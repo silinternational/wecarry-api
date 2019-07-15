@@ -1,0 +1,13 @@
+create_table("users") {
+	t.Column("id", "integer", {primary: true})
+	t.Column("email", "string", {})
+	t.Column("first_name", "string", {})
+	t.Column("last_name", "string", {})
+	t.Column("nickname", "string", {})
+	t.Column("auth_org_id", "integer", {})
+	t.Column("auth_org_uid", "string", {})
+	t.Column("admin_role", "string", {null: true})
+	t.Column("uuid", "string", {})
+	t.ForeignKey("auth_org_id", {"organizations": ["id"]}, {"on_delete": "set null"})
+	t.Timestamps()
+}

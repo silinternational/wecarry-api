@@ -1,0 +1,8 @@
+create_table("user_access_tokens") {
+	t.Column("id", "integer", {primary: true})
+	t.Column("user_id", "integer", {})
+	t.Column("access_token", "string", {})
+	t.Column("expires_at", "timestamp", {})
+	t.ForeignKey("user_id", {"users": ["id"]}, {"on_delete": "cascade"})
+	t.Timestamps()
+}

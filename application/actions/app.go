@@ -59,6 +59,10 @@ func App() *buffalo.App {
 		app.Use(popmw.Transaction(models.DB))
 
 		app.GET("/", HomeHandler)
+		app.Resource("/users", UsersResource{})
+		app.Resource("/user_access_tokens", UserAccessTokensResource{})
+		app.Resource("/user_organizations", UserOrganizationsResource{})
+		app.Resource("/organizations", OrganizationsResource{})
 	}
 
 	return app
