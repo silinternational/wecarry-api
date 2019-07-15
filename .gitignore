@@ -1,0 +1,10 @@
+
+
+# env files
+local.env
+aws.credentials
+aws.env
+*.aes
+
+# IDE files
+.idea/
