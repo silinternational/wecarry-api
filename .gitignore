@@ -1,10 +1,19 @@
-
-
-# env files
-local.env
-aws.credentials
-aws.env
-*.aes
-
-# IDE files
+application/vendor/
+**/*.log
 .idea/
+bin/
+tmp/
+*-packr.go
+.vscode/
+.grifter/
+.env
+**/.DS_Store
+*.pid
+coverage
+coverage.data
+.console_history
+.jhw-cache/
+jhw.*
+generated/
+.vendor/
+*.aes

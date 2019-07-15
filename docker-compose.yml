@@ -1,0 +1,20 @@
+version: "3.7"
+services:
+  buffalo:
+    build:
+      context: ./application
+      dockerfile: Dockerfile-dev
+    volumes:
+      - ./application:/go/src/handcarry
+    ports:
+      - "3000:3000"
+    environment:
+      ADDR: 0.0.0.0
+    command: buffalo dev
+
+  db:
+    image: postgres:9.6.13
+    environment:
+      POSTGRES_USER: handcarry
+      POSTGRES_PASSWORD: handcarry
+      POSTGRES_DB: handcarry
