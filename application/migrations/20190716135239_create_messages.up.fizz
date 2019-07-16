@@ -7,4 +7,5 @@ create_table("messages") {
 	t.ForeignKey("thread_id", {"threads": ["id"]}, {"on_delete": "cascade"})
 	t.ForeignKey("sent_by_id", {"users": ["id"]}, {"on_delete": "cascade"})
 	t.Timestamps()
+    t.Index("uuid", {"unique": true})
 }

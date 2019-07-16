@@ -17,4 +17,5 @@ create_table("posts") {
 	t.ForeignKey("receiver_id", {"users": ["id"]}, {"on_delete": "set null"})
 	t.ForeignKey("provider_id", {"users": ["id"]}, {"on_delete": "set null"})
 	t.Timestamps()
+    t.Index("uuid", {"unique": true})
 }
