@@ -1,7 +1,13 @@
 package models
 
 import (
+	"crypto/sha256"
 	"encoding/json"
+	"fmt"
+	"log"
+	"math/rand"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/gobuffalo/nulls"
@@ -66,4 +72,86 @@ func (u *User) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) {
 // This method is not required and may be deleted.
 func (u *User) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
+}
+
+// CreateAccessToken - Create and store new UserAccessToken
+func (u *User) CreateAccessToken(tx *pop.Connection, clientID string) (string, int64, error) {
+
+	token := createAccessTokenPart()
+	hash := hashClientIdAccessToken(clientID + token)
+	expireAt := createAccessTokenExpiry()
+
+	userAccessToken := UserAccessToken{
+		UserID:      u.ID,
+		AccessToken: hash,
+		ExpiresAt:   expireAt,
+	}
+
+	err := tx.Save(userAccessToken)
+	if err != nil {
+		return "", 0, err
+	}
+
+	return token, expireAt.UTC().Unix(), nil
+}
+
+func FindUserByAccessToken(accessToken string) (User, error) {
+
+	userAccessToken := UserAccessToken{}
+
+	if accessToken == "" {
+		return User{}, fmt.Errorf("error: access token must not be blank")
+	}
+
+	dbAccessToken := hashClientIdAccessToken(accessToken)
+	queryString := fmt.Sprintf("access_token = '%s'", dbAccessToken)
+
+	if err := DB.Where(queryString).First(&userAccessToken); err != nil {
+		return User{}, fmt.Errorf("error finding user by access token: %s", err.Error())
+	}
+
+	if userAccessToken.ExpiresAt.Before(time.Now()) {
+		err := DB.Destroy(userAccessToken)
+		if err != nil {
+			log.Printf("Unable to delete expired userAccessToken, id: %v", userAccessToken.ID)
+		}
+		return User{}, fmt.Errorf("access token has expired")
+	}
+
+	return userAccessToken.User, nil
+}
+
+func createAccessTokenExpiry() time.Time {
+	lifetime := os.Getenv("ACCESS_TOKEN_LIFETIME")
+	if lifetime == "" {
+		lifetime = "28800"
+	}
+
+	lifetimeSeconds, err := strconv.Atoi(lifetime)
+	if err != nil {
+		lifetimeSeconds = 28800
+	}
+
+	dtNow := time.Now()
+	futureTime := dtNow.Add(time.Second * time.Duration(lifetimeSeconds))
+
+	return futureTime
+}
+
+func createAccessTokenPart() string {
+	var alphanumerics = []rune("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+	tokenLength := 32
+	b := make([]rune, tokenLength)
+	for i := range b {
+		b[i] = alphanumerics[rand.Intn(len(alphanumerics))]
+	}
+
+	accessToken := string(b)
+
+	return accessToken
+}
+
+func hashClientIdAccessToken(accessToken string) string {
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(accessToken)))
 }

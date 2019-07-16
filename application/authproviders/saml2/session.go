@@ -1,4 +1,4 @@
-package saml2provider
+package saml2
 
 import (
 	"encoding/json"

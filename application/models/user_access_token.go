@@ -56,3 +56,15 @@ func (u *UserAccessToken) ValidateCreate(tx *pop.Connection) (*validate.Errors, 
 func (u *UserAccessToken) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }
+
+func DeleteAccessToken(accessToken string) error {
+	userAccessToken := UserAccessToken{
+		AccessToken: accessToken,
+	}
+	err := DB.Where("access_token = ?", userAccessToken).First(userAccessToken)
+	if err != nil {
+		return err
+	}
+
+	return DB.Destroy(userAccessToken)
+}

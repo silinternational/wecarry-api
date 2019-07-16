@@ -5,7 +5,7 @@ services:
       context: ./application
       dockerfile: Dockerfile-dev
     volumes:
-      - ./application:/go/src/handcarry
+      - ./application:/handcarry
     ports:
       - "3000:3000"
     environment:

@@ -1,10 +1,12 @@
-package saml2provider
+package saml2
 
 import (
 	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"strings"
+
+	"github.com/silinternational/handcarry-api/domain"
 
 	"github.com/markbates/goth"
 	"golang.org/x/oauth2"
