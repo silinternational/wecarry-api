@@ -1,12 +1,10 @@
-# This is a multi-stage Dockerfile and requires >= Docker 17.05
-# https://docs.docker.com/engine/userguide/eng-image/multistage-build/
-FROM gobuffalo/buffalo:v0.14.6 as builder
+FROM gobuffalo/buffalo:v0.14.6
 
-RUN mkdir -p $GOPATH/src/handcarry
-WORKDIR $GOPATH/src/handcarry
+RUN mkdir -p /handcarry
+WORKDIR /handcarry
 
 ADD . .
-ENV GO111MODULES=on
+ENV GO111MODULE=on
 RUN go get ./...
 
 CMD ["buffalo", "dev"]
