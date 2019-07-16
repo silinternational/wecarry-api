@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"handcarry/actions"
+	"github.com/silinternational/handcarry-api/actions"
 )
 
 // main is the starting point for your Buffalo application.

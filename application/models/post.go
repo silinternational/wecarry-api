@@ -1,0 +1,76 @@
+package models
+
+import (
+	"encoding/json"
+	"github.com/gofrs/uuid"
+	"time"
+
+	"github.com/gobuffalo/nulls"
+	"github.com/gobuffalo/pop"
+	"github.com/gobuffalo/validate"
+	"github.com/gobuffalo/validate/validators"
+)
+
+type Post struct {
+	ID          int          `json:"id" db:"id"`
+	CreatedAt   time.Time    `json:"created_at" db:"created_at"`
+	UpdatedAt   time.Time    `json:"updated_at" db:"updated_at"`
+	CreatedByID int          `json:"created_by_id" db:"created_by_id"`
+	Type        string       `json:"type" db:"type"`
+	OrgID       int          `json:"org_id" db:"org_id"`
+	Title       string       `json:"title" db:"title"`
+	Description nulls.String `json:"description" db:"description"`
+	Destination nulls.String `json:"destination" db:"destination"`
+	Origin      nulls.String `json:"origin" db:"origin"`
+	Size        string       `json:"size" db:"size"`
+	Uuid        uuid.UUID    `json:"uuid" db:"uuid"`
+	ReceiverID  nulls.Int    `json:"receiver_id" db:"receiver_id"`
+	ProviderID  nulls.Int    `json:"provider_id" db:"provider_id"`
+	Status      string       `json:"status" db:"status"`
+	CreatedBy   User         `belongs_to:"users"`
+	Org         Organization `belongs_to:"organizations"`
+	Receiver    User         `belongs_to:"users"`
+	Provider    User         `belongs_to:"users"`
+}
+
+// String is not required by pop and may be deleted
+func (p Post) String() string {
+	jp, _ := json.Marshal(p)
+	return string(jp)
+}
+
+// Posts is not required by pop and may be deleted
+type Posts []Post
+
+// String is not required by pop and may be deleted
+func (p Posts) String() string {
+	jp, _ := json.Marshal(p)
+	return string(jp)
+}
+
+// Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
+// This method is not required and may be deleted.
+func (p *Post) Validate(tx *pop.Connection) (*validate.Errors, error) {
+	return validate.Validate(
+		&validators.IntIsPresent{Field: p.ID, Name: "ID"},
+		&validators.IntIsPresent{Field: p.CreatedByID, Name: "CreatedBy"},
+		&validators.StringIsPresent{Field: p.Type, Name: "Type"},
+		&validators.IntIsPresent{Field: p.OrgID, Name: "OrgID"},
+		&validators.StringIsPresent{Field: p.Title, Name: "Title"},
+		&validators.StringIsPresent{Field: p.Size, Name: "Size"},
+		&validators.UUIDIsPresent{Field: p.Uuid, Name: "Uuid"},
+		&validators.StringIsPresent{Field: p.Status, Name: "Status"},
+	), nil
+}
+
+// ValidateCreate gets run every time you call "pop.ValidateAndCreate" method.
+// This method is not required and may be deleted.
+func (p *Post) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) {
+	return validate.NewErrors(), nil
+}
+
+// ValidateUpdate gets run every time you call "pop.ValidateAndUpdate" method.
+// This method is not required and may be deleted.
+func (p *Post) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
+	return validate.NewErrors(), nil
+}

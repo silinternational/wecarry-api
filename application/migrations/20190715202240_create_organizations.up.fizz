@@ -4,6 +4,6 @@ create_table("organizations") {
 	t.Column("url", "string", {null: true})
 	t.Column("auth_type", "string", {})
 	t.Column("auth_config", "json", {})
-	t.Column("uuid", "string", {})
+	t.Column("uuid", "uuid", {})
 	t.Timestamps()
 }

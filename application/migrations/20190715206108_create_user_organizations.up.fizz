@@ -1,5 +1,5 @@
 create_table("user_organizations") {
-	t.Column("id", "uuid", {primary: true})
+	t.Column("id", "integer", {primary: true})
 	t.Column("org_id", "integer", {})
 	t.Column("user_id", "integer", {})
 	t.Column("role", "string", {})

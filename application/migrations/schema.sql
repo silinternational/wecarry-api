@@ -21,6 +21,44 @@ SET default_tablespace = '';
 SET default_with_oids = false;
 
 --
+-- Name: messages; Type: TABLE; Schema: public; Owner: handcarry
+--
+
+CREATE TABLE public.messages (
+    id integer NOT NULL,
+    uuid uuid NOT NULL,
+    thread_id integer NOT NULL,
+    sent_by_id integer NOT NULL,
+    content character varying(255) NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.messages OWNER TO handcarry;
+
+--
+-- Name: messages_id_seq; Type: SEQUENCE; Schema: public; Owner: handcarry
+--
+
+CREATE SEQUENCE public.messages_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.messages_id_seq OWNER TO handcarry;
+
+--
+-- Name: messages_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: handcarry
+--
+
+ALTER SEQUENCE public.messages_id_seq OWNED BY public.messages.id;
+
+
+--
 -- Name: organizations; Type: TABLE; Schema: public; Owner: handcarry
 --
 
@@ -30,7 +68,7 @@ CREATE TABLE public.organizations (
     url character varying(255),
     auth_type character varying(255) NOT NULL,
     auth_config jsonb NOT NULL,
-    uuid character varying(255) NOT NULL,
+    uuid uuid NOT NULL,
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL
 );
@@ -60,6 +98,52 @@ ALTER SEQUENCE public.organizations_id_seq OWNED BY public.organizations.id;
 
 
 --
+-- Name: posts; Type: TABLE; Schema: public; Owner: handcarry
+--
+
+CREATE TABLE public.posts (
+    id integer NOT NULL,
+    created_by_id integer NOT NULL,
+    type character varying(255) NOT NULL,
+    org_id integer NOT NULL,
+    title character varying(255) NOT NULL,
+    description character varying(255),
+    destination character varying(255),
+    origin character varying(255),
+    size character varying(255) NOT NULL,
+    uuid uuid NOT NULL,
+    receiver_id integer,
+    provider_id integer,
+    status character varying(255) NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.posts OWNER TO handcarry;
+
+--
+-- Name: posts_id_seq; Type: SEQUENCE; Schema: public; Owner: handcarry
+--
+
+CREATE SEQUENCE public.posts_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.posts_id_seq OWNER TO handcarry;
+
+--
+-- Name: posts_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: handcarry
+--
+
+ALTER SEQUENCE public.posts_id_seq OWNED BY public.posts.id;
+
+
+--
 -- Name: schema_migration; Type: TABLE; Schema: public; Owner: handcarry
 --
 
@@ -69,6 +153,78 @@ CREATE TABLE public.schema_migration (
 
 
 ALTER TABLE public.schema_migration OWNER TO handcarry;
+
+--
+-- Name: thread_participants; Type: TABLE; Schema: public; Owner: handcarry
+--
+
+CREATE TABLE public.thread_participants (
+    id integer NOT NULL,
+    thread_id integer NOT NULL,
+    user_id integer NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.thread_participants OWNER TO handcarry;
+
+--
+-- Name: thread_participants_id_seq; Type: SEQUENCE; Schema: public; Owner: handcarry
+--
+
+CREATE SEQUENCE public.thread_participants_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.thread_participants_id_seq OWNER TO handcarry;
+
+--
+-- Name: thread_participants_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: handcarry
+--
+
+ALTER SEQUENCE public.thread_participants_id_seq OWNED BY public.thread_participants.id;
+
+
+--
+-- Name: threads; Type: TABLE; Schema: public; Owner: handcarry
+--
+
+CREATE TABLE public.threads (
+    id integer NOT NULL,
+    uuid uuid NOT NULL,
+    post_id integer NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.threads OWNER TO handcarry;
+
+--
+-- Name: threads_id_seq; Type: SEQUENCE; Schema: public; Owner: handcarry
+--
+
+CREATE SEQUENCE public.threads_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.threads_id_seq OWNER TO handcarry;
+
+--
+-- Name: threads_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: handcarry
+--
+
+ALTER SEQUENCE public.threads_id_seq OWNED BY public.threads.id;
+
 
 --
 -- Name: user_access_tokens; Type: TABLE; Schema: public; Owner: handcarry
@@ -112,7 +268,7 @@ ALTER SEQUENCE public.user_access_tokens_id_seq OWNED BY public.user_access_toke
 --
 
 CREATE TABLE public.user_organizations (
-    id uuid NOT NULL,
+    id integer NOT NULL,
     org_id integer NOT NULL,
     user_id integer NOT NULL,
     role character varying(255) NOT NULL,
@@ -122,6 +278,27 @@ CREATE TABLE public.user_organizations (
 
 
 ALTER TABLE public.user_organizations OWNER TO handcarry;
+
+--
+-- Name: user_organizations_id_seq; Type: SEQUENCE; Schema: public; Owner: handcarry
+--
+
+CREATE SEQUENCE public.user_organizations_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.user_organizations_id_seq OWNER TO handcarry;
+
+--
+-- Name: user_organizations_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: handcarry
+--
+
+ALTER SEQUENCE public.user_organizations_id_seq OWNED BY public.user_organizations.id;
+
 
 --
 -- Name: users; Type: TABLE; Schema: public; Owner: handcarry
@@ -136,7 +313,7 @@ CREATE TABLE public.users (
     auth_org_id integer NOT NULL,
     auth_org_uid character varying(255) NOT NULL,
     admin_role character varying(255),
-    uuid character varying(255) NOT NULL,
+    uuid uuid NOT NULL,
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL
 );
@@ -166,10 +343,38 @@ ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
 
 
 --
+-- Name: messages id; Type: DEFAULT; Schema: public; Owner: handcarry
+--
+
+ALTER TABLE ONLY public.messages ALTER COLUMN id SET DEFAULT nextval('public.messages_id_seq'::regclass);
+
+
+--
 -- Name: organizations id; Type: DEFAULT; Schema: public; Owner: handcarry
 --
 
 ALTER TABLE ONLY public.organizations ALTER COLUMN id SET DEFAULT nextval('public.organizations_id_seq'::regclass);
+
+
+--
+-- Name: posts id; Type: DEFAULT; Schema: public; Owner: handcarry
+--
+
+ALTER TABLE ONLY public.posts ALTER COLUMN id SET DEFAULT nextval('public.posts_id_seq'::regclass);
+
+
+--
+-- Name: thread_participants id; Type: DEFAULT; Schema: public; Owner: handcarry
+--
+
+ALTER TABLE ONLY public.thread_participants ALTER COLUMN id SET DEFAULT nextval('public.thread_participants_id_seq'::regclass);
+
+
+--
+-- Name: threads id; Type: DEFAULT; Schema: public; Owner: handcarry
+--
+
+ALTER TABLE ONLY public.threads ALTER COLUMN id SET DEFAULT nextval('public.threads_id_seq'::regclass);
 
 
 --
@@ -180,10 +385,25 @@ ALTER TABLE ONLY public.user_access_tokens ALTER COLUMN id SET DEFAULT nextval('
 
 
 --
+-- Name: user_organizations id; Type: DEFAULT; Schema: public; Owner: handcarry
+--
+
+ALTER TABLE ONLY public.user_organizations ALTER COLUMN id SET DEFAULT nextval('public.user_organizations_id_seq'::regclass);
+
+
+--
 -- Name: users id; Type: DEFAULT; Schema: public; Owner: handcarry
 --
 
 ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_id_seq'::regclass);
+
+
+--
+-- Name: messages messages_pkey; Type: CONSTRAINT; Schema: public; Owner: handcarry
+--
+
+ALTER TABLE ONLY public.messages
+    ADD CONSTRAINT messages_pkey PRIMARY KEY (id);
 
 
 --
@@ -192,6 +412,30 @@ ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_
 
 ALTER TABLE ONLY public.organizations
     ADD CONSTRAINT organizations_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: posts posts_pkey; Type: CONSTRAINT; Schema: public; Owner: handcarry
+--
+
+ALTER TABLE ONLY public.posts
+    ADD CONSTRAINT posts_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: thread_participants thread_participants_pkey; Type: CONSTRAINT; Schema: public; Owner: handcarry
+--
+
+ALTER TABLE ONLY public.thread_participants
+    ADD CONSTRAINT thread_participants_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: threads threads_pkey; Type: CONSTRAINT; Schema: public; Owner: handcarry
+--
+
+ALTER TABLE ONLY public.threads
+    ADD CONSTRAINT threads_pkey PRIMARY KEY (id);
 
 
 --
@@ -223,6 +467,78 @@ ALTER TABLE ONLY public.users
 --
 
 CREATE UNIQUE INDEX schema_migration_version_idx ON public.schema_migration USING btree (version);
+
+
+--
+-- Name: messages messages_sent_by_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: handcarry
+--
+
+ALTER TABLE ONLY public.messages
+    ADD CONSTRAINT messages_sent_by_id_fkey FOREIGN KEY (sent_by_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: messages messages_thread_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: handcarry
+--
+
+ALTER TABLE ONLY public.messages
+    ADD CONSTRAINT messages_thread_id_fkey FOREIGN KEY (thread_id) REFERENCES public.threads(id) ON DELETE CASCADE;
+
+
+--
+-- Name: posts posts_created_by_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: handcarry
+--
+
+ALTER TABLE ONLY public.posts
+    ADD CONSTRAINT posts_created_by_id_fkey FOREIGN KEY (created_by_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: posts posts_org_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: handcarry
+--
+
+ALTER TABLE ONLY public.posts
+    ADD CONSTRAINT posts_org_id_fkey FOREIGN KEY (org_id) REFERENCES public.organizations(id) ON DELETE SET NULL;
+
+
+--
+-- Name: posts posts_provider_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: handcarry
+--
+
+ALTER TABLE ONLY public.posts
+    ADD CONSTRAINT posts_provider_id_fkey FOREIGN KEY (provider_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
+-- Name: posts posts_receiver_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: handcarry
+--
+
+ALTER TABLE ONLY public.posts
+    ADD CONSTRAINT posts_receiver_id_fkey FOREIGN KEY (receiver_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
+-- Name: thread_participants thread_participants_thread_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: handcarry
+--
+
+ALTER TABLE ONLY public.thread_participants
+    ADD CONSTRAINT thread_participants_thread_id_fkey FOREIGN KEY (thread_id) REFERENCES public.threads(id) ON DELETE CASCADE;
+
+
+--
+-- Name: thread_participants thread_participants_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: handcarry
+--
+
+ALTER TABLE ONLY public.thread_participants
+    ADD CONSTRAINT thread_participants_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: threads threads_post_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: handcarry
+--
+
+ALTER TABLE ONLY public.threads
+    ADD CONSTRAINT threads_post_id_fkey FOREIGN KEY (post_id) REFERENCES public.posts(id) ON DELETE CASCADE;
 
 
 --
