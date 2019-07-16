@@ -3,7 +3,9 @@ package actions
 import (
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/envy"
+	csrf "github.com/gobuffalo/mw-csrf"
 	paramlogger "github.com/gobuffalo/mw-paramlogger"
+	"github.com/markbates/goth/gothic"
 
 	"github.com/silinternational/handcarry-api/models"
 
@@ -53,8 +55,24 @@ func App() *buffalo.App {
 		// Remove to disable this.
 		app.Use(popmw.Transaction(models.DB))
 
+		//  Added for authorization
+		app.Use(SetCurrentUser)
+		app.Use(Authorize)
+		app.Middleware.Skip(Authorize, HomeHandler)
+
 		app.GET("/", HomeHandler)
+
+
+		auth := app.Group("/auth")
+
 		// app.POST("/auth/login", AuthHandler)
+		bah := buffalo.WrapHandlerFunc(gothic.BeginAuthHandler)
+		auth.GET("/logout", AuthDestroy)
+		auth.GET("/{provider}", bah)
+		auth.GET("/{provider}/callback", AuthCallback)  // "GET" for Google
+		auth.POST("/{provider}/callback", AuthCallback) //  "POST" for saml2
+		auth.Middleware.Skip(csrf.New, AuthCallback)    //  Don't require csrf on auth
+
 	}
 
 	return app

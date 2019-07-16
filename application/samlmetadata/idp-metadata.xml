@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" entityID="appsdev.iidp.net" ID="pfxe1e9036e-ee38-b787-e248-dd34e22d2a9a"><ds:Signature>
+    <ds:SignedInfo><ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+        <ds:SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/>
+        <ds:Reference URI="#pfxe1e9036e-ee38-b787-e248-dd34e22d2a9a"><ds:Transforms><ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/><ds:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/></ds:Transforms><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><ds:DigestValue>Z/DXukHfyVsEbB5VnuWsGZ+wmQ3p3/U/jHZcW7Qqay4=</ds:DigestValue></ds:Reference></ds:SignedInfo><ds:SignatureValue>MFSZpDXtFScz+oDLF3V+cqmnCIsTLKlhxE8ODli+5g6RjKqf/wxONZZuZZDBMCSLzKUsfXmBDGsdohKx6FiptFyooxkuPGActMeVaMnetnIR2qDTVtKRCACH3/flRHZQV2zuQY7Pmi84K8iK8asPLXsYJFrBTb5KJ7rTu0wTn6HdVGObrDbsi3vUwcvqxRtVt/zft8K8wYCbGZNAhDu3bzscbRaEeoKGEuRmXwGVI2A1xA/wUNzaDqGYsg6zXjoT/pvZ8FLCnApGqY1r8UYU6Tm9k95GQHLRmBts8yybiP3slpjQ4Nu3PhPYUaf9z3ouTdMS5LYCxZHgZ2RbAhpoFA==</ds:SignatureValue>
+    <ds:KeyInfo><ds:X509Data><ds:X509Certificate>MIIDXTCCAkWgAwIBAgIJAMdPzqvQygzNMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNVBAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBXaWRnaXRzIFB0eSBMdGQwHhcNMTcwNjIyMjAxODU1WhcNMjcwNjIyMjAxODU1WjBFMQswCQYDVQQGEwJBVTETMBEGA1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50ZXJuZXQgV2lkZ2l0cyBQdHkgTHRkMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxQz+TW4NBBO0mU4S59IdF5u9qSFUF94xr/PtV4yE9Fi75hZ6KiQukVxFhJCCBhPOWzdHTtUnl9mwTUsN2473e17ciIJNb4Z3LPMkuThG7RWs15WVVWb0hSK5wJKuZus587jbM4uNfrz0/1WThJLBfZ0/oV9vvYiyhbp7gcT8iV18iiQVszOPJ+FPutvPQ3Hn+xZgLCOgWBXOV54yrjL/S5Mo8uQdOkruW9ll9Fvd6KC0Pl8g1nH2Qkm8EkeJkCLy9U+QXaABaSgAOnYhuWmuohEqmyLWI2xgPyt13hlggfvGBueig8Y9/QXL6xLmH9w09ds/erta/hZQZMKDd5jE8QIDAQABo1AwTjAdBgNVHQ4EFgQU1ksU7hYQqnpgSZ9x/wvSd8sbRKwwHwYDVR0jBBgwFoAU1ksU7hYQqnpgSZ9x/wvSd8sbRKwwDAYDVR0TBAUwAwEB/zANBgkqhkiG9w0BAQsFAAOCAQEAlDY2R0WTceiPr1f+QNwo1wqyyoofn7HthMvhg5oN0KlZj2EesyI/RGN0/bVKOn+nrAvXnMlsFw4WLSbNoXG48BgB2xJLI9dF9JjN1DTM4g2c5PGeERwu6ukg2PpIwKKjyHVqEP0id8QHkb/qEotF12GIK4Vl2JzpgSk5Zsgshk3XrJbUEWpP03z0+qoy/oopuiQ0BX1hRzG8WMwKvWdFqCfRRAZEozwpJ6vOm1x5+laRRbkblaw4DRSsWB11K5DvCX/ZZuszB5gvyo1Bu65AD/37OlWBd8eFyQBJ7Sc4XQ029xpn+r4WP1TKDwRVQT1TzgzbgpF2vby+6B2o42bbPw==</ds:X509Certificate></ds:X509Data></ds:KeyInfo></ds:Signature>
+    <md:IDPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+        <md:KeyDescriptor use="signing">
+            <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+                <ds:X509Data>
+                    <ds:X509Certificate>MIIDXTCCAkWgAwIBAgIJAMdPzqvQygzNMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNVBAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBXaWRnaXRzIFB0eSBMdGQwHhcNMTcwNjIyMjAxODU1WhcNMjcwNjIyMjAxODU1WjBFMQswCQYDVQQGEwJBVTETMBEGA1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50ZXJuZXQgV2lkZ2l0cyBQdHkgTHRkMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxQz+TW4NBBO0mU4S59IdF5u9qSFUF94xr/PtV4yE9Fi75hZ6KiQukVxFhJCCBhPOWzdHTtUnl9mwTUsN2473e17ciIJNb4Z3LPMkuThG7RWs15WVVWb0hSK5wJKuZus587jbM4uNfrz0/1WThJLBfZ0/oV9vvYiyhbp7gcT8iV18iiQVszOPJ+FPutvPQ3Hn+xZgLCOgWBXOV54yrjL/S5Mo8uQdOkruW9ll9Fvd6KC0Pl8g1nH2Qkm8EkeJkCLy9U+QXaABaSgAOnYhuWmuohEqmyLWI2xgPyt13hlggfvGBueig8Y9/QXL6xLmH9w09ds/erta/hZQZMKDd5jE8QIDAQABo1AwTjAdBgNVHQ4EFgQU1ksU7hYQqnpgSZ9x/wvSd8sbRKwwHwYDVR0jBBgwFoAU1ksU7hYQqnpgSZ9x/wvSd8sbRKwwDAYDVR0TBAUwAwEB/zANBgkqhkiG9w0BAQsFAAOCAQEAlDY2R0WTceiPr1f+QNwo1wqyyoofn7HthMvhg5oN0KlZj2EesyI/RGN0/bVKOn+nrAvXnMlsFw4WLSbNoXG48BgB2xJLI9dF9JjN1DTM4g2c5PGeERwu6ukg2PpIwKKjyHVqEP0id8QHkb/qEotF12GIK4Vl2JzpgSk5Zsgshk3XrJbUEWpP03z0+qoy/oopuiQ0BX1hRzG8WMwKvWdFqCfRRAZEozwpJ6vOm1x5+laRRbkblaw4DRSsWB11K5DvCX/ZZuszB5gvyo1Bu65AD/37OlWBd8eFyQBJ7Sc4XQ029xpn+r4WP1TKDwRVQT1TzgzbgpF2vby+6B2o42bbPw==</ds:X509Certificate>
+                </ds:X509Data>
+            </ds:KeyInfo>
+        </md:KeyDescriptor>
+        <md:KeyDescriptor use="encryption">
+            <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+                <ds:X509Data>
+                    <ds:X509Certificate>MIIDXTCCAkWgAwIBAgIJAMdPzqvQygzNMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNVBAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBXaWRnaXRzIFB0eSBMdGQwHhcNMTcwNjIyMjAxODU1WhcNMjcwNjIyMjAxODU1WjBFMQswCQYDVQQGEwJBVTETMBEGA1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50ZXJuZXQgV2lkZ2l0cyBQdHkgTHRkMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxQz+TW4NBBO0mU4S59IdF5u9qSFUF94xr/PtV4yE9Fi75hZ6KiQukVxFhJCCBhPOWzdHTtUnl9mwTUsN2473e17ciIJNb4Z3LPMkuThG7RWs15WVVWb0hSK5wJKuZus587jbM4uNfrz0/1WThJLBfZ0/oV9vvYiyhbp7gcT8iV18iiQVszOPJ+FPutvPQ3Hn+xZgLCOgWBXOV54yrjL/S5Mo8uQdOkruW9ll9Fvd6KC0Pl8g1nH2Qkm8EkeJkCLy9U+QXaABaSgAOnYhuWmuohEqmyLWI2xgPyt13hlggfvGBueig8Y9/QXL6xLmH9w09ds/erta/hZQZMKDd5jE8QIDAQABo1AwTjAdBgNVHQ4EFgQU1ksU7hYQqnpgSZ9x/wvSd8sbRKwwHwYDVR0jBBgwFoAU1ksU7hYQqnpgSZ9x/wvSd8sbRKwwDAYDVR0TBAUwAwEB/zANBgkqhkiG9w0BAQsFAAOCAQEAlDY2R0WTceiPr1f+QNwo1wqyyoofn7HthMvhg5oN0KlZj2EesyI/RGN0/bVKOn+nrAvXnMlsFw4WLSbNoXG48BgB2xJLI9dF9JjN1DTM4g2c5PGeERwu6ukg2PpIwKKjyHVqEP0id8QHkb/qEotF12GIK4Vl2JzpgSk5Zsgshk3XrJbUEWpP03z0+qoy/oopuiQ0BX1hRzG8WMwKvWdFqCfRRAZEozwpJ6vOm1x5+laRRbkblaw4DRSsWB11K5DvCX/ZZuszB5gvyo1Bu65AD/37OlWBd8eFyQBJ7Sc4XQ029xpn+r4WP1TKDwRVQT1TzgzbgpF2vby+6B2o42bbPw==</ds:X509Certificate>
+                </ds:X509Data>
+            </ds:KeyInfo>
+        </md:KeyDescriptor>
+        <md:SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://appsdev.iidp.net/saml2/idp/SingleLogoutService.php"/>
+        <md:NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:transient</md:NameIDFormat>
+        <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://appsdev.iidp.net/saml2/idp/SSOService.php"/>
+    </md:IDPSSODescriptor>
+    <md:ContactPerson contactType="technical">
+        <md:GivenName>Insite</md:GivenName>
+        <md:SurName>Admin</md:SurName>
+        <md:EmailAddress>info@insitehome.org</md:EmailAddress>
+    </md:ContactPerson>
+</md:EntityDescriptor>

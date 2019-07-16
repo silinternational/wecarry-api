@@ -1,7 +1,7 @@
 package grifts
 
 import (
-	"handcarry/actions"
+	"github.com/silinternational/handcarry-api/actions"
 
 	"github.com/gobuffalo/buffalo"
 )
