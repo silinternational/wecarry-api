@@ -15,10 +15,9 @@ import (
 	saml2provider "github.com/silinternational/handcarry-api/authproviders/saml2"
 )
 
-const SessionNameUserID = "current_user_id"
 const SAML2Provider = "saml2"
 const SAMLResponseKey = "SAMLResponse"
-const SAMLUserIDKey = "UserID"
+const SAMLUserIDKey = "eduPersonTargetID"
 
 const AuthDiscoURL = "/auth/disco"
 
@@ -32,14 +31,6 @@ func init() {
 	saml2P.IDPURL = os.Getenv("SAML2_SINGLE_SIGN_ON_URL")
 
 	goth.UseProviders(&saml2P)
-
-	//goth.UseProviders(&saml2P)
-	//github.New(os.Getenv("GITHUB_KEY"), os.Getenv("GITHUB_SECRET"), fmt.Sprintf("%s%s", App().Host, "/auth/github/callback")),
-	// cloudfoundry.New(os.Getenv("UAA_URL"), os.Getenv("UAA_CLIENT"),
-	// 	os.Getenv("UAA_CLIENT_SECRET"),
-	// 	fmt.Sprintf("%s%s", App().Host, "/auth/cloudfoundry/callback"),
-	// 	"openid",
-	// ),
 }
 
 func getClientIDAndSAMLResponse(relayState string, c buffalo.Context) (string, string, error) {
@@ -91,6 +82,36 @@ func getProviderIDFromSAMLResponse(samlResponse string) (string, error) {
 	return providerID, nil
 }
 
+func samlAttribute(attrName, samlResponse string) (string, error) {
+	sprov := saml2provider.Provider{}
+	sp, err := sprov.GetSAMLServiceProvider()
+	if err != nil {
+		return "", err
+	}
+
+	response, err := sp.ValidateEncodedResponse(samlResponse)
+
+	if err != nil {
+		return "", fmt.Errorf("could not validate %s. %v", SAMLResponseKey, err.Error())
+	}
+
+	if response == nil {
+		return "", fmt.Errorf("got nil response validating %s", SAMLResponseKey)
+	}
+
+	assertions := response.Assertions
+	if len(assertions) < 1 {
+		return "", fmt.Errorf("did not get any SAML assertions")
+	}
+
+	attrVal := saml2provider.GetSAMLAttributeFirstValue(attrName, assertions[0].AttributeStatement.Attributes)
+	if attrVal == "" {
+		return "", fmt.Errorf("no value found for %s", attrName)
+	}
+
+	return attrVal, nil
+}
+
 func AuthLogin(c buffalo.Context) error {
 
 	returnTo := c.Param("ReturnTo")
@@ -120,12 +141,7 @@ func AuthLogin(c buffalo.Context) error {
 }
 
 func AuthCallback(c buffalo.Context) error {
-	println("\n With buffalo dev, use localhost:3000?ClientID=123456.  Otherwise the session won't be recognized. \n")
-
-	relayState, err := domain.GetRequestParam("RelayState", c.Request())
-	if err != nil {
-		return errors.WithStack(err)
-	}
+	relayState := c.Param("RelayState")
 
 	relayValues := domain.GetSubPartKeyValues(relayState, "?", "=")
 
@@ -134,20 +150,19 @@ func AuthCallback(c buffalo.Context) error {
 		return c.Error(401, err)
 	}
 
-	providerID, err := getProviderIDFromSAMLResponse(samlResponse)
+	authOrgUid, err := samlAttribute(SAMLUserIDKey, samlResponse)
 	if err != nil {
 		return c.Error(401, err)
 	}
 
-	gothicUser, err := gothic.CompleteUserAuth(c.Response(), c.Request())
-	if err != nil {
-		return c.Error(401, err)
-	}
-	fmt.Printf("\nPPPPP %v\n", providerID)
+	// gothicUser, err := gothic.CompleteUserAuth(c.Response(), c.Request())
+	// if err != nil {
+	// 	return c.Error(401, err)
+	// }
 
-	// Get an existing User with the current provider and provider userID
+	// Get an existing User with the current auth org uid
 	tx := c.Value("tx").(*pop.Connection)
-	q := tx.Where("provider = ? and provider_id = ?", gothicUser.Provider, providerID)
+	q := tx.Where("auth_org_uid = ?", authOrgUid)
 	exists, err := q.Exists("users")
 	if err != nil {
 		return errors.WithStack(err)
@@ -158,6 +173,8 @@ func AuthCallback(c buffalo.Context) error {
 			return errors.WithStack(err)
 		}
 	}
+
+	// TODO see if user with email already exists
 
 	// Create or update the User with latest data from the provider
 	// u.FirstName = defaults.String(defaults.String(gothicUser.Name, u.FirstName), "MISSING")

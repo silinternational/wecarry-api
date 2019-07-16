@@ -18,7 +18,6 @@ type AppError struct {
 	Level string
 }
 
-
 func GetRequestData(r *http.Request) (map[string][]string, error) {
 	data := map[string][]string{}
 
@@ -46,24 +45,10 @@ func GetFirstStringFromSlice(strSlice []string) string {
 	return ""
 }
 
-func GetClientIDFromRequest(r *http.Request) (string, error) {
-	return GetRequestParam(ClientIDKey, r)
-}
-
 func GetBearerTokenFromRequest(r *http.Request) string {
 	bearerKey := "Bearer"
 
 	return GetFirstStringFromSlice(r.Header[bearerKey])
-}
-
-func GetRequestParam(paramName string, r *http.Request) (string, error) {
-	requestData, err := GetRequestData(r)
-
-	if err != nil {
-		return "", err
-	}
-
-	return GetFirstStringFromSlice(requestData[paramName]), nil
 }
 
 func GetSubPartKeyValues(inString, outerDelimiter, innerDelimiter string) map[string]string {

@@ -31,16 +31,16 @@ const SPReturnTo = "handcarry.local:3000/"
 
 // Provider needs to be implemented for each 3rd party authentication provider
 // e.g. Facebook, Twitter, etc...
-//type Provider interface {
-//	Name() string
-//	SetName(name string)
-//	BeginAuth(state string) (Session, error)
-//	UnmarshalSession(string) (Session, error)
-//	FetchUser(Session) (User, error)
-//	Debug(bool)
-//	RefreshToken(refreshToken string) (*oauth2.Token, error) //Get new access token based on the refresh token
-//	RefreshTokenAvailable() bool                             //Refresh token is provided by auth provider or not
-//}
+// type Provider interface {
+//	 Name() string
+//	 SetName(name string)
+//	 BeginAuth(state string) (Session, error)
+//	 UnmarshalSession(string) (Session, error)
+//	 FetchUser(Session) (User, error)
+//	 Debug(bool)
+//	 RefreshToken(refreshToken string) (*oauth2.Token, error) //Get new access token based on the refresh token
+//	 RefreshTokenAvailable() bool                             //Refresh token is provided by auth provider or not
+// }
 
 type Provider struct {
 	providerName string
