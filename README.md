@@ -9,7 +9,7 @@ pip:>=19.1.1
 ## Setting it up
 
 In an appropriate directory:
-* git clone https://github.com/silinternational/handcarry-api.git
+* git clone git@github.com:silinternational/handcarry-api.git
 * cd handcarry-api
 * docker-compose up -d
 
