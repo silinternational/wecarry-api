@@ -30,6 +30,8 @@ services:
 
   adminer:
     image: adminer
+    depends_on:
+      - db
     restart: always
     ports:
       - 8080:8080
@@ -37,6 +39,8 @@ services:
   phppgadmin:
     restart: always
     image: dockage/phppgadmin:latest
+    depends_on:
+      - db
     ports:
       - "8081:80"
     environment:
