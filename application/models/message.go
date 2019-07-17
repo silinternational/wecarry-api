@@ -16,7 +16,7 @@ type Message struct {
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 	Uuid      uuid.UUID `json:"uuid" db:"uuid"`
 	ThreadID  int       `json:"thread_id" db:"thread_id"`
-	SentByID  int       `json:"sent_by_id" db:"sent_by"`
+	SentByID  int       `json:"sent_by_id" db:"sent_by_id"`
 	Content   string    `json:"content" db:"content"`
 	Thread    Thread    `belongs_to:"threads"`
 	SentBy    User      `belongs_to:"users"`

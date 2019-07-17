@@ -3,6 +3,7 @@ type Query {
     user(id: ID): User
     posts: [Post]!
     post(id: ID): Post
+    threads: [Thread]!
 }
 
 enum Role {
@@ -67,8 +68,8 @@ type Thread {
 
 type Message {
     id: ID!
-    sender: User
-    content: String
+    sender: User!
+    content: String!
     createdAt: String
     updatedAt: String
 }

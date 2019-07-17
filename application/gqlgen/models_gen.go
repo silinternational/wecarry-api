@@ -11,7 +11,7 @@ import (
 type Message struct {
 	ID        string  `json:"id"`
 	Sender    *User   `json:"sender"`
-	Content   *string `json:"content"`
+	Content   string  `json:"content"`
 	CreatedAt *string `json:"createdAt"`
 	UpdatedAt *string `json:"updatedAt"`
 }

@@ -2,6 +2,7 @@ package gqlgen
 
 import (
 	"context"
+
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/silinternational/handcarry-api/models"
 	"github.com/vektah/gqlparser/gqlerror"
@@ -91,4 +92,29 @@ func (r *queryResolver) Post(ctx context.Context, id *string) (*Post, error) {
 	}
 
 	return &newGqlPost, nil
+}
+
+func (r *queryResolver) Threads(ctx context.Context) ([]*Thread, error) {
+	db := models.DB
+	dbThreads := models.Threads{}
+
+	db = CallDBEagerWithRelatedFields(ThreadRelatedFields(), db, ctx)
+
+	if err := db.All(&dbThreads); err != nil {
+		graphql.AddError(ctx, gqlerror.Errorf("Error getting threads: %v", err.Error()))
+		return []*Thread{}, err
+	}
+
+	gqlThreads := []*Thread{}
+	for _, dbThread := range dbThreads {
+		newGqlThread, err := ConvertDBThreadToGqlThread(dbThread)
+
+		if err != nil {
+			graphql.AddError(ctx, gqlerror.Errorf("Error converting users: %v", err.Error()))
+			return gqlThreads, err
+		}
+		gqlThreads = append(gqlThreads, &newGqlThread)
+
+	}
+	return gqlThreads, nil
 }
