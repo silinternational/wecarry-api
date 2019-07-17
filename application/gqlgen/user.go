@@ -1,11 +1,9 @@
 package gqlgen
 
 import (
-	"github.com/99designs/gqlgen/graphql"
 	"github.com/gobuffalo/nulls"
 	"github.com/silinternational/handcarry-api/domain"
 	"github.com/silinternational/handcarry-api/models"
-	"github.com/vektah/gqlparser/gqlerror"
 	"strconv"
 )
 
