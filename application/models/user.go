@@ -4,9 +4,9 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"github.com/gobuffalo/envy"
 	"log"
 	"math/rand"
-	"os"
 	"strconv"
 	"time"
 
@@ -122,10 +122,7 @@ func FindUserByAccessToken(accessToken string) (User, error) {
 }
 
 func createAccessTokenExpiry() time.Time {
-	lifetime := os.Getenv("ACCESS_TOKEN_LIFETIME")
-	if lifetime == "" {
-		lifetime = "28800"
-	}
+	lifetime := envy.Get("ACCESS_TOKEN_LIFETIME", "28800")
 
 	lifetimeSeconds, err := strconv.Atoi(lifetime)
 	if err != nil {
