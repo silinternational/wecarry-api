@@ -81,7 +81,7 @@ func (u *User) CreateAccessToken(tx *pop.Connection, clientID string) (string, i
 	hash := hashClientIdAccessToken(clientID + token)
 	expireAt := createAccessTokenExpiry()
 
-	userAccessToken := UserAccessToken{
+	userAccessToken := &UserAccessToken{
 		UserID:      u.ID,
 		AccessToken: hash,
 		ExpiresAt:   expireAt,
@@ -106,7 +106,7 @@ func FindUserByAccessToken(accessToken string) (User, error) {
 	dbAccessToken := hashClientIdAccessToken(accessToken)
 	queryString := fmt.Sprintf("access_token = '%s'", dbAccessToken)
 
-	if err := DB.Where(queryString).First(&userAccessToken); err != nil {
+	if err := DB.Eager().Where(queryString).First(&userAccessToken); err != nil {
 		return User{}, fmt.Errorf("error finding user by access token: %s", err.Error())
 	}
 
