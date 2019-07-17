@@ -1,3 +1,9 @@
+type Query {
+    users: [User]!
+    user(id: ID): User
+    posts: [Post]!
+    post(id: ID): Post
+}
 
 enum Role {
     ADMIN
@@ -5,20 +11,64 @@ enum Role {
 }
 
 type User {
-  id: ID
-  email: String
-  firstName: String
-  lastName: String
-  nickname: String
-  uuid: String
-  accessToken: String
+  id: ID!
+  email: String!
+  firstName: String!
+  lastName: String!
+  nickname: String!
+  uuid: String!
+  accessToken: String!
   createdAt: String
   updatedAt: String
-  adminRole: String
+  adminRole: Role
 }
 
+enum PostType {
+    REQUEST
+    OFFER
+}
 
-type Query {
-    users: [User]!
-    user(id: ID): User
+type Post {
+    id: ID!
+    type: PostType!
+    createdBy: User!
+    receiver: User
+    provider: User
+    organization: Organization
+    title: String!
+    description: String
+    destination: String
+    origin: String
+    size: String!
+    neededAfter: String
+    neededBefore: String
+    category: String
+    status: String!
+    thread: [Thread!]!
+    createdAt: String
+    updatedAt: String
+}
+
+type Organization {
+    id: ID!
+    name: String!
+    url: String
+    createdAt: String
+    updatedAt: String
+}
+
+type Thread {
+    id: ID!
+    participants: [User!]!
+    messages: [Message!]!
+    createdAt: String
+    updatedAt: String
+}
+
+type Message {
+    id: ID!
+    sender: User
+    content: String
+    createdAt: String
+    updatedAt: String
 }

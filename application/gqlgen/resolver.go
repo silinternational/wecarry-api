@@ -41,3 +41,31 @@ func (r *queryResolver) Users(ctx context.Context) ([]*User, error) {
 func (r *queryResolver) User(ctx context.Context, id *string) (*User, error) {
 	panic("not implemented")
 }
+
+
+func (r *queryResolver) Posts(ctx context.Context) ([]*Post, error) {
+	db := models.DB
+	dbPosts := models.Posts{}
+
+	if err := db.All(&dbPosts); err != nil {
+		graphql.AddError(ctx, gqlerror.Errorf("Error getting users: %v", err.Error()))
+		return []*Post{}, err
+	}
+
+	gqlPosts := []*Post{}
+	for _, dbPost := range dbPosts {
+		newGqlPost, err := ConvertDBPostToGqlPost(dbPost, ctx)
+		if err != nil {
+			graphql.AddError(ctx, gqlerror.Errorf("Error converting users: %v", err.Error()))
+			return gqlPosts, err
+		}
+		gqlPosts = append(gqlPosts, &newGqlPost)
+
+	}
+	return gqlPosts, nil
+}
+
+
+func (r *queryResolver) Post(ctx context.Context, id *string) (*Post, error) {
+	panic("not implemented")
+}
