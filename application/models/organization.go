@@ -6,7 +6,6 @@ import (
 
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
-	"github.com/gobuffalo/pop/slices"
 	"github.com/gobuffalo/validate"
 	"github.com/gobuffalo/validate/validators"
 )
@@ -18,7 +17,7 @@ type Organization struct {
 	Name       string       `json:"name" db:"name"`
 	Url        nulls.String `json:"url" db:"url"`
 	AuthType   string       `json:"auth_type" db:"auth_type"`
-	AuthConfig slices.Map   `json:"auth_config" db:"auth_config"`
+	AuthConfig string       `json:"auth_config" db:"auth_config"`
 	Uuid       string       `json:"uuid" db:"uuid"`
 }
 
