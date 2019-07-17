@@ -29,7 +29,7 @@ CREATE TABLE public.messages (
     uuid uuid NOT NULL,
     thread_id integer NOT NULL,
     sent_by_id integer NOT NULL,
-    content character varying(255) NOT NULL,
+    content character varying(4096) NOT NULL,
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL
 );
@@ -106,15 +106,18 @@ CREATE TABLE public.posts (
     created_by_id integer NOT NULL,
     type character varying(255) NOT NULL,
     org_id integer NOT NULL,
+    status character varying(255) NOT NULL,
     title character varying(255) NOT NULL,
-    description character varying(255),
     destination character varying(255),
     origin character varying(255),
     size character varying(255) NOT NULL,
     uuid uuid NOT NULL,
     receiver_id integer,
     provider_id integer,
-    status character varying(255) NOT NULL,
+    needed_after date NOT NULL,
+    needed_before date NOT NULL,
+    category character varying(255) NOT NULL,
+    description character varying(4096),
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL
 );
@@ -463,10 +466,73 @@ ALTER TABLE ONLY public.users
 
 
 --
+-- Name: messages_uuid_idx; Type: INDEX; Schema: public; Owner: handcarry
+--
+
+CREATE UNIQUE INDEX messages_uuid_idx ON public.messages USING btree (uuid);
+
+
+--
+-- Name: organizations_uuid_idx; Type: INDEX; Schema: public; Owner: handcarry
+--
+
+CREATE UNIQUE INDEX organizations_uuid_idx ON public.organizations USING btree (uuid);
+
+
+--
+-- Name: posts_uuid_idx; Type: INDEX; Schema: public; Owner: handcarry
+--
+
+CREATE UNIQUE INDEX posts_uuid_idx ON public.posts USING btree (uuid);
+
+
+--
 -- Name: schema_migration_version_idx; Type: INDEX; Schema: public; Owner: handcarry
 --
 
 CREATE UNIQUE INDEX schema_migration_version_idx ON public.schema_migration USING btree (version);
+
+
+--
+-- Name: threads_uuid_idx; Type: INDEX; Schema: public; Owner: handcarry
+--
+
+CREATE UNIQUE INDEX threads_uuid_idx ON public.threads USING btree (uuid);
+
+
+--
+-- Name: user_access_tokens_access_token_idx; Type: INDEX; Schema: public; Owner: handcarry
+--
+
+CREATE UNIQUE INDEX user_access_tokens_access_token_idx ON public.user_access_tokens USING btree (access_token);
+
+
+--
+-- Name: users_auth_org_id_auth_org_uid_idx; Type: INDEX; Schema: public; Owner: handcarry
+--
+
+CREATE UNIQUE INDEX users_auth_org_id_auth_org_uid_idx ON public.users USING btree (auth_org_id, auth_org_uid);
+
+
+--
+-- Name: users_email_idx; Type: INDEX; Schema: public; Owner: handcarry
+--
+
+CREATE UNIQUE INDEX users_email_idx ON public.users USING btree (email);
+
+
+--
+-- Name: users_nickname_idx; Type: INDEX; Schema: public; Owner: handcarry
+--
+
+CREATE UNIQUE INDEX users_nickname_idx ON public.users USING btree (nickname);
+
+
+--
+-- Name: users_uuid_idx; Type: INDEX; Schema: public; Owner: handcarry
+--
+
+CREATE UNIQUE INDEX users_uuid_idx ON public.users USING btree (uuid);
 
 
 --

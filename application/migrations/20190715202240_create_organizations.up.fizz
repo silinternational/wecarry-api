@@ -6,4 +6,5 @@ create_table("organizations") {
 	t.Column("auth_config", "json", {})
 	t.Column("uuid", "uuid", {})
 	t.Timestamps()
+	t.Index("uuid", {"unique": true})
 }
