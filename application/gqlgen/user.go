@@ -1,6 +1,7 @@
 package gqlgen
 
 import (
+	"github.com/silinternational/handcarry-api/domain"
 	"github.com/silinternational/handcarry-api/models"
 	"strconv"
 )
@@ -19,8 +20,8 @@ func ConvertDBUserToGqlUser(dbUser models.User) (User, error) {
 		LastName:  dbUser.LastName,
 		Nickname:  dbUser.Nickname,
 		AdminRole: &gqlRole,
-		CreatedAt: ConvertTimeToStringPtr(dbUser.CreatedAt),
-		UpdatedAt: ConvertTimeToStringPtr(dbUser.UpdatedAt),
+		CreatedAt: domain.ConvertTimeToStringPtr(dbUser.CreatedAt),
+		UpdatedAt: domain.ConvertTimeToStringPtr(dbUser.UpdatedAt),
 	}
 
 	return newGqlUser, nil

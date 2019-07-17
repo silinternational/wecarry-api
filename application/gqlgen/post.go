@@ -1,6 +1,7 @@
 package gqlgen
 
 import (
+	"github.com/silinternational/handcarry-api/domain"
 	"github.com/silinternational/handcarry-api/models"
 	"strconv"
 )
@@ -25,8 +26,8 @@ func ConvertDBPostToGqlPost(dbPost models.Post) (Post, error) {
 		NeededBefore: &stubBefore,   //GetStringFromNullsString(dbPost.NeededBefore),
 		Category:     &stubCategory, // GetStringFromNullsString(dbPost.Category),
 		Status:       dbPost.Status,
-		CreatedAt:    ConvertTimeToStringPtr(dbPost.CreatedAt),
-		UpdatedAt:    ConvertTimeToStringPtr(dbPost.UpdatedAt),
+		CreatedAt:    domain.ConvertTimeToStringPtr(dbPost.CreatedAt),
+		UpdatedAt:    domain.ConvertTimeToStringPtr(dbPost.UpdatedAt),
 	}
 
 	return newGqlPost, nil
