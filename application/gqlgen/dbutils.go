@@ -23,12 +23,15 @@ func ConvertTimeToStringPtr(inTime time.Time) *string {
 func ConvertDBUserToGqlUser(dbUser models.User, ctx context.Context) (User, error) {
 	dbID := strconv.Itoa(dbUser.ID)
 
+	r := GetStringFromNullsString(dbUser.AdminRole)
+	gqlRole := Role(*r)
+
 	newGqlUser := User{
-		ID:        &dbID,
-		Nickname:  &dbUser.Nickname,
-		AdminRole: GetStringFromNullsString(dbUser.AdminRole),
-		CreatedAt: ConvertTimeToStringPtr(dbUser.CreatedAt),
-		UpdatedAt: ConvertTimeToStringPtr(dbUser.UpdatedAt),
+		ID:        dbID,
+		Nickname:  dbUser.Nickname,
+		AdminRole: &gqlRole,
+		CreatedAt: *ConvertTimeToStringPtr(dbUser.CreatedAt),
+		UpdatedAt: *ConvertTimeToStringPtr(dbUser.UpdatedAt),
 	}
 
 	return newGqlUser, nil
