@@ -10,4 +10,8 @@ create_table("users") {
 	t.Column("uuid", "uuid", {})
 	t.ForeignKey("auth_org_id", {"organizations": ["id"]}, {"on_delete": "set null"})
 	t.Timestamps()
+    t.Index("email", {"unique": true})
+    t.Index("nickname", {"unique": true})
+    t.Index(["auth_org_id", "auth_org_uid"], {"unique": true})
+    t.Index("uuid", {"unique": true})
 }
