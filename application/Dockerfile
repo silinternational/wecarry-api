@@ -6,7 +6,7 @@ RUN mkdir -p $GOPATH/src/handcarry
 WORKDIR $GOPATH/src/handcarry
 
 ADD . .
-ENV GO111MODULES=on
+ENV GO111MODULE=on
 RUN go get ./...
 RUN buffalo build --static -o /bin/app
 

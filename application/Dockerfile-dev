@@ -1,7 +1,14 @@
 FROM gobuffalo/buffalo:v0.14.6
 
+RUN apt-get update && apt-get install -y nano \
+    && rm -rf /var/lib/apt/lists/*
+
+
 RUN mkdir -p /handcarry
 WORKDIR /handcarry
+
+
+RUN echo 'alias ll="ls -al"' >> ~/.bashrc
 
 ADD . .
 ENV GO111MODULE=on
