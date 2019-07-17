@@ -36,7 +36,12 @@ func App() *buffalo.App {
 		app = buffalo.New(buffalo.Options{
 			Env: ENV,
 			PreWares: []buffalo.PreWare{
-				cors.Default().Handler,
+				cors.New(cors.Options{
+					AllowCredentials: true,
+					AllowedOrigins:   []string{"*"},
+					AllowedMethods:   []string{"HEAD", "GET", "POST", "PUT", "PATCH", "DELETE"},
+					AllowedHeaders:   []string{"*"},
+				}).Handler,
 			},
 			SessionName:  "_handcarry_session",
 			SessionStore: sessions.NewCookieStore([]byte("testing")),

@@ -8,6 +8,8 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/gofrs/uuid"
+
 	"github.com/gobuffalo/pop"
 
 	dsig "github.com/russellhaering/goxmldsig"
@@ -29,6 +31,13 @@ const CallbackURL = "http://handcarry.local:3000/auth/saml2/callback/"
 const SPIssuer = "http://handcarry.local:3000"
 const SPAudienceURI = SPIssuer
 const SPReturnTo = "handcarry.local:3000/"
+
+type SamlUser struct {
+	FirstName string
+	LastName  string
+	Email     string
+	UserID    string
+}
 
 func AuthLogin(c buffalo.Context) error {
 
@@ -73,7 +82,7 @@ func AuthCallback(c buffalo.Context) error {
 		return c.Error(401, err)
 	}
 
-	authOrgUid, err := samlAttribute(SAMLUserIDKey, samlResponse)
+	samlUser, err := getSamlUserFromAssertion(samlResponse)
 	if err != nil {
 		return c.Error(401, err)
 	}
@@ -81,19 +90,41 @@ func AuthCallback(c buffalo.Context) error {
 	// Get an existing User with the current auth org uid
 	u := &models.User{}
 	tx := c.Value("tx").(*pop.Connection)
-	q := tx.Where("auth_org_uid = ?", authOrgUid)
+	q := tx.Where("auth_org_uid = ?", samlUser.UserID)
 	exists, err := q.Exists("users")
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	if !exists {
-		// TODO see if user with email already exists
-		return c.Error(404, fmt.Errorf("user with org_uid %s not found", authOrgUid))
-	}
+	if exists {
+		if err = q.First(u); err != nil {
+			return errors.WithStack(err)
+		}
+	} else {
+		emailQuery := tx.Where("email = ?", samlUser.Email)
+		exists, err := emailQuery.Exists("users")
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		if exists {
+			return c.Error(409, fmt.Errorf("a user with this email address already exists"))
+		}
 
-	if err = q.First(u); err != nil {
-		return errors.WithStack(err)
+		newUuid, _ := uuid.NewV4()
+		u = &models.User{
+			FirstName:  samlUser.FirstName,
+			LastName:   samlUser.LastName,
+			Email:      samlUser.Email,
+			AuthOrgUid: samlUser.UserID,
+			Nickname:   fmt.Sprintf("%s %s", samlUser.FirstName, samlUser.LastName[:0]),
+			AuthOrgID:  1,
+			Uuid:       newUuid.String(),
+		}
+
+		err = tx.Create(u)
+		if err != nil {
+			return c.Error(500, fmt.Errorf("unable to create new user record: %s", err.Error()))
+		}
 	}
 
 	accessToken, expiresAt, err := u.CreateAccessToken(tx, fmt.Sprintf("%v", clientID))
@@ -105,11 +136,6 @@ func AuthCallback(c buffalo.Context) error {
 		return errors.WithStack(err)
 	}
 
-	// returnTo := relayValues["ReturnTo"]
-	// if returnTo == "" {
-	// 	returnTo = "/"
-	// }
-	//
 	returnToURL := fmt.Sprintf("%s?access_token=%s&expires=%v", returnTo, accessToken, expiresAt)
 
 	return c.Redirect(302, returnToURL)
@@ -288,4 +314,33 @@ func getSAMLAttributeFirstValue(attrName string, attributes []types.Attribute) s
 		return ""
 	}
 	return ""
+}
+
+func getSamlUserFromAssertion(assertion string) (SamlUser, error) {
+	firstName, err := samlAttribute("givenName", assertion)
+	if err != nil {
+		return SamlUser{}, err
+	}
+
+	lastName, err := samlAttribute("sn", assertion)
+	if err != nil {
+		return SamlUser{}, err
+	}
+
+	email, err := samlAttribute("mail", assertion)
+	if err != nil {
+		return SamlUser{}, err
+	}
+
+	userID, err := samlAttribute("eduPersonTargetID", assertion)
+	if err != nil {
+		return SamlUser{}, err
+	}
+
+	return SamlUser{
+		FirstName: firstName,
+		LastName:  lastName,
+		Email:     email,
+		UserID:    userID,
+	}, nil
 }
