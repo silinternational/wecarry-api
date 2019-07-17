@@ -55,9 +55,11 @@ func App() *buffalo.App {
 
 		//  Added for authorization
 		app.Use(SetCurrentUser)
-		app.Middleware.Skip(SetCurrentUser, HomeHandler, AuthLogin, AuthCallback)
+		app.Middleware.Skip(SetCurrentUser, HomeHandler, AuthLogin, AuthCallback,
+			GQLHandler)
 
 		app.GET("/", HomeHandler)
+		app.POST("/gql/", GQLHandler)
 		app.GET("/me", MeHandler)
 
 		auth := app.Group("/auth")

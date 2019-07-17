@@ -1,0 +1,24 @@
+
+enum Role {
+    ADMIN
+    USER
+}
+
+type User {
+  id: ID
+  email: String
+  firstName: String
+  lastName: String
+  nickname: String
+  uuid: String
+  accessToken: String
+  createdAt: String
+  updatedAt: String
+  adminRole: String
+}
+
+
+type Query {
+    users: [User]!
+    user(id: ID): User
+}

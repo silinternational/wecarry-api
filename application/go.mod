@@ -3,8 +3,10 @@ module github.com/silinternational/handcarry-api
 go 1.12
 
 require (
+	github.com/99designs/gqlgen v0.9.1
 	github.com/beevik/etree v1.1.0 // indirect
 	github.com/codegangsta/negroni v1.0.0 // indirect
+	github.com/go-chi/chi v3.3.2+incompatible
 	github.com/gobuffalo/buffalo v0.14.6
 	github.com/gobuffalo/buffalo-pop v1.13.0
 	github.com/gobuffalo/envy v1.7.0
@@ -36,6 +38,7 @@ require (
 	github.com/russellhaering/goxmldsig v0.0.0-20180430223755-7acd5e4a6ef7
 	github.com/spf13/afero v1.2.1 // indirect
 	github.com/unrolled/secure v1.0.0
+	github.com/vektah/gqlparser v1.1.2
 	golang.org/x/oauth2 v0.0.0-20181203162652-d668ce993890
 )
 
