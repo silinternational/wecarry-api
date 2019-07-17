@@ -5,7 +5,6 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/silinternational/handcarry-api/models"
 	"github.com/vektah/gqlparser/gqlerror"
-	"strconv"
 ) // THIS CODE IS A STARTING POINT ONLY. IT WILL NOT BE UPDATED WITH SCHEMA CHANGES.
 
 type Resolver struct{}
@@ -41,15 +40,8 @@ func (r *queryResolver) Users(ctx context.Context) ([]*User, error) {
 
 func (r *queryResolver) User(ctx context.Context, id *string) (*User, error) {
 	dbUser := models.User{}
-	intID, err := strconv.Atoi(*id)
-	if err != nil {
-		graphql.AddError(ctx, gqlerror.Errorf("Error converting id to int: %v", err.Error()))
-		return &User{}, err
-	}
 
-	err = models.DB.Find(&dbUser, intID)
-
-	if err != nil {
+	if err := models.DB.Where("uuid = ?", id).First(&dbUser); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting user: %v", err.Error()))
 		return &User{}, err
 	}
@@ -69,7 +61,7 @@ func (r *queryResolver) Posts(ctx context.Context) ([]*Post, error) {
 	dbPosts := models.Posts{}
 
 	if err := db.All(&dbPosts); err != nil {
-		graphql.AddError(ctx, gqlerror.Errorf("Error getting users: %v", err.Error()))
+		graphql.AddError(ctx, gqlerror.Errorf("Error getting posts: %v", err.Error()))
 		return []*Post{}, err
 	}
 
@@ -77,7 +69,7 @@ func (r *queryResolver) Posts(ctx context.Context) ([]*Post, error) {
 	for _, dbPost := range dbPosts {
 		newGqlPost, err := ConvertDBPostToGqlPost(dbPost, ctx)
 		if err != nil {
-			graphql.AddError(ctx, gqlerror.Errorf("Error converting users: %v", err.Error()))
+			graphql.AddError(ctx, gqlerror.Errorf("Error converting posts: %v", err.Error()))
 			return gqlPosts, err
 		}
 		gqlPosts = append(gqlPosts, &newGqlPost)
@@ -89,22 +81,15 @@ func (r *queryResolver) Posts(ctx context.Context) ([]*Post, error) {
 
 func (r *queryResolver) Post(ctx context.Context, id *string) (*Post, error) {
 	dbPost := models.Post{}
-	intID, err := strconv.Atoi(*id)
-	if err != nil {
-		graphql.AddError(ctx, gqlerror.Errorf("Error converting id to int: %v", err.Error()))
-		return &Post{}, err
-	}
 
-	err = models.DB.Find(&dbPost, intID)
-
-	if err != nil {
-		graphql.AddError(ctx, gqlerror.Errorf("Error getting user: %v", err.Error()))
+	if err := models.DB.Where("uuid = ?", id).First(&dbPost); err != nil {
+		graphql.AddError(ctx, gqlerror.Errorf("Error getting post: %v", err.Error()))
 		return &Post{}, err
 	}
 
 	newGqlPost, err := ConvertDBPostToGqlPost(dbPost, ctx)
 	if err != nil {
-		graphql.AddError(ctx, gqlerror.Errorf("Error converting user: %v", err.Error()))
+		graphql.AddError(ctx, gqlerror.Errorf("Error converting post: %v", err.Error()))
 		return &newGqlPost, err
 	}
 
