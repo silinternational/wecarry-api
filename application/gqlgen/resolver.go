@@ -26,7 +26,7 @@ func (r *queryResolver) Users(ctx context.Context) ([]*User, error) {
 
 	gqlUsers := []*User{}
 	for _, dbUser := range dbUsers {
-		newGqlUser, err := ConvertDBUserToGqlUser(dbUser, ctx)
+		newGqlUser, err := ConvertDBUserToGqlUser(dbUser)
 		if err != nil {
 			graphql.AddError(ctx, gqlerror.Errorf("Error converting users: %v", err.Error()))
 			return gqlUsers, err
@@ -37,7 +37,6 @@ func (r *queryResolver) Users(ctx context.Context) ([]*User, error) {
 	return gqlUsers, nil
 }
 
-
 func (r *queryResolver) User(ctx context.Context, id *string) (*User, error) {
 	dbUser := models.User{}
 
@@ -46,7 +45,7 @@ func (r *queryResolver) User(ctx context.Context, id *string) (*User, error) {
 		return &User{}, err
 	}
 
-	newGqlUser, err := ConvertDBUserToGqlUser(dbUser, ctx)
+	newGqlUser, err := ConvertDBUserToGqlUser(dbUser)
 	if err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error converting user: %v", err.Error()))
 		return &newGqlUser, err
@@ -54,7 +53,6 @@ func (r *queryResolver) User(ctx context.Context, id *string) (*User, error) {
 
 	return &newGqlUser, nil
 }
-
 
 func (r *queryResolver) Posts(ctx context.Context) ([]*Post, error) {
 	db := models.DB
@@ -67,7 +65,7 @@ func (r *queryResolver) Posts(ctx context.Context) ([]*Post, error) {
 
 	gqlPosts := []*Post{}
 	for _, dbPost := range dbPosts {
-		newGqlPost, err := ConvertDBPostToGqlPost(dbPost, ctx)
+		newGqlPost, err := ConvertDBPostToGqlPost(dbPost)
 		if err != nil {
 			graphql.AddError(ctx, gqlerror.Errorf("Error converting posts: %v", err.Error()))
 			return gqlPosts, err
@@ -78,7 +76,6 @@ func (r *queryResolver) Posts(ctx context.Context) ([]*Post, error) {
 	return gqlPosts, nil
 }
 
-
 func (r *queryResolver) Post(ctx context.Context, id *string) (*Post, error) {
 	dbPost := models.Post{}
 
@@ -87,7 +84,7 @@ func (r *queryResolver) Post(ctx context.Context, id *string) (*Post, error) {
 		return &Post{}, err
 	}
 
-	newGqlPost, err := ConvertDBPostToGqlPost(dbPost, ctx)
+	newGqlPost, err := ConvertDBPostToGqlPost(dbPost)
 	if err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error converting post: %v", err.Error()))
 		return &newGqlPost, err

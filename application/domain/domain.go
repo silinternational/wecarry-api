@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/gobuffalo/buffalo"
 
@@ -88,4 +89,12 @@ func GetCurrentUser(c buffalo.Context) models.User {
 	}
 
 	return models.User{}
+}
+
+// ConvertTimeToStringPtr is intended to convert the
+// CreatedAt and UpdatedAt fields of database objects
+// to pointers to strings to populate the same gqlgen fields
+func ConvertTimeToStringPtr(inTime time.Time) *string {
+	inTimeStr := inTime.Format(time.RFC3339)
+	return &inTimeStr
 }
