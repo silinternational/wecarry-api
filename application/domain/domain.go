@@ -3,7 +3,12 @@ package domain
 import (
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
+
+	"github.com/gobuffalo/buffalo"
+
+	"github.com/silinternational/handcarry-api/models"
 )
 
 const ClientIDKey = "client_id"
@@ -46,9 +51,18 @@ func GetFirstStringFromSlice(strSlice []string) string {
 }
 
 func GetBearerTokenFromRequest(r *http.Request) string {
-	bearerKey := "Bearer"
+	authorizationHeader := r.Header.Get("Authorization")
+	if authorizationHeader == "" {
+		return ""
+	}
 
-	return GetFirstStringFromSlice(r.Header[bearerKey])
+	re := regexp.MustCompile(`^Bearer (.*)$`)
+	matches := re.FindSubmatch([]byte(authorizationHeader))
+	if len(matches) < 2 {
+		return ""
+	}
+
+	return string(matches[1])
 }
 
 func GetSubPartKeyValues(inString, outerDelimiter, innerDelimiter string) map[string]string {
@@ -63,4 +77,15 @@ func GetSubPartKeyValues(inString, outerDelimiter, innerDelimiter string) map[st
 	}
 
 	return keyValues
+}
+
+func GetCurrentUser(c buffalo.Context) models.User {
+	user := c.Value("current_user")
+
+	switch user.(type) {
+	case models.User:
+		return user.(models.User)
+	}
+
+	return models.User{}
 }

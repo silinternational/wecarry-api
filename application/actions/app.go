@@ -5,13 +5,11 @@ import (
 	"github.com/gobuffalo/envy"
 	csrf "github.com/gobuffalo/mw-csrf"
 	paramlogger "github.com/gobuffalo/mw-paramlogger"
-	"github.com/markbates/goth/gothic"
-
+	"github.com/gorilla/sessions"
 	"github.com/silinternational/handcarry-api/models"
 
 	"github.com/gobuffalo/buffalo-pop/pop/popmw"
 	contenttype "github.com/gobuffalo/mw-contenttype"
-	"github.com/gobuffalo/x/sessions"
 	"github.com/rs/cors"
 )
 
@@ -36,12 +34,12 @@ var app *buffalo.App
 func App() *buffalo.App {
 	if app == nil {
 		app = buffalo.New(buffalo.Options{
-			Env:          ENV,
-			SessionStore: sessions.Null{},
+			Env: ENV,
 			PreWares: []buffalo.PreWare{
 				cors.Default().Handler,
 			},
-			SessionName: "_application_session",
+			SessionName:  "_handcarry_session",
+			SessionStore: sessions.NewCookieStore([]byte("testing")),
 		})
 
 		// Log request parameters (filters apply).
@@ -60,13 +58,12 @@ func App() *buffalo.App {
 		app.Middleware.Skip(SetCurrentUser, HomeHandler, AuthLogin, AuthCallback)
 
 		app.GET("/", HomeHandler)
+		app.GET("/me", MeHandler)
 
 		auth := app.Group("/auth")
-		auth.GET("/login", AuthLogin)
 		auth.Middleware.Skip(SetCurrentUser, AuthLogin, AuthCallback)
-		bah := buffalo.WrapHandlerFunc(gothic.BeginAuthHandler)
+		auth.GET("/login", AuthLogin)
 		auth.GET("/logout", AuthDestroy)
-		auth.GET("/{provider}", bah)
 		auth.GET("/{provider}/callback", AuthCallback)  // "GET" for Google
 		auth.POST("/{provider}/callback", AuthCallback) //  "POST" for saml2
 		auth.Middleware.Skip(csrf.New, AuthCallback)    //  Don't require csrf on auth
