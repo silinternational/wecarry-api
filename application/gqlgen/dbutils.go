@@ -8,7 +8,6 @@ import (
 	"time"
 )
 
-
 // ConvertTimeToStringPtr is intended to convert the
 // CreatedAt and UpdatedAt fields of database objects
 // to pointers to strings to populate the same gqlgen fields
@@ -28,6 +27,9 @@ func ConvertDBUserToGqlUser(dbUser models.User, ctx context.Context) (User, erro
 
 	newGqlUser := User{
 		ID:        dbID,
+		Email:     dbUser.Email,
+		FirstName: dbUser.FirstName,
+		LastName:  dbUser.LastName,
 		Nickname:  dbUser.Nickname,
 		AdminRole: &gqlRole,
 		CreatedAt: *ConvertTimeToStringPtr(dbUser.CreatedAt),
