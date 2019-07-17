@@ -1,6 +1,8 @@
 type Query {
     users: [User]!
     user(id: ID): User
+    posts: [Post]!
+    post(id: ID): Post
 }
 
 enum Role {
@@ -16,8 +18,8 @@ type User {
   nickname: String!
   uuid: String!
   accessToken: String!
-  createdAt: String!
-  updatedAt: String!
+  createdAt: String
+  updatedAt: String
   adminRole: Role
 }
 

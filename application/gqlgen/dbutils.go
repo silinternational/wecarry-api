@@ -17,9 +17,7 @@ func ConvertTimeToStringPtr(inTime time.Time) *string {
 	return &inTimeStr
 }
 
-// ConvertDBUserToGqlUser does what its name says, but also converts the user's
-// spouse (if there is one) and cars (if there are any)
-// spouse is a "belongs_to" relationship anc cars is a "many_to_many" relationship
+// ConvertDBUserToGqlUser does what its name says, but also ...
 func ConvertDBUserToGqlUser(dbUser models.User, ctx context.Context) (User, error) {
 	dbID := strconv.Itoa(dbUser.ID)
 
@@ -30,9 +28,24 @@ func ConvertDBUserToGqlUser(dbUser models.User, ctx context.Context) (User, erro
 		ID:        dbID,
 		Nickname:  dbUser.Nickname,
 		AdminRole: &gqlRole,
-		CreatedAt: *ConvertTimeToStringPtr(dbUser.CreatedAt),
-		UpdatedAt: *ConvertTimeToStringPtr(dbUser.UpdatedAt),
+		CreatedAt: ConvertTimeToStringPtr(dbUser.CreatedAt),
+		UpdatedAt: ConvertTimeToStringPtr(dbUser.UpdatedAt),
 	}
 
 	return newGqlUser, nil
+}
+
+// ConvertDBPostToGqlPost does what its name says, but also ...
+func ConvertDBPostToGqlPost(dbPost models.Post, ctx context.Context) (Post, error) {
+	dbID := strconv.Itoa(dbPost.ID)
+
+
+	newGqlPost := Post{
+		ID:        dbID,
+		Type: PostType(dbPost.Type),
+		CreatedAt: ConvertTimeToStringPtr(dbPost.CreatedAt),
+		UpdatedAt: ConvertTimeToStringPtr(dbPost.UpdatedAt),
+	}
+
+	return newGqlPost, nil
 }

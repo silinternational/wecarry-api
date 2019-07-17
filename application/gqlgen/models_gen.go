@@ -54,16 +54,16 @@ type Thread struct {
 }
 
 type User struct {
-	ID          string `json:"id"`
-	Email       string `json:"email"`
-	FirstName   string `json:"firstName"`
-	LastName    string `json:"lastName"`
-	Nickname    string `json:"nickname"`
-	UUID        string `json:"uuid"`
-	AccessToken string `json:"accessToken"`
-	CreatedAt   string `json:"createdAt"`
-	UpdatedAt   string `json:"updatedAt"`
-	AdminRole   *Role  `json:"adminRole"`
+	ID          string  `json:"id"`
+	Email       string  `json:"email"`
+	FirstName   string  `json:"firstName"`
+	LastName    string  `json:"lastName"`
+	Nickname    string  `json:"nickname"`
+	UUID        string  `json:"uuid"`
+	AccessToken string  `json:"accessToken"`
+	CreatedAt   *string `json:"createdAt"`
+	UpdatedAt   *string `json:"updatedAt"`
+	AdminRole   *Role   `json:"adminRole"`
 }
 
 type PostType string
