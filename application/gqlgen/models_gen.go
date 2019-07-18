@@ -38,7 +38,7 @@ type Post struct {
 	Size         string        `json:"size"`
 	NeededAfter  *string       `json:"neededAfter"`
 	NeededBefore *string       `json:"neededBefore"`
-	Category     *string       `json:"category"`
+	Category     string        `json:"category"`
 	Status       string        `json:"status"`
 	Thread       []*Thread     `json:"thread"`
 	CreatedAt    *string       `json:"createdAt"`
