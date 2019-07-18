@@ -12,6 +12,10 @@ import (
 
 type Resolver struct{}
 
+func (r *Resolver) Mutation() MutationResolver {
+	return &mutationResolver{r}
+}
+
 func (r *Resolver) Query() QueryResolver {
 	return &queryResolver{r}
 }
