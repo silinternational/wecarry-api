@@ -1,6 +1,7 @@
 package gqlgen
 
 import (
+	"fmt"
 	"github.com/silinternational/handcarry-api/domain"
 	"github.com/silinternational/handcarry-api/models"
 	"strconv"
@@ -22,14 +23,36 @@ func ConvertDBMessageToGqlMessage(dbMessage models.Message) (Message, error) {
 
 func ConvertGqlNewMessageToDBMessage(gqlMessage NewMessage) (models.Message, error) {
 
-	thread, err := models.FindThreadByUUID(domain.ConvertStrPtrToString(gqlMessage.ThreadID))
-	if err != nil {
-		return models.Message{}, err
-	}
-
 	user, err := models.FindUserByUUID(gqlMessage.SenderID)
 	if err != nil {
 		return models.Message{}, err
+	}
+	var thread models.Thread
+
+	threadUuid := domain.ConvertStrPtrToString(gqlMessage.ThreadID)
+	if threadUuid != "" {
+		var err error
+		thread, err = models.FindThreadByUUID(threadUuid)
+		if err != nil {
+			return models.Message{}, err
+		}
+	} else {
+		post, err := models.FindPostByUUID(gqlMessage.PostID)
+		if err != nil {
+			return models.Message{}, err
+		}
+
+		thread = models.Thread{
+			PostID:       post.ID,
+			Uuid:         domain.GetUuid(),
+			Participants: []models.User{user},
+		}
+
+		if err = models.DB.Save(&thread); err != nil {
+			err = fmt.Errorf("error saving new thread for message: %v", err.Error())
+			return models.Message{}, err
+		}
+
 	}
 
 	dbMessage := models.Message{}
