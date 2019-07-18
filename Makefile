@@ -1,6 +1,8 @@
 dev: buffalo migrate
 
 migrate: db
+	echo "Delaying to let the DB get ready..."
+	sleep 10
 	docker-compose run buffalo buffalo-pop pop migrate up
 	docker-compose run buffalo grift db:seed
 
