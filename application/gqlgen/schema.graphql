@@ -79,7 +79,7 @@ type Message {
 
 
 input NewPost {
-    createdByID: String!
+    createdByID: String
     orgID: String!
     type: PostType!
     title: String!
@@ -93,13 +93,19 @@ input NewPost {
 }
 
 input NewMessage {
-    senderID: String!
+    senderID: String
     content: String!
     postID: String!
     threadID: String
 }
 
+input UpdatedPostStatus {
+    id: ID!
+    status: String!
+}
+
 type Mutation {
-  createPost(input: NewPost!): Post!
-  createMessage(input: NewMessage!): Message!
+    createPost(input: NewPost!): Post!
+    updatePost(input: UpdatedPostStatus!): Post!
+    createMessage(input: NewMessage!): Message!
 }

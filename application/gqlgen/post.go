@@ -32,11 +32,14 @@ func ConvertDBPostToGqlPost(dbPost models.Post) (Post, error) {
 	return newGqlPost, nil
 }
 
-func ConvertGqlNewPostToDBPost(gqlPost NewPost) (models.Post, error) {
-
-	createdByUser, err := models.FindUserByUUID(gqlPost.CreatedByID)
-	if err != nil {
-		return models.Post{}, err
+func ConvertGqlNewPostToDBPost(gqlPost NewPost, createdByUser models.User) (models.Post, error) {
+	createdByUserID := domain.ConvertStrPtrToString(gqlPost.CreatedByID)
+	if createdByUserID != "" {
+		var err error
+		createdByUser, err = models.FindUserByUUID(createdByUserID)
+		if err != nil {
+			return models.Post{}, err
+		}
 	}
 
 	org, err := models.FindOrgByUUID(gqlPost.OrgID)
