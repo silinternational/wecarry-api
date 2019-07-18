@@ -7,8 +7,6 @@ import (
 
 	"github.com/silinternational/handcarry-api/domain"
 
-	"github.com/gobuffalo/buffalo"
-
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/silinternational/handcarry-api/models"
 	"github.com/vektah/gqlparser/gqlerror"
@@ -25,15 +23,6 @@ func (r *Resolver) Query() QueryResolver {
 }
 
 type queryResolver struct{ *Resolver }
-
-func getBuffaloContext(ctx context.Context) buffalo.Context {
-	return ctx.Value("BuffaloContext").(buffalo.Context)
-}
-
-func getCurrentUser(ctx context.Context) models.User {
-	buffaloContext := getBuffaloContext(ctx)
-	return domain.GetCurrentUser(buffaloContext)
-}
 
 func (r *queryResolver) Users(ctx context.Context) ([]*User, error) {
 	db := models.DB
@@ -77,7 +66,7 @@ func (r *queryResolver) User(ctx context.Context, id *string) (*User, error) {
 func (r *queryResolver) Posts(ctx context.Context) ([]*Post, error) {
 	db := models.DB
 	dbPosts := models.Posts{}
-	currentUser := getCurrentUser(ctx)
+	currentUser := domain.GetCurrentUserFromGqlContext(ctx)
 	if err := db.Where("organization_id IN (?)", currentUser.GetOrgIDs()...).All(&dbPosts); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting posts: %v", err.Error()))
 		return []*Post{}, err
@@ -98,7 +87,7 @@ func (r *queryResolver) Posts(ctx context.Context) ([]*Post, error) {
 
 func (r *queryResolver) Post(ctx context.Context, id *string) (*Post, error) {
 	dbPost := models.Post{}
-	currentUser := getCurrentUser(ctx)
+	currentUser := domain.GetCurrentUserFromGqlContext(ctx)
 
 	if err := models.DB.Where("organization_id IN (?)", currentUser.GetOrgIDs()...).Where("uuid = ?", id).First(&dbPost); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting post: %v", err.Error()))
