@@ -1,9 +1,10 @@
 package gqlgen
 
 import (
+	"strconv"
+
 	"github.com/silinternational/handcarry-api/domain"
 	"github.com/silinternational/handcarry-api/models"
-	"strconv"
 )
 
 // ConvertDBPostToGqlPost does what its name says, but also ...

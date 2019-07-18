@@ -2,6 +2,12 @@ package gqlgen
 
 import (
 	"context"
+	"log"
+
+	"github.com/silinternational/handcarry-api/domain"
+
+	"github.com/gobuffalo/buffalo"
+
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/silinternational/handcarry-api/models"
 	"github.com/vektah/gqlparser/gqlerror"
@@ -14,6 +20,10 @@ func (r *Resolver) Query() QueryResolver {
 }
 
 type queryResolver struct{ *Resolver }
+
+func GetBuffaloContext(ctx context.Context) buffalo.Context {
+	return ctx.Value("BuffaloContext").(buffalo.Context)
+}
 
 func (r *queryResolver) Users(ctx context.Context) ([]*User, error) {
 	db := models.DB
@@ -57,13 +67,17 @@ func (r *queryResolver) User(ctx context.Context, id *string) (*User, error) {
 func (r *queryResolver) Posts(ctx context.Context) ([]*Post, error) {
 	db := models.DB
 	dbPosts := models.Posts{}
-
-	if err := db.All(&dbPosts); err != nil {
+	buffaloContext := GetBuffaloContext(ctx)
+	currentUser := domain.GetCurrentUser(buffaloContext)
+	log.Printf("\n\nresolver current user: %+v\n\n", currentUser)
+	// orgIds := currentUser.GetOrgIDs()
+	// log.Printf("\n\norg ids: %v", orgIds)
+	if err := db.Where("org_id IN (?)", currentUser.AuthOrgID).All(&dbPosts); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting posts: %v", err.Error()))
 		return []*Post{}, err
 	}
 
-	gqlPosts := []*Post{}
+	var gqlPosts []*Post
 	for _, dbPost := range dbPosts {
 		newGqlPost, err := ConvertDBPostToGqlPost(dbPost)
 		if err != nil {
