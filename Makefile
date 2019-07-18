@@ -1,8 +1,6 @@
 dev: buffalo migrate
 
 migrate: db
-	echo "Delaying to let the DB get ready..."
-	sleep 10
 	docker-compose run buffalo buffalo-pop pop migrate up
 	docker-compose run buffalo grift db:seed
 
@@ -16,6 +14,8 @@ application/gqlgen/generated.go: application/gqlgen/schema.graphql
 
 buffalo: db
 	docker-compose up -d buffalo
+	echo "Delaying to let the DB get ready..."
+	sleep 5
 
 db:
 	docker-compose up -d db
