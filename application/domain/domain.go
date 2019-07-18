@@ -98,3 +98,11 @@ func ConvertTimeToStringPtr(inTime time.Time) *string {
 	inTimeStr := inTime.Format(time.RFC3339)
 	return &inTimeStr
 }
+
+func ConvertStrPtrToString(inPtr *string) string {
+	if inPtr == nil {
+		return ""
+	}
+
+	return *inPtr
+}

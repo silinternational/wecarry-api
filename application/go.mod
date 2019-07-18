@@ -6,7 +6,7 @@ require (
 	github.com/99designs/gqlgen v0.9.1
 	github.com/beevik/etree v1.1.0 // indirect
 	github.com/codegangsta/negroni v1.0.0 // indirect
-	github.com/go-chi/chi v3.3.2+incompatible
+	github.com/go-chi/chi v4.0.2+incompatible
 	github.com/gobuffalo/buffalo v0.14.6
 	github.com/gobuffalo/buffalo-pop v1.16.0
 	github.com/gobuffalo/envy v1.7.0
