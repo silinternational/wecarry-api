@@ -1,8 +1,8 @@
 package grifts
 
 import (
-	uuid2 "github.com/gofrs/uuid"
 	"github.com/markbates/grift/grift"
+	"github.com/silinternational/handcarry-api/domain"
 	"github.com/silinternational/handcarry-api/models"
 	"github.com/gobuffalo/nulls"
 	"time"
@@ -13,8 +13,8 @@ var _ = grift.Namespace("db", func() {
 	grift.Desc("seed", "Seeds a database")
 	_ = grift.Add("seed", func(c *grift.Context) error {
 
-		organizationUuid1 := getUuid()
-		organizationUuid2 := getUuid()
+		organizationUuid1 := domain.GetUuidAsString()
+		organizationUuid2 := domain.GetUuidAsString()
 		fixtureOrgs := []*models.Organization{
 			{
 				ID:         1,
@@ -39,11 +39,11 @@ var _ = grift.Namespace("db", func() {
 			}
 		}
 
-		userUuid1 := getUuid()
-		userUuid2 := getUuid()
-		userUuid3 := getUuid()
-		userUuid4 := getUuid()
-		userUuid5 := getUuid()
+		userUuid1 := domain.GetUuidAsString()
+		userUuid2 := domain.GetUuidAsString()
+		userUuid3 := domain.GetUuidAsString()
+		userUuid4 := domain.GetUuidAsString()
+		userUuid5 := domain.GetUuidAsString()
 		fixtureUsers := []*models.User{
 			{
 				ID:         1,
@@ -103,7 +103,8 @@ var _ = grift.Namespace("db", func() {
 				return err
 			}
 		}
-/*
+
+    /*
 		fixtureUserOrgs := []*models.UserOrganization{
 			{
 				ID:     1,
@@ -137,12 +138,12 @@ var _ = grift.Namespace("db", func() {
 			},
 		}
 
-		for _, userOrgs := range fixtureUserOrgs {
-			err := models.DB.Create(userOrgs)
-			if err != nil {
-				return err
+			for _, userOrgs := range fixtureUserOrgs {
+				err := models.DB.Create(userOrgs)
+				if err != nil {
+					return err
+				}
 			}
-		}
 		*/
 
 		postUuid1, _ := uuid2.NewV4()
@@ -239,8 +240,3 @@ var _ = grift.Namespace("db", func() {
 	})
 
 })
-
-func getUuid() string {
-	uuid, _ := uuid2.NewV4()
-	return uuid.String()
-}
