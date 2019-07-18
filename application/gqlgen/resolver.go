@@ -129,13 +129,13 @@ func (r *queryResolver) Message(ctx context.Context, id *string) (*Message, erro
 	dbMsg := models.Message{}
 
 	if err := models.DB.Where("uuid = ?", id).First(&dbMsg); err != nil {
-		graphql.AddError(ctx, gqlerror.Errorf("Error getting post: %v", err.Error()))
+		graphql.AddError(ctx, gqlerror.Errorf("error getting message: %v", err.Error()))
 		return &Message{}, err
 	}
 
 	gqlMessage, err := ConvertDBMessageToGqlMessage(dbMsg)
 	if err != nil {
-		graphql.AddError(ctx, gqlerror.Errorf("Error converting post: %v", err.Error()))
+		graphql.AddError(ctx, gqlerror.Errorf("error converting message: %v", err.Error()))
 		return &gqlMessage, err
 	}
 
