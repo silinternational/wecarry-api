@@ -43,7 +43,7 @@ type Post {
     size: String!
     neededAfter: String
     neededBefore: String
-    category: String
+    category: String!
     status: String!
     thread: [Thread!]!
     createdAt: String

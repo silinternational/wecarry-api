@@ -571,7 +571,7 @@ type Post {
     size: String!
     neededAfter: String
     neededBefore: String
-    category: String
+    category: String!
     status: String!
     thread: [Thread!]!
     createdAt: String
@@ -1524,12 +1524,15 @@ func (ec *executionContext) _Post_category(ctx context.Context, field graphql.Co
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Post_status(ctx context.Context, field graphql.CollectedField, obj *Post) (ret graphql.Marshaler) {
@@ -3774,6 +3777,9 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 			out.Values[i] = ec._Post_neededBefore(ctx, field, obj)
 		case "category":
 			out.Values[i] = ec._Post_category(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "status":
 			out.Values[i] = ec._Post_status(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -4460,7 +4466,7 @@ func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋsilinternational�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOUser2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐUser(ctx, sel, v[i])
+			ret[i] = ec.marshalNUser2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐUser(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
