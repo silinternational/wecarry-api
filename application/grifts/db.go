@@ -230,7 +230,7 @@ var _ = grift.Namespace("db", func() {
 		}
 
 		for _, post := range fixturePosts {
-			err := models.DB.Create(posts)
+			err := models.DB.Create(post)
 			if err != nil {
 				return err
 			}
