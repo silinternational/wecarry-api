@@ -3,11 +3,10 @@ package grifts
 import (
 	"fmt"
 	"github.com/gobuffalo/nulls"
-	"time"
-
+	"github.com/gofrs/uuid"
 	"github.com/markbates/grift/grift"
-	"github.com/silinternational/handcarry-api/domain"
 	"github.com/silinternational/handcarry-api/models"
+	"time"
 )
 
 var _ = grift.Namespace("db", func() {
@@ -16,8 +15,8 @@ var _ = grift.Namespace("db", func() {
 	_ = grift.Add("seed", func(c *grift.Context) error {
 
 		// ORGANIZATIONS Table
-		organizationUuid1 := domain.GetUuidAsString()
-		organizationUuid2 := domain.GetUuidAsString()
+		organizationUuid1 := "f3a79b30-f00e-48a0-a64d-e27748dea22d"
+		organizationUuid2 := "d2e95724-9270-4050-82d9-6a9f9c35c766"
 		fixtureOrgs := []*models.Organization{
 			{
 				ID:         1,
@@ -44,11 +43,11 @@ var _ = grift.Namespace("db", func() {
 		}
 
 		// USERS Table
-		userUuid1 := domain.GetUuidAsString()
-		userUuid2 := domain.GetUuidAsString()
-		userUuid3 := domain.GetUuidAsString()
-		userUuid4 := domain.GetUuidAsString()
-		userUuid5 := domain.GetUuidAsString()
+		userUuid1 := "e5447366-26b2-4256-b2ab-58c92c3d54cc"
+		userUuid2 := "3d79902f-c204-4922-b479-57f0ec41eabe"
+		userUuid3 := "babcf980-e1f0-42d3-b2b0-2e4704159f4f"
+		userUuid4 := "44dc63fa-1227-4bea-b34a-416a26c3e077"
+		userUuid5 := "2a96a5a6-971a-403d-8276-c41657bc57ce"
 		fixtureUsers := []*models.User{
 			{
 				ID:         1,
@@ -110,6 +109,7 @@ var _ = grift.Namespace("db", func() {
 			}
 		}
 
+		// USER_ORGANIZATIONS Table
 		fixtureUserOrgs := []*models.UserOrganization{
 			{
 				ID:             1,
@@ -151,11 +151,12 @@ var _ = grift.Namespace("db", func() {
 			}
 		}
 
-		postUuid1 := domain.GetUuid()
-		postUuid2 := domain.GetUuid()
-		postUuid3 := domain.GetUuid()
-		postUuid4 := domain.GetUuid()
-		postUuid5 := domain.GetUuid()
+		// POSTS Table
+		postUuid1, _ := uuid.FromString("270fa549-65f2-43c0-ac27-78a054cf49a1")
+		postUuid2, _ := uuid.FromString("028164cd-a8f5-43b9-98d0-f8a7778ea2f1")
+		postUuid3, _ := uuid.FromString("e625a482-c8ff-4f52-b8ed-73e6b3eac4d7")
+		postUuid4, _ := uuid.FromString("8e08011d-bd5f-4c1a-a4f4-0c019beb939b")
+		postUuid5, _ := uuid.FromString("35e2b332-a968-4932-b205-ca0d1eabdf0e")
 		fixturePosts := []*models.Post{
 			{
 				ID:             1,
@@ -242,10 +243,11 @@ var _ = grift.Namespace("db", func() {
 			}
 		}
 
-		threadUuid1 := domain.GetUuid()
-		threadUuid2 := domain.GetUuid()
-		threadUuid3 := domain.GetUuid()
-		threadUuid4 := domain.GetUuid()
+		// THREADS Table
+		threadUuid1, _ := uuid.FromString("bdb7515d-06a9-4896-97a4-aeae962b85e2")
+		threadUuid2, _ := uuid.FromString("216c4b08-a4b4-4b7f-b62c-543be07e07c0")
+		threadUuid3, _ := uuid.FromString("79adc9bf-69b6-4b8a-ae23-dc26fb9de661")
+		threadUuid4, _ := uuid.FromString("7781642d-50d0-43da-9af2-e21133b4af91")
 		fixtureThreads := []*models.Thread{
 			{
 				ID:     1,
@@ -277,6 +279,7 @@ var _ = grift.Namespace("db", func() {
 			}
 		}
 
+		// THREAD_PARTICIPANTS Table
 		fixtureParticipants := []*models.ThreadParticipant{
 			{
 				ID:       1,
@@ -319,6 +322,74 @@ var _ = grift.Namespace("db", func() {
 			err := models.DB.Create(participant)
 			if err != nil {
 				err = fmt.Errorf("error loading thread participant fixture ... %+v\n %v", participant, err.Error())
+				return err
+			}
+		}
+
+		// MESSAGES Table
+		messageUuid1, _ := uuid.FromString("b0d7c515-e74c-4af7-a937-f1deb9369831")
+		messageUuid2, _ := uuid.FromString("ac52793a-e683-4684-bc10-213f49a3e302")
+		messageUuid3, _ := uuid.FromString("b90703f6-a5d7-4534-aacd-6b3212288454")
+		messageUuid4, _ := uuid.FromString("a74c0cb6-66e6-43d4-9c71-0ce96bdda99b")
+		messageUuid5, _ := uuid.FromString("e3932ab7-ae53-493f-a676-50512c4ca952")
+		messageUuid6, _ := uuid.FromString("0aea9161-b374-45ae-8abd-faf04b8da9e1")
+		messageUuid7, _ := uuid.FromString("d9e54392-1a5f-4e6e-b74a-10756b8a9812")
+		fixtureMessages := []*models.Message{
+			{
+				ThreadID: 1,
+				ID:       1,
+				Uuid:     messageUuid1,
+				SentByID: 5,
+				Content:  "Any chance you can bring some PB?",
+			},
+			{
+				ThreadID: 1,
+				ID:       2,
+				Uuid:     messageUuid2,
+				SentByID: 1,
+				Content:  "Absolutely!",
+			},
+			{
+				ThreadID: 1,
+				ID:       3,
+				Uuid:     messageUuid3,
+				SentByID: 5,
+				Content:  "Thanks 😁",
+			},
+			{
+				ThreadID: 2,
+				ID:       4,
+				Uuid:     messageUuid4,
+				SentByID: 5,
+				Content:  "red plum jam, if possible",
+			},
+			{
+				ThreadID: 3,
+				ID:       5,
+				Uuid:     messageUuid5,
+				SentByID: 3,
+				Content:  "Did you find any Wintergreen Altoids?",
+			},
+			{
+				ThreadID: 3,
+				ID:       6,
+				Uuid:     messageUuid6,
+				SentByID: 5,
+				Content:  "No luck, sorry",
+			},
+			{
+				ThreadID: 4,
+				ID:       7,
+				Uuid:     messageUuid7,
+				SentByID: 4,
+				Content:  "I haven't heard from my son, either. Have you seen him recently?",
+			},
+		}
+
+		for _, message := range fixtureMessages {
+			err := models.DB.Create(message)
+			if err != nil {
+				err = fmt.Errorf("error loading message fixture ... %+v\n %v", message, err.Error())
 				return err
 			}
 		}
