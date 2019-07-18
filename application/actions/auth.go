@@ -69,10 +69,7 @@ func AuthLogin(c buffalo.Context) error {
 
 func AuthCallback(c buffalo.Context) error {
 
-	returnTo := c.Session().Get("ReturnTo")
-	if returnTo == "" {
-		returnTo = envy.Get("UI_URL", "/")
-	}
+	returnTo := envy.Get("UI_URL", "/")
 
 	clientID := c.Session().Get("ClientID")
 	if clientID == "" {

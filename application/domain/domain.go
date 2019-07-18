@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -90,6 +91,14 @@ func GetCurrentUser(c buffalo.Context) models.User {
 	}
 
 	return models.User{}
+}
+
+func GetCurrentUserFromGqlContext(ctx context.Context) models.User {
+	bc, ok := ctx.Value("BuffaloContext").(buffalo.Context)
+	if !ok {
+		return models.User{}
+	}
+	return GetCurrentUser(bc)
 }
 
 // ConvertTimeToStringPtr is intended to convert the
