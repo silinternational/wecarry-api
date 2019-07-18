@@ -17,19 +17,20 @@ import (
 )
 
 type User struct {
-	ID           int               `json:"id" db:"id"`
-	CreatedAt    time.Time         `json:"created_at" db:"created_at"`
-	UpdatedAt    time.Time         `json:"updated_at" db:"updated_at"`
-	Email        string            `json:"email" db:"email"`
-	FirstName    string            `json:"first_name" db:"first_name"`
-	LastName     string            `json:"last_name" db:"last_name"`
-	Nickname     string            `json:"nickname" db:"nickname"`
-	AuthOrgID    int               `json:"auth_org_id" db:"auth_org_id"`
-	AuthOrgUid   string            `json:"auth_org_uid" db:"auth_org_uid"`
-	AdminRole    nulls.String      `json:"admin_role" db:"admin_role"`
-	Uuid         string            `json:"uuid" db:"uuid"`
-	AuthOrg      Organization      `belongs_to:"organizations"`
-	AccessTokens []UserAccessToken `has_many:"user_access_tokens"`
+	ID            int               `json:"id" db:"id"`
+	CreatedAt     time.Time         `json:"created_at" db:"created_at"`
+	UpdatedAt     time.Time         `json:"updated_at" db:"updated_at"`
+	Email         string            `json:"email" db:"email"`
+	FirstName     string            `json:"first_name" db:"first_name"`
+	LastName      string            `json:"last_name" db:"last_name"`
+	Nickname      string            `json:"nickname" db:"nickname"`
+	AuthOrgID     int               `json:"auth_org_id" db:"auth_org_id"`
+	AuthOrgUid    string            `json:"auth_org_uid" db:"auth_org_uid"`
+	AdminRole     nulls.String      `json:"admin_role" db:"admin_role"`
+	Uuid          string            `json:"uuid" db:"uuid"`
+	AuthOrg       Organization      `belongs_to:"organizations"`
+	AccessTokens  []UserAccessToken `has_many:"user_access_tokens"`
+	Organizations Organizations     `many_to_many:"user_organizations"`
 }
 
 // String is not required by pop and may be deleted

@@ -20,6 +20,7 @@ type Organization struct {
 	AuthType   string       `json:"auth_type" db:"auth_type"`
 	AuthConfig string       `json:"auth_config" db:"auth_config"`
 	Uuid       string       `json:"uuid" db:"uuid"`
+	Users      Users        `many_to_many:"user_organizations"`
 }
 
 // String is not required by pop and may be deleted

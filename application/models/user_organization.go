@@ -10,14 +10,14 @@ import (
 )
 
 type UserOrganization struct {
-	ID           int          `json:"id" db:"id"`
-	CreatedAt    time.Time    `json:"created_at" db:"created_at"`
-	UpdatedAt    time.Time    `json:"updated_at" db:"updated_at"`
-	OrgID        int          `json:"org_id" db:"org_id"`
-	UserID       int          `json:"user_id" db:"user_id"`
-	Role         string       `json:"role" db:"role"`
-	User         User         `belongs_to:"users"`
-	Organization Organization `belongs_to:"organizations"`
+	ID             int          `json:"id" db:"id"`
+	CreatedAt      time.Time    `json:"created_at" db:"created_at"`
+	UpdatedAt      time.Time    `json:"updated_at" db:"updated_at"`
+	OrganizationID int          `json:"org_id" db:"org_id"`
+	UserID         int          `json:"user_id" db:"user_id"`
+	Role           string       `json:"role" db:"role"`
+	User           User         `belongs_to:"users"`
+	Organization   Organization `belongs_to:"organizations"`
 }
 
 // String is not required by pop and may be deleted
@@ -39,7 +39,7 @@ func (u UserOrganizations) String() string {
 // This method is not required and may be deleted.
 func (u *UserOrganization) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
-		&validators.IntIsPresent{Field: u.OrgID, Name: "OrgID"},
+		&validators.IntIsPresent{Field: u.OrganizationID, Name: "OrgID"},
 		&validators.IntIsPresent{Field: u.UserID, Name: "UserID"},
 		&validators.StringIsPresent{Field: u.Role, Name: "Role"},
 	), nil
