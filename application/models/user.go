@@ -121,6 +121,23 @@ func FindUserByAccessToken(accessToken string) (User, error) {
 	return userAccessToken.User, nil
 }
 
+func FindUserByUUID(uuid string) (User, error) {
+
+	if uuid == "" {
+		return User{}, fmt.Errorf("error: access token must not be blank")
+	}
+
+	user := User{}
+
+	queryString := fmt.Sprintf("uuid = '%s'", uuid)
+
+	if err := DB.Where(queryString).First(&user); err != nil {
+		return User{}, fmt.Errorf("error finding user by uuid: %s", err.Error())
+	}
+
+	return user, nil
+}
+
 func createAccessTokenExpiry() time.Time {
 	lifetime := envy.Get("ACCESS_TOKEN_LIFETIME", "28800")
 

@@ -31,6 +31,7 @@ enum PostType {
 
 type Post {
     id: ID!
+    uuid: String!
     type: PostType!
     createdBy: User!
     receiver: User
@@ -72,4 +73,22 @@ type Message {
     content: String!
     createdAt: String
     updatedAt: String
+}
+
+input NewPost {
+    createdByID: String!
+    orgID: String!
+    type: PostType!
+    title: String!
+    description: String
+    destination: String
+    origin: String
+    size: String!
+    neededAfter: String
+    neededBefore: String
+    category: String
+}
+
+type Mutation {
+  createPost(input: NewPost!): Post!
 }

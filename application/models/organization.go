@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/gobuffalo/nulls"
@@ -57,4 +58,21 @@ func (o *Organization) ValidateCreate(tx *pop.Connection) (*validate.Errors, err
 // This method is not required and may be deleted.
 func (o *Organization) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
+}
+
+func FindOrgByUUID(uuid string) (Organization, error) {
+
+	if uuid == "" {
+		return Organization{}, fmt.Errorf("error: access token must not be blank")
+	}
+
+	org := Organization{}
+
+	queryString := fmt.Sprintf("uuid = '%s'", uuid)
+
+	if err := DB.Where(queryString).First(&org); err != nil {
+		return Organization{}, fmt.Errorf("error finding org by uuid: %s", err.Error())
+	}
+
+	return org, nil
 }
