@@ -14,11 +14,11 @@ application/gqlgen/generated.go: application/gqlgen/schema.graphql
 
 buffalo: db
 	docker-compose up -d buffalo
-	echo "Delaying to let the DB get ready..."
-	sleep 5
 
 db:
 	docker-compose up -d db
+	echo "Delaying to let the DB get ready..."
+	sleep 5
 
 clean:
 	docker-compose kill
