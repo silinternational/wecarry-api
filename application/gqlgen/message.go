@@ -8,7 +8,7 @@ import (
 )
 
 // ConvertDBUserToGqlUser does what its name says, but also ...
-func ConvertDBMessageToGqlMessage(dbMessage models.Message) (Message, error) {
+func ConvertSimpleDBMessageToGqlMessage(dbMessage models.Message) (Message, error) {
 	dbID := strconv.Itoa(dbMessage.ID)
 
 	gqlMessage := Message{
@@ -19,6 +19,59 @@ func ConvertDBMessageToGqlMessage(dbMessage models.Message) (Message, error) {
 	}
 
 	return gqlMessage, nil
+}
+
+// ConvertDBUserToGqlUser does what its name says, but also ...
+func ConvertDBMessageToGqlMessage(dbMessage models.Message) (Message, error) {
+
+	// TODO this fetching of related objects is all quick and dirty.  Rewrite when there is time.
+	dbID := strconv.Itoa(dbMessage.ID)
+
+	dbThread := models.Thread{}
+	if err := models.DB.Find(&dbThread, dbMessage.ThreadID); err != nil {
+		return Message{}, err
+	}
+
+	thread, err := ConvertDBThreadToGqlThread(dbThread)
+	if err != nil {
+		return Message{}, err
+	}
+
+	dbMessages := models.Messages{}
+	queryString := fmt.Sprintf("thread_id = '%s'", thread.ID)
+	if err := models.DB.Where(queryString).All(&dbMessages); err != nil {
+		return Message{}, err
+	}
+
+	for _, m := range dbMessages {
+		gqlMsg, err := ConvertSimpleDBMessageToGqlMessage(m)
+		if err != nil {
+			return Message{}, err
+		}
+
+		thread.Messages = append(thread.Messages, &gqlMsg)
+	}
+
+	dbUser := models.User{}
+	if err := models.DB.Find(&dbUser, dbMessage.SentByID); err != nil {
+		return Message{}, err
+	}
+
+	sender, err := ConvertDBUserToGqlUser(dbUser)
+	if err != nil {
+		return Message{}, err
+	}
+
+	gqlMessage := Message{
+		ID:        dbID,
+		Content:   dbMessage.Content,
+		Thread:    &thread,
+		Sender:    &sender,
+		CreatedAt: domain.ConvertTimeToStringPtr(dbMessage.CreatedAt),
+		UpdatedAt: domain.ConvertTimeToStringPtr(dbMessage.UpdatedAt),
+	}
+
+	return gqlMessage, err
 }
 
 func ConvertGqlNewMessageToDBMessage(gqlMessage NewMessage, user models.User) (models.Message, error) {

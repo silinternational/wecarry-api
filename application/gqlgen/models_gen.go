@@ -12,6 +12,7 @@ type Message struct {
 	ID        string  `json:"id"`
 	Sender    *User   `json:"sender"`
 	Content   string  `json:"content"`
+	Thread    *Thread `json:"thread"`
 	CreatedAt *string `json:"createdAt"`
 	UpdatedAt *string `json:"updatedAt"`
 }
