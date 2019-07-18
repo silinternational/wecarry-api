@@ -10,10 +10,6 @@ import (
 func ConvertDBPostToGqlPost(dbPost models.Post) (Post, error) {
 	dbID := strconv.Itoa(dbPost.ID)
 
-	stubAfter := "0000"
-	stubBefore := "9999"
-	stubCategory := "Eats"
-
 	newGqlPost := Post{
 		ID:           dbID,
 		Type:         PostType(dbPost.Type),
@@ -22,9 +18,9 @@ func ConvertDBPostToGqlPost(dbPost models.Post) (Post, error) {
 		Destination:  GetStringFromNullsString(dbPost.Destination),
 		Origin:       GetStringFromNullsString(dbPost.Origin),
 		Size:         dbPost.Size,
-		NeededAfter:  &stubAfter,    //GetStringFromNullsString(dbPost.NeededAfter),
-		NeededBefore: &stubBefore,   //GetStringFromNullsString(dbPost.NeededBefore),
-		Category:     &stubCategory, // GetStringFromNullsString(dbPost.Category),
+		NeededAfter:  domain.ConvertTimeToStringPtr(dbPost.NeededAfter),
+		NeededBefore: domain.ConvertTimeToStringPtr(dbPost.NeededBefore),
+		Category:     dbPost.Category,
 		Status:       dbPost.Status,
 		CreatedAt:    domain.ConvertTimeToStringPtr(dbPost.CreatedAt),
 		UpdatedAt:    domain.ConvertTimeToStringPtr(dbPost.UpdatedAt),
