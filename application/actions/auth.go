@@ -8,6 +8,8 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/gobuffalo/envy"
+
 	"github.com/gofrs/uuid"
 
 	"github.com/gobuffalo/pop"
@@ -69,7 +71,7 @@ func AuthCallback(c buffalo.Context) error {
 
 	returnTo := c.Session().Get("ReturnTo")
 	if returnTo == "" {
-		returnTo = "/"
+		returnTo = envy.Get("UI_URL", "/")
 	}
 
 	clientID := c.Session().Get("ClientID")
@@ -146,7 +148,7 @@ func AuthCallback(c buffalo.Context) error {
 		return errors.WithStack(err)
 	}
 
-	returnToURL := fmt.Sprintf("%s?access_token=%s&expires=%v", returnTo, accessToken, expiresAt)
+	returnToURL := fmt.Sprintf("%s/?access_token=%s&expires=%v", returnTo, accessToken, expiresAt)
 
 	return c.Redirect(302, returnToURL)
 }
