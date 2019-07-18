@@ -134,6 +134,11 @@ func FindUserByAccessToken(accessToken string) (User, error) {
 		return User{}, fmt.Errorf("access token has expired")
 	}
 
+	err := DB.Load(&userAccessToken.User)
+	if err != nil {
+		log.Printf("unable to eagerly load all associations for user: %s", err.Error())
+	}
+
 	return userAccessToken.User, nil
 }
 

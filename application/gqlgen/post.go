@@ -1,8 +1,9 @@
 package gqlgen
 
 import (
-	"github.com/gobuffalo/nulls"
 	"strconv"
+
+	"github.com/gobuffalo/nulls"
 	"github.com/silinternational/handcarry-api/domain"
 	"github.com/silinternational/handcarry-api/models"
 )
@@ -47,7 +48,7 @@ func ConvertGqlNewPostToDBPost(gqlPost NewPost) (models.Post, error) {
 	dbPost.Uuid = domain.GetUuid()
 
 	dbPost.CreatedByID = createdByUser.ID
-	dbPost.OrgID = org.ID
+	dbPost.OrganizationID = org.ID
 	dbPost.Type = gqlPost.Type.String()
 	dbPost.Title = gqlPost.Title
 

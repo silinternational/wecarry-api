@@ -125,6 +125,16 @@ func AuthCallback(c buffalo.Context) error {
 		if err != nil {
 			return c.Error(500, fmt.Errorf("unable to create new user record: %s", err.Error()))
 		}
+
+		uo := &models.UserOrganization{
+			UserID:         u.ID,
+			OrganizationID: u.AuthOrgID,
+			Role:           "member",
+		}
+		err = tx.Create(uo)
+		if err != nil {
+			return c.Error(500, fmt.Errorf("unable to create new user organization record: %s", err.Error()))
+		}
 	}
 
 	accessToken, expiresAt, err := u.CreateAccessToken(tx, fmt.Sprintf("%v", clientID))
