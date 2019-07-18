@@ -1,12 +1,12 @@
 package grifts
 
 import (
+	"fmt"
+	"github.com/gobuffalo/nulls"
 	"github.com/markbates/grift/grift"
 	"github.com/silinternational/handcarry-api/domain"
 	"github.com/silinternational/handcarry-api/models"
-	"github.com/gobuffalo/nulls"
 	"time"
-	"fmt"
 )
 
 var _ = grift.Namespace("db", func() {
@@ -37,7 +37,7 @@ var _ = grift.Namespace("db", func() {
 		for _, org := range fixtureOrgs {
 			err := models.DB.Create(org)
 			if err != nil {
-				err = fmt.Errorf("error loading organization fixture ... %+v\n %v", org, err.Error() )
+				err = fmt.Errorf("error loading organization fixture ... %+v\n %v", org, err.Error())
 				return err
 			}
 		}
@@ -104,7 +104,7 @@ var _ = grift.Namespace("db", func() {
 		for _, user := range fixtureUsers {
 			err := models.DB.Create(user)
 			if err != nil {
-				err = fmt.Errorf("error loading user fixture ... %+v\n %v", user, err.Error() )
+				err = fmt.Errorf("error loading user fixture ... %+v\n %v", user, err.Error())
 				return err
 			}
 		}
@@ -145,7 +145,7 @@ var _ = grift.Namespace("db", func() {
 		for _, userOrgs := range fixtureUserOrgs {
 			err := models.DB.Create(userOrgs)
 			if err != nil {
-				err = fmt.Errorf("error loading user organizations fixture ... %+v\n %v", userOrgs, err.Error() )
+				err = fmt.Errorf("error loading user organizations fixture ... %+v\n %v", userOrgs, err.Error())
 				return err
 			}
 		}
@@ -236,7 +236,7 @@ var _ = grift.Namespace("db", func() {
 		for _, post := range fixturePosts {
 			err := models.DB.Create(post)
 			if err != nil {
-				err = fmt.Errorf("error loading post fixture ... %+v\n %v", post, err.Error() )
+				err = fmt.Errorf("error loading post fixture ... %+v\n %v", post, err.Error())
 				return err
 			}
 		}
@@ -271,7 +271,7 @@ var _ = grift.Namespace("db", func() {
 		for _, thread := range fixtureThreads {
 			err := models.DB.Create(thread)
 			if err != nil {
-				err = fmt.Errorf("error loading thread fixture ... %+v\n %v", thread, err.Error() )
+				err = fmt.Errorf("error loading thread fixture ... %+v\n %v", thread, err.Error())
 				return err
 			}
 		}
@@ -317,7 +317,7 @@ var _ = grift.Namespace("db", func() {
 		for _, participant := range fixtureParticipants {
 			err := models.DB.Create(participant)
 			if err != nil {
-				err = fmt.Errorf("error loading thread participant fixture ... %+v\n %v", participant, err.Error() )
+				err = fmt.Errorf("error loading thread participant fixture ... %+v\n %v", participant, err.Error())
 				return err
 			}
 		}
