@@ -1,9 +1,12 @@
 package grifts
 
 import (
-	uuid2 "github.com/gofrs/uuid"
 	"github.com/markbates/grift/grift"
+	"github.com/silinternational/handcarry-api/domain"
 	"github.com/silinternational/handcarry-api/models"
+	"github.com/gobuffalo/nulls"
+	"time"
+	"fmt"
 )
 
 var _ = grift.Namespace("db", func() {
@@ -11,8 +14,8 @@ var _ = grift.Namespace("db", func() {
 	grift.Desc("seed", "Seeds a database")
 	_ = grift.Add("seed", func(c *grift.Context) error {
 
-		organizationUuid1 := getUuid()
-		organizationUuid2 := getUuid()
+		organizationUuid1 := domain.GetUuidAsString()
+		organizationUuid2 := domain.GetUuidAsString()
 		fixtureOrgs := []*models.Organization{
 			{
 				ID:         1,
@@ -33,15 +36,16 @@ var _ = grift.Namespace("db", func() {
 		for _, org := range fixtureOrgs {
 			err := models.DB.Create(org)
 			if err != nil {
+				err = fmt.Errorf("error loading organization fixture ... %+v\n %v", org, err.Error() )
 				return err
 			}
 		}
 
-		userUuid1 := getUuid()
-		userUuid2 := getUuid()
-		userUuid3 := getUuid()
-		userUuid4 := getUuid()
-		userUuid5 := getUuid()
+		userUuid1 := domain.GetUuidAsString()
+		userUuid2 := domain.GetUuidAsString()
+		userUuid3 := domain.GetUuidAsString()
+		userUuid4 := domain.GetUuidAsString()
+		userUuid5 := domain.GetUuidAsString()
 		fixtureUsers := []*models.User{
 			{
 				ID:         1,
@@ -98,6 +102,7 @@ var _ = grift.Namespace("db", func() {
 		for _, user := range fixtureUsers {
 			err := models.DB.Create(user)
 			if err != nil {
+				err = fmt.Errorf("error loading user fixture ... %+v\n %v", user, err.Error() )
 				return err
 			}
 		}
@@ -135,9 +140,101 @@ var _ = grift.Namespace("db", func() {
 			},
 		}
 
-		for _, userOrgs := range fixtureUserOrgs {
-			err := models.DB.Create(userOrgs)
+			for _, userOrgs := range fixtureUserOrgs {
+				err := models.DB.Create(userOrgs)
+				if err != nil {
+					return err
+				}
+			}
+		*/
+
+		postUuid1 := domain.GetUuid()
+		postUuid2 := domain.GetUuid()
+		postUuid3 := domain.GetUuid()
+		postUuid4 := domain.GetUuid()
+		postUuid5 := domain.GetUuid()
+		fixturePosts := []*models.Post{
+			{
+				ID:           1,
+				CreatedByID:  1,
+				Type:         "request",
+				OrgID:        1,
+				Status:       "unfulfilled",
+				Title:        "Maple Syrup",
+				Destination:  nulls.NewString("Madrid, Spain"),
+				Size:         "Medium",
+				Uuid:         postUuid1,
+				ReceiverID:   nulls.NewInt(1),
+				NeededAfter:  time.Date(2019,time.July,19,0,0,0,0,time.UTC),
+				NeededBefore: time.Date(2019,time.August,3,0,0,0,0,time.UTC),
+				Category:     "Unknown",
+				Description:  nulls.NewString("Missing my good, old, Canadian maple syrupy goodness"),
+			},
+			{
+				ID:           2,
+				CreatedByID:  2,
+				Type:         "request",
+				OrgID:        1,
+				Status:       "unfulfilled",
+				Title:        "Jif Peanut Butter",
+				Destination:  nulls.NewString("JAARS, NC, USA"),
+				Size:         "Small",
+				Uuid:         postUuid2,
+				ReceiverID:   nulls.NewInt(2),
+				NeededBefore: time.Date(2019,time.August,3,0,0,0,0,time.UTC),
+				Category:     "Food",
+				Description:  nulls.NewString("Jiffy Peanut Butter goes on our daily bread!"),
+			},
+			{
+				ID:           3,
+				CreatedByID:  3,
+				Type:         "request",
+				OrgID:        1,
+				Status:       "unfulfilled",
+				Title:        "Burt's Bee's Lip Balm",
+				Destination:  nulls.NewString("Atlanta, GA, USA"),
+				Size:         "Tiny",
+				Uuid:         postUuid3,
+				ReceiverID:   nulls.NewInt(3),
+				NeededAfter:  time.Date(2019,time.July,18,0,0,0,0,time.UTC),
+				Category:     "Personal",
+				Description:  nulls.NewString("Please save me from having painfully cracked lips!"),
+			},
+			{
+				ID:           4,
+				CreatedByID:  4,
+				Type:         "request",
+				OrgID:        1,
+				Status:       "unfulfilled",
+				Title:        "Peanut Butter",
+				Destination:  nulls.NewString("Orlando, FL, USA"),
+				Size:         "Small",
+				Uuid:         postUuid4,
+				ReceiverID:   nulls.NewInt(4),
+				NeededAfter:  time.Date(2019,time.August,3,0,0,0,0,time.UTC),
+				NeededBefore: time.Date(2019,time.September,1,0,0,0,0,time.UTC),
+				Category:     "Food",
+				Description:  nulls.NewString("I already have chocolate, but I need peanut butter."),
+			},
+			{
+				ID:           5,
+				CreatedByID:  5,
+				Type:         "request",
+				OrgID:        2,
+				Status:       "unfulfilled",
+				Title:        "Altoids",
+				Size:         "Tiny",
+				Uuid:         postUuid5,
+				ReceiverID:   nulls.NewInt(5),
+				Category:     "Mints",
+				Description:  nulls.NewString("The original celebrated curiously strong mints"),
+			},
+		}
+
+		for _, post := range fixturePosts {
+			err := models.DB.Create(post)
 			if err != nil {
+				err = fmt.Errorf("error loading post fixture ... %+v\n %v", post, err.Error() )
 				return err
 			}
 		}
@@ -146,8 +243,3 @@ var _ = grift.Namespace("db", func() {
 	})
 
 })
-
-func getUuid() string {
-	uuid, _ := uuid2.NewV4()
-	return uuid.String()
-}

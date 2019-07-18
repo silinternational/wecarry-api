@@ -44,6 +44,7 @@ func ConvertGqlNewPostToDBPost(gqlPost NewPost) (models.Post, error) {
 	}
 
 	dbPost := models.Post{}
+	dbPost.Uuid = domain.GetUuid()
 
 	dbPost.CreatedByID = createdByUser.ID
 	dbPost.OrgID = org.ID
