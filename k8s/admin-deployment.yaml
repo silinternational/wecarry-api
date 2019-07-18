@@ -1,0 +1,108 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: handcarry-adminer
+  labels:
+    app: handcarry
+spec:
+  ports:
+    - port: 8080
+  selector:
+    app: handcarry
+    tier: front
+  clusterIP: None
+---G
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: handcarry-adminer
+  labels:
+    app: handcarry
+spec:
+  selector:
+    matchLabels:
+      app: handcarry
+      tier: front
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: handcarry
+        tier: front
+    spec:
+      containers:
+      - image: adminer
+        ports:
+        - containerPort: 8080
+---
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: handcarry-phppgadmin
+  labels:
+    app: handcarry
+spec:
+  selector:
+    matchLabels:
+      app: handcarry
+      tier: front
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: handcarry
+        tier: front
+    spec:
+      containers:
+      - image: dockage/phppgadmin:latest
+        ports:
+        - containerPort: 80
+        env:
+         - name: PHP_PG_ADMIN_SERVER_DESC
+           value: PostgreSQL
+         - name: PHP_PG_ADMIN_SERVER_HOST
+           value: db
+         - name: PHP_PG_ADMIN_SERVER_PORT
+           value: 5432
+         - name: PHP_PG_ADMIN_SERVER_SSL_MODE
+           value: allow
+         - name: PHP_PG_ADMIN_SERVER_DEFAULT_DB
+           value: handcarry
+         - name: PHP_PG_ADMIN_SERVER_PG_DUMP_PATH
+           value: /usr/bin/pg_dump
+         - name: PHP_PG_ADMIN_SERVER_PG_DUMPALL_PATH
+           value: /usr/bin/pg_dumpall
+         - name: PHP_PG_ADMIN_DEFAULT_LANG
+           value: auto
+         - name: PHP_PG_ADMIN_AUTO_COMPLETE
+           value: default on
+         - name: PHP_PG_ADMIN_EXTRA_LOGIN_SECURITY
+           value: false
+         - name: PHP_PG_ADMIN_OWNED_ONLY
+           value: false
+         - name: PHP_PG_ADMIN_SHOW_COMMENTS
+           value: true
+         - name: PHP_PG_ADMIN_SHOW_ADVANCED
+           value: false
+         - name: PHP_PG_ADMIN_SHOW_SYSTEM
+           value: false
+         - name: PHP_PG_ADMIN_MIN_PASSWORD_LENGTH
+           value: 1
+         - name: PHP_PG_ADMIN_LEFT_WIDTH
+           value: 200
+         - name: PHP_PG_ADMIN_THEME
+           value: default
+         - name: PHP_PG_ADMIN_SHOW_OIDS
+           value: false
+         - name: PHP_PG_ADMIN_MAX_ROWS
+           value: 30
+         - name: PHP_PG_ADMIN_MAX_CHARS
+           value: 50
+         - name: PHP_PG_ADMIN_USE_XHTML_STRICT
+           value: false
+         - name: PHP_PG_ADMIN_HELP_BASE
+           value: http://www.postgresql.org/docs/%s/interactive/
+         - name: PHP_PG_ADMIN_AJAX_REFRESH
+           value: 3

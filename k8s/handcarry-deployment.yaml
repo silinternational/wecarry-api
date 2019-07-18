@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: handcarry
+  labels:
+    app: handcarry
+spec:
+  ports:
+    - port: 3000
+  selector:
+    app: handcarry
+    tier: middle
+  type: LoadBalancer
+---
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: handcarry
+  labels:
+    app: handcarry
+spec:
+  selector:
+    matchLabels:
+      app: handcarry
+      tier: middle
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: handcarry
+        tier: middle
+    spec:
+      containers:
+      - image: handcarry-api_buffalo
+        imagePullPolicy: Never
+        name: handcarry
+        env:
+        - name: ADDR
+          value: 0.0.0.0
+        - name: HOST
+          value: http://handcarry.local:3000
+        - name: PORT
+          value: "3000"
+        ports:
+        - containerPort: 3000
+          name: handcarry
