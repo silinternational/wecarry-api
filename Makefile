@@ -1,8 +1,8 @@
 dev: buffalo migrate
 
 migrate: db
-	docker-compose run buffalo buffalo-pop pop migrate up
-	docker-compose run buffalo grift db:seed
+	docker-compose run --rm buffalo whenavail db 5432 10 buffalo-pop pop migrate up
+	docker-compose run --rm buffalo grift db:seed
 
 migratestatus: db
 	docker-compose run buffalo buffalo-pop pop migrate status

@@ -1,8 +1,13 @@
 FROM gobuffalo/buffalo:v0.14.6
 
-RUN apt-get update && apt-get install -y nano \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y \
+    nano \
+    curl \
+    netcat \
+    && apt-get clean
 
+RUN curl -o /usr/local/bin/whenavail https://bitbucket.org/silintl/docker-whenavail/raw/1.0.2/whenavail \
+     && chmod a+x /usr/local/bin/whenavail
 
 RUN mkdir -p /handcarry
 WORKDIR /handcarry
