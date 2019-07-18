@@ -21,11 +21,15 @@ func ConvertDBMessageToGqlMessage(dbMessage models.Message) (Message, error) {
 	return gqlMessage, nil
 }
 
-func ConvertGqlNewMessageToDBMessage(gqlMessage NewMessage) (models.Message, error) {
+func ConvertGqlNewMessageToDBMessage(gqlMessage NewMessage, user models.User) (models.Message, error) {
 
-	user, err := models.FindUserByUUID(gqlMessage.SenderID)
-	if err != nil {
-		return models.Message{}, err
+	senderID := domain.ConvertStrPtrToString(gqlMessage.SenderID)
+	if senderID != "" {
+		var err error
+		user, err = models.FindUserByUUID(senderID)
+		if err != nil {
+			return models.Message{}, err
+		}
 	}
 	var thread models.Thread
 

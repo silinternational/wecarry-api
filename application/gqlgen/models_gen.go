@@ -17,14 +17,14 @@ type Message struct {
 }
 
 type NewMessage struct {
-	SenderID string  `json:"senderID"`
+	SenderID *string `json:"senderID"`
 	Content  string  `json:"content"`
 	PostID   string  `json:"postID"`
 	ThreadID *string `json:"threadID"`
 }
 
 type NewPost struct {
-	CreatedByID  string   `json:"createdByID"`
+	CreatedByID  *string  `json:"createdByID"`
 	OrgID        string   `json:"orgID"`
 	Type         PostType `json:"type"`
 	Title        string   `json:"title"`
@@ -74,6 +74,11 @@ type Thread struct {
 	PostID       string     `json:"postID"`
 	CreatedAt    *string    `json:"createdAt"`
 	UpdatedAt    *string    `json:"updatedAt"`
+}
+
+type UpdatedPostStatus struct {
+	ID     string `json:"id"`
+	Status string `json:"status"`
 }
 
 type User struct {

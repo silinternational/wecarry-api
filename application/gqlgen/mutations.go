@@ -2,13 +2,15 @@ package gqlgen
 
 import (
 	"context"
+	"github.com/silinternational/handcarry-api/domain"
 	"github.com/silinternational/handcarry-api/models"
 )
 
 type mutationResolver struct{ *Resolver }
 
 func (r *mutationResolver) CreatePost(ctx context.Context, input NewPost) (*Post, error) {
-	dbPost, err := ConvertGqlNewPostToDBPost(input)
+	cUser := domain.GetCurrentUserFromGqlContext(ctx)
+	dbPost, err := ConvertGqlNewPostToDBPost(input, cUser)
 	if err != nil {
 		return &Post{}, err
 	}
@@ -22,8 +24,13 @@ func (r *mutationResolver) CreatePost(ctx context.Context, input NewPost) (*Post
 	return &gqlPost, err
 }
 
+func (r *mutationResolver) UpdatePost(ctx context.Context, input UpdatedPostStatus) (*Post, error) {
+	panic("UpdatePost not implemented")
+}
+
 func (r *mutationResolver) CreateMessage(ctx context.Context, input NewMessage) (*Message, error) {
-	dbMessage, err := ConvertGqlNewMessageToDBMessage(input)
+	cUser := domain.GetCurrentUserFromGqlContext(ctx)
+	dbMessage, err := ConvertGqlNewMessageToDBMessage(input, cUser)
 	if err != nil {
 		return &Message{}, err
 	}
