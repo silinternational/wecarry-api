@@ -7,6 +7,11 @@ migrate: db
 migratestatus: db
 	docker-compose run buffalo buffalo-pop pop migrate status
 
+gqlgen: application/gqlgen/generated.go
+
+application/gqlgen/generated.go: application/gqlgen/schema.graphql
+	docker-compose run --rm buffalo go generate ./...
+
 buffalo: db
 	docker-compose up -d buffalo
 
