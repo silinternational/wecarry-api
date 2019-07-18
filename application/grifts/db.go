@@ -6,6 +6,7 @@ import (
 	"github.com/silinternational/handcarry-api/models"
 	"github.com/gobuffalo/nulls"
 	"time"
+	"fmt"
 )
 
 var _ = grift.Namespace("db", func() {
@@ -35,6 +36,7 @@ var _ = grift.Namespace("db", func() {
 		for _, org := range fixtureOrgs {
 			err := models.DB.Create(org)
 			if err != nil {
+				err = fmt.Errorf("error loading organization fixture ... %+v\n %v", org, err.Error() )
 				return err
 			}
 		}
@@ -100,6 +102,7 @@ var _ = grift.Namespace("db", func() {
 		for _, user := range fixtureUsers {
 			err := models.DB.Create(user)
 			if err != nil {
+				err = fmt.Errorf("error loading user fixture ... %+v\n %v", user, err.Error() )
 				return err
 			}
 		}
@@ -232,6 +235,7 @@ var _ = grift.Namespace("db", func() {
 		for _, post := range fixturePosts {
 			err := models.DB.Create(post)
 			if err != nil {
+				err = fmt.Errorf("error loading post fixture ... %+v\n %v", post, err.Error() )
 				return err
 			}
 		}
