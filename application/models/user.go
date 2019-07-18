@@ -145,11 +145,10 @@ func FindUserByAccessToken(accessToken string) (User, error) {
 func FindUserByUUID(uuid string) (User, error) {
 
 	if uuid == "" {
-		return User{}, fmt.Errorf("error: access token must not be blank")
+		return User{}, fmt.Errorf("error: uuid must not be blank")
 	}
 
 	user := User{}
-
 	queryString := fmt.Sprintf("uuid = '%s'", uuid)
 
 	if err := DB.Where(queryString).First(&user); err != nil {

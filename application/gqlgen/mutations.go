@@ -21,3 +21,18 @@ func (r *mutationResolver) CreatePost(ctx context.Context, input NewPost) (*Post
 
 	return &gqlPost, err
 }
+
+func (r *mutationResolver) CreateMessage(ctx context.Context, input NewMessage) (*Message, error) {
+	dbMessage, err := ConvertGqlNewMessageToDBMessage(input)
+	if err != nil {
+		return &Message{}, err
+	}
+
+	if err := models.DB.Create(&dbMessage); err != nil {
+		return &Message{}, err
+	}
+
+	gqlMessage, err := ConvertDBMessageToGqlMessage(dbMessage)
+
+	return &gqlMessage, err
+}
