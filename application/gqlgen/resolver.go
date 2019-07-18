@@ -124,3 +124,20 @@ func (r *queryResolver) Threads(ctx context.Context) ([]*Thread, error) {
 	}
 	return gqlThreads, nil
 }
+
+func (r *queryResolver) Message(ctx context.Context, id *string) (*Message, error) {
+	dbMsg := models.Message{}
+
+	if err := models.DB.Where("uuid = ?", id).First(&dbMsg); err != nil {
+		graphql.AddError(ctx, gqlerror.Errorf("Error getting post: %v", err.Error()))
+		return &Message{}, err
+	}
+
+	gqlMessage, err := ConvertDBMessageToGqlMessage(dbMsg)
+	if err != nil {
+		graphql.AddError(ctx, gqlerror.Errorf("Error converting post: %v", err.Error()))
+		return &gqlMessage, err
+	}
+
+	return &gqlMessage, nil
+}
