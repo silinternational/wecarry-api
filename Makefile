@@ -17,8 +17,6 @@ buffalo: db
 
 db:
 	docker-compose up -d db
-	echo "Delaying to let the DB get ready..."
-	sleep 5
 
 clean:
 	docker-compose kill
