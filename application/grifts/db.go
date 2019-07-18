@@ -102,37 +102,36 @@ var _ = grift.Namespace("db", func() {
 			}
 		}
 
-		/*
 		fixtureUserOrgs := []*models.UserOrganization{
 			{
-				ID:     1,
-				OrgID:  1,
-				UserID: 1,
-				Role:   "admin",
+				ID:             1,
+				OrganizationID: 1,
+				UserID:         1,
+				Role:           "admin",
 			},
 			{
-				ID:     2,
-				OrgID:  1,
-				UserID: 2,
-				Role:   "foo",
+				ID:             2,
+				OrganizationID: 1,
+				UserID:         2,
+				Role:           "foo",
 			},
 			{
-				ID:     3,
-				OrgID:  1,
-				UserID: 3,
-				Role:   "bar",
+				ID:             3,
+				OrganizationID: 1,
+				UserID:         3,
+				Role:           "bar",
 			},
 			{
-				ID:     4,
-				OrgID:  1,
-				UserID: 4,
-				Role:   "baz",
+				ID:             4,
+				OrganizationID: 1,
+				UserID:         4,
+				Role:           "baz",
 			},
 			{
-				ID:     5,
-				OrgID:  2,
-				UserID: 5,
-				Role:   "admin",
+				ID:             5,
+				OrganizationID: 2,
+				UserID:         5,
+				Role:           "admin",
 			},
 		}
 
@@ -142,7 +141,6 @@ var _ = grift.Namespace("db", func() {
 				return err
 			}
 		}
-		*/
 
 		return nil
 	})
