@@ -149,11 +149,11 @@ var _ = grift.Namespace("db", func() {
 			}
 		*/
 
-		postUuid1, _ := uuid2.NewV4()
-		postUuid2, _ := uuid2.NewV4()
-		postUuid3, _ := uuid2.NewV4()
-		postUuid4, _ := uuid2.NewV4()
-		postUuid5, _ := uuid2.NewV4()
+		postUuid1 := domain.GetUuid()
+		postUuid2 := domain.GetUuid()
+		postUuid3 := domain.GetUuid()
+		postUuid4 := domain.GetUuid()
+		postUuid5 := domain.GetUuid()
 		fixturePosts := []*models.Post{
 			{
 				ID:           1,
