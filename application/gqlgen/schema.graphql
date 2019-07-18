@@ -73,6 +73,7 @@ type Message {
     id: ID!
     sender: User!
     content: String!
+    thread: Thread!
     createdAt: String
     updatedAt: String
 }
