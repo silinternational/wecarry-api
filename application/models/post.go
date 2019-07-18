@@ -13,25 +13,28 @@ import (
 )
 
 type Post struct {
-	ID          int          `json:"id" db:"id"`
-	CreatedAt   time.Time    `json:"created_at" db:"created_at"`
-	UpdatedAt   time.Time    `json:"updated_at" db:"updated_at"`
-	CreatedByID int          `json:"created_by_id" db:"created_by_id"`
-	Type        string       `json:"type" db:"type"`
-	OrgID       int          `json:"org_id" db:"org_id"`
-	Title       string       `json:"title" db:"title"`
-	Description nulls.String `json:"description" db:"description"`
-	Destination nulls.String `json:"destination" db:"destination"`
-	Origin      nulls.String `json:"origin" db:"origin"`
-	Size        string       `json:"size" db:"size"`
-	Uuid        uuid.UUID    `json:"uuid" db:"uuid"`
-	ReceiverID  nulls.Int    `json:"receiver_id" db:"receiver_id"`
-	ProviderID  nulls.Int    `json:"provider_id" db:"provider_id"`
-	Status      string       `json:"status" db:"status"`
-	CreatedBy   User         `belongs_to:"users"`
-	Org         Organization `belongs_to:"organizations"`
-	Receiver    User         `belongs_to:"users"`
-	Provider    User         `belongs_to:"users"`
+	ID           int          `json:"id" db:"id"`
+	CreatedAt    time.Time    `json:"created_at" db:"created_at"`
+	UpdatedAt    time.Time    `json:"updated_at" db:"updated_at"`
+	CreatedByID  int          `json:"created_by_id" db:"created_by_id"`
+	Type         string       `json:"type" db:"type"`
+	OrgID        int          `json:"org_id" db:"org_id"`
+	Status       string       `json:"status" db:"status"`
+	Title        string       `json:"title" db:"title"`
+	Destination  nulls.String `json:"destination" db:"destination"`
+	Origin       nulls.String `json:"origin" db:"origin"`
+	Size         string       `json:"size" db:"size"`
+	Uuid         uuid.UUID    `json:"uuid" db:"uuid"`
+	ReceiverID   nulls.Int    `json:"receiver_id" db:"receiver_id"`
+	ProviderID   nulls.Int    `json:"provider_id" db:"provider_id"`
+	NeededAfter  time.Time    `json:"needed_after" db:"needed_after"`
+	NeededBefore time.Time    `json:"needed_before" db:"needed_before"`
+	Category     string       `json:"category" db:"category"`
+	Description  nulls.String `json:"description" db:"description"`
+	CreatedBy    User         `belongs_to:"users"`
+	Org          Organization `belongs_to:"organizations"`
+	Receiver     User         `belongs_to:"users"`
+	Provider     User         `belongs_to:"users"`
 }
 
 // String is not required by pop and may be deleted

@@ -8,7 +8,7 @@ This software needs docker-compose version 1.24.0 at least.
 
 In an appropriate directory:
 * git clone git@github.com:silinternational/handcarry-api.git
-* cd handcarry-api/application
+* cd handcarry-api
 * make
 
 ## Installation Troubleshooting

@@ -11,9 +11,23 @@ import (
 type Message struct {
 	ID        string  `json:"id"`
 	Sender    *User   `json:"sender"`
-	Content   *string `json:"content"`
+	Content   string  `json:"content"`
 	CreatedAt *string `json:"createdAt"`
 	UpdatedAt *string `json:"updatedAt"`
+}
+
+type NewPost struct {
+	CreatedByID  string   `json:"createdByID"`
+	OrgID        string   `json:"orgID"`
+	Type         PostType `json:"type"`
+	Title        string   `json:"title"`
+	Description  *string  `json:"description"`
+	Destination  *string  `json:"destination"`
+	Origin       *string  `json:"origin"`
+	Size         string   `json:"size"`
+	NeededAfter  *string  `json:"neededAfter"`
+	NeededBefore *string  `json:"neededBefore"`
+	Category     *string  `json:"category"`
 }
 
 type Organization struct {
@@ -26,6 +40,7 @@ type Organization struct {
 
 type Post struct {
 	ID           string        `json:"id"`
+	UUID         string        `json:"uuid"`
 	Type         PostType      `json:"type"`
 	CreatedBy    *User         `json:"createdBy"`
 	Receiver     *User         `json:"receiver"`
@@ -38,7 +53,7 @@ type Post struct {
 	Size         string        `json:"size"`
 	NeededAfter  *string       `json:"neededAfter"`
 	NeededBefore *string       `json:"neededBefore"`
-	Category     *string       `json:"category"`
+	Category     string        `json:"category"`
 	Status       string        `json:"status"`
 	Thread       []*Thread     `json:"thread"`
 	CreatedAt    *string       `json:"createdAt"`

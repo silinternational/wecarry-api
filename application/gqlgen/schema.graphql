@@ -3,6 +3,7 @@ type Query {
     user(id: ID): User
     posts: [Post]!
     post(id: ID): Post
+    threads: [Thread]!
 }
 
 enum Role {
@@ -30,6 +31,7 @@ enum PostType {
 
 type Post {
     id: ID!
+    uuid: String!
     type: PostType!
     createdBy: User!
     receiver: User
@@ -42,7 +44,7 @@ type Post {
     size: String!
     neededAfter: String
     neededBefore: String
-    category: String
+    category: String!
     status: String!
     thread: [Thread!]!
     createdAt: String
@@ -67,8 +69,26 @@ type Thread {
 
 type Message {
     id: ID!
-    sender: User
-    content: String
+    sender: User!
+    content: String!
     createdAt: String
     updatedAt: String
+}
+
+input NewPost {
+    createdByID: String!
+    orgID: String!
+    type: PostType!
+    title: String!
+    description: String
+    destination: String
+    origin: String
+    size: String!
+    neededAfter: String
+    neededBefore: String
+    category: String
+}
+
+type Mutation {
+  createPost(input: NewPost!): Post!
 }

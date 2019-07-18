@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gobuffalo/buffalo"
+	uuid2 "github.com/gofrs/uuid"
 
 	"github.com/silinternational/handcarry-api/models"
 )
@@ -97,4 +98,21 @@ func GetCurrentUser(c buffalo.Context) models.User {
 func ConvertTimeToStringPtr(inTime time.Time) *string {
 	inTimeStr := inTime.Format(time.RFC3339)
 	return &inTimeStr
+}
+
+func ConvertStrPtrToString(inPtr *string) string {
+	if inPtr == nil {
+		return ""
+	}
+
+	return *inPtr
+}
+
+func GetUuid() uuid2.UUID {
+	uuid, _ := uuid2.NewV4()
+	return uuid
+}
+
+func GetUuidAsString() string {
+	return GetUuid().String()
 }

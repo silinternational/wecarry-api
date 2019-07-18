@@ -12,12 +12,14 @@ import (
 )
 
 type Thread struct {
-	ID        int       `json:"id" db:"id"`
-	CreatedAt time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
-	Uuid      uuid.UUID `json:"uuid" db:"uuid"`
-	PostID    int       `json:"post_id" db:"post_id"`
-	Post      Post      `belongs_to:"posts"`
+	ID           int       `json:"id" db:"id"`
+	CreatedAt    time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at" db:"updated_at"`
+	Uuid         uuid.UUID `json:"uuid" db:"uuid"`
+	PostID       int       `json:"post_id" db:"post_id"`
+	Post         Post      `belongs_to:"posts"`
+	Messages     Messages  `has_many:"messages"`
+	Participants Users     `has_many:"users"`
 }
 
 // String is not required by pop and may be deleted

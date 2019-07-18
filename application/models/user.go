@@ -31,7 +31,7 @@ type User struct {
 	Uuid          string            `json:"uuid" db:"uuid"`
 	AuthOrg       Organization      `belongs_to:"organizations"`
 	AccessTokens  []UserAccessToken `has_many:"user_access_tokens"`
-	Organizations []Organization    `many_to_many:"user_organizations"`
+	Organizations Organizations     `many_to_many:"user_organizations"`
 }
 
 // String is not required by pop and may be deleted
@@ -135,6 +135,23 @@ func FindUserByAccessToken(accessToken string) (User, error) {
 	}
 
 	return userAccessToken.User, nil
+}
+
+func FindUserByUUID(uuid string) (User, error) {
+
+	if uuid == "" {
+		return User{}, fmt.Errorf("error: access token must not be blank")
+	}
+
+	user := User{}
+
+	queryString := fmt.Sprintf("uuid = '%s'", uuid)
+
+	if err := DB.Where(queryString).First(&user); err != nil {
+		return User{}, fmt.Errorf("error finding user by uuid: %s", err.Error())
+	}
+
+	return user, nil
 }
 
 func createAccessTokenExpiry() time.Time {

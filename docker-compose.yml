@@ -1,4 +1,5 @@
 version: "3.7"
+
 services:
   buffalo:
     build:
@@ -16,6 +17,16 @@ services:
       - db
     command: buffalo dev
 
+  playground:
+    build:
+      context: ./application
+      dockerfile: Dockerfile-dev
+    volumes:
+      - ./application:/handcarry
+    ports:
+      - "8082:3000"
+    command: go run gqlgen/server/server.go
+
   db:
     image: postgres:9.6.13
     environment:
@@ -24,12 +35,14 @@ services:
       POSTGRES_DB: handcarry
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
+      interval: 3s
+      timeout: 2s
       retries: 5
 
   adminer:
     image: adminer
+    depends_on:
+      - db
     restart: always
     ports:
       - 8080:8080
@@ -37,6 +50,8 @@ services:
   phppgadmin:
     restart: always
     image: dockage/phppgadmin:latest
+    depends_on:
+      - db
     ports:
       - "8081:80"
     environment:

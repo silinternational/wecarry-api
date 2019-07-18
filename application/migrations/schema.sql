@@ -29,7 +29,7 @@ CREATE TABLE public.messages (
     uuid uuid NOT NULL,
     thread_id integer NOT NULL,
     sent_by_id integer NOT NULL,
-    content character varying(255) NOT NULL,
+    content character varying(4096) NOT NULL,
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL
 );
@@ -106,15 +106,18 @@ CREATE TABLE public.posts (
     created_by_id integer NOT NULL,
     type character varying(255) NOT NULL,
     org_id integer NOT NULL,
+    status character varying(255) NOT NULL,
     title character varying(255) NOT NULL,
-    description character varying(255),
     destination character varying(255),
     origin character varying(255),
     size character varying(255) NOT NULL,
     uuid uuid NOT NULL,
     receiver_id integer,
     provider_id integer,
-    status character varying(255) NOT NULL,
+    needed_after date NOT NULL,
+    needed_before date NOT NULL,
+    category character varying(255) NOT NULL,
+    description character varying(4096),
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL
 );

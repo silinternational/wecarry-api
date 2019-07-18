@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/gobuffalo/nulls"
@@ -19,6 +20,7 @@ type Organization struct {
 	AuthType   string       `json:"auth_type" db:"auth_type"`
 	AuthConfig string       `json:"auth_config" db:"auth_config"`
 	Uuid       string       `json:"uuid" db:"uuid"`
+	Users      Users        `many_to_many:"user_organizations"`
 }
 
 // String is not required by pop and may be deleted
@@ -57,4 +59,21 @@ func (o *Organization) ValidateCreate(tx *pop.Connection) (*validate.Errors, err
 // This method is not required and may be deleted.
 func (o *Organization) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
+}
+
+func FindOrgByUUID(uuid string) (Organization, error) {
+
+	if uuid == "" {
+		return Organization{}, fmt.Errorf("error: access token must not be blank")
+	}
+
+	org := Organization{}
+
+	queryString := fmt.Sprintf("uuid = '%s'", uuid)
+
+	if err := DB.Where(queryString).First(&org); err != nil {
+		return Organization{}, fmt.Errorf("error finding org by uuid: %s", err.Error())
+	}
+
+	return org, nil
 }
