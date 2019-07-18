@@ -3,6 +3,7 @@ package gqlgen
 import (
 	"context"
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/gobuffalo/pop/nulls"
 	"github.com/silinternational/handcarry-api/domain"
 	"github.com/silinternational/handcarry-api/models"
 	"github.com/vektah/gqlparser/gqlerror"
@@ -33,6 +34,7 @@ func (r *mutationResolver) UpdatePostStatus(ctx context.Context, input UpdatedPo
 	}
 
 	post.Status = input.Status
+	post.ProviderID = nulls.NewInt(domain.GetCurrentUserFromGqlContext(ctx).ID)
 	if err := models.DB.Update(&post); err != nil {
 		return &Post{}, err
 	}
