@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gobuffalo/buffalo"
+	uuid2 "github.com/gofrs/uuid"
 
 	"github.com/silinternational/handcarry-api/models"
 )
@@ -105,4 +106,13 @@ func ConvertStrPtrToString(inPtr *string) string {
 	}
 
 	return *inPtr
+}
+
+func GetUuid() uuid2.UUID {
+	uuid, _ := uuid2.NewV4()
+	return uuid
+}
+
+func GetUuidAsString() string {
+	return GetUuid().String()
 }
