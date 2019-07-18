@@ -51,9 +51,9 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CreateMessage func(childComplexity int, input NewMessage) int
-		CreatePost    func(childComplexity int, input NewPost) int
-		UpdatePost    func(childComplexity int, input UpdatedPostStatus) int
+		CreateMessage    func(childComplexity int, input NewMessage) int
+		CreatePost       func(childComplexity int, input NewPost) int
+		UpdatePostStatus func(childComplexity int, input UpdatedPostStatus) int
 	}
 
 	Organization struct {
@@ -120,7 +120,7 @@ type ComplexityRoot struct {
 
 type MutationResolver interface {
 	CreatePost(ctx context.Context, input NewPost) (*Post, error)
-	UpdatePost(ctx context.Context, input UpdatedPostStatus) (*Post, error)
+	UpdatePostStatus(ctx context.Context, input UpdatedPostStatus) (*Post, error)
 	CreateMessage(ctx context.Context, input NewMessage) (*Message, error)
 }
 type QueryResolver interface {
@@ -206,17 +206,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreatePost(childComplexity, args["input"].(NewPost)), true
 
-	case "Mutation.updatePost":
-		if e.complexity.Mutation.UpdatePost == nil {
+	case "Mutation.updatePostStatus":
+		if e.complexity.Mutation.UpdatePostStatus == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_updatePost_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_updatePostStatus_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdatePost(childComplexity, args["input"].(UpdatedPostStatus)), true
+		return e.complexity.Mutation.UpdatePostStatus(childComplexity, args["input"].(UpdatedPostStatus)), true
 
 	case "Organization.createdAt":
 		if e.complexity.Organization.CreatedAt == nil {
@@ -725,7 +725,7 @@ input UpdatedPostStatus {
 
 type Mutation {
     createPost(input: NewPost!): Post!
-    updatePost(input: UpdatedPostStatus!): Post!
+    updatePostStatus(input: UpdatedPostStatus!): Post!
     createMessage(input: NewMessage!): Message!
 }
 `},
@@ -763,7 +763,7 @@ func (ec *executionContext) field_Mutation_createPost_args(ctx context.Context, 
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_updatePost_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_updatePostStatus_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 UpdatedPostStatus
@@ -1092,7 +1092,7 @@ func (ec *executionContext) _Mutation_createPost(ctx context.Context, field grap
 	return ec.marshalNPost2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐPost(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_updatePost(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_updatePostStatus(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -1109,7 +1109,7 @@ func (ec *executionContext) _Mutation_updatePost(ctx context.Context, field grap
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_updatePost_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_updatePostStatus_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -1118,7 +1118,7 @@ func (ec *executionContext) _Mutation_updatePost(ctx context.Context, field grap
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdatePost(rctx, args["input"].(UpdatedPostStatus))
+		return ec.resolvers.Mutation().UpdatePostStatus(rctx, args["input"].(UpdatedPostStatus))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4276,8 +4276,8 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "updatePost":
-			out.Values[i] = ec._Mutation_updatePost(ctx, field)
+		case "updatePostStatus":
+			out.Values[i] = ec._Mutation_updatePostStatus(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -5128,7 +5128,7 @@ func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋsilinternational�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOUser2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐUser(ctx, sel, v[i])
+			ret[i] = ec.marshalNUser2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐUser(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)

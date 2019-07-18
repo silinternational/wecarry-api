@@ -106,6 +106,6 @@ input UpdatedPostStatus {
 
 type Mutation {
     createPost(input: NewPost!): Post!
-    updatePost(input: UpdatedPostStatus!): Post!
+    updatePostStatus(input: UpdatedPostStatus!): Post!
     createMessage(input: NewMessage!): Message!
 }
