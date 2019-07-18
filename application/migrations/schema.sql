@@ -105,7 +105,7 @@ CREATE TABLE public.posts (
     id integer NOT NULL,
     created_by_id integer NOT NULL,
     type character varying(255) NOT NULL,
-    org_id integer NOT NULL,
+    organization_id integer NOT NULL,
     status character varying(255) NOT NULL,
     title character varying(255) NOT NULL,
     destination character varying(255),
@@ -272,7 +272,7 @@ ALTER SEQUENCE public.user_access_tokens_id_seq OWNED BY public.user_access_toke
 
 CREATE TABLE public.user_organizations (
     id integer NOT NULL,
-    org_id integer NOT NULL,
+    organization_id integer NOT NULL,
     user_id integer NOT NULL,
     role character varying(255) NOT NULL,
     created_at timestamp without time zone NOT NULL,
@@ -560,11 +560,11 @@ ALTER TABLE ONLY public.posts
 
 
 --
--- Name: posts posts_org_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: handcarry
+-- Name: posts posts_organization_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: handcarry
 --
 
 ALTER TABLE ONLY public.posts
-    ADD CONSTRAINT posts_org_id_fkey FOREIGN KEY (org_id) REFERENCES public.organizations(id) ON DELETE SET NULL;
+    ADD CONSTRAINT posts_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id) ON DELETE SET NULL;
 
 
 --
@@ -616,11 +616,11 @@ ALTER TABLE ONLY public.user_access_tokens
 
 
 --
--- Name: user_organizations user_organizations_org_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: handcarry
+-- Name: user_organizations user_organizations_organization_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: handcarry
 --
 
 ALTER TABLE ONLY public.user_organizations
-    ADD CONSTRAINT user_organizations_org_id_fkey FOREIGN KEY (org_id) REFERENCES public.organizations(id) ON DELETE CASCADE;
+    ADD CONSTRAINT user_organizations_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id) ON DELETE CASCADE;
 
 
 --

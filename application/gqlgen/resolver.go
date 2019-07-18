@@ -4,7 +4,6 @@ package gqlgen
 
 import (
 	"context"
-	"log"
 
 	"github.com/silinternational/handcarry-api/domain"
 
@@ -27,8 +26,13 @@ func (r *Resolver) Query() QueryResolver {
 
 type queryResolver struct{ *Resolver }
 
-func GetBuffaloContext(ctx context.Context) buffalo.Context {
+func getBuffaloContext(ctx context.Context) buffalo.Context {
 	return ctx.Value("BuffaloContext").(buffalo.Context)
+}
+
+func getCurrentUser(ctx context.Context) models.User {
+	buffaloContext := getBuffaloContext(ctx)
+	return domain.GetCurrentUser(buffaloContext)
 }
 
 func (r *queryResolver) Users(ctx context.Context) ([]*User, error) {
@@ -73,12 +77,8 @@ func (r *queryResolver) User(ctx context.Context, id *string) (*User, error) {
 func (r *queryResolver) Posts(ctx context.Context) ([]*Post, error) {
 	db := models.DB
 	dbPosts := models.Posts{}
-	buffaloContext := GetBuffaloContext(ctx)
-	currentUser := domain.GetCurrentUser(buffaloContext)
-	log.Printf("\n\nresolver current user: %+v\n\n", currentUser)
-	// orgIds := currentUser.GetOrgIDs()
-	// log.Printf("\n\norg ids: %v", orgIds)
-	if err := db.Where("org_id IN (?)", currentUser.AuthOrgID).All(&dbPosts); err != nil {
+	currentUser := getCurrentUser(ctx)
+	if err := db.Where("organization_id IN (?)", currentUser.GetOrgIDs()...).All(&dbPosts); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting posts: %v", err.Error()))
 		return []*Post{}, err
 	}
@@ -98,8 +98,9 @@ func (r *queryResolver) Posts(ctx context.Context) ([]*Post, error) {
 
 func (r *queryResolver) Post(ctx context.Context, id *string) (*Post, error) {
 	dbPost := models.Post{}
+	currentUser := getCurrentUser(ctx)
 
-	if err := models.DB.Where("uuid = ?", id).First(&dbPost); err != nil {
+	if err := models.DB.Where("organization_id IN (?)", currentUser.GetOrgIDs()...).Where("uuid = ?", id).First(&dbPost); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting post: %v", err.Error()))
 		return &Post{}, err
 	}
@@ -124,7 +125,7 @@ func (r *queryResolver) Threads(ctx context.Context) ([]*Thread, error) {
 		return []*Thread{}, err
 	}
 
-	gqlThreads := []*Thread{}
+	var gqlThreads []*Thread
 	for _, dbThread := range dbThreads {
 		newGqlThread, err := ConvertDBThreadToGqlThread(dbThread)
 
