@@ -5128,7 +5128,7 @@ func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋsilinternational�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNUser2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐUser(ctx, sel, v[i])
+			ret[i] = ec.marshalOUser2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐUser(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
