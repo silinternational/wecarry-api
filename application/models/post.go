@@ -2,8 +2,9 @@ package models
 
 import (
 	"encoding/json"
-	"github.com/gofrs/uuid"
 	"time"
+
+	"github.com/gofrs/uuid"
 
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"

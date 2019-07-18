@@ -3,8 +3,9 @@ package models
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gofrs/uuid"
 	"time"
+
+	"github.com/gofrs/uuid"
 
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
