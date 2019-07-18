@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gofrs/uuid"
 	"time"
 
@@ -56,4 +57,20 @@ func (t *Thread) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) {
 // This method is not required and may be deleted.
 func (t *Thread) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
+}
+
+func FindThreadByUUID(uuid string) (Thread, error) {
+
+	if uuid == "" {
+		return Thread{}, fmt.Errorf("error: thread uuid must not be blank")
+	}
+
+	thread := Thread{}
+	queryString := fmt.Sprintf("uuid = '%s'", uuid)
+
+	if err := DB.Where(queryString).First(&thread); err != nil {
+		return Thread{}, fmt.Errorf("error finding thread by uuid: %s", err.Error())
+	}
+
+	return thread, nil
 }

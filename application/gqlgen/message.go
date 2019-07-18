@@ -19,3 +19,24 @@ func ConvertDBMessageToGqlMessage(dbMessage models.Message) (Message, error) {
 
 	return gqlMessage, nil
 }
+
+func ConvertGqlNewMessageToDBMessage(gqlMessage NewMessage) (models.Message, error) {
+
+	thread, err := models.FindThreadByUUID(domain.ConvertStrPtrToString(gqlMessage.ThreadID))
+	if err != nil {
+		return models.Message{}, err
+	}
+
+	user, err := models.FindUserByUUID(gqlMessage.SenderID)
+	if err != nil {
+		return models.Message{}, err
+	}
+
+	dbMessage := models.Message{}
+	dbMessage.Uuid = domain.GetUuid()
+	dbMessage.Content = gqlMessage.Content
+	dbMessage.ThreadID = thread.ID
+	dbMessage.SentByID = user.ID
+
+	return dbMessage, nil
+}

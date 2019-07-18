@@ -4,7 +4,7 @@ type Query {
     posts: [Post]!
     post(id: ID): Post
     threads: [Thread]!
-    message: Message!
+    message(id: ID): Message!
 }
 
 enum Role {

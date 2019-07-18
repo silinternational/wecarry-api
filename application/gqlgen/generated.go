@@ -86,7 +86,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Message func(childComplexity int) int
+		Message func(childComplexity int, id *string) int
 		Post    func(childComplexity int, id *string) int
 		Posts   func(childComplexity int) int
 		Threads func(childComplexity int) int
@@ -127,7 +127,7 @@ type QueryResolver interface {
 	Posts(ctx context.Context) ([]*Post, error)
 	Post(ctx context.Context, id *string) (*Post, error)
 	Threads(ctx context.Context) ([]*Thread, error)
-	Message(ctx context.Context) (*Message, error)
+	Message(ctx context.Context, id *string) (*Message, error)
 }
 
 type executableSchema struct {
@@ -377,7 +377,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.Query.Message(childComplexity), true
+		args, err := ec.field_Query_message_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Message(childComplexity, args["id"].(*string)), true
 
 	case "Query.post":
 		if e.complexity.Query.Post == nil {
@@ -604,7 +609,7 @@ var parsedSchema = gqlparser.MustLoadSchema(
     posts: [Post]!
     post(id: ID): Post
     threads: [Thread]!
-    message: Message!
+    message(id: ID): Message!
 }
 
 enum Role {
@@ -749,6 +754,20 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_message_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *string
+	if tmp, ok := rawArgs["id"]; ok {
+		arg0, err = ec.unmarshalOID2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -2141,10 +2160,17 @@ func (ec *executionContext) _Query_message(ctx context.Context, field graphql.Co
 		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_message_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Message(rctx)
+		return ec.resolvers.Query().Message(rctx, args["id"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
