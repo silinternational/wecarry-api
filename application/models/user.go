@@ -4,11 +4,12 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
-	"github.com/gobuffalo/envy"
 	"log"
 	"math/rand"
 	"strconv"
 	"time"
+
+	"github.com/gobuffalo/envy"
 
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
@@ -96,6 +97,20 @@ func (u *User) CreateAccessToken(tx *pop.Connection, clientID string) (string, i
 	return token, expireAt.UTC().Unix(), nil
 }
 
+func (u *User) GetOrgIDs() []interface{} {
+	var ids []int
+	for _, uo := range u.Organizations {
+		ids = append(ids, uo.ID)
+	}
+
+	s := make([]interface{}, len(ids))
+	for i, v := range ids {
+		s[i] = v
+	}
+
+	return s
+}
+
 func FindUserByAccessToken(accessToken string) (User, error) {
 
 	userAccessToken := UserAccessToken{}
@@ -125,11 +140,10 @@ func FindUserByAccessToken(accessToken string) (User, error) {
 func FindUserByUUID(uuid string) (User, error) {
 
 	if uuid == "" {
-		return User{}, fmt.Errorf("error: access token must not be blank")
+		return User{}, fmt.Errorf("error: uuid must not be blank")
 	}
 
 	user := User{}
-
 	queryString := fmt.Sprintf("uuid = '%s'", uuid)
 
 	if err := DB.Where(queryString).First(&user); err != nil {

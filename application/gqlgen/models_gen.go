@@ -16,6 +16,13 @@ type Message struct {
 	UpdatedAt *string `json:"updatedAt"`
 }
 
+type NewMessage struct {
+	SenderID string  `json:"senderID"`
+	Content  string  `json:"content"`
+	PostID   string  `json:"postID"`
+	ThreadID *string `json:"threadID"`
+}
+
 type NewPost struct {
 	CreatedByID  string   `json:"createdByID"`
 	OrgID        string   `json:"orgID"`
@@ -64,6 +71,7 @@ type Thread struct {
 	ID           string     `json:"id"`
 	Participants []*User    `json:"participants"`
 	Messages     []*Message `json:"messages"`
+	PostID       string     `json:"postID"`
 	CreatedAt    *string    `json:"createdAt"`
 	UpdatedAt    *string    `json:"updatedAt"`
 }

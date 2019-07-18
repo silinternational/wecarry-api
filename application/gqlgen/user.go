@@ -2,9 +2,10 @@ package gqlgen
 
 import (
 	"github.com/gobuffalo/nulls"
+	"strconv"
+
 	"github.com/silinternational/handcarry-api/domain"
 	"github.com/silinternational/handcarry-api/models"
-	"strconv"
 )
 
 // ConvertDBUserToGqlUser does what its name says, but also ...
