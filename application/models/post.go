@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -77,4 +78,20 @@ func (p *Post) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) {
 // This method is not required and may be deleted.
 func (p *Post) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
+}
+
+func FindPostByUUID(uuid string) (Post, error) {
+
+	if uuid == "" {
+		return Post{}, fmt.Errorf("error finding post: uuid must not be blank")
+	}
+
+	post := Post{}
+	queryString := fmt.Sprintf("uuid = '%s'", uuid)
+
+	if err := DB.Where(queryString).First(&post); err != nil {
+		return Post{}, fmt.Errorf("error finding post by uuid: %s", err.Error())
+	}
+
+	return post, nil
 }
