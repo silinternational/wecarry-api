@@ -15,6 +15,7 @@ var _ = grift.Namespace("db", func() {
 	grift.Desc("seed", "Seeds a database")
 	_ = grift.Add("seed", func(c *grift.Context) error {
 
+		// ORGANIZATIONS Table
 		organizationUuid1 := domain.GetUuidAsString()
 		organizationUuid2 := domain.GetUuidAsString()
 		fixtureOrgs := []*models.Organization{
@@ -42,6 +43,7 @@ var _ = grift.Namespace("db", func() {
 			}
 		}
 
+		// USERS Table
 		userUuid1 := domain.GetUuidAsString()
 		userUuid2 := domain.GetUuidAsString()
 		userUuid3 := domain.GetUuidAsString()
@@ -144,6 +146,7 @@ var _ = grift.Namespace("db", func() {
 		for _, userOrgs := range fixtureUserOrgs {
 			err := models.DB.Create(userOrgs)
 			if err != nil {
+				err = fmt.Errorf("error loading user organizations fixture ... %+v\n %v", userOrgs, err.Error())
 				return err
 			}
 		}
@@ -235,6 +238,87 @@ var _ = grift.Namespace("db", func() {
 			err := models.DB.Create(post)
 			if err != nil {
 				err = fmt.Errorf("error loading post fixture ... %+v\n %v", post, err.Error())
+				return err
+			}
+		}
+
+		threadUuid1 := domain.GetUuid()
+		threadUuid2 := domain.GetUuid()
+		threadUuid3 := domain.GetUuid()
+		threadUuid4 := domain.GetUuid()
+		fixtureThreads := []*models.Thread{
+			{
+				ID:     1,
+				Uuid:   threadUuid1,
+				PostID: 1,
+			},
+			{
+				ID:     2,
+				Uuid:   threadUuid2,
+				PostID: 2,
+			},
+			{
+				ID:     3,
+				Uuid:   threadUuid3,
+				PostID: 3,
+			},
+			{
+				ID:     4,
+				Uuid:   threadUuid4,
+				PostID: 4,
+			},
+		}
+
+		for _, thread := range fixtureThreads {
+			err := models.DB.Create(thread)
+			if err != nil {
+				err = fmt.Errorf("error loading thread fixture ... %+v\n %v", thread, err.Error())
+				return err
+			}
+		}
+
+		fixtureParticipants := []*models.ThreadParticipant{
+			{
+				ID:       1,
+				ThreadID: 1,
+				UserID:   1,
+			},
+			{
+				ID:       2,
+				ThreadID: 1,
+				UserID:   5,
+			},
+			{
+				ID:       3,
+				ThreadID: 2,
+				UserID:   2,
+			},
+			{
+				ID:       4,
+				ThreadID: 2,
+				UserID:   5,
+			},
+			{
+				ID:       5,
+				ThreadID: 3,
+				UserID:   3,
+			},
+			{
+				ID:       6,
+				ThreadID: 3,
+				UserID:   5,
+			},
+			{
+				ID:       7,
+				ThreadID: 4,
+				UserID:   4,
+			},
+		}
+
+		for _, participant := range fixtureParticipants {
+			err := models.DB.Create(participant)
+			if err != nil {
+				err = fmt.Errorf("error loading thread participant fixture ... %+v\n %v", participant, err.Error())
 				return err
 			}
 		}
