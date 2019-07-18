@@ -1,4 +1,5 @@
 version: "3.7"
+
 services:
   buffalo:
     build:
@@ -15,6 +16,16 @@ services:
     depends_on:
       - db
     command: buffalo dev
+
+  playground:
+    build:
+      context: ./application
+      dockerfile: Dockerfile-dev
+    volumes:
+      - ./application:/handcarry
+    ports:
+      - "8082:3000"
+    command: go run gqlgen/server/server.go
 
   db:
     image: postgres:9.6.13
