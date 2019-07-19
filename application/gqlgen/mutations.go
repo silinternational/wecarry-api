@@ -22,7 +22,7 @@ func (r *mutationResolver) CreatePost(ctx context.Context, input NewPost) (*Post
 		return &Post{}, err
 	}
 
-	gqlPost, err := ConvertDBPostToGqlPost(dbPost)
+	gqlPost, err := ConvertDBPostToGqlPost(dbPost, &cUser)
 
 	return &gqlPost, err
 }
@@ -39,7 +39,7 @@ func (r *mutationResolver) UpdatePostStatus(ctx context.Context, input UpdatedPo
 		return &Post{}, err
 	}
 
-	updatedPost, err := ConvertDBPostToGqlPost(post)
+	updatedPost, err := ConvertDBPostToGqlPost(post, nil)
 	if err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error converting post: %v", err.Error()))
 		return &updatedPost, err

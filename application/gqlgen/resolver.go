@@ -66,15 +66,15 @@ func (r *queryResolver) User(ctx context.Context, id *string) (*User, error) {
 func (r *queryResolver) Posts(ctx context.Context) ([]*Post, error) {
 	db := models.DB
 	dbPosts := models.Posts{}
-	currentUser := domain.GetCurrentUserFromGqlContext(ctx)
-	if err := db.Where("organization_id IN (?)", currentUser.GetOrgIDs()...).All(&dbPosts); err != nil {
+	cUser := domain.GetCurrentUserFromGqlContext(ctx)
+	if err := db.Where("organization_id IN (?)", cUser.GetOrgIDs()...).All(&dbPosts); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting posts: %v", err.Error()))
 		return []*Post{}, err
 	}
 
 	var gqlPosts []*Post
 	for _, dbPost := range dbPosts {
-		newGqlPost, err := ConvertDBPostToGqlPost(dbPost)
+		newGqlPost, err := ConvertDBPostToGqlPost(dbPost, &cUser)
 		if err != nil {
 			graphql.AddError(ctx, gqlerror.Errorf("Error converting posts: %v", err.Error()))
 			return gqlPosts, err
@@ -87,14 +87,14 @@ func (r *queryResolver) Posts(ctx context.Context) ([]*Post, error) {
 
 func (r *queryResolver) Post(ctx context.Context, id *string) (*Post, error) {
 	dbPost := models.Post{}
-	currentUser := domain.GetCurrentUserFromGqlContext(ctx)
+	cUser := domain.GetCurrentUserFromGqlContext(ctx)
 
-	if err := models.DB.Where("organization_id IN (?)", currentUser.GetOrgIDs()...).Where("uuid = ?", id).First(&dbPost); err != nil {
+	if err := models.DB.Where("organization_id IN (?)", cUser.GetOrgIDs()...).Where("uuid = ?", id).First(&dbPost); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting post: %v", err.Error()))
 		return &Post{}, err
 	}
 
-	newGqlPost, err := ConvertDBPostToGqlPost(dbPost)
+	newGqlPost, err := ConvertDBPostToGqlPost(dbPost, &cUser)
 	if err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error converting post: %v", err.Error()))
 		return &newGqlPost, err

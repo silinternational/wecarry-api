@@ -75,3 +75,37 @@ func FindThreadByUUID(uuid string) (Thread, error) {
 
 	return thread, nil
 }
+
+func FindThreadByPostIDAndUserID(postID int, userID int) (Thread, error) {
+
+	if postID == 0 || userID == 0 {
+		err := fmt.Errorf("error: post postID and userID must not be 0. Got: %v and %v", postID, userID)
+		return Thread{}, err
+	}
+
+	// TODO This is quick and dirty.  Rewrite to make it efficient
+	allThreads := []Thread{}
+	if err := DB.Eager("Participants").All(&allThreads); err != nil {
+		return Thread{}, fmt.Errorf("error finding threads with participants: %s", postID, err.Error())
+	}
+
+	return Thread{}, nil
+	//postQuery := fmt.Sprintf("post_id = '%v'", postID)
+	//
+	//threadsForPost := []Thread{}
+	//// First, get the posts
+	//if err := DB.Eager("Participants").Where(postQuery).All(&threadsForPost); err != nil {
+	//	return Thread{}, fmt.Errorf("error finding threads with postID %v: %s", postID, err.Error())
+	//}
+	//
+	//// Then match the user
+	//for _, t := range threadsForPost {
+	//	for _, u := range t.Participants {
+	//		if u.ID == userID {
+	//			return t, nil
+	//		}
+	//	}
+	//}
+
+	return Thread{}, nil
+}
