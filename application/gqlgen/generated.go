@@ -707,7 +707,6 @@ type Message {
 
 
 input NewPost {
-    createdByID: String
     orgID: String!
     type: PostType!
     title: String!
@@ -721,7 +720,6 @@ input NewPost {
 }
 
 input NewMessage {
-    senderID: String
     content: String!
     postID: String!
     threadID: String
@@ -4121,12 +4119,6 @@ func (ec *executionContext) unmarshalInputNewMessage(ctx context.Context, obj in
 
 	for k, v := range asMap {
 		switch k {
-		case "senderID":
-			var err error
-			it.SenderID, err = ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "content":
 			var err error
 			it.Content, err = ec.unmarshalNString2string(ctx, v)
@@ -4157,12 +4149,6 @@ func (ec *executionContext) unmarshalInputNewPost(ctx context.Context, obj inter
 
 	for k, v := range asMap {
 		switch k {
-		case "createdByID":
-			var err error
-			it.CreatedByID, err = ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "orgID":
 			var err error
 			it.OrgID, err = ec.unmarshalNString2string(ctx, v)

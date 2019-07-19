@@ -18,14 +18,12 @@ type Message struct {
 }
 
 type NewMessage struct {
-	SenderID *string `json:"senderID"`
 	Content  string  `json:"content"`
 	PostID   string  `json:"postID"`
 	ThreadID *string `json:"threadID"`
 }
 
 type NewPost struct {
-	CreatedByID  *string  `json:"createdByID"`
 	OrgID        string   `json:"orgID"`
 	Type         PostType `json:"type"`
 	Title        string   `json:"title"`

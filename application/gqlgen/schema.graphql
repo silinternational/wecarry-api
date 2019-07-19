@@ -80,7 +80,6 @@ type Message {
 
 
 input NewPost {
-    createdByID: String
     orgID: String!
     type: PostType!
     title: String!
@@ -94,7 +93,6 @@ input NewPost {
 }
 
 input NewMessage {
-    senderID: String
     content: String!
     postID: String!
     threadID: String
