@@ -27,12 +27,7 @@ import (
 
 const SAML2Provider = "saml2"
 const SAMLResponseKey = "SAMLResponse"
-const SAMLUserIDKey = "eduPersonTargetID"
 const IDPMetadataFile = "./samlmetadata/idp-metadata.xml"
-const CallbackURL = "http://handcarry.local:3000/auth/saml2/callback/"
-const SPIssuer = "http://handcarry.local:3000"
-const SPAudienceURI = SPIssuer
-const SPReturnTo = "handcarry.local:3000/"
 
 type SamlUser struct {
 	FirstName string
@@ -297,13 +292,15 @@ func getSAML2Provider() (*saml2.SAMLServiceProvider, error) {
 		return &saml2.SAMLServiceProvider{}, err
 	}
 
+	host := envy.Get("HOST", "")
+
 	sp := &saml2.SAMLServiceProvider{
 		IdentityProviderSSOURL:      metadata.IDPSSODescriptor.SingleSignOnServices[0].Location,
 		IdentityProviderIssuer:      metadata.EntityID,
-		ServiceProviderIssuer:       SPIssuer,
-		AssertionConsumerServiceURL: CallbackURL,
+		ServiceProviderIssuer:       host,
+		AssertionConsumerServiceURL: fmt.Sprintf("%s/%s", host, "auth/saml2/callback/"),
 		SignAuthnRequests:           false,
-		AudienceURI:                 SPAudienceURI,
+		AudienceURI:                 host,
 		IDPCertificateStore:         &certStore,
 		//SPKeyStore:                  randomKeyStore,
 	}
