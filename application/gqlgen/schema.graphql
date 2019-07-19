@@ -50,6 +50,7 @@ type Post {
     thread: [Thread!]!
     createdAt: String
     updatedAt: String
+    myThreadID: String
 }
 
 type Organization {
