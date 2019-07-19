@@ -1,0 +1,8 @@
+create_table("thread_participants") {
+	t.Column("id", "integer", {primary: true})
+	t.Column("thread_id", "integer", {})
+	t.Column("user_id", "integer", {})
+	t.ForeignKey("thread_id", {"threads": ["id"]}, {"on_delete": "cascade"})
+	t.ForeignKey("user_id", {"users": ["id"]}, {"on_delete": "cascade"})
+	t.Timestamps()
+}

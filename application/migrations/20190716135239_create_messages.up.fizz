@@ -1,0 +1,11 @@
+create_table("messages") {
+	t.Column("id", "integer", {primary: true})
+	t.Column("uuid", "uuid", {})
+	t.Column("thread_id", "integer", {})
+	t.Column("sent_by_id", "integer", {})
+	t.Column("content", "character varying(4096)", {})
+	t.ForeignKey("thread_id", {"threads": ["id"]}, {"on_delete": "cascade"})
+	t.ForeignKey("sent_by_id", {"users": ["id"]}, {"on_delete": "cascade"})
+	t.Timestamps()
+    t.Index("uuid", {"unique": true})
+}

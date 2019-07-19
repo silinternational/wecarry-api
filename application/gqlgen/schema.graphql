@@ -1,0 +1,110 @@
+type Query {
+    users: [User]!
+    user(id: ID): User
+    posts: [Post]!
+    post(id: ID): Post
+    threads: [Thread]!
+    message(id: ID): Message!
+}
+
+enum Role {
+    ADMIN
+    USER
+}
+
+type User {
+  id: ID!
+  email: String!
+  firstName: String!
+  lastName: String!
+  nickname: String!
+  uuid: String!
+  accessToken: String!
+  createdAt: String
+  updatedAt: String
+  adminRole: Role
+}
+
+enum PostType {
+    REQUEST
+    OFFER
+}
+
+type Post {
+    id: ID!
+    uuid: String!
+    type: PostType!
+    createdBy: User!
+    receiver: User
+    provider: User
+    organization: Organization
+    title: String!
+    description: String
+    destination: String
+    origin: String
+    size: String!
+    neededAfter: String
+    neededBefore: String
+    category: String!
+    status: String!
+    thread: [Thread!]!
+    createdAt: String
+    updatedAt: String
+}
+
+type Organization {
+    id: ID!
+    name: String!
+    url: String
+    createdAt: String
+    updatedAt: String
+}
+
+type Thread {
+    id: ID!
+    participants: [User!]!
+    messages: [Message!]!
+    postID: String!
+    createdAt: String
+    updatedAt: String
+}
+
+type Message {
+    id: ID!
+    sender: User!
+    content: String!
+    thread: Thread!
+    createdAt: String
+    updatedAt: String
+}
+
+
+input NewPost {
+    orgID: String!
+    type: PostType!
+    title: String!
+    description: String
+    destination: String
+    origin: String
+    size: String!
+    neededAfter: String
+    neededBefore: String
+    category: String
+}
+
+input NewMessage {
+    content: String!
+    postID: String!
+    threadID: String
+}
+
+input UpdatedPostStatus {
+    id: ID!
+    status: String!
+}
+
+type Mutation {
+    createPost(input: NewPost!): Post!
+    updatePostStatus(input: UpdatedPostStatus!): Post!
+    createMessage(input: NewMessage!): Message!
+}
