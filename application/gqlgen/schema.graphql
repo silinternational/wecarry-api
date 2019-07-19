@@ -73,7 +73,7 @@ type Thread {
     participants: [User!]!
     messages: [Message!]!
     postID: String!
-
+    post: Post!
     createdAt: String
     updatedAt: String
 }
