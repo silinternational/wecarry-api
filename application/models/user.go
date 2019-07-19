@@ -120,14 +120,17 @@ func FindUserByAccessToken(accessToken string) (User, error) {
 	}
 
 	dbAccessToken := hashClientIdAccessToken(accessToken)
-	queryString := fmt.Sprintf("access_token = '%s'", dbAccessToken)
-
-	if err := DB.Eager().Where(queryString).First(&userAccessToken); err != nil {
+	// and expires_at > now()
+	if err := DB.Eager().Where("access_token = ?", dbAccessToken).First(&userAccessToken); err != nil {
 		return User{}, fmt.Errorf("error finding user by access token: %s", err.Error())
 	}
 
+	if userAccessToken.ID == 0 {
+		return User{}, fmt.Errorf("error finding user by access token")
+	}
+
 	if userAccessToken.ExpiresAt.Before(time.Now()) {
-		err := DB.Destroy(userAccessToken)
+		err := DB.Destroy(&userAccessToken)
 		if err != nil {
 			log.Printf("Unable to delete expired userAccessToken, id: %v", userAccessToken.ID)
 		}
