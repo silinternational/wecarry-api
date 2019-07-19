@@ -72,6 +72,7 @@ type Thread struct {
 	Participants []*User    `json:"participants"`
 	Messages     []*Message `json:"messages"`
 	PostID       string     `json:"postID"`
+	Post         *Post      `json:"post"`
 	CreatedAt    *string    `json:"createdAt"`
 	UpdatedAt    *string    `json:"updatedAt"`
 }

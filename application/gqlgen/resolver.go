@@ -146,8 +146,9 @@ func (r *queryResolver) MyThreads(ctx context.Context) ([]*Thread, error) {
 	dbThreads := models.Threads{}
 	currentUser := domain.GetCurrentUserFromGqlContext(ctx)
 
-	db = CallDBEagerWithRelatedFields(ThreadRelatedFields(), db, ctx)
-	if err := db.Q().LeftJoin("thread_participants tp", "threads.id = tp.thread_id").Where("tp.user_id = ?", currentUser.ID).All(&dbThreads); err != nil {
+	query := db.Q().LeftJoin("thread_participants tp", "threads.id = tp.thread_id")
+	query = query.Where("tp.user_id = ?", currentUser.ID)
+	if err := query.All(&dbThreads); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting threads: %v", err.Error()))
 		return []*Thread{}, err
 	}
