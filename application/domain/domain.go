@@ -22,6 +22,8 @@ const ErrorLevelCritical = "critical"
 
 const AdminRoleSuperDuperAdmin = "SuperDuperAdmin"
 
+const EmptyUUID = "00000000-0000-0000-0000-000000000000"
+
 type AppError struct {
 	Err   error
 	Code  int

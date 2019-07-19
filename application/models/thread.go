@@ -83,29 +83,23 @@ func FindThreadByPostIDAndUserID(postID int, userID int) (Thread, error) {
 		return Thread{}, err
 	}
 
-	// TODO This is quick and dirty.  Rewrite to make it efficient
-	allThreads := []Thread{}
-	if err := DB.Eager("Participants").All(&allThreads); err != nil {
-		return Thread{}, fmt.Errorf("error finding threads with participants: %s", postID, err.Error())
+	threads := []Thread{}
+
+	if err := DB.Q().LeftJoin("thread_participants tp", "threads.id = tp.thread_id").
+		Where("tp.user_id = ?", userID).All(&threads); err != nil {
+		fmt.Errorf("Error getting threads: %v", err.Error())
+		return Thread{}, err
+	}
+
+	fmt.Printf("\nAAAAAAB threads %v ... userID: %v\n", len(threads), userID)
+
+	// TODO Rewrite this to do it the proper way
+	for _, t := range threads {
+		if t.PostID == postID {
+			return t, nil
+		}
 	}
 
 	return Thread{}, nil
-	//postQuery := fmt.Sprintf("post_id = '%v'", postID)
-	//
-	//threadsForPost := []Thread{}
-	//// First, get the posts
-	//if err := DB.Eager("Participants").Where(postQuery).All(&threadsForPost); err != nil {
-	//	return Thread{}, fmt.Errorf("error finding threads with postID %v: %s", postID, err.Error())
-	//}
-	//
-	//// Then match the user
-	//for _, t := range threadsForPost {
-	//	for _, u := range t.Participants {
-	//		if u.ID == userID {
-	//			return t, nil
-	//		}
-	//	}
-	//}
 
-	return Thread{}, nil
 }

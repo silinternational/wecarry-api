@@ -66,6 +66,7 @@ type Thread {
     participants: [User!]!
     messages: [Message!]!
     postID: String!
+
     createdAt: String
     updatedAt: String
 }

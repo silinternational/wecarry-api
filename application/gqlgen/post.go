@@ -40,7 +40,11 @@ func ConvertDBPostToGqlPost(dbPost models.Post, currentUser *models.User) (Post,
 	}
 
 	threadUuid := thread.Uuid.String()
-	gqlPost.MyThreadID = &threadUuid
+	s := ""
+	gqlPost.MyThreadID = &s
+	if threadUuid != domain.EmptyUUID {
+		gqlPost.MyThreadID = &threadUuid
+	}
 
 	return gqlPost, nil
 }
@@ -62,6 +66,7 @@ func ConvertGqlNewPostToDBPost(gqlPost NewPost, createdByUser models.User) (mode
 	dbPost.Title = gqlPost.Title
 
 	dbPost.Description = nulls.NewString(*gqlPost.Description)
+	dbPost.Destination = nulls.NewString(*gqlPost.Destination)
 	dbPost.Origin = nulls.NewString(*gqlPost.Origin)
 	dbPost.Size = gqlPost.Size
 
