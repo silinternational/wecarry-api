@@ -8,11 +8,12 @@ import (
 	"github.com/silinternational/handcarry-api/models"
 )
 
-// ConvertDBPostToGqlPost does what its name says, but also ...
-func ConvertDBPostToGqlPost(dbPost models.Post) (Post, error) {
+// ConvertDBPostToGqlPost does what its name says, but also adds the ID
+// of the first thread that is associated with the Post and the current user ...
+func ConvertDBPostToGqlPost(dbPost models.Post, currentUser *models.User) (Post, error) {
 	dbID := strconv.Itoa(dbPost.ID)
 
-	newGqlPost := Post{
+	gqlPost := Post{
 		ID:           dbID,
 		UUID:         dbPost.Uuid.String(),
 		Type:         PostType(dbPost.Type),
@@ -29,9 +30,26 @@ func ConvertDBPostToGqlPost(dbPost models.Post) (Post, error) {
 		UpdatedAt:    domain.ConvertTimeToStringPtr(dbPost.UpdatedAt),
 	}
 
-	return newGqlPost, nil
+	if currentUser == nil {
+		return gqlPost, nil
+	}
+
+	thread, err := models.FindThreadByPostIDAndUserID(dbPost.ID, currentUser.ID)
+	if err != nil {
+		return gqlPost, err
+	}
+
+	threadUuid := thread.Uuid.String()
+	s := ""
+	gqlPost.MyThreadID = &s
+	if threadUuid != domain.EmptyUUID {
+		gqlPost.MyThreadID = &threadUuid
+	}
+
+	return gqlPost, nil
 }
 
+// ConvertGqlNewPostToDBPost does what its name says, but also ...
 func ConvertGqlNewPostToDBPost(gqlPost NewPost, createdByUser models.User) (models.Post, error) {
 
 	org, err := models.FindOrgByUUID(gqlPost.OrgID)
@@ -48,6 +66,7 @@ func ConvertGqlNewPostToDBPost(gqlPost NewPost, createdByUser models.User) (mode
 	dbPost.Title = gqlPost.Title
 
 	dbPost.Description = nulls.NewString(*gqlPost.Description)
+	dbPost.Destination = nulls.NewString(*gqlPost.Destination)
 	dbPost.Origin = nulls.NewString(*gqlPost.Origin)
 	dbPost.Size = gqlPost.Size
 

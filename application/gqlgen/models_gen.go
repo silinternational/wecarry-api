@@ -64,6 +64,7 @@ type Post struct {
 	Thread       []*Thread     `json:"thread"`
 	CreatedAt    *string       `json:"createdAt"`
 	UpdatedAt    *string       `json:"updatedAt"`
+	MyThreadID   *string       `json:"myThreadID"`
 }
 
 type Thread struct {

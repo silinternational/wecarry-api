@@ -57,6 +57,7 @@ type Post {
     thread: [Thread!]!
     createdAt: String
     updatedAt: String
+    myThreadID: String
 }
 
 type Organization {
@@ -72,6 +73,7 @@ type Thread {
     participants: [User!]!
     messages: [Message!]!
     postID: String!
+
     createdAt: String
     updatedAt: String
 }

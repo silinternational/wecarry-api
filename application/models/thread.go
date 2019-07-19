@@ -75,3 +75,31 @@ func FindThreadByUUID(uuid string) (Thread, error) {
 
 	return thread, nil
 }
+
+func FindThreadByPostIDAndUserID(postID int, userID int) (Thread, error) {
+
+	if postID == 0 || userID == 0 {
+		err := fmt.Errorf("error: post postID and userID must not be 0. Got: %v and %v", postID, userID)
+		return Thread{}, err
+	}
+
+	threads := []Thread{}
+
+	if err := DB.Q().LeftJoin("thread_participants tp", "threads.id = tp.thread_id").
+		Where("tp.user_id = ?", userID).All(&threads); err != nil {
+		fmt.Errorf("Error getting threads: %v", err.Error())
+		return Thread{}, err
+	}
+
+	fmt.Printf("\nAAAAAAB threads %v ... userID: %v\n", len(threads), userID)
+
+	// TODO Rewrite this to do it the proper way
+	for _, t := range threads {
+		if t.PostID == postID {
+			return t, nil
+		}
+	}
+
+	return Thread{}, nil
+
+}
