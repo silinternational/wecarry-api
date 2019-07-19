@@ -1,0 +1,23 @@
+app:
+  build:
+    image: 369020531563.dkr.ecr.us-east-1.amazonaws.com/handcarry-stg
+    context: application
+    dockerfile: Dockerfile
+  cached: true
+  encrypted_env_file: .env.encrypted
+  working_dir: /go/src/handcarry
+  command: true
+
+ecsdeploy:
+  image: silintl/ecs-deploy:latest
+  encrypted_env_file: .env.encrypted
+
+awsgenerator:
+  image: codeship/aws-ecr-dockercfg-generator
+  encrypted_env_file: .env.encrypted
+  add_docker: true
+
+tracker:
+  image: silintl/app-deployment-tracker-ga:latest
+  environment:
+    TRACKING_ID: UA-56269387-10
