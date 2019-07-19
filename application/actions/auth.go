@@ -56,6 +56,9 @@ func AuthLogin(c buffalo.Context) error {
 	}
 
 	sp, err := getSAML2Provider()
+	if err != nil {
+		return err
+	}
 
 	authURL, err := sp.BuildAuthURL("")
 
@@ -282,21 +285,54 @@ func getIDPCert(metadata *types.EntityDescriptor) (dsig.MemoryX509CertificateSto
 
 func getSAML2Provider() (*saml2.SAMLServiceProvider, error) {
 
-	metadata, err := getIDPMetadata()
-	if err != nil {
-		return &saml2.SAMLServiceProvider{}, err
+	// metadata, err := getIDPMetadata()
+	// if err != nil {
+	// 	return &saml2.SAMLServiceProvider{}, err
+	// }
+	//
+	// certStore, err := getIDPCert(metadata)
+	// if err != nil {
+	// 	return &saml2.SAMLServiceProvider{}, err
+	// }
+
+	idpSsoUrl := envy.Get("SAML_IDP_SSO_URL", "")
+	if idpSsoUrl == "" {
+		msg := "unable to get SAML_IDP_SSO_URL from environment"
+		return &saml2.SAMLServiceProvider{}, fmt.Errorf(msg)
 	}
 
-	certStore, err := getIDPCert(metadata)
-	if err != nil {
-		return &saml2.SAMLServiceProvider{}, err
+	idpEntityId := envy.Get("SAML_IDP_ENTITY_ID", "")
+	if idpSsoUrl == "" {
+		msg := "unable to get SAML_IDP_ENTITY_ID from environment"
+		return &saml2.SAMLServiceProvider{}, fmt.Errorf(msg)
 	}
+
+	idpCertData := envy.Get("SAML_IDP_CERT_DATA", "")
+	if idpCertData == "" {
+		msg := "unable to get SAML_IDP_CERT_DATA from environment"
+		return &saml2.SAMLServiceProvider{}, fmt.Errorf(msg)
+	}
+
+	certStore := dsig.MemoryX509CertificateStore{
+		Roots: []*x509.Certificate{},
+	}
+	certData, err := base64.StdEncoding.DecodeString(idpCertData)
+	if err != nil {
+		return &saml2.SAMLServiceProvider{}, fmt.Errorf("error getting IDP cert data from metadata. %v", err.Error())
+	}
+
+	idpCert, err := x509.ParseCertificate(certData)
+	if err != nil {
+		return &saml2.SAMLServiceProvider{}, fmt.Errorf("error parsing IDP cert data from metadata. %v", err.Error())
+	}
+
+	certStore.Roots = append(certStore.Roots, idpCert)
 
 	host := envy.Get("HOST", "")
 
 	sp := &saml2.SAMLServiceProvider{
-		IdentityProviderSSOURL:      metadata.IDPSSODescriptor.SingleSignOnServices[0].Location,
-		IdentityProviderIssuer:      metadata.EntityID,
+		IdentityProviderSSOURL:      idpSsoUrl,
+		IdentityProviderIssuer:      idpEntityId,
 		ServiceProviderIssuer:       host,
 		AssertionConsumerServiceURL: fmt.Sprintf("%s/%s", host, "auth/saml2/callback/"),
 		SignAuthnRequests:           false,
