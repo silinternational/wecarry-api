@@ -4,7 +4,14 @@ type Query {
     posts: [Post]!
     post(id: ID): Post
     threads: [Thread]!
+    myThreads: [Thread]!
     message(id: ID): Message!
+}
+
+type Mutation {
+    createPost(input: NewPost!): Post!
+    updatePostStatus(input: UpdatedPostStatus!): Post!
+    createMessage(input: NewMessage!): Message!
 }
 
 enum Role {
@@ -103,10 +110,4 @@ input NewMessage {
 input UpdatedPostStatus {
     id: ID!
     status: String!
-}
-
-type Mutation {
-    createPost(input: NewPost!): Post!
-    updatePostStatus(input: UpdatedPostStatus!): Post!
-    createMessage(input: NewMessage!): Message!
 }

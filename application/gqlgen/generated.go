@@ -89,12 +89,13 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Message func(childComplexity int, id *string) int
-		Post    func(childComplexity int, id *string) int
-		Posts   func(childComplexity int) int
-		Threads func(childComplexity int) int
-		User    func(childComplexity int, id *string) int
-		Users   func(childComplexity int) int
+		Message   func(childComplexity int, id *string) int
+		MyThreads func(childComplexity int) int
+		Post      func(childComplexity int, id *string) int
+		Posts     func(childComplexity int) int
+		Threads   func(childComplexity int) int
+		User      func(childComplexity int, id *string) int
+		Users     func(childComplexity int) int
 	}
 
 	Thread struct {
@@ -131,6 +132,7 @@ type QueryResolver interface {
 	Posts(ctx context.Context) ([]*Post, error)
 	Post(ctx context.Context, id *string) (*Post, error)
 	Threads(ctx context.Context) ([]*Thread, error)
+	MyThreads(ctx context.Context) ([]*Thread, error)
 	Message(ctx context.Context, id *string) (*Message, error)
 }
 
@@ -414,6 +416,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Message(childComplexity, args["id"].(*string)), true
 
+	case "Query.myThreads":
+		if e.complexity.Query.MyThreads == nil {
+			break
+		}
+
+		return e.complexity.Query.MyThreads(childComplexity), true
+
 	case "Query.post":
 		if e.complexity.Query.Post == nil {
 			break
@@ -639,7 +648,14 @@ var parsedSchema = gqlparser.MustLoadSchema(
     posts: [Post]!
     post(id: ID): Post
     threads: [Thread]!
+    myThreads: [Thread]!
     message(id: ID): Message!
+}
+
+type Mutation {
+    createPost(input: NewPost!): Post!
+    updatePostStatus(input: UpdatedPostStatus!): Post!
+    createMessage(input: NewMessage!): Message!
 }
 
 enum Role {
@@ -737,12 +753,6 @@ input NewMessage {
 input UpdatedPostStatus {
     id: ID!
     status: String!
-}
-
-type Mutation {
-    createPost(input: NewPost!): Post!
-    updatePostStatus(input: UpdatedPostStatus!): Post!
-    createMessage(input: NewMessage!): Message!
 }
 `},
 )
@@ -2292,6 +2302,43 @@ func (ec *executionContext) _Query_threads(ctx context.Context, field graphql.Co
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Query().Threads(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*Thread)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNThread2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐThread(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_myThreads(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().MyThreads(rctx)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4578,6 +4625,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_threads(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "myThreads":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_myThreads(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}

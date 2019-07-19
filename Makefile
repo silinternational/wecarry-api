@@ -12,7 +12,7 @@ migratestatus: db
 gqlgen: application/gqlgen/generated.go
 
 application/gqlgen/generated.go: application/gqlgen/schema.graphql
-	docker-compose run --rm buffalo go generate ./...
+	docker-compose run --rm buffalo /bin/bash -c "go generate ./... ; chown 1000.1000 gqlgen/generated.go gqlgen/models_gen.go"
 
 adminer:
 	docker-compose up -d adminer

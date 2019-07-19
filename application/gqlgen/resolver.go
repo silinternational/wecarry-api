@@ -120,7 +120,32 @@ func (r *queryResolver) Post(ctx context.Context, id *string) (*Post, error) {
 func (r *queryResolver) Threads(ctx context.Context) ([]*Thread, error) {
 	db := models.DB
 	dbThreads := models.Threads{}
+
+	db = CallDBEagerWithRelatedFields(ThreadRelatedFields(), db, ctx)
+	if err := db.All(&dbThreads); err != nil {
+		graphql.AddError(ctx, gqlerror.Errorf("Error getting threads: %v", err.Error()))
+		return []*Thread{}, err
+	}
+
+	var gqlThreads []*Thread
+	for _, dbThread := range dbThreads {
+		newGqlThread, err := ConvertDBThreadToGqlThread(dbThread)
+
+		if err != nil {
+			graphql.AddError(ctx, gqlerror.Errorf("Error converting users: %v", err.Error()))
+			return gqlThreads, err
+		}
+		gqlThreads = append(gqlThreads, &newGqlThread)
+
+	}
+	return gqlThreads, nil
+}
+
+func (r *queryResolver) MyThreads(ctx context.Context) ([]*Thread, error) {
+	db := models.DB
+	dbThreads := models.Threads{}
 	currentUser := domain.GetCurrentUserFromGqlContext(ctx)
+
 	db = CallDBEagerWithRelatedFields(ThreadRelatedFields(), db, ctx)
 	if err := db.Q().LeftJoin("thread_participants tp", "threads.id = tp.thread_id").Where("tp.user_id = ?", currentUser.ID).All(&dbThreads); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting threads: %v", err.Error()))
