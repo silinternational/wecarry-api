@@ -24,6 +24,8 @@ const AdminRoleSuperDuperAdmin = "SuperDuperAdmin"
 
 const EmptyUUID = "00000000-0000-0000-0000-000000000000"
 
+const DateFormat = "2006-01-02"
+
 type AppError struct {
 	Err   error
 	Code  int
@@ -113,6 +115,17 @@ func ConvertTimeToStringPtr(inTime time.Time) *string {
 	return &inTimeStr
 }
 
+func ConvertDateToStringPtr(inDate time.Time) *string {
+
+	dateStr := inDate.Format(DateFormat)
+	emptyDate := "0001-01-01"
+	if dateStr == emptyDate {
+		dateStr = ""
+	}
+
+	return &dateStr
+}
+
 func ConvertStrPtrToString(inPtr *string) string {
 	if inPtr == nil {
 		return ""
@@ -128,4 +141,12 @@ func GetUuid() uuid2.UUID {
 
 func GetUuidAsString() string {
 	return GetUuid().String()
+}
+
+func ConvertStringPtrToDate(inPtr *string) (time.Time, error) {
+	if inPtr == nil {
+		return time.Time{}, nil
+	}
+
+	return time.Parse(DateFormat, *inPtr)
 }

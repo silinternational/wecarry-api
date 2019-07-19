@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/gobuffalo/envy"
+	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
 )
 
@@ -19,4 +20,12 @@ func init() {
 		log.Fatal(err)
 	}
 	pop.Debug = env == "development"
+}
+
+func ConvertStringPtrToNullsString(inPtr *string) nulls.String {
+	if inPtr == nil {
+		return nulls.String{}
+	}
+
+	return nulls.NewString(*inPtr)
 }
