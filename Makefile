@@ -26,6 +26,14 @@ ppa:
 buffalo: db
 	docker-compose up -d buffalo
 
+bounce: db
+	docker-compose kill buffalo
+	docker-compose rm buffalo
+	docker-compose up -d buffalo
+
+logs:
+	docker-compose logs buffalo
+
 db:
 	docker-compose up -d db
 
