@@ -91,8 +91,6 @@ func FindThreadByPostIDAndUserID(postID int, userID int) (Thread, error) {
 		return Thread{}, err
 	}
 
-	fmt.Printf("\nAAAAAAB threads %v ... userID: %v\n", len(threads), userID)
-
 	// TODO Rewrite this to do it the proper way
 	for _, t := range threads {
 		if t.PostID == postID {
@@ -102,4 +100,20 @@ func FindThreadByPostIDAndUserID(postID int, userID int) (Thread, error) {
 
 	return Thread{}, nil
 
+}
+
+func GetThreadParticipants(threadID int) (Users, error) {
+
+	thrParts := ThreadParticipants{}
+
+	if err := DB.Eager("User").Where("thread_id = ?", threadID).All(&thrParts); err != nil {
+		return Users{}, fmt.Errorf("error finding users on thread %v ... %v", threadID, err)
+	}
+
+	users := Users{}
+	for _, tp := range thrParts {
+		users = append(users, tp.User)
+	}
+
+	return users, nil
 }
