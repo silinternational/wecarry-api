@@ -28,12 +28,19 @@ func (r *queryResolver) Users(ctx context.Context) ([]*User, error) {
 	db := models.DB
 	dbUsers := models.Users{}
 
+	currentUser := domain.GetCurrentUserFromGqlContext(ctx)
+
+	if currentUser.AdminRole.String != domain.AdminRoleSuperDuperAdmin {
+		return []*User{}, nil
+
+	}
+
 	if err := db.All(&dbUsers); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting users: %v", err.Error()))
 		return []*User{}, err
 	}
 
-	gqlUsers := []*User{}
+	var gqlUsers []*User
 	for _, dbUser := range dbUsers {
 		newGqlUser, err := ConvertDBUserToGqlUser(dbUser)
 		if err != nil {
@@ -48,6 +55,12 @@ func (r *queryResolver) Users(ctx context.Context) ([]*User, error) {
 
 func (r *queryResolver) User(ctx context.Context, id *string) (*User, error) {
 	dbUser := models.User{}
+
+	currentUser := domain.GetCurrentUserFromGqlContext(ctx)
+
+	if currentUser.AdminRole.String != domain.AdminRoleSuperDuperAdmin && currentUser.Uuid != *id {
+		return &User{}, nil
+	}
 
 	if err := models.DB.Where("uuid = ?", id).First(&dbUser); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting user: %v", err.Error()))
@@ -106,10 +119,9 @@ func (r *queryResolver) Post(ctx context.Context, id *string) (*Post, error) {
 func (r *queryResolver) Threads(ctx context.Context) ([]*Thread, error) {
 	db := models.DB
 	dbThreads := models.Threads{}
-
+	currentUser := domain.GetCurrentUserFromGqlContext(ctx)
 	db = CallDBEagerWithRelatedFields(ThreadRelatedFields(), db, ctx)
-
-	if err := db.All(&dbThreads); err != nil {
+	if err := db.Q().LeftJoin("thread_participants tp", "threads.id = tp.thread_id").Where("thread_participants.user_id = ?", currentUser.ID).All(&dbThreads); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting threads: %v", err.Error()))
 		return []*Thread{}, err
 	}

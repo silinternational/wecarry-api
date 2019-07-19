@@ -20,6 +20,8 @@ const ErrorLevelWarn = "warn"
 const ErrorLevelError = "error"
 const ErrorLevelCritical = "critical"
 
+const AdminRoleSuperDuperAdmin = "SuperDuperAdmin"
+
 type AppError struct {
 	Err   error
 	Code  int
