@@ -74,6 +74,77 @@ func ConvertDBMessageToGqlMessage(dbMessage models.Message) (Message, error) {
 	return gqlMessage, err
 }
 
+func getThreadAndParticipants(threadUuid string, user models.User) (models.Thread, error) {
+
+	thread, err := models.FindThreadByUUID(threadUuid)
+	if err != nil {
+		return models.Thread{}, err
+	}
+
+	if thread.ID == 0 {
+		return thread, fmt.Errorf("could not find thread with uuid %v", threadUuid)
+	}
+
+	users, err := models.GetThreadParticipants(thread.ID)
+	if err != nil {
+		return models.Thread{}, err
+	}
+
+	isUserAlreadyAParticipant := false
+	for _, u := range users {
+		if u.ID == user.ID {
+			isUserAlreadyAParticipant = true
+			break
+		}
+	}
+
+	if !isUserAlreadyAParticipant {
+		users = append(users, user)
+	}
+
+	thread.Participants = users
+
+	return thread, nil
+}
+
+func createThreadWithParticipants(postUuid string, user models.User) (models.Thread, error) {
+	post, err := models.FindPostByUUID(postUuid)
+	if err != nil {
+		return models.Thread{}, err
+	}
+
+	participants := models.Users{user}
+
+	// Ensure Post Creator is one of the participants
+	if post.CreatedBy.ID != 0 && post.CreatedBy.ID != user.ID {
+		participants = append(participants, post.CreatedBy)
+	}
+
+	thread := models.Thread{
+		PostID:       post.ID,
+		Uuid:         domain.GetUuid(),
+		Participants: participants,
+	}
+
+	if err = models.DB.Save(&thread); err != nil {
+		err = fmt.Errorf("error saving new thread for message: %v", err.Error())
+		return models.Thread{}, err
+	}
+
+	for _, p := range participants {
+		threadP := models.ThreadParticipant{
+			ThreadID: thread.ID,
+			UserID:   p.ID,
+		}
+		if err := models.DB.Save(&threadP); err != nil {
+			err = fmt.Errorf("error saving new thread participant %+v for message: %v", threadP, err.Error())
+			return models.Thread{}, err
+		}
+	}
+
+	return thread, nil
+}
+
 func ConvertGqlNewMessageToDBMessage(gqlMessage NewMessage, user models.User) (models.Message, error) {
 
 	var thread models.Thread
@@ -81,27 +152,17 @@ func ConvertGqlNewMessageToDBMessage(gqlMessage NewMessage, user models.User) (m
 	threadUuid := domain.ConvertStrPtrToString(gqlMessage.ThreadID)
 	if threadUuid != "" {
 		var err error
-		thread, err = models.FindThreadByUUID(threadUuid)
+		thread, err = getThreadAndParticipants(threadUuid, user)
 		if err != nil {
 			return models.Message{}, err
 		}
+
 	} else {
-		post, err := models.FindPostByUUID(gqlMessage.PostID)
+		var err error
+		thread, err = createThreadWithParticipants(gqlMessage.PostID, user)
 		if err != nil {
 			return models.Message{}, err
 		}
-
-		thread = models.Thread{
-			PostID:       post.ID,
-			Uuid:         domain.GetUuid(),
-			Participants: []models.User{user},
-		}
-
-		if err = models.DB.Save(&thread); err != nil {
-			err = fmt.Errorf("error saving new thread for message: %v", err.Error())
-			return models.Message{}, err
-		}
-
 	}
 
 	dbMessage := models.Message{}

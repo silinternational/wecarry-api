@@ -89,7 +89,7 @@ func FindPostByUUID(uuid string) (Post, error) {
 	post := Post{}
 	queryString := fmt.Sprintf("uuid = '%s'", uuid)
 
-	if err := DB.Where(queryString).First(&post); err != nil {
+	if err := DB.Eager("CreatedBy").Where(queryString).First(&post); err != nil {
 		return Post{}, fmt.Errorf("error finding post by uuid: %s", err.Error())
 	}
 
