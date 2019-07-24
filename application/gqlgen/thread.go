@@ -14,7 +14,8 @@ func ThreadRelatedFields() map[string]string {
 	}
 }
 
-// ConvertDBThreadToGqlThread does what its name says, but also ...
+// ConvertDBThreadToGqlThread does what its name says, but also gets the
+// thread participants
 func ConvertDBThreadToGqlThread(dbThread models.Thread) (Thread, error) {
 	dbID := strconv.Itoa(dbThread.ID)
 
@@ -24,16 +25,24 @@ func ConvertDBThreadToGqlThread(dbThread models.Thread) (Thread, error) {
 		UpdatedAt: domain.ConvertTimeToStringPtr(dbThread.UpdatedAt),
 	}
 
-	participants := []*User{}
-	for _, p := range dbThread.Participants {
+	// TODO only get participants if they are requested
+	// Get thread participants and convert them to Gql users
+	participants, err := models.GetThreadParticipants(dbThread.ID)
+	if err != nil {
+		return gqlThread, err
+	}
+
+	gqlUsers := []*User{}
+
+	for _, p := range participants {
 		participant, err := ConvertDBUserToGqlUser(p)
 		if err != nil {
 			return gqlThread, err
 		}
-		participants = append(participants, &participant)
+		gqlUsers = append(gqlUsers, &participant)
 	}
 
-	gqlThread.Participants = participants
+	gqlThread.Participants = gqlUsers
 
 	messages := []*Message{}
 	for _, m := range dbThread.Messages {
