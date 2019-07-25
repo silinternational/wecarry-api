@@ -2,10 +2,8 @@ package gqlgen
 
 import (
 	"context"
-	"strings"
-
-	"github.com/99designs/gqlgen/graphql"
 	"github.com/gobuffalo/pop"
+	"github.com/silinternational/handcarry-api/domain"
 )
 
 // CallDBEagerWithRelatedFields calls db.Eager with the
@@ -13,14 +11,12 @@ import (
 // The keys of the relatedFields should match what gqlgen uses and
 //   the values should be the match what the pop model uses for the same field
 func CallDBEagerWithRelatedFields(relatedFields map[string]string, db *pop.Connection, ctx context.Context) *pop.Connection {
-
-	rctxt := graphql.GetRequestContext(ctx)
-	rawQuery := rctxt.RawQuery
+	requestFields := GetRequestFields(ctx)
 
 	updateFields := []string{}
 	for gqlField, dbField := range relatedFields {
 
-		if strings.Contains(rawQuery, gqlField) {
+		if domain.IsStringInSlice(gqlField, requestFields) {
 			updateFields = append(updateFields, dbField)
 		}
 	}

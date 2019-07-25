@@ -25,7 +25,6 @@ type User {
   firstName: String!
   lastName: String!
   nickname: String!
-  uuid: String!
   accessToken: String!
   createdAt: String
   updatedAt: String
@@ -39,7 +38,6 @@ enum PostType {
 
 type Post {
     id: ID!
-    uuid: String!
     type: PostType!
     createdBy: User!
     receiver: User
@@ -54,7 +52,7 @@ type Post {
     neededBefore: String
     category: String!
     status: String!
-    thread: [Thread!]!
+    threads: [Thread]!
     createdAt: String
     updatedAt: String
     myThreadID: String

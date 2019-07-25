@@ -81,10 +81,9 @@ type ComplexityRoot struct {
 		Receiver     func(childComplexity int) int
 		Size         func(childComplexity int) int
 		Status       func(childComplexity int) int
-		Thread       func(childComplexity int) int
+		Threads      func(childComplexity int) int
 		Title        func(childComplexity int) int
 		Type         func(childComplexity int) int
-		UUID         func(childComplexity int) int
 		UpdatedAt    func(childComplexity int) int
 	}
 
@@ -117,7 +116,6 @@ type ComplexityRoot struct {
 		ID          func(childComplexity int) int
 		LastName    func(childComplexity int) int
 		Nickname    func(childComplexity int) int
-		UUID        func(childComplexity int) int
 		UpdatedAt   func(childComplexity int) int
 	}
 }
@@ -370,12 +368,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Post.Status(childComplexity), true
 
-	case "Post.thread":
-		if e.complexity.Post.Thread == nil {
+	case "Post.threads":
+		if e.complexity.Post.Threads == nil {
 			break
 		}
 
-		return e.complexity.Post.Thread(childComplexity), true
+		return e.complexity.Post.Threads(childComplexity), true
 
 	case "Post.title":
 		if e.complexity.Post.Title == nil {
@@ -390,13 +388,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Post.Type(childComplexity), true
-
-	case "Post.uuid":
-		if e.complexity.Post.UUID == nil {
-			break
-		}
-
-		return e.complexity.Post.UUID(childComplexity), true
 
 	case "Post.updatedAt":
 		if e.complexity.Post.UpdatedAt == nil {
@@ -574,13 +565,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.User.Nickname(childComplexity), true
 
-	case "User.uuid":
-		if e.complexity.User.UUID == nil {
-			break
-		}
-
-		return e.complexity.User.UUID(childComplexity), true
-
 	case "User.updatedAt":
 		if e.complexity.User.UpdatedAt == nil {
 			break
@@ -677,7 +661,6 @@ type User {
   firstName: String!
   lastName: String!
   nickname: String!
-  uuid: String!
   accessToken: String!
   createdAt: String
   updatedAt: String
@@ -691,7 +674,6 @@ enum PostType {
 
 type Post {
     id: ID!
-    uuid: String!
     type: PostType!
     createdBy: User!
     receiver: User
@@ -706,7 +688,7 @@ type Post {
     neededBefore: String
     category: String!
     status: String!
-    thread: [Thread!]!
+    threads: [Thread]!
     createdAt: String
     updatedAt: String
     myThreadID: String
@@ -1465,43 +1447,6 @@ func (ec *executionContext) _Post_id(ctx context.Context, field graphql.Collecte
 	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Post_uuid(ctx context.Context, field graphql.CollectedField, obj *Post) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Post",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.UUID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _Post_type(ctx context.Context, field graphql.CollectedField, obj *Post) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -1996,7 +1941,7 @@ func (ec *executionContext) _Post_status(ctx context.Context, field graphql.Coll
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Post_thread(ctx context.Context, field graphql.CollectedField, obj *Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_threads(ctx context.Context, field graphql.CollectedField, obj *Post) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -2015,7 +1960,7 @@ func (ec *executionContext) _Post_thread(ctx context.Context, field graphql.Coll
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Thread, nil
+		return obj.Threads, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2905,43 +2850,6 @@ func (ec *executionContext) _User_nickname(ctx context.Context, field graphql.Co
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Nickname, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _User_uuid(ctx context.Context, field graphql.CollectedField, obj *User) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "User",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.UUID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4524,11 +4432,6 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "uuid":
-			out.Values[i] = ec._Post_uuid(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "type":
 			out.Values[i] = ec._Post_type(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -4575,8 +4478,8 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "thread":
-			out.Values[i] = ec._Post_thread(ctx, field, obj)
+		case "threads":
+			out.Values[i] = ec._Post_threads(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -4803,11 +4706,6 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "nickname":
 			out.Values[i] = ec._User_nickname(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "uuid":
-			out.Values[i] = ec._User_uuid(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -5267,7 +5165,7 @@ func (ec *executionContext) marshalNThread2ᚕᚖgithubᚗcomᚋsilinternational
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNThread2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐThread(ctx, sel, v[i])
+			ret[i] = ec.marshalOThread2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐThread(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)

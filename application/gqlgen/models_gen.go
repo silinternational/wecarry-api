@@ -46,7 +46,6 @@ type Organization struct {
 
 type Post struct {
 	ID           string        `json:"id"`
-	UUID         string        `json:"uuid"`
 	Type         PostType      `json:"type"`
 	CreatedBy    *User         `json:"createdBy"`
 	Receiver     *User         `json:"receiver"`
@@ -61,7 +60,7 @@ type Post struct {
 	NeededBefore *string       `json:"neededBefore"`
 	Category     string        `json:"category"`
 	Status       string        `json:"status"`
-	Thread       []*Thread     `json:"thread"`
+	Threads      []*Thread     `json:"threads"`
 	CreatedAt    *string       `json:"createdAt"`
 	UpdatedAt    *string       `json:"updatedAt"`
 	MyThreadID   *string       `json:"myThreadID"`
@@ -88,7 +87,6 @@ type User struct {
 	FirstName   string  `json:"firstName"`
 	LastName    string  `json:"lastName"`
 	Nickname    string  `json:"nickname"`
-	UUID        string  `json:"uuid"`
 	AccessToken string  `json:"accessToken"`
 	CreatedAt   *string `json:"createdAt"`
 	UpdatedAt   *string `json:"updatedAt"`

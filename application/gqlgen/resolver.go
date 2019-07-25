@@ -4,7 +4,6 @@ package gqlgen
 
 import (
 	"context"
-
 	"github.com/silinternational/handcarry-api/domain"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -32,10 +31,12 @@ func (r *queryResolver) Users(ctx context.Context) ([]*User, error) {
 
 	if currentUser.AdminRole.String != domain.AdminRoleSuperDuperAdmin {
 		return []*User{}, nil
-
 	}
 
-	if err := db.All(&dbUsers); err != nil {
+	requestFields := GetRequestFields(ctx)
+	selectFields := GetSelectFieldsFromRequestFields(UserSimpleFields(), requestFields)
+
+	if err := db.Select(selectFields...).All(&dbUsers); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting users: %v", err.Error()))
 		return []*User{}, err
 	}
@@ -62,7 +63,10 @@ func (r *queryResolver) User(ctx context.Context, id *string) (*User, error) {
 		return &User{}, nil
 	}
 
-	if err := models.DB.Where("uuid = ?", id).First(&dbUser); err != nil {
+	requestFields := GetRequestFields(ctx)
+	selectFields := GetSelectFieldsFromRequestFields(UserSimpleFields(), requestFields)
+
+	if err := models.DB.Select(selectFields...).Where("uuid = ?", id).First(&dbUser); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting user: %v", err.Error()))
 		return &User{}, err
 	}
@@ -87,7 +91,7 @@ func (r *queryResolver) Posts(ctx context.Context) ([]*Post, error) {
 
 	var gqlPosts []*Post
 	for _, dbPost := range dbPosts {
-		newGqlPost, err := ConvertDBPostToGqlPost(dbPost, &cUser)
+		newGqlPost, err := ConvertDBPostToGqlPost(dbPost, &cUser, GetRequestFields(ctx))
 		if err != nil {
 			graphql.AddError(ctx, gqlerror.Errorf("Error converting posts: %v", err.Error()))
 			return gqlPosts, err
@@ -108,7 +112,7 @@ func (r *queryResolver) Post(ctx context.Context, id *string) (*Post, error) {
 		return &Post{}, err
 	}
 
-	newGqlPost, err := ConvertDBPostToGqlPost(dbPost, &cUser)
+	newGqlPost, err := ConvertDBPostToGqlPost(dbPost, &cUser, GetRequestFields(ctx))
 	if err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error converting post: %v", err.Error()))
 		return &newGqlPost, err
@@ -121,15 +125,17 @@ func (r *queryResolver) Threads(ctx context.Context) ([]*Thread, error) {
 	db := models.DB
 	dbThreads := models.Threads{}
 
-	db = CallDBEagerWithRelatedFields(ThreadRelatedFields(), db, ctx)
-	if err := db.All(&dbThreads); err != nil {
+	requestFields := GetRequestFields(ctx)
+	selectFields := getSelectFieldsForThreads(requestFields)
+
+	if err := db.Select(selectFields...).All(&dbThreads); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting threads: %v", err.Error()))
 		return []*Thread{}, err
 	}
 
 	var gqlThreads []*Thread
 	for _, dbThread := range dbThreads {
-		newGqlThread, err := ConvertDBThreadToGqlThread(dbThread)
+		newGqlThread, err := ConvertDBThreadToGqlThread(dbThread, requestFields)
 
 		if err != nil {
 			graphql.AddError(ctx, gqlerror.Errorf("Error converting users: %v", err.Error()))
@@ -155,10 +161,10 @@ func (r *queryResolver) MyThreads(ctx context.Context) ([]*Thread, error) {
 
 	var gqlThreads []*Thread
 	for _, dbThread := range dbThreads {
-		newGqlThread, err := ConvertDBThreadToGqlThread(dbThread)
+		newGqlThread, err := ConvertDBThreadToGqlThread(dbThread, []string{})
 
 		if err != nil {
-			graphql.AddError(ctx, gqlerror.Errorf("Error converting users: %v", err.Error()))
+			graphql.AddError(ctx, gqlerror.Errorf("Error converting threads: %v", err.Error()))
 			return gqlThreads, err
 		}
 		gqlThreads = append(gqlThreads, &newGqlThread)
@@ -175,7 +181,7 @@ func (r *queryResolver) Message(ctx context.Context, id *string) (*Message, erro
 		return &Message{}, err
 	}
 
-	gqlMessage, err := ConvertDBMessageToGqlMessage(dbMsg)
+	gqlMessage, err := ConvertDBMessageToGqlMessage(dbMsg, GetRequestFields(ctx))
 	if err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("error converting message: %v", err.Error()))
 		return &gqlMessage, err

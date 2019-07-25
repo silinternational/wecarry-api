@@ -150,3 +150,13 @@ func ConvertStringPtrToDate(inPtr *string) (time.Time, error) {
 
 	return time.Parse(DateFormat, *inPtr)
 }
+
+func IsStringInSlice(needle string, haystack []string) bool {
+	for _, hs := range haystack {
+		if needle == hs {
+			return true
+		}
+	}
+
+	return false
+}

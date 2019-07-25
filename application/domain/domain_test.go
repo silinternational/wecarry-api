@@ -78,3 +78,44 @@ func TestGetBearerTokenFromRequest(t *testing.T) {
 		})
 	}
 }
+
+func TestIsStringInSlice(t *testing.T) {
+	type TestData struct {
+		Needle   string
+		Haystack []string
+		Expected bool
+	}
+
+	allTestData := []TestData{
+		{
+			Needle:   "no",
+			Haystack: []string{},
+			Expected: false,
+		},
+		{
+			Needle:   "no",
+			Haystack: []string{"really", "are you sure"},
+			Expected: false,
+		},
+		{
+			Needle:   "yes",
+			Haystack: []string{"yes"},
+			Expected: true,
+		},
+		{
+			Needle:   "yes",
+			Haystack: []string{"one", "two", "three", "yes"},
+			Expected: true,
+		},
+	}
+
+	for i, td := range allTestData {
+		results := IsStringInSlice(td.Needle, td.Haystack)
+		expected := td.Expected
+
+		if results != expected {
+			t.Errorf("Bad results for test set i = %v. Expected %v, but got %v", i, expected, results)
+			return
+		}
+	}
+}

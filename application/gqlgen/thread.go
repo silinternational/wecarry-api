@@ -4,32 +4,40 @@ import (
 	"fmt"
 	"github.com/silinternational/handcarry-api/domain"
 	"github.com/silinternational/handcarry-api/models"
-	"strconv"
 )
 
-func ThreadRelatedFields() map[string]string {
+func ThreadSimpleFields() map[string]string {
 	return map[string]string{
-		//"participants": "Participants",
-		"messages": "Messages",
+		"id":     "uuid",
+		"postID": "post_id",
 	}
 }
 
-// ConvertDBThreadToGqlThread does what its name says, but also gets the
-// thread participants
-func ConvertDBThreadToGqlThread(dbThread models.Thread) (Thread, error) {
-	dbID := strconv.Itoa(dbThread.ID)
+func getSelectFieldsForThreads(requestFields []string) []string {
+	selectFields := GetSelectFieldsFromRequestFields(ThreadSimpleFields(), requestFields)
 
-	gqlThread := Thread{
-		ID:        dbID,
-		CreatedAt: domain.ConvertTimeToStringPtr(dbThread.CreatedAt),
-		UpdatedAt: domain.ConvertTimeToStringPtr(dbThread.UpdatedAt),
+	// Ensure we can get participants via the thread ID
+	if domain.IsStringInSlice(ParticipantsField, requestFields) {
+		selectFields = append(selectFields, "id")
 	}
 
-	// TODO only get participants if they are requested
-	// Get thread participants and convert them to Gql users
-	participants, err := models.GetThreadParticipants(dbThread.ID)
+	// Ensure we can get the post via the post ID
+	if domain.IsStringInSlice(PostField, requestFields) {
+		selectFields = append(selectFields, "post_id")
+	}
+
+	return selectFields
+}
+
+func addParticipantsToThread(gqlThread *Thread, dbThread models.Thread, requestFields []string) error {
+	if !domain.IsStringInSlice(ParticipantsField, requestFields) {
+		return nil
+	}
+
+	selectedFields := GetSelectFieldsFromRequestFields(UserSimpleFields(), requestFields)
+	participants, err := models.GetThreadParticipants(dbThread.ID, selectedFields)
 	if err != nil {
-		return gqlThread, err
+		return err
 	}
 
 	gqlUsers := []*User{}
@@ -37,35 +45,88 @@ func ConvertDBThreadToGqlThread(dbThread models.Thread) (Thread, error) {
 	for _, p := range participants {
 		participant, err := ConvertDBUserToGqlUser(p)
 		if err != nil {
-			return gqlThread, err
+			return err
 		}
 		gqlUsers = append(gqlUsers, &participant)
 	}
 
 	gqlThread.Participants = gqlUsers
+	return nil
+}
+
+func addPostToThread(gqlThread *Thread, postID int, requestFields []string) error {
+	if !domain.IsStringInSlice(PostField, requestFields) {
+		return nil
+	}
+
+	if postID <= 0 {
+		return fmt.Errorf("error: postID must be positive, got %v", postID)
+	}
+
+	post := models.Post{}
+	if err := models.DB.Find(&post, postID); err != nil {
+		return fmt.Errorf("error loading post %v %s", postID, err)
+	}
+
+	gqlPost, err := ConvertDBPostToGqlPost(post, nil, requestFields)
+	if err != nil {
+		return err
+	}
+
+	gqlThread.Post = &gqlPost
+
+	return nil
+}
+
+func addMessagesToThread(gqlThread *Thread, dbThread models.Thread, requestFields []string) error {
+	if !domain.IsStringInSlice(MessagesField, requestFields) {
+		return nil
+	}
+
+	selectFields := GetSelectFieldsFromRequestFields(MessageSimpleFields(), requestFields)
+
+	dbMessages := []models.Message{}
+	if err := models.DB.Select(selectFields...).Where("thread_id = ?", dbThread.ID).All(&dbMessages); err != nil {
+		return fmt.Errorf("error getting messages for thread id %v ... %v", dbThread.ID, err)
+	}
 
 	messages := []*Message{}
-	for _, m := range dbThread.Messages {
-		message, err := ConvertDBMessageToGqlMessage(m)
+
+	for _, m := range dbMessages {
+		message, err := ConvertDBMessageToGqlMessageWithSender(m, requestFields)
 		if err != nil {
-			return gqlThread, err
+			return err
 		}
 		messages = append(messages, &message)
 	}
 
 	gqlThread.Messages = messages
+	return nil
+}
 
-	post := models.Post{}
-	if err := models.DB.Find(&post, dbThread.PostID); err != nil {
-		return gqlThread, fmt.Errorf("error loading post %v %s", dbThread.PostID, err)
+// ConvertDBThreadToGqlThread does what its name says, but also gets the
+// thread participants
+func ConvertDBThreadToGqlThread(dbThread models.Thread, requestFields []string) (Thread, error) {
+	gqlThread := Thread{
+		ID:        dbThread.Uuid.String(),
+		CreatedAt: domain.ConvertTimeToStringPtr(dbThread.CreatedAt),
+		UpdatedAt: domain.ConvertTimeToStringPtr(dbThread.UpdatedAt),
 	}
 
-	gqlPost, err := ConvertDBPostToGqlPost(post, nil)
-	if err != nil {
+	if err := addParticipantsToThread(&gqlThread, dbThread, requestFields); err != nil {
+		err = fmt.Errorf("error adding participants to thread id %v ... %v", dbThread.ID, err)
 		return gqlThread, err
 	}
 
-	gqlThread.Post = &gqlPost
+	if err := addMessagesToThread(&gqlThread, dbThread, requestFields); err != nil {
+		err = fmt.Errorf("error adding messages to thread id %v ... %v", dbThread.ID, err)
+		return gqlThread, err
+	}
 
-	return gqlThread, err
+	if err := addPostToThread(&gqlThread, dbThread.PostID, requestFields); err != nil {
+		err = fmt.Errorf("error adding post to thread id %v ... %v", dbThread.ID, err)
+		return gqlThread, err
+	}
+
+	return gqlThread, nil
 }

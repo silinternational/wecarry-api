@@ -2,20 +2,54 @@ package gqlgen
 
 import (
 	"fmt"
-	"strconv"
-
 	"github.com/silinternational/handcarry-api/domain"
 	"github.com/silinternational/handcarry-api/models"
 )
 
+func addMyThreadIDToPost(gqlPost *Post, dbPost models.Post, currentUser *models.User) error {
+	if currentUser == nil {
+		return nil
+	}
+
+	thread, err := models.FindThreadByPostIDAndUserID(dbPost.ID, currentUser.ID)
+	if err != nil {
+		return err
+	}
+
+	threadUuid := thread.Uuid.String()
+	s := ""
+	gqlPost.MyThreadID = &s
+	if threadUuid != domain.EmptyUUID {
+		gqlPost.MyThreadID = &threadUuid
+	}
+	return nil
+}
+
+func addCreatedByToPost(gqlPost *Post, dbPost models.Post, requestFields []string) error {
+	if !domain.IsStringInSlice(CreatedByField, requestFields) {
+		return nil
+	}
+
+	creator := models.User{}
+	selectFields := GetSelectFieldsFromRequestFields(UserSimpleFields(), requestFields)
+	if err := models.DB.Select(selectFields...).Find(&creator, dbPost.CreatedByID); err != nil {
+		return err
+	}
+
+	gqlUser, err := ConvertDBUserToGqlUser(creator)
+	if err != nil {
+		return err
+	}
+	gqlPost.CreatedBy = &gqlUser
+
+	return nil
+}
+
 // ConvertDBPostToGqlPost does what its name says, but also adds the ID
 // of the first thread that is associated with the Post and the current user ...
-func ConvertDBPostToGqlPost(dbPost models.Post, currentUser *models.User) (Post, error) {
-	dbID := strconv.Itoa(dbPost.ID)
-
+func ConvertDBPostToGqlPost(dbPost models.Post, currentUser *models.User, requestFields []string) (Post, error) {
 	gqlPost := Post{
-		ID:           dbID,
-		UUID:         dbPost.Uuid.String(),
+		ID:           dbPost.Uuid.String(),
 		Type:         PostType(dbPost.Type),
 		Title:        dbPost.Title,
 		Description:  GetStringFromNullsString(dbPost.Description),
@@ -30,23 +64,13 @@ func ConvertDBPostToGqlPost(dbPost models.Post, currentUser *models.User) (Post,
 		UpdatedAt:    domain.ConvertTimeToStringPtr(dbPost.UpdatedAt),
 	}
 
-	if currentUser == nil {
-		return gqlPost, nil
-	}
-
-	thread, err := models.FindThreadByPostIDAndUserID(dbPost.ID, currentUser.ID)
-	if err != nil {
+	if err := addMyThreadIDToPost(&gqlPost, dbPost, currentUser); err != nil {
 		return gqlPost, err
 	}
 
-	threadUuid := thread.Uuid.String()
-	s := ""
-	gqlPost.MyThreadID = &s
-	if threadUuid != domain.EmptyUUID {
-		gqlPost.MyThreadID = &threadUuid
-	}
+	err := addCreatedByToPost(&gqlPost, dbPost, requestFields)
 
-	return gqlPost, nil
+	return gqlPost, err
 }
 
 // ConvertGqlNewPostToDBPost does what its name says, but also ...

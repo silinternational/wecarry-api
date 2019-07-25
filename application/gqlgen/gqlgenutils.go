@@ -4,6 +4,12 @@ import (
 	"github.com/gobuffalo/nulls"
 )
 
+const MessagesField = "messages"
+const ParticipantsField = "participants"
+const PostField = "post"
+const SenderField = "sender"
+const CreatedByField = "createdBy"
+
 func GetStringFromNullsString(inString nulls.String) *string {
 	output := ""
 	if inString.Valid {
