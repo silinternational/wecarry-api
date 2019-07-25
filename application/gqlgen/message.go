@@ -71,9 +71,11 @@ func ConvertDBMessageToGqlMessage(dbMessage models.Message, requestFields []stri
 		return Message{}, err
 	}
 
+	selectFields := GetSelectFieldsFromRequestFields(MessageSimpleFields(), requestFields)
+
 	dbMessages := models.Messages{}
 	queryString := fmt.Sprintf("thread_id = '%v'", dbThread.ID)
-	if err := models.DB.Where(queryString).All(&dbMessages); err != nil {
+	if err := models.DB.Select(selectFields...).Where(queryString).All(&dbMessages); err != nil {
 		err = fmt.Errorf("error finding messages with thread id %v ... %v", dbThread.ID, err)
 		return Message{}, err
 	}
