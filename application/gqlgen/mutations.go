@@ -22,7 +22,7 @@ func (r *mutationResolver) CreatePost(ctx context.Context, input NewPost) (*Post
 		return &Post{}, err
 	}
 
-	gqlPost, err := ConvertDBPostToGqlPost(dbPost, &cUser)
+	gqlPost, err := ConvertDBPostToGqlPost(dbPost, &cUser, GetRequestFields(ctx))
 
 	return &gqlPost, err
 }
@@ -39,7 +39,7 @@ func (r *mutationResolver) UpdatePostStatus(ctx context.Context, input UpdatedPo
 		return &Post{}, err
 	}
 
-	updatedPost, err := ConvertDBPostToGqlPost(post, nil)
+	updatedPost, err := ConvertDBPostToGqlPost(post, nil, GetRequestFields(ctx))
 	if err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error converting post: %v", err.Error()))
 		return &updatedPost, err
@@ -50,7 +50,7 @@ func (r *mutationResolver) UpdatePostStatus(ctx context.Context, input UpdatedPo
 
 func (r *mutationResolver) CreateMessage(ctx context.Context, input NewMessage) (*Message, error) {
 	cUser := domain.GetCurrentUserFromGqlContext(ctx)
-	dbMessage, err := ConvertGqlNewMessageToDBMessage(input, cUser)
+	dbMessage, err := ConvertGqlNewMessageToDBMessage(input, cUser, GetRequestFields(ctx))
 	if err != nil {
 		return &Message{}, err
 	}
@@ -59,7 +59,7 @@ func (r *mutationResolver) CreateMessage(ctx context.Context, input NewMessage) 
 		return &Message{}, err
 	}
 
-	gqlMessage, err := ConvertDBMessageToGqlMessage(dbMessage)
+	gqlMessage, err := ConvertDBMessageToGqlMessage(dbMessage, GetRequestFields(ctx))
 
 	return &gqlMessage, err
 }
