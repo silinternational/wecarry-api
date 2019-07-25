@@ -2,21 +2,32 @@ package gqlgen
 
 import (
 	"github.com/gobuffalo/nulls"
-	"strconv"
-
 	"github.com/silinternational/handcarry-api/domain"
 	"github.com/silinternational/handcarry-api/models"
 )
 
+func UserSimpleFields() map[string]string {
+	return map[string]string{
+		"id":          "uuid",
+		"email":       "email",
+		"firstName":   "first_name",
+		"lastName":    "last_name",
+		"nickname":    "nickname",
+		"accessToken": "access_token",
+		"createdAt":   "created_at",
+		"updatedAt":   "updated_at",
+		"adminRole":   "admin_role",
+	}
+}
+
 // ConvertDBUserToGqlUser does what its name says, but also ...
 func ConvertDBUserToGqlUser(dbUser models.User) (User, error) {
-	dbID := strconv.Itoa(dbUser.ID)
 
 	r := GetStringFromNullsString(dbUser.AdminRole)
 	gqlRole := Role(*r)
 
 	newGqlUser := User{
-		ID:        dbID,
+		ID:        dbUser.Uuid,
 		Email:     dbUser.Email,
 		FirstName: dbUser.FirstName,
 		LastName:  dbUser.LastName,
