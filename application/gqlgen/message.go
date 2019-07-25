@@ -4,15 +4,23 @@ import (
 	"fmt"
 	"github.com/silinternational/handcarry-api/domain"
 	"github.com/silinternational/handcarry-api/models"
-	"strconv"
 )
+
+func MessageSimpleFields() map[string]string {
+	return map[string]string{
+		"id":        "uuid",
+		"content":   "content",
+		"sender":    "sent_by_id",
+		"createdAt": "created_at",
+		"updatedAt": "updated_at",
+	}
+}
 
 // ConvertDBUserToGqlUser does what its name says, but also ...
 func ConvertSimpleDBMessageToGqlMessage(dbMessage models.Message) (Message, error) {
-	dbID := strconv.Itoa(dbMessage.ID)
 
 	gqlMessage := Message{
-		ID:        dbID,
+		ID:        dbMessage.Uuid.String(),
 		Content:   dbMessage.Content,
 		CreatedAt: domain.ConvertTimeToStringPtr(dbMessage.CreatedAt),
 		UpdatedAt: domain.ConvertTimeToStringPtr(dbMessage.UpdatedAt),
@@ -21,25 +29,52 @@ func ConvertSimpleDBMessageToGqlMessage(dbMessage models.Message) (Message, erro
 	return gqlMessage, nil
 }
 
-// ConvertDBUserToGqlUser does what its name says, but also ...
-func ConvertDBMessageToGqlMessage(dbMessage models.Message) (Message, error) {
-
-	// TODO this fetching of related objects is all quick and dirty.  Rewrite when there is time.
-	dbID := strconv.Itoa(dbMessage.ID)
-
-	dbThread := models.Thread{}
-	if err := models.DB.Find(&dbThread, dbMessage.ThreadID); err != nil {
+// ConvertDBMessageToGqlMessageWithSender does what its name says without getting the related thread object.
+func ConvertDBMessageToGqlMessageWithSender(dbMessage models.Message, requestFields []string) (Message, error) {
+	gqlMessage, err := ConvertSimpleDBMessageToGqlMessage(dbMessage)
+	if err != nil {
 		return Message{}, err
 	}
 
-	thread, err := ConvertDBThreadToGqlThread(dbThread)
+	if !domain.IsStringInSlice(SenderField, requestFields) {
+		return gqlMessage, nil
+	}
+
+	dbUser := models.User{}
+	if err := models.DB.Find(&dbUser, dbMessage.SentByID); err != nil {
+		return Message{}, err
+	}
+
+	sender, err := ConvertDBUserToGqlUser(dbUser)
+	if err != nil {
+		return Message{}, err
+	}
+
+	gqlMessage.Sender = &sender
+
+	return gqlMessage, nil
+}
+
+// ConvertDBUserToGqlUser does what its name says, but also ...
+func ConvertDBMessageToGqlMessage(dbMessage models.Message, requestFields []string) (Message, error) {
+
+	// TODO this fetching of related objects is all quick and dirty.  Rewrite when there is time.
+
+	dbThread := models.Thread{}
+	if err := models.DB.Find(&dbThread, dbMessage.ThreadID); err != nil {
+		err = fmt.Errorf("error finding thread with id %v for message ... %v", dbMessage.ThreadID, err)
+		return Message{}, err
+	}
+
+	thread, err := ConvertDBThreadToGqlThread(dbThread, requestFields)
 	if err != nil {
 		return Message{}, err
 	}
 
 	dbMessages := models.Messages{}
-	queryString := fmt.Sprintf("thread_id = '%s'", thread.ID)
+	queryString := fmt.Sprintf("thread_id = '%v'", dbThread.ID)
 	if err := models.DB.Where(queryString).All(&dbMessages); err != nil {
+		err = fmt.Errorf("error finding messages with thread id %v ... %v", dbThread.ID, err)
 		return Message{}, err
 	}
 
@@ -54,6 +89,7 @@ func ConvertDBMessageToGqlMessage(dbMessage models.Message) (Message, error) {
 
 	dbUser := models.User{}
 	if err := models.DB.Find(&dbUser, dbMessage.SentByID); err != nil {
+		err = fmt.Errorf("error finding message sentBy user with id %v ... %v", dbMessage.SentByID, err)
 		return Message{}, err
 	}
 
@@ -62,19 +98,18 @@ func ConvertDBMessageToGqlMessage(dbMessage models.Message) (Message, error) {
 		return Message{}, err
 	}
 
-	gqlMessage := Message{
-		ID:        dbID,
-		Content:   dbMessage.Content,
-		Thread:    &thread,
-		Sender:    &sender,
-		CreatedAt: domain.ConvertTimeToStringPtr(dbMessage.CreatedAt),
-		UpdatedAt: domain.ConvertTimeToStringPtr(dbMessage.UpdatedAt),
+	gqlMessage, err := ConvertSimpleDBMessageToGqlMessage(dbMessage)
+	if err != nil {
+		return Message{}, err
 	}
 
-	return gqlMessage, err
+	gqlMessage.Thread = &thread
+	gqlMessage.Sender = &sender
+
+	return gqlMessage, nil
 }
 
-func getThreadAndParticipants(threadUuid string, user models.User) (models.Thread, error) {
+func getThreadAndParticipants(threadUuid string, user models.User, requestFields []string) (models.Thread, error) {
 
 	thread, err := models.FindThreadByUUID(threadUuid)
 	if err != nil {
@@ -85,7 +120,9 @@ func getThreadAndParticipants(threadUuid string, user models.User) (models.Threa
 		return thread, fmt.Errorf("could not find thread with uuid %v", threadUuid)
 	}
 
-	users, err := models.GetThreadParticipants(thread.ID)
+	selectFields := GetSelectFieldsFromRequestFields(UserSimpleFields(), requestFields)
+
+	users, err := models.GetThreadParticipants(thread.ID, selectFields)
 	if err != nil {
 		return models.Thread{}, err
 	}
@@ -145,14 +182,14 @@ func createThreadWithParticipants(postUuid string, user models.User) (models.Thr
 	return thread, nil
 }
 
-func ConvertGqlNewMessageToDBMessage(gqlMessage NewMessage, user models.User) (models.Message, error) {
+func ConvertGqlNewMessageToDBMessage(gqlMessage NewMessage, user models.User, requestFields []string) (models.Message, error) {
 
 	var thread models.Thread
 
 	threadUuid := domain.ConvertStrPtrToString(gqlMessage.ThreadID)
 	if threadUuid != "" {
 		var err error
-		thread, err = getThreadAndParticipants(threadUuid, user)
+		thread, err = getThreadAndParticipants(threadUuid, user, requestFields)
 		if err != nil {
 			return models.Message{}, err
 		}
