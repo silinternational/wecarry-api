@@ -102,17 +102,23 @@ func FindThreadByPostIDAndUserID(postID int, userID int) (Thread, error) {
 
 }
 
-func GetThreadParticipants(threadID int) (Users, error) {
+func GetThreadParticipants(threadID int, selectFields []string) (Users, error) {
 
-	thrParts := ThreadParticipants{}
+	threadParts := ThreadParticipants{}
 
-	if err := DB.Eager("User").Where("thread_id = ?", threadID).All(&thrParts); err != nil {
+	if err := DB.Where("thread_id = ?", threadID).All(&threadParts); err != nil {
 		return Users{}, fmt.Errorf("error finding users on thread %v ... %v", threadID, err)
 	}
 
 	users := Users{}
-	for _, tp := range thrParts {
-		users = append(users, tp.User)
+	for _, tp := range threadParts {
+		u := User{}
+
+		if err := DB.Select(selectFields...).Find(&u, tp.UserID); err != nil {
+			return Users{}, fmt.Errorf("error finding users on thread %v ... %v", threadID, err)
+		}
+
+		users = append(users, u)
 	}
 
 	return users, nil
