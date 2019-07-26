@@ -26,7 +26,7 @@ func TestResolver(t *testing.T) {
 
 	// Load Organization test fixtures
 	orgUuid1 := "51b5321d-2769-48a0-908a-7af1d15083e2"
-	orgFix := []models.Organization{
+	orgFix := models.Organizations{
 		{
 			ID:         1,
 			Name:       "ACME",
@@ -42,7 +42,7 @@ func TestResolver(t *testing.T) {
 
 	// Load User test fixtures
 	userUuid1, _ := uuid.FromString("0265d116-b54e-4712-952f-eae1d6bcdcd1")
-	userFix := []models.User{
+	userFix := models.Users{
 		{
 			ID:         1,
 			Uuid:       userUuid1,
@@ -62,7 +62,7 @@ func TestResolver(t *testing.T) {
 	userFix[0].Organizations = models.Organizations{orgFix[0]}
 
 	// Load USER_ORGANIZATIONS fixtures
-	UserOrgsFix := []models.UserOrganization{
+	UserOrgsFix := models.UserOrganizations{
 		{
 			ID:             1,
 			OrganizationID: 1,
@@ -77,7 +77,7 @@ func TestResolver(t *testing.T) {
 
 	//  Load Post test fixtures
 	postUuid1, _ := uuid.FromString("c67d507b-6c1c-4d0a-b1e6-d726a5b48c26")
-	postFix := []models.Post{
+	postFix := models.Posts{
 		{
 			ID:             1,
 			CreatedByID:    1,
@@ -102,7 +102,7 @@ func TestResolver(t *testing.T) {
 
 	// Load Thread test fixtures
 	threadUuid1, _ := uuid.FromString("bdb7515d-06a9-4896-97a4-aeae962b85e2")
-	threadFix := []models.Thread{
+	threadFix := models.Threads{
 		{
 			ID:     1,
 			Uuid:   threadUuid1,
@@ -129,7 +129,7 @@ func TestResolver(t *testing.T) {
 
 	// Load MESSAGES fixtures
 	messageUuid1, _ := uuid.FromString("b0d7c515-e74c-4af7-a937-f1deb9369831")
-	MessageFix := []models.Message{
+	MessageFix := models.Messages{
 		{
 			ThreadID: 1,
 			ID:       1,
