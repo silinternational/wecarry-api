@@ -316,9 +316,9 @@ CREATE TABLE public.users (
     auth_org_id integer NOT NULL,
     auth_org_uid character varying(255) NOT NULL,
     admin_role character varying(255),
-    uuid uuid NOT NULL,
     created_at timestamp without time zone NOT NULL,
-    updated_at timestamp without time zone NOT NULL
+    updated_at timestamp without time zone NOT NULL,
+    uuid uuid
 );
 
 

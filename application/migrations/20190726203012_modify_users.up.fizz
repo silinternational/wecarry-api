@@ -1,7 +1,11 @@
+drop_index("users", "users_uuid_idx")
+
 rename_column("users", "uuid", "uuid_string")
 
 add_column("users", "uuid", "uuid", {null: true})
 
 sql("UPDATE users SET uuid = CAST( uuid_string AS uuid);")
+
+add_index("users", "uuid", {"unique": true})
 
 drop_column("users", "uuid_string")
