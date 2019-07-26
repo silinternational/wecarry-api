@@ -36,37 +36,43 @@ func BounceTestDB() error {
 	return nil
 }
 
-func createOrgs(fixtures []models.Organization) error {
-	db := models.DB
+func createOrgs(fixtures models.Organizations) error {
 	for _, f := range fixtures {
-		if err := db.Create(&f); err != nil {
+		if err := models.DB.Create(&f); err != nil {
 			return fmt.Errorf("error creating org %+v ...\n %v \n", f, err)
 		}
 	}
 	return nil
 }
 
-func createUsers(fixtures []models.User) error {
-	db := models.DB
+func createUsers(fixtures models.Users) error {
 	for _, f := range fixtures {
-		if err := db.Create(&f); err != nil {
+		if err := models.DB.Create(&f); err != nil {
 			return fmt.Errorf("error creating user %+v ...\n %v \n", f, err)
 		}
 	}
 	return nil
 }
 
-func createPosts(fixtures []models.Post) error {
-	db := models.DB
+func createUserOrgs(fixtures models.UserOrganizations) error {
 	for _, f := range fixtures {
-		if err := db.Create(&f); err != nil {
+		if err := models.DB.Create(&f); err != nil {
+			return fmt.Errorf("error creating user-org %+v ...\n %v \n", f, err)
+		}
+	}
+	return nil
+}
+
+func createPosts(fixtures models.Posts) error {
+	for _, f := range fixtures {
+		if err := models.DB.Create(&f); err != nil {
 			return fmt.Errorf("error creating post %+v ...\n %v \n", f, err)
 		}
 	}
 	return nil
 }
 
-func createThreads(fixtures []models.Thread) error {
+func createThreads(fixtures models.Threads) error {
 	db := models.DB
 	for _, f := range fixtures {
 		if err := db.Create(&f); err != nil {
@@ -83,6 +89,24 @@ func createThreads(fixtures []models.Thread) error {
 		return fmt.Errorf("wrong number of threads created, expected %v, but got %v", len(fixtures), len(threads))
 	}
 
+	return nil
+}
+
+func createThreadParticipants(fixtures models.ThreadParticipants) error {
+	for _, f := range fixtures {
+		if err := models.DB.Create(&f); err != nil {
+			return fmt.Errorf("error creating threadparticipant %+v ...\n %v \n", f, err)
+		}
+	}
+	return nil
+}
+
+func createMessages(fixtures models.Messages) error {
+	for _, f := range fixtures {
+		if err := models.DB.Create(&f); err != nil {
+			return fmt.Errorf("error creating message %+v ...\n %v \n", f, err)
+		}
+	}
 	return nil
 }
 

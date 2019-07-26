@@ -62,7 +62,7 @@ func TestResolver(t *testing.T) {
 	userFix[0].Organizations = models.Organizations{orgFix[0]}
 
 	// Load USER_ORGANIZATIONS fixtures
-	fixtureUserOrgs := []*models.UserOrganization{
+	UserOrgsFix := []models.UserOrganization{
 		{
 			ID:             1,
 			OrganizationID: 1,
@@ -70,12 +70,9 @@ func TestResolver(t *testing.T) {
 			Role:           "admin",
 		},
 	}
-
-	for _, userOrgs := range fixtureUserOrgs {
-		if err := models.DB.Create(userOrgs); err != nil {
-			t.Errorf("could not run test ... %v", err)
-			return
-		}
+	if err := createUserOrgs(UserOrgsFix); err != nil {
+		t.Errorf("could not run test ... %v", err)
+		return
 	}
 
 	//  Load Post test fixtures
@@ -118,24 +115,21 @@ func TestResolver(t *testing.T) {
 	}
 
 	// Load THREAD_PARTICIPANTS fixtures
-	fixtureTParticipants := []*models.ThreadParticipant{
+	threadPartFix := []models.ThreadParticipant{
 		{
 			ID:       1,
 			ThreadID: 1,
 			UserID:   1,
 		},
 	}
-
-	for _, participant := range fixtureTParticipants {
-		if err := models.DB.Create(participant); err != nil {
-			t.Errorf("could not run test ... %v", err)
-			return
-		}
+	if err := createThreadParticipants(threadPartFix); err != nil {
+		t.Errorf("could not run test ... %v", err)
+		return
 	}
 
 	// Load MESSAGES fixtures
 	messageUuid1, _ := uuid.FromString("b0d7c515-e74c-4af7-a937-f1deb9369831")
-	fixtureMessages := []*models.Message{
+	MessageFix := []models.Message{
 		{
 			ThreadID: 1,
 			ID:       1,
@@ -145,11 +139,9 @@ func TestResolver(t *testing.T) {
 		},
 	}
 
-	for _, message := range fixtureMessages {
-		if err := models.DB.Create(message); err != nil {
-			t.Errorf("could not run test ... %v", err)
-			return
-		}
+	if err := createMessages(MessageFix); err != nil {
+		t.Errorf("could not run test ... %v", err)
+		return
 	}
 
 	// Prep gql server
