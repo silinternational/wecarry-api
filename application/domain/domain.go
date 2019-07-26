@@ -99,7 +99,11 @@ func GetCurrentUser(c buffalo.Context) models.User {
 	return models.User{}
 }
 
-func GetCurrentUserFromGqlContext(ctx context.Context) models.User {
+func GetCurrentUserFromGqlContext(ctx context.Context, testUser models.User) models.User {
+	if testUser.ID > 0 {
+		return testUser
+	}
+
 	bc, ok := ctx.Value("BuffaloContext").(buffalo.Context)
 	if !ok {
 		return models.User{}

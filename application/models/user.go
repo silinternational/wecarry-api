@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gofrs/uuid"
+
 	"github.com/gobuffalo/envy"
 
 	"github.com/gobuffalo/nulls"
@@ -28,7 +30,7 @@ type User struct {
 	AuthOrgID     int               `json:"auth_org_id" db:"auth_org_id"`
 	AuthOrgUid    string            `json:"auth_org_uid" db:"auth_org_uid"`
 	AdminRole     nulls.String      `json:"admin_role" db:"admin_role"`
-	Uuid          string            `json:"uuid" db:"uuid"`
+	Uuid          uuid.UUID         `json:"uuid" db:"uuid"`
 	AuthOrg       Organization      `belongs_to:"organizations"`
 	AccessTokens  []UserAccessToken `has_many:"user_access_tokens"`
 	Organizations Organizations     `many_to_many:"user_organizations"`
@@ -60,7 +62,7 @@ func (u *User) Validate(tx *pop.Connection) (*validate.Errors, error) {
 		&validators.StringIsPresent{Field: u.Nickname, Name: "Nickname"},
 		&validators.IntIsPresent{Field: u.AuthOrgID, Name: "AuthOrgID"},
 		&validators.StringIsPresent{Field: u.AuthOrgUid, Name: "AuthOrgUid"},
-		&validators.StringIsPresent{Field: u.Uuid, Name: "Uuid"},
+		&validators.UUIDIsPresent{Field: u.Uuid, Name: "Uuid"},
 	), nil
 }
 

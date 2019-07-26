@@ -12,7 +12,7 @@ import (
 type mutationResolver struct{ *Resolver }
 
 func (r *mutationResolver) CreatePost(ctx context.Context, input NewPost) (*Post, error) {
-	cUser := domain.GetCurrentUserFromGqlContext(ctx)
+	cUser := domain.GetCurrentUserFromGqlContext(ctx, TestUser)
 	dbPost, err := ConvertGqlNewPostToDBPost(input, cUser)
 	if err != nil {
 		return &Post{}, err
@@ -34,7 +34,7 @@ func (r *mutationResolver) UpdatePostStatus(ctx context.Context, input UpdatedPo
 	}
 
 	post.Status = input.Status
-	post.ProviderID = nulls.NewInt(domain.GetCurrentUserFromGqlContext(ctx).ID)
+	post.ProviderID = nulls.NewInt(domain.GetCurrentUserFromGqlContext(ctx, TestUser).ID)
 	if err := models.DB.Update(&post); err != nil {
 		return &Post{}, err
 	}
@@ -49,7 +49,7 @@ func (r *mutationResolver) UpdatePostStatus(ctx context.Context, input UpdatedPo
 }
 
 func (r *mutationResolver) CreateMessage(ctx context.Context, input NewMessage) (*Message, error) {
-	cUser := domain.GetCurrentUserFromGqlContext(ctx)
+	cUser := domain.GetCurrentUserFromGqlContext(ctx, TestUser)
 	dbMessage, err := ConvertGqlNewMessageToDBMessage(input, cUser, GetRequestFields(ctx))
 	if err != nil {
 		return &Message{}, err

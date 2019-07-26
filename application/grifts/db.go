@@ -43,11 +43,11 @@ var _ = grift.Namespace("db", func() {
 		}
 
 		// USERS Table
-		userUuid1 := "e5447366-26b2-4256-b2ab-58c92c3d54cc"
-		userUuid2 := "3d79902f-c204-4922-b479-57f0ec41eabe"
-		userUuid3 := "babcf980-e1f0-42d3-b2b0-2e4704159f4f"
-		userUuid4 := "44dc63fa-1227-4bea-b34a-416a26c3e077"
-		userUuid5 := "2a96a5a6-971a-403d-8276-c41657bc57ce"
+		userUuid1, _ := uuid.FromString("e5447366-26b2-4256-b2ab-58c92c3d54cc")
+		userUuid2, _ := uuid.FromString("3d79902f-c204-4922-b479-57f0ec41eabe")
+		userUuid3, _ := uuid.FromString("babcf980-e1f0-42d3-b2b0-2e4704159f4f")
+		userUuid4, _ := uuid.FromString("44dc63fa-1227-4bea-b34a-416a26c3e077")
+		userUuid5, _ := uuid.FromString("2a96a5a6-971a-403d-8276-c41657bc57ce")
 		fixtureUsers := []*models.User{
 			{
 				ID:         1,
