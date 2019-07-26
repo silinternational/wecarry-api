@@ -62,7 +62,7 @@ func (r *queryResolver) User(ctx context.Context, id *string) (*User, error) {
 
 	currentUser := domain.GetCurrentUserFromGqlContext(ctx, TestUser)
 
-	if currentUser.AdminRole.String != domain.AdminRoleSuperDuperAdmin && currentUser.Uuid != *id {
+	if currentUser.AdminRole.String != domain.AdminRoleSuperDuperAdmin && currentUser.Uuid.String() != *id {
 		return &User{}, nil
 	}
 

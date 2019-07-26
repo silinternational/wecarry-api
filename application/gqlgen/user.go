@@ -27,7 +27,7 @@ func ConvertDBUserToGqlUser(dbUser models.User) (User, error) {
 	gqlRole := Role(*r)
 
 	newGqlUser := User{
-		ID:        dbUser.Uuid,
+		ID:        dbUser.Uuid.String(),
 		Email:     dbUser.Email,
 		FirstName: dbUser.FirstName,
 		LastName:  dbUser.LastName,

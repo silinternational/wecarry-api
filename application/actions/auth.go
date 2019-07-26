@@ -115,7 +115,7 @@ func AuthCallback(c buffalo.Context) error {
 			AuthOrgUid: samlUser.UserID,
 			Nickname:   fmt.Sprintf("%s %s", samlUser.FirstName, samlUser.LastName[:0]),
 			AuthOrgID:  1,
-			Uuid:       newUuid.String(),
+			Uuid:       newUuid,
 		}
 
 		err = tx.Create(u)

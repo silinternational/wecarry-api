@@ -41,7 +41,7 @@ func TestResolver(t *testing.T) {
 	}
 
 	// Load User test fixtures
-	userUuid1 := "0265d116-b54e-4712-952f-eae1d6bcdcd1"
+	userUuid1, _ := uuid.FromString("0265d116-b54e-4712-952f-eae1d6bcdcd1")
 	userFix := []models.User{
 		{
 			ID:         1,
@@ -268,7 +268,7 @@ func TestResolver(t *testing.T) {
 	}
 
 	strResults = usersResp.Users[0].ID
-	strExpected = userFix[0].Uuid
+	strExpected = userFix[0].Uuid.String()
 
 	if strResults != strExpected {
 		t.Errorf("bad user ID results. \n  Expected %v, \n   but got %v", strExpected, strResults)
