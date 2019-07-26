@@ -55,7 +55,7 @@ func addParticipantsToThread(gqlThread *Thread, dbThread models.Thread, requestF
 }
 
 func addPostToThread(gqlThread *Thread, postID int, requestFields []string) error {
-	if !domain.IsStringInSlice(PostField, requestFields) {
+	if !domain.IsStringInSlice(PostField, requestFields) && !domain.IsStringInSlice(PostIDField, requestFields) {
 		return nil
 	}
 
@@ -68,12 +68,15 @@ func addPostToThread(gqlThread *Thread, postID int, requestFields []string) erro
 		return fmt.Errorf("error loading post %v %s", postID, err)
 	}
 
-	gqlPost, err := ConvertDBPostToGqlPost(post, nil, requestFields)
-	if err != nil {
-		return err
+	if domain.IsStringInSlice(PostField, requestFields) {
+		gqlPost, err := ConvertDBPostToGqlPost(post, nil, requestFields)
+		if err != nil {
+			return err
+		}
+		gqlThread.Post = &gqlPost
 	}
 
-	gqlThread.Post = &gqlPost
+	gqlThread.PostID = post.Uuid.String()
 
 	return nil
 }

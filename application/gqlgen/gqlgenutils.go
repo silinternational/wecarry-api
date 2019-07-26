@@ -7,6 +7,7 @@ import (
 const MessagesField = "messages"
 const ParticipantsField = "participants"
 const PostField = "post"
+const PostIDField = "postID"
 const SenderField = "sender"
 const CreatedByField = "createdBy"
 
