@@ -4,6 +4,7 @@ package gqlgen
 
 import (
 	"context"
+
 	"github.com/silinternational/handcarry-api/domain"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -30,7 +31,7 @@ func (r *queryResolver) Users(ctx context.Context) ([]*User, error) {
 	db := models.DB
 	dbUsers := models.Users{}
 
-	currentUser := domain.GetCurrentUserFromGqlContext(ctx, TestUser)
+	currentUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 
 	if currentUser.AdminRole.String != domain.AdminRoleSuperDuperAdmin {
 		return []*User{}, nil
@@ -60,7 +61,7 @@ func (r *queryResolver) Users(ctx context.Context) ([]*User, error) {
 func (r *queryResolver) User(ctx context.Context, id *string) (*User, error) {
 	dbUser := models.User{}
 
-	currentUser := domain.GetCurrentUserFromGqlContext(ctx, TestUser)
+	currentUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 
 	if currentUser.AdminRole.String != domain.AdminRoleSuperDuperAdmin && currentUser.Uuid.String() != *id {
 		return &User{}, nil
@@ -87,7 +88,7 @@ func (r *queryResolver) Posts(ctx context.Context) ([]*Post, error) {
 
 	db := models.DB
 	dbPosts := models.Posts{}
-	cUser := domain.GetCurrentUserFromGqlContext(ctx, TestUser)
+	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 	if err := db.Where("organization_id IN (?)", cUser.GetOrgIDs()...).All(&dbPosts); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting posts: %v", err.Error()))
 		return []*Post{}, err
@@ -109,7 +110,7 @@ func (r *queryResolver) Posts(ctx context.Context) ([]*Post, error) {
 
 func (r *queryResolver) Post(ctx context.Context, id *string) (*Post, error) {
 	dbPost := models.Post{}
-	cUser := domain.GetCurrentUserFromGqlContext(ctx, TestUser)
+	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 
 	if err := models.DB.Where("organization_id IN (?)", cUser.GetOrgIDs()...).Where("uuid = ?", id).First(&dbPost); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting post: %v", err.Error()))
@@ -156,7 +157,7 @@ func (r *queryResolver) Threads(ctx context.Context) ([]*Thread, error) {
 func (r *queryResolver) MyThreads(ctx context.Context) ([]*Thread, error) {
 	db := models.DB
 	dbThreads := models.Threads{}
-	currentUser := domain.GetCurrentUserFromGqlContext(ctx, TestUser)
+	currentUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 
 	query := db.Q().LeftJoin("thread_participants tp", "threads.id = tp.thread_id")
 	query = query.Where("tp.user_id = ?", currentUser.ID)

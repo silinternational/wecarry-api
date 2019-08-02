@@ -2,11 +2,12 @@ package grifts
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/gobuffalo/nulls"
 	"github.com/gofrs/uuid"
 	"github.com/markbates/grift/grift"
 	"github.com/silinternational/handcarry-api/models"
-	"time"
 )
 
 var _ = grift.Namespace("db", func() {
@@ -15,8 +16,8 @@ var _ = grift.Namespace("db", func() {
 	_ = grift.Add("seed", func(c *grift.Context) error {
 
 		// ORGANIZATIONS Table
-		organizationUuid1 := "f3a79b30-f00e-48a0-a64d-e27748dea22d"
-		organizationUuid2 := "d2e95724-9270-4050-82d9-6a9f9c35c766"
+		organizationUuid1, _ := uuid.FromString("f3a79b30-f00e-48a0-a64d-e27748dea22d")
+		organizationUuid2, _ := uuid.FromString("d2e95724-9270-4050-82d9-6a9f9c35c766")
 		fixtureOrgs := []*models.Organization{
 			{
 				ID:         1,

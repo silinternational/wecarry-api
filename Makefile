@@ -9,6 +9,9 @@ migrate: db
 migratestatus: db
 	docker-compose run buffalo buffalo-pop pop migrate status
 
+migratetestdb: testdb
+	docker-compose run --rm test whenavail testdb 5432 10 buffalo-pop pop migrate up
+
 gqlgen: application/gqlgen/generated.go
 
 application/gqlgen/generated.go: application/gqlgen/schema.graphql
@@ -36,6 +39,12 @@ logs:
 
 db:
 	docker-compose up -d db
+
+testdb:
+	docker-compose up -d testdb
+
+test: migratetestdb
+	docker-compose run --rm test
 
 clean:
 	docker-compose kill

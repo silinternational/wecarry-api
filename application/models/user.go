@@ -9,14 +9,17 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/gofrs/uuid"
-
 	"github.com/gobuffalo/envy"
-
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
 	"github.com/gobuffalo/validate/validators"
+
+	"github.com/gofrs/uuid"
+	"github.com/pkg/errors"
+
+	"github.com/silinternational/handcarry-api/auth/saml"
+	"github.com/silinternational/handcarry-api/domain"
 )
 
 type User struct {
@@ -111,6 +114,55 @@ func (u *User) GetOrgIDs() []interface{} {
 	}
 
 	return s
+}
+
+func (u *User) FindOrCreateFromSamlUser(tx *pop.Connection, orgID int, samlUser saml.SamlUser) error {
+
+	q := tx.Where("auth_org_id = ? and auth_org_uid = ?", orgID, samlUser.UserID)
+	exists, err := q.Exists("users")
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	if exists {
+		if err = q.First(u); err != nil {
+			return errors.WithStack(err)
+		}
+	} else {
+		emailQuery := tx.Where("email = ?", samlUser.Email)
+		exists, err := emailQuery.Exists("users")
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		if exists {
+			return fmt.Errorf("a user with this email address already exists")
+		}
+
+		u.FirstName = samlUser.FirstName
+		u.LastName = samlUser.LastName
+		u.Email = samlUser.Email
+		u.AuthOrgUid = samlUser.UserID
+		u.Nickname = fmt.Sprintf("%s %s", samlUser.FirstName, samlUser.LastName[:0])
+		u.AuthOrgID = 1
+		u.Uuid = domain.GetUuid()
+
+		err = tx.Create(u)
+		if err != nil {
+			return fmt.Errorf("unable to create new user record: %s", err.Error())
+		}
+
+		uo := &UserOrganization{
+			UserID:         u.ID,
+			OrganizationID: u.AuthOrgID,
+			Role:           "member",
+		}
+		err = tx.Create(uo)
+		if err != nil {
+			return fmt.Errorf("unable to create new user organization record: %s", err.Error())
+		}
+	}
+
+	return nil
 }
 
 func FindUserByAccessToken(accessToken string) (User, error) {

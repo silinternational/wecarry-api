@@ -18,5 +18,7 @@ RUN echo 'alias ll="ls -al"' >> ~/.bashrc
 ADD . .
 ENV GO111MODULE=on
 RUN go get ./...
+RUN go get github.com/gobuffalo/suite
+RUN go get github.com/gobuffalo/httptest
 
 CMD ["buffalo", "dev"]

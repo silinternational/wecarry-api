@@ -1,8 +1,10 @@
 package models
 
 import (
+	"context"
 	"log"
 
+	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/envy"
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
@@ -28,4 +30,27 @@ func ConvertStringPtrToNullsString(inPtr *string) nulls.String {
 	}
 
 	return nulls.NewString(*inPtr)
+}
+
+func GetCurrentUserFromGqlContext(ctx context.Context, testUser User) User {
+	if testUser.ID > 0 {
+		return testUser
+	}
+
+	bc, ok := ctx.Value("BuffaloContext").(buffalo.Context)
+	if !ok {
+		return User{}
+	}
+	return GetCurrentUser(bc)
+}
+
+func GetCurrentUser(c buffalo.Context) User {
+	user := c.Value("current_user")
+
+	switch user.(type) {
+	case User:
+		return user.(User)
+	}
+
+	return User{}
 }

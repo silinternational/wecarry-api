@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/gofrs/uuid"
+
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
@@ -19,7 +21,7 @@ type Organization struct {
 	Url        nulls.String `json:"url" db:"url"`
 	AuthType   string       `json:"auth_type" db:"auth_type"`
 	AuthConfig string       `json:"auth_config" db:"auth_config"`
-	Uuid       string       `json:"uuid" db:"uuid"`
+	Uuid       uuid.UUID    `json:"uuid" db:"uuid"`
 	Users      Users        `many_to_many:"user_organizations"`
 }
 
@@ -45,7 +47,7 @@ func (o *Organization) Validate(tx *pop.Connection) (*validate.Errors, error) {
 		&validators.IntIsPresent{Field: o.ID, Name: "ID"},
 		&validators.StringIsPresent{Field: o.Name, Name: "Name"},
 		&validators.StringIsPresent{Field: o.AuthType, Name: "AuthType"},
-		&validators.StringIsPresent{Field: o.Uuid, Name: "Uuid"},
+		&validators.UUIDIsPresent{Field: o.Uuid, Name: "Uuid"},
 	), nil
 }
 

@@ -1,17 +1,13 @@
 package domain
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
 	"time"
 
-	"github.com/gobuffalo/buffalo"
 	uuid2 "github.com/gofrs/uuid"
-
-	"github.com/silinternational/handcarry-api/models"
 )
 
 const ClientIDKey = "client_id"
@@ -86,29 +82,6 @@ func GetSubPartKeyValues(inString, outerDelimiter, innerDelimiter string) map[st
 	}
 
 	return keyValues
-}
-
-func GetCurrentUser(c buffalo.Context) models.User {
-	user := c.Value("current_user")
-
-	switch user.(type) {
-	case models.User:
-		return user.(models.User)
-	}
-
-	return models.User{}
-}
-
-func GetCurrentUserFromGqlContext(ctx context.Context, testUser models.User) models.User {
-	if testUser.ID > 0 {
-		return testUser
-	}
-
-	bc, ok := ctx.Value("BuffaloContext").(buffalo.Context)
-	if !ok {
-		return models.User{}
-	}
-	return GetCurrentUser(bc)
 }
 
 // ConvertTimeToStringPtr is intended to convert the

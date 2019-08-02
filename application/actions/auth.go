@@ -8,19 +8,17 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/silinternational/handcarry-api/auth/saml"
+
+	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/envy"
-
-	"github.com/gofrs/uuid"
-
 	"github.com/gobuffalo/pop"
-
-	dsig "github.com/russellhaering/goxmldsig"
+	"github.com/pkg/errors"
 
 	saml2 "github.com/russellhaering/gosaml2"
 	"github.com/russellhaering/gosaml2/types"
+	dsig "github.com/russellhaering/goxmldsig"
 
-	"github.com/gobuffalo/buffalo"
-	"github.com/pkg/errors"
 	"github.com/silinternational/handcarry-api/domain"
 	"github.com/silinternational/handcarry-api/models"
 )
@@ -29,26 +27,19 @@ const SAML2Provider = "saml2"
 const SAMLResponseKey = "SAMLResponse"
 const IDPMetadataFile = "./samlmetadata/idp-metadata.xml"
 
-type SamlUser struct {
-	FirstName string
-	LastName  string
-	Email     string
-	UserID    string
-}
-
 func AuthLogin(c buffalo.Context) error {
-
-	returnTo := c.Param("ReturnTo")
-	if returnTo == "" {
-		returnTo = "/"
-	}
-	c.Session().Set("ReturnTo", returnTo)
 
 	clientID := c.Param("client_id")
 	if clientID == "" {
 		return fmt.Errorf("client_id is required to login")
 	}
 	c.Session().Set("ClientID", clientID)
+
+	returnTo := c.Param("ReturnTo")
+	if returnTo == "" {
+		returnTo = "/"
+	}
+	c.Session().Set("ReturnTo", returnTo)
 
 	err := c.Session().Save()
 	if err != nil {
@@ -69,7 +60,7 @@ func AuthCallback(c buffalo.Context) error {
 
 	returnTo := envy.Get("UI_URL", "/")
 
-	clientID := c.Session().Get("ClientID")
+	clientID := c.Session().Get("ClientID").(string)
 	if clientID == "" {
 		return fmt.Errorf("client_id is required to login")
 	}
@@ -87,54 +78,12 @@ func AuthCallback(c buffalo.Context) error {
 	// Get an existing User with the current auth org uid
 	u := &models.User{}
 	tx := c.Value("tx").(*pop.Connection)
-	q := tx.Where("auth_org_uid = ?", samlUser.UserID)
-	exists, err := q.Exists("users")
+	err = u.FindOrCreateFromSamlUser(tx, 1, samlUser)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	if exists {
-		if err = q.First(u); err != nil {
-			return errors.WithStack(err)
-		}
-	} else {
-		emailQuery := tx.Where("email = ?", samlUser.Email)
-		exists, err := emailQuery.Exists("users")
-		if err != nil {
-			return errors.WithStack(err)
-		}
-		if exists {
-			return c.Error(409, fmt.Errorf("a user with this email address already exists"))
-		}
-
-		newUuid, _ := uuid.NewV4()
-		u = &models.User{
-			FirstName:  samlUser.FirstName,
-			LastName:   samlUser.LastName,
-			Email:      samlUser.Email,
-			AuthOrgUid: samlUser.UserID,
-			Nickname:   fmt.Sprintf("%s %s", samlUser.FirstName, samlUser.LastName[:0]),
-			AuthOrgID:  1,
-			Uuid:       newUuid,
-		}
-
-		err = tx.Create(u)
-		if err != nil {
-			return c.Error(500, fmt.Errorf("unable to create new user record: %s", err.Error()))
-		}
-
-		uo := &models.UserOrganization{
-			UserID:         u.ID,
-			OrganizationID: u.AuthOrgID,
-			Role:           "member",
-		}
-		err = tx.Create(uo)
-		if err != nil {
-			return c.Error(500, fmt.Errorf("unable to create new user organization record: %s", err.Error()))
-		}
-	}
-
-	accessToken, expiresAt, err := u.CreateAccessToken(tx, fmt.Sprintf("%v", clientID))
+	accessToken, expiresAt, err := u.CreateAccessToken(tx, clientID)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -358,28 +307,28 @@ func getSAMLAttributeFirstValue(attrName string, attributes []types.Attribute) s
 	return ""
 }
 
-func getSamlUserFromAssertion(assertion string) (SamlUser, error) {
+func getSamlUserFromAssertion(assertion string) (saml.SamlUser, error) {
 	firstName, err := samlAttribute("givenName", assertion)
 	if err != nil {
-		return SamlUser{}, err
+		return saml.SamlUser{}, err
 	}
 
 	lastName, err := samlAttribute("sn", assertion)
 	if err != nil {
-		return SamlUser{}, err
+		return saml.SamlUser{}, err
 	}
 
 	email, err := samlAttribute("mail", assertion)
 	if err != nil {
-		return SamlUser{}, err
+		return saml.SamlUser{}, err
 	}
 
 	userID, err := samlAttribute("eduPersonTargetID", assertion)
 	if err != nil {
-		return SamlUser{}, err
+		return saml.SamlUser{}, err
 	}
 
-	return SamlUser{
+	return saml.SamlUser{
 		FirstName: firstName,
 		LastName:  lastName,
 		Email:     email,

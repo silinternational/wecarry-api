@@ -2,15 +2,15 @@ package actions
 
 import (
 	"github.com/gobuffalo/buffalo"
+	"github.com/gobuffalo/buffalo-pop/pop/popmw"
 	"github.com/gobuffalo/envy"
+	contenttype "github.com/gobuffalo/mw-contenttype"
 	csrf "github.com/gobuffalo/mw-csrf"
 	paramlogger "github.com/gobuffalo/mw-paramlogger"
-	"github.com/gorilla/sessions"
-	"github.com/silinternational/handcarry-api/models"
 
-	"github.com/gobuffalo/buffalo-pop/pop/popmw"
-	contenttype "github.com/gobuffalo/mw-contenttype"
+	"github.com/gorilla/sessions"
 	"github.com/rs/cors"
+	"github.com/silinternational/handcarry-api/models"
 )
 
 // ENV is used to help switch settings based on where the
@@ -38,13 +38,13 @@ func App() *buffalo.App {
 			PreWares: []buffalo.PreWare{
 				cors.New(cors.Options{
 					AllowCredentials: true,
-					AllowedOrigins:   []string{"*"},
+					AllowedOrigins:   []string{envy.Get("UI_ORIGIN", "*")},
 					AllowedMethods:   []string{"HEAD", "GET", "POST", "PUT", "PATCH", "DELETE"},
 					AllowedHeaders:   []string{"*"},
 				}).Handler,
 			},
 			SessionName:  "_handcarry_session",
-			SessionStore: sessions.NewCookieStore([]byte("testing")),
+			SessionStore: sessions.NewCookieStore([]byte(envy.Get("SESSION_SECRET", "testing"))),
 		})
 
 		// Log request parameters (filters apply).

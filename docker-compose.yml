@@ -21,6 +21,19 @@ services:
       - db
     command: buffalo dev
 
+  test:
+    build:
+      context: ./application
+      dockerfile: Dockerfile-dev
+    volumes:
+      - ./application:/handcarry
+    environment:
+      GO_ENV: test
+    depends_on:
+      - testdb
+    working_dir: /handcarry
+    command: go test ./...
+
   playground:
     build:
       context: ./application
@@ -37,6 +50,18 @@ services:
       POSTGRES_USER: handcarry
       POSTGRES_PASSWORD: handcarry
       POSTGRES_DB: handcarry
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 3s
+      timeout: 2s
+      retries: 5
+
+  testdb:
+    image: postgres:9.6.13
+    environment:
+      POSTGRES_USER: handcarry
+      POSTGRES_PASSWORD: handcarry
+      POSTGRES_DB: handcarry_test
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 3s
