@@ -13,6 +13,10 @@ resolver:
   filename: resolver.go
   type: Resolver
 autobind: []
+models:
+  User:
+    model: github.com/silinternational/handcarry-api/models.User
+
 #directives:
 #  deprecated:
 #    skip_runtime: true

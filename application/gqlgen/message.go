@@ -40,13 +40,8 @@ func ConvertDBMessageToGqlMessageWithSender(dbMessage models.Message, requestFie
 		return gqlMessage, nil
 	}
 
-	dbUser := models.User{}
-	if err := models.DB.Find(&dbUser, dbMessage.SentByID); err != nil {
-		return Message{}, err
-	}
-
-	sender, err := ConvertDBUserToGqlUser(dbUser)
-	if err != nil {
+	sender := models.User{}
+	if err := models.DB.Find(&sender, dbMessage.SentByID); err != nil {
 		return Message{}, err
 	}
 
@@ -89,14 +84,9 @@ func ConvertDBMessageToGqlMessage(dbMessage models.Message, requestFields []stri
 		thread.Messages = append(thread.Messages, &gqlMsg)
 	}
 
-	dbUser := models.User{}
-	if err := models.DB.Find(&dbUser, dbMessage.SentByID); err != nil {
+	sender := models.User{}
+	if err := models.DB.Find(&sender, dbMessage.SentByID); err != nil {
 		err = fmt.Errorf("error finding message sentBy user with id %v ... %v", dbMessage.SentByID, err)
-		return Message{}, err
-	}
-
-	sender, err := ConvertDBUserToGqlUser(dbUser)
-	if err != nil {
 		return Message{}, err
 	}
 

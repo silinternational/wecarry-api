@@ -40,17 +40,13 @@ func addParticipantsToThread(gqlThread *Thread, dbThread models.Thread, requestF
 		return err
 	}
 
-	gqlUsers := []*User{}
+	var users []*models.User
 
 	for _, p := range participants {
-		participant, err := ConvertDBUserToGqlUser(p)
-		if err != nil {
-			return err
-		}
-		gqlUsers = append(gqlUsers, &participant)
+		users = append(users, &p)
 	}
 
-	gqlThread.Participants = gqlUsers
+	gqlThread.Participants = users
 	return nil
 }
 

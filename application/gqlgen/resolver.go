@@ -4,6 +4,7 @@ package gqlgen
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/silinternational/handcarry-api/domain"
 
@@ -27,14 +28,42 @@ func (r *Resolver) Query() QueryResolver {
 
 type queryResolver struct{ *Resolver }
 
-func (r *queryResolver) Users(ctx context.Context) ([]*User, error) {
+func (r *Resolver) User() UserResolver {
+	return &userResolver{r}
+}
+
+type userResolver struct{ *Resolver }
+
+func (r *userResolver) CreatedAt(ctx context.Context, obj *models.User) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return domain.ConvertTimeToStringPtr(obj.CreatedAt), nil
+}
+
+func (r *userResolver) UpdatedAt(ctx context.Context, obj *models.User) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return domain.ConvertTimeToStringPtr(obj.UpdatedAt), nil
+}
+
+func (r *userResolver) AdminRole(ctx context.Context, obj *models.User) (*Role, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	a := Role(obj.AdminRole.String)
+	return &a, nil
+}
+
+func (r *queryResolver) Users(ctx context.Context) ([]*models.User, error) {
 	db := models.DB
-	dbUsers := models.Users{}
+	var dbUsers []*models.User
 
 	currentUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 
 	if currentUser.AdminRole.String != domain.AdminRoleSuperDuperAdmin {
-		return []*User{}, nil
+		return []*models.User{}, fmt.Errorf("not authorized")
 	}
 
 	requestFields := GetRequestFields(ctx)
@@ -42,29 +71,19 @@ func (r *queryResolver) Users(ctx context.Context) ([]*User, error) {
 
 	if err := db.Select(selectFields...).All(&dbUsers); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting users: %v", err.Error()))
-		return []*User{}, err
+		return []*models.User{}, err
 	}
 
-	var gqlUsers []*User
-	for _, dbUser := range dbUsers {
-		newGqlUser, err := ConvertDBUserToGqlUser(dbUser)
-		if err != nil {
-			graphql.AddError(ctx, gqlerror.Errorf("Error converting users: %v", err.Error()))
-			return gqlUsers, err
-		}
-		gqlUsers = append(gqlUsers, &newGqlUser)
-
-	}
-	return gqlUsers, nil
+	return dbUsers, nil
 }
 
-func (r *queryResolver) User(ctx context.Context, id *string) (*User, error) {
+func (r *queryResolver) User(ctx context.Context, id *string) (*models.User, error) {
 	dbUser := models.User{}
 
 	currentUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 
 	if currentUser.AdminRole.String != domain.AdminRoleSuperDuperAdmin && currentUser.Uuid.String() != *id {
-		return &User{}, nil
+		return &dbUser, fmt.Errorf("not authorized")
 	}
 
 	requestFields := GetRequestFields(ctx)
@@ -72,16 +91,10 @@ func (r *queryResolver) User(ctx context.Context, id *string) (*User, error) {
 
 	if err := models.DB.Select(selectFields...).Where("uuid = ?", id).First(&dbUser); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting user: %v", err.Error()))
-		return &User{}, err
+		return &dbUser, err
 	}
 
-	newGqlUser, err := ConvertDBUserToGqlUser(dbUser)
-	if err != nil {
-		graphql.AddError(ctx, gqlerror.Errorf("Error converting user: %v", err.Error()))
-		return &newGqlUser, err
-	}
-
-	return &newGqlUser, nil
+	return &dbUser, nil
 }
 
 func (r *queryResolver) Posts(ctx context.Context) ([]*Post, error) {

@@ -36,11 +36,7 @@ func addCreatedByToPost(gqlPost *Post, dbPost models.Post, requestFields []strin
 		return err
 	}
 
-	gqlUser, err := ConvertDBUserToGqlUser(creator)
-	if err != nil {
-		return err
-	}
-	gqlPost.CreatedBy = &gqlUser
+	gqlPost.CreatedBy = &creator
 
 	return nil
 }
