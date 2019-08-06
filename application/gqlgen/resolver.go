@@ -214,24 +214,9 @@ func (r *queryResolver) Post(ctx context.Context, id *string) (*models.Post, err
 		return &models.Post{}, err
 	}
 
-	// TODO: GetRequestFields gets *all* request fields smashed into one list. Need something that
-	// gives just the request fields from the object of interest.
-	selectFields := GetSelectFieldsFromRequestFields(UserSimpleFields(), GetRequestFields(ctx))
-
-	creator := models.User{}
-	if err := models.DB.Select(selectFields...).Find(&creator, post.CreatedByID); err != nil {
-		return &post, err
-	}
-	post.CreatedBy = creator
-
-	receiver := models.User{}
-	if err := models.DB.Select(selectFields...).Find(&receiver, post.ReceiverID); err == nil {
-		post.Receiver = receiver
-	}
-
-	provider := models.User{}
-	if err := models.DB.Select(selectFields...).Find(&provider, post.ProviderID); err == nil {
-		post.Provider = provider
+	e := post.QueryRelatedUsers(GetSelectFieldsFromRequestFields(UserSimpleFields(), GetRequestFields(ctx)))
+	if e != nil {
+		return &post, e
 	}
 
 	return &post, nil
