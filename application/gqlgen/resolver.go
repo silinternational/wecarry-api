@@ -206,24 +206,35 @@ func (r *queryResolver) Posts(ctx context.Context) ([]*models.Post, error) {
 }
 
 func (r *queryResolver) Post(ctx context.Context, id *string) (*models.Post, error) {
-	dbPost := models.Post{}
+	post := models.Post{}
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 
-	if err := models.DB.Where("organization_id IN (?)", cUser.GetOrgIDs()...).Where("uuid = ?", id).First(&dbPost); err != nil {
+	if err := models.DB.Where("organization_id IN (?)", cUser.GetOrgIDs()...).Where("uuid = ?", id).First(&post); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting post: %v", err.Error()))
 		return &models.Post{}, err
 	}
 
-	creator := models.User{}
 	// TODO: GetRequestFields gets *all* request fields smashed into one list. Need something that
 	// gives just the request fields from the object of interest.
 	selectFields := GetSelectFieldsFromRequestFields(UserSimpleFields(), GetRequestFields(ctx))
-	if err := models.DB.Select(selectFields...).Find(&creator, dbPost.CreatedByID); err != nil {
-		return &dbPost, err
-	}
-	dbPost.CreatedBy = creator
 
-	return &dbPost, nil
+	creator := models.User{}
+	if err := models.DB.Select(selectFields...).Find(&creator, post.CreatedByID); err != nil {
+		return &post, err
+	}
+	post.CreatedBy = creator
+
+	receiver := models.User{}
+	if err := models.DB.Select(selectFields...).Find(&receiver, post.ReceiverID); err == nil {
+		post.Receiver = receiver
+	}
+
+	provider := models.User{}
+	if err := models.DB.Select(selectFields...).Find(&provider, post.ProviderID); err == nil {
+		post.Provider = provider
+	}
+
+	return &post, nil
 }
 
 func (r *queryResolver) Threads(ctx context.Context) ([]*Thread, error) {
