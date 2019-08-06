@@ -65,11 +65,7 @@ func addPostToThread(gqlThread *Thread, postID int, requestFields []string) erro
 	}
 
 	if domain.IsStringInSlice(PostField, requestFields) {
-		gqlPost, err := ConvertDBPostToGqlPost(post, nil, requestFields)
-		if err != nil {
-			return err
-		}
-		gqlThread.Post = &gqlPost
+		gqlThread.Post = &post
 	}
 
 	gqlThread.PostID = post.Uuid.String()

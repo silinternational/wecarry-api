@@ -46,34 +46,12 @@ type Organization struct {
 	UpdatedAt *string `json:"updatedAt"`
 }
 
-type Post struct {
-	ID           string        `json:"id"`
-	Type         PostType      `json:"type"`
-	CreatedBy    *models.User  `json:"createdBy"`
-	Receiver     *models.User  `json:"receiver"`
-	Provider     *models.User  `json:"provider"`
-	Organization *Organization `json:"organization"`
-	Title        string        `json:"title"`
-	Description  *string       `json:"description"`
-	Destination  *string       `json:"destination"`
-	Origin       *string       `json:"origin"`
-	Size         string        `json:"size"`
-	NeededAfter  *string       `json:"neededAfter"`
-	NeededBefore *string       `json:"neededBefore"`
-	Category     string        `json:"category"`
-	Status       string        `json:"status"`
-	Threads      []*Thread     `json:"threads"`
-	CreatedAt    *string       `json:"createdAt"`
-	UpdatedAt    *string       `json:"updatedAt"`
-	MyThreadID   *string       `json:"myThreadID"`
-}
-
 type Thread struct {
 	ID           string         `json:"id"`
 	Participants []*models.User `json:"participants"`
 	Messages     []*Message     `json:"messages"`
 	PostID       string         `json:"postID"`
-	Post         *Post          `json:"post"`
+	Post         *models.Post   `json:"post"`
 	CreatedAt    *string        `json:"createdAt"`
 	UpdatedAt    *string        `json:"updatedAt"`
 }

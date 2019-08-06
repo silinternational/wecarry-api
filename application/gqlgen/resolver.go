@@ -97,46 +97,133 @@ func (r *queryResolver) User(ctx context.Context, id *string) (*models.User, err
 	return &dbUser, nil
 }
 
-func (r *queryResolver) Posts(ctx context.Context) ([]*Post, error) {
+func (r *Resolver) Post() PostResolver {
+	return &postResolver{r}
+}
+
+type postResolver struct{ *Resolver }
+
+func (r *postResolver) Type(ctx context.Context, obj *models.Post) (PostType, error) {
+	if obj == nil {
+		return "", nil
+	}
+	return PostType(obj.Type), nil
+}
+
+func (r *postResolver) Organization(ctx context.Context, obj *models.Post) (*Organization, error) {
+	return nil, nil
+}
+
+func (r *postResolver) Description(ctx context.Context, obj *models.Post) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return GetStringFromNullsString(obj.Description), nil
+}
+
+func (r *postResolver) Destination(ctx context.Context, obj *models.Post) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return GetStringFromNullsString(obj.Destination), nil
+}
+
+func (r *postResolver) Origin(ctx context.Context, obj *models.Post) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return GetStringFromNullsString(obj.Origin), nil
+}
+
+func (r *postResolver) NeededAfter(ctx context.Context, obj *models.Post) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return domain.ConvertTimeToStringPtr(obj.NeededAfter), nil
+}
+
+func (r *postResolver) NeededBefore(ctx context.Context, obj *models.Post) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return domain.ConvertTimeToStringPtr(obj.NeededBefore), nil
+}
+
+func (r *postResolver) Threads(ctx context.Context, obj *models.Post) ([]*Thread, error) {
+	return nil, nil
+}
+
+func (r *postResolver) CreatedAt(ctx context.Context, obj *models.Post) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return domain.ConvertTimeToStringPtr(obj.CreatedAt), nil
+}
+
+func (r *postResolver) UpdatedAt(ctx context.Context, obj *models.Post) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return domain.ConvertTimeToStringPtr(obj.UpdatedAt), nil
+}
+
+func (r *postResolver) MyThreadID(ctx context.Context, obj *models.Post) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+
+	currentUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+
+	thread, err := models.FindThreadByPostIDAndUserID(obj.ID, currentUser.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	threadUuid := thread.Uuid.String()
+	if threadUuid == domain.EmptyUUID {
+		return nil, nil
+	}
+
+	return &threadUuid, nil
+}
+
+func (r *queryResolver) Posts(ctx context.Context) ([]*models.Post, error) {
 
 	db := models.DB
 	dbPosts := models.Posts{}
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 	if err := db.Where("organization_id IN (?)", cUser.GetOrgIDs()...).All(&dbPosts); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting posts: %v", err.Error()))
-		return []*Post{}, err
+		return []*models.Post{}, err
 	}
 
-	var gqlPosts []*Post
+	var posts []*models.Post
 	for _, dbPost := range dbPosts {
-		newGqlPost, err := ConvertDBPostToGqlPost(dbPost, &cUser, GetRequestFields(ctx))
-		if err != nil {
-			graphql.AddError(ctx, gqlerror.Errorf("Error converting posts: %v", err.Error()))
-			return gqlPosts, err
-		}
-		gqlPosts = append(gqlPosts, &newGqlPost)
-
+		posts = append(posts, &dbPost)
 	}
 
-	return gqlPosts, nil
+	return posts, nil
 }
 
-func (r *queryResolver) Post(ctx context.Context, id *string) (*Post, error) {
+func (r *queryResolver) Post(ctx context.Context, id *string) (*models.Post, error) {
 	dbPost := models.Post{}
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 
 	if err := models.DB.Where("organization_id IN (?)", cUser.GetOrgIDs()...).Where("uuid = ?", id).First(&dbPost); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting post: %v", err.Error()))
-		return &Post{}, err
+		return &models.Post{}, err
 	}
 
-	newGqlPost, err := ConvertDBPostToGqlPost(dbPost, &cUser, GetRequestFields(ctx))
-	if err != nil {
-		graphql.AddError(ctx, gqlerror.Errorf("Error converting post: %v", err.Error()))
-		return &newGqlPost, err
+	creator := models.User{}
+	// TODO: GetRequestFields gets *all* request fields smashed into one list. Need something that
+	// gives just the request fields from the object of interest.
+	selectFields := GetSelectFieldsFromRequestFields(UserSimpleFields(), GetRequestFields(ctx))
+	if err := models.DB.Select(selectFields...).Find(&creator, dbPost.CreatedByID); err != nil {
+		return &dbPost, err
 	}
+	dbPost.CreatedBy = creator
 
-	return &newGqlPost, nil
+	return &dbPost, nil
 }
 
 func (r *queryResolver) Threads(ctx context.Context) ([]*Thread, error) {

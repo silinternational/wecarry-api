@@ -36,6 +36,7 @@ type Config struct {
 
 type ResolverRoot interface {
 	Mutation() MutationResolver
+	Post() PostResolver
 	Query() QueryResolver
 	User() UserResolver
 }
@@ -122,15 +123,32 @@ type ComplexityRoot struct {
 }
 
 type MutationResolver interface {
-	CreatePost(ctx context.Context, input NewPost) (*Post, error)
-	UpdatePostStatus(ctx context.Context, input UpdatedPostStatus) (*Post, error)
+	CreatePost(ctx context.Context, input NewPost) (*models.Post, error)
+	UpdatePostStatus(ctx context.Context, input UpdatedPostStatus) (*models.Post, error)
 	CreateMessage(ctx context.Context, input NewMessage) (*Message, error)
+}
+type PostResolver interface {
+	Type(ctx context.Context, obj *models.Post) (PostType, error)
+
+	Organization(ctx context.Context, obj *models.Post) (*Organization, error)
+
+	Description(ctx context.Context, obj *models.Post) (*string, error)
+	Destination(ctx context.Context, obj *models.Post) (*string, error)
+	Origin(ctx context.Context, obj *models.Post) (*string, error)
+
+	NeededAfter(ctx context.Context, obj *models.Post) (*string, error)
+	NeededBefore(ctx context.Context, obj *models.Post) (*string, error)
+
+	Threads(ctx context.Context, obj *models.Post) ([]*Thread, error)
+	CreatedAt(ctx context.Context, obj *models.Post) (*string, error)
+	UpdatedAt(ctx context.Context, obj *models.Post) (*string, error)
+	MyThreadID(ctx context.Context, obj *models.Post) (*string, error)
 }
 type QueryResolver interface {
 	Users(ctx context.Context) ([]*models.User, error)
 	User(ctx context.Context, id *string) (*models.User, error)
-	Posts(ctx context.Context) ([]*Post, error)
-	Post(ctx context.Context, id *string) (*Post, error)
+	Posts(ctx context.Context) ([]*models.Post, error)
+	Post(ctx context.Context, id *string) (*models.Post, error)
 	Threads(ctx context.Context) ([]*Thread, error)
 	MyThreads(ctx context.Context) ([]*Thread, error)
 	Message(ctx context.Context, id *string) (*Message, error)
@@ -1138,10 +1156,10 @@ func (ec *executionContext) _Mutation_createPost(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*Post)
+	res := resTmp.(*models.Post)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNPost2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐPost(ctx, field.Selections, res)
+	return ec.marshalNPost2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_updatePostStatus(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1182,10 +1200,10 @@ func (ec *executionContext) _Mutation_updatePostStatus(ctx context.Context, fiel
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*Post)
+	res := resTmp.(*models.Post)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNPost2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐPost(ctx, field.Selections, res)
+	return ec.marshalNPost2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_createMessage(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1408,7 +1426,7 @@ func (ec *executionContext) _Organization_updatedAt(ctx context.Context, field g
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Post_id(ctx context.Context, field graphql.CollectedField, obj *Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_id(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -1439,13 +1457,13 @@ func (ec *executionContext) _Post_id(ctx context.Context, field graphql.Collecte
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(int)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNID2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Post_type(ctx context.Context, field graphql.CollectedField, obj *Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_type(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -1458,13 +1476,13 @@ func (ec *executionContext) _Post_type(ctx context.Context, field graphql.Collec
 		Object:   "Post",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Type, nil
+		return ec.resolvers.Post().Type(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1482,7 +1500,7 @@ func (ec *executionContext) _Post_type(ctx context.Context, field graphql.Collec
 	return ec.marshalNPostType2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐPostType(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Post_createdBy(ctx context.Context, field graphql.CollectedField, obj *Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_createdBy(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -1513,13 +1531,13 @@ func (ec *executionContext) _Post_createdBy(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*models.User)
+	res := resTmp.(models.User)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNUser2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Post_receiver(ctx context.Context, field graphql.CollectedField, obj *Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_receiver(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -1547,13 +1565,13 @@ func (ec *executionContext) _Post_receiver(ctx context.Context, field graphql.Co
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*models.User)
+	res := resTmp.(models.User)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOUser2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Post_provider(ctx context.Context, field graphql.CollectedField, obj *Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_provider(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -1581,13 +1599,13 @@ func (ec *executionContext) _Post_provider(ctx context.Context, field graphql.Co
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*models.User)
+	res := resTmp.(models.User)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOUser2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Post_organization(ctx context.Context, field graphql.CollectedField, obj *Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_organization(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -1600,13 +1618,13 @@ func (ec *executionContext) _Post_organization(ctx context.Context, field graphq
 		Object:   "Post",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Organization, nil
+		return ec.resolvers.Post().Organization(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1621,7 +1639,7 @@ func (ec *executionContext) _Post_organization(ctx context.Context, field graphq
 	return ec.marshalOOrganization2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐOrganization(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Post_title(ctx context.Context, field graphql.CollectedField, obj *Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_title(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -1658,7 +1676,7 @@ func (ec *executionContext) _Post_title(ctx context.Context, field graphql.Colle
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Post_description(ctx context.Context, field graphql.CollectedField, obj *Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_description(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -1671,13 +1689,13 @@ func (ec *executionContext) _Post_description(ctx context.Context, field graphql
 		Object:   "Post",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Description, nil
+		return ec.resolvers.Post().Description(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1692,7 +1710,7 @@ func (ec *executionContext) _Post_description(ctx context.Context, field graphql
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Post_destination(ctx context.Context, field graphql.CollectedField, obj *Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_destination(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -1705,13 +1723,13 @@ func (ec *executionContext) _Post_destination(ctx context.Context, field graphql
 		Object:   "Post",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Destination, nil
+		return ec.resolvers.Post().Destination(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1726,7 +1744,7 @@ func (ec *executionContext) _Post_destination(ctx context.Context, field graphql
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Post_origin(ctx context.Context, field graphql.CollectedField, obj *Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_origin(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -1739,13 +1757,13 @@ func (ec *executionContext) _Post_origin(ctx context.Context, field graphql.Coll
 		Object:   "Post",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Origin, nil
+		return ec.resolvers.Post().Origin(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1760,7 +1778,7 @@ func (ec *executionContext) _Post_origin(ctx context.Context, field graphql.Coll
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Post_size(ctx context.Context, field graphql.CollectedField, obj *Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_size(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -1797,7 +1815,7 @@ func (ec *executionContext) _Post_size(ctx context.Context, field graphql.Collec
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Post_neededAfter(ctx context.Context, field graphql.CollectedField, obj *Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_neededAfter(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -1810,13 +1828,13 @@ func (ec *executionContext) _Post_neededAfter(ctx context.Context, field graphql
 		Object:   "Post",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.NeededAfter, nil
+		return ec.resolvers.Post().NeededAfter(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1831,7 +1849,7 @@ func (ec *executionContext) _Post_neededAfter(ctx context.Context, field graphql
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Post_neededBefore(ctx context.Context, field graphql.CollectedField, obj *Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_neededBefore(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -1844,13 +1862,13 @@ func (ec *executionContext) _Post_neededBefore(ctx context.Context, field graphq
 		Object:   "Post",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.NeededBefore, nil
+		return ec.resolvers.Post().NeededBefore(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1865,7 +1883,7 @@ func (ec *executionContext) _Post_neededBefore(ctx context.Context, field graphq
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Post_category(ctx context.Context, field graphql.CollectedField, obj *Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_category(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -1902,7 +1920,7 @@ func (ec *executionContext) _Post_category(ctx context.Context, field graphql.Co
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Post_status(ctx context.Context, field graphql.CollectedField, obj *Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_status(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -1939,7 +1957,7 @@ func (ec *executionContext) _Post_status(ctx context.Context, field graphql.Coll
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Post_threads(ctx context.Context, field graphql.CollectedField, obj *Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_threads(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -1952,13 +1970,13 @@ func (ec *executionContext) _Post_threads(ctx context.Context, field graphql.Col
 		Object:   "Post",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Threads, nil
+		return ec.resolvers.Post().Threads(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1976,7 +1994,7 @@ func (ec *executionContext) _Post_threads(ctx context.Context, field graphql.Col
 	return ec.marshalNThread2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐThread(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Post_createdAt(ctx context.Context, field graphql.CollectedField, obj *Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_createdAt(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -1989,13 +2007,13 @@ func (ec *executionContext) _Post_createdAt(ctx context.Context, field graphql.C
 		Object:   "Post",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.CreatedAt, nil
+		return ec.resolvers.Post().CreatedAt(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2010,7 +2028,7 @@ func (ec *executionContext) _Post_createdAt(ctx context.Context, field graphql.C
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Post_updatedAt(ctx context.Context, field graphql.CollectedField, obj *Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_updatedAt(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -2023,13 +2041,13 @@ func (ec *executionContext) _Post_updatedAt(ctx context.Context, field graphql.C
 		Object:   "Post",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.UpdatedAt, nil
+		return ec.resolvers.Post().UpdatedAt(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2044,7 +2062,7 @@ func (ec *executionContext) _Post_updatedAt(ctx context.Context, field graphql.C
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Post_myThreadID(ctx context.Context, field graphql.CollectedField, obj *Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_myThreadID(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -2057,13 +2075,13 @@ func (ec *executionContext) _Post_myThreadID(ctx context.Context, field graphql.
 		Object:   "Post",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.MyThreadID, nil
+		return ec.resolvers.Post().MyThreadID(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2187,10 +2205,10 @@ func (ec *executionContext) _Query_posts(ctx context.Context, field graphql.Coll
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*Post)
+	res := resTmp.([]*models.Post)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNPost2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐPost(ctx, field.Selections, res)
+	return ec.marshalNPost2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_post(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2228,10 +2246,10 @@ func (ec *executionContext) _Query_post(ctx context.Context, field graphql.Colle
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*Post)
+	res := resTmp.(*models.Post)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOPost2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐPost(ctx, field.Selections, res)
+	return ec.marshalOPost2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_threads(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2606,10 +2624,10 @@ func (ec *executionContext) _Thread_post(ctx context.Context, field graphql.Coll
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*Post)
+	res := resTmp.(*models.Post)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNPost2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐPost(ctx, field.Selections, res)
+	return ec.marshalNPost2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Thread_createdAt(ctx context.Context, field graphql.CollectedField, obj *Thread) (ret graphql.Marshaler) {
@@ -4379,7 +4397,7 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 
 var postImplementors = []string{"Post"}
 
-func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj *Post) graphql.Marshaler {
+func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj *models.Post) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.RequestContext, sel, postImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -4391,65 +4409,164 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 		case "id":
 			out.Values[i] = ec._Post_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "type":
-			out.Values[i] = ec._Post_type(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Post_type(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "createdBy":
 			out.Values[i] = ec._Post_createdBy(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "receiver":
 			out.Values[i] = ec._Post_receiver(ctx, field, obj)
 		case "provider":
 			out.Values[i] = ec._Post_provider(ctx, field, obj)
 		case "organization":
-			out.Values[i] = ec._Post_organization(ctx, field, obj)
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Post_organization(ctx, field, obj)
+				return res
+			})
 		case "title":
 			out.Values[i] = ec._Post_title(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "description":
-			out.Values[i] = ec._Post_description(ctx, field, obj)
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Post_description(ctx, field, obj)
+				return res
+			})
 		case "destination":
-			out.Values[i] = ec._Post_destination(ctx, field, obj)
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Post_destination(ctx, field, obj)
+				return res
+			})
 		case "origin":
-			out.Values[i] = ec._Post_origin(ctx, field, obj)
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Post_origin(ctx, field, obj)
+				return res
+			})
 		case "size":
 			out.Values[i] = ec._Post_size(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "neededAfter":
-			out.Values[i] = ec._Post_neededAfter(ctx, field, obj)
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Post_neededAfter(ctx, field, obj)
+				return res
+			})
 		case "neededBefore":
-			out.Values[i] = ec._Post_neededBefore(ctx, field, obj)
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Post_neededBefore(ctx, field, obj)
+				return res
+			})
 		case "category":
 			out.Values[i] = ec._Post_category(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "status":
 			out.Values[i] = ec._Post_status(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "threads":
-			out.Values[i] = ec._Post_threads(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Post_threads(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "createdAt":
-			out.Values[i] = ec._Post_createdAt(ctx, field, obj)
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Post_createdAt(ctx, field, obj)
+				return res
+			})
 		case "updatedAt":
-			out.Values[i] = ec._Post_updatedAt(ctx, field, obj)
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Post_updatedAt(ctx, field, obj)
+				return res
+			})
 		case "myThreadID":
-			out.Values[i] = ec._Post_myThreadID(ctx, field, obj)
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Post_myThreadID(ctx, field, obj)
+				return res
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5060,11 +5177,11 @@ func (ec *executionContext) unmarshalNNewPost2githubᚗcomᚋsilinternationalᚋ
 	return ec.unmarshalInputNewPost(ctx, v)
 }
 
-func (ec *executionContext) marshalNPost2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐPost(ctx context.Context, sel ast.SelectionSet, v Post) graphql.Marshaler {
+func (ec *executionContext) marshalNPost2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐPost(ctx context.Context, sel ast.SelectionSet, v models.Post) graphql.Marshaler {
 	return ec._Post(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNPost2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐPost(ctx context.Context, sel ast.SelectionSet, v []*Post) graphql.Marshaler {
+func (ec *executionContext) marshalNPost2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐPost(ctx context.Context, sel ast.SelectionSet, v []*models.Post) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -5088,7 +5205,7 @@ func (ec *executionContext) marshalNPost2ᚕᚖgithubᚗcomᚋsilinternational�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOPost2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐPost(ctx, sel, v[i])
+			ret[i] = ec.marshalOPost2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐPost(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -5101,7 +5218,7 @@ func (ec *executionContext) marshalNPost2ᚕᚖgithubᚗcomᚋsilinternational�
 	return ret
 }
 
-func (ec *executionContext) marshalNPost2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐPost(ctx context.Context, sel ast.SelectionSet, v *Post) graphql.Marshaler {
+func (ec *executionContext) marshalNPost2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐPost(ctx context.Context, sel ast.SelectionSet, v *models.Post) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -5523,11 +5640,11 @@ func (ec *executionContext) marshalOOrganization2ᚖgithubᚗcomᚋsilinternatio
 	return ec._Organization(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOPost2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐPost(ctx context.Context, sel ast.SelectionSet, v Post) graphql.Marshaler {
+func (ec *executionContext) marshalOPost2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐPost(ctx context.Context, sel ast.SelectionSet, v models.Post) graphql.Marshaler {
 	return ec._Post(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOPost2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐPost(ctx context.Context, sel ast.SelectionSet, v *Post) graphql.Marshaler {
+func (ec *executionContext) marshalOPost2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐPost(ctx context.Context, sel ast.SelectionSet, v *models.Post) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
