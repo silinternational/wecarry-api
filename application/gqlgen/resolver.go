@@ -190,16 +190,18 @@ func (r *postResolver) MyThreadID(ctx context.Context, obj *models.Post) (*strin
 func (r *queryResolver) Posts(ctx context.Context) ([]*models.Post, error) {
 
 	db := models.DB
-	var dbPosts []*models.Post
+	var posts []*models.Post
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
-	if err := db.Where("organization_id IN (?)", cUser.GetOrgIDs()...).All(&dbPosts); err != nil {
+	if err := db.Where("organization_id IN (?)", cUser.GetOrgIDs()...).All(&posts); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting posts: %v", err.Error()))
 		return []*models.Post{}, err
 	}
 
-	var posts []*models.Post
-	for _, dbPost := range dbPosts {
-		posts = append(posts, dbPost)
+	for _, dbPost := range posts {
+		e := dbPost.QueryRelatedUsers(GetSelectFieldsFromRequestFields(UserSimpleFields(), GetRequestFields(ctx)))
+		if e != nil {
+			return posts, e
+		}
 	}
 
 	return posts, nil
