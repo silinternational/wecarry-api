@@ -197,8 +197,8 @@ func (r *queryResolver) Posts(ctx context.Context) ([]*models.Post, error) {
 		return []*models.Post{}, err
 	}
 
-	for _, dbPost := range posts {
-		e := dbPost.QueryRelatedUsers(GetSelectFieldsFromRequestFields(UserSimpleFields(), GetRequestFields(ctx)))
+	for _, p := range posts {
+		e := p.QueryRelatedUsers(GetSelectFieldsFromRequestFields(UserSimpleFields(), GetRequestFields(ctx)))
 		if e != nil {
 			return posts, e
 		}
