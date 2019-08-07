@@ -50,7 +50,7 @@ func ConvertDBMessageToGqlMessageWithSender(dbMessage models.Message, requestFie
 	return gqlMessage, nil
 }
 
-// ConvertDBUserToGqlUser does what its name says, but also ...
+// ConvertDBMessageToGqlMessage does what its name says, but also ...
 func ConvertDBMessageToGqlMessage(dbMessage models.Message, requestFields []string) (Message, error) {
 
 	// TODO this fetching of related objects is all quick and dirty.  Rewrite when there is time.
@@ -61,28 +61,28 @@ func ConvertDBMessageToGqlMessage(dbMessage models.Message, requestFields []stri
 		return Message{}, err
 	}
 
-	thread, err := ConvertDBThreadToGqlThread(dbThread, requestFields)
-	if err != nil {
-		return Message{}, err
-	}
+	//thread, err := ConvertDBThreadToGqlThread(dbThread, requestFields)
+	//if err != nil {
+	//	return Message{}, err
+	//}
+	//
+	//selectFields := GetSelectFieldsFromRequestFields(MessageSimpleFields(), requestFields)
+	//
+	//dbMessages := models.Messages{}
+	//queryString := fmt.Sprintf("thread_id = '%v'", dbThread.ID)
+	//if err := models.DB.Select(selectFields...).Where(queryString).All(&dbMessages); err != nil {
+	//	err = fmt.Errorf("error finding messages with thread id %v ... %v", dbThread.ID, err)
+	//	return Message{}, err
+	//}
 
-	selectFields := GetSelectFieldsFromRequestFields(MessageSimpleFields(), requestFields)
-
-	dbMessages := models.Messages{}
-	queryString := fmt.Sprintf("thread_id = '%v'", dbThread.ID)
-	if err := models.DB.Select(selectFields...).Where(queryString).All(&dbMessages); err != nil {
-		err = fmt.Errorf("error finding messages with thread id %v ... %v", dbThread.ID, err)
-		return Message{}, err
-	}
-
-	for _, m := range dbMessages {
-		gqlMsg, err := ConvertSimpleDBMessageToGqlMessage(m)
-		if err != nil {
-			return Message{}, err
-		}
-
-		thread.Messages = append(thread.Messages, &gqlMsg)
-	}
+	//for _, m := range dbMessages {
+	//	gqlMsg, err := ConvertSimpleDBMessageToGqlMessage(m)
+	//	if err != nil {
+	//		return Message{}, err
+	//	}
+	//
+	//	thread.Messages = append(thread.Messages, &gqlMsg)
+	//}
 
 	sender := models.User{}
 	if err := models.DB.Find(&sender, dbMessage.SentByID); err != nil {
@@ -95,7 +95,7 @@ func ConvertDBMessageToGqlMessage(dbMessage models.Message, requestFields []stri
 		return Message{}, err
 	}
 
-	gqlMessage.Thread = &thread
+	//gqlMessage.Thread = &thread
 	gqlMessage.Sender = &sender
 
 	return gqlMessage, nil

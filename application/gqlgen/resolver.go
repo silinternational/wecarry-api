@@ -5,6 +5,7 @@ package gqlgen
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/silinternational/handcarry-api/domain"
 
@@ -149,7 +150,7 @@ func (r *postResolver) NeededBefore(ctx context.Context, obj *models.Post) (*str
 	return domain.ConvertTimeToStringPtr(obj.NeededBefore), nil
 }
 
-func (r *postResolver) Threads(ctx context.Context, obj *models.Post) ([]*Thread, error) {
+func (r *postResolver) Threads(ctx context.Context, obj *models.Post) ([]*models.Thread, error) {
 	return nil, nil
 }
 
@@ -224,58 +225,117 @@ func (r *queryResolver) Post(ctx context.Context, id *string) (*models.Post, err
 	return &post, nil
 }
 
-func (r *queryResolver) Threads(ctx context.Context) ([]*Thread, error) {
+func (r *Resolver) Thread() ThreadResolver {
+	return &threadResolver{r}
+}
+
+type threadResolver struct{ *Resolver }
+
+func (r *threadResolver) Participants(ctx context.Context, obj *models.Thread) ([]*models.User, error) {
+	if obj == nil {
+		return nil, nil
+	}
+
+	selectedFields := GetSelectFieldsFromRequestFields(UserSimpleFields(), GetRequestFields(ctx))
+	participants, err := models.GetThreadParticipants(obj.ID, selectedFields)
+	if err != nil {
+		return nil, err
+	}
+
+	var users []*models.User
+
+	for _, p := range participants {
+		// TODO: change models.GetThreadParticipants to return a slice of pointers
+		u := p // instantiate a new copy for each object
+		users = append(users, &u)
+	}
+
+	return users, nil
+}
+
+func (r *threadResolver) Messages(ctx context.Context, obj *models.Thread) ([]*Message, error) {
+	return nil, nil
+}
+
+func (r *threadResolver) PostID(ctx context.Context, obj *models.Thread) (string, error) {
+	if obj == nil {
+		return "", nil
+	}
+	return strconv.Itoa(obj.PostID), nil
+}
+
+func (r *threadResolver) CreatedAt(ctx context.Context, obj *models.Thread) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return domain.ConvertTimeToStringPtr(obj.CreatedAt), nil
+}
+
+func (r *threadResolver) UpdatedAt(ctx context.Context, obj *models.Thread) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return domain.ConvertTimeToStringPtr(obj.UpdatedAt), nil
+}
+
+func (r *queryResolver) Threads(ctx context.Context) ([]*models.Thread, error) {
+	var threads []*models.Thread
 
 	db := models.DB
-	dbThreads := models.Threads{}
 
 	requestFields := GetRequestFields(ctx)
 	selectFields := getSelectFieldsForThreads(requestFields)
 
-	if err := db.Select(selectFields...).All(&dbThreads); err != nil {
-		graphql.AddError(ctx, gqlerror.Errorf("Error getting threads: %v", err.Error()))
-		return []*Thread{}, err
+	if err := db.Select(selectFields...).All(&threads); err != nil {
+		return []*models.Thread{}, fmt.Errorf("error getting threads: %v", err)
 	}
 
-	var gqlThreads []*Thread
-	for _, dbThread := range dbThreads {
-		newGqlThread, err := ConvertDBThreadToGqlThread(dbThread, requestFields)
-
-		if err != nil {
-			graphql.AddError(ctx, gqlerror.Errorf("Error converting users: %v", err.Error()))
-			return gqlThreads, err
+	// TODO: extract common code between Threads and MyThreads
+	// TODO: filter requestFields for post fields
+	postFields := requestFields
+	messageFields := GetSelectFieldsFromRequestFields(MessageSimpleFields(), requestFields)
+	for _, t := range threads {
+		if err := t.LoadPost(postFields); err != nil {
+			graphql.AddError(ctx, gqlerror.Errorf("Error loading post data for thread %v: %v", t.ID, err))
 		}
-		gqlThreads = append(gqlThreads, &newGqlThread)
 
+		if err := t.LoadMessages(messageFields); err != nil {
+			graphql.AddError(ctx, gqlerror.Errorf("Error loading messages for thread %v: %v", t.ID, err))
+		}
 	}
 
-	return gqlThreads, nil
+	return threads, nil
 }
 
-func (r *queryResolver) MyThreads(ctx context.Context) ([]*Thread, error) {
+func (r *queryResolver) MyThreads(ctx context.Context) ([]*models.Thread, error) {
+	var threads []*models.Thread
+
 	db := models.DB
-	dbThreads := models.Threads{}
+	requestFields := GetRequestFields(ctx)
 	currentUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 
+	// TODO: use getSelectFieldsForThreads()
 	query := db.Q().LeftJoin("thread_participants tp", "threads.id = tp.thread_id")
 	query = query.Where("tp.user_id = ?", currentUser.ID)
-	if err := query.All(&dbThreads); err != nil {
-		graphql.AddError(ctx, gqlerror.Errorf("Error getting threads: %v", err.Error()))
-		return []*Thread{}, err
+	if err := query.All(&threads); err != nil {
+		return []*models.Thread{}, fmt.Errorf("error getting threads: %v", err)
 	}
 
-	var gqlThreads []*Thread
-	for _, dbThread := range dbThreads {
-		newGqlThread, err := ConvertDBThreadToGqlThread(dbThread, []string{})
-
-		if err != nil {
-			graphql.AddError(ctx, gqlerror.Errorf("Error converting threads: %v", err.Error()))
-			return gqlThreads, err
+	// TODO: extract common code between Threads and MyThreads
+	// TODO: filter requestFields for post fields
+	postFields := requestFields
+	messageFields := GetSelectFieldsFromRequestFields(MessageSimpleFields(), requestFields)
+	for _, t := range threads {
+		if err := t.LoadPost(postFields); err != nil {
+			graphql.AddError(ctx, gqlerror.Errorf("Error loading post data for thread %v: %v", t.ID, err))
 		}
-		gqlThreads = append(gqlThreads, &newGqlThread)
 
+		if err := t.LoadMessages(messageFields); err != nil {
+			graphql.AddError(ctx, gqlerror.Errorf("Error loading messages for thread %v: %v", t.ID, err))
+		}
 	}
-	return gqlThreads, nil
+
+	return threads, nil
 }
 
 func (r *queryResolver) Message(ctx context.Context, id *string) (*Message, error) {

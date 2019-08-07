@@ -11,12 +11,12 @@ import (
 )
 
 type Message struct {
-	ID        string       `json:"id"`
-	Sender    *models.User `json:"sender"`
-	Content   string       `json:"content"`
-	Thread    *Thread      `json:"thread"`
-	CreatedAt *string      `json:"createdAt"`
-	UpdatedAt *string      `json:"updatedAt"`
+	ID        string         `json:"id"`
+	Sender    *models.User   `json:"sender"`
+	Content   string         `json:"content"`
+	Thread    *models.Thread `json:"thread"`
+	CreatedAt *string        `json:"createdAt"`
+	UpdatedAt *string        `json:"updatedAt"`
 }
 
 type NewMessage struct {
@@ -44,16 +44,6 @@ type Organization struct {
 	URL       *string `json:"url"`
 	CreatedAt *string `json:"createdAt"`
 	UpdatedAt *string `json:"updatedAt"`
-}
-
-type Thread struct {
-	ID           string         `json:"id"`
-	Participants []*models.User `json:"participants"`
-	Messages     []*Message     `json:"messages"`
-	PostID       string         `json:"postID"`
-	Post         *models.Post   `json:"post"`
-	CreatedAt    *string        `json:"createdAt"`
-	UpdatedAt    *string        `json:"updatedAt"`
 }
 
 type UpdatedPostStatus struct {

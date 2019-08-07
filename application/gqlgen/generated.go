@@ -38,6 +38,7 @@ type ResolverRoot interface {
 	Mutation() MutationResolver
 	Post() PostResolver
 	Query() QueryResolver
+	Thread() ThreadResolver
 	User() UserResolver
 }
 
@@ -139,7 +140,7 @@ type PostResolver interface {
 	NeededAfter(ctx context.Context, obj *models.Post) (*string, error)
 	NeededBefore(ctx context.Context, obj *models.Post) (*string, error)
 
-	Threads(ctx context.Context, obj *models.Post) ([]*Thread, error)
+	Threads(ctx context.Context, obj *models.Post) ([]*models.Thread, error)
 	CreatedAt(ctx context.Context, obj *models.Post) (*string, error)
 	UpdatedAt(ctx context.Context, obj *models.Post) (*string, error)
 	MyThreadID(ctx context.Context, obj *models.Post) (*string, error)
@@ -149,9 +150,17 @@ type QueryResolver interface {
 	User(ctx context.Context, id *string) (*models.User, error)
 	Posts(ctx context.Context) ([]*models.Post, error)
 	Post(ctx context.Context, id *string) (*models.Post, error)
-	Threads(ctx context.Context) ([]*Thread, error)
-	MyThreads(ctx context.Context) ([]*Thread, error)
+	Threads(ctx context.Context) ([]*models.Thread, error)
+	MyThreads(ctx context.Context) ([]*models.Thread, error)
 	Message(ctx context.Context, id *string) (*Message, error)
+}
+type ThreadResolver interface {
+	Participants(ctx context.Context, obj *models.Thread) ([]*models.User, error)
+	Messages(ctx context.Context, obj *models.Thread) ([]*Message, error)
+	PostID(ctx context.Context, obj *models.Thread) (string, error)
+
+	CreatedAt(ctx context.Context, obj *models.Thread) (*string, error)
+	UpdatedAt(ctx context.Context, obj *models.Thread) (*string, error)
 }
 type UserResolver interface {
 	CreatedAt(ctx context.Context, obj *models.User) (*string, error)
@@ -1044,10 +1053,10 @@ func (ec *executionContext) _Message_thread(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*Thread)
+	res := resTmp.(*models.Thread)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNThread2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐThread(ctx, field.Selections, res)
+	return ec.marshalNThread2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐThread(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Message_createdAt(ctx context.Context, field graphql.CollectedField, obj *Message) (ret graphql.Marshaler) {
@@ -1988,10 +1997,10 @@ func (ec *executionContext) _Post_threads(ctx context.Context, field graphql.Col
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*Thread)
+	res := resTmp.([]*models.Thread)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNThread2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐThread(ctx, field.Selections, res)
+	return ec.marshalNThread2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐThread(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Post_createdAt(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
@@ -2283,10 +2292,10 @@ func (ec *executionContext) _Query_threads(ctx context.Context, field graphql.Co
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*Thread)
+	res := resTmp.([]*models.Thread)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNThread2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐThread(ctx, field.Selections, res)
+	return ec.marshalNThread2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐThread(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_myThreads(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2320,10 +2329,10 @@ func (ec *executionContext) _Query_myThreads(ctx context.Context, field graphql.
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*Thread)
+	res := resTmp.([]*models.Thread)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNThread2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐThread(ctx, field.Selections, res)
+	return ec.marshalNThread2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐThread(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_message(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2445,7 +2454,7 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 	return ec.marshalO__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Thread_id(ctx context.Context, field graphql.CollectedField, obj *Thread) (ret graphql.Marshaler) {
+func (ec *executionContext) _Thread_id(ctx context.Context, field graphql.CollectedField, obj *models.Thread) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -2476,13 +2485,13 @@ func (ec *executionContext) _Thread_id(ctx context.Context, field graphql.Collec
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(int)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNID2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Thread_participants(ctx context.Context, field graphql.CollectedField, obj *Thread) (ret graphql.Marshaler) {
+func (ec *executionContext) _Thread_participants(ctx context.Context, field graphql.CollectedField, obj *models.Thread) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -2495,13 +2504,13 @@ func (ec *executionContext) _Thread_participants(ctx context.Context, field grap
 		Object:   "Thread",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Participants, nil
+		return ec.resolvers.Thread().Participants(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2519,7 +2528,7 @@ func (ec *executionContext) _Thread_participants(ctx context.Context, field grap
 	return ec.marshalNUser2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Thread_messages(ctx context.Context, field graphql.CollectedField, obj *Thread) (ret graphql.Marshaler) {
+func (ec *executionContext) _Thread_messages(ctx context.Context, field graphql.CollectedField, obj *models.Thread) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -2532,13 +2541,13 @@ func (ec *executionContext) _Thread_messages(ctx context.Context, field graphql.
 		Object:   "Thread",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Messages, nil
+		return ec.resolvers.Thread().Messages(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2556,7 +2565,7 @@ func (ec *executionContext) _Thread_messages(ctx context.Context, field graphql.
 	return ec.marshalNMessage2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐMessage(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Thread_postID(ctx context.Context, field graphql.CollectedField, obj *Thread) (ret graphql.Marshaler) {
+func (ec *executionContext) _Thread_postID(ctx context.Context, field graphql.CollectedField, obj *models.Thread) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -2569,13 +2578,13 @@ func (ec *executionContext) _Thread_postID(ctx context.Context, field graphql.Co
 		Object:   "Thread",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.PostID, nil
+		return ec.resolvers.Thread().PostID(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2593,7 +2602,7 @@ func (ec *executionContext) _Thread_postID(ctx context.Context, field graphql.Co
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Thread_post(ctx context.Context, field graphql.CollectedField, obj *Thread) (ret graphql.Marshaler) {
+func (ec *executionContext) _Thread_post(ctx context.Context, field graphql.CollectedField, obj *models.Thread) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -2624,13 +2633,13 @@ func (ec *executionContext) _Thread_post(ctx context.Context, field graphql.Coll
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*models.Post)
+	res := resTmp.(models.Post)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNPost2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
+	return ec.marshalNPost2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Thread_createdAt(ctx context.Context, field graphql.CollectedField, obj *Thread) (ret graphql.Marshaler) {
+func (ec *executionContext) _Thread_createdAt(ctx context.Context, field graphql.CollectedField, obj *models.Thread) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -2643,13 +2652,13 @@ func (ec *executionContext) _Thread_createdAt(ctx context.Context, field graphql
 		Object:   "Thread",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.CreatedAt, nil
+		return ec.resolvers.Thread().CreatedAt(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2664,7 +2673,7 @@ func (ec *executionContext) _Thread_createdAt(ctx context.Context, field graphql
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Thread_updatedAt(ctx context.Context, field graphql.CollectedField, obj *Thread) (ret graphql.Marshaler) {
+func (ec *executionContext) _Thread_updatedAt(ctx context.Context, field graphql.CollectedField, obj *models.Thread) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -2677,13 +2686,13 @@ func (ec *executionContext) _Thread_updatedAt(ctx context.Context, field graphql
 		Object:   "Thread",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.UpdatedAt, nil
+		return ec.resolvers.Thread().UpdatedAt(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4702,7 +4711,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 
 var threadImplementors = []string{"Thread"}
 
-func (ec *executionContext) _Thread(ctx context.Context, sel ast.SelectionSet, obj *Thread) graphql.Marshaler {
+func (ec *executionContext) _Thread(ctx context.Context, sel ast.SelectionSet, obj *models.Thread) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.RequestContext, sel, threadImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -4714,32 +4723,77 @@ func (ec *executionContext) _Thread(ctx context.Context, sel ast.SelectionSet, o
 		case "id":
 			out.Values[i] = ec._Thread_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "participants":
-			out.Values[i] = ec._Thread_participants(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Thread_participants(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "messages":
-			out.Values[i] = ec._Thread_messages(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Thread_messages(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "postID":
-			out.Values[i] = ec._Thread_postID(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Thread_postID(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "post":
 			out.Values[i] = ec._Thread_post(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "createdAt":
-			out.Values[i] = ec._Thread_createdAt(ctx, field, obj)
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Thread_createdAt(ctx, field, obj)
+				return res
+			})
 		case "updatedAt":
-			out.Values[i] = ec._Thread_updatedAt(ctx, field, obj)
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Thread_updatedAt(ctx, field, obj)
+				return res
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5251,11 +5305,11 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
-func (ec *executionContext) marshalNThread2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐThread(ctx context.Context, sel ast.SelectionSet, v Thread) graphql.Marshaler {
+func (ec *executionContext) marshalNThread2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐThread(ctx context.Context, sel ast.SelectionSet, v models.Thread) graphql.Marshaler {
 	return ec._Thread(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNThread2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐThread(ctx context.Context, sel ast.SelectionSet, v []*Thread) graphql.Marshaler {
+func (ec *executionContext) marshalNThread2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐThread(ctx context.Context, sel ast.SelectionSet, v []*models.Thread) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -5279,7 +5333,7 @@ func (ec *executionContext) marshalNThread2ᚕᚖgithubᚗcomᚋsilinternational
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOThread2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐThread(ctx, sel, v[i])
+			ret[i] = ec.marshalOThread2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐThread(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -5292,7 +5346,7 @@ func (ec *executionContext) marshalNThread2ᚕᚖgithubᚗcomᚋsilinternational
 	return ret
 }
 
-func (ec *executionContext) marshalNThread2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐThread(ctx context.Context, sel ast.SelectionSet, v *Thread) graphql.Marshaler {
+func (ec *executionContext) marshalNThread2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐThread(ctx context.Context, sel ast.SelectionSet, v *models.Thread) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -5334,7 +5388,7 @@ func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋsilinternational�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOUser2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐUser(ctx, sel, v[i])
+			ret[i] = ec.marshalNUser2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐUser(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -5698,11 +5752,11 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return ec.marshalOString2string(ctx, sel, *v)
 }
 
-func (ec *executionContext) marshalOThread2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐThread(ctx context.Context, sel ast.SelectionSet, v Thread) graphql.Marshaler {
+func (ec *executionContext) marshalOThread2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐThread(ctx context.Context, sel ast.SelectionSet, v models.Thread) graphql.Marshaler {
 	return ec._Thread(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOThread2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐThread(ctx context.Context, sel ast.SelectionSet, v *Thread) graphql.Marshaler {
+func (ec *executionContext) marshalOThread2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐThread(ctx context.Context, sel ast.SelectionSet, v *models.Thread) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

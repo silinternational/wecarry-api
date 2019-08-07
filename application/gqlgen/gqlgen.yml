@@ -18,6 +18,8 @@ models:
     model: github.com/silinternational/handcarry-api/models.User
   Post:
     model: github.com/silinternational/handcarry-api/models.Post
+  Thread:
+    model: github.com/silinternational/handcarry-api/models.Thread
 
 #directives:
 #  deprecated:
