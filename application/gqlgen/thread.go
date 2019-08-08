@@ -47,6 +47,13 @@ func (r *threadResolver) Participants(ctx context.Context, obj *models.Thread) (
 	return users, nil
 }
 
+func (r *threadResolver) ID(ctx context.Context, obj *models.Thread) (string, error) {
+	if obj == nil {
+		return "", nil
+	}
+	return obj.Uuid.String(), nil
+}
+
 func (r *threadResolver) Messages(ctx context.Context, obj *models.Thread) ([]*models.Message, error) {
 	if obj == nil {
 		return nil, nil

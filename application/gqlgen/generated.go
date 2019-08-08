@@ -168,6 +168,7 @@ type QueryResolver interface {
 	Message(ctx context.Context, id *string) (*models.Message, error)
 }
 type ThreadResolver interface {
+	ID(ctx context.Context, obj *models.Thread) (string, error)
 	Participants(ctx context.Context, obj *models.Thread) ([]*models.User, error)
 	Messages(ctx context.Context, obj *models.Thread) ([]*models.Message, error)
 	PostID(ctx context.Context, obj *models.Thread) (string, error)
@@ -2480,13 +2481,13 @@ func (ec *executionContext) _Thread_id(ctx context.Context, field graphql.Collec
 		Object:   "Thread",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ID, nil
+		return ec.resolvers.Thread().ID(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2498,10 +2499,10 @@ func (ec *executionContext) _Thread_id(ctx context.Context, field graphql.Collec
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(string)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNID2int(ctx, field.Selections, res)
+	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Thread_participants(ctx context.Context, field graphql.CollectedField, obj *models.Thread) (ret graphql.Marshaler) {
@@ -4788,10 +4789,19 @@ func (ec *executionContext) _Thread(ctx context.Context, sel ast.SelectionSet, o
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Thread")
 		case "id":
-			out.Values[i] = ec._Thread_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Thread_id(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "participants":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
