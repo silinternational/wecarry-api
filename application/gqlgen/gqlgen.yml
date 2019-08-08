@@ -34,6 +34,8 @@ models:
     fields:
       id:
         resolver: true
+      post:
+        resolver: true
   Message:
     model: github.com/silinternational/handcarry-api/models.Message
 

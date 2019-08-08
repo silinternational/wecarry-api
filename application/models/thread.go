@@ -104,7 +104,7 @@ func FindThreadByPostIDAndUserID(postID int, userID int) (Thread, error) {
 
 }
 
-func GetThreadParticipants(threadID int, selectFields []string) (Users, error) {
+func getThreadParticipants(threadID int, selectFields []string) (Users, error) {
 
 	threadParts := ThreadParticipants{}
 
@@ -125,30 +125,15 @@ func GetThreadParticipants(threadID int, selectFields []string) (Users, error) {
 	return users, nil
 }
 
-func (t *Thread) LoadPost(selectFields []string) error {
+func (t *Thread) GetPost(selectFields []string) (*Post, error) {
 	if t.PostID <= 0 {
-		return fmt.Errorf("error: PostID must be positive, got %v", t.PostID)
+		return nil, fmt.Errorf("error: PostID must be positive, got %v", t.PostID)
 	}
-
 	post := Post{}
-	// TODO: use selectFields. gqlgen.GetRequestFields() must be filtered to only include appropriate fields.
-	if err := models.DB.Find(&post, t.PostID); err != nil {
-		return fmt.Errorf("error loading post %v %s", t.PostID, err)
+	if err := models.DB.Select(selectFields...).Find(&post, t.PostID); err != nil {
+		return nil, fmt.Errorf("error loading post %v %s", t.PostID, err)
 	}
-
-	t.Post = post
-
-	return nil
-}
-
-func (t *Thread) LoadMessages(selectFields []string) error {
-	var messages []Message
-	if err := models.DB.Select(selectFields...).Where("thread_id = ?", t.ID).All(&messages); err != nil {
-		return fmt.Errorf("error getting messages for thread id %v ... %v", t.ID, err)
-	}
-
-	t.Messages = messages
-	return nil
+	return &post, nil
 }
 
 func (t *Thread) GetMessages(selectFields []string) ([]*Message, error) {
@@ -158,6 +143,25 @@ func (t *Thread) GetMessages(selectFields []string) ([]*Message, error) {
 	}
 
 	return messages, nil
+}
+
+func (t *Thread) GetParticipants(selectFields []string) ([]*User, error) {
+	var users []*User
+	var threadParticipants []*ThreadParticipant
+
+	if err := DB.Where("thread_id = ?", t.ID).All(&threadParticipants); err != nil {
+		return users, fmt.Errorf("error reading from thread_participants table %v ... %v", t.ID, err)
+	}
+
+	for _, tp := range threadParticipants {
+		u := User{}
+
+		if err := DB.Select(selectFields...).Find(&u, tp.UserID); err != nil {
+			return users, fmt.Errorf("error finding users on thread %v ... %v", t.ID, err)
+		}
+		users = append(users, &u)
+	}
+	return users, nil
 }
 
 func GetThreadAndParticipants(threadUuid string, user User, selectFields []string) (Thread, error) {
@@ -171,7 +175,7 @@ func GetThreadAndParticipants(threadUuid string, user User, selectFields []strin
 		return thread, fmt.Errorf("could not find thread with uuid %v", threadUuid)
 	}
 
-	users, err := GetThreadParticipants(thread.ID, selectFields)
+	users, err := getThreadParticipants(thread.ID, selectFields)
 	if err != nil {
 		return Thread{}, err
 	}

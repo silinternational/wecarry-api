@@ -9,6 +9,25 @@ import (
 	"github.com/vektah/gqlparser/gqlerror"
 )
 
+func PostSimpleFields() map[string]string {
+	return map[string]string{
+		"id":           "uuid",
+		"postID":       "post_id",
+		"type":         "type",
+		"title":        "title",
+		"description":  "description",
+		"destination":  "destination",
+		"origin":       "origin",
+		"size":         "size",
+		"neededAfter":  "needed_after",
+		"neededBefore": "needed_before",
+		"category":     "category",
+		"status":       "status",
+		"createdAt":    "created_at",
+		"updatedAt":    "updated_at",
+	}
+}
+
 func (r *Resolver) Post() PostResolver {
 	return &postResolver{r}
 }
