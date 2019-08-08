@@ -104,27 +104,6 @@ func FindThreadByPostIDAndUserID(postID int, userID int) (Thread, error) {
 
 }
 
-func getThreadParticipants(threadID int, selectFields []string) (Users, error) {
-
-	threadParts := ThreadParticipants{}
-
-	if err := DB.Where("thread_id = ?", threadID).All(&threadParts); err != nil {
-		return Users{}, fmt.Errorf("error finding users on thread %v ... %v", threadID, err)
-	}
-
-	users := Users{}
-	for _, tp := range threadParts {
-		u := User{}
-
-		if err := DB.Select(selectFields...).Find(&u, tp.UserID); err != nil {
-			return Users{}, fmt.Errorf("error finding users on thread %v ... %v", threadID, err)
-		}
-		users = append(users, u)
-	}
-
-	return users, nil
-}
-
 func (t *Thread) GetPost(selectFields []string) (*Post, error) {
 	if t.PostID <= 0 {
 		return nil, fmt.Errorf("error: PostID must be positive, got %v", t.PostID)
@@ -162,39 +141,6 @@ func (t *Thread) GetParticipants(selectFields []string) ([]*User, error) {
 		users = append(users, &u)
 	}
 	return users, nil
-}
-
-func GetThreadAndParticipants(threadUuid string, user User, selectFields []string) (Thread, error) {
-
-	thread, err := FindThreadByUUID(threadUuid)
-	if err != nil {
-		return Thread{}, err
-	}
-
-	if thread.ID == 0 {
-		return thread, fmt.Errorf("could not find thread with uuid %v", threadUuid)
-	}
-
-	users, err := getThreadParticipants(thread.ID, selectFields)
-	if err != nil {
-		return Thread{}, err
-	}
-
-	isUserAlreadyAParticipant := false
-	for _, u := range users {
-		if u.ID == user.ID {
-			isUserAlreadyAParticipant = true
-			break
-		}
-	}
-
-	if !isUserAlreadyAParticipant {
-		users = append(users, user)
-	}
-
-	thread.Participants = users
-
-	return thread, nil
 }
 
 func CreateThreadWithParticipants(postUuid string, user User) (Thread, error) {

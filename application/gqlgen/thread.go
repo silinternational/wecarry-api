@@ -105,10 +105,7 @@ func (r *queryResolver) MyThreads(ctx context.Context) ([]*models.Thread, error)
 func getSelectFieldsForThreads(requestFields []string) []string {
 	selectFields := GetSelectFieldsFromRequestFields(ThreadSimpleFields(), requestFields)
 
-	// Ensure we can get participants via the thread ID
-	if domain.IsStringInSlice(ParticipantsField, requestFields) {
-		selectFields = append(selectFields, "id")
-	}
+	selectFields = append(selectFields, "id")
 
 	return selectFields
 }

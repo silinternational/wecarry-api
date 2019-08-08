@@ -38,6 +38,11 @@ models:
         resolver: true
   Message:
     model: github.com/silinternational/handcarry-api/models.Message
+    fields:
+      id:
+        resolver: true
+      thread:
+        resolver: true
 
 #directives:
 #  deprecated:

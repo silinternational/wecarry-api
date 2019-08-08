@@ -126,8 +126,10 @@ type ComplexityRoot struct {
 }
 
 type MessageResolver interface {
+	ID(ctx context.Context, obj *models.Message) (string, error)
 	Sender(ctx context.Context, obj *models.Message) (*models.User, error)
 
+	Thread(ctx context.Context, obj *models.Message) (*models.Thread, error)
 	CreatedAt(ctx context.Context, obj *models.Message) (*string, error)
 	UpdatedAt(ctx context.Context, obj *models.Message) (*string, error)
 }
@@ -940,13 +942,13 @@ func (ec *executionContext) _Message_id(ctx context.Context, field graphql.Colle
 		Object:   "Message",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ID, nil
+		return ec.resolvers.Message().ID(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -958,10 +960,10 @@ func (ec *executionContext) _Message_id(ctx context.Context, field graphql.Colle
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(string)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNID2int(ctx, field.Selections, res)
+	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Message_sender(ctx context.Context, field graphql.CollectedField, obj *models.Message) (ret graphql.Marshaler) {
@@ -1051,13 +1053,13 @@ func (ec *executionContext) _Message_thread(ctx context.Context, field graphql.C
 		Object:   "Message",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Thread, nil
+		return ec.resolvers.Message().Thread(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1069,10 +1071,10 @@ func (ec *executionContext) _Message_thread(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(models.Thread)
+	res := resTmp.(*models.Thread)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNThread2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐThread(ctx, field.Selections, res)
+	return ec.marshalNThread2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐThread(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Message_createdAt(ctx context.Context, field graphql.CollectedField, obj *models.Message) (ret graphql.Marshaler) {
@@ -4307,10 +4309,19 @@ func (ec *executionContext) _Message(ctx context.Context, sel ast.SelectionSet, 
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Message")
 		case "id":
-			out.Values[i] = ec._Message_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Message_id(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "sender":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -4331,10 +4342,19 @@ func (ec *executionContext) _Message(ctx context.Context, sel ast.SelectionSet, 
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "thread":
-			out.Values[i] = ec._Message_thread(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Message_thread(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "createdAt":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -5461,6 +5481,16 @@ func (ec *executionContext) marshalNThread2ᚕᚖgithubᚗcomᚋsilinternational
 	return ret
 }
 
+func (ec *executionContext) marshalNThread2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐThread(ctx context.Context, sel ast.SelectionSet, v *models.Thread) graphql.Marshaler {
+	if v == nil {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Thread(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNUpdatedPostStatus2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐUpdatedPostStatus(ctx context.Context, v interface{}) (UpdatedPostStatus, error) {
 	return ec.unmarshalInputUpdatedPostStatus(ctx, v)
 }
@@ -5493,7 +5523,7 @@ func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋsilinternational�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNUser2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐUser(ctx, sel, v[i])
+			ret[i] = ec.marshalOUser2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐUser(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)

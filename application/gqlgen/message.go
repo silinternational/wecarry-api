@@ -2,7 +2,6 @@ package gqlgen
 
 import (
 	"context"
-	"fmt"
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/silinternational/handcarry-api/domain"
 	"github.com/silinternational/handcarry-api/models"
@@ -13,6 +12,7 @@ func MessageSimpleFields() map[string]string {
 	return map[string]string{
 		"id":        "uuid",
 		"content":   "content",
+		"thread":    "thread_id",
 		"sender":    "sent_by_id",
 		"createdAt": "created_at",
 		"updatedAt": "updated_at",
@@ -25,18 +25,27 @@ func (r *Resolver) Message() MessageResolver {
 
 type messageResolver struct{ *Resolver }
 
+func (r *messageResolver) ID(ctx context.Context, obj *models.Message) (string, error) {
+	if obj == nil {
+		return "", nil
+	}
+	return obj.Uuid.String(), nil
+}
+
 func (r *messageResolver) Sender(ctx context.Context, obj *models.Message) (*models.User, error) {
 	if obj == nil {
 		return nil, nil
 	}
+	selectFields := GetSelectFieldsFromRequestFields(UserSimpleFields(), graphql.CollectAllFields(ctx))
+	return obj.GetSender(selectFields)
+}
 
-	sender := models.User{}
-	if err := models.DB.Find(&sender, obj.SentByID); err != nil {
-		err = fmt.Errorf("error finding message sentBy user with id %v ... %v", obj.SentByID, err)
-		return nil, err
+func (r *messageResolver) Thread(ctx context.Context, obj *models.Message) (*models.Thread, error) {
+	if obj == nil {
+		return nil, nil
 	}
-
-	return &sender, nil
+	selectFields := getSelectFieldsForThreads(graphql.CollectAllFields(ctx))
+	return obj.GetThread(selectFields)
 }
 
 func (r *messageResolver) CreatedAt(ctx context.Context, obj *models.Message) (*string, error) {
@@ -72,8 +81,7 @@ func ConvertGqlNewMessageToDBMessage(gqlMessage NewMessage, user models.User, re
 	threadUuid := domain.ConvertStrPtrToString(gqlMessage.ThreadID)
 	if threadUuid != "" {
 		var err error
-		selectFields := GetSelectFieldsFromRequestFields(UserSimpleFields(), requestFields)
-		thread, err = models.GetThreadAndParticipants(threadUuid, user, selectFields)
+		thread, err = models.FindThreadByUUID(threadUuid)
 		if err != nil {
 			return models.Message{}, err
 		}
