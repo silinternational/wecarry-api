@@ -4,6 +4,8 @@ package gqlgen
 
 import (
 	"context"
+	"fmt"
+	"strconv"
 
 	"github.com/silinternational/handcarry-api/domain"
 
@@ -27,14 +29,69 @@ func (r *Resolver) Query() QueryResolver {
 
 type queryResolver struct{ *Resolver }
 
-func (r *queryResolver) Users(ctx context.Context) ([]*User, error) {
+func (r *Resolver) Organization() OrganizationResolver {
+	return &organizationResolver{r}
+}
+
+type organizationResolver struct{ *Resolver }
+
+func (r *organizationResolver) URL(ctx context.Context, obj *models.Organization) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return GetStringFromNullsString(obj.Url), nil
+}
+
+func (r *organizationResolver) CreatedAt(ctx context.Context, obj *models.Organization) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return domain.ConvertTimeToStringPtr(obj.CreatedAt), nil
+}
+
+func (r *organizationResolver) UpdatedAt(ctx context.Context, obj *models.Organization) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return domain.ConvertTimeToStringPtr(obj.UpdatedAt), nil
+}
+
+func (r *Resolver) User() UserResolver {
+	return &userResolver{r}
+}
+
+type userResolver struct{ *Resolver }
+
+func (r *userResolver) CreatedAt(ctx context.Context, obj *models.User) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return domain.ConvertTimeToStringPtr(obj.CreatedAt), nil
+}
+
+func (r *userResolver) UpdatedAt(ctx context.Context, obj *models.User) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return domain.ConvertTimeToStringPtr(obj.UpdatedAt), nil
+}
+
+func (r *userResolver) AdminRole(ctx context.Context, obj *models.User) (*Role, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	a := Role(obj.AdminRole.String)
+	return &a, nil
+}
+
+func (r *queryResolver) Users(ctx context.Context) ([]*models.User, error) {
 	db := models.DB
-	dbUsers := models.Users{}
+	var dbUsers []*models.User
 
 	currentUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 
 	if currentUser.AdminRole.String != domain.AdminRoleSuperDuperAdmin {
-		return []*User{}, nil
+		return []*models.User{}, fmt.Errorf("not authorized")
 	}
 
 	requestFields := GetRequestFields(ctx)
@@ -42,29 +99,19 @@ func (r *queryResolver) Users(ctx context.Context) ([]*User, error) {
 
 	if err := db.Select(selectFields...).All(&dbUsers); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting users: %v", err.Error()))
-		return []*User{}, err
+		return []*models.User{}, err
 	}
 
-	var gqlUsers []*User
-	for _, dbUser := range dbUsers {
-		newGqlUser, err := ConvertDBUserToGqlUser(dbUser)
-		if err != nil {
-			graphql.AddError(ctx, gqlerror.Errorf("Error converting users: %v", err.Error()))
-			return gqlUsers, err
-		}
-		gqlUsers = append(gqlUsers, &newGqlUser)
-
-	}
-	return gqlUsers, nil
+	return dbUsers, nil
 }
 
-func (r *queryResolver) User(ctx context.Context, id *string) (*User, error) {
+func (r *queryResolver) User(ctx context.Context, id *string) (*models.User, error) {
 	dbUser := models.User{}
 
 	currentUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 
 	if currentUser.AdminRole.String != domain.AdminRoleSuperDuperAdmin && currentUser.Uuid.String() != *id {
-		return &User{}, nil
+		return &dbUser, fmt.Errorf("not authorized")
 	}
 
 	requestFields := GetRequestFields(ctx)
@@ -72,127 +119,304 @@ func (r *queryResolver) User(ctx context.Context, id *string) (*User, error) {
 
 	if err := models.DB.Select(selectFields...).Where("uuid = ?", id).First(&dbUser); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting user: %v", err.Error()))
-		return &User{}, err
+		return &dbUser, err
 	}
 
-	newGqlUser, err := ConvertDBUserToGqlUser(dbUser)
-	if err != nil {
-		graphql.AddError(ctx, gqlerror.Errorf("Error converting user: %v", err.Error()))
-		return &newGqlUser, err
-	}
-
-	return &newGqlUser, nil
+	return &dbUser, nil
 }
 
-func (r *queryResolver) Posts(ctx context.Context) ([]*Post, error) {
+func (r *Resolver) Post() PostResolver {
+	return &postResolver{r}
+}
+
+type postResolver struct{ *Resolver }
+
+func (r *postResolver) Type(ctx context.Context, obj *models.Post) (PostType, error) {
+	if obj == nil {
+		return "", nil
+	}
+	return PostType(obj.Type), nil
+}
+
+func (r *postResolver) Organization(ctx context.Context, obj *models.Post) (*models.Organization, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	organization, err := obj.GetOrganization(GetRequestFields(ctx))
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving Organization data for post %v: %v", obj.ID, err)
+	}
+	return &organization, nil
+}
+
+func (r *postResolver) Description(ctx context.Context, obj *models.Post) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return GetStringFromNullsString(obj.Description), nil
+}
+
+func (r *postResolver) Destination(ctx context.Context, obj *models.Post) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return GetStringFromNullsString(obj.Destination), nil
+}
+
+func (r *postResolver) Origin(ctx context.Context, obj *models.Post) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return GetStringFromNullsString(obj.Origin), nil
+}
+
+func (r *postResolver) NeededAfter(ctx context.Context, obj *models.Post) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return domain.ConvertTimeToStringPtr(obj.NeededAfter), nil
+}
+
+func (r *postResolver) NeededBefore(ctx context.Context, obj *models.Post) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return domain.ConvertTimeToStringPtr(obj.NeededBefore), nil
+}
+
+func (r *postResolver) Threads(ctx context.Context, obj *models.Post) ([]*models.Thread, error) {
+	return nil, nil
+}
+
+func (r *postResolver) CreatedAt(ctx context.Context, obj *models.Post) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return domain.ConvertTimeToStringPtr(obj.CreatedAt), nil
+}
+
+func (r *postResolver) UpdatedAt(ctx context.Context, obj *models.Post) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return domain.ConvertTimeToStringPtr(obj.UpdatedAt), nil
+}
+
+func (r *postResolver) MyThreadID(ctx context.Context, obj *models.Post) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+
+	currentUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+
+	thread, err := models.FindThreadByPostIDAndUserID(obj.ID, currentUser.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	threadUuid := thread.Uuid.String()
+	if threadUuid == domain.EmptyUUID {
+		return nil, nil
+	}
+
+	return &threadUuid, nil
+}
+
+func (r *queryResolver) Posts(ctx context.Context) ([]*models.Post, error) {
 
 	db := models.DB
-	dbPosts := models.Posts{}
+	var posts []*models.Post
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
-	if err := db.Where("organization_id IN (?)", cUser.GetOrgIDs()...).All(&dbPosts); err != nil {
+	if err := db.Where("organization_id IN (?)", cUser.GetOrgIDs()...).All(&posts); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting posts: %v", err.Error()))
-		return []*Post{}, err
+		return []*models.Post{}, err
 	}
 
-	var gqlPosts []*Post
-	for _, dbPost := range dbPosts {
-		newGqlPost, err := ConvertDBPostToGqlPost(dbPost, &cUser, GetRequestFields(ctx))
-		if err != nil {
-			graphql.AddError(ctx, gqlerror.Errorf("Error converting posts: %v", err.Error()))
-			return gqlPosts, err
+	for _, p := range posts {
+		e := p.QueryRelatedUsers(GetSelectFieldsFromRequestFields(UserSimpleFields(), GetRequestFields(ctx)))
+		if e != nil {
+			return posts, e
 		}
-		gqlPosts = append(gqlPosts, &newGqlPost)
-
 	}
 
-	return gqlPosts, nil
+	return posts, nil
 }
 
-func (r *queryResolver) Post(ctx context.Context, id *string) (*Post, error) {
-	dbPost := models.Post{}
+func (r *queryResolver) Post(ctx context.Context, id *string) (*models.Post, error) {
+	post := models.Post{}
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 
-	if err := models.DB.Where("organization_id IN (?)", cUser.GetOrgIDs()...).Where("uuid = ?", id).First(&dbPost); err != nil {
+	if err := models.DB.Where("organization_id IN (?)", cUser.GetOrgIDs()...).Where("uuid = ?", id).First(&post); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting post: %v", err.Error()))
-		return &Post{}, err
+		return &models.Post{}, err
 	}
 
-	newGqlPost, err := ConvertDBPostToGqlPost(dbPost, &cUser, GetRequestFields(ctx))
-	if err != nil {
-		graphql.AddError(ctx, gqlerror.Errorf("Error converting post: %v", err.Error()))
-		return &newGqlPost, err
+	e := post.QueryRelatedUsers(GetSelectFieldsFromRequestFields(UserSimpleFields(), GetRequestFields(ctx)))
+	if e != nil {
+		return &post, e
 	}
 
-	return &newGqlPost, nil
+	return &post, nil
 }
 
-func (r *queryResolver) Threads(ctx context.Context) ([]*Thread, error) {
+func (r *Resolver) Thread() ThreadResolver {
+	return &threadResolver{r}
+}
+
+type threadResolver struct{ *Resolver }
+
+func (r *threadResolver) Participants(ctx context.Context, obj *models.Thread) ([]*models.User, error) {
+	if obj == nil {
+		return nil, nil
+	}
+
+	selectedFields := GetSelectFieldsFromRequestFields(UserSimpleFields(), GetRequestFields(ctx))
+	participants, err := models.GetThreadParticipants(obj.ID, selectedFields)
+	if err != nil {
+		return nil, err
+	}
+
+	var users []*models.User
+
+	for _, p := range participants {
+		// TODO: change models.GetThreadParticipants to return a slice of pointers
+		u := p // instantiate a new copy for each object
+		users = append(users, &u)
+	}
+
+	return users, nil
+}
+
+func (r *threadResolver) Messages(ctx context.Context, obj *models.Thread) ([]*models.Message, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return nil, nil
+}
+
+func (r *threadResolver) PostID(ctx context.Context, obj *models.Thread) (string, error) {
+	if obj == nil {
+		return "", nil
+	}
+	return strconv.Itoa(obj.PostID), nil
+}
+
+func (r *threadResolver) CreatedAt(ctx context.Context, obj *models.Thread) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return domain.ConvertTimeToStringPtr(obj.CreatedAt), nil
+}
+
+func (r *threadResolver) UpdatedAt(ctx context.Context, obj *models.Thread) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return domain.ConvertTimeToStringPtr(obj.UpdatedAt), nil
+}
+
+func (r *queryResolver) Threads(ctx context.Context) ([]*models.Thread, error) {
+	var threads []*models.Thread
 
 	db := models.DB
-	dbThreads := models.Threads{}
 
 	requestFields := GetRequestFields(ctx)
 	selectFields := getSelectFieldsForThreads(requestFields)
 
-	if err := db.Select(selectFields...).All(&dbThreads); err != nil {
-		graphql.AddError(ctx, gqlerror.Errorf("Error getting threads: %v", err.Error()))
-		return []*Thread{}, err
+	if err := db.Select(selectFields...).All(&threads); err != nil {
+		return []*models.Thread{}, fmt.Errorf("error getting threads: %v", err)
 	}
 
-	var gqlThreads []*Thread
-	for _, dbThread := range dbThreads {
-		newGqlThread, err := ConvertDBThreadToGqlThread(dbThread, requestFields)
-
-		if err != nil {
-			graphql.AddError(ctx, gqlerror.Errorf("Error converting users: %v", err.Error()))
-			return gqlThreads, err
+	// TODO: extract common code between Threads and MyThreads
+	// TODO: filter requestFields for post fields
+	postFields := requestFields
+	messageFields := GetSelectFieldsFromRequestFields(MessageSimpleFields(), requestFields)
+	for _, t := range threads {
+		if err := t.LoadPost(postFields); err != nil {
+			graphql.AddError(ctx, gqlerror.Errorf("Error loading post data for thread %v: %v", t.ID, err))
 		}
-		gqlThreads = append(gqlThreads, &newGqlThread)
 
+		if err := t.LoadMessages(messageFields); err != nil {
+			graphql.AddError(ctx, gqlerror.Errorf("Error loading messages for thread %v: %v", t.ID, err))
+		}
 	}
 
-	return gqlThreads, nil
+	return threads, nil
 }
 
-func (r *queryResolver) MyThreads(ctx context.Context) ([]*Thread, error) {
+func (r *queryResolver) MyThreads(ctx context.Context) ([]*models.Thread, error) {
+	var threads []*models.Thread
+
 	db := models.DB
-	dbThreads := models.Threads{}
+	requestFields := GetRequestFields(ctx)
 	currentUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 
+	// TODO: use getSelectFieldsForThreads()
 	query := db.Q().LeftJoin("thread_participants tp", "threads.id = tp.thread_id")
 	query = query.Where("tp.user_id = ?", currentUser.ID)
-	if err := query.All(&dbThreads); err != nil {
-		graphql.AddError(ctx, gqlerror.Errorf("Error getting threads: %v", err.Error()))
-		return []*Thread{}, err
+	if err := query.All(&threads); err != nil {
+		return []*models.Thread{}, fmt.Errorf("error getting threads: %v", err)
 	}
 
-	var gqlThreads []*Thread
-	for _, dbThread := range dbThreads {
-		newGqlThread, err := ConvertDBThreadToGqlThread(dbThread, []string{})
-
-		if err != nil {
-			graphql.AddError(ctx, gqlerror.Errorf("Error converting threads: %v", err.Error()))
-			return gqlThreads, err
+	// TODO: extract common code between Threads and MyThreads
+	// TODO: filter requestFields for post fields
+	postFields := requestFields
+	messageFields := GetSelectFieldsFromRequestFields(MessageSimpleFields(), requestFields)
+	for _, t := range threads {
+		if err := t.LoadPost(postFields); err != nil {
+			graphql.AddError(ctx, gqlerror.Errorf("Error loading post data for thread %v: %v", t.ID, err))
 		}
-		gqlThreads = append(gqlThreads, &newGqlThread)
 
+		if err := t.LoadMessages(messageFields); err != nil {
+			graphql.AddError(ctx, gqlerror.Errorf("Error loading messages for thread %v: %v", t.ID, err))
+		}
 	}
-	return gqlThreads, nil
+
+	return threads, nil
 }
 
-func (r *queryResolver) Message(ctx context.Context, id *string) (*Message, error) {
-	dbMsg := models.Message{}
+func (r *Resolver) Message() MessageResolver {
+	return &messageResolver{r}
+}
 
-	if err := models.DB.Where("uuid = ?", id).First(&dbMsg); err != nil {
+type messageResolver struct{ *Resolver }
+
+func (r *messageResolver) Sender(ctx context.Context, obj *models.Message) (*models.User, error) {
+	if obj == nil {
+		return nil, nil
+	}
+
+	sender := models.User{}
+	if err := models.DB.Find(&sender, obj.SentByID); err != nil {
+		err = fmt.Errorf("error finding message sentBy user with id %v ... %v", obj.SentByID, err)
+		return nil, err
+	}
+
+	return &sender, nil
+}
+
+func (r *messageResolver) CreatedAt(ctx context.Context, obj *models.Message) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return domain.ConvertTimeToStringPtr(obj.CreatedAt), nil
+}
+
+func (r *messageResolver) UpdatedAt(ctx context.Context, obj *models.Message) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return domain.ConvertTimeToStringPtr(obj.UpdatedAt), nil
+}
+
+func (r *queryResolver) Message(ctx context.Context, id *string) (*models.Message, error) {
+	message := models.Message{}
+	messageFields := GetSelectFieldsFromRequestFields(MessageSimpleFields(), graphql.CollectAllFields(ctx))
+
+	if err := models.DB.Select(messageFields...).Where("uuid = ?", id).First(&message); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("error getting message: %v", err.Error()))
-		return &Message{}, err
+		return &models.Message{}, err
 	}
 
-	gqlMessage, err := ConvertDBMessageToGqlMessage(dbMsg, GetRequestFields(ctx))
-	if err != nil {
-		graphql.AddError(ctx, gqlerror.Errorf("error converting message: %v", err.Error()))
-		return &gqlMessage, err
-	}
-
-	return &gqlMessage, nil
+	return &message, nil
 }

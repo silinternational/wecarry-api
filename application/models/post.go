@@ -95,3 +95,33 @@ func FindPostByUUID(uuid string) (Post, error) {
 
 	return post, nil
 }
+
+// QueryRelatedUsers queries the creator, receiver, and provider from the database
+func (p *Post) QueryRelatedUsers(fields []string) error {
+	creator := User{}
+	if err := DB.Select(fields...).Find(&creator, p.CreatedByID); err != nil {
+		return err
+	}
+	p.CreatedBy = creator
+
+	receiver := User{}
+	if err := DB.Select(fields...).Find(&receiver, p.ReceiverID); err == nil {
+		p.Receiver = receiver
+	}
+
+	provider := User{}
+	if err := DB.Select(fields...).Find(&provider, p.ProviderID); err == nil {
+		p.Provider = provider
+	}
+
+	return nil
+}
+
+func (p *Post) GetOrganization(fields []string) (Organization, error) {
+	organization := Organization{}
+	if err := DB.Select(fields...).Find(&organization, p.OrganizationID); err != nil {
+		return organization, err
+	}
+
+	return organization, nil
+}

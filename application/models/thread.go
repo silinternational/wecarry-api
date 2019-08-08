@@ -3,6 +3,7 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gobuffalo/buffalo/genny/build/_fixtures/coke/models"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -117,9 +118,43 @@ func GetThreadParticipants(threadID int, selectFields []string) (Users, error) {
 		if err := DB.Select(selectFields...).Find(&u, tp.UserID); err != nil {
 			return Users{}, fmt.Errorf("error finding users on thread %v ... %v", threadID, err)
 		}
-
 		users = append(users, u)
 	}
 
 	return users, nil
+}
+
+func (t *Thread) LoadPost(selectFields []string) error {
+	if t.PostID <= 0 {
+		return fmt.Errorf("error: PostID must be positive, got %v", t.PostID)
+	}
+
+	post := Post{}
+	// TODO: use selectFields. gqlgen.GetRequestFields() must be filtered to only include appropriate fields.
+	if err := models.DB.Find(&post, t.PostID); err != nil {
+		return fmt.Errorf("error loading post %v %s", t.PostID, err)
+	}
+
+	t.Post = post
+
+	return nil
+}
+
+func (t *Thread) LoadMessages(selectFields []string) error {
+	var messages []Message
+	if err := models.DB.Select(selectFields...).Where("thread_id = ?", t.ID).All(&messages); err != nil {
+		return fmt.Errorf("error getting messages for thread id %v ... %v", t.ID, err)
+	}
+
+	t.Messages = messages
+	return nil
+}
+
+func (t *Thread) GetMessages(selectFields []string) ([]*Message, error) {
+	var messages []*Message
+	if err := models.DB.Select(selectFields...).Where("thread_id = ?", t.ID).All(&messages); err != nil {
+		return messages, fmt.Errorf("error getting messages for thread id %v ... %v", t.ID, err)
+	}
+
+	return messages, nil
 }
