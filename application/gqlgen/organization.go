@@ -6,6 +6,18 @@ import (
 	"github.com/silinternational/handcarry-api/models"
 )
 
+func OrganizationSimpleFields() map[string]string {
+	return map[string]string{
+		"id":         "uuid",
+		"name":       "name",
+		"url":        "url",
+		"authType":   "auth_type",
+		"authConfig": "auth_config",
+		"createdAt":  "created_at",
+		"updatedAt":  "updated_at",
+	}
+}
+
 func (r *Resolver) Organization() OrganizationResolver {
 	return &organizationResolver{r}
 }

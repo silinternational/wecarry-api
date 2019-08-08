@@ -22,15 +22,33 @@ func (r *postResolver) Type(ctx context.Context, obj *models.Post) (PostType, er
 	return PostType(obj.Type), nil
 }
 
+func (r *postResolver) CreatedBy(ctx context.Context, obj *models.Post) (*models.User, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return obj.GetCreator(GetSelectFieldsFromRequestFields(UserSimpleFields(), GetRequestFields(ctx)))
+}
+
+func (r *postResolver) Receiver(ctx context.Context, obj *models.Post) (*models.User, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return obj.GetReceiver(GetSelectFieldsFromRequestFields(UserSimpleFields(), GetRequestFields(ctx)))
+}
+
+func (r *postResolver) Provider(ctx context.Context, obj *models.Post) (*models.User, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return obj.GetProvider(GetSelectFieldsFromRequestFields(UserSimpleFields(), GetRequestFields(ctx)))
+}
+
 func (r *postResolver) Organization(ctx context.Context, obj *models.Post) (*models.Organization, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	organization, err := obj.GetOrganization(GetRequestFields(ctx))
-	if err != nil {
-		return nil, fmt.Errorf("error retrieving Organization data for post %v: %v", obj.ID, err)
-	}
-	return &organization, nil
+	selectFields := GetSelectFieldsFromRequestFields(OrganizationSimpleFields(), graphql.CollectAllFields(ctx))
+	return obj.GetOrganization(selectFields)
 }
 
 func (r *postResolver) Description(ctx context.Context, obj *models.Post) (*string, error) {
@@ -69,7 +87,11 @@ func (r *postResolver) NeededBefore(ctx context.Context, obj *models.Post) (*str
 }
 
 func (r *postResolver) Threads(ctx context.Context, obj *models.Post) ([]*models.Thread, error) {
-	return nil, nil
+	if obj == nil {
+		return nil, nil
+	}
+	selectFields := GetSelectFieldsFromRequestFields(ThreadSimpleFields(), graphql.CollectAllFields(ctx))
+	return obj.GetThreads(selectFields)
 }
 
 func (r *postResolver) CreatedAt(ctx context.Context, obj *models.Post) (*string, error) {
@@ -90,37 +112,16 @@ func (r *postResolver) MyThreadID(ctx context.Context, obj *models.Post) (*strin
 	if obj == nil {
 		return nil, nil
 	}
-
-	currentUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
-
-	thread, err := models.FindThreadByPostIDAndUserID(obj.ID, currentUser.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	threadUuid := thread.Uuid.String()
-	if threadUuid == domain.EmptyUUID {
-		return nil, nil
-	}
-
-	return &threadUuid, nil
+	return obj.GetThreadIdForUser(models.GetCurrentUserFromGqlContext(ctx, TestUser))
 }
 
 func (r *queryResolver) Posts(ctx context.Context) ([]*models.Post, error) {
-
-	db := models.DB
 	var posts []*models.Post
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
-	if err := db.Where("organization_id IN (?)", cUser.GetOrgIDs()...).All(&posts); err != nil {
+
+	if err := models.DB.Where("organization_id IN (?)", cUser.GetOrgIDs()...).All(&posts); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting posts: %v", err.Error()))
 		return []*models.Post{}, err
-	}
-
-	for _, p := range posts {
-		e := p.QueryRelatedUsers(GetSelectFieldsFromRequestFields(UserSimpleFields(), GetRequestFields(ctx)))
-		if e != nil {
-			return posts, e
-		}
 	}
 
 	return posts, nil
@@ -133,11 +134,6 @@ func (r *queryResolver) Post(ctx context.Context, id *string) (*models.Post, err
 	if err := models.DB.Where("organization_id IN (?)", cUser.GetOrgIDs()...).Where("uuid = ?", id).First(&post); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting post: %v", err.Error()))
 		return &models.Post{}, err
-	}
-
-	e := post.QueryRelatedUsers(GetSelectFieldsFromRequestFields(UserSimpleFields(), GetRequestFields(ctx)))
-	if e != nil {
-		return &post, e
 	}
 
 	return &post, nil

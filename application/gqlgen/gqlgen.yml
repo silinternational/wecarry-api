@@ -23,6 +23,12 @@ models:
     fields:
       organization:
         resolver: true
+      createdBy:
+        resolver: true
+      receiver:
+        resolver: true
+      provider:
+        resolver: true
   Thread:
     model: github.com/silinternational/handcarry-api/models.Thread
     fields:
