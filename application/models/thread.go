@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gobuffalo/buffalo/genny/build/_fixtures/coke/models"
+	"github.com/silinternational/handcarry-api/domain"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -157,4 +158,75 @@ func (t *Thread) GetMessages(selectFields []string) ([]*Message, error) {
 	}
 
 	return messages, nil
+}
+
+func GetThreadAndParticipants(threadUuid string, user User, selectFields []string) (Thread, error) {
+
+	thread, err := FindThreadByUUID(threadUuid)
+	if err != nil {
+		return Thread{}, err
+	}
+
+	if thread.ID == 0 {
+		return thread, fmt.Errorf("could not find thread with uuid %v", threadUuid)
+	}
+
+	users, err := GetThreadParticipants(thread.ID, selectFields)
+	if err != nil {
+		return Thread{}, err
+	}
+
+	isUserAlreadyAParticipant := false
+	for _, u := range users {
+		if u.ID == user.ID {
+			isUserAlreadyAParticipant = true
+			break
+		}
+	}
+
+	if !isUserAlreadyAParticipant {
+		users = append(users, user)
+	}
+
+	thread.Participants = users
+
+	return thread, nil
+}
+
+func CreateThreadWithParticipants(postUuid string, user User) (Thread, error) {
+	post, err := FindPostByUUID(postUuid)
+	if err != nil {
+		return Thread{}, err
+	}
+
+	participants := Users{user}
+
+	// Ensure Post Creator is one of the participants
+	if post.CreatedBy.ID != 0 && post.CreatedBy.ID != user.ID {
+		participants = append(participants, post.CreatedBy)
+	}
+
+	thread := Thread{
+		PostID:       post.ID,
+		Uuid:         domain.GetUuid(),
+		Participants: participants,
+	}
+
+	if err = models.DB.Save(&thread); err != nil {
+		err = fmt.Errorf("error saving new thread for message: %v", err.Error())
+		return Thread{}, err
+	}
+
+	for _, p := range participants {
+		threadP := ThreadParticipant{
+			ThreadID: thread.ID,
+			UserID:   p.ID,
+		}
+		if err := DB.Save(&threadP); err != nil {
+			err = fmt.Errorf("error saving new thread participant %+v for message: %v", threadP, err.Error())
+			return Thread{}, err
+		}
+	}
+
+	return thread, nil
 }
