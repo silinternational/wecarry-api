@@ -37,18 +37,16 @@ func (r *mutationResolver) UpdatePostStatus(ctx context.Context, input UpdatedPo
 	return &post, nil
 }
 
-func (r *mutationResolver) CreateMessage(ctx context.Context, input NewMessage) (*Message, error) {
+func (r *mutationResolver) CreateMessage(ctx context.Context, input NewMessage) (*models.Message, error) {
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
-	dbMessage, err := ConvertGqlNewMessageToDBMessage(input, cUser, GetRequestFields(ctx))
+	message, err := ConvertGqlNewMessageToDBMessage(input, cUser, GetRequestFields(ctx))
 	if err != nil {
-		return &Message{}, err
+		return &models.Message{}, err
 	}
 
-	if err := models.DB.Create(&dbMessage); err != nil {
-		return &Message{}, err
+	if err := models.DB.Create(&message); err != nil {
+		return &models.Message{}, err
 	}
 
-	gqlMessage, err := ConvertDBMessageToGqlMessage(dbMessage, GetRequestFields(ctx))
-
-	return &gqlMessage, err
+	return &message, err
 }

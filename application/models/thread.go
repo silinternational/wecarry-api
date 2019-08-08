@@ -149,3 +149,12 @@ func (t *Thread) LoadMessages(selectFields []string) error {
 	t.Messages = messages
 	return nil
 }
+
+func (t *Thread) GetMessages(selectFields []string) ([]*Message, error) {
+	var messages []*Message
+	if err := models.DB.Select(selectFields...).Where("thread_id = ?", t.ID).All(&messages); err != nil {
+		return messages, fmt.Errorf("error getting messages for thread id %v ... %v", t.ID, err)
+	}
+
+	return messages, nil
+}

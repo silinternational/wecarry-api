@@ -6,18 +6,7 @@ import (
 	"fmt"
 	"io"
 	"strconv"
-
-	"github.com/silinternational/handcarry-api/models"
 )
-
-type Message struct {
-	ID        string         `json:"id"`
-	Sender    *models.User   `json:"sender"`
-	Content   string         `json:"content"`
-	Thread    *models.Thread `json:"thread"`
-	CreatedAt *string        `json:"createdAt"`
-	UpdatedAt *string        `json:"updatedAt"`
-}
 
 type NewMessage struct {
 	Content  string  `json:"content"`

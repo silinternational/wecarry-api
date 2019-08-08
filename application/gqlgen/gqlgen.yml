@@ -25,6 +25,8 @@ models:
         resolver: true
   Thread:
     model: github.com/silinternational/handcarry-api/models.Thread
+  Message:
+    model: github.com/silinternational/handcarry-api/models.Message
 
 #directives:
 #  deprecated:

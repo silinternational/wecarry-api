@@ -287,7 +287,10 @@ func (r *threadResolver) Participants(ctx context.Context, obj *models.Thread) (
 	return users, nil
 }
 
-func (r *threadResolver) Messages(ctx context.Context, obj *models.Thread) ([]*Message, error) {
+func (r *threadResolver) Messages(ctx context.Context, obj *models.Thread) ([]*models.Message, error) {
+	if obj == nil {
+		return nil, nil
+	}
 	return nil, nil
 }
 
@@ -372,19 +375,48 @@ func (r *queryResolver) MyThreads(ctx context.Context) ([]*models.Thread, error)
 	return threads, nil
 }
 
-func (r *queryResolver) Message(ctx context.Context, id *string) (*Message, error) {
-	dbMsg := models.Message{}
+func (r *Resolver) Message() MessageResolver {
+	return &messageResolver{r}
+}
 
-	if err := models.DB.Where("uuid = ?", id).First(&dbMsg); err != nil {
+type messageResolver struct{ *Resolver }
+
+func (r *messageResolver) Sender(ctx context.Context, obj *models.Message) (*models.User, error) {
+	if obj == nil {
+		return nil, nil
+	}
+
+	sender := models.User{}
+	if err := models.DB.Find(&sender, obj.SentByID); err != nil {
+		err = fmt.Errorf("error finding message sentBy user with id %v ... %v", obj.SentByID, err)
+		return nil, err
+	}
+
+	return &sender, nil
+}
+
+func (r *messageResolver) CreatedAt(ctx context.Context, obj *models.Message) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return domain.ConvertTimeToStringPtr(obj.CreatedAt), nil
+}
+
+func (r *messageResolver) UpdatedAt(ctx context.Context, obj *models.Message) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return domain.ConvertTimeToStringPtr(obj.UpdatedAt), nil
+}
+
+func (r *queryResolver) Message(ctx context.Context, id *string) (*models.Message, error) {
+	message := models.Message{}
+	messageFields := GetSelectFieldsFromRequestFields(MessageSimpleFields(), graphql.CollectAllFields(ctx))
+
+	if err := models.DB.Select(messageFields...).Where("uuid = ?", id).First(&message); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("error getting message: %v", err.Error()))
-		return &Message{}, err
+		return &models.Message{}, err
 	}
 
-	gqlMessage, err := ConvertDBMessageToGqlMessage(dbMsg, GetRequestFields(ctx))
-	if err != nil {
-		graphql.AddError(ctx, gqlerror.Errorf("error converting message: %v", err.Error()))
-		return &gqlMessage, err
-	}
-
-	return &gqlMessage, nil
+	return &message, nil
 }
