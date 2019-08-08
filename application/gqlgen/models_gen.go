@@ -38,14 +38,6 @@ type NewPost struct {
 	Category     *string  `json:"category"`
 }
 
-type Organization struct {
-	ID        string  `json:"id"`
-	Name      string  `json:"name"`
-	URL       *string `json:"url"`
-	CreatedAt *string `json:"createdAt"`
-	UpdatedAt *string `json:"updatedAt"`
-}
-
 type UpdatedPostStatus struct {
 	ID     string `json:"id"`
 	Status string `json:"status"`

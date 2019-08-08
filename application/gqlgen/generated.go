@@ -36,6 +36,7 @@ type Config struct {
 
 type ResolverRoot interface {
 	Mutation() MutationResolver
+	Organization() OrganizationResolver
 	Post() PostResolver
 	Query() QueryResolver
 	Thread() ThreadResolver
@@ -128,10 +129,15 @@ type MutationResolver interface {
 	UpdatePostStatus(ctx context.Context, input UpdatedPostStatus) (*models.Post, error)
 	CreateMessage(ctx context.Context, input NewMessage) (*Message, error)
 }
+type OrganizationResolver interface {
+	URL(ctx context.Context, obj *models.Organization) (*string, error)
+	CreatedAt(ctx context.Context, obj *models.Organization) (*string, error)
+	UpdatedAt(ctx context.Context, obj *models.Organization) (*string, error)
+}
 type PostResolver interface {
 	Type(ctx context.Context, obj *models.Post) (PostType, error)
 
-	Organization(ctx context.Context, obj *models.Post) (*Organization, error)
+	Organization(ctx context.Context, obj *models.Post) (*models.Organization, error)
 
 	Description(ctx context.Context, obj *models.Post) (*string, error)
 	Destination(ctx context.Context, obj *models.Post) (*string, error)
@@ -1259,7 +1265,7 @@ func (ec *executionContext) _Mutation_createMessage(ctx context.Context, field g
 	return ec.marshalNMessage2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐMessage(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Organization_id(ctx context.Context, field graphql.CollectedField, obj *Organization) (ret graphql.Marshaler) {
+func (ec *executionContext) _Organization_id(ctx context.Context, field graphql.CollectedField, obj *models.Organization) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -1290,13 +1296,13 @@ func (ec *executionContext) _Organization_id(ctx context.Context, field graphql.
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(int)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNID2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Organization_name(ctx context.Context, field graphql.CollectedField, obj *Organization) (ret graphql.Marshaler) {
+func (ec *executionContext) _Organization_name(ctx context.Context, field graphql.CollectedField, obj *models.Organization) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -1333,7 +1339,7 @@ func (ec *executionContext) _Organization_name(ctx context.Context, field graphq
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Organization_url(ctx context.Context, field graphql.CollectedField, obj *Organization) (ret graphql.Marshaler) {
+func (ec *executionContext) _Organization_url(ctx context.Context, field graphql.CollectedField, obj *models.Organization) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -1346,13 +1352,13 @@ func (ec *executionContext) _Organization_url(ctx context.Context, field graphql
 		Object:   "Organization",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.URL, nil
+		return ec.resolvers.Organization().URL(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1367,7 +1373,7 @@ func (ec *executionContext) _Organization_url(ctx context.Context, field graphql
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Organization_createdAt(ctx context.Context, field graphql.CollectedField, obj *Organization) (ret graphql.Marshaler) {
+func (ec *executionContext) _Organization_createdAt(ctx context.Context, field graphql.CollectedField, obj *models.Organization) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -1380,13 +1386,13 @@ func (ec *executionContext) _Organization_createdAt(ctx context.Context, field g
 		Object:   "Organization",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.CreatedAt, nil
+		return ec.resolvers.Organization().CreatedAt(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1401,7 +1407,7 @@ func (ec *executionContext) _Organization_createdAt(ctx context.Context, field g
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Organization_updatedAt(ctx context.Context, field graphql.CollectedField, obj *Organization) (ret graphql.Marshaler) {
+func (ec *executionContext) _Organization_updatedAt(ctx context.Context, field graphql.CollectedField, obj *models.Organization) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -1414,13 +1420,13 @@ func (ec *executionContext) _Organization_updatedAt(ctx context.Context, field g
 		Object:   "Organization",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.UpdatedAt, nil
+		return ec.resolvers.Organization().UpdatedAt(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1642,10 +1648,10 @@ func (ec *executionContext) _Post_organization(ctx context.Context, field graphq
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*Organization)
+	res := resTmp.(*models.Organization)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOOrganization2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐOrganization(ctx, field.Selections, res)
+	return ec.marshalOOrganization2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐOrganization(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Post_title(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
@@ -4368,7 +4374,7 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 
 var organizationImplementors = []string{"Organization"}
 
-func (ec *executionContext) _Organization(ctx context.Context, sel ast.SelectionSet, obj *Organization) graphql.Marshaler {
+func (ec *executionContext) _Organization(ctx context.Context, sel ast.SelectionSet, obj *models.Organization) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.RequestContext, sel, organizationImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -4380,19 +4386,46 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 		case "id":
 			out.Values[i] = ec._Organization_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "name":
 			out.Values[i] = ec._Organization_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "url":
-			out.Values[i] = ec._Organization_url(ctx, field, obj)
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Organization_url(ctx, field, obj)
+				return res
+			})
 		case "createdAt":
-			out.Values[i] = ec._Organization_createdAt(ctx, field, obj)
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Organization_createdAt(ctx, field, obj)
+				return res
+			})
 		case "updatedAt":
-			out.Values[i] = ec._Organization_updatedAt(ctx, field, obj)
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Organization_updatedAt(ctx, field, obj)
+				return res
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5683,11 +5716,11 @@ func (ec *executionContext) marshalOID2ᚖstring(ctx context.Context, sel ast.Se
 	return ec.marshalOID2string(ctx, sel, *v)
 }
 
-func (ec *executionContext) marshalOOrganization2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐOrganization(ctx context.Context, sel ast.SelectionSet, v Organization) graphql.Marshaler {
+func (ec *executionContext) marshalOOrganization2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐOrganization(ctx context.Context, sel ast.SelectionSet, v models.Organization) graphql.Marshaler {
 	return ec._Organization(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOOrganization2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐOrganization(ctx context.Context, sel ast.SelectionSet, v *Organization) graphql.Marshaler {
+func (ec *executionContext) marshalOOrganization2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐOrganization(ctx context.Context, sel ast.SelectionSet, v *models.Organization) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

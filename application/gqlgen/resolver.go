@@ -29,6 +29,33 @@ func (r *Resolver) Query() QueryResolver {
 
 type queryResolver struct{ *Resolver }
 
+func (r *Resolver) Organization() OrganizationResolver {
+	return &organizationResolver{r}
+}
+
+type organizationResolver struct{ *Resolver }
+
+func (r *organizationResolver) URL(ctx context.Context, obj *models.Organization) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return GetStringFromNullsString(obj.Url), nil
+}
+
+func (r *organizationResolver) CreatedAt(ctx context.Context, obj *models.Organization) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return domain.ConvertTimeToStringPtr(obj.CreatedAt), nil
+}
+
+func (r *organizationResolver) UpdatedAt(ctx context.Context, obj *models.Organization) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return domain.ConvertTimeToStringPtr(obj.UpdatedAt), nil
+}
+
 func (r *Resolver) User() UserResolver {
 	return &userResolver{r}
 }
@@ -111,8 +138,15 @@ func (r *postResolver) Type(ctx context.Context, obj *models.Post) (PostType, er
 	return PostType(obj.Type), nil
 }
 
-func (r *postResolver) Organization(ctx context.Context, obj *models.Post) (*Organization, error) {
-	return nil, nil
+func (r *postResolver) Organization(ctx context.Context, obj *models.Post) (*models.Organization, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	organization, err := obj.GetOrganization(GetRequestFields(ctx))
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving Organization data for post %v: %v", obj.ID, err)
+	}
+	return &organization, nil
 }
 
 func (r *postResolver) Description(ctx context.Context, obj *models.Post) (*string, error) {
