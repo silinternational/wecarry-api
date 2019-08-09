@@ -74,7 +74,7 @@ func TestGetBearerTokenFromRequest(t *testing.T) {
 			args: args{
 				r: &http.Request{
 					Header: map[string][]string{
-						"Authorization": {"Bearer: 861B1C06-DDB8-494F-8627-3A87B22FFB82"},
+						"Authorization": {"Bearer 861B1C06-DDB8-494F-8627-3A87B22FFB82"},
 					},
 				},
 			},
@@ -84,7 +84,7 @@ func TestGetBearerTokenFromRequest(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := GetBearerTokenFromRequest(tt.args.r); got != tt.want {
-				t.Errorf("GetBearerTokenFromRequest() = %v, want %v", got, tt.want)
+				t.Errorf("GetBearerTokenFromRequest() = \"%v\", want \"%v\"", got, tt.want)
 			}
 		})
 	}
