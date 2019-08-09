@@ -74,7 +74,7 @@ func (r *queryResolver) Message(ctx context.Context, id *string) (*models.Messag
 	return &message, nil
 }
 
-func ConvertGqlNewMessageToDBMessage(gqlMessage NewMessage, user models.User, requestFields []string) (models.Message, error) {
+func ConvertGqlNewMessageToDBMessage(gqlMessage NewMessage, user models.User) (models.Message, error) {
 
 	var thread models.Thread
 
