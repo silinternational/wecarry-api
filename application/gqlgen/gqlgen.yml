@@ -27,11 +27,3 @@ models:
     model: github.com/silinternational/handcarry-api/models.Thread
   Message:
     model: github.com/silinternational/handcarry-api/models.Message
-
-#directives:
-#  deprecated:
-#    skip_runtime: true
-#  include:
-#    skip_runtime: true
-#  skip:
-#    skip_runtime: true
