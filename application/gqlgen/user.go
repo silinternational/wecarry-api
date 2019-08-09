@@ -9,7 +9,7 @@ import (
 	"github.com/vektah/gqlparser/gqlerror"
 )
 
-func UserSimpleFields() map[string]string {
+func UserFields() map[string]string {
 	return map[string]string{
 		"id":          "uuid",
 		"email":       "email",
@@ -68,7 +68,7 @@ func (r *queryResolver) Users(ctx context.Context) ([]*models.User, error) {
 		return []*models.User{}, fmt.Errorf("not authorized")
 	}
 
-	selectFields := GetSelectFieldsFromRequestFields(UserSimpleFields(), graphql.CollectAllFields(ctx))
+	selectFields := GetSelectFieldsFromRequestFields(UserFields(), graphql.CollectAllFields(ctx))
 	if err := db.Select(selectFields...).All(&dbUsers); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting users: %v", err.Error()))
 		return []*models.User{}, err
@@ -86,7 +86,7 @@ func (r *queryResolver) User(ctx context.Context, id *string) (*models.User, err
 		return &dbUser, fmt.Errorf("not authorized")
 	}
 
-	selectFields := GetSelectFieldsFromRequestFields(UserSimpleFields(), graphql.CollectAllFields(ctx))
+	selectFields := GetSelectFieldsFromRequestFields(UserFields(), graphql.CollectAllFields(ctx))
 	if err := models.DB.Select(selectFields...).Where("uuid = ?", id).First(&dbUser); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting user: %v", err.Error()))
 		return &dbUser, err

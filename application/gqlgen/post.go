@@ -9,7 +9,7 @@ import (
 	"github.com/vektah/gqlparser/gqlerror"
 )
 
-func PostSimpleFields() map[string]string {
+func PostFields() map[string]string {
 	return map[string]string{
 		"id":           "uuid",
 		"createdBy":    "created_by_id",
@@ -55,28 +55,28 @@ func (r *postResolver) CreatedBy(ctx context.Context, obj *models.Post) (*models
 	if obj == nil {
 		return nil, nil
 	}
-	return obj.GetCreator(GetSelectFieldsFromRequestFields(UserSimpleFields(), graphql.CollectAllFields(ctx)))
+	return obj.GetCreator(GetSelectFieldsFromRequestFields(UserFields(), graphql.CollectAllFields(ctx)))
 }
 
 func (r *postResolver) Receiver(ctx context.Context, obj *models.Post) (*models.User, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	return obj.GetReceiver(GetSelectFieldsFromRequestFields(UserSimpleFields(), graphql.CollectAllFields(ctx)))
+	return obj.GetReceiver(GetSelectFieldsFromRequestFields(UserFields(), graphql.CollectAllFields(ctx)))
 }
 
 func (r *postResolver) Provider(ctx context.Context, obj *models.Post) (*models.User, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	return obj.GetProvider(GetSelectFieldsFromRequestFields(UserSimpleFields(), graphql.CollectAllFields(ctx)))
+	return obj.GetProvider(GetSelectFieldsFromRequestFields(UserFields(), graphql.CollectAllFields(ctx)))
 }
 
 func (r *postResolver) Organization(ctx context.Context, obj *models.Post) (*models.Organization, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	selectFields := GetSelectFieldsFromRequestFields(OrganizationSimpleFields(), graphql.CollectAllFields(ctx))
+	selectFields := GetSelectFieldsFromRequestFields(OrganizationFields(), graphql.CollectAllFields(ctx))
 	return obj.GetOrganization(selectFields)
 }
 
@@ -119,7 +119,7 @@ func (r *postResolver) Threads(ctx context.Context, obj *models.Post) ([]*models
 	if obj == nil {
 		return nil, nil
 	}
-	selectFields := GetSelectFieldsFromRequestFields(ThreadSimpleFields(), graphql.CollectAllFields(ctx))
+	selectFields := GetSelectFieldsFromRequestFields(ThreadFields(), graphql.CollectAllFields(ctx))
 	return obj.GetThreads(selectFields)
 }
 
@@ -212,7 +212,7 @@ func ConvertGqlNewPostToDBPost(gqlPost NewPost, createdByUser models.User) (mode
 }
 
 func getSelectFieldsForPosts(ctx context.Context) []string {
-	selectFields := GetSelectFieldsFromRequestFields(PostSimpleFields(), graphql.CollectAllFields(ctx))
+	selectFields := GetSelectFieldsFromRequestFields(PostFields(), graphql.CollectAllFields(ctx))
 	selectFields = append(selectFields, "id")
 	return selectFields
 }

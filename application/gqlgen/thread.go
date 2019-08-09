@@ -8,7 +8,7 @@ import (
 	"github.com/silinternational/handcarry-api/models"
 )
 
-func ThreadSimpleFields() map[string]string {
+func ThreadFields() map[string]string {
 	return map[string]string{
 		"id":        "uuid",
 		"postID":    "post_id",
@@ -28,7 +28,7 @@ func (r *threadResolver) Participants(ctx context.Context, obj *models.Thread) (
 		return nil, nil
 	}
 
-	selectedFields := GetSelectFieldsFromRequestFields(UserSimpleFields(), graphql.CollectAllFields(ctx))
+	selectedFields := GetSelectFieldsFromRequestFields(UserFields(), graphql.CollectAllFields(ctx))
 	return obj.GetParticipants(selectedFields)
 }
 
@@ -43,7 +43,7 @@ func (r *threadResolver) Messages(ctx context.Context, obj *models.Thread) ([]*m
 	if obj == nil {
 		return nil, nil
 	}
-	selectedFields := GetSelectFieldsFromRequestFields(MessageSimpleFields(), graphql.CollectAllFields(ctx))
+	selectedFields := GetSelectFieldsFromRequestFields(MessageFields(), graphql.CollectAllFields(ctx))
 	return obj.GetMessages(selectedFields)
 }
 
@@ -59,7 +59,7 @@ func (r *threadResolver) PostID(ctx context.Context, obj *models.Thread) (string
 }
 
 func (r *threadResolver) Post(ctx context.Context, obj *models.Thread) (*models.Post, error) {
-	selectedFields := GetSelectFieldsFromRequestFields(PostSimpleFields(), graphql.CollectAllFields(ctx))
+	selectedFields := GetSelectFieldsFromRequestFields(PostFields(), graphql.CollectAllFields(ctx))
 	return obj.GetPost(selectedFields)
 }
 
@@ -106,7 +106,7 @@ func (r *queryResolver) MyThreads(ctx context.Context) ([]*models.Thread, error)
 }
 
 func getSelectFieldsForThreads(requestFields []string) []string {
-	selectFields := GetSelectFieldsFromRequestFields(ThreadSimpleFields(), requestFields)
+	selectFields := GetSelectFieldsFromRequestFields(ThreadFields(), requestFields)
 
 	selectFields = append(selectFields, "id")
 

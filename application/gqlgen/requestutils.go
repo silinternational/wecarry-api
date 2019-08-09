@@ -4,9 +4,9 @@ import (
 	"github.com/silinternational/handcarry-api/domain"
 )
 
-// GetSelectFieldsFromRequestFields gets the intersection of the non-relational fields for the db model
+// GetSelectFieldsFromRequestFields gets the intersection of all fields for the db model
 //  and the top-level requested fields
-func GetSelectFieldsFromRequestFields(simpleFields map[string]string, requestFields []string) []string {
+func GetSelectFieldsFromRequestFields(fields map[string]string, requestFields []string) []string {
 	if len(requestFields) == 0 {
 		return []string{}
 	}
@@ -14,7 +14,7 @@ func GetSelectFieldsFromRequestFields(simpleFields map[string]string, requestFie
 	// TODO: GetRequestFields gets *all* request fields smashed into one list. Need something that
 	// gives just the request fields from the object of interest.
 	selectFields := []string{}
-	for gqlField, dbField := range simpleFields {
+	for gqlField, dbField := range fields {
 		if domain.IsStringInSlice(gqlField, requestFields) {
 			selectFields = append(selectFields, dbField)
 		}

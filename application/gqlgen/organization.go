@@ -6,7 +6,7 @@ import (
 	"github.com/silinternational/handcarry-api/models"
 )
 
-func OrganizationSimpleFields() map[string]string {
+func OrganizationFields() map[string]string {
 	return map[string]string{
 		"id":         "uuid",
 		"name":       "name",
