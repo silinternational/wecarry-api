@@ -29,6 +29,13 @@ func (r *Resolver) User() UserResolver {
 
 type userResolver struct{ *Resolver }
 
+func (r *userResolver) ID(ctx context.Context, obj *models.User) (string, error) {
+	if obj == nil {
+		return "", nil
+	}
+	return obj.Uuid.String(), nil
+}
+
 func (r *userResolver) CreatedAt(ctx context.Context, obj *models.User) (*string, error) {
 	if obj == nil {
 		return nil, nil

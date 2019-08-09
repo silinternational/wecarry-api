@@ -16,11 +16,19 @@ autobind: []
 models:
   Organization:
     model: github.com/silinternational/handcarry-api/models.Organization
+    fields:
+      id:
+        resolver: true
   User:
     model: github.com/silinternational/handcarry-api/models.User
+    fields:
+      id:
+        resolver: true
   Post:
     model: github.com/silinternational/handcarry-api/models.Post
     fields:
+      id:
+        resolver: true
       organization:
         resolver: true
       createdBy:

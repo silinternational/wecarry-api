@@ -34,6 +34,13 @@ func (r *Resolver) Post() PostResolver {
 
 type postResolver struct{ *Resolver }
 
+func (r *postResolver) ID(ctx context.Context, obj *models.Post) (string, error) {
+	if obj == nil {
+		return "", nil
+	}
+	return obj.Uuid.String(), nil
+}
+
 func (r *postResolver) Type(ctx context.Context, obj *models.Post) (PostType, error) {
 	if obj == nil {
 		return "", nil
