@@ -55,21 +55,21 @@ func (r *postResolver) CreatedBy(ctx context.Context, obj *models.Post) (*models
 	if obj == nil {
 		return nil, nil
 	}
-	return obj.GetCreator(GetSelectFieldsFromRequestFields(UserSimpleFields(), GetRequestFields(ctx)))
+	return obj.GetCreator(GetSelectFieldsFromRequestFields(UserSimpleFields(), graphql.CollectAllFields(ctx)))
 }
 
 func (r *postResolver) Receiver(ctx context.Context, obj *models.Post) (*models.User, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	return obj.GetReceiver(GetSelectFieldsFromRequestFields(UserSimpleFields(), GetRequestFields(ctx)))
+	return obj.GetReceiver(GetSelectFieldsFromRequestFields(UserSimpleFields(), graphql.CollectAllFields(ctx)))
 }
 
 func (r *postResolver) Provider(ctx context.Context, obj *models.Post) (*models.User, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	return obj.GetProvider(GetSelectFieldsFromRequestFields(UserSimpleFields(), GetRequestFields(ctx)))
+	return obj.GetProvider(GetSelectFieldsFromRequestFields(UserSimpleFields(), graphql.CollectAllFields(ctx)))
 }
 
 func (r *postResolver) Organization(ctx context.Context, obj *models.Post) (*models.Organization, error) {

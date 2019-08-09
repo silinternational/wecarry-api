@@ -28,7 +28,7 @@ func (r *threadResolver) Participants(ctx context.Context, obj *models.Thread) (
 		return nil, nil
 	}
 
-	selectedFields := GetSelectFieldsFromRequestFields(UserSimpleFields(), GetRequestFields(ctx))
+	selectedFields := GetSelectFieldsFromRequestFields(UserSimpleFields(), graphql.CollectAllFields(ctx))
 	return obj.GetParticipants(selectedFields)
 }
 
@@ -43,7 +43,7 @@ func (r *threadResolver) Messages(ctx context.Context, obj *models.Thread) ([]*m
 	if obj == nil {
 		return nil, nil
 	}
-	selectedFields := GetSelectFieldsFromRequestFields(MessageSimpleFields(), GetRequestFields(ctx))
+	selectedFields := GetSelectFieldsFromRequestFields(MessageSimpleFields(), graphql.CollectAllFields(ctx))
 	return obj.GetMessages(selectedFields)
 }
 
@@ -59,7 +59,7 @@ func (r *threadResolver) PostID(ctx context.Context, obj *models.Thread) (string
 }
 
 func (r *threadResolver) Post(ctx context.Context, obj *models.Thread) (*models.Post, error) {
-	selectedFields := GetSelectFieldsFromRequestFields(PostSimpleFields(), GetRequestFields(ctx))
+	selectedFields := GetSelectFieldsFromRequestFields(PostSimpleFields(), graphql.CollectAllFields(ctx))
 	return obj.GetPost(selectedFields)
 }
 
