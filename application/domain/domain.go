@@ -61,7 +61,7 @@ func GetBearerTokenFromRequest(r *http.Request) string {
 		return ""
 	}
 
-	re := regexp.MustCompile(`^Bearer (.*)$`)
+	re := regexp.MustCompile(`^(?i)Bearer (.*)$`)
 	matches := re.FindSubmatch([]byte(authorizationHeader))
 	if len(matches) < 2 {
 		return ""

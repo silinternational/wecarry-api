@@ -26,6 +26,17 @@ func TestGetBearerTokenFromRequest(t *testing.T) {
 			want: "abc123",
 		},
 		{
+			name: "also valid, not case-sensitive",
+			args: args{
+				r: &http.Request{
+					Header: map[string][]string{
+						"Authorization": {"bearer def456"},
+					},
+				},
+			},
+			want: "def456",
+		},
+		{
 			name: "missing authorization header",
 			args: args{
 				r: &http.Request{
