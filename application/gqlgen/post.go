@@ -12,13 +12,16 @@ import (
 func PostSimpleFields() map[string]string {
 	return map[string]string{
 		"id":           "uuid",
-		"postID":       "post_id",
+		"createdBy":    "created_by_id",
+		"organization": "organization_id",
 		"type":         "type",
 		"title":        "title",
 		"description":  "description",
 		"destination":  "destination",
 		"origin":       "origin",
 		"size":         "size",
+		"receiver":     "receiver_id",
+		"provider":     "provider_id",
 		"neededAfter":  "needed_after",
 		"neededBefore": "needed_before",
 		"category":     "category",
@@ -145,7 +148,8 @@ func (r *queryResolver) Posts(ctx context.Context) ([]*models.Post, error) {
 	var posts []*models.Post
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 
-	if err := models.DB.Where("organization_id IN (?)", cUser.GetOrgIDs()...).All(&posts); err != nil {
+	selectFields := getSelectFieldsForPosts(ctx)
+	if err := models.DB.Select(selectFields...).Where("organization_id IN (?)", cUser.GetOrgIDs()...).All(&posts); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting posts: %v", err.Error()))
 		return []*models.Post{}, err
 	}
@@ -157,7 +161,8 @@ func (r *queryResolver) Post(ctx context.Context, id *string) (*models.Post, err
 	post := models.Post{}
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 
-	if err := models.DB.Where("organization_id IN (?)", cUser.GetOrgIDs()...).Where("uuid = ?", id).First(&post); err != nil {
+	selectFields := getSelectFieldsForPosts(ctx)
+	if err := models.DB.Select(selectFields...).Where("organization_id IN (?)", cUser.GetOrgIDs()...).Where("uuid = ?", id).First(&post); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting post: %v", err.Error()))
 		return &models.Post{}, err
 	}
@@ -204,4 +209,10 @@ func ConvertGqlNewPostToDBPost(gqlPost NewPost, createdByUser models.User) (mode
 	dbPost.Category = domain.ConvertStrPtrToString(gqlPost.Category)
 
 	return dbPost, nil
+}
+
+func getSelectFieldsForPosts(ctx context.Context) []string {
+	selectFields := GetSelectFieldsFromRequestFields(PostSimpleFields(), graphql.CollectAllFields(ctx))
+	selectFields = append(selectFields, "id")
+	return selectFields
 }
