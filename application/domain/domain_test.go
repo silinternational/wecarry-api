@@ -46,6 +46,53 @@ func TestGetRequestData(t *testing.T) {
 	}
 }
 
+func TestGetFirstStringFromSlice(t *testing.T) {
+	type args struct {
+		s []string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "nil",
+			args: args{
+				s: nil,
+			},
+			want: "",
+		},
+		{
+			name: "empty slice",
+			args: args{
+				s: []string{},
+			},
+			want: "",
+		},
+		{
+			name: "single string in slice",
+			args: args{
+				s: []string{"alpha"},
+			},
+			want: "alpha",
+		},
+		{
+			name: "two strings in slice",
+			args: args{
+				s: []string{"alpha", "beta"},
+			},
+			want: "alpha",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := GetFirstStringFromSlice(tt.args.s); got != tt.want {
+				t.Errorf("GetFirstStringFromSlice() = \"%v\", want \"%v\"", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestGetBearerTokenFromRequest(t *testing.T) {
 	type args struct {
 		r *http.Request
@@ -126,6 +173,53 @@ func TestGetBearerTokenFromRequest(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := GetBearerTokenFromRequest(tt.args.r); got != tt.want {
 				t.Errorf("GetBearerTokenFromRequest() = \"%v\", want \"%v\"", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGetSubPartKeyValues(t *testing.T) {
+	type args struct {
+		s []string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "nil",
+			args: args{
+				s: nil,
+			},
+			want: "",
+		},
+		{
+			name: "empty slice",
+			args: args{
+				s: []string{},
+			},
+			want: "",
+		},
+		{
+			name: "single string in slice",
+			args: args{
+				s: []string{"alpha"},
+			},
+			want: "alpha",
+		},
+		{
+			name: "two strings in slice",
+			args: args{
+				s: []string{"alpha", "beta"},
+			},
+			want: "alpha",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := GetSubPartKeyValues(tt.args.s); got != tt.want {
+				t.Errorf("GetSubPartKeyValues() = \"%v\", want \"%v\"", got, tt.want)
 			}
 		})
 	}
