@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"reflect"
 	"testing"
+	"time"
 )
 
 func TestGetRequestData(t *testing.T) {
@@ -256,6 +257,41 @@ func TestGetSubPartKeyValues(t *testing.T) {
 			got := GetSubPartKeyValues(tt.args.inString, tt.args.outerDelimiter, tt.args.innerDelimiter)
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("GetSubPartKeyValues() = \"%v\", want \"%v\"", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestConvertTimeToStringPtr(t *testing.T) {
+	now := time.Now()
+	type args struct {
+		inTime time.Time
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "default",
+			args: args{
+				inTime: time.Time{},
+			},
+			want: "0001-01-01T00:00:00Z",
+		},
+		{
+			name: "now",
+			args: args{
+				inTime: now,
+			},
+			want: now.Format(time.RFC3339),
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got := ConvertTimeToStringPtr(test.args.inTime)
+			if *got != test.want {
+				t.Errorf("ConvertTimeToStringPtr() = \"%v\", want \"%v\"", *got, test.want)
 			}
 		})
 	}
