@@ -6,10 +6,9 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/silinternational/handcarry-api/domain"
 	"github.com/silinternational/handcarry-api/models"
-	"strconv"
 )
 
-func ThreadSimpleFields() map[string]string {
+func ThreadFields() map[string]string {
 	return map[string]string{
 		"id":        "uuid",
 		"postID":    "post_id",
@@ -29,7 +28,7 @@ func (r *threadResolver) Participants(ctx context.Context, obj *models.Thread) (
 		return nil, nil
 	}
 
-	selectedFields := GetSelectFieldsFromRequestFields(UserSimpleFields(), GetRequestFields(ctx))
+	selectedFields := GetSelectFieldsFromRequestFields(UserFields(), graphql.CollectAllFields(ctx))
 	return obj.GetParticipants(selectedFields)
 }
 
@@ -44,7 +43,7 @@ func (r *threadResolver) Messages(ctx context.Context, obj *models.Thread) ([]*m
 	if obj == nil {
 		return nil, nil
 	}
-	selectedFields := GetSelectFieldsFromRequestFields(MessageSimpleFields(), GetRequestFields(ctx))
+	selectedFields := GetSelectFieldsFromRequestFields(MessageFields(), graphql.CollectAllFields(ctx))
 	return obj.GetMessages(selectedFields)
 }
 
@@ -52,11 +51,15 @@ func (r *threadResolver) PostID(ctx context.Context, obj *models.Thread) (string
 	if obj == nil {
 		return "", nil
 	}
-	return strconv.Itoa(obj.PostID), nil
+	if post, err := obj.GetPost([]string{"uuid"}); err == nil {
+		return post.Uuid.String(), nil
+	} else {
+		return "", err
+	}
 }
 
 func (r *threadResolver) Post(ctx context.Context, obj *models.Thread) (*models.Post, error) {
-	selectedFields := GetSelectFieldsFromRequestFields(PostSimpleFields(), GetRequestFields(ctx))
+	selectedFields := GetSelectFieldsFromRequestFields(PostFields(), graphql.CollectAllFields(ctx))
 	return obj.GetPost(selectedFields)
 }
 
@@ -103,7 +106,7 @@ func (r *queryResolver) MyThreads(ctx context.Context) ([]*models.Thread, error)
 }
 
 func getSelectFieldsForThreads(requestFields []string) []string {
-	selectFields := GetSelectFieldsFromRequestFields(ThreadSimpleFields(), requestFields)
+	selectFields := GetSelectFieldsFromRequestFields(ThreadFields(), requestFields)
 
 	selectFields = append(selectFields, "id")
 

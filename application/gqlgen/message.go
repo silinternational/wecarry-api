@@ -8,7 +8,7 @@ import (
 	"github.com/vektah/gqlparser/gqlerror"
 )
 
-func MessageSimpleFields() map[string]string {
+func MessageFields() map[string]string {
 	return map[string]string{
 		"id":        "uuid",
 		"content":   "content",
@@ -36,7 +36,7 @@ func (r *messageResolver) Sender(ctx context.Context, obj *models.Message) (*mod
 	if obj == nil {
 		return nil, nil
 	}
-	selectFields := GetSelectFieldsFromRequestFields(UserSimpleFields(), graphql.CollectAllFields(ctx))
+	selectFields := GetSelectFieldsFromRequestFields(UserFields(), graphql.CollectAllFields(ctx))
 	return obj.GetSender(selectFields)
 }
 
@@ -64,7 +64,7 @@ func (r *messageResolver) UpdatedAt(ctx context.Context, obj *models.Message) (*
 
 func (r *queryResolver) Message(ctx context.Context, id *string) (*models.Message, error) {
 	message := models.Message{}
-	messageFields := GetSelectFieldsFromRequestFields(MessageSimpleFields(), graphql.CollectAllFields(ctx))
+	messageFields := GetSelectFieldsFromRequestFields(MessageFields(), graphql.CollectAllFields(ctx))
 
 	if err := models.DB.Select(messageFields...).Where("uuid = ?", id).First(&message); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("error getting message: %v", err.Error()))
@@ -74,7 +74,7 @@ func (r *queryResolver) Message(ctx context.Context, id *string) (*models.Messag
 	return &message, nil
 }
 
-func ConvertGqlNewMessageToDBMessage(gqlMessage NewMessage, user models.User, requestFields []string) (models.Message, error) {
+func ConvertGqlNewMessageToDBMessage(gqlMessage NewMessage, user models.User) (models.Message, error) {
 
 	var thread models.Thread
 

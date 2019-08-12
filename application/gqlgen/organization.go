@@ -6,7 +6,7 @@ import (
 	"github.com/silinternational/handcarry-api/models"
 )
 
-func OrganizationSimpleFields() map[string]string {
+func OrganizationFields() map[string]string {
 	return map[string]string{
 		"id":         "uuid",
 		"name":       "name",
@@ -23,6 +23,13 @@ func (r *Resolver) Organization() OrganizationResolver {
 }
 
 type organizationResolver struct{ *Resolver }
+
+func (r *organizationResolver) ID(ctx context.Context, obj *models.Organization) (string, error) {
+	if obj == nil {
+		return "", nil
+	}
+	return obj.Uuid.String(), nil
+}
 
 func (r *organizationResolver) URL(ctx context.Context, obj *models.Organization) (*string, error) {
 	if obj == nil {
