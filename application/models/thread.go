@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gobuffalo/buffalo/genny/build/_fixtures/coke/models"
+	"github.com/silinternational/handcarry-api/domain"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -103,51 +104,15 @@ func FindThreadByPostIDAndUserID(postID int, userID int) (Thread, error) {
 
 }
 
-func GetThreadParticipants(threadID int, selectFields []string) (Users, error) {
-
-	threadParts := ThreadParticipants{}
-
-	if err := DB.Where("thread_id = ?", threadID).All(&threadParts); err != nil {
-		return Users{}, fmt.Errorf("error finding users on thread %v ... %v", threadID, err)
-	}
-
-	users := Users{}
-	for _, tp := range threadParts {
-		u := User{}
-
-		if err := DB.Select(selectFields...).Find(&u, tp.UserID); err != nil {
-			return Users{}, fmt.Errorf("error finding users on thread %v ... %v", threadID, err)
-		}
-		users = append(users, u)
-	}
-
-	return users, nil
-}
-
-func (t *Thread) LoadPost(selectFields []string) error {
+func (t *Thread) GetPost(selectFields []string) (*Post, error) {
 	if t.PostID <= 0 {
-		return fmt.Errorf("error: PostID must be positive, got %v", t.PostID)
+		return nil, fmt.Errorf("error: PostID must be positive, got %v", t.PostID)
 	}
-
 	post := Post{}
-	// TODO: use selectFields. gqlgen.GetRequestFields() must be filtered to only include appropriate fields.
-	if err := models.DB.Find(&post, t.PostID); err != nil {
-		return fmt.Errorf("error loading post %v %s", t.PostID, err)
+	if err := models.DB.Select(selectFields...).Find(&post, t.PostID); err != nil {
+		return nil, fmt.Errorf("error loading post %v %s", t.PostID, err)
 	}
-
-	t.Post = post
-
-	return nil
-}
-
-func (t *Thread) LoadMessages(selectFields []string) error {
-	var messages []Message
-	if err := models.DB.Select(selectFields...).Where("thread_id = ?", t.ID).All(&messages); err != nil {
-		return fmt.Errorf("error getting messages for thread id %v ... %v", t.ID, err)
-	}
-
-	t.Messages = messages
-	return nil
+	return &post, nil
 }
 
 func (t *Thread) GetMessages(selectFields []string) ([]*Message, error) {
@@ -157,4 +122,61 @@ func (t *Thread) GetMessages(selectFields []string) ([]*Message, error) {
 	}
 
 	return messages, nil
+}
+
+func (t *Thread) GetParticipants(selectFields []string) ([]*User, error) {
+	var users []*User
+	var threadParticipants []*ThreadParticipant
+
+	if err := DB.Where("thread_id = ?", t.ID).All(&threadParticipants); err != nil {
+		return users, fmt.Errorf("error reading from thread_participants table %v ... %v", t.ID, err)
+	}
+
+	for _, tp := range threadParticipants {
+		u := User{}
+
+		if err := DB.Select(selectFields...).Find(&u, tp.UserID); err != nil {
+			return users, fmt.Errorf("error finding users on thread %v ... %v", t.ID, err)
+		}
+		users = append(users, &u)
+	}
+	return users, nil
+}
+
+func CreateThreadWithParticipants(postUuid string, user User) (Thread, error) {
+	post, err := FindPostByUUID(postUuid)
+	if err != nil {
+		return Thread{}, err
+	}
+
+	participants := Users{user}
+
+	// Ensure Post Creator is one of the participants
+	if post.CreatedBy.ID != 0 && post.CreatedBy.ID != user.ID {
+		participants = append(participants, post.CreatedBy)
+	}
+
+	thread := Thread{
+		PostID:       post.ID,
+		Uuid:         domain.GetUuid(),
+		Participants: participants,
+	}
+
+	if err = models.DB.Save(&thread); err != nil {
+		err = fmt.Errorf("error saving new thread for message: %v", err.Error())
+		return Thread{}, err
+	}
+
+	for _, p := range participants {
+		threadP := ThreadParticipant{
+			ThreadID: thread.ID,
+			UserID:   p.ID,
+		}
+		if err := DB.Save(&threadP); err != nil {
+			err = fmt.Errorf("error saving new thread participant %+v for message: %v", threadP, err.Error())
+			return Thread{}, err
+		}
+	}
+
+	return thread, nil
 }

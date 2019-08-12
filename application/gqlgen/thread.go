@@ -1,7 +1,12 @@
 package gqlgen
 
 import (
+	"context"
+	"fmt"
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/silinternational/handcarry-api/domain"
+	"github.com/silinternational/handcarry-api/models"
+	"strconv"
 )
 
 func ThreadSimpleFields() map[string]string {
@@ -13,18 +18,94 @@ func ThreadSimpleFields() map[string]string {
 	}
 }
 
+func (r *Resolver) Thread() ThreadResolver {
+	return &threadResolver{r}
+}
+
+type threadResolver struct{ *Resolver }
+
+func (r *threadResolver) Participants(ctx context.Context, obj *models.Thread) ([]*models.User, error) {
+	if obj == nil {
+		return nil, nil
+	}
+
+	selectedFields := GetSelectFieldsFromRequestFields(UserSimpleFields(), GetRequestFields(ctx))
+	return obj.GetParticipants(selectedFields)
+}
+
+func (r *threadResolver) ID(ctx context.Context, obj *models.Thread) (string, error) {
+	if obj == nil {
+		return "", nil
+	}
+	return obj.Uuid.String(), nil
+}
+
+func (r *threadResolver) Messages(ctx context.Context, obj *models.Thread) ([]*models.Message, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	selectedFields := GetSelectFieldsFromRequestFields(MessageSimpleFields(), GetRequestFields(ctx))
+	return obj.GetMessages(selectedFields)
+}
+
+func (r *threadResolver) PostID(ctx context.Context, obj *models.Thread) (string, error) {
+	if obj == nil {
+		return "", nil
+	}
+	return strconv.Itoa(obj.PostID), nil
+}
+
+func (r *threadResolver) Post(ctx context.Context, obj *models.Thread) (*models.Post, error) {
+	selectedFields := GetSelectFieldsFromRequestFields(PostSimpleFields(), GetRequestFields(ctx))
+	return obj.GetPost(selectedFields)
+}
+
+func (r *threadResolver) CreatedAt(ctx context.Context, obj *models.Thread) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return domain.ConvertTimeToStringPtr(obj.CreatedAt), nil
+}
+
+func (r *threadResolver) UpdatedAt(ctx context.Context, obj *models.Thread) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return domain.ConvertTimeToStringPtr(obj.UpdatedAt), nil
+}
+
+func (r *queryResolver) Threads(ctx context.Context) ([]*models.Thread, error) {
+	var threads []*models.Thread
+
+	db := models.DB
+
+	selectFields := getSelectFieldsForThreads(graphql.CollectAllFields(ctx))
+	if err := db.Select(selectFields...).All(&threads); err != nil {
+		return []*models.Thread{}, fmt.Errorf("error getting threads: %v", err)
+	}
+
+	return threads, nil
+}
+
+func (r *queryResolver) MyThreads(ctx context.Context) ([]*models.Thread, error) {
+	var threads []*models.Thread
+
+	db := models.DB
+	currentUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+
+	query := db.Q().LeftJoin("thread_participants tp", "threads.id = tp.thread_id")
+	query = query.Where("tp.user_id = ?", currentUser.ID)
+	if err := query.All(&threads); err != nil {
+		return []*models.Thread{}, fmt.Errorf("error getting threads: %v", err)
+	}
+
+	return threads, nil
+}
+
 func getSelectFieldsForThreads(requestFields []string) []string {
 	selectFields := GetSelectFieldsFromRequestFields(ThreadSimpleFields(), requestFields)
 
-	// Ensure we can get participants via the thread ID
-	if domain.IsStringInSlice(ParticipantsField, requestFields) {
-		selectFields = append(selectFields, "id")
-	}
-
-	// Ensure we can get the post via the post ID
-	if domain.IsStringInSlice(PostField, requestFields) {
-		selectFields = append(selectFields, "post_id")
-	}
+	selectFields = append(selectFields, "id")
 
 	return selectFields
 }
