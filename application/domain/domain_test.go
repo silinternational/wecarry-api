@@ -164,7 +164,7 @@ func TestGetBearerTokenFromRequest(t *testing.T) {
 			args: args{
 				r: &http.Request{
 					Header: map[string][]string{
-						"Authorization": {"Bearer 861B1C06-DDB8-494F-8627-3A87B22FFB82"},
+						"Authorization": {"Bearer: 861B1C06-DDB8-494F-8627-3A87B22FFB82"},
 					},
 				},
 			},
