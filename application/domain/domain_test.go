@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"net/http"
 	"net/url"
+	"reflect"
 	"testing"
 )
 
@@ -180,45 +181,80 @@ func TestGetBearerTokenFromRequest(t *testing.T) {
 
 func TestGetSubPartKeyValues(t *testing.T) {
 	type args struct {
-		s []string
+		inString, outerDelimiter, innerDelimiter string
 	}
 	tests := []struct {
 		name string
 		args args
-		want string
+		want map[string]string
 	}{
 		{
-			name: "nil",
+			name: "empty string",
 			args: args{
-				s: nil,
+				inString:       "",
+				outerDelimiter: "!",
+				innerDelimiter: "*",
 			},
-			want: "",
+			want: map[string]string{},
 		},
 		{
-			name: "empty slice",
+			name: "one pair",
 			args: args{
-				s: []string{},
+				inString:       "param^value",
+				outerDelimiter: "#",
+				innerDelimiter: "^",
 			},
-			want: "",
+			want: map[string]string{
+				"param": "value",
+			},
 		},
 		{
-			name: "single string in slice",
+			name: "two pairs",
 			args: args{
-				s: []string{"alpha"},
+				inString:       "param1(value1@param2(value2",
+				outerDelimiter: "@",
+				innerDelimiter: "(",
 			},
-			want: "alpha",
+			want: map[string]string{
+				"param1": "value1",
+				"param2": "value2",
+			},
 		},
 		{
-			name: "two strings in slice",
+			name: "no inner delimiter",
 			args: args{
-				s: []string{"alpha", "beta"},
+				inString:       "param-value",
+				outerDelimiter: "-",
+				innerDelimiter: "=",
 			},
-			want: "alpha",
+			want: map[string]string{},
+		},
+		{
+			name: "extra inner delimiter",
+			args: args{
+				inString:       "param=value=extra",
+				outerDelimiter: "-",
+				innerDelimiter: "=",
+			},
+			want: map[string]string{},
+		},
+		{
+			name: "empty value",
+			args: args{
+				inString:       "param=value-empty=",
+				outerDelimiter: "-",
+				innerDelimiter: "=",
+			},
+			want: map[string]string{
+				"param": "value",
+				"empty": "",
+			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := GetSubPartKeyValues(tt.args.s); got != tt.want {
+			got := GetSubPartKeyValues(tt.args.inString, tt.args.outerDelimiter, tt.args.innerDelimiter)
+			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("GetSubPartKeyValues() = \"%v\", want \"%v\"", got, tt.want)
 			}
 		})
