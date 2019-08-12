@@ -297,6 +297,43 @@ func TestConvertTimeToStringPtr(t *testing.T) {
 	}
 }
 
+func TestConvertStringPtrToDate(t *testing.T) {
+	testTime := time.Date(2019, time.August, 12, 0, 0, 0, 0, time.UTC)
+	testStr := testTime.Format("2006-01-02") // not using a const in order to detect code changes
+	badTime := "1"
+	type args struct {
+		inPtr *string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    time.Time
+		wantErr bool
+	}{{
+		name: "nil",
+		args: args{nil},
+		want: time.Time{},
+	}, {
+		name: "good",
+		args: args{&testStr},
+		want: testTime,
+	}, {
+		name:    "error",
+		args:    args{&badTime},
+		wantErr: true,
+	}}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := ConvertStringPtrToDate(test.args.inPtr)
+			if test.wantErr == false && err != nil {
+				t.Errorf("Unexpected error %v", err)
+			} else if got != test.want {
+				t.Errorf("ConvertStringPtrToDate() = \"%v\", want \"%v\"", got, test.want)
+			}
+		})
+	}
+}
+
 func TestIsStringInSlice(t *testing.T) {
 	type TestData struct {
 		Needle   string
