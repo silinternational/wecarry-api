@@ -25,7 +25,7 @@ func TestResolver(t *testing.T) {
 	fmt.Printf("")
 
 	// Load Organization test fixtures
-	orgUuid1 := "51b5321d-2769-48a0-908a-7af1d15083e2"
+	orgUuid1, _ := uuid.FromString("51b5321d-2769-48a0-908a-7af1d15083e2")
 	orgFix := models.Organizations{
 		{
 			ID:         1,

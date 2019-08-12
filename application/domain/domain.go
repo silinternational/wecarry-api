@@ -61,7 +61,7 @@ func GetBearerTokenFromRequest(r *http.Request) string {
 		return ""
 	}
 
-	re := regexp.MustCompile(`^Bearer (.*)$`)
+	re := regexp.MustCompile(`^(?i)Bearer (.*)$`)
 	matches := re.FindSubmatch([]byte(authorizationHeader))
 	if len(matches) < 2 {
 		return ""
@@ -92,17 +92,6 @@ func ConvertTimeToStringPtr(inTime time.Time) *string {
 	return &inTimeStr
 }
 
-func ConvertDateToStringPtr(inDate time.Time) *string {
-
-	dateStr := inDate.Format(DateFormat)
-	emptyDate := "0001-01-01"
-	if dateStr == emptyDate {
-		dateStr = ""
-	}
-
-	return &dateStr
-}
-
 func ConvertStrPtrToString(inPtr *string) string {
 	if inPtr == nil {
 		return ""
@@ -114,10 +103,6 @@ func ConvertStrPtrToString(inPtr *string) string {
 func GetUuid() uuid2.UUID {
 	uuid, _ := uuid2.NewV4()
 	return uuid
-}
-
-func GetUuidAsString() string {
-	return GetUuid().String()
 }
 
 func ConvertStringPtrToDate(inPtr *string) (time.Time, error) {
