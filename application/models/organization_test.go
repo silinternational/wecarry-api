@@ -1,7 +1,6 @@
 package models
 
 import (
-	"fmt"
 	"github.com/gobuffalo/nulls"
 	"github.com/gofrs/uuid"
 	"github.com/silinternational/handcarry-api/domain"
@@ -10,28 +9,19 @@ import (
 	"testing"
 )
 
-func init() {
-	if err := BounceTestDB(); err != nil {
-		panic(fmt.Errorf("BounceTestDB() failed: %v", err))
-	}
-}
-
 func TestFindOrgByUUID(t *testing.T) {
 	// Load Organization test fixtures
 	orgUuidStr := "51b5321d-2769-48a0-908a-7af1d15083e2"
 	orgUuid1, _ := uuid.FromString(orgUuidStr)
-	orgFix := Organizations{
-		{
-			ID:         1,
-			Name:       "ACME",
-			Uuid:       orgUuid1,
-			AuthType:   "saml2",
-			AuthConfig: "[]",
-		},
+	org := Organization{
+		Name:       "ACME",
+		Uuid:       orgUuid1,
+		AuthType:   "saml2",
+		AuthConfig: "[]",
 	}
-	if err := CreateOrgs(orgFix); err != nil {
+	if err := DB.Create(&org); err != nil {
 		t.Errorf("could not run test ... %v", err)
-		return
+		t.FailNow()
 	}
 
 	type args struct {
@@ -46,7 +36,7 @@ func TestFindOrgByUUID(t *testing.T) {
 		{
 			name: "found",
 			args: args{orgUuidStr},
-			want: orgFix[0],
+			want: org,
 		},
 		{
 			name:    "empty access token",
@@ -76,8 +66,9 @@ func TestFindOrgByUUID(t *testing.T) {
 		})
 	}
 
-	// clean up
-	resetOrganizationsTable(t)
+	if err := DB.Destroy(&org); err != nil {
+		t.Errorf("error deleting test data: %v", err)
+	}
 }
 
 func TestCreateOrganization(t *testing.T) {
@@ -125,11 +116,13 @@ func TestCreateOrganization(t *testing.T) {
 			} else if (test.wantErr == false) && (err != nil) {
 				t.Errorf("Unexpected error %v", err)
 			}
+
+			// clean up
+			if err := DB.Destroy(&test.org); err != nil {
+				t.Errorf("error deleting test data: %v", err)
+			}
 		})
 	}
-
-	// clean up
-	resetOrganizationsTable(t)
 }
 
 func TestValidateOrganization(t *testing.T) {
