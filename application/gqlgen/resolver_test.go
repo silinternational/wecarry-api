@@ -21,7 +21,7 @@ func newHandler() http.HandlerFunc {
 }
 
 func TestResolver(t *testing.T) {
-	BounceTestDB()
+	models.BounceTestDB()
 	fmt.Printf("")
 
 	// Load Organization test fixtures
@@ -35,7 +35,7 @@ func TestResolver(t *testing.T) {
 			AuthConfig: "[]",
 		},
 	}
-	if err := createOrgs(orgFix); err != nil {
+	if err := models.CreateOrgs(orgFix); err != nil {
 		t.Errorf("could not run test ... %v", err)
 		return
 	}
@@ -54,7 +54,7 @@ func TestResolver(t *testing.T) {
 			AuthOrgUid: "clark_kent",
 		},
 	}
-	if err := createUsers(userFix); err != nil {
+	if err := models.CreateUsers(userFix); err != nil {
 		t.Errorf("could not run test ... %v", err)
 		return
 	}
@@ -70,7 +70,7 @@ func TestResolver(t *testing.T) {
 			Role:           "admin",
 		},
 	}
-	if err := createUserOrgs(UserOrgsFix); err != nil {
+	if err := models.CreateUserOrgs(UserOrgsFix); err != nil {
 		t.Errorf("could not run test ... %v", err)
 		return
 	}
@@ -95,7 +95,7 @@ func TestResolver(t *testing.T) {
 			Description:    nulls.NewString("Missing my good, old, Canadian maple syrupy goodness"),
 		},
 	}
-	if err := createPosts(postFix); err != nil {
+	if err := models.CreatePosts(postFix); err != nil {
 		t.Errorf("could not run test ... %v", err)
 		return
 	}
@@ -109,7 +109,7 @@ func TestResolver(t *testing.T) {
 			PostID: 1,
 		},
 	}
-	if err := createThreads(threadFix); err != nil {
+	if err := models.CreateThreads(threadFix); err != nil {
 		t.Errorf("could not run test ... %v", err)
 		return
 	}
@@ -122,7 +122,7 @@ func TestResolver(t *testing.T) {
 			UserID:   1,
 		},
 	}
-	if err := createThreadParticipants(threadPartFix); err != nil {
+	if err := models.CreateThreadParticipants(threadPartFix); err != nil {
 		t.Errorf("could not run test ... %v", err)
 		return
 	}
@@ -139,7 +139,7 @@ func TestResolver(t *testing.T) {
 		},
 	}
 
-	if err := createMessages(MessageFix); err != nil {
+	if err := models.CreateMessages(MessageFix); err != nil {
 		t.Errorf("could not run test ... %v", err)
 		return
 	}
