@@ -197,3 +197,131 @@ func TestFindUserByAccessToken(t *testing.T) {
 
 	resetTables(t) // Pack it in, Pack it out a/k/a "Leave No Trace"
 }
+
+func TestValidateUser(t *testing.T) {
+	tests := []struct {
+		name     string
+		user     User
+		wantErr  bool
+		errField string
+	}{
+		{
+			name: "minimum",
+			user: User{
+				Email:      "user@example.com",
+				FirstName:  "A",
+				LastName:   "User",
+				Nickname:   "A User",
+				AuthOrgID:  1,
+				AuthOrgUid: "a_user",
+				Uuid:       domain.GetUuid(),
+			},
+			wantErr: false,
+		},
+		{
+			name: "missing email",
+			user: User{
+				FirstName:  "A",
+				LastName:   "User",
+				Nickname:   "A User",
+				AuthOrgID:  1,
+				AuthOrgUid: "a_user",
+				Uuid:       domain.GetUuid(),
+			},
+			wantErr:  true,
+			errField: "email",
+		},
+		{
+			name: "missing first_name",
+			user: User{
+				Email:      "user@example.com",
+				LastName:   "User",
+				Nickname:   "A User",
+				AuthOrgID:  1,
+				AuthOrgUid: "a_user",
+				Uuid:       domain.GetUuid(),
+			},
+			wantErr:  true,
+			errField: "first_name",
+		},
+		{
+			name: "missing last_name",
+			user: User{
+				Email:      "user@example.com",
+				FirstName:  "A",
+				Nickname:   "A User",
+				AuthOrgID:  1,
+				AuthOrgUid: "a_user",
+				Uuid:       domain.GetUuid(),
+			},
+			wantErr:  true,
+			errField: "last_name",
+		},
+		{
+			name: "missing nickname",
+			user: User{
+				Email:      "user@example.com",
+				FirstName:  "A",
+				LastName:   "User",
+				AuthOrgID:  1,
+				AuthOrgUid: "a_user",
+				Uuid:       domain.GetUuid(),
+			},
+			wantErr:  true,
+			errField: "nickname",
+		},
+		{
+			name: "missing auth_org_id",
+			user: User{
+				Email:      "user@example.com",
+				FirstName:  "A",
+				LastName:   "User",
+				Nickname:   "A User",
+				AuthOrgUid: "a_user",
+				Uuid:       domain.GetUuid(),
+			},
+			wantErr:  true,
+			errField: "auth_org_id",
+		},
+		{
+			name: "missing auth_org_uid",
+			user: User{
+				Email:     "user@example.com",
+				FirstName: "A",
+				LastName:  "User",
+				Nickname:  "A User",
+				AuthOrgID: 1,
+				Uuid:      domain.GetUuid(),
+			},
+			wantErr:  true,
+			errField: "auth_org_uid",
+		},
+		{
+			name: "missing uuid",
+			user: User{
+				Email:      "user@example.com",
+				FirstName:  "A",
+				LastName:   "User",
+				Nickname:   "A User",
+				AuthOrgID:  1,
+				AuthOrgUid: "a_user",
+			},
+			wantErr:  true,
+			errField: "uuid",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			vErr, _ := test.user.Validate(DB)
+			if test.wantErr {
+				if vErr.Count() == 0 {
+					t.Errorf("Expected an error, but did not get one")
+				} else if len(vErr.Get(test.errField)) == 0 {
+					t.Errorf("Expected an error on field %v, but got none (errors: %v)", test.errField, vErr.Errors)
+				}
+			} else if (test.wantErr == false) && (vErr.HasAny()) {
+				t.Errorf("Unexpected error: %v", vErr)
+			}
+		})
+	}
+}
