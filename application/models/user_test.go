@@ -1,7 +1,6 @@
 package models
 
 import (
-	"reflect"
 	"testing"
 	"time"
 
@@ -188,7 +187,7 @@ func TestFindUserByAccessToken(t *testing.T) {
 			} else {
 				if err != nil {
 					t.Errorf("FindUserByAccessToken() returned an error: %v", err)
-				} else if reflect.DeepEqual(got, test.want) {
+				} else if got.Uuid != test.want.Uuid {
 					t.Errorf("found %v, expected %v", got, test.want)
 				}
 			}

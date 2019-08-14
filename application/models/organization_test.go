@@ -5,7 +5,6 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/silinternational/handcarry-api/domain"
 
-	"reflect"
 	"testing"
 )
 
@@ -59,7 +58,7 @@ func TestFindOrgByUUID(t *testing.T) {
 			} else {
 				if err != nil {
 					t.Errorf("FindOrgByUUID() returned an error: %v", err)
-				} else if reflect.DeepEqual(got, test.want) {
+				} else if got.Uuid != test.want.Uuid {
 					t.Errorf("found %v, expected %v", got, test.want)
 				}
 			}
