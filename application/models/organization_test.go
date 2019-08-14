@@ -135,7 +135,6 @@ func TestValidateOrganization(t *testing.T) {
 		{
 			name: "minimum",
 			org: Organization{
-				ID:         1,
 				Name:       "Bits 'R' Us",
 				Uuid:       domain.GetUuid(),
 				AuthType:   "saml2",
@@ -146,7 +145,6 @@ func TestValidateOrganization(t *testing.T) {
 		{
 			name: "missing name",
 			org: Organization{
-				ID:         1,
 				Uuid:       domain.GetUuid(),
 				AuthType:   "saml2",
 				AuthConfig: "[]",
@@ -157,7 +155,6 @@ func TestValidateOrganization(t *testing.T) {
 		{
 			name: "missing uuid",
 			org: Organization{
-				ID:         1,
 				Name:       "Babelfish Warehouse",
 				AuthType:   "saml2",
 				AuthConfig: "[]",
@@ -168,7 +165,6 @@ func TestValidateOrganization(t *testing.T) {
 		{
 			name: "missing auth type",
 			org: Organization{
-				ID:         1,
 				Name:       "Babelfish Warehouse",
 				Uuid:       domain.GetUuid(),
 				AuthConfig: "[]",

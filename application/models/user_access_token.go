@@ -38,7 +38,6 @@ func (u UserAccessTokens) String() string {
 // This method is not required and may be deleted.
 func (u *UserAccessToken) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
-		&validators.IntIsPresent{Field: u.ID, Name: "ID"},
 		&validators.IntIsPresent{Field: u.UserID, Name: "UserID"},
 		&validators.StringIsPresent{Field: u.AccessToken, Name: "AccessToken"},
 		&validators.TimeIsPresent{Field: u.ExpiresAt, Name: "ExpiresAt"},

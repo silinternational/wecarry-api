@@ -44,7 +44,6 @@ func (m Messages) String() string {
 // This method is not required and may be deleted.
 func (m *Message) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
-		&validators.IntIsPresent{Field: m.ID, Name: "ID"},
 		&validators.UUIDIsPresent{Field: m.Uuid, Name: "Uuid"},
 		&validators.IntIsPresent{Field: m.ThreadID, Name: "ThreadID"},
 		&validators.IntIsPresent{Field: m.SentByID, Name: "SentBy"},

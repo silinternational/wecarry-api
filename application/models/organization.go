@@ -44,7 +44,6 @@ func (o Organizations) String() string {
 // This method is not required and may be deleted.
 func (o *Organization) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
-		&validators.IntIsPresent{Field: o.ID, Name: "ID"},
 		&validators.StringIsPresent{Field: o.Name, Name: "Name"},
 		&validators.StringIsPresent{Field: o.AuthType, Name: "AuthType"},
 		&validators.UUIDIsPresent{Field: o.Uuid, Name: "Uuid"},
