@@ -1,7 +1,9 @@
 package models
 
 import (
+	"reflect"
 	"testing"
+	"time"
 
 	"github.com/gobuffalo/buffalo/genny/build/_fixtures/coke/models"
 	"github.com/gobuffalo/nulls"
@@ -95,4 +97,103 @@ func TestUser_FindOrCreateFromSamlUser(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestFindUserByAccessToken(t *testing.T) {
+	resetTables(t) // in case other tests don't clean up
+
+	// Load Organization test fixtures
+	org := Organization{
+		Name:       "ACME",
+		Uuid:       domain.GetUuid(),
+		AuthType:   "saml2",
+		AuthConfig: "[]",
+	}
+	if err := DB.Create(&org); err != nil {
+		t.Errorf("could not create test org ... %v", err)
+		t.FailNow()
+	}
+
+	// Load User test fixtures
+	user := User{
+		Email:      "user@example.com",
+		FirstName:  "Existing",
+		LastName:   "User",
+		Nickname:   "Existing User",
+		AuthOrgID:  org.ID,
+		AuthOrgUid: "existing_user",
+		Uuid:       domain.GetUuid(),
+	}
+	if err := DB.Create(&user); err != nil {
+		t.Errorf("could not create test user ... %v", err)
+		t.FailNow()
+	}
+
+	// Load access token test fixtures
+	tokens := UserAccessTokens{
+		{
+			UserID:      user.ID,
+			AccessToken: hashClientIdAccessToken("abc123"),
+			ExpiresAt:   time.Unix(0, 0),
+		},
+		{
+			UserID:      user.ID,
+			AccessToken: hashClientIdAccessToken("xyz789"),
+			ExpiresAt:   time.Date(2099, time.December, 31, 0, 0, 0, 0, time.UTC),
+		},
+	}
+
+	if err := CreateUserAccessTokens(tokens); err != nil {
+		t.Errorf("could not create access tokens ... %v", err)
+		t.FailNow()
+	}
+
+	type args struct {
+		token string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    User
+		wantErr bool
+	}{
+		{
+			name:    "expired",
+			args:    args{"abc123"},
+			wantErr: true,
+		},
+		{
+			name: "valid",
+			args: args{"xyz789"},
+			want: user,
+		},
+		{
+			name:    "invalid",
+			args:    args{"000000"},
+			wantErr: true,
+		},
+		{
+			name:    "empty",
+			args:    args{""},
+			wantErr: true,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := FindUserByAccessToken(test.args.token)
+			if test.wantErr {
+				if err == nil {
+					t.Errorf("Expected an error, but did not get one")
+				}
+			} else {
+				if err != nil {
+					t.Errorf("FindUserByAccessToken() returned an error: %v", err)
+				} else if reflect.DeepEqual(got, test.want) {
+					t.Errorf("found %v, expected %v", got, test.want)
+				}
+			}
+		})
+	}
+
+	resetTables(t) // Pack it in, Pack it out a/k/a "Leave No Trace"
 }
