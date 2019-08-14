@@ -110,10 +110,20 @@ func TestCreateOrganization(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			err := DB.Create(&test.org)
-			if (test.wantErr == true) && (err == nil) {
-				t.Errorf("Expected an error, but did not get one")
-			} else if (test.wantErr == false) && (err != nil) {
+			if test.wantErr == true {
+				if err == nil {
+					t.Errorf("Expected an error, but did not get one")
+				}
+			} else if err != nil {
 				t.Errorf("Unexpected error %v", err)
+			} else {
+				org, err := FindOrgByUUID(test.org.Uuid.String())
+				if err != nil {
+					t.Errorf("Couldn't find new org %v: %v", test.org.Name, err)
+				}
+				if org.Uuid != test.org.Uuid {
+					t.Errorf("newly created org doesn't match, found %v, expected %v", org, test.org)
+				}
 			}
 
 			// clean up
