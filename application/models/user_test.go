@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -323,4 +324,84 @@ func TestValidateUser(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCreateAccessToken(t *testing.T) {
+	resetTables(t)
+
+	// Load Organization test fixtures
+	org := Organization{
+		Name:       "ACME",
+		Uuid:       domain.GetUuid(),
+		AuthType:   "saml2",
+		AuthConfig: "[]",
+	}
+	if err := DB.Create(&org); err != nil {
+		t.Errorf("could not create test org ... %v", err)
+		t.FailNow()
+	}
+
+	// Load User test fixtures
+	user := User{
+		Email:      "user@example.com",
+		FirstName:  "Existing",
+		LastName:   "User",
+		Nickname:   "Existing User",
+		AuthOrgID:  org.ID,
+		AuthOrgUid: "existing_user",
+		Uuid:       domain.GetUuid(),
+	}
+	if err := DB.Create(&user); err != nil {
+		t.Errorf("could not create test user ... %v", err)
+		t.FailNow()
+	}
+
+	type args struct {
+		user     User
+		clientID string
+	}
+	tests := []struct {
+		name string
+		args args
+	}{
+		{
+			name: "basic",
+			args: args{
+				user:     user,
+				clientID: "abc123",
+			},
+		},
+		{
+			name: "empty client ID",
+			args: args{
+				user:     user,
+				clientID: "",
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			expectedExpiry := createAccessTokenExpiry().Unix()
+			token, expiry, err := test.args.user.CreateAccessToken(DB, test.args.clientID)
+			if err != nil {
+				t.Errorf("CreateAccessToken() returned error: %v", err)
+			}
+			hash := hashClientIdAccessToken(test.args.clientID + token)
+
+			var dbToken UserAccessToken
+			if err := DB.Where(fmt.Sprintf("access_token='%v'", hash)).First(&dbToken); err != nil {
+				t.Errorf("Can't find new token (%v)", err)
+			}
+
+			if expiry-expectedExpiry > 1 {
+				t.Errorf("Unexpected token expiry: %v, expected %v", expiry, expectedExpiry)
+			}
+
+			if dbToken.ExpiresAt.Unix()-expectedExpiry > 1 {
+				t.Errorf("Unexpected token expiry: %v, expected %v", dbToken.ExpiresAt.Unix(), expectedExpiry)
+			}
+		})
+	}
+
+	resetTables(t) // Pack it in, Pack it out a/k/a "Leave No Trace"
 }
