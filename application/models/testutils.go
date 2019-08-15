@@ -121,7 +121,6 @@ func CreateUserAccessTokens(fixtures UserAccessTokens) error {
 }
 
 func resetTables(t *testing.T) {
-	resetUserAccessTokensTable(t)
 	resetUsersTable(t)
 	resetOrganizationsTable(t)
 }
@@ -150,20 +149,6 @@ func resetOrganizationsTable(t *testing.T) {
 	err = models.DB.RawQuery("ALTER SEQUENCE organizations_id_seq RESTART WITH 1").Exec()
 	if err != nil {
 		t.Errorf("Failed to delete all organizations for test, error: %s", err)
-		t.FailNow()
-	}
-}
-
-func resetUserAccessTokensTable(t *testing.T) {
-	// delete all existing user access tokens
-	err := models.DB.RawQuery("delete from user_access_tokens").Exec()
-	if err != nil {
-		t.Errorf("Failed to delete all tokens for test, error: %s", err)
-		t.FailNow()
-	}
-	err = models.DB.RawQuery("ALTER SEQUENCE user_access_tokens_id_seq RESTART WITH 1").Exec()
-	if err != nil {
-		t.Errorf("Failed to delete all tokens for test, error: %s", err)
 		t.FailNow()
 	}
 }
