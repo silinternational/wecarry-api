@@ -134,7 +134,7 @@ func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
 		}
 	}
 
-	var newUser bool
+	newUser := true
 	if u.ID != 0 {
 		newUser = false
 	}
