@@ -2,64 +2,51 @@ package gqlgen
 
 import (
 	"context"
-
-	"github.com/99designs/gqlgen/graphql"
-	"github.com/gobuffalo/pop/nulls"
+	"github.com/gobuffalo/nulls"
 	"github.com/silinternational/handcarry-api/models"
-	"github.com/vektah/gqlparser/gqlerror"
 )
 
 type mutationResolver struct{ *Resolver }
 
-func (r *mutationResolver) CreatePost(ctx context.Context, input NewPost) (*Post, error) {
+func (r *mutationResolver) CreatePost(ctx context.Context, input NewPost) (*models.Post, error) {
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
-	dbPost, err := ConvertGqlNewPostToDBPost(input, cUser)
+	post, err := ConvertGqlNewPostToDBPost(input, cUser)
 	if err != nil {
-		return &Post{}, err
+		return &models.Post{}, err
 	}
 
-	if err := models.DB.Create(&dbPost); err != nil {
-		return &Post{}, err
+	if err := models.DB.Create(&post); err != nil {
+		return &models.Post{}, err
 	}
 
-	gqlPost, err := ConvertDBPostToGqlPost(dbPost, &cUser, GetRequestFields(ctx))
-
-	return &gqlPost, err
+	return &post, err
 }
 
-func (r *mutationResolver) UpdatePostStatus(ctx context.Context, input UpdatedPostStatus) (*Post, error) {
+func (r *mutationResolver) UpdatePostStatus(ctx context.Context, input UpdatedPostStatus) (*models.Post, error) {
 	post, err := models.FindPostByUUID(input.ID)
 	if err != nil {
-		return &Post{}, err
+		return &models.Post{}, err
 	}
 
 	post.Status = input.Status
 	post.ProviderID = nulls.NewInt(models.GetCurrentUserFromGqlContext(ctx, TestUser).ID)
 	if err := models.DB.Update(&post); err != nil {
-		return &Post{}, err
+		return &models.Post{}, err
 	}
 
-	updatedPost, err := ConvertDBPostToGqlPost(post, nil, GetRequestFields(ctx))
-	if err != nil {
-		graphql.AddError(ctx, gqlerror.Errorf("Error converting post: %v", err.Error()))
-		return &updatedPost, err
-	}
-
-	return &updatedPost, nil
+	return &post, nil
 }
 
-func (r *mutationResolver) CreateMessage(ctx context.Context, input NewMessage) (*Message, error) {
+func (r *mutationResolver) CreateMessage(ctx context.Context, input NewMessage) (*models.Message, error) {
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
-	dbMessage, err := ConvertGqlNewMessageToDBMessage(input, cUser, GetRequestFields(ctx))
+	message, err := ConvertGqlNewMessageToDBMessage(input, cUser)
 	if err != nil {
-		return &Message{}, err
+		return &models.Message{}, err
 	}
 
-	if err := models.DB.Create(&dbMessage); err != nil {
-		return &Message{}, err
+	if err := models.DB.Create(&message); err != nil {
+		return &models.Message{}, err
 	}
 
-	gqlMessage, err := ConvertDBMessageToGqlMessage(dbMessage, GetRequestFields(ctx))
-
-	return &gqlMessage, err
+	return &message, err
 }

@@ -1,204 +1,94 @@
 package gqlgen
 
 import (
-	"fmt"
+	"context"
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/silinternational/handcarry-api/domain"
 	"github.com/silinternational/handcarry-api/models"
+	"github.com/vektah/gqlparser/gqlerror"
 )
 
-func MessageSimpleFields() map[string]string {
+func MessageFields() map[string]string {
 	return map[string]string{
 		"id":        "uuid",
 		"content":   "content",
+		"thread":    "thread_id",
 		"sender":    "sent_by_id",
 		"createdAt": "created_at",
 		"updatedAt": "updated_at",
 	}
 }
 
-// ConvertDBUserToGqlUser does what its name says, but also ...
-func ConvertSimpleDBMessageToGqlMessage(dbMessage models.Message) (Message, error) {
-
-	gqlMessage := Message{
-		ID:        dbMessage.Uuid.String(),
-		Content:   dbMessage.Content,
-		CreatedAt: domain.ConvertTimeToStringPtr(dbMessage.CreatedAt),
-		UpdatedAt: domain.ConvertTimeToStringPtr(dbMessage.UpdatedAt),
-	}
-
-	return gqlMessage, nil
+func (r *Resolver) Message() MessageResolver {
+	return &messageResolver{r}
 }
 
-// ConvertDBMessageToGqlMessageWithSender does what its name says without getting the related thread object.
-func ConvertDBMessageToGqlMessageWithSender(dbMessage models.Message, requestFields []string) (Message, error) {
-	gqlMessage, err := ConvertSimpleDBMessageToGqlMessage(dbMessage)
-	if err != nil {
-		return Message{}, err
+type messageResolver struct{ *Resolver }
+
+func (r *messageResolver) ID(ctx context.Context, obj *models.Message) (string, error) {
+	if obj == nil {
+		return "", nil
 	}
-
-	if !domain.IsStringInSlice(SenderField, requestFields) {
-		return gqlMessage, nil
-	}
-
-	dbUser := models.User{}
-	if err := models.DB.Find(&dbUser, dbMessage.SentByID); err != nil {
-		return Message{}, err
-	}
-
-	sender, err := ConvertDBUserToGqlUser(dbUser)
-	if err != nil {
-		return Message{}, err
-	}
-
-	gqlMessage.Sender = &sender
-
-	return gqlMessage, nil
+	return obj.Uuid.String(), nil
 }
 
-// ConvertDBUserToGqlUser does what its name says, but also ...
-func ConvertDBMessageToGqlMessage(dbMessage models.Message, requestFields []string) (Message, error) {
-
-	// TODO this fetching of related objects is all quick and dirty.  Rewrite when there is time.
-
-	dbThread := models.Thread{}
-	if err := models.DB.Find(&dbThread, dbMessage.ThreadID); err != nil {
-		err = fmt.Errorf("error finding thread with id %v for message ... %v", dbMessage.ThreadID, err)
-		return Message{}, err
+func (r *messageResolver) Sender(ctx context.Context, obj *models.Message) (*models.User, error) {
+	if obj == nil {
+		return nil, nil
 	}
-
-	thread, err := ConvertDBThreadToGqlThread(dbThread, requestFields)
-	if err != nil {
-		return Message{}, err
-	}
-
-	selectFields := GetSelectFieldsFromRequestFields(MessageSimpleFields(), requestFields)
-
-	dbMessages := models.Messages{}
-	queryString := fmt.Sprintf("thread_id = '%v'", dbThread.ID)
-	if err := models.DB.Select(selectFields...).Where(queryString).All(&dbMessages); err != nil {
-		err = fmt.Errorf("error finding messages with thread id %v ... %v", dbThread.ID, err)
-		return Message{}, err
-	}
-
-	for _, m := range dbMessages {
-		gqlMsg, err := ConvertSimpleDBMessageToGqlMessage(m)
-		if err != nil {
-			return Message{}, err
-		}
-
-		thread.Messages = append(thread.Messages, &gqlMsg)
-	}
-
-	dbUser := models.User{}
-	if err := models.DB.Find(&dbUser, dbMessage.SentByID); err != nil {
-		err = fmt.Errorf("error finding message sentBy user with id %v ... %v", dbMessage.SentByID, err)
-		return Message{}, err
-	}
-
-	sender, err := ConvertDBUserToGqlUser(dbUser)
-	if err != nil {
-		return Message{}, err
-	}
-
-	gqlMessage, err := ConvertSimpleDBMessageToGqlMessage(dbMessage)
-	if err != nil {
-		return Message{}, err
-	}
-
-	gqlMessage.Thread = &thread
-	gqlMessage.Sender = &sender
-
-	return gqlMessage, nil
+	selectFields := GetSelectFieldsFromRequestFields(UserFields(), graphql.CollectAllFields(ctx))
+	return obj.GetSender(selectFields)
 }
 
-func getThreadAndParticipants(threadUuid string, user models.User, requestFields []string) (models.Thread, error) {
-
-	thread, err := models.FindThreadByUUID(threadUuid)
-	if err != nil {
-		return models.Thread{}, err
+func (r *messageResolver) Thread(ctx context.Context, obj *models.Message) (*models.Thread, error) {
+	if obj == nil {
+		return nil, nil
 	}
-
-	if thread.ID == 0 {
-		return thread, fmt.Errorf("could not find thread with uuid %v", threadUuid)
-	}
-
-	selectFields := GetSelectFieldsFromRequestFields(UserSimpleFields(), requestFields)
-
-	users, err := models.GetThreadParticipants(thread.ID, selectFields)
-	if err != nil {
-		return models.Thread{}, err
-	}
-
-	isUserAlreadyAParticipant := false
-	for _, u := range users {
-		if u.ID == user.ID {
-			isUserAlreadyAParticipant = true
-			break
-		}
-	}
-
-	if !isUserAlreadyAParticipant {
-		users = append(users, user)
-	}
-
-	thread.Participants = users
-
-	return thread, nil
+	selectFields := getSelectFieldsForThreads(graphql.CollectAllFields(ctx))
+	return obj.GetThread(selectFields)
 }
 
-func createThreadWithParticipants(postUuid string, user models.User) (models.Thread, error) {
-	post, err := models.FindPostByUUID(postUuid)
-	if err != nil {
-		return models.Thread{}, err
+func (r *messageResolver) CreatedAt(ctx context.Context, obj *models.Message) (*string, error) {
+	if obj == nil {
+		return nil, nil
 	}
-
-	participants := models.Users{user}
-
-	// Ensure Post Creator is one of the participants
-	if post.CreatedBy.ID != 0 && post.CreatedBy.ID != user.ID {
-		participants = append(participants, post.CreatedBy)
-	}
-
-	thread := models.Thread{
-		PostID:       post.ID,
-		Uuid:         domain.GetUuid(),
-		Participants: participants,
-	}
-
-	if err = models.DB.Save(&thread); err != nil {
-		err = fmt.Errorf("error saving new thread for message: %v", err.Error())
-		return models.Thread{}, err
-	}
-
-	for _, p := range participants {
-		threadP := models.ThreadParticipant{
-			ThreadID: thread.ID,
-			UserID:   p.ID,
-		}
-		if err := models.DB.Save(&threadP); err != nil {
-			err = fmt.Errorf("error saving new thread participant %+v for message: %v", threadP, err.Error())
-			return models.Thread{}, err
-		}
-	}
-
-	return thread, nil
+	return domain.ConvertTimeToStringPtr(obj.CreatedAt), nil
 }
 
-func ConvertGqlNewMessageToDBMessage(gqlMessage NewMessage, user models.User, requestFields []string) (models.Message, error) {
+func (r *messageResolver) UpdatedAt(ctx context.Context, obj *models.Message) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return domain.ConvertTimeToStringPtr(obj.UpdatedAt), nil
+}
+
+func (r *queryResolver) Message(ctx context.Context, id *string) (*models.Message, error) {
+	message := models.Message{}
+	messageFields := GetSelectFieldsFromRequestFields(MessageFields(), graphql.CollectAllFields(ctx))
+
+	if err := models.DB.Select(messageFields...).Where("uuid = ?", id).First(&message); err != nil {
+		graphql.AddError(ctx, gqlerror.Errorf("error getting message: %v", err.Error()))
+		return &models.Message{}, err
+	}
+
+	return &message, nil
+}
+
+func ConvertGqlNewMessageToDBMessage(gqlMessage NewMessage, user models.User) (models.Message, error) {
 
 	var thread models.Thread
 
 	threadUuid := domain.ConvertStrPtrToString(gqlMessage.ThreadID)
 	if threadUuid != "" {
 		var err error
-		thread, err = getThreadAndParticipants(threadUuid, user, requestFields)
+		thread, err = models.FindThreadByUUID(threadUuid)
 		if err != nil {
 			return models.Message{}, err
 		}
 
 	} else {
 		var err error
-		thread, err = createThreadWithParticipants(gqlMessage.PostID, user)
+		thread, err = models.CreateThreadWithParticipants(gqlMessage.PostID, user)
 		if err != nil {
 			return models.Message{}, err
 		}

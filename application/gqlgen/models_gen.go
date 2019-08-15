@@ -8,15 +8,6 @@ import (
 	"strconv"
 )
 
-type Message struct {
-	ID        string  `json:"id"`
-	Sender    *User   `json:"sender"`
-	Content   string  `json:"content"`
-	Thread    *Thread `json:"thread"`
-	CreatedAt *string `json:"createdAt"`
-	UpdatedAt *string `json:"updatedAt"`
-}
-
 type NewMessage struct {
 	Content  string  `json:"content"`
 	PostID   string  `json:"postID"`
@@ -36,61 +27,9 @@ type NewPost struct {
 	Category     *string  `json:"category"`
 }
 
-type Organization struct {
-	ID        string  `json:"id"`
-	Name      string  `json:"name"`
-	URL       *string `json:"url"`
-	CreatedAt *string `json:"createdAt"`
-	UpdatedAt *string `json:"updatedAt"`
-}
-
-type Post struct {
-	ID           string        `json:"id"`
-	Type         PostType      `json:"type"`
-	CreatedBy    *User         `json:"createdBy"`
-	Receiver     *User         `json:"receiver"`
-	Provider     *User         `json:"provider"`
-	Organization *Organization `json:"organization"`
-	Title        string        `json:"title"`
-	Description  *string       `json:"description"`
-	Destination  *string       `json:"destination"`
-	Origin       *string       `json:"origin"`
-	Size         string        `json:"size"`
-	NeededAfter  *string       `json:"neededAfter"`
-	NeededBefore *string       `json:"neededBefore"`
-	Category     string        `json:"category"`
-	Status       string        `json:"status"`
-	Threads      []*Thread     `json:"threads"`
-	CreatedAt    *string       `json:"createdAt"`
-	UpdatedAt    *string       `json:"updatedAt"`
-	MyThreadID   *string       `json:"myThreadID"`
-}
-
-type Thread struct {
-	ID           string     `json:"id"`
-	Participants []*User    `json:"participants"`
-	Messages     []*Message `json:"messages"`
-	PostID       string     `json:"postID"`
-	Post         *Post      `json:"post"`
-	CreatedAt    *string    `json:"createdAt"`
-	UpdatedAt    *string    `json:"updatedAt"`
-}
-
 type UpdatedPostStatus struct {
 	ID     string `json:"id"`
 	Status string `json:"status"`
-}
-
-type User struct {
-	ID          string  `json:"id"`
-	Email       string  `json:"email"`
-	FirstName   string  `json:"firstName"`
-	LastName    string  `json:"lastName"`
-	Nickname    string  `json:"nickname"`
-	AccessToken string  `json:"accessToken"`
-	CreatedAt   *string `json:"createdAt"`
-	UpdatedAt   *string `json:"updatedAt"`
-	AdminRole   *Role   `json:"adminRole"`
 }
 
 type PostType string

@@ -3,6 +3,8 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gobuffalo/buffalo/genny/build/_fixtures/coke/models"
+	"github.com/silinternational/handcarry-api/domain"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -102,24 +104,79 @@ func FindThreadByPostIDAndUserID(postID int, userID int) (Thread, error) {
 
 }
 
-func GetThreadParticipants(threadID int, selectFields []string) (Users, error) {
+func (t *Thread) GetPost(selectFields []string) (*Post, error) {
+	if t.PostID <= 0 {
+		return nil, fmt.Errorf("error: PostID must be positive, got %v", t.PostID)
+	}
+	post := Post{}
+	if err := models.DB.Select(selectFields...).Find(&post, t.PostID); err != nil {
+		return nil, fmt.Errorf("error loading post %v %s", t.PostID, err)
+	}
+	return &post, nil
+}
 
-	threadParts := ThreadParticipants{}
-
-	if err := DB.Where("thread_id = ?", threadID).All(&threadParts); err != nil {
-		return Users{}, fmt.Errorf("error finding users on thread %v ... %v", threadID, err)
+func (t *Thread) GetMessages(selectFields []string) ([]*Message, error) {
+	var messages []*Message
+	if err := models.DB.Select(selectFields...).Where("thread_id = ?", t.ID).All(&messages); err != nil {
+		return messages, fmt.Errorf("error getting messages for thread id %v ... %v", t.ID, err)
 	}
 
-	users := Users{}
-	for _, tp := range threadParts {
+	return messages, nil
+}
+
+func (t *Thread) GetParticipants(selectFields []string) ([]*User, error) {
+	var users []*User
+	var threadParticipants []*ThreadParticipant
+
+	if err := DB.Where("thread_id = ?", t.ID).All(&threadParticipants); err != nil {
+		return users, fmt.Errorf("error reading from thread_participants table %v ... %v", t.ID, err)
+	}
+
+	for _, tp := range threadParticipants {
 		u := User{}
 
 		if err := DB.Select(selectFields...).Find(&u, tp.UserID); err != nil {
-			return Users{}, fmt.Errorf("error finding users on thread %v ... %v", threadID, err)
+			return users, fmt.Errorf("error finding users on thread %v ... %v", t.ID, err)
 		}
+		users = append(users, &u)
+	}
+	return users, nil
+}
 
-		users = append(users, u)
+func CreateThreadWithParticipants(postUuid string, user User) (Thread, error) {
+	post, err := FindPostByUUID(postUuid)
+	if err != nil {
+		return Thread{}, err
 	}
 
-	return users, nil
+	participants := Users{user}
+
+	// Ensure Post Creator is one of the participants
+	if post.CreatedBy.ID != 0 && post.CreatedBy.ID != user.ID {
+		participants = append(participants, post.CreatedBy)
+	}
+
+	thread := Thread{
+		PostID:       post.ID,
+		Uuid:         domain.GetUuid(),
+		Participants: participants,
+	}
+
+	if err = models.DB.Save(&thread); err != nil {
+		err = fmt.Errorf("error saving new thread for message: %v", err.Error())
+		return Thread{}, err
+	}
+
+	for _, p := range participants {
+		threadP := ThreadParticipant{
+			ThreadID: thread.ID,
+			UserID:   p.ID,
+		}
+		if err := DB.Save(&threadP); err != nil {
+			err = fmt.Errorf("error saving new thread participant %+v for message: %v", threadP, err.Error())
+			return Thread{}, err
+		}
+	}
+
+	return thread, nil
 }

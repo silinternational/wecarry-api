@@ -2,6 +2,8 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
+	"github.com/gobuffalo/buffalo/genny/build/_fixtures/coke/models"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -60,4 +62,22 @@ func (m *Message) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) {
 // This method is not required and may be deleted.
 func (m *Message) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
+}
+
+func (m *Message) GetSender(requestFields []string) (*User, error) {
+	sender := User{}
+	if err := models.DB.Find(&sender, m.SentByID); err != nil {
+		err = fmt.Errorf("error finding message sentBy user with id %v ... %v", m.SentByID, err)
+		return nil, err
+	}
+	return &sender, nil
+}
+
+func (m *Message) GetThread(requestFields []string) (*Thread, error) {
+	thread := Thread{}
+	if err := models.DB.Find(&thread, m.ThreadID); err != nil {
+		err = fmt.Errorf("error finding message thread id %v ... %v", m.ThreadID, err)
+		return nil, err
+	}
+	return &thread, nil
 }

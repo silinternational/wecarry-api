@@ -3,6 +3,7 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/silinternational/handcarry-api/domain"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -94,4 +95,61 @@ func FindPostByUUID(uuid string) (Post, error) {
 	}
 
 	return post, nil
+}
+
+func (p *Post) GetCreator(fields []string) (*User, error) {
+	creator := User{}
+	if err := DB.Select(fields...).Find(&creator, p.CreatedByID); err != nil {
+		return nil, err
+	}
+	return &creator, nil
+}
+
+func (p *Post) GetProvider(fields []string) (*User, error) {
+	provider := User{}
+	if err := DB.Select(fields...).Find(&provider, p.ProviderID); err != nil {
+		return nil, nil // provider is a nullable field, so ignore any error
+	}
+	return &provider, nil
+}
+
+func (p *Post) GetReceiver(fields []string) (*User, error) {
+	receiver := User{}
+	if err := DB.Select(fields...).Find(&receiver, p.ReceiverID); err != nil {
+		return nil, nil // receiver is a nullable field, so ignore any error
+	}
+	return &receiver, nil
+}
+
+func (p *Post) GetOrganization(fields []string) (*Organization, error) {
+	organization := Organization{}
+	if err := DB.Select(fields...).Find(&organization, p.OrganizationID); err != nil {
+		return nil, err
+	}
+
+	return &organization, nil
+}
+
+func (p *Post) GetThreads(fields []string) ([]*Thread, error) {
+	var threads []*Thread
+
+	if err := DB.Select(fields...).Where("post_id = ?", p.ID).All(&threads); err != nil {
+		return threads, fmt.Errorf("error getting threads for post id %v ... %v", p.ID, err)
+	}
+
+	return threads, nil
+}
+
+func (p *Post) GetThreadIdForUser(user User) (*string, error) {
+	thread, err := FindThreadByPostIDAndUserID(p.ID, user.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	threadUuid := thread.Uuid.String()
+	if threadUuid == domain.EmptyUUID {
+		return nil, nil
+	}
+
+	return &threadUuid, nil
 }
