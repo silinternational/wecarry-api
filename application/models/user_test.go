@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 	"time"
 
@@ -403,5 +404,84 @@ func TestCreateAccessToken(t *testing.T) {
 		})
 	}
 
+	resetTables(t) // Pack it in, Pack it out a/k/a "Leave No Trace"
+}
+
+func TestGetOrgIDs(t *testing.T) {
+	resetTables(t)
+
+	// Load Organization test fixtures
+	orgs := Organizations{
+		{
+			Name:       "ACME",
+			Uuid:       domain.GetUuid(),
+			AuthType:   "saml2",
+			AuthConfig: "[]",
+		},
+		{
+			Name:       "Starfleet Academy",
+			Uuid:       domain.GetUuid(),
+			AuthType:   "saml2",
+			AuthConfig: "[]",
+		},
+	}
+	for i := range orgs {
+		if err := DB.Create(&orgs[i]); err != nil {
+			t.Errorf("error creating org %+v ...\n %v \n", orgs[i], err)
+			t.FailNow()
+		}
+	}
+
+	// Load User test fixtures
+	user := User{
+		Email:      "user@example.com",
+		FirstName:  "Existing",
+		LastName:   "User",
+		Nickname:   "Existing User",
+		AuthOrgID:  orgs[0].ID,
+		AuthOrgUid: "existing_user",
+		Uuid:       domain.GetUuid(),
+	}
+	if err := DB.Create(&user); err != nil {
+		t.Errorf("could not create test user ... %v", err)
+		t.FailNow()
+	}
+
+	for i := range orgs {
+		uo := UserOrganization{
+			OrganizationID: orgs[i].ID,
+			UserID:         user.ID,
+			Role:           "user",
+		}
+		if err := DB.Create(&uo); err != nil {
+			t.Errorf("could not create test user org ... %v", err)
+			t.FailNow()
+		}
+	}
+
+	tests := []struct {
+		name string
+		user User
+		want []int
+	}{
+		{
+			name: "basic",
+			user: user,
+			want: []int{1, 2},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if err := DB.Load(&test.user); err != nil {
+				t.Errorf("Failed to load related records on user %v", user.ID)
+				t.FailNow()
+			}
+			got := test.user.GetOrgIDs()
+
+			if !reflect.DeepEqual(got, test.want) {
+				t.Errorf("GetOrgIDs() = \"%v\", want \"%v\"", got, test.want)
+			}
+		})
+	}
 	resetTables(t) // Pack it in, Pack it out a/k/a "Leave No Trace"
 }
