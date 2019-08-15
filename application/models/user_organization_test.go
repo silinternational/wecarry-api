@@ -55,7 +55,7 @@ func TestFindByAuthEmail(t *testing.T) {
 			Name:       "Org1",
 			Url:        nulls.String{},
 			AuthType:   "",
-			AuthConfig: "",
+			AuthConfig: "{}",
 			Uuid:       org1uuid,
 		},
 		{
@@ -63,7 +63,7 @@ func TestFindByAuthEmail(t *testing.T) {
 			Name:       "Org2",
 			Url:        nulls.String{},
 			AuthType:   "",
-			AuthConfig: "",
+			AuthConfig: "{}",
 			Uuid:       org2uuid,
 		},
 	}

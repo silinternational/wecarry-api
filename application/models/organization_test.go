@@ -10,6 +10,8 @@ import (
 )
 
 func TestFindOrgByUUID(t *testing.T) {
+	resetTables(t)
+
 	// Load Organization test fixtures
 	orgUuidStr := "51b5321d-2769-48a0-908a-7af1d15083e2"
 	orgUuid1, _ := uuid.FromString(orgUuidStr)
@@ -83,7 +85,7 @@ func TestCreateOrganization(t *testing.T) {
 				Name:       "ACME",
 				Uuid:       domain.GetUuid(),
 				AuthType:   "saml2",
-				AuthConfig: "[]",
+				AuthConfig: "{}",
 				Url:        nulls.NewString("https://www.example.com"),
 			},
 			wantErr: false,
@@ -94,7 +96,7 @@ func TestCreateOrganization(t *testing.T) {
 				Name:       "Bits 'R' Us",
 				Uuid:       domain.GetUuid(),
 				AuthType:   "saml2",
-				AuthConfig: "[]",
+				AuthConfig: "{}",
 			},
 			wantErr: false,
 		},
