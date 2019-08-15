@@ -16,16 +16,16 @@ var _ = grift.Namespace("db", func() {
 	_ = grift.Add("seed", func(c *grift.Context) error {
 
 		// ORGANIZATIONS Table
-		organizationUuid1, _ := uuid.FromString("f3a79b30-f00e-48a0-a64d-e27748dea22d")
+		//organizationUuid1, _ := uuid.FromString("f3a79b30-f00e-48a0-a64d-e27748dea22d")
 		organizationUuid2, _ := uuid.FromString("d2e95724-9270-4050-82d9-6a9f9c35c766")
 		fixtureOrgs := []*models.Organization{
-			{
-				ID:         1,
-				Uuid:       organizationUuid1,
-				Name:       "AppsDev",
-				AuthType:   "SAML",
-				AuthConfig: "{}",
-			},
+			//{
+			//	ID:         1,
+			//	Uuid:       organizationUuid1,
+			//	Name:       "AppsDev",
+			//	AuthType:   "SAML",
+			//	AuthConfig: "{}",
+			//},
 			{
 				ID:         2,
 				Uuid:       organizationUuid2,
@@ -107,30 +107,40 @@ var _ = grift.Namespace("db", func() {
 				OrganizationID: 1,
 				UserID:         1,
 				Role:           "admin",
+				AuthEmail:      "clark.kent@example.org",
+				AuthID:         "clark_kent",
 			},
 			{
 				ID:             2,
 				OrganizationID: 1,
 				UserID:         2,
 				Role:           "foo",
+				AuthEmail:      "jane.eyre@example.org",
+				AuthID:         "jane_eyre",
 			},
 			{
 				ID:             3,
 				OrganizationID: 1,
 				UserID:         3,
 				Role:           "bar",
+				AuthEmail:      "jane.doe@example.org",
+				AuthID:         "jane_doe",
 			},
 			{
 				ID:             4,
 				OrganizationID: 1,
 				UserID:         4,
 				Role:           "baz",
+				AuthEmail:      "denethor.ben.ecthelion@example.org",
+				AuthID:         "denethor_ecthelion",
 			},
 			{
 				ID:             5,
 				OrganizationID: 2,
 				UserID:         5,
 				Role:           "admin",
+				AuthEmail:      "john.smith@example.org",
+				AuthID:         "john_smith",
 			},
 		}
 
