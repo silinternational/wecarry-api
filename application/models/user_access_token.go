@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/gobuffalo/pop"
@@ -61,18 +62,23 @@ func (u *UserAccessToken) ValidateUpdate(tx *pop.Connection) (*validate.Errors, 
 
 func DeleteAccessToken(accessToken string) error {
 	userAccessToken := UserAccessToken{
-		AccessToken: accessToken,
+		AccessToken: hashClientIdAccessToken(accessToken),
 	}
-	err := DB.Where("access_token = ?", userAccessToken).First(userAccessToken)
+	err := DB.Where("access_token = ?", userAccessToken.AccessToken).First(&userAccessToken)
 	if err != nil {
 		return err
 	}
 
-	return DB.Destroy(userAccessToken)
+	return DB.Destroy(&userAccessToken)
 }
 
 func UserAccessTokenFind(accessToken string) (*UserAccessToken, error) {
-	var userAccessToken *UserAccessToken
-	err := DB.Eager().Where("access_token = ?", accessToken).First(userAccessToken)
-	return userAccessToken, err
+	userAccessToken := UserAccessToken{}
+	if err := DB.Eager().Where("access_token = ?", hashClientIdAccessToken(accessToken)).First(&userAccessToken); err != nil {
+		return &userAccessToken, fmt.Errorf("failed to find access token, %v", err)
+	}
+	if err := DB.Load(&userAccessToken.UserOrganization); err != nil {
+		return &userAccessToken, fmt.Errorf("failed to load related records for access token, %v", err)
+	}
+	return &userAccessToken, nil
 }

@@ -117,7 +117,7 @@ func (p *Provider) Login(c buffalo.Context) auth.Response {
 }
 
 func (p *Provider) Logout(c buffalo.Context) auth.Response {
-	return auth.Response{}
+	return auth.Response{RedirectURL: p.Config.SingleLogoutURL}
 }
 
 func getUserFromAssertion(assertion *saml2.AssertionInfo) *auth.User {
