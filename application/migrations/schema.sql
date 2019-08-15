@@ -59,6 +59,42 @@ ALTER SEQUENCE public.messages_id_seq OWNED BY public.messages.id;
 
 
 --
+-- Name: organization_domains; Type: TABLE; Schema: public; Owner: handcarry
+--
+
+CREATE TABLE public.organization_domains (
+    id integer NOT NULL,
+    organization_id integer NOT NULL,
+    domain character varying(255) NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.organization_domains OWNER TO handcarry;
+
+--
+-- Name: organization_domains_id_seq; Type: SEQUENCE; Schema: public; Owner: handcarry
+--
+
+CREATE SEQUENCE public.organization_domains_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.organization_domains_id_seq OWNER TO handcarry;
+
+--
+-- Name: organization_domains_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: handcarry
+--
+
+ALTER SEQUENCE public.organization_domains_id_seq OWNED BY public.organization_domains.id;
+
+
+--
 -- Name: organizations; Type: TABLE; Schema: public; Owner: handcarry
 --
 
@@ -275,6 +311,9 @@ CREATE TABLE public.user_organizations (
     organization_id integer NOT NULL,
     user_id integer NOT NULL,
     role character varying(255) NOT NULL,
+    auth_id character varying(255) NOT NULL,
+    auth_email character varying(255) NOT NULL,
+    last_login timestamp without time zone NOT NULL,
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL
 );
@@ -313,8 +352,6 @@ CREATE TABLE public.users (
     first_name character varying(255) NOT NULL,
     last_name character varying(255) NOT NULL,
     nickname character varying(255) NOT NULL,
-    auth_org_id integer NOT NULL,
-    auth_org_uid character varying(255) NOT NULL,
     admin_role character varying(255),
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL,
@@ -350,6 +387,13 @@ ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
 --
 
 ALTER TABLE ONLY public.messages ALTER COLUMN id SET DEFAULT nextval('public.messages_id_seq'::regclass);
+
+
+--
+-- Name: organization_domains id; Type: DEFAULT; Schema: public; Owner: handcarry
+--
+
+ALTER TABLE ONLY public.organization_domains ALTER COLUMN id SET DEFAULT nextval('public.organization_domains_id_seq'::regclass);
 
 
 --
@@ -407,6 +451,14 @@ ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_
 
 ALTER TABLE ONLY public.messages
     ADD CONSTRAINT messages_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: organization_domains organization_domains_pkey; Type: CONSTRAINT; Schema: public; Owner: handcarry
+--
+
+ALTER TABLE ONLY public.organization_domains
+    ADD CONSTRAINT organization_domains_pkey PRIMARY KEY (id);
 
 
 --
@@ -473,6 +525,13 @@ CREATE UNIQUE INDEX messages_uuid_idx ON public.messages USING btree (uuid);
 
 
 --
+-- Name: organization_domains_domain_idx; Type: INDEX; Schema: public; Owner: handcarry
+--
+
+CREATE UNIQUE INDEX organization_domains_domain_idx ON public.organization_domains USING btree (domain);
+
+
+--
 -- Name: organizations_uuid_idx; Type: INDEX; Schema: public; Owner: handcarry
 --
 
@@ -508,10 +567,24 @@ CREATE UNIQUE INDEX user_access_tokens_access_token_idx ON public.user_access_to
 
 
 --
--- Name: users_auth_org_id_auth_org_uid_idx; Type: INDEX; Schema: public; Owner: handcarry
+-- Name: user_organizations_organization_id_auth_email_idx; Type: INDEX; Schema: public; Owner: handcarry
 --
 
-CREATE UNIQUE INDEX users_auth_org_id_auth_org_uid_idx ON public.users USING btree (auth_org_id, auth_org_uid);
+CREATE UNIQUE INDEX user_organizations_organization_id_auth_email_idx ON public.user_organizations USING btree (organization_id, auth_email);
+
+
+--
+-- Name: user_organizations_organization_id_auth_id_idx; Type: INDEX; Schema: public; Owner: handcarry
+--
+
+CREATE UNIQUE INDEX user_organizations_organization_id_auth_id_idx ON public.user_organizations USING btree (organization_id, auth_id);
+
+
+--
+-- Name: user_organizations_organization_id_user_id_idx; Type: INDEX; Schema: public; Owner: handcarry
+--
+
+CREATE UNIQUE INDEX user_organizations_organization_id_user_id_idx ON public.user_organizations USING btree (organization_id, user_id);
 
 
 --
@@ -549,6 +622,14 @@ ALTER TABLE ONLY public.messages
 
 ALTER TABLE ONLY public.messages
     ADD CONSTRAINT messages_thread_id_fkey FOREIGN KEY (thread_id) REFERENCES public.threads(id) ON DELETE CASCADE;
+
+
+--
+-- Name: organization_domains organization_domains_organization_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: handcarry
+--
+
+ALTER TABLE ONLY public.organization_domains
+    ADD CONSTRAINT organization_domains_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id) ON DELETE CASCADE;
 
 
 --
@@ -629,14 +710,6 @@ ALTER TABLE ONLY public.user_organizations
 
 ALTER TABLE ONLY public.user_organizations
     ADD CONSTRAINT user_organizations_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
-
-
---
--- Name: users users_auth_org_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: handcarry
---
-
-ALTER TABLE ONLY public.users
-    ADD CONSTRAINT users_auth_org_id_fkey FOREIGN KEY (auth_org_id) REFERENCES public.organizations(id) ON DELETE SET NULL;
 
 
 --

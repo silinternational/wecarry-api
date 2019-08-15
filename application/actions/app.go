@@ -5,7 +5,6 @@ import (
 	"github.com/gobuffalo/buffalo-pop/pop/popmw"
 	"github.com/gobuffalo/envy"
 	contenttype "github.com/gobuffalo/mw-contenttype"
-	csrf "github.com/gobuffalo/mw-csrf"
 	paramlogger "github.com/gobuffalo/mw-paramlogger"
 
 	"github.com/gorilla/sessions"
@@ -60,19 +59,17 @@ func App() *buffalo.App {
 
 		//  Added for authorization
 		app.Use(SetCurrentUser)
-		app.Middleware.Skip(SetCurrentUser, HomeHandler, AuthLogin, AuthCallback)
+		app.Middleware.Skip(SetCurrentUser, HomeHandler, AuthLogin)
 
 		app.GET("/", HomeHandler)
 		app.POST("/gql/", GQLHandler)
 		app.GET("/me", MeHandler)
 
 		auth := app.Group("/auth")
-		auth.Middleware.Skip(SetCurrentUser, AuthLogin, AuthCallback)
+		auth.Middleware.Skip(SetCurrentUser, AuthLogin)
 		auth.GET("/login", AuthLogin)
+		auth.POST("/login", AuthLogin)
 		auth.GET("/logout", AuthDestroy)
-		auth.GET("/{provider}/callback", AuthCallback)  // "GET" for Google
-		auth.POST("/{provider}/callback", AuthCallback) //  "POST" for saml2
-		auth.Middleware.Skip(csrf.New, AuthCallback)    //  Don't require csrf on auth
 
 	}
 

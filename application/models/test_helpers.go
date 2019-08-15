@@ -7,8 +7,23 @@ import (
 )
 
 func resetTables(t *testing.T) {
+	resetUserOrganizationsTable(t)
 	resetUsersTable(t)
 	resetOrganizationsTable(t)
+}
+
+func resetUserOrganizationsTable(t *testing.T) {
+	// delete all existing users
+	err := models.DB.RawQuery("delete from user_organizations").Exec()
+	if err != nil {
+		t.Errorf("Failed to delete all user_organizations for test, error: %s", err)
+		t.FailNow()
+	}
+	err = models.DB.RawQuery("ALTER SEQUENCE user_organizations_id_seq RESTART WITH 1").Exec()
+	if err != nil {
+		t.Errorf("Failed to delete all users for test, error: %s", err)
+		t.FailNow()
+	}
 }
 
 func resetUsersTable(t *testing.T) {

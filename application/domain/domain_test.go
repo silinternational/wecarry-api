@@ -3,6 +3,8 @@ package domain
 import (
 	"net/http"
 	"testing"
+
+	"github.com/gofrs/uuid"
 )
 
 func TestGetBearerTokenFromRequest(t *testing.T) {
@@ -117,5 +119,12 @@ func TestIsStringInSlice(t *testing.T) {
 			t.Errorf("Bad results for test set i = %v. Expected %v, but got %v", i, expected, results)
 			return
 		}
+	}
+}
+
+func Test_emptyUuidValue(t *testing.T) {
+	val := uuid.UUID{}
+	if val.String() != "00000000-0000-0000-0000-000000000000" {
+		t.Errorf("empty uuid value not as expected, got: %s", val.String())
 	}
 }

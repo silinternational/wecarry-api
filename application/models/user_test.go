@@ -3,14 +3,15 @@ package models
 import (
 	"testing"
 
+	"github.com/silinternational/handcarry-api/auth"
+
 	"github.com/gobuffalo/buffalo/genny/build/_fixtures/coke/models"
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
-	"github.com/silinternational/handcarry-api/auth/saml"
 	"github.com/silinternational/handcarry-api/domain"
 )
 
-func TestUser_FindOrCreateFromSamlUser(t *testing.T) {
+func TestUser_FindOrCreateFromAuthUser(t *testing.T) {
 	resetTables(t)
 
 	// create org for test
@@ -30,7 +31,7 @@ func TestUser_FindOrCreateFromSamlUser(t *testing.T) {
 	type args struct {
 		tx       *pop.Connection
 		orgID    int
-		samlUser saml.SamlUser
+		authUser *auth.User
 	}
 	tests := []struct {
 		name    string
@@ -41,9 +42,8 @@ func TestUser_FindOrCreateFromSamlUser(t *testing.T) {
 		{
 			name: "create new user: test_user1",
 			args: args{
-				tx:    models.DB,
 				orgID: org.ID,
-				samlUser: saml.SamlUser{
+				authUser: &auth.User{
 					FirstName: "Test",
 					LastName:  "User",
 					Email:     "test_user1@domain.com",
@@ -56,9 +56,8 @@ func TestUser_FindOrCreateFromSamlUser(t *testing.T) {
 		{
 			name: "find existing user: test_user1",
 			args: args{
-				tx:    models.DB,
 				orgID: org.ID,
-				samlUser: saml.SamlUser{
+				authUser: &auth.User{
 					FirstName: "Test",
 					LastName:  "User",
 					Email:     "test_user1@domain.com",
@@ -71,9 +70,8 @@ func TestUser_FindOrCreateFromSamlUser(t *testing.T) {
 		{
 			name: "conflicting user",
 			args: args{
-				tx:    models.DB,
 				orgID: org.ID,
-				samlUser: saml.SamlUser{
+				authUser: &auth.User{
 					FirstName: "Test",
 					LastName:  "User",
 					Email:     "test_user1@domain.com",
@@ -87,9 +85,9 @@ func TestUser_FindOrCreateFromSamlUser(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			u := &User{}
-			err := u.FindOrCreateFromSamlUser(tt.args.tx, tt.args.orgID, tt.args.samlUser)
+			err := u.FindOrCreateFromAuthUser(tt.args.orgID, tt.args.authUser)
 			if err != nil && !tt.wantErr {
-				t.Errorf("FindOrCreateFromSamlUser() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("FindOrCreateFromAuthUser() error = %v, wantErr %v", err, tt.wantErr)
 			} else if u.ID != tt.wantID {
 				t.Errorf("ID on user is not what was wanted. Got %v, wanted %v", u.ID, tt.wantID)
 			}

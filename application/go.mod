@@ -32,3 +32,5 @@ require (
 )
 
 replace github.com/silinternational/handcarry-api v0.0.0 => ./
+
+replace github.com/gobuffalo/envy v1.7.0 => github.com/silinternational/envy v1.7.0

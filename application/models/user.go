@@ -9,6 +9,11 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/pkg/errors"
+	"github.com/silinternational/handcarry-api/domain"
+
+	"github.com/silinternational/handcarry-api/auth"
+
 	"github.com/gobuffalo/envy"
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
@@ -16,10 +21,6 @@ import (
 	"github.com/gobuffalo/validate/validators"
 
 	"github.com/gofrs/uuid"
-	"github.com/pkg/errors"
-
-	"github.com/silinternational/handcarry-api/auth/saml"
-	"github.com/silinternational/handcarry-api/domain"
 )
 
 type User struct {
@@ -30,11 +31,8 @@ type User struct {
 	FirstName     string            `json:"first_name" db:"first_name"`
 	LastName      string            `json:"last_name" db:"last_name"`
 	Nickname      string            `json:"nickname" db:"nickname"`
-	AuthOrgID     int               `json:"auth_org_id" db:"auth_org_id"`
-	AuthOrgUid    string            `json:"auth_org_uid" db:"auth_org_uid"`
 	AdminRole     nulls.String      `json:"admin_role" db:"admin_role"`
 	Uuid          uuid.UUID         `json:"uuid" db:"uuid"`
-	AuthOrg       Organization      `belongs_to:"organizations"`
 	AccessTokens  []UserAccessToken `has_many:"user_access_tokens"`
 	Organizations Organizations     `many_to_many:"user_organizations"`
 }
@@ -63,8 +61,6 @@ func (u *User) Validate(tx *pop.Connection) (*validate.Errors, error) {
 		&validators.StringIsPresent{Field: u.FirstName, Name: "FirstName"},
 		&validators.StringIsPresent{Field: u.LastName, Name: "LastName"},
 		&validators.StringIsPresent{Field: u.Nickname, Name: "Nickname"},
-		&validators.IntIsPresent{Field: u.AuthOrgID, Name: "AuthOrgID"},
-		&validators.StringIsPresent{Field: u.AuthOrgUid, Name: "AuthOrgUid"},
 		&validators.UUIDIsPresent{Field: u.Uuid, Name: "Uuid"},
 	), nil
 }
@@ -82,7 +78,7 @@ func (u *User) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 }
 
 // CreateAccessToken - Create and store new UserAccessToken
-func (u *User) CreateAccessToken(tx *pop.Connection, clientID string) (string, int64, error) {
+func (u *User) CreateAccessToken(clientID string) (string, int64, error) {
 
 	token := createAccessTokenPart()
 	hash := hashClientIdAccessToken(clientID + token)
@@ -94,7 +90,7 @@ func (u *User) CreateAccessToken(tx *pop.Connection, clientID string) (string, i
 		ExpiresAt:   expireAt,
 	}
 
-	err := tx.Save(userAccessToken)
+	err := DB.Save(userAccessToken)
 	if err != nil {
 		return "", 0, err
 	}
@@ -116,51 +112,68 @@ func (u *User) GetOrgIDs() []interface{} {
 	return s
 }
 
-func (u *User) FindOrCreateFromSamlUser(tx *pop.Connection, orgID int, samlUser saml.SamlUser) error {
+func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
 
-	q := tx.Where("auth_org_id = ? and auth_org_uid = ?", orgID, samlUser.UserID)
-	exists, err := q.Exists("users")
+	userOrgs, err := UserOrganizationFindByAuthEmail(authUser.Email, orgID)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	if exists {
-		if err = q.First(u); err != nil {
-			return errors.WithStack(err)
+	if len(userOrgs) > 1 {
+		return fmt.Errorf("too many user organizations found (%v), data integrity problem", len(userOrgs))
+	}
+
+	if len(userOrgs) == 1 {
+		if userOrgs[0].AuthID != authUser.UserID {
+			return fmt.Errorf("a user in this organization with this email address already exists with different user id")
 		}
-	} else {
-		emailQuery := tx.Where("email = ?", samlUser.Email)
-		exists, err := emailQuery.Exists("users")
+		err = DB.Where("uuid = ?", userOrgs[0].User.Uuid).First(u)
 		if err != nil {
 			return errors.WithStack(err)
-		}
-		if exists {
-			return fmt.Errorf("a user with this email address already exists")
-		}
-
-		u.FirstName = samlUser.FirstName
-		u.LastName = samlUser.LastName
-		u.Email = samlUser.Email
-		u.AuthOrgUid = samlUser.UserID
-		u.Nickname = fmt.Sprintf("%s %s", samlUser.FirstName, samlUser.LastName[:0])
-		u.AuthOrgID = 1
-		u.Uuid = domain.GetUuid()
-
-		err = tx.Create(u)
-		if err != nil {
-			return fmt.Errorf("unable to create new user record: %s", err.Error())
-		}
-
-		uo := &UserOrganization{
-			UserID:         u.ID,
-			OrganizationID: u.AuthOrgID,
-			Role:           "member",
-		}
-		err = tx.Create(uo)
-		if err != nil {
-			return fmt.Errorf("unable to create new user organization record: %s", err.Error())
 		}
 	}
+
+	var newUser bool
+	if u.ID != 0 {
+		newUser = false
+	}
+
+	// update attributes from authUser
+	u.FirstName = authUser.FirstName
+	u.LastName = authUser.LastName
+	u.Email = authUser.Email
+	u.Nickname = fmt.Sprintf("%s %s", authUser.FirstName, authUser.LastName[:0])
+
+	// if new user they will need a uuid
+	if newUser {
+		u.Uuid = domain.GetUuid()
+	}
+
+	err = DB.Save(u)
+	if err != nil {
+		return fmt.Errorf("unable to create new user record: %s", err.Error())
+	}
+
+	if len(userOrgs) == 0 {
+		userOrg := &UserOrganization{
+			OrganizationID: orgID,
+			UserID:         u.ID,
+			Role:           UserOrganizationRoleMember,
+			AuthID:         authUser.UserID,
+			AuthEmail:      u.Email,
+			LastLogin:      time.Now(),
+		}
+		err = DB.Save(userOrg)
+		if err != nil {
+			return fmt.Errorf("unable to create new user_organization record: %s", err.Error())
+		}
+	}
+
+	// reload user
+	// err = DB.Eager().Where("id = ?", u.ID).First(u)
+	// if err != nil {
+	// 	return fmt.Errorf("unable to reload user after update: %s", err)
+	// }
 
 	return nil
 }

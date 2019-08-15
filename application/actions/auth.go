@@ -1,39 +1,70 @@
 package actions
 
 import (
-	"crypto/x509"
-	"encoding/base64"
-	"encoding/xml"
 	"fmt"
-	"io/ioutil"
-	"os"
+	"net/http"
+	"strconv"
 
-	"github.com/silinternational/handcarry-api/auth/saml"
+	"github.com/gobuffalo/buffalo/render"
 
 	"github.com/gobuffalo/buffalo"
-	"github.com/gobuffalo/envy"
-	"github.com/gobuffalo/pop"
 	"github.com/pkg/errors"
-
-	saml2 "github.com/russellhaering/gosaml2"
-	"github.com/russellhaering/gosaml2/types"
-	dsig "github.com/russellhaering/goxmldsig"
 
 	"github.com/silinternational/handcarry-api/domain"
 	"github.com/silinternational/handcarry-api/models"
 )
 
-const SAML2Provider = "saml2"
 const SAMLResponseKey = "SAMLResponse"
 const IDPMetadataFile = "./samlmetadata/idp-metadata.xml"
 
-func AuthLogin(c buffalo.Context) error {
+type AuthError struct {
+	Code    string `json:"Code"`
+	Message string `json:"Message"`
+}
 
-	clientID := c.Param("client_id")
-	if clientID == "" {
-		return fmt.Errorf("client_id is required to login")
+type AuthOrgOption struct {
+	ID      string `json:"ID"`
+	Name    string `json:"Name"`
+	LogoURL string `json:"LogoURL"`
+}
+
+type AuthUser struct {
+	ID                   string          `json:"ID"`
+	Name                 string          `json:"Name"`
+	Nickname             string          `json:"Nickname"`
+	Email                string          `json:"Email"`
+	Organizations        []AuthOrgOption `json:"Organizations"`
+	AccessToken          string          `json:"AccessToken"`
+	AccessTokenExpiresAt int64           `json:"AccessTokenExpiresAt"`
+}
+
+type AuthResponse struct {
+	Error          *AuthError       `json:"Error,omitempty"`
+	AuthOrgOptions *[]AuthOrgOption `json:"AuthOrgOptions,omitempty"`
+	RedirectURL    string           `json:"RedirectURL,omitempty"`
+	User           *AuthUser        `json:"User,omitempty"`
+}
+
+func AuthLogin(c buffalo.Context) error {
+	var clientID string
+	clientID, ok := c.Session().Get("ClientID").(string)
+	if !ok {
+		clientID = c.Param("client_id")
+		if clientID == "" {
+			return authError(c, http.StatusBadRequest, "MissingClientID", "client_id is required to login")
+		}
+		c.Session().Set("ClientID", clientID)
 	}
-	c.Session().Set("ClientID", clientID)
+
+	var authEmail string
+	authEmail, ok = c.Session().Get("AuthEmail").(string)
+	if !ok {
+		authEmail = c.Param("authEmail")
+		if authEmail == "" {
+			return authError(c, http.StatusBadRequest, "MissingAuthEmail", "authEmail is required to login")
+		}
+		c.Session().Set("AuthEmail", authEmail)
+	}
 
 	returnTo := c.Param("ReturnTo")
 	if returnTo == "" {
@@ -43,59 +74,156 @@ func AuthLogin(c buffalo.Context) error {
 
 	err := c.Session().Save()
 	if err != nil {
-		return err
+		return authError(c, http.StatusInternalServerError, "ServerError", "unable to save session")
 	}
 
-	sp, err := getSAML2Provider()
+	// find org for auth config and processing
+	var orgID int
+	oid := c.Param("org_id")
+	if oid == "" {
+		orgID = 0
+	} else {
+		orgID, _ = strconv.Atoi(oid)
+	}
+	var org models.Organization
+	userOrgs, err := models.UserOrganizationFindByAuthEmail(authEmail, orgID)
+	if len(userOrgs) == 1 {
+		org = userOrgs[1].Organization
+	}
+
+	// no user_organization records yet, see if we have an organization for user's email domain
+	if len(userOrgs) == 0 {
+		org, err = models.OrganizationFindByDomain(domain.EmailDomain(authEmail))
+		if err != nil {
+			return authError(c, http.StatusInternalServerError, "UnableToFindOrgByEmail", "unable to find organization by email domain")
+		}
+		if org.AuthType == "" {
+			return authError(c, http.StatusNotFound, "OrgNotFound", "unable to find organization by email domain")
+		}
+	}
+
+	// get auth provider for org to process login
+	sp, err := org.GetAuthProvider()
 	if err != nil {
-		return err
+		return authError(c, http.StatusInternalServerError, "UnableToLoadAuthProvider", "unable to load auth provider for organization")
 	}
 
-	authURL, err := sp.BuildAuthURL("")
+	authResp := sp.Login(c)
+	if authResp.Error != nil {
+		return authError(c, http.StatusBadRequest, "AuthError", authResp.Error.Error())
+	}
 
-	return c.Redirect(302, authURL)
+	// if redirect url is present it is initial login, not return from auth provider yet
+	if authResp.RedirectURL != "" {
+		resp := AuthResponse{
+			RedirectURL: authResp.RedirectURL,
+		}
+
+		return c.Render(200, render.JSON(resp))
+	}
+
+	// if we have an authuser, find or create user in local db and finish login
+	var user models.User
+	if authResp.AuthUser != nil {
+		err := user.FindOrCreateFromAuthUser(org.ID, authResp.AuthUser)
+		if err != nil {
+			return authError(c, http.StatusBadRequest, "AuthFailure", err.Error())
+		}
+	}
+
+	accessToken, expiresAt, err := user.CreateAccessToken(clientID)
+	if err != nil {
+		return authError(c, http.StatusBadRequest, "CreateAccessTokenFailure", err.Error())
+	}
+
+	var uos []AuthOrgOption
+	for _, uo := range user.Organizations {
+		uos = append(uos, AuthOrgOption{
+			ID:      uo.Uuid.String(),
+			Name:    uo.Name,
+			LogoURL: uo.Url.String,
+		})
+	}
+
+	authUser := &AuthUser{
+		ID:                   user.Uuid.String(),
+		Name:                 user.FirstName + " " + user.LastName,
+		Nickname:             user.Nickname,
+		Email:                user.Email,
+		Organizations:        uos,
+		AccessToken:          accessToken,
+		AccessTokenExpiresAt: expiresAt,
+	}
+
+	authResponse := AuthResponse{
+		User: authUser,
+	}
+
+	return c.Render(200, render.JSON(authResponse))
 }
 
-func AuthCallback(c buffalo.Context) error {
-
-	returnTo := envy.Get("UI_URL", "/")
-
-	clientID := c.Session().Get("ClientID").(string)
-	if clientID == "" {
-		return fmt.Errorf("client_id is required to login")
+// returnAuthError takes a error code and message and renders AuthResponse to json and returns
+func authError(c buffalo.Context, status int, code, message string) error {
+	resp := AuthResponse{
+		Error: &AuthError{
+			Code:    code,
+			Message: message,
+		},
 	}
 
-	samlResponse, err := samlResponse(c)
-	if err != nil {
-		return c.Error(401, err)
-	}
-
-	samlUser, err := getSamlUserFromAssertion(samlResponse)
-	if err != nil {
-		return c.Error(401, err)
-	}
-
-	// Get an existing User with the current auth org uid
-	u := &models.User{}
-	tx := c.Value("tx").(*pop.Connection)
-	err = u.FindOrCreateFromSamlUser(tx, 1, samlUser)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	accessToken, expiresAt, err := u.CreateAccessToken(tx, clientID)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	if err = tx.Save(u); err != nil {
-		return errors.WithStack(err)
-	}
-
-	returnToURL := fmt.Sprintf("%s/?access_token=%s&expires=%v", returnTo, accessToken, expiresAt)
-
-	return c.Redirect(302, returnToURL)
+	return c.Render(status, render.JSON(resp))
 }
+
+// func AuthCallback(c buffalo.Context) error {
+//
+// 	returnTo := envy.Get("UI_URL", "/")
+//
+// 	clientID := c.Session().Get("ClientID").(string)
+// 	if clientID == "" {
+// 		return fmt.Errorf("client_id is required to login")
+// 	}
+//
+// 	// Process saml response
+// 	samlResponse, err := samlResponse(c)
+// 	if err != nil {
+// 		return c.Error(401, err)
+// 	}
+// 	samlUser, err := getSamlUserFromAssertion(samlResponse)
+// 	if err != nil {
+// 		return c.Error(401, err)
+// 	}
+//
+// 	tx := c.Value("tx").(*pop.Connection)
+//
+// 	// Find user orgs
+// 	userOrgs, err := models.UserOrganizationFindByAuthEmail(samlUser.Email)
+// 	if err != nil {
+// 		return errors.WithStack(err)
+// 	}
+// 	if len(userOrgs) == 1 {
+//
+// 	}
+//
+// 	// Get an existing User with the current auth org uid
+// 	u := &models.User{}
+// 	// err = u.FindOrCreateFromSamlUser(tx, 1, samlUser)
+// 	// if err != nil {
+// 	// 	return errors.WithStack(err)
+// 	// }
+//
+// 	accessToken, expiresAt, err := u.CreateAccessToken(tx, clientID)
+// 	if err != nil {
+// 		return errors.WithStack(err)
+// 	}
+//
+// 	if err = tx.Save(u); err != nil {
+// 		return errors.WithStack(err)
+// 	}
+//
+// 	returnToURL := fmt.Sprintf("%s/?access_token=%s&expires=%v", returnTo, accessToken, expiresAt)
+//
+// 	return c.Redirect(302, returnToURL)
+// }
 
 func AuthDestroy(c buffalo.Context) error {
 
@@ -104,21 +232,21 @@ func AuthDestroy(c buffalo.Context) error {
 		return errors.WithStack(fmt.Errorf("no Bearer token provided"))
 	}
 
-	user, err := models.FindUserByAccessToken(bearerToken)
-	if err != nil {
-		return errors.WithStack(err)
-	}
+	// user, err := models.FindUserByAccessToken(bearerToken)
+	// if err != nil {
+	// 	return errors.WithStack(err)
+	// }
 
 	var logoutURL string
 
-	if user.AuthOrg.AuthType == SAML2Provider {
-		// TODO get logout url from user.AuthOrg.AuthConfig
-		logoutURL = os.Getenv("SAML2_LOGOUT_URL")
-		err := models.DeleteAccessToken(bearerToken)
-		if err != nil {
-			return err
-		}
-	}
+	// if user.AuthOrg.AuthType == SAML2Provider {
+	// 	// TODO get logout url from user.AuthOrg.AuthConfig
+	// 	logoutURL = os.Getenv("SAML2_LOGOUT_URL")
+	// 	err := models.DeleteAccessToken(bearerToken)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
 
 	if logoutURL == "" {
 		logoutURL = "/"
@@ -143,195 +271,4 @@ func SetCurrentUser(next buffalo.Handler) buffalo.Handler {
 
 		return next(c)
 	}
-}
-
-func samlResponse(c buffalo.Context) (string, error) {
-	reqData, err := domain.GetRequestData(c.Request())
-	if err != nil {
-		return "", err
-	}
-
-	samlResponse := domain.GetFirstStringFromSlice(reqData[SAMLResponseKey])
-	if samlResponse == "" {
-		return "", fmt.Errorf("%s not found in request", SAMLResponseKey)
-	}
-
-	return samlResponse, nil
-}
-
-func samlAttribute(attrName, samlResponse string) (string, error) {
-	sp, err := getSAML2Provider()
-	if err != nil {
-		return "", err
-	}
-
-	response, err := sp.ValidateEncodedResponse(samlResponse)
-
-	if err != nil {
-		return "", fmt.Errorf("could not validate %s. %v", SAMLResponseKey, err.Error())
-	}
-
-	if response == nil {
-		return "", fmt.Errorf("got nil response validating %s", SAMLResponseKey)
-	}
-
-	assertions := response.Assertions
-	if len(assertions) < 1 {
-		return "", fmt.Errorf("did not get any SAML assertions")
-	}
-
-	attrVal := getSAMLAttributeFirstValue(attrName, assertions[0].AttributeStatement.Attributes)
-	if attrVal == "" {
-		return "", fmt.Errorf("no value found for %s", attrName)
-	}
-
-	return attrVal, nil
-}
-
-func getIDPMetadata() (*types.EntityDescriptor, error) {
-	rawMetadata, err := ioutil.ReadFile(IDPMetadataFile)
-	if err != nil {
-		return nil, fmt.Errorf("error reading IDP metadata file. %v", err.Error())
-	}
-
-	metadata := &types.EntityDescriptor{}
-	err = xml.Unmarshal(rawMetadata, metadata)
-	if err != nil {
-		return nil, fmt.Errorf("error unmarshalling IDP metadata file contents. %v", err.Error())
-	}
-
-	return metadata, nil
-}
-
-func getIDPCert(metadata *types.EntityDescriptor) (dsig.MemoryX509CertificateStore, error) {
-	certStore := dsig.MemoryX509CertificateStore{
-		Roots: []*x509.Certificate{},
-	}
-
-	for _, kd := range metadata.IDPSSODescriptor.KeyDescriptors {
-
-		for idx, xcert := range kd.KeyInfo.X509Data.X509Certificates {
-
-			if xcert.Data == "" {
-				return certStore, fmt.Errorf("metadata certificate(%d) must not be empty", idx)
-			}
-			certData, err := base64.StdEncoding.DecodeString(xcert.Data)
-			if err != nil {
-				return certStore, fmt.Errorf("error getting IDP cert data from metadata. %v", err.Error())
-			}
-
-			idpCert, err := x509.ParseCertificate(certData)
-			if err != nil {
-				return certStore, fmt.Errorf("error parsing IDP cert data from metadata. %v", err.Error())
-			}
-
-			certStore.Roots = append(certStore.Roots, idpCert)
-		}
-	}
-
-	return certStore, nil
-}
-
-func getSAML2Provider() (*saml2.SAMLServiceProvider, error) {
-
-	// metadata, err := getIDPMetadata()
-	// if err != nil {
-	// 	return &saml2.SAMLServiceProvider{}, err
-	// }
-	//
-	// certStore, err := getIDPCert(metadata)
-	// if err != nil {
-	// 	return &saml2.SAMLServiceProvider{}, err
-	// }
-
-	idpSsoUrl := envy.Get("SAML_IDP_SSO_URL", "")
-	if idpSsoUrl == "" {
-		msg := "unable to get SAML_IDP_SSO_URL from environment"
-		return &saml2.SAMLServiceProvider{}, fmt.Errorf(msg)
-	}
-
-	idpEntityId := envy.Get("SAML_IDP_ENTITY_ID", "")
-	if idpSsoUrl == "" {
-		msg := "unable to get SAML_IDP_ENTITY_ID from environment"
-		return &saml2.SAMLServiceProvider{}, fmt.Errorf(msg)
-	}
-
-	idpCertData := envy.Get("SAML_IDP_CERT_DATA", "")
-	if idpCertData == "" {
-		msg := "unable to get SAML_IDP_CERT_DATA from environment"
-		return &saml2.SAMLServiceProvider{}, fmt.Errorf(msg)
-	}
-
-	certStore := dsig.MemoryX509CertificateStore{
-		Roots: []*x509.Certificate{},
-	}
-	certData, err := base64.StdEncoding.DecodeString(idpCertData)
-	if err != nil {
-		return &saml2.SAMLServiceProvider{}, fmt.Errorf("error getting IDP cert data from metadata. %v", err.Error())
-	}
-
-	idpCert, err := x509.ParseCertificate(certData)
-	if err != nil {
-		return &saml2.SAMLServiceProvider{}, fmt.Errorf("error parsing IDP cert data from metadata. %v", err.Error())
-	}
-
-	certStore.Roots = append(certStore.Roots, idpCert)
-
-	host := envy.Get("HOST", "")
-
-	sp := &saml2.SAMLServiceProvider{
-		IdentityProviderSSOURL:      idpSsoUrl,
-		IdentityProviderIssuer:      idpEntityId,
-		ServiceProviderIssuer:       host,
-		AssertionConsumerServiceURL: fmt.Sprintf("%s/%s", host, "auth/saml2/callback/"),
-		SignAuthnRequests:           false,
-		AudienceURI:                 host,
-		IDPCertificateStore:         &certStore,
-		//SPKeyStore:                  randomKeyStore,
-	}
-
-	return sp, nil
-}
-
-func getSAMLAttributeFirstValue(attrName string, attributes []types.Attribute) string {
-	for _, attr := range attributes {
-		if attr.Name != attrName {
-			continue
-		}
-
-		if len(attr.Values) > 0 {
-			return attr.Values[0].Value
-		}
-		return ""
-	}
-	return ""
-}
-
-func getSamlUserFromAssertion(assertion string) (saml.SamlUser, error) {
-	firstName, err := samlAttribute("givenName", assertion)
-	if err != nil {
-		return saml.SamlUser{}, err
-	}
-
-	lastName, err := samlAttribute("sn", assertion)
-	if err != nil {
-		return saml.SamlUser{}, err
-	}
-
-	email, err := samlAttribute("mail", assertion)
-	if err != nil {
-		return saml.SamlUser{}, err
-	}
-
-	userID, err := samlAttribute("eduPersonTargetID", assertion)
-	if err != nil {
-		return saml.SamlUser{}, err
-	}
-
-	return saml.SamlUser{
-		FirstName: firstName,
-		LastName:  lastName,
-		Email:     email,
-		UserID:    userID,
-	}, nil
 }

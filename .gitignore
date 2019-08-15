@@ -17,3 +17,4 @@ jhw.*
 generated/
 .vendor/
 *.aes
+application/grifts/private.go
