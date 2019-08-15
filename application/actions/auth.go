@@ -119,7 +119,7 @@ func AuthLogin(c buffalo.Context) error {
 			RedirectURL: authResp.RedirectURL,
 		}
 
-		return c.Render(200, render.JSON(resp))
+		return c.Redirect(303, resp.RedirectURL)
 	}
 
 	// if we have an authuser, find or create user in local db and finish login
