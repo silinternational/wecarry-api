@@ -88,7 +88,7 @@ func AuthLogin(c buffalo.Context) error {
 	var org models.Organization
 	userOrgs, err := models.UserOrganizationFindByAuthEmail(authEmail, orgID)
 	if len(userOrgs) == 1 {
-		org = userOrgs[1].Organization
+		org = userOrgs[0].Organization
 	}
 
 	// no user_organization records yet, see if we have an organization for user's email domain
