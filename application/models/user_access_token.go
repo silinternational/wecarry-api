@@ -10,13 +10,15 @@ import (
 )
 
 type UserAccessToken struct {
-	ID          int       `json:"id" db:"id"`
-	CreatedAt   time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
-	UserID      int       `json:"user_id" db:"user_id"`
-	AccessToken string    `json:"access_token" db:"access_token"`
-	ExpiresAt   time.Time `json:"expires_at" db:"expires_at"`
-	User        User      `belongs_to:"users"`
+	ID                  int              `json:"id" db:"id"`
+	CreatedAt           time.Time        `json:"created_at" db:"created_at"`
+	UpdatedAt           time.Time        `json:"updated_at" db:"updated_at"`
+	UserID              int              `json:"user_id" db:"user_id"`
+	UserOrganizationsID int              `json:"user_organizations_id" db:"user_organizations_id"`
+	AccessToken         string           `json:"access_token" db:"access_token"`
+	ExpiresAt           time.Time        `json:"expires_at" db:"expires_at"`
+	User                User             `belongs_to:"users"`
+	UserOrganization    UserOrganization `belongs_to:"user_organizations"`
 }
 
 // String is not required by pop and may be deleted
@@ -67,4 +69,10 @@ func DeleteAccessToken(accessToken string) error {
 	}
 
 	return DB.Destroy(userAccessToken)
+}
+
+func UserAccessTokenFind(accessToken string) (*UserAccessToken, error) {
+	var userAccessToken *UserAccessToken
+	err := DB.Eager().Where("access_token = ?", accessToken).First(userAccessToken)
+	return userAccessToken, err
 }

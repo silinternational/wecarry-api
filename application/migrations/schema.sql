@@ -272,6 +272,7 @@ ALTER SEQUENCE public.threads_id_seq OWNED BY public.threads.id;
 CREATE TABLE public.user_access_tokens (
     id integer NOT NULL,
     user_id integer NOT NULL,
+    user_organizations_id integer NOT NULL,
     access_token character varying(255) NOT NULL,
     expires_at timestamp without time zone NOT NULL,
     created_at timestamp without time zone NOT NULL,
@@ -694,6 +695,14 @@ ALTER TABLE ONLY public.threads
 
 ALTER TABLE ONLY public.user_access_tokens
     ADD CONSTRAINT user_access_tokens_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: user_access_tokens user_access_tokens_user_organizations_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: handcarry
+--
+
+ALTER TABLE ONLY public.user_access_tokens
+    ADD CONSTRAINT user_access_tokens_user_organizations_id_fkey FOREIGN KEY (user_organizations_id) REFERENCES public.user_organizations(id) ON DELETE CASCADE;
 
 
 --

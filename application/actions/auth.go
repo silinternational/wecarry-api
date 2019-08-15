@@ -131,7 +131,7 @@ func AuthLogin(c buffalo.Context) error {
 		}
 	}
 
-	accessToken, expiresAt, err := user.CreateAccessToken(clientID)
+	accessToken, expiresAt, err := user.CreateAccessToken(org.ID, clientID)
 	if err != nil {
 		return authError(c, http.StatusBadRequest, "CreateAccessTokenFailure", err.Error())
 	}
@@ -174,86 +174,44 @@ func authError(c buffalo.Context, status int, code, message string) error {
 	return c.Render(status, render.JSON(resp))
 }
 
-// func AuthCallback(c buffalo.Context) error {
-//
-// 	returnTo := envy.Get("UI_URL", "/")
-//
-// 	clientID := c.Session().Get("ClientID").(string)
-// 	if clientID == "" {
-// 		return fmt.Errorf("client_id is required to login")
-// 	}
-//
-// 	// Process saml response
-// 	samlResponse, err := samlResponse(c)
-// 	if err != nil {
-// 		return c.Error(401, err)
-// 	}
-// 	samlUser, err := getSamlUserFromAssertion(samlResponse)
-// 	if err != nil {
-// 		return c.Error(401, err)
-// 	}
-//
-// 	tx := c.Value("tx").(*pop.Connection)
-//
-// 	// Find user orgs
-// 	userOrgs, err := models.UserOrganizationFindByAuthEmail(samlUser.Email)
-// 	if err != nil {
-// 		return errors.WithStack(err)
-// 	}
-// 	if len(userOrgs) == 1 {
-//
-// 	}
-//
-// 	// Get an existing User with the current auth org uid
-// 	u := &models.User{}
-// 	// err = u.FindOrCreateFromSamlUser(tx, 1, samlUser)
-// 	// if err != nil {
-// 	// 	return errors.WithStack(err)
-// 	// }
-//
-// 	accessToken, expiresAt, err := u.CreateAccessToken(tx, clientID)
-// 	if err != nil {
-// 		return errors.WithStack(err)
-// 	}
-//
-// 	if err = tx.Save(u); err != nil {
-// 		return errors.WithStack(err)
-// 	}
-//
-// 	returnToURL := fmt.Sprintf("%s/?access_token=%s&expires=%v", returnTo, accessToken, expiresAt)
-//
-// 	return c.Redirect(302, returnToURL)
-// }
-
 func AuthDestroy(c buffalo.Context) error {
 
 	bearerToken := domain.GetBearerTokenFromRequest(c.Request())
 	if bearerToken == "" {
-		return errors.WithStack(fmt.Errorf("no Bearer token provided"))
+		return authError(c, 400, "LogoutError", "no Bearer token provided")
 	}
 
-	// user, err := models.FindUserByAccessToken(bearerToken)
-	// if err != nil {
-	// 	return errors.WithStack(err)
-	// }
-
-	var logoutURL string
-
-	// if user.AuthOrg.AuthType == SAML2Provider {
-	// 	// TODO get logout url from user.AuthOrg.AuthConfig
-	// 	logoutURL = os.Getenv("SAML2_LOGOUT_URL")
-	// 	err := models.DeleteAccessToken(bearerToken)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
-
-	if logoutURL == "" {
-		logoutURL = "/"
+	uat, err := models.UserAccessTokenFind(bearerToken)
+	if err != nil {
+		return authError(c, 500, "LogoutError", err.Error())
 	}
 
-	c.Session().Clear()
-	return c.Redirect(302, logoutURL)
+	if uat == nil {
+		return authError(c, 404, "LogoutError", "access token not found")
+	}
+
+	authPro, err := uat.UserOrganization.Organization.GetAuthProvider()
+	if err != nil {
+		return authError(c, 500, "LogoutError", err.Error())
+	}
+
+	authResp := authPro.Logout(c)
+	if authResp.Error != nil {
+		return authError(c, 500, "LogoutError", authResp.Error.Error())
+	}
+
+	var response AuthResponse
+
+	if authResp.RedirectURL != "" {
+		err = models.DeleteAccessToken(bearerToken)
+		if err != nil {
+			return authError(c, 500, "LogoutError", err.Error())
+		}
+		c.Session().Clear()
+		response.RedirectURL = authResp.RedirectURL
+	}
+
+	return c.Render(200, render.JSON(response))
 }
 
 func SetCurrentUser(next buffalo.Handler) buffalo.Handler {
