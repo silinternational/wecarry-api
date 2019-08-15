@@ -85,10 +85,10 @@ func (u *User) CreateAccessToken(orgID int, clientID string) (string, int64, err
 	expireAt := createAccessTokenExpiry()
 
 	userAccessToken := &UserAccessToken{
-		UserID:              u.ID,
-		UserOrganizationsID: orgID,
-		AccessToken:         hash,
-		ExpiresAt:           expireAt,
+		UserID:             u.ID,
+		UserOrganizationID: orgID,
+		AccessToken:        hash,
+		ExpiresAt:          expireAt,
 	}
 
 	err := DB.Save(userAccessToken)
