@@ -143,7 +143,7 @@ func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
 	u.FirstName = authUser.FirstName
 	u.LastName = authUser.LastName
 	u.Email = authUser.Email
-	u.Nickname = fmt.Sprintf("%s %s", authUser.FirstName, authUser.LastName[:0])
+	u.Nickname = fmt.Sprintf("%s %s", authUser.FirstName, authUser.LastName[:1])
 
 	// if new user they will need a uuid
 	if newUser {
