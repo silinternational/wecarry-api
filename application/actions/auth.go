@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
+
+	"github.com/gobuffalo/envy"
 
 	"github.com/gobuffalo/buffalo/render"
 
@@ -155,11 +158,7 @@ func AuthLogin(c buffalo.Context) error {
 		AccessTokenExpiresAt: expiresAt,
 	}
 
-	authResponse := AuthResponse{
-		User: authUser,
-	}
-
-	return c.Render(200, render.JSON(authResponse))
+	return c.Redirect(302, getLoginSuccessRedirectUrl(*authUser))
 }
 
 // returnAuthError takes a error code and message and renders AuthResponse to json and returns
@@ -229,4 +228,19 @@ func SetCurrentUser(next buffalo.Handler) buffalo.Handler {
 
 		return next(c)
 	}
+}
+
+/**
+ * Build URL to redirect user to after successful login
+
+ */
+func getLoginSuccessRedirectUrl(authUser AuthUser) string {
+
+	uiUrl := envy.Get("UI_URL", "/")
+
+	tokenExpiry := time.Unix(authUser.AccessTokenExpiresAt, 0).Format(time.RFC3339)
+	url := fmt.Sprintf("%v?token_type=Bearer&expires_utc=%s&access_token=%s",
+		uiUrl, tokenExpiry, authUser.AccessToken)
+
+	return url
 }
