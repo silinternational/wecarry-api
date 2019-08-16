@@ -158,7 +158,7 @@ func AuthLogin(c buffalo.Context) error {
 		AccessTokenExpiresAt: expiresAt,
 	}
 
-	return c.Redirect(302, getLoginSuccessRedirectUrl(*authUser))
+	return c.Redirect(302, getLoginSuccessRedirectURL(*authUser))
 }
 
 // returnAuthError takes a error code and message and renders AuthResponse to json and returns
@@ -230,16 +230,12 @@ func SetCurrentUser(next buffalo.Handler) buffalo.Handler {
 	}
 }
 
-/**
- * Build URL to redirect user to after successful login
-
- */
-func getLoginSuccessRedirectUrl(authUser AuthUser) string {
-
+// getLoginSuccessRedirectURL generates the URL for redirection after a successful login
+func getLoginSuccessRedirectURL(authUser AuthUser) string {
 	uiUrl := envy.Get("UI_URL", "/")
 
 	tokenExpiry := time.Unix(authUser.AccessTokenExpiresAt, 0).Format(time.RFC3339)
-	url := fmt.Sprintf("%v?token_type=Bearer&expires_utc=%s&access_token=%s",
+	url := fmt.Sprintf("%s?token_type=Bearer&expires_utc=%s&access_token=%s",
 		uiUrl, tokenExpiry, authUser.AccessToken)
 
 	return url
