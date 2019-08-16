@@ -339,7 +339,7 @@ func TestCreateAccessToken(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			expectedExpiry := createAccessTokenExpiry().Unix()
-			token, expiry, err := test.args.user.CreateAccessToken(DB, test.args.clientID)
+			token, expiry, err := test.args.user.CreateAccessToken(org, test.args.clientID)
 			if err != nil {
 				t.Errorf("CreateAccessToken() returned error: %v", err)
 			}

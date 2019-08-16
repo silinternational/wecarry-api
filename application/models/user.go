@@ -77,21 +77,25 @@ func (u *User) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 }
 
 // CreateAccessToken - Create and store new UserAccessToken
-func (u *User) CreateAccessToken(orgID int, clientID string) (string, int64, error) {
+func (u *User) CreateAccessToken(org Organization, clientID string) (string, int64, error) {
 
 	token := createAccessTokenPart()
 	hash := hashClientIdAccessToken(clientID + token)
 	expireAt := createAccessTokenExpiry()
 
+	userOrg, err := FindUserOrganization(*u, org)
+	if err != nil {
+		return "", 0, err
+	}
+
 	userAccessToken := &UserAccessToken{
 		UserID:             u.ID,
-		UserOrganizationID: orgID,
+		UserOrganizationID: userOrg.ID,
 		AccessToken:        hash,
 		ExpiresAt:          expireAt,
 	}
 
-	err := DB.Save(userAccessToken)
-	if err != nil {
+	if err := DB.Save(userAccessToken); err != nil {
 		return "", 0, err
 	}
 
