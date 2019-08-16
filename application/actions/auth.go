@@ -50,17 +50,19 @@ type AuthResponse struct {
 
 func AuthLogin(c buffalo.Context) error {
 	var clientID string
-	clientID, ok := c.Session().Get("ClientID").(string)
-	if !ok {
-		clientID = c.Param("client_id")
-		if clientID == "" {
+	clientID = c.Param("client_id")
+	if clientID == "" {
+		var ok bool
+		clientID, ok = c.Session().Get("ClientID").(string)
+		if !ok {
 			return authError(c, http.StatusBadRequest, "MissingClientID", "client_id is required to login")
 		}
+	} else {
 		c.Session().Set("ClientID", clientID)
 	}
 
 	var authEmail string
-	authEmail, ok = c.Session().Get("AuthEmail").(string)
+	authEmail, ok := c.Session().Get("AuthEmail").(string)
 	if !ok {
 		authEmail = c.Param("authEmail")
 		if authEmail == "" {
