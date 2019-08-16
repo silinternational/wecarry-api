@@ -22,7 +22,7 @@ type UserOrganization struct {
 	Role           string       `json:"role" db:"role"`
 	AuthID         string       `json:"auth_id" db:"auth_id"`
 	AuthEmail      string       `json:"auth_email" db:"auth_email"`
-	LastLogin      time.Time    `json:"lasT_login" db:"last_login"`
+	LastLogin      time.Time    `json:"last_login" db:"last_login"`
 	User           User         `belongs_to:"users"`
 	Organization   Organization `belongs_to:"organizations"`
 }
