@@ -126,17 +126,31 @@ func TestFindUserByAccessToken(t *testing.T) {
 		t.FailNow()
 	}
 
+	// Load UserOrganization test fixture
+	userOrg := UserOrganization{
+		OrganizationID: org.ID,
+		UserID:         user.ID,
+		AuthID:         "existing_user",
+		AuthEmail:      "user@example.com",
+	}
+	if err := DB.Create(&userOrg); err != nil {
+		t.Errorf("unable to create fixture user_organization: %s", err)
+		t.FailNow()
+	}
+
 	// Load access token test fixtures
 	tokens := UserAccessTokens{
 		{
-			UserID:      user.ID,
-			AccessToken: hashClientIdAccessToken("abc123"),
-			ExpiresAt:   time.Unix(0, 0),
+			UserID:             user.ID,
+			UserOrganizationID: userOrg.ID,
+			AccessToken:        hashClientIdAccessToken("abc123"),
+			ExpiresAt:          time.Unix(0, 0),
 		},
 		{
-			UserID:      user.ID,
-			AccessToken: hashClientIdAccessToken("xyz789"),
-			ExpiresAt:   time.Date(2099, time.December, 31, 0, 0, 0, 0, time.UTC),
+			UserID:             user.ID,
+			UserOrganizationID: userOrg.ID,
+			AccessToken:        hashClientIdAccessToken("xyz789"),
+			ExpiresAt:          time.Date(2099, time.December, 31, 0, 0, 0, 0, time.UTC),
 		},
 	}
 
@@ -313,6 +327,18 @@ func TestCreateAccessToken(t *testing.T) {
 		t.FailNow()
 	}
 
+	// Load UserOrganization test fixture
+	userOrg := UserOrganization{
+		OrganizationID: org.ID,
+		UserID:         user.ID,
+		AuthID:         "existing_user",
+		AuthEmail:      "user@example.com",
+	}
+	if err := DB.Create(&userOrg); err != nil {
+		t.Errorf("unable to create fixture user_organization: %s", err)
+		t.FailNow()
+	}
+
 	type args struct {
 		user     User
 		clientID string
@@ -431,9 +457,13 @@ func TestGetOrgIDs(t *testing.T) {
 				t.FailNow()
 			}
 			got := test.user.GetOrgIDs()
+			ints := make([]int, len(got))
+			for i, id := range got {
+				ints[i] = id.(int)
+			}
 
-			if !reflect.DeepEqual(got, test.want) {
-				t.Errorf("GetOrgIDs() = \"%v\", want \"%v\"", got, test.want)
+			if !reflect.DeepEqual(ints, test.want) {
+				t.Errorf("GetOrgIDs() = \"%v\", want \"%v\"", ints, test.want)
 			}
 		})
 	}
