@@ -99,56 +99,19 @@ func TestUser_FindOrCreateFromAuthUser(t *testing.T) {
 }
 
 func TestFindUserByAccessToken(t *testing.T) {
-	resetTables(t) // in case other tests don't clean up
-
-	// Load Organization test fixtures
-	org := Organization{
-		Name:       "ACME",
-		Uuid:       domain.GetUuid(),
-		AuthType:   "saml2",
-		AuthConfig: "[]",
-	}
-	if err := DB.Create(&org); err != nil {
-		t.Errorf("could not create test org ... %v", err)
-		t.FailNow()
-	}
-
-	// Load User test fixtures
-	user := User{
-		Email:     "user@example.com",
-		FirstName: "Existing",
-		LastName:  "User",
-		Nickname:  "Existing User",
-		Uuid:      domain.GetUuid(),
-	}
-	if err := DB.Create(&user); err != nil {
-		t.Errorf("could not create test user ... %v", err)
-		t.FailNow()
-	}
-
-	// Load UserOrganization test fixture
-	userOrg := UserOrganization{
-		OrganizationID: org.ID,
-		UserID:         user.ID,
-		AuthID:         "existing_user",
-		AuthEmail:      "user@example.com",
-	}
-	if err := DB.Create(&userOrg); err != nil {
-		t.Errorf("unable to create fixture user_organization: %s", err)
-		t.FailNow()
-	}
+	_, user, userOrgs := createUserFixtures(t)
 
 	// Load access token test fixtures
 	tokens := UserAccessTokens{
 		{
 			UserID:             user.ID,
-			UserOrganizationID: userOrg.ID,
+			UserOrganizationID: userOrgs[0].ID,
 			AccessToken:        hashClientIdAccessToken("abc123"),
 			ExpiresAt:          time.Unix(0, 0),
 		},
 		{
 			UserID:             user.ID,
-			UserOrganizationID: userOrg.ID,
+			UserOrganizationID: userOrgs[0].ID,
 			AccessToken:        hashClientIdAccessToken("xyz789"),
 			ExpiresAt:          time.Date(2099, time.December, 31, 0, 0, 0, 0, time.UTC),
 		},
@@ -300,44 +263,7 @@ func TestValidateUser(t *testing.T) {
 }
 
 func TestCreateAccessToken(t *testing.T) {
-	resetTables(t)
-
-	// Load Organization test fixtures
-	org := Organization{
-		Name:       "ACME",
-		Uuid:       domain.GetUuid(),
-		AuthType:   "saml2",
-		AuthConfig: "[]",
-	}
-	if err := DB.Create(&org); err != nil {
-		t.Errorf("could not create test org ... %v", err)
-		t.FailNow()
-	}
-
-	// Load User test fixtures
-	user := User{
-		Email:     "user@example.com",
-		FirstName: "Existing",
-		LastName:  "User",
-		Nickname:  "Existing User",
-		Uuid:      domain.GetUuid(),
-	}
-	if err := DB.Create(&user); err != nil {
-		t.Errorf("could not create test user ... %v", err)
-		t.FailNow()
-	}
-
-	// Load UserOrganization test fixture
-	userOrg := UserOrganization{
-		OrganizationID: org.ID,
-		UserID:         user.ID,
-		AuthID:         "existing_user",
-		AuthEmail:      "user@example.com",
-	}
-	if err := DB.Create(&userOrg); err != nil {
-		t.Errorf("unable to create fixture user_organization: %s", err)
-		t.FailNow()
-	}
+	orgs, user, _ := createUserFixtures(t)
 
 	type args struct {
 		user     User
@@ -365,7 +291,7 @@ func TestCreateAccessToken(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			expectedExpiry := createAccessTokenExpiry().Unix()
-			token, expiry, err := test.args.user.CreateAccessToken(org, test.args.clientID)
+			token, expiry, err := test.args.user.CreateAccessToken(orgs[0], test.args.clientID)
 			if err != nil {
 				t.Errorf("CreateAccessToken() returned error: %v", err)
 			}
@@ -390,6 +316,41 @@ func TestCreateAccessToken(t *testing.T) {
 }
 
 func TestGetOrgIDs(t *testing.T) {
+	_, user, _ := createUserFixtures(t)
+
+	tests := []struct {
+		name string
+		user User
+		want []int
+	}{
+		{
+			name: "basic",
+			user: user,
+			want: []int{1, 2},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if err := DB.Load(&test.user); err != nil {
+				t.Errorf("Failed to load related records on user %v", user.ID)
+				t.FailNow()
+			}
+			got := test.user.GetOrgIDs()
+			ints := make([]int, len(got))
+			for i, id := range got {
+				ints[i] = id.(int)
+			}
+
+			if !reflect.DeepEqual(ints, test.want) {
+				t.Errorf("GetOrgIDs() = \"%v\", want \"%v\"", ints, test.want)
+			}
+		})
+	}
+	resetTables(t) // Pack it in, Pack it out a/k/a "Leave No Trace"
+}
+
+func createUserFixtures(t *testing.T) (Organizations, User, UserOrganizations) {
+	// in case other tests don't clean up
 	resetTables(t)
 
 	// Load Organization test fixtures
@@ -427,45 +388,27 @@ func TestGetOrgIDs(t *testing.T) {
 		t.FailNow()
 	}
 
-	for i := range orgs {
-		uo := UserOrganization{
-			OrganizationID: orgs[i].ID,
+	// Load UserOrganization test fixtures
+	userOrgs := UserOrganizations{
+		{
+			OrganizationID: orgs[0].ID,
 			UserID:         user.ID,
-			Role:           "user",
-		}
-		if err := DB.Create(&uo); err != nil {
+			AuthID:         "existing_user",
+			AuthEmail:      "user@example.com",
+		},
+		{
+			OrganizationID: orgs[1].ID,
+			UserID:         user.ID,
+			AuthID:         "existing_user",
+			AuthEmail:      "user@example.com",
+		},
+	}
+	for i := range userOrgs {
+		if err := DB.Create(&userOrgs[i]); err != nil {
 			t.Errorf("could not create test user org ... %v", err)
 			t.FailNow()
 		}
 	}
 
-	tests := []struct {
-		name string
-		user User
-		want []int
-	}{
-		{
-			name: "basic",
-			user: user,
-			want: []int{1, 2},
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			if err := DB.Load(&test.user); err != nil {
-				t.Errorf("Failed to load related records on user %v", user.ID)
-				t.FailNow()
-			}
-			got := test.user.GetOrgIDs()
-			ints := make([]int, len(got))
-			for i, id := range got {
-				ints[i] = id.(int)
-			}
-
-			if !reflect.DeepEqual(ints, test.want) {
-				t.Errorf("GetOrgIDs() = \"%v\", want \"%v\"", ints, test.want)
-			}
-		})
-	}
-	resetTables(t) // Pack it in, Pack it out a/k/a "Leave No Trace"
+	return orgs, user, userOrgs
 }
