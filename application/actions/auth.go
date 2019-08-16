@@ -209,7 +209,6 @@ func AuthDestroy(c buffalo.Context) error {
 		}
 		c.Session().Clear()
 		response.RedirectURL = authResp.RedirectURL
-		return c.Redirect(302, response.RedirectURL)
 	}
 
 	return c.Render(200, render.JSON(response))
