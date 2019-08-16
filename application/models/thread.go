@@ -44,7 +44,6 @@ func (t Threads) String() string {
 // This method is not required and may be deleted.
 func (t *Thread) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
-		&validators.IntIsPresent{Field: t.ID, Name: "ID"},
 		&validators.UUIDIsPresent{Field: t.Uuid, Name: "Uuid"},
 		&validators.IntIsPresent{Field: t.PostID, Name: "PostID"},
 	), nil

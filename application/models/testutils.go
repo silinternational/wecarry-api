@@ -112,6 +112,15 @@ func CreateMessages(fixtures Messages) error {
 	return nil
 }
 
+func CreateUserAccessTokens(fixtures UserAccessTokens) error {
+	for _, f := range fixtures {
+		if err := DB.Create(&f); err != nil {
+			return fmt.Errorf("error creating user access token %+v ...\n %v \n", f, err)
+		}
+	}
+	return nil
+}
+
 func resetTables(t *testing.T) {
 	resetUserOrganizationsTable(t)
 	resetUsersTable(t)

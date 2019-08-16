@@ -58,7 +58,6 @@ func (p Posts) String() string {
 // This method is not required and may be deleted.
 func (p *Post) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
-		&validators.IntIsPresent{Field: p.ID, Name: "ID"},
 		&validators.IntIsPresent{Field: p.CreatedByID, Name: "CreatedBy"},
 		&validators.StringIsPresent{Field: p.Type, Name: "Type"},
 		&validators.IntIsPresent{Field: p.OrganizationID, Name: "OrganizationID"},

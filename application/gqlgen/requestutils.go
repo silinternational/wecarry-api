@@ -11,8 +11,6 @@ func GetSelectFieldsFromRequestFields(fields map[string]string, requestFields []
 		return []string{}
 	}
 
-	// TODO: GetRequestFields gets *all* request fields smashed into one list. Need something that
-	// gives just the request fields from the object of interest.
 	selectFields := []string{}
 	for gqlField, dbField := range fields {
 		if domain.IsStringInSlice(gqlField, requestFields) {

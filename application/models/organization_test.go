@@ -5,7 +5,6 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/silinternational/handcarry-api/domain"
 
-	"reflect"
 	"testing"
 )
 
@@ -61,7 +60,7 @@ func TestFindOrgByUUID(t *testing.T) {
 			} else {
 				if err != nil {
 					t.Errorf("FindOrgByUUID() returned an error: %v", err)
-				} else if reflect.DeepEqual(got, test.want) {
+				} else if got.Uuid != test.want.Uuid {
 					t.Errorf("found %v, expected %v", got, test.want)
 				}
 			}
@@ -113,10 +112,20 @@ func TestCreateOrganization(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			err := DB.Create(&test.org)
-			if (test.wantErr == true) && (err == nil) {
-				t.Errorf("Expected an error, but did not get one")
-			} else if (test.wantErr == false) && (err != nil) {
+			if test.wantErr == true {
+				if err == nil {
+					t.Errorf("Expected an error, but did not get one")
+				}
+			} else if err != nil {
 				t.Errorf("Unexpected error %v", err)
+			} else {
+				org, err := FindOrgByUUID(test.org.Uuid.String())
+				if err != nil {
+					t.Errorf("Couldn't find new org %v: %v", test.org.Name, err)
+				}
+				if org.Uuid != test.org.Uuid {
+					t.Errorf("newly created org doesn't match, found %v, expected %v", org, test.org)
+				}
 			}
 
 			// clean up
@@ -137,7 +146,6 @@ func TestValidateOrganization(t *testing.T) {
 		{
 			name: "minimum",
 			org: Organization{
-				ID:         1,
 				Name:       "Bits 'R' Us",
 				Uuid:       domain.GetUuid(),
 				AuthType:   "saml2",
@@ -148,7 +156,6 @@ func TestValidateOrganization(t *testing.T) {
 		{
 			name: "missing name",
 			org: Organization{
-				ID:         1,
 				Uuid:       domain.GetUuid(),
 				AuthType:   "saml2",
 				AuthConfig: "[]",
@@ -159,7 +166,6 @@ func TestValidateOrganization(t *testing.T) {
 		{
 			name: "missing uuid",
 			org: Organization{
-				ID:         1,
 				Name:       "Babelfish Warehouse",
 				AuthType:   "saml2",
 				AuthConfig: "[]",
@@ -170,7 +176,6 @@ func TestValidateOrganization(t *testing.T) {
 		{
 			name: "missing auth type",
 			org: Organization{
-				ID:         1,
 				Name:       "Babelfish Warehouse",
 				Uuid:       domain.GetUuid(),
 				AuthConfig: "[]",
