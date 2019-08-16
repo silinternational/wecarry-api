@@ -115,13 +115,11 @@ func TestFindUserByAccessToken(t *testing.T) {
 
 	// Load User test fixtures
 	user := User{
-		Email:      "user@example.com",
-		FirstName:  "Existing",
-		LastName:   "User",
-		Nickname:   "Existing User",
-		AuthOrgID:  org.ID,
-		AuthOrgUid: "existing_user",
-		Uuid:       domain.GetUuid(),
+		Email:     "user@example.com",
+		FirstName: "Existing",
+		LastName:  "User",
+		Nickname:  "Existing User",
+		Uuid:      domain.GetUuid(),
 	}
 	if err := DB.Create(&user); err != nil {
 		t.Errorf("could not create test user ... %v", err)
@@ -207,25 +205,21 @@ func TestValidateUser(t *testing.T) {
 		{
 			name: "minimum",
 			user: User{
-				Email:      "user@example.com",
-				FirstName:  "A",
-				LastName:   "User",
-				Nickname:   "A User",
-				AuthOrgID:  1,
-				AuthOrgUid: "a_user",
-				Uuid:       domain.GetUuid(),
+				Email:     "user@example.com",
+				FirstName: "A",
+				LastName:  "User",
+				Nickname:  "A User",
+				Uuid:      domain.GetUuid(),
 			},
 			wantErr: false,
 		},
 		{
 			name: "missing email",
 			user: User{
-				FirstName:  "A",
-				LastName:   "User",
-				Nickname:   "A User",
-				AuthOrgID:  1,
-				AuthOrgUid: "a_user",
-				Uuid:       domain.GetUuid(),
+				FirstName: "A",
+				LastName:  "User",
+				Nickname:  "A User",
+				Uuid:      domain.GetUuid(),
 			},
 			wantErr:  true,
 			errField: "email",
@@ -233,12 +227,10 @@ func TestValidateUser(t *testing.T) {
 		{
 			name: "missing first_name",
 			user: User{
-				Email:      "user@example.com",
-				LastName:   "User",
-				Nickname:   "A User",
-				AuthOrgID:  1,
-				AuthOrgUid: "a_user",
-				Uuid:       domain.GetUuid(),
+				Email:    "user@example.com",
+				LastName: "User",
+				Nickname: "A User",
+				Uuid:     domain.GetUuid(),
 			},
 			wantErr:  true,
 			errField: "first_name",
@@ -246,12 +238,10 @@ func TestValidateUser(t *testing.T) {
 		{
 			name: "missing last_name",
 			user: User{
-				Email:      "user@example.com",
-				FirstName:  "A",
-				Nickname:   "A User",
-				AuthOrgID:  1,
-				AuthOrgUid: "a_user",
-				Uuid:       domain.GetUuid(),
+				Email:     "user@example.com",
+				FirstName: "A",
+				Nickname:  "A User",
+				Uuid:      domain.GetUuid(),
 			},
 			wantErr:  true,
 			errField: "last_name",
@@ -259,51 +249,21 @@ func TestValidateUser(t *testing.T) {
 		{
 			name: "missing nickname",
 			user: User{
-				Email:      "user@example.com",
-				FirstName:  "A",
-				LastName:   "User",
-				AuthOrgID:  1,
-				AuthOrgUid: "a_user",
-				Uuid:       domain.GetUuid(),
+				Email:     "user@example.com",
+				FirstName: "A",
+				LastName:  "User",
+				Uuid:      domain.GetUuid(),
 			},
 			wantErr:  true,
 			errField: "nickname",
 		},
 		{
-			name: "missing auth_org_id",
-			user: User{
-				Email:      "user@example.com",
-				FirstName:  "A",
-				LastName:   "User",
-				Nickname:   "A User",
-				AuthOrgUid: "a_user",
-				Uuid:       domain.GetUuid(),
-			},
-			wantErr:  true,
-			errField: "auth_org_id",
-		},
-		{
-			name: "missing auth_org_uid",
+			name: "missing uuid",
 			user: User{
 				Email:     "user@example.com",
 				FirstName: "A",
 				LastName:  "User",
 				Nickname:  "A User",
-				AuthOrgID: 1,
-				Uuid:      domain.GetUuid(),
-			},
-			wantErr:  true,
-			errField: "auth_org_uid",
-		},
-		{
-			name: "missing uuid",
-			user: User{
-				Email:      "user@example.com",
-				FirstName:  "A",
-				LastName:   "User",
-				Nickname:   "A User",
-				AuthOrgID:  1,
-				AuthOrgUid: "a_user",
 			},
 			wantErr:  true,
 			errField: "uuid",
@@ -342,13 +302,11 @@ func TestCreateAccessToken(t *testing.T) {
 
 	// Load User test fixtures
 	user := User{
-		Email:      "user@example.com",
-		FirstName:  "Existing",
-		LastName:   "User",
-		Nickname:   "Existing User",
-		AuthOrgID:  org.ID,
-		AuthOrgUid: "existing_user",
-		Uuid:       domain.GetUuid(),
+		Email:     "user@example.com",
+		FirstName: "Existing",
+		LastName:  "User",
+		Nickname:  "Existing User",
+		Uuid:      domain.GetUuid(),
 	}
 	if err := DB.Create(&user); err != nil {
 		t.Errorf("could not create test user ... %v", err)
@@ -432,13 +390,11 @@ func TestGetOrgIDs(t *testing.T) {
 
 	// Load User test fixtures
 	user := User{
-		Email:      "user@example.com",
-		FirstName:  "Existing",
-		LastName:   "User",
-		Nickname:   "Existing User",
-		AuthOrgID:  orgs[0].ID,
-		AuthOrgUid: "existing_user",
-		Uuid:       domain.GetUuid(),
+		Email:     "user@example.com",
+		FirstName: "Existing",
+		LastName:  "User",
+		Nickname:  "Existing User",
+		Uuid:      domain.GetUuid(),
 	}
 	if err := DB.Create(&user); err != nil {
 		t.Errorf("could not create test user ... %v", err)
