@@ -19,16 +19,16 @@ import (
 const AuthTypeSaml = "saml"
 
 type Organization struct {
-	ID                  int                   `json:"id" db:"id"`
-	CreatedAt           time.Time             `json:"created_at" db:"created_at"`
-	UpdatedAt           time.Time             `json:"updated_at" db:"updated_at"`
-	Name                string                `json:"name" db:"name"`
-	Url                 nulls.String          `json:"url" db:"url"`
-	AuthType            string                `json:"auth_type" db:"auth_type"`
-	AuthConfig          string                `json:"auth_config" db:"auth_config"`
-	Uuid                uuid.UUID             `json:"uuid" db:"uuid"`
-	Users               Users                 `many_to_many:"user_organizations"`
-	OrganizationDomains []OrganizationDomains `has_many:"organization_domains"`
+	ID                  int                  `json:"id" db:"id"`
+	CreatedAt           time.Time            `json:"created_at" db:"created_at"`
+	UpdatedAt           time.Time            `json:"updated_at" db:"updated_at"`
+	Name                string               `json:"name" db:"name"`
+	Url                 nulls.String         `json:"url" db:"url"`
+	AuthType            string               `json:"auth_type" db:"auth_type"`
+	AuthConfig          string               `json:"auth_config" db:"auth_config"`
+	Uuid                uuid.UUID            `json:"uuid" db:"uuid"`
+	Users               Users                `many_to_many:"user_organizations"`
+	OrganizationDomains []OrganizationDomain `has_many:"organization_domains"`
 }
 
 // String is not required by pop and may be deleted
@@ -94,7 +94,7 @@ func FindOrgByUUID(uuid string) (Organization, error) {
 }
 
 func OrganizationFindByDomain(domain string) (Organization, error) {
-	var orgDomain OrganizationDomains
+	var orgDomain OrganizationDomain
 	if err := DB.Eager().Where("domain = ?", domain).First(&orgDomain); err != nil {
 		return Organization{}, fmt.Errorf("error finding organization by domain: %s", err.Error())
 	}
