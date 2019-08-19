@@ -76,8 +76,5 @@ func UserAccessTokenFind(accessToken string) (*UserAccessToken, error) {
 	if err := DB.Eager().Where("access_token = ?", hashClientIdAccessToken(accessToken)).First(&userAccessToken); err != nil {
 		return &userAccessToken, fmt.Errorf("failed to find access token, %v", err)
 	}
-	if err := DB.Load(&userAccessToken.UserOrganization); err != nil {
-		return &userAccessToken, fmt.Errorf("failed to load related records for access token, %v", err)
-	}
 	return &userAccessToken, nil
 }
