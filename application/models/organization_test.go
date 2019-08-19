@@ -2,28 +2,13 @@ package models
 
 import (
 	"github.com/gobuffalo/nulls"
-	"github.com/gofrs/uuid"
 	"github.com/silinternational/handcarry-api/domain"
 
 	"testing"
 )
 
 func TestFindOrgByUUID(t *testing.T) {
-	resetTables(t)
-
-	// Load Organization test fixtures
-	orgUuidStr := "51b5321d-2769-48a0-908a-7af1d15083e2"
-	orgUuid1, _ := uuid.FromString(orgUuidStr)
-	org := Organization{
-		Name:       "ACME",
-		Uuid:       orgUuid1,
-		AuthType:   "saml2",
-		AuthConfig: "[]",
-	}
-	if err := DB.Create(&org); err != nil {
-		t.Errorf("could not run test ... %v", err)
-		t.FailNow()
-	}
+	org, _ := createOrgFixtures(t)
 
 	type args struct {
 		uuid string
@@ -36,7 +21,7 @@ func TestFindOrgByUUID(t *testing.T) {
 	}{
 		{
 			name: "found",
-			args: args{orgUuidStr},
+			args: args{org.Uuid.String()},
 			want: org,
 		},
 		{
@@ -198,4 +183,81 @@ func TestValidateOrganization(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestOrganizationFindByDomain(t *testing.T) {
+	org, orgDomain := createOrgFixtures(t)
+
+	type args struct {
+		domain string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    Organization
+		wantErr bool
+	}{
+		{
+			name: "found",
+			args: args{orgDomain.Domain},
+			want: org,
+		},
+		{
+			name:    "empty string",
+			args:    args{""},
+			wantErr: true,
+		},
+		{
+			name:    "near match",
+			args:    args{"example.com"},
+			wantErr: true,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := OrganizationFindByDomain(test.args.domain)
+			if test.wantErr {
+				if err == nil {
+					t.Errorf("Expected an error, but did not get one")
+				}
+			} else {
+				if err != nil {
+					t.Errorf("OrganizationFindByDomain() returned an error: %v", err)
+				} else if got.Uuid != test.want.Uuid {
+					t.Errorf("found %v, expected %v", got, test.want)
+				}
+			}
+		})
+	}
+
+	// delete org fixture and org domain by cascading delete
+	if err := DB.Destroy(&org); err != nil {
+		t.Errorf("error deleting test data: %v", err)
+	}
+}
+
+func createOrgFixtures(t *testing.T) (Organization, OrganizationDomain) {
+	// Load Organization test fixtures
+	org := Organization{
+		Name:       "ACME",
+		Uuid:       domain.GetUuid(),
+		AuthType:   "saml2",
+		AuthConfig: "[]",
+	}
+	if err := DB.Create(&org); err != nil {
+		t.Errorf("could not create org fixtures ... %v", err)
+		t.FailNow()
+	}
+
+	// Load Organization Domains test fixtures
+	orgDomain := OrganizationDomain{
+		OrganizationID: org.ID,
+		Domain:         "example.org",
+	}
+	if err := DB.Create(&orgDomain); err != nil {
+		t.Errorf("could not create org domain fixtures ... %v", err)
+		t.FailNow()
+	}
+
+	return org, orgDomain
 }
