@@ -113,6 +113,7 @@ func (p *Provider) Login(c buffalo.Context) auth.Response {
 		return resp
 	}
 	resp.AuthUser = getUserFromAssertion(assertion)
+	resp.RelayState = c.Param("RelayState")
 	return resp
 }
 

@@ -124,6 +124,8 @@ func AuthLogin(c buffalo.Context) error {
 			RedirectURL: authResp.RedirectURL,
 		}
 
+		resp.RedirectURL = resp.RedirectURL + "&RelayState=" + clientID
+
 		return c.Render(200, render.JSON(resp))
 	}
 
@@ -136,7 +138,7 @@ func AuthLogin(c buffalo.Context) error {
 		}
 	}
 
-	accessToken, expiresAt, err := user.CreateAccessToken(org, clientID)
+	accessToken, expiresAt, err := user.CreateAccessToken(org, authResp.RelayState)
 	if err != nil {
 		return authError(c, http.StatusBadRequest, "CreateAccessTokenFailure", err.Error())
 	}

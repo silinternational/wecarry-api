@@ -26,6 +26,7 @@ type User struct {
 type Response struct {
 	RedirectURL string
 	AuthUser    *User
+	RelayState  string
 	Error       error
 }
 
