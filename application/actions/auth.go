@@ -51,51 +51,42 @@ type AuthResponse struct {
 func AuthLogin(c buffalo.Context) error {
 	var clientID string
 	clientID = c.Param("client_id")
-	fmt.Printf("----- received clientID %s from request %v\n", clientID, c.Params())
+	fmt.Printf("----- received clientID %s from request\n", clientID)
+	fmt.Printf("------ request addr: %s\n", c.Request().RemoteAddr)
 
 	var authEmail string
-	authEmail, ok := c.Session().Get("AuthEmail").(string)
-	if !ok {
-		authEmail = c.Param("authEmail")
-		if authEmail == "" {
+	authEmail = c.Param("authEmail")
+
+	var org models.Organization
+	if authEmail == "" {
+		// TODO: find a way around this hack without using session storage
+		var err error
+		if org, err = models.OrganizationFindByDomain("sil.org"); err != nil {
 			return authError(c, http.StatusBadRequest, "MissingAuthEmail", "authEmail is required to login")
 		}
-		c.Session().Set("AuthEmail", authEmail)
-	}
-
-	returnTo := c.Param("ReturnTo")
-	if returnTo == "" {
-		returnTo = "/"
-	}
-	c.Session().Set("ReturnTo", returnTo)
-
-	err := c.Session().Save()
-	if err != nil {
-		return authError(c, http.StatusInternalServerError, "ServerError", "unable to save session")
-	}
-
-	// find org for auth config and processing
-	var orgID int
-	oid := c.Param("org_id")
-	if oid == "" {
-		orgID = 0
 	} else {
-		orgID, _ = strconv.Atoi(oid)
-	}
-	var org models.Organization
-	userOrgs, err := models.UserOrganizationFindByAuthEmail(authEmail, orgID)
-	if len(userOrgs) == 1 {
-		org = userOrgs[0].Organization
-	}
-
-	// no user_organization records yet, see if we have an organization for user's email domain
-	if len(userOrgs) == 0 {
-		org, err = models.OrganizationFindByDomain(domain.EmailDomain(authEmail))
-		if err != nil {
-			return authError(c, http.StatusInternalServerError, "UnableToFindOrgByEmail", "unable to find organization by email domain")
+		// find org for auth config and processing
+		var orgID int
+		oid := c.Param("org_id")
+		if oid == "" {
+			orgID = 0
+		} else {
+			orgID, _ = strconv.Atoi(oid)
 		}
-		if org.AuthType == "" {
-			return authError(c, http.StatusNotFound, "OrgNotFound", "unable to find organization by email domain")
+		userOrgs, err := models.UserOrganizationFindByAuthEmail(authEmail, orgID)
+		if len(userOrgs) == 1 {
+			org = userOrgs[0].Organization
+		}
+
+		// no user_organization records yet, see if we have an organization for user's email domain
+		if len(userOrgs) == 0 {
+			org, err = models.OrganizationFindByDomain(domain.EmailDomain(authEmail))
+			if err != nil {
+				return authError(c, http.StatusInternalServerError, "UnableToFindOrgByEmail", "unable to find organization by email domain")
+			}
+			if org.AuthType == "" {
+				return authError(c, http.StatusNotFound, "OrgNotFound", "unable to find organization by email domain")
+			}
 		}
 	}
 
@@ -116,8 +107,9 @@ func AuthLogin(c buffalo.Context) error {
 			RedirectURL: authResp.RedirectURL,
 		}
 
-		resp.RedirectURL = resp.RedirectURL + "&RelayState=" + clientID
-
+		//// don't commit this -- it's only a convenience for myself
+		//return c.Redirect(303, resp.RedirectURL)
+		//
 		return c.Render(200, render.JSON(resp))
 	}
 
@@ -130,7 +122,7 @@ func AuthLogin(c buffalo.Context) error {
 		}
 	}
 
-	accessToken, expiresAt, err := user.CreateAccessToken(org, authResp.RelayState)
+	accessToken, expiresAt, err := user.CreateAccessToken(org, authResp.ClientID)
 	if err != nil {
 		return authError(c, http.StatusBadRequest, "CreateAccessTokenFailure", err.Error())
 	}

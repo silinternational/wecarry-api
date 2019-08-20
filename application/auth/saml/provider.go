@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/gobuffalo/buffalo"
@@ -102,7 +103,12 @@ func (p *Provider) Login(c buffalo.Context) auth.Response {
 	// check if this is not a saml response and redirect
 	samlResp := c.Param("SAMLResponse")
 	if samlResp == "" {
-		resp.RedirectURL, resp.Error = p.SamlProvider.BuildAuthURL("")
+		relayState := url.Values{}
+		relayState.Add("client_id", c.Param("client_id"))
+		relayState.Add("authEmail", c.Param("authEmail"))
+		relayState.Add("ReturnTo", c.Param("ReturnTo"))
+
+		resp.RedirectURL, resp.Error = p.SamlProvider.BuildAuthURL(relayState.Encode())
 		return resp
 	}
 
@@ -113,8 +119,13 @@ func (p *Provider) Login(c buffalo.Context) auth.Response {
 		return resp
 	}
 	resp.AuthUser = getUserFromAssertion(assertion)
-	resp.RelayState = c.Param("RelayState")
-	fmt.Printf("-------- RelayState: %v\n", c.Param("RelayState"))
+
+	relayState, err := url.ParseQuery(c.Param("RelayState"))
+	if err == nil {
+		resp.ClientID = relayState["client_id"][0]
+		resp.AuthEmail = relayState["authEmail"][0]
+		resp.ReturnTo = relayState["ReturnTo"][0]
+	}
 	return resp
 }
 

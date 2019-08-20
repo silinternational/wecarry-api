@@ -26,7 +26,9 @@ type User struct {
 type Response struct {
 	RedirectURL string
 	AuthUser    *User
-	RelayState  string
+	AuthEmail   string
+	ClientID    string
+	ReturnTo    string
 	Error       error
 }
 
