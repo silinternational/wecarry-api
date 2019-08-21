@@ -183,34 +183,25 @@ func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
 }
 
 func FindUserByAccessToken(accessToken string) (User, error) {
-
-	userAccessToken := UserAccessToken{}
-
 	if accessToken == "" {
 		return User{}, fmt.Errorf("error: access token must not be blank")
 	}
 
-	dbAccessToken := hashClientIdAccessToken(accessToken)
-	// and expires_at > now()
-	if err := DB.Eager().Where("access_token = ?", dbAccessToken).First(&userAccessToken); err != nil {
+	userAccessToken, err := UserAccessTokenFind(accessToken)
+	if err != nil {
 		return User{}, fmt.Errorf("error finding user by access token: %s", err.Error())
 	}
 
-	if userAccessToken.ID == 0 {
+	if userAccessToken == nil || userAccessToken.ID == 0 {
 		return User{}, fmt.Errorf("error finding user by access token")
 	}
 
 	if userAccessToken.ExpiresAt.Before(time.Now()) {
-		err := DB.Destroy(&userAccessToken)
+		err := DB.Destroy(userAccessToken)
 		if err != nil {
 			log.Printf("Unable to delete expired userAccessToken, id: %v", userAccessToken.ID)
 		}
 		return User{}, fmt.Errorf("access token has expired")
-	}
-
-	err := DB.Load(&userAccessToken.User)
-	if err != nil {
-		log.Printf("unable to eagerly load all associations for user: %s", err.Error())
 	}
 
 	return userAccessToken.User, nil
