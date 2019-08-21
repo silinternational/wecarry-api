@@ -383,3 +383,22 @@ func Test_emptyUuidValue(t *testing.T) {
 		t.Errorf("empty uuid value not as expected, got: %s", val.String())
 	}
 }
+
+func TestEmailDomain(t *testing.T) {
+	tests := []struct {
+		name  string
+		email string
+		want  string
+	}{
+		{name: "empty string", email: "", want: ""},
+		{name: "domain only", email: "example.org", want: "example.org"},
+		{name: "full email", email: "user@example.org", want: "example.org"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := EmailDomain(test.email); got != test.want {
+				t.Errorf("incorrect response from EmailDomain(): %v, expected %v", got, test.want)
+			}
+		})
+	}
+}
