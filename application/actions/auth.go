@@ -49,9 +49,6 @@ type AuthResponse struct {
 }
 
 func AuthLogin(c buffalo.Context) error {
-	var clientID string
-	clientID = c.Param("client_id")
-
 	var authEmail string
 	authEmail = c.Param("authEmail")
 
