@@ -78,7 +78,7 @@ func UserOrganizationFindByAuthEmail(authEmail string, orgID int) ([]UserOrganiz
 	params := []interface{}{authEmail}
 
 	if orgID != 0 {
-		where = "auth_email = ? AND organization_id = ?"
+		where += " AND organization_id = ?"
 		params = append(params, orgID)
 	}
 
