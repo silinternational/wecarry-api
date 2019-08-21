@@ -59,6 +59,13 @@ func (r *userResolver) AdminRole(ctx context.Context, obj *models.User) (*Role, 
 	return &a, nil
 }
 
+func (r *userResolver) Organizations(ctx context.Context, obj *models.User) ([]*models.Organization, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return obj.GetOrganizations()
+}
+
 func (r *queryResolver) Users(ctx context.Context) ([]*models.User, error) {
 	db := models.DB
 	var dbUsers []*models.User

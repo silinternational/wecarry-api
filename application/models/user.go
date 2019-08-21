@@ -254,3 +254,17 @@ func createAccessTokenPart() string {
 func hashClientIdAccessToken(accessToken string) string {
 	return fmt.Sprintf("%x", sha256.Sum256([]byte(accessToken)))
 }
+
+func (u *User) GetOrganizations() ([]*Organization, error) {
+	var orgs []*Organization
+	if err := DB.Load(u, "Organizations"); err != nil {
+		return orgs, fmt.Errorf("error getting organizations for user id %v ... %v", u.ID, err)
+	}
+
+	for _, org := range u.Organizations {
+		orgCopy := org
+		orgs = append(orgs, &orgCopy)
+	}
+
+	return orgs, nil
+}

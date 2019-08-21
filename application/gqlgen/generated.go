@@ -114,14 +114,15 @@ type ComplexityRoot struct {
 	}
 
 	User struct {
-		AdminRole func(childComplexity int) int
-		CreatedAt func(childComplexity int) int
-		Email     func(childComplexity int) int
-		FirstName func(childComplexity int) int
-		ID        func(childComplexity int) int
-		LastName  func(childComplexity int) int
-		Nickname  func(childComplexity int) int
-		UpdatedAt func(childComplexity int) int
+		AdminRole     func(childComplexity int) int
+		CreatedAt     func(childComplexity int) int
+		Email         func(childComplexity int) int
+		FirstName     func(childComplexity int) int
+		ID            func(childComplexity int) int
+		LastName      func(childComplexity int) int
+		Nickname      func(childComplexity int) int
+		Organizations func(childComplexity int) int
+		UpdatedAt     func(childComplexity int) int
 	}
 }
 
@@ -189,6 +190,7 @@ type UserResolver interface {
 	CreatedAt(ctx context.Context, obj *models.User) (*string, error)
 	UpdatedAt(ctx context.Context, obj *models.User) (*string, error)
 	AdminRole(ctx context.Context, obj *models.User) (*Role, error)
+	Organizations(ctx context.Context, obj *models.User) ([]*models.Organization, error)
 }
 
 type executableSchema struct {
@@ -614,6 +616,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.User.Nickname(childComplexity), true
 
+	case "User.organizations":
+		if e.complexity.User.Organizations == nil {
+			break
+		}
+
+		return e.complexity.User.Organizations(childComplexity), true
+
 	case "User.updatedAt":
 		if e.complexity.User.UpdatedAt == nil {
 			break
@@ -705,14 +714,15 @@ enum Role {
 }
 
 type User {
-  id: ID!
-  email: String!
-  firstName: String!
-  lastName: String!
-  nickname: String!
-  createdAt: String
-  updatedAt: String
-  adminRole: Role
+    id: ID!
+    email: String!
+    firstName: String!
+    lastName: String!
+    nickname: String!
+    createdAt: String
+    updatedAt: String
+    adminRole: Role
+    organizations: [Organization!]!
 }
 
 enum PostType {
@@ -3017,6 +3027,43 @@ func (ec *executionContext) _User_adminRole(ctx context.Context, field graphql.C
 	return ec.marshalORole2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐRole(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _User_organizations(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "User",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.User().Organizations(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*models.Organization)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNOrganization2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐOrganization(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -5041,6 +5088,20 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 				res = ec._User_adminRole(ctx, field, obj)
 				return res
 			})
+		case "organizations":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._User_organizations(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5384,6 +5445,57 @@ func (ec *executionContext) unmarshalNNewPost2githubᚗcomᚋsilinternationalᚋ
 	return ec.unmarshalInputNewPost(ctx, v)
 }
 
+func (ec *executionContext) marshalNOrganization2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐOrganization(ctx context.Context, sel ast.SelectionSet, v models.Organization) graphql.Marshaler {
+	return ec._Organization(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNOrganization2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐOrganization(ctx context.Context, sel ast.SelectionSet, v []*models.Organization) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		rctx := &graphql.ResolverContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNOrganization2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐOrganization(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalNOrganization2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐOrganization(ctx context.Context, sel ast.SelectionSet, v *models.Organization) graphql.Marshaler {
+	if v == nil {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Organization(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNPost2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐPost(ctx context.Context, sel ast.SelectionSet, v models.Post) graphql.Marshaler {
 	return ec._Post(ctx, sel, &v)
 }
@@ -5541,7 +5653,7 @@ func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋsilinternational�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNUser2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐUser(ctx, sel, v[i])
+			ret[i] = ec.marshalOUser2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐUser(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
