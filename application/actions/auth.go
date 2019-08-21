@@ -51,8 +51,6 @@ type AuthResponse struct {
 func AuthLogin(c buffalo.Context) error {
 	var clientID string
 	clientID = c.Param("client_id")
-	fmt.Printf("----- received clientID %s from request\n", clientID)
-	fmt.Printf("------ request addr: %s\n", c.Request().RemoteAddr)
 
 	var authEmail string
 	authEmail = c.Param("authEmail")
