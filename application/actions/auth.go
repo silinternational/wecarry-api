@@ -69,12 +69,10 @@ func AuthLogin(c buffalo.Context) error {
 			orgID, _ = strconv.Atoi(oid)
 		}
 		userOrgs, err := models.UserOrganizationFindByAuthEmail(authEmail, orgID)
-		if len(userOrgs) == 1 {
+		if len(userOrgs) >= 1 {
 			org = userOrgs[0].Organization
-		}
-
-		// no user_organization records yet, see if we have an organization for user's email domain
-		if len(userOrgs) == 0 {
+		} else {
+			// no user_organization records yet, see if we have an organization for user's email domain
 			org, err = models.OrganizationFindByDomain(domain.EmailDomain(authEmail))
 			if err != nil {
 				return authError(c, http.StatusInternalServerError, "UnableToFindOrgByEmail", "unable to find organization by email domain")
@@ -88,7 +86,8 @@ func AuthLogin(c buffalo.Context) error {
 	// get auth provider for org to process login
 	sp, err := org.GetAuthProvider()
 	if err != nil {
-		return authError(c, http.StatusInternalServerError, "UnableToLoadAuthProvider", "unable to load auth provider for organization")
+		return authError(c, http.StatusInternalServerError, "UnableToLoadAuthProvider",
+			fmt.Sprintf("unable to load auth provider for '%s'", org.Name))
 	}
 
 	authResp := sp.Login(c)
