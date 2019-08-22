@@ -11,14 +11,9 @@ import (
 	"github.com/gobuffalo/buffalo/render"
 
 	"github.com/gobuffalo/buffalo"
-	"github.com/pkg/errors"
-
 	"github.com/silinternational/handcarry-api/domain"
 	"github.com/silinternational/handcarry-api/models"
 )
-
-const SAMLResponseKey = "SAMLResponse"
-const IDPMetadataFile = "./samlmetadata/idp-metadata.xml"
 
 type AuthError struct {
 	Code    string `json:"Code"`
@@ -49,38 +44,78 @@ type AuthResponse struct {
 }
 
 func AuthLogin(c buffalo.Context) error {
-	var authEmail string
-	authEmail = c.Param("authEmail")
+	var clientID string
+	clientID, ok := c.Session().Get("ClientID").(string)
+	if !ok {
+		clientID = c.Param("client_id")
+		if clientID == "" {
+			return authError(c, http.StatusBadRequest, "MissingClientID", "client_id is required to login")
+		}
+		c.Session().Set("ClientID", clientID)
+	}
 
-	var org models.Organization
-	if authEmail == "" {
-		// TODO: find a way around this hack without using session storage
-		var err error
-		if org, err = models.OrganizationFindByDomain("sil.org"); err != nil {
+	var authEmail string
+	authEmail, ok = c.Session().Get("AuthEmail").(string)
+	if !ok {
+		authEmail = c.Param("authEmail")
+		if authEmail == "" {
 			return authError(c, http.StatusBadRequest, "MissingAuthEmail", "authEmail is required to login")
 		}
+		c.Session().Set("AuthEmail", authEmail)
+	}
+
+	returnTo := c.Param("ReturnTo")
+	if returnTo == "" {
+		returnTo = "/"
+	}
+	c.Session().Set("ReturnTo", returnTo)
+
+	err := c.Session().Save()
+	if err != nil {
+		return authError(c, http.StatusInternalServerError, "ServerError", "unable to save session")
+	}
+
+	// find org for auth config and processing
+	var orgID int
+	oid := c.Param("org_id")
+	if oid == "" {
+		orgID = 0
 	} else {
-		// find org for auth config and processing
-		var orgID int
-		oid := c.Param("org_id")
-		if oid == "" {
-			orgID = 0
-		} else {
-			orgID, _ = strconv.Atoi(oid)
+		orgID, _ = strconv.Atoi(oid)
+	}
+
+	var org models.Organization
+	userOrgs, err := models.UserOrganizationFindByAuthEmail(authEmail, orgID)
+	if len(userOrgs) == 1 {
+		org = userOrgs[0].Organization
+	}
+
+	// no user_organization records yet, see if we have an organization for user's email domain
+	if len(userOrgs) == 0 {
+		org, err = models.OrganizationFindByDomain(domain.EmailDomain(authEmail))
+		if err != nil {
+			return authError(c, http.StatusInternalServerError, "UnableToFindOrgByEmail", "unable to find organization by email domain")
 		}
-		userOrgs, err := models.UserOrganizationFindByAuthEmail(authEmail, orgID)
-		if len(userOrgs) >= 1 {
-			org = userOrgs[0].Organization
-		} else {
-			// no user_organization records yet, see if we have an organization for user's email domain
-			org, err = models.OrganizationFindByDomain(domain.EmailDomain(authEmail))
-			if err != nil {
-				return authError(c, http.StatusInternalServerError, "UnableToFindOrgByEmail", "unable to find organization by email domain")
-			}
-			if org.AuthType == "" {
-				return authError(c, http.StatusNotFound, "OrgNotFound", "unable to find organization by email domain")
-			}
+		if org.AuthType == "" {
+			return authError(c, http.StatusNotFound, "OrgNotFound", "unable to find organization by email domain")
 		}
+	}
+
+	// User has more than one organization affiliation, return list to choose from
+	if len(userOrgs) > 1 {
+		var orgOpts []AuthOrgOption
+		for _, uo := range userOrgs {
+			orgOpts = append(orgOpts, AuthOrgOption{
+				ID:      strconv.Itoa(uo.ID),
+				Name:    uo.Organization.Name,
+				LogoURL: uo.Organization.Url.String, // TODO change to a logo url when one is added to organization
+			})
+		}
+
+		resp := AuthResponse{
+			AuthOrgOptions: &orgOpts,
+		}
+		return c.Render(200, render.JSON(resp))
 	}
 
 	// get auth provider for org to process login
@@ -101,15 +136,16 @@ func AuthLogin(c buffalo.Context) error {
 			RedirectURL: authResp.RedirectURL,
 		}
 
-		//// don't commit this -- it's only a convenience for myself
-		//return c.Redirect(303, resp.RedirectURL)
-		//
 		return c.Render(200, render.JSON(resp))
 	}
 
 	// if we have an authuser, find or create user in local db and finish login
 	var user models.User
 	if authResp.AuthUser != nil {
+		// login was success, clear session so new login can be initiated if needed
+		c.Session().Clear()
+		_ = c.Session().Save()
+
 		err := user.FindOrCreateFromAuthUser(org.ID, authResp.AuthUser)
 		if err != nil {
 			return authError(c, http.StatusBadRequest, "AuthFailure", err.Error())
@@ -130,7 +166,7 @@ func AuthLogin(c buffalo.Context) error {
 		})
 	}
 
-	authUser := &AuthUser{
+	authUser := AuthUser{
 		ID:                   user.Uuid.String(),
 		Name:                 user.FirstName + " " + user.LastName,
 		Nickname:             user.Nickname,
@@ -140,7 +176,7 @@ func AuthLogin(c buffalo.Context) error {
 		AccessTokenExpiresAt: expiresAt,
 	}
 
-	return c.Redirect(302, getLoginSuccessRedirectURL(*authUser))
+	return c.Redirect(302, getLoginSuccessRedirectURL(authUser))
 }
 
 // returnAuthError takes a error code and message and renders AuthResponse to json and returns
@@ -199,12 +235,12 @@ func SetCurrentUser(next buffalo.Handler) buffalo.Handler {
 	return func(c buffalo.Context) error {
 		bearerToken := domain.GetBearerTokenFromRequest(c.Request())
 		if bearerToken == "" {
-			return errors.WithStack(fmt.Errorf("no Bearer token provided"))
+			return fmt.Errorf("no Bearer token provided")
 		}
 
 		user, err := models.FindUserByAccessToken(bearerToken)
 		if err != nil {
-			return errors.WithStack(err)
+			return c.Error(401, fmt.Errorf("invalid bearer token"))
 		}
 		c.Set("current_user", user)
 

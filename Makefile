@@ -46,6 +46,11 @@ testdb:
 test: migratetestdb
 	docker-compose run --rm test
 
+testenv: migratetestdb
+	docker-compose run --rm test bash
+
 clean:
 	docker-compose kill
 	docker-compose rm -f
+
+fresh: clean dev

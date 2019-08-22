@@ -122,34 +122,31 @@ func CreateUserAccessTokens(fixtures UserAccessTokens) error {
 }
 
 func resetTables(t *testing.T) {
-	resetUsersTable(t)
-	resetOrganizationsTable(t)
-}
+	tablesInOrder := []string{
+		"user_access_tokens",
+		"user_organizations",
+		"organization_domains",
+		"thread_participants",
+		"messages",
+		"threads",
+		"posts",
+		"organizations",
+		"users",
+	}
 
-func resetUsersTable(t *testing.T) {
-	// delete all existing users
-	err := models.DB.RawQuery("delete from users").Exec()
-	if err != nil {
-		t.Errorf("Failed to delete all users for test, error: %s", err)
-		t.FailNow()
-	}
-	err = models.DB.RawQuery("ALTER SEQUENCE users_id_seq RESTART WITH 1").Exec()
-	if err != nil {
-		t.Errorf("Failed to delete all users for test, error: %s", err)
-		t.FailNow()
-	}
-}
+	for _, table := range tablesInOrder {
+		dq := fmt.Sprintf("delete from %s", table)
+		aq := fmt.Sprintf("ALTER SEQUENCE %s_id_seq RESTART WITH 1", table)
 
-func resetOrganizationsTable(t *testing.T) {
-	// delete all existing users
-	err := models.DB.RawQuery("delete from organizations").Exec()
-	if err != nil {
-		t.Errorf("Failed to delete all organizations for test, error: %s", err)
-		t.FailNow()
-	}
-	err = models.DB.RawQuery("ALTER SEQUENCE organizations_id_seq RESTART WITH 1").Exec()
-	if err != nil {
-		t.Errorf("Failed to delete all organizations for test, error: %s", err)
-		t.FailNow()
+		err := models.DB.RawQuery(dq).Exec()
+		if err != nil {
+			t.Errorf("Failed to delete all %s for test, error: %s", table, err)
+			t.FailNow()
+		}
+		err = models.DB.RawQuery(aq).Exec()
+		if err != nil {
+			t.Errorf("Failed to reset sequence on %s for test, error: %s", table, err)
+			t.FailNow()
+		}
 	}
 }
