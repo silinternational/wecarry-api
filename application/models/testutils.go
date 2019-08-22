@@ -2,9 +2,10 @@ package models
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/gobuffalo/buffalo/genny/build/_fixtures/coke/models"
 	"github.com/gobuffalo/pop"
-	"testing"
 )
 
 func BounceTestDB() error {

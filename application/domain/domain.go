@@ -143,3 +143,13 @@ func IsStringInSlice(needle string, haystack []string) bool {
 
 	return false
 }
+
+func EmailDomain(email string) string {
+	// If email includes @ it is full email address, otherwise it is just domain
+	if strings.Contains(email, "@") {
+		parts := strings.Split(email, "@")
+		return parts[1]
+	} else {
+		return email
+	}
+}

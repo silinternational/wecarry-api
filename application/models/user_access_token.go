@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/gobuffalo/pop"
@@ -10,13 +11,15 @@ import (
 )
 
 type UserAccessToken struct {
-	ID          int       `json:"id" db:"id"`
-	CreatedAt   time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
-	UserID      int       `json:"user_id" db:"user_id"`
-	AccessToken string    `json:"access_token" db:"access_token"`
-	ExpiresAt   time.Time `json:"expires_at" db:"expires_at"`
-	User        User      `belongs_to:"users"`
+	ID                 int              `json:"id" db:"id"`
+	CreatedAt          time.Time        `json:"created_at" db:"created_at"`
+	UpdatedAt          time.Time        `json:"updated_at" db:"updated_at"`
+	UserID             int              `json:"user_id" db:"user_id"`
+	UserOrganizationID int              `json:"user_organization_id" db:"user_organization_id"`
+	AccessToken        string           `json:"access_token" db:"access_token"`
+	ExpiresAt          time.Time        `json:"expires_at" db:"expires_at"`
+	User               User             `belongs_to:"users"`
+	UserOrganization   UserOrganization `belongs_to:"user_organizations"`
 }
 
 // String is not required by pop and may be deleted
@@ -58,12 +61,20 @@ func (u *UserAccessToken) ValidateUpdate(tx *pop.Connection) (*validate.Errors, 
 
 func DeleteAccessToken(accessToken string) error {
 	userAccessToken := UserAccessToken{
-		AccessToken: accessToken,
+		AccessToken: hashClientIdAccessToken(accessToken),
 	}
-	err := DB.Where("access_token = ?", userAccessToken).First(userAccessToken)
+	err := DB.Where("access_token = ?", userAccessToken.AccessToken).First(&userAccessToken)
 	if err != nil {
 		return err
 	}
 
-	return DB.Destroy(userAccessToken)
+	return DB.Destroy(&userAccessToken)
+}
+
+func UserAccessTokenFind(accessToken string) (*UserAccessToken, error) {
+	userAccessToken := UserAccessToken{}
+	if err := DB.Eager().Where("access_token = ?", hashClientIdAccessToken(accessToken)).First(&userAccessToken); err != nil {
+		return &userAccessToken, fmt.Errorf("failed to find access token, %v", err)
+	}
+	return &userAccessToken, nil
 }

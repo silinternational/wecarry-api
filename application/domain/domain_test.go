@@ -7,6 +7,8 @@ import (
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/gofrs/uuid"
 )
 
 func TestGetRequestData(t *testing.T) {
@@ -372,5 +374,31 @@ func TestIsStringInSlice(t *testing.T) {
 			t.Errorf("Bad results for test set i = %v. Expected %v, but got %v", i, expected, results)
 			return
 		}
+	}
+}
+
+func Test_emptyUuidValue(t *testing.T) {
+	val := uuid.UUID{}
+	if val.String() != "00000000-0000-0000-0000-000000000000" {
+		t.Errorf("empty uuid value not as expected, got: %s", val.String())
+	}
+}
+
+func TestEmailDomain(t *testing.T) {
+	tests := []struct {
+		name  string
+		email string
+		want  string
+	}{
+		{name: "empty string", email: "", want: ""},
+		{name: "domain only", email: "example.org", want: "example.org"},
+		{name: "full email", email: "user@example.org", want: "example.org"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := EmailDomain(test.email); got != test.want {
+				t.Errorf("incorrect response from EmailDomain(): %v, expected %v", got, test.want)
+			}
+		})
 	}
 }

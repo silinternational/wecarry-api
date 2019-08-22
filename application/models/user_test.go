@@ -6,14 +6,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/silinternational/handcarry-api/auth"
+
 	"github.com/gobuffalo/buffalo/genny/build/_fixtures/coke/models"
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
-	"github.com/silinternational/handcarry-api/auth/saml"
 	"github.com/silinternational/handcarry-api/domain"
 )
 
-func TestUser_FindOrCreateFromSamlUser(t *testing.T) {
+func TestUser_FindOrCreateFromAuthUser(t *testing.T) {
 	resetTables(t)
 
 	// create org for test
@@ -33,7 +34,7 @@ func TestUser_FindOrCreateFromSamlUser(t *testing.T) {
 	type args struct {
 		tx       *pop.Connection
 		orgID    int
-		samlUser saml.SamlUser
+		authUser *auth.User
 	}
 	tests := []struct {
 		name    string
@@ -44,9 +45,8 @@ func TestUser_FindOrCreateFromSamlUser(t *testing.T) {
 		{
 			name: "create new user: test_user1",
 			args: args{
-				tx:    models.DB,
 				orgID: org.ID,
-				samlUser: saml.SamlUser{
+				authUser: &auth.User{
 					FirstName: "Test",
 					LastName:  "User",
 					Email:     "test_user1@domain.com",
@@ -59,9 +59,8 @@ func TestUser_FindOrCreateFromSamlUser(t *testing.T) {
 		{
 			name: "find existing user: test_user1",
 			args: args{
-				tx:    models.DB,
 				orgID: org.ID,
-				samlUser: saml.SamlUser{
+				authUser: &auth.User{
 					FirstName: "Test",
 					LastName:  "User",
 					Email:     "test_user1@domain.com",
@@ -74,9 +73,8 @@ func TestUser_FindOrCreateFromSamlUser(t *testing.T) {
 		{
 			name: "conflicting user",
 			args: args{
-				tx:    models.DB,
 				orgID: org.ID,
-				samlUser: saml.SamlUser{
+				authUser: &auth.User{
 					FirstName: "Test",
 					LastName:  "User",
 					Email:     "test_user1@domain.com",
@@ -90,9 +88,9 @@ func TestUser_FindOrCreateFromSamlUser(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			u := &User{}
-			err := u.FindOrCreateFromSamlUser(tt.args.tx, tt.args.orgID, tt.args.samlUser)
+			err := u.FindOrCreateFromAuthUser(tt.args.orgID, tt.args.authUser)
 			if err != nil && !tt.wantErr {
-				t.Errorf("FindOrCreateFromSamlUser() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("FindOrCreateFromAuthUser() error = %v, wantErr %v", err, tt.wantErr)
 			} else if u.ID != tt.wantID {
 				t.Errorf("ID on user is not what was wanted. Got %v, wanted %v", u.ID, tt.wantID)
 			}
@@ -101,46 +99,21 @@ func TestUser_FindOrCreateFromSamlUser(t *testing.T) {
 }
 
 func TestFindUserByAccessToken(t *testing.T) {
-	resetTables(t) // in case other tests don't clean up
-
-	// Load Organization test fixtures
-	org := Organization{
-		Name:       "ACME",
-		Uuid:       domain.GetUuid(),
-		AuthType:   "saml2",
-		AuthConfig: "[]",
-	}
-	if err := DB.Create(&org); err != nil {
-		t.Errorf("could not create test org ... %v", err)
-		t.FailNow()
-	}
-
-	// Load User test fixtures
-	user := User{
-		Email:      "user@example.com",
-		FirstName:  "Existing",
-		LastName:   "User",
-		Nickname:   "Existing User",
-		AuthOrgID:  org.ID,
-		AuthOrgUid: "existing_user",
-		Uuid:       domain.GetUuid(),
-	}
-	if err := DB.Create(&user); err != nil {
-		t.Errorf("could not create test user ... %v", err)
-		t.FailNow()
-	}
+	_, user, userOrgs := createUserFixtures(t)
 
 	// Load access token test fixtures
 	tokens := UserAccessTokens{
 		{
-			UserID:      user.ID,
-			AccessToken: hashClientIdAccessToken("abc123"),
-			ExpiresAt:   time.Unix(0, 0),
+			UserID:             user.ID,
+			UserOrganizationID: userOrgs[0].ID,
+			AccessToken:        hashClientIdAccessToken("abc123"),
+			ExpiresAt:          time.Unix(0, 0),
 		},
 		{
-			UserID:      user.ID,
-			AccessToken: hashClientIdAccessToken("xyz789"),
-			ExpiresAt:   time.Date(2099, time.December, 31, 0, 0, 0, 0, time.UTC),
+			UserID:             user.ID,
+			UserOrganizationID: userOrgs[0].ID,
+			AccessToken:        hashClientIdAccessToken("xyz789"),
+			ExpiresAt:          time.Date(2099, time.December, 31, 0, 0, 0, 0, time.UTC),
 		},
 	}
 
@@ -209,25 +182,21 @@ func TestValidateUser(t *testing.T) {
 		{
 			name: "minimum",
 			user: User{
-				Email:      "user@example.com",
-				FirstName:  "A",
-				LastName:   "User",
-				Nickname:   "A User",
-				AuthOrgID:  1,
-				AuthOrgUid: "a_user",
-				Uuid:       domain.GetUuid(),
+				Email:     "user@example.com",
+				FirstName: "A",
+				LastName:  "User",
+				Nickname:  "A User",
+				Uuid:      domain.GetUuid(),
 			},
 			wantErr: false,
 		},
 		{
 			name: "missing email",
 			user: User{
-				FirstName:  "A",
-				LastName:   "User",
-				Nickname:   "A User",
-				AuthOrgID:  1,
-				AuthOrgUid: "a_user",
-				Uuid:       domain.GetUuid(),
+				FirstName: "A",
+				LastName:  "User",
+				Nickname:  "A User",
+				Uuid:      domain.GetUuid(),
 			},
 			wantErr:  true,
 			errField: "email",
@@ -235,12 +204,10 @@ func TestValidateUser(t *testing.T) {
 		{
 			name: "missing first_name",
 			user: User{
-				Email:      "user@example.com",
-				LastName:   "User",
-				Nickname:   "A User",
-				AuthOrgID:  1,
-				AuthOrgUid: "a_user",
-				Uuid:       domain.GetUuid(),
+				Email:    "user@example.com",
+				LastName: "User",
+				Nickname: "A User",
+				Uuid:     domain.GetUuid(),
 			},
 			wantErr:  true,
 			errField: "first_name",
@@ -248,12 +215,10 @@ func TestValidateUser(t *testing.T) {
 		{
 			name: "missing last_name",
 			user: User{
-				Email:      "user@example.com",
-				FirstName:  "A",
-				Nickname:   "A User",
-				AuthOrgID:  1,
-				AuthOrgUid: "a_user",
-				Uuid:       domain.GetUuid(),
+				Email:     "user@example.com",
+				FirstName: "A",
+				Nickname:  "A User",
+				Uuid:      domain.GetUuid(),
 			},
 			wantErr:  true,
 			errField: "last_name",
@@ -261,51 +226,21 @@ func TestValidateUser(t *testing.T) {
 		{
 			name: "missing nickname",
 			user: User{
-				Email:      "user@example.com",
-				FirstName:  "A",
-				LastName:   "User",
-				AuthOrgID:  1,
-				AuthOrgUid: "a_user",
-				Uuid:       domain.GetUuid(),
+				Email:     "user@example.com",
+				FirstName: "A",
+				LastName:  "User",
+				Uuid:      domain.GetUuid(),
 			},
 			wantErr:  true,
 			errField: "nickname",
 		},
 		{
-			name: "missing auth_org_id",
-			user: User{
-				Email:      "user@example.com",
-				FirstName:  "A",
-				LastName:   "User",
-				Nickname:   "A User",
-				AuthOrgUid: "a_user",
-				Uuid:       domain.GetUuid(),
-			},
-			wantErr:  true,
-			errField: "auth_org_id",
-		},
-		{
-			name: "missing auth_org_uid",
+			name: "missing uuid",
 			user: User{
 				Email:     "user@example.com",
 				FirstName: "A",
 				LastName:  "User",
 				Nickname:  "A User",
-				AuthOrgID: 1,
-				Uuid:      domain.GetUuid(),
-			},
-			wantErr:  true,
-			errField: "auth_org_uid",
-		},
-		{
-			name: "missing uuid",
-			user: User{
-				Email:      "user@example.com",
-				FirstName:  "A",
-				LastName:   "User",
-				Nickname:   "A User",
-				AuthOrgID:  1,
-				AuthOrgUid: "a_user",
 			},
 			wantErr:  true,
 			errField: "uuid",
@@ -328,34 +263,7 @@ func TestValidateUser(t *testing.T) {
 }
 
 func TestCreateAccessToken(t *testing.T) {
-	resetTables(t)
-
-	// Load Organization test fixtures
-	org := Organization{
-		Name:       "ACME",
-		Uuid:       domain.GetUuid(),
-		AuthType:   "saml2",
-		AuthConfig: "[]",
-	}
-	if err := DB.Create(&org); err != nil {
-		t.Errorf("could not create test org ... %v", err)
-		t.FailNow()
-	}
-
-	// Load User test fixtures
-	user := User{
-		Email:      "user@example.com",
-		FirstName:  "Existing",
-		LastName:   "User",
-		Nickname:   "Existing User",
-		AuthOrgID:  org.ID,
-		AuthOrgUid: "existing_user",
-		Uuid:       domain.GetUuid(),
-	}
-	if err := DB.Create(&user); err != nil {
-		t.Errorf("could not create test user ... %v", err)
-		t.FailNow()
-	}
+	orgs, user, _ := createUserFixtures(t)
 
 	type args struct {
 		user     User
@@ -383,7 +291,7 @@ func TestCreateAccessToken(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			expectedExpiry := createAccessTokenExpiry().Unix()
-			token, expiry, err := test.args.user.CreateAccessToken(DB, test.args.clientID)
+			token, expiry, err := test.args.user.CreateAccessToken(orgs[0], test.args.clientID)
 			if err != nil {
 				t.Errorf("CreateAccessToken() returned error: %v", err)
 			}
@@ -408,6 +316,41 @@ func TestCreateAccessToken(t *testing.T) {
 }
 
 func TestGetOrgIDs(t *testing.T) {
+	_, user, _ := createUserFixtures(t)
+
+	tests := []struct {
+		name string
+		user User
+		want []int
+	}{
+		{
+			name: "basic",
+			user: user,
+			want: []int{1, 2},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if err := DB.Load(&test.user); err != nil {
+				t.Errorf("Failed to load related records on user %v", user.ID)
+				t.FailNow()
+			}
+			got := test.user.GetOrgIDs()
+			ints := make([]int, len(got))
+			for i, id := range got {
+				ints[i] = id.(int)
+			}
+
+			if !reflect.DeepEqual(ints, test.want) {
+				t.Errorf("GetOrgIDs() = \"%v\", want \"%v\"", ints, test.want)
+			}
+		})
+	}
+	resetTables(t) // Pack it in, Pack it out a/k/a "Leave No Trace"
+}
+
+func createUserFixtures(t *testing.T) (Organizations, User, UserOrganizations) {
+	// in case other tests don't clean up
 	resetTables(t)
 
 	// Load Organization test fixtures
@@ -434,54 +377,38 @@ func TestGetOrgIDs(t *testing.T) {
 
 	// Load User test fixtures
 	user := User{
-		Email:      "user@example.com",
-		FirstName:  "Existing",
-		LastName:   "User",
-		Nickname:   "Existing User",
-		AuthOrgID:  orgs[0].ID,
-		AuthOrgUid: "existing_user",
-		Uuid:       domain.GetUuid(),
+		Email:     "user@example.com",
+		FirstName: "Existing",
+		LastName:  "User",
+		Nickname:  "Existing User",
+		Uuid:      domain.GetUuid(),
 	}
 	if err := DB.Create(&user); err != nil {
 		t.Errorf("could not create test user ... %v", err)
 		t.FailNow()
 	}
 
-	for i := range orgs {
-		uo := UserOrganization{
-			OrganizationID: orgs[i].ID,
+	// Load UserOrganization test fixtures
+	userOrgs := UserOrganizations{
+		{
+			OrganizationID: orgs[0].ID,
 			UserID:         user.ID,
-			Role:           "user",
-		}
-		if err := DB.Create(&uo); err != nil {
+			AuthID:         "existing_user",
+			AuthEmail:      "user@example.com",
+		},
+		{
+			OrganizationID: orgs[1].ID,
+			UserID:         user.ID,
+			AuthID:         "existing_user",
+			AuthEmail:      "user@example.com",
+		},
+	}
+	for i := range userOrgs {
+		if err := DB.Create(&userOrgs[i]); err != nil {
 			t.Errorf("could not create test user org ... %v", err)
 			t.FailNow()
 		}
 	}
 
-	tests := []struct {
-		name string
-		user User
-		want []int
-	}{
-		{
-			name: "basic",
-			user: user,
-			want: []int{1, 2},
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			if err := DB.Load(&test.user); err != nil {
-				t.Errorf("Failed to load related records on user %v", user.ID)
-				t.FailNow()
-			}
-			got := test.user.GetOrgIDs()
-
-			if !reflect.DeepEqual(got, test.want) {
-				t.Errorf("GetOrgIDs() = \"%v\", want \"%v\"", got, test.want)
-			}
-		})
-	}
-	resetTables(t) // Pack it in, Pack it out a/k/a "Leave No Trace"
+	return orgs, user, userOrgs
 }

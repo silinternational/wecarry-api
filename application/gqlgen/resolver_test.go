@@ -2,17 +2,19 @@ package gqlgen
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/gobuffalo/nulls"
 	"github.com/gofrs/uuid"
 	"github.com/silinternational/handcarry-api/domain"
 	"github.com/silinternational/handcarry-api/models"
-	"time"
 
-	"github.com/99designs/gqlgen/client"
-	"github.com/99designs/gqlgen/handler"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/99designs/gqlgen/client"
+	"github.com/99designs/gqlgen/handler"
 )
 
 func newHandler() http.HandlerFunc {
@@ -44,14 +46,12 @@ func TestResolver(t *testing.T) {
 	userUuid1, _ := uuid.FromString("0265d116-b54e-4712-952f-eae1d6bcdcd1")
 	userFix := models.Users{
 		{
-			ID:         1,
-			Uuid:       userUuid1,
-			Email:      "clark.kent@example.org",
-			FirstName:  "Clark",
-			LastName:   "Kent",
-			Nickname:   "Reporter38",
-			AuthOrgID:  1,
-			AuthOrgUid: "clark_kent",
+			ID:        1,
+			Uuid:      userUuid1,
+			Email:     "clark.kent@example.org",
+			FirstName: "Clark",
+			LastName:  "Kent",
+			Nickname:  "Reporter38",
 		},
 	}
 	if err := models.CreateUsers(userFix); err != nil {
@@ -282,4 +282,6 @@ func TestResolver(t *testing.T) {
 		t.Errorf("bad user Nickname results. \n  Expected %v, \n   but got %v", strExpected, strResults)
 		return
 	}
+
+	models.BounceTestDB()
 }
