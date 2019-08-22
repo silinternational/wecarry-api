@@ -331,10 +331,6 @@ func TestGetOrgIDs(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			if err := DB.Load(&test.user); err != nil {
-				t.Errorf("Failed to load related records on user %v", user.ID)
-				t.FailNow()
-			}
 			got := test.user.GetOrgIDs()
 			ints := make([]int, len(got))
 			for i, id := range got {
@@ -411,4 +407,37 @@ func createUserFixtures(t *testing.T) (Organizations, User, UserOrganizations) {
 	}
 
 	return orgs, user, userOrgs
+}
+
+func TestGetOrganizations(t *testing.T) {
+	orgs, user, _ := createUserFixtures(t)
+
+	tests := []struct {
+		name string
+		user User
+		want []string
+	}{
+		{
+			name: "basic",
+			user: user,
+			want: []string{orgs[0].Name, orgs[1].Name},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := test.user.GetOrganizations()
+			if err != nil {
+				t.Errorf("GetOrganizations() returned error: %s", err)
+			}
+
+			orgNames := make([]string, len(got))
+			for i, o := range got {
+				orgNames[i] = o.Name
+			}
+			if !reflect.DeepEqual(orgNames, test.want) {
+				t.Errorf("GetOrgIDs() = \"%v\", want \"%v\"", got, test.want)
+			}
+		})
+	}
+	resetTables(t) // Pack it in, Pack it out a/k/a "Leave No Trace"
 }
