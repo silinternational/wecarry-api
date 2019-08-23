@@ -270,8 +270,9 @@ func TestCreateAccessToken(t *testing.T) {
 		clientID string
 	}
 	tests := []struct {
-		name string
-		args args
+		name    string
+		args    args
+		wantErr bool
 	}{
 		{
 			name: "basic",
@@ -279,6 +280,7 @@ func TestCreateAccessToken(t *testing.T) {
 				user:     user,
 				clientID: "abc123",
 			},
+			wantErr: false,
 		},
 		{
 			name: "empty client ID",
@@ -286,28 +288,35 @@ func TestCreateAccessToken(t *testing.T) {
 				user:     user,
 				clientID: "",
 			},
+			wantErr: true,
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			expectedExpiry := createAccessTokenExpiry().Unix()
 			token, expiry, err := test.args.user.CreateAccessToken(orgs[0], test.args.clientID)
-			if err != nil {
-				t.Errorf("CreateAccessToken() returned error: %v", err)
-			}
-			hash := hashClientIdAccessToken(test.args.clientID + token)
+			if test.wantErr {
+				if err == nil {
+					t.Errorf("expected error, but did not get one")
+				}
+			} else {
+				if err != nil && !test.wantErr {
+					t.Errorf("CreateAccessToken() returned error: %v", err)
+				}
+				hash := hashClientIdAccessToken(test.args.clientID + token)
 
-			var dbToken UserAccessToken
-			if err := DB.Where(fmt.Sprintf("access_token='%v'", hash)).First(&dbToken); err != nil {
-				t.Errorf("Can't find new token (%v)", err)
-			}
+				var dbToken UserAccessToken
+				if err := DB.Where(fmt.Sprintf("access_token='%v'", hash)).First(&dbToken); err != nil {
+					t.Errorf("Can't find new token (%v)", err)
+				}
 
-			if expiry-expectedExpiry > 1 {
-				t.Errorf("Unexpected token expiry: %v, expected %v", expiry, expectedExpiry)
-			}
+				if expiry-expectedExpiry > 1 {
+					t.Errorf("Unexpected token expiry: %v, expected %v", expiry, expectedExpiry)
+				}
 
-			if dbToken.ExpiresAt.Unix()-expectedExpiry > 1 {
-				t.Errorf("Unexpected token expiry: %v, expected %v", dbToken.ExpiresAt.Unix(), expectedExpiry)
+				if dbToken.ExpiresAt.Unix()-expectedExpiry > 1 {
+					t.Errorf("Unexpected token expiry: %v, expected %v", dbToken.ExpiresAt.Unix(), expectedExpiry)
+				}
 			}
 		})
 	}

@@ -78,6 +78,9 @@ func (u *User) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 
 // CreateAccessToken - Create and store new UserAccessToken
 func (u *User) CreateAccessToken(org Organization, clientID string) (string, int64, error) {
+	if clientID == "" {
+		return "", 0, fmt.Errorf("cannot create token with empty clientID for user %s", u.Nickname)
+	}
 
 	token := createAccessTokenPart()
 	hash := hashClientIdAccessToken(clientID + token)
