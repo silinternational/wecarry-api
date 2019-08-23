@@ -3,8 +3,9 @@ package models
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/silinternational/handcarry-api/domain"
 	"time"
+
+	"github.com/silinternational/handcarry-api/domain"
 
 	"github.com/gofrs/uuid"
 

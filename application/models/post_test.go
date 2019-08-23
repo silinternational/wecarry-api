@@ -136,3 +136,73 @@ func TestPost_Validate(t *testing.T) {
 		})
 	}
 }
+
+func CreatePostFixtures(t *testing.T, user User) []Post {
+	if err := DB.Load(&user, "Organizations"); err != nil {
+		t.Errorf("failed to load organizations on user fixture, %s", err)
+	}
+
+	// Load UserOrganization test fixtures
+	posts := []Post{
+		{
+			CreatedByID:    user.ID,
+			Type:           "Request",
+			OrganizationID: user.Organizations[0].ID,
+			Title:          "A Request",
+			Size:           "Medium",
+			Status:         "New",
+			Uuid:           domain.GetUuid(),
+		},
+		{
+			CreatedByID:    user.ID,
+			Type:           "Offer",
+			OrganizationID: user.Organizations[0].ID,
+			Title:          "An Offer",
+			Size:           "Medium",
+			Status:         "New",
+			Uuid:           domain.GetUuid(),
+		},
+	}
+	for i := range posts {
+		if err := DB.Create(&posts[i]); err != nil {
+			t.Errorf("could not create test user org ... %v", err)
+			t.FailNow()
+		}
+	}
+
+	return posts
+}
+
+func TestFindPostByUUID(t *testing.T) {
+	_, user, _ := CreateUserFixtures(t)
+	posts := CreatePostFixtures(t, user)
+
+	tests := []struct {
+		name    string
+		uuid    string
+		want    Post
+		wantErr bool
+	}{
+		{name: "good", uuid: posts[0].Uuid.String(), want: posts[0]},
+		{name: "blank uuid", uuid: "", wantErr: true},
+		{name: "wrong uuid", uuid: domain.GetUuid().String(), wantErr: true},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := FindPostByUUID(test.uuid)
+			if test.wantErr {
+				if (err != nil) != test.wantErr {
+					t.Errorf("FindPostByUUID() did not return expected error")
+				}
+			} else {
+				if err != nil {
+					t.Errorf("FindPostByUUID() error = %v", err)
+				} else if got.Uuid != test.want.Uuid {
+					t.Errorf("FindPostByUUID() got = %s, want %s", got.Uuid, test.want.Uuid)
+				}
+			}
+		})
+	}
+
+	resetTables(t)
+}
