@@ -76,6 +76,8 @@ func TestUserAccessToken_DeleteByBearerToken(t *testing.T) {
 			}
 		})
 	}
+
+	resetTables(t)
 }
 
 func TestUserAccessToken_FindByBearerToken(t *testing.T) {
