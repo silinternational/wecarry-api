@@ -37,7 +37,7 @@ func App() *buffalo.App {
 			PreWares: []buffalo.PreWare{
 				cors.New(cors.Options{
 					AllowCredentials: true,
-					AllowedOrigins:   []string{envy.Get("UI_ORIGIN", "*")},
+					AllowedOrigins:   []string{envy.Get("UI_URL", "*")},
 					AllowedMethods:   []string{"HEAD", "GET", "POST", "PUT", "PATCH", "DELETE"},
 					AllowedHeaders:   []string{"*"},
 				}).Handler,

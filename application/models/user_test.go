@@ -409,6 +409,64 @@ func createUserFixtures(t *testing.T) (Organizations, User, UserOrganizations) {
 	return orgs, user, userOrgs
 }
 
+// Ensure multiple access tokens for same organization are allowed (to support multiple tabs/browsers)
+func TestUser_CreateAccessToken(t *testing.T) {
+	resetTables(t)
+
+	// setup fixtures for test
+	user := &User{
+		ID:        1,
+		Email:     "test@test.com",
+		FirstName: "test",
+		LastName:  "user",
+		Nickname:  "Tester",
+		AdminRole: nulls.String{},
+		Uuid:      domain.GetUuid(),
+	}
+	_ = DB.Create(user)
+
+	org := &Organization{
+		ID:         1,
+		Name:       "testorg",
+		Url:        nulls.String{},
+		AuthType:   "saml",
+		AuthConfig: "{}",
+		Uuid:       domain.GetUuid(),
+	}
+	_ = DB.Create(org)
+
+	userOrg := &UserOrganization{
+		ID:             1,
+		OrganizationID: 1,
+		UserID:         1,
+		Role:           UserOrganizationRoleMember,
+		AuthID:         "abc123",
+		AuthEmail:      "test@test.com",
+		LastLogin:      time.Now(),
+	}
+	_ = DB.Create(userOrg)
+
+	accessToken1, _, err := user.CreateAccessToken(*org, "abc1234")
+	if err != nil {
+		t.Errorf("unable to create access token 1: %s", err)
+	}
+	accessToken2, _, err := user.CreateAccessToken(*org, "1234abc")
+	if err != nil {
+		t.Errorf("unable to create access token 2: %s", err)
+	}
+
+	if accessToken1 == accessToken2 {
+		t.Error("got same access tokens after two calls")
+	}
+
+	uat := &UserAccessToken{}
+	count, err := DB.Where("user_id = ? and user_organization_id = ?", user.ID, userOrg.ID).Count(uat)
+	if count != 2 {
+		t.Errorf("did not find correct number of user access tokens, want 2, got %v", count)
+	}
+
+}
+
 func TestGetOrganizations(t *testing.T) {
 	orgs, user, _ := createUserFixtures(t)
 
