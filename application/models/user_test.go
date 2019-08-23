@@ -434,7 +434,7 @@ func CreateUserFixtures(t *testing.T) (Organizations, User, UserOrganizations) {
 }
 
 func TestGetOrganizations(t *testing.T) {
-	orgs, user, _ := createUserFixtures(t)
+	orgs, user, _ := CreateUserFixtures(t)
 
 	tests := []struct {
 		name string

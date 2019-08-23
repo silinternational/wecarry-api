@@ -202,13 +202,10 @@ func AuthDestroy(c buffalo.Context) error {
 		return authError(c, 400, "LogoutError", "no Bearer token provided")
 	}
 
-	uat, err := models.UserAccessTokenFind(bearerToken)
+	var uat models.UserAccessToken
+	err := uat.FindByBearerToken(bearerToken)
 	if err != nil {
 		return authError(c, 500, "LogoutError", err.Error())
-	}
-
-	if uat == nil {
-		return authError(c, 404, "LogoutError", "access token not found")
 	}
 
 	authPro, err := uat.UserOrganization.Organization.GetAuthProvider()

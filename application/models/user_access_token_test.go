@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func TestValidateUserAccessToken(t *testing.T) {
+func TestUserAccessToken_Validate(t *testing.T) {
 	tests := []struct {
 		name     string
 		token    UserAccessToken
@@ -54,8 +54,8 @@ func TestValidateUserAccessToken(t *testing.T) {
 }
 
 func TestDeleteAccessToken(t *testing.T) {
-	_, users, userOrgs := CreateUserFixtures(t)
-	tokens := CreateUserAccessTokenFixtures(t, users, userOrgs)
+	_, user, userOrgs := CreateUserFixtures(t)
+	tokens := CreateUserAccessTokenFixtures(t, user, userOrgs)
 
 	tests := []struct {
 		name    string
@@ -77,6 +77,42 @@ func TestDeleteAccessToken(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestUserAccessToken_FindByBearerToken(t *testing.T) {
+	_, user, userOrgs := CreateUserFixtures(t)
+	tokens := CreateUserAccessTokenFixtures(t, user, userOrgs)
+
+	tests := []struct {
+		name    string
+		token   string
+		want    User
+		wantErr bool
+	}{
+		{name: "valid0", token: tokens[0], want: user},
+		{name: "valid1", token: tokens[1], want: user},
+		{name: "invalid", token: "000000", wantErr: true},
+		{name: "empty", token: "", wantErr: true},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var u UserAccessToken
+			err := u.FindByBearerToken(test.token)
+			if test.wantErr {
+				if err == nil {
+					t.Errorf("Expected an error, but did not get one")
+				}
+			} else {
+				if err != nil {
+					t.Errorf("FindUserByAccessToken() returned an error: %v", err)
+				} else if u.User.Uuid != test.want.Uuid {
+					t.Errorf("found %v, expected %v", u, test.want)
+				}
+			}
+		})
+	}
+
+	resetTables(t)
 }
 
 func CreateUserAccessTokenFixtures(t *testing.T, user User, userOrgs UserOrganizations) []string {

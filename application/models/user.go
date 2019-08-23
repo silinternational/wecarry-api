@@ -193,12 +193,13 @@ func FindUserByAccessToken(accessToken string) (User, error) {
 		return User{}, fmt.Errorf("error: access token must not be blank")
 	}
 
-	userAccessToken, err := UserAccessTokenFind(accessToken)
+	var userAccessToken UserAccessToken
+	err := userAccessToken.FindByBearerToken(accessToken)
 	if err != nil {
 		return User{}, fmt.Errorf("error finding user by access token: %s", err.Error())
 	}
 
-	if userAccessToken == nil || userAccessToken.ID == 0 {
+	if userAccessToken.ID == 0 {
 		return User{}, fmt.Errorf("error finding user by access token")
 	}
 

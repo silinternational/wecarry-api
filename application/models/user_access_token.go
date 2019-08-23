@@ -71,10 +71,9 @@ func DeleteAccessToken(accessToken string) error {
 	return DB.Destroy(&userAccessToken)
 }
 
-func UserAccessTokenFind(accessToken string) (*UserAccessToken, error) {
-	userAccessToken := UserAccessToken{}
-	if err := DB.Eager().Where("access_token = ?", hashClientIdAccessToken(accessToken)).First(&userAccessToken); err != nil {
-		return &userAccessToken, fmt.Errorf("failed to find access token, %v", err)
+func (u *UserAccessToken) FindByBearerToken(bearerToken string) error {
+	if err := DB.Eager().Where("access_token = ?", hashClientIdAccessToken(bearerToken)).First(u); err != nil {
+		return fmt.Errorf("failed to find access token, %v", err)
 	}
-	return &userAccessToken, nil
+	return nil
 }
