@@ -99,7 +99,7 @@ func TestUser_FindOrCreateFromAuthUser(t *testing.T) {
 }
 
 func TestFindUserByAccessToken(t *testing.T) {
-	_, user, userOrgs := createUserFixtures(t)
+	_, user, userOrgs := CreateUserFixtures(t)
 
 	// Load access token test fixtures
 	tokens := UserAccessTokens{
@@ -264,7 +264,7 @@ func TestValidateUser(t *testing.T) {
 
 // Ensure multiple access tokens for same organization are allowed (to support multiple tabs/browsers)
 func TestCreateAccessToken(t *testing.T) {
-	orgs, user, _ := createUserFixtures(t)
+	orgs, user, _ := CreateUserFixtures(t)
 
 	type args struct {
 		user     User
@@ -340,7 +340,7 @@ func TestCreateAccessToken(t *testing.T) {
 }
 
 func TestGetOrgIDs(t *testing.T) {
-	_, user, _ := createUserFixtures(t)
+	_, user, _ := CreateUserFixtures(t)
 
 	tests := []struct {
 		name string
@@ -369,7 +369,7 @@ func TestGetOrgIDs(t *testing.T) {
 	resetTables(t) // Pack it in, Pack it out a/k/a "Leave No Trace"
 }
 
-func createUserFixtures(t *testing.T) (Organizations, User, UserOrganizations) {
+func CreateUserFixtures(t *testing.T) (Organizations, User, UserOrganizations) {
 	// in case other tests don't clean up
 	resetTables(t)
 
