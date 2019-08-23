@@ -221,7 +221,8 @@ func AuthDestroy(c buffalo.Context) error {
 	var response AuthResponse
 
 	if authResp.RedirectURL != "" {
-		err = models.DeleteAccessToken(bearerToken)
+		var uat models.UserAccessToken
+		err = uat.DeleteByBearerToken(bearerToken)
 		if err != nil {
 			return authError(c, 500, "LogoutError", err.Error())
 		}

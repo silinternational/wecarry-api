@@ -1,7 +1,6 @@
 package models
 
 import (
-	"fmt"
 	"testing"
 	"time"
 )
@@ -53,7 +52,7 @@ func TestUserAccessToken_Validate(t *testing.T) {
 	}
 }
 
-func TestDeleteAccessToken(t *testing.T) {
+func TestUserAccessToken_DeleteByBearerToken(t *testing.T) {
 	_, user, userOrgs := CreateUserFixtures(t)
 	tokens := CreateUserAccessTokenFixtures(t, user, userOrgs)
 
@@ -68,8 +67,8 @@ func TestDeleteAccessToken(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := DeleteAccessToken(test.token)
-			fmt.Printf("test.token=%s", test.token)
+			var uat UserAccessToken
+			err := uat.DeleteByBearerToken(test.token)
 			if err != nil && !test.wantErr {
 				t.Errorf("DeleteAccessToken() returned an unexpected error: %s", err)
 			} else if err == nil && test.wantErr {
