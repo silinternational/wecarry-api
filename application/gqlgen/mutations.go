@@ -2,6 +2,7 @@ package gqlgen
 
 import (
 	"context"
+
 	"github.com/gobuffalo/nulls"
 	"github.com/silinternational/handcarry-api/models"
 )
@@ -23,8 +24,8 @@ func (r *mutationResolver) CreatePost(ctx context.Context, input NewPost) (*mode
 }
 
 func (r *mutationResolver) UpdatePostStatus(ctx context.Context, input UpdatedPostStatus) (*models.Post, error) {
-	post, err := models.FindPostByUUID(input.ID)
-	if err != nil {
+	var post models.Post
+	if err := post.FindByUUID(input.ID); err != nil {
 		return &models.Post{}, err
 	}
 

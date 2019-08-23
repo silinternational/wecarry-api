@@ -189,16 +189,17 @@ func TestFindPostByUUID(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := FindPostByUUID(test.uuid)
+			var post Post
+			err := post.FindByUUID(test.uuid)
 			if test.wantErr {
 				if (err != nil) != test.wantErr {
-					t.Errorf("FindPostByUUID() did not return expected error")
+					t.Errorf("FindByUUID() did not return expected error")
 				}
 			} else {
 				if err != nil {
-					t.Errorf("FindPostByUUID() error = %v", err)
-				} else if got.Uuid != test.want.Uuid {
-					t.Errorf("FindPostByUUID() got = %s, want %s", got.Uuid, test.want.Uuid)
+					t.Errorf("FindByUUID() error = %v", err)
+				} else if post.Uuid != test.want.Uuid {
+					t.Errorf("FindByUUID() got = %s, want %s", post.Uuid, test.want.Uuid)
 				}
 			}
 		})
