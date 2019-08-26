@@ -1,6 +1,7 @@
 package models
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/gofrs/uuid"
@@ -324,6 +325,39 @@ func TestPost_GetOrganization(t *testing.T) {
 				t.Errorf("GetOrganization() error = %v", err)
 			} else if org.Uuid != test.want {
 				t.Errorf("GetOrganization() got = %s, want %s", org.Uuid, test.want)
+			}
+		})
+	}
+}
+
+func TestPost_GetThreads(t *testing.T) {
+	resetTables(t)
+
+	_, users, _ := CreateUserFixtures(t)
+	posts := CreatePostFixtures(t, users)
+	threads := CreateThreadFixtures(t, posts[0])
+
+	tests := []struct {
+		name string
+		post Post
+		want []uuid.UUID
+	}{
+		{name: "no threads", post: posts[1], want: []uuid.UUID{}},
+		{name: "two threads", post: posts[0], want: []uuid.UUID{threads[0].Uuid, threads[1].Uuid}},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := test.post.GetThreads([]string{"uuid"})
+			if err != nil {
+				t.Errorf("GetThreads() error: %v", err)
+			} else {
+				ids := make([]uuid.UUID, len(got))
+				for i := range got {
+					ids[i] = got[i].Uuid
+				}
+				if !reflect.DeepEqual(ids, test.want) {
+					t.Errorf("GetThreads() got = %s, want %s", ids, test.want)
+				}
 			}
 		})
 	}
