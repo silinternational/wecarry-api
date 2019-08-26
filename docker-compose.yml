@@ -9,6 +9,8 @@ services:
       - ./application:/handcarry
     ports:
       - "3000:3000"
+    env_file:
+      - ./.env
     environment:
       ADDR: 0.0.0.0
       HOST: http://handcarry.local:3000
