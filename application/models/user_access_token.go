@@ -67,7 +67,7 @@ func (u *UserAccessToken) DeleteByBearerToken(bearerToken string) error {
 }
 
 func (u *UserAccessToken) FindByBearerToken(bearerToken string) error {
-	if err := DB.Eager().Where("access_token = ?", hashClientIdAccessToken("1234")).First(u); err != nil {
+	if err := DB.Eager().Where("access_token = ?", hashClientIdAccessToken(bearerToken)).First(u); err != nil {
 		return fmt.Errorf("failed to find access token '%s...', %s", bearerToken[0:5], err)
 	}
 	return nil
