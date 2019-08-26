@@ -204,7 +204,7 @@ func FindUserByAccessToken(accessToken string) (User, error) {
 	}
 
 	if userAccessToken.ExpiresAt.Before(time.Now()) {
-		err := DB.Destroy(userAccessToken)
+		err := DB.Destroy(&userAccessToken)
 		if err != nil {
 			log.Printf("Unable to delete expired userAccessToken, id: %v", userAccessToken.ID)
 		}
