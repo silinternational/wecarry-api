@@ -3,7 +3,9 @@ package gqlgen
 import (
 	"context"
 	"fmt"
+
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/gobuffalo/pop"
 	"github.com/silinternational/handcarry-api/domain"
 	"github.com/silinternational/handcarry-api/models"
 	"github.com/vektah/gqlparser/gqlerror"
@@ -149,7 +151,7 @@ func (r *queryResolver) Posts(ctx context.Context) ([]*models.Post, error) {
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 
 	selectFields := getSelectFieldsForPosts(ctx)
-	if err := models.DB.Select(selectFields...).Where("organization_id IN (?)", cUser.GetOrgIDs()...).All(&posts); err != nil {
+	if err := models.DB.Select(selectFields...).Scope(scopeUserOrgs(cUser)).All(&posts); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting posts: %v", err.Error()))
 		return []*models.Post{}, err
 	}
@@ -162,7 +164,7 @@ func (r *queryResolver) Post(ctx context.Context, id *string) (*models.Post, err
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 
 	selectFields := getSelectFieldsForPosts(ctx)
-	if err := models.DB.Select(selectFields...).Where("organization_id IN (?)", cUser.GetOrgIDs()...).Where("uuid = ?", id).First(&post); err != nil {
+	if err := models.DB.Select(selectFields...).Scope(scopeUserOrgs(cUser)).Where("uuid = ?", id).First(&post); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting post: %v", err.Error()))
 		return &models.Post{}, err
 	}
@@ -215,4 +217,19 @@ func getSelectFieldsForPosts(ctx context.Context) []string {
 	selectFields := GetSelectFieldsFromRequestFields(PostFields(), graphql.CollectAllFields(ctx))
 	selectFields = append(selectFields, "id")
 	return selectFields
+}
+
+// scope query to only include organizations for current user
+func scopeUserOrgs(cUser models.User) pop.ScopeFunc {
+	return func(q *pop.Query) *pop.Query {
+		orgs := cUser.GetOrgIDs()
+
+		// convert []int to []interface{}
+		s := make([]interface{}, len(orgs))
+		for i, v := range orgs {
+			s[i] = v
+		}
+
+		return q.Where("organization_id IN (?)", s...)
+	}
 }
