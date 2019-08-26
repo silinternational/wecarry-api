@@ -356,13 +356,9 @@ func TestGetOrgIDs(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			got := test.user.GetOrgIDs()
-			ints := make([]int, len(got))
-			for i, id := range got {
-				ints[i] = id.(int)
-			}
 
-			if !reflect.DeepEqual(ints, test.want) {
-				t.Errorf("GetOrgIDs() = \"%v\", want \"%v\"", ints, test.want)
+			if !reflect.DeepEqual(got, test.want) {
+				t.Errorf("GetOrgIDs() = \"%v\", want \"%v\"", got, test.want)
 			}
 		})
 	}

@@ -105,18 +105,13 @@ func (u *User) CreateAccessToken(org Organization, clientID string) (string, int
 	return token, expireAt.UTC().Unix(), nil
 }
 
-func (u *User) GetOrgIDs() []interface{} {
+func (u *User) GetOrgIDs() []int {
 	// ignore the error and allow the user's Organizations to be an empty slice.
 	_ = DB.Load(u, "Organizations")
 
-	var ids []int
-	for _, uo := range u.Organizations {
-		ids = append(ids, uo.ID)
-	}
-
-	s := make([]interface{}, len(ids))
-	for i, v := range ids {
-		s[i] = v
+	s := make([]int, len(u.Organizations))
+	for i, v := range u.Organizations {
+		s[i] = v.ID
 	}
 
 	return s
