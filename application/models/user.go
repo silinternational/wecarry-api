@@ -106,7 +106,7 @@ func (u *User) CreateAccessToken(org Organization, clientID string) (string, int
 }
 
 func (u *User) GetOrgIDs() []interface{} {
-	// ignore the error and allow the return value to be an empty slice
+	// ignore the error and allow the user's Organizations to be an empty slice.
 	_ = DB.Load(u, "Organizations")
 
 	var ids []int
