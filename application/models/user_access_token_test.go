@@ -53,6 +53,8 @@ func TestUserAccessToken_Validate(t *testing.T) {
 }
 
 func TestUserAccessToken_DeleteByBearerToken(t *testing.T) {
+	resetTables(t)
+
 	_, user, userOrgs := CreateUserFixtures(t)
 	tokens := CreateUserAccessTokenFixtures(t, user, userOrgs)
 
@@ -76,11 +78,11 @@ func TestUserAccessToken_DeleteByBearerToken(t *testing.T) {
 			}
 		})
 	}
-
-	resetTables(t)
 }
 
 func TestUserAccessToken_FindByBearerToken(t *testing.T) {
+	resetTables(t)
+
 	_, user, userOrgs := CreateUserFixtures(t)
 	tokens := CreateUserAccessTokenFixtures(t, user, userOrgs)
 
@@ -112,8 +114,6 @@ func TestUserAccessToken_FindByBearerToken(t *testing.T) {
 			}
 		})
 	}
-
-	resetTables(t)
 }
 
 func CreateUserAccessTokenFixtures(t *testing.T, user User, userOrgs UserOrganizations) []string {
