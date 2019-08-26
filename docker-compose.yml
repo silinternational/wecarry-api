@@ -51,11 +51,6 @@ services:
       POSTGRES_USER: handcarry
       POSTGRES_PASSWORD: handcarry
       POSTGRES_DB: handcarry
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 3s
-      timeout: 2s
-      retries: 5
 
   testdb:
     image: postgres:9.6.13
@@ -63,11 +58,6 @@ services:
       POSTGRES_USER: handcarry
       POSTGRES_PASSWORD: handcarry
       POSTGRES_DB: handcarry_test
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 3s
-      timeout: 2s
-      retries: 5
 
   adminer:
     image: adminer

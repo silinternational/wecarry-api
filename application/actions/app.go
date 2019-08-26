@@ -67,7 +67,6 @@ func App() *buffalo.App {
 
 		app.GET("/", HomeHandler)
 		app.POST("/gql/", GQLHandler)
-		app.GET("/me", MeHandler)
 
 		auth := app.Group("/auth")
 		auth.Middleware.Skip(SetCurrentUser, AuthLogin)

@@ -262,6 +262,7 @@ func TestValidateUser(t *testing.T) {
 	}
 }
 
+// Ensure multiple access tokens for same organization are allowed (to support multiple tabs/browsers)
 func TestCreateAccessToken(t *testing.T) {
 	orgs, user, _ := createUserFixtures(t)
 
@@ -270,15 +271,25 @@ func TestCreateAccessToken(t *testing.T) {
 		clientID string
 	}
 	tests := []struct {
-		name string
-		args args
+		name    string
+		args    args
+		wantErr bool
 	}{
 		{
-			name: "basic",
+			name: "abc123",
 			args: args{
 				user:     user,
 				clientID: "abc123",
 			},
+			wantErr: false,
+		},
+		{
+			name: "123abc",
+			args: args{
+				user:     user,
+				clientID: "123abc",
+			},
+			wantErr: false,
 		},
 		{
 			name: "empty client ID",
@@ -286,30 +297,43 @@ func TestCreateAccessToken(t *testing.T) {
 				user:     user,
 				clientID: "",
 			},
+			wantErr: true,
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			expectedExpiry := createAccessTokenExpiry().Unix()
 			token, expiry, err := test.args.user.CreateAccessToken(orgs[0], test.args.clientID)
-			if err != nil {
-				t.Errorf("CreateAccessToken() returned error: %v", err)
-			}
-			hash := hashClientIdAccessToken(test.args.clientID + token)
+			if test.wantErr {
+				if err == nil {
+					t.Errorf("expected error, but did not get one")
+				}
+			} else {
+				if err != nil && !test.wantErr {
+					t.Errorf("CreateAccessToken() returned error: %v", err)
+				}
+				hash := hashClientIdAccessToken(test.args.clientID + token)
 
-			var dbToken UserAccessToken
-			if err := DB.Where(fmt.Sprintf("access_token='%v'", hash)).First(&dbToken); err != nil {
-				t.Errorf("Can't find new token (%v)", err)
-			}
+				var dbToken UserAccessToken
+				if err := DB.Where(fmt.Sprintf("access_token='%v'", hash)).First(&dbToken); err != nil {
+					t.Errorf("Can't find new token (%v)", err)
+				}
 
-			if expiry-expectedExpiry > 1 {
-				t.Errorf("Unexpected token expiry: %v, expected %v", expiry, expectedExpiry)
-			}
+				if expiry-expectedExpiry > 1 {
+					t.Errorf("Unexpected token expiry: %v, expected %v", expiry, expectedExpiry)
+				}
 
-			if dbToken.ExpiresAt.Unix()-expectedExpiry > 1 {
-				t.Errorf("Unexpected token expiry: %v, expected %v", dbToken.ExpiresAt.Unix(), expectedExpiry)
+				if dbToken.ExpiresAt.Unix()-expectedExpiry > 1 {
+					t.Errorf("Unexpected token expiry: %v, expected %v", dbToken.ExpiresAt.Unix(), expectedExpiry)
+				}
 			}
 		})
+	}
+
+	uat := &UserAccessToken{}
+	count, _ := DB.Where("user_id = ?", user.ID).Count(uat)
+	if count != 2 {
+		t.Errorf("did not find correct number of user access tokens, want 2, got %v", count)
 	}
 
 	resetTables(t) // Pack it in, Pack it out a/k/a "Leave No Trace"
@@ -331,18 +355,10 @@ func TestGetOrgIDs(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			if err := DB.Load(&test.user); err != nil {
-				t.Errorf("Failed to load related records on user %v", user.ID)
-				t.FailNow()
-			}
 			got := test.user.GetOrgIDs()
-			ints := make([]int, len(got))
-			for i, id := range got {
-				ints[i] = id.(int)
-			}
 
-			if !reflect.DeepEqual(ints, test.want) {
-				t.Errorf("GetOrgIDs() = \"%v\", want \"%v\"", ints, test.want)
+			if !reflect.DeepEqual(got, test.want) {
+				t.Errorf("GetOrgIDs() = \"%v\", want \"%v\"", got, test.want)
 			}
 		})
 	}
@@ -413,60 +429,35 @@ func createUserFixtures(t *testing.T) (Organizations, User, UserOrganizations) {
 	return orgs, user, userOrgs
 }
 
-// Ensure multiple access tokens for same organization are allowed (to support multiple tabs/browsers)
-func TestUser_CreateAccessToken(t *testing.T) {
-	resetTables(t)
+func TestGetOrganizations(t *testing.T) {
+	orgs, user, _ := createUserFixtures(t)
 
-	// setup fixtures for test
-	user := &User{
-		ID:        1,
-		Email:     "test@test.com",
-		FirstName: "test",
-		LastName:  "user",
-		Nickname:  "Tester",
-		AdminRole: nulls.String{},
-		Uuid:      domain.GetUuid(),
+	tests := []struct {
+		name string
+		user User
+		want []string
+	}{
+		{
+			name: "basic",
+			user: user,
+			want: []string{orgs[0].Name, orgs[1].Name},
+		},
 	}
-	_ = DB.Create(user)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := test.user.GetOrganizations()
+			if err != nil {
+				t.Errorf("GetOrganizations() returned error: %s", err)
+			}
 
-	org := &Organization{
-		ID:         1,
-		Name:       "testorg",
-		Url:        nulls.String{},
-		AuthType:   "saml",
-		AuthConfig: "{}",
-		Uuid:       domain.GetUuid(),
+			orgNames := make([]string, len(got))
+			for i, o := range got {
+				orgNames[i] = o.Name
+			}
+			if !reflect.DeepEqual(orgNames, test.want) {
+				t.Errorf("GetOrgIDs() = \"%v\", want \"%v\"", got, test.want)
+			}
+		})
 	}
-	_ = DB.Create(org)
-
-	userOrg := &UserOrganization{
-		ID:             1,
-		OrganizationID: 1,
-		UserID:         1,
-		Role:           UserOrganizationRoleMember,
-		AuthID:         "abc123",
-		AuthEmail:      "test@test.com",
-		LastLogin:      time.Now(),
-	}
-	_ = DB.Create(userOrg)
-
-	accessToken1, _, err := user.CreateAccessToken(*org, "abc1234")
-	if err != nil {
-		t.Errorf("unable to create access token 1: %s", err)
-	}
-	accessToken2, _, err := user.CreateAccessToken(*org, "1234abc")
-	if err != nil {
-		t.Errorf("unable to create access token 2: %s", err)
-	}
-
-	if accessToken1 == accessToken2 {
-		t.Error("got same access tokens after two calls")
-	}
-
-	uat := &UserAccessToken{}
-	count, err := DB.Where("user_id = ? and user_organization_id = ?", user.ID, userOrg.ID).Count(uat)
-	if count != 2 {
-		t.Errorf("did not find correct number of user access tokens, want 2, got %v", count)
-	}
-
+	resetTables(t) // Pack it in, Pack it out a/k/a "Leave No Trace"
 }

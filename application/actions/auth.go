@@ -162,7 +162,7 @@ func AuthLogin(c buffalo.Context) error {
 		}
 	}
 
-	accessToken, expiresAt, err := user.CreateAccessToken(org, authResp.ClientID)
+	accessToken, expiresAt, err := user.CreateAccessToken(org, clientID)
 	if err != nil {
 		domain.RollbarError(c, rollbar.ERR, err, map[string]interface{}{"authEmail": authEmail, "code": "CreateAccessTokenFailure"})
 		return authError(c, http.StatusBadRequest, "CreateAccessTokenFailure", err.Error())

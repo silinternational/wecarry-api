@@ -78,6 +78,9 @@ func (u *User) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 
 // CreateAccessToken - Create and store new UserAccessToken
 func (u *User) CreateAccessToken(org Organization, clientID string) (string, int64, error) {
+	if clientID == "" {
+		return "", 0, fmt.Errorf("cannot create token with empty clientID for user %s", u.Nickname)
+	}
 
 	token := createAccessTokenPart()
 	hash := hashClientIdAccessToken(clientID + token)
@@ -102,15 +105,13 @@ func (u *User) CreateAccessToken(org Organization, clientID string) (string, int
 	return token, expireAt.UTC().Unix(), nil
 }
 
-func (u *User) GetOrgIDs() []interface{} {
-	var ids []int
-	for _, uo := range u.Organizations {
-		ids = append(ids, uo.ID)
-	}
+func (u *User) GetOrgIDs() []int {
+	// ignore the error and allow the user's Organizations to be an empty slice.
+	_ = DB.Load(u, "Organizations")
 
-	s := make([]interface{}, len(ids))
-	for i, v := range ids {
-		s[i] = v
+	s := make([]int, len(u.Organizations))
+	for i, v := range u.Organizations {
+		s[i] = v.ID
 	}
 
 	return s
@@ -253,4 +254,18 @@ func createAccessTokenPart() string {
 
 func hashClientIdAccessToken(accessToken string) string {
 	return fmt.Sprintf("%x", sha256.Sum256([]byte(accessToken)))
+}
+
+func (u *User) GetOrganizations() ([]*Organization, error) {
+	var orgs []*Organization
+	if err := DB.Load(u, "Organizations"); err != nil {
+		return orgs, fmt.Errorf("error getting organizations for user id %v ... %v", u.ID, err)
+	}
+
+	for _, org := range u.Organizations {
+		orgCopy := org
+		orgs = append(orgs, &orgCopy)
+	}
+
+	return orgs, nil
 }

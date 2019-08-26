@@ -226,6 +226,14 @@ func getSelectFieldsForPosts(ctx context.Context) []string {
 // scope query to only include organizations for current user
 func scopeUserOrgs(cUser models.User) pop.ScopeFunc {
 	return func(q *pop.Query) *pop.Query {
-		return q.Where("organization_id IN (?)", cUser.GetOrgIDs()...)
+		orgs := cUser.GetOrgIDs()
+
+		// convert []int to []interface{}
+		s := make([]interface{}, len(orgs))
+		for i, v := range orgs {
+			s[i] = v
+		}
+
+		return q.Where("organization_id IN (?)", s...)
 	}
 }
