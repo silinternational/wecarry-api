@@ -172,7 +172,7 @@ func CreatePostFixtures(t *testing.T, users Users) []Post {
 			t.Errorf("could not create test user org ... %v", err)
 			t.FailNow()
 		}
-		if err := DB.Load(&posts[i], "CreatedBy", "Provider", "Receiver"); err != nil {
+		if err := DB.Load(&posts[i], "CreatedBy", "Provider", "Receiver", "Organization"); err != nil {
 			t.Errorf("Error loading post associations: %s", err)
 			t.FailNow()
 		}
@@ -299,6 +299,31 @@ func TestPost_GetReceiver(t *testing.T) {
 				t.Errorf("received nil, expected %v", test.want.String())
 			} else if user.Uuid != *test.want {
 				t.Errorf("GetProvider() got = %s, want %s", user.Uuid, test.want)
+			}
+		})
+	}
+}
+
+func TestPost_GetOrganization(t *testing.T) {
+	resetTables(t)
+
+	_, users, _ := CreateUserFixtures(t)
+	posts := CreatePostFixtures(t, users)
+
+	tests := []struct {
+		name string
+		post Post
+		want uuid.UUID
+	}{
+		{name: "good", post: posts[0], want: posts[0].Organization.Uuid},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			org, err := test.post.GetOrganization([]string{"uuid"})
+			if err != nil {
+				t.Errorf("GetOrganization() error = %v", err)
+			} else if org.Uuid != test.want {
+				t.Errorf("GetOrganization() got = %s, want %s", org.Uuid, test.want)
 			}
 		})
 	}
