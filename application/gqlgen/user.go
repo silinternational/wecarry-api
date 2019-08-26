@@ -3,6 +3,7 @@ package gqlgen
 import (
 	"context"
 	"fmt"
+
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/silinternational/handcarry-api/domain"
 	"github.com/silinternational/handcarry-api/models"
@@ -58,6 +59,13 @@ func (r *userResolver) AdminRole(ctx context.Context, obj *models.User) (*Role, 
 	return &a, nil
 }
 
+func (r *userResolver) Organizations(ctx context.Context, obj *models.User) ([]*models.Organization, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return obj.GetOrganizations()
+}
+
 func (r *queryResolver) Users(ctx context.Context) ([]*models.User, error) {
 	db := models.DB
 	var dbUsers []*models.User
@@ -81,6 +89,10 @@ func (r *queryResolver) User(ctx context.Context, id *string) (*models.User, err
 	dbUser := models.User{}
 
 	currentUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+
+	if id == nil {
+		return &currentUser, nil
+	}
 
 	if currentUser.AdminRole.String != domain.AdminRoleSuperDuperAdmin && currentUser.Uuid.String() != *id {
 		return &dbUser, fmt.Errorf("not authorized")

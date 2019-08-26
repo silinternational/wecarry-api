@@ -156,7 +156,7 @@ func AuthLogin(c buffalo.Context) error {
 		}
 	}
 
-	accessToken, expiresAt, err := user.CreateAccessToken(org, authResp.ClientID)
+	accessToken, expiresAt, err := user.CreateAccessToken(org, clientID)
 	if err != nil {
 		return authError(c, http.StatusBadRequest, "CreateAccessTokenFailure", err.Error())
 	}

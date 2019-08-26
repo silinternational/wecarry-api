@@ -20,14 +20,15 @@ enum Role {
 }
 
 type User {
-  id: ID!
-  email: String!
-  firstName: String!
-  lastName: String!
-  nickname: String!
-  createdAt: String
-  updatedAt: String
-  adminRole: Role
+    id: ID!
+    email: String!
+    firstName: String!
+    lastName: String!
+    nickname: String!
+    createdAt: String
+    updatedAt: String
+    adminRole: Role
+    organizations: [Organization!]!
 }
 
 enum PostType {
