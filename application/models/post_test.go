@@ -3,8 +3,10 @@ package models
 import (
 	"testing"
 
+	"github.com/gofrs/uuid"
 	"github.com/silinternational/handcarry-api/domain"
 
+	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/validate"
 )
 
@@ -137,30 +139,32 @@ func TestPost_Validate(t *testing.T) {
 	}
 }
 
-func CreatePostFixtures(t *testing.T, user User) []Post {
-	if err := DB.Load(&user, "Organizations"); err != nil {
-		t.Errorf("failed to load organizations on user fixture, %s", err)
+func CreatePostFixtures(t *testing.T, users Users) []Post {
+	if err := DB.Load(&users[0], "Organizations"); err != nil {
+		t.Errorf("failed to load organizations on users[0] fixture, %s", err)
 	}
 
 	// Load UserOrganization test fixtures
 	posts := []Post{
 		{
-			CreatedByID:    user.ID,
+			CreatedByID:    users[0].ID,
 			Type:           "Request",
-			OrganizationID: user.Organizations[0].ID,
+			OrganizationID: users[0].Organizations[0].ID,
 			Title:          "A Request",
 			Size:           "Medium",
 			Status:         "New",
 			Uuid:           domain.GetUuid(),
+			ProviderID:     nulls.NewInt(users[1].ID),
 		},
 		{
-			CreatedByID:    user.ID,
+			CreatedByID:    users[0].ID,
 			Type:           "Offer",
-			OrganizationID: user.Organizations[0].ID,
+			OrganizationID: users[0].Organizations[0].ID,
 			Title:          "An Offer",
 			Size:           "Medium",
 			Status:         "New",
 			Uuid:           domain.GetUuid(),
+			ReceiverID:     nulls.NewInt(users[1].ID),
 		},
 	}
 	for i := range posts {
@@ -168,14 +172,19 @@ func CreatePostFixtures(t *testing.T, user User) []Post {
 			t.Errorf("could not create test user org ... %v", err)
 			t.FailNow()
 		}
+		if err := DB.Load(&posts[i], "CreatedBy", "Provider", "Receiver"); err != nil {
+			t.Errorf("Error loading post associations: %s", err)
+			t.FailNow()
+		}
 	}
-
 	return posts
 }
 
 func TestFindPostByUUID(t *testing.T) {
-	_, user, _ := CreateUserFixtures(t)
-	posts := CreatePostFixtures(t, user)
+	resetTables(t)
+
+	_, users, _ := CreateUserFixtures(t)
+	posts := CreatePostFixtures(t, users)
 
 	tests := []struct {
 		name    string
@@ -204,6 +213,93 @@ func TestFindPostByUUID(t *testing.T) {
 			}
 		})
 	}
+}
 
+func TestPost_GetCreator(t *testing.T) {
 	resetTables(t)
+
+	_, users, _ := CreateUserFixtures(t)
+	posts := CreatePostFixtures(t, users)
+
+	tests := []struct {
+		name string
+		post Post
+		want uuid.UUID
+	}{
+		{name: "good", post: posts[0], want: posts[0].CreatedBy.Uuid},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			user, err := test.post.GetCreator([]string{"uuid"})
+			if err != nil {
+				t.Errorf("GetCreator() error = %v", err)
+			} else if user.Uuid != test.want {
+				t.Errorf("GetCreator() got = %s, want %s", user.Uuid, test.want)
+			}
+		})
+	}
+}
+
+func TestPost_GetProvider(t *testing.T) {
+	resetTables(t)
+
+	_, users, _ := CreateUserFixtures(t)
+	posts := CreatePostFixtures(t, users)
+
+	tests := []struct {
+		name string
+		post Post
+		want *uuid.UUID
+	}{
+		{name: "good", post: posts[0], want: &posts[0].Provider.Uuid},
+		{name: "nil", post: posts[1], want: nil},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			user, err := test.post.GetProvider([]string{"uuid"})
+			if err != nil {
+				t.Errorf("GetProvider() error = %v", err)
+			} else if test.want == nil {
+				if user != nil {
+					t.Errorf("expected nil, got %s", user.Uuid.String())
+				}
+			} else if user == nil {
+				t.Errorf("received nil, expected %v", test.want.String())
+			} else if user.Uuid != *test.want {
+				t.Errorf("GetProvider() got = %s, want %s", user.Uuid, test.want)
+			}
+		})
+	}
+}
+
+func TestPost_GetReceiver(t *testing.T) {
+	resetTables(t)
+
+	_, users, _ := CreateUserFixtures(t)
+	posts := CreatePostFixtures(t, users)
+
+	tests := []struct {
+		name string
+		post Post
+		want *uuid.UUID
+	}{
+		{name: "good", post: posts[1], want: &posts[1].Receiver.Uuid},
+		{name: "nil", post: posts[0], want: nil},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			user, err := test.post.GetReceiver([]string{"uuid"})
+			if err != nil {
+				t.Errorf("GetReceiver() error = %v", err)
+			} else if test.want == nil {
+				if user != nil {
+					t.Errorf("expected nil, got %s", user.Uuid.String())
+				}
+			} else if user == nil {
+				t.Errorf("received nil, expected %v", test.want.String())
+			} else if user.Uuid != *test.want {
+				t.Errorf("GetProvider() got = %s, want %s", user.Uuid, test.want)
+			}
+		})
+	}
 }
