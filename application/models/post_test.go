@@ -144,7 +144,7 @@ func CreatePostFixtures(t *testing.T, users Users) []Post {
 		t.Errorf("failed to load organizations on users[0] fixture, %s", err)
 	}
 
-	// Load UserOrganization test fixtures
+	// Load Post test fixtures
 	posts := []Post{
 		{
 			CreatedByID:    users[0].ID,
