@@ -55,7 +55,7 @@ func TestUserAccessToken_Validate(t *testing.T) {
 func TestUserAccessToken_DeleteByBearerToken(t *testing.T) {
 	resetTables(t)
 
-	_, user, userOrgs := CreateUserFixtures(t)
+	_, users, userOrgs := CreateUserFixtures(t)
 	tokens := CreateUserAccessTokenFixtures(t, users[0], userOrgs)
 
 	tests := []struct {
