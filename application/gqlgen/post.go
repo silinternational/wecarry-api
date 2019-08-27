@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/rollbar/rollbar-go"
-
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/gobuffalo/pop"
 	"github.com/silinternational/handcarry-api/domain"
@@ -155,7 +153,7 @@ func (r *queryResolver) Posts(ctx context.Context) ([]*models.Post, error) {
 	selectFields := getSelectFieldsForPosts(ctx)
 	if err := models.DB.Select(selectFields...).Scope(scopeUserOrgs(cUser)).All(&posts); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting posts: %v", err.Error()))
-		domain.RollbarError(models.GetBuffaloContextFromGqlContext(ctx), rollbar.ERR, err, domain.NoExtras)
+		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
 		return []*models.Post{}, err
 	}
 
@@ -169,7 +167,7 @@ func (r *queryResolver) Post(ctx context.Context, id *string) (*models.Post, err
 	selectFields := getSelectFieldsForPosts(ctx)
 	if err := models.DB.Select(selectFields...).Scope(scopeUserOrgs(cUser)).Where("uuid = ?", id).First(&post); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting post: %v", err.Error()))
-		domain.RollbarError(models.GetBuffaloContextFromGqlContext(ctx), rollbar.ERR, err, map[string]interface{}{"post_id": *id})
+		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), map[string]interface{}{"post_id": *id})
 		return &models.Post{}, err
 	}
 

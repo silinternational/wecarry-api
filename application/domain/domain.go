@@ -27,7 +27,7 @@ const EmptyUUID = "00000000-0000-0000-0000-000000000000"
 
 const DateFormat = "2006-01-02"
 
-// NoExtras is exported for use when making calls to RollbarError and RollbarMessage to reduce
+// NoExtras is exported for use when making calls to RollbarError and rollbarMessage to reduce
 // typing map[string]interface{} when no extras are needed
 var NoExtras map[string]interface{}
 
@@ -178,18 +178,25 @@ func RollbarMiddleware(next buffalo.Handler) buffalo.Handler {
 	}
 }
 
-// RollbarError is a wrapper function to call rollbar's client.ErrorWithExtras function from client stored in context
-func RollbarError(c buffalo.Context, level string, err error, extras map[string]interface{}) {
-	rc, ok := c.Value("rollbar").(*rollbar.Client)
-	if ok {
-		rc.ErrorWithExtras(level, err, extras)
-		return
-	}
-
+// Error log error and send to Rollbar
+func Error(c buffalo.Context, msg string, extras map[string]interface{}) {
+	c.Logger().Error(msg, extras)
+	rollbarMessage(c, rollbar.ERR, msg, extras)
 }
 
-// RollbarMessage is a wrapper function to call rollbar's client.MessageWithExtras function from client stored in context
-func RollbarMessage(c buffalo.Context, level string, msg string, extras map[string]interface{}) {
+// Warn log warning and send to Rollbar
+func Warn(c buffalo.Context, msg string, extras map[string]interface{}) {
+	c.Logger().Warn(msg, extras)
+	rollbarMessage(c, rollbar.WARN, msg, extras)
+}
+
+// Log info message
+func Info(c buffalo.Context, msg string, extras map[string]interface{}) {
+	c.Logger().Info(msg, extras)
+}
+
+// rollbarMessage is a wrapper function to call rollbar's client.MessageWithExtras function from client stored in context
+func rollbarMessage(c buffalo.Context, level string, msg string, extras map[string]interface{}) {
 	rc, ok := c.Value("rollbar").(*rollbar.Client)
 	if ok {
 		rc.MessageWithExtras(level, msg, extras)
@@ -197,6 +204,7 @@ func RollbarMessage(c buffalo.Context, level string, msg string, extras map[stri
 	}
 }
 
+// RollbarSetPerson sets person on the rollbar context for futher logging
 func RollbarSetPerson(c buffalo.Context, id, username, email string) {
 	rc, ok := c.Value("rollbar").(*rollbar.Client)
 	if ok {
