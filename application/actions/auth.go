@@ -215,7 +215,8 @@ func AuthDestroy(c buffalo.Context) error {
 		return authError(c, 400, "LogoutError", "no Bearer token provided")
 	}
 
-	uat, err := models.UserAccessTokenFind(bearerToken)
+	var uat models.UserAccessToken
+	err := uat.FindByBearerToken(bearerToken)
 	if err != nil {
 		domain.Error(c, err.Error(), map[string]interface{}{"code": "LogoutError"})
 		return authError(c, 500, "LogoutError", err.Error())
@@ -244,7 +245,8 @@ func AuthDestroy(c buffalo.Context) error {
 	var response AuthResponse
 
 	if authResp.RedirectURL != "" {
-		err = models.DeleteAccessToken(bearerToken)
+		var uat models.UserAccessToken
+		err = uat.DeleteByBearerToken(bearerToken)
 		if err != nil {
 			domain.Error(c, err.Error(), map[string]interface{}{"code": "LogoutError"})
 			return authError(c, 500, "LogoutError", err.Error())
