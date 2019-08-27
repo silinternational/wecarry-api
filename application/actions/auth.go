@@ -101,7 +101,8 @@ func AuthLogin(c buffalo.Context) error {
 	if len(userOrgs) == 0 {
 		org, err = models.OrganizationFindByDomain(domain.EmailDomain(authEmail))
 		if err != nil {
-			domain.RollbarError(c, rollbar.ERR, err, map[string]interface{}{"authEmail": authEmail, "code": "UnableToFindOrgByEmail"})
+			extras := map[string]interface{}{"authEmail": authEmail, "code": "UnableToFindOrgByEmail"}
+			domain.RollbarError(c, rollbar.ERR, err, extras)
 			return authError(c, http.StatusInternalServerError, "UnableToFindOrgByEmail", "unable to find organization by email domain")
 		}
 		if org.AuthType == "" {
@@ -129,14 +130,16 @@ func AuthLogin(c buffalo.Context) error {
 	// get auth provider for org to process login
 	sp, err := org.GetAuthProvider()
 	if err != nil {
-		domain.RollbarError(c, rollbar.ERR, err, map[string]interface{}{"authEmail": authEmail, "code": "UnableToLoadAuthProvider"})
+		extras := map[string]interface{}{"authEmail": authEmail, "code": "UnableToLoadAuthProvider"}
+		domain.RollbarError(c, rollbar.ERR, err, extras)
 		return authError(c, http.StatusInternalServerError, "UnableToLoadAuthProvider",
 			fmt.Sprintf("unable to load auth provider for '%s'", org.Name))
 	}
 
 	authResp := sp.Login(c)
 	if authResp.Error != nil {
-		domain.RollbarError(c, rollbar.WARN, authResp.Error, map[string]interface{}{"authEmail": authEmail, "code": "AuthError"})
+		extras := map[string]interface{}{"authEmail": authEmail, "code": "AuthError"}
+		domain.RollbarError(c, rollbar.WARN, authResp.Error, extras)
 		return authError(c, http.StatusBadRequest, "AuthError", authResp.Error.Error())
 	}
 
@@ -164,7 +167,8 @@ func AuthLogin(c buffalo.Context) error {
 
 	accessToken, expiresAt, err := user.CreateAccessToken(org, clientID)
 	if err != nil {
-		domain.RollbarError(c, rollbar.ERR, err, map[string]interface{}{"authEmail": authEmail, "code": "CreateAccessTokenFailure"})
+		extras := map[string]interface{}{"authEmail": authEmail, "code": "CreateAccessTokenFailure"}
+		domain.RollbarError(c, rollbar.ERR, err, extras)
 		return authError(c, http.StatusBadRequest, "CreateAccessTokenFailure", err.Error())
 	}
 
