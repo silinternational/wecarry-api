@@ -59,6 +59,7 @@ services:
       POSTGRES_PASSWORD: handcarry
       POSTGRES_DB: handcarry_test
 
+  # http://localhost:8080/?pgsql=db&username=handcarry&db=handcarry&ns=public
   adminer:
     image: adminer
     depends_on:
