@@ -99,6 +99,7 @@ func TestUser_FindOrCreateFromAuthUser(t *testing.T) {
 }
 
 func TestFindUserByAccessToken(t *testing.T) {
+	resetTables(t)
 	_, users, userOrgs := CreateUserFixtures(t)
 
 	// Load access token test fixtures
@@ -168,8 +169,6 @@ func TestFindUserByAccessToken(t *testing.T) {
 			}
 		})
 	}
-
-	resetTables(t) // Pack it in, Pack it out a/k/a "Leave No Trace"
 }
 
 func TestValidateUser(t *testing.T) {
@@ -264,6 +263,7 @@ func TestValidateUser(t *testing.T) {
 
 // Ensure multiple access tokens for same organization are allowed (to support multiple tabs/browsers)
 func TestCreateAccessToken(t *testing.T) {
+	resetTables(t)
 	orgs, users, _ := CreateUserFixtures(t)
 
 	type args struct {
@@ -335,11 +335,10 @@ func TestCreateAccessToken(t *testing.T) {
 	if count != 2 {
 		t.Errorf("did not find correct number of user access tokens, want 2, got %v", count)
 	}
-
-	resetTables(t) // Pack it in, Pack it out a/k/a "Leave No Trace"
 }
 
 func TestGetOrgIDs(t *testing.T) {
+	resetTables(t)
 	_, users, _ := CreateUserFixtures(t)
 
 	tests := []struct {
@@ -362,11 +361,9 @@ func TestGetOrgIDs(t *testing.T) {
 			}
 		})
 	}
-	resetTables(t) // Pack it in, Pack it out a/k/a "Leave No Trace"
 }
 
 func CreateUserFixtures(t *testing.T) (Organizations, Users, UserOrganizations) {
-	// in case other tests don't clean up
 	resetTables(t)
 
 	// Load Organization test fixtures
@@ -441,6 +438,7 @@ func CreateUserFixtures(t *testing.T) (Organizations, Users, UserOrganizations) 
 }
 
 func TestGetOrganizations(t *testing.T) {
+	resetTables(t)
 	orgs, users, _ := CreateUserFixtures(t)
 
 	tests := []struct {
@@ -470,5 +468,4 @@ func TestGetOrganizations(t *testing.T) {
 			}
 		})
 	}
-	resetTables(t) // Pack it in, Pack it out a/k/a "Leave No Trace"
 }

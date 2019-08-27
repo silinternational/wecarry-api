@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/gobuffalo/nulls"
+	"github.com/silinternational/handcarry-api/domain"
 	"github.com/silinternational/handcarry-api/models"
 )
 
@@ -13,6 +14,7 @@ func (r *mutationResolver) CreatePost(ctx context.Context, input NewPost) (*mode
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 	post, err := ConvertGqlNewPostToDBPost(input, cUser)
 	if err != nil {
+		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
 		return &models.Post{}, err
 	}
 
@@ -26,12 +28,14 @@ func (r *mutationResolver) CreatePost(ctx context.Context, input NewPost) (*mode
 func (r *mutationResolver) UpdatePostStatus(ctx context.Context, input UpdatedPostStatus) (*models.Post, error) {
 	var post models.Post
 	if err := post.FindByUUID(input.ID); err != nil {
+		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
 		return &models.Post{}, err
 	}
 
 	post.Status = input.Status
 	post.ProviderID = nulls.NewInt(models.GetCurrentUserFromGqlContext(ctx, TestUser).ID)
 	if err := models.DB.Update(&post); err != nil {
+		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
 		return &models.Post{}, err
 	}
 
@@ -42,10 +46,12 @@ func (r *mutationResolver) CreateMessage(ctx context.Context, input NewMessage) 
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 	message, err := ConvertGqlNewMessageToDBMessage(input, cUser)
 	if err != nil {
+		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
 		return &models.Message{}, err
 	}
 
 	if err := models.DB.Create(&message); err != nil {
+		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
 		return &models.Message{}, err
 	}
 

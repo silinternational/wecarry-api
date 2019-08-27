@@ -73,12 +73,15 @@ func (r *queryResolver) Users(ctx context.Context) ([]*models.User, error) {
 	currentUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 
 	if currentUser.AdminRole.String != domain.AdminRoleSuperDuperAdmin {
-		return []*models.User{}, fmt.Errorf("not authorized")
+		err := fmt.Errorf("not authorized")
+		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
+		return []*models.User{}, err
 	}
 
 	selectFields := GetSelectFieldsFromRequestFields(UserFields(), graphql.CollectAllFields(ctx))
 	if err := db.Select(selectFields...).All(&dbUsers); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting users: %v", err.Error()))
+		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
 		return []*models.User{}, err
 	}
 
@@ -95,12 +98,15 @@ func (r *queryResolver) User(ctx context.Context, id *string) (*models.User, err
 	}
 
 	if currentUser.AdminRole.String != domain.AdminRoleSuperDuperAdmin && currentUser.Uuid.String() != *id {
-		return &dbUser, fmt.Errorf("not authorized")
+		err := fmt.Errorf("not authorized")
+		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
+		return &dbUser, err
 	}
 
 	selectFields := GetSelectFieldsFromRequestFields(UserFields(), graphql.CollectAllFields(ctx))
 	if err := models.DB.Select(selectFields...).Where("uuid = ?", id).First(&dbUser); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting user: %v", err.Error()))
+		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
 		return &dbUser, err
 	}
 
