@@ -55,8 +55,8 @@ func TestUserAccessToken_Validate(t *testing.T) {
 func TestUserAccessToken_DeleteByBearerToken(t *testing.T) {
 	resetTables(t)
 
-	_, user, userOrgs := CreateUserFixtures(t)
-	tokens := CreateUserAccessTokenFixtures(t, user, userOrgs)
+	_, users, userOrgs := CreateUserFixtures(t)
+	tokens := CreateUserAccessTokenFixtures(t, users[0], userOrgs)
 
 	tests := []struct {
 		name    string
@@ -83,8 +83,8 @@ func TestUserAccessToken_DeleteByBearerToken(t *testing.T) {
 func TestUserAccessToken_FindByBearerToken(t *testing.T) {
 	resetTables(t)
 
-	_, user, userOrgs := CreateUserFixtures(t)
-	tokens := CreateUserAccessTokenFixtures(t, user, userOrgs)
+	_, users, userOrgs := CreateUserFixtures(t)
+	tokens := CreateUserAccessTokenFixtures(t, users[0], userOrgs)
 
 	tests := []struct {
 		name    string
@@ -92,8 +92,8 @@ func TestUserAccessToken_FindByBearerToken(t *testing.T) {
 		want    User
 		wantErr bool
 	}{
-		{name: "valid0", token: tokens[0], want: user},
-		{name: "valid1", token: tokens[1], want: user},
+		{name: "valid0", token: tokens[0], want: users[0]},
+		{name: "valid1", token: tokens[1], want: users[0]},
 		{name: "invalid", token: "000000", wantErr: true},
 		{name: "empty", token: "", wantErr: true},
 	}

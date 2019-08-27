@@ -26,8 +26,8 @@ func (r *mutationResolver) CreatePost(ctx context.Context, input NewPost) (*mode
 }
 
 func (r *mutationResolver) UpdatePostStatus(ctx context.Context, input UpdatedPostStatus) (*models.Post, error) {
-	post, err := models.FindPostByUUID(input.ID)
-	if err != nil {
+	var post models.Post
+	if err := post.FindByUUID(input.ID); err != nil {
 		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
 		return &models.Post{}, err
 	}

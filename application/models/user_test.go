@@ -100,18 +100,18 @@ func TestUser_FindOrCreateFromAuthUser(t *testing.T) {
 
 func TestFindUserByAccessToken(t *testing.T) {
 	resetTables(t)
-	_, user, userOrgs := CreateUserFixtures(t)
+	_, users, userOrgs := CreateUserFixtures(t)
 
 	// Load access token test fixtures
 	tokens := UserAccessTokens{
 		{
-			UserID:             user.ID,
+			UserID:             users[0].ID,
 			UserOrganizationID: userOrgs[0].ID,
 			AccessToken:        hashClientIdAccessToken("abc123"),
 			ExpiresAt:          time.Unix(0, 0),
 		},
 		{
-			UserID:             user.ID,
+			UserID:             users[0].ID,
 			UserOrganizationID: userOrgs[0].ID,
 			AccessToken:        hashClientIdAccessToken("xyz789"),
 			ExpiresAt:          time.Date(2099, time.December, 31, 0, 0, 0, 0, time.UTC),
@@ -140,7 +140,7 @@ func TestFindUserByAccessToken(t *testing.T) {
 		{
 			name: "valid",
 			args: args{"xyz789"},
-			want: user,
+			want: users[0],
 		},
 		{
 			name:    "invalid",
@@ -264,7 +264,7 @@ func TestValidateUser(t *testing.T) {
 // Ensure multiple access tokens for same organization are allowed (to support multiple tabs/browsers)
 func TestCreateAccessToken(t *testing.T) {
 	resetTables(t)
-	orgs, user, _ := CreateUserFixtures(t)
+	orgs, users, _ := CreateUserFixtures(t)
 
 	type args struct {
 		user     User
@@ -278,7 +278,7 @@ func TestCreateAccessToken(t *testing.T) {
 		{
 			name: "abc123",
 			args: args{
-				user:     user,
+				user:     users[0],
 				clientID: "abc123",
 			},
 			wantErr: false,
@@ -286,7 +286,7 @@ func TestCreateAccessToken(t *testing.T) {
 		{
 			name: "123abc",
 			args: args{
-				user:     user,
+				user:     users[0],
 				clientID: "123abc",
 			},
 			wantErr: false,
@@ -294,7 +294,7 @@ func TestCreateAccessToken(t *testing.T) {
 		{
 			name: "empty client ID",
 			args: args{
-				user:     user,
+				user:     users[0],
 				clientID: "",
 			},
 			wantErr: true,
@@ -331,7 +331,7 @@ func TestCreateAccessToken(t *testing.T) {
 	}
 
 	uat := &UserAccessToken{}
-	count, _ := DB.Where("user_id = ?", user.ID).Count(uat)
+	count, _ := DB.Where("user_id = ?", users[0].ID).Count(uat)
 	if count != 2 {
 		t.Errorf("did not find correct number of user access tokens, want 2, got %v", count)
 	}
@@ -339,7 +339,7 @@ func TestCreateAccessToken(t *testing.T) {
 
 func TestGetOrgIDs(t *testing.T) {
 	resetTables(t)
-	_, user, _ := CreateUserFixtures(t)
+	_, users, _ := CreateUserFixtures(t)
 
 	tests := []struct {
 		name string
@@ -348,7 +348,7 @@ func TestGetOrgIDs(t *testing.T) {
 	}{
 		{
 			name: "basic",
-			user: user,
+			user: users[0],
 			want: []int{1, 2},
 		},
 	}
@@ -363,7 +363,9 @@ func TestGetOrgIDs(t *testing.T) {
 	}
 }
 
-func CreateUserFixtures(t *testing.T) (Organizations, User, UserOrganizations) {
+func CreateUserFixtures(t *testing.T) (Organizations, Users, UserOrganizations) {
+	resetTables(t)
+
 	// Load Organization test fixtures
 	orgs := Organizations{
 		{
@@ -387,29 +389,40 @@ func CreateUserFixtures(t *testing.T) (Organizations, User, UserOrganizations) {
 	}
 
 	// Load User test fixtures
-	user := User{
-		Email:     "user@example.com",
-		FirstName: "Existing",
-		LastName:  "User",
-		Nickname:  "Existing User",
-		Uuid:      domain.GetUuid(),
+	users := Users{
+		{
+			Email:     "user1@example.com",
+			FirstName: "Existing",
+			LastName:  "User",
+			Nickname:  "Existing User",
+			Uuid:      domain.GetUuid(),
+		},
+		{
+			Email:     "user2@example.com",
+			FirstName: "Another",
+			LastName:  "User",
+			Nickname:  "Another User",
+			Uuid:      domain.GetUuid(),
+		},
 	}
-	if err := DB.Create(&user); err != nil {
-		t.Errorf("could not create test user ... %v", err)
-		t.FailNow()
+	for i := range users {
+		if err := DB.Create(&users[i]); err != nil {
+			t.Errorf("could not create test user %v ... %v", i, err)
+			t.FailNow()
+		}
 	}
 
 	// Load UserOrganization test fixtures
 	userOrgs := UserOrganizations{
 		{
 			OrganizationID: orgs[0].ID,
-			UserID:         user.ID,
+			UserID:         users[0].ID,
 			AuthID:         "existing_user",
 			AuthEmail:      "user@example.com",
 		},
 		{
 			OrganizationID: orgs[1].ID,
-			UserID:         user.ID,
+			UserID:         users[0].ID,
 			AuthID:         "existing_user",
 			AuthEmail:      "user@example.com",
 		},
@@ -421,12 +434,12 @@ func CreateUserFixtures(t *testing.T) (Organizations, User, UserOrganizations) {
 		}
 	}
 
-	return orgs, user, userOrgs
+	return orgs, users, userOrgs
 }
 
 func TestGetOrganizations(t *testing.T) {
 	resetTables(t)
-	orgs, user, _ := CreateUserFixtures(t)
+	orgs, users, _ := CreateUserFixtures(t)
 
 	tests := []struct {
 		name string
@@ -435,7 +448,7 @@ func TestGetOrganizations(t *testing.T) {
 	}{
 		{
 			name: "basic",
-			user: user,
+			user: users[0],
 			want: []string{orgs[0].Name, orgs[1].Name},
 		},
 	}
