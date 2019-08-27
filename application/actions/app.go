@@ -6,9 +6,9 @@ import (
 	"github.com/gobuffalo/envy"
 	contenttype "github.com/gobuffalo/mw-contenttype"
 	paramlogger "github.com/gobuffalo/mw-paramlogger"
-
 	"github.com/gorilla/sessions"
 	"github.com/rs/cors"
+	"github.com/silinternational/handcarry-api/domain"
 	"github.com/silinternational/handcarry-api/models"
 )
 
@@ -31,6 +31,7 @@ var app *buffalo.App
 // placed last in the route declarations, as it will prevent routes
 // declared after it to never be called.
 func App() *buffalo.App {
+
 	if app == nil {
 		app = buffalo.New(buffalo.Options{
 			Env: ENV,
@@ -45,6 +46,9 @@ func App() *buffalo.App {
 			SessionName:  "_handcarry_session",
 			SessionStore: sessions.NewCookieStore([]byte(envy.Get("SESSION_SECRET", "testing"))),
 		})
+
+		// Initialize and attach "rollbar" to context
+		app.Use(domain.RollbarMiddleware)
 
 		// Log request parameters (filters apply).
 		app.Use(paramlogger.ParameterLogger)

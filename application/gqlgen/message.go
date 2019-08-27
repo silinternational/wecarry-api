@@ -2,7 +2,9 @@ package gqlgen
 
 import (
 	"context"
+
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/rollbar/rollbar-go"
 	"github.com/silinternational/handcarry-api/domain"
 	"github.com/silinternational/handcarry-api/models"
 	"github.com/vektah/gqlparser/gqlerror"
@@ -68,6 +70,7 @@ func (r *queryResolver) Message(ctx context.Context, id *string) (*models.Messag
 
 	if err := models.DB.Select(messageFields...).Where("uuid = ?", id).First(&message); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("error getting message: %v", err.Error()))
+		domain.RollbarError(models.GetBuffaloContextFromGqlContext(ctx), rollbar.ERR, err, domain.NoExtras)
 		return &models.Message{}, err
 	}
 
