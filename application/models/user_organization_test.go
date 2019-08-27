@@ -104,6 +104,7 @@ func createUserOrganizationFixtures(t *testing.T) {
 }
 
 func TestFindByAuthEmail(t *testing.T) {
+	resetTables(t)
 	createUserOrganizationFixtures(t)
 
 	type args struct {
@@ -152,11 +153,10 @@ func TestFindByAuthEmail(t *testing.T) {
 			}
 		})
 	}
-
-	resetTables(t)
 }
 
 func TestFindUserOrganization(t *testing.T) {
+	resetTables(t)
 	createUserOrganizationFixtures(t)
 
 	type args struct {
@@ -228,6 +228,4 @@ func TestFindUserOrganization(t *testing.T) {
 			}
 		})
 	}
-
-	resetTables(t)
 }
