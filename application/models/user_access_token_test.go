@@ -123,13 +123,13 @@ func CreateUserAccessTokenFixtures(t *testing.T, user User, userOrgs UserOrganiz
 		{
 			UserID:             user.ID,
 			UserOrganizationID: userOrgs[0].ID,
-			AccessToken:        hashClientIdAccessToken(rawTokens[0]),
+			AccessToken:        HashClientIdAccessToken(rawTokens[0]),
 			ExpiresAt:          time.Unix(0, 0),
 		},
 		{
 			UserID:             user.ID,
 			UserOrganizationID: userOrgs[0].ID,
-			AccessToken:        hashClientIdAccessToken(rawTokens[1]),
+			AccessToken:        HashClientIdAccessToken(rawTokens[1]),
 			ExpiresAt:          time.Date(2099, time.December, 31, 0, 0, 0, 0, time.UTC),
 		},
 	}
