@@ -8,7 +8,8 @@ WORKDIR $GOPATH/src/handcarry
 ADD . .
 ENV GO111MODULE=on
 RUN go get ./...
-RUN buffalo build --static -o /bin/app
+RUN export GIT_COMMIT=$(git rev-list -1 HEAD) && \
+    buffalo build --ldflags "-X main.GitCommitHash=$GIT_COMMIT" --static -o /bin/app
 
 FROM alpine
 RUN apk add --no-cache bash

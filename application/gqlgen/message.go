@@ -2,6 +2,7 @@ package gqlgen
 
 import (
 	"context"
+
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/silinternational/handcarry-api/domain"
 	"github.com/silinternational/handcarry-api/models"
@@ -68,6 +69,7 @@ func (r *queryResolver) Message(ctx context.Context, id *string) (*models.Messag
 
 	if err := models.DB.Select(messageFields...).Where("uuid = ?", id).First(&message); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("error getting message: %v", err.Error()))
+		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
 		return &models.Message{}, err
 	}
 

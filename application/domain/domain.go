@@ -7,6 +7,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gobuffalo/envy"
+	"github.com/rollbar/rollbar-go"
+
+	"github.com/gobuffalo/buffalo"
+
 	uuid2 "github.com/gofrs/uuid"
 )
 
@@ -21,6 +26,10 @@ const AdminRoleSuperDuperAdmin = "SuperDuperAdmin"
 const EmptyUUID = "00000000-0000-0000-0000-000000000000"
 
 const DateFormat = "2006-01-02"
+
+// NoExtras is exported for use when making calls to RollbarError and rollbarMessage to reduce
+// typing map[string]interface{} when no extras are needed
+var NoExtras map[string]interface{}
 
 type AppError struct {
 	Err   error
@@ -151,5 +160,55 @@ func EmailDomain(email string) string {
 		return parts[1]
 	} else {
 		return email
+	}
+}
+
+func RollbarMiddleware(next buffalo.Handler) buffalo.Handler {
+	return func(c buffalo.Context) error {
+		client := rollbar.New(
+			envy.Get("ROLLBAR_TOKEN", ""),
+			envy.Get("GO_ENV", "development"),
+			"",
+			"",
+			envy.Get("ROLLBAR_SERVER_ROOT", "github.com/silinternational/handcarry-api"))
+
+		c.Set("rollbar", client)
+
+		return next(c)
+	}
+}
+
+// Error log error and send to Rollbar
+func Error(c buffalo.Context, msg string, extras map[string]interface{}) {
+	c.Logger().Error(msg, extras)
+	rollbarMessage(c, rollbar.ERR, msg, extras)
+}
+
+// Warn log warning and send to Rollbar
+func Warn(c buffalo.Context, msg string, extras map[string]interface{}) {
+	c.Logger().Warn(msg, extras)
+	rollbarMessage(c, rollbar.WARN, msg, extras)
+}
+
+// Log info message
+func Info(c buffalo.Context, msg string, extras map[string]interface{}) {
+	c.Logger().Info(msg, extras)
+}
+
+// rollbarMessage is a wrapper function to call rollbar's client.MessageWithExtras function from client stored in context
+func rollbarMessage(c buffalo.Context, level string, msg string, extras map[string]interface{}) {
+	rc, ok := c.Value("rollbar").(*rollbar.Client)
+	if ok {
+		rc.MessageWithExtras(level, msg, extras)
+		return
+	}
+}
+
+// RollbarSetPerson sets person on the rollbar context for futher logging
+func RollbarSetPerson(c buffalo.Context, id, username, email string) {
+	rc, ok := c.Value("rollbar").(*rollbar.Client)
+	if ok {
+		rc.SetPerson(id, username, email)
+		return
 	}
 }

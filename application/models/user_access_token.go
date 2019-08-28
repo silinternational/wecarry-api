@@ -59,22 +59,20 @@ func (u *UserAccessToken) ValidateUpdate(tx *pop.Connection) (*validate.Errors, 
 	return validate.NewErrors(), nil
 }
 
-func DeleteAccessToken(accessToken string) error {
-	userAccessToken := UserAccessToken{
-		AccessToken: HashClientIdAccessToken(accessToken),
-	}
-	err := DB.Where("access_token = ?", userAccessToken.AccessToken).First(&userAccessToken)
-	if err != nil {
+func (u *UserAccessToken) DeleteByBearerToken(bearerToken string) error {
+	if err := u.FindByBearerToken(bearerToken); err != nil {
 		return err
 	}
-
-	return DB.Destroy(&userAccessToken)
+	return DB.Destroy(u)
 }
 
-func UserAccessTokenFind(accessToken string) (*UserAccessToken, error) {
-	userAccessToken := UserAccessToken{}
-	if err := DB.Eager().Where("access_token = ?", HashClientIdAccessToken(accessToken)).First(&userAccessToken); err != nil {
-		return &userAccessToken, fmt.Errorf("failed to find access token, %v", err)
+func (u *UserAccessToken) FindByBearerToken(bearerToken string) error {
+	if err := DB.Eager().Where("access_token = ?", hashClientIdAccessToken(bearerToken)).First(u); err != nil {
+		l := len(bearerToken)
+		if l > 5 {
+			l = 5
+		}
+		return fmt.Errorf("failed to find access token '%s...', %s", bearerToken[0:l], err)
 	}
-	return &userAccessToken, nil
+	return nil
 }

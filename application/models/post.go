@@ -3,8 +3,9 @@ package models
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/silinternational/handcarry-api/domain"
 	"time"
+
+	"github.com/silinternational/handcarry-api/domain"
 
 	"github.com/gofrs/uuid"
 
@@ -87,20 +88,18 @@ func (p *Post) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }
 
-func FindPostByUUID(uuid string) (Post, error) {
-
+func (p *Post) FindByUUID(uuid string) error {
 	if uuid == "" {
-		return Post{}, fmt.Errorf("error finding post: uuid must not be blank")
+		return fmt.Errorf("error finding post: uuid must not be blank")
 	}
 
-	post := Post{}
 	queryString := fmt.Sprintf("uuid = '%s'", uuid)
 
-	if err := DB.Eager("CreatedBy").Where(queryString).First(&post); err != nil {
-		return Post{}, fmt.Errorf("error finding post by uuid: %s", err.Error())
+	if err := DB.Eager("CreatedBy").Where(queryString).First(p); err != nil {
+		return fmt.Errorf("error finding post by uuid: %s", err.Error())
 	}
 
-	return post, nil
+	return nil
 }
 
 func (p *Post) GetCreator(fields []string) (*User, error) {

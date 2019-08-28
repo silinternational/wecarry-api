@@ -76,6 +76,7 @@ func AuthLogin(c buffalo.Context) error {
 
 	err := c.Session().Save()
 	if err != nil {
+		domain.Error(c, err.Error(), map[string]interface{}{"authEmail": authEmail})
 		return authError(c, http.StatusInternalServerError, "ServerError", "unable to save session")
 	}
 
@@ -98,6 +99,8 @@ func AuthLogin(c buffalo.Context) error {
 	if len(userOrgs) == 0 {
 		org, err = models.OrganizationFindByDomain(domain.EmailDomain(authEmail))
 		if err != nil {
+			extras := map[string]interface{}{"authEmail": authEmail, "code": "UnableToFindOrgByEmail"}
+			domain.Error(c, err.Error(), extras)
 			return authError(c, http.StatusInternalServerError, "UnableToFindOrgByEmail", "unable to find organization by email domain")
 		}
 		if org.AuthType == "" {
@@ -125,12 +128,16 @@ func AuthLogin(c buffalo.Context) error {
 	// get auth provider for org to process login
 	sp, err := org.GetAuthProvider()
 	if err != nil {
+		extras := map[string]interface{}{"authEmail": authEmail, "code": "UnableToLoadAuthProvider"}
+		domain.Error(c, err.Error(), extras)
 		return authError(c, http.StatusInternalServerError, "UnableToLoadAuthProvider",
 			fmt.Sprintf("unable to load auth provider for '%s'", org.Name))
 	}
 
 	authResp := sp.Login(c)
 	if authResp.Error != nil {
+		extras := map[string]interface{}{"authEmail": authEmail, "code": "AuthError"}
+		domain.Error(c, authResp.Error.Error(), extras)
 		return authError(c, http.StatusBadRequest, "AuthError", authResp.Error.Error())
 	}
 
@@ -158,6 +165,8 @@ func AuthLogin(c buffalo.Context) error {
 
 	accessToken, expiresAt, err := user.CreateAccessToken(org, clientID)
 	if err != nil {
+		extras := map[string]interface{}{"authEmail": authEmail, "code": "CreateAccessTokenFailure"}
+		domain.Error(c, err.Error(), extras)
 		return authError(c, http.StatusBadRequest, "CreateAccessTokenFailure", err.Error())
 	}
 
@@ -180,6 +189,9 @@ func AuthLogin(c buffalo.Context) error {
 		AccessTokenExpiresAt: expiresAt,
 	}
 
+	// set person on rollbar session
+	domain.RollbarSetPerson(c, authUser.ID, authUser.Nickname, authUser.Email)
+
 	return c.Redirect(302, getLoginSuccessRedirectURL(authUser))
 }
 
@@ -199,33 +211,39 @@ func AuthDestroy(c buffalo.Context) error {
 
 	bearerToken := domain.GetBearerTokenFromRequest(c.Request())
 	if bearerToken == "" {
+		domain.Warn(c, "no Bearer token provided", map[string]interface{}{"code": "LogoutError"})
 		return authError(c, 400, "LogoutError", "no Bearer token provided")
 	}
 
-	uat, err := models.UserAccessTokenFind(bearerToken)
+	var uat models.UserAccessToken
+	err := uat.FindByBearerToken(bearerToken)
 	if err != nil {
+		domain.Error(c, err.Error(), map[string]interface{}{"code": "LogoutError"})
 		return authError(c, 500, "LogoutError", err.Error())
 	}
 
-	if uat == nil {
-		return authError(c, 404, "LogoutError", "access token not found")
-	}
+	// set person on rollbar session
+	domain.RollbarSetPerson(c, uat.User.Uuid.String(), uat.User.Nickname, uat.User.Email)
 
 	authPro, err := uat.UserOrganization.Organization.GetAuthProvider()
 	if err != nil {
+		domain.Error(c, err.Error(), map[string]interface{}{"code": "LogoutError"})
 		return authError(c, 500, "LogoutError", err.Error())
 	}
 
 	authResp := authPro.Logout(c)
 	if authResp.Error != nil {
+		domain.Error(c, authResp.Error.Error(), map[string]interface{}{"code": "LogoutError"})
 		return authError(c, 500, "LogoutError", authResp.Error.Error())
 	}
 
 	var response AuthResponse
 
 	if authResp.RedirectURL != "" {
-		err = models.DeleteAccessToken(bearerToken)
+		var uat models.UserAccessToken
+		err = uat.DeleteByBearerToken(bearerToken)
 		if err != nil {
+			domain.Error(c, err.Error(), map[string]interface{}{"code": "LogoutError"})
 			return authError(c, 500, "LogoutError", err.Error())
 		}
 		c.Session().Clear()
@@ -247,6 +265,16 @@ func SetCurrentUser(next buffalo.Handler) buffalo.Handler {
 			return c.Error(401, fmt.Errorf("invalid bearer token"))
 		}
 		c.Set("current_user", user)
+
+		// set person on rollbar session
+		domain.RollbarSetPerson(c, user.Uuid.String(), user.Nickname, user.Email)
+		msg := fmt.Sprintf("user %s authenticated with bearer token from ip %s", user.Email, c.Request().RemoteAddr)
+		extras := map[string]interface{}{
+			"user_id": user.ID,
+			"email":   user.Email,
+			"ip":      c.Request().RemoteAddr,
+		}
+		domain.Info(c, msg, extras)
 
 		return next(c)
 	}

@@ -9,6 +9,8 @@ services:
       - ./application:/handcarry
     ports:
       - "3000:3000"
+    env_file:
+      - ./.env
     environment:
       ADDR: 0.0.0.0
       HOST: http://handcarry.local:3000
@@ -57,6 +59,7 @@ services:
       POSTGRES_PASSWORD: handcarry
       POSTGRES_DB: handcarry_test
 
+  # http://localhost:8080/?pgsql=db&username=handcarry&db=handcarry&ns=public
   adminer:
     image: adminer
     depends_on:
