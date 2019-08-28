@@ -15,6 +15,13 @@ import (
 	"github.com/gobuffalo/validate/validators"
 )
 
+const PostTypeRequest = "request"
+
+const PostStatusUnfulfilled = "unfulfilled"
+
+const PostSizeMedium = "medium"
+const PostSizeSmall = "small"
+
 type Post struct {
 	ID             int          `json:"id" db:"id"`
 	CreatedAt      time.Time    `json:"created_at" db:"created_at"`

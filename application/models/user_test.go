@@ -107,13 +107,13 @@ func TestFindUserByAccessToken(t *testing.T) {
 		{
 			UserID:             users[0].ID,
 			UserOrganizationID: userOrgs[0].ID,
-			AccessToken:        hashClientIdAccessToken("abc123"),
+			AccessToken:        HashClientIdAccessToken("abc123"),
 			ExpiresAt:          time.Unix(0, 0),
 		},
 		{
 			UserID:             users[0].ID,
 			UserOrganizationID: userOrgs[0].ID,
-			AccessToken:        hashClientIdAccessToken("xyz789"),
+			AccessToken:        HashClientIdAccessToken("xyz789"),
 			ExpiresAt:          time.Date(2099, time.December, 31, 0, 0, 0, 0, time.UTC),
 		},
 	}
@@ -312,7 +312,7 @@ func TestCreateAccessToken(t *testing.T) {
 				if err != nil && !test.wantErr {
 					t.Errorf("CreateAccessToken() returned error: %v", err)
 				}
-				hash := hashClientIdAccessToken(test.args.clientID + token)
+				hash := HashClientIdAccessToken(test.args.clientID + token)
 
 				var dbToken UserAccessToken
 				if err := DB.Where(fmt.Sprintf("access_token='%v'", hash)).First(&dbToken); err != nil {
