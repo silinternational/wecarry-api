@@ -61,7 +61,7 @@ func (u *UserAccessToken) ValidateUpdate(tx *pop.Connection) (*validate.Errors, 
 
 func DeleteAccessToken(accessToken string) error {
 	userAccessToken := UserAccessToken{
-		AccessToken: hashClientIdAccessToken(accessToken),
+		AccessToken: HashClientIdAccessToken(accessToken),
 	}
 	err := DB.Where("access_token = ?", userAccessToken.AccessToken).First(&userAccessToken)
 	if err != nil {
@@ -73,7 +73,7 @@ func DeleteAccessToken(accessToken string) error {
 
 func UserAccessTokenFind(accessToken string) (*UserAccessToken, error) {
 	userAccessToken := UserAccessToken{}
-	if err := DB.Eager().Where("access_token = ?", hashClientIdAccessToken(accessToken)).First(&userAccessToken); err != nil {
+	if err := DB.Eager().Where("access_token = ?", HashClientIdAccessToken(accessToken)).First(&userAccessToken); err != nil {
 		return &userAccessToken, fmt.Errorf("failed to find access token, %v", err)
 	}
 	return &userAccessToken, nil
