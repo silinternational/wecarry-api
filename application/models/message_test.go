@@ -1,10 +1,9 @@
 package models
 
-import ()
+func (ms *ModelSuite) TestMessage_GetSender() {
+	t := ms.T()
 
-func (as *ModelSuite) TestMessage_GetSender() {
-	t := as.T()
-
+	resetTables(t)
 	messageFixtures := Fixtures_GetSender(t)
 
 	messages := messageFixtures.Messages
@@ -17,8 +16,7 @@ func (as *ModelSuite) TestMessage_GetSender() {
 		t.FailNow()
 	}
 
-	as.Equal(users[1].ID, userResults.ID, "Bad user ID")
+	ms.Equal(users[1].ID, userResults.ID, "Bad user ID")
 
-	as.Equal(users[1].Nickname, userResults.Nickname, "Bad user Nickname")
-
+	ms.Equal(users[1].Nickname, userResults.Nickname, "Bad user Nickname")
 }
