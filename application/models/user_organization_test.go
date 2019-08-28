@@ -103,7 +103,8 @@ func createUserOrganizationFixtures(t *testing.T) {
 	}
 }
 
-func TestFindByAuthEmail(t *testing.T) {
+func (ms *ModelSuite) TestFindByAuthEmail() {
+	t := ms.T()
 	resetTables(t)
 	createUserOrganizationFixtures(t)
 
@@ -155,7 +156,8 @@ func TestFindByAuthEmail(t *testing.T) {
 	}
 }
 
-func TestFindUserOrganization(t *testing.T) {
+func (ms *ModelSuite) TestFindUserOrganization() {
+	t := ms.T()
 	resetTables(t)
 	createUserOrganizationFixtures(t)
 

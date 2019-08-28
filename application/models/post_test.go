@@ -11,7 +11,8 @@ import (
 	"github.com/gobuffalo/validate"
 )
 
-func TestPost_Validate(t *testing.T) {
+func (ms *ModelSuite) TestPost_Validate() {
+	t := ms.T()
 	tests := []struct {
 		name     string
 		post     Post
@@ -181,7 +182,8 @@ func CreatePostFixtures(t *testing.T, users Users) []Post {
 	return posts
 }
 
-func TestFindPostByUUID(t *testing.T) {
+func (ms *ModelSuite) TestFindPostByUUID() {
+	t := ms.T()
 	resetTables(t)
 
 	_, users, _ := CreateUserFixtures(t)
@@ -216,7 +218,8 @@ func TestFindPostByUUID(t *testing.T) {
 	}
 }
 
-func TestPost_GetCreator(t *testing.T) {
+func (ms *ModelSuite) TestPost_GetCreator() {
+	t := ms.T()
 	resetTables(t)
 
 	_, users, _ := CreateUserFixtures(t)
@@ -241,7 +244,8 @@ func TestPost_GetCreator(t *testing.T) {
 	}
 }
 
-func TestPost_GetProvider(t *testing.T) {
+func (ms *ModelSuite) TestPost_GetProvider() {
+	t := ms.T()
 	resetTables(t)
 
 	_, users, _ := CreateUserFixtures(t)
@@ -273,7 +277,8 @@ func TestPost_GetProvider(t *testing.T) {
 	}
 }
 
-func TestPost_GetReceiver(t *testing.T) {
+func (ms *ModelSuite) TestPost_GetReceiver() {
+	t := ms.T()
 	resetTables(t)
 
 	_, users, _ := CreateUserFixtures(t)
@@ -305,7 +310,8 @@ func TestPost_GetReceiver(t *testing.T) {
 	}
 }
 
-func TestPost_GetOrganization(t *testing.T) {
+func (ms *ModelSuite) TestPost_GetOrganization() {
+	t := ms.T()
 	resetTables(t)
 
 	_, users, _ := CreateUserFixtures(t)
@@ -330,7 +336,8 @@ func TestPost_GetOrganization(t *testing.T) {
 	}
 }
 
-func TestPost_GetThreads(t *testing.T) {
+func (ms *ModelSuite) TestPost_GetThreads() {
+	t := ms.T()
 	resetTables(t)
 
 	_, users, _ := CreateUserFixtures(t)
@@ -363,7 +370,8 @@ func TestPost_GetThreads(t *testing.T) {
 	}
 }
 
-func TestPost_GetThreadIdForUser(t *testing.T) {
+func (ms *ModelSuite) TestPost_GetThreadIdForUser() {
+	t := ms.T()
 	resetTables(t)
 
 	_, users, _ := CreateUserFixtures(t)

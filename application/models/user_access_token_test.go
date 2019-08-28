@@ -5,7 +5,8 @@ import (
 	"time"
 )
 
-func TestUserAccessToken_Validate(t *testing.T) {
+func (ms *ModelSuite) TestUserAccessToken_Validate() {
+	t := ms.T()
 	tests := []struct {
 		name     string
 		token    UserAccessToken
@@ -52,7 +53,8 @@ func TestUserAccessToken_Validate(t *testing.T) {
 	}
 }
 
-func TestUserAccessToken_DeleteByBearerToken(t *testing.T) {
+func (ms *ModelSuite) TestUserAccessToken_DeleteByBearerToken() {
+	t := ms.T()
 	resetTables(t)
 
 	_, users, userOrgs := CreateUserFixtures(t)
@@ -80,7 +82,8 @@ func TestUserAccessToken_DeleteByBearerToken(t *testing.T) {
 	}
 }
 
-func TestUserAccessToken_FindByBearerToken(t *testing.T) {
+func (ms *ModelSuite) TestUserAccessToken_FindByBearerToken() {
+	t := ms.T()
 	resetTables(t)
 
 	_, users, userOrgs := CreateUserFixtures(t)

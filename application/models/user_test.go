@@ -14,7 +14,8 @@ import (
 	"github.com/silinternational/handcarry-api/domain"
 )
 
-func TestUser_FindOrCreateFromAuthUser(t *testing.T) {
+func (ms *ModelSuite) TestUser_FindOrCreateFromAuthUser() {
+	t := ms.T()
 	resetTables(t)
 
 	// create org for test
@@ -98,7 +99,8 @@ func TestUser_FindOrCreateFromAuthUser(t *testing.T) {
 	}
 }
 
-func TestFindUserByAccessToken(t *testing.T) {
+func (ms *ModelSuite) TestFindUserByAccessToken() {
+	t := ms.T()
 	resetTables(t)
 	_, users, userOrgs := CreateUserFixtures(t)
 
@@ -171,7 +173,8 @@ func TestFindUserByAccessToken(t *testing.T) {
 	}
 }
 
-func TestValidateUser(t *testing.T) {
+func (ms *ModelSuite) TestValidateUser() {
+	t := ms.T()
 	tests := []struct {
 		name     string
 		user     User
@@ -262,7 +265,8 @@ func TestValidateUser(t *testing.T) {
 }
 
 // Ensure multiple access tokens for same organization are allowed (to support multiple tabs/browsers)
-func TestCreateAccessToken(t *testing.T) {
+func (ms *ModelSuite) TestCreateAccessToken() {
+	t := ms.T()
 	resetTables(t)
 	orgs, users, _ := CreateUserFixtures(t)
 
@@ -337,7 +341,8 @@ func TestCreateAccessToken(t *testing.T) {
 	}
 }
 
-func TestGetOrgIDs(t *testing.T) {
+func (ms *ModelSuite) TestGetOrgIDs() {
+	t := ms.T()
 	resetTables(t)
 	_, users, _ := CreateUserFixtures(t)
 
@@ -437,7 +442,8 @@ func CreateUserFixtures(t *testing.T) (Organizations, Users, UserOrganizations) 
 	return orgs, users, userOrgs
 }
 
-func TestGetOrganizations(t *testing.T) {
+func (ms *ModelSuite) TestGetOrganizations() {
+	t := ms.T()
 	resetTables(t)
 	orgs, users, _ := CreateUserFixtures(t)
 
