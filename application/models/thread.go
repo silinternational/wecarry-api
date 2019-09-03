@@ -139,10 +139,10 @@ func (t *Thread) GetParticipants(selectFields []string) ([]*User, error) {
 	return users, nil
 }
 
-func CreateThreadWithParticipants(postUuid string, user User) (Thread, error) {
+func (t *Thread) CreateWithParticipants(postUuid string, user User) error {
 	var post Post
 	if err := post.FindByUUID(postUuid); err != nil {
-		return Thread{}, err
+		return err
 	}
 
 	participants := Users{user}
@@ -160,7 +160,7 @@ func CreateThreadWithParticipants(postUuid string, user User) (Thread, error) {
 
 	if err := models.DB.Save(&thread); err != nil {
 		err = fmt.Errorf("error saving new thread for message: %v", err.Error())
-		return Thread{}, err
+		return err
 	}
 
 	for _, p := range participants {
@@ -170,9 +170,10 @@ func CreateThreadWithParticipants(postUuid string, user User) (Thread, error) {
 		}
 		if err := DB.Save(&threadP); err != nil {
 			err = fmt.Errorf("error saving new thread participant %+v for message: %v", threadP, err.Error())
-			return Thread{}, err
+			return err
 		}
 	}
 
-	return thread, nil
+	*t = thread
+	return nil
 }

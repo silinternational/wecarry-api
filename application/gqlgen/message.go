@@ -90,7 +90,7 @@ func ConvertGqlNewMessageToDBMessage(gqlMessage NewMessage, user models.User) (m
 
 	} else {
 		var err error
-		thread, err = models.CreateThreadWithParticipants(gqlMessage.PostID, user)
+		err = thread.CreateWithParticipants(gqlMessage.PostID, user)
 		if err != nil {
 			return models.Message{}, err
 		}
