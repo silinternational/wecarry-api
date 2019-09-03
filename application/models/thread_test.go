@@ -386,3 +386,36 @@ func (ms *ModelSuite) TestThread_GetParticipants() {
 		})
 	}
 }
+
+func (ms *ModelSuite) TestThread_CreateWithParticipants() {
+	t := ms.T()
+	resetTables(t)
+
+	_, users, _ := CreateUserFixtures(t)
+	posts := CreatePostFixtures(t, users)
+	post := posts[0]
+
+	var thread Thread
+	if err := thread.CreateWithParticipants(post.Uuid.String(), users[1]); err != nil {
+		t.Errorf("TestThread_CreateWithParticipants() error = %v", err)
+		t.FailNow()
+	}
+
+	var threadFromDB Thread
+	if err := DB.Eager().Find(&threadFromDB, thread.ID); err != nil {
+		t.Errorf("TestThread_CreateWithParticipants() couldn't find new thread: %s", err)
+	}
+
+	if threadFromDB.PostID != post.ID {
+		t.Errorf("TestThread_CreateWithParticipants() post ID is wrong, got %d, expected %d",
+			threadFromDB.PostID, post.ID)
+	}
+
+	ids := make([]uuid.UUID, len(threadFromDB.Participants))
+	for i := range threadFromDB.Participants {
+		ids[i] = threadFromDB.Participants[i].Uuid
+	}
+
+	ms.Contains(ids, users[0].Uuid, "new thread doesn't include post creator as participant")
+	ms.Contains(ids, users[1].Uuid, "new thread doesn't include provided user as participant")
+}

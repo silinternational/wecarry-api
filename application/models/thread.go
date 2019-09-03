@@ -23,7 +23,7 @@ type Thread struct {
 	PostID       int       `json:"post_id" db:"post_id"`
 	Post         Post      `belongs_to:"posts"`
 	Messages     Messages  `has_many:"messages"`
-	Participants Users     `has_many:"users"`
+	Participants Users     `many_to_many:"thread_participants"`
 }
 
 // String is not required by pop and may be deleted
