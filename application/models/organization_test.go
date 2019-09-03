@@ -9,7 +9,8 @@ import (
 	"testing"
 )
 
-func TestOrganizationFindByUUID(t *testing.T) {
+func (ms *ModelSuite) TestFindOrgByUUID() {
+	t := ms.T()
 	org, _ := createOrgFixtures(t)
 
 	type args struct {
@@ -60,7 +61,8 @@ func TestOrganizationFindByUUID(t *testing.T) {
 	}
 }
 
-func TestOrganizationCreate(t *testing.T) {
+func (ms *ModelSuite) TestCreateOrganization() {
+	t := ms.T()
 	tests := []struct {
 		name    string
 		org     Organization
@@ -125,7 +127,8 @@ func TestOrganizationCreate(t *testing.T) {
 	}
 }
 
-func TestOrganizationValidate(t *testing.T) {
+func (ms *ModelSuite) TestValidateOrganization() {
+	t := ms.T()
 	tests := []struct {
 		name     string
 		org      Organization
@@ -189,7 +192,8 @@ func TestOrganizationValidate(t *testing.T) {
 	}
 }
 
-func TestOrganizationFindByDomain(t *testing.T) {
+func (ms *ModelSuite) TestOrganizationFindByDomain() {
+	t := ms.T()
 	org, orgDomain := createOrgFixtures(t)
 
 	type args struct {

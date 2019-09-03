@@ -5,7 +5,8 @@ import (
 	"time"
 )
 
-func TestUserAccessToken_Validate(t *testing.T) {
+func (ms *ModelSuite) TestUserAccessToken_Validate() {
+	t := ms.T()
 	tests := []struct {
 		name     string
 		token    UserAccessToken
@@ -52,11 +53,12 @@ func TestUserAccessToken_Validate(t *testing.T) {
 	}
 }
 
-func TestUserAccessToken_DeleteByBearerToken(t *testing.T) {
+func (ms *ModelSuite) TestUserAccessToken_DeleteByBearerToken() {
+	t := ms.T()
 	resetTables(t)
 
-	_, user, userOrgs := CreateUserFixtures(t)
-	tokens := CreateUserAccessTokenFixtures(t, user, userOrgs)
+	_, users, userOrgs := CreateUserFixtures(t)
+	tokens := CreateUserAccessTokenFixtures(t, users[0], userOrgs)
 
 	tests := []struct {
 		name    string
@@ -80,11 +82,12 @@ func TestUserAccessToken_DeleteByBearerToken(t *testing.T) {
 	}
 }
 
-func TestUserAccessToken_FindByBearerToken(t *testing.T) {
+func (ms *ModelSuite) TestUserAccessToken_FindByBearerToken() {
+	t := ms.T()
 	resetTables(t)
 
-	_, user, userOrgs := CreateUserFixtures(t)
-	tokens := CreateUserAccessTokenFixtures(t, user, userOrgs)
+	_, users, userOrgs := CreateUserFixtures(t)
+	tokens := CreateUserAccessTokenFixtures(t, users[0], userOrgs)
 
 	tests := []struct {
 		name    string
@@ -92,8 +95,8 @@ func TestUserAccessToken_FindByBearerToken(t *testing.T) {
 		want    User
 		wantErr bool
 	}{
-		{name: "valid0", token: tokens[0], want: user},
-		{name: "valid1", token: tokens[1], want: user},
+		{name: "valid0", token: tokens[0], want: users[0]},
+		{name: "valid1", token: tokens[1], want: users[0]},
 		{name: "invalid", token: "000000", wantErr: true},
 		{name: "empty", token: "", wantErr: true},
 	}
@@ -123,13 +126,13 @@ func CreateUserAccessTokenFixtures(t *testing.T, user User, userOrgs UserOrganiz
 		{
 			UserID:             user.ID,
 			UserOrganizationID: userOrgs[0].ID,
-			AccessToken:        hashClientIdAccessToken(rawTokens[0]),
+			AccessToken:        HashClientIdAccessToken(rawTokens[0]),
 			ExpiresAt:          time.Unix(0, 0),
 		},
 		{
 			UserID:             user.ID,
 			UserOrganizationID: userOrgs[0].ID,
-			AccessToken:        hashClientIdAccessToken(rawTokens[1]),
+			AccessToken:        HashClientIdAccessToken(rawTokens[1]),
 			ExpiresAt:          time.Date(2099, time.December, 31, 0, 0, 0, 0, time.UTC),
 		},
 	}

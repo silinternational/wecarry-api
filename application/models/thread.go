@@ -3,9 +3,10 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/gobuffalo/buffalo/genny/build/_fixtures/coke/models"
 	"github.com/silinternational/handcarry-api/domain"
-	"time"
 
 	"github.com/gofrs/uuid"
 
@@ -143,8 +144,8 @@ func (t *Thread) GetParticipants(selectFields []string) ([]*User, error) {
 }
 
 func CreateThreadWithParticipants(postUuid string, user User) (Thread, error) {
-	post, err := FindPostByUUID(postUuid)
-	if err != nil {
+	var post Post
+	if err := post.FindByUUID(postUuid); err != nil {
 		return Thread{}, err
 	}
 
@@ -161,7 +162,7 @@ func CreateThreadWithParticipants(postUuid string, user User) (Thread, error) {
 		Participants: participants,
 	}
 
-	if err = models.DB.Save(&thread); err != nil {
+	if err := models.DB.Save(&thread); err != nil {
 		err = fmt.Errorf("error saving new thread for message: %v", err.Error())
 		return Thread{}, err
 	}

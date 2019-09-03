@@ -223,11 +223,6 @@ func AuthDestroy(c buffalo.Context) error {
 		return authError(c, 500, "LogoutError", err.Error())
 	}
 
-	if uat.ID == 0 {
-		domain.Warn(c, "access token not found", map[string]interface{}{"code": "LogoutError"})
-		return authError(c, 404, "LogoutError", "access token not found")
-	}
-
 	// set person on rollbar session
 	domain.RollbarSetPerson(c, uat.User.Uuid.String(), uat.User.Nickname, uat.User.Email)
 

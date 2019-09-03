@@ -83,7 +83,7 @@ func (u *User) CreateAccessToken(org Organization, clientID string) (string, int
 	}
 
 	token := createAccessTokenPart()
-	hash := hashClientIdAccessToken(clientID + token)
+	hash := HashClientIdAccessToken(clientID + token)
 	expireAt := createAccessTokenExpiry()
 
 	userOrg, err := FindUserOrganization(*u, org)
@@ -253,7 +253,8 @@ func createAccessTokenPart() string {
 	return accessToken
 }
 
-func hashClientIdAccessToken(accessToken string) string {
+// HashClientIdAccessToken just returns a sha256.Sum256 of the input value
+func HashClientIdAccessToken(accessToken string) string {
 	return fmt.Sprintf("%x", sha256.Sum256([]byte(accessToken)))
 }
 

@@ -67,7 +67,7 @@ func (u *UserAccessToken) DeleteByBearerToken(bearerToken string) error {
 }
 
 func (u *UserAccessToken) FindByBearerToken(bearerToken string) error {
-	if err := DB.Eager().Where("access_token = ?", hashClientIdAccessToken(bearerToken)).First(u); err != nil {
+	if err := DB.Eager().Where("access_token = ?", HashClientIdAccessToken(bearerToken)).First(u); err != nil {
 		l := len(bearerToken)
 		if l > 5 {
 			l = 5
