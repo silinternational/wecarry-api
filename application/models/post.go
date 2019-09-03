@@ -146,8 +146,8 @@ func (p *Post) GetThreads(fields []string) ([]*Thread, error) {
 }
 
 func (p *Post) GetThreadIdForUser(user User) (*string, error) {
-	thread, err := FindThreadByPostIDAndUserID(p.ID, user.ID)
-	if err != nil {
+	var thread Thread
+	if err := thread.FindByPostIDAndUserID(p.ID, user.ID); err != nil {
 		return nil, err
 	}
 

@@ -63,7 +63,6 @@ func (t *Thread) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 }
 
 func (t *Thread) FindByUUID(uuid string) error {
-
 	if uuid == "" {
 		return fmt.Errorf("error: thread uuid must not be blank")
 	}
@@ -77,29 +76,28 @@ func (t *Thread) FindByUUID(uuid string) error {
 	return nil
 }
 
-func FindThreadByPostIDAndUserID(postID int, userID int) (Thread, error) {
-
+func (t *Thread) FindByPostIDAndUserID(postID int, userID int) error {
 	if postID == 0 || userID == 0 {
 		err := fmt.Errorf("error: post postID and userID must not be 0. Got: %v and %v", postID, userID)
-		return Thread{}, err
+		return err
 	}
 
 	var threads []Thread
 
 	if err := DB.Q().LeftJoin("thread_participants tp", "threads.id = tp.thread_id").
 		Where("tp.user_id = ?", userID).All(&threads); err != nil {
-		return Thread{}, fmt.Errorf("error getting threads: %v", err.Error())
+		return fmt.Errorf("error getting threads: %v", err.Error())
 	}
 
 	// TODO Rewrite this to do it the proper way
-	for _, t := range threads {
-		if t.PostID == postID {
-			return t, nil
+	for _, tt := range threads {
+		if tt.PostID == postID {
+			*t = tt
+			return nil
 		}
 	}
 
-	return Thread{}, nil
-
+	return nil
 }
 
 func (t *Thread) GetPost(selectFields []string) (*Post, error) {
