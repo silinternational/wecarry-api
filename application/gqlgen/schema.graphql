@@ -12,6 +12,10 @@ type Mutation {
     createPost(input: NewPost!): Post!
     updatePostStatus(input: UpdatedPostStatus!): Post!
     createMessage(input: NewMessage!): Message!
+    createOrganization(input: NewOrganization!): Organization!
+    updateOrganization(input: UpdateOrganization!): Organization!
+    createOrganizationDomain(input: NewOrganizationDomain!): OrganizationDomain!
+    removeOrganizationDomain(input: NewOrganizationDomain!): OrganizationDomain!
 }
 
 enum Role {
@@ -64,6 +68,31 @@ type Organization {
     url: String
     createdAt: String
     updatedAt: String
+}
+
+input NewOrganization {
+    name: String!
+    url: String
+    authType: String
+    authConfig: String
+}
+
+input UpdateOrganization {
+    id: ID!
+    name: String!
+    url: String
+    authType: String
+    authConfig: String
+}
+
+type OrganizationDomain {
+    domain: String!
+    organizationId: String!
+}
+
+input NewOrganizationDomain {
+    domain: String!
+    organizationId: String!
 }
 
 type Thread {

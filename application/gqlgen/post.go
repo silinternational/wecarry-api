@@ -176,7 +176,8 @@ func (r *queryResolver) Post(ctx context.Context, id *string) (*models.Post, err
 
 // ConvertGqlNewPostToDBPost does what its name says, but also ...
 func ConvertGqlNewPostToDBPost(gqlPost NewPost, createdByUser models.User) (models.Post, error) {
-	org, err := models.FindOrgByUUID(gqlPost.OrgID)
+	var org models.Organization
+	err := org.FindByUUID(gqlPost.OrgID)
 	if err != nil {
 		return models.Post{}, err
 	}

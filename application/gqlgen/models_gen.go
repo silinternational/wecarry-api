@@ -14,6 +14,18 @@ type NewMessage struct {
 	ThreadID *string `json:"threadID"`
 }
 
+type NewOrganization struct {
+	Name       string  `json:"name"`
+	URL        *string `json:"url"`
+	AuthType   *string `json:"authType"`
+	AuthConfig *string `json:"authConfig"`
+}
+
+type NewOrganizationDomain struct {
+	Domain         string `json:"domain"`
+	OrganizationID string `json:"organizationId"`
+}
+
 type NewPost struct {
 	OrgID        string   `json:"orgID"`
 	Type         PostType `json:"type"`
@@ -25,6 +37,19 @@ type NewPost struct {
 	NeededAfter  *string  `json:"neededAfter"`
 	NeededBefore *string  `json:"neededBefore"`
 	Category     *string  `json:"category"`
+}
+
+type OrganizationDomain struct {
+	Domain         string `json:"domain"`
+	OrganizationID string `json:"organizationId"`
+}
+
+type UpdateOrganization struct {
+	ID         string  `json:"id"`
+	Name       string  `json:"name"`
+	URL        *string `json:"url"`
+	AuthType   *string `json:"authType"`
+	AuthConfig *string `json:"authConfig"`
 }
 
 type UpdatedPostStatus struct {

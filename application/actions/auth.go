@@ -97,7 +97,8 @@ func AuthLogin(c buffalo.Context) error {
 
 	// no user_organization records yet, see if we have an organization for user's email domain
 	if len(userOrgs) == 0 {
-		org, err = models.OrganizationFindByDomain(domain.EmailDomain(authEmail))
+		var org models.Organization
+		err = org.FindByDomain(domain.EmailDomain(authEmail))
 		if err != nil {
 			extras := map[string]interface{}{"authEmail": authEmail, "code": "UnableToFindOrgByEmail"}
 			domain.Error(c, err.Error(), extras)
@@ -222,7 +223,7 @@ func AuthDestroy(c buffalo.Context) error {
 		return authError(c, 500, "LogoutError", err.Error())
 	}
 
-	if uat == nil {
+	if uat.ID == 0 {
 		domain.Warn(c, "access token not found", map[string]interface{}{"code": "LogoutError"})
 		return authError(c, 404, "LogoutError", "access token not found")
 	}

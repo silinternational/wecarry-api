@@ -34,7 +34,7 @@ type User struct {
 	AdminRole     nulls.String      `json:"admin_role" db:"admin_role"`
 	Uuid          uuid.UUID         `json:"uuid" db:"uuid"`
 	AccessTokens  []UserAccessToken `has_many:"user_access_tokens" json:"-"`
-	Organizations Organizations     `many_to_many:"user_organizations" json:"-"`
+	Organizations []Organization    `many_to_many:"user_organizations" json:"-"`
 }
 
 // String is not required by pop and may be deleted

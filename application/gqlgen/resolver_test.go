@@ -28,7 +28,7 @@ func TestResolver(t *testing.T) {
 
 	// Load Organization test fixtures
 	orgUuid1, _ := uuid.FromString("51b5321d-2769-48a0-908a-7af1d15083e2")
-	orgFix := models.Organizations{
+	orgFix := []models.Organization{
 		{
 			ID:         1,
 			Name:       "ACME",
@@ -59,7 +59,7 @@ func TestResolver(t *testing.T) {
 		return
 	}
 
-	userFix[0].Organizations = models.Organizations{orgFix[0]}
+	userFix[0].Organizations = []models.Organization{orgFix[0]}
 
 	// Load USER_ORGANIZATIONS fixtures
 	UserOrgsFix := models.UserOrganizations{

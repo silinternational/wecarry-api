@@ -1,7 +1,6 @@
 package models
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -29,21 +28,6 @@ type Organization struct {
 	Uuid                uuid.UUID            `json:"uuid" db:"uuid"`
 	Users               Users                `many_to_many:"user_organizations"`
 	OrganizationDomains []OrganizationDomain `has_many:"organization_domains"`
-}
-
-// String is not required by pop and may be deleted
-func (o Organization) String() string {
-	jo, _ := json.Marshal(o)
-	return string(jo)
-}
-
-// Organizations is not required by pop and may be deleted
-type Organizations []Organization
-
-// String is not required by pop and may be deleted
-func (o Organizations) String() string {
-	jo, _ := json.Marshal(o)
-	return string(jo)
 }
 
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
@@ -76,28 +60,77 @@ func (o *Organization) GetAuthProvider() (auth.Provider, error) {
 	return &auth.EmptyProvider{}, fmt.Errorf("unsupported auth provider type: %s", o.AuthType)
 }
 
-func FindOrgByUUID(uuid string) (Organization, error) {
+func (o *Organization) FindByUUID(uuid string) error {
 
 	if uuid == "" {
-		return Organization{}, fmt.Errorf("error: access token must not be blank")
+		return fmt.Errorf("error: access token must not be blank")
 	}
 
-	org := Organization{}
-
-	queryString := fmt.Sprintf("uuid = '%s'", uuid)
-
-	if err := DB.Where(queryString).First(&org); err != nil {
-		return Organization{}, fmt.Errorf("error finding org by uuid: %s", err.Error())
+	if err := DB.Where("uuid = ?", uuid).First(o); err != nil {
+		return fmt.Errorf("error finding org by uuid: %s", err.Error())
 	}
 
-	return org, nil
+	return nil
 }
 
-func OrganizationFindByDomain(domain string) (Organization, error) {
+func (o *Organization) FindByDomain(domain string) error {
 	var orgDomain OrganizationDomain
-	if err := DB.Eager().Where("domain = ?", domain).First(&orgDomain); err != nil {
-		return Organization{}, fmt.Errorf("error finding organization by domain: %s", err.Error())
+	if err := DB.Where("domain = ?", domain).First(&orgDomain); err != nil {
+		return fmt.Errorf("error finding organization_domain by domain: %s", err.Error())
 	}
 
-	return orgDomain.Organization, nil
+	if err := DB.Eager().Where("id = ?", orgDomain.OrganizationID).First(o); err != nil {
+		return fmt.Errorf("error finding organization by domain: %s", err.Error())
+	}
+
+	return nil
+}
+
+func (o *Organization) AddDomain(domain string) (OrganizationDomain, error) {
+	// make sure domain is not registered to another org first
+	var orgDomain OrganizationDomain
+
+	count, err := DB.Where("domain = ?", domain).Count(&orgDomain)
+	if err != nil {
+		return OrganizationDomain{}, err
+	}
+
+	if count > 0 {
+		return OrganizationDomain{}, fmt.Errorf("this domain (%s) is already in use", domain)
+	}
+
+	orgDomain.Domain = domain
+	orgDomain.OrganizationID = o.ID
+	err = DB.Save(&orgDomain)
+	if err != nil {
+		return OrganizationDomain{}, err
+	}
+
+	return orgDomain, nil
+}
+
+func (o *Organization) RemoveDomain(domain string) error {
+	// make sure domain belongs to org for removal
+	for _, od := range o.OrganizationDomains {
+		if od.Domain == domain {
+			err := DB.Destroy(&od)
+			if err != nil {
+				return err
+			}
+			return o.loadDomains()
+		}
+	}
+
+	return fmt.Errorf("domain %s not found for organization", domain)
+}
+
+func (o *Organization) loadDomains() error {
+	var ods []OrganizationDomain
+	err := DB.Where("organization_id = ?", o.ID).All(&ods)
+	if err != nil {
+		return err
+	}
+
+	o.OrganizationDomains = ods
+	return nil
 }

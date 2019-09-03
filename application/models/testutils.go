@@ -38,7 +38,7 @@ func BounceTestDB() error {
 	return nil
 }
 
-func CreateOrgs(fixtures Organizations) error {
+func CreateOrgs(fixtures []Organization) error {
 	for _, f := range fixtures {
 		if err := DB.Create(&f); err != nil {
 			return fmt.Errorf("error creating org %+v ...\n %v \n", f, err)

@@ -58,9 +58,13 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CreateMessage    func(childComplexity int, input NewMessage) int
-		CreatePost       func(childComplexity int, input NewPost) int
-		UpdatePostStatus func(childComplexity int, input UpdatedPostStatus) int
+		CreateMessage            func(childComplexity int, input NewMessage) int
+		CreateOrganization       func(childComplexity int, input NewOrganization) int
+		CreateOrganizationDomain func(childComplexity int, input NewOrganizationDomain) int
+		CreatePost               func(childComplexity int, input NewPost) int
+		RemoveOrganizationDomain func(childComplexity int, input NewOrganizationDomain) int
+		UpdateOrganization       func(childComplexity int, input UpdateOrganization) int
+		UpdatePostStatus         func(childComplexity int, input UpdatedPostStatus) int
 	}
 
 	Organization struct {
@@ -69,6 +73,11 @@ type ComplexityRoot struct {
 		Name      func(childComplexity int) int
 		URL       func(childComplexity int) int
 		UpdatedAt func(childComplexity int) int
+	}
+
+	OrganizationDomain struct {
+		Domain         func(childComplexity int) int
+		OrganizationID func(childComplexity int) int
 	}
 
 	Post struct {
@@ -138,6 +147,10 @@ type MutationResolver interface {
 	CreatePost(ctx context.Context, input NewPost) (*models.Post, error)
 	UpdatePostStatus(ctx context.Context, input UpdatedPostStatus) (*models.Post, error)
 	CreateMessage(ctx context.Context, input NewMessage) (*models.Message, error)
+	CreateOrganization(ctx context.Context, input NewOrganization) (*models.Organization, error)
+	UpdateOrganization(ctx context.Context, input UpdateOrganization) (*models.Organization, error)
+	CreateOrganizationDomain(ctx context.Context, input NewOrganizationDomain) (*OrganizationDomain, error)
+	RemoveOrganizationDomain(ctx context.Context, input NewOrganizationDomain) (*OrganizationDomain, error)
 }
 type OrganizationResolver interface {
 	ID(ctx context.Context, obj *models.Organization) (string, error)
@@ -190,7 +203,6 @@ type UserResolver interface {
 	CreatedAt(ctx context.Context, obj *models.User) (*string, error)
 	UpdatedAt(ctx context.Context, obj *models.User) (*string, error)
 	AdminRole(ctx context.Context, obj *models.User) (*Role, error)
-	Organizations(ctx context.Context, obj *models.User) ([]*models.Organization, error)
 }
 
 type executableSchema struct {
@@ -262,6 +274,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreateMessage(childComplexity, args["input"].(NewMessage)), true
 
+	case "Mutation.createOrganization":
+		if e.complexity.Mutation.CreateOrganization == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createOrganization_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateOrganization(childComplexity, args["input"].(NewOrganization)), true
+
+	case "Mutation.createOrganizationDomain":
+		if e.complexity.Mutation.CreateOrganizationDomain == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createOrganizationDomain_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateOrganizationDomain(childComplexity, args["input"].(NewOrganizationDomain)), true
+
 	case "Mutation.createPost":
 		if e.complexity.Mutation.CreatePost == nil {
 			break
@@ -273,6 +309,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CreatePost(childComplexity, args["input"].(NewPost)), true
+
+	case "Mutation.removeOrganizationDomain":
+		if e.complexity.Mutation.RemoveOrganizationDomain == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_removeOrganizationDomain_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.RemoveOrganizationDomain(childComplexity, args["input"].(NewOrganizationDomain)), true
+
+	case "Mutation.updateOrganization":
+		if e.complexity.Mutation.UpdateOrganization == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateOrganization_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateOrganization(childComplexity, args["input"].(UpdateOrganization)), true
 
 	case "Mutation.updatePostStatus":
 		if e.complexity.Mutation.UpdatePostStatus == nil {
@@ -320,6 +380,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Organization.UpdatedAt(childComplexity), true
+
+	case "OrganizationDomain.domain":
+		if e.complexity.OrganizationDomain.Domain == nil {
+			break
+		}
+
+		return e.complexity.OrganizationDomain.Domain(childComplexity), true
+
+	case "OrganizationDomain.organizationId":
+		if e.complexity.OrganizationDomain.OrganizationID == nil {
+			break
+		}
+
+		return e.complexity.OrganizationDomain.OrganizationID(childComplexity), true
 
 	case "Post.category":
 		if e.complexity.Post.Category == nil {
@@ -706,6 +780,10 @@ type Mutation {
     createPost(input: NewPost!): Post!
     updatePostStatus(input: UpdatedPostStatus!): Post!
     createMessage(input: NewMessage!): Message!
+    createOrganization(input: NewOrganization!): Organization!
+    updateOrganization(input: UpdateOrganization!): Organization!
+    createOrganizationDomain(input: NewOrganizationDomain!): OrganizationDomain!
+    removeOrganizationDomain(input: NewOrganizationDomain!): OrganizationDomain!
 }
 
 enum Role {
@@ -758,6 +836,31 @@ type Organization {
     url: String
     createdAt: String
     updatedAt: String
+}
+
+input NewOrganization {
+    name: String!
+    url: String
+    authType: String
+    authConfig: String
+}
+
+input UpdateOrganization {
+    id: ID!
+    name: String!
+    url: String
+    authType: String
+    authConfig: String
+}
+
+type OrganizationDomain {
+    domain: String!
+    organizationId: String!
+}
+
+input NewOrganizationDomain {
+    domain: String!
+    organizationId: String!
 }
 
 type Thread {
@@ -824,12 +927,68 @@ func (ec *executionContext) field_Mutation_createMessage_args(ctx context.Contex
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_createOrganizationDomain_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 NewOrganizationDomain
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalNNewOrganizationDomain2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐNewOrganizationDomain(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createOrganization_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 NewOrganization
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalNNewOrganization2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐNewOrganization(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_createPost_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 NewPost
 	if tmp, ok := rawArgs["input"]; ok {
 		arg0, err = ec.unmarshalNNewPost2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐNewPost(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_removeOrganizationDomain_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 NewOrganizationDomain
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalNNewOrganizationDomain2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐNewOrganizationDomain(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateOrganization_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 UpdateOrganization
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalNUpdateOrganization2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐUpdateOrganization(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1292,6 +1451,182 @@ func (ec *executionContext) _Mutation_createMessage(ctx context.Context, field g
 	return ec.marshalNMessage2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐMessage(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Mutation_createOrganization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_createOrganization_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateOrganization(rctx, args["input"].(NewOrganization))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Organization)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNOrganization2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐOrganization(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_updateOrganization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_updateOrganization_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateOrganization(rctx, args["input"].(UpdateOrganization))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Organization)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNOrganization2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐOrganization(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_createOrganizationDomain(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_createOrganizationDomain_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateOrganizationDomain(rctx, args["input"].(NewOrganizationDomain))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*OrganizationDomain)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNOrganizationDomain2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐOrganizationDomain(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_removeOrganizationDomain(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_removeOrganizationDomain_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().RemoveOrganizationDomain(rctx, args["input"].(NewOrganizationDomain))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*OrganizationDomain)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNOrganizationDomain2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐOrganizationDomain(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Organization_id(ctx context.Context, field graphql.CollectedField, obj *models.Organization) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -1466,6 +1801,80 @@ func (ec *executionContext) _Organization_updatedAt(ctx context.Context, field g
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _OrganizationDomain_domain(ctx context.Context, field graphql.CollectedField, obj *OrganizationDomain) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "OrganizationDomain",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Domain, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _OrganizationDomain_organizationId(ctx context.Context, field graphql.CollectedField, obj *OrganizationDomain) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "OrganizationDomain",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.OrganizationID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Post_id(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
@@ -3040,13 +3449,13 @@ func (ec *executionContext) _User_organizations(ctx context.Context, field graph
 		Object:   "User",
 		Field:    field,
 		Args:     nil,
-		IsMethod: true,
+		IsMethod: false,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.User().Organizations(rctx, obj)
+		return obj.Organizations, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3058,10 +3467,10 @@ func (ec *executionContext) _User_organizations(ctx context.Context, field graph
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*models.Organization)
+	res := resTmp.([]models.Organization)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNOrganization2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐOrganization(ctx, field.Selections, res)
+	return ec.marshalNOrganization2ᚕgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐOrganization(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
@@ -4245,6 +4654,66 @@ func (ec *executionContext) unmarshalInputNewMessage(ctx context.Context, obj in
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputNewOrganization(ctx context.Context, obj interface{}) (NewOrganization, error) {
+	var it NewOrganization
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "name":
+			var err error
+			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "url":
+			var err error
+			it.URL, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "authType":
+			var err error
+			it.AuthType, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "authConfig":
+			var err error
+			it.AuthConfig, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputNewOrganizationDomain(ctx context.Context, obj interface{}) (NewOrganizationDomain, error) {
+	var it NewOrganizationDomain
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "domain":
+			var err error
+			it.Domain, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "organizationId":
+			var err error
+			it.OrganizationID, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputNewPost(ctx context.Context, obj interface{}) (NewPost, error) {
 	var it NewPost
 	var asMap = obj.(map[string]interface{})
@@ -4308,6 +4777,48 @@ func (ec *executionContext) unmarshalInputNewPost(ctx context.Context, obj inter
 		case "category":
 			var err error
 			it.Category, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpdateOrganization(ctx context.Context, obj interface{}) (UpdateOrganization, error) {
+	var it UpdateOrganization
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "id":
+			var err error
+			it.ID, err = ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "name":
+			var err error
+			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "url":
+			var err error
+			it.URL, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "authType":
+			var err error
+			it.AuthType, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "authConfig":
+			var err error
+			it.AuthConfig, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -4470,6 +4981,26 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "createOrganization":
+			out.Values[i] = ec._Mutation_createOrganization(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "updateOrganization":
+			out.Values[i] = ec._Mutation_updateOrganization(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "createOrganizationDomain":
+			out.Values[i] = ec._Mutation_createOrganizationDomain(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "removeOrganizationDomain":
+			out.Values[i] = ec._Mutation_removeOrganizationDomain(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -4544,6 +5075,38 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 				res = ec._Organization_updatedAt(ctx, field, obj)
 				return res
 			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var organizationDomainImplementors = []string{"OrganizationDomain"}
+
+func (ec *executionContext) _OrganizationDomain(ctx context.Context, sel ast.SelectionSet, obj *OrganizationDomain) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.RequestContext, sel, organizationDomainImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("OrganizationDomain")
+		case "domain":
+			out.Values[i] = ec._OrganizationDomain_domain(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "organizationId":
+			out.Values[i] = ec._OrganizationDomain_organizationId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5089,19 +5652,10 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 				return res
 			})
 		case "organizations":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._User_organizations(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			})
+			out.Values[i] = ec._User_organizations(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5441,6 +5995,14 @@ func (ec *executionContext) unmarshalNNewMessage2githubᚗcomᚋsilinternational
 	return ec.unmarshalInputNewMessage(ctx, v)
 }
 
+func (ec *executionContext) unmarshalNNewOrganization2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐNewOrganization(ctx context.Context, v interface{}) (NewOrganization, error) {
+	return ec.unmarshalInputNewOrganization(ctx, v)
+}
+
+func (ec *executionContext) unmarshalNNewOrganizationDomain2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐNewOrganizationDomain(ctx context.Context, v interface{}) (NewOrganizationDomain, error) {
+	return ec.unmarshalInputNewOrganizationDomain(ctx, v)
+}
+
 func (ec *executionContext) unmarshalNNewPost2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐNewPost(ctx context.Context, v interface{}) (NewPost, error) {
 	return ec.unmarshalInputNewPost(ctx, v)
 }
@@ -5449,7 +6011,7 @@ func (ec *executionContext) marshalNOrganization2githubᚗcomᚋsilinternational
 	return ec._Organization(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNOrganization2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐOrganization(ctx context.Context, sel ast.SelectionSet, v []*models.Organization) graphql.Marshaler {
+func (ec *executionContext) marshalNOrganization2ᚕgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐOrganization(ctx context.Context, sel ast.SelectionSet, v []models.Organization) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -5473,7 +6035,7 @@ func (ec *executionContext) marshalNOrganization2ᚕᚖgithubᚗcomᚋsilinterna
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNOrganization2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐOrganization(ctx, sel, v[i])
+			ret[i] = ec.marshalNOrganization2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐOrganization(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -5494,6 +6056,20 @@ func (ec *executionContext) marshalNOrganization2ᚖgithubᚗcomᚋsilinternatio
 		return graphql.Null
 	}
 	return ec._Organization(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNOrganizationDomain2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐOrganizationDomain(ctx context.Context, sel ast.SelectionSet, v OrganizationDomain) graphql.Marshaler {
+	return ec._OrganizationDomain(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNOrganizationDomain2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐOrganizationDomain(ctx context.Context, sel ast.SelectionSet, v *OrganizationDomain) graphql.Marshaler {
+	if v == nil {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._OrganizationDomain(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNPost2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐPost(ctx context.Context, sel ast.SelectionSet, v models.Post) graphql.Marshaler {
@@ -5621,6 +6197,10 @@ func (ec *executionContext) marshalNThread2ᚖgithubᚗcomᚋsilinternationalᚋ
 	return ec._Thread(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNUpdateOrganization2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐUpdateOrganization(ctx context.Context, v interface{}) (UpdateOrganization, error) {
+	return ec.unmarshalInputUpdateOrganization(ctx, v)
+}
+
 func (ec *executionContext) unmarshalNUpdatedPostStatus2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐUpdatedPostStatus(ctx context.Context, v interface{}) (UpdatedPostStatus, error) {
 	return ec.unmarshalInputUpdatedPostStatus(ctx, v)
 }
@@ -5653,7 +6233,7 @@ func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋsilinternational�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOUser2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐUser(ctx, sel, v[i])
+			ret[i] = ec.marshalNUser2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐUser(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)

@@ -363,9 +363,9 @@ func TestGetOrgIDs(t *testing.T) {
 	}
 }
 
-func CreateUserFixtures(t *testing.T) (Organizations, User, UserOrganizations) {
+func CreateUserFixtures(t *testing.T) ([]Organization, User, UserOrganizations) {
 	// Load Organization test fixtures
-	orgs := Organizations{
+	orgs := []Organization{
 		{
 			Name:       "ACME",
 			Uuid:       domain.GetUuid(),

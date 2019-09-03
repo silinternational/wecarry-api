@@ -1,13 +1,15 @@
 package models
 
 import (
+	"time"
+
 	"github.com/gobuffalo/nulls"
 	"github.com/silinternational/handcarry-api/domain"
 
 	"testing"
 )
 
-func TestFindOrgByUUID(t *testing.T) {
+func TestOrganizationFindByUUID(t *testing.T) {
 	org, _ := createOrgFixtures(t)
 
 	type args struct {
@@ -37,16 +39,17 @@ func TestFindOrgByUUID(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := FindOrgByUUID(test.args.uuid)
+			var org Organization
+			err := org.FindByUUID(test.args.uuid)
 			if test.wantErr {
 				if err == nil {
 					t.Errorf("Expected an error, but did not get one")
 				}
 			} else {
 				if err != nil {
-					t.Errorf("FindOrgByUUID() returned an error: %v", err)
-				} else if got.Uuid != test.want.Uuid {
-					t.Errorf("found %v, expected %v", got, test.want)
+					t.Errorf("FindByUUID() returned an error: %v", err)
+				} else if org.Uuid != test.want.Uuid {
+					t.Errorf("found %v, expected %v", org, test.want)
 				}
 			}
 		})
@@ -57,7 +60,7 @@ func TestFindOrgByUUID(t *testing.T) {
 	}
 }
 
-func TestCreateOrganization(t *testing.T) {
+func TestOrganizationCreate(t *testing.T) {
 	tests := []struct {
 		name    string
 		org     Organization
@@ -104,7 +107,8 @@ func TestCreateOrganization(t *testing.T) {
 			} else if err != nil {
 				t.Errorf("Unexpected error %v", err)
 			} else {
-				org, err := FindOrgByUUID(test.org.Uuid.String())
+				var org Organization
+				err := org.FindByUUID(test.org.Uuid.String())
 				if err != nil {
 					t.Errorf("Couldn't find new org %v: %v", test.org.Name, err)
 				}
@@ -121,7 +125,7 @@ func TestCreateOrganization(t *testing.T) {
 	}
 }
 
-func TestValidateOrganization(t *testing.T) {
+func TestOrganizationValidate(t *testing.T) {
 	tests := []struct {
 		name     string
 		org      Organization
@@ -215,7 +219,8 @@ func TestOrganizationFindByDomain(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := OrganizationFindByDomain(test.args.domain)
+			var org Organization
+			err := org.FindByDomain(test.args.domain)
 			if test.wantErr {
 				if err == nil {
 					t.Errorf("Expected an error, but did not get one")
@@ -223,8 +228,8 @@ func TestOrganizationFindByDomain(t *testing.T) {
 			} else {
 				if err != nil {
 					t.Errorf("OrganizationFindByDomain() returned an error: %v", err)
-				} else if got.Uuid != test.want.Uuid {
-					t.Errorf("found %v, expected %v", got, test.want)
+				} else if org.Uuid != test.want.Uuid {
+					t.Errorf("found %v, expected %v", org, test.want)
 				}
 			}
 		})
@@ -260,4 +265,80 @@ func createOrgFixtures(t *testing.T) (Organization, OrganizationDomain) {
 	}
 
 	return org, orgDomain
+}
+
+func TestOrganization_AddLoadRemoveDomain(t *testing.T) {
+	resetTables(t)
+
+	orgFixtures := []Organization{
+		{
+			ID:         1,
+			CreatedAt:  time.Time{},
+			UpdatedAt:  time.Time{},
+			Name:       "Org1",
+			Url:        nulls.String{},
+			AuthType:   "na",
+			AuthConfig: "{}",
+			Uuid:       domain.GetUuid(),
+		},
+		{
+			ID:         2,
+			CreatedAt:  time.Time{},
+			UpdatedAt:  time.Time{},
+			Name:       "Org2",
+			Url:        nulls.String{},
+			AuthType:   "na",
+			AuthConfig: "{}",
+			Uuid:       domain.GetUuid(),
+		},
+	}
+	for _, org := range orgFixtures {
+		err := DB.Create(&org)
+		if err != nil {
+			t.Errorf("Unable to create org fixture: %s", err)
+			t.FailNow()
+		}
+	}
+
+	first, err := orgFixtures[0].AddDomain("first.com")
+	if err != nil {
+		t.Errorf("unable to add first domain to Org1: %s", err)
+	} else if first.ID == 0 {
+		t.Errorf("did not get error, but failed to add first domain to Org1")
+	}
+
+	second, err := orgFixtures[0].AddDomain("second.com")
+	if err != nil {
+		t.Errorf("unable to add second domain to Org1: %s", err)
+	} else if second.ID == 0 {
+		t.Errorf("did not get error, but failed to add second domain to Org1")
+	}
+
+	_, err = orgFixtures[1].AddDomain("second.com")
+	if err == nil {
+		t.Errorf("was to add existing domain (second.com) to Org2 but should have gotten error")
+	}
+
+	if len(orgFixtures[0].OrganizationDomains) != 0 {
+		t.Errorf("hmm, didn't expect that")
+	}
+
+	err = orgFixtures[0].loadDomains()
+	if err != nil {
+		t.Errorf("unable to reload domains: %s", err)
+	}
+
+	if len(orgFixtures[0].OrganizationDomains) != 2 {
+		t.Errorf("after reloading org domains we did not get what we expected (%v), got: %v", 2, len(orgFixtures[0].OrganizationDomains))
+	}
+
+	err = orgFixtures[0].RemoveDomain("first.com")
+	if err != nil {
+		t.Errorf("unable to remove domain: %s", err)
+	}
+
+	if len(orgFixtures[0].OrganizationDomains) != 1 {
+		t.Errorf("org domains count after removing domain is not correct, expected %v, got: %v", 1, len(orgFixtures[0].OrganizationDomains))
+	}
+
 }

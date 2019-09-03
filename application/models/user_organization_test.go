@@ -220,7 +220,7 @@ func TestFindUserOrganization(t *testing.T) {
 				}
 			} else {
 				if err != nil {
-					t.Errorf("FindOrgByUUID() returned an error: %v", err)
+					t.Errorf("FindByUUID() returned an error: %v", err)
 				} else if (uo.UserID != user.ID) || (uo.OrganizationID != org.ID) {
 					t.Errorf("received wrong UserOrganization (UserID=%v, OrganizationID=%v), expected (user.ID=%v, org.ID=%v)",
 						uo.UserID, uo.OrganizationID, user.ID, org.ID)
