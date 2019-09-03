@@ -176,3 +176,48 @@ func (ms *ModelSuite) TestThread_FindByPostIDAndUserID() {
 		})
 	}
 }
+
+func (ms *ModelSuite) TestThread_GetPost() {
+	t := ms.T()
+	resetTables(t)
+
+	_, users, _ := CreateUserFixtures(t)
+	posts := CreatePostFixtures(t, users)
+	threadFixtures := CreateThreadFixtures(t, posts[0])
+
+	type args struct {
+		thread       Thread
+		selectFields []string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    Post
+		wantErr bool
+	}{
+		{
+			name: "good",
+			args: args{
+				thread:       threadFixtures.Threads[0],
+				selectFields: []string{"uuid"},
+			},
+			want: posts[0],
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := test.args.thread.GetPost(test.args.selectFields)
+			if test.wantErr {
+				if (err != nil) != test.wantErr {
+					t.Errorf("GetPost() did not return expected error")
+				}
+			} else {
+				if err != nil {
+					t.Errorf("GetPost() error = %v", err)
+				} else if got.Uuid != test.want.Uuid {
+					t.Errorf("GetPost() got = %s, want %s", got.Uuid, test.want.Uuid)
+				}
+			}
+		})
+	}
+}
