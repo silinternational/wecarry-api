@@ -84,12 +84,11 @@ func FindThreadByPostIDAndUserID(postID int, userID int) (Thread, error) {
 		return Thread{}, err
 	}
 
-	threads := []Thread{}
+	var threads []Thread
 
 	if err := DB.Q().LeftJoin("thread_participants tp", "threads.id = tp.thread_id").
 		Where("tp.user_id = ?", userID).All(&threads); err != nil {
-		fmt.Errorf("Error getting threads: %v", err.Error())
-		return Thread{}, err
+		return Thread{}, fmt.Errorf("error getting threads: %v", err.Error())
 	}
 
 	// TODO Rewrite this to do it the proper way
