@@ -62,20 +62,19 @@ func (t *Thread) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }
 
-func FindThreadByUUID(uuid string) (Thread, error) {
+func (t *Thread) FindByUUID(uuid string) error {
 
 	if uuid == "" {
-		return Thread{}, fmt.Errorf("error: thread uuid must not be blank")
+		return fmt.Errorf("error: thread uuid must not be blank")
 	}
 
-	thread := Thread{}
 	queryString := fmt.Sprintf("uuid = '%s'", uuid)
 
-	if err := DB.Where(queryString).First(&thread); err != nil {
-		return Thread{}, fmt.Errorf("error finding thread by uuid: %s", err.Error())
+	if err := DB.Where(queryString).First(t); err != nil {
+		return fmt.Errorf("error finding thread by uuid: %s", err.Error())
 	}
 
-	return thread, nil
+	return nil
 }
 
 func FindThreadByPostIDAndUserID(postID int, userID int) (Thread, error) {

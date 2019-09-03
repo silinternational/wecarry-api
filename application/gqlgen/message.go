@@ -83,7 +83,7 @@ func ConvertGqlNewMessageToDBMessage(gqlMessage NewMessage, user models.User) (m
 	threadUuid := domain.ConvertStrPtrToString(gqlMessage.ThreadID)
 	if threadUuid != "" {
 		var err error
-		thread, err = models.FindThreadByUUID(threadUuid)
+		err = thread.FindByUUID(threadUuid)
 		if err != nil {
 			return models.Message{}, err
 		}
