@@ -1,14 +1,18 @@
 package models
 
 import (
+	"reflect"
 	"testing"
+
+	"github.com/gofrs/uuid"
 
 	"github.com/gobuffalo/validate"
 	"github.com/silinternational/handcarry-api/domain"
 )
 
 type ThreadFixtures struct {
-	Threads Threads
+	Threads  Threads
+	Messages Messages
 }
 
 func CreateThreadFixtures(t *testing.T, post Post) ThreadFixtures {
@@ -30,7 +34,7 @@ func CreateThreadFixtures(t *testing.T, post Post) ThreadFixtures {
 		}
 	}
 
-	// Load Thread test fixtures
+	// Load Thread Participants test fixtures
 	threadParticipants := []ThreadParticipant{
 		{
 			ThreadID: threads[0].ID,
@@ -48,7 +52,36 @@ func CreateThreadFixtures(t *testing.T, post Post) ThreadFixtures {
 		}
 	}
 
-	return ThreadFixtures{Threads: threads}
+	// Load Message test fixtures
+	messages := Messages{
+		{
+			Uuid:     domain.GetUuid(),
+			ThreadID: threads[0].ID,
+			SentByID: post.CreatedByID,
+			Content:  "I can being chocolate if you bring PB",
+		},
+		{
+			Uuid:     domain.GetUuid(),
+			ThreadID: threads[1].ID,
+			SentByID: post.ProviderID.Int,
+			Content:  "I can being PB if you bring chocolate",
+		},
+		{
+			Uuid:     domain.GetUuid(),
+			ThreadID: threads[1].ID,
+			SentByID: post.CreatedByID,
+			Content:  "Great!",
+		},
+	}
+
+	for _, message := range messages {
+		if err := DB.Create(&message); err != nil {
+			t.Errorf("could not create test message ... %v", err)
+			t.FailNow()
+		}
+	}
+
+	return ThreadFixtures{Threads: threads, Messages: messages}
 }
 
 func (ms *ModelSuite) TestThread_Validate() {
@@ -216,6 +249,70 @@ func (ms *ModelSuite) TestThread_GetPost() {
 					t.Errorf("GetPost() error = %v", err)
 				} else if got.Uuid != test.want.Uuid {
 					t.Errorf("GetPost() got = %s, want %s", got.Uuid, test.want.Uuid)
+				}
+			}
+		})
+	}
+}
+
+func (ms *ModelSuite) TestThread_GetMessages() {
+	t := ms.T()
+	resetTables(t)
+
+	_, users, _ := CreateUserFixtures(t)
+	posts := CreatePostFixtures(t, users)
+	threadFixtures := CreateThreadFixtures(t, posts[0])
+
+	type args struct {
+		thread       Thread
+		selectFields []string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    []uuid.UUID
+		wantErr bool
+	}{
+		{
+			name: "one message",
+			args: args{
+				thread:       threadFixtures.Threads[0],
+				selectFields: []string{},
+			},
+			want: []uuid.UUID{
+				threadFixtures.Messages[0].Uuid,
+			},
+		},
+		{
+			name: "two messages",
+			args: args{
+				thread:       threadFixtures.Threads[1],
+				selectFields: []string{},
+			},
+			want: []uuid.UUID{
+				threadFixtures.Messages[1].Uuid,
+				threadFixtures.Messages[2].Uuid,
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := test.args.thread.GetMessages(test.args.selectFields)
+			if test.wantErr {
+				if (err != nil) != test.wantErr {
+					t.Errorf("GetMessages() did not return expected error")
+				}
+			} else {
+				if err != nil {
+					t.Errorf("GetMessages() error = %v", err)
+				} else {
+					ids := make([]uuid.UUID, len(got))
+					for i := range got {
+						ids[i] = got[i].Uuid
+					}
+					if !reflect.DeepEqual(ids, test.want) {
+						t.Errorf("GetMessages() got = %s, want %s", ids, test.want)
+					}
 				}
 			}
 		})
