@@ -7,7 +7,11 @@ import (
 	"github.com/silinternational/handcarry-api/domain"
 )
 
-func CreateThreadFixtures(t *testing.T, post Post) []Thread {
+type ThreadFixtures struct {
+	Threads Threads
+}
+
+func CreateThreadFixtures(t *testing.T, post Post) ThreadFixtures {
 	// Load Thread test fixtures
 	threads := []Thread{
 		{
@@ -44,7 +48,7 @@ func CreateThreadFixtures(t *testing.T, post Post) []Thread {
 		}
 	}
 
-	return threads
+	return ThreadFixtures{Threads: threads}
 }
 
 func (ms *ModelSuite) TestThread_Validate() {
@@ -92,6 +96,43 @@ func (ms *ModelSuite) TestThread_Validate() {
 				}
 			} else if (test.wantErr == false) && (vErr.HasAny()) {
 				t.Errorf("Unexpected error: %v", vErr)
+			}
+		})
+	}
+}
+
+func (ms *ModelSuite) TestThread_FindByUUID() {
+	t := ms.T()
+	resetTables(t)
+
+	_, users, _ := CreateUserFixtures(t)
+	posts := CreatePostFixtures(t, users)
+	threadFixtures := CreateThreadFixtures(t, posts[0])
+
+	tests := []struct {
+		name    string
+		uuid    string
+		want    Thread
+		wantErr bool
+	}{
+		{name: "good", uuid: threadFixtures.Threads[0].Uuid.String(), want: threadFixtures.Threads[0]},
+		{name: "blank uuid", uuid: "", wantErr: true},
+		{name: "wrong uuid", uuid: domain.GetUuid().String(), wantErr: true},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var thread Thread
+			err := thread.FindByUUID(test.uuid)
+			if test.wantErr {
+				if (err != nil) != test.wantErr {
+					t.Errorf("FindByUUID() did not return expected error")
+				}
+			} else {
+				if err != nil {
+					t.Errorf("FindByUUID() error = %v", err)
+				} else if thread.Uuid != test.want.Uuid {
+					t.Errorf("FindByUUID() got = %s, want %s", thread.Uuid, test.want.Uuid)
+				}
 			}
 		})
 	}
