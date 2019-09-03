@@ -42,6 +42,10 @@ func CreateThreadFixtures(t *testing.T, post Post) ThreadFixtures {
 		},
 		{
 			ThreadID: threads[1].ID,
+			UserID:   post.ProviderID.Int,
+		},
+		{
+			ThreadID: threads[1].ID,
 			UserID:   post.CreatedByID,
 		},
 	}
@@ -187,7 +191,7 @@ func (ms *ModelSuite) TestThread_FindByPostIDAndUserID() {
 	}{
 		{name: "good", postID: posts[0].ID, userID: users[0].ID, want: threadFixtures.Threads[0]},
 		{name: "wrong post ID", postID: posts[1].ID, userID: users[0].ID, want: Thread{}},
-		{name: "wrong user ID", postID: posts[0].ID, userID: users[1].ID, want: Thread{}},
+		{name: "wrong user ID", postID: posts[0].ID, userID: users[2].ID, want: Thread{}},
 		{name: "bad post ID", postID: -1, userID: users[0].ID, want: Thread{}},
 		{name: "bad user ID", postID: posts[0].ID, userID: -1, want: Thread{}},
 	}
@@ -312,6 +316,70 @@ func (ms *ModelSuite) TestThread_GetMessages() {
 					}
 					if !reflect.DeepEqual(ids, test.want) {
 						t.Errorf("GetMessages() got = %s, want %s", ids, test.want)
+					}
+				}
+			}
+		})
+	}
+}
+
+func (ms *ModelSuite) TestThread_GetParticipants() {
+	t := ms.T()
+	resetTables(t)
+
+	_, users, _ := CreateUserFixtures(t)
+	posts := CreatePostFixtures(t, users)
+	threadFixtures := CreateThreadFixtures(t, posts[0])
+
+	type args struct {
+		thread       Thread
+		selectFields []string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    []uuid.UUID
+		wantErr bool
+	}{
+		{
+			name: "one participant",
+			args: args{
+				thread:       threadFixtures.Threads[0],
+				selectFields: []string{},
+			},
+			want: []uuid.UUID{
+				users[0].Uuid,
+			},
+		},
+		{
+			name: "two participants",
+			args: args{
+				thread:       threadFixtures.Threads[1],
+				selectFields: []string{},
+			},
+			want: []uuid.UUID{
+				users[1].Uuid,
+				users[0].Uuid,
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := test.args.thread.GetParticipants(test.args.selectFields)
+			if test.wantErr {
+				if (err != nil) != test.wantErr {
+					t.Errorf("GetParticipants() did not return expected error")
+				}
+			} else {
+				if err != nil {
+					t.Errorf("GetParticipants() error = %v", err)
+				} else {
+					ids := make([]uuid.UUID, len(got))
+					for i := range got {
+						ids[i] = got[i].Uuid
+					}
+					if !reflect.DeepEqual(ids, test.want) {
+						t.Errorf("GetParticipants() got = %s, want %s", ids, test.want)
 					}
 				}
 			}
