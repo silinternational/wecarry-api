@@ -23,6 +23,12 @@ import (
 	"github.com/gofrs/uuid"
 )
 
+const (
+	PostRoleCreatedby string = "CREATEDBY"
+	PostRoleReceiving string = "RECEIVING"
+	PostRoleProviding string = "PROVIDING"
+)
+
 type User struct {
 	ID             int               `json:"id" db:"id"`
 	CreatedAt      time.Time         `json:"created_at" db:"created_at"`
@@ -290,13 +296,13 @@ func (u *User) GetPosts(postRole string) ([]*Post, error) {
 
 	var posts Posts
 	switch postRole {
-	case "CREATEDBY":
+	case PostRoleCreatedby:
 		posts = u.PostsCreated
 
-	case "RECEIVING":
+	case PostRoleReceiving:
 		posts = u.PostsReceiving
 
-	case "PROVIDING":
+	case PostRoleProviding:
 		posts = u.PostsProviding
 	}
 
