@@ -14,6 +14,9 @@ type Mutation {
     createMessage(input: NewMessage!): Message!
 }
 
+# Date and Time in RFC3339 format
+scalar Time
+
 enum Role {
     ADMIN
     USER
@@ -25,8 +28,8 @@ type User {
     firstName: String!
     lastName: String!
     nickname: String!
-    createdAt: String
-    updatedAt: String
+    createdAt: Time
+    updatedAt: Time
     adminRole: Role
     organizations: [Organization!]!
 }
@@ -53,8 +56,8 @@ type Post {
     category: String!
     status: String!
     threads: [Thread]!
-    createdAt: String
-    updatedAt: String
+    createdAt: Time
+    updatedAt: Time
     myThreadID: String
 }
 
@@ -62,8 +65,8 @@ type Organization {
     id: ID!
     name: String!
     url: String
-    createdAt: String
-    updatedAt: String
+    createdAt: Time
+    updatedAt: Time
 }
 
 type Thread {
@@ -72,8 +75,8 @@ type Thread {
     messages: [Message!]!
     postID: String!
     post: Post!
-    createdAt: String
-    updatedAt: String
+    createdAt: Time
+    updatedAt: Time
 }
 
 type Message {
@@ -81,8 +84,8 @@ type Message {
     sender: User!
     content: String!
     thread: Thread!
-    createdAt: String
-    updatedAt: String
+    createdAt: Time
+    updatedAt: Time
 }
 
 

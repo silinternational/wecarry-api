@@ -49,20 +49,6 @@ func (r *messageResolver) Thread(ctx context.Context, obj *models.Message) (*mod
 	return obj.GetThread(selectFields)
 }
 
-func (r *messageResolver) CreatedAt(ctx context.Context, obj *models.Message) (*string, error) {
-	if obj == nil {
-		return nil, nil
-	}
-	return domain.ConvertTimeToStringPtr(obj.CreatedAt), nil
-}
-
-func (r *messageResolver) UpdatedAt(ctx context.Context, obj *models.Message) (*string, error) {
-	if obj == nil {
-		return nil, nil
-	}
-	return domain.ConvertTimeToStringPtr(obj.UpdatedAt), nil
-}
-
 func (r *queryResolver) Message(ctx context.Context, id *string) (*models.Message, error) {
 	message := models.Message{}
 	messageFields := GetSelectFieldsFromRequestFields(MessageFields(), graphql.CollectAllFields(ctx))

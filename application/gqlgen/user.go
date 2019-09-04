@@ -37,20 +37,6 @@ func (r *userResolver) ID(ctx context.Context, obj *models.User) (string, error)
 	return obj.Uuid.String(), nil
 }
 
-func (r *userResolver) CreatedAt(ctx context.Context, obj *models.User) (*string, error) {
-	if obj == nil {
-		return nil, nil
-	}
-	return domain.ConvertTimeToStringPtr(obj.CreatedAt), nil
-}
-
-func (r *userResolver) UpdatedAt(ctx context.Context, obj *models.User) (*string, error) {
-	if obj == nil {
-		return nil, nil
-	}
-	return domain.ConvertTimeToStringPtr(obj.UpdatedAt), nil
-}
-
 func (r *userResolver) AdminRole(ctx context.Context, obj *models.User) (*Role, error) {
 	if obj == nil {
 		return nil, nil
