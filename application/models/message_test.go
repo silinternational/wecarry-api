@@ -92,7 +92,7 @@ func (ms *ModelSuite) TestMessage_GetSender() {
 	messages := messageFixtures.Messages
 	users := messageFixtures.Users
 
-	userResults, err := messages[1].GetSender([]string{"nickname", "last_name"})
+	userResults, err := messages[1].GetSender([]string{"id", "nickname", "last_name", "first_name", "email"})
 
 	if err != nil {
 		t.Errorf("unexpected error ... %v", err)
@@ -100,6 +100,8 @@ func (ms *ModelSuite) TestMessage_GetSender() {
 	}
 
 	ms.Equal(users[1].ID, userResults.ID, "Bad user ID")
-
 	ms.Equal(users[1].Nickname, userResults.Nickname, "Bad user Nickname")
+	ms.Equal(users[1].LastName, userResults.LastName, "Bad user LastName")
+	ms.Equal(users[1].FirstName, userResults.FirstName, "Bad user FirstName")
+	ms.Equal(users[1].Email, userResults.Email, "Bad user Email")
 }
