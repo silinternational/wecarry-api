@@ -86,7 +86,7 @@ func (u *User) CreateAccessToken(org Organization, clientID string) (string, int
 	hash := HashClientIdAccessToken(clientID + token)
 	expireAt := createAccessTokenExpiry()
 
-	userOrg, err := FindUserOrganization(*u, org)
+	userOrg, err := u.FindUserOrganization(org)
 	if err != nil {
 		return "", 0, err
 	}
@@ -118,8 +118,8 @@ func (u *User) GetOrgIDs() []int {
 }
 
 func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
-
-	userOrgs, err := UserOrganizationFindByAuthEmail(authUser.Email, orgID)
+	var userOrgs UserOrganizations
+	err := userOrgs.FindByAuthEmail(authUser.Email, orgID)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -183,19 +183,19 @@ func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
 	return nil
 }
 
-func FindUserByAccessToken(accessToken string) (User, error) {
+func (u *User) FindByAccessToken(accessToken string) error {
 	if accessToken == "" {
-		return User{}, fmt.Errorf("error: access token must not be blank")
+		return fmt.Errorf("error: access token must not be blank")
 	}
 
 	var userAccessToken UserAccessToken
 	err := userAccessToken.FindByBearerToken(accessToken)
 	if err != nil {
-		return User{}, fmt.Errorf("error finding user by access token: %s", err.Error())
+		return fmt.Errorf("error finding user by access token: %s", err.Error())
 	}
 
 	if userAccessToken.ID == 0 {
-		return User{}, fmt.Errorf("error finding user by access token")
+		return fmt.Errorf("error finding user by access token")
 	}
 
 	if userAccessToken.ExpiresAt.Before(time.Now()) {
@@ -203,26 +203,24 @@ func FindUserByAccessToken(accessToken string) (User, error) {
 		if err != nil {
 			log.Printf("Unable to delete expired userAccessToken, id: %v", userAccessToken.ID)
 		}
-		return User{}, fmt.Errorf("access token has expired")
+		return fmt.Errorf("access token has expired")
 	}
 
-	return userAccessToken.User, nil
+	*u = userAccessToken.User
+	return nil
 }
 
-func FindUserByUUID(uuid string) (User, error) {
+func (u *User) FindByUUID(uuid string) error {
 
 	if uuid == "" {
-		return User{}, fmt.Errorf("error: uuid must not be blank")
+		return fmt.Errorf("error: uuid must not be blank")
 	}
 
-	user := User{}
-	queryString := fmt.Sprintf("uuid = '%s'", uuid)
-
-	if err := DB.Where(queryString).First(&user); err != nil {
-		return User{}, fmt.Errorf("error finding user by uuid: %s", err.Error())
+	if err := DB.Where("uuid = ?", uuid).First(u); err != nil {
+		return fmt.Errorf("error finding user by uuid: %s", err.Error())
 	}
 
-	return user, nil
+	return nil
 }
 
 func createAccessTokenExpiry() time.Time {
@@ -270,4 +268,13 @@ func (u *User) GetOrganizations() ([]*Organization, error) {
 	}
 
 	return orgs, nil
+}
+
+func (u *User) FindUserOrganization(org Organization) (UserOrganization, error) {
+	var userOrg UserOrganization
+	if err := DB.Where("user_id = ? AND organization_id = ?", u.ID, org.ID).First(&userOrg); err != nil {
+		return UserOrganization{}, fmt.Errorf("association not found for user '%v' and org '%v' (%s)", u.Nickname, org.Name, err.Error())
+	}
+
+	return userOrg, nil
 }
