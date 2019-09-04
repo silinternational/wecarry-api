@@ -182,7 +182,7 @@ func CreatePostFixtures(t *testing.T, users Users) []Post {
 	return posts
 }
 
-func (ms *ModelSuite) TestFindPostByUUID() {
+func (ms *ModelSuite) TestPost_FindByUUID() {
 	t := ms.T()
 	resetTables(t)
 
