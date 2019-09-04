@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gofrs/uuid"
+
 	"github.com/silinternational/handcarry-api/auth"
 
 	"github.com/gobuffalo/buffalo/genny/build/_fixtures/coke/models"
@@ -471,7 +473,7 @@ func (ms *ModelSuite) TestGetOrganizations() {
 				orgNames[i] = o.Name
 			}
 			if !reflect.DeepEqual(orgNames, test.want) {
-				t.Errorf("GetOrgIDs() = \"%v\", want \"%v\"", got, test.want)
+				t.Errorf("GetOrgIDs() = \"%v\", want \"%v\"", orgNames, test.want)
 			}
 		})
 	}
@@ -548,6 +550,64 @@ func (ms *ModelSuite) TestFindUserOrganization() {
 					t.Errorf("received wrong UserOrganization (UserID=%v, OrganizationID=%v), expected (user.ID=%v, org.ID=%v)",
 						uo.UserID, uo.OrganizationID, user.ID, org.ID)
 				}
+			}
+		})
+	}
+}
+
+func (ms *ModelSuite) TestUser_GetPosts() {
+	t := ms.T()
+	resetTables(t)
+	_, users, _ := CreateUserFixtures(t)
+	posts := CreatePostFixtures(t, users)
+
+	type args struct {
+		user     User
+		postRole string
+	}
+	tests := []struct {
+		name string
+		args args
+		want []uuid.UUID
+	}{
+		{
+			name: "created by",
+			args: args{
+				user:     users[0],
+				postRole: "CREATEDBY",
+			},
+			want: []uuid.UUID{posts[0].Uuid, posts[1].Uuid},
+		},
+		{
+			name: "providing by",
+			args: args{
+				user:     users[1],
+				postRole: "PROVIDING",
+			},
+			want: []uuid.UUID{posts[0].Uuid},
+		},
+		{
+			name: "receiving by",
+			args: args{
+				user:     users[1],
+				postRole: "RECEIVING",
+			},
+			want: []uuid.UUID{posts[1].Uuid},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := test.args.user.GetPosts(test.args.postRole)
+			if err != nil {
+				t.Errorf("GetPosts() returned error: %s", err)
+			}
+
+			ids := make([]uuid.UUID, len(got))
+			for i, p := range got {
+				ids[i] = p.Uuid
+			}
+			if !reflect.DeepEqual(ids, test.want) {
+				t.Errorf("GetOrgIDs() = \"%v\", want \"%v\"", ids, test.want)
 			}
 		})
 	}

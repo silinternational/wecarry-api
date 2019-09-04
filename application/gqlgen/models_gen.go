@@ -32,6 +32,49 @@ type UpdatedPostStatus struct {
 	Status string `json:"status"`
 }
 
+type PostRole string
+
+const (
+	PostRoleCreatedby PostRole = "CREATEDBY"
+	PostRoleReceiving PostRole = "RECEIVING"
+	PostRoleProviding PostRole = "PROVIDING"
+)
+
+var AllPostRole = []PostRole{
+	PostRoleCreatedby,
+	PostRoleReceiving,
+	PostRoleProviding,
+}
+
+func (e PostRole) IsValid() bool {
+	switch e {
+	case PostRoleCreatedby, PostRoleReceiving, PostRoleProviding:
+		return true
+	}
+	return false
+}
+
+func (e PostRole) String() string {
+	return string(e)
+}
+
+func (e *PostRole) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PostRole(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PostRole", str)
+	}
+	return nil
+}
+
+func (e PostRole) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
 type PostType string
 
 const (

@@ -52,6 +52,13 @@ func (r *userResolver) Organizations(ctx context.Context, obj *models.User) ([]*
 	return obj.GetOrganizations()
 }
 
+func (r *userResolver) Posts(ctx context.Context, obj *models.User, role PostRole) ([]*models.Post, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return obj.GetPosts(role.String())
+}
+
 func (r *queryResolver) Users(ctx context.Context) ([]*models.User, error) {
 	db := models.DB
 	var dbUsers []*models.User
