@@ -3,8 +3,9 @@ package models
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gobuffalo/buffalo/genny/build/_fixtures/coke/models"
 	"time"
+
+	"github.com/gobuffalo/buffalo/genny/build/_fixtures/coke/models"
 
 	"github.com/gofrs/uuid"
 
@@ -46,7 +47,7 @@ func (m *Message) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
 		&validators.UUIDIsPresent{Field: m.Uuid, Name: "Uuid"},
 		&validators.IntIsPresent{Field: m.ThreadID, Name: "ThreadID"},
-		&validators.IntIsPresent{Field: m.SentByID, Name: "SentBy"},
+		&validators.IntIsPresent{Field: m.SentByID, Name: "SentByID"},
 		&validators.StringIsPresent{Field: m.Content, Name: "Content"},
 	), nil
 }
