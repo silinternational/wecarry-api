@@ -99,7 +99,7 @@ func (ms *ModelSuite) TestUser_FindOrCreateFromAuthUser() {
 	}
 }
 
-func (ms *ModelSuite) TestFindUserByAccessToken() {
+func (ms *ModelSuite) TestUser_FindByAccessToken() {
 	t := ms.T()
 	resetTables(t)
 	_, users, userOrgs := CreateUserFixtures(t)
@@ -157,14 +157,15 @@ func (ms *ModelSuite) TestFindUserByAccessToken() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := FindUserByAccessToken(test.args.token)
+			var got User
+			err := got.FindByAccessToken(test.args.token)
 			if test.wantErr {
 				if err == nil {
 					t.Errorf("Expected an error, but did not get one")
 				}
 			} else {
 				if err != nil {
-					t.Errorf("FindUserByAccessToken() returned an error: %v", err)
+					t.Errorf("FindByAccessToken() returned an error: %v", err)
 				} else if got.Uuid != test.want.Uuid {
 					t.Errorf("found %v, expected %v", got, test.want)
 				}

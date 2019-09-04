@@ -183,19 +183,19 @@ func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
 	return nil
 }
 
-func FindUserByAccessToken(accessToken string) (User, error) {
+func (u *User) FindByAccessToken(accessToken string) error {
 	if accessToken == "" {
-		return User{}, fmt.Errorf("error: access token must not be blank")
+		return fmt.Errorf("error: access token must not be blank")
 	}
 
 	var userAccessToken UserAccessToken
 	err := userAccessToken.FindByBearerToken(accessToken)
 	if err != nil {
-		return User{}, fmt.Errorf("error finding user by access token: %s", err.Error())
+		return fmt.Errorf("error finding user by access token: %s", err.Error())
 	}
 
 	if userAccessToken.ID == 0 {
-		return User{}, fmt.Errorf("error finding user by access token")
+		return fmt.Errorf("error finding user by access token")
 	}
 
 	if userAccessToken.ExpiresAt.Before(time.Now()) {
@@ -203,26 +203,24 @@ func FindUserByAccessToken(accessToken string) (User, error) {
 		if err != nil {
 			log.Printf("Unable to delete expired userAccessToken, id: %v", userAccessToken.ID)
 		}
-		return User{}, fmt.Errorf("access token has expired")
+		return fmt.Errorf("access token has expired")
 	}
 
-	return userAccessToken.User, nil
+	*u = userAccessToken.User
+	return nil
 }
 
-func FindUserByUUID(uuid string) (User, error) {
+func (u *User) FindByUUID(uuid string) error {
 
 	if uuid == "" {
-		return User{}, fmt.Errorf("error: uuid must not be blank")
+		return fmt.Errorf("error: uuid must not be blank")
 	}
 
-	user := User{}
-	queryString := fmt.Sprintf("uuid = '%s'", uuid)
-
-	if err := DB.Where(queryString).First(&user); err != nil {
-		return User{}, fmt.Errorf("error finding user by uuid: %s", err.Error())
+	if err := DB.Where("uuid = ?", uuid).First(u); err != nil {
+		return fmt.Errorf("error finding user by uuid: %s", err.Error())
 	}
 
-	return user, nil
+	return nil
 }
 
 func createAccessTokenExpiry() time.Time {

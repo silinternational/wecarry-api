@@ -260,8 +260,8 @@ func SetCurrentUser(next buffalo.Handler) buffalo.Handler {
 			return fmt.Errorf("no Bearer token provided")
 		}
 
-		user, err := models.FindUserByAccessToken(bearerToken)
-		if err != nil {
+		var user models.User
+		if err := user.FindByAccessToken(bearerToken); err != nil {
 			return c.Error(401, fmt.Errorf("invalid bearer token"))
 		}
 		c.Set("current_user", user)
