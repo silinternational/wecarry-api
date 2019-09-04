@@ -90,7 +90,8 @@ func AuthLogin(c buffalo.Context) error {
 	}
 
 	var org models.Organization
-	userOrgs, err := models.UserOrganizationFindByAuthEmail(authEmail, orgID)
+	var userOrgs models.UserOrganizations
+	err = userOrgs.FindByAuthEmail(authEmail, orgID)
 	if len(userOrgs) == 1 {
 		org = userOrgs[0].Organization
 	}

@@ -118,8 +118,8 @@ func (u *User) GetOrgIDs() []int {
 }
 
 func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
-
-	userOrgs, err := UserOrganizationFindByAuthEmail(authUser.Email, orgID)
+	var userOrgs UserOrganizations
+	err := userOrgs.FindByAuthEmail(authUser.Email, orgID)
 	if err != nil {
 		return errors.WithStack(err)
 	}
