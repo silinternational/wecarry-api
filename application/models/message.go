@@ -66,7 +66,7 @@ func (m *Message) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 
 func (m *Message) GetSender(requestFields []string) (*User, error) {
 	sender := User{}
-	if err := models.DB.Find(&sender, m.SentByID); err != nil {
+	if err := models.DB.Select(requestFields...).Find(&sender, m.SentByID); err != nil {
 		err = fmt.Errorf("error finding message sentBy user with id %v ... %v", m.SentByID, err)
 		return nil, err
 	}
@@ -75,7 +75,7 @@ func (m *Message) GetSender(requestFields []string) (*User, error) {
 
 func (m *Message) GetThread(requestFields []string) (*Thread, error) {
 	thread := Thread{}
-	if err := models.DB.Find(&thread, m.ThreadID); err != nil {
+	if err := models.DB.Select(requestFields...).Find(&thread, m.ThreadID); err != nil {
 		err = fmt.Errorf("error finding message thread id %v ... %v", m.ThreadID, err)
 		return nil, err
 	}
