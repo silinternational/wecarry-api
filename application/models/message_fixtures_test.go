@@ -1,16 +1,18 @@
 package models
 
 import (
+	"testing"
+	"time"
+
 	buffalo_models "github.com/gobuffalo/buffalo/genny/build/_fixtures/coke/models"
 	"github.com/gobuffalo/nulls"
 	"github.com/silinternational/handcarry-api/domain"
-	"testing"
-	"time"
 )
 
 type MessageFixtures struct {
 	Users    Users
 	Messages Messages
+	Threads  Threads
 }
 
 func Fixtures_GetSender(t *testing.T) MessageFixtures {
@@ -172,6 +174,7 @@ func Fixtures_GetSender(t *testing.T) MessageFixtures {
 	return MessageFixtures{
 		Users:    users,
 		Messages: messages,
+		Threads:  threads,
 	}
 
 }

@@ -105,3 +105,24 @@ func (ms *ModelSuite) TestMessage_GetSender() {
 	ms.Equal(users[1].FirstName, userResults.FirstName, "Bad user FirstName")
 	ms.Equal(users[1].Email, userResults.Email, "Bad user Email")
 }
+
+func (ms *ModelSuite) TestMessage_GetThread() {
+	t := ms.T()
+
+	resetTables(t)
+	messageFixtures := Fixtures_GetSender(t)
+
+	messages := messageFixtures.Messages
+	threads := messageFixtures.Threads
+
+	threadResults, err := messages[1].GetThread([]string{"id", "uuid", "post_id"})
+
+	if err != nil {
+		t.Errorf("unexpected error ... %v", err)
+		t.FailNow()
+	}
+
+	ms.Equal(threads[1].ID, threadResults.ID, "Bad thread ID")
+	ms.Equal(threads[1].Uuid, threadResults.Uuid, "Bad thread UUID")
+	ms.Equal(threads[1].PostID, threadResults.PostID, "Bad thread PostID")
+}
