@@ -88,12 +88,3 @@ func (u *UserOrganizations) FindByAuthEmail(authEmail string, orgID int) error {
 
 	return nil
 }
-
-func FindUserOrganization(user User, org Organization) (UserOrganization, error) {
-	var userOrg UserOrganization
-	if err := DB.Where("user_id = ? AND organization_id = ?", user.ID, org.ID).First(&userOrg); err != nil {
-		return UserOrganization{}, fmt.Errorf("association not found for user '%v' and org '%v' (%s)", user.Nickname, org.Name, err.Error())
-	}
-
-	return userOrg, nil
-}

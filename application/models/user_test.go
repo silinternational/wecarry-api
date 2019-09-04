@@ -476,3 +476,79 @@ func (ms *ModelSuite) TestGetOrganizations() {
 		})
 	}
 }
+
+func (ms *ModelSuite) TestFindUserOrganization() {
+	t := ms.T()
+	resetTables(t)
+	createUserOrganizationFixtures(t)
+
+	type args struct {
+		user User
+		org  Organization
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "user 1, org 1",
+			args: args{
+				user: User{Email: "single@domain.com"},
+				org:  Organization{Name: "Org1"},
+			},
+			wantErr: false,
+		},
+		{
+			name: "user 2, org 1",
+			args: args{
+				user: User{Email: "two@domain.com"},
+				org:  Organization{Name: "Org1"},
+			},
+			wantErr: false,
+		},
+		{
+			name: "user 2, org 2",
+			args: args{
+				user: User{Email: "two@domain.com"},
+				org:  Organization{Name: "Org2"},
+			},
+			wantErr: false,
+		},
+		{
+			name: "user 1, org 2",
+			args: args{
+				user: User{Email: "single@domain.com"},
+				org:  Organization{Name: "Org2"},
+			},
+			wantErr: true,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var user User
+			if err := DB.Where("email = ?", test.args.user.Email).First(&user); err != nil {
+				t.Errorf("couldn't find test user '%v'", test.args.user.Email)
+			}
+
+			var org Organization
+			if err := DB.Where("name = ?", test.args.org.Name).First(&org); err != nil {
+				t.Errorf("couldn't find test org '%v'", test.args.org.Name)
+			}
+
+			uo, err := user.FindUserOrganization(org)
+			if test.wantErr {
+				if err == nil {
+					t.Errorf("Expected an error, but did not get one")
+				}
+			} else {
+				if err != nil {
+					t.Errorf("FindOrgByUUID() returned an error: %v", err)
+				} else if (uo.UserID != user.ID) || (uo.OrganizationID != org.ID) {
+					t.Errorf("received wrong UserOrganization (UserID=%v, OrganizationID=%v), expected (user.ID=%v, org.ID=%v)",
+						uo.UserID, uo.OrganizationID, user.ID, org.ID)
+				}
+			}
+		})
+	}
+}

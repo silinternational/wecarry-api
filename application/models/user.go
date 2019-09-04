@@ -86,7 +86,7 @@ func (u *User) CreateAccessToken(org Organization, clientID string) (string, int
 	hash := HashClientIdAccessToken(clientID + token)
 	expireAt := createAccessTokenExpiry()
 
-	userOrg, err := FindUserOrganization(*u, org)
+	userOrg, err := u.FindUserOrganization(org)
 	if err != nil {
 		return "", 0, err
 	}
@@ -268,4 +268,13 @@ func (u *User) GetOrganizations() ([]*Organization, error) {
 	}
 
 	return orgs, nil
+}
+
+func (u *User) FindUserOrganization(org Organization) (UserOrganization, error) {
+	var userOrg UserOrganization
+	if err := DB.Where("user_id = ? AND organization_id = ?", u.ID, org.ID).First(&userOrg); err != nil {
+		return UserOrganization{}, fmt.Errorf("association not found for user '%v' and org '%v' (%s)", u.Nickname, org.Name, err.Error())
+	}
+
+	return userOrg, nil
 }
