@@ -155,7 +155,9 @@ CREATE TABLE public.posts (
     category character varying(255) NOT NULL,
     description character varying(4096),
     created_at timestamp without time zone NOT NULL,
-    updated_at timestamp without time zone NOT NULL
+    updated_at timestamp without time zone NOT NULL,
+    url character varying(255),
+    cost numeric(13,4)
 );
 
 
