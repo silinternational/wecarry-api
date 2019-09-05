@@ -24,9 +24,9 @@ import (
 )
 
 const (
-	PostRoleCreatedby string = "CREATEDBY"
-	PostRoleReceiving string = "RECEIVING"
-	PostRoleProviding string = "PROVIDING"
+	PostRoleCreatedby string = "PostsCreated"
+	PostRoleReceiving string = "PostsReceiving"
+	PostRoleProviding string = "PostsProviding"
 )
 
 type User struct {
@@ -290,7 +290,7 @@ func (u *User) FindUserOrganization(org Organization) (UserOrganization, error) 
 
 func (u *User) GetPosts(postRole string) ([]*Post, error) {
 	var postPtrs []*Post
-	if err := DB.Load(u, "PostsCreated", "PostsReceiving", "PostsProviding"); err != nil {
+	if err := DB.Load(u, postRole); err != nil {
 		return postPtrs, fmt.Errorf("error getting posts for user id %v ... %v", u.ID, err)
 	}
 

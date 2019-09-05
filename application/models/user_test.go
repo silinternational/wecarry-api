@@ -574,7 +574,7 @@ func (ms *ModelSuite) TestUser_GetPosts() {
 			name: "created by",
 			args: args{
 				user:     users[0],
-				postRole: "CREATEDBY",
+				postRole: PostRoleCreatedby,
 			},
 			want: []uuid.UUID{posts[0].Uuid, posts[1].Uuid},
 		},
@@ -582,7 +582,7 @@ func (ms *ModelSuite) TestUser_GetPosts() {
 			name: "providing by",
 			args: args{
 				user:     users[1],
-				postRole: "PROVIDING",
+				postRole: PostRoleProviding,
 			},
 			want: []uuid.UUID{posts[0].Uuid},
 		},
@@ -590,7 +590,7 @@ func (ms *ModelSuite) TestUser_GetPosts() {
 			name: "receiving by",
 			args: args{
 				user:     users[1],
-				postRole: "RECEIVING",
+				postRole: PostRoleReceiving,
 			},
 			want: []uuid.UUID{posts[1].Uuid},
 		},
