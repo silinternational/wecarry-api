@@ -418,4 +418,12 @@ func (ms *ModelSuite) TestThread_CreateWithParticipants() {
 
 	ms.Contains(ids, users[0].Uuid, "new thread doesn't include post creator as participant")
 	ms.Contains(ids, users[1].Uuid, "new thread doesn't include provided user as participant")
+	ms.Equal(2, len(ids), "incorrect number of participants found")
+
+	var tp ThreadParticipants
+	n, err := DB.Where("thread_id = ?", thread.ID).Count(&tp)
+	if err != nil {
+		t.Errorf("TestThread_CreateWithParticipants() couldn't read from thread_participants: %s", err)
+	}
+	ms.Equal(2, n, "incorrect number of thread_participants records created")
 }
