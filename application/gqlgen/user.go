@@ -10,6 +10,12 @@ import (
 	"github.com/vektah/gqlparser/gqlerror"
 )
 
+var PostRoleMap = map[PostRole]string{
+	PostRoleCreatedby: models.PostRoleCreatedby,
+	PostRoleReceiving: models.PostRoleReceiving,
+	PostRoleProviding: models.PostRoleProviding,
+}
+
 func UserFields() map[string]string {
 	return map[string]string{
 		"id":          "uuid",
@@ -50,6 +56,13 @@ func (r *userResolver) Organizations(ctx context.Context, obj *models.User) ([]*
 		return nil, nil
 	}
 	return obj.GetOrganizations()
+}
+
+func (r *userResolver) Posts(ctx context.Context, obj *models.User, role PostRole) ([]*models.Post, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return obj.GetPosts(PostRoleMap[role])
 }
 
 func (r *queryResolver) Users(ctx context.Context) ([]*models.User, error) {
