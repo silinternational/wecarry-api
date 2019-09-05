@@ -74,6 +74,7 @@ type ComplexityRoot struct {
 
 	Post struct {
 		Category     func(childComplexity int) int
+		Cost         func(childComplexity int) int
 		CreatedAt    func(childComplexity int) int
 		CreatedBy    func(childComplexity int) int
 		Description  func(childComplexity int) int
@@ -91,6 +92,7 @@ type ComplexityRoot struct {
 		Threads      func(childComplexity int) int
 		Title        func(childComplexity int) int
 		Type         func(childComplexity int) int
+		URL          func(childComplexity int) int
 		UpdatedAt    func(childComplexity int) int
 	}
 
@@ -162,6 +164,8 @@ type PostResolver interface {
 	Threads(ctx context.Context, obj *models.Post) ([]*models.Thread, error)
 
 	MyThreadID(ctx context.Context, obj *models.Post) (*string, error)
+	URL(ctx context.Context, obj *models.Post) (*string, error)
+	Cost(ctx context.Context, obj *models.Post) (*string, error)
 }
 type QueryResolver interface {
 	Users(ctx context.Context) ([]*models.User, error)
@@ -322,6 +326,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Post.Category(childComplexity), true
 
+	case "Post.cost":
+		if e.complexity.Post.Cost == nil {
+			break
+		}
+
+		return e.complexity.Post.Cost(childComplexity), true
+
 	case "Post.createdAt":
 		if e.complexity.Post.CreatedAt == nil {
 			break
@@ -440,6 +451,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Post.Type(childComplexity), true
+
+	case "Post.url":
+		if e.complexity.Post.URL == nil {
+			break
+		}
+
+		return e.complexity.Post.URL(childComplexity), true
 
 	case "Post.updatedAt":
 		if e.complexity.Post.UpdatedAt == nil {
@@ -766,6 +784,8 @@ type Post {
     createdAt: Time
     updatedAt: Time
     myThreadID: String
+    url: String
+    cost: String
 }
 
 type Organization {
@@ -795,7 +815,6 @@ type Message {
     updatedAt: Time
 }
 
-
 input NewPost {
     orgID: String!
     type: PostType!
@@ -807,6 +826,8 @@ input NewPost {
     neededAfter: String
     neededBefore: String
     category: String
+    url: String
+    cost: String
 }
 
 input NewMessage {
@@ -2154,6 +2175,74 @@ func (ec *executionContext) _Post_myThreadID(ctx context.Context, field graphql.
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Post().MyThreadID(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Post_url(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Post",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Post().URL(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Post_cost(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Post",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Post().Cost(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4385,6 +4474,18 @@ func (ec *executionContext) unmarshalInputNewPost(ctx context.Context, obj inter
 			if err != nil {
 				return it, err
 			}
+		case "url":
+			var err error
+			it.URL, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "cost":
+			var err error
+			it.Cost, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		}
 	}
 
@@ -4781,6 +4882,28 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 					}
 				}()
 				res = ec._Post_myThreadID(ctx, field, obj)
+				return res
+			})
+		case "url":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Post_url(ctx, field, obj)
+				return res
+			})
+		case "cost":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Post_cost(ctx, field, obj)
 				return res
 			})
 		default:
@@ -5522,7 +5645,7 @@ func (ec *executionContext) marshalNPost2ᚕᚖgithubᚗcomᚋsilinternational�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNPost2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐPost(ctx, sel, v[i])
+			ret[i] = ec.marshalOPost2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐPost(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -5660,7 +5783,7 @@ func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋsilinternational�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOUser2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐUser(ctx, sel, v[i])
+			ret[i] = ec.marshalNUser2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐUser(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)

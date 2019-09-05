@@ -66,6 +66,8 @@ type Post {
     createdAt: Time
     updatedAt: Time
     myThreadID: String
+    url: String
+    cost: String
 }
 
 type Organization {
@@ -95,7 +97,6 @@ type Message {
     updatedAt: Time
 }
 
-
 input NewPost {
     orgID: String!
     type: PostType!
@@ -107,6 +108,8 @@ input NewPost {
     neededAfter: String
     neededBefore: String
     category: String
+    url: String
+    cost: String
 }
 
 input NewMessage {

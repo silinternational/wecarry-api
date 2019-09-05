@@ -3,6 +3,9 @@ package gqlgen
 import (
 	"context"
 	"fmt"
+	"strconv"
+
+	"github.com/gobuffalo/nulls"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/gobuffalo/pop"
@@ -30,6 +33,8 @@ func PostFields() map[string]string {
 		"status":       "status",
 		"createdAt":    "created_at",
 		"updatedAt":    "updated_at",
+		"url":          "url",
+		"cost":         "cost",
 	}
 }
 
@@ -132,6 +137,22 @@ func (r *postResolver) MyThreadID(ctx context.Context, obj *models.Post) (*strin
 	return obj.GetThreadIdForUser(models.GetCurrentUserFromGqlContext(ctx, TestUser))
 }
 
+func (r *postResolver) URL(ctx context.Context, obj *models.Post) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return GetStringFromNullsString(obj.URL), nil
+}
+
+func (r *postResolver) Cost(ctx context.Context, obj *models.Post) (*string, error) {
+	if (obj == nil) || (!obj.Cost.Valid) {
+		return nil, nil
+	}
+
+	c := strconv.FormatFloat(obj.Cost.Float64, 'f', -1, 64)
+	return &c, nil
+}
+
 func (r *queryResolver) Posts(ctx context.Context) ([]*models.Post, error) {
 	var posts []*models.Post
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
@@ -197,6 +218,19 @@ func ConvertGqlNewPostToDBPost(gqlPost NewPost, createdByUser models.User) (mode
 
 	dbPost.NeededBefore = neededBefore
 	dbPost.Category = domain.ConvertStrPtrToString(gqlPost.Category)
+
+	if gqlPost.URL != nil {
+		dbPost.URL = nulls.NewString(*gqlPost.URL)
+	}
+
+	if gqlPost.Cost != nil {
+		c, err := strconv.ParseFloat(*gqlPost.Cost, 64)
+		if err != nil {
+			err = fmt.Errorf("error converting cost %v ... %v", gqlPost.Cost, err.Error())
+			return models.Post{}, err
+		}
+		dbPost.Cost = nulls.NewFloat64(c)
+	}
 
 	return dbPost, nil
 }

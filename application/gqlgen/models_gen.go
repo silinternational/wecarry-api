@@ -25,6 +25,8 @@ type NewPost struct {
 	NeededAfter  *string  `json:"neededAfter"`
 	NeededBefore *string  `json:"neededBefore"`
 	Category     *string  `json:"category"`
+	URL          *string  `json:"url"`
+	Cost         *string  `json:"cost"`
 }
 
 type UpdatedPostStatus struct {
