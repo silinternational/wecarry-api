@@ -412,6 +412,13 @@ func CreateUserFixtures(t *testing.T) (Organizations, Users, UserOrganizations) 
 			Nickname:  "Another User",
 			Uuid:      domain.GetUuid(),
 		},
+		{
+			Email:     "not_participating@example.com",
+			FirstName: "Not",
+			LastName:  "Participating",
+			Nickname:  "Not Participating",
+			Uuid:      domain.GetUuid(),
+		},
 	}
 	for i := range users {
 		if err := DB.Create(&users[i]); err != nil {

@@ -23,7 +23,7 @@ type Thread struct {
 	PostID       int       `json:"post_id" db:"post_id"`
 	Post         Post      `belongs_to:"posts"`
 	Messages     Messages  `has_many:"messages"`
-	Participants Users     `has_many:"users"`
+	Participants Users     `many_to_many:"thread_participants"`
 }
 
 // String is not required by pop and may be deleted
@@ -62,46 +62,42 @@ func (t *Thread) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }
 
-func FindThreadByUUID(uuid string) (Thread, error) {
-
+func (t *Thread) FindByUUID(uuid string) error {
 	if uuid == "" {
-		return Thread{}, fmt.Errorf("error: thread uuid must not be blank")
+		return fmt.Errorf("error: thread uuid must not be blank")
 	}
 
-	thread := Thread{}
 	queryString := fmt.Sprintf("uuid = '%s'", uuid)
 
-	if err := DB.Where(queryString).First(&thread); err != nil {
-		return Thread{}, fmt.Errorf("error finding thread by uuid: %s", err.Error())
+	if err := DB.Where(queryString).First(t); err != nil {
+		return fmt.Errorf("error finding thread by uuid: %s", err.Error())
 	}
 
-	return thread, nil
+	return nil
 }
 
-func FindThreadByPostIDAndUserID(postID int, userID int) (Thread, error) {
-
+func (t *Thread) FindByPostIDAndUserID(postID int, userID int) error {
 	if postID == 0 || userID == 0 {
 		err := fmt.Errorf("error: post postID and userID must not be 0. Got: %v and %v", postID, userID)
-		return Thread{}, err
+		return err
 	}
 
-	threads := []Thread{}
+	var threads []Thread
 
 	if err := DB.Q().LeftJoin("thread_participants tp", "threads.id = tp.thread_id").
 		Where("tp.user_id = ?", userID).All(&threads); err != nil {
-		fmt.Errorf("Error getting threads: %v", err.Error())
-		return Thread{}, err
+		return fmt.Errorf("error getting threads: %v", err.Error())
 	}
 
 	// TODO Rewrite this to do it the proper way
-	for _, t := range threads {
-		if t.PostID == postID {
-			return t, nil
+	for _, tt := range threads {
+		if tt.PostID == postID {
+			*t = tt
+			return nil
 		}
 	}
 
-	return Thread{}, nil
-
+	return nil
 }
 
 func (t *Thread) GetPost(selectFields []string) (*Post, error) {
@@ -143,10 +139,10 @@ func (t *Thread) GetParticipants(selectFields []string) ([]*User, error) {
 	return users, nil
 }
 
-func CreateThreadWithParticipants(postUuid string, user User) (Thread, error) {
+func (t *Thread) CreateWithParticipants(postUuid string, user User) error {
 	var post Post
 	if err := post.FindByUUID(postUuid); err != nil {
-		return Thread{}, err
+		return err
 	}
 
 	participants := Users{user}
@@ -164,7 +160,7 @@ func CreateThreadWithParticipants(postUuid string, user User) (Thread, error) {
 
 	if err := models.DB.Save(&thread); err != nil {
 		err = fmt.Errorf("error saving new thread for message: %v", err.Error())
-		return Thread{}, err
+		return err
 	}
 
 	for _, p := range participants {
@@ -174,9 +170,10 @@ func CreateThreadWithParticipants(postUuid string, user User) (Thread, error) {
 		}
 		if err := DB.Save(&threadP); err != nil {
 			err = fmt.Errorf("error saving new thread participant %+v for message: %v", threadP, err.Error())
-			return Thread{}, err
+			return err
 		}
 	}
 
-	return thread, nil
+	*t = thread
+	return nil
 }

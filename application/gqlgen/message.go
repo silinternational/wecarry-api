@@ -69,14 +69,14 @@ func ConvertGqlNewMessageToDBMessage(gqlMessage NewMessage, user models.User) (m
 	threadUuid := domain.ConvertStrPtrToString(gqlMessage.ThreadID)
 	if threadUuid != "" {
 		var err error
-		thread, err = models.FindThreadByUUID(threadUuid)
+		err = thread.FindByUUID(threadUuid)
 		if err != nil {
 			return models.Message{}, err
 		}
 
 	} else {
 		var err error
-		thread, err = models.CreateThreadWithParticipants(gqlMessage.PostID, user)
+		err = thread.CreateWithParticipants(gqlMessage.PostID, user)
 		if err != nil {
 			return models.Message{}, err
 		}
