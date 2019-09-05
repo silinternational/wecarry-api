@@ -124,7 +124,7 @@ func (t *Thread) GetParticipants(selectFields []string) ([]*User, error) {
 	var users []*User
 	var threadParticipants []*ThreadParticipant
 
-	if err := DB.Where("thread_id = ?", t.ID).All(&threadParticipants); err != nil {
+	if err := DB.Where("thread_id = ?", t.ID).Order("id asc").All(&threadParticipants); err != nil {
 		return users, fmt.Errorf("error reading from thread_participants table %v ... %v", t.ID, err)
 	}
 
