@@ -23,18 +23,27 @@ import (
 	"github.com/gofrs/uuid"
 )
 
+const (
+	PostRoleCreatedby string = "PostsCreated"
+	PostRoleReceiving string = "PostsReceiving"
+	PostRoleProviding string = "PostsProviding"
+)
+
 type User struct {
-	ID            int               `json:"id" db:"id"`
-	CreatedAt     time.Time         `json:"created_at" db:"created_at"`
-	UpdatedAt     time.Time         `json:"updated_at" db:"updated_at"`
-	Email         string            `json:"email" db:"email"`
-	FirstName     string            `json:"first_name" db:"first_name"`
-	LastName      string            `json:"last_name" db:"last_name"`
-	Nickname      string            `json:"nickname" db:"nickname"`
-	AdminRole     nulls.String      `json:"admin_role" db:"admin_role"`
-	Uuid          uuid.UUID         `json:"uuid" db:"uuid"`
-	AccessTokens  []UserAccessToken `has_many:"user_access_tokens" json:"-"`
-	Organizations Organizations     `many_to_many:"user_organizations" json:"-"`
+	ID             int               `json:"id" db:"id"`
+	CreatedAt      time.Time         `json:"created_at" db:"created_at"`
+	UpdatedAt      time.Time         `json:"updated_at" db:"updated_at"`
+	Email          string            `json:"email" db:"email"`
+	FirstName      string            `json:"first_name" db:"first_name"`
+	LastName       string            `json:"last_name" db:"last_name"`
+	Nickname       string            `json:"nickname" db:"nickname"`
+	AdminRole      nulls.String      `json:"admin_role" db:"admin_role"`
+	Uuid           uuid.UUID         `json:"uuid" db:"uuid"`
+	AccessTokens   []UserAccessToken `has_many:"user_access_tokens" json:"-"`
+	Organizations  Organizations     `many_to_many:"user_organizations" json:"-"`
+	PostsCreated   Posts             `has_many:"posts" fk_id:"created_by_id"`
+	PostsProviding Posts             `has_many:"posts" fk_id:"provider_id"`
+	PostsReceiving Posts             `has_many:"posts" fk_id:"receiver_id"`
 }
 
 // String is not required by pop and may be deleted
@@ -86,7 +95,7 @@ func (u *User) CreateAccessToken(org Organization, clientID string) (string, int
 	hash := HashClientIdAccessToken(clientID + token)
 	expireAt := createAccessTokenExpiry()
 
-	userOrg, err := FindUserOrganization(*u, org)
+	userOrg, err := u.FindUserOrganization(org)
 	if err != nil {
 		return "", 0, err
 	}
@@ -118,8 +127,8 @@ func (u *User) GetOrgIDs() []int {
 }
 
 func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
-
-	userOrgs, err := UserOrganizationFindByAuthEmail(authUser.Email, orgID)
+	var userOrgs UserOrganizations
+	err := userOrgs.FindByAuthEmail(authUser.Email, orgID)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -183,19 +192,19 @@ func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
 	return nil
 }
 
-func FindUserByAccessToken(accessToken string) (User, error) {
+func (u *User) FindByAccessToken(accessToken string) error {
 	if accessToken == "" {
-		return User{}, fmt.Errorf("error: access token must not be blank")
+		return fmt.Errorf("error: access token must not be blank")
 	}
 
 	var userAccessToken UserAccessToken
 	err := userAccessToken.FindByBearerToken(accessToken)
 	if err != nil {
-		return User{}, fmt.Errorf("error finding user by access token: %s", err.Error())
+		return fmt.Errorf("error finding user by access token: %s", err.Error())
 	}
 
 	if userAccessToken.ID == 0 {
-		return User{}, fmt.Errorf("error finding user by access token")
+		return fmt.Errorf("error finding user by access token")
 	}
 
 	if userAccessToken.ExpiresAt.Before(time.Now()) {
@@ -203,26 +212,24 @@ func FindUserByAccessToken(accessToken string) (User, error) {
 		if err != nil {
 			log.Printf("Unable to delete expired userAccessToken, id: %v", userAccessToken.ID)
 		}
-		return User{}, fmt.Errorf("access token has expired")
+		return fmt.Errorf("access token has expired")
 	}
 
-	return userAccessToken.User, nil
+	*u = userAccessToken.User
+	return nil
 }
 
-func FindUserByUUID(uuid string) (User, error) {
+func (u *User) FindByUUID(uuid string) error {
 
 	if uuid == "" {
-		return User{}, fmt.Errorf("error: uuid must not be blank")
+		return fmt.Errorf("error: uuid must not be blank")
 	}
 
-	user := User{}
-	queryString := fmt.Sprintf("uuid = '%s'", uuid)
-
-	if err := DB.Where(queryString).First(&user); err != nil {
-		return User{}, fmt.Errorf("error finding user by uuid: %s", err.Error())
+	if err := DB.Where("uuid = ?", uuid).First(u); err != nil {
+		return fmt.Errorf("error finding user by uuid: %s", err.Error())
 	}
 
-	return user, nil
+	return nil
 }
 
 func createAccessTokenExpiry() time.Time {
@@ -270,4 +277,39 @@ func (u *User) GetOrganizations() ([]*Organization, error) {
 	}
 
 	return orgs, nil
+}
+
+func (u *User) FindUserOrganization(org Organization) (UserOrganization, error) {
+	var userOrg UserOrganization
+	if err := DB.Where("user_id = ? AND organization_id = ?", u.ID, org.ID).First(&userOrg); err != nil {
+		return UserOrganization{}, fmt.Errorf("association not found for user '%v' and org '%v' (%s)", u.Nickname, org.Name, err.Error())
+	}
+
+	return userOrg, nil
+}
+
+func (u *User) GetPosts(postRole string) ([]*Post, error) {
+	var postPtrs []*Post
+	if err := DB.Load(u, postRole); err != nil {
+		return postPtrs, fmt.Errorf("error getting posts for user id %v ... %v", u.ID, err)
+	}
+
+	var posts Posts
+	switch postRole {
+	case PostRoleCreatedby:
+		posts = u.PostsCreated
+
+	case PostRoleReceiving:
+		posts = u.PostsReceiving
+
+	case PostRoleProviding:
+		posts = u.PostsProviding
+	}
+
+	for _, p := range posts {
+		p1 := p
+		postPtrs = append(postPtrs, &p1)
+	}
+
+	return postPtrs, nil
 }

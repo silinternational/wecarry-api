@@ -66,12 +66,12 @@ func (u *UserOrganization) ValidateUpdate(tx *pop.Connection) (*validate.Errors,
 	return validate.NewErrors(), nil
 }
 
-// UserOrganizationFindByAuthEmail finds and returns an array of user organizations for the given email address
-func UserOrganizationFindByAuthEmail(authEmail string, orgID int) ([]UserOrganization, error) {
+// FindByAuthEmail finds and returns an array of user organizations for the given email address
+func (u *UserOrganizations) FindByAuthEmail(authEmail string, orgID int) error {
 	// Validate email address before query
 	errs := validate.Validate(&validators.EmailIsPresent{Field: authEmail})
 	if len(errs.Errors) > 0 {
-		return []UserOrganization{}, fmt.Errorf("email address provided (%s) is not valid", authEmail)
+		return fmt.Errorf("email address provided (%s) is not valid", authEmail)
 	}
 
 	where := "auth_email = ?"
@@ -82,19 +82,9 @@ func UserOrganizationFindByAuthEmail(authEmail string, orgID int) ([]UserOrganiz
 		params = append(params, orgID)
 	}
 
-	var userOrgs []UserOrganization
-	if err := DB.Eager().Where(where, params...).All(&userOrgs); err != nil {
-		return []UserOrganization{}, fmt.Errorf("error finding user by email: %s", err.Error())
+	if err := DB.Eager().Where(where, params...).All(u); err != nil {
+		return fmt.Errorf("error finding user by email: %s", err.Error())
 	}
 
-	return userOrgs, nil
-}
-
-func FindUserOrganization(user User, org Organization) (UserOrganization, error) {
-	var userOrg UserOrganization
-	if err := DB.Where("user_id = ? AND organization_id = ?", user.ID, org.ID).First(&userOrg); err != nil {
-		return UserOrganization{}, fmt.Errorf("association not found for user '%v' and org '%v' (%s)", user.Nickname, org.Name, err.Error())
-	}
-
-	return userOrg, nil
+	return nil
 }

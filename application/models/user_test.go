@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gofrs/uuid"
+
 	"github.com/silinternational/handcarry-api/auth"
 
 	"github.com/gobuffalo/buffalo/genny/build/_fixtures/coke/models"
@@ -99,7 +101,7 @@ func (ms *ModelSuite) TestUser_FindOrCreateFromAuthUser() {
 	}
 }
 
-func (ms *ModelSuite) TestFindUserByAccessToken() {
+func (ms *ModelSuite) TestUser_FindByAccessToken() {
 	t := ms.T()
 	resetTables(t)
 	_, users, userOrgs := CreateUserFixtures(t)
@@ -157,14 +159,15 @@ func (ms *ModelSuite) TestFindUserByAccessToken() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := FindUserByAccessToken(test.args.token)
+			var got User
+			err := got.FindByAccessToken(test.args.token)
 			if test.wantErr {
 				if err == nil {
 					t.Errorf("Expected an error, but did not get one")
 				}
 			} else {
 				if err != nil {
-					t.Errorf("FindUserByAccessToken() returned an error: %v", err)
+					t.Errorf("FindByAccessToken() returned an error: %v", err)
 				} else if got.Uuid != test.want.Uuid {
 					t.Errorf("found %v, expected %v", got, test.want)
 				}
@@ -477,7 +480,141 @@ func (ms *ModelSuite) TestGetOrganizations() {
 				orgNames[i] = o.Name
 			}
 			if !reflect.DeepEqual(orgNames, test.want) {
-				t.Errorf("GetOrgIDs() = \"%v\", want \"%v\"", got, test.want)
+				t.Errorf("GetOrgIDs() = \"%v\", want \"%v\"", orgNames, test.want)
+			}
+		})
+	}
+}
+
+func (ms *ModelSuite) TestFindUserOrganization() {
+	t := ms.T()
+	resetTables(t)
+	createUserOrganizationFixtures(t)
+
+	type args struct {
+		user User
+		org  Organization
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "user 1, org 1",
+			args: args{
+				user: User{Email: "single@domain.com"},
+				org:  Organization{Name: "Org1"},
+			},
+			wantErr: false,
+		},
+		{
+			name: "user 2, org 1",
+			args: args{
+				user: User{Email: "two@domain.com"},
+				org:  Organization{Name: "Org1"},
+			},
+			wantErr: false,
+		},
+		{
+			name: "user 2, org 2",
+			args: args{
+				user: User{Email: "two@domain.com"},
+				org:  Organization{Name: "Org2"},
+			},
+			wantErr: false,
+		},
+		{
+			name: "user 1, org 2",
+			args: args{
+				user: User{Email: "single@domain.com"},
+				org:  Organization{Name: "Org2"},
+			},
+			wantErr: true,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var user User
+			if err := DB.Where("email = ?", test.args.user.Email).First(&user); err != nil {
+				t.Errorf("couldn't find test user '%v'", test.args.user.Email)
+			}
+
+			var org Organization
+			if err := DB.Where("name = ?", test.args.org.Name).First(&org); err != nil {
+				t.Errorf("couldn't find test org '%v'", test.args.org.Name)
+			}
+
+			uo, err := user.FindUserOrganization(org)
+			if test.wantErr {
+				if err == nil {
+					t.Errorf("Expected an error, but did not get one")
+				}
+			} else {
+				if err != nil {
+					t.Errorf("FindOrgByUUID() returned an error: %v", err)
+				} else if (uo.UserID != user.ID) || (uo.OrganizationID != org.ID) {
+					t.Errorf("received wrong UserOrganization (UserID=%v, OrganizationID=%v), expected (user.ID=%v, org.ID=%v)",
+						uo.UserID, uo.OrganizationID, user.ID, org.ID)
+				}
+			}
+		})
+	}
+}
+
+func (ms *ModelSuite) TestUser_GetPosts() {
+	t := ms.T()
+	resetTables(t)
+	_, users, _ := CreateUserFixtures(t)
+	posts := CreatePostFixtures(t, users)
+
+	type args struct {
+		user     User
+		postRole string
+	}
+	tests := []struct {
+		name string
+		args args
+		want []uuid.UUID
+	}{
+		{
+			name: "created by",
+			args: args{
+				user:     users[0],
+				postRole: PostRoleCreatedby,
+			},
+			want: []uuid.UUID{posts[0].Uuid, posts[1].Uuid},
+		},
+		{
+			name: "providing by",
+			args: args{
+				user:     users[1],
+				postRole: PostRoleProviding,
+			},
+			want: []uuid.UUID{posts[0].Uuid},
+		},
+		{
+			name: "receiving by",
+			args: args{
+				user:     users[1],
+				postRole: PostRoleReceiving,
+			},
+			want: []uuid.UUID{posts[1].Uuid},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := test.args.user.GetPosts(test.args.postRole)
+			if err != nil {
+				t.Errorf("GetPosts() returned error: %s", err)
+			}
+
+			ids := make([]uuid.UUID, len(got))
+			for i, p := range got {
+				ids[i] = p.Uuid
+			}
+			if !reflect.DeepEqual(ids, test.want) {
+				t.Errorf("GetOrgIDs() = \"%v\", want \"%v\"", ids, test.want)
 			}
 		})
 	}
