@@ -163,17 +163,6 @@ func (t *Thread) CreateWithParticipants(postUuid string, user User) error {
 		return err
 	}
 
-	for _, p := range participants {
-		threadP := ThreadParticipant{
-			ThreadID: thread.ID,
-			UserID:   p.ID,
-		}
-		if err := DB.Save(&threadP); err != nil {
-			err = fmt.Errorf("error saving new thread participant %+v for message: %v", threadP, err.Error())
-			return err
-		}
-	}
-
 	*t = thread
 	return nil
 }
