@@ -10,7 +10,7 @@ type Query {
 
 type Mutation {
     createPost(input: NewPost!): Post!
-    updatePostStatus(input: UpdatedPostStatus!): Post!
+    updatePost(input: UpdatedPost!): Post!
     createMessage(input: NewMessage!): Message!
 }
 
@@ -26,6 +26,15 @@ enum PostRole {
     CREATEDBY
     RECEIVING
     PROVIDING
+}
+
+enum PostStatus {
+    OPEN
+    COMMITTED
+    ACCEPTED
+    RECEIVED
+    COMPLETED
+    REMOVED
 }
 
 type User {
@@ -118,7 +127,17 @@ input NewMessage {
     threadID: String
 }
 
-input UpdatedPostStatus {
+input UpdatedPost {
     id: ID!
-    status: String!
+    status: PostStatus
+    title: String
+    description: String
+    destination: String
+    origin: String
+    size: String
+    neededAfter: String
+    neededBefore: String
+    category: String
+    url: String
+    cost: String
 }
