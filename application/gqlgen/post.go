@@ -217,15 +217,15 @@ func convertGqlPostInputToDBPost(input postInput, createdByUser models.User) (mo
 	}
 
 	if input.Description != nil {
-		post.Description = models.ConvertStringPtrToNullsString(input.Description)
+		post.Description = nulls.NewString(*input.Description)
 	}
 
 	if input.Destination != nil {
-		post.Destination = models.ConvertStringPtrToNullsString(input.Destination)
+		post.Destination = nulls.NewString(*input.Destination)
 	}
 
 	if input.Origin != nil {
-		post.Origin = models.ConvertStringPtrToNullsString(input.Origin)
+		post.Origin = nulls.NewString(*input.Origin)
 	}
 
 	if input.Size != nil {
@@ -251,7 +251,7 @@ func convertGqlPostInputToDBPost(input postInput, createdByUser models.User) (mo
 	}
 
 	if input.Category != nil {
-		post.Category = domain.ConvertStrPtrToString(input.Category)
+		post.Category = *input.Category
 	}
 
 	if input.URL != nil {
