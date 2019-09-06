@@ -14,36 +14,6 @@ type NewMessage struct {
 	ThreadID *string `json:"threadID"`
 }
 
-type NewPost struct {
-	OrgID        string   `json:"orgID"`
-	Type         PostType `json:"type"`
-	Title        string   `json:"title"`
-	Description  *string  `json:"description"`
-	Destination  *string  `json:"destination"`
-	Origin       *string  `json:"origin"`
-	Size         string   `json:"size"`
-	NeededAfter  *string  `json:"neededAfter"`
-	NeededBefore *string  `json:"neededBefore"`
-	Category     *string  `json:"category"`
-	URL          *string  `json:"url"`
-	Cost         *string  `json:"cost"`
-}
-
-type UpdatedPost struct {
-	ID           string      `json:"id"`
-	Status       *PostStatus `json:"status"`
-	Title        *string     `json:"title"`
-	Description  *string     `json:"description"`
-	Destination  *string     `json:"destination"`
-	Origin       *string     `json:"origin"`
-	Size         *string     `json:"size"`
-	NeededAfter  *string     `json:"neededAfter"`
-	NeededBefore *string     `json:"neededBefore"`
-	Category     *string     `json:"category"`
-	URL          *string     `json:"url"`
-	Cost         *string     `json:"cost"`
-}
-
 type PostRole string
 
 const (

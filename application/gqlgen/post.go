@@ -181,58 +181,93 @@ func (r *queryResolver) Post(ctx context.Context, id *string) (*models.Post, err
 	return &post, nil
 }
 
-// ConvertGqlNewPostToDBPost does what its name says, but also ...
-func ConvertGqlNewPostToDBPost(gqlPost NewPost, createdByUser models.User) (models.Post, error) {
-	org, err := models.FindOrgByUUID(gqlPost.OrgID)
-	if err != nil {
-		return models.Post{}, err
+// convertGqlPostInputToDBPost takes a `PostInput` and either finds a record matching the UUID given in `input.ID` or
+// creates a new `models.Post` with a new UUID. In either case, all properties that are not `nil` are set to the value
+// provided in `input`
+func convertGqlPostInputToDBPost(input postInput, createdByUser models.User) (models.Post, error) {
+	post := models.Post{}
+
+	if input.ID != nil {
+		if err := post.FindByUUID(*input.ID); err != nil {
+			return post, err
+		}
+	} else {
+		post.Uuid = domain.GetUuid()
+		post.CreatedByID = createdByUser.ID
 	}
 
-	dbPost := models.Post{}
-	dbPost.Uuid = domain.GetUuid()
-
-	dbPost.CreatedByID = createdByUser.ID
-	dbPost.OrganizationID = org.ID
-	dbPost.Type = gqlPost.Type.String()
-	dbPost.Title = gqlPost.Title
-
-	dbPost.Description = models.ConvertStringPtrToNullsString(gqlPost.Description)
-	dbPost.Destination = models.ConvertStringPtrToNullsString(gqlPost.Destination)
-	dbPost.Origin = models.ConvertStringPtrToNullsString(gqlPost.Origin)
-
-	dbPost.Size = gqlPost.Size
-
-	neededAfter, err := domain.ConvertStringPtrToDate(gqlPost.NeededAfter)
-	if err != nil {
-		err = fmt.Errorf("error converting NeededAfter %v ... %v", gqlPost.NeededAfter, err.Error())
-		return models.Post{}, err
+	if input.Status != nil {
+		post.Status = input.Status.String()
 	}
 
-	dbPost.NeededAfter = neededAfter
-
-	neededBefore, err := domain.ConvertStringPtrToDate(gqlPost.NeededBefore)
-	if err != nil {
-		err = fmt.Errorf("error converting NeededBefore %v ... %v", gqlPost.NeededBefore, err.Error())
-		return models.Post{}, err
-	}
-
-	dbPost.NeededBefore = neededBefore
-	dbPost.Category = domain.ConvertStrPtrToString(gqlPost.Category)
-
-	if gqlPost.URL != nil {
-		dbPost.URL = nulls.NewString(*gqlPost.URL)
-	}
-
-	if gqlPost.Cost != nil {
-		c, err := strconv.ParseFloat(*gqlPost.Cost, 64)
+	if input.OrgID != nil {
+		org, err := models.FindOrgByUUID(*input.OrgID)
 		if err != nil {
-			err = fmt.Errorf("error converting cost %v ... %v", gqlPost.Cost, err.Error())
 			return models.Post{}, err
 		}
-		dbPost.Cost = nulls.NewFloat64(c)
+		post.OrganizationID = org.ID
 	}
 
-	return dbPost, nil
+	if input.Type != nil {
+		post.Type = input.Type.String()
+	}
+
+	if input.Title != nil {
+		post.Title = *input.Title
+	}
+
+	if input.Description != nil {
+		post.Description = models.ConvertStringPtrToNullsString(input.Description)
+	}
+
+	if input.Destination != nil {
+		post.Destination = models.ConvertStringPtrToNullsString(input.Destination)
+	}
+
+	if input.Origin != nil {
+		post.Origin = models.ConvertStringPtrToNullsString(input.Origin)
+	}
+
+	if input.Size != nil {
+		post.Size = *input.Size
+	}
+
+	if input.NeededAfter != nil {
+		neededAfter, err := domain.ConvertStringPtrToDate(input.NeededAfter)
+		if err != nil {
+			err = fmt.Errorf("error converting NeededAfter %v ... %v", input.NeededAfter, err.Error())
+			return models.Post{}, err
+		}
+		post.NeededAfter = neededAfter
+	}
+
+	if input.NeededBefore != nil {
+		neededBefore, err := domain.ConvertStringPtrToDate(input.NeededBefore)
+		if err != nil {
+			err = fmt.Errorf("error converting NeededBefore %v ... %v", input.NeededBefore, err.Error())
+			return models.Post{}, err
+		}
+		post.NeededBefore = neededBefore
+	}
+
+	if input.Category != nil {
+		post.Category = domain.ConvertStrPtrToString(input.Category)
+	}
+
+	if input.URL != nil {
+		post.URL = nulls.NewString(*input.URL)
+	}
+
+	if input.Cost != nil {
+		c, err := strconv.ParseFloat(*input.Cost, 64)
+		if err != nil {
+			err = fmt.Errorf("error converting cost %v ... %v", input.Cost, err.Error())
+			return models.Post{}, err
+		}
+		post.Cost = nulls.NewFloat64(c)
+	}
+
+	return post, nil
 }
 
 func getSelectFieldsForPosts(ctx context.Context) []string {
