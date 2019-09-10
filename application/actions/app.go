@@ -4,7 +4,6 @@ import (
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/buffalo-pop/pop/popmw"
 	"github.com/gobuffalo/envy"
-	contenttype "github.com/gobuffalo/mw-contenttype"
 	paramlogger "github.com/gobuffalo/mw-paramlogger"
 	"github.com/gorilla/sessions"
 	"github.com/rs/cors"
@@ -52,9 +51,6 @@ func App() *buffalo.App {
 
 		// Log request parameters (filters apply).
 		app.Use(paramlogger.ParameterLogger)
-
-		// Set the request content type to JSON
-		app.Use(contenttype.Set("application/json"))
 
 		// Wraps each request in a transaction.
 		//  c.Value("tx").(*pop.Connection)

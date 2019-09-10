@@ -6,16 +6,32 @@ type Query {
     threads: [Thread]!
     myThreads: [Thread]!
     message(id: ID): Message!
+    postImage(id: ID): File!
 }
 
 type Mutation {
     createPost(input: NewPost!): Post!
     updatePost(input: UpdatedPost!): Post!
     createMessage(input: NewMessage!): Message!
+    uploadPostImage(input: NewPostImage!): File!
 }
 
 # Date and Time in RFC3339 format
 scalar Time
+
+scalar Upload
+
+type File {
+    id: ID!
+    name: String!
+    size: Int!
+    content: String!
+}
+
+input NewPostImage {
+    file: Upload!
+    postID: ID!
+}
 
 enum Role {
     ADMIN

@@ -3,6 +3,8 @@ package gqlgen
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
+	"math"
 	"strconv"
 
 	"github.com/gobuffalo/nulls"
@@ -337,4 +339,52 @@ func (r *mutationResolver) UpdatePost(ctx context.Context, input postInput) (*mo
 	}
 
 	return &post, nil
+}
+
+func (r *queryResolver) PostImage(ctx context.Context, id *string) (*File, error) {
+	var post models.Post
+	if err := post.FindByUUID(*id); err != nil {
+		graphql.AddError(ctx, gqlerror.Errorf("error getting post: %s", err))
+		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
+	}
+
+	var image models.Image
+	if err := models.DB.Where("post_id = ?", post.ID).First(&image); err != nil {
+		graphql.AddError(ctx, gqlerror.Errorf("error getting image: %s", err))
+		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
+		return &File{}, err
+	}
+
+	return &File{ID: image.UUID.String(), Size: len(image.Content.ByteSlice), Content: string(image.Content.ByteSlice)}, nil
+}
+
+func (r *mutationResolver) UploadPostImage(ctx context.Context, input NewPostImage) (*File, error) {
+	if input.File.File == nil {
+		return &File{}, fmt.Errorf("file is nil")
+	}
+
+	content, err := ioutil.ReadAll(input.File.File)
+	if err != nil {
+		return &File{}, fmt.Errorf("error reading file, %s", err)
+	}
+
+	var post models.Post
+	if err := post.FindByUUID(input.PostID); err != nil {
+		graphql.AddError(ctx, gqlerror.Errorf("error getting post: %s", err))
+		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
+	}
+
+	image := models.Image{
+		UUID:    domain.GetUuid(),
+		Content: nulls.NewByteSlice(content),
+		PostID:  post.ID,
+	}
+	if err := models.DB.Save(&image); err != nil {
+		return nil, err
+	}
+
+	if input.File.Size > math.MaxInt32 {
+		return &File{}, fmt.Errorf("exceeded max file size: %d", input.File.Size)
+	}
+	return &File{ID: image.UUID.String(), Name: input.File.Filename, Size: int(input.File.Size)}, nil
 }

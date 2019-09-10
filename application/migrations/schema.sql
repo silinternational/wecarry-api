@@ -21,6 +21,44 @@ SET default_tablespace = '';
 SET default_with_oids = false;
 
 --
+-- Name: images; Type: TABLE; Schema: public; Owner: handcarry
+--
+
+CREATE TABLE public.images (
+    id integer NOT NULL,
+    uuid uuid NOT NULL,
+    content bytea,
+    url character varying(255),
+    post_id integer NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.images OWNER TO handcarry;
+
+--
+-- Name: images_id_seq; Type: SEQUENCE; Schema: public; Owner: handcarry
+--
+
+CREATE SEQUENCE public.images_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.images_id_seq OWNER TO handcarry;
+
+--
+-- Name: images_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: handcarry
+--
+
+ALTER SEQUENCE public.images_id_seq OWNED BY public.images.id;
+
+
+--
 -- Name: messages; Type: TABLE; Schema: public; Owner: handcarry
 --
 
@@ -386,6 +424,13 @@ ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
 
 
 --
+-- Name: images id; Type: DEFAULT; Schema: public; Owner: handcarry
+--
+
+ALTER TABLE ONLY public.images ALTER COLUMN id SET DEFAULT nextval('public.images_id_seq'::regclass);
+
+
+--
 -- Name: messages id; Type: DEFAULT; Schema: public; Owner: handcarry
 --
 
@@ -446,6 +491,14 @@ ALTER TABLE ONLY public.user_organizations ALTER COLUMN id SET DEFAULT nextval('
 --
 
 ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_id_seq'::regclass);
+
+
+--
+-- Name: images images_pkey; Type: CONSTRAINT; Schema: public; Owner: handcarry
+--
+
+ALTER TABLE ONLY public.images
+    ADD CONSTRAINT images_pkey PRIMARY KEY (id);
 
 
 --
@@ -518,6 +571,13 @@ ALTER TABLE ONLY public.user_organizations
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: images_uuid_idx; Type: INDEX; Schema: public; Owner: handcarry
+--
+
+CREATE UNIQUE INDEX images_uuid_idx ON public.images USING btree (uuid);
 
 
 --
@@ -609,6 +669,14 @@ CREATE UNIQUE INDEX users_nickname_idx ON public.users USING btree (nickname);
 --
 
 CREATE UNIQUE INDEX users_uuid_idx ON public.users USING btree (uuid);
+
+
+--
+-- Name: images images_post_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: handcarry
+--
+
+ALTER TABLE ONLY public.images
+    ADD CONSTRAINT images_post_id_fkey FOREIGN KEY (post_id) REFERENCES public.posts(id) ON DELETE CASCADE;
 
 
 --

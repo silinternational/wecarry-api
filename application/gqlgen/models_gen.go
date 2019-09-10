@@ -6,12 +6,26 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+
+	"github.com/99designs/gqlgen/graphql"
 )
+
+type File struct {
+	ID      string `json:"id"`
+	Name    string `json:"name"`
+	Size    int    `json:"size"`
+	Content string `json:"content"`
+}
 
 type NewMessage struct {
 	Content  string  `json:"content"`
 	PostID   string  `json:"postID"`
 	ThreadID *string `json:"threadID"`
+}
+
+type NewPostImage struct {
+	File   graphql.Upload `json:"file"`
+	PostID string         `json:"postID"`
 }
 
 type PostRole string
