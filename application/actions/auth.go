@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/gobuffalo/envy"
@@ -289,14 +288,10 @@ func SetCurrentUser(next buffalo.Handler) buffalo.Handler {
 
 // getLoginSuccessRedirectURL generates the URL for redirection after a successful login
 func getLoginSuccessRedirectURL(authUser AuthUser, returnTo string) string {
-	uiUrl := envy.Get("UI_URL", "/")
+	uiUrl := envy.Get("UI_URL", "")
 
-	if len(returnTo) > 0 {
-		if strings.HasPrefix(returnTo, uiUrl) {
-			uiUrl = returnTo
-		} else if returnTo[0] == '/' {
-			uiUrl = uiUrl + returnTo
-		}
+	if len(returnTo) > 0 && returnTo[0] == '/' {
+		uiUrl = uiUrl + "/#" + returnTo
 	}
 
 	tokenExpiry := time.Unix(authUser.AccessTokenExpiresAt, 0).Format(time.RFC3339)
