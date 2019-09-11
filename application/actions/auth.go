@@ -71,9 +71,14 @@ func AuthLogin(c buffalo.Context) error {
 
 	returnTo := c.Param("ReturnTo")
 	if returnTo == "" {
-		returnTo = "/"
+		var ok bool
+		returnTo, ok = c.Session().Get("ReturnTo").(string)
+		if !ok {
+			returnTo = "/#"
+		}
+	} else {
+		c.Session().Set("ReturnTo", returnTo)
 	}
-	c.Session().Set("ReturnTo", returnTo)
 
 	err := c.Session().Save()
 	if err != nil {
@@ -193,12 +198,6 @@ func AuthLogin(c buffalo.Context) error {
 
 	// set person on rollbar session
 	domain.RollbarSetPerson(c, authUser.ID, authUser.Nickname, authUser.Email)
-
-	// get ReturnTo for redirect
-	returnTo, ok = c.Session().Get("ReturnTo").(string)
-	if !ok {
-		returnTo = ""
-	}
 
 	return c.Redirect(302, getLoginSuccessRedirectURL(authUser, returnTo))
 }
