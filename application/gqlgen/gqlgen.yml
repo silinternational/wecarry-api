@@ -51,6 +51,10 @@ models:
         resolver: true
       thread:
         resolver: true
+  UpdatedPost:
+    model: github.com/silinternational/handcarry-api/gqlgen.postInput
+  NewPost:
+    model: github.com/silinternational/handcarry-api/gqlgen.postInput
 
 #directives:
 #  deprecated:

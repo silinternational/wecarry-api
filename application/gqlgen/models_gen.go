@@ -14,26 +14,6 @@ type NewMessage struct {
 	ThreadID *string `json:"threadID"`
 }
 
-type NewPost struct {
-	OrgID        string   `json:"orgID"`
-	Type         PostType `json:"type"`
-	Title        string   `json:"title"`
-	Description  *string  `json:"description"`
-	Destination  *string  `json:"destination"`
-	Origin       *string  `json:"origin"`
-	Size         string   `json:"size"`
-	NeededAfter  *string  `json:"neededAfter"`
-	NeededBefore *string  `json:"neededBefore"`
-	Category     *string  `json:"category"`
-	URL          *string  `json:"url"`
-	Cost         *string  `json:"cost"`
-}
-
-type UpdatedPostStatus struct {
-	ID     string `json:"id"`
-	Status string `json:"status"`
-}
-
 type PostRole string
 
 const (
@@ -74,6 +54,55 @@ func (e *PostRole) UnmarshalGQL(v interface{}) error {
 }
 
 func (e PostRole) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type PostStatus string
+
+const (
+	PostStatusOpen      PostStatus = "OPEN"
+	PostStatusCommitted PostStatus = "COMMITTED"
+	PostStatusAccepted  PostStatus = "ACCEPTED"
+	PostStatusReceived  PostStatus = "RECEIVED"
+	PostStatusCompleted PostStatus = "COMPLETED"
+	PostStatusRemoved   PostStatus = "REMOVED"
+)
+
+var AllPostStatus = []PostStatus{
+	PostStatusOpen,
+	PostStatusCommitted,
+	PostStatusAccepted,
+	PostStatusReceived,
+	PostStatusCompleted,
+	PostStatusRemoved,
+}
+
+func (e PostStatus) IsValid() bool {
+	switch e {
+	case PostStatusOpen, PostStatusCommitted, PostStatusAccepted, PostStatusReceived, PostStatusCompleted, PostStatusRemoved:
+		return true
+	}
+	return false
+}
+
+func (e PostStatus) String() string {
+	return string(e)
+}
+
+func (e *PostStatus) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PostStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PostStatus", str)
+	}
+	return nil
+}
+
+func (e PostStatus) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
