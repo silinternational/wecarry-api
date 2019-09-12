@@ -31,6 +31,8 @@ services:
       dockerfile: Dockerfile-dev
     volumes:
       - ./application:/handcarry
+    env_file:
+      - ./test.env
     environment:
       GO_ENV: test
     depends_on:

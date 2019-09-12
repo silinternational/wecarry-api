@@ -60,6 +60,8 @@ func (i *Image) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }
 
+// Store takes a byte slice and stores it into S3 and saves the metadata in the database image table.
+// None of the struct members of i are used as input, but are updated if the function is successful.
 func (i *Image) Store(postUUID string, content []byte) error {
 	var post Post
 	if err := post.FindByUUID(postUUID); err != nil {
@@ -86,6 +88,8 @@ func (i *Image) Store(postUUID string, content []byte) error {
 	return nil
 }
 
+// FindByUUID locates an image by Post UUID and Image UUID and returns the result, including a valid URL.
+// None of the struct members of i are used as input, but are updated if the function is successful.
 func (i *Image) FindByUUID(postUUID, imageUUID string) error {
 	var post Post
 	if err := post.FindByUUID(postUUID); err != nil {
@@ -105,7 +109,7 @@ func (i *Image) FindByUUID(postUUID, imageUUID string) error {
 	return nil
 }
 
-// RefreshURL ensures the URL is good for at least a few minutes
+// RefreshURL ensures the image URL is good for at least a few minutes
 func (i *Image) RefreshURL() error {
 	if i.URLExpiration.After(time.Now().Add(time.Minute * 5)) {
 		return nil
