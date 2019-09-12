@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/gobuffalo/validate/validators"
@@ -73,7 +72,6 @@ func (i *Image) Store(postUUID string, content []byte) error {
 		return err
 	}
 
-	fmt.Printf("--------- image uuid: %s, postid: %d, url: %s\n", imageUUID, post.ID, url)
 	image := Image{
 		UUID:          imageUUID,
 		PostID:        post.ID,
