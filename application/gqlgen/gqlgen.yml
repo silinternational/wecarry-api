@@ -19,6 +19,11 @@ models:
     fields:
       id:
         resolver: true
+  OrganizationDomain:
+    model: github.com/silinternational/handcarry-api/models.OrganizationDomain
+    fields:
+      id:
+        resolver: false
   User:
     model: github.com/silinternational/handcarry-api/models.User
     fields:

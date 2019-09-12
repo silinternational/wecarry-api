@@ -2,7 +2,11 @@ package models
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"strings"
+
+	"github.com/gobuffalo/validate"
 
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/envy"
@@ -65,4 +69,14 @@ func GetCurrentUser(c buffalo.Context) User {
 	}
 
 	return User{}
+}
+
+// FlattenPopErrors - pop validation errors are complex structures, this flattens them to a simple string
+func FlattenPopErrors(popErrs *validate.Errors) string {
+	var msg string
+	for key, val := range popErrs.Errors {
+		msg += fmt.Sprintf("%s: %s |", key, strings.Join(val, ", "))
+	}
+
+	return msg
 }

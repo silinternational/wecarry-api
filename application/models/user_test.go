@@ -16,7 +16,7 @@ import (
 
 func (ms *ModelSuite) TestUser_FindOrCreateFromAuthUser() {
 	t := ms.T()
-	resetTables(t)
+	ResetTables(t, ms.DB)
 
 	// create org for test
 	org := &Organization{
@@ -101,7 +101,7 @@ func (ms *ModelSuite) TestUser_FindOrCreateFromAuthUser() {
 
 func (ms *ModelSuite) TestFindUserByAccessToken() {
 	t := ms.T()
-	resetTables(t)
+	ResetTables(t, ms.DB)
 	_, users, userOrgs := CreateUserFixtures(t)
 
 	// Load access token test fixtures
@@ -267,7 +267,7 @@ func (ms *ModelSuite) TestValidateUser() {
 // Ensure multiple access tokens for same organization are allowed (to support multiple tabs/browsers)
 func (ms *ModelSuite) TestCreateAccessToken() {
 	t := ms.T()
-	resetTables(t)
+	ResetTables(t, ms.DB)
 	orgs, users, _ := CreateUserFixtures(t)
 
 	type args struct {
@@ -343,7 +343,7 @@ func (ms *ModelSuite) TestCreateAccessToken() {
 
 func (ms *ModelSuite) TestGetOrgIDs() {
 	t := ms.T()
-	resetTables(t)
+	ResetTables(t, ms.DB)
 	_, users, _ := CreateUserFixtures(t)
 
 	tests := []struct {
@@ -368,8 +368,8 @@ func (ms *ModelSuite) TestGetOrgIDs() {
 	}
 }
 
-func CreateUserFixtures(t *testing.T) (Organizations, Users, UserOrganizations) {
-	resetTables(t)
+func CreateUserFixtures(t *testing.T) ([]Organization, Users, UserOrganizations) {
+	ResetTables(t, DB)
 
 	// Load Organization test fixtures
 	orgs := []Organization{
@@ -386,9 +386,9 @@ func CreateUserFixtures(t *testing.T) (Organizations, Users, UserOrganizations) 
 			AuthConfig: "[]",
 		},
 	}
-	for i := range orgs {
-		if err := DB.Create(&orgs[i]); err != nil {
-			t.Errorf("error creating org %+v ...\n %v \n", orgs[i], err)
+	for _, org := range orgs {
+		if err := DB.Create(&org); err != nil {
+			t.Errorf("error creating org %+v ...\n %v \n", org, err)
 			t.FailNow()
 		}
 	}
@@ -410,9 +410,9 @@ func CreateUserFixtures(t *testing.T) (Organizations, Users, UserOrganizations) 
 			Uuid:      domain.GetUuid(),
 		},
 	}
-	for i := range users {
-		if err := DB.Create(&users[i]); err != nil {
-			t.Errorf("could not create test user %v ... %v", i, err)
+	for _, user := range users {
+		if err := DB.Create(&user); err != nil {
+			t.Errorf("could not create test user %v ... %v", user, err)
 			t.FailNow()
 		}
 	}
@@ -432,8 +432,8 @@ func CreateUserFixtures(t *testing.T) (Organizations, Users, UserOrganizations) 
 			AuthEmail:      "user@example.com",
 		},
 	}
-	for i := range userOrgs {
-		if err := DB.Create(&userOrgs[i]); err != nil {
+	for _, uo := range userOrgs {
+		if err := DB.Create(&uo); err != nil {
 			t.Errorf("could not create test user org ... %v", err)
 			t.FailNow()
 		}
@@ -444,7 +444,7 @@ func CreateUserFixtures(t *testing.T) (Organizations, Users, UserOrganizations) 
 
 func (ms *ModelSuite) TestGetOrganizations() {
 	t := ms.T()
-	resetTables(t)
+	ResetTables(t, ms.DB)
 	orgs, users, _ := CreateUserFixtures(t)
 
 	tests := []struct {
@@ -473,5 +473,81 @@ func (ms *ModelSuite) TestGetOrganizations() {
 				t.Errorf("GetOrgIDs() = \"%v\", want \"%v\"", got, test.want)
 			}
 		})
+	}
+}
+
+func (ms *ModelSuite) TestCanEditOrganization() {
+	t := ms.T()
+	ResetTables(t, ms.DB)
+
+	orgFixtures := []Organization{
+		{
+			ID:         1,
+			Name:       "Org1",
+			Url:        nulls.String{},
+			AuthType:   "saml2",
+			AuthConfig: "{}",
+			Uuid:       domain.GetUuid(),
+		},
+		{
+			ID:         2,
+			Name:       "Org2",
+			Url:        nulls.String{},
+			AuthType:   "saml2",
+			AuthConfig: "{}",
+			Uuid:       domain.GetUuid(),
+		},
+	}
+	for _, of := range orgFixtures {
+		err := DB.Create(&of)
+		if err != nil {
+			t.Errorf("failed to create org fixtures: %s", err)
+		}
+	}
+
+	user := User{
+		ID:        1,
+		Email:     "test@com.com",
+		FirstName: "Test",
+		LastName:  "User",
+		Nickname:  "test_user",
+		AdminRole: nulls.String{},
+		Uuid:      domain.GetUuid(),
+	}
+	err := DB.Create(&user)
+	if err != nil {
+		t.Errorf("failed to create user fixture: %s", err)
+	}
+
+	userOrgFixtures := []UserOrganization{
+		{
+			ID:             1,
+			OrganizationID: 1,
+			UserID:         1,
+			Role:           UserOrganizationRoleAdmin,
+			AuthID:         "abc123",
+			AuthEmail:      "test@com.com",
+		},
+		{
+			ID:             2,
+			OrganizationID: 2,
+			UserID:         1,
+			Role:           UserOrganizationRoleMember,
+			AuthID:         "123abc",
+			AuthEmail:      "test@com.com",
+		},
+	}
+	for _, uof := range userOrgFixtures {
+		err := DB.Create(&uof)
+		if err != nil {
+			t.Errorf("failed to create user org fixtures: %s", err)
+		}
+	}
+
+	if !user.CanEditOrganization(orgFixtures[0].ID) {
+		t.Error("user unable to edit org that they should be able to edit")
+	}
+	if user.CanEditOrganization(orgFixtures[1].ID) {
+		t.Error("user is able to edit org that they should not be able to edit")
 	}
 }

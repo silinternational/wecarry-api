@@ -39,12 +39,7 @@ type NewPost struct {
 	Category     *string  `json:"category"`
 }
 
-type OrganizationDomain struct {
-	Domain         string `json:"domain"`
-	OrganizationID string `json:"organizationId"`
-}
-
-type UpdateOrganization struct {
+type UpdatedOrganization struct {
 	ID         string  `json:"id"`
 	Name       string  `json:"name"`
 	URL        *string `json:"url"`

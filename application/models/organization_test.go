@@ -272,7 +272,7 @@ func createOrgFixtures(t *testing.T) (Organization, OrganizationDomain) {
 }
 
 func TestOrganization_AddLoadRemoveDomain(t *testing.T) {
-	resetTables(t)
+	ResetTables(t, DB)
 
 	orgFixtures := []Organization{
 		{
@@ -304,32 +304,23 @@ func TestOrganization_AddLoadRemoveDomain(t *testing.T) {
 		}
 	}
 
-	first, err := orgFixtures[0].AddDomain("first.com")
+	err := orgFixtures[0].AddDomain("first.com")
 	if err != nil {
 		t.Errorf("unable to add first domain to Org1: %s", err)
-	} else if first.ID == 0 {
+	} else if len(orgFixtures[0].OrganizationDomains) != 1 {
 		t.Errorf("did not get error, but failed to add first domain to Org1")
 	}
 
-	second, err := orgFixtures[0].AddDomain("second.com")
+	err = orgFixtures[0].AddDomain("second.com")
 	if err != nil {
 		t.Errorf("unable to add second domain to Org1: %s", err)
-	} else if second.ID == 0 {
+	} else if len(orgFixtures[0].OrganizationDomains) != 2 {
 		t.Errorf("did not get error, but failed to add second domain to Org1")
 	}
 
-	_, err = orgFixtures[1].AddDomain("second.com")
+	err = orgFixtures[1].AddDomain("second.com")
 	if err == nil {
 		t.Errorf("was to add existing domain (second.com) to Org2 but should have gotten error")
-	}
-
-	if len(orgFixtures[0].OrganizationDomains) != 0 {
-		t.Errorf("hmm, didn't expect that")
-	}
-
-	err = orgFixtures[0].loadDomains()
-	if err != nil {
-		t.Errorf("unable to reload domains: %s", err)
 	}
 
 	if len(orgFixtures[0].OrganizationDomains) != 2 {
@@ -343,6 +334,204 @@ func TestOrganization_AddLoadRemoveDomain(t *testing.T) {
 
 	if len(orgFixtures[0].OrganizationDomains) != 1 {
 		t.Errorf("org domains count after removing domain is not correct, expected %v, got: %v", 1, len(orgFixtures[0].OrganizationDomains))
+	}
+
+}
+
+func TestOrganization_Save(t *testing.T) {
+	ResetTables(t, DB)
+
+	orgFixtures := []Organization{
+		{
+			ID:         1,
+			CreatedAt:  time.Time{},
+			UpdatedAt:  time.Time{},
+			Name:       "Org1",
+			Url:        nulls.String{},
+			AuthType:   "na",
+			AuthConfig: "{}",
+			Uuid:       domain.GetUuid(),
+		},
+		{
+			ID:         2,
+			CreatedAt:  time.Time{},
+			UpdatedAt:  time.Time{},
+			Name:       "Org2",
+			Url:        nulls.String{},
+			AuthType:   "na",
+			AuthConfig: "{}",
+			Uuid:       domain.GetUuid(),
+		},
+	}
+	for _, org := range orgFixtures {
+		err := DB.Create(&org)
+		if err != nil {
+			t.Errorf("Unable to create org fixture: %s", err)
+			t.FailNow()
+		}
+	}
+
+	// test save of existing organization
+	orgFixtures[0].Name = "changed"
+	err := orgFixtures[0].Save()
+	if err != nil {
+		t.Error(err)
+	}
+	// load org from db to ensure change saved
+	var found Organization
+	err = DB.Where("id = ?", orgFixtures[0].ID).First(&found)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if found.Name != orgFixtures[0].Name {
+		t.Errorf("Org name not changed after save, wanted: %s, have: %s", orgFixtures[0].Name, found.Name)
+	}
+
+	// create new org
+	newOrg := Organization{
+		Name:       "new org",
+		Url:        nulls.String{},
+		AuthType:   "saml2",
+		AuthConfig: "{}",
+		Uuid:       domain.GetUuid(),
+	}
+
+	err = newOrg.Save()
+	if err != nil {
+		t.Error(err)
+	}
+
+	if newOrg.ID == 0 {
+		t.Error("new organization not updated after save")
+	}
+
+}
+
+func TestOrganization_ListAll(t *testing.T) {
+	ResetTables(t, DB)
+
+	orgFixtures := []Organization{
+		{
+			ID:         1,
+			CreatedAt:  time.Time{},
+			UpdatedAt:  time.Time{},
+			Name:       "Org1",
+			Url:        nulls.String{},
+			AuthType:   "na",
+			AuthConfig: "{}",
+			Uuid:       domain.GetUuid(),
+		},
+		{
+			ID:         2,
+			CreatedAt:  time.Time{},
+			UpdatedAt:  time.Time{},
+			Name:       "Org2",
+			Url:        nulls.String{},
+			AuthType:   "na",
+			AuthConfig: "{}",
+			Uuid:       domain.GetUuid(),
+		},
+	}
+	for _, org := range orgFixtures {
+		err := DB.Create(&org)
+		if err != nil {
+			t.Errorf("Unable to create org fixture: %s", err)
+			t.FailNow()
+		}
+	}
+
+	var allOrgs Organizations
+	err := allOrgs.ListAll()
+	if err != nil {
+		t.Error(err)
+	}
+
+	if len(allOrgs) != len(orgFixtures) {
+		t.Errorf("Did not get expected number of orgs, got %v, wanted %v", len(allOrgs), len(orgFixtures))
+	}
+
+}
+
+func TestOrganization_ListAllForUser(t *testing.T) {
+	ResetTables(t, DB)
+
+	orgFixtures := []Organization{
+		{
+			ID:         1,
+			CreatedAt:  time.Time{},
+			UpdatedAt:  time.Time{},
+			Name:       "Org1",
+			Url:        nulls.String{},
+			AuthType:   "na",
+			AuthConfig: "{}",
+			Uuid:       domain.GetUuid(),
+		},
+		{
+			ID:         2,
+			CreatedAt:  time.Time{},
+			UpdatedAt:  time.Time{},
+			Name:       "Org2",
+			Url:        nulls.String{},
+			AuthType:   "na",
+			AuthConfig: "{}",
+			Uuid:       domain.GetUuid(),
+		},
+	}
+	for _, org := range orgFixtures {
+		err := DB.Create(&org)
+		if err != nil {
+			t.Errorf("Unable to create org fixture: %s", err)
+			t.FailNow()
+		}
+	}
+
+	userFixtures := []User{
+		{
+			ID:        1,
+			Email:     "user1@test.com",
+			FirstName: "user",
+			LastName:  "one",
+			Nickname:  "user_one",
+			AdminRole: nulls.String{},
+			Uuid:      domain.GetUuid(),
+		},
+	}
+	for _, user := range userFixtures {
+		err := DB.Create(&user)
+		if err != nil {
+			t.Errorf("Unable to create user fixture: %s", err)
+			t.FailNow()
+		}
+	}
+
+	userOrgFixtures := []UserOrganization{
+		{
+			ID:             1,
+			OrganizationID: 1,
+			UserID:         1,
+			Role:           UserOrganizationRoleMember,
+			AuthID:         "user_one",
+			AuthEmail:      "user1@test.com",
+			LastLogin:      time.Time{},
+		},
+	}
+	for _, uo := range userOrgFixtures {
+		err := DB.Create(&uo)
+		if err != nil {
+			t.Errorf("Unable to create user_organization fixture: %s", err)
+			t.FailNow()
+		}
+	}
+
+	var userOrgs Organizations
+	err := userOrgs.ListAllForUser(userFixtures[0])
+	if err != nil {
+		t.Error(err)
+	}
+
+	if len(userOrgs) != len(userOrgFixtures) {
+		t.Errorf("Did not get expected number of orgs for user, got %v, wanted %v", len(userOrgs), len(userOrgFixtures))
 	}
 
 }

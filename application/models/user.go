@@ -24,17 +24,18 @@ import (
 )
 
 type User struct {
-	ID            int               `json:"id" db:"id"`
-	CreatedAt     time.Time         `json:"created_at" db:"created_at"`
-	UpdatedAt     time.Time         `json:"updated_at" db:"updated_at"`
-	Email         string            `json:"email" db:"email"`
-	FirstName     string            `json:"first_name" db:"first_name"`
-	LastName      string            `json:"last_name" db:"last_name"`
-	Nickname      string            `json:"nickname" db:"nickname"`
-	AdminRole     nulls.String      `json:"admin_role" db:"admin_role"`
-	Uuid          uuid.UUID         `json:"uuid" db:"uuid"`
-	AccessTokens  []UserAccessToken `has_many:"user_access_tokens" json:"-"`
-	Organizations []Organization    `many_to_many:"user_organizations" json:"-"`
+	ID                int                `json:"id" db:"id"`
+	CreatedAt         time.Time          `json:"created_at" db:"created_at"`
+	UpdatedAt         time.Time          `json:"updated_at" db:"updated_at"`
+	Email             string             `json:"email" db:"email"`
+	FirstName         string             `json:"first_name" db:"first_name"`
+	LastName          string             `json:"last_name" db:"last_name"`
+	Nickname          string             `json:"nickname" db:"nickname"`
+	AdminRole         nulls.String       `json:"admin_role" db:"admin_role"`
+	Uuid              uuid.UUID          `json:"uuid" db:"uuid"`
+	AccessTokens      []UserAccessToken  `has_many:"user_access_tokens" json:"-"`
+	Organizations     []Organization     `many_to_many:"user_organizations" json:"-"`
+	UserOrganizations []UserOrganization `has_many:"user_organizations" json:"-"`
 }
 
 // String is not required by pop and may be deleted
@@ -181,6 +182,27 @@ func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
 	// }
 
 	return nil
+}
+
+// CanCreateOrganization returns true if the given user is allowed to create organizations
+func (u *User) CanCreateOrganization() bool {
+	return u.AdminRole.String == domain.AdminRoleSuperDuperAdmin || u.AdminRole.String == domain.AdminRoleSalesAdmin
+}
+
+func (u *User) CanEditOrganization(orgId int) bool {
+	// make sure we're checking current user orgs
+	err := DB.Load(u, "UserOrganizations")
+	if err != nil {
+		return false
+	}
+
+	for _, uo := range u.UserOrganizations {
+		if uo.OrganizationID == orgId && uo.Role == UserOrganizationRoleAdmin {
+			return true
+		}
+	}
+
+	return false
 }
 
 func FindUserByAccessToken(accessToken string) (User, error) {

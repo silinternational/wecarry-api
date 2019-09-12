@@ -9,7 +9,7 @@ import (
 
 func createUserOrganizationFixtures(t *testing.T) {
 	// reset db tables
-	resetTables(t)
+	ResetTables(t, DB)
 
 	singleUuid := domain.GetUuid()
 	twoUuid := domain.GetUuid()
@@ -105,7 +105,7 @@ func createUserOrganizationFixtures(t *testing.T) {
 
 func (ms *ModelSuite) TestFindByAuthEmail() {
 	t := ms.T()
-	resetTables(t)
+	ResetTables(t, ms.DB)
 	createUserOrganizationFixtures(t)
 
 	type args struct {
@@ -158,7 +158,7 @@ func (ms *ModelSuite) TestFindByAuthEmail() {
 
 func (ms *ModelSuite) TestFindUserOrganization() {
 	t := ms.T()
-	resetTables(t)
+	ResetTables(t, ms.DB)
 	createUserOrganizationFixtures(t)
 
 	type args struct {

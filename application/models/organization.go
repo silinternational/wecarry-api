@@ -30,6 +30,8 @@ type Organization struct {
 	OrganizationDomains []OrganizationDomain `has_many:"organization_domains"`
 }
 
+type Organizations []Organization
+
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
 // This method is not required and may be deleted.
 func (o *Organization) Validate(tx *pop.Connection) (*validate.Errors, error) {
@@ -86,27 +88,32 @@ func (o *Organization) FindByDomain(domain string) error {
 	return nil
 }
 
-func (o *Organization) AddDomain(domain string) (OrganizationDomain, error) {
+func (o *Organization) AddDomain(domain string) error {
 	// make sure domain is not registered to another org first
 	var orgDomain OrganizationDomain
 
 	count, err := DB.Where("domain = ?", domain).Count(&orgDomain)
 	if err != nil {
-		return OrganizationDomain{}, err
+		return err
 	}
 
 	if count > 0 {
-		return OrganizationDomain{}, fmt.Errorf("this domain (%s) is already in use", domain)
+		return fmt.Errorf("this domain (%s) is already in use", domain)
 	}
 
 	orgDomain.Domain = domain
 	orgDomain.OrganizationID = o.ID
 	err = DB.Save(&orgDomain)
 	if err != nil {
-		return OrganizationDomain{}, err
+		return err
 	}
 
-	return orgDomain, nil
+	err = DB.Load(o, "OrganizationDomains")
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (o *Organization) RemoveDomain(domain string) error {
@@ -117,20 +124,36 @@ func (o *Organization) RemoveDomain(domain string) error {
 			if err != nil {
 				return err
 			}
-			return o.loadDomains()
+			err = DB.Load(o, "OrganizationDomains")
+			if err != nil {
+				return err
+			}
+
+			return nil
 		}
 	}
 
 	return fmt.Errorf("domain %s not found for organization", domain)
 }
 
-func (o *Organization) loadDomains() error {
-	var ods []OrganizationDomain
-	err := DB.Where("organization_id = ?", o.ID).All(&ods)
+// Save wrap DB.Save() call to check for errors and operate on attached object
+func (o *Organization) Save() error {
+	validationErrs, err := o.Validate(DB)
+	if validationErrs != nil && validationErrs.HasAny() {
+		return fmt.Errorf(FlattenPopErrors(validationErrs))
+	}
 	if err != nil {
 		return err
 	}
 
-	o.OrganizationDomains = ods
-	return nil
+	return DB.Save(o)
+}
+
+func (orgs *Organizations) ListAll() error {
+	return DB.All(orgs)
+}
+
+func (orgs *Organizations) ListAllForUser(user User) error {
+	return DB.Q().LeftJoin("user_organizations uo", "organizations.id = uo.organization_id").
+		Where("uo.user_id = ?", user.ID).All(orgs)
 }

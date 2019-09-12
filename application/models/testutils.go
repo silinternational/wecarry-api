@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/gobuffalo/buffalo/genny/build/_fixtures/coke/models"
 	"github.com/gobuffalo/pop"
 )
 
@@ -121,7 +120,7 @@ func CreateUserAccessTokens(fixtures UserAccessTokens) error {
 	return nil
 }
 
-func resetTables(t *testing.T) {
+func ResetTables(t *testing.T, db *pop.Connection) {
 	tablesInOrder := []string{
 		"user_access_tokens",
 		"user_organizations",
@@ -138,12 +137,12 @@ func resetTables(t *testing.T) {
 		dq := fmt.Sprintf("delete from %s", table)
 		aq := fmt.Sprintf("ALTER SEQUENCE %s_id_seq RESTART WITH 1", table)
 
-		err := models.DB.RawQuery(dq).Exec()
+		err := db.RawQuery(dq).Exec()
 		if err != nil {
 			t.Errorf("Failed to delete all %s for test, error: %s", table, err)
 			t.FailNow()
 		}
-		err = models.DB.RawQuery(aq).Exec()
+		err = db.RawQuery(aq).Exec()
 		if err != nil {
 			t.Errorf("Failed to reset sequence on %s for test, error: %s", table, err)
 			t.FailNow()

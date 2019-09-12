@@ -38,6 +38,7 @@ type ResolverRoot interface {
 	Message() MessageResolver
 	Mutation() MutationResolver
 	Organization() OrganizationResolver
+	OrganizationDomain() OrganizationDomainResolver
 	Post() PostResolver
 	Query() QueryResolver
 	Thread() ThreadResolver
@@ -63,7 +64,7 @@ type ComplexityRoot struct {
 		CreateOrganizationDomain func(childComplexity int, input NewOrganizationDomain) int
 		CreatePost               func(childComplexity int, input NewPost) int
 		RemoveOrganizationDomain func(childComplexity int, input NewOrganizationDomain) int
-		UpdateOrganization       func(childComplexity int, input UpdateOrganization) int
+		UpdateOrganization       func(childComplexity int, input UpdatedOrganization) int
 		UpdatePostStatus         func(childComplexity int, input UpdatedPostStatus) int
 	}
 
@@ -148,9 +149,9 @@ type MutationResolver interface {
 	UpdatePostStatus(ctx context.Context, input UpdatedPostStatus) (*models.Post, error)
 	CreateMessage(ctx context.Context, input NewMessage) (*models.Message, error)
 	CreateOrganization(ctx context.Context, input NewOrganization) (*models.Organization, error)
-	UpdateOrganization(ctx context.Context, input UpdateOrganization) (*models.Organization, error)
-	CreateOrganizationDomain(ctx context.Context, input NewOrganizationDomain) (*OrganizationDomain, error)
-	RemoveOrganizationDomain(ctx context.Context, input NewOrganizationDomain) (*OrganizationDomain, error)
+	UpdateOrganization(ctx context.Context, input UpdatedOrganization) (*models.Organization, error)
+	CreateOrganizationDomain(ctx context.Context, input NewOrganizationDomain) ([]*models.OrganizationDomain, error)
+	RemoveOrganizationDomain(ctx context.Context, input NewOrganizationDomain) ([]*models.OrganizationDomain, error)
 }
 type OrganizationResolver interface {
 	ID(ctx context.Context, obj *models.Organization) (string, error)
@@ -158,6 +159,9 @@ type OrganizationResolver interface {
 	URL(ctx context.Context, obj *models.Organization) (*string, error)
 	CreatedAt(ctx context.Context, obj *models.Organization) (*string, error)
 	UpdatedAt(ctx context.Context, obj *models.Organization) (*string, error)
+}
+type OrganizationDomainResolver interface {
+	OrganizationID(ctx context.Context, obj *models.OrganizationDomain) (string, error)
 }
 type PostResolver interface {
 	ID(ctx context.Context, obj *models.Post) (string, error)
@@ -332,7 +336,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateOrganization(childComplexity, args["input"].(UpdateOrganization)), true
+		return e.complexity.Mutation.UpdateOrganization(childComplexity, args["input"].(UpdatedOrganization)), true
 
 	case "Mutation.updatePostStatus":
 		if e.complexity.Mutation.UpdatePostStatus == nil {
@@ -781,9 +785,9 @@ type Mutation {
     updatePostStatus(input: UpdatedPostStatus!): Post!
     createMessage(input: NewMessage!): Message!
     createOrganization(input: NewOrganization!): Organization!
-    updateOrganization(input: UpdateOrganization!): Organization!
-    createOrganizationDomain(input: NewOrganizationDomain!): OrganizationDomain!
-    removeOrganizationDomain(input: NewOrganizationDomain!): OrganizationDomain!
+    updateOrganization(input: UpdatedOrganization!): Organization!
+    createOrganizationDomain(input: NewOrganizationDomain!): [OrganizationDomain!]!
+    removeOrganizationDomain(input: NewOrganizationDomain!): [OrganizationDomain!]!
 }
 
 enum Role {
@@ -845,7 +849,7 @@ input NewOrganization {
     authConfig: String
 }
 
-input UpdateOrganization {
+input UpdatedOrganization {
     id: ID!
     name: String!
     url: String
@@ -986,9 +990,9 @@ func (ec *executionContext) field_Mutation_removeOrganizationDomain_args(ctx con
 func (ec *executionContext) field_Mutation_updateOrganization_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 UpdateOrganization
+	var arg0 UpdatedOrganization
 	if tmp, ok := rawArgs["input"]; ok {
-		arg0, err = ec.unmarshalNUpdateOrganization2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐUpdateOrganization(ctx, tmp)
+		arg0, err = ec.unmarshalNUpdatedOrganization2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐUpdatedOrganization(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1521,7 +1525,7 @@ func (ec *executionContext) _Mutation_updateOrganization(ctx context.Context, fi
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateOrganization(rctx, args["input"].(UpdateOrganization))
+		return ec.resolvers.Mutation().UpdateOrganization(rctx, args["input"].(UpdatedOrganization))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1577,10 +1581,10 @@ func (ec *executionContext) _Mutation_createOrganizationDomain(ctx context.Conte
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*OrganizationDomain)
+	res := resTmp.([]*models.OrganizationDomain)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNOrganizationDomain2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐOrganizationDomain(ctx, field.Selections, res)
+	return ec.marshalNOrganizationDomain2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐOrganizationDomain(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_removeOrganizationDomain(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1621,10 +1625,10 @@ func (ec *executionContext) _Mutation_removeOrganizationDomain(ctx context.Conte
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*OrganizationDomain)
+	res := resTmp.([]*models.OrganizationDomain)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNOrganizationDomain2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐOrganizationDomain(ctx, field.Selections, res)
+	return ec.marshalNOrganizationDomain2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐOrganizationDomain(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Organization_id(ctx context.Context, field graphql.CollectedField, obj *models.Organization) (ret graphql.Marshaler) {
@@ -1803,7 +1807,7 @@ func (ec *executionContext) _Organization_updatedAt(ctx context.Context, field g
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _OrganizationDomain_domain(ctx context.Context, field graphql.CollectedField, obj *OrganizationDomain) (ret graphql.Marshaler) {
+func (ec *executionContext) _OrganizationDomain_domain(ctx context.Context, field graphql.CollectedField, obj *models.OrganizationDomain) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -1840,7 +1844,7 @@ func (ec *executionContext) _OrganizationDomain_domain(ctx context.Context, fiel
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _OrganizationDomain_organizationId(ctx context.Context, field graphql.CollectedField, obj *OrganizationDomain) (ret graphql.Marshaler) {
+func (ec *executionContext) _OrganizationDomain_organizationId(ctx context.Context, field graphql.CollectedField, obj *models.OrganizationDomain) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -1853,13 +1857,13 @@ func (ec *executionContext) _OrganizationDomain_organizationId(ctx context.Conte
 		Object:   "OrganizationDomain",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.OrganizationID, nil
+		return ec.resolvers.OrganizationDomain().OrganizationID(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4786,8 +4790,8 @@ func (ec *executionContext) unmarshalInputNewPost(ctx context.Context, obj inter
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputUpdateOrganization(ctx context.Context, obj interface{}) (UpdateOrganization, error) {
-	var it UpdateOrganization
+func (ec *executionContext) unmarshalInputUpdatedOrganization(ctx context.Context, obj interface{}) (UpdatedOrganization, error) {
+	var it UpdatedOrganization
 	var asMap = obj.(map[string]interface{})
 
 	for k, v := range asMap {
@@ -5088,7 +5092,7 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 
 var organizationDomainImplementors = []string{"OrganizationDomain"}
 
-func (ec *executionContext) _OrganizationDomain(ctx context.Context, sel ast.SelectionSet, obj *OrganizationDomain) graphql.Marshaler {
+func (ec *executionContext) _OrganizationDomain(ctx context.Context, sel ast.SelectionSet, obj *models.OrganizationDomain) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.RequestContext, sel, organizationDomainImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -5100,13 +5104,22 @@ func (ec *executionContext) _OrganizationDomain(ctx context.Context, sel ast.Sel
 		case "domain":
 			out.Values[i] = ec._OrganizationDomain_domain(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "organizationId":
-			out.Values[i] = ec._OrganizationDomain_organizationId(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._OrganizationDomain_organizationId(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6058,11 +6071,48 @@ func (ec *executionContext) marshalNOrganization2ᚖgithubᚗcomᚋsilinternatio
 	return ec._Organization(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNOrganizationDomain2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐOrganizationDomain(ctx context.Context, sel ast.SelectionSet, v OrganizationDomain) graphql.Marshaler {
+func (ec *executionContext) marshalNOrganizationDomain2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐOrganizationDomain(ctx context.Context, sel ast.SelectionSet, v models.OrganizationDomain) graphql.Marshaler {
 	return ec._OrganizationDomain(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNOrganizationDomain2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐOrganizationDomain(ctx context.Context, sel ast.SelectionSet, v *OrganizationDomain) graphql.Marshaler {
+func (ec *executionContext) marshalNOrganizationDomain2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐOrganizationDomain(ctx context.Context, sel ast.SelectionSet, v []*models.OrganizationDomain) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		rctx := &graphql.ResolverContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNOrganizationDomain2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐOrganizationDomain(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalNOrganizationDomain2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐOrganizationDomain(ctx context.Context, sel ast.SelectionSet, v *models.OrganizationDomain) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -6197,8 +6247,8 @@ func (ec *executionContext) marshalNThread2ᚖgithubᚗcomᚋsilinternationalᚋ
 	return ec._Thread(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNUpdateOrganization2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐUpdateOrganization(ctx context.Context, v interface{}) (UpdateOrganization, error) {
-	return ec.unmarshalInputUpdateOrganization(ctx, v)
+func (ec *executionContext) unmarshalNUpdatedOrganization2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐUpdatedOrganization(ctx context.Context, v interface{}) (UpdatedOrganization, error) {
+	return ec.unmarshalInputUpdatedOrganization(ctx, v)
 }
 
 func (ec *executionContext) unmarshalNUpdatedPostStatus2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐUpdatedPostStatus(ctx context.Context, v interface{}) (UpdatedPostStatus, error) {
@@ -6233,7 +6283,7 @@ func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋsilinternational�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNUser2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐUser(ctx, sel, v[i])
+			ret[i] = ec.marshalOUser2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐUser(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)

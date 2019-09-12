@@ -6,10 +6,6 @@ import (
 	"github.com/silinternational/handcarry-api/domain"
 )
 
-func Test_Thread(t *testing.T) {
-	t.Fatal("This test needs to be implemented!")
-}
-
 func CreateThreadFixtures(t *testing.T, post Post) []Thread {
 	// Load Thread test fixtures
 	threads := []Thread{
