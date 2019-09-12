@@ -99,20 +99,28 @@ func (i *Image) FindByUUID(postUUID, imageUUID string) error {
 		return err
 	}
 
-	// ensure the URL is good for at least a few minutes
-	if image.URLExpiration.Before(time.Now().Add(time.Minute * 5)) {
-
-		newURL, err := domain.GetFileURL(postUUID + "/" + imageUUID)
-		if err != nil {
-			return err
-		}
-		image.URL = nulls.NewString(newURL.Url)
-		image.URLExpiration = newURL.Expiration
-		if err = DB.Save(&image); err != nil {
-			return err
-		}
+	if err := image.RefreshURL(); err != nil {
+		return err
 	}
 
 	*i = image
+	return nil
+}
+
+// RefreshURL ensures the URL is good for at least a few minutes
+func (i *Image) RefreshURL() error {
+	if i.URLExpiration.After(time.Now().Add(time.Minute * 5)) {
+		return nil
+	}
+
+	newURL, err := domain.GetFileURL(i.Post.Uuid.String() + "/" + i.UUID.String())
+	if err != nil {
+		return err
+	}
+	i.URL = nulls.NewString(newURL.Url)
+	i.URLExpiration = newURL.Expiration
+	if err = DB.Save(i); err != nil {
+		return err
+	}
 	return nil
 }

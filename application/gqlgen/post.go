@@ -154,6 +154,33 @@ func (r *postResolver) Cost(ctx context.Context, obj *models.Post) (*string, err
 	return &c, nil
 }
 
+func (r *postResolver) Images(ctx context.Context, obj *models.Post) ([]*File, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	images, err := obj.GetImages()
+	if err != nil {
+		graphql.AddError(ctx, gqlerror.Errorf("Error retrieving images for post %s", obj.Uuid.String()))
+		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
+		return nil, err
+	}
+
+	files := make([]*File, len(images))
+	for i, image := range images {
+		if err := image.RefreshURL(); err != nil {
+			graphql.AddError(ctx, gqlerror.Errorf("Error retrieving URL for image %s", image.UUID.String()))
+			continue
+		}
+		file := File{
+			ID:            image.UUID.String(),
+			URL:           image.URL.String,
+			URLExpiration: &image.URLExpiration,
+		}
+		files[i] = &file
+	}
+	return files, nil
+}
+
 func (r *queryResolver) Posts(ctx context.Context) ([]*models.Post, error) {
 	var posts []*models.Post
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)

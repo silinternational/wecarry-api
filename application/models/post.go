@@ -160,3 +160,12 @@ func (p *Post) GetThreadIdForUser(user User) (*string, error) {
 
 	return &threadUuid, nil
 }
+
+func (p *Post) GetImages() (Images, error) {
+	var images Images
+	if err := DB.Where("post_id = ?", p.ID).All(&images); err != nil {
+		return images, err
+	}
+
+	return images, nil
+}

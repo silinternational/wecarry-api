@@ -92,6 +92,7 @@ type Post {
     myThreadID: String
     url: String
     cost: String
+    images: [File!]!
 }
 
 type Organization {

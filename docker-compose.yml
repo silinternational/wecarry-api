@@ -19,7 +19,7 @@ services:
       DATABASE_URL: postgres://handcarry:handcarry@db:5432/handcarry?sslmode=disable
       GO_ENV: development
       AWS_ENDPOINT: http://minio:9000
-      AWS_DISABLE_SSL: true
+      AWS_DISABLE_SSL: "true"
       AWS_S3_BUCKET: gtis-hca-dev
     depends_on:
       - db
