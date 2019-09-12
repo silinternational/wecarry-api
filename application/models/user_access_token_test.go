@@ -110,7 +110,7 @@ func (ms *ModelSuite) TestUserAccessToken_FindByBearerToken() {
 				}
 			} else {
 				if err != nil {
-					t.Errorf("FindUserByAccessToken() returned an error: %v", err)
+					t.Errorf("FindByAccessToken() returned an error: %v", err)
 				} else if u.User.Uuid != test.want.Uuid {
 					t.Errorf("found %v, expected %v", u, test.want)
 				}

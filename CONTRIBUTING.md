@@ -22,6 +22,30 @@ certain standardized verbs: Get, Find, Create, Delete. When possible, functions
 should have a model struct attached as a pointer: `func (p *Post)
 FindByUUID(uuid string) error`.
 
+### Unit test naming
+
+Unit test functions that test struct-attached functions should be named like
+`TestObject_FunctionName` where `Object` is the name of the struct and
+`FunctionName` is the name of the function under test.
+
+### Test suites
+
+Use Buffalo ([strechr/testify](https://github.com/stretchr/testify)) test
+suites. If not all tests in a package that uses Buffalo suites use the correct
+syntax, then running `buffalo test -m TestObject_FunctionName` will run the
+expected test and any standard Go test functions/suites. For example, since the
+`models` package has a `models_test` suite, all tests in this package should be
+of the form:
+```go
+func (ms *ModelSuite) TestObject_FunctionName() {
+}
+```
+rather than  
+```go
+func Test_FunctionName(t *testing.T) {
+}
+```  
+
 ## gqlgen
 
 gqlgen generates code to handle GraphQL queries. The primary input is the 

@@ -65,20 +65,6 @@ func (r *threadResolver) Post(ctx context.Context, obj *models.Thread) (*models.
 	return obj.GetPost(selectedFields)
 }
 
-func (r *threadResolver) CreatedAt(ctx context.Context, obj *models.Thread) (*string, error) {
-	if obj == nil {
-		return nil, nil
-	}
-	return domain.ConvertTimeToStringPtr(obj.CreatedAt), nil
-}
-
-func (r *threadResolver) UpdatedAt(ctx context.Context, obj *models.Thread) (*string, error) {
-	if obj == nil {
-		return nil, nil
-	}
-	return domain.ConvertTimeToStringPtr(obj.UpdatedAt), nil
-}
-
 func (r *queryResolver) Threads(ctx context.Context) ([]*models.Thread, error) {
 	var threads []*models.Thread
 

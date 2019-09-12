@@ -3,6 +3,9 @@ package gqlgen
 import (
 	"context"
 	"fmt"
+	"strconv"
+
+	"github.com/gobuffalo/nulls"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/gobuffalo/pop"
@@ -30,6 +33,8 @@ func PostFields() map[string]string {
 		"status":       "status",
 		"createdAt":    "created_at",
 		"updatedAt":    "updated_at",
+		"url":          "url",
+		"cost":         "cost",
 	}
 }
 
@@ -125,25 +130,27 @@ func (r *postResolver) Threads(ctx context.Context, obj *models.Post) ([]*models
 	return obj.GetThreads(selectFields)
 }
 
-func (r *postResolver) CreatedAt(ctx context.Context, obj *models.Post) (*string, error) {
-	if obj == nil {
-		return nil, nil
-	}
-	return domain.ConvertTimeToStringPtr(obj.CreatedAt), nil
-}
-
-func (r *postResolver) UpdatedAt(ctx context.Context, obj *models.Post) (*string, error) {
-	if obj == nil {
-		return nil, nil
-	}
-	return domain.ConvertTimeToStringPtr(obj.UpdatedAt), nil
-}
-
 func (r *postResolver) MyThreadID(ctx context.Context, obj *models.Post) (*string, error) {
 	if obj == nil {
 		return nil, nil
 	}
 	return obj.GetThreadIdForUser(models.GetCurrentUserFromGqlContext(ctx, TestUser))
+}
+
+func (r *postResolver) URL(ctx context.Context, obj *models.Post) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return GetStringFromNullsString(obj.URL), nil
+}
+
+func (r *postResolver) Cost(ctx context.Context, obj *models.Post) (*string, error) {
+	if (obj == nil) || (!obj.Cost.Valid) {
+		return nil, nil
+	}
+
+	c := strconv.FormatFloat(obj.Cost.Float64, 'f', -1, 64)
+	return &c, nil
 }
 
 func (r *queryResolver) Posts(ctx context.Context) ([]*models.Post, error) {
@@ -174,46 +181,94 @@ func (r *queryResolver) Post(ctx context.Context, id *string) (*models.Post, err
 	return &post, nil
 }
 
-// ConvertGqlNewPostToDBPost does what its name says, but also ...
-func ConvertGqlNewPostToDBPost(gqlPost NewPost, createdByUser models.User) (models.Post, error) {
-	var org models.Organization
-	err := org.FindByUUID(gqlPost.OrgID)
-	if err != nil {
-		return models.Post{}, err
+// convertGqlPostInputToDBPost takes a `PostInput` and either finds a record matching the UUID given in `input.ID` or
+// creates a new `models.Post` with a new UUID. In either case, all properties that are not `nil` are set to the value
+// provided in `input`
+func convertGqlPostInputToDBPost(input postInput, createdByUser models.User) (models.Post, error) {
+	post := models.Post{}
+
+	if input.ID != nil {
+		if err := post.FindByUUID(*input.ID); err != nil {
+			return post, err
+		}
+	} else {
+		post.Uuid = domain.GetUuid()
+		post.CreatedByID = createdByUser.ID
 	}
 
-	dbPost := models.Post{}
-	dbPost.Uuid = domain.GetUuid()
-
-	dbPost.CreatedByID = createdByUser.ID
-	dbPost.OrganizationID = org.ID
-	dbPost.Type = gqlPost.Type.String()
-	dbPost.Title = gqlPost.Title
-
-	dbPost.Description = models.ConvertStringPtrToNullsString(gqlPost.Description)
-	dbPost.Destination = models.ConvertStringPtrToNullsString(gqlPost.Destination)
-	dbPost.Origin = models.ConvertStringPtrToNullsString(gqlPost.Origin)
-
-	dbPost.Size = gqlPost.Size
-
-	neededAfter, err := domain.ConvertStringPtrToDate(gqlPost.NeededAfter)
-	if err != nil {
-		err = fmt.Errorf("error converting NeededAfter %v ... %v", gqlPost.NeededAfter, err.Error())
-		return models.Post{}, err
+	if input.Status != nil {
+		post.Status = input.Status.String()
 	}
 
-	dbPost.NeededAfter = neededAfter
-
-	neededBefore, err := domain.ConvertStringPtrToDate(gqlPost.NeededBefore)
-	if err != nil {
-		err = fmt.Errorf("error converting NeededBefore %v ... %v", gqlPost.NeededBefore, err.Error())
-		return models.Post{}, err
+	if input.OrgID != nil {
+		var org models.Organization
+		err := org.FindByUUID(*input.OrgID)
+		if err != nil {
+			return models.Post{}, err
+		}
+		post.OrganizationID = org.ID
 	}
 
-	dbPost.NeededBefore = neededBefore
-	dbPost.Category = domain.ConvertStrPtrToString(gqlPost.Category)
+	if input.Type != nil {
+		post.Type = input.Type.String()
+	}
 
-	return dbPost, nil
+	if input.Title != nil {
+		post.Title = *input.Title
+	}
+
+	if input.Description != nil {
+		post.Description = nulls.NewString(*input.Description)
+	}
+
+	if input.Destination != nil {
+		post.Destination = nulls.NewString(*input.Destination)
+	}
+
+	if input.Origin != nil {
+		post.Origin = nulls.NewString(*input.Origin)
+	}
+
+	if input.Size != nil {
+		post.Size = *input.Size
+	}
+
+	if input.NeededAfter != nil {
+		neededAfter, err := domain.ConvertStringPtrToDate(input.NeededAfter)
+		if err != nil {
+			err = fmt.Errorf("error converting NeededAfter %v ... %v", input.NeededAfter, err.Error())
+			return models.Post{}, err
+		}
+		post.NeededAfter = neededAfter
+	}
+
+	if input.NeededBefore != nil {
+		neededBefore, err := domain.ConvertStringPtrToDate(input.NeededBefore)
+		if err != nil {
+			err = fmt.Errorf("error converting NeededBefore %v ... %v", input.NeededBefore, err.Error())
+			return models.Post{}, err
+		}
+		post.NeededBefore = neededBefore
+	}
+
+	if input.Category != nil {
+		post.Category = *input.Category
+	}
+
+	if input.URL != nil {
+		post.URL = nulls.NewString(*input.URL)
+	}
+
+	if input.Cost != nil {
+		c, err := strconv.ParseFloat(*input.Cost, 64)
+		if err != nil {
+			err = fmt.Errorf("error converting cost %v ... %v", input.Cost, err.Error())
+			return models.Post{}, err
+		}
+		post.Cost = nulls.NewFloat64(c)
+	}
+
+	return post, nil
 }
 
 func getSelectFieldsForPosts(ctx context.Context) []string {
@@ -235,4 +290,52 @@ func scopeUserOrgs(cUser models.User) pop.ScopeFunc {
 
 		return q.Where("organization_id IN (?)", s...)
 	}
+}
+
+type postInput struct {
+	ID           *string
+	Status       *PostStatus
+	OrgID        *string
+	Type         *PostType
+	Title        *string
+	Description  *string
+	Destination  *string
+	Origin       *string
+	Size         *string
+	NeededAfter  *string
+	NeededBefore *string
+	Category     *string
+	URL          *string
+	Cost         *string
+}
+
+func (r *mutationResolver) CreatePost(ctx context.Context, input postInput) (*models.Post, error) {
+	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+	post, err := convertGqlPostInputToDBPost(input, cUser)
+	if err != nil {
+		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
+		return &models.Post{}, err
+	}
+
+	if err := models.DB.Create(&post); err != nil {
+		return &models.Post{}, err
+	}
+
+	return &post, nil
+}
+
+func (r *mutationResolver) UpdatePost(ctx context.Context, input postInput) (*models.Post, error) {
+	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+	post, err := convertGqlPostInputToDBPost(input, cUser)
+	if err != nil {
+		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
+		return &models.Post{}, err
+	}
+
+	if err := models.DB.Update(&post); err != nil {
+		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
+		return &models.Post{}, err
+	}
+
+	return &post, nil
 }

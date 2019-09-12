@@ -144,13 +144,14 @@ func (ms *ModelSuite) TestFindByAuthEmail() {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := UserOrganizationFindByAuthEmail(tt.args.authEmail, 0)
+			var got UserOrganizations
+			err := got.FindByAuthEmail(tt.args.authEmail, 0)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("UserOrganizationFindByAuthEmail() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("FindByAuthEmail() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if len(got) != tt.want {
-				t.Errorf("UserOrganizationFindByAuthEmail() got = %v, want %v", got, tt.want)
+				t.Errorf("FindByAuthEmail() got = %v, want %v", got, tt.want)
 			}
 		})
 	}

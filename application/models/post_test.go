@@ -182,7 +182,7 @@ func CreatePostFixtures(t *testing.T, users Users) []Post {
 	return posts
 }
 
-func (ms *ModelSuite) TestFindPostByUUID() {
+func (ms *ModelSuite) TestPost_FindByUUID() {
 	t := ms.T()
 	ResetTables(t, ms.DB)
 
@@ -342,7 +342,8 @@ func (ms *ModelSuite) TestPost_GetThreads() {
 
 	_, users, _ := CreateUserFixtures(t)
 	posts := CreatePostFixtures(t, users)
-	threads := CreateThreadFixtures(t, posts[0])
+	threadFixtures := CreateThreadFixtures(t, posts[0])
+	threads := threadFixtures.Threads
 
 	tests := []struct {
 		name string
@@ -376,9 +377,8 @@ func (ms *ModelSuite) TestPost_GetThreadIdForUser() {
 
 	_, users, _ := CreateUserFixtures(t)
 	posts := CreatePostFixtures(t, users)
-	threads := CreateThreadFixtures(t, posts[0])
-
-	thread0UUID := threads[0].Uuid.String()
+	threadFixtures := CreateThreadFixtures(t, posts[0])
+	thread0UUID := threadFixtures.Threads[0].Uuid.String()
 
 	tests := []struct {
 		name string

@@ -70,9 +70,14 @@ func AuthLogin(c buffalo.Context) error {
 
 	returnTo := c.Param("ReturnTo")
 	if returnTo == "" {
-		returnTo = "/"
+		var ok bool
+		returnTo, ok = c.Session().Get("ReturnTo").(string)
+		if !ok {
+			returnTo = "/#"
+		}
+	} else {
+		c.Session().Set("ReturnTo", returnTo)
 	}
-	c.Session().Set("ReturnTo", returnTo)
 
 	err := c.Session().Save()
 	if err != nil {
@@ -90,7 +95,8 @@ func AuthLogin(c buffalo.Context) error {
 	}
 
 	var org models.Organization
-	userOrgs, err := models.UserOrganizationFindByAuthEmail(authEmail, orgID)
+	var userOrgs models.UserOrganizations
+	err = userOrgs.FindByAuthEmail(authEmail, orgID)
 	if len(userOrgs) == 1 {
 		org = userOrgs[0].Organization
 	}
@@ -193,7 +199,7 @@ func AuthLogin(c buffalo.Context) error {
 	// set person on rollbar session
 	domain.RollbarSetPerson(c, authUser.ID, authUser.Nickname, authUser.Email)
 
-	return c.Redirect(302, getLoginSuccessRedirectURL(authUser))
+	return c.Redirect(302, getLoginSuccessRedirectURL(authUser, returnTo))
 }
 
 // returnAuthError takes a error code and message and renders AuthResponse to json and returns
@@ -261,8 +267,8 @@ func SetCurrentUser(next buffalo.Handler) buffalo.Handler {
 			return fmt.Errorf("no Bearer token provided")
 		}
 
-		user, err := models.FindUserByAccessToken(bearerToken)
-		if err != nil {
+		var user models.User
+		if err := user.FindByAccessToken(bearerToken); err != nil {
 			return c.Error(401, fmt.Errorf("invalid bearer token"))
 		}
 		c.Set("current_user", user)
@@ -282,8 +288,12 @@ func SetCurrentUser(next buffalo.Handler) buffalo.Handler {
 }
 
 // getLoginSuccessRedirectURL generates the URL for redirection after a successful login
-func getLoginSuccessRedirectURL(authUser AuthUser) string {
-	uiUrl := envy.Get("UI_URL", "/")
+func getLoginSuccessRedirectURL(authUser AuthUser, returnTo string) string {
+	uiUrl := envy.Get("UI_URL", "")
+
+	if len(returnTo) > 0 && returnTo[0] == '/' {
+		uiUrl = uiUrl + "/#" + returnTo
+	}
 
 	tokenExpiry := time.Unix(authUser.AccessTokenExpiresAt, 0).Format(time.RFC3339)
 	url := fmt.Sprintf("%s?token_type=Bearer&expires_utc=%s&access_token=%s",

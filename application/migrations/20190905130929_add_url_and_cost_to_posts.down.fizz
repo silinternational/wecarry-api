@@ -1,0 +1,2 @@
+drop_column("posts", "url")
+drop_column("posts", "cost")
