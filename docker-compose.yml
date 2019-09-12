@@ -18,6 +18,9 @@ services:
       UI_URL: http://handcarry.local:5000
       DATABASE_URL: postgres://handcarry:handcarry@db:5432/handcarry?sslmode=disable
       GO_ENV: development
+      AWS_ENDPOINT: http://minio:9000
+      AWS_DISABLE_SSL: true
+      AWS_S3_BUCKET: gtis-hca-dev
     depends_on:
       - db
     command: buffalo dev
@@ -99,3 +102,14 @@ services:
       - PHP_PG_ADMIN_USE_XHTML_STRICT=false
       - PHP_PG_ADMIN_HELP_BASE=http://www.postgresql.org/docs/%s/interactive/
       - PHP_PG_ADMIN_AJAX_REFRESH=3
+
+  minio:
+    image: minio/minio
+    ports:
+      - "9000:9000"
+    command: server /data
+    env_file:
+      - ./.env
+    environment:
+      MINIO_ACCESS_KEY: ${AWS_ACCESS_KEY_ID}
+      MINIO_SECRET_KEY: ${AWS_SECRET_ACCESS_KEY}

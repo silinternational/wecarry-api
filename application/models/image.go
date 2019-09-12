@@ -2,9 +2,11 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/gobuffalo/validate/validators"
+	"github.com/silinternational/handcarry-api/domain"
 
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
@@ -13,14 +15,14 @@ import (
 )
 
 type Image struct {
-	ID        int             `json:"id" db:"id"`
-	CreatedAt time.Time       `json:"created_at" db:"created_at"`
-	UpdatedAt time.Time       `json:"updated_at" db:"updated_at"`
-	UUID      uuid.UUID       `json:"uuid" db:"uuid"`
-	PostID    int             `json:"post_id" db:"post_id"`
-	Content   nulls.ByteSlice `json:"content" db:"content"`
-	URL       nulls.String    `json:"url" db:"url"`
-	Post      Post            `belongs_to:"posts"`
+	ID            int          `json:"id" db:"id"`
+	CreatedAt     time.Time    `json:"created_at" db:"created_at"`
+	UpdatedAt     time.Time    `json:"updated_at" db:"updated_at"`
+	UUID          uuid.UUID    `json:"uuid" db:"uuid"`
+	PostID        int          `json:"post_id" db:"post_id"`
+	URL           nulls.String `json:"url" db:"url"`
+	URLExpiration time.Time    `json:"url_expiration" db:"url_expiration"`
+	Post          Post         `belongs_to:"posts"`
 }
 
 // String is not required by pop and may be deleted
@@ -57,4 +59,31 @@ func (i *Image) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) {
 // This method is not required and may be deleted.
 func (i *Image) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
+}
+
+func (i *Image) Store(postUUID string, content []byte) error {
+	var post Post
+	if err := post.FindByUUID(postUUID); err != nil {
+		return err
+	}
+
+	imageUUID := domain.GetUuid()
+	url, err := domain.StoreFile(postUUID+"/"+imageUUID.String(), "binary/octet-stream", content, false)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("--------- image uuid: %s, postid: %d, url: %s\n", imageUUID, post.ID, url)
+	image := Image{
+		UUID:          imageUUID,
+		PostID:        post.ID,
+		URL:           nulls.NewString(url.Url),
+		URLExpiration: url.Expiration,
+	}
+	if err := DB.Save(&image); err != nil {
+		return err
+	}
+
+	*i = image
+	return nil
 }

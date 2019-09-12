@@ -1,8 +1,8 @@
 create_table("images") {
 	t.Column("id", "integer", {primary: true})
 	t.Column("uuid", "uuid", {})
-	t.Column("content", "blob", {null: true})
-	t.Column("url", "string", {null: true})
+	t.Column("url", "string", {null: true, "size": 1024})
+	t.Column("url_expiration", "timestamp")
 	t.Column("post_id", "integer")
 	t.Timestamps()
     t.Index("uuid", {"unique": true})

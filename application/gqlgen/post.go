@@ -355,7 +355,7 @@ func (r *queryResolver) PostImage(ctx context.Context, id *string) (*File, error
 		return &File{}, err
 	}
 
-	return &File{ID: image.UUID.String(), Size: len(image.Content.ByteSlice), Content: string(image.Content.ByteSlice)}, nil
+	return &File{ID: image.UUID.String()}, nil
 }
 
 func (r *mutationResolver) UploadPostImage(ctx context.Context, input NewPostImage) (*File, error) {
@@ -368,19 +368,9 @@ func (r *mutationResolver) UploadPostImage(ctx context.Context, input NewPostIma
 		return &File{}, fmt.Errorf("error reading file, %s", err)
 	}
 
-	var post models.Post
-	if err := post.FindByUUID(input.PostID); err != nil {
-		graphql.AddError(ctx, gqlerror.Errorf("error getting post: %s", err))
-		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
-	}
-
-	image := models.Image{
-		UUID:    domain.GetUuid(),
-		Content: nulls.NewByteSlice(content),
-		PostID:  post.ID,
-	}
-	if err := models.DB.Save(&image); err != nil {
-		return nil, err
+	var image models.Image
+	if err := image.Store(input.PostID, content); err != nil {
+		return &File{}, fmt.Errorf("failed to store image: %s", err)
 	}
 
 	if input.File.Size > math.MaxInt32 {

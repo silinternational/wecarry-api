@@ -27,8 +27,8 @@ SET default_with_oids = false;
 CREATE TABLE public.images (
     id integer NOT NULL,
     uuid uuid NOT NULL,
-    content bytea,
-    url character varying(255),
+    url character varying(1024),
+    url_expiration timestamp without time zone NOT NULL,
     post_id integer NOT NULL,
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL
