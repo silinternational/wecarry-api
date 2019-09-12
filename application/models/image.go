@@ -44,7 +44,7 @@ func (i Images) String() string {
 func (i *Image) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
 		&validators.UUIDIsPresent{Field: i.UUID, Name: "UUID"},
-		&validators.IntIsPresent{Field: i.PostID, Name: "ThreadID"},
+		&validators.IntIsPresent{Field: i.PostID, Name: "post_id"},
 	), nil
 }
 

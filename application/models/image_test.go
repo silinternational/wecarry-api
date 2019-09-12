@@ -31,7 +31,7 @@ func (ms *ModelSuite) TestImage_Validate() {
 				PostID: 1,
 			},
 			wantErr:  true,
-			errField: "UUID",
+			errField: "uuid",
 		},
 		{
 			name: "missing post_id",
