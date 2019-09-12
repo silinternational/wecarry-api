@@ -6,15 +6,15 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql"
 )
 
 type File struct {
-	ID      string `json:"id"`
-	Name    string `json:"name"`
-	Size    int    `json:"size"`
-	Content string `json:"content"`
+	ID            string     `json:"id"`
+	URL           string     `json:"url"`
+	URLExpiration *time.Time `json:"urlExpiration"`
 }
 
 type NewMessage struct {

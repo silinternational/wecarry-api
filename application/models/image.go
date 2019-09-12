@@ -68,7 +68,7 @@ func (i *Image) Store(postUUID string, content []byte) error {
 	}
 
 	imageUUID := domain.GetUuid()
-	url, err := domain.StoreFile(postUUID+"/"+imageUUID.String(), "binary/octet-stream", content, false)
+	url, err := domain.StoreFile(postUUID+"/"+imageUUID.String(), "binary/octet-stream", content)
 	if err != nil {
 		return err
 	}
@@ -82,6 +82,35 @@ func (i *Image) Store(postUUID string, content []byte) error {
 	}
 	if err := DB.Save(&image); err != nil {
 		return err
+	}
+
+	*i = image
+	return nil
+}
+
+func (i *Image) FindByUUID(postUUID, imageUUID string) error {
+	var post Post
+	if err := post.FindByUUID(postUUID); err != nil {
+		return err
+	}
+
+	var image Image
+	if err := DB.Where("post_id = ? AND uuid = ?", post.ID, imageUUID).First(&image); err != nil {
+		return err
+	}
+
+	// ensure the URL is good for at least a few minutes
+	if image.URLExpiration.Before(time.Now().Add(time.Minute * 5)) {
+
+		newURL, err := domain.GetFileURL(postUUID + "/" + imageUUID)
+		if err != nil {
+			return err
+		}
+		image.URL = nulls.NewString(newURL.Url)
+		image.URLExpiration = newURL.Expiration
+		if err = DB.Save(&image); err != nil {
+			return err
+		}
 	}
 
 	*i = image

@@ -50,10 +50,9 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	File struct {
-		Content func(childComplexity int) int
-		ID      func(childComplexity int) int
-		Name    func(childComplexity int) int
-		Size    func(childComplexity int) int
+		ID            func(childComplexity int) int
+		URL           func(childComplexity int) int
+		URLExpiration func(childComplexity int) int
 	}
 
 	Message struct {
@@ -108,7 +107,7 @@ type ComplexityRoot struct {
 		Message   func(childComplexity int, id *string) int
 		MyThreads func(childComplexity int) int
 		Post      func(childComplexity int, id *string) int
-		PostImage func(childComplexity int, id *string) int
+		PostImage func(childComplexity int, postID string, imageID string) int
 		Posts     func(childComplexity int) int
 		Threads   func(childComplexity int) int
 		User      func(childComplexity int, id *string) int
@@ -185,7 +184,7 @@ type QueryResolver interface {
 	Threads(ctx context.Context) ([]*models.Thread, error)
 	MyThreads(ctx context.Context) ([]*models.Thread, error)
 	Message(ctx context.Context, id *string) (*models.Message, error)
-	PostImage(ctx context.Context, id *string) (*File, error)
+	PostImage(ctx context.Context, postID string, imageID string) (*File, error)
 }
 type ThreadResolver interface {
 	ID(ctx context.Context, obj *models.Thread) (string, error)
@@ -217,13 +216,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	_ = ec
 	switch typeName + "." + field {
 
-	case "File.content":
-		if e.complexity.File.Content == nil {
-			break
-		}
-
-		return e.complexity.File.Content(childComplexity), true
-
 	case "File.id":
 		if e.complexity.File.ID == nil {
 			break
@@ -231,19 +223,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.File.ID(childComplexity), true
 
-	case "File.name":
-		if e.complexity.File.Name == nil {
+	case "File.url":
+		if e.complexity.File.URL == nil {
 			break
 		}
 
-		return e.complexity.File.Name(childComplexity), true
+		return e.complexity.File.URL(childComplexity), true
 
-	case "File.size":
-		if e.complexity.File.Size == nil {
+	case "File.urlExpiration":
+		if e.complexity.File.URLExpiration == nil {
 			break
 		}
 
-		return e.complexity.File.Size(childComplexity), true
+		return e.complexity.File.URLExpiration(childComplexity), true
 
 	case "Message.content":
 		if e.complexity.Message.Content == nil {
@@ -558,7 +550,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.PostImage(childComplexity, args["id"].(*string)), true
+		return e.complexity.Query.PostImage(childComplexity, args["postID"].(string), args["imageID"].(string)), true
 
 	case "Query.posts":
 		if e.complexity.Query.Posts == nil {
@@ -787,7 +779,7 @@ var parsedSchema = gqlparser.MustLoadSchema(
     threads: [Thread]!
     myThreads: [Thread]!
     message(id: ID): Message!
-    postImage(id: ID): File!
+    postImage(postID: ID!, imageID: ID!): File!
 }
 
 type Mutation {
@@ -804,9 +796,8 @@ scalar Upload
 
 type File {
     id: ID!
-    name: String!
-    size: Int!
-    content: String!
+    url: String!
+    urlExpiration: Time
 }
 
 input NewPostImage {
@@ -1032,14 +1023,22 @@ func (ec *executionContext) field_Query_message_args(ctx context.Context, rawArg
 func (ec *executionContext) field_Query_postImage_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *string
-	if tmp, ok := rawArgs["id"]; ok {
-		arg0, err = ec.unmarshalOID2ᚖstring(ctx, tmp)
+	var arg0 string
+	if tmp, ok := rawArgs["postID"]; ok {
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["id"] = arg0
+	args["postID"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["imageID"]; ok {
+		arg1, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["imageID"] = arg1
 	return args, nil
 }
 
@@ -1158,7 +1157,7 @@ func (ec *executionContext) _File_id(ctx context.Context, field graphql.Collecte
 	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _File_name(ctx context.Context, field graphql.CollectedField, obj *File) (ret graphql.Marshaler) {
+func (ec *executionContext) _File_url(ctx context.Context, field graphql.CollectedField, obj *File) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -1177,7 +1176,7 @@ func (ec *executionContext) _File_name(ctx context.Context, field graphql.Collec
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
+		return obj.URL, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1195,7 +1194,7 @@ func (ec *executionContext) _File_name(ctx context.Context, field graphql.Collec
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _File_size(ctx context.Context, field graphql.CollectedField, obj *File) (ret graphql.Marshaler) {
+func (ec *executionContext) _File_urlExpiration(ctx context.Context, field graphql.CollectedField, obj *File) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -1214,59 +1213,19 @@ func (ec *executionContext) _File_size(ctx context.Context, field graphql.Collec
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Size, nil
+		return obj.URLExpiration, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(*time.Time)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _File_content(ctx context.Context, field graphql.CollectedField, obj *File) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "File",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Content, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Message_id(ctx context.Context, field graphql.CollectedField, obj *models.Message) (ret graphql.Marshaler) {
@@ -2875,7 +2834,7 @@ func (ec *executionContext) _Query_postImage(ctx context.Context, field graphql.
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().PostImage(rctx, args["id"].(*string))
+		return ec.resolvers.Query().PostImage(rctx, args["postID"].(string), args["imageID"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4986,21 +4945,13 @@ func (ec *executionContext) _File(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "name":
-			out.Values[i] = ec._File_name(ctx, field, obj)
+		case "url":
+			out.Values[i] = ec._File_url(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "size":
-			out.Values[i] = ec._File_size(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "content":
-			out.Values[i] = ec._File_content(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+		case "urlExpiration":
+			out.Values[i] = ec._File_urlExpiration(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6046,20 +5997,6 @@ func (ec *executionContext) marshalNID2ᚖstring(ctx context.Context, sel ast.Se
 	return ec.marshalNID2string(ctx, sel, *v)
 }
 
-func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
-	return graphql.UnmarshalInt(v)
-}
-
-func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
-	res := graphql.MarshalInt(v)
-	if res == graphql.Null {
-		if !ec.HasError(graphql.GetResolverContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-	}
-	return res
-}
-
 func (ec *executionContext) marshalNMessage2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐMessage(ctx context.Context, sel ast.SelectionSet, v models.Message) graphql.Marshaler {
 	return ec._Message(ctx, sel, &v)
 }
@@ -6202,7 +6139,7 @@ func (ec *executionContext) marshalNPost2ᚕᚖgithubᚗcomᚋsilinternational�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOPost2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐPost(ctx, sel, v[i])
+			ret[i] = ec.marshalNPost2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐPost(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -6795,6 +6732,21 @@ func (ec *executionContext) unmarshalOTime2timeᚐTime(ctx context.Context, v in
 
 func (ec *executionContext) marshalOTime2timeᚐTime(ctx context.Context, sel ast.SelectionSet, v time.Time) graphql.Marshaler {
 	return graphql.MarshalTime(v)
+}
+
+func (ec *executionContext) unmarshalOTime2ᚖtimeᚐTime(ctx context.Context, v interface{}) (*time.Time, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalOTime2timeᚐTime(ctx, v)
+	return &res, err
+}
+
+func (ec *executionContext) marshalOTime2ᚖtimeᚐTime(ctx context.Context, sel ast.SelectionSet, v *time.Time) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.marshalOTime2timeᚐTime(ctx, sel, *v)
 }
 
 func (ec *executionContext) marshalOUser2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐUser(ctx context.Context, sel ast.SelectionSet, v models.User) graphql.Marshaler {

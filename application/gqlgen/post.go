@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"math"
 	"strconv"
 
 	"github.com/gobuffalo/nulls"
@@ -341,21 +340,19 @@ func (r *mutationResolver) UpdatePost(ctx context.Context, input postInput) (*mo
 	return &post, nil
 }
 
-func (r *queryResolver) PostImage(ctx context.Context, id *string) (*File, error) {
-	var post models.Post
-	if err := post.FindByUUID(*id); err != nil {
-		graphql.AddError(ctx, gqlerror.Errorf("error getting post: %s", err))
-		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
-	}
-
+func (r *queryResolver) PostImage(ctx context.Context, postID, imageID string) (*File, error) {
 	var image models.Image
-	if err := models.DB.Where("post_id = ?", post.ID).First(&image); err != nil {
+	if err := image.FindByUUID(postID, imageID); err == nil {
 		graphql.AddError(ctx, gqlerror.Errorf("error getting image: %s", err))
 		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
-		return &File{}, err
+		return &File{}, fmt.Errorf("failed to retrieve image: %s", err)
 	}
 
-	return &File{ID: image.UUID.String()}, nil
+	return &File{
+		ID:            image.UUID.String(),
+		URL:           image.URL.String,
+		URLExpiration: &image.URLExpiration,
+	}, nil
 }
 
 func (r *mutationResolver) UploadPostImage(ctx context.Context, input NewPostImage) (*File, error) {
@@ -373,8 +370,9 @@ func (r *mutationResolver) UploadPostImage(ctx context.Context, input NewPostIma
 		return &File{}, fmt.Errorf("failed to store image: %s", err)
 	}
 
-	if input.File.Size > math.MaxInt32 {
-		return &File{}, fmt.Errorf("exceeded max file size: %d", input.File.Size)
-	}
-	return &File{ID: image.UUID.String(), Name: input.File.Filename, Size: int(input.File.Size)}, nil
+	return &File{
+		ID:            image.UUID.String(),
+		URL:           image.URL.String,
+		URLExpiration: &image.URLExpiration,
+	}, nil
 }

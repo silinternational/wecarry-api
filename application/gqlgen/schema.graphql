@@ -6,7 +6,7 @@ type Query {
     threads: [Thread]!
     myThreads: [Thread]!
     message(id: ID): Message!
-    postImage(id: ID): File!
+    postImage(postID: ID!, imageID: ID!): File!
 }
 
 type Mutation {
@@ -23,9 +23,8 @@ scalar Upload
 
 type File {
     id: ID!
-    name: String!
-    size: Int!
-    content: String!
+    url: String!
+    urlExpiration: Time
 }
 
 input NewPostImage {
