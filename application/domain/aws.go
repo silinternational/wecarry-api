@@ -32,7 +32,7 @@ type awsConfig struct {
 }
 
 // presigned URL expiration
-const urlExpiration = 10 * time.Minute
+const urlLifespan = 10 * time.Minute
 
 func getS3ConfigFromEnv() awsConfig {
 	var a awsConfig
@@ -78,16 +78,16 @@ func getObjectURL(config awsConfig, svc *s3.S3, key string) (ObjectUrl, error) {
 			Key:    aws.String(key),
 		})
 
-		if newUrl, err := req.Presign(urlExpiration); err == nil {
+		if newUrl, err := req.Presign(urlLifespan); err == nil {
 			objectUrl.Url = newUrl
 			// return a time slightly before the actual url expiration to account for delays
-			objectUrl.Expiration = time.Now().Add(urlExpiration - time.Minute)
+			objectUrl.Expiration = time.Now().Add(urlLifespan - time.Minute)
 		} else {
 			return objectUrl, err
 		}
 	} else {
 		objectUrl.Url = fmt.Sprintf("https://%s.s3.amazonaws.com/%s", config.awsS3Bucket, url.PathEscape(key))
-		objectUrl.Expiration = time.Date(2099, time.December, 31, 0, 0, 0, 0, time.UTC)
+		objectUrl.Expiration = time.Date(9999, time.December, 31, 0, 0, 0, 0, time.UTC)
 	}
 	return objectUrl, nil
 }
@@ -101,8 +101,6 @@ func StoreFile(key, contentType string, content []byte) (ObjectUrl, error) {
 		return ObjectUrl{}, err
 	}
 
-	r := bytes.NewReader(content)
-
 	acl := ""
 	if !config.getPresignedUrl {
 		acl = "public-read"
@@ -112,7 +110,7 @@ func StoreFile(key, contentType string, content []byte) (ObjectUrl, error) {
 		Key:         aws.String(key),
 		ContentType: aws.String(contentType),
 		ACL:         aws.String(acl),
-		Body:        r,
+		Body:        bytes.NewReader(content),
 	}); err != nil {
 		return ObjectUrl{}, err
 	}
