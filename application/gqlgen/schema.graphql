@@ -114,7 +114,7 @@ type OrganizationDomain {
 
 input NewOrganizationDomain {
     domain: String!
-    organizationId: String!
+    organizationID: ID!
 }
 
 type Thread {
