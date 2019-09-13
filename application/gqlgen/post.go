@@ -194,6 +194,15 @@ func convertGqlPostInputToDBPost(input postInput, currentUser models.User) (mode
 	} else {
 		post.Uuid = domain.GetUuid()
 		post.CreatedByID = currentUser.ID
+		// TODO: This should probably be done in the model package
+		if input.Type != nil {
+			switch *input.Type {
+			case models.PostTypeRequest:
+				post.ReceiverID = nulls.NewInt(currentUser.ID)
+			case models.PostTypeOffer:
+				post.ProviderID = nulls.NewInt(currentUser.ID)
+			}
+		}
 	}
 
 	if input.Status != nil {

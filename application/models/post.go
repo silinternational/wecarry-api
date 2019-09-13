@@ -15,7 +15,8 @@ import (
 	"github.com/gobuffalo/validate/validators"
 )
 
-const PostTypeRequest = "request"
+const PostTypeRequest = "REQUEST"
+const PostTypeOffer = "OFFER"
 
 const PostStatusUnfulfilled = "unfulfilled"
 
