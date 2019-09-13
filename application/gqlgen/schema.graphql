@@ -109,7 +109,7 @@ input UpdatedOrganization {
 
 type OrganizationDomain {
     domain: String!
-    organizationId: String!
+    organizationID: ID!
 }
 
 input NewOrganizationDomain {
