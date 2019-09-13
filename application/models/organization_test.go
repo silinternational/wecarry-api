@@ -271,7 +271,7 @@ func createOrgFixtures(t *testing.T) (Organization, OrganizationDomain) {
 	return org, orgDomain
 }
 
-func TestOrganization_AddLoadRemoveDomain(t *testing.T) {
+func TestOrganization_AddRemoveDomain(t *testing.T) {
 	ResetTables(t, DB)
 
 	orgFixtures := []Organization{
