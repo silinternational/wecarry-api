@@ -2,6 +2,8 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/gobuffalo/validate/validators"
@@ -69,7 +71,13 @@ func (i *Image) Store(postUUID string, content []byte) error {
 	}
 
 	imageUUID := domain.GetUuid()
-	url, err := domain.StoreFile(postUUID+"/"+imageUUID.String(), "binary/octet-stream", content)
+
+	contentType, err := detectContentType(content)
+	if err != nil {
+		return err
+	}
+
+	url, err := domain.StoreFile(postUUID+"/"+imageUUID.String(), contentType, content)
 	if err != nil {
 		return err
 	}
@@ -125,4 +133,20 @@ func (i *Image) RefreshURL() error {
 		return err
 	}
 	return nil
+}
+
+func detectContentType(content []byte) (string, error) {
+	allowedTypes := []string{
+		"image/jpeg",
+		"image/png",
+		"image/gif",
+	}
+
+	detectedType := http.DetectContentType(content)
+	for _, t := range allowedTypes {
+		if detectedType == t {
+			return t, nil
+		}
+	}
+	return "", fmt.Errorf("invalid file type %s", detectedType)
 }
