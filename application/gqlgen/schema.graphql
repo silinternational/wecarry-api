@@ -89,6 +89,7 @@ type Organization {
     url: String
     createdAt: Time
     updatedAt: Time
+    domains: [OrganizationDomain!]!
 }
 
 input NewOrganization {

@@ -83,7 +83,7 @@ func (r *postResolver) Organization(ctx context.Context, obj *models.Post) (*mod
 	if obj == nil {
 		return nil, nil
 	}
-	selectFields := GetSelectFieldsFromRequestFields(OrganizationFields(), graphql.CollectAllFields(ctx))
+	selectFields := getSelectFieldsForOrganizations(ctx)
 	return obj.GetOrganization(selectFields)
 }
 
