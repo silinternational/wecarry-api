@@ -184,7 +184,7 @@ func (r *queryResolver) Post(ctx context.Context, id *string) (*models.Post, err
 // convertGqlPostInputToDBPost takes a `PostInput` and either finds a record matching the UUID given in `input.ID` or
 // creates a new `models.Post` with a new UUID. In either case, all properties that are not `nil` are set to the value
 // provided in `input`
-func convertGqlPostInputToDBPost(input postInput, createdByUser models.User) (models.Post, error) {
+func convertGqlPostInputToDBPost(input postInput, currentUser models.User) (models.Post, error) {
 	post := models.Post{}
 
 	if input.ID != nil {
@@ -193,11 +193,15 @@ func convertGqlPostInputToDBPost(input postInput, createdByUser models.User) (mo
 		}
 	} else {
 		post.Uuid = domain.GetUuid()
-		post.CreatedByID = createdByUser.ID
+		post.CreatedByID = currentUser.ID
 	}
 
 	if input.Status != nil {
 		post.Status = input.Status.String()
+		if *input.Status == PostStatusCommitted {
+			// TODO: This should probably be done in the model package, especially if the logic becomes more complex
+			post.ProviderID = nulls.NewInt(currentUser.ID)
+		}
 	}
 
 	if input.OrgID != nil {
