@@ -271,7 +271,7 @@ func convertGqlPostInputToDBPost(input postInput, currentUser models.User) (mode
 		post.URL = nulls.NewString(*input.URL)
 	}
 
-	if input.Cost != nil {
+	if input.Cost != nil && *(input.Cost) != "" {
 		c, err := strconv.ParseFloat(*input.Cost, 64)
 		if err != nil {
 			err = fmt.Errorf("error converting cost %v ... %v", input.Cost, err.Error())
