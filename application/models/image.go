@@ -72,6 +72,10 @@ func (i *Image) Store(postUUID string, content []byte) error {
 
 	imageUUID := domain.GetUuid()
 
+	if len(content) > domain.MaxFileSize {
+		return fmt.Errorf("file too large (%d bytes), max is %d bytes", len(content), domain.MaxFileSize)
+	}
+
 	contentType, err := detectContentType(content)
 	if err != nil {
 		return err
@@ -137,9 +141,11 @@ func (i *Image) RefreshURL() error {
 
 func detectContentType(content []byte) (string, error) {
 	allowedTypes := []string{
+		"image/bmp",
+		"image/gif",
 		"image/jpeg",
 		"image/png",
-		"image/gif",
+		"image/webp",
 	}
 
 	detectedType := http.DetectContentType(content)

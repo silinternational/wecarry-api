@@ -78,13 +78,13 @@ func (ms *ModelSuite) TestImage_Store() {
 				postUUID: posts[0].Uuid.String(),
 				content:  []byte{},
 			},
-			wantErr: false,
+			wantErr: true,
 		},
 		{
-			name: "small file",
+			name: "GIF87a file",
 			args: args{
 				postUUID: posts[0].Uuid.String(),
-				content:  []byte{'t', 'e', 's', 't'},
+				content:  []byte("GIF87a"),
 			},
 			wantErr: false,
 		},
@@ -93,6 +93,14 @@ func (ms *ModelSuite) TestImage_Store() {
 			args: args{
 				postUUID: "92311213-081e-4286-96b9-599609676552",
 				content:  []byte{},
+			},
+			wantErr: true,
+		},
+		{
+			name: "large file",
+			args: args{
+				postUUID: posts[0].Uuid.String(),
+				content:  make([]byte, domain.MaxFileSize+1),
 			},
 			wantErr: true,
 		},
@@ -181,6 +189,74 @@ func (ms *ModelSuite) TestImage_FindByUUID() {
 					ms.Contains(i.URL.String, "http", "URL doesn't start with 'http'")
 					ms.True(i.URLExpiration.After(time.Now()), "URLExpiration is in the past")
 				}
+			}
+		})
+	}
+}
+
+func (ms *ModelSuite) Test_detectContentType() {
+	t := ms.T()
+	tests := []struct {
+		name    string
+		content []byte
+		want    string
+		wantErr bool
+	}{
+		{
+			name:    "BMP",
+			content: []byte("BM"),
+			want:    "image/bmp",
+		},
+		{
+			name:    "GIF87a",
+			content: []byte("GIF87a"),
+			want:    "image/gif",
+		},
+		{
+			name:    "GIF89a",
+			content: []byte("GIF89a"),
+			want:    "image/gif",
+		},
+		{
+			name:    "WebP",
+			content: []byte("RIFFxxxxWEBPVP"),
+			want:    "image/webp",
+		},
+		{
+			name:    "PNG",
+			content: []byte{0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a},
+			want:    "image/png",
+		},
+		{
+			name:    "JPEG",
+			content: []byte{0xff, 0xd8, 0xff},
+			want:    "image/jpeg",
+		},
+		{
+			name:    "GZIP",
+			content: []byte{0x1f, 0x8b, 0x08},
+			wantErr: true,
+		},
+		{
+			name:    "ZIP",
+			content: []byte{0x50, 0x4b, 0x03, 0x04},
+			wantErr: true,
+		},
+		{
+			name:    "EXE", // detected as application/octet-stream
+			content: []byte{0x4d, 0x5a, 0x00},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := detectContentType(tt.content)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("detectContentType() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("detectContentType() got = %v, want %v", got, tt.want)
 			}
 		})
 	}

@@ -27,6 +27,8 @@ const EmptyUUID = "00000000-0000-0000-0000-000000000000"
 
 const DateFormat = "2006-01-02"
 
+const MaxFileSize = 1 << 20 // 1 Mebibyte
+
 // NoExtras is exported for use when making calls to RollbarError and rollbarMessage to reduce
 // typing map[string]interface{} when no extras are needed
 var NoExtras map[string]interface{}
