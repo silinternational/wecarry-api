@@ -95,16 +95,16 @@ type Organization {
 input NewOrganization {
     name: String!
     url: String
-    authType: String
-    authConfig: String
+    authType: String!
+    authConfig: String!
 }
 
 input UpdatedOrganization {
     id: ID!
     name: String!
     url: String
-    authType: String
-    authConfig: String
+    authType: String!
+    authConfig: String!
 }
 
 type OrganizationDomain {

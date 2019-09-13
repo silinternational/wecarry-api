@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/gobuffalo/nulls"
+
 	"github.com/silinternational/handcarry-api/domain"
 	"github.com/silinternational/handcarry-api/models"
 )
@@ -35,8 +37,8 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input NewOrga
 	org := models.Organization{
 		Name:       input.Name,
 		Url:        models.ConvertStringPtrToNullsString(input.URL),
-		AuthType:   *input.AuthType,
-		AuthConfig: *input.AuthConfig,
+		AuthType:   input.AuthType,
+		AuthConfig: input.AuthConfig,
 		Uuid:       domain.GetUuid(),
 	}
 
@@ -56,10 +58,13 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, input Updated
 		return &models.Organization{}, fmt.Errorf("user not allowed to edit organizations")
 	}
 
+	if input.URL != nil {
+		org.Url = nulls.NewString(*input.URL)
+	}
+
 	org.Name = input.Name
-	org.Url = models.ConvertStringPtrToNullsString(input.URL)
-	org.AuthType = *input.AuthType
-	org.AuthConfig = *input.AuthConfig
+	org.AuthType = input.AuthType
+	org.AuthConfig = input.AuthConfig
 	err = org.Save()
 
 	return &org, err
@@ -82,9 +87,9 @@ func (r *mutationResolver) CreateOrganizationDomain(ctx context.Context, input N
 		return []*models.OrganizationDomain{}, err
 	}
 
-	var orgDomains []*models.OrganizationDomain
-	for _, od := range org.OrganizationDomains {
-		orgDomains = append(orgDomains, &od)
+	orgDomains := make([]*models.OrganizationDomain, len(org.OrganizationDomains))
+	for i, od := range org.OrganizationDomains {
+		orgDomains[i] = &od
 	}
 
 	return orgDomains, nil
@@ -107,9 +112,9 @@ func (r *mutationResolver) RemoveOrganizationDomain(ctx context.Context, input N
 		return []*models.OrganizationDomain{}, err
 	}
 
-	var orgDomains []*models.OrganizationDomain
-	for _, od := range org.OrganizationDomains {
-		orgDomains = append(orgDomains, &od)
+	orgDomains := make([]*models.OrganizationDomain, len(org.OrganizationDomains))
+	for i, od := range org.OrganizationDomains {
+		orgDomains[i] = &od
 	}
 
 	return orgDomains, nil

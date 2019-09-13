@@ -902,16 +902,16 @@ type Organization {
 input NewOrganization {
     name: String!
     url: String
-    authType: String
-    authConfig: String
+    authType: String!
+    authConfig: String!
 }
 
 input UpdatedOrganization {
     id: ID!
     name: String!
     url: String
-    authType: String
-    authConfig: String
+    authType: String!
+    authConfig: String!
 }
 
 type OrganizationDomain {
@@ -4909,13 +4909,13 @@ func (ec *executionContext) unmarshalInputNewOrganization(ctx context.Context, o
 			}
 		case "authType":
 			var err error
-			it.AuthType, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			it.AuthType, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
 		case "authConfig":
 			var err error
-			it.AuthConfig, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			it.AuthConfig, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5059,13 +5059,13 @@ func (ec *executionContext) unmarshalInputUpdatedOrganization(ctx context.Contex
 			}
 		case "authType":
 			var err error
-			it.AuthType, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			it.AuthType, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
 		case "authConfig":
 			var err error
-			it.AuthConfig, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			it.AuthConfig, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}

@@ -2,9 +2,12 @@ package models
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log"
 	"strings"
+
+	"github.com/pkg/errors"
 
 	"github.com/gobuffalo/validate"
 
@@ -79,4 +82,13 @@ func FlattenPopErrors(popErrs *validate.Errors) string {
 	}
 
 	return msg
+}
+
+// IsSqlNoRowsErr Checks if given error is a no results/rows error and therefore not really an error at all
+func IsSqlNoRowsErr(err error) bool {
+	if err != nil && errors.Cause(err) == sql.ErrNoRows {
+		return true
+	}
+
+	return false
 }

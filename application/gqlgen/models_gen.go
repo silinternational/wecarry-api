@@ -17,8 +17,8 @@ type NewMessage struct {
 type NewOrganization struct {
 	Name       string  `json:"name"`
 	URL        *string `json:"url"`
-	AuthType   *string `json:"authType"`
-	AuthConfig *string `json:"authConfig"`
+	AuthType   string  `json:"authType"`
+	AuthConfig string  `json:"authConfig"`
 }
 
 type NewOrganizationDomain struct {
@@ -30,8 +30,8 @@ type UpdatedOrganization struct {
 	ID         string  `json:"id"`
 	Name       string  `json:"name"`
 	URL        *string `json:"url"`
-	AuthType   *string `json:"authType"`
-	AuthConfig *string `json:"authConfig"`
+	AuthType   string  `json:"authType"`
+	AuthConfig string  `json:"authConfig"`
 }
 
 type PostRole string

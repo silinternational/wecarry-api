@@ -117,23 +117,23 @@ func (o *Organization) AddDomain(domain string) error {
 }
 
 func (o *Organization) RemoveDomain(domain string) error {
-	// make sure domain belongs to org for removal
-	for _, od := range o.OrganizationDomains {
-		if od.Domain == domain {
-			err := DB.Destroy(&od)
-			if err != nil {
-				return err
-			}
-			err = DB.Load(o, "OrganizationDomains")
-			if err != nil {
-				return err
-			}
-
-			return nil
-		}
+	var orgDomain OrganizationDomain
+	err := DB.Where("organization_id = ? and domain = ?", o.ID, domain).First(&orgDomain)
+	if err != nil {
+		return err
 	}
 
-	return fmt.Errorf("domain %s not found for organization", domain)
+	err = DB.Destroy(&orgDomain)
+	if err != nil {
+		return err
+	}
+
+	err = DB.Load(o, "OrganizationDomains")
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Save wrap DB.Save() call to check for errors and operate on attached object
