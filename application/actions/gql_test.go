@@ -216,8 +216,8 @@ func (as *ActionSuite) Test_CreateOrganization() {
 
 	createOrgPayload := `{"query": "mutation { createOrganization(input: { name: \"new org\", url: \"http://test.com\", authType: \"saml2\", authConfig: \"{}\", }){id} }"}`
 	updateOrgPayload := fmt.Sprintf(`{"query": "mutation { updateOrganization(input: { id: \"%s\" name: \"updated org\", url: \"http://test.com\", authType: \"saml2\", authConfig: \"{}\", }){id} }"}`, orgFixtures["Org1"].Uuid.String())
-	createOrgDomainPayload := fmt.Sprintf(`{"query": "mutation { createOrganizationDomain(input: { organizationId: \"%s\", domain: \"newdomain.com\"}){domain} }"}`, orgFixtures["Org1"].Uuid.String())
-	removeOrgDomainPayload := fmt.Sprintf(`{"query": "mutation { removeOrganizationDomain(input: { organizationId: \"%s\", domain: \"newdomain.com\"}){domain} }"}`, orgFixtures["Org1"].Uuid.String())
+	createOrgDomainPayload := fmt.Sprintf(`{"query": "mutation { createOrganizationDomain(input: { organizationID: \"%s\", domain: \"newdomain.com\"}){domain} }"}`, orgFixtures["Org1"].Uuid.String())
+	removeOrgDomainPayload := fmt.Sprintf(`{"query": "mutation { removeOrganizationDomain(input: { organizationID: \"%s\", domain: \"newdomain.com\"}){domain} }"}`, orgFixtures["Org1"].Uuid.String())
 
 	testCases := []testCase{
 		{
@@ -341,14 +341,14 @@ func (as *ActionSuite) Test_CreateOrganization() {
 			}
 
 			if len(errResp.Errors) == 0 {
-				t.Errorf("did not get expected errors, response: +%v", errResp)
+				t.Errorf("did not get expected errors in test %s, response: +%v", tc.Name, errResp)
 			}
 
 			continue
 		}
 
 		if !strings.Contains(string(body), tc.ExpectSubString) {
-			t.Errorf("substring \"%s\" not found in response: %s", tc.ExpectSubString, string(body))
+			t.Errorf("substring \"%s\" not found in response: %s. test case: %s", tc.ExpectSubString, string(body), tc.Name)
 		}
 
 	}

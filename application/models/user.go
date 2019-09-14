@@ -288,14 +288,13 @@ func HashClientIdAccessToken(accessToken string) string {
 }
 
 func (u *User) GetOrganizations() ([]*Organization, error) {
-	var orgs []*Organization
 	if err := DB.Load(u, "Organizations"); err != nil {
-		return orgs, fmt.Errorf("error getting organizations for user id %v ... %v", u.ID, err)
+		return []*Organization{}, fmt.Errorf("error getting organizations for user id %v ... %v", u.ID, err)
 	}
 
-	for _, org := range u.Organizations {
-		orgCopy := org
-		orgs = append(orgs, &orgCopy)
+	orgs := make([]*Organization, len(u.Organizations))
+	for i := range u.Organizations {
+		orgs[i] = &u.Organizations[i]
 	}
 
 	return orgs, nil

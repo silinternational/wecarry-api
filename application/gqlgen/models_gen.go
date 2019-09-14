@@ -23,7 +23,7 @@ type NewOrganization struct {
 
 type NewOrganizationDomain struct {
 	Domain         string `json:"domain"`
-	OrganizationID string `json:"organizationId"`
+	OrganizationID string `json:"organizationID"`
 }
 
 type UpdatedOrganization struct {

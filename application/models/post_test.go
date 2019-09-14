@@ -186,7 +186,7 @@ func (ms *ModelSuite) TestPost_FindByUUID() {
 	t := ms.T()
 	ResetTables(t, ms.DB)
 
-	_, users, _ := CreateUserFixtures(t)
+	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(t, users)
 
 	tests := []struct {
@@ -222,7 +222,7 @@ func (ms *ModelSuite) TestPost_GetCreator() {
 	t := ms.T()
 	ResetTables(t, ms.DB)
 
-	_, users, _ := CreateUserFixtures(t)
+	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(t, users)
 
 	tests := []struct {
@@ -248,7 +248,7 @@ func (ms *ModelSuite) TestPost_GetProvider() {
 	t := ms.T()
 	ResetTables(t, ms.DB)
 
-	_, users, _ := CreateUserFixtures(t)
+	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(t, users)
 
 	tests := []struct {
@@ -281,7 +281,7 @@ func (ms *ModelSuite) TestPost_GetReceiver() {
 	t := ms.T()
 	ResetTables(t, ms.DB)
 
-	_, users, _ := CreateUserFixtures(t)
+	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(t, users)
 
 	tests := []struct {
@@ -314,7 +314,7 @@ func (ms *ModelSuite) TestPost_GetOrganization() {
 	t := ms.T()
 	ResetTables(t, ms.DB)
 
-	_, users, _ := CreateUserFixtures(t)
+	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(t, users)
 
 	tests := []struct {
@@ -340,7 +340,7 @@ func (ms *ModelSuite) TestPost_GetThreads() {
 	t := ms.T()
 	ResetTables(t, ms.DB)
 
-	_, users, _ := CreateUserFixtures(t)
+	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(t, users)
 	threadFixtures := CreateThreadFixtures(t, posts[0])
 	threads := threadFixtures.Threads
@@ -375,7 +375,7 @@ func (ms *ModelSuite) TestPost_GetThreadIdForUser() {
 	t := ms.T()
 	ResetTables(t, ms.DB)
 
-	_, users, _ := CreateUserFixtures(t)
+	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(t, users)
 	threadFixtures := CreateThreadFixtures(t, posts[0])
 	thread0UUID := threadFixtures.Threads[0].Uuid.String()

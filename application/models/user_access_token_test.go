@@ -57,7 +57,7 @@ func (ms *ModelSuite) TestUserAccessToken_DeleteByBearerToken() {
 	t := ms.T()
 	ResetTables(t, ms.DB)
 
-	_, users, userOrgs := CreateUserFixtures(t)
+	_, users, userOrgs := CreateUserFixtures(ms, t)
 	tokens := CreateUserAccessTokenFixtures(t, users[0], userOrgs)
 
 	tests := []struct {
@@ -86,7 +86,7 @@ func (ms *ModelSuite) TestUserAccessToken_FindByBearerToken() {
 	t := ms.T()
 	ResetTables(t, ms.DB)
 
-	_, users, userOrgs := CreateUserFixtures(t)
+	_, users, userOrgs := CreateUserFixtures(ms, t)
 	tokens := CreateUserAccessTokenFixtures(t, users[0], userOrgs)
 
 	tests := []struct {

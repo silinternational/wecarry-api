@@ -2,11 +2,27 @@ app:
   build:
     image: 369020531563.dkr.ecr.us-east-1.amazonaws.com/handcarry-stg
     context: application
-    dockerfile: Dockerfile
+    dockerfile: Dockerfile-dev
   cached: true
+  depends_on:
+    - testdb
+  environment:
+    ADDR: 0.0.0.0
+    HOST: http://handcarry.local:3000
+    PORT: 3000
+    UI_URL: http://handcarry.local:5000
+    DATABASE_URL: postgres://handcarry:handcarry@testdb:5432/handcarry_test?sslmode=disable
+    GO_ENV: test
   encrypted_env_file: .env.encrypted
-  working_dir: /go/src/handcarry
+  working_dir: /handcarry
   command: true
+
+testdb:
+  image: postgres:9.6.13
+  environment:
+    POSTGRES_USER: handcarry
+    POSTGRES_PASSWORD: handcarry
+    POSTGRES_DB: handcarry_test
 
 ecsdeploy:
   image: silintl/ecs-deploy:latest

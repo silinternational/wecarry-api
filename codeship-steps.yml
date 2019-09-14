@@ -1,6 +1,6 @@
-- name: build
+- name: test
   service: app
-  command: true
+  command: go test -v ./...
 
 - name: push_develop_timestamp
   service: app

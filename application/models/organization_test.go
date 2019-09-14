@@ -11,7 +11,7 @@ import (
 
 func (ms *ModelSuite) TestFindOrgByUUID() {
 	t := ms.T()
-	org, _ := createOrgFixtures(t)
+	org, _ := createOrgFixtures(ms, t)
 
 	type args struct {
 		uuid string
@@ -56,7 +56,7 @@ func (ms *ModelSuite) TestFindOrgByUUID() {
 		})
 	}
 
-	if err := DB.Destroy(&org); err != nil {
+	if err := ms.DB.Destroy(&org); err != nil {
 		t.Errorf("error deleting test data: %v", err)
 	}
 }
@@ -101,7 +101,7 @@ func (ms *ModelSuite) TestCreateOrganization() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := DB.Create(&test.org)
+			err := ms.DB.Create(&test.org)
 			if test.wantErr == true {
 				if err == nil {
 					t.Errorf("Expected an error, but did not get one")
@@ -120,7 +120,7 @@ func (ms *ModelSuite) TestCreateOrganization() {
 			}
 
 			// clean up
-			if err := DB.Destroy(&test.org); err != nil {
+			if err := ms.DB.Destroy(&test.org); err != nil {
 				t.Errorf("error deleting test data: %v", err)
 			}
 		})
@@ -141,7 +141,7 @@ func (ms *ModelSuite) TestValidateOrganization() {
 				Name:       "Bits 'R' Us",
 				Uuid:       domain.GetUuid(),
 				AuthType:   "saml2",
-				AuthConfig: "[]",
+				AuthConfig: "{}",
 			},
 			wantErr: false,
 		},
@@ -150,7 +150,7 @@ func (ms *ModelSuite) TestValidateOrganization() {
 			org: Organization{
 				Uuid:       domain.GetUuid(),
 				AuthType:   "saml2",
-				AuthConfig: "[]",
+				AuthConfig: "{}",
 			},
 			wantErr:  true,
 			errField: "name",
@@ -160,7 +160,7 @@ func (ms *ModelSuite) TestValidateOrganization() {
 			org: Organization{
 				Name:       "Babelfish Warehouse",
 				AuthType:   "saml2",
-				AuthConfig: "[]",
+				AuthConfig: "{}",
 			},
 			wantErr:  true,
 			errField: "uuid",
@@ -170,7 +170,7 @@ func (ms *ModelSuite) TestValidateOrganization() {
 			org: Organization{
 				Name:       "Babelfish Warehouse",
 				Uuid:       domain.GetUuid(),
-				AuthConfig: "[]",
+				AuthConfig: "{}",
 			},
 			wantErr:  true,
 			errField: "auth_type",
@@ -194,7 +194,7 @@ func (ms *ModelSuite) TestValidateOrganization() {
 
 func (ms *ModelSuite) TestOrganizationFindByDomain() {
 	t := ms.T()
-	org, orgDomain := createOrgFixtures(t)
+	org, orgDomain := createOrgFixtures(ms, t)
 
 	type args struct {
 		domain string
@@ -240,20 +240,20 @@ func (ms *ModelSuite) TestOrganizationFindByDomain() {
 	}
 
 	// delete org fixture and org domain by cascading delete
-	if err := DB.Destroy(&org); err != nil {
+	if err := ms.DB.Destroy(&org); err != nil {
 		t.Errorf("error deleting test data: %v", err)
 	}
 }
 
-func createOrgFixtures(t *testing.T) (Organization, OrganizationDomain) {
+func createOrgFixtures(ms *ModelSuite, t *testing.T) (Organization, OrganizationDomain) {
 	// Load Organization test fixtures
 	org := Organization{
 		Name:       "ACME",
 		Uuid:       domain.GetUuid(),
 		AuthType:   "saml2",
-		AuthConfig: "[]",
+		AuthConfig: "{}",
 	}
-	if err := DB.Create(&org); err != nil {
+	if err := ms.DB.Create(&org); err != nil {
 		t.Errorf("could not create org fixtures ... %v", err)
 		t.FailNow()
 	}
@@ -263,7 +263,7 @@ func createOrgFixtures(t *testing.T) (Organization, OrganizationDomain) {
 		OrganizationID: org.ID,
 		Domain:         "example.org",
 	}
-	if err := DB.Create(&orgDomain); err != nil {
+	if err := ms.DB.Create(&orgDomain); err != nil {
 		t.Errorf("could not create org domain fixtures ... %v", err)
 		t.FailNow()
 	}
@@ -271,8 +271,9 @@ func createOrgFixtures(t *testing.T) (Organization, OrganizationDomain) {
 	return org, orgDomain
 }
 
-func TestOrganization_AddRemoveDomain(t *testing.T) {
-	ResetTables(t, DB)
+func (ms *ModelSuite) TestOrganization_AddRemoveDomain() {
+	t := ms.T()
+	ResetTables(t, ms.DB)
 
 	orgFixtures := []Organization{
 		{
@@ -296,8 +297,8 @@ func TestOrganization_AddRemoveDomain(t *testing.T) {
 			Uuid:       domain.GetUuid(),
 		},
 	}
-	for _, org := range orgFixtures {
-		err := DB.Create(&org)
+	for i := range orgFixtures {
+		err := ms.DB.Create(&orgFixtures[i])
 		if err != nil {
 			t.Errorf("Unable to create org fixture: %s", err)
 			t.FailNow()
@@ -338,8 +339,9 @@ func TestOrganization_AddRemoveDomain(t *testing.T) {
 
 }
 
-func TestOrganization_Save(t *testing.T) {
-	ResetTables(t, DB)
+func (ms *ModelSuite) TestOrganization_Save() {
+	t := ms.T()
+	ResetTables(t, ms.DB)
 
 	orgFixtures := []Organization{
 		{
@@ -363,8 +365,8 @@ func TestOrganization_Save(t *testing.T) {
 			Uuid:       domain.GetUuid(),
 		},
 	}
-	for _, org := range orgFixtures {
-		err := DB.Create(&org)
+	for i := range orgFixtures {
+		err := ms.DB.Create(&orgFixtures[i])
 		if err != nil {
 			t.Errorf("Unable to create org fixture: %s", err)
 			t.FailNow()
@@ -377,9 +379,9 @@ func TestOrganization_Save(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	// load org from db to ensure change saved
+	// load org from ms.DB.to ensure change saved
 	var found Organization
-	err = DB.Where("id = ?", orgFixtures[0].ID).First(&found)
+	err = ms.DB.Where("id = ?", orgFixtures[0].ID).First(&found)
 	if err != nil {
 		t.Error(err)
 	}
@@ -408,8 +410,9 @@ func TestOrganization_Save(t *testing.T) {
 
 }
 
-func TestOrganization_ListAll(t *testing.T) {
-	ResetTables(t, DB)
+func (ms *ModelSuite) TestOrganization_ListAll() {
+	t := ms.T()
+	ResetTables(t, ms.DB)
 
 	orgFixtures := []Organization{
 		{
@@ -433,8 +436,8 @@ func TestOrganization_ListAll(t *testing.T) {
 			Uuid:       domain.GetUuid(),
 		},
 	}
-	for _, org := range orgFixtures {
-		err := DB.Create(&org)
+	for i := range orgFixtures {
+		err := ms.DB.Create(&orgFixtures[i])
 		if err != nil {
 			t.Errorf("Unable to create org fixture: %s", err)
 			t.FailNow()
@@ -453,8 +456,9 @@ func TestOrganization_ListAll(t *testing.T) {
 
 }
 
-func TestOrganization_ListAllForUser(t *testing.T) {
-	ResetTables(t, DB)
+func (ms *ModelSuite) TestOrganization_ListAllForUser() {
+	t := ms.T()
+	ResetTables(t, ms.DB)
 
 	orgFixtures := []Organization{
 		{
@@ -478,8 +482,8 @@ func TestOrganization_ListAllForUser(t *testing.T) {
 			Uuid:       domain.GetUuid(),
 		},
 	}
-	for _, org := range orgFixtures {
-		err := DB.Create(&org)
+	for i := range orgFixtures {
+		err := ms.DB.Create(&orgFixtures[i])
 		if err != nil {
 			t.Errorf("Unable to create org fixture: %s", err)
 			t.FailNow()
@@ -497,8 +501,8 @@ func TestOrganization_ListAllForUser(t *testing.T) {
 			Uuid:      domain.GetUuid(),
 		},
 	}
-	for _, user := range userFixtures {
-		err := DB.Create(&user)
+	for i := range userFixtures {
+		err := ms.DB.Create(&userFixtures[i])
 		if err != nil {
 			t.Errorf("Unable to create user fixture: %s", err)
 			t.FailNow()
@@ -516,8 +520,8 @@ func TestOrganization_ListAllForUser(t *testing.T) {
 			LastLogin:      time.Time{},
 		},
 	}
-	for _, uo := range userOrgFixtures {
-		err := DB.Create(&uo)
+	for i := range userOrgFixtures {
+		err := ms.DB.Create(&userOrgFixtures[i])
 		if err != nil {
 			t.Errorf("Unable to create user_organization fixture: %s", err)
 			t.FailNow()
