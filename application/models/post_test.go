@@ -141,7 +141,7 @@ func (ms *ModelSuite) TestPost_Validate() {
 	}
 }
 
-func CreatePostFixtures(t *testing.T, users Users) []Post {
+func CreatePostFixtures(ms *ModelSuite, t *testing.T, users Users) []Post {
 	if err := DB.Load(&users[0], "Organizations"); err != nil {
 		t.Errorf("failed to load organizations on users[0] fixture, %s", err)
 	}
@@ -170,7 +170,7 @@ func CreatePostFixtures(t *testing.T, users Users) []Post {
 		},
 	}
 	for i := range posts {
-		if err := DB.Create(&posts[i]); err != nil {
+		if err := ms.DB.Create(&posts[i]); err != nil {
 			t.Errorf("could not create test user org ... %v", err)
 			t.FailNow()
 		}
@@ -187,7 +187,7 @@ func (ms *ModelSuite) TestPost_FindByUUID() {
 	ResetTables(t, ms.DB)
 
 	_, users, _ := CreateUserFixtures(ms, t)
-	posts := CreatePostFixtures(t, users)
+	posts := CreatePostFixtures(ms, t, users)
 
 	tests := []struct {
 		name    string
@@ -223,7 +223,7 @@ func (ms *ModelSuite) TestPost_GetCreator() {
 	ResetTables(t, ms.DB)
 
 	_, users, _ := CreateUserFixtures(ms, t)
-	posts := CreatePostFixtures(t, users)
+	posts := CreatePostFixtures(ms, t, users)
 
 	tests := []struct {
 		name string
@@ -249,7 +249,7 @@ func (ms *ModelSuite) TestPost_GetProvider() {
 	ResetTables(t, ms.DB)
 
 	_, users, _ := CreateUserFixtures(ms, t)
-	posts := CreatePostFixtures(t, users)
+	posts := CreatePostFixtures(ms, t, users)
 
 	tests := []struct {
 		name string
@@ -282,7 +282,7 @@ func (ms *ModelSuite) TestPost_GetReceiver() {
 	ResetTables(t, ms.DB)
 
 	_, users, _ := CreateUserFixtures(ms, t)
-	posts := CreatePostFixtures(t, users)
+	posts := CreatePostFixtures(ms, t, users)
 
 	tests := []struct {
 		name string
@@ -315,7 +315,7 @@ func (ms *ModelSuite) TestPost_GetOrganization() {
 	ResetTables(t, ms.DB)
 
 	_, users, _ := CreateUserFixtures(ms, t)
-	posts := CreatePostFixtures(t, users)
+	posts := CreatePostFixtures(ms, t, users)
 
 	tests := []struct {
 		name string
@@ -341,8 +341,8 @@ func (ms *ModelSuite) TestPost_GetThreads() {
 	ResetTables(t, ms.DB)
 
 	_, users, _ := CreateUserFixtures(ms, t)
-	posts := CreatePostFixtures(t, users)
-	threadFixtures := CreateThreadFixtures(t, posts[0])
+	posts := CreatePostFixtures(ms, t, users)
+	threadFixtures := CreateThreadFixtures(ms, t, posts[0])
 	threads := threadFixtures.Threads
 
 	tests := []struct {
@@ -376,8 +376,8 @@ func (ms *ModelSuite) TestPost_GetThreadIdForUser() {
 	ResetTables(t, ms.DB)
 
 	_, users, _ := CreateUserFixtures(ms, t)
-	posts := CreatePostFixtures(t, users)
-	threadFixtures := CreateThreadFixtures(t, posts[0])
+	posts := CreatePostFixtures(ms, t, users)
+	threadFixtures := CreateThreadFixtures(ms, t, posts[0])
 	thread0UUID := threadFixtures.Threads[0].Uuid.String()
 
 	tests := []struct {

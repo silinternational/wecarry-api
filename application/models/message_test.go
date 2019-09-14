@@ -87,7 +87,7 @@ func (ms *ModelSuite) TestMessage_GetSender() {
 	t := ms.T()
 
 	ResetTables(t, ms.DB)
-	messageFixtures := Fixtures_GetSender(t)
+	messageFixtures := Fixtures_GetSender(ms, t)
 
 	messages := messageFixtures.Messages
 	users := messageFixtures.Users
@@ -110,7 +110,7 @@ func (ms *ModelSuite) TestMessage_GetThread() {
 	t := ms.T()
 
 	ResetTables(t, ms.DB)
-	messageFixtures := Fixtures_GetSender(t)
+	messageFixtures := Fixtures_GetSender(ms, t)
 
 	messages := messageFixtures.Messages
 	threads := messageFixtures.Threads

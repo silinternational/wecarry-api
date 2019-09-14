@@ -1,6 +1,6 @@
 - name: test
   service: app
-  command: go test -v ./...
+  command: ./codeship-test.sh
 
 - name: push_develop_timestamp
   service: app

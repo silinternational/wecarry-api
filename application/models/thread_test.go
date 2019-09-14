@@ -15,7 +15,7 @@ type ThreadFixtures struct {
 	Messages Messages
 }
 
-func CreateThreadFixtures(t *testing.T, post Post) ThreadFixtures {
+func CreateThreadFixtures(ms *ModelSuite, t *testing.T, post Post) ThreadFixtures {
 	// Load Thread test fixtures
 	threads := []Thread{
 		{
@@ -28,7 +28,7 @@ func CreateThreadFixtures(t *testing.T, post Post) ThreadFixtures {
 		},
 	}
 	for i := range threads {
-		if err := DB.Create(&threads[i]); err != nil {
+		if err := ms.DB.Create(&threads[i]); err != nil {
 			t.Errorf("could not create test threads ... %v", err)
 			t.FailNow()
 		}
@@ -50,7 +50,7 @@ func CreateThreadFixtures(t *testing.T, post Post) ThreadFixtures {
 		},
 	}
 	for i := range threadParticipants {
-		if err := DB.Create(&threadParticipants[i]); err != nil {
+		if err := ms.DB.Create(&threadParticipants[i]); err != nil {
 			t.Errorf("could not create test thread participants ... %v", err)
 			t.FailNow()
 		}
@@ -79,7 +79,7 @@ func CreateThreadFixtures(t *testing.T, post Post) ThreadFixtures {
 	}
 
 	for _, message := range messages {
-		if err := DB.Create(&message); err != nil {
+		if err := ms.DB.Create(&message); err != nil {
 			t.Errorf("could not create test message ... %v", err)
 			t.FailNow()
 		}
@@ -143,8 +143,8 @@ func (ms *ModelSuite) TestThread_FindByUUID() {
 	ResetTables(t, ms.DB)
 
 	_, users, _ := CreateUserFixtures(ms, t)
-	posts := CreatePostFixtures(t, users)
-	threadFixtures := CreateThreadFixtures(t, posts[0])
+	posts := CreatePostFixtures(ms, t, users)
+	threadFixtures := CreateThreadFixtures(ms, t, posts[0])
 
 	tests := []struct {
 		name    string
@@ -180,8 +180,8 @@ func (ms *ModelSuite) TestThread_FindByPostIDAndUserID() {
 	ResetTables(t, ms.DB)
 
 	_, users, _ := CreateUserFixtures(ms, t)
-	posts := CreatePostFixtures(t, users)
-	threadFixtures := CreateThreadFixtures(t, posts[0])
+	posts := CreatePostFixtures(ms, t, users)
+	threadFixtures := CreateThreadFixtures(ms, t, posts[0])
 
 	tests := []struct {
 		name           string
@@ -219,8 +219,8 @@ func (ms *ModelSuite) TestThread_GetPost() {
 	ResetTables(t, ms.DB)
 
 	_, users, _ := CreateUserFixtures(ms, t)
-	posts := CreatePostFixtures(t, users)
-	threadFixtures := CreateThreadFixtures(t, posts[0])
+	posts := CreatePostFixtures(ms, t, users)
+	threadFixtures := CreateThreadFixtures(ms, t, posts[0])
 
 	type args struct {
 		thread       Thread
@@ -264,8 +264,8 @@ func (ms *ModelSuite) TestThread_GetMessages() {
 	ResetTables(t, ms.DB)
 
 	_, users, _ := CreateUserFixtures(ms, t)
-	posts := CreatePostFixtures(t, users)
-	threadFixtures := CreateThreadFixtures(t, posts[0])
+	posts := CreatePostFixtures(ms, t, users)
+	threadFixtures := CreateThreadFixtures(ms, t, posts[0])
 
 	type args struct {
 		thread       Thread
@@ -328,8 +328,8 @@ func (ms *ModelSuite) TestThread_GetParticipants() {
 	ResetTables(t, ms.DB)
 
 	_, users, _ := CreateUserFixtures(ms, t)
-	posts := CreatePostFixtures(t, users)
-	threadFixtures := CreateThreadFixtures(t, posts[0])
+	posts := CreatePostFixtures(ms, t, users)
+	threadFixtures := CreateThreadFixtures(ms, t, posts[0])
 
 	type args struct {
 		thread       Thread
@@ -392,7 +392,7 @@ func (ms *ModelSuite) TestThread_CreateWithParticipants() {
 	ResetTables(t, ms.DB)
 
 	_, users, _ := CreateUserFixtures(ms, t)
-	posts := CreatePostFixtures(t, users)
+	posts := CreatePostFixtures(ms, t, users)
 	post := posts[0]
 
 	var thread Thread

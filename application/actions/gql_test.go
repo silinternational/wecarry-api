@@ -26,7 +26,7 @@ func (as *ActionSuite) TestQueryAUser() {
 	t := as.T()
 	models.ResetTables(t, as.DB)
 
-	queryFixtures := Fixtures_QueryAUser(t)
+	queryFixtures := Fixtures_QueryAUser(as, t)
 	userFixtures := queryFixtures.Users
 
 	tUuid := userFixtures[1].Uuid.String()
@@ -58,9 +58,18 @@ func (as *ActionSuite) Test_CreateOrganization() {
 	t := as.T()
 	models.ResetTables(as.T(), as.DB)
 
-	userFixtures := map[string]models.User{
-		"SalesAdmin": {
-			ID:        1,
+	// Array indexes for convenience in references
+	const (
+		SalesAdmin    = 0
+		OrgMember     = 1
+		OrgAdmin      = 2
+		OtherOrgAdmin = 3
+		Org1          = 0
+		Org2          = 1
+	)
+
+	userFixtures := []models.User{
+		{
 			Email:     "sales_admin@domain.com",
 			FirstName: "Sales",
 			LastName:  "Admin",
@@ -68,8 +77,7 @@ func (as *ActionSuite) Test_CreateOrganization() {
 			AdminRole: nulls.NewString(domain.AdminRoleSalesAdmin),
 			Uuid:      domain.GetUuid(),
 		},
-		"OrgMember": {
-			ID:        2,
+		{
 			Email:     "member@domain.com",
 			FirstName: "Org",
 			LastName:  "Member",
@@ -77,8 +85,7 @@ func (as *ActionSuite) Test_CreateOrganization() {
 			AdminRole: nulls.String{},
 			Uuid:      domain.GetUuid(),
 		},
-		"OrgAdmin": {
-			ID:        3,
+		{
 			Email:     "admin@domain.com",
 			FirstName: "Org",
 			LastName:  "Admin",
@@ -86,8 +93,7 @@ func (as *ActionSuite) Test_CreateOrganization() {
 			AdminRole: nulls.String{},
 			Uuid:      domain.GetUuid(),
 		},
-		"OtherOrgAdmin": {
-			ID:        4,
+		{
 			Email:     "admin@other.com",
 			FirstName: "Other Org",
 			LastName:  "Admin",
@@ -96,24 +102,22 @@ func (as *ActionSuite) Test_CreateOrganization() {
 			Uuid:      domain.GetUuid(),
 		},
 	}
-	for name, fix := range userFixtures {
-		err := as.DB.Create(&fix)
+	for i := range userFixtures {
+		err := as.DB.Create(&userFixtures[i])
 		if err != nil {
-			t.Errorf("unable to create fixture named %s: %s", name, err)
+			t.Errorf("unable to create user fixture %s: %s", userFixtures[i].Nickname, err)
 		}
 	}
 
-	orgFixtures := map[string]models.Organization{
-		"Org1": {
-			ID:         1,
+	orgFixtures := []models.Organization{
+		{
 			Name:       "Org1",
 			Url:        nulls.String{},
 			AuthType:   "saml2",
 			AuthConfig: "{}",
 			Uuid:       domain.GetUuid(),
 		},
-		"Org2": {
-			ID:         2,
+		{
 			Name:       "Org2",
 			Url:        nulls.String{},
 			AuthType:   "saml2",
@@ -121,88 +125,80 @@ func (as *ActionSuite) Test_CreateOrganization() {
 			Uuid:       domain.GetUuid(),
 		},
 	}
-	for name, fix := range orgFixtures {
-		err := as.DB.Create(&fix)
+	for i := range orgFixtures {
+		err := as.DB.Create(&orgFixtures[i])
 		if err != nil {
-			t.Errorf("unable to create fixture named %s: %s", name, err)
+			t.Errorf("unable to create org fixture named %s: %s", orgFixtures[i].Name, err)
 		}
 	}
 
-	userOrgFixtures := map[string]models.UserOrganization{
-		"SalesAdmin": {
-			ID:             1,
-			OrganizationID: orgFixtures["Org1"].ID,
-			UserID:         userFixtures["SalesAdmin"].ID,
+	userOrgFixtures := []models.UserOrganization{
+		{
+			OrganizationID: orgFixtures[Org1].ID,
+			UserID:         userFixtures[SalesAdmin].ID,
 			Role:           models.UserOrganizationRoleMember,
-			AuthID:         userFixtures["SalesAdmin"].Nickname,
-			AuthEmail:      userFixtures["SalesAdmin"].Email,
+			AuthID:         userFixtures[SalesAdmin].Nickname,
+			AuthEmail:      userFixtures[SalesAdmin].Email,
 		},
-		"OrgMember": {
-			ID:             2,
-			OrganizationID: orgFixtures["Org1"].ID,
-			UserID:         userFixtures["OrgMember"].ID,
+		{
+			OrganizationID: orgFixtures[Org1].ID,
+			UserID:         userFixtures[OrgMember].ID,
 			Role:           models.UserOrganizationRoleMember,
-			AuthID:         userFixtures["OrgMember"].Nickname,
-			AuthEmail:      userFixtures["OrgMember"].Email,
+			AuthID:         userFixtures[OrgMember].Nickname,
+			AuthEmail:      userFixtures[OrgMember].Email,
 		},
-		"OrgAdmin": {
-			ID:             3,
-			OrganizationID: orgFixtures["Org1"].ID,
-			UserID:         userFixtures["OrgAdmin"].ID,
+		{
+			OrganizationID: orgFixtures[Org1].ID,
+			UserID:         userFixtures[OrgAdmin].ID,
 			Role:           models.UserOrganizationRoleAdmin,
-			AuthID:         userFixtures["OrgAdmin"].Nickname,
-			AuthEmail:      userFixtures["OrgAdmin"].Email,
+			AuthID:         userFixtures[OrgAdmin].Nickname,
+			AuthEmail:      userFixtures[OrgAdmin].Email,
 		},
-		"OtherOrgAdmin": {
-			ID:             4,
-			OrganizationID: orgFixtures["Org2"].ID,
-			UserID:         userFixtures["OtherOrgAdmin"].ID,
+		{
+			OrganizationID: orgFixtures[Org2].ID,
+			UserID:         userFixtures[OtherOrgAdmin].ID,
 			Role:           models.UserOrganizationRoleAdmin,
-			AuthID:         userFixtures["OtherOrgAdmin"].Nickname,
-			AuthEmail:      userFixtures["OtherOrgAdmin"].Email,
+			AuthID:         userFixtures[OtherOrgAdmin].Nickname,
+			AuthEmail:      userFixtures[OtherOrgAdmin].Email,
 		},
 	}
-	for name, fix := range userOrgFixtures {
-		err := as.DB.Create(&fix)
+	for i := range userOrgFixtures {
+		err := as.DB.Create(&userOrgFixtures[i])
 		if err != nil {
-			t.Errorf("unable to create fixture named %s: %s", name, err)
+			t.Errorf("unable to create user org fixture for %s: %s", userOrgFixtures[i].AuthID, err)
 		}
 	}
 
-	accessTokenFixtures := map[string]models.UserAccessToken{
-		"SalesAdmin": {
-			ID:                 1,
-			UserID:             userFixtures["SalesAdmin"].ID,
-			UserOrganizationID: userOrgFixtures["SalesAdmin"].ID,
-			AccessToken:        models.HashClientIdAccessToken(userFixtures["SalesAdmin"].Nickname),
+	accessTokenFixtures := []models.UserAccessToken{
+		{
+			UserID:             userFixtures[SalesAdmin].ID,
+			UserOrganizationID: userOrgFixtures[SalesAdmin].ID,
+			AccessToken:        models.HashClientIdAccessToken(userFixtures[SalesAdmin].Nickname),
 			ExpiresAt:          time.Now().Add(time.Minute * 60),
 		},
-		"OrgMember": {
-			ID:                 2,
-			UserID:             userFixtures["OrgMember"].ID,
-			UserOrganizationID: userOrgFixtures["OrgMember"].ID,
-			AccessToken:        models.HashClientIdAccessToken(userFixtures["OrgMember"].Nickname),
+		{
+			UserID:             userFixtures[OrgMember].ID,
+			UserOrganizationID: userOrgFixtures[OrgMember].ID,
+			AccessToken:        models.HashClientIdAccessToken(userFixtures[OrgMember].Nickname),
 			ExpiresAt:          time.Now().Add(time.Minute * 60),
 		},
-		"OrgAdmin": {
-			ID:                 3,
-			UserID:             userFixtures["OrgAdmin"].ID,
-			UserOrganizationID: userOrgFixtures["OrgAdmin"].ID,
-			AccessToken:        models.HashClientIdAccessToken(userFixtures["OrgAdmin"].Nickname),
+		{
+			UserID:             userFixtures[OrgAdmin].ID,
+			UserOrganizationID: userOrgFixtures[OrgAdmin].ID,
+			AccessToken:        models.HashClientIdAccessToken(userFixtures[OrgAdmin].Nickname),
 			ExpiresAt:          time.Now().Add(time.Minute * 60),
 		},
-		"OtherOrgAdmin": {
-			ID:                 4,
-			UserID:             userFixtures["OtherOrgAdmin"].ID,
-			UserOrganizationID: userOrgFixtures["OtherOrgAdmin"].ID,
-			AccessToken:        models.HashClientIdAccessToken(userFixtures["OtherOrgAdmin"].Nickname),
+		{
+			UserID:             userFixtures[OtherOrgAdmin].ID,
+			UserOrganizationID: userOrgFixtures[OtherOrgAdmin].ID,
+			AccessToken:        models.HashClientIdAccessToken(userFixtures[OtherOrgAdmin].Nickname),
 			ExpiresAt:          time.Now().Add(time.Minute * 60),
 		},
 	}
-	for name, fix := range accessTokenFixtures {
-		err := as.DB.Create(&fix)
+	for i := range accessTokenFixtures {
+		err := as.DB.Create(&accessTokenFixtures[i])
 		if err != nil {
-			t.Errorf("unable to create fixture named %s: %s", name, err)
+			t.Errorf("unable to create access token fixture for index %v: %s", i, err)
 		}
 	}
 
@@ -215,104 +211,104 @@ func (as *ActionSuite) Test_CreateOrganization() {
 	}
 
 	createOrgPayload := `{"query": "mutation { createOrganization(input: { name: \"new org\", url: \"http://test.com\", authType: \"saml2\", authConfig: \"{}\", }){id} }"}`
-	updateOrgPayload := fmt.Sprintf(`{"query": "mutation { updateOrganization(input: { id: \"%s\" name: \"updated org\", url: \"http://test.com\", authType: \"saml2\", authConfig: \"{}\", }){id} }"}`, orgFixtures["Org1"].Uuid.String())
-	createOrgDomainPayload := fmt.Sprintf(`{"query": "mutation { createOrganizationDomain(input: { organizationID: \"%s\", domain: \"newdomain.com\"}){domain} }"}`, orgFixtures["Org1"].Uuid.String())
-	removeOrgDomainPayload := fmt.Sprintf(`{"query": "mutation { removeOrganizationDomain(input: { organizationID: \"%s\", domain: \"newdomain.com\"}){domain} }"}`, orgFixtures["Org1"].Uuid.String())
+	updateOrgPayload := fmt.Sprintf(`{"query": "mutation { updateOrganization(input: { id: \"%s\" name: \"updated org\", url: \"http://test.com\", authType: \"saml2\", authConfig: \"{}\", }){id} }"}`, orgFixtures[Org1].Uuid.String())
+	createOrgDomainPayload := fmt.Sprintf(`{"query": "mutation { createOrganizationDomain(input: { organizationID: \"%s\", domain: \"newdomain.com\"}){domain} }"}`, orgFixtures[Org1].Uuid.String())
+	removeOrgDomainPayload := fmt.Sprintf(`{"query": "mutation { removeOrganizationDomain(input: { organizationID: \"%s\", domain: \"newdomain.com\"}){domain} }"}`, orgFixtures[Org1].Uuid.String())
 
 	testCases := []testCase{
 		{
 			Name:        "org member cannot create org",
-			Token:       userFixtures["OrgMember"].Nickname,
+			Token:       userFixtures[OrgMember].Nickname,
 			Payload:     createOrgPayload,
 			ExpectError: true,
 		},
 		{
 			Name:        "org admin cannot create org",
-			Token:       userFixtures["OrgAdmin"].Nickname,
+			Token:       userFixtures[OrgAdmin].Nickname,
 			Payload:     createOrgPayload,
 			ExpectError: true,
 		},
 		{
 			Name:            "sales admin can create org",
-			Token:           userFixtures["SalesAdmin"].Nickname,
+			Token:           userFixtures[SalesAdmin].Nickname,
 			Payload:         createOrgPayload,
 			ExpectError:     false,
 			ExpectSubString: "createOrganization",
 		},
 		{
 			Name:        "org member cannot update org",
-			Token:       userFixtures["OrgMember"].Nickname,
+			Token:       userFixtures[OrgMember].Nickname,
 			Payload:     updateOrgPayload,
 			ExpectError: true,
 		},
 		{
 			Name:            "org admin can update org",
-			Token:           userFixtures["OrgAdmin"].Nickname,
+			Token:           userFixtures[OrgAdmin].Nickname,
 			Payload:         updateOrgPayload,
 			ExpectError:     false,
 			ExpectSubString: "updateOrganization",
 		},
 		{
 			Name:        "other org admin cannot update org1",
-			Token:       userFixtures["OtherOrgAdmin"].Nickname,
+			Token:       userFixtures[OtherOrgAdmin].Nickname,
 			Payload:     updateOrgPayload,
 			ExpectError: true,
 		},
 		{
 			Name:            "sales admin can update org",
-			Token:           userFixtures["SalesAdmin"].Nickname,
+			Token:           userFixtures[SalesAdmin].Nickname,
 			Payload:         updateOrgPayload,
 			ExpectError:     false,
 			ExpectSubString: "updateOrganization",
 		},
 		{
 			Name:        "org member cannot create org domain",
-			Token:       userFixtures["OrgMember"].Nickname,
+			Token:       userFixtures[OrgMember].Nickname,
 			Payload:     createOrgDomainPayload,
 			ExpectError: true,
 		},
 		{
 			Name:            "org admin can create org domain",
-			Token:           userFixtures["OrgAdmin"].Nickname,
+			Token:           userFixtures[OrgAdmin].Nickname,
 			Payload:         createOrgDomainPayload,
 			ExpectError:     false,
 			ExpectSubString: "createOrganizationDomain",
 		},
 		{
 			Name:        "org admin cannot create duplicate org domain",
-			Token:       userFixtures["OrgAdmin"].Nickname,
+			Token:       userFixtures[OrgAdmin].Nickname,
 			Payload:     createOrgDomainPayload,
 			ExpectError: true,
 		},
 		{
 			Name:        "org member cannot remove org domain",
-			Token:       userFixtures["OrgMember"].Nickname,
+			Token:       userFixtures[OrgMember].Nickname,
 			Payload:     removeOrgDomainPayload,
 			ExpectError: true,
 		},
 		{
 			Name:            "org admin can remove org domain",
-			Token:           userFixtures["OrgAdmin"].Nickname,
+			Token:           userFixtures[OrgAdmin].Nickname,
 			Payload:         removeOrgDomainPayload,
 			ExpectError:     false,
 			ExpectSubString: "removeOrganizationDomain",
 		},
 		{
 			Name:        "other org admin cannot create org1 domain",
-			Token:       userFixtures["OtherOrgAdmin"].Nickname,
+			Token:       userFixtures[OtherOrgAdmin].Nickname,
 			Payload:     createOrgDomainPayload,
 			ExpectError: true,
 		},
 		{
 			Name:            "sales admin can create org domain",
-			Token:           userFixtures["SalesAdmin"].Nickname,
+			Token:           userFixtures[SalesAdmin].Nickname,
 			Payload:         createOrgDomainPayload,
 			ExpectError:     false,
 			ExpectSubString: "createOrganizationDomain",
 		},
 		{
 			Name:            "sales admin can remove org domain",
-			Token:           userFixtures["SalesAdmin"].Nickname,
+			Token:           userFixtures[SalesAdmin].Nickname,
 			Payload:         removeOrgDomainPayload,
 			ExpectError:     false,
 			ExpectSubString: "removeOrganizationDomain",

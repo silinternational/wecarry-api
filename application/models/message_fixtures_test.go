@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	buffalo_models "github.com/gobuffalo/buffalo/genny/build/_fixtures/coke/models"
 	"github.com/gobuffalo/nulls"
 	"github.com/silinternational/handcarry-api/domain"
 )
@@ -15,17 +14,16 @@ type MessageFixtures struct {
 	Threads  Threads
 }
 
-func Fixtures_GetSender(t *testing.T) MessageFixtures {
+func Fixtures_GetSender(ms *ModelSuite, t *testing.T) MessageFixtures {
 	// Load Org test fixtures
 	org := &Organization{
-		ID:         1,
 		Name:       "TestOrg1",
 		Url:        nulls.String{},
 		AuthType:   "saml",
 		AuthConfig: "{}",
 		Uuid:       domain.GetUuid(),
 	}
-	err := buffalo_models.DB.Create(org)
+	err := ms.DB.Create(org)
 	if err != nil {
 		t.Errorf("could not create organization for test, error: %s", err)
 		t.FailNow()
@@ -34,7 +32,6 @@ func Fixtures_GetSender(t *testing.T) MessageFixtures {
 	// Load User test fixtures
 	users := Users{
 		{
-			ID:        1,
 			Email:     "user1@example.com",
 			FirstName: "First",
 			LastName:  "User",
@@ -42,7 +39,6 @@ func Fixtures_GetSender(t *testing.T) MessageFixtures {
 			Uuid:      domain.GetUuid(),
 		},
 		{
-			ID:        2,
 			Email:     "user2@example.com",
 			FirstName: "Second",
 			LastName:  "User",
@@ -51,8 +47,8 @@ func Fixtures_GetSender(t *testing.T) MessageFixtures {
 		},
 	}
 
-	for _, user := range users {
-		if err := DB.Create(&user); err != nil {
+	for i := range users {
+		if err := ms.DB.Create(&users[i]); err != nil {
 			t.Errorf("could not create test user ... %v", err)
 			t.FailNow()
 		}
@@ -74,8 +70,8 @@ func Fixtures_GetSender(t *testing.T) MessageFixtures {
 		},
 	}
 
-	for _, uOrg := range userOrgs {
-		if err := DB.Create(&uOrg); err != nil {
+	for i := range userOrgs {
+		if err := ms.DB.Create(&userOrgs[i]); err != nil {
 			t.Errorf("could not create test user org ... %v", err)
 			t.FailNow()
 		}
@@ -85,7 +81,6 @@ func Fixtures_GetSender(t *testing.T) MessageFixtures {
 
 	posts := Posts{
 		{
-			ID:             1,
 			Uuid:           domain.GetUuid(),
 			Type:           PostTypeRequest,
 			CreatedByID:    users[0].ID,
@@ -101,7 +96,6 @@ func Fixtures_GetSender(t *testing.T) MessageFixtures {
 			Description:    nulls.NewString("Missing my PB & J"),
 		},
 		{
-			ID:             2,
 			Uuid:           domain.GetUuid(),
 			Type:           PostTypeRequest,
 			CreatedByID:    users[1].ID,
@@ -118,8 +112,8 @@ func Fixtures_GetSender(t *testing.T) MessageFixtures {
 		},
 	}
 
-	for _, post := range posts {
-		if err := DB.Create(&post); err != nil {
+	for i := range posts {
+		if err := ms.DB.Create(&posts[i]); err != nil {
 			t.Errorf("could not create test post ... %v", err)
 			t.FailNow()
 		}
@@ -128,19 +122,17 @@ func Fixtures_GetSender(t *testing.T) MessageFixtures {
 	// Load Thread test fixtures
 	threads := Threads{
 		{
-			ID:     1,
 			Uuid:   domain.GetUuid(),
 			PostID: posts[0].ID,
 		},
 		{
-			ID:     2,
 			Uuid:   domain.GetUuid(),
 			PostID: posts[1].ID,
 		},
 	}
 
-	for _, thread := range threads {
-		if err := DB.Create(&thread); err != nil {
+	for i := range threads {
+		if err := ms.DB.Create(&threads[i]); err != nil {
 			t.Errorf("could not create test thread ... %v", err)
 			t.FailNow()
 		}
@@ -149,14 +141,12 @@ func Fixtures_GetSender(t *testing.T) MessageFixtures {
 	// Load Message test fixtures
 	messages := Messages{
 		{
-			ID:       1,
 			Uuid:     domain.GetUuid(),
 			ThreadID: threads[0].ID,
 			SentByID: users[0].ID,
 			Content:  "I can being chocolate if you bring PB",
 		},
 		{
-			ID:       2,
 			Uuid:     domain.GetUuid(),
 			ThreadID: threads[1].ID,
 			SentByID: users[1].ID,
@@ -164,8 +154,8 @@ func Fixtures_GetSender(t *testing.T) MessageFixtures {
 		},
 	}
 
-	for _, message := range messages {
-		if err := DB.Create(&message); err != nil {
+	for i := range messages {
+		if err := ms.DB.Create(&messages[i]); err != nil {
 			t.Errorf("could not create test message ... %v", err)
 			t.FailNow()
 		}

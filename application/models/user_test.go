@@ -10,7 +10,6 @@ import (
 
 	"github.com/silinternational/handcarry-api/auth"
 
-	"github.com/gobuffalo/buffalo/genny/build/_fixtures/coke/models"
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
 	"github.com/silinternational/handcarry-api/domain"
@@ -30,7 +29,7 @@ func (ms *ModelSuite) TestUser_FindOrCreateFromAuthUser() {
 		AuthConfig: "{}",
 		Uuid:       domain.GetUuid(),
 	}
-	err := models.DB.Create(org)
+	err := ms.DB.Create(org)
 	if err != nil {
 		t.Errorf("Failed to create organization for test, error: %s", err)
 		t.FailNow()
@@ -395,7 +394,7 @@ func CreateUserFixtures(ms *ModelSuite, t *testing.T) ([]Organization, Users, Us
 		},
 	}
 	for i := range orgs {
-		if err := DB.Create(&orgs[i]); err != nil {
+		if err := ms.DB.Create(&orgs[i]); err != nil {
 			t.Errorf("error creating org %+v ...\n %v \n", orgs[i], err)
 			t.FailNow()
 		}
@@ -426,7 +425,7 @@ func CreateUserFixtures(ms *ModelSuite, t *testing.T) ([]Organization, Users, Us
 		},
 	}
 	for i := range users {
-		if err := DB.Create(&users[i]); err != nil {
+		if err := ms.DB.Create(&users[i]); err != nil {
 			t.Errorf("could not create test user %v ... %v", users[i], err)
 			t.FailNow()
 		}
@@ -448,7 +447,7 @@ func CreateUserFixtures(ms *ModelSuite, t *testing.T) ([]Organization, Users, Us
 		},
 	}
 	for i := range userOrgs {
-		if err := DB.Create(&userOrgs[i]); err != nil {
+		if err := ms.DB.Create(&userOrgs[i]); err != nil {
 			t.Errorf("could not create test user org ... %v. uo = %+v", err, userOrgs[i])
 			t.FailNow()
 		}
@@ -494,7 +493,7 @@ func (ms *ModelSuite) TestGetOrganizations() {
 func (ms *ModelSuite) Test_FindUserOrganization() {
 	t := ms.T()
 	ResetTables(t, ms.DB)
-	createUserOrganizationFixtures(t)
+	createUserOrganizationFixtures(ms, t)
 
 	type args struct {
 		user User
@@ -571,7 +570,7 @@ func (ms *ModelSuite) TestUser_GetPosts() {
 	t := ms.T()
 	ResetTables(t, ms.DB)
 	_, users, _ := CreateUserFixtures(ms, t)
-	posts := CreatePostFixtures(t, users)
+	posts := CreatePostFixtures(ms, t, users)
 
 	type args struct {
 		user     User
@@ -648,7 +647,7 @@ func (ms *ModelSuite) TestCanEditOrganization() {
 		},
 	}
 	for _, of := range orgFixtures {
-		err := DB.Create(&of)
+		err := ms.DB.Create(&of)
 		if err != nil {
 			t.Errorf("failed to create org fixtures: %s", err)
 		}
@@ -663,7 +662,7 @@ func (ms *ModelSuite) TestCanEditOrganization() {
 		AdminRole: nulls.String{},
 		Uuid:      domain.GetUuid(),
 	}
-	err := DB.Create(&user)
+	err := ms.DB.Create(&user)
 	if err != nil {
 		t.Errorf("failed to create user fixture: %s", err)
 	}
@@ -687,7 +686,7 @@ func (ms *ModelSuite) TestCanEditOrganization() {
 		},
 	}
 	for _, uof := range userOrgFixtures {
-		err := DB.Create(&uof)
+		err := ms.DB.Create(&uof)
 		if err != nil {
 			t.Errorf("failed to create user org fixtures: %s", err)
 		}
