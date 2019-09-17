@@ -33,7 +33,7 @@ services:
     depends_on:
       - testdb
     working_dir: /handcarry
-    command: go test ./...
+    command: buffalo test
 
   playground:
     build:
