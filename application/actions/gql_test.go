@@ -4,14 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/gobuffalo/httptest"
+	"github.com/silinternational/handcarry-api/models"
 	"io/ioutil"
 	"strings"
-	"time"
-
-	"github.com/gobuffalo/httptest"
-	"github.com/gobuffalo/nulls"
-	"github.com/silinternational/handcarry-api/domain"
-	"github.com/silinternational/handcarry-api/models"
 )
 
 type gqlErrorResponse struct {
@@ -65,142 +61,11 @@ func (as *ActionSuite) Test_CreateOrganization() {
 		OrgAdmin      = 2
 		OtherOrgAdmin = 3
 		Org1          = 0
-		Org2          = 1
 	)
 
-	userFixtures := []models.User{
-		{
-			Email:     "sales_admin@domain.com",
-			FirstName: "Sales",
-			LastName:  "Admin",
-			Nickname:  "sales_admin",
-			AdminRole: nulls.NewString(domain.AdminRoleSalesAdmin),
-			Uuid:      domain.GetUuid(),
-		},
-		{
-			Email:     "member@domain.com",
-			FirstName: "Org",
-			LastName:  "Member",
-			Nickname:  "org_member",
-			AdminRole: nulls.String{},
-			Uuid:      domain.GetUuid(),
-		},
-		{
-			Email:     "admin@domain.com",
-			FirstName: "Org",
-			LastName:  "Admin",
-			Nickname:  "org_admin",
-			AdminRole: nulls.String{},
-			Uuid:      domain.GetUuid(),
-		},
-		{
-			Email:     "admin@other.com",
-			FirstName: "Other Org",
-			LastName:  "Admin",
-			Nickname:  "other_org_admin",
-			AdminRole: nulls.String{},
-			Uuid:      domain.GetUuid(),
-		},
-	}
-	for i := range userFixtures {
-		err := as.DB.Create(&userFixtures[i])
-		if err != nil {
-			t.Errorf("unable to create user fixture %s: %s", userFixtures[i].Nickname, err)
-		}
-	}
-
-	orgFixtures := []models.Organization{
-		{
-			Name:       "Org1",
-			Url:        nulls.String{},
-			AuthType:   "saml2",
-			AuthConfig: "{}",
-			Uuid:       domain.GetUuid(),
-		},
-		{
-			Name:       "Org2",
-			Url:        nulls.String{},
-			AuthType:   "saml2",
-			AuthConfig: "{}",
-			Uuid:       domain.GetUuid(),
-		},
-	}
-	for i := range orgFixtures {
-		err := as.DB.Create(&orgFixtures[i])
-		if err != nil {
-			t.Errorf("unable to create org fixture named %s: %s", orgFixtures[i].Name, err)
-		}
-	}
-
-	userOrgFixtures := []models.UserOrganization{
-		{
-			OrganizationID: orgFixtures[Org1].ID,
-			UserID:         userFixtures[SalesAdmin].ID,
-			Role:           models.UserOrganizationRoleMember,
-			AuthID:         userFixtures[SalesAdmin].Nickname,
-			AuthEmail:      userFixtures[SalesAdmin].Email,
-		},
-		{
-			OrganizationID: orgFixtures[Org1].ID,
-			UserID:         userFixtures[OrgMember].ID,
-			Role:           models.UserOrganizationRoleMember,
-			AuthID:         userFixtures[OrgMember].Nickname,
-			AuthEmail:      userFixtures[OrgMember].Email,
-		},
-		{
-			OrganizationID: orgFixtures[Org1].ID,
-			UserID:         userFixtures[OrgAdmin].ID,
-			Role:           models.UserOrganizationRoleAdmin,
-			AuthID:         userFixtures[OrgAdmin].Nickname,
-			AuthEmail:      userFixtures[OrgAdmin].Email,
-		},
-		{
-			OrganizationID: orgFixtures[Org2].ID,
-			UserID:         userFixtures[OtherOrgAdmin].ID,
-			Role:           models.UserOrganizationRoleAdmin,
-			AuthID:         userFixtures[OtherOrgAdmin].Nickname,
-			AuthEmail:      userFixtures[OtherOrgAdmin].Email,
-		},
-	}
-	for i := range userOrgFixtures {
-		err := as.DB.Create(&userOrgFixtures[i])
-		if err != nil {
-			t.Errorf("unable to create user org fixture for %s: %s", userOrgFixtures[i].AuthID, err)
-		}
-	}
-
-	accessTokenFixtures := []models.UserAccessToken{
-		{
-			UserID:             userFixtures[SalesAdmin].ID,
-			UserOrganizationID: userOrgFixtures[SalesAdmin].ID,
-			AccessToken:        models.HashClientIdAccessToken(userFixtures[SalesAdmin].Nickname),
-			ExpiresAt:          time.Now().Add(time.Minute * 60),
-		},
-		{
-			UserID:             userFixtures[OrgMember].ID,
-			UserOrganizationID: userOrgFixtures[OrgMember].ID,
-			AccessToken:        models.HashClientIdAccessToken(userFixtures[OrgMember].Nickname),
-			ExpiresAt:          time.Now().Add(time.Minute * 60),
-		},
-		{
-			UserID:             userFixtures[OrgAdmin].ID,
-			UserOrganizationID: userOrgFixtures[OrgAdmin].ID,
-			AccessToken:        models.HashClientIdAccessToken(userFixtures[OrgAdmin].Nickname),
-			ExpiresAt:          time.Now().Add(time.Minute * 60),
-		},
-		{
-			UserID:             userFixtures[OtherOrgAdmin].ID,
-			UserOrganizationID: userOrgFixtures[OtherOrgAdmin].ID,
-			AccessToken:        models.HashClientIdAccessToken(userFixtures[OtherOrgAdmin].Nickname),
-			ExpiresAt:          time.Now().Add(time.Minute * 60),
-		},
-	}
-	for i := range accessTokenFixtures {
-		err := as.DB.Create(&accessTokenFixtures[i])
-		if err != nil {
-			t.Errorf("unable to create access token fixture for index %v: %s", i, err)
-		}
-	}
+	testFixtures := Fixtures_CreateOrganization(as, t)
+	userFixtures := testFixtures.Users
+	orgFixtures := testFixtures.Orgs
 
 	type testCase struct {
 		Name            string
