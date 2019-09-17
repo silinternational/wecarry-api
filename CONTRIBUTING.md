@@ -8,9 +8,9 @@
 
 ## Coding Style
 
-### Golang formatting
+### Go formatting
 
-Because Golang has one code formatting standard, this project uses that
+Because Go has one code formatting standard, this project uses that
 standard. To stay consistent, enable `go fmt` in your editor or IDE to format
 your code before it's committed. For example, in Goland, go to Settings - Tools
 - File Watchers, add and enable `go fmt`.

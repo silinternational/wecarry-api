@@ -15,17 +15,16 @@ import (
 	uuid2 "github.com/gofrs/uuid"
 )
 
-const ClientIDKey = "client_id"
-
-const ErrorLevelWarn = "warn"
-const ErrorLevelError = "error"
-const ErrorLevelCritical = "critical"
-
-const AdminRoleSuperDuperAdmin = "SuperDuperAdmin"
-
-const EmptyUUID = "00000000-0000-0000-0000-000000000000"
-
-const DateFormat = "2006-01-02"
+const (
+	ClientIDKey              = "client_id"
+	ErrorLevelWarn           = "warn"
+	ErrorLevelError          = "error"
+	ErrorLevelCritical       = "critical"
+	AdminRoleSuperDuperAdmin = "SuperDuperAdmin"
+	AdminRoleSalesAdmin      = "SalesAdmin"
+	EmptyUUID                = "00000000-0000-0000-0000-000000000000"
+	DateFormat               = "2006-01-02"
+)
 
 // NoExtras is exported for use when making calls to RollbarError and rollbarMessage to reduce
 // typing map[string]interface{} when no extras are needed

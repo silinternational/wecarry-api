@@ -3,6 +3,8 @@ package gqlgen
 import (
 	"context"
 
+	"github.com/99designs/gqlgen/graphql"
+
 	"github.com/silinternational/handcarry-api/models"
 )
 
@@ -36,4 +38,26 @@ func (r *organizationResolver) URL(ctx context.Context, obj *models.Organization
 		return nil, nil
 	}
 	return GetStringFromNullsString(obj.Url), nil
+}
+
+func (r *organizationResolver) Domains(ctx context.Context, obj *models.Organization) ([]*models.OrganizationDomain, error) {
+	if obj == nil {
+		return nil, nil
+	}
+
+	if err := models.DB.Load(obj, "OrganizationDomains"); err != nil {
+		return nil, err
+	}
+	domains := obj.OrganizationDomains
+	dp := make([]*models.OrganizationDomain, len(domains))
+	for i, d := range domains {
+		dp[i] = &d
+	}
+	return dp, nil
+}
+
+func getSelectFieldsForOrganizations(ctx context.Context) []string {
+	selectFields := GetSelectFieldsFromRequestFields(OrganizationFields(), graphql.CollectAllFields(ctx))
+	selectFields = append(selectFields, "id")
+	return selectFields
 }

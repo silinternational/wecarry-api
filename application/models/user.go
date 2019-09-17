@@ -30,20 +30,21 @@ const (
 )
 
 type User struct {
-	ID             int               `json:"id" db:"id"`
-	CreatedAt      time.Time         `json:"created_at" db:"created_at"`
-	UpdatedAt      time.Time         `json:"updated_at" db:"updated_at"`
-	Email          string            `json:"email" db:"email"`
-	FirstName      string            `json:"first_name" db:"first_name"`
-	LastName       string            `json:"last_name" db:"last_name"`
-	Nickname       string            `json:"nickname" db:"nickname"`
-	AdminRole      nulls.String      `json:"admin_role" db:"admin_role"`
-	Uuid           uuid.UUID         `json:"uuid" db:"uuid"`
-	AccessTokens   []UserAccessToken `has_many:"user_access_tokens" json:"-"`
-	Organizations  Organizations     `many_to_many:"user_organizations" json:"-"`
-	PostsCreated   Posts             `has_many:"posts" fk_id:"created_by_id"`
-	PostsProviding Posts             `has_many:"posts" fk_id:"provider_id"`
-	PostsReceiving Posts             `has_many:"posts" fk_id:"receiver_id"`
+	ID                int                `json:"id" db:"id"`
+	CreatedAt         time.Time          `json:"created_at" db:"created_at"`
+	UpdatedAt         time.Time          `json:"updated_at" db:"updated_at"`
+	Email             string             `json:"email" db:"email"`
+	FirstName         string             `json:"first_name" db:"first_name"`
+	LastName          string             `json:"last_name" db:"last_name"`
+	Nickname          string             `json:"nickname" db:"nickname"`
+	AdminRole         nulls.String       `json:"admin_role" db:"admin_role"`
+	Uuid              uuid.UUID          `json:"uuid" db:"uuid"`
+	AccessTokens      []UserAccessToken  `has_many:"user_access_tokens" json:"-"`
+	Organizations     Organizations      `many_to_many:"user_organizations" json:"-"`
+	UserOrganizations []UserOrganization `has_many:"user_organizations" json:"-"`
+	PostsCreated      Posts              `has_many:"posts" fk_id:"created_by_id"`
+	PostsProviding    Posts              `has_many:"posts" fk_id:"provider_id"`
+	PostsReceiving    Posts              `has_many:"posts" fk_id:"receiver_id"`
 }
 
 // String is not required by pop and may be deleted
@@ -192,6 +193,27 @@ func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
 	return nil
 }
 
+// CanCreateOrganization returns true if the given user is allowed to create organizations
+func (u *User) CanCreateOrganization() bool {
+	return u.AdminRole.String == domain.AdminRoleSuperDuperAdmin || u.AdminRole.String == domain.AdminRoleSalesAdmin
+}
+
+func (u *User) CanEditOrganization(orgId int) bool {
+	// make sure we're checking current user orgs
+	err := DB.Load(u, "UserOrganizations")
+	if err != nil {
+		return false
+	}
+
+	for _, uo := range u.UserOrganizations {
+		if uo.OrganizationID == orgId && uo.Role == UserOrganizationRoleAdmin {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (u *User) FindByAccessToken(accessToken string) error {
 	if accessToken == "" {
 		return fmt.Errorf("error: access token must not be blank")
@@ -266,14 +288,13 @@ func HashClientIdAccessToken(accessToken string) string {
 }
 
 func (u *User) GetOrganizations() ([]*Organization, error) {
-	var orgs []*Organization
 	if err := DB.Load(u, "Organizations"); err != nil {
-		return orgs, fmt.Errorf("error getting organizations for user id %v ... %v", u.ID, err)
+		return []*Organization{}, fmt.Errorf("error getting organizations for user id %v ... %v", u.ID, err)
 	}
 
-	for _, org := range u.Organizations {
-		orgCopy := org
-		orgs = append(orgs, &orgCopy)
+	orgs := make([]*Organization, len(u.Organizations))
+	for i := range u.Organizations {
+		orgs[i] = &u.Organizations[i]
 	}
 
 	return orgs, nil

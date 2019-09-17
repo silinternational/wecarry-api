@@ -83,7 +83,7 @@ func (r *postResolver) Organization(ctx context.Context, obj *models.Post) (*mod
 	if obj == nil {
 		return nil, nil
 	}
-	selectFields := GetSelectFieldsFromRequestFields(OrganizationFields(), graphql.CollectAllFields(ctx))
+	selectFields := getSelectFieldsForOrganizations(ctx)
 	return obj.GetOrganization(selectFields)
 }
 
@@ -214,7 +214,8 @@ func convertGqlPostInputToDBPost(input postInput, currentUser models.User) (mode
 	}
 
 	if input.OrgID != nil {
-		org, err := models.FindOrgByUUID(*input.OrgID)
+		var org models.Organization
+		err := org.FindByUUID(*input.OrgID)
 		if err != nil {
 			return models.Post{}, err
 		}

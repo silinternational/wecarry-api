@@ -1,6 +1,6 @@
-- name: build
+- name: test
   service: app
-  command: true
+  command: ./codeship-test.sh
 
 - name: push_develop_timestamp
   service: app
