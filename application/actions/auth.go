@@ -49,7 +49,6 @@ type AuthResponse struct {
 	User           *AuthUser        `json:"User,omitempty"`
 }
 
-
 func getOrSetClientID(c buffalo.Context) (string, error) {
 	var clientID string
 
@@ -82,8 +81,7 @@ func getOrSetAuthEmail(c buffalo.Context) (string, error) {
 	return authEmail, nil
 }
 
-
-func getOrSetReturnTo(c buffalo.Context) string{
+func getOrSetReturnTo(c buffalo.Context) string {
 	returnTo := c.Param(ReturnToKey)
 
 	if returnTo == "" {
@@ -103,7 +101,7 @@ func getOrSetReturnTo(c buffalo.Context) string{
 
 func getOrgAndUserOrgs(
 	authEmail string,
-	c buffalo.Context) (models.Organization, models.UserOrganizations, error){
+	c buffalo.Context) (models.Organization, models.UserOrganizations, error) {
 	var orgID int
 	oid := c.Param("org_id")
 	if oid == "" {
@@ -196,7 +194,7 @@ func createAuthUser(
 	}
 
 	isNew := false
-	if time.Since(user.CreatedAt) < time.Duration(time.Second * 30) {
+	if time.Since(user.CreatedAt) < time.Duration(time.Second*30) {
 		isNew = true
 	}
 
@@ -391,9 +389,7 @@ func getLoginSuccessRedirectURL(authUser AuthUser, returnTo string) string {
 		uiUrl += returnTo
 	}
 
-
 	url := fmt.Sprintf("%s%s", uiUrl, params)
-
 
 	return url
 }

@@ -59,7 +59,7 @@ func (as *ActionSuite) TestGetLoginSuccessRedirectURL() {
 			allResults := getLoginSuccessRedirectURL(test.authUser, test.returnTo)
 
 			expected := test.wantBeginning
-			beginningResults := allResults[0: len(expected)]
+			beginningResults := allResults[0:len(expected)]
 
 			if beginningResults != expected {
 				t.Errorf("Bad results at beginning for test \"%s\". \nExpected %s\n  but got %s",
@@ -68,7 +68,7 @@ func (as *ActionSuite) TestGetLoginSuccessRedirectURL() {
 			}
 
 			expected = test.wantEnd
-			endResults := allResults[len(allResults) - len(expected) : len(allResults)]
+			endResults := allResults[len(allResults)-len(expected) : len(allResults)]
 			if endResults != expected {
 				t.Errorf("Bad results at end for test \"%s\". \nExpected %s\n  but got %s",
 					test.name, expected, allResults)
