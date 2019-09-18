@@ -49,7 +49,7 @@ func (as *ActionSuite) TestGetLoginSuccessRedirectURL() {
 			name:          "Not New With No ReturnTo",
 			authUser:      AuthUser{ID: "1", IsNew: false, AccessToken: "old3"},
 			returnTo:      "",
-			wantBeginning: "/#?token_type=Bearer&expires_utc=",
+			wantBeginning: uiURL + "/#?token_type=Bearer&expires_utc=",
 			wantEnd:       "&access_token=old3",
 		},
 	}
