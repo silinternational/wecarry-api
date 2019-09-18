@@ -1,11 +1,14 @@
 package actions
 
 import (
+	"github.com/gobuffalo/envy"
 	"testing"
 )
 
 func (as *ActionSuite) TestGetLoginSuccessRedirectURL() {
 	t := as.T()
+
+	uiURL := envy.Get("UI_URL", "")
 
 	tests := []struct {
 		name          string
@@ -18,28 +21,28 @@ func (as *ActionSuite) TestGetLoginSuccessRedirectURL() {
 			name:          "New No ReturnTo",
 			authUser:      AuthUser{ID: "1", IsNew: true, AccessToken: "new"},
 			returnTo:      "",
-			wantBeginning: "/#/welcome?token_type=Bearer&expires_utc=",
+			wantBeginning: uiURL + "/#/welcome?token_type=Bearer&expires_utc=",
 			wantEnd:       "&access_token=new",
 		},
 		{
 			name:          "New With ReturnTo",
 			authUser:      AuthUser{ID: "1", IsNew: true, AccessToken: "new"},
 			returnTo:      "/posts",
-			wantBeginning: "/#/welcome?token_type=Bearer&expires_utc=",
+			wantBeginning: uiURL + "/#/welcome?token_type=Bearer&expires_utc=",
 			wantEnd:       "&access_token=new&ReturnTo=/posts",
 		},
 		{
 			name:          "Not New ReturnTo Without a Slash",
 			authUser:      AuthUser{ID: "1", IsNew: false, AccessToken: "old1"},
 			returnTo:      "posts",
-			wantBeginning: "/#/posts?token_type=Bearer&expires_utc=",
+			wantBeginning: uiURL + "/#/posts?token_type=Bearer&expires_utc=",
 			wantEnd:       "&access_token=old1",
 		},
 		{
 			name:          "Not New With a Good ReturnTo",
 			authUser:      AuthUser{ID: "1", IsNew: false, AccessToken: "old2"},
 			returnTo:      "/posts",
-			wantBeginning: "/#/posts?token_type=Bearer&expires_utc=",
+			wantBeginning: uiURL + "/#/posts?token_type=Bearer&expires_utc=",
 			wantEnd:       "&access_token=old2",
 		},
 		{
