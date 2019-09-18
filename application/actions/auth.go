@@ -53,6 +53,7 @@ func getOrSetClientID(c buffalo.Context) (string, error) {
 	var clientID string
 
 	clientID = c.Param("client_id")
+
 	if clientID == "" {
 		var ok bool
 		clientID, ok = c.Session().Get("ClientID").(string)
