@@ -190,7 +190,7 @@ func (as *ActionSuite) TestGetOrSetClientID() {
 			if expected != "" {
 				results = fmt.Sprintf("%v", c.sess.Get(ClientIDSessionKey))
 				if results != expected {
-					t.Errorf("bad results for test \"%s\". \nExpected %s\n but got %s",
+					t.Errorf("bad session results for test \"%s\". \nExpected %s\n but got %s",
 						test.name, expected, results)
 					return
 				}
@@ -285,7 +285,7 @@ func (as *ActionSuite) TestGetOrSetAuthEmail() {
 			if expected != "" {
 				results = fmt.Sprintf("%v", c.sess.Get(AuthEmailSessionKey))
 				if results != expected {
-					t.Errorf("bad results for test \"%s\". \nExpected %s\n but got %s",
+					t.Errorf("bad session results for test \"%s\". \nExpected %s\n but got %s",
 						test.name, expected, results)
 					return
 				}
@@ -365,7 +365,7 @@ func (as *ActionSuite) TestGetOrSetReturnTo() {
 			if expected != "" {
 				results = fmt.Sprintf("%v", c.sess.Get(ReturnToSessionKey))
 				if results != expected {
-					t.Errorf("bad results for test \"%s\". \nExpected %s\n but got %s",
+					t.Errorf("bad session results for test \"%s\". \nExpected %s\n but got %s",
 						test.name, expected, results)
 					return
 				}
@@ -430,7 +430,7 @@ func (as *ActionSuite) TestGetOrgAndUserOrgs() {
 			}
 
 			if len(resultUserOrgs) != test.wantUserOrgCount {
-				t.Errorf("bad results for test \"%s\". \nExpected %v UserOrg but got %v ... \n %+v\n",
+				t.Errorf("bad results for test \"%s\". \nExpected %v UserOrg(s) but got %v ... \n %+v\n",
 					test.name, test.wantUserOrgCount, len(resultUserOrgs), resultUserOrgs)
 				return
 			}
@@ -487,5 +487,4 @@ func (as *ActionSuite) TestCreateAuthUser() {
 	if results != expected {
 		t.Errorf("bad email results: expected %v but got %v", expected, results)
 	}
-
 }
