@@ -18,20 +18,29 @@ import (
 	"github.com/silinternational/handcarry-api/models"
 )
 
-// http param and session key for ReturnTo
-const ReturnToParam = "return-to"
-const ReturnToSessionKey = "ReturnTo"
-
-// http param and session key for Client ID
-const ClientIDParam = "client-id"
-const ClientIDSessionKey = "ClientID"
+// http param for access token
+const AccessTokenParam = "access-token"
 
 // http param and session key for Auth Email
 const AuthEmailParam = "auth-email"
 const AuthEmailSessionKey = "AuthEmail"
 
+// http param and session key for Client ID
+const ClientIDParam = "client-id"
+const ClientIDSessionKey = "ClientID"
+
+// http param for expires utc
+const ExpiresUTCParam = "expires-utc"
+
 // http param for organization id
 const OrgIDParam = "org-id"
+
+// http param and session key for ReturnTo
+const ReturnToParam = "return-to"
+const ReturnToSessionKey = "ReturnTo"
+
+// http param for token type
+const TokenTypeParam = "token-type"
 
 type AuthError struct {
 	Code    string `json:"Code"`
@@ -387,8 +396,8 @@ func getLoginSuccessRedirectURL(authUser AuthUser, returnTo string) string {
 	uiUrl := envy.Get("UI_URL", "") + "/#"
 
 	tokenExpiry := time.Unix(authUser.AccessTokenExpiresAt, 0).Format(time.RFC3339)
-	params := fmt.Sprintf("?token_type=Bearer&expires_utc=%s&access_token=%s",
-		tokenExpiry, authUser.AccessToken)
+	params := fmt.Sprintf("?%s=Bearer&%s=%s&%s=%s",
+		TokenTypeParam, ExpiresUTCParam, tokenExpiry, AccessTokenParam, authUser.AccessToken)
 
 	if authUser.IsNew {
 		uiUrl += "/welcome"
