@@ -31,7 +31,7 @@ const AuthEmailParam = "auth-email"
 const AuthEmailSessionKey = "AuthEmail"
 
 // http param for organization id
-const OrgIDParam = "org_id"
+const OrgIDParam = "org-id"
 
 type AuthError struct {
 	Code    string `json:"Code"`
