@@ -119,7 +119,6 @@ func getOrgAndUserOrgs(
 
 	// no user_organization records yet, see if we have an organization for user's email domain
 	if len(userOrgs) == 0 {
-		var org models.Organization
 		err = org.FindByDomain(domain.EmailDomain(authEmail))
 		if err != nil {
 			extras := map[string]interface{}{"authEmail": authEmail, "code": "UnableToFindOrgByEmail"}
