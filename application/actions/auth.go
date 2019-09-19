@@ -393,7 +393,7 @@ func getLoginSuccessRedirectURL(authUser AuthUser, returnTo string) string {
 	if authUser.IsNew {
 		uiUrl += "/welcome"
 		if len(returnTo) > 0 {
-			params += "&" + ReturnToSessionKey + "=" + returnTo
+			params += "&" + ReturnToParam + "=" + returnTo
 		}
 	} else {
 		if len(returnTo) > 0 && returnTo[0] != '/' {
