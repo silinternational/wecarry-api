@@ -5,6 +5,7 @@ import (
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/buffalo/render"
 	"github.com/gobuffalo/envy"
+	"github.com/silinternational/handcarry-api/models"
 	"testing"
 )
 
@@ -112,6 +113,7 @@ func (as *ActionSuite) TestGetOrSetClientID() {
 		returnTo     string
 		wantErr      bool
 		want         string
+		wantSession  string
 	}{
 		{
 			name:         "No Param No Session",
@@ -125,6 +127,7 @@ func (as *ActionSuite) TestGetOrSetClientID() {
 			sessionValue: "2222",
 			wantErr:      false,
 			want:         "2222",
+			wantSession:  "2222",
 		},
 		{
 			name:         "With Param But Not With Session",
@@ -132,6 +135,7 @@ func (as *ActionSuite) TestGetOrSetClientID() {
 			sessionValue: "",
 			wantErr:      false,
 			want:         "3333",
+			wantSession:  "3333",
 		},
 		{
 			name:         "With Param And With Session",
@@ -139,6 +143,7 @@ func (as *ActionSuite) TestGetOrSetClientID() {
 			sessionValue: "444B",
 			wantErr:      false,
 			want:         "444A",
+			wantSession:  "444A",
 		},
 	}
 	for _, test := range tests {
@@ -150,10 +155,10 @@ func (as *ActionSuite) TestGetOrSetClientID() {
 				params: map[string]string{},
 			}
 
-			c.params["client_id"] = test.param
+			c.params[ClientIDParam] = test.param
 
 			if test.sessionValue != "" {
-				c.Session().Set("ClientID", test.sessionValue)
+				c.Session().Set(ClientIDSessionKey, test.sessionValue)
 				c.Session().Save()
 			} else {
 				c.Session().Clear()
@@ -179,7 +184,284 @@ func (as *ActionSuite) TestGetOrSetClientID() {
 					test.name, expected, results)
 				return
 			}
+
+			expected = test.wantSession
+			if expected != "" {
+				results = fmt.Sprintf("%v", c.sess.Get(ClientIDSessionKey))
+				if results != expected {
+					t.Errorf("bad results for test \"%s\". \nExpected %s\n but got %s",
+						test.name, expected, results)
+					return
+				}
+			}
 		})
 	}
+}
 
+func (as *ActionSuite) TestGetOrSetAuthEmail() {
+	t := as.T()
+
+	tests := []struct {
+		name         string
+		param        string
+		sessionValue string
+		returnTo     string
+		wantErr      bool
+		want         string
+		wantSession  string
+	}{
+		{
+			name:         "No Param No Session",
+			param:        "",
+			sessionValue: "",
+			wantErr:      true,
+		},
+		{
+			name:         "No Param But With Session",
+			param:        "",
+			sessionValue: "sess@example.com",
+			wantErr:      false,
+			want:         "sess@example.com",
+			wantSession:  "sess@example.com",
+		},
+		{
+			name:         "With Param But Not With Session",
+			param:        "param@example.com",
+			sessionValue: "",
+			wantErr:      false,
+			want:         "param@example.com",
+			wantSession:  "param@example.com",
+		},
+		{
+			name:         "With Param And With Session",
+			param:        "param@example.com",
+			sessionValue: "sess@example.com",
+			wantErr:      false,
+			want:         "sess@example.com",
+			wantSession:  "sess@example.com",
+		},
+	}
+	for _, test := range tests {
+		// Test the first part and last part of the resulting urls
+		t.Run(test.name, func(t *testing.T) {
+
+			c := &bufTestCtx{
+				sess:   as.Session,
+				params: map[string]string{},
+			}
+
+			c.params[AuthEmailParam] = test.param
+
+			if test.sessionValue != "" {
+				c.Session().Set(AuthEmailSessionKey, test.sessionValue)
+				c.Session().Save()
+			} else {
+				c.Session().Clear()
+				c.Session().Save()
+			}
+
+			results, err := getOrSetAuthEmail(c)
+
+			if test.wantErr && err == nil {
+				t.Errorf("for test \"%s\" expected an error but did not get one.", test.name)
+				return
+			}
+
+			if !test.wantErr && err != nil {
+				t.Errorf("unexpected error for test \"%s\" ...  %v", test.name, err)
+				return
+			}
+
+			expected := test.want
+
+			if results != expected {
+				t.Errorf("bad results for test \"%s\". \nExpected %s\n but got %s",
+					test.name, expected, results)
+				return
+			}
+
+			expected = test.wantSession
+			if expected != "" {
+				results = fmt.Sprintf("%v", c.sess.Get(AuthEmailSessionKey))
+				if results != expected {
+					t.Errorf("bad results for test \"%s\". \nExpected %s\n but got %s",
+						test.name, expected, results)
+					return
+				}
+			}
+		})
+	}
+}
+
+func (as *ActionSuite) TestGetOrSetReturnTo() {
+	t := as.T()
+
+	tests := []struct {
+		name         string
+		param        string
+		sessionValue string
+		returnTo     string
+		want         string
+		wantSession  string
+	}{
+		{
+			name:         "No Param No Session",
+			param:        "",
+			sessionValue: "",
+			want:         "/#",
+		},
+		{
+			name:         "No Param But With Session",
+			param:        "",
+			sessionValue: "sess.example.com",
+			want:         "sess.example.com",
+			wantSession:  "sess.example.com",
+		},
+		{
+			name:         "With Param But Not With Session",
+			param:        "param.example.com",
+			sessionValue: "",
+			want:         "param.example.com",
+			wantSession:  "param.example.com",
+		},
+		{
+			name:         "With Param And With Session",
+			param:        "param.example.com",
+			sessionValue: "sess.example.com",
+			want:         "param.example.com",
+			wantSession:  "param.example.com",
+		},
+	}
+	for _, test := range tests {
+		// Test the first part and last part of the resulting urls
+		t.Run(test.name, func(t *testing.T) {
+
+			c := &bufTestCtx{
+				sess:   as.Session,
+				params: map[string]string{},
+			}
+
+			c.params[ReturnToParam] = test.param
+
+			if test.sessionValue != "" {
+				c.Session().Set(ReturnToSessionKey, test.sessionValue)
+				c.Session().Save()
+			} else {
+				c.Session().Clear()
+				c.Session().Save()
+			}
+
+			results := getOrSetReturnTo(c)
+			expected := test.want
+
+			if results != expected {
+				t.Errorf("bad results for test \"%s\". \nExpected %s\n but got %s",
+					test.name, expected, results)
+				return
+			}
+
+			expected = test.wantSession
+			if expected != "" {
+				results = fmt.Sprintf("%v", c.sess.Get(ReturnToSessionKey))
+				if results != expected {
+					t.Errorf("bad results for test \"%s\". \nExpected %s\n but got %s",
+						test.name, expected, results)
+					return
+				}
+			}
+		})
+	}
+}
+
+func (as *ActionSuite) TestGetOrgsAndUserOrgs() {
+	t := as.T()
+	models.ResetTables(t, as.DB)
+
+	fixtures := Fixtures_GetOrgAndUserOrgs(as, t)
+	userFixtures := fixtures.users
+	orgFixture := fixtures.orgs[0]
+	userOrgFixtures := fixtures.userOrgs
+
+	tests := []struct {
+		name        string
+		authEmail   string
+		param       string
+		wantErr     bool
+		wantOrg     string
+		wantUserOrg string
+	}{
+		{
+			name:      "No Param No User Org",
+			authEmail: userFixtures[0].Email,
+			param:     "",
+			wantErr:   true,
+		},
+		{
+			name:        "No Param But With User Org",
+			authEmail:   userFixtures[0].Email,
+			param:       "",
+			wantErr:     false,
+			wantOrg:     "sess@example.com",
+			wantUserOrg: "sess@example.com",
+		},
+		{
+			name:        "With Param But Not With User Org",
+			authEmail:   userFixtures[0].Email,
+			param:       "param@example.com",
+			wantErr:     false,
+			wantOrg:     "sess@example.com",
+			wantUserOrg: "sess@example.com",
+		},
+		{
+			name:        "With Param And With User Org",
+			authEmail:   userFixtures[0].Email,
+			param:       "param@example.com",
+			wantErr:     false,
+			wantOrg:     "sess@example.com",
+			wantUserOrg: "sess@example.com",
+		},
+	}
+	for _, test := range tests {
+		// Test the first part and last part of the resulting urls
+		t.Run(test.name, func(t *testing.T) {
+
+			c := &bufTestCtx{
+				sess:   as.Session,
+				params: map[string]string{},
+			}
+
+			c.params[OrgIDParam] = test.param
+
+			resultOrg, resultUserOrgs, err := getOrgAndUserOrgs(test.authEmail, c)
+
+			if test.wantErr && err == nil {
+				t.Errorf("for test \"%s\" expected an error but did not get one.", test.name)
+				return
+			}
+
+			if !test.wantErr && err != nil {
+				t.Errorf("unexpected error for test \"%s\" ...  %v", test.name, err)
+				return
+			}
+
+			expected := test.wantOrg
+			results := resultOrg.Name
+
+			if results != expected {
+				t.Errorf("bad results for test \"%s\". \nExpected %s\n but got %s",
+					test.name, expected, results)
+				return
+			}
+
+			expected = test.wantSession
+			if expected != "" {
+				results = fmt.Sprintf("%v", c.sess.Get(AuthEmailSessionKey))
+				if results != expected {
+					t.Errorf("bad results for test \"%s\". \nExpected %s\n but got %s",
+						test.name, expected, results)
+					return
+				}
+			}
+		})
+	}
 }
