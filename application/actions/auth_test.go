@@ -5,6 +5,7 @@ import (
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/buffalo/render"
 	"github.com/gobuffalo/envy"
+	"github.com/silinternational/handcarry-api/auth"
 	"github.com/silinternational/handcarry-api/models"
 	"testing"
 )
@@ -373,52 +374,37 @@ func (as *ActionSuite) TestGetOrSetReturnTo() {
 	}
 }
 
-func (as *ActionSuite) TestGetOrgsAndUserOrgs() {
+// This doesn't test for errors, since it's too complicated with the call to domain.Error()
+func (as *ActionSuite) TestGetOrgAndUserOrgs() {
 	t := as.T()
 	models.ResetTables(t, as.DB)
 
 	fixtures := Fixtures_GetOrgAndUserOrgs(as, t)
-	userFixtures := fixtures.users
 	orgFixture := fixtures.orgs[0]
 	userOrgFixtures := fixtures.userOrgs
 
 	tests := []struct {
-		name        string
-		authEmail   string
-		param       string
-		wantErr     bool
-		wantOrg     string
-		wantUserOrg string
+		name             string
+		authEmail        string
+		param            string
+		wantOrg          string
+		wantUserOrg      string
+		wantUserOrgCount int
 	}{
 		{
-			name:      "No Param No User Org",
-			authEmail: userFixtures[0].Email,
-			param:     "",
-			wantErr:   true,
+			name:             "No org_id Param But With UserOrg For AuthEmail",
+			authEmail:        userOrgFixtures[0].AuthEmail,
+			param:            "",
+			wantOrg:          orgFixture.Name,
+			wantUserOrgCount: 1,
+			wantUserOrg:      userOrgFixtures[0].AuthEmail,
 		},
 		{
-			name:        "No Param But With User Org",
-			authEmail:   userFixtures[0].Email,
-			param:       "",
-			wantErr:     false,
-			wantOrg:     "sess@example.com",
-			wantUserOrg: "sess@example.com",
-		},
-		{
-			name:        "With Param But Not With User Org",
-			authEmail:   userFixtures[0].Email,
-			param:       "param@example.com",
-			wantErr:     false,
-			wantOrg:     "sess@example.com",
-			wantUserOrg: "sess@example.com",
-		},
-		{
-			name:        "With Param And With User Org",
-			authEmail:   userFixtures[0].Email,
-			param:       "param@example.com",
-			wantErr:     false,
-			wantOrg:     "sess@example.com",
-			wantUserOrg: "sess@example.com",
+			name:             "With bad org_id Param But With UserOrg for AuthEmail",
+			authEmail:        userOrgFixtures[0].AuthEmail,
+			param:            "11",
+			wantOrg:          orgFixture.Name,
+			wantUserOrgCount: 0,
 		},
 	}
 	for _, test := range tests {
@@ -432,36 +418,74 @@ func (as *ActionSuite) TestGetOrgsAndUserOrgs() {
 
 			c.params[OrgIDParam] = test.param
 
-			resultOrg, resultUserOrgs, err := getOrgAndUserOrgs(test.authEmail, c)
-
-			if test.wantErr && err == nil {
-				t.Errorf("for test \"%s\" expected an error but did not get one.", test.name)
-				return
-			}
-
-			if !test.wantErr && err != nil {
-				t.Errorf("unexpected error for test \"%s\" ...  %v", test.name, err)
-				return
-			}
+			resultOrg, resultUserOrgs, _ := getOrgAndUserOrgs(test.authEmail, c)
 
 			expected := test.wantOrg
 			results := resultOrg.Name
 
 			if results != expected {
-				t.Errorf("bad results for test \"%s\". \nExpected %s\n but got %s",
+				t.Errorf("bad Org results for test \"%s\". \nExpected %s\n but got %s",
 					test.name, expected, results)
 				return
 			}
 
-			expected = test.wantSession
-			if expected != "" {
-				results = fmt.Sprintf("%v", c.sess.Get(AuthEmailSessionKey))
+			if len(resultUserOrgs) != test.wantUserOrgCount {
+				t.Errorf("bad results for test \"%s\". \nExpected %v UserOrg but got %v ... \n %+v\n",
+					test.name, test.wantUserOrgCount, len(resultUserOrgs), resultUserOrgs)
+				return
+			}
+
+			if test.wantUserOrgCount == 1 {
+
+				expected = test.wantUserOrg
+				results = resultUserOrgs[0].AuthEmail
+
 				if results != expected {
-					t.Errorf("bad results for test \"%s\". \nExpected %s\n but got %s",
+					t.Errorf("bad UserOrg results for test \"%s\". \nExpected %s\n but got %s",
 						test.name, expected, results)
 					return
 				}
 			}
 		})
 	}
+}
+
+func (as *ActionSuite) TestCreateAuthUser() {
+	t := as.T()
+	models.ResetTables(t, as.DB)
+	orgFixture := Fixtures_CreateAuthUser(as, t).orgs[0]
+	c := &bufTestCtx{
+		sess:   as.Session,
+		params: map[string]string{},
+	}
+
+	newEmail := "new@example.com"
+
+	authUser := auth.User{
+		Email:     newEmail,
+		FirstName: "First",
+		LastName:  "Last",
+	}
+
+	var user models.User
+	err := user.FindOrCreateFromAuthUser(orgFixture.ID, &authUser)
+	if err != nil {
+		t.Errorf("could not run test because of error calling user.FindOrCreateFromAuthUser ...\n %v", err)
+		return
+	}
+
+	resultsAuthUser, err := createAuthUser(newEmail, "12345678", user, orgFixture, c)
+
+	if err != nil {
+		t.Errorf("unexpected error ... %v", err)
+		return
+	}
+
+	expected := newEmail
+	results := resultsAuthUser.Email
+
+	if results != expected {
+		t.Errorf("bad email results: expected %v but got %v", expected, results)
+	}
+
 }

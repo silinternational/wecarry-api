@@ -117,7 +117,7 @@ func getOrgAndUserOrgs(
 	authEmail string,
 	c buffalo.Context) (models.Organization, models.UserOrganizations, error) {
 	var orgID int
-	oid := c.Param("org_id")
+	oid := c.Param(OrgIDParam)
 	if oid == "" {
 		orgID = 0
 	} else {
@@ -189,8 +189,8 @@ func createAuthUser(
 	user models.User,
 	org models.Organization,
 	c buffalo.Context) (AuthUser, error) {
-
 	accessToken, expiresAt, err := user.CreateAccessToken(org, clientID)
+
 	if err != nil {
 		extras := map[string]interface{}{"authEmail": authEmail, "code": "CreateAccessTokenFailure"}
 		domain.Error(c, err.Error(), extras)
