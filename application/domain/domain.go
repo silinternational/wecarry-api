@@ -16,7 +16,6 @@ import (
 )
 
 const (
-	ClientIDKey              = "client_id"
 	ErrorLevelWarn           = "warn"
 	ErrorLevelError          = "error"
 	ErrorLevelCritical       = "critical"

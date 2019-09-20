@@ -19,7 +19,29 @@ import (
 	"github.com/silinternational/wecarry-api/models"
 )
 
-const ReturnToKey = "ReturnTo"
+// http param for access token
+const AccessTokenParam = "access-token"
+
+// http param and session key for Auth Email
+const AuthEmailParam = "auth-email"
+const AuthEmailSessionKey = "AuthEmail"
+
+// http param and session key for Client ID
+const ClientIDParam = "client-id"
+const ClientIDSessionKey = "ClientID"
+
+// http param for expires utc
+const ExpiresUTCParam = "expires-utc"
+
+// http param for organization id
+const OrgIDParam = "org-id"
+
+// http param and session key for ReturnTo
+const ReturnToParam = "return-to"
+const ReturnToSessionKey = "ReturnTo"
+
+// http param for token type
+const TokenTypeParam = "token-type"
 
 type AuthError struct {
 	Code    string `json:"Code"`
@@ -53,15 +75,16 @@ type AuthResponse struct {
 func getOrSetClientID(c buffalo.Context) (string, error) {
 	var clientID string
 
-	clientID = c.Param("client_id")
+	clientID = c.Param(ClientIDParam)
+
 	if clientID == "" {
 		var ok bool
-		clientID, ok = c.Session().Get("ClientID").(string)
+		clientID, ok = c.Session().Get(ClientIDSessionKey).(string)
 		if !ok {
-			return "", authError(c, http.StatusBadRequest, "MissingClientID", "client_id is required to login")
+			return "", authError(c, http.StatusBadRequest, "MissingClientID", ClientIDParam+" is required to login")
 		}
 	} else {
-		c.Session().Set("ClientID", clientID)
+		c.Session().Set(ClientIDSessionKey, clientID)
 	}
 
 	return clientID, nil
@@ -70,24 +93,24 @@ func getOrSetClientID(c buffalo.Context) (string, error) {
 func getOrSetAuthEmail(c buffalo.Context) (string, error) {
 	var authEmail string
 	var ok bool
-	authEmail, ok = c.Session().Get("AuthEmail").(string)
+	authEmail, ok = c.Session().Get(AuthEmailSessionKey).(string)
 	if !ok {
-		authEmail = c.Param("authEmail")
+		authEmail = c.Param(AuthEmailParam)
 		if authEmail == "" {
-			return "", authError(c, http.StatusBadRequest, "MissingAuthEmail", "authEmail is required to login")
+			return "", authError(c, http.StatusBadRequest, "MissingAuthEmail", AuthEmailParam+" is required to login")
 		}
-		c.Session().Set("AuthEmail", authEmail)
+		c.Session().Set(AuthEmailSessionKey, authEmail)
 	}
 
 	return authEmail, nil
 }
 
 func getOrSetReturnTo(c buffalo.Context) string {
-	returnTo := c.Param(ReturnToKey)
+	returnTo := c.Param(ReturnToParam)
 
 	if returnTo == "" {
 		var ok bool
-		returnTo, ok = c.Session().Get(ReturnToKey).(string)
+		returnTo, ok = c.Session().Get(ReturnToSessionKey).(string)
 		if !ok {
 			returnTo = "/#"
 		}
@@ -95,7 +118,7 @@ func getOrSetReturnTo(c buffalo.Context) string {
 		return returnTo
 	}
 
-	c.Session().Set(ReturnToKey, returnTo)
+	c.Session().Set(ReturnToSessionKey, returnTo)
 
 	return returnTo
 }
@@ -104,7 +127,7 @@ func getOrgAndUserOrgs(
 	authEmail string,
 	c buffalo.Context) (models.Organization, models.UserOrganizations, error) {
 	var orgID int
-	oid := c.Param("org_id")
+	oid := c.Param(OrgIDParam)
 	if oid == "" {
 		orgID = 0
 	} else {
@@ -176,8 +199,8 @@ func createAuthUser(
 	user models.User,
 	org models.Organization,
 	c buffalo.Context) (AuthUser, error) {
-
 	accessToken, expiresAt, err := user.CreateAccessToken(org, clientID)
+
 	if err != nil {
 		extras := map[string]interface{}{"authEmail": authEmail, "code": "CreateAccessTokenFailure"}
 		domain.Error(c, err.Error(), extras)
@@ -374,13 +397,13 @@ func getLoginSuccessRedirectURL(authUser AuthUser, returnTo string) string {
 	uiUrl := envy.Get("UI_URL", "") + "/#"
 
 	tokenExpiry := time.Unix(authUser.AccessTokenExpiresAt, 0).Format(time.RFC3339)
-	params := fmt.Sprintf("?token_type=Bearer&expires_utc=%s&access_token=%s",
-		tokenExpiry, authUser.AccessToken)
+	params := fmt.Sprintf("?%s=Bearer&%s=%s&%s=%s",
+		TokenTypeParam, ExpiresUTCParam, tokenExpiry, AccessTokenParam, authUser.AccessToken)
 
 	if authUser.IsNew {
 		uiUrl += "/welcome"
 		if len(returnTo) > 0 {
-			params += "&" + ReturnToKey + "=" + returnTo
+			params += "&" + ReturnToParam + "=" + returnTo
 		}
 	} else {
 		if len(returnTo) > 0 && returnTo[0] != '/' {
