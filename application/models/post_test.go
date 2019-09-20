@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/gofrs/uuid"
-	"github.com/silinternational/handcarry-api/domain"
+	"github.com/silinternational/wecarry-api/domain"
 
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/validate"

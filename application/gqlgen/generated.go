@@ -13,7 +13,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
-	"github.com/silinternational/handcarry-api/models"
+	"github.com/silinternational/wecarry-api/models"
 	"github.com/vektah/gqlparser"
 	"github.com/vektah/gqlparser/ast"
 )
@@ -986,7 +986,7 @@ func (ec *executionContext) field_Mutation_createMessage_args(ctx context.Contex
 	args := map[string]interface{}{}
 	var arg0 NewMessage
 	if tmp, ok := rawArgs["input"]; ok {
-		arg0, err = ec.unmarshalNNewMessage2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐNewMessage(ctx, tmp)
+		arg0, err = ec.unmarshalNNewMessage2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐNewMessage(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1000,7 +1000,7 @@ func (ec *executionContext) field_Mutation_createOrganizationDomain_args(ctx con
 	args := map[string]interface{}{}
 	var arg0 NewOrganizationDomain
 	if tmp, ok := rawArgs["input"]; ok {
-		arg0, err = ec.unmarshalNNewOrganizationDomain2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐNewOrganizationDomain(ctx, tmp)
+		arg0, err = ec.unmarshalNNewOrganizationDomain2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐNewOrganizationDomain(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1014,7 +1014,7 @@ func (ec *executionContext) field_Mutation_createOrganization_args(ctx context.C
 	args := map[string]interface{}{}
 	var arg0 NewOrganization
 	if tmp, ok := rawArgs["input"]; ok {
-		arg0, err = ec.unmarshalNNewOrganization2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐNewOrganization(ctx, tmp)
+		arg0, err = ec.unmarshalNNewOrganization2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐNewOrganization(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1028,7 +1028,7 @@ func (ec *executionContext) field_Mutation_createPost_args(ctx context.Context, 
 	args := map[string]interface{}{}
 	var arg0 postInput
 	if tmp, ok := rawArgs["input"]; ok {
-		arg0, err = ec.unmarshalNNewPost2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐpostInput(ctx, tmp)
+		arg0, err = ec.unmarshalNNewPost2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐpostInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1042,7 +1042,7 @@ func (ec *executionContext) field_Mutation_removeOrganizationDomain_args(ctx con
 	args := map[string]interface{}{}
 	var arg0 NewOrganizationDomain
 	if tmp, ok := rawArgs["input"]; ok {
-		arg0, err = ec.unmarshalNNewOrganizationDomain2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐNewOrganizationDomain(ctx, tmp)
+		arg0, err = ec.unmarshalNNewOrganizationDomain2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐNewOrganizationDomain(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1056,7 +1056,7 @@ func (ec *executionContext) field_Mutation_updateOrganization_args(ctx context.C
 	args := map[string]interface{}{}
 	var arg0 UpdatedOrganization
 	if tmp, ok := rawArgs["input"]; ok {
-		arg0, err = ec.unmarshalNUpdatedOrganization2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐUpdatedOrganization(ctx, tmp)
+		arg0, err = ec.unmarshalNUpdatedOrganization2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐUpdatedOrganization(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1070,7 +1070,7 @@ func (ec *executionContext) field_Mutation_updatePost_args(ctx context.Context, 
 	args := map[string]interface{}{}
 	var arg0 postInput
 	if tmp, ok := rawArgs["input"]; ok {
-		arg0, err = ec.unmarshalNUpdatedPost2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐpostInput(ctx, tmp)
+		arg0, err = ec.unmarshalNUpdatedPost2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐpostInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1140,7 +1140,7 @@ func (ec *executionContext) field_User_posts_args(ctx context.Context, rawArgs m
 	args := map[string]interface{}{}
 	var arg0 PostRole
 	if tmp, ok := rawArgs["role"]; ok {
-		arg0, err = ec.unmarshalNPostRole2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐPostRole(ctx, tmp)
+		arg0, err = ec.unmarshalNPostRole2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostRole(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1256,7 +1256,7 @@ func (ec *executionContext) _Message_sender(ctx context.Context, field graphql.C
 	res := resTmp.(*models.User)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNUser2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Message_content(ctx context.Context, field graphql.CollectedField, obj *models.Message) (ret graphql.Marshaler) {
@@ -1330,7 +1330,7 @@ func (ec *executionContext) _Message_thread(ctx context.Context, field graphql.C
 	res := resTmp.(*models.Thread)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNThread2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐThread(ctx, field.Selections, res)
+	return ec.marshalNThread2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐThread(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Message_createdAt(ctx context.Context, field graphql.CollectedField, obj *models.Message) (ret graphql.Marshaler) {
@@ -1442,7 +1442,7 @@ func (ec *executionContext) _Mutation_createPost(ctx context.Context, field grap
 	res := resTmp.(*models.Post)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNPost2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
+	return ec.marshalNPost2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_updatePost(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1486,7 +1486,7 @@ func (ec *executionContext) _Mutation_updatePost(ctx context.Context, field grap
 	res := resTmp.(*models.Post)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNPost2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
+	return ec.marshalNPost2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_createMessage(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1530,7 +1530,7 @@ func (ec *executionContext) _Mutation_createMessage(ctx context.Context, field g
 	res := resTmp.(*models.Message)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNMessage2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐMessage(ctx, field.Selections, res)
+	return ec.marshalNMessage2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMessage(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_createOrganization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1574,7 +1574,7 @@ func (ec *executionContext) _Mutation_createOrganization(ctx context.Context, fi
 	res := resTmp.(*models.Organization)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNOrganization2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐOrganization(ctx, field.Selections, res)
+	return ec.marshalNOrganization2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganization(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_updateOrganization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1618,7 +1618,7 @@ func (ec *executionContext) _Mutation_updateOrganization(ctx context.Context, fi
 	res := resTmp.(*models.Organization)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNOrganization2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐOrganization(ctx, field.Selections, res)
+	return ec.marshalNOrganization2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganization(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_createOrganizationDomain(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1662,7 +1662,7 @@ func (ec *executionContext) _Mutation_createOrganizationDomain(ctx context.Conte
 	res := resTmp.([]*models.OrganizationDomain)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNOrganizationDomain2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐOrganizationDomain(ctx, field.Selections, res)
+	return ec.marshalNOrganizationDomain2ᚕᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganizationDomain(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_removeOrganizationDomain(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1706,7 +1706,7 @@ func (ec *executionContext) _Mutation_removeOrganizationDomain(ctx context.Conte
 	res := resTmp.([]*models.OrganizationDomain)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNOrganizationDomain2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐOrganizationDomain(ctx, field.Selections, res)
+	return ec.marshalNOrganizationDomain2ᚕᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganizationDomain(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Organization_id(ctx context.Context, field graphql.CollectedField, obj *models.Organization) (ret graphql.Marshaler) {
@@ -1919,7 +1919,7 @@ func (ec *executionContext) _Organization_domains(ctx context.Context, field gra
 	res := resTmp.([]*models.OrganizationDomain)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNOrganizationDomain2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐOrganizationDomain(ctx, field.Selections, res)
+	return ec.marshalNOrganizationDomain2ᚕᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganizationDomain(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _OrganizationDomain_domain(ctx context.Context, field graphql.CollectedField, obj *models.OrganizationDomain) (ret graphql.Marshaler) {
@@ -2067,7 +2067,7 @@ func (ec *executionContext) _Post_type(ctx context.Context, field graphql.Collec
 	res := resTmp.(PostType)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNPostType2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐPostType(ctx, field.Selections, res)
+	return ec.marshalNPostType2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostType(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Post_createdBy(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
@@ -2104,7 +2104,7 @@ func (ec *executionContext) _Post_createdBy(ctx context.Context, field graphql.C
 	res := resTmp.(*models.User)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNUser2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Post_receiver(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
@@ -2138,7 +2138,7 @@ func (ec *executionContext) _Post_receiver(ctx context.Context, field graphql.Co
 	res := resTmp.(*models.User)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOUser2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Post_provider(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
@@ -2172,7 +2172,7 @@ func (ec *executionContext) _Post_provider(ctx context.Context, field graphql.Co
 	res := resTmp.(*models.User)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOUser2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Post_organization(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
@@ -2206,7 +2206,7 @@ func (ec *executionContext) _Post_organization(ctx context.Context, field graphq
 	res := resTmp.(*models.Organization)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOOrganization2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐOrganization(ctx, field.Selections, res)
+	return ec.marshalOOrganization2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganization(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Post_title(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
@@ -2561,7 +2561,7 @@ func (ec *executionContext) _Post_threads(ctx context.Context, field graphql.Col
 	res := resTmp.([]*models.Thread)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNThread2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐThread(ctx, field.Selections, res)
+	return ec.marshalNThread2ᚕᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐThread(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Post_createdAt(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
@@ -2768,7 +2768,7 @@ func (ec *executionContext) _Query_users(ctx context.Context, field graphql.Coll
 	res := resTmp.([]*models.User)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNUser2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚕᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_user(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2809,7 +2809,7 @@ func (ec *executionContext) _Query_user(ctx context.Context, field graphql.Colle
 	res := resTmp.(*models.User)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOUser2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_posts(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2846,7 +2846,7 @@ func (ec *executionContext) _Query_posts(ctx context.Context, field graphql.Coll
 	res := resTmp.([]*models.Post)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNPost2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
+	return ec.marshalNPost2ᚕᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_post(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2887,7 +2887,7 @@ func (ec *executionContext) _Query_post(ctx context.Context, field graphql.Colle
 	res := resTmp.(*models.Post)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOPost2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
+	return ec.marshalOPost2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_threads(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2924,7 +2924,7 @@ func (ec *executionContext) _Query_threads(ctx context.Context, field graphql.Co
 	res := resTmp.([]*models.Thread)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNThread2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐThread(ctx, field.Selections, res)
+	return ec.marshalNThread2ᚕᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐThread(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_myThreads(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2961,7 +2961,7 @@ func (ec *executionContext) _Query_myThreads(ctx context.Context, field graphql.
 	res := resTmp.([]*models.Thread)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNThread2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐThread(ctx, field.Selections, res)
+	return ec.marshalNThread2ᚕᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐThread(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_message(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3005,7 +3005,7 @@ func (ec *executionContext) _Query_message(ctx context.Context, field graphql.Co
 	res := resTmp.(*models.Message)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNMessage2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐMessage(ctx, field.Selections, res)
+	return ec.marshalNMessage2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMessage(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3154,7 +3154,7 @@ func (ec *executionContext) _Thread_participants(ctx context.Context, field grap
 	res := resTmp.([]*models.User)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNUser2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚕᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Thread_messages(ctx context.Context, field graphql.CollectedField, obj *models.Thread) (ret graphql.Marshaler) {
@@ -3191,7 +3191,7 @@ func (ec *executionContext) _Thread_messages(ctx context.Context, field graphql.
 	res := resTmp.([]*models.Message)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNMessage2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐMessage(ctx, field.Selections, res)
+	return ec.marshalNMessage2ᚕᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMessage(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Thread_postID(ctx context.Context, field graphql.CollectedField, obj *models.Thread) (ret graphql.Marshaler) {
@@ -3265,7 +3265,7 @@ func (ec *executionContext) _Thread_post(ctx context.Context, field graphql.Coll
 	res := resTmp.(*models.Post)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNPost2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
+	return ec.marshalNPost2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Thread_createdAt(ctx context.Context, field graphql.CollectedField, obj *models.Thread) (ret graphql.Marshaler) {
@@ -3620,7 +3620,7 @@ func (ec *executionContext) _User_adminRole(ctx context.Context, field graphql.C
 	res := resTmp.(*Role)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalORole2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐRole(ctx, field.Selections, res)
+	return ec.marshalORole2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐRole(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _User_organizations(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
@@ -3657,7 +3657,7 @@ func (ec *executionContext) _User_organizations(ctx context.Context, field graph
 	res := resTmp.([]*models.Organization)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNOrganization2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐOrganization(ctx, field.Selections, res)
+	return ec.marshalNOrganization2ᚕᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganization(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _User_posts(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
@@ -3701,7 +3701,7 @@ func (ec *executionContext) _User_posts(ctx context.Context, field graphql.Colle
 	res := resTmp.([]*models.Post)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNPost2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
+	return ec.marshalNPost2ᚕᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
@@ -4959,7 +4959,7 @@ func (ec *executionContext) unmarshalInputNewPost(ctx context.Context, obj inter
 			}
 		case "type":
 			var err error
-			it.Type, err = ec.unmarshalNPostType2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐPostType(ctx, v)
+			it.Type, err = ec.unmarshalNPostType2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostType(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5085,7 +5085,7 @@ func (ec *executionContext) unmarshalInputUpdatedPost(ctx context.Context, obj i
 			}
 		case "status":
 			var err error
-			it.Status, err = ec.unmarshalOPostStatus2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐPostStatus(ctx, v)
+			it.Status, err = ec.unmarshalOPostStatus2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostStatus(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -6244,11 +6244,11 @@ func (ec *executionContext) marshalNID2ᚖstring(ctx context.Context, sel ast.Se
 	return ec.marshalNID2string(ctx, sel, *v)
 }
 
-func (ec *executionContext) marshalNMessage2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐMessage(ctx context.Context, sel ast.SelectionSet, v models.Message) graphql.Marshaler {
+func (ec *executionContext) marshalNMessage2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMessage(ctx context.Context, sel ast.SelectionSet, v models.Message) graphql.Marshaler {
 	return ec._Message(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNMessage2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐMessage(ctx context.Context, sel ast.SelectionSet, v []*models.Message) graphql.Marshaler {
+func (ec *executionContext) marshalNMessage2ᚕᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMessage(ctx context.Context, sel ast.SelectionSet, v []*models.Message) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -6272,7 +6272,7 @@ func (ec *executionContext) marshalNMessage2ᚕᚖgithubᚗcomᚋsilinternationa
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNMessage2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐMessage(ctx, sel, v[i])
+			ret[i] = ec.marshalNMessage2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMessage(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -6285,7 +6285,7 @@ func (ec *executionContext) marshalNMessage2ᚕᚖgithubᚗcomᚋsilinternationa
 	return ret
 }
 
-func (ec *executionContext) marshalNMessage2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐMessage(ctx context.Context, sel ast.SelectionSet, v *models.Message) graphql.Marshaler {
+func (ec *executionContext) marshalNMessage2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMessage(ctx context.Context, sel ast.SelectionSet, v *models.Message) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -6295,27 +6295,27 @@ func (ec *executionContext) marshalNMessage2ᚖgithubᚗcomᚋsilinternational�
 	return ec._Message(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNNewMessage2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐNewMessage(ctx context.Context, v interface{}) (NewMessage, error) {
+func (ec *executionContext) unmarshalNNewMessage2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐNewMessage(ctx context.Context, v interface{}) (NewMessage, error) {
 	return ec.unmarshalInputNewMessage(ctx, v)
 }
 
-func (ec *executionContext) unmarshalNNewOrganization2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐNewOrganization(ctx context.Context, v interface{}) (NewOrganization, error) {
+func (ec *executionContext) unmarshalNNewOrganization2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐNewOrganization(ctx context.Context, v interface{}) (NewOrganization, error) {
 	return ec.unmarshalInputNewOrganization(ctx, v)
 }
 
-func (ec *executionContext) unmarshalNNewOrganizationDomain2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐNewOrganizationDomain(ctx context.Context, v interface{}) (NewOrganizationDomain, error) {
+func (ec *executionContext) unmarshalNNewOrganizationDomain2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐNewOrganizationDomain(ctx context.Context, v interface{}) (NewOrganizationDomain, error) {
 	return ec.unmarshalInputNewOrganizationDomain(ctx, v)
 }
 
-func (ec *executionContext) unmarshalNNewPost2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐpostInput(ctx context.Context, v interface{}) (postInput, error) {
+func (ec *executionContext) unmarshalNNewPost2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐpostInput(ctx context.Context, v interface{}) (postInput, error) {
 	return ec.unmarshalInputNewPost(ctx, v)
 }
 
-func (ec *executionContext) marshalNOrganization2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐOrganization(ctx context.Context, sel ast.SelectionSet, v models.Organization) graphql.Marshaler {
+func (ec *executionContext) marshalNOrganization2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganization(ctx context.Context, sel ast.SelectionSet, v models.Organization) graphql.Marshaler {
 	return ec._Organization(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNOrganization2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐOrganization(ctx context.Context, sel ast.SelectionSet, v []*models.Organization) graphql.Marshaler {
+func (ec *executionContext) marshalNOrganization2ᚕᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganization(ctx context.Context, sel ast.SelectionSet, v []*models.Organization) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -6339,7 +6339,7 @@ func (ec *executionContext) marshalNOrganization2ᚕᚖgithubᚗcomᚋsilinterna
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNOrganization2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐOrganization(ctx, sel, v[i])
+			ret[i] = ec.marshalNOrganization2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganization(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -6352,7 +6352,7 @@ func (ec *executionContext) marshalNOrganization2ᚕᚖgithubᚗcomᚋsilinterna
 	return ret
 }
 
-func (ec *executionContext) marshalNOrganization2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐOrganization(ctx context.Context, sel ast.SelectionSet, v *models.Organization) graphql.Marshaler {
+func (ec *executionContext) marshalNOrganization2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganization(ctx context.Context, sel ast.SelectionSet, v *models.Organization) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -6362,11 +6362,11 @@ func (ec *executionContext) marshalNOrganization2ᚖgithubᚗcomᚋsilinternatio
 	return ec._Organization(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNOrganizationDomain2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐOrganizationDomain(ctx context.Context, sel ast.SelectionSet, v models.OrganizationDomain) graphql.Marshaler {
+func (ec *executionContext) marshalNOrganizationDomain2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganizationDomain(ctx context.Context, sel ast.SelectionSet, v models.OrganizationDomain) graphql.Marshaler {
 	return ec._OrganizationDomain(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNOrganizationDomain2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐOrganizationDomain(ctx context.Context, sel ast.SelectionSet, v []*models.OrganizationDomain) graphql.Marshaler {
+func (ec *executionContext) marshalNOrganizationDomain2ᚕᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganizationDomain(ctx context.Context, sel ast.SelectionSet, v []*models.OrganizationDomain) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -6390,7 +6390,7 @@ func (ec *executionContext) marshalNOrganizationDomain2ᚕᚖgithubᚗcomᚋsili
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNOrganizationDomain2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐOrganizationDomain(ctx, sel, v[i])
+			ret[i] = ec.marshalNOrganizationDomain2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganizationDomain(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -6403,7 +6403,7 @@ func (ec *executionContext) marshalNOrganizationDomain2ᚕᚖgithubᚗcomᚋsili
 	return ret
 }
 
-func (ec *executionContext) marshalNOrganizationDomain2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐOrganizationDomain(ctx context.Context, sel ast.SelectionSet, v *models.OrganizationDomain) graphql.Marshaler {
+func (ec *executionContext) marshalNOrganizationDomain2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganizationDomain(ctx context.Context, sel ast.SelectionSet, v *models.OrganizationDomain) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -6413,11 +6413,11 @@ func (ec *executionContext) marshalNOrganizationDomain2ᚖgithubᚗcomᚋsilinte
 	return ec._OrganizationDomain(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNPost2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐPost(ctx context.Context, sel ast.SelectionSet, v models.Post) graphql.Marshaler {
+func (ec *executionContext) marshalNPost2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx context.Context, sel ast.SelectionSet, v models.Post) graphql.Marshaler {
 	return ec._Post(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNPost2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐPost(ctx context.Context, sel ast.SelectionSet, v []*models.Post) graphql.Marshaler {
+func (ec *executionContext) marshalNPost2ᚕᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx context.Context, sel ast.SelectionSet, v []*models.Post) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -6441,7 +6441,7 @@ func (ec *executionContext) marshalNPost2ᚕᚖgithubᚗcomᚋsilinternational�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOPost2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐPost(ctx, sel, v[i])
+			ret[i] = ec.marshalOPost2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -6454,7 +6454,7 @@ func (ec *executionContext) marshalNPost2ᚕᚖgithubᚗcomᚋsilinternational�
 	return ret
 }
 
-func (ec *executionContext) marshalNPost2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐPost(ctx context.Context, sel ast.SelectionSet, v *models.Post) graphql.Marshaler {
+func (ec *executionContext) marshalNPost2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx context.Context, sel ast.SelectionSet, v *models.Post) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -6464,33 +6464,33 @@ func (ec *executionContext) marshalNPost2ᚖgithubᚗcomᚋsilinternationalᚋha
 	return ec._Post(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNPostRole2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐPostRole(ctx context.Context, v interface{}) (PostRole, error) {
+func (ec *executionContext) unmarshalNPostRole2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostRole(ctx context.Context, v interface{}) (PostRole, error) {
 	var res PostRole
 	return res, res.UnmarshalGQL(v)
 }
 
-func (ec *executionContext) marshalNPostRole2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐPostRole(ctx context.Context, sel ast.SelectionSet, v PostRole) graphql.Marshaler {
+func (ec *executionContext) marshalNPostRole2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostRole(ctx context.Context, sel ast.SelectionSet, v PostRole) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) unmarshalNPostType2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐPostType(ctx context.Context, v interface{}) (PostType, error) {
+func (ec *executionContext) unmarshalNPostType2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostType(ctx context.Context, v interface{}) (PostType, error) {
 	var res PostType
 	return res, res.UnmarshalGQL(v)
 }
 
-func (ec *executionContext) marshalNPostType2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐPostType(ctx context.Context, sel ast.SelectionSet, v PostType) graphql.Marshaler {
+func (ec *executionContext) marshalNPostType2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostType(ctx context.Context, sel ast.SelectionSet, v PostType) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) unmarshalNPostType2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐPostType(ctx context.Context, v interface{}) (*PostType, error) {
+func (ec *executionContext) unmarshalNPostType2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostType(ctx context.Context, v interface{}) (*PostType, error) {
 	if v == nil {
 		return nil, nil
 	}
-	res, err := ec.unmarshalNPostType2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐPostType(ctx, v)
+	res, err := ec.unmarshalNPostType2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostType(ctx, v)
 	return &res, err
 }
 
-func (ec *executionContext) marshalNPostType2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐPostType(ctx context.Context, sel ast.SelectionSet, v *PostType) graphql.Marshaler {
+func (ec *executionContext) marshalNPostType2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostType(ctx context.Context, sel ast.SelectionSet, v *PostType) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -6532,11 +6532,11 @@ func (ec *executionContext) marshalNString2ᚖstring(ctx context.Context, sel as
 	return ec.marshalNString2string(ctx, sel, *v)
 }
 
-func (ec *executionContext) marshalNThread2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐThread(ctx context.Context, sel ast.SelectionSet, v models.Thread) graphql.Marshaler {
+func (ec *executionContext) marshalNThread2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐThread(ctx context.Context, sel ast.SelectionSet, v models.Thread) graphql.Marshaler {
 	return ec._Thread(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNThread2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐThread(ctx context.Context, sel ast.SelectionSet, v []*models.Thread) graphql.Marshaler {
+func (ec *executionContext) marshalNThread2ᚕᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐThread(ctx context.Context, sel ast.SelectionSet, v []*models.Thread) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -6560,7 +6560,7 @@ func (ec *executionContext) marshalNThread2ᚕᚖgithubᚗcomᚋsilinternational
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOThread2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐThread(ctx, sel, v[i])
+			ret[i] = ec.marshalOThread2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐThread(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -6573,7 +6573,7 @@ func (ec *executionContext) marshalNThread2ᚕᚖgithubᚗcomᚋsilinternational
 	return ret
 }
 
-func (ec *executionContext) marshalNThread2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐThread(ctx context.Context, sel ast.SelectionSet, v *models.Thread) graphql.Marshaler {
+func (ec *executionContext) marshalNThread2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐThread(ctx context.Context, sel ast.SelectionSet, v *models.Thread) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -6583,19 +6583,19 @@ func (ec *executionContext) marshalNThread2ᚖgithubᚗcomᚋsilinternationalᚋ
 	return ec._Thread(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNUpdatedOrganization2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐUpdatedOrganization(ctx context.Context, v interface{}) (UpdatedOrganization, error) {
+func (ec *executionContext) unmarshalNUpdatedOrganization2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐUpdatedOrganization(ctx context.Context, v interface{}) (UpdatedOrganization, error) {
 	return ec.unmarshalInputUpdatedOrganization(ctx, v)
 }
 
-func (ec *executionContext) unmarshalNUpdatedPost2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐpostInput(ctx context.Context, v interface{}) (postInput, error) {
+func (ec *executionContext) unmarshalNUpdatedPost2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐpostInput(ctx context.Context, v interface{}) (postInput, error) {
 	return ec.unmarshalInputUpdatedPost(ctx, v)
 }
 
-func (ec *executionContext) marshalNUser2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐUser(ctx context.Context, sel ast.SelectionSet, v models.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx context.Context, sel ast.SelectionSet, v models.User) graphql.Marshaler {
 	return ec._User(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐUser(ctx context.Context, sel ast.SelectionSet, v []*models.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx context.Context, sel ast.SelectionSet, v []*models.User) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -6619,7 +6619,7 @@ func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋsilinternational�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNUser2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐUser(ctx, sel, v[i])
+			ret[i] = ec.marshalNUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -6632,7 +6632,7 @@ func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋsilinternational�
 	return ret
 }
 
-func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐUser(ctx context.Context, sel ast.SelectionSet, v *models.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx context.Context, sel ast.SelectionSet, v *models.User) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -6914,70 +6914,70 @@ func (ec *executionContext) marshalOID2ᚖstring(ctx context.Context, sel ast.Se
 	return ec.marshalOID2string(ctx, sel, *v)
 }
 
-func (ec *executionContext) marshalOOrganization2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐOrganization(ctx context.Context, sel ast.SelectionSet, v models.Organization) graphql.Marshaler {
+func (ec *executionContext) marshalOOrganization2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganization(ctx context.Context, sel ast.SelectionSet, v models.Organization) graphql.Marshaler {
 	return ec._Organization(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOOrganization2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐOrganization(ctx context.Context, sel ast.SelectionSet, v *models.Organization) graphql.Marshaler {
+func (ec *executionContext) marshalOOrganization2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganization(ctx context.Context, sel ast.SelectionSet, v *models.Organization) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Organization(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOPost2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐPost(ctx context.Context, sel ast.SelectionSet, v models.Post) graphql.Marshaler {
+func (ec *executionContext) marshalOPost2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx context.Context, sel ast.SelectionSet, v models.Post) graphql.Marshaler {
 	return ec._Post(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOPost2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐPost(ctx context.Context, sel ast.SelectionSet, v *models.Post) graphql.Marshaler {
+func (ec *executionContext) marshalOPost2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx context.Context, sel ast.SelectionSet, v *models.Post) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Post(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOPostStatus2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐPostStatus(ctx context.Context, v interface{}) (PostStatus, error) {
+func (ec *executionContext) unmarshalOPostStatus2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostStatus(ctx context.Context, v interface{}) (PostStatus, error) {
 	var res PostStatus
 	return res, res.UnmarshalGQL(v)
 }
 
-func (ec *executionContext) marshalOPostStatus2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐPostStatus(ctx context.Context, sel ast.SelectionSet, v PostStatus) graphql.Marshaler {
+func (ec *executionContext) marshalOPostStatus2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostStatus(ctx context.Context, sel ast.SelectionSet, v PostStatus) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) unmarshalOPostStatus2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐPostStatus(ctx context.Context, v interface{}) (*PostStatus, error) {
+func (ec *executionContext) unmarshalOPostStatus2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostStatus(ctx context.Context, v interface{}) (*PostStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
-	res, err := ec.unmarshalOPostStatus2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐPostStatus(ctx, v)
+	res, err := ec.unmarshalOPostStatus2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostStatus(ctx, v)
 	return &res, err
 }
 
-func (ec *executionContext) marshalOPostStatus2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐPostStatus(ctx context.Context, sel ast.SelectionSet, v *PostStatus) graphql.Marshaler {
+func (ec *executionContext) marshalOPostStatus2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostStatus(ctx context.Context, sel ast.SelectionSet, v *PostStatus) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return v
 }
 
-func (ec *executionContext) unmarshalORole2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐRole(ctx context.Context, v interface{}) (Role, error) {
+func (ec *executionContext) unmarshalORole2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐRole(ctx context.Context, v interface{}) (Role, error) {
 	var res Role
 	return res, res.UnmarshalGQL(v)
 }
 
-func (ec *executionContext) marshalORole2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐRole(ctx context.Context, sel ast.SelectionSet, v Role) graphql.Marshaler {
+func (ec *executionContext) marshalORole2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐRole(ctx context.Context, sel ast.SelectionSet, v Role) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) unmarshalORole2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐRole(ctx context.Context, v interface{}) (*Role, error) {
+func (ec *executionContext) unmarshalORole2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐRole(ctx context.Context, v interface{}) (*Role, error) {
 	if v == nil {
 		return nil, nil
 	}
-	res, err := ec.unmarshalORole2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐRole(ctx, v)
+	res, err := ec.unmarshalORole2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐRole(ctx, v)
 	return &res, err
 }
 
-func (ec *executionContext) marshalORole2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐRole(ctx context.Context, sel ast.SelectionSet, v *Role) graphql.Marshaler {
+func (ec *executionContext) marshalORole2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐRole(ctx context.Context, sel ast.SelectionSet, v *Role) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7007,11 +7007,11 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return ec.marshalOString2string(ctx, sel, *v)
 }
 
-func (ec *executionContext) marshalOThread2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐThread(ctx context.Context, sel ast.SelectionSet, v models.Thread) graphql.Marshaler {
+func (ec *executionContext) marshalOThread2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐThread(ctx context.Context, sel ast.SelectionSet, v models.Thread) graphql.Marshaler {
 	return ec._Thread(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOThread2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐThread(ctx context.Context, sel ast.SelectionSet, v *models.Thread) graphql.Marshaler {
+func (ec *executionContext) marshalOThread2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐThread(ctx context.Context, sel ast.SelectionSet, v *models.Thread) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7026,11 +7026,11 @@ func (ec *executionContext) marshalOTime2timeᚐTime(ctx context.Context, sel as
 	return graphql.MarshalTime(v)
 }
 
-func (ec *executionContext) marshalOUser2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐUser(ctx context.Context, sel ast.SelectionSet, v models.User) graphql.Marshaler {
+func (ec *executionContext) marshalOUser2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx context.Context, sel ast.SelectionSet, v models.User) graphql.Marshaler {
 	return ec._User(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐUser(ctx context.Context, sel ast.SelectionSet, v *models.User) graphql.Marshaler {
+func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx context.Context, sel ast.SelectionSet, v *models.User) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/silinternational/handcarry-api/domain"
+	"github.com/silinternational/wecarry-api/domain"
 
 	"github.com/gofrs/uuid"
 

@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/gobuffalo/nulls"
-	"github.com/silinternational/handcarry-api/domain"
-	"github.com/silinternational/handcarry-api/models"
+	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/models"
 )
 
 type QueryFixtures struct {
@@ -103,12 +103,10 @@ func Fixtures_QueryAUser(as *ActionSuite, t *testing.T) QueryFixtures {
 	}
 }
 
-
 type OrgFixtures struct {
-	Users       models.Users
-	Orgs models.Organizations
+	Users models.Users
+	Orgs  models.Organizations
 }
-
 
 func Fixtures_CreateOrganization(as *ActionSuite, t *testing.T) OrgFixtures {
 
@@ -223,7 +221,6 @@ func Fixtures_CreateOrganization(as *ActionSuite, t *testing.T) OrgFixtures {
 		}
 	}
 
-
 	accessTokenFixtures := []models.UserAccessToken{
 		{
 			UserID:             users[SalesAdmin].ID,
@@ -259,6 +256,6 @@ func Fixtures_CreateOrganization(as *ActionSuite, t *testing.T) OrgFixtures {
 
 	return OrgFixtures{
 		Users: users,
-		Orgs: orgs,
+		Orgs:  orgs,
 	}
 }

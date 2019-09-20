@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/gobuffalo/httptest"
-	"github.com/silinternational/handcarry-api/models"
 	"io/ioutil"
 	"strings"
+
+	"github.com/gobuffalo/httptest"
+	"github.com/silinternational/wecarry-api/models"
 )
 
 type gqlErrorResponse struct {

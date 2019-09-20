@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/gobuffalo/validate"
-	"github.com/silinternational/handcarry-api/domain"
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 func (ms *ModelSuite) TestMessage_Validate() {
