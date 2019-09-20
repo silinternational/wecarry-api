@@ -8,8 +8,8 @@ import (
 	paramlogger "github.com/gobuffalo/mw-paramlogger"
 	"github.com/gorilla/sessions"
 	"github.com/rs/cors"
-	"github.com/silinternational/handcarry-api/domain"
-	"github.com/silinternational/handcarry-api/models"
+	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/models"
 )
 
 // ENV is used to help switch settings based on where the
@@ -43,7 +43,7 @@ func App() *buffalo.App {
 					AllowedHeaders:   []string{"*"},
 				}).Handler,
 			},
-			SessionName:  "_handcarry_session",
+			SessionName:  "_wecarry_session",
 			SessionStore: sessions.NewCookieStore([]byte(envy.Get("SESSION_SECRET", "testing"))),
 		})
 

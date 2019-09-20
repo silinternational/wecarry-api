@@ -1,6 +1,6 @@
 app:
   build:
-    image: 369020531563.dkr.ecr.us-east-1.amazonaws.com/handcarry-stg
+    image: 369020531563.dkr.ecr.us-east-1.amazonaws.com/wecarry-stg
     context: application
     dockerfile: Dockerfile-dev
   cached: true
@@ -8,21 +8,21 @@ app:
     - testdb
   environment:
     ADDR: 0.0.0.0
-    HOST: http://handcarry.local:3000
+    HOST: http://wecarry.local:3000
     PORT: 3000
-    UI_URL: http://handcarry.local:5000
-    DATABASE_URL: postgres://handcarry:handcarry@testdb:5432/handcarry_test?sslmode=disable
+    UI_URL: http://wecarry.local:5000
+    DATABASE_URL: postgres://wecarry:wecarry@testdb:5432/wecarry_test?sslmode=disable
     GO_ENV: test
   encrypted_env_file: .env.encrypted
-  working_dir: /handcarry
+  working_dir: /wecarry
   command: true
 
 testdb:
   image: postgres:9.6.13
   environment:
-    POSTGRES_USER: handcarry
-    POSTGRES_PASSWORD: handcarry
-    POSTGRES_DB: handcarry_test
+    POSTGRES_USER: wecarry
+    POSTGRES_PASSWORD: wecarry
+    POSTGRES_DB: wecarry_test
 
 ecsdeploy:
   image: silintl/ecs-deploy:latest

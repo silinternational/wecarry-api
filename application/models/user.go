@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/silinternational/handcarry-api/domain"
+	"github.com/silinternational/wecarry-api/domain"
 
-	"github.com/silinternational/handcarry-api/auth"
+	"github.com/silinternational/wecarry-api/auth"
 
 	"github.com/gobuffalo/envy"
 	"github.com/gobuffalo/nulls"

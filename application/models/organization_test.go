@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/gobuffalo/nulls"
-	"github.com/silinternational/handcarry-api/domain"
+	"github.com/silinternational/wecarry-api/domain"
 
 	"testing"
 )

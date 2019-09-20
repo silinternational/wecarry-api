@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/silinternational/handcarry-api/auth"
-	"github.com/silinternational/handcarry-api/auth/saml"
+	"github.com/silinternational/wecarry-api/auth"
+	"github.com/silinternational/wecarry-api/auth/saml"
 
 	"github.com/gofrs/uuid"
 

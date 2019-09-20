@@ -1,4 +1,4 @@
-# Welcome to the HandCarry.App server code!
+# Welcome to the WeCarry.App server code!
 
 ## Requirements
 
@@ -7,7 +7,7 @@ This software needs docker-compose version 1.24.0 at least.
 ## Setting it up
 
 In an appropriate directory:
-* git clone git@github.com:silinternational/handcarry-api.git
+* git clone git@github.com:silinternational/wecarry-api.git
 * cd handcarry-api
 * make
 

@@ -5,7 +5,7 @@
 - name: push_develop_timestamp
   service: app
   type: push
-  image_name: 369020531563.dkr.ecr.us-east-1.amazonaws.com/handcarry-stg
+  image_name: 369020531563.dkr.ecr.us-east-1.amazonaws.com/wecarry-stg
   image_tag: "{{.Timestamp}}"
   tag: develop
   registry: https://369020531563.dkr.ecr.us-east-1.amazonaws.com
@@ -14,7 +14,7 @@
 - name: push_develop_develop
   service: app
   type: push
-  image_name: 369020531563.dkr.ecr.us-east-1.amazonaws.com/handcarry-stg
+  image_name: 369020531563.dkr.ecr.us-east-1.amazonaws.com/wecarry-stg
   image_tag: "develop"
   tag: develop
   registry: https://369020531563.dkr.ecr.us-east-1.amazonaws.com
@@ -23,7 +23,7 @@
 #- name: push_production_timestamp
 #  service: app
 #  type: push
-#  image_name: 369020531563.dkr.ecr.us-east-1.amazonaws.com/handcarry-prod
+#  image_name: 369020531563.dkr.ecr.us-east-1.amazonaws.com/wecarry-prod
 #  image_tag: "{{.Timestamp}}"
 #  tag: master
 #  registry: https://369020531563.dkr.ecr.us-east-1.amazonaws.com
@@ -32,7 +32,7 @@
 #- name: push_production_latest
 #  service: app
 #  type: push
-#  image_name: 369020531563.dkr.ecr.us-east-1.amazonaws.com/handcarry-prod
+#  image_name: 369020531563.dkr.ecr.us-east-1.amazonaws.com/wecarry-prod
 #  image_tag: "latest"
 #  tag: master
 #  registry: https://369020531563.dkr.ecr.us-east-1.amazonaws.com
@@ -41,12 +41,12 @@
 - name: deploy_staging_web
   service: ecsdeploy
   tag: develop
-  command: "-c appsdev-stg -n handcarry-api -i 369020531563.dkr.ecr.us-east-1.amazonaws.com/handcarry-stg -e CI_TIMESTAMP -t 600"
+  command: "-c appsdev-stg -n wecarry-api -i 369020531563.dkr.ecr.us-east-1.amazonaws.com/wecarry-stg -e CI_TIMESTAMP -t 600"
 
 #- name: deploy_production_web
 #  service: ecsdeploy
 #  tag: master
-#  command: "-c appsdev-prod -n handcarry-api -i 369020531563.dkr.ecr.us-east-1.amazonaws.com/handcarry-prod -e CI_TIMESTAMP -t 600"
+#  command: "-c appsdev-prod -n wecarry-api -i 369020531563.dkr.ecr.us-east-1.amazonaws.com/wecarry-prod -e CI_TIMESTAMP -t 600"
 
 - name: track_deployment
   service: tracker

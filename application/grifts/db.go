@@ -7,7 +7,7 @@ import (
 	"github.com/gobuffalo/nulls"
 	"github.com/gofrs/uuid"
 	"github.com/markbates/grift/grift"
-	"github.com/silinternational/handcarry-api/models"
+	"github.com/silinternational/wecarry-api/models"
 )
 
 var _ = grift.Namespace("db", func() {

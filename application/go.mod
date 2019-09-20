@@ -1,4 +1,4 @@
-module github.com/silinternational/handcarry-api
+module github.com/silinternational/wecarry-api
 
 go 1.12
 
@@ -31,6 +31,6 @@ require (
 	github.com/vektah/gqlparser v1.1.2
 )
 
-replace github.com/silinternational/handcarry-api v0.0.0 => ./
+replace github.com/silinternational/wecarry-api v0.0.0 => ./
 
 replace github.com/gobuffalo/envy v1.7.0 => github.com/silinternational/envy v1.7.0

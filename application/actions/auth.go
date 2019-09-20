@@ -2,9 +2,10 @@ package actions
 
 import (
 	"fmt"
-	"github.com/silinternational/handcarry-api/auth"
 
-	//	"github.com/silinternational/handcarry-api/auth"
+	"github.com/silinternational/wecarry-api/auth"
+
+	//	"github.com/silinternational/wecarry-api/auth"
 	"net/http"
 	"strconv"
 	"time"
@@ -14,8 +15,8 @@ import (
 	"github.com/gobuffalo/buffalo/render"
 
 	"github.com/gobuffalo/buffalo"
-	"github.com/silinternational/handcarry-api/domain"
-	"github.com/silinternational/handcarry-api/models"
+	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/models"
 )
 
 const ReturnToKey = "ReturnTo"
