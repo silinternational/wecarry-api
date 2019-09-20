@@ -2,12 +2,13 @@ package actions
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/buffalo/render"
 	"github.com/gobuffalo/envy"
-	"github.com/silinternational/handcarry-api/auth"
-	"github.com/silinternational/handcarry-api/models"
-	"testing"
+	"github.com/silinternational/wecarry-api/auth"
+	"github.com/silinternational/wecarry-api/models"
 )
 
 func (as *ActionSuite) TestGetLoginSuccessRedirectURL() {

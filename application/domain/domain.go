@@ -168,7 +168,7 @@ func RollbarMiddleware(next buffalo.Handler) buffalo.Handler {
 			envy.Get("GO_ENV", "development"),
 			"",
 			"",
-			envy.Get("ROLLBAR_SERVER_ROOT", "github.com/silinternational/handcarry-api"))
+			envy.Get("ROLLBAR_SERVER_ROOT", "github.com/silinternational/wecarry-api"))
 
 		c.Set("rollbar", client)
 

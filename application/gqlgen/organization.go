@@ -5,7 +5,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 
-	"github.com/silinternational/handcarry-api/models"
+	"github.com/silinternational/wecarry-api/models"
 )
 
 func OrganizationFields() map[string]string {

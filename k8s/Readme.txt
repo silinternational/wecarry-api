@@ -6,7 +6,7 @@ Assumption:  Minikube has been installed.
 eval $(minikube docker-env)
 
 # Create the Docker image and push it to the local Docker repo
-cd handcarry-api
+cd wecarry-api
 make buffalo
 make clean
 
@@ -19,7 +19,7 @@ kubectl get deployments
 kubectl get services -w
 
 # Access the app
-minikube service handcarry --url
+minikube service wecarry --url
 
 # That will give you are URL like this:  http://192.168.39.133:30769
 # Navigate to that URL in your web browser.

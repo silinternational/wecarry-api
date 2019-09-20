@@ -3,7 +3,7 @@
 package gqlgen
 
 import (
-	"github.com/silinternational/handcarry-api/models"
+	"github.com/silinternational/wecarry-api/models"
 ) // THIS CODE IS A STARTING POINT ONLY. IT WILL NOT BE UPDATED WITH SCHEMA CHANGES.
 
 // TestUser is intended as a way to inject a "current User" for unit tests

@@ -7,7 +7,7 @@ import (
 
 	"github.com/99designs/gqlgen/handler"
 	"github.com/go-chi/chi"
-	"github.com/silinternational/handcarry-api/gqlgen"
+	"github.com/silinternational/wecarry-api/gqlgen"
 )
 
 const defaultPort = "3000"

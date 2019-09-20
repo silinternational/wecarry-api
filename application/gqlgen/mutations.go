@@ -6,8 +6,8 @@ import (
 
 	"github.com/gobuffalo/nulls"
 
-	"github.com/silinternational/handcarry-api/domain"
-	"github.com/silinternational/handcarry-api/models"
+	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/models"
 )
 
 type mutationResolver struct{ *Resolver }

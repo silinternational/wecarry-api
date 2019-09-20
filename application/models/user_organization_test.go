@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/gobuffalo/nulls"
-	"github.com/silinternational/handcarry-api/domain"
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 func createUserOrganizationFixtures(ms *ModelSuite, t *testing.T) {
