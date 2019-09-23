@@ -3,7 +3,7 @@
   command: ./codeship-test.sh
 
 - name: push_develop_timestamp
-  service: app
+  service: binary
   type: push
   image_name: 369020531563.dkr.ecr.us-east-1.amazonaws.com/wecarry-stg
   image_tag: "{{.Timestamp}}"
@@ -12,7 +12,7 @@
   dockercfg_service: awsgenerator
 
 - name: push_develop_develop
-  service: app
+  service: binary
   type: push
   image_name: 369020531563.dkr.ecr.us-east-1.amazonaws.com/wecarry-stg
   image_tag: "develop"
@@ -21,7 +21,7 @@
   dockercfg_service: awsgenerator
 
 #- name: push_production_timestamp
-#  service: app
+#  service: binary
 #  type: push
 #  image_name: 369020531563.dkr.ecr.us-east-1.amazonaws.com/wecarry-prod
 #  image_tag: "{{.Timestamp}}"
@@ -30,7 +30,7 @@
 #  dockercfg_service: awsgenerator
 #
 #- name: push_production_latest
-#  service: app
+#  service: binary
 #  type: push
 #  image_name: 369020531563.dkr.ecr.us-east-1.amazonaws.com/wecarry-prod
 #  image_tag: "latest"

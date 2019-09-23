@@ -1,6 +1,6 @@
 app:
   build:
-    image: 369020531563.dkr.ecr.us-east-1.amazonaws.com/wecarry-stg
+    image: tester
     context: application
     dockerfile: Dockerfile-dev
   cached: true
@@ -23,6 +23,15 @@ testdb:
     POSTGRES_USER: wecarry
     POSTGRES_PASSWORD: wecarry
     POSTGRES_DB: wecarry_test
+
+binary:
+  build:
+    image: 369020531563.dkr.ecr.us-east-1.amazonaws.com/wecarry-stg
+    context: application
+    dockerfile: Dockerfile
+  cached: true
+  working_dir: /wecarry
+  command: true
 
 ecsdeploy:
   image: silintl/ecs-deploy:latest
