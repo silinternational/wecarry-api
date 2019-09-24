@@ -10,8 +10,11 @@ const TypeSaml = "saml"
 // It is expected Login can be called multiple times, whether during initializing a login request or when
 // processing a authentication response.
 type Provider interface {
-	Login(c buffalo.Context) Response
 	Logout(c buffalo.Context) Response
+
+	AuthRequest(c buffalo.Context) (string, error)
+
+	AuthCallback(c buffalo.Context) Response
 }
 
 // User holds common attributes expected from auth providers
@@ -31,9 +34,14 @@ type Response struct {
 
 type EmptyProvider struct{}
 
-func (e *EmptyProvider) Login(c buffalo.Context) Response {
+func (e *EmptyProvider) Logout(c buffalo.Context) Response {
 	return Response{}
 }
-func (e *EmptyProvider) Logout(c buffalo.Context) Response {
+
+func (e *EmptyProvider) AuthRequest(c buffalo.Context) (string, error) {
+	return "", nil
+}
+
+func (e *EmptyProvider) AuthCallback(c buffalo.Context) Response {
 	return Response{}
 }

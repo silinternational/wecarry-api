@@ -3,8 +3,6 @@ package actions
 import (
 	"fmt"
 
-	"github.com/silinternational/wecarry-api/auth"
-
 	//	"github.com/silinternational/wecarry-api/auth"
 	"net/http"
 	"strconv"
@@ -35,6 +33,7 @@ const ExpiresUTCParam = "expires-utc"
 
 // http param for organization id
 const OrgIDParam = "org-id"
+const OrgIDSessionKey = "OrgID"
 
 // http param and session key for ReturnTo
 const ReturnToParam = "return-to"
@@ -70,39 +69,6 @@ type AuthResponse struct {
 	AuthOrgOptions *[]AuthOrgOption `json:"AuthOrgOptions,omitempty"`
 	RedirectURL    string           `json:"RedirectURL,omitempty"`
 	User           *AuthUser        `json:"User,omitempty"`
-}
-
-func getOrSetClientID(c buffalo.Context) (string, error) {
-	var clientID string
-
-	clientID = c.Param(ClientIDParam)
-
-	if clientID == "" {
-		var ok bool
-		clientID, ok = c.Session().Get(ClientIDSessionKey).(string)
-		if !ok {
-			return "", authError(c, http.StatusBadRequest, "MissingClientID", ClientIDParam+" is required to login")
-		}
-	} else {
-		c.Session().Set(ClientIDSessionKey, clientID)
-	}
-
-	return clientID, nil
-}
-
-func getOrSetAuthEmail(c buffalo.Context) (string, error) {
-	var authEmail string
-	var ok bool
-	authEmail, ok = c.Session().Get(AuthEmailSessionKey).(string)
-	if !ok {
-		authEmail = c.Param(AuthEmailParam)
-		if authEmail == "" {
-			return "", authError(c, http.StatusBadRequest, "MissingAuthEmail", AuthEmailParam+" is required to login")
-		}
-		c.Session().Set(AuthEmailSessionKey, authEmail)
-	}
-
-	return authEmail, nil
 }
 
 func getOrSetReturnTo(c buffalo.Context) string {
@@ -173,27 +139,6 @@ func provideOrgOptions(userOrgs models.UserOrganizations, c buffalo.Context) err
 	return c.Render(200, render.JSON(resp))
 }
 
-// get auth provider for org to process login
-func getAuthResp(authEmail string, org models.Organization, c buffalo.Context) (auth.Response, error) {
-
-	sp, err := org.GetAuthProvider()
-	if err != nil {
-		extras := map[string]interface{}{"authEmail": authEmail, "code": "UnableToLoadAuthProvider"}
-		domain.Error(c, err.Error(), extras)
-		return auth.Response{}, authError(c, http.StatusInternalServerError, "UnableToLoadAuthProvider",
-			fmt.Sprintf("unable to load auth provider for '%s'", org.Name))
-	}
-
-	authResp := sp.Login(c)
-	if authResp.Error != nil {
-		extras := map[string]interface{}{"authEmail": authEmail, "code": "AuthError"}
-		domain.Error(c, authResp.Error.Error(), extras)
-		return auth.Response{}, authError(c, http.StatusBadRequest, "AuthError", authResp.Error.Error())
-	}
-
-	return authResp, nil
-}
-
 func createAuthUser(
 	authEmail, clientID string,
 	user models.User,
@@ -235,24 +180,21 @@ func createAuthUser(
 	return authUser, nil
 }
 
-func AuthLogin(c buffalo.Context) error {
-	clientID, err := getOrSetClientID(c)
-	if err != nil {
-		return err
+func AuthRequest(c buffalo.Context) error {
+	clientID := c.Param(ClientIDParam)
+	if clientID == "" {
+		return authError(c, http.StatusBadRequest, "MissingClientID", ClientIDParam+" is required to login")
 	}
 
-	authEmail, err := getOrSetAuthEmail(c)
-	if err != nil {
-		return err
-	}
+	c.Session().Set(ClientIDSessionKey, clientID)
 
-	returnTo := getOrSetReturnTo(c)
-
-	err = c.Session().Save()
-	if err != nil {
-		domain.Error(c, err.Error(), map[string]interface{}{"authEmail": authEmail})
-		return authError(c, http.StatusInternalServerError, "ServerError", "unable to save session")
+	authEmail := c.Param(AuthEmailParam)
+	if authEmail == "" {
+		return authError(c, http.StatusBadRequest, "MissingAuthEmail", AuthEmailParam+" is required to login")
 	}
+	c.Session().Set(AuthEmailSessionKey, authEmail)
+
+	getOrSetReturnTo(c)
 
 	// find org for auth config and processing
 	org, userOrgs, err := getOrgAndUserOrgs(authEmail, c)
@@ -262,24 +204,87 @@ func AuthLogin(c buffalo.Context) error {
 
 	// User has more than one organization affiliation, return list to choose from
 	if len(userOrgs) > 1 {
-		if len(userOrgs) > 1 {
-			return provideOrgOptions(userOrgs, c)
-		}
+		return provideOrgOptions(userOrgs, c)
 	}
 
-	// get auth provider for org to process login
-	authResp, err := getAuthResp(authEmail, org, c)
+	orgID := org.Uuid.String()
+	if orgID == "" {
+		return authError(c, http.StatusInternalServerError, "MissingOrgID", "unable to determine the organization id")
+	}
+
+	c.Session().Set(OrgIDSessionKey, orgID)
+	err = c.Session().Save()
 	if err != nil {
-		return err
+		domain.Error(c, err.Error(), map[string]interface{}{"authEmail": authEmail})
+		return authError(c, http.StatusInternalServerError, "ServerError", "unable to save session")
 	}
 
-	// if redirect url is present it is initial login, not return from auth provider yet
-	if authResp.RedirectURL != "" {
-		resp := AuthResponse{
-			RedirectURL: authResp.RedirectURL,
-		}
+	sp, err := org.GetAuthProvider()
+	if err != nil {
+		extras := map[string]interface{}{"authEmail": authEmail, "code": "UnableToLoadAuthProvider"}
+		domain.Error(c, err.Error(), extras)
+		return authError(c, http.StatusInternalServerError, "UnableToLoadAuthProvider",
+			fmt.Sprintf("unable to load auth provider for '%s'", org.Name))
+	}
 
-		return c.Render(200, render.JSON(resp))
+	redirectURL, err := sp.AuthRequest(c)
+	if err != nil {
+		return authError(c, http.StatusInternalServerError, "UnableToGetAuthnURL",
+			fmt.Sprintf("unable to figure out what the authentication url should be '%s'", org.Name))
+	}
+
+	resp := AuthResponse{RedirectURL: redirectURL}
+
+	// Reply with a 200 and leave it to the UI to do the redirect
+	return c.Render(200, render.JSON(resp))
+
+}
+
+// AuthCallback assumes the user has logged in to the IDP or Oauth service and now their browser
+// has been redirected back with the final response
+func AuthCallback(c buffalo.Context) error {
+	clientID, ok := c.Session().Get(ClientIDSessionKey).(string)
+	if !ok {
+		return authError(c, http.StatusBadRequest, "MissingClientID", ClientIDParam+" is required to complete login")
+	}
+
+	authEmail, ok := c.Session().Get(AuthEmailSessionKey).(string)
+	if !ok {
+		return authError(c, http.StatusBadRequest, "MissingAuthEmail", AuthEmailParam+" is required to complete login")
+	}
+
+	returnTo := getOrSetReturnTo(c)
+
+	err := c.Session().Save()
+	if err != nil {
+		domain.Error(c, err.Error(), map[string]interface{}{"authEmail": authEmail})
+		return authError(c, http.StatusInternalServerError, "ServerError", "unable to save session")
+	}
+
+	orgID, ok := c.Session().Get(OrgIDSessionKey).(string)
+	if !ok {
+		return authError(c, http.StatusInternalServerError, "MissingOrgID", OrgIDSessionKey+" session entry is required to complete login")
+	}
+
+	org := models.Organization{}
+	err = org.FindByUUID(orgID)
+	if err != nil {
+		return authError(c, http.StatusInternalServerError, "MissingOrg", "unable to find org with uuid "+orgID)
+	}
+
+	sp, err := org.GetAuthProvider()
+	if err != nil {
+		extras := map[string]interface{}{"authEmail": authEmail, "code": "UnableToLoadAuthProvider"}
+		domain.Error(c, err.Error(), extras)
+		return authError(c, http.StatusInternalServerError, "UnableToLoadAuthProvider",
+			fmt.Sprintf("unable to load auth provider for '%s'", org.Name))
+	}
+
+	authResp := sp.AuthCallback(c)
+	if authResp.Error != nil {
+		extras := map[string]interface{}{"authEmail": authEmail, "code": "AuthError"}
+		domain.Error(c, authResp.Error.Error(), extras)
+		return authError(c, http.StatusBadRequest, "AuthError", authResp.Error.Error())
 	}
 
 	// if we have an authuser, find or create user in local db and finish login
