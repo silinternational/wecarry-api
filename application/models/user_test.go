@@ -8,27 +8,28 @@ import (
 
 	"github.com/gofrs/uuid"
 
-	"github.com/silinternational/handcarry-api/auth"
+	"github.com/silinternational/wecarry-api/auth"
 
-	"github.com/gobuffalo/buffalo/genny/build/_fixtures/coke/models"
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
-	"github.com/silinternational/handcarry-api/domain"
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 func (ms *ModelSuite) TestUser_FindOrCreateFromAuthUser() {
 	t := ms.T()
-	resetTables(t)
+	ResetTables(t, ms.DB)
+
+	unique := domain.GetUuid().String()
 
 	// create org for test
 	org := &Organization{
-		Name:       "TestOrg1",
+		Name:       "TestOrg1-" + unique,
 		Url:        nulls.String{},
 		AuthType:   "saml",
 		AuthConfig: "{}",
 		Uuid:       domain.GetUuid(),
 	}
-	err := models.DB.Create(org)
+	err := ms.DB.Create(org)
 	if err != nil {
 		t.Errorf("Failed to create organization for test, error: %s", err)
 		t.FailNow()
@@ -52,8 +53,8 @@ func (ms *ModelSuite) TestUser_FindOrCreateFromAuthUser() {
 				authUser: &auth.User{
 					FirstName: "Test",
 					LastName:  "User",
-					Email:     "test_user1@domain.com",
-					UserID:    "test_user1",
+					Email:     fmt.Sprintf("test_user1-%s@domain.com", unique),
+					UserID:    fmt.Sprintf("test_user1-%s", unique),
 				},
 			},
 			wantErr: false,
@@ -66,8 +67,8 @@ func (ms *ModelSuite) TestUser_FindOrCreateFromAuthUser() {
 				authUser: &auth.User{
 					FirstName: "Test",
 					LastName:  "User",
-					Email:     "test_user1@domain.com",
-					UserID:    "test_user1",
+					Email:     fmt.Sprintf("test_user1-%s@domain.com", unique),
+					UserID:    fmt.Sprintf("test_user1-%s", unique),
 				},
 			},
 			wantErr: false,
@@ -80,7 +81,7 @@ func (ms *ModelSuite) TestUser_FindOrCreateFromAuthUser() {
 				authUser: &auth.User{
 					FirstName: "Test",
 					LastName:  "User",
-					Email:     "test_user1@domain.com",
+					Email:     fmt.Sprintf("test_user1-%s@domain.com", unique),
 					UserID:    "test_user2",
 				},
 			},
@@ -103,8 +104,8 @@ func (ms *ModelSuite) TestUser_FindOrCreateFromAuthUser() {
 
 func (ms *ModelSuite) TestUser_FindByAccessToken() {
 	t := ms.T()
-	resetTables(t)
-	_, users, userOrgs := CreateUserFixtures(t)
+	ResetTables(t, ms.DB)
+	_, users, userOrgs := CreateUserFixtures(ms, t)
 
 	// Load access token test fixtures
 	tokens := UserAccessTokens{
@@ -270,11 +271,12 @@ func (ms *ModelSuite) TestValidateUser() {
 // Ensure multiple access tokens for same organization are allowed (to support multiple tabs/browsers)
 func (ms *ModelSuite) TestCreateAccessToken() {
 	t := ms.T()
-	resetTables(t)
-	orgs, users, _ := CreateUserFixtures(t)
+	ResetTables(t, ms.DB)
+
+	orgs, users, _ := CreateUserFixtures(ms, t)
 
 	type args struct {
-		user     User
+		user     *User
 		clientID string
 	}
 	tests := []struct {
@@ -285,7 +287,7 @@ func (ms *ModelSuite) TestCreateAccessToken() {
 		{
 			name: "abc123",
 			args: args{
-				user:     users[0],
+				user:     &users[0],
 				clientID: "abc123",
 			},
 			wantErr: false,
@@ -293,7 +295,7 @@ func (ms *ModelSuite) TestCreateAccessToken() {
 		{
 			name: "123abc",
 			args: args{
-				user:     users[0],
+				user:     &users[0],
 				clientID: "123abc",
 			},
 			wantErr: false,
@@ -301,7 +303,7 @@ func (ms *ModelSuite) TestCreateAccessToken() {
 		{
 			name: "empty client ID",
 			args: args{
-				user:     users[0],
+				user:     &users[0],
 				clientID: "",
 			},
 			wantErr: true,
@@ -346,8 +348,8 @@ func (ms *ModelSuite) TestCreateAccessToken() {
 
 func (ms *ModelSuite) TestGetOrgIDs() {
 	t := ms.T()
-	resetTables(t)
-	_, users, _ := CreateUserFixtures(t)
+	ResetTables(t, ms.DB)
+	_, users, _ := CreateUserFixtures(ms, t)
 
 	tests := []struct {
 		name string
@@ -371,26 +373,28 @@ func (ms *ModelSuite) TestGetOrgIDs() {
 	}
 }
 
-func CreateUserFixtures(t *testing.T) (Organizations, Users, UserOrganizations) {
-	resetTables(t)
+func CreateUserFixtures(ms *ModelSuite, t *testing.T) ([]Organization, Users, UserOrganizations) {
+	ResetTables(t, ms.DB)
+
+	unique := domain.GetUuid().String()
 
 	// Load Organization test fixtures
-	orgs := Organizations{
+	orgs := []Organization{
 		{
-			Name:       "ACME",
+			Name:       fmt.Sprintf("ACME-%s", unique),
 			Uuid:       domain.GetUuid(),
 			AuthType:   "saml2",
-			AuthConfig: "[]",
+			AuthConfig: "{}",
 		},
 		{
-			Name:       "Starfleet Academy",
+			Name:       fmt.Sprintf("Starfleet Academy-%s", unique),
 			Uuid:       domain.GetUuid(),
 			AuthType:   "saml2",
-			AuthConfig: "[]",
+			AuthConfig: "{}",
 		},
 	}
 	for i := range orgs {
-		if err := DB.Create(&orgs[i]); err != nil {
+		if err := ms.DB.Create(&orgs[i]); err != nil {
 			t.Errorf("error creating org %+v ...\n %v \n", orgs[i], err)
 			t.FailNow()
 		}
@@ -399,30 +403,30 @@ func CreateUserFixtures(t *testing.T) (Organizations, Users, UserOrganizations) 
 	// Load User test fixtures
 	users := Users{
 		{
-			Email:     "user1@example.com",
+			Email:     fmt.Sprintf("user1-%s@example.com", unique),
 			FirstName: "Existing",
 			LastName:  "User",
-			Nickname:  "Existing User",
+			Nickname:  fmt.Sprintf("Existing User %s", unique),
 			Uuid:      domain.GetUuid(),
 		},
 		{
-			Email:     "user2@example.com",
+			Email:     fmt.Sprintf("user2-%s@example.com", unique),
 			FirstName: "Another",
 			LastName:  "User",
-			Nickname:  "Another User",
+			Nickname:  fmt.Sprintf("Another User %s", unique),
 			Uuid:      domain.GetUuid(),
 		},
 		{
-			Email:     "not_participating@example.com",
+			Email:     fmt.Sprintf("not_participating-%s@example.com", unique),
 			FirstName: "Not",
 			LastName:  "Participating",
-			Nickname:  "Not Participating",
+			Nickname:  fmt.Sprintf("Not Participating %s", unique),
 			Uuid:      domain.GetUuid(),
 		},
 	}
 	for i := range users {
-		if err := DB.Create(&users[i]); err != nil {
-			t.Errorf("could not create test user %v ... %v", i, err)
+		if err := ms.DB.Create(&users[i]); err != nil {
+			t.Errorf("could not create test user %v ... %v", users[i], err)
 			t.FailNow()
 		}
 	}
@@ -432,19 +436,19 @@ func CreateUserFixtures(t *testing.T) (Organizations, Users, UserOrganizations) 
 		{
 			OrganizationID: orgs[0].ID,
 			UserID:         users[0].ID,
-			AuthID:         "existing_user",
-			AuthEmail:      "user@example.com",
+			AuthID:         users[0].Email,
+			AuthEmail:      users[0].Email,
 		},
 		{
 			OrganizationID: orgs[1].ID,
 			UserID:         users[0].ID,
-			AuthID:         "existing_user",
-			AuthEmail:      "user@example.com",
+			AuthID:         users[0].Email,
+			AuthEmail:      users[0].Email,
 		},
 	}
 	for i := range userOrgs {
-		if err := DB.Create(&userOrgs[i]); err != nil {
-			t.Errorf("could not create test user org ... %v", err)
+		if err := ms.DB.Create(&userOrgs[i]); err != nil {
+			t.Errorf("could not create test user org ... %v. uo = %+v", err, userOrgs[i])
 			t.FailNow()
 		}
 	}
@@ -454,8 +458,8 @@ func CreateUserFixtures(t *testing.T) (Organizations, Users, UserOrganizations) 
 
 func (ms *ModelSuite) TestGetOrganizations() {
 	t := ms.T()
-	resetTables(t)
-	orgs, users, _ := CreateUserFixtures(t)
+	ResetTables(t, ms.DB)
+	orgs, users, _ := CreateUserFixtures(ms, t)
 
 	tests := []struct {
 		name string
@@ -480,16 +484,16 @@ func (ms *ModelSuite) TestGetOrganizations() {
 				orgNames[i] = o.Name
 			}
 			if !reflect.DeepEqual(orgNames, test.want) {
-				t.Errorf("GetOrgIDs() = \"%v\", want \"%v\"", orgNames, test.want)
+				t.Errorf("GetOrganizations() = \"%v\", want \"%v\"", orgNames, test.want)
 			}
 		})
 	}
 }
 
-func (ms *ModelSuite) TestFindUserOrganization() {
+func (ms *ModelSuite) Test_FindUserOrganization() {
 	t := ms.T()
-	resetTables(t)
-	createUserOrganizationFixtures(t)
+	ResetTables(t, ms.DB)
+	createUserOrganizationFixtures(ms, t)
 
 	type args struct {
 		user User
@@ -564,9 +568,9 @@ func (ms *ModelSuite) TestFindUserOrganization() {
 
 func (ms *ModelSuite) TestUser_GetPosts() {
 	t := ms.T()
-	resetTables(t)
-	_, users, _ := CreateUserFixtures(t)
-	posts := CreatePostFixtures(t, users)
+	ResetTables(t, ms.DB)
+	_, users, _ := CreateUserFixtures(ms, t)
+	posts := CreatePostFixtures(ms, t, users)
 
 	type args struct {
 		user     User
@@ -617,5 +621,81 @@ func (ms *ModelSuite) TestUser_GetPosts() {
 				t.Errorf("GetOrgIDs() = \"%v\", want \"%v\"", ids, test.want)
 			}
 		})
+	}
+}
+
+func (ms *ModelSuite) TestCanEditOrganization() {
+	t := ms.T()
+	ResetTables(t, ms.DB)
+
+	orgFixtures := []Organization{
+		{
+			ID:         1,
+			Name:       "Org1",
+			Url:        nulls.String{},
+			AuthType:   "saml2",
+			AuthConfig: "{}",
+			Uuid:       domain.GetUuid(),
+		},
+		{
+			ID:         2,
+			Name:       "Org2",
+			Url:        nulls.String{},
+			AuthType:   "saml2",
+			AuthConfig: "{}",
+			Uuid:       domain.GetUuid(),
+		},
+	}
+	for _, of := range orgFixtures {
+		err := ms.DB.Create(&of)
+		if err != nil {
+			t.Errorf("failed to create org fixtures: %s", err)
+		}
+	}
+
+	user := User{
+		ID:        1,
+		Email:     "test@com.com",
+		FirstName: "Test",
+		LastName:  "User",
+		Nickname:  "test_user",
+		AdminRole: nulls.String{},
+		Uuid:      domain.GetUuid(),
+	}
+	err := ms.DB.Create(&user)
+	if err != nil {
+		t.Errorf("failed to create user fixture: %s", err)
+	}
+
+	userOrgFixtures := []UserOrganization{
+		{
+			ID:             1,
+			OrganizationID: 1,
+			UserID:         1,
+			Role:           UserOrganizationRoleAdmin,
+			AuthID:         "abc123",
+			AuthEmail:      "test@com.com",
+		},
+		{
+			ID:             2,
+			OrganizationID: 2,
+			UserID:         1,
+			Role:           UserOrganizationRoleMember,
+			AuthID:         "123abc",
+			AuthEmail:      "test@com.com",
+		},
+	}
+	for _, uof := range userOrgFixtures {
+		err := ms.DB.Create(&uof)
+		if err != nil {
+			t.Errorf("failed to create user org fixtures: %s", err)
+		}
+	}
+
+	if !user.CanEditOrganization(orgFixtures[0].ID) {
+		t.Error("user unable to edit org that they should be able to edit")
+	}
+	if user.CanEditOrganization(orgFixtures[1].ID) {
+		t.Error("user is able to edit org that they should not be able to edit")
 	}
 }

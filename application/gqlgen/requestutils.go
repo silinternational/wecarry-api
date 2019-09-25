@@ -1,7 +1,7 @@
 package gqlgen
 
 import (
-	"github.com/silinternational/handcarry-api/domain"
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 // GetSelectFieldsFromRequestFields gets the intersection of all fields for the db model

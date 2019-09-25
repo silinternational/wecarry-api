@@ -13,6 +13,10 @@ type Mutation {
     createPost(input: NewPost!): Post!
     updatePost(input: UpdatedPost!): Post!
     createMessage(input: NewMessage!): Message!
+    createOrganization(input: NewOrganization!): Organization!
+    updateOrganization(input: UpdatedOrganization!): Organization!
+    createOrganizationDomain(input: NewOrganizationDomain!): [OrganizationDomain!]!
+    removeOrganizationDomain(input: NewOrganizationDomain!): [OrganizationDomain!]!
     uploadPostImage(input: NewPostImage!): File!
 }
 
@@ -101,6 +105,32 @@ type Organization {
     url: String
     createdAt: Time
     updatedAt: Time
+    domains: [OrganizationDomain!]!
+}
+
+input NewOrganization {
+    name: String!
+    url: String
+    authType: String!
+    authConfig: String!
+}
+
+input UpdatedOrganization {
+    id: ID!
+    name: String!
+    url: String
+    authType: String!
+    authConfig: String!
+}
+
+type OrganizationDomain {
+    domain: String!
+    organizationID: ID!
+}
+
+input NewOrganizationDomain {
+    domain: String!
+    organizationID: ID!
 }
 
 type Thread {

@@ -1,11 +1,36 @@
 app:
   build:
-    image: 369020531563.dkr.ecr.us-east-1.amazonaws.com/handcarry-stg
+    image: tester
+    context: application
+    dockerfile: Dockerfile-dev
+  cached: true
+  depends_on:
+    - testdb
+  environment:
+    ADDR: 0.0.0.0
+    HOST: http://wecarry.local:3000
+    PORT: 3000
+    UI_URL: http://wecarry.local:5000
+    DATABASE_URL: postgres://wecarry:wecarry@testdb:5432/wecarry_test?sslmode=disable
+    GO_ENV: test
+  encrypted_env_file: .env.encrypted
+  working_dir: /wecarry
+  command: true
+
+testdb:
+  image: postgres:9.6.13
+  environment:
+    POSTGRES_USER: wecarry
+    POSTGRES_PASSWORD: wecarry
+    POSTGRES_DB: wecarry_test
+
+binary:
+  build:
+    image: 369020531563.dkr.ecr.us-east-1.amazonaws.com/wecarry-stg
     context: application
     dockerfile: Dockerfile
   cached: true
-  encrypted_env_file: .env.encrypted
-  working_dir: /go/src/handcarry
+  working_dir: /wecarry
   command: true
 
 ecsdeploy:

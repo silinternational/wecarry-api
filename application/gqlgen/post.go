@@ -10,8 +10,8 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/gobuffalo/pop"
-	"github.com/silinternational/handcarry-api/domain"
-	"github.com/silinternational/handcarry-api/models"
+	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/models"
 	"github.com/vektah/gqlparser/gqlerror"
 )
 
@@ -84,7 +84,7 @@ func (r *postResolver) Organization(ctx context.Context, obj *models.Post) (*mod
 	if obj == nil {
 		return nil, nil
 	}
-	selectFields := GetSelectFieldsFromRequestFields(OrganizationFields(), graphql.CollectAllFields(ctx))
+	selectFields := getSelectFieldsForOrganizations(ctx)
 	return obj.GetOrganization(selectFields)
 }
 
@@ -212,7 +212,7 @@ func (r *queryResolver) Post(ctx context.Context, id *string) (*models.Post, err
 // convertGqlPostInputToDBPost takes a `PostInput` and either finds a record matching the UUID given in `input.ID` or
 // creates a new `models.Post` with a new UUID. In either case, all properties that are not `nil` are set to the value
 // provided in `input`
-func convertGqlPostInputToDBPost(input postInput, createdByUser models.User) (models.Post, error) {
+func convertGqlPostInputToDBPost(input postInput, currentUser models.User) (models.Post, error) {
 	post := models.Post{}
 
 	if input.ID != nil {
@@ -221,15 +221,29 @@ func convertGqlPostInputToDBPost(input postInput, createdByUser models.User) (mo
 		}
 	} else {
 		post.Uuid = domain.GetUuid()
-		post.CreatedByID = createdByUser.ID
+		post.CreatedByID = currentUser.ID
+		// TODO: This should probably be done in the model package
+		if input.Type != nil {
+			switch *input.Type {
+			case models.PostTypeRequest:
+				post.ReceiverID = nulls.NewInt(currentUser.ID)
+			case models.PostTypeOffer:
+				post.ProviderID = nulls.NewInt(currentUser.ID)
+			}
+		}
 	}
 
 	if input.Status != nil {
 		post.Status = input.Status.String()
+		if *input.Status == PostStatusCommitted {
+			// TODO: This should probably be done in the model package, especially if the logic becomes more complex
+			post.ProviderID = nulls.NewInt(currentUser.ID)
+		}
 	}
 
 	if input.OrgID != nil {
-		org, err := models.FindOrgByUUID(*input.OrgID)
+		var org models.Organization
+		err := org.FindByUUID(*input.OrgID)
 		if err != nil {
 			return models.Post{}, err
 		}
@@ -286,7 +300,7 @@ func convertGqlPostInputToDBPost(input postInput, createdByUser models.User) (mo
 		post.URL = nulls.NewString(*input.URL)
 	}
 
-	if input.Cost != nil {
+	if input.Cost != nil && *(input.Cost) != "" {
 		c, err := strconv.ParseFloat(*input.Cost, 64)
 		if err != nil {
 			err = fmt.Errorf("error converting cost %v ... %v", input.Cost, err.Error())

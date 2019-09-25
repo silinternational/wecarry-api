@@ -13,7 +13,7 @@ import (
 	saml2 "github.com/russellhaering/gosaml2"
 	"github.com/russellhaering/gosaml2/types"
 	dsig "github.com/russellhaering/goxmldsig"
-	"github.com/silinternational/handcarry-api/auth"
+	"github.com/silinternational/wecarry-api/auth"
 )
 
 type Provider struct {

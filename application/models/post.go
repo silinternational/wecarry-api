@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/silinternational/handcarry-api/domain"
+	"github.com/silinternational/wecarry-api/domain"
 
 	"github.com/gofrs/uuid"
 
@@ -15,7 +15,8 @@ import (
 	"github.com/gobuffalo/validate/validators"
 )
 
-const PostTypeRequest = "request"
+const PostTypeRequest = "REQUEST"
+const PostTypeOffer = "OFFER"
 
 const PostStatusUnfulfilled = "unfulfilled"
 

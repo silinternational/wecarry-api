@@ -15,17 +15,22 @@ resolver:
 autobind: []
 models:
   Organization:
-    model: github.com/silinternational/handcarry-api/models.Organization
+    model: github.com/silinternational/wecarry-api/models.Organization
     fields:
       id:
         resolver: true
+  OrganizationDomain:
+    model: github.com/silinternational/wecarry-api/models.OrganizationDomain
+    fields:
+      id:
+        resolver: false
   User:
-    model: github.com/silinternational/handcarry-api/models.User
+    model: github.com/silinternational/wecarry-api/models.User
     fields:
       id:
         resolver: true
   Post:
-    model: github.com/silinternational/handcarry-api/models.Post
+    model: github.com/silinternational/wecarry-api/models.Post
     fields:
       id:
         resolver: true
@@ -38,23 +43,23 @@ models:
       provider:
         resolver: true
   Thread:
-    model: github.com/silinternational/handcarry-api/models.Thread
+    model: github.com/silinternational/wecarry-api/models.Thread
     fields:
       id:
         resolver: true
       post:
         resolver: true
   Message:
-    model: github.com/silinternational/handcarry-api/models.Message
+    model: github.com/silinternational/wecarry-api/models.Message
     fields:
       id:
         resolver: true
       thread:
         resolver: true
   UpdatedPost:
-    model: github.com/silinternational/handcarry-api/gqlgen.postInput
+    model: github.com/silinternational/wecarry-api/gqlgen.postInput
   NewPost:
-    model: github.com/silinternational/handcarry-api/gqlgen.postInput
+    model: github.com/silinternational/wecarry-api/gqlgen.postInput
 
 #directives:
 #  deprecated:

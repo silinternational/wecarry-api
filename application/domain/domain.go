@@ -15,17 +15,15 @@ import (
 	uuid2 "github.com/gofrs/uuid"
 )
 
-const ClientIDKey = "client_id"
-
-const ErrorLevelWarn = "warn"
-const ErrorLevelError = "error"
-const ErrorLevelCritical = "critical"
-
-const AdminRoleSuperDuperAdmin = "SuperDuperAdmin"
-
-const EmptyUUID = "00000000-0000-0000-0000-000000000000"
-
-const DateFormat = "2006-01-02"
+const (
+	ErrorLevelWarn           = "warn"
+	ErrorLevelError          = "error"
+	ErrorLevelCritical       = "critical"
+	AdminRoleSuperDuperAdmin = "SuperDuperAdmin"
+	AdminRoleSalesAdmin      = "SalesAdmin"
+	EmptyUUID                = "00000000-0000-0000-0000-000000000000"
+	DateFormat               = "2006-01-02"
+)
 
 const MaxFileSize = 1 << 20 // 1 Mebibyte
 
@@ -172,7 +170,7 @@ func RollbarMiddleware(next buffalo.Handler) buffalo.Handler {
 			envy.Get("GO_ENV", "development"),
 			"",
 			"",
-			envy.Get("ROLLBAR_SERVER_ROOT", "github.com/silinternational/handcarry-api"))
+			envy.Get("ROLLBAR_SERVER_ROOT", "github.com/silinternational/wecarry-api"))
 
 		c.Set("rollbar", client)
 

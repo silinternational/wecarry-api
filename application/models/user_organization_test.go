@@ -4,12 +4,12 @@ import (
 	"testing"
 
 	"github.com/gobuffalo/nulls"
-	"github.com/silinternational/handcarry-api/domain"
+	"github.com/silinternational/wecarry-api/domain"
 )
 
-func createUserOrganizationFixtures(t *testing.T) {
+func createUserOrganizationFixtures(ms *ModelSuite, t *testing.T) {
 	// reset db tables
-	resetTables(t)
+	ResetTables(ms.T(), ms.DB)
 
 	singleUuid := domain.GetUuid()
 	twoUuid := domain.GetUuid()
@@ -35,7 +35,7 @@ func createUserOrganizationFixtures(t *testing.T) {
 		},
 	}
 	for _, u := range users {
-		err := DB.Create(&u)
+		err := ms.DB.Create(&u)
 		if err != nil {
 			t.Errorf("unable to create fixture user: %s", err)
 			t.FailNow()
@@ -64,7 +64,7 @@ func createUserOrganizationFixtures(t *testing.T) {
 		},
 	}
 	for _, o := range orgs {
-		err := DB.Create(&o)
+		err := ms.DB.Create(&o)
 		if err != nil {
 			t.Errorf("unable to create fixture organization: %s", err)
 			t.FailNow()
@@ -95,7 +95,7 @@ func createUserOrganizationFixtures(t *testing.T) {
 		},
 	}
 	for _, uo := range userOrgs {
-		err := DB.Create(&uo)
+		err := ms.DB.Create(&uo)
 		if err != nil {
 			t.Errorf("unable to create fixture user_organization: %s", err)
 			t.FailNow()
@@ -105,8 +105,8 @@ func createUserOrganizationFixtures(t *testing.T) {
 
 func (ms *ModelSuite) TestFindByAuthEmail() {
 	t := ms.T()
-	resetTables(t)
-	createUserOrganizationFixtures(t)
+	ResetTables(t, ms.DB)
+	createUserOrganizationFixtures(ms, t)
 
 	type args struct {
 		authEmail string

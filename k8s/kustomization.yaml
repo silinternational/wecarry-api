@@ -1,8 +1,8 @@
 secretGenerator:
 - name: postgresql-pass
   literals:
-  - password=handcarry
+  - password=wecarry
 resources:
   - postgresql-deployment.yaml
 #  - admin-deployment.yaml
-  - handcarry-deployment.yaml
+  - wecarry-deployment.yaml

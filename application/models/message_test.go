@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/gobuffalo/validate"
-	"github.com/silinternational/handcarry-api/domain"
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 func (ms *ModelSuite) TestMessage_Validate() {
@@ -86,8 +86,8 @@ func (ms *ModelSuite) TestMessage_Validate() {
 func (ms *ModelSuite) TestMessage_GetSender() {
 	t := ms.T()
 
-	resetTables(t)
-	messageFixtures := Fixtures_GetSender(t)
+	ResetTables(t, ms.DB)
+	messageFixtures := Fixtures_GetSender(ms, t)
 
 	messages := messageFixtures.Messages
 	users := messageFixtures.Users
@@ -109,8 +109,8 @@ func (ms *ModelSuite) TestMessage_GetSender() {
 func (ms *ModelSuite) TestMessage_GetThread() {
 	t := ms.T()
 
-	resetTables(t)
-	messageFixtures := Fixtures_GetSender(t)
+	ResetTables(t, ms.DB)
+	messageFixtures := Fixtures_GetSender(ms, t)
 
 	messages := messageFixtures.Messages
 	threads := messageFixtures.Threads
