@@ -70,11 +70,11 @@ func App() *buffalo.App {
 
 		auth := app.Group("/auth")
 		auth.Middleware.Skip(SetCurrentUser, AuthRequest, AuthCallback)
-		auth.GET("/login", AuthRequest)
+
 		auth.POST("/login", AuthRequest)
 
-		auth.GET("/callback", AuthCallback) //
-		auth.POST("/callback", AuthCallback)
+		auth.GET("/callback", AuthCallback) // for Google Oauth
+		//auth.POST("/callback", AuthCallback)  // for SAML???
 
 		auth.GET("/logout", AuthDestroy)
 
