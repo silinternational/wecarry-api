@@ -23,6 +23,7 @@ type User struct {
 	LastName  string
 	Email     string
 	UserID    string
+	Nickname  string
 }
 
 // Response holds fields for login and logout responses. not all fields will have values
