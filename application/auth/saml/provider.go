@@ -96,7 +96,11 @@ func (p *Provider) initSAMLServiceProvider() error {
 	return nil
 }
 
-func (p *Provider) Login(c buffalo.Context) auth.Response {
+func (p *Provider) AuthRequest(c buffalo.Context) (string, error) {
+	return p.SamlProvider.BuildAuthURL("")
+}
+
+func (p *Provider) AuthCallback(c buffalo.Context) auth.Response {
 	resp := auth.Response{}
 
 	// check if this is not a saml response and redirect
