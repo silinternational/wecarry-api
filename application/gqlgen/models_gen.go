@@ -23,9 +23,29 @@ type NewMessage struct {
 	ThreadID *string `json:"threadID"`
 }
 
+type NewOrganization struct {
+	Name       string  `json:"name"`
+	URL        *string `json:"url"`
+	AuthType   string  `json:"authType"`
+	AuthConfig string  `json:"authConfig"`
+}
+
+type NewOrganizationDomain struct {
+	Domain         string `json:"domain"`
+	OrganizationID string `json:"organizationID"`
+}
+
 type NewPostImage struct {
 	File   graphql.Upload `json:"file"`
 	PostID string         `json:"postID"`
+}
+
+type UpdatedOrganization struct {
+	ID         string  `json:"id"`
+	Name       string  `json:"name"`
+	URL        *string `json:"url"`
+	AuthType   string  `json:"authType"`
+	AuthConfig string  `json:"authConfig"`
 }
 
 type PostRole string

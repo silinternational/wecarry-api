@@ -72,7 +72,7 @@ type ComplexityRoot struct {
 		RemoveOrganizationDomain func(childComplexity int, input NewOrganizationDomain) int
 		UpdateOrganization       func(childComplexity int, input UpdatedOrganization) int
 		UpdatePost               func(childComplexity int, input postInput) int
-		UploadPostImage func(childComplexity int, input NewPostImage) int
+		UploadPostImage          func(childComplexity int, input NewPostImage) int
 	}
 
 	Organization struct {
@@ -1164,7 +1164,7 @@ func (ec *executionContext) field_Mutation_uploadPostImage_args(ctx context.Cont
 	args := map[string]interface{}{}
 	var arg0 NewPostImage
 	if tmp, ok := rawArgs["input"]; ok {
-		arg0, err = ec.unmarshalNNewPostImage2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐNewPostImage(ctx, tmp)
+		arg0, err = ec.unmarshalNNewPostImage2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐNewPostImage(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1974,7 +1974,7 @@ func (ec *executionContext) _Mutation_uploadPostImage(ctx context.Context, field
 	res := resTmp.(*File)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNFile2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐFile(ctx, field.Selections, res)
+	return ec.marshalNFile2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐFile(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Organization_id(ctx context.Context, field graphql.CollectedField, obj *models.Organization) (ret graphql.Marshaler) {
@@ -3036,7 +3036,7 @@ func (ec *executionContext) _Post_images(ctx context.Context, field graphql.Coll
 	res := resTmp.([]*File)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNFile2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐFile(ctx, field.Selections, res)
+	return ec.marshalNFile2ᚕᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐFile(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_users(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3354,7 +3354,7 @@ func (ec *executionContext) _Query_postImage(ctx context.Context, field graphql.
 	res := resTmp.(*File)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNFile2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐFile(ctx, field.Selections, res)
+	return ec.marshalNFile2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐFile(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -5378,6 +5378,30 @@ func (ec *executionContext) unmarshalInputNewPost(ctx context.Context, obj inter
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputNewPostImage(ctx context.Context, obj interface{}) (NewPostImage, error) {
+	var it NewPostImage
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "file":
+			var err error
+			it.File, err = ec.unmarshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "postID":
+			var err error
+			it.PostID, err = ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputUpdatedOrganization(ctx context.Context, obj interface{}) (UpdatedOrganization, error) {
 	var it UpdatedOrganization
 	var asMap = obj.(map[string]interface{})
@@ -5411,30 +5435,6 @@ func (ec *executionContext) unmarshalInputUpdatedOrganization(ctx context.Contex
 		case "authConfig":
 			var err error
 			it.AuthConfig, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputNewPostImage(ctx context.Context, obj interface{}) (NewPostImage, error) {
-	var it NewPostImage
-	var asMap = obj.(map[string]interface{})
-
-	for k, v := range asMap {
-		switch k {
-		case "file":
-			var err error
-			it.File, err = ec.unmarshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "postID":
-			var err error
-			it.PostID, err = ec.unmarshalNID2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -6638,25 +6638,11 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) unmarshalNID2int(ctx context.Context, v interface{}) (int, error) {
-	return graphql.UnmarshalIntID(v)
-}
-
-func (ec *executionContext) marshalNID2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
-	res := graphql.MarshalIntID(v)
-	if res == graphql.Null {
-		if !ec.HasError(graphql.GetResolverContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-	}
-	return res
-}
-
-func (ec *executionContext) marshalNFile2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐFile(ctx context.Context, sel ast.SelectionSet, v File) graphql.Marshaler {
+func (ec *executionContext) marshalNFile2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐFile(ctx context.Context, sel ast.SelectionSet, v File) graphql.Marshaler {
 	return ec._File(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNFile2ᚕᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐFile(ctx context.Context, sel ast.SelectionSet, v []*File) graphql.Marshaler {
+func (ec *executionContext) marshalNFile2ᚕᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐFile(ctx context.Context, sel ast.SelectionSet, v []*File) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -6680,7 +6666,7 @@ func (ec *executionContext) marshalNFile2ᚕᚖgithubᚗcomᚋsilinternational�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNFile2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐFile(ctx, sel, v[i])
+			ret[i] = ec.marshalNFile2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐFile(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -6693,7 +6679,7 @@ func (ec *executionContext) marshalNFile2ᚕᚖgithubᚗcomᚋsilinternational�
 	return ret
 }
 
-func (ec *executionContext) marshalNFile2ᚖgithubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐFile(ctx context.Context, sel ast.SelectionSet, v *File) graphql.Marshaler {
+func (ec *executionContext) marshalNFile2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐFile(ctx context.Context, sel ast.SelectionSet, v *File) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -6701,6 +6687,20 @@ func (ec *executionContext) marshalNFile2ᚖgithubᚗcomᚋsilinternationalᚋha
 		return graphql.Null
 	}
 	return ec._File(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNID2int(ctx context.Context, v interface{}) (int, error) {
+	return graphql.UnmarshalIntID(v)
+}
+
+func (ec *executionContext) marshalNID2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
+	res := graphql.MarshalIntID(v)
+	if res == graphql.Null {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+	}
+	return res
 }
 
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
@@ -6802,12 +6802,11 @@ func (ec *executionContext) unmarshalNNewPost2githubᚗcomᚋsilinternationalᚋ
 	return ec.unmarshalInputNewPost(ctx, v)
 }
 
-func (ec *executionContext) marshalNOrganization2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganization(ctx context.Context, sel ast.SelectionSet, v models.Organization) graphql.Marshaler {
-func (ec *executionContext) unmarshalNNewPostImage2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋgqlgenᚐNewPostImage(ctx context.Context, v interface{}) (NewPostImage, error) {
+func (ec *executionContext) unmarshalNNewPostImage2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐNewPostImage(ctx context.Context, v interface{}) (NewPostImage, error) {
 	return ec.unmarshalInputNewPostImage(ctx, v)
 }
 
-func (ec *executionContext) marshalNOrganization2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐOrganization(ctx context.Context, sel ast.SelectionSet, v models.Organization) graphql.Marshaler {
+func (ec *executionContext) marshalNOrganization2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganization(ctx context.Context, sel ast.SelectionSet, v models.Organization) graphql.Marshaler {
 	return ec._Organization(ctx, sel, &v)
 }
 
@@ -7101,7 +7100,7 @@ func (ec *executionContext) marshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋg
 	return res
 }
 
-func (ec *executionContext) marshalNUser2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐUser(ctx context.Context, sel ast.SelectionSet, v models.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx context.Context, sel ast.SelectionSet, v models.User) graphql.Marshaler {
 	return ec._User(ctx, sel, &v)
 }
 
@@ -7129,7 +7128,7 @@ func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋsilinternational�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, sel, v[i])
+			ret[i] = ec.marshalOUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -7551,7 +7550,7 @@ func (ec *executionContext) marshalOTime2ᚖtimeᚐTime(ctx context.Context, sel
 	return ec.marshalOTime2timeᚐTime(ctx, sel, *v)
 }
 
-func (ec *executionContext) marshalOUser2githubᚗcomᚋsilinternationalᚋhandcarryᚑapiᚋmodelsᚐUser(ctx context.Context, sel ast.SelectionSet, v models.User) graphql.Marshaler {
+func (ec *executionContext) marshalOUser2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx context.Context, sel ast.SelectionSet, v models.User) graphql.Marshaler {
 	return ec._User(ctx, sel, &v)
 }
 
