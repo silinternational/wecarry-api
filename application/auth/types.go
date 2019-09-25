@@ -7,8 +7,6 @@ import (
 const TypeSaml = "saml"
 
 // Provider interface to be implemented by any auth providers
-// It is expected Login can be called multiple times, whether during initializing a login request or when
-// processing a authentication response.
 type Provider interface {
 	Logout(c buffalo.Context) Response
 
