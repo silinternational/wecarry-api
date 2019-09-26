@@ -1,9 +1,7 @@
 package models
 
 import (
-	"encoding/json"
 	"fmt"
-	"github.com/gobuffalo/envy"
 	"github.com/silinternational/wecarry-api/auth/google"
 	"time"
 
@@ -20,9 +18,6 @@ import (
 
 const AuthTypeSaml = "saml"
 const AuthTypeGoogle = "google"
-
-// Environment variable keys
-const AuthCallbackURLEnv = "AUTH_CALLBACK_URL"
 
 type Organization struct {
 	ID                  int                  `json:"id" db:"id"`
@@ -68,11 +63,7 @@ func (o *Organization) GetAuthProvider() (auth.Provider, error) {
 	}
 
 	if o.AuthType == AuthTypeGoogle {
-		gCfg := google.GoogleConfig{}
-		json.Unmarshal([]byte(o.AuthConfig), &gCfg)
-
-		scopes := []string{"profile", "email"}
-		return google.New(gCfg.GoogleKey, gCfg.GoogleSecret, envy.Get(AuthCallbackURLEnv, ""), scopes...), nil
+		return google.New([]byte(o.AuthConfig))
 	}
 
 	return &auth.EmptyProvider{}, fmt.Errorf("unsupported auth provider type: %s", o.AuthType)

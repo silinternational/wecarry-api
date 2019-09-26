@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gobuffalo/buffalo"
+	"github.com/gobuffalo/envy"
 	"github.com/silinternational/wecarry-api/auth"
 	"io/ioutil"
 	"net/http"
@@ -29,15 +30,24 @@ type GoogleConfig struct {
 // New creates a new Google provider, and sets up important connection details.
 // You should always call `google.New` to get a new Provider. Never try to create
 // one manually.
-func New(clientKey, secret, callbackURL string, scopes ...string) *Provider {
+func New(jsonConfig json.RawMessage) (*Provider, error) {
+
+	gCfg := GoogleConfig{}
+	err := json.Unmarshal(jsonConfig, &gCfg)
+	if err != nil {
+		return &Provider{}, err
+	}
+
+	scopes := []string{"profile", "email"}
+
 	p := &Provider{
-		ClientKey:    clientKey,
-		Secret:       secret,
-		CallbackURL:  callbackURL,
+		ClientKey:    gCfg.GoogleKey,
+		Secret:       gCfg.GoogleSecret,
+		CallbackURL:  envy.Get(auth.AuthCallbackURLEnv, ""),
 		providerName: ProviderName,
 	}
 	p.config = newConfig(p, scopes)
-	return p
+	return p, nil
 }
 
 // Provider is the implementation of `goth.Provider` for accessing Google.
