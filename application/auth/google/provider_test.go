@@ -74,5 +74,5 @@ func Test_SessionFromJSON(t *testing.T) {
 }
 
 func googleProvider() *google.Provider {
-	return google.New(os.Getenv("GOOGLE_KEY"), os.Getenv("GOOGEL_SECRET"), "/foo")
+	return google.New(os.Getenv("GOOGLE_KEY"), os.Getenv("GOOGLE_SECRET"), "/foo")
 }
