@@ -19,11 +19,9 @@ may have earlier versions of these installed.
 Make sure to uninstall docker-compose packages, and then following the
 instructions here: https://docs.docker.com/compose/install/
 
-## Development
+## Auth
 
-### Auth
-
-#### Google
+### Google
 To enable authentication via Google, an organization record will 
 need to be created that includes an auth_type of `google` and an auth_config like the following ... 
 
@@ -36,10 +34,10 @@ To learn about requirements on the Google side, start [here](https://developers.
 At this point, Google does not allow `*.local` domains to access their oauth2 api.
 So, for local development, your api's host should probably just be `localhost`
 
-(It may be the case that using `buffalo dev` will require the use of `localhost` to avoid 
-losing track of the session during authentication.)
+(It may also be the case that using `buffalo dev` will require the use of `localhost` to avoid 
+losing track of the google related session during authentication.)
 
-#### SAML
+### SAML
 To enable authentication via a SAML2 Identity Provider, an organization 
 record will need to be created that includes an auth_type of `saml` and an
 auth_config like the following ...
