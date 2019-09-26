@@ -21,6 +21,7 @@ require (
 	github.com/gobuffalo/validate v2.0.3+incompatible
 	github.com/gofrs/uuid v3.2.0+incompatible
 	github.com/gorilla/sessions v1.1.3
+	github.com/markbates/goth v1.56.0
 	github.com/markbates/grift v1.0.6
 	github.com/paganotoni/sendgrid-sender v1.0.5
 	github.com/pkg/errors v0.8.1
@@ -29,6 +30,7 @@ require (
 	github.com/russellhaering/gosaml2 v0.3.1
 	github.com/russellhaering/goxmldsig v0.0.0-20180430223755-7acd5e4a6ef7
 	github.com/vektah/gqlparser v1.1.2
+	golang.org/x/oauth2 v0.0.0-20181203162652-d668ce993890
 )
 
 replace github.com/silinternational/wecarry-api v0.0.0 => ./
