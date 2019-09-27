@@ -1,0 +1,25 @@
+create_table("files") {
+	t.Column("id", "integer", {primary: true})
+	t.Column("uuid", "uuid", {})
+	t.Column("url", "string", {null: true, "size": 1024})
+	t.Column("url_expiration", "timestamp")
+	t.Column("name", "string")
+	t.Column("size", "int")
+	t.Column("content_type", "string")
+	t.Timestamps()
+    t.Index("uuid", {"unique": true})
+}
+
+create_table("post_files") {
+	t.Column("id", "integer", {primary: true})
+	t.Column("post_id", "integer")
+	t.Column("file_id", "integer")
+	t.Timestamps()
+    t.Index("file_id", {"unique": true})
+	t.ForeignKey("post_id", {"posts": ["id"]}, {"on_delete": "cascade"})
+	t.ForeignKey("file_id", {"files": ["id"]}, {"on_delete": "cascade"})
+}
+
+add_column("posts", "photo_file_id", "integer", {null: true})
+add_column("users", "photo_file_id", "integer", {null: true})
+add_column("users", "photo_url", "string", {null: true})

@@ -18,6 +18,9 @@ services:
       UI_URL: http://wecarry.local:5000
       DATABASE_URL: postgres://wecarry:wecarry@db:5432/wecarry?sslmode=disable
       GO_ENV: development
+      AWS_S3_ENDPOINT: http://minio:9000
+      AWS_S3_DISABLE_SSL: "true"
+      AWS_S3_BUCKET: gtis-hca-dev
     depends_on:
       - db
     command: buffalo dev
@@ -28,10 +31,13 @@ services:
       dockerfile: Dockerfile-dev
     volumes:
       - ./application:/wecarry
+    env_file:
+      - ./test.env
     environment:
       GO_ENV: test
     depends_on:
       - testdb
+      - minio
     working_dir: /wecarry
     command: buffalo test
 
@@ -99,3 +105,14 @@ services:
       - PHP_PG_ADMIN_USE_XHTML_STRICT=false
       - PHP_PG_ADMIN_HELP_BASE=http://www.postgresql.org/docs/%s/interactive/
       - PHP_PG_ADMIN_AJAX_REFRESH=3
+
+  minio:
+    image: minio/minio
+    ports:
+      - "9000:9000"
+    command: server /data
+    env_file:
+      - ./.env
+    environment:
+      MINIO_ACCESS_KEY: ${AWS_S3_ACCESS_KEY_ID}
+      MINIO_SECRET_KEY: ${AWS_S3_SECRET_ACCESS_KEY}

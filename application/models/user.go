@@ -39,12 +39,15 @@ type User struct {
 	Nickname          string             `json:"nickname" db:"nickname"`
 	AdminRole         nulls.String       `json:"admin_role" db:"admin_role"`
 	Uuid              uuid.UUID          `json:"uuid" db:"uuid"`
+	PhotoFileID       nulls.Int          `json:"photo_file_id" db:"photo_file_id"`
+	PhotoURL          nulls.String       `json:"photo_url" db:"photo_url"`
 	AccessTokens      []UserAccessToken  `has_many:"user_access_tokens" json:"-"`
 	Organizations     Organizations      `many_to_many:"user_organizations" json:"-"`
 	UserOrganizations []UserOrganization `has_many:"user_organizations" json:"-"`
 	PostsCreated      Posts              `has_many:"posts" fk_id:"created_by_id"`
 	PostsProviding    Posts              `has_many:"posts" fk_id:"provider_id"`
 	PostsReceiving    Posts              `has_many:"posts" fk_id:"receiver_id"`
+	PhotoFile         File               `belongs_to:"files"`
 }
 
 // String is not required by pop and may be deleted
@@ -333,4 +336,19 @@ func (u *User) GetPosts(postRole string) ([]*Post, error) {
 	}
 
 	return postPtrs, nil
+}
+
+// AttachPhoto assigns a previously-stored File to this User as a profile photo
+func (u *User) AttachPhoto(fileID string) (File, error) {
+	var f File
+	if err := f.FindByUUID(fileID); err != nil {
+		return f, err
+	}
+
+	u.PhotoFileID = nulls.NewInt(f.ID)
+	if err := DB.Save(u); err != nil {
+		return f, err
+	}
+
+	return f, nil
 }

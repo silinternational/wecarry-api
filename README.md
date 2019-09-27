@@ -9,7 +9,13 @@ This software needs docker-compose version 1.24.0 at least.
 In an appropriate directory:
 * git clone git@github.com:silinternational/wecarry-api.git
 * cd wecarry-api
+* cp .env.example .env
 * make
+
+Note that the data provided in `.env.example` will not allow
+all features to work. In particular, the `ROLLBAR_TOKEN` must 
+be valid. The fake AWS data will work for file uploads to the minIO
+container, but obviously not for a real AWS S3 bucket.
 
 ## Installation Troubleshooting
 

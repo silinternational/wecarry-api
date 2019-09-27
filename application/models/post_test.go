@@ -171,7 +171,7 @@ func CreatePostFixtures(ms *ModelSuite, t *testing.T, users Users) []Post {
 	}
 	for i := range posts {
 		if err := ms.DB.Create(&posts[i]); err != nil {
-			t.Errorf("could not create test user org ... %v", err)
+			t.Errorf("could not create test post ... %v", err)
 			t.FailNow()
 		}
 		if err := DB.Load(&posts[i], "CreatedBy", "Provider", "Receiver", "Organization"); err != nil {
@@ -405,4 +405,137 @@ func (ms *ModelSuite) TestPost_GetThreadIdForUser() {
 			}
 		})
 	}
+}
+
+func (ms *ModelSuite) TestPost_AttachFile() {
+	t := ms.T()
+	ResetTables(t, ms.DB)
+
+	user := User{}
+	if err := ms.DB.Create(&user); err != nil {
+		t.Errorf("failed to create user fixture, %s", err)
+	}
+
+	organization := Organization{AuthConfig: "{}"}
+	if err := ms.DB.Create(&organization); err != nil {
+		t.Errorf("failed to create organization fixture, %s", err)
+	}
+
+	post := Post{
+		CreatedByID:    user.ID,
+		OrganizationID: organization.ID,
+	}
+	if err := ms.DB.Create(&post); err != nil {
+		t.Errorf("failed to create post fixture, %s", err)
+	}
+
+	var fileFixture File
+	const filename = "photo.gif"
+	if err := fileFixture.Store(filename, []byte("GIF89a")); err != nil {
+		t.Errorf("failed to create file fixture, %s", err)
+	}
+
+	if attachedFile, err := post.AttachFile(fileFixture.UUID.String()); err != nil {
+		t.Errorf("failed to attach file to post, %s", err)
+	} else {
+		ms.Equal(filename, attachedFile.Name)
+		ms.NotEqual(0, attachedFile.ID)
+		ms.NotEqual(domain.EmptyUUID, attachedFile.UUID.String())
+	}
+
+	if err := DB.Load(&post); err != nil {
+		t.Errorf("failed to load relations for test post, %s", err)
+	}
+
+	ms.Equal(1, len(post.Files))
+
+	if err := DB.Load(&(post.Files[0])); err != nil {
+		t.Errorf("failed to load files relations for test post, %s", err)
+	}
+
+	ms.Equal(filename, post.Files[0].File.Name)
+}
+
+func (ms *ModelSuite) TestPost_GetFiles() {
+	t := ms.T()
+	ResetTables(t, ms.DB)
+
+	user := User{}
+	if err := ms.DB.Create(&user); err != nil {
+		t.Errorf("failed to create user fixture, %s", err)
+	}
+
+	organization := Organization{AuthConfig: "{}"}
+	if err := ms.DB.Create(&organization); err != nil {
+		t.Errorf("failed to create organization fixture, %s", err)
+	}
+
+	post := Post{
+		CreatedByID:    user.ID,
+		OrganizationID: organization.ID,
+	}
+	if err := ms.DB.Create(&post); err != nil {
+		t.Errorf("failed to create post fixture, %s", err)
+	}
+
+	var f File
+	const filename = "photo.gif"
+	if err := f.Store(filename, []byte("GIF89a")); err != nil {
+		t.Errorf("failed to create file fixture, %s", err)
+	}
+
+	if _, err := post.AttachFile(f.UUID.String()); err != nil {
+		t.Errorf("failed to attach file to post, %s", err)
+	}
+
+	files, err := post.GetFiles()
+	if err != nil {
+		t.Errorf("failed to get files list for post, %s", err)
+	}
+
+	ms.Equal(1, len(files))
+	ms.Equal(filename, files[0].Name)
+}
+
+func (ms *ModelSuite) TestPost_AttachPhoto() {
+	t := ms.T()
+	ResetTables(t, ms.DB)
+
+	user := User{}
+	if err := ms.DB.Create(&user); err != nil {
+		t.Errorf("failed to create user fixture, %s", err)
+	}
+
+	organization := Organization{AuthConfig: "{}"}
+	if err := ms.DB.Create(&organization); err != nil {
+		t.Errorf("failed to create organization fixture, %s", err)
+	}
+
+	post := Post{
+		CreatedByID:    user.ID,
+		OrganizationID: organization.ID,
+	}
+	if err := ms.DB.Create(&post); err != nil {
+		t.Errorf("failed to create post fixture, %s", err)
+	}
+
+	var f File
+	const filename = "photo.gif"
+	if err := f.Store(filename, []byte("GIF89a")); err != nil {
+		t.Errorf("failed to create file fixture, %s", err)
+	}
+
+	if attachedFile, err := post.AttachPhoto(f.UUID.String()); err != nil {
+		t.Errorf("failed to attach photo to post, %s", err)
+	} else {
+		ms.Equal(filename, attachedFile.Name)
+		ms.NotEqual(0, attachedFile.ID)
+		ms.NotEqual(domain.EmptyUUID, attachedFile.UUID.String())
+	}
+
+	if err := DB.Load(&post); err != nil {
+		t.Errorf("failed to load photo relation for test post, %s", err)
+	}
+
+	ms.Equal(filename, post.PhotoFile.Name)
 }
