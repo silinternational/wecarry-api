@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"github.com/silinternational/wecarry-api/auth/google"
 	"time"
 
 	"github.com/silinternational/wecarry-api/auth"
@@ -16,6 +17,7 @@ import (
 )
 
 const AuthTypeSaml = "saml"
+const AuthTypeGoogle = "google"
 
 type Organization struct {
 	ID                  int                  `json:"id" db:"id"`
@@ -55,8 +57,13 @@ func (o *Organization) ValidateUpdate(tx *pop.Connection) (*validate.Errors, err
 }
 
 func (o *Organization) GetAuthProvider() (auth.Provider, error) {
+
 	if o.AuthType == AuthTypeSaml {
 		return saml.New([]byte(o.AuthConfig))
+	}
+
+	if o.AuthType == AuthTypeGoogle {
+		return google.New([]byte(o.AuthConfig))
 	}
 
 	return &auth.EmptyProvider{}, fmt.Errorf("unsupported auth provider type: %s", o.AuthType)
