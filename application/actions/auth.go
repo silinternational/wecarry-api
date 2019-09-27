@@ -118,7 +118,8 @@ func getOrgAndUserOrgs(
 		if err != nil {
 			extras := map[string]interface{}{"authEmail": authEmail}
 			return org, userOrgs, authError(c, "ErrorFindingOrgByEmail",
-				fmt.Sprintf("error finding organization by email domain ... %v", err), extras)
+				// The error message will already give plenty of detail
+				err.Error(), extras)
 		}
 		if org.AuthType == "" {
 			return org, userOrgs, authError(c, "OrgNotFound",
@@ -206,7 +207,8 @@ func AuthRequest(c buffalo.Context) error {
 	// find org for auth config and processing
 	org, userOrgs, err := getOrgAndUserOrgs(authEmail, c)
 	if err != nil {
-		return err
+		return authError(c, "OrgUserOrg",
+			fmt.Sprintf("error getting org and userOrgs ... %v", err), emptyExtras)
 	}
 
 	// User has more than one organization affiliation, return list to choose from
@@ -214,11 +216,11 @@ func AuthRequest(c buffalo.Context) error {
 		return provideOrgOptions(userOrgs, c)
 	}
 
-	orgID := org.Uuid.String()
-	if orgID == "" {
+	if org.ID == 0 {
 		return authError(c, "MissingOrgID", "unable to determine the organization id", emptyExtras)
 	}
 
+	orgID := org.Uuid.String()
 	c.Session().Set(OrgIDSessionKey, orgID)
 	err = c.Session().Save()
 	if err != nil {
@@ -281,8 +283,7 @@ func AuthCallback(c buffalo.Context) error {
 	org := models.Organization{}
 	err = org.FindByUUID(orgID)
 	if err != nil {
-		return authError(c, "MissingOrg",
-			fmt.Sprintf("error finding org with uuid %s ... %v", orgID, err), emptyExtras)
+		return authError(c, "MissingOrg", err.Error(), emptyExtras)
 	}
 
 	ap, err := org.GetAuthProvider()
