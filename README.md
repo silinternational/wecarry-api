@@ -44,8 +44,8 @@ auth_config like the following ...
 
 ```
 {
- "SPEntityID": "http://wecarry.local:3000", 
- "AudienceURI": "http://wecarry.local:3000", 
+ "SPEntityID": "http://example.local:3000", 
+ "AudienceURI": "http://example.local:3000", 
  "IDPEntityID": "our.idp.net", 
  "SignRequest": true, 
  "AttributeMap": null, 
@@ -56,6 +56,6 @@ auth_config like the following ...
  "SingleSignOnURL": "https://our.idp.net/saml2/idp/SSOService.php", 
  "CheckResponseSigning": true, 
  "RequireEncryptedAssertion": false, 
- "AssertionConsumerServiceURL": "http://wecarry.local:3000/auth/login"
+ "AssertionConsumerServiceURL": "http://example.local:3000/auth/callback"
 }
 ```
