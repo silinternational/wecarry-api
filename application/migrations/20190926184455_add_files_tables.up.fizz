@@ -21,5 +21,7 @@ create_table("post_files") {
 }
 
 add_column("posts", "photo_file_id", "integer", {null: true})
+add_index("posts", "photo_file_id", {"unique": true})
 add_column("users", "photo_file_id", "integer", {null: true})
+add_index("users", "photo_file_id", {"unique": true})
 add_column("users", "photo_url", "string", {null: true})

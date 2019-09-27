@@ -665,6 +665,13 @@ CREATE UNIQUE INDEX post_files_file_id_idx ON public.post_files USING btree (fil
 
 
 --
+-- Name: posts_photo_file_id_idx; Type: INDEX; Schema: public; Owner: wecarry
+--
+
+CREATE UNIQUE INDEX posts_photo_file_id_idx ON public.posts USING btree (photo_file_id);
+
+
+--
 -- Name: posts_uuid_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
@@ -725,6 +732,13 @@ CREATE UNIQUE INDEX users_email_idx ON public.users USING btree (email);
 --
 
 CREATE UNIQUE INDEX users_nickname_idx ON public.users USING btree (nickname);
+
+
+--
+-- Name: users_photo_file_id_idx; Type: INDEX; Schema: public; Owner: wecarry
+--
+
+CREATE UNIQUE INDEX users_photo_file_id_idx ON public.users USING btree (photo_file_id);
 
 
 --
