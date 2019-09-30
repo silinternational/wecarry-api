@@ -38,7 +38,7 @@ func App() *buffalo.App {
 			PreWares: []buffalo.PreWare{
 				cors.New(cors.Options{
 					AllowCredentials: true,
-					AllowedOrigins:   []string{envy.Get("UI_URL", "*")},
+					AllowedOrigins:   []string{envy.Get(UIURLEnv, "*")},
 					AllowedMethods:   []string{"HEAD", "GET", "POST", "PUT", "PATCH", "DELETE"},
 					AllowedHeaders:   []string{"*"},
 				}).Handler,
@@ -73,7 +73,7 @@ func App() *buffalo.App {
 
 		auth.POST("/login", AuthRequest)
 
-		auth.GET("/callback", AuthCallback) // for Google Oauth
+		auth.GET("/callback", AuthCallback)  // for Google Oauth
 		auth.POST("/callback", AuthCallback) // for SAML
 
 		auth.GET("/logout", AuthDestroy)

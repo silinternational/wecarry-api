@@ -14,7 +14,7 @@ import (
 func (as *ActionSuite) TestGetLoginSuccessRedirectURL() {
 	t := as.T()
 
-	uiURL := envy.Get("UI_URL", "")
+	uiURL := envy.Get(UIURLEnv, "")
 
 	tests := []struct {
 		name          string
