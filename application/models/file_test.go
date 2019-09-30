@@ -209,6 +209,11 @@ func (ms *ModelSuite) Test_detectContentType() {
 			want:    "image/jpeg",
 		},
 		{
+			name:    "pdf",
+			content: []byte("%PDF-"),
+			want:    "application/pdf",
+		},
+		{
 			name:    "GZIP",
 			content: []byte{0x1f, 0x8b, 0x08},
 			wantErr: true,
