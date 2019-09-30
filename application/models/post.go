@@ -212,3 +212,16 @@ func (p *Post) AttachPhoto(fileID string) (File, error) {
 
 	return f, nil
 }
+
+// GetPhoto retrieves the file attached as the Post photo
+func (p *Post) GetPhoto() (*File, error) {
+	if err := DB.Load(p, "PhotoFile"); err != nil {
+		return nil, err
+	}
+
+	if err := p.PhotoFile.RefreshURL(); err != nil {
+		return nil, err
+	}
+
+	return &(p.PhotoFile), nil
+}

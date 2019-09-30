@@ -29,6 +29,8 @@ models:
     fields:
       id:
         resolver: true
+      photoURL:
+        resolver: true
   Post:
     model: github.com/silinternational/wecarry-api/models.Post
     fields:
@@ -55,6 +57,11 @@ models:
       id:
         resolver: true
       thread:
+        resolver: true
+  File:
+    model: github.com/silinternational/wecarry-api/models.File
+    fields:
+      id:
         resolver: true
   UpdatedPost:
     model: github.com/silinternational/wecarry-api/gqlgen.postInput

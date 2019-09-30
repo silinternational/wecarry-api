@@ -14,6 +14,8 @@ import (
 	"github.com/vektah/gqlparser/gqlerror"
 )
 
+// PostFields maps GraphQL fields to their equivalent database fields. For related types, the
+// foreign key field name is provided.
 func PostFields() map[string]string {
 	return map[string]string{
 		"id":           "uuid",
@@ -35,6 +37,7 @@ func PostFields() map[string]string {
 		"updatedAt":    "updated_at",
 		"url":          "url",
 		"cost":         "cost",
+		"photo":        "photo_file_id",
 	}
 }
 
@@ -62,21 +65,21 @@ func (r *postResolver) CreatedBy(ctx context.Context, obj *models.Post) (*models
 	if obj == nil {
 		return nil, nil
 	}
-	return obj.GetCreator(GetSelectFieldsFromRequestFields(UserFields(), graphql.CollectAllFields(ctx)))
+	return obj.GetCreator(GetSelectFieldsForUsers(ctx))
 }
 
 func (r *postResolver) Receiver(ctx context.Context, obj *models.Post) (*models.User, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	return obj.GetReceiver(GetSelectFieldsFromRequestFields(UserFields(), graphql.CollectAllFields(ctx)))
+	return obj.GetReceiver(GetSelectFieldsForUsers(ctx))
 }
 
 func (r *postResolver) Provider(ctx context.Context, obj *models.Post) (*models.User, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	return obj.GetProvider(GetSelectFieldsFromRequestFields(UserFields(), graphql.CollectAllFields(ctx)))
+	return obj.GetProvider(GetSelectFieldsForUsers(ctx))
 }
 
 func (r *postResolver) Organization(ctx context.Context, obj *models.Post) (*models.Organization, error) {
@@ -151,6 +154,40 @@ func (r *postResolver) Cost(ctx context.Context, obj *models.Post) (*string, err
 
 	c := strconv.FormatFloat(obj.Cost.Float64, 'f', -1, 64)
 	return &c, nil
+}
+
+func (r *postResolver) Photo(ctx context.Context, obj *models.Post) (*models.File, error) {
+	if obj == nil {
+		return nil, nil
+	}
+
+	return obj.GetPhoto()
+}
+
+func (r *postResolver) Files(ctx context.Context, obj *models.Post) ([]*models.File, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	images, err := obj.GetFiles()
+	if err != nil {
+		graphql.AddError(ctx, gqlerror.Errorf("Error retrieving images for post %s", obj.Uuid.String()))
+		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
+		return nil, err
+	}
+
+	files := make([]*models.File, len(images))
+	for i, image := range images {
+		if err := image.RefreshURL(); err != nil {
+			graphql.AddError(ctx, gqlerror.Errorf("Error retrieving URL for image %s", image.UUID.String()))
+			continue
+		}
+		file := models.File{
+			URL:           nulls.NewString(image.URL.String),
+			URLExpiration: image.URLExpiration,
+		}
+		files[i] = &file
+	}
+	return files, nil
 }
 
 func (r *queryResolver) Posts(ctx context.Context) ([]*models.Post, error) {

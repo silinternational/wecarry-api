@@ -16,6 +16,8 @@ var PostRoleMap = map[PostRole]string{
 	PostRoleProviding: models.PostRoleProviding,
 }
 
+// UserFields maps GraphQL fields to their equivalent database fields. For related types, the
+// foreign key field name is provided.
 func UserFields() map[string]string {
 	return map[string]string{
 		"id":          "uuid",
@@ -27,6 +29,8 @@ func UserFields() map[string]string {
 		"createdAt":   "created_at",
 		"updatedAt":   "updated_at",
 		"adminRole":   "admin_role",
+		"photoURL":    "photo_url",
+		"photoFile":   "photo_file_id",
 	}
 }
 
@@ -65,6 +69,13 @@ func (r *userResolver) Posts(ctx context.Context, obj *models.User, role PostRol
 	return obj.GetPosts(PostRoleMap[role])
 }
 
+func (r *userResolver) PhotoURL(ctx context.Context, obj *models.User) (string, error) {
+	if obj == nil {
+		return "", nil
+	}
+	return obj.GetPhotoURL()
+}
+
 func (r *queryResolver) Users(ctx context.Context) ([]*models.User, error) {
 	db := models.DB
 	var dbUsers []*models.User
@@ -77,8 +88,7 @@ func (r *queryResolver) Users(ctx context.Context) ([]*models.User, error) {
 		return []*models.User{}, err
 	}
 
-	selectFields := GetSelectFieldsFromRequestFields(UserFields(), graphql.CollectAllFields(ctx))
-	if err := db.Select(selectFields...).All(&dbUsers); err != nil {
+	if err := db.Select(GetSelectFieldsForUsers(ctx)...).All(&dbUsers); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting users: %v", err.Error()))
 		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
 		return []*models.User{}, err
@@ -102,12 +112,20 @@ func (r *queryResolver) User(ctx context.Context, id *string) (*models.User, err
 		return &dbUser, err
 	}
 
-	selectFields := GetSelectFieldsFromRequestFields(UserFields(), graphql.CollectAllFields(ctx))
-	if err := models.DB.Select(selectFields...).Where("uuid = ?", id).First(&dbUser); err != nil {
+	if err := models.DB.Where("uuid = ?", id).First(&dbUser); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting user: %v", err.Error()))
 		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
 		return &dbUser, err
 	}
 
 	return &dbUser, nil
+}
+
+func GetSelectFieldsForUsers(ctx context.Context) []string {
+	selectFields := GetSelectFieldsFromRequestFields(UserFields(), graphql.CollectAllFields(ctx))
+	selectFields = append(selectFields, "id")
+	if domain.IsStringInSlice("photoURL", graphql.CollectAllFields(ctx)) {
+		selectFields = append(selectFields, "photo_file_id")
+	}
+	return selectFields
 }

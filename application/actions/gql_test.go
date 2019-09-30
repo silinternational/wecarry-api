@@ -7,6 +7,14 @@ import (
 	"io/ioutil"
 	"strings"
 
+	"github.com/gobuffalo/nulls"
+	"github.com/silinternational/wecarry-api/domain"
+
+	"github.com/silinternational/wecarry-api/gqlgen"
+
+	"github.com/99designs/gqlgen/client"
+	"github.com/99designs/gqlgen/handler"
+
 	"github.com/gobuffalo/httptest"
 	"github.com/silinternational/wecarry-api/models"
 )
@@ -19,36 +27,36 @@ type gqlErrorResponse struct {
 	Data interface{} `json:"data"`
 }
 
-func (as *ActionSuite) TestQueryAUser() {
+func (as *ActionSuite) Test_UserQuery() {
 	t := as.T()
 	models.ResetTables(t, as.DB)
 
-	queryFixtures := Fixtures_QueryAUser(as, t)
+	queryFixtures := Fixtures_UserQuery(as, t)
 	userFixtures := queryFixtures.Users
 
-	tUuid := userFixtures[1].Uuid.String()
+	c := getGqlClient()
 
-	uq := map[string]string{
-		"query": `{user(id: "` + tUuid + `") {id nickname}}`,
+	query := `{user(id: "` + userFixtures[1].Uuid.String() + `") {id nickname photoURL}}`
+
+	var usersResp struct {
+		User struct {
+			ID       string `json:"id"`
+			Nickname string `json:"nickname"`
+			PhotoURL string `json:"photoURL"`
+		} `json:"user"`
 	}
 
-	bearer := queryFixtures.ClientID + queryFixtures.AccessToken
-	headers := map[string]string{
-		"Content-Type":  "application/json",
-		"Authorization": "Bearer " + bearer,
+	gqlgen.TestUser = userFixtures[0]
+	gqlgen.TestUser.AdminRole = nulls.NewString(domain.AdminRoleSuperDuperAdmin)
+	c.MustPost(query, &usersResp)
+
+	if err := as.DB.Load(&(userFixtures[1]), "PhotoFile"); err != nil {
+		t.Errorf("failed to load user fixture, %s", err)
 	}
-
-	hj := as.JSON("/gql")
-	hj.Headers = headers
-	res := hj.Post(uq)
-
-	as.Equal(200, res.Code)
-
-	u2Uuid := userFixtures[1].Uuid.String()
-	u2Nname := userFixtures[1].Nickname
-	expectedBody := `{"data":{"user":{"id":"` + u2Uuid + `","nickname":"` + u2Nname + `"}}}`
-	as.Equal(expectedBody, res.Body.String())
-
+	as.Equal(userFixtures[1].Uuid.String(), usersResp.User.ID)
+	as.Equal(userFixtures[1].Nickname, usersResp.User.Nickname)
+	as.Equal(userFixtures[1].PhotoFile.URL.String, usersResp.User.PhotoURL)
+	as.Regexp("^https?", usersResp.User.PhotoURL)
 }
 
 func (as *ActionSuite) Test_CreateOrganization() {
@@ -214,5 +222,48 @@ func (as *ActionSuite) Test_CreateOrganization() {
 		}
 
 	}
+}
 
+func (as *ActionSuite) Test_PostQuery() {
+	t := as.T()
+	models.ResetTables(t, as.DB)
+
+	queryFixtures := Fixtures_PostQuery(as, t)
+	userFixtures := queryFixtures.Users
+	postFixtures := queryFixtures.Posts
+
+	c := getGqlClient()
+
+	query := `{ post(id: "` + postFixtures[1].Uuid.String() + `") { id photo { id } files { id } }}`
+
+	var postsResp struct {
+		Post struct {
+			ID    string `json:"id"`
+			Photo struct {
+				ID string `json:"id"`
+			} `json:"photo"`
+			Files []struct {
+				ID string `json:"id"`
+			} `json:"files"`
+		} `json:"post"`
+	}
+
+	gqlgen.TestUser = userFixtures[0]
+	c.MustPost(query, &postsResp)
+
+	if err := as.DB.Load(&(postFixtures[1]), "PhotoFile", "Files"); err != nil {
+		t.Errorf("failed to load post fixture, %s", err)
+	}
+
+	as.Equal(postFixtures[1].Uuid.String(), postsResp.Post.ID)
+	as.Equal(postFixtures[1].PhotoFile.UUID.String(), postsResp.Post.Photo.ID)
+	as.Equal(1, len(postsResp.Post.Files))
+	as.Equal(postFixtures[1].Files[0].File.UUID.String(), postsResp.Post.Files[0].ID)
+}
+
+func getGqlClient() *client.Client {
+	h := handler.GraphQL(gqlgen.NewExecutableSchema(gqlgen.Config{Resolvers: &gqlgen.Resolver{}}))
+	srv := httptest.NewServer(h)
+	c := client.New(srv.URL)
+	return c
 }

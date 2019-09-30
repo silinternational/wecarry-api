@@ -21,6 +21,15 @@ type Mutation {
 # Date and Time in RFC3339 format
 scalar Time
 
+type File {
+    id: ID!
+    url: String!
+    urlExpiration: Time!
+    name: String!
+    size: Int!
+    contentType: String!
+}
+
 enum Role {
     ADMIN
     USER
@@ -52,6 +61,7 @@ type User {
     adminRole: Role
     organizations: [Organization!]!
     posts(role: PostRole!): [Post!]!
+    photoURL: String!
 }
 
 enum PostType {
@@ -81,6 +91,8 @@ type Post {
     myThreadID: String
     url: String
     cost: String
+    photo: File!
+    files: [File!]!
 }
 
 type Organization {

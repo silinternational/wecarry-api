@@ -359,3 +359,22 @@ func (u *User) AttachPhoto(fileID string) (File, error) {
 
 	return f, nil
 }
+
+// GetPhotoURL retrieves the photo URL, either from the photo_url database field, or from the attached file
+func (u *User) GetPhotoURL() (string, error) {
+	if err := DB.Load(u, "PhotoFile"); err != nil {
+		return "", err
+	}
+
+	url := u.PhotoURL.String
+	if url == "" {
+		if !u.PhotoFileID.Valid {
+			return "", nil
+		}
+		if err := u.PhotoFile.RefreshURL(); err != nil {
+			return "", err
+		}
+		url = u.PhotoFile.URL.String
+	}
+	return url, nil
+}

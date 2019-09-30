@@ -140,6 +140,7 @@ func detectContentType(content []byte) (string, error) {
 		"image/jpeg",
 		"image/png",
 		"image/webp",
+		"application/pdf",
 	}
 
 	detectedType := http.DetectContentType(content)
