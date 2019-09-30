@@ -42,12 +42,15 @@ type Post struct {
 	NeededBefore   time.Time     `json:"needed_before" db:"needed_before"`
 	Category       string        `json:"category" db:"category"`
 	Description    nulls.String  `json:"description" db:"description"`
+	URL            nulls.String  `json:"url" db:"url"`
+	Cost           nulls.Float64 `json:"cost" db:"cost"`
+	PhotoFileID    nulls.Int     `json:"photo_file_id" db:"photo_file_id"`
 	CreatedBy      User          `belongs_to:"users"`
 	Organization   Organization  `belongs_to:"organizations"`
 	Receiver       User          `belongs_to:"users"`
 	Provider       User          `belongs_to:"users"`
-	URL            nulls.String  `json:"url" db:"url"`
-	Cost           nulls.Float64 `json:"cost" db:"cost"`
+	Files          PostFiles     `has_many:"post_files"`
+	PhotoFile      File          `belongs_to:"files"`
 }
 
 // String is not required by pop and may be deleted
@@ -160,4 +163,52 @@ func (p *Post) GetThreadIdForUser(user User) (*string, error) {
 	}
 
 	return &threadUuid, nil
+}
+
+// AttachFile adds a previously-stored File to this Post
+func (p *Post) AttachFile(fileID string) (File, error) {
+	var f File
+	if err := f.FindByUUID(fileID); err != nil {
+		return f, err
+	}
+
+	if err := DB.Save(&PostFile{PostID: p.ID, FileID: f.ID}); err != nil {
+		return f, err
+	}
+
+	return f, nil
+}
+
+// GetFiles retrieves the metadata for all of the files attached to this Post
+func (p *Post) GetFiles() ([]File, error) {
+	var pf []*PostFile
+
+	if err := DB.Eager("File").Select().Where("post_id = ?", p.ID).All(&pf); err != nil {
+		return nil, fmt.Errorf("error getting files for post id %d, %s", p.ID, err)
+	}
+
+	files := make([]File, len(pf))
+	for i, p := range pf {
+		files[i] = p.File
+		if err := files[i].RefreshURL(); err != nil {
+			return files, err
+		}
+	}
+
+	return files, nil
+}
+
+// AttachPhoto assigns a previously-stored File to this Post as its photo
+func (p *Post) AttachPhoto(fileID string) (File, error) {
+	var f File
+	if err := f.FindByUUID(fileID); err != nil {
+		return f, err
+	}
+
+	p.PhotoFileID = nulls.NewInt(f.ID)
+	if err := DB.Save(p); err != nil {
+		return f, err
+	}
+
+	return f, nil
 }

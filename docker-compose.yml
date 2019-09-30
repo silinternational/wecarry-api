@@ -28,10 +28,13 @@ services:
       dockerfile: Dockerfile-dev
     volumes:
       - ./application:/wecarry
+    env_file:
+      - ./test.env
     environment:
       GO_ENV: test
     depends_on:
       - testdb
+      - minio
     working_dir: /wecarry
     command: buffalo test
 
@@ -99,3 +102,14 @@ services:
       - PHP_PG_ADMIN_USE_XHTML_STRICT=false
       - PHP_PG_ADMIN_HELP_BASE=http://www.postgresql.org/docs/%s/interactive/
       - PHP_PG_ADMIN_AJAX_REFRESH=3
+
+  minio:
+    image: minio/minio
+    ports:
+      - "9000:9000"
+    command: server /data
+    env_file:
+      - ./.env
+    environment:
+      MINIO_ACCESS_KEY: ${AWS_S3_ACCESS_KEY_ID}
+      MINIO_SECRET_KEY: ${AWS_S3_SECRET_ACCESS_KEY}
