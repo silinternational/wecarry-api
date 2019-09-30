@@ -3,6 +3,7 @@ package models
 import (
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/gofrs/uuid"
 	"github.com/silinternational/wecarry-api/domain"
@@ -497,7 +498,7 @@ func (ms *ModelSuite) TestPost_GetFiles() {
 	ms.Equal(filename, files[0].Name)
 }
 
-func (ms *ModelSuite) TestPost_AttachPhoto() {
+func (ms *ModelSuite) TestPost_AttachPhoto_GetPhoto() {
 	t := ms.T()
 	ResetTables(t, ms.DB)
 
@@ -519,13 +520,14 @@ func (ms *ModelSuite) TestPost_AttachPhoto() {
 		t.Errorf("failed to create post fixture, %s", err)
 	}
 
-	var f File
+	var photoFixture File
 	const filename = "photo.gif"
-	if err := f.Store(filename, []byte("GIF89a")); err != nil {
+	if err := photoFixture.Store(filename, []byte("GIF89a")); err != nil {
 		t.Errorf("failed to create file fixture, %s", err)
 	}
 
-	if attachedFile, err := post.AttachPhoto(f.UUID.String()); err != nil {
+	attachedFile, err := post.AttachPhoto(photoFixture.UUID.String())
+	if err != nil {
 		t.Errorf("failed to attach photo to post, %s", err)
 	} else {
 		ms.Equal(filename, attachedFile.Name)
@@ -538,4 +540,12 @@ func (ms *ModelSuite) TestPost_AttachPhoto() {
 	}
 
 	ms.Equal(filename, post.PhotoFile.Name)
+
+	if got, err := post.GetPhoto(); err == nil {
+		ms.Equal(attachedFile.UUID.String(), got.UUID.String())
+		ms.True(got.URLExpiration.After(time.Now().Add(time.Minute)))
+		ms.Equal(filename, got.Name)
+	} else {
+		ms.Fail("post.GetPhoto failed, %s", err)
+	}
 }
