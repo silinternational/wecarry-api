@@ -272,7 +272,7 @@ func AuthCallback(c buffalo.Context) error {
 		return authError(c, http.StatusInternalServerError, "MissingOrg", "unable to find org with uuid "+orgID)
 	}
 
-	sp, err := org.GetAuthProvider()
+	ap, err := org.GetAuthProvider()
 	if err != nil {
 		extras := map[string]interface{}{"authEmail": authEmail, "code": "UnableToLoadAuthProvider"}
 		domain.Error(c, err.Error(), extras)
@@ -280,7 +280,7 @@ func AuthCallback(c buffalo.Context) error {
 			fmt.Sprintf("unable to load auth provider for '%s'", org.Name))
 	}
 
-	authResp := sp.AuthCallback(c)
+	authResp := ap.AuthCallback(c)
 	if authResp.Error != nil {
 		extras := map[string]interface{}{"authEmail": authEmail, "code": "AuthError"}
 		domain.Error(c, authResp.Error.Error(), extras)

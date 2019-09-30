@@ -6,6 +6,9 @@ import (
 
 const TypeSaml = "saml"
 
+// Environment variable keys
+const AuthCallbackURLEnv = "AUTH_CALLBACK_URL"
+
 // Provider interface to be implemented by any auth providers
 type Provider interface {
 	Logout(c buffalo.Context) Response
@@ -21,6 +24,7 @@ type User struct {
 	LastName  string
 	Email     string
 	UserID    string
+	Nickname  string
 }
 
 // Response holds fields for login and logout responses. not all fields will have values
