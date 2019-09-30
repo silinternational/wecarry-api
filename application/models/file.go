@@ -127,7 +127,7 @@ func (f *File) RefreshURL() error {
 	}
 	f.URL = nulls.NewString(newURL.Url)
 	f.URLExpiration = newURL.Expiration
-	if err = DB.Save(f); err != nil {
+	if err = DB.Update(f); err != nil {
 		return err
 	}
 	return nil
