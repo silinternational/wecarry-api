@@ -47,7 +47,7 @@ func (ms *ModelSuite) TestFile_Validate() {
 				} else if len(vErr.Get(test.errField)) == 0 {
 					t.Errorf("Expected an error on field %v, but got none (errors: %v)", test.errField, vErr.Errors)
 				}
-			} else if (test.wantErr == false) && (vErr.HasAny()) {
+			} else if vErr.HasAny() {
 				t.Errorf("Unexpected error: %v", vErr)
 			}
 		})

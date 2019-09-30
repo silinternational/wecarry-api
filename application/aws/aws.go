@@ -56,15 +56,11 @@ func GetS3ConfigFromEnv() awsConfig {
 
 	if disableSSL, err := strconv.ParseBool(envy.Get(AwsS3DisableSSLEnv, "false")); err == nil {
 		a.awsDisableSSL = disableSSL
-	} else {
-		a.awsDisableSSL = false
 	}
 
 	if len(a.awsEndpoint) > 0 {
 		// a non-empty endpoint means minIO is in use, which doesn't support the S3 object URL scheme
 		a.getPresignedUrl = true
-	} else {
-		a.getPresignedUrl = false
 	}
 	return a
 }
@@ -84,23 +80,26 @@ func CreateS3Service(config awsConfig) (*s3.S3, error) {
 
 func getObjectURL(config awsConfig, svc *s3.S3, key string) (ObjectUrl, error) {
 	var objectUrl ObjectUrl
-	if config.getPresignedUrl {
-		req, _ := svc.GetObjectRequest(&s3.GetObjectInput{
-			Bucket: aws.String(config.awsS3Bucket),
-			Key:    aws.String(key),
-		})
 
-		if newUrl, err := req.Presign(urlLifespan); err == nil {
-			objectUrl.Url = newUrl
-			// return a time slightly before the actual url expiration to account for delays
-			objectUrl.Expiration = time.Now().Add(urlLifespan - time.Minute)
-		} else {
-			return objectUrl, err
-		}
-	} else {
+	if !config.getPresignedUrl {
 		objectUrl.Url = fmt.Sprintf("https://%s.s3.amazonaws.com/%s", config.awsS3Bucket, url.PathEscape(key))
 		objectUrl.Expiration = time.Date(9999, time.December, 31, 0, 0, 0, 0, time.UTC)
+		return objectUrl, nil
 	}
+
+	req, _ := svc.GetObjectRequest(&s3.GetObjectInput{
+		Bucket: aws.String(config.awsS3Bucket),
+		Key:    aws.String(key),
+	})
+
+	if newUrl, err := req.Presign(urlLifespan); err == nil {
+		objectUrl.Url = newUrl
+		// return a time slightly before the actual url expiration to account for delays
+		objectUrl.Expiration = time.Now().Add(urlLifespan - time.Minute)
+	} else {
+		return objectUrl, err
+	}
+
 	return objectUrl, nil
 }
 
@@ -145,10 +144,5 @@ func GetFileURL(key string) (ObjectUrl, error) {
 		return ObjectUrl{}, err
 	}
 
-	objectUrl, err := getObjectURL(config, svc, key)
-	if err != nil {
-		return ObjectUrl{}, err
-	}
-
-	return objectUrl, nil
+	return getObjectURL(config, svc, key)
 }

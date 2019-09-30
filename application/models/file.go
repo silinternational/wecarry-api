@@ -143,10 +143,8 @@ func detectContentType(content []byte) (string, error) {
 	}
 
 	detectedType := http.DetectContentType(content)
-	for _, t := range allowedTypes {
-		if detectedType == t {
-			return t, nil
-		}
+	if domain.IsStringInSlice(detectedType, allowedTypes) {
+		return detectedType, nil
 	}
 	return "", fmt.Errorf("invalid file type %s", detectedType)
 }
