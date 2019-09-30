@@ -1,0 +1,5 @@
+drop_table("post_files")
+drop_table("files")
+drop_column("posts", "photo_file_id")
+drop_column("users", "photo_file_id")
+drop_column("users", "photo_url")

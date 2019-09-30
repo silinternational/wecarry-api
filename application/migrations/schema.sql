@@ -21,6 +21,46 @@ SET default_tablespace = '';
 SET default_with_oids = false;
 
 --
+-- Name: files; Type: TABLE; Schema: public; Owner: wecarry
+--
+
+CREATE TABLE public.files (
+    id integer NOT NULL,
+    uuid uuid NOT NULL,
+    url character varying(1024),
+    url_expiration timestamp without time zone NOT NULL,
+    name character varying(255) NOT NULL,
+    size integer NOT NULL,
+    content_type character varying(255) NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.files OWNER TO wecarry;
+
+--
+-- Name: files_id_seq; Type: SEQUENCE; Schema: public; Owner: wecarry
+--
+
+CREATE SEQUENCE public.files_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.files_id_seq OWNER TO wecarry;
+
+--
+-- Name: files_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wecarry
+--
+
+ALTER SEQUENCE public.files_id_seq OWNED BY public.files.id;
+
+
+--
 -- Name: messages; Type: TABLE; Schema: public; Owner: wecarry
 --
 
@@ -134,6 +174,42 @@ ALTER SEQUENCE public.organizations_id_seq OWNED BY public.organizations.id;
 
 
 --
+-- Name: post_files; Type: TABLE; Schema: public; Owner: wecarry
+--
+
+CREATE TABLE public.post_files (
+    id integer NOT NULL,
+    post_id integer NOT NULL,
+    file_id integer NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.post_files OWNER TO wecarry;
+
+--
+-- Name: post_files_id_seq; Type: SEQUENCE; Schema: public; Owner: wecarry
+--
+
+CREATE SEQUENCE public.post_files_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.post_files_id_seq OWNER TO wecarry;
+
+--
+-- Name: post_files_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wecarry
+--
+
+ALTER SEQUENCE public.post_files_id_seq OWNED BY public.post_files.id;
+
+
+--
 -- Name: posts; Type: TABLE; Schema: public; Owner: wecarry
 --
 
@@ -157,7 +233,8 @@ CREATE TABLE public.posts (
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL,
     url character varying(255),
-    cost numeric(13,4)
+    cost numeric(13,4),
+    photo_file_id integer
 );
 
 
@@ -358,7 +435,9 @@ CREATE TABLE public.users (
     admin_role character varying(255),
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL,
-    uuid uuid
+    uuid uuid,
+    photo_file_id integer,
+    photo_url character varying(255)
 );
 
 
@@ -386,6 +465,13 @@ ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
 
 
 --
+-- Name: files id; Type: DEFAULT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.files ALTER COLUMN id SET DEFAULT nextval('public.files_id_seq'::regclass);
+
+
+--
 -- Name: messages id; Type: DEFAULT; Schema: public; Owner: wecarry
 --
 
@@ -404,6 +490,13 @@ ALTER TABLE ONLY public.organization_domains ALTER COLUMN id SET DEFAULT nextval
 --
 
 ALTER TABLE ONLY public.organizations ALTER COLUMN id SET DEFAULT nextval('public.organizations_id_seq'::regclass);
+
+
+--
+-- Name: post_files id; Type: DEFAULT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.post_files ALTER COLUMN id SET DEFAULT nextval('public.post_files_id_seq'::regclass);
 
 
 --
@@ -449,6 +542,14 @@ ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_
 
 
 --
+-- Name: files files_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.files
+    ADD CONSTRAINT files_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: messages messages_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
 --
 
@@ -470,6 +571,14 @@ ALTER TABLE ONLY public.organization_domains
 
 ALTER TABLE ONLY public.organizations
     ADD CONSTRAINT organizations_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: post_files post_files_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.post_files
+    ADD CONSTRAINT post_files_pkey PRIMARY KEY (id);
 
 
 --
@@ -521,6 +630,13 @@ ALTER TABLE ONLY public.users
 
 
 --
+-- Name: files_uuid_idx; Type: INDEX; Schema: public; Owner: wecarry
+--
+
+CREATE UNIQUE INDEX files_uuid_idx ON public.files USING btree (uuid);
+
+
+--
 -- Name: messages_uuid_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
@@ -539,6 +655,20 @@ CREATE UNIQUE INDEX organization_domains_domain_idx ON public.organization_domai
 --
 
 CREATE UNIQUE INDEX organizations_uuid_idx ON public.organizations USING btree (uuid);
+
+
+--
+-- Name: post_files_file_id_idx; Type: INDEX; Schema: public; Owner: wecarry
+--
+
+CREATE UNIQUE INDEX post_files_file_id_idx ON public.post_files USING btree (file_id);
+
+
+--
+-- Name: posts_photo_file_id_idx; Type: INDEX; Schema: public; Owner: wecarry
+--
+
+CREATE UNIQUE INDEX posts_photo_file_id_idx ON public.posts USING btree (photo_file_id);
 
 
 --
@@ -605,6 +735,13 @@ CREATE UNIQUE INDEX users_nickname_idx ON public.users USING btree (nickname);
 
 
 --
+-- Name: users_photo_file_id_idx; Type: INDEX; Schema: public; Owner: wecarry
+--
+
+CREATE UNIQUE INDEX users_photo_file_id_idx ON public.users USING btree (photo_file_id);
+
+
+--
 -- Name: users_uuid_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
@@ -633,6 +770,22 @@ ALTER TABLE ONLY public.messages
 
 ALTER TABLE ONLY public.organization_domains
     ADD CONSTRAINT organization_domains_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id) ON DELETE CASCADE;
+
+
+--
+-- Name: post_files post_files_file_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.post_files
+    ADD CONSTRAINT post_files_file_id_fkey FOREIGN KEY (file_id) REFERENCES public.files(id) ON DELETE CASCADE;
+
+
+--
+-- Name: post_files post_files_post_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.post_files
+    ADD CONSTRAINT post_files_post_id_fkey FOREIGN KEY (post_id) REFERENCES public.posts(id) ON DELETE CASCADE;
 
 
 --

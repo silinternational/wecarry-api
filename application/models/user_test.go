@@ -699,3 +699,33 @@ func (ms *ModelSuite) TestCanEditOrganization() {
 		t.Error("user is able to edit org that they should not be able to edit")
 	}
 }
+
+func (ms *ModelSuite) TestUser_AttachPhoto() {
+	t := ms.T()
+	ResetTables(t, ms.DB)
+
+	user := User{}
+	if err := ms.DB.Create(&user); err != nil {
+		t.Errorf("failed to create user fixture, %s", err)
+	}
+
+	var f File
+	const filename = "photo.gif"
+	if err := f.Store(filename, []byte("GIF89a")); err != nil {
+		t.Errorf("failed to create file fixture, %s", err)
+	}
+
+	if attachedFile, err := user.AttachPhoto(f.UUID.String()); err != nil {
+		t.Errorf("failed to attach photo to user, %s", err)
+	} else {
+		ms.Equal(filename, attachedFile.Name)
+		ms.NotEqual(0, attachedFile.ID)
+		ms.NotEqual(domain.EmptyUUID, attachedFile.UUID.String())
+	}
+
+	if err := DB.Load(&user); err != nil {
+		t.Errorf("failed to load photo relation for test user, %s", err)
+	}
+
+	ms.Equal(filename, user.PhotoFile.Name)
+}
