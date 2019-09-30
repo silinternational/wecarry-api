@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws/awserr"
+
 	"github.com/gobuffalo/envy"
 
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -40,11 +42,6 @@ type awsConfig struct {
 
 // presigned URL expiration
 const urlLifespan = 10 * time.Minute
-
-// String returns a pointer to the string value passed in.
-func String(v string) *string {
-	return &v
-}
 
 func GetS3ConfigFromEnv() awsConfig {
 	var a awsConfig
@@ -145,4 +142,27 @@ func GetFileURL(key string) (ObjectUrl, error) {
 	}
 
 	return getObjectURL(config, svc, key)
+}
+
+func CreateS3Bucket() error {
+	config := GetS3ConfigFromEnv()
+
+	svc, err := CreateS3Service(config)
+	if err != nil {
+		return err
+	}
+
+	if _, err := svc.CreateBucket(&s3.CreateBucketInput{
+		Bucket: aws.String(envy.Get(AwsS3BucketEnv, "")),
+	}); err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case s3.ErrCodeBucketAlreadyExists:
+			case s3.ErrCodeBucketAlreadyOwnedByYou:
+			default:
+				return err
+			}
+		}
+	}
+	return nil
 }
