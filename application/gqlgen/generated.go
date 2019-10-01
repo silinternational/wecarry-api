@@ -1068,6 +1068,7 @@ input UpdatedPost {
     category: String
     url: String
     cost: String
+    photoID: ID
 }
 `},
 )
@@ -5577,6 +5578,12 @@ func (ec *executionContext) unmarshalInputUpdatedPost(ctx context.Context, obj i
 			if err != nil {
 				return it, err
 			}
+		case "photoID":
+			var err error
+			it.PhotoID, err = ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		}
 	}
 
@@ -7046,7 +7053,7 @@ func (ec *executionContext) marshalNPost2ᚕᚖgithubᚗcomᚋsilinternational�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOPost2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, sel, v[i])
+			ret[i] = ec.marshalNPost2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)

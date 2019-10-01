@@ -198,7 +198,8 @@ func (p *Post) GetFiles() ([]File, error) {
 	return files, nil
 }
 
-// AttachPhoto assigns a previously-stored File to this Post as its photo
+// AttachPhoto assigns a previously-stored File to this Post as its photo. Parameter `fileID` is the UUID
+// of the photo to attach.
 func (p *Post) AttachPhoto(fileID string) (File, error) {
 	var f File
 	if err := f.FindByUUID(fileID); err != nil {

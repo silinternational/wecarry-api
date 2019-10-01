@@ -221,7 +221,7 @@ func (r *queryResolver) Post(ctx context.Context, id *string) (*models.Post, err
 // convertGqlPostInputToDBPost takes a `PostInput` and either finds a record matching the UUID given in `input.ID` or
 // creates a new `models.Post` with a new UUID. In either case, all properties that are not `nil` are set to the value
 // provided in `input`
-func convertGqlPostInputToDBPost(input postInput, currentUser models.User) (models.Post, error) {
+func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUser models.User) (models.Post, error) {
 	post := models.Post{}
 
 	if input.ID != nil {
@@ -318,6 +318,14 @@ func convertGqlPostInputToDBPost(input postInput, currentUser models.User) (mode
 		post.Cost = nulls.NewFloat64(c)
 	}
 
+	if input.PhotoID != nil {
+		if file, err := post.AttachPhoto(*input.PhotoID); err != nil {
+			graphql.AddError(ctx, gqlerror.Errorf("Error attaching photo to Post, %s", err.Error()))
+		} else {
+			post.PhotoFile = file
+		}
+	}
+
 	return post, nil
 }
 
@@ -357,11 +365,12 @@ type postInput struct {
 	Category     *string
 	URL          *string
 	Cost         *string
+	PhotoID      *string
 }
 
 func (r *mutationResolver) CreatePost(ctx context.Context, input postInput) (*models.Post, error) {
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
-	post, err := convertGqlPostInputToDBPost(input, cUser)
+	post, err := convertGqlPostInputToDBPost(ctx, input, cUser)
 	if err != nil {
 		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
 		return &models.Post{}, err
@@ -376,7 +385,7 @@ func (r *mutationResolver) CreatePost(ctx context.Context, input postInput) (*mo
 
 func (r *mutationResolver) UpdatePost(ctx context.Context, input postInput) (*models.Post, error) {
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
-	post, err := convertGqlPostInputToDBPost(input, cUser)
+	post, err := convertGqlPostInputToDBPost(ctx, input, cUser)
 	if err != nil {
 		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
 		return &models.Post{}, err

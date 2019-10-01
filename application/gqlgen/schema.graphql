@@ -182,4 +182,5 @@ input UpdatedPost {
     category: String
     url: String
     cost: String
+    photoID: ID
 }
