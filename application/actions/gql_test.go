@@ -155,6 +155,7 @@ func (as *ActionSuite) Test_CreateOrganization() {
 		req := httptest.NewRequest("POST", "/gql", payload)
 		resp := httptest.NewRecorder()
 		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tc.Token))
+		req.Header.Set("content-type", "application/json")
 
 		as.App.ServeHTTP(resp, req)
 

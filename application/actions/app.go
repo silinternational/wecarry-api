@@ -4,7 +4,6 @@ import (
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/buffalo-pop/pop/popmw"
 	"github.com/gobuffalo/envy"
-	contenttype "github.com/gobuffalo/mw-contenttype"
 	paramlogger "github.com/gobuffalo/mw-paramlogger"
 	"github.com/gorilla/sessions"
 	"github.com/rs/cors"
@@ -31,7 +30,6 @@ var app *buffalo.App
 // placed last in the route declarations, as it will prevent routes
 // declared after it to never be called.
 func App() *buffalo.App {
-
 	if app == nil {
 		app = buffalo.New(buffalo.Options{
 			Env: ENV,
@@ -53,9 +51,6 @@ func App() *buffalo.App {
 		// Log request parameters (filters apply).
 		app.Use(paramlogger.ParameterLogger)
 
-		// Set the request content type to JSON
-		app.Use(contenttype.Set("application/json"))
-
 		// Wraps each request in a transaction.
 		//  c.Value("tx").(*pop.Connection)
 		// Remove to disable this.
@@ -68,16 +63,17 @@ func App() *buffalo.App {
 		app.GET("/", HomeHandler)
 		app.POST("/gql/", GQLHandler)
 
+		app.POST("/upload/", UploadHandler)
+
 		auth := app.Group("/auth")
 		auth.Middleware.Skip(SetCurrentUser, AuthRequest, AuthCallback)
 
 		auth.POST("/login", AuthRequest)
 
-		auth.GET("/callback", AuthCallback) // for Google Oauth
+		auth.GET("/callback", AuthCallback)  // for Google Oauth
 		auth.POST("/callback", AuthCallback) // for SAML
 
 		auth.GET("/logout", AuthDestroy)
-
 	}
 
 	return app
