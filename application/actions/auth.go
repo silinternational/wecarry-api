@@ -114,14 +114,10 @@ func getOrgAndUserOrgs(
 	if len(userOrgs) == 0 {
 		err = org.FindByDomain(domain.EmailDomain(authEmail))
 		if err != nil {
-			extras := map[string]interface{}{"authEmail": authEmail}
-			return org, userOrgs, authError(c, "ErrorFindingOrgByEmail",
-				// The error message will already give plenty of detail
-				err.Error(), extras)
+			return org, userOrgs, err
 		}
 		if org.AuthType == "" {
-			return org, userOrgs, authError(c, "OrgNotFound",
-				"unable to find organization by email domain")
+			return org, userOrgs, fmt.Errorf("unable to find organization by email domain")
 		}
 	}
 
@@ -141,19 +137,17 @@ func provideOrgOptions(userOrgs models.UserOrganizations, c buffalo.Context) err
 	resp := AuthResponse{
 		AuthOrgOptions: &orgOpts,
 	}
-	return c.Render(200, render.JSON(resp))
+	return c.Render(http.StatusOK, render.JSON(resp))
 }
 
 func createAuthUser(
-	authEmail, clientID string,
+	clientID string,
 	user models.User,
-	org models.Organization,
-	c buffalo.Context) (AuthUser, error) {
+	org models.Organization) (AuthUser, error) {
 	accessToken, expiresAt, err := user.CreateAccessToken(org, clientID)
 
 	if err != nil {
-		extras := map[string]interface{}{"authEmail": authEmail}
-		return AuthUser{}, authError(c, "CreateAccessTokenFailure", err.Error(), extras)
+		return AuthUser{}, err
 	}
 
 	var uos []AuthOrgOption
@@ -187,7 +181,7 @@ func createAuthUser(
 func AuthRequest(c buffalo.Context) error {
 	clientID := c.Param(ClientIDParam)
 	if clientID == "" {
-		return authError(c, "MissingClientID",
+		return authRequestError(c, http.StatusBadRequest, domain.MissingClientID,
 			ClientIDParam+" is required to login")
 	}
 
@@ -195,18 +189,20 @@ func AuthRequest(c buffalo.Context) error {
 
 	authEmail := c.Param(AuthEmailParam)
 	if authEmail == "" {
-		return authError(c, "MissingAuthEmail",
+		return authRequestError(c, http.StatusBadRequest, domain.MissingAuthEmail,
 			AuthEmailParam+" is required to login")
 	}
 	c.Session().Set(AuthEmailSessionKey, authEmail)
 
 	getOrSetReturnTo(c)
 
+	extras := map[string]interface{}{"authEmail": authEmail}
+
 	// find org for auth config and processing
 	org, userOrgs, err := getOrgAndUserOrgs(authEmail, c)
 	if err != nil {
-		return authError(c, "OrgUserOrg",
-			fmt.Sprintf("error getting org and userOrgs ... %v", err))
+		return authRequestError(c, http.StatusInternalServerError, domain.ErrorFindingOrgUserOrgs,
+			fmt.Sprintf("error getting org and userOrgs ... %v", err), extras)
 	}
 
 	// User has more than one organization affiliation, return list to choose from
@@ -215,35 +211,34 @@ func AuthRequest(c buffalo.Context) error {
 	}
 
 	if org.ID == 0 {
-		return authError(c, "MissingOrgID", "unable to determine the organization id")
+		return authRequestError(c, http.StatusBadRequest, domain.CannotFindOrg,
+			"unable to find an organization for this user", extras)
 	}
 
 	orgID := org.Uuid.String()
 	c.Session().Set(OrgIDSessionKey, orgID)
 	err = c.Session().Save()
 	if err != nil {
-		extras := map[string]interface{}{"authEmail": authEmail}
-		return authError(c, "SessionAuthRequest",
+		return authRequestError(c, http.StatusInternalServerError, domain.ErrorSavingAuthRequestSession,
 			fmt.Sprintf("unable to save session ... %v", err), extras)
 	}
 
 	sp, err := org.GetAuthProvider()
 	if err != nil {
-		extras := map[string]interface{}{"authEmail": authEmail}
-		return authError(c, "UnableToLoadAuthProvider",
+		return authRequestError(c, http.StatusInternalServerError, domain.ErrorLoadingAuthProvider,
 			fmt.Sprintf("unable to load auth provider for '%s' ... %v", org.Name, err), extras)
 	}
 
 	redirectURL, err := sp.AuthRequest(c)
 	if err != nil {
-		return authError(c, "UnableToGetAuthnURL",
-			fmt.Sprintf("unable to figure out what the authentication url should be '%s' ... %v", err, org.Name))
+		return authRequestError(c, http.StatusInternalServerError, domain.ErrorGettingAuthURL,
+			fmt.Sprintf("unable to determine what the authentication url should be for '%s' ... %v", org.Name, err))
 	}
 
 	resp := AuthResponse{RedirectURL: redirectURL}
 
 	// Reply with a 200 and leave it to the UI to do the redirect
-	return c.Render(200, render.JSON(resp))
+	return c.Render(http.StatusOK, render.JSON(resp))
 
 }
 
@@ -252,13 +247,13 @@ func AuthRequest(c buffalo.Context) error {
 func AuthCallback(c buffalo.Context) error {
 	clientID, ok := c.Session().Get(ClientIDSessionKey).(string)
 	if !ok {
-		return authError(c, "MissingSessionClientID",
+		return logErrorAndRedirect(c, domain.MissingSessionClientID,
 			ClientIDSessionKey+" session entry is required to complete login")
 	}
 
 	authEmail, ok := c.Session().Get(AuthEmailSessionKey).(string)
 	if !ok {
-		return authError(c, "MissingSessionAuthEmail",
+		return logErrorAndRedirect(c, domain.MissingSessionAuthEmail,
 			AuthEmailSessionKey+" session entry is required to complete login")
 	}
 
@@ -267,33 +262,34 @@ func AuthCallback(c buffalo.Context) error {
 	err := c.Session().Save()
 	if err != nil {
 		extras := map[string]interface{}{"authEmail": authEmail}
-		return authError(c, "SessionAuthCallback",
+		return logErrorAndRedirect(c, domain.ErrorSavingAuthCallbackSession,
 			fmt.Sprintf("error saving session ... %v", err), extras)
 	}
 
 	orgID, ok := c.Session().Get(OrgIDSessionKey).(string)
 	if !ok {
-		return authError(c, "MissingSessionOrgID",
+		return logErrorAndRedirect(c, domain.MissingSessionOrgID,
 			OrgIDSessionKey+" session entry is required to complete login")
 	}
 
 	org := models.Organization{}
 	err = org.FindByUUID(orgID)
 	if err != nil {
-		return authError(c, "MissingOrg", err.Error())
+		return logErrorAndRedirect(c, domain.ErrorFindingOrg,
+			fmt.Sprintf("error finding org with UUID %s ... %v", orgID, err.Error()))
 	}
 
 	ap, err := org.GetAuthProvider()
 	if err != nil {
 		extras := map[string]interface{}{"authEmail": authEmail}
-		return authError(c, "UnableToLoadAuthProvider",
+		return logErrorAndRedirect(c, domain.ErrorLoadingAuthProvider,
 			fmt.Sprintf("error loading auth provider for '%s' ... %v", org.Name, err), extras)
 	}
 
 	authResp := ap.AuthCallback(c)
 	if authResp.Error != nil {
 		extras := map[string]interface{}{"authEmail": authEmail}
-		return authError(c, "AuthCallback", authResp.Error.Error(), extras)
+		return logErrorAndRedirect(c, domain.ErrorAuthProvidersCallback, authResp.Error.Error(), extras)
 	}
 
 	// if we have an authuser, find or create user in local db and finish login
@@ -301,15 +297,20 @@ func AuthCallback(c buffalo.Context) error {
 	if authResp.AuthUser != nil {
 		// login was success, clear session so new login can be initiated if needed
 		c.Session().Clear()
-		_ = c.Session().Save()
-
-		err := user.FindOrCreateFromAuthUser(org.ID, authResp.AuthUser)
+		err := c.Session().Save()
 		if err != nil {
-			return authError(c, "AuthUser", err.Error())
+			extras := map[string]interface{}{"authEmail": authEmail}
+			return logErrorAndRedirect(c, domain.ErrorSavingAuthCallbackSession,
+				fmt.Sprintf("error saving session after clear... %v", err), extras)
+		}
+
+		err = user.FindOrCreateFromAuthUser(org.ID, authResp.AuthUser)
+		if err != nil {
+			return logErrorAndRedirect(c, domain.ErrorWithAuthUser, err.Error())
 		}
 	}
 
-	authUser, err := createAuthUser(authEmail, clientID, user, org, c)
+	authUser, err := createAuthUser(clientID, user, org)
 	if err != nil {
 		return err
 	}
@@ -320,8 +321,7 @@ func AuthCallback(c buffalo.Context) error {
 	return c.Redirect(302, getLoginSuccessRedirectURL(authUser, returnTo))
 }
 
-// Make extras variadic, so that it can be omitted from the params
-func authError(c buffalo.Context, code, message string, extras ...map[string]interface{}) error {
+func mergeExtras(code string, extras ...map[string]interface{}) map[string]interface{} {
 	allExtras := map[string]interface{}{"code": code}
 
 	for _, e := range extras {
@@ -329,6 +329,24 @@ func authError(c buffalo.Context, code, message string, extras ...map[string]int
 			allExtras[k] = v
 		}
 	}
+	return allExtras
+}
+
+// Make extras variadic, so that it can be omitted from the params
+func authRequestError(c buffalo.Context, httpStatus int, errorCode, message string, extras ...map[string]interface{}) error {
+	allExtras := mergeExtras(errorCode, extras...)
+
+	domain.Error(c, message, allExtras)
+
+	authError := AuthError{
+		Code: errorCode,
+	}
+	return c.Render(httpStatus, render.JSON(authError))
+}
+
+// Make extras variadic, so that it can be omitted from the params
+func logErrorAndRedirect(c buffalo.Context, code, message string, extras ...map[string]interface{}) error {
+	allExtras := mergeExtras(code, extras...)
 
 	domain.Error(c, message, allExtras)
 
@@ -336,18 +354,19 @@ func authError(c buffalo.Context, code, message string, extras ...map[string]int
 	return c.Redirect(http.StatusFound, uiUrl)
 }
 
+// AuthDestroy uses the bearer token to find the user's access token and
+//  calls the appropriate provider's logout function.
 func AuthDestroy(c buffalo.Context) error {
-
 	bearerToken := domain.GetBearerTokenFromRequest(c.Request())
 	if bearerToken == "" {
-		return authError(c, "LogoutBearerToken",
+		return logErrorAndRedirect(c, domain.MissingBearerToken,
 			"no Bearer token provided")
 	}
 
 	var uat models.UserAccessToken
 	err := uat.FindByBearerToken(bearerToken)
 	if err != nil {
-		return authError(c, "LogoutAccessToken", err.Error())
+		return logErrorAndRedirect(c, domain.ErrorFindingAccessToken, err.Error())
 	}
 
 	// set person on rollbar session
@@ -355,12 +374,12 @@ func AuthDestroy(c buffalo.Context) error {
 
 	authPro, err := uat.UserOrganization.Organization.GetAuthProvider()
 	if err != nil {
-		return authError(c, "LogoutAuthProvider", err.Error())
+		return logErrorAndRedirect(c, domain.ErrorLoadingAuthProvider, err.Error())
 	}
 
 	authResp := authPro.Logout(c)
 	if authResp.Error != nil {
-		return authError(c, "LogoutError", authResp.Error.Error())
+		return logErrorAndRedirect(c, domain.ErrorAuthProvidersLogout, authResp.Error.Error())
 	}
 
 	var response AuthResponse
@@ -369,13 +388,13 @@ func AuthDestroy(c buffalo.Context) error {
 		var uat models.UserAccessToken
 		err = uat.DeleteByBearerToken(bearerToken)
 		if err != nil {
-			return authError(c, "LogoutDeleteBearerToken", err.Error())
+			return logErrorAndRedirect(c, domain.ErrorDeletingAccessToken, err.Error())
 		}
 		c.Session().Clear()
 		response.RedirectURL = authResp.RedirectURL
 	}
 
-	return c.Render(200, render.JSON(response))
+	return c.Render(http.StatusOK, render.JSON(response))
 }
 
 func SetCurrentUser(next buffalo.Handler) buffalo.Handler {
