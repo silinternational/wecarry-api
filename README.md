@@ -38,8 +38,11 @@ To enable authentication via Google, an organization record will
 need to be created that includes an auth_type of `google` and an auth_config like the following ... 
 
 ```
-{"GoogleKey": "1234-abcd.apps.googleusercontent.com", "GoogleSecret": "abcd-1234"}
+{}
 ```
+
+The two environment variables `GOOGLE_KEY` and `GOOGLE_SECRET` will need to be 
+set for the appropriate Google oauth developer account. 
 
 To learn about requirements on the Google side, start [here](https://developers.google.com/identity/protocols/OAuth2)
 
