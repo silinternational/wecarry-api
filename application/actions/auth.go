@@ -42,11 +42,6 @@ const ReturnToSessionKey = "ReturnTo"
 // http param for token type
 const TokenTypeParam = "token-type"
 
-type AuthError struct {
-	Code    string `json:"Code"`
-	Message string `json:"Message"`
-}
-
 type AuthOrgOption struct {
 	ID      string `json:"ID"`
 	Name    string `json:"Name"`
@@ -65,7 +60,7 @@ type AuthUser struct {
 }
 
 type AuthResponse struct {
-	Error          *AuthError       `json:"Error,omitempty"`
+	Error          *domain.AppError `json:"Error,omitempty"`
 	AuthOrgOptions *[]AuthOrgOption `json:"AuthOrgOptions,omitempty"`
 	RedirectURL    string           `json:"RedirectURL,omitempty"`
 	User           *AuthUser        `json:"User,omitempty"`
@@ -311,10 +306,10 @@ func AuthCallback(c buffalo.Context) error {
 	return c.Redirect(302, getLoginSuccessRedirectURL(authUser, returnTo))
 }
 
-// returnAuthError takes a error code and message and renders AuthResponse to json and returns
+// authError takes a error code and message and renders AuthResponse to json and returns
 func authError(c buffalo.Context, status int, code, message string) error {
 	resp := AuthResponse{
-		Error: &AuthError{
+		Error: &domain.AppError{
 			Code:    code,
 			Message: message,
 		},
