@@ -76,6 +76,7 @@ type ComplexityRoot struct {
 		RemoveOrganizationDomain func(childComplexity int, input NewOrganizationDomain) int
 		UpdateOrganization       func(childComplexity int, input UpdatedOrganization) int
 		UpdatePost               func(childComplexity int, input postInput) int
+		UpdateUser               func(childComplexity int, input UpdatedUser) int
 	}
 
 	Organization struct {
@@ -166,6 +167,7 @@ type MessageResolver interface {
 type MutationResolver interface {
 	CreatePost(ctx context.Context, input postInput) (*models.Post, error)
 	UpdatePost(ctx context.Context, input postInput) (*models.Post, error)
+	UpdateUser(ctx context.Context, input UpdatedUser) (*models.User, error)
 	CreateMessage(ctx context.Context, input NewMessage) (*models.Message, error)
 	CreateOrganization(ctx context.Context, input NewOrganization) (*models.Organization, error)
 	UpdateOrganization(ctx context.Context, input UpdatedOrganization) (*models.Organization, error)
@@ -409,6 +411,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.UpdatePost(childComplexity, args["input"].(postInput)), true
+
+	case "Mutation.updateUser":
+		if e.complexity.Mutation.UpdateUser == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateUser_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateUser(childComplexity, args["input"].(UpdatedUser)), true
 
 	case "Organization.createdAt":
 		if e.complexity.Organization.CreatedAt == nil {
@@ -897,6 +911,7 @@ var parsedSchema = gqlparser.MustLoadSchema(
 type Mutation {
     createPost(input: NewPost!): Post!
     updatePost(input: UpdatedPost!): Post!
+    updateUser(input: UpdatedUser!): User!
     createMessage(input: NewMessage!): Message!
     createOrganization(input: NewOrganization!): Organization!
     updateOrganization(input: UpdatedOrganization!): Organization!
@@ -948,6 +963,12 @@ type User {
     organizations: [Organization!]!
     posts(role: PostRole!): [Post!]!
     photoURL: String!
+}
+
+input UpdatedUser {
+    id: ID!
+    photoURL: String
+    photoID: String
 }
 
 enum PostType {
@@ -1167,6 +1188,20 @@ func (ec *executionContext) field_Mutation_updatePost_args(ctx context.Context, 
 	var arg0 postInput
 	if tmp, ok := rawArgs["input"]; ok {
 		arg0, err = ec.unmarshalNUpdatedPost2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐpostInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateUser_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 UpdatedUser
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalNUpdatedUser2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐUpdatedUser(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1805,6 +1840,50 @@ func (ec *executionContext) _Mutation_updatePost(ctx context.Context, field grap
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNPost2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_updateUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_updateUser_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateUser(rctx, args["input"].(UpdatedUser))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.User)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_createMessage(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -5590,6 +5669,36 @@ func (ec *executionContext) unmarshalInputUpdatedPost(ctx context.Context, obj i
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputUpdatedUser(ctx context.Context, obj interface{}) (UpdatedUser, error) {
+	var it UpdatedUser
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "id":
+			var err error
+			it.ID, err = ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "photoURL":
+			var err error
+			it.PhotoURL, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "photoID":
+			var err error
+			it.PhotoID, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -5763,6 +5872,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "updatePost":
 			out.Values[i] = ec._Mutation_updatePost(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "updateUser":
+			out.Values[i] = ec._Mutation_updateUser(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -7053,7 +7167,7 @@ func (ec *executionContext) marshalNPost2ᚕᚖgithubᚗcomᚋsilinternational�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNPost2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, sel, v[i])
+			ret[i] = ec.marshalOPost2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -7217,6 +7331,10 @@ func (ec *executionContext) unmarshalNUpdatedPost2githubᚗcomᚋsilinternationa
 	return ec.unmarshalInputUpdatedPost(ctx, v)
 }
 
+func (ec *executionContext) unmarshalNUpdatedUser2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐUpdatedUser(ctx context.Context, v interface{}) (UpdatedUser, error) {
+	return ec.unmarshalInputUpdatedUser(ctx, v)
+}
+
 func (ec *executionContext) marshalNUser2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx context.Context, sel ast.SelectionSet, v models.User) graphql.Marshaler {
 	return ec._User(ctx, sel, &v)
 }
@@ -7245,7 +7363,7 @@ func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋsilinternational�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, sel, v[i])
+			ret[i] = ec.marshalOUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)

@@ -34,6 +34,12 @@ type UpdatedOrganization struct {
 	AuthConfig string  `json:"authConfig"`
 }
 
+type UpdatedUser struct {
+	ID       string  `json:"id"`
+	PhotoURL *string `json:"photoURL"`
+	PhotoID  *string `json:"photoID"`
+}
+
 type PostRole string
 
 const (

@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/gobuffalo/nulls"
+
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
@@ -128,4 +130,38 @@ func GetSelectFieldsForUsers(ctx context.Context) []string {
 		selectFields = append(selectFields, "photo_file_id")
 	}
 	return selectFields
+}
+
+func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdatedUser) (*models.User, error) {
+	var user models.User
+	err := user.FindByUUID(input.ID)
+	if err != nil {
+		return &models.User{}, err
+	}
+
+	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+	if cUser.ID != user.ID {
+		return &models.User{}, fmt.Errorf("user not allowed to edit user profiles")
+	}
+
+	if input.PhotoURL != nil {
+		if *input.PhotoURL == "" {
+			user.PhotoURL = nulls.String{Valid: false}
+		} else {
+			user.PhotoURL = nulls.NewString(*input.PhotoURL)
+		}
+	}
+
+	if input.PhotoID != nil {
+		var file models.File
+		err := file.FindByUUID(*input.PhotoID)
+		if err != nil {
+			return &models.User{}, err
+		}
+		user.PhotoFileID = nulls.NewInt(file.ID)
+	}
+
+	err = user.Save()
+
+	return &user, err
 }

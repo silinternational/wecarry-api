@@ -11,6 +11,7 @@ type Query {
 type Mutation {
     createPost(input: NewPost!): Post!
     updatePost(input: UpdatedPost!): Post!
+    updateUser(input: UpdatedUser!): User!
     createMessage(input: NewMessage!): Message!
     createOrganization(input: NewOrganization!): Organization!
     updateOrganization(input: UpdatedOrganization!): Organization!
@@ -62,6 +63,12 @@ type User {
     organizations: [Organization!]!
     posts(role: PostRole!): [Post!]!
     photoURL: String!
+}
+
+input UpdatedUser {
+    id: ID!
+    photoURL: String
+    photoID: String
 }
 
 enum PostType {
