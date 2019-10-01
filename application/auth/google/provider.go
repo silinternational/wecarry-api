@@ -135,11 +135,12 @@ func (p *Provider) AuthCallback(c buffalo.Context) auth.Response {
 	gu, err := p.FetchUser(sess)
 
 	authUser := auth.User{
-		FirstName: gu.FirstName,
-		LastName:  gu.LastName,
-		Email:     gu.Email,
-		UserID:    gu.UserID,
-		Nickname:  gu.NickName,
+		FirstName:       gu.FirstName,
+		LastName:        gu.LastName,
+		Email:           gu.Email,
+		UserID:          gu.UserID,
+		Nickname:        gu.NickName,
+		ProfileImageURL: gu.AvatarURL,
 	}
 
 	resp.AuthUser = &authUser
