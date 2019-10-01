@@ -323,14 +323,14 @@ func AuthDestroy(c buffalo.Context) error {
 	bearerToken := domain.GetBearerTokenFromRequest(c.Request())
 	if bearerToken == "" {
 		domain.Warn(c, "no Bearer token provided", map[string]interface{}{"code": "LogoutError"})
-		return authError(c, 400, "LogoutError", "no Bearer token provided")
+		return authError(c, http.StatusBadRequest, "LogoutError", "no Bearer token provided")
 	}
 
 	var uat models.UserAccessToken
 	err := uat.FindByBearerToken(bearerToken)
 	if err != nil {
 		domain.Error(c, err.Error(), map[string]interface{}{"code": "LogoutError"})
-		return authError(c, 500, "LogoutError", err.Error())
+		return authError(c, http.StatusInternalServerError, "LogoutError", err.Error())
 	}
 
 	// set person on rollbar session
@@ -339,13 +339,13 @@ func AuthDestroy(c buffalo.Context) error {
 	authPro, err := uat.UserOrganization.Organization.GetAuthProvider()
 	if err != nil {
 		domain.Error(c, err.Error(), map[string]interface{}{"code": "LogoutError"})
-		return authError(c, 500, "LogoutError", err.Error())
+		return authError(c, http.StatusInternalServerError, "LogoutError", err.Error())
 	}
 
 	authResp := authPro.Logout(c)
 	if authResp.Error != nil {
 		domain.Error(c, authResp.Error.Error(), map[string]interface{}{"code": "LogoutError"})
-		return authError(c, 500, "LogoutError", authResp.Error.Error())
+		return authError(c, http.StatusInternalServerError, "LogoutError", authResp.Error.Error())
 	}
 
 	var response AuthResponse
@@ -355,7 +355,7 @@ func AuthDestroy(c buffalo.Context) error {
 		err = uat.DeleteByBearerToken(bearerToken)
 		if err != nil {
 			domain.Error(c, err.Error(), map[string]interface{}{"code": "LogoutError"})
-			return authError(c, 500, "LogoutError", err.Error())
+			return authError(c, http.StatusInternalServerError, "LogoutError", err.Error())
 		}
 		c.Session().Clear()
 		response.RedirectURL = authResp.RedirectURL
@@ -368,12 +368,12 @@ func SetCurrentUser(next buffalo.Handler) buffalo.Handler {
 	return func(c buffalo.Context) error {
 		bearerToken := domain.GetBearerTokenFromRequest(c.Request())
 		if bearerToken == "" {
-			return fmt.Errorf("no Bearer token provided")
+			return authError(c, http.StatusBadRequest, "MissingBearerToken", "no bearer token provided")
 		}
 
 		var user models.User
 		if err := user.FindByAccessToken(bearerToken); err != nil {
-			return c.Error(401, fmt.Errorf("invalid bearer token"))
+			return authError(c, http.StatusUnauthorized, "InvalidBearerToken", "invalid bearer token")
 		}
 		c.Set("current_user", user)
 
