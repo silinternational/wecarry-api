@@ -13,7 +13,10 @@ func (r *Resolver) File() FileResolver {
 type fileResolver struct{ *Resolver }
 
 func (r *fileResolver) URL(ctx context.Context, obj *models.File) (string, error) {
-	return "fileURL", nil
+	if obj == nil {
+		return "", nil
+	}
+	return obj.URL.String, nil
 }
 
 func (r *fileResolver) ID(ctx context.Context, obj *models.File) (string, error) {
