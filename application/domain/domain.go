@@ -32,7 +32,7 @@ var NoExtras map[string]interface{}
 
 type AppError struct {
 	Code    string `json:"Code"`
-	Message string `json:"Message"`
+	Message string `json:"Message,omitempty"`
 }
 
 // GetRequestData parses the URL, if the method is GET, or the body, if the method
