@@ -21,28 +21,25 @@ const endpointProfile string = "https://www.googleapis.com/oauth2/v2/userinfo"
 
 const ProviderName = "google"
 
-// GoogleConfig is needed for sending auth requests to Google
-type GoogleConfig struct {
-	GoogleKey    string `json:"GoogleKey"`
-	GoogleSecret string `json:"GoogleSecret"`
-}
-
 // New creates a new Google provider, and sets up important connection details.
 // You should always call `google.New` to get a new Provider. Never try to create
 // one manually.
 func New(jsonConfig json.RawMessage) (*Provider, error) {
 
-	gCfg := GoogleConfig{}
-	err := json.Unmarshal(jsonConfig, &gCfg)
-	if err != nil {
+	googleKey := envy.Get(auth.GoogleKeyEnv, "")
+	googleSecret := envy.Get(auth.GoogleSecretEnv, "")
+
+	if googleKey == "" || googleSecret == "" {
+		err := fmt.Errorf("missing required environment variable, either %s or %s.",
+			auth.GoogleKeyEnv, auth.GoogleSecretEnv)
 		return &Provider{}, err
 	}
 
 	scopes := []string{"profile", "email"}
 
 	p := &Provider{
-		ClientKey:    gCfg.GoogleKey,
-		Secret:       gCfg.GoogleSecret,
+		ClientKey:    googleKey,
+		Secret:       googleSecret,
 		CallbackURL:  envy.Get(auth.AuthCallbackURLEnv, ""),
 		providerName: ProviderName,
 	}

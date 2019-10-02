@@ -27,13 +27,22 @@ instructions here: https://docs.docker.com/compose/install/
 
 ## Auth
 
+### Auth Request Error Codes
+When an auth request is made to the wecarry api and something goes wrong, the api
+will render json with a Code entry for the error. To see a list of possible codes, 
+refer to domain/errorcodes.go.  In particular, the related codes are those 
+that have a comment referring to actions.AuthRequest.
+
 ### Google
 To enable authentication via Google, an organization record will 
 need to be created that includes an auth_type of `google` and an auth_config like the following ... 
 
 ```
-{"GoogleKey": "1234-abcd.apps.googleusercontent.com", "GoogleSecret": "abcd-1234"}
+{}
 ```
+
+The two environment variables `GOOGLE_KEY` and `GOOGLE_SECRET` will need to be 
+set for the appropriate Google oauth developer account. 
 
 To learn about requirements on the Google side, start [here](https://developers.google.com/identity/protocols/OAuth2)
 

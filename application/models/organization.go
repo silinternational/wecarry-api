@@ -72,7 +72,7 @@ func (o *Organization) GetAuthProvider() (auth.Provider, error) {
 func (o *Organization) FindByUUID(uuid string) error {
 
 	if uuid == "" {
-		return fmt.Errorf("error: access token must not be blank")
+		return fmt.Errorf("error: org uuid must not be blank")
 	}
 
 	if err := DB.Where("uuid = ?", uuid).First(o); err != nil {
