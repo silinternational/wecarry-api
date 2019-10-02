@@ -156,7 +156,6 @@ type ComplexityRoot struct {
 
 type FileResolver interface {
 	ID(ctx context.Context, obj *models.File) (string, error)
-	URL(ctx context.Context, obj *models.File) (string, error)
 }
 type MessageResolver interface {
 	ID(ctx context.Context, obj *models.Message) (string, error)
@@ -1365,13 +1364,13 @@ func (ec *executionContext) _File_url(ctx context.Context, field graphql.Collect
 		Object:   "File",
 		Field:    field,
 		Args:     nil,
-		IsMethod: true,
+		IsMethod: false,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.File().URL(rctx, obj)
+		return obj.URL, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5723,19 +5722,10 @@ func (ec *executionContext) _File(ctx context.Context, sel ast.SelectionSet, obj
 				return res
 			})
 		case "url":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._File_url(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			})
+			out.Values[i] = ec._File_url(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "urlExpiration":
 			out.Values[i] = ec._File_urlExpiration(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -7350,7 +7340,7 @@ func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋsilinternational�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, sel, v[i])
+			ret[i] = ec.marshalOUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)

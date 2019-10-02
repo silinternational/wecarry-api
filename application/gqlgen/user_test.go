@@ -152,6 +152,6 @@ func (as *ActionSuite) Test_UserQuery() {
 	}
 	as.Equal(userFixtures[1].Uuid.String(), usersResp.User.ID)
 	as.Equal(userFixtures[1].Nickname, usersResp.User.Nickname)
-	as.Equal(userFixtures[1].PhotoFile.URL.String, usersResp.User.PhotoURL)
+	as.Equal(userFixtures[1].PhotoFile.URL, usersResp.User.PhotoURL)
 	as.Regexp("^https?", usersResp.User.PhotoURL)
 }

@@ -162,7 +162,7 @@ func (ms *ModelSuite) TestFile_FindByUUID() {
 					t.Errorf("error = %v, fileID = %s", err, tt.args.fileUUID)
 				} else {
 					ms.Equal(tt.args.fileUUID, f.UUID.String(), "retrieved file has wrong UUID")
-					ms.Contains(f.URL.String, "http", "URL doesn't start with 'http'")
+					ms.Contains(f.URL, "http", "URL doesn't start with 'http'")
 					ms.True(f.URLExpiration.After(time.Now()), "URLExpiration is in the past")
 				}
 			}

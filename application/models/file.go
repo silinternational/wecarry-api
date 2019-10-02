@@ -10,7 +10,6 @@ import (
 
 	"github.com/silinternational/wecarry-api/domain"
 
-	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
 	"github.com/gobuffalo/validate/validators"
@@ -18,15 +17,15 @@ import (
 )
 
 type File struct {
-	ID            int          `json:"id" db:"id"`
-	CreatedAt     time.Time    `json:"created_at" db:"created_at"`
-	UpdatedAt     time.Time    `json:"updated_at" db:"updated_at"`
-	UUID          uuid.UUID    `json:"uuid" db:"uuid"`
-	URL           nulls.String `json:"url" db:"url"`
-	URLExpiration time.Time    `json:"url_expiration" db:"url_expiration"`
-	Name          string       `json:"name" db:"name"`
-	Size          int          `json:"size" db:"size"`
-	ContentType   string       `json:"content_type" db:"content_type"`
+	ID            int       `json:"id" db:"id"`
+	CreatedAt     time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at" db:"updated_at"`
+	UUID          uuid.UUID `json:"uuid" db:"uuid"`
+	URL           string    `json:"url" db:"url"`
+	URLExpiration time.Time `json:"url_expiration" db:"url_expiration"`
+	Name          string    `json:"name" db:"name"`
+	Size          int       `json:"size" db:"size"`
+	ContentType   string    `json:"content_type" db:"content_type"`
 }
 
 // String is not required by pop and may be deleted
@@ -85,7 +84,7 @@ func (f *File) Store(name string, content []byte) error {
 
 	file := File{
 		UUID:          fileUUID,
-		URL:           nulls.NewString(url.Url),
+		URL:           url.Url,
 		URLExpiration: url.Expiration,
 		Name:          name,
 		Size:          len(content),
@@ -125,7 +124,7 @@ func (f *File) RefreshURL() error {
 	if err != nil {
 		return err
 	}
-	f.URL = nulls.NewString(newURL.Url)
+	f.URL = newURL.Url
 	f.URLExpiration = newURL.Expiration
 	if err = DB.Update(f); err != nil {
 		return err

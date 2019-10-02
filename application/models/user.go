@@ -374,7 +374,7 @@ func (u *User) GetPhotoURL() (string, error) {
 		if err := u.PhotoFile.RefreshURL(); err != nil {
 			return "", err
 		}
-		url = u.PhotoFile.URL.String
+		url = u.PhotoFile.URL
 	}
 	return url, nil
 }

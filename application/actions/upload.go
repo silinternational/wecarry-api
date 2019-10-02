@@ -50,7 +50,7 @@ func UploadHandler(c buffalo.Context) error {
 	resp := UploadResponse{
 		Name:        fileObject.Name,
 		UUID:        fileObject.UUID.String(),
-		URL:         fileObject.URL.String,
+		URL:         fileObject.URL,
 		ContentType: fileObject.ContentType,
 		Size:        fileObject.Size,
 	}
