@@ -1,6 +1,7 @@
 package gqlgen
 
 import (
+	"fmt"
 	"net/http/httptest"
 	"testing"
 	"time"
@@ -397,42 +398,38 @@ func Fixtures_UpdatePost(t *testing.T) UpdatePostFixtures {
 	}
 }
 
-// TODO: Fix this. It gives a strange panic message: " * '' has invalid keys: updatePost"
-//func (gs *GqlgenSuite) Test_UpdatePost() {
-//	t := gs.T()
-//	models.ResetTables(t, models.DB)
-//
-//	queryFixtures := Fixtures_UpdatePost(t)
-//	userFixtures := queryFixtures.Users
-//	postFixtures := queryFixtures.Posts
-//	fileFixtures := queryFixtures.Files
-//
-//	c := getGqlClient()
-//
-//	input := `id: "` + postFixtures[1].Uuid.String() + `" photoID: "` + fileFixtures[2].UUID.String() + `"`
-//	query := `mutation { updatePost(input: {` + input + `}) { id photo { id } }}`
-//
-//	fmt.Printf("------ query=%s\n", query)
-//	var postsResp struct {
-//		Post struct {
-//			ID    string `json:"id"`
-//			Photo struct {
-//				ID string `json:"id"`
-//			} `json:"photo"`
-//			Files []struct {
-//				ID string `json:"id"`
-//			} `json:"files"`
-//		} `json:"post"`
-//	}
-//
-//	TestUser = userFixtures[0]
-//	c.MustPost(query, &postsResp)
-//
-//	if err := models.DB.Load(&(postFixtures[1]), "PhotoFile", "Files"); err != nil {
-//		t.Errorf("failed to load post fixture, %s", err)
-//		t.FailNow()
-//	}
-//
-//	gs.Equal(postFixtures[1].Uuid.String(), postsResp.Post.ID)
-//	gs.Equal(fileFixtures[2].UUID.String(), postsResp.Post.Photo.ID)
-//}
+func (gs *GqlgenSuite) Test_UpdatePost() {
+	t := gs.T()
+	models.ResetTables(t, models.DB)
+
+	queryFixtures := Fixtures_UpdatePost(t)
+	userFixtures := queryFixtures.Users
+	postFixtures := queryFixtures.Posts
+	fileFixtures := queryFixtures.Files
+
+	c := getGqlClient()
+
+	input := `id: "` + postFixtures[1].Uuid.String() + `" photoID: "` + fileFixtures[2].UUID.String() + `"`
+	query := `mutation { updatePost(input: {` + input + `}) { id photo { id } }}`
+
+	fmt.Printf("------ query=%s\n", query)
+	var postsResp struct {
+		Post struct {
+			ID    string `json:"id"`
+			Photo struct {
+				ID string `json:"id"`
+			} `json:"photo"`
+		} `json:"updatePost"`
+	}
+
+	TestUser = userFixtures[0]
+	c.MustPost(query, &postsResp)
+
+	if err := models.DB.Load(&(postFixtures[1]), "PhotoFile", "Files"); err != nil {
+		t.Errorf("failed to load post fixture, %s", err)
+		t.FailNow()
+	}
+
+	gs.Equal(postFixtures[1].Uuid.String(), postsResp.Post.ID)
+	gs.Equal(fileFixtures[2].UUID.String(), postsResp.Post.Photo.ID)
+}
