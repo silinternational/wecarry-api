@@ -17,6 +17,7 @@ import (
 type PostQueryFixtures struct {
 	Posts       models.Posts
 	Users       models.Users
+	Files       models.Files
 	ClientID    string
 	AccessToken string
 }
@@ -144,26 +145,38 @@ func Fixtures_PostQuery(t *testing.T) PostQueryFixtures {
 		t.FailNow()
 	}
 
-	var f models.File
-
-	// attach photo
-	if err := f.Store("photo.gif", []byte("GIF89a")); err != nil {
-		t.Errorf("failed to create file fixture, %s", err)
-		t.FailNow()
+	// create file fixtures
+	fileData := []struct {
+		name    string
+		content []byte
+	}{
+		{
+			name:    "photo.gif",
+			content: []byte("GIF89a"),
+		},
+		{
+			name:    "dummy.pdf",
+			content: []byte("%PDF-"),
+		},
+	}
+	fileFixtures := make([]models.File, len(fileData))
+	for i, fileDatum := range fileData {
+		var f models.File
+		if err := f.Store(fileDatum.name, fileDatum.content); err != nil {
+			t.Errorf("failed to create file fixture, %s", err)
+			t.FailNow()
+		}
+		fileFixtures[i] = f
 	}
 
-	if _, err := posts[1].AttachPhoto(f.UUID.String()); err != nil {
+	// attach photo
+	if _, err := posts[1].AttachPhoto(fileFixtures[0].UUID.String()); err != nil {
 		t.Errorf("failed to attach photo to post, %s", err)
 		t.FailNow()
 	}
 
 	// attach file
-	if err := f.Store("dummy.pdf", []byte("%PDF-")); err != nil {
-		t.Errorf("failed to create file fixture, %s", err)
-		t.FailNow()
-	}
-
-	if _, err := posts[1].AttachFile(f.UUID.String()); err != nil {
+	if _, err := posts[1].AttachFile(fileFixtures[1].UUID.String()); err != nil {
 		t.Errorf("failed to attach file to post, %s", err)
 		t.FailNow()
 	}
@@ -171,6 +184,7 @@ func Fixtures_PostQuery(t *testing.T) PostQueryFixtures {
 	return PostQueryFixtures{
 		Posts:       posts,
 		Users:       users,
+		Files:       fileFixtures,
 		ClientID:    clientID,
 		AccessToken: accessToken,
 	}
@@ -183,6 +197,7 @@ func (gs *GqlgenSuite) Test_PostQuery() {
 	queryFixtures := Fixtures_PostQuery(t)
 	userFixtures := queryFixtures.Users
 	postFixtures := queryFixtures.Posts
+	fileFixtures := queryFixtures.Files
 
 	c := getGqlClient()
 
@@ -203,14 +218,10 @@ func (gs *GqlgenSuite) Test_PostQuery() {
 	TestUser = userFixtures[0]
 	c.MustPost(query, &postsResp)
 
-	if err := models.DB.Load(&(postFixtures[1]), "PhotoFile", "Files"); err != nil {
-		t.Errorf("failed to load post fixture, %s", err)
-	}
-
 	gs.Equal(postFixtures[1].Uuid.String(), postsResp.Post.ID)
-	gs.Equal(postFixtures[1].PhotoFile.UUID.String(), postsResp.Post.Photo.ID)
+	gs.Equal(fileFixtures[0].UUID.String(), postsResp.Post.Photo.ID)
 	gs.Equal(1, len(postsResp.Post.Files))
-	gs.Equal(postFixtures[1].Files[0].File.UUID.String(), postsResp.Post.Files[0].ID)
+	gs.Equal(fileFixtures[1].UUID.String(), postsResp.Post.Files[0].ID)
 }
 
 type UpdatePostFixtures struct {
