@@ -19,11 +19,8 @@ models:
     fields:
       id:
         resolver: true
-  OrganizationDomain:
+  Domain:
     model: github.com/silinternational/wecarry-api/models.OrganizationDomain
-    fields:
-      id:
-        resolver: false
   User:
     model: github.com/silinternational/wecarry-api/models.User
     fields:
@@ -63,9 +60,9 @@ models:
     fields:
       id:
         resolver: true
-  UpdatedPost:
+  UpdatePostInput:
     model: github.com/silinternational/wecarry-api/gqlgen.postInput
-  NewPost:
+  CreatePostInput:
     model: github.com/silinternational/wecarry-api/gqlgen.postInput
 
 #directives:

@@ -9,14 +9,14 @@ type Query {
 }
 
 type Mutation {
-    createPost(input: NewPost!): Post!
-    updatePost(input: UpdatedPost!): Post!
-    updateUser(input: UpdatedUser!): User!
-    createMessage(input: NewMessage!): Message!
-    createOrganization(input: NewOrganization!): Organization!
-    updateOrganization(input: UpdatedOrganization!): Organization!
-    createOrganizationDomain(input: NewOrganizationDomain!): [OrganizationDomain!]!
-    removeOrganizationDomain(input: NewOrganizationDomain!): [OrganizationDomain!]!
+    createPost(input: CreatePostInput!): Post!
+    updatePost(input: UpdatePostInput!): Post!
+    updateUser(input: UpdateUserInput!): User!
+    createMessage(input: CreateMessageInput!): Message!
+    createOrganization(input: CreateOrganizationInput!): Organization!
+    updateOrganization(input: UpdateOrganizationInput!): Organization!
+    createDomain(input: CreateDomainInput!): [Domain!]!
+    removeDomain(input: RemoveDomainInput!): [Domain!]!
 }
 
 # Date and Time in RFC3339 format
@@ -56,7 +56,7 @@ type User {
     photoURL: String!
 }
 
-input UpdatedUser {
+input UpdateUserInput {
     id: ID
     photoID: String
 }
@@ -98,17 +98,17 @@ type Organization {
     url: String
     createdAt: Time
     updatedAt: Time
-    domains: [OrganizationDomain!]!
+    domains: [Domain!]!
 }
 
-input NewOrganization {
+input CreateOrganizationInput {
     name: String!
     url: String
     authType: String!
     authConfig: String!
 }
 
-input UpdatedOrganization {
+input UpdateOrganizationInput {
     id: ID!
     name: String!
     url: String
@@ -116,12 +116,17 @@ input UpdatedOrganization {
     authConfig: String!
 }
 
-type OrganizationDomain {
+type Domain {
     domain: String!
     organizationID: ID!
 }
 
-input NewOrganizationDomain {
+input CreateDomainInput {
+    domain: String!
+    organizationID: ID!
+}
+
+input RemoveDomainInput {
     domain: String!
     organizationID: ID!
 }
@@ -145,7 +150,7 @@ type Message {
     updatedAt: Time
 }
 
-input NewPost {
+input CreatePostInput {
     orgID: String!
     type: PostType!
     title: String!
@@ -160,13 +165,13 @@ input NewPost {
     cost: String
 }
 
-input NewMessage {
+input CreateMessageInput {
     content: String!
     postID: String!
     threadID: String
 }
 
-input UpdatedPost {
+input UpdatePostInput {
     id: ID!
     status: PostStatus
     title: String

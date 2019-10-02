@@ -8,25 +8,30 @@ import (
 	"strconv"
 )
 
-type NewMessage struct {
+type CreateDomainInput struct {
+	Domain         string `json:"domain"`
+	OrganizationID string `json:"organizationID"`
+}
+
+type CreateMessageInput struct {
 	Content  string  `json:"content"`
 	PostID   string  `json:"postID"`
 	ThreadID *string `json:"threadID"`
 }
 
-type NewOrganization struct {
+type CreateOrganizationInput struct {
 	Name       string  `json:"name"`
 	URL        *string `json:"url"`
 	AuthType   string  `json:"authType"`
 	AuthConfig string  `json:"authConfig"`
 }
 
-type NewOrganizationDomain struct {
+type RemoveDomainInput struct {
 	Domain         string `json:"domain"`
 	OrganizationID string `json:"organizationID"`
 }
 
-type UpdatedOrganization struct {
+type UpdateOrganizationInput struct {
 	ID         string  `json:"id"`
 	Name       string  `json:"name"`
 	URL        *string `json:"url"`
@@ -34,7 +39,7 @@ type UpdatedOrganization struct {
 	AuthConfig string  `json:"authConfig"`
 }
 
-type UpdatedUser struct {
+type UpdateUserInput struct {
 	ID      *string `json:"id"`
 	PhotoID *string `json:"photoID"`
 }
