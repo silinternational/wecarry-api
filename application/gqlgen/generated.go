@@ -922,15 +922,6 @@ type Mutation {
 # Date and Time in RFC3339 format
 scalar Time
 
-type File {
-    id: ID!
-    url: String!
-    urlExpiration: Time!
-    name: String!
-    size: Int!
-    contentType: String!
-}
-
 enum Role {
     ADMIN
     USER
@@ -998,7 +989,7 @@ type Post {
     myThreadID: String
     url: String
     cost: String
-    photo: File!
+    photo: File
     files: [File!]!
 }
 
@@ -1090,6 +1081,15 @@ input UpdatedPost {
     url: String
     cost: String
     photoID: ID
+}
+
+type File {
+    id: ID!
+    url: String!
+    urlExpiration: Time!
+    name: String!
+    size: Int!
+    contentType: String!
 }
 `},
 )
@@ -3157,15 +3157,12 @@ func (ec *executionContext) _Post_photo(ctx context.Context, field graphql.Colle
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(*models.File)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNFile2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐFile(ctx, field.Selections, res)
+	return ec.marshalOFile2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐFile(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Post_files(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
@@ -6239,9 +6236,6 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 					}
 				}()
 				res = ec._Post_photo(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
 				return res
 			})
 		case "files":
@@ -7363,7 +7357,7 @@ func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋsilinternational�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, sel, v[i])
+			ret[i] = ec.marshalNUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -7633,6 +7627,17 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 		return graphql.Null
 	}
 	return ec.marshalOBoolean2bool(ctx, sel, *v)
+}
+
+func (ec *executionContext) marshalOFile2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐFile(ctx context.Context, sel ast.SelectionSet, v models.File) graphql.Marshaler {
+	return ec._File(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalOFile2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐFile(ctx context.Context, sel ast.SelectionSet, v *models.File) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._File(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOID2string(ctx context.Context, v interface{}) (string, error) {

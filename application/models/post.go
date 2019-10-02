@@ -220,6 +220,10 @@ func (p *Post) GetPhoto() (*File, error) {
 		return nil, err
 	}
 
+	if !p.PhotoFileID.Valid {
+		return nil, nil
+	}
+
 	if err := p.PhotoFile.RefreshURL(); err != nil {
 		return nil, err
 	}
