@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/gobuffalo/nulls"
-	"github.com/silinternational/wecarry-api/aws"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 )
@@ -99,7 +98,7 @@ func Fixtures_UserQuery(as *ActionSuite, t *testing.T) UserQueryFixtures {
 		t.FailNow()
 	}
 
-	if err := aws.CreateS3Bucket(); err != nil {
+	if err := createS3Bucket(); err != nil {
 		t.Errorf("failed to create S3 bucket, %s", err)
 		t.FailNow()
 	}
