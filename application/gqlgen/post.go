@@ -170,26 +170,7 @@ func (r *postResolver) Files(ctx context.Context, obj *models.Post) ([]*models.F
 	if obj == nil {
 		return nil, nil
 	}
-	images, err := obj.GetFiles()
-	if err != nil {
-		graphql.AddError(ctx, gqlerror.Errorf("Error retrieving images for post %s", obj.Uuid.String()))
-		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
-		return nil, err
-	}
-
-	files := make([]*models.File, len(images))
-	for i, image := range images {
-		if err := image.RefreshURL(); err != nil {
-			graphql.AddError(ctx, gqlerror.Errorf("Error retrieving URL for image %s", image.UUID.String()))
-			continue
-		}
-		file := models.File{
-			URL:           nulls.NewString(image.URL.String),
-			URLExpiration: image.URLExpiration,
-		}
-		files[i] = &file
-	}
-	return files, nil
+	return obj.GetFiles()
 }
 
 func (r *queryResolver) Posts(ctx context.Context) ([]*models.Post, error) {

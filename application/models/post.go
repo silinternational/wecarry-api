@@ -180,16 +180,16 @@ func (p *Post) AttachFile(fileID string) (File, error) {
 }
 
 // GetFiles retrieves the metadata for all of the files attached to this Post
-func (p *Post) GetFiles() ([]File, error) {
+func (p *Post) GetFiles() ([]*File, error) {
 	var pf []*PostFile
 
 	if err := DB.Eager("File").Select().Where("post_id = ?", p.ID).All(&pf); err != nil {
 		return nil, fmt.Errorf("error getting files for post id %d, %s", p.ID, err)
 	}
 
-	files := make([]File, len(pf))
+	files := make([]*File, len(pf))
 	for i, p := range pf {
-		files[i] = p.File
+		files[i] = &p.File
 		if err := files[i].RefreshURL(); err != nil {
 			return files, err
 		}
