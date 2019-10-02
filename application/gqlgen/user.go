@@ -116,7 +116,7 @@ func (r *queryResolver) User(ctx context.Context, id *string) (*models.User, err
 		return &dbUser, err
 	}
 
-	if err := models.DB.Where("uuid = ?", id).First(&dbUser); err != nil {
+	if err := models.DB.Select(GetSelectFieldsForUsers(ctx)...).Where("uuid = ?", id).First(&dbUser); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting user: %v", err.Error()))
 		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
 		return &dbUser, err
