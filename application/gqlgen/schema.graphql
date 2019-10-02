@@ -57,8 +57,7 @@ type User {
 }
 
 input UpdatedUser {
-    id: ID!
-    photoURL: String
+    id: ID
     photoID: String
 }
 

@@ -132,24 +132,24 @@ func GetSelectFieldsForUsers(ctx context.Context) []string {
 	return selectFields
 }
 
+// UpdateUser takes data from the GraphQL `UpdateUser` mutation and updates the database. If the
+// user ID is provided and the current user is allowed to edit profiles, that user will be updated.
+// Otherwise, the current authenticated user is updated.
 func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdatedUser) (*models.User, error) {
-	var user models.User
-	err := user.FindByUUID(input.ID)
-	if err != nil {
-		return &models.User{}, err
-	}
-
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
-	if cUser.ID != user.ID {
-		return &models.User{}, fmt.Errorf("user not allowed to edit user profiles")
+	var user models.User
+
+	if input.ID != nil {
+		err := user.FindByUUID(*(input.ID))
+		if err != nil {
+			return &models.User{}, err
+		}
+	} else {
+		user = cUser
 	}
 
-	if input.PhotoURL != nil {
-		if *input.PhotoURL == "" {
-			user.PhotoURL = nulls.String{Valid: false}
-		} else {
-			user.PhotoURL = nulls.NewString(*input.PhotoURL)
-		}
+	if cUser.AdminRole.String != domain.AdminRoleSuperDuperAdmin && cUser.ID != user.ID {
+		return &models.User{}, fmt.Errorf("user not allowed to edit user profiles")
 	}
 
 	if input.PhotoID != nil {
@@ -161,7 +161,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdatedUser) (*
 		user.PhotoFileID = nulls.NewInt(file.ID)
 	}
 
-	err = user.Save()
+	err := user.Save()
 
 	return &user, err
 }

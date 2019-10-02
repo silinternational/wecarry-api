@@ -35,9 +35,8 @@ type UpdatedOrganization struct {
 }
 
 type UpdatedUser struct {
-	ID       string  `json:"id"`
-	PhotoURL *string `json:"photoURL"`
-	PhotoID  *string `json:"photoID"`
+	ID      *string `json:"id"`
+	PhotoID *string `json:"photoID"`
 }
 
 type PostRole string

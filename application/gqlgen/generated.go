@@ -957,8 +957,7 @@ type User {
 }
 
 input UpdatedUser {
-    id: ID!
-    photoURL: String
+    id: ID
     photoID: String
 }
 
@@ -5674,13 +5673,7 @@ func (ec *executionContext) unmarshalInputUpdatedUser(ctx context.Context, obj i
 		switch k {
 		case "id":
 			var err error
-			it.ID, err = ec.unmarshalNID2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "photoURL":
-			var err error
-			it.PhotoURL, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			it.ID, err = ec.unmarshalOID2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
