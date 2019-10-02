@@ -5,6 +5,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/gobuffalo/envy"
+
 	"github.com/silinternational/wecarry-api/aws"
 
 	"github.com/gobuffalo/validate"
@@ -118,11 +122,36 @@ func CreateFileFixtures(t *testing.T, posts Posts) Files {
 	return files
 }
 
+// createS3Bucket creates an S3 bucket with a name defined by an environment variable. If the bucket already
+// exists, it will not return an error.
+func createS3Bucket() error {
+	config := aws.GetS3ConfigFromEnv()
+
+	svc, err := aws.CreateS3Service(config)
+	if err != nil {
+		return err
+	}
+
+	bucketName := envy.Get(aws.AwsS3BucketEnv, "")
+	c := &s3.CreateBucketInput{Bucket: &bucketName}
+	if _, err := svc.CreateBucket(c); err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case s3.ErrCodeBucketAlreadyExists:
+			case s3.ErrCodeBucketAlreadyOwnedByYou:
+			default:
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 func (ms *ModelSuite) TestFile_FindByUUID() {
 	t := ms.T()
 	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(ms, t, users)
-	if err := aws.CreateS3Bucket(); err != nil {
+	if err := createS3Bucket(); err != nil {
 		t.Errorf("failed to create S3 bucket, %s", err)
 		t.FailNow()
 	}

@@ -7,8 +7,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws/awserr"
-
 	"github.com/gobuffalo/envy"
 
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -142,29 +140,4 @@ func GetFileURL(key string) (ObjectUrl, error) {
 	}
 
 	return getObjectURL(config, svc, key)
-}
-
-// CreateS3Bucket creates an S3 bucket with a name defined by an environment variable. If the bucket already
-// exists, it will not return an error.
-func CreateS3Bucket() error {
-	config := GetS3ConfigFromEnv()
-
-	svc, err := CreateS3Service(config)
-	if err != nil {
-		return err
-	}
-
-	if _, err := svc.CreateBucket(&s3.CreateBucketInput{
-		Bucket: aws.String(envy.Get(AwsS3BucketEnv, "")),
-	}); err != nil {
-		if aerr, ok := err.(awserr.Error); ok {
-			switch aerr.Code() {
-			case s3.ErrCodeBucketAlreadyExists:
-			case s3.ErrCodeBucketAlreadyOwnedByYou:
-			default:
-				return err
-			}
-		}
-	}
-	return nil
 }
