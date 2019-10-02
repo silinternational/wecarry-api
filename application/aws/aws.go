@@ -144,6 +144,8 @@ func GetFileURL(key string) (ObjectUrl, error) {
 	return getObjectURL(config, svc, key)
 }
 
+// CreateS3Bucket creates an S3 bucket with a name defined by an environment variable. If the bucket already
+// exists, it will not return an error.
 func CreateS3Bucket() error {
 	config := GetS3ConfigFromEnv()
 

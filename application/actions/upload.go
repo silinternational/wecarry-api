@@ -11,7 +11,8 @@ import (
 	"github.com/silinternational/wecarry-api/models"
 )
 
-const FileTagName = "file"
+// FileFieldName is the multipart field name for the file upload.
+const FileFieldName = "file"
 
 // UploadResponse is a JSON response for the /upload endpoint
 type UploadResponse struct {
@@ -25,7 +26,7 @@ type UploadResponse struct {
 
 // UploadHandler responds to POST requests at /upload
 func UploadHandler(c buffalo.Context) error {
-	f, err := c.File(FileTagName)
+	f, err := c.File(FileFieldName)
 	if err != nil {
 		return c.Render(http.StatusInternalServerError, render.JSON(UploadResponse{
 			Error: &domain.AppError{Code: domain.ErrorReceivingFile, Message: err.Error()},

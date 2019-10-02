@@ -498,6 +498,7 @@ func (ms *ModelSuite) TestPost_GetFiles() {
 	ms.Equal(filename, files[0].Name)
 }
 
+// TestPost_AttachPhoto_GetPhoto tests the AttachPhoto and GetPhoto methods of models.Post
 func (ms *ModelSuite) TestPost_AttachPhoto_GetPhoto() {
 	t := ms.T()
 	ResetTables(t, ms.DB)

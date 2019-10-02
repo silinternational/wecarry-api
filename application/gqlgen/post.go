@@ -156,6 +156,7 @@ func (r *postResolver) Cost(ctx context.Context, obj *models.Post) (*string, err
 	return &c, nil
 }
 
+// Photo retrieves the file attached as the primary photo
 func (r *postResolver) Photo(ctx context.Context, obj *models.Post) (*models.File, error) {
 	if obj == nil {
 		return nil, nil
@@ -164,6 +165,7 @@ func (r *postResolver) Photo(ctx context.Context, obj *models.Post) (*models.Fil
 	return obj.GetPhoto()
 }
 
+// Files retrieves the list of files attached to the post, not including the primary photo
 func (r *postResolver) Files(ctx context.Context, obj *models.Post) ([]*models.File, error) {
 	if obj == nil {
 		return nil, nil

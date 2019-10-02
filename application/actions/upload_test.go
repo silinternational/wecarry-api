@@ -17,11 +17,13 @@ import (
 	"github.com/silinternational/wecarry-api/models"
 )
 
+// UploadFixtures is for returning fixtures from Fixtures_Upload
 type UploadFixtures struct {
 	ClientID    string
 	AccessToken string
 }
 
+// Fixtures_Upload creates fixtures for the Test_Upload test
 func Fixtures_Upload(as *ActionSuite, t *testing.T) UploadFixtures {
 	// Load Org test fixtures
 	org := &models.Organization{
@@ -82,6 +84,7 @@ func Fixtures_Upload(as *ActionSuite, t *testing.T) UploadFixtures {
 	}
 }
 
+// Test_Upload tests the actions.UploadHandler function
 func (as *ActionSuite) Test_Upload() {
 	t := as.T()
 	models.ResetTables(as.T(), as.DB)
@@ -94,7 +97,7 @@ func (as *ActionSuite) Test_Upload() {
 	const filename = "test.gif"
 
 	f := httptest.File{
-		ParamName: FileTagName,
+		ParamName: FileFieldName,
 		FileName:  filename,
 		Reader:    bytes.NewReader([]byte("GIF87a")),
 	}

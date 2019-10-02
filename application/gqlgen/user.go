@@ -71,6 +71,8 @@ func (r *userResolver) Posts(ctx context.Context, obj *models.User, role PostRol
 	return obj.GetPosts(PostRoleMap[role])
 }
 
+// PhotoURL retrieves a URL for the user profile photo or avatar. It can either be an attached photo or
+// a photo belonging to an external profile such as Gravatar or Google.
 func (r *userResolver) PhotoURL(ctx context.Context, obj *models.User) (string, error) {
 	if obj == nil {
 		return "", nil
@@ -123,6 +125,8 @@ func (r *queryResolver) User(ctx context.Context, id *string) (*models.User, err
 	return &dbUser, nil
 }
 
+// GetSelectFieldsForUsers returns a list of database fields appropriate for the current query. Foreign keys
+// will be included as needed.
 func GetSelectFieldsForUsers(ctx context.Context) []string {
 	selectFields := GetSelectFieldsFromRequestFields(UserFields(), graphql.CollectAllFields(ctx))
 	selectFields = append(selectFields, "id")

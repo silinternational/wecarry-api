@@ -10,6 +10,7 @@ import (
 	"github.com/silinternational/wecarry-api/models"
 )
 
+// UserQueryFixtures is for returning fixtures from Fixtures_UserQuery
 type UserQueryFixtures struct {
 	Users       models.Users
 	CurrentUser models.User
@@ -17,6 +18,7 @@ type UserQueryFixtures struct {
 	AccessToken string
 }
 
+// Fixtures_UserQuery creates fixtures for Test_UserQuery
 func Fixtures_UserQuery(as *ActionSuite, t *testing.T) UserQueryFixtures {
 	// Load Org test fixtures
 	org := &models.Organization{
@@ -121,6 +123,7 @@ func Fixtures_UserQuery(as *ActionSuite, t *testing.T) UserQueryFixtures {
 	}
 }
 
+// Test_UserQuery tests the User GraphQL query
 func (as *ActionSuite) Test_UserQuery() {
 	t := as.T()
 	models.ResetTables(t, as.DB)
