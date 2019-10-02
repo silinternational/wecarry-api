@@ -28,21 +28,21 @@ func UploadHandler(c buffalo.Context) error {
 	f, err := c.File(FileTagName)
 	if err != nil {
 		return c.Render(http.StatusInternalServerError, render.JSON(UploadResponse{
-			Error: &domain.AppError{Code: "ErrorReceivingFile", Message: err.Error()},
+			Error: &domain.AppError{Code: domain.ErrorReceivingFile, Message: err.Error()},
 		}))
 	}
 
 	content, err := ioutil.ReadAll(f)
 	if err != nil {
 		return c.Render(http.StatusInternalServerError, render.JSON(UploadResponse{
-			Error: &domain.AppError{Code: "UnableToReadFile", Message: err.Error()},
+			Error: &domain.AppError{Code: domain.UnableToReadFile, Message: err.Error()},
 		}))
 	}
 
 	var fileObject models.File
 	if err := fileObject.Store(f.Filename, content); err != nil {
 		return c.Render(http.StatusInternalServerError, render.JSON(UploadResponse{
-			Error: &domain.AppError{Code: "UnableToStoreFile", Message: err.Error()},
+			Error: &domain.AppError{Code: domain.UnableToStoreFile, Message: err.Error()},
 		}))
 	}
 

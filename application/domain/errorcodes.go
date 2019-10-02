@@ -59,3 +59,12 @@ const ErrorAuthProvidersLogout = "ErrorAuthProvidersLogout"
 
 // actions.AuthDestroy
 const ErrorDeletingAccessToken = "ErrorDeletingAccessToken"
+
+// actions.UploadHandler
+const ErrorReceivingFile = "ErrorReceivingFile"
+
+// actions.UploadHandler
+const UnableToReadFile = "UnableToReadFile"
+
+// actions.UploadHandler
+const UnableToStoreFile = "UnableToStoreFile"
