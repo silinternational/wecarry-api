@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/gobuffalo/nulls"
+
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
@@ -16,6 +18,8 @@ var PostRoleMap = map[PostRole]string{
 	PostRoleProviding: models.PostRoleProviding,
 }
 
+// UserFields maps GraphQL fields to their equivalent database fields. For related types, the
+// foreign key field name is provided.
 func UserFields() map[string]string {
 	return map[string]string{
 		"id":          "uuid",
@@ -27,6 +31,8 @@ func UserFields() map[string]string {
 		"createdAt":   "created_at",
 		"updatedAt":   "updated_at",
 		"adminRole":   "admin_role",
+		"photoURL":    "photo_url",
+		"photoFile":   "photo_file_id",
 	}
 }
 
@@ -65,6 +71,15 @@ func (r *userResolver) Posts(ctx context.Context, obj *models.User, role PostRol
 	return obj.GetPosts(PostRoleMap[role])
 }
 
+// PhotoURL retrieves a URL for the user profile photo or avatar. It can either be an attached photo or
+// a photo belonging to an external profile such as Gravatar or Google.
+func (r *userResolver) PhotoURL(ctx context.Context, obj *models.User) (string, error) {
+	if obj == nil {
+		return "", nil
+	}
+	return obj.GetPhotoURL()
+}
+
 func (r *queryResolver) Users(ctx context.Context) ([]*models.User, error) {
 	db := models.DB
 	var dbUsers []*models.User
@@ -77,8 +92,7 @@ func (r *queryResolver) Users(ctx context.Context) ([]*models.User, error) {
 		return []*models.User{}, err
 	}
 
-	selectFields := GetSelectFieldsFromRequestFields(UserFields(), graphql.CollectAllFields(ctx))
-	if err := db.Select(selectFields...).All(&dbUsers); err != nil {
+	if err := db.Select(GetSelectFieldsForUsers(ctx)...).All(&dbUsers); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting users: %v", err.Error()))
 		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
 		return []*models.User{}, err
@@ -102,12 +116,56 @@ func (r *queryResolver) User(ctx context.Context, id *string) (*models.User, err
 		return &dbUser, err
 	}
 
-	selectFields := GetSelectFieldsFromRequestFields(UserFields(), graphql.CollectAllFields(ctx))
-	if err := models.DB.Select(selectFields...).Where("uuid = ?", id).First(&dbUser); err != nil {
+	if err := models.DB.Select(GetSelectFieldsForUsers(ctx)...).Where("uuid = ?", id).First(&dbUser); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting user: %v", err.Error()))
 		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
 		return &dbUser, err
 	}
 
 	return &dbUser, nil
+}
+
+// GetSelectFieldsForUsers returns a list of database fields appropriate for the current query. Foreign keys
+// will be included as needed.
+func GetSelectFieldsForUsers(ctx context.Context) []string {
+	selectFields := GetSelectFieldsFromRequestFields(UserFields(), graphql.CollectAllFields(ctx))
+	selectFields = append(selectFields, "id")
+	if domain.IsStringInSlice("photoURL", graphql.CollectAllFields(ctx)) {
+		selectFields = append(selectFields, "photo_file_id")
+	}
+	return selectFields
+}
+
+// UpdateUser takes data from the GraphQL `UpdateUser` mutation and updates the database. If the
+// user ID is provided and the current user is allowed to edit profiles, that user will be updated.
+// Otherwise, the current authenticated user is updated.
+func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdatedUser) (*models.User, error) {
+	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+	var user models.User
+
+	if input.ID != nil {
+		err := user.FindByUUID(*(input.ID))
+		if err != nil {
+			return &models.User{}, err
+		}
+	} else {
+		user = cUser
+	}
+
+	if cUser.AdminRole.String != domain.AdminRoleSuperDuperAdmin && cUser.ID != user.ID {
+		return &models.User{}, fmt.Errorf("user not allowed to edit user profiles")
+	}
+
+	if input.PhotoID != nil {
+		var file models.File
+		err := file.FindByUUID(*input.PhotoID)
+		if err != nil {
+			return &models.User{}, err
+		}
+		user.PhotoFileID = nulls.NewInt(file.ID)
+	}
+
+	err := user.Save()
+
+	return &user, err
 }

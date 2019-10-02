@@ -20,6 +20,7 @@ services:
       GO_ENV: development
     depends_on:
       - db
+      - minio
     command: buffalo dev
 
   test:

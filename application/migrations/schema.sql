@@ -27,7 +27,7 @@ SET default_with_oids = false;
 CREATE TABLE public.files (
     id integer NOT NULL,
     uuid uuid NOT NULL,
-    url character varying(1024),
+    url character varying(1024) NOT NULL,
     url_expiration timestamp without time zone NOT NULL,
     name character varying(255) NOT NULL,
     size integer NOT NULL,

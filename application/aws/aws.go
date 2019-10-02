@@ -41,11 +41,6 @@ type awsConfig struct {
 // presigned URL expiration
 const urlLifespan = 10 * time.Minute
 
-// String returns a pointer to the string value passed in.
-func String(v string) *string {
-	return &v
-}
-
 func GetS3ConfigFromEnv() awsConfig {
 	var a awsConfig
 	a.awsAccessKeyID = envy.Get(AwsS3AccessKeyIDEnv, "")

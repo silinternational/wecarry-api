@@ -29,8 +29,7 @@ func (r *threadResolver) Participants(ctx context.Context, obj *models.Thread) (
 		return nil, nil
 	}
 
-	selectedFields := GetSelectFieldsFromRequestFields(UserFields(), graphql.CollectAllFields(ctx))
-	return obj.GetParticipants(selectedFields)
+	return obj.GetParticipants(GetSelectFieldsForUsers(ctx))
 }
 
 func (r *threadResolver) ID(ctx context.Context, obj *models.Thread) (string, error) {

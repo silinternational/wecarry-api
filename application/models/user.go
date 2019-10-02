@@ -359,3 +359,35 @@ func (u *User) AttachPhoto(fileID string) (File, error) {
 
 	return f, nil
 }
+
+// GetPhotoURL retrieves the photo URL, either from the photo_url database field, or from the attached file
+func (u *User) GetPhotoURL() (string, error) {
+	if err := DB.Load(u, "PhotoFile"); err != nil {
+		return "", err
+	}
+
+	url := u.PhotoURL.String
+	if url == "" {
+		if !u.PhotoFileID.Valid {
+			return "", nil
+		}
+		if err := u.PhotoFile.RefreshURL(); err != nil {
+			return "", err
+		}
+		url = u.PhotoFile.URL
+	}
+	return url, nil
+}
+
+// Save wraps DB.Save() call to check for errors and operate on attached object
+func (u *User) Save() error {
+	validationErrs, err := u.Validate(DB)
+	if validationErrs != nil && validationErrs.HasAny() {
+		return fmt.Errorf(FlattenPopErrors(validationErrs))
+	}
+	if err != nil {
+		return err
+	}
+
+	return DB.Save(u)
+}

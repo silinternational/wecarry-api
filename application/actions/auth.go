@@ -45,11 +45,6 @@ const TokenTypeParam = "token-type"
 // environment variable key for the UI's URL
 const UIURLEnv = "UI_URL"
 
-type AuthError struct {
-	Code    string `json:"Code"`
-	Message string `json:"Message"`
-}
-
 type AuthOrgOption struct {
 	ID      string `json:"ID"`
 	Name    string `json:"Name"`
@@ -68,7 +63,7 @@ type AuthUser struct {
 }
 
 type AuthResponse struct {
-	Error          *AuthError       `json:"Error,omitempty"`
+	Error          *domain.AppError `json:"Error,omitempty"`
 	AuthOrgOptions *[]AuthOrgOption `json:"AuthOrgOptions,omitempty"`
 	RedirectURL    string           `json:"RedirectURL,omitempty"`
 	User           *AuthUser        `json:"User,omitempty"`
@@ -338,7 +333,7 @@ func authRequestError(c buffalo.Context, httpStatus int, errorCode, message stri
 
 	domain.Error(c, message, allExtras)
 
-	authError := AuthError{
+	authError := domain.AppError{
 		Code: errorCode,
 	}
 	return c.Render(httpStatus, render.JSON(authError))

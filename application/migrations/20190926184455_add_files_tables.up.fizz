@@ -1,7 +1,7 @@
 create_table("files") {
 	t.Column("id", "integer", {primary: true})
 	t.Column("uuid", "uuid", {})
-	t.Column("url", "string", {null: true, "size": 1024})
+	t.Column("url", "string", {"size": 1024})
 	t.Column("url_expiration", "timestamp")
 	t.Column("name", "string")
 	t.Column("size", "int")

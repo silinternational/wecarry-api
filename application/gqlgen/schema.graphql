@@ -11,6 +11,7 @@ type Query {
 type Mutation {
     createPost(input: NewPost!): Post!
     updatePost(input: UpdatedPost!): Post!
+    updateUser(input: UpdatedUser!): User!
     createMessage(input: NewMessage!): Message!
     createOrganization(input: NewOrganization!): Organization!
     updateOrganization(input: UpdatedOrganization!): Organization!
@@ -52,6 +53,12 @@ type User {
     adminRole: Role
     organizations: [Organization!]!
     posts(role: PostRole!): [Post!]!
+    photoURL: String!
+}
+
+input UpdatedUser {
+    id: ID
+    photoID: String
 }
 
 enum PostType {
@@ -81,6 +88,8 @@ type Post {
     myThreadID: String
     url: String
     cost: String
+    photo: File
+    files: [File!]!
 }
 
 type Organization {
@@ -170,4 +179,14 @@ input UpdatedPost {
     category: String
     url: String
     cost: String
+    photoID: ID
+}
+
+type File {
+    id: ID!
+    url: String!
+    urlExpiration: Time!
+    name: String!
+    size: Int!
+    contentType: String!
 }

@@ -2,19 +2,16 @@ package gqlgen
 
 import (
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"time"
 
+	"github.com/99designs/gqlgen/client"
+	"github.com/99designs/gqlgen/handler"
 	"github.com/gobuffalo/nulls"
 	"github.com/gofrs/uuid"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
-
-	"net/http"
-	"net/http/httptest"
-	"testing"
-
-	"github.com/99designs/gqlgen/client"
-	"github.com/99designs/gqlgen/handler"
 )
 
 func newHandler() http.HandlerFunc {
@@ -22,7 +19,8 @@ func newHandler() http.HandlerFunc {
 
 }
 
-func TestResolver(t *testing.T) {
+func (gs *GqlgenSuite) TestResolver() {
+	t := gs.T()
 	models.BounceTestDB()
 	fmt.Printf("")
 

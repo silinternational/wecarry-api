@@ -37,8 +37,7 @@ func (r *messageResolver) Sender(ctx context.Context, obj *models.Message) (*mod
 	if obj == nil {
 		return nil, nil
 	}
-	selectFields := GetSelectFieldsFromRequestFields(UserFields(), graphql.CollectAllFields(ctx))
-	return obj.GetSender(selectFields)
+	return obj.GetSender(GetSelectFieldsForUsers(ctx))
 }
 
 func (r *messageResolver) Thread(ctx context.Context, obj *models.Message) (*models.Thread, error) {

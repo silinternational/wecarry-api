@@ -19,38 +19,6 @@ type gqlErrorResponse struct {
 	Data interface{} `json:"data"`
 }
 
-func (as *ActionSuite) TestQueryAUser() {
-	t := as.T()
-	models.ResetTables(t, as.DB)
-
-	queryFixtures := Fixtures_QueryAUser(as, t)
-	userFixtures := queryFixtures.Users
-
-	tUuid := userFixtures[1].Uuid.String()
-
-	uq := map[string]string{
-		"query": `{user(id: "` + tUuid + `") {id nickname}}`,
-	}
-
-	bearer := queryFixtures.ClientID + queryFixtures.AccessToken
-	headers := map[string]string{
-		"Content-Type":  "application/json",
-		"Authorization": "Bearer " + bearer,
-	}
-
-	hj := as.JSON("/gql")
-	hj.Headers = headers
-	res := hj.Post(uq)
-
-	as.Equal(200, res.Code)
-
-	u2Uuid := userFixtures[1].Uuid.String()
-	u2Nname := userFixtures[1].Nickname
-	expectedBody := `{"data":{"user":{"id":"` + u2Uuid + `","nickname":"` + u2Nname + `"}}}`
-	as.Equal(expectedBody, res.Body.String())
-
-}
-
 func (as *ActionSuite) Test_CreateOrganization() {
 	t := as.T()
 	models.ResetTables(as.T(), as.DB)
@@ -187,6 +155,7 @@ func (as *ActionSuite) Test_CreateOrganization() {
 		req := httptest.NewRequest("POST", "/gql", payload)
 		resp := httptest.NewRecorder()
 		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tc.Token))
+		req.Header.Set("content-type", "application/json")
 
 		as.App.ServeHTTP(resp, req)
 
@@ -214,5 +183,4 @@ func (as *ActionSuite) Test_CreateOrganization() {
 		}
 
 	}
-
 }

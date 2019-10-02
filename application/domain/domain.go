@@ -31,9 +31,8 @@ const (
 var NoExtras map[string]interface{}
 
 type AppError struct {
-	Err   error
-	Code  int
-	Level string
+	Code    string `json:"Code"`
+	Message string `json:"Message,omitempty"`
 }
 
 // GetRequestData parses the URL, if the method is GET, or the body, if the method
