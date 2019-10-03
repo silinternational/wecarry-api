@@ -51,6 +51,7 @@ type Post struct {
 	Provider       User          `belongs_to:"users"`
 	Files          PostFiles     `has_many:"post_files"`
 	PhotoFile      File          `belongs_to:"files"`
+	Threads        Threads       `has_many:"threads"`
 }
 
 // String is not required by pop and may be deleted
@@ -141,11 +142,24 @@ func (p *Post) GetOrganization(fields []string) (*Organization, error) {
 	return &organization, nil
 }
 
-func (p *Post) GetThreads(fields []string) ([]*Thread, error) {
-	var threads []*Thread
+// GetThreads finds all threads on this post in which the given user is participating
+func (p *Post) GetThreads(fields []string, user User) ([]*Thread, error) {
+	if err := DB.Load(p, "Threads"); err != nil {
+		return nil, fmt.Errorf("error getting threads for post id %v ... %v", p.ID, err)
+	}
 
-	if err := DB.Select(fields...).Where("post_id = ?", p.ID).All(&threads); err != nil {
-		return threads, fmt.Errorf("error getting threads for post id %v ... %v", p.ID, err)
+	var threads []*Thread
+	for i, t := range p.Threads {
+		if err := DB.Load(&t, "Participants"); err != nil {
+			return nil, fmt.Errorf("error getting participants for thread id %v ... %v", t.ID, err)
+		}
+
+		for _, participant := range t.Participants {
+			if participant.ID == user.ID {
+				threads = append(threads, &(p.Threads[i]))
+				break
+			}
+		}
 	}
 
 	return threads, nil

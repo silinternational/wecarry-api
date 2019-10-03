@@ -130,7 +130,8 @@ func (r *postResolver) Threads(ctx context.Context, obj *models.Post) ([]*models
 		return nil, nil
 	}
 	selectFields := GetSelectFieldsFromRequestFields(ThreadFields(), graphql.CollectAllFields(ctx))
-	return obj.GetThreads(selectFields)
+	user := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+	return obj.GetThreads(selectFields, user)
 }
 
 func (r *postResolver) MyThreadID(ctx context.Context, obj *models.Post) (*string, error) {

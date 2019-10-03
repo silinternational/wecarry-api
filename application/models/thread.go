@@ -76,6 +76,8 @@ func (t *Thread) FindByUUID(uuid string) error {
 	return nil
 }
 
+// FindByPostIDAndUserID finds the first thread on the given post that the given user is a participant. Since a
+// post creator can be participating in multiple threads, it is better to use `Post.GetThreads` in that case.
 func (t *Thread) FindByPostIDAndUserID(postID int, userID int) error {
 	if postID == 0 || userID == 0 {
 		err := fmt.Errorf("error: post postID and userID must not be 0. Got: %v and %v", postID, userID)
