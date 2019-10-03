@@ -2,8 +2,9 @@ package models
 
 import (
 	"fmt"
-	"github.com/silinternational/wecarry-api/auth/google"
 	"time"
+
+	"github.com/silinternational/wecarry-api/auth/google"
 
 	"github.com/silinternational/wecarry-api/auth"
 	"github.com/silinternational/wecarry-api/auth/saml"
