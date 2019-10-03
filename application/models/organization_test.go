@@ -328,7 +328,7 @@ func (ms *ModelSuite) TestOrganization_AddRemoveDomain() {
 		t.Errorf("after reloading org domains we did not get what we expected (%v), got: %v", 2, len(orgFixtures[0].OrganizationDomains))
 	}
 
-	err = orgFixtures[0].RemoveOrganizationDomain("first.com")
+	err = orgFixtures[0].RemoveDomain("first.com")
 	if err != nil {
 		t.Errorf("unable to remove domain: %s", err)
 	}

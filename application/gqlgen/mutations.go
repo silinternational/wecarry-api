@@ -107,7 +107,7 @@ func (r *mutationResolver) RemoveOrganizationDomain(ctx context.Context, input R
 		return []*models.OrganizationDomain{}, fmt.Errorf("user not allowed to edit organizations")
 	}
 
-	err = org.RemoveOrganizationDomain(input.Domain)
+	err = org.RemoveDomain(input.Domain)
 	if err != nil {
 		return []*models.OrganizationDomain{}, err
 	}
