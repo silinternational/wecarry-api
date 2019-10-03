@@ -50,11 +50,6 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
-	Domain struct {
-		Domain         func(childComplexity int) int
-		OrganizationID func(childComplexity int) int
-	}
-
 	File struct {
 		ContentType   func(childComplexity int) int
 		ID            func(childComplexity int) int
@@ -91,6 +86,11 @@ type ComplexityRoot struct {
 		Name      func(childComplexity int) int
 		URL       func(childComplexity int) int
 		UpdatedAt func(childComplexity int) int
+	}
+
+	OrganizationDomain struct {
+		Domain         func(childComplexity int) int
+		OrganizationID func(childComplexity int) int
 	}
 
 	Post struct {
@@ -242,20 +242,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e}
 	_ = ec
 	switch typeName + "." + field {
-
-	case "Domain.domain":
-		if e.complexity.Domain.Domain == nil {
-			break
-		}
-
-		return e.complexity.Domain.Domain(childComplexity), true
-
-	case "Domain.organizationID":
-		if e.complexity.Domain.OrganizationID == nil {
-			break
-		}
-
-		return e.complexity.Domain.OrganizationID(childComplexity), true
 
 	case "File.contentType":
 		if e.complexity.File.ContentType == nil {
@@ -478,6 +464,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Organization.UpdatedAt(childComplexity), true
+
+	case "OrganizationDomain.domain":
+		if e.complexity.OrganizationDomain.Domain == nil {
+			break
+		}
+
+		return e.complexity.OrganizationDomain.Domain(childComplexity), true
+
+	case "OrganizationDomain.organizationID":
+		if e.complexity.OrganizationDomain.OrganizationID == nil {
+			break
+		}
+
+		return e.complexity.OrganizationDomain.OrganizationID(childComplexity), true
 
 	case "Post.category":
 		if e.complexity.Post.Category == nil {
@@ -914,8 +914,8 @@ type Mutation {
     createMessage(input: CreateMessageInput!): Message!
     createOrganization(input: CreateOrganizationInput!): Organization!
     updateOrganization(input: UpdateOrganizationInput!): Organization!
-    createOrganizationDomain(input: CreateOrganizationDomainInput!): [Domain!]!
-    removeOrganizationDomain(input: RemoveOrganizationDomainInput!): [Domain!]!
+    createOrganizationDomain(input: CreateOrganizationDomainInput!): [OrganizationDomain!]!
+    removeOrganizationDomain(input: RemoveOrganizationDomainInput!): [OrganizationDomain!]!
 }
 
 # Date and Time in RFC3339 format
@@ -997,7 +997,7 @@ type Organization {
     url: String
     createdAt: Time
     updatedAt: Time
-    domains: [Domain!]!
+    domains: [OrganizationDomain!]!
 }
 
 input CreateOrganizationInput {
@@ -1015,7 +1015,7 @@ input UpdateOrganizationInput {
     authConfig: String!
 }
 
-type Domain {
+type OrganizationDomain {
     domain: String!
     organizationID: ID!
 }
@@ -1318,80 +1318,6 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
-
-func (ec *executionContext) _Domain_domain(ctx context.Context, field graphql.CollectedField, obj *models.OrganizationDomain) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Domain",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Domain, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Domain_organizationID(ctx context.Context, field graphql.CollectedField, obj *models.OrganizationDomain) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Domain",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.OrganizationID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNID2int(ctx, field.Selections, res)
-}
 
 func (ec *executionContext) _File_id(ctx context.Context, field graphql.CollectedField, obj *models.File) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
@@ -2136,7 +2062,7 @@ func (ec *executionContext) _Mutation_createOrganizationDomain(ctx context.Conte
 	res := resTmp.([]*models.OrganizationDomain)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNDomain2ᚕᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganizationDomain(ctx, field.Selections, res)
+	return ec.marshalNOrganizationDomain2ᚕᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganizationDomain(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_removeOrganizationDomain(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2180,7 +2106,7 @@ func (ec *executionContext) _Mutation_removeOrganizationDomain(ctx context.Conte
 	res := resTmp.([]*models.OrganizationDomain)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNDomain2ᚕᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganizationDomain(ctx, field.Selections, res)
+	return ec.marshalNOrganizationDomain2ᚕᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganizationDomain(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Organization_id(ctx context.Context, field graphql.CollectedField, obj *models.Organization) (ret graphql.Marshaler) {
@@ -2393,7 +2319,81 @@ func (ec *executionContext) _Organization_domains(ctx context.Context, field gra
 	res := resTmp.([]*models.OrganizationDomain)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNDomain2ᚕᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganizationDomain(ctx, field.Selections, res)
+	return ec.marshalNOrganizationDomain2ᚕᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganizationDomain(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _OrganizationDomain_domain(ctx context.Context, field graphql.CollectedField, obj *models.OrganizationDomain) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "OrganizationDomain",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Domain, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _OrganizationDomain_organizationID(ctx context.Context, field graphql.CollectedField, obj *models.OrganizationDomain) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "OrganizationDomain",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.OrganizationID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNID2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Post_id(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
@@ -5725,38 +5725,6 @@ func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, o
 
 // region    **************************** object.gotpl ****************************
 
-var domainImplementors = []string{"Domain"}
-
-func (ec *executionContext) _Domain(ctx context.Context, sel ast.SelectionSet, obj *models.OrganizationDomain) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.RequestContext, sel, domainImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Domain")
-		case "domain":
-			out.Values[i] = ec._Domain_domain(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "organizationID":
-			out.Values[i] = ec._Domain_organizationID(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
 var fileImplementors = []string{"File"}
 
 func (ec *executionContext) _File(ctx context.Context, sel ast.SelectionSet, obj *models.File) graphql.Marshaler {
@@ -6016,6 +5984,38 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 				}
 				return res
 			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var organizationDomainImplementors = []string{"OrganizationDomain"}
+
+func (ec *executionContext) _OrganizationDomain(ctx context.Context, sel ast.SelectionSet, obj *models.OrganizationDomain) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.RequestContext, sel, organizationDomainImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("OrganizationDomain")
+		case "domain":
+			out.Values[i] = ec._OrganizationDomain_domain(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "organizationID":
+			out.Values[i] = ec._OrganizationDomain_organizationID(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6881,57 +6881,6 @@ func (ec *executionContext) unmarshalNCreatePostInput2githubᚗcomᚋsilinternat
 	return ec.unmarshalInputCreatePostInput(ctx, v)
 }
 
-func (ec *executionContext) marshalNDomain2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganizationDomain(ctx context.Context, sel ast.SelectionSet, v models.OrganizationDomain) graphql.Marshaler {
-	return ec._Domain(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNDomain2ᚕᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganizationDomain(ctx context.Context, sel ast.SelectionSet, v []*models.OrganizationDomain) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		rctx := &graphql.ResolverContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithResolverContext(ctx, rctx)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNDomain2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganizationDomain(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-	return ret
-}
-
-func (ec *executionContext) marshalNDomain2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganizationDomain(ctx context.Context, sel ast.SelectionSet, v *models.OrganizationDomain) graphql.Marshaler {
-	if v == nil {
-		if !ec.HasError(graphql.GetResolverContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	return ec._Domain(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalNFile2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐFile(ctx context.Context, sel ast.SelectionSet, v models.File) graphql.Marshaler {
 	return ec._File(ctx, sel, &v)
 }
@@ -7145,6 +7094,57 @@ func (ec *executionContext) marshalNOrganization2ᚖgithubᚗcomᚋsilinternatio
 	return ec._Organization(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNOrganizationDomain2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganizationDomain(ctx context.Context, sel ast.SelectionSet, v models.OrganizationDomain) graphql.Marshaler {
+	return ec._OrganizationDomain(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNOrganizationDomain2ᚕᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganizationDomain(ctx context.Context, sel ast.SelectionSet, v []*models.OrganizationDomain) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		rctx := &graphql.ResolverContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNOrganizationDomain2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganizationDomain(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalNOrganizationDomain2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganizationDomain(ctx context.Context, sel ast.SelectionSet, v *models.OrganizationDomain) graphql.Marshaler {
+	if v == nil {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._OrganizationDomain(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNPost2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx context.Context, sel ast.SelectionSet, v models.Post) graphql.Marshaler {
 	return ec._Post(ctx, sel, &v)
 }
@@ -7173,7 +7173,7 @@ func (ec *executionContext) marshalNPost2ᚕᚖgithubᚗcomᚋsilinternational�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOPost2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, sel, v[i])
+			ret[i] = ec.marshalNPost2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -7373,7 +7373,7 @@ func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋsilinternational�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, sel, v[i])
+			ret[i] = ec.marshalNUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)

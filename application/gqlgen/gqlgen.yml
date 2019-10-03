@@ -19,7 +19,7 @@ models:
     fields:
       id:
         resolver: true
-  Domain:
+  OrganizationDomain:
     model: github.com/silinternational/wecarry-api/models.OrganizationDomain
   User:
     model: github.com/silinternational/wecarry-api/models.User
