@@ -251,6 +251,44 @@ func (ms *ModelSuite) TestValidateUser() {
 			wantErr:  true,
 			errField: "uuid",
 		},
+		{
+			name: "good photoURL",
+			user: User{
+				Email:     "user@example.com",
+				FirstName: "A",
+				LastName:  "User",
+				Nickname:  "A User",
+				Uuid:      domain.GetUuid(),
+				PhotoURL:  nulls.NewString("http://example.com/user/7/avatar"),
+			},
+			wantErr: false,
+		},
+		{
+			name: "blank photoURL",
+			user: User{
+				Email:     "user@example.com",
+				FirstName: "A",
+				LastName:  "User",
+				Nickname:  "A User",
+				Uuid:      domain.GetUuid(),
+				PhotoURL:  nulls.NewString(""),
+			},
+			wantErr:  true,
+			errField: "photo_url",
+		},
+		{
+			name: "bad photoURL",
+			user: User{
+				Email:     "user@example.com",
+				FirstName: "A",
+				LastName:  "User",
+				Nickname:  "A User",
+				Uuid:      domain.GetUuid(),
+				PhotoURL:  nulls.NewString("badone"),
+			},
+			wantErr:  true,
+			errField: "photo_url",
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

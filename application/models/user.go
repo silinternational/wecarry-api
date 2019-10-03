@@ -74,6 +74,7 @@ func (u *User) Validate(tx *pop.Connection) (*validate.Errors, error) {
 		&validators.StringIsPresent{Field: u.LastName, Name: "LastName"},
 		&validators.StringIsPresent{Field: u.Nickname, Name: "Nickname"},
 		&validators.UUIDIsPresent{Field: u.Uuid, Name: "Uuid"},
+		&NullsStringIsURL{Field: u.PhotoURL, Name: "PhotoURL"},
 	), nil
 }
 
@@ -160,6 +161,11 @@ func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
 	u.FirstName = authUser.FirstName
 	u.LastName = authUser.LastName
 	u.Email = authUser.Email
+
+	if authUser.PhotoURL != "" {
+		u.PhotoURL = nulls.NewString(authUser.PhotoURL)
+	}
+
 	u.Nickname = authUser.Nickname
 
 	if u.Nickname == "" {

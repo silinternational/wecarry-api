@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/gobuffalo/validate/validators"
 	"log"
 	"strings"
 
@@ -91,4 +92,24 @@ func IsSqlNoRowsErr(err error) bool {
 	}
 
 	return false
+}
+
+// NullsStringIsURL is a model field validator
+// which makes sure that a NullsString that is not null is
+// a valid URL
+type NullsStringIsURL struct {
+	Name    string
+	Field   nulls.String
+	Message string
+}
+
+// IsValid adds an error if the field is not empty and not a url.
+func (v *NullsStringIsURL) IsValid(errors *validate.Errors) {
+	if !v.Field.Valid {
+		return
+	}
+	value := v.Field.String
+
+	newV := validators.URLIsPresent{Name: v.Name, Field: value, Message: v.Message}
+	newV.IsValid(errors)
 }
