@@ -70,7 +70,7 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, input UpdateO
 	return &org, err
 }
 
-func (r *mutationResolver) CreateDomain(ctx context.Context, input CreateDomainInput) ([]*models.OrganizationDomain, error) {
+func (r *mutationResolver) CreateOrganizationDomain(ctx context.Context, input CreateOrganizationDomainInput) ([]*models.OrganizationDomain, error) {
 	var org models.Organization
 	err := org.FindByUUID(input.OrganizationID)
 	if err != nil {
@@ -95,7 +95,7 @@ func (r *mutationResolver) CreateDomain(ctx context.Context, input CreateDomainI
 	return orgDomains, nil
 }
 
-func (r *mutationResolver) RemoveDomain(ctx context.Context, input RemoveDomainInput) ([]*models.OrganizationDomain, error) {
+func (r *mutationResolver) RemoveOrganizationDomain(ctx context.Context, input RemoveOrganizationDomainInput) ([]*models.OrganizationDomain, error) {
 	var org models.Organization
 	err := org.FindByUUID(input.OrganizationID)
 	if err != nil {
@@ -107,7 +107,7 @@ func (r *mutationResolver) RemoveDomain(ctx context.Context, input RemoveDomainI
 		return []*models.OrganizationDomain{}, fmt.Errorf("user not allowed to edit organizations")
 	}
 
-	err = org.RemoveDomain(input.Domain)
+	err = org.RemoveOrganizationDomain(input.Domain)
 	if err != nil {
 		return []*models.OrganizationDomain{}, err
 	}

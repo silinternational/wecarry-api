@@ -15,8 +15,8 @@ type Mutation {
     createMessage(input: CreateMessageInput!): Message!
     createOrganization(input: CreateOrganizationInput!): Organization!
     updateOrganization(input: UpdateOrganizationInput!): Organization!
-    createDomain(input: CreateDomainInput!): [Domain!]!
-    removeDomain(input: RemoveDomainInput!): [Domain!]!
+    createOrganizationDomain(input: CreateOrganizationDomainInput!): [Domain!]!
+    removeOrganizationDomain(input: RemoveOrganizationDomainInput!): [Domain!]!
 }
 
 # Date and Time in RFC3339 format
@@ -121,12 +121,12 @@ type Domain {
     organizationID: ID!
 }
 
-input CreateDomainInput {
+input CreateOrganizationDomainInput {
     domain: String!
     organizationID: ID!
 }
 
-input RemoveDomainInput {
+input RemoveOrganizationDomainInput {
     domain: String!
     organizationID: ID!
 }

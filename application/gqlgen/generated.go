@@ -74,14 +74,14 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CreateDomain       func(childComplexity int, input CreateDomainInput) int
-		CreateMessage      func(childComplexity int, input CreateMessageInput) int
-		CreateOrganization func(childComplexity int, input CreateOrganizationInput) int
-		CreatePost         func(childComplexity int, input postInput) int
-		RemoveDomain       func(childComplexity int, input RemoveDomainInput) int
-		UpdateOrganization func(childComplexity int, input UpdateOrganizationInput) int
-		UpdatePost         func(childComplexity int, input postInput) int
-		UpdateUser         func(childComplexity int, input UpdateUserInput) int
+		CreateMessage            func(childComplexity int, input CreateMessageInput) int
+		CreateOrganization       func(childComplexity int, input CreateOrganizationInput) int
+		CreateOrganizationDomain func(childComplexity int, input CreateOrganizationDomainInput) int
+		CreatePost               func(childComplexity int, input postInput) int
+		RemoveOrganizationDomain func(childComplexity int, input RemoveOrganizationDomainInput) int
+		UpdateOrganization       func(childComplexity int, input UpdateOrganizationInput) int
+		UpdatePost               func(childComplexity int, input postInput) int
+		UpdateUser               func(childComplexity int, input UpdateUserInput) int
 	}
 
 	Organization struct {
@@ -170,8 +170,8 @@ type MutationResolver interface {
 	CreateMessage(ctx context.Context, input CreateMessageInput) (*models.Message, error)
 	CreateOrganization(ctx context.Context, input CreateOrganizationInput) (*models.Organization, error)
 	UpdateOrganization(ctx context.Context, input UpdateOrganizationInput) (*models.Organization, error)
-	CreateDomain(ctx context.Context, input CreateDomainInput) ([]*models.OrganizationDomain, error)
-	RemoveDomain(ctx context.Context, input RemoveDomainInput) ([]*models.OrganizationDomain, error)
+	CreateOrganizationDomain(ctx context.Context, input CreateOrganizationDomainInput) ([]*models.OrganizationDomain, error)
+	RemoveOrganizationDomain(ctx context.Context, input RemoveOrganizationDomainInput) ([]*models.OrganizationDomain, error)
 }
 type OrganizationResolver interface {
 	ID(ctx context.Context, obj *models.Organization) (string, error)
@@ -341,18 +341,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Message.UpdatedAt(childComplexity), true
 
-	case "Mutation.createDomain":
-		if e.complexity.Mutation.CreateDomain == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_createDomain_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.CreateDomain(childComplexity, args["input"].(CreateDomainInput)), true
-
 	case "Mutation.createMessage":
 		if e.complexity.Mutation.CreateMessage == nil {
 			break
@@ -377,6 +365,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreateOrganization(childComplexity, args["input"].(CreateOrganizationInput)), true
 
+	case "Mutation.createOrganizationDomain":
+		if e.complexity.Mutation.CreateOrganizationDomain == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createOrganizationDomain_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateOrganizationDomain(childComplexity, args["input"].(CreateOrganizationDomainInput)), true
+
 	case "Mutation.createPost":
 		if e.complexity.Mutation.CreatePost == nil {
 			break
@@ -389,17 +389,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreatePost(childComplexity, args["input"].(postInput)), true
 
-	case "Mutation.removeDomain":
-		if e.complexity.Mutation.RemoveDomain == nil {
+	case "Mutation.removeOrganizationDomain":
+		if e.complexity.Mutation.RemoveOrganizationDomain == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_removeDomain_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_removeOrganizationDomain_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.RemoveDomain(childComplexity, args["input"].(RemoveDomainInput)), true
+		return e.complexity.Mutation.RemoveOrganizationDomain(childComplexity, args["input"].(RemoveOrganizationDomainInput)), true
 
 	case "Mutation.updateOrganization":
 		if e.complexity.Mutation.UpdateOrganization == nil {
@@ -914,8 +914,8 @@ type Mutation {
     createMessage(input: CreateMessageInput!): Message!
     createOrganization(input: CreateOrganizationInput!): Organization!
     updateOrganization(input: UpdateOrganizationInput!): Organization!
-    createDomain(input: CreateDomainInput!): [Domain!]!
-    removeDomain(input: RemoveDomainInput!): [Domain!]!
+    createOrganizationDomain(input: CreateOrganizationDomainInput!): [Domain!]!
+    removeOrganizationDomain(input: RemoveOrganizationDomainInput!): [Domain!]!
 }
 
 # Date and Time in RFC3339 format
@@ -1020,12 +1020,12 @@ type Domain {
     organizationID: ID!
 }
 
-input CreateDomainInput {
+input CreateOrganizationDomainInput {
     domain: String!
     organizationID: ID!
 }
 
-input RemoveDomainInput {
+input RemoveOrganizationDomainInput {
     domain: String!
     organizationID: ID!
 }
@@ -1101,12 +1101,12 @@ type File {
 
 // region    ***************************** args.gotpl *****************************
 
-func (ec *executionContext) field_Mutation_createDomain_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_createMessage_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 CreateDomainInput
+	var arg0 CreateMessageInput
 	if tmp, ok := rawArgs["input"]; ok {
-		arg0, err = ec.unmarshalNCreateDomainInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐCreateDomainInput(ctx, tmp)
+		arg0, err = ec.unmarshalNCreateMessageInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐCreateMessageInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1115,12 +1115,12 @@ func (ec *executionContext) field_Mutation_createDomain_args(ctx context.Context
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_createMessage_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_createOrganizationDomain_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 CreateMessageInput
+	var arg0 CreateOrganizationDomainInput
 	if tmp, ok := rawArgs["input"]; ok {
-		arg0, err = ec.unmarshalNCreateMessageInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐCreateMessageInput(ctx, tmp)
+		arg0, err = ec.unmarshalNCreateOrganizationDomainInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐCreateOrganizationDomainInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1157,12 +1157,12 @@ func (ec *executionContext) field_Mutation_createPost_args(ctx context.Context, 
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_removeDomain_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_removeOrganizationDomain_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 RemoveDomainInput
+	var arg0 RemoveOrganizationDomainInput
 	if tmp, ok := rawArgs["input"]; ok {
-		arg0, err = ec.unmarshalNRemoveDomainInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐRemoveDomainInput(ctx, tmp)
+		arg0, err = ec.unmarshalNRemoveOrganizationDomainInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐRemoveOrganizationDomainInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2095,7 +2095,7 @@ func (ec *executionContext) _Mutation_updateOrganization(ctx context.Context, fi
 	return ec.marshalNOrganization2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganization(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_createDomain(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_createOrganizationDomain(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -2112,7 +2112,7 @@ func (ec *executionContext) _Mutation_createDomain(ctx context.Context, field gr
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_createDomain_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_createOrganizationDomain_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -2121,7 +2121,7 @@ func (ec *executionContext) _Mutation_createDomain(ctx context.Context, field gr
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateDomain(rctx, args["input"].(CreateDomainInput))
+		return ec.resolvers.Mutation().CreateOrganizationDomain(rctx, args["input"].(CreateOrganizationDomainInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2139,7 +2139,7 @@ func (ec *executionContext) _Mutation_createDomain(ctx context.Context, field gr
 	return ec.marshalNDomain2ᚕᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganizationDomain(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_removeDomain(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_removeOrganizationDomain(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -2156,7 +2156,7 @@ func (ec *executionContext) _Mutation_removeDomain(ctx context.Context, field gr
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_removeDomain_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_removeOrganizationDomain_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -2165,7 +2165,7 @@ func (ec *executionContext) _Mutation_removeDomain(ctx context.Context, field gr
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().RemoveDomain(rctx, args["input"].(RemoveDomainInput))
+		return ec.resolvers.Mutation().RemoveOrganizationDomain(rctx, args["input"].(RemoveOrganizationDomainInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5363,30 +5363,6 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    **************************** input.gotpl *****************************
 
-func (ec *executionContext) unmarshalInputCreateDomainInput(ctx context.Context, obj interface{}) (CreateDomainInput, error) {
-	var it CreateDomainInput
-	var asMap = obj.(map[string]interface{})
-
-	for k, v := range asMap {
-		switch k {
-		case "domain":
-			var err error
-			it.Domain, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "organizationID":
-			var err error
-			it.OrganizationID, err = ec.unmarshalNID2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputCreateMessageInput(ctx context.Context, obj interface{}) (CreateMessageInput, error) {
 	var it CreateMessageInput
 	var asMap = obj.(map[string]interface{})
@@ -5408,6 +5384,30 @@ func (ec *executionContext) unmarshalInputCreateMessageInput(ctx context.Context
 		case "threadID":
 			var err error
 			it.ThreadID, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputCreateOrganizationDomainInput(ctx context.Context, obj interface{}) (CreateOrganizationDomainInput, error) {
+	var it CreateOrganizationDomainInput
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "domain":
+			var err error
+			it.Domain, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "organizationID":
+			var err error
+			it.OrganizationID, err = ec.unmarshalNID2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5537,8 +5537,8 @@ func (ec *executionContext) unmarshalInputCreatePostInput(ctx context.Context, o
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputRemoveDomainInput(ctx context.Context, obj interface{}) (RemoveDomainInput, error) {
-	var it RemoveDomainInput
+func (ec *executionContext) unmarshalInputRemoveOrganizationDomainInput(ctx context.Context, obj interface{}) (RemoveOrganizationDomainInput, error) {
+	var it RemoveOrganizationDomainInput
 	var asMap = obj.(map[string]interface{})
 
 	for k, v := range asMap {
@@ -5936,13 +5936,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "createDomain":
-			out.Values[i] = ec._Mutation_createDomain(ctx, field)
+		case "createOrganizationDomain":
+			out.Values[i] = ec._Mutation_createOrganizationDomain(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "removeDomain":
-			out.Values[i] = ec._Mutation_removeDomain(ctx, field)
+		case "removeOrganizationDomain":
+			out.Values[i] = ec._Mutation_removeOrganizationDomain(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -6865,12 +6865,12 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) unmarshalNCreateDomainInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐCreateDomainInput(ctx context.Context, v interface{}) (CreateDomainInput, error) {
-	return ec.unmarshalInputCreateDomainInput(ctx, v)
-}
-
 func (ec *executionContext) unmarshalNCreateMessageInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐCreateMessageInput(ctx context.Context, v interface{}) (CreateMessageInput, error) {
 	return ec.unmarshalInputCreateMessageInput(ctx, v)
+}
+
+func (ec *executionContext) unmarshalNCreateOrganizationDomainInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐCreateOrganizationDomainInput(ctx context.Context, v interface{}) (CreateOrganizationDomainInput, error) {
+	return ec.unmarshalInputCreateOrganizationDomainInput(ctx, v)
 }
 
 func (ec *executionContext) unmarshalNCreateOrganizationInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐCreateOrganizationInput(ctx context.Context, v interface{}) (CreateOrganizationInput, error) {
@@ -7232,8 +7232,8 @@ func (ec *executionContext) marshalNPostType2ᚖgithubᚗcomᚋsilinternational�
 	return v
 }
 
-func (ec *executionContext) unmarshalNRemoveDomainInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐRemoveDomainInput(ctx context.Context, v interface{}) (RemoveDomainInput, error) {
-	return ec.unmarshalInputRemoveDomainInput(ctx, v)
+func (ec *executionContext) unmarshalNRemoveOrganizationDomainInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐRemoveOrganizationDomainInput(ctx context.Context, v interface{}) (RemoveOrganizationDomainInput, error) {
+	return ec.unmarshalInputRemoveOrganizationDomainInput(ctx, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
@@ -7373,7 +7373,7 @@ func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋsilinternational�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, sel, v[i])
+			ret[i] = ec.marshalOUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)

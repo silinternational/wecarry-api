@@ -2,8 +2,9 @@ package models
 
 import (
 	"fmt"
-	"github.com/silinternational/wecarry-api/auth/google"
 	"time"
+
+	"github.com/silinternational/wecarry-api/auth/google"
 
 	"github.com/silinternational/wecarry-api/auth"
 	"github.com/silinternational/wecarry-api/auth/saml"
@@ -123,7 +124,7 @@ func (o *Organization) AddDomain(domain string) error {
 	return nil
 }
 
-func (o *Organization) RemoveDomain(domain string) error {
+func (o *Organization) RemoveOrganizationDomain(domain string) error {
 	var orgDomain OrganizationDomain
 	err := DB.Where("organization_id = ? and domain = ?", o.ID, domain).First(&orgDomain)
 	if err != nil {
