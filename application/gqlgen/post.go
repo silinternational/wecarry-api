@@ -14,6 +14,8 @@ import (
 	"github.com/vektah/gqlparser/gqlerror"
 )
 
+// PostFields maps GraphQL fields to their equivalent database fields. For related types, the
+// foreign key field name is provided.
 func PostFields() map[string]string {
 	return map[string]string{
 		"id":           "uuid",
@@ -35,6 +37,7 @@ func PostFields() map[string]string {
 		"updatedAt":    "updated_at",
 		"url":          "url",
 		"cost":         "cost",
+		"photo":        "photo_file_id",
 	}
 }
 
@@ -62,21 +65,21 @@ func (r *postResolver) CreatedBy(ctx context.Context, obj *models.Post) (*models
 	if obj == nil {
 		return nil, nil
 	}
-	return obj.GetCreator(GetSelectFieldsFromRequestFields(UserFields(), graphql.CollectAllFields(ctx)))
+	return obj.GetCreator(GetSelectFieldsForUsers(ctx))
 }
 
 func (r *postResolver) Receiver(ctx context.Context, obj *models.Post) (*models.User, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	return obj.GetReceiver(GetSelectFieldsFromRequestFields(UserFields(), graphql.CollectAllFields(ctx)))
+	return obj.GetReceiver(GetSelectFieldsForUsers(ctx))
 }
 
 func (r *postResolver) Provider(ctx context.Context, obj *models.Post) (*models.User, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	return obj.GetProvider(GetSelectFieldsFromRequestFields(UserFields(), graphql.CollectAllFields(ctx)))
+	return obj.GetProvider(GetSelectFieldsForUsers(ctx))
 }
 
 func (r *postResolver) Organization(ctx context.Context, obj *models.Post) (*models.Organization, error) {
@@ -153,6 +156,23 @@ func (r *postResolver) Cost(ctx context.Context, obj *models.Post) (*string, err
 	return &c, nil
 }
 
+// Photo retrieves the file attached as the primary photo
+func (r *postResolver) Photo(ctx context.Context, obj *models.Post) (*models.File, error) {
+	if obj == nil {
+		return nil, nil
+	}
+
+	return obj.GetPhoto()
+}
+
+// Files retrieves the list of files attached to the post, not including the primary photo
+func (r *postResolver) Files(ctx context.Context, obj *models.Post) ([]*models.File, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return obj.GetFiles()
+}
+
 func (r *queryResolver) Posts(ctx context.Context) ([]*models.Post, error) {
 	var posts []*models.Post
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
@@ -184,7 +204,7 @@ func (r *queryResolver) Post(ctx context.Context, id *string) (*models.Post, err
 // convertGqlPostInputToDBPost takes a `PostInput` and either finds a record matching the UUID given in `input.ID` or
 // creates a new `models.Post` with a new UUID. In either case, all properties that are not `nil` are set to the value
 // provided in `input`
-func convertGqlPostInputToDBPost(input postInput, currentUser models.User) (models.Post, error) {
+func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUser models.User) (models.Post, error) {
 	post := models.Post{}
 
 	if input.ID != nil {
@@ -281,6 +301,14 @@ func convertGqlPostInputToDBPost(input postInput, currentUser models.User) (mode
 		post.Cost = nulls.NewFloat64(c)
 	}
 
+	if input.PhotoID != nil {
+		if file, err := post.AttachPhoto(*input.PhotoID); err != nil {
+			graphql.AddError(ctx, gqlerror.Errorf("Error attaching photo to Post, %s", err.Error()))
+		} else {
+			post.PhotoFile = file
+		}
+	}
+
 	return post, nil
 }
 
@@ -320,11 +348,12 @@ type postInput struct {
 	Category     *string
 	URL          *string
 	Cost         *string
+	PhotoID      *string
 }
 
 func (r *mutationResolver) CreatePost(ctx context.Context, input postInput) (*models.Post, error) {
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
-	post, err := convertGqlPostInputToDBPost(input, cUser)
+	post, err := convertGqlPostInputToDBPost(ctx, input, cUser)
 	if err != nil {
 		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
 		return &models.Post{}, err
@@ -339,7 +368,7 @@ func (r *mutationResolver) CreatePost(ctx context.Context, input postInput) (*mo
 
 func (r *mutationResolver) UpdatePost(ctx context.Context, input postInput) (*models.Post, error) {
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
-	post, err := convertGqlPostInputToDBPost(input, cUser)
+	post, err := convertGqlPostInputToDBPost(ctx, input, cUser)
 	if err != nil {
 		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
 		return &models.Post{}, err

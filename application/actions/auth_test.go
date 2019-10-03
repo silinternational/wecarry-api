@@ -14,7 +14,7 @@ import (
 func (as *ActionSuite) TestGetLoginSuccessRedirectURL() {
 	t := as.T()
 
-	uiURL := envy.Get("UI_URL", "")
+	uiURL := envy.Get(UIURLEnv, "")
 
 	tests := []struct {
 		name          string
@@ -265,10 +265,6 @@ func (as *ActionSuite) TestCreateAuthUser() {
 	t := as.T()
 	models.ResetTables(t, as.DB)
 	orgFixture := Fixtures_CreateAuthUser(as, t).orgs[0]
-	c := &bufTestCtx{
-		sess:   as.Session,
-		params: map[string]string{},
-	}
 
 	newEmail := "new@example.com"
 
@@ -285,7 +281,7 @@ func (as *ActionSuite) TestCreateAuthUser() {
 		return
 	}
 
-	resultsAuthUser, err := createAuthUser(newEmail, "12345678", user, orgFixture, c)
+	resultsAuthUser, err := createAuthUser("12345678", user, orgFixture)
 
 	if err != nil {
 		t.Errorf("unexpected error ... %v", err)

@@ -180,16 +180,16 @@ func (p *Post) AttachFile(fileID string) (File, error) {
 }
 
 // GetFiles retrieves the metadata for all of the files attached to this Post
-func (p *Post) GetFiles() ([]File, error) {
+func (p *Post) GetFiles() ([]*File, error) {
 	var pf []*PostFile
 
 	if err := DB.Eager("File").Select().Where("post_id = ?", p.ID).All(&pf); err != nil {
 		return nil, fmt.Errorf("error getting files for post id %d, %s", p.ID, err)
 	}
 
-	files := make([]File, len(pf))
+	files := make([]*File, len(pf))
 	for i, p := range pf {
-		files[i] = p.File
+		files[i] = &p.File
 		if err := files[i].RefreshURL(); err != nil {
 			return files, err
 		}
@@ -198,7 +198,8 @@ func (p *Post) GetFiles() ([]File, error) {
 	return files, nil
 }
 
-// AttachPhoto assigns a previously-stored File to this Post as its photo
+// AttachPhoto assigns a previously-stored File to this Post as its photo. Parameter `fileID` is the UUID
+// of the photo to attach.
 func (p *Post) AttachPhoto(fileID string) (File, error) {
 	var f File
 	if err := f.FindByUUID(fileID); err != nil {
@@ -211,4 +212,21 @@ func (p *Post) AttachPhoto(fileID string) (File, error) {
 	}
 
 	return f, nil
+}
+
+// GetPhoto retrieves the file attached as the Post photo
+func (p *Post) GetPhoto() (*File, error) {
+	if err := DB.Load(p, "PhotoFile"); err != nil {
+		return nil, err
+	}
+
+	if !p.PhotoFileID.Valid {
+		return nil, nil
+	}
+
+	if err := p.PhotoFile.RefreshURL(); err != nil {
+		return nil, err
+	}
+
+	return &(p.PhotoFile), nil
 }

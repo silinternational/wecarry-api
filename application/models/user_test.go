@@ -709,13 +709,13 @@ func (ms *ModelSuite) TestUser_AttachPhoto() {
 		t.Errorf("failed to create user fixture, %s", err)
 	}
 
-	var f File
+	var photoFixture File
 	const filename = "photo.gif"
-	if err := f.Store(filename, []byte("GIF89a")); err != nil {
+	if err := photoFixture.Store(filename, []byte("GIF89a")); err != nil {
 		t.Errorf("failed to create file fixture, %s", err)
 	}
 
-	if attachedFile, err := user.AttachPhoto(f.UUID.String()); err != nil {
+	if attachedFile, err := user.AttachPhoto(photoFixture.UUID.String()); err != nil {
 		t.Errorf("failed to attach photo to user, %s", err)
 	} else {
 		ms.Equal(filename, attachedFile.Name)
@@ -728,4 +728,10 @@ func (ms *ModelSuite) TestUser_AttachPhoto() {
 	}
 
 	ms.Equal(filename, user.PhotoFile.Name)
+
+	if got, err := user.GetPhotoURL(); err == nil {
+		ms.Regexp("^https?", got)
+	} else {
+		ms.Fail("user.GetPhotoURL failed, %s", err)
+	}
 }

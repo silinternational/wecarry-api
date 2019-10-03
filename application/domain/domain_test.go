@@ -302,6 +302,7 @@ func TestConvertTimeToStringPtr(t *testing.T) {
 func TestConvertStringPtrToDate(t *testing.T) {
 	testTime := time.Date(2019, time.August, 12, 0, 0, 0, 0, time.UTC)
 	testStr := testTime.Format("2006-01-02") // not using a const in order to detect code changes
+	emptyStr := ""
 	badTime := "1"
 	type args struct {
 		inPtr *string
@@ -314,6 +315,10 @@ func TestConvertStringPtrToDate(t *testing.T) {
 	}{{
 		name: "nil",
 		args: args{nil},
+		want: time.Time{},
+	}, {
+		name: "empty",
+		args: args{&emptyStr},
 		want: time.Time{},
 	}, {
 		name: "good",

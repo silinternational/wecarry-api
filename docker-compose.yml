@@ -7,6 +7,7 @@ services:
       dockerfile: Dockerfile-dev
     volumes:
       - ./application:/wecarry
+      - ./dev:/wecarry/dev
     ports:
       - "3000:3000"
     env_file:
@@ -20,6 +21,7 @@ services:
       GO_ENV: development
     depends_on:
       - db
+      - minio
     command: buffalo dev
 
   test:
