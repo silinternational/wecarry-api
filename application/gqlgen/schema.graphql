@@ -45,8 +45,6 @@ enum PostStatus {
 type User {
     id: ID!
     email: String!
-    firstName: String!
-    lastName: String!
     nickname: String!
     createdAt: Time
     updatedAt: Time
