@@ -1,4 +1,5 @@
 dev: buffalo migrate adminer
+	docker-compose run --rm buffalo /bin/bash -c "cd dev && go run dev.go"
 
 all: buffalo migrate adminer ppa playground
 

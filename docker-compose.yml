@@ -7,6 +7,7 @@ services:
       dockerfile: Dockerfile-dev
     volumes:
       - ./application:/wecarry
+      - ./dev:/wecarry/dev
     ports:
       - "3000:3000"
     env_file:
