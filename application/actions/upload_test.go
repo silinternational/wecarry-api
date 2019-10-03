@@ -8,10 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/gobuffalo/envy"
-
 	"github.com/gobuffalo/buffalo/binding"
 
 	"github.com/silinternational/wecarry-api/aws"
@@ -25,31 +21,6 @@ import (
 type UploadFixtures struct {
 	ClientID    string
 	AccessToken string
-}
-
-// createS3Bucket creates an S3 bucket with a name defined by an environment variable. If the bucket already
-// exists, it will not return an error.
-func createS3Bucket() error {
-	config := aws.GetS3ConfigFromEnv()
-
-	svc, err := aws.CreateS3Service(config)
-	if err != nil {
-		return err
-	}
-
-	bucketName := envy.Get(aws.AwsS3BucketEnv, "")
-	c := &s3.CreateBucketInput{Bucket: &bucketName}
-	if _, err := svc.CreateBucket(c); err != nil {
-		if aerr, ok := err.(awserr.Error); ok {
-			switch aerr.Code() {
-			case s3.ErrCodeBucketAlreadyExists:
-			case s3.ErrCodeBucketAlreadyOwnedByYou:
-			default:
-				return err
-			}
-		}
-	}
-	return nil
 }
 
 // Fixtures_Upload creates fixtures for the Test_Upload test
@@ -102,7 +73,7 @@ func Fixtures_Upload(as *ActionSuite, t *testing.T) UploadFixtures {
 		t.FailNow()
 	}
 
-	if err := createS3Bucket(); err != nil {
+	if err := aws.CreateS3Bucket(); err != nil {
 		t.Errorf("failed to create S3 bucket, %s", err)
 		t.FailNow()
 	}
