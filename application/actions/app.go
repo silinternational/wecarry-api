@@ -73,7 +73,7 @@ func App() *buffalo.App {
 		auth.GET("/callback", AuthCallback)  // for Google Oauth
 		auth.POST("/callback", AuthCallback) // for SAML
 
-		auth.GET("/logout", AuthDestroy)
+		auth.POST("/logout", AuthDestroy)
 	}
 
 	return app
