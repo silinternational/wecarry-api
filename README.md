@@ -17,21 +17,6 @@ all features to work. In particular, the `ROLLBAR_TOKEN` must
 be valid. The fake AWS data will work for file uploads to the minIO
 container, but obviously not for a real AWS S3 bucket.
 
-#### Create S3 Bucket
-
-##### Local development
-
-In a local development environment, [minIO](https://min.io/) is used in 
-place of AWS S3. While automated tests create a bucket automatically,
-for development you will need to manually create a bucket. To do this, open
-a browser to http://localhost:9000. Click the "+" button and create a bucket
-with the name assigned to the environment variable `AWS_S3_BUCKET`.
-
-##### Production
-
-In your AWS S3 account, create a new bucket with the name assigned to
-the environment variable `AWS_S3_BUCKET`.
-
 ## Installation Troubleshooting
 
 Default versions which come with your operating system
