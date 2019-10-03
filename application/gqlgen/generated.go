@@ -1044,6 +1044,7 @@ input CreatePostInput {
     category: String
     url: String
     cost: String
+    photoID: ID
 }
 
 input CreateMessageInput {
@@ -5439,6 +5440,12 @@ func (ec *executionContext) unmarshalInputCreatePostInput(ctx context.Context, o
 			if err != nil {
 				return it, err
 			}
+		case "photoID":
+			var err error
+			it.PhotoID, err = ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		}
 	}
 
@@ -7271,7 +7278,7 @@ func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋsilinternational�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, sel, v[i])
+			ret[i] = ec.marshalOUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)

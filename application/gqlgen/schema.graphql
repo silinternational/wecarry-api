@@ -161,6 +161,7 @@ input CreatePostInput {
     category: String
     url: String
     cost: String
+    photoID: ID
 }
 
 input CreateMessageInput {

@@ -207,8 +207,11 @@ func (p *Post) AttachPhoto(fileID string) (File, error) {
 	}
 
 	p.PhotoFileID = nulls.NewInt(f.ID)
-	if err := DB.Save(p); err != nil {
-		return f, err
+	// if this is a new object, don't save it yet
+	if p.ID != 0 {
+		if err := DB.Update(p); err != nil {
+			return f, err
+		}
 	}
 
 	return f, nil
