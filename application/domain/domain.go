@@ -132,7 +132,7 @@ func GetUuid() uuid2.UUID {
 // format into a time.Time object. If nil is provided, the default value
 // for time.Time is returned.
 func ConvertStringPtrToDate(inPtr *string) (time.Time, error) {
-	if inPtr == nil {
+	if inPtr == nil || *inPtr == "" {
 		return time.Time{}, nil
 	}
 
