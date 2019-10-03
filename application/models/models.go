@@ -95,7 +95,7 @@ func IsSqlNoRowsErr(err error) bool {
 }
 
 // NullsStringIsURL is a model field validator
-// which makes sure that a NullsString that is not null is
+// which makes sure that a NullsString that is not blank or null is
 // a valid URL
 type NullsStringIsURL struct {
 	Name    string
@@ -109,6 +109,10 @@ func (v *NullsStringIsURL) IsValid(errors *validate.Errors) {
 		return
 	}
 	value := v.Field.String
+
+	if value == "" {
+		return
+	}
 
 	newV := validators.URLIsPresent{Name: v.Name, Field: value, Message: v.Message}
 	newV.IsValid(errors)

@@ -273,8 +273,7 @@ func (ms *ModelSuite) TestValidateUser() {
 				Uuid:      domain.GetUuid(),
 				PhotoURL:  nulls.NewString(""),
 			},
-			wantErr:  true,
-			errField: "photo_url",
+			wantErr: false,
 		},
 		{
 			name: "bad photoURL",
