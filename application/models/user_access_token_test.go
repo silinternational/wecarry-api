@@ -157,13 +157,13 @@ func CreateUserFixtures_GetOrg(ms *ModelSuite, t *testing.T) ([]Organization, Us
 		{
 			Name:       fmt.Sprintf("ACME-%s", unique),
 			Uuid:       domain.GetUuid(),
-			AuthType:   "saml2",
+			AuthType:   AuthTypeSaml,
 			AuthConfig: "{}",
 		},
 		{
 			Name:       fmt.Sprintf("Starfleet Academy-%s", unique),
 			Uuid:       domain.GetUuid(),
-			AuthType:   "google",
+			AuthType:   AuthTypeGoogle,
 			AuthConfig: "{}",
 		},
 	}

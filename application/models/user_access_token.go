@@ -80,10 +80,6 @@ func (u *UserAccessToken) FindByBearerToken(bearerToken string) error {
 
 // GetOrganization returns the Organization of the UserOrganization of the UserAccessToken
 func (u *UserAccessToken) GetOrganization() (Organization, error) {
-	if u.UserOrganizationID <= 0 {
-		return Organization{}, fmt.Errorf("user access token id %v has no user organization", u.ID)
-	}
-
 	if u.UserOrganization.ID <= 0 {
 		if err := DB.Load(u, "UserOrganization"); err != nil {
 			return Organization{}, fmt.Errorf("error loading user organization for user access token id %v ... %v",
