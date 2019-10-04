@@ -56,6 +56,9 @@ const MissingLogoutToken = "MissingLogoutToken"
 const ErrorFindingAccessToken = "ErrorFindingAccessToken"
 
 // actions.AuthDestroy
+const ErrorFindingOrgForAccessToken = "ErrorFindingOrgForAccessToken"
+
+// actions.AuthDestroy
 const ErrorAuthProvidersLogout = "ErrorAuthProvidersLogout"
 
 // actions.AuthDestroy
