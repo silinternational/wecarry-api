@@ -26,6 +26,10 @@ func CreateThreadFixtures(ms *ModelSuite, t *testing.T, post Post) ThreadFixture
 			Uuid:   domain.GetUuid(),
 			PostID: post.ID,
 		},
+		{
+			Uuid:   domain.GetUuid(),
+			PostID: post.ID,
+		},
 	}
 	for i := range threads {
 		if err := ms.DB.Create(&threads[i]); err != nil {

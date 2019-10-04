@@ -12,9 +12,9 @@ import (
 
 type mutationResolver struct{ *Resolver }
 
-func (r *mutationResolver) CreateMessage(ctx context.Context, input NewMessage) (*models.Message, error) {
+func (r *mutationResolver) CreateMessage(ctx context.Context, input CreateMessageInput) (*models.Message, error) {
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
-	message, err := ConvertGqlNewMessageToDBMessage(input, cUser)
+	message, err := ConvertGqlCreateMessageInputToDBMessage(input, cUser)
 	if err != nil {
 		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
 		return &models.Message{}, err
@@ -28,7 +28,7 @@ func (r *mutationResolver) CreateMessage(ctx context.Context, input NewMessage) 
 	return &message, err
 }
 
-func (r *mutationResolver) CreateOrganization(ctx context.Context, input NewOrganization) (*models.Organization, error) {
+func (r *mutationResolver) CreateOrganization(ctx context.Context, input CreateOrganizationInput) (*models.Organization, error) {
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 	if !cUser.CanCreateOrganization() {
 		return &models.Organization{}, fmt.Errorf("user not allowed to create organizations")
@@ -46,7 +46,7 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input NewOrga
 	return &org, err
 }
 
-func (r *mutationResolver) UpdateOrganization(ctx context.Context, input UpdatedOrganization) (*models.Organization, error) {
+func (r *mutationResolver) UpdateOrganization(ctx context.Context, input UpdateOrganizationInput) (*models.Organization, error) {
 	var org models.Organization
 	err := org.FindByUUID(input.ID)
 	if err != nil {
@@ -70,7 +70,7 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, input Updated
 	return &org, err
 }
 
-func (r *mutationResolver) CreateOrganizationDomain(ctx context.Context, input NewOrganizationDomain) ([]*models.OrganizationDomain, error) {
+func (r *mutationResolver) CreateOrganizationDomain(ctx context.Context, input CreateOrganizationDomainInput) ([]*models.OrganizationDomain, error) {
 	var org models.Organization
 	err := org.FindByUUID(input.OrganizationID)
 	if err != nil {
@@ -95,7 +95,7 @@ func (r *mutationResolver) CreateOrganizationDomain(ctx context.Context, input N
 	return orgDomains, nil
 }
 
-func (r *mutationResolver) RemoveOrganizationDomain(ctx context.Context, input NewOrganizationDomain) ([]*models.OrganizationDomain, error) {
+func (r *mutationResolver) RemoveOrganizationDomain(ctx context.Context, input RemoveOrganizationDomainInput) ([]*models.OrganizationDomain, error) {
 	var org models.Organization
 	err := org.FindByUUID(input.OrganizationID)
 	if err != nil {

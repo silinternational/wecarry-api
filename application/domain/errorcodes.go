@@ -48,8 +48,9 @@ const ErrorAuthProvidersCallback = "ErrorAuthProvidersCallback"
 // actions.AuthCallback
 const ErrorWithAuthUser = "ErrorWithAuthUser"
 
+// token param is required on a logout request
 // actions.AuthDestroy
-const MissingBearerToken = "MissingBearerToken"
+const MissingLogoutToken = "MissingLogoutToken"
 
 // actions.AuthDestroy
 const ErrorFindingAccessToken = "ErrorFindingAccessToken"

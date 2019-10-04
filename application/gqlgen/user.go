@@ -137,7 +137,7 @@ func GetSelectFieldsForUsers(ctx context.Context) []string {
 // UpdateUser takes data from the GraphQL `UpdateUser` mutation and updates the database. If the
 // user ID is provided and the current user is allowed to edit profiles, that user will be updated.
 // Otherwise, the current authenticated user is updated.
-func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdatedUser) (*models.User, error) {
+func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput) (*models.User, error) {
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 	var user models.User
 

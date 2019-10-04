@@ -356,7 +356,7 @@ func (ms *ModelSuite) TestPost_GetThreads() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := test.post.GetThreads([]string{"uuid"})
+			got, err := test.post.GetThreads([]string{"uuid"}, users[0])
 			if err != nil {
 				t.Errorf("GetThreads() error: %v", err)
 			} else {
