@@ -162,7 +162,7 @@ var _ = grift.Namespace("db", func() {
 			{
 				ID:             1,
 				CreatedByID:    1,
-				Type:           "request",
+				Type:           models.PostTypeRequest,
 				OrganizationID: 1,
 				Status:         models.PostStatusOpen,
 				Title:          "Maple Syrup",
@@ -178,7 +178,7 @@ var _ = grift.Namespace("db", func() {
 			{
 				ID:             2,
 				CreatedByID:    2,
-				Type:           "request",
+				Type:           models.PostTypeRequest,
 				OrganizationID: 1,
 				Status:         models.PostStatusOpen,
 				Title:          "Jif Peanut Butter",
@@ -193,7 +193,7 @@ var _ = grift.Namespace("db", func() {
 			{
 				ID:             3,
 				CreatedByID:    3,
-				Type:           "request",
+				Type:           models.PostTypeRequest,
 				OrganizationID: 1,
 				Status:         models.PostStatusOpen,
 				Title:          "Burt's Bee's Lip Balm",
@@ -208,7 +208,7 @@ var _ = grift.Namespace("db", func() {
 			{
 				ID:             4,
 				CreatedByID:    4,
-				Type:           "request",
+				Type:           models.PostTypeRequest,
 				OrganizationID: 1,
 				Status:         models.PostStatusOpen,
 				Title:          "Peanut Butter",
@@ -224,7 +224,7 @@ var _ = grift.Namespace("db", func() {
 			{
 				ID:             5,
 				CreatedByID:    5,
-				Type:           "request",
+				Type:           models.PostTypeRequest,
 				OrganizationID: 2,
 				Status:         models.PostStatusOpen,
 				Title:          "Altoids",
