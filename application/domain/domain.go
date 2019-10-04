@@ -24,10 +24,8 @@ const (
 	EmptyUUID                = "00000000-0000-0000-0000-000000000000"
 	DateFormat               = "2006-01-02"
 	MaxFileSize              = 1 << 20 // 1 Mebibyte
+	UIURLEnv                 = "UI_URL"
 )
-
-// environment variable key for the UI's URL
-const UIURLEnv = "UI_URL"
 
 // NoExtras is exported for use when making calls to RollbarError and rollbarMessage to reduce
 // typing map[string]interface{} when no extras are needed
