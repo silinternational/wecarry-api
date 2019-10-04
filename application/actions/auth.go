@@ -31,6 +31,9 @@ const ClientIDSessionKey = "ClientID"
 // http param for expires utc
 const ExpiresUTCParam = "expires-utc"
 
+// logout http param for what is normally the bearer token
+const LogoutToken = "token"
+
 // http param for organization id
 const OrgIDParam = "org-id"
 const OrgIDSessionKey = "OrgID"
@@ -352,14 +355,14 @@ func logErrorAndRedirect(c buffalo.Context, code, message string, extras ...map[
 // AuthDestroy uses the bearer token to find the user's access token and
 //  calls the appropriate provider's logout function.
 func AuthDestroy(c buffalo.Context) error {
-	bearerToken := domain.GetBearerTokenFromRequest(c.Request())
-	if bearerToken == "" {
-		return logErrorAndRedirect(c, domain.MissingBearerToken,
-			"no Bearer token provided")
+	tokenParam := c.Param(LogoutToken)
+	if tokenParam == "" {
+		return logErrorAndRedirect(c, domain.MissingLogoutToken,
+			LogoutToken+" is required to logout")
 	}
 
 	var uat models.UserAccessToken
-	err := uat.FindByBearerToken(bearerToken)
+	err := uat.FindByBearerToken(tokenParam)
 	if err != nil {
 		return logErrorAndRedirect(c, domain.ErrorFindingAccessToken, err.Error())
 	}
@@ -377,19 +380,19 @@ func AuthDestroy(c buffalo.Context) error {
 		return logErrorAndRedirect(c, domain.ErrorAuthProvidersLogout, authResp.Error.Error())
 	}
 
-	var response AuthResponse
+	redirectURL := envy.Get(UIURLEnv, "")
 
 	if authResp.RedirectURL != "" {
 		var uat models.UserAccessToken
-		err = uat.DeleteByBearerToken(bearerToken)
+		err = uat.DeleteByBearerToken(tokenParam)
 		if err != nil {
 			return logErrorAndRedirect(c, domain.ErrorDeletingAccessToken, err.Error())
 		}
 		c.Session().Clear()
-		response.RedirectURL = authResp.RedirectURL
+		redirectURL = authResp.RedirectURL
 	}
 
-	return c.Render(http.StatusOK, render.JSON(response))
+	return c.Redirect(http.StatusFound, redirectURL)
 }
 
 func SetCurrentUser(next buffalo.Handler) buffalo.Handler {
