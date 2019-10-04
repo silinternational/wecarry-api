@@ -271,12 +271,18 @@ func scopeUserOrgs(cUser User) pop.ScopeFunc {
 	}
 }
 
+// scope query to not include removed posts
+func scopeNotRemoved() pop.ScopeFunc {
+	return func(q *pop.Query) *pop.Query {
+		return q.Where("status != ?", PostStatusRemoved)
+	}
+}
+
 func (p *Post) FindByUserAndUUID(ctx context.Context, user User, uuid string, selectFields ...string) error {
-	return DB.Select(selectFields...).Scope(scopeUserOrgs(user)).
-		Where("uuid = ? AND status != ?", uuid, PostStatusRemoved).First(p)
+	return DB.Select(selectFields...).Scope(scopeUserOrgs(user)).Scope(scopeNotRemoved()).
+		Where("uuid = ?", uuid).First(p)
 }
 
 func (p *Posts) FindByUser(ctx context.Context, user User, selectFields ...string) error {
-	return DB.Select(selectFields...).Scope(scopeUserOrgs(user)).
-		Where("status != ?", PostStatusRemoved).All(p)
+	return DB.Select(selectFields...).Scope(scopeUserOrgs(user)).Scope(scopeNotRemoved()).All(p)
 }
