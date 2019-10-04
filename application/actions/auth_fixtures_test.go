@@ -20,7 +20,7 @@ func Fixtures_GetOrgAndUserOrgs(as *ActionSuite, t *testing.T) UserOrgFixtures {
 	org := &models.Organization{
 		Name:       "TestOrg1",
 		Url:        nulls.String{},
-		AuthType:   "saml",
+		AuthType:   models.AuthTypeSaml,
 		AuthConfig: "{}",
 		Uuid:       domain.GetUuid(),
 	}
@@ -100,7 +100,7 @@ func Fixtures_CreateAuthUser(as *ActionSuite, t *testing.T) UserOrgFixtures {
 	org := &models.Organization{
 		Name:       "TestOrg1",
 		Url:        nulls.String{},
-		AuthType:   "saml",
+		AuthType:   models.AuthTypeSaml,
 		AuthConfig: "{}",
 		Uuid:       domain.GetUuid(),
 	}

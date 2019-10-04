@@ -19,7 +19,7 @@ func Fixtures_GetSender(ms *ModelSuite, t *testing.T) MessageFixtures {
 	org := &Organization{
 		Name:       "TestOrg1",
 		Url:        nulls.String{},
-		AuthType:   "saml",
+		AuthType:   AuthTypeSaml,
 		AuthConfig: "{}",
 		Uuid:       domain.GetUuid(),
 	}

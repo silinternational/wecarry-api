@@ -10,7 +10,7 @@ import (
 	"github.com/gobuffalo/validate/validators"
 )
 
-const UserOrganizationRoleMember = "member"
+const UserOrganizationRoleUser = "user"
 const UserOrganizationRoleAdmin = "admin"
 
 type UserOrganization struct {

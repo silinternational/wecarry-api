@@ -24,7 +24,7 @@ func Fixtures_UserQuery(as *ActionSuite, t *testing.T) UserQueryFixtures {
 	org := &models.Organization{
 		Name:       "TestOrg1",
 		Url:        nulls.String{},
-		AuthType:   "saml",
+		AuthType:   models.AuthTypeSaml,
 		AuthConfig: "{}",
 		Uuid:       domain.GetUuid(),
 	}

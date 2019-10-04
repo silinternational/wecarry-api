@@ -31,7 +31,7 @@ func (gs *GqlgenSuite) TestResolver() {
 			ID:         1,
 			Name:       "ACME",
 			Uuid:       orgUuid1,
-			AuthType:   "saml2",
+			AuthType:   models.AuthTypeSaml,
 			AuthConfig: "[]",
 		},
 	}
@@ -65,7 +65,7 @@ func (gs *GqlgenSuite) TestResolver() {
 			ID:             1,
 			OrganizationID: 1,
 			UserID:         1,
-			Role:           "admin",
+			Role:           RoleAdmin.String(),
 		},
 	}
 	if err := models.CreateUserOrgs(UserOrgsFix); err != nil {

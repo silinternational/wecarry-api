@@ -189,7 +189,7 @@ func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
 		userOrg := &UserOrganization{
 			OrganizationID: orgID,
 			UserID:         u.ID,
-			Role:           UserOrganizationRoleMember,
+			Role:           UserOrganizationRoleUser,
 			AuthID:         authUser.UserID,
 			AuthEmail:      u.Email,
 			LastLogin:      time.Now(),

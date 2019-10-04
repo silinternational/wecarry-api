@@ -73,7 +73,7 @@ func (ms *ModelSuite) TestCreateOrganization() {
 			org: Organization{
 				Name:       "ACME",
 				Uuid:       domain.GetUuid(),
-				AuthType:   "saml2",
+				AuthType:   AuthTypeSaml,
 				AuthConfig: "{}",
 				Url:        nulls.NewString("https://www.example.com"),
 			},
@@ -84,7 +84,7 @@ func (ms *ModelSuite) TestCreateOrganization() {
 			org: Organization{
 				Name:       "Bits 'R' Us",
 				Uuid:       domain.GetUuid(),
-				AuthType:   "saml2",
+				AuthType:   AuthTypeSaml,
 				AuthConfig: "{}",
 			},
 			wantErr: false,
@@ -94,7 +94,7 @@ func (ms *ModelSuite) TestCreateOrganization() {
 			org: Organization{
 				Name:     "Bits 'R' Us",
 				Uuid:     domain.GetUuid(),
-				AuthType: "saml2",
+				AuthType: AuthTypeSaml,
 			},
 			wantErr: true,
 		},
@@ -140,7 +140,7 @@ func (ms *ModelSuite) TestValidateOrganization() {
 			org: Organization{
 				Name:       "Bits 'R' Us",
 				Uuid:       domain.GetUuid(),
-				AuthType:   "saml2",
+				AuthType:   AuthTypeSaml,
 				AuthConfig: "{}",
 			},
 			wantErr: false,
@@ -149,7 +149,7 @@ func (ms *ModelSuite) TestValidateOrganization() {
 			name: "missing name",
 			org: Organization{
 				Uuid:       domain.GetUuid(),
-				AuthType:   "saml2",
+				AuthType:   AuthTypeSaml,
 				AuthConfig: "{}",
 			},
 			wantErr:  true,
@@ -159,7 +159,7 @@ func (ms *ModelSuite) TestValidateOrganization() {
 			name: "missing uuid",
 			org: Organization{
 				Name:       "Babelfish Warehouse",
-				AuthType:   "saml2",
+				AuthType:   AuthTypeSaml,
 				AuthConfig: "{}",
 			},
 			wantErr:  true,
@@ -250,7 +250,7 @@ func createOrgFixtures(ms *ModelSuite, t *testing.T) (Organization, Organization
 	org := Organization{
 		Name:       "ACME",
 		Uuid:       domain.GetUuid(),
-		AuthType:   "saml2",
+		AuthType:   AuthTypeSaml,
 		AuthConfig: "{}",
 	}
 	if err := ms.DB.Create(&org); err != nil {
@@ -394,7 +394,7 @@ func (ms *ModelSuite) TestOrganization_Save() {
 	newOrg := Organization{
 		Name:       "new org",
 		Url:        nulls.String{},
-		AuthType:   "saml2",
+		AuthType:   AuthTypeSaml,
 		AuthConfig: "{}",
 		Uuid:       domain.GetUuid(),
 	}
@@ -514,7 +514,7 @@ func (ms *ModelSuite) TestOrganization_ListAllForUser() {
 			ID:             1,
 			OrganizationID: 1,
 			UserID:         1,
-			Role:           UserOrganizationRoleMember,
+			Role:           UserOrganizationRoleUser,
 			AuthID:         "user_one",
 			AuthEmail:      "user1@test.com",
 			LastLogin:      time.Time{},
