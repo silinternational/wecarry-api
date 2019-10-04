@@ -66,7 +66,7 @@ func App() *buffalo.App {
 		app.POST("/upload/", UploadHandler)
 
 		auth := app.Group("/auth")
-		auth.Middleware.Skip(SetCurrentUser, AuthRequest, AuthCallback)
+		auth.Middleware.Skip(SetCurrentUser, AuthRequest, AuthCallback, AuthDestroy)
 
 		auth.POST("/login", AuthRequest)
 
