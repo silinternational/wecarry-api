@@ -10,7 +10,6 @@ import (
 
 	"github.com/gofrs/uuid"
 
-	"github.com/gobuffalo/buffalo/genny/build/_fixtures/coke/models"
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
@@ -273,11 +272,11 @@ func scopeUserOrgs(cUser User) pop.ScopeFunc {
 }
 
 func (p *Post) FindByUserAndUUID(ctx context.Context, user User, uuid string, selectFields ...string) error {
-	return models.DB.Select(selectFields...).Scope(scopeUserOrgs(user)).
+	return DB.Select(selectFields...).Scope(scopeUserOrgs(user)).
 		Where("uuid = ? AND status != ?", uuid, PostStatusRemoved).First(p)
 }
 
 func (p *Posts) FindByUser(ctx context.Context, user User, selectFields ...string) error {
-	return models.DB.Select(selectFields...).Scope(scopeUserOrgs(user)).
+	return DB.Select(selectFields...).Scope(scopeUserOrgs(user)).
 		Where("status != ?", PostStatusRemoved).All(p)
 }
