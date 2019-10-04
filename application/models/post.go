@@ -278,11 +278,14 @@ func scopeNotRemoved() pop.ScopeFunc {
 	}
 }
 
+// FindByUserAndUUID finds the post identified by the given UUID if it belongs to the same organization as the
+// given user and if the post has not been marked as removed.
 func (p *Post) FindByUserAndUUID(ctx context.Context, user User, uuid string, selectFields ...string) error {
 	return DB.Select(selectFields...).Scope(scopeUserOrgs(user)).Scope(scopeNotRemoved()).
 		Where("uuid = ?", uuid).First(p)
 }
 
+// FindByUser finds all posts belonging to the same organization as the given user and not marked as removed.
 func (p *Posts) FindByUser(ctx context.Context, user User, selectFields ...string) error {
 	return DB.Select(selectFields...).Scope(scopeUserOrgs(user)).Scope(scopeNotRemoved()).All(p)
 }
