@@ -81,7 +81,7 @@ func (gs *GqlgenSuite) TestResolver() {
 			CreatedByID:    1,
 			Type:           "request",
 			OrganizationID: 1,
-			Status:         "unfulfilled",
+			Status:         models.PostStatusOpen,
 			Title:          "Maple Syrup",
 			Destination:    nulls.NewString("Madrid, Spain"),
 			Size:           "Medium",
