@@ -28,6 +28,7 @@ type User struct {
 	Email     string
 	UserID    string
 	Nickname  string
+	PhotoURL  string
 }
 
 // Response holds fields for login and logout responses. not all fields will have values

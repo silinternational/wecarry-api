@@ -137,6 +137,7 @@ func (p *Provider) AuthCallback(c buffalo.Context) auth.Response {
 		Email:     gu.Email,
 		UserID:    gu.UserID,
 		Nickname:  gu.NickName,
+		PhotoURL:  gu.AvatarURL,
 	}
 
 	resp.AuthUser = &authUser
