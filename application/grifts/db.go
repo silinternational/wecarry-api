@@ -23,14 +23,14 @@ var _ = grift.Namespace("db", func() {
 			//	ID:         1,
 			//	Uuid:       organizationUuid1,
 			//	Name:       "AppsDev",
-			//	AuthType:   "SAML",
+			//	AuthType:   models.AuthTypeSaml,
 			//	AuthConfig: "{}",
 			//},
 			{
 				ID:         2,
 				Uuid:       organizationUuid2,
 				Name:       "Other",
-				AuthType:   "SAML",
+				AuthType:   models.AuthTypeSaml,
 				AuthConfig: "{}",
 			},
 		}

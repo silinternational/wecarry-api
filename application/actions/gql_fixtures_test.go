@@ -71,14 +71,14 @@ func Fixtures_CreateOrganization(as *ActionSuite, t *testing.T) OrgFixtures {
 		{
 			Name:       "Org1",
 			Url:        nulls.String{},
-			AuthType:   "saml2",
+			AuthType:   models.AuthTypeSaml,
 			AuthConfig: "{}",
 			Uuid:       domain.GetUuid(),
 		},
 		{
 			Name:       "Org2",
 			Url:        nulls.String{},
-			AuthType:   "saml2",
+			AuthType:   models.AuthTypeSaml,
 			AuthConfig: "{}",
 			Uuid:       domain.GetUuid(),
 		},

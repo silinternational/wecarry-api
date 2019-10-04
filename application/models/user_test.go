@@ -25,7 +25,7 @@ func (ms *ModelSuite) TestUser_FindOrCreateFromAuthUser() {
 	org := &Organization{
 		Name:       "TestOrg1-" + unique,
 		Url:        nulls.String{},
-		AuthType:   "saml",
+		AuthType:   AuthTypeSaml,
 		AuthConfig: "{}",
 		Uuid:       domain.GetUuid(),
 	}
@@ -420,13 +420,13 @@ func CreateUserFixtures(ms *ModelSuite, t *testing.T) ([]Organization, Users, Us
 		{
 			Name:       fmt.Sprintf("ACME-%s", unique),
 			Uuid:       domain.GetUuid(),
-			AuthType:   "saml2",
+			AuthType:   AuthTypeSaml,
 			AuthConfig: "{}",
 		},
 		{
 			Name:       fmt.Sprintf("Starfleet Academy-%s", unique),
 			Uuid:       domain.GetUuid(),
-			AuthType:   "saml2",
+			AuthType:   AuthTypeSaml,
 			AuthConfig: "{}",
 		},
 	}
@@ -670,7 +670,7 @@ func (ms *ModelSuite) TestCanEditOrganization() {
 			ID:         1,
 			Name:       "Org1",
 			Url:        nulls.String{},
-			AuthType:   "saml2",
+			AuthType:   models.AuthTypeSaml,
 			AuthConfig: "{}",
 			Uuid:       domain.GetUuid(),
 		},
@@ -678,7 +678,7 @@ func (ms *ModelSuite) TestCanEditOrganization() {
 			ID:         2,
 			Name:       "Org2",
 			Url:        nulls.String{},
-			AuthType:   "saml2",
+			AuthType:   models.AuthTypeSaml,
 			AuthConfig: "{}",
 			Uuid:       domain.GetUuid(),
 		},

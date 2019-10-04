@@ -35,7 +35,7 @@ func Fixtures_PostQuery(t *testing.T) PostQueryFixtures {
 	org := &models.Organization{
 		Name:       "TestOrg1",
 		Url:        nulls.String{},
-		AuthType:   "saml",
+		AuthType:   models.AuthTypeSaml,
 		AuthConfig: "{}",
 		Uuid:       domain.GetUuid(),
 	}
@@ -238,7 +238,7 @@ func Fixtures_UpdatePost(t *testing.T) UpdatePostFixtures {
 	org := &models.Organization{
 		Name:       "TestOrg1",
 		Url:        nulls.String{},
-		AuthType:   "saml",
+		AuthType:   models.AuthTypeSaml,
 		AuthConfig: "{}",
 		Uuid:       domain.GetUuid(),
 	}
