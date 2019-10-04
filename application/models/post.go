@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -15,13 +16,20 @@ import (
 	"github.com/gobuffalo/validate/validators"
 )
 
-const PostTypeRequest = "REQUEST"
-const PostTypeOffer = "OFFER"
+const (
+	PostTypeRequest = "REQUEST"
+	PostTypeOffer   = "OFFER"
 
-const PostStatusUnfulfilled = "unfulfilled"
+	PostSizeMedium = "medium"
+	PostSizeSmall  = "small"
 
-const PostSizeMedium = "medium"
-const PostSizeSmall = "small"
+	PostStatusOpen      string = "OPEN"
+	PostStatusCommitted string = "COMMITTED"
+	PostStatusAccepted  string = "ACCEPTED"
+	PostStatusReceived  string = "RECEIVED"
+	PostStatusCompleted string = "COMPLETED"
+	PostStatusRemoved   string = "REMOVED"
+)
 
 type Post struct {
 	ID             int           `json:"id" db:"id"`
@@ -246,4 +254,38 @@ func (p *Post) GetPhoto() (*File, error) {
 	}
 
 	return &(p.PhotoFile), nil
+}
+
+// scope query to only include organizations for current user
+func scopeUserOrgs(cUser User) pop.ScopeFunc {
+	return func(q *pop.Query) *pop.Query {
+		orgs := cUser.GetOrgIDs()
+
+		// convert []int to []interface{}
+		s := make([]interface{}, len(orgs))
+		for i, v := range orgs {
+			s[i] = v
+		}
+
+		return q.Where("organization_id IN (?)", s...)
+	}
+}
+
+// scope query to not include removed posts
+func scopeNotRemoved() pop.ScopeFunc {
+	return func(q *pop.Query) *pop.Query {
+		return q.Where("status != ?", PostStatusRemoved)
+	}
+}
+
+// FindByUserAndUUID finds the post identified by the given UUID if it belongs to the same organization as the
+// given user and if the post has not been marked as removed.
+func (p *Post) FindByUserAndUUID(ctx context.Context, user User, uuid string, selectFields ...string) error {
+	return DB.Select(selectFields...).Scope(scopeUserOrgs(user)).Scope(scopeNotRemoved()).
+		Where("uuid = ?", uuid).First(p)
+}
+
+// FindByUser finds all posts belonging to the same organization as the given user and not marked as removed.
+func (p *Posts) FindByUser(ctx context.Context, user User, selectFields ...string) error {
+	return DB.Select(selectFields...).Scope(scopeUserOrgs(user)).Scope(scopeNotRemoved()).All(p)
 }
