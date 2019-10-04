@@ -7,8 +7,8 @@ import (
 
 var _ = grift.Namespace("minio", func() {
 
-	_ = grift.Desc("minio", "Create a bucket in minIO")
-	_ = grift.Add("createBucket", func(c *grift.Context) error {
+	_ = grift.Desc("minio", "seed minIO")
+	_ = grift.Add("seed", func(c *grift.Context) error {
 		return aws.CreateS3Bucket()
 	})
 })
