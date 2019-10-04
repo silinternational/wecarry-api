@@ -717,7 +717,7 @@ func (ms *ModelSuite) TestCanEditOrganization() {
 			ID:             2,
 			OrganizationID: 2,
 			UserID:         1,
-			Role:           UserOrganizationRoleMember,
+			Role:           UserOrganizationRoleUser,
 			AuthID:         "123abc",
 			AuthEmail:      "test@com.com",
 		},

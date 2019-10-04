@@ -514,7 +514,7 @@ func (ms *ModelSuite) TestOrganization_ListAllForUser() {
 			ID:             1,
 			OrganizationID: 1,
 			UserID:         1,
-			Role:           UserOrganizationRoleMember,
+			Role:           UserOrganizationRoleUser,
 			AuthID:         "user_one",
 			AuthEmail:      "user1@test.com",
 			LastLogin:      time.Time{},
