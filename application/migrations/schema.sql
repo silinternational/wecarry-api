@@ -435,7 +435,7 @@ CREATE TABLE public.users (
     admin_role character varying(255),
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL,
-    uuid uuid,
+    uuid uuid NOT NULL,
     photo_file_id integer,
     photo_url character varying(255)
 );
