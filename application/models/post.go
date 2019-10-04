@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -9,19 +10,27 @@ import (
 
 	"github.com/gofrs/uuid"
 
+	"github.com/gobuffalo/buffalo/genny/build/_fixtures/coke/models"
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
 	"github.com/gobuffalo/validate/validators"
 )
 
-const PostTypeRequest = "REQUEST"
-const PostTypeOffer = "OFFER"
+const (
+	PostTypeRequest = "REQUEST"
+	PostTypeOffer   = "OFFER"
 
-const PostStatusUnfulfilled = "unfulfilled"
+	PostSizeMedium = "medium"
+	PostSizeSmall  = "small"
 
-const PostSizeMedium = "medium"
-const PostSizeSmall = "small"
+	PostStatusOpen      string = "OPEN"
+	PostStatusCommitted string = "COMMITTED"
+	PostStatusAccepted  string = "ACCEPTED"
+	PostStatusReceived  string = "RECEIVED"
+	PostStatusCompleted string = "COMPLETED"
+	PostStatusRemoved   string = "REMOVED"
+)
 
 type Post struct {
 	ID             int           `json:"id" db:"id"`
@@ -246,4 +255,29 @@ func (p *Post) GetPhoto() (*File, error) {
 	}
 
 	return &(p.PhotoFile), nil
+}
+
+// scope query to only include organizations for current user
+func scopeUserOrgs(cUser User) pop.ScopeFunc {
+	return func(q *pop.Query) *pop.Query {
+		orgs := cUser.GetOrgIDs()
+
+		// convert []int to []interface{}
+		s := make([]interface{}, len(orgs))
+		for i, v := range orgs {
+			s[i] = v
+		}
+
+		return q.Where("organization_id IN (?)", s...)
+	}
+}
+
+func (p *Post) FindByUserAndUUID(ctx context.Context, user User, uuid string, selectFields ...string) error {
+	return models.DB.Select(selectFields...).Scope(scopeUserOrgs(user)).
+		Where("uuid = ? AND status != ?", uuid, PostStatusRemoved).First(p)
+}
+
+func (p *Posts) FindByUser(ctx context.Context, user User, selectFields ...string) error {
+	return models.DB.Select(selectFields...).Scope(scopeUserOrgs(user)).
+		Where("status != ?", PostStatusRemoved).All(p)
 }
