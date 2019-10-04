@@ -79,26 +79,26 @@ func (u *UserAccessToken) FindByBearerToken(bearerToken string) error {
 }
 
 // GetOrganization returns the Organization of the UserOrganization of the UserAccessToken
-//  I'm not using DB.Eager() or DB.Load() because they seemed to keep hanging.
-//  I wonder if it was because of the has_many  <--->  belongs_to relations
 func (u *UserAccessToken) GetOrganization() (Organization, error) {
-	if u.UserOrganizationID <= 0 {
-		return Organization{}, fmt.Errorf("user access token id %v has no user organization", u.ID)
+	if u.UserOrganization.ID <= 0 {
+		if err := DB.Load(u, "UserOrganization"); err != nil {
+			return Organization{}, fmt.Errorf("error loading user organization for user access token id %v ... %v",
+				u.ID, err)
+		}
 	}
 
-	var uO UserOrganization
+	uOrg := u.UserOrganization
 
-	if err := DB.Find(&uO, u.UserOrganizationID); err != nil {
-		return Organization{}, fmt.Errorf("error getting user organization with id %v ... %v", u.UserOrganizationID, err)
-	}
-
-	if uO.OrganizationID <= 0 {
+	if uOrg.OrganizationID <= 0 {
 		return Organization{}, fmt.Errorf("user access token id %v has no organization", u.ID)
 	}
 
-	var o Organization
+	if uOrg.Organization.ID <= 0 {
+		if err := DB.Load(&uOrg, "Organization"); err != nil {
+			return Organization{}, fmt.Errorf("error loading user organization for user access token id %v ... %v",
+				u.ID, err)
+		}
+	}
 
-	err := DB.Find(&o, uO.OrganizationID)
-
-	return o, err
+	return uOrg.Organization, nil
 }
