@@ -26,6 +26,9 @@ const (
 	MaxFileSize              = 1 << 20 // 1 Mebibyte
 )
 
+// environment variable key for the UI's URL
+const UIURLEnv = "UI_URL"
+
 // NoExtras is exported for use when making calls to RollbarError and rollbarMessage to reduce
 // typing map[string]interface{} when no extras are needed
 var NoExtras map[string]interface{}
