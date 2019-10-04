@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"github.com/gobuffalo/envy"
+	"github.com/silinternational/wecarry-api/domain"
 	"strings"
 
 	"github.com/gobuffalo/buffalo"
@@ -122,7 +124,13 @@ func (p *Provider) AuthCallback(c buffalo.Context) auth.Response {
 }
 
 func (p *Provider) Logout(c buffalo.Context) auth.Response {
-	return auth.Response{RedirectURL: p.Config.SingleLogoutURL}
+	resp := auth.Response{}
+	err := auth.Logout(c.Response(), c.Request())
+	if err != nil {
+		resp.Error = err
+	}
+	rURL := fmt.Sprintf("%s?ReturnTo=%s", p.Config.SingleLogoutURL, envy.Get(domain.UIURLEnv, ""))
+	return auth.Response{RedirectURL: rURL}
 }
 
 func getUserFromAssertion(assertion *saml2.AssertionInfo) *auth.User {

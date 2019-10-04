@@ -45,9 +45,6 @@ const ReturnToSessionKey = "ReturnTo"
 // http param for token type
 const TokenTypeParam = "token-type"
 
-// environment variable key for the UI's URL
-const UIURLEnv = "UI_URL"
-
 type AuthOrgOption struct {
 	ID      string `json:"ID"`
 	Name    string `json:"Name"`
@@ -348,7 +345,7 @@ func logErrorAndRedirect(c buffalo.Context, code, message string, extras ...map[
 
 	domain.Error(c, message, allExtras)
 
-	uiUrl := envy.Get(UIURLEnv, "") + "/#/login?error=true"
+	uiUrl := envy.Get(domain.UIURLEnv, "") + "/#/login?error=true"
 	return c.Redirect(http.StatusFound, uiUrl)
 }
 
@@ -367,10 +364,15 @@ func AuthDestroy(c buffalo.Context) error {
 		return logErrorAndRedirect(c, domain.ErrorFindingAccessToken, err.Error())
 	}
 
+	org, err := uat.GetOrganization()
+	if err != nil {
+		return logErrorAndRedirect(c, domain.ErrorFindingOrgForAccessToken, err.Error())
+	}
+
 	// set person on rollbar session
 	domain.RollbarSetPerson(c, uat.User.Uuid.String(), uat.User.Nickname, uat.User.Email)
 
-	authPro, err := uat.UserOrganization.Organization.GetAuthProvider()
+	authPro, err := org.GetAuthProvider()
 	if err != nil {
 		return logErrorAndRedirect(c, domain.ErrorLoadingAuthProvider, err.Error())
 	}
@@ -380,7 +382,7 @@ func AuthDestroy(c buffalo.Context) error {
 		return logErrorAndRedirect(c, domain.ErrorAuthProvidersLogout, authResp.Error.Error())
 	}
 
-	redirectURL := envy.Get(UIURLEnv, "")
+	redirectURL := envy.Get(domain.UIURLEnv, "")
 
 	if authResp.RedirectURL != "" {
 		var uat models.UserAccessToken
@@ -425,7 +427,7 @@ func SetCurrentUser(next buffalo.Handler) buffalo.Handler {
 // getLoginSuccessRedirectURL generates the URL for redirection after a successful login
 func getLoginSuccessRedirectURL(authUser AuthUser, returnTo string) string {
 
-	uiUrl := envy.Get(UIURLEnv, "") + "/#"
+	uiUrl := envy.Get(domain.UIURLEnv, "") + "/#"
 
 	tokenExpiry := time.Unix(authUser.AccessTokenExpiresAt, 0).Format(time.RFC3339)
 	params := fmt.Sprintf("?%s=Bearer&%s=%s&%s=%s",

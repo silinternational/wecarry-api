@@ -144,3 +144,40 @@ func CreateUserAccessTokenFixtures(t *testing.T, user User, userOrgs UserOrganiz
 
 	return rawTokens
 }
+
+func (ms *ModelSuite) TestUserAccessToken_GetOrganization() {
+	t := ms.T()
+	ResetTables(t, ms.DB)
+
+	_, users, userOrgs := CreateUserFixtures(ms, t)
+	tokens := CreateUserAccessTokenFixtures(t, users[0], userOrgs)
+
+	tests := []struct {
+		name    string
+		token   string
+		want    User
+		wantErr bool
+	}{
+		{name: "valid0", token: tokens[0], want: users[0]},
+		{name: "valid1", token: tokens[1], want: users[0]},
+		{name: "invalid", token: "000000", wantErr: true},
+		{name: "empty", token: "", wantErr: true},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var u UserAccessToken
+			err := u.FindByBearerToken(test.token)
+			if test.wantErr {
+				if err == nil {
+					t.Errorf("Expected an error, but did not get one")
+				}
+			} else {
+				if err != nil {
+					t.Errorf("FindByAccessToken() returned an error: %v", err)
+				} else if u.User.Uuid != test.want.Uuid {
+					t.Errorf("found %v, expected %v", u, test.want)
+				}
+			}
+		})
+	}
+}
