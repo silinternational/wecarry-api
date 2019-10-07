@@ -3,9 +3,12 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"math/rand"
 	"strconv"
 	"time"
+
+	"github.com/silinternational/wecarry-api/domain"
 
 	"github.com/gobuffalo/envy"
 
@@ -108,11 +111,11 @@ func (u *UserAccessToken) GetOrganization() (Organization, error) {
 }
 
 func createAccessTokenExpiry() time.Time {
-	lifetime := envy.Get("ACCESS_TOKEN_LIFETIME", "3600")
+	envLifetime := envy.Get("ACCESS_TOKEN_LIFETIME", strconv.Itoa(domain.AccessTokenLifetimeSeconds))
 
-	lifetimeSeconds, err := strconv.Atoi(lifetime)
+	lifetimeSeconds, err := strconv.Atoi(envLifetime)
 	if err != nil {
-		lifetimeSeconds = 28800
+		lifetimeSeconds = domain.AccessTokenLifetimeSeconds
 	}
 
 	dtNow := time.Now()
@@ -135,10 +138,35 @@ func createAccessTokenPart() string {
 	return accessToken
 }
 
-func (uat *UserAccessToken) Renew() error {
-	uat.ExpiresAt = createAccessTokenExpiry()
-	if err := DB.Update(uat); err != nil {
+// Renew extends the token expiration to the configured token lifetime
+func (u *UserAccessToken) Renew() error {
+	u.ExpiresAt = createAccessTokenExpiry()
+	if err := DB.Update(u); err != nil {
 		return fmt.Errorf("error renewing access token, %s", err)
 	}
 	return nil
+}
+
+// GetUser returns the User associated with this access token
+func (u *UserAccessToken) GetUser() (User, error) {
+	if err := DB.Load(u, "User"); err != nil {
+		return User{}, err
+	}
+	if u.User.ID <= 0 {
+		return User{}, fmt.Errorf("no user associated with access token")
+	}
+	return u.User, nil
+}
+
+// IsExpired checks the token expiration and returns `true` if expired. Also deletes the token from the database
+// if it is expired.
+func (u *UserAccessToken) IsExpired() bool {
+	if u.ExpiresAt.Before(time.Now()) {
+		err := DB.Destroy(u)
+		if err != nil {
+			log.Printf("Unable to delete expired userAccessToken, id: %v", u.ID)
+		}
+		return true
+	}
+	return false
 }

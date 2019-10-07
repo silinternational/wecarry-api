@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/pkg/errors"
@@ -225,33 +224,6 @@ func (u *User) CanEditOrganization(orgId int) bool {
 	}
 
 	return false
-}
-
-func (u *User) FindByAccessToken(accessToken string) error {
-	if accessToken == "" {
-		return fmt.Errorf("error: access token must not be blank")
-	}
-
-	var userAccessToken UserAccessToken
-	err := userAccessToken.FindByBearerToken(accessToken)
-	if err != nil {
-		return fmt.Errorf("error finding user by access token: %s", err.Error())
-	}
-
-	if userAccessToken.ID == 0 {
-		return fmt.Errorf("error finding user by access token")
-	}
-
-	if userAccessToken.ExpiresAt.Before(time.Now()) {
-		err := DB.Destroy(&userAccessToken)
-		if err != nil {
-			log.Printf("Unable to delete expired userAccessToken, id: %v", userAccessToken.ID)
-		}
-		return fmt.Errorf("access token has expired")
-	}
-
-	*u = userAccessToken.User
-	return userAccessToken.Renew()
 }
 
 func (u *User) FindByUUID(uuid string) error {

@@ -16,15 +16,16 @@ import (
 )
 
 const (
-	ErrorLevelWarn           = "warn"
-	ErrorLevelError          = "error"
-	ErrorLevelCritical       = "critical"
-	AdminRoleSuperDuperAdmin = "SuperDuperAdmin"
-	AdminRoleSalesAdmin      = "SalesAdmin"
-	EmptyUUID                = "00000000-0000-0000-0000-000000000000"
-	DateFormat               = "2006-01-02"
-	MaxFileSize              = 1 << 20 // 1 Mebibyte
-	UIURLEnv                 = "UI_URL"
+	ErrorLevelWarn             = "warn"
+	ErrorLevelError            = "error"
+	ErrorLevelCritical         = "critical"
+	AdminRoleSuperDuperAdmin   = "SuperDuperAdmin"
+	AdminRoleSalesAdmin        = "SalesAdmin"
+	EmptyUUID                  = "00000000-0000-0000-0000-000000000000"
+	DateFormat                 = "2006-01-02"
+	MaxFileSize                = 1 << 20 // 1 Mebibyte
+	UIURLEnv                   = "UI_URL"
+	AccessTokenLifetimeSeconds = 3600
 )
 
 // NoExtras is exported for use when making calls to RollbarError and rollbarMessage to reduce
