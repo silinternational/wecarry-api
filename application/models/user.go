@@ -251,7 +251,7 @@ func (u *User) FindByAccessToken(accessToken string) error {
 	}
 
 	*u = userAccessToken.User
-	return nil
+	return userAccessToken.Renew()
 }
 
 func (u *User) FindByUUID(uuid string) error {

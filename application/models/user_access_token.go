@@ -134,3 +134,11 @@ func createAccessTokenPart() string {
 
 	return accessToken
 }
+
+func (uat *UserAccessToken) Renew() error {
+	uat.ExpiresAt = createAccessTokenExpiry()
+	if err := DB.Update(uat); err != nil {
+		return fmt.Errorf("error renewing access token, %s", err)
+	}
+	return nil
+}
