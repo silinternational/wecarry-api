@@ -3,7 +3,11 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
+	"strconv"
 	"time"
+
+	"github.com/gobuffalo/envy"
 
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
@@ -101,4 +105,32 @@ func (u *UserAccessToken) GetOrganization() (Organization, error) {
 	}
 
 	return uOrg.Organization, nil
+}
+
+func createAccessTokenExpiry() time.Time {
+	lifetime := envy.Get("ACCESS_TOKEN_LIFETIME", "3600")
+
+	lifetimeSeconds, err := strconv.Atoi(lifetime)
+	if err != nil {
+		lifetimeSeconds = 28800
+	}
+
+	dtNow := time.Now()
+	futureTime := dtNow.Add(time.Second * time.Duration(lifetimeSeconds))
+
+	return futureTime
+}
+
+func createAccessTokenPart() string {
+	var alphanumerics = []rune("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+	tokenLength := 32
+	b := make([]rune, tokenLength)
+	for i := range b {
+		b[i] = alphanumerics[rand.Intn(len(alphanumerics))]
+	}
+
+	accessToken := string(b)
+
+	return accessToken
 }

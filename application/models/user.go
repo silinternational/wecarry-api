@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"math/rand"
-	"strconv"
 	"time"
 
 	"github.com/pkg/errors"
@@ -14,7 +12,6 @@ import (
 
 	"github.com/silinternational/wecarry-api/auth"
 
-	"github.com/gobuffalo/envy"
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
@@ -268,34 +265,6 @@ func (u *User) FindByUUID(uuid string) error {
 	}
 
 	return nil
-}
-
-func createAccessTokenExpiry() time.Time {
-	lifetime := envy.Get("ACCESS_TOKEN_LIFETIME", "28800")
-
-	lifetimeSeconds, err := strconv.Atoi(lifetime)
-	if err != nil {
-		lifetimeSeconds = 28800
-	}
-
-	dtNow := time.Now()
-	futureTime := dtNow.Add(time.Second * time.Duration(lifetimeSeconds))
-
-	return futureTime
-}
-
-func createAccessTokenPart() string {
-	var alphanumerics = []rune("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-
-	tokenLength := 32
-	b := make([]rune, tokenLength)
-	for i := range b {
-		b[i] = alphanumerics[rand.Intn(len(alphanumerics))]
-	}
-
-	accessToken := string(b)
-
-	return accessToken
 }
 
 // HashClientIdAccessToken just returns a sha256.Sum256 of the input value
