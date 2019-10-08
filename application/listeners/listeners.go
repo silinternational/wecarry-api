@@ -8,7 +8,7 @@ import (
 )
 
 // For new listener functions, register them at the end of the
-// file in the RegisterListeners function
+// file in the apiListeners slice
 
 const (
 	UserAccessTokensCleanupDelayMinutes = 480
@@ -24,7 +24,7 @@ func userCreated(e events.Event) {
 	domain.Logger.Printf("%s User Created ... %s", domain.GetCurrentTime(), e.Message)
 }
 
-func UserAccessTokensCleanup(e events.Event) {
+func userAccessTokensCleanup(e events.Event) {
 	if e.Kind != domain.EventApiAuthUserLoggedIn {
 		return
 	}
@@ -44,21 +44,28 @@ func UserAccessTokensCleanup(e events.Event) {
 	domain.Logger.Printf("Deleted %v expired user access tokens during cleanup", deleted)
 }
 
+type apiListener struct {
+	name     string
+	listener func(events.Event)
+}
+
+var apiListeners = []apiListener{
+	{
+		name:     "user-created",
+		listener: userCreated,
+	},
+	{
+		name:     "trigger-user-access-tokens-cleanup",
+		listener: userAccessTokensCleanup,
+	},
+}
+
 // RegisterListeners registers all the listeners to be used by the app
 func RegisterListeners() {
-	var name string
-	var err error
-
-	name = "user-created"
-	_, err = events.NamedListen(name, userCreated)
-	if err != nil {
-		domain.ErrLogger.Print("Failed registering listener: " + name)
+	for _, a := range apiListeners {
+		_, err := events.NamedListen(a.name, a.listener)
+		if err != nil {
+			domain.ErrLogger.Print("Failed registering listener: " + a.name)
+		}
 	}
-
-	name = "trigger-user-access-tokens-cleanup"
-	_, err = events.NamedListen(name, UserAccessTokensCleanup)
-	if err != nil {
-		domain.ErrLogger.Print("Failed registering listener: " + name)
-	}
-
 }
