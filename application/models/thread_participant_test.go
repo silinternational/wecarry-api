@@ -147,18 +147,20 @@ func (ms *ModelSuite) TestThreadParticipant_SetLastViewedAt() {
 
 			if test.wantErr {
 				ms.Error(err)
-			} else {
-				if err != nil {
-					t.Errorf("SetLastViewedAt() returned an error: %v", err)
-				} else {
-					want := test.lastViewedAt.Add(-1 * time.Minute)
-					ms.True(tp.LastViewedAt.After(want),
-						fmt.Sprintf("time not correct, got %v, wanted afer %v", tp.LastViewedAt, want))
-					want = test.lastViewedAt.Add(time.Minute)
-					ms.True(tp.LastViewedAt.Before(want),
-						fmt.Sprintf("time not correct, got %v, wanted before %v", tp.LastViewedAt, want))
-				}
+				return
 			}
+
+			if err != nil {
+				t.Errorf("SetLastViewedAt() returned an error: %v", err)
+				return
+			}
+
+			want := test.lastViewedAt.Add(-1 * time.Minute)
+			ms.True(tp.LastViewedAt.After(want),
+				fmt.Sprintf("time not correct, got %v, wanted afer %v", tp.LastViewedAt, want))
+			want = test.lastViewedAt.Add(time.Minute)
+			ms.True(tp.LastViewedAt.Before(want),
+				fmt.Sprintf("time not correct, got %v, wanted before %v", tp.LastViewedAt, want))
 		})
 	}
 }
