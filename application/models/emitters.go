@@ -1,4 +1,4 @@
-package eventers
+package models
 
 import (
 	"github.com/gobuffalo/events"
@@ -6,7 +6,8 @@ import (
 )
 
 const (
-	ApiUserCreated = "api:user:created"
+	ApiUserCreated      = "api:user:created"
+	ApiAuthUserLoggedIn = "api:auth:user:loggedin"
 )
 
 /////////////////////////////////////////////////////////////////////////////////////////
