@@ -384,7 +384,7 @@ func (ms *ModelSuite) TestUserAccessToken_GetUser() {
 	}
 }
 
-// CreateFixtures_IsExpired creates test fixtures for the IsExpired test function
+// CreateFixtures_IsExpired creates test fixtures for the DeleteIfExpired test function
 func CreateFixtures_IsExpired(ms *ModelSuite, t *testing.T) AccessTokenFixtures {
 	ResetTables(t, ms.DB)
 
@@ -431,7 +431,7 @@ func CreateFixtures_IsExpired(ms *ModelSuite, t *testing.T) AccessTokenFixtures 
 	}
 }
 
-func (ms *ModelSuite) TestUserAccessToken_IsExpired() {
+func (ms *ModelSuite) TestUserAccessToken_DeleteIfExpired() {
 	t := ms.T()
 	ResetTables(t, ms.DB)
 
@@ -449,7 +449,11 @@ func (ms *ModelSuite) TestUserAccessToken_IsExpired() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			u := test.token
-			got := u.IsExpired()
+			got, err := u.DeleteIfExpired()
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+				return
+			}
 			ms.Equal(test.want, got)
 		})
 	}
@@ -520,7 +524,7 @@ func (ms *ModelSuite) TestUserAccessToken_Renew() {
 		t.Run(test.name, func(t *testing.T) {
 			u := test.token
 			_ = u.Renew()
-			ms.False(u.IsExpired())
+			ms.False(u.DeleteIfExpired())
 		})
 	}
 }
