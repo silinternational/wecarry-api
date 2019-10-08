@@ -8,7 +8,6 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/rs/cors"
 	"github.com/silinternational/wecarry-api/domain"
-	"github.com/silinternational/wecarry-api/eventers"
 	"github.com/silinternational/wecarry-api/models"
 )
 
@@ -77,7 +76,7 @@ func App() *buffalo.App {
 		auth.GET("/logout", AuthDestroy)
 	}
 
-	eventers.RegisterListeners()
+	models.RegisterListeners()
 
 	return app
 }

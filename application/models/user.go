@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
-	"github.com/silinternational/wecarry-api/eventers"
 	"strings"
 	"time"
 
@@ -204,7 +203,7 @@ func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
 	}
 
 	if newUser {
-		eventers.UserCreated("Nickname: " + u.Nickname + "  Uuid: " + u.Uuid.String())
+		UserCreated("Nickname: " + u.Nickname + "  Uuid: " + u.Uuid.String())
 	}
 
 	// reload user
