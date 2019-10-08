@@ -23,6 +23,7 @@ const (
 	AdminRoleSalesAdmin      = "SalesAdmin"
 	EmptyUUID                = "00000000-0000-0000-0000-000000000000"
 	DateFormat               = "2006-01-02"
+	DateTimeFormat           = "2006-01-02 15:04:05"
 	MaxFileSize              = 1 << 20 // 1 Mebibyte
 	UIURLEnv                 = "UI_URL"
 )
@@ -119,6 +120,12 @@ func ConvertStrPtrToString(inPtr *string) string {
 	}
 
 	return *inPtr
+}
+
+// GetCurrentTime returns a string of the current date and time
+// based on the default DateTimeFormat
+func GetCurrentTime() string {
+	return time.Now().Format(DateTimeFormat)
 }
 
 // GetUuid creates a new, unique version 4 (random) UUID and returns it
