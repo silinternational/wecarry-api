@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"github.com/silinternational/wecarry-api/eventers"
 	"log"
 	"math/rand"
 	"strconv"
@@ -204,6 +205,10 @@ func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
 		if err != nil {
 			return fmt.Errorf("unable to create new user_organization record: %s", err.Error())
 		}
+	}
+
+	if newUser {
+		eventers.UserCreated("Nickname: " + u.Nickname + "  Uuid: " + u.Uuid.String())
 	}
 
 	// reload user
