@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/silinternational/wecarry-api/eventers"
-	"log"
 	"strings"
 	"time"
 
