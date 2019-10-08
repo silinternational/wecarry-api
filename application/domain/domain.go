@@ -32,6 +32,10 @@ const (
 	// Environment Variables
 	UIURLEnv                      = "UI_URL"
 	AccessTokenLifetimeSecondsEnv = "ACCESS_TOKEN_LIFETIME_SECONDS"
+
+	// Event Kinds
+	EventApiUserCreated      = "api:user:created"
+	EventApiAuthUserLoggedIn = "api:auth:user:loggedin"
 )
 
 // NoExtras is exported for use when making calls to RollbarError and rollbarMessage to reduce
