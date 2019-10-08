@@ -110,6 +110,13 @@ func (r *postResolver) Origin(ctx context.Context, obj *models.Post) (*string, e
 	return GetStringFromNullsString(obj.Origin), nil
 }
 
+func (r *postResolver) Size(ctx context.Context, obj *models.Post) (PostSize, error) {
+	if obj == nil {
+		return "", nil
+	}
+	return PostSize(obj.Size), nil
+}
+
 func (r *postResolver) NeededAfter(ctx context.Context, obj *models.Post) (*string, error) {
 	if obj == nil {
 		return nil, nil
@@ -268,7 +275,7 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 	}
 
 	if input.Size != nil {
-		post.Size = *input.Size
+		post.Size = (*input.Size).String()
 	}
 
 	if input.NeededAfter != nil {
@@ -332,7 +339,7 @@ type postInput struct {
 	Description  *string
 	Destination  *string
 	Origin       *string
-	Size         *string
+	Size         *PostSize
 	NeededAfter  *string
 	NeededBefore *string
 	Category     *string

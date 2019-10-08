@@ -42,6 +42,14 @@ enum PostStatus {
     REMOVED
 }
 
+enum PostSize {
+    TINY
+    SMALL
+    MEDIUM
+    LARGE
+    XLARGE
+}
+
 type User {
     id: ID!
     email: String!
@@ -75,7 +83,7 @@ type Post {
     description: String
     destination: String
     origin: String
-    size: String!
+    size: PostSize!
     neededAfter: String
     neededBefore: String
     category: String!
@@ -155,7 +163,7 @@ input CreatePostInput {
     description: String
     destination: String
     origin: String
-    size: String!
+    size: PostSize!
     neededAfter: String
     neededBefore: String
     category: String
@@ -177,7 +185,7 @@ input UpdatePostInput {
     description: String
     destination: String
     origin: String
-    size: String
+    size: PostSize
     neededAfter: String
     neededBefore: String
     category: String
