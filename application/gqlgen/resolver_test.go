@@ -84,7 +84,7 @@ func (gs *GqlgenSuite) TestResolver() {
 			Status:         PostStatusOpen.String(),
 			Title:          "Maple Syrup",
 			Destination:    nulls.NewString("Madrid, Spain"),
-			Size:           "Medium",
+			Size:           PostSizeMedium,
 			Uuid:           postUuid1,
 			ReceiverID:     nulls.NewInt(1),
 			NeededAfter:    time.Date(2019, time.July, 19, 0, 0, 0, 0, time.UTC),

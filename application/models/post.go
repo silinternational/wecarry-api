@@ -20,15 +20,18 @@ const (
 	PostTypeRequest = "REQUEST"
 	PostTypeOffer   = "OFFER"
 
-	PostSizeMedium = "medium"
-	PostSizeSmall  = "small"
+	PostSizeTiny   = "TINY"
+	PostSizeSmall  = "SMALL"
+	PostSizeMedium = "MEDIUM"
+	PostSizeLarge  = "LARGE"
+	PostSizeXlarge = "XLARGE"
 
-	PostStatusOpen      string = "OPEN"
-	PostStatusCommitted string = "COMMITTED"
-	PostStatusAccepted  string = "ACCEPTED"
-	PostStatusReceived  string = "RECEIVED"
-	PostStatusCompleted string = "COMPLETED"
-	PostStatusRemoved   string = "REMOVED"
+	PostStatusOpen      = "OPEN"
+	PostStatusCommitted = "COMMITTED"
+	PostStatusAccepted  = "ACCEPTED"
+	PostStatusReceived  = "RECEIVED"
+	PostStatusCompleted = "COMPLETED"
+	PostStatusRemoved   = "REMOVED"
 )
 
 type Post struct {

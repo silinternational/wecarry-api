@@ -189,7 +189,7 @@ type PostResolver interface {
 	Description(ctx context.Context, obj *models.Post) (*string, error)
 	Destination(ctx context.Context, obj *models.Post) (*string, error)
 	Origin(ctx context.Context, obj *models.Post) (*string, error)
-
+	Size(ctx context.Context, obj *models.Post) (PostSize, error)
 	NeededAfter(ctx context.Context, obj *models.Post) (*string, error)
 	NeededBefore(ctx context.Context, obj *models.Post) (*string, error)
 
@@ -925,6 +925,14 @@ enum PostStatus {
     REMOVED
 }
 
+enum PostSize {
+    TINY
+    SMALL
+    MEDIUM
+    LARGE
+    XLARGE
+}
+
 type User {
     id: ID!
     email: String!
@@ -958,7 +966,7 @@ type Post {
     description: String
     destination: String
     origin: String
-    size: String!
+    size: PostSize!
     neededAfter: String
     neededBefore: String
     category: String!
@@ -1038,7 +1046,7 @@ input CreatePostInput {
     description: String
     destination: String
     origin: String
-    size: String!
+    size: PostSize!
     neededAfter: String
     neededBefore: String
     category: String
@@ -1060,7 +1068,7 @@ input UpdatePostInput {
     description: String
     destination: String
     origin: String
-    size: String
+    size: PostSize
     neededAfter: String
     neededBefore: String
     category: String
@@ -2744,13 +2752,13 @@ func (ec *executionContext) _Post_size(ctx context.Context, field graphql.Collec
 		Object:   "Post",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Size, nil
+		return ec.resolvers.Post().Size(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2762,10 +2770,10 @@ func (ec *executionContext) _Post_size(ctx context.Context, field graphql.Collec
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(PostSize)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNPostSize2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostSize(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Post_neededAfter(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
@@ -5406,7 +5414,7 @@ func (ec *executionContext) unmarshalInputCreatePostInput(ctx context.Context, o
 			}
 		case "size":
 			var err error
-			it.Size, err = ec.unmarshalNString2ᚖstring(ctx, v)
+			it.Size, err = ec.unmarshalNPostSize2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostSize(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5562,7 +5570,7 @@ func (ec *executionContext) unmarshalInputUpdatePostInput(ctx context.Context, o
 			}
 		case "size":
 			var err error
-			it.Size, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			it.Size, err = ec.unmarshalOPostSize2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostSize(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -6067,10 +6075,19 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 				return res
 			})
 		case "size":
-			out.Values[i] = ec._Post_size(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Post_size(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "neededAfter":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -7110,6 +7127,33 @@ func (ec *executionContext) marshalNPostRole2githubᚗcomᚋsilinternationalᚋw
 	return v
 }
 
+func (ec *executionContext) unmarshalNPostSize2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostSize(ctx context.Context, v interface{}) (PostSize, error) {
+	var res PostSize
+	return res, res.UnmarshalGQL(v)
+}
+
+func (ec *executionContext) marshalNPostSize2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostSize(ctx context.Context, sel ast.SelectionSet, v PostSize) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) unmarshalNPostSize2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostSize(ctx context.Context, v interface{}) (*PostSize, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalNPostSize2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostSize(ctx, v)
+	return &res, err
+}
+
+func (ec *executionContext) marshalNPostSize2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostSize(ctx context.Context, sel ast.SelectionSet, v *PostSize) graphql.Marshaler {
+	if v == nil {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return v
+}
+
 func (ec *executionContext) unmarshalNPostType2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostType(ctx context.Context, v interface{}) (PostType, error) {
 	var res PostType
 	return res, res.UnmarshalGQL(v)
@@ -7604,6 +7648,30 @@ func (ec *executionContext) marshalOPost2ᚖgithubᚗcomᚋsilinternationalᚋwe
 		return graphql.Null
 	}
 	return ec._Post(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOPostSize2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostSize(ctx context.Context, v interface{}) (PostSize, error) {
+	var res PostSize
+	return res, res.UnmarshalGQL(v)
+}
+
+func (ec *executionContext) marshalOPostSize2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostSize(ctx context.Context, sel ast.SelectionSet, v PostSize) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) unmarshalOPostSize2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostSize(ctx context.Context, v interface{}) (*PostSize, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalOPostSize2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostSize(ctx, v)
+	return &res, err
+}
+
+func (ec *executionContext) marshalOPostSize2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostSize(ctx context.Context, sel ast.SelectionSet, v *PostSize) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
 }
 
 func (ec *executionContext) unmarshalOPostStatus2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostStatus(ctx context.Context, v interface{}) (PostStatus, error) {
