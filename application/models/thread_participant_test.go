@@ -141,6 +141,10 @@ func (ms *ModelSuite) TestThreadParticipant_SetLastViewedAt() {
 		t.Run(test.name, func(t *testing.T) {
 			tp := test.threadParticipant
 			err := tp.SetLastViewedAt(test.lastViewedAt)
+
+			// reload from database to ensure the new time was saved
+			_ = DB.Reload(&tp)
+
 			if test.wantErr {
 				ms.Error(err)
 			} else {
