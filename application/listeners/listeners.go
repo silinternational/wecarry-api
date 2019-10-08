@@ -1,8 +1,9 @@
-package models
+package listeners
 
 import (
 	"github.com/gobuffalo/events"
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/models"
 	"time"
 )
 
@@ -35,7 +36,7 @@ func UserAccessTokensCleanup(e events.Event) {
 
 	UserAccessTokensNextCleanupTime = now.Add(time.Duration(time.Minute * UserAccessTokensCleanupDelayMinutes))
 
-	deleted, err := UserAccessTokensDeleteExpired()
+	deleted, err := models.UserAccessTokensDeleteExpired()
 	if err != nil {
 		domain.ErrLogger.Print("Last error deleting expired user access tokens during cleanup ... " + err.Error())
 	}
