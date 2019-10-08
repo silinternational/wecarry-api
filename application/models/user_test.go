@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
-	"time"
 
 	"github.com/gofrs/uuid"
 
@@ -97,81 +96,6 @@ func (ms *ModelSuite) TestUser_FindOrCreateFromAuthUser() {
 				t.Errorf("FindOrCreateFromAuthUser() error = %v, wantErr %v", err, tt.wantErr)
 			} else if u.ID != tt.wantID {
 				t.Errorf("ID on user is not what was wanted. Got %v, wanted %v", u.ID, tt.wantID)
-			}
-		})
-	}
-}
-
-func (ms *ModelSuite) TestUser_FindByAccessToken() {
-	t := ms.T()
-	ResetTables(t, ms.DB)
-	_, users, userOrgs := CreateUserFixtures(ms, t)
-
-	// Load access token test fixtures
-	tokens := UserAccessTokens{
-		{
-			UserID:             users[0].ID,
-			UserOrganizationID: userOrgs[0].ID,
-			AccessToken:        HashClientIdAccessToken("abc123"),
-			ExpiresAt:          time.Unix(0, 0),
-		},
-		{
-			UserID:             users[0].ID,
-			UserOrganizationID: userOrgs[0].ID,
-			AccessToken:        HashClientIdAccessToken("xyz789"),
-			ExpiresAt:          time.Date(2099, time.December, 31, 0, 0, 0, 0, time.UTC),
-		},
-	}
-
-	if err := CreateUserAccessTokens(tokens); err != nil {
-		t.Errorf("could not create access tokens ... %v", err)
-		t.FailNow()
-	}
-
-	type args struct {
-		token string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    User
-		wantErr bool
-	}{
-		{
-			name:    "expired",
-			args:    args{"abc123"},
-			wantErr: true,
-		},
-		{
-			name: "valid",
-			args: args{"xyz789"},
-			want: users[0],
-		},
-		{
-			name:    "invalid",
-			args:    args{"000000"},
-			wantErr: true,
-		},
-		{
-			name:    "empty",
-			args:    args{""},
-			wantErr: true,
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			var got User
-			err := got.FindByAccessToken(test.args.token)
-			if test.wantErr {
-				if err == nil {
-					t.Errorf("Expected an error, but did not get one")
-				}
-			} else {
-				if err != nil {
-					t.Errorf("FindByAccessToken() returned an error: %v", err)
-				} else if got.Uuid != test.want.Uuid {
-					t.Errorf("found %v, expected %v", got, test.want)
-				}
 			}
 		})
 	}

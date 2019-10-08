@@ -3,7 +3,14 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"log"
+	"math/rand"
+	"strconv"
 	"time"
+
+	"github.com/silinternational/wecarry-api/domain"
+
+	"github.com/gobuffalo/envy"
 
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
@@ -101,4 +108,66 @@ func (u *UserAccessToken) GetOrganization() (Organization, error) {
 	}
 
 	return uOrg.Organization, nil
+}
+
+func createAccessTokenExpiry() time.Time {
+	envLifetime := envy.Get("ACCESS_TOKEN_LIFETIME", strconv.Itoa(domain.AccessTokenLifetimeSeconds))
+
+	lifetimeSeconds, err := strconv.Atoi(envLifetime)
+	if err != nil {
+        // TODO Ensure this gets logged so that we know our env var is bad
+		lifetimeSeconds = domain.AccessTokenLifetimeSeconds
+	}
+
+	dtNow := time.Now()
+	futureTime := dtNow.Add(time.Second * time.Duration(lifetimeSeconds))
+
+	return futureTime
+}
+
+func createAccessTokenPart() string {
+	var alphanumerics = []rune("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+	tokenLength := 32
+	b := make([]rune, tokenLength)
+	for i := range b {
+		b[i] = alphanumerics[rand.Intn(len(alphanumerics))]
+	}
+
+	accessToken := string(b)
+
+	return accessToken
+}
+
+// Renew extends the token expiration to the configured token lifetime
+func (u *UserAccessToken) Renew() error {
+	u.ExpiresAt = createAccessTokenExpiry()
+	if err := DB.Update(u); err != nil {
+		return fmt.Errorf("error renewing access token, %s", err)
+	}
+	return nil
+}
+
+// GetUser returns the User associated with this access token
+func (u *UserAccessToken) GetUser() (User, error) {
+	if err := DB.Load(u, "User"); err != nil {
+		return User{}, err
+	}
+	if u.User.ID <= 0 {
+		return User{}, fmt.Errorf("no user associated with access token")
+	}
+	return u.User, nil
+}
+
+// IsExpired checks the token expiration and returns `true` if expired. Also deletes the token from the database
+// if it is expired.
+func (u *UserAccessToken) IsExpired() bool {
+	if u.ExpiresAt.Before(time.Now()) {
+		err := DB.Destroy(u)
+		if err != nil {
+			log.Printf("Unable to delete expired userAccessToken, id: %v", u.ID)
+		}
+		return true
+	}
+	return false
 }
