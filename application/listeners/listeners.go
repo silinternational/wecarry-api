@@ -16,7 +16,7 @@ const (
 var UserAccessTokensNextCleanupTime time.Time
 
 func userCreated(e events.Event) {
-	if e.Kind != ApiUserCreated {
+	if e.Kind != domain.EventApiUserCreated {
 		return
 	}
 
@@ -24,7 +24,7 @@ func userCreated(e events.Event) {
 }
 
 func UserAccessTokensCleanup(e events.Event) {
-	if e.Kind != ApiAuthUserLoggedIn {
+	if e.Kind != domain.EventApiAuthUserLoggedIn {
 		return
 	}
 
