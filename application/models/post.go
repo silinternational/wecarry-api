@@ -228,7 +228,7 @@ func (p *Post) GetFiles() ([]*File, error) {
 func (p *Post) AttachPhoto(fileID string) (File, error) {
 	var f File
 	if err := f.FindByUUID(fileID); err != nil {
-		return f, err
+		return f, nil // in case client can't recognize this error we'll fail silently
 	}
 
 	p.PhotoFileID = nulls.NewInt(f.ID)
