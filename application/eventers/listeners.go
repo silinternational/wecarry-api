@@ -13,8 +13,8 @@ func userCreated(e events.Event) {
 	if e.Kind != ApiUserCreated {
 		return
 	}
-	now := domain.GetCurrentTime()
-	log.Printf("%s User Created ... %s", now, e.Message)
+
+	domain.Logger.Printf("%s User Created ... %s", domain.GetCurrentTime(), e.Message)
 }
 
 // RegisterListeners registers all the listeners to be used by the app

@@ -2,7 +2,9 @@ package domain
 
 import (
 	"fmt"
+	"log"
 	"net/http"
+	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -26,12 +28,20 @@ const (
 	MaxFileSize                = 1 << 20 // 1 Mebibyte
 	UIURLEnv                   = "UI_URL"
 	AccessTokenLifetimeSeconds = 3600
-	DateTimeFormat           = "2006-01-02 15:04:05"
+	DateTimeFormat             = "2006-01-02 15:04:05"
 )
 
 // NoExtras is exported for use when making calls to RollbarError and rollbarMessage to reduce
 // typing map[string]interface{} when no extras are needed
 var NoExtras map[string]interface{}
+
+var Logger log.Logger
+var ErrLogger log.Logger
+
+func init() {
+	Logger.SetOutput(os.Stdout)
+	ErrLogger.SetOutput(os.Stderr)
+}
 
 type AppError struct {
 	Code    string `json:"Code"`
