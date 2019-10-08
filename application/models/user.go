@@ -203,7 +203,7 @@ func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
 	}
 
 	if newUser {
-		UserCreated("Nickname: " + u.Nickname + "  Uuid: " + u.Uuid.String())
+		EmitEvent(domain.EventApiUserCreated, "Nickname: "+u.Nickname+"  Uuid: "+u.Uuid.String())
 	}
 
 	// reload user
