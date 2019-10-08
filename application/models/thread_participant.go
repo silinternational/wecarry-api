@@ -15,9 +15,9 @@ type ThreadParticipant struct {
 	UpdatedAt    time.Time `json:"updated_at" db:"updated_at"`
 	ThreadID     int       `json:"thread_id" db:"thread_id"`
 	UserID       int       `json:"user_id" db:"user_id"`
+	LastViewedAt time.Time `json:"last_viewed_at" db:"last_viewed_at"`
 	Thread       Thread    `belongs_to:"threads"`
 	User         User      `belongs_to:"users"`
-	LastViewedAt time.Time `json:"last_viewed_at" db:"last_viewed_at"`
 }
 
 // String is not required by pop and may be deleted
@@ -57,7 +57,7 @@ func (t *ThreadParticipant) ValidateUpdate(tx *pop.Connection) (*validate.Errors
 }
 
 // SetLastViewedAt sets the last viewed time field
-func (t *ThreadParticipant) SetLastViewedAt(time time.Time) error {
-	t.LastViewedAt = time
+func (t *ThreadParticipant) SetLastViewedAt(lastViewedAt time.Time) error {
+	t.LastViewedAt = lastViewedAt
 	return DB.Update(t)
 }
