@@ -69,7 +69,6 @@ func CreateFixtures_ThreadParticipant_SetLastViewedAt(ms *ModelSuite, t *testing
 
 	users := Users{
 		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1", Uuid: domain.GetUuid()},
-		{Email: t.Name() + "_user2@example.com", Nickname: t.Name() + " User2", Uuid: domain.GetUuid()},
 	}
 	for i := range users {
 		createFixture(t, &(users[i]))
@@ -77,7 +76,6 @@ func CreateFixtures_ThreadParticipant_SetLastViewedAt(ms *ModelSuite, t *testing
 
 	userOrgs := UserOrganizations{
 		{OrganizationID: org.ID, UserID: users[0].ID, AuthID: users[0].Email, AuthEmail: users[0].Email},
-		{OrganizationID: org.ID, UserID: users[1].ID, AuthID: users[1].Email, AuthEmail: users[1].Email},
 	}
 	for i := range userOrgs {
 		createFixture(t, &(userOrgs[i]))
@@ -121,8 +119,6 @@ func CreateFixtures_ThreadParticipant_SetLastViewedAt(ms *ModelSuite, t *testing
 
 	return ThreadFixtures{
 		Users:              users,
-		Posts:              posts,
-		Threads:            threads,
 		ThreadParticipants: threadParticipants,
 	}
 }
@@ -136,24 +132,27 @@ func (ms *ModelSuite) TestThreadParticipant_SetLastViewedAt() {
 	tests := []struct {
 		name              string
 		threadParticipant ThreadParticipant
-		want              string
+		lastViewedAt      time.Time
 		wantErr           bool
 	}{
-		{name: "good", threadParticipant: f.ThreadParticipants[0], want: f.Users[0].Uuid.String()},
+		{name: "good", threadParticipant: f.ThreadParticipants[0], lastViewedAt: time.Now()},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			tp := test.threadParticipant
-			err := tp.SetLastViewedAt(time.Now())
+			err := tp.SetLastViewedAt(test.lastViewedAt)
 			if test.wantErr {
 				ms.Error(err)
 			} else {
 				if err != nil {
 					t.Errorf("SetLastViewedAt() returned an error: %v", err)
 				} else {
-					want := time.Now().Add(-1 * time.Minute)
+					want := test.lastViewedAt.Add(-1 * time.Minute)
 					ms.True(tp.LastViewedAt.After(want),
 						fmt.Sprintf("time not correct, got %v, wanted afer %v", tp.LastViewedAt, want))
+					want = test.lastViewedAt.Add(time.Minute)
+					ms.True(tp.LastViewedAt.Before(want),
+						fmt.Sprintf("time not correct, got %v, wanted before %v", tp.LastViewedAt, want))
 				}
 			}
 		})
