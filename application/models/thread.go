@@ -177,10 +177,5 @@ func (t *Thread) SetLastViewedAt(user User, time time.Time) error {
 		return err
 	}
 
-	tp.LastViewedAt = time
-	if err := DB.Update(&tp); err != nil {
-		return err
-	}
-
-	return nil
+	return tp.SetLastViewedAt(time)
 }
