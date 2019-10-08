@@ -115,6 +115,7 @@ func createAccessTokenExpiry() time.Time {
 
 	lifetimeSeconds, err := strconv.Atoi(envLifetime)
 	if err != nil {
+        // TODO Ensure this gets logged so that we know our env var is bad
 		lifetimeSeconds = domain.AccessTokenLifetimeSeconds
 	}
 
