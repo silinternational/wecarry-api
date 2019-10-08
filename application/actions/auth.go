@@ -404,9 +404,15 @@ func SetCurrentUser(next buffalo.Handler) buffalo.Handler {
 			return fmt.Errorf("no Bearer token provided")
 		}
 
-		var user models.User
-		if err := user.FindByAccessToken(bearerToken); err != nil {
+		var userAccessToken models.UserAccessToken
+		err := userAccessToken.FindByBearerToken(bearerToken)
+		if err != nil || userAccessToken.IsExpired() {
 			return c.Error(401, fmt.Errorf("invalid bearer token"))
+		}
+
+		user, err := userAccessToken.GetUser()
+		if err != nil {
+			return fmt.Errorf("error finding user by access token, %s", err.Error())
 		}
 		c.Set("current_user", user)
 
@@ -419,6 +425,10 @@ func SetCurrentUser(next buffalo.Handler) buffalo.Handler {
 			"ip":      c.Request().RemoteAddr,
 		}
 		domain.Info(c, msg, extras)
+
+		if err := userAccessToken.Renew(); err != nil {
+			domain.Error(c, fmt.Sprintf("error renewing access token, %s", c.Request().RemoteAddr), extras)
+		}
 
 		return next(c)
 	}

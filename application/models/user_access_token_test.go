@@ -2,9 +2,12 @@ package models
 
 import (
 	"fmt"
-	"github.com/silinternational/wecarry-api/domain"
 	"testing"
 	"time"
+
+	"github.com/gobuffalo/buffalo/genny/build/_fixtures/coke/models"
+
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 func (ms *ModelSuite) TestUserAccessToken_Validate() {
@@ -282,6 +285,242 @@ func (ms *ModelSuite) TestUserAccessToken_GetOrganization() {
 					t.Errorf("found %v, expected %v", u, test.want)
 				}
 			}
+		})
+	}
+}
+
+func createFixture(t *testing.T, f interface{}) {
+	err := models.DB.Create(f)
+	if err != nil {
+		t.Errorf("error creating %T fixture, %s", f, err)
+		t.FailNow()
+	}
+}
+
+type AccessTokenFixtures struct {
+	Users
+	UserAccessTokens
+}
+
+// CreateFixtures_GetUser creates test fixtures for the GetUser test function
+func CreateFixtures_GetUser(ms *ModelSuite, t *testing.T) AccessTokenFixtures {
+	ResetTables(t, ms.DB)
+
+	org := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	createFixture(t, &org)
+
+	users := Users{
+		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1", Uuid: domain.GetUuid()},
+		{Email: t.Name() + "_user2@example.com", Nickname: t.Name() + " User2", Uuid: domain.GetUuid()},
+	}
+	for i := range users {
+		createFixture(t, &(users[i]))
+	}
+
+	userOrgs := UserOrganizations{
+		{OrganizationID: org.ID, UserID: users[0].ID, AuthID: users[0].Email, AuthEmail: users[0].Email},
+		{OrganizationID: org.ID, UserID: users[1].ID, AuthID: users[1].Email, AuthEmail: users[1].Email},
+	}
+	for i := range userOrgs {
+		createFixture(t, &(userOrgs[i]))
+	}
+
+	tokens := UserAccessTokens{
+		{
+			UserID:             users[0].ID,
+			UserOrganizationID: userOrgs[0].ID,
+			AccessToken:        HashClientIdAccessToken("abc123"),
+			ExpiresAt:          time.Unix(0, 0),
+		},
+		{
+			UserID:             users[1].ID,
+			UserOrganizationID: userOrgs[1].ID,
+			AccessToken:        HashClientIdAccessToken("xyz789"),
+			ExpiresAt:          time.Date(2099, time.December, 31, 0, 0, 0, 0, time.UTC),
+		},
+	}
+	for i := range tokens {
+		createFixture(t, &(tokens[i]))
+	}
+
+	return AccessTokenFixtures{
+		Users:            users,
+		UserAccessTokens: tokens,
+	}
+}
+
+func (ms *ModelSuite) TestUserAccessToken_GetUser() {
+	t := ms.T()
+	ResetTables(t, ms.DB)
+
+	f := CreateFixtures_GetUser(ms, t)
+
+	tests := []struct {
+		name    string
+		token   UserAccessToken
+		want    string
+		wantErr bool
+	}{
+		{name: "user1", token: f.UserAccessTokens[0], want: f.Users[0].Uuid.String()},
+		{name: "user2", token: f.UserAccessTokens[1], want: f.Users[1].Uuid.String()},
+		{name: "noUserOrg", token: UserAccessToken{}, wantErr: true},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			u := test.token
+			got, err := u.GetUser()
+			if test.wantErr {
+				if err == nil {
+					t.Errorf("Expected an error, but did not get one")
+				}
+			} else {
+				if err != nil {
+					t.Errorf("GetUser() returned an error: %v", err)
+				} else if got.Uuid.String() != test.want {
+					t.Errorf("found %v, expected %v", got.Uuid.String(), test.want)
+				}
+			}
+		})
+	}
+}
+
+// CreateFixtures_IsExpired creates test fixtures for the IsExpired test function
+func CreateFixtures_IsExpired(ms *ModelSuite, t *testing.T) AccessTokenFixtures {
+	ResetTables(t, ms.DB)
+
+	org := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	createFixture(t, &org)
+
+	users := Users{
+		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1", Uuid: domain.GetUuid()},
+		{Email: t.Name() + "_user2@example.com", Nickname: t.Name() + " User2", Uuid: domain.GetUuid()},
+	}
+	for i := range users {
+		createFixture(t, &(users[i]))
+	}
+
+	userOrgs := UserOrganizations{
+		{OrganizationID: org.ID, UserID: users[0].ID, AuthID: users[0].Email, AuthEmail: users[0].Email},
+		{OrganizationID: org.ID, UserID: users[1].ID, AuthID: users[1].Email, AuthEmail: users[1].Email},
+	}
+	for i := range userOrgs {
+		createFixture(t, &(userOrgs[i]))
+	}
+
+	tokens := UserAccessTokens{
+		{
+			UserID:             users[0].ID,
+			UserOrganizationID: userOrgs[0].ID,
+			AccessToken:        HashClientIdAccessToken("abc123"),
+			ExpiresAt:          time.Unix(0, 0),
+		},
+		{
+			UserID:             users[1].ID,
+			UserOrganizationID: userOrgs[1].ID,
+			AccessToken:        HashClientIdAccessToken("xyz789"),
+			ExpiresAt:          time.Date(2099, time.December, 31, 0, 0, 0, 0, time.UTC),
+		},
+	}
+	for i := range tokens {
+		createFixture(t, &(tokens[i]))
+	}
+
+	return AccessTokenFixtures{
+		Users:            users,
+		UserAccessTokens: tokens,
+	}
+}
+
+func (ms *ModelSuite) TestUserAccessToken_IsExpired() {
+	t := ms.T()
+	ResetTables(t, ms.DB)
+
+	f := CreateFixtures_IsExpired(ms, t)
+
+	tests := []struct {
+		name  string
+		token UserAccessToken
+		want  bool
+	}{
+		{name: "expired", token: f.UserAccessTokens[0], want: true},
+		{name: "not expired", token: f.UserAccessTokens[1], want: false},
+		{name: "empty token", token: UserAccessToken{}, want: true},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			u := test.token
+			got := u.IsExpired()
+			ms.Equal(test.want, got)
+		})
+	}
+}
+
+// CreateFixtures_Renew creates test fixtures for the Renew test function
+func CreateFixtures_Renew(ms *ModelSuite, t *testing.T) AccessTokenFixtures {
+	ResetTables(t, ms.DB)
+
+	org := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	createFixture(t, &org)
+
+	users := Users{
+		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1", Uuid: domain.GetUuid()},
+		{Email: t.Name() + "_user2@example.com", Nickname: t.Name() + " User2", Uuid: domain.GetUuid()},
+	}
+	for i := range users {
+		createFixture(t, &(users[i]))
+	}
+
+	userOrgs := UserOrganizations{
+		{OrganizationID: org.ID, UserID: users[0].ID, AuthID: users[0].Email, AuthEmail: users[0].Email},
+		{OrganizationID: org.ID, UserID: users[1].ID, AuthID: users[1].Email, AuthEmail: users[1].Email},
+	}
+	for i := range userOrgs {
+		createFixture(t, &(userOrgs[i]))
+	}
+
+	tokens := UserAccessTokens{
+		{
+			UserID:             users[0].ID,
+			UserOrganizationID: userOrgs[0].ID,
+			AccessToken:        HashClientIdAccessToken("abc123"),
+			ExpiresAt:          time.Unix(0, 0),
+		},
+		{
+			UserID:             users[1].ID,
+			UserOrganizationID: userOrgs[1].ID,
+			AccessToken:        HashClientIdAccessToken("xyz789"),
+			ExpiresAt:          time.Date(2099, time.December, 31, 0, 0, 0, 0, time.UTC),
+		},
+	}
+	for i := range tokens {
+		createFixture(t, &(tokens[i]))
+	}
+
+	return AccessTokenFixtures{
+		Users:            users,
+		UserAccessTokens: tokens,
+	}
+}
+
+func (ms *ModelSuite) TestUserAccessToken_Renew() {
+	t := ms.T()
+	ResetTables(t, ms.DB)
+
+	f := CreateFixtures_Renew(ms, t)
+
+	tests := []struct {
+		name  string
+		token UserAccessToken
+	}{
+		{name: "expired", token: f.UserAccessTokens[0]},
+		{name: "not expired", token: f.UserAccessTokens[1]},
+		{name: "empty token", token: UserAccessToken{}},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			u := test.token
+			_ = u.Renew()
+			ms.False(u.IsExpired())
 		})
 	}
 }
