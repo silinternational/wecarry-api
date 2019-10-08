@@ -16,14 +16,6 @@ const (
 
 var UserAccessTokensNextCleanupTime time.Time
 
-func userCreated(e events.Event) {
-	if e.Kind != domain.EventApiUserCreated {
-		return
-	}
-
-	domain.Logger.Printf("%s User Created ... %s", domain.GetCurrentTime(), e.Message)
-}
-
 func userAccessTokensCleanup(e events.Event) {
 	if e.Kind != domain.EventApiAuthUserLoggedIn {
 		return
@@ -42,6 +34,14 @@ func userAccessTokensCleanup(e events.Event) {
 	}
 
 	domain.Logger.Printf("Deleted %v expired user access tokens during cleanup", deleted)
+}
+
+func userCreated(e events.Event) {
+	if e.Kind != domain.EventApiUserCreated {
+		return
+	}
+
+	domain.Logger.Printf("%s User Created ... %s", domain.GetCurrentTime(), e.Message)
 }
 
 type apiListener struct {
