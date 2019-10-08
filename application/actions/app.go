@@ -8,7 +8,7 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/rs/cors"
 	"github.com/silinternational/wecarry-api/domain"
-	"github.com/silinternational/wecarry-api/listeners"
+	"github.com/silinternational/wecarry-api/eventers"
 	"github.com/silinternational/wecarry-api/models"
 )
 
@@ -77,15 +77,7 @@ func App() *buffalo.App {
 		auth.GET("/logout", AuthDestroy)
 	}
 
-	listeners.Register()
-
-	//_, err := events.Listen(func(e events.Event) {
-	//	fmt.Printf("\n\nCCCCCCCCCCCCCCC     Got an event: %+v \n", e)
-	//})
-	//if err != nil {
-	//	println("\n\nDDDDDDDDDDDDDDDD error: " + err.Error())
-	//}
-	////defer deleteFn()
+	eventers.RegisterListeners()
 
 	return app
 }
