@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+	"time"
 )
 
 type CreateMessageInput struct {
@@ -29,6 +30,11 @@ type CreateOrganizationInput struct {
 type RemoveOrganizationDomainInput struct {
 	Domain         string `json:"domain"`
 	OrganizationID string `json:"organizationID"`
+}
+
+type SetThreadLastViewedAtInput struct {
+	ThreadID string    `json:"threadId"`
+	Time     time.Time `json:"time"`
 }
 
 type UpdateOrganizationInput struct {
