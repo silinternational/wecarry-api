@@ -17,6 +17,7 @@ type Mutation {
     updateOrganization(input: UpdateOrganizationInput!): Organization!
     createOrganizationDomain(input: CreateOrganizationDomainInput!): [OrganizationDomain!]!
     removeOrganizationDomain(input: RemoveOrganizationDomainInput!): [OrganizationDomain!]!
+    setThreadLastViewedAt(input: SetThreadLastViewedAtInput!): Thread!
 }
 
 # Date and Time in RFC3339 format
@@ -201,4 +202,9 @@ type File {
     name: String!
     size: Int!
     contentType: String!
+}
+
+input SetThreadLastViewedAtInput {
+    threadId: ID!
+    time: Time!
 }

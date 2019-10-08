@@ -168,3 +168,19 @@ func (t *Thread) CreateWithParticipants(postUuid string, user User) error {
 	*t = thread
 	return nil
 }
+
+// SetLastViewedAt sets the last viewed time for the given user on the thread
+func (t *Thread) SetLastViewedAt(user User, time time.Time) error {
+	var tp ThreadParticipant
+
+	if err := DB.Where("thread_id = ? AND user_id = ?", t.ID, user.ID).First(&tp); err != nil {
+		return err
+	}
+
+	tp.LastViewedAt = time
+	if err := DB.Update(&tp); err != nil {
+		return err
+	}
+
+	return nil
+}

@@ -11,8 +11,11 @@ import (
 )
 
 type ThreadFixtures struct {
-	Threads  Threads
-	Messages Messages
+	Users
+	Posts
+	Threads
+	ThreadParticipants
+	Messages
 }
 
 func CreateThreadFixtures(ms *ModelSuite, t *testing.T, post Post) ThreadFixtures {
