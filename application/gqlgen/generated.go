@@ -74,6 +74,7 @@ type ComplexityRoot struct {
 		CreateOrganizationDomain func(childComplexity int, input CreateOrganizationDomainInput) int
 		CreatePost               func(childComplexity int, input postInput) int
 		RemoveOrganizationDomain func(childComplexity int, input RemoveOrganizationDomainInput) int
+		SetThreadLastViewedAt    func(childComplexity int, input SetThreadLastViewedAtInput) int
 		UpdateOrganization       func(childComplexity int, input UpdateOrganizationInput) int
 		UpdatePost               func(childComplexity int, input postInput) int
 		UpdateUser               func(childComplexity int, input UpdateUserInput) int
@@ -170,6 +171,7 @@ type MutationResolver interface {
 	UpdateOrganization(ctx context.Context, input UpdateOrganizationInput) (*models.Organization, error)
 	CreateOrganizationDomain(ctx context.Context, input CreateOrganizationDomainInput) ([]*models.OrganizationDomain, error)
 	RemoveOrganizationDomain(ctx context.Context, input RemoveOrganizationDomainInput) ([]*models.OrganizationDomain, error)
+	SetThreadLastViewedAt(ctx context.Context, input SetThreadLastViewedAtInput) (*models.Thread, error)
 }
 type OrganizationResolver interface {
 	ID(ctx context.Context, obj *models.Organization) (string, error)
@@ -384,6 +386,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.RemoveOrganizationDomain(childComplexity, args["input"].(RemoveOrganizationDomainInput)), true
+
+	case "Mutation.setThreadLastViewedAt":
+		if e.complexity.Mutation.SetThreadLastViewedAt == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_setThreadLastViewedAt_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.SetThreadLastViewedAt(childComplexity, args["input"].(SetThreadLastViewedAtInput)), true
 
 	case "Mutation.updateOrganization":
 		if e.complexity.Mutation.UpdateOrganization == nil {
@@ -900,6 +914,7 @@ type Mutation {
     updateOrganization(input: UpdateOrganizationInput!): Organization!
     createOrganizationDomain(input: CreateOrganizationDomainInput!): [OrganizationDomain!]!
     removeOrganizationDomain(input: RemoveOrganizationDomainInput!): [OrganizationDomain!]!
+    setThreadLastViewedAt(input: SetThreadLastViewedAtInput!): Thread!
 }
 
 # Date and Time in RFC3339 format
@@ -1085,6 +1100,11 @@ type File {
     size: Int!
     contentType: String!
 }
+
+input SetThreadLastViewedAtInput {
+    threadId: ID!
+    time: Time!
+}
 `},
 )
 
@@ -1154,6 +1174,20 @@ func (ec *executionContext) field_Mutation_removeOrganizationDomain_args(ctx con
 	var arg0 RemoveOrganizationDomainInput
 	if tmp, ok := rawArgs["input"]; ok {
 		arg0, err = ec.unmarshalNRemoveOrganizationDomainInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐRemoveOrganizationDomainInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_setThreadLastViewedAt_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 SetThreadLastViewedAtInput
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalNSetThreadLastViewedAtInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐSetThreadLastViewedAtInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2098,6 +2132,50 @@ func (ec *executionContext) _Mutation_removeOrganizationDomain(ctx context.Conte
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNOrganizationDomain2ᚕᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganizationDomain(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_setThreadLastViewedAt(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_setThreadLastViewedAt_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().SetThreadLastViewedAt(rctx, args["input"].(SetThreadLastViewedAtInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Thread)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNThread2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐThread(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Organization_id(ctx context.Context, field graphql.CollectedField, obj *models.Organization) (ret graphql.Marshaler) {
@@ -5484,6 +5562,30 @@ func (ec *executionContext) unmarshalInputRemoveOrganizationDomainInput(ctx cont
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputSetThreadLastViewedAtInput(ctx context.Context, obj interface{}) (SetThreadLastViewedAtInput, error) {
+	var it SetThreadLastViewedAtInput
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "threadId":
+			var err error
+			it.ThreadID, err = ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "time":
+			var err error
+			it.Time, err = ec.unmarshalNTime2timeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputUpdateOrganizationInput(ctx context.Context, obj interface{}) (UpdateOrganizationInput, error) {
 	var it UpdateOrganizationInput
 	var asMap = obj.(map[string]interface{})
@@ -5834,6 +5936,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "removeOrganizationDomain":
 			out.Values[i] = ec._Mutation_removeOrganizationDomain(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "setThreadLastViewedAt":
+			out.Values[i] = ec._Mutation_setThreadLastViewedAt(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -7095,7 +7202,7 @@ func (ec *executionContext) marshalNPost2ᚕᚖgithubᚗcomᚋsilinternational�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNPost2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, sel, v[i])
+			ret[i] = ec.marshalOPost2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -7183,6 +7290,10 @@ func (ec *executionContext) marshalNPostType2ᚖgithubᚗcomᚋsilinternational�
 
 func (ec *executionContext) unmarshalNRemoveOrganizationDomainInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐRemoveOrganizationDomainInput(ctx context.Context, v interface{}) (RemoveOrganizationDomainInput, error) {
 	return ec.unmarshalInputRemoveOrganizationDomainInput(ctx, v)
+}
+
+func (ec *executionContext) unmarshalNSetThreadLastViewedAtInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐSetThreadLastViewedAtInput(ctx context.Context, v interface{}) (SetThreadLastViewedAtInput, error) {
+	return ec.unmarshalInputSetThreadLastViewedAtInput(ctx, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {

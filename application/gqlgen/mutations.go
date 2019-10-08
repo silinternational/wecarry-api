@@ -119,3 +119,16 @@ func (r *mutationResolver) RemoveOrganizationDomain(ctx context.Context, input R
 
 	return orgDomains, nil
 }
+
+// SetThreadLastViewedAt sets the last viewed time for the current user on the given thread
+func (r *mutationResolver) SetThreadLastViewedAt(ctx context.Context, input SetThreadLastViewedAtInput) (*models.Thread, error) {
+	var thread models.Thread
+	if err := thread.FindByUUID(input.ThreadID); err != nil {
+		return &thread, err
+	}
+	if err := thread.SetLastViewedAt(models.GetCurrentUserFromGqlContext(ctx, TestUser), input.Time); err != nil {
+		return &thread, err
+	}
+
+	return &thread, nil
+}

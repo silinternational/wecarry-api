@@ -1,7 +1,11 @@
 package models
 
 import (
+	"fmt"
 	"testing"
+	"time"
+
+	"github.com/silinternational/wecarry-api/domain"
 
 	"github.com/gobuffalo/validate"
 )
@@ -52,6 +56,111 @@ func (ms *ModelSuite) TestThreadParticipant_Validate() {
 			} else if (test.wantErr == false) && (vErr.HasAny()) {
 				t.Errorf("Unexpected error: %v", vErr)
 			}
+		})
+	}
+}
+
+// CreateFixtures_ThreadParticipant_SetLastViewedAt creates test fixtures for the ThreadParticipant_SetLastViewedAt test
+func CreateFixtures_ThreadParticipant_SetLastViewedAt(ms *ModelSuite, t *testing.T) ThreadFixtures {
+	ResetTables(t, ms.DB)
+
+	org := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	createFixture(t, &org)
+
+	users := Users{
+		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1", Uuid: domain.GetUuid()},
+	}
+	for i := range users {
+		createFixture(t, &(users[i]))
+	}
+
+	userOrgs := UserOrganizations{
+		{OrganizationID: org.ID, UserID: users[0].ID, AuthID: users[0].Email, AuthEmail: users[0].Email},
+	}
+	for i := range userOrgs {
+		createFixture(t, &(userOrgs[i]))
+	}
+
+	posts := Posts{
+		{
+			CreatedByID:    users[0].ID,
+			Type:           PostTypeRequest,
+			OrganizationID: org.ID,
+			Status:         PostStatusOpen,
+			Title:          "Maple Syrup",
+			Size:           PostSizeMedium,
+			Uuid:           domain.GetUuid(),
+			NeededAfter:    time.Now(),
+			NeededBefore:   time.Date(2029, time.August, 3, 0, 0, 0, 0, time.UTC),
+			Category:       "Unknown",
+		},
+	}
+	for i := range posts {
+		createFixture(t, &(posts[i]))
+	}
+
+	threads := Threads{
+		{Uuid: domain.GetUuid(), PostID: posts[0].ID},
+	}
+	for i := range threads {
+		createFixture(t, &(threads[i]))
+	}
+
+	threadParticipants := ThreadParticipants{
+		{
+			ThreadID:     threads[0].ID,
+			UserID:       users[0].ID,
+			LastViewedAt: time.Now().Add(-1 * time.Hour),
+		},
+	}
+	for i := range threadParticipants {
+		createFixture(t, &(threadParticipants[i]))
+	}
+
+	return ThreadFixtures{
+		Users:              users,
+		ThreadParticipants: threadParticipants,
+	}
+}
+
+func (ms *ModelSuite) TestThreadParticipant_SetLastViewedAt() {
+	t := ms.T()
+	ResetTables(t, ms.DB)
+
+	f := CreateFixtures_ThreadParticipant_SetLastViewedAt(ms, t)
+
+	tests := []struct {
+		name              string
+		threadParticipant ThreadParticipant
+		lastViewedAt      time.Time
+		wantErr           bool
+	}{
+		{name: "good", threadParticipant: f.ThreadParticipants[0], lastViewedAt: time.Now()},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			tp := test.threadParticipant
+			err := tp.SetLastViewedAt(test.lastViewedAt)
+
+			// reload from database to ensure the new time was saved
+			_ = DB.Reload(&tp)
+
+			if test.wantErr {
+				ms.Error(err)
+				return
+			}
+
+			if err != nil {
+				t.Errorf("SetLastViewedAt() returned an error: %v", err)
+				return
+			}
+
+			want := test.lastViewedAt.Add(-1 * time.Minute)
+			ms.True(tp.LastViewedAt.After(want),
+				fmt.Sprintf("time not correct, got %v, wanted afer %v", tp.LastViewedAt, want))
+			want = test.lastViewedAt.Add(time.Minute)
+			ms.True(tp.LastViewedAt.Before(want),
+				fmt.Sprintf("time not correct, got %v, wanted before %v", tp.LastViewedAt, want))
 		})
 	}
 }
