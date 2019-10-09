@@ -581,38 +581,26 @@ func (ms *ModelSuite) TestUserAccessToken_UserAccessTokensDeleteExpired() {
 
 	f := createFixtures_UserAccessTokensDeleteExpired(ms, t)
 
-	got, err := UserAccessTokensDeleteExpired()
+	var uats UserAccessTokens
+	got, err := uats.DeleteExpired()
 
-	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
-		return
-	}
+	ms.NoError(err)
 
 	want := 1
 
-	if got != want {
-		t.Errorf("Wrong count of deleted tokens. Expected %v, but got %v", want, got)
-		return
-	}
+	ms.Equal(want, got, "Wrong count of deleted tokens.")
 
-	var uats UserAccessTokens
-	if err := DB.All(&uats); err != nil {
+	var uatsLeft UserAccessTokens
+	if err := DB.All(&uatsLeft); err != nil {
 		t.Errorf("Couldn't get tokens in order to complete test ... %v", err)
 		return
 	}
 
-	got = len(uats)
+	got = len(uatsLeft)
+	ms.Equal(want, got, "Deleted wrong number of tokens.")
 
-	if got != want {
-		t.Errorf("Deleted wrong number of tokens. Expected %v, but got %v", want, got)
-		return
-	}
-
-	gotToken := uats[0].AccessToken
+	gotToken := uatsLeft[0].AccessToken
 	wantToken := f.UserAccessTokens[1].AccessToken
 
-	if gotToken != wantToken {
-		t.Errorf("Wrong token remaining. \nWant %v \n Got %v", wantToken, gotToken)
-	}
-
+	ms.Equal(wantToken, gotToken, "Wrong token remaining.")
 }
