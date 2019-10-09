@@ -130,8 +130,8 @@ func GetCurrentTime() string {
 // GetUuid creates a new, unique version 4 (random) UUID and returns it
 // as a uuid2.UUID. Errors are ignored.
 func GetUuid() uuid2.UUID {
-	// TODO: Handle this error
-	uuid, _ := uuid2.NewV4()
+	uuid, err := uuid2.NewV4()
+	ErrLogger.Printf("error creating new uuid2 ... %v", err)
 	return uuid
 }
 
