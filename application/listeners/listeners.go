@@ -14,25 +14,34 @@ const (
 var UserAccessTokensNextCleanupTime time.Time
 
 //
-// Register new listener functions here
+// Register new listener functions here.  Remember, though, that these groupings just
+// describe what we want.  They don't make it happen this way. The listeners
+// themselves still need to verify the event kind
 //
-var apiListeners = []apiListener{
-	{
-		name:     "user-created",
-		listener: userCreated,
+var apiListeners = map[string][]apiListener{
+	domain.EventApiUserCreated: []apiListener{
+		{
+			name:     "user-created",
+			listener: userCreated,
+		},
 	},
-	{
-		name:     "trigger-user-access-tokens-cleanup",
-		listener: userAccessTokensCleanup,
+
+	domain.EventApiAuthUserLoggedIn: []apiListener{
+		{
+			name:     "trigger-user-access-tokens-cleanup",
+			listener: userAccessTokensCleanup,
+		},
 	},
 }
 
 // RegisterListeners registers all the listeners to be used by the app
 func RegisterListeners() {
-	for _, a := range apiListeners {
-		_, err := events.NamedListen(a.name, a.listener)
-		if err != nil {
-			domain.ErrLogger.Print("Failed registering listener: " + a.name)
+	for _, listeners := range apiListeners {
+		for _, l := range listeners {
+			_, err := events.NamedListen(l.name, l.listener)
+			if err != nil {
+				domain.ErrLogger.Print("Failed registering listener: " + l.name)
+			}
 		}
 	}
 }
@@ -52,10 +61,11 @@ func userAccessTokensCleanup(e events.Event) {
 	var uats models.UserAccessTokens
 	deleted, err := uats.DeleteExpired()
 	if err != nil {
-		domain.ErrLogger.Print("Last error deleting expired user access tokens during cleanup ... " + err.Error())
+		domain.ErrLogger.Printf("%s Last error deleting expired user access tokens during cleanup ... %v",
+			domain.GetCurrentTime(), err)
 	}
 
-	domain.Logger.Printf("Deleted %v expired user access tokens during cleanup", deleted)
+	domain.Logger.Printf("%s Deleted %v expired user access tokens during cleanup", domain.GetCurrentTime(), deleted)
 }
 
 func userCreated(e events.Event) {
