@@ -8,6 +8,7 @@ import (
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/envy"
 	"github.com/silinternational/wecarry-api/auth"
+	"github.com/silinternational/wecarry-api/domain"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -75,9 +76,9 @@ func (p *Provider) AuthCallback(c buffalo.Context) auth.Response {
 
 	defer auth.Logout(res, req)
 
-	// TODO Log this???
 	msg := auth.CheckSessionStore()
 	if msg != "" {
+		domain.Logger.Printf("got message from Google's CheckSessionStore() in AuthCallback ... %s", msg)
 		fmt.Println("google_provider: " + msg)
 	}
 
