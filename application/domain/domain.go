@@ -28,12 +28,16 @@ const (
 	MaxFileSize                = 1 << 20 // 1 Mebibyte
 	AccessTokenLifetimeSeconds = 3600
 	DateTimeFormat             = "2006-01-02 15:04:05"
+)
 
-	// Environment Variables
+// Environment Variables
+const (
 	UIURLEnv                      = "UI_URL"
 	AccessTokenLifetimeSecondsEnv = "ACCESS_TOKEN_LIFETIME_SECONDS"
+)
 
-	// Event Kinds
+// Event Kinds
+const (
 	EventApiUserCreated      = "api:user:created"
 	EventApiAuthUserLoggedIn = "api:auth:user:loggedin"
 )
