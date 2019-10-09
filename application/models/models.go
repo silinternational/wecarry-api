@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/gobuffalo/events"
 	"github.com/gobuffalo/validate/validators"
+	"github.com/silinternational/wecarry-api/domain"
 	"log"
 	"strings"
 
@@ -119,12 +120,9 @@ func (v *NullsStringIsURL) IsValid(errors *validate.Errors) {
 	newV.IsValid(errors)
 }
 
-func EmitEvent(kind, message string) {
-	e := events.Event{
-		Kind:    kind,
-		Message: message,
-	}
+// This can include an event payload, which is a map[string]interface{}
+func emitEvent(e events.Event) {
 	if err := events.Emit(e); err != nil {
-		log.Printf("error emitting event %s ... %v", e.Kind, err)
+		domain.ErrLogger.Printf("error emitting event %s ... %v", e.Kind, err)
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"github.com/gobuffalo/events"
 	"strings"
 	"time"
 
@@ -203,7 +204,12 @@ func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
 	}
 
 	if newUser {
-		EmitEvent(domain.EventApiUserCreated, "Nickname: "+u.Nickname+"  Uuid: "+u.Uuid.String())
+		e := events.Event{
+			Kind:    domain.EventApiUserCreated,
+			Message: "Nickname: " + u.Nickname + "  Uuid: " + u.Uuid.String(),
+			Payload: events.Payload{"user": u},
+		}
+		emitEvent(e)
 	}
 
 	// reload user
