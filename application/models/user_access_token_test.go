@@ -604,3 +604,15 @@ func (ms *ModelSuite) TestUserAccessToken_UserAccessTokensDeleteExpired() {
 
 	ms.Equal(wantToken, gotToken, "Wrong token remaining.")
 }
+
+func (ms *ModelSuite) TestCreateAccessTokenPart() {
+	got1 := createAccessTokenPart()
+	got2 := createAccessTokenPart()
+
+	ms.NotEqual(got1, got2, "Expected two different access tokens, but got the same one")
+
+	got := len(got1)
+	want := 44 //   32 / 3 (rounded up)  * 4
+
+	ms.Equal(want, got, "Wrong length of access token. Got ... %s", got1)
+}

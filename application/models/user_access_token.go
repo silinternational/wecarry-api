@@ -1,9 +1,10 @@
 package models
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"math/rand"
 	"strconv"
 	"time"
 
@@ -125,17 +126,9 @@ func createAccessTokenExpiry() time.Time {
 }
 
 func createAccessTokenPart() string {
-	var alphanumerics = []rune("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-
-	tokenLength := 32
-	b := make([]rune, tokenLength)
-	for i := range b {
-		b[i] = alphanumerics[rand.Intn(len(alphanumerics))]
-	}
-
-	accessToken := string(b)
-
-	return accessToken
+	// Not checking the error, since we did that in models.init()
+	rand.Read(RandomBytes)
+	return base64.URLEncoding.EncodeToString(RandomBytes)
 }
 
 // Renew extends the token expiration to the configured token lifetime

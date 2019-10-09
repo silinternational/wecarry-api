@@ -2,6 +2,7 @@ package models
 
 import (
 	"context"
+	"crypto/rand"
 	"database/sql"
 	"fmt"
 	"github.com/gobuffalo/events"
@@ -24,6 +25,8 @@ import (
 // throughout your application.
 var DB *pop.Connection
 
+var RandomBytes = make([]byte, 32)
+
 func init() {
 	var err error
 	env := envy.Get("GO_ENV", "development")
@@ -32,6 +35,11 @@ func init() {
 		log.Fatal(err)
 	}
 	pop.Debug = env == "development"
+
+	// Just make sure we can use the crypto/rand library on our system
+	if _, err = rand.Read(RandomBytes); err != nil {
+		log.Fatal(fmt.Errorf("error using crypto/rand ... %v", err))
+	}
 }
 
 func ConvertStringPtrToNullsString(inPtr *string) nulls.String {
