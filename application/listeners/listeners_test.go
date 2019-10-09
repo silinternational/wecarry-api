@@ -40,10 +40,8 @@ func (ms *ModelSuite) TestRegisterListeners() {
 
 	ms.Equal("", got, "Got an unexpected error log entry")
 
-	allLs := apiListeners
-
 	wantCount := 0
-	for _, listeners := range allLs {
+	for _, listeners := range apiListeners {
 		wantCount += len(listeners)
 	}
 
