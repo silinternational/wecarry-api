@@ -10,6 +10,7 @@ require (
 	github.com/gobuffalo/buffalo v0.14.6
 	github.com/gobuffalo/buffalo-pop v1.16.0
 	github.com/gobuffalo/envy v1.7.0
+	github.com/gobuffalo/events v1.4.0
 	github.com/gobuffalo/httptest v1.4.0
 	github.com/gobuffalo/mw-contenttype v0.0.0-20190224202710-36c73cc938f3
 	github.com/gobuffalo/mw-csrf v0.0.0-20190129204204-25460a055517 // indirect

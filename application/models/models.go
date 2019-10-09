@@ -4,7 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/gobuffalo/events"
 	"github.com/gobuffalo/validate/validators"
+	"github.com/silinternational/wecarry-api/domain"
 	"log"
 	"strings"
 
@@ -116,4 +118,11 @@ func (v *NullsStringIsURL) IsValid(errors *validate.Errors) {
 
 	newV := validators.URLIsPresent{Name: v.Name, Field: value, Message: v.Message}
 	newV.IsValid(errors)
+}
+
+// This can include an event payload, which is a map[string]interface{}
+func emitEvent(e events.Event) {
+	if err := events.Emit(e); err != nil {
+		domain.ErrLogger.Printf("error emitting event %s ... %v", e.Kind, err)
+	}
 }

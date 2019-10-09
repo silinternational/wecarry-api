@@ -384,8 +384,8 @@ func (ms *ModelSuite) TestUserAccessToken_GetUser() {
 	}
 }
 
-// CreateFixtures_IsExpired creates test fixtures for the IsExpired test function
-func CreateFixtures_IsExpired(ms *ModelSuite, t *testing.T) AccessTokenFixtures {
+// CreateFixtures_DeleteIfExpired creates test fixtures for the DeleteIfExpired test function
+func CreateFixtures_DeleteIfExpired(ms *ModelSuite, t *testing.T) AccessTokenFixtures {
 	ResetTables(t, ms.DB)
 
 	org := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
@@ -431,11 +431,11 @@ func CreateFixtures_IsExpired(ms *ModelSuite, t *testing.T) AccessTokenFixtures 
 	}
 }
 
-func (ms *ModelSuite) TestUserAccessToken_IsExpired() {
+func (ms *ModelSuite) TestUserAccessToken_DeleteIfExpired() {
 	t := ms.T()
 	ResetTables(t, ms.DB)
 
-	f := CreateFixtures_IsExpired(ms, t)
+	f := CreateFixtures_DeleteIfExpired(ms, t)
 
 	tests := []struct {
 		name  string
@@ -449,7 +449,11 @@ func (ms *ModelSuite) TestUserAccessToken_IsExpired() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			u := test.token
-			got := u.IsExpired()
+			got, err := u.DeleteIfExpired()
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+				return
+			}
 			ms.Equal(test.want, got)
 		})
 	}
@@ -520,7 +524,83 @@ func (ms *ModelSuite) TestUserAccessToken_Renew() {
 		t.Run(test.name, func(t *testing.T) {
 			u := test.token
 			_ = u.Renew()
-			ms.False(u.IsExpired())
+			ms.False(u.DeleteIfExpired())
 		})
 	}
+}
+
+func createFixtures_UserAccessTokensDeleteExpired(ms *ModelSuite, t *testing.T) AccessTokenFixtures {
+	ResetTables(t, ms.DB)
+
+	org := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	createFixture(t, &org)
+
+	users := Users{
+		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1", Uuid: domain.GetUuid()},
+		{Email: t.Name() + "_user2@example.com", Nickname: t.Name() + " User2", Uuid: domain.GetUuid()},
+	}
+	for i := range users {
+		createFixture(t, &(users[i]))
+	}
+
+	userOrgs := UserOrganizations{
+		{OrganizationID: org.ID, UserID: users[0].ID, AuthID: users[0].Email, AuthEmail: users[0].Email},
+		{OrganizationID: org.ID, UserID: users[1].ID, AuthID: users[1].Email, AuthEmail: users[1].Email},
+	}
+	for i := range userOrgs {
+		createFixture(t, &(userOrgs[i]))
+	}
+
+	tokens := UserAccessTokens{
+		{
+			UserID:             users[0].ID,
+			UserOrganizationID: userOrgs[0].ID,
+			AccessToken:        HashClientIdAccessToken("abc123"),
+			ExpiresAt:          time.Unix(0, 0),
+		},
+		{
+			UserID:             users[1].ID,
+			UserOrganizationID: userOrgs[1].ID,
+			AccessToken:        HashClientIdAccessToken("xyz789"),
+			ExpiresAt:          time.Date(2099, time.December, 31, 0, 0, 0, 0, time.UTC),
+		},
+	}
+	for i := range tokens {
+		createFixture(t, &(tokens[i]))
+	}
+
+	return AccessTokenFixtures{
+		Users:            users,
+		UserAccessTokens: tokens,
+	}
+}
+
+func (ms *ModelSuite) TestUserAccessToken_UserAccessTokensDeleteExpired() {
+	t := ms.T()
+	ResetTables(t, ms.DB)
+
+	f := createFixtures_UserAccessTokensDeleteExpired(ms, t)
+
+	var uats UserAccessTokens
+	got, err := uats.DeleteExpired()
+
+	ms.NoError(err)
+
+	want := 1
+
+	ms.Equal(want, got, "Wrong count of deleted tokens.")
+
+	var uatsLeft UserAccessTokens
+	if err := DB.All(&uatsLeft); err != nil {
+		t.Errorf("Couldn't get tokens in order to complete test ... %v", err)
+		return
+	}
+
+	got = len(uatsLeft)
+	ms.Equal(want, got, "Deleted wrong number of tokens.")
+
+	gotToken := uatsLeft[0].AccessToken
+	wantToken := f.UserAccessTokens[1].AccessToken
+
+	ms.Equal(wantToken, gotToken, "Wrong token remaining.")
 }

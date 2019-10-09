@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"github.com/gobuffalo/events"
 	"strings"
 	"time"
 
@@ -200,6 +201,15 @@ func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
 		if err != nil {
 			return fmt.Errorf("unable to create new user_organization record: %s", err.Error())
 		}
+	}
+
+	if newUser {
+		e := events.Event{
+			Kind:    domain.EventApiUserCreated,
+			Message: "Nickname: " + u.Nickname + "  Uuid: " + u.Uuid.String(),
+			Payload: events.Payload{"user": u},
+		}
+		emitEvent(e)
 	}
 
 	// reload user

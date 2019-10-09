@@ -406,8 +406,18 @@ func SetCurrentUser(next buffalo.Handler) buffalo.Handler {
 
 		var userAccessToken models.UserAccessToken
 		err := userAccessToken.FindByBearerToken(bearerToken)
-		if err != nil || userAccessToken.IsExpired() {
+		if err != nil {
+			domain.ErrLogger.Print(err.Error())
 			return c.Error(401, fmt.Errorf("invalid bearer token"))
+		}
+
+		isExpired, err := userAccessToken.DeleteIfExpired()
+		if err != nil {
+			domain.ErrLogger.Print(err.Error())
+		}
+
+		if isExpired {
+			return c.Error(401, fmt.Errorf("expired bearer token"))
 		}
 
 		user, err := userAccessToken.GetUser()

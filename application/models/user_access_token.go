@@ -3,7 +3,6 @@ package models
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"math/rand"
 	"strconv"
 	"time"
@@ -111,11 +110,11 @@ func (u *UserAccessToken) GetOrganization() (Organization, error) {
 }
 
 func createAccessTokenExpiry() time.Time {
-	envLifetime := envy.Get("ACCESS_TOKEN_LIFETIME", strconv.Itoa(domain.AccessTokenLifetimeSeconds))
+	envLifetime := envy.Get(domain.AccessTokenLifetimeSecondsEnv, strconv.Itoa(domain.AccessTokenLifetimeSeconds))
 
 	lifetimeSeconds, err := strconv.Atoi(envLifetime)
 	if err != nil {
-        // TODO Ensure this gets logged so that we know our env var is bad
+		domain.ErrLogger.Printf("error converting %s env var ... %v", domain.AccessTokenLifetimeSecondsEnv, err)
 		lifetimeSeconds = domain.AccessTokenLifetimeSeconds
 	}
 
@@ -159,15 +158,37 @@ func (u *UserAccessToken) GetUser() (User, error) {
 	return u.User, nil
 }
 
-// IsExpired checks the token expiration and returns `true` if expired. Also deletes the token from the database
-// if it is expired.
-func (u *UserAccessToken) IsExpired() bool {
+// DeleteIfExpired checks the token expiration and returns `true` if expired. Also deletes
+// the token from the database if it is expired.
+func (u *UserAccessToken) DeleteIfExpired() (bool, error) {
 	if u.ExpiresAt.Before(time.Now()) {
 		err := DB.Destroy(u)
 		if err != nil {
-			log.Printf("Unable to delete expired userAccessToken, id: %v", u.ID)
+			return true, fmt.Errorf("unable to delete expired userAccessToken, id: %v", u.ID)
 		}
-		return true
+		return true, nil
 	}
-	return false
+	return false, nil
+}
+
+func (u *UserAccessTokens) DeleteExpired() (int, error) {
+	deleted := 0
+	var lastErr error
+
+	var uats UserAccessTokens
+	if err := DB.All(&uats); err != nil {
+		return deleted, err
+	}
+
+	for _, u := range uats {
+		isExpired, err := u.DeleteIfExpired()
+		if isExpired && err == nil {
+			deleted++
+		}
+		if err != nil {
+			lastErr = err
+		}
+	}
+
+	return deleted, lastErr
 }

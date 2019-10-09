@@ -2,7 +2,9 @@ package domain
 
 import (
 	"fmt"
+	"log"
 	"net/http"
+	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -24,13 +26,33 @@ const (
 	EmptyUUID                  = "00000000-0000-0000-0000-000000000000"
 	DateFormat                 = "2006-01-02"
 	MaxFileSize                = 1 << 20 // 1 Mebibyte
-	UIURLEnv                   = "UI_URL"
 	AccessTokenLifetimeSeconds = 3600
+	DateTimeFormat             = "2006-01-02 15:04:05"
+)
+
+// Environment Variables
+const (
+	UIURLEnv                      = "UI_URL"
+	AccessTokenLifetimeSecondsEnv = "ACCESS_TOKEN_LIFETIME_SECONDS"
+)
+
+// Event Kinds
+const (
+	EventApiUserCreated      = "api:user:created"
+	EventApiAuthUserLoggedIn = "api:auth:user:loggedin"
 )
 
 // NoExtras is exported for use when making calls to RollbarError and rollbarMessage to reduce
 // typing map[string]interface{} when no extras are needed
 var NoExtras map[string]interface{}
+
+var Logger log.Logger
+var ErrLogger log.Logger
+
+func init() {
+	Logger.SetOutput(os.Stdout)
+	ErrLogger.SetOutput(os.Stderr)
+}
 
 type AppError struct {
 	Code    string `json:"Code"`
@@ -120,6 +142,12 @@ func ConvertStrPtrToString(inPtr *string) string {
 	}
 
 	return *inPtr
+}
+
+// GetCurrentTime returns a string of the current date and time
+// based on the default DateTimeFormat
+func GetCurrentTime() string {
+	return time.Now().Format(DateTimeFormat)
 }
 
 // GetUuid creates a new, unique version 4 (random) UUID and returns it
