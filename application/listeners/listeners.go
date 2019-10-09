@@ -7,48 +7,15 @@ import (
 	"time"
 )
 
-// For new listener functions, register them at the end of the
-// file in the apiListeners slice
-
 const (
 	UserAccessTokensCleanupDelayMinutes = 480
 )
 
 var UserAccessTokensNextCleanupTime time.Time
 
-func userAccessTokensCleanup(e events.Event) {
-	if e.Kind != domain.EventApiAuthUserLoggedIn {
-		return
-	}
-
-	now := time.Now()
-	if !now.After(UserAccessTokensNextCleanupTime) {
-		return
-	}
-
-	UserAccessTokensNextCleanupTime = now.Add(time.Duration(time.Minute * UserAccessTokensCleanupDelayMinutes))
-
-	deleted, err := models.UserAccessTokensDeleteExpired()
-	if err != nil {
-		domain.ErrLogger.Print("Last error deleting expired user access tokens during cleanup ... " + err.Error())
-	}
-
-	domain.Logger.Printf("Deleted %v expired user access tokens during cleanup", deleted)
-}
-
-func userCreated(e events.Event) {
-	if e.Kind != domain.EventApiUserCreated {
-		return
-	}
-
-	domain.Logger.Printf("%s User Created ... %s", domain.GetCurrentTime(), e.Message)
-}
-
-type apiListener struct {
-	name     string
-	listener func(events.Event)
-}
-
+//
+// Register new listener functions here
+//
 var apiListeners = []apiListener{
 	{
 		name:     "user-created",
@@ -68,4 +35,38 @@ func RegisterListeners() {
 			domain.ErrLogger.Print("Failed registering listener: " + a.name)
 		}
 	}
+}
+
+func userAccessTokensCleanup(e events.Event) {
+	if e.Kind != domain.EventApiAuthUserLoggedIn {
+		return
+	}
+
+	now := time.Now()
+	if !now.After(UserAccessTokensNextCleanupTime) {
+		return
+	}
+
+	UserAccessTokensNextCleanupTime = now.Add(time.Duration(time.Minute * UserAccessTokensCleanupDelayMinutes))
+
+	var uats models.UserAccessTokens
+	deleted, err := uats.DeleteExpired()
+	if err != nil {
+		domain.ErrLogger.Print("Last error deleting expired user access tokens during cleanup ... " + err.Error())
+	}
+
+	domain.Logger.Printf("Deleted %v expired user access tokens during cleanup", deleted)
+}
+
+func userCreated(e events.Event) {
+	if e.Kind != domain.EventApiUserCreated {
+		return
+	}
+
+	domain.Logger.Printf("%s User Created ... %s", domain.GetCurrentTime(), e.Message)
+}
+
+type apiListener struct {
+	name     string
+	listener func(events.Event)
 }
