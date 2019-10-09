@@ -171,7 +171,7 @@ func (u *UserAccessToken) DeleteIfExpired() (bool, error) {
 	return false, nil
 }
 
-func UserAccessTokensDeleteExpired() (int, error) {
+func (u *UserAccessTokens) DeleteExpired() (int, error) {
 	deleted := 0
 	var lastErr error
 
