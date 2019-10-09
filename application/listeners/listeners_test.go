@@ -6,6 +6,7 @@ import (
 	"github.com/gobuffalo/events"
 	"github.com/gobuffalo/suite"
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/models"
 	"os"
 	"reflect"
 	"runtime"
@@ -99,6 +100,7 @@ func (ms *ModelSuite) TestUserCreated() {
 }
 
 func (ms *ModelSuite) TestUserAccessTokensCleanup() {
+	models.ResetTables(ms.T(), ms.DB)
 
 	UserAccessTokensNextCleanupTime = time.Now().Add(-time.Duration(time.Hour))
 
