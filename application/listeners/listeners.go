@@ -1,10 +1,15 @@
 package listeners
 
 import (
+	"time"
+
+	"github.com/gobuffalo/envy"
+
+	"github.com/silinternational/wecarry-api/notifications"
+
 	"github.com/gobuffalo/events"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
-	"time"
 )
 
 const (
@@ -30,6 +35,13 @@ var apiListeners = map[string][]apiListener{
 		{
 			name:     "trigger-user-access-tokens-cleanup",
 			listener: userAccessTokensCleanup,
+		},
+	},
+
+	domain.EventApiMessageCreated: []apiListener{
+		{
+			name:     "send-new-message-notification",
+			listener: sendNewMessageNotification,
 		},
 	},
 }
@@ -74,6 +86,44 @@ func userCreated(e events.Event) {
 	}
 
 	domain.Logger.Printf("%s User Created ... %s", domain.GetCurrentTime(), e.Message)
+}
+
+func sendNewMessageNotification(e events.Event) {
+	if e.Kind != domain.EventApiMessageCreated {
+		return
+	}
+	domain.Logger.Printf("%s Message Created ... %s", domain.GetCurrentTime(), e.Message)
+
+	from := getPayload(e, "From").(models.User)
+	to := getPayload(e, "To").(models.User)
+	message := getPayload(e, "Message").(models.Message)
+
+	uiUrl := envy.Get(domain.UIURLEnv, "")
+	data := map[string]interface{}{
+		"postURL":        uiUrl + "/#/requests/" + message.Thread.Post.Uuid.String(),
+		"postTitle":      message.Thread.Post.Title,
+		"messageContent": message.Content,
+		"sentByNickname": from.Nickname,
+		"threadURL":      uiUrl + "/#/messages/" + message.Thread.Uuid.String(),
+	}
+
+	msg := notifications.Message{
+		Template: domain.MessageTemplateNewMessage,
+		Data:     data,
+		From:     from,
+		To:       to,
+	}
+	if err := notifications.Send(msg); err != nil {
+		domain.ErrLogger.Printf("error sending 'New Message' notification, %s", err)
+	}
+}
+
+func getPayload(e events.Event, name string) interface{} {
+	p, err := e.Payload.Pluck(name)
+	if err != nil {
+		domain.ErrLogger.Printf("error retrieving payload %s from %s event, %s", name, e.Kind, err)
+	}
+	return p
 }
 
 type apiListener struct {

@@ -34,12 +34,22 @@ const (
 const (
 	UIURLEnv                      = "UI_URL"
 	AccessTokenLifetimeSecondsEnv = "ACCESS_TOKEN_LIFETIME_SECONDS"
+	SendGridAPIKeyEnv             = "SENDGRID_API_KEY"
+	EmailServiceEnv               = "EMAIL_SERVICE"
+	MobileServiceEnv              = "MOBILE_SERVICE"
 )
 
 // Event Kinds
 const (
 	EventApiUserCreated      = "api:user:created"
 	EventApiAuthUserLoggedIn = "api:auth:user:loggedin"
+	EventApiMessageCreated   = "api:message:created"
+)
+
+// Notification Message Template Names
+const (
+	MessageTemplateNewMessage = "new_message"
+	MessageTemplateNewRequest = "new_request"
 )
 
 // NoExtras is exported for use when making calls to RollbarError and rollbarMessage to reduce

@@ -20,7 +20,7 @@ func (r *mutationResolver) CreateMessage(ctx context.Context, input CreateMessag
 		return &models.Message{}, err
 	}
 
-	if err := models.DB.Create(&message); err != nil {
+	if err := message.Create(); err != nil {
 		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
 		return &models.Message{}, err
 	}

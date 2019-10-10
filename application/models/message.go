@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/gobuffalo/events"
+	"github.com/silinternational/wecarry-api/domain"
+
 	"github.com/gobuffalo/buffalo/genny/build/_fixtures/coke/models"
 
 	"github.com/gofrs/uuid"
@@ -82,4 +85,34 @@ func (m *Message) GetThread(requestFields []string) (*Thread, error) {
 		return nil, err
 	}
 	return &thread, nil
+}
+
+// Create a new message. Sends an `EventApiMessageCreated` event.
+func (m *Message) Create() error {
+	if err := DB.Create(m); err != nil {
+		return err
+	}
+
+	// Thread is needed in the Event listener
+	if err := DB.Load(m, "SentBy", "Thread"); err != nil {
+		return err
+	}
+
+	// Post is needed in the Event listener
+	if err := DB.Load(&m.Thread, "Participants", "Post"); err != nil {
+		return err
+	}
+
+	for _, tp := range m.Thread.Participants {
+		if tp.ID == m.SentBy.ID {
+			continue
+		}
+		e := events.Event{
+			Kind:    domain.EventApiMessageCreated,
+			Message: "Sender: " + m.SentBy.Nickname,
+			Payload: events.Payload{"Message": *m, "From": m.SentBy, "To": tp},
+		}
+		emitEvent(e)
+	}
+	return nil
 }

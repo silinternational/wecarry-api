@@ -1,0 +1,72 @@
+package notifications
+
+import (
+	"github.com/gobuffalo/envy"
+	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/notifications/email"
+	"github.com/silinternational/wecarry-api/notifications/mobile"
+)
+
+const (
+	EmailServiceSendGrid = "sendgrid"
+	EmailServiceDummy    = "dummy"
+	MobileServiceTwilio  = "twilio"
+	MobileServiceDummy   = "dummy"
+)
+
+type Notifier interface {
+	Send(msg Message) error
+}
+
+type Email struct {
+}
+
+func (e *Email) Send(msg Message) error {
+	var emailService email.Service
+
+	emailServiceType := envy.Get(domain.EmailServiceEnv, "sendgrid")
+	switch emailServiceType {
+	case EmailServiceSendGrid:
+		emailService = &email.SendGridService{}
+	case EmailServiceDummy:
+		emailService = &email.DummyService{}
+	default:
+		emailService = &email.DummyService{}
+	}
+
+	emailMessage := email.Message{
+		FromName:     msg.From.Nickname,
+		FromEmail:    msg.From.Email,
+		ToName:       msg.To.Nickname,
+		ToEmail:      msg.To.Email,
+		TemplateName: msg.Template,
+		TemplateData: msg.Data,
+	}
+
+	return emailService.Send(emailMessage)
+}
+
+type Mobile struct {
+}
+
+func (m *Mobile) Send(msg Message) error {
+	var mobileService mobile.Service
+
+	mobileServiceType := envy.Get(domain.MobileServiceEnv, "dummy")
+	switch mobileServiceType {
+	case MobileServiceDummy:
+		mobileService = &mobile.DummyService{}
+	default:
+		mobileService = &mobile.DummyService{}
+	}
+
+	mobileMessage := mobile.Message{
+		FromName:     msg.From.Nickname,
+		FromPhone:    msg.From.Email,
+		ToName:       msg.To.Nickname,
+		ToPhone:      msg.To.Email,
+		TemplateName: msg.Template,
+	}
+
+	return mobileService.Send(mobileMessage)
+}
