@@ -13,6 +13,58 @@ resolver:
   filename: resolver.go
   type: Resolver
 autobind: []
+models:
+  Organization:
+    model: github.com/silinternational/wecarry-api/models.Organization
+    fields:
+      id:
+        resolver: true
+  OrganizationDomain:
+    model: github.com/silinternational/wecarry-api/models.OrganizationDomain
+  User:
+    model: github.com/silinternational/wecarry-api/models.User
+    fields:
+      id:
+        resolver: true
+      photoURL:
+        resolver: true
+  Post:
+    model: github.com/silinternational/wecarry-api/models.Post
+    fields:
+      id:
+        resolver: true
+      organization:
+        resolver: true
+      createdBy:
+        resolver: true
+      receiver:
+        resolver: true
+      provider:
+        resolver: true
+  Thread:
+    model: github.com/silinternational/wecarry-api/models.Thread
+    fields:
+      id:
+        resolver: true
+      post:
+        resolver: true
+  Message:
+    model: github.com/silinternational/wecarry-api/models.Message
+    fields:
+      id:
+        resolver: true
+      thread:
+        resolver: true
+  File:
+    model: github.com/silinternational/wecarry-api/models.File
+    fields:
+      id:
+        resolver: true
+  UpdatePostInput:
+    model: github.com/silinternational/wecarry-api/gqlgen.postInput
+  CreatePostInput:
+    model: github.com/silinternational/wecarry-api/gqlgen.postInput
+
 #directives:
 #  deprecated:
 #    skip_runtime: true

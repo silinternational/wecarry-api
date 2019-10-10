@@ -6,91 +6,187 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+	"time"
 )
 
-type Message struct {
-	ID        string  `json:"id"`
-	Sender    *User   `json:"sender"`
-	Content   string  `json:"content"`
-	Thread    *Thread `json:"thread"`
-	CreatedAt *string `json:"createdAt"`
-	UpdatedAt *string `json:"updatedAt"`
-}
-
-type NewMessage struct {
+type CreateMessageInput struct {
 	Content  string  `json:"content"`
 	PostID   string  `json:"postID"`
 	ThreadID *string `json:"threadID"`
 }
 
-type NewPost struct {
-	OrgID        string   `json:"orgID"`
-	Type         PostType `json:"type"`
-	Title        string   `json:"title"`
-	Description  *string  `json:"description"`
-	Destination  *string  `json:"destination"`
-	Origin       *string  `json:"origin"`
-	Size         string   `json:"size"`
-	NeededAfter  *string  `json:"neededAfter"`
-	NeededBefore *string  `json:"neededBefore"`
-	Category     *string  `json:"category"`
+type CreateOrganizationDomainInput struct {
+	Domain         string `json:"domain"`
+	OrganizationID string `json:"organizationID"`
 }
 
-type Organization struct {
-	ID        string  `json:"id"`
-	Name      string  `json:"name"`
-	URL       *string `json:"url"`
-	CreatedAt *string `json:"createdAt"`
-	UpdatedAt *string `json:"updatedAt"`
+type CreateOrganizationInput struct {
+	Name       string  `json:"name"`
+	URL        *string `json:"url"`
+	AuthType   string  `json:"authType"`
+	AuthConfig string  `json:"authConfig"`
 }
 
-type Post struct {
-	ID           string        `json:"id"`
-	UUID         string        `json:"uuid"`
-	Type         PostType      `json:"type"`
-	CreatedBy    *User         `json:"createdBy"`
-	Receiver     *User         `json:"receiver"`
-	Provider     *User         `json:"provider"`
-	Organization *Organization `json:"organization"`
-	Title        string        `json:"title"`
-	Description  *string       `json:"description"`
-	Destination  *string       `json:"destination"`
-	Origin       *string       `json:"origin"`
-	Size         string        `json:"size"`
-	NeededAfter  *string       `json:"neededAfter"`
-	NeededBefore *string       `json:"neededBefore"`
-	Category     string        `json:"category"`
-	Status       string        `json:"status"`
-	Thread       []*Thread     `json:"thread"`
-	CreatedAt    *string       `json:"createdAt"`
-	UpdatedAt    *string       `json:"updatedAt"`
+type RemoveOrganizationDomainInput struct {
+	Domain         string `json:"domain"`
+	OrganizationID string `json:"organizationID"`
 }
 
-type Thread struct {
-	ID           string     `json:"id"`
-	Participants []*User    `json:"participants"`
-	Messages     []*Message `json:"messages"`
-	PostID       string     `json:"postID"`
-	CreatedAt    *string    `json:"createdAt"`
-	UpdatedAt    *string    `json:"updatedAt"`
+type SetThreadLastViewedAtInput struct {
+	ThreadID string    `json:"threadId"`
+	Time     time.Time `json:"time"`
 }
 
-type UpdatedPostStatus struct {
-	ID     string `json:"id"`
-	Status string `json:"status"`
+type UpdateOrganizationInput struct {
+	ID         string  `json:"id"`
+	Name       string  `json:"name"`
+	URL        *string `json:"url"`
+	AuthType   string  `json:"authType"`
+	AuthConfig string  `json:"authConfig"`
 }
 
-type User struct {
-	ID          string  `json:"id"`
-	Email       string  `json:"email"`
-	FirstName   string  `json:"firstName"`
-	LastName    string  `json:"lastName"`
-	Nickname    string  `json:"nickname"`
-	UUID        string  `json:"uuid"`
-	AccessToken string  `json:"accessToken"`
-	CreatedAt   *string `json:"createdAt"`
-	UpdatedAt   *string `json:"updatedAt"`
-	AdminRole   *Role   `json:"adminRole"`
+type UpdateUserInput struct {
+	ID      *string `json:"id"`
+	PhotoID *string `json:"photoID"`
+}
+
+type PostRole string
+
+const (
+	PostRoleCreatedby PostRole = "CREATEDBY"
+	PostRoleReceiving PostRole = "RECEIVING"
+	PostRoleProviding PostRole = "PROVIDING"
+)
+
+var AllPostRole = []PostRole{
+	PostRoleCreatedby,
+	PostRoleReceiving,
+	PostRoleProviding,
+}
+
+func (e PostRole) IsValid() bool {
+	switch e {
+	case PostRoleCreatedby, PostRoleReceiving, PostRoleProviding:
+		return true
+	}
+	return false
+}
+
+func (e PostRole) String() string {
+	return string(e)
+}
+
+func (e *PostRole) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PostRole(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PostRole", str)
+	}
+	return nil
+}
+
+func (e PostRole) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type PostSize string
+
+const (
+	PostSizeTiny   PostSize = "TINY"
+	PostSizeSmall  PostSize = "SMALL"
+	PostSizeMedium PostSize = "MEDIUM"
+	PostSizeLarge  PostSize = "LARGE"
+	PostSizeXlarge PostSize = "XLARGE"
+)
+
+var AllPostSize = []PostSize{
+	PostSizeTiny,
+	PostSizeSmall,
+	PostSizeMedium,
+	PostSizeLarge,
+	PostSizeXlarge,
+}
+
+func (e PostSize) IsValid() bool {
+	switch e {
+	case PostSizeTiny, PostSizeSmall, PostSizeMedium, PostSizeLarge, PostSizeXlarge:
+		return true
+	}
+	return false
+}
+
+func (e PostSize) String() string {
+	return string(e)
+}
+
+func (e *PostSize) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PostSize(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PostSize", str)
+	}
+	return nil
+}
+
+func (e PostSize) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type PostStatus string
+
+const (
+	PostStatusOpen      PostStatus = "OPEN"
+	PostStatusCommitted PostStatus = "COMMITTED"
+	PostStatusAccepted  PostStatus = "ACCEPTED"
+	PostStatusReceived  PostStatus = "RECEIVED"
+	PostStatusCompleted PostStatus = "COMPLETED"
+	PostStatusRemoved   PostStatus = "REMOVED"
+)
+
+var AllPostStatus = []PostStatus{
+	PostStatusOpen,
+	PostStatusCommitted,
+	PostStatusAccepted,
+	PostStatusReceived,
+	PostStatusCompleted,
+	PostStatusRemoved,
+}
+
+func (e PostStatus) IsValid() bool {
+	switch e {
+	case PostStatusOpen, PostStatusCommitted, PostStatusAccepted, PostStatusReceived, PostStatusCompleted, PostStatusRemoved:
+		return true
+	}
+	return false
+}
+
+func (e PostStatus) String() string {
+	return string(e)
+}
+
+func (e *PostStatus) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PostStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PostStatus", str)
+	}
+	return nil
+}
+
+func (e PostStatus) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 type PostType string

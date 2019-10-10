@@ -6,24 +6,46 @@ services:
       context: ./application
       dockerfile: Dockerfile-dev
     volumes:
-      - ./application:/handcarry
+      - ./application:/wecarry
+      - ./dev:/wecarry/dev
     ports:
       - "3000:3000"
+    env_file:
+      - ./.env
     environment:
       ADDR: 0.0.0.0
-      HOST: http://handcarry.local:3000
+      HOST: http://wecarry.local:3000
       PORT: 3000
-      UI_URL: http://handcarry.local:5000
+      UI_URL: http://wecarry.local:5000
+      DATABASE_URL: postgres://wecarry:wecarry@db:5432/wecarry?sslmode=disable
+      GO_ENV: development
     depends_on:
       - db
+      - minio
     command: buffalo dev
+
+  test:
+    build:
+      context: ./application
+      dockerfile: Dockerfile-dev
+    volumes:
+      - ./application:/wecarry
+    env_file:
+      - ./test.env
+    environment:
+      GO_ENV: test
+    depends_on:
+      - testdb
+      - minio
+    working_dir: /wecarry
+    command: buffalo test
 
   playground:
     build:
       context: ./application
       dockerfile: Dockerfile-dev
     volumes:
-      - ./application:/handcarry
+      - ./application:/wecarry
     ports:
       - "8082:3000"
     command: go run gqlgen/server/server.go
@@ -31,15 +53,18 @@ services:
   db:
     image: postgres:9.6.13
     environment:
-      POSTGRES_USER: handcarry
-      POSTGRES_PASSWORD: handcarry
-      POSTGRES_DB: handcarry
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 3s
-      timeout: 2s
-      retries: 5
+      POSTGRES_USER: wecarry
+      POSTGRES_PASSWORD: wecarry
+      POSTGRES_DB: wecarry
 
+  testdb:
+    image: postgres:9.6.13
+    environment:
+      POSTGRES_USER: wecarry
+      POSTGRES_PASSWORD: wecarry
+      POSTGRES_DB: wecarry_test
+
+  # http://localhost:8080/?pgsql=db&username=wecarry&db=wecarry&ns=public
   adminer:
     image: adminer
     depends_on:
@@ -60,7 +85,7 @@ services:
       - PHP_PG_ADMIN_SERVER_HOST=db
       - PHP_PG_ADMIN_SERVER_PORT=5432
       - PHP_PG_ADMIN_SERVER_SSL_MODE=allow
-      - PHP_PG_ADMIN_SERVER_DEFAULT_DB=handcarry
+      - PHP_PG_ADMIN_SERVER_DEFAULT_DB=wecarry
       - PHP_PG_ADMIN_SERVER_PG_DUMP_PATH=/usr/bin/pg_dump
       - PHP_PG_ADMIN_SERVER_PG_DUMPALL_PATH=/usr/bin/pg_dumpall
       - PHP_PG_ADMIN_DEFAULT_LANG=auto
@@ -79,3 +104,14 @@ services:
       - PHP_PG_ADMIN_USE_XHTML_STRICT=false
       - PHP_PG_ADMIN_HELP_BASE=http://www.postgresql.org/docs/%s/interactive/
       - PHP_PG_ADMIN_AJAX_REFRESH=3
+
+  minio:
+    image: minio/minio
+    ports:
+      - "9000:9000"
+    command: server /data
+    env_file:
+      - ./.env
+    environment:
+      MINIO_ACCESS_KEY: ${AWS_S3_ACCESS_KEY_ID}
+      MINIO_SECRET_KEY: ${AWS_S3_SECRET_ACCESS_KEY}

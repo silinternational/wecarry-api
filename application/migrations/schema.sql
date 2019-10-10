@@ -21,7 +21,47 @@ SET default_tablespace = '';
 SET default_with_oids = false;
 
 --
--- Name: messages; Type: TABLE; Schema: public; Owner: handcarry
+-- Name: files; Type: TABLE; Schema: public; Owner: wecarry
+--
+
+CREATE TABLE public.files (
+    id integer NOT NULL,
+    uuid uuid NOT NULL,
+    url character varying(1024) NOT NULL,
+    url_expiration timestamp without time zone NOT NULL,
+    name character varying(255) NOT NULL,
+    size integer NOT NULL,
+    content_type character varying(255) NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.files OWNER TO wecarry;
+
+--
+-- Name: files_id_seq; Type: SEQUENCE; Schema: public; Owner: wecarry
+--
+
+CREATE SEQUENCE public.files_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.files_id_seq OWNER TO wecarry;
+
+--
+-- Name: files_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wecarry
+--
+
+ALTER SEQUENCE public.files_id_seq OWNED BY public.files.id;
+
+
+--
+-- Name: messages; Type: TABLE; Schema: public; Owner: wecarry
 --
 
 CREATE TABLE public.messages (
@@ -35,10 +75,10 @@ CREATE TABLE public.messages (
 );
 
 
-ALTER TABLE public.messages OWNER TO handcarry;
+ALTER TABLE public.messages OWNER TO wecarry;
 
 --
--- Name: messages_id_seq; Type: SEQUENCE; Schema: public; Owner: handcarry
+-- Name: messages_id_seq; Type: SEQUENCE; Schema: public; Owner: wecarry
 --
 
 CREATE SEQUENCE public.messages_id_seq
@@ -49,17 +89,53 @@ CREATE SEQUENCE public.messages_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.messages_id_seq OWNER TO handcarry;
+ALTER TABLE public.messages_id_seq OWNER TO wecarry;
 
 --
--- Name: messages_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: handcarry
+-- Name: messages_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wecarry
 --
 
 ALTER SEQUENCE public.messages_id_seq OWNED BY public.messages.id;
 
 
 --
--- Name: organizations; Type: TABLE; Schema: public; Owner: handcarry
+-- Name: organization_domains; Type: TABLE; Schema: public; Owner: wecarry
+--
+
+CREATE TABLE public.organization_domains (
+    id integer NOT NULL,
+    organization_id integer NOT NULL,
+    domain character varying(255) NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.organization_domains OWNER TO wecarry;
+
+--
+-- Name: organization_domains_id_seq; Type: SEQUENCE; Schema: public; Owner: wecarry
+--
+
+CREATE SEQUENCE public.organization_domains_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.organization_domains_id_seq OWNER TO wecarry;
+
+--
+-- Name: organization_domains_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wecarry
+--
+
+ALTER SEQUENCE public.organization_domains_id_seq OWNED BY public.organization_domains.id;
+
+
+--
+-- Name: organizations; Type: TABLE; Schema: public; Owner: wecarry
 --
 
 CREATE TABLE public.organizations (
@@ -74,10 +150,10 @@ CREATE TABLE public.organizations (
 );
 
 
-ALTER TABLE public.organizations OWNER TO handcarry;
+ALTER TABLE public.organizations OWNER TO wecarry;
 
 --
--- Name: organizations_id_seq; Type: SEQUENCE; Schema: public; Owner: handcarry
+-- Name: organizations_id_seq; Type: SEQUENCE; Schema: public; Owner: wecarry
 --
 
 CREATE SEQUENCE public.organizations_id_seq
@@ -88,17 +164,53 @@ CREATE SEQUENCE public.organizations_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.organizations_id_seq OWNER TO handcarry;
+ALTER TABLE public.organizations_id_seq OWNER TO wecarry;
 
 --
--- Name: organizations_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: handcarry
+-- Name: organizations_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wecarry
 --
 
 ALTER SEQUENCE public.organizations_id_seq OWNED BY public.organizations.id;
 
 
 --
--- Name: posts; Type: TABLE; Schema: public; Owner: handcarry
+-- Name: post_files; Type: TABLE; Schema: public; Owner: wecarry
+--
+
+CREATE TABLE public.post_files (
+    id integer NOT NULL,
+    post_id integer NOT NULL,
+    file_id integer NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.post_files OWNER TO wecarry;
+
+--
+-- Name: post_files_id_seq; Type: SEQUENCE; Schema: public; Owner: wecarry
+--
+
+CREATE SEQUENCE public.post_files_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.post_files_id_seq OWNER TO wecarry;
+
+--
+-- Name: post_files_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wecarry
+--
+
+ALTER SEQUENCE public.post_files_id_seq OWNED BY public.post_files.id;
+
+
+--
+-- Name: posts; Type: TABLE; Schema: public; Owner: wecarry
 --
 
 CREATE TABLE public.posts (
@@ -119,14 +231,17 @@ CREATE TABLE public.posts (
     category character varying(255) NOT NULL,
     description character varying(4096),
     created_at timestamp without time zone NOT NULL,
-    updated_at timestamp without time zone NOT NULL
+    updated_at timestamp without time zone NOT NULL,
+    url character varying(255),
+    cost numeric(13,4),
+    photo_file_id integer
 );
 
 
-ALTER TABLE public.posts OWNER TO handcarry;
+ALTER TABLE public.posts OWNER TO wecarry;
 
 --
--- Name: posts_id_seq; Type: SEQUENCE; Schema: public; Owner: handcarry
+-- Name: posts_id_seq; Type: SEQUENCE; Schema: public; Owner: wecarry
 --
 
 CREATE SEQUENCE public.posts_id_seq
@@ -137,17 +252,17 @@ CREATE SEQUENCE public.posts_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.posts_id_seq OWNER TO handcarry;
+ALTER TABLE public.posts_id_seq OWNER TO wecarry;
 
 --
--- Name: posts_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: handcarry
+-- Name: posts_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wecarry
 --
 
 ALTER SEQUENCE public.posts_id_seq OWNED BY public.posts.id;
 
 
 --
--- Name: schema_migration; Type: TABLE; Schema: public; Owner: handcarry
+-- Name: schema_migration; Type: TABLE; Schema: public; Owner: wecarry
 --
 
 CREATE TABLE public.schema_migration (
@@ -155,10 +270,10 @@ CREATE TABLE public.schema_migration (
 );
 
 
-ALTER TABLE public.schema_migration OWNER TO handcarry;
+ALTER TABLE public.schema_migration OWNER TO wecarry;
 
 --
--- Name: thread_participants; Type: TABLE; Schema: public; Owner: handcarry
+-- Name: thread_participants; Type: TABLE; Schema: public; Owner: wecarry
 --
 
 CREATE TABLE public.thread_participants (
@@ -166,14 +281,15 @@ CREATE TABLE public.thread_participants (
     thread_id integer NOT NULL,
     user_id integer NOT NULL,
     created_at timestamp without time zone NOT NULL,
-    updated_at timestamp without time zone NOT NULL
+    updated_at timestamp without time zone NOT NULL,
+    last_viewed_at timestamp without time zone DEFAULT '1900-01-01 00:00:00'::timestamp without time zone NOT NULL
 );
 
 
-ALTER TABLE public.thread_participants OWNER TO handcarry;
+ALTER TABLE public.thread_participants OWNER TO wecarry;
 
 --
--- Name: thread_participants_id_seq; Type: SEQUENCE; Schema: public; Owner: handcarry
+-- Name: thread_participants_id_seq; Type: SEQUENCE; Schema: public; Owner: wecarry
 --
 
 CREATE SEQUENCE public.thread_participants_id_seq
@@ -184,17 +300,17 @@ CREATE SEQUENCE public.thread_participants_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.thread_participants_id_seq OWNER TO handcarry;
+ALTER TABLE public.thread_participants_id_seq OWNER TO wecarry;
 
 --
--- Name: thread_participants_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: handcarry
+-- Name: thread_participants_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wecarry
 --
 
 ALTER SEQUENCE public.thread_participants_id_seq OWNED BY public.thread_participants.id;
 
 
 --
--- Name: threads; Type: TABLE; Schema: public; Owner: handcarry
+-- Name: threads; Type: TABLE; Schema: public; Owner: wecarry
 --
 
 CREATE TABLE public.threads (
@@ -206,10 +322,10 @@ CREATE TABLE public.threads (
 );
 
 
-ALTER TABLE public.threads OWNER TO handcarry;
+ALTER TABLE public.threads OWNER TO wecarry;
 
 --
--- Name: threads_id_seq; Type: SEQUENCE; Schema: public; Owner: handcarry
+-- Name: threads_id_seq; Type: SEQUENCE; Schema: public; Owner: wecarry
 --
 
 CREATE SEQUENCE public.threads_id_seq
@@ -220,22 +336,23 @@ CREATE SEQUENCE public.threads_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.threads_id_seq OWNER TO handcarry;
+ALTER TABLE public.threads_id_seq OWNER TO wecarry;
 
 --
--- Name: threads_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: handcarry
+-- Name: threads_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wecarry
 --
 
 ALTER SEQUENCE public.threads_id_seq OWNED BY public.threads.id;
 
 
 --
--- Name: user_access_tokens; Type: TABLE; Schema: public; Owner: handcarry
+-- Name: user_access_tokens; Type: TABLE; Schema: public; Owner: wecarry
 --
 
 CREATE TABLE public.user_access_tokens (
     id integer NOT NULL,
     user_id integer NOT NULL,
+    user_organization_id integer NOT NULL,
     access_token character varying(255) NOT NULL,
     expires_at timestamp without time zone NOT NULL,
     created_at timestamp without time zone NOT NULL,
@@ -243,10 +360,10 @@ CREATE TABLE public.user_access_tokens (
 );
 
 
-ALTER TABLE public.user_access_tokens OWNER TO handcarry;
+ALTER TABLE public.user_access_tokens OWNER TO wecarry;
 
 --
--- Name: user_access_tokens_id_seq; Type: SEQUENCE; Schema: public; Owner: handcarry
+-- Name: user_access_tokens_id_seq; Type: SEQUENCE; Schema: public; Owner: wecarry
 --
 
 CREATE SEQUENCE public.user_access_tokens_id_seq
@@ -257,17 +374,17 @@ CREATE SEQUENCE public.user_access_tokens_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.user_access_tokens_id_seq OWNER TO handcarry;
+ALTER TABLE public.user_access_tokens_id_seq OWNER TO wecarry;
 
 --
--- Name: user_access_tokens_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: handcarry
+-- Name: user_access_tokens_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wecarry
 --
 
 ALTER SEQUENCE public.user_access_tokens_id_seq OWNED BY public.user_access_tokens.id;
 
 
 --
--- Name: user_organizations; Type: TABLE; Schema: public; Owner: handcarry
+-- Name: user_organizations; Type: TABLE; Schema: public; Owner: wecarry
 --
 
 CREATE TABLE public.user_organizations (
@@ -275,15 +392,18 @@ CREATE TABLE public.user_organizations (
     organization_id integer NOT NULL,
     user_id integer NOT NULL,
     role character varying(255) NOT NULL,
+    auth_id character varying(255) NOT NULL,
+    auth_email character varying(255) NOT NULL,
+    last_login timestamp without time zone NOT NULL,
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL
 );
 
 
-ALTER TABLE public.user_organizations OWNER TO handcarry;
+ALTER TABLE public.user_organizations OWNER TO wecarry;
 
 --
--- Name: user_organizations_id_seq; Type: SEQUENCE; Schema: public; Owner: handcarry
+-- Name: user_organizations_id_seq; Type: SEQUENCE; Schema: public; Owner: wecarry
 --
 
 CREATE SEQUENCE public.user_organizations_id_seq
@@ -294,17 +414,17 @@ CREATE SEQUENCE public.user_organizations_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.user_organizations_id_seq OWNER TO handcarry;
+ALTER TABLE public.user_organizations_id_seq OWNER TO wecarry;
 
 --
--- Name: user_organizations_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: handcarry
+-- Name: user_organizations_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wecarry
 --
 
 ALTER SEQUENCE public.user_organizations_id_seq OWNED BY public.user_organizations.id;
 
 
 --
--- Name: users; Type: TABLE; Schema: public; Owner: handcarry
+-- Name: users; Type: TABLE; Schema: public; Owner: wecarry
 --
 
 CREATE TABLE public.users (
@@ -313,19 +433,19 @@ CREATE TABLE public.users (
     first_name character varying(255) NOT NULL,
     last_name character varying(255) NOT NULL,
     nickname character varying(255) NOT NULL,
-    auth_org_id integer NOT NULL,
-    auth_org_uid character varying(255) NOT NULL,
     admin_role character varying(255),
-    uuid uuid NOT NULL,
     created_at timestamp without time zone NOT NULL,
-    updated_at timestamp without time zone NOT NULL
+    updated_at timestamp without time zone NOT NULL,
+    uuid uuid NOT NULL,
+    photo_file_id integer,
+    photo_url character varying(255)
 );
 
 
-ALTER TABLE public.users OWNER TO handcarry;
+ALTER TABLE public.users OWNER TO wecarry;
 
 --
--- Name: users_id_seq; Type: SEQUENCE; Schema: public; Owner: handcarry
+-- Name: users_id_seq; Type: SEQUENCE; Schema: public; Owner: wecarry
 --
 
 CREATE SEQUENCE public.users_id_seq
@@ -336,73 +456,102 @@ CREATE SEQUENCE public.users_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.users_id_seq OWNER TO handcarry;
+ALTER TABLE public.users_id_seq OWNER TO wecarry;
 
 --
--- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: handcarry
+-- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wecarry
 --
 
 ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
 
 
 --
--- Name: messages id; Type: DEFAULT; Schema: public; Owner: handcarry
+-- Name: files id; Type: DEFAULT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.files ALTER COLUMN id SET DEFAULT nextval('public.files_id_seq'::regclass);
+
+
+--
+-- Name: messages id; Type: DEFAULT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.messages ALTER COLUMN id SET DEFAULT nextval('public.messages_id_seq'::regclass);
 
 
 --
--- Name: organizations id; Type: DEFAULT; Schema: public; Owner: handcarry
+-- Name: organization_domains id; Type: DEFAULT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.organization_domains ALTER COLUMN id SET DEFAULT nextval('public.organization_domains_id_seq'::regclass);
+
+
+--
+-- Name: organizations id; Type: DEFAULT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.organizations ALTER COLUMN id SET DEFAULT nextval('public.organizations_id_seq'::regclass);
 
 
 --
--- Name: posts id; Type: DEFAULT; Schema: public; Owner: handcarry
+-- Name: post_files id; Type: DEFAULT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.post_files ALTER COLUMN id SET DEFAULT nextval('public.post_files_id_seq'::regclass);
+
+
+--
+-- Name: posts id; Type: DEFAULT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.posts ALTER COLUMN id SET DEFAULT nextval('public.posts_id_seq'::regclass);
 
 
 --
--- Name: thread_participants id; Type: DEFAULT; Schema: public; Owner: handcarry
+-- Name: thread_participants id; Type: DEFAULT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.thread_participants ALTER COLUMN id SET DEFAULT nextval('public.thread_participants_id_seq'::regclass);
 
 
 --
--- Name: threads id; Type: DEFAULT; Schema: public; Owner: handcarry
+-- Name: threads id; Type: DEFAULT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.threads ALTER COLUMN id SET DEFAULT nextval('public.threads_id_seq'::regclass);
 
 
 --
--- Name: user_access_tokens id; Type: DEFAULT; Schema: public; Owner: handcarry
+-- Name: user_access_tokens id; Type: DEFAULT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.user_access_tokens ALTER COLUMN id SET DEFAULT nextval('public.user_access_tokens_id_seq'::regclass);
 
 
 --
--- Name: user_organizations id; Type: DEFAULT; Schema: public; Owner: handcarry
+-- Name: user_organizations id; Type: DEFAULT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.user_organizations ALTER COLUMN id SET DEFAULT nextval('public.user_organizations_id_seq'::regclass);
 
 
 --
--- Name: users id; Type: DEFAULT; Schema: public; Owner: handcarry
+-- Name: users id; Type: DEFAULT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_id_seq'::regclass);
 
 
 --
--- Name: messages messages_pkey; Type: CONSTRAINT; Schema: public; Owner: handcarry
+-- Name: files files_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.files
+    ADD CONSTRAINT files_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: messages messages_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.messages
@@ -410,7 +559,15 @@ ALTER TABLE ONLY public.messages
 
 
 --
--- Name: organizations organizations_pkey; Type: CONSTRAINT; Schema: public; Owner: handcarry
+-- Name: organization_domains organization_domains_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.organization_domains
+    ADD CONSTRAINT organization_domains_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: organizations organizations_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.organizations
@@ -418,7 +575,15 @@ ALTER TABLE ONLY public.organizations
 
 
 --
--- Name: posts posts_pkey; Type: CONSTRAINT; Schema: public; Owner: handcarry
+-- Name: post_files post_files_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.post_files
+    ADD CONSTRAINT post_files_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: posts posts_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.posts
@@ -426,7 +591,7 @@ ALTER TABLE ONLY public.posts
 
 
 --
--- Name: thread_participants thread_participants_pkey; Type: CONSTRAINT; Schema: public; Owner: handcarry
+-- Name: thread_participants thread_participants_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.thread_participants
@@ -434,7 +599,7 @@ ALTER TABLE ONLY public.thread_participants
 
 
 --
--- Name: threads threads_pkey; Type: CONSTRAINT; Schema: public; Owner: handcarry
+-- Name: threads threads_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.threads
@@ -442,7 +607,7 @@ ALTER TABLE ONLY public.threads
 
 
 --
--- Name: user_access_tokens user_access_tokens_pkey; Type: CONSTRAINT; Schema: public; Owner: handcarry
+-- Name: user_access_tokens user_access_tokens_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.user_access_tokens
@@ -450,7 +615,7 @@ ALTER TABLE ONLY public.user_access_tokens
 
 
 --
--- Name: user_organizations user_organizations_pkey; Type: CONSTRAINT; Schema: public; Owner: handcarry
+-- Name: user_organizations user_organizations_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.user_organizations
@@ -458,7 +623,7 @@ ALTER TABLE ONLY public.user_organizations
 
 
 --
--- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: handcarry
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.users
@@ -466,77 +631,126 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: messages_uuid_idx; Type: INDEX; Schema: public; Owner: handcarry
+-- Name: files_uuid_idx; Type: INDEX; Schema: public; Owner: wecarry
+--
+
+CREATE UNIQUE INDEX files_uuid_idx ON public.files USING btree (uuid);
+
+
+--
+-- Name: messages_uuid_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
 CREATE UNIQUE INDEX messages_uuid_idx ON public.messages USING btree (uuid);
 
 
 --
--- Name: organizations_uuid_idx; Type: INDEX; Schema: public; Owner: handcarry
+-- Name: organization_domains_domain_idx; Type: INDEX; Schema: public; Owner: wecarry
+--
+
+CREATE UNIQUE INDEX organization_domains_domain_idx ON public.organization_domains USING btree (domain);
+
+
+--
+-- Name: organizations_uuid_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
 CREATE UNIQUE INDEX organizations_uuid_idx ON public.organizations USING btree (uuid);
 
 
 --
--- Name: posts_uuid_idx; Type: INDEX; Schema: public; Owner: handcarry
+-- Name: post_files_file_id_idx; Type: INDEX; Schema: public; Owner: wecarry
+--
+
+CREATE UNIQUE INDEX post_files_file_id_idx ON public.post_files USING btree (file_id);
+
+
+--
+-- Name: posts_photo_file_id_idx; Type: INDEX; Schema: public; Owner: wecarry
+--
+
+CREATE UNIQUE INDEX posts_photo_file_id_idx ON public.posts USING btree (photo_file_id);
+
+
+--
+-- Name: posts_uuid_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
 CREATE UNIQUE INDEX posts_uuid_idx ON public.posts USING btree (uuid);
 
 
 --
--- Name: schema_migration_version_idx; Type: INDEX; Schema: public; Owner: handcarry
+-- Name: schema_migration_version_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
 CREATE UNIQUE INDEX schema_migration_version_idx ON public.schema_migration USING btree (version);
 
 
 --
--- Name: threads_uuid_idx; Type: INDEX; Schema: public; Owner: handcarry
+-- Name: threads_uuid_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
 CREATE UNIQUE INDEX threads_uuid_idx ON public.threads USING btree (uuid);
 
 
 --
--- Name: user_access_tokens_access_token_idx; Type: INDEX; Schema: public; Owner: handcarry
+-- Name: user_access_tokens_access_token_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
 CREATE UNIQUE INDEX user_access_tokens_access_token_idx ON public.user_access_tokens USING btree (access_token);
 
 
 --
--- Name: users_auth_org_id_auth_org_uid_idx; Type: INDEX; Schema: public; Owner: handcarry
+-- Name: user_organizations_organization_id_auth_email_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
-CREATE UNIQUE INDEX users_auth_org_id_auth_org_uid_idx ON public.users USING btree (auth_org_id, auth_org_uid);
+CREATE UNIQUE INDEX user_organizations_organization_id_auth_email_idx ON public.user_organizations USING btree (organization_id, auth_email);
 
 
 --
--- Name: users_email_idx; Type: INDEX; Schema: public; Owner: handcarry
+-- Name: user_organizations_organization_id_auth_id_idx; Type: INDEX; Schema: public; Owner: wecarry
+--
+
+CREATE UNIQUE INDEX user_organizations_organization_id_auth_id_idx ON public.user_organizations USING btree (organization_id, auth_id);
+
+
+--
+-- Name: user_organizations_organization_id_user_id_idx; Type: INDEX; Schema: public; Owner: wecarry
+--
+
+CREATE UNIQUE INDEX user_organizations_organization_id_user_id_idx ON public.user_organizations USING btree (organization_id, user_id);
+
+
+--
+-- Name: users_email_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
 CREATE UNIQUE INDEX users_email_idx ON public.users USING btree (email);
 
 
 --
--- Name: users_nickname_idx; Type: INDEX; Schema: public; Owner: handcarry
+-- Name: users_nickname_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
 CREATE UNIQUE INDEX users_nickname_idx ON public.users USING btree (nickname);
 
 
 --
--- Name: users_uuid_idx; Type: INDEX; Schema: public; Owner: handcarry
+-- Name: users_photo_file_id_idx; Type: INDEX; Schema: public; Owner: wecarry
+--
+
+CREATE UNIQUE INDEX users_photo_file_id_idx ON public.users USING btree (photo_file_id);
+
+
+--
+-- Name: users_uuid_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
 CREATE UNIQUE INDEX users_uuid_idx ON public.users USING btree (uuid);
 
 
 --
--- Name: messages messages_sent_by_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: handcarry
+-- Name: messages messages_sent_by_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.messages
@@ -544,7 +758,7 @@ ALTER TABLE ONLY public.messages
 
 
 --
--- Name: messages messages_thread_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: handcarry
+-- Name: messages messages_thread_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.messages
@@ -552,7 +766,31 @@ ALTER TABLE ONLY public.messages
 
 
 --
--- Name: posts posts_created_by_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: handcarry
+-- Name: organization_domains organization_domains_organization_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.organization_domains
+    ADD CONSTRAINT organization_domains_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id) ON DELETE CASCADE;
+
+
+--
+-- Name: post_files post_files_file_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.post_files
+    ADD CONSTRAINT post_files_file_id_fkey FOREIGN KEY (file_id) REFERENCES public.files(id) ON DELETE CASCADE;
+
+
+--
+-- Name: post_files post_files_post_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.post_files
+    ADD CONSTRAINT post_files_post_id_fkey FOREIGN KEY (post_id) REFERENCES public.posts(id) ON DELETE CASCADE;
+
+
+--
+-- Name: posts posts_created_by_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.posts
@@ -560,7 +798,15 @@ ALTER TABLE ONLY public.posts
 
 
 --
--- Name: posts posts_organization_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: handcarry
+-- Name: posts posts_files_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.posts
+    ADD CONSTRAINT posts_files_id_fk FOREIGN KEY (photo_file_id) REFERENCES public.files(id) ON DELETE CASCADE;
+
+
+--
+-- Name: posts posts_organization_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.posts
@@ -568,7 +814,7 @@ ALTER TABLE ONLY public.posts
 
 
 --
--- Name: posts posts_provider_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: handcarry
+-- Name: posts posts_provider_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.posts
@@ -576,7 +822,7 @@ ALTER TABLE ONLY public.posts
 
 
 --
--- Name: posts posts_receiver_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: handcarry
+-- Name: posts posts_receiver_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.posts
@@ -584,7 +830,7 @@ ALTER TABLE ONLY public.posts
 
 
 --
--- Name: thread_participants thread_participants_thread_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: handcarry
+-- Name: thread_participants thread_participants_thread_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.thread_participants
@@ -592,7 +838,7 @@ ALTER TABLE ONLY public.thread_participants
 
 
 --
--- Name: thread_participants thread_participants_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: handcarry
+-- Name: thread_participants thread_participants_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.thread_participants
@@ -600,7 +846,7 @@ ALTER TABLE ONLY public.thread_participants
 
 
 --
--- Name: threads threads_post_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: handcarry
+-- Name: threads threads_post_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.threads
@@ -608,7 +854,7 @@ ALTER TABLE ONLY public.threads
 
 
 --
--- Name: user_access_tokens user_access_tokens_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: handcarry
+-- Name: user_access_tokens user_access_tokens_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.user_access_tokens
@@ -616,7 +862,15 @@ ALTER TABLE ONLY public.user_access_tokens
 
 
 --
--- Name: user_organizations user_organizations_organization_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: handcarry
+-- Name: user_access_tokens user_access_tokens_user_organization_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.user_access_tokens
+    ADD CONSTRAINT user_access_tokens_user_organization_id_fkey FOREIGN KEY (user_organization_id) REFERENCES public.user_organizations(id) ON DELETE CASCADE;
+
+
+--
+-- Name: user_organizations user_organizations_organization_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.user_organizations
@@ -624,7 +878,7 @@ ALTER TABLE ONLY public.user_organizations
 
 
 --
--- Name: user_organizations user_organizations_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: handcarry
+-- Name: user_organizations user_organizations_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.user_organizations
@@ -632,11 +886,11 @@ ALTER TABLE ONLY public.user_organizations
 
 
 --
--- Name: users users_auth_org_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: handcarry
+-- Name: users users_files_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.users
-    ADD CONSTRAINT users_auth_org_id_fkey FOREIGN KEY (auth_org_id) REFERENCES public.organizations(id) ON DELETE SET NULL;
+    ADD CONSTRAINT users_files_id_fk FOREIGN KEY (photo_file_id) REFERENCES public.files(id) ON DELETE CASCADE;
 
 
 --

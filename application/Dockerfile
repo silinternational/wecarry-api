@@ -2,12 +2,14 @@
 # https://docs.docker.com/engine/userguide/eng-image/multistage-build/
 FROM gobuffalo/buffalo:v0.14.6 as builder
 
-RUN mkdir -p $GOPATH/src/handcarry
-WORKDIR $GOPATH/src/handcarry
+RUN mkdir -p $GOPATH/src/wecarry
+WORKDIR $GOPATH/src/wecarry
 
 ADD . .
 ENV GO111MODULE=on
 RUN go get ./...
+#RUN export GIT_COMMIT=$(git rev-list -1 HEAD) && \
+#    buffalo build --ldflags "-X main.GitCommitHash=$GIT_COMMIT" --static -o /bin/app
 RUN buffalo build --static -o /bin/app
 
 FROM alpine
@@ -27,5 +29,5 @@ ENV ADDR=0.0.0.0
 EXPOSE 3000
 
 # Uncomment to run the migrations before running the binary:
-# CMD /bin/app migrate; /bin/app
-CMD exec /bin/app
+CMD /bin/app migrate; /bin/app
+#CMD exec /bin/app

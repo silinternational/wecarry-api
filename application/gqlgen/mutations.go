@@ -2,64 +2,133 @@ package gqlgen
 
 import (
 	"context"
-	"github.com/99designs/gqlgen/graphql"
-	"github.com/gobuffalo/pop/nulls"
-	"github.com/silinternational/handcarry-api/domain"
-	"github.com/silinternational/handcarry-api/models"
-	"github.com/vektah/gqlparser/gqlerror"
+	"fmt"
+
+	"github.com/gobuffalo/nulls"
+
+	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/models"
 )
 
 type mutationResolver struct{ *Resolver }
 
-func (r *mutationResolver) CreatePost(ctx context.Context, input NewPost) (*Post, error) {
-	cUser := domain.GetCurrentUserFromGqlContext(ctx)
-	dbPost, err := ConvertGqlNewPostToDBPost(input, cUser)
+func (r *mutationResolver) CreateMessage(ctx context.Context, input CreateMessageInput) (*models.Message, error) {
+	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+	message, err := ConvertGqlCreateMessageInputToDBMessage(input, cUser)
 	if err != nil {
-		return &Post{}, err
+		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
+		return &models.Message{}, err
 	}
 
-	if err := models.DB.Create(&dbPost); err != nil {
-		return &Post{}, err
+	if err := models.DB.Create(&message); err != nil {
+		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
+		return &models.Message{}, err
 	}
 
-	gqlPost, err := ConvertDBPostToGqlPost(dbPost)
-
-	return &gqlPost, err
+	return &message, err
 }
 
-func (r *mutationResolver) UpdatePostStatus(ctx context.Context, input UpdatedPostStatus) (*Post, error) {
-	post, err := models.FindPostByUUID(input.ID)
-	if err != nil {
-		return &Post{}, err
+func (r *mutationResolver) CreateOrganization(ctx context.Context, input CreateOrganizationInput) (*models.Organization, error) {
+	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+	if !cUser.CanCreateOrganization() {
+		return &models.Organization{}, fmt.Errorf("user not allowed to create organizations")
 	}
 
-	post.Status = input.Status
-	post.ProviderID = nulls.NewInt(domain.GetCurrentUserFromGqlContext(ctx).ID)
-	if err := models.DB.Update(&post); err != nil {
-		return &Post{}, err
+	org := models.Organization{
+		Name:       input.Name,
+		Url:        models.ConvertStringPtrToNullsString(input.URL),
+		AuthType:   input.AuthType,
+		AuthConfig: input.AuthConfig,
+		Uuid:       domain.GetUuid(),
 	}
 
-	updatedPost, err := ConvertDBPostToGqlPost(post)
-	if err != nil {
-		graphql.AddError(ctx, gqlerror.Errorf("Error converting post: %v", err.Error()))
-		return &updatedPost, err
-	}
-
-	return &updatedPost, nil
+	err := org.Save()
+	return &org, err
 }
 
-func (r *mutationResolver) CreateMessage(ctx context.Context, input NewMessage) (*Message, error) {
-	cUser := domain.GetCurrentUserFromGqlContext(ctx)
-	dbMessage, err := ConvertGqlNewMessageToDBMessage(input, cUser)
+func (r *mutationResolver) UpdateOrganization(ctx context.Context, input UpdateOrganizationInput) (*models.Organization, error) {
+	var org models.Organization
+	err := org.FindByUUID(input.ID)
 	if err != nil {
-		return &Message{}, err
+		return &models.Organization{}, err
 	}
 
-	if err := models.DB.Create(&dbMessage); err != nil {
-		return &Message{}, err
+	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+	if !cUser.CanEditOrganization(org.ID) {
+		return &models.Organization{}, fmt.Errorf("user not allowed to edit organizations")
 	}
 
-	gqlMessage, err := ConvertDBMessageToGqlMessage(dbMessage)
+	if input.URL != nil {
+		org.Url = nulls.NewString(*input.URL)
+	}
 
-	return &gqlMessage, err
+	org.Name = input.Name
+	org.AuthType = input.AuthType
+	org.AuthConfig = input.AuthConfig
+	err = org.Save()
+
+	return &org, err
+}
+
+func (r *mutationResolver) CreateOrganizationDomain(ctx context.Context, input CreateOrganizationDomainInput) ([]*models.OrganizationDomain, error) {
+	var org models.Organization
+	err := org.FindByUUID(input.OrganizationID)
+	if err != nil {
+		return []*models.OrganizationDomain{}, err
+	}
+
+	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+	if !cUser.CanEditOrganization(org.ID) {
+		return []*models.OrganizationDomain{}, fmt.Errorf("user not allowed to edit organizations")
+	}
+
+	err = org.AddDomain(input.Domain)
+	if err != nil {
+		return []*models.OrganizationDomain{}, err
+	}
+
+	orgDomains := make([]*models.OrganizationDomain, len(org.OrganizationDomains))
+	for i, od := range org.OrganizationDomains {
+		orgDomains[i] = &od
+	}
+
+	return orgDomains, nil
+}
+
+func (r *mutationResolver) RemoveOrganizationDomain(ctx context.Context, input RemoveOrganizationDomainInput) ([]*models.OrganizationDomain, error) {
+	var org models.Organization
+	err := org.FindByUUID(input.OrganizationID)
+	if err != nil {
+		return []*models.OrganizationDomain{}, err
+	}
+
+	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+	if !cUser.CanEditOrganization(org.ID) {
+		return []*models.OrganizationDomain{}, fmt.Errorf("user not allowed to edit organizations")
+	}
+
+	err = org.RemoveDomain(input.Domain)
+	if err != nil {
+		return []*models.OrganizationDomain{}, err
+	}
+
+	orgDomains := make([]*models.OrganizationDomain, len(org.OrganizationDomains))
+	for i, od := range org.OrganizationDomains {
+		orgDomains[i] = &od
+	}
+
+	return orgDomains, nil
+}
+
+// SetThreadLastViewedAt sets the last viewed time for the current user on the given thread
+func (r *mutationResolver) SetThreadLastViewedAt(ctx context.Context, input SetThreadLastViewedAtInput) (*models.Thread, error) {
+	var thread models.Thread
+	if err := thread.FindByUUID(input.ThreadID); err != nil {
+		return &thread, err
+	}
+	if err := thread.SetLastViewedAt(models.GetCurrentUserFromGqlContext(ctx, TestUser), input.Time); err != nil {
+		return &thread, err
+	}
+
+	return &thread, nil
 }

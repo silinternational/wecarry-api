@@ -1,0 +1,7 @@
+drop_foreign_key("users", "users_files_id_fk")
+drop_foreign_key("posts", "posts_files_id_fk")
+drop_table("post_files")
+drop_table("files")
+drop_column("posts", "photo_file_id")
+drop_column("users", "photo_file_id")
+drop_column("users", "photo_url")

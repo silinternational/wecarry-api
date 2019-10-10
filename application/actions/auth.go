@@ -1,355 +1,471 @@
 package actions
 
 import (
-	"crypto/x509"
-	"encoding/base64"
-	"encoding/xml"
 	"fmt"
-	"io/ioutil"
-	"os"
+
+	//	"github.com/silinternational/wecarry-api/auth"
+	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/gobuffalo/envy"
 
-	"github.com/gofrs/uuid"
-
-	"github.com/gobuffalo/pop"
-
-	dsig "github.com/russellhaering/goxmldsig"
-
-	saml2 "github.com/russellhaering/gosaml2"
-	"github.com/russellhaering/gosaml2/types"
+	"github.com/gobuffalo/buffalo/render"
 
 	"github.com/gobuffalo/buffalo"
-	"github.com/pkg/errors"
-	"github.com/silinternational/handcarry-api/domain"
-	"github.com/silinternational/handcarry-api/models"
+	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/models"
 )
 
-const SAML2Provider = "saml2"
-const SAMLResponseKey = "SAMLResponse"
-const SAMLUserIDKey = "eduPersonTargetID"
-const IDPMetadataFile = "./samlmetadata/idp-metadata.xml"
-const CallbackURL = "http://handcarry.local:3000/auth/saml2/callback/"
-const SPIssuer = "http://handcarry.local:3000"
-const SPAudienceURI = SPIssuer
-const SPReturnTo = "handcarry.local:3000/"
+// http param for access token
+const AccessTokenParam = "access-token"
 
-type SamlUser struct {
-	FirstName string
-	LastName  string
-	Email     string
-	UserID    string
+// http param and session key for Auth Email
+const AuthEmailParam = "auth-email"
+const AuthEmailSessionKey = "AuthEmail"
+
+// http param and session key for Client ID
+const ClientIDParam = "client-id"
+const ClientIDSessionKey = "ClientID"
+
+// http param for expires utc
+const ExpiresUTCParam = "expires-utc"
+
+// logout http param for what is normally the bearer token
+const LogoutToken = "token"
+
+// http param for organization id
+const OrgIDParam = "org-id"
+const OrgIDSessionKey = "OrgID"
+
+// http param and session key for ReturnTo
+const ReturnToParam = "return-to"
+const ReturnToSessionKey = "ReturnTo"
+
+// http param for token type
+const TokenTypeParam = "token-type"
+
+type AuthOrgOption struct {
+	ID      string `json:"ID"`
+	Name    string `json:"Name"`
+	LogoURL string `json:"LogoURL"`
 }
 
-func AuthLogin(c buffalo.Context) error {
+type AuthUser struct {
+	ID                   string          `json:"ID"`
+	Name                 string          `json:"Name"`
+	Nickname             string          `json:"Nickname"`
+	Email                string          `json:"Email"`
+	Organizations        []AuthOrgOption `json:"Organizations"`
+	AccessToken          string          `json:"AccessToken"`
+	AccessTokenExpiresAt int64           `json:"AccessTokenExpiresAt"`
+	IsNew                bool            `json:"IsNew"`
+}
 
-	returnTo := c.Param("ReturnTo")
+type AuthResponse struct {
+	Error          *domain.AppError `json:"Error,omitempty"`
+	AuthOrgOptions *[]AuthOrgOption `json:"AuthOrgOptions,omitempty"`
+	RedirectURL    string           `json:"RedirectURL,omitempty"`
+	User           *AuthUser        `json:"User,omitempty"`
+}
+
+func getOrSetReturnTo(c buffalo.Context) string {
+	returnTo := c.Param(ReturnToParam)
+
 	if returnTo == "" {
-		returnTo = "/"
-	}
-	c.Session().Set("ReturnTo", returnTo)
+		var ok bool
+		returnTo, ok = c.Session().Get(ReturnToSessionKey).(string)
+		if !ok {
+			returnTo = "/#"
+		}
 
-	clientID := c.Param("client_id")
-	if clientID == "" {
-		return fmt.Errorf("client_id is required to login")
+		return returnTo
 	}
-	c.Session().Set("ClientID", clientID)
+
+	c.Session().Set(ReturnToSessionKey, returnTo)
+
+	return returnTo
+}
+
+func getOrgAndUserOrgs(
+	authEmail string,
+	c buffalo.Context) (models.Organization, models.UserOrganizations, error) {
+	var orgID int
+	oid := c.Param(OrgIDParam)
+	if oid == "" {
+		orgID = 0
+	} else {
+		orgID, _ = strconv.Atoi(oid)
+	}
+
+	var org models.Organization
+	var userOrgs models.UserOrganizations
+	err := userOrgs.FindByAuthEmail(authEmail, orgID)
+	if len(userOrgs) == 1 {
+		org = userOrgs[0].Organization
+	}
+
+	// no user_organization records yet, see if we have an organization for user's email domain
+	if len(userOrgs) == 0 {
+		err = org.FindByDomain(domain.EmailDomain(authEmail))
+		if err != nil {
+			return org, userOrgs, err
+		}
+		if org.AuthType == "" {
+			return org, userOrgs, fmt.Errorf("unable to find organization by email domain")
+		}
+	}
+
+	return org, userOrgs, nil
+}
+
+func provideOrgOptions(userOrgs models.UserOrganizations, c buffalo.Context) error {
+	var orgOpts []AuthOrgOption
+	for _, uo := range userOrgs {
+		orgOpts = append(orgOpts, AuthOrgOption{
+			ID:      strconv.Itoa(uo.ID),
+			Name:    uo.Organization.Name,
+			LogoURL: uo.Organization.Url.String, // TODO change to a logo url when one is added to organization
+		})
+	}
+
+	resp := AuthResponse{
+		AuthOrgOptions: &orgOpts,
+	}
+	return c.Render(http.StatusOK, render.JSON(resp))
+}
+
+func createAuthUser(
+	clientID string,
+	user models.User,
+	org models.Organization) (AuthUser, error) {
+	accessToken, expiresAt, err := user.CreateAccessToken(org, clientID)
+
+	if err != nil {
+		return AuthUser{}, err
+	}
+
+	var uos []AuthOrgOption
+	for _, uo := range user.Organizations {
+		uos = append(uos, AuthOrgOption{
+			ID:      uo.Uuid.String(),
+			Name:    uo.Name,
+			LogoURL: uo.Url.String,
+		})
+	}
+
+	isNew := false
+	if time.Since(user.CreatedAt) < time.Duration(time.Second*30) {
+		isNew = true
+	}
+
+	authUser := AuthUser{
+		ID:                   user.Uuid.String(),
+		Name:                 user.FirstName + " " + user.LastName,
+		Nickname:             user.Nickname,
+		Email:                user.Email,
+		Organizations:        uos,
+		AccessToken:          accessToken,
+		AccessTokenExpiresAt: expiresAt,
+		IsNew:                isNew,
+	}
+
+	return authUser, nil
+}
+
+func AuthRequest(c buffalo.Context) error {
+	clientID := c.Param(ClientIDParam)
+	if clientID == "" {
+		return authRequestError(c, http.StatusBadRequest, domain.MissingClientID,
+			ClientIDParam+" is required to login")
+	}
+
+	c.Session().Set(ClientIDSessionKey, clientID)
+
+	authEmail := c.Param(AuthEmailParam)
+	if authEmail == "" {
+		return authRequestError(c, http.StatusBadRequest, domain.MissingAuthEmail,
+			AuthEmailParam+" is required to login")
+	}
+	c.Session().Set(AuthEmailSessionKey, authEmail)
+
+	getOrSetReturnTo(c)
+
+	extras := map[string]interface{}{"authEmail": authEmail}
+
+	// find org for auth config and processing
+	org, userOrgs, err := getOrgAndUserOrgs(authEmail, c)
+	if err != nil {
+		return authRequestError(c, http.StatusInternalServerError, domain.ErrorFindingOrgUserOrgs,
+			fmt.Sprintf("error getting org and userOrgs ... %v", err), extras)
+	}
+
+	// User has more than one organization affiliation, return list to choose from
+	if len(userOrgs) > 1 {
+		return provideOrgOptions(userOrgs, c)
+	}
+
+	if org.ID == 0 {
+		return authRequestError(c, http.StatusBadRequest, domain.CannotFindOrg,
+			"unable to find an organization for this user", extras)
+	}
+
+	orgID := org.Uuid.String()
+	c.Session().Set(OrgIDSessionKey, orgID)
+	err = c.Session().Save()
+	if err != nil {
+		return authRequestError(c, http.StatusInternalServerError, domain.ErrorSavingAuthRequestSession,
+			fmt.Sprintf("unable to save session ... %v", err), extras)
+	}
+
+	sp, err := org.GetAuthProvider()
+	if err != nil {
+		return authRequestError(c, http.StatusInternalServerError, domain.ErrorLoadingAuthProvider,
+			fmt.Sprintf("unable to load auth provider for '%s' ... %v", org.Name, err), extras)
+	}
+
+	redirectURL, err := sp.AuthRequest(c)
+	if err != nil {
+		return authRequestError(c, http.StatusInternalServerError, domain.ErrorGettingAuthURL,
+			fmt.Sprintf("unable to determine what the authentication url should be for '%s' ... %v", org.Name, err))
+	}
+
+	resp := AuthResponse{RedirectURL: redirectURL}
+
+	// Reply with a 200 and leave it to the UI to do the redirect
+	return c.Render(http.StatusOK, render.JSON(resp))
+
+}
+
+// AuthCallback assumes the user has logged in to the IDP or Oauth service and now their browser
+// has been redirected back with the final response
+func AuthCallback(c buffalo.Context) error {
+	clientID, ok := c.Session().Get(ClientIDSessionKey).(string)
+	if !ok {
+		return logErrorAndRedirect(c, domain.MissingSessionClientID,
+			ClientIDSessionKey+" session entry is required to complete login")
+	}
+
+	authEmail, ok := c.Session().Get(AuthEmailSessionKey).(string)
+	if !ok {
+		return logErrorAndRedirect(c, domain.MissingSessionAuthEmail,
+			AuthEmailSessionKey+" session entry is required to complete login")
+	}
+
+	returnTo := getOrSetReturnTo(c)
 
 	err := c.Session().Save()
+	if err != nil {
+		extras := map[string]interface{}{"authEmail": authEmail}
+		return logErrorAndRedirect(c, domain.ErrorSavingAuthCallbackSession,
+			fmt.Sprintf("error saving session ... %v", err), extras)
+	}
+
+	orgID, ok := c.Session().Get(OrgIDSessionKey).(string)
+	if !ok {
+		return logErrorAndRedirect(c, domain.MissingSessionOrgID,
+			OrgIDSessionKey+" session entry is required to complete login")
+	}
+
+	org := models.Organization{}
+	err = org.FindByUUID(orgID)
+	if err != nil {
+		return logErrorAndRedirect(c, domain.ErrorFindingOrg,
+			fmt.Sprintf("error finding org with UUID %s ... %v", orgID, err.Error()))
+	}
+
+	ap, err := org.GetAuthProvider()
+	if err != nil {
+		extras := map[string]interface{}{"authEmail": authEmail}
+		return logErrorAndRedirect(c, domain.ErrorLoadingAuthProvider,
+			fmt.Sprintf("error loading auth provider for '%s' ... %v", org.Name, err), extras)
+	}
+
+	authResp := ap.AuthCallback(c)
+	if authResp.Error != nil {
+		extras := map[string]interface{}{"authEmail": authEmail}
+		return logErrorAndRedirect(c, domain.ErrorAuthProvidersCallback, authResp.Error.Error(), extras)
+	}
+
+	// if we have an authuser, find or create user in local db and finish login
+	var user models.User
+	if authResp.AuthUser != nil {
+		// login was success, clear session so new login can be initiated if needed
+		c.Session().Clear()
+		err := c.Session().Save()
+		if err != nil {
+			extras := map[string]interface{}{"authEmail": authEmail}
+			return logErrorAndRedirect(c, domain.ErrorSavingAuthCallbackSession,
+				fmt.Sprintf("error saving session after clear... %v", err), extras)
+		}
+
+		err = user.FindOrCreateFromAuthUser(org.ID, authResp.AuthUser)
+		if err != nil {
+			return logErrorAndRedirect(c, domain.ErrorWithAuthUser, err.Error())
+		}
+	}
+
+	authUser, err := createAuthUser(clientID, user, org)
 	if err != nil {
 		return err
 	}
 
-	sp, err := getSAML2Provider()
+	// set person on rollbar session
+	domain.RollbarSetPerson(c, authUser.ID, authUser.Nickname, authUser.Email)
 
-	authURL, err := sp.BuildAuthURL("")
-
-	return c.Redirect(302, authURL)
+	return c.Redirect(302, getLoginSuccessRedirectURL(authUser, returnTo))
 }
 
-func AuthCallback(c buffalo.Context) error {
+func mergeExtras(code string, extras ...map[string]interface{}) map[string]interface{} {
+	allExtras := map[string]interface{}{"code": code}
 
-	returnTo := envy.Get("UI_URL", "/")
-
-	clientID := c.Session().Get("ClientID")
-	if clientID == "" {
-		return fmt.Errorf("client_id is required to login")
-	}
-
-	samlResponse, err := samlResponse(c)
-	if err != nil {
-		return c.Error(401, err)
-	}
-
-	samlUser, err := getSamlUserFromAssertion(samlResponse)
-	if err != nil {
-		return c.Error(401, err)
-	}
-
-	// Get an existing User with the current auth org uid
-	u := &models.User{}
-	tx := c.Value("tx").(*pop.Connection)
-	q := tx.Where("auth_org_uid = ?", samlUser.UserID)
-	exists, err := q.Exists("users")
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	if exists {
-		if err = q.First(u); err != nil {
-			return errors.WithStack(err)
-		}
-	} else {
-		emailQuery := tx.Where("email = ?", samlUser.Email)
-		exists, err := emailQuery.Exists("users")
-		if err != nil {
-			return errors.WithStack(err)
-		}
-		if exists {
-			return c.Error(409, fmt.Errorf("a user with this email address already exists"))
-		}
-
-		newUuid, _ := uuid.NewV4()
-		u = &models.User{
-			FirstName:  samlUser.FirstName,
-			LastName:   samlUser.LastName,
-			Email:      samlUser.Email,
-			AuthOrgUid: samlUser.UserID,
-			Nickname:   fmt.Sprintf("%s %s", samlUser.FirstName, samlUser.LastName[:0]),
-			AuthOrgID:  1,
-			Uuid:       newUuid.String(),
-		}
-
-		err = tx.Create(u)
-		if err != nil {
-			return c.Error(500, fmt.Errorf("unable to create new user record: %s", err.Error()))
-		}
-
-		uo := &models.UserOrganization{
-			UserID:         u.ID,
-			OrganizationID: u.AuthOrgID,
-			Role:           "member",
-		}
-		err = tx.Create(uo)
-		if err != nil {
-			return c.Error(500, fmt.Errorf("unable to create new user organization record: %s", err.Error()))
+	for _, e := range extras {
+		for k, v := range e {
+			allExtras[k] = v
 		}
 	}
-
-	accessToken, expiresAt, err := u.CreateAccessToken(tx, fmt.Sprintf("%v", clientID))
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	if err = tx.Save(u); err != nil {
-		return errors.WithStack(err)
-	}
-
-	returnToURL := fmt.Sprintf("%s/?access_token=%s&expires=%v", returnTo, accessToken, expiresAt)
-
-	return c.Redirect(302, returnToURL)
+	return allExtras
 }
 
+// Make extras variadic, so that it can be omitted from the params
+func authRequestError(c buffalo.Context, httpStatus int, errorCode, message string, extras ...map[string]interface{}) error {
+	allExtras := mergeExtras(errorCode, extras...)
+
+	domain.Error(c, message, allExtras)
+
+	authError := domain.AppError{
+		Code: errorCode,
+	}
+	return c.Render(httpStatus, render.JSON(authError))
+}
+
+// Make extras variadic, so that it can be omitted from the params
+func logErrorAndRedirect(c buffalo.Context, code, message string, extras ...map[string]interface{}) error {
+	allExtras := mergeExtras(code, extras...)
+
+	domain.Error(c, message, allExtras)
+
+	uiUrl := envy.Get(domain.UIURLEnv, "") + "/#/login?error=true"
+	return c.Redirect(http.StatusFound, uiUrl)
+}
+
+// AuthDestroy uses the bearer token to find the user's access token and
+//  calls the appropriate provider's logout function.
 func AuthDestroy(c buffalo.Context) error {
-
-	bearerToken := domain.GetBearerTokenFromRequest(c.Request())
-	if bearerToken == "" {
-		return errors.WithStack(fmt.Errorf("no Bearer token provided"))
+	tokenParam := c.Param(LogoutToken)
+	if tokenParam == "" {
+		return logErrorAndRedirect(c, domain.MissingLogoutToken,
+			LogoutToken+" is required to logout")
 	}
 
-	user, err := models.FindUserByAccessToken(bearerToken)
+	var uat models.UserAccessToken
+	err := uat.FindByBearerToken(tokenParam)
 	if err != nil {
-		return errors.WithStack(err)
+		return logErrorAndRedirect(c, domain.ErrorFindingAccessToken, err.Error())
 	}
 
-	var logoutURL string
+	org, err := uat.GetOrganization()
+	if err != nil {
+		return logErrorAndRedirect(c, domain.ErrorFindingOrgForAccessToken, err.Error())
+	}
 
-	if user.AuthOrg.AuthType == SAML2Provider {
-		// TODO get logout url from user.AuthOrg.AuthConfig
-		logoutURL = os.Getenv("SAML2_LOGOUT_URL")
-		err := models.DeleteAccessToken(bearerToken)
+	// set person on rollbar session
+	domain.RollbarSetPerson(c, uat.User.Uuid.String(), uat.User.Nickname, uat.User.Email)
+
+	authPro, err := org.GetAuthProvider()
+	if err != nil {
+		return logErrorAndRedirect(c, domain.ErrorLoadingAuthProvider, err.Error())
+	}
+
+	authResp := authPro.Logout(c)
+	if authResp.Error != nil {
+		return logErrorAndRedirect(c, domain.ErrorAuthProvidersLogout, authResp.Error.Error())
+	}
+
+	redirectURL := envy.Get(domain.UIURLEnv, "")
+
+	if authResp.RedirectURL != "" {
+		var uat models.UserAccessToken
+		err = uat.DeleteByBearerToken(tokenParam)
 		if err != nil {
-			return err
+			return logErrorAndRedirect(c, domain.ErrorDeletingAccessToken, err.Error())
 		}
+		c.Session().Clear()
+		redirectURL = authResp.RedirectURL
 	}
 
-	if logoutURL == "" {
-		logoutURL = "/"
-	}
-
-	c.Session().Clear()
-	return c.Redirect(302, logoutURL)
+	return c.Redirect(http.StatusFound, redirectURL)
 }
 
 func SetCurrentUser(next buffalo.Handler) buffalo.Handler {
 	return func(c buffalo.Context) error {
 		bearerToken := domain.GetBearerTokenFromRequest(c.Request())
 		if bearerToken == "" {
-			return errors.WithStack(fmt.Errorf("no Bearer token provided"))
+			return fmt.Errorf("no Bearer token provided")
 		}
 
-		user, err := models.FindUserByAccessToken(bearerToken)
+		var userAccessToken models.UserAccessToken
+		err := userAccessToken.FindByBearerToken(bearerToken)
 		if err != nil {
-			return errors.WithStack(err)
+			domain.ErrLogger.Print(err.Error())
+			return c.Error(401, fmt.Errorf("invalid bearer token"))
+		}
+
+		isExpired, err := userAccessToken.DeleteIfExpired()
+		if err != nil {
+			domain.ErrLogger.Print(err.Error())
+		}
+
+		if isExpired {
+			return c.Error(401, fmt.Errorf("expired bearer token"))
+		}
+
+		user, err := userAccessToken.GetUser()
+		if err != nil {
+			return fmt.Errorf("error finding user by access token, %s", err.Error())
 		}
 		c.Set("current_user", user)
+
+		// set person on rollbar session
+		domain.RollbarSetPerson(c, user.Uuid.String(), user.Nickname, user.Email)
+		msg := fmt.Sprintf("user %s authenticated with bearer token from ip %s", user.Email, c.Request().RemoteAddr)
+		extras := map[string]interface{}{
+			"user_id": user.ID,
+			"email":   user.Email,
+			"ip":      c.Request().RemoteAddr,
+		}
+		domain.Info(c, msg, extras)
+
+		if err := userAccessToken.Renew(); err != nil {
+			domain.Error(c, fmt.Sprintf("error renewing access token, %s", c.Request().RemoteAddr), extras)
+		}
 
 		return next(c)
 	}
 }
 
-func samlResponse(c buffalo.Context) (string, error) {
-	reqData, err := domain.GetRequestData(c.Request())
-	if err != nil {
-		return "", err
-	}
+// getLoginSuccessRedirectURL generates the URL for redirection after a successful login
+func getLoginSuccessRedirectURL(authUser AuthUser, returnTo string) string {
 
-	samlResponse := domain.GetFirstStringFromSlice(reqData[SAMLResponseKey])
-	if samlResponse == "" {
-		return "", fmt.Errorf("%s not found in request", SAMLResponseKey)
-	}
+	uiUrl := envy.Get(domain.UIURLEnv, "") + "/#"
 
-	return samlResponse, nil
-}
+	tokenExpiry := time.Unix(authUser.AccessTokenExpiresAt, 0).Format(time.RFC3339)
+	params := fmt.Sprintf("?%s=Bearer&%s=%s&%s=%s",
+		TokenTypeParam, ExpiresUTCParam, tokenExpiry, AccessTokenParam, authUser.AccessToken)
 
-func samlAttribute(attrName, samlResponse string) (string, error) {
-	sp, err := getSAML2Provider()
-	if err != nil {
-		return "", err
-	}
-
-	response, err := sp.ValidateEncodedResponse(samlResponse)
-
-	if err != nil {
-		return "", fmt.Errorf("could not validate %s. %v", SAMLResponseKey, err.Error())
-	}
-
-	if response == nil {
-		return "", fmt.Errorf("got nil response validating %s", SAMLResponseKey)
-	}
-
-	assertions := response.Assertions
-	if len(assertions) < 1 {
-		return "", fmt.Errorf("did not get any SAML assertions")
-	}
-
-	attrVal := getSAMLAttributeFirstValue(attrName, assertions[0].AttributeStatement.Attributes)
-	if attrVal == "" {
-		return "", fmt.Errorf("no value found for %s", attrName)
-	}
-
-	return attrVal, nil
-}
-
-func getIDPMetadata() (*types.EntityDescriptor, error) {
-	rawMetadata, err := ioutil.ReadFile(IDPMetadataFile)
-	if err != nil {
-		return nil, fmt.Errorf("error reading IDP metadata file. %v", err.Error())
-	}
-
-	metadata := &types.EntityDescriptor{}
-	err = xml.Unmarshal(rawMetadata, metadata)
-	if err != nil {
-		return nil, fmt.Errorf("error unmarshalling IDP metadata file contents. %v", err.Error())
-	}
-
-	return metadata, nil
-}
-
-func getIDPCert(metadata *types.EntityDescriptor) (dsig.MemoryX509CertificateStore, error) {
-	certStore := dsig.MemoryX509CertificateStore{
-		Roots: []*x509.Certificate{},
-	}
-
-	for _, kd := range metadata.IDPSSODescriptor.KeyDescriptors {
-
-		for idx, xcert := range kd.KeyInfo.X509Data.X509Certificates {
-
-			if xcert.Data == "" {
-				return certStore, fmt.Errorf("metadata certificate(%d) must not be empty", idx)
-			}
-			certData, err := base64.StdEncoding.DecodeString(xcert.Data)
-			if err != nil {
-				return certStore, fmt.Errorf("error getting IDP cert data from metadata. %v", err.Error())
-			}
-
-			idpCert, err := x509.ParseCertificate(certData)
-			if err != nil {
-				return certStore, fmt.Errorf("error parsing IDP cert data from metadata. %v", err.Error())
-			}
-
-			certStore.Roots = append(certStore.Roots, idpCert)
+	if authUser.IsNew {
+		uiUrl += "/welcome"
+		if len(returnTo) > 0 {
+			params += "&" + ReturnToParam + "=" + returnTo
 		}
-	}
-
-	return certStore, nil
-}
-
-func getSAML2Provider() (*saml2.SAMLServiceProvider, error) {
-
-	metadata, err := getIDPMetadata()
-	if err != nil {
-		return &saml2.SAMLServiceProvider{}, err
-	}
-
-	certStore, err := getIDPCert(metadata)
-	if err != nil {
-		return &saml2.SAMLServiceProvider{}, err
-	}
-
-	sp := &saml2.SAMLServiceProvider{
-		IdentityProviderSSOURL:      metadata.IDPSSODescriptor.SingleSignOnServices[0].Location,
-		IdentityProviderIssuer:      metadata.EntityID,
-		ServiceProviderIssuer:       SPIssuer,
-		AssertionConsumerServiceURL: CallbackURL,
-		SignAuthnRequests:           false,
-		AudienceURI:                 SPAudienceURI,
-		IDPCertificateStore:         &certStore,
-		//SPKeyStore:                  randomKeyStore,
-	}
-
-	return sp, nil
-}
-
-func getSAMLAttributeFirstValue(attrName string, attributes []types.Attribute) string {
-	for _, attr := range attributes {
-		if attr.Name != attrName {
-			continue
+	} else {
+		if len(returnTo) > 0 && returnTo[0] != '/' {
+			returnTo = "/" + returnTo
 		}
-
-		if len(attr.Values) > 0 {
-			return attr.Values[0].Value
-		}
-		return ""
-	}
-	return ""
-}
-
-func getSamlUserFromAssertion(assertion string) (SamlUser, error) {
-	firstName, err := samlAttribute("givenName", assertion)
-	if err != nil {
-		return SamlUser{}, err
+		uiUrl += returnTo
 	}
 
-	lastName, err := samlAttribute("sn", assertion)
-	if err != nil {
-		return SamlUser{}, err
-	}
+	url := fmt.Sprintf("%s%s", uiUrl, params)
 
-	email, err := samlAttribute("mail", assertion)
-	if err != nil {
-		return SamlUser{}, err
-	}
-
-	userID, err := samlAttribute("eduPersonTargetID", assertion)
-	if err != nil {
-		return SamlUser{}, err
-	}
-
-	return SamlUser{
-		FirstName: firstName,
-		LastName:  lastName,
-		Email:     email,
-		UserID:    userID,
-	}, nil
+	return url
 }

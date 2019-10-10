@@ -2,7 +2,14 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
+	"math/rand"
+	"strconv"
 	"time"
+
+	"github.com/silinternational/wecarry-api/domain"
+
+	"github.com/gobuffalo/envy"
 
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
@@ -10,13 +17,15 @@ import (
 )
 
 type UserAccessToken struct {
-	ID          int       `json:"id" db:"id"`
-	CreatedAt   time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
-	UserID      int       `json:"user_id" db:"user_id"`
-	AccessToken string    `json:"access_token" db:"access_token"`
-	ExpiresAt   time.Time `json:"expires_at" db:"expires_at"`
-	User        User      `belongs_to:"users"`
+	ID                 int              `json:"id" db:"id"`
+	CreatedAt          time.Time        `json:"created_at" db:"created_at"`
+	UpdatedAt          time.Time        `json:"updated_at" db:"updated_at"`
+	UserID             int              `json:"user_id" db:"user_id"`
+	UserOrganizationID int              `json:"user_organization_id" db:"user_organization_id"`
+	AccessToken        string           `json:"access_token" db:"access_token"`
+	ExpiresAt          time.Time        `json:"expires_at" db:"expires_at"`
+	User               User             `belongs_to:"users"`
+	UserOrganization   UserOrganization `belongs_to:"user_organizations"`
 }
 
 // String is not required by pop and may be deleted
@@ -38,7 +47,6 @@ func (u UserAccessTokens) String() string {
 // This method is not required and may be deleted.
 func (u *UserAccessToken) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
-		&validators.IntIsPresent{Field: u.ID, Name: "ID"},
 		&validators.IntIsPresent{Field: u.UserID, Name: "UserID"},
 		&validators.StringIsPresent{Field: u.AccessToken, Name: "AccessToken"},
 		&validators.TimeIsPresent{Field: u.ExpiresAt, Name: "ExpiresAt"},
@@ -57,14 +65,130 @@ func (u *UserAccessToken) ValidateUpdate(tx *pop.Connection) (*validate.Errors, 
 	return validate.NewErrors(), nil
 }
 
-func DeleteAccessToken(accessToken string) error {
-	userAccessToken := UserAccessToken{
-		AccessToken: accessToken,
-	}
-	err := DB.Where("access_token = ?", userAccessToken).First(userAccessToken)
-	if err != nil {
+func (u *UserAccessToken) DeleteByBearerToken(bearerToken string) error {
+	if err := u.FindByBearerToken(bearerToken); err != nil {
 		return err
 	}
+	return DB.Destroy(u)
+}
 
-	return DB.Destroy(userAccessToken)
+func (u *UserAccessToken) FindByBearerToken(bearerToken string) error {
+	if err := DB.Eager().Where("access_token = ?", HashClientIdAccessToken(bearerToken)).First(u); err != nil {
+		l := len(bearerToken)
+		if l > 5 {
+			l = 5
+		}
+		return fmt.Errorf("failed to find access token '%s...', %s", bearerToken[0:l], err)
+	}
+
+	return nil
+}
+
+// GetOrganization returns the Organization of the UserOrganization of the UserAccessToken
+func (u *UserAccessToken) GetOrganization() (Organization, error) {
+	if u.UserOrganization.ID <= 0 {
+		if err := DB.Load(u, "UserOrganization"); err != nil {
+			return Organization{}, fmt.Errorf("error loading user organization for user access token id %v ... %v",
+				u.ID, err)
+		}
+	}
+
+	uOrg := u.UserOrganization
+
+	if uOrg.OrganizationID <= 0 {
+		return Organization{}, fmt.Errorf("user access token id %v has no organization", u.ID)
+	}
+
+	if uOrg.Organization.ID <= 0 {
+		if err := DB.Load(&uOrg, "Organization"); err != nil {
+			return Organization{}, fmt.Errorf("error loading user organization for user access token id %v ... %v",
+				u.ID, err)
+		}
+	}
+
+	return uOrg.Organization, nil
+}
+
+func createAccessTokenExpiry() time.Time {
+	envLifetime := envy.Get(domain.AccessTokenLifetimeSecondsEnv, strconv.Itoa(domain.AccessTokenLifetimeSeconds))
+
+	lifetimeSeconds, err := strconv.Atoi(envLifetime)
+	if err != nil {
+		domain.ErrLogger.Printf("error converting %s env var ... %v", domain.AccessTokenLifetimeSecondsEnv, err)
+		lifetimeSeconds = domain.AccessTokenLifetimeSeconds
+	}
+
+	dtNow := time.Now()
+	futureTime := dtNow.Add(time.Second * time.Duration(lifetimeSeconds))
+
+	return futureTime
+}
+
+func createAccessTokenPart() string {
+	var alphanumerics = []rune("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+	tokenLength := 32
+	b := make([]rune, tokenLength)
+	for i := range b {
+		b[i] = alphanumerics[rand.Intn(len(alphanumerics))]
+	}
+
+	accessToken := string(b)
+
+	return accessToken
+}
+
+// Renew extends the token expiration to the configured token lifetime
+func (u *UserAccessToken) Renew() error {
+	u.ExpiresAt = createAccessTokenExpiry()
+	if err := DB.Update(u); err != nil {
+		return fmt.Errorf("error renewing access token, %s", err)
+	}
+	return nil
+}
+
+// GetUser returns the User associated with this access token
+func (u *UserAccessToken) GetUser() (User, error) {
+	if err := DB.Load(u, "User"); err != nil {
+		return User{}, err
+	}
+	if u.User.ID <= 0 {
+		return User{}, fmt.Errorf("no user associated with access token")
+	}
+	return u.User, nil
+}
+
+// DeleteIfExpired checks the token expiration and returns `true` if expired. Also deletes
+// the token from the database if it is expired.
+func (u *UserAccessToken) DeleteIfExpired() (bool, error) {
+	if u.ExpiresAt.Before(time.Now()) {
+		err := DB.Destroy(u)
+		if err != nil {
+			return true, fmt.Errorf("unable to delete expired userAccessToken, id: %v", u.ID)
+		}
+		return true, nil
+	}
+	return false, nil
+}
+
+func (u *UserAccessTokens) DeleteExpired() (int, error) {
+	deleted := 0
+	var lastErr error
+
+	var uats UserAccessTokens
+	if err := DB.All(&uats); err != nil {
+		return deleted, err
+	}
+
+	for _, u := range uats {
+		isExpired, err := u.DeleteIfExpired()
+		if isExpired && err == nil {
+			deleted++
+		}
+		if err != nil {
+			lastErr = err
+		}
+	}
+
+	return deleted, lastErr
 }

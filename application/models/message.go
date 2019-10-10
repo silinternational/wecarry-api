@@ -2,7 +2,10 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
+
+	"github.com/gobuffalo/buffalo/genny/build/_fixtures/coke/models"
 
 	"github.com/gofrs/uuid"
 
@@ -42,10 +45,9 @@ func (m Messages) String() string {
 // This method is not required and may be deleted.
 func (m *Message) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
-		&validators.IntIsPresent{Field: m.ID, Name: "ID"},
 		&validators.UUIDIsPresent{Field: m.Uuid, Name: "Uuid"},
 		&validators.IntIsPresent{Field: m.ThreadID, Name: "ThreadID"},
-		&validators.IntIsPresent{Field: m.SentByID, Name: "SentBy"},
+		&validators.IntIsPresent{Field: m.SentByID, Name: "SentByID"},
 		&validators.StringIsPresent{Field: m.Content, Name: "Content"},
 	), nil
 }
@@ -60,4 +62,24 @@ func (m *Message) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) {
 // This method is not required and may be deleted.
 func (m *Message) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
+}
+
+// GetSender finds and returns the User that is the Sender of this Message
+func (m *Message) GetSender(requestFields []string) (*User, error) {
+	sender := User{}
+	if err := models.DB.Select(requestFields...).Find(&sender, m.SentByID); err != nil {
+		err = fmt.Errorf("error finding message sentBy user with id %v ... %v", m.SentByID, err)
+		return nil, err
+	}
+	return &sender, nil
+}
+
+// GetThread finds and returns the Thread that this Message is attached to
+func (m *Message) GetThread(requestFields []string) (*Thread, error) {
+	thread := Thread{}
+	if err := models.DB.Select(requestFields...).Find(&thread, m.ThreadID); err != nil {
+		err = fmt.Errorf("error finding message thread id %v ... %v", m.ThreadID, err)
+		return nil, err
+	}
+	return &thread, nil
 }

@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/gobuffalo/buffalo/genny/build/_fixtures/coke/models"
+	"github.com/silinternational/wecarry-api/domain"
+
 	"github.com/gofrs/uuid"
 
 	"github.com/gobuffalo/pop"
@@ -20,7 +23,7 @@ type Thread struct {
 	PostID       int       `json:"post_id" db:"post_id"`
 	Post         Post      `belongs_to:"posts"`
 	Messages     Messages  `has_many:"messages"`
-	Participants Users     `has_many:"users"`
+	Participants Users     `many_to_many:"thread_participants"`
 }
 
 // String is not required by pop and may be deleted
@@ -42,7 +45,6 @@ func (t Threads) String() string {
 // This method is not required and may be deleted.
 func (t *Thread) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
-		&validators.IntIsPresent{Field: t.ID, Name: "ID"},
 		&validators.UUIDIsPresent{Field: t.Uuid, Name: "Uuid"},
 		&validators.IntIsPresent{Field: t.PostID, Name: "PostID"},
 	), nil
@@ -60,18 +62,120 @@ func (t *Thread) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }
 
-func FindThreadByUUID(uuid string) (Thread, error) {
-
+func (t *Thread) FindByUUID(uuid string) error {
 	if uuid == "" {
-		return Thread{}, fmt.Errorf("error: thread uuid must not be blank")
+		return fmt.Errorf("error: thread uuid must not be blank")
 	}
 
-	thread := Thread{}
 	queryString := fmt.Sprintf("uuid = '%s'", uuid)
 
-	if err := DB.Where(queryString).First(&thread); err != nil {
-		return Thread{}, fmt.Errorf("error finding thread by uuid: %s", err.Error())
+	if err := DB.Where(queryString).First(t); err != nil {
+		return fmt.Errorf("error finding thread by uuid: %s", err.Error())
 	}
 
-	return thread, nil
+	return nil
+}
+
+// FindByPostIDAndUserID finds the first thread on the given post that the given user is a participant. Since a
+// post creator can be participating in multiple threads, it is better to use `Post.GetThreads` in that case.
+func (t *Thread) FindByPostIDAndUserID(postID int, userID int) error {
+	if postID == 0 || userID == 0 {
+		err := fmt.Errorf("error: post postID and userID must not be 0. Got: %v and %v", postID, userID)
+		return err
+	}
+
+	var threads []Thread
+
+	if err := DB.Q().LeftJoin("thread_participants tp", "threads.id = tp.thread_id").
+		Where("tp.user_id = ?", userID).All(&threads); err != nil {
+		return fmt.Errorf("error getting threads: %v", err.Error())
+	}
+
+	// TODO Rewrite this to do it the proper way
+	for _, tt := range threads {
+		if tt.PostID == postID {
+			*t = tt
+			return nil
+		}
+	}
+
+	return nil
+}
+
+func (t *Thread) GetPost(selectFields []string) (*Post, error) {
+	if t.PostID <= 0 {
+		return nil, fmt.Errorf("error: PostID must be positive, got %v", t.PostID)
+	}
+	post := Post{}
+	if err := models.DB.Select(selectFields...).Find(&post, t.PostID); err != nil {
+		return nil, fmt.Errorf("error loading post %v %s", t.PostID, err)
+	}
+	return &post, nil
+}
+
+func (t *Thread) GetMessages(selectFields []string) ([]*Message, error) {
+	var messages []*Message
+	if err := models.DB.Select(selectFields...).Where("thread_id = ?", t.ID).All(&messages); err != nil {
+		return messages, fmt.Errorf("error getting messages for thread id %v ... %v", t.ID, err)
+	}
+
+	return messages, nil
+}
+
+func (t *Thread) GetParticipants(selectFields []string) ([]*User, error) {
+	var users []*User
+	var threadParticipants []*ThreadParticipant
+
+	if err := DB.Where("thread_id = ?", t.ID).Order("id asc").All(&threadParticipants); err != nil {
+		return users, fmt.Errorf("error reading from thread_participants table %v ... %v", t.ID, err)
+	}
+
+	for _, tp := range threadParticipants {
+		u := User{}
+
+		if err := DB.Select(selectFields...).Find(&u, tp.UserID); err != nil {
+			return users, fmt.Errorf("error finding users on thread %v ... %v", t.ID, err)
+		}
+		users = append(users, &u)
+	}
+	return users, nil
+}
+
+func (t *Thread) CreateWithParticipants(postUuid string, user User) error {
+	var post Post
+	if err := post.FindByUUID(postUuid); err != nil {
+		return err
+	}
+
+	participants := Users{user}
+
+	// Ensure Post Creator is one of the participants
+	if post.CreatedBy.ID != 0 && post.CreatedBy.ID != user.ID {
+		participants = append(participants, post.CreatedBy)
+	}
+
+	thread := Thread{
+		PostID:       post.ID,
+		Uuid:         domain.GetUuid(),
+		Participants: participants,
+	}
+
+	if err := models.DB.Save(&thread); err != nil {
+		err = fmt.Errorf("error saving new thread for message: %v", err.Error())
+		return err
+	}
+
+	*t = thread
+	return nil
+}
+
+// SetLastViewedAt sets the last viewed time for the given user on the thread
+func (t *Thread) SetLastViewedAt(user User, time time.Time) error {
+	var tp ThreadParticipant
+
+	if err := DB.Where("thread_id = ? AND user_id = ?", t.ID, user.ID).First(&tp); err != nil {
+		return err
+	}
+
+	return tp.SetLastViewedAt(time)
 }

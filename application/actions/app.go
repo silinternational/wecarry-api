@@ -2,15 +2,14 @@ package actions
 
 import (
 	"github.com/gobuffalo/buffalo"
+	"github.com/gobuffalo/buffalo-pop/pop/popmw"
 	"github.com/gobuffalo/envy"
-	csrf "github.com/gobuffalo/mw-csrf"
 	paramlogger "github.com/gobuffalo/mw-paramlogger"
 	"github.com/gorilla/sessions"
-	"github.com/silinternational/handcarry-api/models"
-
-	"github.com/gobuffalo/buffalo-pop/pop/popmw"
-	contenttype "github.com/gobuffalo/mw-contenttype"
 	"github.com/rs/cors"
+	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/listeners"
+	"github.com/silinternational/wecarry-api/models"
 )
 
 // ENV is used to help switch settings based on where the
@@ -38,20 +37,20 @@ func App() *buffalo.App {
 			PreWares: []buffalo.PreWare{
 				cors.New(cors.Options{
 					AllowCredentials: true,
-					AllowedOrigins:   []string{"*"},
+					AllowedOrigins:   []string{envy.Get(domain.UIURLEnv, "*")},
 					AllowedMethods:   []string{"HEAD", "GET", "POST", "PUT", "PATCH", "DELETE"},
 					AllowedHeaders:   []string{"*"},
 				}).Handler,
 			},
-			SessionName:  "_handcarry_session",
-			SessionStore: sessions.NewCookieStore([]byte("testing")),
+			SessionName:  "_wecarry_session",
+			SessionStore: sessions.NewCookieStore([]byte(envy.Get("SESSION_SECRET", "testing"))),
 		})
+
+		// Initialize and attach "rollbar" to context
+		app.Use(domain.RollbarMiddleware)
 
 		// Log request parameters (filters apply).
 		app.Use(paramlogger.ParameterLogger)
-
-		// Set the request content type to JSON
-		app.Use(contenttype.Set("application/json"))
 
 		// Wraps each request in a transaction.
 		//  c.Value("tx").(*pop.Connection)
@@ -60,21 +59,25 @@ func App() *buffalo.App {
 
 		//  Added for authorization
 		app.Use(SetCurrentUser)
-		app.Middleware.Skip(SetCurrentUser, HomeHandler, AuthLogin, AuthCallback)
+		app.Middleware.Skip(SetCurrentUser, HomeHandler)
 
 		app.GET("/", HomeHandler)
 		app.POST("/gql/", GQLHandler)
-		app.GET("/me", MeHandler)
+
+		app.POST("/upload/", UploadHandler)
 
 		auth := app.Group("/auth")
-		auth.Middleware.Skip(SetCurrentUser, AuthLogin, AuthCallback)
-		auth.GET("/login", AuthLogin)
-		auth.GET("/logout", AuthDestroy)
-		auth.GET("/{provider}/callback", AuthCallback)  // "GET" for Google
-		auth.POST("/{provider}/callback", AuthCallback) //  "POST" for saml2
-		auth.Middleware.Skip(csrf.New, AuthCallback)    //  Don't require csrf on auth
+		auth.Middleware.Skip(SetCurrentUser, AuthRequest, AuthCallback, AuthDestroy)
 
+		auth.POST("/login", AuthRequest)
+
+		auth.GET("/callback", AuthCallback)  // for Google Oauth
+		auth.POST("/callback", AuthCallback) // for SAML
+
+		auth.GET("/logout", AuthDestroy)
 	}
+
+	listeners.RegisterListeners()
 
 	return app
 }

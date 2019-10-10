@@ -1,10 +1,13 @@
 package main
 
 import (
-	"log"
+	"github.com/gobuffalo/envy"
+	"github.com/rollbar/rollbar-go"
 
-	"github.com/silinternational/handcarry-api/actions"
+	"github.com/silinternational/wecarry-api/actions"
 )
+
+var GitCommitHash string
 
 // main is the starting point for your Buffalo application.
 // You can feel free and add to this `main` method, change
@@ -13,10 +16,20 @@ import (
 // call `app.Serve()`, unless you don't want to start your
 // application that is. :)
 func main() {
+
+	// init rollbar
+	rollbar.SetToken(envy.Get("ROLLBAR_TOKEN", ""))
+	rollbar.SetEnvironment(envy.Get("GO_ENV", "development"))
+	rollbar.SetCodeVersion(GitCommitHash)
+	rollbar.SetServerRoot(envy.Get("ROLLBAR_SERVER_ROOT", "github.com/silinternational/wecarry-api"))
+
 	app := actions.App()
-	if err := app.Serve(); err != nil {
-		log.Fatal(err)
-	}
+	rollbar.WrapAndWait(func() {
+		if err := app.Serve(); err != nil {
+			panic(err)
+		}
+	})
+
 }
 
 /*

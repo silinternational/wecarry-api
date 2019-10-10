@@ -4,25 +4,68 @@ type Query {
     posts: [Post]!
     post(id: ID): Post
     threads: [Thread]!
+    myThreads: [Thread]!
     message(id: ID): Message!
 }
+
+type Mutation {
+    createPost(input: CreatePostInput!): Post!
+    updatePost(input: UpdatePostInput!): Post!
+    updateUser(input: UpdateUserInput!): User!
+    createMessage(input: CreateMessageInput!): Message!
+    createOrganization(input: CreateOrganizationInput!): Organization!
+    updateOrganization(input: UpdateOrganizationInput!): Organization!
+    createOrganizationDomain(input: CreateOrganizationDomainInput!): [OrganizationDomain!]!
+    removeOrganizationDomain(input: RemoveOrganizationDomainInput!): [OrganizationDomain!]!
+    setThreadLastViewedAt(input: SetThreadLastViewedAtInput!): Thread!
+}
+
+# Date and Time in RFC3339 format
+scalar Time
 
 enum Role {
     ADMIN
     USER
 }
 
+enum PostRole {
+    CREATEDBY
+    RECEIVING
+    PROVIDING
+}
+
+enum PostStatus {
+    OPEN
+    COMMITTED
+    ACCEPTED
+    RECEIVED
+    COMPLETED
+    REMOVED
+}
+
+enum PostSize {
+    TINY
+    SMALL
+    MEDIUM
+    LARGE
+    XLARGE
+}
+
 type User {
-  id: ID!
-  email: String!
-  firstName: String!
-  lastName: String!
-  nickname: String!
-  uuid: String!
-  accessToken: String!
-  createdAt: String
-  updatedAt: String
-  adminRole: Role
+    id: ID!
+    email: String!
+    nickname: String!
+    createdAt: Time
+    updatedAt: Time
+    adminRole: Role
+    organizations: [Organization!]!
+    posts(role: PostRole!): [Post!]!
+    photoURL: String!
+}
+
+input UpdateUserInput {
+    id: ID
+    photoID: String
 }
 
 enum PostType {
@@ -32,7 +75,6 @@ enum PostType {
 
 type Post {
     id: ID!
-    uuid: String!
     type: PostType!
     createdBy: User!
     receiver: User
@@ -42,22 +84,58 @@ type Post {
     description: String
     destination: String
     origin: String
-    size: String!
+    size: PostSize!
     neededAfter: String
     neededBefore: String
     category: String!
     status: String!
-    thread: [Thread!]!
-    createdAt: String
-    updatedAt: String
+    threads: [Thread]!
+    createdAt: Time
+    updatedAt: Time
+    myThreadID: String
+    url: String
+    cost: String
+    photo: File
+    files: [File!]!
 }
 
 type Organization {
     id: ID!
     name: String!
     url: String
-    createdAt: String
-    updatedAt: String
+    createdAt: Time
+    updatedAt: Time
+    domains: [OrganizationDomain!]!
+}
+
+input CreateOrganizationInput {
+    name: String!
+    url: String
+    authType: String!
+    authConfig: String!
+}
+
+input UpdateOrganizationInput {
+    id: ID!
+    name: String!
+    url: String
+    authType: String!
+    authConfig: String!
+}
+
+type OrganizationDomain {
+    domain: String!
+    organizationID: ID!
+}
+
+input CreateOrganizationDomainInput {
+    domain: String!
+    organizationID: ID!
+}
+
+input RemoveOrganizationDomainInput {
+    domain: String!
+    organizationID: ID!
 }
 
 type Thread {
@@ -65,8 +143,9 @@ type Thread {
     participants: [User!]!
     messages: [Message!]!
     postID: String!
-    createdAt: String
-    updatedAt: String
+    post: Post!
+    createdAt: Time
+    updatedAt: Time
 }
 
 type Message {
@@ -74,37 +153,58 @@ type Message {
     sender: User!
     content: String!
     thread: Thread!
-    createdAt: String
-    updatedAt: String
+    createdAt: Time
+    updatedAt: Time
 }
 
-
-input NewPost {
+input CreatePostInput {
     orgID: String!
     type: PostType!
     title: String!
     description: String
     destination: String
     origin: String
-    size: String!
+    size: PostSize!
     neededAfter: String
     neededBefore: String
     category: String
+    url: String
+    cost: String
+    photoID: ID
 }
 
-input NewMessage {
+input CreateMessageInput {
     content: String!
     postID: String!
     threadID: String
 }
 
-input UpdatedPostStatus {
+input UpdatePostInput {
     id: ID!
-    status: String!
+    status: PostStatus
+    title: String
+    description: String
+    destination: String
+    origin: String
+    size: PostSize
+    neededAfter: String
+    neededBefore: String
+    category: String
+    url: String
+    cost: String
+    photoID: ID
 }
 
-type Mutation {
-    createPost(input: NewPost!): Post!
-    updatePostStatus(input: UpdatedPostStatus!): Post!
-    createMessage(input: NewMessage!): Message!
+type File {
+    id: ID!
+    url: String!
+    urlExpiration: Time!
+    name: String!
+    size: Int!
+    contentType: String!
+}
+
+input SetThreadLastViewedAtInput {
+    threadId: ID!
+    time: Time!
 }

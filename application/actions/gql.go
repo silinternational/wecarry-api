@@ -5,7 +5,7 @@ import (
 
 	"github.com/99designs/gqlgen/handler"
 	"github.com/gobuffalo/buffalo"
-	"github.com/silinternational/handcarry-api/gqlgen"
+	"github.com/silinternational/wecarry-api/gqlgen"
 )
 
 func GQLHandler(c buffalo.Context) error {

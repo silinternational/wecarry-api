@@ -1,0 +1,2 @@
+add_column("posts", "url", "string", {null: true})
+add_column("posts", "cost", "numeric(13,4)", {null: true})

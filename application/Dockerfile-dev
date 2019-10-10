@@ -9,8 +9,8 @@ RUN apt-get update && apt-get install -y \
 RUN curl -o /usr/local/bin/whenavail https://bitbucket.org/silintl/docker-whenavail/raw/1.0.2/whenavail \
      && chmod a+x /usr/local/bin/whenavail
 
-RUN mkdir -p /handcarry
-WORKDIR /handcarry
+RUN mkdir -p /wecarry
+WORKDIR /wecarry
 
 
 RUN echo 'alias ll="ls -al"' >> ~/.bashrc
@@ -18,5 +18,7 @@ RUN echo 'alias ll="ls -al"' >> ~/.bashrc
 ADD . .
 ENV GO111MODULE=on
 RUN go get ./...
+RUN go get github.com/gobuffalo/suite
+RUN go get github.com/gobuffalo/httptest
 
 CMD ["buffalo", "dev"]
