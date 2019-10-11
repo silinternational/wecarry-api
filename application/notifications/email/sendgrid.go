@@ -1,6 +1,7 @@
 package email
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -29,6 +30,10 @@ var sendGridTemplates = map[string]sendGridTemplate{
 
 func (e *SendGridService) Send(msg Message) error {
 	apiKey := os.Getenv(domain.SendGridAPIKeyEnv)
+	if apiKey == "" {
+		return errors.New("SendGrid API key is required")
+	}
+
 	template, ok := sendGridTemplates[msg.TemplateName]
 	if !ok {
 		return fmt.Errorf("invalid message template name: %s", msg.TemplateName)
