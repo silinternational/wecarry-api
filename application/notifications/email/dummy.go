@@ -1,8 +1,6 @@
 package email
 
 import (
-	"fmt"
-
 	"github.com/silinternational/wecarry-api/domain"
 )
 
@@ -18,7 +16,7 @@ type dummyTemplate struct {
 	subject, body string
 }
 
-var dummyTemplateData = map[string]dummyTemplate{
+var dummyTemplates = map[string]dummyTemplate{
 	domain.MessageTemplateNewRequest: {
 		subject: "new request",
 		body:    "There is a new request for an item from your location.",
@@ -30,11 +28,16 @@ var dummyTemplateData = map[string]dummyTemplate{
 }
 
 func (t *DummyService) Send(msg Message) error {
-	fmt.Printf("new message sent: %s", dummyTemplateData[msg.TemplateName].subject)
+	template, ok := dummyTemplates[msg.TemplateName]
+	if !ok {
+		domain.ErrLogger.Printf("invalid template name: %s", msg.TemplateName)
+	}
+
+	domain.Logger.Printf("dummy message subject: %s", template.subject)
 	t.sentMessages = append(t.sentMessages,
 		dummyMessage{
-			subject:   dummyTemplateData[msg.TemplateName].subject,
-			body:      dummyTemplateData[msg.TemplateName].body,
+			subject:   template.subject,
+			body:      template.body,
 			fromName:  msg.FromName,
 			fromEmail: msg.FromEmail,
 			toName:    msg.ToName,
