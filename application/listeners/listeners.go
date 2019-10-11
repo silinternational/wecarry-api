@@ -102,24 +102,25 @@ func sendNewMessageNotification(e events.Event) {
 	msg := notifications.Message{
 		Template:  domain.MessageTemplateNewMessage,
 		Data:      data,
-		FromName:  getPayload(e, "fromName").(string),
-		FromEmail: getPayload(e, "fromEmail").(string),
-		FromPhone: getPayload(e, "fromPhone").(string),
-		ToName:    getPayload(e, "toName").(string),
-		ToEmail:   getPayload(e, "toEmail").(string),
-		ToPhone:   getPayload(e, "toPhone").(string),
+		FromName:  getPayload(e, "fromName"),
+		FromEmail: getPayload(e, "fromEmail"),
+		FromPhone: getPayload(e, "fromPhone"),
+		ToName:    getPayload(e, "toName"),
+		ToEmail:   getPayload(e, "toEmail"),
+		ToPhone:   getPayload(e, "toPhone"),
 	}
 	if err := notifications.Send(msg); err != nil {
 		domain.ErrLogger.Printf("error sending 'New Message' notification, %s", err)
 	}
 }
 
-func getPayload(event events.Event, name string) interface{} {
+func getPayload(event events.Event, name string) string {
 	p, err := event.Payload.Pluck(name)
 	if err != nil {
 		domain.ErrLogger.Printf("error retrieving payload %s from %s event, %s", name, event.Kind, err)
 	}
-	return p
+	s, _ := p.(string)
+	return s
 }
 
 type apiListener struct {
