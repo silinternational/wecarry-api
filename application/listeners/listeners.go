@@ -122,15 +122,6 @@ func sendNewMessageNotification(e events.Event) {
 	}
 }
 
-func getPayload(event events.Event, name string) string {
-	p, err := event.Payload.Pluck(name)
-	if err != nil {
-		domain.ErrLogger.Printf("error retrieving payload %s from %s event, %s", name, event.Kind, err)
-	}
-	s, _ := p.(string)
-	return s
-}
-
 type apiListener struct {
 	name     string
 	listener func(events.Event)
