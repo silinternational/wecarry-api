@@ -19,19 +19,12 @@ func TestSend(t *testing.T) {
 	emailService = &testService
 
 	if err := emailService.Send(msg); err != nil {
-		t.Errorf("error using dummy service, %s", err)
+		t.Errorf("error sending message, %s", err)
 	}
 
 	n := len(testService.sentMessages)
 	if n != 1 {
 		t.Errorf("incorrect number of messages sent (%d)", n)
 		t.FailNow()
-	}
-
-	var sendGridService SendGridService
-	emailService = &sendGridService
-
-	if err := emailService.Send(msg); err != nil {
-		t.Errorf("error using SendGrid, %s", err)
 	}
 }
