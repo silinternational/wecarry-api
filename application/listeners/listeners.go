@@ -96,11 +96,13 @@ func sendNewMessageNotification(e events.Event) {
 	if e.Kind != domain.EventApiMessageCreated {
 		return
 	}
+
 	domain.Logger.Printf("%s Message Created ... %s", domain.GetCurrentTime(), e.Message)
 
 	mEData, ok := e.Payload["eventData"].(models.MessageCreatedEventData)
 	if !ok {
 		domain.ErrLogger.Print("unable to parse Message Created event payload")
+		return
 	}
 
 	uiUrl := envy.Get(domain.UIURLEnv, "")
