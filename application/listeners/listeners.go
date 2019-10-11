@@ -112,7 +112,7 @@ func sendNewMessageNotification(e events.Event) {
 		"threadURL":      uiUrl + "/#/messages/" + mEData.ThreadUUID,
 	}
 
-	for _, r := range mEData.MessageRecipient {
+	for _, r := range mEData.MessageRecipients {
 		msg := notifications.Message{
 			Template:  domain.MessageTemplateNewMessage,
 			Data:      data,
