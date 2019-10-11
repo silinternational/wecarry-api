@@ -18,10 +18,10 @@ type Notifier interface {
 	Send(msg Message) error
 }
 
-type Email struct {
+type EmailNotifier struct {
 }
 
-func (e *Email) Send(msg Message) error {
+func (e *EmailNotifier) Send(msg Message) error {
 	var emailService email.Service
 
 	emailServiceType := envy.Get(domain.EmailServiceEnv, "sendgrid")
@@ -46,10 +46,10 @@ func (e *Email) Send(msg Message) error {
 	return emailService.Send(emailMessage)
 }
 
-type Mobile struct {
+type MobileNotifier struct {
 }
 
-func (m *Mobile) Send(msg Message) error {
+func (m *MobileNotifier) Send(msg Message) error {
 	var mobileService mobile.Service
 
 	mobileServiceType := envy.Get(domain.MobileServiceEnv, "dummy")
