@@ -1,8 +1,6 @@
 package models
 
 import (
-	"crypto/rand"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -123,12 +121,6 @@ func createAccessTokenExpiry() time.Time {
 	futureTime := dtNow.Add(time.Second * time.Duration(lifetimeSeconds))
 
 	return futureTime
-}
-
-func createAccessTokenPart() string {
-	// Not checking the error, since we did that in models.init()
-	rand.Read(RandomBytes)
-	return base64.URLEncoding.EncodeToString(RandomBytes)
 }
 
 // Renew extends the token expiration to the configured token lifetime

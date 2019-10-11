@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"database/sql"
+	"encoding/base64"
 	"fmt"
 	"github.com/gobuffalo/events"
 	"github.com/gobuffalo/validate/validators"
@@ -25,7 +26,7 @@ import (
 // throughout your application.
 var DB *pop.Connection
 
-var RandomBytes = make([]byte, 32)
+const TokenBytes = 32
 
 func init() {
 	var err error
@@ -38,9 +39,20 @@ func init() {
 	pop.Debug = env == "development"
 
 	// Just make sure we can use the crypto/rand library on our system
-	if _, err = rand.Read(RandomBytes); err != nil {
+	if _, err = getRandomToken(); err != nil {
 		log.Fatal(fmt.Errorf("error using crypto/rand ... %v", err))
 	}
+}
+
+func getRandomToken() (string, error) {
+	rb := make([]byte, TokenBytes)
+
+	_, err := rand.Read(rb)
+	if err != nil {
+		return "", err
+	}
+
+	return base64.URLEncoding.EncodeToString(rb), nil
 }
 
 func ConvertStringPtrToNullsString(inPtr *string) nulls.String {

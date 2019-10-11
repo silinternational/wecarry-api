@@ -95,7 +95,7 @@ func (u *User) CreateAccessToken(org Organization, clientID string) (string, int
 		return "", 0, fmt.Errorf("cannot create token with empty clientID for user %s", u.Nickname)
 	}
 
-	token := createAccessTokenPart()
+	token, _ := getRandomToken()
 	hash := HashClientIdAccessToken(clientID + token)
 	expireAt := createAccessTokenExpiry()
 
