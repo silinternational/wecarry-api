@@ -2,51 +2,51 @@
   service: app
   command: ./codeship-test.sh
 
-- name: push_develop_timestamp
+# - name: push_develop_timestamp
+#   service: binary
+#   type: push
+#   image_name: 369020531563.dkr.ecr.us-east-1.amazonaws.com/wecarry-stg
+#   image_tag: "{{.Timestamp}}"
+#   tag: develop
+#   registry: https://369020531563.dkr.ecr.us-east-1.amazonaws.com
+#   dockercfg_service: awsgenerator
+
+# - name: push_develop_develop
+#   service: binary
+#   type: push
+#   image_name: 369020531563.dkr.ecr.us-east-1.amazonaws.com/wecarry-stg
+#   image_tag: "develop"
+#   tag: develop
+#   registry: https://369020531563.dkr.ecr.us-east-1.amazonaws.com
+#   dockercfg_service: awsgenerator
+
+- name: push_production_timestamp
   service: binary
   type: push
-  image_name: 369020531563.dkr.ecr.us-east-1.amazonaws.com/wecarry-stg
+  image_name: 369020531563.dkr.ecr.us-east-1.amazonaws.com/wecarry-prod
   image_tag: "{{.Timestamp}}"
-  tag: develop
+  tag: master
   registry: https://369020531563.dkr.ecr.us-east-1.amazonaws.com
   dockercfg_service: awsgenerator
 
-- name: push_develop_develop
+- name: push_production_latest
   service: binary
   type: push
-  image_name: 369020531563.dkr.ecr.us-east-1.amazonaws.com/wecarry-stg
-  image_tag: "develop"
-  tag: develop
+  image_name: 369020531563.dkr.ecr.us-east-1.amazonaws.com/wecarry-prod
+  image_tag: "latest"
+  tag: master
   registry: https://369020531563.dkr.ecr.us-east-1.amazonaws.com
   dockercfg_service: awsgenerator
 
-#- name: push_production_timestamp
-#  service: binary
-#  type: push
-#  image_name: 369020531563.dkr.ecr.us-east-1.amazonaws.com/wecarry-prod
-#  image_tag: "{{.Timestamp}}"
-#  tag: master
-#  registry: https://369020531563.dkr.ecr.us-east-1.amazonaws.com
-#  dockercfg_service: awsgenerator
-#
-#- name: push_production_latest
-#  service: binary
-#  type: push
-#  image_name: 369020531563.dkr.ecr.us-east-1.amazonaws.com/wecarry-prod
-#  image_tag: "latest"
-#  tag: master
-#  registry: https://369020531563.dkr.ecr.us-east-1.amazonaws.com
-#  dockercfg_service: awsgenerator
+# - name: deploy_staging_web
+#   service: ecsdeploy
+#   tag: develop 
+#   command: "-c appsdev-stg -n wecarry-api -i 369020531563.dkr.ecr.us-east-1.amazonaws.com/wecarry-stg -e CI_TIMESTAMP -t 600"
 
-- name: deploy_staging_web
+- name: deploy_production_web
   service: ecsdeploy
-  tag: develop
-  command: "-c appsdev-stg -n wecarry-api -i 369020531563.dkr.ecr.us-east-1.amazonaws.com/wecarry-stg -e CI_TIMESTAMP -t 600"
-
-#- name: deploy_production_web
-#  service: ecsdeploy
-#  tag: master
-#  command: "-c appsdev-prod -n wecarry-api -i 369020531563.dkr.ecr.us-east-1.amazonaws.com/wecarry-prod -e CI_TIMESTAMP -t 600"
+  tag: master
+  command: "-c appsdev-stg -n wecarry-api -i 369020531563.dkr.ecr.us-east-1.amazonaws.com/wecarry-prod -e CI_TIMESTAMP -t 600"
 
 - name: track_deployment
   service: tracker

@@ -17,6 +17,11 @@ const (
 
 var UserAccessTokensNextCleanupTime time.Time
 
+type apiListener struct {
+	name     string
+	listener func(events.Event)
+}
+
 //
 // Register new listener functions here.  Remember, though, that these groupings just
 // describe what we want.  They don't make it happen this way. The listeners
@@ -120,9 +125,4 @@ func sendNewMessageNotification(e events.Event) {
 			domain.ErrLogger.Printf("error sending 'New Message' notification, %s", err)
 		}
 	}
-}
-
-type apiListener struct {
-	name     string
-	listener func(events.Event)
 }
