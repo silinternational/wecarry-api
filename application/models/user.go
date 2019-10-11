@@ -174,7 +174,7 @@ func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
 		u.Uuid = domain.GetUuid()
 
 		u.Nickname = authUser.Nickname
-		if err := u.getUniqueNickname(); err != nil {
+		if err := u.uniquifyNickname(); err != nil {
 			return err
 		}
 	}
@@ -351,22 +351,22 @@ func (u *User) Save() error {
 	return DB.Save(u)
 }
 
-func (u *User) getUniqueNickname() error {
+func (u *User) uniquifyNickname() error {
 
 	simpleNN := u.Nickname
 	if simpleNN == "" {
-		last := ""
+		simpleNN = u.FirstName
 		if len(u.LastName) > 0 {
-			last = u.LastName[:1]
+			simpleNN = u.FirstName + u.LastName[:1]
 		}
-		simpleNN = u.FirstName + last
 	}
-
-	u.Nickname = simpleNN
 
 	var err error
 
+	// User the first nickname prefix that makes it unique
 	for _, p := range allPrefixes() {
+		u.Nickname = p + simpleNN
+
 		var existingUser User
 		err = DB.Where("nickname = ?", u.Nickname).First(&existingUser)
 
@@ -375,8 +375,6 @@ func (u *User) getUniqueNickname() error {
 			return nil
 		}
 
-		// Get a different nickname
-		u.Nickname = p + simpleNN
 	}
 
 	if err != nil {
