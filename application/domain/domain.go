@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -25,7 +24,7 @@ const (
 	AdminRoleSalesAdmin        = "SalesAdmin"
 	EmptyUUID                  = "00000000-0000-0000-0000-000000000000"
 	DateFormat                 = "2006-01-02"
-	MaxFileSize                = 1 << 20 // 1 Mebibyte
+	MaxFileSize                = 1 << 21 // 10 Mebibytes
 	AccessTokenLifetimeSeconds = 3600
 	DateTimeFormat             = "2006-01-02 15:04:05"
 )
@@ -57,28 +56,6 @@ func init() {
 type AppError struct {
 	Code    string `json:"Code"`
 	Message string `json:"Message,omitempty"`
-}
-
-// GetRequestData parses the URL, if the method is GET, or the body, if the method
-// is POST or PUT, and returns a map[string][]string with all of the parameter/value
-// pairs. In either case, the data must be urlencoded.
-func GetRequestData(r *http.Request) (map[string][]string, error) {
-	data := map[string][]string{}
-
-	if r.Method == "GET" {
-		return r.URL.Query(), nil
-	}
-
-	if r.Method == "POST" || r.Method == "PUT" {
-		// Call ParseForm() to parse the raw query and update r.PostForm and r.Form.
-		if err := r.ParseForm(); err != nil {
-			return data, fmt.Errorf("error getting POST data: %v", err.Error())
-		}
-
-		data = r.PostForm
-	}
-
-	return data, nil
 }
 
 // GetFirstStringFromSlice returns the first string in the given slice, or an empty
@@ -153,8 +130,8 @@ func GetCurrentTime() string {
 // GetUuid creates a new, unique version 4 (random) UUID and returns it
 // as a uuid2.UUID. Errors are ignored.
 func GetUuid() uuid2.UUID {
-	// TODO: Handle this error
-	uuid, _ := uuid2.NewV4()
+	uuid, err := uuid2.NewV4()
+	ErrLogger.Printf("error creating new uuid2 ... %v", err)
 	return uuid
 }
 

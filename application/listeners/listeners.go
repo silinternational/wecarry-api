@@ -13,6 +13,11 @@ const (
 
 var UserAccessTokensNextCleanupTime time.Time
 
+type apiListener struct {
+	name     string
+	listener func(events.Event)
+}
+
 //
 // Register new listener functions here.  Remember, though, that these groupings just
 // describe what we want.  They don't make it happen this way. The listeners
@@ -74,9 +79,4 @@ func userCreated(e events.Event) {
 	}
 
 	domain.Logger.Printf("%s User Created ... %s", domain.GetCurrentTime(), e.Message)
-}
-
-type apiListener struct {
-	name     string
-	listener func(events.Event)
 }

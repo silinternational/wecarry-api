@@ -32,6 +32,7 @@ func init() {
 	env := envy.Get("GO_ENV", "development")
 	DB, err = pop.Connect(env)
 	if err != nil {
+		domain.ErrLogger.Printf("error connecting to database ... %v", err)
 		log.Fatal(err)
 	}
 	pop.Debug = env == "development"

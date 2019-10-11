@@ -1,54 +1,13 @@
 package domain
 
 import (
-	"bytes"
 	"net/http"
-	"net/url"
 	"reflect"
 	"testing"
 	"time"
 
 	"github.com/gofrs/uuid"
 )
-
-func TestGetRequestData(t *testing.T) {
-	// test GET request
-	req := http.Request{
-		Method: "GET",
-		URL:    &url.URL{RawQuery: "param=val"},
-	}
-	data, err := GetRequestData(&req)
-	if err != nil {
-		t.Errorf("GetRequestData() error: %v", err)
-	}
-	if v, ok := data["param"]; ok {
-		if len(v) != 1 || v[0] != "val" {
-			t.Errorf("Invalid data: %v", v)
-		}
-	} else {
-		t.Errorf("Missing parameter")
-	}
-
-	// test POST request
-	body := []byte("param=val")
-	postRequest, err := http.NewRequest("POST", "http://www.google.com", bytes.NewBuffer(body))
-	if err != nil {
-		t.Errorf("NewRequest() error: %v", err)
-	}
-	postRequest.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-	data, err = GetRequestData(postRequest)
-	if err != nil {
-		t.Errorf("GetRequestData() error: %v", err)
-	}
-	if v, ok := data["param"]; ok {
-		if len(v) != 1 || v[0] != "val" {
-			t.Errorf("Invalid data: %v", v)
-		}
-	} else {
-		t.Errorf("Missing parameter (data: %v) (body: %v)", data, string(body))
-	}
-}
 
 func TestGetFirstStringFromSlice(t *testing.T) {
 	type args struct {
