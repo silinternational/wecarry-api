@@ -1,0 +1,36 @@
+package models
+
+func allPrefixes() [30]string {
+	return [30]string{
+		"Faithful",
+		"Honest",
+		"Determined",
+		"Joyful",
+		"Loving",
+		"Peaceful",
+		"Patient",
+		"Kind",
+		"Good",
+		"Selfless",
+		"Disciplined",
+		"Authentic",
+		"Powerful",
+		"Enduring",
+		"Trustworthy",
+		"Upright",
+		"Courageous",
+		"Reliable",
+		"Responsible",
+		"Generous",
+		"Compassionate",
+		"Committed",
+		"Humble",
+		"Loyal",
+		"Wise",
+		"Truthful",
+		"Diligent",
+		"Flexible",
+		"Calm",
+		"Confident",
+	}
+}

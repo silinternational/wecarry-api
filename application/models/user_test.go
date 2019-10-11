@@ -696,3 +696,74 @@ func (ms *ModelSuite) TestUser_AttachPhoto() {
 		ms.Fail("user.GetPhotoURL failed, %s", err)
 	}
 }
+
+func CreateUserFixturesForNicknames(ms *ModelSuite, t *testing.T) User {
+	ResetTables(t, ms.DB)
+
+	unique := domain.GetUuid().String()
+
+	// Load User test fixtures
+	user := User{
+		Email:     fmt.Sprintf("user1-%s@example.com", unique),
+		FirstName: "Existing",
+		LastName:  "User",
+		Nickname:  "ExistingU",
+		Uuid:      domain.GetUuid(),
+	}
+
+	if err := ms.DB.Create(&user); err != nil {
+		t.Errorf("could not create test user %v ... %v", user, err)
+		t.FailNow()
+	}
+
+	return user
+}
+
+func (ms *ModelSuite) TestGetUniqueNickname() {
+	t := ms.T()
+	existingUser := CreateUserFixturesForNicknames(ms, t)
+
+	tests := []struct {
+		name     string
+		user     User
+		want     string
+		dontWant string
+	}{
+		{
+			name: "No Change, Blank Last Name",
+			user: User{FirstName: "New"},
+			want: "New",
+		},
+		{
+			name: "No Change, OK Last Name",
+			user: User{FirstName: "New", LastName: "User"},
+			want: "NewU",
+		},
+		{
+			name: "Expect Change",
+			user: User{
+				FirstName: existingUser.FirstName,
+				LastName:  existingUser.LastName,
+				Nickname:  existingUser.Nickname},
+			dontWant: existingUser.Nickname,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := test.user.getUniqueNickname()
+			if err != nil {
+				t.Errorf("getUniqueNickname() returned error: %s", err)
+			}
+
+			got := test.user.Nickname
+
+			if test.want != "" {
+				ms.Equal(test.want, got)
+				return
+			}
+
+			ms.NotEqual(test.dontWant, got)
+		})
+	}
+}
