@@ -1,10 +1,12 @@
 package notifications
 
-import "github.com/silinternational/wecarry-api/models"
-
 type Message struct {
-	Template string
-	Data     map[string]interface{}
-	From     models.User
-	To       models.User
+	Template  string
+	Data      map[string]interface{}
+	FromName  string
+	FromEmail string
+	FromPhone string
+	ToName    string
+	ToEmail   string
+	ToPhone   string
 }

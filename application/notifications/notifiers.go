@@ -35,10 +35,10 @@ func (e *Email) Send(msg Message) error {
 	}
 
 	emailMessage := email.Message{
-		FromName:     msg.From.Nickname,
-		FromEmail:    msg.From.Email,
-		ToName:       msg.To.Nickname,
-		ToEmail:      msg.To.Email,
+		FromName:     msg.FromName,
+		FromEmail:    msg.FromEmail,
+		ToName:       msg.ToName,
+		ToEmail:      msg.ToEmail,
 		TemplateName: msg.Template,
 		TemplateData: msg.Data,
 	}
@@ -61,10 +61,10 @@ func (m *Mobile) Send(msg Message) error {
 	}
 
 	mobileMessage := mobile.Message{
-		FromName:     msg.From.Nickname,
-		FromPhone:    msg.From.Email,
-		ToName:       msg.To.Nickname,
-		ToPhone:      msg.To.Email,
+		FromName:     msg.FromName,
+		FromPhone:    msg.FromPhone,
+		ToName:       msg.ToName,
+		ToPhone:      msg.ToPhone,
 		TemplateName: msg.Template,
 	}
 

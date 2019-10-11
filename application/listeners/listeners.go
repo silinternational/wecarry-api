@@ -3,13 +3,10 @@ package listeners
 import (
 	"time"
 
-	"github.com/gobuffalo/envy"
-
-	"github.com/silinternational/wecarry-api/notifications"
-
 	"github.com/gobuffalo/events"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
+	"github.com/silinternational/wecarry-api/notifications"
 )
 
 const (
@@ -94,34 +91,33 @@ func sendNewMessageNotification(e events.Event) {
 	}
 	domain.Logger.Printf("%s Message Created ... %s", domain.GetCurrentTime(), e.Message)
 
-	from := getPayload(e, "From").(models.User)
-	to := getPayload(e, "To").(models.User)
-	message := getPayload(e, "Message").(models.Message)
-
-	uiUrl := envy.Get(domain.UIURLEnv, "")
 	data := map[string]interface{}{
-		"postURL":        uiUrl + "/#/requests/" + message.Thread.Post.Uuid.String(),
-		"postTitle":      message.Thread.Post.Title,
-		"messageContent": message.Content,
-		"sentByNickname": from.Nickname,
-		"threadURL":      uiUrl + "/#/messages/" + message.Thread.Uuid.String(),
+		"postURL":        getPayload(e, "postURL"),
+		"postTitle":      getPayload(e, "postTitle"),
+		"messageContent": getPayload(e, "messageContent"),
+		"sentByNickname": getPayload(e, "fromName"),
+		"threadURL":      getPayload(e, "threadURL"),
 	}
 
 	msg := notifications.Message{
-		Template: domain.MessageTemplateNewMessage,
-		Data:     data,
-		From:     from,
-		To:       to,
+		Template:  domain.MessageTemplateNewMessage,
+		Data:      data,
+		FromName:  getPayload(e, "fromName").(string),
+		FromEmail: getPayload(e, "fromEmail").(string),
+		FromPhone: getPayload(e, "fromPhone").(string),
+		ToName:    getPayload(e, "toName").(string),
+		ToEmail:   getPayload(e, "toEmail").(string),
+		ToPhone:   getPayload(e, "toPhone").(string),
 	}
 	if err := notifications.Send(msg); err != nil {
 		domain.ErrLogger.Printf("error sending 'New Message' notification, %s", err)
 	}
 }
 
-func getPayload(e events.Event, name string) interface{} {
-	p, err := e.Payload.Pluck(name)
+func getPayload(event events.Event, name string) interface{} {
+	p, err := event.Payload.Pluck(name)
 	if err != nil {
-		domain.ErrLogger.Printf("error retrieving payload %s from %s event, %s", name, e.Kind, err)
+		domain.ErrLogger.Printf("error retrieving payload %s from %s event, %s", name, event.Kind, err)
 	}
 	return p
 }

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/gobuffalo/envy"
+
 	"github.com/gobuffalo/events"
 	"github.com/silinternational/wecarry-api/domain"
 
@@ -93,24 +95,34 @@ func (m *Message) Create() error {
 		return err
 	}
 
-	// Thread is needed in the Event listener
 	if err := DB.Load(m, "SentBy", "Thread"); err != nil {
 		return err
 	}
 
-	// Post is needed in the Event listener
 	if err := DB.Load(&m.Thread, "Participants", "Post"); err != nil {
 		return err
 	}
 
+	uiUrl := envy.Get(domain.UIURLEnv, "")
 	for _, tp := range m.Thread.Participants {
 		if tp.ID == m.SentBy.ID {
 			continue
 		}
 		e := events.Event{
 			Kind:    domain.EventApiMessageCreated,
-			Message: "Sender: " + m.SentBy.Nickname,
-			Payload: events.Payload{"Message": *m, "From": m.SentBy, "To": tp},
+			Message: "New Message from " + m.SentBy.Nickname,
+			Payload: events.Payload{
+				"toName":         tp.Nickname,
+				"toEmail":        tp.Email,
+				"toPhone":        "",
+				"fromName":       m.SentBy.Nickname,
+				"fromEmail":      m.SentBy.Email,
+				"fromPhone":      "",
+				"postURL":        uiUrl + "/#/requests/" + m.Thread.Post.Uuid.String(),
+				"postTitle":      m.Thread.Post.Title,
+				"messageContent": m.Content,
+				"threadURL":      uiUrl + "/#/messages/" + m.Thread.Uuid.String(),
+			},
 		}
 		emitEvent(e)
 	}
