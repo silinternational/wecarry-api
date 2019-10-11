@@ -401,14 +401,14 @@ func SetCurrentUser(next buffalo.Handler) buffalo.Handler {
 	return func(c buffalo.Context) error {
 		bearerToken := domain.GetBearerTokenFromRequest(c.Request())
 		if bearerToken == "" {
-			return fmt.Errorf("no Bearer token provided")
+			return c.Error(http.StatusUnauthorized, fmt.Errorf("no Bearer token provided"))
 		}
 
 		var userAccessToken models.UserAccessToken
 		err := userAccessToken.FindByBearerToken(bearerToken)
 		if err != nil {
 			domain.ErrLogger.Print(err.Error())
-			return c.Error(401, fmt.Errorf("invalid bearer token"))
+			return c.Error(http.StatusUnauthorized, fmt.Errorf("invalid bearer token"))
 		}
 
 		isExpired, err := userAccessToken.DeleteIfExpired()
@@ -417,12 +417,12 @@ func SetCurrentUser(next buffalo.Handler) buffalo.Handler {
 		}
 
 		if isExpired {
-			return c.Error(401, fmt.Errorf("expired bearer token"))
+			return c.Error(http.StatusUnauthorized, fmt.Errorf("expired bearer token"))
 		}
 
 		user, err := userAccessToken.GetUser()
 		if err != nil {
-			return fmt.Errorf("error finding user by access token, %s", err.Error())
+			return c.Error(http.StatusInternalServerError, fmt.Errorf("error finding user by access token, %s", err.Error()))
 		}
 		c.Set("current_user", user)
 
