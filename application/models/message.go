@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gobuffalo/envy"
-
 	"github.com/gobuffalo/events"
 	"github.com/silinternational/wecarry-api/domain"
 
@@ -29,6 +27,17 @@ type Message struct {
 	Content   string    `json:"content" db:"content"`
 	Thread    Thread    `belongs_to:"threads"`
 	SentBy    User      `belongs_to:"users"`
+}
+
+// MessageCreatedEventData holds data needed by the Message Created event listener
+type MessageCreatedEventData struct {
+	MessageCreatorNickName string
+	MessageCreatorEmail    string
+	MessageContent         string
+	PostUUID               string
+	PostTitle              string
+	ThreadUUID             string
+	MessageRecipient       []struct{ Nickname, Email string }
 }
 
 // String is not required by pop and may be deleted
@@ -103,28 +112,54 @@ func (m *Message) Create() error {
 		return err
 	}
 
-	uiUrl := envy.Get(domain.UIURLEnv, "")
+	eventData := MessageCreatedEventData{
+		MessageCreatorNickName: m.SentBy.Nickname,
+		MessageCreatorEmail:    m.SentBy.Email,
+		MessageContent:         m.Content,
+		PostUUID:               m.Thread.Post.Uuid.String(),
+		PostTitle:              m.Thread.Post.Title,
+		ThreadUUID:             m.Thread.Uuid.String(),
+	}
+
 	for _, tp := range m.Thread.Participants {
 		if tp.ID == m.SentBy.ID {
 			continue
 		}
-		e := events.Event{
-			Kind:    domain.EventApiMessageCreated,
-			Message: "New Message from " + m.SentBy.Nickname,
-			Payload: events.Payload{
-				"toName":         tp.Nickname,
-				"toEmail":        tp.Email,
-				"toPhone":        "",
-				"fromName":       m.SentBy.Nickname,
-				"fromEmail":      m.SentBy.Email,
-				"fromPhone":      "",
-				"postURL":        uiUrl + "/#/requests/" + m.Thread.Post.Uuid.String(),
-				"postTitle":      m.Thread.Post.Title,
-				"messageContent": m.Content,
-				"threadURL":      uiUrl + "/#/messages/" + m.Thread.Uuid.String(),
-			},
-		}
-		emitEvent(e)
+		eventData.MessageRecipient = append(eventData.MessageRecipient,
+			struct{ Nickname, Email string }{Nickname: tp.Nickname, Email: tp.Email})
 	}
+
+	e := events.Event{
+		Kind:    domain.EventApiMessageCreated,
+		Message: "New Message from " + m.SentBy.Nickname,
+		Payload: events.Payload{"eventData": eventData},
+	}
+
+	emitEvent(e)
+
+	//
+	//uiUrl := envy.Get(domain.UIURLEnv, "")
+	//for _, tp := range m.Thread.Participants {
+	//	if tp.ID == m.SentBy.ID {
+	//		continue
+	//	}
+	//	e := events.Event{
+	//		Kind:    domain.EventApiMessageCreated,
+	//		Message: "New Message from " + m.SentBy.Nickname,
+	//		Payload: events.Payload{
+	//			"toName":         tp.Nickname,
+	//			"toEmail":        tp.Email,
+	//			"toPhone":        "",
+	//			"fromName":       m.SentBy.Nickname,
+	//			"fromEmail":      m.SentBy.Email,
+	//			"fromPhone":      "",
+	//			"postURL":        uiUrl + "/#/requests/" + m.Thread.Post.Uuid.String(),
+	//			"postTitle":      m.Thread.Post.Title,
+	//			"messageContent": m.Content,
+	//			"threadURL":      uiUrl + "/#/messages/" + m.Thread.Uuid.String(),
+	//		},
+	//	}
+	//	emitEvent(e)
+	//}
 	return nil
 }

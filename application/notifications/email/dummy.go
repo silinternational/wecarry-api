@@ -1,6 +1,9 @@
 package email
 
 import (
+	"errors"
+	"fmt"
+
 	"github.com/silinternational/wecarry-api/domain"
 )
 
@@ -30,7 +33,9 @@ var dummyTemplates = map[string]dummyTemplate{
 func (t *DummyService) Send(msg Message) error {
 	template, ok := dummyTemplates[msg.TemplateName]
 	if !ok {
-		domain.ErrLogger.Printf("invalid template name: %s", msg.TemplateName)
+		errMsg := fmt.Sprintf("invalid template name: %s", msg.TemplateName)
+		domain.ErrLogger.Print(errMsg)
+		return errors.New(errMsg)
 	}
 
 	domain.Logger.Printf("dummy message subject: %s", template.subject)

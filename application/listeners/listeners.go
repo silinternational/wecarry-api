@@ -3,6 +3,8 @@ package listeners
 import (
 	"time"
 
+	"github.com/gobuffalo/envy"
+
 	"github.com/gobuffalo/events"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
@@ -91,26 +93,32 @@ func sendNewMessageNotification(e events.Event) {
 	}
 	domain.Logger.Printf("%s Message Created ... %s", domain.GetCurrentTime(), e.Message)
 
-	data := map[string]interface{}{
-		"postURL":        getPayload(e, "postURL"),
-		"postTitle":      getPayload(e, "postTitle"),
-		"messageContent": getPayload(e, "messageContent"),
-		"sentByNickname": getPayload(e, "fromName"),
-		"threadURL":      getPayload(e, "threadURL"),
+	mEData, ok := e.Payload["eventData"].(models.MessageCreatedEventData)
+	if !ok {
+		domain.ErrLogger.Print("unable to parse Message Created event payload")
 	}
 
-	msg := notifications.Message{
-		Template:  domain.MessageTemplateNewMessage,
-		Data:      data,
-		FromName:  getPayload(e, "fromName"),
-		FromEmail: getPayload(e, "fromEmail"),
-		FromPhone: getPayload(e, "fromPhone"),
-		ToName:    getPayload(e, "toName"),
-		ToEmail:   getPayload(e, "toEmail"),
-		ToPhone:   getPayload(e, "toPhone"),
+	uiUrl := envy.Get(domain.UIURLEnv, "")
+	data := map[string]interface{}{
+		"postURL":        uiUrl + "/#/requests/" + mEData.PostUUID,
+		"postTitle":      mEData.PostTitle,
+		"messageContent": mEData.MessageContent,
+		"sentByNickname": mEData.MessageCreatorNickName,
+		"threadURL":      uiUrl + "/#/messages/" + mEData.ThreadUUID,
 	}
-	if err := notifications.Send(msg); err != nil {
-		domain.ErrLogger.Printf("error sending 'New Message' notification, %s", err)
+
+	for _, r := range mEData.MessageRecipient {
+		msg := notifications.Message{
+			Template:  domain.MessageTemplateNewMessage,
+			Data:      data,
+			FromName:  mEData.MessageCreatorNickName,
+			FromEmail: mEData.MessageCreatorEmail,
+			ToName:    r.Nickname,
+			ToEmail:   r.Email,
+		}
+		if err := notifications.Send(msg); err != nil {
+			domain.ErrLogger.Printf("error sending 'New Message' notification, %s", err)
+		}
 	}
 }
 
