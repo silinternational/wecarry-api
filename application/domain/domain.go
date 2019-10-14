@@ -141,7 +141,9 @@ func GetCurrentTime() string {
 // as a uuid2.UUID. Errors are ignored.
 func GetUuid() uuid2.UUID {
 	uuid, err := uuid2.NewV4()
-	ErrLogger.Printf("error creating new uuid2 ... %v", err)
+	if err != nil {
+		ErrLogger.Printf("error creating new uuid2 ... %v", err)
+	}
 	return uuid
 }
 
