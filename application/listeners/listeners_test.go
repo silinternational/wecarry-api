@@ -3,15 +3,16 @@ package listeners
 import (
 	"bytes"
 	"fmt"
-	"github.com/gobuffalo/events"
-	"github.com/gobuffalo/suite"
-	"github.com/silinternational/wecarry-api/domain"
-	"github.com/silinternational/wecarry-api/models"
 	"os"
 	"reflect"
 	"runtime"
 	"testing"
 	"time"
+
+	"github.com/gobuffalo/events"
+	"github.com/gobuffalo/suite"
+	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/models"
 )
 
 type ModelSuite struct {
@@ -117,6 +118,26 @@ func (ms *ModelSuite) TestUserAccessTokensCleanup() {
 	userAccessTokensCleanup(e)
 	got := buf.String()
 	want := "Deleted 0 expired user access tokens during cleanup"
+
+	ms.Contains(got, want, "Got an unexpected log entry")
+}
+
+func (ms *ModelSuite) TestSendNewMessageNotification() {
+	var buf bytes.Buffer
+	domain.Logger.SetOutput(&buf)
+
+	defer func() {
+		domain.Logger.SetOutput(os.Stdout)
+	}()
+
+	e := events.Event{
+		Kind:    domain.EventApiMessageCreated,
+		Message: "New Message from",
+	}
+
+	sendNewMessageNotification(e)
+	got := buf.String()
+	want := "Message Created ... New Message from"
 
 	ms.Contains(got, want, "Got an unexpected log entry")
 }
