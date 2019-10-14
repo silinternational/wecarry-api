@@ -3,7 +3,6 @@ package models
 import (
 	"encoding/json"
 	"fmt"
-	"math/rand"
 	"strconv"
 	"time"
 
@@ -122,20 +121,6 @@ func createAccessTokenExpiry() time.Time {
 	futureTime := dtNow.Add(time.Second * time.Duration(lifetimeSeconds))
 
 	return futureTime
-}
-
-func createAccessTokenPart() string {
-	var alphanumerics = []rune("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-
-	tokenLength := 32
-	b := make([]rune, tokenLength)
-	for i := range b {
-		b[i] = alphanumerics[rand.Intn(len(alphanumerics))]
-	}
-
-	accessToken := string(b)
-
-	return accessToken
 }
 
 // Renew extends the token expiration to the configured token lifetime
