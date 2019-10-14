@@ -169,18 +169,14 @@ func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
 		u.PhotoURL = nulls.NewString(fmt.Sprintf("https://www.gravatar.com/avatar/%x.jpg?s=200&d=mp", hash))
 	}
 
-	u.Nickname = authUser.Nickname
-
-	if u.Nickname == "" {
-		u.Nickname = u.FirstName
-		if len(u.LastName) > 0 {
-			u.Nickname += u.LastName[:1]
-		}
-	}
-
-	// if new user they will need a uuid
+	// if new user they will need a uuid and a unique Nickname
 	if newUser {
 		u.Uuid = domain.GetUuid()
+
+		u.Nickname = authUser.Nickname
+		if err := u.uniquifyNickname(); err != nil {
+			return err
+		}
 	}
 
 	err = DB.Save(u)
@@ -353,4 +349,37 @@ func (u *User) Save() error {
 	}
 
 	return DB.Save(u)
+}
+
+func (u *User) uniquifyNickname() error {
+
+	simpleNN := u.Nickname
+	if simpleNN == "" {
+		simpleNN = u.FirstName
+		if len(u.LastName) > 0 {
+			simpleNN = u.FirstName + u.LastName[:1]
+		}
+	}
+
+	var err error
+
+	// User the first nickname prefix that makes it unique
+	for _, p := range allPrefixes() {
+		u.Nickname = p + simpleNN
+
+		var existingUser User
+		err = DB.Where("nickname = ?", u.Nickname).First(&existingUser)
+
+		// We didn't find a match, so we're good with the current nickname
+		if existingUser.Nickname == "" {
+			return nil
+		}
+
+	}
+
+	if err != nil {
+		return fmt.Errorf("last error looking for unique nickname for existingUser %v ... %v", u.Uuid, err)
+	}
+
+	return fmt.Errorf("failed finding unique nickname for user %s %s", u.FirstName, u.LastName)
 }
