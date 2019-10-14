@@ -61,23 +61,33 @@ func Fixtures_PostQuery(t *testing.T) PostQueryFixtures {
 
 	posts := models.Posts{
 		{
-			Uuid:           domain.GetUuid(),
-			CreatedByID:    users[0].ID,
-			ReceiverID:     nulls.NewInt(users[0].ID),
-			ProviderID:     nulls.NewInt(users[1].ID),
-			OrganizationID: org.ID,
-			Type:           PostTypeRequest.String(),
-			Status:         PostStatusCommitted.String(),
-			Title:          "A Request",
-			Destination:    nulls.NewString("A place"),
-			Origin:         nulls.NewString("Another place"),
-			Size:           PostSizeSmall.String(),
-			NeededAfter:    time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
-			NeededBefore:   time.Date(2099, 1, 1, 0, 0, 0, 0, time.UTC),
-			Category:       "OTHER",
-			Description:    nulls.NewString("This is a description"),
-			URL:            nulls.NewString("https://www.example.com/items/101"),
-			Cost:           nulls.NewFloat64(1.0),
+			Uuid:                   domain.GetUuid(),
+			CreatedByID:            users[0].ID,
+			ReceiverID:             nulls.NewInt(users[0].ID),
+			ProviderID:             nulls.NewInt(users[1].ID),
+			OrganizationID:         org.ID,
+			Type:                   PostTypeRequest.String(),
+			Status:                 PostStatusCommitted.String(),
+			Title:                  "A Request",
+			DestinationDescription: "A place",
+			DestinationCountry:     "US",
+			DestinationDivision1:   "FL",
+			DestinationDivision2:   "Miami",
+			DestinationLat:         nulls.NewFloat64(25.7617),
+			DestinationLong:        nulls.NewFloat64(-80.1918),
+			OriginDescription:      "Another place",
+			OriginCountry:          "CA",
+			OriginDivision1:        "Ontario",
+			OriginDivision2:        "Toronto",
+			OriginLat:              nulls.NewFloat64(43.6532),
+			OriginLong:             nulls.NewFloat64(-79.3832),
+			Size:                   PostSizeSmall.String(),
+			NeededAfter:            time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
+			NeededBefore:           time.Date(2099, 1, 1, 0, 0, 0, 0, time.UTC),
+			Category:               "OTHER",
+			Description:            nulls.NewString("This is a description"),
+			URL:                    nulls.NewString("https://www.example.com/items/101"),
+			Cost:                   nulls.NewFloat64(1.0),
 		},
 		{
 			Uuid:           domain.GetUuid(),
@@ -158,8 +168,8 @@ func (gs *GqlgenSuite) Test_PostQuery() {
 		    type
 			title
 			description
-			destination
-			origin
+			destination {description}
+			origin {description}
 			size
 			neededAfter
 			neededBefore
@@ -180,12 +190,16 @@ func (gs *GqlgenSuite) Test_PostQuery() {
 
 	var resp struct {
 		Post struct {
-			ID           string `json:"id"`
-			Type         string `json:"type"`
-			Title        string `json:"title"`
-			Description  string `json:"description"`
-			Destination  string `json:"destination"`
-			Origin       string `json:"origin"`
+			ID          string `json:"id"`
+			Type        string `json:"type"`
+			Title       string `json:"title"`
+			Description string `json:"description"`
+			Destination struct {
+				Description string `json:"description"`
+			} `json:"destination"`
+			Origin struct {
+				Description string `json:"description"`
+			} `json:"origin"`
 			Size         string `json:"size"`
 			NeededAfter  string `json:"neededAfter"`
 			NeededBefore string `json:"neededBefore"`
@@ -224,8 +238,8 @@ func (gs *GqlgenSuite) Test_PostQuery() {
 	gs.Equal(f.Posts[0].Type, resp.Post.Type)
 	gs.Equal(f.Posts[0].Title, resp.Post.Title)
 	gs.Equal(f.Posts[0].Description.String, resp.Post.Description)
-	gs.Equal(f.Posts[0].Destination.String, resp.Post.Destination)
-	gs.Equal(f.Posts[0].Origin.String, resp.Post.Origin)
+	gs.Equal(f.Posts[0].DestinationDescription, resp.Post.Destination.Description)
+	gs.Equal(f.Posts[0].OriginDescription, resp.Post.Origin.Description)
 	gs.Equal(f.Posts[0].Size, resp.Post.Size)
 	gs.Equal(f.Posts[0].NeededAfter.Format(time.RFC3339), resp.Post.NeededAfter)
 	gs.Equal(f.Posts[0].NeededBefore.Format(time.RFC3339), resp.Post.NeededBefore)

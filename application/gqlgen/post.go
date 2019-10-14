@@ -23,8 +23,6 @@ func PostFields() map[string]string {
 		"type":         "type",
 		"title":        "title",
 		"description":  "description",
-		"destination":  "destination",
-		"origin":       "origin",
 		"size":         "size",
 		"receiver":     "receiver_id",
 		"provider":     "provider_id",
@@ -96,18 +94,34 @@ func (r *postResolver) Description(ctx context.Context, obj *models.Post) (*stri
 	return GetStringFromNullsString(obj.Description), nil
 }
 
-func (r *postResolver) Destination(ctx context.Context, obj *models.Post) (*string, error) {
+func (r *postResolver) Destination(ctx context.Context, obj *models.Post) (*Location, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	return GetStringFromNullsString(obj.Destination), nil
+	l := &Location{
+		Description: obj.DestinationDescription,
+		Country:     obj.DestinationCountry,
+		Division1:   obj.DestinationDivision1,
+		Division2:   obj.DestinationDivision2,
+		Latitude:    GetFloat64FromNullsFloat64(obj.DestinationLat),
+		Longitude:   GetFloat64FromNullsFloat64(obj.DestinationLong),
+	}
+	return l, nil
 }
 
-func (r *postResolver) Origin(ctx context.Context, obj *models.Post) (*string, error) {
+func (r *postResolver) Origin(ctx context.Context, obj *models.Post) (*Location, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	return GetStringFromNullsString(obj.Origin), nil
+	l := &Location{
+		Description: obj.OriginDescription,
+		Country:     obj.OriginCountry,
+		Division1:   obj.OriginDivision1,
+		Division2:   obj.OriginDivision2,
+		Latitude:    GetFloat64FromNullsFloat64(obj.OriginLat),
+		Longitude:   GetFloat64FromNullsFloat64(obj.OriginLong),
+	}
+	return l, nil
 }
 
 func (r *postResolver) Size(ctx context.Context, obj *models.Post) (PostSize, error) {
@@ -267,11 +281,29 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 	}
 
 	if input.Destination != nil {
-		post.Destination = nulls.NewString(*input.Destination)
+		post.DestinationDescription = input.Destination.Description
+		post.DestinationCountry = input.Destination.Country
+		post.DestinationDivision1 = input.Destination.Division1
+		post.DestinationDivision2 = input.Destination.Division2
+		if input.Destination.Latitude != nil {
+			post.DestinationLat = nulls.NewFloat64(*input.Destination.Latitude)
+		}
+		if input.Destination.Longitude != nil {
+			post.DestinationLong = nulls.NewFloat64(*input.Destination.Longitude)
+		}
 	}
 
 	if input.Origin != nil {
-		post.Origin = nulls.NewString(*input.Origin)
+		post.OriginDescription = input.Origin.Description
+		post.OriginCountry = input.Origin.Country
+		post.OriginDivision1 = input.Origin.Division1
+		post.OriginDivision2 = input.Origin.Division2
+		if input.Origin.Latitude != nil {
+			post.OriginLat = nulls.NewFloat64(*input.Origin.Latitude)
+		}
+		if input.Origin.Longitude != nil {
+			post.OriginLong = nulls.NewFloat64(*input.Origin.Longitude)
+		}
 	}
 
 	if input.Size != nil {
@@ -325,8 +357,17 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 }
 
 func getSelectFieldsForPosts(ctx context.Context) []string {
-	selectFields := GetSelectFieldsFromRequestFields(PostFields(), graphql.CollectAllFields(ctx))
+	requestFields := graphql.CollectAllFields(ctx)
+	selectFields := GetSelectFieldsFromRequestFields(PostFields(), requestFields)
 	selectFields = append(selectFields, "id")
+	if domain.IsStringInSlice("destination", requestFields) {
+		selectFields = append(selectFields, "destination_description", "destination_country",
+			"destination_division1", "destination_division2", "destination_lat", "destination_long")
+	}
+	if domain.IsStringInSlice("origin", requestFields) {
+		selectFields = append(selectFields, "origin_description", "origin_country",
+			"origin_division1", "origin_division2", "origin_lat", "origin_long")
+	}
 	return selectFields
 }
 
@@ -337,8 +378,8 @@ type postInput struct {
 	Type         *PostType
 	Title        *string
 	Description  *string
-	Destination  *string
-	Origin       *string
+	Destination  *LocationInput
+	Origin       *LocationInput
 	Size         *PostSize
 	NeededAfter  *string
 	NeededBefore *string

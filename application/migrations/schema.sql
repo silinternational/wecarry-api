@@ -220,8 +220,8 @@ CREATE TABLE public.posts (
     organization_id integer NOT NULL,
     status character varying(255) NOT NULL,
     title character varying(255) NOT NULL,
-    destination character varying(255),
-    origin character varying(255),
+    destination_description character varying(255) DEFAULT ''::character varying NOT NULL,
+    origin_description character varying(255) DEFAULT ''::character varying NOT NULL,
     size character varying(255) NOT NULL,
     uuid uuid NOT NULL,
     receiver_id integer,
@@ -234,7 +234,17 @@ CREATE TABLE public.posts (
     updated_at timestamp without time zone NOT NULL,
     url character varying(255),
     cost numeric(13,4),
-    photo_file_id integer
+    photo_file_id integer,
+    destination_country character varying(2) DEFAULT ''::character varying NOT NULL,
+    destination_division1 character varying(64) DEFAULT ''::character varying NOT NULL,
+    destination_division2 character varying(64) DEFAULT ''::character varying NOT NULL,
+    destination_lat numeric(8,5),
+    destination_long numeric(8,5),
+    origin_country character varying(2) DEFAULT ''::character varying NOT NULL,
+    origin_division1 character varying(64) DEFAULT ''::character varying NOT NULL,
+    origin_division2 character varying(64) DEFAULT ''::character varying NOT NULL,
+    origin_lat numeric(8,5),
+    origin_long numeric(8,5)
 );
 
 

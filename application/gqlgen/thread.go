@@ -60,7 +60,7 @@ func (r *threadResolver) PostID(ctx context.Context, obj *models.Thread) (string
 }
 
 func (r *threadResolver) Post(ctx context.Context, obj *models.Thread) (*models.Post, error) {
-	selectedFields := GetSelectFieldsFromRequestFields(PostFields(), graphql.CollectAllFields(ctx))
+	selectedFields := getSelectFieldsForPosts(ctx)
 	return obj.GetPost(selectedFields)
 }
 

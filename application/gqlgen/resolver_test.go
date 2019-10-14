@@ -77,20 +77,20 @@ func (gs *GqlgenSuite) TestResolver() {
 	postUuid1, _ := uuid.FromString("c67d507b-6c1c-4d0a-b1e6-d726a5b48c26")
 	postFix := models.Posts{
 		{
-			ID:             1,
-			CreatedByID:    1,
-			Type:           PostTypeRequest.String(),
-			OrganizationID: 1,
-			Status:         PostStatusOpen.String(),
-			Title:          "Maple Syrup",
-			Destination:    nulls.NewString("Madrid, Spain"),
-			Size:           PostSizeMedium.String(),
-			Uuid:           postUuid1,
-			ReceiverID:     nulls.NewInt(1),
-			NeededAfter:    time.Date(2019, time.July, 19, 0, 0, 0, 0, time.UTC),
-			NeededBefore:   time.Date(2019, time.August, 3, 0, 0, 0, 0, time.UTC),
-			Category:       "Unknown",
-			Description:    nulls.NewString("Missing my good, old, Canadian maple syrupy goodness"),
+			ID:                     1,
+			CreatedByID:            1,
+			Type:                   PostTypeRequest.String(),
+			OrganizationID:         1,
+			Status:                 PostStatusOpen.String(),
+			Title:                  "Maple Syrup",
+			DestinationDescription: "Madrid, Spain",
+			Size:                   PostSizeMedium.String(),
+			Uuid:                   postUuid1,
+			ReceiverID:             nulls.NewInt(1),
+			NeededAfter:            time.Date(2019, time.July, 19, 0, 0, 0, 0, time.UTC),
+			NeededBefore:           time.Date(2019, time.August, 3, 0, 0, 0, 0, time.UTC),
+			Category:               "Unknown",
+			Description:            nulls.NewString("Missing my good, old, Canadian maple syrupy goodness"),
 		},
 	}
 	if err := models.CreatePosts(postFix); err != nil {
@@ -159,11 +159,13 @@ func (gs *GqlgenSuite) TestResolver() {
 	// It appears that everything needs to be exported in order to be recognized
 	var postsResp struct {
 		Posts []struct {
-			ID           string `json:"id"`
-			Type         string `json:"type"`
-			Status       string `json:"status"`
-			Title        string `json:"title"`
-			Destination  string `json:"destination"`
+			ID          string `json:"id"`
+			Type        string `json:"type"`
+			Status      string `json:"status"`
+			Title       string `json:"title"`
+			Destination struct {
+				Description string `json:"description"`
+			} `json:"destination"`
 			Size         string `json:"size"`
 			NeededAfter  string `json:"neededAfter"`
 			NeededBefore string `json:"neededBefore"`
@@ -173,7 +175,7 @@ func (gs *GqlgenSuite) TestResolver() {
 	}
 
 	c.MustPost(
-		`{posts {id type status title destination size neededAfter neededBefore category description}}`,
+		`{posts {id type status title destination {description} size neededAfter neededBefore category description}}`,
 		&postsResp,
 	)
 

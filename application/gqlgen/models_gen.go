@@ -27,6 +27,24 @@ type CreateOrganizationInput struct {
 	AuthConfig string  `json:"authConfig"`
 }
 
+type Location struct {
+	Description string   `json:"description"`
+	Country     string   `json:"country"`
+	Division1   string   `json:"division1"`
+	Division2   string   `json:"division2"`
+	Latitude    *float64 `json:"latitude"`
+	Longitude   *float64 `json:"longitude"`
+}
+
+type LocationInput struct {
+	Description string   `json:"description"`
+	Country     string   `json:"country"`
+	Division1   string   `json:"division1"`
+	Division2   string   `json:"division2"`
+	Latitude    *float64 `json:"latitude"`
+	Longitude   *float64 `json:"longitude"`
+}
+
 type RemoveOrganizationDomainInput struct {
 	Domain         string `json:"domain"`
 	OrganizationID string `json:"organizationID"`

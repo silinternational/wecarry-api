@@ -82,8 +82,8 @@ type Post {
     organization: Organization
     title: String!
     description: String
-    destination: String
-    origin: String
+    destination: Location
+    origin: Location
     size: PostSize!
     neededAfter: String
     neededBefore: String
@@ -162,8 +162,8 @@ input CreatePostInput {
     type: PostType!
     title: String!
     description: String
-    destination: String
-    origin: String
+    destination: LocationInput
+    origin: LocationInput
     size: PostSize!
     neededAfter: String
     neededBefore: String
@@ -184,8 +184,8 @@ input UpdatePostInput {
     status: PostStatus
     title: String
     description: String
-    destination: String
-    origin: String
+    destination: LocationInput
+    origin: LocationInput
     size: PostSize
     neededAfter: String
     neededBefore: String
@@ -207,4 +207,28 @@ type File {
 input SetThreadLastViewedAtInput {
     threadId: ID!
     time: Time!
+}
+
+type Location {
+    description: String!
+    # Country, ISO 3166-1 Alpha-2 code
+    country: String!
+    # Administrative Division, Level 1 -- e.g. State
+    division1: String!
+    # Administrative Division, Level 2 -- e.g. City
+    division2: String!
+    latitude: Float
+    longitude: Float
+}
+
+input LocationInput {
+    description: String!
+    # Country, ISO 3166-1 Alpha-2 code
+    country: String!
+    # Administrative Division, Level 1 -- e.g. State
+    division1: String!
+    # Administrative Division, Level 2 -- e.g. City
+    division2: String!
+    latitude: Float
+    longitude: Float
 }
