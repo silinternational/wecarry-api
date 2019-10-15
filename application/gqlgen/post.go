@@ -272,9 +272,7 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 		post.Type = input.Type.String()
 	}
 
-	if input.Title != nil {
-		post.Title = *input.Title
-	}
+	setOptionalStringField(input.Title, &(post.Title))
 
 	if input.Description != nil {
 		post.Description = nulls.NewString(*input.Description)
@@ -282,28 +280,20 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 
 	if input.Destination != nil {
 		post.DestinationDescription = input.Destination.Description
-		post.DestinationCountry = input.Destination.Country
-		post.DestinationDivision1 = input.Destination.Division1
-		post.DestinationDivision2 = input.Destination.Division2
-		if input.Destination.Latitude != nil {
-			post.DestinationLat = nulls.NewFloat64(*input.Destination.Latitude)
-		}
-		if input.Destination.Longitude != nil {
-			post.DestinationLong = nulls.NewFloat64(*input.Destination.Longitude)
-		}
+		setOptionalStringField(input.Destination.Country, &(post.DestinationCountry))
+		setOptionalStringField(input.Destination.Division1, &(post.DestinationDivision1))
+		setOptionalStringField(input.Destination.Division2, &(post.DestinationDivision2))
+		setOptionalFloatField(input.Destination.Latitude, &(post.DestinationLat))
+		setOptionalFloatField(input.Destination.Longitude, &(post.DestinationLong))
 	}
 
 	if input.Origin != nil {
 		post.OriginDescription = input.Origin.Description
-		post.OriginCountry = input.Origin.Country
-		post.OriginDivision1 = input.Origin.Division1
-		post.OriginDivision2 = input.Origin.Division2
-		if input.Origin.Latitude != nil {
-			post.OriginLat = nulls.NewFloat64(*input.Origin.Latitude)
-		}
-		if input.Origin.Longitude != nil {
-			post.OriginLong = nulls.NewFloat64(*input.Origin.Longitude)
-		}
+		setOptionalStringField(input.Origin.Country, &(post.OriginCountry))
+		setOptionalStringField(input.Origin.Division1, &(post.OriginDivision1))
+		setOptionalStringField(input.Origin.Division2, &(post.OriginDivision2))
+		setOptionalFloatField(input.Origin.Latitude, &(post.OriginLat))
+		setOptionalFloatField(input.Origin.Longitude, &(post.OriginLong))
 	}
 
 	if input.Size != nil {
@@ -328,9 +318,7 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 		post.NeededBefore = neededBefore
 	}
 
-	if input.Category != nil {
-		post.Category = *input.Category
-	}
+	setOptionalStringField(input.Category, &(post.Category))
 
 	if input.URL != nil {
 		post.URL = nulls.NewString(*input.URL)
@@ -354,6 +342,18 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 	}
 
 	return post, nil
+}
+
+func setOptionalStringField(input *string, output *string) {
+	if input != nil {
+		*output = *input
+	}
+}
+
+func setOptionalFloatField(input *float64, output *nulls.Float64) {
+	if input != nil {
+		*output = nulls.NewFloat64(*input)
+	}
 }
 
 func getSelectFieldsForPosts(ctx context.Context) []string {

@@ -1172,11 +1172,11 @@ type Location {
 input LocationInput {
     description: String!
     # Country, ISO 3166-1 Alpha-2 code
-    country: String!
+    country: String
     # Administrative Division, Level 1 -- e.g. State
-    division1: String!
+    division1: String
     # Administrative Division, Level 2 -- e.g. City
-    division2: String!
+    division2: String
     latitude: Float
     longitude: Float
 }
@@ -5843,19 +5843,19 @@ func (ec *executionContext) unmarshalInputLocationInput(ctx context.Context, obj
 			}
 		case "country":
 			var err error
-			it.Country, err = ec.unmarshalNString2string(ctx, v)
+			it.Country, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
 		case "division1":
 			var err error
-			it.Division1, err = ec.unmarshalNString2string(ctx, v)
+			it.Division1, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
 		case "division2":
 			var err error
-			it.Division2, err = ec.unmarshalNString2string(ctx, v)
+			it.Division2, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}

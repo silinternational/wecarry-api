@@ -38,9 +38,9 @@ type Location struct {
 
 type LocationInput struct {
 	Description string   `json:"description"`
-	Country     string   `json:"country"`
-	Division1   string   `json:"division1"`
-	Division2   string   `json:"division2"`
+	Country     *string  `json:"country"`
+	Division1   *string  `json:"division1"`
+	Division2   *string  `json:"division2"`
 	Latitude    *float64 `json:"latitude"`
 	Longitude   *float64 `json:"longitude"`
 }

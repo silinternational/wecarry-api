@@ -224,11 +224,11 @@ type Location {
 input LocationInput {
     description: String!
     # Country, ISO 3166-1 Alpha-2 code
-    country: String!
+    country: String
     # Administrative Division, Level 1 -- e.g. State
-    division1: String!
+    division1: String
     # Administrative Division, Level 2 -- e.g. City
-    division2: String!
+    division2: String
     latitude: Float
     longitude: Float
 }
