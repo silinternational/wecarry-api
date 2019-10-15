@@ -429,3 +429,104 @@ func (gs *GqlgenSuite) Test_UpdatePost() {
 	gs.Equal("example.com", postsResp.Post.Url)
 	gs.Equal("1", postsResp.Post.Cost)
 }
+
+type CreatePostFixtures struct {
+	models.User
+	models.Organization
+	models.File
+}
+
+func Fixtures_CreatePost(t *testing.T) CreatePostFixtures {
+	org := models.Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	createFixture(t, &org)
+
+	user := models.User{
+		Email:    t.Name() + "_user1@example.com",
+		Nickname: t.Name() + " User1",
+		Uuid:     domain.GetUuid(),
+	}
+	createFixture(t, &user)
+
+	userOrg := models.UserOrganization{
+		OrganizationID: org.ID,
+		UserID:         user.ID,
+		AuthID:         t.Name() + "_auth_user1",
+		AuthEmail:      user.Email,
+	}
+	createFixture(t, &userOrg)
+
+	if err := aws.CreateS3Bucket(); err != nil {
+		t.Errorf("failed to create S3 bucket, %s", err)
+		t.FailNow()
+	}
+
+	var fileFixture models.File
+	if err := fileFixture.Store("photo.gif", []byte("GIF89a")); err != nil {
+		t.Errorf("failed to create file fixture, %s", err)
+		t.FailNow()
+	}
+
+	return CreatePostFixtures{
+		User:         user,
+		Organization: org,
+		File:         fileFixture,
+	}
+}
+
+func (gs *GqlgenSuite) Test_CreatePost() {
+	t := gs.T()
+	models.ResetTables(t, models.DB)
+
+	f := Fixtures_CreatePost(t)
+	c := getGqlClient()
+
+	var postsResp PostResponse
+
+	input := `orgID: "` + f.Organization.Uuid.String() + `"` +
+		`photoID: "` + f.File.UUID.String() + `"` +
+		` 
+			type: REQUEST
+			title: "title"
+			description: "new description"
+			destination: {description:"dest" country:"dc" division1:"dd1" division2:"dd2" latitude:1.1 longitude:2.2}
+			origin: {description:"origin" country:"oc" division1:"od1" division2:"od2" latitude:3.3 longitude:4.4}
+			size: TINY
+			neededAfter: "2019-11-01"
+			neededBefore: "2019-12-25"
+			category: "cat"
+			url: "example.com" 
+			cost: "1.00"
+		`
+	query := `mutation { post: createPost(input: {` + input + `}) { organization { id } photo { id } type title 
+			description destination { description country division1 division2 latitude longitude } 
+			origin { description country division1 division2 latitude longitude }
+			size neededAfter neededBefore category url cost }}`
+
+	TestUser = f.User
+	c.MustPost(query, &postsResp)
+
+	gs.Equal(f.Organization.Uuid.String(), postsResp.Post.Organization.ID)
+	gs.Equal(f.File.UUID.String(), postsResp.Post.Photo.ID)
+	gs.Equal("REQUEST", postsResp.Post.Type)
+	gs.Equal("title", postsResp.Post.Title)
+	gs.Equal("new description", postsResp.Post.Description)
+	gs.Equal("", postsResp.Post.Status)
+	gs.Equal("dest", postsResp.Post.Destination.Description)
+	gs.Equal("dc", postsResp.Post.Destination.Country)
+	gs.Equal("dd1", postsResp.Post.Destination.Division1)
+	gs.Equal("dd2", postsResp.Post.Destination.Division2)
+	gs.Equal(1.1, postsResp.Post.Destination.Lat)
+	gs.Equal(2.2, postsResp.Post.Destination.Long)
+	gs.Equal("origin", postsResp.Post.Origin.Description)
+	gs.Equal("oc", postsResp.Post.Origin.Country)
+	gs.Equal("od1", postsResp.Post.Origin.Division1)
+	gs.Equal("od2", postsResp.Post.Origin.Division2)
+	gs.Equal(3.3, postsResp.Post.Origin.Lat)
+	gs.Equal(4.4, postsResp.Post.Origin.Long)
+	gs.Equal("TINY", postsResp.Post.Size)
+	gs.Equal("2019-11-01T00:00:00Z", postsResp.Post.NeededAfter)
+	gs.Equal("2019-12-25T00:00:00Z", postsResp.Post.NeededBefore)
+	gs.Equal("cat", postsResp.Post.Category)
+	gs.Equal("example.com", postsResp.Post.Url)
+	gs.Equal("1", postsResp.Post.Cost)
+}
