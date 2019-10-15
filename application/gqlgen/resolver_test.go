@@ -77,20 +77,19 @@ func (gs *GqlgenSuite) TestResolver() {
 	postUuid1, _ := uuid.FromString("c67d507b-6c1c-4d0a-b1e6-d726a5b48c26")
 	postFix := models.Posts{
 		{
-			ID:                     1,
-			CreatedByID:            1,
-			Type:                   PostTypeRequest.String(),
-			OrganizationID:         1,
-			Status:                 PostStatusOpen.String(),
-			Title:                  "Maple Syrup",
-			DestinationDescription: "Madrid, Spain",
-			Size:                   PostSizeMedium.String(),
-			Uuid:                   postUuid1,
-			ReceiverID:             nulls.NewInt(1),
-			NeededAfter:            time.Date(2019, time.July, 19, 0, 0, 0, 0, time.UTC),
-			NeededBefore:           time.Date(2019, time.August, 3, 0, 0, 0, 0, time.UTC),
-			Category:               "Unknown",
-			Description:            nulls.NewString("Missing my good, old, Canadian maple syrupy goodness"),
+			ID:             1,
+			CreatedByID:    1,
+			Type:           PostTypeRequest.String(),
+			OrganizationID: 1,
+			Status:         PostStatusOpen.String(),
+			Title:          "Maple Syrup",
+			Size:           PostSizeMedium.String(),
+			Uuid:           postUuid1,
+			ReceiverID:     nulls.NewInt(1),
+			NeededAfter:    time.Date(2019, time.July, 19, 0, 0, 0, 0, time.UTC),
+			NeededBefore:   time.Date(2019, time.August, 3, 0, 0, 0, 0, time.UTC),
+			Category:       "Unknown",
+			Description:    nulls.NewString("Missing my good, old, Canadian maple syrupy goodness"),
 		},
 	}
 	if err := models.CreatePosts(postFix); err != nil {

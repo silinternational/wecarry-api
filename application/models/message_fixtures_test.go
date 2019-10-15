@@ -1,8 +1,11 @@
 package models
 
 import (
+	"fmt"
 	"testing"
 	"time"
+
+	"github.com/gobuffalo/buffalo/genny/build/_fixtures/coke/models"
 
 	"github.com/gobuffalo/nulls"
 	"github.com/silinternational/wecarry-api/domain"
@@ -77,38 +80,43 @@ func Fixtures_GetSender(ms *ModelSuite, t *testing.T) MessageFixtures {
 		}
 	}
 
-	// Load Post test fixtures
+	for _, loc := range fixtureLocations {
+		err := models.DB.Create(loc)
+		if err != nil {
+			err = fmt.Errorf("error loading post fixture ... %+v\n %v", loc, err.Error())
+			return err
+		}
+	}
 
+	// Load Post test fixtures
 	posts := Posts{
 		{
-			Uuid:                   domain.GetUuid(),
-			Type:                   PostTypeRequest,
-			CreatedByID:            users[0].ID,
-			OrganizationID:         org.ID,
-			Status:                 PostStatusOpen,
-			Title:                  "I need PB",
-			DestinationDescription: "Madrid, Spain",
-			Size:                   PostSizeMedium,
-			ReceiverID:             nulls.NewInt(users[0].ID),
-			NeededAfter:            time.Date(2019, time.July, 19, 0, 0, 0, 0, time.UTC),
-			NeededBefore:           time.Date(2099, time.August, 3, 0, 0, 0, 0, time.UTC),
-			Category:               "Unknown",
-			Description:            nulls.NewString("Missing my PB & J"),
+			Uuid:           domain.GetUuid(),
+			Type:           PostTypeRequest,
+			CreatedByID:    users[0].ID,
+			OrganizationID: org.ID,
+			Status:         PostStatusOpen,
+			Title:          "I need PB",
+			Size:           PostSizeMedium,
+			ReceiverID:     nulls.NewInt(users[0].ID),
+			NeededAfter:    time.Date(2019, time.July, 19, 0, 0, 0, 0, time.UTC),
+			NeededBefore:   time.Date(2099, time.August, 3, 0, 0, 0, 0, time.UTC),
+			Category:       "Unknown",
+			Description:    nulls.NewString("Missing my PB & J"),
 		},
 		{
-			Uuid:                   domain.GetUuid(),
-			Type:                   PostTypeRequest,
-			CreatedByID:            users[1].ID,
-			OrganizationID:         org.ID,
-			Status:                 PostStatusOpen,
-			Title:                  "Please bring chocolate",
-			DestinationDescription: "Nairobi, Kenya",
-			Size:                   PostSizeSmall,
-			ReceiverID:             nulls.NewInt(users[1].ID),
-			NeededAfter:            time.Date(2019, time.July, 19, 1, 0, 0, 0, time.UTC),
-			NeededBefore:           time.Date(2099, time.August, 3, 1, 0, 0, 0, time.UTC),
-			Category:               "Unknown",
-			Description:            nulls.NewString("2-3 bars"),
+			Uuid:           domain.GetUuid(),
+			Type:           PostTypeRequest,
+			CreatedByID:    users[1].ID,
+			OrganizationID: org.ID,
+			Status:         PostStatusOpen,
+			Title:          "Please bring chocolate",
+			Size:           PostSizeSmall,
+			ReceiverID:     nulls.NewInt(users[1].ID),
+			NeededAfter:    time.Date(2019, time.July, 19, 1, 0, 0, 0, time.UTC),
+			NeededBefore:   time.Date(2099, time.August, 3, 1, 0, 0, 0, time.UTC),
+			Category:       "Unknown",
+			Description:    nulls.NewString("2-3 bars"),
 		},
 	}
 

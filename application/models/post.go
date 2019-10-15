@@ -35,44 +35,36 @@ const (
 )
 
 type Post struct {
-	ID                     int           `json:"id" db:"id"`
-	CreatedAt              time.Time     `json:"created_at" db:"created_at"`
-	UpdatedAt              time.Time     `json:"updated_at" db:"updated_at"`
-	CreatedByID            int           `json:"created_by_id" db:"created_by_id"`
-	Type                   string        `json:"type" db:"type"`
-	OrganizationID         int           `json:"organization_id" db:"organization_id"`
-	Status                 string        `json:"status" db:"status"`
-	Title                  string        `json:"title" db:"title"`
-	DestinationDescription string        `json:"destination_description" db:"destination_description"`
-	DestinationCountry     string        `json:"destination_country" db:"destination_country"`
-	DestinationDivision1   string        `json:"destination_division1" db:"destination_division1"`
-	DestinationDivision2   string        `json:"destination_division2" db:"destination_division2"`
-	DestinationLat         nulls.Float64 `json:"destination_lat" db:"destination_lat"`
-	DestinationLong        nulls.Float64 `json:"destination_long" db:"destination_long"`
-	OriginDescription      string        `json:"origin_description" db:"origin_description"`
-	OriginCountry          string        `json:"origin_country" db:"origin_country"`
-	OriginDivision1        string        `json:"origin_division1" db:"origin_division1"`
-	OriginDivision2        string        `json:"origin_division2" db:"origin_division2"`
-	OriginLat              nulls.Float64 `json:"origin_lat" db:"origin_lat"`
-	OriginLong             nulls.Float64 `json:"origin_long" db:"origin_long"`
-	Size                   string        `json:"size" db:"size"`
-	Uuid                   uuid.UUID     `json:"uuid" db:"uuid"`
-	ReceiverID             nulls.Int     `json:"receiver_id" db:"receiver_id"`
-	ProviderID             nulls.Int     `json:"provider_id" db:"provider_id"`
-	NeededAfter            time.Time     `json:"needed_after" db:"needed_after"`
-	NeededBefore           time.Time     `json:"needed_before" db:"needed_before"`
-	Category               string        `json:"category" db:"category"`
-	Description            nulls.String  `json:"description" db:"description"`
-	URL                    nulls.String  `json:"url" db:"url"`
-	Cost                   nulls.Float64 `json:"cost" db:"cost"`
-	PhotoFileID            nulls.Int     `json:"photo_file_id" db:"photo_file_id"`
-	CreatedBy              User          `belongs_to:"users"`
-	Organization           Organization  `belongs_to:"organizations"`
-	Receiver               User          `belongs_to:"users"`
-	Provider               User          `belongs_to:"users"`
-	Files                  PostFiles     `has_many:"post_files"`
-	PhotoFile              File          `belongs_to:"files"`
-	Threads                Threads       `has_many:"threads"`
+	ID             int           `json:"id" db:"id"`
+	CreatedAt      time.Time     `json:"created_at" db:"created_at"`
+	UpdatedAt      time.Time     `json:"updated_at" db:"updated_at"`
+	CreatedByID    int           `json:"created_by_id" db:"created_by_id"`
+	Type           string        `json:"type" db:"type"`
+	OrganizationID int           `json:"organization_id" db:"organization_id"`
+	Status         string        `json:"status" db:"status"`
+	Title          string        `json:"title" db:"title"`
+	Size           string        `json:"size" db:"size"`
+	Uuid           uuid.UUID     `json:"uuid" db:"uuid"`
+	ReceiverID     nulls.Int     `json:"receiver_id" db:"receiver_id"`
+	ProviderID     nulls.Int     `json:"provider_id" db:"provider_id"`
+	NeededAfter    time.Time     `json:"needed_after" db:"needed_after"`
+	NeededBefore   time.Time     `json:"needed_before" db:"needed_before"`
+	Category       string        `json:"category" db:"category"`
+	Description    nulls.String  `json:"description" db:"description"`
+	URL            nulls.String  `json:"url" db:"url"`
+	Cost           nulls.Float64 `json:"cost" db:"cost"`
+	PhotoFileID    nulls.Int     `json:"photo_file_id" db:"photo_file_id"`
+	DestinationID  nulls.Int     `json:"destination_id" db:"destination_id"`
+	OriginID       nulls.Int     `json:"origin_id" db:"origin_id"`
+	CreatedBy      User          `belongs_to:"users"`
+	Organization   Organization  `belongs_to:"organizations"`
+	Receiver       User          `belongs_to:"users"`
+	Provider       User          `belongs_to:"users"`
+	Files          PostFiles     `has_many:"post_files"`
+	PhotoFile      File          `belongs_to:"files"`
+	Threads        Threads       `has_many:"threads"`
+	Destination    Location      `belongs_to:"locations"`
+	Origin         Location      `belongs_to:"locations"`
 }
 
 // String is not required by pop and may be deleted
@@ -301,4 +293,22 @@ func (p *Post) FindByUserAndUUID(ctx context.Context, user User, uuid string, se
 // FindByUser finds all posts belonging to the same organization as the given user and not marked as removed.
 func (p *Posts) FindByUser(ctx context.Context, user User, selectFields ...string) error {
 	return DB.Select(selectFields...).Scope(scopeUserOrgs(user)).Scope(scopeNotRemoved()).All(p)
+}
+
+func (p *Post) GetDestination() (*Location, error) {
+	location := Location{}
+	if err := DB.Find(&location, p.DestinationID); err != nil {
+		return nil, err
+	}
+
+	return &location, nil
+}
+
+func (p *Post) GetOrigin() (*Location, error) {
+	location := Location{}
+	if err := DB.Find(&location, p.OriginID); err != nil {
+		return nil, err
+	}
+
+	return &location, nil
 }

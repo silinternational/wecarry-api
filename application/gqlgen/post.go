@@ -35,6 +35,8 @@ func PostFields() map[string]string {
 		"url":          "url",
 		"cost":         "cost",
 		"photo":        "photo_file_id",
+		"destination":  "destination_id",
+		"origin":       "origin_id",
 	}
 }
 
@@ -94,34 +96,18 @@ func (r *postResolver) Description(ctx context.Context, obj *models.Post) (*stri
 	return GetStringFromNullsString(obj.Description), nil
 }
 
-func (r *postResolver) Destination(ctx context.Context, obj *models.Post) (*Location, error) {
+func (r *postResolver) Destination(ctx context.Context, obj *models.Post) (*models.Location, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	l := &Location{
-		Description: obj.DestinationDescription,
-		Country:     obj.DestinationCountry,
-		Division1:   obj.DestinationDivision1,
-		Division2:   obj.DestinationDivision2,
-		Latitude:    GetFloat64FromNullsFloat64(obj.DestinationLat),
-		Longitude:   GetFloat64FromNullsFloat64(obj.DestinationLong),
-	}
-	return l, nil
+	return obj.GetDestination()
 }
 
-func (r *postResolver) Origin(ctx context.Context, obj *models.Post) (*Location, error) {
+func (r *postResolver) Origin(ctx context.Context, obj *models.Post) (*models.Location, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	l := &Location{
-		Description: obj.OriginDescription,
-		Country:     obj.OriginCountry,
-		Division1:   obj.OriginDivision1,
-		Division2:   obj.OriginDivision2,
-		Latitude:    GetFloat64FromNullsFloat64(obj.OriginLat),
-		Longitude:   GetFloat64FromNullsFloat64(obj.OriginLong),
-	}
-	return l, nil
+	return obj.GetOrigin()
 }
 
 func (r *postResolver) Size(ctx context.Context, obj *models.Post) (PostSize, error) {
@@ -278,23 +264,19 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 		post.Description = nulls.NewString(*input.Description)
 	}
 
-	if input.Destination != nil {
-		post.DestinationDescription = input.Destination.Description
-		setOptionalStringField(input.Destination.Country, &(post.DestinationCountry))
-		setOptionalStringField(input.Destination.Division1, &(post.DestinationDivision1))
-		setOptionalStringField(input.Destination.Division2, &(post.DestinationDivision2))
-		setOptionalFloatField(input.Destination.Latitude, &(post.DestinationLat))
-		setOptionalFloatField(input.Destination.Longitude, &(post.DestinationLong))
-	}
-
-	if input.Origin != nil {
-		post.OriginDescription = input.Origin.Description
-		setOptionalStringField(input.Origin.Country, &(post.OriginCountry))
-		setOptionalStringField(input.Origin.Division1, &(post.OriginDivision1))
-		setOptionalStringField(input.Origin.Division2, &(post.OriginDivision2))
-		setOptionalFloatField(input.Origin.Latitude, &(post.OriginLat))
-		setOptionalFloatField(input.Origin.Longitude, &(post.OriginLong))
-	}
+	//if input.Destination != nil {
+	//	post.DestinationDescription = input.Destination.Description
+	//	setOptionalStringField(input.Destination.Country, &(post.DestinationCountry))
+	//	setOptionalFloatField(input.Destination.Latitude, &(post.DestinationLat))
+	//	setOptionalFloatField(input.Destination.Longitude, &(post.DestinationLong))
+	//}
+	//
+	//if input.Origin != nil {
+	//	post.OriginDescription = input.Origin.Description
+	//	setOptionalStringField(input.Origin.Country, &(post.OriginCountry))
+	//	setOptionalFloatField(input.Origin.Latitude, &(post.OriginLat))
+	//	setOptionalFloatField(input.Origin.Longitude, &(post.OriginLong))
+	//}
 
 	if input.Size != nil {
 		post.Size = (*input.Size).String()
@@ -350,24 +332,10 @@ func setOptionalStringField(input *string, output *string) {
 	}
 }
 
-func setOptionalFloatField(input *float64, output *nulls.Float64) {
-	if input != nil {
-		*output = nulls.NewFloat64(*input)
-	}
-}
-
 func getSelectFieldsForPosts(ctx context.Context) []string {
 	requestFields := graphql.CollectAllFields(ctx)
 	selectFields := GetSelectFieldsFromRequestFields(PostFields(), requestFields)
 	selectFields = append(selectFields, "id")
-	if domain.IsStringInSlice("destination", requestFields) {
-		selectFields = append(selectFields, "destination_description", "destination_country",
-			"destination_division1", "destination_division2", "destination_lat", "destination_long")
-	}
-	if domain.IsStringInSlice("origin", requestFields) {
-		selectFields = append(selectFields, "origin_description", "origin_country",
-			"origin_division1", "origin_division2", "origin_lat", "origin_long")
-	}
 	return selectFields
 }
 

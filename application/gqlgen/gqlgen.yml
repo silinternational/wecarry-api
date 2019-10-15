@@ -28,6 +28,8 @@ models:
         resolver: true
       photoURL:
         resolver: true
+      location:
+        resolver: true
   Post:
     model: github.com/silinternational/wecarry-api/models.Post
     fields:
@@ -40,6 +42,10 @@ models:
       receiver:
         resolver: true
       provider:
+        resolver: true
+      destination:
+        resolver: true
+      origin:
         resolver: true
   Thread:
     model: github.com/silinternational/wecarry-api/models.Thread
@@ -64,6 +70,8 @@ models:
     model: github.com/silinternational/wecarry-api/gqlgen.postInput
   CreatePostInput:
     model: github.com/silinternational/wecarry-api/gqlgen.postInput
+  Location:
+    model: github.com/silinternational/wecarry-api/models.Location
 
 #directives:
 #  deprecated:

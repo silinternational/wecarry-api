@@ -78,6 +78,13 @@ func (r *userResolver) PhotoURL(ctx context.Context, obj *models.User) (string, 
 	return obj.GetPhotoURL()
 }
 
+func (r *userResolver) Location(ctx context.Context, obj *models.User) (*models.Location, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return obj.GetLocation()
+}
+
 func (r *queryResolver) Users(ctx context.Context) ([]*models.User, error) {
 	db := models.DB
 	var dbUsers []*models.User

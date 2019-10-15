@@ -21,6 +21,7 @@ type PostQueryFixtures struct {
 	models.Posts
 	models.Files
 	models.Threads
+	models.Locations
 }
 
 type PostResponse struct {
@@ -111,35 +112,43 @@ func Fixtures_PostQuery(t *testing.T) PostQueryFixtures {
 		createFixture(t, &(userOrgs[i]))
 	}
 
+	locations := []models.Location{
+		{
+			Description: "Miami, FL, USA",
+			Country:     "US",
+			Latitude:    nulls.NewFloat64(25.7617),
+			Longitude:   nulls.NewFloat64(-80.1918),
+		},
+		{
+			Description: "Toronto, Canada",
+			Country:     "CA",
+			Latitude:    nulls.NewFloat64(43.6532),
+			Longitude:   nulls.NewFloat64(-79.3832),
+		},
+	}
+	for i := range locations {
+		createFixture(t, &(locations[i]))
+	}
+
 	posts := models.Posts{
 		{
-			Uuid:                   domain.GetUuid(),
-			CreatedByID:            users[0].ID,
-			ReceiverID:             nulls.NewInt(users[0].ID),
-			ProviderID:             nulls.NewInt(users[1].ID),
-			OrganizationID:         org.ID,
-			Type:                   PostTypeRequest.String(),
-			Status:                 PostStatusCommitted.String(),
-			Title:                  "A Request",
-			DestinationDescription: "A place",
-			DestinationCountry:     "US",
-			DestinationDivision1:   "FL",
-			DestinationDivision2:   "Miami",
-			DestinationLat:         nulls.NewFloat64(25.7617),
-			DestinationLong:        nulls.NewFloat64(-80.1918),
-			OriginDescription:      "Another place",
-			OriginCountry:          "CA",
-			OriginDivision1:        "Ontario",
-			OriginDivision2:        "Toronto",
-			OriginLat:              nulls.NewFloat64(43.6532),
-			OriginLong:             nulls.NewFloat64(-79.3832),
-			Size:                   PostSizeSmall.String(),
-			NeededAfter:            time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
-			NeededBefore:           time.Date(2099, 1, 1, 0, 0, 0, 0, time.UTC),
-			Category:               "OTHER",
-			Description:            nulls.NewString("This is a description"),
-			URL:                    nulls.NewString("https://www.example.com/items/101"),
-			Cost:                   nulls.NewFloat64(1.0),
+			Uuid:           domain.GetUuid(),
+			CreatedByID:    users[0].ID,
+			ReceiverID:     nulls.NewInt(users[0].ID),
+			ProviderID:     nulls.NewInt(users[1].ID),
+			OrganizationID: org.ID,
+			Type:           PostTypeRequest.String(),
+			Status:         PostStatusCommitted.String(),
+			Title:          "A Request",
+			DestinationID:  nulls.NewInt(locations[0].ID),
+			OriginID:       nulls.NewInt(locations[1].ID),
+			Size:           PostSizeSmall.String(),
+			NeededAfter:    time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
+			NeededBefore:   time.Date(2099, 1, 1, 0, 0, 0, 0, time.UTC),
+			Category:       "OTHER",
+			Description:    nulls.NewString("This is a description"),
+			URL:            nulls.NewString("https://www.example.com/items/101"),
+			Cost:           nulls.NewFloat64(1.0),
 		},
 		{
 			Uuid:           domain.GetUuid(),
@@ -204,6 +213,7 @@ func Fixtures_PostQuery(t *testing.T) PostQueryFixtures {
 		Posts:        posts,
 		Files:        fileFixtures,
 		Threads:      threads,
+		Locations:    locations,
 	}
 }
 
@@ -220,8 +230,8 @@ func (gs *GqlgenSuite) Test_PostQuery() {
 		    type
 			title
 			description
-			destination {description country division1 division2 latitude longitude}
-			origin {description country division1 division2 latitude longitude}
+			destination {description country latitude longitude}
+			origin {description country latitude longitude}
 			size
 			neededAfter
 			neededBefore
@@ -250,19 +260,15 @@ func (gs *GqlgenSuite) Test_PostQuery() {
 	gs.Equal(f.Posts[0].Title, resp.Post.Title)
 	gs.Equal(f.Posts[0].Description.String, resp.Post.Description)
 
-	gs.Equal(f.Posts[0].DestinationDescription, resp.Post.Destination.Description)
-	gs.Equal(f.Posts[0].DestinationCountry, resp.Post.Destination.Country)
-	gs.Equal(f.Posts[0].DestinationDivision1, resp.Post.Destination.Division1)
-	gs.Equal(f.Posts[0].DestinationDivision2, resp.Post.Destination.Division2)
-	gs.Equal(f.Posts[0].DestinationLat.Float64, resp.Post.Destination.Lat)
-	gs.Equal(f.Posts[0].DestinationLong.Float64, resp.Post.Destination.Long)
+	gs.Equal(f.Locations[0].Description, resp.Post.Destination.Description)
+	gs.Equal(f.Locations[0].Country, resp.Post.Destination.Country)
+	gs.Equal(f.Locations[0].Latitude.Float64, resp.Post.Destination.Lat)
+	gs.Equal(f.Locations[0].Longitude.Float64, resp.Post.Destination.Long)
 
-	gs.Equal(f.Posts[0].OriginDescription, resp.Post.Origin.Description)
-	gs.Equal(f.Posts[0].OriginCountry, resp.Post.Origin.Country)
-	gs.Equal(f.Posts[0].OriginDivision1, resp.Post.Origin.Division1)
-	gs.Equal(f.Posts[0].OriginDivision2, resp.Post.Origin.Division2)
-	gs.Equal(f.Posts[0].OriginLat.Float64, resp.Post.Origin.Lat)
-	gs.Equal(f.Posts[0].OriginLong.Float64, resp.Post.Origin.Long)
+	gs.Equal(f.Locations[1].Description, resp.Post.Origin.Description)
+	gs.Equal(f.Locations[1].Country, resp.Post.Origin.Country)
+	gs.Equal(f.Locations[1].Latitude.Float64, resp.Post.Origin.Lat)
+	gs.Equal(f.Locations[1].Longitude.Float64, resp.Post.Origin.Long)
 
 	gs.Equal(f.Posts[0].Size, resp.Post.Size)
 	gs.Equal(f.Posts[0].NeededAfter.Format(time.RFC3339), resp.Post.NeededAfter)
@@ -384,8 +390,8 @@ func (gs *GqlgenSuite) Test_UpdatePost() {
 		` 
 			description: "new description"
 			status: COMMITTED
-			destination: {description:"dest" country:"dc" division1:"dd1" division2:"dd2" latitude:1.1 longitude:2.2}
-			origin: {description:"origin" country:"oc" division1:"od1" division2:"od2" latitude:3.3 longitude:4.4}
+			destination: {description:"dest" country:"dc" latitude:1.1 longitude:2.2}
+			origin: {description:"origin" country:"oc" latitude:3.3 longitude:4.4}
 			size: TINY
 			neededAfter: "2019-11-01"
 			neededBefore: "2019-12-25"
@@ -394,8 +400,8 @@ func (gs *GqlgenSuite) Test_UpdatePost() {
 			cost: "1.00"
 		`
 	query := `mutation { post: updatePost(input: {` + input + `}) { id photo { id } description status 
-			destination { description country division1 division2 latitude longitude} 
-			origin { description country division1 division2 latitude longitude}
+			destination { description country latitude longitude} 
+			origin { description country latitude longitude}
 			size neededAfter neededBefore category url cost}}`
 
 	TestUser = f.Users[0]
@@ -412,14 +418,10 @@ func (gs *GqlgenSuite) Test_UpdatePost() {
 	gs.Equal("COMMITTED", postsResp.Post.Status)
 	gs.Equal("dest", postsResp.Post.Destination.Description)
 	gs.Equal("dc", postsResp.Post.Destination.Country)
-	gs.Equal("dd1", postsResp.Post.Destination.Division1)
-	gs.Equal("dd2", postsResp.Post.Destination.Division2)
 	gs.Equal(1.1, postsResp.Post.Destination.Lat)
 	gs.Equal(2.2, postsResp.Post.Destination.Long)
 	gs.Equal("origin", postsResp.Post.Origin.Description)
 	gs.Equal("oc", postsResp.Post.Origin.Country)
-	gs.Equal("od1", postsResp.Post.Origin.Division1)
-	gs.Equal("od2", postsResp.Post.Origin.Division2)
 	gs.Equal(3.3, postsResp.Post.Origin.Lat)
 	gs.Equal(4.4, postsResp.Post.Origin.Long)
 	gs.Equal("TINY", postsResp.Post.Size)
@@ -488,8 +490,8 @@ func (gs *GqlgenSuite) Test_CreatePost() {
 			type: REQUEST
 			title: "title"
 			description: "new description"
-			destination: {description:"dest" country:"dc" division1:"dd1" division2:"dd2" latitude:1.1 longitude:2.2}
-			origin: {description:"origin" country:"oc" division1:"od1" division2:"od2" latitude:3.3 longitude:4.4}
+			destination: {description:"dest" country:"dc" latitude:1.1 longitude:2.2}
+			origin: {description:"origin" country:"oc" latitude:3.3 longitude:4.4}
 			size: TINY
 			neededAfter: "2019-11-01"
 			neededBefore: "2019-12-25"
@@ -498,8 +500,8 @@ func (gs *GqlgenSuite) Test_CreatePost() {
 			cost: "1.00"
 		`
 	query := `mutation { post: createPost(input: {` + input + `}) { organization { id } photo { id } type title 
-			description destination { description country division1 division2 latitude longitude } 
-			origin { description country division1 division2 latitude longitude }
+			description destination { description country latitude longitude } 
+			origin { description country latitude longitude }
 			size neededAfter neededBefore category url cost }}`
 
 	TestUser = f.User
@@ -513,14 +515,10 @@ func (gs *GqlgenSuite) Test_CreatePost() {
 	gs.Equal("", postsResp.Post.Status)
 	gs.Equal("dest", postsResp.Post.Destination.Description)
 	gs.Equal("dc", postsResp.Post.Destination.Country)
-	gs.Equal("dd1", postsResp.Post.Destination.Division1)
-	gs.Equal("dd2", postsResp.Post.Destination.Division2)
 	gs.Equal(1.1, postsResp.Post.Destination.Lat)
 	gs.Equal(2.2, postsResp.Post.Destination.Long)
 	gs.Equal("origin", postsResp.Post.Origin.Description)
 	gs.Equal("oc", postsResp.Post.Origin.Country)
-	gs.Equal("od1", postsResp.Post.Origin.Division1)
-	gs.Equal("od2", postsResp.Post.Origin.Division2)
 	gs.Equal(3.3, postsResp.Post.Origin.Lat)
 	gs.Equal(4.4, postsResp.Post.Origin.Long)
 	gs.Equal("TINY", postsResp.Post.Size)

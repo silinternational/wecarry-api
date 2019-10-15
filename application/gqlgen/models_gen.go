@@ -27,20 +27,9 @@ type CreateOrganizationInput struct {
 	AuthConfig string  `json:"authConfig"`
 }
 
-type Location struct {
-	Description string   `json:"description"`
-	Country     string   `json:"country"`
-	Division1   string   `json:"division1"`
-	Division2   string   `json:"division2"`
-	Latitude    *float64 `json:"latitude"`
-	Longitude   *float64 `json:"longitude"`
-}
-
 type LocationInput struct {
 	Description string   `json:"description"`
 	Country     *string  `json:"country"`
-	Division1   *string  `json:"division1"`
-	Division2   *string  `json:"division2"`
 	Latitude    *float64 `json:"latitude"`
 	Longitude   *float64 `json:"longitude"`
 }
@@ -64,8 +53,9 @@ type UpdateOrganizationInput struct {
 }
 
 type UpdateUserInput struct {
-	ID      *string `json:"id"`
-	PhotoID *string `json:"photoID"`
+	ID       *string        `json:"id"`
+	PhotoID  *string        `json:"photoID"`
+	Location *LocationInput `json:"location"`
 }
 
 type PostRole string
