@@ -2,7 +2,6 @@ package gqlgen
 
 import (
 	"testing"
-	"time"
 
 	"github.com/gobuffalo/nulls"
 	"github.com/silinternational/wecarry-api/aws"
@@ -45,19 +44,8 @@ type UserQueryFixtures struct {
 
 // Fixtures_UserQuery creates fixtures for Test_UserQuery
 func Fixtures_UserQuery(as *ActionSuite, t *testing.T) UserQueryFixtures {
-	// Load Org test fixtures
-	org := &models.Organization{
-		Name:       "TestOrg1",
-		Url:        nulls.String{},
-		AuthType:   models.AuthTypeSaml,
-		AuthConfig: "{}",
-		Uuid:       domain.GetUuid(),
-	}
-	err := as.DB.Create(org)
-	if err != nil {
-		t.Errorf("could not create organization for test, error: %s", err)
-		t.FailNow()
-	}
+	org := &models.Organization{AuthConfig: "{}", Uuid: domain.GetUuid()}
+	createFixture(t, org)
 
 	locations := []models.Location{
 		{
@@ -68,89 +56,41 @@ func Fixtures_UserQuery(as *ActionSuite, t *testing.T) UserQueryFixtures {
 		},
 	}
 	for i := range locations {
-		createFixture(t, &(locations[i]))
+		createFixture(t, &locations[i])
 	}
 
 	users := models.Users{
 		{
-			Email:     "user1@example.com",
-			FirstName: "First",
-			LastName:  "User",
-			Nickname:  "User1",
 			Uuid:      domain.GetUuid(),
+			Email:     t.Name() + "_user1@example.com",
+			Nickname:  t.Name() + " User1",
 			AdminRole: nulls.NewString(domain.AdminRoleSuperDuperAdmin),
 		},
 		{
-			Email:      "user2@example.com",
-			FirstName:  "Second",
-			LastName:   "User",
-			Nickname:   "User2",
 			Uuid:       domain.GetUuid(),
+			Email:      t.Name() + "_user2@example.com",
+			Nickname:   t.Name() + " User2",
+			AdminRole:  nulls.NewString(domain.AdminRoleSalesAdmin),
 			LocationID: nulls.NewInt(locations[0].ID),
 		},
 	}
-
 	for i := range users {
-		if err := as.DB.Create(&users[i]); err != nil {
-			t.Errorf("could not create test user ... %v", err)
-			t.FailNow()
-		}
+		createFixture(t, &users[i])
 	}
 
-	// Load UserOrganization test fixtures
 	userOrgs := models.UserOrganizations{
-		{
-			OrganizationID: org.ID,
-			UserID:         users[0].ID,
-			AuthID:         "auth_user1",
-			AuthEmail:      users[0].Email,
-		},
-		{
-			OrganizationID: org.ID,
-			UserID:         users[1].ID,
-			AuthID:         "auth_user2",
-			AuthEmail:      users[1].Email,
-		},
+		{OrganizationID: org.ID, UserID: users[0].ID, AuthEmail: users[0].Email},
+		{OrganizationID: org.ID, UserID: users[1].ID, AuthEmail: users[1].Email},
 	}
-
 	for i := range userOrgs {
-		if err := as.DB.Create(&userOrgs[i]); err != nil {
-			t.Errorf("could not create test user org ... %v", err)
-			t.FailNow()
-		}
+		createFixture(t, &userOrgs[i])
 	}
 
 	posts := models.Posts{
-		{
-			CreatedByID:    users[1].ID,
-			Type:           PostTypeOffer.String(),
-			OrganizationID: org.ID,
-			Title:          "An Offer",
-			Size:           PostSizeLarge.String(),
-			Status:         PostStatusOpen.String(),
-			Uuid:           domain.GetUuid(),
-			ProviderID:     nulls.NewInt(users[1].ID),
-		},
+		{CreatedByID: users[1].ID, Uuid: domain.GetUuid(), ProviderID: nulls.NewInt(users[1].ID)},
 	}
-
 	for i := range posts {
 		createFixture(t, &(posts[i]))
-	}
-
-	clientID := "12345678"
-	accessToken := "ABCDEFGHIJKLMONPQRSTUVWXYZ123456"
-	hash := models.HashClientIdAccessToken(clientID + accessToken)
-
-	userAccessToken := models.UserAccessToken{
-		UserID:             users[0].ID,
-		UserOrganizationID: userOrgs[0].ID,
-		AccessToken:        hash,
-		ExpiresAt:          time.Now().Add(time.Hour),
-	}
-
-	if err := as.DB.Create(&userAccessToken); err != nil {
-		t.Errorf("could not create test userAccessToken ... %v", err)
-		t.FailNow()
 	}
 
 	if err := aws.CreateS3Bucket(); err != nil {
