@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -197,8 +198,16 @@ func RollbarMiddleware(next buffalo.Handler) buffalo.Handler {
 
 // Error log error and send to Rollbar
 func Error(c buffalo.Context, msg string, extras map[string]interface{}) {
+
+	// Avoid panics running tests when c doesn't have the necessary nested methods
+	cType := fmt.Sprintf("%T", c)
+	if cType == "models.EmptyContext" {
+		return
+	}
+
 	c.Logger().Error(msg, extras)
 	rollbarMessage(c, rollbar.ERR, msg, extras)
+
 }
 
 // Warn log warning and send to Rollbar
