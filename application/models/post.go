@@ -94,16 +94,84 @@ func (p *Post) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	), nil
 }
 
+type createStatusValidator struct {
+	Name    string
+	Status  string
+	Message string
+}
+
+func (v *createStatusValidator) IsValid(errors *validate.Errors) {
+	if v.Status == PostStatusOpen {
+		return
+	}
+
+	v.Message = fmt.Sprintf("Can only create a post with '%s' status, not '%s' status",
+		PostStatusOpen, v.Status)
+	errors.Add(validators.GenerateKey(v.Name), v.Message)
+}
+
 // ValidateCreate gets run every time you call "pop.ValidateAndCreate" method.
-// This method is not required and may be deleted.
 func (p *Post) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) {
-	return validate.NewErrors(), nil
+	return validate.Validate(
+		&createStatusValidator{
+			Name:   "Create Status",
+			Status: p.Status,
+		},
+	), nil
+	//return validate.NewErrors(), nil
+}
+
+type updateStatusValidator struct {
+	Name    string
+	Post    *Post
+	Message string
+}
+
+func (v *updateStatusValidator) IsValid(errors *validate.Errors) {
+
+	// TODO Take into account PostTypeOffer as well.  This is just for PostTypeRequest
+
+	oldPost := Post{}
+	uuid := v.Post.Uuid.String()
+	if err := oldPost.FindByUUID(uuid); err != nil {
+		v.Message = fmt.Sprintf("error finding existing post by UUID %s ... %v", uuid, err)
+		errors.Add(validators.GenerateKey(v.Name), v.Message)
+	}
+
+	if oldPost.Status == v.Post.Status {
+		return
+	}
+
+	okChanges := map[string][]string{
+		PostStatusOpen:      {PostStatusOpen, PostStatusCommitted, PostStatusRemoved},
+		PostStatusCommitted: {PostStatusCommitted, PostStatusOpen, PostStatusAccepted, PostStatusRemoved},
+		PostStatusAccepted:  {PostStatusAccepted, PostStatusOpen, PostStatusReceived, PostStatusRemoved},
+		PostStatusReceived:  {PostStatusReceived, PostStatusCompleted},
+		PostStatusCompleted: {PostStatusCompleted},
+		PostStatusRemoved:   {PostStatusRemoved},
+	}
+
+	errorMsg := "cannot move '%s' status to '%s' status"
+	for key, oks := range okChanges {
+		if oldPost.Status != key {
+			continue
+		}
+
+		if !domain.IsStringInSlice(v.Post.Status, oks) {
+			v.Message = fmt.Sprintf(errorMsg, PostStatusOpen, v.Post.Status)
+			errors.Add(validators.GenerateKey(v.Name), v.Message)
+		}
+	}
 }
 
 // ValidateUpdate gets run every time you call "pop.ValidateAndUpdate" method.
-// This method is not required and may be deleted.
 func (p *Post) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
-	return validate.NewErrors(), nil
+	return validate.Validate(
+		&updateStatusValidator{
+			Name: "Status",
+			Post: p,
+		},
+	), nil
 }
 
 func (p *Post) FindByUUID(uuid string) error {
