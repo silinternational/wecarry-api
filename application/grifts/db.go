@@ -187,7 +187,7 @@ var _ = grift.Namespace("db", func() {
 		for _, loc := range fixtureLocations {
 			err := models.DB.Create(loc)
 			if err != nil {
-				err = fmt.Errorf("error loading post fixture ... %+v\n %v", loc, err.Error())
+				err = fmt.Errorf("error loading locations fixture ... %+v\n %v", loc, err.Error())
 				return err
 			}
 		}
@@ -222,7 +222,7 @@ var _ = grift.Namespace("db", func() {
 				OrganizationID: 1,
 				Status:         models.PostStatusOpen,
 				Title:          "Jif Peanut Butter",
-				DestinationID:  nulls.NewInt(1),
+				DestinationID:  nulls.NewInt(2),
 				Size:           models.PostSizeSmall,
 				Uuid:           postUuid2,
 				ReceiverID:     nulls.NewInt(2),
@@ -237,7 +237,7 @@ var _ = grift.Namespace("db", func() {
 				OrganizationID: 1,
 				Status:         models.PostStatusOpen,
 				Title:          "Burt's Bee's Lip Balm",
-				DestinationID:  nulls.NewInt(1),
+				DestinationID:  nulls.NewInt(3),
 				Size:           models.PostSizeTiny,
 				Uuid:           postUuid3,
 				ReceiverID:     nulls.NewInt(3),
@@ -252,7 +252,7 @@ var _ = grift.Namespace("db", func() {
 				OrganizationID: 1,
 				Status:         models.PostStatusOpen,
 				Title:          "Peanut Butter",
-				DestinationID:  nulls.NewInt(1),
+				DestinationID:  nulls.NewInt(4),
 				Size:           models.PostSizeSmall,
 				Uuid:           postUuid4,
 				ReceiverID:     nulls.NewInt(4),
