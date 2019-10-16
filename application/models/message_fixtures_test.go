@@ -1,11 +1,8 @@
 package models
 
 import (
-	"fmt"
 	"testing"
 	"time"
-
-	"github.com/gobuffalo/buffalo/genny/build/_fixtures/coke/models"
 
 	"github.com/gobuffalo/nulls"
 	"github.com/silinternational/wecarry-api/domain"
@@ -77,14 +74,6 @@ func Fixtures_GetSender(ms *ModelSuite, t *testing.T) MessageFixtures {
 		if err := ms.DB.Create(&userOrgs[i]); err != nil {
 			t.Errorf("could not create test user org ... %v", err)
 			t.FailNow()
-		}
-	}
-
-	for _, loc := range fixtureLocations {
-		err := models.DB.Create(loc)
-		if err != nil {
-			err = fmt.Errorf("error loading post fixture ... %+v\n %v", loc, err.Error())
-			return err
 		}
 	}
 
