@@ -312,3 +312,31 @@ func (p *Post) GetOrigin() (*Location, error) {
 
 	return &location, nil
 }
+
+func (p *Post) SetDestination(location Location) error {
+	if p.DestinationID.Valid {
+		location.ID = p.DestinationID.Int
+		p.Destination = location
+		return DB.Update(&(p.Destination))
+	} else {
+		if err := DB.Create(&location); err != nil {
+			return err
+		}
+		p.DestinationID = nulls.NewInt(location.ID)
+		return DB.Update(p)
+	}
+}
+
+func (p *Post) SetOrigin(location Location) error {
+	if p.OriginID.Valid {
+		location.ID = p.OriginID.Int
+		p.Origin = location
+		return DB.Update(&(p.Origin))
+	} else {
+		if err := DB.Create(&location); err != nil {
+			return err
+		}
+		p.OriginID = nulls.NewInt(location.ID)
+		return DB.Update(p)
+	}
+}

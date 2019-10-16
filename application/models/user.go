@@ -395,3 +395,17 @@ func (u *User) GetLocation() (*Location, error) {
 
 	return &location, nil
 }
+
+func (u *User) SetLocation(location Location) error {
+	if u.LocationID.Valid {
+		location.ID = u.LocationID.Int
+		u.Location = location
+		return DB.Update(&(u.Location))
+	} else {
+		if err := DB.Create(&location); err != nil {
+			return err
+		}
+		u.LocationID = nulls.NewInt(location.ID)
+		return DB.Update(u)
+	}
+}

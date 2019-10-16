@@ -264,20 +264,6 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 		post.Description = nulls.NewString(*input.Description)
 	}
 
-	//if input.Destination != nil {
-	//	post.DestinationDescription = input.Destination.Description
-	//	setOptionalStringField(input.Destination.Country, &(post.DestinationCountry))
-	//	setOptionalFloatField(input.Destination.Latitude, &(post.DestinationLat))
-	//	setOptionalFloatField(input.Destination.Longitude, &(post.DestinationLong))
-	//}
-	//
-	//if input.Origin != nil {
-	//	post.OriginDescription = input.Origin.Description
-	//	setOptionalStringField(input.Origin.Country, &(post.OriginCountry))
-	//	setOptionalFloatField(input.Origin.Latitude, &(post.OriginLat))
-	//	setOptionalFloatField(input.Origin.Longitude, &(post.OriginLong))
-	//}
-
 	if input.Size != nil {
 		post.Size = (*input.Size).String()
 	}
@@ -326,12 +312,6 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 	return post, nil
 }
 
-func setOptionalStringField(input *string, output *string) {
-	if input != nil {
-		*output = *input
-	}
-}
-
 func getSelectFieldsForPosts(ctx context.Context) []string {
 	requestFields := graphql.CollectAllFields(ctx)
 	selectFields := GetSelectFieldsFromRequestFields(PostFields(), requestFields)
@@ -369,6 +349,22 @@ func (r *mutationResolver) CreatePost(ctx context.Context, input postInput) (*mo
 		return &models.Post{}, err
 	}
 
+	if input.Destination != nil {
+		err := post.SetDestination(convertGqlLocationInputToDBLocation(*input.Destination))
+		if err != nil {
+			domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
+			return &models.Post{}, err
+		}
+	}
+
+	if input.Origin != nil {
+		err := post.SetOrigin(convertGqlLocationInputToDBLocation(*input.Origin))
+		if err != nil {
+			domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
+			return &models.Post{}, err
+		}
+	}
+
 	return &post, nil
 }
 
@@ -383,6 +379,22 @@ func (r *mutationResolver) UpdatePost(ctx context.Context, input postInput) (*mo
 	if err := models.DB.Update(&post); err != nil {
 		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
 		return &models.Post{}, err
+	}
+
+	if input.Destination != nil {
+		err := post.SetDestination(convertGqlLocationInputToDBLocation(*input.Destination))
+		if err != nil {
+			domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
+			return &models.Post{}, err
+		}
+	}
+
+	if input.Origin != nil {
+		err := post.SetOrigin(convertGqlLocationInputToDBLocation(*input.Origin))
+		if err != nil {
+			domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
+			return &models.Post{}, err
+		}
 	}
 
 	return &post, nil

@@ -292,9 +292,10 @@ func (gs *GqlgenSuite) Test_PostQuery() {
 }
 
 type UpdatePostFixtures struct {
-	Posts models.Posts
-	Users models.Users
-	Files models.Files
+	models.Posts
+	models.Users
+	models.Files
+	models.Locations
 }
 
 func Fixtures_UpdatePost(t *testing.T) UpdatePostFixtures {
@@ -317,7 +318,18 @@ func Fixtures_UpdatePost(t *testing.T) UpdatePostFixtures {
 		createFixture(t, &(userOrgs[i]))
 	}
 
-	// Load Post test fixtures
+	locations := []models.Location{
+		{
+			Description: "Miami, FL, USA",
+			Country:     "US",
+			Latitude:    nulls.NewFloat64(25.7617),
+			Longitude:   nulls.NewFloat64(-80.1918),
+		},
+	}
+	for i := range locations {
+		createFixture(t, &(locations[i]))
+	}
+
 	posts := models.Posts{
 		{
 			CreatedByID:    users[0].ID,
@@ -328,6 +340,8 @@ func Fixtures_UpdatePost(t *testing.T) UpdatePostFixtures {
 			Status:         PostStatusOpen.String(),
 			Uuid:           domain.GetUuid(),
 			ReceiverID:     nulls.NewInt(users[1].ID),
+			DestinationID:  nulls.NewInt(locations[0].ID), // test update of existing location
+			// leave OriginID nil to test adding a location
 		},
 	}
 
@@ -491,7 +505,6 @@ func (gs *GqlgenSuite) Test_CreatePost() {
 			title: "title"
 			description: "new description"
 			destination: {description:"dest" country:"dc" latitude:1.1 longitude:2.2}
-			origin: {description:"origin" country:"oc" latitude:3.3 longitude:4.4}
 			size: TINY
 			neededAfter: "2019-11-01"
 			neededBefore: "2019-12-25"
@@ -517,10 +530,10 @@ func (gs *GqlgenSuite) Test_CreatePost() {
 	gs.Equal("dc", postsResp.Post.Destination.Country)
 	gs.Equal(1.1, postsResp.Post.Destination.Lat)
 	gs.Equal(2.2, postsResp.Post.Destination.Long)
-	gs.Equal("origin", postsResp.Post.Origin.Description)
-	gs.Equal("oc", postsResp.Post.Origin.Country)
-	gs.Equal(3.3, postsResp.Post.Origin.Lat)
-	gs.Equal(4.4, postsResp.Post.Origin.Long)
+	gs.Equal("", postsResp.Post.Origin.Description)
+	gs.Equal("", postsResp.Post.Origin.Country)
+	gs.Equal(0.0, postsResp.Post.Origin.Lat)
+	gs.Equal(0.0, postsResp.Post.Origin.Long)
 	gs.Equal("TINY", postsResp.Post.Size)
 	gs.Equal("2019-11-01T00:00:00Z", postsResp.Post.NeededAfter)
 	gs.Equal("2019-12-25T00:00:00Z", postsResp.Post.NeededBefore)

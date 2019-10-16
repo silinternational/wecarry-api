@@ -2,6 +2,7 @@ package gqlgen
 
 import (
 	"github.com/gobuffalo/nulls"
+	"github.com/silinternational/wecarry-api/models"
 )
 
 func GetStringFromNullsString(inString nulls.String) *string {
@@ -19,4 +20,28 @@ func GetFloat64FromNullsFloat64(in nulls.Float64) *float64 {
 		output = in.Float64
 	}
 	return &output
+}
+
+func setOptionalStringField(input *string, output *string) {
+	if input != nil {
+		*output = *input
+	}
+}
+
+func setOptionalFloatField(input *float64, output *nulls.Float64) {
+	if input != nil {
+		*output = nulls.NewFloat64(*input)
+	}
+}
+
+func convertGqlLocationInputToDBLocation(input LocationInput) models.Location {
+	l := models.Location{
+		Description: input.Description,
+	}
+
+	setOptionalStringField(input.Country, &(l.Country))
+	setOptionalFloatField(input.Latitude, &(l.Latitude))
+	setOptionalFloatField(input.Longitude, &(l.Longitude))
+
+	return l
 }
