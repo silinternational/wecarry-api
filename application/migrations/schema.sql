@@ -889,19 +889,19 @@ ALTER TABLE ONLY public.posts
 
 
 --
+-- Name: posts posts_files_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.posts
+    ADD CONSTRAINT posts_files_id_fk FOREIGN KEY (photo_file_id) REFERENCES public.files(id) ON DELETE SET NULL;
+
+
+--
 -- Name: posts posts_organization_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.posts
     ADD CONSTRAINT posts_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id) ON DELETE SET NULL;
-
-
---
--- Name: posts posts_photo_file_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
---
-
-ALTER TABLE ONLY public.posts
-    ADD CONSTRAINT posts_photo_file_id_fkey FOREIGN KEY (photo_file_id) REFERENCES public.files(id) ON UPDATE CASCADE ON DELETE SET NULL;
 
 
 --
@@ -981,7 +981,7 @@ ALTER TABLE ONLY public.user_organizations
 --
 
 ALTER TABLE ONLY public.users
-    ADD CONSTRAINT users_files_id_fk FOREIGN KEY (photo_file_id) REFERENCES public.files(id) ON DELETE CASCADE;
+    ADD CONSTRAINT users_files_id_fk FOREIGN KEY (photo_file_id) REFERENCES public.files(id) ON DELETE SET NULL;
 
 
 --
