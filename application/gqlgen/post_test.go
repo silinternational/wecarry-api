@@ -1,7 +1,6 @@
 package gqlgen
 
 import (
-	"fmt"
 	"net/http/httptest"
 	"strconv"
 	"testing"
@@ -434,7 +433,6 @@ func (gs *GqlgenSuite) Test_UpdatePost() {
 	input := `id: "` + postFixtures[1].Uuid.String() + `" photoID: "` + fileFixtures[2].UUID.String() + `"`
 	query := `mutation { updatePost(input: {` + input + `}) { id photo { id } }}`
 
-	fmt.Printf("------ query=%s\n", query)
 	var postsResp struct {
 		Post struct {
 			ID    string `json:"id"`
@@ -454,4 +452,25 @@ func (gs *GqlgenSuite) Test_UpdatePost() {
 
 	gs.Equal(postFixtures[1].Uuid.String(), postsResp.Post.ID)
 	gs.Equal(fileFixtures[2].UUID.String(), postsResp.Post.Photo.ID)
+
+	// Now check for a valid status update
+	input = `id: "` + postFixtures[0].Uuid.String() + `" status: ` + models.PostStatusCommitted
+	query = `mutation { updatePost(input: {` + input + `}) { id status}}`
+
+	var valErrResp struct {
+		Post struct {
+			ID     string `json:"id"`
+			Status string `json:"status"`
+		} `json:"updatePost"`
+	}
+
+	err := c.Post(query, &valErrResp)
+	gs.NoError(err)
+
+	// Now check for a validation error
+	input = `id: "` + postFixtures[0].Uuid.String() + `" status: ` + models.PostStatusCompleted
+	query = `mutation { updatePost(input: {` + input + `}) { id status}}`
+
+	err = c.Post(query, &valErrResp)
+	gs.Error(err)
 }
