@@ -131,37 +131,68 @@ func (gs *GqlgenSuite) Test_UserQuery() {
 	f := Fixtures_UserQuery(gs, t)
 	c := getGqlClient()
 
-	query := `{user(id: "` + f.Users[1].Uuid.String() + `") {
-		id
-		email
-		nickname
-		adminRole
-		photoURL
-		posts (role: CREATEDBY) {id}
-		organizations {id}
-		location {description country latitude longitude}
-	}}`
+	type testCase struct {
+		Name        string
+		Payload     string
+		TestUser    models.User
+		ExpectError bool
+		Test        func(t *testing.T)
+	}
 
 	var resp UserResponse
 
-	TestUser = f.Users[0]
-	c.MustPost(query, &resp)
-
-	if err := models.DB.Load(&(f.Users[1]), "PhotoFile"); err != nil {
-		t.Errorf("failed to load user fixture, %s", err)
+	allFields := `{ id email nickname adminRole photoURL posts (role: CREATEDBY) {id} organizations {id} location {description country latitude longitude} }`
+	testCases := []testCase{
+		{
+			Name:     "all fields",
+			Payload:  `{user(id: "` + f.Users[1].Uuid.String() + `")` + allFields + "}",
+			TestUser: f.Users[0],
+			Test: func(t *testing.T) {
+				if err := models.DB.Load(&(f.Users[1]), "PhotoFile"); err != nil {
+					t.Errorf("failed to load user fixture, %s", err)
+				}
+				gs.Equal(f.Users[1].Uuid.String(), resp.User.ID, "incorrect ID")
+				gs.Equal(f.Users[1].Email, resp.User.Email, "incorrect Email")
+				gs.Equal(f.Users[1].Nickname, resp.User.Nickname, "incorrect Nickname")
+				gs.Equal(f.Users[1].AdminRole.String, resp.User.AdminRole, "incorrect AdminRole")
+				gs.Equal(f.Users[1].PhotoFile.URL, resp.User.PhotoURL, "incorrect PhotoURL")
+				gs.Regexp("^https?", resp.User.PhotoURL, "invalid PhotoURL")
+				gs.Equal(1, len(resp.User.Posts), "wrong number of posts")
+				gs.Equal(f.Posts[0].Uuid.String(), resp.User.Posts[0].ID, "incorrect Post ID")
+				gs.Equal(1, len(resp.User.Organizations), "wrong number of Organizations")
+				gs.Equal(f.Organization.Uuid.String(), resp.User.Organizations[0].ID, "incorrect Organization ID")
+				gs.Equal(f.Locations[0].Description, resp.User.Location.Description, "incorrect location")
+				gs.Equal(f.Locations[0].Country, resp.User.Location.Country, "incorrect country")
+				gs.Equal(f.Locations[0].Latitude.Float64, resp.User.Location.Lat, "incorrect latitude")
+				gs.Equal(f.Locations[0].Longitude.Float64, resp.User.Location.Long, "incorrect longitude")
+			},
+		},
+		{
+			Name:     "current user",
+			Payload:  `{user ` + allFields + "}",
+			TestUser: f.Users[1],
+			Test: func(t *testing.T) {
+				gs.Equal(f.Users[1].Uuid.String(), resp.User.ID, "incorrect ID")
+			},
+		},
+		// This test case doesn't play well because rollbar isn't configured for testing
+		//{
+		//	Name:        "not allowed",
+		//	Payload:     `{user(id: "` + f.Users[0].Uuid.String() + `")` + allFields + "}",
+		//	TestUser:    f.Users[1],
+		//	Test:        func(t *testing.T) {},
+		//	ExpectError: true,
+		//},
 	}
-	gs.Equal(f.Users[1].Uuid.String(), resp.User.ID, "incorrect ID")
-	gs.Equal(f.Users[1].Email, resp.User.Email, "incorrect Email")
-	gs.Equal(f.Users[1].Nickname, resp.User.Nickname, "incorrect Nickname")
-	gs.Equal(f.Users[1].AdminRole.String, resp.User.AdminRole, "incorrect AdminRole")
-	gs.Equal(f.Users[1].PhotoFile.URL, resp.User.PhotoURL, "incorrect PhotoURL")
-	gs.Regexp("^https?", resp.User.PhotoURL, "invalid PhotoURL")
-	gs.Equal(1, len(resp.User.Posts), "wrong number of posts")
-	gs.Equal(f.Posts[0].Uuid.String(), resp.User.Posts[0].ID, "incorrect Post ID")
-	gs.Equal(1, len(resp.User.Organizations), "wrong number of Organizations")
-	gs.Equal(f.Organization.Uuid.String(), resp.User.Organizations[0].ID, "incorrect Organization ID")
-	gs.Equal(f.Locations[0].Description, resp.User.Location.Description, "incorrect location")
-	gs.Equal(f.Locations[0].Country, resp.User.Location.Country, "incorrect country")
-	gs.Equal(f.Locations[0].Latitude.Float64, resp.User.Location.Lat, "incorrect latitude")
-	gs.Equal(f.Locations[0].Longitude.Float64, resp.User.Location.Long, "incorrect longitude")
+
+	for _, test := range testCases {
+		TestUser = test.TestUser
+		err := c.Post(test.Payload, &resp)
+		if test.ExpectError {
+			gs.Error(err)
+		} else {
+			gs.NoError(err)
+		}
+		t.Run(test.Name, test.Test)
+	}
 }
