@@ -10,12 +10,37 @@ import (
 	"github.com/silinternational/wecarry-api/models"
 )
 
+// UserResponse is for marshalling User query and mutation responses
+type UserResponse struct {
+	User struct {
+		ID            string `json:"id"`
+		Email         string `json:"email"`
+		Nickname      string `json:"nickname"`
+		CreatedAt     string `json:"createdAt"`
+		UpdatedAt     string `json:"updatedAt"`
+		AdminRole     string `json:"adminRole"`
+		Organizations []struct {
+			ID int `json:"id"`
+		} `json:"organizations"`
+		Posts []struct {
+			ID int `json:"id"`
+		}
+		PhotoURL string `json:"photoURL"`
+		Location struct {
+			Description string  `json:"description"`
+			Country     string  `json:"country"`
+			Lat         float64 `json:"latitude"`
+			Long        float64 `json:"longitude"`
+		} `json:"location"`
+	} `json:"user"`
+}
+
 // UserQueryFixtures is for returning fixtures from Fixtures_UserQuery
 type UserQueryFixtures struct {
-	Users       models.Users
-	CurrentUser models.User
-	ClientID    string
-	AccessToken string
+	models.Organization
+	models.Users
+	models.Posts
+	models.Locations
 }
 
 // Fixtures_UserQuery creates fixtures for Test_UserQuery
@@ -34,7 +59,18 @@ func Fixtures_UserQuery(as *ActionSuite, t *testing.T) UserQueryFixtures {
 		t.FailNow()
 	}
 
-	// Load User test fixtures
+	locations := []models.Location{
+		{
+			Description: "Miami, FL, USA",
+			Country:     "US",
+			Latitude:    nulls.NewFloat64(25.7617),
+			Longitude:   nulls.NewFloat64(-80.1918),
+		},
+	}
+	for i := range locations {
+		createFixture(t, &(locations[i]))
+	}
+
 	users := models.Users{
 		{
 			Email:     "user1@example.com",
@@ -45,11 +81,12 @@ func Fixtures_UserQuery(as *ActionSuite, t *testing.T) UserQueryFixtures {
 			AdminRole: nulls.NewString(domain.AdminRoleSuperDuperAdmin),
 		},
 		{
-			Email:     "user2@example.com",
-			FirstName: "Second",
-			LastName:  "User",
-			Nickname:  "User2",
-			Uuid:      domain.GetUuid(),
+			Email:      "user2@example.com",
+			FirstName:  "Second",
+			LastName:   "User",
+			Nickname:   "User2",
+			Uuid:       domain.GetUuid(),
+			LocationID: nulls.NewInt(locations[0].ID),
 		},
 	}
 
@@ -81,6 +118,23 @@ func Fixtures_UserQuery(as *ActionSuite, t *testing.T) UserQueryFixtures {
 			t.Errorf("could not create test user org ... %v", err)
 			t.FailNow()
 		}
+	}
+
+	posts := models.Posts{
+		{
+			CreatedByID:    users[1].ID,
+			Type:           PostTypeOffer.String(),
+			OrganizationID: org.ID,
+			Title:          "An Offer",
+			Size:           PostSizeLarge.String(),
+			Status:         PostStatusOpen.String(),
+			Uuid:           domain.GetUuid(),
+			ProviderID:     nulls.NewInt(users[1].ID),
+		},
+	}
+
+	for i := range posts {
+		createFixture(t, &(posts[i]))
 	}
 
 	clientID := "12345678"
@@ -117,9 +171,10 @@ func Fixtures_UserQuery(as *ActionSuite, t *testing.T) UserQueryFixtures {
 	}
 
 	return UserQueryFixtures{
-		Users:       users,
-		ClientID:    clientID,
-		AccessToken: accessToken,
+		Organization: *org,
+		Users:        users,
+		Posts:        posts,
+		Locations:    locations,
 	}
 }
 
@@ -128,30 +183,40 @@ func (as *ActionSuite) Test_UserQuery() {
 	t := as.T()
 	models.ResetTables(t, as.DB)
 
-	queryFixtures := Fixtures_UserQuery(as, t)
-	userFixtures := queryFixtures.Users
-
+	f := Fixtures_UserQuery(as, t)
 	c := getGqlClient()
 
-	query := `{user(id: "` + userFixtures[1].Uuid.String() + `") {id nickname photoURL}}`
+	query := `{user(id: "` + f.Users[1].Uuid.String() + `") {
+		id
+		email
+		nickname
+		adminRole
+		photoURL
+		posts (role: CREATEDBY) {id}
+		organizations {id}
+		location {description country latitude longitude}
+	}}`
 
-	var usersResp struct {
-		User struct {
-			ID       string `json:"id"`
-			Nickname string `json:"nickname"`
-			PhotoURL string `json:"photoURL"`
-		} `json:"user"`
-	}
+	var resp UserResponse
 
-	TestUser = userFixtures[0]
-	TestUser.AdminRole = nulls.NewString(domain.AdminRoleSuperDuperAdmin)
-	c.MustPost(query, &usersResp)
+	TestUser = f.Users[0]
+	c.MustPost(query, &resp)
 
-	if err := as.DB.Load(&(userFixtures[1]), "PhotoFile"); err != nil {
+	if err := as.DB.Load(&(f.Users[1]), "PhotoFile"); err != nil {
 		t.Errorf("failed to load user fixture, %s", err)
 	}
-	as.Equal(userFixtures[1].Uuid.String(), usersResp.User.ID)
-	as.Equal(userFixtures[1].Nickname, usersResp.User.Nickname)
-	as.Equal(userFixtures[1].PhotoFile.URL, usersResp.User.PhotoURL)
-	as.Regexp("^https?", usersResp.User.PhotoURL)
+	as.Equal(f.Users[1].Uuid.String(), resp.User.ID)
+	as.Equal(f.Users[1].Email, resp.User.Email)
+	as.Equal(f.Users[1].Nickname, resp.User.Nickname)
+	as.Equal(f.Users[1].AdminRole, resp.User.AdminRole)
+	as.Equal(f.Users[1].PhotoFile.URL, resp.User.PhotoURL)
+	as.Regexp("^https?", resp.User.PhotoURL)
+	as.Equal(1, resp.User.Posts)
+	as.Equal(f.Posts[0].ID, resp.User.Posts[0].ID)
+	as.Equal(1, resp.User.Organizations)
+	as.Equal(f.Organization.ID, resp.User.Organizations[0].ID)
+	as.Equal(f.Locations[0].Description, resp.User.Location.Description)
+	as.Equal(f.Locations[0].Country, resp.User.Location.Country)
+	as.Equal(f.Locations[0].Latitude.Float64, resp.User.Location.Lat)
+	as.Equal(f.Locations[0].Longitude.Float64, resp.User.Location.Long)
 }
