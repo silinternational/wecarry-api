@@ -3,9 +3,8 @@ package gqlgen
 import (
 	"context"
 	"fmt"
-	"strconv"
-
 	"github.com/gobuffalo/nulls"
+	"strconv"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/silinternational/wecarry-api/domain"
@@ -371,9 +370,17 @@ func (r *mutationResolver) UpdatePost(ctx context.Context, input postInput) (*mo
 		return &models.Post{}, err
 	}
 
-	if err := models.DB.Update(&post); err != nil {
+	valErrs, err := models.DB.ValidateAndUpdate(&post)
+
+	if err != nil {
 		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
 		return &models.Post{}, err
+	}
+
+	if len(valErrs.Errors) > 0 {
+		vErrs := models.FlattenPopErrors(valErrs)
+		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), vErrs, domain.NoExtras)
+		return &models.Post{}, fmt.Errorf(vErrs)
 	}
 
 	return &post, nil
