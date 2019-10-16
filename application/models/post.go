@@ -258,7 +258,7 @@ func (p *Post) GetPhoto() (*File, error) {
 		return nil, err
 	}
 
-	return &(p.PhotoFile), nil
+	return &p.PhotoFile, nil
 }
 
 // scope query to only include organizations for current user
@@ -323,7 +323,7 @@ func (p *Post) SetDestination(location Location) error {
 	if p.DestinationID.Valid {
 		location.ID = p.DestinationID.Int
 		p.Destination = location
-		return DB.Update(&(p.Destination))
+		return DB.Update(&p.Destination)
 	} else {
 		if err := DB.Create(&location); err != nil {
 			return err
@@ -337,7 +337,7 @@ func (p *Post) SetOrigin(location Location) error {
 	if p.OriginID.Valid {
 		location.ID = p.OriginID.Int
 		p.Origin = location
-		return DB.Update(&(p.Origin))
+		return DB.Update(&p.Origin)
 	} else {
 		if err := DB.Create(&location); err != nil {
 			return err

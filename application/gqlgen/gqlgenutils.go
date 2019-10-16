@@ -39,9 +39,9 @@ func convertGqlLocationInputToDBLocation(input LocationInput) models.Location {
 		Description: input.Description,
 	}
 
-	setOptionalStringField(input.Country, &(l.Country))
-	setOptionalFloatField(input.Latitude, &(l.Latitude))
-	setOptionalFloatField(input.Longitude, &(l.Longitude))
+	setOptionalStringField(input.Country, &l.Country)
+	setOptionalFloatField(input.Latitude, &l.Latitude)
+	setOptionalFloatField(input.Longitude, &l.Longitude)
 
 	return l
 }

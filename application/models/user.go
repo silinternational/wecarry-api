@@ -403,7 +403,7 @@ func (u *User) SetLocation(location Location) error {
 	if u.LocationID.Valid {
 		location.ID = u.LocationID.Int
 		u.Location = location
-		return DB.Update(&(u.Location))
+		return DB.Update(&u.Location)
 	} else {
 		if err := DB.Create(&location); err != nil {
 			return err

@@ -258,7 +258,7 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 		post.Type = input.Type.String()
 	}
 
-	setOptionalStringField(input.Title, &(post.Title))
+	setOptionalStringField(input.Title, &post.Title)
 
 	if input.Description != nil {
 		post.Description = nulls.NewString(*input.Description)
@@ -286,7 +286,7 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 		post.NeededBefore = neededBefore
 	}
 
-	setOptionalStringField(input.Category, &(post.Category))
+	setOptionalStringField(input.Category, &post.Category)
 
 	if input.URL != nil {
 		post.URL = nulls.NewString(*input.URL)
