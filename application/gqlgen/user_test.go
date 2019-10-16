@@ -175,14 +175,13 @@ func (gs *GqlgenSuite) Test_UserQuery() {
 				gs.Equal(f.Users[1].Uuid.String(), resp.User.ID, "incorrect ID")
 			},
 		},
-		// This test case doesn't play well because rollbar isn't configured for testing
-		//{
-		//	Name:        "not allowed",
-		//	Payload:     `{user(id: "` + f.Users[0].Uuid.String() + `")` + allFields + "}",
-		//	TestUser:    f.Users[1],
-		//	Test:        func(t *testing.T) {},
-		//	ExpectError: true,
-		//},
+		{
+			Name:        "not allowed",
+			Payload:     `{user(id: "` + f.Users[0].Uuid.String() + `")` + allFields + "}",
+			TestUser:    f.Users[1],
+			Test:        func(t *testing.T) {},
+			ExpectError: true,
+		},
 	}
 
 	for _, test := range testCases {
