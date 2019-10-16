@@ -31,6 +31,7 @@ func UserFields() map[string]string {
 		"adminRole":   "admin_role",
 		"photoURL":    "photo_url",
 		"photoFile":   "photo_file_id",
+		"location":    "location_id",
 	}
 }
 
