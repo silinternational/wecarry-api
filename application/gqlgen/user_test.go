@@ -19,10 +19,10 @@ type UserResponse struct {
 		UpdatedAt     string `json:"updatedAt"`
 		AdminRole     string `json:"adminRole"`
 		Organizations []struct {
-			ID int `json:"id"`
+			ID string `json:"id"`
 		} `json:"organizations"`
 		Posts []struct {
-			ID int `json:"id"`
+			ID string `json:"id"`
 		}
 		PhotoURL string `json:"photoURL"`
 		Location struct {
@@ -43,7 +43,7 @@ type UserQueryFixtures struct {
 }
 
 // Fixtures_UserQuery creates fixtures for Test_UserQuery
-func Fixtures_UserQuery(as *ActionSuite, t *testing.T) UserQueryFixtures {
+func Fixtures_UserQuery(gs *GqlgenSuite, t *testing.T) UserQueryFixtures {
 	org := &models.Organization{AuthConfig: "{}", Uuid: domain.GetUuid()}
 	createFixture(t, org)
 
@@ -79,15 +79,20 @@ func Fixtures_UserQuery(as *ActionSuite, t *testing.T) UserQueryFixtures {
 	}
 
 	userOrgs := models.UserOrganizations{
-		{OrganizationID: org.ID, UserID: users[0].ID, AuthEmail: users[0].Email},
-		{OrganizationID: org.ID, UserID: users[1].ID, AuthEmail: users[1].Email},
+		{OrganizationID: org.ID, UserID: users[0].ID, AuthID: users[0].Email, AuthEmail: users[0].Email},
+		{OrganizationID: org.ID, UserID: users[1].ID, AuthID: users[1].Email, AuthEmail: users[1].Email},
 	}
 	for i := range userOrgs {
 		createFixture(t, &userOrgs[i])
 	}
 
 	posts := models.Posts{
-		{CreatedByID: users[1].ID, Uuid: domain.GetUuid(), ProviderID: nulls.NewInt(users[1].ID)},
+		{
+			Uuid:           domain.GetUuid(),
+			CreatedByID:    users[1].ID,
+			OrganizationID: org.ID,
+			ProviderID:     nulls.NewInt(users[1].ID),
+		},
 	}
 	for i := range posts {
 		createFixture(t, &(posts[i]))
@@ -119,11 +124,11 @@ func Fixtures_UserQuery(as *ActionSuite, t *testing.T) UserQueryFixtures {
 }
 
 // Test_UserQuery tests the User GraphQL query
-func (as *ActionSuite) Test_UserQuery() {
-	t := as.T()
-	models.ResetTables(t, as.DB)
+func (gs *GqlgenSuite) Test_UserQuery() {
+	t := gs.T()
+	models.ResetTables(t, models.DB)
 
-	f := Fixtures_UserQuery(as, t)
+	f := Fixtures_UserQuery(gs, t)
 	c := getGqlClient()
 
 	query := `{user(id: "` + f.Users[1].Uuid.String() + `") {
@@ -142,21 +147,21 @@ func (as *ActionSuite) Test_UserQuery() {
 	TestUser = f.Users[0]
 	c.MustPost(query, &resp)
 
-	if err := as.DB.Load(&(f.Users[1]), "PhotoFile"); err != nil {
+	if err := models.DB.Load(&(f.Users[1]), "PhotoFile"); err != nil {
 		t.Errorf("failed to load user fixture, %s", err)
 	}
-	as.Equal(f.Users[1].Uuid.String(), resp.User.ID)
-	as.Equal(f.Users[1].Email, resp.User.Email)
-	as.Equal(f.Users[1].Nickname, resp.User.Nickname)
-	as.Equal(f.Users[1].AdminRole, resp.User.AdminRole)
-	as.Equal(f.Users[1].PhotoFile.URL, resp.User.PhotoURL)
-	as.Regexp("^https?", resp.User.PhotoURL)
-	as.Equal(1, resp.User.Posts)
-	as.Equal(f.Posts[0].ID, resp.User.Posts[0].ID)
-	as.Equal(1, resp.User.Organizations)
-	as.Equal(f.Organization.ID, resp.User.Organizations[0].ID)
-	as.Equal(f.Locations[0].Description, resp.User.Location.Description)
-	as.Equal(f.Locations[0].Country, resp.User.Location.Country)
-	as.Equal(f.Locations[0].Latitude.Float64, resp.User.Location.Lat)
-	as.Equal(f.Locations[0].Longitude.Float64, resp.User.Location.Long)
+	gs.Equal(f.Users[1].Uuid.String(), resp.User.ID, "incorrect ID")
+	gs.Equal(f.Users[1].Email, resp.User.Email, "incorrect Email")
+	gs.Equal(f.Users[1].Nickname, resp.User.Nickname, "incorrect Nickname")
+	gs.Equal(f.Users[1].AdminRole.String, resp.User.AdminRole, "incorrect AdminRole")
+	gs.Equal(f.Users[1].PhotoFile.URL, resp.User.PhotoURL, "incorrect PhotoURL")
+	gs.Regexp("^https?", resp.User.PhotoURL, "invalid PhotoURL")
+	gs.Equal(1, len(resp.User.Posts), "wrong number of posts")
+	gs.Equal(f.Posts[0].Uuid.String(), resp.User.Posts[0].ID, "incorrect Post ID")
+	gs.Equal(1, len(resp.User.Organizations), "wrong number of Organizations")
+	gs.Equal(f.Organization.Uuid.String(), resp.User.Organizations[0].ID, "incorrect Organization ID")
+	gs.Equal(f.Locations[0].Description, resp.User.Location.Description, "incorrect location")
+	gs.Equal(f.Locations[0].Country, resp.User.Location.Country, "incorrect country")
+	gs.Equal(f.Locations[0].Latitude.Float64, resp.User.Location.Lat, "incorrect latitude")
+	gs.Equal(f.Locations[0].Longitude.Float64, resp.User.Location.Long, "incorrect longitude")
 }
