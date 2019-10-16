@@ -29,16 +29,12 @@ type PostResponse struct {
 		Destination struct {
 			Description string  `json:"description"`
 			Country     string  `json:"country"`
-			Division1   string  `json:"division1"`
-			Division2   string  `json:"division2"`
 			Lat         float64 `json:"latitude"`
 			Long        float64 `json:"longitude"`
 		} `json:"destination"`
 		Origin struct {
 			Description string  `json:"description"`
 			Country     string  `json:"country"`
-			Division1   string  `json:"division1"`
-			Division2   string  `json:"division2"`
 			Lat         float64 `json:"latitude"`
 			Long        float64 `json:"longitude"`
 		} `json:"origin"`
