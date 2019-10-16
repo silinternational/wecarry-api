@@ -1,7 +1,6 @@
 package gqlgen
 
 import (
-	"net/http/httptest"
 	"strconv"
 	"testing"
 	"time"
@@ -9,9 +8,6 @@ import (
 	"github.com/gobuffalo/nulls"
 	"github.com/silinternational/wecarry-api/aws"
 	"github.com/silinternational/wecarry-api/domain"
-
-	"github.com/99designs/gqlgen/client"
-	"github.com/99designs/gqlgen/handler"
 	"github.com/silinternational/wecarry-api/models"
 )
 
@@ -75,21 +71,6 @@ type PostResponse struct {
 			ID string `json:"id"`
 		} `json:"files"`
 	} `json:"post"`
-}
-
-func getGqlClient() *client.Client {
-	h := handler.GraphQL(NewExecutableSchema(Config{Resolvers: &Resolver{}}))
-	srv := httptest.NewServer(h)
-	c := client.New(srv.URL)
-	return c
-}
-
-func createFixture(t *testing.T, f interface{}) {
-	err := models.DB.Create(f)
-	if err != nil {
-		t.Errorf("error creating %T fixture, %s", f, err)
-		t.FailNow()
-	}
 }
 
 func Fixtures_PostQuery(t *testing.T) PostQueryFixtures {
