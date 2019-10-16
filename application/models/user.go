@@ -388,6 +388,9 @@ func (u *User) uniquifyNickname() error {
 }
 
 func (u *User) GetLocation() (*Location, error) {
+	if !u.LocationID.Valid {
+		return nil, nil
+	}
 	location := Location{}
 	if err := DB.Find(&location, u.LocationID); err != nil {
 		return nil, err
