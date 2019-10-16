@@ -296,6 +296,9 @@ func (p *Posts) FindByUser(ctx context.Context, user User, selectFields ...strin
 }
 
 func (p *Post) GetDestination() (*Location, error) {
+	if !p.DestinationID.Valid {
+		return nil, nil
+	}
 	location := Location{}
 	if err := DB.Find(&location, p.DestinationID); err != nil {
 		return nil, err
@@ -305,6 +308,9 @@ func (p *Post) GetDestination() (*Location, error) {
 }
 
 func (p *Post) GetOrigin() (*Location, error) {
+	if !p.OriginID.Valid {
+		return nil, nil
+	}
 	location := Location{}
 	if err := DB.Find(&location, p.OriginID); err != nil {
 		return nil, err
