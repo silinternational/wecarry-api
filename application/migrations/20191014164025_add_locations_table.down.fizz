@@ -3,3 +3,6 @@ drop_column("posts", "origin_id")
 drop_column("users", "location_id")
 
 drop_table("locations")
+
+add_column("posts", "destination", "string", {null: true})
+add_column("posts", "origin", "string", {null: true})
