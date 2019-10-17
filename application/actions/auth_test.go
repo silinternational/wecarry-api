@@ -189,7 +189,6 @@ func (as *ActionSuite) TestGetOrSetReturnTo() {
 // This doesn't test for errors, since it's too complicated with the call to domain.Error()
 func (as *ActionSuite) TestGetOrgAndUserOrgs() {
 	t := as.T()
-	models.ResetTables(t, as.DB)
 
 	fixtures := Fixtures_GetOrgAndUserOrgs(as, t)
 	orgFixture := fixtures.orgs[0]
@@ -264,7 +263,6 @@ func (as *ActionSuite) TestGetOrgAndUserOrgs() {
 
 func (as *ActionSuite) TestCreateAuthUser() {
 	t := as.T()
-	models.ResetTables(t, as.DB)
 	orgFixture := Fixtures_CreateAuthUser(as, t).orgs[0]
 
 	newEmail := "new@example.com"
