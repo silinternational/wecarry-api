@@ -196,7 +196,6 @@ func Fixtures_PostQuery(t *testing.T) PostQueryFixtures {
 
 func (gs *GqlgenSuite) Test_PostQuery() {
 	t := gs.T()
-	models.ResetTables(t, models.DB)
 
 	f := Fixtures_PostQuery(t)
 	c := getGqlClient()
@@ -370,7 +369,6 @@ func Fixtures_UpdatePost(t *testing.T) UpdatePostFixtures {
 
 func (gs *GqlgenSuite) Test_UpdatePost() {
 	t := gs.T()
-	models.ResetTables(t, models.DB)
 
 	f := Fixtures_UpdatePost(t)
 	c := getGqlClient()
@@ -482,7 +480,6 @@ func Fixtures_CreatePost(t *testing.T) CreatePostFixtures {
 
 func (gs *GqlgenSuite) Test_CreatePost() {
 	t := gs.T()
-	models.ResetTables(t, models.DB)
 
 	f := Fixtures_CreatePost(t)
 	c := getGqlClient()
