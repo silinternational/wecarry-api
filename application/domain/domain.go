@@ -198,6 +198,13 @@ func RollbarMiddleware(next buffalo.Handler) buffalo.Handler {
 func mergeExtras(extras []map[string]interface{}) map[string]interface{} {
 	var allExtras map[string]interface{}
 
+	// I didn't think I would need this, but without is at least one test was failing
+	// The code allowed a map[string]interface{} to get through (i.e. not in a slice)
+	// without the compiler complaining
+	if len(extras) == 1 {
+		return extras[0]
+	}
+
 	for _, e := range extras {
 		for k, v := range e {
 			allExtras[k] = v
