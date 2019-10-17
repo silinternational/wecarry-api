@@ -5,8 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gobuffalo/buffalo/genny/build/_fixtures/coke/models"
-
 	"github.com/silinternational/wecarry-api/domain"
 )
 
@@ -286,14 +284,6 @@ func (ms *ModelSuite) TestUserAccessToken_GetOrganization() {
 				}
 			}
 		})
-	}
-}
-
-func createFixture(t *testing.T, f interface{}) {
-	err := models.DB.Create(f)
-	if err != nil {
-		t.Errorf("error creating %T fixture, %s", f, err)
-		t.FailNow()
 	}
 }
 
