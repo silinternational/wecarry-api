@@ -43,8 +43,8 @@ db:
 testdb:
 	docker-compose up -d testdb
 
-test: migratetestdb
-	docker-compose run --rm test
+test:
+	docker-compose run --rm test whenavail testdb 5432 10 buffalo test
 
 testenv: migratetestdb
 	docker-compose run --rm test bash
