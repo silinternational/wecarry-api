@@ -24,7 +24,7 @@ func (r *locationResolver) Latitude(ctx context.Context, obj *models.Location) (
 
 // Longitude resolves the Longitude property of the location model
 func (r *locationResolver) Longitude(ctx context.Context, obj *models.Location) (*float64, error) {
-	if obj == nil || !obj.Latitude.Valid {
+	if obj == nil || !obj.Longitude.Valid {
 		return nil, nil
 	}
 	v := obj.Longitude.Float64

@@ -387,6 +387,7 @@ func (u *User) uniquifyNickname() error {
 	return fmt.Errorf("failed finding unique nickname for user %s %s", u.FirstName, u.LastName)
 }
 
+// GetLocation reads the location record, if it exists, and returns the Location object.
 func (u *User) GetLocation() (*Location, error) {
 	if !u.LocationID.Valid {
 		return nil, nil
@@ -399,16 +400,16 @@ func (u *User) GetLocation() (*Location, error) {
 	return &location, nil
 }
 
+// SetLocation sets the user location fields, creating a new record in the database if necessary.
 func (u *User) SetLocation(location Location) error {
 	if u.LocationID.Valid {
 		location.ID = u.LocationID.Int
 		u.Location = location
 		return DB.Update(&u.Location)
-	} else {
-		if err := DB.Create(&location); err != nil {
-			return err
-		}
-		u.LocationID = nulls.NewInt(location.ID)
-		return DB.Update(u)
 	}
+	if err := DB.Create(&location); err != nil {
+		return err
+	}
+	u.LocationID = nulls.NewInt(location.ID)
+	return DB.Update(u)
 }

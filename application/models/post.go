@@ -295,6 +295,7 @@ func (p *Posts) FindByUser(ctx context.Context, user User, selectFields ...strin
 	return DB.Select(selectFields...).Scope(scopeUserOrgs(user)).Scope(scopeNotRemoved()).All(p)
 }
 
+// GetDestination reads the destination record, if it exists, and returns the Location object.
 func (p *Post) GetDestination() (*Location, error) {
 	if !p.DestinationID.Valid {
 		return nil, nil
@@ -307,6 +308,7 @@ func (p *Post) GetDestination() (*Location, error) {
 	return &location, nil
 }
 
+// GetOrigin reads the origin record, if it exists, and returns the Location object.
 func (p *Post) GetOrigin() (*Location, error) {
 	if !p.OriginID.Valid {
 		return nil, nil
@@ -319,30 +321,31 @@ func (p *Post) GetOrigin() (*Location, error) {
 	return &location, nil
 }
 
+// SetDestination sets the destination location fields, creating a new record in the database if necessary.
 func (p *Post) SetDestination(location Location) error {
 	if p.DestinationID.Valid {
 		location.ID = p.DestinationID.Int
 		p.Destination = location
 		return DB.Update(&p.Destination)
-	} else {
-		if err := DB.Create(&location); err != nil {
-			return err
-		}
-		p.DestinationID = nulls.NewInt(location.ID)
-		return DB.Update(p)
 	}
+
+	if err := DB.Create(&location); err != nil {
+		return err
+	}
+	p.DestinationID = nulls.NewInt(location.ID)
+	return DB.Update(p)
 }
 
+// SetOrigin sets the origin location fields, creating a new record in the database if necessary.
 func (p *Post) SetOrigin(location Location) error {
 	if p.OriginID.Valid {
 		location.ID = p.OriginID.Int
 		p.Origin = location
 		return DB.Update(&p.Origin)
-	} else {
-		if err := DB.Create(&location); err != nil {
-			return err
-		}
-		p.OriginID = nulls.NewInt(location.ID)
-		return DB.Update(p)
 	}
+	if err := DB.Create(&location); err != nil {
+		return err
+	}
+	p.OriginID = nulls.NewInt(location.ID)
+	return DB.Update(p)
 }
