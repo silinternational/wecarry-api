@@ -142,25 +142,25 @@ func (v *updateStatusValidator) IsValid(errors *validate.Errors) {
 		return
 	}
 
-	okChanges := map[string][]string{
-		PostStatusOpen:      {PostStatusOpen, PostStatusCommitted, PostStatusRemoved},
-		PostStatusCommitted: {PostStatusCommitted, PostStatusOpen, PostStatusAccepted, PostStatusRemoved},
-		PostStatusAccepted:  {PostStatusAccepted, PostStatusOpen, PostStatusReceived, PostStatusRemoved},
-		PostStatusReceived:  {PostStatusReceived, PostStatusCompleted},
-		PostStatusCompleted: {PostStatusCompleted},
-		PostStatusRemoved:   {PostStatusRemoved},
+	// Ensure that the new status is compatible with the old one in terms of a transition
+	okTransitions := map[string][]string{
+		PostStatusOpen:      {PostStatusCommitted, PostStatusRemoved},
+		PostStatusCommitted: {PostStatusOpen, PostStatusAccepted, PostStatusRemoved},
+		PostStatusAccepted:  {PostStatusOpen, PostStatusReceived, PostStatusRemoved},
+		PostStatusReceived:  {PostStatusCompleted},
+		PostStatusCompleted: {},
+		PostStatusRemoved:   {},
 	}
 
-	errorMsg := "cannot move '%s' status to '%s' status"
-	for key, oks := range okChanges {
-		if oldPost.Status != key {
-			continue
-		}
+	goodStatuses, ok := okTransitions[oldPost.Status]
+	if !ok {
+		return
+	}
 
-		if !domain.IsStringInSlice(v.Post.Status, oks) {
-			v.Message = fmt.Sprintf(errorMsg, PostStatusOpen, v.Post.Status)
-			errors.Add(validators.GenerateKey(v.Name), v.Message)
-		}
+	if !domain.IsStringInSlice(v.Post.Status, goodStatuses) {
+		errorMsg := "cannot move '%s' status to '%s' status"
+		v.Message = fmt.Sprintf(errorMsg, oldPost.Status, v.Post.Status)
+		errors.Add(validators.GenerateKey(v.Name), v.Message)
 	}
 }
 
