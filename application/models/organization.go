@@ -4,17 +4,15 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/silinternational/wecarry-api/auth/google"
-
-	"github.com/silinternational/wecarry-api/auth"
-	"github.com/silinternational/wecarry-api/auth/saml"
-
-	"github.com/gofrs/uuid"
-
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
 	"github.com/gobuffalo/validate/validators"
+	"github.com/gofrs/uuid"
+	"github.com/pkg/errors"
+	"github.com/silinternational/wecarry-api/auth"
+	"github.com/silinternational/wecarry-api/auth/google"
+	"github.com/silinternational/wecarry-api/auth/saml"
 )
 
 const AuthTypeSaml = "saml"
@@ -73,7 +71,7 @@ func (o *Organization) GetAuthProvider() (auth.Provider, error) {
 func (o *Organization) FindByUUID(uuid string) error {
 
 	if uuid == "" {
-		return fmt.Errorf("error: org uuid must not be blank")
+		return errors.New("error: org uuid must not be blank")
 	}
 
 	if err := DB.Where("uuid = ?", uuid).First(o); err != nil {
@@ -148,7 +146,7 @@ func (o *Organization) RemoveDomain(domain string) error {
 func (o *Organization) Save() error {
 	validationErrs, err := o.Validate(DB)
 	if validationErrs != nil && validationErrs.HasAny() {
-		return fmt.Errorf(FlattenPopErrors(validationErrs))
+		return errors.New(FlattenPopErrors(validationErrs))
 	}
 	if err != nil {
 		return err

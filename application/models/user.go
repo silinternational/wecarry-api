@@ -146,7 +146,7 @@ func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
 
 	if len(userOrgs) == 1 {
 		if userOrgs[0].AuthID != authUser.UserID {
-			return fmt.Errorf("a user in this organization with this email address already exists with different user id")
+			return errors.New("a user in this organization with this email address already exists with different user id")
 		}
 		err = DB.Where("uuid = ?", userOrgs[0].User.Uuid).First(u)
 		if err != nil {
@@ -244,7 +244,7 @@ func (u *User) CanEditOrganization(orgId int) bool {
 func (u *User) FindByUUID(uuid string) error {
 
 	if uuid == "" {
-		return fmt.Errorf("error: uuid must not be blank")
+		return errors.New("error: uuid must not be blank")
 	}
 
 	if err := DB.Where("uuid = ?", uuid).First(u); err != nil {
@@ -345,7 +345,7 @@ func (u *User) GetPhotoURL() (string, error) {
 func (u *User) Save() error {
 	validationErrs, err := u.Validate(DB)
 	if validationErrs != nil && validationErrs.HasAny() {
-		return fmt.Errorf(FlattenPopErrors(validationErrs))
+		return errors.New(FlattenPopErrors(validationErrs))
 	}
 	if err != nil {
 		return err

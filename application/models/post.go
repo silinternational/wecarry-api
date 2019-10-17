@@ -4,17 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gobuffalo/buffalo"
 	"time"
 
-	"github.com/silinternational/wecarry-api/domain"
-
-	"github.com/gofrs/uuid"
-
+	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
 	"github.com/gobuffalo/validate/validators"
+	"github.com/gofrs/uuid"
+	"github.com/pkg/errors"
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 const (
@@ -185,7 +184,7 @@ func (p *Post) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 
 func (p *Post) FindByUUID(uuid string) error {
 	if uuid == "" {
-		return fmt.Errorf("error finding post: uuid must not be blank")
+		return errors.New("error finding post: uuid must not be blank")
 	}
 
 	queryString := fmt.Sprintf("uuid = '%s'", uuid)
