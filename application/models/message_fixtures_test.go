@@ -78,7 +78,6 @@ func Fixtures_GetSender(ms *ModelSuite, t *testing.T) MessageFixtures {
 	}
 
 	// Load Post test fixtures
-
 	posts := Posts{
 		{
 			Uuid:           domain.GetUuid(),
@@ -87,7 +86,6 @@ func Fixtures_GetSender(ms *ModelSuite, t *testing.T) MessageFixtures {
 			OrganizationID: org.ID,
 			Status:         PostStatusOpen,
 			Title:          "I need PB",
-			Destination:    nulls.NewString("Madrid, Spain"),
 			Size:           PostSizeMedium,
 			ReceiverID:     nulls.NewInt(users[0].ID),
 			NeededAfter:    time.Date(2019, time.July, 19, 0, 0, 0, 0, time.UTC),
@@ -102,7 +100,6 @@ func Fixtures_GetSender(ms *ModelSuite, t *testing.T) MessageFixtures {
 			OrganizationID: org.ID,
 			Status:         PostStatusOpen,
 			Title:          "Please bring chocolate",
-			Destination:    nulls.NewString("Nairobi, Kenya"),
 			Size:           PostSizeSmall,
 			ReceiverID:     nulls.NewInt(users[1].ID),
 			NeededAfter:    time.Date(2019, time.July, 19, 1, 0, 0, 0, time.UTC),

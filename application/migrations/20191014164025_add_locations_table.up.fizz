@@ -1,0 +1,20 @@
+create_table("locations") {
+	t.Column("id", "integer", {primary: true})
+	t.Column("description", "string", {"size": 255, "default": ""})
+	t.Column("country", "string", {"size": 2, "default": ""})
+	t.Column("latitude", "float", {"scale": 5, "precision": 8, "null": true})
+	t.Column("longitude", "float", {"scale": 5, "precision": 8, "null": true})
+	t.DisableTimestamps()
+}
+
+add_column("posts", "destination_id", "integer", {null: true})
+add_index("posts", "destination_id", {"unique": true})
+add_foreign_key("posts", "destination_id", {"locations": ["id"]}, {"name": "post_destination_fk", "on_delete": "set null"})
+
+add_column("posts", "origin_id", "integer", {null: true})
+add_index("posts", "origin_id", {"unique": true})
+add_foreign_key("posts", "origin_id", {"locations": ["id"]}, {"name": "post_origin_fk", "on_delete": "set null"})
+
+add_column("users", "location_id", "integer", {null: true})
+add_index("users", "location_id", {"unique": true})
+add_foreign_key("users", "location_id", {"locations": ["id"]}, {"on_delete": "set null"})

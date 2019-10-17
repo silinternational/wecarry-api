@@ -83,7 +83,6 @@ func (gs *GqlgenSuite) TestResolver() {
 			OrganizationID: 1,
 			Status:         PostStatusOpen.String(),
 			Title:          "Maple Syrup",
-			Destination:    nulls.NewString("Madrid, Spain"),
 			Size:           PostSizeMedium.String(),
 			Uuid:           postUuid1,
 			ReceiverID:     nulls.NewInt(1),
@@ -159,11 +158,13 @@ func (gs *GqlgenSuite) TestResolver() {
 	// It appears that everything needs to be exported in order to be recognized
 	var postsResp struct {
 		Posts []struct {
-			ID           string `json:"id"`
-			Type         string `json:"type"`
-			Status       string `json:"status"`
-			Title        string `json:"title"`
-			Destination  string `json:"destination"`
+			ID          string `json:"id"`
+			Type        string `json:"type"`
+			Status      string `json:"status"`
+			Title       string `json:"title"`
+			Destination struct {
+				Description string `json:"description"`
+			} `json:"destination"`
 			Size         string `json:"size"`
 			NeededAfter  string `json:"neededAfter"`
 			NeededBefore string `json:"neededBefore"`
@@ -173,7 +174,7 @@ func (gs *GqlgenSuite) TestResolver() {
 	}
 
 	c.MustPost(
-		`{posts {id type status title destination size neededAfter neededBefore category description}}`,
+		`{posts {id type status title destination {description} size neededAfter neededBefore category description}}`,
 		&postsResp,
 	)
 
