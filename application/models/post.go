@@ -161,7 +161,7 @@ func (v *updateStatusValidator) IsValid(errors *validate.Errors) {
 
 	if !domain.IsStringInSlice(v.Post.Status, goodStatuses) {
 		errorMsg := "cannot move post %s from '%s' status to '%s' status"
-		v.Message = fmt.Sprintf(errorMsg, oldPost.Uuid.String(), oldPost.Status, v.Post.Status)
+		v.Message = fmt.Sprintf(errorMsg, uuid, oldPost.Status, v.Post.Status)
 		errors.Add(validators.GenerateKey(v.Name), v.Message)
 	}
 }
