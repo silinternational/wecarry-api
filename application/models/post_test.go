@@ -550,3 +550,107 @@ func (ms *ModelSuite) TestPost_AttachPhoto_GetPhoto() {
 		ms.Fail("post.GetPhoto failed, %s", err)
 	}
 }
+
+func (ms *ModelSuite) TestPost_SetDestination() {
+	t := ms.T()
+
+	user := User{Uuid: domain.GetUuid(), Email: t.Name() + "_user@example.com", Nickname: t.Name() + "_User"}
+	createFixture(t, &user)
+
+	organization := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	createFixture(t, &organization)
+
+	post := Post{CreatedByID: user.ID, OrganizationID: organization.ID}
+	createFixture(t, &post)
+
+	locationFixtures := Locations{
+		{
+			Description: "a place",
+			Country:     "XY",
+			Latitude:    nulls.NewFloat64(1.1),
+			Longitude:   nulls.NewFloat64(2.2),
+		},
+		{
+			Description: "another place",
+			Country:     "AB",
+			Latitude:    nulls.Float64{},
+			Longitude:   nulls.Float64{},
+		},
+	}
+
+	err := post.SetDestination(locationFixtures[0])
+	ms.NoError(err, "unexpected error from post.SetDestination()")
+
+	locationFromDB, err := post.GetDestination()
+	ms.NoError(err, "unexpected error from post.GetDestination()")
+
+	locationFixtures[0].ID = locationFromDB.ID
+	ms.Equal(locationFixtures[0], *locationFromDB, "destination data doesn't match new location")
+
+	err = post.SetDestination(locationFixtures[1])
+	ms.NoError(err, "unexpected error from post.SetDestination()")
+
+	locationFromDB, err = post.GetDestination()
+	ms.NoError(err, "unexpected error from post.GetDestination()")
+	ms.Equal(locationFixtures[0].ID, locationFromDB.ID,
+		"Location ID doesn't match -- location record was probably not reused")
+
+	locationFixtures[1].ID = locationFromDB.ID
+	ms.Equal(locationFixtures[1], *locationFromDB, "destination data doesn't match after update")
+
+	// These are redundant checks, but here to document the fact that a null overwrites previous data.
+	ms.False(locationFromDB.Latitude.Valid)
+	ms.False(locationFromDB.Longitude.Valid)
+}
+
+func (ms *ModelSuite) TestPost_SetOrigin() {
+	t := ms.T()
+
+	user := User{Uuid: domain.GetUuid(), Email: t.Name() + "_user@example.com", Nickname: t.Name() + "_User"}
+	createFixture(t, &user)
+
+	organization := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	createFixture(t, &organization)
+
+	post := Post{CreatedByID: user.ID, OrganizationID: organization.ID}
+	createFixture(t, &post)
+
+	locationFixtures := Locations{
+		{
+			Description: "a place",
+			Country:     "XY",
+			Latitude:    nulls.NewFloat64(1.1),
+			Longitude:   nulls.NewFloat64(2.2),
+		},
+		{
+			Description: "another place",
+			Country:     "AB",
+			Latitude:    nulls.Float64{},
+			Longitude:   nulls.Float64{},
+		},
+	}
+
+	err := post.SetOrigin(locationFixtures[0])
+	ms.NoError(err, "unexpected error from post.SetOrigin()")
+
+	locationFromDB, err := post.GetOrigin()
+	ms.NoError(err, "unexpected error from post.GetOrigin()")
+
+	locationFixtures[0].ID = locationFromDB.ID
+	ms.Equal(locationFixtures[0], *locationFromDB, "destination data doesn't match new location")
+
+	err = post.SetOrigin(locationFixtures[1])
+	ms.NoError(err, "unexpected error from post.SetOrigin()")
+
+	locationFromDB, err = post.GetOrigin()
+	ms.NoError(err, "unexpected error from post.GetOrigin()")
+	ms.Equal(locationFixtures[0].ID, locationFromDB.ID,
+		"Location ID doesn't match -- location record was probably not reused")
+
+	locationFixtures[1].ID = locationFromDB.ID
+	ms.Equal(locationFixtures[1], *locationFromDB, "destination data doesn't match after update")
+
+	// These are redundant checks, but here to document the fact that a null overwrites previous data.
+	ms.False(locationFromDB.Latitude.Valid)
+	ms.False(locationFromDB.Longitude.Valid)
+}

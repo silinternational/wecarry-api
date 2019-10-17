@@ -768,3 +768,49 @@ func (ms *ModelSuite) TestUniquifyNickname() {
 		})
 	}
 }
+
+func (ms *ModelSuite) TestUser_SetLocation() {
+	t := ms.T()
+
+	user := User{Uuid: domain.GetUuid(), Email: t.Name() + "_user@example.com", Nickname: t.Name() + "_User"}
+	createFixture(t, &user)
+
+	locationFixtures := Locations{
+		{
+			Description: "a place",
+			Country:     "XY",
+			Latitude:    nulls.NewFloat64(1.1),
+			Longitude:   nulls.NewFloat64(2.2),
+		},
+		{
+			Description: "another place",
+			Country:     "AB",
+			Latitude:    nulls.Float64{},
+			Longitude:   nulls.Float64{},
+		},
+	}
+
+	err := user.SetLocation(locationFixtures[0])
+	ms.NoError(err, "unexpected error from user.SetLocation()")
+
+	locationFromDB, err := user.GetLocation()
+	ms.NoError(err, "unexpected error from user.GetLocation()")
+
+	locationFixtures[0].ID = locationFromDB.ID
+	ms.Equal(locationFixtures[0], *locationFromDB, "destination data doesn't match new location")
+
+	err = user.SetLocation(locationFixtures[1])
+	ms.NoError(err, "unexpected error from user.SetLocation()")
+
+	locationFromDB, err = user.GetLocation()
+	ms.NoError(err, "unexpected error from user.GetLocation()")
+	ms.Equal(locationFixtures[0].ID, locationFromDB.ID,
+		"Location ID doesn't match -- location record was probably not reused")
+
+	locationFixtures[1].ID = locationFromDB.ID
+	ms.Equal(locationFixtures[1], *locationFromDB, "destination data doesn't match after update")
+
+	// These are redundant checks, but here to document the fact that a null overwrites previous data.
+	ms.False(locationFromDB.Latitude.Valid)
+	ms.False(locationFromDB.Longitude.Valid)
+}
