@@ -51,10 +51,6 @@ const (
 	MessageTemplateNewRequest = "new_request"
 )
 
-// NoExtras is exported for use when making calls to RollbarError and rollbarMessage to reduce
-// typing map[string]interface{} when no extras are needed
-var NoExtras map[string]interface{}
-
 var Logger log.Logger
 var ErrLogger log.Logger
 
