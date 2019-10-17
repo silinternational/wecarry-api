@@ -696,3 +696,75 @@ func (ms *ModelSuite) TestUser_AttachPhoto() {
 		ms.Fail("user.GetPhotoURL failed, %s", err)
 	}
 }
+
+func CreateUserFixturesForNicknames(ms *ModelSuite, t *testing.T) User {
+	ResetTables(t, ms.DB)
+	prefix := allPrefixes()[0]
+
+	// Load User test fixtures
+	user := User{
+		Email:     fmt.Sprintf("user1-%s@example.com", t.Name()),
+		FirstName: "Existing",
+		LastName:  "User",
+		Nickname:  prefix + "ExistingU",
+		Uuid:      domain.GetUuid(),
+	}
+
+	if err := ms.DB.Create(&user); err != nil {
+		t.Errorf("could not create test user %v ... %v", user, err)
+		t.FailNow()
+	}
+
+	return user
+}
+
+func (ms *ModelSuite) TestUniquifyNickname() {
+	t := ms.T()
+	existingUser := CreateUserFixturesForNicknames(ms, t)
+	prefix := allPrefixes()[0]
+
+	tests := []struct {
+		name     string
+		user     User
+		want     string
+		dontWant string
+	}{
+		{
+			name: "No Change, Blank Last Name",
+			user: User{FirstName: "New"},
+			want: prefix + "New",
+		},
+		{
+			name: "No Change, OK Last Name",
+			user: User{FirstName: "New", LastName: "User"},
+			want: prefix + "NewU",
+		},
+		{
+			name: "Expect Change",
+			user: User{
+				FirstName: existingUser.FirstName,
+				LastName:  existingUser.LastName,
+				Nickname:  existingUser.Nickname[len(prefix):], //remove the prefix so it can be added back on
+			},
+			dontWant: existingUser.Nickname,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := test.user.uniquifyNickname()
+			if err != nil {
+				t.Errorf("uniquifyNickname() returned error: %s", err)
+			}
+
+			got := test.user.Nickname
+
+			if test.want != "" {
+				ms.Equal(test.want, got)
+				return
+			}
+
+			ms.NotEqual(test.dontWant, got)
+		})
+	}
+}

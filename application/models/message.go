@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/gobuffalo/events"
+	"github.com/silinternational/wecarry-api/domain"
+
 	"github.com/gobuffalo/buffalo/genny/build/_fixtures/coke/models"
 
 	"github.com/gofrs/uuid"
@@ -24,6 +27,17 @@ type Message struct {
 	Content   string    `json:"content" db:"content"`
 	Thread    Thread    `belongs_to:"threads"`
 	SentBy    User      `belongs_to:"users"`
+}
+
+// MessageCreatedEventData holds data needed by the Message Created event listener
+type MessageCreatedEventData struct {
+	MessageCreatorNickName string
+	MessageCreatorEmail    string
+	MessageContent         string
+	PostUUID               string
+	PostTitle              string
+	ThreadUUID             string
+	MessageRecipients      []struct{ Nickname, Email string }
 }
 
 // String is not required by pop and may be deleted
@@ -82,4 +96,46 @@ func (m *Message) GetThread(requestFields []string) (*Thread, error) {
 		return nil, err
 	}
 	return &thread, nil
+}
+
+// Create a new message. Sends an `EventApiMessageCreated` event.
+func (m *Message) Create() error {
+	if err := DB.Create(m); err != nil {
+		return err
+	}
+
+	if err := DB.Load(m, "SentBy", "Thread"); err != nil {
+		return err
+	}
+
+	if err := DB.Load(&m.Thread, "Participants", "Post"); err != nil {
+		return err
+	}
+
+	eventData := MessageCreatedEventData{
+		MessageCreatorNickName: m.SentBy.Nickname,
+		MessageCreatorEmail:    m.SentBy.Email,
+		MessageContent:         m.Content,
+		PostUUID:               m.Thread.Post.Uuid.String(),
+		PostTitle:              m.Thread.Post.Title,
+		ThreadUUID:             m.Thread.Uuid.String(),
+	}
+
+	for _, tp := range m.Thread.Participants {
+		if tp.ID == m.SentBy.ID {
+			continue
+		}
+		eventData.MessageRecipients = append(eventData.MessageRecipients,
+			struct{ Nickname, Email string }{Nickname: tp.Nickname, Email: tp.Email})
+	}
+
+	e := events.Event{
+		Kind:    domain.EventApiMessageCreated,
+		Message: "New Message from " + m.SentBy.Nickname,
+		Payload: events.Payload{"eventData": eventData},
+	}
+
+	emitEvent(e)
+
+	return nil
 }

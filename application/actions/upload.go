@@ -28,7 +28,7 @@ type UploadResponse struct {
 func UploadHandler(c buffalo.Context) error {
 	f, err := c.File(FileFieldName)
 	if err != nil {
-		// TODO: Log this error
+		domain.ErrLogger.Printf("error getting uploaded file from context ... %v", err)
 		return c.Render(http.StatusInternalServerError, render.JSON(UploadResponse{
 			Error: &domain.AppError{Code: domain.ErrorReceivingFile, Message: err.Error()},
 		}))
@@ -36,7 +36,7 @@ func UploadHandler(c buffalo.Context) error {
 
 	content, err := ioutil.ReadAll(f)
 	if err != nil {
-		// TODO: Log this error
+		domain.ErrLogger.Printf("error reading uploaded file ... %v", err)
 		return c.Render(http.StatusInternalServerError, render.JSON(UploadResponse{
 			Error: &domain.AppError{Code: domain.UnableToReadFile, Message: err.Error()},
 		}))
@@ -44,7 +44,7 @@ func UploadHandler(c buffalo.Context) error {
 
 	var fileObject models.File
 	if err := fileObject.Store(f.Filename, content); err != nil {
-		// TODO: Log this error
+		domain.ErrLogger.Printf("error storing uploaded file ... %v", err)
 		return c.Render(http.StatusInternalServerError, render.JSON(UploadResponse{
 			Error: &domain.AppError{Code: domain.UnableToStoreFile, Message: err.Error()},
 		}))

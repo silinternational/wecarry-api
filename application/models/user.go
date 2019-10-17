@@ -5,9 +5,10 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
-	"github.com/gobuffalo/events"
 	"strings"
 	"time"
+
+	"github.com/gobuffalo/events"
 
 	"github.com/pkg/errors"
 	"github.com/silinternational/wecarry-api/domain"
@@ -40,6 +41,7 @@ type User struct {
 	Uuid              uuid.UUID          `json:"uuid" db:"uuid"`
 	PhotoFileID       nulls.Int          `json:"photo_file_id" db:"photo_file_id"`
 	PhotoURL          nulls.String       `json:"photo_url" db:"photo_url"`
+	LocationID        nulls.Int          `json:"location_id" db:"location_id"`
 	AccessTokens      []UserAccessToken  `has_many:"user_access_tokens" json:"-"`
 	Organizations     Organizations      `many_to_many:"user_organizations" json:"-"`
 	UserOrganizations []UserOrganization `has_many:"user_organizations" json:"-"`
@@ -47,6 +49,7 @@ type User struct {
 	PostsProviding    Posts              `has_many:"posts" fk_id:"provider_id"`
 	PostsReceiving    Posts              `has_many:"posts" fk_id:"receiver_id"`
 	PhotoFile         File               `belongs_to:"files"`
+	Location          Location           `belongs_to:"locations"`
 }
 
 // String is not required by pop and may be deleted
@@ -95,7 +98,7 @@ func (u *User) CreateAccessToken(org Organization, clientID string) (string, int
 		return "", 0, fmt.Errorf("cannot create token with empty clientID for user %s", u.Nickname)
 	}
 
-	token := createAccessTokenPart()
+	token, _ := getRandomToken()
 	hash := HashClientIdAccessToken(clientID + token)
 	expireAt := createAccessTokenExpiry()
 
@@ -169,18 +172,14 @@ func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
 		u.PhotoURL = nulls.NewString(fmt.Sprintf("https://www.gravatar.com/avatar/%x.jpg?s=200&d=mp", hash))
 	}
 
-	u.Nickname = authUser.Nickname
-
-	if u.Nickname == "" {
-		u.Nickname = u.FirstName
-		if len(u.LastName) > 0 {
-			u.Nickname += u.LastName[:1]
-		}
-	}
-
-	// if new user they will need a uuid
+	// if new user they will need a uuid and a unique Nickname
 	if newUser {
 		u.Uuid = domain.GetUuid()
+
+		u.Nickname = authUser.Nickname
+		if err := u.uniquifyNickname(); err != nil {
+			return err
+		}
 	}
 
 	err = DB.Save(u)
@@ -353,4 +352,64 @@ func (u *User) Save() error {
 	}
 
 	return DB.Save(u)
+}
+
+func (u *User) uniquifyNickname() error {
+
+	simpleNN := u.Nickname
+	if simpleNN == "" {
+		simpleNN = u.FirstName
+		if len(u.LastName) > 0 {
+			simpleNN = u.FirstName + u.LastName[:1]
+		}
+	}
+
+	var err error
+
+	// User the first nickname prefix that makes it unique
+	for _, p := range allPrefixes() {
+		u.Nickname = p + simpleNN
+
+		var existingUser User
+		err = DB.Where("nickname = ?", u.Nickname).First(&existingUser)
+
+		// We didn't find a match, so we're good with the current nickname
+		if existingUser.Nickname == "" {
+			return nil
+		}
+
+	}
+
+	if err != nil {
+		return fmt.Errorf("last error looking for unique nickname for existingUser %v ... %v", u.Uuid, err)
+	}
+
+	return fmt.Errorf("failed finding unique nickname for user %s %s", u.FirstName, u.LastName)
+}
+
+// GetLocation reads the location record, if it exists, and returns the Location object.
+func (u *User) GetLocation() (*Location, error) {
+	if !u.LocationID.Valid {
+		return nil, nil
+	}
+	location := Location{}
+	if err := DB.Find(&location, u.LocationID); err != nil {
+		return nil, err
+	}
+
+	return &location, nil
+}
+
+// SetLocation sets the user location fields, creating a new record in the database if necessary.
+func (u *User) SetLocation(location Location) error {
+	if u.LocationID.Valid {
+		location.ID = u.LocationID.Int
+		u.Location = location
+		return DB.Update(&u.Location)
+	}
+	if err := DB.Create(&location); err != nil {
+		return err
+	}
+	u.LocationID = nulls.NewInt(location.ID)
+	return DB.Update(u)
 }

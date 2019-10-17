@@ -61,6 +61,42 @@ ALTER SEQUENCE public.files_id_seq OWNED BY public.files.id;
 
 
 --
+-- Name: locations; Type: TABLE; Schema: public; Owner: wecarry
+--
+
+CREATE TABLE public.locations (
+    id integer NOT NULL,
+    description character varying(255) DEFAULT ''::character varying NOT NULL,
+    country character varying(2) DEFAULT ''::character varying NOT NULL,
+    latitude numeric(8,5),
+    longitude numeric(8,5)
+);
+
+
+ALTER TABLE public.locations OWNER TO wecarry;
+
+--
+-- Name: locations_id_seq; Type: SEQUENCE; Schema: public; Owner: wecarry
+--
+
+CREATE SEQUENCE public.locations_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.locations_id_seq OWNER TO wecarry;
+
+--
+-- Name: locations_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wecarry
+--
+
+ALTER SEQUENCE public.locations_id_seq OWNED BY public.locations.id;
+
+
+--
 -- Name: messages; Type: TABLE; Schema: public; Owner: wecarry
 --
 
@@ -234,7 +270,9 @@ CREATE TABLE public.posts (
     updated_at timestamp without time zone NOT NULL,
     url character varying(255),
     cost numeric(13,4),
-    photo_file_id integer
+    photo_file_id integer,
+    destination_id integer,
+    origin_id integer
 );
 
 
@@ -438,7 +476,8 @@ CREATE TABLE public.users (
     updated_at timestamp without time zone NOT NULL,
     uuid uuid NOT NULL,
     photo_file_id integer,
-    photo_url character varying(255)
+    photo_url character varying(255),
+    location_id integer
 );
 
 
@@ -470,6 +509,13 @@ ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
 --
 
 ALTER TABLE ONLY public.files ALTER COLUMN id SET DEFAULT nextval('public.files_id_seq'::regclass);
+
+
+--
+-- Name: locations id; Type: DEFAULT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.locations ALTER COLUMN id SET DEFAULT nextval('public.locations_id_seq'::regclass);
 
 
 --
@@ -548,6 +594,14 @@ ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_
 
 ALTER TABLE ONLY public.files
     ADD CONSTRAINT files_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: locations locations_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.locations
+    ADD CONSTRAINT locations_pkey PRIMARY KEY (id);
 
 
 --
@@ -666,6 +720,20 @@ CREATE UNIQUE INDEX post_files_file_id_idx ON public.post_files USING btree (fil
 
 
 --
+-- Name: posts_destination_id_idx; Type: INDEX; Schema: public; Owner: wecarry
+--
+
+CREATE UNIQUE INDEX posts_destination_id_idx ON public.posts USING btree (destination_id);
+
+
+--
+-- Name: posts_origin_id_idx; Type: INDEX; Schema: public; Owner: wecarry
+--
+
+CREATE UNIQUE INDEX posts_origin_id_idx ON public.posts USING btree (origin_id);
+
+
+--
 -- Name: posts_photo_file_id_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
@@ -729,6 +797,13 @@ CREATE UNIQUE INDEX users_email_idx ON public.users USING btree (email);
 
 
 --
+-- Name: users_location_id_idx; Type: INDEX; Schema: public; Owner: wecarry
+--
+
+CREATE UNIQUE INDEX users_location_id_idx ON public.users USING btree (location_id);
+
+
+--
 -- Name: users_nickname_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
@@ -774,6 +849,14 @@ ALTER TABLE ONLY public.organization_domains
 
 
 --
+-- Name: posts post_destination_fk; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.posts
+    ADD CONSTRAINT post_destination_fk FOREIGN KEY (destination_id) REFERENCES public.locations(id) ON DELETE SET NULL;
+
+
+--
 -- Name: post_files post_files_file_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
@@ -790,6 +873,14 @@ ALTER TABLE ONLY public.post_files
 
 
 --
+-- Name: posts post_origin_fk; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.posts
+    ADD CONSTRAINT post_origin_fk FOREIGN KEY (origin_id) REFERENCES public.locations(id) ON DELETE SET NULL;
+
+
+--
 -- Name: posts posts_created_by_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
@@ -802,7 +893,7 @@ ALTER TABLE ONLY public.posts
 --
 
 ALTER TABLE ONLY public.posts
-    ADD CONSTRAINT posts_files_id_fk FOREIGN KEY (photo_file_id) REFERENCES public.files(id) ON DELETE CASCADE;
+    ADD CONSTRAINT posts_files_id_fk FOREIGN KEY (photo_file_id) REFERENCES public.files(id) ON DELETE SET NULL;
 
 
 --
@@ -890,7 +981,15 @@ ALTER TABLE ONLY public.user_organizations
 --
 
 ALTER TABLE ONLY public.users
-    ADD CONSTRAINT users_files_id_fk FOREIGN KEY (photo_file_id) REFERENCES public.files(id) ON DELETE CASCADE;
+    ADD CONSTRAINT users_files_id_fk FOREIGN KEY (photo_file_id) REFERENCES public.files(id) ON DELETE SET NULL;
+
+
+--
+-- Name: users users_locations_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_locations_id_fk FOREIGN KEY (location_id) REFERENCES public.locations(id) ON DELETE SET NULL;
 
 
 --
