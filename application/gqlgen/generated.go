@@ -1110,7 +1110,7 @@ input CreatePostInput {
     type: PostType!
     title: String!
     description: String
-    destination: LocationInput
+    destination: LocationInput!
     origin: LocationInput
     size: PostSize!
     neededAfter: String
@@ -5723,7 +5723,7 @@ func (ec *executionContext) unmarshalInputCreatePostInput(ctx context.Context, o
 			}
 		case "destination":
 			var err error
-			it.Destination, err = ec.unmarshalOLocationInput2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐLocationInput(ctx, v)
+			it.Destination, err = ec.unmarshalNLocationInput2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐLocationInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -7371,6 +7371,18 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
+func (ec *executionContext) unmarshalNLocationInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐLocationInput(ctx context.Context, v interface{}) (LocationInput, error) {
+	return ec.unmarshalInputLocationInput(ctx, v)
+}
+
+func (ec *executionContext) unmarshalNLocationInput2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐLocationInput(ctx context.Context, v interface{}) (*LocationInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalNLocationInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐLocationInput(ctx, v)
+	return &res, err
+}
+
 func (ec *executionContext) marshalNMessage2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMessage(ctx context.Context, sel ast.SelectionSet, v models.Message) graphql.Marshaler {
 	return ec._Message(ctx, sel, &v)
 }
@@ -7552,7 +7564,7 @@ func (ec *executionContext) marshalNPost2ᚕᚖgithubᚗcomᚋsilinternational�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOPost2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, sel, v[i])
+			ret[i] = ec.marshalNPost2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
