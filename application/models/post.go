@@ -43,8 +43,6 @@ type Post struct {
 	OrganizationID int           `json:"organization_id" db:"organization_id"`
 	Status         string        `json:"status" db:"status"`
 	Title          string        `json:"title" db:"title"`
-	Destination    nulls.String  `json:"destination" db:"destination"`
-	Origin         nulls.String  `json:"origin" db:"origin"`
 	Size           string        `json:"size" db:"size"`
 	Uuid           uuid.UUID     `json:"uuid" db:"uuid"`
 	ReceiverID     nulls.Int     `json:"receiver_id" db:"receiver_id"`
@@ -56,6 +54,8 @@ type Post struct {
 	URL            nulls.String  `json:"url" db:"url"`
 	Cost           nulls.Float64 `json:"cost" db:"cost"`
 	PhotoFileID    nulls.Int     `json:"photo_file_id" db:"photo_file_id"`
+	DestinationID  nulls.Int     `json:"destination_id" db:"destination_id"`
+	OriginID       nulls.Int     `json:"origin_id" db:"origin_id"`
 	CreatedBy      User          `belongs_to:"users"`
 	Organization   Organization  `belongs_to:"organizations"`
 	Receiver       User          `belongs_to:"users"`
@@ -63,6 +63,8 @@ type Post struct {
 	Files          PostFiles     `has_many:"post_files"`
 	PhotoFile      File          `belongs_to:"files"`
 	Threads        Threads       `has_many:"threads"`
+	Destination    Location      `belongs_to:"locations"`
+	Origin         Location      `belongs_to:"locations"`
 }
 
 // String is not required by pop and may be deleted
@@ -324,7 +326,7 @@ func (p *Post) GetPhoto() (*File, error) {
 		return nil, err
 	}
 
-	return &(p.PhotoFile), nil
+	return &p.PhotoFile, nil
 }
 
 // scope query to only include organizations for current user
@@ -359,4 +361,59 @@ func (p *Post) FindByUserAndUUID(ctx context.Context, user User, uuid string, se
 // FindByUser finds all posts belonging to the same organization as the given user and not marked as removed.
 func (p *Posts) FindByUser(ctx context.Context, user User, selectFields ...string) error {
 	return DB.Select(selectFields...).Scope(scopeUserOrgs(user)).Scope(scopeNotRemoved()).All(p)
+}
+
+// GetDestination reads the destination record, if it exists, and returns the Location object.
+func (p *Post) GetDestination() (*Location, error) {
+	if !p.DestinationID.Valid {
+		return nil, nil
+	}
+	location := Location{}
+	if err := DB.Find(&location, p.DestinationID); err != nil {
+		return nil, err
+	}
+
+	return &location, nil
+}
+
+// GetOrigin reads the origin record, if it exists, and returns the Location object.
+func (p *Post) GetOrigin() (*Location, error) {
+	if !p.OriginID.Valid {
+		return nil, nil
+	}
+	location := Location{}
+	if err := DB.Find(&location, p.OriginID); err != nil {
+		return nil, err
+	}
+
+	return &location, nil
+}
+
+// SetDestination sets the destination location fields, creating a new record in the database if necessary.
+func (p *Post) SetDestination(location Location) error {
+	if p.DestinationID.Valid {
+		location.ID = p.DestinationID.Int
+		p.Destination = location
+		return DB.Update(&p.Destination)
+	}
+
+	if err := DB.Create(&location); err != nil {
+		return err
+	}
+	p.DestinationID = nulls.NewInt(location.ID)
+	return DB.Update(p)
+}
+
+// SetOrigin sets the origin location fields, creating a new record in the database if necessary.
+func (p *Post) SetOrigin(location Location) error {
+	if p.OriginID.Valid {
+		location.ID = p.OriginID.Int
+		p.Origin = location
+		return DB.Update(&p.Origin)
+	}
+	if err := DB.Create(&location); err != nil {
+		return err
+	}
+	p.OriginID = nulls.NewInt(location.ID)
+	return DB.Update(p)
 }

@@ -31,6 +31,7 @@ func UserFields() map[string]string {
 		"adminRole":   "admin_role",
 		"photoURL":    "photo_url",
 		"photoFile":   "photo_file_id",
+		"location":    "location_id",
 	}
 }
 
@@ -76,6 +77,13 @@ func (r *userResolver) PhotoURL(ctx context.Context, obj *models.User) (string, 
 		return "", nil
 	}
 	return obj.GetPhotoURL()
+}
+
+func (r *userResolver) Location(ctx context.Context, obj *models.User) (*models.Location, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return obj.GetLocation()
 }
 
 func (r *queryResolver) Users(ctx context.Context) ([]*models.User, error) {
@@ -144,6 +152,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 	if input.ID != nil {
 		err := user.FindByUUID(*(input.ID))
 		if err != nil {
+			domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
 			return &models.User{}, err
 		}
 	} else {
@@ -151,16 +160,27 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 	}
 
 	if cUser.AdminRole.String != domain.AdminRoleSuperDuperAdmin && cUser.ID != user.ID {
-		return &models.User{}, fmt.Errorf("user not allowed to edit user profiles")
+		err := fmt.Errorf("user not allowed to edit user profiles")
+		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
+		return &models.User{}, err
 	}
 
 	if input.PhotoID != nil {
 		var file models.File
 		err := file.FindByUUID(*input.PhotoID)
 		if err != nil {
+			domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
 			return &models.User{}, err
 		}
 		user.PhotoFileID = nulls.NewInt(file.ID)
+	}
+
+	if input.Location != nil {
+		err := user.SetLocation(convertGqlLocationInputToDBLocation(*input.Location))
+		if err != nil {
+			domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
+			return &models.User{}, err
+		}
 	}
 
 	err := user.Save()

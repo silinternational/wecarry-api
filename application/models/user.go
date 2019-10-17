@@ -5,9 +5,10 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
-	"github.com/gobuffalo/events"
 	"strings"
 	"time"
+
+	"github.com/gobuffalo/events"
 
 	"github.com/pkg/errors"
 	"github.com/silinternational/wecarry-api/domain"
@@ -40,6 +41,7 @@ type User struct {
 	Uuid              uuid.UUID          `json:"uuid" db:"uuid"`
 	PhotoFileID       nulls.Int          `json:"photo_file_id" db:"photo_file_id"`
 	PhotoURL          nulls.String       `json:"photo_url" db:"photo_url"`
+	LocationID        nulls.Int          `json:"location_id" db:"location_id"`
 	AccessTokens      []UserAccessToken  `has_many:"user_access_tokens" json:"-"`
 	Organizations     Organizations      `many_to_many:"user_organizations" json:"-"`
 	UserOrganizations []UserOrganization `has_many:"user_organizations" json:"-"`
@@ -47,6 +49,7 @@ type User struct {
 	PostsProviding    Posts              `has_many:"posts" fk_id:"provider_id"`
 	PostsReceiving    Posts              `has_many:"posts" fk_id:"receiver_id"`
 	PhotoFile         File               `belongs_to:"files"`
+	Location          Location           `belongs_to:"locations"`
 }
 
 // String is not required by pop and may be deleted
@@ -382,4 +385,31 @@ func (u *User) uniquifyNickname() error {
 	}
 
 	return fmt.Errorf("failed finding unique nickname for user %s %s", u.FirstName, u.LastName)
+}
+
+// GetLocation reads the location record, if it exists, and returns the Location object.
+func (u *User) GetLocation() (*Location, error) {
+	if !u.LocationID.Valid {
+		return nil, nil
+	}
+	location := Location{}
+	if err := DB.Find(&location, u.LocationID); err != nil {
+		return nil, err
+	}
+
+	return &location, nil
+}
+
+// SetLocation sets the user location fields, creating a new record in the database if necessary.
+func (u *User) SetLocation(location Location) error {
+	if u.LocationID.Valid {
+		location.ID = u.LocationID.Int
+		u.Location = location
+		return DB.Update(&u.Location)
+	}
+	if err := DB.Create(&location); err != nil {
+		return err
+	}
+	u.LocationID = nulls.NewInt(location.ID)
+	return DB.Update(u)
 }

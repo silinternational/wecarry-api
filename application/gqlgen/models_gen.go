@@ -27,6 +27,13 @@ type CreateOrganizationInput struct {
 	AuthConfig string  `json:"authConfig"`
 }
 
+type LocationInput struct {
+	Description string   `json:"description"`
+	Country     string   `json:"country"`
+	Latitude    *float64 `json:"latitude"`
+	Longitude   *float64 `json:"longitude"`
+}
+
 type RemoveOrganizationDomainInput struct {
 	Domain         string `json:"domain"`
 	OrganizationID string `json:"organizationID"`
@@ -46,8 +53,9 @@ type UpdateOrganizationInput struct {
 }
 
 type UpdateUserInput struct {
-	ID      *string `json:"id"`
-	PhotoID *string `json:"photoID"`
+	ID       *string        `json:"id"`
+	PhotoID  *string        `json:"photoID"`
+	Location *LocationInput `json:"location"`
 }
 
 type PostRole string

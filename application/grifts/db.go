@@ -152,6 +152,46 @@ var _ = grift.Namespace("db", func() {
 			}
 		}
 
+		// LOCATIONS Table
+		fixtureLocations := []*models.Location{
+			{
+				ID:          1,
+				Description: "Madrid, Spain",
+				Country:     "ES",
+				Latitude:    nulls.NewFloat64(40.4168),
+				Longitude:   nulls.NewFloat64(-3.7038),
+			},
+			{
+				ID:          1,
+				Description: "JAARS, NC, USA",
+				Country:     "US",
+				Latitude:    nulls.NewFloat64(34.8638),
+				Longitude:   nulls.NewFloat64(-80.7459),
+			},
+			{
+				ID:          1,
+				Description: "Atlanta, GA, USA",
+				Country:     "US",
+				Latitude:    nulls.NewFloat64(33.7490),
+				Longitude:   nulls.NewFloat64(-84.3880),
+			},
+			{
+				ID:          1,
+				Description: "Orlando, FL, USA",
+				Country:     "US",
+				Latitude:    nulls.NewFloat64(28.5383),
+				Longitude:   nulls.NewFloat64(-81.3792),
+			},
+		}
+
+		for _, loc := range fixtureLocations {
+			err := models.DB.Create(loc)
+			if err != nil {
+				err = fmt.Errorf("error loading locations fixture ... %+v\n %v", loc, err.Error())
+				return err
+			}
+		}
+
 		// POSTS Table
 		postUuid1, _ := uuid.FromString("270fa549-65f2-43c0-ac27-78a054cf49a1")
 		postUuid2, _ := uuid.FromString("028164cd-a8f5-43b9-98d0-f8a7778ea2f1")
@@ -166,7 +206,7 @@ var _ = grift.Namespace("db", func() {
 				OrganizationID: 1,
 				Status:         models.PostStatusOpen,
 				Title:          "Maple Syrup",
-				Destination:    nulls.NewString("Madrid, Spain"),
+				DestinationID:  nulls.NewInt(1),
 				Size:           models.PostSizeMedium,
 				Uuid:           postUuid1,
 				ReceiverID:     nulls.NewInt(1),
@@ -182,7 +222,7 @@ var _ = grift.Namespace("db", func() {
 				OrganizationID: 1,
 				Status:         models.PostStatusOpen,
 				Title:          "Jif Peanut Butter",
-				Destination:    nulls.NewString("JAARS, NC, USA"),
+				DestinationID:  nulls.NewInt(2),
 				Size:           models.PostSizeSmall,
 				Uuid:           postUuid2,
 				ReceiverID:     nulls.NewInt(2),
@@ -197,7 +237,7 @@ var _ = grift.Namespace("db", func() {
 				OrganizationID: 1,
 				Status:         models.PostStatusOpen,
 				Title:          "Burt's Bee's Lip Balm",
-				Destination:    nulls.NewString("Atlanta, GA, USA"),
+				DestinationID:  nulls.NewInt(3),
 				Size:           models.PostSizeTiny,
 				Uuid:           postUuid3,
 				ReceiverID:     nulls.NewInt(3),
@@ -212,7 +252,7 @@ var _ = grift.Namespace("db", func() {
 				OrganizationID: 1,
 				Status:         models.PostStatusOpen,
 				Title:          "Peanut Butter",
-				Destination:    nulls.NewString("Orlando, FL, USA"),
+				DestinationID:  nulls.NewInt(4),
 				Size:           models.PostSizeSmall,
 				Uuid:           postUuid4,
 				ReceiverID:     nulls.NewInt(4),
