@@ -777,7 +777,7 @@ func (ms *ModelSuite) TestUser_SetLocation() {
 		"Location ID doesn't match -- location record was probably not reused")
 
 	locationFixtures[1].ID = locationFromDB.ID
-	ms.Equal(locationFixtures[1], *locationFromDB, "destination data doesn't match after update")
+	ms.Equal(locationFixtures[1], *locationFromDB, "user location data doesn't match after update")
 
 	// These are redundant checks, but here to document the fact that a null overwrites previous data.
 	ms.False(locationFromDB.Latitude.Valid)
