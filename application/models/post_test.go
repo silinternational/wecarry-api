@@ -142,6 +142,615 @@ func (ms *ModelSuite) TestPost_Validate() {
 	}
 }
 
+func (ms *ModelSuite) TestPost_ValidateCreate() {
+	t := ms.T()
+
+	tests := []struct {
+		name     string
+		post     Post
+		want     *validate.Errors
+		wantErr  bool
+		errField string
+	}{
+		{
+			name: "good - open",
+			post: Post{
+				CreatedByID:    1,
+				Type:           PostTypeRequest,
+				OrganizationID: 1,
+				Title:          "A Request",
+				Size:           PostSizeMedium,
+				Status:         PostStatusOpen,
+				Uuid:           domain.GetUuid(),
+			},
+			wantErr: false,
+		},
+		{
+			name: "bad status - accepted",
+			post: Post{
+				CreatedByID:    1,
+				Type:           PostTypeRequest,
+				OrganizationID: 1,
+				Title:          "A Request",
+				Size:           PostSizeMedium,
+				Status:         PostStatusAccepted,
+				Uuid:           domain.GetUuid(),
+			},
+			wantErr:  true,
+			errField: "create_status",
+		},
+		{
+			name: "bad status - committed",
+			post: Post{
+				CreatedByID:    1,
+				OrganizationID: 1,
+				Type:           PostTypeRequest,
+				Title:          "A Request",
+				Size:           PostSizeMedium,
+				Status:         PostStatusCommitted,
+				Uuid:           domain.GetUuid(),
+			},
+			wantErr:  true,
+			errField: "create_status",
+		},
+		{
+			name: "bad status - delivered",
+			post: Post{
+				CreatedByID:    1,
+				OrganizationID: 1,
+				Type:           PostTypeRequest,
+				Title:          "A Request",
+				Size:           PostSizeMedium,
+				Status:         PostStatusDelivered,
+				Uuid:           domain.GetUuid(),
+			},
+			wantErr:  true,
+			errField: "create_status",
+		},
+		{
+			name: "bad status - received",
+			post: Post{
+				CreatedByID:    1,
+				OrganizationID: 1,
+				Type:           PostTypeRequest,
+				Title:          "A Request",
+				Size:           PostSizeMedium,
+				Status:         PostStatusReceived,
+				Uuid:           domain.GetUuid(),
+			},
+			wantErr:  true,
+			errField: "create_status",
+		},
+		{
+			name: "bad status - completed",
+			post: Post{
+				CreatedByID:    1,
+				OrganizationID: 1,
+				Type:           PostTypeRequest,
+				Title:          "A Request",
+				Size:           PostSizeMedium,
+				Status:         PostStatusCompleted,
+				Uuid:           domain.GetUuid(),
+			},
+			wantErr:  true,
+			errField: "create_status",
+		},
+		{
+			name: "bad status - removed",
+			post: Post{
+				CreatedByID:    1,
+				OrganizationID: 1,
+				Type:           PostTypeRequest,
+				Title:          "A Request",
+				Size:           PostSizeMedium,
+				Status:         PostStatusRemoved,
+				Uuid:           domain.GetUuid(),
+			},
+			wantErr:  true,
+			errField: "create_status",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			vErr, _ := test.post.ValidateCreate(DB)
+			if test.wantErr {
+				if vErr.Count() == 0 {
+					t.Errorf("Expected an error, but did not get one")
+				} else if len(vErr.Get(test.errField)) == 0 {
+					t.Errorf("Expected an error on field %v, but got none (errors: %v)", test.errField, vErr.Errors)
+				}
+			} else if (test.wantErr == false) && (vErr.HasAny()) {
+				t.Errorf("Unexpected error: %v", vErr)
+			}
+		})
+	}
+}
+
+func CreateFixturesValidateUpdate(ms *ModelSuite, t *testing.T) []Post {
+
+	// Create org
+	org := &Organization{
+		ID:         1,
+		Name:       "TestOrg",
+		Url:        nulls.String{},
+		AuthType:   AuthTypeSaml,
+		AuthConfig: "{}",
+		Uuid:       domain.GetUuid(),
+	}
+	createFixture(t, org)
+
+	// Create User
+	user := User{
+		Email:     "user1@example.com",
+		FirstName: "Existing",
+		LastName:  "User",
+		Nickname:  "Existing User ",
+		Uuid:      domain.GetUuid(),
+	}
+
+	if err := ms.DB.Create(&user); err != nil {
+		t.Errorf("could not create test user %v ... %v", user.Email, err)
+		t.FailNow()
+	}
+
+	// Load Post test fixtures
+	posts := []Post{
+		{
+			CreatedByID:    user.ID,
+			OrganizationID: org.ID,
+			Type:           PostTypeRequest,
+			Title:          "Open Request 0",
+			Size:           PostSizeMedium,
+			Status:         PostStatusOpen,
+			Uuid:           domain.GetUuid(),
+		},
+		{
+			CreatedByID:    user.ID,
+			OrganizationID: org.ID,
+			Type:           PostTypeRequest,
+			Title:          "Committed Request 1",
+			Size:           PostSizeMedium,
+			Status:         PostStatusCommitted,
+			Uuid:           domain.GetUuid(),
+		},
+		{
+			CreatedByID:    user.ID,
+			OrganizationID: org.ID,
+			Type:           PostTypeRequest,
+			Title:          "Accepted Request 2",
+			Size:           PostSizeMedium,
+			Status:         PostStatusAccepted,
+			Uuid:           domain.GetUuid(),
+		},
+		{
+			CreatedByID:    user.ID,
+			OrganizationID: org.ID,
+			Type:           PostTypeRequest,
+			Title:          "Received Request 3",
+			Size:           PostSizeMedium,
+			Status:         PostStatusReceived,
+			Uuid:           domain.GetUuid(),
+		},
+		{
+			CreatedByID:    user.ID,
+			OrganizationID: org.ID,
+			Type:           PostTypeRequest,
+			Title:          "Completed Request 4",
+			Size:           PostSizeMedium,
+			Status:         PostStatusCompleted,
+			Uuid:           domain.GetUuid(),
+		},
+		{
+			CreatedByID:    user.ID,
+			OrganizationID: org.ID,
+			Type:           PostTypeRequest,
+			Title:          "Removed Request 5",
+			Size:           PostSizeMedium,
+			Status:         PostStatusRemoved,
+			Uuid:           domain.GetUuid(),
+		},
+	}
+
+	if err := CreatePosts(posts); err != nil {
+		t.Errorf("could not create test post ... %v", err)
+		t.FailNow()
+	}
+	return posts
+}
+
+func (ms *ModelSuite) TestPost_ValidateUpdate() {
+	t := ms.T()
+
+	posts := CreateFixturesValidateUpdate(ms, t)
+
+	tests := []struct {
+		name     string
+		post     Post
+		want     *validate.Errors
+		wantErr  bool
+		errField string
+	}{
+		{
+			name: "good status - from open to open",
+			post: Post{
+				Status: PostStatusOpen,
+				Uuid:   posts[0].Uuid,
+			},
+			wantErr: false,
+		},
+		{
+			name: "good status - from open to committed",
+			post: Post{
+				Title:  "New Title",
+				Status: PostStatusCommitted,
+				Uuid:   posts[0].Uuid,
+			},
+			wantErr: false,
+		},
+		{
+			name: "good status - from open to removed",
+			post: Post{
+				Status: PostStatusRemoved,
+				Uuid:   posts[0].Uuid,
+			},
+			wantErr: false,
+		},
+		{
+			name: "bad status - from open to accepted",
+			post: Post{
+				Status: PostStatusAccepted,
+				Uuid:   posts[0].Uuid,
+			},
+			wantErr:  true,
+			errField: "status",
+		},
+		{
+			name: "bad status - from open to delivered",
+			post: Post{
+				Status: PostStatusDelivered,
+				Uuid:   posts[0].Uuid,
+			},
+			wantErr:  true,
+			errField: "status",
+		},
+		{
+			name: "bad status - from open to received",
+			post: Post{
+				Status: PostStatusReceived,
+				Uuid:   posts[0].Uuid,
+			},
+			wantErr:  true,
+			errField: "status",
+		},
+		{
+			name: "bad status - from open to completed",
+			post: Post{
+				Status: PostStatusCompleted,
+				Uuid:   posts[0].Uuid,
+			},
+			wantErr:  true,
+			errField: "status",
+		},
+		{
+			name: "good status - from committed to committed",
+			post: Post{
+				Title:  "New Title",
+				Status: PostStatusCommitted,
+				Uuid:   posts[1].Uuid,
+			},
+			wantErr: false,
+		},
+		{
+			name: "good status - from committed to open",
+			post: Post{
+				Status: PostStatusOpen,
+				Uuid:   posts[1].Uuid,
+			},
+			wantErr: false,
+		},
+		{
+			name: "good status - from committed to accepted",
+			post: Post{
+				Status: PostStatusAccepted,
+				Uuid:   posts[1].Uuid,
+			},
+			wantErr: false,
+		},
+		{
+			name: "good status - from committed to delivered",
+			post: Post{
+				Status: PostStatusDelivered,
+				Uuid:   posts[1].Uuid,
+			},
+			wantErr: false,
+		},
+		{
+			name: "good status - from committed to removed",
+			post: Post{
+				Status: PostStatusRemoved,
+				Uuid:   posts[1].Uuid,
+			},
+			wantErr: false,
+		},
+		{
+			name: "bad status - from committed to received",
+			post: Post{
+				Status: PostStatusReceived,
+				Uuid:   posts[1].Uuid,
+			},
+			wantErr:  true,
+			errField: "status",
+		},
+		{
+			name: "bad status - from committed to completed",
+			post: Post{
+				Status: PostStatusCompleted,
+				Uuid:   posts[1].Uuid,
+			},
+			wantErr:  true,
+			errField: "status",
+		},
+		{
+			name: "good status - from accepted to accepted",
+			post: Post{
+				Title:  "New Title",
+				Status: PostStatusAccepted,
+				Uuid:   posts[2].Uuid,
+			},
+			wantErr: false,
+		},
+		{
+			name: "good status - from accepted to open",
+			post: Post{
+				Status: PostStatusOpen,
+				Uuid:   posts[2].Uuid,
+			},
+			wantErr: false,
+		},
+		{
+			name: "good status - from accepted to delivered",
+			post: Post{
+				Status: PostStatusDelivered,
+				Uuid:   posts[2].Uuid,
+			},
+			wantErr: false,
+		},
+		{
+			name: "good status - from accepted to received",
+			post: Post{
+				Status: PostStatusReceived,
+				Uuid:   posts[2].Uuid,
+			},
+			wantErr: false,
+		},
+		{
+			name: "good status - from accepted to removed",
+			post: Post{
+				Status: PostStatusRemoved,
+				Uuid:   posts[2].Uuid,
+			},
+			wantErr: false,
+		},
+		{
+			name: "bad status - from accepted to committed",
+			post: Post{
+				Status: PostStatusCommitted,
+				Uuid:   posts[2].Uuid,
+			},
+			wantErr:  true,
+			errField: "status",
+		},
+		{
+			name: "bad status - from accepted to completed",
+			post: Post{
+				Status: PostStatusCompleted,
+				Uuid:   posts[2].Uuid,
+			},
+			wantErr:  true,
+			errField: "status",
+		},
+		{
+			name: "good status - from received to received",
+			post: Post{
+				Title:  "New Title",
+				Status: PostStatusReceived,
+				Uuid:   posts[3].Uuid,
+			},
+			wantErr: false,
+		},
+		{
+			name: "good status - from received to accepted",
+			post: Post{
+				Status: PostStatusAccepted,
+				Uuid:   posts[3].Uuid,
+			},
+			wantErr: false,
+		},
+		{
+			name: "good status - from received to completed",
+			post: Post{
+				Status: PostStatusCompleted,
+				Uuid:   posts[3].Uuid,
+			},
+			wantErr: false,
+		},
+		{
+			name: "bad status - from received to open",
+			post: Post{
+				Status: PostStatusOpen,
+				Uuid:   posts[3].Uuid,
+			},
+			wantErr:  true,
+			errField: "status",
+		},
+		{
+			name: "bad status - from received to committed",
+			post: Post{
+				Status: PostStatusCommitted,
+				Uuid:   posts[3].Uuid,
+			},
+			wantErr:  true,
+			errField: "status",
+		},
+		{
+			name: "bad status - from received to delivered",
+			post: Post{
+				Status: PostStatusDelivered,
+				Uuid:   posts[3].Uuid,
+			},
+			wantErr:  true,
+			errField: "status",
+		},
+		{
+			name: "bad status - from received to removed",
+			post: Post{
+				Status: PostStatusRemoved,
+				Uuid:   posts[3].Uuid,
+			},
+			wantErr:  true,
+			errField: "status",
+		},
+		{
+			name: "good status - from completed to completed",
+			post: Post{
+				Title:  "New Title",
+				Status: PostStatusCompleted,
+				Uuid:   posts[4].Uuid,
+			},
+			wantErr: false,
+		},
+		{
+			name: "good status - from completed to delivered",
+			post: Post{
+				Status: PostStatusDelivered,
+				Uuid:   posts[4].Uuid,
+			},
+			wantErr: false,
+		},
+		{
+			name: "good status - from completed to received",
+			post: Post{
+				Status: PostStatusReceived,
+				Uuid:   posts[4].Uuid,
+			},
+			wantErr: false,
+		},
+		{
+			name: "bad status - from completed to open",
+			post: Post{
+				Status: PostStatusOpen,
+				Uuid:   posts[4].Uuid,
+			},
+			wantErr:  true,
+			errField: "status",
+		},
+		{
+			name: "bad status - from completed to committed",
+			post: Post{
+				Status: PostStatusCommitted,
+				Uuid:   posts[4].Uuid,
+			},
+			wantErr:  true,
+			errField: "status",
+		},
+		{
+			name: "bad status - from completed to accepted",
+			post: Post{
+				Status: PostStatusAccepted,
+				Uuid:   posts[4].Uuid,
+			},
+			wantErr:  true,
+			errField: "status",
+		},
+		{
+			name: "bad status - from completed to removed",
+			post: Post{
+				Status: PostStatusRemoved,
+				Uuid:   posts[4].Uuid,
+			},
+			wantErr:  true,
+			errField: "status",
+		},
+		{
+			name: "good status - from removed to removed",
+			post: Post{
+				Title:  "New Title",
+				Status: PostStatusRemoved,
+				Uuid:   posts[5].Uuid,
+			},
+			wantErr: false,
+		},
+		{
+			name: "bad status - from removed to open",
+			post: Post{
+				Status: PostStatusOpen,
+				Uuid:   posts[5].Uuid,
+			},
+			wantErr:  true,
+			errField: "status",
+		},
+		{
+			name: "bad status - from removed to committed",
+			post: Post{
+				Status: PostStatusCommitted,
+				Uuid:   posts[5].Uuid,
+			},
+			wantErr:  true,
+			errField: "status",
+		},
+		{
+			name: "bad status - from removed to accepted",
+			post: Post{
+				Status: PostStatusAccepted,
+				Uuid:   posts[5].Uuid,
+			},
+			wantErr:  true,
+			errField: "status",
+		},
+		{
+			name: "bad status - from removed to delivered",
+			post: Post{
+				Status: PostStatusDelivered,
+				Uuid:   posts[5].Uuid,
+			},
+			wantErr:  true,
+			errField: "status",
+		},
+		{
+			name: "bad status - from removed to received",
+			post: Post{
+				Status: PostStatusReceived,
+				Uuid:   posts[5].Uuid,
+			},
+			wantErr:  true,
+			errField: "status",
+		},
+		{
+			name: "bad status - from removed to completed",
+			post: Post{
+				Status: PostStatusCompleted,
+				Uuid:   posts[5].Uuid,
+			},
+			wantErr:  true,
+			errField: "status",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			vErr, _ := test.post.ValidateUpdate(DB)
+			if test.wantErr {
+				if vErr.Count() == 0 {
+					t.Errorf("Expected an error, but did not get one")
+				} else if len(vErr.Get(test.errField)) == 0 {
+					t.Errorf("Expected an error on field %v, but got none (errors: %v)", test.errField, vErr.Errors)
+				}
+			} else if (test.wantErr == false) && (vErr.HasAny()) {
+				t.Errorf("Unexpected error: %v", vErr)
+			}
+		})
+	}
+}
+
 func CreatePostFixtures(ms *ModelSuite, t *testing.T, users Users) []Post {
 	if err := DB.Load(&users[0], "Organizations"); err != nil {
 		t.Errorf("failed to load organizations on users[0] fixture, %s", err)
@@ -185,7 +794,6 @@ func CreatePostFixtures(ms *ModelSuite, t *testing.T, users Users) []Post {
 
 func (ms *ModelSuite) TestPost_FindByUUID() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(ms, t, users)
@@ -221,7 +829,6 @@ func (ms *ModelSuite) TestPost_FindByUUID() {
 
 func (ms *ModelSuite) TestPost_GetCreator() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(ms, t, users)
@@ -247,7 +854,6 @@ func (ms *ModelSuite) TestPost_GetCreator() {
 
 func (ms *ModelSuite) TestPost_GetProvider() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(ms, t, users)
@@ -280,7 +886,6 @@ func (ms *ModelSuite) TestPost_GetProvider() {
 
 func (ms *ModelSuite) TestPost_GetReceiver() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(ms, t, users)
@@ -313,7 +918,6 @@ func (ms *ModelSuite) TestPost_GetReceiver() {
 
 func (ms *ModelSuite) TestPost_GetOrganization() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(ms, t, users)
@@ -339,7 +943,6 @@ func (ms *ModelSuite) TestPost_GetOrganization() {
 
 func (ms *ModelSuite) TestPost_GetThreads() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(ms, t, users)
@@ -374,7 +977,6 @@ func (ms *ModelSuite) TestPost_GetThreads() {
 
 func (ms *ModelSuite) TestPost_GetThreadIdForUser() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(ms, t, users)
@@ -410,7 +1012,6 @@ func (ms *ModelSuite) TestPost_GetThreadIdForUser() {
 
 func (ms *ModelSuite) TestPost_AttachFile() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	user := User{}
 	if err := ms.DB.Create(&user); err != nil {
@@ -459,7 +1060,6 @@ func (ms *ModelSuite) TestPost_AttachFile() {
 
 func (ms *ModelSuite) TestPost_GetFiles() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	user := User{}
 	if err := ms.DB.Create(&user); err != nil {
@@ -501,7 +1101,6 @@ func (ms *ModelSuite) TestPost_GetFiles() {
 // TestPost_AttachPhoto_GetPhoto tests the AttachPhoto and GetPhoto methods of models.Post
 func (ms *ModelSuite) TestPost_AttachPhoto_GetPhoto() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	user := User{}
 	if err := ms.DB.Create(&user); err != nil {

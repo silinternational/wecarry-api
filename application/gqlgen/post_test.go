@@ -421,6 +421,20 @@ func (gs *GqlgenSuite) Test_UpdatePost() {
 	gs.Equal("cat", postsResp.Post.Category)
 	gs.Equal("example.com", postsResp.Post.Url)
 	gs.Equal("1", postsResp.Post.Cost)
+
+	// Now check for a valid status update
+	input = `id: "` + f.Posts[0].Uuid.String() + `" status: ` + models.PostStatusCommitted
+	query = `mutation { post: updatePost(input: {` + input + `}) { id status}}`
+
+	err := c.Post(query, &postsResp)
+	gs.NoError(err)
+
+	// Now check for a validation error for a bad status update
+	input = `id: "` + f.Posts[0].Uuid.String() + `" status: ` + models.PostStatusCompleted
+	query = `mutation { post: updatePost(input: {` + input + `}) { id status}}`
+
+	err = c.Post(query, &postsResp)
+	gs.Error(err)
 }
 
 type CreatePostFixtures struct {
