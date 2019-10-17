@@ -1168,7 +1168,7 @@ type Location {
 input LocationInput {
     description: String!
     # Country, ISO 3166-1 Alpha-2 code
-    country: String
+    country: String!
     latitude: Float
     longitude: Float
 }
@@ -5795,7 +5795,7 @@ func (ec *executionContext) unmarshalInputLocationInput(ctx context.Context, obj
 			}
 		case "country":
 			var err error
-			it.Country, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			it.Country, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -7783,7 +7783,7 @@ func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋsilinternational�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, sel, v[i])
+			ret[i] = ec.marshalOUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)

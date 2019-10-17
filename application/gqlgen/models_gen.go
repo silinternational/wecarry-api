@@ -29,7 +29,7 @@ type CreateOrganizationInput struct {
 
 type LocationInput struct {
 	Description string   `json:"description"`
-	Country     *string  `json:"country"`
+	Country     string   `json:"country"`
 	Latitude    *float64 `json:"latitude"`
 	Longitude   *float64 `json:"longitude"`
 }

@@ -222,7 +222,7 @@ type Location {
 input LocationInput {
     description: String!
     # Country, ISO 3166-1 Alpha-2 code
-    country: String
+    country: String!
     latitude: Float
     longitude: Float
 }

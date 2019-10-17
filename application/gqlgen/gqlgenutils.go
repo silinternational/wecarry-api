@@ -37,9 +37,9 @@ func setOptionalFloatField(input *float64, output *nulls.Float64) {
 func convertGqlLocationInputToDBLocation(input LocationInput) models.Location {
 	l := models.Location{
 		Description: input.Description,
+		Country:     input.Country,
 	}
 
-	setOptionalStringField(input.Country, &l.Country)
 	setOptionalFloatField(input.Latitude, &l.Latitude)
 	setOptionalFloatField(input.Longitude, &l.Longitude)
 
