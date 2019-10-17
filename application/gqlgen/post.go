@@ -22,8 +22,6 @@ func PostFields() map[string]string {
 		"type":         "type",
 		"title":        "title",
 		"description":  "description",
-		"destination":  "destination",
-		"origin":       "origin",
 		"size":         "size",
 		"receiver":     "receiver_id",
 		"provider":     "provider_id",
@@ -36,6 +34,8 @@ func PostFields() map[string]string {
 		"url":          "url",
 		"cost":         "cost",
 		"photo":        "photo_file_id",
+		"destination":  "destination_id",
+		"origin":       "origin_id",
 	}
 }
 
@@ -95,18 +95,18 @@ func (r *postResolver) Description(ctx context.Context, obj *models.Post) (*stri
 	return GetStringFromNullsString(obj.Description), nil
 }
 
-func (r *postResolver) Destination(ctx context.Context, obj *models.Post) (*string, error) {
+func (r *postResolver) Destination(ctx context.Context, obj *models.Post) (*models.Location, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	return GetStringFromNullsString(obj.Destination), nil
+	return obj.GetDestination()
 }
 
-func (r *postResolver) Origin(ctx context.Context, obj *models.Post) (*string, error) {
+func (r *postResolver) Origin(ctx context.Context, obj *models.Post) (*models.Location, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	return GetStringFromNullsString(obj.Origin), nil
+	return obj.GetOrigin()
 }
 
 func (r *postResolver) Size(ctx context.Context, obj *models.Post) (PostSize, error) {
@@ -257,20 +257,10 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 		post.Type = input.Type.String()
 	}
 
-	if input.Title != nil {
-		post.Title = *input.Title
-	}
+	setOptionalStringField(input.Title, &post.Title)
 
 	if input.Description != nil {
 		post.Description = nulls.NewString(*input.Description)
-	}
-
-	if input.Destination != nil {
-		post.Destination = nulls.NewString(*input.Destination)
-	}
-
-	if input.Origin != nil {
-		post.Origin = nulls.NewString(*input.Origin)
 	}
 
 	if input.Size != nil {
@@ -295,9 +285,7 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 		post.NeededBefore = neededBefore
 	}
 
-	if input.Category != nil {
-		post.Category = *input.Category
-	}
+	setOptionalStringField(input.Category, &post.Category)
 
 	if input.URL != nil {
 		post.URL = nulls.NewString(*input.URL)
@@ -324,7 +312,8 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 }
 
 func getSelectFieldsForPosts(ctx context.Context) []string {
-	selectFields := GetSelectFieldsFromRequestFields(PostFields(), graphql.CollectAllFields(ctx))
+	requestFields := graphql.CollectAllFields(ctx)
+	selectFields := GetSelectFieldsFromRequestFields(PostFields(), requestFields)
 	selectFields = append(selectFields, "id")
 	return selectFields
 }
@@ -336,8 +325,8 @@ type postInput struct {
 	Type         *PostType
 	Title        *string
 	Description  *string
-	Destination  *string
-	Origin       *string
+	Destination  *LocationInput
+	Origin       *LocationInput
 	Size         *PostSize
 	NeededAfter  *string
 	NeededBefore *string
@@ -357,6 +346,22 @@ func (r *mutationResolver) CreatePost(ctx context.Context, input postInput) (*mo
 
 	if err := models.DB.Create(&post); err != nil {
 		return &models.Post{}, err
+	}
+
+	if input.Destination != nil {
+		err := post.SetDestination(convertGqlLocationInputToDBLocation(*input.Destination))
+		if err != nil {
+			domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
+			return &models.Post{}, err
+		}
+	}
+
+	if input.Origin != nil {
+		err := post.SetOrigin(convertGqlLocationInputToDBLocation(*input.Origin))
+		if err != nil {
+			domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
+			return &models.Post{}, err
+		}
 	}
 
 	return &post, nil
@@ -381,6 +386,22 @@ func (r *mutationResolver) UpdatePost(ctx context.Context, input postInput) (*mo
 		vErrs := models.FlattenPopErrors(valErrs)
 		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), vErrs, domain.NoExtras)
 		return &models.Post{}, fmt.Errorf(vErrs)
+	}
+
+	if input.Destination != nil {
+		err := post.SetDestination(convertGqlLocationInputToDBLocation(*input.Destination))
+		if err != nil {
+			domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
+			return &models.Post{}, err
+		}
+	}
+
+	if input.Origin != nil {
+		err := post.SetOrigin(convertGqlLocationInputToDBLocation(*input.Origin))
+		if err != nil {
+			domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
+			return &models.Post{}, err
+		}
 	}
 
 	return &post, nil
