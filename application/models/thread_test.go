@@ -147,7 +147,6 @@ func (ms *ModelSuite) TestThread_Validate() {
 
 func (ms *ModelSuite) TestThread_FindByUUID() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(ms, t, users)
@@ -184,7 +183,6 @@ func (ms *ModelSuite) TestThread_FindByUUID() {
 
 func (ms *ModelSuite) TestThread_FindByPostIDAndUserID() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(ms, t, users)
@@ -223,7 +221,6 @@ func (ms *ModelSuite) TestThread_FindByPostIDAndUserID() {
 
 func (ms *ModelSuite) TestThread_GetPost() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(ms, t, users)
@@ -268,7 +265,6 @@ func (ms *ModelSuite) TestThread_GetPost() {
 
 func (ms *ModelSuite) TestThread_GetMessages() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(ms, t, users)
@@ -332,7 +328,6 @@ func (ms *ModelSuite) TestThread_GetMessages() {
 
 func (ms *ModelSuite) TestThread_GetParticipants() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(ms, t, users)
@@ -396,7 +391,6 @@ func (ms *ModelSuite) TestThread_GetParticipants() {
 
 func (ms *ModelSuite) TestThread_CreateWithParticipants() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(ms, t, users)

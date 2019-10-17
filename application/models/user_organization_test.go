@@ -9,14 +9,12 @@ import (
 
 func createUserOrganizationFixtures(ms *ModelSuite, t *testing.T) {
 	// reset db tables
-	ResetTables(ms.T(), ms.DB)
 
 	singleUuid := domain.GetUuid()
 	twoUuid := domain.GetUuid()
 
 	users := []User{
 		{
-			ID:        1,
 			Email:     "single@domain.com",
 			FirstName: "Single",
 			LastName:  "Result",
@@ -25,7 +23,6 @@ func createUserOrganizationFixtures(ms *ModelSuite, t *testing.T) {
 			Uuid:      singleUuid,
 		},
 		{
-			ID:        2,
 			Email:     "two@domain.com",
 			FirstName: "Two",
 			LastName:  "Results",
@@ -34,12 +31,8 @@ func createUserOrganizationFixtures(ms *ModelSuite, t *testing.T) {
 			Uuid:      twoUuid,
 		},
 	}
-	for _, u := range users {
-		err := ms.DB.Create(&u)
-		if err != nil {
-			t.Errorf("unable to create fixture user: %s", err)
-			t.FailNow()
-		}
+	for i := range users {
+		createFixture(t, &users[i])
 	}
 
 	org1uuid := domain.GetUuid()
@@ -47,7 +40,6 @@ func createUserOrganizationFixtures(ms *ModelSuite, t *testing.T) {
 
 	orgs := []Organization{
 		{
-			ID:         1,
 			Name:       "Org1",
 			Url:        nulls.String{},
 			AuthType:   "",
@@ -55,7 +47,6 @@ func createUserOrganizationFixtures(ms *ModelSuite, t *testing.T) {
 			Uuid:       org1uuid,
 		},
 		{
-			ID:         2,
 			Name:       "Org2",
 			Url:        nulls.String{},
 			AuthType:   "",
@@ -63,49 +54,37 @@ func createUserOrganizationFixtures(ms *ModelSuite, t *testing.T) {
 			Uuid:       org2uuid,
 		},
 	}
-	for _, o := range orgs {
-		err := ms.DB.Create(&o)
-		if err != nil {
-			t.Errorf("unable to create fixture organization: %s", err)
-			t.FailNow()
-		}
+	for i := range orgs {
+		createFixture(t, &orgs[i])
 	}
 
 	userOrgs := []UserOrganization{
 		{
-			ID:             1,
-			OrganizationID: 1,
-			UserID:         1,
+			OrganizationID: orgs[0].ID,
+			UserID:         users[0].ID,
 			AuthID:         "one",
 			AuthEmail:      "single@domain.com",
 		},
 		{
-			ID:             2,
-			OrganizationID: 1,
-			UserID:         2,
+			OrganizationID: orgs[0].ID,
+			UserID:         users[1].ID,
 			AuthID:         "two",
 			AuthEmail:      "two@domain.com",
 		},
 		{
-			ID:             3,
-			OrganizationID: 2,
-			UserID:         2,
+			OrganizationID: orgs[1].ID,
+			UserID:         users[1].ID,
 			AuthID:         "two",
 			AuthEmail:      "two@domain.com",
 		},
 	}
-	for _, uo := range userOrgs {
-		err := ms.DB.Create(&uo)
-		if err != nil {
-			t.Errorf("unable to create fixture user_organization: %s", err)
-			t.FailNow()
-		}
+	for i := range userOrgs {
+		createFixture(t, &userOrgs[i])
 	}
 }
 
 func (ms *ModelSuite) TestFindByAuthEmail() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 	createUserOrganizationFixtures(ms, t)
 
 	type args struct {

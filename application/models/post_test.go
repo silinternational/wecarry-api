@@ -185,7 +185,6 @@ func CreatePostFixtures(ms *ModelSuite, t *testing.T, users Users) []Post {
 
 func (ms *ModelSuite) TestPost_FindByUUID() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(ms, t, users)
@@ -221,7 +220,6 @@ func (ms *ModelSuite) TestPost_FindByUUID() {
 
 func (ms *ModelSuite) TestPost_GetCreator() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(ms, t, users)
@@ -247,7 +245,6 @@ func (ms *ModelSuite) TestPost_GetCreator() {
 
 func (ms *ModelSuite) TestPost_GetProvider() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(ms, t, users)
@@ -280,7 +277,6 @@ func (ms *ModelSuite) TestPost_GetProvider() {
 
 func (ms *ModelSuite) TestPost_GetReceiver() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(ms, t, users)
@@ -313,7 +309,6 @@ func (ms *ModelSuite) TestPost_GetReceiver() {
 
 func (ms *ModelSuite) TestPost_GetOrganization() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(ms, t, users)
@@ -339,7 +334,6 @@ func (ms *ModelSuite) TestPost_GetOrganization() {
 
 func (ms *ModelSuite) TestPost_GetThreads() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(ms, t, users)
@@ -374,7 +368,6 @@ func (ms *ModelSuite) TestPost_GetThreads() {
 
 func (ms *ModelSuite) TestPost_GetThreadIdForUser() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(ms, t, users)
@@ -410,7 +403,6 @@ func (ms *ModelSuite) TestPost_GetThreadIdForUser() {
 
 func (ms *ModelSuite) TestPost_AttachFile() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	user := User{}
 	if err := ms.DB.Create(&user); err != nil {
@@ -459,7 +451,6 @@ func (ms *ModelSuite) TestPost_AttachFile() {
 
 func (ms *ModelSuite) TestPost_GetFiles() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	user := User{}
 	if err := ms.DB.Create(&user); err != nil {
@@ -501,7 +492,6 @@ func (ms *ModelSuite) TestPost_GetFiles() {
 // TestPost_AttachPhoto_GetPhoto tests the AttachPhoto and GetPhoto methods of models.Post
 func (ms *ModelSuite) TestPost_AttachPhoto_GetPhoto() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	user := User{}
 	if err := ms.DB.Create(&user); err != nil {

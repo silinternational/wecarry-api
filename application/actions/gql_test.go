@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/gobuffalo/httptest"
-	"github.com/silinternational/wecarry-api/models"
 )
 
 type gqlErrorResponse struct {
@@ -21,7 +20,6 @@ type gqlErrorResponse struct {
 
 func (as *ActionSuite) Test_CreateOrganization() {
 	t := as.T()
-	models.ResetTables(as.T(), as.DB)
 
 	// Array indexes for convenience in references
 	const (
