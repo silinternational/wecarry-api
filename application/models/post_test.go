@@ -627,7 +627,7 @@ func (ms *ModelSuite) TestPost_SetOrigin() {
 	ms.NoError(err, "unexpected error from post.GetOrigin()")
 
 	locationFixtures[0].ID = locationFromDB.ID
-	ms.Equal(locationFixtures[0], *locationFromDB, "destination data doesn't match new location")
+	ms.Equal(locationFixtures[0], *locationFromDB, "origin data doesn't match new location")
 
 	err = post.SetOrigin(locationFixtures[1])
 	ms.NoError(err, "unexpected error from post.SetOrigin()")
