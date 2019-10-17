@@ -194,6 +194,20 @@ func (ms *ModelSuite) TestPost_ValidateCreate() {
 			errField: "create_status",
 		},
 		{
+			name: "bad status - delivered",
+			post: Post{
+				CreatedByID:    1,
+				OrganizationID: 1,
+				Type:           PostTypeRequest,
+				Title:          "A Request",
+				Size:           PostSizeMedium,
+				Status:         PostStatusDelivered,
+				Uuid:           domain.GetUuid(),
+			},
+			wantErr:  true,
+			errField: "create_status",
+		},
+		{
 			name: "bad status - received",
 			post: Post{
 				CreatedByID:    1,
@@ -536,18 +550,18 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			errField: "status",
 		},
 		{
-			name: "good status - from received to accepted",
+			name: "good status - from received to received",
 			post: Post{
-				Status: PostStatusAccepted,
+				Title:  "New Title",
+				Status: PostStatusReceived,
 				Uuid:   posts[3].Uuid,
 			},
 			wantErr: false,
 		},
 		{
-			name: "good status - from received to received",
+			name: "good status - from received to accepted",
 			post: Post{
-				Title:  "New Title",
-				Status: PostStatusReceived,
+				Status: PostStatusAccepted,
 				Uuid:   posts[3].Uuid,
 			},
 			wantErr: false,
@@ -696,7 +710,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 		{
 			name: "bad status - from removed to delivered",
 			post: Post{
-				Status: PostStatusCommitted,
+				Status: PostStatusDelivered,
 				Uuid:   posts[5].Uuid,
 			},
 			wantErr:  true,
@@ -705,7 +719,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 		{
 			name: "bad status - from removed to received",
 			post: Post{
-				Status: PostStatusAccepted,
+				Status: PostStatusReceived,
 				Uuid:   posts[5].Uuid,
 			},
 			wantErr:  true,
@@ -714,10 +728,10 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 		{
 			name: "bad status - from removed to completed",
 			post: Post{
-				Status: PostStatusRemoved,
+				Status: PostStatusCompleted,
 				Uuid:   posts[5].Uuid,
 			},
-			wantErr:  false,
+			wantErr:  true,
 			errField: "status",
 		},
 	}
