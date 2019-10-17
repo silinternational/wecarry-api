@@ -766,7 +766,7 @@ func (ms *ModelSuite) TestUser_SetLocation() {
 	ms.NoError(err, "unexpected error from user.GetLocation()")
 
 	locationFixtures[0].ID = locationFromDB.ID
-	ms.Equal(locationFixtures[0], *locationFromDB, "destination data doesn't match new location")
+	ms.Equal(locationFixtures[0], *locationFromDB, "user location data doesn't match new location")
 
 	err = user.SetLocation(locationFixtures[1])
 	ms.NoError(err, "unexpected error from user.SetLocation()")
