@@ -263,11 +263,7 @@ func CreateFixturesValidateUpdate(ms *ModelSuite, t *testing.T) []Post {
 		AuthConfig: "{}",
 		Uuid:       domain.GetUuid(),
 	}
-	err := ms.DB.Create(org)
-	if err != nil {
-		t.Errorf("Failed to create organization for test, error: %s", err)
-		t.FailNow()
-	}
+	createFixture(t, org)
 
 	// Create User
 	user := User{
@@ -330,6 +326,15 @@ func CreateFixturesValidateUpdate(ms *ModelSuite, t *testing.T) []Post {
 			Status:         PostStatusCompleted,
 			Uuid:           domain.GetUuid(),
 		},
+		{
+			CreatedByID:    user.ID,
+			OrganizationID: org.ID,
+			Type:           PostTypeRequest,
+			Title:          "Removed Request 5",
+			Size:           PostSizeMedium,
+			Status:         PostStatusRemoved,
+			Uuid:           domain.GetUuid(),
+		},
 	}
 
 	if err := CreatePosts(posts); err != nil {
@@ -386,6 +391,15 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			errField: "status",
 		},
 		{
+			name: "bad status - from open to delivered",
+			post: Post{
+				Status: PostStatusDelivered,
+				Uuid:   posts[0].Uuid,
+			},
+			wantErr:  true,
+			errField: "status",
+		},
+		{
 			name: "bad status - from open to received",
 			post: Post{
 				Status: PostStatusReceived,
@@ -424,6 +438,14 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			name: "good status - from committed to accepted",
 			post: Post{
 				Status: PostStatusAccepted,
+				Uuid:   posts[1].Uuid,
+			},
+			wantErr: false,
+		},
+		{
+			name: "good status - from committed to delivered",
+			post: Post{
+				Status: PostStatusDelivered,
 				Uuid:   posts[1].Uuid,
 			},
 			wantErr: false,
@@ -472,6 +494,14 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			wantErr: false,
 		},
 		{
+			name: "good status - from accepted to delivered",
+			post: Post{
+				Status: PostStatusDelivered,
+				Uuid:   posts[2].Uuid,
+			},
+			wantErr: false,
+		},
+		{
 			name: "good status - from accepted to received",
 			post: Post{
 				Status: PostStatusReceived,
@@ -504,6 +534,14 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			},
 			wantErr:  true,
 			errField: "status",
+		},
+		{
+			name: "good status - from received to accepted",
+			post: Post{
+				Status: PostStatusAccepted,
+				Uuid:   posts[3].Uuid,
+			},
+			wantErr: false,
 		},
 		{
 			name: "good status - from received to received",
@@ -541,9 +579,18 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			errField: "status",
 		},
 		{
-			name: "bad status - from received to accepted",
+			name: "bad status - from received to delivered",
 			post: Post{
-				Status: PostStatusAccepted,
+				Status: PostStatusDelivered,
+				Uuid:   posts[3].Uuid,
+			},
+			wantErr:  true,
+			errField: "status",
+		},
+		{
+			name: "bad status - from received to removed",
+			post: Post{
+				Status: PostStatusRemoved,
 				Uuid:   posts[3].Uuid,
 			},
 			wantErr:  true,
@@ -554,6 +601,22 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			post: Post{
 				Title:  "New Title",
 				Status: PostStatusCompleted,
+				Uuid:   posts[4].Uuid,
+			},
+			wantErr: false,
+		},
+		{
+			name: "good status - from completed to delivered",
+			post: Post{
+				Status: PostStatusDelivered,
+				Uuid:   posts[4].Uuid,
+			},
+			wantErr: false,
+		},
+		{
+			name: "good status - from completed to received",
+			post: Post{
+				Status: PostStatusReceived,
 				Uuid:   posts[4].Uuid,
 			},
 			wantErr: false,
@@ -586,12 +649,75 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			errField: "status",
 		},
 		{
-			name: "bad status - from completed to received",
+			name: "bad status - from completed to removed",
 			post: Post{
-				Status: PostStatusReceived,
+				Status: PostStatusRemoved,
 				Uuid:   posts[4].Uuid,
 			},
 			wantErr:  true,
+			errField: "status",
+		},
+		{
+			name: "good status - from removed to removed",
+			post: Post{
+				Title:  "New Title",
+				Status: PostStatusRemoved,
+				Uuid:   posts[5].Uuid,
+			},
+			wantErr: false,
+		},
+		{
+			name: "bad status - from removed to open",
+			post: Post{
+				Status: PostStatusOpen,
+				Uuid:   posts[5].Uuid,
+			},
+			wantErr:  true,
+			errField: "status",
+		},
+		{
+			name: "bad status - from removed to committed",
+			post: Post{
+				Status: PostStatusCommitted,
+				Uuid:   posts[5].Uuid,
+			},
+			wantErr:  true,
+			errField: "status",
+		},
+		{
+			name: "bad status - from removed to accepted",
+			post: Post{
+				Status: PostStatusAccepted,
+				Uuid:   posts[5].Uuid,
+			},
+			wantErr:  true,
+			errField: "status",
+		},
+		{
+			name: "bad status - from removed to delivered",
+			post: Post{
+				Status: PostStatusCommitted,
+				Uuid:   posts[5].Uuid,
+			},
+			wantErr:  true,
+			errField: "status",
+		},
+		{
+			name: "bad status - from removed to received",
+			post: Post{
+				Status: PostStatusAccepted,
+				Uuid:   posts[5].Uuid,
+			},
+			wantErr:  true,
+			errField: "status",
+		},
+		{
+			name: "bad status - from removed to completed",
+			post: Post{
+				Status: PostStatusRemoved,
+				Uuid:   posts[5].Uuid,
+			},
+			wantErr:  false,
 			errField: "status",
 		},
 	}

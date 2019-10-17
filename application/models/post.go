@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/gobuffalo/buffalo"
 	"time"
 
 	"github.com/silinternational/wecarry-api/domain"
@@ -30,6 +31,7 @@ const (
 	PostStatusCommitted = "COMMITTED"
 	PostStatusAccepted  = "ACCEPTED"
 	PostStatusReceived  = "RECEIVED"
+	PostStatusDelivered = "DELIVERED"
 	PostStatusCompleted = "COMPLETED"
 	PostStatusRemoved   = "REMOVED"
 )
@@ -126,6 +128,7 @@ func (p *Post) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) {
 type updateStatusValidator struct {
 	Name    string
 	Post    *Post
+	Context buffalo.Context
 	Message string
 }
 
@@ -145,17 +148,21 @@ func (v *updateStatusValidator) IsValid(errors *validate.Errors) {
 	}
 
 	// Ensure that the new status is compatible with the old one in terms of a transition
+	// allow for doing a step in reverse, in case there was a mistake going forward
 	okTransitions := map[string][]string{
 		PostStatusOpen:      {PostStatusCommitted, PostStatusRemoved},
-		PostStatusCommitted: {PostStatusOpen, PostStatusAccepted, PostStatusRemoved},
-		PostStatusAccepted:  {PostStatusOpen, PostStatusReceived, PostStatusRemoved},
-		PostStatusReceived:  {PostStatusCompleted},
-		PostStatusCompleted: {},
+		PostStatusCommitted: {PostStatusOpen, PostStatusAccepted, PostStatusDelivered, PostStatusRemoved},
+		PostStatusAccepted:  {PostStatusOpen, PostStatusDelivered, PostStatusReceived, PostStatusRemoved},
+		PostStatusDelivered: {PostStatusAccepted, PostStatusCompleted},
+		PostStatusReceived:  {PostStatusAccepted, PostStatusCompleted},
+		PostStatusCompleted: {PostStatusDelivered, PostStatusReceived},
 		PostStatusRemoved:   {},
 	}
 
 	goodStatuses, ok := okTransitions[oldPost.Status]
 	if !ok {
+		msg := "unexpected status '%s' on post %s"
+		domain.ErrLogger.Printf(msg, oldPost.Status, oldPost.Uuid.String())
 		return
 	}
 
