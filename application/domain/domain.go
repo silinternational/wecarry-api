@@ -195,21 +195,35 @@ func RollbarMiddleware(next buffalo.Handler) buffalo.Handler {
 	}
 }
 
+func mergeExtras(extras []map[string]interface{}) map[string]interface{} {
+	var allExtras map[string]interface{}
+
+	for _, e := range extras {
+		for k, v := range e {
+			allExtras[k] = v
+		}
+	}
+
+	return allExtras
+}
+
 // Error log error and send to Rollbar
-func Error(c buffalo.Context, msg string, extras map[string]interface{}) {
-	c.Logger().Error(msg, extras)
-	rollbarMessage(c, rollbar.ERR, msg, extras)
+func Error(c buffalo.Context, msg string, extras ...map[string]interface{}) {
+	es := mergeExtras(extras)
+	c.Logger().Error(msg, es)
+	rollbarMessage(c, rollbar.ERR, msg, es)
 }
 
 // Warn log warning and send to Rollbar
-func Warn(c buffalo.Context, msg string, extras map[string]interface{}) {
-	c.Logger().Warn(msg, extras)
-	rollbarMessage(c, rollbar.WARN, msg, extras)
+func Warn(c buffalo.Context, msg string, extras ...map[string]interface{}) {
+	es := mergeExtras(extras)
+	c.Logger().Warn(msg, es)
+	rollbarMessage(c, rollbar.WARN, msg, es)
 }
 
 // Log info message
-func Info(c buffalo.Context, msg string, extras map[string]interface{}) {
-	c.Logger().Info(msg, extras)
+func Info(c buffalo.Context, msg string, extras ...map[string]interface{}) {
+	c.Logger().Info(msg, mergeExtras(extras))
 }
 
 // rollbarMessage is a wrapper function to call rollbar's client.MessageWithExtras function from client stored in context

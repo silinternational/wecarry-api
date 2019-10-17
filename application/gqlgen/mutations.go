@@ -16,12 +16,12 @@ func (r *mutationResolver) CreateMessage(ctx context.Context, input CreateMessag
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 	message, err := ConvertGqlCreateMessageInputToDBMessage(input, cUser)
 	if err != nil {
-		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
+		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
 		return &models.Message{}, err
 	}
 
 	if err := message.Create(); err != nil {
-		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
+		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
 		return &models.Message{}, err
 	}
 

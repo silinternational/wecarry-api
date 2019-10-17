@@ -54,7 +54,7 @@ func (r *queryResolver) Message(ctx context.Context, id *string) (*models.Messag
 
 	if err := models.DB.Select(messageFields...).Where("uuid = ?", id).First(&message); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("error getting message: %v", err.Error()))
-		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
+		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
 		return &models.Message{}, err
 	}
 
