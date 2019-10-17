@@ -5,8 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gobuffalo/buffalo/genny/build/_fixtures/coke/models"
-
 	"github.com/silinternational/wecarry-api/domain"
 )
 
@@ -60,7 +58,6 @@ func (ms *ModelSuite) TestUserAccessToken_Validate() {
 
 func (ms *ModelSuite) TestUserAccessToken_DeleteByBearerToken() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	_, users, userOrgs := CreateUserFixtures(ms, t)
 	tokens := CreateUserAccessTokenFixtures(t, users[0], userOrgs)
@@ -89,7 +86,6 @@ func (ms *ModelSuite) TestUserAccessToken_DeleteByBearerToken() {
 
 func (ms *ModelSuite) TestUserAccessToken_FindByBearerToken() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	_, users, userOrgs := CreateUserFixtures(ms, t)
 	tokens := CreateUserAccessTokenFixtures(t, users[0], userOrgs)
@@ -151,8 +147,6 @@ func CreateUserAccessTokenFixtures(t *testing.T, user User, userOrgs UserOrganiz
 }
 
 func CreateUserFixtures_GetOrg(ms *ModelSuite, t *testing.T) ([]Organization, Users, UserOrganizations) {
-	ResetTables(t, ms.DB)
-
 	unique := domain.GetUuid().String()
 
 	// Load Organization test fixtures
@@ -254,7 +248,6 @@ func CreateUserAccessTokenFixtures_GetOrgs(t *testing.T, users Users, userOrgs U
 
 func (ms *ModelSuite) TestUserAccessToken_GetOrganization() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	orgs, users, userOrgs := CreateUserFixtures_GetOrg(ms, t)
 
@@ -289,14 +282,6 @@ func (ms *ModelSuite) TestUserAccessToken_GetOrganization() {
 	}
 }
 
-func createFixture(t *testing.T, f interface{}) {
-	err := models.DB.Create(f)
-	if err != nil {
-		t.Errorf("error creating %T fixture, %s", f, err)
-		t.FailNow()
-	}
-}
-
 type AccessTokenFixtures struct {
 	Users
 	UserAccessTokens
@@ -304,8 +289,6 @@ type AccessTokenFixtures struct {
 
 // CreateFixtures_GetUser creates test fixtures for the GetUser test function
 func CreateFixtures_GetUser(ms *ModelSuite, t *testing.T) AccessTokenFixtures {
-	ResetTables(t, ms.DB)
-
 	org := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
 	createFixture(t, &org)
 
@@ -351,7 +334,6 @@ func CreateFixtures_GetUser(ms *ModelSuite, t *testing.T) AccessTokenFixtures {
 
 func (ms *ModelSuite) TestUserAccessToken_GetUser() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	f := CreateFixtures_GetUser(ms, t)
 
@@ -386,8 +368,6 @@ func (ms *ModelSuite) TestUserAccessToken_GetUser() {
 
 // CreateFixtures_DeleteIfExpired creates test fixtures for the DeleteIfExpired test function
 func CreateFixtures_DeleteIfExpired(ms *ModelSuite, t *testing.T) AccessTokenFixtures {
-	ResetTables(t, ms.DB)
-
 	org := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
 	createFixture(t, &org)
 
@@ -433,8 +413,6 @@ func CreateFixtures_DeleteIfExpired(ms *ModelSuite, t *testing.T) AccessTokenFix
 
 func (ms *ModelSuite) TestUserAccessToken_DeleteIfExpired() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
-
 	f := CreateFixtures_DeleteIfExpired(ms, t)
 
 	tests := []struct {
@@ -461,8 +439,6 @@ func (ms *ModelSuite) TestUserAccessToken_DeleteIfExpired() {
 
 // CreateFixtures_Renew creates test fixtures for the Renew test function
 func CreateFixtures_Renew(ms *ModelSuite, t *testing.T) AccessTokenFixtures {
-	ResetTables(t, ms.DB)
-
 	org := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
 	createFixture(t, &org)
 
@@ -508,7 +484,6 @@ func CreateFixtures_Renew(ms *ModelSuite, t *testing.T) AccessTokenFixtures {
 
 func (ms *ModelSuite) TestUserAccessToken_Renew() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	f := CreateFixtures_Renew(ms, t)
 
@@ -530,7 +505,6 @@ func (ms *ModelSuite) TestUserAccessToken_Renew() {
 }
 
 func createFixtures_UserAccessTokensDeleteExpired(ms *ModelSuite, t *testing.T) AccessTokenFixtures {
-	ResetTables(t, ms.DB)
 
 	org := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
 	createFixture(t, &org)
@@ -577,7 +551,6 @@ func createFixtures_UserAccessTokensDeleteExpired(ms *ModelSuite, t *testing.T) 
 
 func (ms *ModelSuite) TestUserAccessToken_UserAccessTokensDeleteExpired() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	f := createFixtures_UserAccessTokensDeleteExpired(ms, t)
 

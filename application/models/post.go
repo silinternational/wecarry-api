@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/gobuffalo/buffalo"
 	"time"
 
 	"github.com/silinternational/wecarry-api/domain"
@@ -30,6 +31,7 @@ const (
 	PostStatusCommitted = "COMMITTED"
 	PostStatusAccepted  = "ACCEPTED"
 	PostStatusReceived  = "RECEIVED"
+	PostStatusDelivered = "DELIVERED"
 	PostStatusCompleted = "COMPLETED"
 	PostStatusRemoved   = "REMOVED"
 )
@@ -96,16 +98,89 @@ func (p *Post) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	), nil
 }
 
+type createStatusValidator struct {
+	Name    string
+	Status  string
+	Message string
+}
+
+func (v *createStatusValidator) IsValid(errors *validate.Errors) {
+	if v.Status == PostStatusOpen {
+		return
+	}
+
+	v.Message = fmt.Sprintf("Can only create a post with '%s' status, not '%s' status",
+		PostStatusOpen, v.Status)
+	errors.Add(validators.GenerateKey(v.Name), v.Message)
+}
+
 // ValidateCreate gets run every time you call "pop.ValidateAndCreate" method.
-// This method is not required and may be deleted.
 func (p *Post) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) {
-	return validate.NewErrors(), nil
+	return validate.Validate(
+		&createStatusValidator{
+			Name:   "Create Status",
+			Status: p.Status,
+		},
+	), nil
+	//return validate.NewErrors(), nil
+}
+
+type updateStatusValidator struct {
+	Name    string
+	Post    *Post
+	Context buffalo.Context
+	Message string
+}
+
+func (v *updateStatusValidator) IsValid(errors *validate.Errors) {
+
+	// TODO Take into account PostTypeOffer as well.  This is just for PostTypeRequest
+
+	oldPost := Post{}
+	uuid := v.Post.Uuid.String()
+	if err := oldPost.FindByUUID(uuid); err != nil {
+		v.Message = fmt.Sprintf("error finding existing post by UUID %s ... %v", uuid, err)
+		errors.Add(validators.GenerateKey(v.Name), v.Message)
+	}
+
+	if oldPost.Status == v.Post.Status {
+		return
+	}
+
+	// Ensure that the new status is compatible with the old one in terms of a transition
+	// allow for doing a step in reverse, in case there was a mistake going forward
+	okTransitions := map[string][]string{
+		PostStatusOpen:      {PostStatusCommitted, PostStatusRemoved},
+		PostStatusCommitted: {PostStatusOpen, PostStatusAccepted, PostStatusDelivered, PostStatusRemoved},
+		PostStatusAccepted:  {PostStatusOpen, PostStatusDelivered, PostStatusReceived, PostStatusRemoved},
+		PostStatusDelivered: {PostStatusAccepted, PostStatusCompleted},
+		PostStatusReceived:  {PostStatusAccepted, PostStatusCompleted},
+		PostStatusCompleted: {PostStatusDelivered, PostStatusReceived},
+		PostStatusRemoved:   {},
+	}
+
+	goodStatuses, ok := okTransitions[oldPost.Status]
+	if !ok {
+		msg := "unexpected status '%s' on post %s"
+		domain.ErrLogger.Printf(msg, oldPost.Status, oldPost.Uuid.String())
+		return
+	}
+
+	if !domain.IsStringInSlice(v.Post.Status, goodStatuses) {
+		errorMsg := "cannot move post %s from '%s' status to '%s' status"
+		v.Message = fmt.Sprintf(errorMsg, uuid, oldPost.Status, v.Post.Status)
+		errors.Add(validators.GenerateKey(v.Name), v.Message)
+	}
 }
 
 // ValidateUpdate gets run every time you call "pop.ValidateAndUpdate" method.
-// This method is not required and may be deleted.
 func (p *Post) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
-	return validate.NewErrors(), nil
+	return validate.Validate(
+		&updateStatusValidator{
+			Name: "Status",
+			Post: p,
+		},
+	), nil
 }
 
 func (p *Post) FindByUUID(uuid string) error {

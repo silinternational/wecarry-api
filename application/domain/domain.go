@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -212,6 +213,12 @@ func mergeExtras(extras []map[string]interface{}) map[string]interface{} {
 
 // Error log error and send to Rollbar
 func Error(c buffalo.Context, msg string, extras ...map[string]interface{}) {
+	// Avoid panics running tests when c doesn't have the necessary nested methods
+	cType := fmt.Sprintf("%T", c)
+	if cType == "models.EmptyContext" {
+		return
+	}
+
 	es := mergeExtras(extras)
 	c.Logger().Error(msg, es)
 	rollbarMessage(c, rollbar.ERR, msg, es)

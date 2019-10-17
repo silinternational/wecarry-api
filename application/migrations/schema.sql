@@ -256,8 +256,6 @@ CREATE TABLE public.posts (
     organization_id integer NOT NULL,
     status character varying(255) NOT NULL,
     title character varying(255) NOT NULL,
-    destination character varying(255),
-    origin character varying(255),
     size character varying(255) NOT NULL,
     uuid uuid NOT NULL,
     receiver_id integer,

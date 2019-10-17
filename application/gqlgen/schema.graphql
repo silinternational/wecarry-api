@@ -38,6 +38,7 @@ enum PostStatus {
     OPEN
     COMMITTED
     ACCEPTED
+    DELIVERED
     RECEIVED
     COMPLETED
     REMOVED
@@ -164,7 +165,7 @@ input CreatePostInput {
     type: PostType!
     title: String!
     description: String
-    destination: LocationInput
+    destination: LocationInput!
     origin: LocationInput
     size: PostSize!
     neededAfter: String

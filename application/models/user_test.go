@@ -16,7 +16,6 @@ import (
 
 func (ms *ModelSuite) TestUser_FindOrCreateFromAuthUser() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	unique := domain.GetUuid().String()
 
@@ -28,11 +27,7 @@ func (ms *ModelSuite) TestUser_FindOrCreateFromAuthUser() {
 		AuthConfig: "{}",
 		Uuid:       domain.GetUuid(),
 	}
-	err := ms.DB.Create(org)
-	if err != nil {
-		t.Errorf("Failed to create organization for test, error: %s", err)
-		t.FailNow()
-	}
+	createFixture(t, org)
 
 	type args struct {
 		tx       *pop.Connection
@@ -43,7 +38,6 @@ func (ms *ModelSuite) TestUser_FindOrCreateFromAuthUser() {
 		name    string
 		args    args
 		wantErr bool
-		wantID  int
 	}{
 		{
 			name: "create new user: test_user1",
@@ -57,7 +51,6 @@ func (ms *ModelSuite) TestUser_FindOrCreateFromAuthUser() {
 				},
 			},
 			wantErr: false,
-			wantID:  1,
 		},
 		{
 			name: "find existing user: test_user1",
@@ -71,7 +64,6 @@ func (ms *ModelSuite) TestUser_FindOrCreateFromAuthUser() {
 				},
 			},
 			wantErr: false,
-			wantID:  1,
 		},
 		{
 			name: "conflicting user",
@@ -85,17 +77,17 @@ func (ms *ModelSuite) TestUser_FindOrCreateFromAuthUser() {
 				},
 			},
 			wantErr: true,
-			wantID:  0,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			u := &User{}
 			err := u.FindOrCreateFromAuthUser(tt.args.orgID, tt.args.authUser)
-			if err != nil && !tt.wantErr {
-				t.Errorf("FindOrCreateFromAuthUser() error = %v, wantErr %v", err, tt.wantErr)
-			} else if u.ID != tt.wantID {
-				t.Errorf("ID on user is not what was wanted. Got %v, wanted %v", u.ID, tt.wantID)
+			if tt.wantErr {
+				ms.Error(err, "FindOrCreateFromAuthUser() did not return expected error")
+			} else {
+				ms.NoError(err, "FindOrCreateFromAuthUser() error: %s", err)
+				ms.NotEqual(0, u.ID, "Did not get a new user ID")
 			}
 		})
 	}
@@ -232,7 +224,6 @@ func (ms *ModelSuite) TestValidateUser() {
 // Ensure multiple access tokens for same organization are allowed (to support multiple tabs/browsers)
 func (ms *ModelSuite) TestCreateAccessToken() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	orgs, users, _ := CreateUserFixtures(ms, t)
 
@@ -309,8 +300,7 @@ func (ms *ModelSuite) TestCreateAccessToken() {
 
 func (ms *ModelSuite) TestGetOrgIDs() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
-	_, users, _ := CreateUserFixtures(ms, t)
+	orgs, users, _ := CreateUserFixtures(ms, t)
 
 	tests := []struct {
 		name string
@@ -320,7 +310,7 @@ func (ms *ModelSuite) TestGetOrgIDs() {
 		{
 			name: "basic",
 			user: users[0],
-			want: []int{1, 2},
+			want: []int{orgs[0].ID, orgs[1].ID},
 		},
 	}
 	for _, test := range tests {
@@ -335,7 +325,6 @@ func (ms *ModelSuite) TestGetOrgIDs() {
 }
 
 func CreateUserFixtures(ms *ModelSuite, t *testing.T) ([]Organization, Users, UserOrganizations) {
-	ResetTables(t, ms.DB)
 
 	unique := domain.GetUuid().String()
 
@@ -419,7 +408,6 @@ func CreateUserFixtures(ms *ModelSuite, t *testing.T) ([]Organization, Users, Us
 
 func (ms *ModelSuite) TestGetOrganizations() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 	orgs, users, _ := CreateUserFixtures(ms, t)
 
 	tests := []struct {
@@ -453,7 +441,6 @@ func (ms *ModelSuite) TestGetOrganizations() {
 
 func (ms *ModelSuite) Test_FindUserOrganization() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 	createUserOrganizationFixtures(ms, t)
 
 	type args struct {
@@ -529,7 +516,6 @@ func (ms *ModelSuite) Test_FindUserOrganization() {
 
 func (ms *ModelSuite) TestUser_GetPosts() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(ms, t, users)
 
@@ -587,11 +573,9 @@ func (ms *ModelSuite) TestUser_GetPosts() {
 
 func (ms *ModelSuite) TestCanEditOrganization() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	orgFixtures := []Organization{
 		{
-			ID:         1,
 			Name:       "Org1",
 			Url:        nulls.String{},
 			AuthType:   AuthTypeSaml,
@@ -599,7 +583,6 @@ func (ms *ModelSuite) TestCanEditOrganization() {
 			Uuid:       domain.GetUuid(),
 		},
 		{
-			ID:         2,
 			Name:       "Org2",
 			Url:        nulls.String{},
 			AuthType:   AuthTypeSaml,
@@ -607,15 +590,11 @@ func (ms *ModelSuite) TestCanEditOrganization() {
 			Uuid:       domain.GetUuid(),
 		},
 	}
-	for _, of := range orgFixtures {
-		err := ms.DB.Create(&of)
-		if err != nil {
-			t.Errorf("failed to create org fixtures: %s", err)
-		}
+	for i := range orgFixtures {
+		createFixture(t, &orgFixtures[i])
 	}
 
 	user := User{
-		ID:        1,
 		Email:     "test@com.com",
 		FirstName: "Test",
 		LastName:  "User",
@@ -623,34 +602,26 @@ func (ms *ModelSuite) TestCanEditOrganization() {
 		AdminRole: nulls.String{},
 		Uuid:      domain.GetUuid(),
 	}
-	err := ms.DB.Create(&user)
-	if err != nil {
-		t.Errorf("failed to create user fixture: %s", err)
-	}
+	createFixture(t, &user)
 
 	userOrgFixtures := []UserOrganization{
 		{
-			ID:             1,
-			OrganizationID: 1,
-			UserID:         1,
+			OrganizationID: orgFixtures[0].ID,
+			UserID:         user.ID,
 			Role:           UserOrganizationRoleAdmin,
 			AuthID:         "abc123",
 			AuthEmail:      "test@com.com",
 		},
 		{
-			ID:             2,
-			OrganizationID: 2,
-			UserID:         1,
+			OrganizationID: orgFixtures[1].ID,
+			UserID:         user.ID,
 			Role:           UserOrganizationRoleUser,
 			AuthID:         "123abc",
 			AuthEmail:      "test@com.com",
 		},
 	}
-	for _, uof := range userOrgFixtures {
-		err := ms.DB.Create(&uof)
-		if err != nil {
-			t.Errorf("failed to create user org fixtures: %s", err)
-		}
+	for i := range userOrgFixtures {
+		createFixture(t, &userOrgFixtures[i])
 	}
 
 	if !user.CanEditOrganization(orgFixtures[0].ID) {
@@ -663,7 +634,6 @@ func (ms *ModelSuite) TestCanEditOrganization() {
 
 func (ms *ModelSuite) TestUser_AttachPhoto() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	user := User{}
 	if err := ms.DB.Create(&user); err != nil {
@@ -698,7 +668,6 @@ func (ms *ModelSuite) TestUser_AttachPhoto() {
 }
 
 func CreateUserFixturesForNicknames(ms *ModelSuite, t *testing.T) User {
-	ResetTables(t, ms.DB)
 	prefix := allPrefixes()[0]
 
 	// Load User test fixtures
@@ -767,4 +736,50 @@ func (ms *ModelSuite) TestUniquifyNickname() {
 			ms.NotEqual(test.dontWant, got)
 		})
 	}
+}
+
+func (ms *ModelSuite) TestUser_SetLocation() {
+	t := ms.T()
+
+	user := User{Uuid: domain.GetUuid(), Email: t.Name() + "_user@example.com", Nickname: t.Name() + "_User"}
+	createFixture(t, &user)
+
+	locationFixtures := Locations{
+		{
+			Description: "a place",
+			Country:     "XY",
+			Latitude:    nulls.NewFloat64(1.1),
+			Longitude:   nulls.NewFloat64(2.2),
+		},
+		{
+			Description: "another place",
+			Country:     "AB",
+			Latitude:    nulls.Float64{},
+			Longitude:   nulls.Float64{},
+		},
+	}
+
+	err := user.SetLocation(locationFixtures[0])
+	ms.NoError(err, "unexpected error from user.SetLocation()")
+
+	locationFromDB, err := user.GetLocation()
+	ms.NoError(err, "unexpected error from user.GetLocation()")
+
+	locationFixtures[0].ID = locationFromDB.ID
+	ms.Equal(locationFixtures[0], *locationFromDB, "user location data doesn't match new location")
+
+	err = user.SetLocation(locationFixtures[1])
+	ms.NoError(err, "unexpected error from user.SetLocation()")
+
+	locationFromDB, err = user.GetLocation()
+	ms.NoError(err, "unexpected error from user.GetLocation()")
+	ms.Equal(locationFixtures[0].ID, locationFromDB.ID,
+		"Location ID doesn't match -- location record was probably not reused")
+
+	locationFixtures[1].ID = locationFromDB.ID
+	ms.Equal(locationFixtures[1], *locationFromDB, "user location data doesn't match after update")
+
+	// These are redundant checks, but here to document the fact that a null overwrites previous data.
+	ms.False(locationFromDB.Latitude.Valid)
+	ms.False(locationFromDB.Longitude.Valid)
 }

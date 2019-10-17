@@ -273,7 +273,6 @@ func createOrgFixtures(ms *ModelSuite, t *testing.T) (Organization, Organization
 
 func (ms *ModelSuite) TestOrganization_AddRemoveDomain() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	orgFixtures := []Organization{
 		{
@@ -341,7 +340,6 @@ func (ms *ModelSuite) TestOrganization_AddRemoveDomain() {
 
 func (ms *ModelSuite) TestOrganization_Save() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	orgFixtures := []Organization{
 		{
@@ -412,7 +410,6 @@ func (ms *ModelSuite) TestOrganization_Save() {
 
 func (ms *ModelSuite) TestOrganization_ListAll() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	orgFixtures := []Organization{
 		{
@@ -458,11 +455,9 @@ func (ms *ModelSuite) TestOrganization_ListAll() {
 
 func (ms *ModelSuite) TestOrganization_ListAllForUser() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	orgFixtures := []Organization{
 		{
-			ID:         1,
 			CreatedAt:  time.Time{},
 			UpdatedAt:  time.Time{},
 			Name:       "Org1",
@@ -472,7 +467,6 @@ func (ms *ModelSuite) TestOrganization_ListAllForUser() {
 			Uuid:       domain.GetUuid(),
 		},
 		{
-			ID:         2,
 			CreatedAt:  time.Time{},
 			UpdatedAt:  time.Time{},
 			Name:       "Org2",
@@ -483,16 +477,11 @@ func (ms *ModelSuite) TestOrganization_ListAllForUser() {
 		},
 	}
 	for i := range orgFixtures {
-		err := ms.DB.Create(&orgFixtures[i])
-		if err != nil {
-			t.Errorf("Unable to create org fixture: %s", err)
-			t.FailNow()
-		}
+		createFixture(t, &orgFixtures[i])
 	}
 
 	userFixtures := []User{
 		{
-			ID:        1,
 			Email:     "user1@test.com",
 			FirstName: "user",
 			LastName:  "one",
@@ -502,18 +491,13 @@ func (ms *ModelSuite) TestOrganization_ListAllForUser() {
 		},
 	}
 	for i := range userFixtures {
-		err := ms.DB.Create(&userFixtures[i])
-		if err != nil {
-			t.Errorf("Unable to create user fixture: %s", err)
-			t.FailNow()
-		}
+		createFixture(t, &userFixtures[i])
 	}
 
 	userOrgFixtures := []UserOrganization{
 		{
-			ID:             1,
-			OrganizationID: 1,
-			UserID:         1,
+			OrganizationID: orgFixtures[0].ID,
+			UserID:         userFixtures[0].ID,
 			Role:           UserOrganizationRoleUser,
 			AuthID:         "user_one",
 			AuthEmail:      "user1@test.com",
@@ -521,11 +505,7 @@ func (ms *ModelSuite) TestOrganization_ListAllForUser() {
 		},
 	}
 	for i := range userOrgFixtures {
-		err := ms.DB.Create(&userOrgFixtures[i])
-		if err != nil {
-			t.Errorf("Unable to create user_organization fixture: %s", err)
-			t.FailNow()
-		}
+		createFixture(t, &userOrgFixtures[i])
 	}
 
 	var userOrgs Organizations

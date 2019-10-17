@@ -154,6 +154,7 @@ const (
 	PostStatusOpen      PostStatus = "OPEN"
 	PostStatusCommitted PostStatus = "COMMITTED"
 	PostStatusAccepted  PostStatus = "ACCEPTED"
+	PostStatusDelivered PostStatus = "DELIVERED"
 	PostStatusReceived  PostStatus = "RECEIVED"
 	PostStatusCompleted PostStatus = "COMPLETED"
 	PostStatusRemoved   PostStatus = "REMOVED"
@@ -163,6 +164,7 @@ var AllPostStatus = []PostStatus{
 	PostStatusOpen,
 	PostStatusCommitted,
 	PostStatusAccepted,
+	PostStatusDelivered,
 	PostStatusReceived,
 	PostStatusCompleted,
 	PostStatusRemoved,
@@ -170,7 +172,7 @@ var AllPostStatus = []PostStatus{
 
 func (e PostStatus) IsValid() bool {
 	switch e {
-	case PostStatusOpen, PostStatusCommitted, PostStatusAccepted, PostStatusReceived, PostStatusCompleted, PostStatusRemoved:
+	case PostStatusOpen, PostStatusCommitted, PostStatusAccepted, PostStatusDelivered, PostStatusReceived, PostStatusCompleted, PostStatusRemoved:
 		return true
 	}
 	return false

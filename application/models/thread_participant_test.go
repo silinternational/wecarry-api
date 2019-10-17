@@ -62,7 +62,6 @@ func (ms *ModelSuite) TestThreadParticipant_Validate() {
 
 // CreateFixtures_ThreadParticipant_SetLastViewedAt creates test fixtures for the ThreadParticipant_SetLastViewedAt test
 func CreateFixtures_ThreadParticipant_SetLastViewedAt(ms *ModelSuite, t *testing.T) ThreadFixtures {
-	ResetTables(t, ms.DB)
 
 	org := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
 	createFixture(t, &org)
@@ -125,7 +124,6 @@ func CreateFixtures_ThreadParticipant_SetLastViewedAt(ms *ModelSuite, t *testing
 
 func (ms *ModelSuite) TestThreadParticipant_SetLastViewedAt() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	f := CreateFixtures_ThreadParticipant_SetLastViewedAt(ms, t)
 
