@@ -155,34 +155,35 @@ var _ = grift.Namespace("db", func() {
 		// LOCATIONS Table
 		fixtureLocations := []*models.Location{
 			{
-				ID:          1,
 				Description: "Madrid, Spain",
 				Country:     "ES",
 				Latitude:    nulls.NewFloat64(40.4168),
 				Longitude:   nulls.NewFloat64(-3.7038),
 			},
 			{
-				ID:          1,
 				Description: "JAARS, NC, USA",
 				Country:     "US",
 				Latitude:    nulls.NewFloat64(34.8638),
 				Longitude:   nulls.NewFloat64(-80.7459),
 			},
 			{
-				ID:          1,
 				Description: "Atlanta, GA, USA",
 				Country:     "US",
 				Latitude:    nulls.NewFloat64(33.7490),
 				Longitude:   nulls.NewFloat64(-84.3880),
 			},
 			{
-				ID:          1,
 				Description: "Orlando, FL, USA",
 				Country:     "US",
 				Latitude:    nulls.NewFloat64(28.5383),
 				Longitude:   nulls.NewFloat64(-81.3792),
 			},
-		}
+			{
+				Description: "Toronto, Canada",
+				Country:     "CA",
+				Latitude:    nulls.NewFloat64(43.6532),
+				Longitude:   nulls.NewFloat64(-79.3832),
+			}}
 
 		for _, loc := range fixtureLocations {
 			err := models.DB.Create(loc)
@@ -268,6 +269,7 @@ var _ = grift.Namespace("db", func() {
 				OrganizationID: 2,
 				Status:         models.PostStatusOpen,
 				Title:          "Altoids",
+				DestinationID:  nulls.NewInt(5),
 				Size:           models.PostSizeTiny,
 				Uuid:           postUuid5,
 				ReceiverID:     nulls.NewInt(5),

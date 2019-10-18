@@ -5,16 +5,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gobuffalo/events"
-	"github.com/silinternational/wecarry-api/domain"
-
 	"github.com/gobuffalo/buffalo/genny/build/_fixtures/coke/models"
-
-	"github.com/gofrs/uuid"
-
+	"github.com/gobuffalo/events"
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
 	"github.com/gobuffalo/validate/validators"
+	"github.com/gofrs/uuid"
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 type Message struct {
@@ -104,38 +101,23 @@ func (m *Message) Create() error {
 		return err
 	}
 
-	if err := DB.Load(m, "SentBy", "Thread"); err != nil {
-		return err
-	}
-
-	if err := DB.Load(&m.Thread, "Participants", "Post"); err != nil {
-		return err
-	}
-
-	eventData := MessageCreatedEventData{
-		MessageCreatorNickName: m.SentBy.Nickname,
-		MessageCreatorEmail:    m.SentBy.Email,
-		MessageContent:         m.Content,
-		PostUUID:               m.Thread.Post.Uuid.String(),
-		PostTitle:              m.Thread.Post.Title,
-		ThreadUUID:             m.Thread.Uuid.String(),
-	}
-
-	for _, tp := range m.Thread.Participants {
-		if tp.ID == m.SentBy.ID {
-			continue
-		}
-		eventData.MessageRecipients = append(eventData.MessageRecipients,
-			struct{ Nickname, Email string }{Nickname: tp.Nickname, Email: tp.Email})
-	}
-
 	e := events.Event{
 		Kind:    domain.EventApiMessageCreated,
-		Message: "New Message from " + m.SentBy.Nickname,
-		Payload: events.Payload{"eventData": eventData},
+		Message: "New Message Created",
+		Payload: events.Payload{"id": m.ID},
 	}
 
 	emitEvent(e)
 
 	return nil
+}
+
+// FindByID loads from DB the Message record identified by the given primary key
+func (m *Message) FindByID(id int) error {
+	return DB.Find(m, id)
+}
+
+// LoadRelations loads related records from the database
+func (m *Message) LoadRelations(fields ...string) error {
+	return DB.Load(m, fields...)
 }

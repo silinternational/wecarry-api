@@ -178,3 +178,8 @@ func (t *Thread) SetLastViewedAt(user User, time time.Time) error {
 
 	return tp.SetLastViewedAt(time)
 }
+
+// LoadRelations loads related records from the database
+func (t *Thread) LoadRelations(fields ...string) error {
+	return DB.Load(t, fields...)
+}

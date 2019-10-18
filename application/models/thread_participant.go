@@ -10,14 +10,15 @@ import (
 )
 
 type ThreadParticipant struct {
-	ID           int       `json:"id" db:"id"`
-	CreatedAt    time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at" db:"updated_at"`
-	ThreadID     int       `json:"thread_id" db:"thread_id"`
-	UserID       int       `json:"user_id" db:"user_id"`
-	LastViewedAt time.Time `json:"last_viewed_at" db:"last_viewed_at"`
-	Thread       Thread    `belongs_to:"threads"`
-	User         User      `belongs_to:"users"`
+	ID             int       `json:"id" db:"id"`
+	CreatedAt      time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at" db:"updated_at"`
+	ThreadID       int       `json:"thread_id" db:"thread_id"`
+	UserID         int       `json:"user_id" db:"user_id"`
+	LastViewedAt   time.Time `json:"last_viewed_at" db:"last_viewed_at"`
+	LastNotifiedAt time.Time `json:"last_notified_at" db:"last_notified_at"`
+	Thread         Thread    `belongs_to:"threads"`
+	User           User      `belongs_to:"users"`
 }
 
 // String is not required by pop and may be deleted

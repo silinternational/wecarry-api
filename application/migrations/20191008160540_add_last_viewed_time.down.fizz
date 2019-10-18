@@ -1,1 +1,2 @@
 drop_column("thread_participants", "last_viewed_at")
+drop_column("thread_participants", "last_notified_at")
