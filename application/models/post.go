@@ -187,7 +187,7 @@ func (p *Post) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 type PostStatusEventData struct {
 	OldStatus string
 	NewStatus string
-	PostUuid  string
+	PostID    int
 }
 
 func (p *Post) BeforeUpdate(tx *pop.Connection) error {
@@ -204,7 +204,7 @@ func (p *Post) BeforeUpdate(tx *pop.Connection) error {
 	eventData := PostStatusEventData{
 		OldStatus: oldPost.Status,
 		NewStatus: p.Status,
-		PostUuid:  p.Uuid.String(),
+		PostID:    p.ID,
 	}
 
 	e := events.Event{
@@ -214,6 +214,18 @@ func (p *Post) BeforeUpdate(tx *pop.Connection) error {
 	}
 
 	emitEvent(e)
+	return nil
+}
+
+func (p *Post) FindByID(id int) error {
+	if id <= 0 {
+		return errors.New("error finding post: id must a positive number")
+	}
+
+	if err := DB.Find(p, id); err != nil {
+		return fmt.Errorf("error finding post by id: %s", err.Error())
+	}
+
 	return nil
 }
 
