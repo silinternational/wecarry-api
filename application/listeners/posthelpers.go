@@ -13,18 +13,20 @@ type PostMsgRecipient struct {
 
 // GetPostRecipients returns up to two entries for the Post Requestor and
 // Post Provider assuming their email is not blank.
-func GetPostRecipients(eData m.PostStatusEventData) []PostMsgRecipient {
-	post := eData.Post
+func GetPostRecipients(post m.Post) []PostMsgRecipient {
+
+	receiver, _ := post.GetReceiver([]string{"Email", "Nickname"})
+	provider, _ := post.GetProvider([]string{"Email", "Nickname"})
 
 	var recipients []PostMsgRecipient
 
-	if post.Receiver.Email != "" {
-		r := PostMsgRecipient{nickname: post.Receiver.Nickname, email: post.Receiver.Email}
+	if receiver != nil {
+		r := PostMsgRecipient{nickname: receiver.Nickname, email: receiver.Email}
 		recipients = []PostMsgRecipient{r}
 	}
 
-	if post.Provider.Email != "" {
-		r := PostMsgRecipient{nickname: post.Provider.Nickname, email: post.Provider.Email}
+	if provider != nil {
+		r := PostMsgRecipient{nickname: provider.Nickname, email: provider.Email}
 		recipients = append(recipients, r)
 	}
 
@@ -42,8 +44,8 @@ func sendNotification(template string, recipient PostMsgRecipient) {
 	}
 }
 
-func sendAllNotifications(template string, eData m.PostStatusEventData) {
-	recipients := GetPostRecipients(eData)
+func sendAllNotifications(template string, post m.Post) {
+	recipients := GetPostRecipients(post)
 
 	for _, r := range recipients {
 		sendNotification(template, r)
@@ -72,7 +74,7 @@ var statusTemplates = map[string]string{
 	join(m.PostStatusAccepted, m.PostStatusRemoved):    domain.MessageTemplateRequestFromAcceptedToRemoved,
 }
 
-func requestStatusUpdatedNotifications(eData m.PostStatusEventData) {
+func requestStatusUpdatedNotifications(post m.Post, eData m.PostStatusEventData) {
 
 	fromStatusTo := join(eData.OldStatus, eData.NewStatus)
 	template, ok := statusTemplates[fromStatusTo]
@@ -80,5 +82,5 @@ func requestStatusUpdatedNotifications(eData m.PostStatusEventData) {
 	if !ok {
 		domain.ErrLogger.Printf("unexpected status transition '%s'", fromStatusTo)
 	}
-	sendAllNotifications(template, eData)
+	sendAllNotifications(template, post)
 }

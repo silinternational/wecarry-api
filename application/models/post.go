@@ -187,7 +187,7 @@ func (p *Post) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 type PostStatusEventData struct {
 	OldStatus string
 	NewStatus string
-	Post      Post
+	PostUuid  string
 }
 
 func (p *Post) BeforeUpdate(tx *pop.Connection) error {
@@ -201,15 +201,10 @@ func (p *Post) BeforeUpdate(tx *pop.Connection) error {
 		return nil
 	}
 
-	if err := DB.Load(p, "Receiver", "Provider"); err != nil {
-		domain.ErrLogger.Printf("error loading users on post before update - uuid %v ... %v", p.Uuid, err)
-		return nil
-	}
-
 	eventData := PostStatusEventData{
 		OldStatus: oldPost.Status,
 		NewStatus: p.Status,
-		Post:      *p,
+		PostUuid:  p.Uuid.String(),
 	}
 
 	e := events.Event{

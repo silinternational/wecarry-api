@@ -147,10 +147,17 @@ func sendPostStatusUpdatedNotification(e events.Event) {
 		return
 	}
 
-	if pEData.Post.Type != models.PostTypeRequest {
+	uuid := pEData.PostUuid
+
+	post := models.Post{}
+	if err := post.FindByUUID(uuid); err != nil {
+		domain.ErrLogger.Printf("unable to find post from event with uuid %s ... %s", uuid, err)
+	}
+
+	if post.Type != models.PostTypeRequest {
 		return
 	}
 
-	requestStatusUpdatedNotifications(pEData)
+	requestStatusUpdatedNotifications(post, pEData)
 
 }
