@@ -8,7 +8,6 @@ import (
 	"github.com/gobuffalo/events"
 	"time"
 
-	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
