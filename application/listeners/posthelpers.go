@@ -6,30 +6,32 @@ import (
 	"github.com/silinternational/wecarry-api/notifications"
 )
 
-type msgRecipient struct {
+type PostMsgRecipient struct {
 	nickname string
 	email    string
 }
 
-func getRecipients(eData models.PostStatusEventData) []msgRecipient {
+// GetPostRecipients returns up to two entries for the Post Requestor and
+// Post Provider assuming their email is not blank.
+func GetPostRecipients(eData models.PostStatusEventData) []PostMsgRecipient {
 	post := eData.Post
 
-	var recipients []msgRecipient
+	var recipients []PostMsgRecipient
 
 	if post.Receiver.Email != "" {
-		r := msgRecipient{nickname: post.Receiver.Nickname, email: post.Receiver.Email}
-		recipients = []msgRecipient{r}
+		r := PostMsgRecipient{nickname: post.Receiver.Nickname, email: post.Receiver.Email}
+		recipients = []PostMsgRecipient{r}
 	}
 
 	if post.Provider.Email != "" {
-		r := msgRecipient{nickname: post.Provider.Nickname, email: post.Provider.Email}
+		r := PostMsgRecipient{nickname: post.Provider.Nickname, email: post.Provider.Email}
 		recipients = append(recipients, r)
 	}
 
 	return recipients
 }
 
-func sendNotification(template string, recipient msgRecipient) {
+func sendNotification(template string, recipient PostMsgRecipient) {
 	msg := notifications.Message{
 		Template: template,
 		ToName:   recipient.nickname,
@@ -41,7 +43,7 @@ func sendNotification(template string, recipient msgRecipient) {
 }
 
 func sendAllNotifications(template string, eData models.PostStatusEventData) {
-	recipients := getRecipients(eData)
+	recipients := GetPostRecipients(eData)
 
 	for _, r := range recipients {
 		sendNotification(template, r)
