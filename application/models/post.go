@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gobuffalo/buffalo"
+	"github.com/gobuffalo/events"
 	"time"
 
 	"github.com/silinternational/wecarry-api/domain"
@@ -181,6 +182,45 @@ func (p *Post) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 			Post: p,
 		},
 	), nil
+}
+
+// PostStatusEventData holds data needed by the Post Status Updated event listener
+type PostStatusEventData struct {
+	OldStatus string
+	NewStatus string
+	Post      Post
+}
+
+func (p *Post) BeforeUpdate(tx *pop.Connection) error {
+	oldPost := Post{}
+	if err := tx.Find(&oldPost, p.ID); err != nil {
+		domain.ErrLogger.Printf("error finding original post before update - uuid %v ... %v", p.Uuid, err)
+		return nil
+	}
+
+	if oldPost.Status == "" || oldPost.Status == p.Status {
+		return nil
+	}
+
+	if err := DB.Load(p, "Receiver", "Provider"); err != nil {
+		domain.ErrLogger.Printf("error loading users on post before update - uuid %v ... %v", p.Uuid, err)
+		return nil
+	}
+
+	eventData := PostStatusEventData{
+		OldStatus: oldPost.Status,
+		NewStatus: p.Status,
+		Post:      *p,
+	}
+
+	e := events.Event{
+		Kind:    domain.EventApiPostStatusUpdated,
+		Message: "Post Status changed",
+		Payload: events.Payload{"eventData": eventData},
+	}
+
+	emitEvent(e)
+	return nil
 }
 
 func (p *Post) FindByUUID(uuid string) error {
