@@ -2,11 +2,10 @@ package gqlgen
 
 import (
 	"context"
-	"fmt"
-
-	"github.com/gobuffalo/nulls"
+	"errors"
 
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/gobuffalo/nulls"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 	"github.com/vektah/gqlparser/gqlerror"
@@ -93,7 +92,7 @@ func (r *queryResolver) Users(ctx context.Context) ([]*models.User, error) {
 	currentUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 
 	if currentUser.AdminRole.String != domain.AdminRoleSuperDuperAdmin {
-		err := fmt.Errorf("not authorized")
+		err := errors.New("not authorized")
 		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
 		return []*models.User{}, err
 	}
@@ -117,7 +116,7 @@ func (r *queryResolver) User(ctx context.Context, id *string) (*models.User, err
 	}
 
 	if currentUser.AdminRole.String != domain.AdminRoleSuperDuperAdmin && currentUser.Uuid.String() != *id {
-		err := fmt.Errorf("not authorized")
+		err := errors.New("not authorized")
 		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
 		return &dbUser, err
 	}
@@ -160,7 +159,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 	}
 
 	if cUser.AdminRole.String != domain.AdminRoleSuperDuperAdmin && cUser.ID != user.ID {
-		err := fmt.Errorf("user not allowed to edit user profiles")
+		err := errors.New("user not allowed to edit user profiles")
 		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
 		return &models.User{}, err
 	}
