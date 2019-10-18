@@ -1,18 +1,16 @@
 package actions
 
 import (
+	"errors"
 	"fmt"
 
-	//	"github.com/silinternational/wecarry-api/auth"
 	"net/http"
 	"strconv"
 	"time"
 
-	"github.com/gobuffalo/envy"
-
-	"github.com/gobuffalo/buffalo/render"
-
 	"github.com/gobuffalo/buffalo"
+	"github.com/gobuffalo/buffalo/render"
+	"github.com/gobuffalo/envy"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 )
@@ -112,7 +110,7 @@ func getOrgAndUserOrgs(
 			return org, userOrgs, err
 		}
 		if org.AuthType == "" {
-			return org, userOrgs, fmt.Errorf("unable to find organization by email domain")
+			return org, userOrgs, errors.New("unable to find organization by email domain")
 		}
 	}
 
@@ -401,14 +399,14 @@ func SetCurrentUser(next buffalo.Handler) buffalo.Handler {
 	return func(c buffalo.Context) error {
 		bearerToken := domain.GetBearerTokenFromRequest(c.Request())
 		if bearerToken == "" {
-			return c.Error(http.StatusUnauthorized, fmt.Errorf("no Bearer token provided"))
+			return c.Error(http.StatusUnauthorized, errors.New("no Bearer token provided"))
 		}
 
 		var userAccessToken models.UserAccessToken
 		err := userAccessToken.FindByBearerToken(bearerToken)
 		if err != nil {
 			domain.ErrLogger.Print(err.Error())
-			return c.Error(http.StatusUnauthorized, fmt.Errorf("invalid bearer token"))
+			return c.Error(http.StatusUnauthorized, errors.New("invalid bearer token"))
 		}
 
 		isExpired, err := userAccessToken.DeleteIfExpired()
@@ -417,7 +415,7 @@ func SetCurrentUser(next buffalo.Handler) buffalo.Handler {
 		}
 
 		if isExpired {
-			return c.Error(http.StatusUnauthorized, fmt.Errorf("expired bearer token"))
+			return c.Error(http.StatusUnauthorized, errors.New("expired bearer token"))
 		}
 
 		user, err := userAccessToken.GetUser()

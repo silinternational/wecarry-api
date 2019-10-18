@@ -6,13 +6,12 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/silinternational/wecarry-api/domain"
-
 	"github.com/gobuffalo/envy"
-
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
 	"github.com/gobuffalo/validate/validators"
+	"github.com/pkg/errors"
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 type UserAccessToken struct {
@@ -138,7 +137,7 @@ func (u *UserAccessToken) GetUser() (User, error) {
 		return User{}, err
 	}
 	if u.User.ID <= 0 {
-		return User{}, fmt.Errorf("no user associated with access token")
+		return User{}, errors.New("no user associated with access token")
 	}
 	return u.User, nil
 }

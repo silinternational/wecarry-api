@@ -52,10 +52,6 @@ const (
 	MessageTemplateNewRequest = "new_request"
 )
 
-// NoExtras is exported for use when making calls to RollbarError and rollbarMessage to reduce
-// typing map[string]interface{} when no extras are needed
-var NoExtras map[string]interface{}
-
 var Logger log.Logger
 var ErrLogger log.Logger
 
@@ -196,29 +192,48 @@ func RollbarMiddleware(next buffalo.Handler) buffalo.Handler {
 	}
 }
 
-// Error log error and send to Rollbar
-func Error(c buffalo.Context, msg string, extras map[string]interface{}) {
+func mergeExtras(extras []map[string]interface{}) map[string]interface{} {
+	var allExtras map[string]interface{}
 
+	// I didn't think I would need this, but without is at least one test was failing
+	// The code allowed a map[string]interface{} to get through (i.e. not in a slice)
+	// without the compiler complaining
+	if len(extras) == 1 {
+		return extras[0]
+	}
+
+	for _, e := range extras {
+		for k, v := range e {
+			allExtras[k] = v
+		}
+	}
+
+	return allExtras
+}
+
+// Error log error and send to Rollbar
+func Error(c buffalo.Context, msg string, extras ...map[string]interface{}) {
 	// Avoid panics running tests when c doesn't have the necessary nested methods
 	cType := fmt.Sprintf("%T", c)
 	if cType == "models.EmptyContext" {
 		return
 	}
 
-	c.Logger().Error(msg, extras)
-	rollbarMessage(c, rollbar.ERR, msg, extras)
-
+	es := mergeExtras(extras)
+	c.Logger().Error(msg, es)
+	rollbarMessage(c, rollbar.ERR, msg, es)
 }
 
 // Warn log warning and send to Rollbar
-func Warn(c buffalo.Context, msg string, extras map[string]interface{}) {
-	c.Logger().Warn(msg, extras)
-	rollbarMessage(c, rollbar.WARN, msg, extras)
+func Warn(c buffalo.Context, msg string, extras ...map[string]interface{}) {
+	es := mergeExtras(extras)
+	c.Logger().Warn(msg, es)
+	rollbarMessage(c, rollbar.WARN, msg, es)
 }
 
 // Log info message
-func Info(c buffalo.Context, msg string, extras map[string]interface{}) {
-	c.Logger().Info(msg, extras)
+func Info(c buffalo.Context, msg string, extras ...map[string]interface{}) {
+	c.Logger().Info(msg, mergeExtras(extras))
 }
 
 // rollbarMessage is a wrapper function to call rollbar's client.MessageWithExtras function from client stored in context

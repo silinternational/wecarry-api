@@ -2,10 +2,9 @@ package gqlgen
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
 	"github.com/gobuffalo/nulls"
-
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 )
@@ -16,12 +15,12 @@ func (r *mutationResolver) CreateMessage(ctx context.Context, input CreateMessag
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 	message, err := ConvertGqlCreateMessageInputToDBMessage(input, cUser)
 	if err != nil {
-		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
+		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
 		return &models.Message{}, err
 	}
 
 	if err := message.Create(); err != nil {
-		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
+		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
 		return &models.Message{}, err
 	}
 
@@ -31,7 +30,7 @@ func (r *mutationResolver) CreateMessage(ctx context.Context, input CreateMessag
 func (r *mutationResolver) CreateOrganization(ctx context.Context, input CreateOrganizationInput) (*models.Organization, error) {
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 	if !cUser.CanCreateOrganization() {
-		return &models.Organization{}, fmt.Errorf("user not allowed to create organizations")
+		return &models.Organization{}, errors.New("user not allowed to create organizations")
 	}
 
 	org := models.Organization{
@@ -55,7 +54,7 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, input UpdateO
 
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 	if !cUser.CanEditOrganization(org.ID) {
-		return &models.Organization{}, fmt.Errorf("user not allowed to edit organizations")
+		return &models.Organization{}, errors.New("user not allowed to edit organizations")
 	}
 
 	if input.URL != nil {
@@ -79,7 +78,7 @@ func (r *mutationResolver) CreateOrganizationDomain(ctx context.Context, input C
 
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 	if !cUser.CanEditOrganization(org.ID) {
-		return []*models.OrganizationDomain{}, fmt.Errorf("user not allowed to edit organizations")
+		return []*models.OrganizationDomain{}, errors.New("user not allowed to edit organizations")
 	}
 
 	err = org.AddDomain(input.Domain)
@@ -104,7 +103,7 @@ func (r *mutationResolver) RemoveOrganizationDomain(ctx context.Context, input R
 
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 	if !cUser.CanEditOrganization(org.ID) {
-		return []*models.OrganizationDomain{}, fmt.Errorf("user not allowed to edit organizations")
+		return []*models.OrganizationDomain{}, errors.New("user not allowed to edit organizations")
 	}
 
 	err = org.RemoveDomain(input.Domain)

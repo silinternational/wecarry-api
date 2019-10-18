@@ -6,13 +6,12 @@ import (
 	"time"
 
 	"github.com/gobuffalo/buffalo/genny/build/_fixtures/coke/models"
-	"github.com/silinternational/wecarry-api/domain"
-
-	"github.com/gofrs/uuid"
-
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
 	"github.com/gobuffalo/validate/validators"
+	"github.com/gofrs/uuid"
+	"github.com/pkg/errors"
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 type Thread struct {
@@ -64,7 +63,7 @@ func (t *Thread) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 
 func (t *Thread) FindByUUID(uuid string) error {
 	if uuid == "" {
-		return fmt.Errorf("error: thread uuid must not be blank")
+		return errors.New("error: thread uuid must not be blank")
 	}
 
 	queryString := fmt.Sprintf("uuid = '%s'", uuid)
