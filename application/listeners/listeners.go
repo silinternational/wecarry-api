@@ -5,12 +5,9 @@ import (
 
 	"github.com/silinternational/wecarry-api/job"
 
-	"github.com/gobuffalo/envy"
-
 	"github.com/gobuffalo/events"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
-	"github.com/silinternational/wecarry-api/notifications"
 )
 
 const (
@@ -107,51 +104,7 @@ func sendNewMessageNotification(e events.Event) {
 		return
 	}
 
-	var m models.Message
-	if err := m.FindByID(id, "SentBy", "Thread"); err != nil {
-		domain.ErrLogger.Printf("sendNewMessageNotification: bad ID (%d) received in event payload, %s", id, err)
-		return
-	}
-
-	if err := m.Thread.LoadRelations("Participants", "Post"); err != nil {
-		domain.ErrLogger.Printf("sendNewMessageNotification: failed to load Participants and Post")
-		return
-	}
-
-	var recipients []struct{ Nickname, Email string }
-	for _, tp := range m.Thread.Participants {
-		if tp.ID == m.SentBy.ID {
-			continue
-		}
-		recipients = append(recipients,
-			struct{ Nickname, Email string }{tp.Nickname, tp.Email})
-	}
-
-	uiUrl := envy.Get(domain.UIURLEnv, "")
-	data := map[string]interface{}{
-		"postURL":        uiUrl + "/#/requests/" + m.Thread.Post.Uuid.String(),
-		"postTitle":      m.Thread.Post.Title,
-		"messageContent": m.Content,
-		"sentByNickname": m.SentBy.Nickname,
-		"threadURL":      uiUrl + "/#/messages/" + m.Thread.Uuid.String(),
-	}
-
-	for _, r := range recipients {
-		msg := notifications.Message{
-			Template:  domain.MessageTemplateNewMessage,
-			Data:      data,
-			FromName:  m.SentBy.Nickname,
-			FromEmail: m.SentBy.Email,
-			ToName:    r.Nickname,
-			ToEmail:   r.Email,
-		}
-		if err := notifications.Send(msg); err != nil {
-			domain.ErrLogger.Printf("error sending 'New Message' notification, %s", err)
-		}
-
-		args := map[string]interface{}{"message_id": "1"}
-		if err := job.Submit("new_message", args); err != nil {
-			domain.ErrLogger.Printf("error starting 'New Message' job, %s", err)
-		}
+	if err := job.Submit("new_message", map[string]interface{}{"message_id": id}); err != nil {
+		domain.ErrLogger.Printf("error starting 'New Message' job, %s", err)
 	}
 }

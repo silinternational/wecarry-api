@@ -38,7 +38,8 @@ func (t *DummyService) Send(msg Message) error {
 		return errors.New(errMsg)
 	}
 
-	domain.Logger.Printf("dummy message subject: %s", template.subject)
+	domain.Logger.Printf("dummy message subject: %s, recipient: %s, data: %+v",
+		template.subject, msg.ToName, msg.TemplateData)
 	t.sentMessages = append(t.sentMessages,
 		dummyMessage{
 			subject:   template.subject,
