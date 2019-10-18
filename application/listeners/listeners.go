@@ -48,6 +48,13 @@ var apiListeners = map[string][]apiListener{
 			listener: sendNewMessageNotification,
 		},
 	},
+
+	domain.EventApiPostStatusUpdated: []apiListener{
+		{
+			name:     "post-status-updated-notification",
+			listener: sendPostStatusUpdatedNotification,
+		},
+	},
 }
 
 // RegisterListeners registers all the listeners to be used by the app
@@ -126,5 +133,38 @@ func sendNewMessageNotification(e events.Event) {
 		if err := notifications.Send(msg); err != nil {
 			domain.ErrLogger.Printf("error sending 'New Message' notification, %s", err)
 		}
+	}
+}
+
+func sendPostStatusUpdatedNotification(e events.Event) {
+	if e.Kind != domain.EventApiPostStatusUpdated {
+		return
+	}
+
+	pEData, ok := e.Payload["eventData"].(models.PostStatusEventData)
+	if !ok {
+		domain.ErrLogger.Print("unable to parse Post Status Updated event payload")
+		return
+	}
+
+	if pEData.Post.Type != models.PostTypeRequest {
+		return
+	}
+
+	switch pEData.NewStatus {
+	case models.PostStatusOpen:
+		RequestNewStatusOpen(pEData)
+	case models.PostStatusCommitted:
+		RequestNewStatusCommitted(pEData)
+	case models.PostStatusAccepted:
+		RequestNewStatusAccepted(pEData)
+	case models.PostStatusDelivered:
+		RequestNewStatusDelivered(pEData)
+	case models.PostStatusReceived:
+		RequestNewStatusReceived(pEData)
+	case models.PostStatusCompleted:
+		RequestStatusCompleted(pEData)
+	case models.PostStatusRemoved:
+		RequestNewStatusRemoved(pEData)
 	}
 }

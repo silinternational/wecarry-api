@@ -41,15 +41,32 @@ const (
 
 // Event Kinds
 const (
-	EventApiUserCreated      = "api:user:created"
-	EventApiAuthUserLoggedIn = "api:auth:user:loggedin"
-	EventApiMessageCreated   = "api:message:created"
+	EventApiUserCreated       = "api:user:created"
+	EventApiAuthUserLoggedIn  = "api:auth:user:loggedin"
+	EventApiMessageCreated    = "api:message:created"
+	EventApiPostStatusUpdated = "api:post:status:updated"
 )
 
 // Notification Message Template Names
 const (
-	MessageTemplateNewMessage = "new_message"
-	MessageTemplateNewRequest = "new_request"
+	MessageTemplateNewMessage                      = "new_message"
+	MessageTemplateNewRequest                      = "new_request"
+	MessageTemplateRequestFromCommittedToOpen      = "request_from_committed_to_open"
+	MessageTemplateRequestFromAcceptedToOpen       = "request_from_accepted_to_open"
+	MessageTemplateRequestFromOpenToCommitted      = "request_from_open_to_committed"
+	MessageTemplateRequestFromCommittedToAccepted  = "request_from_committed_to_accepted"
+	MessageTemplateRequestFromDeliveredToAccepted  = "request_from_delivered_to_accepted"
+	MessageTemplateRequestFromReceivedToAccepted   = "request_from_received_to_accepted"
+	MessageTemplateRequestFromCommittedToDelivered = "request_from_committed_to_delivered"
+	MessageTemplateRequestFromAcceptedToDelivered  = "request_from_accepted_to_delivered"
+	MessageTemplateRequestFromCompletedToDelivered = "request_from_completed_to_delivered"
+	MessageTemplateRequestFromAcceptedToReceived   = "request_from_accepted_to_received"
+	MessageTemplateRequestFromCompletedToReceived  = "request_from_completed_to_received"
+	MessageTemplateRequestFromDeliveredToCompleted = "request_from_delivered_to_completed"
+	MessageTemplateRequestFromReceivedToCompleted  = "request_from_received_to_completed"
+	MessageTemplateRequestFromOpenToRemoved        = "request_from_open_to_removed"
+	MessageTemplateRequestFromCommittedToRemoved   = "request_from_committed_to_removed"
+	MessageTemplateRequestFromAcceptedToRemoved    = "request_from_accepted_to_removed"
 )
 
 var Logger log.Logger
