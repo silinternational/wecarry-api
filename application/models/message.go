@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -113,11 +114,22 @@ func (m *Message) Create() error {
 }
 
 // FindByID loads from DB the Message record identified by the given primary key
-func (m *Message) FindByID(id int) error {
+func (m *Message) FindByID(id int, eagerFields ...string) error {
+	if id <= 0 {
+		return errors.New("error finding message, invalid id")
+	}
+
+	if err := DB.Eager(eagerFields...).Find(m, id); err != nil {
+		return fmt.Errorf("error finding message by id, %s", err)
+	}
 	return DB.Find(m, id)
 }
 
 // LoadRelations loads related records from the database
 func (m *Message) LoadRelations(fields ...string) error {
-	return DB.Load(m, fields...)
+	if err := DB.Load(m, fields...); err != nil {
+		return fmt.Errorf("error loading related records for message %s, %s", m.Uuid.String(), err)
+	}
+
+	return nil
 }

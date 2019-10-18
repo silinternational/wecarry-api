@@ -108,13 +108,8 @@ func sendNewMessageNotification(e events.Event) {
 	}
 
 	var m models.Message
-	if err := m.FindByID(id); err != nil {
+	if err := m.FindByID(id, "SentBy", "Thread"); err != nil {
 		domain.ErrLogger.Printf("sendNewMessageNotification: bad ID (%d) received in event payload, %s", id, err)
-		return
-	}
-
-	if err := m.LoadRelations("SentBy", "Thread"); err != nil {
-		domain.ErrLogger.Printf("sendNewMessageNotification: failed to load SentBy and Thread")
 		return
 	}
 

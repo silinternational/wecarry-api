@@ -19,6 +19,7 @@ func init() {
 	}
 }
 
+// NewMessageWorker is the Worker handler for new notifications of new Thread Messages
 func NewMessageWorker(args worker.Args) error {
 	domain.Logger.Printf("--------- new_message worker, args: %+v", args)
 
@@ -39,6 +40,7 @@ func NewMessageWorker(args worker.Args) error {
 	return nil
 }
 
+// Submit enqueues a new Worker job for the given handler. Arguments can be provided in `args`.
 func Submit(handler string, args map[string]interface{}) error {
 	job := worker.Job{
 		Queue:   "default",
@@ -47,6 +49,7 @@ func Submit(handler string, args map[string]interface{}) error {
 	}
 	if err := W.PerformIn(job, 10*time.Second); err != nil {
 		domain.ErrLogger.Print(err)
+		return err
 	}
 
 	return nil

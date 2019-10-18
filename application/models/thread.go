@@ -181,5 +181,9 @@ func (t *Thread) SetLastViewedAt(user User, time time.Time) error {
 
 // LoadRelations loads related records from the database
 func (t *Thread) LoadRelations(fields ...string) error {
-	return DB.Load(t, fields...)
+	if err := DB.Load(t, fields...); err != nil {
+		return fmt.Errorf("error loading related records for thread %s, %s", t.Uuid.String(), err)
+	}
+
+	return nil
 }
