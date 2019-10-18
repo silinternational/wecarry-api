@@ -6,16 +6,17 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
+	"errors"
 	"fmt"
-	"github.com/gobuffalo/envy"
-	"github.com/silinternational/wecarry-api/domain"
 	"strings"
 
 	"github.com/gobuffalo/buffalo"
+	"github.com/gobuffalo/envy"
 	saml2 "github.com/russellhaering/gosaml2"
 	"github.com/russellhaering/gosaml2/types"
 	dsig "github.com/russellhaering/goxmldsig"
 	"github.com/silinternational/wecarry-api/auth"
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 type Provider struct {
@@ -162,7 +163,7 @@ func getCertStore(cert string) (dsig.MemoryX509CertificateStore, error) {
 	}
 
 	if cert == "" || !strings.HasPrefix(cert, "-") {
-		return certStore, fmt.Errorf("a valid PEM encoded certificate is required")
+		return certStore, errors.New("a valid PEM encoded certificate is required")
 	}
 
 	cert, err := pemToBase64(cert)
@@ -189,11 +190,11 @@ func getRsaPrivateKey(privateKey, publicCert string) (*rsa.PrivateKey, error) {
 	var rsaKey *rsa.PrivateKey
 
 	if privateKey == "" {
-		return rsaKey, fmt.Errorf("A valid PEM encoded privateKey is required")
+		return rsaKey, errors.New("A valid PEM encoded privateKey is required")
 	}
 
 	if publicCert == "" {
-		return rsaKey, fmt.Errorf("A valid PEM encoded publicCert is required")
+		return rsaKey, errors.New("A valid PEM encoded publicCert is required")
 	}
 
 	privPem, _ := pem.Decode([]byte(privateKey))
@@ -212,12 +213,12 @@ func getRsaPrivateKey(privateKey, publicCert string) (*rsa.PrivateKey, error) {
 	var ok bool
 	rsaKey, ok = parsedKey.(*rsa.PrivateKey)
 	if !ok {
-		return rsaKey, fmt.Errorf("unable to assert parsed key type")
+		return rsaKey, errors.New("unable to assert parsed key type")
 	}
 
 	pubPem, _ := pem.Decode([]byte(publicCert))
 	if pubPem == nil {
-		return rsaKey, fmt.Errorf("rsa public key not in pem format")
+		return rsaKey, errors.New("rsa public key not in pem format")
 	}
 	if pubPem.Type != "CERTIFICATE" {
 		return rsaKey, fmt.Errorf("RSA public key is of the wrong type: %s", pubPem.Type)
@@ -242,7 +243,7 @@ func getRsaPrivateKey(privateKey, publicCert string) (*rsa.PrivateKey, error) {
 func pemToBase64(pemStr string) (string, error) {
 	block, _ := pem.Decode([]byte(pemStr))
 	if block == nil {
-		return "", fmt.Errorf("input string is not PEM encoded")
+		return "", errors.New("input string is not PEM encoded")
 	}
 
 	return base64.StdEncoding.EncodeToString(block.Bytes), nil

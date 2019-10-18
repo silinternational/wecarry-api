@@ -2,20 +2,18 @@ package aws
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"net/url"
 	"strconv"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws/awserr"
-
-	"github.com/gobuffalo/envy"
-
-	"github.com/aws/aws-sdk-go/aws/credentials"
-
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/gobuffalo/envy"
 )
 
 const AwsS3RegionEnv = "AWS_REGION"
@@ -149,7 +147,7 @@ func GetFileURL(key string) (ObjectUrl, error) {
 func CreateS3Bucket() error {
 	env := envy.Get("GO_ENV", "development")
 	if env != "test" && env != "development" {
-		return fmt.Errorf("CreateS3Bucket should only be used in test and development")
+		return errors.New("CreateS3Bucket should only be used in test and development")
 	}
 
 	config := GetS3ConfigFromEnv()
