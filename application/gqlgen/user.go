@@ -94,13 +94,13 @@ func (r *queryResolver) Users(ctx context.Context) ([]*models.User, error) {
 
 	if currentUser.AdminRole.String != domain.AdminRoleSuperDuperAdmin {
 		err := fmt.Errorf("not authorized")
-		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
+		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
 		return []*models.User{}, err
 	}
 
 	if err := db.Select(GetSelectFieldsForUsers(ctx)...).All(&dbUsers); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting users: %v", err.Error()))
-		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
+		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
 		return []*models.User{}, err
 	}
 
@@ -118,13 +118,13 @@ func (r *queryResolver) User(ctx context.Context, id *string) (*models.User, err
 
 	if currentUser.AdminRole.String != domain.AdminRoleSuperDuperAdmin && currentUser.Uuid.String() != *id {
 		err := fmt.Errorf("not authorized")
-		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
+		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
 		return &dbUser, err
 	}
 
 	if err := models.DB.Select(GetSelectFieldsForUsers(ctx)...).Where("uuid = ?", id).First(&dbUser); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting user: %v", err.Error()))
-		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
+		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
 		return &dbUser, err
 	}
 
@@ -152,7 +152,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 	if input.ID != nil {
 		err := user.FindByUUID(*(input.ID))
 		if err != nil {
-			domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
+			domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
 			return &models.User{}, err
 		}
 	} else {
@@ -161,7 +161,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 
 	if cUser.AdminRole.String != domain.AdminRoleSuperDuperAdmin && cUser.ID != user.ID {
 		err := fmt.Errorf("user not allowed to edit user profiles")
-		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
+		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
 		return &models.User{}, err
 	}
 
@@ -169,7 +169,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 		var file models.File
 		err := file.FindByUUID(*input.PhotoID)
 		if err != nil {
-			domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
+			domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
 			return &models.User{}, err
 		}
 		user.PhotoFileID = nulls.NewInt(file.ID)
@@ -178,7 +178,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 	if input.Location != nil {
 		err := user.SetLocation(convertGqlLocationInputToDBLocation(*input.Location))
 		if err != nil {
-			domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
+			domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
 			return &models.User{}, err
 		}
 	}
