@@ -217,12 +217,12 @@ func (p *Post) BeforeUpdate(tx *pop.Connection) error {
 	return nil
 }
 
-func (p *Post) FindByID(id int) error {
+func (p *Post) FindByID(id int, eagerFields ...string) error {
 	if id <= 0 {
 		return errors.New("error finding post: id must a positive number")
 	}
 
-	if err := DB.Find(p, id); err != nil {
+	if err := DB.Eager(eagerFields...).Find(p, id); err != nil {
 		return fmt.Errorf("error finding post by id: %s", err.Error())
 	}
 

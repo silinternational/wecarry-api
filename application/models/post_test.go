@@ -792,6 +792,56 @@ func CreatePostFixtures(ms *ModelSuite, t *testing.T, users Users) []Post {
 	return posts
 }
 
+func (ms *ModelSuite) TestPost_FindByID() {
+	t := ms.T()
+
+	_, users, _ := CreateUserFixtures(ms, t)
+	posts := CreatePostFixtures(ms, t, users)
+
+	tests := []struct {
+		name          string
+		id            int
+		eagerFields   []string
+		wantPost      Post
+		wantCreatedBy User
+		wantProvider  User
+		wantErr       bool
+	}{
+		{name: "good with no related fields",
+			id:       posts[0].ID,
+			wantPost: posts[0],
+		},
+		{name: "good with two related fields",
+			id:            posts[0].ID,
+			eagerFields:   []string{"CreatedBy", "Provider"},
+			wantPost:      posts[0],
+			wantCreatedBy: users[0],
+			wantProvider:  users[1],
+		},
+		{name: "zero ID", id: 0, wantErr: true},
+		{name: "wrong id", id: 99999, wantErr: true},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var post Post
+			err := post.FindByID(test.id, test.eagerFields...)
+
+			if test.wantErr {
+				ms.Error(err)
+			} else {
+				ms.NoError(err)
+				ms.Equal(test.wantPost.ID, post.ID, "bad post id")
+				if test.wantCreatedBy.ID != 0 {
+					ms.Equal(test.wantCreatedBy.ID, post.CreatedBy.ID, "bad post createdby id")
+				}
+				if test.wantProvider.ID != 0 {
+					ms.Equal(test.wantProvider.ID, post.Provider.ID, "bod post provider id")
+				}
+			}
+		})
+	}
+}
+
 func (ms *ModelSuite) TestPost_FindByUUID() {
 	t := ms.T()
 
