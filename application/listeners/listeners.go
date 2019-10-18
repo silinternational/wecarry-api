@@ -151,20 +151,6 @@ func sendPostStatusUpdatedNotification(e events.Event) {
 		return
 	}
 
-	switch pEData.NewStatus {
-	case models.PostStatusOpen:
-		RequestNewStatusOpen(pEData)
-	case models.PostStatusCommitted:
-		RequestNewStatusCommitted(pEData)
-	case models.PostStatusAccepted:
-		RequestNewStatusAccepted(pEData)
-	case models.PostStatusDelivered:
-		RequestNewStatusDelivered(pEData)
-	case models.PostStatusReceived:
-		RequestNewStatusReceived(pEData)
-	case models.PostStatusCompleted:
-		RequestStatusCompleted(pEData)
-	case models.PostStatusRemoved:
-		RequestNewStatusRemoved(pEData)
-	}
+	requestStatusUpdatedNotifications(pEData)
+
 }

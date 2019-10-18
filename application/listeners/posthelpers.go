@@ -2,7 +2,7 @@ package listeners
 
 import (
 	"github.com/silinternational/wecarry-api/domain"
-	"github.com/silinternational/wecarry-api/models"
+	m "github.com/silinternational/wecarry-api/models"
 	"github.com/silinternational/wecarry-api/notifications"
 )
 
@@ -13,7 +13,7 @@ type PostMsgRecipient struct {
 
 // GetPostRecipients returns up to two entries for the Post Requestor and
 // Post Provider assuming their email is not blank.
-func GetPostRecipients(eData models.PostStatusEventData) []PostMsgRecipient {
+func GetPostRecipients(eData m.PostStatusEventData) []PostMsgRecipient {
 	post := eData.Post
 
 	var recipients []PostMsgRecipient
@@ -42,7 +42,7 @@ func sendNotification(template string, recipient PostMsgRecipient) {
 	}
 }
 
-func sendAllNotifications(template string, eData models.PostStatusEventData) {
+func sendAllNotifications(template string, eData m.PostStatusEventData) {
 	recipients := GetPostRecipients(eData)
 
 	for _, r := range recipients {
@@ -50,82 +50,35 @@ func sendAllNotifications(template string, eData models.PostStatusEventData) {
 	}
 }
 
-func RequestNewStatusOpen(eData models.PostStatusEventData) {
-
-	switch eData.OldStatus {
-	case models.PostStatusCommitted: // Reverted. No longer committed
-		sendAllNotifications(domain.MessageTemplateRequestFromCommittedToOpen, eData)
-
-	case models.PostStatusAccepted: // Reverted. No longer accepted or committed
-		sendAllNotifications(domain.MessageTemplateRequestFromAcceptedToOpen, eData)
-	}
+func join(s1, s2 string) string {
+	return s1 + "-" + s2
 }
 
-func RequestNewStatusCommitted(eData models.PostStatusEventData) {
-
-	// Just keeping to the pattern, even though there is only one option now
-	switch eData.OldStatus {
-	case models.PostStatusOpen: // Advanced - normal progression
-		sendAllNotifications(domain.MessageTemplateRequestFromOpenToCommitted, eData)
-	}
+var statusTemplates = map[string]string{
+	join(m.PostStatusCommitted, m.PostStatusOpen):      domain.MessageTemplateRequestFromCommittedToOpen,
+	join(m.PostStatusAccepted, m.PostStatusOpen):       domain.MessageTemplateRequestFromAcceptedToOpen,
+	join(m.PostStatusOpen, m.PostStatusCommitted):      domain.MessageTemplateRequestFromOpenToCommitted,
+	join(m.PostStatusCommitted, m.PostStatusAccepted):  domain.MessageTemplateRequestFromCommittedToAccepted,
+	join(m.PostStatusDelivered, m.PostStatusAccepted):  domain.MessageTemplateRequestFromDeliveredToAccepted,
+	join(m.PostStatusReceived, m.PostStatusAccepted):   domain.MessageTemplateRequestFromReceivedToAccepted,
+	join(m.PostStatusCommitted, m.PostStatusDelivered): domain.MessageTemplateRequestFromCommittedToDelivered,
+	join(m.PostStatusAccepted, m.PostStatusDelivered):  domain.MessageTemplateRequestFromAcceptedToDelivered,
+	join(m.PostStatusCompleted, m.PostStatusDelivered): domain.MessageTemplateRequestFromCompletedToDelivered,
+	join(m.PostStatusAccepted, m.PostStatusReceived):   domain.MessageTemplateRequestFromAcceptedToReceived,
+	join(m.PostStatusCompleted, m.PostStatusReceived):  domain.MessageTemplateRequestFromCompletedToReceived,
+	join(m.PostStatusDelivered, m.PostStatusCompleted): domain.MessageTemplateRequestFromDeliveredToCompleted,
+	join(m.PostStatusReceived, m.PostStatusCompleted):  domain.MessageTemplateRequestFromReceivedToCompleted,
+	join(m.PostStatusCommitted, m.PostStatusRemoved):   domain.MessageTemplateRequestFromCommittedToRemoved,
+	join(m.PostStatusAccepted, m.PostStatusRemoved):    domain.MessageTemplateRequestFromAcceptedToRemoved,
 }
 
-func RequestNewStatusAccepted(eData models.PostStatusEventData) {
+func requestStatusUpdatedNotifications(eData m.PostStatusEventData) {
 
-	switch eData.OldStatus {
-	case models.PostStatusCommitted: // Advanced - normal progression
-		sendAllNotifications(domain.MessageTemplateRequestFromCommittedToAccepted, eData)
+	fromStatusTo := join(eData.OldStatus, eData.NewStatus)
+	template, ok := statusTemplates[fromStatusTo]
 
-	case models.PostStatusDelivered: // Reverted - just fixing a mis-click?
-		sendAllNotifications(domain.MessageTemplateRequestFromDeliveredToAccepted, eData)
-
-	case models.PostStatusReceived: // Reverted - just fixing a mis-click?
-		sendAllNotifications(domain.MessageTemplateRequestFromReceivedToAccepted, eData)
+	if !ok {
+		domain.ErrLogger.Printf("unexpected status transition '%s'", fromStatusTo)
 	}
-}
-
-func RequestNewStatusDelivered(eData models.PostStatusEventData) {
-	switch eData.OldStatus {
-	case models.PostStatusCommitted: // Advanced - skipped Accepted
-		sendAllNotifications(domain.MessageTemplateRequestFromCommittedToDelivered, eData)
-
-	case models.PostStatusAccepted: // Advanced - normal progression
-		sendAllNotifications(domain.MessageTemplateRequestFromAcceptedToDelivered, eData)
-
-	case models.PostStatusCompleted: // Reverted - just fixing a mis-click?
-		sendAllNotifications(domain.MessageTemplateRequestFromCompletedToDelivered, eData)
-	}
-}
-
-func RequestNewStatusReceived(eData models.PostStatusEventData) {
-	switch eData.OldStatus {
-	case models.PostStatusAccepted: // Advanced - normal progression
-		sendAllNotifications(domain.MessageTemplateRequestFromAcceptedToReceived, eData)
-
-	case models.PostStatusCompleted: // Reverted - just fixing a mis-click?
-		sendAllNotifications(domain.MessageTemplateRequestFromCompletedToReceived, eData)
-	}
-}
-
-func RequestStatusCompleted(eData models.PostStatusEventData) {
-	switch eData.OldStatus {
-	case models.PostStatusDelivered: // Advanced - normal progression
-		sendAllNotifications(domain.MessageTemplateRequestFromDeliveredToCompleted, eData)
-
-	case models.PostStatusReceived: // Advanced - normal progression
-		sendAllNotifications(domain.MessageTemplateRequestFromReceivedToCompleted, eData)
-	}
-}
-
-func RequestNewStatusRemoved(eData models.PostStatusEventData) {
-	switch eData.OldStatus {
-	case models.PostStatusOpen: // Cancelling the request
-		sendAllNotifications(domain.MessageTemplateRequestFromOpenToRemoved, eData)
-
-	case models.PostStatusCommitted: // Cancelling the request
-		sendAllNotifications(domain.MessageTemplateRequestFromCommittedToRemoved, eData)
-
-	case models.PostStatusAccepted: // Cancelling the request
-		sendAllNotifications(domain.MessageTemplateRequestFromAcceptedToRemoved, eData)
-	}
+	sendAllNotifications(template, eData)
 }
