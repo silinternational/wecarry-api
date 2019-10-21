@@ -51,3 +51,14 @@ func (t *DummyService) Send(msg Message) error {
 		})
 	return nil
 }
+
+// GetNumberOfMessagesSent returns the number of messages sent since initialization or the last call to
+// DeleteSentMessages
+func (t *DummyService) GetNumberOfMessagesSent() int {
+	return len(t.sentMessages)
+}
+
+// DeleteSentMessages erases the store of sent messages
+func (t *DummyService) DeleteSentMessages() {
+	t.sentMessages = []dummyMessage{}
+}
