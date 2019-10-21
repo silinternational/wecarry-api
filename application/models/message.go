@@ -124,12 +124,3 @@ func (m *Message) FindByID(id int, eagerFields ...string) error {
 	}
 	return DB.Find(m, id)
 }
-
-// LoadRelations loads related records from the database
-func (m *Message) LoadRelations(fields ...string) error {
-	if err := DB.Load(m, fields...); err != nil {
-		return fmt.Errorf("error loading related records for message %s, %s", m.Uuid.String(), err)
-	}
-
-	return nil
-}
