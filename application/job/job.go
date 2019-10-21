@@ -11,6 +11,9 @@ import (
 	"github.com/gobuffalo/buffalo/worker"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
+
+const (
+	NewMessage = "new_message"
 )
 
 var W worker.Worker
@@ -26,7 +29,7 @@ func init() {
 func NewMessageHandler(args worker.Args) error {
 	domain.Logger.Printf("--------- new_message worker, args: %+v", args)
 
-	id, ok := args["message_id"].(int)
+	id, ok := args[domain.ArgMessageID].(int)
 	if !ok {
 		return errors.New("no message ID provided to new_message worker")
 	}

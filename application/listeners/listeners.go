@@ -98,13 +98,13 @@ func sendNewMessageNotification(e events.Event) {
 
 	domain.Logger.Printf("%s Message Created ... %s", domain.GetCurrentTime(), e.Message)
 
-	id, ok := e.Payload["id"].(int)
+	id, ok := e.Payload[domain.ArgMessageID].(int)
 	if !ok {
 		domain.ErrLogger.Print("sendNewMessageNotification: unable to read message ID from event payload")
 		return
 	}
 
-	if err := job.Submit("new_message", map[string]interface{}{"message_id": id}); err != nil {
+	if err := job.Submit(job.NewMessage, map[string]interface{}{domain.ArgMessageID: id}); err != nil {
 		domain.ErrLogger.Printf("error starting 'New Message' job, %s", err)
 	}
 }

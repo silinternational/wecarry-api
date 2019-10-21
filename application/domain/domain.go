@@ -46,6 +46,11 @@ const (
 	EventApiMessageCreated   = "api:message:created"
 )
 
+// Event and Job argument names
+const (
+	ArgMessageID = "message_id"
+)
+
 // Notification Message Template Names
 const (
 	MessageTemplateNewMessage = "new_message"

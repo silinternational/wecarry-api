@@ -111,7 +111,7 @@ func (m *Message) Create() error {
 	e := events.Event{
 		Kind:    domain.EventApiMessageCreated,
 		Message: "New Message Created",
-		Payload: events.Payload{"id": m.ID},
+		Payload: events.Payload{domain.ArgMessageID: m.ID},
 	}
 
 	emitEvent(e)
