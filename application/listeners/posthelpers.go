@@ -81,6 +81,7 @@ func requestStatusUpdatedNotifications(post m.Post, eData m.PostStatusEventData)
 
 	if !ok {
 		domain.ErrLogger.Printf("unexpected status transition '%s'", fromStatusTo)
+		return
 	}
 	sendAllNotifications(template, post)
 }
