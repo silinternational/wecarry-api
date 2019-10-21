@@ -36,7 +36,7 @@ func NewMessageHandler(args worker.Args) error {
 		return fmt.Errorf("bad ID (%d) received by new message handler, %s", id, err)
 	}
 
-	if err := m.Thread.LoadRelations("Participants", "Post"); err != nil {
+	if err := m.Thread.Load("Participants", "Post"); err != nil {
 		return errors.New("failed to load Participants and Post in new message handler")
 	}
 
