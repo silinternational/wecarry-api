@@ -123,6 +123,40 @@ func (ms *ModelSuite) TestMessage_GetThread() {
 	ms.Equal(threads[0].PostID, threadResults.PostID, "Bad thread PostID")
 }
 
+func (ms *ModelSuite) TestMessage_Create() {
+	t := ms.T()
+
+	f := Fixtures_Message_Create(ms, t)
+	msg := Message{
+		Uuid:     domain.GetUuid(),
+		ThreadID: f.Threads[0].ID,
+		SentByID: f.Users[0].ID,
+		Content:  `Owe nothing to anyone, except to love one another.`,
+	}
+
+	tests := []struct {
+		name    string
+		msg     Message
+		wantErr bool
+	}{
+		{name: "good", msg: msg},
+		{name: "validation error", msg: Message{}, wantErr: true},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			message := test.msg
+			err := message.Create()
+
+			if test.wantErr {
+				ms.Error(err)
+			} else {
+				ms.NoError(err)
+				ms.Equal(test.msg.Uuid, message.Uuid, "incorrect message UUID")
+			}
+		})
+	}
+}
+
 func (ms *ModelSuite) TestMessage_FindByID() {
 	t := ms.T()
 
