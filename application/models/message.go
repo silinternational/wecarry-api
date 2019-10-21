@@ -98,8 +98,14 @@ func (m *Message) GetThread(requestFields []string) (*Thread, error) {
 
 // Create a new message. Sends an `EventApiMessageCreated` event.
 func (m *Message) Create() error {
-	if err := DB.Create(m); err != nil {
+	valErrs, err := DB.ValidateAndCreate(m)
+
+	if err != nil {
 		return err
+	}
+
+	if len(valErrs.Errors) > 0 {
+		return errors.New(FlattenPopErrors(valErrs))
 	}
 
 	e := events.Event{
