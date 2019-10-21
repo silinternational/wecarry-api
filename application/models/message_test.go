@@ -91,18 +91,16 @@ func (ms *ModelSuite) TestMessage_GetSender() {
 	messages := messageFixtures.Messages
 	users := messageFixtures.Users
 
-	userResults, err := messages[1].GetSender([]string{"id", "nickname", "last_name", "first_name", "email"})
+	userResults, err := messages[0].GetSender([]string{"id", "nickname", "email"})
 
 	if err != nil {
 		t.Errorf("unexpected error ... %v", err)
 		t.FailNow()
 	}
 
-	ms.Equal(users[1].ID, userResults.ID, "Bad user ID")
-	ms.Equal(users[1].Nickname, userResults.Nickname, "Bad user Nickname")
-	ms.Equal(users[1].LastName, userResults.LastName, "Bad user LastName")
-	ms.Equal(users[1].FirstName, userResults.FirstName, "Bad user FirstName")
-	ms.Equal(users[1].Email, userResults.Email, "Bad user Email")
+	ms.Equal(users[0].ID, userResults.ID, "Bad user ID")
+	ms.Equal(users[0].Nickname, userResults.Nickname, "Bad user Nickname")
+	ms.Equal(users[0].Email, userResults.Email, "Bad user Email")
 }
 
 func (ms *ModelSuite) TestMessage_GetThread() {
@@ -113,14 +111,14 @@ func (ms *ModelSuite) TestMessage_GetThread() {
 	messages := messageFixtures.Messages
 	threads := messageFixtures.Threads
 
-	threadResults, err := messages[1].GetThread([]string{"id", "uuid", "post_id"})
+	threadResults, err := messages[0].GetThread([]string{"id", "uuid", "post_id"})
 
 	if err != nil {
 		t.Errorf("unexpected error ... %v", err)
 		t.FailNow()
 	}
 
-	ms.Equal(threads[1].ID, threadResults.ID, "Bad thread ID")
-	ms.Equal(threads[1].Uuid, threadResults.Uuid, "Bad thread UUID")
-	ms.Equal(threads[1].PostID, threadResults.PostID, "Bad thread PostID")
+	ms.Equal(threads[0].ID, threadResults.ID, "Bad thread ID")
+	ms.Equal(threads[0].Uuid, threadResults.Uuid, "Bad thread UUID")
+	ms.Equal(threads[0].PostID, threadResults.PostID, "Bad thread PostID")
 }
