@@ -48,7 +48,8 @@ func NewMessageHandler(args worker.Args) error {
 
 		var tp models.ThreadParticipant
 		if err := models.DB.Where("user_id = ? AND thread_id = ?", p.ID, m.ThreadID).First(&tp); err != nil {
-			return fmt.Errorf("failed to find thread_participant record for user %d and thread %d", tp.ID, m.ThreadID)
+			return fmt.Errorf("failed to find thread_participant record for user %d and thread %d, %s",
+				tp.ID, m.ThreadID, err)
 		}
 		if tp.LastViewedAt.After(tp.LastNotifiedAt) {
 			continue
