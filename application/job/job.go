@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gobuffalo/envy"
-	"github.com/silinternational/wecarry-api/notifications"
-
 	"github.com/gobuffalo/buffalo/worker"
+	"github.com/gobuffalo/envy"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
+	"github.com/silinternational/wecarry-api/notifications"
+)
 
 const (
 	NewMessage = "new_message"
@@ -20,7 +20,7 @@ var W worker.Worker
 
 func init() {
 	W = worker.NewSimple()
-	if err := W.Register("new_message", NewMessageHandler); err != nil {
+	if err := W.Register(NewMessage, NewMessageHandler); err != nil {
 		domain.ErrLogger.Printf("error registering 'new_message' worker, %s", err)
 	}
 }
@@ -31,7 +31,7 @@ func NewMessageHandler(args worker.Args) error {
 
 	id, ok := args[domain.ArgMessageID].(int)
 	if !ok {
-		return errors.New("no message ID provided to new_message worker")
+		return fmt.Errorf("no message ID provided to new_message worker, args = %+v", args)
 	}
 
 	var m models.Message
