@@ -51,7 +51,8 @@ func NewMessageHandler(args worker.Args) error {
 			return fmt.Errorf("failed to find thread_participant record for user %d and thread %d, %s",
 				tp.ID, m.ThreadID, err)
 		}
-		if tp.LastViewedAt.After(tp.LastNotifiedAt) {
+		// Don't send a notification if this user has viewed the message or if they've already been notified
+		if tp.LastViewedAt.After(m.UpdatedAt) || tp.LastNotifiedAt.After(m.UpdatedAt) {
 			continue
 		}
 
