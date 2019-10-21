@@ -17,29 +17,27 @@ var W worker.Worker
 
 func init() {
 	W = worker.NewSimple()
-	if err := W.Register("new_message", NewMessageWorker); err != nil {
+	if err := W.Register("new_message", NewMessageHandler); err != nil {
 		domain.ErrLogger.Printf("error registering 'new_message' worker, %s", err)
 	}
 }
 
-// NewMessageWorker is the Worker handler for new notifications of new Thread Messages
-func NewMessageWorker(args worker.Args) error {
+// NewMessageHandler is the Worker handler for new notifications of new Thread Messages
+func NewMessageHandler(args worker.Args) error {
 	domain.Logger.Printf("--------- new_message worker, args: %+v", args)
 
 	id, ok := args["message_id"].(int)
 	if !ok {
-		err := errors.New("no message ID provided to new_message worker")
-		domain.ErrLogger.Print(err)
-		return err
+		return errors.New("no message ID provided to new_message worker")
 	}
 
 	var m models.Message
 	if err := m.FindByID(id, "SentBy", "Thread"); err != nil {
-		return fmt.Errorf("sendNewMessageNotification: bad ID (%d) received in event payload, %s", id, err)
+		return fmt.Errorf("bad ID (%d) received by new message handler, %s", id, err)
 	}
 
 	if err := m.Thread.LoadRelations("Participants", "Post"); err != nil {
-		return fmt.Errorf("sendNewMessageNotification: failed to load Participants and Post")
+		return errors.New("failed to load Participants and Post in new message handler")
 	}
 
 	var recipients []struct{ Nickname, Email string }
