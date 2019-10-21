@@ -119,8 +119,17 @@ func (m *Message) FindByID(id int, eagerFields ...string) error {
 		return errors.New("error finding message, invalid id")
 	}
 
-	if err := DB.Eager(eagerFields...).Find(m, id); err != nil {
+	var err error
+	// Eager() with an empty argument list will load all fields, which is not what is intended here
+	if len(eagerFields) > 0 {
+		err = DB.Eager(eagerFields...).Find(m, id)
+	} else {
+		err = DB.Find(m, id)
+	}
+
+	if err != nil {
 		return fmt.Errorf("error finding message by id, %s", err)
 	}
+
 	return DB.Find(m, id)
 }

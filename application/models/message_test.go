@@ -86,7 +86,7 @@ func (ms *ModelSuite) TestMessage_Validate() {
 func (ms *ModelSuite) TestMessage_GetSender() {
 	t := ms.T()
 
-	messageFixtures := Fixtures_GetSender(ms, t)
+	messageFixtures := Fixtures_Message_GetSender(ms, t)
 
 	messages := messageFixtures.Messages
 	users := messageFixtures.Users
@@ -106,7 +106,7 @@ func (ms *ModelSuite) TestMessage_GetSender() {
 func (ms *ModelSuite) TestMessage_GetThread() {
 	t := ms.T()
 
-	messageFixtures := Fixtures_GetSender(ms, t)
+	messageFixtures := Fixtures_Message_GetSender(ms, t)
 
 	messages := messageFixtures.Messages
 	threads := messageFixtures.Threads
@@ -121,4 +121,49 @@ func (ms *ModelSuite) TestMessage_GetThread() {
 	ms.Equal(threads[0].ID, threadResults.ID, "Bad thread ID")
 	ms.Equal(threads[0].Uuid, threadResults.Uuid, "Bad thread UUID")
 	ms.Equal(threads[0].PostID, threadResults.PostID, "Bad thread PostID")
+}
+
+func (ms *ModelSuite) TestMessage_FindByID() {
+	t := ms.T()
+
+	f := Fixtures_Message_FindByID(ms, t)
+
+	tests := []struct {
+		name        string
+		id          int
+		eagerFields []string
+		wantMessage Message
+		wantSentBy  User
+		wantThread  Thread
+		wantErr     bool
+	}{
+		{name: "good with no extra fields",
+			id:          f.Messages[0].ID,
+			wantMessage: f.Messages[0],
+		},
+		{name: "good with two extra fields",
+			id:          f.Messages[0].ID,
+			eagerFields: []string{"SentBy", "Thread"},
+			wantMessage: f.Messages[0],
+			wantSentBy:  f.Users[0],
+			wantThread:  f.Threads[0],
+		},
+		{name: "zero ID", id: 0, wantErr: true},
+		{name: "wrong id", id: 99999, wantErr: true},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var message Message
+			err := message.FindByID(test.id, test.eagerFields...)
+
+			if test.wantErr {
+				ms.Error(err)
+			} else {
+				ms.NoError(err)
+				ms.Equal(test.wantMessage.ID, message.ID, "bad message id")
+				ms.Equal(test.wantSentBy.ID, message.SentBy.ID, "bad message sent_by id")
+				ms.Equal(test.wantThread.Uuid, message.Thread.Uuid, "bad message thread id")
+			}
+		})
+	}
 }
