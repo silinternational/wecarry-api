@@ -18,25 +18,16 @@ func CreateFixtures_GetPostRecipients(ms *ModelSuite, t *testing.T) orgUserPostF
 	unique := domain.GetUuid().String()
 
 	// Load Organization test fixtures
-	orgs := []m.Organization{
-		{
-			Name:       "ACME-" + unique,
-			Uuid:       domain.GetUuid(),
-			AuthType:   m.AuthTypeSaml,
-			AuthConfig: "{}",
-		},
-		{
-			Name:       "Starfleet Academy-" + unique,
-			Uuid:       domain.GetUuid(),
-			AuthType:   m.AuthTypeSaml,
-			AuthConfig: "{}",
-		},
+	org := m.Organization{
+		Name:       "ACME-" + unique,
+		Uuid:       domain.GetUuid(),
+		AuthType:   m.AuthTypeSaml,
+		AuthConfig: "{}",
 	}
-	for i := range orgs {
-		if err := ms.DB.Create(&orgs[i]); err != nil {
-			t.Errorf("error creating org %+v ...\n %v \n", orgs[i], err)
-			t.FailNow()
-		}
+
+	if err := ms.DB.Create(&org); err != nil {
+		t.Errorf("error creating org %+v ...\n %v \n", org, err)
+		t.FailNow()
 	}
 
 	// Load User test fixtures
@@ -71,25 +62,15 @@ func CreateFixtures_GetPostRecipients(ms *ModelSuite, t *testing.T) orgUserPostF
 	}
 
 	// Load UserOrganization test fixtures
-	userOrgs := m.UserOrganizations{
-		{
-			OrganizationID: orgs[0].ID,
-			UserID:         users[0].ID,
-			AuthID:         users[0].Email,
-			AuthEmail:      users[0].Email,
-		},
-		{
-			OrganizationID: orgs[1].ID,
-			UserID:         users[0].ID,
-			AuthID:         users[0].Email,
-			AuthEmail:      users[0].Email,
-		},
+	userOrg := m.UserOrganization{
+		OrganizationID: org.ID,
+		UserID:         users[0].ID,
+		AuthID:         users[0].Email,
+		AuthEmail:      users[0].Email,
 	}
-	for i := range userOrgs {
-		if err := ms.DB.Create(&userOrgs[i]); err != nil {
-			t.Errorf("could not create test user org ... %v. uo = %+v", err, userOrgs[i])
-			t.FailNow()
-		}
+	if err := ms.DB.Create(&userOrg); err != nil {
+		t.Errorf("could not create test user org ... %v. uo = %+v", err, userOrg)
+		t.FailNow()
 	}
 
 	if err := m.DB.Load(&users[0], "Organizations"); err != nil {
@@ -132,7 +113,7 @@ func CreateFixtures_GetPostRecipients(ms *ModelSuite, t *testing.T) orgUserPostF
 	}
 
 	return orgUserPostFixtures{
-		orgs:  orgs,
+		orgs:  m.Organizations{org},
 		users: users,
 		posts: posts,
 	}
@@ -143,25 +124,16 @@ func CreateFixtures_RequestStatusUpdatedNotifications(ms *ModelSuite, t *testing
 	unique := domain.GetUuid().String()
 
 	// Load Organization test fixtures
-	orgs := []m.Organization{
-		{
-			Name:       "ACME-" + unique,
-			Uuid:       domain.GetUuid(),
-			AuthType:   m.AuthTypeSaml,
-			AuthConfig: "{}",
-		},
-		{
-			Name:       "Starfleet Academy-" + unique,
-			Uuid:       domain.GetUuid(),
-			AuthType:   m.AuthTypeSaml,
-			AuthConfig: "{}",
-		},
+	org := m.Organization{
+		Name:       "ACME-" + unique,
+		Uuid:       domain.GetUuid(),
+		AuthType:   m.AuthTypeSaml,
+		AuthConfig: "{}",
 	}
-	for i := range orgs {
-		if err := ms.DB.Create(&orgs[i]); err != nil {
-			t.Errorf("error creating org %+v ...\n %v \n", orgs[i], err)
-			t.FailNow()
-		}
+
+	if err := ms.DB.Create(&org); err != nil {
+		t.Errorf("error creating org %+v ...\n %v \n", org, err)
+		t.FailNow()
 	}
 
 	// Load User test fixtures
@@ -196,25 +168,16 @@ func CreateFixtures_RequestStatusUpdatedNotifications(ms *ModelSuite, t *testing
 	}
 
 	// Load UserOrganization test fixtures
-	userOrgs := m.UserOrganizations{
-		{
-			OrganizationID: orgs[0].ID,
-			UserID:         users[0].ID,
-			AuthID:         users[0].Email,
-			AuthEmail:      users[0].Email,
-		},
-		{
-			OrganizationID: orgs[1].ID,
-			UserID:         users[0].ID,
-			AuthID:         users[0].Email,
-			AuthEmail:      users[0].Email,
-		},
+	userOrg := m.UserOrganization{
+
+		OrganizationID: org.ID,
+		UserID:         users[0].ID,
+		AuthID:         users[0].Email,
+		AuthEmail:      users[0].Email,
 	}
-	for i := range userOrgs {
-		if err := ms.DB.Create(&userOrgs[i]); err != nil {
-			t.Errorf("could not create test user org ... %v. uo = %+v", err, userOrgs[i])
-			t.FailNow()
-		}
+	if err := ms.DB.Create(&userOrg); err != nil {
+		t.Errorf("could not create test user org ... %v. uo = %+v", err, userOrg)
+		t.FailNow()
 	}
 
 	if err := m.DB.Load(&users[0], "Organizations"); err != nil {
@@ -257,7 +220,7 @@ func CreateFixtures_RequestStatusUpdatedNotifications(ms *ModelSuite, t *testing
 	}
 
 	return orgUserPostFixtures{
-		orgs:  orgs,
+		orgs:  m.Organizations{org},
 		users: users,
 		posts: posts,
 	}
