@@ -33,6 +33,7 @@ services:
     env_file:
       - ./test.env
     environment:
+      EMAIL_SERVICE: dummy
       GO_ENV: test
     depends_on:
       - testdb
