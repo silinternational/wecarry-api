@@ -154,7 +154,7 @@ func (v *updateStatusValidator) IsValid(errors *validate.Errors) {
 		PostStatusCommitted: {PostStatusOpen, PostStatusAccepted, PostStatusDelivered, PostStatusRemoved},
 		PostStatusAccepted:  {PostStatusOpen, PostStatusDelivered, PostStatusReceived, PostStatusRemoved},
 		PostStatusDelivered: {PostStatusAccepted, PostStatusCompleted},
-		PostStatusReceived:  {PostStatusAccepted, PostStatusCompleted},
+		PostStatusReceived:  {PostStatusAccepted, PostStatusDelivered, PostStatusCompleted},
 		PostStatusCompleted: {PostStatusDelivered, PostStatusReceived},
 		PostStatusRemoved:   {},
 	}

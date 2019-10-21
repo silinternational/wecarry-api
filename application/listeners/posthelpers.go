@@ -65,6 +65,7 @@ var statusTemplates = map[string]string{
 	join(m.PostStatusReceived, m.PostStatusAccepted):   domain.MessageTemplateRequestFromReceivedToAccepted,
 	join(m.PostStatusCommitted, m.PostStatusDelivered): domain.MessageTemplateRequestFromCommittedToDelivered,
 	join(m.PostStatusAccepted, m.PostStatusDelivered):  domain.MessageTemplateRequestFromAcceptedToDelivered,
+	join(m.PostStatusReceived, m.PostStatusDelivered):  domain.MessageTemplateRequestFromReceivedToDelivered,
 	join(m.PostStatusCompleted, m.PostStatusDelivered): domain.MessageTemplateRequestFromCompletedToDelivered,
 	join(m.PostStatusAccepted, m.PostStatusReceived):   domain.MessageTemplateRequestFromAcceptedToReceived,
 	join(m.PostStatusCompleted, m.PostStatusReceived):  domain.MessageTemplateRequestFromCompletedToReceived,
