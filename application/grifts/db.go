@@ -183,7 +183,8 @@ var _ = grift.Namespace("db", func() {
 				Country:     "CA",
 				Latitude:    nulls.NewFloat64(43.6532),
 				Longitude:   nulls.NewFloat64(-79.3832),
-			}}
+			},
+		}
 
 		for _, loc := range fixtureLocations {
 			err := models.DB.Create(loc)
