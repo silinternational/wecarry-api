@@ -55,6 +55,7 @@ func NewMessageHandler(args worker.Args) error {
 		FromEmail: m.SentBy.Email,
 	}
 
+	var lastErr error
 	for _, p := range m.Thread.Participants {
 		if p.ID == m.SentBy.ID {
 			continue
@@ -62,7 +63,9 @@ func NewMessageHandler(args worker.Args) error {
 
 		var tp models.ThreadParticipant
 		if err := tp.FindByThreadIDAndUserID(m.ThreadID, p.ID); err != nil {
-			return err
+			domain.ErrLogger.Printf("NewMessageHandler error, %s", err)
+			lastErr = err
+			continue
 		}
 		// Don't send a notification if this user has viewed the message or if they've already been notified
 		if tp.LastViewedAt.After(m.UpdatedAt) || tp.LastNotifiedAt.After(m.UpdatedAt) {
@@ -73,15 +76,17 @@ func NewMessageHandler(args worker.Args) error {
 		msg.ToEmail = p.Email
 		if err := notifications.Send(msg); err != nil {
 			domain.ErrLogger.Printf("error sending 'New Message' notification, %s", err)
+			lastErr = err
 			continue
 		}
 
 		if err := tp.UpdateLastNotifiedAt(time.Now()); err != nil {
-			return err
+			domain.ErrLogger.Printf("NewMessageHandler error, %s", err)
+			lastErr = err
 		}
 	}
 
-	return nil
+	return lastErr
 }
 
 // SubmitDelayed enqueues a new Worker job for the given handler. Arguments can be provided in `args`.
