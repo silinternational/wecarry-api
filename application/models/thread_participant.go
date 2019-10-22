@@ -2,8 +2,11 @@ package models
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
+
+	"github.com/gobuffalo/buffalo/genny/build/_fixtures/coke/models"
 
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
@@ -66,9 +69,22 @@ func (t *ThreadParticipant) SetLastViewedAt(lastViewedAt time.Time) error {
 
 // FindByThreadIDAndUserID reads a record by the given Thread ID and User ID
 func (t *ThreadParticipant) FindByThreadIDAndUserID(threadID, userID int) error {
+	if threadID <= 0 || userID <= 0 {
+		return errors.New("error finding thread_participant, invalid id")
+	}
+
 	if err := DB.Where("user_id = ? AND thread_id = ?", userID, threadID).First(t); err != nil {
 		return fmt.Errorf("failed to find thread_participant record for user %d and thread %d, %s",
 			userID, threadID, err)
+	}
+	return nil
+}
+
+// UpdateLastNotifiedAt sets LastNotifiedAt and writes to the database
+func (t *ThreadParticipant) UpdateLastNotifiedAt(newTime time.Time) error {
+	t.LastNotifiedAt = newTime
+	if err := models.DB.Update(t); err != nil {
+		return fmt.Errorf("failed to update thread_participant.last_notified_at, %s", err)
 	}
 	return nil
 }

@@ -69,9 +69,8 @@ func NewMessageHandler(args worker.Args) error {
 			continue
 		}
 
-		tp.LastNotifiedAt = time.Now()
-		if err := models.DB.Update(&tp); err != nil {
-			return errors.New("failed to update thread_participant.last_notified_at")
+		if err := tp.UpdateLastNotifiedAt(time.Now()); err != nil {
+			return err
 		}
 
 		msg.ToName = p.Nickname
