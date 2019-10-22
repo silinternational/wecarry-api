@@ -79,17 +79,18 @@ func (js *JobSuite) TestNewMessageHandler() {
 
 			if test.wantErr {
 				js.Error(err)
-			} else {
-				js.NoError(err)
-				js.Equal(test.wantNumberOfEmails, notifications.DummyEmailService.GetNumberOfMessagesSent())
+				return
+			}
 
-				if test.wantNumberOfEmails == 1 {
-					var tp models.ThreadParticipant
-					_ = tp.FindByThreadIDAndUserID(test.message.ThreadID, test.recipientID)
-					expect := time.Now()
-					js.WithinDuration(expect, tp.LastNotifiedAt, time.Second,
-						"last notified time not correct, got %v, wanted %v", tp.LastNotifiedAt, expect)
-				}
+			js.NoError(err)
+			js.Equal(test.wantNumberOfEmails, notifications.DummyEmailService.GetNumberOfMessagesSent())
+
+			if test.wantNumberOfEmails == 1 {
+				var tp models.ThreadParticipant
+				_ = tp.FindByThreadIDAndUserID(test.message.ThreadID, test.recipientID)
+				expect := time.Now()
+				js.WithinDuration(expect, tp.LastNotifiedAt, time.Second,
+					"last notified time not correct, got %v, wanted %v", tp.LastNotifiedAt, expect)
 			}
 		})
 	}
