@@ -162,3 +162,86 @@ func (ms *ModelSuite) TestThreadParticipant_SetLastViewedAt() {
 		})
 	}
 }
+
+// CreateFixtures_ThreadParticipant_UpdateLastNotifiedAt creates test fixtures for the
+// ThreadParticipant_UpdateLastNotifiedAt test
+func CreateFixtures_ThreadParticipant_UpdateLastNotifiedAt(ms *ModelSuite, t *testing.T) ThreadFixtures {
+
+	org := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	createFixture(t, &org)
+
+	users := Users{
+		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1", Uuid: domain.GetUuid()},
+	}
+	for i := range users {
+		createFixture(t, &(users[i]))
+	}
+
+	posts := Posts{
+		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID},
+	}
+	for i := range posts {
+		createFixture(t, &(posts[i]))
+	}
+
+	threads := Threads{
+		{Uuid: domain.GetUuid(), PostID: posts[0].ID},
+	}
+	for i := range threads {
+		createFixture(t, &(threads[i]))
+	}
+
+	threadParticipants := ThreadParticipants{
+		{
+			ThreadID:       threads[0].ID,
+			UserID:         users[0].ID,
+			LastNotifiedAt: time.Now().Add(-1 * time.Hour),
+		},
+	}
+	for i := range threadParticipants {
+		createFixture(t, &(threadParticipants[i]))
+	}
+
+	return ThreadFixtures{
+		ThreadParticipants: threadParticipants,
+	}
+}
+
+func (ms *ModelSuite) TestThreadParticipant_UpdateLastNotifiedAt() {
+	t := ms.T()
+
+	f := CreateFixtures_ThreadParticipant_UpdateLastNotifiedAt(ms, t)
+
+	tests := []struct {
+		name              string
+		threadParticipant ThreadParticipant
+		LastNotifiedAt    time.Time
+		wantErr           bool
+	}{
+		{name: "now", threadParticipant: f.ThreadParticipants[0], LastNotifiedAt: time.Now()},
+		{name: "future", threadParticipant: f.ThreadParticipants[0], LastNotifiedAt: time.Now().Add(time.Minute)},
+		{name: "past", threadParticipant: f.ThreadParticipants[0], LastNotifiedAt: time.Now().Add(-1 * time.Minute)},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			tp := test.threadParticipant
+			err := tp.UpdateLastNotifiedAt(test.LastNotifiedAt)
+
+			// reload from database to ensure the new time was saved
+			_ = DB.Reload(&tp)
+
+			if test.wantErr {
+				ms.Error(err)
+				return
+			}
+
+			if err != nil {
+				t.Errorf("UpdateLastNotifiedAt() returned an error: %v", err)
+				return
+			}
+
+			ms.WithinDuration(test.LastNotifiedAt, tp.LastNotifiedAt, time.Second,
+				"time not correct, got %v, wanted %v", tp.LastNotifiedAt, test.LastNotifiedAt)
+		})
+	}
+}
