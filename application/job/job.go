@@ -27,8 +27,6 @@ func init() {
 
 // NewMessageHandler is the Worker handler for new notifications of new Thread Messages
 func NewMessageHandler(args worker.Args) error {
-	domain.Logger.Printf("--------- new_message worker, args: %+v", args)
-
 	id, ok := args[domain.ArgMessageID].(int)
 	if !ok {
 		return fmt.Errorf("no message ID provided to new_message worker, args = %+v", args)
@@ -43,16 +41,28 @@ func NewMessageHandler(args worker.Args) error {
 		return errors.New("failed to load Participants and Post in new message handler")
 	}
 
-	var recipients []struct{ Nickname, Email string }
+	uiUrl := envy.Get(domain.UIURLEnv, "")
+	msg := notifications.Message{
+		Template: domain.MessageTemplateNewMessage,
+		Data: map[string]interface{}{
+			"postURL":        uiUrl + "/#/requests/" + m.Thread.Post.Uuid.String(),
+			"postTitle":      m.Thread.Post.Title,
+			"messageContent": m.Content,
+			"sentByNickname": m.SentBy.Nickname,
+			"threadURL":      uiUrl + "/#/messages/" + m.Thread.Uuid.String(),
+		},
+		FromName:  m.SentBy.Nickname,
+		FromEmail: m.SentBy.Email,
+	}
+
 	for _, p := range m.Thread.Participants {
 		if p.ID == m.SentBy.ID {
 			continue
 		}
 
 		var tp models.ThreadParticipant
-		if err := models.DB.Where("user_id = ? AND thread_id = ?", p.ID, m.ThreadID).First(&tp); err != nil {
-			return fmt.Errorf("failed to find thread_participant record for user %d and thread %d, %s",
-				tp.ID, m.ThreadID, err)
+		if err := tp.FindByThreadIDAndUserID(m.ThreadID, p.ID); err != nil {
+			return err
 		}
 		// Don't send a notification if this user has viewed the message or if they've already been notified
 		if tp.LastViewedAt.After(m.UpdatedAt) || tp.LastNotifiedAt.After(m.UpdatedAt) {
@@ -64,28 +74,8 @@ func NewMessageHandler(args worker.Args) error {
 			return errors.New("failed to update thread_participant.last_notified_at")
 		}
 
-		recipients = append(recipients,
-			struct{ Nickname, Email string }{p.Nickname, p.Email})
-	}
-
-	uiUrl := envy.Get(domain.UIURLEnv, "")
-	data := map[string]interface{}{
-		"postURL":        uiUrl + "/#/requests/" + m.Thread.Post.Uuid.String(),
-		"postTitle":      m.Thread.Post.Title,
-		"messageContent": m.Content,
-		"sentByNickname": m.SentBy.Nickname,
-		"threadURL":      uiUrl + "/#/messages/" + m.Thread.Uuid.String(),
-	}
-
-	for _, r := range recipients {
-		msg := notifications.Message{
-			Template:  domain.MessageTemplateNewMessage,
-			Data:      data,
-			FromName:  m.SentBy.Nickname,
-			FromEmail: m.SentBy.Email,
-			ToName:    r.Nickname,
-			ToEmail:   r.Email,
-		}
+		msg.ToName = p.Nickname
+		msg.ToEmail = p.Email
 		if err := notifications.Send(msg); err != nil {
 			domain.ErrLogger.Printf("error sending 'New Message' notification, %s", err)
 		}
