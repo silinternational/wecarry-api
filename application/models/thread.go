@@ -168,13 +168,22 @@ func (t *Thread) CreateWithParticipants(postUuid string, user User) error {
 	return nil
 }
 
-// SetLastViewedAt sets the last viewed time for the given user on the thread
-func (t *Thread) SetLastViewedAt(user User, time time.Time) error {
+// UpdateLastViewedAt sets the last viewed time for the given user on the thread
+func (t *Thread) UpdateLastViewedAt(user User, time time.Time) error {
 	var tp ThreadParticipant
 
-	if err := DB.Where("thread_id = ? AND user_id = ?", t.ID, user.ID).First(&tp); err != nil {
+	if err := tp.FindByThreadIDAndUserID(t.ID, user.ID); err != nil {
 		return err
 	}
 
-	return tp.SetLastViewedAt(time)
+	return tp.UpdateLastViewedAt(time)
+}
+
+// Load reads the selected fields from the database
+func (t *Thread) Load(fields ...string) error {
+	if err := DB.Load(t, fields...); err != nil {
+		return fmt.Errorf("error loading data for thread %s, %s", t.Uuid.String(), err)
+	}
+
+	return nil
 }

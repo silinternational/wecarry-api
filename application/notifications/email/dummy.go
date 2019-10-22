@@ -106,7 +106,8 @@ func (t *DummyService) Send(msg Message) error {
 		return errors.New(errMsg)
 	}
 
-	domain.Logger.Printf("dummy message subject: %s", template.subject)
+	domain.Logger.Printf("dummy message subject: %s, recipient: %s, data: %+v",
+		template.subject, msg.ToName, msg.TemplateData)
 	t.sentMessages = append(t.sentMessages,
 		dummyMessage{
 			subject:   template.subject,
@@ -117,4 +118,15 @@ func (t *DummyService) Send(msg Message) error {
 			toEmail:   msg.ToEmail,
 		})
 	return nil
+}
+
+// GetNumberOfMessagesSent returns the number of messages sent since initialization or the last call to
+// DeleteSentMessages
+func (t *DummyService) GetNumberOfMessagesSent() int {
+	return len(t.sentMessages)
+}
+
+// DeleteSentMessages erases the store of sent messages
+func (t *DummyService) DeleteSentMessages() {
+	t.sentMessages = []dummyMessage{}
 }

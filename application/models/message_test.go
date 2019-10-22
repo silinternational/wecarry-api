@@ -86,41 +86,118 @@ func (ms *ModelSuite) TestMessage_Validate() {
 func (ms *ModelSuite) TestMessage_GetSender() {
 	t := ms.T()
 
-	messageFixtures := Fixtures_GetSender(ms, t)
+	messageFixtures := Fixtures_Message_GetSender(ms, t)
 
 	messages := messageFixtures.Messages
 	users := messageFixtures.Users
 
-	userResults, err := messages[1].GetSender([]string{"id", "nickname", "last_name", "first_name", "email"})
+	userResults, err := messages[0].GetSender([]string{"id", "nickname", "email"})
 
 	if err != nil {
 		t.Errorf("unexpected error ... %v", err)
 		t.FailNow()
 	}
 
-	ms.Equal(users[1].ID, userResults.ID, "Bad user ID")
-	ms.Equal(users[1].Nickname, userResults.Nickname, "Bad user Nickname")
-	ms.Equal(users[1].LastName, userResults.LastName, "Bad user LastName")
-	ms.Equal(users[1].FirstName, userResults.FirstName, "Bad user FirstName")
-	ms.Equal(users[1].Email, userResults.Email, "Bad user Email")
+	ms.Equal(users[0].ID, userResults.ID, "Bad user ID")
+	ms.Equal(users[0].Nickname, userResults.Nickname, "Bad user Nickname")
+	ms.Equal(users[0].Email, userResults.Email, "Bad user Email")
 }
 
 func (ms *ModelSuite) TestMessage_GetThread() {
 	t := ms.T()
 
-	messageFixtures := Fixtures_GetSender(ms, t)
+	messageFixtures := Fixtures_Message_GetSender(ms, t)
 
 	messages := messageFixtures.Messages
 	threads := messageFixtures.Threads
 
-	threadResults, err := messages[1].GetThread([]string{"id", "uuid", "post_id"})
+	threadResults, err := messages[0].GetThread([]string{"id", "uuid", "post_id"})
 
 	if err != nil {
 		t.Errorf("unexpected error ... %v", err)
 		t.FailNow()
 	}
 
-	ms.Equal(threads[1].ID, threadResults.ID, "Bad thread ID")
-	ms.Equal(threads[1].Uuid, threadResults.Uuid, "Bad thread UUID")
-	ms.Equal(threads[1].PostID, threadResults.PostID, "Bad thread PostID")
+	ms.Equal(threads[0].ID, threadResults.ID, "Bad thread ID")
+	ms.Equal(threads[0].Uuid, threadResults.Uuid, "Bad thread UUID")
+	ms.Equal(threads[0].PostID, threadResults.PostID, "Bad thread PostID")
+}
+
+func (ms *ModelSuite) TestMessage_Create() {
+	t := ms.T()
+
+	f := Fixtures_Message_Create(ms, t)
+	msg := Message{
+		Uuid:     domain.GetUuid(),
+		ThreadID: f.Threads[0].ID,
+		SentByID: f.Users[0].ID,
+		Content:  `Owe nothing to anyone, except to love one another.`,
+	}
+
+	tests := []struct {
+		name    string
+		msg     Message
+		wantErr bool
+	}{
+		{name: "good", msg: msg},
+		{name: "validation error", msg: Message{}, wantErr: true},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			message := test.msg
+			err := message.Create()
+
+			if test.wantErr {
+				ms.Error(err)
+			} else {
+				ms.NoError(err)
+				ms.Equal(test.msg.Uuid, message.Uuid, "incorrect message UUID")
+			}
+		})
+	}
+}
+
+func (ms *ModelSuite) TestMessage_FindByID() {
+	t := ms.T()
+
+	f := Fixtures_Message_FindByID(ms, t)
+
+	tests := []struct {
+		name        string
+		id          int
+		eagerFields []string
+		wantMessage Message
+		wantSentBy  User
+		wantThread  Thread
+		wantErr     bool
+	}{
+		{name: "good with no extra fields",
+			id:          f.Messages[0].ID,
+			wantMessage: f.Messages[0],
+		},
+		{name: "good with two extra fields",
+			id:          f.Messages[0].ID,
+			eagerFields: []string{"SentBy", "Thread"},
+			wantMessage: f.Messages[0],
+			wantSentBy:  f.Users[0],
+			wantThread:  f.Threads[0],
+		},
+		{name: "zero ID", id: 0, wantErr: true},
+		{name: "wrong id", id: 99999, wantErr: true},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var message Message
+			err := message.FindByID(test.id, test.eagerFields...)
+
+			if test.wantErr {
+				ms.Error(err)
+			} else {
+				ms.NoError(err)
+				ms.Equal(test.wantMessage.ID, message.ID, "bad message id")
+				ms.Equal(test.wantSentBy.ID, message.SentBy.ID, "bad message sent_by id")
+				ms.Equal(test.wantThread.Uuid, message.Thread.Uuid, "bad message thread id")
+			}
+		})
+	}
 }

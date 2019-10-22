@@ -2,6 +2,8 @@ package models
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/gobuffalo/pop"
@@ -10,14 +12,15 @@ import (
 )
 
 type ThreadParticipant struct {
-	ID           int       `json:"id" db:"id"`
-	CreatedAt    time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at" db:"updated_at"`
-	ThreadID     int       `json:"thread_id" db:"thread_id"`
-	UserID       int       `json:"user_id" db:"user_id"`
-	LastViewedAt time.Time `json:"last_viewed_at" db:"last_viewed_at"`
-	Thread       Thread    `belongs_to:"threads"`
-	User         User      `belongs_to:"users"`
+	ID             int       `json:"id" db:"id"`
+	CreatedAt      time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at" db:"updated_at"`
+	ThreadID       int       `json:"thread_id" db:"thread_id"`
+	UserID         int       `json:"user_id" db:"user_id"`
+	LastViewedAt   time.Time `json:"last_viewed_at" db:"last_viewed_at"`
+	LastNotifiedAt time.Time `json:"last_notified_at" db:"last_notified_at"`
+	Thread         Thread    `belongs_to:"threads"`
+	User           User      `belongs_to:"users"`
 }
 
 // String is not required by pop and may be deleted
@@ -56,8 +59,33 @@ func (t *ThreadParticipant) ValidateUpdate(tx *pop.Connection) (*validate.Errors
 	return validate.NewErrors(), nil
 }
 
-// SetLastViewedAt sets the last viewed time field
-func (t *ThreadParticipant) SetLastViewedAt(lastViewedAt time.Time) error {
+// UpdateLastViewedAt sets the last viewed time field and writes to the database
+func (t *ThreadParticipant) UpdateLastViewedAt(lastViewedAt time.Time) error {
 	t.LastViewedAt = lastViewedAt
-	return DB.Update(t)
+	if err := DB.Update(t); err != nil {
+		return fmt.Errorf("failed to update thread_participant.last_viewed_at, %s", err)
+	}
+	return nil
+}
+
+// FindByThreadIDAndUserID reads a record by the given Thread ID and User ID
+func (t *ThreadParticipant) FindByThreadIDAndUserID(threadID, userID int) error {
+	if threadID <= 0 || userID <= 0 {
+		return errors.New("error finding thread_participant, invalid id")
+	}
+
+	if err := DB.Where("user_id = ? AND thread_id = ?", userID, threadID).First(t); err != nil {
+		return fmt.Errorf("failed to find thread_participant record for user %d and thread %d, %s",
+			userID, threadID, err)
+	}
+	return nil
+}
+
+// UpdateLastNotifiedAt sets LastNotifiedAt and writes to the database
+func (t *ThreadParticipant) UpdateLastNotifiedAt(newTime time.Time) error {
+	t.LastNotifiedAt = newTime
+	if err := DB.Update(t); err != nil {
+		return fmt.Errorf("failed to update thread_participant.last_notified_at, %s", err)
+	}
+	return nil
 }

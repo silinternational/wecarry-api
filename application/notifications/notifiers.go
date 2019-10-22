@@ -14,13 +14,19 @@ const (
 	MobileServiceDummy   = "dummy"
 )
 
+// Notifier is an abstraction layer for multiple types of notifications: email, mobile, and push (TBD).
 type Notifier interface {
 	Send(msg Message) error
 }
 
+// EmailNotifier is an email notifier that conforms to the Notifier interface.
 type EmailNotifier struct {
 }
 
+// DummyEmailService is an instance of a mocked email service used for test and development.
+var DummyEmailService email.DummyService
+
+// Send a notification using an email notifier.
 func (e *EmailNotifier) Send(msg Message) error {
 	var emailService email.Service
 
@@ -29,9 +35,9 @@ func (e *EmailNotifier) Send(msg Message) error {
 	case EmailServiceSendGrid:
 		emailService = &email.SendGridService{}
 	case EmailServiceDummy:
-		emailService = &email.DummyService{}
+		emailService = &DummyEmailService
 	default:
-		emailService = &email.DummyService{}
+		emailService = &DummyEmailService
 	}
 
 	emailMessage := email.Message{
@@ -46,9 +52,11 @@ func (e *EmailNotifier) Send(msg Message) error {
 	return emailService.Send(emailMessage)
 }
 
+// MobileNotifier is an email notifier that conforms to the Notifier interface.
 type MobileNotifier struct {
 }
 
+// Send a notification using a mobile notifier.
 func (m *MobileNotifier) Send(msg Message) error {
 	var mobileService mobile.Service
 

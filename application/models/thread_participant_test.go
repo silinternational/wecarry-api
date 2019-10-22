@@ -5,9 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/silinternational/wecarry-api/domain"
-
 	"github.com/gobuffalo/validate"
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 func (ms *ModelSuite) TestThreadParticipant_Validate() {
@@ -60,8 +59,7 @@ func (ms *ModelSuite) TestThreadParticipant_Validate() {
 	}
 }
 
-// CreateFixtures_ThreadParticipant_SetLastViewedAt creates test fixtures for the ThreadParticipant_SetLastViewedAt test
-func CreateFixtures_ThreadParticipant_SetLastViewedAt(ms *ModelSuite, t *testing.T) ThreadFixtures {
+func CreateFixtures_ThreadParticipant_UpdateLastViewedAt(ms *ModelSuite, t *testing.T) ThreadFixtures {
 
 	org := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
 	createFixture(t, &org)
@@ -122,10 +120,10 @@ func CreateFixtures_ThreadParticipant_SetLastViewedAt(ms *ModelSuite, t *testing
 	}
 }
 
-func (ms *ModelSuite) TestThreadParticipant_SetLastViewedAt() {
+func (ms *ModelSuite) TestThreadParticipant_UpdateLastViewedAt() {
 	t := ms.T()
 
-	f := CreateFixtures_ThreadParticipant_SetLastViewedAt(ms, t)
+	f := CreateFixtures_ThreadParticipant_UpdateLastViewedAt(ms, t)
 
 	tests := []struct {
 		name              string
@@ -138,7 +136,7 @@ func (ms *ModelSuite) TestThreadParticipant_SetLastViewedAt() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			tp := test.threadParticipant
-			err := tp.SetLastViewedAt(test.lastViewedAt)
+			err := tp.UpdateLastViewedAt(test.lastViewedAt)
 
 			// reload from database to ensure the new time was saved
 			_ = DB.Reload(&tp)
@@ -149,7 +147,7 @@ func (ms *ModelSuite) TestThreadParticipant_SetLastViewedAt() {
 			}
 
 			if err != nil {
-				t.Errorf("SetLastViewedAt() returned an error: %v", err)
+				t.Errorf("UpdateLastViewedAt() returned an error: %v", err)
 				return
 			}
 
@@ -159,6 +157,163 @@ func (ms *ModelSuite) TestThreadParticipant_SetLastViewedAt() {
 			want = test.lastViewedAt.Add(time.Minute)
 			ms.True(tp.LastViewedAt.Before(want),
 				fmt.Sprintf("time not correct, got %v, wanted before %v", tp.LastViewedAt, want))
+		})
+	}
+}
+
+func CreateFixtures_ThreadParticipant_FindByThreadIDAndUserID(ms *ModelSuite) ThreadFixtures {
+	t := ms.T()
+
+	org := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	createFixture(t, &org)
+
+	users := Users{
+		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1", Uuid: domain.GetUuid()},
+	}
+	for i := range users {
+		createFixture(t, &(users[i]))
+	}
+
+	posts := Posts{
+		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID},
+	}
+	for i := range posts {
+		createFixture(t, &(posts[i]))
+	}
+
+	threads := Threads{
+		{Uuid: domain.GetUuid(), PostID: posts[0].ID},
+	}
+	for i := range threads {
+		createFixture(t, &(threads[i]))
+	}
+
+	threadParticipants := ThreadParticipants{
+		{ThreadID: threads[0].ID, UserID: users[0].ID},
+	}
+	for i := range threadParticipants {
+		createFixture(t, &(threadParticipants[i]))
+	}
+
+	return ThreadFixtures{
+		Users:              users,
+		Threads:            threads,
+		ThreadParticipants: threadParticipants,
+	}
+}
+
+func (ms *ModelSuite) TestThreadParticipant_FindByThreadIDAndUserID() {
+	t := ms.T()
+
+	f := CreateFixtures_ThreadParticipant_FindByThreadIDAndUserID(ms)
+
+	tests := []struct {
+		name     string
+		threadID int
+		userID   int
+		wantID   int
+		wantErr  bool
+	}{
+		{name: "good", threadID: f.Threads[0].ID, userID: f.Users[0].ID, wantID: f.ThreadParticipants[0].ID},
+		{name: "bad user ID", threadID: f.Threads[0].ID, userID: 0, wantErr: true},
+		{name: "bad thread ID", threadID: 0, userID: f.Users[0].ID, wantErr: true},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var tp ThreadParticipant
+			err := tp.FindByThreadIDAndUserID(test.threadID, test.userID)
+
+			if test.wantErr {
+				ms.Error(err, "did not get an error from FindByThreadIDAndUserID")
+				return
+			}
+
+			ms.NoError(err, "unexpected error from FindByThreadIDAndUserID")
+
+			ms.Equal(test.wantID, tp.ID, "incorrect thread_participant ID returned")
+		})
+	}
+}
+
+// CreateFixtures_ThreadParticipant_UpdateLastNotifiedAt creates test fixtures for the
+// ThreadParticipant_UpdateLastNotifiedAt test
+func CreateFixtures_ThreadParticipant_UpdateLastNotifiedAt(ms *ModelSuite, t *testing.T) ThreadFixtures {
+
+	org := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	createFixture(t, &org)
+
+	users := Users{
+		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1", Uuid: domain.GetUuid()},
+	}
+	for i := range users {
+		createFixture(t, &(users[i]))
+	}
+
+	posts := Posts{
+		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID},
+	}
+	for i := range posts {
+		createFixture(t, &(posts[i]))
+	}
+
+	threads := Threads{
+		{Uuid: domain.GetUuid(), PostID: posts[0].ID},
+	}
+	for i := range threads {
+		createFixture(t, &(threads[i]))
+	}
+
+	threadParticipants := ThreadParticipants{
+		{
+			ThreadID:       threads[0].ID,
+			UserID:         users[0].ID,
+			LastNotifiedAt: time.Now().Add(-1 * time.Hour),
+		},
+	}
+	for i := range threadParticipants {
+		createFixture(t, &(threadParticipants[i]))
+	}
+
+	return ThreadFixtures{
+		ThreadParticipants: threadParticipants,
+	}
+}
+
+func (ms *ModelSuite) TestThreadParticipant_UpdateLastNotifiedAt() {
+	t := ms.T()
+
+	f := CreateFixtures_ThreadParticipant_UpdateLastNotifiedAt(ms, t)
+
+	tests := []struct {
+		name              string
+		threadParticipant ThreadParticipant
+		LastNotifiedAt    time.Time
+		wantErr           bool
+	}{
+		{name: "now", threadParticipant: f.ThreadParticipants[0], LastNotifiedAt: time.Now()},
+		{name: "future", threadParticipant: f.ThreadParticipants[0], LastNotifiedAt: time.Now().Add(time.Minute)},
+		{name: "past", threadParticipant: f.ThreadParticipants[0], LastNotifiedAt: time.Now().Add(-1 * time.Minute)},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			tp := test.threadParticipant
+			err := tp.UpdateLastNotifiedAt(test.LastNotifiedAt)
+
+			// reload from database to ensure the new time was saved
+			_ = DB.Reload(&tp)
+
+			if test.wantErr {
+				ms.Error(err)
+				return
+			}
+
+			if err != nil {
+				t.Errorf("UpdateLastNotifiedAt() returned an error: %v", err)
+				return
+			}
+
+			ms.WithinDuration(test.LastNotifiedAt, tp.LastNotifiedAt, time.Second,
+				"time not correct, got %v, wanted %v", tp.LastNotifiedAt, test.LastNotifiedAt)
 		})
 	}
 }

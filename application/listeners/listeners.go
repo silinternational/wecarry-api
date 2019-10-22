@@ -3,12 +3,10 @@ package listeners
 import (
 	"time"
 
-	"github.com/gobuffalo/envy"
-
 	"github.com/gobuffalo/events"
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/job"
 	"github.com/silinternational/wecarry-api/models"
-	"github.com/silinternational/wecarry-api/notifications"
 )
 
 const (
@@ -106,33 +104,15 @@ func sendNewMessageNotification(e events.Event) {
 
 	domain.Logger.Printf("%s Message Created ... %s", domain.GetCurrentTime(), e.Message)
 
-	mEData, ok := e.Payload["eventData"].(models.MessageCreatedEventData)
+	id, ok := e.Payload[domain.ArgMessageID].(int)
 	if !ok {
-		domain.ErrLogger.Print("unable to parse Message Created event payload")
+		domain.ErrLogger.Print("sendNewMessageNotification: unable to read message ID from event payload")
 		return
 	}
 
-	uiUrl := envy.Get(domain.UIURLEnv, "")
-	data := map[string]interface{}{
-		"postURL":        uiUrl + "/#/requests/" + mEData.PostUUID,
-		"postTitle":      mEData.PostTitle,
-		"messageContent": mEData.MessageContent,
-		"sentByNickname": mEData.MessageCreatorNickName,
-		"threadURL":      uiUrl + "/#/messages/" + mEData.ThreadUUID,
-	}
-
-	for _, r := range mEData.MessageRecipients {
-		msg := notifications.Message{
-			Template:  domain.MessageTemplateNewMessage,
-			Data:      data,
-			FromName:  mEData.MessageCreatorNickName,
-			FromEmail: mEData.MessageCreatorEmail,
-			ToName:    r.Nickname,
-			ToEmail:   r.Email,
-		}
-		if err := notifications.Send(msg); err != nil {
-			domain.ErrLogger.Printf("error sending 'New Message' notification, %s", err)
-		}
+	if err := job.SubmitDelayed(job.NewMessage, domain.NewMessageNotificationDelay,
+		map[string]interface{}{domain.ArgMessageID: id}); err != nil {
+		domain.ErrLogger.Printf("error starting 'New Message' job, %s", err)
 	}
 }
 

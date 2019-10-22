@@ -18,16 +18,17 @@ import (
 )
 
 const (
-	ErrorLevelWarn             = "warn"
-	ErrorLevelError            = "error"
-	ErrorLevelCritical         = "critical"
-	AdminRoleSuperDuperAdmin   = "SuperDuperAdmin"
-	AdminRoleSalesAdmin        = "SalesAdmin"
-	EmptyUUID                  = "00000000-0000-0000-0000-000000000000"
-	DateFormat                 = "2006-01-02"
-	MaxFileSize                = 1 << 21 // 10 Mebibytes
-	AccessTokenLifetimeSeconds = 3600
-	DateTimeFormat             = "2006-01-02 15:04:05"
+	ErrorLevelWarn              = "warn"
+	ErrorLevelError             = "error"
+	ErrorLevelCritical          = "critical"
+	AdminRoleSuperDuperAdmin    = "SuperDuperAdmin"
+	AdminRoleSalesAdmin         = "SalesAdmin"
+	EmptyUUID                   = "00000000-0000-0000-0000-000000000000"
+	DateFormat                  = "2006-01-02"
+	MaxFileSize                 = 1 << 21 // 10 Mebibytes
+	AccessTokenLifetimeSeconds  = 3600
+	DateTimeFormat              = "2006-01-02 15:04:05"
+	NewMessageNotificationDelay = 10 * time.Minute
 )
 
 // Environment Variables
@@ -45,6 +46,11 @@ const (
 	EventApiAuthUserLoggedIn  = "api:auth:user:loggedin"
 	EventApiMessageCreated    = "api:message:created"
 	EventApiPostStatusUpdated = "api:post:status:updated"
+)
+
+// Event and Job argument names
+const (
+	ArgMessageID = "message_id"
 )
 
 // Notification Message Template Names
@@ -70,12 +76,22 @@ const (
 	MessageTemplateRequestFromAcceptedToRemoved    = "request_from_accepted_to_removed"
 )
 
+// UI URL Paths
+const (
+	postUIPath   = "/#/requests/"
+	threadUIPath = "/#/messages/"
+)
+
 var Logger log.Logger
 var ErrLogger log.Logger
+
+// UIURL is the URL of the UI, obtained from an environment variable (UIURLEnv)
+var UIURL string
 
 func init() {
 	Logger.SetOutput(os.Stdout)
 	ErrLogger.SetOutput(os.Stderr)
+	UIURL = envy.Get(UIURLEnv, "")
 }
 
 type AppError struct {
@@ -270,4 +286,14 @@ func RollbarSetPerson(c buffalo.Context, id, username, email string) {
 		rc.SetPerson(id, username, email)
 		return
 	}
+}
+
+// GetPostUIURL returns a UI URL for the given Post
+func GetPostUIURL(postUUID string) string {
+	return UIURL + postUIPath + postUUID
+}
+
+// GetThreadUIURL returns a UI URL for the given Thread
+func GetThreadUIURL(threadUUID string) string {
+	return UIURL + threadUIPath + threadUUID
 }

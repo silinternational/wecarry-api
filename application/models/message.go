@@ -2,19 +2,16 @@ package models
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/gobuffalo/events"
-	"github.com/silinternational/wecarry-api/domain"
-
-	"github.com/gobuffalo/buffalo/genny/build/_fixtures/coke/models"
-
-	"github.com/gofrs/uuid"
-
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
 	"github.com/gobuffalo/validate/validators"
+	"github.com/gofrs/uuid"
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 type Message struct {
@@ -81,7 +78,7 @@ func (m *Message) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 // GetSender finds and returns the User that is the Sender of this Message
 func (m *Message) GetSender(requestFields []string) (*User, error) {
 	sender := User{}
-	if err := models.DB.Select(requestFields...).Find(&sender, m.SentByID); err != nil {
+	if err := DB.Select(requestFields...).Find(&sender, m.SentByID); err != nil {
 		err = fmt.Errorf("error finding message sentBy user with id %v ... %v", m.SentByID, err)
 		return nil, err
 	}
@@ -91,7 +88,7 @@ func (m *Message) GetSender(requestFields []string) (*User, error) {
 // GetThread finds and returns the Thread that this Message is attached to
 func (m *Message) GetThread(requestFields []string) (*Thread, error) {
 	thread := Thread{}
-	if err := models.DB.Select(requestFields...).Find(&thread, m.ThreadID); err != nil {
+	if err := DB.Select(requestFields...).Find(&thread, m.ThreadID); err != nil {
 		err = fmt.Errorf("error finding message thread id %v ... %v", m.ThreadID, err)
 		return nil, err
 	}
@@ -100,42 +97,44 @@ func (m *Message) GetThread(requestFields []string) (*Thread, error) {
 
 // Create a new message. Sends an `EventApiMessageCreated` event.
 func (m *Message) Create() error {
-	if err := DB.Create(m); err != nil {
+	valErrs, err := DB.ValidateAndCreate(m)
+
+	if err != nil {
 		return err
 	}
 
-	if err := DB.Load(m, "SentBy", "Thread"); err != nil {
-		return err
-	}
-
-	if err := DB.Load(&m.Thread, "Participants", "Post"); err != nil {
-		return err
-	}
-
-	eventData := MessageCreatedEventData{
-		MessageCreatorNickName: m.SentBy.Nickname,
-		MessageCreatorEmail:    m.SentBy.Email,
-		MessageContent:         m.Content,
-		PostUUID:               m.Thread.Post.Uuid.String(),
-		PostTitle:              m.Thread.Post.Title,
-		ThreadUUID:             m.Thread.Uuid.String(),
-	}
-
-	for _, tp := range m.Thread.Participants {
-		if tp.ID == m.SentBy.ID {
-			continue
-		}
-		eventData.MessageRecipients = append(eventData.MessageRecipients,
-			struct{ Nickname, Email string }{Nickname: tp.Nickname, Email: tp.Email})
+	if len(valErrs.Errors) > 0 {
+		return errors.New(FlattenPopErrors(valErrs))
 	}
 
 	e := events.Event{
 		Kind:    domain.EventApiMessageCreated,
-		Message: "New Message from " + m.SentBy.Nickname,
-		Payload: events.Payload{"eventData": eventData},
+		Message: "New Message Created",
+		Payload: events.Payload{domain.ArgMessageID: m.ID},
 	}
 
 	emitEvent(e)
 
 	return nil
+}
+
+// FindByID loads from DB the Message record identified by the given primary key
+func (m *Message) FindByID(id int, eagerFields ...string) error {
+	if id <= 0 {
+		return errors.New("error finding message, invalid id")
+	}
+
+	var err error
+	// Eager() with an empty argument list will load all fields, which is not what is intended here
+	if len(eagerFields) > 0 {
+		err = DB.Eager(eagerFields...).Find(m, id)
+	} else {
+		err = DB.Find(m, id)
+	}
+
+	if err != nil {
+		return fmt.Errorf("error finding message by id, %s", err)
+	}
+
+	return DB.Find(m, id)
 }

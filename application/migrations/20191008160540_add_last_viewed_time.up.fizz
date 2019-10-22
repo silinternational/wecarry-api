@@ -1,1 +1,2 @@
 add_column("thread_participants", "last_viewed_at", "timestamp", {"default": "1900-01-01 00:00:00"})
+add_column("thread_participants", "last_notified_at", "timestamp", {"default": "1900-01-01 00:00:00"})
