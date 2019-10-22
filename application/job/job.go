@@ -28,7 +28,7 @@ func init() {
 // NewMessageHandler is the Worker handler for new notifications of new Thread Messages
 func NewMessageHandler(args worker.Args) error {
 	id, ok := args[domain.ArgMessageID].(int)
-	if !ok {
+	if !ok || id <= 0 {
 		return fmt.Errorf("no message ID provided to new_message worker, args = %+v", args)
 	}
 
