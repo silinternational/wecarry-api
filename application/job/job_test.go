@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/silinternational/wecarry-api/models"
 
@@ -37,24 +38,15 @@ func (js *JobSuite) TestNewMessageHandler() {
 
 	f := CreateFixtures_TestNewMessageHandler(js)
 
-	args := map[string]interface{}{
-		domain.ArgMessageID: f.Messages[0].ID,
-	}
-	err := NewMessageHandler(args)
-	js.NoError(err)
-
-	errLog := buf.String()
-	js.Equal("", errLog, "Got an unexpected error log entry")
-
-	js.Equal(1, notifications.DummyEmailService.GetNumberOfMessagesSent())
-
 	tests := []struct {
 		message            models.Message
+		recipientID        int
 		wantNumberOfEmails int
 		wantErr            bool
 	}{
 		{
 			message:            f.Messages[0],
+			recipientID:        f.Users[1].ID,
 			wantNumberOfEmails: 1,
 		},
 		{
@@ -67,6 +59,7 @@ func (js *JobSuite) TestNewMessageHandler() {
 		},
 		{
 			message:            f.Messages[3],
+			recipientID:        f.Users[4].ID,
 			wantNumberOfEmails: 1,
 		},
 		{
@@ -91,10 +84,27 @@ func (js *JobSuite) TestNewMessageHandler() {
 				js.Error(err)
 			} else {
 				js.NoError(err)
-				//js.Equal(test.wantNumberOfEmails, notifications.DummyEmailService.GetNumberOfMessagesSent())
+				js.Equal(test.wantNumberOfEmails, notifications.DummyEmailService.GetNumberOfMessagesSent())
+
+				if test.wantNumberOfEmails == 1 {
+					var tp models.ThreadParticipant
+					_ = tp.FindByThreadIDAndUserID(test.message.ThreadID, test.recipientID)
+					js.True(isNow(tp.LastNotifiedAt))
+				}
 			}
 		})
 	}
+}
+
+// isNow loosely compares the given time to time.Now()
+func isNow(t time.Time) bool {
+	if t.After(time.Now().Add(5 * time.Second)) {
+		return false
+	}
+	if t.Before(time.Now().Add(-5 * time.Second)) {
+		return false
+	}
+	return true
 }
 
 func (js *JobSuite) TestSubmit() {

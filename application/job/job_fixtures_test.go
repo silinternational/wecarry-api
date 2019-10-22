@@ -14,7 +14,7 @@ type MessageFixtures struct {
 }
 
 func createFixture(js *JobSuite, f interface{}) {
-	err := models.DB.Create(f)
+	err := js.DB.Create(f)
 	if err != nil {
 		js.T().Errorf("error creating %T fixture, %s", f, err)
 		js.T().FailNow()
@@ -24,7 +24,7 @@ func CreateFixtures_TestNewMessageHandler(js *JobSuite) MessageFixtures {
 	org := &models.Organization{AuthConfig: "{}", Uuid: domain.GetUuid()}
 	createFixture(js, org)
 
-	unique := "" //domain.GetUuid().String()
+	unique := domain.GetUuid().String()
 	users := models.Users{
 		{Email: unique + "user0@example.com", Nickname: unique + "User0", Uuid: domain.GetUuid()},
 		{Email: unique + "user1@example.com", Nickname: unique + "User1", Uuid: domain.GetUuid()},
@@ -160,8 +160,23 @@ func CreateFixtures_TestNewMessageHandler(js *JobSuite) MessageFixtures {
 			Content:   "New message, message updated_at < last_notified_at < last_viewed_at",
 		},
 	}
-	for i := range messages {
-		createFixture(js, &messages[i])
+	for i, m := range messages {
+		// manually create records to bypass automatic updated_at code
+		err := js.DB.RawQuery(`INSERT INTO messages (content, created_at, sent_by_id, thread_id, updated_at, uuid)
+			VALUES (?, ?, ?, ?, ?, ?)`, m.Content, m.UpdatedAt, m.SentByID, m.ThreadID, m.UpdatedAt, m.Uuid).Exec()
+		if err != nil {
+			js.T().Errorf("error creating message fixture, %s", err)
+			js.T().FailNow()
+		}
+
+		// get the new message ID
+		var m2 models.Message
+		err = js.DB.Where("uuid = ?", m.Uuid.String()).First(&m2)
+		if err != nil {
+			js.T().Errorf("error finding message fixture %s, %s", m.Uuid.String(), err)
+			js.T().FailNow()
+		}
+		messages[i].ID = m2.ID
 	}
 
 	return MessageFixtures{
