@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gobuffalo/buffalo/genny/build/_fixtures/coke/models"
-
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
 	"github.com/gobuffalo/validate/validators"
@@ -64,7 +62,7 @@ func (t *ThreadParticipant) ValidateUpdate(tx *pop.Connection) (*validate.Errors
 // UpdateLastViewedAt sets the last viewed time field and writes to the database
 func (t *ThreadParticipant) UpdateLastViewedAt(lastViewedAt time.Time) error {
 	t.LastViewedAt = lastViewedAt
-	if err := models.DB.Update(t); err != nil {
+	if err := DB.Update(t); err != nil {
 		return fmt.Errorf("failed to update thread_participant.last_viewed_at, %s", err)
 	}
 	return nil
@@ -86,7 +84,7 @@ func (t *ThreadParticipant) FindByThreadIDAndUserID(threadID, userID int) error 
 // UpdateLastNotifiedAt sets LastNotifiedAt and writes to the database
 func (t *ThreadParticipant) UpdateLastNotifiedAt(newTime time.Time) error {
 	t.LastNotifiedAt = newTime
-	if err := models.DB.Update(t); err != nil {
+	if err := DB.Update(t); err != nil {
 		return fmt.Errorf("failed to update thread_participant.last_notified_at, %s", err)
 	}
 	return nil
