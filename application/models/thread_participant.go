@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/gobuffalo/pop"
@@ -61,4 +62,13 @@ func (t *ThreadParticipant) ValidateUpdate(tx *pop.Connection) (*validate.Errors
 func (t *ThreadParticipant) SetLastViewedAt(lastViewedAt time.Time) error {
 	t.LastViewedAt = lastViewedAt
 	return DB.Update(t)
+}
+
+// FindByThreadIDAndUserID reads a record by the given Thread ID and User ID
+func (t *ThreadParticipant) FindByThreadIDAndUserID(threadID, userID int) error {
+	if err := DB.Where("user_id = ? AND thread_id = ?", userID, threadID).First(t); err != nil {
+		return fmt.Errorf("failed to find thread_participant record for user %d and thread %d, %s",
+			userID, threadID, err)
+	}
+	return nil
 }

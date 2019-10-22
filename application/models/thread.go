@@ -172,7 +172,7 @@ func (t *Thread) CreateWithParticipants(postUuid string, user User) error {
 func (t *Thread) SetLastViewedAt(user User, time time.Time) error {
 	var tp ThreadParticipant
 
-	if err := DB.Where("thread_id = ? AND user_id = ?", t.ID, user.ID).First(&tp); err != nil {
+	if err := tp.FindByThreadIDAndUserID(t.ID, user.ID); err != nil {
 		return err
 	}
 
