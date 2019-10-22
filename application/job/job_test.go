@@ -89,22 +89,13 @@ func (js *JobSuite) TestNewMessageHandler() {
 				if test.wantNumberOfEmails == 1 {
 					var tp models.ThreadParticipant
 					_ = tp.FindByThreadIDAndUserID(test.message.ThreadID, test.recipientID)
-					js.True(isNow(tp.LastNotifiedAt))
+					expect := time.Now()
+					js.WithinDuration(expect, tp.LastNotifiedAt, time.Second,
+						"last notified time not correct, got %v, wanted %v", tp.LastNotifiedAt, expect)
 				}
 			}
 		})
 	}
-}
-
-// isNow loosely compares the given time to time.Now()
-func isNow(t time.Time) bool {
-	if t.After(time.Now().Add(5 * time.Second)) {
-		return false
-	}
-	if t.Before(time.Now().Add(-5 * time.Second)) {
-		return false
-	}
-	return true
 }
 
 func (js *JobSuite) TestSubmit() {
