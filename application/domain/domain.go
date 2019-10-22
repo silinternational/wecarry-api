@@ -18,16 +18,17 @@ import (
 )
 
 const (
-	ErrorLevelWarn             = "warn"
-	ErrorLevelError            = "error"
-	ErrorLevelCritical         = "critical"
-	AdminRoleSuperDuperAdmin   = "SuperDuperAdmin"
-	AdminRoleSalesAdmin        = "SalesAdmin"
-	EmptyUUID                  = "00000000-0000-0000-0000-000000000000"
-	DateFormat                 = "2006-01-02"
-	MaxFileSize                = 1 << 21 // 10 Mebibytes
-	AccessTokenLifetimeSeconds = 3600
-	DateTimeFormat             = "2006-01-02 15:04:05"
+	ErrorLevelWarn              = "warn"
+	ErrorLevelError             = "error"
+	ErrorLevelCritical          = "critical"
+	AdminRoleSuperDuperAdmin    = "SuperDuperAdmin"
+	AdminRoleSalesAdmin         = "SalesAdmin"
+	EmptyUUID                   = "00000000-0000-0000-0000-000000000000"
+	DateFormat                  = "2006-01-02"
+	MaxFileSize                 = 1 << 21 // 10 Mebibytes
+	AccessTokenLifetimeSeconds  = 3600
+	DateTimeFormat              = "2006-01-02 15:04:05"
+	NewMessageNotificationDelay = 10 * time.Minute
 )
 
 // Environment Variables

@@ -98,7 +98,7 @@ func (js *JobSuite) TestNewMessageHandler() {
 	}
 }
 
-func (js *JobSuite) TestSubmit() {
+func (js *JobSuite) TestSubmitDelayed() {
 	var buf bytes.Buffer
 	domain.ErrLogger.SetOutput(&buf)
 
@@ -106,7 +106,7 @@ func (js *JobSuite) TestSubmit() {
 		domain.ErrLogger.SetOutput(os.Stderr)
 	}()
 
-	err := Submit("no_handler", nil)
+	err := SubmitDelayed("no_handler", time.Second, nil)
 	js.NoError(err)
 
 	errLog := buf.String()

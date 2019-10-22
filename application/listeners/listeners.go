@@ -104,7 +104,8 @@ func sendNewMessageNotification(e events.Event) {
 		return
 	}
 
-	if err := job.Submit(job.NewMessage, map[string]interface{}{domain.ArgMessageID: id}); err != nil {
+	if err := job.SubmitDelayed(job.NewMessage, domain.NewMessageNotificationDelay,
+		map[string]interface{}{domain.ArgMessageID: id}); err != nil {
 		domain.ErrLogger.Printf("error starting 'New Message' job, %s", err)
 	}
 }
