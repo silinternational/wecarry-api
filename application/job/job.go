@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/gobuffalo/buffalo/worker"
-	"github.com/gobuffalo/envy"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 	"github.com/silinternational/wecarry-api/notifications"
@@ -41,15 +40,14 @@ func NewMessageHandler(args worker.Args) error {
 		return errors.New("failed to load Participants and Post in new message handler")
 	}
 
-	uiUrl := envy.Get(domain.UIURLEnv, "")
 	msg := notifications.Message{
 		Template: domain.MessageTemplateNewMessage,
 		Data: map[string]interface{}{
-			"postURL":        uiUrl + "/#/requests/" + m.Thread.Post.Uuid.String(),
+			"postURL":        domain.GetPostUIURL(m.Thread.Post.Uuid.String()),
 			"postTitle":      m.Thread.Post.Title,
 			"messageContent": m.Content,
 			"sentByNickname": m.SentBy.Nickname,
-			"threadURL":      uiUrl + "/#/messages/" + m.Thread.Uuid.String(),
+			"threadURL":      domain.GetThreadUIURL(m.Thread.Uuid.String()),
 		},
 		FromName:  m.SentBy.Nickname,
 		FromEmail: m.SentBy.Email,
