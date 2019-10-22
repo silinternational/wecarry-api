@@ -163,6 +163,80 @@ func (ms *ModelSuite) TestThreadParticipant_SetLastViewedAt() {
 	}
 }
 
+func CreateFixtures_ThreadParticipant_FindByThreadIDAndUserID(ms *ModelSuite) ThreadFixtures {
+	t := ms.T()
+
+	org := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	createFixture(t, &org)
+
+	users := Users{
+		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1", Uuid: domain.GetUuid()},
+	}
+	for i := range users {
+		createFixture(t, &(users[i]))
+	}
+
+	posts := Posts{
+		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID},
+	}
+	for i := range posts {
+		createFixture(t, &(posts[i]))
+	}
+
+	threads := Threads{
+		{Uuid: domain.GetUuid(), PostID: posts[0].ID},
+	}
+	for i := range threads {
+		createFixture(t, &(threads[i]))
+	}
+
+	threadParticipants := ThreadParticipants{
+		{ThreadID: threads[0].ID, UserID: users[0].ID},
+	}
+	for i := range threadParticipants {
+		createFixture(t, &(threadParticipants[i]))
+	}
+
+	return ThreadFixtures{
+		Users:              users,
+		Threads:            threads,
+		ThreadParticipants: threadParticipants,
+	}
+}
+
+func (ms *ModelSuite) TestThreadParticipant_FindByThreadIDAndUserID() {
+	t := ms.T()
+
+	f := CreateFixtures_ThreadParticipant_FindByThreadIDAndUserID(ms)
+
+	tests := []struct {
+		name     string
+		threadID int
+		userID   int
+		wantID   int
+		wantErr  bool
+	}{
+		{name: "good", threadID: f.Threads[0].ID, userID: f.Users[0].ID, wantID: f.ThreadParticipants[0].ID},
+		{name: "bad user ID", threadID: f.Threads[0].ID, userID: 0, wantErr: true},
+		{name: "bad thread ID", threadID: 0, userID: f.Users[0].ID, wantErr: true},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var tp ThreadParticipant
+			err := tp.FindByThreadIDAndUserID(test.threadID, test.userID)
+
+			if test.wantErr {
+				ms.Error(err, "did not get an error from FindByThreadIDAndUserID")
+				return
+			}
+
+			ms.NoError(err, "unexpected error from FindByThreadIDAndUserID")
+
+			ms.Equal(test.wantID, tp.ID, "incorrect thread_participant ID returned")
+		})
+	}
+}
+
 // CreateFixtures_ThreadParticipant_UpdateLastNotifiedAt creates test fixtures for the
 // ThreadParticipant_UpdateLastNotifiedAt test
 func CreateFixtures_ThreadParticipant_UpdateLastNotifiedAt(ms *ModelSuite, t *testing.T) ThreadFixtures {
