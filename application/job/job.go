@@ -69,14 +69,15 @@ func NewMessageHandler(args worker.Args) error {
 			continue
 		}
 
-		if err := tp.UpdateLastNotifiedAt(time.Now()); err != nil {
-			return err
-		}
-
 		msg.ToName = p.Nickname
 		msg.ToEmail = p.Email
 		if err := notifications.Send(msg); err != nil {
 			domain.ErrLogger.Printf("error sending 'New Message' notification, %s", err)
+			continue
+		}
+
+		if err := tp.UpdateLastNotifiedAt(time.Now()); err != nil {
+			return err
 		}
 	}
 
