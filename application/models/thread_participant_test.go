@@ -5,9 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/silinternational/wecarry-api/domain"
-
 	"github.com/gobuffalo/validate"
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 func (ms *ModelSuite) TestThreadParticipant_Validate() {

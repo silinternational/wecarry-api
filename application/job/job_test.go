@@ -6,13 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/silinternational/wecarry-api/models"
-
-	"github.com/silinternational/wecarry-api/notifications"
-
-	"github.com/silinternational/wecarry-api/domain"
-
 	"github.com/gobuffalo/suite"
+	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/models"
+	"github.com/silinternational/wecarry-api/notifications"
 )
 
 type JobSuite struct {

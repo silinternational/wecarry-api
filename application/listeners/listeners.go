@@ -3,10 +3,9 @@ package listeners
 import (
 	"time"
 
-	"github.com/silinternational/wecarry-api/job"
-
 	"github.com/gobuffalo/events"
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/job"
 	"github.com/silinternational/wecarry-api/models"
 )
 
