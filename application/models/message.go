@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gobuffalo/buffalo/genny/build/_fixtures/coke/models"
 	"github.com/gobuffalo/events"
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
@@ -79,7 +78,7 @@ func (m *Message) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 // GetSender finds and returns the User that is the Sender of this Message
 func (m *Message) GetSender(requestFields []string) (*User, error) {
 	sender := User{}
-	if err := models.DB.Select(requestFields...).Find(&sender, m.SentByID); err != nil {
+	if err := DB.Select(requestFields...).Find(&sender, m.SentByID); err != nil {
 		err = fmt.Errorf("error finding message sentBy user with id %v ... %v", m.SentByID, err)
 		return nil, err
 	}
@@ -89,7 +88,7 @@ func (m *Message) GetSender(requestFields []string) (*User, error) {
 // GetThread finds and returns the Thread that this Message is attached to
 func (m *Message) GetThread(requestFields []string) (*Thread, error) {
 	thread := Thread{}
-	if err := models.DB.Select(requestFields...).Find(&thread, m.ThreadID); err != nil {
+	if err := DB.Select(requestFields...).Find(&thread, m.ThreadID); err != nil {
 		err = fmt.Errorf("error finding message thread id %v ... %v", m.ThreadID, err)
 		return nil, err
 	}
