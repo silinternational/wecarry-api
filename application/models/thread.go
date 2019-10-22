@@ -168,15 +168,15 @@ func (t *Thread) CreateWithParticipants(postUuid string, user User) error {
 	return nil
 }
 
-// SetLastViewedAt sets the last viewed time for the given user on the thread
-func (t *Thread) SetLastViewedAt(user User, time time.Time) error {
+// UpdateLastViewedAt sets the last viewed time for the given user on the thread
+func (t *Thread) UpdateLastViewedAt(user User, time time.Time) error {
 	var tp ThreadParticipant
 
 	if err := tp.FindByThreadIDAndUserID(t.ID, user.ID); err != nil {
 		return err
 	}
 
-	return tp.SetLastViewedAt(time)
+	return tp.UpdateLastViewedAt(time)
 }
 
 // Load reads the selected fields from the database

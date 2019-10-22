@@ -125,7 +125,7 @@ func (r *mutationResolver) SetThreadLastViewedAt(ctx context.Context, input SetT
 	if err := thread.FindByUUID(input.ThreadID); err != nil {
 		return &thread, err
 	}
-	if err := thread.SetLastViewedAt(models.GetCurrentUserFromGqlContext(ctx, TestUser), input.Time); err != nil {
+	if err := thread.UpdateLastViewedAt(models.GetCurrentUserFromGqlContext(ctx, TestUser), input.Time); err != nil {
 		return &thread, err
 	}
 

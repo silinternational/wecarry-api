@@ -60,8 +60,7 @@ func (ms *ModelSuite) TestThreadParticipant_Validate() {
 	}
 }
 
-// CreateFixtures_ThreadParticipant_SetLastViewedAt creates test fixtures for the ThreadParticipant_SetLastViewedAt test
-func CreateFixtures_ThreadParticipant_SetLastViewedAt(ms *ModelSuite, t *testing.T) ThreadFixtures {
+func CreateFixtures_ThreadParticipant_UpdateLastViewedAt(ms *ModelSuite, t *testing.T) ThreadFixtures {
 
 	org := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
 	createFixture(t, &org)
@@ -122,10 +121,10 @@ func CreateFixtures_ThreadParticipant_SetLastViewedAt(ms *ModelSuite, t *testing
 	}
 }
 
-func (ms *ModelSuite) TestThreadParticipant_SetLastViewedAt() {
+func (ms *ModelSuite) TestThreadParticipant_UpdateLastViewedAt() {
 	t := ms.T()
 
-	f := CreateFixtures_ThreadParticipant_SetLastViewedAt(ms, t)
+	f := CreateFixtures_ThreadParticipant_UpdateLastViewedAt(ms, t)
 
 	tests := []struct {
 		name              string
@@ -138,7 +137,7 @@ func (ms *ModelSuite) TestThreadParticipant_SetLastViewedAt() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			tp := test.threadParticipant
-			err := tp.SetLastViewedAt(test.lastViewedAt)
+			err := tp.UpdateLastViewedAt(test.lastViewedAt)
 
 			// reload from database to ensure the new time was saved
 			_ = DB.Reload(&tp)
@@ -149,7 +148,7 @@ func (ms *ModelSuite) TestThreadParticipant_SetLastViewedAt() {
 			}
 
 			if err != nil {
-				t.Errorf("SetLastViewedAt() returned an error: %v", err)
+				t.Errorf("UpdateLastViewedAt() returned an error: %v", err)
 				return
 			}
 
