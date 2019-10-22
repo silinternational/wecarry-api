@@ -61,10 +61,12 @@ func (t *ThreadParticipant) ValidateUpdate(tx *pop.Connection) (*validate.Errors
 	return validate.NewErrors(), nil
 }
 
-// SetLastViewedAt sets the last viewed time field
-func (t *ThreadParticipant) SetLastViewedAt(lastViewedAt time.Time) error {
+// UpdateLastViewedAt sets the last viewed time field and writes to the database
+func (t *ThreadParticipant) UpdateLastViewedAt(lastViewedAt time.Time) error {
 	t.LastViewedAt = lastViewedAt
-	return DB.Update(t)
+	if err := models.DB.Update(t); err != nil {
+		return fmt.Errorf("failed to update thread_participant.last_viewed_at, %s", err)
+	}
 }
 
 // FindByThreadIDAndUserID reads a record by the given Thread ID and User ID
