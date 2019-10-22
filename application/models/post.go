@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gobuffalo/buffalo"
+	"github.com/gobuffalo/events"
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
@@ -153,7 +154,7 @@ func (v *updateStatusValidator) IsValid(errors *validate.Errors) {
 		PostStatusCommitted: {PostStatusOpen, PostStatusAccepted, PostStatusDelivered, PostStatusRemoved},
 		PostStatusAccepted:  {PostStatusOpen, PostStatusDelivered, PostStatusReceived, PostStatusRemoved},
 		PostStatusDelivered: {PostStatusAccepted, PostStatusCompleted},
-		PostStatusReceived:  {PostStatusAccepted, PostStatusCompleted},
+		PostStatusReceived:  {PostStatusAccepted, PostStatusDelivered, PostStatusCompleted},
 		PostStatusCompleted: {PostStatusDelivered, PostStatusReceived},
 		PostStatusRemoved:   {},
 	}
@@ -180,6 +181,52 @@ func (p *Post) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 			Post: p,
 		},
 	), nil
+}
+
+// PostStatusEventData holds data needed by the Post Status Updated event listener
+type PostStatusEventData struct {
+	OldStatus string
+	NewStatus string
+	PostID    int
+}
+
+func (p *Post) BeforeUpdate(tx *pop.Connection) error {
+	oldPost := Post{}
+	if err := tx.Find(&oldPost, p.ID); err != nil {
+		domain.ErrLogger.Printf("error finding original post before update - uuid %v ... %v", p.Uuid, err)
+		return nil
+	}
+
+	if oldPost.Status == "" || oldPost.Status == p.Status {
+		return nil
+	}
+
+	eventData := PostStatusEventData{
+		OldStatus: oldPost.Status,
+		NewStatus: p.Status,
+		PostID:    p.ID,
+	}
+
+	e := events.Event{
+		Kind:    domain.EventApiPostStatusUpdated,
+		Message: "Post Status changed",
+		Payload: events.Payload{"eventData": eventData},
+	}
+
+	emitEvent(e)
+	return nil
+}
+
+func (p *Post) FindByID(id int, eagerFields ...string) error {
+	if id <= 0 {
+		return errors.New("error finding post: id must a positive number")
+	}
+
+	if err := DB.Eager(eagerFields...).Find(p, id); err != nil {
+		return fmt.Errorf("error finding post by id: %s", err.Error())
+	}
+
+	return nil
 }
 
 func (p *Post) FindByUUID(uuid string) error {
