@@ -54,6 +54,8 @@ models:
         resolver: true
       post:
         resolver: true
+      lastViewedAt:
+        resolver: true
   Message:
     model: github.com/silinternational/wecarry-api/models.Message
     fields:

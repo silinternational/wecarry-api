@@ -168,6 +168,16 @@ func (t *Thread) CreateWithParticipants(postUuid string, user User) error {
 	return nil
 }
 
+// GetLastViewedAt gets the last viewed time for the given user on the thread
+func (t *Thread) GetLastViewedAt(user User) (*time.Time, error) {
+	var tp ThreadParticipant
+	if err := tp.FindByThreadIDAndUserID(t.ID, user.ID); err != nil {
+		return nil, err
+	}
+	lastViewedAt := tp.LastViewedAt
+	return &lastViewedAt, nil
+}
+
 // UpdateLastViewedAt sets the last viewed time for the given user on the thread
 func (t *Thread) UpdateLastViewedAt(user User, time time.Time) error {
 	var tp ThreadParticipant
