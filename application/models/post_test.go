@@ -1219,16 +1219,16 @@ func (ms *ModelSuite) TestPost_SetProviderWithStatus() {
 
 	tests := []struct {
 		name           string
-		pType          string
 		status         string
+		pType          string
 		wantProviderID nulls.Int
 	}{
 		{name: "Committed Request", status: PostStatusCommitted,
 			pType: PostTypeRequest, wantProviderID: nulls.NewInt(user.ID)},
 		{name: "Not Committed Request", status: PostStatusAccepted,
 			pType: PostTypeRequest, wantProviderID: nulls.Int{}},
-		{name: "Committed Offer",
-			pType: PostTypeOffer, status: PostStatusCommitted, wantProviderID: nulls.Int{}},
+		{name: "Committed Offer", status: PostStatusCommitted,
+			pType: PostTypeOffer, wantProviderID: nulls.Int{}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
