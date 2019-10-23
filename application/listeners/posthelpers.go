@@ -6,6 +6,9 @@ import (
 	"github.com/silinternational/wecarry-api/notifications"
 )
 
+// The intention is to allow the tests to override this with their own Send function
+var ntfSend = notifications.Send
+
 type PostUser struct {
 	Nickname string
 	Email    string
@@ -58,7 +61,7 @@ func sendNotificationRequestFromOpenToCommitted(template string, post m.Post) {
 		ToName:   postUsers.Requester.Nickname,
 		ToEmail:  postUsers.Requester.Email,
 	}
-	if err := notifications.Send(msg); err != nil {
+	if err := ntfSend(msg); err != nil {
 		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
 	}
 }
@@ -85,7 +88,7 @@ func sendNotificationRequestFromCommittedToAccepted(template string, post m.Post
 		ToName:   postUsers.Provider.Nickname,
 		ToEmail:  postUsers.Provider.Email,
 	}
-	if err := notifications.Send(msg); err != nil {
+	if err := ntfSend(msg); err != nil {
 		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
 	}
 }
