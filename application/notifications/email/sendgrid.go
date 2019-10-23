@@ -24,8 +24,10 @@ type sendGridTemplate struct {
 }
 
 var sendGridTemplates = map[string]sendGridTemplate{
-	domain.MessageTemplateNewMessage: {id: "d-3c43c00e9c384aff99260d53f1b0d482"},
-	domain.MessageTemplateNewRequest: {id: ""},
+	domain.MessageTemplateNewMessage:                     {id: "d-3c43c00e9c384aff99260d53f1b0d482"},
+	domain.MessageTemplateNewRequest:                     {id: ""},
+	domain.MessageTemplateRequestFromOpenToCommitted:     {id: "d-44a96bd9fb3846a9ab6ae9b933becf4e"},
+	domain.MessageTemplateRequestFromCommittedToAccepted: {id: "d-b03639e13cb6493998f946b8ef678fab"},
 }
 
 func (e *SendGridService) Send(msg Message) error {
