@@ -106,7 +106,7 @@ func join(s1, s2 string) string {
 	return s1 + "-" + s2
 }
 
-var statusTemplates = map[string]Sender{
+var statusSenders = map[string]Sender{
 	join(m.PostStatusCommitted, m.PostStatusOpen): Sender{
 		Template: domain.MessageTemplateRequestFromCommittedToOpen,
 		Sender:   sendNotificationEmpty},
@@ -160,7 +160,7 @@ var statusTemplates = map[string]Sender{
 func requestStatusUpdatedNotifications(post m.Post, eData m.PostStatusEventData) {
 
 	fromStatusTo := join(eData.OldStatus, eData.NewStatus)
-	sender, ok := statusTemplates[fromStatusTo]
+	sender, ok := statusSenders[fromStatusTo]
 
 	if !ok {
 		domain.ErrLogger.Printf("unexpected status transition '%s'", fromStatusTo)
