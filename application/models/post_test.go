@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"reflect"
 	"testing"
 	"time"
@@ -1238,6 +1239,42 @@ func (ms *ModelSuite) TestPost_SetProviderWithStatus() {
 
 			ms.Equal(test.wantProviderID, post.ProviderID)
 			ms.Equal(test.status, post.Status)
+		})
+	}
+}
+
+func (ms *ModelSuite) TestPosts_FindByUser() {
+	t := ms.T()
+
+	f := CreateFixtures_Posts_FindByUser(ms)
+
+	tests := []struct {
+		name        string
+		user        User
+		wantPostIDs []int
+		wantErr     bool
+	}{
+		{name: "user 0", user: f.Users[0], wantPostIDs: []int{f.Posts[2].ID, f.Posts[1].ID, f.Posts[0].ID}},
+		{name: "user 1", user: f.Users[1], wantPostIDs: []int{f.Posts[2].ID, f.Posts[0].ID}},
+		{name: "non-existent user", user: User{}, wantErr: true},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			posts := Posts{}
+			var c context.Context
+			err := posts.FindByUser(c, test.user)
+
+			if test.wantErr {
+				ms.Error(err)
+				return
+			}
+
+			ms.NoError(err)
+			postIDs := make([]int, len(posts))
+			for i := range posts {
+				postIDs[i] = posts[i].ID
+			}
+			ms.Equal(test.wantPostIDs, postIDs)
 		})
 	}
 }

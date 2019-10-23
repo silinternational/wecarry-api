@@ -1,10 +1,16 @@
 package models
 
 import (
+	"testing"
+
 	"github.com/gobuffalo/nulls"
 	"github.com/silinternational/wecarry-api/domain"
-	"testing"
 )
+
+type PostFixtures struct {
+	Users
+	Posts
+}
 
 func CreateFixturesValidateUpdate(ms *ModelSuite, t *testing.T) []Post {
 
@@ -137,4 +143,48 @@ func CreatePostFixtures(ms *ModelSuite, t *testing.T, users Users) []Post {
 		}
 	}
 	return posts
+}
+
+func CreateFixtures_Posts_FindByUser(ms *ModelSuite) PostFixtures {
+	t := ms.T()
+
+	orgs := Organizations{
+		{Uuid: domain.GetUuid(), AuthConfig: "{}"},
+		{Uuid: domain.GetUuid(), AuthConfig: "{}"},
+	}
+	for i := range orgs {
+		createFixture(t, &orgs[i])
+	}
+
+	unique := domain.GetUuid().String()
+	users := Users{
+		{Email: unique + "_user0@example.com", Nickname: unique + "User0", Uuid: domain.GetUuid()},
+		{Email: unique + "_user1@example.com", Nickname: unique + "User1", Uuid: domain.GetUuid()},
+	}
+	for i := range users {
+		createFixture(t, &users[i])
+	}
+
+	userOrgs := UserOrganizations{
+		{OrganizationID: orgs[0].ID, UserID: users[0].ID, AuthID: users[0].Email, AuthEmail: users[0].Email},
+		{OrganizationID: orgs[1].ID, UserID: users[0].ID, AuthID: users[0].Email, AuthEmail: users[0].Email},
+		{OrganizationID: orgs[0].ID, UserID: users[1].ID, AuthID: users[1].Email, AuthEmail: users[1].Email},
+	}
+	for i := range userOrgs {
+		createFixture(t, &(userOrgs[i]))
+	}
+
+	posts := Posts{
+		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: orgs[0].ID},
+		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: orgs[1].ID},
+		{Uuid: domain.GetUuid(), CreatedByID: users[1].ID, OrganizationID: orgs[0].ID},
+	}
+	for i := range posts {
+		createFixture(t, &posts[i])
+	}
+
+	return PostFixtures{
+		Users: users,
+		Posts: posts,
+	}
 }
