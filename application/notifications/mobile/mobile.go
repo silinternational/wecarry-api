@@ -23,8 +23,14 @@ type template struct {
 }
 
 var templateData = map[string]template{
-	domain.MessageTemplateNewMessage: {subject: "new message", body: "You have a new message."},
-	domain.MessageTemplateNewRequest: {subject: "new request", body: "There is a new request for an item from your location."},
+	domain.MessageTemplateNewMessage: {
+		subject: "new message", body: "You have a new message."},
+	domain.MessageTemplateNewRequest: {
+		subject: "new request", body: "There is a new request for an item from your location."},
+	domain.MessageTemplateRequestFromOpenToCommitted: {
+		subject: "potential provider", body: "Someone has offered to fulfill your request."},
+	domain.MessageTemplateRequestFromCommittedToAccepted: {
+		subject: "offer accepted", body: "The requester has accepter your offer."},
 }
 
 func (t *DummyService) Send(msg Message) error {
