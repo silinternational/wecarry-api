@@ -266,98 +266,6 @@ func (ms *ModelSuite) TestPost_ValidateCreate() {
 	}
 }
 
-func CreateFixturesValidateUpdate(ms *ModelSuite, t *testing.T) []Post {
-
-	// Create org
-	org := &Organization{
-		ID:         1,
-		Name:       "TestOrg",
-		Url:        nulls.String{},
-		AuthType:   AuthTypeSaml,
-		AuthConfig: "{}",
-		Uuid:       domain.GetUuid(),
-	}
-	createFixture(t, org)
-
-	// Create User
-	user := User{
-		Email:     "user1@example.com",
-		FirstName: "Existing",
-		LastName:  "User",
-		Nickname:  "Existing User ",
-		Uuid:      domain.GetUuid(),
-	}
-
-	if err := ms.DB.Create(&user); err != nil {
-		t.Errorf("could not create test user %v ... %v", user.Email, err)
-		t.FailNow()
-	}
-
-	// Load Post test fixtures
-	posts := []Post{
-		{
-			CreatedByID:    user.ID,
-			OrganizationID: org.ID,
-			Type:           PostTypeRequest,
-			Title:          "Open Request 0",
-			Size:           PostSizeMedium,
-			Status:         PostStatusOpen,
-			Uuid:           domain.GetUuid(),
-		},
-		{
-			CreatedByID:    user.ID,
-			OrganizationID: org.ID,
-			Type:           PostTypeRequest,
-			Title:          "Committed Request 1",
-			Size:           PostSizeMedium,
-			Status:         PostStatusCommitted,
-			Uuid:           domain.GetUuid(),
-		},
-		{
-			CreatedByID:    user.ID,
-			OrganizationID: org.ID,
-			Type:           PostTypeRequest,
-			Title:          "Accepted Request 2",
-			Size:           PostSizeMedium,
-			Status:         PostStatusAccepted,
-			Uuid:           domain.GetUuid(),
-		},
-		{
-			CreatedByID:    user.ID,
-			OrganizationID: org.ID,
-			Type:           PostTypeRequest,
-			Title:          "Received Request 3",
-			Size:           PostSizeMedium,
-			Status:         PostStatusReceived,
-			Uuid:           domain.GetUuid(),
-		},
-		{
-			CreatedByID:    user.ID,
-			OrganizationID: org.ID,
-			Type:           PostTypeRequest,
-			Title:          "Completed Request 4",
-			Size:           PostSizeMedium,
-			Status:         PostStatusCompleted,
-			Uuid:           domain.GetUuid(),
-		},
-		{
-			CreatedByID:    user.ID,
-			OrganizationID: org.ID,
-			Type:           PostTypeRequest,
-			Title:          "Removed Request 5",
-			Size:           PostSizeMedium,
-			Status:         PostStatusRemoved,
-			Uuid:           domain.GetUuid(),
-		},
-	}
-
-	if err := CreatePosts(posts); err != nil {
-		t.Errorf("could not create test post ... %v", err)
-		t.FailNow()
-	}
-	return posts
-}
-
 func (ms *ModelSuite) TestPost_ValidateUpdate() {
 	t := ms.T()
 
@@ -748,47 +656,6 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			}
 		})
 	}
-}
-
-func CreatePostFixtures(ms *ModelSuite, t *testing.T, users Users) []Post {
-	if err := DB.Load(&users[0], "Organizations"); err != nil {
-		t.Errorf("failed to load organizations on users[0] fixture, %s", err)
-	}
-
-	// Load Post test fixtures
-	posts := []Post{
-		{
-			CreatedByID:    users[0].ID,
-			Type:           PostTypeRequest,
-			OrganizationID: users[0].Organizations[0].ID,
-			Title:          "A Request",
-			Size:           PostSizeMedium,
-			Status:         PostStatusOpen,
-			Uuid:           domain.GetUuid(),
-			ProviderID:     nulls.NewInt(users[1].ID),
-		},
-		{
-			CreatedByID:    users[0].ID,
-			Type:           PostTypeOffer,
-			OrganizationID: users[0].Organizations[0].ID,
-			Title:          "An Offer",
-			Size:           PostSizeMedium,
-			Status:         PostStatusOpen,
-			Uuid:           domain.GetUuid(),
-			ReceiverID:     nulls.NewInt(users[1].ID),
-		},
-	}
-	for i := range posts {
-		if err := ms.DB.Create(&posts[i]); err != nil {
-			t.Errorf("could not create test post ... %v", err)
-			t.FailNow()
-		}
-		if err := DB.Load(&posts[i], "CreatedBy", "Provider", "Receiver", "Organization"); err != nil {
-			t.Errorf("Error loading post associations: %s", err)
-			t.FailNow()
-		}
-	}
-	return posts
 }
 
 func (ms *ModelSuite) TestPost_FindByID() {
@@ -1301,4 +1168,76 @@ func (ms *ModelSuite) TestPost_SetOrigin() {
 	// These are redundant checks, but here to document the fact that a null overwrites previous data.
 	ms.False(locationFromDB.Latitude.Valid)
 	ms.False(locationFromDB.Longitude.Valid)
+}
+
+func (ms *ModelSuite) TestPost_NewWithUser() {
+	t := ms.T()
+	_, users, _ := CreateUserFixtures(ms, t)
+	user := users[0]
+
+	tests := []struct {
+		name           string
+		pType          string
+		wantPostType   string
+		wantPostStatus string
+		wantReceiverID int
+		wantProviderID int
+		wantErr        bool
+	}{
+		{name: "Good Request", pType: PostTypeRequest,
+			wantPostType: PostTypeRequest, wantPostStatus: PostStatusOpen,
+			wantReceiverID: user.ID,
+		},
+		{name: "Good Offer", pType: PostTypeRequest,
+			wantPostType: PostTypeRequest, wantPostStatus: PostStatusOpen,
+			wantProviderID: user.ID,
+		},
+		{name: "Bad Type", pType: "BADTYPE", wantErr: true},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var post Post
+			err := post.NewWithUser(test.pType, user)
+
+			if test.wantErr {
+				ms.Error(err)
+			} else {
+				ms.NoError(err)
+				ms.NotEqual(domain.EmptyUUID, post.Uuid)
+				ms.Equal(test.wantPostType, post.Type)
+				ms.Equal(user.ID, post.CreatedByID)
+				ms.Equal(test.wantPostStatus, post.Status)
+			}
+		})
+	}
+}
+
+func (ms *ModelSuite) TestPost_SetProviderWithStatus() {
+	t := ms.T()
+	_, users, _ := CreateUserFixtures(ms, t)
+	user := users[0]
+
+	tests := []struct {
+		name           string
+		status         string
+		pType          string
+		wantProviderID nulls.Int
+	}{
+		{name: "Committed Request", status: PostStatusCommitted,
+			pType: PostTypeRequest, wantProviderID: nulls.NewInt(user.ID)},
+		{name: "Not Committed Request", status: PostStatusAccepted,
+			pType: PostTypeRequest, wantProviderID: nulls.Int{}},
+		{name: "Committed Offer", status: PostStatusCommitted,
+			pType: PostTypeOffer, wantProviderID: nulls.Int{}},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var post Post
+			post.Type = test.pType
+			post.SetProviderWithStatus(test.status, user)
+
+			ms.Equal(test.wantProviderID, post.ProviderID)
+			ms.Equal(test.status, post.Status)
+		})
+	}
 }
