@@ -224,26 +224,13 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 			return post, err
 		}
 	} else {
-		post.Uuid = domain.GetUuid()
-		post.CreatedByID = currentUser.ID
-		post.Status = models.PostStatusOpen
-		// TODO: This should probably be done in the model package
-		if input.Type != nil {
-			switch *input.Type {
-			case models.PostTypeRequest:
-				post.ReceiverID = nulls.NewInt(currentUser.ID)
-			case models.PostTypeOffer:
-				post.ProviderID = nulls.NewInt(currentUser.ID)
-			}
+		if err := post.NewWithUser(input.Type.String(), currentUser); err != nil {
+			return post, err
 		}
 	}
 
 	if input.Status != nil {
-		post.Status = input.Status.String()
-		if *input.Status == PostStatusCommitted {
-			// TODO: This should probably be done in the model package, especially if the logic becomes more complex
-			post.ProviderID = nulls.NewInt(currentUser.ID)
-		}
+		post.SetProvider(input.Status.String(), currentUser)
 	}
 
 	if input.OrgID != nil {
@@ -340,6 +327,7 @@ type postInput struct {
 
 func (r *mutationResolver) CreatePost(ctx context.Context, input postInput) (*models.Post, error) {
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+
 	post, err := convertGqlPostInputToDBPost(ctx, input, cUser)
 	if err != nil {
 		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
