@@ -3,6 +3,7 @@ package gqlgen
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/silinternational/wecarry-api/domain"
@@ -37,6 +38,13 @@ func (r *threadResolver) ID(ctx context.Context, obj *models.Thread) (string, er
 		return "", nil
 	}
 	return obj.Uuid.String(), nil
+}
+
+func (r *threadResolver) LastViewedAt(ctx context.Context, obj *models.Thread) (*time.Time, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return obj.GetLastViewedAt(models.GetCurrentUserFromGqlContext(ctx, TestUser))
 }
 
 func (r *threadResolver) Messages(ctx context.Context, obj *models.Thread) ([]*models.Message, error) {

@@ -3,6 +3,7 @@ package models
 import (
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/gofrs/uuid"
 
@@ -44,8 +45,9 @@ func CreateThreadFixtures(ms *ModelSuite, t *testing.T, post Post) ThreadFixture
 	// Load Thread Participants test fixtures
 	threadParticipants := []ThreadParticipant{
 		{
-			ThreadID: threads[0].ID,
-			UserID:   post.CreatedByID,
+			ThreadID:     threads[0].ID,
+			UserID:       post.CreatedByID,
+			LastViewedAt: time.Now(),
 		},
 		{
 			ThreadID: threads[1].ID,
@@ -92,7 +94,7 @@ func CreateThreadFixtures(ms *ModelSuite, t *testing.T, post Post) ThreadFixture
 		}
 	}
 
-	return ThreadFixtures{Threads: threads, Messages: messages}
+	return ThreadFixtures{Threads: threads, Messages: messages, ThreadParticipants: threadParticipants}
 }
 
 func (ms *ModelSuite) TestThread_Validate() {
@@ -427,4 +429,51 @@ func (ms *ModelSuite) TestThread_CreateWithParticipants() {
 		t.Errorf("TestThread_CreateWithParticipants() couldn't read from thread_participants: %s", err)
 	}
 	ms.Equal(2, n, "incorrect number of thread_participants records created")
+}
+
+func (ms *ModelSuite) TestThread_GetLastViewedAt() {
+	t := ms.T()
+
+	_, users, _ := CreateUserFixtures(ms, t)
+	posts := CreatePostFixtures(ms, t, users)
+	threadFixtures := CreateThreadFixtures(ms, t, posts[0])
+
+	tests := []struct {
+		name    string
+		thread  Thread
+		user    User
+		want    time.Time
+		wantErr bool
+	}{
+		{
+			name:   "good",
+			thread: threadFixtures.Threads[0],
+			user:   users[0],
+			want:   threadFixtures.ThreadParticipants[0].LastViewedAt,
+		},
+		{
+			name:    "invalid user",
+			thread:  threadFixtures.Threads[0],
+			user:    User{},
+			wantErr: true,
+		},
+		{
+			name:    "invalid thread",
+			thread:  Thread{},
+			user:    users[0],
+			wantErr: true,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			lastViewedAt, err := test.thread.GetLastViewedAt(test.user)
+			if test.wantErr {
+				ms.Error(err, "did not get expected error")
+				return
+			}
+
+			ms.NoError(err)
+			ms.Equal(test.want.Format(time.RFC3339), lastViewedAt.Format(time.RFC3339))
+		})
+	}
 }

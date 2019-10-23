@@ -440,7 +440,12 @@ func (p *Post) FindByUserAndUUID(ctx context.Context, user User, uuid string, se
 
 // FindByUser finds all posts belonging to the same organization as the given user and not marked as removed.
 func (p *Posts) FindByUser(ctx context.Context, user User, selectFields ...string) error {
-	return DB.Select(selectFields...).Scope(scopeUserOrgs(user)).Scope(scopeNotRemoved()).All(p)
+	return DB.
+		Select(selectFields...).
+		Scope(scopeUserOrgs(user)).
+		Scope(scopeNotRemoved()).
+		Order("created_at desc").
+		All(p)
 }
 
 // GetDestination reads the destination record, if it exists, and returns the Location object.

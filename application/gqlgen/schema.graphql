@@ -147,6 +147,7 @@ type Thread {
     messages: [Message!]!
     postID: String!
     post: Post!
+    lastViewedAt: Time!
     createdAt: Time
     updatedAt: Time
 }
