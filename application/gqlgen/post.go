@@ -230,7 +230,7 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 	}
 
 	if input.Status != nil {
-		post.SetProvider(input.Status.String(), currentUser)
+		post.SetProviderForStatus(input.Status.String(), currentUser)
 	}
 
 	if input.OrgID != nil {

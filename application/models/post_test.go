@@ -1234,7 +1234,7 @@ func (ms *ModelSuite) TestPost_SetProvider() {
 		t.Run(test.name, func(t *testing.T) {
 			var post Post
 			post.Type = test.pType
-			post.SetProvider(test.status, user)
+			post.SetProviderForStatus(test.status, user)
 
 			ms.Equal(test.wantProviderID, post.ProviderID)
 			ms.Equal(test.status, post.Status)
