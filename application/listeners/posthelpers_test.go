@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func (ms *ModelSuite) TestGetPostRecipients() {
+func (ms *ModelSuite) TestGetPostUsers() {
 	t := ms.T()
 
 	orgUserPostFixtures := CreateFixtures_GetPostRecipients(ms, t)
@@ -16,31 +16,28 @@ func (ms *ModelSuite) TestGetPostRecipients() {
 	posts := orgUserPostFixtures.posts
 
 	tests := []struct {
-		name           string
-		id             int
-		wantRecipients []PostMsgRecipient
-		wantErr        bool
+		name          string
+		id            int
+		wantRequester PostMsgRecipient
+		wantProvider  PostMsgRecipient
+		wantErr       bool
 	}{
 		{name: "Request by User0 with User1 as Provider",
 			id: posts[0].ID,
-			wantRecipients: []PostMsgRecipient{
-				{
-					nickname: users[0].Nickname,
-					email:    users[0].Email,
-				},
-				{
-					nickname: users[1].Nickname,
-					email:    users[1].Email,
-				},
+			wantRequester: PostMsgRecipient{
+				Nickname: users[0].Nickname,
+				Email:    users[0].Email,
+			},
+			wantProvider: PostMsgRecipient{
+				Nickname: users[1].Nickname,
+				Email:    users[1].Email,
 			},
 		},
 		{name: "Request by User0 with no Provider",
 			id: posts[1].ID,
-			wantRecipients: []PostMsgRecipient{
-				{
-					nickname: users[0].Nickname,
-					email:    users[0].Email,
-				},
+			wantRequester: PostMsgRecipient{
+				Nickname: users[0].Nickname,
+				Email:    users[0].Email,
 			},
 		},
 	}
@@ -51,19 +48,14 @@ func (ms *ModelSuite) TestGetPostRecipients() {
 			err := post.FindByID(test.id)
 			ms.NoError(err, "error finding post for test")
 
-			postMsgRecipients := GetPostRecipients(post)
+			postUsers := GetPostUsers(post)
 
 			if test.wantErr {
 				ms.Error(err)
 			} else {
-				expectedCount := len(test.wantRecipients)
 				ms.NoError(err)
-				ms.Equal(expectedCount, len(postMsgRecipients), "bad number of recipients")
-				ms.Equal(test.wantRecipients[0], postMsgRecipients[0])
-
-				if expectedCount == 2 {
-					ms.Equal(test.wantRecipients[1], postMsgRecipients[1])
-				}
+				ms.Equal(test.wantRequester, postUsers.Requester)
+				ms.Equal(test.wantProvider, postUsers.Provider)
 			}
 		})
 	}
