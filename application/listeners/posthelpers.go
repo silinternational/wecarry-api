@@ -1,13 +1,10 @@
 package listeners
 
 import (
-	"github.com/gobuffalo/envy"
 	"github.com/silinternational/wecarry-api/domain"
 	m "github.com/silinternational/wecarry-api/models"
 	"github.com/silinternational/wecarry-api/notifications"
 )
-
-var uiURL = envy.Get(domain.UIURLEnv, "")
 
 type PostUser struct {
 	Nickname string
@@ -48,7 +45,7 @@ func sendNotificationRequestFromOpenToCommitted(template string, post m.Post) {
 	}
 
 	data := map[string]interface{}{
-		"uiURL":            uiURL,
+		"uiURL":            domain.UIURL,
 		"postURL":          domain.GetPostUIURL(post.Uuid.String()),
 		"postTitle":        post.Title,
 		"providerNickname": postUsers.Provider.Nickname,
@@ -75,7 +72,7 @@ func sendNotificationRequestFromCommittedToAccepted(template string, post m.Post
 	}
 
 	data := map[string]interface{}{
-		"uiURL":             uiURL,
+		"uiURL":             domain.UIURL,
 		"postURL":           domain.GetPostUIURL(post.Uuid.String()),
 		"postTitle":         post.Title,
 		"postDescription":   post.Description,
