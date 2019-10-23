@@ -1212,7 +1212,7 @@ func (ms *ModelSuite) TestPost_NewWithUser() {
 	}
 }
 
-func (ms *ModelSuite) TestPost_SetProvider() {
+func (ms *ModelSuite) TestPost_SetProviderWithStatus() {
 	t := ms.T()
 	_, users, _ := CreateUserFixtures(ms, t)
 	user := users[0]
@@ -1234,7 +1234,7 @@ func (ms *ModelSuite) TestPost_SetProvider() {
 		t.Run(test.name, func(t *testing.T) {
 			var post Post
 			post.Type = test.pType
-			post.SetProviderForStatus(test.status, user)
+			post.SetProviderWithStatus(test.status, user)
 
 			ms.Equal(test.wantProviderID, post.ProviderID)
 			ms.Equal(test.status, post.Status)

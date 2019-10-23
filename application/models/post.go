@@ -103,7 +103,7 @@ func (p *Post) NewWithUser(pType string, currentUser User) error {
 	return nil
 }
 
-func (p *Post) SetProviderForStatus(status string, currentUser User) {
+func (p *Post) SetProviderWithStatus(status string, currentUser User) {
 
 	if p.Type == PostTypeRequest && status == PostStatusCommitted {
 		p.ProviderID = nulls.NewInt(currentUser.ID)
