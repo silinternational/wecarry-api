@@ -84,6 +84,33 @@ func (p Posts) String() string {
 	return string(jp)
 }
 
+func (p *Post) NewWithUser(pType string, currentUser User) error {
+	p.Uuid = domain.GetUuid()
+	p.CreatedByID = currentUser.ID
+	p.Status = PostStatusOpen
+
+	switch pType {
+	case PostTypeRequest:
+		p.ReceiverID = nulls.NewInt(currentUser.ID)
+	case PostTypeOffer:
+		p.ProviderID = nulls.NewInt(currentUser.ID)
+	default:
+		return errors.New("bad type for new post: " + pType)
+	}
+
+	p.Type = pType
+
+	return nil
+}
+
+func (p *Post) SetProviderWithStatus(status string, currentUser User) {
+
+	if p.Type == PostTypeRequest && status == PostStatusCommitted {
+		p.ProviderID = nulls.NewInt(currentUser.ID)
+	}
+	p.Status = status
+}
+
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
 // This method is not required and may be deleted.
 func (p *Post) Validate(tx *pop.Connection) (*validate.Errors, error) {
@@ -290,7 +317,7 @@ func (p *Post) GetThreads(fields []string, user User) ([]*Thread, error) {
 
 		for _, participant := range t.Participants {
 			if participant.ID == user.ID {
-				threads = append(threads, &(p.Threads[i]))
+				threads = append(threads, &p.Threads[i])
 				break
 			}
 		}

@@ -13,6 +13,7 @@ require (
 	github.com/gobuffalo/events v1.4.0
 	github.com/gobuffalo/httptest v1.4.0
 	github.com/gobuffalo/mw-contenttype v0.0.0-20190224202710-36c73cc938f3
+	github.com/gobuffalo/mw-csrf v0.0.0-20190129204204-25460a055517 // indirect
 	github.com/gobuffalo/mw-paramlogger v0.0.0-20190224201358-0d45762ab655
 	github.com/gobuffalo/nulls v0.1.0
 	github.com/gobuffalo/packr v1.25.0
