@@ -18,24 +18,24 @@ func (ms *ModelSuite) TestGetPostUsers() {
 	tests := []struct {
 		name          string
 		id            int
-		wantRequester PostMsgRecipient
-		wantProvider  PostMsgRecipient
+		wantRequester PostUser
+		wantProvider  PostUser
 		wantErr       bool
 	}{
 		{name: "Request by User0 with User1 as Provider",
 			id: posts[0].ID,
-			wantRequester: PostMsgRecipient{
+			wantRequester: PostUser{
 				Nickname: users[0].Nickname,
 				Email:    users[0].Email,
 			},
-			wantProvider: PostMsgRecipient{
+			wantProvider: PostUser{
 				Nickname: users[1].Nickname,
 				Email:    users[1].Email,
 			},
 		},
 		{name: "Request by User0 with no Provider",
 			id: posts[1].ID,
-			wantRequester: PostMsgRecipient{
+			wantRequester: PostUser{
 				Nickname: users[0].Nickname,
 				Email:    users[0].Email,
 			},

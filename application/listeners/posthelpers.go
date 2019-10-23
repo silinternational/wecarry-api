@@ -9,14 +9,14 @@ import (
 
 var uiURL = envy.Get(domain.UIURLEnv, "")
 
-type PostMsgRecipient struct {
+type PostUser struct {
 	Nickname string
 	Email    string
 }
 
 type PostUsers struct {
-	Requester PostMsgRecipient
-	Provider  PostMsgRecipient
+	Requester PostUser
+	Provider  PostUser
 }
 
 // GetPostUsers returns up to two entries for the Post Requester and
@@ -29,11 +29,11 @@ func GetPostUsers(post m.Post) PostUsers {
 	var recipients PostUsers
 
 	if requester != nil {
-		recipients.Requester = PostMsgRecipient{Nickname: requester.Nickname, Email: requester.Email}
+		recipients.Requester = PostUser{Nickname: requester.Nickname, Email: requester.Email}
 	}
 
 	if provider != nil {
-		recipients.Provider = PostMsgRecipient{Nickname: provider.Nickname, Email: provider.Email}
+		recipients.Provider = PostUser{Nickname: provider.Nickname, Email: provider.Email}
 	}
 
 	return recipients
