@@ -391,3 +391,58 @@ func (ms *ModelSuite) TestThread_GetLastViewedAt() {
 		})
 	}
 }
+
+func (ms *ModelSuite) TestThread_UnreadMessageCount() {
+	t := ms.T()
+
+	f := CreateThreadFixtures_UnreadMessageCount(ms, t)
+
+	tests := []struct {
+		name    string
+		threadP ThreadParticipant
+		user    User
+		want    int
+		wantErr bool
+	}{
+		{
+			name:    "Eager User Own Thread",
+			threadP: f.ThreadParticipants[0],
+			user:    f.Users[0],
+			want:    0,
+		},
+		{
+			name:    "Eager User Other Thread",
+			threadP: f.ThreadParticipants[3],
+			user:    f.Users[0],
+			want:    0,
+		},
+		{
+			name:    "Lazy User Other Thread",
+			threadP: f.ThreadParticipants[1],
+			user:    f.Users[1],
+			want:    2,
+		},
+		{
+			name:    "Lazy User Own Thread",
+			threadP: f.ThreadParticipants[2],
+			user:    f.Users[1],
+			want:    1,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := DB.Load(&test.threadP)
+			ms.NoError(err)
+
+			got, err := test.threadP.Thread.UnreadMessageCount(test.threadP.LastViewedAt)
+			if test.wantErr {
+				ms.Error(err, "did not get expected error")
+				return
+			}
+
+			ms.NoError(err)
+			ms.Equal(test.want, got)
+		})
+	}
+}
