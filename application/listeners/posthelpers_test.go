@@ -2,7 +2,6 @@ package listeners
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
@@ -100,15 +99,8 @@ func (ms *ModelSuite) TestRequestStatusUpdatedNotifications() {
 
 }
 
-// This returns an error that includes data that the tests can look for
-func dummySend(msg notifications.Message) error {
-	return errors.New(fmt.Sprintf("postTitle:%v", msg.Data["postTitle"]))
-}
-
 func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 	t := ms.T()
-
-	ntfSend = dummySend
 
 	orgUserPostFixtures := CreateFixtures_sendNotificationRequestFromStatus(ms, t)
 	posts := orgUserPostFixtures.posts
@@ -125,49 +117,48 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 		post         models.Post
 		template     string
 		sendFunction func(string, models.Post)
-		wantContains string
-		wantEquals   string
+		wantToEmail  string
+		wantErrLog   string
 	}{
 		{name: "Good - Open to Committed",
 			post:         posts[0],
 			template:     domain.MessageTemplateRequestFromOpenToCommitted,
-			sendFunction: sendNotificationRequestFromCommittedToAccepted,
-			wantContains: "postTitle:" + posts[0].Title,
+			sendFunction: sendNotificationRequestFromOpenToCommitted,
+			wantToEmail:  posts[0].CreatedBy.Email,
 		},
 		{name: "Bad - Open to Committed",
 			template:     domain.MessageTemplateRequestFromOpenToCommitted,
-			sendFunction: sendNotificationRequestFromCommittedToAccepted,
+			sendFunction: sendNotificationRequestFromOpenToCommitted,
 			post:         posts[1],
-			wantEquals: fmt.Sprintf("error preparing '%s' notification - no provider\n",
+			wantErrLog: fmt.Sprintf("error preparing '%s' notification - no provider\n",
 				domain.MessageTemplateRequestFromOpenToCommitted),
 		},
 		{name: "Good - Committed to Accepted",
 			post:         posts[0],
 			template:     domain.MessageTemplateRequestFromCommittedToAccepted,
 			sendFunction: sendNotificationRequestFromCommittedToAccepted,
-			wantContains: "postTitle:" + posts[0].Title,
+			wantToEmail:  posts[0].Provider.Email,
 		},
 		{name: "Bad - Committed to Accepted",
 			template:     domain.MessageTemplateRequestFromCommittedToAccepted,
 			sendFunction: sendNotificationRequestFromCommittedToAccepted,
 			post:         posts[1],
-			wantEquals: fmt.Sprintf("error preparing '%s' notification - no provider\n",
+			wantErrLog: fmt.Sprintf("error preparing '%s' notification - no provider\n",
 				domain.MessageTemplateRequestFromCommittedToAccepted),
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 
+			notifications.TestEmailService.DeleteSentMessages()
+
 			test.sendFunction(test.template, test.post)
-			got := buf.String()
+			gotBuf := buf.String()
 			buf.Reset()
 
-			if test.wantContains != "" {
-				ms.Contains(got, test.wantContains, "missing data in fake test log entry")
-				return
-			}
-
-			ms.Equal(test.wantEquals, got, "wrong error log entry")
+			lastToEmail := notifications.TestEmailService.GetLastToEmail()
+			ms.Equal(test.wantToEmail, lastToEmail, "bad To Email")
+			ms.Equal(test.wantErrLog, gotBuf, "wrong error log entry")
 		})
 	}
 }
