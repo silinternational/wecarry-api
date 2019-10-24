@@ -64,33 +64,36 @@ func CreateUserOrgs(fixtures UserOrganizations) error {
 	return nil
 }
 
-func CreatePosts(fixtures Posts) error {
+func CreatePosts(fixtures Posts) (Posts, error) {
+	outFs := Posts{}
+
 	for _, f := range fixtures {
 		if err := DB.Create(&f); err != nil {
-			return fmt.Errorf("error creating post %+v ...\n %v \n", f, err)
+			return outFs, fmt.Errorf("error creating post %+v ...\n %v \n", f, err)
 		}
+		outFs = append(outFs, f)
 	}
-	return nil
+	return outFs, nil
 }
 
-func CreateThreads(fixtures Threads) error {
+func CreateThreads(fixtures Threads) (Threads, error) {
 	db := DB
 	for _, f := range fixtures {
 		if err := db.Create(&f); err != nil {
-			return fmt.Errorf("error creating thread %+v ...\n %v \n", f, err)
+			return Threads{}, fmt.Errorf("error creating thread %+v ...\n %v \n", f, err)
 		}
 	}
 
 	threads := []Thread{}
 	if err := db.All(&threads); err != nil {
-		return fmt.Errorf("error retrieving new threads ... %v \n", err)
+		return threads, fmt.Errorf("error retrieving new threads ... %v \n", err)
 	}
 
 	if len(threads) < len(fixtures) {
-		return fmt.Errorf("wrong number of threads created, expected %v, but got %v", len(fixtures), len(threads))
+		return threads, fmt.Errorf("wrong number of threads created, expected %v, but got %v", len(fixtures), len(threads))
 	}
 
-	return nil
+	return threads, nil
 }
 
 func CreateThreadParticipants(fixtures ThreadParticipants) error {
