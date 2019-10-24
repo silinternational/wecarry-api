@@ -92,7 +92,7 @@ func (gs *GqlgenSuite) TestResolver() {
 			Description:    nulls.NewString("Missing my good, old, Canadian maple syrupy goodness"),
 		},
 	}
-	if err := models.CreatePosts(postFix); err != nil {
+	if _, err := models.CreatePosts(postFix); err != nil {
 		t.Errorf("could not run test ... %v", err)
 		return
 	}
@@ -106,7 +106,7 @@ func (gs *GqlgenSuite) TestResolver() {
 			PostID: 1,
 		},
 	}
-	if err := models.CreateThreads(threadFix); err != nil {
+	if _, err := models.CreateThreads(threadFix); err != nil {
 		t.Errorf("could not run test ... %v", err)
 		return
 	}

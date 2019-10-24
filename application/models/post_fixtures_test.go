@@ -97,7 +97,8 @@ func CreateFixturesValidateUpdate(ms *ModelSuite, t *testing.T) []Post {
 		},
 	}
 
-	if err := CreatePosts(posts); err != nil {
+	posts, err := CreatePosts(posts)
+	if err != nil {
 		t.Errorf("could not create test post ... %v", err)
 		t.FailNow()
 	}
