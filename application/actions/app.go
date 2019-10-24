@@ -14,7 +14,7 @@ import (
 
 // ENV is used to help switch settings based on where the
 // application is being run. Default is "development".
-var ENV = envy.Get("GO_ENV", "development")
+var ENV = envy.Get(domain.GoEnv, "development")
 var app *buffalo.App
 
 // App is where all routes and middleware for buffalo
@@ -43,7 +43,7 @@ func App() *buffalo.App {
 				}).Handler,
 			},
 			SessionName:  "_wecarry_session",
-			SessionStore: sessions.NewCookieStore([]byte(envy.Get("SESSION_SECRET", "testing"))),
+			SessionStore: sessions.NewCookieStore([]byte(envy.Get(domain.SessionSecretEnv, "testing"))),
 		})
 
 		// Initialize and attach "rollbar" to context

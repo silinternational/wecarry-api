@@ -5,16 +5,16 @@ package google
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gobuffalo/buffalo"
-	"github.com/gobuffalo/envy"
-	"github.com/silinternational/wecarry-api/auth"
-	"github.com/silinternational/wecarry-api/domain"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
 
+	"github.com/gobuffalo/buffalo"
+	"github.com/gobuffalo/envy"
 	"github.com/markbates/goth"
+	"github.com/silinternational/wecarry-api/auth"
+	"github.com/silinternational/wecarry-api/domain"
 	"golang.org/x/oauth2"
 )
 
@@ -27,12 +27,12 @@ const ProviderName = "google"
 // one manually.
 func New(jsonConfig json.RawMessage) (*Provider, error) {
 
-	googleKey := envy.Get(auth.GoogleKeyEnv, "")
-	googleSecret := envy.Get(auth.GoogleSecretEnv, "")
+	googleKey := envy.Get(domain.GoogleKeyEnv, "")
+	googleSecret := envy.Get(domain.GoogleSecretEnv, "")
 
 	if googleKey == "" || googleSecret == "" {
 		err := fmt.Errorf("missing required environment variable, either %s or %s.",
-			auth.GoogleKeyEnv, auth.GoogleSecretEnv)
+			domain.GoogleKeyEnv, domain.GoogleSecretEnv)
 		return &Provider{}, err
 	}
 
@@ -41,7 +41,7 @@ func New(jsonConfig json.RawMessage) (*Provider, error) {
 	p := &Provider{
 		ClientKey:    googleKey,
 		Secret:       googleSecret,
-		CallbackURL:  envy.Get(auth.AuthCallbackURLEnv, ""),
+		CallbackURL:  envy.Get(domain.AuthCallbackURLEnv, ""),
 		providerName: ProviderName,
 	}
 	p.config = newConfig(p, scopes)

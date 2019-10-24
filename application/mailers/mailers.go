@@ -6,6 +6,7 @@ import (
 	"github.com/gobuffalo/envy"
 	"github.com/gobuffalo/packr/v2"
 	ssender "github.com/paganotoni/sendgrid-sender"
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 var sender mail.Sender
@@ -14,7 +15,7 @@ var r *render.Engine
 func init() {
 
 	// Pulling config from the env.
-	APIKey := envy.Get("SENDGRID_API_KEY", "")
+	APIKey := envy.Get(domain.SendGridAPIKeyEnv, "")
 	sender = ssender.NewSendgridSender(APIKey)
 
 	r = render.New(render.Options{

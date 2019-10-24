@@ -6,20 +6,18 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"fmt"
-	"github.com/gobuffalo/events"
-	"github.com/gobuffalo/validate/validators"
-	"github.com/silinternational/wecarry-api/domain"
 	"log"
 	"strings"
 
-	"github.com/pkg/errors"
-
-	"github.com/gobuffalo/validate"
-
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/envy"
+	"github.com/gobuffalo/events"
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
+	"github.com/gobuffalo/validate"
+	"github.com/gobuffalo/validate/validators"
+	"github.com/pkg/errors"
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 // DB is a connection to your database to be used
@@ -30,7 +28,7 @@ const TokenBytes = 32
 
 func init() {
 	var err error
-	env := envy.Get("GO_ENV", "development")
+	env := envy.Get(domain.GoEnv, "development")
 	DB, err = pop.Connect(env)
 	if err != nil {
 		domain.ErrLogger.Printf("error connecting to database ... %v", err)

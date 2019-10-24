@@ -14,14 +14,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/gobuffalo/envy"
+	"github.com/silinternational/wecarry-api/domain"
 )
-
-const AwsS3RegionEnv = "AWS_REGION"
-const AwsS3EndpointEnv = "AWS_S3_ENDPOINT"
-const AwsS3DisableSSLEnv = "AWS_S3_DISABLE_SSL"
-const AwsS3BucketEnv = "AWS_S3_BUCKET"
-const AwsS3AccessKeyIDEnv = "AWS_S3_ACCESS_KEY_ID"
-const AwsS3SecretAccessKeyEnv = "AWS_S3_SECRET_ACCESS_KEY"
 
 type ObjectUrl struct {
 	Url        string
@@ -43,13 +37,13 @@ const urlLifespan = 10 * time.Minute
 
 func GetS3ConfigFromEnv() awsConfig {
 	var a awsConfig
-	a.awsAccessKeyID = envy.Get(AwsS3AccessKeyIDEnv, "")
-	a.awsSecretAccessKey = envy.Get(AwsS3SecretAccessKeyEnv, "")
-	a.awsEndpoint = envy.Get(AwsS3EndpointEnv, "")
-	a.awsRegion = envy.Get(AwsS3RegionEnv, "")
-	a.awsS3Bucket = envy.Get(AwsS3BucketEnv, "")
+	a.awsAccessKeyID = envy.Get(domain.AwsS3AccessKeyIDEnv, "")
+	a.awsSecretAccessKey = envy.Get(domain.AwsS3SecretAccessKeyEnv, "")
+	a.awsEndpoint = envy.Get(domain.AwsS3EndpointEnv, "")
+	a.awsRegion = envy.Get(domain.AwsS3RegionEnv, "")
+	a.awsS3Bucket = envy.Get(domain.AwsS3BucketEnv, "")
 
-	if disableSSL, err := strconv.ParseBool(envy.Get(AwsS3DisableSSLEnv, "false")); err == nil {
+	if disableSSL, err := strconv.ParseBool(envy.Get(domain.AwsS3DisableSSLEnv, "false")); err == nil {
 		a.awsDisableSSL = disableSSL
 	}
 
@@ -145,7 +139,7 @@ func GetFileURL(key string) (ObjectUrl, error) {
 // CreateS3Bucket creates an S3 bucket with a name defined by an environment variable. If the bucket already
 // exists, it will not return an error.
 func CreateS3Bucket() error {
-	env := envy.Get("GO_ENV", "development")
+	env := envy.Get(domain.GoEnv, "development")
 	if env != "test" && env != "development" {
 		return errors.New("CreateS3Bucket should only be used in test and development")
 	}
@@ -157,7 +151,7 @@ func CreateS3Bucket() error {
 		return err
 	}
 
-	bucketName := envy.Get(AwsS3BucketEnv, "")
+	bucketName := envy.Get(domain.AwsS3BucketEnv, "")
 	c := &s3.CreateBucketInput{Bucket: &bucketName}
 	if _, err := svc.CreateBucket(c); err != nil {
 		if aerr, ok := err.(awserr.Error); ok {

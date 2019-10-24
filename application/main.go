@@ -3,8 +3,8 @@ package main
 import (
 	"github.com/gobuffalo/envy"
 	"github.com/rollbar/rollbar-go"
-
 	"github.com/silinternational/wecarry-api/actions"
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 var GitCommitHash string
@@ -18,10 +18,10 @@ var GitCommitHash string
 func main() {
 
 	// init rollbar
-	rollbar.SetToken(envy.Get("ROLLBAR_TOKEN", ""))
-	rollbar.SetEnvironment(envy.Get("GO_ENV", "development"))
+	rollbar.SetToken(envy.Get(domain.RollbarTokenEnv, ""))
+	rollbar.SetEnvironment(envy.Get(domain.GoEnv, "development"))
 	rollbar.SetCodeVersion(GitCommitHash)
-	rollbar.SetServerRoot(envy.Get("ROLLBAR_SERVER_ROOT", "github.com/silinternational/wecarry-api"))
+	rollbar.SetServerRoot(envy.Get(domain.RollbarServerRootEnv, "github.com/silinternational/wecarry-api"))
 
 	app := actions.App()
 	rollbar.WrapAndWait(func() {

@@ -33,11 +33,25 @@ const (
 
 // Environment Variables
 const (
-	UIURLEnv                      = "UI_URL"
 	AccessTokenLifetimeSecondsEnv = "ACCESS_TOKEN_LIFETIME_SECONDS"
-	SendGridAPIKeyEnv             = "SENDGRID_API_KEY"
+	AuthCallbackURLEnv            = "AUTH_CALLBACK_URL"
+	AwsS3RegionEnv                = "AWS_REGION"
+	AwsS3EndpointEnv              = "AWS_S3_ENDPOINT"
+	AwsS3DisableSSLEnv            = "AWS_S3_DISABLE_SSL"
+	AwsS3BucketEnv                = "AWS_S3_BUCKET"
+	AwsS3AccessKeyIDEnv           = "AWS_S3_ACCESS_KEY_ID"
+	AwsS3SecretAccessKeyEnv       = "AWS_S3_SECRET_ACCESS_KEY"
+	GoEnv                         = "GO_ENV"
+	GoogleKeyEnv                  = "GOOGLE_KEY"
+	GoogleSecretEnv               = "GOOGLE_SECRET"
 	EmailServiceEnv               = "EMAIL_SERVICE"
 	MobileServiceEnv              = "MOBILE_SERVICE"
+	PortEnv                       = "PORT"
+	RollbarServerRootEnv          = "ROLLBAR_SERVER_ROOT"
+	RollbarTokenEnv               = "ROLLBAR_TOKEN"
+	SendGridAPIKeyEnv             = "SENDGRID_API_KEY"
+	SessionSecretEnv              = "SESSION_SECRET"
+	UIURLEnv                      = "UI_URL"
 )
 
 // Event Kinds
@@ -214,11 +228,11 @@ func EmailDomain(email string) string {
 func RollbarMiddleware(next buffalo.Handler) buffalo.Handler {
 	return func(c buffalo.Context) error {
 		client := rollbar.New(
-			envy.Get("ROLLBAR_TOKEN", ""),
-			envy.Get("GO_ENV", "development"),
+			envy.Get(RollbarTokenEnv, ""),
+			envy.Get(GoEnv, "development"),
 			"",
 			"",
-			envy.Get("ROLLBAR_SERVER_ROOT", "github.com/silinternational/wecarry-api"))
+			envy.Get(RollbarServerRootEnv, "github.com/silinternational/wecarry-api"))
 
 		c.Set("rollbar", client)
 
