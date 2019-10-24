@@ -3,8 +3,6 @@ package notifications
 import (
 	"github.com/gobuffalo/envy"
 	"github.com/silinternational/wecarry-api/domain"
-	"github.com/silinternational/wecarry-api/notifications/email"
-	"github.com/silinternational/wecarry-api/notifications/mobile"
 )
 
 const (
@@ -23,30 +21,27 @@ type Notifier interface {
 type EmailNotifier struct {
 }
 
-// DummyEmailService is an instance of a mocked email service used for test and development.
-var DummyEmailService email.DummyService
-
 // Send a notification using an email notifier.
 func (e *EmailNotifier) Send(msg Message) error {
-	var emailService email.Service
+	var emailService EmailService
 
 	emailServiceType := envy.Get(domain.EmailServiceEnv, "sendgrid")
 	switch emailServiceType {
 	case EmailServiceSendGrid:
-		emailService = &email.SendGridService{}
+		emailService = &SendGridService{}
 	case EmailServiceDummy:
-		emailService = &DummyEmailService
+		emailService = &TestEmailService
 	default:
-		emailService = &DummyEmailService
+		emailService = &TestEmailService
 	}
 
-	emailMessage := email.Message{
-		FromName:     msg.FromName,
-		FromEmail:    msg.FromEmail,
-		ToName:       msg.ToName,
-		ToEmail:      msg.ToEmail,
-		TemplateName: msg.Template,
-		TemplateData: msg.Data,
+	emailMessage := Message{
+		FromName:  msg.FromName,
+		FromEmail: msg.FromEmail,
+		ToName:    msg.ToName,
+		ToEmail:   msg.ToEmail,
+		Template:  msg.Template,
+		Data:      msg.Data,
 	}
 
 	return emailService.Send(emailMessage)
@@ -58,22 +53,22 @@ type MobileNotifier struct {
 
 // Send a notification using a mobile notifier.
 func (m *MobileNotifier) Send(msg Message) error {
-	var mobileService mobile.Service
+	var mobileService MobileService
 
 	mobileServiceType := envy.Get(domain.MobileServiceEnv, "dummy")
 	switch mobileServiceType {
 	case MobileServiceDummy:
-		mobileService = &mobile.DummyService{}
+		mobileService = &DummyMobileService{}
 	default:
-		mobileService = &mobile.DummyService{}
+		mobileService = &DummyMobileService{}
 	}
 
-	mobileMessage := mobile.Message{
-		FromName:     msg.FromName,
-		FromPhone:    msg.FromPhone,
-		ToName:       msg.ToName,
-		ToPhone:      msg.ToPhone,
-		TemplateName: msg.Template,
+	mobileMessage := Message{
+		FromName:  msg.FromName,
+		FromPhone: msg.FromPhone,
+		ToName:    msg.ToName,
+		ToPhone:   msg.ToPhone,
+		Template:  msg.Template,
 	}
 
 	return mobileService.Send(mobileMessage)
