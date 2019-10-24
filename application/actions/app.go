@@ -3,7 +3,6 @@ package actions
 import (
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/buffalo-pop/pop/popmw"
-	"github.com/gobuffalo/envy"
 	paramlogger "github.com/gobuffalo/mw-paramlogger"
 	"github.com/gorilla/sessions"
 	"github.com/rs/cors"
@@ -12,9 +11,6 @@ import (
 	"github.com/silinternational/wecarry-api/models"
 )
 
-// ENV is used to help switch settings based on where the
-// application is being run. Default is "development".
-var ENV = envy.Get("GO_ENV", "development")
 var app *buffalo.App
 
 // App is where all routes and middleware for buffalo
@@ -33,17 +29,17 @@ var app *buffalo.App
 func App() *buffalo.App {
 	if app == nil {
 		app = buffalo.New(buffalo.Options{
-			Env: ENV,
+			Env: domain.Env.GoEnv,
 			PreWares: []buffalo.PreWare{
 				cors.New(cors.Options{
 					AllowCredentials: true,
-					AllowedOrigins:   []string{envy.Get(domain.UIURLEnv, "*")},
+					AllowedOrigins:   []string{domain.Env.UIURL},
 					AllowedMethods:   []string{"HEAD", "GET", "POST", "PUT", "PATCH", "DELETE"},
 					AllowedHeaders:   []string{"*"},
 				}).Handler,
 			},
 			SessionName:  "_wecarry_session",
-			SessionStore: sessions.NewCookieStore([]byte(envy.Get("SESSION_SECRET", "testing"))),
+			SessionStore: sessions.NewCookieStore([]byte(domain.Env.SessionSecret)),
 		})
 
 		// Initialize and attach "rollbar" to context

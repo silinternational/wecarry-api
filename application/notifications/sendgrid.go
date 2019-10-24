@@ -3,7 +3,6 @@ package notifications
 import (
 	"errors"
 	"fmt"
-	"os"
 
 	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
@@ -31,7 +30,7 @@ var sendGridTemplates = map[string]sendGridTemplate{
 }
 
 func (e *SendGridService) Send(msg Message) error {
-	apiKey := os.Getenv(domain.SendGridAPIKeyEnv)
+	apiKey := domain.Env.SendGridAPIKey
 	if apiKey == "" {
 		return errors.New("SendGrid API key is required")
 	}

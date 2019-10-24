@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/gobuffalo/buffalo"
-	"github.com/gobuffalo/envy"
 	saml2 "github.com/russellhaering/gosaml2"
 	"github.com/russellhaering/gosaml2/types"
 	dsig "github.com/russellhaering/goxmldsig"
@@ -130,7 +129,7 @@ func (p *Provider) Logout(c buffalo.Context) auth.Response {
 	if err != nil {
 		resp.Error = err
 	}
-	rURL := fmt.Sprintf("%s?ReturnTo=%s", p.Config.SingleLogoutURL, envy.Get(domain.UIURLEnv, ""))
+	rURL := fmt.Sprintf("%s?ReturnTo=%s", p.Config.SingleLogoutURL, domain.Env.UIURL)
 	return auth.Response{RedirectURL: rURL}
 }
 

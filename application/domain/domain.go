@@ -6,15 +6,14 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
-	"github.com/gobuffalo/envy"
-	"github.com/rollbar/rollbar-go"
-
 	"github.com/gobuffalo/buffalo"
-
+	"github.com/gobuffalo/envy"
 	uuid2 "github.com/gofrs/uuid"
+	"github.com/rollbar/rollbar-go"
 )
 
 const (
@@ -29,15 +28,6 @@ const (
 	AccessTokenLifetimeSeconds  = 3600
 	DateTimeFormat              = "2006-01-02 15:04:05"
 	NewMessageNotificationDelay = 10 * time.Minute
-)
-
-// Environment Variables
-const (
-	UIURLEnv                      = "UI_URL"
-	AccessTokenLifetimeSecondsEnv = "ACCESS_TOKEN_LIFETIME_SECONDS"
-	SendGridAPIKeyEnv             = "SENDGRID_API_KEY"
-	EmailServiceEnv               = "EMAIL_SERVICE"
-	MobileServiceEnv              = "MOBILE_SERVICE"
 )
 
 // Event Kinds
@@ -85,13 +75,62 @@ const (
 var Logger log.Logger
 var ErrLogger log.Logger
 
-// UIURL is the URL of the UI, obtained from an environment variable (UIURLEnv)
-var UIURL string
+// Env holds environment variable values loaded by init()
+var Env struct {
+	AccessTokenLifetimeSeconds int
+	AuthCallbackURL            string
+	AwsS3Region                string
+	AwsS3Endpoint              string
+	AwsS3DisableSSL            bool
+	AwsS3Bucket                string
+	AwsS3AccessKeyID           string
+	AwsS3SecretAccessKey       string
+	EmailService               string
+	GoEnv                      string
+	GoogleKey                  string
+	GoogleSecret               string
+	MobileService              string
+	PlaygroundPort             string
+	RollbarServerRoot          string
+	RollbarToken               string
+	SendGridAPIKey             string
+	SessionSecret              string
+	UIURL                      string
+}
 
 func init() {
 	Logger.SetOutput(os.Stdout)
 	ErrLogger.SetOutput(os.Stderr)
-	UIURL = envy.Get(UIURLEnv, "")
+
+	ReadEnv()
+}
+
+// ReadEnv loads environment data into `Env`
+func ReadEnv() {
+	n, err := strconv.Atoi(envy.Get("ACCESS_TOKEN_LIFETIME_SECONDS", strconv.Itoa(AccessTokenLifetimeSeconds)))
+	if err != nil {
+		ErrLogger.Printf("error converting token lifetime env var ... %v", err)
+		n = AccessTokenLifetimeSeconds
+	}
+	Env.AccessTokenLifetimeSeconds = n
+	Env.AuthCallbackURL = envy.Get("AUTH_CALLBACK_URL", "")
+	Env.AwsS3Region = envy.Get("AWS_REGION", "")
+	Env.AwsS3Endpoint = envy.Get("AWS_S3_ENDPOINT", "")
+	Env.AwsS3DisableSSL, _ = strconv.ParseBool(envy.Get("AWS_S3_DISABLE_SSL", "false"))
+	Env.AwsS3Bucket = envy.Get("AWS_S3_BUCKET", "")
+	Env.AwsS3AccessKeyID = envy.Get("AWS_S3_ACCESS_KEY_ID", "")
+	Env.AwsS3SecretAccessKey = envy.Get("AWS_S3_SECRET_ACCESS_KEY", "")
+	Env.EmailService = envy.Get("EMAIL_SERVICE", "sendgrid")
+	Env.GoEnv = envy.Get("GO_ENV", "development")
+	Env.GoogleKey = envy.Get("GOOGLE_KEY", "")
+	Env.GoogleSecret = envy.Get("GOOGLE_SECRET", "")
+	Env.MobileService = envy.Get("MOBILE_SERVICE", "dummy")
+	Env.PlaygroundPort = envy.Get("PORT", "3000")
+	Env.RollbarServerRoot = envy.Get("ROLLBAR_SERVER_ROOT", "github.com/silinternational/wecarry-api")
+	Env.RollbarToken = envy.Get("ROLLBAR_TOKEN", "")
+	Env.SendGridAPIKey = envy.Get("SENDGRID_API_KEY", "")
+	Env.SessionSecret = envy.Get("SESSION_SECRET", "testing")
+	Env.UIURL = envy.Get("UI_URL", "dev.wecarry.app")
 }
 
 type AppError struct {
@@ -214,11 +253,11 @@ func EmailDomain(email string) string {
 func RollbarMiddleware(next buffalo.Handler) buffalo.Handler {
 	return func(c buffalo.Context) error {
 		client := rollbar.New(
-			envy.Get("ROLLBAR_TOKEN", ""),
-			envy.Get("GO_ENV", "development"),
+			Env.RollbarToken,
+			Env.GoEnv,
 			"",
 			"",
-			envy.Get("ROLLBAR_SERVER_ROOT", "github.com/silinternational/wecarry-api"))
+			Env.RollbarServerRoot)
 
 		c.Set("rollbar", client)
 
@@ -290,10 +329,10 @@ func RollbarSetPerson(c buffalo.Context, id, username, email string) {
 
 // GetPostUIURL returns a UI URL for the given Post
 func GetPostUIURL(postUUID string) string {
-	return UIURL + postUIPath + postUUID
+	return Env.UIURL + postUIPath + postUUID
 }
 
 // GetThreadUIURL returns a UI URL for the given Thread
 func GetThreadUIURL(threadUUID string) string {
-	return UIURL + threadUIPath + threadUUID
+	return Env.UIURL + threadUIPath + threadUUID
 }
