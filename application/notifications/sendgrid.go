@@ -1,4 +1,4 @@
-package email
+package notifications
 
 import (
 	"errors"
@@ -35,14 +35,14 @@ func (e *SendGridService) Send(msg Message) error {
 		return errors.New("SendGrid API key is required")
 	}
 
-	template, ok := sendGridTemplates[msg.TemplateName]
+	template, ok := sendGridTemplates[msg.Template]
 	if !ok {
-		return fmt.Errorf("invalid message template name: %s", msg.TemplateName)
+		return fmt.Errorf("invalid message template name: %s", msg.Template)
 	}
 
 	p := mail.NewPersonalization()
 	p.AddTos(mail.NewEmail(msg.ToName, msg.ToEmail))
-	for key, val := range msg.TemplateData {
+	for key, val := range msg.Data {
 		p.SetDynamicTemplateData(key, val)
 	}
 

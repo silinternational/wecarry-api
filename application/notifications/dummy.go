@@ -1,4 +1,4 @@
-package email
+package notifications
 
 import (
 	"errors"
@@ -7,9 +7,11 @@ import (
 	"github.com/silinternational/wecarry-api/domain"
 )
 
-type DummyService struct {
+type DummyEmailService struct {
 	sentMessages []dummyMessage
 }
+
+var TestEmailService DummyEmailService
 
 type dummyMessage struct {
 	subject, body, fromName, fromEmail, toName, toEmail string
@@ -98,16 +100,16 @@ var dummyTemplates = map[string]dummyTemplate{
 	},
 }
 
-func (t *DummyService) Send(msg Message) error {
-	template, ok := dummyTemplates[msg.TemplateName]
+func (t *DummyEmailService) Send(msg Message) error {
+	template, ok := dummyTemplates[msg.Template]
 	if !ok {
-		errMsg := fmt.Sprintf("invalid template name: %s", msg.TemplateName)
+		errMsg := fmt.Sprintf("invalid template name: %s", msg.Template)
 		domain.ErrLogger.Print(errMsg)
 		return errors.New(errMsg)
 	}
 
 	domain.Logger.Printf("dummy message subject: %s, recipient: %s, data: %+v",
-		template.subject, msg.ToName, msg.TemplateData)
+		template.subject, msg.ToName, msg.Data)
 	t.sentMessages = append(t.sentMessages,
 		dummyMessage{
 			subject:   template.subject,
@@ -122,11 +124,19 @@ func (t *DummyService) Send(msg Message) error {
 
 // GetNumberOfMessagesSent returns the number of messages sent since initialization or the last call to
 // DeleteSentMessages
-func (t *DummyService) GetNumberOfMessagesSent() int {
+func (t *DummyEmailService) GetNumberOfMessagesSent() int {
 	return len(t.sentMessages)
 }
 
 // DeleteSentMessages erases the store of sent messages
-func (t *DummyService) DeleteSentMessages() {
+func (t *DummyEmailService) DeleteSentMessages() {
 	t.sentMessages = []dummyMessage{}
+}
+
+func (t *DummyEmailService) GetLastToEmail() string {
+	if len(t.sentMessages) == 0 {
+		return ""
+	}
+
+	return t.sentMessages[len(t.sentMessages)-1].toEmail
 }
