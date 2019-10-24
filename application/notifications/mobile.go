@@ -1,4 +1,4 @@
-package mobile
+package notifications
 
 import (
 	"fmt"
@@ -6,15 +6,11 @@ import (
 	"github.com/silinternational/wecarry-api/domain"
 )
 
-type Message struct {
-	FromName, FromPhone, ToName, ToPhone, TemplateName string
-}
-
-type Service interface {
+type MobileService interface {
 	Send(msg Message) error
 }
 
-type DummyService struct {
+type DummyMobileService struct {
 	numberSent int
 }
 
@@ -33,8 +29,8 @@ var templateData = map[string]template{
 		subject: "offer accepted", body: "The requester has accepted your offer."},
 }
 
-func (t *DummyService) Send(msg Message) error {
-	fmt.Printf("new message sent: %s", templateData[msg.TemplateName].subject)
+func (t *DummyMobileService) Send(msg Message) error {
+	fmt.Printf("new message sent: %s", templateData[msg.Template].subject)
 	t.numberSent++
 	return nil
 }
