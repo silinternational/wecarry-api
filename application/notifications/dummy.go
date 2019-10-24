@@ -11,6 +11,8 @@ type DummyEmailService struct {
 	sentMessages []dummyMessage
 }
 
+var TestEmailService DummyEmailService
+
 type dummyMessage struct {
 	subject, body, fromName, fromEmail, toName, toEmail string
 }

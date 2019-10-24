@@ -30,9 +30,9 @@ func (e *EmailNotifier) Send(msg Message) error {
 	case EmailServiceSendGrid:
 		emailService = &SendGridService{}
 	case EmailServiceDummy:
-		emailService = &DummyEmailService{}
+		emailService = &TestEmailService
 	default:
-		emailService = &DummyEmailService{}
+		emailService = &TestEmailService
 	}
 
 	emailMessage := Message{
