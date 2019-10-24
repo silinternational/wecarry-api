@@ -2,13 +2,16 @@ package listeners
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
+	"github.com/silinternational/wecarry-api/notifications"
 	"os"
 	"testing"
 )
 
-func (ms *ModelSuite) TestGetPostRecipients() {
+func (ms *ModelSuite) TestGetPostUsers() {
 	t := ms.T()
 
 	orgUserPostFixtures := CreateFixtures_GetPostRecipients(ms, t)
@@ -16,31 +19,28 @@ func (ms *ModelSuite) TestGetPostRecipients() {
 	posts := orgUserPostFixtures.posts
 
 	tests := []struct {
-		name           string
-		id             int
-		wantRecipients []PostMsgRecipient
-		wantErr        bool
+		name          string
+		id            int
+		wantRequester PostUser
+		wantProvider  PostUser
+		wantErr       bool
 	}{
 		{name: "Request by User0 with User1 as Provider",
 			id: posts[0].ID,
-			wantRecipients: []PostMsgRecipient{
-				{
-					nickname: users[0].Nickname,
-					email:    users[0].Email,
-				},
-				{
-					nickname: users[1].Nickname,
-					email:    users[1].Email,
-				},
+			wantRequester: PostUser{
+				Nickname: users[0].Nickname,
+				Email:    users[0].Email,
+			},
+			wantProvider: PostUser{
+				Nickname: users[1].Nickname,
+				Email:    users[1].Email,
 			},
 		},
 		{name: "Request by User0 with no Provider",
 			id: posts[1].ID,
-			wantRecipients: []PostMsgRecipient{
-				{
-					nickname: users[0].Nickname,
-					email:    users[0].Email,
-				},
+			wantRequester: PostUser{
+				Nickname: users[0].Nickname,
+				Email:    users[0].Email,
 			},
 		},
 	}
@@ -51,19 +51,14 @@ func (ms *ModelSuite) TestGetPostRecipients() {
 			err := post.FindByID(test.id)
 			ms.NoError(err, "error finding post for test")
 
-			postMsgRecipients := GetPostRecipients(post)
+			postUsers := GetPostUsers(post)
 
 			if test.wantErr {
 				ms.Error(err)
 			} else {
-				expectedCount := len(test.wantRecipients)
 				ms.NoError(err)
-				ms.Equal(expectedCount, len(postMsgRecipients), "bad number of recipients")
-				ms.Equal(test.wantRecipients[0], postMsgRecipients[0])
-
-				if expectedCount == 2 {
-					ms.Equal(test.wantRecipients[1], postMsgRecipients[1])
-				}
+				ms.Equal(test.wantRequester, postUsers.Requester)
+				ms.Equal(test.wantProvider, postUsers.Provider)
 			}
 		})
 	}
@@ -73,7 +68,6 @@ func (ms *ModelSuite) TestRequestStatusUpdatedNotifications() {
 	t := ms.T()
 
 	orgUserPostFixtures := CreateFixtures_RequestStatusUpdatedNotifications(ms, t)
-	//users := orgUserPostFixtures.users
 	posts := orgUserPostFixtures.posts
 
 	postStatusEData := models.PostStatusEventData{
@@ -104,4 +98,76 @@ func (ms *ModelSuite) TestRequestStatusUpdatedNotifications() {
 	got = buf.String()
 	ms.Contains(got, "unexpected status transition 'OPEN-ACCEPTED'", "Got an unexpected error log entry")
 
+}
+
+// This returns an error that includes data that the tests can look for
+func dummySend(msg notifications.Message) error {
+	return errors.New(fmt.Sprintf("postTitle:%v", msg.Data["postTitle"]))
+}
+
+func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
+	t := ms.T()
+
+	ntfSend = dummySend
+
+	orgUserPostFixtures := CreateFixtures_sendNotificationRequestFromStatus(ms, t)
+	posts := orgUserPostFixtures.posts
+
+	var buf bytes.Buffer
+	domain.ErrLogger.SetOutput(&buf)
+
+	defer func() {
+		domain.ErrLogger.SetOutput(os.Stderr)
+	}()
+
+	tests := []struct {
+		name         string
+		post         models.Post
+		template     string
+		sendFunction func(string, models.Post)
+		wantContains string
+		wantEquals   string
+	}{
+		{name: "Good - Open to Committed",
+			post:         posts[0],
+			template:     domain.MessageTemplateRequestFromOpenToCommitted,
+			sendFunction: sendNotificationRequestFromCommittedToAccepted,
+			wantContains: "postTitle:" + posts[0].Title,
+		},
+		{name: "Bad - Open to Committed",
+			template:     domain.MessageTemplateRequestFromOpenToCommitted,
+			sendFunction: sendNotificationRequestFromCommittedToAccepted,
+			post:         posts[1],
+			wantEquals: fmt.Sprintf("error preparing '%s' notification - no provider\n",
+				domain.MessageTemplateRequestFromOpenToCommitted),
+		},
+		{name: "Good - Committed to Accepted",
+			post:         posts[0],
+			template:     domain.MessageTemplateRequestFromCommittedToAccepted,
+			sendFunction: sendNotificationRequestFromCommittedToAccepted,
+			wantContains: "postTitle:" + posts[0].Title,
+		},
+		{name: "Bad - Committed to Accepted",
+			template:     domain.MessageTemplateRequestFromCommittedToAccepted,
+			sendFunction: sendNotificationRequestFromCommittedToAccepted,
+			post:         posts[1],
+			wantEquals: fmt.Sprintf("error preparing '%s' notification - no provider\n",
+				domain.MessageTemplateRequestFromCommittedToAccepted),
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+
+			test.sendFunction(test.template, test.post)
+			got := buf.String()
+			buf.Reset()
+
+			if test.wantContains != "" {
+				ms.Contains(got, test.wantContains, "missing data in fake test log entry")
+				return
+			}
+
+			ms.Equal(test.wantEquals, got, "wrong error log entry")
+		})
+	}
 }
