@@ -132,3 +132,11 @@ func (t *DummyEmailService) GetNumberOfMessagesSent() int {
 func (t *DummyEmailService) DeleteSentMessages() {
 	t.sentMessages = []dummyMessage{}
 }
+
+func (t *DummyEmailService) GetLastToEmail() string {
+	if len(t.sentMessages) == 0 {
+		return ""
+	}
+
+	return t.sentMessages[len(t.sentMessages)-1].toEmail
+}
