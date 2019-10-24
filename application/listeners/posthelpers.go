@@ -48,7 +48,7 @@ func sendNotificationRequestFromOpenToCommitted(template string, post m.Post) {
 	}
 
 	data := map[string]interface{}{
-		"uiURL":            domain.UIURL,
+		"uiURL":            domain.Env.UIURL,
 		"postURL":          domain.GetPostUIURL(post.Uuid.String()),
 		"postTitle":        post.Title,
 		"providerNickname": postUsers.Provider.Nickname,
@@ -75,7 +75,7 @@ func sendNotificationRequestFromCommittedToAccepted(template string, post m.Post
 	}
 
 	data := map[string]interface{}{
-		"uiURL":             domain.UIURL,
+		"uiURL":             domain.Env.UIURL,
 		"postURL":           domain.GetPostUIURL(post.Uuid.String()),
 		"postTitle":         post.Title,
 		"postDescription":   post.Description,

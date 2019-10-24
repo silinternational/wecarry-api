@@ -13,7 +13,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/gobuffalo/envy"
 	"github.com/silinternational/wecarry-api/domain"
 )
 
@@ -37,13 +36,13 @@ const urlLifespan = 10 * time.Minute
 
 func GetS3ConfigFromEnv() awsConfig {
 	var a awsConfig
-	a.awsAccessKeyID = envy.Get(domain.AwsS3AccessKeyIDEnv, "")
-	a.awsSecretAccessKey = envy.Get(domain.AwsS3SecretAccessKeyEnv, "")
-	a.awsEndpoint = envy.Get(domain.AwsS3EndpointEnv, "")
-	a.awsRegion = envy.Get(domain.AwsS3RegionEnv, "")
-	a.awsS3Bucket = envy.Get(domain.AwsS3BucketEnv, "")
+	a.awsAccessKeyID = domain.Env.AwsS3AccessKeyID
+	a.awsSecretAccessKey = domain.Env.AwsS3SecretAccessKey
+	a.awsEndpoint = domain.Env.AwsS3Endpoint
+	a.awsRegion = domain.Env.AwsS3Region
+	a.awsS3Bucket = domain.Env.AwsS3Bucket
 
-	if disableSSL, err := strconv.ParseBool(envy.Get(domain.AwsS3DisableSSLEnv, "false")); err == nil {
+	if disableSSL, err := strconv.ParseBool(domain.Env.AwsS3DisableSSL); err == nil {
 		a.awsDisableSSL = disableSSL
 	}
 
@@ -139,7 +138,7 @@ func GetFileURL(key string) (ObjectUrl, error) {
 // CreateS3Bucket creates an S3 bucket with a name defined by an environment variable. If the bucket already
 // exists, it will not return an error.
 func CreateS3Bucket() error {
-	env := envy.Get(domain.GoEnv, "development")
+	env := domain.Env.GoEnv
 	if env != "test" && env != "development" {
 		return errors.New("CreateS3Bucket should only be used in test and development")
 	}
@@ -151,8 +150,7 @@ func CreateS3Bucket() error {
 		return err
 	}
 
-	bucketName := envy.Get(domain.AwsS3BucketEnv, "")
-	c := &s3.CreateBucketInput{Bucket: &bucketName}
+	c := &s3.CreateBucketInput{Bucket: &domain.Env.AwsS3Bucket}
 	if _, err := svc.CreateBucket(c); err != nil {
 		if aerr, ok := err.(awserr.Error); ok {
 			switch aerr.Code() {

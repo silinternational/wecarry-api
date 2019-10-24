@@ -1,7 +1,6 @@
 package notifications
 
 import (
-	"github.com/gobuffalo/envy"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/notifications/email"
 	"github.com/silinternational/wecarry-api/notifications/mobile"
@@ -30,7 +29,7 @@ var DummyEmailService email.DummyService
 func (e *EmailNotifier) Send(msg Message) error {
 	var emailService email.Service
 
-	emailServiceType := envy.Get(domain.EmailServiceEnv, "sendgrid")
+	emailServiceType := domain.Env.EmailService
 	switch emailServiceType {
 	case EmailServiceSendGrid:
 		emailService = &email.SendGridService{}
@@ -60,7 +59,7 @@ type MobileNotifier struct {
 func (m *MobileNotifier) Send(msg Message) error {
 	var mobileService mobile.Service
 
-	mobileServiceType := envy.Get(domain.MobileServiceEnv, "dummy")
+	mobileServiceType := domain.Env.MobileService
 	switch mobileServiceType {
 	case MobileServiceDummy:
 		mobileService = &mobile.DummyService{}

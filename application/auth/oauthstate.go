@@ -10,12 +10,12 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
+
+	"github.com/silinternational/wecarry-api/domain"
 
 	"github.com/gorilla/sessions"
 	"github.com/markbates/goth"
-	"github.com/silinternational/wecarry-api/domain"
 )
 
 // Store can/should be set by applications using an oauth2 provider like google.
@@ -27,7 +27,7 @@ var defaultStore sessions.Store
 var keySet = false
 
 func init() {
-	key := []byte(os.Getenv(domain.SessionSecretEnv))
+	key := []byte(domain.Env.SessionSecret)
 	keySet = len(key) != 0
 
 	cookieStore := sessions.NewCookieStore([]byte(key))

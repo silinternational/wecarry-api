@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/gobuffalo/buffalo"
-	"github.com/gobuffalo/envy"
 	"github.com/gobuffalo/events"
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
@@ -28,7 +27,7 @@ const TokenBytes = 32
 
 func init() {
 	var err error
-	env := envy.Get(domain.GoEnv, "development")
+	env := domain.Env.GoEnv
 	DB, err = pop.Connect(env)
 	if err != nil {
 		domain.ErrLogger.Printf("error connecting to database ... %v", err)

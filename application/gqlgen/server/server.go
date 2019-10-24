@@ -3,17 +3,17 @@ package main
 import (
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/99designs/gqlgen/handler"
 	"github.com/go-chi/chi"
+	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/gqlgen"
 )
 
 const defaultPort = "3000"
 
 func main() {
-	port := os.Getenv(domain.PortEnv)
+	port := domain.Env.PlaygroundPort
 	if port == "" {
 		port = defaultPort
 	}

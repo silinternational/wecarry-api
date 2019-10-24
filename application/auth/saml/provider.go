@@ -10,13 +10,13 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/silinternational/wecarry-api/domain"
+
 	"github.com/gobuffalo/buffalo"
-	"github.com/gobuffalo/envy"
 	saml2 "github.com/russellhaering/gosaml2"
 	"github.com/russellhaering/gosaml2/types"
 	dsig "github.com/russellhaering/goxmldsig"
 	"github.com/silinternational/wecarry-api/auth"
-	"github.com/silinternational/wecarry-api/domain"
 )
 
 type Provider struct {
@@ -130,7 +130,7 @@ func (p *Provider) Logout(c buffalo.Context) auth.Response {
 	if err != nil {
 		resp.Error = err
 	}
-	rURL := fmt.Sprintf("%s?ReturnTo=%s", p.Config.SingleLogoutURL, envy.Get(domain.UIURLEnv, ""))
+	rURL := fmt.Sprintf("%s?ReturnTo=%s", p.Config.SingleLogoutURL, domain.Env.UIURL)
 	return auth.Response{RedirectURL: rURL}
 }
 
