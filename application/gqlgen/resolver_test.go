@@ -9,7 +9,6 @@ import (
 	"github.com/99designs/gqlgen/client"
 	"github.com/99designs/gqlgen/handler"
 	"github.com/gobuffalo/nulls"
-	"github.com/gofrs/uuid"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 )
@@ -21,125 +20,91 @@ func newHandler() http.HandlerFunc {
 
 func (gs *GqlgenSuite) TestResolver() {
 	t := gs.T()
-	models.BounceTestDB()
+	//models.BounceTestDB()
 	fmt.Printf("")
 
 	// Load Organization test fixtures
-	orgUuid1, _ := uuid.FromString("51b5321d-2769-48a0-908a-7af1d15083e2")
 	orgFix := []models.Organization{
 		{
-			ID:         1,
 			Name:       "ACME",
-			Uuid:       orgUuid1,
+			Uuid:       domain.GetUuid(),
 			AuthType:   models.AuthTypeSaml,
 			AuthConfig: "[]",
 		},
 	}
-	if err := models.CreateOrgs(orgFix); err != nil {
-		t.Errorf("could not run test ... %v", err)
-		return
-	}
+	createFixture(gs, &orgFix[0])
 
 	// Load User test fixtures
-	userUuid1, _ := uuid.FromString("0265d116-b54e-4712-952f-eae1d6bcdcd1")
 	userFix := models.Users{
 		{
-			ID:        1,
-			Uuid:      userUuid1,
+			Uuid:      domain.GetUuid(),
 			Email:     "clark.kent@example.org",
 			FirstName: "Clark",
 			LastName:  "Kent",
 			Nickname:  "Reporter38",
 		},
 	}
-	if err := models.CreateUsers(userFix); err != nil {
-		t.Errorf("could not run test ... %v", err)
-		return
-	}
+	createFixture(gs, &userFix[0])
 
 	userFix[0].Organizations = []models.Organization{orgFix[0]}
 
 	// Load USER_ORGANIZATIONS fixtures
 	UserOrgsFix := models.UserOrganizations{
 		{
-			ID:             1,
-			OrganizationID: 1,
-			UserID:         1,
+			OrganizationID: orgFix[0].ID,
+			UserID:         userFix[0].ID,
 			Role:           RoleAdmin.String(),
 		},
 	}
-	if err := models.CreateUserOrgs(UserOrgsFix); err != nil {
-		t.Errorf("could not run test ... %v", err)
-		return
-	}
+	createFixture(gs, &UserOrgsFix[0])
 
 	//  Load Post test fixtures
-	postUuid1, _ := uuid.FromString("c67d507b-6c1c-4d0a-b1e6-d726a5b48c26")
 	postFix := models.Posts{
 		{
-			ID:             1,
-			CreatedByID:    1,
+			CreatedByID:    userFix[0].ID,
 			Type:           PostTypeRequest.String(),
-			OrganizationID: 1,
+			OrganizationID: orgFix[0].ID,
 			Status:         PostStatusOpen.String(),
 			Title:          "Maple Syrup",
 			Size:           PostSizeMedium.String(),
-			Uuid:           postUuid1,
-			ReceiverID:     nulls.NewInt(1),
+			Uuid:           domain.GetUuid(),
+			ReceiverID:     nulls.NewInt(userFix[0].ID),
 			NeededAfter:    time.Date(2019, time.July, 19, 0, 0, 0, 0, time.UTC),
 			NeededBefore:   time.Date(2019, time.August, 3, 0, 0, 0, 0, time.UTC),
 			Category:       "Unknown",
 			Description:    nulls.NewString("Missing my good, old, Canadian maple syrupy goodness"),
 		},
 	}
-	if err := models.CreatePosts(postFix); err != nil {
-		t.Errorf("could not run test ... %v", err)
-		return
-	}
+	createFixture(gs, &postFix[0])
 
 	// Load Thread test fixtures
-	threadUuid1, _ := uuid.FromString("bdb7515d-06a9-4896-97a4-aeae962b85e2")
 	threadFix := models.Threads{
 		{
-			ID:     1,
-			Uuid:   threadUuid1,
-			PostID: 1,
+			Uuid:   domain.GetUuid(),
+			PostID: postFix[0].ID,
 		},
 	}
-	if err := models.CreateThreads(threadFix); err != nil {
-		t.Errorf("could not run test ... %v", err)
-		return
-	}
+	createFixture(gs, &threadFix[0])
 
 	// Load THREAD_PARTICIPANTS fixtures
 	threadPartFix := []models.ThreadParticipant{
 		{
-			ID:       1,
-			ThreadID: 1,
-			UserID:   1,
+			ThreadID: threadFix[0].ID,
+			UserID:   userFix[0].ID,
 		},
 	}
-	if err := models.CreateThreadParticipants(threadPartFix); err != nil {
-		t.Errorf("could not run test ... %v", err)
-		return
-	}
+	createFixture(gs, &threadPartFix[0])
 
 	// Load MESSAGES fixtures
-	messageUuid1, _ := uuid.FromString("b0d7c515-e74c-4af7-a937-f1deb9369831")
 	MessageFix := models.Messages{
 		{
-			ThreadID: 1,
-			ID:       1,
-			Uuid:     messageUuid1,
-			SentByID: 1,
+			ThreadID: threadFix[0].ID,
+			Uuid:     domain.GetUuid(),
+			SentByID: userFix[0].ID,
 			Content:  "Any chance you can bring some PB?",
 		},
 	}
-
-	if err := models.CreateMessages(MessageFix); err != nil {
-		t.Errorf("could not run test ... %v", err)
-		return
-	}
+	createFixture(gs, &MessageFix[0])
 
 	// Prep gql server
 	h := newHandler()
@@ -282,5 +247,5 @@ func (gs *GqlgenSuite) TestResolver() {
 		return
 	}
 
-	models.BounceTestDB()
+	//models.BounceTestDB()
 }

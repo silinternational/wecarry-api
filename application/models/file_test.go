@@ -96,7 +96,8 @@ func (ms *ModelSuite) TestFile_Store() {
 	}
 }
 
-func CreateFileFixtures(t *testing.T, posts Posts) Files {
+func CreateFileFixtures(ms *ModelSuite, posts Posts) Files {
+	t := ms.T()
 	const n = 2
 	files := make(Files, n)
 
@@ -110,7 +111,7 @@ func CreateFileFixtures(t *testing.T, posts Posts) Files {
 	}
 
 	files[1].URLExpiration = time.Now().Add(-time.Minute)
-	if err := DB.Save(&files[1]); err != nil {
+	if err := ms.DB.Save(&files[1]); err != nil {
 		t.Errorf("failed to update file fixture")
 	}
 
@@ -125,7 +126,7 @@ func (ms *ModelSuite) TestFile_FindByUUID() {
 		t.Errorf("failed to create S3 bucket, %s", err)
 		t.FailNow()
 	}
-	files := CreateFileFixtures(t, posts)
+	files := CreateFileFixtures(ms, posts)
 
 	type args struct {
 		fileUUID string

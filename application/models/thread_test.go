@@ -405,7 +405,7 @@ func (ms *ModelSuite) TestThread_CreateWithParticipants() {
 	}
 
 	var threadFromDB Thread
-	if err := DB.Eager().Find(&threadFromDB, thread.ID); err != nil {
+	if err := ms.DB.Eager().Find(&threadFromDB, thread.ID); err != nil {
 		t.Errorf("TestThread_CreateWithParticipants() couldn't find new thread: %s", err)
 	}
 
@@ -424,7 +424,7 @@ func (ms *ModelSuite) TestThread_CreateWithParticipants() {
 	ms.Equal(2, len(ids), "incorrect number of participants found")
 
 	var tp ThreadParticipants
-	n, err := DB.Where("thread_id = ?", thread.ID).Count(&tp)
+	n, err := ms.DB.Where("thread_id = ?", thread.ID).Count(&tp)
 	if err != nil {
 		t.Errorf("TestThread_CreateWithParticipants() couldn't read from thread_participants: %s", err)
 	}
