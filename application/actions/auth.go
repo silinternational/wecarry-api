@@ -15,33 +15,35 @@ import (
 	"github.com/silinternational/wecarry-api/models"
 )
 
-// http param for access token
-const AccessTokenParam = "access-token"
+const (
+	// http param for access token
+	AccessTokenParam = "access-token"
 
-// http param and session key for Auth Email
-const AuthEmailParam = "auth-email"
-const AuthEmailSessionKey = "AuthEmail"
+	// http param and session key for Auth Email
+	AuthEmailParam      = "auth-email"
+	AuthEmailSessionKey = "AuthEmail"
 
-// http param and session key for Client ID
-const ClientIDParam = "client-id"
-const ClientIDSessionKey = "ClientID"
+	// http param and session key for Client ID
+	ClientIDParam      = "client-id"
+	ClientIDSessionKey = "ClientID"
 
-// http param for expires utc
-const ExpiresUTCParam = "expires-utc"
+	// http param for expires utc
+	ExpiresUTCParam = "expires-utc"
 
-// logout http param for what is normally the bearer token
-const LogoutToken = "token"
+	// logout http param for what is normally the bearer token
+	LogoutToken = "token"
 
-// http param for organization id
-const OrgIDParam = "org-id"
-const OrgIDSessionKey = "OrgID"
+	// http param for organization id
+	OrgIDParam      = "org-id"
+	OrgIDSessionKey = "OrgID"
 
-// http param and session key for ReturnTo
-const ReturnToParam = "return-to"
-const ReturnToSessionKey = "ReturnTo"
+	// http param and session key for ReturnTo
+	ReturnToParam      = "return-to"
+	ReturnToSessionKey = "ReturnTo"
 
-// http param for token type
-const TokenTypeParam = "token-type"
+	// http param for token type
+	TokenTypeParam = "token-type"
+)
 
 type AuthOrgOption struct {
 	ID      string `json:"ID"`
