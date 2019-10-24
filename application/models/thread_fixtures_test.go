@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"github.com/gobuffalo/nulls"
 	"github.com/silinternational/wecarry-api/domain"
 	"testing"
 	"time"
@@ -93,7 +94,7 @@ func CreateThreadFixtures(ms *ModelSuite, t *testing.T, post Post) ThreadFixture
 	return ThreadFixtures{Threads: threads, Messages: messages, ThreadParticipants: threadParticipants}
 }
 
-func CreateThreadFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T, post Post) ThreadFixtures {
+func CreateThreadFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) ThreadFixtures {
 
 	unique := domain.GetUuid().String()
 
@@ -121,9 +122,9 @@ func CreateThreadFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T, post 
 		},
 		{
 			Email:     fmt.Sprintf("user2-%s@example.com", unique),
-			FirstName: "Sleepy",
+			FirstName: "Lazy",
 			LastName:  "User",
-			Nickname:  fmt.Sprintf("Sleepy User %s", unique),
+			Nickname:  fmt.Sprintf("Lazy User %s", unique),
 			Uuid:      domain.GetUuid(),
 		},
 	}
@@ -144,9 +145,9 @@ func CreateThreadFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T, post 
 		},
 		{
 			OrganizationID: org.ID,
-			UserID:         users[0].ID,
-			AuthID:         users[0].Email,
-			AuthEmail:      users[0].Email,
+			UserID:         users[1].ID,
+			AuthID:         users[1].Email,
+			AuthEmail:      users[1].Email,
 		},
 	}
 	for i := range userOrgs {
@@ -156,7 +157,8 @@ func CreateThreadFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T, post 
 		}
 	}
 
-	posts := []Post{
+	// Each user has a request and is a provider on the other user's post
+	posts := Posts{
 		{
 			CreatedByID:    users[0].ID,
 			OrganizationID: org.ID,
@@ -165,6 +167,7 @@ func CreateThreadFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T, post 
 			Size:           PostSizeMedium,
 			Status:         PostStatusOpen,
 			Uuid:           domain.GetUuid(),
+			ProviderID:     nulls.NewInt(users[1].ID),
 		},
 		{
 			CreatedByID:    users[1].ID,
@@ -174,13 +177,102 @@ func CreateThreadFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T, post 
 			Size:           PostSizeMedium,
 			Status:         PostStatusOpen,
 			Uuid:           domain.GetUuid(),
+			ProviderID:     nulls.NewInt(users[0].ID),
 		},
 	}
 
-	if err := CreatePosts(posts); err != nil {
+	posts, err := CreatePosts(posts)
+	if err != nil {
 		t.Errorf("could not create test post ... %v", err)
 		t.FailNow()
 	}
 
-	return ThreadFixtures{}
+	threads := []Thread{
+		{
+			Uuid:   domain.GetUuid(),
+			PostID: posts[0].ID,
+		},
+		{
+			Uuid:   domain.GetUuid(),
+			PostID: posts[1].ID,
+		},
+	}
+
+	threads, err = CreateThreads(threads)
+	if err != nil {
+		t.Errorf("could not create test threads ... %v", err)
+		t.FailNow()
+	}
+
+	tnow := time.Now()
+	oldTime := tnow.Add(-time.Duration(time.Hour))
+	futureTime := tnow.Add(time.Duration(time.Hour))
+
+	// One thread per post with 2 users per thread
+	threadParticipants := []ThreadParticipant{
+		{
+			ThreadID:     threads[0].ID,
+			UserID:       posts[0].CreatedByID,
+			LastViewedAt: futureTime,
+		},
+		{
+			ThreadID:     threads[0].ID,
+			UserID:       posts[0].ProviderID.Int,
+			LastViewedAt: oldTime,
+		},
+		{
+			ThreadID:     threads[1].ID,
+			UserID:       posts[1].CreatedByID,
+			LastViewedAt: oldTime,
+		},
+		{
+			ThreadID:     threads[1].ID,
+			UserID:       posts[1].ProviderID.Int,
+			LastViewedAt: futureTime,
+		},
+	}
+
+	if err := CreateThreadParticipants(threadParticipants); err != nil {
+		t.Errorf("could not create test thread participants ... %v", err)
+		t.FailNow()
+	}
+
+	// I can't seem to give them custom times
+	messages := Messages{
+		{
+			Uuid:     domain.GetUuid(),
+			ThreadID: threads[0].ID,
+			SentByID: posts[0].CreatedByID,
+			Content:  "I can being chocolate if you bring PB",
+		},
+		{
+			Uuid:     domain.GetUuid(),
+			ThreadID: threads[0].ID,
+			SentByID: posts[0].ProviderID.Int,
+			Content:  "Great",
+		},
+		{
+			Uuid:     domain.GetUuid(),
+			ThreadID: threads[1].ID,
+			SentByID: posts[1].CreatedByID,
+			Content:  "I can being PB if you bring chocolate",
+		},
+	}
+
+	if err := CreateMessages(messages); err != nil {
+		t.Errorf("could not create test message ... %v", err)
+		t.FailNow()
+	}
+
+	if err := DB.Load(&messages[0]); err != nil {
+		t.Errorf("could not load message 0 fields ... %v", err)
+		t.FailNow()
+	}
+
+	return ThreadFixtures{
+		Users:              users,
+		Threads:            threads,
+		Messages:           messages,
+		ThreadParticipants: threadParticipants,
+	}
 }
