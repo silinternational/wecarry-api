@@ -198,18 +198,16 @@ func (t *Thread) Load(fields ...string) error {
 	return nil
 }
 
-func (t *Thread) UnreadMessageCount() (int, error) {
-	tnow := time.Now()
+func (t *Thread) UnreadMessageCount(lastViewedAt time.Time) (int, error) {
 	count := 0
 
-	if len(t.Messages) == 0 {
-		if err := DB.Load(t, "messages"); err != nil {
-			return count, err
-		}
+	msgs, err := t.GetMessages([]string{"created_at"})
+	if err != nil {
+		return count, err
 	}
 
-	for _, m := range t.Messages {
-		if m.CreatedAt.After(tnow) {
+	for _, m := range msgs {
+		if m.CreatedAt.After(lastViewedAt) {
 			count++
 		}
 	}
