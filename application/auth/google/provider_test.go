@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/silinternational/wecarry-api/domain"
-
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/providers/google"
+	"github.com/silinternational/wecarry-api/domain"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -10,13 +10,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/silinternational/wecarry-api/domain"
-
 	"github.com/gobuffalo/buffalo"
 	saml2 "github.com/russellhaering/gosaml2"
 	"github.com/russellhaering/gosaml2/types"
 	dsig "github.com/russellhaering/goxmldsig"
 	"github.com/silinternational/wecarry-api/auth"
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 type Provider struct {

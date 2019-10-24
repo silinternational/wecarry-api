@@ -12,10 +12,9 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/silinternational/wecarry-api/domain"
-
 	"github.com/gorilla/sessions"
 	"github.com/markbates/goth"
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 // Store can/should be set by applications using an oauth2 provider like google.
