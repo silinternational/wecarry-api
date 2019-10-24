@@ -419,28 +419,28 @@ type UnreadThread struct {
 	Count      int
 }
 
-func (u *User) GetUnreadMessageCount() ([]UnreadThread, error) {
+func (u *User) UnreadMessageCount() ([]UnreadThread, error) {
 	emptyUnreads := []UnreadThread{}
 
 	threadPs := ThreadParticipants{}
-	if err := DB.Eager("thread").Where("user_id = ?", u.ID).All(&threadPs); err != nil {
+	if err := DB.Eager("Thread").Where("user_id = ?", u.ID).All(&threadPs); err != nil {
 		return emptyUnreads, err
 	}
 
 	unreads := []UnreadThread{}
 
 	for _, tp := range threadPs {
-		threadCount, err := tp.Thread.UnreadMessageCount()
+		msgCount, err := tp.Thread.UnreadMessageCount(tp.LastViewedAt)
 		if err != nil {
 			domain.ErrLogger.Printf("error getting count of unread messages for thread %s ... %v",
 				tp.Thread.Uuid, err)
 			continue
 		}
 
-		if threadCount > 0 {
-			unreads = append(unreads, UnreadThread{ThreadUUID: tp.Thread.Uuid, Count: threadCount})
+		if msgCount > 0 {
+			unreads = append(unreads, UnreadThread{ThreadUUID: tp.Thread.Uuid, Count: msgCount})
 		}
 	}
 
-	return []UnreadThread{}, nil
+	return unreads, nil
 }
