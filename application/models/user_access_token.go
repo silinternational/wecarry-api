@@ -3,7 +3,6 @@ package models
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/gobuffalo/pop"
@@ -107,14 +106,8 @@ func (u *UserAccessToken) GetOrganization() (Organization, error) {
 }
 
 func createAccessTokenExpiry() time.Time {
-	lifetimeSeconds, err := strconv.Atoi(domain.Env.AccessTokenLifetimeSeconds)
-	if err != nil {
-		domain.ErrLogger.Printf("error converting token lifetime env var ... %v", err)
-		lifetimeSeconds = domain.AccessTokenLifetimeSeconds
-	}
-
 	dtNow := time.Now()
-	futureTime := dtNow.Add(time.Second * time.Duration(lifetimeSeconds))
+	futureTime := dtNow.Add(time.Second * time.Duration(domain.Env.AccessTokenLifetimeSeconds))
 
 	return futureTime
 }

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"strconv"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -41,10 +40,7 @@ func GetS3ConfigFromEnv() awsConfig {
 	a.awsEndpoint = domain.Env.AwsS3Endpoint
 	a.awsRegion = domain.Env.AwsS3Region
 	a.awsS3Bucket = domain.Env.AwsS3Bucket
-
-	if disableSSL, err := strconv.ParseBool(domain.Env.AwsS3DisableSSL); err == nil {
-		a.awsDisableSSL = disableSSL
-	}
+	a.awsDisableSSL = domain.Env.AwsS3DisableSSL
 
 	if len(a.awsEndpoint) > 0 {
 		// a non-empty endpoint means minIO is in use, which doesn't support the S3 object URL scheme

@@ -77,11 +77,11 @@ var ErrLogger log.Logger
 
 // Env holds environment variable values loaded by init()
 var Env struct {
-	AccessTokenLifetimeSeconds string
+	AccessTokenLifetimeSeconds int
 	AuthCallbackURL            string
 	AwsS3Region                string
 	AwsS3Endpoint              string
-	AwsS3DisableSSL            string
+	AwsS3DisableSSL            bool
 	AwsS3Bucket                string
 	AwsS3AccessKeyID           string
 	AwsS3SecretAccessKey       string
@@ -107,11 +107,16 @@ func init() {
 
 // ReadEnv loads environment data into `Env`
 func ReadEnv() {
-	Env.AccessTokenLifetimeSeconds = envy.Get("ACCESS_TOKEN_LIFETIME_SECONDS", strconv.Itoa(AccessTokenLifetimeSeconds))
+	n, err := strconv.Atoi(envy.Get("ACCESS_TOKEN_LIFETIME_SECONDS", strconv.Itoa(AccessTokenLifetimeSeconds)))
+	if err != nil {
+		ErrLogger.Printf("error converting token lifetime env var ... %v", err)
+		n = AccessTokenLifetimeSeconds
+	}
+	Env.AccessTokenLifetimeSeconds = n
 	Env.AuthCallbackURL = envy.Get("AUTH_CALLBACK_URL", "")
 	Env.AwsS3Region = envy.Get("AWS_REGION", "")
 	Env.AwsS3Endpoint = envy.Get("AWS_S3_ENDPOINT", "")
-	Env.AwsS3DisableSSL = envy.Get("AWS_S3_DISABLE_SSL", "false")
+	Env.AwsS3DisableSSL, _ = strconv.ParseBool(envy.Get("AWS_S3_DISABLE_SSL", "false"))
 	Env.AwsS3Bucket = envy.Get("AWS_S3_BUCKET", "")
 	Env.AwsS3AccessKeyID = envy.Get("AWS_S3_ACCESS_KEY_ID", "")
 	Env.AwsS3SecretAccessKey = envy.Get("AWS_S3_SECRET_ACCESS_KEY", "")
