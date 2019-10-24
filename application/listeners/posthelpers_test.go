@@ -113,18 +113,20 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 	}()
 
 	tests := []struct {
-		name         string
-		post         models.Post
-		template     string
-		sendFunction func(string, models.Post)
-		wantToEmail  string
-		wantErrLog   string
+		name           string
+		post           models.Post
+		template       string
+		sendFunction   func(string, models.Post)
+		wantEmailsSent int
+		wantToEmail    string
+		wantErrLog     string
 	}{
 		{name: "Good - Open to Committed",
-			post:         posts[0],
-			template:     domain.MessageTemplateRequestFromOpenToCommitted,
-			sendFunction: sendNotificationRequestFromOpenToCommitted,
-			wantToEmail:  posts[0].CreatedBy.Email,
+			post:           posts[0],
+			template:       domain.MessageTemplateRequestFromOpenToCommitted,
+			sendFunction:   sendNotificationRequestFromOpenToCommitted,
+			wantEmailsSent: 1,
+			wantToEmail:    posts[0].CreatedBy.Email,
 		},
 		{name: "Bad - Open to Committed",
 			template:     domain.MessageTemplateRequestFromOpenToCommitted,
@@ -134,10 +136,11 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 				domain.MessageTemplateRequestFromOpenToCommitted),
 		},
 		{name: "Good - Committed to Accepted",
-			post:         posts[0],
-			template:     domain.MessageTemplateRequestFromCommittedToAccepted,
-			sendFunction: sendNotificationRequestFromCommittedToAccepted,
-			wantToEmail:  posts[0].Provider.Email,
+			post:           posts[0],
+			template:       domain.MessageTemplateRequestFromCommittedToAccepted,
+			sendFunction:   sendNotificationRequestFromCommittedToAccepted,
+			wantEmailsSent: 1,
+			wantToEmail:    posts[0].Provider.Email,
 		},
 		{name: "Bad - Committed to Accepted",
 			template:     domain.MessageTemplateRequestFromCommittedToAccepted,
@@ -156,7 +159,9 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 			gotBuf := buf.String()
 			buf.Reset()
 
+			emailCount := notifications.TestEmailService.GetNumberOfMessagesSent()
 			lastToEmail := notifications.TestEmailService.GetLastToEmail()
+			ms.Equal(test.wantEmailsSent, emailCount, "bad To Email")
 			ms.Equal(test.wantToEmail, lastToEmail, "bad To Email")
 			ms.Equal(test.wantErrLog, gotBuf, "wrong error log entry")
 		})
