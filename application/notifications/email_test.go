@@ -1,4 +1,4 @@
-package email
+package notifications
 
 import (
 	"testing"
@@ -8,14 +8,14 @@ import (
 
 func TestSend(t *testing.T) {
 	msg := Message{
-		FromName:     "from name",
-		FromEmail:    "from@example.com",
-		ToName:       "to name",
-		ToEmail:      "steve_schram@sil.org",
-		TemplateName: domain.MessageTemplateNewMessage,
+		FromName:  "from name",
+		FromEmail: "from@example.com",
+		ToName:    "to name",
+		ToEmail:   "steve_schram@sil.org",
+		Template:  domain.MessageTemplateNewMessage,
 	}
-	var emailService Service
-	var testService DummyService
+	var emailService EmailService
+	var testService DummyEmailService
 	emailService = &testService
 
 	if err := emailService.Send(msg); err != nil {

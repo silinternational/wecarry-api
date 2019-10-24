@@ -35,6 +35,8 @@ func (js *JobSuite) TestNewMessageHandler() {
 
 	f := CreateFixtures_TestNewMessageHandler(js)
 
+	var testEmailService notifications.DummyEmailService
+
 	tests := []struct {
 		message            models.Message
 		recipientID        int
@@ -70,7 +72,7 @@ func (js *JobSuite) TestNewMessageHandler() {
 	}
 	for _, test := range tests {
 		js.T().Run(test.message.Content, func(t *testing.T) {
-			notifications.DummyEmailService.DeleteSentMessages()
+			testEmailService.DeleteSentMessages()
 
 			args := map[string]interface{}{
 				domain.ArgMessageID: test.message.ID,
@@ -83,7 +85,7 @@ func (js *JobSuite) TestNewMessageHandler() {
 			}
 
 			js.NoError(err)
-			js.Equal(test.wantNumberOfEmails, notifications.DummyEmailService.GetNumberOfMessagesSent())
+			js.Equal(test.wantNumberOfEmails, testEmailService.GetNumberOfMessagesSent())
 
 			if test.wantNumberOfEmails == 1 {
 				var tp models.ThreadParticipant
