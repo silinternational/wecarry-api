@@ -30,7 +30,7 @@ var templateData = map[string]template{
 	domain.MessageTemplateRequestFromOpenToCommitted: {
 		subject: "potential provider", body: "Someone has offered to fulfill your request."},
 	domain.MessageTemplateRequestFromCommittedToAccepted: {
-		subject: "offer accepted", body: "The requester has accepter your offer."},
+		subject: "offer accepted", body: "The requester has accepted your offer."},
 }
 
 func (t *DummyService) Send(msg Message) error {
