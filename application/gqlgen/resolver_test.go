@@ -20,7 +20,6 @@ func newHandler() http.HandlerFunc {
 
 func (gs *GqlgenSuite) TestResolver() {
 	t := gs.T()
-	//models.BounceTestDB()
 	fmt.Printf("")
 
 	// Load Organization test fixtures
@@ -246,6 +245,4 @@ func (gs *GqlgenSuite) TestResolver() {
 		t.Errorf("bad user Nickname results. \n  Expected %v, \n   but got %v", strExpected, strResults)
 		return
 	}
-
-	//models.BounceTestDB()
 }
