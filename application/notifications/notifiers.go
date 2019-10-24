@@ -1,7 +1,6 @@
 package notifications
 
 import (
-	"github.com/gobuffalo/envy"
 	"github.com/silinternational/wecarry-api/domain"
 )
 
@@ -25,7 +24,7 @@ type EmailNotifier struct {
 func (e *EmailNotifier) Send(msg Message) error {
 	var emailService EmailService
 
-	emailServiceType := envy.Get(domain.EmailServiceEnv, "sendgrid")
+	emailServiceType := domain.Env.EmailService
 	switch emailServiceType {
 	case EmailServiceSendGrid:
 		emailService = &SendGridService{}
@@ -55,7 +54,7 @@ type MobileNotifier struct {
 func (m *MobileNotifier) Send(msg Message) error {
 	var mobileService MobileService
 
-	mobileServiceType := envy.Get(domain.MobileServiceEnv, "dummy")
+	mobileServiceType := domain.Env.MobileService
 	switch mobileServiceType {
 	case MobileServiceDummy:
 		mobileService = &DummyMobileService{}

@@ -3,10 +3,8 @@ package models
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"time"
 
-	"github.com/gobuffalo/envy"
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
 	"github.com/gobuffalo/validate/validators"
@@ -108,16 +106,8 @@ func (u *UserAccessToken) GetOrganization() (Organization, error) {
 }
 
 func createAccessTokenExpiry() time.Time {
-	envLifetime := envy.Get(domain.AccessTokenLifetimeSecondsEnv, strconv.Itoa(domain.AccessTokenLifetimeSeconds))
-
-	lifetimeSeconds, err := strconv.Atoi(envLifetime)
-	if err != nil {
-		domain.ErrLogger.Printf("error converting %s env var ... %v", domain.AccessTokenLifetimeSecondsEnv, err)
-		lifetimeSeconds = domain.AccessTokenLifetimeSeconds
-	}
-
 	dtNow := time.Now()
-	futureTime := dtNow.Add(time.Second * time.Duration(lifetimeSeconds))
+	futureTime := dtNow.Add(time.Second * time.Duration(domain.Env.AccessTokenLifetimeSeconds))
 
 	return futureTime
 }

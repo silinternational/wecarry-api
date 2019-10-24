@@ -6,7 +6,6 @@ import (
 
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/buffalo/render"
-	"github.com/gobuffalo/envy"
 	"github.com/silinternational/wecarry-api/auth"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
@@ -15,7 +14,7 @@ import (
 func (as *ActionSuite) TestGetLoginSuccessRedirectURL() {
 	t := as.T()
 
-	uiURL := envy.Get(domain.UIURLEnv, "")
+	uiURL := domain.Env.UIURL
 
 	tests := []struct {
 		name          string

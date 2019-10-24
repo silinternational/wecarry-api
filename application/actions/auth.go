@@ -10,38 +10,39 @@ import (
 
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/buffalo/render"
-	"github.com/gobuffalo/envy"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 )
 
-// http param for access token
-const AccessTokenParam = "access-token"
+const (
+	// http param for access token
+	AccessTokenParam = "access-token"
 
-// http param and session key for Auth Email
-const AuthEmailParam = "auth-email"
-const AuthEmailSessionKey = "AuthEmail"
+	// http param and session key for Auth Email
+	AuthEmailParam      = "auth-email"
+	AuthEmailSessionKey = "AuthEmail"
 
-// http param and session key for Client ID
-const ClientIDParam = "client-id"
-const ClientIDSessionKey = "ClientID"
+	// http param and session key for Client ID
+	ClientIDParam      = "client-id"
+	ClientIDSessionKey = "ClientID"
 
-// http param for expires utc
-const ExpiresUTCParam = "expires-utc"
+	// http param for expires utc
+	ExpiresUTCParam = "expires-utc"
 
-// logout http param for what is normally the bearer token
-const LogoutToken = "token"
+	// logout http param for what is normally the bearer token
+	LogoutToken = "token"
 
-// http param for organization id
-const OrgIDParam = "org-id"
-const OrgIDSessionKey = "OrgID"
+	// http param for organization id
+	OrgIDParam      = "org-id"
+	OrgIDSessionKey = "OrgID"
 
-// http param and session key for ReturnTo
-const ReturnToParam = "return-to"
-const ReturnToSessionKey = "ReturnTo"
+	// http param and session key for ReturnTo
+	ReturnToParam      = "return-to"
+	ReturnToSessionKey = "ReturnTo"
 
-// http param for token type
-const TokenTypeParam = "token-type"
+	// http param for token type
+	TokenTypeParam = "token-type"
+)
 
 type AuthOrgOption struct {
 	ID      string `json:"ID"`
@@ -343,7 +344,7 @@ func logErrorAndRedirect(c buffalo.Context, code, message string, extras ...map[
 
 	domain.Error(c, message, allExtras)
 
-	uiUrl := envy.Get(domain.UIURLEnv, "") + "/#/login?error=true"
+	uiUrl := domain.Env.UIURL + "/#/login?error=true"
 	return c.Redirect(http.StatusFound, uiUrl)
 }
 
@@ -380,7 +381,7 @@ func AuthDestroy(c buffalo.Context) error {
 		return logErrorAndRedirect(c, domain.ErrorAuthProvidersLogout, authResp.Error.Error())
 	}
 
-	redirectURL := envy.Get(domain.UIURLEnv, "")
+	redirectURL := domain.Env.UIURL
 
 	if authResp.RedirectURL != "" {
 		var uat models.UserAccessToken
@@ -445,7 +446,7 @@ func SetCurrentUser(next buffalo.Handler) buffalo.Handler {
 // getLoginSuccessRedirectURL generates the URL for redirection after a successful login
 func getLoginSuccessRedirectURL(authUser AuthUser, returnTo string) string {
 
-	uiUrl := envy.Get(domain.UIURLEnv, "") + "/#"
+	uiUrl := domain.Env.UIURL + "/#"
 
 	tokenExpiry := time.Unix(authUser.AccessTokenExpiresAt, 0).Format(time.RFC3339)
 	params := fmt.Sprintf("?%s=Bearer&%s=%s&%s=%s",

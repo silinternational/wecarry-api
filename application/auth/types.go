@@ -6,12 +6,6 @@ import (
 
 const TypeSaml = "saml"
 
-// Environment variable keys
-const AuthCallbackURLEnv = "AUTH_CALLBACK_URL"
-
-const GoogleKeyEnv = "GOOGLE_KEY"
-const GoogleSecretEnv = "GOOGLE_SECRET"
-
 // Provider interface to be implemented by any auth providers
 type Provider interface {
 	Logout(c buffalo.Context) Response
