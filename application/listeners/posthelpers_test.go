@@ -161,7 +161,7 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 
 			emailCount := notifications.TestEmailService.GetNumberOfMessagesSent()
 			lastToEmail := notifications.TestEmailService.GetLastToEmail()
-			ms.Equal(test.wantEmailsSent, emailCount, "bad To Email")
+			ms.Equal(test.wantEmailsSent, emailCount, "wrong email count")
 			ms.Equal(test.wantToEmail, lastToEmail, "bad To Email")
 			ms.Equal(test.wantErrLog, gotBuf, "wrong error log entry")
 		})
