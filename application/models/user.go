@@ -413,3 +413,34 @@ func (u *User) SetLocation(location Location) error {
 	u.LocationID = nulls.NewInt(location.ID)
 	return DB.Update(u)
 }
+
+type UnreadThread struct {
+	ThreadUUID uuid.UUID
+	Count      int
+}
+
+func (u *User) GetUnreadMessageCount() ([]UnreadThread, error) {
+	emptyUnreads := []UnreadThread{}
+
+	threadPs := ThreadParticipants{}
+	if err := DB.Eager("thread").Where("user_id = ?", u.ID).All(&threadPs); err != nil {
+		return emptyUnreads, err
+	}
+
+	unreads := []UnreadThread{}
+
+	for _, tp := range threadPs {
+		threadCount, err := tp.Thread.UnreadMessageCount()
+		if err != nil {
+			domain.ErrLogger.Printf("error getting count of unread messages for thread %s ... %v",
+				tp.Thread.Uuid, err)
+			continue
+		}
+
+		if threadCount > 0 {
+			unreads = append(unreads, UnreadThread{ThreadUUID: tp.Thread.Uuid, Count: threadCount})
+		}
+	}
+
+	return []UnreadThread{}, nil
+}
