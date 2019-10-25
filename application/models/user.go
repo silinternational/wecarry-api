@@ -246,13 +246,13 @@ func (u *User) CanEditOrganization(orgId int) bool {
 	return false
 }
 
-func (u *User) FindByUUID(uuid string) error {
-
+// FindByUUID find a User with the given UUID and loads it from the database.
+func (u *User) FindByUUID(uuid string, selectFields ...string) error {
 	if uuid == "" {
 		return errors.New("error: uuid must not be blank")
 	}
 
-	if err := DB.Where("uuid = ?", uuid).First(u); err != nil {
+	if err := DB.Select(selectFields...).Where("uuid = ?", uuid).First(u); err != nil {
 		return fmt.Errorf("error finding user by uuid: %s", err.Error())
 	}
 
