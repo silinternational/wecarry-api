@@ -435,7 +435,7 @@ func (ms *ModelSuite) TestThread_UnreadMessageCount() {
 			err := DB.Load(&test.threadP)
 			ms.NoError(err)
 
-			got, err := test.threadP.Thread.UnreadMessageCount(test.threadP.LastViewedAt)
+			got, err := test.threadP.Thread.UnreadMessageCount(&test.user, test.threadP.LastViewedAt)
 			if test.wantErr {
 				ms.Error(err, "did not get expected error")
 				return
