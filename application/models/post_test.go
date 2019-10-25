@@ -645,6 +645,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			test.post.Type = PostTypeRequest // only Requests have been implemented thus far
 			vErr, _ := test.post.ValidateUpdate(DB)
 			if test.wantErr {
 				if vErr.Count() == 0 {
