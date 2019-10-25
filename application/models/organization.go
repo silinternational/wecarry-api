@@ -155,11 +155,11 @@ func (o *Organization) Save() error {
 	return DB.Save(o)
 }
 
-func (orgs *Organizations) ListAll() error {
+func (orgs *Organizations) All() error {
 	return DB.All(orgs)
 }
 
-func (orgs *Organizations) ListAllForUser(user User) error {
+func (orgs *Organizations) AllForUser(user User) error {
 	return DB.Q().LeftJoin("user_organizations uo", "organizations.id = uo.organization_id").
 		Where("uo.user_id = ?", user.ID).All(orgs)
 }
