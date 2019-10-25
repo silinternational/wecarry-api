@@ -63,6 +63,7 @@ type User {
     posts(role: PostRole!): [Post!]!
     photoURL: String!
     location: Location
+    unreadMessageCount: Int!
 }
 
 input UpdateUserInput {
@@ -150,6 +151,7 @@ type Thread {
     lastViewedAt: Time!
     createdAt: Time!
     updatedAt: Time!
+    unreadMessageCount: Int!
 }
 
 type Message {

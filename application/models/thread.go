@@ -197,3 +197,20 @@ func (t *Thread) Load(fields ...string) error {
 
 	return nil
 }
+
+func (t *Thread) UnreadMessageCount(lastViewedAt time.Time) (int, error) {
+	count := 0
+
+	msgs, err := t.GetMessages([]string{"created_at"})
+	if err != nil {
+		return count, err
+	}
+
+	for _, m := range msgs {
+		if m.CreatedAt.After(lastViewedAt) {
+			count++
+		}
+	}
+
+	return count, nil
+}

@@ -30,6 +30,8 @@ models:
         resolver: true
       location:
         resolver: true
+      unreadMessageCount:
+        resolver: true
   Post:
     model: github.com/silinternational/wecarry-api/models.Post
     fields:
@@ -55,6 +57,8 @@ models:
       post:
         resolver: true
       lastViewedAt:
+        resolver: true
+      unreadMessageCount:
         resolver: true
   Message:
     model: github.com/silinternational/wecarry-api/models.Message

@@ -139,27 +139,29 @@ type ComplexityRoot struct {
 	}
 
 	Thread struct {
-		CreatedAt    func(childComplexity int) int
-		ID           func(childComplexity int) int
-		LastViewedAt func(childComplexity int) int
-		Messages     func(childComplexity int) int
-		Participants func(childComplexity int) int
-		Post         func(childComplexity int) int
-		PostID       func(childComplexity int) int
-		UpdatedAt    func(childComplexity int) int
+		CreatedAt          func(childComplexity int) int
+		ID                 func(childComplexity int) int
+		LastViewedAt       func(childComplexity int) int
+		Messages           func(childComplexity int) int
+		Participants       func(childComplexity int) int
+		Post               func(childComplexity int) int
+		PostID             func(childComplexity int) int
+		UnreadMessageCount func(childComplexity int) int
+		UpdatedAt          func(childComplexity int) int
 	}
 
 	User struct {
-		AdminRole     func(childComplexity int) int
-		CreatedAt     func(childComplexity int) int
-		Email         func(childComplexity int) int
-		ID            func(childComplexity int) int
-		Location      func(childComplexity int) int
-		Nickname      func(childComplexity int) int
-		Organizations func(childComplexity int) int
-		PhotoURL      func(childComplexity int) int
-		Posts         func(childComplexity int, role PostRole) int
-		UpdatedAt     func(childComplexity int) int
+		AdminRole          func(childComplexity int) int
+		CreatedAt          func(childComplexity int) int
+		Email              func(childComplexity int) int
+		ID                 func(childComplexity int) int
+		Location           func(childComplexity int) int
+		Nickname           func(childComplexity int) int
+		Organizations      func(childComplexity int) int
+		PhotoURL           func(childComplexity int) int
+		Posts              func(childComplexity int, role PostRole) int
+		UnreadMessageCount func(childComplexity int) int
+		UpdatedAt          func(childComplexity int) int
 	}
 }
 
@@ -233,6 +235,8 @@ type ThreadResolver interface {
 	PostID(ctx context.Context, obj *models.Thread) (string, error)
 	Post(ctx context.Context, obj *models.Thread) (*models.Post, error)
 	LastViewedAt(ctx context.Context, obj *models.Thread) (*time.Time, error)
+
+	UnreadMessageCount(ctx context.Context, obj *models.Thread) (int, error)
 }
 type UserResolver interface {
 	ID(ctx context.Context, obj *models.User) (string, error)
@@ -242,6 +246,7 @@ type UserResolver interface {
 	Posts(ctx context.Context, obj *models.User, role PostRole) ([]*models.Post, error)
 	PhotoURL(ctx context.Context, obj *models.User) (string, error)
 	Location(ctx context.Context, obj *models.User) (*models.Location, error)
+	UnreadMessageCount(ctx context.Context, obj *models.User) (int, error)
 }
 
 type executableSchema struct {
@@ -809,6 +814,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Thread.PostID(childComplexity), true
 
+	case "Thread.unreadMessageCount":
+		if e.complexity.Thread.UnreadMessageCount == nil {
+			break
+		}
+
+		return e.complexity.Thread.UnreadMessageCount(childComplexity), true
+
 	case "Thread.updatedAt":
 		if e.complexity.Thread.UpdatedAt == nil {
 			break
@@ -883,6 +895,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.User.Posts(childComplexity, args["role"].(PostRole)), true
+
+	case "User.unreadMessageCount":
+		if e.complexity.User.UnreadMessageCount == nil {
+			break
+		}
+
+		return e.complexity.User.UnreadMessageCount(childComplexity), true
 
 	case "User.updatedAt":
 		if e.complexity.User.UpdatedAt == nil {
@@ -1018,6 +1037,7 @@ type User {
     posts(role: PostRole!): [Post!]!
     photoURL: String!
     location: Location
+    unreadMessageCount: Int!
 }
 
 input UpdateUserInput {
@@ -1105,6 +1125,7 @@ type Thread {
     lastViewedAt: Time!
     createdAt: Time!
     updatedAt: Time!
+    unreadMessageCount: Int!
 }
 
 type Message {
@@ -4157,6 +4178,43 @@ func (ec *executionContext) _Thread_updatedAt(ctx context.Context, field graphql
 	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Thread_unreadMessageCount(ctx context.Context, field graphql.CollectedField, obj *models.Thread) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Thread",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Thread().UnreadMessageCount(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _User_id(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -4526,6 +4584,43 @@ func (ec *executionContext) _User_location(ctx context.Context, field graphql.Co
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalOLocation2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐLocation(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _User_unreadMessageCount(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "User",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.User().UnreadMessageCount(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
@@ -6976,6 +7071,20 @@ func (ec *executionContext) _Thread(ctx context.Context, sel ast.SelectionSet, o
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "unreadMessageCount":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Thread_unreadMessageCount(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -7094,6 +7203,20 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 					}
 				}()
 				res = ec._User_location(ctx, field, obj)
+				return res
+			})
+		case "unreadMessageCount":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._User_unreadMessageCount(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			})
 		default:
@@ -7935,7 +8058,7 @@ func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋsilinternational�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, sel, v[i])
+			ret[i] = ec.marshalNUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)

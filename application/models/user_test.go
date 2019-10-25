@@ -324,88 +324,6 @@ func (ms *ModelSuite) TestGetOrgIDs() {
 	}
 }
 
-func CreateUserFixtures(ms *ModelSuite, t *testing.T) ([]Organization, Users, UserOrganizations) {
-
-	unique := domain.GetUuid().String()
-
-	// Load Organization test fixtures
-	orgs := []Organization{
-		{
-			Name:       fmt.Sprintf("ACME-%s", unique),
-			Uuid:       domain.GetUuid(),
-			AuthType:   AuthTypeSaml,
-			AuthConfig: "{}",
-		},
-		{
-			Name:       fmt.Sprintf("Starfleet Academy-%s", unique),
-			Uuid:       domain.GetUuid(),
-			AuthType:   AuthTypeSaml,
-			AuthConfig: "{}",
-		},
-	}
-	for i := range orgs {
-		if err := ms.DB.Create(&orgs[i]); err != nil {
-			t.Errorf("error creating org %+v ...\n %v \n", orgs[i], err)
-			t.FailNow()
-		}
-	}
-
-	// Load User test fixtures
-	users := Users{
-		{
-			Email:     fmt.Sprintf("user1-%s@example.com", unique),
-			FirstName: "Existing",
-			LastName:  "User",
-			Nickname:  fmt.Sprintf("Existing User %s", unique),
-			Uuid:      domain.GetUuid(),
-		},
-		{
-			Email:     fmt.Sprintf("user2-%s@example.com", unique),
-			FirstName: "Another",
-			LastName:  "User",
-			Nickname:  fmt.Sprintf("Another User %s", unique),
-			Uuid:      domain.GetUuid(),
-		},
-		{
-			Email:     fmt.Sprintf("not_participating-%s@example.com", unique),
-			FirstName: "Not",
-			LastName:  "Participating",
-			Nickname:  fmt.Sprintf("Not Participating %s", unique),
-			Uuid:      domain.GetUuid(),
-		},
-	}
-	for i := range users {
-		if err := ms.DB.Create(&users[i]); err != nil {
-			t.Errorf("could not create test user %v ... %v", users[i], err)
-			t.FailNow()
-		}
-	}
-
-	// Load UserOrganization test fixtures
-	userOrgs := UserOrganizations{
-		{
-			OrganizationID: orgs[0].ID,
-			UserID:         users[0].ID,
-			AuthID:         users[0].Email,
-			AuthEmail:      users[0].Email,
-		},
-		{
-			OrganizationID: orgs[1].ID,
-			UserID:         users[0].ID,
-			AuthID:         users[0].Email,
-			AuthEmail:      users[0].Email,
-		},
-	}
-	for i := range userOrgs {
-		if err := ms.DB.Create(&userOrgs[i]); err != nil {
-			t.Errorf("could not create test user org ... %v. uo = %+v", err, userOrgs[i])
-			t.FailNow()
-		}
-	}
-
-	return orgs, users, userOrgs
-}
-
 func (ms *ModelSuite) TestGetOrganizations() {
 	t := ms.T()
 	orgs, users, _ := CreateUserFixtures(ms, t)
@@ -782,4 +700,50 @@ func (ms *ModelSuite) TestUser_SetLocation() {
 	// These are redundant checks, but here to document the fact that a null overwrites previous data.
 	ms.False(locationFromDB.Latitude.Valid)
 	ms.False(locationFromDB.Longitude.Valid)
+}
+
+func (ms *ModelSuite) TestUser_UnreadMessageCount() {
+	t := ms.T()
+
+	f := CreateThreadFixtures_UnreadMessageCount(ms, t)
+
+	tests := []struct {
+		name      string
+		user      User
+		want      int
+		wantErr   bool
+		wantTotal int
+	}{
+		{
+			name: "Eager User",
+			user: f.Users[0],
+			want: 0,
+		},
+		{
+			name:      "Lazy User",
+			user:      f.Users[1],
+			want:      2,
+			wantTotal: 3,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+
+			got, err := test.user.UnreadMessageCount()
+			if test.wantErr {
+				ms.Error(err, "did not get expected error")
+				return
+			}
+
+			ms.NoError(err)
+			ms.Equal(test.want, len(got))
+
+			gotTotal := 0
+			for _, g := range got {
+				gotTotal += g.Count
+			}
+			ms.Equal(test.wantTotal, gotTotal)
+		})
+	}
 }

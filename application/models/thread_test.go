@@ -11,92 +11,6 @@ import (
 	"github.com/silinternational/wecarry-api/domain"
 )
 
-type ThreadFixtures struct {
-	Users
-	Posts
-	Threads
-	ThreadParticipants
-	Messages
-}
-
-func CreateThreadFixtures(ms *ModelSuite, t *testing.T, post Post) ThreadFixtures {
-	// Load Thread test fixtures
-	threads := []Thread{
-		{
-			Uuid:   domain.GetUuid(),
-			PostID: post.ID,
-		},
-		{
-			Uuid:   domain.GetUuid(),
-			PostID: post.ID,
-		},
-		{
-			Uuid:   domain.GetUuid(),
-			PostID: post.ID,
-		},
-	}
-	for i := range threads {
-		if err := ms.DB.Create(&threads[i]); err != nil {
-			t.Errorf("could not create test threads ... %v", err)
-			t.FailNow()
-		}
-	}
-
-	// Load Thread Participants test fixtures
-	threadParticipants := []ThreadParticipant{
-		{
-			ThreadID:     threads[0].ID,
-			UserID:       post.CreatedByID,
-			LastViewedAt: time.Now(),
-		},
-		{
-			ThreadID: threads[1].ID,
-			UserID:   post.ProviderID.Int,
-		},
-		{
-			ThreadID: threads[1].ID,
-			UserID:   post.CreatedByID,
-		},
-	}
-	for i := range threadParticipants {
-		if err := ms.DB.Create(&threadParticipants[i]); err != nil {
-			t.Errorf("could not create test thread participants ... %v", err)
-			t.FailNow()
-		}
-	}
-
-	// Load Message test fixtures
-	messages := Messages{
-		{
-			Uuid:     domain.GetUuid(),
-			ThreadID: threads[0].ID,
-			SentByID: post.CreatedByID,
-			Content:  "I can being chocolate if you bring PB",
-		},
-		{
-			Uuid:     domain.GetUuid(),
-			ThreadID: threads[1].ID,
-			SentByID: post.ProviderID.Int,
-			Content:  "I can being PB if you bring chocolate",
-		},
-		{
-			Uuid:     domain.GetUuid(),
-			ThreadID: threads[1].ID,
-			SentByID: post.CreatedByID,
-			Content:  "Great!",
-		},
-	}
-
-	for _, message := range messages {
-		if err := ms.DB.Create(&message); err != nil {
-			t.Errorf("could not create test message ... %v", err)
-			t.FailNow()
-		}
-	}
-
-	return ThreadFixtures{Threads: threads, Messages: messages, ThreadParticipants: threadParticipants}
-}
-
 func (ms *ModelSuite) TestThread_Validate() {
 	t := ms.T()
 	tests := []struct {
@@ -152,7 +66,7 @@ func (ms *ModelSuite) TestThread_FindByUUID() {
 
 	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(ms, t, users)
-	threadFixtures := CreateThreadFixtures(ms, t, posts[0])
+	threadFixtures := CreateThreadFixtures(ms, posts[0])
 
 	tests := []struct {
 		name    string
@@ -188,7 +102,7 @@ func (ms *ModelSuite) TestThread_FindByPostIDAndUserID() {
 
 	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(ms, t, users)
-	threadFixtures := CreateThreadFixtures(ms, t, posts[0])
+	threadFixtures := CreateThreadFixtures(ms, posts[0])
 
 	tests := []struct {
 		name           string
@@ -226,7 +140,7 @@ func (ms *ModelSuite) TestThread_GetPost() {
 
 	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(ms, t, users)
-	threadFixtures := CreateThreadFixtures(ms, t, posts[0])
+	threadFixtures := CreateThreadFixtures(ms, posts[0])
 
 	type args struct {
 		thread       Thread
@@ -270,7 +184,7 @@ func (ms *ModelSuite) TestThread_GetMessages() {
 
 	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(ms, t, users)
-	threadFixtures := CreateThreadFixtures(ms, t, posts[0])
+	threadFixtures := CreateThreadFixtures(ms, posts[0])
 
 	type args struct {
 		thread       Thread
@@ -333,7 +247,7 @@ func (ms *ModelSuite) TestThread_GetParticipants() {
 
 	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(ms, t, users)
-	threadFixtures := CreateThreadFixtures(ms, t, posts[0])
+	threadFixtures := CreateThreadFixtures(ms, posts[0])
 
 	type args struct {
 		thread       Thread
@@ -436,7 +350,7 @@ func (ms *ModelSuite) TestThread_GetLastViewedAt() {
 
 	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(ms, t, users)
-	threadFixtures := CreateThreadFixtures(ms, t, posts[0])
+	threadFixtures := CreateThreadFixtures(ms, posts[0])
 
 	tests := []struct {
 		name    string
@@ -474,6 +388,61 @@ func (ms *ModelSuite) TestThread_GetLastViewedAt() {
 
 			ms.NoError(err)
 			ms.Equal(test.want.Format(time.RFC3339), lastViewedAt.Format(time.RFC3339))
+		})
+	}
+}
+
+func (ms *ModelSuite) TestThread_UnreadMessageCount() {
+	t := ms.T()
+
+	f := CreateThreadFixtures_UnreadMessageCount(ms, t)
+
+	tests := []struct {
+		name    string
+		threadP ThreadParticipant
+		user    User
+		want    int
+		wantErr bool
+	}{
+		{
+			name:    "Eager User Own Thread",
+			threadP: f.ThreadParticipants[0],
+			user:    f.Users[0],
+			want:    0,
+		},
+		{
+			name:    "Eager User Other Thread",
+			threadP: f.ThreadParticipants[3],
+			user:    f.Users[0],
+			want:    0,
+		},
+		{
+			name:    "Lazy User Other Thread",
+			threadP: f.ThreadParticipants[1],
+			user:    f.Users[1],
+			want:    2,
+		},
+		{
+			name:    "Lazy User Own Thread",
+			threadP: f.ThreadParticipants[2],
+			user:    f.Users[1],
+			want:    1,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := DB.Load(&test.threadP)
+			ms.NoError(err)
+
+			got, err := test.threadP.Thread.UnreadMessageCount(test.threadP.LastViewedAt)
+			if test.wantErr {
+				ms.Error(err, "did not get expected error")
+				return
+			}
+
+			ms.NoError(err)
+			ms.Equal(test.want, got)
 		})
 	}
 }
