@@ -1,10 +1,10 @@
 package models
 
 import (
-	"testing"
-
 	"github.com/gobuffalo/validate"
 	"github.com/silinternational/wecarry-api/domain"
+	"testing"
+	"time"
 )
 
 func (ms *ModelSuite) TestMessage_Validate() {
@@ -200,4 +200,35 @@ func (ms *ModelSuite) TestMessage_FindByID() {
 			}
 		})
 	}
+}
+
+func (ms *ModelSuite) TestMessage_AfterCreate() {
+	f := CreateMessageFixtures_AfterCreate(ms, ms.T())
+
+	eagerThreadP := f.ThreadParticipants[1] // Lazy User's side of Eager User's post thread
+	lazyThreadP := f.ThreadParticipants[2]  // Lazy User's own post thread
+
+	eagerThreadPLVA := eagerThreadP.LastViewedAt
+
+	newMessage := Message{
+		Uuid:     domain.GetUuid(),
+		ThreadID: lazyThreadP.ThreadID,
+		SentByID: lazyThreadP.UserID,
+		Content:  "This message should update LastViewedAt",
+	}
+
+	err := DB.Create(&newMessage)
+	ms.NoError(err)
+
+	tSecond := time.Duration(time.Second)
+
+	gotTP := ThreadParticipant{}
+	err = DB.Find(&gotTP, eagerThreadP.ID)
+	ms.NoError(err)
+	ms.WithinDuration(eagerThreadPLVA, gotTP.LastViewedAt, tSecond)
+
+	gotTP = ThreadParticipant{}
+	err = DB.Find(&gotTP, lazyThreadP.ID)
+	ms.NoError(err)
+	ms.WithinDuration(time.Now(), gotTP.LastViewedAt, tSecond)
 }
