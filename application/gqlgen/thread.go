@@ -99,16 +99,16 @@ func (r *threadResolver) UnreadMessageCount(ctx context.Context, obj *models.Thr
 }
 
 func (r *queryResolver) Threads(ctx context.Context) ([]*models.Thread, error) {
-	var threads []*models.Thread
-
-	db := models.DB
-
-	selectFields := getSelectFieldsForThreads(ctx)
-	if err := db.Select(selectFields...).All(&threads); err != nil {
+	dbThreads := models.Threads{}
+	if err := dbThreads.All(getSelectFieldsForThreads(ctx)...); err != nil {
 		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
 		return []*models.Thread{}, fmt.Errorf("error getting threads: %v", err)
 	}
 
+	threads := make([]*models.Thread, len(dbThreads))
+	for i := range dbThreads {
+		threads[i] = &dbThreads[i]
+	}
 	return threads, nil
 }
 

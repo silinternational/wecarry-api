@@ -61,6 +61,11 @@ func (t *Thread) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }
 
+// All retrieves all Threads from the database.
+func (t *Threads) All(selectFields ...string) error {
+	return DB.Select(selectFields...).All(t)
+}
+
 func (t *Thread) FindByUUID(uuid string) error {
 	if uuid == "" {
 		return errors.New("error: thread uuid must not be blank")
