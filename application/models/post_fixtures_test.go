@@ -23,7 +23,7 @@ func CreateFixturesValidateUpdate(ms *ModelSuite, t *testing.T) []Post {
 		AuthConfig: "{}",
 		Uuid:       domain.GetUuid(),
 	}
-	createFixture(t, org)
+	createFixture(ms, org)
 
 	// Create User
 	user := User{
@@ -97,16 +97,15 @@ func CreateFixturesValidateUpdate(ms *ModelSuite, t *testing.T) []Post {
 		},
 	}
 
-	posts, err := CreatePosts(posts)
-	if err != nil {
-		t.Errorf("could not create test post ... %v", err)
-		t.FailNow()
+	for i := range posts {
+		createFixture(ms, &posts[i])
 	}
+
 	return posts
 }
 
 func CreatePostFixtures(ms *ModelSuite, t *testing.T, users Users) []Post {
-	if err := DB.Load(&users[0], "Organizations"); err != nil {
+	if err := ms.DB.Load(&users[0], "Organizations"); err != nil {
 		t.Errorf("failed to load organizations on users[0] fixture, %s", err)
 	}
 
@@ -138,7 +137,7 @@ func CreatePostFixtures(ms *ModelSuite, t *testing.T, users Users) []Post {
 			t.Errorf("could not create test post ... %v", err)
 			t.FailNow()
 		}
-		if err := DB.Load(&posts[i], "CreatedBy", "Provider", "Receiver", "Organization"); err != nil {
+		if err := ms.DB.Load(&posts[i], "CreatedBy", "Provider", "Receiver", "Organization"); err != nil {
 			t.Errorf("Error loading post associations: %s", err)
 			t.FailNow()
 		}
@@ -147,14 +146,12 @@ func CreatePostFixtures(ms *ModelSuite, t *testing.T, users Users) []Post {
 }
 
 func CreateFixtures_Posts_FindByUser(ms *ModelSuite) PostFixtures {
-	t := ms.T()
-
 	orgs := Organizations{
 		{Uuid: domain.GetUuid(), AuthConfig: "{}"},
 		{Uuid: domain.GetUuid(), AuthConfig: "{}"},
 	}
 	for i := range orgs {
-		createFixture(t, &orgs[i])
+		createFixture(ms, &orgs[i])
 	}
 
 	unique := domain.GetUuid().String()
@@ -163,7 +160,7 @@ func CreateFixtures_Posts_FindByUser(ms *ModelSuite) PostFixtures {
 		{Email: unique + "_user1@example.com", Nickname: unique + "User1", Uuid: domain.GetUuid()},
 	}
 	for i := range users {
-		createFixture(t, &users[i])
+		createFixture(ms, &users[i])
 	}
 
 	userOrgs := UserOrganizations{
@@ -172,7 +169,7 @@ func CreateFixtures_Posts_FindByUser(ms *ModelSuite) PostFixtures {
 		{OrganizationID: orgs[0].ID, UserID: users[1].ID, AuthID: users[1].Email, AuthEmail: users[1].Email},
 	}
 	for i := range userOrgs {
-		createFixture(t, &(userOrgs[i]))
+		createFixture(ms, &(userOrgs[i]))
 	}
 
 	posts := Posts{
@@ -181,7 +178,7 @@ func CreateFixtures_Posts_FindByUser(ms *ModelSuite) PostFixtures {
 		{Uuid: domain.GetUuid(), CreatedByID: users[1].ID, OrganizationID: orgs[0].ID},
 	}
 	for i := range posts {
-		createFixture(t, &posts[i])
+		createFixture(ms, &posts[i])
 	}
 
 	return PostFixtures{

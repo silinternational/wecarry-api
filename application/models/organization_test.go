@@ -477,7 +477,7 @@ func (ms *ModelSuite) TestOrganization_ListAllForUser() {
 		},
 	}
 	for i := range orgFixtures {
-		createFixture(t, &orgFixtures[i])
+		createFixture(ms, &orgFixtures[i])
 	}
 
 	userFixtures := []User{
@@ -491,7 +491,7 @@ func (ms *ModelSuite) TestOrganization_ListAllForUser() {
 		},
 	}
 	for i := range userFixtures {
-		createFixture(t, &userFixtures[i])
+		createFixture(ms, &userFixtures[i])
 	}
 
 	userOrgFixtures := []UserOrganization{
@@ -505,7 +505,7 @@ func (ms *ModelSuite) TestOrganization_ListAllForUser() {
 		},
 	}
 	for i := range userOrgFixtures {
-		createFixture(t, &userOrgFixtures[i])
+		createFixture(ms, &userOrgFixtures[i])
 	}
 
 	var userOrgs Organizations

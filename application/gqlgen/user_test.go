@@ -45,7 +45,7 @@ type UserQueryFixtures struct {
 // Fixtures_UserQuery creates fixtures for Test_UserQuery
 func Fixtures_UserQuery(gs *GqlgenSuite, t *testing.T) UserQueryFixtures {
 	org := &models.Organization{AuthConfig: "{}", Uuid: domain.GetUuid()}
-	createFixture(t, org)
+	createFixture(gs, org)
 
 	locations := []models.Location{
 		{
@@ -56,7 +56,7 @@ func Fixtures_UserQuery(gs *GqlgenSuite, t *testing.T) UserQueryFixtures {
 		},
 	}
 	for i := range locations {
-		createFixture(t, &locations[i])
+		createFixture(gs, &locations[i])
 	}
 
 	users := models.Users{
@@ -75,7 +75,7 @@ func Fixtures_UserQuery(gs *GqlgenSuite, t *testing.T) UserQueryFixtures {
 		},
 	}
 	for i := range users {
-		createFixture(t, &users[i])
+		createFixture(gs, &users[i])
 	}
 
 	userOrgs := models.UserOrganizations{
@@ -83,7 +83,7 @@ func Fixtures_UserQuery(gs *GqlgenSuite, t *testing.T) UserQueryFixtures {
 		{OrganizationID: org.ID, UserID: users[1].ID, AuthID: users[1].Email, AuthEmail: users[1].Email},
 	}
 	for i := range userOrgs {
-		createFixture(t, &userOrgs[i])
+		createFixture(gs, &userOrgs[i])
 	}
 
 	posts := models.Posts{
@@ -95,7 +95,7 @@ func Fixtures_UserQuery(gs *GqlgenSuite, t *testing.T) UserQueryFixtures {
 		},
 	}
 	for i := range posts {
-		createFixture(t, &(posts[i]))
+		createFixture(gs, &(posts[i]))
 	}
 
 	if err := aws.CreateS3Bucket(); err != nil {
@@ -126,7 +126,6 @@ func Fixtures_UserQuery(gs *GqlgenSuite, t *testing.T) UserQueryFixtures {
 // Test_UserQuery tests the User GraphQL query
 func (gs *GqlgenSuite) Test_UserQuery() {
 	t := gs.T()
-	models.ResetTables(t, models.DB)
 
 	f := Fixtures_UserQuery(gs, t)
 	c := getGqlClient()

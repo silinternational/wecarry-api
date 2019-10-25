@@ -27,7 +27,7 @@ func (ms *ModelSuite) TestUser_FindOrCreateFromAuthUser() {
 		AuthConfig: "{}",
 		Uuid:       domain.GetUuid(),
 	}
-	createFixture(t, org)
+	createFixture(ms, org)
 
 	type args struct {
 		tx       *pop.Connection
@@ -276,7 +276,7 @@ func (ms *ModelSuite) TestCreateAccessToken() {
 				hash := HashClientIdAccessToken(test.args.clientID + token)
 
 				var dbToken UserAccessToken
-				if err := DB.Where(fmt.Sprintf("access_token='%v'", hash)).First(&dbToken); err != nil {
+				if err := ms.DB.Where(fmt.Sprintf("access_token='%v'", hash)).First(&dbToken); err != nil {
 					t.Errorf("Can't find new token (%v)", err)
 				}
 
@@ -292,7 +292,7 @@ func (ms *ModelSuite) TestCreateAccessToken() {
 	}
 
 	uat := &UserAccessToken{}
-	count, _ := DB.Where("user_id = ?", users[0].ID).Count(uat)
+	count, _ := ms.DB.Where("user_id = ?", users[0].ID).Count(uat)
 	if count != 2 {
 		t.Errorf("did not find correct number of user access tokens, want 2, got %v", count)
 	}
@@ -406,12 +406,12 @@ func (ms *ModelSuite) Test_FindUserOrganization() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var user User
-			if err := DB.Where("email = ?", test.args.user.Email).First(&user); err != nil {
+			if err := ms.DB.Where("email = ?", test.args.user.Email).First(&user); err != nil {
 				t.Errorf("couldn't find test user '%v'", test.args.user.Email)
 			}
 
 			var org Organization
-			if err := DB.Where("name = ?", test.args.org.Name).First(&org); err != nil {
+			if err := ms.DB.Where("name = ?", test.args.org.Name).First(&org); err != nil {
 				t.Errorf("couldn't find test org '%v'", test.args.org.Name)
 			}
 
@@ -509,7 +509,7 @@ func (ms *ModelSuite) TestCanEditOrganization() {
 		},
 	}
 	for i := range orgFixtures {
-		createFixture(t, &orgFixtures[i])
+		createFixture(ms, &orgFixtures[i])
 	}
 
 	user := User{
@@ -520,7 +520,7 @@ func (ms *ModelSuite) TestCanEditOrganization() {
 		AdminRole: nulls.String{},
 		Uuid:      domain.GetUuid(),
 	}
-	createFixture(t, &user)
+	createFixture(ms, &user)
 
 	userOrgFixtures := []UserOrganization{
 		{
@@ -539,7 +539,7 @@ func (ms *ModelSuite) TestCanEditOrganization() {
 		},
 	}
 	for i := range userOrgFixtures {
-		createFixture(t, &userOrgFixtures[i])
+		createFixture(ms, &userOrgFixtures[i])
 	}
 
 	if !user.CanEditOrganization(orgFixtures[0].ID) {
@@ -572,7 +572,7 @@ func (ms *ModelSuite) TestUser_AttachPhoto() {
 		ms.NotEqual(domain.EmptyUUID, attachedFile.UUID.String())
 	}
 
-	if err := DB.Load(&user); err != nil {
+	if err := ms.DB.Load(&user); err != nil {
 		t.Errorf("failed to load photo relation for test user, %s", err)
 	}
 
@@ -660,7 +660,7 @@ func (ms *ModelSuite) TestUser_SetLocation() {
 	t := ms.T()
 
 	user := User{Uuid: domain.GetUuid(), Email: t.Name() + "_user@example.com", Nickname: t.Name() + "_User"}
-	createFixture(t, &user)
+	createFixture(ms, &user)
 
 	locationFixtures := Locations{
 		{

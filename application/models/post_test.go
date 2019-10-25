@@ -962,13 +962,13 @@ func (ms *ModelSuite) TestPost_AttachFile() {
 		ms.NotEqual(domain.EmptyUUID, attachedFile.UUID.String())
 	}
 
-	if err := DB.Load(&post); err != nil {
+	if err := ms.DB.Load(&post); err != nil {
 		t.Errorf("failed to load relations for test post, %s", err)
 	}
 
 	ms.Equal(1, len(post.Files))
 
-	if err := DB.Load(&(post.Files[0])); err != nil {
+	if err := ms.DB.Load(&(post.Files[0])); err != nil {
 		t.Errorf("failed to load files relations for test post, %s", err)
 	}
 
@@ -1071,13 +1071,13 @@ func (ms *ModelSuite) TestPost_SetDestination() {
 	t := ms.T()
 
 	user := User{Uuid: domain.GetUuid(), Email: t.Name() + "_user@example.com", Nickname: t.Name() + "_User"}
-	createFixture(t, &user)
+	createFixture(ms, &user)
 
 	organization := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
-	createFixture(t, &organization)
+	createFixture(ms, &organization)
 
 	post := Post{CreatedByID: user.ID, OrganizationID: organization.ID}
-	createFixture(t, &post)
+	createFixture(ms, &post)
 
 	locationFixtures := Locations{
 		{
@@ -1123,13 +1123,13 @@ func (ms *ModelSuite) TestPost_SetOrigin() {
 	t := ms.T()
 
 	user := User{Uuid: domain.GetUuid(), Email: t.Name() + "_user@example.com", Nickname: t.Name() + "_User"}
-	createFixture(t, &user)
+	createFixture(ms, &user)
 
 	organization := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
-	createFixture(t, &organization)
+	createFixture(ms, &organization)
 
 	post := Post{CreatedByID: user.ID, OrganizationID: organization.ID}
-	createFixture(t, &post)
+	createFixture(ms, &post)
 
 	locationFixtures := Locations{
 		{
