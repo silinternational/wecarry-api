@@ -66,7 +66,7 @@ func (ms *ModelSuite) TestThread_FindByUUID() {
 
 	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(ms, t, users)
-	threadFixtures := CreateThreadFixtures(ms, t, posts[0])
+	threadFixtures := CreateThreadFixtures(ms, posts[0])
 
 	tests := []struct {
 		name    string
@@ -102,7 +102,7 @@ func (ms *ModelSuite) TestThread_FindByPostIDAndUserID() {
 
 	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(ms, t, users)
-	threadFixtures := CreateThreadFixtures(ms, t, posts[0])
+	threadFixtures := CreateThreadFixtures(ms, posts[0])
 
 	tests := []struct {
 		name           string
@@ -140,7 +140,7 @@ func (ms *ModelSuite) TestThread_GetPost() {
 
 	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(ms, t, users)
-	threadFixtures := CreateThreadFixtures(ms, t, posts[0])
+	threadFixtures := CreateThreadFixtures(ms, posts[0])
 
 	type args struct {
 		thread       Thread
@@ -184,7 +184,7 @@ func (ms *ModelSuite) TestThread_GetMessages() {
 
 	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(ms, t, users)
-	threadFixtures := CreateThreadFixtures(ms, t, posts[0])
+	threadFixtures := CreateThreadFixtures(ms, posts[0])
 
 	type args struct {
 		thread       Thread
@@ -247,7 +247,7 @@ func (ms *ModelSuite) TestThread_GetParticipants() {
 
 	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(ms, t, users)
-	threadFixtures := CreateThreadFixtures(ms, t, posts[0])
+	threadFixtures := CreateThreadFixtures(ms, posts[0])
 
 	type args struct {
 		thread       Thread
@@ -350,7 +350,7 @@ func (ms *ModelSuite) TestThread_GetLastViewedAt() {
 
 	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(ms, t, users)
-	threadFixtures := CreateThreadFixtures(ms, t, posts[0])
+	threadFixtures := CreateThreadFixtures(ms, posts[0])
 
 	tests := []struct {
 		name    string

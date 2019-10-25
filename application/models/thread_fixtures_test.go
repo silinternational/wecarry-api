@@ -16,7 +16,7 @@ type ThreadFixtures struct {
 	Messages
 }
 
-func CreateThreadFixtures(ms *ModelSuite, t *testing.T, post Post) ThreadFixtures {
+func CreateThreadFixtures(ms *ModelSuite, post Post) ThreadFixtures {
 	// Load Thread test fixtures
 	threads := []Thread{
 		{
@@ -33,7 +33,7 @@ func CreateThreadFixtures(ms *ModelSuite, t *testing.T, post Post) ThreadFixture
 		},
 	}
 	for i := range threads {
-		createFixture(t, &threads[i])
+		createFixture(ms, &threads[i])
 	}
 
 	// Load Thread Participants test fixtures
@@ -53,7 +53,7 @@ func CreateThreadFixtures(ms *ModelSuite, t *testing.T, post Post) ThreadFixture
 		},
 	}
 	for i := range threadParticipants {
-		createFixture(t, &threadParticipants[i])
+		createFixture(ms, &threadParticipants[i])
 	}
 
 	// Load Message test fixtures
@@ -79,7 +79,7 @@ func CreateThreadFixtures(ms *ModelSuite, t *testing.T, post Post) ThreadFixture
 	}
 
 	for i := range messages {
-		createFixture(t, &messages[i])
+		createFixture(ms, &messages[i])
 	}
 
 	return ThreadFixtures{Threads: threads, Messages: messages, ThreadParticipants: threadParticipants}
@@ -120,7 +120,7 @@ func CreateThreadFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) Threa
 		},
 	}
 	for i := range users {
-		createFixture(t, &users[i])
+		createFixture(ms, &users[i])
 	}
 
 	// Load UserOrganization test fixtures
@@ -139,7 +139,7 @@ func CreateThreadFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) Threa
 		},
 	}
 	for i := range userOrgs {
-		createFixture(t, &userOrgs[i])
+		createFixture(ms, &userOrgs[i])
 	}
 
 	// Each user has a request and is a provider on the other user's post
@@ -167,7 +167,7 @@ func CreateThreadFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) Threa
 	}
 
 	for i := range posts {
-		createFixture(t, &posts[i])
+		createFixture(ms, &posts[i])
 	}
 
 	threads := []Thread{
@@ -182,7 +182,7 @@ func CreateThreadFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) Threa
 	}
 
 	for i := range threads {
-		createFixture(t, &threads[i])
+		createFixture(ms, &threads[i])
 	}
 
 	tnow := time.Now()
@@ -214,7 +214,7 @@ func CreateThreadFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) Threa
 	}
 
 	for i := range threadParticipants {
-		createFixture(t, &threadParticipants[i])
+		createFixture(ms, &threadParticipants[i])
 	}
 
 	// I can't seem to give them custom times
@@ -240,7 +240,7 @@ func CreateThreadFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) Threa
 	}
 
 	for i := range messages {
-		createFixture(t, &messages[i])
+		createFixture(ms, &messages[i])
 	}
 
 	return ThreadFixtures{
