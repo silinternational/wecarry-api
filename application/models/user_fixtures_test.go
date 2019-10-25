@@ -204,7 +204,7 @@ func CreateUserFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) UserMes
 		createFixture(ms, &threads[i])
 	}
 
-	tNow := time.Now()
+	tNow := time.Now().Round(time.Duration(time.Second))
 	oldTime := tNow.Add(-time.Duration(time.Hour))
 	oldOldTime := oldTime.Add(-time.Duration(time.Hour))
 
