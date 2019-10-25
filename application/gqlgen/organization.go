@@ -3,10 +3,8 @@ package gqlgen
 import (
 	"context"
 
-	"github.com/silinternational/wecarry-api/domain"
-
 	"github.com/99designs/gqlgen/graphql"
-
+	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 )
 
