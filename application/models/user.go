@@ -449,3 +449,15 @@ func (u *User) UnreadMessageCount() ([]UnreadThread, error) {
 
 	return unreads, nil
 }
+
+// GetThreads finds all threads that the user is participating in.
+func (u *User) GetThreads() (Threads, error) {
+	var t Threads
+	query := DB.Q().LeftJoin("thread_participants tp", "threads.id = tp.thread_id")
+	query = query.Where("tp.user_id = ?", u.ID)
+	if err := query.All(&t); err != nil {
+		return nil, err
+	}
+
+	return t, nil
+}

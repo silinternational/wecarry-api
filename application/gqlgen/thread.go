@@ -115,8 +115,8 @@ func (r *queryResolver) Threads(ctx context.Context) ([]*models.Thread, error) {
 func (r *queryResolver) MyThreads(ctx context.Context) ([]*models.Thread, error) {
 	currentUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 
-	dbThreads := models.Threads{}
-	if err := dbThreads.AllForUser(currentUser); err != nil {
+	dbThreads, err := currentUser.GetThreads()
+	if err != nil {
 		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
 		return []*models.Thread{}, fmt.Errorf("error getting threads: %v", err)
 	}

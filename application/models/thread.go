@@ -218,14 +218,3 @@ func (t *Thread) UnreadMessageCount(lastViewedAt time.Time) (int, error) {
 
 	return count, nil
 }
-
-// AllForUser finds all threads that given user is involved in.
-func (t *Threads) AllForUser(user User) error {
-	query := DB.Q().LeftJoin("thread_participants tp", "threads.id = tp.thread_id")
-	query = query.Where("tp.user_id = ?", user.ID)
-	if err := query.All(t); err != nil {
-		return err
-	}
-
-	return nil
-}
