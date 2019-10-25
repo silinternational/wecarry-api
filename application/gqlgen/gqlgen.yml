@@ -32,6 +32,8 @@ models:
         resolver: true
       location:
         resolver: true
+      unreadMessageCount:
+        resolver: true
   Post:
     model: models.Post
     fields:
@@ -57,6 +59,8 @@ models:
       post:
         resolver: true
       lastViewedAt:
+        resolver: true
+      unreadMessageCount:
         resolver: true
   Message:
     model: models.Message

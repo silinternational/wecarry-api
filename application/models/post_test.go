@@ -863,7 +863,7 @@ func (ms *ModelSuite) TestPost_GetThreads() {
 
 	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(ms, t, users)
-	threadFixtures := CreateThreadFixtures(ms, t, posts[0])
+	threadFixtures := CreateThreadFixtures(ms, posts[0])
 	threads := threadFixtures.Threads
 
 	tests := []struct {
@@ -897,7 +897,7 @@ func (ms *ModelSuite) TestPost_GetThreadIdForUser() {
 
 	_, users, _ := CreateUserFixtures(ms, t)
 	posts := CreatePostFixtures(ms, t, users)
-	threadFixtures := CreateThreadFixtures(ms, t, posts[0])
+	threadFixtures := CreateThreadFixtures(ms, posts[0])
 	thread0UUID := threadFixtures.Threads[0].Uuid.String()
 
 	tests := []struct {

@@ -85,6 +85,24 @@ func (r *userResolver) Location(ctx context.Context, obj *models.User) (*models.
 	return obj.GetLocation()
 }
 
+func (r *userResolver) UnreadMessageCount(ctx context.Context, obj *models.User) (int, error) {
+	if obj == nil {
+		return 0, nil
+	}
+	mCounts, err := obj.UnreadMessageCount()
+
+	if err != nil {
+		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
+		return 0, err
+	}
+	total := 0
+	for _, c := range mCounts {
+		total += c.Count
+	}
+
+	return total, nil
+}
+
 func (r *queryResolver) Users(ctx context.Context) ([]*models.User, error) {
 	db := models.DB
 	var dbUsers []*models.User
