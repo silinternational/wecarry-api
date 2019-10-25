@@ -1185,7 +1185,7 @@ type File {
 }
 
 input SetThreadLastViewedAtInput {
-    threadId: ID!
+    threadID: ID!
     time: Time!
 }
 
@@ -6020,7 +6020,7 @@ func (ec *executionContext) unmarshalInputSetThreadLastViewedAtInput(ctx context
 
 	for k, v := range asMap {
 		switch k {
-		case "threadId":
+		case "threadID":
 			var err error
 			it.ThreadID, err = ec.unmarshalNID2string(ctx, v)
 			if err != nil {
@@ -8058,7 +8058,7 @@ func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋsilinternational�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, sel, v[i])
+			ret[i] = ec.marshalOUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
