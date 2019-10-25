@@ -705,7 +705,7 @@ func (ms *ModelSuite) TestUser_SetLocation() {
 func (ms *ModelSuite) TestUser_UnreadMessageCount() {
 	t := ms.T()
 
-	f := CreateThreadFixtures_UnreadMessageCount(ms, t)
+	f := CreateUserFixtures_UnreadMessageCount(ms, t)
 
 	tests := []struct {
 		name      string
@@ -714,11 +714,11 @@ func (ms *ModelSuite) TestUser_UnreadMessageCount() {
 		wantErr   bool
 		wantTotal int
 	}{
-		{
-			name: "Eager User",
-			user: f.Users[0],
-			want: 0,
-		},
+		//{
+		//	name: "Eager User",
+		//	user: f.Users[0],
+		//	want: 0,
+		//},
 		{
 			name:      "Lazy User",
 			user:      f.Users[1],

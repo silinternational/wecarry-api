@@ -204,16 +204,16 @@ func CreateUserFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) UserMes
 		createFixture(ms, &threads[i])
 	}
 
-	tnow := time.Now()
-	oldTime := tnow.Add(-time.Duration(time.Hour))
-	futureTime := tnow.Add(time.Duration(time.Hour))
+	tNow := time.Now()
+	oldTime := tNow.Add(-time.Duration(time.Hour))
+	oldOldTime := oldTime.Add(-time.Duration(time.Hour))
 
 	// One thread per post with 2 users per thread
 	threadParticipants := []ThreadParticipant{
 		{
 			ThreadID:     threads[0].ID,
 			UserID:       posts[0].CreatedByID,
-			LastViewedAt: futureTime,
+			LastViewedAt: tNow, // This will get overridden and then reset again
 		},
 		{
 			ThreadID:     threads[0].ID,
@@ -228,7 +228,7 @@ func CreateUserFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) UserMes
 		{
 			ThreadID:     threads[1].ID,
 			UserID:       posts[1].ProviderID.Int,
-			LastViewedAt: futureTime,
+			LastViewedAt: tNow,
 		},
 	}
 
@@ -239,32 +239,65 @@ func CreateUserFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) UserMes
 	// I can't seem to give them custom times
 	messages := Messages{
 		{
-			Uuid:     domain.GetUuid(),
-			ThreadID: threads[0].ID,
-			SentByID: posts[0].CreatedByID,
-			Content:  "I can being chocolate if you bring PB",
+			Uuid:      domain.GetUuid(),
+			ThreadID:  threads[0].ID,        // user 0's post
+			SentByID:  posts[0].CreatedByID, // user 0 (Eager)
+			Content:   "I can being chocolate if you bring PB",
+			CreatedAt: oldOldTime,
 		},
 		{
-			Uuid:     domain.GetUuid(),
-			ThreadID: threads[0].ID,
-			SentByID: posts[0].ProviderID.Int,
-			Content:  "Great",
+			Uuid:      domain.GetUuid(),
+			ThreadID:  threads[0].ID,           // user 0's post
+			SentByID:  posts[0].ProviderID.Int, // user 1 (Lazy)
+			Content:   "Great",
+			CreatedAt: oldTime,
 		},
 		{
-			Uuid:     domain.GetUuid(),
-			ThreadID: threads[1].ID,
-			SentByID: posts[1].CreatedByID,
-			Content:  "I can being PB if you bring chocolate",
+			Uuid:      domain.GetUuid(),
+			ThreadID:  threads[0].ID,        // user 0's post
+			SentByID:  posts[0].CreatedByID, // user 0 (Eager)
+			Content:   "Can you get it here by next week?",
+			CreatedAt: tNow, // Lazy User doesn't see this one
+		},
+		{
+			Uuid:      domain.GetUuid(),
+			ThreadID:  threads[1].ID,        // user 1's post
+			SentByID:  posts[1].CreatedByID, // user 1 (Lazy)
+			Content:   "I can being PB if you bring chocolate",
+			CreatedAt: oldTime,
+		},
+		{
+			Uuid:      domain.GetUuid(),
+			ThreadID:  threads[1].ID,           // user 1's post
+			SentByID:  posts[1].ProviderID.Int, // user 0 (Eager)
+			Content:   "Did you see my other message?",
+			CreatedAt: tNow, // Lazy User doesn't see this one
+		},
+		{
+			Uuid:      domain.GetUuid(),
+			ThreadID:  threads[1].ID,           // user 1's post
+			SentByID:  posts[1].ProviderID.Int, // user 0 (Eager)
+			Content:   "Anyone Home?",
+			CreatedAt: tNow, // Lazy User doesn't see this one
 		},
 	}
 
-	for i := range messages {
-		createFixture(ms, &messages[i])
+	for _, m := range messages {
+		if err := ms.DB.RawQuery(`INSERT INTO messages (content, created_at, sent_by_id, thread_id, updated_at, uuid)`+
+			`VALUES (?, ?, ?, ?, ?, ?)`,
+			m.Content, m.CreatedAt, m.SentByID, m.ThreadID, m.CreatedAt, m.Uuid).Exec(); err != nil {
+			t.Errorf("error loading messages ... %v", err)
+			t.FailNow()
+		}
 	}
 
-	if err := DB.Load(&messages[0]); err != nil {
-		t.Errorf("could not load message 0 fields ... %v", err)
-		t.FailNow()
+	// Because of Message.AfterCreate() we need to reset the LastViewedAt attributes
+	//                     Eager User0, Lazy User1, Lazy User1, Eager User0
+	for i, tt := range []time.Time{tNow, oldTime, oldTime, tNow} {
+		if err := threadParticipants[i].UpdateLastViewedAt(tt); err != nil {
+			t.Errorf("could not update LastViewedAt ... %v", err)
+			t.FailNow()
+		}
 	}
 
 	return UserMessageFixtures{
