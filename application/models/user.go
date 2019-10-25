@@ -92,6 +92,11 @@ func (u *User) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }
 
+// All retrieves all Users from the database.
+func (u *Users) All(selectFields ...string) error {
+	return DB.Select(selectFields...).All(u)
+}
+
 // CreateAccessToken - Create and store new UserAccessToken
 func (u *User) CreateAccessToken(org Organization, clientID string) (string, int64, error) {
 	if clientID == "" {
