@@ -12,17 +12,19 @@ model:
 resolver:
   filename: resolver.go
   type: Resolver
-autobind: []
+autobind:
+  - github.com/silinternational/wecarry-api/models
+  - github.com/silinternational/wecarry-api/gqlgen
 models:
   Organization:
-    model: github.com/silinternational/wecarry-api/models.Organization
+    model: models.Organization
     fields:
       id:
         resolver: true
   OrganizationDomain:
-    model: github.com/silinternational/wecarry-api/models.OrganizationDomain
+    model: models.OrganizationDomain
   User:
-    model: github.com/silinternational/wecarry-api/models.User
+    model: models.User
     fields:
       id:
         resolver: true
@@ -31,7 +33,7 @@ models:
       location:
         resolver: true
   Post:
-    model: github.com/silinternational/wecarry-api/models.Post
+    model: models.Post
     fields:
       id:
         resolver: true
@@ -48,7 +50,7 @@ models:
       origin:
         resolver: true
   Thread:
-    model: github.com/silinternational/wecarry-api/models.Thread
+    model: models.Thread
     fields:
       id:
         resolver: true
@@ -57,23 +59,23 @@ models:
       lastViewedAt:
         resolver: true
   Message:
-    model: github.com/silinternational/wecarry-api/models.Message
+    model: models.Message
     fields:
       id:
         resolver: true
       thread:
         resolver: true
   File:
-    model: github.com/silinternational/wecarry-api/models.File
+    model: models.File
     fields:
       id:
         resolver: true
   UpdatePostInput:
-    model: github.com/silinternational/wecarry-api/gqlgen.postInput
+    model: gqlgen.postInput
   CreatePostInput:
-    model: github.com/silinternational/wecarry-api/gqlgen.postInput
+    model: gqlgen.postInput
   Location:
-    model: github.com/silinternational/wecarry-api/models.Location
+    model: models.Location
 
 #directives:
 #  deprecated:

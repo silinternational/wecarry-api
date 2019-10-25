@@ -3,7 +3,6 @@ package gqlgen
 import (
 	"fmt"
 	"net/http"
-	"net/http/httptest"
 	"time"
 
 	"github.com/99designs/gqlgen/client"
@@ -106,9 +105,7 @@ func (gs *GqlgenSuite) TestResolver() {
 	createFixture(gs, &MessageFix[0])
 
 	// Prep gql server
-	h := newHandler()
-	srv := httptest.NewServer(h)
-	c := client.New(srv.URL)
+	c := client.New(newHandler())
 
 	var intResults, intExpected int
 	var strResults, strExpected string
