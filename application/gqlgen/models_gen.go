@@ -40,7 +40,7 @@ type RemoveOrganizationDomainInput struct {
 }
 
 type SetThreadLastViewedAtInput struct {
-	ThreadID string    `json:"threadId"`
+	ThreadID string    `json:"threadID"`
 	Time     time.Time `json:"time"`
 }
 

@@ -211,7 +211,7 @@ type File {
 }
 
 input SetThreadLastViewedAtInput {
-    threadId: ID!
+    threadID: ID!
     time: Time!
 }
 
