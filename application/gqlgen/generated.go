@@ -111,7 +111,6 @@ type ComplexityRoot struct {
 		Destination  func(childComplexity int) int
 		Files        func(childComplexity int) int
 		ID           func(childComplexity int) int
-		MyThreadID   func(childComplexity int) int
 		NeededAfter  func(childComplexity int) int
 		NeededBefore func(childComplexity int) int
 		Organization func(childComplexity int) int
@@ -213,7 +212,6 @@ type PostResolver interface {
 
 	Threads(ctx context.Context, obj *models.Post) ([]*models.Thread, error)
 
-	MyThreadID(ctx context.Context, obj *models.Post) (*string, error)
 	URL(ctx context.Context, obj *models.Post) (*string, error)
 	Cost(ctx context.Context, obj *models.Post) (*string, error)
 	Photo(ctx context.Context, obj *models.Post) (*models.File, error)
@@ -595,13 +593,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Post.ID(childComplexity), true
-
-	case "Post.myThreadID":
-		if e.complexity.Post.MyThreadID == nil {
-			break
-		}
-
-		return e.complexity.Post.MyThreadID(childComplexity), true
 
 	case "Post.neededAfter":
 		if e.complexity.Post.NeededAfter == nil {
@@ -1070,7 +1061,6 @@ type Post {
     threads: [Thread]!
     createdAt: Time!
     updatedAt: Time!
-    myThreadID: String
     url: String
     cost: String
     photo: File
@@ -3358,40 +3348,6 @@ func (ec *executionContext) _Post_updatedAt(ctx context.Context, field graphql.C
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Post_myThreadID(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Post",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Post().MyThreadID(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Post_url(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
@@ -6775,17 +6731,6 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "myThreadID":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Post_myThreadID(ctx, field, obj)
-				return res
-			})
 		case "url":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -8058,7 +8003,7 @@ func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋsilinternational�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, sel, v[i])
+			ret[i] = ec.marshalNUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)

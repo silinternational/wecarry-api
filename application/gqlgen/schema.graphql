@@ -96,7 +96,6 @@ type Post {
     threads: [Thread]!
     createdAt: Time!
     updatedAt: Time!
-    myThreadID: String
     url: String
     cost: String
     photo: File

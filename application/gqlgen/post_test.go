@@ -44,7 +44,6 @@ type PostResponse struct {
 		Status       string `json:"status"`
 		CreatedAt    string `json:"createdAt"`
 		UpdatedAt    string `json:"updatedAt"`
-		MyThreadID   string `json:"myThreadID"`
 		Cost         string `json:"cost"`
 		Url          string `json:"url"`
 		CreatedBy    struct {
@@ -214,7 +213,6 @@ func (gs *GqlgenSuite) Test_PostQuery() {
 			status
 			createdAt
 			updatedAt
-			myThreadID
 			cost
 			url
 			createdBy { id }
@@ -256,7 +254,6 @@ func (gs *GqlgenSuite) Test_PostQuery() {
 	gs.NoError(err, "couldn't parse cost field as a float")
 	gs.Equal(f.Posts[0].Cost.Float64, cost)
 	gs.Equal(f.Posts[0].URL.String, resp.Post.Url)
-	gs.Equal(f.Threads[0].Uuid.String(), resp.Post.MyThreadID)
 	gs.Equal(f.Users[0].Uuid.String(), resp.Post.CreatedBy.ID)
 	gs.Equal(f.Users[0].Uuid.String(), resp.Post.Receiver.ID)
 	gs.Equal(f.Users[1].Uuid.String(), resp.Post.Provider.ID)

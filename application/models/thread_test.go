@@ -97,44 +97,6 @@ func (ms *ModelSuite) TestThread_FindByUUID() {
 	}
 }
 
-func (ms *ModelSuite) TestThread_FindByPostIDAndUserID() {
-	t := ms.T()
-
-	_, users, _ := CreateUserFixtures(ms, t)
-	posts := CreatePostFixtures(ms, t, users)
-	threadFixtures := CreateThreadFixtures(ms, posts[0])
-
-	tests := []struct {
-		name           string
-		postID, userID int
-		want           Thread
-		wantErr        bool
-	}{
-		{name: "good", postID: posts[0].ID, userID: users[0].ID, want: threadFixtures.Threads[0]},
-		{name: "wrong post ID", postID: posts[1].ID, userID: users[0].ID, want: Thread{}},
-		{name: "wrong user ID", postID: posts[0].ID, userID: users[2].ID, want: Thread{}},
-		{name: "bad post ID", postID: -1, userID: users[0].ID, want: Thread{}},
-		{name: "bad user ID", postID: posts[0].ID, userID: -1, want: Thread{}},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			var thread Thread
-			err := thread.FindByPostIDAndUserID(test.postID, test.userID)
-			if test.wantErr {
-				if (err != nil) != test.wantErr {
-					t.Errorf("FindByPostIDAndUserID() did not return expected error")
-				}
-			} else {
-				if err != nil {
-					t.Errorf("FindByPostIDAndUserID() error = %v", err)
-				} else if thread.Uuid != test.want.Uuid {
-					t.Errorf("FindByPostIDAndUserID() got = %s, want %s", thread.Uuid, test.want.Uuid)
-				}
-			}
-		})
-	}
-}
-
 func (ms *ModelSuite) TestThread_GetPost() {
 	t := ms.T()
 
