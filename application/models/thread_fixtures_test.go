@@ -33,10 +33,7 @@ func CreateThreadFixtures(ms *ModelSuite, t *testing.T, post Post) ThreadFixture
 		},
 	}
 	for i := range threads {
-		if err := ms.DB.Create(&threads[i]); err != nil {
-			t.Errorf("could not create test threads ... %v", err)
-			t.FailNow()
-		}
+		createFixture(t, &threads[i])
 	}
 
 	// Load Thread Participants test fixtures
@@ -56,10 +53,7 @@ func CreateThreadFixtures(ms *ModelSuite, t *testing.T, post Post) ThreadFixture
 		},
 	}
 	for i := range threadParticipants {
-		if err := ms.DB.Create(&threadParticipants[i]); err != nil {
-			t.Errorf("could not create test thread participants ... %v", err)
-			t.FailNow()
-		}
+		createFixture(t, &threadParticipants[i])
 	}
 
 	// Load Message test fixtures
@@ -84,11 +78,8 @@ func CreateThreadFixtures(ms *ModelSuite, t *testing.T, post Post) ThreadFixture
 		},
 	}
 
-	for _, message := range messages {
-		if err := ms.DB.Create(&message); err != nil {
-			t.Errorf("could not create test message ... %v", err)
-			t.FailNow()
-		}
+	for i := range messages {
+		createFixture(t, &messages[i])
 	}
 
 	return ThreadFixtures{Threads: threads, Messages: messages, ThreadParticipants: threadParticipants}
@@ -129,10 +120,7 @@ func CreateThreadFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) Threa
 		},
 	}
 	for i := range users {
-		if err := ms.DB.Create(&users[i]); err != nil {
-			t.Errorf("could not create test user %v ... %v", users[i], err)
-			t.FailNow()
-		}
+		createFixture(t, &users[i])
 	}
 
 	// Load UserOrganization test fixtures
@@ -151,10 +139,7 @@ func CreateThreadFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) Threa
 		},
 	}
 	for i := range userOrgs {
-		if err := ms.DB.Create(&userOrgs[i]); err != nil {
-			t.Errorf("could not create test user org ... %v. uo = %+v", err, userOrgs[i])
-			t.FailNow()
-		}
+		createFixture(t, &userOrgs[i])
 	}
 
 	// Each user has a request and is a provider on the other user's post
@@ -181,10 +166,8 @@ func CreateThreadFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) Threa
 		},
 	}
 
-	posts, err := CreatePosts(posts)
-	if err != nil {
-		t.Errorf("could not create test post ... %v", err)
-		t.FailNow()
+	for i := range posts {
+		createFixture(t, &posts[i])
 	}
 
 	threads := []Thread{
@@ -198,10 +181,8 @@ func CreateThreadFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) Threa
 		},
 	}
 
-	threads, err = CreateThreads(threads)
-	if err != nil {
-		t.Errorf("could not create test threads ... %v", err)
-		t.FailNow()
+	for i := range threads {
+		createFixture(t, &threads[i])
 	}
 
 	tnow := time.Now()
@@ -232,9 +213,8 @@ func CreateThreadFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) Threa
 		},
 	}
 
-	if err := CreateThreadParticipants(threadParticipants); err != nil {
-		t.Errorf("could not create test thread participants ... %v", err)
-		t.FailNow()
+	for i := range threadParticipants {
+		createFixture(t, &threadParticipants[i])
 	}
 
 	// I can't seem to give them custom times
@@ -259,14 +239,8 @@ func CreateThreadFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) Threa
 		},
 	}
 
-	if err := CreateMessages(messages); err != nil {
-		t.Errorf("could not create test message ... %v", err)
-		t.FailNow()
-	}
-
-	if err := DB.Load(&messages[0]); err != nil {
-		t.Errorf("could not load message 0 fields ... %v", err)
-		t.FailNow()
+	for i := range messages {
+		createFixture(t, &messages[i])
 	}
 
 	return ThreadFixtures{
