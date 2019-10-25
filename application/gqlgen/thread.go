@@ -103,7 +103,7 @@ func (r *queryResolver) Threads(ctx context.Context) ([]*models.Thread, error) {
 
 	db := models.DB
 
-	selectFields := getSelectFieldsForThreads(graphql.CollectAllFields(ctx))
+	selectFields := getSelectFieldsForThreads(ctx)
 	if err := db.Select(selectFields...).All(&threads); err != nil {
 		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
 		return []*models.Thread{}, fmt.Errorf("error getting threads: %v", err)
@@ -128,8 +128,8 @@ func (r *queryResolver) MyThreads(ctx context.Context) ([]*models.Thread, error)
 	return threads, nil
 }
 
-func getSelectFieldsForThreads(requestFields []string) []string {
-	selectFields := GetSelectFieldsFromRequestFields(ThreadFields(), requestFields)
+func getSelectFieldsForThreads(ctx context.Context) []string {
+	selectFields := GetSelectFieldsFromRequestFields(ThreadFields(), graphql.CollectAllFields(ctx))
 
 	selectFields = append(selectFields, "id")
 

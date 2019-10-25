@@ -44,7 +44,7 @@ func (r *messageResolver) Thread(ctx context.Context, obj *models.Message) (*mod
 	if obj == nil {
 		return nil, nil
 	}
-	selectFields := getSelectFieldsForThreads(graphql.CollectAllFields(ctx))
+	selectFields := getSelectFieldsForThreads(ctx)
 	return obj.GetThread(selectFields)
 }
 
