@@ -90,7 +90,7 @@ func (r *threadResolver) UnreadMessageCount(ctx context.Context, obj *models.Thr
 		return 0, nil
 	}
 
-	count, err := obj.UnreadMessageCount(*lastViewedAt)
+	count, err := obj.UnreadMessageCount(&user, *lastViewedAt)
 	if err != nil {
 		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
 		return 0, nil

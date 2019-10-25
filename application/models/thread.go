@@ -198,7 +198,9 @@ func (t *Thread) Load(fields ...string) error {
 	return nil
 }
 
-func (t *Thread) UnreadMessageCount(lastViewedAt time.Time) (int, error) {
+// UnreadMessageCount returns the number of messages on this thread that the current
+//  user has not created and for which the CreatedAt value is after the lastViewedAt value
+func (t *Thread) UnreadMessageCount(user *User, lastViewedAt time.Time) (int, error) {
 	count := 0
 
 	msgs, err := t.GetMessages([]string{"created_at"})
@@ -207,7 +209,7 @@ func (t *Thread) UnreadMessageCount(lastViewedAt time.Time) (int, error) {
 	}
 
 	for _, m := range msgs {
-		if m.CreatedAt.After(lastViewedAt) {
+		if m.SentByID != user.ID && m.CreatedAt.After(lastViewedAt) {
 			count++
 		}
 	}

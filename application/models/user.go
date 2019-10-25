@@ -419,6 +419,8 @@ type UnreadThread struct {
 	Count      int
 }
 
+// UnreadMessageCount returns an entry for each thread that has other users' messages
+// that have not yet been read by this this user.
 func (u *User) UnreadMessageCount() ([]UnreadThread, error) {
 	emptyUnreads := []UnreadThread{}
 
@@ -430,7 +432,7 @@ func (u *User) UnreadMessageCount() ([]UnreadThread, error) {
 	unreads := []UnreadThread{}
 
 	for _, tp := range threadPs {
-		msgCount, err := tp.Thread.UnreadMessageCount(tp.LastViewedAt)
+		msgCount, err := tp.Thread.UnreadMessageCount(u, tp.LastViewedAt)
 		if err != nil {
 			domain.ErrLogger.Printf("error getting count of unread messages for thread %s ... %v",
 				tp.Thread.Uuid, err)
