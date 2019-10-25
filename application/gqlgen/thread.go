@@ -72,6 +72,23 @@ func (r *threadResolver) Post(ctx context.Context, obj *models.Thread) (*models.
 	return obj.GetPost(selectedFields)
 }
 
+func (r *threadResolver) UnreadMessageCount(ctx context.Context, obj *models.Thread) (int, error) {
+	if obj == nil {
+		return 0, nil
+	}
+	lastViewedAt, err := obj.GetLastViewedAt(models.GetCurrentUserFromGqlContext(ctx, TestUser))
+	if err != nil {
+		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
+		return 0, err
+	}
+	count, err := obj.UnreadMessageCount(*lastViewedAt)
+	if err != nil {
+		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
+		return 0, err
+	}
+	return count, nil
+}
+
 func (r *queryResolver) Threads(ctx context.Context) ([]*models.Thread, error) {
 	var threads []*models.Thread
 
