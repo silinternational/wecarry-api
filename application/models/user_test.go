@@ -747,3 +747,30 @@ func (ms *ModelSuite) TestUser_UnreadMessageCount() {
 		})
 	}
 }
+
+func (ms *ModelSuite) TestUser_GetThreads() {
+	t := ms.T()
+
+	f := CreateUserFixtures_GetThreads(ms)
+
+	tests := []struct {
+		name string
+		user User
+		want []uuid.UUID
+	}{
+		{name: "no threads", user: f.Users[1], want: []uuid.UUID{}},
+		{name: "two threads", user: f.Users[0], want: []uuid.UUID{f.Threads[0].Uuid, f.Threads[1].Uuid}},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := test.user.GetThreads()
+			ms.NoError(err)
+
+			ids := make([]uuid.UUID, len(got))
+			for i := range got {
+				ids[i] = got[i].Uuid
+			}
+			ms.Equal(test.want, ids, "incorrect list of threads returned")
+		})
+	}
+}

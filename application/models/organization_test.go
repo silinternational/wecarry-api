@@ -408,7 +408,7 @@ func (ms *ModelSuite) TestOrganization_Save() {
 
 }
 
-func (ms *ModelSuite) TestOrganization_ListAll() {
+func (ms *ModelSuite) TestOrganization_All() {
 	t := ms.T()
 
 	orgFixtures := []Organization{
@@ -442,7 +442,7 @@ func (ms *ModelSuite) TestOrganization_ListAll() {
 	}
 
 	var allOrgs Organizations
-	err := allOrgs.ListAll()
+	err := allOrgs.All()
 	if err != nil {
 		t.Error(err)
 	}
@@ -453,7 +453,7 @@ func (ms *ModelSuite) TestOrganization_ListAll() {
 
 }
 
-func (ms *ModelSuite) TestOrganization_ListAllForUser() {
+func (ms *ModelSuite) TestOrganization_AllForUser() {
 	t := ms.T()
 
 	orgFixtures := []Organization{
@@ -509,7 +509,7 @@ func (ms *ModelSuite) TestOrganization_ListAllForUser() {
 	}
 
 	var userOrgs Organizations
-	err := userOrgs.ListAllForUser(userFixtures[0])
+	err := userOrgs.AllForUser(userFixtures[0])
 	if err != nil {
 		t.Error(err)
 	}

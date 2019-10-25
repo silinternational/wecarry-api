@@ -2,10 +2,11 @@ package models
 
 import (
 	"fmt"
-	"github.com/gobuffalo/nulls"
-	"github.com/silinternational/wecarry-api/domain"
 	"testing"
 	"time"
+
+	"github.com/gobuffalo/nulls"
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 func CreateUserFixtures(ms *ModelSuite, t *testing.T) ([]Organization, Users, UserOrganizations) {
@@ -272,5 +273,53 @@ func CreateUserFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) UserMes
 		Threads:            threads,
 		Messages:           messages,
 		ThreadParticipants: threadParticipants,
+	}
+}
+
+type UserFixtures struct {
+	Users
+	Threads
+}
+
+func CreateUserFixtures_GetThreads(ms *ModelSuite) UserFixtures {
+	unique := domain.GetUuid().String()
+
+	org := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	createFixture(ms, &org)
+
+	users := Users{
+		{Email: unique + "_user0@example.com", Nickname: unique + "_user0", Uuid: domain.GetUuid()},
+		{Email: unique + "_user1@example.com", Nickname: unique + "_user1", Uuid: domain.GetUuid()},
+	}
+	for i := range users {
+		createFixture(ms, &users[i])
+	}
+
+	posts := Posts{
+		{CreatedByID: users[0].ID, OrganizationID: org.ID, Uuid: domain.GetUuid()},
+	}
+	for i := range posts {
+		createFixture(ms, &posts[i])
+	}
+
+	threads := []Thread{
+		{Uuid: domain.GetUuid(), PostID: posts[0].ID},
+		{Uuid: domain.GetUuid(), PostID: posts[0].ID},
+	}
+	for i := range threads {
+		createFixture(ms, &threads[i])
+	}
+
+	threadParticipants := []ThreadParticipant{
+		{ThreadID: threads[0].ID, UserID: users[0].ID},
+		{ThreadID: threads[1].ID, UserID: users[0].ID},
+	}
+	for i := range threadParticipants {
+		createFixture(ms, &threadParticipants[i])
+	}
+
+	return UserFixtures{
+		Users:   users,
+		Threads: threads,
 	}
 }

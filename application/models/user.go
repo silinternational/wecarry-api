@@ -92,6 +92,11 @@ func (u *User) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }
 
+// All retrieves all Users from the database.
+func (u *Users) All(selectFields ...string) error {
+	return DB.Select(selectFields...).All(u)
+}
+
 // CreateAccessToken - Create and store new UserAccessToken
 func (u *User) CreateAccessToken(org Organization, clientID string) (string, int64, error) {
 	if clientID == "" {
@@ -241,13 +246,13 @@ func (u *User) CanEditOrganization(orgId int) bool {
 	return false
 }
 
-func (u *User) FindByUUID(uuid string) error {
-
+// FindByUUID find a User with the given UUID and loads it from the database.
+func (u *User) FindByUUID(uuid string, selectFields ...string) error {
 	if uuid == "" {
 		return errors.New("error: uuid must not be blank")
 	}
 
-	if err := DB.Where("uuid = ?", uuid).First(u); err != nil {
+	if err := DB.Select(selectFields...).Where("uuid = ?", uuid).First(u); err != nil {
 		return fmt.Errorf("error finding user by uuid: %s", err.Error())
 	}
 
@@ -443,4 +448,16 @@ func (u *User) UnreadMessageCount() ([]UnreadThread, error) {
 	}
 
 	return unreads, nil
+}
+
+// GetThreads finds all threads that the user is participating in.
+func (u *User) GetThreads() (Threads, error) {
+	var t Threads
+	query := DB.Q().LeftJoin("thread_participants tp", "threads.id = tp.thread_id")
+	query = query.Where("tp.user_id = ?", u.ID)
+	if err := query.All(&t); err != nil {
+		return nil, err
+	}
+
+	return t, nil
 }

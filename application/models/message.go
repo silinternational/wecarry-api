@@ -138,3 +138,16 @@ func (m *Message) FindByID(id int, eagerFields ...string) error {
 
 	return DB.Find(m, id)
 }
+
+// FindByUUID loads from DB the Message record identified by the given UUID
+func (m *Message) FindByUUID(id string, selectFields ...string) error {
+	if id == "" {
+		return errors.New("error: message uuid must not be blank")
+	}
+
+	if err := DB.Where("uuid = ?", id).Select(selectFields...).First(m); err != nil {
+		return fmt.Errorf("error finding message by uuid: %s", err.Error())
+	}
+
+	return nil
+}
