@@ -99,37 +99,37 @@ func (r *threadResolver) UnreadMessageCount(ctx context.Context, obj *models.Thr
 }
 
 func (r *queryResolver) Threads(ctx context.Context) ([]*models.Thread, error) {
-	var threads []*models.Thread
-
-	db := models.DB
-
-	selectFields := getSelectFieldsForThreads(graphql.CollectAllFields(ctx))
-	if err := db.Select(selectFields...).All(&threads); err != nil {
+	dbThreads := models.Threads{}
+	if err := dbThreads.All(getSelectFieldsForThreads(ctx)...); err != nil {
 		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
 		return []*models.Thread{}, fmt.Errorf("error getting threads: %v", err)
 	}
 
+	threads := make([]*models.Thread, len(dbThreads))
+	for i := range dbThreads {
+		threads[i] = &dbThreads[i]
+	}
 	return threads, nil
 }
 
 func (r *queryResolver) MyThreads(ctx context.Context) ([]*models.Thread, error) {
-	var threads []*models.Thread
-
-	db := models.DB
 	currentUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 
-	query := db.Q().LeftJoin("thread_participants tp", "threads.id = tp.thread_id")
-	query = query.Where("tp.user_id = ?", currentUser.ID)
-	if err := query.All(&threads); err != nil {
+	dbThreads, err := currentUser.GetThreads()
+	if err != nil {
 		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
 		return []*models.Thread{}, fmt.Errorf("error getting threads: %v", err)
 	}
 
+	threads := make([]*models.Thread, len(dbThreads))
+	for i := range dbThreads {
+		threads[i] = &dbThreads[i]
+	}
 	return threads, nil
 }
 
-func getSelectFieldsForThreads(requestFields []string) []string {
-	selectFields := GetSelectFieldsFromRequestFields(ThreadFields(), requestFields)
+func getSelectFieldsForThreads(ctx context.Context) []string {
+	selectFields := GetSelectFieldsFromRequestFields(ThreadFields(), graphql.CollectAllFields(ctx))
 
 	selectFields = append(selectFields, "id")
 

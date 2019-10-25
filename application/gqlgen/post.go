@@ -2,7 +2,6 @@ package gqlgen
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
 
@@ -331,27 +330,19 @@ func (r *mutationResolver) CreatePost(ctx context.Context, input postInput) (*mo
 	post, err := convertGqlPostInputToDBPost(ctx, input, cUser)
 	if err != nil {
 		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
-		return &models.Post{}, err
+		return nil, err
 	}
 
-	valErrs, err := models.DB.ValidateAndCreate(&post)
-
-	if err != nil {
+	if err := post.Create(); err != nil {
 		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
-		return &models.Post{}, err
-	}
-
-	if len(valErrs.Errors) > 0 {
-		vErrs := models.FlattenPopErrors(valErrs)
-		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), vErrs)
-		return &models.Post{}, errors.New(vErrs)
+		return nil, err
 	}
 
 	if input.Destination != nil {
 		err := post.SetDestination(convertGqlLocationInputToDBLocation(*input.Destination))
 		if err != nil {
 			domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
-			return &models.Post{}, err
+			return nil, err
 		}
 	}
 
@@ -359,7 +350,7 @@ func (r *mutationResolver) CreatePost(ctx context.Context, input postInput) (*mo
 		err := post.SetOrigin(convertGqlLocationInputToDBLocation(*input.Origin))
 		if err != nil {
 			domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
-			return &models.Post{}, err
+			return nil, err
 		}
 	}
 
@@ -371,27 +362,19 @@ func (r *mutationResolver) UpdatePost(ctx context.Context, input postInput) (*mo
 	post, err := convertGqlPostInputToDBPost(ctx, input, cUser)
 	if err != nil {
 		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
-		return &models.Post{}, err
+		return nil, err
 	}
 
-	valErrs, err := models.DB.ValidateAndUpdate(&post)
-
-	if err != nil {
+	if err := post.Update(); err != nil {
 		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
-		return &models.Post{}, err
-	}
-
-	if len(valErrs.Errors) > 0 {
-		vErrs := models.FlattenPopErrors(valErrs)
-		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), vErrs)
-		return &models.Post{}, errors.New(vErrs)
+		return nil, err
 	}
 
 	if input.Destination != nil {
 		err := post.SetDestination(convertGqlLocationInputToDBLocation(*input.Destination))
 		if err != nil {
 			domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
-			return &models.Post{}, err
+			return nil, err
 		}
 	}
 
@@ -399,7 +382,7 @@ func (r *mutationResolver) UpdatePost(ctx context.Context, input postInput) (*mo
 		err := post.SetOrigin(convertGqlLocationInputToDBLocation(*input.Origin))
 		if err != nil {
 			domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
-			return &models.Post{}, err
+			return nil, err
 		}
 	}
 

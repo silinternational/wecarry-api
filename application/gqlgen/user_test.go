@@ -148,7 +148,7 @@ func (gs *GqlgenSuite) Test_UserQuery() {
 			Payload:  `{user(id: "` + f.Users[1].Uuid.String() + `")` + allFields + "}",
 			TestUser: f.Users[0],
 			Test: func(t *testing.T) {
-				if err := models.DB.Load(&(f.Users[1]), "PhotoFile"); err != nil {
+				if err := gs.DB.Load(&(f.Users[1]), "PhotoFile"); err != nil {
 					t.Errorf("failed to load user fixture, %s", err)
 				}
 				gs.Equal(f.Users[1].Uuid.String(), resp.User.ID, "incorrect ID")

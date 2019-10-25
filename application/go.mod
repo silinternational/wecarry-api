@@ -3,7 +3,7 @@ module github.com/silinternational/wecarry-api
 go 1.12
 
 require (
-	github.com/99designs/gqlgen v0.9.1
+	github.com/99designs/gqlgen v0.10.1
 	github.com/aws/aws-sdk-go v1.25.0
 	github.com/beevik/etree v1.1.0 // indirect
 	github.com/go-chi/chi v3.3.2+incompatible
@@ -12,11 +12,9 @@ require (
 	github.com/gobuffalo/envy v1.7.0
 	github.com/gobuffalo/events v1.4.0
 	github.com/gobuffalo/httptest v1.4.0
-	github.com/gobuffalo/mw-contenttype v0.0.0-20190224202710-36c73cc938f3
 	github.com/gobuffalo/mw-csrf v0.0.0-20190129204204-25460a055517
 	github.com/gobuffalo/mw-paramlogger v0.0.0-20190224201358-0d45762ab655
 	github.com/gobuffalo/nulls v0.1.0
-	github.com/gobuffalo/packr v1.25.0
 	github.com/gobuffalo/packr/v2 v2.5.2
 	github.com/gobuffalo/pop v4.11.2+incompatible
 	github.com/gobuffalo/suite v2.8.1+incompatible
@@ -34,7 +32,6 @@ require (
 	github.com/sendgrid/sendgrid-go v3.5.0+incompatible
 	github.com/stretchr/testify v1.4.0
 	github.com/vektah/gqlparser v1.1.2
-	golang.org/x/net v0.0.0-20190613194153-d28f0bde5980
 	golang.org/x/oauth2 v0.0.0-20181203162652-d668ce993890
 )
 

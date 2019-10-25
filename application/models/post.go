@@ -84,6 +84,36 @@ func (p Posts) String() string {
 	return string(jp)
 }
 
+// Create stores the Post data as a new record in the database.
+func (p *Post) Create() error {
+	valErrs, err := DB.ValidateAndCreate(p)
+	if err != nil {
+		return err
+	}
+
+	if len(valErrs.Errors) > 0 {
+		vErrs := FlattenPopErrors(valErrs)
+		return errors.New(vErrs)
+	}
+
+	return nil
+}
+
+// Update writes the Post data to an existing database record.
+func (p *Post) Update() error {
+	valErrs, err := DB.ValidateAndUpdate(p)
+	if err != nil {
+		return err
+	}
+
+	if len(valErrs.Errors) > 0 {
+		vErrs := FlattenPopErrors(valErrs)
+		return errors.New(vErrs)
+	}
+
+	return nil
+}
+
 func (p *Post) NewWithUser(pType string, currentUser User) error {
 	p.Uuid = domain.GetUuid()
 	p.CreatedByID = currentUser.ID

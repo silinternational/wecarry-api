@@ -397,7 +397,7 @@ func (gs *GqlgenSuite) Test_UpdatePost() {
 	TestUser = f.Users[0]
 	c.MustPost(query, &postsResp)
 
-	if err := models.DB.Load(&(f.Posts[0]), "PhotoFile", "Files"); err != nil {
+	if err := gs.DB.Load(&(f.Posts[0]), "PhotoFile", "Files"); err != nil {
 		t.Errorf("failed to load post fixture, %s", err)
 		t.FailNow()
 	}

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gobuffalo/buffalo/genny/build/_fixtures/coke/models"
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
 	"github.com/gobuffalo/validate/validators"
@@ -61,6 +60,11 @@ func (t *Thread) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }
 
+// All retrieves all Threads from the database.
+func (t *Threads) All(selectFields ...string) error {
+	return DB.Select(selectFields...).All(t)
+}
+
 func (t *Thread) FindByUUID(uuid string) error {
 	if uuid == "" {
 		return errors.New("error: thread uuid must not be blank")
@@ -106,7 +110,7 @@ func (t *Thread) GetPost(selectFields []string) (*Post, error) {
 		return nil, fmt.Errorf("error: PostID must be positive, got %v", t.PostID)
 	}
 	post := Post{}
-	if err := models.DB.Select(selectFields...).Find(&post, t.PostID); err != nil {
+	if err := DB.Select(selectFields...).Find(&post, t.PostID); err != nil {
 		return nil, fmt.Errorf("error loading post %v %s", t.PostID, err)
 	}
 	return &post, nil
@@ -114,7 +118,7 @@ func (t *Thread) GetPost(selectFields []string) (*Post, error) {
 
 func (t *Thread) GetMessages(selectFields []string) ([]*Message, error) {
 	var messages []*Message
-	if err := models.DB.Select(selectFields...).Where("thread_id = ?", t.ID).All(&messages); err != nil {
+	if err := DB.Select(selectFields...).Where("thread_id = ?", t.ID).All(&messages); err != nil {
 		return messages, fmt.Errorf("error getting messages for thread id %v ... %v", t.ID, err)
 	}
 
@@ -159,7 +163,7 @@ func (t *Thread) CreateWithParticipants(postUuid string, user User) error {
 		Participants: participants,
 	}
 
-	if err := models.DB.Save(&thread); err != nil {
+	if err := DB.Save(&thread); err != nil {
 		err = fmt.Errorf("error saving new thread for message: %v", err.Error())
 		return err
 	}

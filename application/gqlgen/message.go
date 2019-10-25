@@ -44,15 +44,18 @@ func (r *messageResolver) Thread(ctx context.Context, obj *models.Message) (*mod
 	if obj == nil {
 		return nil, nil
 	}
-	selectFields := getSelectFieldsForThreads(graphql.CollectAllFields(ctx))
+	selectFields := getSelectFieldsForThreads(ctx)
 	return obj.GetThread(selectFields)
 }
 
 func (r *queryResolver) Message(ctx context.Context, id *string) (*models.Message, error) {
-	message := models.Message{}
+	if id == nil {
+		return nil, nil
+	}
+	var message models.Message
 	messageFields := GetSelectFieldsFromRequestFields(MessageFields(), graphql.CollectAllFields(ctx))
 
-	if err := models.DB.Select(messageFields...).Where("uuid = ?", id).First(&message); err != nil {
+	if err := message.FindByUUID(*id, messageFields...); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("error getting message: %v", err.Error()))
 		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
 		return &models.Message{}, err

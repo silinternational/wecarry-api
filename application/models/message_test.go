@@ -1,6 +1,9 @@
 package models
 
 import (
+	"testing"
+	"time"
+
 	"github.com/gobuffalo/validate"
 	"github.com/silinternational/wecarry-api/domain"
 	"testing"
@@ -197,6 +200,55 @@ func (ms *ModelSuite) TestMessage_FindByID() {
 				ms.Equal(test.wantMessage.ID, message.ID, "bad message id")
 				ms.Equal(test.wantSentBy.ID, message.SentBy.ID, "bad message sent_by id")
 				ms.Equal(test.wantThread.Uuid, message.Thread.Uuid, "bad message thread id")
+			}
+		})
+	}
+}
+
+func (ms *ModelSuite) TestMessage_FindByUUID() {
+	t := ms.T()
+
+	f := Fixtures_Message_FindByUUID(ms)
+
+	tests := []struct {
+		name          string
+		uuid          string
+		fields        []string
+		wantID        int
+		wantContent   string
+		wantCreatedAt string
+		wantErr       bool
+	}{
+		{name: "good with no extra fields",
+			uuid:          f.Messages[0].Uuid.String(),
+			fields:        []string{"id"},
+			wantID:        f.Messages[0].ID,
+			wantContent:   "",
+			wantCreatedAt: time.Time{}.Format(time.RFC3339),
+		},
+		{name: "good with two extra fields",
+			uuid:          f.Messages[0].Uuid.String(),
+			fields:        []string{"id", "content", "created_at"},
+			wantID:        f.Messages[0].ID,
+			wantContent:   f.Messages[0].Content,
+			wantCreatedAt: f.Messages[0].CreatedAt.Format(time.RFC3339),
+		},
+		{name: "empty ID", uuid: "", wantErr: true},
+		{name: "wrong id", uuid: domain.GetUuid().String(), wantErr: true},
+		{name: "invalid UUID", uuid: "40FE092C-8FF1-45BE-BCD4-65AD66C1D0DX", wantErr: true},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var message Message
+			err := message.FindByUUID(test.uuid, test.fields...)
+
+			if test.wantErr {
+				ms.Error(err)
+			} else {
+				ms.NoError(err)
+				ms.Equal(test.wantID, message.ID, "bad message ID")
+				ms.Equal(test.wantContent, message.Content, "bad message Content")
+				ms.Equal(test.wantCreatedAt, message.CreatedAt.Format(time.RFC3339), "bad message CreatedAt")
 			}
 		})
 	}

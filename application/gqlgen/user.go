@@ -104,9 +104,6 @@ func (r *userResolver) UnreadMessageCount(ctx context.Context, obj *models.User)
 }
 
 func (r *queryResolver) Users(ctx context.Context) ([]*models.User, error) {
-	db := models.DB
-	var dbUsers []*models.User
-
 	currentUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 
 	if currentUser.AdminRole.String != domain.AdminRoleSuperDuperAdmin {
@@ -115,13 +112,18 @@ func (r *queryResolver) Users(ctx context.Context) ([]*models.User, error) {
 		return []*models.User{}, err
 	}
 
-	if err := db.Select(GetSelectFieldsForUsers(ctx)...).All(&dbUsers); err != nil {
+	dbUsers := models.Users{}
+	if err := dbUsers.All(GetSelectFieldsForUsers(ctx)...); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting users: %v", err.Error()))
 		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
 		return []*models.User{}, err
 	}
 
-	return dbUsers, nil
+	users := make([]*models.User, len(dbUsers))
+	for i := range dbUsers {
+		users[i] = &dbUsers[i]
+	}
+	return users, nil
 }
 
 func (r *queryResolver) User(ctx context.Context, id *string) (*models.User, error) {
@@ -139,7 +141,7 @@ func (r *queryResolver) User(ctx context.Context, id *string) (*models.User, err
 		return &dbUser, err
 	}
 
-	if err := models.DB.Select(GetSelectFieldsForUsers(ctx)...).Where("uuid = ?", id).First(&dbUser); err != nil {
+	if err := dbUser.FindByUUID(*id, GetSelectFieldsForUsers(ctx)...); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting user: %v", err.Error()))
 		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
 		return &dbUser, err

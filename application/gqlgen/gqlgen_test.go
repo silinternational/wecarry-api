@@ -1,7 +1,6 @@
 package gqlgen
 
 import (
-	"net/http/httptest"
 	"testing"
 
 	"github.com/99designs/gqlgen/client"
@@ -26,8 +25,7 @@ func Test_GqlgenSuite(t *testing.T) {
 
 func getGqlClient() *client.Client {
 	h := handler.GraphQL(NewExecutableSchema(Config{Resolvers: &Resolver{}}))
-	srv := httptest.NewServer(h)
-	c := client.New(srv.URL)
+	c := client.New(h)
 	return c
 }
 
