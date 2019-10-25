@@ -124,7 +124,7 @@ func provideOrgOptions(userOrgs models.UserOrganizations, c buffalo.Context) err
 		orgOpts = append(orgOpts, AuthOrgOption{
 			ID:      strconv.Itoa(uo.ID),
 			Name:    uo.Organization.Name,
-			LogoURL: uo.Organization.Url.String, // TODO change to a logo url when one is added to organization
+			LogoURL: "",
 		})
 	}
 
