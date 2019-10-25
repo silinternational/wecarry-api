@@ -6,8 +6,6 @@ import (
 
 	"github.com/gobuffalo/validate"
 	"github.com/silinternational/wecarry-api/domain"
-	"testing"
-	"time"
 )
 
 func (ms *ModelSuite) TestMessage_Validate() {
