@@ -97,10 +97,7 @@ func CreateThreadFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) Threa
 		AuthConfig: "{}",
 	}
 
-	if err := ms.DB.Create(&org); err != nil {
-		t.Errorf("error creating org %+v ...\n %v \n", org, err)
-		t.FailNow()
-	}
+	createFixture(ms, &org)
 
 	// Load User test fixtures
 	users := Users{
