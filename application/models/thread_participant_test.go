@@ -62,20 +62,20 @@ func (ms *ModelSuite) TestThreadParticipant_Validate() {
 func CreateFixtures_ThreadParticipant_UpdateLastViewedAt(ms *ModelSuite, t *testing.T) ThreadFixtures {
 
 	org := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
-	createFixture(t, &org)
+	createFixture(ms, &org)
 
 	users := Users{
 		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1", Uuid: domain.GetUuid()},
 	}
 	for i := range users {
-		createFixture(t, &(users[i]))
+		createFixture(ms, &(users[i]))
 	}
 
 	userOrgs := UserOrganizations{
 		{OrganizationID: org.ID, UserID: users[0].ID, AuthID: users[0].Email, AuthEmail: users[0].Email},
 	}
 	for i := range userOrgs {
-		createFixture(t, &(userOrgs[i]))
+		createFixture(ms, &(userOrgs[i]))
 	}
 
 	posts := Posts{
@@ -93,14 +93,14 @@ func CreateFixtures_ThreadParticipant_UpdateLastViewedAt(ms *ModelSuite, t *test
 		},
 	}
 	for i := range posts {
-		createFixture(t, &(posts[i]))
+		createFixture(ms, &(posts[i]))
 	}
 
 	threads := Threads{
 		{Uuid: domain.GetUuid(), PostID: posts[0].ID},
 	}
 	for i := range threads {
-		createFixture(t, &(threads[i]))
+		createFixture(ms, &(threads[i]))
 	}
 
 	threadParticipants := ThreadParticipants{
@@ -111,7 +111,7 @@ func CreateFixtures_ThreadParticipant_UpdateLastViewedAt(ms *ModelSuite, t *test
 		},
 	}
 	for i := range threadParticipants {
-		createFixture(t, &(threadParticipants[i]))
+		createFixture(ms, &(threadParticipants[i]))
 	}
 
 	return ThreadFixtures{
@@ -139,7 +139,7 @@ func (ms *ModelSuite) TestThreadParticipant_UpdateLastViewedAt() {
 			err := tp.UpdateLastViewedAt(test.lastViewedAt)
 
 			// reload from database to ensure the new time was saved
-			_ = DB.Reload(&tp)
+			_ = ms.DB.Reload(&tp)
 
 			if test.wantErr {
 				ms.Error(err)
@@ -165,34 +165,34 @@ func CreateFixtures_ThreadParticipant_FindByThreadIDAndUserID(ms *ModelSuite) Th
 	t := ms.T()
 
 	org := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
-	createFixture(t, &org)
+	createFixture(ms, &org)
 
 	users := Users{
 		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1", Uuid: domain.GetUuid()},
 	}
 	for i := range users {
-		createFixture(t, &(users[i]))
+		createFixture(ms, &(users[i]))
 	}
 
 	posts := Posts{
 		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID},
 	}
 	for i := range posts {
-		createFixture(t, &(posts[i]))
+		createFixture(ms, &(posts[i]))
 	}
 
 	threads := Threads{
 		{Uuid: domain.GetUuid(), PostID: posts[0].ID},
 	}
 	for i := range threads {
-		createFixture(t, &(threads[i]))
+		createFixture(ms, &(threads[i]))
 	}
 
 	threadParticipants := ThreadParticipants{
 		{ThreadID: threads[0].ID, UserID: users[0].ID},
 	}
 	for i := range threadParticipants {
-		createFixture(t, &(threadParticipants[i]))
+		createFixture(ms, &(threadParticipants[i]))
 	}
 
 	return ThreadFixtures{
@@ -240,27 +240,27 @@ func (ms *ModelSuite) TestThreadParticipant_FindByThreadIDAndUserID() {
 func CreateFixtures_ThreadParticipant_UpdateLastNotifiedAt(ms *ModelSuite, t *testing.T) ThreadFixtures {
 
 	org := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
-	createFixture(t, &org)
+	createFixture(ms, &org)
 
 	users := Users{
 		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1", Uuid: domain.GetUuid()},
 	}
 	for i := range users {
-		createFixture(t, &(users[i]))
+		createFixture(ms, &(users[i]))
 	}
 
 	posts := Posts{
 		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID},
 	}
 	for i := range posts {
-		createFixture(t, &(posts[i]))
+		createFixture(ms, &(posts[i]))
 	}
 
 	threads := Threads{
 		{Uuid: domain.GetUuid(), PostID: posts[0].ID},
 	}
 	for i := range threads {
-		createFixture(t, &(threads[i]))
+		createFixture(ms, &(threads[i]))
 	}
 
 	threadParticipants := ThreadParticipants{
@@ -271,7 +271,7 @@ func CreateFixtures_ThreadParticipant_UpdateLastNotifiedAt(ms *ModelSuite, t *te
 		},
 	}
 	for i := range threadParticipants {
-		createFixture(t, &(threadParticipants[i]))
+		createFixture(ms, &(threadParticipants[i]))
 	}
 
 	return ThreadFixtures{
@@ -300,7 +300,7 @@ func (ms *ModelSuite) TestThreadParticipant_UpdateLastNotifiedAt() {
 			err := tp.UpdateLastNotifiedAt(test.LastNotifiedAt)
 
 			// reload from database to ensure the new time was saved
-			_ = DB.Reload(&tp)
+			_ = ms.DB.Reload(&tp)
 
 			if test.wantErr {
 				ms.Error(err)

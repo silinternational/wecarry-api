@@ -3,7 +3,6 @@ package models
 import (
 	"testing"
 
-	"github.com/gobuffalo/buffalo/genny/build/_fixtures/coke/models"
 	"github.com/gobuffalo/suite"
 )
 
@@ -20,10 +19,10 @@ func Test_ModelSuite(t *testing.T) {
 	suite.Run(t, as)
 }
 
-func createFixture(t *testing.T, f interface{}) {
-	err := models.DB.Create(f)
+func createFixture(ms *ModelSuite, f interface{}) {
+	err := ms.DB.Create(f)
 	if err != nil {
-		t.Errorf("error creating %T fixture, %s", f, err)
-		t.FailNow()
+		ms.T().Errorf("error creating %T fixture, %s", f, err)
+		ms.T().FailNow()
 	}
 }

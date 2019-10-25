@@ -32,7 +32,7 @@ func createUserOrganizationFixtures(ms *ModelSuite, t *testing.T) {
 		},
 	}
 	for i := range users {
-		createFixture(t, &users[i])
+		createFixture(ms, &users[i])
 	}
 
 	org1uuid := domain.GetUuid()
@@ -55,7 +55,7 @@ func createUserOrganizationFixtures(ms *ModelSuite, t *testing.T) {
 		},
 	}
 	for i := range orgs {
-		createFixture(t, &orgs[i])
+		createFixture(ms, &orgs[i])
 	}
 
 	userOrgs := []UserOrganization{
@@ -79,7 +79,7 @@ func createUserOrganizationFixtures(ms *ModelSuite, t *testing.T) {
 		},
 	}
 	for i := range userOrgs {
-		createFixture(t, &userOrgs[i])
+		createFixture(ms, &userOrgs[i])
 	}
 }
 

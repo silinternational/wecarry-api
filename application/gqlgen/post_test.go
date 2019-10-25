@@ -2,7 +2,6 @@ package gqlgen
 
 import (
 	"strconv"
-	"testing"
 	"time"
 
 	"github.com/gobuffalo/nulls"
@@ -69,16 +68,18 @@ type PostResponse struct {
 	} `json:"post"`
 }
 
-func Fixtures_PostQuery(t *testing.T) PostQueryFixtures {
+func createFixtures_PostQuery(gs *GqlgenSuite) PostQueryFixtures {
+	t := gs.T()
+
 	org := models.Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
-	createFixture(t, &org)
+	createFixture(gs, &org)
 
 	users := models.Users{
 		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1 ", Uuid: domain.GetUuid()},
 		{Email: t.Name() + "_user2@example.com", Nickname: t.Name() + " User2 ", Uuid: domain.GetUuid()},
 	}
 	for i := range users {
-		createFixture(t, &(users[i]))
+		createFixture(gs, &(users[i]))
 	}
 
 	userOrgs := models.UserOrganizations{
@@ -86,7 +87,7 @@ func Fixtures_PostQuery(t *testing.T) PostQueryFixtures {
 		{OrganizationID: org.ID, UserID: users[1].ID, AuthID: t.Name() + "_auth_user2", AuthEmail: users[1].Email},
 	}
 	for i := range userOrgs {
-		createFixture(t, &(userOrgs[i]))
+		createFixture(gs, &(userOrgs[i]))
 	}
 
 	locations := []models.Location{
@@ -104,7 +105,7 @@ func Fixtures_PostQuery(t *testing.T) PostQueryFixtures {
 		},
 	}
 	for i := range locations {
-		createFixture(t, &(locations[i]))
+		createFixture(gs, &(locations[i]))
 	}
 
 	posts := models.Posts{
@@ -135,21 +136,21 @@ func Fixtures_PostQuery(t *testing.T) PostQueryFixtures {
 		},
 	}
 	for i := range posts {
-		createFixture(t, &(posts[i]))
+		createFixture(gs, &(posts[i]))
 	}
 
 	threads := []models.Thread{
 		{Uuid: domain.GetUuid(), PostID: posts[0].ID},
 	}
 	for i := range threads {
-		createFixture(t, &(threads[i]))
+		createFixture(gs, &(threads[i]))
 	}
 
 	threadParticipants := []models.ThreadParticipant{
 		{ThreadID: threads[0].ID, UserID: posts[0].CreatedByID},
 	}
 	for i := range threadParticipants {
-		createFixture(t, &(threadParticipants[i]))
+		createFixture(gs, &(threadParticipants[i]))
 	}
 
 	if err := aws.CreateS3Bucket(); err != nil {
@@ -195,10 +196,7 @@ func Fixtures_PostQuery(t *testing.T) PostQueryFixtures {
 }
 
 func (gs *GqlgenSuite) Test_PostQuery() {
-	t := gs.T()
-	models.ResetTables(t, models.DB)
-
-	f := Fixtures_PostQuery(t)
+	f := createFixtures_PostQuery(gs)
 	c := getGqlClient()
 
 	query := `{ post(id: "` + f.Posts[0].Uuid.String() + `") 
@@ -275,16 +273,18 @@ type UpdatePostFixtures struct {
 	models.Locations
 }
 
-func Fixtures_UpdatePost(t *testing.T) UpdatePostFixtures {
+func createFixtures_UpdatePost(gs *GqlgenSuite) UpdatePostFixtures {
+	t := gs.T()
+
 	org := models.Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
-	createFixture(t, &org)
+	createFixture(gs, &org)
 
 	users := models.Users{
 		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1 ", Uuid: domain.GetUuid()},
 		{Email: t.Name() + "_user2@example.com", Nickname: t.Name() + " User2 ", Uuid: domain.GetUuid()},
 	}
 	for i := range users {
-		createFixture(t, &(users[i]))
+		createFixture(gs, &(users[i]))
 	}
 
 	userOrgs := models.UserOrganizations{
@@ -292,7 +292,7 @@ func Fixtures_UpdatePost(t *testing.T) UpdatePostFixtures {
 		{OrganizationID: org.ID, UserID: users[1].ID, AuthID: t.Name() + "_auth_user2", AuthEmail: users[1].Email},
 	}
 	for i := range userOrgs {
-		createFixture(t, &(userOrgs[i]))
+		createFixture(gs, &(userOrgs[i]))
 	}
 
 	locations := []models.Location{
@@ -304,7 +304,7 @@ func Fixtures_UpdatePost(t *testing.T) UpdatePostFixtures {
 		},
 	}
 	for i := range locations {
-		createFixture(t, &(locations[i]))
+		createFixture(gs, &(locations[i]))
 	}
 
 	posts := models.Posts{
@@ -323,7 +323,7 @@ func Fixtures_UpdatePost(t *testing.T) UpdatePostFixtures {
 	}
 
 	for i := range posts {
-		createFixture(t, &(posts[i]))
+		createFixture(gs, &(posts[i]))
 	}
 
 	if err := aws.CreateS3Bucket(); err != nil {
@@ -370,9 +370,8 @@ func Fixtures_UpdatePost(t *testing.T) UpdatePostFixtures {
 
 func (gs *GqlgenSuite) Test_UpdatePost() {
 	t := gs.T()
-	models.ResetTables(t, models.DB)
 
-	f := Fixtures_UpdatePost(t)
+	f := createFixtures_UpdatePost(gs)
 	c := getGqlClient()
 
 	var postsResp PostResponse
@@ -443,16 +442,18 @@ type CreatePostFixtures struct {
 	models.File
 }
 
-func Fixtures_CreatePost(t *testing.T) CreatePostFixtures {
+func createFixtures_CreatePost(gs *GqlgenSuite) CreatePostFixtures {
+	t := gs.T()
+
 	org := models.Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
-	createFixture(t, &org)
+	createFixture(gs, &org)
 
 	user := models.User{
 		Email:    t.Name() + "_user1@example.com",
 		Nickname: t.Name() + " User1",
 		Uuid:     domain.GetUuid(),
 	}
-	createFixture(t, &user)
+	createFixture(gs, &user)
 
 	userOrg := models.UserOrganization{
 		OrganizationID: org.ID,
@@ -460,7 +461,7 @@ func Fixtures_CreatePost(t *testing.T) CreatePostFixtures {
 		AuthID:         t.Name() + "_auth_user1",
 		AuthEmail:      user.Email,
 	}
-	createFixture(t, &userOrg)
+	createFixture(gs, &userOrg)
 
 	if err := aws.CreateS3Bucket(); err != nil {
 		t.Errorf("failed to create S3 bucket, %s", err)
@@ -481,10 +482,7 @@ func Fixtures_CreatePost(t *testing.T) CreatePostFixtures {
 }
 
 func (gs *GqlgenSuite) Test_CreatePost() {
-	t := gs.T()
-	models.ResetTables(t, models.DB)
-
-	f := Fixtures_CreatePost(t)
+	f := createFixtures_CreatePost(gs)
 	c := getGqlClient()
 
 	var postsResp PostResponse

@@ -6,18 +6,22 @@ import (
 
 	"github.com/99designs/gqlgen/client"
 	"github.com/99designs/gqlgen/handler"
-	"github.com/silinternational/wecarry-api/models"
-	"github.com/stretchr/testify/suite"
+	"github.com/gobuffalo/suite"
 )
 
 // GqlgenSuite establishes a test suite for gqlgen tests
 type GqlgenSuite struct {
-	suite.Suite
+	*suite.Model
 }
 
 // Test_GqlgenSuite runs the GqlgenSuite test suite
 func Test_GqlgenSuite(t *testing.T) {
-	suite.Run(t, new(GqlgenSuite))
+	model := suite.NewModel()
+
+	gs := &GqlgenSuite{
+		Model: model,
+	}
+	suite.Run(t, gs)
 }
 
 func getGqlClient() *client.Client {
@@ -27,10 +31,10 @@ func getGqlClient() *client.Client {
 	return c
 }
 
-func createFixture(t *testing.T, f interface{}) {
-	err := models.DB.Create(f)
+func createFixture(gs *GqlgenSuite, f interface{}) {
+	err := gs.DB.Create(f)
 	if err != nil {
-		t.Errorf("error creating %T fixture, %s", f, err)
-		t.FailNow()
+		gs.T().Errorf("error creating %T fixture, %s", f, err)
+		gs.T().FailNow()
 	}
 }
