@@ -76,11 +76,20 @@ func (r *threadResolver) UnreadMessageCount(ctx context.Context, obj *models.Thr
 	if obj == nil {
 		return 0, nil
 	}
-	lastViewedAt, err := obj.GetLastViewedAt(models.GetCurrentUserFromGqlContext(ctx, TestUser))
+	user := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+
+	lastViewedAt, err := obj.GetLastViewedAt(user)
 	if err != nil {
 		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
 		return 0, nil
 	}
+
+	if lastViewedAt == nil {
+		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx),
+			fmt.Sprintf("lastViewedAt nil for user %v on thread %v", user.ID, obj.ID))
+		return 0, nil
+	}
+
 	count, err := obj.UnreadMessageCount(*lastViewedAt)
 	if err != nil {
 		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
