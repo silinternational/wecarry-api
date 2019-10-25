@@ -892,41 +892,6 @@ func (ms *ModelSuite) TestPost_GetThreads() {
 	}
 }
 
-func (ms *ModelSuite) TestPost_GetThreadIdForUser() {
-	t := ms.T()
-
-	_, users, _ := CreateUserFixtures(ms, t)
-	posts := CreatePostFixtures(ms, t, users)
-	threadFixtures := CreateThreadFixtures(ms, posts[0])
-	thread0UUID := threadFixtures.Threads[0].Uuid.String()
-
-	tests := []struct {
-		name string
-		post Post
-		user User
-		want *string
-	}{
-		{name: "no threads", post: posts[1], user: users[0], want: nil},
-		{name: "good", post: posts[0], user: users[0], want: &thread0UUID},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			got, err := test.post.GetThreadIdForUser(test.user)
-			if err != nil {
-				t.Errorf("GetThreadIdForUser() error: %v", err)
-			} else if test.want == nil {
-				if got != nil {
-					t.Errorf("GetThreadIdForUser() returned %v, expected nil", *got)
-				}
-			} else if got == nil {
-				t.Errorf("GetThreadIdForUser() returned nil, expected %v", *test.want)
-			} else if *test.want != *got {
-				t.Errorf("GetThreadIdForUser() got = %s, want %s", *got, *test.want)
-			}
-		})
-	}
-}
-
 func (ms *ModelSuite) TestPost_AttachFile() {
 	t := ms.T()
 

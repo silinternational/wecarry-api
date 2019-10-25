@@ -139,13 +139,6 @@ func (r *postResolver) Threads(ctx context.Context, obj *models.Post) ([]*models
 	return obj.GetThreads(selectFields, user)
 }
 
-func (r *postResolver) MyThreadID(ctx context.Context, obj *models.Post) (*string, error) {
-	if obj == nil {
-		return nil, nil
-	}
-	return obj.GetThreadIdForUser(models.GetCurrentUserFromGqlContext(ctx, TestUser))
-}
-
 func (r *postResolver) URL(ctx context.Context, obj *models.Post) (*string, error) {
 	if obj == nil {
 		return nil, nil

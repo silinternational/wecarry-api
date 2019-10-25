@@ -367,20 +367,6 @@ func (p *Post) GetThreads(fields []string, user User) ([]*Thread, error) {
 	return threads, nil
 }
 
-func (p *Post) GetThreadIdForUser(user User) (*string, error) {
-	var thread Thread
-	if err := thread.FindByPostIDAndUserID(p.ID, user.ID); err != nil {
-		return nil, err
-	}
-
-	threadUuid := thread.Uuid.String()
-	if threadUuid == domain.EmptyUUID {
-		return nil, nil
-	}
-
-	return &threadUuid, nil
-}
-
 // AttachFile adds a previously-stored File to this Post
 func (p *Post) AttachFile(fileID string) (File, error) {
 	var f File
