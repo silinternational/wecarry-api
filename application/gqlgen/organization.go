@@ -3,6 +3,8 @@ package gqlgen
 import (
 	"context"
 
+	"github.com/silinternational/wecarry-api/domain"
+
 	"github.com/99designs/gqlgen/graphql"
 
 	"github.com/silinternational/wecarry-api/models"
@@ -45,10 +47,12 @@ func (r *organizationResolver) Domains(ctx context.Context, obj *models.Organiza
 		return nil, nil
 	}
 
-	if err := models.DB.Load(obj, "OrganizationDomains"); err != nil {
+	domains, err := obj.GetDomains()
+	if err != nil {
+		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
 		return nil, err
 	}
-	domains := obj.OrganizationDomains
+
 	dp := make([]*models.OrganizationDomain, len(domains))
 	for i, d := range domains {
 		dp[i] = &d

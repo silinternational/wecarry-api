@@ -163,3 +163,12 @@ func (orgs *Organizations) ListAllForUser(user User) error {
 	return DB.Q().LeftJoin("user_organizations uo", "organizations.id = uo.organization_id").
 		Where("uo.user_id = ?", user.ID).All(orgs)
 }
+
+// GetDomains finds and returns all related OrganizationDomain rows.
+func (o *Organization) GetDomains() ([]OrganizationDomain, error) {
+	if err := DB.Load(o, "OrganizationDomains"); err != nil {
+		return nil, err
+	}
+
+	return o.OrganizationDomains, nil
+}
