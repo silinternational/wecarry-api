@@ -90,6 +90,33 @@ func sendNotificationRequestFromCommittedToAccepted(template string, post m.Post
 	}
 }
 
+func sendNotificationRequestFromCommittedOrAcceptedToDelivered(template string, post m.Post) {
+	postUsers := GetPostUsers(post)
+
+	if postUsers.Provider.Nickname == "" {
+		domain.ErrLogger.Printf("error preparing '%s' notification - no provider", template)
+		return
+	}
+
+	data := map[string]interface{}{
+		"uiURL":            domain.Env.UIURL,
+		"postURL":          domain.GetPostUIURL(post.Uuid.String()),
+		"postTitle":        post.Title,
+		"providerNickname": postUsers.Provider.Nickname,
+		"providerEmail":    postUsers.Provider.Email,
+	}
+
+	msg := notifications.Message{
+		Template: template,
+		Data:     data,
+		ToName:   postUsers.Requester.Nickname,
+		ToEmail:  postUsers.Requester.Email,
+	}
+	if err := notifications.Send(msg); err != nil {
+		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
+	}
+}
+
 func sendNotificationEmpty(template string, post m.Post) {
 	domain.ErrLogger.Print("Notification not implemented yet for " + template)
 }
@@ -124,10 +151,10 @@ var statusSenders = map[string]Sender{
 		Sender:   sendNotificationEmpty},
 	join(m.PostStatusCommitted, m.PostStatusDelivered): Sender{
 		Template: domain.MessageTemplateRequestFromCommittedToDelivered,
-		Sender:   sendNotificationEmpty},
+		Sender:   sendNotificationRequestFromCommittedOrAcceptedToDelivered},
 	join(m.PostStatusAccepted, m.PostStatusDelivered): Sender{
 		Template: domain.MessageTemplateRequestFromAcceptedToDelivered,
-		Sender:   sendNotificationEmpty},
+		Sender:   sendNotificationRequestFromCommittedOrAcceptedToDelivered},
 	join(m.PostStatusReceived, m.PostStatusDelivered): Sender{
 		Template: domain.MessageTemplateRequestFromReceivedToDelivered,
 		Sender:   sendNotificationEmpty},
