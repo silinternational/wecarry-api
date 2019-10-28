@@ -369,15 +369,6 @@ func CreateMessageFixtures_AfterCreate(ms *ModelSuite, t *testing.T) MessageFixt
 		}
 	}
 
-	// Because of Message.AfterCreate() we need to reset the LastViewedAt attributes
-	//                     Eager User0, Lazy User1, Lazy User1, Eager User0
-	for i, tt := range []time.Time{tNow, oldTime, oldTime, tNow} {
-		if err := threadParticipants[i].UpdateLastViewedAt(tt); err != nil {
-			t.Errorf("could not update LastViewedAt ... %v", err)
-			t.FailNow()
-		}
-	}
-
 	return MessageFixtures{
 		Users:              users,
 		Threads:            threads,
