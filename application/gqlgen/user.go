@@ -55,14 +55,14 @@ func (r *userResolver) AdminRole(ctx context.Context, obj *models.User) (*Role, 
 	return &a, nil
 }
 
-func (r *userResolver) Organizations(ctx context.Context, obj *models.User) ([]*models.Organization, error) {
+func (r *userResolver) Organizations(ctx context.Context, obj *models.User) ([]models.Organization, error) {
 	if obj == nil {
 		return nil, nil
 	}
 	return obj.GetOrganizations()
 }
 
-func (r *userResolver) Posts(ctx context.Context, obj *models.User, role PostRole) ([]*models.Post, error) {
+func (r *userResolver) Posts(ctx context.Context, obj *models.User, role PostRole) ([]models.Post, error) {
 	if obj == nil {
 		return nil, nil
 	}
@@ -103,26 +103,22 @@ func (r *userResolver) UnreadMessageCount(ctx context.Context, obj *models.User)
 	return total, nil
 }
 
-func (r *queryResolver) Users(ctx context.Context) ([]*models.User, error) {
+func (r *queryResolver) Users(ctx context.Context) ([]models.User, error) {
 	currentUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 
 	if currentUser.AdminRole.String != domain.AdminRoleSuperDuperAdmin {
 		err := errors.New("not authorized")
 		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
-		return []*models.User{}, err
+		return nil, err
 	}
 
-	dbUsers := models.Users{}
-	if err := dbUsers.All(GetSelectFieldsForUsers(ctx)...); err != nil {
+	users := models.Users{}
+	if err := users.All(GetSelectFieldsForUsers(ctx)...); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting users: %v", err.Error()))
 		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
-		return []*models.User{}, err
+		return nil, err
 	}
 
-	users := make([]*models.User, len(dbUsers))
-	for i := range dbUsers {
-		users[i] = &dbUsers[i]
-	}
 	return users, nil
 }
 

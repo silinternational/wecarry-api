@@ -25,7 +25,7 @@ func (r *Resolver) Thread() ThreadResolver {
 
 type threadResolver struct{ *Resolver }
 
-func (r *threadResolver) Participants(ctx context.Context, obj *models.Thread) ([]*models.User, error) {
+func (r *threadResolver) Participants(ctx context.Context, obj *models.Thread) ([]models.User, error) {
 	if obj == nil {
 		return nil, nil
 	}
@@ -47,7 +47,7 @@ func (r *threadResolver) LastViewedAt(ctx context.Context, obj *models.Thread) (
 	return obj.GetLastViewedAt(models.GetCurrentUserFromGqlContext(ctx, TestUser))
 }
 
-func (r *threadResolver) Messages(ctx context.Context, obj *models.Thread) ([]*models.Message, error) {
+func (r *threadResolver) Messages(ctx context.Context, obj *models.Thread) ([]models.Message, error) {
 	if obj == nil {
 		return nil, nil
 	}
@@ -98,33 +98,25 @@ func (r *threadResolver) UnreadMessageCount(ctx context.Context, obj *models.Thr
 	return count, nil
 }
 
-func (r *queryResolver) Threads(ctx context.Context) ([]*models.Thread, error) {
-	dbThreads := models.Threads{}
-	if err := dbThreads.All(getSelectFieldsForThreads(ctx)...); err != nil {
+func (r *queryResolver) Threads(ctx context.Context) ([]models.Thread, error) {
+	threads := models.Threads{}
+	if err := threads.All(getSelectFieldsForThreads(ctx)...); err != nil {
 		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
-		return []*models.Thread{}, fmt.Errorf("error getting threads: %v", err)
+		return nil, fmt.Errorf("error getting threads: %v", err)
 	}
 
-	threads := make([]*models.Thread, len(dbThreads))
-	for i := range dbThreads {
-		threads[i] = &dbThreads[i]
-	}
 	return threads, nil
 }
 
-func (r *queryResolver) MyThreads(ctx context.Context) ([]*models.Thread, error) {
+func (r *queryResolver) MyThreads(ctx context.Context) ([]models.Thread, error) {
 	currentUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 
-	dbThreads, err := currentUser.GetThreads()
+	threads, err := currentUser.GetThreads()
 	if err != nil {
 		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
-		return []*models.Thread{}, fmt.Errorf("error getting threads: %v", err)
+		return nil, fmt.Errorf("error getting threads: %v", err)
 	}
 
-	threads := make([]*models.Thread, len(dbThreads))
-	for i := range dbThreads {
-		threads[i] = &dbThreads[i]
-	}
 	return threads, nil
 }
 

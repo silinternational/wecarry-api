@@ -264,17 +264,12 @@ func HashClientIdAccessToken(accessToken string) string {
 	return fmt.Sprintf("%x", sha256.Sum256([]byte(accessToken)))
 }
 
-func (u *User) GetOrganizations() ([]*Organization, error) {
+func (u *User) GetOrganizations() ([]Organization, error) {
 	if err := DB.Load(u, "Organizations"); err != nil {
-		return []*Organization{}, fmt.Errorf("error getting organizations for user id %v ... %v", u.ID, err)
+		return nil, fmt.Errorf("error getting organizations for user id %v ... %v", u.ID, err)
 	}
 
-	orgs := make([]*Organization, len(u.Organizations))
-	for i := range u.Organizations {
-		orgs[i] = &u.Organizations[i]
-	}
-
-	return orgs, nil
+	return u.Organizations, nil
 }
 
 func (u *User) FindUserOrganization(org Organization) (UserOrganization, error) {
@@ -286,10 +281,9 @@ func (u *User) FindUserOrganization(org Organization) (UserOrganization, error) 
 	return userOrg, nil
 }
 
-func (u *User) GetPosts(postRole string) ([]*Post, error) {
-	var postPtrs []*Post
+func (u *User) GetPosts(postRole string) ([]Post, error) {
 	if err := DB.Load(u, postRole); err != nil {
-		return postPtrs, fmt.Errorf("error getting posts for user id %v ... %v", u.ID, err)
+		return nil, fmt.Errorf("error getting posts for user id %v ... %v", u.ID, err)
 	}
 
 	var posts Posts
@@ -304,12 +298,7 @@ func (u *User) GetPosts(postRole string) ([]*Post, error) {
 		posts = u.PostsProviding
 	}
 
-	for _, p := range posts {
-		p1 := p
-		postPtrs = append(postPtrs, &p1)
-	}
-
-	return postPtrs, nil
+	return posts, nil
 }
 
 // AttachPhoto assigns a previously-stored File to this User as a profile photo

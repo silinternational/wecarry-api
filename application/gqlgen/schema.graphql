@@ -1,10 +1,10 @@
 type Query {
-    users: [User]!
+    users: [User!]!
     user(id: ID): User
-    posts: [Post]!
+    posts: [Post!]!
     post(id: ID): Post
-    threads: [Thread]!
-    myThreads: [Thread]!
+    threads: [Thread!]!
+    myThreads: [Thread!]!
     message(id: ID): Message!
 }
 
@@ -93,7 +93,7 @@ type Post {
     neededBefore: String
     category: String!
     status: String!
-    threads: [Thread]!
+    threads: [Thread!]!
     createdAt: Time!
     updatedAt: Time!
     url: String
