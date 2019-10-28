@@ -345,12 +345,12 @@ func (p *Post) GetOrganization(fields []string) (*Organization, error) {
 }
 
 // GetThreads finds all threads on this post in which the given user is participating
-func (p *Post) GetThreads(fields []string, user User) ([]*Thread, error) {
+func (p *Post) GetThreads(fields []string, user User) ([]Thread, error) {
 	if err := DB.Load(p, "Threads"); err != nil {
 		return nil, fmt.Errorf("error getting threads for post id %v ... %v", p.ID, err)
 	}
 
-	var threads []*Thread
+	var threads []Thread
 	for i, t := range p.Threads {
 		if err := DB.Load(&t, "Participants"); err != nil {
 			return nil, fmt.Errorf("error getting participants for thread id %v ... %v", t.ID, err)
@@ -358,7 +358,7 @@ func (p *Post) GetThreads(fields []string, user User) ([]*Thread, error) {
 
 		for _, participant := range t.Participants {
 			if participant.ID == user.ID {
-				threads = append(threads, &p.Threads[i])
+				threads = append(threads, p.Threads[i])
 				break
 			}
 		}
@@ -382,16 +382,16 @@ func (p *Post) AttachFile(fileID string) (File, error) {
 }
 
 // GetFiles retrieves the metadata for all of the files attached to this Post
-func (p *Post) GetFiles() ([]*File, error) {
+func (p *Post) GetFiles() ([]File, error) {
 	var pf []*PostFile
 
 	if err := DB.Eager("File").Select().Where("post_id = ?", p.ID).All(&pf); err != nil {
 		return nil, fmt.Errorf("error getting files for post id %d, %s", p.ID, err)
 	}
 
-	files := make([]*File, len(pf))
+	files := make([]File, len(pf))
 	for i, p := range pf {
-		files[i] = &p.File
+		files[i] = p.File
 		if err := files[i].RefreshURL(); err != nil {
 			return files, err
 		}

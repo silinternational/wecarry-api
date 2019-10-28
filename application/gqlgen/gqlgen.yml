@@ -12,6 +12,7 @@ model:
 resolver:
   filename: resolver.go
   type: Resolver
+omit_slice_element_pointers: true
 autobind:
   - github.com/silinternational/wecarry-api/models
   - github.com/silinternational/wecarry-api/gqlgen

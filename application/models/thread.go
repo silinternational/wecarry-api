@@ -90,8 +90,8 @@ func (t *Thread) GetPost(selectFields []string) (*Post, error) {
 	return &post, nil
 }
 
-func (t *Thread) GetMessages(selectFields []string) ([]*Message, error) {
-	var messages []*Message
+func (t *Thread) GetMessages(selectFields []string) ([]Message, error) {
+	var messages []Message
 	if err := DB.Select(selectFields...).Where("thread_id = ?", t.ID).All(&messages); err != nil {
 		return messages, fmt.Errorf("error getting messages for thread id %v ... %v", t.ID, err)
 	}
@@ -99,8 +99,8 @@ func (t *Thread) GetMessages(selectFields []string) ([]*Message, error) {
 	return messages, nil
 }
 
-func (t *Thread) GetParticipants(selectFields []string) ([]*User, error) {
-	var users []*User
+func (t *Thread) GetParticipants(selectFields []string) ([]User, error) {
+	var users []User
 	var threadParticipants []*ThreadParticipant
 
 	if err := DB.Where("thread_id = ?", t.ID).Order("id asc").All(&threadParticipants); err != nil {
@@ -113,7 +113,7 @@ func (t *Thread) GetParticipants(selectFields []string) ([]*User, error) {
 		if err := DB.Select(selectFields...).Find(&u, tp.UserID); err != nil {
 			return users, fmt.Errorf("error finding users on thread %v ... %v", t.ID, err)
 		}
-		users = append(users, &u)
+		users = append(users, u)
 	}
 	return users, nil
 }
