@@ -78,16 +78,9 @@ func (m *Message) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 // AfterCreate updates the LastViewedAt value on the associated ThreadParticipant to right now
 func (m *Message) AfterCreate(tx *pop.Connection) error {
 	threadP := ThreadParticipant{}
-	where := "thread_id = ? AND user_id = ?"
-	if err := DB.Where(where, m.ThreadID, m.SentByID).First(&threadP); err != nil {
-		domain.ErrLogger.Printf("error finding thread participant for Thread ID %v and User ID %v",
-			m.ThreadID, m.SentByID)
-		return nil
-	}
 
-	if threadP.ID == 0 {
-		domain.ErrLogger.Printf("unable to findthread participant for Thread ID %v and User ID %v",
-			m.ThreadID, m.SentByID)
+	if err := threadP.FindByThreadIDAndUserID(m.ThreadID, m.SentByID); err != nil {
+		domain.ErrLogger.Print("aftercreate new message " + err.Error())
 		return nil
 	}
 
