@@ -79,32 +79,6 @@ func (t *Thread) FindByUUID(uuid string) error {
 	return nil
 }
 
-// FindByPostIDAndUserID finds the first thread on the given post that the given user is a participant. Since a
-// post creator can be participating in multiple threads, it is better to use `Post.GetThreads` in that case.
-func (t *Thread) FindByPostIDAndUserID(postID int, userID int) error {
-	if postID == 0 || userID == 0 {
-		err := fmt.Errorf("error: post postID and userID must not be 0. Got: %v and %v", postID, userID)
-		return err
-	}
-
-	var threads []Thread
-
-	if err := DB.Q().LeftJoin("thread_participants tp", "threads.id = tp.thread_id").
-		Where("tp.user_id = ?", userID).All(&threads); err != nil {
-		return fmt.Errorf("error getting threads: %v", err.Error())
-	}
-
-	// TODO Rewrite this to do it the proper way
-	for _, tt := range threads {
-		if tt.PostID == postID {
-			*t = tt
-			return nil
-		}
-	}
-
-	return nil
-}
-
 func (t *Thread) GetPost(selectFields []string) (*Post, error) {
 	if t.PostID <= 0 {
 		return nil, fmt.Errorf("error: PostID must be positive, got %v", t.PostID)
