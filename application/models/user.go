@@ -437,7 +437,7 @@ func (u *User) UnreadMessageCount() ([]UnreadThread, error) {
 	unreads := []UnreadThread{}
 
 	for _, tp := range threadPs {
-		msgCount, err := tp.Thread.UnreadMessageCount(u, tp.LastViewedAt)
+		msgCount, err := tp.Thread.UnreadMessageCount(u.ID, tp.LastViewedAt)
 		if err != nil {
 			domain.ErrLogger.Printf("error getting count of unread messages for thread %s ... %v",
 				tp.Thread.Uuid, err)
