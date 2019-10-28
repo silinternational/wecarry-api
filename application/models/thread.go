@@ -157,10 +157,10 @@ func (t *Thread) GetLastViewedAt(user User) (*time.Time, error) {
 }
 
 // UpdateLastViewedAt sets the last viewed time for the given user on the thread
-func (t *Thread) UpdateLastViewedAt(user User, time time.Time) error {
+func (t *Thread) UpdateLastViewedAt(userID int, time time.Time) error {
 	var tp ThreadParticipant
 
-	if err := tp.FindByThreadIDAndUserID(t.ID, user.ID); err != nil {
+	if err := tp.FindByThreadIDAndUserID(t.ID, userID); err != nil {
 		return err
 	}
 
