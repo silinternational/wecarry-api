@@ -377,7 +377,7 @@ func CreateMessageFixtures_AfterCreate(ms *ModelSuite, t *testing.T) MessageFixt
 			t.FailNow()
 		}
 	}
-	println()
+
 	return MessageFixtures{
 		Users:              users,
 		Threads:            threads,
