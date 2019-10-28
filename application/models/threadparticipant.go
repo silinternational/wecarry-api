@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"time"
 
@@ -71,7 +70,7 @@ func (t *ThreadParticipant) UpdateLastViewedAt(lastViewedAt time.Time) error {
 // FindByThreadIDAndUserID reads a record by the given Thread ID and User ID
 func (t *ThreadParticipant) FindByThreadIDAndUserID(threadID, userID int) error {
 	if threadID <= 0 || userID <= 0 {
-		return errors.New("error finding thread_participant, invalid id")
+		return fmt.Errorf("error finding thread_participant, invalid id ... threadID %v, userID %v", threadID, userID)
 	}
 
 	if err := DB.Where("user_id = ? AND thread_id = ?", userID, threadID).First(t); err != nil {
