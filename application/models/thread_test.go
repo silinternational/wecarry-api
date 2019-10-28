@@ -382,13 +382,13 @@ func (ms *ModelSuite) TestThread_UnreadMessageCount() {
 			name:    "Lazy User Other Thread",
 			threadP: f.ThreadParticipants[1],
 			user:    f.Users[1],
-			want:    2,
+			want:    1,
 		},
 		{
 			name:    "Lazy User Own Thread",
 			threadP: f.ThreadParticipants[2],
 			user:    f.Users[1],
-			want:    1,
+			want:    2,
 		},
 	}
 
@@ -397,7 +397,7 @@ func (ms *ModelSuite) TestThread_UnreadMessageCount() {
 			err := DB.Load(&test.threadP)
 			ms.NoError(err)
 
-			got, err := test.threadP.Thread.UnreadMessageCount(test.threadP.LastViewedAt)
+			got, err := test.threadP.Thread.UnreadMessageCount(test.user.ID, test.threadP.LastViewedAt)
 			if test.wantErr {
 				ms.Error(err, "did not get expected error")
 				return

@@ -157,10 +157,10 @@ func (t *Thread) GetLastViewedAt(user User) (*time.Time, error) {
 }
 
 // UpdateLastViewedAt sets the last viewed time for the given user on the thread
-func (t *Thread) UpdateLastViewedAt(user User, time time.Time) error {
+func (t *Thread) UpdateLastViewedAt(userID int, time time.Time) error {
 	var tp ThreadParticipant
 
-	if err := tp.FindByThreadIDAndUserID(t.ID, user.ID); err != nil {
+	if err := tp.FindByThreadIDAndUserID(t.ID, userID); err != nil {
 		return err
 	}
 
@@ -176,8 +176,13 @@ func (t *Thread) Load(fields ...string) error {
 	return nil
 }
 
-func (t *Thread) UnreadMessageCount(lastViewedAt time.Time) (int, error) {
+// UnreadMessageCount returns the number of messages on this thread that the current
+//  user has not created and for which the CreatedAt value is after the lastViewedAt value
+func (t *Thread) UnreadMessageCount(userID int, lastViewedAt time.Time) (int, error) {
 	count := 0
+	if userID <= 0 {
+		return count, fmt.Errorf("error in UnreadMessageCount, invalid id %v", userID)
+	}
 
 	msgs, err := t.GetMessages([]string{"created_at"})
 	if err != nil {
@@ -185,7 +190,7 @@ func (t *Thread) UnreadMessageCount(lastViewedAt time.Time) (int, error) {
 	}
 
 	for _, m := range msgs {
-		if m.CreatedAt.After(lastViewedAt) {
+		if m.SentByID != userID && m.CreatedAt.After(lastViewedAt) {
 			count++
 		}
 	}

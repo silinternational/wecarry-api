@@ -75,6 +75,23 @@ func (m *Message) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }
 
+// AfterCreate updates the LastViewedAt value on the associated ThreadParticipant to right now
+func (m *Message) AfterCreate(tx *pop.Connection) error {
+	threadP := ThreadParticipant{}
+
+	if err := threadP.FindByThreadIDAndUserID(m.ThreadID, m.SentByID); err != nil {
+		domain.ErrLogger.Print("aftercreate new message " + err.Error())
+		return nil
+	}
+
+	if err := threadP.UpdateLastViewedAt(time.Now()); err != nil {
+		domain.ErrLogger.Print("aftercreate new message " + err.Error())
+		return nil
+	}
+
+	return nil
+}
+
 // GetSender finds and returns the User that is the Sender of this Message
 func (m *Message) GetSender(requestFields []string) (*User, error) {
 	sender := User{}
