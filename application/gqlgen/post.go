@@ -92,7 +92,7 @@ func (r *postResolver) Description(ctx context.Context, obj *models.Post) (*stri
 	if obj == nil {
 		return nil, nil
 	}
-	return GetStringFromNullsString(obj.Description), nil
+	return models.GetStringFromNullsString(obj.Description), nil
 }
 
 func (r *postResolver) Destination(ctx context.Context, obj *models.Post) (*models.Location, error) {
@@ -143,7 +143,7 @@ func (r *postResolver) URL(ctx context.Context, obj *models.Post) (*string, erro
 	if obj == nil {
 		return nil, nil
 	}
-	return GetStringFromNullsString(obj.URL), nil
+	return models.GetStringFromNullsString(obj.URL), nil
 }
 
 func (r *postResolver) Cost(ctx context.Context, obj *models.Post) (*string, error) {

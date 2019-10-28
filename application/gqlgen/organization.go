@@ -37,7 +37,7 @@ func (r *organizationResolver) URL(ctx context.Context, obj *models.Organization
 	if obj == nil {
 		return nil, nil
 	}
-	return GetStringFromNullsString(obj.Url), nil
+	return models.GetStringFromNullsString(obj.Url), nil
 }
 
 func (r *organizationResolver) Domains(ctx context.Context, obj *models.Organization) ([]*models.OrganizationDomain, error) {
