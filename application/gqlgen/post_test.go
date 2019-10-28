@@ -307,7 +307,7 @@ func createFixtures_UpdatePost(gs *GqlgenSuite) UpdatePostFixtures {
 	posts := models.Posts{
 		{
 			CreatedByID:    users[0].ID,
-			Type:           PostTypeOffer.String(),
+			Type:           PostTypeRequest.String(),
 			OrganizationID: org.ID,
 			Title:          "An Offer",
 			Size:           PostSizeLarge.String(),
