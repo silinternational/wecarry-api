@@ -190,9 +190,20 @@ type updateStatusValidator struct {
 }
 
 func (v *updateStatusValidator) IsValid(errors *validate.Errors) {
+	switch v.Post.Type {
+	case PostTypeOffer:
+		v.isOfferValid(errors)
+	case PostTypeRequest:
+		v.isRequestValid(errors)
+	}
+}
 
-	// TODO Take into account PostTypeOffer as well.  This is just for PostTypeRequest
+func (v *updateStatusValidator) isOfferValid(errors *validate.Errors) {
+	v.Message = "Offer status updates not allowed at this time"
+	errors.Add(validators.GenerateKey(v.Name), v.Message)
+}
 
+func (v *updateStatusValidator) isRequestValid(errors *validate.Errors) {
 	oldPost := Post{}
 	uuid := v.Post.Uuid.String()
 	if err := oldPost.FindByUUID(uuid); err != nil {
