@@ -3,7 +3,9 @@ package actions
 import (
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/buffalo-pop/pop/popmw"
+	i18n "github.com/gobuffalo/mw-i18n"
 	paramlogger "github.com/gobuffalo/mw-paramlogger"
+	"github.com/gobuffalo/packr"
 	"github.com/gorilla/sessions"
 	"github.com/rs/cors"
 	"github.com/silinternational/wecarry-api/domain"
@@ -56,6 +58,13 @@ func App() *buffalo.App {
 		//  Added for authorization
 		app.Use(SetCurrentUser)
 		app.Middleware.Skip(SetCurrentUser, HomeHandler)
+
+		var err error
+		domain.T, err = i18n.New(packr.NewBox("../locales"), "en")
+		if err != nil {
+			_ = app.Stop(err)
+		}
+		app.Use(domain.T.Middleware())
 
 		app.GET("/", HomeHandler)
 		app.POST("/gql/", GQLHandler)
