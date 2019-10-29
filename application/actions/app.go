@@ -80,9 +80,9 @@ func App() *buffalo.App {
 		auth.POST("/callback", AuthCallback) // for SAML
 
 		auth.GET("/logout", AuthDestroy)
-	}
 
-	listeners.RegisterListeners()
+		listeners.RegisterListeners()
+	}
 
 	return app
 }
