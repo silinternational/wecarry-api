@@ -113,13 +113,15 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 	}()
 
 	tests := []struct {
-		name           string
-		post           models.Post
-		template       string
-		sendFunction   func(string, models.Post)
-		wantEmailsSent int
-		wantToEmail    string
-		wantErrLog     string
+		name            string
+		template        string
+		post            models.Post
+		eventData       models.PostStatusEventData
+		sendFunction    func(string, models.Post, models.PostStatusEventData)
+		wantEmailsSent  int
+		wantToEmail     string
+		wantEmailNumber int
+		wantErrLog      string
 	}{
 		{name: "Good - Open to Committed",
 			post:           posts[0],
@@ -134,6 +136,33 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 			sendFunction: sendNotificationRequestFromOpenToCommitted,
 			wantErrLog: fmt.Sprintf("error preparing '%s' notification - no provider\n",
 				domain.MessageTemplateRequestFromOpenToCommitted),
+		},
+		{name: "Good - Committed to Open - Requester",
+			post: posts[0],
+			eventData: models.PostStatusEventData{
+				OldStatus:     models.PostStatusCommitted,
+				NewStatus:     models.PostStatusOpen,
+				PostID:        posts[0].ID,
+				OldProviderID: *models.GetIntFromNullsInt(posts[0].ProviderID),
+			},
+			template:       domain.MessageTemplateRequestFromCommittedToOpen,
+			sendFunction:   sendNotificationRequestFromCommittedToOpen,
+			wantEmailsSent: 2,
+			wantToEmail:    posts[0].CreatedBy.Email,
+		},
+		{name: "Good - Committed to Open - Provider",
+			post: posts[0],
+			eventData: models.PostStatusEventData{
+				OldStatus:     models.PostStatusCommitted,
+				NewStatus:     models.PostStatusOpen,
+				PostID:        posts[0].ID,
+				OldProviderID: *models.GetIntFromNullsInt(posts[0].ProviderID),
+			},
+			template:        domain.MessageTemplateRequestFromCommittedToOpen,
+			sendFunction:    sendNotificationRequestFromCommittedToOpen,
+			wantEmailsSent:  2,
+			wantEmailNumber: 1,
+			wantToEmail:     posts[0].Provider.Email,
 		},
 		{name: "Good - Committed to Accepted",
 			post:           posts[0],
@@ -163,6 +192,19 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 			wantErrLog: fmt.Sprintf("error preparing '%s' notification - no provider\n",
 				domain.MessageTemplateRequestFromCommittedToDelivered),
 		},
+		{name: "Good - Accepted to Open",
+			post: posts[0],
+			eventData: models.PostStatusEventData{
+				OldStatus:     models.PostStatusAccepted,
+				NewStatus:     models.PostStatusOpen,
+				PostID:        posts[0].ID,
+				OldProviderID: *models.GetIntFromNullsInt(posts[0].ProviderID),
+			},
+			template:       domain.MessageTemplateRequestFromAcceptedToOpen,
+			sendFunction:   sendNotificationRequestFromAcceptedToOpen,
+			wantEmailsSent: 1,
+			wantToEmail:    posts[0].Provider.Email,
+		},
 		{name: "Good - Accepted to Delivered",
 			post:           posts[0],
 			template:       domain.MessageTemplateRequestFromAcceptedToDelivered,
@@ -183,14 +225,14 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 
 			notifications.TestEmailService.DeleteSentMessages()
 
-			test.sendFunction(test.template, test.post)
+			test.sendFunction(test.template, test.post, test.eventData)
 			gotBuf := buf.String()
 			buf.Reset()
 
 			emailCount := notifications.TestEmailService.GetNumberOfMessagesSent()
-			lastToEmail := notifications.TestEmailService.GetLastToEmail()
+			toEmail := notifications.TestEmailService.GetToEmailByIndex(test.wantEmailNumber)
 			ms.Equal(test.wantEmailsSent, emailCount, "wrong email count")
-			ms.Equal(test.wantToEmail, lastToEmail, "bad To Email")
+			ms.Equal(test.wantToEmail, toEmail, "bad To Email")
 			ms.Equal(test.wantErrLog, gotBuf, "wrong error log entry")
 		})
 	}

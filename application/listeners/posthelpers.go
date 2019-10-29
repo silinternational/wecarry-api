@@ -36,7 +36,7 @@ func GetPostUsers(post m.Post) PostUsers {
 	return recipients
 }
 
-func sendNotificationRequestFromOpenToCommitted(template string, post m.Post) {
+func sendNotificationRequestFromOpenToCommitted(template string, post m.Post, eData m.PostStatusEventData) {
 	postUsers := GetPostUsers(post)
 
 	if postUsers.Provider.Nickname == "" {
@@ -63,7 +63,73 @@ func sendNotificationRequestFromOpenToCommitted(template string, post m.Post) {
 	}
 }
 
-func sendNotificationRequestFromCommittedToAccepted(template string, post m.Post) {
+// Until we have status auditing history, we don't know who reverted the Post to `open` status.
+//  So, tell both the requester and provider about it.
+func sendNotificationRequestFromCommittedToOpen(template string, post m.Post, eData m.PostStatusEventData) {
+	postUsers := GetPostUsers(post)
+
+	oldProvider := m.User{}
+	if err := oldProvider.FindByID(eData.OldProviderID); err != nil {
+		domain.ErrLogger.Printf("error preparing '%s' notification for old provider id, %v ... %v",
+			template, eData.OldProviderID, err)
+	}
+
+	providerNickname := oldProvider.Nickname
+	providerEmail := oldProvider.Email
+
+	if providerNickname == "" {
+		providerNickname = "Unknown User"
+		providerEmail = "Missing Email"
+	}
+
+	// First notify requester
+	data := map[string]interface{}{
+		"uiURL":             domain.Env.UIURL,
+		"postURL":           domain.GetPostUIURL(post.Uuid.String()),
+		"postTitle":         post.Title,
+		"providerNickname":  providerNickname,
+		"providerEmail":     providerEmail,
+		"requesterNickname": postUsers.Requester.Nickname,
+		"requesterEmail":    postUsers.Requester.Email,
+	}
+
+	msg := notifications.Message{
+		Template: template,
+		Data:     data,
+		ToName:   postUsers.Requester.Nickname,
+		ToEmail:  postUsers.Requester.Email,
+	}
+	if err := notifications.Send(msg); err != nil {
+		domain.ErrLogger.Printf("error sending '%s' notification to old provider, %s", template, err)
+	}
+
+	// Now notify the old provider
+	if oldProvider.Nickname == "" {
+		return
+	}
+
+	data = map[string]interface{}{
+		"uiURL":             domain.Env.UIURL,
+		"postURL":           domain.GetPostUIURL(post.Uuid.String()),
+		"postTitle":         post.Title,
+		"providerNickname":  providerNickname,
+		"providerEmail":     providerEmail,
+		"requesterNickname": postUsers.Requester.Nickname,
+		"requesterEmail":    postUsers.Requester.Email,
+	}
+
+	msg = notifications.Message{
+		Template: template,
+		Data:     data,
+		ToName:   oldProvider.Nickname,
+		ToEmail:  oldProvider.Email,
+	}
+	if err := notifications.Send(msg); err != nil {
+		domain.ErrLogger.Printf("error sending '%s' notification to requester, %s", template, err)
+	}
+}
+
+func sendNotificationRequestFromCommittedToAccepted(template string, post m.Post, eData m.PostStatusEventData) {
 	postUsers := GetPostUsers(post)
 
 	if postUsers.Provider.Nickname == "" {
@@ -90,7 +156,7 @@ func sendNotificationRequestFromCommittedToAccepted(template string, post m.Post
 	}
 }
 
-func sendNotificationRequestFromCommittedOrAcceptedToDelivered(template string, post m.Post) {
+func sendNotificationRequestFromCommittedOrAcceptedToDelivered(template string, post m.Post, eData m.PostStatusEventData) {
 	postUsers := GetPostUsers(post)
 
 	if postUsers.Provider.Nickname == "" {
@@ -117,13 +183,42 @@ func sendNotificationRequestFromCommittedOrAcceptedToDelivered(template string, 
 	}
 }
 
-func sendNotificationEmpty(template string, post m.Post) {
+func sendNotificationRequestFromAcceptedToOpen(template string, post m.Post, eData m.PostStatusEventData) {
+	postUsers := GetPostUsers(post)
+
+	oldProvider := m.User{}
+	if err := oldProvider.FindByID(eData.OldProviderID); err != nil {
+		domain.ErrLogger.Printf("error preparing '%s' notification for old provider id, %v ... %v",
+			template, eData.OldProviderID, err)
+		return
+	}
+
+	data := map[string]interface{}{
+		"uiURL":             domain.Env.UIURL,
+		"postURL":           domain.GetPostUIURL(post.Uuid.String()),
+		"postTitle":         post.Title,
+		"requesterNickname": postUsers.Requester.Nickname,
+		"requesterEmail":    postUsers.Requester.Email,
+	}
+
+	msg := notifications.Message{
+		Template: template,
+		Data:     data,
+		ToName:   oldProvider.Nickname,
+		ToEmail:  oldProvider.Email,
+	}
+	if err := notifications.Send(msg); err != nil {
+		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
+	}
+}
+
+func sendNotificationEmpty(template string, post m.Post, eData m.PostStatusEventData) {
 	domain.ErrLogger.Print("Notification not implemented yet for " + template)
 }
 
 type Sender struct {
 	Template string
-	Sender   func(string, m.Post)
+	Sender   func(string, m.Post, m.PostStatusEventData)
 }
 
 func join(s1, s2 string) string {
@@ -133,7 +228,7 @@ func join(s1, s2 string) string {
 var statusSenders = map[string]Sender{
 	join(m.PostStatusCommitted, m.PostStatusOpen): Sender{
 		Template: domain.MessageTemplateRequestFromCommittedToOpen,
-		Sender:   sendNotificationEmpty},
+		Sender:   sendNotificationRequestFromCommittedToOpen},
 	join(m.PostStatusAccepted, m.PostStatusOpen): Sender{
 		Template: domain.MessageTemplateRequestFromAcceptedToOpen,
 		Sender:   sendNotificationEmpty},
@@ -191,5 +286,5 @@ func requestStatusUpdatedNotifications(post m.Post, eData m.PostStatusEventData)
 		return
 	}
 
-	sender.Sender(sender.Template, post)
+	sender.Sender(sender.Template, post, eData)
 }
