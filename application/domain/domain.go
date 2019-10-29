@@ -12,7 +12,6 @@ import (
 
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/envy"
-	i18n "github.com/gobuffalo/mw-i18n"
 	uuid2 "github.com/gofrs/uuid"
 	"github.com/rollbar/rollbar-go"
 )
@@ -98,9 +97,6 @@ var Env struct {
 	SessionSecret              string
 	UIURL                      string
 }
-
-// T is the Buffalo i18n translator
-var T *i18n.Translator
 
 func init() {
 	Logger.SetOutput(os.Stdout)
