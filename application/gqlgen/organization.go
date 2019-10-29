@@ -40,7 +40,7 @@ func (r *organizationResolver) URL(ctx context.Context, obj *models.Organization
 	return models.GetStringFromNullsString(obj.Url), nil
 }
 
-func (r *organizationResolver) Domains(ctx context.Context, obj *models.Organization) ([]*models.OrganizationDomain, error) {
+func (r *organizationResolver) Domains(ctx context.Context, obj *models.Organization) ([]models.OrganizationDomain, error) {
 	if obj == nil {
 		return nil, nil
 	}
@@ -51,11 +51,7 @@ func (r *organizationResolver) Domains(ctx context.Context, obj *models.Organiza
 		return nil, err
 	}
 
-	dp := make([]*models.OrganizationDomain, len(domains))
-	for i, d := range domains {
-		dp[i] = &d
-	}
-	return dp, nil
+	return domains, nil
 }
 
 func getSelectFieldsForOrganizations(ctx context.Context) []string {

@@ -69,54 +69,44 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, input UpdateO
 	return &org, err
 }
 
-func (r *mutationResolver) CreateOrganizationDomain(ctx context.Context, input CreateOrganizationDomainInput) ([]*models.OrganizationDomain, error) {
+func (r *mutationResolver) CreateOrganizationDomain(ctx context.Context, input CreateOrganizationDomainInput) ([]models.OrganizationDomain, error) {
 	var org models.Organization
 	err := org.FindByUUID(input.OrganizationID)
 	if err != nil {
-		return []*models.OrganizationDomain{}, err
+		return nil, err
 	}
 
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 	if !cUser.CanEditOrganization(org.ID) {
-		return []*models.OrganizationDomain{}, errors.New("user not allowed to edit organizations")
+		return nil, errors.New("user not allowed to edit organizations")
 	}
 
 	err = org.AddDomain(input.Domain)
 	if err != nil {
-		return []*models.OrganizationDomain{}, err
+		return nil, err
 	}
 
-	orgDomains := make([]*models.OrganizationDomain, len(org.OrganizationDomains))
-	for i, od := range org.OrganizationDomains {
-		orgDomains[i] = &od
-	}
-
-	return orgDomains, nil
+	return org.OrganizationDomains, nil
 }
 
-func (r *mutationResolver) RemoveOrganizationDomain(ctx context.Context, input RemoveOrganizationDomainInput) ([]*models.OrganizationDomain, error) {
+func (r *mutationResolver) RemoveOrganizationDomain(ctx context.Context, input RemoveOrganizationDomainInput) ([]models.OrganizationDomain, error) {
 	var org models.Organization
 	err := org.FindByUUID(input.OrganizationID)
 	if err != nil {
-		return []*models.OrganizationDomain{}, err
+		return nil, err
 	}
 
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 	if !cUser.CanEditOrganization(org.ID) {
-		return []*models.OrganizationDomain{}, errors.New("user not allowed to edit organizations")
+		return nil, errors.New("user not allowed to edit organizations")
 	}
 
 	err = org.RemoveDomain(input.Domain)
 	if err != nil {
-		return []*models.OrganizationDomain{}, err
+		return nil, err
 	}
 
-	orgDomains := make([]*models.OrganizationDomain, len(org.OrganizationDomains))
-	for i, od := range org.OrganizationDomains {
-		orgDomains[i] = &od
-	}
-
-	return orgDomains, nil
+	return org.OrganizationDomains, nil
 }
 
 // SetThreadLastViewedAt sets the last viewed time for the current user on the given thread

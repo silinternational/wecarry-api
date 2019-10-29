@@ -130,7 +130,7 @@ func (r *postResolver) NeededBefore(ctx context.Context, obj *models.Post) (*str
 	return domain.ConvertTimeToStringPtr(obj.NeededBefore), nil
 }
 
-func (r *postResolver) Threads(ctx context.Context, obj *models.Post) ([]*models.Thread, error) {
+func (r *postResolver) Threads(ctx context.Context, obj *models.Post) ([]models.Thread, error) {
 	if obj == nil {
 		return nil, nil
 	}
@@ -165,28 +165,24 @@ func (r *postResolver) Photo(ctx context.Context, obj *models.Post) (*models.Fil
 }
 
 // Files retrieves the list of files attached to the post, not including the primary photo
-func (r *postResolver) Files(ctx context.Context, obj *models.Post) ([]*models.File, error) {
+func (r *postResolver) Files(ctx context.Context, obj *models.Post) ([]models.File, error) {
 	if obj == nil {
 		return nil, nil
 	}
 	return obj.GetFiles()
 }
 
-func (r *queryResolver) Posts(ctx context.Context) ([]*models.Post, error) {
+func (r *queryResolver) Posts(ctx context.Context) ([]models.Post, error) {
 	posts := models.Posts{}
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 	selectFields := getSelectFieldsForPosts(ctx)
 	if err := posts.FindByUser(ctx, cUser, selectFields...); err != nil {
 		graphql.AddError(ctx, gqlerror.Errorf("Error getting posts: %v", err.Error()))
 		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
-		return []*models.Post{}, err
+		return nil, err
 	}
 
-	pp := make([]*models.Post, len(posts))
-	for i := range posts {
-		pp[i] = &(posts[i])
-	}
-	return pp, nil
+	return posts, nil
 }
 
 func (r *queryResolver) Post(ctx context.Context, id *string) (*models.Post, error) {
