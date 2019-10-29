@@ -2,10 +2,11 @@ package models
 
 import (
 	"fmt"
-	"github.com/gobuffalo/nulls"
-	"github.com/silinternational/wecarry-api/domain"
 	"testing"
 	"time"
+
+	"github.com/gobuffalo/nulls"
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 type ThreadFixtures struct {
