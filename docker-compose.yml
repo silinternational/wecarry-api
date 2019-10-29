@@ -35,7 +35,6 @@ services:
     environment:
       EMAIL_SERVICE: dummy
       GO_ENV: test
-      EMAIL_SERVICE: dummy
     depends_on:
       - testdb
       - minio
