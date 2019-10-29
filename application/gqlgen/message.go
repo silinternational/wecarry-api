@@ -2,7 +2,6 @@ package gqlgen
 
 import (
 	"context"
-	"errors"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/silinternational/wecarry-api/domain"
@@ -38,13 +37,7 @@ func (r *messageResolver) Sender(ctx context.Context, obj *models.Message) (*mod
 	if obj == nil {
 		return nil, nil
 	}
-	user, err := obj.GetSender(GetSelectFieldsForUsers(ctx))
-	if err != nil {
-		c := models.GetBuffaloContextFromGqlContext(ctx)
-		domain.Error(c, err.Error())
-		return nil, errors.New(domain.T.Translate(c, "MessageGetSender"))
-	}
-	return user, nil
+	return obj.GetSender(GetSelectFieldsForUsers(ctx))
 }
 
 func (r *messageResolver) Thread(ctx context.Context, obj *models.Message) (*models.Thread, error) {
