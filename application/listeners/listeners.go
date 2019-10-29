@@ -61,7 +61,7 @@ func RegisterListeners() {
 		for _, l := range listeners {
 			_, err := events.NamedListen(l.name, l.listener)
 			if err != nil {
-				domain.ErrLogger.Print("Failed registering listener: " + l.name)
+				domain.ErrLogger.Print("Failed registering listener:", l.name, err)
 			}
 		}
 	}
