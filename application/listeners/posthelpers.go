@@ -143,6 +143,33 @@ func sendNotificationRequestFromCommittedToAccepted(template string, post m.Post
 	}
 }
 
+func sendNotificationRequestFromCommittedToRemoved(template string, post m.Post, eData m.PostStatusEventData) {
+	postUsers := GetPostUsers(post)
+
+	if postUsers.Provider.Nickname == "" {
+		domain.ErrLogger.Printf("error preparing '%s' notification - no provider", template)
+		return
+	}
+
+	data := map[string]interface{}{
+		"uiURL":             domain.Env.UIURL,
+		"postURL":           domain.GetPostUIURL(post.Uuid.String()),
+		"postTitle":         post.Title,
+		"postDescription":   post.Description,
+		"requesterNickname": postUsers.Requester.Nickname,
+	}
+
+	msg := notifications.Message{
+		Template: template,
+		Data:     data,
+		ToName:   postUsers.Provider.Nickname,
+		ToEmail:  postUsers.Provider.Email,
+	}
+	if err := notifications.Send(msg); err != nil {
+		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
+	}
+}
+
 func sendNotificationRequestFromCommittedOrAcceptedToDelivered(template string, post m.Post, eData m.PostStatusEventData) {
 	postUsers := GetPostUsers(post)
 
@@ -286,7 +313,7 @@ var statusSenders = map[string]Sender{
 		Sender:   sendNotificationEmpty},
 	join(m.PostStatusCommitted, m.PostStatusRemoved): Sender{
 		Template: domain.MessageTemplateRequestFromCommittedToRemoved,
-		Sender:   sendNotificationEmpty},
+		Sender:   sendNotificationRequestFromCommittedToRemoved},
 	join(m.PostStatusAccepted, m.PostStatusRemoved): Sender{
 		Template: domain.MessageTemplateRequestFromAcceptedToRemoved,
 		Sender:   sendNotificationEmpty},
