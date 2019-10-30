@@ -261,6 +261,20 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 			wantErrLog: fmt.Sprintf("error preparing '%s' notification - no provider\n",
 				domain.MessageTemplateRequestFromAcceptedToReceived),
 		},
+		{name: "Good - Accepted to Removed",
+			post:           posts[0],
+			template:       domain.MessageTemplateRequestFromAcceptedToRemoved,
+			sendFunction:   sendNotificationRequestFromAcceptedToRemoved,
+			wantEmailsSent: 1,
+			wantToEmail:    posts[0].Provider.Email,
+		},
+		{name: "Bad - Accepted to Removed", // No Provider
+			post:         posts[1],
+			template:     domain.MessageTemplateRequestFromAcceptedToRemoved,
+			sendFunction: sendNotificationRequestFromAcceptedToRemoved,
+			wantErrLog: fmt.Sprintf("error preparing '%s' notification - no provider\n",
+				domain.MessageTemplateRequestFromAcceptedToRemoved),
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

@@ -34,6 +34,7 @@ var sendGridTemplates = map[string]sendGridTemplate{
 	domain.MessageTemplateRequestFromAcceptedToOpen:       {id: "d-4203f4bed73543468751a9667834dbd9"},
 	domain.MessageTemplateRequestFromAcceptedToDelivered:  {id: "d-11a7c98ceb8a424ca1c9e619ba9c1f16"},
 	domain.MessageTemplateRequestFromAcceptedToReceived:   {id: "d-f963c27c30d44b1fb06e17973865bb3a"},
+	domain.MessageTemplateRequestFromAcceptedToRemoved:    {id: "d-82f1b7a2d6974ac88f7979763ec081e5"},
 }
 
 func (e *SendGridService) Send(msg Message) error {
