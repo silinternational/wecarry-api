@@ -58,6 +58,7 @@ const (
 	MessageTemplateRequestFromAcceptedToDelivered  = "request_from_accepted_to_delivered"
 	MessageTemplateRequestFromReceivedToDelivered  = "request_from_received_to_delivered"
 	MessageTemplateRequestFromCompletedToDelivered = "request_from_completed_to_delivered"
+	MessageTemplateRequestFromCommittedToReceived  = "request_from_committed_to_received"
 	MessageTemplateRequestFromAcceptedToReceived   = "request_from_accepted_to_received"
 	MessageTemplateRequestFromCompletedToReceived  = "request_from_completed_to_received"
 	MessageTemplateRequestFromDeliveredToCompleted = "request_from_delivered_to_completed"

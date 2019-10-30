@@ -216,10 +216,11 @@ func (v *updateStatusValidator) isRequestValid(errors *validate.Errors) {
 	}
 
 	// Ensure that the new status is compatible with the old one in terms of a transition
-	// allow for doing a step in reverse, in case there was a mistake going forward
+	// allow for doing a step in reverse, in case there was a mistake going forward and
+	// also allowing for some "unofficial" interaction happening outside of the app
 	okTransitions := map[string][]string{
 		PostStatusOpen:      {PostStatusCommitted, PostStatusRemoved},
-		PostStatusCommitted: {PostStatusOpen, PostStatusAccepted, PostStatusDelivered, PostStatusRemoved},
+		PostStatusCommitted: {PostStatusOpen, PostStatusAccepted, PostStatusDelivered, PostStatusReceived, PostStatusRemoved},
 		PostStatusAccepted:  {PostStatusOpen, PostStatusDelivered, PostStatusReceived, PostStatusRemoved},
 		PostStatusDelivered: {PostStatusAccepted, PostStatusCompleted},
 		PostStatusReceived:  {PostStatusAccepted, PostStatusDelivered, PostStatusCompleted},

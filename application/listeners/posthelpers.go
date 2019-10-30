@@ -170,6 +170,32 @@ func sendNotificationRequestFromCommittedOrAcceptedToDelivered(template string, 
 	}
 }
 
+func sendNotificationRequestFromCommittedOrAcceptedToReceived(template string, post m.Post, eData m.PostStatusEventData) {
+	postUsers := GetPostUsers(post)
+
+	if postUsers.Provider.Nickname == "" {
+		domain.ErrLogger.Printf("error preparing '%s' notification - no provider", template)
+		return
+	}
+
+	data := map[string]interface{}{
+		"uiURL":            domain.Env.UIURL,
+		"postURL":          domain.GetPostUIURL(post.Uuid.String()),
+		"postTitle":        post.Title,
+		"receiverNickname": postUsers.Requester.Nickname,
+	}
+
+	msg := notifications.Message{
+		Template: template,
+		Data:     data,
+		ToName:   postUsers.Provider.Nickname,
+		ToEmail:  postUsers.Provider.Email,
+	}
+	if err := notifications.Send(msg); err != nil {
+		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
+	}
+}
+
 func sendNotificationRequestFromAcceptedToOpen(template string, post m.Post, eData m.PostStatusEventData) {
 	postUsers := GetPostUsers(post)
 
@@ -243,9 +269,12 @@ var statusSenders = map[string]Sender{
 	join(m.PostStatusCompleted, m.PostStatusDelivered): Sender{
 		Template: domain.MessageTemplateRequestFromCompletedToDelivered,
 		Sender:   sendNotificationEmpty},
+	join(m.PostStatusCommitted, m.PostStatusReceived): Sender{
+		Template: domain.MessageTemplateRequestFromCompletedToReceived,
+		Sender:   sendNotificationRequestFromCommittedOrAcceptedToReceived},
 	join(m.PostStatusAccepted, m.PostStatusReceived): Sender{
 		Template: domain.MessageTemplateRequestFromAcceptedToReceived,
-		Sender:   sendNotificationEmpty},
+		Sender:   sendNotificationRequestFromCommittedOrAcceptedToReceived},
 	join(m.PostStatusCompleted, m.PostStatusReceived): Sender{
 		Template: domain.MessageTemplateRequestFromCompletedToReceived,
 		Sender:   sendNotificationEmpty},
