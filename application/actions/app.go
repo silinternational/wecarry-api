@@ -5,7 +5,7 @@ import (
 	"github.com/gobuffalo/buffalo-pop/pop/popmw"
 	i18n "github.com/gobuffalo/mw-i18n"
 	paramlogger "github.com/gobuffalo/mw-paramlogger"
-	"github.com/gobuffalo/packr"
+	"github.com/gobuffalo/packr/v2"
 	"github.com/gorilla/sessions"
 	"github.com/rs/cors"
 	"github.com/silinternational/wecarry-api/domain"
@@ -60,7 +60,7 @@ func App() *buffalo.App {
 		app.Middleware.Skip(SetCurrentUser, HomeHandler)
 
 		var err error
-		domain.T, err = i18n.New(packr.NewBox("../locales"), "en")
+		domain.T, err = i18n.New(packr.New("locales", "../locales"), "en")
 		if err != nil {
 			_ = app.Stop(err)
 		}
@@ -80,9 +80,9 @@ func App() *buffalo.App {
 		auth.POST("/callback", AuthCallback) // for SAML
 
 		auth.GET("/logout", AuthDestroy)
-	}
 
-	listeners.RegisterListeners()
+		listeners.RegisterListeners()
+	}
 
 	return app
 }
