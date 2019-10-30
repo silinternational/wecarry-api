@@ -185,7 +185,7 @@ func sendNotificationRequestFromCommittedOrAcceptedToDelivered(template string, 
 	}
 }
 
-func sendNotificationRequestFromCommittedOrAcceptedToReceived(template string, post m.Post, eData m.PostStatusEventData) {
+func sendNotificationRequestFromAcceptedToReceived(template string, post m.Post, eData m.PostStatusEventData) {
 	postUsers := GetPostUsers(post)
 
 	if postUsers.Provider.Nickname == "" {
@@ -290,10 +290,10 @@ var statusSenders = map[string]Sender{
 		Sender:   sendNotificationEmpty},
 	join(m.PostStatusCommitted, m.PostStatusReceived): Sender{
 		Template: domain.MessageTemplateRequestFromCompletedToReceived,
-		Sender:   sendNotificationRequestFromCommittedOrAcceptedToReceived},
+		Sender:   sendNotificationRequestFromAcceptedToReceived},
 	join(m.PostStatusAccepted, m.PostStatusReceived): Sender{
 		Template: domain.MessageTemplateRequestFromAcceptedToReceived,
-		Sender:   sendNotificationRequestFromCommittedOrAcceptedToReceived},
+		Sender:   sendNotificationRequestFromAcceptedToReceived},
 	join(m.PostStatusCompleted, m.PostStatusReceived): Sender{
 		Template: domain.MessageTemplateRequestFromCompletedToReceived,
 		Sender:   sendNotificationEmpty},

@@ -220,7 +220,7 @@ func (v *updateStatusValidator) isRequestValid(errors *validate.Errors) {
 	// also allowing for some "unofficial" interaction happening outside of the app
 	okTransitions := map[string][]string{
 		PostStatusOpen:      {PostStatusCommitted, PostStatusRemoved},
-		PostStatusCommitted: {PostStatusOpen, PostStatusAccepted, PostStatusDelivered, PostStatusReceived, PostStatusRemoved},
+		PostStatusCommitted: {PostStatusOpen, PostStatusAccepted, PostStatusDelivered, PostStatusRemoved},
 		PostStatusAccepted:  {PostStatusOpen, PostStatusDelivered, PostStatusReceived, PostStatusRemoved},
 		PostStatusDelivered: {PostStatusAccepted, PostStatusCompleted},
 		PostStatusReceived:  {PostStatusAccepted, PostStatusDelivered, PostStatusCompleted},
