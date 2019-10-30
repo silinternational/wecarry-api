@@ -140,3 +140,11 @@ func (t *DummyEmailService) GetLastToEmail() string {
 
 	return t.sentMessages[len(t.sentMessages)-1].toEmail
 }
+
+func (t *DummyEmailService) GetToEmailByIndex(i int) string {
+	if len(t.sentMessages) <= i {
+		return ""
+	}
+
+	return t.sentMessages[i].toEmail
+}

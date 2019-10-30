@@ -259,6 +259,18 @@ func (u *User) FindByUUID(uuid string, selectFields ...string) error {
 	return nil
 }
 
+func (u *User) FindByID(id int, eagerFields ...string) error {
+	if id <= 0 {
+		return errors.New("error finding user: id must a positive number")
+	}
+
+	if err := DB.Eager(eagerFields...).Find(u, id); err != nil {
+		return fmt.Errorf("error finding user by id: %v, ... %v", id, err.Error())
+	}
+
+	return nil
+}
+
 // HashClientIdAccessToken just returns a sha256.Sum256 of the input value
 func HashClientIdAccessToken(accessToken string) string {
 	return fmt.Sprintf("%x", sha256.Sum256([]byte(accessToken)))

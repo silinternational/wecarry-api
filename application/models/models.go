@@ -60,6 +60,27 @@ func ConvertStringPtrToNullsString(inPtr *string) nulls.String {
 	return nulls.NewString(*inPtr)
 }
 
+// GetStringFromNullsString returns a pointer to make it easier for calling
+// functions to return a pointer without an extra line of code.
+func GetStringFromNullsString(inString nulls.String) *string {
+	output := ""
+	if inString.Valid {
+		output = inString.String
+	}
+
+	return &output
+}
+
+// GetIntFromNullsInt returns a pointer to make it easier for calling
+// functions to return a pointer without an extra line of code.
+func GetIntFromNullsInt(in nulls.Int) *int {
+	output := int(0)
+	if in.Valid {
+		output = in.Int
+	}
+	return &output
+}
+
 func GetCurrentUserFromGqlContext(ctx context.Context, testUser User) User {
 	if testUser.ID > 0 {
 		return testUser

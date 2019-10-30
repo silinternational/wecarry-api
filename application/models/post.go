@@ -253,9 +253,10 @@ func (p *Post) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 
 // PostStatusEventData holds data needed by the Post Status Updated event listener
 type PostStatusEventData struct {
-	OldStatus string
-	NewStatus string
-	PostID    int
+	OldStatus     string
+	NewStatus     string
+	OldProviderID int
+	PostID        int
 }
 
 func (p *Post) BeforeUpdate(tx *pop.Connection) error {
@@ -270,9 +271,10 @@ func (p *Post) BeforeUpdate(tx *pop.Connection) error {
 	}
 
 	eventData := PostStatusEventData{
-		OldStatus: oldPost.Status,
-		NewStatus: p.Status,
-		PostID:    p.ID,
+		OldStatus:     oldPost.Status,
+		NewStatus:     p.Status,
+		PostID:        p.ID,
+		OldProviderID: *GetIntFromNullsInt(p.ProviderID),
 	}
 
 	e := events.Event{
@@ -282,6 +284,23 @@ func (p *Post) BeforeUpdate(tx *pop.Connection) error {
 	}
 
 	emitEvent(e)
+	return nil
+}
+
+// Make sure there is no provider on an Open Request
+func (p *Post) AfterUpdate(tx *pop.Connection) error {
+	if p.Type != PostTypeRequest || p.Status != PostStatusOpen {
+		return nil
+	}
+
+	p.ProviderID = nulls.Int{}
+
+	// Don't try to use DB.Update inside AfterUpdate, since that gets into an eternal loop
+	if err := DB.RawQuery(
+		fmt.Sprintf(`UPDATE posts set provider_id = NULL where ID = %v`, p.ID)).Exec(); err != nil {
+		domain.ErrLogger.Print("error removing provider id from post ... " + err.Error())
+	}
+
 	return nil
 }
 
