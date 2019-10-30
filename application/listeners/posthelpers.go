@@ -108,22 +108,9 @@ func sendNotificationRequestFromCommittedToOpen(template string, post m.Post, eD
 		return
 	}
 
-	data = map[string]interface{}{
-		"uiURL":             domain.Env.UIURL,
-		"postURL":           domain.GetPostUIURL(post.Uuid.String()),
-		"postTitle":         post.Title,
-		"providerNickname":  providerNickname,
-		"providerEmail":     providerEmail,
-		"requesterNickname": postUsers.Requester.Nickname,
-		"requesterEmail":    postUsers.Requester.Email,
-	}
+	msg.ToName = oldProvider.Nickname
+	msg.ToEmail = oldProvider.Email
 
-	msg = notifications.Message{
-		Template: template,
-		Data:     data,
-		ToName:   oldProvider.Nickname,
-		ToEmail:  oldProvider.Email,
-	}
 	if err := notifications.Send(msg); err != nil {
 		domain.ErrLogger.Printf("error sending '%s' notification to requester, %s", template, err)
 	}
