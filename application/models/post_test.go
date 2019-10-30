@@ -374,20 +374,21 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			wantErr: false,
 		},
 		{
-			name: "good status - from committed to received",
-			post: Post{
-				Status: PostStatusReceived,
-				Uuid:   posts[1].Uuid,
-			},
-			wantErr: false,
-		},
-		{
 			name: "good status - from committed to removed",
 			post: Post{
 				Status: PostStatusRemoved,
 				Uuid:   posts[1].Uuid,
 			},
 			wantErr: false,
+		},
+		{
+			name: "bad status - from committed to received",
+			post: Post{
+				Status: PostStatusReceived,
+				Uuid:   posts[1].Uuid,
+			},
+			wantErr:  true,
+			errField: "status",
 		},
 		{
 			name: "bad status - from committed to completed",
