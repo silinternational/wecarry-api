@@ -11,22 +11,6 @@ import (
 
 type mutationResolver struct{ *Resolver }
 
-func (r *mutationResolver) CreateMessage(ctx context.Context, input CreateMessageInput) (*models.Message, error) {
-	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
-	message, err := ConvertGqlCreateMessageInputToDBMessage(input, cUser)
-	if err != nil {
-		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
-		return &models.Message{}, err
-	}
-
-	if err := message.Create(); err != nil {
-		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
-		return &models.Message{}, err
-	}
-
-	return &message, err
-}
-
 func (r *mutationResolver) CreateOrganization(ctx context.Context, input CreateOrganizationInput) (*models.Organization, error) {
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 	if !cUser.CanCreateOrganization() {

@@ -1,2 +1,10 @@
-- id: MessageGetSender
-  translation: error finding the message sender information
+- id: GetMessageSender
+  translation: We had a problem finding the message sender information.
+- id: GetMessageThread
+  translation: We had a problem finding the message conversation information.
+- id: GetMessage
+  translation: We had a problem finding the message information.
+- id: CreateMessageParseInput
+  translation: We had a problem processing the new message.
+- id: CreateMessage
+  translation: We had a problem creating the new message.

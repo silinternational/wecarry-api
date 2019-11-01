@@ -7,9 +7,10 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
-	"github.com/vektah/gqlparser/gqlerror"
 )
 
+// MessageFields maps GraphQL fields to their equivalent database fields. For related types, the
+// foreign key field name is provided.
 func MessageFields() map[string]string {
 	return map[string]string{
 		"id":        "uuid",
@@ -21,12 +22,14 @@ func MessageFields() map[string]string {
 	}
 }
 
+// Message returns the message resolver. It is required by GraphQL
 func (r *Resolver) Message() MessageResolver {
 	return &messageResolver{r}
 }
 
 type messageResolver struct{ *Resolver }
 
+// ID resolves the `ID` property of the message model
 func (r *messageResolver) ID(ctx context.Context, obj *models.Message) (string, error) {
 	if obj == nil {
 		return "", nil
@@ -34,6 +37,7 @@ func (r *messageResolver) ID(ctx context.Context, obj *models.Message) (string, 
 	return obj.Uuid.String(), nil
 }
 
+// Sender resolves the `sender` property of the message model
 func (r *messageResolver) Sender(ctx context.Context, obj *models.Message) (*models.User, error) {
 	if obj == nil {
 		return nil, nil
@@ -42,19 +46,29 @@ func (r *messageResolver) Sender(ctx context.Context, obj *models.Message) (*mod
 	if err != nil {
 		c := models.GetBuffaloContextFromGqlContext(ctx)
 		domain.Error(c, err.Error())
-		return nil, errors.New(domain.T.Translate(c, "MessageGetSender"))
+		return nil, errors.New(domain.T.Translate(c, "GetMessageSender"))
 	}
+
 	return user, nil
 }
 
+// Thread resolves the `thread` property of the message model
 func (r *messageResolver) Thread(ctx context.Context, obj *models.Message) (*models.Thread, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	selectFields := getSelectFieldsForThreads(ctx)
-	return obj.GetThread(selectFields)
+
+	thread, err := obj.GetThread(getSelectFieldsForThreads(ctx))
+	if err != nil {
+		c := models.GetBuffaloContextFromGqlContext(ctx)
+		domain.Error(c, err.Error())
+		return nil, errors.New(domain.T.Translate(c, "GetMessageThread"))
+	}
+
+	return thread, nil
 }
 
+// Message resolves the `message` model
 func (r *queryResolver) Message(ctx context.Context, id *string) (*models.Message, error) {
 	if id == nil {
 		return nil, nil
@@ -63,15 +77,15 @@ func (r *queryResolver) Message(ctx context.Context, id *string) (*models.Messag
 	messageFields := GetSelectFieldsFromRequestFields(MessageFields(), graphql.CollectAllFields(ctx))
 
 	if err := message.FindByUUID(*id, messageFields...); err != nil {
-		graphql.AddError(ctx, gqlerror.Errorf("error getting message: %v", err.Error()))
-		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
-		return &models.Message{}, err
+		c := models.GetBuffaloContextFromGqlContext(ctx)
+		domain.Error(c, err.Error())
+		return nil, errors.New(domain.T.Translate(c, "GetMessage"))
 	}
 
 	return &message, nil
 }
 
-func ConvertGqlCreateMessageInputToDBMessage(gqlMessage CreateMessageInput, user models.User) (models.Message, error) {
+func convertGqlCreateMessageInputToDBMessage(gqlMessage CreateMessageInput, user models.User) (models.Message, error) {
 
 	var thread models.Thread
 
@@ -98,4 +112,22 @@ func ConvertGqlCreateMessageInputToDBMessage(gqlMessage CreateMessageInput, user
 	dbMessage.SentByID = user.ID
 
 	return dbMessage, nil
+}
+
+// CreateMessage is a mutation resolver for creating a new message
+func (r *mutationResolver) CreateMessage(ctx context.Context, input CreateMessageInput) (*models.Message, error) {
+	c := models.GetBuffaloContextFromGqlContext(ctx)
+	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+	message, err := convertGqlCreateMessageInputToDBMessage(input, cUser)
+	if err != nil {
+		domain.Error(c, err.Error())
+		return nil, errors.New(domain.T.Translate(c, "CreateMessageParseInput"))
+	}
+
+	if err2 := message.Create(); err2 != nil {
+		domain.Error(c, err2.Error())
+		return nil, errors.New(domain.T.Translate(c, "CreateMessage"))
+	}
+
+	return &message, nil
 }

@@ -1,2 +1,2 @@
-- id: MessageGetSender
-  translation: error al encontrar la información del remitente del mensaje
+- id: GetMessageSender
+  translation: tuvimos un problema para encontrar la información del remitente del mensaje
