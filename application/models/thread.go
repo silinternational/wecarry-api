@@ -81,7 +81,9 @@ func (t *Thread) FindByUUID(uuid string) error {
 
 func (t *Thread) GetPost(selectFields []string) (*Post, error) {
 	if t.PostID <= 0 {
-		return nil, fmt.Errorf("error: PostID must be positive, got %v", t.PostID)
+		if err := t.FindByUUID(t.Uuid.String()); err != nil {
+			return nil, err
+		}
 	}
 	post := Post{}
 	if err := DB.Select(selectFields...).Find(&post, t.PostID); err != nil {
