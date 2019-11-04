@@ -4,7 +4,33 @@
   translation: We had a problem finding the message conversation information.
 - id: GetMessage
   translation: We had a problem finding the message information.
-- id: CreateMessageParseInput
+- id: CreateMessage.ParseInput
   translation: We had a problem processing the new message.
 - id: CreateMessage
   translation: We had a problem creating the new message.
+- id: CreateOrganization
+  translation: We had a problem creating the new organization.
+- id: CreateOrganization.NotAllowed
+  translation: You have insufficient privileges to create organizations.
+- id: UpdateOrganization
+  translation: We had a problem updating the organization.
+- id: UpdateOrganization.NotFound
+  translation: We had a problem finding the organization to update.
+- id: UpdateOrganization.NotAllowed
+  translation: You have insufficient privileges to edit information for that organization.
+- id: CreateOrganizationDomain
+  translation: We had a problem adding a domain to the organization.
+- id: CreateOrganizationDomain.NotFound
+  translation: We had a problem finding the organization to add a domain.
+- id: CreateOrganizationDomain.NotAllowed
+  translation: You have insufficient privileges to add domains to that organization.
+- id: RemoveOrganizationDomain
+  translation: We had a problem removing a domain from the organization.
+- id: RemoveOrganizationDomain.NotFound
+  translation: We had a problem finding the organization to remove a domain.
+- id: RemoveOrganizationDomain.NotAllowed
+  translation: You have insufficient privileges to remove domains from that organization.
+- id: SetThreadLastViewedAt.NotFound
+  translation: We had a problem finding the thread to update its last-viewed time.
+- id: SetThreadLastViewedAt
+  translation: We had a problem updating the thread last-viewed time.
