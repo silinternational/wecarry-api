@@ -45,7 +45,10 @@ func (r *messageResolver) Sender(ctx context.Context, obj *models.Message) (*mod
 	user, err := obj.GetSender(GetSelectFieldsForUsers(ctx))
 	if err != nil {
 		c := models.GetBuffaloContextFromGqlContext(ctx)
-		domain.Error(c, err.Error())
+		extras := map[string]interface{}{
+			"query": *graphql.GetRequestContext(ctx),
+		}
+		domain.Error(c, err.Error(), extras)
 		return nil, errors.New(domain.T.Translate(c, "GetMessageSender"))
 	}
 
@@ -61,7 +64,10 @@ func (r *messageResolver) Thread(ctx context.Context, obj *models.Message) (*mod
 	thread, err := obj.GetThread(getSelectFieldsForThreads(ctx))
 	if err != nil {
 		c := models.GetBuffaloContextFromGqlContext(ctx)
-		domain.Error(c, err.Error())
+		extras := map[string]interface{}{
+			"query": *graphql.GetRequestContext(ctx),
+		}
+		domain.Error(c, err.Error(), extras)
 		return nil, errors.New(domain.T.Translate(c, "GetMessageThread"))
 	}
 
@@ -78,7 +84,11 @@ func (r *queryResolver) Message(ctx context.Context, id *string) (*models.Messag
 
 	if err := message.FindByUUID(*id, messageFields...); err != nil {
 		c := models.GetBuffaloContextFromGqlContext(ctx)
-		domain.Error(c, err.Error())
+		extras := map[string]interface{}{
+			"query":  *graphql.GetRequestContext(ctx),
+			"fields": messageFields,
+		}
+		domain.Error(c, err.Error(), extras)
 		return nil, errors.New(domain.T.Translate(c, "GetMessage"))
 	}
 
@@ -118,14 +128,18 @@ func convertGqlCreateMessageInputToDBMessage(gqlMessage CreateMessageInput, user
 func (r *mutationResolver) CreateMessage(ctx context.Context, input CreateMessageInput) (*models.Message, error) {
 	c := models.GetBuffaloContextFromGqlContext(ctx)
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+	extras := map[string]interface{}{
+		"user":  cUser,
+		"query": *graphql.GetRequestContext(ctx),
+	}
 	message, err := convertGqlCreateMessageInputToDBMessage(input, cUser)
 	if err != nil {
-		domain.Error(c, err.Error())
+		domain.Error(c, err.Error(), extras)
 		return nil, errors.New(domain.T.Translate(c, "CreateMessageParseInput"))
 	}
 
 	if err2 := message.Create(); err2 != nil {
-		domain.Error(c, err2.Error())
+		domain.Error(c, err2.Error(), extras)
 		return nil, errors.New(domain.T.Translate(c, "CreateMessage"))
 	}
 
