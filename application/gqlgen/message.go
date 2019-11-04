@@ -46,7 +46,7 @@ func (r *messageResolver) Sender(ctx context.Context, obj *models.Message) (*mod
 	if err != nil {
 		c := models.GetBuffaloContextFromGqlContext(ctx)
 		extras := map[string]interface{}{
-			"query": *graphql.GetRequestContext(ctx),
+			"query": graphql.GetRequestContext(ctx).RawQuery,
 		}
 		domain.Error(c, err.Error(), extras)
 		return nil, errors.New(domain.T.Translate(c, "GetMessageSender"))
@@ -65,7 +65,7 @@ func (r *messageResolver) Thread(ctx context.Context, obj *models.Message) (*mod
 	if err != nil {
 		c := models.GetBuffaloContextFromGqlContext(ctx)
 		extras := map[string]interface{}{
-			"query": *graphql.GetRequestContext(ctx),
+			"query": graphql.GetRequestContext(ctx).RawQuery,
 		}
 		domain.Error(c, err.Error(), extras)
 		return nil, errors.New(domain.T.Translate(c, "GetMessageThread"))
@@ -85,7 +85,7 @@ func (r *queryResolver) Message(ctx context.Context, id *string) (*models.Messag
 	if err := message.FindByUUID(*id, messageFields...); err != nil {
 		c := models.GetBuffaloContextFromGqlContext(ctx)
 		extras := map[string]interface{}{
-			"query":  *graphql.GetRequestContext(ctx),
+			"query":  graphql.GetRequestContext(ctx).RawQuery,
 			"fields": messageFields,
 		}
 		domain.Error(c, err.Error(), extras)
@@ -130,7 +130,7 @@ func (r *mutationResolver) CreateMessage(ctx context.Context, input CreateMessag
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 	extras := map[string]interface{}{
 		"user":  cUser,
-		"query": *graphql.GetRequestContext(ctx),
+		"query": graphql.GetRequestContext(ctx).RawQuery,
 	}
 	message, err := convertGqlCreateMessageInputToDBMessage(input, cUser)
 	if err != nil {
