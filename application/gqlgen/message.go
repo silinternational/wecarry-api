@@ -135,7 +135,7 @@ func (r *mutationResolver) CreateMessage(ctx context.Context, input CreateMessag
 	message, err := convertGqlCreateMessageInputToDBMessage(input, cUser)
 	if err != nil {
 		domain.Error(c, err.Error(), extras)
-		return nil, errors.New(domain.T.Translate(c, "CreateMessageParseInput"))
+		return nil, errors.New(domain.T.Translate(c, "CreateMessage.ParseInput"))
 	}
 
 	if err2 := message.Create(); err2 != nil {
