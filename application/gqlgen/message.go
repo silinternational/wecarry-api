@@ -2,7 +2,6 @@ package gqlgen
 
 import (
 	"context"
-	"errors"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/silinternational/wecarry-api/domain"
@@ -44,12 +43,7 @@ func (r *messageResolver) Sender(ctx context.Context, obj *models.Message) (*mod
 	}
 	user, err := obj.GetSender(GetSelectFieldsForUsers(ctx))
 	if err != nil {
-		c := models.GetBuffaloContextFromGqlContext(ctx)
-		extras := map[string]interface{}{
-			"query": graphql.GetRequestContext(ctx).RawQuery,
-		}
-		domain.Error(c, err.Error(), extras)
-		return nil, errors.New(domain.T.Translate(c, "GetMessageSender"))
+		return nil, reportError(ctx, err, "GetMessageSender")
 	}
 
 	return user, nil
@@ -63,12 +57,7 @@ func (r *messageResolver) Thread(ctx context.Context, obj *models.Message) (*mod
 
 	thread, err := obj.GetThread(getSelectFieldsForThreads(ctx))
 	if err != nil {
-		c := models.GetBuffaloContextFromGqlContext(ctx)
-		extras := map[string]interface{}{
-			"query": graphql.GetRequestContext(ctx).RawQuery,
-		}
-		domain.Error(c, err.Error(), extras)
-		return nil, errors.New(domain.T.Translate(c, "GetMessageThread"))
+		return nil, reportError(ctx, err, "GetMessageThread")
 	}
 
 	return thread, nil
@@ -82,14 +71,11 @@ func (r *queryResolver) Message(ctx context.Context, id *string) (*models.Messag
 	var message models.Message
 	messageFields := GetSelectFieldsFromRequestFields(MessageFields(), graphql.CollectAllFields(ctx))
 
-	if err := message.FindByUUID(*id, messageFields...); err != nil {
-		c := models.GetBuffaloContextFromGqlContext(ctx)
+	if err := message.FindByUUID("*id", messageFields...); err != nil {
 		extras := map[string]interface{}{
-			"query":  graphql.GetRequestContext(ctx).RawQuery,
 			"fields": messageFields,
 		}
-		domain.Error(c, err.Error(), extras)
-		return nil, errors.New(domain.T.Translate(c, "GetMessage"))
+		return nil, reportError(ctx, err, "GetMessage", extras)
 	}
 
 	return &message, nil
@@ -126,21 +112,17 @@ func convertGqlCreateMessageInputToDBMessage(gqlMessage CreateMessageInput, user
 
 // CreateMessage is a mutation resolver for creating a new message
 func (r *mutationResolver) CreateMessage(ctx context.Context, input CreateMessageInput) (*models.Message, error) {
-	c := models.GetBuffaloContextFromGqlContext(ctx)
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 	extras := map[string]interface{}{
-		"user":  cUser,
-		"query": graphql.GetRequestContext(ctx).RawQuery,
+		"user": cUser,
 	}
 	message, err := convertGqlCreateMessageInputToDBMessage(input, cUser)
 	if err != nil {
-		domain.Error(c, err.Error(), extras)
-		return nil, errors.New(domain.T.Translate(c, "CreateMessage.ParseInput"))
+		return nil, reportError(ctx, err, "CreateMessage.ParseInput", extras)
 	}
 
 	if err2 := message.Create(); err2 != nil {
-		domain.Error(c, err2.Error(), extras)
-		return nil, errors.New(domain.T.Translate(c, "CreateMessage"))
+		return nil, reportError(ctx, err2, "CreateMessage", extras)
 	}
 
 	return &message, nil

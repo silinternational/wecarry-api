@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/99designs/gqlgen/graphql"
-
 	"github.com/gobuffalo/nulls"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
@@ -15,16 +13,14 @@ type mutationResolver struct{ *Resolver }
 
 // CreateOrganization adds a now organization, if the current user has appropriate permissions.
 func (r *mutationResolver) CreateOrganization(ctx context.Context, input CreateOrganizationInput) (*models.Organization, error) {
-	c := models.GetBuffaloContextFromGqlContext(ctx)
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 	extras := map[string]interface{}{
-		"user":  cUser.Uuid,
-		"query": *graphql.GetRequestContext(ctx),
+		"user": cUser.Uuid,
 	}
 	if !cUser.CanCreateOrganization() {
 		extras["user.admin_role"] = cUser.AdminRole
-		domain.Error(c, "insufficient permissions", extras)
-		return nil, errors.New(domain.T.Translate(c, "CreateOrganization.NotAllowed"))
+		err := errors.New("insufficient permissions")
+		return nil, reportError(ctx, err, "CreateOrganization.NotAllowed", extras)
 	}
 
 	org := models.Organization{
@@ -36,8 +32,7 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input CreateO
 	}
 
 	if err := org.Save(); err != nil {
-		domain.Error(c, err.Error(), extras)
-		return nil, errors.New(domain.T.Translate(c, "CreateOrganization"))
+		return nil, reportError(ctx, err, "CreateOrganization")
 	}
 
 	return &org, nil
@@ -45,23 +40,19 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input CreateO
 
 // UpdateOrganization updates an organization, if the current user has appropriate permissions.
 func (r *mutationResolver) UpdateOrganization(ctx context.Context, input UpdateOrganizationInput) (*models.Organization, error) {
-	c := models.GetBuffaloContextFromGqlContext(ctx)
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 	extras := map[string]interface{}{
-		"user":  cUser.Uuid,
-		"query": graphql.GetRequestContext(ctx).RawQuery,
+		"user": cUser.Uuid,
 	}
 
 	var org models.Organization
-	err := org.FindByUUID(input.ID)
-	if err != nil {
-		domain.Error(c, err.Error(), extras)
-		return nil, errors.New(domain.T.Translate(c, "UpdateOrganization.NotFound"))
+	if err := org.FindByUUID(input.ID); err != nil {
+		return nil, reportError(ctx, err, "UpdateOrganization.NotFound", extras)
 	}
 
 	if !cUser.CanEditOrganization(org.ID) {
-		domain.Error(c, "insufficient permissions", extras)
-		return nil, errors.New(domain.T.Translate(c, "UpdateOrganization.NotAllowed"))
+		err := errors.New("insufficient permissions")
+		return nil, reportError(ctx, err, "UpdateOrganization.NotAllowed", extras)
 	}
 
 	if input.URL != nil {
@@ -71,9 +62,8 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, input UpdateO
 	org.Name = input.Name
 	org.AuthType = input.AuthType
 	org.AuthConfig = input.AuthConfig
-	if err = org.Save(); err != nil {
-		domain.Error(c, err.Error(), extras)
-		return nil, errors.New(domain.T.Translate(c, "UpdateOrganization"))
+	if err := org.Save(); err != nil {
+		return nil, reportError(ctx, err, "UpdateOrganization", extras)
 	}
 
 	return &org, nil
@@ -81,27 +71,23 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, input UpdateO
 
 // CreateOrganizationDomain is the resolver for the `createOrganizationDomain` mutation
 func (r *mutationResolver) CreateOrganizationDomain(ctx context.Context, input CreateOrganizationDomainInput) ([]models.OrganizationDomain, error) {
-	c := models.GetBuffaloContextFromGqlContext(ctx)
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 	extras := map[string]interface{}{
-		"user":  cUser.Uuid,
-		"query": graphql.GetRequestContext(ctx).RawQuery,
+		"user": cUser.Uuid,
 	}
 
 	var org models.Organization
 	if err := org.FindByUUID(input.OrganizationID); err != nil {
-		domain.Error(c, err.Error(), extras)
-		return nil, errors.New(domain.T.Translate(c, "CreateOrganizationDomain.NotFound"))
+		return nil, reportError(ctx, err, "CreateOrganizationDomain.NotFound", extras)
 	}
 
 	if !cUser.CanEditOrganization(org.ID) {
-		domain.Error(c, "insufficient permissions", extras)
-		return nil, errors.New(domain.T.Translate(c, "CreateOrganizationDomain.NotAllowed"))
+		err := errors.New("insufficient permissions")
+		return nil, reportError(ctx, err, "CreateOrganizationDomain.NotAllowed", extras)
 	}
 
 	if err := org.AddDomain(input.Domain); err != nil {
-		domain.Error(c, err.Error(), extras)
-		return nil, errors.New(domain.T.Translate(c, "CreateOrganizationDomain"))
+		return nil, reportError(ctx, err, "CreateOrganizationDomain", extras)
 	}
 
 	return org.OrganizationDomains, nil
@@ -109,27 +95,23 @@ func (r *mutationResolver) CreateOrganizationDomain(ctx context.Context, input C
 
 // RemoveOrganizationDomain is the resolver for the `removeOrganizationDomain` mutation
 func (r *mutationResolver) RemoveOrganizationDomain(ctx context.Context, input RemoveOrganizationDomainInput) ([]models.OrganizationDomain, error) {
-	c := models.GetBuffaloContextFromGqlContext(ctx)
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 	extras := map[string]interface{}{
-		"user":  cUser.Uuid,
-		"query": graphql.GetRequestContext(ctx).RawQuery,
+		"user": cUser.Uuid,
 	}
 
 	var org models.Organization
 	if err := org.FindByUUID(input.OrganizationID); err != nil {
-		domain.Error(c, err.Error(), extras)
-		return nil, errors.New(domain.T.Translate(c, "RemoveOrganizationDomain.NotFound"))
+		return nil, reportError(ctx, err, "RemoveOrganizationDomain.NotFound", extras)
 	}
 
 	if !cUser.CanEditOrganization(org.ID) {
-		domain.Error(c, "insufficient permissions", extras)
-		return nil, errors.New(domain.T.Translate(c, "RemoveOrganizationDomain.NotAllowed"))
+		err := errors.New("insufficient permissions")
+		return nil, reportError(ctx, err, "RemoveOrganizationDomain.NotAllowed", extras)
 	}
 
 	if err := org.RemoveDomain(input.Domain); err != nil {
-		domain.Error(c, err.Error(), extras)
-		return nil, errors.New(domain.T.Translate(c, "RemoveOrganizationDomain"))
+		return nil, reportError(ctx, err, "RemoveOrganizationDomain", extras)
 	}
 
 	return org.OrganizationDomains, nil
@@ -137,22 +119,18 @@ func (r *mutationResolver) RemoveOrganizationDomain(ctx context.Context, input R
 
 // SetThreadLastViewedAt sets the last viewed time for the current user on the given thread
 func (r *mutationResolver) SetThreadLastViewedAt(ctx context.Context, input SetThreadLastViewedAtInput) (*models.Thread, error) {
-	c := models.GetBuffaloContextFromGqlContext(ctx)
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 	extras := map[string]interface{}{
-		"user":  cUser.Uuid,
-		"query": graphql.GetRequestContext(ctx).RawQuery,
+		"user": cUser.Uuid,
 	}
 
 	var thread models.Thread
 	if err := thread.FindByUUID(input.ThreadID); err != nil {
-		domain.Error(c, err.Error(), extras)
-		return nil, errors.New(domain.T.Translate(c, "SetThreadLastViewedAt.NotFound"))
+		return nil, reportError(ctx, err, "SetThreadLastViewedAt.NotFound", extras)
 	}
 
 	if err := thread.UpdateLastViewedAt(cUser.ID, input.Time); err != nil {
-		domain.Error(c, err.Error(), extras)
-		return nil, errors.New(domain.T.Translate(c, "SetThreadLastViewedAt"))
+		return nil, reportError(ctx, err, "SetThreadLastViewedAt", extras)
 	}
 
 	return &thread, nil
