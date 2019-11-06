@@ -11,7 +11,7 @@ import (
 
 type mutationResolver struct{ *Resolver }
 
-// CreateOrganization adds a now organization, if the current user has appropriate permissions.
+// CreateOrganization adds a new organization, if the current user has appropriate permissions.
 func (r *mutationResolver) CreateOrganization(ctx context.Context, input CreateOrganizationInput) (*models.Organization, error) {
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 	extras := map[string]interface{}{
