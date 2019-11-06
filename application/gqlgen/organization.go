@@ -28,7 +28,7 @@ func (r *Resolver) Organization() OrganizationResolver {
 
 type organizationResolver struct{ *Resolver }
 
-// ID resolves the `ID` property of the organization model. It provides the UUID instead of the autoincrement ID.
+// ID resolves the `ID` property of the organization query. It provides the UUID instead of the autoincrement ID.
 func (r *organizationResolver) ID(ctx context.Context, obj *models.Organization) (string, error) {
 	if obj == nil {
 		return "", nil

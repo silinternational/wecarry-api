@@ -46,7 +46,7 @@ func (r *Resolver) Post() PostResolver {
 
 type postResolver struct{ *Resolver }
 
-// ID resolves the `ID` property of the post model. It provides the UUID instead of the autoincrement ID.
+// ID resolves the `ID` property of the post query. It provides the UUID instead of the autoincrement ID.
 func (r *postResolver) ID(ctx context.Context, obj *models.Post) (string, error) {
 	if obj == nil {
 		return "", nil
@@ -54,7 +54,7 @@ func (r *postResolver) ID(ctx context.Context, obj *models.Post) (string, error)
 	return obj.Uuid.String(), nil
 }
 
-// Type resolves the `type` property of the post model. It converts the model type to the gqlgen enum type
+// Type resolves the `type` property of the post query. It converts the model type to the gqlgen enum type
 func (r *postResolver) Type(ctx context.Context, obj *models.Post) (PostType, error) {
 	if obj == nil {
 		return "", nil
@@ -62,7 +62,7 @@ func (r *postResolver) Type(ctx context.Context, obj *models.Post) (PostType, er
 	return PostType(obj.Type), nil
 }
 
-// CreatedBy resolves the `createdBy` property of the post model. It retrieves the related record from the database.
+// CreatedBy resolves the `createdBy` property of the post query. It retrieves the related record from the database.
 func (r *postResolver) CreatedBy(ctx context.Context, obj *models.Post) (*models.User, error) {
 	if obj == nil {
 		return nil, nil
@@ -76,7 +76,7 @@ func (r *postResolver) CreatedBy(ctx context.Context, obj *models.Post) (*models
 	return creator, nil
 }
 
-// Receiver resolves the `receiver` property of the post model. It retrieves the related record from the database.
+// Receiver resolves the `receiver` property of the post query. It retrieves the related record from the database.
 func (r *postResolver) Receiver(ctx context.Context, obj *models.Post) (*models.User, error) {
 	if obj == nil {
 		return nil, nil
@@ -90,7 +90,7 @@ func (r *postResolver) Receiver(ctx context.Context, obj *models.Post) (*models.
 	return receiver, nil
 }
 
-// Provider resolves the `provider` property of the post model. It retrieves the related record from the database.
+// Provider resolves the `provider` property of the post query. It retrieves the related record from the database.
 func (r *postResolver) Provider(ctx context.Context, obj *models.Post) (*models.User, error) {
 	if obj == nil {
 		return nil, nil
@@ -104,7 +104,7 @@ func (r *postResolver) Provider(ctx context.Context, obj *models.Post) (*models.
 	return provider, nil
 }
 
-// Organization resolves the `organization` property of the post model. It retrieves the related record from the
+// Organization resolves the `organization` property of the post query. It retrieves the related record from the
 // database.
 func (r *postResolver) Organization(ctx context.Context, obj *models.Post) (*models.Organization, error) {
 	if obj == nil {
@@ -127,7 +127,7 @@ func (r *postResolver) Description(ctx context.Context, obj *models.Post) (*stri
 	return models.GetStringFromNullsString(obj.Description), nil
 }
 
-// Destination resolves the `destination` property of the post model, retrieving the related record from the database.
+// Destination resolves the `destination` property of the post query, retrieving the related record from the database.
 func (r *postResolver) Destination(ctx context.Context, obj *models.Post) (*models.Location, error) {
 	if obj == nil {
 		return nil, nil
@@ -141,7 +141,7 @@ func (r *postResolver) Destination(ctx context.Context, obj *models.Post) (*mode
 	return destination, nil
 }
 
-// Origin resolves the `origin` property of the post model, retrieving the related record from the database.
+// Origin resolves the `origin` property of the post query, retrieving the related record from the database.
 func (r *postResolver) Origin(ctx context.Context, obj *models.Post) (*models.Location, error) {
 	if obj == nil {
 		return nil, nil
@@ -155,7 +155,7 @@ func (r *postResolver) Origin(ctx context.Context, obj *models.Post) (*models.Lo
 	return origin, nil
 }
 
-// Size resolves the `size` property of the post model. It converts the model type to the gqlgen enum type
+// Size resolves the `size` property of the post query. It converts the model type to the gqlgen enum type
 func (r *postResolver) Size(ctx context.Context, obj *models.Post) (PostSize, error) {
 	if obj == nil {
 		return "", nil
@@ -163,7 +163,7 @@ func (r *postResolver) Size(ctx context.Context, obj *models.Post) (PostSize, er
 	return PostSize(obj.Size), nil
 }
 
-// NeededAfter resolves the `neededAfter` property of the post model, converting a time.Time to a RFC3339 *string
+// NeededAfter resolves the `neededAfter` property of the post query, converting a time.Time to a RFC3339 *string
 func (r *postResolver) NeededAfter(ctx context.Context, obj *models.Post) (*string, error) {
 	if obj == nil {
 		return nil, nil
@@ -171,7 +171,7 @@ func (r *postResolver) NeededAfter(ctx context.Context, obj *models.Post) (*stri
 	return domain.ConvertTimeToStringPtr(obj.NeededAfter), nil
 }
 
-// NeededBefore resolves the `neededBefore` property of the post model, converting a time.Time to a RFC3339 *string
+// NeededBefore resolves the `neededBefore` property of the post query, converting a time.Time to a RFC3339 *string
 func (r *postResolver) NeededBefore(ctx context.Context, obj *models.Post) (*string, error) {
 	if obj == nil {
 		return nil, nil
@@ -179,7 +179,7 @@ func (r *postResolver) NeededBefore(ctx context.Context, obj *models.Post) (*str
 	return domain.ConvertTimeToStringPtr(obj.NeededBefore), nil
 }
 
-// Threads resolves the `threads` property of the post model, retrieving the related records from the database.
+// Threads resolves the `threads` property of the post query, retrieving the related records from the database.
 func (r *postResolver) Threads(ctx context.Context, obj *models.Post) ([]models.Thread, error) {
 	if obj == nil {
 		return nil, nil
@@ -199,7 +199,7 @@ func (r *postResolver) Threads(ctx context.Context, obj *models.Post) ([]models.
 	return threads, nil
 }
 
-// URL resolves the `url` property of the post model, converting nulls.String to a *string
+// URL resolves the `url` property of the post query, converting nulls.String to a *string
 func (r *postResolver) URL(ctx context.Context, obj *models.Post) (*string, error) {
 	if obj == nil {
 		return nil, nil
@@ -207,7 +207,7 @@ func (r *postResolver) URL(ctx context.Context, obj *models.Post) (*string, erro
 	return models.GetStringFromNullsString(obj.URL), nil
 }
 
-// Cost resolves the `cost` property of the post model, converting float64 to *string
+// Cost resolves the `cost` property of the post query, converting float64 to *string
 func (r *postResolver) Cost(ctx context.Context, obj *models.Post) (*string, error) {
 	if (obj == nil) || (!obj.Cost.Valid) {
 		return nil, nil

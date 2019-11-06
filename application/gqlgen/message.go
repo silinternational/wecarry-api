@@ -28,7 +28,7 @@ func (r *Resolver) Message() MessageResolver {
 
 type messageResolver struct{ *Resolver }
 
-// ID resolves the `ID` property of the message model
+// ID resolves the `ID` property of the message query
 func (r *messageResolver) ID(ctx context.Context, obj *models.Message) (string, error) {
 	if obj == nil {
 		return "", nil
@@ -36,7 +36,7 @@ func (r *messageResolver) ID(ctx context.Context, obj *models.Message) (string, 
 	return obj.Uuid.String(), nil
 }
 
-// Sender resolves the `sender` property of the message model
+// Sender resolves the `sender` property of the message query
 func (r *messageResolver) Sender(ctx context.Context, obj *models.Message) (*models.User, error) {
 	if obj == nil {
 		return nil, nil
@@ -49,7 +49,7 @@ func (r *messageResolver) Sender(ctx context.Context, obj *models.Message) (*mod
 	return user, nil
 }
 
-// Thread resolves the `thread` property of the message model
+// Thread resolves the `thread` property of the message query
 func (r *messageResolver) Thread(ctx context.Context, obj *models.Message) (*models.Thread, error) {
 	if obj == nil {
 		return nil, nil
