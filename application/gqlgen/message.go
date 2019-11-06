@@ -114,7 +114,7 @@ func convertGqlCreateMessageInputToDBMessage(gqlMessage CreateMessageInput, user
 func (r *mutationResolver) CreateMessage(ctx context.Context, input CreateMessageInput) (*models.Message, error) {
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 	extras := map[string]interface{}{
-		"user": cUser,
+		"user": cUser.Uuid,
 	}
 	message, err := convertGqlCreateMessageInputToDBMessage(input, cUser)
 	if err != nil {
