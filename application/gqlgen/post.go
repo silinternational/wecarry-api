@@ -68,9 +68,13 @@ func (r *postResolver) CreatedBy(ctx context.Context, obj *models.Post) (*models
 		return nil, nil
 	}
 
-	creator, err := obj.GetCreator(GetSelectFieldsForUsers(ctx))
+	selectFields := GetSelectFieldsForUsers(ctx)
+	creator, err := obj.GetCreator(selectFields)
 	if err != nil {
-		return nil, reportError(ctx, err, "GetPostCreator")
+		extras := map[string]interface{}{
+			"fields": selectFields,
+		}
+		return nil, reportError(ctx, err, "GetPostCreator", extras)
 	}
 
 	return creator, nil
@@ -82,9 +86,13 @@ func (r *postResolver) Receiver(ctx context.Context, obj *models.Post) (*models.
 		return nil, nil
 	}
 
-	receiver, err := obj.GetReceiver(GetSelectFieldsForUsers(ctx))
+	selectFields := GetSelectFieldsForUsers(ctx)
+	receiver, err := obj.GetReceiver(selectFields)
 	if err != nil {
-		return nil, reportError(ctx, err, "GetPostReceiver")
+		extras := map[string]interface{}{
+			"fields": selectFields,
+		}
+		return nil, reportError(ctx, err, "GetPostReceiver", extras)
 	}
 
 	return receiver, nil
@@ -96,9 +104,13 @@ func (r *postResolver) Provider(ctx context.Context, obj *models.Post) (*models.
 		return nil, nil
 	}
 
-	provider, err := obj.GetProvider(GetSelectFieldsForUsers(ctx))
+	selectFields := GetSelectFieldsForUsers(ctx)
+	provider, err := obj.GetProvider(selectFields)
 	if err != nil {
-		return nil, reportError(ctx, err, "GetPostProvider")
+		extras := map[string]interface{}{
+			"fields": selectFields,
+		}
+		return nil, reportError(ctx, err, "GetPostProvider", extras)
 	}
 
 	return provider, nil
@@ -111,9 +123,13 @@ func (r *postResolver) Organization(ctx context.Context, obj *models.Post) (*mod
 		return nil, nil
 	}
 
-	organization, err := obj.GetOrganization(getSelectFieldsForOrganizations(ctx))
+	selectFields := getSelectFieldsForOrganizations(ctx)
+	organization, err := obj.GetOrganization(selectFields)
 	if err != nil {
-		return nil, reportError(ctx, err, "GetPostOrganization")
+		extras := map[string]interface{}{
+			"fields": selectFields,
+		}
+		return nil, reportError(ctx, err, "GetPostOrganization", extras)
 	}
 
 	return organization, nil
