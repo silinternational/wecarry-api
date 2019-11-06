@@ -31,9 +31,9 @@
 - id: RemoveOrganizationDomain.NotAllowed
   translation: You have insufficient privileges to remove domains from that organization.
 - id: SetThreadLastViewedAt.NotFound
-  translation: We had a problem finding the thread to update its last-viewed time.
+  translation: We had a problem finding the conversation to update its last-viewed time.
 - id: SetThreadLastViewedAt
-  translation: We had a problem updating the thread last-viewed time.
+  translation: We had a problem updating the conversation last-viewed time.
 - id: GetOrganizationDomains
   translation: We had a problem finding the list of domains for the organization.
 - id: GetPostCreator
@@ -49,7 +49,7 @@
 - id: GetPostOrigin
   translation: We had a problem finding the origin for that request or offer.
 - id: GetPostThreads
-  translation: We had a problem finding the list of threads for that request or offer.
+  translation: We had a problem finding the list of conversations for that request or offer.
 - id: GetPostPhoto
   translation: We had a problem finding the photo for that request or offer.
 - id: GetPostFiles
