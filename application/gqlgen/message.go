@@ -71,7 +71,7 @@ func (r *queryResolver) Message(ctx context.Context, id *string) (*models.Messag
 	var message models.Message
 	messageFields := GetSelectFieldsFromRequestFields(MessageFields(), graphql.CollectAllFields(ctx))
 
-	if err := message.FindByUUID("*id", messageFields...); err != nil {
+	if err := message.FindByUUID(*id, messageFields...); err != nil {
 		extras := map[string]interface{}{
 			"fields": messageFields,
 		}
