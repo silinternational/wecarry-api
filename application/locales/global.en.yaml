@@ -74,3 +74,17 @@
   translation: We had a problem setting the destination to update that request or offer.
 - id: UpdatePost.SetOrigin
   translation: We had a problem setting the origin to update that request or offer.
+- id: GetThreadParticipants
+  translation: We had a problem getting a list of participants in that conversation.
+- id: GetThreadLastViewedAt
+  translation: We had a problem finding the time you last viewed that conversation.
+- id: GetThreadMessages
+  translation: We had a problem finding the list of messages in that conversation.
+- id: GetThreadPostID
+  translation: We had a problem finding the request or offer for that conversation.
+- id: GetThreadPost
+  translation: We had a problem finding the request or offer inforamation for that conversation.
+- id: GetThreads
+  translation: We had a problem finding the list of conversations.
+- id: GetMyThreads
+  translation: We had a problem finding a list of your conversations.
