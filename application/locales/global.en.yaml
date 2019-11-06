@@ -88,3 +88,31 @@
   translation: We had a problem finding the list of conversations.
 - id: GetMyThreads
   translation: We had a problem finding a list of your conversations.
+- id: GetUserOrganizations
+  translation: We had a problem finding the list of organization for the user profile.
+- id: GetUserPosts
+  translation: We had a problem finding the list of posts for the user profile.
+- id: GetUserPhotoURL
+  translation: We had a problem finding the photo for the user profile.
+- id: GetUserLocation
+  translation: We had a problem finding the location for the user profile.
+- id: GetUserUnreadMessageCount
+  translation: We had a problem finding the unread message count for the user profile.
+- id: GetUsers.NotAllowed
+  translation: You are not allowed to access user profile data.
+- id: GetUsers
+  translation: We had a problem finding the list of user profiles.
+- id: GetUser.NotAllowed
+  translation: You are not allowed to access that user profile.
+- id: GetUser
+  translation: We had a problem finding the user profile.
+- id: UpdateUser.NotFound
+  translation: We had a problem finding the user for the profile update.
+- id: UpdateUser.NotAllowed
+  translation: You are not allowed to update that user profile.
+- id: UpdateUser.PhotoNotFound
+  translation: We had a problem finding the photo to update the user profile.
+- id: UpdateUser.SetLocationError
+  translation: We had a problem setting the location on the user profile.
+- id: UpdateUser
+  translation: We had a problem updating the user profile.
