@@ -140,8 +140,8 @@ func (r *userResolver) UnreadMessageCount(ctx context.Context, obj *models.User)
 func (r *queryResolver) Users(ctx context.Context) ([]models.User, error) {
 	currentUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 
-	role := currentUser.AdminRole
-	if role.String != domain.AdminRoleSuperDuperAdmin {
+	role := currentUser.AdminRole.String
+	if role != domain.AdminRoleSuperDuperAdmin {
 		err := errors.New("insufficient permissions")
 		extras := map[string]interface{}{
 			"role": role,
@@ -169,8 +169,8 @@ func (r *queryResolver) User(ctx context.Context, id *string) (*models.User, err
 		return &currentUser, nil
 	}
 
-	role := currentUser.AdminRole
-	if role.String != domain.AdminRoleSuperDuperAdmin && currentUser.Uuid.String() != *id {
+	role := currentUser.AdminRole.String
+	if role != domain.AdminRoleSuperDuperAdmin && currentUser.Uuid.String() != *id {
 		err := errors.New("insufficient permissions")
 		extras := map[string]interface{}{
 			"role": role,
