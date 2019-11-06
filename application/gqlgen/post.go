@@ -39,12 +39,14 @@ func PostFields() map[string]string {
 	}
 }
 
+// Post returns the post resolver. It is required by GraphQL
 func (r *Resolver) Post() PostResolver {
 	return &postResolver{r}
 }
 
 type postResolver struct{ *Resolver }
 
+// ID resolves the `ID` property of the post model. It provides the UUID instead of the autoincrement ID.
 func (r *postResolver) ID(ctx context.Context, obj *models.Post) (string, error) {
 	if obj == nil {
 		return "", nil
@@ -52,6 +54,7 @@ func (r *postResolver) ID(ctx context.Context, obj *models.Post) (string, error)
 	return obj.Uuid.String(), nil
 }
 
+// Type resolves the `type` property of the post model. It converts the model type to the gqlgen enum type
 func (r *postResolver) Type(ctx context.Context, obj *models.Post) (PostType, error) {
 	if obj == nil {
 		return "", nil
@@ -59,35 +62,64 @@ func (r *postResolver) Type(ctx context.Context, obj *models.Post) (PostType, er
 	return PostType(obj.Type), nil
 }
 
+// CreatedBy resolves the `createdBy` property of the post model. It retrieves the related record from the database.
 func (r *postResolver) CreatedBy(ctx context.Context, obj *models.Post) (*models.User, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	return obj.GetCreator(GetSelectFieldsForUsers(ctx))
+
+	creator, err := obj.GetCreator(GetSelectFieldsForUsers(ctx))
+	if err != nil {
+		return nil, reportError(ctx, err, "GetPostCreator")
+	}
+
+	return creator, nil
 }
 
+// Receiver resolves the `receiver` property of the post model. It retrieves the related record from the database.
 func (r *postResolver) Receiver(ctx context.Context, obj *models.Post) (*models.User, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	return obj.GetReceiver(GetSelectFieldsForUsers(ctx))
+
+	receiver, err := obj.GetReceiver(GetSelectFieldsForUsers(ctx))
+	if err != nil {
+		return nil, reportError(ctx, err, "GetPostReceiver")
+	}
+
+	return receiver, nil
 }
 
+// Provider resolves the `provider` property of the post model. It retrieves the related record from the database.
 func (r *postResolver) Provider(ctx context.Context, obj *models.Post) (*models.User, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	return obj.GetProvider(GetSelectFieldsForUsers(ctx))
+
+	provider, err := obj.GetProvider(GetSelectFieldsForUsers(ctx))
+	if err != nil {
+		return nil, reportError(ctx, err, "GetPostProvider")
+	}
+
+	return provider, nil
 }
 
+// Organization resolves the `organization` property of the post model. It retrieves the related record from the
+// database.
 func (r *postResolver) Organization(ctx context.Context, obj *models.Post) (*models.Organization, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	selectFields := getSelectFieldsForOrganizations(ctx)
-	return obj.GetOrganization(selectFields)
+
+	organization, err := obj.GetOrganization(getSelectFieldsForOrganizations(ctx))
+	if err != nil {
+		return nil, reportError(ctx, err, "GetPostOrganization")
+	}
+
+	return organization, nil
 }
 
+// Description resolves the `description` property, converting a nulls.String to a *string.
 func (r *postResolver) Description(ctx context.Context, obj *models.Post) (*string, error) {
 	if obj == nil {
 		return nil, nil
@@ -95,20 +127,35 @@ func (r *postResolver) Description(ctx context.Context, obj *models.Post) (*stri
 	return models.GetStringFromNullsString(obj.Description), nil
 }
 
+// Destination resolves the `destination` property of the post model, retrieving the related record from the database.
 func (r *postResolver) Destination(ctx context.Context, obj *models.Post) (*models.Location, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	return obj.GetDestination()
+
+	destination, err := obj.GetDestination()
+	if err != nil {
+		return nil, reportError(ctx, err, "GetPostDestination")
+	}
+
+	return destination, nil
 }
 
+// Origin resolves the `origin` property of the post model, retrieving the related record from the database.
 func (r *postResolver) Origin(ctx context.Context, obj *models.Post) (*models.Location, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	return obj.GetOrigin()
+
+	origin, err := obj.GetOrigin()
+	if err != nil {
+		return nil, reportError(ctx, err, "GetPostOrigin")
+	}
+
+	return origin, nil
 }
 
+// Size resolves the `size` property of the post model. It converts the model type to the gqlgen enum type
 func (r *postResolver) Size(ctx context.Context, obj *models.Post) (PostSize, error) {
 	if obj == nil {
 		return "", nil
@@ -116,6 +163,7 @@ func (r *postResolver) Size(ctx context.Context, obj *models.Post) (PostSize, er
 	return PostSize(obj.Size), nil
 }
 
+// NeededAfter resolves the `neededAfter` property of the post model, converting a time.Time to a RFC3339 *string
 func (r *postResolver) NeededAfter(ctx context.Context, obj *models.Post) (*string, error) {
 	if obj == nil {
 		return nil, nil
@@ -123,6 +171,7 @@ func (r *postResolver) NeededAfter(ctx context.Context, obj *models.Post) (*stri
 	return domain.ConvertTimeToStringPtr(obj.NeededAfter), nil
 }
 
+// NeededBefore resolves the `neededBefore` property of the post model, converting a time.Time to a RFC3339 *string
 func (r *postResolver) NeededBefore(ctx context.Context, obj *models.Post) (*string, error) {
 	if obj == nil {
 		return nil, nil
@@ -130,15 +179,27 @@ func (r *postResolver) NeededBefore(ctx context.Context, obj *models.Post) (*str
 	return domain.ConvertTimeToStringPtr(obj.NeededBefore), nil
 }
 
+// Threads resolves the `threads` property of the post model, retrieving the related records from the database.
 func (r *postResolver) Threads(ctx context.Context, obj *models.Post) ([]models.Thread, error) {
 	if obj == nil {
 		return nil, nil
 	}
+
 	selectFields := GetSelectFieldsFromRequestFields(ThreadFields(), graphql.CollectAllFields(ctx))
 	user := models.GetCurrentUserFromGqlContext(ctx, TestUser)
-	return obj.GetThreads(selectFields, user)
+	threads, err := obj.GetThreads(selectFields, user)
+	if err != nil {
+		extras := map[string]interface{}{
+			"user":   user.Uuid,
+			"fields": selectFields,
+		}
+		return nil, reportError(ctx, err, "GetPostThreads", extras)
+	}
+
+	return threads, nil
 }
 
+// URL resolves the `url` property of the post model, converting nulls.String to a *string
 func (r *postResolver) URL(ctx context.Context, obj *models.Post) (*string, error) {
 	if obj == nil {
 		return nil, nil
@@ -146,6 +207,7 @@ func (r *postResolver) URL(ctx context.Context, obj *models.Post) (*string, erro
 	return models.GetStringFromNullsString(obj.URL), nil
 }
 
+// Cost resolves the `cost` property of the post model, converting float64 to *string
 func (r *postResolver) Cost(ctx context.Context, obj *models.Post) (*string, error) {
 	if (obj == nil) || (!obj.Cost.Valid) {
 		return nil, nil
@@ -161,7 +223,12 @@ func (r *postResolver) Photo(ctx context.Context, obj *models.Post) (*models.Fil
 		return nil, nil
 	}
 
-	return obj.GetPhoto()
+	photo, err := obj.GetPhoto()
+	if err != nil {
+		return nil, reportError(ctx, err, "GetPostPhoto")
+	}
+
+	return photo, nil
 }
 
 // Files retrieves the list of files attached to the post, not including the primary photo
@@ -169,22 +236,31 @@ func (r *postResolver) Files(ctx context.Context, obj *models.Post) ([]models.Fi
 	if obj == nil {
 		return nil, nil
 	}
-	return obj.GetFiles()
+	files, err := obj.GetFiles()
+	if err != nil {
+		return nil, reportError(ctx, err, "GetPostFiles")
+	}
+
+	return files, nil
 }
 
+// Posts resolves the `posts` query
 func (r *queryResolver) Posts(ctx context.Context) ([]models.Post, error) {
 	posts := models.Posts{}
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 	selectFields := getSelectFieldsForPosts(ctx)
 	if err := posts.FindByUser(ctx, cUser, selectFields...); err != nil {
-		graphql.AddError(ctx, gqlerror.Errorf("Error getting posts: %v", err.Error()))
-		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
-		return nil, err
+		extras := map[string]interface{}{
+			"user":   cUser.Uuid,
+			"fields": selectFields,
+		}
+		return nil, reportError(ctx, err, "GetPosts", extras)
 	}
 
 	return posts, nil
 }
 
+// Post resolves the `post` query
 func (r *queryResolver) Post(ctx context.Context, id *string) (*models.Post, error) {
 	if id == nil {
 		return nil, nil
@@ -193,9 +269,11 @@ func (r *queryResolver) Post(ctx context.Context, id *string) (*models.Post, err
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 	selectFields := getSelectFieldsForPosts(ctx)
 	if err := post.FindByUserAndUUID(ctx, cUser, *id, selectFields...); err != nil {
-		graphql.AddError(ctx, gqlerror.Errorf("Error getting post: %v", err.Error()))
-		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), map[string]interface{}{"post_id": *id})
-		return &models.Post{}, err
+		extras := map[string]interface{}{
+			"user":   cUser.Uuid,
+			"fields": selectFields,
+		}
+		return nil, reportError(ctx, err, "GetPost", extras)
 	}
 
 	return &post, nil
@@ -313,65 +391,62 @@ type postInput struct {
 	PhotoID      *string
 }
 
+// CreatePost resolves the `createPost` mutation.
 func (r *mutationResolver) CreatePost(ctx context.Context, input postInput) (*models.Post, error) {
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+	extras := map[string]interface{}{
+		"user": cUser.Uuid,
+	}
 
 	post, err := convertGqlPostInputToDBPost(ctx, input, cUser)
 	if err != nil {
-		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
-		return nil, err
+		return nil, reportError(ctx, err, "CreatePost.ProcessInput", extras)
 	}
 
-	if err := post.Create(); err != nil {
-		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
-		return nil, err
+	if err2 := post.Create(); err2 != nil {
+		return nil, reportError(ctx, err2, "CreatePost", extras)
 	}
 
 	if input.Destination != nil {
-		err := post.SetDestination(convertGqlLocationInputToDBLocation(*input.Destination))
-		if err != nil {
-			domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
-			return nil, err
+		if err3 := post.SetDestination(convertGqlLocationInputToDBLocation(*input.Destination)); err3 != nil {
+			return nil, reportError(ctx, err3, "CreatePost.SetDestination", extras)
 		}
 	}
 
 	if input.Origin != nil {
-		err := post.SetOrigin(convertGqlLocationInputToDBLocation(*input.Origin))
-		if err != nil {
-			domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
-			return nil, err
+		if err4 := post.SetOrigin(convertGqlLocationInputToDBLocation(*input.Origin)); err4 != nil {
+			return nil, reportError(ctx, err4, "CreatePost.SetOrigin", extras)
 		}
 	}
 
 	return &post, nil
 }
 
+// UpdatePost resolves the `updatePost` mutation.
 func (r *mutationResolver) UpdatePost(ctx context.Context, input postInput) (*models.Post, error) {
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
-	post, err := convertGqlPostInputToDBPost(ctx, input, cUser)
-	if err != nil {
-		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
-		return nil, err
+	extras := map[string]interface{}{
+		"user": cUser.Uuid,
 	}
 
-	if err := post.Update(); err != nil {
-		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
-		return nil, err
+	post, err := convertGqlPostInputToDBPost(ctx, input, cUser)
+	if err != nil {
+		return nil, reportError(ctx, err, "UpdatePost.ProcessInput", extras)
+	}
+
+	if err2 := post.Update(); err2 != nil {
+		return nil, reportError(ctx, err2, "UpdatePost", extras)
 	}
 
 	if input.Destination != nil {
-		err := post.SetDestination(convertGqlLocationInputToDBLocation(*input.Destination))
-		if err != nil {
-			domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
-			return nil, err
+		if err3 := post.SetDestination(convertGqlLocationInputToDBLocation(*input.Destination)); err3 != nil {
+			return nil, reportError(ctx, err3, "UpdatePost.SetDestination", extras)
 		}
 	}
 
 	if input.Origin != nil {
-		err := post.SetOrigin(convertGqlLocationInputToDBLocation(*input.Origin))
-		if err != nil {
-			domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
-			return nil, err
+		if err4 := post.SetOrigin(convertGqlLocationInputToDBLocation(*input.Origin)); err4 != nil {
+			return nil, reportError(ctx, err4, "UpdatePost.SetOrigin", extras)
 		}
 	}
 

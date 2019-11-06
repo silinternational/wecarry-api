@@ -36,3 +36,41 @@
   translation: We had a problem updating the thread last-viewed time.
 - id: GetOrganizationDomains
   translation: We had a problem finding the list of domains for the organization.
+- id: GetPostCreator
+  translation: We had a problem finding the creator of that request or offer.
+- id: GetPostReceiver
+  translation: We had a problem finding the receiver for that request or offer.
+- id: GetPostProvider
+  translation: We had a problem finding the provider for that request or offer.
+- id: GetPostOrganization
+  translation: We had a problem finding the organization for that request or offer.
+- id: GetPostDestination
+  translation: We had a problem finding the destination for that request or offer.
+- id: GetPostOrigin
+  translation: We had a problem finding the origin for that request or offer.
+- id: GetPostThreads
+  translation: We had a problem finding the list of threads for that request or offer.
+- id: GetPostPhoto
+  translation: We had a problem finding the photo for that request or offer.
+- id: GetPostFiles
+  translation: We had a problem finding the list of attachments for that request or offer.
+- id: GetPosts
+  translation: We had a problem finding a list of requests and offers.
+- id: GetPost
+  translation: We had a problem finding that request or offer.
+- id: CreatePost
+  translation: We had a problem creating that request or offer.
+- id: CreatePost.ProcessInput
+  translation: We had a problem processing the information to create that request or offer.
+- id: CreatePost.SetDestination
+  translation: We had a problem setting the destination for that new request or offer.
+- id: CreatePost.SetOrigin
+  translation: We had a problem setting the origin for that new request or offer.
+- id: UpdatePost
+  translation: We had a problem updating that request or offer.
+- id: UpdatePost.ProcessInput
+  translation: We had a problem processing the information to update that request or offer.
+- id: UpdatePost.SetDestination
+  translation: We had a problem setting the destination to update that request or offer.
+- id: UpdatePost.SetOrigin
+  translation: We had a problem setting the origin to update that request or offer.
