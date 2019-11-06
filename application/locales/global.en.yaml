@@ -83,13 +83,13 @@
 - id: GetThreadPostID
   translation: We had a problem finding the request or offer for that conversation.
 - id: GetThreadPost
-  translation: We had a problem finding the request or offer inforamation for that conversation.
+  translation: We had a problem finding the request or offer information for that conversation.
 - id: GetThreads
   translation: We had a problem finding the list of conversations.
 - id: GetMyThreads
   translation: We had a problem finding a list of your conversations.
 - id: GetUserOrganizations
-  translation: We had a problem finding the list of organization for the user profile.
+  translation: We had a problem finding the list of organizations for the user profile.
 - id: GetUserPosts
   translation: We had a problem finding the list of posts for the user profile.
 - id: GetUserPhotoURL
