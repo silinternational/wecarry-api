@@ -52,7 +52,7 @@ func (r *organizationResolver) Domains(ctx context.Context, obj *models.Organiza
 
 	domains, err := obj.GetDomains()
 	if err != nil {
-		return nil, reportError(ctx, err, "GetMessage")
+		return nil, reportError(ctx, err, "GetOrganizationDomains")
 	}
 
 	return domains, nil

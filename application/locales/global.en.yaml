@@ -34,3 +34,5 @@
   translation: We had a problem finding the thread to update its last-viewed time.
 - id: SetThreadLastViewedAt
   translation: We had a problem updating the thread last-viewed time.
+- id: GetOrganizationDomains
+  translation: We had a problem finding the list of domains for the organization.
