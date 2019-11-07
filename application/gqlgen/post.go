@@ -363,6 +363,16 @@ func (r *mutationResolver) UpdatePost(ctx context.Context, input postInput) (*mo
 		return nil, err
 	}
 
+	var editable bool
+	if editable, err = post.IsEditable(cUser); err != nil {
+		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
+		return nil, err
+	}
+	if !editable {
+		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), "post cannot be edited")
+		return nil, err
+	}
+
 	if err := post.Update(); err != nil {
 		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
 		return nil, err
