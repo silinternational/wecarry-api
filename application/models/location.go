@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"errors"
 
 	"github.com/gobuffalo/nulls"
 )
@@ -22,3 +23,18 @@ func (l Location) String() string {
 
 // Locations is not required by pop and may be deleted
 type Locations []Location
+
+// Create stores the Location data as a new record in the database.
+func (l *Location) Create() error {
+	valErrs, err := DB.ValidateAndCreate(l)
+	if err != nil {
+		return err
+	}
+
+	if len(valErrs.Errors) > 0 {
+		vErrs := FlattenPopErrors(valErrs)
+		return errors.New(vErrs)
+	}
+
+	return nil
+}

@@ -56,7 +56,7 @@ type Post struct {
 	URL            nulls.String  `json:"url" db:"url"`
 	Cost           nulls.Float64 `json:"cost" db:"cost"`
 	PhotoFileID    nulls.Int     `json:"photo_file_id" db:"photo_file_id"`
-	DestinationID  nulls.Int     `json:"destination_id" db:"destination_id"`
+	DestinationID  int           `json:"destination_id" db:"destination_id"`
 	OriginID       nulls.Int     `json:"origin_id" db:"origin_id"`
 	CreatedBy      User          `belongs_to:"users"`
 	Organization   Organization  `belongs_to:"organizations"`
@@ -497,9 +497,6 @@ func (p *Posts) FindByUser(ctx context.Context, user User, selectFields ...strin
 
 // GetDestination reads the destination record, if it exists, and returns the Location object.
 func (p *Post) GetDestination() (*Location, error) {
-	if !p.DestinationID.Valid {
-		return nil, nil
-	}
 	location := Location{}
 	if err := DB.Find(&location, p.DestinationID); err != nil {
 		return nil, err
@@ -523,17 +520,9 @@ func (p *Post) GetOrigin() (*Location, error) {
 
 // SetDestination sets the destination location fields, creating a new record in the database if necessary.
 func (p *Post) SetDestination(location Location) error {
-	if p.DestinationID.Valid {
-		location.ID = p.DestinationID.Int
-		p.Destination = location
-		return DB.Update(&p.Destination)
-	}
-
-	if err := DB.Create(&location); err != nil {
-		return err
-	}
-	p.DestinationID = nulls.NewInt(location.ID)
-	return DB.Update(p)
+	location.ID = p.DestinationID
+	p.Destination = location
+	return DB.Update(&p.Destination)
 }
 
 // SetOrigin sets the origin location fields, creating a new record in the database if necessary.
