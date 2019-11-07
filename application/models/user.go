@@ -43,7 +43,7 @@ type User struct {
 	PhotoURL          nulls.String       `json:"photo_url" db:"photo_url"`
 	LocationID        nulls.Int          `json:"location_id" db:"location_id"`
 	AccessTokens      []UserAccessToken  `has_many:"user_access_tokens" json:"-"`
-	Organizations     Organizations      `many_to_many:"user_organizations" json:"-"`
+	Organizations     Organizations      `many_to_many:"user_organizations" order_by:"name asc" json:"-"`
 	UserOrganizations []UserOrganization `has_many:"user_organizations" json:"-"`
 	PostsCreated      Posts              `has_many:"posts" fk_id:"created_by_id"`
 	PostsProviding    Posts              `has_many:"posts" fk_id:"provider_id"`
