@@ -549,3 +549,46 @@ func (p *Post) SetOrigin(location Location) error {
 	p.OriginID = nulls.NewInt(location.ID)
 	return DB.Update(p)
 }
+
+// IsEditable response with true if the given user is the owner of the post or an admin,
+// and it is not in a locked status.
+func (p *Post) IsEditable(user User) (bool, error) {
+	if user.ID <= 0 {
+		return false, errors.New("user.ID must be a valid primary key")
+	}
+
+	if p.CreatedByID <= 0 {
+		if err := DB.Reload(p); err != nil {
+			return false, err
+		}
+	}
+
+	if user.ID != p.CreatedByID && !user.CanEditAllPosts() {
+		return false, nil
+	}
+
+	return p.isStatusEditable(p.Status), nil
+}
+
+// isStatusEditable defines which posts statuses can be edited. It does not use the receiver `p'.
+func (p *Post) isStatusEditable(status string) bool {
+	switch status {
+	case PostStatusOpen:
+		fallthrough
+	case PostStatusCommitted:
+		fallthrough
+	case PostStatusAccepted:
+		fallthrough
+	case PostStatusReceived:
+		fallthrough
+	case PostStatusDelivered:
+		return true
+
+	case PostStatusCompleted:
+		fallthrough
+	case PostStatusRemoved:
+		fallthrough
+	default:
+		return false
+	}
+}

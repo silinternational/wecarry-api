@@ -246,6 +246,11 @@ func (u *User) CanEditOrganization(orgId int) bool {
 	return false
 }
 
+// CanEditAllPosts returns true if the given user is allowed to edit any post
+func (u *User) CanEditAllPosts() bool {
+	return u.AdminRole.String == domain.AdminRoleSuperDuperAdmin
+}
+
 // FindByUUID find a User with the given UUID and loads it from the database.
 func (u *User) FindByUUID(uuid string, selectFields ...string) error {
 	if uuid == "" {

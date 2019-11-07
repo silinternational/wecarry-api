@@ -172,6 +172,15 @@ func (r *postResolver) Files(ctx context.Context, obj *models.Post) ([]models.Fi
 	return obj.GetFiles()
 }
 
+// IsEditable response with true if the current user is the creator of the post, and it is not in a locked status.
+func (r *postResolver) IsEditable(ctx context.Context, obj *models.Post) (bool, error) {
+	if obj == nil {
+		return false, nil
+	}
+	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+	return obj.IsEditable(cUser)
+}
+
 func (r *queryResolver) Posts(ctx context.Context) ([]models.Post, error) {
 	posts := models.Posts{}
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
