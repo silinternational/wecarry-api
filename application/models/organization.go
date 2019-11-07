@@ -28,7 +28,7 @@ type Organization struct {
 	AuthConfig          string               `json:"auth_config" db:"auth_config"`
 	Uuid                uuid.UUID            `json:"uuid" db:"uuid"`
 	Users               Users                `many_to_many:"user_organizations"`
-	OrganizationDomains []OrganizationDomain `has_many:"organization_domains"`
+	OrganizationDomains []OrganizationDomain `has_many:"organization_domains" order_by:"domain asc"`
 }
 
 type Organizations []Organization
