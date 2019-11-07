@@ -86,7 +86,7 @@ type Post {
     organization: Organization
     title: String!
     description: String
-    destination: Location
+    destination: Location!
     origin: Location
     size: PostSize!
     neededAfter: String
