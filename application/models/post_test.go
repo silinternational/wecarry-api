@@ -873,7 +873,7 @@ func (ms *ModelSuite) TestPost_GetThreads() {
 		want []uuid.UUID
 	}{
 		{name: "no threads", post: posts[1], want: []uuid.UUID{}},
-		{name: "two threads", post: posts[0], want: []uuid.UUID{threads[0].Uuid, threads[1].Uuid}},
+		{name: "two threads", post: posts[0], want: []uuid.UUID{threads[1].Uuid, threads[0].Uuid}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

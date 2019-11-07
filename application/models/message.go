@@ -124,6 +124,11 @@ func (m *Message) Create() error {
 		return errors.New(FlattenPopErrors(valErrs))
 	}
 
+	// Touch the "updatedAt" field on the thread so thread lists can easily be sorted by last activity
+	if err2 := DB.Load(m, "Thread"); err2 == nil {
+		_ = DB.Save(&m.Thread)
+	}
+
 	e := events.Event{
 		Kind:    domain.EventApiMessageCreated,
 		Message: "New Message Created",

@@ -64,7 +64,7 @@ type Post struct {
 	Provider       User          `belongs_to:"users"`
 	Files          PostFiles     `has_many:"post_files"`
 	PhotoFile      File          `belongs_to:"files"`
-	Threads        Threads       `has_many:"threads"`
+	Threads        Threads       `has_many:"threads" order_by:"updated_at desc"`
 	Destination    Location      `belongs_to:"locations"`
 	Origin         Location      `belongs_to:"locations"`
 }
@@ -366,22 +366,13 @@ func (p *Post) GetOrganization(fields []string) (*Organization, error) {
 
 // GetThreads finds all threads on this post in which the given user is participating
 func (p *Post) GetThreads(fields []string, user User) ([]Thread, error) {
-	if err := DB.Load(p, "Threads"); err != nil {
-		return nil, fmt.Errorf("error getting threads for post id %v ... %v", p.ID, err)
-	}
-
-	var threads []Thread
-	for i, t := range p.Threads {
-		if err := DB.Load(&t, "Participants"); err != nil {
-			return nil, fmt.Errorf("error getting participants for thread id %v ... %v", t.ID, err)
-		}
-
-		for _, participant := range t.Participants {
-			if participant.ID == user.ID {
-				threads = append(threads, p.Threads[i])
-				break
-			}
-		}
+	var threads Threads
+	query := DB.Q().
+		Join("thread_participants tp", "threads.id = tp.thread_id").
+		Order("threads.updated_at DESC").
+		Where("tp.user_id = ? AND threads.post_id = ?", user.ID, p.ID)
+	if err := query.All(&threads); err != nil {
+		return nil, err
 	}
 
 	return threads, nil
