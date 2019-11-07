@@ -162,6 +162,11 @@ func CreateUserFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) UserMes
 		}
 	}
 
+	locations := []Location{{}, {}}
+	for i := range locations {
+		createFixture(ms, &(locations[i]))
+	}
+
 	// Each user has a request and is a provider on the other user's post
 	posts := Posts{
 		{
@@ -173,6 +178,7 @@ func CreateUserFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) UserMes
 			Status:         PostStatusOpen,
 			Uuid:           domain.GetUuid(),
 			ProviderID:     nulls.NewInt(users[1].ID),
+			DestinationID:  locations[0].ID,
 		},
 		{
 			CreatedByID:    users[1].ID,
@@ -183,6 +189,7 @@ func CreateUserFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) UserMes
 			Status:         PostStatusOpen,
 			Uuid:           domain.GetUuid(),
 			ProviderID:     nulls.NewInt(users[0].ID),
+			DestinationID:  locations[1].ID,
 		},
 	}
 
@@ -319,8 +326,11 @@ func CreateUserFixtures_GetThreads(ms *ModelSuite) UserFixtures {
 		createFixture(ms, &users[i])
 	}
 
+	location := Location{}
+	createFixture(ms, &location)
+
 	posts := Posts{
-		{CreatedByID: users[0].ID, OrganizationID: org.ID, Uuid: domain.GetUuid()},
+		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID, DestinationID: location.ID},
 	}
 	for i := range posts {
 		createFixture(ms, &posts[i])

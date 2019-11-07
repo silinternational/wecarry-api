@@ -39,6 +39,11 @@ func CreateFixturesValidateUpdate(ms *ModelSuite, t *testing.T) []Post {
 		t.FailNow()
 	}
 
+	locations := []Location{{}, {}, {}, {}, {}, {}}
+	for i := range locations {
+		createFixture(ms, &locations[i])
+	}
+
 	// Load Post test fixtures
 	posts := []Post{
 		{
@@ -49,6 +54,7 @@ func CreateFixturesValidateUpdate(ms *ModelSuite, t *testing.T) []Post {
 			Size:           PostSizeMedium,
 			Status:         PostStatusOpen,
 			Uuid:           domain.GetUuid(),
+			DestinationID:  locations[0].ID,
 		},
 		{
 			CreatedByID:    user.ID,
@@ -58,6 +64,7 @@ func CreateFixturesValidateUpdate(ms *ModelSuite, t *testing.T) []Post {
 			Size:           PostSizeMedium,
 			Status:         PostStatusCommitted,
 			Uuid:           domain.GetUuid(),
+			DestinationID:  locations[1].ID,
 		},
 		{
 			CreatedByID:    user.ID,
@@ -67,6 +74,7 @@ func CreateFixturesValidateUpdate(ms *ModelSuite, t *testing.T) []Post {
 			Size:           PostSizeMedium,
 			Status:         PostStatusAccepted,
 			Uuid:           domain.GetUuid(),
+			DestinationID:  locations[2].ID,
 		},
 		{
 			CreatedByID:    user.ID,
@@ -76,6 +84,7 @@ func CreateFixturesValidateUpdate(ms *ModelSuite, t *testing.T) []Post {
 			Size:           PostSizeMedium,
 			Status:         PostStatusReceived,
 			Uuid:           domain.GetUuid(),
+			DestinationID:  locations[3].ID,
 		},
 		{
 			CreatedByID:    user.ID,
@@ -85,6 +94,7 @@ func CreateFixturesValidateUpdate(ms *ModelSuite, t *testing.T) []Post {
 			Size:           PostSizeMedium,
 			Status:         PostStatusCompleted,
 			Uuid:           domain.GetUuid(),
+			DestinationID:  locations[4].ID,
 		},
 		{
 			CreatedByID:    user.ID,
@@ -94,6 +104,7 @@ func CreateFixturesValidateUpdate(ms *ModelSuite, t *testing.T) []Post {
 			Size:           PostSizeMedium,
 			Status:         PostStatusRemoved,
 			Uuid:           domain.GetUuid(),
+			DestinationID:  locations[5].ID,
 		},
 	}
 
@@ -109,6 +120,11 @@ func CreatePostFixtures(ms *ModelSuite, t *testing.T, users Users) []Post {
 		t.Errorf("failed to load organizations on users[0] fixture, %s", err)
 	}
 
+	locations := []Location{{}, {}}
+	for i := range locations {
+		createFixture(ms, &(locations[i]))
+	}
+
 	// Load Post test fixtures
 	posts := []Post{
 		{
@@ -120,6 +136,7 @@ func CreatePostFixtures(ms *ModelSuite, t *testing.T, users Users) []Post {
 			Status:         PostStatusOpen,
 			Uuid:           domain.GetUuid(),
 			ProviderID:     nulls.NewInt(users[1].ID),
+			DestinationID:  locations[0].ID,
 		},
 		{
 			CreatedByID:    users[0].ID,
@@ -130,6 +147,7 @@ func CreatePostFixtures(ms *ModelSuite, t *testing.T, users Users) []Post {
 			Status:         PostStatusOpen,
 			Uuid:           domain.GetUuid(),
 			ReceiverID:     nulls.NewInt(users[1].ID),
+			DestinationID:  locations[1].ID,
 		},
 	}
 	for i := range posts {
@@ -172,10 +190,15 @@ func CreateFixtures_Posts_FindByUser(ms *ModelSuite) PostFixtures {
 		createFixture(ms, &(userOrgs[i]))
 	}
 
+	locations := []Location{{}, {}, {}}
+	for i := range locations {
+		createFixture(ms, &(locations[i]))
+	}
+
 	posts := Posts{
-		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: orgs[0].ID},
-		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: orgs[1].ID},
-		{Uuid: domain.GetUuid(), CreatedByID: users[1].ID, OrganizationID: orgs[0].ID},
+		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: orgs[0].ID, DestinationID: locations[0].ID},
+		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: orgs[1].ID, DestinationID: locations[1].ID},
+		{Uuid: domain.GetUuid(), CreatedByID: users[1].ID, OrganizationID: orgs[0].ID, DestinationID: locations[2].ID},
 	}
 	for i := range posts {
 		createFixture(ms, &posts[i])

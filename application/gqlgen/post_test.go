@@ -102,6 +102,7 @@ func createFixtures_PostQuery(gs *GqlgenSuite) PostQueryFixtures {
 			Latitude:    nulls.NewFloat64(43.6532),
 			Longitude:   nulls.NewFloat64(-79.3832),
 		},
+		{},
 	}
 	for i := range locations {
 		createFixture(gs, &(locations[i]))
@@ -117,7 +118,7 @@ func createFixtures_PostQuery(gs *GqlgenSuite) PostQueryFixtures {
 			Type:           PostTypeRequest.String(),
 			Status:         PostStatusCommitted.String(),
 			Title:          "A Request",
-			DestinationID:  nulls.NewInt(locations[0].ID),
+			DestinationID:  locations[0].ID,
 			OriginID:       nulls.NewInt(locations[1].ID),
 			Size:           PostSizeSmall.String(),
 			NeededAfter:    time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
@@ -132,6 +133,7 @@ func createFixtures_PostQuery(gs *GqlgenSuite) PostQueryFixtures {
 			CreatedByID:    users[0].ID,
 			ProviderID:     nulls.NewInt(users[0].ID),
 			OrganizationID: org.ID,
+			DestinationID:  locations[2].ID,
 		},
 	}
 	for i := range posts {
@@ -314,7 +316,7 @@ func createFixtures_UpdatePost(gs *GqlgenSuite) UpdatePostFixtures {
 			Status:         PostStatusOpen.String(),
 			Uuid:           domain.GetUuid(),
 			ReceiverID:     nulls.NewInt(users[1].ID),
-			DestinationID:  nulls.NewInt(locations[0].ID), // test update of existing location
+			DestinationID:  locations[0].ID, // test update of existing location
 			// leave OriginID nil to test adding a location
 		},
 	}
@@ -504,7 +506,8 @@ func (gs *GqlgenSuite) Test_CreatePost() {
 			size neededAfter neededBefore category url cost }}`
 
 	TestUser = f.User
-	c.MustPost(query, &postsResp)
+	err := c.Post(query, &postsResp)
+	gs.NoError(err)
 
 	gs.Equal(f.Organization.Uuid.String(), postsResp.Post.Organization.ID)
 	gs.Equal(f.File.UUID.String(), postsResp.Post.Photo.ID)
