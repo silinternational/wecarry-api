@@ -3,8 +3,12 @@ package models
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	"github.com/gobuffalo/nulls"
+	"github.com/gobuffalo/pop"
+	"github.com/gobuffalo/validate"
+	"github.com/gobuffalo/validate/validators"
 )
 
 type Location struct {
@@ -23,6 +27,56 @@ func (l Location) String() string {
 
 // Locations is not required by pop and may be deleted
 type Locations []Location
+
+// Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
+func (l *Location) Validate(tx *pop.Connection) (*validate.Errors, error) {
+	return validate.Validate(
+		&validators.StringIsPresent{Field: l.Description, Name: "Description"},
+		&validators.StringLengthInRange{
+			Name:    "country",
+			Field:   l.Country,
+			Min:     2,
+			Max:     2,
+			Message: "country must be ISO 3166–1 alpha-2",
+		},
+		&geoValidator{
+			Name:      "geo",
+			Latitude:  l.Latitude,
+			Longitude: l.Longitude,
+		},
+	), nil
+}
+
+type geoValidator struct {
+	Name, Message       string
+	Latitude, Longitude nulls.Float64
+}
+
+// IsValid checks the latitude and longitude valid ranges
+func (v *geoValidator) IsValid(errors *validate.Errors) {
+	if !v.Latitude.Valid && !v.Longitude.Valid {
+		return
+	}
+
+	if v.Latitude.Valid != v.Latitude.Valid {
+		errors.Add(validators.GenerateKey(v.Name), "only one coordinate given, must have neither or both")
+	}
+
+	if v.Latitude.Float64 < -90.0 || v.Latitude.Float64 > 90.0 {
+		v.Message = fmt.Sprintf("Latitude %v is out of range", v.Latitude)
+		errors.Add(validators.GenerateKey(v.Name), v.Message)
+	}
+
+	if v.Longitude.Float64 < -180.0 || v.Longitude.Float64 > 180.0 {
+		v.Message = fmt.Sprintf("Longitude %v is out of range", v.Longitude)
+		errors.Add(validators.GenerateKey(v.Name), v.Message)
+	}
+
+	if v.Longitude.Float64 == 0 && v.Latitude.Float64 == 0 {
+		v.Message = "a valid geo coordinate must be given"
+		errors.Add(validators.GenerateKey(v.Name), v.Message)
+	}
+}
 
 // Create stores the Location data as a new record in the database.
 func (l *Location) Create() error {
