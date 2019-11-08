@@ -94,7 +94,9 @@ func (u *User) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 
 // All retrieves all Users from the database.
 func (u *Users) All(selectFields ...string) error {
-	return DB.Select(selectFields...).All(u)
+	return DB.Select(selectFields...).
+		Order("nickname asc").
+		All(u)
 }
 
 // CreateAccessToken - Create and store new UserAccessToken
