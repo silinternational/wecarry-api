@@ -452,7 +452,7 @@ func (ms *ModelSuite) TestUser_GetPosts() {
 				user:     users[0],
 				postRole: PostRoleCreatedby,
 			},
-			want: []uuid.UUID{posts[0].Uuid, posts[1].Uuid},
+			want: []uuid.UUID{posts[1].Uuid, posts[0].Uuid},
 		},
 		{
 			name: "providing by",
@@ -759,7 +759,7 @@ func (ms *ModelSuite) TestUser_GetThreads() {
 		want []uuid.UUID
 	}{
 		{name: "no threads", user: f.Users[1], want: []uuid.UUID{}},
-		{name: "two threads", user: f.Users[0], want: []uuid.UUID{f.Threads[0].Uuid, f.Threads[1].Uuid}},
+		{name: "two threads", user: f.Users[0], want: []uuid.UUID{f.Threads[1].Uuid, f.Threads[0].Uuid}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
