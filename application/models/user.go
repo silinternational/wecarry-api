@@ -45,9 +45,9 @@ type User struct {
 	AccessTokens      []UserAccessToken  `has_many:"user_access_tokens" json:"-"`
 	Organizations     Organizations      `many_to_many:"user_organizations" order_by:"name asc" json:"-"`
 	UserOrganizations []UserOrganization `has_many:"user_organizations" json:"-"`
-	PostsCreated      Posts              `has_many:"posts" fk_id:"created_by_id"`
-	PostsProviding    Posts              `has_many:"posts" fk_id:"provider_id"`
-	PostsReceiving    Posts              `has_many:"posts" fk_id:"receiver_id"`
+	PostsCreated      Posts              `has_many:"posts" fk_id:"created_by_id" order_by:"updated_at desc"`
+	PostsProviding    Posts              `has_many:"posts" fk_id:"provider_id" order_by:"updated_at desc"`
+	PostsReceiving    Posts              `has_many:"posts" fk_id:"receiver_id" order_by:"updated_at desc"`
 	PhotoFile         File               `belongs_to:"files"`
 	Location          Location           `belongs_to:"locations"`
 }
