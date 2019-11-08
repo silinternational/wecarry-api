@@ -396,7 +396,12 @@ func (p *Post) AttachFile(fileID string) (File, error) {
 func (p *Post) GetFiles() ([]File, error) {
 	var pf []*PostFile
 
-	if err := DB.Eager("File").Select().Where("post_id = ?", p.ID).All(&pf); err != nil {
+	err := DB.Eager("File").
+		Select().
+		Where("post_id = ?", p.ID).
+		Order("updated_at desc").
+		All(&pf)
+	if err != nil {
 		return nil, fmt.Errorf("error getting files for post id %d, %s", p.ID, err)
 	}
 
