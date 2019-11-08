@@ -1,6 +1,8 @@
 package models
 
-import "time"
+import (
+	"time"
+)
 
 type OrganizationDomain struct {
 	ID             int          `json:"id" db:"id"`
@@ -9,4 +11,12 @@ type OrganizationDomain struct {
 	OrganizationID int          `json:"organization_id" db:"organization_id"`
 	Domain         string       `json:"domain" db:"domain"`
 	Organization   Organization `belongs_to:"organizations"`
+}
+
+// GetOrganizationUUID loads the Organization record and converts its UUID to its string representation.
+func (o *OrganizationDomain) GetOrganizationUUID() (string, error) {
+	if err := DB.Load(o, "Organization"); err != nil {
+		return "", err
+	}
+	return o.Organization.Uuid.String(), nil
 }
