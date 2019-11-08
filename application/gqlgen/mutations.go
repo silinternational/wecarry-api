@@ -86,7 +86,7 @@ func (r *mutationResolver) CreateOrganizationDomain(ctx context.Context, input C
 		return nil, err
 	}
 
-	return org.OrganizationDomains, nil
+	return org.GetDomains()
 }
 
 func (r *mutationResolver) RemoveOrganizationDomain(ctx context.Context, input RemoveOrganizationDomainInput) ([]models.OrganizationDomain, error) {
@@ -106,7 +106,7 @@ func (r *mutationResolver) RemoveOrganizationDomain(ctx context.Context, input R
 		return nil, err
 	}
 
-	return org.OrganizationDomains, nil
+	return org.GetDomains()
 }
 
 // SetThreadLastViewedAt sets the last viewed time for the current user on the given thread
