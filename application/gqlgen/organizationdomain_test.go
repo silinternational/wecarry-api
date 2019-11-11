@@ -14,9 +14,9 @@ type OrganizationDomainFixtures struct {
 
 type OrganizationDomainResponse struct {
 	OrganizationDomain []struct {
-		ID     string `json:"organizationID"`
-		Domain string `json:"domain"`
-	} `json:"organizationDomain"`
+		OrganizationID string `json:"organizationID"`
+		Domain         string `json:"domain"`
+	} `json:"domain"`
 }
 
 func createFixtures_OrganizationDomain(gs *GqlgenSuite) OrganizationDomainFixtures {
@@ -62,23 +62,28 @@ func (gs *GqlgenSuite) Test_CreateOrganizationDomain() {
 	f := createFixtures_OrganizationDomain(gs)
 	c := getGqlClient()
 
-	input := `organizationID: "` + f.Organization.Uuid.String() + `" 
-		domain: "example.org"`
-	query := `mutation { organizationDomain: createOrganizationDomain(input: {` + input + `})
-		{ domain organizationID }}`
-	fmt.Printf("------- query=%s\n", query)
+	testDomain := "example.com"
+	allFieldsQuery := `organizationID domain`
+	allFieldsInput := fmt.Sprintf(`organizationID:"%s" domain:"%s"`,
+		f.Organization.Uuid.String(), testDomain)
 
 	var resp OrganizationDomainResponse
-
-	TestUser = f.Users[0]
-	gs.Error(c.Post(query, &resp))
-
 	TestUser = f.Users[1]
-	gs.NoError(c.Post(query, &resp))
+	err := c.Post(fmt.Sprintf("mutation{domain: createOrganizationDomain(input: {%s}) {%s}}",
+		allFieldsInput, allFieldsQuery), &resp)
+	gs.NoError(err)
 
-	gs.Equal(1, len(resp.OrganizationDomain), "received wrong number of domains")
-	gs.Equal(f.Organization.Uuid.String(), resp.OrganizationDomain[0].ID, "received incorrect org UUID")
-	gs.Equal("example.org", resp.OrganizationDomain[0].Domain, "received incorrect domain")
+	gs.Equal(1, len(resp.OrganizationDomain), "wrong number of domains in response")
+	gs.Equal(testDomain, resp.OrganizationDomain[0].Domain, "received wrong domain")
+	gs.Equal(f.Organization.Uuid.String(), resp.OrganizationDomain[0].OrganizationID, "received wrong org ID")
+
+	var orgs models.Organizations
+	err = gs.DB.Eager().Where("name = ?", f.Organization.Name).All(&orgs)
+	gs.NoError(err)
+
+	gs.GreaterOrEqual(1, len(orgs), "no Organization found")
+	gs.Equal(1, len(orgs[0].OrganizationDomains), "wrong number of domains in DB")
+	gs.Equal(testDomain, orgs[0].OrganizationDomains[0].Domain, "wrong domain in DB")
 
 	// removeOrganization is tested in `actions/gql_test.go`. This tests the returned data, whereas the `actions`
 	// test is more thorough with error cases.
