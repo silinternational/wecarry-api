@@ -942,43 +942,26 @@ func (ms *ModelSuite) TestPost_AttachFile() {
 }
 
 func (ms *ModelSuite) TestPost_GetFiles() {
-	t := ms.T()
+	f := CreateFixturesForPostsGetFiles(ms)
 
-	user := User{}
-	if err := ms.DB.Create(&user); err != nil {
-		t.Errorf("failed to create user fixture, %s", err)
+	files, err := f.Posts[0].GetFiles()
+	ms.NoError(err, "failed to get files list for post, %s", err)
+
+	ms.Equal(len(f.Files), len(files))
+
+	// sort most recently updated first
+	expectedFilenames := []string{
+		f.Files[2].Name,
+		f.Files[1].Name,
+		f.Files[0].Name,
 	}
 
-	organization := Organization{AuthConfig: "{}"}
-	if err := ms.DB.Create(&organization); err != nil {
-		t.Errorf("failed to create organization fixture, %s", err)
+	receivedFilenames := make([]string, len(files))
+	for i := range files {
+		receivedFilenames[i] = files[i].Name
 	}
 
-	post := Post{
-		CreatedByID:    user.ID,
-		OrganizationID: organization.ID,
-	}
-	if err := ms.DB.Create(&post); err != nil {
-		t.Errorf("failed to create post fixture, %s", err)
-	}
-
-	var f File
-	const filename = "photo.gif"
-	if err := f.Store(filename, []byte("GIF89a")); err != nil {
-		t.Errorf("failed to create file fixture, %s", err)
-	}
-
-	if _, err := post.AttachFile(f.UUID.String()); err != nil {
-		t.Errorf("failed to attach file to post, %s", err)
-	}
-
-	files, err := post.GetFiles()
-	if err != nil {
-		t.Errorf("failed to get files list for post, %s", err)
-	}
-
-	ms.Equal(1, len(files))
-	ms.Equal(filename, files[0].Name)
+	ms.Equal(expectedFilenames, receivedFilenames, "incorrect list of files")
 }
 
 // TestPost_AttachPhoto_GetPhoto tests the AttachPhoto and GetPhoto methods of models.Post
