@@ -452,3 +452,23 @@ func (ms *ModelSuite) TestOrganization_All() {
 	}
 
 }
+
+func (ms *ModelSuite) TestOrganization_GetDomains() {
+	f := CreateFixturesForOrganizationGetDomains(ms)
+
+	orgDomains, err := f.Organizations[0].GetDomains()
+	ms.NoError(err)
+
+	domains := make([]string, len(orgDomains))
+	for i := range orgDomains {
+		domains[i] = orgDomains[i].Domain
+	}
+
+	expected := []string{
+		f.OrganizationDomains[1].Domain,
+		f.OrganizationDomains[2].Domain,
+		f.OrganizationDomains[0].Domain,
+	}
+
+	ms.Equal(expected, domains, "incorrect list of domains")
+}
