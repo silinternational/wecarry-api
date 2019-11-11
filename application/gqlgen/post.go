@@ -2,6 +2,7 @@ package gqlgen
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -459,28 +460,26 @@ func (r *mutationResolver) UpdatePost(ctx context.Context, input postInput) (*mo
 		return nil, reportError(ctx, err, "UpdatePost.ProcessInput", extras)
 	}
 
-	var editable bool
-	if editable, err = post.IsEditable(cUser); err != nil {
-		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
-		return nil, err
+	if editable, err2 := post.IsEditable(cUser); err2 != nil {
+		return nil, reportError(ctx, err2, "UpdatePost.GetEditable", extras)
+	} else if !editable {
+		return nil, reportError(ctx, errors.New("attempt to update a non-editable post"),
+			"UpdatePost.NotEditable", extras)
 	}
-	if !editable {
-		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), "post cannot be edited")
-		return nil, err
-	}
-	if err2 := post.Update(); err2 != nil {
-		return nil, reportError(ctx, err2, "UpdatePost", extras)
+
+	if err3 := post.Update(); err3 != nil {
+		return nil, reportError(ctx, err3, "UpdatePost", extras)
 	}
 
 	if input.Destination != nil {
-		if err3 := post.SetDestination(convertGqlLocationInputToDBLocation(*input.Destination)); err3 != nil {
-			return nil, reportError(ctx, err3, "UpdatePost.SetDestination", extras)
+		if err4 := post.SetDestination(convertGqlLocationInputToDBLocation(*input.Destination)); err4 != nil {
+			return nil, reportError(ctx, err4, "UpdatePost.SetDestination", extras)
 		}
 	}
 
 	if input.Origin != nil {
-		if err4 := post.SetOrigin(convertGqlLocationInputToDBLocation(*input.Origin)); err4 != nil {
-			return nil, reportError(ctx, err4, "UpdatePost.SetOrigin", extras)
+		if err5 := post.SetOrigin(convertGqlLocationInputToDBLocation(*input.Origin)); err5 != nil {
+			return nil, reportError(ctx, err5, "UpdatePost.SetOrigin", extras)
 		}
 	}
 
