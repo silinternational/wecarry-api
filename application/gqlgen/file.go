@@ -13,7 +13,7 @@ func (r *Resolver) File() FileResolver {
 
 type fileResolver struct{ *Resolver }
 
-// ID resolves the ID property of the file model
+// ID resolves the ID property of the file query
 func (r *fileResolver) ID(ctx context.Context, obj *models.File) (string, error) {
 	if obj == nil {
 		return "", nil
