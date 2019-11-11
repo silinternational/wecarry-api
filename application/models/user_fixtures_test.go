@@ -16,13 +16,13 @@ func CreateUserFixtures(ms *ModelSuite, t *testing.T) ([]Organization, Users, Us
 	// Load Organization test fixtures
 	orgs := []Organization{
 		{
-			Name:       fmt.Sprintf("ACME-%s", unique),
+			Name:       fmt.Sprintf("Starfleet Academy-%s", unique),
 			Uuid:       domain.GetUuid(),
 			AuthType:   AuthTypeSaml,
 			AuthConfig: "{}",
 		},
 		{
-			Name:       fmt.Sprintf("Starfleet Academy-%s", unique),
+			Name:       fmt.Sprintf("ACME-%s", unique),
 			Uuid:       domain.GetUuid(),
 			AuthType:   AuthTypeSaml,
 			AuthConfig: "{}",

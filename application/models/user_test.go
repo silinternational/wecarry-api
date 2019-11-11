@@ -324,7 +324,7 @@ func (ms *ModelSuite) TestGetOrgIDs() {
 	}
 }
 
-func (ms *ModelSuite) TestGetOrganizations() {
+func (ms *ModelSuite) TestUser_GetOrganizations() {
 	t := ms.T()
 	orgs, users, _ := CreateUserFixtures(ms, t)
 
@@ -336,7 +336,7 @@ func (ms *ModelSuite) TestGetOrganizations() {
 		{
 			name: "basic",
 			user: users[0],
-			want: []string{orgs[0].Name, orgs[1].Name},
+			want: []string{orgs[1].Name, orgs[0].Name},
 		},
 	}
 	for _, test := range tests {
