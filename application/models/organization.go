@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -29,6 +30,12 @@ type Organization struct {
 	Uuid                uuid.UUID            `json:"uuid" db:"uuid"`
 	Users               Users                `many_to_many:"user_organizations"`
 	OrganizationDomains []OrganizationDomain `has_many:"organization_domains" order_by:"domain asc"`
+}
+
+// String is used to serialize error extras
+func (o Organization) String() string {
+	ju, _ := json.Marshal(o)
+	return string(ju)
 }
 
 type Organizations []Organization
