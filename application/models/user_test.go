@@ -434,8 +434,7 @@ func (ms *ModelSuite) Test_FindUserOrganization() {
 
 func (ms *ModelSuite) TestUser_GetPosts() {
 	t := ms.T()
-	_, users, _ := CreateUserFixtures(ms, t)
-	posts := CreatePostFixtures(ms, t, users)
+	f := CreateFixturesForUserGetPosts(ms)
 
 	type args struct {
 		user     User
@@ -449,26 +448,26 @@ func (ms *ModelSuite) TestUser_GetPosts() {
 		{
 			name: "created by",
 			args: args{
-				user:     users[0],
+				user:     f.Users[0],
 				postRole: PostRoleCreatedby,
 			},
-			want: []uuid.UUID{posts[1].Uuid, posts[0].Uuid},
+			want: []uuid.UUID{f.Posts[3].Uuid, f.Posts[2].Uuid, f.Posts[1].Uuid, f.Posts[0].Uuid},
 		},
 		{
 			name: "providing by",
 			args: args{
-				user:     users[1],
+				user:     f.Users[1],
 				postRole: PostRoleProviding,
 			},
-			want: []uuid.UUID{posts[0].Uuid},
+			want: []uuid.UUID{f.Posts[1].Uuid, f.Posts[0].Uuid},
 		},
 		{
 			name: "receiving by",
 			args: args{
-				user:     users[1],
+				user:     f.Users[1],
 				postRole: PostRoleReceiving,
 			},
-			want: []uuid.UUID{posts[1].Uuid},
+			want: []uuid.UUID{f.Posts[3].Uuid, f.Posts[2].Uuid},
 		},
 	}
 	for _, test := range tests {
