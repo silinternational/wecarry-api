@@ -62,6 +62,9 @@ func reportError(ctx context.Context, err error, errID string, extras ...map[str
 		}
 	}
 	domain.Error(c, err.Error(), allExtras)
-	simpleErr := errors.New(domain.T.Translate(c, errID))
-	return simpleErr
+
+	if domain.T == nil {
+		return errors.New(errID)
+	}
+	return errors.New(domain.T.Translate(c, errID))
 }
