@@ -64,7 +64,6 @@ type Post struct {
 	Provider       User          `belongs_to:"users"`
 	Files          PostFiles     `has_many:"post_files"`
 	PhotoFile      File          `belongs_to:"files"`
-	Threads        Threads       `has_many:"threads" order_by:"updated_at desc"`
 	Destination    Location      `belongs_to:"locations"`
 	Origin         Location      `belongs_to:"locations"`
 }
