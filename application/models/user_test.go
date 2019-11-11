@@ -298,7 +298,7 @@ func (ms *ModelSuite) TestCreateAccessToken() {
 	}
 }
 
-func (ms *ModelSuite) TestGetOrgIDs() {
+func (ms *ModelSuite) TestUser_GetOrgIDs() {
 	t := ms.T()
 	orgs, users, _ := CreateUserFixtures(ms, t)
 
@@ -310,7 +310,7 @@ func (ms *ModelSuite) TestGetOrgIDs() {
 		{
 			name: "basic",
 			user: users[0],
-			want: []int{orgs[0].ID, orgs[1].ID},
+			want: []int{orgs[1].ID, orgs[0].ID},
 		},
 	}
 	for _, test := range tests {
