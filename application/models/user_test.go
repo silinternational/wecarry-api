@@ -489,7 +489,7 @@ func (ms *ModelSuite) TestUser_GetPosts() {
 	}
 }
 
-func (ms *ModelSuite) TestCanEditOrganization() {
+func (ms *ModelSuite) TestUser_CanEditOrganization() {
 	t := ms.T()
 
 	orgFixtures := []Organization{
@@ -547,6 +547,30 @@ func (ms *ModelSuite) TestCanEditOrganization() {
 	}
 	if user.CanEditOrganization(orgFixtures[1].ID) {
 		t.Error("user is able to edit org that they should not be able to edit")
+	}
+}
+
+func (ms *ModelSuite) TestUser_CanEditAllPosts() {
+	t := ms.T()
+	f := CreateUserFixtures_CanEditAllPosts(ms)
+
+	tests := []struct {
+		name string
+		user User
+		want bool
+	}{
+		{name: "super admin & org admin", user: f.Users[0], want: true},
+		{name: "sales admin & org admin", user: f.Users[1], want: false},
+		{name: "org admin", user: f.Users[2], want: false},
+		{name: "super admin", user: f.Users[3], want: true},
+		{name: "sales admin", user: f.Users[4], want: false},
+		{name: "user", user: f.Users[5], want: false},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ms.Equal(test.want, test.user.CanEditAllPosts(), "CanEditAllPosts() incorrect result")
+		})
 	}
 }
 
