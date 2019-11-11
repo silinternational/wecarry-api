@@ -422,15 +422,20 @@ func (gs *GqlgenSuite) Test_UpdatePost() {
 	input = `id: "` + f.Posts[0].Uuid.String() + `" status: ` + models.PostStatusCommitted
 	query = `mutation { post: updatePost(input: {` + input + `}) { id status}}`
 
-	err := c.Post(query, &postsResp)
-	gs.NoError(err)
+	gs.NoError(c.Post(query, &postsResp))
 
 	// Now check for a validation error for a bad status update
 	input = `id: "` + f.Posts[0].Uuid.String() + `" status: ` + models.PostStatusCompleted
 	query = `mutation { post: updatePost(input: {` + input + `}) { id status}}`
 
-	err = c.Post(query, &postsResp)
-	gs.Error(err)
+	gs.Error(c.Post(query, &postsResp))
+
+	// Attempt to edit a locked post
+	TestUser = f.Users[1]
+	input = `id: "` + f.Posts[0].Uuid.String() + `" category: "new category"`
+	query = `mutation { post: updatePost(input: {` + input + `}) { id status}}`
+
+	gs.Error(c.Post(query, &postsResp))
 }
 
 type CreatePostFixtures struct {
