@@ -246,7 +246,7 @@ func (u *User) CanEditOrganization(orgId int) bool {
 	return false
 }
 
-// CanEditAllPosts returns true if the given user is allowed to edit any post
+// CanEditAllPosts indicates whether the user is allowed to edit all posts.
 func (u *User) CanEditAllPosts() bool {
 	return u.AdminRole.String == domain.AdminRoleSuperDuperAdmin
 }

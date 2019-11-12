@@ -261,7 +261,7 @@ func (r *postResolver) Files(ctx context.Context, obj *models.Post) ([]models.Fi
 	return files, nil
 }
 
-// IsEditable response with true if the current user is the creator of the post, and it is not in a locked status.
+// IsEditable indicates whether the user is allowed to edit the post
 func (r *postResolver) IsEditable(ctx context.Context, obj *models.Post) (bool, error) {
 	if obj == nil {
 		return false, nil
