@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/gobuffalo/nulls"
@@ -10,6 +11,7 @@ import (
 type PostFixtures struct {
 	Users
 	Posts
+	Files
 }
 
 func CreateFixturesValidateUpdate(ms *ModelSuite, t *testing.T) []Post {
@@ -143,6 +145,34 @@ func CreatePostFixtures(ms *ModelSuite, t *testing.T, users Users) []Post {
 		}
 	}
 	return posts
+}
+
+func CreateFixturesForPostsGetFiles(ms *ModelSuite) PostFixtures {
+	user := User{}
+	createFixture(ms, &user)
+
+	organization := Organization{AuthConfig: "{}"}
+	createFixture(ms, &organization)
+
+	post := Post{CreatedByID: user.ID, OrganizationID: organization.ID}
+	createFixture(ms, &post)
+
+	files := make(Files, 3)
+
+	for i := range files {
+		var file File
+		ms.NoError(file.Store(fmt.Sprintf("file_%d.gif", i), []byte("GIF87a")),
+			"failed to create file fixture")
+		files[i] = file
+		_, err := post.AttachFile(files[i].UUID.String())
+		ms.NoError(err, "failed to attach file to post fixture")
+	}
+
+	return PostFixtures{
+		Users: Users{user},
+		Posts: Posts{post},
+		Files: files,
+	}
 }
 
 func CreateFixtures_Posts_FindByUser(ms *ModelSuite) PostFixtures {

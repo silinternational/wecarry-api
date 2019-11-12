@@ -16,13 +16,13 @@ func CreateUserFixtures(ms *ModelSuite, t *testing.T) ([]Organization, Users, Us
 	// Load Organization test fixtures
 	orgs := []Organization{
 		{
-			Name:       fmt.Sprintf("ACME-%s", unique),
+			Name:       fmt.Sprintf("Starfleet Academy-%s", unique),
 			Uuid:       domain.GetUuid(),
 			AuthType:   AuthTypeSaml,
 			AuthConfig: "{}",
 		},
 		{
-			Name:       fmt.Sprintf("Starfleet Academy-%s", unique),
+			Name:       fmt.Sprintf("ACME-%s", unique),
 			Uuid:       domain.GetUuid(),
 			AuthType:   AuthTypeSaml,
 			AuthConfig: "{}",
@@ -97,6 +97,55 @@ type UserMessageFixtures struct {
 	Threads
 	ThreadParticipants
 	Messages
+}
+
+func CreateFixturesForUserGetPosts(ms *ModelSuite) UserFixtures {
+	org := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	createFixture(ms, &org)
+
+	unique := org.Uuid.String()
+	users := Users{
+		{Email: unique + "user0@example.com", Nickname: unique + "User 0", Uuid: domain.GetUuid()},
+		{Email: unique + "user1@example.com", Nickname: unique + "User 1", Uuid: domain.GetUuid()},
+	}
+	for i := range users {
+		createFixture(ms, &users[i])
+	}
+
+	posts := []Post{
+		{
+			CreatedByID:    users[0].ID,
+			OrganizationID: org.ID,
+			Uuid:           domain.GetUuid(),
+			ProviderID:     nulls.NewInt(users[1].ID),
+		},
+		{
+			CreatedByID:    users[0].ID,
+			OrganizationID: org.ID,
+			Uuid:           domain.GetUuid(),
+			ProviderID:     nulls.NewInt(users[1].ID),
+		},
+		{
+			CreatedByID:    users[0].ID,
+			OrganizationID: org.ID,
+			Uuid:           domain.GetUuid(),
+			ReceiverID:     nulls.NewInt(users[1].ID),
+		},
+		{
+			CreatedByID:    users[0].ID,
+			OrganizationID: org.ID,
+			Uuid:           domain.GetUuid(),
+			ReceiverID:     nulls.NewInt(users[1].ID),
+		},
+	}
+	for i := range posts {
+		createFixture(ms, &posts[i])
+	}
+
+	return UserFixtures{
+		Users: users,
+		Posts: posts,
+	}
 }
 
 func CreateUserFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) UserMessageFixtures {
@@ -302,6 +351,7 @@ func CreateUserFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) UserMes
 
 type UserFixtures struct {
 	Users
+	Posts
 	Threads
 }
 

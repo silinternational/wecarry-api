@@ -10,3 +10,5 @@ type OrganizationDomain struct {
 	Domain         string       `json:"domain" db:"domain"`
 	Organization   Organization `belongs_to:"organizations"`
 }
+
+type OrganizationDomains []OrganizationDomain

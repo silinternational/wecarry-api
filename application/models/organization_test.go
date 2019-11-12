@@ -453,69 +453,22 @@ func (ms *ModelSuite) TestOrganization_All() {
 
 }
 
-func (ms *ModelSuite) TestOrganization_AllForUser() {
-	t := ms.T()
+func (ms *ModelSuite) TestOrganization_GetDomains() {
+	f := CreateFixturesForOrganizationGetDomains(ms)
 
-	orgFixtures := []Organization{
-		{
-			CreatedAt:  time.Time{},
-			UpdatedAt:  time.Time{},
-			Name:       "Org1",
-			Url:        nulls.String{},
-			AuthType:   "na",
-			AuthConfig: "{}",
-			Uuid:       domain.GetUuid(),
-		},
-		{
-			CreatedAt:  time.Time{},
-			UpdatedAt:  time.Time{},
-			Name:       "Org2",
-			Url:        nulls.String{},
-			AuthType:   "na",
-			AuthConfig: "{}",
-			Uuid:       domain.GetUuid(),
-		},
-	}
-	for i := range orgFixtures {
-		createFixture(ms, &orgFixtures[i])
+	orgDomains, err := f.Organizations[0].GetDomains()
+	ms.NoError(err)
+
+	domains := make([]string, len(orgDomains))
+	for i := range orgDomains {
+		domains[i] = orgDomains[i].Domain
 	}
 
-	userFixtures := []User{
-		{
-			Email:     "user1@test.com",
-			FirstName: "user",
-			LastName:  "one",
-			Nickname:  "user_one",
-			AdminRole: nulls.String{},
-			Uuid:      domain.GetUuid(),
-		},
-	}
-	for i := range userFixtures {
-		createFixture(ms, &userFixtures[i])
+	expected := []string{
+		f.OrganizationDomains[1].Domain,
+		f.OrganizationDomains[2].Domain,
+		f.OrganizationDomains[0].Domain,
 	}
 
-	userOrgFixtures := []UserOrganization{
-		{
-			OrganizationID: orgFixtures[0].ID,
-			UserID:         userFixtures[0].ID,
-			Role:           UserOrganizationRoleUser,
-			AuthID:         "user_one",
-			AuthEmail:      "user1@test.com",
-			LastLogin:      time.Time{},
-		},
-	}
-	for i := range userOrgFixtures {
-		createFixture(ms, &userOrgFixtures[i])
-	}
-
-	var userOrgs Organizations
-	err := userOrgs.AllForUser(userFixtures[0])
-	if err != nil {
-		t.Error(err)
-	}
-
-	if len(userOrgs) != len(userOrgFixtures) {
-		t.Errorf("Did not get expected number of orgs for user, got %v, wanted %v", len(userOrgs), len(userOrgFixtures))
-	}
-
+	ms.Equal(expected, domains, "incorrect list of domains")
 }

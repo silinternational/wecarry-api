@@ -43,11 +43,11 @@ type User struct {
 	PhotoURL          nulls.String       `json:"photo_url" db:"photo_url"`
 	LocationID        nulls.Int          `json:"location_id" db:"location_id"`
 	AccessTokens      []UserAccessToken  `has_many:"user_access_tokens" json:"-"`
-	Organizations     Organizations      `many_to_many:"user_organizations" json:"-"`
+	Organizations     Organizations      `many_to_many:"user_organizations" order_by:"name asc" json:"-"`
 	UserOrganizations []UserOrganization `has_many:"user_organizations" json:"-"`
-	PostsCreated      Posts              `has_many:"posts" fk_id:"created_by_id"`
-	PostsProviding    Posts              `has_many:"posts" fk_id:"provider_id"`
-	PostsReceiving    Posts              `has_many:"posts" fk_id:"receiver_id"`
+	PostsCreated      Posts              `has_many:"posts" fk_id:"created_by_id" order_by:"updated_at desc"`
+	PostsProviding    Posts              `has_many:"posts" fk_id:"provider_id" order_by:"updated_at desc"`
+	PostsReceiving    Posts              `has_many:"posts" fk_id:"receiver_id" order_by:"updated_at desc"`
 	PhotoFile         File               `belongs_to:"files"`
 	Location          Location           `belongs_to:"locations"`
 }
@@ -94,7 +94,9 @@ func (u *User) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 
 // All retrieves all Users from the database.
 func (u *Users) All(selectFields ...string) error {
-	return DB.Select(selectFields...).All(u)
+	return DB.Select(selectFields...).
+		Order("nickname asc").
+		All(u)
 }
 
 // CreateAccessToken - Create and store new UserAccessToken
@@ -456,8 +458,10 @@ func (u *User) UnreadMessageCount() ([]UnreadThread, error) {
 // GetThreads finds all threads that the user is participating in.
 func (u *User) GetThreads() (Threads, error) {
 	var t Threads
-	query := DB.Q().LeftJoin("thread_participants tp", "threads.id = tp.thread_id")
-	query = query.Where("tp.user_id = ?", u.ID)
+	query := DB.Q().
+		LeftJoin("thread_participants tp", "threads.id = tp.thread_id").
+		Where("tp.user_id = ?", u.ID).
+		Order("updated_at desc")
 	if err := query.All(&t); err != nil {
 		return nil, err
 	}

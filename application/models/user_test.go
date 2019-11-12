@@ -298,7 +298,7 @@ func (ms *ModelSuite) TestCreateAccessToken() {
 	}
 }
 
-func (ms *ModelSuite) TestGetOrgIDs() {
+func (ms *ModelSuite) TestUser_GetOrgIDs() {
 	t := ms.T()
 	orgs, users, _ := CreateUserFixtures(ms, t)
 
@@ -310,7 +310,7 @@ func (ms *ModelSuite) TestGetOrgIDs() {
 		{
 			name: "basic",
 			user: users[0],
-			want: []int{orgs[0].ID, orgs[1].ID},
+			want: []int{orgs[1].ID, orgs[0].ID},
 		},
 	}
 	for _, test := range tests {
@@ -324,7 +324,7 @@ func (ms *ModelSuite) TestGetOrgIDs() {
 	}
 }
 
-func (ms *ModelSuite) TestGetOrganizations() {
+func (ms *ModelSuite) TestUser_GetOrganizations() {
 	t := ms.T()
 	orgs, users, _ := CreateUserFixtures(ms, t)
 
@@ -336,7 +336,7 @@ func (ms *ModelSuite) TestGetOrganizations() {
 		{
 			name: "basic",
 			user: users[0],
-			want: []string{orgs[0].Name, orgs[1].Name},
+			want: []string{orgs[1].Name, orgs[0].Name},
 		},
 	}
 	for _, test := range tests {
@@ -434,8 +434,7 @@ func (ms *ModelSuite) Test_FindUserOrganization() {
 
 func (ms *ModelSuite) TestUser_GetPosts() {
 	t := ms.T()
-	_, users, _ := CreateUserFixtures(ms, t)
-	posts := CreatePostFixtures(ms, t, users)
+	f := CreateFixturesForUserGetPosts(ms)
 
 	type args struct {
 		user     User
@@ -449,26 +448,26 @@ func (ms *ModelSuite) TestUser_GetPosts() {
 		{
 			name: "created by",
 			args: args{
-				user:     users[0],
+				user:     f.Users[0],
 				postRole: PostRoleCreatedby,
 			},
-			want: []uuid.UUID{posts[0].Uuid, posts[1].Uuid},
+			want: []uuid.UUID{f.Posts[3].Uuid, f.Posts[2].Uuid, f.Posts[1].Uuid, f.Posts[0].Uuid},
 		},
 		{
 			name: "providing by",
 			args: args{
-				user:     users[1],
+				user:     f.Users[1],
 				postRole: PostRoleProviding,
 			},
-			want: []uuid.UUID{posts[0].Uuid},
+			want: []uuid.UUID{f.Posts[1].Uuid, f.Posts[0].Uuid},
 		},
 		{
 			name: "receiving by",
 			args: args{
-				user:     users[1],
+				user:     f.Users[1],
 				postRole: PostRoleReceiving,
 			},
-			want: []uuid.UUID{posts[1].Uuid},
+			want: []uuid.UUID{f.Posts[3].Uuid, f.Posts[2].Uuid},
 		},
 	}
 	for _, test := range tests {
@@ -759,7 +758,7 @@ func (ms *ModelSuite) TestUser_GetThreads() {
 		want []uuid.UUID
 	}{
 		{name: "no threads", user: f.Users[1], want: []uuid.UUID{}},
-		{name: "two threads", user: f.Users[0], want: []uuid.UUID{f.Threads[0].Uuid, f.Threads[1].Uuid}},
+		{name: "two threads", user: f.Users[0], want: []uuid.UUID{f.Threads[1].Uuid, f.Threads[0].Uuid}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
