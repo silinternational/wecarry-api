@@ -774,3 +774,25 @@ func (ms *ModelSuite) TestUser_GetThreads() {
 		})
 	}
 }
+
+func (ms *ModelSuite) TestUser_WantsPostNotification() {
+	t := ms.T()
+	f := CreateFixturesForUserWantsPostNotification(ms)
+
+	tests := []struct {
+		name string
+		user User
+		post Post
+		want bool
+	}{
+		{name: "yes", user: f.Users[1], post: f.Posts[0], want: true},
+		{name: "no", user: f.Users[0], post: f.Posts[0], want: false},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got := test.user.WantsPostNotification(test.post)
+
+			ms.Equal(test.want, got, "incorrect result from WantsPostNotification()")
+		})
+	}
+}
