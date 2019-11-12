@@ -108,14 +108,14 @@ func (ms *ModelSuite) TestLocation_Validate() {
 		t.Run(test.name, func(t *testing.T) {
 			vErr, _ := test.location.Validate(DB)
 			if test.wantErr {
-				if vErr.Count() == 0 {
-					t.Errorf("Expected an error, but did not get one")
-				} else if len(vErr.Get(test.errField)) == 0 {
-					t.Errorf("Expected an error on field %v, but got none (errors: %v)", test.errField, vErr.Errors)
-				}
-			} else if (test.wantErr == false) && (vErr.HasAny()) {
-				t.Errorf("Unexpected error: %v", vErr)
+				ms.Greater(vErr.Count(), 0, "Expected an error, but did not get one")
+				ms.NotEqual(len(vErr.Get(test.errField)), 0,
+					"Expected an error on field %v, but got none (errors: %v)",
+					test.errField, vErr.Errors)
+				return
 			}
+
+			ms.False(vErr.HasAny(), "Unexpected error: %v", vErr)
 		})
 	}
 }

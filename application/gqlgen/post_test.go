@@ -506,8 +506,7 @@ func (gs *GqlgenSuite) Test_CreatePost() {
 			size neededAfter neededBefore category url cost }}`
 
 	TestUser = f.User
-	err := c.Post(query, &postsResp)
-	gs.NoError(err)
+	gs.NoError(c.Post(query, &postsResp))
 
 	gs.Equal(f.Organization.Uuid.String(), postsResp.Post.Organization.ID)
 	gs.Equal(f.File.UUID.String(), postsResp.Post.Photo.ID)
