@@ -34,6 +34,8 @@
   translation: We had a problem finding the conversation to update its last-viewed time.
 - id: SetThreadLastViewedAt
   translation: We had a problem updating the conversation last-viewed time.
+- id: GetOrganizationDomainOrganizationID
+  translation: We had a problem finding the domain ID.
 - id: GetOrganizationDomains
   translation: We had a problem finding the list of domains for the organization.
 - id: GetPostCreator

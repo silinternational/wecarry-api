@@ -26,5 +26,11 @@ func (r *organizationDomainResolver) OrganizationID(ctx context.Context, obj *mo
 	if obj == nil {
 		return "", nil
 	}
-	return obj.GetOrganizationUUID()
+
+	id, err := obj.GetOrganizationUUID()
+	if err != nil {
+		return "", reportError(ctx, err, "GetOrganizationDomainOrganizationID")
+	}
+
+	return id, nil
 }
