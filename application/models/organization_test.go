@@ -305,34 +305,30 @@ func (ms *ModelSuite) TestOrganization_AddRemoveDomain() {
 	}
 
 	err := orgFixtures[0].AddDomain("first.com")
-	if err != nil {
-		t.Errorf("unable to add first domain to Org1: %s", err)
-	} else if len(orgFixtures[0].OrganizationDomains) != 1 {
+	ms.NoError(err, "unable to add first domain to Org1: %s", err)
+	domains, _ := orgFixtures[0].GetDomains()
+	if len(domains) != 1 {
 		t.Errorf("did not get error, but failed to add first domain to Org1")
 	}
 
 	err = orgFixtures[0].AddDomain("second.com")
-	if err != nil {
-		t.Errorf("unable to add second domain to Org1: %s", err)
-	} else if len(orgFixtures[0].OrganizationDomains) != 2 {
+	ms.NoError(err, "unable to add second domain to Org1: %s", err)
+	domains, _ = orgFixtures[0].GetDomains()
+	if len(domains) != 2 {
 		t.Errorf("did not get error, but failed to add second domain to Org1")
 	}
 
 	err = orgFixtures[1].AddDomain("second.com")
-	if err == nil {
-		t.Errorf("was to add existing domain (second.com) to Org2 but should have gotten error")
-	}
-
-	if len(orgFixtures[0].OrganizationDomains) != 2 {
+	ms.Error(err, "was to add existing domain (second.com) to Org2 but should have gotten error")
+	domains, _ = orgFixtures[0].GetDomains()
+	if len(domains) != 2 {
 		t.Errorf("after reloading org domains we did not get what we expected (%v), got: %v", 2, len(orgFixtures[0].OrganizationDomains))
 	}
 
 	err = orgFixtures[0].RemoveDomain("first.com")
-	if err != nil {
-		t.Errorf("unable to remove domain: %s", err)
-	}
-
-	if len(orgFixtures[0].OrganizationDomains) != 1 {
+	ms.NoError(err, "unable to remove domain: %s", err)
+	domains, _ = orgFixtures[0].GetDomains()
+	if len(domains) != 1 {
 		t.Errorf("org domains count after removing domain is not correct, expected %v, got: %v", 1, len(orgFixtures[0].OrganizationDomains))
 	}
 

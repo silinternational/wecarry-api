@@ -116,17 +116,7 @@ func (o *Organization) AddDomain(domain string) error {
 
 	orgDomain.Domain = domain
 	orgDomain.OrganizationID = o.ID
-	err = DB.Save(&orgDomain)
-	if err != nil {
-		return err
-	}
-
-	err = DB.Load(o, "OrganizationDomains")
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return DB.Save(&orgDomain)
 }
 
 func (o *Organization) RemoveDomain(domain string) error {
@@ -136,17 +126,7 @@ func (o *Organization) RemoveDomain(domain string) error {
 		return err
 	}
 
-	err = DB.Destroy(&orgDomain)
-	if err != nil {
-		return err
-	}
-
-	err = DB.Load(o, "OrganizationDomains")
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return DB.Destroy(&orgDomain)
 }
 
 // Save wrap DB.Save() call to check for errors and operate on attached object

@@ -90,7 +90,13 @@ func (r *mutationResolver) CreateOrganizationDomain(ctx context.Context, input C
 		return nil, reportError(ctx, err, "CreateOrganizationDomain", extras)
 	}
 
-	return org.OrganizationDomains, nil
+	domains, err2 := org.GetDomains()
+	if err2 != nil {
+		// don't return an error since the AddDomain operation succeeded
+		_ = reportError(ctx, err2, "", extras)
+	}
+
+	return domains, nil
 }
 
 // RemoveOrganizationDomain is the resolver for the `removeOrganizationDomain` mutation
@@ -114,7 +120,13 @@ func (r *mutationResolver) RemoveOrganizationDomain(ctx context.Context, input R
 		return nil, reportError(ctx, err, "RemoveOrganizationDomain", extras)
 	}
 
-	return org.OrganizationDomains, nil
+	domains, err2 := org.GetDomains()
+	if err2 != nil {
+		// don't return an error since the RemoveDomain operation succeeded
+		_ = reportError(ctx, err2, "", extras)
+	}
+
+	return domains, nil
 }
 
 // SetThreadLastViewedAt sets the last viewed time for the current user on the given thread
