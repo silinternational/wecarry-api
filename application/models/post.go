@@ -69,6 +69,11 @@ type Post struct {
 	Origin         Location      `belongs_to:"locations"`
 }
 
+// PostCreatedEventData holds data needed by the New Post event listener
+type PostCreatedEventData struct {
+	PostID int
+}
+
 // String is not required by pop and may be deleted
 func (p Post) String() string {
 	jp, _ := json.Marshal(p)
@@ -302,6 +307,24 @@ func (p *Post) AfterUpdate(tx *pop.Connection) error {
 		domain.ErrLogger.Print("error removing provider id from post ... " + err.Error())
 	}
 
+	return nil
+}
+
+// AfterCreate is called by Pop after successful creation of the record
+func (p *Post) AfterCreate(tx *pop.Connection) error {
+	if p.Type != PostTypeRequest || p.Status != PostStatusOpen {
+		return nil
+	}
+
+	e := events.Event{
+		Kind:    domain.EventApiPostCreated,
+		Message: "Post created",
+		Payload: events.Payload{"eventData": PostCreatedEventData{
+			PostID: p.ID,
+		}},
+	}
+
+	emitEvent(e)
 	return nil
 }
 

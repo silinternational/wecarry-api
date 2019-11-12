@@ -37,6 +37,7 @@ const (
 	EventApiAuthUserLoggedIn  = "api:auth:user:loggedin"
 	EventApiMessageCreated    = "api:message:created"
 	EventApiPostStatusUpdated = "api:post:status:updated"
+	EventApiPostCreated       = "api:post:status:created"
 )
 
 // Event and Job argument names

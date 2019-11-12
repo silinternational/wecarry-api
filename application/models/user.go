@@ -464,3 +464,14 @@ func (u *User) GetThreads() (Threads, error) {
 
 	return t, nil
 }
+
+// WantsPostNotification answers the question "Does the user want notifications for this post?"
+func (u *User) WantsPostNotification(post Post) bool {
+	if post.CreatedByID == u.ID {
+		return false
+	}
+
+	// Insert subscription and geolocation logic here
+
+	return true
+}

@@ -28,7 +28,7 @@ type Organization struct {
 	AuthType            string               `json:"auth_type" db:"auth_type"`
 	AuthConfig          string               `json:"auth_config" db:"auth_config"`
 	Uuid                uuid.UUID            `json:"uuid" db:"uuid"`
-	Users               Users                `many_to_many:"user_organizations"`
+	Users               Users                `many_to_many:"user_organizations" order_by:"nickname"`
 	OrganizationDomains []OrganizationDomain `has_many:"organization_domains"`
 }
 
@@ -178,4 +178,17 @@ func (o *Organization) GetDomains() ([]OrganizationDomain, error) {
 	}
 
 	return o.OrganizationDomains, nil
+}
+
+// GetUsers finds and returns all related Users.
+func (o *Organization) GetUsers() (Users, error) {
+	if o.ID <= 0 {
+		return nil, errors.New("invalid Organization ID")
+	}
+
+	if err := DB.Load(o, "Users"); err != nil {
+		return nil, err
+	}
+
+	return o.Users, nil
 }
