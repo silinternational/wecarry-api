@@ -153,6 +153,9 @@ func (ms *ModelSuite) TestMessage_Create() {
 			} else {
 				ms.NoError(err)
 				ms.Equal(test.msg.Uuid, message.Uuid, "incorrect message UUID")
+				_ = ms.DB.Reload(&f.Threads[0])
+				ms.WithinDuration(time.Now(), f.Threads[0].UpdatedAt, time.Second,
+					"thread.updated_at was not set to the current time")
 			}
 		})
 	}

@@ -14,6 +14,8 @@ type OrganizationDomain struct {
 	Organization   Organization `belongs_to:"organizations"`
 }
 
+type OrganizationDomains []OrganizationDomain
+
 // GetOrganizationUUID loads the Organization record and converts its UUID to its string representation.
 func (o *OrganizationDomain) GetOrganizationUUID() (string, error) {
 	if o.OrganizationID <= 0 {
