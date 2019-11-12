@@ -1,6 +1,7 @@
 package models
 
 import (
+	"errors"
 	"time"
 )
 
@@ -15,6 +16,9 @@ type OrganizationDomain struct {
 
 // GetOrganizationUUID loads the Organization record and converts its UUID to its string representation.
 func (o *OrganizationDomain) GetOrganizationUUID() (string, error) {
+	if o.OrganizationID <= 0 {
+		return "", errors.New("OrganizationID is not valid")
+	}
 	if err := DB.Load(o, "Organization"); err != nil {
 		return "", err
 	}
