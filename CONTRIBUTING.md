@@ -68,6 +68,25 @@ situations. For example:
     }
 ```
      
+### Error handling and presentation
+
+Internal handling of errors consists mostly of the built-in `errors` type. When
+an error propagates up to the `gqlgen` package, the internal error should be
+logged and a new user-focused and localized message should be returned from 
+the resolver function. Translation of error messages is handled by the Buffalo
+`Translate` function. Translation keys consist of the query or mutation name,
+optionally followed by a short description of the point of failure. You may use
+the helper function `reportError` which handles all of these steps. Translation
+text is stored in the `locales` folder.
+ 
+For example:
+
+```go
+	extras := map[string]interface{}{
+		"user": cUser.Uuid,
+	}
+    return nil, reportError(ctx, err, "CreatePost.SetDestination", extras)
+``` 
 
 ## gqlgen
 
