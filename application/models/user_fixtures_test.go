@@ -2,12 +2,21 @@ package models
 
 import (
 	"fmt"
+	"strconv"
 	"testing"
 	"time"
 
 	"github.com/gobuffalo/nulls"
 	"github.com/silinternational/wecarry-api/domain"
 )
+
+type UserMessageFixtures struct {
+	Users
+	Posts
+	Threads
+	ThreadParticipants
+	Messages
+}
 
 func CreateUserFixtures(ms *ModelSuite, t *testing.T) ([]Organization, Users, UserOrganizations) {
 
@@ -91,12 +100,47 @@ func CreateUserFixtures(ms *ModelSuite, t *testing.T) ([]Organization, Users, Us
 	return orgs, users, userOrgs
 }
 
-type UserMessageFixtures struct {
-	Users
-	Posts
-	Threads
-	ThreadParticipants
-	Messages
+func CreateUserFixtures_CanEditAllPosts(ms *ModelSuite) UserFixtures {
+	org := Organization{AuthConfig: "{}", Uuid: domain.GetUuid()}
+	createFixture(ms, &org)
+
+	unique := org.Uuid.String()
+	users := Users{
+		{AdminRole: nulls.NewString(domain.AdminRoleSuperDuperAdmin)},
+		{AdminRole: nulls.NewString(domain.AdminRoleSalesAdmin)},
+		{AdminRole: nulls.String{}},
+		{AdminRole: nulls.NewString(domain.AdminRoleSuperDuperAdmin)},
+		{AdminRole: nulls.String{}},
+		{AdminRole: nulls.NewString(domain.AdminRoleSalesAdmin)},
+	}
+	for i := range users {
+		users[i].Email = "user" + strconv.Itoa(i) + unique + "example.com"
+		users[i].Nickname = users[i].Email
+		users[i].Uuid = domain.GetUuid()
+
+		createFixture(ms, &users[i])
+	}
+
+	userOrgFixtures := []UserOrganization{
+		{Role: UserOrganizationRoleAdmin},
+		{Role: UserOrganizationRoleAdmin},
+		{Role: UserOrganizationRoleAdmin},
+		{Role: UserOrganizationRoleUser},
+		{Role: UserOrganizationRoleUser},
+		{Role: UserOrganizationRoleUser},
+	}
+	for i := range userOrgFixtures {
+		userOrgFixtures[i].OrganizationID = org.ID
+		userOrgFixtures[i].UserID = users[i].ID
+		userOrgFixtures[i].AuthID = users[i].Email
+		userOrgFixtures[i].AuthEmail = users[i].Email
+
+		createFixture(ms, &userOrgFixtures[i])
+	}
+
+	return UserFixtures{
+		Users: users,
+	}
 }
 
 func CreateFixturesForUserGetPosts(ms *ModelSuite) UserFixtures {

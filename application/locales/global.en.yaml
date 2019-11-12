@@ -70,6 +70,10 @@
   translation: We had a problem updating that request or offer.
 - id: UpdatePost.ProcessInput
   translation: We had a problem processing the information to update that request or offer.
+- id: UpdatePost.GetEditable
+  translation: We had a problem preparing to update that request or offer.
+- id: UpdatePost.NotEditable
+  translation: That request or offer is locked for editing.
 - id: UpdatePost.SetDestination
   translation: We had a problem setting the destination to update that request or offer.
 - id: UpdatePost.SetOrigin

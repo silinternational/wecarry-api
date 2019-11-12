@@ -216,3 +216,38 @@ func CreateFixtures_Posts_FindByUser(ms *ModelSuite) PostFixtures {
 		Posts: posts,
 	}
 }
+
+func CreateFixtures_Post_IsEditable(ms *ModelSuite) PostFixtures {
+	org := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	createFixture(ms, &org)
+
+	unique := org.Uuid.String()
+	users := Users{
+		{Email: unique + "_user0@example.com", Nickname: unique + "User0", Uuid: domain.GetUuid()},
+		{Email: unique + "_user1@example.com", Nickname: unique + "User1", Uuid: domain.GetUuid()},
+	}
+	for i := range users {
+		createFixture(ms, &users[i])
+	}
+
+	userOrgs := UserOrganizations{
+		{OrganizationID: org.ID, UserID: users[0].ID, AuthID: users[0].Email, AuthEmail: users[0].Email},
+		{OrganizationID: org.ID, UserID: users[1].ID, AuthID: users[1].Email, AuthEmail: users[1].Email},
+	}
+	for i := range userOrgs {
+		createFixture(ms, &(userOrgs[i]))
+	}
+
+	posts := Posts{
+		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID, Status: PostStatusOpen},
+		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID, Status: PostStatusCompleted},
+	}
+	for i := range posts {
+		createFixture(ms, &posts[i])
+	}
+
+	return PostFixtures{
+		Users: users,
+		Posts: posts,
+	}
+}

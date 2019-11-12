@@ -1227,3 +1227,62 @@ func (ms *ModelSuite) TestPosts_FindByUser() {
 		})
 	}
 }
+
+func (ms *ModelSuite) TestPost_IsEditable() {
+	t := ms.T()
+
+	f := CreateFixtures_Post_IsEditable(ms)
+
+	tests := []struct {
+		name    string
+		user    User
+		post    Post
+		want    bool
+		wantErr bool
+	}{
+		{name: "user 0, post 0", user: f.Users[0], post: f.Posts[0], want: true},
+		{name: "user 0, post 1", user: f.Users[0], post: f.Posts[1], want: false},
+		{name: "user 1, post 0", user: f.Users[1], post: f.Posts[0], want: false},
+		{name: "user 1, post 1", user: f.Users[1], post: f.Posts[1], want: false},
+		{name: "non-existent user", wantErr: true},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			editable, err := test.post.IsEditable(test.user)
+
+			if test.wantErr {
+				ms.Error(err)
+				return
+			}
+
+			ms.NoError(err)
+			ms.Equal(test.want, editable)
+		})
+	}
+}
+
+func (ms *ModelSuite) TestPost_isStatusEditable() {
+	t := ms.T()
+
+	tests := []struct {
+		status string
+		want   bool
+	}{
+		{status: PostStatusOpen, want: true},
+		{status: PostStatusCommitted, want: true},
+		{status: PostStatusAccepted, want: true},
+		{status: PostStatusReceived, want: true},
+		{status: PostStatusDelivered, want: true},
+		{status: PostStatusCompleted, want: false},
+		{status: PostStatusRemoved, want: false},
+		{status: "", want: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.status, func(t *testing.T) {
+			var p Post
+			if got := p.isStatusEditable(tt.status); got != tt.want {
+				t.Errorf("isStatusEditable() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

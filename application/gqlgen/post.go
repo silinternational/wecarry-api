@@ -2,6 +2,7 @@ package gqlgen
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -260,6 +261,15 @@ func (r *postResolver) Files(ctx context.Context, obj *models.Post) ([]models.Fi
 	return files, nil
 }
 
+// IsEditable indicates whether the user is allowed to edit the post
+func (r *postResolver) IsEditable(ctx context.Context, obj *models.Post) (bool, error) {
+	if obj == nil {
+		return false, nil
+	}
+	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+	return obj.IsEditable(cUser)
+}
+
 // Posts resolves the `posts` query
 func (r *queryResolver) Posts(ctx context.Context) ([]models.Post, error) {
 	posts := models.Posts{}
@@ -450,19 +460,26 @@ func (r *mutationResolver) UpdatePost(ctx context.Context, input postInput) (*mo
 		return nil, reportError(ctx, err, "UpdatePost.ProcessInput", extras)
 	}
 
-	if err2 := post.Update(); err2 != nil {
-		return nil, reportError(ctx, err2, "UpdatePost", extras)
+	if editable, err2 := post.IsEditable(cUser); err2 != nil {
+		return nil, reportError(ctx, err2, "UpdatePost.GetEditable", extras)
+	} else if !editable {
+		return nil, reportError(ctx, errors.New("attempt to update a non-editable post"),
+			"UpdatePost.NotEditable", extras)
+	}
+
+	if err3 := post.Update(); err3 != nil {
+		return nil, reportError(ctx, err3, "UpdatePost", extras)
 	}
 
 	if input.Destination != nil {
-		if err3 := post.SetDestination(convertGqlLocationInputToDBLocation(*input.Destination)); err3 != nil {
-			return nil, reportError(ctx, err3, "UpdatePost.SetDestination", extras)
+		if err4 := post.SetDestination(convertGqlLocationInputToDBLocation(*input.Destination)); err4 != nil {
+			return nil, reportError(ctx, err4, "UpdatePost.SetDestination", extras)
 		}
 	}
 
 	if input.Origin != nil {
-		if err4 := post.SetOrigin(convertGqlLocationInputToDBLocation(*input.Origin)); err4 != nil {
-			return nil, reportError(ctx, err4, "UpdatePost.SetOrigin", extras)
+		if err5 := post.SetOrigin(convertGqlLocationInputToDBLocation(*input.Origin)); err5 != nil {
+			return nil, reportError(ctx, err5, "UpdatePost.SetOrigin", extras)
 		}
 	}
 
