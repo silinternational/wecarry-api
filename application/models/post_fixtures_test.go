@@ -264,11 +264,20 @@ func CreateFixtures_Post_IsEditable(ms *ModelSuite) PostFixtures {
 		createFixture(ms, &(userOrgs[i]))
 	}
 
+	locations := []Location{{}, {}}
+	for i := range locations {
+		createFixture(ms, &(locations[i]))
+	}
+
 	posts := Posts{
-		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID, Status: PostStatusOpen},
-		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID, Status: PostStatusCompleted},
+		{Status: PostStatusOpen},
+		{Status: PostStatusCompleted},
 	}
 	for i := range posts {
+		posts[i].Uuid = domain.GetUuid()
+		posts[i].CreatedByID = users[0].ID
+		posts[i].OrganizationID = org.ID
+		posts[i].DestinationID = locations[i].ID
 		createFixture(ms, &posts[i])
 	}
 

@@ -156,33 +156,23 @@ func CreateFixturesForUserGetPosts(ms *ModelSuite) UserFixtures {
 		createFixture(ms, &users[i])
 	}
 
+	const numberOfPosts = 4
+	locations := make([]Location, numberOfPosts)
+	for i := range locations {
+		createFixture(ms, &(locations[i]))
+	}
+
 	posts := []Post{
-		{
-			CreatedByID:    users[0].ID,
-			OrganizationID: org.ID,
-			Uuid:           domain.GetUuid(),
-			ProviderID:     nulls.NewInt(users[1].ID),
-		},
-		{
-			CreatedByID:    users[0].ID,
-			OrganizationID: org.ID,
-			Uuid:           domain.GetUuid(),
-			ProviderID:     nulls.NewInt(users[1].ID),
-		},
-		{
-			CreatedByID:    users[0].ID,
-			OrganizationID: org.ID,
-			Uuid:           domain.GetUuid(),
-			ReceiverID:     nulls.NewInt(users[1].ID),
-		},
-		{
-			CreatedByID:    users[0].ID,
-			OrganizationID: org.ID,
-			Uuid:           domain.GetUuid(),
-			ReceiverID:     nulls.NewInt(users[1].ID),
-		},
+		{ProviderID: nulls.NewInt(users[1].ID)},
+		{ProviderID: nulls.NewInt(users[1].ID)},
+		{ReceiverID: nulls.NewInt(users[1].ID)},
+		{ReceiverID: nulls.NewInt(users[1].ID)},
 	}
 	for i := range posts {
+		posts[i].CreatedByID = users[0].ID
+		posts[i].OrganizationID = org.ID
+		posts[i].Uuid = domain.GetUuid()
+		posts[i].DestinationID = locations[i].ID
 		createFixture(ms, &posts[i])
 	}
 
