@@ -58,7 +58,7 @@ func (v *geoValidator) IsValid(errors *validate.Errors) {
 		return
 	}
 
-	if v.Latitude.Valid != v.Latitude.Valid {
+	if v.Latitude.Valid != v.Longitude.Valid {
 		errors.Add(validators.GenerateKey(v.Name), "only one coordinate given, must have neither or both")
 	}
 

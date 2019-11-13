@@ -88,7 +88,7 @@ func (ms *ModelSuite) TestLocation_Validate() {
 			location: Location{
 				Description: "only lat",
 				Country:     "NA",
-				Latitude:    nulls.NewFloat64(0),
+				Latitude:    nulls.NewFloat64(1.0),
 			},
 			wantErr:  true,
 			errField: "geo",
@@ -98,7 +98,7 @@ func (ms *ModelSuite) TestLocation_Validate() {
 			location: Location{
 				Description: "only long",
 				Country:     "NA",
-				Longitude:   nulls.NewFloat64(0),
+				Longitude:   nulls.NewFloat64(1.0),
 			},
 			wantErr:  true,
 			errField: "geo",
