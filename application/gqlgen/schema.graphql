@@ -11,6 +11,7 @@ type Query {
 type Mutation {
     createPost(input: CreatePostInput!): Post!
     updatePost(input: UpdatePostInput!): Post!
+    updatePostStatus(input: UpdatePostStatusInput!): Post!
     updateUser(input: UpdateUserInput!): User!
     createMessage(input: CreateMessageInput!): Message!
     createOrganization(input: CreateOrganizationInput!): Organization!
@@ -229,4 +230,9 @@ input LocationInput {
     country: String!
     latitude: Float
     longitude: Float
+}
+
+input UpdatePostStatusInput {
+    id: ID!
+    status: PostStatus!
 }

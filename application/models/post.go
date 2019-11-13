@@ -562,12 +562,12 @@ func (p *Post) IsEditable(user User) (bool, error) {
 		return false, nil
 	}
 
-	return p.isStatusEditable(p.Status), nil
+	return p.isPostEditable(), nil
 }
 
-// isStatusEditable defines which posts statuses can be edited. It does not use the receiver `p'.
-func (p *Post) isStatusEditable(status string) bool {
-	switch status {
+// isPostEditable defines at which states can posts be edited.
+func (p *Post) isPostEditable() bool {
+	switch p.Status {
 	case PostStatusOpen:
 		fallthrough
 	case PostStatusCommitted:
@@ -586,4 +586,34 @@ func (p *Post) isStatusEditable(status string) bool {
 	default:
 		return false
 	}
+}
+
+// isStatusChangeable defines which posts statuses can be changed by which users.
+// Invalid transitions are not checked here; it is left for the validator to do this.
+func (p *Post) isStatusChangeable(user User, newStatus string) bool {
+	if user.AdminRole.String == domain.AdminRoleSuperDuperAdmin {
+		return true
+	}
+
+	if p.CreatedByID == user.ID {
+		return true
+	}
+
+	if p.ProviderID.Int != user.ID && p.ReceiverID.Int != user.ID {
+		return false
+	}
+
+	if newStatus == PostStatusCommitted {
+		return true
+	}
+
+	if p.Type == PostTypeRequest && newStatus == PostStatusDelivered {
+		return true
+	}
+
+	if p.Type == PostTypeOffer && newStatus == PostStatusReceived {
+		return true
+	}
+
+	return false
 }
