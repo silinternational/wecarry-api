@@ -2,10 +2,10 @@ package models
 
 import (
 	"fmt"
-	"github.com/gobuffalo/nulls"
 	"testing"
 	"time"
 
+	"github.com/gobuffalo/nulls"
 	"github.com/silinternational/wecarry-api/domain"
 )
 
@@ -84,10 +84,26 @@ func Fixtures_Message_Create(ms *ModelSuite, t *testing.T) MessageFixtures {
 	}
 
 	threads := Threads{
-		{Uuid: domain.GetUuid(), PostID: posts[0].ID},
+		{
+			CreatedAt: time.Now().Add(-10 * time.Minute),
+			UpdatedAt: time.Now().Add(-10 * time.Minute),
+			Uuid:      domain.GetUuid(),
+			PostID:    posts[0].ID,
+		},
 	}
-	for i := range threads {
-		createFixture(ms, &threads[i])
+	for i, thread := range threads {
+		if err := ms.DB.RawQuery(`INSERT INTO threads (created_at, updated_at, uuid, post_id) VALUES (?, ?, ?, ?)`,
+			thread.CreatedAt, thread.UpdatedAt, thread.Uuid, thread.PostID).Exec(); err != nil {
+			t.Errorf("error loading threads, %v", err)
+			t.FailNow()
+		}
+
+		// get the new thread ID
+		err := ms.DB.Where("uuid = ?", thread.Uuid.String()).First(&threads[i])
+		if err != nil {
+			ms.T().Errorf("error finding thread fixture %s, %s", thread.Uuid.String(), err)
+			ms.T().FailNow()
+		}
 	}
 
 	return MessageFixtures{

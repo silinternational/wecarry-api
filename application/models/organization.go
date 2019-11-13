@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -28,7 +29,13 @@ type Organization struct {
 	AuthConfig          string               `json:"auth_config" db:"auth_config"`
 	Uuid                uuid.UUID            `json:"uuid" db:"uuid"`
 	Users               Users                `many_to_many:"user_organizations"`
-	OrganizationDomains []OrganizationDomain `has_many:"organization_domains"`
+	OrganizationDomains []OrganizationDomain `has_many:"organization_domains" order_by:"domain asc"`
+}
+
+// String is used to serialize error extras
+func (o Organization) String() string {
+	ju, _ := json.Marshal(o)
+	return string(ju)
 }
 
 type Organizations []Organization
@@ -109,17 +116,7 @@ func (o *Organization) AddDomain(domain string) error {
 
 	orgDomain.Domain = domain
 	orgDomain.OrganizationID = o.ID
-	err = DB.Save(&orgDomain)
-	if err != nil {
-		return err
-	}
-
-	err = DB.Load(o, "OrganizationDomains")
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return DB.Save(&orgDomain)
 }
 
 func (o *Organization) RemoveDomain(domain string) error {
@@ -129,17 +126,7 @@ func (o *Organization) RemoveDomain(domain string) error {
 		return err
 	}
 
-	err = DB.Destroy(&orgDomain)
-	if err != nil {
-		return err
-	}
-
-	err = DB.Load(o, "OrganizationDomains")
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return DB.Destroy(&orgDomain)
 }
 
 // Save wrap DB.Save() call to check for errors and operate on attached object
@@ -157,11 +144,6 @@ func (o *Organization) Save() error {
 
 func (orgs *Organizations) All() error {
 	return DB.All(orgs)
-}
-
-func (orgs *Organizations) AllForUser(user User) error {
-	return DB.Q().LeftJoin("user_organizations uo", "organizations.id = uo.organization_id").
-		Where("uo.user_id = ?", user.ID).All(orgs)
 }
 
 // GetDomains finds and returns all related OrganizationDomain rows.

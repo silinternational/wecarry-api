@@ -44,7 +44,49 @@ rather than
 ```go
 func Test_FunctionName(t *testing.T) {
 }
-```  
+```
+
+### Database Queries
+
+For simple queries and simple joins, Pop provides a good API based on
+model struct annotations. These should be used where possible. Do not assume,
+however, that objects passed from other functions are pre-populated with
+data from related objects. If related data is required, call the `DB.Load`
+function.
+
+Complex queries and joins can be accomplished using the model fields and 
+iterating over the attached lists. This ends up being more complex and 
+difficult to read. We have determined it is better to use raw SQL in these
+situations. For example:
+
+```go
+    var t Threads
+    query := DB.Q().LeftJoin("thread_participants tp", "threads.id = tp.thread_id")
+    query = query.Where("tp.user_id = ?", u.ID)
+    if err := query.All(&t); err != nil {
+        return nil, err
+    }
+```
+     
+### Error handling and presentation
+
+Internal handling of errors consists mostly of the built-in `errors` type. When
+an error propagates up to the `gqlgen` package, the internal error should be
+logged and a new user-focused and localized message should be returned from 
+the resolver function. Translation of error messages is handled by the Buffalo
+`Translate` function. Translation keys consist of the query or mutation name,
+optionally followed by a short description of the point of failure. You may use
+the helper function `reportError` which handles all of these steps. Translation
+text is stored in the `locales` folder.
+ 
+For example:
+
+```go
+	extras := map[string]interface{}{
+		"user": cUser.Uuid,
+	}
+    return nil, reportError(ctx, err, "CreatePost.SetDestination", extras)
+``` 
 
 ## gqlgen
 

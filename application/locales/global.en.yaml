@@ -1,2 +1,124 @@
-- id: MessageGetSender
-  translation: error finding the message sender information
+- id: GetMessageSender
+  translation: We had a problem finding the message sender information.
+- id: GetMessageThread
+  translation: We had a problem finding the message conversation information.
+- id: GetMessage
+  translation: We had a problem finding the message information.
+- id: CreateMessage.ParseInput
+  translation: We had a problem processing the new message.
+- id: CreateMessage
+  translation: We had a problem creating the new message.
+- id: CreateOrganization
+  translation: We had a problem creating the new organization.
+- id: CreateOrganization.NotAllowed
+  translation: You have insufficient privileges to create organizations.
+- id: UpdateOrganization
+  translation: We had a problem updating the organization.
+- id: UpdateOrganization.NotFound
+  translation: We had a problem finding the organization to update.
+- id: UpdateOrganization.NotAllowed
+  translation: You have insufficient privileges to edit information for that organization.
+- id: CreateOrganizationDomain
+  translation: We had a problem adding a domain to the organization.
+- id: CreateOrganizationDomain.NotFound
+  translation: We had a problem finding the organization to add a domain.
+- id: CreateOrganizationDomain.NotAllowed
+  translation: You have insufficient privileges to add domains to that organization.
+- id: RemoveOrganizationDomain
+  translation: We had a problem removing a domain from the organization.
+- id: RemoveOrganizationDomain.NotFound
+  translation: We had a problem finding the organization to remove a domain.
+- id: RemoveOrganizationDomain.NotAllowed
+  translation: You have insufficient privileges to remove domains from that organization.
+- id: SetThreadLastViewedAt.NotFound
+  translation: We had a problem finding the conversation to update its last-viewed time.
+- id: SetThreadLastViewedAt
+  translation: We had a problem updating the conversation last-viewed time.
+- id: GetOrganizationDomainOrganizationID
+  translation: We had a problem finding the domain ID.
+- id: GetOrganizationDomains
+  translation: We had a problem finding the list of domains for the organization.
+- id: GetPostCreator
+  translation: We had a problem finding the creator of that request or offer.
+- id: GetPostReceiver
+  translation: We had a problem finding the receiver for that request or offer.
+- id: GetPostProvider
+  translation: We had a problem finding the provider for that request or offer.
+- id: GetPostOrganization
+  translation: We had a problem finding the organization for that request or offer.
+- id: GetPostDestination
+  translation: We had a problem finding the destination for that request or offer.
+- id: GetPostOrigin
+  translation: We had a problem finding the origin for that request or offer.
+- id: GetPostThreads
+  translation: We had a problem finding the list of conversations for that request or offer.
+- id: GetPostPhoto
+  translation: We had a problem finding the photo for that request or offer.
+- id: GetPostFiles
+  translation: We had a problem finding the list of attachments for that request or offer.
+- id: GetPosts
+  translation: We had a problem finding a list of requests and offers.
+- id: GetPost
+  translation: We had a problem finding that request or offer.
+- id: CreatePost
+  translation: We had a problem creating that request or offer.
+- id: CreatePost.ProcessInput
+  translation: We had a problem processing the information to create that request or offer.
+- id: CreatePost.SetDestination
+  translation: We had a problem setting the destination for that new request or offer.
+- id: CreatePost.SetOrigin
+  translation: We had a problem setting the origin for that new request or offer.
+- id: UpdatePost
+  translation: We had a problem updating that request or offer.
+- id: UpdatePost.ProcessInput
+  translation: We had a problem processing the information to update that request or offer.
+- id: UpdatePost.GetEditable
+  translation: We had a problem preparing to update that request or offer.
+- id: UpdatePost.NotEditable
+  translation: That request or offer is locked for editing.
+- id: UpdatePost.SetDestination
+  translation: We had a problem setting the destination to update that request or offer.
+- id: UpdatePost.SetOrigin
+  translation: We had a problem setting the origin to update that request or offer.
+- id: GetThreadParticipants
+  translation: We had a problem getting a list of participants in that conversation.
+- id: GetThreadLastViewedAt
+  translation: We had a problem finding the time you last viewed that conversation.
+- id: GetThreadMessages
+  translation: We had a problem finding the list of messages in that conversation.
+- id: GetThreadPostID
+  translation: We had a problem finding the request or offer for that conversation.
+- id: GetThreadPost
+  translation: We had a problem finding the request or offer information for that conversation.
+- id: GetThreads
+  translation: We had a problem finding the list of conversations.
+- id: GetMyThreads
+  translation: We had a problem finding a list of your conversations.
+- id: GetUserOrganizations
+  translation: We had a problem finding the list of organizations for the user profile.
+- id: GetUserPosts
+  translation: We had a problem finding the list of posts for the user profile.
+- id: GetUserPhotoURL
+  translation: We had a problem finding the photo for the user profile.
+- id: GetUserLocation
+  translation: We had a problem finding the location for the user profile.
+- id: GetUserUnreadMessageCount
+  translation: We had a problem finding the unread message count for the user profile.
+- id: GetUsers.NotAllowed
+  translation: You are not allowed to access user profile data.
+- id: GetUsers
+  translation: We had a problem finding the list of user profiles.
+- id: GetUser.NotAllowed
+  translation: You are not allowed to access that user profile.
+- id: GetUser
+  translation: We had a problem finding the user profile.
+- id: UpdateUser.NotFound
+  translation: We had a problem finding the user for the profile update.
+- id: UpdateUser.NotAllowed
+  translation: You are not allowed to update that user profile.
+- id: UpdateUser.PhotoNotFound
+  translation: We had a problem finding the photo to update the user profile.
+- id: UpdateUser.SetLocationError
+  translation: We had a problem setting the location on the user profile.
+- id: UpdateUser
+  translation: We had a problem updating the user profile.
