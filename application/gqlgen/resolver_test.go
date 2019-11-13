@@ -56,6 +56,10 @@ func (gs *GqlgenSuite) TestResolver() {
 	}
 	createFixture(gs, &UserOrgsFix[0])
 
+	//  Load Location test fixture
+	location := models.Location{}
+	createFixture(gs, &location)
+
 	//  Load Post test fixtures
 	postFix := models.Posts{
 		{
@@ -71,6 +75,7 @@ func (gs *GqlgenSuite) TestResolver() {
 			NeededBefore:   time.Date(2019, time.August, 3, 0, 0, 0, 0, time.UTC),
 			Category:       "Unknown",
 			Description:    nulls.NewString("Missing my good, old, Canadian maple syrupy goodness"),
+			DestinationID:  location.ID,
 		},
 	}
 	createFixture(gs, &postFix[0])

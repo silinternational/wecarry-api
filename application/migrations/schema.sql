@@ -269,7 +269,7 @@ CREATE TABLE public.posts (
     url character varying(255),
     cost numeric(13,4),
     photo_file_id integer,
-    destination_id integer,
+    destination_id integer NOT NULL,
     origin_id integer
 );
 
@@ -852,7 +852,7 @@ ALTER TABLE ONLY public.organization_domains
 --
 
 ALTER TABLE ONLY public.posts
-    ADD CONSTRAINT post_destination_fk FOREIGN KEY (destination_id) REFERENCES public.locations(id) ON DELETE SET NULL;
+    ADD CONSTRAINT post_destination_fk FOREIGN KEY (destination_id) REFERENCES public.locations(id);
 
 
 --

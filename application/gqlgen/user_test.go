@@ -86,12 +86,16 @@ func Fixtures_UserQuery(gs *GqlgenSuite, t *testing.T) UserQueryFixtures {
 		createFixture(gs, &userOrgs[i])
 	}
 
+	location := models.Location{}
+	createFixture(gs, &location)
+
 	posts := models.Posts{
 		{
 			Uuid:           domain.GetUuid(),
 			CreatedByID:    users[1].ID,
 			OrganizationID: org.ID,
 			ProviderID:     nulls.NewInt(users[1].ID),
+			DestinationID:  location.ID,
 		},
 	}
 	for i := range posts {
