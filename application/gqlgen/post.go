@@ -460,7 +460,9 @@ func (r *mutationResolver) UpdatePost(ctx context.Context, input postInput) (*mo
 		return nil, reportError(ctx, err, "UpdatePost.ProcessInput", extras)
 	}
 
-	if editable, err2 := post.IsEditable(cUser); err2 != nil {
+	var dbPost models.Post
+	_ = dbPost.FindByID(post.ID)
+	if editable, err2 := dbPost.IsEditable(cUser); err2 != nil {
 		return nil, reportError(ctx, err2, "UpdatePost.GetEditable", extras)
 	} else if !editable {
 		return nil, reportError(ctx, errors.New("attempt to update a non-editable post"),
