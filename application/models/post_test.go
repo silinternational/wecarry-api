@@ -873,7 +873,7 @@ func (ms *ModelSuite) TestPost_GetThreads() {
 		want []uuid.UUID
 	}{
 		{name: "no threads", post: posts[1], want: []uuid.UUID{}},
-		{name: "two threads", post: posts[0], want: []uuid.UUID{threads[0].Uuid, threads[1].Uuid}},
+		{name: "two threads", post: posts[0], want: []uuid.UUID{threads[1].Uuid, threads[0].Uuid}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -940,41 +940,26 @@ func (ms *ModelSuite) TestPost_AttachFile() {
 }
 
 func (ms *ModelSuite) TestPost_GetFiles() {
-	t := ms.T()
+	f := CreateFixturesForPostsGetFiles(ms)
 
-	user := User{}
-	createFixture(ms, &user)
+	files, err := f.Posts[0].GetFiles()
+	ms.NoError(err, "failed to get files list for post, %s", err)
 
-	organization := Organization{AuthConfig: "{}"}
-	createFixture(ms, &organization)
+	ms.Equal(len(f.Files), len(files))
 
-	location := Location{}
-	createFixture(ms, &location)
-
-	post := Post{
-		CreatedByID:    user.ID,
-		OrganizationID: organization.ID,
-		DestinationID:  location.ID,
-	}
-	createFixture(ms, &post)
-
-	var f File
-	const filename = "photo.gif"
-	if err := f.Store(filename, []byte("GIF89a")); err != nil {
-		t.Errorf("failed to create file fixture, %s", err)
+	// sort most recently updated first
+	expectedFilenames := []string{
+		f.Files[2].Name,
+		f.Files[1].Name,
+		f.Files[0].Name,
 	}
 
-	if _, err := post.AttachFile(f.UUID.String()); err != nil {
-		t.Errorf("failed to attach file to post, %s", err)
+	receivedFilenames := make([]string, len(files))
+	for i := range files {
+		receivedFilenames[i] = files[i].Name
 	}
 
-	files, err := post.GetFiles()
-	if err != nil {
-		t.Errorf("failed to get files list for post, %s", err)
-	}
-
-	ms.Equal(1, len(files))
-	ms.Equal(filename, files[0].Name)
+	ms.Equal(expectedFilenames, receivedFilenames, "incorrect list of files")
 }
 
 // TestPost_AttachPhoto_GetPhoto tests the AttachPhoto and GetPhoto methods of models.Post
@@ -1227,6 +1212,65 @@ func (ms *ModelSuite) TestPosts_FindByUser() {
 				postIDs[i] = posts[i].ID
 			}
 			ms.Equal(test.wantPostIDs, postIDs)
+		})
+	}
+}
+
+func (ms *ModelSuite) TestPost_IsEditable() {
+	t := ms.T()
+
+	f := CreateFixtures_Post_IsEditable(ms)
+
+	tests := []struct {
+		name    string
+		user    User
+		post    Post
+		want    bool
+		wantErr bool
+	}{
+		{name: "user 0, post 0", user: f.Users[0], post: f.Posts[0], want: true},
+		{name: "user 0, post 1", user: f.Users[0], post: f.Posts[1], want: false},
+		{name: "user 1, post 0", user: f.Users[1], post: f.Posts[0], want: false},
+		{name: "user 1, post 1", user: f.Users[1], post: f.Posts[1], want: false},
+		{name: "non-existent user", wantErr: true},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			editable, err := test.post.IsEditable(test.user)
+
+			if test.wantErr {
+				ms.Error(err)
+				return
+			}
+
+			ms.NoError(err)
+			ms.Equal(test.want, editable)
+		})
+	}
+}
+
+func (ms *ModelSuite) TestPost_isStatusEditable() {
+	t := ms.T()
+
+	tests := []struct {
+		status string
+		want   bool
+	}{
+		{status: PostStatusOpen, want: true},
+		{status: PostStatusCommitted, want: true},
+		{status: PostStatusAccepted, want: true},
+		{status: PostStatusReceived, want: true},
+		{status: PostStatusDelivered, want: true},
+		{status: PostStatusCompleted, want: false},
+		{status: PostStatusRemoved, want: false},
+		{status: "", want: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.status, func(t *testing.T) {
+			var p Post
+			if got := p.isStatusEditable(tt.status); got != tt.want {
+				t.Errorf("isStatusEditable() = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }

@@ -41,6 +41,7 @@ type ResolverRoot interface {
 	Message() MessageResolver
 	Mutation() MutationResolver
 	Organization() OrganizationResolver
+	OrganizationDomain() OrganizationDomainResolver
 	Post() PostResolver
 	Query() QueryResolver
 	Thread() ThreadResolver
@@ -111,6 +112,7 @@ type ComplexityRoot struct {
 		Destination  func(childComplexity int) int
 		Files        func(childComplexity int) int
 		ID           func(childComplexity int) int
+		IsEditable   func(childComplexity int) int
 		NeededAfter  func(childComplexity int) int
 		NeededBefore func(childComplexity int) int
 		Organization func(childComplexity int) int
@@ -195,6 +197,9 @@ type OrganizationResolver interface {
 
 	Domains(ctx context.Context, obj *models.Organization) ([]models.OrganizationDomain, error)
 }
+type OrganizationDomainResolver interface {
+	OrganizationID(ctx context.Context, obj *models.OrganizationDomain) (string, error)
+}
 type PostResolver interface {
 	ID(ctx context.Context, obj *models.Post) (string, error)
 	Type(ctx context.Context, obj *models.Post) (PostType, error)
@@ -216,6 +221,7 @@ type PostResolver interface {
 	Cost(ctx context.Context, obj *models.Post) (*string, error)
 	Photo(ctx context.Context, obj *models.Post) (*models.File, error)
 	Files(ctx context.Context, obj *models.Post) ([]models.File, error)
+	IsEditable(ctx context.Context, obj *models.Post) (bool, error)
 }
 type QueryResolver interface {
 	Users(ctx context.Context) ([]models.User, error)
@@ -593,6 +599,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Post.ID(childComplexity), true
+
+	case "Post.isEditable":
+		if e.complexity.Post.IsEditable == nil {
+			break
+		}
+
+		return e.complexity.Post.IsEditable(childComplexity), true
 
 	case "Post.neededAfter":
 		if e.complexity.Post.NeededAfter == nil {
@@ -1065,6 +1078,7 @@ type Post {
     cost: String
     photo: File
     files: [File!]!
+    isEditable: Boolean!
 }
 
 type Organization {
@@ -2684,13 +2698,13 @@ func (ec *executionContext) _OrganizationDomain_organizationID(ctx context.Conte
 		Object:   "OrganizationDomain",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.OrganizationID, nil
+		return ec.resolvers.OrganizationDomain().OrganizationID(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2702,10 +2716,10 @@ func (ec *executionContext) _OrganizationDomain_organizationID(ctx context.Conte
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(string)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNID2int(ctx, field.Selections, res)
+	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Post_id(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
@@ -3490,6 +3504,43 @@ func (ec *executionContext) _Post_files(ctx context.Context, field graphql.Colle
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNFile2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐFile(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Post_isEditable(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Post",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Post().IsEditable(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_users(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6522,13 +6573,22 @@ func (ec *executionContext) _OrganizationDomain(ctx context.Context, sel ast.Sel
 		case "domain":
 			out.Values[i] = ec._OrganizationDomain_domain(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "organizationID":
-			out.Values[i] = ec._OrganizationDomain_organizationID(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._OrganizationDomain_organizationID(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6779,6 +6839,20 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 					}
 				}()
 				res = ec._Post_files(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "isEditable":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Post_isEditable(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -7495,20 +7569,6 @@ func (ec *executionContext) marshalNFile2ᚕgithubᚗcomᚋsilinternationalᚋwe
 	}
 	wg.Wait()
 	return ret
-}
-
-func (ec *executionContext) unmarshalNID2int(ctx context.Context, v interface{}) (int, error) {
-	return graphql.UnmarshalIntID(v)
-}
-
-func (ec *executionContext) marshalNID2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
-	res := graphql.MarshalIntID(v)
-	if res == graphql.Null {
-		if !ec.HasError(graphql.GetResolverContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-	}
-	return res
 }
 
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {

@@ -24,6 +24,9 @@ models:
         resolver: true
   OrganizationDomain:
     model: models.OrganizationDomain
+    fields:
+      organizationID:
+        resolver: true
   User:
     model: models.User
     fields:

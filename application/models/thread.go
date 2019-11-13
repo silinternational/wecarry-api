@@ -62,7 +62,9 @@ func (t *Thread) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 
 // All retrieves all Threads from the database.
 func (t *Threads) All(selectFields ...string) error {
-	return DB.Select(selectFields...).All(t)
+	return DB.Select(selectFields...).
+		Order("updated_at desc").
+		All(t)
 }
 
 func (t *Thread) FindByUUID(uuid string) error {

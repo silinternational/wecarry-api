@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/gobuffalo/nulls"
@@ -10,6 +11,7 @@ import (
 type PostFixtures struct {
 	Users
 	Posts
+	Files
 }
 
 func CreateFixturesValidateUpdate(ms *ModelSuite, t *testing.T) []Post {
@@ -163,6 +165,37 @@ func CreatePostFixtures(ms *ModelSuite, t *testing.T, users Users) []Post {
 	return posts
 }
 
+func CreateFixturesForPostsGetFiles(ms *ModelSuite) PostFixtures {
+	user := User{}
+	createFixture(ms, &user)
+
+	organization := Organization{AuthConfig: "{}"}
+	createFixture(ms, &organization)
+
+	location := Location{}
+	createFixture(ms, &location)
+
+	post := Post{CreatedByID: user.ID, OrganizationID: organization.ID, DestinationID: location.ID}
+	createFixture(ms, &post)
+
+	files := make(Files, 3)
+
+	for i := range files {
+		var file File
+		ms.NoError(file.Store(fmt.Sprintf("file_%d.gif", i), []byte("GIF87a")),
+			"failed to create file fixture")
+		files[i] = file
+		_, err := post.AttachFile(files[i].UUID.String())
+		ms.NoError(err, "failed to attach file to post fixture")
+	}
+
+	return PostFixtures{
+		Users: Users{user},
+		Posts: Posts{post},
+		Files: files,
+	}
+}
+
 func CreateFixtures_Posts_FindByUser(ms *ModelSuite) PostFixtures {
 	orgs := Organizations{
 		{Uuid: domain.GetUuid(), AuthConfig: "{}"},
@@ -199,6 +232,41 @@ func CreateFixtures_Posts_FindByUser(ms *ModelSuite) PostFixtures {
 		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: orgs[0].ID, DestinationID: locations[0].ID},
 		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: orgs[1].ID, DestinationID: locations[1].ID},
 		{Uuid: domain.GetUuid(), CreatedByID: users[1].ID, OrganizationID: orgs[0].ID, DestinationID: locations[2].ID},
+	}
+	for i := range posts {
+		createFixture(ms, &posts[i])
+	}
+
+	return PostFixtures{
+		Users: users,
+		Posts: posts,
+	}
+}
+
+func CreateFixtures_Post_IsEditable(ms *ModelSuite) PostFixtures {
+	org := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	createFixture(ms, &org)
+
+	unique := org.Uuid.String()
+	users := Users{
+		{Email: unique + "_user0@example.com", Nickname: unique + "User0", Uuid: domain.GetUuid()},
+		{Email: unique + "_user1@example.com", Nickname: unique + "User1", Uuid: domain.GetUuid()},
+	}
+	for i := range users {
+		createFixture(ms, &users[i])
+	}
+
+	userOrgs := UserOrganizations{
+		{OrganizationID: org.ID, UserID: users[0].ID, AuthID: users[0].Email, AuthEmail: users[0].Email},
+		{OrganizationID: org.ID, UserID: users[1].ID, AuthID: users[1].Email, AuthEmail: users[1].Email},
+	}
+	for i := range userOrgs {
+		createFixture(ms, &(userOrgs[i]))
+	}
+
+	posts := Posts{
+		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID, Status: PostStatusOpen},
+		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID, Status: PostStatusCompleted},
 	}
 	for i := range posts {
 		createFixture(ms, &posts[i])

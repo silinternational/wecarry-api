@@ -100,6 +100,7 @@ type Post {
     cost: String
     photo: File
     files: [File!]!
+    isEditable: Boolean!
 }
 
 type Organization {
