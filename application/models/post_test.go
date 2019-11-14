@@ -897,22 +897,20 @@ func (ms *ModelSuite) TestPost_AttachFile() {
 	t := ms.T()
 
 	user := User{}
-	if err := ms.DB.Create(&user); err != nil {
-		t.Errorf("failed to create user fixture, %s", err)
-	}
+	createFixture(ms, &user)
 
 	organization := Organization{AuthConfig: "{}"}
-	if err := ms.DB.Create(&organization); err != nil {
-		t.Errorf("failed to create organization fixture, %s", err)
-	}
+	createFixture(ms, &organization)
+
+	location := Location{}
+	createFixture(ms, &location)
 
 	post := Post{
 		CreatedByID:    user.ID,
 		OrganizationID: organization.ID,
+		DestinationID:  location.ID,
 	}
-	if err := ms.DB.Create(&post); err != nil {
-		t.Errorf("failed to create post fixture, %s", err)
-	}
+	createFixture(ms, &post)
 
 	var fileFixture File
 	const filename = "photo.gif"
@@ -969,22 +967,20 @@ func (ms *ModelSuite) TestPost_AttachPhoto_GetPhoto() {
 	t := ms.T()
 
 	user := User{}
-	if err := ms.DB.Create(&user); err != nil {
-		t.Errorf("failed to create user fixture, %s", err)
-	}
+	createFixture(ms, &user)
 
 	organization := Organization{AuthConfig: "{}"}
-	if err := ms.DB.Create(&organization); err != nil {
-		t.Errorf("failed to create organization fixture, %s", err)
-	}
+	createFixture(ms, &organization)
+
+	location := Location{}
+	createFixture(ms, &location)
 
 	post := Post{
 		CreatedByID:    user.ID,
 		OrganizationID: organization.ID,
+		DestinationID:  location.ID,
 	}
-	if err := ms.DB.Create(&post); err != nil {
-		t.Errorf("failed to create post fixture, %s", err)
-	}
+	createFixture(ms, &post)
 
 	var photoFixture File
 	const filename = "photo.gif"
@@ -1025,10 +1021,7 @@ func (ms *ModelSuite) TestPost_SetDestination() {
 	organization := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
 	createFixture(ms, &organization)
 
-	post := Post{CreatedByID: user.ID, OrganizationID: organization.ID}
-	createFixture(ms, &post)
-
-	locationFixtures := Locations{
+	locations := Locations{
 		{
 			Description: "a place",
 			Country:     "XY",
@@ -1042,26 +1035,18 @@ func (ms *ModelSuite) TestPost_SetDestination() {
 			Longitude:   nulls.Float64{},
 		},
 	}
+	createFixture(ms, &locations[0]) // only save the first record for now
 
-	err := post.SetDestination(locationFixtures[0])
+	post := Post{CreatedByID: user.ID, OrganizationID: organization.ID, DestinationID: locations[0].ID}
+	createFixture(ms, &post)
+
+	err := post.SetDestination(locations[1])
 	ms.NoError(err, "unexpected error from post.SetDestination()")
 
 	locationFromDB, err := post.GetDestination()
 	ms.NoError(err, "unexpected error from post.GetDestination()")
-
-	locationFixtures[0].ID = locationFromDB.ID
-	ms.Equal(locationFixtures[0], *locationFromDB, "destination data doesn't match new location")
-
-	err = post.SetDestination(locationFixtures[1])
-	ms.NoError(err, "unexpected error from post.SetDestination()")
-
-	locationFromDB, err = post.GetDestination()
-	ms.NoError(err, "unexpected error from post.GetDestination()")
-	ms.Equal(locationFixtures[0].ID, locationFromDB.ID,
-		"Location ID doesn't match -- location record was probably not reused")
-
-	locationFixtures[1].ID = locationFromDB.ID
-	ms.Equal(locationFixtures[1], *locationFromDB, "destination data doesn't match after update")
+	locations[1].ID = locationFromDB.ID
+	ms.Equal(locations[1], *locationFromDB, "destination data doesn't match after update")
 
 	// These are redundant checks, but here to document the fact that a null overwrites previous data.
 	ms.False(locationFromDB.Latitude.Valid)
@@ -1077,7 +1062,10 @@ func (ms *ModelSuite) TestPost_SetOrigin() {
 	organization := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
 	createFixture(ms, &organization)
 
-	post := Post{CreatedByID: user.ID, OrganizationID: organization.ID}
+	location := Location{}
+	createFixture(ms, &location)
+
+	post := Post{CreatedByID: user.ID, OrganizationID: organization.ID, DestinationID: location.ID}
 	createFixture(ms, &post)
 
 	locationFixtures := Locations{

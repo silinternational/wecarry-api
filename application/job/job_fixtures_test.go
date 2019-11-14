@@ -20,6 +20,7 @@ func createFixture(js *JobSuite, f interface{}) {
 		js.T().FailNow()
 	}
 }
+
 func CreateFixtures_TestNewMessageHandler(js *JobSuite) MessageFixtures {
 	org := &models.Organization{AuthConfig: "{}", Uuid: domain.GetUuid()}
 	createFixture(js, org)
@@ -38,8 +39,11 @@ func CreateFixtures_TestNewMessageHandler(js *JobSuite) MessageFixtures {
 		createFixture(js, &users[i])
 	}
 
+	location := models.Location{}
+	createFixture(js, &location)
+
 	posts := models.Posts{
-		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID},
+		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID, DestinationID: location.ID},
 	}
 	for i := range posts {
 		createFixture(js, &posts[i])
