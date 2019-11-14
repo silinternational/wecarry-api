@@ -2,10 +2,11 @@ package models
 
 import (
 	"fmt"
-	"github.com/gobuffalo/nulls"
-	"github.com/silinternational/wecarry-api/domain"
 	"testing"
 	"time"
+
+	"github.com/gobuffalo/nulls"
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 type ThreadFixtures struct {
@@ -139,6 +140,11 @@ func CreateThreadFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) Threa
 		createFixture(ms, &userOrgs[i])
 	}
 
+	locations := []Location{{}, {}}
+	for i := range locations {
+		createFixture(ms, &(locations[i]))
+	}
+
 	// Each user has a request and is a provider on the other user's post
 	posts := Posts{
 		{
@@ -150,6 +156,7 @@ func CreateThreadFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) Threa
 			Status:         PostStatusOpen,
 			Uuid:           domain.GetUuid(),
 			ProviderID:     nulls.NewInt(users[1].ID),
+			DestinationID:  locations[0].ID,
 		},
 		{
 			CreatedByID:    users[1].ID,
@@ -160,6 +167,7 @@ func CreateThreadFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) Threa
 			Status:         PostStatusOpen,
 			Uuid:           domain.GetUuid(),
 			ProviderID:     nulls.NewInt(users[0].ID),
+			DestinationID:  locations[1].ID,
 		},
 	}
 

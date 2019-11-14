@@ -429,14 +429,14 @@ func (r *mutationResolver) CreatePost(ctx context.Context, input postInput) (*mo
 		return nil, reportError(ctx, err, "CreatePost.ProcessInput", extras)
 	}
 
+	dest := convertGqlLocationInputToDBLocation(*input.Destination)
+	if err1 := dest.Create(); err1 != nil {
+		return nil, reportError(ctx, err1, "CreatePost.SetDestination", extras)
+	}
+	post.DestinationID = dest.ID
+
 	if err2 := post.Create(); err2 != nil {
 		return nil, reportError(ctx, err2, "CreatePost", extras)
-	}
-
-	if input.Destination != nil {
-		if err3 := post.SetDestination(convertGqlLocationInputToDBLocation(*input.Destination)); err3 != nil {
-			return nil, reportError(ctx, err3, "CreatePost.SetDestination", extras)
-		}
 	}
 
 	if input.Origin != nil {
@@ -460,7 +460,9 @@ func (r *mutationResolver) UpdatePost(ctx context.Context, input postInput) (*mo
 		return nil, reportError(ctx, err, "UpdatePost.ProcessInput", extras)
 	}
 
-	if editable, err2 := post.IsEditable(cUser); err2 != nil {
+	var dbPost models.Post
+	_ = dbPost.FindByID(post.ID)
+	if editable, err2 := dbPost.IsEditable(cUser); err2 != nil {
 		return nil, reportError(ctx, err2, "UpdatePost.GetEditable", extras)
 	} else if !editable {
 		return nil, reportError(ctx, errors.New("attempt to update a non-editable post"),

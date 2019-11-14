@@ -29,8 +29,11 @@ func Fixtures_Message_GetSender(ms *ModelSuite, t *testing.T) MessageFixtures {
 		createFixture(ms, &users[i])
 	}
 
+	location := Location{}
+	createFixture(ms, &location)
+
 	posts := Posts{
-		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID},
+		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID, DestinationID: location.ID},
 	}
 	for i := range posts {
 		createFixture(ms, &posts[i])
@@ -76,8 +79,11 @@ func Fixtures_Message_Create(ms *ModelSuite, t *testing.T) MessageFixtures {
 		createFixture(ms, &users[i])
 	}
 
+	location := Location{}
+	createFixture(ms, &location)
+
 	posts := Posts{
-		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID},
+		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID, DestinationID: location.ID},
 	}
 	for i := range posts {
 		createFixture(ms, &posts[i])
@@ -125,8 +131,11 @@ func Fixtures_Message_FindByID(ms *ModelSuite, t *testing.T) MessageFixtures {
 		createFixture(ms, &users[i])
 	}
 
+	location := Location{}
+	createFixture(ms, &location)
+
 	posts := Posts{
-		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID},
+		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID, DestinationID: location.ID},
 	}
 	for i := range posts {
 		createFixture(ms, &posts[i])
@@ -170,8 +179,11 @@ func Fixtures_Message_FindByUUID(ms *ModelSuite) MessageFixtures {
 		createFixture(ms, &users[i])
 	}
 
+	location := Location{}
+	createFixture(ms, &location)
+
 	posts := Posts{
-		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID},
+		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID, DestinationID: location.ID},
 	}
 	for i := range posts {
 		createFixture(ms, &posts[i])
@@ -255,6 +267,11 @@ func CreateMessageFixtures_AfterCreate(ms *ModelSuite, t *testing.T) MessageFixt
 		createFixture(ms, &userOrgs[i])
 	}
 
+	locations := []Location{{}, {}}
+	for i := range locations {
+		createFixture(ms, &(locations[i]))
+	}
+
 	// Each user has a request and is a provider on the other user's post
 	posts := Posts{
 		{
@@ -266,6 +283,7 @@ func CreateMessageFixtures_AfterCreate(ms *ModelSuite, t *testing.T) MessageFixt
 			Status:         PostStatusOpen,
 			Uuid:           domain.GetUuid(),
 			ProviderID:     nulls.NewInt(users[1].ID),
+			DestinationID:  locations[0].ID,
 		},
 		{
 			CreatedByID:    users[1].ID,
@@ -276,6 +294,7 @@ func CreateMessageFixtures_AfterCreate(ms *ModelSuite, t *testing.T) MessageFixt
 			Status:         PostStatusOpen,
 			Uuid:           domain.GetUuid(),
 			ProviderID:     nulls.NewInt(users[0].ID),
+			DestinationID:  locations[1].ID,
 		},
 	}
 
