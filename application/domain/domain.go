@@ -46,7 +46,7 @@ const (
 
 // Notification Message Template Names
 const (
-	MessageTemplateNewMessage                      = "new_message"
+	MessageTemplateNewThreadMessage                = "new_thread_message"
 	MessageTemplateNewRequest                      = "new_request"
 	MessageTemplateRequestFromCommittedToOpen      = "request_from_committed_to_open"
 	MessageTemplateRequestFromAcceptedToOpen       = "request_from_accepted_to_open"
@@ -79,6 +79,7 @@ var ErrLogger log.Logger
 // Env holds environment variable values loaded by init()
 var Env struct {
 	AccessTokenLifetimeSeconds int
+	AppName                    string
 	AuthCallbackURL            string
 	AwsS3Region                string
 	AwsS3Endpoint              string
@@ -117,6 +118,7 @@ func ReadEnv() {
 		n = AccessTokenLifetimeSeconds
 	}
 	Env.AccessTokenLifetimeSeconds = n
+	Env.AppName = envy.Get("APP_NAME", "WeCarry")
 	Env.AuthCallbackURL = envy.Get("AUTH_CALLBACK_URL", "")
 	Env.AwsS3Region = envy.Get("AWS_REGION", "")
 	Env.AwsS3Endpoint = envy.Get("AWS_S3_ENDPOINT", "")
