@@ -1,6 +1,7 @@
 package notifications
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 
@@ -23,7 +24,7 @@ type sendGridTemplate struct {
 }
 
 var sendGridTemplates = map[string]sendGridTemplate{
-	domain.MessageTemplateNewMessage:                      {id: "d-3c43c00e9c384aff99260d53f1b0d482"},
+	domain.MessageTemplateNewThreadMessage:                {id: "d-3c43c00e9c384aff99260d53f1b0d482"},
 	domain.MessageTemplateNewRequest:                      {id: ""},
 	domain.MessageTemplateRequestFromOpenToCommitted:      {id: "d-44a96bd9fb3846a9ab6ae9b933becf4e"},
 	domain.MessageTemplateRequestFromCommittedToAccepted:  {id: "d-b03639e13cb6493998f946b8ef678fab"},
@@ -42,29 +43,23 @@ func (e *SendGridService) Send(msg Message) error {
 		return errors.New("SendGrid API key is required")
 	}
 
-	template, ok := sendGridTemplates[msg.Template]
-	if !ok {
-		return fmt.Errorf("invalid message template name: %s", msg.Template)
+	subject := "New Message on " + domain.Env.AppName
+	from := mail.NewEmail(msg.FromName, msg.FromEmail)
+	to := mail.NewEmail(msg.ToName, msg.ToEmail)
+
+	msg.Data["uiURL"] = domain.Env.UIURL
+	msg.Data["appName"] = domain.Env.AppName
+
+	bodyBuf := &bytes.Buffer{}
+	if err := r.HTML(msg.Template).Render(bodyBuf, msg.Data); err != nil {
+		return errors.New("error rendering message body - " + err.Error())
 	}
+	body := bodyBuf.String()
 
-	p := mail.NewPersonalization()
-	p.AddTos(mail.NewEmail(msg.ToName, msg.ToEmail))
-	for key, val := range msg.Data {
-		p.SetDynamicTemplateData(key, val)
-	}
+	m := mail.NewSingleEmail(from, subject, to, body, body)
+	client := sendgrid.NewSendClient(apiKey)
+	response, err := client.Send(m)
 
-	message := mail.NewV3Mail()
-	message.SetTemplateID(template.id)
-	message.SetFrom(mail.NewEmail(msg.FromName, msg.FromEmail))
-	message.AddPersonalizations(p)
-
-	domain.Logger.Printf("email data: %+v\n", message.Personalizations[0].DynamicTemplateData)
-
-	request := sendgrid.GetRequest(apiKey, SendGridEndpointMailSend, SendGridAPIUrl)
-	request.Method = "POST"
-	request.Body = mail.GetRequestBody(message)
-
-	response, err := sendgrid.API(request)
 	if err != nil {
 		return fmt.Errorf("error attempting to send message, %s", err)
 	}
