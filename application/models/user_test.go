@@ -573,6 +573,50 @@ func (ms *ModelSuite) TestUser_CanEditAllPosts() {
 	}
 }
 
+func (ms *ModelSuite) TestUser_CanUpdatePostStatus() {
+	t := ms.T()
+
+	tests := []struct {
+		name      string
+		post      Post
+		user      User
+		newStatus string
+		want      bool
+	}{
+		{
+			name: "Creator",
+			post: Post{CreatedByID: 1},
+			user: User{ID: 1},
+			want: true,
+		},
+		{
+			name: "SuperDuperAdmin",
+			post: Post{},
+			user: User{AdminRole: nulls.NewString(domain.AdminRoleSuperDuperAdmin)},
+			want: true,
+		},
+		{
+			name:      "Open",
+			post:      Post{CreatedByID: 1},
+			newStatus: PostStatusOpen,
+			want:      false,
+		},
+		{
+			name:      "Committed",
+			post:      Post{CreatedByID: 1},
+			newStatus: PostStatusCommitted,
+			want:      true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ms.Equal(test.want, test.user.CanUpdatePostStatus(test.post, test.newStatus),
+				"CanEditAllPosts() incorrect result")
+		})
+	}
+}
+
 func (ms *ModelSuite) TestUser_AttachPhoto() {
 	t := ms.T()
 
