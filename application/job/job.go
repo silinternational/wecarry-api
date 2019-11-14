@@ -12,14 +12,14 @@ import (
 )
 
 const (
-	NewMessage = "new_message"
+	NewThreadMessage = "new_thread_message"
 )
 
 var W worker.Worker
 
 func init() {
 	W = worker.NewSimple()
-	if err := W.Register(NewMessage, NewThreadMessageHandler); err != nil {
+	if err := W.Register(NewThreadMessage, NewThreadMessageHandler); err != nil {
 		domain.ErrLogger.Printf("error registering 'new_message' worker, %s", err)
 	}
 }
@@ -28,16 +28,16 @@ func init() {
 func NewThreadMessageHandler(args worker.Args) error {
 	id, ok := args[domain.ArgMessageID].(int)
 	if !ok || id <= 0 {
-		return fmt.Errorf("no message ID provided to new_message worker, args = %+v", args)
+		return fmt.Errorf("no message ID provided to new_thread_message worker, args = %+v", args)
 	}
 
 	var m models.Message
 	if err := m.FindByID(id, "SentBy", "Thread"); err != nil {
-		return fmt.Errorf("bad ID (%d) received by new message handler, %s", id, err)
+		return fmt.Errorf("bad ID (%d) received by new thread message handler, %s", id, err)
 	}
 
 	if err := m.Thread.Load("Participants", "Post"); err != nil {
-		return errors.New("failed to load Participants and Post in new message handler")
+		return errors.New("failed to load Participants and Post in new thread message handler")
 	}
 
 	msg := notifications.Message{
@@ -75,7 +75,7 @@ func NewThreadMessageHandler(args worker.Args) error {
 		msg.ToName = p.Nickname
 		msg.ToEmail = p.Email
 		if err := notifications.Send(msg); err != nil {
-			domain.ErrLogger.Printf("error sending 'New Message' notification, %s", err)
+			domain.ErrLogger.Printf("error sending 'New Thread Message' notification, %s", err)
 			lastErr = err
 			continue
 		}

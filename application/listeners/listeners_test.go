@@ -133,7 +133,7 @@ func (ms *ModelSuite) TestSendNewMessageNotification() {
 		Message: "New Message from",
 	}
 
-	sendNewMessageNotification(e)
+	sendNewThreadMessageNotification(e)
 	got := buf.String()
 	want := "Message Created ... New Message from"
 
