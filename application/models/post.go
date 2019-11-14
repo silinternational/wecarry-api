@@ -588,12 +588,12 @@ func (p *Post) isStatusChangeable(user User, newStatus string) bool {
 		return true
 	}
 
-	if p.ProviderID.Int != user.ID && p.ReceiverID.Int != user.ID {
-		return false
-	}
-
 	if newStatus == PostStatusCommitted {
 		return true
+	}
+
+	if p.ProviderID.Int != user.ID && p.ReceiverID.Int != user.ID {
+		return false
 	}
 
 	if p.Type == PostTypeRequest && newStatus == PostStatusDelivered {
