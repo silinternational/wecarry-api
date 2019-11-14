@@ -112,6 +112,8 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 		domain.ErrLogger.SetOutput(os.Stderr)
 	}()
 
+	var getT = notifications.GetEmailTemplate
+
 	tests := []struct {
 		name            string
 		template        string
@@ -190,7 +192,7 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 			template:     domain.MessageTemplateRequestFromCommittedToDelivered,
 			sendFunction: sendNotificationRequestFromCommittedOrAcceptedToDelivered,
 			wantErrLog: fmt.Sprintf("error preparing '%s' notification - no provider\n",
-				domain.MessageTemplateRequestFromCommittedToDelivered),
+				getT(domain.MessageTemplateRequestFromCommittedToDelivered)),
 		},
 		{name: "Good - Committed to Removed",
 			post:           posts[0],
@@ -231,7 +233,7 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 			template:     domain.MessageTemplateRequestFromAcceptedToDelivered,
 			sendFunction: sendNotificationRequestFromCommittedOrAcceptedToDelivered,
 			wantErrLog: fmt.Sprintf("error preparing '%s' notification - no provider\n",
-				domain.MessageTemplateRequestFromAcceptedToDelivered),
+				getT(domain.MessageTemplateRequestFromAcceptedToDelivered)),
 		},
 		{name: "Good - Accepted to Received",
 			post:           posts[0],
@@ -262,12 +264,14 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 				domain.MessageTemplateRequestFromAcceptedToRemoved),
 		},
 	}
+
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 
 			notifications.TestEmailService.DeleteSentMessages()
 
-			test.sendFunction(test.template, test.post, test.eventData)
+			template := getT(test.template)
+			test.sendFunction(template, test.post, test.eventData)
 			gotBuf := buf.String()
 			buf.Reset()
 

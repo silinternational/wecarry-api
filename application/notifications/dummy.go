@@ -22,6 +22,8 @@ type dummyTemplate struct {
 	subject, body string
 }
 
+var getT = GetEmailTemplate
+
 var dummyTemplates = map[string]dummyTemplate{
 	domain.MessageTemplateNewRequest: {
 		subject: "new request",
@@ -59,9 +61,9 @@ var dummyTemplates = map[string]dummyTemplate{
 		subject: domain.MessageTemplateRequestFromCommittedToDelivered,
 		body:    "The status of a request changed from committed to delivered.",
 	},
-	domain.MessageTemplateRequestFromAcceptedToDelivered: {
-		subject: domain.MessageTemplateRequestFromAcceptedToDelivered,
-		body:    "The status of a request changed from accepted to delivered.",
+	getT(domain.MessageTemplateRequestFromAcceptedToDelivered): {
+		subject: getT(domain.MessageTemplateRequestFromAcceptedToDelivered),
+		body:    "The status of a request changed from committed or accepted to delivered.",
 	},
 	domain.MessageTemplateRequestFromReceivedToDelivered: {
 		subject: domain.MessageTemplateRequestFromReceivedToDelivered,
@@ -102,24 +104,27 @@ var dummyTemplates = map[string]dummyTemplate{
 }
 
 func (t *DummyEmailService) Send(msg Message) error {
-	template, ok := dummyTemplates[msg.Template]
+	dTemplate, ok := dummyTemplates[msg.Template]
 	if !ok {
 		errMsg := fmt.Sprintf("invalid template name: %s", msg.Template)
 		domain.ErrLogger.Print(errMsg)
 		return errors.New(errMsg)
 	}
 
+	eTemplate := msg.Template
 	bodyBuf := &bytes.Buffer{}
-	if err := r.HTML(msg.Template).Render(bodyBuf, msg.Data); err != nil {
-		return errors.New("error rendering message body - " + err.Error())
+	if err := r.HTML(eTemplate).Render(bodyBuf, msg.Data); err != nil {
+		errMsg := "error rendering message body - " + err.Error()
+		domain.ErrLogger.Print(errMsg)
+		return errors.New(errMsg)
 	}
 
 	domain.Logger.Printf("dummy message subject: %s, recipient: %s, data: %+v",
-		template.subject, msg.ToName, msg.Data)
+		dTemplate.subject, msg.ToName, msg.Data)
 
 	t.sentMessages = append(t.sentMessages,
 		dummyMessage{
-			subject:   template.subject,
+			subject:   dTemplate.subject,
 			body:      bodyBuf.String(),
 			fromName:  msg.FromName,
 			fromEmail: msg.FromEmail,
