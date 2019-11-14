@@ -80,6 +80,12 @@
   translation: We had a problem setting the destination to update that request or offer.
 - id: UpdatePost.SetOrigin
   translation: We had a problem setting the origin to update that request or offer.
+- id: UpdatePostStatus
+  translation: We had a problem changing the status of that request or offer.
+- id: UpdatePostStatus.FindPost
+  translation: We had a problem finding that request or offer for changing its status.
+- id: UpdatePostStatus.NotAllowed
+  translation: You have insufficient privileges to change the status of that post.
 - id: GetThreadParticipants
   translation: We had a problem getting a list of participants in that conversation.
 - id: GetThreadLastViewedAt
