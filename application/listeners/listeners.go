@@ -163,7 +163,7 @@ func sendPostCreatedNotifications(e events.Event) {
 
 	post := models.Post{}
 	if err := post.FindByID(eventData.PostID); err != nil {
-		domain.ErrLogger.Printf("unable to find post from event with id %v ... %s", eventData.PostID, err)
+		domain.ErrLogger.Printf("unable to find post %d from post-created event, %s", eventData.PostID, err)
 	}
 
 	org, err := post.GetOrganization([]string{"id"})

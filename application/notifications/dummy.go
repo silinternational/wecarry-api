@@ -24,7 +24,7 @@ type dummyTemplate struct {
 var dummyTemplates = map[string]dummyTemplate{
 	domain.MessageTemplateNewRequest: {
 		subject: "new request",
-		body:    "There is a new request for an item from your location.",
+		body:    "There is a new request for an item.",
 	},
 	domain.MessageTemplateNewMessage: {
 		subject: "new message",
