@@ -1,6 +1,7 @@
 package gqlgen
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 
@@ -425,13 +426,13 @@ func (gs *GqlgenSuite) Test_UpdatePost() {
 	gs.Equal(true, postsResp.Post.IsEditable)
 
 	// Now check for a valid status update
-	input = `id: "` + f.Posts[0].Uuid.String() + `" status: ` + models.PostStatusCommitted
+	input = `id: "` + f.Posts[0].Uuid.String() + `" status: ` + PostStatusCommitted.String()
 	query = `mutation { post: updatePost(input: {` + input + `}) { id status}}`
 
 	gs.NoError(c.Post(query, &postsResp))
 
 	// Now check for a validation error for a bad status update
-	input = `id: "` + f.Posts[0].Uuid.String() + `" status: ` + models.PostStatusCompleted
+	input = `id: "` + f.Posts[0].Uuid.String() + `" status: ` + PostStatusCompleted.String()
 	query = `mutation { post: updatePost(input: {` + input + `}) { id status}}`
 
 	gs.Error(c.Post(query, &postsResp))
@@ -537,4 +538,112 @@ func (gs *GqlgenSuite) Test_CreatePost() {
 	gs.Equal("cat", postsResp.Post.Category)
 	gs.Equal("example.com", postsResp.Post.Url)
 	gs.Equal("1", postsResp.Post.Cost)
+}
+
+type UpdatePostStatusFixtures struct {
+	models.Posts
+	models.Users
+}
+
+func createFixturesForUpdatePostStatus(gs *GqlgenSuite) UpdatePostStatusFixtures {
+	org := models.Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	createFixture(gs, &org)
+
+	unique := org.Uuid.String()
+	users := make(models.Users, 2)
+	userOrgs := make(models.UserOrganizations, len(users))
+	for i := range users {
+		users[i] = models.User{
+			Email:    fmt.Sprintf("%s_user%d@example.com", unique, i),
+			Nickname: fmt.Sprintf("%s_User%d", unique, i),
+			Uuid:     domain.GetUuid(),
+		}
+		createFixture(gs, &users[i])
+
+		userOrgs[i] = models.UserOrganization{
+			OrganizationID: org.ID,
+			UserID:         users[i].ID,
+			AuthID:         users[i].Email,
+			AuthEmail:      users[i].Email,
+		}
+		createFixture(gs, &userOrgs[i])
+	}
+
+	posts := make(models.Posts, 2)
+	locations := make(models.Locations, len(posts))
+	for i := range posts {
+		createFixture(gs, &locations[i])
+
+		posts[i].CreatedByID = users[0].ID
+		posts[i].OrganizationID = org.ID
+		posts[i].Uuid = domain.GetUuid()
+		posts[i].DestinationID = locations[i].ID
+		posts[i].Title = "title"
+		posts[i].Size = PostSizeSmall.String()
+		posts[i].Type = PostTypeRequest.String()
+		posts[i].Status = models.PostStatusOpen
+		createFixture(gs, &posts[i])
+	}
+
+	return UpdatePostFixtures{
+		Posts: posts,
+		Users: users,
+	}
+}
+
+func (gs *GqlgenSuite) Test_UpdatePostStatus() {
+	f := createFixturesForUpdatePostStatus(gs)
+	c := getGqlClient()
+
+	var postsResp PostResponse
+
+	input := `id: "` + f.Posts[0].Uuid.String() + `", status: ` + PostStatusCommitted.String()
+	query := `mutation { post: updatePostStatus(input: {` + input + `}) {id status}}`
+
+	TestUser = f.Users[1]
+	gs.NoError(c.Post(query, &postsResp), "query=%s", query)
+	gs.Equal(PostStatusCommitted.String(), postsResp.Post.Status)
+
+	input = `id: "` + f.Posts[0].Uuid.String() + `", status: ` + PostStatusAccepted.String()
+	query = `mutation { post: updatePostStatus(input: {` + input + `}) {id status}}`
+
+	TestUser = f.Users[1]
+	gs.Error(c.Post(query, &postsResp), "query=%s", query)
+
+	TestUser = f.Users[0]
+	gs.NoError(c.Post(query, &postsResp), "query=%s", query)
+	gs.Equal(PostStatusAccepted.String(), postsResp.Post.Status)
+
+	input = `id: "` + f.Posts[0].Uuid.String() + `", status: ` + PostStatusReceived.String()
+	query = `mutation { post: updatePostStatus(input: {` + input + `}) {id status}}`
+
+	TestUser = f.Users[1]
+	gs.Error(c.Post(query, &postsResp), "query=%s", query)
+
+	TestUser = f.Users[0]
+	gs.NoError(c.Post(query, &postsResp), "query=%s", query)
+	gs.Equal(PostStatusReceived.String(), postsResp.Post.Status)
+
+	input = `id: "` + f.Posts[0].Uuid.String() + `", status: ` + PostStatusDelivered.String()
+	query = `mutation { post: updatePostStatus(input: {` + input + `}) {id status}}`
+
+	TestUser = f.Users[1]
+	gs.NoError(c.Post(query, &postsResp), "query=%s", query)
+	gs.Equal(PostStatusDelivered.String(), postsResp.Post.Status)
+
+	input = `id: "` + f.Posts[0].Uuid.String() + `", status: ` + PostStatusCompleted.String()
+	query = `mutation { post: updatePostStatus(input: {` + input + `}) {id status}}`
+
+	TestUser = f.Users[1]
+	gs.Error(c.Post(query, &postsResp), "query=%s", query)
+
+	TestUser = f.Users[0]
+	gs.NoError(c.Post(query, &postsResp), "query=%s", query)
+	gs.Equal(PostStatusCompleted.String(), postsResp.Post.Status)
+
+	input = `id: "` + f.Posts[0].Uuid.String() + `", status: ` + PostStatusRemoved.String()
+	query = `mutation { post: updatePostStatus(input: {` + input + `}) {id status}}`
+
+	TestUser = f.Users[0]
+	gs.Error(c.Post(query, &postsResp), "query=%s", query)
 }
