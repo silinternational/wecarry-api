@@ -19,7 +19,7 @@ type template struct {
 }
 
 var templateData = map[string]template{
-	domain.MessageTemplateNewMessage: {
+	domain.MessageTemplateNewThreadMessage: {
 		subject: "new message", body: "You have a new message."},
 	domain.MessageTemplateNewRequest: {
 		subject: "new request", body: "There is a new request for an item from your location."},

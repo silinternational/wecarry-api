@@ -12,7 +12,7 @@ func TestSend(t *testing.T) {
 		FromEmail: "from@example.com",
 		ToName:    "to name",
 		ToEmail:   "steve_schram@sil.org",
-		Template:  domain.MessageTemplateNewMessage,
+		Template:  domain.MessageTemplateNewThreadMessage,
 	}
 	var emailService EmailService
 	var testService DummyEmailService
