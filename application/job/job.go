@@ -19,13 +19,13 @@ var W worker.Worker
 
 func init() {
 	W = worker.NewSimple()
-	if err := W.Register(NewMessage, NewMessageHandler); err != nil {
+	if err := W.Register(NewMessage, NewThreadMessageHandler); err != nil {
 		domain.ErrLogger.Printf("error registering 'new_message' worker, %s", err)
 	}
 }
 
-// NewMessageHandler is the Worker handler for new notifications of new Thread Messages
-func NewMessageHandler(args worker.Args) error {
+// NewThreadMessageHandler is the Worker handler for new notifications of new Thread Messages
+func NewThreadMessageHandler(args worker.Args) error {
 	id, ok := args[domain.ArgMessageID].(int)
 	if !ok || id <= 0 {
 		return fmt.Errorf("no message ID provided to new_message worker, args = %+v", args)
@@ -41,8 +41,10 @@ func NewMessageHandler(args worker.Args) error {
 	}
 
 	msg := notifications.Message{
-		Template: domain.MessageTemplateNewMessage,
+		Template: domain.MessageTemplateNewThreadMessage,
 		Data: map[string]interface{}{
+			"appName":        domain.Env.AppName,
+			"uiURL":          domain.Env.UIURL,
 			"postURL":        domain.GetPostUIURL(m.Thread.Post.Uuid.String()),
 			"postTitle":      m.Thread.Post.Title,
 			"messageContent": m.Content,
@@ -61,7 +63,7 @@ func NewMessageHandler(args worker.Args) error {
 
 		var tp models.ThreadParticipant
 		if err := tp.FindByThreadIDAndUserID(m.ThreadID, p.ID); err != nil {
-			domain.ErrLogger.Printf("NewMessageHandler error, %s", err)
+			domain.ErrLogger.Printf("NewThreadMessageHandler error, %s", err)
 			lastErr = err
 			continue
 		}
@@ -79,7 +81,7 @@ func NewMessageHandler(args worker.Args) error {
 		}
 
 		if err := tp.UpdateLastNotifiedAt(time.Now()); err != nil {
-			domain.ErrLogger.Printf("NewMessageHandler error, %s", err)
+			domain.ErrLogger.Printf("NewThreadMessageHandler error, %s", err)
 			lastErr = err
 		}
 	}
