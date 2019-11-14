@@ -20,8 +20,7 @@ func createFixture(js *JobSuite, f interface{}) {
 		js.T().FailNow()
 	}
 }
-
-func CreateFixtures_TestNewMessageHandler(js *JobSuite) MessageFixtures {
+func CreateFixtures_TestNewThreadMessageHandler(js *JobSuite) MessageFixtures {
 	org := &models.Organization{AuthConfig: "{}", Uuid: domain.GetUuid()}
 	createFixture(js, org)
 
