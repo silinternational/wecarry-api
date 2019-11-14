@@ -1,6 +1,7 @@
 package notifications
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 
@@ -26,7 +27,7 @@ var dummyTemplates = map[string]dummyTemplate{
 		subject: "new request",
 		body:    "There is a new request for an item from your location.",
 	},
-	domain.MessageTemplateNewMessage: {
+	domain.MessageTemplateNewThreadMessage: {
 		subject: "new message",
 		body:    "You have a new message.",
 	},
@@ -106,6 +107,11 @@ func (t *DummyEmailService) Send(msg Message) error {
 		errMsg := fmt.Sprintf("invalid template name: %s", msg.Template)
 		domain.ErrLogger.Print(errMsg)
 		return errors.New(errMsg)
+	}
+
+	bodyBuf := &bytes.Buffer{}
+	if err := r.HTML(msg.Template).Render(bodyBuf, msg.Data); err != nil {
+		return errors.New("error rendering message body - " + err.Error())
 	}
 
 	domain.Logger.Printf("dummy message subject: %s, recipient: %s, data: %+v",
