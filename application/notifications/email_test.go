@@ -11,8 +11,17 @@ func TestSend(t *testing.T) {
 		FromName:  "from name",
 		FromEmail: "from@example.com",
 		ToName:    "to name",
-		ToEmail:   "steve_schram@sil.org",
+		ToEmail:   "to@example.com",
 		Template:  domain.MessageTemplateNewThreadMessage,
+		Data: map[string]interface{}{
+			"uiURL":          "example.com",
+			"appName":        "Our App",
+			"postURL":        "mypost.example.com",
+			"postTitle":      "My Post",
+			"messageContent": "I can bring it",
+			"sentByNickname": "Fred",
+			"threadURL":      "ourthread.example.com",
+		},
 	}
 	var emailService EmailService
 	var testService DummyEmailService
