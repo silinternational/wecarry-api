@@ -20,7 +20,7 @@ var W worker.Worker
 func init() {
 	W = worker.NewSimple()
 	if err := W.Register(NewThreadMessage, NewThreadMessageHandler); err != nil {
-		domain.ErrLogger.Printf("error registering 'new_message' worker, %s", err)
+		domain.ErrLogger.Printf("error registering '%s' worker, %s", NewThreadMessage, err)
 	}
 }
 
@@ -28,7 +28,7 @@ func init() {
 func NewThreadMessageHandler(args worker.Args) error {
 	id, ok := args[domain.ArgMessageID].(int)
 	if !ok || id <= 0 {
-		return fmt.Errorf("no message ID provided to new_thread_message worker, args = %+v", args)
+		return fmt.Errorf("no message ID provided to %s worker, args = %+v", NewThreadMessage, args)
 	}
 
 	var m models.Message
