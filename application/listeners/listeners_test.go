@@ -139,3 +139,26 @@ func (ms *ModelSuite) TestSendNewMessageNotification() {
 
 	ms.Contains(got, want, "Got an unexpected log entry")
 }
+
+func (ms *ModelSuite) TestSendPostCreatedNotifications() {
+	var buf bytes.Buffer
+	domain.ErrLogger.SetOutput(&buf)
+
+	defer func() {
+		domain.ErrLogger.SetOutput(os.Stderr)
+	}()
+
+	e := events.Event{
+		Kind:    domain.EventApiPostCreated,
+		Message: "Post created",
+	}
+
+	sendPostCreatedNotifications(e)
+	//err := events.Emit(e)
+	//ms.NoError(err, "error emitting event %s ... %v", e.Kind, err)
+
+	got := buf.String()
+	want := "unable to parse Post Created event payload"
+
+	ms.Contains(got, want, "Error log did not have the expected text")
+}
