@@ -113,7 +113,7 @@ func (t *DummyEmailService) Send(msg Message) error {
 
 	eTemplate := msg.Template
 	bodyBuf := &bytes.Buffer{}
-	if err := r.HTML(eTemplate).Render(bodyBuf, msg.Data); err != nil {
+	if err := eR.HTML(eTemplate).Render(bodyBuf, msg.Data); err != nil {
 		errMsg := "error rendering message body - " + err.Error()
 		domain.ErrLogger.Print(errMsg)
 		return errors.New(errMsg)

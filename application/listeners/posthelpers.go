@@ -265,8 +265,6 @@ func join(s1, s2 string) string {
 	return s1 + "-" + s2
 }
 
-var getT = notifications.GetEmailTemplate
-
 var statusSenders = map[string]Sender{
 	join(m.PostStatusCommitted, m.PostStatusOpen): Sender{
 		Template: domain.MessageTemplateRequestFromCommittedToOpen,
@@ -331,5 +329,5 @@ func requestStatusUpdatedNotifications(post m.Post, eData m.PostStatusEventData)
 		return
 	}
 
-	sender.Sender(getT(sender.Template), post, eData)
+	sender.Sender(notifications.GetEmailTemplate(sender.Template), post, eData)
 }

@@ -54,6 +54,7 @@ const (
 	MessageTemplateRequestFromCommittedToAccepted  = "request_from_committed_to_accepted"
 	MessageTemplateRequestFromDeliveredToAccepted  = "request_from_delivered_to_accepted"
 	MessageTemplateRequestFromReceivedToAccepted   = "request_from_received_to_accepted"
+	MessageTemplateRequestDelivered                = "request_delivered"
 	MessageTemplateRequestFromCommittedToDelivered = "request_from_committed_to_delivered"
 	MessageTemplateRequestFromAcceptedToDelivered  = "request_from_accepted_to_delivered"
 	MessageTemplateRequestFromReceivedToDelivered  = "request_from_received_to_delivered"
