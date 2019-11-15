@@ -46,7 +46,7 @@ const (
 
 // Notification Message Template Names
 const (
-	MessageTemplateNewMessage                      = "new_message"
+	MessageTemplateNewThreadMessage                = "new_thread_message"
 	MessageTemplateNewRequest                      = "new_request"
 	MessageTemplateRequestFromCommittedToOpen      = "request_from_committed_to_open"
 	MessageTemplateRequestFromAcceptedToOpen       = "request_from_accepted_to_open"
@@ -54,6 +54,7 @@ const (
 	MessageTemplateRequestFromCommittedToAccepted  = "request_from_committed_to_accepted"
 	MessageTemplateRequestFromDeliveredToAccepted  = "request_from_delivered_to_accepted"
 	MessageTemplateRequestFromReceivedToAccepted   = "request_from_received_to_accepted"
+	MessageTemplateRequestDelivered                = "request_delivered"
 	MessageTemplateRequestFromCommittedToDelivered = "request_from_committed_to_delivered"
 	MessageTemplateRequestFromAcceptedToDelivered  = "request_from_accepted_to_delivered"
 	MessageTemplateRequestFromReceivedToDelivered  = "request_from_received_to_delivered"
@@ -79,6 +80,7 @@ var ErrLogger log.Logger
 // Env holds environment variable values loaded by init()
 var Env struct {
 	AccessTokenLifetimeSeconds int
+	AppName                    string
 	AuthCallbackURL            string
 	AwsS3Region                string
 	AwsS3Endpoint              string
@@ -87,6 +89,7 @@ var Env struct {
 	AwsS3AccessKeyID           string
 	AwsS3SecretAccessKey       string
 	EmailService               string
+	EmailFromAddress           string
 	GoEnv                      string
 	GoogleKey                  string
 	GoogleSecret               string
@@ -117,6 +120,7 @@ func ReadEnv() {
 		n = AccessTokenLifetimeSeconds
 	}
 	Env.AccessTokenLifetimeSeconds = n
+	Env.AppName = envy.Get("APP_NAME", "WeCarry")
 	Env.AuthCallbackURL = envy.Get("AUTH_CALLBACK_URL", "")
 	Env.AwsS3Region = envy.Get("AWS_REGION", "")
 	Env.AwsS3Endpoint = envy.Get("AWS_S3_ENDPOINT", "")
@@ -125,6 +129,7 @@ func ReadEnv() {
 	Env.AwsS3AccessKeyID = envy.Get("AWS_S3_ACCESS_KEY_ID", "")
 	Env.AwsS3SecretAccessKey = envy.Get("AWS_S3_SECRET_ACCESS_KEY", "")
 	Env.EmailService = envy.Get("EMAIL_SERVICE", "sendgrid")
+	Env.EmailFromAddress = envy.Get("EMAIL_FROM_ADDRESS", "no_reply@example.com")
 	Env.GoEnv = envy.Get("GO_ENV", "development")
 	Env.GoogleKey = envy.Get("GOOGLE_KEY", "")
 	Env.GoogleSecret = envy.Get("GOOGLE_SECRET", "")

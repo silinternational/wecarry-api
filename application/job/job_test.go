@@ -25,7 +25,7 @@ func Test_JobSuite(t *testing.T) {
 	suite.Run(t, ms)
 }
 
-func (js *JobSuite) TestNewMessageHandler() {
+func (js *JobSuite) TestNewThreadMessageHandler() {
 	var buf bytes.Buffer
 	domain.ErrLogger.SetOutput(&buf)
 
@@ -33,7 +33,7 @@ func (js *JobSuite) TestNewMessageHandler() {
 		domain.ErrLogger.SetOutput(os.Stderr)
 	}()
 
-	f := CreateFixtures_TestNewMessageHandler(js)
+	f := CreateFixtures_TestNewThreadMessageHandler(js)
 
 	tests := []struct {
 		message            models.Message
@@ -75,7 +75,7 @@ func (js *JobSuite) TestNewMessageHandler() {
 			args := map[string]interface{}{
 				domain.ArgMessageID: test.message.ID,
 			}
-			err := NewMessageHandler(args)
+			err := NewThreadMessageHandler(args)
 
 			if test.wantErr {
 				js.Error(err)
