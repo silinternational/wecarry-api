@@ -382,7 +382,6 @@ func (gs *GqlgenSuite) Test_UpdatePost() {
 	input := `id: "` + f.Posts[0].Uuid.String() + `" photoID: "` + f.Files[1].UUID.String() + `"` +
 		` 
 			description: "new description"
-			status: COMMITTED
 			destination: {description:"dest" country:"dc" latitude:1.1 longitude:2.2}
 			origin: {description:"origin" country:"oc" latitude:3.3 longitude:4.4}
 			size: TINY
@@ -392,7 +391,7 @@ func (gs *GqlgenSuite) Test_UpdatePost() {
 			url: "example.com" 
 			cost: "1.00"
 		`
-	query := `mutation { post: updatePost(input: {` + input + `}) { id photo { id } description status 
+	query := `mutation { post: updatePost(input: {` + input + `}) { id photo { id } description 
 			destination { description country latitude longitude} 
 			origin { description country latitude longitude}
 			size neededAfter neededBefore category url cost isEditable}}`
@@ -408,7 +407,6 @@ func (gs *GqlgenSuite) Test_UpdatePost() {
 	gs.Equal(f.Posts[0].Uuid.String(), postsResp.Post.ID)
 	gs.Equal(f.Files[1].UUID.String(), postsResp.Post.Photo.ID)
 	gs.Equal("new description", postsResp.Post.Description)
-	gs.Equal("COMMITTED", postsResp.Post.Status)
 	gs.Equal("dest", postsResp.Post.Destination.Description)
 	gs.Equal("dc", postsResp.Post.Destination.Country)
 	gs.Equal(1.1, postsResp.Post.Destination.Lat)
@@ -424,18 +422,6 @@ func (gs *GqlgenSuite) Test_UpdatePost() {
 	gs.Equal("example.com", postsResp.Post.Url)
 	gs.Equal("1", postsResp.Post.Cost)
 	gs.Equal(true, postsResp.Post.IsEditable)
-
-	// Now check for a valid status update
-	input = `id: "` + f.Posts[0].Uuid.String() + `" status: ` + PostStatusCommitted.String()
-	query = `mutation { post: updatePost(input: {` + input + `}) { id status}}`
-
-	gs.NoError(c.Post(query, &postsResp))
-
-	// Now check for a validation error for a bad status update
-	input = `id: "` + f.Posts[0].Uuid.String() + `" status: ` + PostStatusCompleted.String()
-	query = `mutation { post: updatePost(input: {` + input + `}) { id status}}`
-
-	gs.Error(c.Post(query, &postsResp))
 
 	// Attempt to edit a locked post
 	TestUser = f.Users[1]

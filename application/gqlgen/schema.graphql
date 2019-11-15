@@ -188,7 +188,6 @@ input CreateMessageInput {
 
 input UpdatePostInput {
     id: ID!
-    status: PostStatus
     title: String
     description: String
     destination: LocationInput
