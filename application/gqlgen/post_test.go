@@ -569,12 +569,13 @@ func createFixturesForUpdatePostStatus(gs *GqlgenSuite) UpdatePostStatusFixtures
 		createFixture(gs, &userOrgs[i])
 	}
 
-	posts := make(models.Posts, 2)
+	posts := make(models.Posts, 1)
 	locations := make(models.Locations, len(posts))
 	for i := range posts {
 		createFixture(gs, &locations[i])
 
 		posts[i].CreatedByID = users[0].ID
+		posts[i].ReceiverID = nulls.NewInt(users[0].ID)
 		posts[i].OrganizationID = org.ID
 		posts[i].Uuid = domain.GetUuid()
 		posts[i].DestinationID = locations[i].ID
@@ -597,53 +598,36 @@ func (gs *GqlgenSuite) Test_UpdatePostStatus() {
 
 	var postsResp PostResponse
 
-	input := `id: "` + f.Posts[0].Uuid.String() + `", status: ` + PostStatusCommitted.String()
-	query := `mutation { post: updatePostStatus(input: {` + input + `}) {id status}}`
+	creator := f.Users[0]
+	provider := f.Users[1]
 
-	TestUser = f.Users[1]
-	gs.NoError(c.Post(query, &postsResp), "query=%s", query)
-	gs.Equal(PostStatusCommitted.String(), postsResp.Post.Status)
+	steps := []struct {
+		status  PostStatus
+		user    models.User
+		wantErr bool
+	}{
+		{status: PostStatusCommitted, user: provider, wantErr: false},
+		{status: PostStatusAccepted, user: provider, wantErr: true},
+		{status: PostStatusAccepted, user: creator, wantErr: false},
+		{status: PostStatusReceived, user: provider, wantErr: true},
+		{status: PostStatusReceived, user: creator, wantErr: false},
+		{status: PostStatusDelivered, user: provider, wantErr: false},
+		{status: PostStatusCompleted, user: provider, wantErr: true},
+		{status: PostStatusCompleted, user: creator, wantErr: false},
+		{status: PostStatusRemoved, user: creator, wantErr: true},
+	}
 
-	input = `id: "` + f.Posts[0].Uuid.String() + `", status: ` + PostStatusAccepted.String()
-	query = `mutation { post: updatePostStatus(input: {` + input + `}) {id status}}`
+	for _, step := range steps {
+		input := `id: "` + f.Posts[0].Uuid.String() + `", status: ` + step.status.String()
+		query := `mutation { post: updatePostStatus(input: {` + input + `}) {id status}}`
 
-	TestUser = f.Users[1]
-	gs.Error(c.Post(query, &postsResp), "query=%s", query)
-
-	TestUser = f.Users[0]
-	gs.NoError(c.Post(query, &postsResp), "query=%s", query)
-	gs.Equal(PostStatusAccepted.String(), postsResp.Post.Status)
-
-	input = `id: "` + f.Posts[0].Uuid.String() + `", status: ` + PostStatusReceived.String()
-	query = `mutation { post: updatePostStatus(input: {` + input + `}) {id status}}`
-
-	TestUser = f.Users[1]
-	gs.Error(c.Post(query, &postsResp), "query=%s", query)
-
-	TestUser = f.Users[0]
-	gs.NoError(c.Post(query, &postsResp), "query=%s", query)
-	gs.Equal(PostStatusReceived.String(), postsResp.Post.Status)
-
-	input = `id: "` + f.Posts[0].Uuid.String() + `", status: ` + PostStatusDelivered.String()
-	query = `mutation { post: updatePostStatus(input: {` + input + `}) {id status}}`
-
-	TestUser = f.Users[1]
-	gs.NoError(c.Post(query, &postsResp), "query=%s", query)
-	gs.Equal(PostStatusDelivered.String(), postsResp.Post.Status)
-
-	input = `id: "` + f.Posts[0].Uuid.String() + `", status: ` + PostStatusCompleted.String()
-	query = `mutation { post: updatePostStatus(input: {` + input + `}) {id status}}`
-
-	TestUser = f.Users[1]
-	gs.Error(c.Post(query, &postsResp), "query=%s", query)
-
-	TestUser = f.Users[0]
-	gs.NoError(c.Post(query, &postsResp), "query=%s", query)
-	gs.Equal(PostStatusCompleted.String(), postsResp.Post.Status)
-
-	input = `id: "` + f.Posts[0].Uuid.String() + `", status: ` + PostStatusRemoved.String()
-	query = `mutation { post: updatePostStatus(input: {` + input + `}) {id status}}`
-
-	TestUser = f.Users[0]
-	gs.Error(c.Post(query, &postsResp), "query=%s", query)
+		TestUser = step.user
+		err := c.Post(query, &postsResp)
+		if step.wantErr {
+			gs.Error(err, "user=%s, query=%s", step.user.Nickname, query)
+		} else {
+			gs.NoError(err, "user=%s, query=%s", step.user.Nickname, query)
+			gs.Equal(step.status.String(), postsResp.Post.Status)
+		}
+	}
 }
