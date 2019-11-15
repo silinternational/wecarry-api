@@ -585,7 +585,7 @@ func createFixturesForUpdatePostStatus(gs *GqlgenSuite) UpdatePostStatusFixtures
 		createFixture(gs, &posts[i])
 	}
 
-	return UpdatePostFixtures{
+	return UpdatePostStatusFixtures{
 		Posts: posts,
 		Users: users,
 	}
