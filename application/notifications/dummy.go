@@ -160,3 +160,11 @@ func (t *DummyEmailService) GetToEmailByIndex(i int) string {
 
 	return t.sentMessages[i].toEmail
 }
+
+func (t *DummyEmailService) GetLastBody() string {
+	if len(t.sentMessages) == 0 {
+		return ""
+	}
+
+	return t.sentMessages[len(t.sentMessages)-1].body
+}
