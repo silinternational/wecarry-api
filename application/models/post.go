@@ -556,25 +556,15 @@ func (p *Post) IsEditable(user User) (bool, error) {
 
 // isPostEditable defines at which states can posts be edited.
 func (p *Post) isPostEditable() bool {
-	switch p.Status {
-	case PostStatusOpen:
-		fallthrough
-	case PostStatusCommitted:
-		fallthrough
-	case PostStatusAccepted:
-		fallthrough
-	case PostStatusReceived:
-		fallthrough
-	case PostStatusDelivered:
-		return true
-
-	case PostStatusCompleted:
-		fallthrough
-	case PostStatusRemoved:
-		fallthrough
-	default:
-		return false
+	editable := []string{
+		PostStatusOpen,
+		PostStatusCommitted,
+		PostStatusAccepted,
+		PostStatusReceived,
+		PostStatusDelivered,
 	}
+
+	return domain.IsStringInSlice(p.Status, editable)
 }
 
 // isStatusChangeable defines which posts statuses can be changed by which users.

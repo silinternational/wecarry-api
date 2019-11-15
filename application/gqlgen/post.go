@@ -506,7 +506,6 @@ func (r *mutationResolver) UpdatePostStatus(ctx context.Context, input UpdatePos
 			"UpdatePostStatus.NotAllowed", extras)
 	}
 
-	post.Status = input.Status.String()
 	post.SetProviderWithStatus(input.Status.String(), cUser)
 	if err := post.Update(); err != nil {
 		return nil, reportError(ctx, err, "UpdatePostStatus", extras)

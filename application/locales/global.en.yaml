@@ -11,25 +11,25 @@
 - id: CreateOrganization
   translation: We had a problem creating the new organization.
 - id: CreateOrganization.NotAllowed
-  translation: You have insufficient privileges to create organizations.
+  translation: You are not authorized to create organizations.
 - id: UpdateOrganization
   translation: We had a problem updating the organization.
 - id: UpdateOrganization.NotFound
   translation: We had a problem finding the organization to update.
 - id: UpdateOrganization.NotAllowed
-  translation: You have insufficient privileges to edit information for that organization.
+  translation: You are not authorized to edit information for that organization.
 - id: CreateOrganizationDomain
   translation: We had a problem adding a domain to the organization.
 - id: CreateOrganizationDomain.NotFound
   translation: We had a problem finding the organization to add a domain.
 - id: CreateOrganizationDomain.NotAllowed
-  translation: You have insufficient privileges to add domains to that organization.
+  translation: You are not authorized to add domains to that organization.
 - id: RemoveOrganizationDomain
   translation: We had a problem removing a domain from the organization.
 - id: RemoveOrganizationDomain.NotFound
   translation: We had a problem finding the organization to remove a domain.
 - id: RemoveOrganizationDomain.NotAllowed
-  translation: You have insufficient privileges to remove domains from that organization.
+  translation: You are not authorized to remove domains from that organization.
 - id: SetThreadLastViewedAt.NotFound
   translation: We had a problem finding the conversation to update its last-viewed time.
 - id: SetThreadLastViewedAt
@@ -85,7 +85,7 @@
 - id: UpdatePostStatus.FindPost
   translation: We had a problem finding that request or offer for changing its status.
 - id: UpdatePostStatus.NotAllowed
-  translation: You have insufficient privileges to change the status of that post.
+  translation: You are not authorized to change the status of that post.
 - id: GetThreadParticipants
   translation: We had a problem getting a list of participants in that conversation.
 - id: GetThreadLastViewedAt
