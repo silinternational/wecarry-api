@@ -1275,7 +1275,7 @@ func (ms *ModelSuite) TestPost_isPostEditable() {
 	}
 }
 
-func (ms *ModelSuite) TestPost_isStatusChangeable() {
+func (ms *ModelSuite) TestPost_canUserChangeStatus() {
 	t := ms.T()
 
 	tests := []struct {
@@ -1354,7 +1354,7 @@ func (ms *ModelSuite) TestPost_isStatusChangeable() {
 	}
 	for _, tt := range tests {
 		t.Run(tt.newStatus, func(t *testing.T) {
-			if got := tt.post.isStatusChangeable(tt.user, tt.newStatus); got != tt.want {
+			if got := tt.post.canUserChangeStatus(tt.user, tt.newStatus); got != tt.want {
 				t.Errorf("isStatusEditable() = %v, want %v", got, tt.want)
 			}
 		})

@@ -567,9 +567,9 @@ func (p *Post) isPostEditable() bool {
 	return domain.IsStringInSlice(p.Status, editable)
 }
 
-// isStatusChangeable defines which posts statuses can be changed by which users.
+// canUserChangeStatus defines which posts statuses can be changed by which users.
 // Invalid transitions are not checked here; it is left for the validator to do this.
-func (p *Post) isStatusChangeable(user User, newStatus string) bool {
+func (p *Post) canUserChangeStatus(user User, newStatus string) bool {
 	if user.AdminRole.String == domain.AdminRoleSuperDuperAdmin {
 		return true
 	}

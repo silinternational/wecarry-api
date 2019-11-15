@@ -265,7 +265,7 @@ func (u *User) CanUpdatePostStatus(post Post, newStatus string) bool {
 	}
 
 	// others can only make limited changes
-	return post.isStatusChangeable(*u, newStatus)
+	return post.canUserChangeStatus(*u, newStatus)
 }
 
 // FindByUUID find a User with the given UUID and loads it from the database.
