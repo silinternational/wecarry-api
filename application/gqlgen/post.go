@@ -487,3 +487,30 @@ func (r *mutationResolver) UpdatePost(ctx context.Context, input postInput) (*mo
 
 	return &post, nil
 }
+
+// UpdatePostStatus resolves the `updatePostStatus` mutation.
+func (r *mutationResolver) UpdatePostStatus(ctx context.Context, input UpdatePostStatusInput) (*models.Post, error) {
+	var post models.Post
+	if err := post.FindByUUID(input.ID); err != nil {
+		return nil, reportError(ctx, err, "UpdatePostStatus.FindPost")
+	}
+
+	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+	extras := map[string]interface{}{
+		"user":      cUser.Uuid,
+		"oldStatus": post.Status,
+		"newStatus": input.Status.String(),
+	}
+	if !cUser.CanUpdatePostStatus(post, input.Status.String()) {
+		return nil, reportError(ctx, errors.New("not allowed to change post status"),
+			"UpdatePostStatus.NotAllowed", extras)
+	}
+
+	post.Status = input.Status.String()
+	post.SetProviderWithStatus(input.Status.String(), cUser)
+	if err := post.Update(); err != nil {
+		return nil, reportError(ctx, err, "UpdatePostStatus", extras)
+	}
+
+	return &post, nil
+}

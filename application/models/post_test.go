@@ -1249,7 +1249,7 @@ func (ms *ModelSuite) TestPost_IsEditable() {
 	}
 }
 
-func (ms *ModelSuite) TestPost_isStatusEditable() {
+func (ms *ModelSuite) TestPost_isPostEditable() {
 	t := ms.T()
 
 	tests := []struct {
@@ -1267,8 +1267,94 @@ func (ms *ModelSuite) TestPost_isStatusEditable() {
 	}
 	for _, tt := range tests {
 		t.Run(tt.status, func(t *testing.T) {
-			var p Post
-			if got := p.isStatusEditable(tt.status); got != tt.want {
+			p := Post{Status: tt.status}
+			if got := p.isPostEditable(); got != tt.want {
+				t.Errorf("isStatusEditable() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func (ms *ModelSuite) TestPost_isStatusChangeable() {
+	t := ms.T()
+
+	tests := []struct {
+		name      string
+		post      Post
+		user      User
+		newStatus string
+		want      bool
+	}{
+		{
+			name: "Creator",
+			post: Post{CreatedByID: 1},
+			user: User{ID: 1},
+			want: true,
+		},
+		{
+			name: "SuperDuperAdmin",
+			post: Post{},
+			user: User{AdminRole: nulls.NewString(domain.AdminRoleSuperDuperAdmin)},
+			want: true,
+		},
+		{
+			name:      "Open",
+			post:      Post{CreatedByID: 1},
+			newStatus: PostStatusOpen,
+			want:      false,
+		},
+		{
+			name:      "Committed",
+			post:      Post{CreatedByID: 1},
+			newStatus: PostStatusCommitted,
+			want:      true,
+		},
+		{
+			name:      "Accepted",
+			post:      Post{CreatedByID: 1},
+			newStatus: PostStatusAccepted,
+			want:      false,
+		},
+		{
+			name:      "Offer Received",
+			post:      Post{Type: PostTypeOffer, CreatedByID: 1},
+			newStatus: PostStatusReceived,
+			want:      true,
+		},
+		{
+			name:      "Request Received",
+			post:      Post{Type: PostTypeRequest, CreatedByID: 1},
+			newStatus: PostStatusReceived,
+			want:      false,
+		},
+		{
+			name:      "Offer Delivered",
+			newStatus: PostStatusDelivered,
+			post:      Post{Type: PostTypeOffer, CreatedByID: 1},
+			want:      false,
+		},
+		{
+			name:      "Request Delivered",
+			newStatus: PostStatusDelivered,
+			post:      Post{Type: PostTypeRequest, CreatedByID: 1},
+			want:      true,
+		},
+		{
+			name:      "Completed",
+			post:      Post{CreatedByID: 1},
+			newStatus: PostStatusCompleted,
+			want:      false,
+		},
+		{
+			name:      "Removed",
+			post:      Post{CreatedByID: 1},
+			newStatus: PostStatusRemoved,
+			want:      false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.newStatus, func(t *testing.T) {
+			if got := tt.post.isStatusChangeable(tt.user, tt.newStatus); got != tt.want {
 				t.Errorf("isStatusEditable() = %v, want %v", got, tt.want)
 			}
 		})

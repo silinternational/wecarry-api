@@ -253,6 +253,21 @@ func (u *User) CanEditAllPosts() bool {
 	return u.AdminRole.String == domain.AdminRoleSuperDuperAdmin
 }
 
+// CanUpdatePostStatus indicates whether the user is allowed to change the post status.
+func (u *User) CanUpdatePostStatus(post Post, newStatus string) bool {
+	if u.AdminRole.String == domain.AdminRoleSuperDuperAdmin {
+		return true
+	}
+
+	// post creator can make any status changes
+	if u.ID == post.CreatedByID {
+		return true
+	}
+
+	// others can only make limited changes
+	return post.isStatusChangeable(*u, newStatus)
+}
+
 // FindByUUID find a User with the given UUID and loads it from the database.
 func (u *User) FindByUUID(uuid string, selectFields ...string) error {
 	if uuid == "" {
