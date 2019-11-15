@@ -48,10 +48,11 @@ func getMessageForProvider(postUsers PostUsers, post m.Post, template string) no
 	}
 
 	return notifications.Message{
-		Template: template,
-		Data:     data,
-		ToName:   postUsers.Provider.Nickname,
-		ToEmail:  postUsers.Provider.Email,
+		Template:  template,
+		Data:      data,
+		ToName:    postUsers.Provider.Nickname,
+		ToEmail:   postUsers.Provider.Email,
+		FromEmail: domain.Env.EmailFromAddress,
 	}
 }
 
@@ -67,10 +68,11 @@ func getMessageForRequester(postUsers PostUsers, post m.Post, template string) n
 	}
 
 	return notifications.Message{
-		Template: template,
-		Data:     data,
-		ToName:   postUsers.Requester.Nickname,
-		ToEmail:  postUsers.Requester.Email,
+		Template:  template,
+		Data:      data,
+		ToName:    postUsers.Requester.Nickname,
+		ToEmail:   postUsers.Requester.Email,
+		FromEmail: domain.Env.EmailFromAddress,
 	}
 }
 
@@ -121,10 +123,11 @@ func sendNotificationRequestFromCommittedToOpen(template string, post m.Post, eD
 	}
 
 	msg := notifications.Message{
-		Template: template,
-		Data:     data,
-		ToName:   postUsers.Requester.Nickname,
-		ToEmail:  postUsers.Requester.Email,
+		Template:  template,
+		Data:      data,
+		ToName:    postUsers.Requester.Nickname,
+		ToEmail:   postUsers.Requester.Email,
+		FromEmail: domain.Env.EmailFromAddress,
 	}
 	if err := notifications.Send(msg); err != nil {
 		domain.ErrLogger.Printf("error sending '%s' notification to old provider, %s", template, err)
@@ -223,10 +226,11 @@ func sendNotificationRequestFromAcceptedToOpen(template string, post m.Post, eDa
 	}
 
 	msg := notifications.Message{
-		Template: template,
-		Data:     data,
-		ToName:   oldProvider.Nickname,
-		ToEmail:  oldProvider.Email,
+		Template:  template,
+		Data:      data,
+		ToName:    oldProvider.Nickname,
+		ToEmail:   oldProvider.Email,
+		FromEmail: domain.Env.EmailFromAddress,
 	}
 	if err := notifications.Send(msg); err != nil {
 		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)

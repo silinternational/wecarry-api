@@ -88,6 +88,7 @@ var Env struct {
 	AwsS3AccessKeyID           string
 	AwsS3SecretAccessKey       string
 	EmailService               string
+	EmailFromAddress           string
 	GoEnv                      string
 	GoogleKey                  string
 	GoogleSecret               string
@@ -127,6 +128,7 @@ func ReadEnv() {
 	Env.AwsS3AccessKeyID = envy.Get("AWS_S3_ACCESS_KEY_ID", "")
 	Env.AwsS3SecretAccessKey = envy.Get("AWS_S3_SECRET_ACCESS_KEY", "")
 	Env.EmailService = envy.Get("EMAIL_SERVICE", "sendgrid")
+	Env.EmailFromAddress = envy.Get("EMAIL_FROM_ADDRESS", "no_reply@example.com")
 	Env.GoEnv = envy.Get("GO_ENV", "development")
 	Env.GoogleKey = envy.Get("GOOGLE_KEY", "")
 	Env.GoogleSecret = envy.Get("GOOGLE_SECRET", "")
