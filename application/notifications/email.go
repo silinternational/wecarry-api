@@ -16,8 +16,9 @@ type EmailService interface {
 	Send(msg Message) error
 }
 
+// GetEmailTemplate returns the filename of the email template corresponding to a particular status change.
+//  Most of those will just be the same as the name of the status change.
 func GetEmailTemplate(key string) string {
-
 	weirdTemplates := map[string]string{
 		domain.MessageTemplateRequestFromCommittedToDelivered: domain.MessageTemplateRequestDelivered,
 		domain.MessageTemplateRequestFromAcceptedToDelivered:  domain.MessageTemplateRequestDelivered,
