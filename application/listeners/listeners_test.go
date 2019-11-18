@@ -9,13 +9,21 @@ import (
 	"testing"
 	"time"
 
+	"github.com/silinternational/wecarry-api/notifications"
+
 	"github.com/gobuffalo/events"
 	"github.com/gobuffalo/suite"
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/models"
 )
 
 type ModelSuite struct {
 	*suite.Model
+}
+
+type PostFixtures struct {
+	models.Users
+	models.Posts
 }
 
 func Test_ModelSuite(t *testing.T) {
@@ -140,25 +148,60 @@ func (ms *ModelSuite) TestSendNewMessageNotification() {
 	ms.Contains(got, want, "Got an unexpected log entry")
 }
 
-func (ms *ModelSuite) TestSendPostCreatedNotifications() {
-	var buf bytes.Buffer
-	domain.ErrLogger.SetOutput(&buf)
+func createFixturesForSendPostCreatedNotifications(ms *ModelSuite) PostFixtures {
+	org := models.Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	createFixture(ms, &org)
 
-	defer func() {
-		domain.ErrLogger.SetOutput(os.Stderr)
-	}()
+	unique := org.Uuid.String()
+	users := models.Users{
+		{Email: unique + "_user0@example.com", Nickname: unique + "User0", Uuid: domain.GetUuid()},
+		{Email: unique + "_user1@example.com", Nickname: unique + "User1", Uuid: domain.GetUuid()},
+		{Email: unique + "_user2@example.com", Nickname: unique + "User2", Uuid: domain.GetUuid()},
+	}
+	userOrgs := make(models.UserOrganizations, len(users))
+	for i := range users {
+		createFixture(ms, &users[i])
+
+		userOrgs[i].OrganizationID = org.ID
+		userOrgs[i].UserID = users[i].ID
+		userOrgs[i].AuthEmail = users[i].Email
+		userOrgs[i].AuthID = users[i].Email
+		createFixture(ms, &(userOrgs[i]))
+	}
+
+	location := models.Location{}
+	createFixture(ms, &location)
+
+	post := models.Post{
+		OrganizationID: org.ID,
+		Uuid:           domain.GetUuid(),
+		CreatedByID:    users[0].ID,
+		DestinationID:  location.ID,
+		Type:           models.PostTypeRequest,
+	}
+	createFixture(ms, &post)
+
+	return PostFixtures{
+		Users: users,
+		Posts: models.Posts{post},
+	}
+}
+
+func (ms *ModelSuite) TestSendPostCreatedNotifications() {
+	f := createFixturesForSendPostCreatedNotifications(ms)
 
 	e := events.Event{
 		Kind:    domain.EventApiPostCreated,
 		Message: "Post created",
+		Payload: events.Payload{"eventData": models.PostCreatedEventData{
+			PostID: f.Posts[0].ID,
+		}},
 	}
 
+	notifications.TestEmailService.DeleteSentMessages()
+
 	sendPostCreatedNotifications(e)
-	//err := events.Emit(e)
-	//ms.NoError(err, "error emitting event %s ... %v", e.Kind, err)
 
-	got := buf.String()
-	want := "unable to parse Post Created event payload"
-
-	ms.Contains(got, want, "Error log did not have the expected text")
+	emailCount := notifications.TestEmailService.GetNumberOfMessagesSent()
+	ms.Equal(2, emailCount, "wrong email count")
 }
