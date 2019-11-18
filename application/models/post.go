@@ -474,7 +474,7 @@ func (p *Post) GetPhoto() (*File, error) {
 	return &p.PhotoFile, nil
 }
 
-// scope query to only include organizations for current user
+// scope query to only include posts from an organization associated with the current user
 func scopeUserOrgs(cUser User) pop.ScopeFunc {
 	return func(q *pop.Query) *pop.Query {
 		orgs := cUser.GetOrgIDs()
