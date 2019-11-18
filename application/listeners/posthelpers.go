@@ -2,6 +2,7 @@ package listeners
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
@@ -358,10 +359,19 @@ func sendNewPostNotification(user models.User, post models.Post) error {
 		return errors.New("'To' email address is required")
 	}
 
+	var template string
+	if post.Type == models.PostTypeRequest {
+		template = domain.MessageTemplateNewRequest
+	} else if post.Type == models.PostTypeOffer {
+		template = domain.MessageTemplateNewOffer
+	} else {
+		return fmt.Errorf("invalid post type %s", post.Type)
+	}
 	msg := notifications.Message{
-		Template: domain.MessageTemplateNewRequest,
-		ToName:   user.Nickname,
-		ToEmail:  user.Email,
+		Template:  template,
+		ToName:    user.Nickname,
+		ToEmail:   user.Email,
+		FromEmail: domain.Env.EmailFromAddress,
 		Data: map[string]interface{}{
 			"appName":   domain.Env.AppName,
 			"uiURL":     domain.Env.UIURL,

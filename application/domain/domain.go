@@ -49,6 +49,7 @@ const (
 const (
 	MessageTemplateNewThreadMessage                = "new_thread_message"
 	MessageTemplateNewRequest                      = "new_request"
+	MessageTemplateNewOffer                        = "new_offer"
 	MessageTemplateRequestFromCommittedToOpen      = "request_from_committed_to_open"
 	MessageTemplateRequestFromAcceptedToOpen       = "request_from_accepted_to_open"
 	MessageTemplateRequestFromOpenToCommitted      = "request_from_open_to_committed"

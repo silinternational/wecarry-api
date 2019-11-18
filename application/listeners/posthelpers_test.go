@@ -302,21 +302,39 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 func (ms *ModelSuite) Test_sendNewPostNotification() {
 	t := ms.T()
 	tests := []struct {
-		name    string
-		user    models.User
-		post    models.Post
-		wantErr bool
+		name     string
+		user     models.User
+		post     models.Post
+		wantBody string
+		wantErr  bool
 	}{
 		{
-			name:    "error",
+			name:    "error - no user email",
 			wantErr: true,
 		},
 		{
-			name: "basic",
+			name: "error - invalid post type",
 			user: models.User{
 				Email: "user@example.com",
 			},
-			post: models.Post{Uuid: domain.GetUuid(), Title: "post title"},
+			post:    models.Post{Type: "bogus"},
+			wantErr: true,
+		},
+		{
+			name: "request",
+			user: models.User{
+				Email: "user@example.com",
+			},
+			post:     models.Post{Uuid: domain.GetUuid(), Title: "post title", Type: models.PostTypeRequest},
+			wantBody: "There is a new request",
+		},
+		{
+			name: "offer",
+			user: models.User{
+				Email: "user@example.com",
+			},
+			post:     models.Post{Uuid: domain.GetUuid(), Title: "post title", Type: models.PostTypeOffer},
+			wantBody: "There is a new offer",
 		},
 	}
 	for _, test := range tests {
@@ -338,7 +356,7 @@ func (ms *ModelSuite) Test_sendNewPostNotification() {
 			ms.Equal(test.user.Email, toEmail, "bad 'To' address")
 
 			body := notifications.TestEmailService.GetLastBody()
-			ms.Contains(body, "There is a new request", "Body doesn't contain expected string")
+			ms.Contains(body, test.wantBody, "Body doesn't contain expected string")
 			ms.Contains(body, test.post.Title, "Body doesn't contain post title")
 			ms.Contains(body, test.post.Uuid.String(), "Body doesn't contain post UUID")
 		})
@@ -359,7 +377,7 @@ func (ms *ModelSuite) Test_sendNewPostNotifications() {
 		},
 		{
 			name: "two users",
-			post: models.Post{CreatedByID: 1},
+			post: models.Post{CreatedByID: 1, Type: models.PostTypeRequest},
 			users: models.Users{
 				{Email: "user1@example.com"},
 				{Email: "user2@example.com"},
