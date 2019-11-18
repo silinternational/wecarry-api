@@ -461,6 +461,44 @@ ALTER SEQUENCE public.user_organizations_id_seq OWNED BY public.user_organizatio
 
 
 --
+-- Name: user_settings; Type: TABLE; Schema: public; Owner: wecarry
+--
+
+CREATE TABLE public.user_settings (
+    id integer NOT NULL,
+    uuid uuid NOT NULL,
+    user_id integer NOT NULL,
+    key character varying(4096) NOT NULL,
+    value character varying(4096) NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.user_settings OWNER TO wecarry;
+
+--
+-- Name: user_settings_id_seq; Type: SEQUENCE; Schema: public; Owner: wecarry
+--
+
+CREATE SEQUENCE public.user_settings_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.user_settings_id_seq OWNER TO wecarry;
+
+--
+-- Name: user_settings_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wecarry
+--
+
+ALTER SEQUENCE public.user_settings_id_seq OWNED BY public.user_settings.id;
+
+
+--
 -- Name: users; Type: TABLE; Schema: public; Owner: wecarry
 --
 
@@ -581,6 +619,13 @@ ALTER TABLE ONLY public.user_organizations ALTER COLUMN id SET DEFAULT nextval('
 
 
 --
+-- Name: user_settings id; Type: DEFAULT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.user_settings ALTER COLUMN id SET DEFAULT nextval('public.user_settings_id_seq'::regclass);
+
+
+--
 -- Name: users id; Type: DEFAULT; Schema: public; Owner: wecarry
 --
 
@@ -673,6 +718,14 @@ ALTER TABLE ONLY public.user_access_tokens
 
 ALTER TABLE ONLY public.user_organizations
     ADD CONSTRAINT user_organizations_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: user_settings user_settings_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.user_settings
+    ADD CONSTRAINT user_settings_pkey PRIMARY KEY (id);
 
 
 --
@@ -786,6 +839,13 @@ CREATE UNIQUE INDEX user_organizations_organization_id_auth_id_idx ON public.use
 --
 
 CREATE UNIQUE INDEX user_organizations_organization_id_user_id_idx ON public.user_organizations USING btree (organization_id, user_id);
+
+
+--
+-- Name: user_settings_uuid_idx; Type: INDEX; Schema: public; Owner: wecarry
+--
+
+CREATE UNIQUE INDEX user_settings_uuid_idx ON public.user_settings USING btree (uuid);
 
 
 --
@@ -973,6 +1033,14 @@ ALTER TABLE ONLY public.user_organizations
 
 ALTER TABLE ONLY public.user_organizations
     ADD CONSTRAINT user_organizations_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: user_settings user_settings_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.user_settings
+    ADD CONSTRAINT user_settings_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 
 --
