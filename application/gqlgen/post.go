@@ -321,10 +321,6 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 		}
 	}
 
-	if input.Status != nil {
-		post.SetProviderWithStatus(input.Status.String(), currentUser)
-	}
-
 	if input.OrgID != nil {
 		var org models.Organization
 		err := org.FindByUUID(*input.OrgID)
@@ -401,7 +397,6 @@ func getSelectFieldsForPosts(ctx context.Context) []string {
 
 type postInput struct {
 	ID           *string
-	Status       *PostStatus
 	OrgID        *string
 	Type         *PostType
 	Title        *string

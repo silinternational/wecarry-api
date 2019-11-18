@@ -1180,7 +1180,6 @@ input CreateMessageInput {
 
 input UpdatePostInput {
     id: ID!
-    status: PostStatus
     title: String
     description: String
     destination: LocationInput
@@ -6180,12 +6179,6 @@ func (ec *executionContext) unmarshalInputUpdatePostInput(ctx context.Context, o
 			if err != nil {
 				return it, err
 			}
-		case "status":
-			var err error
-			it.Status, err = ec.unmarshalOPostStatus2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostStatus(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "title":
 			var err error
 			it.Title, err = ec.unmarshalOString2ᚖstring(ctx, v)
@@ -8575,30 +8568,6 @@ func (ec *executionContext) unmarshalOPostSize2ᚖgithubᚗcomᚋsilinternationa
 }
 
 func (ec *executionContext) marshalOPostSize2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostSize(ctx context.Context, sel ast.SelectionSet, v *PostSize) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return v
-}
-
-func (ec *executionContext) unmarshalOPostStatus2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostStatus(ctx context.Context, v interface{}) (PostStatus, error) {
-	var res PostStatus
-	return res, res.UnmarshalGQL(v)
-}
-
-func (ec *executionContext) marshalOPostStatus2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostStatus(ctx context.Context, sel ast.SelectionSet, v PostStatus) graphql.Marshaler {
-	return v
-}
-
-func (ec *executionContext) unmarshalOPostStatus2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostStatus(ctx context.Context, v interface{}) (*PostStatus, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalOPostStatus2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostStatus(ctx, v)
-	return &res, err
-}
-
-func (ec *executionContext) marshalOPostStatus2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostStatus(ctx context.Context, sel ast.SelectionSet, v *PostStatus) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
