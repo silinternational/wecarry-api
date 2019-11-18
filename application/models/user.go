@@ -9,18 +9,14 @@ import (
 	"time"
 
 	"github.com/gobuffalo/events"
-
-	"github.com/pkg/errors"
-	"github.com/silinternational/wecarry-api/domain"
-
-	"github.com/silinternational/wecarry-api/auth"
-
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
 	"github.com/gobuffalo/validate/validators"
-
 	"github.com/gofrs/uuid"
+	"github.com/pkg/errors"
+	"github.com/silinternational/wecarry-api/auth"
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 const (
