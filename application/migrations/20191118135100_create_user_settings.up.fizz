@@ -1,0 +1,10 @@
+create_table("user_settings") {
+	t.Column("id", "integer", {primary: true})
+	t.Column("uuid", "uuid", {})
+	t.Column("user_id", "integer", {})
+	t.Column("key", "character varying(4096)", {})
+	t.Column("value", "character varying(4096)", {})
+	t.ForeignKey("user_id", {"users": ["id"]}, {"on_delete": "cascade"})
+	t.Timestamps()
+    t.Index("uuid", {"unique": true})
+}

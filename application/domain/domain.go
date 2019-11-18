@@ -68,6 +68,20 @@ const (
 	MessageTemplateRequestFromAcceptedToRemoved    = "request_from_accepted_to_removed"
 )
 
+// User settings
+const (
+	UserSettingsKeyLanguage        = "language"
+	UserSettingsLanguageEnglish    = "en"
+	UserSettingsLanguageFrench     = "fr"
+	UserSettingsLanguageSpanish    = "es"
+	UserSettingsLanguageKorean     = "ko"
+	UserSettingsLanguagePortuguese = "pt"
+
+	UserSettingsKeyUnits      = "units"
+	UserSettingsUnitsImperial = "imperial"
+	UserSettingsUnitsMetric   = "metric"
+)
+
 // UI URL Paths
 const (
 	postUIPath   = "/#/requests/"
