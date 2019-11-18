@@ -155,7 +155,7 @@ func sendPostCreatedNotifications(e events.Event) {
 
 	eventData, ok := e.Payload["eventData"].(models.PostCreatedEventData)
 	if !ok {
-		domain.ErrLogger.Print("unable to parse Post Created event payload")
+		domain.ErrLogger.Printf("Post Created event payload incorrect type: %T", e.Payload["eventData"])
 		return
 	}
 
