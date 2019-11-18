@@ -8,6 +8,7 @@ import (
 
 type OrganizationFixtures struct {
 	Organizations
+	OrganizationDomains
 	Users
 }
 

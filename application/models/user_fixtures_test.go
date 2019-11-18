@@ -471,8 +471,11 @@ func CreateFixturesForUserWantsPostNotification(ms *ModelSuite) UserFixtures {
 		createFixture(ms, &userOrgFixtures[i])
 	}
 
+	location := Location{}
+	createFixture(ms, &location)
+
 	posts := Posts{
-		{CreatedByID: users[0].ID, OrganizationID: org.ID, Uuid: domain.GetUuid()},
+		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID, DestinationID: location.ID},
 	}
 	for i := range posts {
 		createFixture(ms, &posts[i])
