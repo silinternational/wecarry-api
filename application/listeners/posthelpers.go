@@ -2,7 +2,7 @@ package listeners
 
 import (
 	"github.com/silinternational/wecarry-api/domain"
-	m "github.com/silinternational/wecarry-api/models"
+	"github.com/silinternational/wecarry-api/models"
 	"github.com/silinternational/wecarry-api/notifications"
 )
 
@@ -18,7 +18,7 @@ type PostUsers struct {
 
 // GetPostUsers returns up to two entries for the Post Requester and
 // Post Provider assuming their email is not blank.
-func GetPostUsers(post m.Post) PostUsers {
+func GetPostUsers(post models.Post) PostUsers {
 
 	requester, _ := post.GetReceiver([]string{"Email", "Nickname"})
 	provider, _ := post.GetProvider([]string{"Email", "Nickname"})
@@ -36,7 +36,7 @@ func GetPostUsers(post m.Post) PostUsers {
 	return recipients
 }
 
-func getMessageForProvider(postUsers PostUsers, post m.Post, template string) notifications.Message {
+func getMessageForProvider(postUsers PostUsers, post models.Post, template string) notifications.Message {
 	data := map[string]interface{}{
 		"uiURL":             domain.Env.UIURL,
 		"appName":           domain.Env.AppName,
@@ -56,7 +56,7 @@ func getMessageForProvider(postUsers PostUsers, post m.Post, template string) no
 	}
 }
 
-func getMessageForRequester(postUsers PostUsers, post m.Post, template string) notifications.Message {
+func getMessageForRequester(postUsers PostUsers, post models.Post, template string) notifications.Message {
 	data := map[string]interface{}{
 		"uiURL":            domain.Env.UIURL,
 		"appName":          domain.Env.AppName,
@@ -76,7 +76,7 @@ func getMessageForRequester(postUsers PostUsers, post m.Post, template string) n
 	}
 }
 
-func sendNotificationRequestFromOpenToCommitted(template string, post m.Post, eData m.PostStatusEventData) {
+func sendNotificationRequestFromOpenToCommitted(template string, post models.Post, eData models.PostStatusEventData) {
 	postUsers := GetPostUsers(post)
 
 	if postUsers.Provider.Nickname == "" {
@@ -93,10 +93,10 @@ func sendNotificationRequestFromOpenToCommitted(template string, post m.Post, eD
 
 // Until we have status auditing history, we don't know who reverted the Post to `open` status.
 //  So, tell both the requester and provider about it.
-func sendNotificationRequestFromCommittedToOpen(template string, post m.Post, eData m.PostStatusEventData) {
+func sendNotificationRequestFromCommittedToOpen(template string, post models.Post, eData models.PostStatusEventData) {
 	postUsers := GetPostUsers(post)
 
-	oldProvider := m.User{}
+	oldProvider := models.User{}
 	if err := oldProvider.FindByID(eData.OldProviderID); err != nil {
 		domain.ErrLogger.Printf("error preparing '%s' notification for old provider id, %v ... %v",
 			template, eData.OldProviderID, err)
@@ -146,7 +146,7 @@ func sendNotificationRequestFromCommittedToOpen(template string, post m.Post, eD
 	}
 }
 
-func sendNotificationRequestFromCommittedToAccepted(template string, post m.Post, eData m.PostStatusEventData) {
+func sendNotificationRequestFromCommittedToAccepted(template string, post models.Post, eData models.PostStatusEventData) {
 	postUsers := GetPostUsers(post)
 
 	if postUsers.Provider.Nickname == "" {
@@ -161,7 +161,7 @@ func sendNotificationRequestFromCommittedToAccepted(template string, post m.Post
 	}
 }
 
-func sendNotificationRequestFromCommittedToRemoved(template string, post m.Post, eData m.PostStatusEventData) {
+func sendNotificationRequestFromCommittedToRemoved(template string, post models.Post, eData models.PostStatusEventData) {
 	postUsers := GetPostUsers(post)
 
 	if postUsers.Provider.Nickname == "" {
@@ -176,7 +176,7 @@ func sendNotificationRequestFromCommittedToRemoved(template string, post m.Post,
 	}
 }
 
-func sendNotificationRequestFromCommittedOrAcceptedToDelivered(template string, post m.Post, eData m.PostStatusEventData) {
+func sendNotificationRequestFromCommittedOrAcceptedToDelivered(template string, post models.Post, eData models.PostStatusEventData) {
 	postUsers := GetPostUsers(post)
 
 	if postUsers.Provider.Nickname == "" {
@@ -191,7 +191,7 @@ func sendNotificationRequestFromCommittedOrAcceptedToDelivered(template string, 
 	}
 }
 
-func sendNotificationRequestFromAcceptedToReceived(template string, post m.Post, eData m.PostStatusEventData) {
+func sendNotificationRequestFromAcceptedToReceived(template string, post models.Post, eData models.PostStatusEventData) {
 	postUsers := GetPostUsers(post)
 
 	if postUsers.Provider.Nickname == "" {
@@ -206,10 +206,10 @@ func sendNotificationRequestFromAcceptedToReceived(template string, post m.Post,
 	}
 }
 
-func sendNotificationRequestFromAcceptedToOpen(template string, post m.Post, eData m.PostStatusEventData) {
+func sendNotificationRequestFromAcceptedToOpen(template string, post models.Post, eData models.PostStatusEventData) {
 	postUsers := GetPostUsers(post)
 
-	oldProvider := m.User{}
+	oldProvider := models.User{}
 	if err := oldProvider.FindByID(eData.OldProviderID); err != nil {
 		domain.ErrLogger.Printf("error preparing '%s' notification for old provider id, %v ... %v",
 			template, eData.OldProviderID, err)
@@ -237,7 +237,7 @@ func sendNotificationRequestFromAcceptedToOpen(template string, post m.Post, eDa
 	}
 }
 
-func sendNotificationRequestFromAcceptedToRemoved(template string, post m.Post, eData m.PostStatusEventData) {
+func sendNotificationRequestFromAcceptedToRemoved(template string, post models.Post, eData models.PostStatusEventData) {
 	postUsers := GetPostUsers(post)
 
 	if postUsers.Provider.Nickname == "" {
@@ -252,13 +252,13 @@ func sendNotificationRequestFromAcceptedToRemoved(template string, post m.Post, 
 	}
 }
 
-func sendNotificationEmpty(template string, post m.Post, eData m.PostStatusEventData) {
+func sendNotificationEmpty(template string, post models.Post, eData models.PostStatusEventData) {
 	domain.ErrLogger.Print("Notification not implemented yet for " + template)
 }
 
 type Sender struct {
 	Template string
-	Sender   func(string, m.Post, m.PostStatusEventData)
+	Sender   func(string, models.Post, models.PostStatusEventData)
 }
 
 func join(s1, s2 string) string {
@@ -266,60 +266,60 @@ func join(s1, s2 string) string {
 }
 
 var statusSenders = map[string]Sender{
-	join(m.PostStatusCommitted, m.PostStatusOpen): Sender{
+	join(models.PostStatusCommitted, models.PostStatusOpen): {
 		Template: domain.MessageTemplateRequestFromCommittedToOpen,
 		Sender:   sendNotificationRequestFromCommittedToOpen},
-	join(m.PostStatusAccepted, m.PostStatusOpen): Sender{
+	join(models.PostStatusAccepted, models.PostStatusOpen): {
 		Template: domain.MessageTemplateRequestFromAcceptedToOpen,
 		Sender:   sendNotificationRequestFromAcceptedToOpen},
-	join(m.PostStatusOpen, m.PostStatusCommitted): Sender{
+	join(models.PostStatusOpen, models.PostStatusCommitted): {
 		Template: domain.MessageTemplateRequestFromOpenToCommitted,
 		Sender:   sendNotificationRequestFromOpenToCommitted},
-	join(m.PostStatusCommitted, m.PostStatusAccepted): Sender{
+	join(models.PostStatusCommitted, models.PostStatusAccepted): {
 		Template: domain.MessageTemplateRequestFromCommittedToAccepted,
 		Sender:   sendNotificationRequestFromCommittedToAccepted},
-	join(m.PostStatusDelivered, m.PostStatusAccepted): Sender{
+	join(models.PostStatusDelivered, models.PostStatusAccepted): {
 		Template: domain.MessageTemplateRequestFromDeliveredToAccepted,
 		Sender:   sendNotificationEmpty},
-	join(m.PostStatusReceived, m.PostStatusAccepted): Sender{
+	join(models.PostStatusReceived, models.PostStatusAccepted): {
 		Template: domain.MessageTemplateRequestFromReceivedToAccepted,
 		Sender:   sendNotificationEmpty},
-	join(m.PostStatusCommitted, m.PostStatusDelivered): Sender{
+	join(models.PostStatusCommitted, models.PostStatusDelivered): {
 		Template: domain.MessageTemplateRequestFromCommittedToDelivered,
 		Sender:   sendNotificationRequestFromCommittedOrAcceptedToDelivered},
-	join(m.PostStatusAccepted, m.PostStatusDelivered): Sender{
+	join(models.PostStatusAccepted, models.PostStatusDelivered): {
 		Template: domain.MessageTemplateRequestFromAcceptedToDelivered,
 		Sender:   sendNotificationRequestFromCommittedOrAcceptedToDelivered},
-	join(m.PostStatusReceived, m.PostStatusDelivered): Sender{
+	join(models.PostStatusReceived, models.PostStatusDelivered): {
 		Template: domain.MessageTemplateRequestFromReceivedToDelivered,
 		Sender:   sendNotificationEmpty},
-	join(m.PostStatusCompleted, m.PostStatusDelivered): Sender{
+	join(models.PostStatusCompleted, models.PostStatusDelivered): {
 		Template: domain.MessageTemplateRequestFromCompletedToDelivered,
 		Sender:   sendNotificationEmpty},
-	join(m.PostStatusCommitted, m.PostStatusReceived): Sender{
+	join(models.PostStatusCommitted, models.PostStatusReceived): {
 		Template: domain.MessageTemplateRequestFromCompletedToReceived,
 		Sender:   sendNotificationRequestFromAcceptedToReceived},
-	join(m.PostStatusAccepted, m.PostStatusReceived): Sender{
+	join(models.PostStatusAccepted, models.PostStatusReceived): {
 		Template: domain.MessageTemplateRequestFromAcceptedToReceived,
 		Sender:   sendNotificationRequestFromAcceptedToReceived},
-	join(m.PostStatusCompleted, m.PostStatusReceived): Sender{
+	join(models.PostStatusCompleted, models.PostStatusReceived): {
 		Template: domain.MessageTemplateRequestFromCompletedToReceived,
 		Sender:   sendNotificationEmpty},
-	join(m.PostStatusDelivered, m.PostStatusCompleted): Sender{
+	join(models.PostStatusDelivered, models.PostStatusCompleted): {
 		Template: domain.MessageTemplateRequestFromDeliveredToCompleted,
 		Sender:   sendNotificationEmpty},
-	join(m.PostStatusReceived, m.PostStatusCompleted): Sender{
+	join(models.PostStatusReceived, models.PostStatusCompleted): {
 		Template: domain.MessageTemplateRequestFromReceivedToCompleted,
 		Sender:   sendNotificationEmpty},
-	join(m.PostStatusCommitted, m.PostStatusRemoved): Sender{
+	join(models.PostStatusCommitted, models.PostStatusRemoved): {
 		Template: domain.MessageTemplateRequestFromCommittedToRemoved,
 		Sender:   sendNotificationRequestFromCommittedToRemoved},
-	join(m.PostStatusAccepted, m.PostStatusRemoved): Sender{
+	join(models.PostStatusAccepted, models.PostStatusRemoved): {
 		Template: domain.MessageTemplateRequestFromAcceptedToRemoved,
 		Sender:   sendNotificationRequestFromAcceptedToRemoved},
 }
 
-func requestStatusUpdatedNotifications(post m.Post, eData m.PostStatusEventData) {
+func requestStatusUpdatedNotifications(post models.Post, eData models.PostStatusEventData) {
 
 	fromStatusTo := join(eData.OldStatus, eData.NewStatus)
 	sender, ok := statusSenders[fromStatusTo]
