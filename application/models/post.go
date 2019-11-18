@@ -619,3 +619,17 @@ func (p *Post) canUserChangeStatus(user User, newStatus string) bool {
 
 	return false
 }
+
+// GetAudience returns a list of all of the users which have visibility to this post. As of this writing, it is
+// simply the users in the organization associated with this post.
+func (p *Post) GetAudience() (Users, error) {
+	org, err := p.GetOrganization([]string{"id"})
+	if err != nil {
+		return nil, err
+	}
+	users, err := org.GetUsers()
+	if err != nil {
+		return nil, fmt.Errorf("unable to get post organization user list, %s", err.Error())
+	}
+	return users, nil
+}
