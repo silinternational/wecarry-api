@@ -10,6 +10,14 @@ import (
 	"github.com/silinternational/wecarry-api/domain"
 )
 
+type UserMessageFixtures struct {
+	Users
+	Posts
+	Threads
+	ThreadParticipants
+	Messages
+}
+
 func CreateUserFixtures(ms *ModelSuite, t *testing.T) ([]Organization, Users, UserOrganizations) {
 
 	unique := domain.GetUuid().String()
@@ -17,13 +25,13 @@ func CreateUserFixtures(ms *ModelSuite, t *testing.T) ([]Organization, Users, Us
 	// Load Organization test fixtures
 	orgs := []Organization{
 		{
-			Name:       fmt.Sprintf("ACME-%s", unique),
+			Name:       fmt.Sprintf("Starfleet Academy-%s", unique),
 			Uuid:       domain.GetUuid(),
 			AuthType:   AuthTypeSaml,
 			AuthConfig: "{}",
 		},
 		{
-			Name:       fmt.Sprintf("Starfleet Academy-%s", unique),
+			Name:       fmt.Sprintf("ACME-%s", unique),
 			Uuid:       domain.GetUuid(),
 			AuthType:   AuthTypeSaml,
 			AuthConfig: "{}",
@@ -92,12 +100,86 @@ func CreateUserFixtures(ms *ModelSuite, t *testing.T) ([]Organization, Users, Us
 	return orgs, users, userOrgs
 }
 
-type UserMessageFixtures struct {
-	Users
-	Posts
-	Threads
-	ThreadParticipants
-	Messages
+func CreateUserFixtures_CanEditAllPosts(ms *ModelSuite) UserFixtures {
+	org := Organization{AuthConfig: "{}", Uuid: domain.GetUuid()}
+	createFixture(ms, &org)
+
+	unique := org.Uuid.String()
+	users := Users{
+		{AdminRole: nulls.NewString(domain.AdminRoleSuperDuperAdmin)},
+		{AdminRole: nulls.NewString(domain.AdminRoleSalesAdmin)},
+		{AdminRole: nulls.String{}},
+		{AdminRole: nulls.NewString(domain.AdminRoleSuperDuperAdmin)},
+		{AdminRole: nulls.String{}},
+		{AdminRole: nulls.NewString(domain.AdminRoleSalesAdmin)},
+	}
+	for i := range users {
+		users[i].Email = "user" + strconv.Itoa(i) + unique + "example.com"
+		users[i].Nickname = users[i].Email
+		users[i].Uuid = domain.GetUuid()
+
+		createFixture(ms, &users[i])
+	}
+
+	userOrgFixtures := []UserOrganization{
+		{Role: UserOrganizationRoleAdmin},
+		{Role: UserOrganizationRoleAdmin},
+		{Role: UserOrganizationRoleAdmin},
+		{Role: UserOrganizationRoleUser},
+		{Role: UserOrganizationRoleUser},
+		{Role: UserOrganizationRoleUser},
+	}
+	for i := range userOrgFixtures {
+		userOrgFixtures[i].OrganizationID = org.ID
+		userOrgFixtures[i].UserID = users[i].ID
+		userOrgFixtures[i].AuthID = users[i].Email
+		userOrgFixtures[i].AuthEmail = users[i].Email
+
+		createFixture(ms, &userOrgFixtures[i])
+	}
+
+	return UserFixtures{
+		Users: users,
+	}
+}
+
+func CreateFixturesForUserGetPosts(ms *ModelSuite) UserFixtures {
+	org := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	createFixture(ms, &org)
+
+	unique := org.Uuid.String()
+	users := Users{
+		{Email: unique + "user0@example.com", Nickname: unique + "User 0", Uuid: domain.GetUuid()},
+		{Email: unique + "user1@example.com", Nickname: unique + "User 1", Uuid: domain.GetUuid()},
+	}
+	for i := range users {
+		createFixture(ms, &users[i])
+	}
+
+	const numberOfPosts = 4
+	locations := make([]Location, numberOfPosts)
+	for i := range locations {
+		createFixture(ms, &(locations[i]))
+	}
+
+	posts := []Post{
+		{ProviderID: nulls.NewInt(users[1].ID)},
+		{ProviderID: nulls.NewInt(users[1].ID)},
+		{ReceiverID: nulls.NewInt(users[1].ID)},
+		{ReceiverID: nulls.NewInt(users[1].ID)},
+	}
+	for i := range posts {
+		posts[i].CreatedByID = users[0].ID
+		posts[i].OrganizationID = org.ID
+		posts[i].Uuid = domain.GetUuid()
+		posts[i].DestinationID = locations[i].ID
+		createFixture(ms, &posts[i])
+	}
+
+	return UserFixtures{
+		Users: users,
+		Posts: posts,
+	}
 }
 
 func CreateUserFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) UserMessageFixtures {
@@ -163,6 +245,11 @@ func CreateUserFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) UserMes
 		}
 	}
 
+	locations := []Location{{}, {}}
+	for i := range locations {
+		createFixture(ms, &(locations[i]))
+	}
+
 	// Each user has a request and is a provider on the other user's post
 	posts := Posts{
 		{
@@ -174,6 +261,7 @@ func CreateUserFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) UserMes
 			Status:         PostStatusOpen,
 			Uuid:           domain.GetUuid(),
 			ProviderID:     nulls.NewInt(users[1].ID),
+			DestinationID:  locations[0].ID,
 		},
 		{
 			CreatedByID:    users[1].ID,
@@ -184,6 +272,7 @@ func CreateUserFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) UserMes
 			Status:         PostStatusOpen,
 			Uuid:           domain.GetUuid(),
 			ProviderID:     nulls.NewInt(users[0].ID),
+			DestinationID:  locations[1].ID,
 		},
 	}
 
@@ -321,8 +410,11 @@ func CreateUserFixtures_GetThreads(ms *ModelSuite) UserFixtures {
 		createFixture(ms, &users[i])
 	}
 
+	location := Location{}
+	createFixture(ms, &location)
+
 	posts := Posts{
-		{CreatedByID: users[0].ID, OrganizationID: org.ID, Uuid: domain.GetUuid()},
+		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID, DestinationID: location.ID},
 	}
 	for i := range posts {
 		createFixture(ms, &posts[i])

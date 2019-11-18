@@ -56,7 +56,7 @@ type Post struct {
 	URL            nulls.String  `json:"url" db:"url"`
 	Cost           nulls.Float64 `json:"cost" db:"cost"`
 	PhotoFileID    nulls.Int     `json:"photo_file_id" db:"photo_file_id"`
-	DestinationID  nulls.Int     `json:"destination_id" db:"destination_id"`
+	DestinationID  int           `json:"destination_id" db:"destination_id"`
 	OriginID       nulls.Int     `json:"origin_id" db:"origin_id"`
 	CreatedBy      User          `belongs_to:"users"`
 	Organization   Organization  `belongs_to:"organizations"`
@@ -64,7 +64,6 @@ type Post struct {
 	Provider       User          `belongs_to:"users"`
 	Files          PostFiles     `has_many:"post_files"`
 	PhotoFile      File          `belongs_to:"files"`
-	Threads        Threads       `has_many:"threads"`
 	Destination    Location      `belongs_to:"locations"`
 	Origin         Location      `belongs_to:"locations"`
 }
@@ -389,22 +388,13 @@ func (p *Post) GetOrganization(fields []string) (*Organization, error) {
 
 // GetThreads finds all threads on this post in which the given user is participating
 func (p *Post) GetThreads(fields []string, user User) ([]Thread, error) {
-	if err := DB.Load(p, "Threads"); err != nil {
-		return nil, fmt.Errorf("error getting threads for post id %v ... %v", p.ID, err)
-	}
-
-	var threads []Thread
-	for i, t := range p.Threads {
-		if err := DB.Load(&t, "Participants"); err != nil {
-			return nil, fmt.Errorf("error getting participants for thread id %v ... %v", t.ID, err)
-		}
-
-		for _, participant := range t.Participants {
-			if participant.ID == user.ID {
-				threads = append(threads, p.Threads[i])
-				break
-			}
-		}
+	var threads Threads
+	query := DB.Q().
+		Join("thread_participants tp", "threads.id = tp.thread_id").
+		Order("threads.updated_at DESC").
+		Where("tp.user_id = ? AND threads.post_id = ?", user.ID, p.ID)
+	if err := query.All(&threads); err != nil {
+		return nil, err
 	}
 
 	return threads, nil
@@ -428,7 +418,12 @@ func (p *Post) AttachFile(fileID string) (File, error) {
 func (p *Post) GetFiles() ([]File, error) {
 	var pf []*PostFile
 
-	if err := DB.Eager("File").Select().Where("post_id = ?", p.ID).All(&pf); err != nil {
+	err := DB.Eager("File").
+		Select().
+		Where("post_id = ?", p.ID).
+		Order("updated_at desc").
+		All(&pf)
+	if err != nil {
 		return nil, fmt.Errorf("error getting files for post id %d, %s", p.ID, err)
 	}
 
@@ -520,9 +515,6 @@ func (p *Posts) FindByUser(ctx context.Context, user User, selectFields ...strin
 
 // GetDestination reads the destination record, if it exists, and returns the Location object.
 func (p *Post) GetDestination() (*Location, error) {
-	if !p.DestinationID.Valid {
-		return nil, nil
-	}
 	location := Location{}
 	if err := DB.Find(&location, p.DestinationID); err != nil {
 		return nil, err
@@ -546,17 +538,9 @@ func (p *Post) GetOrigin() (*Location, error) {
 
 // SetDestination sets the destination location fields, creating a new record in the database if necessary.
 func (p *Post) SetDestination(location Location) error {
-	if p.DestinationID.Valid {
-		location.ID = p.DestinationID.Int
-		p.Destination = location
-		return DB.Update(&p.Destination)
-	}
-
-	if err := DB.Create(&location); err != nil {
-		return err
-	}
-	p.DestinationID = nulls.NewInt(location.ID)
-	return DB.Update(p)
+	location.ID = p.DestinationID
+	p.Destination = location
+	return DB.Update(&p.Destination)
 }
 
 // SetOrigin sets the origin location fields, creating a new record in the database if necessary.
@@ -571,4 +555,67 @@ func (p *Post) SetOrigin(location Location) error {
 	}
 	p.OriginID = nulls.NewInt(location.ID)
 	return DB.Update(p)
+}
+
+// IsEditable response with true if the given user is the owner of the post or an admin,
+// and it is not in a locked status.
+func (p *Post) IsEditable(user User) (bool, error) {
+	if user.ID <= 0 {
+		return false, errors.New("user.ID must be a valid primary key")
+	}
+
+	if p.CreatedByID <= 0 {
+		if err := DB.Reload(p); err != nil {
+			return false, err
+		}
+	}
+
+	if user.ID != p.CreatedByID && !user.CanEditAllPosts() {
+		return false, nil
+	}
+
+	return p.isPostEditable(), nil
+}
+
+// isPostEditable defines at which states can posts be edited.
+func (p *Post) isPostEditable() bool {
+	editable := []string{
+		PostStatusOpen,
+		PostStatusCommitted,
+		PostStatusAccepted,
+		PostStatusReceived,
+		PostStatusDelivered,
+	}
+
+	return domain.IsStringInSlice(p.Status, editable)
+}
+
+// canUserChangeStatus defines which posts statuses can be changed by which users.
+// Invalid transitions are not checked here; it is left for the validator to do this.
+func (p *Post) canUserChangeStatus(user User, newStatus string) bool {
+	if user.AdminRole.String == domain.AdminRoleSuperDuperAdmin {
+		return true
+	}
+
+	if p.CreatedByID == user.ID {
+		return true
+	}
+
+	if newStatus == PostStatusCommitted {
+		return true
+	}
+
+	if p.ProviderID.Int != user.ID && p.ReceiverID.Int != user.ID {
+		return false
+	}
+
+	if p.Type == PostTypeRequest && newStatus == PostStatusDelivered {
+		return true
+	}
+
+	if p.Type == PostTypeOffer && newStatus == PostStatusReceived {
+		return true
+	}
+
+	return false
 }

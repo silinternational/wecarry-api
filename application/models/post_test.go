@@ -873,7 +873,7 @@ func (ms *ModelSuite) TestPost_GetThreads() {
 		want []uuid.UUID
 	}{
 		{name: "no threads", post: posts[1], want: []uuid.UUID{}},
-		{name: "two threads", post: posts[0], want: []uuid.UUID{threads[0].Uuid, threads[1].Uuid}},
+		{name: "two threads", post: posts[0], want: []uuid.UUID{threads[1].Uuid, threads[0].Uuid}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -897,22 +897,20 @@ func (ms *ModelSuite) TestPost_AttachFile() {
 	t := ms.T()
 
 	user := User{}
-	if err := ms.DB.Create(&user); err != nil {
-		t.Errorf("failed to create user fixture, %s", err)
-	}
+	createFixture(ms, &user)
 
 	organization := Organization{AuthConfig: "{}"}
-	if err := ms.DB.Create(&organization); err != nil {
-		t.Errorf("failed to create organization fixture, %s", err)
-	}
+	createFixture(ms, &organization)
+
+	location := Location{}
+	createFixture(ms, &location)
 
 	post := Post{
 		CreatedByID:    user.ID,
 		OrganizationID: organization.ID,
+		DestinationID:  location.ID,
 	}
-	if err := ms.DB.Create(&post); err != nil {
-		t.Errorf("failed to create post fixture, %s", err)
-	}
+	createFixture(ms, &post)
 
 	var fileFixture File
 	const filename = "photo.gif"
@@ -942,43 +940,26 @@ func (ms *ModelSuite) TestPost_AttachFile() {
 }
 
 func (ms *ModelSuite) TestPost_GetFiles() {
-	t := ms.T()
+	f := CreateFixturesForPostsGetFiles(ms)
 
-	user := User{}
-	if err := ms.DB.Create(&user); err != nil {
-		t.Errorf("failed to create user fixture, %s", err)
+	files, err := f.Posts[0].GetFiles()
+	ms.NoError(err, "failed to get files list for post, %s", err)
+
+	ms.Equal(len(f.Files), len(files))
+
+	// sort most recently updated first
+	expectedFilenames := []string{
+		f.Files[2].Name,
+		f.Files[1].Name,
+		f.Files[0].Name,
 	}
 
-	organization := Organization{AuthConfig: "{}"}
-	if err := ms.DB.Create(&organization); err != nil {
-		t.Errorf("failed to create organization fixture, %s", err)
+	receivedFilenames := make([]string, len(files))
+	for i := range files {
+		receivedFilenames[i] = files[i].Name
 	}
 
-	post := Post{
-		CreatedByID:    user.ID,
-		OrganizationID: organization.ID,
-	}
-	if err := ms.DB.Create(&post); err != nil {
-		t.Errorf("failed to create post fixture, %s", err)
-	}
-
-	var f File
-	const filename = "photo.gif"
-	if err := f.Store(filename, []byte("GIF89a")); err != nil {
-		t.Errorf("failed to create file fixture, %s", err)
-	}
-
-	if _, err := post.AttachFile(f.UUID.String()); err != nil {
-		t.Errorf("failed to attach file to post, %s", err)
-	}
-
-	files, err := post.GetFiles()
-	if err != nil {
-		t.Errorf("failed to get files list for post, %s", err)
-	}
-
-	ms.Equal(1, len(files))
-	ms.Equal(filename, files[0].Name)
+	ms.Equal(expectedFilenames, receivedFilenames, "incorrect list of files")
 }
 
 // TestPost_AttachPhoto_GetPhoto tests the AttachPhoto and GetPhoto methods of models.Post
@@ -986,22 +967,20 @@ func (ms *ModelSuite) TestPost_AttachPhoto_GetPhoto() {
 	t := ms.T()
 
 	user := User{}
-	if err := ms.DB.Create(&user); err != nil {
-		t.Errorf("failed to create user fixture, %s", err)
-	}
+	createFixture(ms, &user)
 
 	organization := Organization{AuthConfig: "{}"}
-	if err := ms.DB.Create(&organization); err != nil {
-		t.Errorf("failed to create organization fixture, %s", err)
-	}
+	createFixture(ms, &organization)
+
+	location := Location{}
+	createFixture(ms, &location)
 
 	post := Post{
 		CreatedByID:    user.ID,
 		OrganizationID: organization.ID,
+		DestinationID:  location.ID,
 	}
-	if err := ms.DB.Create(&post); err != nil {
-		t.Errorf("failed to create post fixture, %s", err)
-	}
+	createFixture(ms, &post)
 
 	var photoFixture File
 	const filename = "photo.gif"
@@ -1042,10 +1021,7 @@ func (ms *ModelSuite) TestPost_SetDestination() {
 	organization := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
 	createFixture(ms, &organization)
 
-	post := Post{CreatedByID: user.ID, OrganizationID: organization.ID}
-	createFixture(ms, &post)
-
-	locationFixtures := Locations{
+	locations := Locations{
 		{
 			Description: "a place",
 			Country:     "XY",
@@ -1059,26 +1035,18 @@ func (ms *ModelSuite) TestPost_SetDestination() {
 			Longitude:   nulls.Float64{},
 		},
 	}
+	createFixture(ms, &locations[0]) // only save the first record for now
 
-	err := post.SetDestination(locationFixtures[0])
+	post := Post{CreatedByID: user.ID, OrganizationID: organization.ID, DestinationID: locations[0].ID}
+	createFixture(ms, &post)
+
+	err := post.SetDestination(locations[1])
 	ms.NoError(err, "unexpected error from post.SetDestination()")
 
 	locationFromDB, err := post.GetDestination()
 	ms.NoError(err, "unexpected error from post.GetDestination()")
-
-	locationFixtures[0].ID = locationFromDB.ID
-	ms.Equal(locationFixtures[0], *locationFromDB, "destination data doesn't match new location")
-
-	err = post.SetDestination(locationFixtures[1])
-	ms.NoError(err, "unexpected error from post.SetDestination()")
-
-	locationFromDB, err = post.GetDestination()
-	ms.NoError(err, "unexpected error from post.GetDestination()")
-	ms.Equal(locationFixtures[0].ID, locationFromDB.ID,
-		"Location ID doesn't match -- location record was probably not reused")
-
-	locationFixtures[1].ID = locationFromDB.ID
-	ms.Equal(locationFixtures[1], *locationFromDB, "destination data doesn't match after update")
+	locations[1].ID = locationFromDB.ID
+	ms.Equal(locations[1], *locationFromDB, "destination data doesn't match after update")
 
 	// These are redundant checks, but here to document the fact that a null overwrites previous data.
 	ms.False(locationFromDB.Latitude.Valid)
@@ -1094,7 +1062,10 @@ func (ms *ModelSuite) TestPost_SetOrigin() {
 	organization := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
 	createFixture(ms, &organization)
 
-	post := Post{CreatedByID: user.ID, OrganizationID: organization.ID}
+	location := Location{}
+	createFixture(ms, &location)
+
+	post := Post{CreatedByID: user.ID, OrganizationID: organization.ID, DestinationID: location.ID}
 	createFixture(ms, &post)
 
 	locationFixtures := Locations{
@@ -1241,6 +1212,151 @@ func (ms *ModelSuite) TestPosts_FindByUser() {
 				postIDs[i] = posts[i].ID
 			}
 			ms.Equal(test.wantPostIDs, postIDs)
+		})
+	}
+}
+
+func (ms *ModelSuite) TestPost_IsEditable() {
+	t := ms.T()
+
+	f := CreateFixtures_Post_IsEditable(ms)
+
+	tests := []struct {
+		name    string
+		user    User
+		post    Post
+		want    bool
+		wantErr bool
+	}{
+		{name: "user 0, post 0", user: f.Users[0], post: f.Posts[0], want: true},
+		{name: "user 0, post 1", user: f.Users[0], post: f.Posts[1], want: false},
+		{name: "user 1, post 0", user: f.Users[1], post: f.Posts[0], want: false},
+		{name: "user 1, post 1", user: f.Users[1], post: f.Posts[1], want: false},
+		{name: "non-existent user", wantErr: true},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			editable, err := test.post.IsEditable(test.user)
+
+			if test.wantErr {
+				ms.Error(err)
+				return
+			}
+
+			ms.NoError(err)
+			ms.Equal(test.want, editable)
+		})
+	}
+}
+
+func (ms *ModelSuite) TestPost_isPostEditable() {
+	t := ms.T()
+
+	tests := []struct {
+		status string
+		want   bool
+	}{
+		{status: PostStatusOpen, want: true},
+		{status: PostStatusCommitted, want: true},
+		{status: PostStatusAccepted, want: true},
+		{status: PostStatusReceived, want: true},
+		{status: PostStatusDelivered, want: true},
+		{status: PostStatusCompleted, want: false},
+		{status: PostStatusRemoved, want: false},
+		{status: "", want: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.status, func(t *testing.T) {
+			p := Post{Status: tt.status}
+			if got := p.isPostEditable(); got != tt.want {
+				t.Errorf("isStatusEditable() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func (ms *ModelSuite) TestPost_canUserChangeStatus() {
+	t := ms.T()
+
+	tests := []struct {
+		name      string
+		post      Post
+		user      User
+		newStatus string
+		want      bool
+	}{
+		{
+			name: "Creator",
+			post: Post{CreatedByID: 1},
+			user: User{ID: 1},
+			want: true,
+		},
+		{
+			name: "SuperDuperAdmin",
+			post: Post{},
+			user: User{AdminRole: nulls.NewString(domain.AdminRoleSuperDuperAdmin)},
+			want: true,
+		},
+		{
+			name:      "Open",
+			post:      Post{CreatedByID: 1},
+			newStatus: PostStatusOpen,
+			want:      false,
+		},
+		{
+			name:      "Committed",
+			post:      Post{CreatedByID: 1},
+			newStatus: PostStatusCommitted,
+			want:      true,
+		},
+		{
+			name:      "Accepted",
+			post:      Post{CreatedByID: 1},
+			newStatus: PostStatusAccepted,
+			want:      false,
+		},
+		{
+			name:      "Offer Received",
+			post:      Post{Type: PostTypeOffer, CreatedByID: 1},
+			newStatus: PostStatusReceived,
+			want:      true,
+		},
+		{
+			name:      "Request Received",
+			post:      Post{Type: PostTypeRequest, CreatedByID: 1},
+			newStatus: PostStatusReceived,
+			want:      false,
+		},
+		{
+			name:      "Offer Delivered",
+			newStatus: PostStatusDelivered,
+			post:      Post{Type: PostTypeOffer, CreatedByID: 1},
+			want:      false,
+		},
+		{
+			name:      "Request Delivered",
+			newStatus: PostStatusDelivered,
+			post:      Post{Type: PostTypeRequest, CreatedByID: 1},
+			want:      true,
+		},
+		{
+			name:      "Completed",
+			post:      Post{CreatedByID: 1},
+			newStatus: PostStatusCompleted,
+			want:      false,
+		},
+		{
+			name:      "Removed",
+			post:      Post{CreatedByID: 1},
+			newStatus: PostStatusRemoved,
+			want:      false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.newStatus, func(t *testing.T) {
+			if got := tt.post.canUserChangeStatus(tt.user, tt.newStatus); got != tt.want {
+				t.Errorf("isStatusEditable() = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }

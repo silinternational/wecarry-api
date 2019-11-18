@@ -39,6 +39,7 @@ func GetPostUsers(post m.Post) PostUsers {
 func getMessageForProvider(postUsers PostUsers, post m.Post, template string) notifications.Message {
 	data := map[string]interface{}{
 		"uiURL":             domain.Env.UIURL,
+		"appName":           domain.Env.AppName,
 		"postURL":           domain.GetPostUIURL(post.Uuid.String()),
 		"postTitle":         post.Title,
 		"postDescription":   post.Description,
@@ -47,16 +48,18 @@ func getMessageForProvider(postUsers PostUsers, post m.Post, template string) no
 	}
 
 	return notifications.Message{
-		Template: template,
-		Data:     data,
-		ToName:   postUsers.Provider.Nickname,
-		ToEmail:  postUsers.Provider.Email,
+		Template:  template,
+		Data:      data,
+		ToName:    postUsers.Provider.Nickname,
+		ToEmail:   postUsers.Provider.Email,
+		FromEmail: domain.Env.EmailFromAddress,
 	}
 }
 
 func getMessageForRequester(postUsers PostUsers, post m.Post, template string) notifications.Message {
 	data := map[string]interface{}{
 		"uiURL":            domain.Env.UIURL,
+		"appName":          domain.Env.AppName,
 		"postURL":          domain.GetPostUIURL(post.Uuid.String()),
 		"postTitle":        post.Title,
 		"postDescription":  post.Description,
@@ -65,10 +68,11 @@ func getMessageForRequester(postUsers PostUsers, post m.Post, template string) n
 	}
 
 	return notifications.Message{
-		Template: template,
-		Data:     data,
-		ToName:   postUsers.Requester.Nickname,
-		ToEmail:  postUsers.Requester.Email,
+		Template:  template,
+		Data:      data,
+		ToName:    postUsers.Requester.Nickname,
+		ToEmail:   postUsers.Requester.Email,
+		FromEmail: domain.Env.EmailFromAddress,
 	}
 }
 
@@ -109,6 +113,7 @@ func sendNotificationRequestFromCommittedToOpen(template string, post m.Post, eD
 	// First notify requester
 	data := map[string]interface{}{
 		"uiURL":             domain.Env.UIURL,
+		"appName":           domain.Env.AppName,
 		"postURL":           domain.GetPostUIURL(post.Uuid.String()),
 		"postTitle":         post.Title,
 		"providerNickname":  providerNickname,
@@ -118,10 +123,11 @@ func sendNotificationRequestFromCommittedToOpen(template string, post m.Post, eD
 	}
 
 	msg := notifications.Message{
-		Template: template,
-		Data:     data,
-		ToName:   postUsers.Requester.Nickname,
-		ToEmail:  postUsers.Requester.Email,
+		Template:  template,
+		Data:      data,
+		ToName:    postUsers.Requester.Nickname,
+		ToEmail:   postUsers.Requester.Email,
+		FromEmail: domain.Env.EmailFromAddress,
 	}
 	if err := notifications.Send(msg); err != nil {
 		domain.ErrLogger.Printf("error sending '%s' notification to old provider, %s", template, err)
@@ -212,6 +218,7 @@ func sendNotificationRequestFromAcceptedToOpen(template string, post m.Post, eDa
 
 	data := map[string]interface{}{
 		"uiURL":             domain.Env.UIURL,
+		"appName":           domain.Env.AppName,
 		"postURL":           domain.GetPostUIURL(post.Uuid.String()),
 		"postTitle":         post.Title,
 		"requesterNickname": postUsers.Requester.Nickname,
@@ -219,10 +226,11 @@ func sendNotificationRequestFromAcceptedToOpen(template string, post m.Post, eDa
 	}
 
 	msg := notifications.Message{
-		Template: template,
-		Data:     data,
-		ToName:   oldProvider.Nickname,
-		ToEmail:  oldProvider.Email,
+		Template:  template,
+		Data:      data,
+		ToName:    oldProvider.Nickname,
+		ToEmail:   oldProvider.Email,
+		FromEmail: domain.Env.EmailFromAddress,
 	}
 	if err := notifications.Send(msg); err != nil {
 		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
@@ -321,5 +329,5 @@ func requestStatusUpdatedNotifications(post m.Post, eData m.PostStatusEventData)
 		return
 	}
 
-	sender.Sender(sender.Template, post, eData)
+	sender.Sender(notifications.GetEmailTemplate(sender.Template), post, eData)
 }

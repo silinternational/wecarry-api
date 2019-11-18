@@ -78,6 +78,9 @@ func CreateFixtures_ThreadParticipant_UpdateLastViewedAt(ms *ModelSuite, t *test
 		createFixture(ms, &(userOrgs[i]))
 	}
 
+	location := Location{}
+	createFixture(ms, &location)
+
 	posts := Posts{
 		{
 			CreatedByID:    users[0].ID,
@@ -90,6 +93,7 @@ func CreateFixtures_ThreadParticipant_UpdateLastViewedAt(ms *ModelSuite, t *test
 			NeededAfter:    time.Now(),
 			NeededBefore:   time.Date(2029, time.August, 3, 0, 0, 0, 0, time.UTC),
 			Category:       "Unknown",
+			DestinationID:  location.ID,
 		},
 	}
 	for i := range posts {
@@ -174,8 +178,11 @@ func CreateFixtures_ThreadParticipant_FindByThreadIDAndUserID(ms *ModelSuite) Th
 		createFixture(ms, &(users[i]))
 	}
 
+	location := Location{}
+	createFixture(ms, &location)
+
 	posts := Posts{
-		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID},
+		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID, DestinationID: location.ID},
 	}
 	for i := range posts {
 		createFixture(ms, &(posts[i]))
@@ -249,8 +256,11 @@ func CreateFixtures_ThreadParticipant_UpdateLastNotifiedAt(ms *ModelSuite, t *te
 		createFixture(ms, &(users[i]))
 	}
 
+	location := Location{}
+	createFixture(ms, &location)
+
 	posts := Posts{
-		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID},
+		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID, DestinationID: location.ID},
 	}
 	for i := range posts {
 		createFixture(ms, &(posts[i]))

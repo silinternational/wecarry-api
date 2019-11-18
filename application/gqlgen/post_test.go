@@ -1,6 +1,7 @@
 package gqlgen
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 
@@ -45,6 +46,7 @@ type PostResponse struct {
 		CreatedAt    string `json:"createdAt"`
 		UpdatedAt    string `json:"updatedAt"`
 		Cost         string `json:"cost"`
+		IsEditable   bool   `json:"isEditable"`
 		Url          string `json:"url"`
 		CreatedBy    struct {
 			ID string `json:"id"`
@@ -102,6 +104,7 @@ func createFixtures_PostQuery(gs *GqlgenSuite) PostQueryFixtures {
 			Latitude:    nulls.NewFloat64(43.6532),
 			Longitude:   nulls.NewFloat64(-79.3832),
 		},
+		{},
 	}
 	for i := range locations {
 		createFixture(gs, &(locations[i]))
@@ -117,7 +120,7 @@ func createFixtures_PostQuery(gs *GqlgenSuite) PostQueryFixtures {
 			Type:           PostTypeRequest.String(),
 			Status:         PostStatusCommitted.String(),
 			Title:          "A Request",
-			DestinationID:  nulls.NewInt(locations[0].ID),
+			DestinationID:  locations[0].ID,
 			OriginID:       nulls.NewInt(locations[1].ID),
 			Size:           PostSizeSmall.String(),
 			NeededAfter:    time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
@@ -132,6 +135,7 @@ func createFixtures_PostQuery(gs *GqlgenSuite) PostQueryFixtures {
 			CreatedByID:    users[0].ID,
 			ProviderID:     nulls.NewInt(users[0].ID),
 			OrganizationID: org.ID,
+			DestinationID:  locations[2].ID,
 		},
 	}
 	for i := range posts {
@@ -214,6 +218,7 @@ func (gs *GqlgenSuite) Test_PostQuery() {
 			createdAt
 			updatedAt
 			cost
+			isEditable
 			url
 			createdBy { id }
 			receiver { id }
@@ -225,7 +230,7 @@ func (gs *GqlgenSuite) Test_PostQuery() {
 
 	var resp PostResponse
 
-	TestUser = f.Users[0]
+	TestUser = f.Users[1]
 	c.MustPost(query, &resp)
 
 	gs.Equal(f.Posts[0].Uuid.String(), resp.Post.ID)
@@ -252,8 +257,9 @@ func (gs *GqlgenSuite) Test_PostQuery() {
 	gs.Equal(f.Posts[0].UpdatedAt.Format(time.RFC3339), resp.Post.UpdatedAt)
 	cost, err := strconv.ParseFloat(resp.Post.Cost, 64)
 	gs.NoError(err, "couldn't parse cost field as a float")
-	gs.Equal(f.Posts[0].Cost.Float64, cost)
 	gs.Equal(f.Posts[0].URL.String, resp.Post.Url)
+	gs.Equal(f.Posts[0].Cost.Float64, cost)
+	gs.Equal(false, resp.Post.IsEditable)
 	gs.Equal(f.Users[0].Uuid.String(), resp.Post.CreatedBy.ID)
 	gs.Equal(f.Users[0].Uuid.String(), resp.Post.Receiver.ID)
 	gs.Equal(f.Users[1].Uuid.String(), resp.Post.Provider.ID)
@@ -314,7 +320,7 @@ func createFixtures_UpdatePost(gs *GqlgenSuite) UpdatePostFixtures {
 			Status:         PostStatusOpen.String(),
 			Uuid:           domain.GetUuid(),
 			ReceiverID:     nulls.NewInt(users[1].ID),
-			DestinationID:  nulls.NewInt(locations[0].ID), // test update of existing location
+			DestinationID:  locations[0].ID, // test update of existing location
 			// leave OriginID nil to test adding a location
 		},
 	}
@@ -376,7 +382,6 @@ func (gs *GqlgenSuite) Test_UpdatePost() {
 	input := `id: "` + f.Posts[0].Uuid.String() + `" photoID: "` + f.Files[1].UUID.String() + `"` +
 		` 
 			description: "new description"
-			status: COMMITTED
 			destination: {description:"dest" country:"dc" latitude:1.1 longitude:2.2}
 			origin: {description:"origin" country:"oc" latitude:3.3 longitude:4.4}
 			size: TINY
@@ -386,10 +391,10 @@ func (gs *GqlgenSuite) Test_UpdatePost() {
 			url: "example.com" 
 			cost: "1.00"
 		`
-	query := `mutation { post: updatePost(input: {` + input + `}) { id photo { id } description status 
+	query := `mutation { post: updatePost(input: {` + input + `}) { id photo { id } description 
 			destination { description country latitude longitude} 
 			origin { description country latitude longitude}
-			size neededAfter neededBefore category url cost}}`
+			size neededAfter neededBefore category url cost isEditable}}`
 
 	TestUser = f.Users[0]
 	c.MustPost(query, &postsResp)
@@ -402,7 +407,6 @@ func (gs *GqlgenSuite) Test_UpdatePost() {
 	gs.Equal(f.Posts[0].Uuid.String(), postsResp.Post.ID)
 	gs.Equal(f.Files[1].UUID.String(), postsResp.Post.Photo.ID)
 	gs.Equal("new description", postsResp.Post.Description)
-	gs.Equal("COMMITTED", postsResp.Post.Status)
 	gs.Equal("dest", postsResp.Post.Destination.Description)
 	gs.Equal("dc", postsResp.Post.Destination.Country)
 	gs.Equal(1.1, postsResp.Post.Destination.Lat)
@@ -417,20 +421,14 @@ func (gs *GqlgenSuite) Test_UpdatePost() {
 	gs.Equal("cat", postsResp.Post.Category)
 	gs.Equal("example.com", postsResp.Post.Url)
 	gs.Equal("1", postsResp.Post.Cost)
+	gs.Equal(true, postsResp.Post.IsEditable)
 
-	// Now check for a valid status update
-	input = `id: "` + f.Posts[0].Uuid.String() + `" status: ` + models.PostStatusCommitted
+	// Attempt to edit a locked post
+	TestUser = f.Users[1]
+	input = `id: "` + f.Posts[0].Uuid.String() + `" category: "new category"`
 	query = `mutation { post: updatePost(input: {` + input + `}) { id status}}`
 
-	err := c.Post(query, &postsResp)
-	gs.NoError(err)
-
-	// Now check for a validation error for a bad status update
-	input = `id: "` + f.Posts[0].Uuid.String() + `" status: ` + models.PostStatusCompleted
-	query = `mutation { post: updatePost(input: {` + input + `}) { id status}}`
-
-	err = c.Post(query, &postsResp)
-	gs.Error(err)
+	gs.Error(c.Post(query, &postsResp))
 }
 
 type CreatePostFixtures struct {
@@ -504,7 +502,7 @@ func (gs *GqlgenSuite) Test_CreatePost() {
 			size neededAfter neededBefore category url cost }}`
 
 	TestUser = f.User
-	c.MustPost(query, &postsResp)
+	gs.NoError(c.Post(query, &postsResp))
 
 	gs.Equal(f.Organization.Uuid.String(), postsResp.Post.Organization.ID)
 	gs.Equal(f.File.UUID.String(), postsResp.Post.Photo.ID)
@@ -526,4 +524,96 @@ func (gs *GqlgenSuite) Test_CreatePost() {
 	gs.Equal("cat", postsResp.Post.Category)
 	gs.Equal("example.com", postsResp.Post.Url)
 	gs.Equal("1", postsResp.Post.Cost)
+}
+
+type UpdatePostStatusFixtures struct {
+	models.Posts
+	models.Users
+}
+
+func createFixturesForUpdatePostStatus(gs *GqlgenSuite) UpdatePostStatusFixtures {
+	org := models.Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	createFixture(gs, &org)
+
+	unique := org.Uuid.String()
+	users := make(models.Users, 2)
+	userOrgs := make(models.UserOrganizations, len(users))
+	for i := range users {
+		users[i] = models.User{
+			Email:    fmt.Sprintf("%s_user%d@example.com", unique, i),
+			Nickname: fmt.Sprintf("%s_User%d", unique, i),
+			Uuid:     domain.GetUuid(),
+		}
+		createFixture(gs, &users[i])
+
+		userOrgs[i] = models.UserOrganization{
+			OrganizationID: org.ID,
+			UserID:         users[i].ID,
+			AuthID:         users[i].Email,
+			AuthEmail:      users[i].Email,
+		}
+		createFixture(gs, &userOrgs[i])
+	}
+
+	posts := make(models.Posts, 1)
+	locations := make(models.Locations, len(posts))
+	for i := range posts {
+		createFixture(gs, &locations[i])
+
+		posts[i].CreatedByID = users[0].ID
+		posts[i].ReceiverID = nulls.NewInt(users[0].ID)
+		posts[i].OrganizationID = org.ID
+		posts[i].Uuid = domain.GetUuid()
+		posts[i].DestinationID = locations[i].ID
+		posts[i].Title = "title"
+		posts[i].Size = PostSizeSmall.String()
+		posts[i].Type = PostTypeRequest.String()
+		posts[i].Status = models.PostStatusOpen
+		createFixture(gs, &posts[i])
+	}
+
+	return UpdatePostStatusFixtures{
+		Posts: posts,
+		Users: users,
+	}
+}
+
+func (gs *GqlgenSuite) Test_UpdatePostStatus() {
+	f := createFixturesForUpdatePostStatus(gs)
+	c := getGqlClient()
+
+	var postsResp PostResponse
+
+	creator := f.Users[0]
+	provider := f.Users[1]
+
+	steps := []struct {
+		status  PostStatus
+		user    models.User
+		wantErr bool
+	}{
+		{status: PostStatusCommitted, user: provider, wantErr: false},
+		{status: PostStatusAccepted, user: provider, wantErr: true},
+		{status: PostStatusAccepted, user: creator, wantErr: false},
+		{status: PostStatusReceived, user: provider, wantErr: true},
+		{status: PostStatusReceived, user: creator, wantErr: false},
+		{status: PostStatusDelivered, user: provider, wantErr: false},
+		{status: PostStatusCompleted, user: provider, wantErr: true},
+		{status: PostStatusCompleted, user: creator, wantErr: false},
+		{status: PostStatusRemoved, user: creator, wantErr: true},
+	}
+
+	for _, step := range steps {
+		input := `id: "` + f.Posts[0].Uuid.String() + `", status: ` + step.status.String()
+		query := `mutation { post: updatePostStatus(input: {` + input + `}) {id status}}`
+
+		TestUser = step.user
+		err := c.Post(query, &postsResp)
+		if step.wantErr {
+			gs.Error(err, "user=%s, query=%s", step.user.Nickname, query)
+		} else {
+			gs.NoError(err, "user=%s, query=%s", step.user.Nickname, query)
+			gs.Equal(step.status.String(), postsResp.Post.Status)
+		}
+	}
 }

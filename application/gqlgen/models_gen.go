@@ -52,6 +52,11 @@ type UpdateOrganizationInput struct {
 	AuthConfig string  `json:"authConfig"`
 }
 
+type UpdatePostStatusInput struct {
+	ID     string     `json:"id"`
+	Status PostStatus `json:"status"`
+}
+
 type UpdateUserInput struct {
 	ID       *string        `json:"id"`
 	PhotoID  *string        `json:"photoID"`

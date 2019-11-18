@@ -45,7 +45,7 @@ var apiListeners = map[string][]apiListener{
 	domain.EventApiMessageCreated: []apiListener{
 		{
 			name:     "send-new-message-notification",
-			listener: sendNewMessageNotification,
+			listener: sendNewThreadMessageNotification,
 		},
 	},
 
@@ -106,20 +106,20 @@ func userCreated(e events.Event) {
 	domain.Logger.Printf("%s User Created ... %s", domain.GetCurrentTime(), e.Message)
 }
 
-func sendNewMessageNotification(e events.Event) {
+func sendNewThreadMessageNotification(e events.Event) {
 	if e.Kind != domain.EventApiMessageCreated {
 		return
 	}
 
-	domain.Logger.Printf("%s Message Created ... %s", domain.GetCurrentTime(), e.Message)
+	domain.Logger.Printf("%s Thread Message Created ... %s", domain.GetCurrentTime(), e.Message)
 
 	id, ok := e.Payload[domain.ArgMessageID].(int)
 	if !ok {
-		domain.ErrLogger.Print("sendNewMessageNotification: unable to read message ID from event payload")
+		domain.ErrLogger.Print("sendNewThreadMessageNotification: unable to read message ID from event payload")
 		return
 	}
 
-	if err := job.SubmitDelayed(job.NewMessage, domain.NewMessageNotificationDelay,
+	if err := job.SubmitDelayed(job.NewThreadMessage, domain.NewMessageNotificationDelay,
 		map[string]interface{}{domain.ArgMessageID: id}); err != nil {
 		domain.ErrLogger.Printf("error starting 'New Message' job, %s", err)
 	}

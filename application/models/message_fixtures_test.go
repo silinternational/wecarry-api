@@ -2,10 +2,10 @@ package models
 
 import (
 	"fmt"
-	"github.com/gobuffalo/nulls"
 	"testing"
 	"time"
 
+	"github.com/gobuffalo/nulls"
 	"github.com/silinternational/wecarry-api/domain"
 )
 
@@ -29,8 +29,11 @@ func Fixtures_Message_GetSender(ms *ModelSuite, t *testing.T) MessageFixtures {
 		createFixture(ms, &users[i])
 	}
 
+	location := Location{}
+	createFixture(ms, &location)
+
 	posts := Posts{
-		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID},
+		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID, DestinationID: location.ID},
 	}
 	for i := range posts {
 		createFixture(ms, &posts[i])
@@ -76,18 +79,37 @@ func Fixtures_Message_Create(ms *ModelSuite, t *testing.T) MessageFixtures {
 		createFixture(ms, &users[i])
 	}
 
+	location := Location{}
+	createFixture(ms, &location)
+
 	posts := Posts{
-		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID},
+		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID, DestinationID: location.ID},
 	}
 	for i := range posts {
 		createFixture(ms, &posts[i])
 	}
 
 	threads := Threads{
-		{Uuid: domain.GetUuid(), PostID: posts[0].ID},
+		{
+			CreatedAt: time.Now().Add(-10 * time.Minute),
+			UpdatedAt: time.Now().Add(-10 * time.Minute),
+			Uuid:      domain.GetUuid(),
+			PostID:    posts[0].ID,
+		},
 	}
-	for i := range threads {
-		createFixture(ms, &threads[i])
+	for i, thread := range threads {
+		if err := ms.DB.RawQuery(`INSERT INTO threads (created_at, updated_at, uuid, post_id) VALUES (?, ?, ?, ?)`,
+			thread.CreatedAt, thread.UpdatedAt, thread.Uuid, thread.PostID).Exec(); err != nil {
+			t.Errorf("error loading threads, %v", err)
+			t.FailNow()
+		}
+
+		// get the new thread ID
+		err := ms.DB.Where("uuid = ?", thread.Uuid.String()).First(&threads[i])
+		if err != nil {
+			ms.T().Errorf("error finding thread fixture %s, %s", thread.Uuid.String(), err)
+			ms.T().FailNow()
+		}
 	}
 
 	return MessageFixtures{
@@ -109,8 +131,11 @@ func Fixtures_Message_FindByID(ms *ModelSuite, t *testing.T) MessageFixtures {
 		createFixture(ms, &users[i])
 	}
 
+	location := Location{}
+	createFixture(ms, &location)
+
 	posts := Posts{
-		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID},
+		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID, DestinationID: location.ID},
 	}
 	for i := range posts {
 		createFixture(ms, &posts[i])
@@ -154,8 +179,11 @@ func Fixtures_Message_FindByUUID(ms *ModelSuite) MessageFixtures {
 		createFixture(ms, &users[i])
 	}
 
+	location := Location{}
+	createFixture(ms, &location)
+
 	posts := Posts{
-		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID},
+		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID, DestinationID: location.ID},
 	}
 	for i := range posts {
 		createFixture(ms, &posts[i])
@@ -239,6 +267,11 @@ func CreateMessageFixtures_AfterCreate(ms *ModelSuite, t *testing.T) MessageFixt
 		createFixture(ms, &userOrgs[i])
 	}
 
+	locations := []Location{{}, {}}
+	for i := range locations {
+		createFixture(ms, &(locations[i]))
+	}
+
 	// Each user has a request and is a provider on the other user's post
 	posts := Posts{
 		{
@@ -250,6 +283,7 @@ func CreateMessageFixtures_AfterCreate(ms *ModelSuite, t *testing.T) MessageFixt
 			Status:         PostStatusOpen,
 			Uuid:           domain.GetUuid(),
 			ProviderID:     nulls.NewInt(users[1].ID),
+			DestinationID:  locations[0].ID,
 		},
 		{
 			CreatedByID:    users[1].ID,
@@ -260,6 +294,7 @@ func CreateMessageFixtures_AfterCreate(ms *ModelSuite, t *testing.T) MessageFixt
 			Status:         PostStatusOpen,
 			Uuid:           domain.GetUuid(),
 			ProviderID:     nulls.NewInt(users[0].ID),
+			DestinationID:  locations[1].ID,
 		},
 	}
 

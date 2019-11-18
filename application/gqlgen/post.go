@@ -2,6 +2,7 @@ package gqlgen
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -260,6 +261,15 @@ func (r *postResolver) Files(ctx context.Context, obj *models.Post) ([]models.Fi
 	return files, nil
 }
 
+// IsEditable indicates whether the user is allowed to edit the post
+func (r *postResolver) IsEditable(ctx context.Context, obj *models.Post) (bool, error) {
+	if obj == nil {
+		return false, nil
+	}
+	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+	return obj.IsEditable(cUser)
+}
+
 // Posts resolves the `posts` query
 func (r *queryResolver) Posts(ctx context.Context) ([]models.Post, error) {
 	posts := models.Posts{}
@@ -309,10 +319,6 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 		if err := post.NewWithUser(input.Type.String(), currentUser); err != nil {
 			return post, err
 		}
-	}
-
-	if input.Status != nil {
-		post.SetProviderWithStatus(input.Status.String(), currentUser)
 	}
 
 	if input.OrgID != nil {
@@ -391,7 +397,6 @@ func getSelectFieldsForPosts(ctx context.Context) []string {
 
 type postInput struct {
 	ID           *string
-	Status       *PostStatus
 	OrgID        *string
 	Type         *PostType
 	Title        *string
@@ -419,14 +424,14 @@ func (r *mutationResolver) CreatePost(ctx context.Context, input postInput) (*mo
 		return nil, reportError(ctx, err, "CreatePost.ProcessInput", extras)
 	}
 
+	dest := convertGqlLocationInputToDBLocation(*input.Destination)
+	if err1 := dest.Create(); err1 != nil {
+		return nil, reportError(ctx, err1, "CreatePost.SetDestination", extras)
+	}
+	post.DestinationID = dest.ID
+
 	if err2 := post.Create(); err2 != nil {
 		return nil, reportError(ctx, err2, "CreatePost", extras)
-	}
-
-	if input.Destination != nil {
-		if err3 := post.SetDestination(convertGqlLocationInputToDBLocation(*input.Destination)); err3 != nil {
-			return nil, reportError(ctx, err3, "CreatePost.SetDestination", extras)
-		}
 	}
 
 	if input.Origin != nil {
@@ -450,20 +455,55 @@ func (r *mutationResolver) UpdatePost(ctx context.Context, input postInput) (*mo
 		return nil, reportError(ctx, err, "UpdatePost.ProcessInput", extras)
 	}
 
-	if err2 := post.Update(); err2 != nil {
-		return nil, reportError(ctx, err2, "UpdatePost", extras)
+	var dbPost models.Post
+	_ = dbPost.FindByID(post.ID)
+	if editable, err2 := dbPost.IsEditable(cUser); err2 != nil {
+		return nil, reportError(ctx, err2, "UpdatePost.GetEditable", extras)
+	} else if !editable {
+		return nil, reportError(ctx, errors.New("attempt to update a non-editable post"),
+			"UpdatePost.NotEditable", extras)
+	}
+
+	if err3 := post.Update(); err3 != nil {
+		return nil, reportError(ctx, err3, "UpdatePost", extras)
 	}
 
 	if input.Destination != nil {
-		if err3 := post.SetDestination(convertGqlLocationInputToDBLocation(*input.Destination)); err3 != nil {
-			return nil, reportError(ctx, err3, "UpdatePost.SetDestination", extras)
+		if err4 := post.SetDestination(convertGqlLocationInputToDBLocation(*input.Destination)); err4 != nil {
+			return nil, reportError(ctx, err4, "UpdatePost.SetDestination", extras)
 		}
 	}
 
 	if input.Origin != nil {
-		if err4 := post.SetOrigin(convertGqlLocationInputToDBLocation(*input.Origin)); err4 != nil {
-			return nil, reportError(ctx, err4, "UpdatePost.SetOrigin", extras)
+		if err5 := post.SetOrigin(convertGqlLocationInputToDBLocation(*input.Origin)); err5 != nil {
+			return nil, reportError(ctx, err5, "UpdatePost.SetOrigin", extras)
 		}
+	}
+
+	return &post, nil
+}
+
+// UpdatePostStatus resolves the `updatePostStatus` mutation.
+func (r *mutationResolver) UpdatePostStatus(ctx context.Context, input UpdatePostStatusInput) (*models.Post, error) {
+	var post models.Post
+	if err := post.FindByUUID(input.ID); err != nil {
+		return nil, reportError(ctx, err, "UpdatePostStatus.FindPost")
+	}
+
+	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+	extras := map[string]interface{}{
+		"user":      cUser.Uuid,
+		"oldStatus": post.Status,
+		"newStatus": input.Status.String(),
+	}
+	if !cUser.CanUpdatePostStatus(post, input.Status.String()) {
+		return nil, reportError(ctx, errors.New("not allowed to change post status"),
+			"UpdatePostStatus.NotAllowed", extras)
+	}
+
+	post.SetProviderWithStatus(input.Status.String(), cUser)
+	if err := post.Update(); err != nil {
+		return nil, reportError(ctx, err, "UpdatePostStatus", extras)
 	}
 
 	return &post, nil

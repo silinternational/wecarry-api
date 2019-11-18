@@ -1,10 +1,11 @@
 package listeners
 
 import (
+	"testing"
+
 	"github.com/gobuffalo/nulls"
 	"github.com/silinternational/wecarry-api/domain"
 	m "github.com/silinternational/wecarry-api/models"
-	"testing"
 )
 
 type orgUserPostFixtures struct {
@@ -77,6 +78,11 @@ func CreateFixtures_GetPostRecipients(ms *ModelSuite, t *testing.T) orgUserPostF
 		t.Errorf("failed to load organizations on users[0] fixture, %s", err)
 	}
 
+	locations := []m.Location{{}, {}}
+	for i := range locations {
+		createFixture(ms, &(locations[i]))
+	}
+
 	// Load Post test fixtures
 	posts := []m.Post{
 		{
@@ -89,6 +95,7 @@ func CreateFixtures_GetPostRecipients(ms *ModelSuite, t *testing.T) orgUserPostF
 			Uuid:           domain.GetUuid(),
 			ProviderID:     nulls.NewInt(users[1].ID),
 			ReceiverID:     nulls.NewInt(users[0].ID),
+			DestinationID:  locations[0].ID,
 		},
 		{
 			CreatedByID:    users[0].ID,
@@ -99,6 +106,7 @@ func CreateFixtures_GetPostRecipients(ms *ModelSuite, t *testing.T) orgUserPostF
 			Status:         m.PostStatusOpen,
 			Uuid:           domain.GetUuid(),
 			ReceiverID:     nulls.NewInt(users[0].ID),
+			DestinationID:  locations[1].ID,
 		},
 	}
 	for i := range posts {
@@ -184,6 +192,11 @@ func CreateFixtures_RequestStatusUpdatedNotifications(ms *ModelSuite, t *testing
 		t.Errorf("failed to load organizations on users[0] fixture, %s", err)
 	}
 
+	locations := []m.Location{{}, {}}
+	for i := range locations {
+		createFixture(ms, &(locations[i]))
+	}
+
 	// Load Post test fixtures
 	posts := []m.Post{
 		{
@@ -196,6 +209,7 @@ func CreateFixtures_RequestStatusUpdatedNotifications(ms *ModelSuite, t *testing
 			Uuid:           domain.GetUuid(),
 			ProviderID:     nulls.NewInt(users[1].ID),
 			ReceiverID:     nulls.NewInt(users[0].ID),
+			DestinationID:  locations[0].ID,
 		},
 		{
 			CreatedByID:    users[0].ID,
@@ -206,6 +220,7 @@ func CreateFixtures_RequestStatusUpdatedNotifications(ms *ModelSuite, t *testing
 			Status:         m.PostStatusOpen,
 			Uuid:           domain.GetUuid(),
 			ReceiverID:     nulls.NewInt(users[0].ID),
+			DestinationID:  locations[1].ID,
 		},
 	}
 	for i := range posts {
@@ -291,6 +306,11 @@ func CreateFixtures_sendNotificationRequestFromStatus(ms *ModelSuite, t *testing
 		t.Errorf("failed to load organizations on users[0] fixture, %s", err)
 	}
 
+	locations := []m.Location{{}, {}}
+	for i := range locations {
+		createFixture(ms, &(locations[i]))
+	}
+
 	// Load Post test fixtures
 	posts := []m.Post{
 		{
@@ -303,6 +323,7 @@ func CreateFixtures_sendNotificationRequestFromStatus(ms *ModelSuite, t *testing
 			Uuid:           domain.GetUuid(),
 			ProviderID:     nulls.NewInt(users[1].ID),
 			ReceiverID:     nulls.NewInt(users[0].ID),
+			DestinationID:  locations[0].ID,
 		},
 		{
 			CreatedByID:    users[0].ID,
@@ -313,6 +334,7 @@ func CreateFixtures_sendNotificationRequestFromStatus(ms *ModelSuite, t *testing
 			Status:         m.PostStatusOpen,
 			Uuid:           domain.GetUuid(),
 			ReceiverID:     nulls.NewInt(users[0].ID),
+			DestinationID:  locations[1].ID,
 		},
 	}
 	for i := range posts {
@@ -330,5 +352,13 @@ func CreateFixtures_sendNotificationRequestFromStatus(ms *ModelSuite, t *testing
 		orgs:  m.Organizations{org},
 		users: users,
 		posts: posts,
+	}
+}
+
+func createFixture(ms *ModelSuite, f interface{}) {
+	err := ms.DB.Create(f)
+	if err != nil {
+		ms.T().Errorf("error creating %T fixture, %s", f, err)
+		ms.T().FailNow()
 	}
 }

@@ -41,6 +41,7 @@ type ResolverRoot interface {
 	Message() MessageResolver
 	Mutation() MutationResolver
 	Organization() OrganizationResolver
+	OrganizationDomain() OrganizationDomainResolver
 	Post() PostResolver
 	Query() QueryResolver
 	Thread() ThreadResolver
@@ -85,6 +86,7 @@ type ComplexityRoot struct {
 		SetThreadLastViewedAt    func(childComplexity int, input SetThreadLastViewedAtInput) int
 		UpdateOrganization       func(childComplexity int, input UpdateOrganizationInput) int
 		UpdatePost               func(childComplexity int, input postInput) int
+		UpdatePostStatus         func(childComplexity int, input UpdatePostStatusInput) int
 		UpdateUser               func(childComplexity int, input UpdateUserInput) int
 	}
 
@@ -111,6 +113,7 @@ type ComplexityRoot struct {
 		Destination  func(childComplexity int) int
 		Files        func(childComplexity int) int
 		ID           func(childComplexity int) int
+		IsEditable   func(childComplexity int) int
 		NeededAfter  func(childComplexity int) int
 		NeededBefore func(childComplexity int) int
 		Organization func(childComplexity int) int
@@ -180,6 +183,7 @@ type MessageResolver interface {
 type MutationResolver interface {
 	CreatePost(ctx context.Context, input postInput) (*models.Post, error)
 	UpdatePost(ctx context.Context, input postInput) (*models.Post, error)
+	UpdatePostStatus(ctx context.Context, input UpdatePostStatusInput) (*models.Post, error)
 	UpdateUser(ctx context.Context, input UpdateUserInput) (*models.User, error)
 	CreateMessage(ctx context.Context, input CreateMessageInput) (*models.Message, error)
 	CreateOrganization(ctx context.Context, input CreateOrganizationInput) (*models.Organization, error)
@@ -194,6 +198,9 @@ type OrganizationResolver interface {
 	URL(ctx context.Context, obj *models.Organization) (*string, error)
 
 	Domains(ctx context.Context, obj *models.Organization) ([]models.OrganizationDomain, error)
+}
+type OrganizationDomainResolver interface {
+	OrganizationID(ctx context.Context, obj *models.OrganizationDomain) (string, error)
 }
 type PostResolver interface {
 	ID(ctx context.Context, obj *models.Post) (string, error)
@@ -216,6 +223,7 @@ type PostResolver interface {
 	Cost(ctx context.Context, obj *models.Post) (*string, error)
 	Photo(ctx context.Context, obj *models.Post) (*models.File, error)
 	Files(ctx context.Context, obj *models.Post) ([]models.File, error)
+	IsEditable(ctx context.Context, obj *models.Post) (bool, error)
 }
 type QueryResolver interface {
 	Users(ctx context.Context) ([]models.User, error)
@@ -470,6 +478,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.UpdatePost(childComplexity, args["input"].(postInput)), true
 
+	case "Mutation.updatePostStatus":
+		if e.complexity.Mutation.UpdatePostStatus == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updatePostStatus_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdatePostStatus(childComplexity, args["input"].(UpdatePostStatusInput)), true
+
 	case "Mutation.updateUser":
 		if e.complexity.Mutation.UpdateUser == nil {
 			break
@@ -593,6 +613,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Post.ID(childComplexity), true
+
+	case "Post.isEditable":
+		if e.complexity.Post.IsEditable == nil {
+			break
+		}
+
+		return e.complexity.Post.IsEditable(childComplexity), true
 
 	case "Post.neededAfter":
 		if e.complexity.Post.NeededAfter == nil {
@@ -976,6 +1003,7 @@ var parsedSchema = gqlparser.MustLoadSchema(
 type Mutation {
     createPost(input: CreatePostInput!): Post!
     updatePost(input: UpdatePostInput!): Post!
+    updatePostStatus(input: UpdatePostStatusInput!): Post!
     updateUser(input: UpdateUserInput!): User!
     createMessage(input: CreateMessageInput!): Message!
     createOrganization(input: CreateOrganizationInput!): Organization!
@@ -1051,7 +1079,7 @@ type Post {
     organization: Organization
     title: String!
     description: String
-    destination: Location
+    destination: Location!
     origin: Location
     size: PostSize!
     neededAfter: String
@@ -1065,6 +1093,7 @@ type Post {
     cost: String
     photo: File
     files: [File!]!
+    isEditable: Boolean!
 }
 
 type Organization {
@@ -1151,7 +1180,6 @@ input CreateMessageInput {
 
 input UpdatePostInput {
     id: ID!
-    status: PostStatus
     title: String
     description: String
     destination: LocationInput
@@ -1193,6 +1221,11 @@ input LocationInput {
     country: String!
     latitude: Float
     longitude: Float
+}
+
+input UpdatePostStatusInput {
+    id: ID!
+    status: PostStatus!
 }
 `},
 )
@@ -1291,6 +1324,20 @@ func (ec *executionContext) field_Mutation_updateOrganization_args(ctx context.C
 	var arg0 UpdateOrganizationInput
 	if tmp, ok := rawArgs["input"]; ok {
 		arg0, err = ec.unmarshalNUpdateOrganizationInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐUpdateOrganizationInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updatePostStatus_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 UpdatePostStatusInput
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalNUpdatePostStatusInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐUpdatePostStatusInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2107,6 +2154,50 @@ func (ec *executionContext) _Mutation_updatePost(ctx context.Context, field grap
 	return ec.marshalNPost2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Mutation_updatePostStatus(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_updatePostStatus_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdatePostStatus(rctx, args["input"].(UpdatePostStatusInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Post)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNPost2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Mutation_updateUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -2684,13 +2775,13 @@ func (ec *executionContext) _OrganizationDomain_organizationID(ctx context.Conte
 		Object:   "OrganizationDomain",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.OrganizationID, nil
+		return ec.resolvers.OrganizationDomain().OrganizationID(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2702,10 +2793,10 @@ func (ec *executionContext) _OrganizationDomain_organizationID(ctx context.Conte
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(string)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNID2int(ctx, field.Selections, res)
+	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Post_id(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
@@ -3018,12 +3109,15 @@ func (ec *executionContext) _Post_destination(ctx context.Context, field graphql
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(*models.Location)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOLocation2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐLocation(ctx, field.Selections, res)
+	return ec.marshalNLocation2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐLocation(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Post_origin(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
@@ -3487,6 +3581,43 @@ func (ec *executionContext) _Post_files(ctx context.Context, field graphql.Colle
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNFile2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐFile(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Post_isEditable(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Post",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Post().IsEditable(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_users(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6048,12 +6179,6 @@ func (ec *executionContext) unmarshalInputUpdatePostInput(ctx context.Context, o
 			if err != nil {
 				return it, err
 			}
-		case "status":
-			var err error
-			it.Status, err = ec.unmarshalOPostStatus2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostStatus(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "title":
 			var err error
 			it.Title, err = ec.unmarshalOString2ᚖstring(ctx, v)
@@ -6117,6 +6242,30 @@ func (ec *executionContext) unmarshalInputUpdatePostInput(ctx context.Context, o
 		case "photoID":
 			var err error
 			it.PhotoID, err = ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpdatePostStatusInput(ctx context.Context, obj interface{}) (UpdatePostStatusInput, error) {
+	var it UpdatePostStatusInput
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "id":
+			var err error
+			it.ID, err = ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "status":
+			var err error
+			it.Status, err = ec.unmarshalNPostStatus2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostStatus(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -6383,6 +6532,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "updatePostStatus":
+			out.Values[i] = ec._Mutation_updatePostStatus(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "updateUser":
 			out.Values[i] = ec._Mutation_updateUser(ctx, field)
 			if out.Values[i] == graphql.Null {
@@ -6519,13 +6673,22 @@ func (ec *executionContext) _OrganizationDomain(ctx context.Context, sel ast.Sel
 		case "domain":
 			out.Values[i] = ec._OrganizationDomain_domain(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "organizationID":
-			out.Values[i] = ec._OrganizationDomain_organizationID(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._OrganizationDomain_organizationID(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6648,6 +6811,9 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 					}
 				}()
 				res = ec._Post_destination(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			})
 		case "origin":
@@ -6773,6 +6939,20 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 					}
 				}()
 				res = ec._Post_files(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "isEditable":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Post_isEditable(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -7491,20 +7671,6 @@ func (ec *executionContext) marshalNFile2ᚕgithubᚗcomᚋsilinternationalᚋwe
 	return ret
 }
 
-func (ec *executionContext) unmarshalNID2int(ctx context.Context, v interface{}) (int, error) {
-	return graphql.UnmarshalIntID(v)
-}
-
-func (ec *executionContext) marshalNID2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
-	res := graphql.MarshalIntID(v)
-	if res == graphql.Null {
-		if !ec.HasError(graphql.GetResolverContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-	}
-	return res
-}
-
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
 	return graphql.UnmarshalID(v)
 }
@@ -7549,6 +7715,20 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNLocation2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐLocation(ctx context.Context, sel ast.SelectionSet, v models.Location) graphql.Marshaler {
+	return ec._Location(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNLocation2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐLocation(ctx context.Context, sel ast.SelectionSet, v *models.Location) graphql.Marshaler {
+	if v == nil {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Location(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNLocationInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐLocationInput(ctx context.Context, v interface{}) (LocationInput, error) {
@@ -7793,6 +7973,15 @@ func (ec *executionContext) marshalNPostSize2ᚖgithubᚗcomᚋsilinternational�
 	return v
 }
 
+func (ec *executionContext) unmarshalNPostStatus2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostStatus(ctx context.Context, v interface{}) (PostStatus, error) {
+	var res PostStatus
+	return res, res.UnmarshalGQL(v)
+}
+
+func (ec *executionContext) marshalNPostStatus2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostStatus(ctx context.Context, sel ast.SelectionSet, v PostStatus) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) unmarshalNPostType2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostType(ctx context.Context, v interface{}) (PostType, error) {
 	var res PostType
 	return res, res.UnmarshalGQL(v)
@@ -7949,6 +8138,10 @@ func (ec *executionContext) unmarshalNUpdateOrganizationInput2githubᚗcomᚋsil
 
 func (ec *executionContext) unmarshalNUpdatePostInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐpostInput(ctx context.Context, v interface{}) (postInput, error) {
 	return ec.unmarshalInputUpdatePostInput(ctx, v)
+}
+
+func (ec *executionContext) unmarshalNUpdatePostStatusInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐUpdatePostStatusInput(ctx context.Context, v interface{}) (UpdatePostStatusInput, error) {
+	return ec.unmarshalInputUpdatePostStatusInput(ctx, v)
 }
 
 func (ec *executionContext) unmarshalNUpdateUserInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐUpdateUserInput(ctx context.Context, v interface{}) (UpdateUserInput, error) {
@@ -8375,30 +8568,6 @@ func (ec *executionContext) unmarshalOPostSize2ᚖgithubᚗcomᚋsilinternationa
 }
 
 func (ec *executionContext) marshalOPostSize2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostSize(ctx context.Context, sel ast.SelectionSet, v *PostSize) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return v
-}
-
-func (ec *executionContext) unmarshalOPostStatus2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostStatus(ctx context.Context, v interface{}) (PostStatus, error) {
-	var res PostStatus
-	return res, res.UnmarshalGQL(v)
-}
-
-func (ec *executionContext) marshalOPostStatus2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostStatus(ctx context.Context, sel ast.SelectionSet, v PostStatus) graphql.Marshaler {
-	return v
-}
-
-func (ec *executionContext) unmarshalOPostStatus2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostStatus(ctx context.Context, v interface{}) (*PostStatus, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalOPostStatus2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostStatus(ctx, v)
-	return &res, err
-}
-
-func (ec *executionContext) marshalOPostStatus2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostStatus(ctx context.Context, sel ast.SelectionSet, v *PostStatus) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

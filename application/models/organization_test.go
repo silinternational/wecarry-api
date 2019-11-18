@@ -305,34 +305,30 @@ func (ms *ModelSuite) TestOrganization_AddRemoveDomain() {
 	}
 
 	err := orgFixtures[0].AddDomain("first.com")
-	if err != nil {
-		t.Errorf("unable to add first domain to Org1: %s", err)
-	} else if len(orgFixtures[0].OrganizationDomains) != 1 {
+	ms.NoError(err, "unable to add first domain to Org1: %s", err)
+	domains, _ := orgFixtures[0].GetDomains()
+	if len(domains) != 1 {
 		t.Errorf("did not get error, but failed to add first domain to Org1")
 	}
 
 	err = orgFixtures[0].AddDomain("second.com")
-	if err != nil {
-		t.Errorf("unable to add second domain to Org1: %s", err)
-	} else if len(orgFixtures[0].OrganizationDomains) != 2 {
+	ms.NoError(err, "unable to add second domain to Org1: %s", err)
+	domains, _ = orgFixtures[0].GetDomains()
+	if len(domains) != 2 {
 		t.Errorf("did not get error, but failed to add second domain to Org1")
 	}
 
 	err = orgFixtures[1].AddDomain("second.com")
-	if err == nil {
-		t.Errorf("was to add existing domain (second.com) to Org2 but should have gotten error")
-	}
-
-	if len(orgFixtures[0].OrganizationDomains) != 2 {
+	ms.Error(err, "was to add existing domain (second.com) to Org2 but should have gotten error")
+	domains, _ = orgFixtures[0].GetDomains()
+	if len(domains) != 2 {
 		t.Errorf("after reloading org domains we did not get what we expected (%v), got: %v", 2, len(orgFixtures[0].OrganizationDomains))
 	}
 
 	err = orgFixtures[0].RemoveDomain("first.com")
-	if err != nil {
-		t.Errorf("unable to remove domain: %s", err)
-	}
-
-	if len(orgFixtures[0].OrganizationDomains) != 1 {
+	ms.NoError(err, "unable to remove domain: %s", err)
+	domains, _ = orgFixtures[0].GetDomains()
+	if len(domains) != 1 {
 		t.Errorf("org domains count after removing domain is not correct, expected %v, got: %v", 1, len(orgFixtures[0].OrganizationDomains))
 	}
 
@@ -453,71 +449,24 @@ func (ms *ModelSuite) TestOrganization_All() {
 
 }
 
-func (ms *ModelSuite) TestOrganization_AllForUser() {
-	t := ms.T()
+func (ms *ModelSuite) TestOrganization_GetDomains() {
+	f := CreateFixturesForOrganizationGetDomains(ms)
 
-	orgFixtures := []Organization{
-		{
-			CreatedAt:  time.Time{},
-			UpdatedAt:  time.Time{},
-			Name:       "Org1",
-			Url:        nulls.String{},
-			AuthType:   "na",
-			AuthConfig: "{}",
-			Uuid:       domain.GetUuid(),
-		},
-		{
-			CreatedAt:  time.Time{},
-			UpdatedAt:  time.Time{},
-			Name:       "Org2",
-			Url:        nulls.String{},
-			AuthType:   "na",
-			AuthConfig: "{}",
-			Uuid:       domain.GetUuid(),
-		},
-	}
-	for i := range orgFixtures {
-		createFixture(ms, &orgFixtures[i])
+	orgDomains, err := f.Organizations[0].GetDomains()
+	ms.NoError(err)
+
+	domains := make([]string, len(orgDomains))
+	for i := range orgDomains {
+		domains[i] = orgDomains[i].Domain
 	}
 
-	userFixtures := []User{
-		{
-			Email:     "user1@test.com",
-			FirstName: "user",
-			LastName:  "one",
-			Nickname:  "user_one",
-			AdminRole: nulls.String{},
-			Uuid:      domain.GetUuid(),
-		},
-	}
-	for i := range userFixtures {
-		createFixture(ms, &userFixtures[i])
+	expected := []string{
+		f.OrganizationDomains[1].Domain,
+		f.OrganizationDomains[2].Domain,
+		f.OrganizationDomains[0].Domain,
 	}
 
-	userOrgFixtures := []UserOrganization{
-		{
-			OrganizationID: orgFixtures[0].ID,
-			UserID:         userFixtures[0].ID,
-			Role:           UserOrganizationRoleUser,
-			AuthID:         "user_one",
-			AuthEmail:      "user1@test.com",
-			LastLogin:      time.Time{},
-		},
-	}
-	for i := range userOrgFixtures {
-		createFixture(ms, &userOrgFixtures[i])
-	}
-
-	var userOrgs Organizations
-	err := userOrgs.AllForUser(userFixtures[0])
-	if err != nil {
-		t.Error(err)
-	}
-
-	if len(userOrgs) != len(userOrgFixtures) {
-		t.Errorf("Did not get expected number of orgs for user, got %v, wanted %v", len(userOrgs), len(userOrgFixtures))
-	}
-
+	ms.Equal(expected, domains, "incorrect list of domains")
 }
 
 func (ms *ModelSuite) TestOrganization_GetUsers() {
