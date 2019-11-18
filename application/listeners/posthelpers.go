@@ -19,11 +19,6 @@ type PostUsers struct {
 	Provider  PostUser
 }
 
-type postAudience struct {
-	models.Post
-	models.Users
-}
-
 // GetPostUsers returns up to two entries for the Post Requester and
 // Post Provider assuming their email is not blank.
 func GetPostUsers(post models.Post) PostUsers {

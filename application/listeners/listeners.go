@@ -26,35 +26,35 @@ type apiListener struct {
 // themselves still need to verify the event kind
 //
 var apiListeners = map[string][]apiListener{
-	domain.EventApiUserCreated: []apiListener{
+	domain.EventApiUserCreated: {
 		{
 			name:     "user-created",
 			listener: userCreated,
 		},
 	},
 
-	domain.EventApiAuthUserLoggedIn: []apiListener{
+	domain.EventApiAuthUserLoggedIn: {
 		{
 			name:     "trigger-user-access-tokens-cleanup",
 			listener: userAccessTokensCleanup,
 		},
 	},
 
-	domain.EventApiMessageCreated: []apiListener{
+	domain.EventApiMessageCreated: {
 		{
 			name:     "send-new-message-notification",
 			listener: sendNewThreadMessageNotification,
 		},
 	},
 
-	domain.EventApiPostStatusUpdated: []apiListener{
+	domain.EventApiPostStatusUpdated: {
 		{
 			name:     "post-status-updated-notification",
 			listener: sendPostStatusUpdatedNotification,
 		},
 	},
 
-	domain.EventApiPostCreated: []apiListener{
+	domain.EventApiPostCreated: {
 		{
 			name:     "post-created-notification",
 			listener: sendPostCreatedNotifications,
