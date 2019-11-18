@@ -3,11 +3,12 @@ package listeners
 import (
 	"bytes"
 	"fmt"
+	"os"
+	"testing"
+
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 	"github.com/silinternational/wecarry-api/notifications"
-	"os"
-	"testing"
 )
 
 func (ms *ModelSuite) TestGetPostUsers() {
@@ -296,4 +297,89 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 		})
 	}
 
+}
+
+func (ms *ModelSuite) Test_sendNewPostNotification() {
+	t := ms.T()
+	tests := []struct {
+		name    string
+		user    models.User
+		post    models.Post
+		wantErr bool
+	}{
+		{
+			name:    "error",
+			wantErr: true,
+		},
+		{
+			name: "basic",
+			user: models.User{
+				Email: "user@example.com",
+			},
+			post: models.Post{Uuid: domain.GetUuid(), Title: "post title"},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			notifications.TestEmailService.DeleteSentMessages()
+
+			err := sendNewPostNotification(test.user, test.post)
+			if test.wantErr {
+				ms.Error(err)
+				return
+			}
+
+			ms.NoError(err)
+
+			emailCount := notifications.TestEmailService.GetNumberOfMessagesSent()
+			ms.Equal(1, emailCount, "wrong email count")
+
+			toEmail := notifications.TestEmailService.GetLastToEmail()
+			ms.Equal(test.user.Email, toEmail, "bad 'To' address")
+
+			body := notifications.TestEmailService.GetLastBody()
+			ms.Contains(body, "There is a new request", "Body doesn't contain expected string")
+			ms.Contains(body, test.post.Title, "Body doesn't contain post title")
+			ms.Contains(body, test.post.Uuid.String(), "Body doesn't contain post UUID")
+		})
+	}
+}
+
+func (ms *ModelSuite) Test_sendNewPostNotifications() {
+	t := ms.T()
+	tests := []struct {
+		name           string
+		post           models.Post
+		users          models.Users
+		wantEmailCount int
+	}{
+		{
+			name:           "empty",
+			wantEmailCount: 0,
+		},
+		{
+			name: "two users",
+			post: models.Post{CreatedByID: 1},
+			users: models.Users{
+				{Email: "user1@example.com"},
+				{Email: "user2@example.com"},
+			},
+			wantEmailCount: 2,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			notifications.TestEmailService.DeleteSentMessages()
+
+			sendNewPostNotifications(test.post, test.users)
+
+			emailCount := notifications.TestEmailService.GetNumberOfMessagesSent()
+			ms.Equal(test.wantEmailCount, emailCount, "wrong email count")
+
+			toAddresses := notifications.TestEmailService.GetAllToAddresses()
+			for _, user := range test.users {
+				ms.Contains(toAddresses, user.Email, "did not find user address %s", user.Email)
+			}
+		})
+	}
 }

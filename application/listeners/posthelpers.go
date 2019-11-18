@@ -1,6 +1,8 @@
 package listeners
 
 import (
+	"errors"
+
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 	"github.com/silinternational/wecarry-api/notifications"
@@ -14,6 +16,11 @@ type PostUser struct {
 type PostUsers struct {
 	Requester PostUser
 	Provider  PostUser
+}
+
+type postAudience struct {
+	models.Post
+	models.Users
 }
 
 // GetPostUsers returns up to two entries for the Post Requester and
@@ -330,4 +337,37 @@ func requestStatusUpdatedNotifications(post models.Post, eData models.PostStatus
 	}
 
 	sender.Sender(notifications.GetEmailTemplate(sender.Template), post, eData)
+}
+
+func sendNewPostNotifications(post models.Post, users models.Users) {
+	for i, user := range users {
+		if !user.WantsPostNotification(post) {
+			continue
+		}
+
+		if err := sendNewPostNotification(user, post); err != nil {
+			domain.ErrLogger.Printf("error sending post created notification (%d of %d), %s",
+				i, len(users), err)
+			return
+		}
+	}
+}
+
+func sendNewPostNotification(user models.User, post models.Post) error {
+	if user.Email == "" {
+		return errors.New("'To' email address is required")
+	}
+
+	msg := notifications.Message{
+		Template: domain.MessageTemplateNewRequest,
+		ToName:   user.Nickname,
+		ToEmail:  user.Email,
+		Data: map[string]interface{}{
+			"appName":   domain.Env.AppName,
+			"uiURL":     domain.Env.UIURL,
+			"postURL":   domain.GetPostUIURL(post.Uuid.String()),
+			"postTitle": post.Title,
+		},
+	}
+	return notifications.Send(msg)
 }

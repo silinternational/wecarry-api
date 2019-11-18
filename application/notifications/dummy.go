@@ -161,6 +161,14 @@ func (t *DummyEmailService) GetToEmailByIndex(i int) string {
 	return t.sentMessages[i].toEmail
 }
 
+func (t *DummyEmailService) GetAllToAddresses() []string {
+	emailAddresses := make([]string, len(t.sentMessages))
+	for i := range t.sentMessages {
+		emailAddresses[i] = t.sentMessages[i].toEmail
+	}
+	return emailAddresses
+}
+
 func (t *DummyEmailService) GetLastBody() string {
 	if len(t.sentMessages) == 0 {
 		return ""

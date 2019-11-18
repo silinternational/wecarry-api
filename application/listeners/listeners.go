@@ -3,8 +3,6 @@ package listeners
 import (
 	"time"
 
-	"github.com/silinternational/wecarry-api/notifications"
-
 	"github.com/gobuffalo/events"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/job"
@@ -161,41 +159,16 @@ func sendPostCreatedNotifications(e events.Event) {
 		return
 	}
 
-	post := models.Post{}
+	var post models.Post
 	if err := post.FindByID(eventData.PostID); err != nil {
 		domain.ErrLogger.Printf("unable to find post %d from post-created event, %s", eventData.PostID, err)
-		return
 	}
 
-	org, err := post.GetOrganization([]string{"id"})
+	users, err := post.GetAudience()
 	if err != nil {
-		domain.ErrLogger.Print("unable to get post organization in event listener,", err.Error())
+		domain.ErrLogger.Print("unable to get post audience in event listener, ", err.Error())
 		return
 	}
 
-	users, err2 := org.GetUsers()
-	if err2 != nil {
-		domain.ErrLogger.Print("unable to get post organization user list in event listener,", err2.Error())
-		return
-	}
-
-	for _, user := range users {
-		if !user.WantsPostNotification(post) {
-			continue
-		}
-
-		msg := notifications.Message{
-			Template: domain.MessageTemplateNewRequest,
-			ToName:   user.Nickname,
-			ToEmail:  user.Email,
-			Data: map[string]interface{}{
-				"uiURL":     domain.Env.UIURL,
-				"postURL":   domain.GetPostUIURL(post.Uuid.String()),
-				"postTitle": post.Title,
-			},
-		}
-		if err3 := notifications.Send(msg); err3 != nil {
-			domain.ErrLogger.Printf("error sending post created notification, %s", err3)
-		}
-	}
+	sendNewPostNotifications(post, users)
 }
