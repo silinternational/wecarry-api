@@ -343,7 +343,6 @@ func sendNewPostNotifications(post models.Post, users models.Users) {
 		if err := sendNewPostNotification(user, post); err != nil {
 			domain.ErrLogger.Printf("error sending post created notification (%d of %d), %s",
 				i, len(users), err)
-			return
 		}
 	}
 }
