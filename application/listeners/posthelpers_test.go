@@ -306,19 +306,20 @@ func (ms *ModelSuite) Test_sendNewPostNotification() {
 		user     models.User
 		post     models.Post
 		wantBody string
-		wantErr  bool
+		wantErr  string
 	}{
 		{
 			name:    "error - no user email",
-			wantErr: true,
+			post:    models.Post{Uuid: domain.GetUuid(), Title: "post title", Type: models.PostTypeRequest},
+			wantErr: "'To' email address is required",
 		},
 		{
 			name: "error - invalid post type",
 			user: models.User{
 				Email: "user@example.com",
 			},
-			post:    models.Post{Type: "bogus"},
-			wantErr: true,
+			post:    models.Post{Uuid: domain.GetUuid(), Title: "post title", Type: "bogus"},
+			wantErr: "invalid template name",
 		},
 		{
 			name: "request",
@@ -342,8 +343,9 @@ func (ms *ModelSuite) Test_sendNewPostNotification() {
 			notifications.TestEmailService.DeleteSentMessages()
 
 			err := sendNewPostNotification(test.user, test.post)
-			if test.wantErr {
+			if test.wantErr != "" {
 				ms.Error(err)
+				ms.Contains(err.Error(), test.wantErr)
 				return
 			}
 
@@ -373,6 +375,7 @@ func (ms *ModelSuite) Test_sendNewPostNotifications() {
 	}{
 		{
 			name:           "empty",
+			post:           models.Post{CreatedByID: 1, Type: models.PostTypeRequest},
 			wantEmailCount: 0,
 		},
 		{
@@ -380,6 +383,16 @@ func (ms *ModelSuite) Test_sendNewPostNotifications() {
 			post: models.Post{CreatedByID: 1, Type: models.PostTypeRequest},
 			users: models.Users{
 				{Email: "user1@example.com"},
+				{Email: "user2@example.com"},
+			},
+			wantEmailCount: 2,
+		},
+		{
+			name: "blank in the middle",
+			post: models.Post{CreatedByID: 1, Type: models.PostTypeRequest},
+			users: models.Users{
+				{Email: "user1@example.com"},
+				{Email: ""},
 				{Email: "user2@example.com"},
 			},
 			wantEmailCount: 2,
@@ -396,6 +409,9 @@ func (ms *ModelSuite) Test_sendNewPostNotifications() {
 
 			toAddresses := notifications.TestEmailService.GetAllToAddresses()
 			for _, user := range test.users {
+				if user.Email == "" {
+					continue
+				}
 				ms.Contains(toAddresses, user.Email, "did not find user address %s", user.Email)
 			}
 		})

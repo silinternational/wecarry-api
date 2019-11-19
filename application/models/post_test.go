@@ -1369,32 +1369,31 @@ func (ms *ModelSuite) TestPost_GetAudience() {
 		name    string
 		post    Post
 		want    []int
-		wantErr bool
+		wantErr string
 	}{
 		{
-			name:    "basic",
-			post:    f.Posts[0],
-			want:    []int{f.Users[0].ID, f.Users[1].ID},
-			wantErr: false,
+			name: "basic",
+			post: f.Posts[0],
+			want: []int{f.Users[0].ID, f.Users[1].ID},
 		},
 		{
-			name:    "no users",
-			post:    f.Posts[1],
-			want:    []int{},
-			wantErr: false,
+			name: "no users",
+			post: f.Posts[1],
+			want: []int{},
 		},
 		{
 			name:    "invalid post",
 			post:    Post{},
 			want:    []int{},
-			wantErr: true,
+			wantErr: "invalid post ID in GetAudience",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := tt.post.GetAudience()
-			if tt.wantErr {
+			if tt.wantErr != "" {
 				ms.Error(err)
+				ms.Contains(err.Error(), tt.wantErr)
 				return
 			}
 

@@ -478,17 +478,18 @@ func (ms *ModelSuite) TestOrganization_GetUsers() {
 		name        string
 		org         Organization
 		wantUserIDs []int
-		wantErr     bool
+		wantErr     string
 	}{
 		{name: "org 0", org: f.Organizations[0], wantUserIDs: []int{f.Users[0].ID, f.Users[2].ID, f.Users[1].ID}},
-		{name: "non-existent org", org: Organization{}, wantErr: true},
+		{name: "non-existent org", org: Organization{}, wantErr: "invalid Organization ID"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			users, err := test.org.GetUsers()
 
-			if test.wantErr {
+			if test.wantErr != "" {
 				ms.Error(err)
+				ms.Contains(err.Error(), test.wantErr)
 				return
 			}
 
