@@ -159,7 +159,7 @@ func CreateFixturesForUserGetPosts(ms *ModelSuite) UserFixtures {
 	const numberOfPosts = 4
 	locations := make([]Location, numberOfPosts)
 	for i := range locations {
-		createFixture(ms, &(locations[i]))
+		createFixture(ms, &locations[i])
 	}
 
 	posts := []Post{
@@ -247,7 +247,7 @@ func CreateUserFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) UserMes
 
 	locations := []Location{{}, {}}
 	for i := range locations {
-		createFixture(ms, &(locations[i]))
+		createFixture(ms, &locations[i])
 	}
 
 	// Each user has a request and is a provider on the other user's post

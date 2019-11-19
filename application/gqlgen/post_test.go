@@ -80,7 +80,7 @@ func createFixtures_PostQuery(gs *GqlgenSuite) PostQueryFixtures {
 		{Email: t.Name() + "_user2@example.com", Nickname: t.Name() + " User2 ", Uuid: domain.GetUuid()},
 	}
 	for i := range users {
-		createFixture(gs, &(users[i]))
+		createFixture(gs, &users[i])
 	}
 
 	userOrgs := models.UserOrganizations{
@@ -88,7 +88,7 @@ func createFixtures_PostQuery(gs *GqlgenSuite) PostQueryFixtures {
 		{OrganizationID: org.ID, UserID: users[1].ID, AuthID: t.Name() + "_auth_user2", AuthEmail: users[1].Email},
 	}
 	for i := range userOrgs {
-		createFixture(gs, &(userOrgs[i]))
+		createFixture(gs, &userOrgs[i])
 	}
 
 	locations := []models.Location{
@@ -107,7 +107,7 @@ func createFixtures_PostQuery(gs *GqlgenSuite) PostQueryFixtures {
 		{},
 	}
 	for i := range locations {
-		createFixture(gs, &(locations[i]))
+		createFixture(gs, &locations[i])
 	}
 
 	posts := models.Posts{
@@ -139,21 +139,21 @@ func createFixtures_PostQuery(gs *GqlgenSuite) PostQueryFixtures {
 		},
 	}
 	for i := range posts {
-		createFixture(gs, &(posts[i]))
+		createFixture(gs, &posts[i])
 	}
 
 	threads := []models.Thread{
 		{Uuid: domain.GetUuid(), PostID: posts[0].ID},
 	}
 	for i := range threads {
-		createFixture(gs, &(threads[i]))
+		createFixture(gs, &threads[i])
 	}
 
 	threadParticipants := []models.ThreadParticipant{
 		{ThreadID: threads[0].ID, UserID: posts[0].CreatedByID},
 	}
 	for i := range threadParticipants {
-		createFixture(gs, &(threadParticipants[i]))
+		createFixture(gs, &threadParticipants[i])
 	}
 
 	if err := aws.CreateS3Bucket(); err != nil {
@@ -287,7 +287,7 @@ func createFixtures_UpdatePost(gs *GqlgenSuite) UpdatePostFixtures {
 		{Email: t.Name() + "_user2@example.com", Nickname: t.Name() + " User2 ", Uuid: domain.GetUuid()},
 	}
 	for i := range users {
-		createFixture(gs, &(users[i]))
+		createFixture(gs, &users[i])
 	}
 
 	userOrgs := models.UserOrganizations{
@@ -295,7 +295,7 @@ func createFixtures_UpdatePost(gs *GqlgenSuite) UpdatePostFixtures {
 		{OrganizationID: org.ID, UserID: users[1].ID, AuthID: t.Name() + "_auth_user2", AuthEmail: users[1].Email},
 	}
 	for i := range userOrgs {
-		createFixture(gs, &(userOrgs[i]))
+		createFixture(gs, &userOrgs[i])
 	}
 
 	locations := []models.Location{
@@ -307,7 +307,7 @@ func createFixtures_UpdatePost(gs *GqlgenSuite) UpdatePostFixtures {
 		},
 	}
 	for i := range locations {
-		createFixture(gs, &(locations[i]))
+		createFixture(gs, &locations[i])
 	}
 
 	posts := models.Posts{
@@ -326,7 +326,7 @@ func createFixtures_UpdatePost(gs *GqlgenSuite) UpdatePostFixtures {
 	}
 
 	for i := range posts {
-		createFixture(gs, &(posts[i]))
+		createFixture(gs, &posts[i])
 	}
 
 	if err := aws.CreateS3Bucket(); err != nil {

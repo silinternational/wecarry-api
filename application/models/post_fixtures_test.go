@@ -124,7 +124,7 @@ func CreatePostFixtures(ms *ModelSuite, t *testing.T, users Users) []Post {
 
 	locations := []Location{{}, {}}
 	for i := range locations {
-		createFixture(ms, &(locations[i]))
+		createFixture(ms, &locations[i])
 	}
 
 	// Load Post test fixtures
@@ -220,12 +220,12 @@ func CreateFixtures_Posts_FindByUser(ms *ModelSuite) PostFixtures {
 		{OrganizationID: orgs[0].ID, UserID: users[1].ID, AuthID: users[1].Email, AuthEmail: users[1].Email},
 	}
 	for i := range userOrgs {
-		createFixture(ms, &(userOrgs[i]))
+		createFixture(ms, &userOrgs[i])
 	}
 
 	locations := []Location{{}, {}, {}}
 	for i := range locations {
-		createFixture(ms, &(locations[i]))
+		createFixture(ms, &locations[i])
 	}
 
 	posts := Posts{
@@ -261,12 +261,12 @@ func CreateFixtures_Post_IsEditable(ms *ModelSuite) PostFixtures {
 		{OrganizationID: org.ID, UserID: users[1].ID, AuthID: users[1].Email, AuthEmail: users[1].Email},
 	}
 	for i := range userOrgs {
-		createFixture(ms, &(userOrgs[i]))
+		createFixture(ms, &userOrgs[i])
 	}
 
 	locations := []Location{{}, {}}
 	for i := range locations {
-		createFixture(ms, &(locations[i]))
+		createFixture(ms, &locations[i])
 	}
 
 	posts := Posts{

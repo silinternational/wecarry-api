@@ -80,7 +80,7 @@ func CreateFixtures_GetPostRecipients(ms *ModelSuite, t *testing.T) orgUserPostF
 
 	locations := []models.Location{{}, {}}
 	for i := range locations {
-		createFixture(ms, &(locations[i]))
+		createFixture(ms, &locations[i])
 	}
 
 	// Load Post test fixtures
@@ -194,7 +194,7 @@ func CreateFixtures_RequestStatusUpdatedNotifications(ms *ModelSuite, t *testing
 
 	locations := []models.Location{{}, {}}
 	for i := range locations {
-		createFixture(ms, &(locations[i]))
+		createFixture(ms, &locations[i])
 	}
 
 	// Load Post test fixtures
@@ -308,7 +308,7 @@ func CreateFixtures_sendNotificationRequestFromStatus(ms *ModelSuite, t *testing
 
 	locations := []models.Location{{}, {}}
 	for i := range locations {
-		createFixture(ms, &(locations[i]))
+		createFixture(ms, &locations[i])
 	}
 
 	// Load Post test fixtures
