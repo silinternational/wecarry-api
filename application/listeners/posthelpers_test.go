@@ -3,11 +3,12 @@ package listeners
 import (
 	"bytes"
 	"fmt"
+	"os"
+	"testing"
+
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 	"github.com/silinternational/wecarry-api/notifications"
-	"os"
-	"testing"
 )
 
 func (ms *ModelSuite) TestGetPostUsers() {
@@ -296,4 +297,123 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 		})
 	}
 
+}
+
+func (ms *ModelSuite) TestSendNewPostNotification() {
+	t := ms.T()
+	tests := []struct {
+		name     string
+		user     models.User
+		post     models.Post
+		wantBody string
+		wantErr  string
+	}{
+		{
+			name:    "error - no user email",
+			post:    models.Post{Uuid: domain.GetUuid(), Title: "post title", Type: models.PostTypeRequest},
+			wantErr: "'To' email address is required",
+		},
+		{
+			name: "error - invalid post type",
+			user: models.User{
+				Email: "user@example.com",
+			},
+			post:    models.Post{Uuid: domain.GetUuid(), Title: "post title", Type: "bogus"},
+			wantErr: "invalid template name",
+		},
+		{
+			name: "request",
+			user: models.User{
+				Email: "user@example.com",
+			},
+			post:     models.Post{Uuid: domain.GetUuid(), Title: "post title", Type: models.PostTypeRequest},
+			wantBody: "There is a new request",
+		},
+		{
+			name: "offer",
+			user: models.User{
+				Email: "user@example.com",
+			},
+			post:     models.Post{Uuid: domain.GetUuid(), Title: "post title", Type: models.PostTypeOffer},
+			wantBody: "There is a new offer",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			notifications.TestEmailService.DeleteSentMessages()
+
+			err := sendNewPostNotification(test.user, test.post)
+			if test.wantErr != "" {
+				ms.Error(err)
+				ms.Contains(err.Error(), test.wantErr)
+				return
+			}
+
+			ms.NoError(err)
+
+			emailCount := notifications.TestEmailService.GetNumberOfMessagesSent()
+			ms.Equal(1, emailCount, "wrong email count")
+
+			toEmail := notifications.TestEmailService.GetLastToEmail()
+			ms.Equal(test.user.Email, toEmail, "bad 'To' address")
+
+			body := notifications.TestEmailService.GetLastBody()
+			ms.Contains(body, test.wantBody, "Body doesn't contain expected string")
+			ms.Contains(body, test.post.Title, "Body doesn't contain post title")
+			ms.Contains(body, test.post.Uuid.String(), "Body doesn't contain post UUID")
+		})
+	}
+}
+
+func (ms *ModelSuite) TestSendNewPostNotifications() {
+	t := ms.T()
+	tests := []struct {
+		name           string
+		post           models.Post
+		users          models.Users
+		wantEmailCount int
+	}{
+		{
+			name:           "empty",
+			post:           models.Post{CreatedByID: 1, Type: models.PostTypeRequest},
+			wantEmailCount: 0,
+		},
+		{
+			name: "two users",
+			post: models.Post{CreatedByID: 1, Type: models.PostTypeRequest},
+			users: models.Users{
+				{Email: "user1@example.com"},
+				{Email: "user2@example.com"},
+			},
+			wantEmailCount: 2,
+		},
+		{
+			name: "blank in the middle",
+			post: models.Post{CreatedByID: 1, Type: models.PostTypeRequest},
+			users: models.Users{
+				{Email: "user1@example.com"},
+				{Email: ""},
+				{Email: "user2@example.com"},
+			},
+			wantEmailCount: 2,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			notifications.TestEmailService.DeleteSentMessages()
+
+			sendNewPostNotifications(test.post, test.users)
+
+			emailCount := notifications.TestEmailService.GetNumberOfMessagesSent()
+			ms.Equal(test.wantEmailCount, emailCount, "wrong email count")
+
+			toAddresses := notifications.TestEmailService.GetAllToAddresses()
+			for _, user := range test.users {
+				if user.Email == "" {
+					continue
+				}
+				ms.Contains(toAddresses, user.Email, "did not find user address %s", user.Email)
+			}
+		})
+	}
 }

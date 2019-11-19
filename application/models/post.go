@@ -68,6 +68,11 @@ type Post struct {
 	Origin         Location      `belongs_to:"locations"`
 }
 
+// PostCreatedEventData holds data needed by the New Post event listener
+type PostCreatedEventData struct {
+	PostID int
+}
+
 // String is not required by pop and may be deleted
 func (p Post) String() string {
 	jp, _ := json.Marshal(p)
@@ -304,6 +309,24 @@ func (p *Post) AfterUpdate(tx *pop.Connection) error {
 	return nil
 }
 
+// AfterCreate is called by Pop after successful creation of the record
+func (p *Post) AfterCreate(tx *pop.Connection) error {
+	if p.Type != PostTypeRequest || p.Status != PostStatusOpen {
+		return nil
+	}
+
+	e := events.Event{
+		Kind:    domain.EventApiPostCreated,
+		Message: "Post created",
+		Payload: events.Payload{"eventData": PostCreatedEventData{
+			PostID: p.ID,
+		}},
+	}
+
+	emitEvent(e)
+	return nil
+}
+
 func (p *Post) FindByID(id int, eagerFields ...string) error {
 	if id <= 0 {
 		return errors.New("error finding post: id must a positive number")
@@ -451,7 +474,7 @@ func (p *Post) GetPhoto() (*File, error) {
 	return &p.PhotoFile, nil
 }
 
-// scope query to only include organizations for current user
+// scope query to only include posts from an organization associated with the current user
 func scopeUserOrgs(cUser User) pop.ScopeFunc {
 	return func(q *pop.Query) *pop.Query {
 		orgs := cUser.GetOrgIDs()
@@ -595,4 +618,21 @@ func (p *Post) canUserChangeStatus(user User, newStatus string) bool {
 	}
 
 	return false
+}
+
+// GetAudience returns a list of all of the users which have visibility to this post. As of this writing, it is
+// simply the users in the organization associated with this post.
+func (p *Post) GetAudience() (Users, error) {
+	if p.ID <= 0 {
+		return nil, errors.New("invalid post ID in GetAudience")
+	}
+	org, err := p.GetOrganization([]string{"id"})
+	if err != nil {
+		return nil, err
+	}
+	users, err := org.GetUsers()
+	if err != nil {
+		return nil, fmt.Errorf("unable to get post organization user list, %s", err.Error())
+	}
+	return users, nil
 }

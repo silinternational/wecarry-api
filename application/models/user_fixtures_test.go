@@ -441,3 +441,48 @@ func CreateUserFixtures_GetThreads(ms *ModelSuite) UserFixtures {
 		Threads: threads,
 	}
 }
+
+func CreateFixturesForUserWantsPostNotification(ms *ModelSuite) UserFixtures {
+	org := Organization{AuthConfig: "{}", Uuid: domain.GetUuid()}
+	createFixture(ms, &org)
+
+	nicknames := []string{"alice", "bob"}
+	unique := org.Uuid.String()
+	users := make(Users, len(nicknames))
+	for i := range users {
+		users[i] = User{
+			Email:    "user" + strconv.Itoa(i) + unique + "@example.com",
+			Nickname: nicknames[i] + unique,
+			Uuid:     domain.GetUuid(),
+		}
+
+		createFixture(ms, &users[i])
+	}
+
+	userOrgFixtures := make(UserOrganizations, len(nicknames))
+	for i := range userOrgFixtures {
+		userOrgFixtures[i] = UserOrganization{
+			OrganizationID: org.ID,
+			UserID:         users[i].ID,
+			AuthID:         users[i].Email,
+			AuthEmail:      users[i].Email,
+		}
+
+		createFixture(ms, &userOrgFixtures[i])
+	}
+
+	location := Location{}
+	createFixture(ms, &location)
+
+	posts := Posts{
+		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID, DestinationID: location.ID},
+	}
+	for i := range posts {
+		createFixture(ms, &posts[i])
+	}
+
+	return UserFixtures{
+		Users: users,
+		Posts: posts,
+	}
+}

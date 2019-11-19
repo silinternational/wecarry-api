@@ -27,7 +27,11 @@ var getT = GetEmailTemplate
 var dummyTemplates = map[string]dummyTemplate{
 	domain.MessageTemplateNewRequest: {
 		subject: "new request",
-		body:    "There is a new request for an item from your location.",
+		body:    "There is a new request for an item.",
+	},
+	domain.MessageTemplateNewOffer: {
+		subject: "new offer",
+		body:    "There is a new offer available.",
 	},
 	domain.MessageTemplateNewThreadMessage: {
 		subject: "new message",
@@ -159,6 +163,14 @@ func (t *DummyEmailService) GetToEmailByIndex(i int) string {
 	}
 
 	return t.sentMessages[i].toEmail
+}
+
+func (t *DummyEmailService) GetAllToAddresses() []string {
+	emailAddresses := make([]string, len(t.sentMessages))
+	for i := range t.sentMessages {
+		emailAddresses[i] = t.sentMessages[i].toEmail
+	}
+	return emailAddresses
 }
 
 func (t *DummyEmailService) GetLastBody() string {
