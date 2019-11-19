@@ -365,7 +365,7 @@ func (ms *ModelSuite) TestSendNewPostNotification() {
 	}
 }
 
-func (ms *ModelSuite) Test_sendNewPostNotifications() {
+func (ms *ModelSuite) TestSendNewPostNotifications() {
 	t := ms.T()
 	tests := []struct {
 		name           string
