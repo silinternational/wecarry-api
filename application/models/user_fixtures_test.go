@@ -159,7 +159,7 @@ func CreateFixturesForUserGetPosts(ms *ModelSuite) UserFixtures {
 	const numberOfPosts = 4
 	locations := make([]Location, numberOfPosts)
 	for i := range locations {
-		createFixture(ms, &(locations[i]))
+		createFixture(ms, &locations[i])
 	}
 
 	posts := []Post{
@@ -247,7 +247,7 @@ func CreateUserFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) UserMes
 
 	locations := []Location{{}, {}}
 	for i := range locations {
-		createFixture(ms, &(locations[i]))
+		createFixture(ms, &locations[i])
 	}
 
 	// Each user has a request and is a provider on the other user's post
@@ -439,5 +439,50 @@ func CreateUserFixtures_GetThreads(ms *ModelSuite) UserFixtures {
 	return UserFixtures{
 		Users:   users,
 		Threads: threads,
+	}
+}
+
+func CreateFixturesForUserWantsPostNotification(ms *ModelSuite) UserFixtures {
+	org := Organization{AuthConfig: "{}", Uuid: domain.GetUuid()}
+	createFixture(ms, &org)
+
+	nicknames := []string{"alice", "bob"}
+	unique := org.Uuid.String()
+	users := make(Users, len(nicknames))
+	for i := range users {
+		users[i] = User{
+			Email:    "user" + strconv.Itoa(i) + unique + "@example.com",
+			Nickname: nicknames[i] + unique,
+			Uuid:     domain.GetUuid(),
+		}
+
+		createFixture(ms, &users[i])
+	}
+
+	userOrgFixtures := make(UserOrganizations, len(nicknames))
+	for i := range userOrgFixtures {
+		userOrgFixtures[i] = UserOrganization{
+			OrganizationID: org.ID,
+			UserID:         users[i].ID,
+			AuthID:         users[i].Email,
+			AuthEmail:      users[i].Email,
+		}
+
+		createFixture(ms, &userOrgFixtures[i])
+	}
+
+	location := Location{}
+	createFixture(ms, &location)
+
+	posts := Posts{
+		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID, DestinationID: location.ID},
+	}
+	for i := range posts {
+		createFixture(ms, &posts[i])
+	}
+
+	return UserFixtures{
+		Users: users,
+		Posts: posts,
 	}
 }

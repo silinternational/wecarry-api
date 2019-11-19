@@ -99,7 +99,7 @@ func Fixtures_UserQuery(gs *GqlgenSuite, t *testing.T) UserQueryFixtures {
 		},
 	}
 	for i := range posts {
-		createFixture(gs, &(posts[i]))
+		createFixture(gs, &posts[i])
 	}
 
 	if err := aws.CreateS3Bucket(); err != nil {

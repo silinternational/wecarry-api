@@ -468,3 +468,37 @@ func (ms *ModelSuite) TestOrganization_GetDomains() {
 
 	ms.Equal(expected, domains, "incorrect list of domains")
 }
+
+func (ms *ModelSuite) TestOrganization_GetUsers() {
+	t := ms.T()
+
+	f := createFixturesForOrganizationGetUsers(ms)
+
+	tests := []struct {
+		name        string
+		org         Organization
+		wantUserIDs []int
+		wantErr     string
+	}{
+		{name: "org 0", org: f.Organizations[0], wantUserIDs: []int{f.Users[0].ID, f.Users[2].ID, f.Users[1].ID}},
+		{name: "non-existent org", org: Organization{}, wantErr: "invalid Organization ID"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			users, err := test.org.GetUsers()
+
+			if test.wantErr != "" {
+				ms.Error(err)
+				ms.Contains(err.Error(), test.wantErr)
+				return
+			}
+
+			ms.NoError(err)
+			userIDs := make([]int, len(users))
+			for i := range users {
+				userIDs[i] = users[i].ID
+			}
+			ms.Equal(test.wantUserIDs, userIDs)
+		})
+	}
+}

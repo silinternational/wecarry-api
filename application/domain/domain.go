@@ -40,6 +40,7 @@ const (
 	EventApiAuthUserLoggedIn  = "api:auth:user:loggedin"
 	EventApiMessageCreated    = "api:message:created"
 	EventApiPostStatusUpdated = "api:post:status:updated"
+	EventApiPostCreated       = "api:post:status:created"
 )
 
 // Event and Job argument names
@@ -52,6 +53,7 @@ const (
 	MessageTemplateNewThreadMessage                = "new_thread_message"
 	MessageTemplateNewRequest                      = "new_request"
 	MessageTemplateRequestFromAcceptedToDelivered  = "request_from_accepted_to_delivered"
+	MessageTemplateNewOffer                        = "new_offer"
 	MessageTemplateRequestFromAcceptedToOpen       = "request_from_accepted_to_open"
 	MessageTemplateRequestFromAcceptedToReceived   = "request_from_accepted_to_received"
 	MessageTemplateRequestFromAcceptedToRemoved    = "request_from_accepted_to_removed"
