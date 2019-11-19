@@ -2,6 +2,7 @@ package listeners
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 	"github.com/silinternational/wecarry-api/notifications"
@@ -160,14 +161,14 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 			sendFunction:     sendNotificationRequestFromAcceptedOrCommittedToReceived,
 			wantEmailsSent:   1,
 			wantToEmail:      posts[0].Provider.Email,
-			wantBodyContains: "reported that they have received this from you",
+			wantBodyContains: "Thank you for fulfilling a request",
 		},
 		{name: "Bad - Accepted to Received", // No Provider
 			post:         posts[1],
 			template:     domain.MessageTemplateRequestFromAcceptedToReceived,
 			sendFunction: sendNotificationRequestFromAcceptedOrCommittedToReceived,
 			wantErrLog: fmt.Sprintf("error preparing '%s' notification - no provider\n",
-				domain.MessageTemplateRequestFromAcceptedToReceived),
+				domain.MessageTemplateRequestReceived),
 		},
 		{name: "Good - Accepted to Removed",
 			post:             posts[0],
