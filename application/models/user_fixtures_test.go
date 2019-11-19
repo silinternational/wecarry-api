@@ -449,35 +449,107 @@ func CreateFixturesForUserWantsPostNotification(ms *ModelSuite) UserFixtures {
 	nicknames := []string{"alice", "bob"}
 	unique := org.Uuid.String()
 	users := make(Users, len(nicknames))
+	userLocations := make(Locations, len(users))
+	userOrgFixtures := make(UserOrganizations, len(users))
 	for i := range users {
+		userLocations[i].Country = "US"
+		userLocations[i].Description = "somewhere"
+		userLocations[i].Latitude = nulls.NewFloat64(40.0)
+		userLocations[i].Longitude = nulls.NewFloat64(-110.0)
+		createFixture(ms, &userLocations[i])
+
 		users[i] = User{
-			Email:    "user" + strconv.Itoa(i) + unique + "@example.com",
-			Nickname: nicknames[i] + unique,
-			Uuid:     domain.GetUuid(),
+			Email:      "user" + strconv.Itoa(i) + unique + "@example.com",
+			Nickname:   nicknames[i] + unique,
+			Uuid:       domain.GetUuid(),
+			LocationID: nulls.NewInt(userLocations[i].ID),
 		}
-
 		createFixture(ms, &users[i])
-	}
 
-	userOrgFixtures := make(UserOrganizations, len(nicknames))
-	for i := range userOrgFixtures {
 		userOrgFixtures[i] = UserOrganization{
 			OrganizationID: org.ID,
 			UserID:         users[i].ID,
 			AuthID:         users[i].Email,
 			AuthEmail:      users[i].Email,
 		}
-
 		createFixture(ms, &userOrgFixtures[i])
 	}
 
-	location := Location{}
-	createFixture(ms, &location)
+	postLocations := Locations{
+		{ // Post 0 Destination
+			Description: "close",
+			Country:     "US",
+			Latitude:    nulls.NewFloat64(35.0),
+			Longitude:   nulls.NewFloat64(-105.0),
+		},
+		{ // Post 1 Destination
+			Description: "far away",
+			Country:     "KR",
+			Latitude:    nulls.NewFloat64(37.0),
+			Longitude:   nulls.NewFloat64(127.0),
+		},
+		{ // Post 2 Destination
+			Description: "far away",
+			Country:     "KR",
+			Latitude:    nulls.NewFloat64(37.0),
+			Longitude:   nulls.NewFloat64(127.0),
+		},
+		{ // Post 3 Destination
+			Description: "close",
+			Country:     "US",
+			Latitude:    nulls.NewFloat64(35.0),
+			Longitude:   nulls.NewFloat64(-105.0),
+		},
+		{ // Post 4 Destination
+			Description: "close",
+			Country:     "US",
+			Latitude:    nulls.NewFloat64(35.0),
+			Longitude:   nulls.NewFloat64(-105.0),
+		},
+		{ // Post 0 Origin
+			Description: "far away",
+			Country:     "KR",
+			Latitude:    nulls.NewFloat64(37.0),
+			Longitude:   nulls.NewFloat64(127.0),
+		},
+		{ // Post 2 Origin
+			Description: "close",
+			Country:     "US",
+			Latitude:    nulls.NewFloat64(35.0),
+			Longitude:   nulls.NewFloat64(-105.0),
+		},
+	}
+	for i := range postLocations {
+		createFixture(ms, &postLocations[i])
+	}
 
 	posts := Posts{
-		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID, DestinationID: location.ID},
+		{
+			Type:     PostTypeRequest,
+			OriginID: nulls.NewInt(postLocations[5].ID),
+		},
+		{
+			Type:     PostTypeOffer,
+			OriginID: nulls.Int{},
+		},
+		{
+			Type:     PostTypeRequest,
+			OriginID: nulls.NewInt(postLocations[6].ID),
+		},
+		{
+			Type:     PostTypeOffer,
+			OriginID: nulls.Int{},
+		},
+		{
+			Type:     PostTypeRequest,
+			OriginID: nulls.Int{},
+		},
 	}
 	for i := range posts {
+		posts[i].Uuid = domain.GetUuid()
+		posts[i].CreatedByID = users[0].ID
+		posts[i].OrganizationID = org.ID
+		posts[i].DestinationID = postLocations[i].ID
 		createFixture(ms, &posts[i])
 	}
 

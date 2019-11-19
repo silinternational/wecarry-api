@@ -29,6 +29,7 @@ const (
 	AccessTokenLifetimeSeconds  = 3600
 	DateTimeFormat              = "2006-01-02 15:04:05"
 	NewMessageNotificationDelay = 10 * time.Minute
+	DefaultProximityDistanceKm  = 1000
 )
 
 // Event Kinds

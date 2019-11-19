@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"strconv"
 	"testing"
 
 	"github.com/gobuffalo/nulls"
@@ -12,6 +13,7 @@ type PostFixtures struct {
 	Users
 	Posts
 	Files
+	Locations
 }
 
 func CreateFixturesValidateUpdate(ms *ModelSuite, t *testing.T) []Post {
@@ -308,12 +310,12 @@ func createFixturesForPostGetAudience(ms *ModelSuite) PostFixtures {
 		{OrganizationID: orgs[0].ID, UserID: users[1].ID, AuthID: users[1].Email, AuthEmail: users[1].Email},
 	}
 	for i := range userOrgs {
-		createFixture(ms, &(userOrgs[i]))
+		createFixture(ms, &userOrgs[i])
 	}
 
 	locations := []Location{{}, {}}
 	for i := range locations {
-		createFixture(ms, &(locations[i]))
+		createFixture(ms, &locations[i])
 	}
 
 	posts := Posts{
@@ -330,5 +332,52 @@ func createFixturesForPostGetAudience(ms *ModelSuite) PostFixtures {
 	return PostFixtures{
 		Users: users,
 		Posts: posts,
+	}
+}
+
+func createFixturesForGetLocationForNotifications(ms *ModelSuite) PostFixtures {
+	org := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	createFixture(ms, &org)
+
+	unique := org.Uuid.String()
+	users := Users{
+		{Email: unique + "_user1@example.com", Nickname: unique + "User1", Uuid: domain.GetUuid()},
+	}
+	for i := range users {
+		createFixture(ms, &users[i])
+	}
+
+	locations := make(Locations, 4)
+	for i := range locations {
+		locations[i].Description = "location " + strconv.Itoa(i)
+		createFixture(ms, &locations[i])
+	}
+
+	posts := Posts{
+		{
+			Type:     PostTypeOffer,
+			OriginID: nulls.Int{},
+		},
+		{
+			Type:     PostTypeRequest,
+			OriginID: nulls.NewInt(locations[3].ID),
+		},
+		{
+			Type:     PostTypeRequest,
+			OriginID: nulls.Int{},
+		},
+	}
+	for i := range posts {
+		posts[i].OrganizationID = org.ID
+		posts[i].Uuid = domain.GetUuid()
+		posts[i].CreatedByID = users[0].ID
+		posts[i].DestinationID = locations[i].ID
+		createFixture(ms, &posts[i])
+	}
+
+	return PostFixtures{
+		Users:     users,
+		Posts:     posts,
+		Locations: locations,
 	}
 }

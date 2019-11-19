@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
@@ -91,4 +92,20 @@ func (l *Location) Create() error {
 	}
 
 	return nil
+}
+
+// Distance calculates the distance in km between two locations
+func (l *Location) Distance(l2 Location) float64 {
+	lat1 := l.Latitude.Float64
+	lon1 := l.Longitude.Float64
+	lat2 := l2.Latitude.Float64
+	lon2 := l2.Longitude.Float64
+
+	var p = math.Pi / 180
+
+	var a = 0.5 - math.Cos((lat2-lat1)*p)/2 +
+		math.Cos(lat1*p)*math.Cos(lat2*p)*
+			(1-math.Cos((lon2-lon1)*p))/2
+
+	return 12742 * math.Asin(math.Sqrt(a)) // 2 * R; R = 6371 km
 }

@@ -491,7 +491,27 @@ func (u *User) WantsPostNotification(post Post) bool {
 		return false
 	}
 
-	// Insert subscription and geolocation logic here
+	if err := DB.Load(u, "Location"); err != nil {
+		domain.ErrLogger.Printf("load of user location failed, %s", err)
+		return false
+	}
+	if !u.Location.Longitude.Valid || !u.Location.Latitude.Valid {
+		return false
+	}
+
+	postLocation, err := post.GetLocationForNotifications()
+	if err != nil {
+		domain.ErrLogger.Print(err.Error())
+		return false
+	}
+	if !postLocation.Longitude.Valid || !postLocation.Latitude.Valid {
+		return false
+	}
+
+	d := u.Location.Distance(*postLocation)
+	if d > domain.DefaultProximityDistanceKm {
+		return false
+	}
 
 	return true
 }

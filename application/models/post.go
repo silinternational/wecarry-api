@@ -636,3 +636,23 @@ func (p *Post) GetAudience() (Users, error) {
 	}
 	return users, nil
 }
+
+// GetLocationForNotifications gets the location most suitable for basic notifications. Specifically,
+// the origin for requests, and the destination for offers.
+func (p *Post) GetLocationForNotifications() (*Location, error) {
+	var postLocation Location
+	switch p.Type {
+	case PostTypeRequest:
+		if err := DB.Load(p, "Origin"); err != nil {
+			return nil, fmt.Errorf("loading post origin failed, %s", err)
+		}
+		postLocation = p.Origin
+
+	case PostTypeOffer:
+		if err := DB.Load(p, "Destination"); err != nil {
+			return nil, fmt.Errorf("loading post destination failed, %s", err)
+		}
+		postLocation = p.Destination
+	}
+	return &postLocation, nil
+}
