@@ -13,10 +13,10 @@ func getUserLanguage() string {
 	return "en"
 }
 
-type argAppName struct{ AppName string }
+var argAppName = map[string]string{"AppName": domain.Env.AppName}
 
 func getTranslatedSubject(translationID, template string) string {
-	subj, err := domain.TranslateWithLang(getUserLanguage(), translationID, argAppName{AppName: domain.Env.AppName})
+	subj, err := domain.TranslateWithLang(getUserLanguage(), translationID, argAppName)
 
 	if err != nil {
 		domain.ErrLogger.Printf("error translating '%s' notification subject, %s", template, err)
