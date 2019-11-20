@@ -1,4 +1,4 @@
-create_table("user_settings") {
+create_table("user_preferences") {
 	t.Column("id", "integer", {primary: true})
 	t.Column("uuid", "uuid", {})
 	t.Column("user_id", "integer", {})

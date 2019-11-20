@@ -1,1 +1,1 @@
-drop_table("user_settings")
+drop_table("user_preferences")
