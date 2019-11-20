@@ -867,7 +867,7 @@ func (ms *ModelSuite) TestUser_WantsPostNotification() {
 func (ms *ModelSuite) TestUser_GetPreferences() {
 	t := ms.T()
 
-	f := CreateUserFixtures_TestGetAPreference(ms)
+	f := CreateUserFixtures_TestGetPreference(ms)
 
 	tests := []struct {
 		name string
@@ -894,10 +894,10 @@ func (ms *ModelSuite) TestUser_GetPreferences() {
 	}
 }
 
-func (ms *ModelSuite) TestUser_GetAPreference() {
+func (ms *ModelSuite) TestUser_GetPreference() {
 	t := ms.T()
 
-	f := CreateUserFixtures_TestGetAPreference(ms)
+	f := CreateUserFixtures_TestGetPreference(ms)
 
 	tests := []struct {
 		name          string

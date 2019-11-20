@@ -473,7 +473,7 @@ func CreateFixturesForUserWantsPostNotification(ms *ModelSuite) UserFixtures {
 	}
 }
 
-func CreateUserFixtures_TestGetAPreference(ms *ModelSuite) UserFixtures {
+func CreateUserFixtures_TestGetPreference(ms *ModelSuite) UserFixtures {
 	nicknames := []string{"alice", "bob"}
 	unique := domain.GetUuid().String()
 	users := make(Users, len(nicknames))
