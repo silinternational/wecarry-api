@@ -84,9 +84,9 @@ const (
 	UserPreferenceLanguageKorean     = "ko"
 	UserPreferenceLanguagePortuguese = "pt"
 
-	UserPreferenceKeyUnits      = "units"
-	UserPreferenceUnitsImperial = "imperial"
-	UserPreferenceUnitsMetric   = "metric"
+	UserPreferenceKeyUnits         = "units"
+	UserPreferenceUnitsUSCustomary = "uscs"
+	UserPreferenceUnitsMetric      = "metric"
 )
 
 // UI URL Paths
@@ -385,9 +385,9 @@ func TranslateWithLang(lang, translationID string, args ...interface{}) (string,
 	return t2(translationID, args...), nil
 }
 
-// IsErrorMoreThanJustNoSQLRows returns false if the error is nil or is just reporting that there
+// IsOtherThanNoRows returns false if the error is nil or is just reporting that there
 //   were no rows in the result set for a sql query.
-func IsErrorMoreThanJustNoSQLRows(err error) bool {
+func IsOtherThanNoRows(err error) bool {
 	if err == nil {
 		return false
 	}

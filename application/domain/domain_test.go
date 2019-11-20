@@ -368,7 +368,7 @@ func TestEmailDomain(t *testing.T) {
 	}
 }
 
-func TestIsErrorMoreThanJustNoSQLRows(t *testing.T) {
+func TestIsOtherThanNoRows(t *testing.T) {
 
 	tests := []struct {
 		name string
@@ -381,7 +381,7 @@ func TestIsErrorMoreThanJustNoSQLRows(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got := IsErrorMoreThanJustNoSQLRows(test.err)
+			got := IsOtherThanNoRows(test.err)
 			if got != test.want {
 				t.Errorf("incorrect response: %v, expected %v", got, test.want)
 			}

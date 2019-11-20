@@ -512,7 +512,7 @@ func (u *User) GetPreference(key string) (*UserPreference, error) {
 
 	err := DB.Where("user_id = ?", u.ID).Where("key = ?", key).First(&uPref)
 	if err != nil {
-		if domain.IsErrorMoreThanJustNoSQLRows(err) {
+		if domain.IsOtherThanNoRows(err) {
 			return nil, err
 		}
 		return nil, nil
