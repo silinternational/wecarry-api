@@ -90,27 +90,6 @@ func CreateUserFixtures(ms *ModelSuite, t *testing.T) ([]Organization, Users, Us
 	for i := range userOrgs {
 		createFixture(ms, &userOrgs[i])
 	}
-
-	// Load UserSetting test fixtures
-	userPreferences := UserPreferences{
-		{
-			Uuid:   domain.GetUuid(),
-			UserID: users[0].ID,
-			Key:    "U0Key1",
-			Value:  "U0Val1",
-		},
-		{
-			Uuid:   domain.GetUuid(),
-			UserID: users[0].ID,
-			Key:    "U0Key2",
-			Value:  "U0Val2",
-		},
-	}
-
-	for i := range userPreferences {
-		createFixture(ms, &userPreferences[i])
-	}
-
 	return orgs, users, userOrgs
 }
 
@@ -398,6 +377,7 @@ func CreateUserFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) UserMes
 
 type UserFixtures struct {
 	Users
+	UserPreferences
 	Posts
 	Threads
 }
@@ -491,4 +471,41 @@ func CreateFixturesForUserWantsPostNotification(ms *ModelSuite) UserFixtures {
 		Users: users,
 		Posts: posts,
 	}
+}
+
+func CreateUserFixtures_TestGetAPreference(ms *ModelSuite) UserFixtures {
+	nicknames := []string{"alice", "bob"}
+	unique := domain.GetUuid().String()
+	users := make(Users, len(nicknames))
+	for i := range users {
+		users[i] = User{
+			Email:    "user" + strconv.Itoa(i) + unique + "@example.com",
+			Nickname: nicknames[i] + unique,
+			Uuid:     domain.GetUuid(),
+		}
+
+		createFixture(ms, &users[i])
+	}
+
+	// Load UserSetting test fixtures
+	userPreferences := UserPreferences{
+		{
+			Uuid:   domain.GetUuid(),
+			UserID: users[0].ID,
+			Key:    "User0Key1",
+			Value:  "User0Val1",
+		},
+		{
+			Uuid:   domain.GetUuid(),
+			UserID: users[0].ID,
+			Key:    "User0Key2",
+			Value:  "User0Val2",
+		},
+	}
+
+	for i := range userPreferences {
+		createFixture(ms, &userPreferences[i])
+	}
+
+	return UserFixtures{Users: users, UserPreferences: userPreferences}
 }

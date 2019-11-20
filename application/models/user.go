@@ -496,3 +496,27 @@ func (u *User) WantsPostNotification(post Post) bool {
 
 	return true
 }
+
+// GetPreferences returns a slice of matching UserPreference records
+func (u *User) GetPreferences() (UserPreferences, error) {
+	uPrefs := UserPreferences{}
+	err := DB.Where("user_id = ?", u.ID).All(&uPrefs)
+
+	return uPrefs, err
+}
+
+// GetAPreference returns a pointer to a matching UserPreference record or if
+// none is found, returns nil
+func (u *User) GetAPreference(key string) (*UserPreference, error) {
+	uPref := UserPreference{}
+
+	err := DB.Where("user_id = ?", u.ID).Where("key = ?", key).First(&uPref)
+	if err != nil {
+		if domain.IsErrorMoreThanJustNoSQLRows(err) {
+			return nil, err
+		}
+		return nil, nil
+	}
+
+	return &uPref, nil
+}
