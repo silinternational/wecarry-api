@@ -97,16 +97,18 @@ func (l *Location) Create() error {
 }
 
 // DistanceKm calculates the distance in km between two locations
-func (l *Location) DistanceKm(l2 Location) float64 {
-	if !l.Latitude.Valid || !l.Longitude.Valid || !l2.Latitude.Valid || !l2.Longitude.Valid {
+func (l *Location) DistanceKm(loc2 Location) float64 {
+	if !l.Latitude.Valid || !l.Longitude.Valid || !loc2.Latitude.Valid || !loc2.Longitude.Valid {
 		return math.NaN()
 	}
 
 	lat1 := l.Latitude.Float64
 	lon1 := l.Longitude.Float64
-	lat2 := l2.Latitude.Float64
-	lon2 := l2.Longitude.Float64
+	lat2 := loc2.Latitude.Float64
+	lon2 := loc2.Longitude.Float64
 
+	// Haversine formula implementation derived from Stack Overflow answer:
+	// https://stackoverflow.com/a/21623206
 	var p = math.Pi / 180
 
 	var a = 0.5 - math.Cos((lat2-lat1)*p)/2 +
@@ -117,12 +119,12 @@ func (l *Location) DistanceKm(l2 Location) float64 {
 }
 
 // IsNear answers the question "Are these two locations near each other?"
-func (l *Location) IsNear(l2 Location) bool {
-	if l.Country != "" && l.Country == l2.Country {
+func (l *Location) IsNear(loc2 Location) bool {
+	if l.Country != "" && l.Country == loc2.Country {
 		return true
 	}
 
-	if d := l.DistanceKm(l2); !math.IsNaN(d) && d < domain.DefaultProximityDistanceKm {
+	if d := l.DistanceKm(loc2); !math.IsNaN(d) && d < domain.DefaultProximityDistanceKm {
 		return true
 	}
 
