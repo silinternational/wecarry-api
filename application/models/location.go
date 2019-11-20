@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
+
+	"github.com/silinternational/wecarry-api/domain"
 
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
@@ -91,4 +94,39 @@ func (l *Location) Create() error {
 	}
 
 	return nil
+}
+
+// DistanceKm calculates the distance in km between two locations
+func (l *Location) DistanceKm(loc2 Location) float64 {
+	if !l.Latitude.Valid || !l.Longitude.Valid || !loc2.Latitude.Valid || !loc2.Longitude.Valid {
+		return math.NaN()
+	}
+
+	lat1 := l.Latitude.Float64
+	lon1 := l.Longitude.Float64
+	lat2 := loc2.Latitude.Float64
+	lon2 := loc2.Longitude.Float64
+
+	// Haversine formula implementation derived from Stack Overflow answer:
+	// https://stackoverflow.com/a/21623206
+	var p = math.Pi / 180
+
+	var a = 0.5 - math.Cos((lat2-lat1)*p)/2 +
+		math.Cos(lat1*p)*math.Cos(lat2*p)*
+			(1-math.Cos((lon2-lon1)*p))/2
+
+	return 12742 * math.Asin(math.Sqrt(a)) // 2 * R; R = 6371 km
+}
+
+// IsNear answers the question "Are these two locations near each other?"
+func (l *Location) IsNear(loc2 Location) bool {
+	if l.Country != "" && l.Country == loc2.Country {
+		return true
+	}
+
+	if d := l.DistanceKm(loc2); !math.IsNaN(d) && d < domain.DefaultProximityDistanceKm {
+		return true
+	}
+
+	return false
 }

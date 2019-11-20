@@ -852,8 +852,42 @@ func (ms *ModelSuite) TestUser_WantsPostNotification() {
 		post Post
 		want bool
 	}{
-		{name: "yes", user: f.Users[1], post: f.Posts[0], want: true},
-		{name: "no", user: f.Users[0], post: f.Posts[0], want: false},
+		{
+			name: "no, I created it",
+			user: f.Users[0],
+			post: f.Posts[0],
+			want: false,
+		},
+		{
+			name: "no, it's a request for something not near me",
+			user: f.Users[1],
+			post: f.Posts[0],
+			want: false,
+		},
+		{
+			name: "no, it's an offer to bring something not near me",
+			user: f.Users[1],
+			post: f.Posts[1],
+			want: false,
+		},
+		{
+			name: "yes, it's a request for something near me",
+			user: f.Users[1],
+			post: f.Posts[2],
+			want: true,
+		},
+		{
+			name: "yes, it's an offer to bring something near me",
+			user: f.Users[1],
+			post: f.Posts[3],
+			want: true,
+		},
+		{
+			name: "no, there is no request origin",
+			user: f.Users[1],
+			post: f.Posts[4],
+			want: false,
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
