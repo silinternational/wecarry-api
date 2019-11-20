@@ -384,3 +384,17 @@ func TranslateWithLang(lang, translationID string, args ...interface{}) (string,
 	}
 	return t2(translationID, args...), nil
 }
+
+// IsErrorMoreThanJustNoSQLRows returns false if the error is nil or is just reporting that there
+//   were no rows in the result set for a sql query.
+func IsErrorMoreThanJustNoSQLRows(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	if err.Error() == "sql: no rows in result set" {
+		return false
+	}
+
+	return true
+}

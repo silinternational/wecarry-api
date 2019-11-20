@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"errors"
 	"net/http"
 	"reflect"
 	"testing"
@@ -362,6 +363,27 @@ func TestEmailDomain(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			if got := EmailDomain(test.email); got != test.want {
 				t.Errorf("incorrect response from EmailDomain(): %v, expected %v", got, test.want)
+			}
+		})
+	}
+}
+
+func TestIsErrorMoreThanJustNoSQLRows(t *testing.T) {
+
+	tests := []struct {
+		name string
+		err  error
+		want bool
+	}{
+		{name: "real error", err: errors.New("Real Error"), want: true},
+		{name: "no rows error", err: errors.New("sql: no rows in result set"), want: false},
+		{name: "nil error", err: nil, want: false},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got := IsErrorMoreThanJustNoSQLRows(test.err)
+			if got != test.want {
+				t.Errorf("incorrect response: %v, expected %v", got, test.want)
 			}
 		})
 	}
