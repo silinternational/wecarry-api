@@ -50,10 +50,10 @@ const (
 
 // Notification Message Template Names
 const (
-	MessageTemplateNewThreadMessage                = "new_thread_message"
-	MessageTemplateNewRequest                      = "new_request"
-	MessageTemplateRequestFromAcceptedToDelivered  = "request_from_accepted_to_delivered"
 	MessageTemplateNewOffer                        = "new_offer"
+	MessageTemplateNewRequest                      = "new_request"
+	MessageTemplateNewThreadMessage                = "new_thread_message"
+	MessageTemplateRequestFromAcceptedToDelivered  = "request_from_accepted_to_delivered"
 	MessageTemplateRequestFromAcceptedToOpen       = "request_from_accepted_to_open"
 	MessageTemplateRequestFromAcceptedToReceived   = "request_from_accepted_to_received"
 	MessageTemplateRequestFromAcceptedToRemoved    = "request_from_accepted_to_removed"
@@ -109,7 +109,7 @@ var Env struct {
 	UIURL                      string
 }
 
-// T is the Buffalo mwi18n translator
+// T is the Buffalo i18n translator
 var T *mwi18n.Translator
 
 func init() {
@@ -353,9 +353,9 @@ func GetThreadUIURL(threadUUID string) string {
 	return Env.UIURL + threadUIPath + threadUUID
 }
 
-// TODO watch for when this is available on a new version of mw-i18n and then replace calls to this function
 // TranslateWithLang returns the translation of the string identified by translationID, for the given language.
-// See Translate for further details.
+// Apparently i18n has a global or something that keeps track of translatable phrases once a new packr Box
+// is created.  If no new packr Box has been created, i18n.Tfunc returns an error.
 func TranslateWithLang(lang, translationID string, args ...interface{}) (string, error) {
 	if T == nil {
 		_, err := mwi18n.New(packr.New("locales", "../locales"), "en")
