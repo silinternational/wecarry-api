@@ -505,9 +505,9 @@ func (u *User) GetPreferences() (UserPreferences, error) {
 	return uPrefs, err
 }
 
-// GetAPreference returns a pointer to a matching UserPreference record or if
+// GetPreference returns a pointer to a matching UserPreference record or if
 // none is found, returns nil
-func (u *User) GetAPreference(key string) (*UserPreference, error) {
+func (u *User) GetPreference(key string) (*UserPreference, error) {
 	uPref := UserPreference{}
 
 	err := DB.Where("user_id = ?", u.ID).Where("key = ?", key).First(&uPref)

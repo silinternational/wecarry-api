@@ -912,7 +912,7 @@ func (ms *ModelSuite) TestUser_GetAPreference() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := test.user.GetAPreference(test.preferenceKey)
+			got, err := test.user.GetPreference(test.preferenceKey)
 			ms.NoError(err)
 			if test.wantNil {
 				ms.Nil(got, "Expected nil but got a preference")
@@ -920,7 +920,7 @@ func (ms *ModelSuite) TestUser_GetAPreference() {
 			}
 
 			ms.NotNil(got, "Got nil when expecting preference with Value "+test.want)
-			ms.Equal(test.want, got.Value, "incorrect result from GetAPreference()")
+			ms.Equal(test.want, got.Value, "incorrect result from GetPreference()")
 		})
 	}
 }
