@@ -521,6 +521,27 @@ func (u *User) GetPreference(key string) (*UserPreference, error) {
 	return &uPref, nil
 }
 
+func (u *User) CreatePreference(key, value string) (UserPreference, error) {
+	uPref := UserPreference{}
+
+	DB.Where("user_id = ?", u.ID).Where("key = ?", key).First(&uPref)
+	if uPref.ID > 0 {
+		err := fmt.Errorf("can't create UserPreference with key %s.  Already exists with id %v.", key, uPref.ID)
+		return UserPreference{}, err
+	}
+
+	uPref.Uuid = domain.GetUuid()
+	uPref.UserID = u.ID
+	uPref.Key = key
+	uPref.Value = value
+
+	if err := DB.Save(&uPref); err != nil {
+		return UserPreference{}, err
+	}
+
+	return uPref, nil
+}
+
 // UpdatePreference finds a User's Preference by UUID, ensures the new key is the same as the
 // original and if so, updates the UserPreference with the new value
 func (u *User) UpdatePreference(uuid uuid.UUID, key, value string) (UserPreference, error) {
