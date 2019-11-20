@@ -453,9 +453,6 @@ func CreateFixturesForUserWantsPostNotification(ms *ModelSuite) UserFixtures {
 	userOrgFixtures := make(UserOrganizations, len(users))
 	for i := range users {
 		userLocations[i].Country = "US"
-		userLocations[i].Description = "somewhere"
-		userLocations[i].Latitude = nulls.NewFloat64(40.0)
-		userLocations[i].Longitude = nulls.NewFloat64(-110.0)
 		createFixture(ms, &userLocations[i])
 
 		users[i] = User{
@@ -479,44 +476,30 @@ func CreateFixturesForUserWantsPostNotification(ms *ModelSuite) UserFixtures {
 		{ // Post 0 Destination
 			Description: "close",
 			Country:     "US",
-			Latitude:    nulls.NewFloat64(35.0),
-			Longitude:   nulls.NewFloat64(-105.0),
 		},
 		{ // Post 1 Destination
 			Description: "far away",
 			Country:     "KR",
-			Latitude:    nulls.NewFloat64(37.0),
-			Longitude:   nulls.NewFloat64(127.0),
 		},
 		{ // Post 2 Destination
 			Description: "far away",
 			Country:     "KR",
-			Latitude:    nulls.NewFloat64(37.0),
-			Longitude:   nulls.NewFloat64(127.0),
 		},
 		{ // Post 3 Destination
 			Description: "close",
 			Country:     "US",
-			Latitude:    nulls.NewFloat64(35.0),
-			Longitude:   nulls.NewFloat64(-105.0),
 		},
 		{ // Post 4 Destination
 			Description: "close",
 			Country:     "US",
-			Latitude:    nulls.NewFloat64(35.0),
-			Longitude:   nulls.NewFloat64(-105.0),
 		},
 		{ // Post 0 Origin
 			Description: "far away",
 			Country:     "KR",
-			Latitude:    nulls.NewFloat64(37.0),
-			Longitude:   nulls.NewFloat64(127.0),
 		},
 		{ // Post 2 Origin
 			Description: "close",
 			Country:     "US",
-			Latitude:    nulls.NewFloat64(35.0),
-			Longitude:   nulls.NewFloat64(-105.0),
 		},
 	}
 	for i := range postLocations {
