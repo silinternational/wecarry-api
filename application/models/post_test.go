@@ -1115,8 +1115,8 @@ func (ms *ModelSuite) TestPost_NewWithUser() {
 
 	tests := []struct {
 		name           string
-		pType          string
-		wantPostType   string
+		pType          PostType
+		wantPostType   PostType
 		wantPostStatus string
 		wantReceiverID int
 		wantProviderID int
@@ -1158,7 +1158,7 @@ func (ms *ModelSuite) TestPost_SetProviderWithStatus() {
 	tests := []struct {
 		name           string
 		status         string
-		pType          string
+		pType          PostType
 		wantProviderID nulls.Int
 	}{
 		{name: "Committed Request", status: PostStatusCommitted,

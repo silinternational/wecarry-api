@@ -3,6 +3,7 @@ package listeners
 import (
 	"errors"
 	"fmt"
+
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 	"github.com/silinternational/wecarry-api/notifications"
@@ -379,12 +380,12 @@ func sendNewPostNotification(user models.User, post models.Post) error {
 	}
 
 	newPostTemplates := map[string]string{
-		models.PostTypeRequest: domain.MessageTemplateNewRequest,
-		models.PostTypeOffer:   domain.MessageTemplateNewOffer,
+		models.PostTypeRequest.String(): domain.MessageTemplateNewRequest,
+		models.PostTypeOffer.String():   domain.MessageTemplateNewOffer,
 	}
 
 	msg := notifications.Message{
-		Template:  newPostTemplates[post.Type],
+		Template:  newPostTemplates[post.Type.String()],
 		ToName:    user.Nickname,
 		ToEmail:   user.Email,
 		FromEmail: domain.Env.EmailFromAddress,

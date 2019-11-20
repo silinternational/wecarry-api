@@ -56,11 +56,11 @@ func (r *postResolver) ID(ctx context.Context, obj *models.Post) (string, error)
 }
 
 // Type resolves the `type` property of the post query. It converts the model type to the gqlgen enum type
-func (r *postResolver) Type(ctx context.Context, obj *models.Post) (PostType, error) {
+func (r *postResolver) Type(ctx context.Context, obj *models.Post) (models.PostType, error) {
 	if obj == nil {
 		return "", nil
 	}
-	return PostType(obj.Type), nil
+	return models.PostType(obj.Type), nil
 }
 
 // CreatedBy resolves the `createdBy` property of the post query. It retrieves the related record from the database.
@@ -316,7 +316,7 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 			return post, err
 		}
 	} else {
-		if err := post.NewWithUser(input.Type.String(), currentUser); err != nil {
+		if err := post.NewWithUser(*input.Type, currentUser); err != nil {
 			return post, err
 		}
 	}
@@ -328,10 +328,6 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 			return models.Post{}, err
 		}
 		post.OrganizationID = org.ID
-	}
-
-	if input.Type != nil {
-		post.Type = input.Type.String()
 	}
 
 	setOptionalStringField(input.Title, &post.Title)
@@ -398,7 +394,7 @@ func getSelectFieldsForPosts(ctx context.Context) []string {
 type postInput struct {
 	ID           *string
 	OrgID        *string
-	Type         *PostType
+	Type         *models.PostType
 	Title        *string
 	Description  *string
 	Destination  *LocationInput

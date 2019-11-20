@@ -64,7 +64,7 @@ func (gs *GqlgenSuite) TestResolver() {
 	postFix := models.Posts{
 		{
 			CreatedByID:    userFix[0].ID,
-			Type:           PostTypeRequest.String(),
+			Type:           models.PostTypeRequest,
 			OrganizationID: orgFix[0].ID,
 			Status:         PostStatusOpen.String(),
 			Title:          "Maple Syrup",
@@ -124,10 +124,10 @@ func (gs *GqlgenSuite) TestResolver() {
 	// It appears that everything needs to be exported in order to be recognized
 	var postsResp struct {
 		Posts []struct {
-			ID          string `json:"id"`
-			Type        string `json:"type"`
-			Status      string `json:"status"`
-			Title       string `json:"title"`
+			ID          string          `json:"id"`
+			Type        models.PostType `json:"type"`
+			Status      string          `json:"status"`
+			Title       string          `json:"title"`
 			Destination struct {
 				Description string `json:"description"`
 			} `json:"destination"`

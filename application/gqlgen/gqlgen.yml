@@ -84,6 +84,8 @@ models:
     model: gqlgen.postInput
   Location:
     model: models.Location
+  PostType:
+    model: models.PostType
 
 #directives:
 #  deprecated:

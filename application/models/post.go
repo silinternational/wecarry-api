@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"strconv"
 	"time"
 
 	"github.com/gobuffalo/buffalo"
@@ -17,9 +19,11 @@ import (
 	"github.com/silinternational/wecarry-api/domain"
 )
 
+type PostType string
+
 const (
-	PostTypeRequest = "REQUEST"
-	PostTypeOffer   = "OFFER"
+	PostTypeRequest PostType = "REQUEST"
+	PostTypeOffer   PostType = "OFFER"
 
 	PostSizeTiny   = "TINY"
 	PostSizeSmall  = "SMALL"
@@ -41,7 +45,7 @@ type Post struct {
 	CreatedAt      time.Time     `json:"created_at" db:"created_at"`
 	UpdatedAt      time.Time     `json:"updated_at" db:"updated_at"`
 	CreatedByID    int           `json:"created_by_id" db:"created_by_id"`
-	Type           string        `json:"type" db:"type"`
+	Type           PostType      `json:"type" db:"type"`
 	OrganizationID int           `json:"organization_id" db:"organization_id"`
 	Status         string        `json:"status" db:"status"`
 	Title          string        `json:"title" db:"title"`
@@ -118,7 +122,7 @@ func (p *Post) Update() error {
 	return nil
 }
 
-func (p *Post) NewWithUser(pType string, currentUser User) error {
+func (p *Post) NewWithUser(pType PostType, currentUser User) error {
 	p.Uuid = domain.GetUuid()
 	p.CreatedByID = currentUser.ID
 	p.Status = PostStatusOpen
@@ -129,7 +133,7 @@ func (p *Post) NewWithUser(pType string, currentUser User) error {
 	case PostTypeOffer:
 		p.ProviderID = nulls.NewInt(currentUser.ID)
 	default:
-		return errors.New("bad type for new post: " + pType)
+		return errors.New("bad type for new post: " + pType.String())
 	}
 
 	p.Type = pType
@@ -150,7 +154,7 @@ func (p *Post) SetProviderWithStatus(status string, currentUser User) {
 func (p *Post) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
 		&validators.IntIsPresent{Field: p.CreatedByID, Name: "CreatedBy"},
-		&validators.StringIsPresent{Field: p.Type, Name: "Type"},
+		&validators.StringIsPresent{Field: p.Type.String(), Name: "Type"},
 		&validators.IntIsPresent{Field: p.OrganizationID, Name: "OrganizationID"},
 		&validators.StringIsPresent{Field: p.Title, Name: "Title"},
 		&validators.StringIsPresent{Field: p.Size, Name: "Size"},
@@ -655,4 +659,38 @@ func (p *Post) GetLocationForNotifications() (*Location, error) {
 		postLocation = p.Destination
 	}
 	return &postLocation, nil
+}
+
+var AllPostType = []PostType{
+	PostTypeRequest,
+	PostTypeOffer,
+}
+
+func (e PostType) IsValid() bool {
+	switch e {
+	case PostTypeRequest, PostTypeOffer:
+		return true
+	}
+	return false
+}
+
+func (e PostType) String() string {
+	return string(e)
+}
+
+func (e *PostType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PostType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PostType", str)
+	}
+	return nil
+}
+
+func (e PostType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }

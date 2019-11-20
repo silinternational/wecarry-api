@@ -22,10 +22,10 @@ type PostQueryFixtures struct {
 
 type PostResponse struct {
 	Post struct {
-		ID          string `json:"id"`
-		Type        string `json:"type"`
-		Title       string `json:"title"`
-		Description string `json:"description"`
+		ID          string          `json:"id"`
+		Type        models.PostType `json:"type"`
+		Title       string          `json:"title"`
+		Description string          `json:"description"`
 		Destination struct {
 			Description string  `json:"description"`
 			Country     string  `json:"country"`
@@ -117,7 +117,7 @@ func createFixtures_PostQuery(gs *GqlgenSuite) PostQueryFixtures {
 			ReceiverID:     nulls.NewInt(users[0].ID),
 			ProviderID:     nulls.NewInt(users[1].ID),
 			OrganizationID: org.ID,
-			Type:           PostTypeRequest.String(),
+			Type:           models.PostTypeRequest,
 			Status:         PostStatusCommitted.String(),
 			Title:          "A Request",
 			DestinationID:  locations[0].ID,
@@ -313,7 +313,7 @@ func createFixtures_UpdatePost(gs *GqlgenSuite) UpdatePostFixtures {
 	posts := models.Posts{
 		{
 			CreatedByID:    users[0].ID,
-			Type:           PostTypeRequest.String(),
+			Type:           models.PostTypeRequest,
 			OrganizationID: org.ID,
 			Title:          "An Offer",
 			Size:           PostSizeLarge.String(),
@@ -506,7 +506,7 @@ func (gs *GqlgenSuite) Test_CreatePost() {
 
 	gs.Equal(f.Organization.Uuid.String(), postsResp.Post.Organization.ID)
 	gs.Equal(f.File.UUID.String(), postsResp.Post.Photo.ID)
-	gs.Equal("REQUEST", postsResp.Post.Type)
+	gs.Equal(models.PostTypeRequest, postsResp.Post.Type)
 	gs.Equal("title", postsResp.Post.Title)
 	gs.Equal("new description", postsResp.Post.Description)
 	gs.Equal("", postsResp.Post.Status)
@@ -567,7 +567,7 @@ func createFixturesForUpdatePostStatus(gs *GqlgenSuite) UpdatePostStatusFixtures
 		posts[i].DestinationID = locations[i].ID
 		posts[i].Title = "title"
 		posts[i].Size = PostSizeSmall.String()
-		posts[i].Type = PostTypeRequest.String()
+		posts[i].Type = models.PostTypeRequest
 		posts[i].Status = models.PostStatusOpen
 		createFixture(gs, &posts[i])
 	}

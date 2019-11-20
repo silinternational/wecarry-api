@@ -204,7 +204,7 @@ type OrganizationDomainResolver interface {
 }
 type PostResolver interface {
 	ID(ctx context.Context, obj *models.Post) (string, error)
-	Type(ctx context.Context, obj *models.Post) (PostType, error)
+	Type(ctx context.Context, obj *models.Post) (models.PostType, error)
 	CreatedBy(ctx context.Context, obj *models.Post) (*models.User, error)
 	Receiver(ctx context.Context, obj *models.Post) (*models.User, error)
 	Provider(ctx context.Context, obj *models.Post) (*models.User, error)
@@ -2867,10 +2867,10 @@ func (ec *executionContext) _Post_type(ctx context.Context, field graphql.Collec
 		}
 		return graphql.Null
 	}
-	res := resTmp.(PostType)
+	res := resTmp.(models.PostType)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNPostType2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostType(ctx, field.Selections, res)
+	return ec.marshalNPostType2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostType(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Post_createdBy(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
@@ -5965,7 +5965,7 @@ func (ec *executionContext) unmarshalInputCreatePostInput(ctx context.Context, o
 			}
 		case "type":
 			var err error
-			it.Type, err = ec.unmarshalNPostType2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostType(ctx, v)
+			it.Type, err = ec.unmarshalNPostType2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostType(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -7982,24 +7982,24 @@ func (ec *executionContext) marshalNPostStatus2githubᚗcomᚋsilinternational�
 	return v
 }
 
-func (ec *executionContext) unmarshalNPostType2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostType(ctx context.Context, v interface{}) (PostType, error) {
-	var res PostType
+func (ec *executionContext) unmarshalNPostType2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostType(ctx context.Context, v interface{}) (models.PostType, error) {
+	var res models.PostType
 	return res, res.UnmarshalGQL(v)
 }
 
-func (ec *executionContext) marshalNPostType2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostType(ctx context.Context, sel ast.SelectionSet, v PostType) graphql.Marshaler {
+func (ec *executionContext) marshalNPostType2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostType(ctx context.Context, sel ast.SelectionSet, v models.PostType) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) unmarshalNPostType2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostType(ctx context.Context, v interface{}) (*PostType, error) {
+func (ec *executionContext) unmarshalNPostType2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostType(ctx context.Context, v interface{}) (*models.PostType, error) {
 	if v == nil {
 		return nil, nil
 	}
-	res, err := ec.unmarshalNPostType2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostType(ctx, v)
+	res, err := ec.unmarshalNPostType2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostType(ctx, v)
 	return &res, err
 }
 
-func (ec *executionContext) marshalNPostType2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPostType(ctx context.Context, sel ast.SelectionSet, v *PostType) graphql.Marshaler {
+func (ec *executionContext) marshalNPostType2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostType(ctx context.Context, sel ast.SelectionSet, v *models.PostType) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
