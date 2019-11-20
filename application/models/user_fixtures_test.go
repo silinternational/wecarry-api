@@ -37,11 +37,9 @@ func CreateUserFixtures(ms *ModelSuite, t *testing.T) ([]Organization, Users, Us
 			AuthConfig: "{}",
 		},
 	}
+
 	for i := range orgs {
-		if err := ms.DB.Create(&orgs[i]); err != nil {
-			t.Errorf("error creating org %+v ...\n %v \n", orgs[i], err)
-			t.FailNow()
-		}
+		createFixture(ms, &orgs[i])
 	}
 
 	// Load User test fixtures
@@ -68,11 +66,9 @@ func CreateUserFixtures(ms *ModelSuite, t *testing.T) ([]Organization, Users, Us
 			Uuid:      domain.GetUuid(),
 		},
 	}
+
 	for i := range users {
-		if err := ms.DB.Create(&users[i]); err != nil {
-			t.Errorf("could not create test user %v ... %v", users[i], err)
-			t.FailNow()
-		}
+		createFixture(ms, &users[i])
 	}
 
 	// Load UserOrganization test fixtures
@@ -90,13 +86,10 @@ func CreateUserFixtures(ms *ModelSuite, t *testing.T) ([]Organization, Users, Us
 			AuthEmail:      users[0].Email,
 		},
 	}
-	for i := range userOrgs {
-		if err := ms.DB.Create(&userOrgs[i]); err != nil {
-			t.Errorf("could not create test user org ... %v. uo = %+v", err, userOrgs[i])
-			t.FailNow()
-		}
-	}
 
+	for i := range userOrgs {
+		createFixture(ms, &userOrgs[i])
+	}
 	return orgs, users, userOrgs
 }
 
@@ -194,10 +187,7 @@ func CreateUserFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) UserMes
 		AuthConfig: "{}",
 	}
 
-	if err := ms.DB.Create(&org); err != nil {
-		t.Errorf("error creating org %+v ...\n %v \n", org, err)
-		t.FailNow()
-	}
+	createFixture(ms, &org)
 
 	// Load User test fixtures
 	users := Users{
@@ -216,11 +206,9 @@ func CreateUserFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) UserMes
 			Uuid:      domain.GetUuid(),
 		},
 	}
+
 	for i := range users {
-		if err := ms.DB.Create(&users[i]); err != nil {
-			t.Errorf("could not create test user %v ... %v", users[i], err)
-			t.FailNow()
-		}
+		createFixture(ms, &users[i])
 	}
 
 	// Load UserOrganization test fixtures
@@ -239,10 +227,7 @@ func CreateUserFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) UserMes
 		},
 	}
 	for i := range userOrgs {
-		if err := ms.DB.Create(&userOrgs[i]); err != nil {
-			t.Errorf("could not create test user org ... %v. uo = %+v", err, userOrgs[i])
-			t.FailNow()
-		}
+		createFixture(ms, &userOrgs[i])
 	}
 
 	locations := []Location{{}, {}}
@@ -392,6 +377,7 @@ func CreateUserFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) UserMes
 
 type UserFixtures struct {
 	Users
+	UserPreferences
 	Posts
 	Threads
 }
@@ -540,4 +526,41 @@ func CreateFixturesForUserWantsPostNotification(ms *ModelSuite) UserFixtures {
 		Users: users,
 		Posts: posts,
 	}
+}
+
+func CreateUserFixtures_TestGetPreference(ms *ModelSuite) UserFixtures {
+	nicknames := []string{"alice", "bob"}
+	unique := domain.GetUuid().String()
+	users := make(Users, len(nicknames))
+	for i := range users {
+		users[i] = User{
+			Email:    "user" + strconv.Itoa(i) + unique + "@example.com",
+			Nickname: nicknames[i] + unique,
+			Uuid:     domain.GetUuid(),
+		}
+
+		createFixture(ms, &users[i])
+	}
+
+	// Load UserSetting test fixtures
+	userPreferences := UserPreferences{
+		{
+			Uuid:   domain.GetUuid(),
+			UserID: users[0].ID,
+			Key:    "User0Key1",
+			Value:  "User0Val1",
+		},
+		{
+			Uuid:   domain.GetUuid(),
+			UserID: users[0].ID,
+			Key:    "User0Key2",
+			Value:  "User0Val2",
+		},
+	}
+
+	for i := range userPreferences {
+		createFixture(ms, &userPreferences[i])
+	}
+
+	return UserFixtures{Users: users, UserPreferences: userPreferences}
 }

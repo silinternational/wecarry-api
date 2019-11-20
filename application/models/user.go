@@ -26,26 +26,27 @@ const (
 )
 
 type User struct {
-	ID                int                `json:"id" db:"id"`
-	CreatedAt         time.Time          `json:"created_at" db:"created_at"`
-	UpdatedAt         time.Time          `json:"updated_at" db:"updated_at"`
-	Email             string             `json:"email" db:"email"`
-	FirstName         string             `json:"first_name" db:"first_name"`
-	LastName          string             `json:"last_name" db:"last_name"`
-	Nickname          string             `json:"nickname" db:"nickname"`
-	AdminRole         nulls.String       `json:"admin_role" db:"admin_role"`
-	Uuid              uuid.UUID          `json:"uuid" db:"uuid"`
-	PhotoFileID       nulls.Int          `json:"photo_file_id" db:"photo_file_id"`
-	PhotoURL          nulls.String       `json:"photo_url" db:"photo_url"`
-	LocationID        nulls.Int          `json:"location_id" db:"location_id"`
-	AccessTokens      []UserAccessToken  `has_many:"user_access_tokens" json:"-"`
-	Organizations     Organizations      `many_to_many:"user_organizations" order_by:"name asc" json:"-"`
-	UserOrganizations []UserOrganization `has_many:"user_organizations" json:"-"`
-	PostsCreated      Posts              `has_many:"posts" fk_id:"created_by_id" order_by:"updated_at desc"`
-	PostsProviding    Posts              `has_many:"posts" fk_id:"provider_id" order_by:"updated_at desc"`
-	PostsReceiving    Posts              `has_many:"posts" fk_id:"receiver_id" order_by:"updated_at desc"`
-	PhotoFile         File               `belongs_to:"files"`
-	Location          Location           `belongs_to:"locations"`
+	ID                int               `json:"id" db:"id"`
+	CreatedAt         time.Time         `json:"created_at" db:"created_at"`
+	UpdatedAt         time.Time         `json:"updated_at" db:"updated_at"`
+	Email             string            `json:"email" db:"email"`
+	FirstName         string            `json:"first_name" db:"first_name"`
+	LastName          string            `json:"last_name" db:"last_name"`
+	Nickname          string            `json:"nickname" db:"nickname"`
+	AdminRole         nulls.String      `json:"admin_role" db:"admin_role"`
+	Uuid              uuid.UUID         `json:"uuid" db:"uuid"`
+	PhotoFileID       nulls.Int         `json:"photo_file_id" db:"photo_file_id"`
+	PhotoURL          nulls.String      `json:"photo_url" db:"photo_url"`
+	LocationID        nulls.Int         `json:"location_id" db:"location_id"`
+	AccessTokens      []UserAccessToken `has_many:"user_access_tokens" json:"-"`
+	Organizations     Organizations     `many_to_many:"user_organizations" order_by:"name asc" json:"-"`
+	UserOrganizations UserOrganizations `has_many:"user_organizations" json:"-"`
+	UserPreferences   UserPreferences   `has_many:"user_preferences" json:"-"`
+	PostsCreated      Posts             `has_many:"posts" fk_id:"created_by_id" order_by:"updated_at desc"`
+	PostsProviding    Posts             `has_many:"posts" fk_id:"provider_id" order_by:"updated_at desc"`
+	PostsReceiving    Posts             `has_many:"posts" fk_id:"receiver_id" order_by:"updated_at desc"`
+	PhotoFile         File              `belongs_to:"files"`
+	Location          Location          `belongs_to:"locations"`
 }
 
 // String is not required by pop and may be deleted
@@ -507,4 +508,28 @@ func (u *User) WantsPostNotification(post Post) bool {
 	}
 
 	return true
+}
+
+// GetPreferences returns a slice of matching UserPreference records
+func (u *User) GetPreferences() (UserPreferences, error) {
+	uPrefs := UserPreferences{}
+	err := DB.Where("user_id = ?", u.ID).All(&uPrefs)
+
+	return uPrefs, err
+}
+
+// GetPreference returns a pointer to a matching UserPreference record or if
+// none is found, returns nil
+func (u *User) GetPreference(key string) (*UserPreference, error) {
+	uPref := UserPreference{}
+
+	err := DB.Where("user_id = ?", u.ID).Where("key = ?", key).First(&uPref)
+	if err != nil {
+		if domain.IsOtherThanNoRows(err) {
+			return nil, err
+		}
+		return nil, nil
+	}
+
+	return &uPref, nil
 }

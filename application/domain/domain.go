@@ -2,6 +2,7 @@ package domain
 
 import (
 	"fmt"
+	"github.com/gobuffalo/packr/v2"
 	"log"
 	"net/http"
 	"os"
@@ -12,7 +13,9 @@ import (
 
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/envy"
-	i18n "github.com/gobuffalo/mw-i18n"
+	mwi18n "github.com/gobuffalo/mw-i18n"
+	"github.com/nicksnyder/go-i18n/i18n"
+
 	uuid2 "github.com/gofrs/uuid"
 	"github.com/rollbar/rollbar-go"
 )
@@ -48,27 +51,43 @@ const (
 
 // Notification Message Template Names
 const (
-	MessageTemplateNewThreadMessage                = "new_thread_message"
-	MessageTemplateNewRequest                      = "new_request"
 	MessageTemplateNewOffer                        = "new_offer"
-	MessageTemplateRequestFromCommittedToOpen      = "request_from_committed_to_open"
-	MessageTemplateRequestFromAcceptedToOpen       = "request_from_accepted_to_open"
-	MessageTemplateRequestFromOpenToCommitted      = "request_from_open_to_committed"
-	MessageTemplateRequestFromCommittedToAccepted  = "request_from_committed_to_accepted"
-	MessageTemplateRequestFromDeliveredToAccepted  = "request_from_delivered_to_accepted"
-	MessageTemplateRequestFromReceivedToAccepted   = "request_from_received_to_accepted"
-	MessageTemplateRequestDelivered                = "request_delivered"
-	MessageTemplateRequestFromCommittedToDelivered = "request_from_committed_to_delivered"
+	MessageTemplateNewRequest                      = "new_request"
+	MessageTemplateNewThreadMessage                = "new_thread_message"
 	MessageTemplateRequestFromAcceptedToDelivered  = "request_from_accepted_to_delivered"
-	MessageTemplateRequestFromReceivedToDelivered  = "request_from_received_to_delivered"
-	MessageTemplateRequestFromCompletedToDelivered = "request_from_completed_to_delivered"
+	MessageTemplateRequestFromAcceptedToOpen       = "request_from_accepted_to_open"
 	MessageTemplateRequestFromAcceptedToReceived   = "request_from_accepted_to_received"
-	MessageTemplateRequestFromCompletedToReceived  = "request_from_completed_to_received"
-	MessageTemplateRequestFromDeliveredToCompleted = "request_from_delivered_to_completed"
-	MessageTemplateRequestFromReceivedToCompleted  = "request_from_received_to_completed"
-	MessageTemplateRequestFromOpenToRemoved        = "request_from_open_to_removed"
-	MessageTemplateRequestFromCommittedToRemoved   = "request_from_committed_to_removed"
 	MessageTemplateRequestFromAcceptedToRemoved    = "request_from_accepted_to_removed"
+	MessageTemplateRequestFromCommittedToAccepted  = "request_from_committed_to_accepted"
+	MessageTemplateRequestFromCommittedToDelivered = "request_from_committed_to_delivered"
+	MessageTemplateRequestFromCommittedToOpen      = "request_from_committed_to_open"
+	MessageTemplateRequestFromCommittedToReceived  = "request_from_committed_to_received"
+	MessageTemplateRequestFromCommittedToRemoved   = "request_from_committed_to_removed"
+	MessageTemplateRequestFromCompletedToDelivered = "request_from_completed_to_delivered"
+	MessageTemplateRequestFromCompletedToReceived  = "request_from_completed_to_received"
+	MessageTemplateRequestFromDeliveredToAccepted  = "request_from_delivered_to_accepted"
+	MessageTemplateRequestFromDeliveredToCompleted = "request_from_delivered_to_completed"
+	MessageTemplateRequestFromOpenToCommitted      = "request_from_open_to_committed"
+	MessageTemplateRequestFromOpenToRemoved        = "request_from_open_to_removed"
+	MessageTemplateRequestFromReceivedToAccepted   = "request_from_received_to_accepted"
+	MessageTemplateRequestFromReceivedToDelivered  = "request_from_received_to_delivered"
+	MessageTemplateRequestFromReceivedToCompleted  = "request_from_received_to_completed"
+	MessageTemplateRequestDelivered                = "request_delivered"
+	MessageTemplateRequestReceived                 = "request_received"
+)
+
+// User preferences
+const (
+	UserPreferenceKeyLanguage        = "language"
+	UserPreferenceLanguageEnglish    = "en"
+	UserPreferenceLanguageFrench     = "fr"
+	UserPreferenceLanguageSpanish    = "es"
+	UserPreferenceLanguageKorean     = "ko"
+	UserPreferenceLanguagePortuguese = "pt"
+
+	UserPreferenceKeyUnits         = "units"
+	UserPreferenceUnitsUSCustomary = "uscs"
+	UserPreferenceUnitsMetric      = "metric"
 )
 
 // UI URL Paths
@@ -106,7 +125,7 @@ var Env struct {
 }
 
 // T is the Buffalo i18n translator
-var T *i18n.Translator
+var T *mwi18n.Translator
 
 func init() {
 	Logger.SetOutput(os.Stdout)
@@ -347,4 +366,36 @@ func GetPostUIURL(postUUID string) string {
 // GetThreadUIURL returns a UI URL for the given Thread
 func GetThreadUIURL(threadUUID string) string {
 	return Env.UIURL + threadUIPath + threadUUID
+}
+
+// TranslateWithLang returns the translation of the string identified by translationID, for the given language.
+// Apparently i18n has a global or something that keeps track of translatable phrases once a new packr Box
+// is created.  If no new packr Box has been created, i18n.Tfunc returns an error.
+func TranslateWithLang(lang, translationID string, args ...interface{}) (string, error) {
+	if T == nil {
+		_, err := mwi18n.New(packr.New("locales", "../locales"), "en")
+		if err != nil {
+			return "", err
+		}
+	}
+
+	t2, err := i18n.Tfunc(lang)
+	if err != nil {
+		return "", err
+	}
+	return t2(translationID, args...), nil
+}
+
+// IsOtherThanNoRows returns false if the error is nil or is just reporting that there
+//   were no rows in the result set for a sql query.
+func IsOtherThanNoRows(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	if err.Error() == "sql: no rows in result set" {
+		return false
+	}
+
+	return true
 }
