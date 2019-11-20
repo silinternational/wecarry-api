@@ -112,7 +112,7 @@ var dummyTemplates = map[string]dummyTemplate{
 }
 
 func (t *DummyEmailService) Send(msg Message) error {
-	dTemplate, ok := dummyTemplates[msg.Template]
+	_, ok := dummyTemplates[msg.Template]
 	if !ok {
 		errMsg := fmt.Sprintf("invalid template name: %s", msg.Template)
 		domain.ErrLogger.Print(errMsg)
@@ -128,11 +128,11 @@ func (t *DummyEmailService) Send(msg Message) error {
 	}
 
 	domain.Logger.Printf("dummy message subject: %s, recipient: %s, data: %+v",
-		dTemplate.subject, msg.ToName, msg.Data)
+		msg.Subject, msg.ToName, msg.Data)
 
 	t.sentMessages = append(t.sentMessages,
 		dummyMessage{
-			subject:   dTemplate.subject,
+			subject:   msg.Subject,
 			body:      bodyBuf.String(),
 			fromName:  msg.FromName,
 			fromEmail: msg.FromEmail,

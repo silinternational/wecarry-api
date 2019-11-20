@@ -30,7 +30,6 @@ func (e *SendGridService) Send(msg Message) error {
 		return errors.New("SendGrid API key is required")
 	}
 
-	subject := "New Message on " + domain.Env.AppName
 	from := mail.NewEmail(msg.FromName, msg.FromEmail)
 	to := mail.NewEmail(msg.ToName, msg.ToEmail)
 
@@ -49,7 +48,7 @@ func (e *SendGridService) Send(msg Message) error {
 		tbody = body
 	}
 
-	m := mail.NewSingleEmail(from, subject, to, tbody, body)
+	m := mail.NewSingleEmail(from, msg.Subject, to, tbody, body)
 	client := sendgrid.NewSendClient(apiKey)
 	response, err := client.Send(m)
 
