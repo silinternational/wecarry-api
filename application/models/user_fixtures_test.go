@@ -92,7 +92,7 @@ func CreateUserFixtures(ms *ModelSuite, t *testing.T) ([]Organization, Users, Us
 	}
 
 	// Load UserSetting test fixtures
-	userSettings := UserSettings{
+	userPreferences := UserPreferences{
 		{
 			Uuid:   domain.GetUuid(),
 			UserID: users[0].ID,
@@ -107,8 +107,8 @@ func CreateUserFixtures(ms *ModelSuite, t *testing.T) ([]Organization, Users, Us
 		},
 	}
 
-	for i := range userSettings {
-		createFixture(ms, &userSettings[i])
+	for i := range userPreferences {
+		createFixture(ms, &userPreferences[i])
 	}
 
 	return orgs, users, userOrgs

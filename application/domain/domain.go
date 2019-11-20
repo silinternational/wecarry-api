@@ -75,18 +75,18 @@ const (
 	MessageTemplateRequestReceived                 = "request_received"
 )
 
-// User settings
+// User preferences
 const (
-	UserSettingsKeyLanguage        = "language"
-	UserSettingsLanguageEnglish    = "en"
-	UserSettingsLanguageFrench     = "fr"
-	UserSettingsLanguageSpanish    = "es"
-	UserSettingsLanguageKorean     = "ko"
-	UserSettingsLanguagePortuguese = "pt"
+	UserPreferenceKeyLanguage        = "language"
+	UserPreferenceLanguageEnglish    = "en"
+	UserPreferenceLanguageFrench     = "fr"
+	UserPreferenceLanguageSpanish    = "es"
+	UserPreferenceLanguageKorean     = "ko"
+	UserPreferenceLanguagePortuguese = "pt"
 
-	UserSettingsKeyUnits      = "units"
-	UserSettingsUnitsImperial = "imperial"
-	UserSettingsUnitsMetric   = "metric"
+	UserPreferenceKeyUnits      = "units"
+	UserPreferenceUnitsImperial = "imperial"
+	UserPreferenceUnitsMetric   = "metric"
 )
 
 // UI URL Paths

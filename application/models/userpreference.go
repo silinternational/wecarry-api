@@ -12,7 +12,7 @@ import (
 	"github.com/gofrs/uuid"
 )
 
-type UserSetting struct {
+type UserPreference struct {
 	ID        int       `json:"id" db:"id"`
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
@@ -24,51 +24,51 @@ type UserSetting struct {
 }
 
 // String is not required by pop and may be deleted
-func (s UserSetting) String() string {
+func (s UserPreference) String() string {
 	jm, _ := json.Marshal(s)
 	return string(jm)
 }
 
-// UserSettings is not required by pop and may be deleted
-type UserSettings []UserSetting
+// UserPreferences is not required by pop and may be deleted
+type UserPreferences []UserPreference
 
 // String is not required by pop and may be deleted
-func (s UserSettings) String() string {
-	jm, _ := json.Marshal(s)
+func (p UserPreferences) String() string {
+	jm, _ := json.Marshal(p)
 	return string(jm)
 }
 
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
 // This method is not required and may be deleted.
-func (s *UserSetting) Validate(tx *pop.Connection) (*validate.Errors, error) {
+func (p *UserPreference) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
-		&validators.UUIDIsPresent{Field: s.Uuid, Name: "Uuid"},
-		&validators.IntIsPresent{Field: s.UserID, Name: "UserID"},
-		&validators.StringIsPresent{Field: s.Key, Name: "Key"},
-		&validators.StringIsPresent{Field: s.Value, Name: "Value"},
+		&validators.UUIDIsPresent{Field: p.Uuid, Name: "Uuid"},
+		&validators.IntIsPresent{Field: p.UserID, Name: "UserID"},
+		&validators.StringIsPresent{Field: p.Key, Name: "Key"},
+		&validators.StringIsPresent{Field: p.Value, Name: "Value"},
 	), nil
 }
 
 // ValidateCreate gets run every time you call "pop.ValidateAndCreate" method.
 // This method is not required and may be deleted.
-func (s *UserSetting) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) {
+func (p *UserPreference) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }
 
 // ValidateUpdate gets run every time you call "pop.ValidateAndUpdate" method.
 // This method is not required and may be deleted.
-func (s *UserSetting) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
+func (p *UserPreference) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }
 
-// FindByUUID loads from DB the UserSetting record identified by the given UUID
-func (s *UserSetting) FindByUUID(id string, selectFields ...string) error {
+// FindByUUID loads from DB the UserPreference record identified by the given UUID
+func (p *UserPreference) FindByUUID(id string, selectFields ...string) error {
 	if id == "" {
-		return errors.New("error: user setting uuid must not be blank")
+		return errors.New("error: user preference uuid must not be blank")
 	}
 
-	if err := DB.Where("uuid = ?", id).Select(selectFields...).First(s); err != nil {
-		return fmt.Errorf("error finding user setting by uuid: %s", err.Error())
+	if err := DB.Where("uuid = ?", id).Select(selectFields...).First(p); err != nil {
+		return fmt.Errorf("error finding user preference by uuid: %s", err.Error())
 	}
 
 	return nil
