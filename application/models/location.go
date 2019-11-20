@@ -94,8 +94,8 @@ func (l *Location) Create() error {
 	return nil
 }
 
-// Distance calculates the distance in km between two locations
-func (l *Location) Distance(l2 Location) float64 {
+// DistanceKm calculates the distance in km between two locations
+func (l *Location) DistanceKm(l2 Location) float64 {
 	lat1 := l.Latitude.Float64
 	lon1 := l.Longitude.Float64
 	lat2 := l2.Latitude.Float64

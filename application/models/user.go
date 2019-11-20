@@ -508,7 +508,7 @@ func (u *User) WantsPostNotification(post Post) bool {
 		return false
 	}
 
-	d := u.Location.Distance(*postLocation)
+	d := u.Location.DistanceKm(*postLocation)
 	if d > domain.DefaultProximityDistanceKm {
 		return false
 	}
