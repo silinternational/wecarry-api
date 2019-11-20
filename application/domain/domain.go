@@ -75,6 +75,20 @@ const (
 	MessageTemplateRequestReceived                 = "request_received"
 )
 
+// User preferences
+const (
+	UserPreferenceKeyLanguage        = "language"
+	UserPreferenceLanguageEnglish    = "en"
+	UserPreferenceLanguageFrench     = "fr"
+	UserPreferenceLanguageSpanish    = "es"
+	UserPreferenceLanguageKorean     = "ko"
+	UserPreferenceLanguagePortuguese = "pt"
+
+	UserPreferenceKeyUnits         = "units"
+	UserPreferenceUnitsUSCustomary = "uscs"
+	UserPreferenceUnitsMetric      = "metric"
+)
+
 // UI URL Paths
 const (
 	postUIPath   = "/#/requests/"
@@ -369,4 +383,18 @@ func TranslateWithLang(lang, translationID string, args ...interface{}) (string,
 		return "", err
 	}
 	return t2(translationID, args...), nil
+}
+
+// IsOtherThanNoRows returns false if the error is nil or is just reporting that there
+//   were no rows in the result set for a sql query.
+func IsOtherThanNoRows(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	if err.Error() == "sql: no rows in result set" {
+		return false
+	}
+
+	return true
 }
