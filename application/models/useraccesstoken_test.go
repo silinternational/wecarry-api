@@ -295,7 +295,7 @@ func CreateFixtures_GetUser(ms *ModelSuite, t *testing.T) AccessTokenFixtures {
 		{Email: t.Name() + "_user2@example.com", Nickname: t.Name() + " User2", Uuid: domain.GetUuid()},
 	}
 	for i := range users {
-		createFixture(ms, &(users[i]))
+		createFixture(ms, &users[i])
 	}
 
 	userOrgs := UserOrganizations{
@@ -303,7 +303,7 @@ func CreateFixtures_GetUser(ms *ModelSuite, t *testing.T) AccessTokenFixtures {
 		{OrganizationID: org.ID, UserID: users[1].ID, AuthID: users[1].Email, AuthEmail: users[1].Email},
 	}
 	for i := range userOrgs {
-		createFixture(ms, &(userOrgs[i]))
+		createFixture(ms, &userOrgs[i])
 	}
 
 	tokens := UserAccessTokens{
@@ -321,7 +321,7 @@ func CreateFixtures_GetUser(ms *ModelSuite, t *testing.T) AccessTokenFixtures {
 		},
 	}
 	for i := range tokens {
-		createFixture(ms, &(tokens[i]))
+		createFixture(ms, &tokens[i])
 	}
 
 	return AccessTokenFixtures{
@@ -374,7 +374,7 @@ func CreateFixtures_DeleteIfExpired(ms *ModelSuite, t *testing.T) AccessTokenFix
 		{Email: t.Name() + "_user2@example.com", Nickname: t.Name() + " User2", Uuid: domain.GetUuid()},
 	}
 	for i := range users {
-		createFixture(ms, &(users[i]))
+		createFixture(ms, &users[i])
 	}
 
 	userOrgs := UserOrganizations{
@@ -382,7 +382,7 @@ func CreateFixtures_DeleteIfExpired(ms *ModelSuite, t *testing.T) AccessTokenFix
 		{OrganizationID: org.ID, UserID: users[1].ID, AuthID: users[1].Email, AuthEmail: users[1].Email},
 	}
 	for i := range userOrgs {
-		createFixture(ms, &(userOrgs[i]))
+		createFixture(ms, &userOrgs[i])
 	}
 
 	tokens := UserAccessTokens{
@@ -400,7 +400,7 @@ func CreateFixtures_DeleteIfExpired(ms *ModelSuite, t *testing.T) AccessTokenFix
 		},
 	}
 	for i := range tokens {
-		createFixture(ms, &(tokens[i]))
+		createFixture(ms, &tokens[i])
 	}
 
 	return AccessTokenFixtures{
@@ -445,7 +445,7 @@ func CreateFixtures_Renew(ms *ModelSuite, t *testing.T) AccessTokenFixtures {
 		{Email: t.Name() + "_user2@example.com", Nickname: t.Name() + " User2", Uuid: domain.GetUuid()},
 	}
 	for i := range users {
-		createFixture(ms, &(users[i]))
+		createFixture(ms, &users[i])
 	}
 
 	userOrgs := UserOrganizations{
@@ -453,7 +453,7 @@ func CreateFixtures_Renew(ms *ModelSuite, t *testing.T) AccessTokenFixtures {
 		{OrganizationID: org.ID, UserID: users[1].ID, AuthID: users[1].Email, AuthEmail: users[1].Email},
 	}
 	for i := range userOrgs {
-		createFixture(ms, &(userOrgs[i]))
+		createFixture(ms, &userOrgs[i])
 	}
 
 	tokens := UserAccessTokens{
@@ -471,7 +471,7 @@ func CreateFixtures_Renew(ms *ModelSuite, t *testing.T) AccessTokenFixtures {
 		},
 	}
 	for i := range tokens {
-		createFixture(ms, &(tokens[i]))
+		createFixture(ms, &tokens[i])
 	}
 
 	return AccessTokenFixtures{
@@ -512,7 +512,7 @@ func createFixtures_UserAccessTokensDeleteExpired(ms *ModelSuite, t *testing.T) 
 		{Email: t.Name() + "_user2@example.com", Nickname: t.Name() + " User2", Uuid: domain.GetUuid()},
 	}
 	for i := range users {
-		createFixture(ms, &(users[i]))
+		createFixture(ms, &users[i])
 	}
 
 	userOrgs := UserOrganizations{
@@ -520,7 +520,7 @@ func createFixtures_UserAccessTokensDeleteExpired(ms *ModelSuite, t *testing.T) 
 		{OrganizationID: org.ID, UserID: users[1].ID, AuthID: users[1].Email, AuthEmail: users[1].Email},
 	}
 	for i := range userOrgs {
-		createFixture(ms, &(userOrgs[i]))
+		createFixture(ms, &userOrgs[i])
 	}
 
 	tokens := UserAccessTokens{
@@ -538,7 +538,7 @@ func createFixtures_UserAccessTokensDeleteExpired(ms *ModelSuite, t *testing.T) 
 		},
 	}
 	for i := range tokens {
-		createFixture(ms, &(tokens[i]))
+		createFixture(ms, &tokens[i])
 	}
 
 	return AccessTokenFixtures{

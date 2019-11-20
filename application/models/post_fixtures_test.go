@@ -124,7 +124,7 @@ func CreatePostFixtures(ms *ModelSuite, t *testing.T, users Users) []Post {
 
 	locations := []Location{{}, {}}
 	for i := range locations {
-		createFixture(ms, &(locations[i]))
+		createFixture(ms, &locations[i])
 	}
 
 	// Load Post test fixtures
@@ -220,12 +220,12 @@ func CreateFixtures_Posts_FindByUser(ms *ModelSuite) PostFixtures {
 		{OrganizationID: orgs[0].ID, UserID: users[1].ID, AuthID: users[1].Email, AuthEmail: users[1].Email},
 	}
 	for i := range userOrgs {
-		createFixture(ms, &(userOrgs[i]))
+		createFixture(ms, &userOrgs[i])
 	}
 
 	locations := []Location{{}, {}, {}}
 	for i := range locations {
-		createFixture(ms, &(locations[i]))
+		createFixture(ms, &locations[i])
 	}
 
 	posts := Posts{
@@ -261,12 +261,12 @@ func CreateFixtures_Post_IsEditable(ms *ModelSuite) PostFixtures {
 		{OrganizationID: org.ID, UserID: users[1].ID, AuthID: users[1].Email, AuthEmail: users[1].Email},
 	}
 	for i := range userOrgs {
-		createFixture(ms, &(userOrgs[i]))
+		createFixture(ms, &userOrgs[i])
 	}
 
 	locations := []Location{{}, {}}
 	for i := range locations {
-		createFixture(ms, &(locations[i]))
+		createFixture(ms, &locations[i])
 	}
 
 	posts := Posts{
@@ -277,6 +277,52 @@ func CreateFixtures_Post_IsEditable(ms *ModelSuite) PostFixtures {
 		posts[i].Uuid = domain.GetUuid()
 		posts[i].CreatedByID = users[0].ID
 		posts[i].OrganizationID = org.ID
+		posts[i].DestinationID = locations[i].ID
+		createFixture(ms, &posts[i])
+	}
+
+	return PostFixtures{
+		Users: users,
+		Posts: posts,
+	}
+}
+
+func createFixturesForPostGetAudience(ms *ModelSuite) PostFixtures {
+	orgs := make(Organizations, 2)
+	for i := range orgs {
+		orgs[i] = Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+		createFixture(ms, &orgs[i])
+	}
+
+	unique := orgs[0].Uuid.String()
+	users := Users{
+		{Email: unique + "_user0@example.com", Nickname: unique + "User0", Uuid: domain.GetUuid()},
+		{Email: unique + "_user1@example.com", Nickname: unique + "User1", Uuid: domain.GetUuid()},
+	}
+	for i := range users {
+		createFixture(ms, &users[i])
+	}
+
+	userOrgs := UserOrganizations{
+		{OrganizationID: orgs[0].ID, UserID: users[0].ID, AuthID: users[0].Email, AuthEmail: users[0].Email},
+		{OrganizationID: orgs[0].ID, UserID: users[1].ID, AuthID: users[1].Email, AuthEmail: users[1].Email},
+	}
+	for i := range userOrgs {
+		createFixture(ms, &(userOrgs[i]))
+	}
+
+	locations := []Location{{}, {}}
+	for i := range locations {
+		createFixture(ms, &(locations[i]))
+	}
+
+	posts := Posts{
+		{OrganizationID: orgs[0].ID}, // 2 users
+		{OrganizationID: orgs[1].ID}, // no users
+	}
+	for i := range posts {
+		posts[i].Uuid = domain.GetUuid()
+		posts[i].CreatedByID = users[0].ID
 		posts[i].DestinationID = locations[i].ID
 		createFixture(ms, &posts[i])
 	}

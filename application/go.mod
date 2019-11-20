@@ -24,6 +24,7 @@ require (
 	github.com/gorilla/sessions v1.1.3
 	github.com/markbates/goth v1.56.0
 	github.com/markbates/grift v1.0.6
+	github.com/nicksnyder/go-i18n v1.10.0
 	github.com/olekukonko/tablewriter v0.0.2 // indirect
 	github.com/paganotoni/sendgrid-sender v1.0.5
 	github.com/pkg/errors v0.8.1

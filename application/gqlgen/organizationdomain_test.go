@@ -29,7 +29,7 @@ func createFixtures_OrganizationDomain(gs *GqlgenSuite) OrganizationDomainFixtur
 		{Email: unique + "_admin@example.com", Nickname: unique + " Admin ", Uuid: domain.GetUuid()},
 	}
 	for i := range users {
-		createFixture(gs, &(users[i]))
+		createFixture(gs, &users[i])
 	}
 
 	userOrgs := models.UserOrganizations{
@@ -49,7 +49,7 @@ func createFixtures_OrganizationDomain(gs *GqlgenSuite) OrganizationDomainFixtur
 		},
 	}
 	for i := range userOrgs {
-		createFixture(gs, &(userOrgs[i]))
+		createFixture(gs, &userOrgs[i])
 	}
 
 	return OrganizationDomainFixtures{

@@ -20,8 +20,10 @@ type EmailService interface {
 //  Most of those will just be the same as the name of the status change.
 func GetEmailTemplate(key string) string {
 	weirdTemplates := map[string]string{
-		domain.MessageTemplateRequestFromCommittedToDelivered: domain.MessageTemplateRequestDelivered,
 		domain.MessageTemplateRequestFromAcceptedToDelivered:  domain.MessageTemplateRequestDelivered,
+		domain.MessageTemplateRequestFromCommittedToDelivered: domain.MessageTemplateRequestDelivered,
+		domain.MessageTemplateRequestFromAcceptedToReceived:   domain.MessageTemplateRequestReceived,
+		domain.MessageTemplateRequestFromCommittedToReceived:  domain.MessageTemplateRequestReceived,
 	}
 
 	template, ok := weirdTemplates[key]

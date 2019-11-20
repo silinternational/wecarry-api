@@ -9,4 +9,5 @@ type Message struct {
 	ToName    string
 	ToEmail   string
 	ToPhone   string
+	Subject   string
 }

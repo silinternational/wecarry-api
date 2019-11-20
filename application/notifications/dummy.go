@@ -27,84 +27,92 @@ var getT = GetEmailTemplate
 var dummyTemplates = map[string]dummyTemplate{
 	domain.MessageTemplateNewRequest: {
 		subject: "new request",
-		body:    "There is a new request for an item from your location.",
+		body:    "There is a new request for an item.",
+	},
+	domain.MessageTemplateNewOffer: {
+		subject: "new offer",
+		body:    "There is a new offer available.",
 	},
 	domain.MessageTemplateNewThreadMessage: {
 		subject: "new message",
 		body:    "You have a new message.",
 	},
-	domain.MessageTemplateRequestFromCommittedToOpen: {
-		subject: domain.MessageTemplateRequestFromCommittedToOpen,
-		body:    "The status of a request changed from committed to open.",
+	domain.MessageTemplateRequestReceived: {
+		subject: domain.MessageTemplateRequestReceived,
+		body:    "The status of a request changed from accepted or committed to received.",
+	},
+	getT(domain.MessageTemplateRequestFromAcceptedToDelivered): {
+		subject: domain.MessageTemplateRequestFromAcceptedToDelivered,
+		body:    "The status of a request changed from committed or accepted to delivered.",
 	},
 	domain.MessageTemplateRequestFromAcceptedToOpen: {
 		subject: domain.MessageTemplateRequestFromAcceptedToOpen,
 		body:    "The status of a request changed from accepted to open.",
 	},
-	domain.MessageTemplateRequestFromOpenToCommitted: {
-		subject: domain.MessageTemplateRequestFromOpenToCommitted,
-		body:    "The status of a request changed from open to committed.",
-	},
-	domain.MessageTemplateRequestFromCommittedToAccepted: {
-		subject: domain.MessageTemplateRequestFromCommittedToAccepted,
-		body:    "The status of a request changed from committed to accepted.",
-	},
-	domain.MessageTemplateRequestFromDeliveredToAccepted: {
-		subject: domain.MessageTemplateRequestFromDeliveredToAccepted,
-		body:    "The status of a request changed from delivered to accepted.",
-	},
-	domain.MessageTemplateRequestFromReceivedToAccepted: {
-		subject: domain.MessageTemplateRequestFromReceivedToAccepted,
-		body:    "The status of a request changed from received to accepted.",
-	},
-	domain.MessageTemplateRequestFromCommittedToDelivered: {
-		subject: domain.MessageTemplateRequestFromCommittedToDelivered,
-		body:    "The status of a request changed from committed to delivered.",
-	},
-	getT(domain.MessageTemplateRequestFromAcceptedToDelivered): {
-		subject: getT(domain.MessageTemplateRequestFromAcceptedToDelivered),
-		body:    "The status of a request changed from committed or accepted to delivered.",
-	},
-	domain.MessageTemplateRequestFromReceivedToDelivered: {
-		subject: domain.MessageTemplateRequestFromReceivedToDelivered,
-		body:    "The status of a request changed from received to delivered.",
-	},
-	domain.MessageTemplateRequestFromCompletedToDelivered: {
-		subject: domain.MessageTemplateRequestFromCompletedToDelivered,
-		body:    "The status of a request changed from completed to delivered.",
-	},
 	domain.MessageTemplateRequestFromAcceptedToReceived: {
 		subject: domain.MessageTemplateRequestFromAcceptedToReceived,
 		body:    "The status of a request changed from accepted to received.",
-	},
-	domain.MessageTemplateRequestFromCompletedToReceived: {
-		subject: domain.MessageTemplateRequestFromCompletedToReceived,
-		body:    "The status of a request changed from completed to received.",
-	},
-	domain.MessageTemplateRequestFromDeliveredToCompleted: {
-		subject: domain.MessageTemplateRequestFromDeliveredToCompleted,
-		body:    "The status of a request changed from delivered to completed.",
-	},
-	domain.MessageTemplateRequestFromReceivedToCompleted: {
-		subject: domain.MessageTemplateRequestFromReceivedToCompleted,
-		body:    "The status of a request changed from received to completed.",
-	},
-	domain.MessageTemplateRequestFromOpenToRemoved: {
-		subject: domain.MessageTemplateRequestFromOpenToRemoved,
-		body:    "The status of a request changed from open to removed.",
-	},
-	domain.MessageTemplateRequestFromCommittedToRemoved: {
-		subject: domain.MessageTemplateRequestFromCommittedToRemoved,
-		body:    "The status of a request changed from committed to removed.",
 	},
 	domain.MessageTemplateRequestFromAcceptedToRemoved: {
 		subject: domain.MessageTemplateRequestFromAcceptedToRemoved,
 		body:    "The status of a request changed from accepted to removed.",
 	},
+	domain.MessageTemplateRequestFromCommittedToAccepted: {
+		subject: domain.MessageTemplateRequestFromCommittedToAccepted,
+		body:    "The status of a request changed from committed to accepted.",
+	},
+	domain.MessageTemplateRequestFromCommittedToDelivered: {
+		subject: domain.MessageTemplateRequestFromCommittedToDelivered,
+		body:    "The status of a request changed from committed to delivered.",
+	},
+	domain.MessageTemplateRequestFromCommittedToOpen: {
+		subject: domain.MessageTemplateRequestFromCommittedToOpen,
+		body:    "The status of a request changed from committed to open.",
+	},
+	domain.MessageTemplateRequestFromCommittedToRemoved: {
+		subject: domain.MessageTemplateRequestFromCommittedToRemoved,
+		body:    "The status of a request changed from committed to removed.",
+	},
+	domain.MessageTemplateRequestFromCompletedToDelivered: {
+		subject: domain.MessageTemplateRequestFromCompletedToDelivered,
+		body:    "The status of a request changed from completed to delivered.",
+	},
+	domain.MessageTemplateRequestFromCompletedToReceived: {
+		subject: domain.MessageTemplateRequestFromCompletedToReceived,
+		body:    "The status of a request changed from completed to received.",
+	},
+	domain.MessageTemplateRequestFromDeliveredToAccepted: {
+		subject: domain.MessageTemplateRequestFromDeliveredToAccepted,
+		body:    "The status of a request changed from delivered to accepted.",
+	},
+	domain.MessageTemplateRequestFromDeliveredToCompleted: {
+		subject: domain.MessageTemplateRequestFromDeliveredToCompleted,
+		body:    "The status of a request changed from delivered to completed.",
+	},
+	domain.MessageTemplateRequestFromOpenToCommitted: {
+		subject: domain.MessageTemplateRequestFromOpenToCommitted,
+		body:    "The status of a request changed from open to committed.",
+	},
+	domain.MessageTemplateRequestFromOpenToRemoved: {
+		subject: domain.MessageTemplateRequestFromOpenToRemoved,
+		body:    "The status of a request changed from open to removed.",
+	},
+	domain.MessageTemplateRequestFromReceivedToAccepted: {
+		subject: domain.MessageTemplateRequestFromReceivedToAccepted,
+		body:    "The status of a request changed from received to accepted.",
+	},
+	domain.MessageTemplateRequestFromReceivedToCompleted: {
+		subject: domain.MessageTemplateRequestFromReceivedToCompleted,
+		body:    "The status of a request changed from received to completed.",
+	},
+	domain.MessageTemplateRequestFromReceivedToDelivered: {
+		subject: domain.MessageTemplateRequestFromReceivedToDelivered,
+		body:    "The status of a request changed from received to delivered.",
+	},
 }
 
 func (t *DummyEmailService) Send(msg Message) error {
-	dTemplate, ok := dummyTemplates[msg.Template]
+	_, ok := dummyTemplates[msg.Template]
 	if !ok {
 		errMsg := fmt.Sprintf("invalid template name: %s", msg.Template)
 		domain.ErrLogger.Print(errMsg)
@@ -120,11 +128,11 @@ func (t *DummyEmailService) Send(msg Message) error {
 	}
 
 	domain.Logger.Printf("dummy message subject: %s, recipient: %s, data: %+v",
-		dTemplate.subject, msg.ToName, msg.Data)
+		msg.Subject, msg.ToName, msg.Data)
 
 	t.sentMessages = append(t.sentMessages,
 		dummyMessage{
-			subject:   dTemplate.subject,
+			subject:   msg.Subject,
 			body:      bodyBuf.String(),
 			fromName:  msg.FromName,
 			fromEmail: msg.FromEmail,
@@ -159,6 +167,14 @@ func (t *DummyEmailService) GetToEmailByIndex(i int) string {
 	}
 
 	return t.sentMessages[i].toEmail
+}
+
+func (t *DummyEmailService) GetAllToAddresses() []string {
+	emailAddresses := make([]string, len(t.sentMessages))
+	for i := range t.sentMessages {
+		emailAddresses[i] = t.sentMessages[i].toEmail
+	}
+	return emailAddresses
 }
 
 func (t *DummyEmailService) GetLastBody() string {

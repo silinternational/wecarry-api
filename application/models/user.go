@@ -9,18 +9,14 @@ import (
 	"time"
 
 	"github.com/gobuffalo/events"
-
-	"github.com/pkg/errors"
-	"github.com/silinternational/wecarry-api/domain"
-
-	"github.com/silinternational/wecarry-api/auth"
-
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
 	"github.com/gobuffalo/validate/validators"
-
 	"github.com/gofrs/uuid"
+	"github.com/pkg/errors"
+	"github.com/silinternational/wecarry-api/auth"
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 const (
@@ -488,4 +484,15 @@ func (u *User) GetThreads() (Threads, error) {
 	}
 
 	return t, nil
+}
+
+// WantsPostNotification answers the question "Does the user want notifications for this post?"
+func (u *User) WantsPostNotification(post Post) bool {
+	if post.CreatedByID == u.ID {
+		return false
+	}
+
+	// Insert subscription and geolocation logic here
+
+	return true
 }

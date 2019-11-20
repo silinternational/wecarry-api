@@ -5,13 +5,13 @@ import (
 
 	"github.com/gobuffalo/nulls"
 	"github.com/silinternational/wecarry-api/domain"
-	m "github.com/silinternational/wecarry-api/models"
+	"github.com/silinternational/wecarry-api/models"
 )
 
 type orgUserPostFixtures struct {
-	orgs  m.Organizations
-	users m.Users
-	posts m.Posts
+	orgs  models.Organizations
+	users models.Users
+	posts models.Posts
 }
 
 func CreateFixtures_GetPostRecipients(ms *ModelSuite, t *testing.T) orgUserPostFixtures {
@@ -19,10 +19,10 @@ func CreateFixtures_GetPostRecipients(ms *ModelSuite, t *testing.T) orgUserPostF
 	unique := domain.GetUuid().String()
 
 	// Load Organization test fixtures
-	org := m.Organization{
+	org := models.Organization{
 		Name:       "ACME-" + unique,
 		Uuid:       domain.GetUuid(),
-		AuthType:   m.AuthTypeSaml,
+		AuthType:   models.AuthTypeSaml,
 		AuthConfig: "{}",
 	}
 
@@ -32,7 +32,7 @@ func CreateFixtures_GetPostRecipients(ms *ModelSuite, t *testing.T) orgUserPostF
 	}
 
 	// Load User test fixtures
-	users := m.Users{
+	users := models.Users{
 		{
 			Email:     "user1-" + unique + "@example.com",
 			FirstName: "Existing1",
@@ -63,7 +63,7 @@ func CreateFixtures_GetPostRecipients(ms *ModelSuite, t *testing.T) orgUserPostF
 	}
 
 	// Load UserOrganization test fixtures
-	userOrg := m.UserOrganization{
+	userOrg := models.UserOrganization{
 		OrganizationID: org.ID,
 		UserID:         users[0].ID,
 		AuthID:         users[0].Email,
@@ -74,24 +74,24 @@ func CreateFixtures_GetPostRecipients(ms *ModelSuite, t *testing.T) orgUserPostF
 		t.FailNow()
 	}
 
-	if err := m.DB.Load(&users[0], "Organizations"); err != nil {
+	if err := models.DB.Load(&users[0], "Organizations"); err != nil {
 		t.Errorf("failed to load organizations on users[0] fixture, %s", err)
 	}
 
-	locations := []m.Location{{}, {}}
+	locations := []models.Location{{}, {}}
 	for i := range locations {
-		createFixture(ms, &(locations[i]))
+		createFixture(ms, &locations[i])
 	}
 
 	// Load Post test fixtures
-	posts := []m.Post{
+	posts := []models.Post{
 		{
 			CreatedByID:    users[0].ID,
-			Type:           m.PostTypeRequest,
+			Type:           models.PostTypeRequest,
 			OrganizationID: users[0].Organizations[0].ID,
 			Title:          "First Request",
-			Size:           m.PostSizeMedium,
-			Status:         m.PostStatusOpen,
+			Size:           models.PostSizeMedium,
+			Status:         models.PostStatusOpen,
 			Uuid:           domain.GetUuid(),
 			ProviderID:     nulls.NewInt(users[1].ID),
 			ReceiverID:     nulls.NewInt(users[0].ID),
@@ -99,11 +99,11 @@ func CreateFixtures_GetPostRecipients(ms *ModelSuite, t *testing.T) orgUserPostF
 		},
 		{
 			CreatedByID:    users[0].ID,
-			Type:           m.PostTypeRequest,
+			Type:           models.PostTypeRequest,
 			OrganizationID: users[0].Organizations[0].ID,
 			Title:          "Second Request",
-			Size:           m.PostSizeMedium,
-			Status:         m.PostStatusOpen,
+			Size:           models.PostSizeMedium,
+			Status:         models.PostStatusOpen,
 			Uuid:           domain.GetUuid(),
 			ReceiverID:     nulls.NewInt(users[0].ID),
 			DestinationID:  locations[1].ID,
@@ -114,14 +114,14 @@ func CreateFixtures_GetPostRecipients(ms *ModelSuite, t *testing.T) orgUserPostF
 			t.Errorf("could not create test post ... %v", err)
 			t.FailNow()
 		}
-		if err := m.DB.Load(&posts[i], "CreatedBy", "Provider", "Receiver", "Organization"); err != nil {
+		if err := models.DB.Load(&posts[i], "CreatedBy", "Provider", "Receiver", "Organization"); err != nil {
 			t.Errorf("Error loading post associations: %s", err)
 			t.FailNow()
 		}
 	}
 
 	return orgUserPostFixtures{
-		orgs:  m.Organizations{org},
+		orgs:  models.Organizations{org},
 		users: users,
 		posts: posts,
 	}
@@ -132,10 +132,10 @@ func CreateFixtures_RequestStatusUpdatedNotifications(ms *ModelSuite, t *testing
 	unique := domain.GetUuid().String()
 
 	// Load Organization test fixtures
-	org := m.Organization{
+	org := models.Organization{
 		Name:       "ACME-" + unique,
 		Uuid:       domain.GetUuid(),
-		AuthType:   m.AuthTypeSaml,
+		AuthType:   models.AuthTypeSaml,
 		AuthConfig: "{}",
 	}
 
@@ -145,7 +145,7 @@ func CreateFixtures_RequestStatusUpdatedNotifications(ms *ModelSuite, t *testing
 	}
 
 	// Load User test fixtures
-	users := m.Users{
+	users := models.Users{
 		{
 			Email:     "user1-" + unique + "@example.com",
 			FirstName: "Existing1",
@@ -176,7 +176,7 @@ func CreateFixtures_RequestStatusUpdatedNotifications(ms *ModelSuite, t *testing
 	}
 
 	// Load UserOrganization test fixtures
-	userOrg := m.UserOrganization{
+	userOrg := models.UserOrganization{
 
 		OrganizationID: org.ID,
 		UserID:         users[0].ID,
@@ -188,24 +188,24 @@ func CreateFixtures_RequestStatusUpdatedNotifications(ms *ModelSuite, t *testing
 		t.FailNow()
 	}
 
-	if err := m.DB.Load(&users[0], "Organizations"); err != nil {
+	if err := models.DB.Load(&users[0], "Organizations"); err != nil {
 		t.Errorf("failed to load organizations on users[0] fixture, %s", err)
 	}
 
-	locations := []m.Location{{}, {}}
+	locations := []models.Location{{}, {}}
 	for i := range locations {
-		createFixture(ms, &(locations[i]))
+		createFixture(ms, &locations[i])
 	}
 
 	// Load Post test fixtures
-	posts := []m.Post{
+	posts := []models.Post{
 		{
 			CreatedByID:    users[0].ID,
-			Type:           m.PostTypeRequest,
+			Type:           models.PostTypeRequest,
 			OrganizationID: users[0].Organizations[0].ID,
 			Title:          "First Request",
-			Size:           m.PostSizeMedium,
-			Status:         m.PostStatusOpen,
+			Size:           models.PostSizeMedium,
+			Status:         models.PostStatusOpen,
 			Uuid:           domain.GetUuid(),
 			ProviderID:     nulls.NewInt(users[1].ID),
 			ReceiverID:     nulls.NewInt(users[0].ID),
@@ -213,11 +213,11 @@ func CreateFixtures_RequestStatusUpdatedNotifications(ms *ModelSuite, t *testing
 		},
 		{
 			CreatedByID:    users[0].ID,
-			Type:           m.PostTypeRequest,
+			Type:           models.PostTypeRequest,
 			OrganizationID: users[0].Organizations[0].ID,
 			Title:          "Second Request",
-			Size:           m.PostSizeMedium,
-			Status:         m.PostStatusOpen,
+			Size:           models.PostSizeMedium,
+			Status:         models.PostStatusOpen,
 			Uuid:           domain.GetUuid(),
 			ReceiverID:     nulls.NewInt(users[0].ID),
 			DestinationID:  locations[1].ID,
@@ -228,14 +228,14 @@ func CreateFixtures_RequestStatusUpdatedNotifications(ms *ModelSuite, t *testing
 			t.Errorf("could not create test post ... %v", err)
 			t.FailNow()
 		}
-		if err := m.DB.Load(&posts[i], "CreatedBy", "Provider", "Receiver", "Organization"); err != nil {
+		if err := models.DB.Load(&posts[i], "CreatedBy", "Provider", "Receiver", "Organization"); err != nil {
 			t.Errorf("Error loading post associations: %s", err)
 			t.FailNow()
 		}
 	}
 
 	return orgUserPostFixtures{
-		orgs:  m.Organizations{org},
+		orgs:  models.Organizations{org},
 		users: users,
 		posts: posts,
 	}
@@ -246,10 +246,10 @@ func CreateFixtures_sendNotificationRequestFromStatus(ms *ModelSuite, t *testing
 	unique := domain.GetUuid().String()
 
 	// Load Organization test fixtures
-	org := m.Organization{
+	org := models.Organization{
 		Name:       "ACME-" + unique,
 		Uuid:       domain.GetUuid(),
-		AuthType:   m.AuthTypeSaml,
+		AuthType:   models.AuthTypeSaml,
 		AuthConfig: "{}",
 	}
 
@@ -259,7 +259,7 @@ func CreateFixtures_sendNotificationRequestFromStatus(ms *ModelSuite, t *testing
 	}
 
 	// Load User test fixtures
-	users := m.Users{
+	users := models.Users{
 		{
 			Email:     "user1-" + unique + "@example.com",
 			FirstName: "Existing1",
@@ -290,7 +290,7 @@ func CreateFixtures_sendNotificationRequestFromStatus(ms *ModelSuite, t *testing
 	}
 
 	// Load UserOrganization test fixtures
-	userOrg := m.UserOrganization{
+	userOrg := models.UserOrganization{
 
 		OrganizationID: org.ID,
 		UserID:         users[0].ID,
@@ -302,24 +302,24 @@ func CreateFixtures_sendNotificationRequestFromStatus(ms *ModelSuite, t *testing
 		t.FailNow()
 	}
 
-	if err := m.DB.Load(&users[0], "Organizations"); err != nil {
+	if err := models.DB.Load(&users[0], "Organizations"); err != nil {
 		t.Errorf("failed to load organizations on users[0] fixture, %s", err)
 	}
 
-	locations := []m.Location{{}, {}}
+	locations := []models.Location{{}, {}}
 	for i := range locations {
-		createFixture(ms, &(locations[i]))
+		createFixture(ms, &locations[i])
 	}
 
 	// Load Post test fixtures
-	posts := []m.Post{
+	posts := []models.Post{
 		{
 			CreatedByID:    users[0].ID,
-			Type:           m.PostTypeRequest,
+			Type:           models.PostTypeRequest,
 			OrganizationID: users[0].Organizations[0].ID,
 			Title:          "First Request",
-			Size:           m.PostSizeMedium,
-			Status:         m.PostStatusOpen,
+			Size:           models.PostSizeMedium,
+			Status:         models.PostStatusOpen,
 			Uuid:           domain.GetUuid(),
 			ProviderID:     nulls.NewInt(users[1].ID),
 			ReceiverID:     nulls.NewInt(users[0].ID),
@@ -327,11 +327,11 @@ func CreateFixtures_sendNotificationRequestFromStatus(ms *ModelSuite, t *testing
 		},
 		{
 			CreatedByID:    users[0].ID,
-			Type:           m.PostTypeRequest,
+			Type:           models.PostTypeRequest,
 			OrganizationID: users[0].Organizations[0].ID,
 			Title:          "Second Request",
-			Size:           m.PostSizeMedium,
-			Status:         m.PostStatusOpen,
+			Size:           models.PostSizeMedium,
+			Status:         models.PostStatusOpen,
 			Uuid:           domain.GetUuid(),
 			ReceiverID:     nulls.NewInt(users[0].ID),
 			DestinationID:  locations[1].ID,
@@ -342,14 +342,14 @@ func CreateFixtures_sendNotificationRequestFromStatus(ms *ModelSuite, t *testing
 			t.Errorf("could not create test post ... %v", err)
 			t.FailNow()
 		}
-		if err := m.DB.Load(&posts[i], "CreatedBy", "Provider", "Receiver", "Organization"); err != nil {
+		if err := models.DB.Load(&posts[i], "CreatedBy", "Provider", "Receiver", "Organization"); err != nil {
 			t.Errorf("Error loading post associations: %s", err)
 			t.FailNow()
 		}
 	}
 
 	return orgUserPostFixtures{
-		orgs:  m.Organizations{org},
+		orgs:  models.Organizations{org},
 		users: users,
 		posts: posts,
 	}

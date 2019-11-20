@@ -41,6 +41,7 @@ func (e *EmailNotifier) Send(msg Message) error {
 		ToEmail:   msg.ToEmail,
 		Template:  msg.Template,
 		Data:      msg.Data,
+		Subject:   msg.Subject,
 	}
 
 	return emailService.Send(emailMessage)

@@ -68,14 +68,14 @@ func CreateFixtures_ThreadParticipant_UpdateLastViewedAt(ms *ModelSuite, t *test
 		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1", Uuid: domain.GetUuid()},
 	}
 	for i := range users {
-		createFixture(ms, &(users[i]))
+		createFixture(ms, &users[i])
 	}
 
 	userOrgs := UserOrganizations{
 		{OrganizationID: org.ID, UserID: users[0].ID, AuthID: users[0].Email, AuthEmail: users[0].Email},
 	}
 	for i := range userOrgs {
-		createFixture(ms, &(userOrgs[i]))
+		createFixture(ms, &userOrgs[i])
 	}
 
 	location := Location{}
@@ -97,14 +97,14 @@ func CreateFixtures_ThreadParticipant_UpdateLastViewedAt(ms *ModelSuite, t *test
 		},
 	}
 	for i := range posts {
-		createFixture(ms, &(posts[i]))
+		createFixture(ms, &posts[i])
 	}
 
 	threads := Threads{
 		{Uuid: domain.GetUuid(), PostID: posts[0].ID},
 	}
 	for i := range threads {
-		createFixture(ms, &(threads[i]))
+		createFixture(ms, &threads[i])
 	}
 
 	threadParticipants := ThreadParticipants{
@@ -115,7 +115,7 @@ func CreateFixtures_ThreadParticipant_UpdateLastViewedAt(ms *ModelSuite, t *test
 		},
 	}
 	for i := range threadParticipants {
-		createFixture(ms, &(threadParticipants[i]))
+		createFixture(ms, &threadParticipants[i])
 	}
 
 	return ThreadFixtures{
@@ -175,7 +175,7 @@ func CreateFixtures_ThreadParticipant_FindByThreadIDAndUserID(ms *ModelSuite) Th
 		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1", Uuid: domain.GetUuid()},
 	}
 	for i := range users {
-		createFixture(ms, &(users[i]))
+		createFixture(ms, &users[i])
 	}
 
 	location := Location{}
@@ -185,21 +185,21 @@ func CreateFixtures_ThreadParticipant_FindByThreadIDAndUserID(ms *ModelSuite) Th
 		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID, DestinationID: location.ID},
 	}
 	for i := range posts {
-		createFixture(ms, &(posts[i]))
+		createFixture(ms, &posts[i])
 	}
 
 	threads := Threads{
 		{Uuid: domain.GetUuid(), PostID: posts[0].ID},
 	}
 	for i := range threads {
-		createFixture(ms, &(threads[i]))
+		createFixture(ms, &threads[i])
 	}
 
 	threadParticipants := ThreadParticipants{
 		{ThreadID: threads[0].ID, UserID: users[0].ID},
 	}
 	for i := range threadParticipants {
-		createFixture(ms, &(threadParticipants[i]))
+		createFixture(ms, &threadParticipants[i])
 	}
 
 	return ThreadFixtures{
@@ -253,7 +253,7 @@ func CreateFixtures_ThreadParticipant_UpdateLastNotifiedAt(ms *ModelSuite, t *te
 		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1", Uuid: domain.GetUuid()},
 	}
 	for i := range users {
-		createFixture(ms, &(users[i]))
+		createFixture(ms, &users[i])
 	}
 
 	location := Location{}
@@ -263,14 +263,14 @@ func CreateFixtures_ThreadParticipant_UpdateLastNotifiedAt(ms *ModelSuite, t *te
 		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID, DestinationID: location.ID},
 	}
 	for i := range posts {
-		createFixture(ms, &(posts[i]))
+		createFixture(ms, &posts[i])
 	}
 
 	threads := Threads{
 		{Uuid: domain.GetUuid(), PostID: posts[0].ID},
 	}
 	for i := range threads {
-		createFixture(ms, &(threads[i]))
+		createFixture(ms, &threads[i])
 	}
 
 	threadParticipants := ThreadParticipants{
@@ -281,7 +281,7 @@ func CreateFixtures_ThreadParticipant_UpdateLastNotifiedAt(ms *ModelSuite, t *te
 		},
 	}
 	for i := range threadParticipants {
-		createFixture(ms, &(threadParticipants[i]))
+		createFixture(ms, &threadParticipants[i])
 	}
 
 	return ThreadFixtures{
