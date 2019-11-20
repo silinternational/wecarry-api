@@ -27,6 +27,12 @@ type CreateOrganizationInput struct {
 	AuthConfig string  `json:"authConfig"`
 }
 
+type CreateUserPreferenceInput struct {
+	UserID string `json:"userID"`
+	Key    string `json:"key"`
+	Value  string `json:"value"`
+}
+
 type LocationInput struct {
 	Description string   `json:"description"`
 	Country     string   `json:"country"`
@@ -61,6 +67,13 @@ type UpdateUserInput struct {
 	ID       *string        `json:"id"`
 	PhotoID  *string        `json:"photoID"`
 	Location *LocationInput `json:"location"`
+}
+
+type UpdateUserPreferenceInput struct {
+	ID     string `json:"id"`
+	UserID string `json:"userID"`
+	Key    string `json:"key"`
+	Value  string `json:"value"`
 }
 
 type PostRole string

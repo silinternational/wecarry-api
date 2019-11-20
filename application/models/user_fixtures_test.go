@@ -487,7 +487,7 @@ func CreateUserFixtures_TestGetPreference(ms *ModelSuite) UserFixtures {
 		createFixture(ms, &users[i])
 	}
 
-	// Load UserSetting test fixtures
+	// Load UserPreferences test fixtures
 	userPreferences := UserPreferences{
 		{
 			Uuid:   domain.GetUuid(),

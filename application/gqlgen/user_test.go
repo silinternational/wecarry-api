@@ -24,6 +24,11 @@ type UserResponse struct {
 		Posts []struct {
 			ID string `json:"id"`
 		}
+		Preferences []struct {
+			ID    string `json:"id"`
+			Key   string `json:"key"`
+			Value string `json:"value"`
+		}
 		PhotoURL string `json:"photoURL"`
 		Location struct {
 			Description string  `json:"description"`
@@ -40,6 +45,7 @@ type UserQueryFixtures struct {
 	models.Users
 	models.Posts
 	models.Locations
+	models.UserPreferences
 }
 
 // Fixtures_UserQuery creates fixtures for Test_UserQuery
@@ -89,6 +95,26 @@ func Fixtures_UserQuery(gs *GqlgenSuite, t *testing.T) UserQueryFixtures {
 	location := models.Location{}
 	createFixture(gs, &location)
 
+	// Load UserPreferences test fixtures
+	userPreferences := models.UserPreferences{
+		{
+			Uuid:   domain.GetUuid(),
+			UserID: users[1].ID,
+			Key:    domain.UserPreferenceKeyLanguage,
+			Value:  domain.UserPreferenceLanguageFrench,
+		},
+		{
+			Uuid:   domain.GetUuid(),
+			UserID: users[1].ID,
+			Key:    domain.UserPreferenceKeyUnits,
+			Value:  domain.UserPreferenceUnitsMetric,
+		},
+	}
+
+	for i := range userPreferences {
+		createFixture(gs, &userPreferences[i])
+	}
+
 	posts := models.Posts{
 		{
 			Uuid:           domain.GetUuid(),
@@ -120,10 +146,11 @@ func Fixtures_UserQuery(gs *GqlgenSuite, t *testing.T) UserQueryFixtures {
 	}
 
 	return UserQueryFixtures{
-		Organization: *org,
-		Users:        users,
-		Posts:        posts,
-		Locations:    locations,
+		Organization:    *org,
+		Users:           users,
+		UserPreferences: userPreferences,
+		Posts:           posts,
+		Locations:       locations,
 	}
 }
 
@@ -144,7 +171,7 @@ func (gs *GqlgenSuite) Test_UserQuery() {
 
 	var resp UserResponse
 
-	allFields := `{ id email nickname adminRole photoURL posts (role: CREATEDBY) {id} organizations {id}
+	allFields := `{ id email nickname adminRole photoURL preferences {key}  posts (role: CREATEDBY) {id} organizations {id}
 		location {description country latitude longitude} }`
 	testCases := []testCase{
 		{
@@ -169,6 +196,10 @@ func (gs *GqlgenSuite) Test_UserQuery() {
 				gs.Equal(f.Locations[0].Country, resp.User.Location.Country, "incorrect country")
 				gs.Equal(f.Locations[0].Latitude.Float64, resp.User.Location.Lat, "incorrect latitude")
 				gs.Equal(f.Locations[0].Longitude.Float64, resp.User.Location.Long, "incorrect longitude")
+
+				gs.Equal(2, len(resp.User.Preferences), "wrong number of UserPreferences")
+				gs.Equal(f.UserPreferences[0].Key, resp.User.Preferences[0].Key, "incorrect preference 0")
+				gs.Equal(f.UserPreferences[1].Key, resp.User.Preferences[1].Key, "incorrect preference 1")
 			},
 		},
 		{

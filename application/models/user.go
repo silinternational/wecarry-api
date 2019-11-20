@@ -524,6 +524,12 @@ func (u *User) GetPreference(key string) (*UserPreference, error) {
 func (u *User) CreatePreference(key, value string) (UserPreference, error) {
 	uPref := UserPreference{}
 
+	if err := u.FindByUUID(u.Uuid.String(), "id"); err != nil {
+		err := fmt.Errorf("can't create UserPreference - error finding user with uuid %s ... %v",
+			u.Uuid.String(), err)
+		return UserPreference{}, err
+	}
+
 	DB.Where("user_id = ?", u.ID).Where("key = ?", key).First(&uPref)
 	if uPref.ID > 0 {
 		err := fmt.Errorf("can't create UserPreference with key %s.  Already exists with id %v.", key, uPref.ID)

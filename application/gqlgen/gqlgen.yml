@@ -38,6 +38,8 @@ models:
         resolver: true
       unreadMessageCount:
         resolver: true
+      userPreference:
+        resolver: true
   Post:
     model: models.Post
     fields:
@@ -84,6 +86,8 @@ models:
     model: gqlgen.postInput
   Location:
     model: models.Location
+  UserPreference:
+    model: models.UserPreference
 
 #directives:
 #  deprecated:
