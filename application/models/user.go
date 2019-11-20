@@ -520,3 +520,28 @@ func (u *User) GetPreference(key string) (*UserPreference, error) {
 
 	return &uPref, nil
 }
+
+// UpdatePreference finds a User's Preference by UUID, ensures the new key is the same as the
+// original and if so, updates the UserPreference with the new value
+func (u *User) UpdatePreference(uuid uuid.UUID, key, value string) (UserPreference, error) {
+	uPref := UserPreference{}
+
+	err := DB.Where("user_id = ?", u.ID).Where("uuid = ?", uuid).First(&uPref)
+	if err != nil {
+		return uPref, err
+	}
+
+	if key != uPref.Key {
+		err := fmt.Errorf("mismatching key for UserPreference with uuid %v. Original was '%s'. New one is '%s'",
+			uuid, uPref.Key, key)
+		return UserPreference{}, err
+	}
+
+	uPref.Value = value
+
+	if err := DB.Save(&uPref); err != nil {
+		return UserPreference{}, err
+	}
+
+	return uPref, nil
+}
