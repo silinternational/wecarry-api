@@ -461,10 +461,10 @@ ALTER SEQUENCE public.user_organizations_id_seq OWNED BY public.user_organizatio
 
 
 --
--- Name: user_settings; Type: TABLE; Schema: public; Owner: wecarry
+-- Name: user_preferences; Type: TABLE; Schema: public; Owner: wecarry
 --
 
-CREATE TABLE public.user_settings (
+CREATE TABLE public.user_preferences (
     id integer NOT NULL,
     uuid uuid NOT NULL,
     user_id integer NOT NULL,
@@ -475,13 +475,13 @@ CREATE TABLE public.user_settings (
 );
 
 
-ALTER TABLE public.user_settings OWNER TO wecarry;
+ALTER TABLE public.user_preferences OWNER TO wecarry;
 
 --
--- Name: user_settings_id_seq; Type: SEQUENCE; Schema: public; Owner: wecarry
+-- Name: user_preferences_id_seq; Type: SEQUENCE; Schema: public; Owner: wecarry
 --
 
-CREATE SEQUENCE public.user_settings_id_seq
+CREATE SEQUENCE public.user_preferences_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -489,13 +489,13 @@ CREATE SEQUENCE public.user_settings_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.user_settings_id_seq OWNER TO wecarry;
+ALTER TABLE public.user_preferences_id_seq OWNER TO wecarry;
 
 --
--- Name: user_settings_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wecarry
+-- Name: user_preferences_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wecarry
 --
 
-ALTER SEQUENCE public.user_settings_id_seq OWNED BY public.user_settings.id;
+ALTER SEQUENCE public.user_preferences_id_seq OWNED BY public.user_preferences.id;
 
 
 --
@@ -619,10 +619,10 @@ ALTER TABLE ONLY public.user_organizations ALTER COLUMN id SET DEFAULT nextval('
 
 
 --
--- Name: user_settings id; Type: DEFAULT; Schema: public; Owner: wecarry
+-- Name: user_preferences id; Type: DEFAULT; Schema: public; Owner: wecarry
 --
 
-ALTER TABLE ONLY public.user_settings ALTER COLUMN id SET DEFAULT nextval('public.user_settings_id_seq'::regclass);
+ALTER TABLE ONLY public.user_preferences ALTER COLUMN id SET DEFAULT nextval('public.user_preferences_id_seq'::regclass);
 
 
 --
@@ -721,11 +721,11 @@ ALTER TABLE ONLY public.user_organizations
 
 
 --
--- Name: user_settings user_settings_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
+-- Name: user_preferences user_preferences_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
 --
 
-ALTER TABLE ONLY public.user_settings
-    ADD CONSTRAINT user_settings_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.user_preferences
+    ADD CONSTRAINT user_preferences_pkey PRIMARY KEY (id);
 
 
 --
@@ -842,10 +842,10 @@ CREATE UNIQUE INDEX user_organizations_organization_id_user_id_idx ON public.use
 
 
 --
--- Name: user_settings_uuid_idx; Type: INDEX; Schema: public; Owner: wecarry
+-- Name: user_preferences_uuid_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
-CREATE UNIQUE INDEX user_settings_uuid_idx ON public.user_settings USING btree (uuid);
+CREATE UNIQUE INDEX user_preferences_uuid_idx ON public.user_preferences USING btree (uuid);
 
 
 --
@@ -1036,11 +1036,11 @@ ALTER TABLE ONLY public.user_organizations
 
 
 --
--- Name: user_settings user_settings_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
+-- Name: user_preferences user_preferences_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
-ALTER TABLE ONLY public.user_settings
-    ADD CONSTRAINT user_settings_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.user_preferences
+    ADD CONSTRAINT user_preferences_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 
 --
