@@ -367,6 +367,8 @@ func (ms *ModelSuite) TestSendNewPostNotification() {
 
 func (ms *ModelSuite) TestSendNewPostNotifications() {
 	t := ms.T()
+	f := createFixturesForTestSendNewPostNotifications(ms)
+
 	tests := []struct {
 		name           string
 		post           models.Post
@@ -375,25 +377,25 @@ func (ms *ModelSuite) TestSendNewPostNotifications() {
 	}{
 		{
 			name:           "empty",
-			post:           models.Post{CreatedByID: 1, Type: models.PostTypeRequest},
+			post:           f.posts[0],
 			wantEmailCount: 0,
 		},
 		{
 			name: "two users",
-			post: models.Post{CreatedByID: 1, Type: models.PostTypeRequest},
+			post: f.posts[0],
 			users: models.Users{
-				{Email: "user1@example.com"},
-				{Email: "user2@example.com"},
+				f.users[1],
+				f.users[2],
 			},
 			wantEmailCount: 2,
 		},
 		{
 			name: "blank in the middle",
-			post: models.Post{CreatedByID: 1, Type: models.PostTypeRequest},
+			post: f.posts[0],
 			users: models.Users{
-				{Email: "user1@example.com"},
+				f.users[1],
 				{Email: ""},
-				{Email: "user2@example.com"},
+				f.users[2],
 			},
 			wantEmailCount: 2,
 		},

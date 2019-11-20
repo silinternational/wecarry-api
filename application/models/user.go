@@ -495,21 +495,14 @@ func (u *User) WantsPostNotification(post Post) bool {
 		domain.ErrLogger.Printf("load of user location failed, %s", err)
 		return false
 	}
-	if !u.Location.Longitude.Valid || !u.Location.Latitude.Valid {
-		return false
-	}
 
 	postLocation, err := post.GetLocationForNotifications()
 	if err != nil {
 		domain.ErrLogger.Print(err.Error())
 		return false
 	}
-	if !postLocation.Longitude.Valid || !postLocation.Latitude.Valid {
-		return false
-	}
 
-	d := u.Location.DistanceKm(*postLocation)
-	if d > domain.DefaultProximityDistanceKm {
+	if !u.Location.IsNear(*postLocation) {
 		return false
 	}
 
