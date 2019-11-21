@@ -204,7 +204,7 @@ type OrganizationDomainResolver interface {
 }
 type PostResolver interface {
 	ID(ctx context.Context, obj *models.Post) (string, error)
-	Type(ctx context.Context, obj *models.Post) (models.PostType, error)
+
 	CreatedBy(ctx context.Context, obj *models.Post) (*models.User, error)
 	Receiver(ctx context.Context, obj *models.Post) (*models.User, error)
 	Provider(ctx context.Context, obj *models.Post) (*models.User, error)
@@ -2849,13 +2849,13 @@ func (ec *executionContext) _Post_type(ctx context.Context, field graphql.Collec
 		Object:   "Post",
 		Field:    field,
 		Args:     nil,
-		IsMethod: true,
+		IsMethod: false,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Post().Type(rctx, obj)
+		return obj.Type, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6726,19 +6726,10 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 				return res
 			})
 		case "type":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Post_type(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			})
+			out.Values[i] = ec._Post_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "createdBy":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {

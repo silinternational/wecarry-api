@@ -55,14 +55,6 @@ func (r *postResolver) ID(ctx context.Context, obj *models.Post) (string, error)
 	return obj.Uuid.String(), nil
 }
 
-// Type resolves the `type` property of the post query. It converts the model type to the gqlgen enum type
-func (r *postResolver) Type(ctx context.Context, obj *models.Post) (models.PostType, error) {
-	if obj == nil {
-		return "", nil
-	}
-	return models.PostType(obj.Type), nil
-}
-
 // CreatedBy resolves the `createdBy` property of the post query. It retrieves the related record from the database.
 func (r *postResolver) CreatedBy(ctx context.Context, obj *models.Post) (*models.User, error) {
 	if obj == nil {
