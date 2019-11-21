@@ -159,7 +159,7 @@ func Fixtures_UserQuery(gs *GqlgenSuite, t *testing.T) UserQueryFixtures {
 	}
 }
 
-// Test_UserQuery tests the User GraphQL query
+// TestUserQuery tests the User GraphQL query
 func (gs *GqlgenSuite) TestUserQuery() {
 	t := gs.T()
 
@@ -236,7 +236,7 @@ func (gs *GqlgenSuite) TestUserQuery() {
 	}
 }
 
-// Test_UserQuery tests the User GraphQL query
+// TestUpdateUser tests the updateUser GraphQL mutation
 func (gs *GqlgenSuite) TestUpdateUser() {
 	t := gs.T()
 

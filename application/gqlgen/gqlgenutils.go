@@ -38,9 +38,9 @@ func convertGqlLocationInputToDBLocation(input LocationInput) models.Location {
 }
 
 func convertUserPreferencesToKeyValues(input []UpdateUserPreferenceInput) [][2]string {
-	keyVals := [][2]string{}
-	for _, p := range input {
-		keyVals = append(keyVals, [2]string{p.Key, p.Value})
+	keyVals := make([][2]string, len(input))
+	for i, p := range input {
+		keyVals[i] = [2]string{p.Key, p.Value}
 	}
 
 	return keyVals

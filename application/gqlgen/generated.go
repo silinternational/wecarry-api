@@ -1093,7 +1093,7 @@ type User {
     organizations: [Organization!]!
     posts(role: PostRole!): [Post!]!
     photoURL: String!
-    preferences: [UserPreference!]
+    preferences: [UserPreference!]!
     location: Location
     unreadMessageCount: Int!
 }
@@ -1108,7 +1108,7 @@ input UpdateUserInput {
     id: ID
     photoID: String
     location: LocationInput
-    preferences: [UpdateUserPreferenceInput!]
+    preferences: [UpdateUserPreferenceInput!]!
 }
 
 input UpdateUserPreferenceInput {
@@ -4716,12 +4716,15 @@ func (ec *executionContext) _User_preferences(ctx context.Context, field graphql
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.([]models.UserPreference)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOUserPreference2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUserPreference(ctx, field.Selections, res)
+	return ec.marshalNUserPreference2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUserPreference(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _User_location(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
@@ -6497,7 +6500,7 @@ func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, o
 			}
 		case "preferences":
 			var err error
-			it.Preferences, err = ec.unmarshalOUpdateUserPreferenceInput2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐUpdateUserPreferenceInput(ctx, v)
+			it.Preferences, err = ec.unmarshalNUpdateUserPreferenceInput2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐUpdateUserPreferenceInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -7536,6 +7539,9 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 					}
 				}()
 				res = ec._User_preferences(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			})
 		case "location":
@@ -8428,6 +8434,26 @@ func (ec *executionContext) unmarshalNUpdateUserPreferenceInput2githubᚗcomᚋs
 	return ec.unmarshalInputUpdateUserPreferenceInput(ctx, v)
 }
 
+func (ec *executionContext) unmarshalNUpdateUserPreferenceInput2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐUpdateUserPreferenceInput(ctx context.Context, v interface{}) ([]UpdateUserPreferenceInput, error) {
+	var vSlice []interface{}
+	if v != nil {
+		if tmp1, ok := v.([]interface{}); ok {
+			vSlice = tmp1
+		} else {
+			vSlice = []interface{}{v}
+		}
+	}
+	var err error
+	res := make([]UpdateUserPreferenceInput, len(vSlice))
+	for i := range vSlice {
+		res[i], err = ec.unmarshalNUpdateUserPreferenceInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐUpdateUserPreferenceInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
 func (ec *executionContext) marshalNUser2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx context.Context, sel ast.SelectionSet, v models.User) graphql.Marshaler {
 	return ec._User(ctx, sel, &v)
 }
@@ -8481,6 +8507,43 @@ func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋsilinternationalᚋwe
 
 func (ec *executionContext) marshalNUserPreference2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUserPreference(ctx context.Context, sel ast.SelectionSet, v models.UserPreference) graphql.Marshaler {
 	return ec._UserPreference(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUserPreference2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUserPreference(ctx context.Context, sel ast.SelectionSet, v []models.UserPreference) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		rctx := &graphql.ResolverContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNUserPreference2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUserPreference(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
@@ -8881,26 +8944,6 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return ec.marshalOString2string(ctx, sel, *v)
 }
 
-func (ec *executionContext) unmarshalOUpdateUserPreferenceInput2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐUpdateUserPreferenceInput(ctx context.Context, v interface{}) ([]UpdateUserPreferenceInput, error) {
-	var vSlice []interface{}
-	if v != nil {
-		if tmp1, ok := v.([]interface{}); ok {
-			vSlice = tmp1
-		} else {
-			vSlice = []interface{}{v}
-		}
-	}
-	var err error
-	res := make([]UpdateUserPreferenceInput, len(vSlice))
-	for i := range vSlice {
-		res[i], err = ec.unmarshalNUpdateUserPreferenceInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐUpdateUserPreferenceInput(ctx, vSlice[i])
-		if err != nil {
-			return nil, err
-		}
-	}
-	return res, nil
-}
-
 func (ec *executionContext) marshalOUser2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx context.Context, sel ast.SelectionSet, v models.User) graphql.Marshaler {
 	return ec._User(ctx, sel, &v)
 }
@@ -8919,46 +8962,6 @@ func (ec *executionContext) unmarshalOUserAdminRole2githubᚗcomᚋsilinternatio
 
 func (ec *executionContext) marshalOUserAdminRole2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUserAdminRole(ctx context.Context, sel ast.SelectionSet, v models.UserAdminRole) graphql.Marshaler {
 	return graphql.MarshalString(string(v))
-}
-
-func (ec *executionContext) marshalOUserPreference2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUserPreference(ctx context.Context, sel ast.SelectionSet, v []models.UserPreference) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		rctx := &graphql.ResolverContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithResolverContext(ctx, rctx)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNUserPreference2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUserPreference(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-	return ret
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValue(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {

@@ -229,13 +229,11 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 	var preferences models.UserPreferences
 
 	// No deleting of preferences supported at this time
-	if input.Preferences != nil {
-		keyVals := convertUserPreferencesToKeyValues(input.Preferences)
+	keyVals := convertUserPreferencesToKeyValues(input.Preferences)
 
-		var err error
-		if preferences, err = user.UpdatePreferencesByKey(keyVals); err != nil {
-			return nil, reportError(ctx, err, "UpdateUser.Preferences")
-		}
+	var err error
+	if preferences, err = user.UpdatePreferencesByKey(keyVals); err != nil {
+		return nil, reportError(ctx, err, "UpdateUser.Preferences")
 	}
 
 	if err := user.Save(); err != nil {

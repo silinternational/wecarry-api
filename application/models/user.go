@@ -560,10 +560,8 @@ func (u *User) GetPreference(key string) (*UserPreference, error) {
 func (u *User) CreatePreference(key, value string) (UserPreference, error) {
 	uPref := UserPreference{}
 
-	if err := u.FindByUUID(u.Uuid.String(), "id"); err != nil {
-		err := fmt.Errorf("can't create UserPreference - error finding user with uuid %s ... %v",
-			u.Uuid.String(), err)
-		return UserPreference{}, err
+	if u.ID <= 0 {
+		return UserPreference{}, errors.New("invalid user ID in CreatePreference.")
 	}
 
 	DB.Where("user_id = ?", u.ID).Where("key = ?", key).First(&uPref)
@@ -572,7 +570,6 @@ func (u *User) CreatePreference(key, value string) (UserPreference, error) {
 		return UserPreference{}, err
 	}
 
-	uPref.Uuid = domain.GetUuid()
 	uPref.UserID = u.ID
 	uPref.Key = key
 	uPref.Value = value
@@ -611,14 +608,14 @@ func (u *User) UpdatePreferenceByKey(key, value string) (UserPreference, error) 
 
 // UpdatePreferencesByKey will also create new instances for preferences that don't exist for that user
 func (u *User) UpdatePreferencesByKey(keyVals [][2]string) (UserPreferences, error) {
-	uPrefs := UserPreferences{}
+	uPrefs := make(UserPreferences, len(keyVals))
 
-	for _, keyVal := range keyVals {
+	for i, keyVal := range keyVals {
 		uP, err := u.UpdatePreferenceByKey(keyVal[0], keyVal[1])
 		if err != nil {
 			return UserPreferences{}, err
 		}
-		uPrefs = append(uPrefs, uP)
+		uPrefs[i] = uP
 	}
 
 	return u.GetPreferences()

@@ -65,7 +65,7 @@ type User {
     organizations: [Organization!]!
     posts(role: PostRole!): [Post!]!
     photoURL: String!
-    preferences: [UserPreference!]
+    preferences: [UserPreference!]!
     location: Location
     unreadMessageCount: Int!
 }
@@ -80,7 +80,7 @@ input UpdateUserInput {
     id: ID
     photoID: String
     location: LocationInput
-    preferences: [UpdateUserPreferenceInput!]
+    preferences: [UpdateUserPreferenceInput!]!
 }
 
 input UpdateUserPreferenceInput {
