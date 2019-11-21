@@ -291,7 +291,7 @@ type Sender struct {
 }
 
 func join(s1, s2 models.PostStatus) string {
-	return fmt.Printf("%s-%s", s1, s2)
+	return fmt.Sprintf("%s-%s", s1, s2)
 }
 
 var statusSenders = map[string]Sender{
