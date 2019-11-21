@@ -78,17 +78,15 @@ input UpdateUserInput {
     id: ID
     photoID: String
     location: LocationInput
+    preferences: [UpdateUserPreferenceInput!]
 }
 
 input CreateUserPreferenceInput {
-    userID: String!
     key: String!
     value: String!
 }
 
 input UpdateUserPreferenceInput {
-    id: ID!
-    userID: String!
     key: String!
     value: String!
 }

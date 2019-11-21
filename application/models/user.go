@@ -561,27 +561,42 @@ func (u *User) CreatePreference(key, value string) (UserPreference, error) {
 	return uPref, nil
 }
 
-// UpdatePreference finds a User's Preference by UUID, ensures the new key is the same as the
-// original and if so, updates the UserPreference with the new value
-func (u *User) UpdatePreference(uuid uuid.UUID, key, value string) (UserPreference, error) {
-	uPref := UserPreference{}
+// UpdatePreferenceByKey will also create a new instance, if a match is not found for that user
+func (u *User) UpdatePreferenceByKey(key, value string) (UserPreference, error) {
 
-	err := DB.Where("user_id = ?", u.ID).Where("uuid = ?", uuid).First(&uPref)
+	uPref, err := u.GetPreference(key)
 	if err != nil {
-		return uPref, err
+		return UserPreference{}, err
 	}
 
-	if key != uPref.Key {
-		err := fmt.Errorf("mismatching key for UserPreference with uuid %v. Original was '%s'. New one is '%s'",
-			uuid, uPref.Key, key)
-		return UserPreference{}, err
+	if uPref == nil {
+		return u.CreatePreference(key, value)
+	}
+
+	if uPref.Value == value {
+		return *uPref, nil
 	}
 
 	uPref.Value = value
 
-	if err := DB.Save(&uPref); err != nil {
+	if err := DB.Save(uPref); err != nil {
 		return UserPreference{}, err
 	}
 
-	return uPref, nil
+	return *uPref, nil
+}
+
+// UpdatePreferencesByKey will also create new instances for preferences that don't exist for that user
+func (u *User) UpdatePreferencesByKey(keyVals [][2]string) (UserPreferences, error) {
+	uPrefs := UserPreferences{}
+
+	for _, keyVal := range keyVals {
+		uP, err := u.UpdatePreferenceByKey(keyVal[0], keyVal[1])
+		if err != nil {
+			return UserPreferences{}, err
+		}
+		uPrefs = append(uPrefs, uP)
+	}
+
+	return uPrefs, nil
 }

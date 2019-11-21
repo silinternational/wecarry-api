@@ -28,9 +28,8 @@ type CreateOrganizationInput struct {
 }
 
 type CreateUserPreferenceInput struct {
-	UserID string `json:"userID"`
-	Key    string `json:"key"`
-	Value  string `json:"value"`
+	Key   string `json:"key"`
+	Value string `json:"value"`
 }
 
 type LocationInput struct {
@@ -64,16 +63,15 @@ type UpdatePostStatusInput struct {
 }
 
 type UpdateUserInput struct {
-	ID       *string        `json:"id"`
-	PhotoID  *string        `json:"photoID"`
-	Location *LocationInput `json:"location"`
+	ID          *string                     `json:"id"`
+	PhotoID     *string                     `json:"photoID"`
+	Location    *LocationInput              `json:"location"`
+	Preferences []UpdateUserPreferenceInput `json:"preferences"`
 }
 
 type UpdateUserPreferenceInput struct {
-	ID     string `json:"id"`
-	UserID string `json:"userID"`
-	Key    string `json:"key"`
-	Value  string `json:"value"`
+	Key   string `json:"key"`
+	Value string `json:"value"`
 }
 
 type PostRole string

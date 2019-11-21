@@ -37,6 +37,15 @@ func convertGqlLocationInputToDBLocation(input LocationInput) models.Location {
 	return l
 }
 
+func convertUserPreferenceInputToKeyValues(input []UpdateUserPreferenceInput) [][2]string {
+	keyVals := [][2]string{}
+	for _, p := range input {
+		keyVals = append(keyVals, [2]string{p.Key, p.Value})
+	}
+
+	return keyVals
+}
+
 // getFunctionName provides the filename, line number, and function name of the 2nd caller.
 func getFunctionName(skip int) string {
 	pc, file, line, ok := runtime.Caller(skip)
