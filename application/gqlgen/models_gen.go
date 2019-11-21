@@ -29,11 +29,6 @@ type CreateOrganizationInput struct {
 	AuthConfig string  `json:"authConfig"`
 }
 
-type CreateUserPreferenceInput struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
-}
-
 type LocationInput struct {
 	Description string   `json:"description"`
 	Country     string   `json:"country"`

@@ -1111,11 +1111,6 @@ input UpdateUserInput {
     preferences: [UpdateUserPreferenceInput!]
 }
 
-input CreateUserPreferenceInput {
-    key: String!
-    value: String!
-}
-
 input UpdateUserPreferenceInput {
     key: String!
     value: String!
@@ -6233,30 +6228,6 @@ func (ec *executionContext) unmarshalInputCreatePostInput(ctx context.Context, o
 		case "photoID":
 			var err error
 			it.PhotoID, err = ec.unmarshalOID2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputCreateUserPreferenceInput(ctx context.Context, obj interface{}) (CreateUserPreferenceInput, error) {
-	var it CreateUserPreferenceInput
-	var asMap = obj.(map[string]interface{})
-
-	for k, v := range asMap {
-		switch k {
-		case "key":
-			var err error
-			it.Key, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "value":
-			var err error
-			it.Value, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}

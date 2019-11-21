@@ -83,11 +83,6 @@ input UpdateUserInput {
     preferences: [UpdateUserPreferenceInput!]
 }
 
-input CreateUserPreferenceInput {
-    key: String!
-    value: String!
-}
-
 input UpdateUserPreferenceInput {
     key: String!
     value: String!
