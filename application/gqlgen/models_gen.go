@@ -7,6 +7,8 @@ import (
 	"io"
 	"strconv"
 	"time"
+
+	"github.com/silinternational/wecarry-api/models"
 )
 
 type CreateMessageInput struct {
@@ -53,8 +55,8 @@ type UpdateOrganizationInput struct {
 }
 
 type UpdatePostStatusInput struct {
-	ID     string     `json:"id"`
-	Status PostStatus `json:"status"`
+	ID     string            `json:"id"`
+	Status models.PostStatus `json:"status"`
 }
 
 type UpdateUserInput struct {
@@ -103,104 +105,6 @@ func (e *PostRole) UnmarshalGQL(v interface{}) error {
 }
 
 func (e PostRole) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-type PostSize string
-
-const (
-	PostSizeTiny   PostSize = "TINY"
-	PostSizeSmall  PostSize = "SMALL"
-	PostSizeMedium PostSize = "MEDIUM"
-	PostSizeLarge  PostSize = "LARGE"
-	PostSizeXlarge PostSize = "XLARGE"
-)
-
-var AllPostSize = []PostSize{
-	PostSizeTiny,
-	PostSizeSmall,
-	PostSizeMedium,
-	PostSizeLarge,
-	PostSizeXlarge,
-}
-
-func (e PostSize) IsValid() bool {
-	switch e {
-	case PostSizeTiny, PostSizeSmall, PostSizeMedium, PostSizeLarge, PostSizeXlarge:
-		return true
-	}
-	return false
-}
-
-func (e PostSize) String() string {
-	return string(e)
-}
-
-func (e *PostSize) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = PostSize(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid PostSize", str)
-	}
-	return nil
-}
-
-func (e PostSize) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-type PostStatus string
-
-const (
-	PostStatusOpen      PostStatus = "OPEN"
-	PostStatusCommitted PostStatus = "COMMITTED"
-	PostStatusAccepted  PostStatus = "ACCEPTED"
-	PostStatusDelivered PostStatus = "DELIVERED"
-	PostStatusReceived  PostStatus = "RECEIVED"
-	PostStatusCompleted PostStatus = "COMPLETED"
-	PostStatusRemoved   PostStatus = "REMOVED"
-)
-
-var AllPostStatus = []PostStatus{
-	PostStatusOpen,
-	PostStatusCommitted,
-	PostStatusAccepted,
-	PostStatusDelivered,
-	PostStatusReceived,
-	PostStatusCompleted,
-	PostStatusRemoved,
-}
-
-func (e PostStatus) IsValid() bool {
-	switch e {
-	case PostStatusOpen, PostStatusCommitted, PostStatusAccepted, PostStatusDelivered, PostStatusReceived, PostStatusCompleted, PostStatusRemoved:
-		return true
-	}
-	return false
-}
-
-func (e PostStatus) String() string {
-	return string(e)
-}
-
-func (e *PostStatus) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = PostStatus(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid PostStatus", str)
-	}
-	return nil
-}
-
-func (e PostStatus) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 

@@ -66,9 +66,9 @@ func (gs *GqlgenSuite) TestResolver() {
 			CreatedByID:    userFix[0].ID,
 			Type:           models.PostTypeRequest,
 			OrganizationID: orgFix[0].ID,
-			Status:         PostStatusOpen.String(),
+			Status:         models.PostStatusOpen,
 			Title:          "Maple Syrup",
-			Size:           PostSizeMedium.String(),
+			Size:           models.PostSizeMedium,
 			Uuid:           domain.GetUuid(),
 			ReceiverID:     nulls.NewInt(userFix[0].ID),
 			NeededAfter:    time.Date(2019, time.July, 19, 0, 0, 0, 0, time.UTC),
@@ -124,18 +124,18 @@ func (gs *GqlgenSuite) TestResolver() {
 	// It appears that everything needs to be exported in order to be recognized
 	var postsResp struct {
 		Posts []struct {
-			ID          string          `json:"id"`
-			Type        models.PostType `json:"type"`
-			Status      string          `json:"status"`
-			Title       string          `json:"title"`
+			ID          string            `json:"id"`
+			Type        models.PostType   `json:"type"`
+			Status      models.PostStatus `json:"status"`
+			Title       string            `json:"title"`
 			Destination struct {
 				Description string `json:"description"`
 			} `json:"destination"`
-			Size         string `json:"size"`
-			NeededAfter  string `json:"neededAfter"`
-			NeededBefore string `json:"neededBefore"`
-			Category     string `json:"category"`
-			Description  string `json:"description"`
+			Size         models.PostSize `json:"size"`
+			NeededAfter  string          `json:"neededAfter"`
+			NeededBefore string          `json:"neededBefore"`
+			Category     string          `json:"category"`
+			Description  string          `json:"description"`
 		} `json:"posts"`
 	}
 

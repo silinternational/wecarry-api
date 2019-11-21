@@ -1117,7 +1117,7 @@ func (ms *ModelSuite) TestPost_NewWithUser() {
 		name           string
 		pType          PostType
 		wantPostType   PostType
-		wantPostStatus string
+		wantPostStatus PostStatus
 		wantReceiverID int
 		wantProviderID int
 		wantErr        bool
@@ -1157,7 +1157,7 @@ func (ms *ModelSuite) TestPost_SetProviderWithStatus() {
 
 	tests := []struct {
 		name           string
-		status         string
+		status         PostStatus
 		pType          PostType
 		wantProviderID nulls.Int
 	}{
@@ -1253,7 +1253,7 @@ func (ms *ModelSuite) TestPost_isPostEditable() {
 	t := ms.T()
 
 	tests := []struct {
-		status string
+		status PostStatus
 		want   bool
 	}{
 		{status: PostStatusOpen, want: true},
@@ -1263,10 +1263,10 @@ func (ms *ModelSuite) TestPost_isPostEditable() {
 		{status: PostStatusDelivered, want: true},
 		{status: PostStatusCompleted, want: false},
 		{status: PostStatusRemoved, want: false},
-		{status: "", want: false},
+		{status: PostStatus(""), want: false},
 	}
 	for _, tt := range tests {
-		t.Run(tt.status, func(t *testing.T) {
+		t.Run(tt.status.String(), func(t *testing.T) {
 			p := Post{Status: tt.status}
 			if got := p.isPostEditable(); got != tt.want {
 				t.Errorf("isStatusEditable() = %v, want %v", got, tt.want)
@@ -1282,7 +1282,7 @@ func (ms *ModelSuite) TestPost_canUserChangeStatus() {
 		name      string
 		post      Post
 		user      User
-		newStatus string
+		newStatus PostStatus
 		want      bool
 	}{
 		{
@@ -1353,7 +1353,7 @@ func (ms *ModelSuite) TestPost_canUserChangeStatus() {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.newStatus, func(t *testing.T) {
+		t.Run(tt.newStatus.String(), func(t *testing.T) {
 			if got := tt.post.canUserChangeStatus(tt.user, tt.newStatus); got != tt.want {
 				t.Errorf("isStatusEditable() = %v, want %v", got, tt.want)
 			}

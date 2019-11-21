@@ -19,12 +19,14 @@ import (
 	"github.com/silinternational/wecarry-api/domain"
 )
 
+// These values are used by GraphQL to reference the names of the Post relationships on the User model.
 const (
-	PostRoleCreatedby string = "PostsCreated"
-	PostRoleReceiving string = "PostsReceiving"
-	PostRoleProviding string = "PostsProviding"
+	PostsCreated   string = "PostsCreated"
+	PostsReceiving string = "PostsReceiving"
+	PostsProviding string = "PostsProviding"
 )
 
+// User model
 type User struct {
 	ID                int               `json:"id" db:"id"`
 	CreatedAt         time.Time         `json:"created_at" db:"created_at"`
@@ -251,7 +253,7 @@ func (u *User) CanEditAllPosts() bool {
 }
 
 // CanUpdatePostStatus indicates whether the user is allowed to change the post status.
-func (u *User) CanUpdatePostStatus(post Post, newStatus string) bool {
+func (u *User) CanUpdatePostStatus(post Post, newStatus PostStatus) bool {
 	if u.AdminRole.String == domain.AdminRoleSuperDuperAdmin {
 		return true
 	}
@@ -319,13 +321,13 @@ func (u *User) GetPosts(postRole string) ([]Post, error) {
 
 	var posts Posts
 	switch postRole {
-	case PostRoleCreatedby:
+	case PostsCreated:
 		posts = u.PostsCreated
 
-	case PostRoleReceiving:
+	case PostsReceiving:
 		posts = u.PostsReceiving
 
-	case PostRoleProviding:
+	case PostsProviding:
 		posts = u.PostsProviding
 	}
 

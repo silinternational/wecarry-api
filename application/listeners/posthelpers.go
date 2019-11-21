@@ -290,8 +290,8 @@ type Sender struct {
 	Sender   func(string, models.Post, models.PostStatusEventData)
 }
 
-func join(s1, s2 string) string {
-	return s1 + "-" + s2
+func join(s1, s2 models.PostStatus) string {
+	return s1.String() + "-" + s2.String()
 }
 
 var statusSenders = map[string]Sender{

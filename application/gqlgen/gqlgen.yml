@@ -86,6 +86,10 @@ models:
     model: models.Location
   PostType:
     model: models.PostType
+  PostStatus:
+    model: models.PostStatus
+  PostSize:
+    model: models.PostSize
 
 #directives:
 #  deprecated:

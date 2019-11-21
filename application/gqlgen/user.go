@@ -12,9 +12,9 @@ import (
 
 // PostRoleMap is used to convert PostRole gql enum values to values used by models
 var PostRoleMap = map[PostRole]string{
-	PostRoleCreatedby: models.PostRoleCreatedby,
-	PostRoleReceiving: models.PostRoleReceiving,
-	PostRoleProviding: models.PostRoleProviding,
+	PostRoleCreatedby: models.PostsCreated,
+	PostRoleReceiving: models.PostsReceiving,
+	PostRoleProviding: models.PostsProviding,
 }
 
 // UserFields maps GraphQL fields to their equivalent database fields. For related types, the

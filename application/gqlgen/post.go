@@ -55,6 +55,15 @@ func (r *postResolver) ID(ctx context.Context, obj *models.Post) (string, error)
 	return obj.Uuid.String(), nil
 }
 
+// Status field resolver. This is here to satisfy the generated postResolver. It is unclear why
+// gqlgen needs it, and it seems to be used only by the mutation responses (not the post query).
+func (r *postResolver) Status(ctx context.Context, obj *models.Post) (string, error) {
+	if obj == nil {
+		return "", nil
+	}
+	return obj.Status.String(), nil
+}
+
 // CreatedBy resolves the `createdBy` property of the post query. It retrieves the related record from the database.
 func (r *postResolver) CreatedBy(ctx context.Context, obj *models.Post) (*models.User, error) {
 	if obj == nil {
@@ -162,14 +171,6 @@ func (r *postResolver) Origin(ctx context.Context, obj *models.Post) (*models.Lo
 	}
 
 	return origin, nil
-}
-
-// Size resolves the `size` property of the post query. It converts the model type to the gqlgen enum type
-func (r *postResolver) Size(ctx context.Context, obj *models.Post) (PostSize, error) {
-	if obj == nil {
-		return "", nil
-	}
-	return PostSize(obj.Size), nil
 }
 
 // NeededAfter resolves the `neededAfter` property of the post query, converting a time.Time to a RFC3339 *string
@@ -329,7 +330,7 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 	}
 
 	if input.Size != nil {
-		post.Size = (*input.Size).String()
+		post.Size = *input.Size
 	}
 
 	if input.NeededAfter != nil {
@@ -391,7 +392,7 @@ type postInput struct {
 	Description  *string
 	Destination  *LocationInput
 	Origin       *LocationInput
-	Size         *PostSize
+	Size         *models.PostSize
 	NeededAfter  *string
 	NeededBefore *string
 	Category     *string
@@ -482,14 +483,14 @@ func (r *mutationResolver) UpdatePostStatus(ctx context.Context, input UpdatePos
 	extras := map[string]interface{}{
 		"user":      cUser.Uuid,
 		"oldStatus": post.Status,
-		"newStatus": input.Status.String(),
+		"newStatus": input.Status,
 	}
-	if !cUser.CanUpdatePostStatus(post, input.Status.String()) {
+	if !cUser.CanUpdatePostStatus(post, input.Status) {
 		return nil, reportError(ctx, errors.New("not allowed to change post status"),
 			"UpdatePostStatus.NotAllowed", extras)
 	}
 
-	post.SetProviderWithStatus(input.Status.String(), cUser)
+	post.SetProviderWithStatus(input.Status, cUser)
 	if err := post.Update(); err != nil {
 		return nil, reportError(ctx, err, "UpdatePostStatus", extras)
 	}

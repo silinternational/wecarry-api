@@ -38,16 +38,16 @@ type PostResponse struct {
 			Lat         float64 `json:"latitude"`
 			Long        float64 `json:"longitude"`
 		} `json:"origin"`
-		Size         string `json:"size"`
-		NeededAfter  string `json:"neededAfter"`
-		NeededBefore string `json:"neededBefore"`
-		Category     string `json:"category"`
-		Status       string `json:"status"`
-		CreatedAt    string `json:"createdAt"`
-		UpdatedAt    string `json:"updatedAt"`
-		Cost         string `json:"cost"`
-		IsEditable   bool   `json:"isEditable"`
-		Url          string `json:"url"`
+		Size         models.PostSize   `json:"size"`
+		NeededAfter  string            `json:"neededAfter"`
+		NeededBefore string            `json:"neededBefore"`
+		Category     string            `json:"category"`
+		Status       models.PostStatus `json:"status"`
+		CreatedAt    string            `json:"createdAt"`
+		UpdatedAt    string            `json:"updatedAt"`
+		Cost         string            `json:"cost"`
+		IsEditable   bool              `json:"isEditable"`
+		Url          string            `json:"url"`
 		CreatedBy    struct {
 			ID string `json:"id"`
 		} `json:"createdBy"`
@@ -118,11 +118,11 @@ func createFixtures_PostQuery(gs *GqlgenSuite) PostQueryFixtures {
 			ProviderID:     nulls.NewInt(users[1].ID),
 			OrganizationID: org.ID,
 			Type:           models.PostTypeRequest,
-			Status:         PostStatusCommitted.String(),
+			Status:         models.PostStatusCommitted,
 			Title:          "A Request",
 			DestinationID:  locations[0].ID,
 			OriginID:       nulls.NewInt(locations[1].ID),
-			Size:           PostSizeSmall.String(),
+			Size:           models.PostSizeSmall,
 			NeededAfter:    time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
 			NeededBefore:   time.Date(2099, 1, 1, 0, 0, 0, 0, time.UTC),
 			Category:       "OTHER",
@@ -231,7 +231,8 @@ func (gs *GqlgenSuite) Test_PostQuery() {
 	var resp PostResponse
 
 	TestUser = f.Users[1]
-	c.MustPost(query, &resp)
+	err := c.Post(query, &resp)
+	gs.NoError(err)
 
 	gs.Equal(f.Posts[0].Uuid.String(), resp.Post.ID)
 	gs.Equal(f.Posts[0].Type, resp.Post.Type)
@@ -316,8 +317,8 @@ func createFixtures_UpdatePost(gs *GqlgenSuite) UpdatePostFixtures {
 			Type:           models.PostTypeRequest,
 			OrganizationID: org.ID,
 			Title:          "An Offer",
-			Size:           PostSizeLarge.String(),
-			Status:         PostStatusOpen.String(),
+			Size:           models.PostSizeLarge,
+			Status:         models.PostStatusOpen,
 			Uuid:           domain.GetUuid(),
 			ReceiverID:     nulls.NewInt(users[1].ID),
 			DestinationID:  locations[0].ID, // test update of existing location
@@ -415,7 +416,7 @@ func (gs *GqlgenSuite) Test_UpdatePost() {
 	gs.Equal("oc", postsResp.Post.Origin.Country)
 	gs.Equal(3.3, postsResp.Post.Origin.Lat)
 	gs.Equal(4.4, postsResp.Post.Origin.Long)
-	gs.Equal("TINY", postsResp.Post.Size)
+	gs.Equal(models.PostSizeTiny, postsResp.Post.Size)
 	gs.Equal("2019-11-01T00:00:00Z", postsResp.Post.NeededAfter)
 	gs.Equal("2019-12-25T00:00:00Z", postsResp.Post.NeededBefore)
 	gs.Equal("cat", postsResp.Post.Category)
@@ -509,7 +510,7 @@ func (gs *GqlgenSuite) Test_CreatePost() {
 	gs.Equal(models.PostTypeRequest, postsResp.Post.Type)
 	gs.Equal("title", postsResp.Post.Title)
 	gs.Equal("new description", postsResp.Post.Description)
-	gs.Equal("", postsResp.Post.Status)
+	gs.Equal(models.PostStatus(""), postsResp.Post.Status)
 	gs.Equal("dest", postsResp.Post.Destination.Description)
 	gs.Equal("dc", postsResp.Post.Destination.Country)
 	gs.Equal(1.1, postsResp.Post.Destination.Lat)
@@ -518,7 +519,7 @@ func (gs *GqlgenSuite) Test_CreatePost() {
 	gs.Equal("", postsResp.Post.Origin.Country)
 	gs.Equal(0.0, postsResp.Post.Origin.Lat)
 	gs.Equal(0.0, postsResp.Post.Origin.Long)
-	gs.Equal("TINY", postsResp.Post.Size)
+	gs.Equal(models.PostSizeTiny, postsResp.Post.Size)
 	gs.Equal("2019-11-01T00:00:00Z", postsResp.Post.NeededAfter)
 	gs.Equal("2019-12-25T00:00:00Z", postsResp.Post.NeededBefore)
 	gs.Equal("cat", postsResp.Post.Category)
@@ -566,7 +567,7 @@ func createFixturesForUpdatePostStatus(gs *GqlgenSuite) UpdatePostStatusFixtures
 		posts[i].Uuid = domain.GetUuid()
 		posts[i].DestinationID = locations[i].ID
 		posts[i].Title = "title"
-		posts[i].Size = PostSizeSmall.String()
+		posts[i].Size = models.PostSizeSmall
 		posts[i].Type = models.PostTypeRequest
 		posts[i].Status = models.PostStatusOpen
 		createFixture(gs, &posts[i])
@@ -588,19 +589,19 @@ func (gs *GqlgenSuite) Test_UpdatePostStatus() {
 	provider := f.Users[1]
 
 	steps := []struct {
-		status  PostStatus
+		status  models.PostStatus
 		user    models.User
 		wantErr bool
 	}{
-		{status: PostStatusCommitted, user: provider, wantErr: false},
-		{status: PostStatusAccepted, user: provider, wantErr: true},
-		{status: PostStatusAccepted, user: creator, wantErr: false},
-		{status: PostStatusReceived, user: provider, wantErr: true},
-		{status: PostStatusReceived, user: creator, wantErr: false},
-		{status: PostStatusDelivered, user: provider, wantErr: false},
-		{status: PostStatusCompleted, user: provider, wantErr: true},
-		{status: PostStatusCompleted, user: creator, wantErr: false},
-		{status: PostStatusRemoved, user: creator, wantErr: true},
+		{status: models.PostStatusCommitted, user: provider, wantErr: false},
+		{status: models.PostStatusAccepted, user: provider, wantErr: true},
+		{status: models.PostStatusAccepted, user: creator, wantErr: false},
+		{status: models.PostStatusReceived, user: provider, wantErr: true},
+		{status: models.PostStatusReceived, user: creator, wantErr: false},
+		{status: models.PostStatusDelivered, user: provider, wantErr: false},
+		{status: models.PostStatusCompleted, user: provider, wantErr: true},
+		{status: models.PostStatusCompleted, user: creator, wantErr: false},
+		{status: models.PostStatusRemoved, user: creator, wantErr: true},
 	}
 
 	for _, step := range steps {
@@ -613,7 +614,7 @@ func (gs *GqlgenSuite) Test_UpdatePostStatus() {
 			gs.Error(err, "user=%s, query=%s", step.user.Nickname, query)
 		} else {
 			gs.NoError(err, "user=%s, query=%s", step.user.Nickname, query)
-			gs.Equal(step.status.String(), postsResp.Post.Status)
+			gs.Equal(step.status, postsResp.Post.Status)
 		}
 	}
 }
