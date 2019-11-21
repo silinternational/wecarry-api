@@ -621,5 +621,5 @@ func (u *User) UpdatePreferencesByKey(keyVals [][2]string) (UserPreferences, err
 		uPrefs = append(uPrefs, uP)
 	}
 
-	return uPrefs, nil
+	return u.GetPreferences()
 }
