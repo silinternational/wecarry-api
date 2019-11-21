@@ -449,7 +449,7 @@ func (ms *ModelSuite) TestUser_GetPosts() {
 			name: "created by",
 			args: args{
 				user:     f.Users[0],
-				postRole: PostRoleCreatedby,
+				postRole: PostsCreated,
 			},
 			want: []uuid.UUID{f.Posts[3].Uuid, f.Posts[2].Uuid, f.Posts[1].Uuid, f.Posts[0].Uuid},
 		},
@@ -457,7 +457,7 @@ func (ms *ModelSuite) TestUser_GetPosts() {
 			name: "providing by",
 			args: args{
 				user:     f.Users[1],
-				postRole: PostRoleProviding,
+				postRole: PostsProviding,
 			},
 			want: []uuid.UUID{f.Posts[1].Uuid, f.Posts[0].Uuid},
 		},
@@ -465,7 +465,7 @@ func (ms *ModelSuite) TestUser_GetPosts() {
 			name: "receiving by",
 			args: args{
 				user:     f.Users[1],
-				postRole: PostRoleReceiving,
+				postRole: PostsReceiving,
 			},
 			want: []uuid.UUID{f.Posts[3].Uuid, f.Posts[2].Uuid},
 		},
@@ -516,7 +516,7 @@ func (ms *ModelSuite) TestUser_CanEditOrganization() {
 		FirstName: "Test",
 		LastName:  "User",
 		Nickname:  "test_user",
-		AdminRole: nulls.String{},
+		AdminRole: UserAdminRoleUser,
 		Uuid:      domain.GetUuid(),
 	}
 	createFixture(ms, &user)
@@ -580,7 +580,7 @@ func (ms *ModelSuite) TestUser_CanUpdatePostStatus() {
 		name      string
 		post      Post
 		user      User
-		newStatus string
+		newStatus PostStatus
 		want      bool
 	}{
 		{
@@ -590,9 +590,9 @@ func (ms *ModelSuite) TestUser_CanUpdatePostStatus() {
 			want: true,
 		},
 		{
-			name: "SuperDuperAdmin",
+			name: "SuperAdmin",
 			post: Post{},
-			user: User{AdminRole: nulls.NewString(domain.AdminRoleSuperDuperAdmin)},
+			user: User{AdminRole: UserAdminRoleSuperAdmin},
 			want: true,
 		},
 		{

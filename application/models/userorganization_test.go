@@ -19,7 +19,7 @@ func createUserOrganizationFixtures(ms *ModelSuite, t *testing.T) {
 			FirstName: "Single",
 			LastName:  "Result",
 			Nickname:  "Single",
-			AdminRole: nulls.String{},
+			AdminRole: UserAdminRoleUser,
 			Uuid:      singleUuid,
 		},
 		{
@@ -27,7 +27,7 @@ func createUserOrganizationFixtures(ms *ModelSuite, t *testing.T) {
 			FirstName: "Two",
 			LastName:  "Results",
 			Nickname:  "Two",
-			AdminRole: nulls.String{},
+			AdminRole: UserAdminRoleUser,
 			Uuid:      twoUuid,
 		},
 	}

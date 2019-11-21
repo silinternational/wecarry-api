@@ -32,7 +32,7 @@ func Fixtures_CreateOrganization(as *ActionSuite, t *testing.T) OrgFixtures {
 			FirstName: "Sales",
 			LastName:  "Admin",
 			Nickname:  "sales_admin",
-			AdminRole: nulls.NewString(domain.AdminRoleSalesAdmin),
+			AdminRole: models.UserAdminRoleSalesAdmin,
 			Uuid:      domain.GetUuid(),
 		},
 		{
@@ -40,7 +40,7 @@ func Fixtures_CreateOrganization(as *ActionSuite, t *testing.T) OrgFixtures {
 			FirstName: "Org",
 			LastName:  "Member",
 			Nickname:  "org_member",
-			AdminRole: nulls.String{},
+			AdminRole: models.UserAdminRoleUser,
 			Uuid:      domain.GetUuid(),
 		},
 		{
@@ -48,7 +48,7 @@ func Fixtures_CreateOrganization(as *ActionSuite, t *testing.T) OrgFixtures {
 			FirstName: "Org",
 			LastName:  "Admin",
 			Nickname:  "org_admin",
-			AdminRole: nulls.String{},
+			AdminRole: models.UserAdminRoleUser,
 			Uuid:      domain.GetUuid(),
 		},
 		{
@@ -56,7 +56,7 @@ func Fixtures_CreateOrganization(as *ActionSuite, t *testing.T) OrgFixtures {
 			FirstName: "Other Org",
 			LastName:  "Admin",
 			Nickname:  "other_org_admin",
-			AdminRole: nulls.String{},
+			AdminRole: models.UserAdminRoleUser,
 			Uuid:      domain.GetUuid(),
 		},
 	}

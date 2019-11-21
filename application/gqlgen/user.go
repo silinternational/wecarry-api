@@ -12,9 +12,9 @@ import (
 
 // PostRoleMap is used to convert PostRole gql enum values to values used by models
 var PostRoleMap = map[PostRole]string{
-	PostRoleCreatedby: models.PostRoleCreatedby,
-	PostRoleReceiving: models.PostRoleReceiving,
-	PostRoleProviding: models.PostRoleProviding,
+	PostRoleCreatedby: models.PostsCreated,
+	PostRoleReceiving: models.PostsReceiving,
+	PostRoleProviding: models.PostsProviding,
 }
 
 // UserFields maps GraphQL fields to their equivalent database fields. For related types, the
@@ -47,15 +47,6 @@ func (r *userResolver) ID(ctx context.Context, obj *models.User) (string, error)
 		return "", nil
 	}
 	return obj.Uuid.String(), nil
-}
-
-// AdminRole converts the models admin roles to gql AdminRole enum values
-func (r *userResolver) AdminRole(ctx context.Context, obj *models.User) (*Role, error) {
-	if obj == nil {
-		return nil, nil
-	}
-	a := Role(obj.AdminRole.String)
-	return &a, nil
 }
 
 // Organizations retrieves the list of Organizations to which the queried user is associated
@@ -140,8 +131,8 @@ func (r *userResolver) UnreadMessageCount(ctx context.Context, obj *models.User)
 func (r *queryResolver) Users(ctx context.Context) ([]models.User, error) {
 	currentUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 
-	role := currentUser.AdminRole.String
-	if role != domain.AdminRoleSuperDuperAdmin {
+	role := currentUser.AdminRole
+	if role != models.UserAdminRoleSuperAdmin {
 		err := errors.New("insufficient permissions")
 		extras := map[string]interface{}{
 			"role": role,
@@ -169,8 +160,8 @@ func (r *queryResolver) User(ctx context.Context, id *string) (*models.User, err
 		return &currentUser, nil
 	}
 
-	role := currentUser.AdminRole.String
-	if role != domain.AdminRoleSuperDuperAdmin && currentUser.Uuid.String() != *id {
+	role := currentUser.AdminRole
+	if role != models.UserAdminRoleSuperAdmin && currentUser.Uuid.String() != *id {
 		err := errors.New("insufficient permissions")
 		extras := map[string]interface{}{
 			"role": role,
@@ -216,7 +207,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 		user = cUser
 	}
 
-	if cUser.AdminRole.String != domain.AdminRoleSuperDuperAdmin && cUser.ID != user.ID {
+	if cUser.AdminRole != models.UserAdminRoleSuperAdmin && cUser.ID != user.ID {
 		err := errors.New("insufficient permissions")
 		return nil, reportError(ctx, err, "UpdateUser.NotAllowed")
 	}

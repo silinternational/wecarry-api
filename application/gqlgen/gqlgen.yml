@@ -84,6 +84,14 @@ models:
     model: gqlgen.postInput
   Location:
     model: models.Location
+  PostType:
+    model: models.PostType
+  PostStatus:
+    model: models.PostStatus
+  PostSize:
+    model: models.PostSize
+  UserAdminRole:
+    model: models.UserAdminRole
 
 #directives:
 #  deprecated:
