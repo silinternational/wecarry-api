@@ -1409,3 +1409,37 @@ func (ms *ModelSuite) TestPost_GetAudience() {
 		})
 	}
 }
+
+func (ms *ModelSuite) TestPost_GetLocationForNotifications() {
+	t := ms.T()
+	f := createFixturesForGetLocationForNotifications(ms)
+
+	tests := []struct {
+		name string
+		post Post
+		want string
+	}{
+		{
+			name: "offer",
+			post: f.Posts[0],
+			want: f.Locations[0].Description,
+		},
+		{
+			name: "request",
+			post: f.Posts[1],
+			want: f.Locations[3].Description,
+		},
+		{
+			name: "request with no origin",
+			post: f.Posts[2],
+			want: "",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.post.GetLocationForNotifications()
+			ms.NoError(err)
+			ms.Equal(tt.want, got.Description)
+		})
+	}
+}

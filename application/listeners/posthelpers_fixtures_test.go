@@ -1,6 +1,8 @@
 package listeners
 
 import (
+	"fmt"
+	"strconv"
 	"testing"
 
 	"github.com/gobuffalo/nulls"
@@ -350,6 +352,53 @@ func CreateFixtures_sendNotificationRequestFromStatus(ms *ModelSuite, t *testing
 
 	return orgUserPostFixtures{
 		orgs:  models.Organizations{org},
+		users: users,
+		posts: posts,
+	}
+}
+
+func createFixturesForTestSendNewPostNotifications(ms *ModelSuite) orgUserPostFixtures {
+	org := models.Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	createFixture(ms, &org)
+
+	unique := org.Uuid.String()
+	users := make(models.Users, 3)
+	userLocations := make(models.Locations, len(users))
+	for i := range users {
+		userLocations[i].Country = "US"
+		createFixture(ms, &userLocations[i])
+
+		users[i] = models.User{
+			Email:      fmt.Sprintf("%s_user%d@example.com", unique, i),
+			Nickname:   fmt.Sprintf("%s_User%d", unique, i),
+			Uuid:       domain.GetUuid(),
+			LocationID: nulls.NewInt(userLocations[i].ID),
+		}
+		createFixture(ms, &users[i])
+	}
+
+	locations := make(models.Locations, 1)
+	for i := range locations {
+		locations[i].Description = "location " + strconv.Itoa(i)
+		locations[i].Country = "US"
+		createFixture(ms, &locations[i])
+	}
+
+	posts := models.Posts{
+		{
+			Type:     models.PostTypeRequest,
+			OriginID: nulls.NewInt(locations[0].ID),
+		},
+	}
+	for i := range posts {
+		posts[i].OrganizationID = org.ID
+		posts[i].Uuid = domain.GetUuid()
+		posts[i].CreatedByID = users[0].ID
+		posts[i].DestinationID = locations[i].ID
+		createFixture(ms, &posts[i])
+	}
+
+	return orgUserPostFixtures{
 		users: users,
 		posts: posts,
 	}
