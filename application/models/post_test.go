@@ -1292,9 +1292,9 @@ func (ms *ModelSuite) TestPost_canUserChangeStatus() {
 			want: true,
 		},
 		{
-			name: "SuperDuperAdmin",
+			name: "SuperAdmin",
 			post: Post{},
-			user: User{AdminRole: nulls.NewString(domain.AdminRoleSuperDuperAdmin)},
+			user: User{AdminRole: UserAdminRoleSuperAdmin},
 			want: true,
 		},
 		{

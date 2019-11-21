@@ -90,6 +90,8 @@ models:
     model: models.PostStatus
   PostSize:
     model: models.PostSize
+  UserAdminRole:
+    model: models.UserAdminRole
 
 #directives:
 #  deprecated:

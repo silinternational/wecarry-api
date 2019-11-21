@@ -99,12 +99,12 @@ func CreateUserFixtures_CanEditAllPosts(ms *ModelSuite) UserFixtures {
 
 	unique := org.Uuid.String()
 	users := Users{
-		{AdminRole: nulls.NewString(domain.AdminRoleSuperDuperAdmin)},
-		{AdminRole: nulls.NewString(domain.AdminRoleSalesAdmin)},
-		{AdminRole: nulls.String{}},
-		{AdminRole: nulls.NewString(domain.AdminRoleSuperDuperAdmin)},
-		{AdminRole: nulls.String{}},
-		{AdminRole: nulls.NewString(domain.AdminRoleSalesAdmin)},
+		{AdminRole: UserAdminRoleSuperAdmin},
+		{AdminRole: UserAdminRoleSalesAdmin},
+		{AdminRole: UserAdminRoleUser},
+		{AdminRole: UserAdminRoleSuperAdmin},
+		{AdminRole: UserAdminRoleUser},
+		{AdminRole: UserAdminRoleSalesAdmin},
 	}
 	for i := range users {
 		users[i].Email = "user" + strconv.Itoa(i) + unique + "example.com"

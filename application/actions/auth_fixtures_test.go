@@ -48,7 +48,7 @@ func Fixtures_GetOrgAndUserOrgs(as *ActionSuite, t *testing.T) UserOrgFixtures {
 			LastName:  "User",
 			Nickname:  "User1",
 			Uuid:      domain.GetUuid(),
-			AdminRole: nulls.NewString(domain.AdminRoleSuperDuperAdmin),
+			AdminRole: models.UserAdminRoleSuperAdmin,
 		},
 		{
 			Email:     "user2@example.com",
@@ -128,7 +128,7 @@ func Fixtures_CreateAuthUser(as *ActionSuite, t *testing.T) UserOrgFixtures {
 			LastName:  "User",
 			Nickname:  "User1",
 			Uuid:      domain.GetUuid(),
-			AdminRole: nulls.NewString(domain.AdminRoleSuperDuperAdmin),
+			AdminRole: models.UserAdminRoleSuperAdmin,
 		},
 		{
 			Email:     "user2@example.com",

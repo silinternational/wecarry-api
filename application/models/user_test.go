@@ -516,7 +516,7 @@ func (ms *ModelSuite) TestUser_CanEditOrganization() {
 		FirstName: "Test",
 		LastName:  "User",
 		Nickname:  "test_user",
-		AdminRole: nulls.String{},
+		AdminRole: UserAdminRoleUser,
 		Uuid:      domain.GetUuid(),
 	}
 	createFixture(ms, &user)
@@ -590,9 +590,9 @@ func (ms *ModelSuite) TestUser_CanUpdatePostStatus() {
 			want: true,
 		},
 		{
-			name: "SuperDuperAdmin",
+			name: "SuperAdmin",
 			post: Post{},
-			user: User{AdminRole: nulls.NewString(domain.AdminRoleSuperDuperAdmin)},
+			user: User{AdminRole: UserAdminRoleSuperAdmin},
 			want: true,
 		},
 		{

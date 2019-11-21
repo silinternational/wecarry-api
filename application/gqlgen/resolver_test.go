@@ -51,7 +51,7 @@ func (gs *GqlgenSuite) TestResolver() {
 		{
 			OrganizationID: orgFix[0].ID,
 			UserID:         userFix[0].ID,
-			Role:           RoleAdmin.String(),
+			Role:           models.UserOrganizationRoleAdmin,
 		},
 	}
 	createFixture(gs, &UserOrgsFix[0])
@@ -211,7 +211,7 @@ func (gs *GqlgenSuite) TestResolver() {
 	//////////////////////////////////////
 
 	TestUser = userFix[0]
-	TestUser.AdminRole = nulls.NewString(domain.AdminRoleSuperDuperAdmin)
+	TestUser.AdminRole = models.UserAdminRoleSuperAdmin
 
 	var usersResp struct {
 		Users []struct {

@@ -26,6 +26,27 @@ const (
 	PostsProviding string = "PostsProviding"
 )
 
+type UserAdminRole string
+
+const (
+	UserAdminRoleSuperAdmin UserAdminRole = "SUPERADMIN"
+	UserAdminRoleSalesAdmin UserAdminRole = "SALESADMIN"
+	UserAdminRoleAdmin      UserAdminRole = "ADMIN"
+	UserAdminRoleUser       UserAdminRole = "USER"
+)
+
+func (e UserAdminRole) IsValid() bool {
+	switch e {
+	case UserAdminRoleSuperAdmin, UserAdminRoleSalesAdmin, UserAdminRoleAdmin, UserAdminRoleUser:
+		return true
+	}
+	return false
+}
+
+func (e UserAdminRole) String() string {
+	return string(e)
+}
+
 // User model
 type User struct {
 	ID                int               `json:"id" db:"id"`
@@ -35,7 +56,7 @@ type User struct {
 	FirstName         string            `json:"first_name" db:"first_name"`
 	LastName          string            `json:"last_name" db:"last_name"`
 	Nickname          string            `json:"nickname" db:"nickname"`
-	AdminRole         nulls.String      `json:"admin_role" db:"admin_role"`
+	AdminRole         UserAdminRole     `json:"admin_role" db:"admin_role"`
 	Uuid              uuid.UUID         `json:"uuid" db:"uuid"`
 	PhotoFileID       nulls.Int         `json:"photo_file_id" db:"photo_file_id"`
 	PhotoURL          nulls.String      `json:"photo_url" db:"photo_url"`
@@ -228,7 +249,7 @@ func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
 
 // CanCreateOrganization returns true if the given user is allowed to create organizations
 func (u *User) CanCreateOrganization() bool {
-	return u.AdminRole.String == domain.AdminRoleSuperDuperAdmin || u.AdminRole.String == domain.AdminRoleSalesAdmin
+	return u.AdminRole == UserAdminRoleSuperAdmin || u.AdminRole == UserAdminRoleSalesAdmin
 }
 
 func (u *User) CanEditOrganization(orgId int) bool {
@@ -249,12 +270,12 @@ func (u *User) CanEditOrganization(orgId int) bool {
 
 // CanEditAllPosts indicates whether the user is allowed to edit all posts.
 func (u *User) CanEditAllPosts() bool {
-	return u.AdminRole.String == domain.AdminRoleSuperDuperAdmin
+	return u.AdminRole == UserAdminRoleSuperAdmin
 }
 
 // CanUpdatePostStatus indicates whether the user is allowed to change the post status.
 func (u *User) CanUpdatePostStatus(post Post, newStatus PostStatus) bool {
-	if u.AdminRole.String == domain.AdminRoleSuperDuperAdmin {
+	if u.AdminRole == UserAdminRoleSuperAdmin {
 		return true
 	}
 

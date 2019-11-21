@@ -2,7 +2,6 @@ package domain
 
 import (
 	"fmt"
-	"github.com/gobuffalo/packr/v2"
 	"log"
 	"net/http"
 	"os"
@@ -14,9 +13,9 @@ import (
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/envy"
 	mwi18n "github.com/gobuffalo/mw-i18n"
-	"github.com/nicksnyder/go-i18n/i18n"
-
+	"github.com/gobuffalo/packr/v2"
 	uuid2 "github.com/gofrs/uuid"
+	"github.com/nicksnyder/go-i18n/i18n"
 	"github.com/rollbar/rollbar-go"
 )
 
@@ -24,8 +23,6 @@ const (
 	ErrorLevelWarn              = "warn"
 	ErrorLevelError             = "error"
 	ErrorLevelCritical          = "critical"
-	AdminRoleSuperDuperAdmin    = "SuperDuperAdmin"
-	AdminRoleSalesAdmin         = "SalesAdmin"
 	EmptyUUID                   = "00000000-0000-0000-0000-000000000000"
 	DateFormat                  = "2006-01-02"
 	MaxFileSize                 = 1 << 21 // 10 Mebibytes

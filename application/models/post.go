@@ -677,7 +677,7 @@ func (p *Post) isPostEditable() bool {
 // canUserChangeStatus defines which posts statuses can be changed by which users.
 // Invalid transitions are not checked here; it is left for the validator to do this.
 func (p *Post) canUserChangeStatus(user User, newStatus PostStatus) bool {
-	if user.AdminRole.String == domain.AdminRoleSuperDuperAdmin {
+	if user.AdminRole == UserAdminRoleSuperAdmin {
 		return true
 	}
 

@@ -45,7 +45,7 @@ func Fixtures_CreateOrganization(gs *GqlgenSuite) OrganizationFixtures {
 			Uuid:      domain.GetUuid(),
 			Email:     unique + "_user1@example.com",
 			Nickname:  unique + " User1",
-			AdminRole: nulls.NewString(domain.AdminRoleSuperDuperAdmin),
+			AdminRole: models.UserAdminRoleSuperAdmin,
 		},
 	}
 	for i := range users {

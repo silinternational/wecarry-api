@@ -248,7 +248,6 @@ type ThreadResolver interface {
 type UserResolver interface {
 	ID(ctx context.Context, obj *models.User) (string, error)
 
-	AdminRole(ctx context.Context, obj *models.User) (*Role, error)
 	Organizations(ctx context.Context, obj *models.User) ([]models.Organization, error)
 	Posts(ctx context.Context, obj *models.User, role PostRole) ([]models.Post, error)
 	PhotoURL(ctx context.Context, obj *models.User) (string, error)
@@ -1017,7 +1016,9 @@ type Mutation {
 # Date and Time in RFC3339 format
 scalar Time
 
-enum Role {
+enum UserAdminRole {
+    SUPERADMIN
+    SALESADMIN
     ADMIN
     USER
 }
@@ -1052,7 +1053,7 @@ type User {
     nickname: String!
     createdAt: Time!
     updatedAt: Time!
-    adminRole: Role
+    adminRole: UserAdminRole
     organizations: [Organization!]!
     posts(role: PostRole!): [Post!]!
     photoURL: String!
@@ -4501,13 +4502,13 @@ func (ec *executionContext) _User_adminRole(ctx context.Context, field graphql.C
 		Object:   "User",
 		Field:    field,
 		Args:     nil,
-		IsMethod: true,
+		IsMethod: false,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.User().AdminRole(rctx, obj)
+		return obj.AdminRole, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4516,10 +4517,10 @@ func (ec *executionContext) _User_adminRole(ctx context.Context, field graphql.C
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*Role)
+	res := resTmp.(models.UserAdminRole)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalORole2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐRole(ctx, field.Selections, res)
+	return ec.marshalOUserAdminRole2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUserAdminRole(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _User_organizations(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
@@ -7259,16 +7260,7 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "adminRole":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._User_adminRole(ctx, field, obj)
-				return res
-			})
+			out.Values[i] = ec._User_adminRole(ctx, field, obj)
 		case "organizations":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -8572,30 +8564,6 @@ func (ec *executionContext) marshalOPostSize2ᚖgithubᚗcomᚋsilinternational�
 	return ec.marshalOPostSize2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostSize(ctx, sel, *v)
 }
 
-func (ec *executionContext) unmarshalORole2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐRole(ctx context.Context, v interface{}) (Role, error) {
-	var res Role
-	return res, res.UnmarshalGQL(v)
-}
-
-func (ec *executionContext) marshalORole2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐRole(ctx context.Context, sel ast.SelectionSet, v Role) graphql.Marshaler {
-	return v
-}
-
-func (ec *executionContext) unmarshalORole2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐRole(ctx context.Context, v interface{}) (*Role, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalORole2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐRole(ctx, v)
-	return &res, err
-}
-
-func (ec *executionContext) marshalORole2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐRole(ctx context.Context, sel ast.SelectionSet, v *Role) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return v
-}
-
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {
 	return graphql.UnmarshalString(v)
 }
@@ -8628,6 +8596,15 @@ func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋsilinternationalᚋwe
 		return graphql.Null
 	}
 	return ec._User(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOUserAdminRole2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUserAdminRole(ctx context.Context, v interface{}) (models.UserAdminRole, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	return models.UserAdminRole(tmp), err
+}
+
+func (ec *executionContext) marshalOUserAdminRole2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUserAdminRole(ctx context.Context, sel ast.SelectionSet, v models.UserAdminRole) graphql.Marshaler {
+	return graphql.MarshalString(string(v))
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValue(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {
