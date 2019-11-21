@@ -13,12 +13,12 @@ import (
 // UserResponse is for marshalling User query and mutation responses
 type UserResponse struct {
 	User struct {
-		ID            string `json:"id"`
-		Email         string `json:"email"`
-		Nickname      string `json:"nickname"`
-		CreatedAt     string `json:"createdAt"`
-		UpdatedAt     string `json:"updatedAt"`
-		AdminRole     string `json:"adminRole"`
+		ID            string               `json:"id"`
+		Email         string               `json:"email"`
+		Nickname      string               `json:"nickname"`
+		CreatedAt     string               `json:"createdAt"`
+		UpdatedAt     string               `json:"updatedAt"`
+		AdminRole     models.UserAdminRole `json:"adminRole"`
 		Organizations []struct {
 			ID string `json:"id"`
 		} `json:"organizations"`
@@ -73,13 +73,13 @@ func Fixtures_UserQuery(gs *GqlgenSuite, t *testing.T) UserQueryFixtures {
 			Nickname:  t.Name() + " User1",
 			FirstName: "First1",
 			LastName:  "Last1",
-			AdminRole: nulls.NewString(domain.AdminRoleSuperDuperAdmin),
+			AdminRole: models.UserAdminRoleSuperAdmin,
 		},
 		{
 			Uuid:       domain.GetUuid(),
 			Email:      t.Name() + "_user2@example.com",
 			Nickname:   t.Name() + " User2",
-			AdminRole:  nulls.NewString(domain.AdminRoleSalesAdmin),
+			AdminRole:  models.UserAdminRoleSalesAdmin,
 			FirstName:  "First2",
 			LastName:   "Last2",
 			LocationID: nulls.NewInt(locations[0].ID),
@@ -190,7 +190,7 @@ func (gs *GqlgenSuite) TestUserQuery() {
 				gs.Equal(f.Users[1].Uuid.String(), resp.User.ID, "incorrect ID")
 				gs.Equal(f.Users[1].Email, resp.User.Email, "incorrect Email")
 				gs.Equal(f.Users[1].Nickname, resp.User.Nickname, "incorrect Nickname")
-				gs.Equal(f.Users[1].AdminRole.String, resp.User.AdminRole, "incorrect AdminRole")
+				gs.Equal(f.Users[1].AdminRole, resp.User.AdminRole, "incorrect AdminRole")
 				gs.Equal(f.Users[1].PhotoFile.URL, resp.User.PhotoURL, "incorrect PhotoURL")
 				gs.Regexp("^https?", resp.User.PhotoURL, "invalid PhotoURL")
 				gs.Equal(1, len(resp.User.Posts), "wrong number of posts")

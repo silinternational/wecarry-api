@@ -508,7 +508,7 @@ CREATE TABLE public.users (
     first_name character varying(255) NOT NULL,
     last_name character varying(255) NOT NULL,
     nickname character varying(255) NOT NULL,
-    admin_role character varying(255),
+    admin_role character varying(255) NOT NULL,
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL,
     uuid uuid NOT NULL,

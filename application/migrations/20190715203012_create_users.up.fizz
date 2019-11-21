@@ -4,7 +4,7 @@ create_table("users") {
 	t.Column("first_name", "string", {})
 	t.Column("last_name", "string", {})
 	t.Column("nickname", "string", {})
-	t.Column("admin_role", "string", {null: true})
+	t.Column("admin_role", "string", {})
 	t.Column("uuid", "uuid", {})
 	t.Timestamps()
     t.Index("email", {"unique": true})

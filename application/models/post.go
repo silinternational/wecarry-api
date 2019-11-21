@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"strconv"
 	"time"
 
 	"github.com/gobuffalo/buffalo"
@@ -17,35 +19,108 @@ import (
 	"github.com/silinternational/wecarry-api/domain"
 )
 
+type PostType string
+
 const (
-	PostTypeRequest = "REQUEST"
-	PostTypeOffer   = "OFFER"
-
-	PostSizeTiny   = "TINY"
-	PostSizeSmall  = "SMALL"
-	PostSizeMedium = "MEDIUM"
-	PostSizeLarge  = "LARGE"
-	PostSizeXlarge = "XLARGE"
-
-	PostStatusOpen      = "OPEN"
-	PostStatusCommitted = "COMMITTED"
-	PostStatusAccepted  = "ACCEPTED"
-	PostStatusReceived  = "RECEIVED"
-	PostStatusDelivered = "DELIVERED"
-	PostStatusCompleted = "COMPLETED"
-	PostStatusRemoved   = "REMOVED"
+	PostTypeRequest PostType = "REQUEST"
+	PostTypeOffer   PostType = "OFFER"
 )
+
+func (e PostType) IsValid() bool {
+	switch e {
+	case PostTypeRequest, PostTypeOffer:
+		return true
+	}
+	return false
+}
+
+func (e PostType) String() string {
+	return string(e)
+}
+
+func (e *PostType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PostType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PostType", str)
+	}
+	return nil
+}
+
+func (e PostType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type PostStatus string
+
+const (
+	PostStatusOpen      PostStatus = "OPEN"
+	PostStatusCommitted PostStatus = "COMMITTED"
+	PostStatusAccepted  PostStatus = "ACCEPTED"
+	PostStatusDelivered PostStatus = "DELIVERED"
+	PostStatusReceived  PostStatus = "RECEIVED"
+	PostStatusCompleted PostStatus = "COMPLETED"
+	PostStatusRemoved   PostStatus = "REMOVED"
+)
+
+func (e PostStatus) IsValid() bool {
+	switch e {
+	case PostStatusOpen, PostStatusCommitted, PostStatusAccepted, PostStatusDelivered, PostStatusReceived,
+		PostStatusCompleted, PostStatusRemoved:
+		return true
+	}
+	return false
+}
+
+func (e PostStatus) String() string {
+	return string(e)
+}
+
+func (e *PostStatus) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PostStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PostStatus", str)
+	}
+	return nil
+}
+
+func (e PostStatus) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type PostSize string
+
+const (
+	PostSizeTiny   PostSize = "TINY"
+	PostSizeSmall  PostSize = "SMALL"
+	PostSizeMedium PostSize = "MEDIUM"
+	PostSizeLarge  PostSize = "LARGE"
+	PostSizeXlarge PostSize = "XLARGE"
+)
+
+func (e PostSize) String() string {
+	return string(e)
+}
 
 type Post struct {
 	ID             int           `json:"id" db:"id"`
 	CreatedAt      time.Time     `json:"created_at" db:"created_at"`
 	UpdatedAt      time.Time     `json:"updated_at" db:"updated_at"`
 	CreatedByID    int           `json:"created_by_id" db:"created_by_id"`
-	Type           string        `json:"type" db:"type"`
+	Type           PostType      `json:"type" db:"type"`
 	OrganizationID int           `json:"organization_id" db:"organization_id"`
-	Status         string        `json:"status" db:"status"`
+	Status         PostStatus    `json:"status" db:"status"`
 	Title          string        `json:"title" db:"title"`
-	Size           string        `json:"size" db:"size"`
+	Size           PostSize      `json:"size" db:"size"`
 	Uuid           uuid.UUID     `json:"uuid" db:"uuid"`
 	ReceiverID     nulls.Int     `json:"receiver_id" db:"receiver_id"`
 	ProviderID     nulls.Int     `json:"provider_id" db:"provider_id"`
@@ -118,7 +193,7 @@ func (p *Post) Update() error {
 	return nil
 }
 
-func (p *Post) NewWithUser(pType string, currentUser User) error {
+func (p *Post) NewWithUser(pType PostType, currentUser User) error {
 	p.Uuid = domain.GetUuid()
 	p.CreatedByID = currentUser.ID
 	p.Status = PostStatusOpen
@@ -129,7 +204,7 @@ func (p *Post) NewWithUser(pType string, currentUser User) error {
 	case PostTypeOffer:
 		p.ProviderID = nulls.NewInt(currentUser.ID)
 	default:
-		return errors.New("bad type for new post: " + pType)
+		return errors.New("bad type for new post: " + pType.String())
 	}
 
 	p.Type = pType
@@ -137,7 +212,7 @@ func (p *Post) NewWithUser(pType string, currentUser User) error {
 	return nil
 }
 
-func (p *Post) SetProviderWithStatus(status string, currentUser User) {
+func (p *Post) SetProviderWithStatus(status PostStatus, currentUser User) {
 
 	if p.Type == PostTypeRequest && status == PostStatusCommitted {
 		p.ProviderID = nulls.NewInt(currentUser.ID)
@@ -150,18 +225,18 @@ func (p *Post) SetProviderWithStatus(status string, currentUser User) {
 func (p *Post) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
 		&validators.IntIsPresent{Field: p.CreatedByID, Name: "CreatedBy"},
-		&validators.StringIsPresent{Field: p.Type, Name: "Type"},
+		&validators.StringIsPresent{Field: p.Type.String(), Name: "Type"},
 		&validators.IntIsPresent{Field: p.OrganizationID, Name: "OrganizationID"},
 		&validators.StringIsPresent{Field: p.Title, Name: "Title"},
-		&validators.StringIsPresent{Field: p.Size, Name: "Size"},
+		&validators.StringIsPresent{Field: p.Size.String(), Name: "Size"},
 		&validators.UUIDIsPresent{Field: p.Uuid, Name: "Uuid"},
-		&validators.StringIsPresent{Field: p.Status, Name: "Status"},
+		&validators.StringIsPresent{Field: p.Status.String(), Name: "Status"},
 	), nil
 }
 
 type createStatusValidator struct {
 	Name    string
-	Status  string
+	Status  PostStatus
 	Message string
 }
 
@@ -222,7 +297,7 @@ func (v *updateStatusValidator) isRequestValid(errors *validate.Errors) {
 	// Ensure that the new status is compatible with the old one in terms of a transition
 	// allow for doing a step in reverse, in case there was a mistake going forward and
 	// also allowing for some "unofficial" interaction happening outside of the app
-	okTransitions := map[string][]string{
+	okTransitions := map[PostStatus][]PostStatus{
 		PostStatusOpen:      {PostStatusCommitted, PostStatusRemoved},
 		PostStatusCommitted: {PostStatusOpen, PostStatusAccepted, PostStatusDelivered, PostStatusRemoved},
 		PostStatusAccepted:  {PostStatusOpen, PostStatusDelivered, PostStatusReceived, PostStatusRemoved},
@@ -239,11 +314,23 @@ func (v *updateStatusValidator) isRequestValid(errors *validate.Errors) {
 		return
 	}
 
-	if !domain.IsStringInSlice(v.Post.Status, goodStatuses) {
+	if !IsStatusInSlice(v.Post.Status, goodStatuses) {
 		errorMsg := "cannot move post %s from '%s' status to '%s' status"
 		v.Message = fmt.Sprintf(errorMsg, uuid, oldPost.Status, v.Post.Status)
 		errors.Add(validators.GenerateKey(v.Name), v.Message)
 	}
+}
+
+// IsStatusInSlice iterates over a slice of PostStatus, looking for the given
+// status. If found, true is returned. Otherwise, false is returned.
+func IsStatusInSlice(needle PostStatus, haystack []PostStatus) bool {
+	for _, hs := range haystack {
+		if needle == hs {
+			return true
+		}
+	}
+
+	return false
 }
 
 // ValidateUpdate gets run every time you call "pop.ValidateAndUpdate" method.
@@ -258,8 +345,8 @@ func (p *Post) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 
 // PostStatusEventData holds data needed by the Post Status Updated event listener
 type PostStatusEventData struct {
-	OldStatus     string
-	NewStatus     string
+	OldStatus     PostStatus
+	NewStatus     PostStatus
 	OldProviderID int
 	PostID        int
 }
@@ -579,21 +666,18 @@ func (p *Post) IsEditable(user User) (bool, error) {
 
 // isPostEditable defines at which states can posts be edited.
 func (p *Post) isPostEditable() bool {
-	editable := []string{
-		PostStatusOpen,
-		PostStatusCommitted,
-		PostStatusAccepted,
-		PostStatusReceived,
-		PostStatusDelivered,
+	switch p.Status {
+	case PostStatusOpen, PostStatusCommitted, PostStatusAccepted, PostStatusReceived, PostStatusDelivered:
+		return true
+	default:
+		return false
 	}
-
-	return domain.IsStringInSlice(p.Status, editable)
 }
 
 // canUserChangeStatus defines which posts statuses can be changed by which users.
 // Invalid transitions are not checked here; it is left for the validator to do this.
-func (p *Post) canUserChangeStatus(user User, newStatus string) bool {
-	if user.AdminRole.String == domain.AdminRoleSuperDuperAdmin {
+func (p *Post) canUserChangeStatus(user User, newStatus PostStatus) bool {
+	if user.AdminRole == UserAdminRoleSuperAdmin {
 		return true
 	}
 

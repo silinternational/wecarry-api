@@ -24,7 +24,9 @@ type Mutation {
 # Date and Time in RFC3339 format
 scalar Time
 
-enum Role {
+enum UserAdminRole {
+    SUPERADMIN
+    SALESADMIN
     ADMIN
     USER
 }
@@ -59,7 +61,7 @@ type User {
     nickname: String!
     createdAt: Time!
     updatedAt: Time!
-    adminRole: Role
+    adminRole: UserAdminRole
     organizations: [Organization!]!
     posts(role: PostRole!): [Post!]!
     photoURL: String!
