@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/silinternational/wecarry-api/domain"
 	"time"
 
 	"github.com/gobuffalo/pop"
@@ -72,4 +73,21 @@ func (p *UserPreference) FindByUUID(id string, selectFields ...string) error {
 	}
 
 	return nil
+}
+
+// Save wraps DB.Save() call to create a UUID if it's empty and check for errors
+func (p *UserPreference) Save() error {
+	if p.Uuid.String() == domain.EmptyUUID {
+		p.Uuid = domain.GetUuid()
+	}
+
+	validationErrs, err := p.Validate(DB)
+	if validationErrs != nil && validationErrs.HasAny() {
+		return errors.New(FlattenPopErrors(validationErrs))
+	}
+	if err != nil {
+		return err
+	}
+
+	return DB.Save(p)
 }

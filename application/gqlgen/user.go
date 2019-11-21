@@ -226,9 +226,39 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 		}
 	}
 
+	var preferences models.UserPreferences
+
+	// No deleting of preferences supported at this time
+	keyVals := convertUserPreferencesToKeyValues(input.Preferences)
+
+	var err error
+	if preferences, err = user.UpdatePreferencesByKey(keyVals); err != nil {
+		return nil, reportError(ctx, err, "UpdateUser.Preferences")
+	}
+
 	if err := user.Save(); err != nil {
 		return nil, reportError(ctx, err, "UpdateUser")
 	}
 
+	user.UserPreferences = preferences
+
 	return &user, nil
+}
+
+// Preferences resolves the `preferences` property of the user query, retrieving the related records from the database.
+func (r *userResolver) Preferences(ctx context.Context, obj *models.User) ([]models.UserPreference, error) {
+	if obj == nil {
+		return nil, nil
+	}
+
+	user := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+	preferences, err := obj.GetPreferences()
+	if err != nil {
+		extras := map[string]interface{}{
+			"user": user.Uuid,
+		}
+		return nil, reportError(ctx, err, "GetUserPreferences", extras)
+	}
+
+	return preferences, nil
 }

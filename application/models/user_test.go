@@ -958,3 +958,49 @@ func (ms *ModelSuite) TestUser_GetPreference() {
 		})
 	}
 }
+
+func (ms *ModelSuite) TestUser_UpdatePreferencesByKey() {
+	t := ms.T()
+
+	f := CreateUserFixtures_TestGetPreference(ms)
+
+	tests := []struct {
+		name          string
+		user          User
+		preferenceKey string
+		newValue      string
+		wantCount     int
+		want          []string
+	}{
+		{
+			name:          "exists1",
+			user:          f.Users[0],
+			preferenceKey: f.UserPreferences[1].Key,
+			newValue:      "Updated1",
+			wantCount:     len(f.UserPreferences),
+			want:          []string{f.UserPreferences[0].Value, "Updated1"},
+		},
+		{
+			name:          "new preference",
+			user:          f.Users[0],
+			preferenceKey: "NewKey",
+			newValue:      "NewValue",
+			wantCount:     len(f.UserPreferences) + 1,
+			want:          []string{f.UserPreferences[0].Value, "Updated1", "NewValue"},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := test.user.UpdatePreferencesByKey([][2]string{{test.preferenceKey, test.newValue}})
+			ms.NoError(err)
+			ms.Equal(test.wantCount, len(got), "incorrect number of user preferences")
+
+			gotVals := []string{}
+			for _, p := range got {
+				gotVals = append(gotVals, p.Value)
+			}
+
+			ms.Equal(test.want, gotVals, "incorrect result from UpdatePreferencesByKey()")
+		})
+	}
+}

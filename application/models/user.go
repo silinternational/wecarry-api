@@ -556,3 +556,67 @@ func (u *User) GetPreference(key string) (*UserPreference, error) {
 
 	return &uPref, nil
 }
+
+func (u *User) CreatePreference(key, value string) (UserPreference, error) {
+	uPref := UserPreference{}
+
+	if u.ID <= 0 {
+		return UserPreference{}, errors.New("invalid user ID in CreatePreference.")
+	}
+
+	DB.Where("user_id = ?", u.ID).Where("key = ?", key).First(&uPref)
+	if uPref.ID > 0 {
+		err := fmt.Errorf("can't create UserPreference with key %s.  Already exists with id %v.", key, uPref.ID)
+		return UserPreference{}, err
+	}
+
+	uPref.UserID = u.ID
+	uPref.Key = key
+	uPref.Value = value
+
+	if err := DB.Save(&uPref); err != nil {
+		return UserPreference{}, err
+	}
+
+	return uPref, nil
+}
+
+// UpdatePreferenceByKey will also create a new instance, if a match is not found for that user
+func (u *User) UpdatePreferenceByKey(key, value string) (UserPreference, error) {
+
+	uPref, err := u.GetPreference(key)
+	if err != nil {
+		return UserPreference{}, err
+	}
+
+	if uPref == nil {
+		return u.CreatePreference(key, value)
+	}
+
+	if uPref.Value == value {
+		return *uPref, nil
+	}
+
+	uPref.Value = value
+
+	if err := DB.Save(uPref); err != nil {
+		return UserPreference{}, err
+	}
+
+	return *uPref, nil
+}
+
+// UpdatePreferencesByKey will also create new instances for preferences that don't exist for that user
+func (u *User) UpdatePreferencesByKey(keyVals [][2]string) (UserPreferences, error) {
+	uPrefs := make(UserPreferences, len(keyVals))
+
+	for i, keyVal := range keyVals {
+		uP, err := u.UpdatePreferenceByKey(keyVal[0], keyVal[1])
+		if err != nil {
+			return UserPreferences{}, err
+		}
+		uPrefs[i] = uP
+	}
+
+	return u.GetPreferences()
+}

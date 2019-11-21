@@ -60,9 +60,15 @@ type UpdatePostStatusInput struct {
 }
 
 type UpdateUserInput struct {
-	ID       *string        `json:"id"`
-	PhotoID  *string        `json:"photoID"`
-	Location *LocationInput `json:"location"`
+	ID          *string                     `json:"id"`
+	PhotoID     *string                     `json:"photoID"`
+	Location    *LocationInput              `json:"location"`
+	Preferences []UpdateUserPreferenceInput `json:"preferences"`
+}
+
+type UpdateUserPreferenceInput struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
 }
 
 type PostRole string

@@ -38,6 +38,8 @@ models:
         resolver: true
       unreadMessageCount:
         resolver: true
+      userPreference:
+        resolver: true
   Post:
     model: models.Post
     fields:
@@ -92,6 +94,8 @@ models:
     model: models.PostSize
   UserAdminRole:
     model: models.UserAdminRole
+  UserPreference:
+    model: models.UserPreference
 
 #directives:
 #  deprecated:

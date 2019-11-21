@@ -65,14 +65,27 @@ type User {
     organizations: [Organization!]!
     posts(role: PostRole!): [Post!]!
     photoURL: String!
+    preferences: [UserPreference!]!
     location: Location
     unreadMessageCount: Int!
+}
+
+type UserPreference {
+    id: ID!
+    key: String!
+    value: String!
 }
 
 input UpdateUserInput {
     id: ID
     photoID: String
     location: LocationInput
+    preferences: [UpdateUserPreferenceInput!]!
+}
+
+input UpdateUserPreferenceInput {
+    key: String!
+    value: String!
 }
 
 enum PostType {
