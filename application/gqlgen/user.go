@@ -230,7 +230,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 
 	// No deleting of preferences supported at this time
 	if input.Preferences != nil {
-		keyVals := convertUserPreferenceInputToKeyValues(input.Preferences)
+		keyVals := convertUserPreferencesToKeyValues(input.Preferences)
 
 		var err error
 		if preferences, err = user.UpdatePreferencesByKey(keyVals); err != nil {
