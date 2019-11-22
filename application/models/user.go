@@ -567,7 +567,7 @@ func (u *User) CreatePreference(key, value string) (UserPreference, error) {
 		return UserPreference{}, errors.New("invalid user ID in CreatePreference.")
 	}
 
-	DB.Where("user_id = ?", u.ID).Where("key = ?", key).First(&uPref)
+	_ = DB.Where("user_id = ?", u.ID).Where("key = ?", key).First(&uPref)
 	if uPref.ID > 0 {
 		err := fmt.Errorf("can't create UserPreference with key %s.  Already exists with id %v.", key, uPref.ID)
 		return UserPreference{}, err
