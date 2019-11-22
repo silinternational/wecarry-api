@@ -38,9 +38,6 @@ func (gs *GqlgenSuite) TestMessageQuery() {
 	thread, err := f.Messages[0].GetThread([]string{"uuid", "id"})
 	gs.NoError(err)
 
-	err = thread.Load("Participants")
-	gs.NoError(err)
-
 	participants, err := thread.GetParticipants([]string{"nickname"})
 	gs.NoError(err)
 	gs.Equal(2, len(participants), "incorrect number of thread participants")
