@@ -156,7 +156,7 @@ func (ms *ModelSuite) TestLocation_Create() {
 	}
 }
 
-func (ms *ModelSuite) TestLocation_Distance() {
+func (ms *ModelSuite) TestLocation_DistanceKm() {
 	t := ms.T()
 
 	tests := []struct {
