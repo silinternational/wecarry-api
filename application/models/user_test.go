@@ -93,7 +93,7 @@ func (ms *ModelSuite) TestUser_FindOrCreateFromAuthUser() {
 	}
 }
 
-func (ms *ModelSuite) TestValidateUser() {
+func (ms *ModelSuite) TestUser_Validate() {
 	t := ms.T()
 	tests := []struct {
 		name     string
@@ -222,7 +222,7 @@ func (ms *ModelSuite) TestValidateUser() {
 }
 
 // Ensure multiple access tokens for same organization are allowed (to support multiple tabs/browsers)
-func (ms *ModelSuite) TestCreateAccessToken() {
+func (ms *ModelSuite) TestUser_CreateAccessToken() {
 	t := ms.T()
 
 	orgs, users, _ := CreateUserFixtures(ms, t)
@@ -357,7 +357,7 @@ func (ms *ModelSuite) TestUser_GetOrganizations() {
 	}
 }
 
-func (ms *ModelSuite) Test_FindUserOrganization() {
+func (ms *ModelSuite) TestUser_FindUserOrganization() {
 	t := ms.T()
 	createUserOrganizationFixtures(ms, t)
 
@@ -672,7 +672,7 @@ func CreateUserFixturesForNicknames(ms *ModelSuite, t *testing.T) User {
 	return user
 }
 
-func (ms *ModelSuite) TestUniquifyNickname() {
+func (ms *ModelSuite) TestUser_UniquifyNickname() {
 	t := ms.T()
 	existingUser := CreateUserFixturesForNicknames(ms, t)
 	prefix := allPrefixes()[0]
