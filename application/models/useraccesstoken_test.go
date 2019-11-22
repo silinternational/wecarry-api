@@ -547,7 +547,7 @@ func createFixtures_UserAccessTokensDeleteExpired(ms *ModelSuite, t *testing.T) 
 	}
 }
 
-func (ms *ModelSuite) TestUserAccessToken_UserAccessTokensDeleteExpired() {
+func (ms *ModelSuite) TestUserAccessToken_DeleteExpired() {
 	t := ms.T()
 
 	f := createFixtures_UserAccessTokensDeleteExpired(ms, t)

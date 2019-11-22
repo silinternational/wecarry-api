@@ -83,7 +83,7 @@ func createUserOrganizationFixtures(ms *ModelSuite, t *testing.T) {
 	}
 }
 
-func (ms *ModelSuite) TestFindByAuthEmail() {
+func (ms *ModelSuite) TestUserOrganization_FindByAuthEmail() {
 	t := ms.T()
 	createUserOrganizationFixtures(ms, t)
 
