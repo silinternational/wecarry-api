@@ -1309,7 +1309,7 @@ func (ms *ModelSuite) TestPosts_FindByUser() {
 	}{
 		{name: "user 0", user: f.Users[0], wantPostIDs: []int{f.Posts[2].ID, f.Posts[1].ID, f.Posts[0].ID}},
 		{name: "user 1", user: f.Users[1], wantPostIDs: []int{f.Posts[2].ID, f.Posts[0].ID}},
-		{name: "non-existent user", user: User{}, wantErr: true},
+		{name: "non-existent user", user: User{}, wantPostIDs: []int{}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
