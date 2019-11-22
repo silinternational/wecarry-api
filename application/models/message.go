@@ -77,6 +77,22 @@ func (m *Message) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 
 // AfterCreate updates the LastViewedAt value on the associated ThreadParticipant to right now
 func (m *Message) AfterCreate(tx *pop.Connection) error {
+
+	thread, err := m.GetThread([]string{"uuid", "id"})
+	if err != nil {
+		return errors.New("error getting message's Thread ... " + err.Error())
+	}
+
+	post, err := thread.GetPost([]string{"created_by_id", "id"})
+	if err != nil {
+		return errors.New("error getting message's Post ... " + err.Error())
+	}
+
+	// Ensure a matching threadparticipant exists
+	if err := thread.ensureParticipants(*post, m.SentByID); err != nil {
+		return err
+	}
+
 	threadP := ThreadParticipant{}
 
 	if err := threadP.FindByThreadIDAndUserID(m.ThreadID, m.SentByID); err != nil {
@@ -113,6 +129,7 @@ func (m *Message) GetThread(requestFields []string) (*Thread, error) {
 }
 
 // Create a new message. Sends an `EventApiMessageCreated` event.
+// It also ensures that a threadParticipant entry exists for its user on its thread.
 func (m *Message) Create() error {
 	valErrs, err := DB.ValidateAndCreate(m)
 
