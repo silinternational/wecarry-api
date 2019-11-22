@@ -1,6 +1,7 @@
 package models
 
 import (
+	"strconv"
 	"testing"
 
 	"github.com/gobuffalo/validate"
@@ -132,6 +133,58 @@ func (ms *ModelSuite) TestUserPreference_FindByUUID() {
 			}
 			ms.NoError(err)
 			ms.Equal(test.uuid, u.Uuid.String())
+		})
+	}
+}
+
+func createFixturesForUserPreferenceSave(ms *ModelSuite) UserPreferenceFixtures {
+	unique := domain.GetUuid().String()
+	user := User{Uuid: domain.GetUuid(), Email: unique + "_user@example.com", Nickname: unique + "_User"}
+	createFixture(ms, &user)
+
+	userPreferences := make(UserPreferences, 2)
+	for i := range userPreferences {
+		userPreferences[i] = UserPreference{
+			UserID: user.ID,
+			Key:    "key" + strconv.Itoa(i),
+			Value:  "v",
+		}
+	}
+	createFixture(ms, &userPreferences[0])
+
+	return UserPreferenceFixtures{
+		Users:           Users{user},
+		UserPreferences: userPreferences,
+	}
+}
+
+func (ms *ModelSuite) TestUserPreference_Save() {
+	t := ms.T()
+	f := createFixturesForUserPreferenceSave(ms)
+	tests := []struct {
+		name    string
+		pref    UserPreference
+		wantErr string
+	}{
+		{name: "update", pref: f.UserPreferences[0]},
+		{name: "create", pref: f.UserPreferences[1]},
+		{name: "bad", wantErr: "can not be blank"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := test.pref.Save()
+			if test.wantErr != "" {
+				ms.Error(err)
+				ms.Contains(err.Error(), test.wantErr)
+				return
+			}
+			ms.NoError(err)
+
+			var u UserPreference
+			ms.NoError(u.FindByUUID(test.pref.Uuid.String()))
+			ms.Equal(test.pref.UserID, u.UserID)
+			ms.Equal(test.pref.Key, u.Key)
+			ms.Equal(test.pref.Value, u.Value)
 		})
 	}
 }
