@@ -1106,6 +1106,7 @@ type UserPreference {
 
 input UpdateUserInput {
     id: ID
+    nickname: String
     photoID: String
     location: LocationInput
     preferences: [UpdateUserPreferenceInput!]!
@@ -6483,6 +6484,12 @@ func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, o
 		case "id":
 			var err error
 			it.ID, err = ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "nickname":
+			var err error
+			it.Nickname, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
