@@ -391,6 +391,9 @@ func (u *User) GetPhotoURL() (string, error) {
 
 // Save wraps DB.Save() call to check for errors and operate on attached object
 func (u *User) Save() error {
+	if u.Uuid.Version() == 0 {
+		u.Uuid = domain.GetUuid()
+	}
 	validationErrs, err := u.Validate(DB)
 	if validationErrs != nil && validationErrs.HasAny() {
 		return errors.New(FlattenPopErrors(validationErrs))
