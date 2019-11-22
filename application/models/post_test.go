@@ -1093,7 +1093,42 @@ func (ms *ModelSuite) TestPost_AttachPhoto_GetPhoto() {
 	}
 }
 
-func (ms *ModelSuite) TestPost_SetDestination() {
+func (ms *ModelSuite) TestPost_FindByUserAndUUID() {
+	t := ms.T()
+	f := createFixturesForPostFindByUserAndUUID(ms)
+
+	tests := []struct {
+		name    string
+		user    User
+		post    Post
+		wantErr string
+	}{
+		{name: "user 0, post 0", user: f.Users[0], post: f.Posts[0]},
+		{name: "user 0, post 1", user: f.Users[0], post: f.Posts[1]},
+		{name: "user 1, post 0", user: f.Users[1], post: f.Posts[0]},
+		{name: "user 1, post 1", user: f.Users[1], post: f.Posts[1], wantErr: "no rows in result set"},
+		{name: "non-existent user", post: f.Posts[1], wantErr: "no rows in result set"},
+		{name: "non-existent post", user: f.Users[1], wantErr: "no rows in result set"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var post Post
+			var c context.Context
+			err := post.FindByUserAndUUID(c, test.user, test.post.Uuid.String())
+
+			if test.wantErr != "" {
+				ms.Error(err)
+				ms.Contains(err.Error(), test.wantErr, "unexpected error")
+				return
+			}
+
+			ms.NoError(err)
+			ms.Equal(test.post.ID, post.ID)
+		})
+	}
+}
+
+func (ms *ModelSuite) TestPost_GetSetDestination() {
 	t := ms.T()
 
 	user := User{Uuid: domain.GetUuid(), Email: t.Name() + "_user@example.com", Nickname: t.Name() + "_User"}
