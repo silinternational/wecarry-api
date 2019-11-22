@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func (ms *ModelSuite) TestFindOrgByUUID() {
+func (ms *ModelSuite) TestOrganization_FindOrgByUUID() {
 	t := ms.T()
 	org, _ := createOrgFixtures(ms, t)
 
@@ -61,7 +61,7 @@ func (ms *ModelSuite) TestFindOrgByUUID() {
 	}
 }
 
-func (ms *ModelSuite) TestCreateOrganization() {
+func (ms *ModelSuite) TestOrganization_Create() {
 	t := ms.T()
 	tests := []struct {
 		name    string
@@ -127,7 +127,7 @@ func (ms *ModelSuite) TestCreateOrganization() {
 	}
 }
 
-func (ms *ModelSuite) TestValidateOrganization() {
+func (ms *ModelSuite) TestOrganization_Validate() {
 	t := ms.T()
 	tests := []struct {
 		name     string
@@ -192,7 +192,7 @@ func (ms *ModelSuite) TestValidateOrganization() {
 	}
 }
 
-func (ms *ModelSuite) TestOrganizationFindByDomain() {
+func (ms *ModelSuite) TestOrganization_FindByDomain() {
 	t := ms.T()
 	org, orgDomain := createOrgFixtures(ms, t)
 
