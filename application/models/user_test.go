@@ -639,6 +639,78 @@ func (ms *ModelSuite) TestUser_CanUpdatePostStatus() {
 	}
 }
 
+func (ms *ModelSuite) TestUser_FindByUUID() {
+	t := ms.T()
+
+	f := createFixturesForUserFind(ms)
+
+	tests := []struct {
+		name    string
+		UUID    string
+		wantErr string
+	}{
+		{
+			name:    "Good",
+			UUID:    f.Users[0].Uuid.String(),
+			wantErr: "",
+		},
+		{
+			name:    "Bad",
+			UUID:    "",
+			wantErr: "uuid must not be blank",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var u User
+			err := u.FindByUUID(test.UUID)
+			if test.wantErr != "" {
+				ms.Error(err)
+				ms.Contains(err.Error(), test.wantErr)
+				return
+			}
+			ms.Equal(test.UUID, u.Uuid.String())
+		})
+	}
+}
+
+func (ms *ModelSuite) TestUser_FindByID() {
+	t := ms.T()
+
+	f := createFixturesForUserFind(ms)
+
+	tests := []struct {
+		name    string
+		ID      int
+		wantErr string
+	}{
+		{
+			name:    "Good",
+			ID:      f.Users[0].ID,
+			wantErr: "",
+		},
+		{
+			name:    "Bad",
+			ID:      0,
+			wantErr: "id must be a positive number",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var u User
+			err := u.FindByID(test.ID)
+			if test.wantErr != "" {
+				ms.Error(err)
+				ms.Contains(err.Error(), test.wantErr)
+				return
+			}
+			ms.Equal(test.ID, u.ID)
+		})
+	}
+}
+
 func (ms *ModelSuite) TestUser_AttachPhoto() {
 	t := ms.T()
 

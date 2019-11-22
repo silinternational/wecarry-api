@@ -136,6 +136,24 @@ func CreateUserFixtures_CanEditAllPosts(ms *ModelSuite) UserFixtures {
 	}
 }
 
+func createFixturesForUserFind(ms *ModelSuite) UserFixtures {
+	org := &Organization{AuthConfig: "{}", Uuid: domain.GetUuid()}
+	createFixture(ms, org)
+
+	unique := domain.GetUuid().String()
+	users := Users{
+		{Email: unique + "user1@example.com", Nickname: unique + "User1", Uuid: domain.GetUuid()},
+		{Email: unique + "user2@example.com", Nickname: unique + "User2", Uuid: domain.GetUuid()},
+	}
+	for i := range users {
+		createFixture(ms, &users[i])
+	}
+
+	return UserFixtures{
+		Users: users,
+	}
+}
+
 func CreateFixturesForUserGetPosts(ms *ModelSuite) UserFixtures {
 	org := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
 	createFixture(ms, &org)

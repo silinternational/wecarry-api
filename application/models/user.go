@@ -303,7 +303,7 @@ func (u *User) FindByUUID(uuid string, selectFields ...string) error {
 
 func (u *User) FindByID(id int, eagerFields ...string) error {
 	if id <= 0 {
-		return errors.New("error finding user: id must a positive number")
+		return errors.New("error finding user: id must be a positive number")
 	}
 
 	if err := DB.Eager(eagerFields...).Find(u, id); err != nil {
