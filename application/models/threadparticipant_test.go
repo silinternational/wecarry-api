@@ -59,13 +59,17 @@ func (ms *ModelSuite) TestThreadParticipant_Validate() {
 	}
 }
 
+// CreateFixtures_ThreadParticipant_UpdateLastViewedAt is used by
+// TestThreadParticipant_UpdateLastViewedAt and TestThread_UpdateLastViewedAt
 func CreateFixtures_ThreadParticipant_UpdateLastViewedAt(ms *ModelSuite, t *testing.T) ThreadFixtures {
 
 	org := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
 	createFixture(ms, &org)
 
+	unique := org.Uuid.String()
 	users := Users{
-		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1", Uuid: domain.GetUuid()},
+		{Email: unique + "_user0@example.com", Nickname: unique + " User0", Uuid: domain.GetUuid()},
+		{Email: unique + "_user1@example.com", Nickname: unique + " User1", Uuid: domain.GetUuid()},
 	}
 	for i := range users {
 		createFixture(ms, &users[i])
@@ -120,6 +124,7 @@ func CreateFixtures_ThreadParticipant_UpdateLastViewedAt(ms *ModelSuite, t *test
 
 	return ThreadFixtures{
 		Users:              users,
+		Threads:            threads,
 		ThreadParticipants: threadParticipants,
 	}
 }

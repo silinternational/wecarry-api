@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 	"time"
@@ -350,6 +351,41 @@ func (ms *ModelSuite) TestThread_GetLastViewedAt() {
 
 			ms.NoError(err)
 			ms.Equal(test.want.Format(time.RFC3339), lastViewedAt.Format(time.RFC3339))
+		})
+	}
+}
+
+func (ms *ModelSuite) TestThread_UpdateLastViewedAt() {
+	t := ms.T()
+	f := CreateFixtures_ThreadParticipant_UpdateLastViewedAt(ms, t)
+
+	tests := []struct {
+		name         string
+		thread       Thread
+		user         User
+		lastViewedAt time.Time
+		wantErr      string
+	}{
+		{name: "good", thread: f.Threads[0], user: f.Users[0], lastViewedAt: time.Now()},
+		{name: "wrong user", thread: f.Threads[0], user: f.Users[1], wantErr: "failed to find thread_participant"},
+		// other combinations are tested in TestThreadParticipant_UpdateLastViewedAt and
+		// TestThreadParticipant_FindByThreadIDAndUserID
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := test.thread.UpdateLastViewedAt(test.user.ID, test.lastViewedAt)
+
+			if test.wantErr != "" {
+				ms.Error(err)
+				ms.Contains(err.Error(), test.wantErr, "unexpected error")
+				return
+			}
+			ms.NoError(err)
+
+			lastViewedAt, err := test.thread.GetLastViewedAt(test.user)
+			ms.NoError(err)
+			ms.WithinDuration(test.lastViewedAt, *lastViewedAt, time.Second,
+				fmt.Sprintf("time not correct, got %v, wanted %v", lastViewedAt, test.lastViewedAt))
 		})
 	}
 }
