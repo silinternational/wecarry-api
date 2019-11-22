@@ -575,6 +575,9 @@ func scopeUserOrgs(cUser User) pop.ScopeFunc {
 			s[i] = v
 		}
 
+		if len(s) == 0 {
+			return q.Where("organization_id = -1")
+		}
 		return q.Where("organization_id IN (?)", s...)
 	}
 }
