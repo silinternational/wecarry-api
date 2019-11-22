@@ -488,6 +488,28 @@ func (ms *ModelSuite) TestUser_GetPosts() {
 	}
 }
 
+func (ms *ModelSuite) TestUser_CanCreateOrganization() {
+	t := ms.T()
+
+	user := User{AdminRole: UserAdminRoleUser}
+	admin := User{AdminRole: UserAdminRoleAdmin}
+	salesAdmin := User{AdminRole: UserAdminRoleSalesAdmin}
+	superAdmin := User{AdminRole: UserAdminRoleSuperAdmin}
+
+	if !salesAdmin.CanCreateOrganization() {
+		t.Error("sales admin should be able to create orgs")
+	}
+	if !superAdmin.CanCreateOrganization() {
+		t.Error("super admin should be able to create orgs")
+	}
+	if admin.CanCreateOrganization() {
+		t.Error("admin should not be able to create orgs")
+	}
+	if user.CanCreateOrganization() {
+		t.Error("user should not be able to create orgs")
+	}
+}
+
 func (ms *ModelSuite) TestUser_CanEditOrganization() {
 	t := ms.T()
 
