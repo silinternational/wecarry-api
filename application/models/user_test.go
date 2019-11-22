@@ -636,7 +636,7 @@ func (ms *ModelSuite) TestUser_AttachPhoto() {
 	} else {
 		ms.Equal(filename, attachedFile.Name)
 		ms.NotEqual(0, attachedFile.ID)
-		ms.NotEqual(domain.EmptyUUID, attachedFile.UUID.String())
+		ms.NotEqual(0, attachedFile.UUID.Version())
 	}
 
 	if err := ms.DB.Load(&user); err != nil {

@@ -923,7 +923,7 @@ func (ms *ModelSuite) TestPost_AttachFile() {
 	} else {
 		ms.Equal(filename, attachedFile.Name)
 		ms.NotEqual(0, attachedFile.ID)
-		ms.NotEqual(domain.EmptyUUID, attachedFile.UUID.String())
+		ms.NotEqual(0, attachedFile.UUID.Version())
 	}
 
 	if err := ms.DB.Load(&post); err != nil {
@@ -994,7 +994,7 @@ func (ms *ModelSuite) TestPost_AttachPhoto_GetPhoto() {
 	} else {
 		ms.Equal(filename, attachedFile.Name)
 		ms.NotEqual(0, attachedFile.ID)
-		ms.NotEqual(domain.EmptyUUID, attachedFile.UUID.String())
+		ms.NotEqual(0, attachedFile.UUID.Version())
 	}
 
 	if err := DB.Load(&post); err != nil {
@@ -1141,7 +1141,7 @@ func (ms *ModelSuite) TestPost_NewWithUser() {
 				ms.Error(err)
 			} else {
 				ms.NoError(err)
-				ms.NotEqual(domain.EmptyUUID, post.Uuid)
+				ms.NotEqual(0, post.Uuid.Version())
 				ms.Equal(test.wantPostType, post.Type)
 				ms.Equal(user.ID, post.CreatedByID)
 				ms.Equal(test.wantPostStatus, post.Status)

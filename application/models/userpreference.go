@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/silinternational/wecarry-api/domain"
 	"time"
 
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
 	"github.com/gobuffalo/validate/validators"
 	"github.com/gofrs/uuid"
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 type UserPreference struct {
@@ -77,7 +77,7 @@ func (p *UserPreference) FindByUUID(id string, selectFields ...string) error {
 
 // Save wraps DB.Save() call to create a UUID if it's empty and check for errors
 func (p *UserPreference) Save() error {
-	if p.Uuid.String() == domain.EmptyUUID {
+	if p.Uuid.Version() == 0 {
 		p.Uuid = domain.GetUuid()
 	}
 
