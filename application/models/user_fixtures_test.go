@@ -193,6 +193,27 @@ func CreateFixturesForUserGetPosts(ms *ModelSuite) UserFixtures {
 	}
 }
 
+func createFixturesForTestUserSave(ms *ModelSuite) UserFixtures {
+	unique := domain.GetUuid()
+	users := make(Users, 5)
+	for i := range users {
+		users[i] = User{
+			Email:     fmt.Sprintf("%s_user%d@example.com", unique, i),
+			Nickname:  fmt.Sprintf("%s_User%d", unique, i),
+			FirstName: fmt.Sprintf("First"),
+			LastName:  fmt.Sprintf("Last"),
+		}
+	}
+	users[2].Uuid = domain.GetUuid()
+	createFixture(ms, &users[3])
+	users[3].FirstName = "New"
+	users[4].FirstName = ""
+
+	return UserFixtures{
+		Users: users,
+	}
+}
+
 func CreateUserFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) UserMessageFixtures {
 
 	unique := domain.GetUuid().String()
