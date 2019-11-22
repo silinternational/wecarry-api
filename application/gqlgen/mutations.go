@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/gobuffalo/nulls"
-	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 )
 
@@ -28,7 +27,6 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input CreateO
 		Url:        models.ConvertStringPtrToNullsString(input.URL),
 		AuthType:   input.AuthType,
 		AuthConfig: input.AuthConfig,
-		Uuid:       domain.GetUuid(),
 	}
 
 	if err := org.Save(); err != nil {

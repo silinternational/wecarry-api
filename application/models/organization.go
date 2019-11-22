@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/silinternational/wecarry-api/domain"
+
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
@@ -131,6 +133,10 @@ func (o *Organization) RemoveDomain(domain string) error {
 
 // Save wrap DB.Save() call to check for errors and operate on attached object
 func (o *Organization) Save() error {
+	if o.Uuid.Version() == 0 {
+		o.Uuid = domain.GetUuid()
+	}
+
 	validationErrs, err := o.Validate(DB)
 	if validationErrs != nil && validationErrs.HasAny() {
 		return errors.New(FlattenPopErrors(validationErrs))

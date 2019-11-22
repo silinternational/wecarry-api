@@ -72,7 +72,6 @@ func (ms *ModelSuite) TestOrganization_Create() {
 			name: "full",
 			org: Organization{
 				Name:       "ACME",
-				Uuid:       domain.GetUuid(),
 				AuthType:   AuthTypeSaml,
 				AuthConfig: "{}",
 				Url:        nulls.NewString("https://www.example.com"),
@@ -83,7 +82,6 @@ func (ms *ModelSuite) TestOrganization_Create() {
 			name: "minimum",
 			org: Organization{
 				Name:       "Bits 'R' Us",
-				Uuid:       domain.GetUuid(),
 				AuthType:   AuthTypeSaml,
 				AuthConfig: "{}",
 			},
@@ -93,7 +91,6 @@ func (ms *ModelSuite) TestOrganization_Create() {
 			name: "missing auth config",
 			org: Organization{
 				Name:     "Bits 'R' Us",
-				Uuid:     domain.GetUuid(),
 				AuthType: AuthTypeSaml,
 			},
 			wantErr: true,
@@ -101,7 +98,7 @@ func (ms *ModelSuite) TestOrganization_Create() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := ms.DB.Create(&test.org)
+			err := test.org.Save()
 			if test.wantErr == true {
 				if err == nil {
 					t.Errorf("Expected an error, but did not get one")
