@@ -660,6 +660,87 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 	}
 }
 
+func (ms *ModelSuite) TestPost_Create() {
+	t := ms.T()
+	f := createFixturesForTestPostCreate(ms)
+
+	tests := []struct {
+		name    string
+		post    Post
+		wantErr string
+	}{
+		{
+			name:    "no uuid",
+			post:    f.Posts[0],
+			wantErr: "",
+		},
+		{
+			name:    "uuid given",
+			post:    f.Posts[1],
+			wantErr: "",
+		},
+		{
+			name:    "validation error",
+			post:    f.Posts[2],
+			wantErr: "Title can not be blank.",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := test.post.Create()
+			if test.wantErr != "" {
+				ms.Error(err)
+				ms.Contains(err.Error(), test.wantErr, "unexpected error message")
+				return
+			}
+			ms.NoError(err)
+
+			ms.NotEqual(0, test.post.Uuid.Version())
+			var p Post
+			ms.NoError(p.FindByID(test.post.ID))
+		})
+	}
+}
+
+func (ms *ModelSuite) TestPost_Update() {
+	t := ms.T()
+	f := createFixturesForTestPostUpdate(ms)
+
+	tests := []struct {
+		name    string
+		post    Post
+		wantErr string
+	}{
+		{
+			name:    "good",
+			post:    f.Posts[0],
+			wantErr: "",
+		},
+		{
+			name:    "validation error",
+			post:    f.Posts[1],
+			wantErr: "Title can not be blank.",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := test.post.Update()
+			if test.wantErr != "" {
+				ms.Error(err)
+				ms.Contains(err.Error(), test.wantErr, "unexpected error message")
+				return
+			}
+			ms.NoError(err)
+
+			ms.NotEqual(0, test.post.Uuid.Version())
+			var p Post
+			ms.NoError(p.FindByID(test.post.ID))
+		})
+	}
+}
+
 func (ms *ModelSuite) TestPost_FindByID() {
 	t := ms.T()
 
