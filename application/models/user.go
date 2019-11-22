@@ -574,7 +574,7 @@ func (u *User) CreatePreference(key, value string) (UserPreference, error) {
 	uPref.Key = key
 	uPref.Value = value
 
-	if err := DB.Save(&uPref); err != nil {
+	if err := uPref.Save(); err != nil {
 		return UserPreference{}, err
 	}
 
@@ -599,7 +599,7 @@ func (u *User) UpdatePreferenceByKey(key, value string) (UserPreference, error) 
 
 	uPref.Value = value
 
-	if err := DB.Save(uPref); err != nil {
+	if err := uPref.Save(); err != nil {
 		return UserPreference{}, err
 	}
 
