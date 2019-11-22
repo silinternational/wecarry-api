@@ -81,7 +81,7 @@ input UpdateUserInput {
     nickname: String
     photoID: String
     location: LocationInput
-    preferences: [UpdateUserPreferenceInput!]!
+    preferences: [UpdateUserPreferenceInput!]
 }
 
 input UpdateUserPreferenceInput {

@@ -1109,7 +1109,7 @@ input UpdateUserInput {
     nickname: String
     photoID: String
     location: LocationInput
-    preferences: [UpdateUserPreferenceInput!]!
+    preferences: [UpdateUserPreferenceInput!]
 }
 
 input UpdateUserPreferenceInput {
@@ -6507,7 +6507,7 @@ func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, o
 			}
 		case "preferences":
 			var err error
-			it.Preferences, err = ec.unmarshalNUpdateUserPreferenceInput2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐUpdateUserPreferenceInput(ctx, v)
+			it.Preferences, err = ec.unmarshalOUpdateUserPreferenceInput2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐUpdateUserPreferenceInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -8441,26 +8441,6 @@ func (ec *executionContext) unmarshalNUpdateUserPreferenceInput2githubᚗcomᚋs
 	return ec.unmarshalInputUpdateUserPreferenceInput(ctx, v)
 }
 
-func (ec *executionContext) unmarshalNUpdateUserPreferenceInput2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐUpdateUserPreferenceInput(ctx context.Context, v interface{}) ([]UpdateUserPreferenceInput, error) {
-	var vSlice []interface{}
-	if v != nil {
-		if tmp1, ok := v.([]interface{}); ok {
-			vSlice = tmp1
-		} else {
-			vSlice = []interface{}{v}
-		}
-	}
-	var err error
-	res := make([]UpdateUserPreferenceInput, len(vSlice))
-	for i := range vSlice {
-		res[i], err = ec.unmarshalNUpdateUserPreferenceInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐUpdateUserPreferenceInput(ctx, vSlice[i])
-		if err != nil {
-			return nil, err
-		}
-	}
-	return res, nil
-}
-
 func (ec *executionContext) marshalNUser2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx context.Context, sel ast.SelectionSet, v models.User) graphql.Marshaler {
 	return ec._User(ctx, sel, &v)
 }
@@ -8949,6 +8929,26 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 		return graphql.Null
 	}
 	return ec.marshalOString2string(ctx, sel, *v)
+}
+
+func (ec *executionContext) unmarshalOUpdateUserPreferenceInput2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐUpdateUserPreferenceInput(ctx context.Context, v interface{}) ([]UpdateUserPreferenceInput, error) {
+	var vSlice []interface{}
+	if v != nil {
+		if tmp1, ok := v.([]interface{}); ok {
+			vSlice = tmp1
+		} else {
+			vSlice = []interface{}{v}
+		}
+	}
+	var err error
+	res := make([]UpdateUserPreferenceInput, len(vSlice))
+	for i := range vSlice {
+		res[i], err = ec.unmarshalNUpdateUserPreferenceInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐUpdateUserPreferenceInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
 }
 
 func (ec *executionContext) marshalOUser2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx context.Context, sel ast.SelectionSet, v models.User) graphql.Marshaler {
