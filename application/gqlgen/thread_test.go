@@ -19,6 +19,9 @@ type threadsResponse struct {
 				} `json:"location"`
 			} `json:"sender"`
 		} `json:"messages"`
+		Post struct {
+			ID string `json:"id"`
+		} `json:"post"`
 	} `json:"threads"`
 }
 
@@ -27,7 +30,7 @@ func (gs *GqlgenSuite) TestThreadsQuery() {
 	c := getGqlClient()
 
 	query := `{ threads
-		{ id participants {nickname} messages {id content sender { location { description }}}}  }`
+		{ id post { id } participants {nickname} messages {id content sender { location { description }}}}  }`
 
 	var resp threadsResponse
 
@@ -37,6 +40,7 @@ func (gs *GqlgenSuite) TestThreadsQuery() {
 	gs.NoError(err)
 
 	gs.Equal(f.Threads[0].Uuid.String(), resp.Threads[0].ID)
+	gs.Equal(f.Posts[0].Uuid.String(), resp.Threads[0].Post.ID)
 	gs.Equal(f.Messages[0].Uuid.String(), resp.Threads[0].Messages[0].ID)
 	gs.Equal(f.Messages[0].Content, resp.Threads[0].Messages[0].Content)
 	gs.Equal(f.Messages[0].SentBy.Nickname, resp.Threads[0].Messages[0].Sender.Nickname)
