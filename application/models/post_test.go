@@ -1134,7 +1134,7 @@ func (ms *ModelSuite) TestPost_SetDestination() {
 	ms.False(locationFromDB.Longitude.Valid)
 }
 
-func (ms *ModelSuite) TestPost_SetOrigin() {
+func (ms *ModelSuite) TestPost_GetSetOrigin() {
 	t := ms.T()
 
 	user := User{Uuid: domain.GetUuid(), Email: t.Name() + "_user@example.com", Nickname: t.Name() + "_User"}
