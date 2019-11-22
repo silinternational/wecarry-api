@@ -214,6 +214,26 @@ func createFixturesForTestUserSave(ms *ModelSuite) UserFixtures {
 	}
 }
 
+func CreateUserFixturesForNicknames(ms *ModelSuite, t *testing.T) User {
+	prefix := allPrefixes()[0]
+
+	// Load User test fixtures
+	user := User{
+		Email:     fmt.Sprintf("user1-%s@example.com", t.Name()),
+		FirstName: "Existing",
+		LastName:  "User",
+		Nickname:  prefix + "ExistingU",
+		Uuid:      domain.GetUuid(),
+	}
+
+	if err := ms.DB.Create(&user); err != nil {
+		t.Errorf("could not create test user %v ... %v", user, err)
+		t.FailNow()
+	}
+
+	return user
+}
+
 func CreateUserFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) UserMessageFixtures {
 
 	unique := domain.GetUuid().String()

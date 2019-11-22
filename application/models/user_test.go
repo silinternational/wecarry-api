@@ -746,6 +746,59 @@ func (ms *ModelSuite) TestUser_AttachPhoto() {
 	}
 }
 
+func (ms *ModelSuite) TestUser_Save() {
+	t := ms.T()
+	f := createFixturesForTestUserSave(ms)
+
+	tests := []struct {
+		name    string
+		user    User
+		wantErr string
+	}{
+		{
+			name:    "no uuid",
+			user:    f.Users[0],
+			wantErr: "",
+		},
+		{
+			name:    "no uuid, should not conflict with first",
+			user:    f.Users[1],
+			wantErr: "",
+		},
+		{
+			name:    "uuid given",
+			user:    f.Users[2],
+			wantErr: "",
+		},
+		{
+			name:    "update existing",
+			user:    f.Users[3],
+			wantErr: "",
+		},
+		{
+			name:    "validation error",
+			user:    f.Users[4],
+			wantErr: "first_name: FirstName can not be blank.",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := test.user.Save()
+			if test.wantErr != "" {
+				ms.Error(err)
+				ms.Contains(err.Error(), test.wantErr, "unexpected error message")
+				return
+			}
+			ms.NoError(err)
+
+			ms.NotEqual(0, test.user.Uuid.Version())
+			var u User
+			ms.NoError(u.FindByID(test.user.ID))
+		})
+	}
+}
+
 func (ms *ModelSuite) TestUser_UniquifyNickname() {
 	t := ms.T()
 	existingUser := CreateUserFixturesForNicknames(ms, t)
