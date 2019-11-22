@@ -254,6 +254,7 @@ func (gs *GqlgenSuite) TestUpdateUser() {
 	var resp UserResponse
 
 	userID := f.Users[1].Uuid.String()
+	newNickname := "U1 New Nickname"
 	location := `{description: "Paris, France", country: "FR", latitude: 48.8588377, longitude: 2.2770202}`
 
 	updatedKey := f.UserPreferences[1].Key
@@ -262,8 +263,8 @@ func (gs *GqlgenSuite) TestUpdateUser() {
 
 	requestedFields := `{id nickname photoURL preferences {key, value} location {description, country}}`
 
-	update := fmt.Sprintf(`mutation { user: updateUser(input:{id: "%s", location: %s, preferences: %s}) %s }`,
-		userID, location, preferences, requestedFields)
+	update := fmt.Sprintf(`mutation { user: updateUser(input:{id: "%s", nickname: "%s", location: %s, preferences: %s}) %s }`,
+		userID, newNickname, location, preferences, requestedFields)
 
 	testCases := []testCase{
 		{
@@ -274,7 +275,7 @@ func (gs *GqlgenSuite) TestUpdateUser() {
 				if err := gs.DB.Load(&(f.Users[1]), "PhotoFile"); err != nil {
 					t.Errorf("failed to load user fixture, %s", err)
 				}
-				gs.Equal(f.Users[1].Nickname, resp.User.Nickname, "incorrect Nickname")
+				gs.Equal(newNickname, resp.User.Nickname, "incorrect Nickname")
 				gs.Equal(f.Users[1].PhotoFile.URL, resp.User.PhotoURL, "incorrect PhotoURL")
 				gs.Regexp("^https?", resp.User.PhotoURL, "invalid PhotoURL")
 				gs.Equal("Paris, France", resp.User.Location.Description, "incorrect location")

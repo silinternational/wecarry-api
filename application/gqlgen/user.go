@@ -212,6 +212,10 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 		return nil, reportError(ctx, err, "UpdateUser.NotAllowed")
 	}
 
+	if input.Nickname != nil {
+		user.Nickname = *input.Nickname
+	}
+
 	if input.PhotoID != nil {
 		var file models.File
 		if err := file.FindByUUID(*input.PhotoID); err != nil {

@@ -78,6 +78,7 @@ type UserPreference {
 
 input UpdateUserInput {
     id: ID
+    nickname: String
     photoID: String
     location: LocationInput
     preferences: [UpdateUserPreferenceInput!]!
