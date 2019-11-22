@@ -22,7 +22,7 @@ type messageResponse struct {
 	} `json:"message"`
 }
 
-func (gs *GqlgenSuite) Test_MessageQuery() {
+func (gs *GqlgenSuite) TestMessageQuery() {
 	f := createFixtures_MessageQuery(gs)
 	c := getGqlClient()
 
