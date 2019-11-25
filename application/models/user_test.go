@@ -192,7 +192,7 @@ func (ms *ModelSuite) TestUser_Validate() {
 			wantErr: false,
 		},
 		{
-			name: "bad photoURL",
+			name: "bad authPhotoURL",
 			user: User{
 				Email:        "user@example.com",
 				FirstName:    "A",
@@ -202,7 +202,7 @@ func (ms *ModelSuite) TestUser_Validate() {
 				AuthPhotoURL: nulls.NewString("badone"),
 			},
 			wantErr:  true,
-			errField: "photo_url",
+			errField: "auth_photo_url",
 		},
 	}
 	for _, test := range tests {
@@ -740,7 +740,8 @@ func (ms *ModelSuite) TestUser_AttachPhoto() {
 	ms.Equal(filename, user.PhotoFile.Name)
 
 	if got, err := user.GetPhotoURL(); err == nil {
-		ms.Regexp("^https?", got)
+		ms.NotNil(got)
+		ms.Regexp("^https?", *got)
 	} else {
 		ms.Fail("user.GetPhotoURL failed, %s", err)
 	}
