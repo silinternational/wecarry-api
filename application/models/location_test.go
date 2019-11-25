@@ -110,7 +110,7 @@ func (ms *ModelSuite) TestLocation_Validate() {
 			vErr, _ := test.location.Validate(DB)
 			if test.wantErr {
 				ms.Greater(vErr.Count(), 0, "Expected an error, but did not get one")
-				ms.NotEqual(len(vErr.Get(test.errField)), 0,
+				ms.True(len(vErr.Get(test.errField)) != 0,
 					"Expected an error on field %v, but got none (errors: %v)",
 					test.errField, vErr.Errors)
 				return

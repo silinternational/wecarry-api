@@ -77,8 +77,8 @@ func (ms *ModelSuite) TestUserPreference_Validate() {
 		t.Run(test.name, func(t *testing.T) {
 			vErr, _ := test.pref.Validate(DB)
 			if test.wantErr {
-				ms.NotEqual(0, vErr.Count(), "Expected an error, but did not get one")
-				ms.NotEqual(0, vErr.Get(test.errField),
+				ms.True(vErr.Count() != 0, "Expected an error, but did not get one")
+				ms.True(len(vErr.Get(test.errField)) > 0,
 					"Expected an error on field %v, but got none (errors: %v)",
 					test.errField, vErr.Errors)
 				return

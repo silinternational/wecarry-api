@@ -582,7 +582,7 @@ func (ms *ModelSuite) TestGetRandomToken() {
 
 	ms.NoError(err)
 
-	ms.NotEqual(got1, got2, "Expected two different access tokens, but got the same one")
+	ms.True(got1 != got2, "Expected two different access tokens, but got the same one")
 
 	got := len(got1)
 

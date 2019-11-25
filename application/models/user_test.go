@@ -87,7 +87,7 @@ func (ms *ModelSuite) TestUser_FindOrCreateFromAuthUser() {
 				ms.Error(err, "FindOrCreateFromAuthUser() did not return expected error")
 			} else {
 				ms.NoError(err, "FindOrCreateFromAuthUser() error: %s", err)
-				ms.NotEqual(0, u.ID, "Did not get a new user ID")
+				ms.True(u.ID != 0, "Did not get a new user ID")
 			}
 		})
 	}
@@ -729,8 +729,8 @@ func (ms *ModelSuite) TestUser_AttachPhoto() {
 		t.Errorf("failed to attach photo to user, %s", err)
 	} else {
 		ms.Equal(filename, attachedFile.Name)
-		ms.NotEqual(0, attachedFile.ID)
-		ms.NotEqual(0, attachedFile.UUID.Version())
+		ms.True(attachedFile.ID != 0)
+		ms.True(attachedFile.UUID.Version() != 0)
 	}
 
 	if err := ms.DB.Load(&user); err != nil {
@@ -792,7 +792,7 @@ func (ms *ModelSuite) TestUser_Save() {
 			}
 			ms.NoError(err)
 
-			ms.NotEqual(0, test.user.Uuid.Version())
+			ms.True(test.user.Uuid.Version() != 0)
 			var u User
 			ms.NoError(u.FindByID(test.user.ID))
 		})
@@ -845,7 +845,7 @@ func (ms *ModelSuite) TestUser_UniquifyNickname() {
 				return
 			}
 
-			ms.NotEqual(test.dontWant, got)
+			ms.True(test.dontWant != got)
 		})
 	}
 }

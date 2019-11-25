@@ -696,7 +696,7 @@ func (ms *ModelSuite) TestPost_Create() {
 			}
 			ms.NoError(err)
 
-			ms.NotEqual(0, test.post.Uuid.Version())
+			ms.True(test.post.Uuid.Version() != 0)
 			var p Post
 			ms.NoError(p.FindByID(test.post.ID))
 		})
@@ -734,7 +734,7 @@ func (ms *ModelSuite) TestPost_Update() {
 			}
 			ms.NoError(err)
 
-			ms.NotEqual(0, test.post.Uuid.Version())
+			ms.True(test.post.Uuid.Version() != 0)
 			var p Post
 			ms.NoError(p.FindByID(test.post.ID))
 		})
@@ -1003,8 +1003,8 @@ func (ms *ModelSuite) TestPost_AttachFile() {
 		t.Errorf("failed to attach file to post, %s", err)
 	} else {
 		ms.Equal(filename, attachedFile.Name)
-		ms.NotEqual(0, attachedFile.ID)
-		ms.NotEqual(0, attachedFile.UUID.Version())
+		ms.True(attachedFile.ID != 0)
+		ms.True(attachedFile.UUID.Version() != 0)
 	}
 
 	if err := ms.DB.Load(&post); err != nil {
@@ -1074,8 +1074,8 @@ func (ms *ModelSuite) TestPost_AttachPhoto_GetPhoto() {
 		t.Errorf("failed to attach photo to post, %s", err)
 	} else {
 		ms.Equal(filename, attachedFile.Name)
-		ms.NotEqual(0, attachedFile.ID)
-		ms.NotEqual(0, attachedFile.UUID.Version())
+		ms.True(attachedFile.ID != 0)
+		ms.True(attachedFile.UUID.Version() != 0)
 	}
 
 	if err := DB.Load(&post); err != nil {
@@ -1257,7 +1257,6 @@ func (ms *ModelSuite) TestPost_NewWithUser() {
 				ms.Error(err)
 			} else {
 				ms.NoError(err)
-				ms.NotEqual(0, post.Uuid.Version())
 				ms.Equal(test.wantPostType, post.Type)
 				ms.Equal(user.ID, post.CreatedByID)
 				ms.Equal(test.wantPostStatus, post.Status)

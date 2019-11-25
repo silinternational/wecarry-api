@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/silinternational/wecarry-api/domain"
-
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
@@ -16,6 +14,7 @@ import (
 	"github.com/silinternational/wecarry-api/auth"
 	"github.com/silinternational/wecarry-api/auth/google"
 	"github.com/silinternational/wecarry-api/auth/saml"
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 const AuthTypeSaml = "saml"
