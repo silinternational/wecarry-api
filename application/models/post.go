@@ -165,6 +165,10 @@ func (p Posts) String() string {
 
 // Create stores the Post data as a new record in the database.
 func (p *Post) Create() error {
+	if p.Uuid.Version() == 0 {
+		p.Uuid = domain.GetUuid()
+	}
+
 	valErrs, err := DB.ValidateAndCreate(p)
 	if err != nil {
 		return err
@@ -194,7 +198,6 @@ func (p *Post) Update() error {
 }
 
 func (p *Post) NewWithUser(pType PostType, currentUser User) error {
-	p.Uuid = domain.GetUuid()
 	p.CreatedByID = currentUser.ID
 	p.Status = PostStatusOpen
 
@@ -572,6 +575,9 @@ func scopeUserOrgs(cUser User) pop.ScopeFunc {
 			s[i] = v
 		}
 
+		if len(s) == 0 {
+			return q.Where("organization_id = -1")
+		}
 		return q.Where("organization_id IN (?)", s...)
 	}
 }

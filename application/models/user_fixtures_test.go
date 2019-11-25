@@ -136,6 +136,24 @@ func CreateUserFixtures_CanEditAllPosts(ms *ModelSuite) UserFixtures {
 	}
 }
 
+func createFixturesForUserFind(ms *ModelSuite) UserFixtures {
+	org := &Organization{AuthConfig: "{}", Uuid: domain.GetUuid()}
+	createFixture(ms, org)
+
+	unique := domain.GetUuid().String()
+	users := Users{
+		{Email: unique + "user1@example.com", Nickname: unique + "User1", Uuid: domain.GetUuid()},
+		{Email: unique + "user2@example.com", Nickname: unique + "User2", Uuid: domain.GetUuid()},
+	}
+	for i := range users {
+		createFixture(ms, &users[i])
+	}
+
+	return UserFixtures{
+		Users: users,
+	}
+}
+
 func CreateFixturesForUserGetPosts(ms *ModelSuite) UserFixtures {
 	org := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
 	createFixture(ms, &org)
@@ -173,6 +191,47 @@ func CreateFixturesForUserGetPosts(ms *ModelSuite) UserFixtures {
 		Users: users,
 		Posts: posts,
 	}
+}
+
+func createFixturesForTestUserSave(ms *ModelSuite) UserFixtures {
+	unique := domain.GetUuid()
+	users := make(Users, 5)
+	for i := range users {
+		users[i] = User{
+			Email:     fmt.Sprintf("%s_user%d@example.com", unique, i),
+			Nickname:  fmt.Sprintf("%s_User%d", unique, i),
+			FirstName: fmt.Sprintf("First"),
+			LastName:  fmt.Sprintf("Last"),
+		}
+	}
+	users[2].Uuid = domain.GetUuid()
+	createFixture(ms, &users[3])
+	users[3].FirstName = "New"
+	users[4].FirstName = ""
+
+	return UserFixtures{
+		Users: users,
+	}
+}
+
+func CreateUserFixturesForNicknames(ms *ModelSuite, t *testing.T) User {
+	prefix := allPrefixes()[0]
+
+	// Load User test fixtures
+	user := User{
+		Email:     fmt.Sprintf("user1-%s@example.com", t.Name()),
+		FirstName: "Existing",
+		LastName:  "User",
+		Nickname:  prefix + "ExistingU",
+		Uuid:      domain.GetUuid(),
+	}
+
+	if err := ms.DB.Create(&user); err != nil {
+		t.Errorf("could not create test user %v ... %v", user, err)
+		t.FailNow()
+	}
+
+	return user
 }
 
 func CreateUserFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) UserMessageFixtures {

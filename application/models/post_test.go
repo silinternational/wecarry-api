@@ -660,6 +660,87 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 	}
 }
 
+func (ms *ModelSuite) TestPost_Create() {
+	t := ms.T()
+	f := createFixturesForTestPostCreate(ms)
+
+	tests := []struct {
+		name    string
+		post    Post
+		wantErr string
+	}{
+		{
+			name:    "no uuid",
+			post:    f.Posts[0],
+			wantErr: "",
+		},
+		{
+			name:    "uuid given",
+			post:    f.Posts[1],
+			wantErr: "",
+		},
+		{
+			name:    "validation error",
+			post:    f.Posts[2],
+			wantErr: "Title can not be blank.",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := test.post.Create()
+			if test.wantErr != "" {
+				ms.Error(err)
+				ms.Contains(err.Error(), test.wantErr, "unexpected error message")
+				return
+			}
+			ms.NoError(err)
+
+			ms.True(test.post.Uuid.Version() != 0)
+			var p Post
+			ms.NoError(p.FindByID(test.post.ID))
+		})
+	}
+}
+
+func (ms *ModelSuite) TestPost_Update() {
+	t := ms.T()
+	f := createFixturesForTestPostUpdate(ms)
+
+	tests := []struct {
+		name    string
+		post    Post
+		wantErr string
+	}{
+		{
+			name:    "good",
+			post:    f.Posts[0],
+			wantErr: "",
+		},
+		{
+			name:    "validation error",
+			post:    f.Posts[1],
+			wantErr: "Title can not be blank.",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := test.post.Update()
+			if test.wantErr != "" {
+				ms.Error(err)
+				ms.Contains(err.Error(), test.wantErr, "unexpected error message")
+				return
+			}
+			ms.NoError(err)
+
+			ms.True(test.post.Uuid.Version() != 0)
+			var p Post
+			ms.NoError(p.FindByID(test.post.ID))
+		})
+	}
+}
+
 func (ms *ModelSuite) TestPost_FindByID() {
 	t := ms.T()
 
@@ -922,8 +1003,8 @@ func (ms *ModelSuite) TestPost_AttachFile() {
 		t.Errorf("failed to attach file to post, %s", err)
 	} else {
 		ms.Equal(filename, attachedFile.Name)
-		ms.NotEqual(0, attachedFile.ID)
-		ms.NotEqual(domain.EmptyUUID, attachedFile.UUID.String())
+		ms.True(attachedFile.ID != 0)
+		ms.True(attachedFile.UUID.Version() != 0)
 	}
 
 	if err := ms.DB.Load(&post); err != nil {
@@ -993,8 +1074,8 @@ func (ms *ModelSuite) TestPost_AttachPhoto_GetPhoto() {
 		t.Errorf("failed to attach photo to post, %s", err)
 	} else {
 		ms.Equal(filename, attachedFile.Name)
-		ms.NotEqual(0, attachedFile.ID)
-		ms.NotEqual(domain.EmptyUUID, attachedFile.UUID.String())
+		ms.True(attachedFile.ID != 0)
+		ms.True(attachedFile.UUID.Version() != 0)
 	}
 
 	if err := DB.Load(&post); err != nil {
@@ -1012,7 +1093,42 @@ func (ms *ModelSuite) TestPost_AttachPhoto_GetPhoto() {
 	}
 }
 
-func (ms *ModelSuite) TestPost_SetDestination() {
+func (ms *ModelSuite) TestPost_FindByUserAndUUID() {
+	t := ms.T()
+	f := createFixturesForPostFindByUserAndUUID(ms)
+
+	tests := []struct {
+		name    string
+		user    User
+		post    Post
+		wantErr string
+	}{
+		{name: "user 0, post 0", user: f.Users[0], post: f.Posts[0]},
+		{name: "user 0, post 1", user: f.Users[0], post: f.Posts[1]},
+		{name: "user 1, post 0", user: f.Users[1], post: f.Posts[0]},
+		{name: "user 1, post 1", user: f.Users[1], post: f.Posts[1], wantErr: "no rows in result set"},
+		{name: "non-existent user", post: f.Posts[1], wantErr: "no rows in result set"},
+		{name: "non-existent post", user: f.Users[1], wantErr: "no rows in result set"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var post Post
+			var c context.Context
+			err := post.FindByUserAndUUID(c, test.user, test.post.Uuid.String())
+
+			if test.wantErr != "" {
+				ms.Error(err)
+				ms.Contains(err.Error(), test.wantErr, "unexpected error")
+				return
+			}
+
+			ms.NoError(err)
+			ms.Equal(test.post.ID, post.ID)
+		})
+	}
+}
+
+func (ms *ModelSuite) TestPost_GetSetDestination() {
 	t := ms.T()
 
 	user := User{Uuid: domain.GetUuid(), Email: t.Name() + "_user@example.com", Nickname: t.Name() + "_User"}
@@ -1053,7 +1169,7 @@ func (ms *ModelSuite) TestPost_SetDestination() {
 	ms.False(locationFromDB.Longitude.Valid)
 }
 
-func (ms *ModelSuite) TestPost_SetOrigin() {
+func (ms *ModelSuite) TestPost_GetSetOrigin() {
 	t := ms.T()
 
 	user := User{Uuid: domain.GetUuid(), Email: t.Name() + "_user@example.com", Nickname: t.Name() + "_User"}
@@ -1141,7 +1257,6 @@ func (ms *ModelSuite) TestPost_NewWithUser() {
 				ms.Error(err)
 			} else {
 				ms.NoError(err)
-				ms.NotEqual(domain.EmptyUUID, post.Uuid)
 				ms.Equal(test.wantPostType, post.Type)
 				ms.Equal(user.ID, post.CreatedByID)
 				ms.Equal(test.wantPostStatus, post.Status)
@@ -1193,7 +1308,7 @@ func (ms *ModelSuite) TestPosts_FindByUser() {
 	}{
 		{name: "user 0", user: f.Users[0], wantPostIDs: []int{f.Posts[2].ID, f.Posts[1].ID, f.Posts[0].ID}},
 		{name: "user 1", user: f.Users[1], wantPostIDs: []int{f.Posts[2].ID, f.Posts[0].ID}},
-		{name: "non-existent user", user: User{}, wantErr: true},
+		{name: "non-existent user", user: User{}, wantPostIDs: []int{}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

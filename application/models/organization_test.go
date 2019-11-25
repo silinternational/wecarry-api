@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func (ms *ModelSuite) TestFindOrgByUUID() {
+func (ms *ModelSuite) TestOrganization_FindOrgByUUID() {
 	t := ms.T()
 	org, _ := createOrgFixtures(ms, t)
 
@@ -61,7 +61,7 @@ func (ms *ModelSuite) TestFindOrgByUUID() {
 	}
 }
 
-func (ms *ModelSuite) TestCreateOrganization() {
+func (ms *ModelSuite) TestOrganization_Create() {
 	t := ms.T()
 	tests := []struct {
 		name    string
@@ -72,7 +72,6 @@ func (ms *ModelSuite) TestCreateOrganization() {
 			name: "full",
 			org: Organization{
 				Name:       "ACME",
-				Uuid:       domain.GetUuid(),
 				AuthType:   AuthTypeSaml,
 				AuthConfig: "{}",
 				Url:        nulls.NewString("https://www.example.com"),
@@ -83,7 +82,6 @@ func (ms *ModelSuite) TestCreateOrganization() {
 			name: "minimum",
 			org: Organization{
 				Name:       "Bits 'R' Us",
-				Uuid:       domain.GetUuid(),
 				AuthType:   AuthTypeSaml,
 				AuthConfig: "{}",
 			},
@@ -93,7 +91,6 @@ func (ms *ModelSuite) TestCreateOrganization() {
 			name: "missing auth config",
 			org: Organization{
 				Name:     "Bits 'R' Us",
-				Uuid:     domain.GetUuid(),
 				AuthType: AuthTypeSaml,
 			},
 			wantErr: true,
@@ -101,7 +98,7 @@ func (ms *ModelSuite) TestCreateOrganization() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := ms.DB.Create(&test.org)
+			err := test.org.Save()
 			if test.wantErr == true {
 				if err == nil {
 					t.Errorf("Expected an error, but did not get one")
@@ -127,7 +124,7 @@ func (ms *ModelSuite) TestCreateOrganization() {
 	}
 }
 
-func (ms *ModelSuite) TestValidateOrganization() {
+func (ms *ModelSuite) TestOrganization_Validate() {
 	t := ms.T()
 	tests := []struct {
 		name     string
@@ -192,7 +189,7 @@ func (ms *ModelSuite) TestValidateOrganization() {
 	}
 }
 
-func (ms *ModelSuite) TestOrganizationFindByDomain() {
+func (ms *ModelSuite) TestOrganization_FindByDomain() {
 	t := ms.T()
 	org, orgDomain := createOrgFixtures(ms, t)
 

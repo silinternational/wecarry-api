@@ -303,7 +303,7 @@ func (u *User) FindByUUID(uuid string, selectFields ...string) error {
 
 func (u *User) FindByID(id int, eagerFields ...string) error {
 	if id <= 0 {
-		return errors.New("error finding user: id must a positive number")
+		return errors.New("error finding user: id must be a positive number")
 	}
 
 	if err := DB.Eager(eagerFields...).Find(u, id); err != nil {
@@ -391,6 +391,9 @@ func (u *User) GetPhotoURL() (string, error) {
 
 // Save wraps DB.Save() call to check for errors and operate on attached object
 func (u *User) Save() error {
+	if u.Uuid.Version() == 0 {
+		u.Uuid = domain.GetUuid()
+	}
 	validationErrs, err := u.Validate(DB)
 	if validationErrs != nil && validationErrs.HasAny() {
 		return errors.New(FlattenPopErrors(validationErrs))
@@ -564,7 +567,7 @@ func (u *User) CreatePreference(key, value string) (UserPreference, error) {
 		return UserPreference{}, errors.New("invalid user ID in CreatePreference.")
 	}
 
-	DB.Where("user_id = ?", u.ID).Where("key = ?", key).First(&uPref)
+	_ = DB.Where("user_id = ?", u.ID).Where("key = ?", key).First(&uPref)
 	if uPref.ID > 0 {
 		err := fmt.Errorf("can't create UserPreference with key %s.  Already exists with id %v.", key, uPref.ID)
 		return UserPreference{}, err

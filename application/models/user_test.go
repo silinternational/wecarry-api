@@ -87,13 +87,13 @@ func (ms *ModelSuite) TestUser_FindOrCreateFromAuthUser() {
 				ms.Error(err, "FindOrCreateFromAuthUser() did not return expected error")
 			} else {
 				ms.NoError(err, "FindOrCreateFromAuthUser() error: %s", err)
-				ms.NotEqual(0, u.ID, "Did not get a new user ID")
+				ms.True(u.ID != 0, "Did not get a new user ID")
 			}
 		})
 	}
 }
 
-func (ms *ModelSuite) TestValidateUser() {
+func (ms *ModelSuite) TestUser_Validate() {
 	t := ms.T()
 	tests := []struct {
 		name     string
@@ -222,7 +222,7 @@ func (ms *ModelSuite) TestValidateUser() {
 }
 
 // Ensure multiple access tokens for same organization are allowed (to support multiple tabs/browsers)
-func (ms *ModelSuite) TestCreateAccessToken() {
+func (ms *ModelSuite) TestUser_CreateAccessToken() {
 	t := ms.T()
 
 	orgs, users, _ := CreateUserFixtures(ms, t)
@@ -357,7 +357,7 @@ func (ms *ModelSuite) TestUser_GetOrganizations() {
 	}
 }
 
-func (ms *ModelSuite) Test_FindUserOrganization() {
+func (ms *ModelSuite) TestUser_FindUserOrganization() {
 	t := ms.T()
 	createUserOrganizationFixtures(ms, t)
 
@@ -485,6 +485,28 @@ func (ms *ModelSuite) TestUser_GetPosts() {
 				t.Errorf("GetOrgIDs() = \"%v\", want \"%v\"", ids, test.want)
 			}
 		})
+	}
+}
+
+func (ms *ModelSuite) TestUser_CanCreateOrganization() {
+	t := ms.T()
+
+	user := User{AdminRole: UserAdminRoleUser}
+	admin := User{AdminRole: UserAdminRoleAdmin}
+	salesAdmin := User{AdminRole: UserAdminRoleSalesAdmin}
+	superAdmin := User{AdminRole: UserAdminRoleSuperAdmin}
+
+	if !salesAdmin.CanCreateOrganization() {
+		t.Error("sales admin should be able to create orgs")
+	}
+	if !superAdmin.CanCreateOrganization() {
+		t.Error("super admin should be able to create orgs")
+	}
+	if admin.CanCreateOrganization() {
+		t.Error("admin should not be able to create orgs")
+	}
+	if user.CanCreateOrganization() {
+		t.Error("user should not be able to create orgs")
 	}
 }
 
@@ -617,6 +639,78 @@ func (ms *ModelSuite) TestUser_CanUpdatePostStatus() {
 	}
 }
 
+func (ms *ModelSuite) TestUser_FindByUUID() {
+	t := ms.T()
+
+	f := createFixturesForUserFind(ms)
+
+	tests := []struct {
+		name    string
+		UUID    string
+		wantErr string
+	}{
+		{
+			name:    "Good",
+			UUID:    f.Users[0].Uuid.String(),
+			wantErr: "",
+		},
+		{
+			name:    "Bad",
+			UUID:    "",
+			wantErr: "uuid must not be blank",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var u User
+			err := u.FindByUUID(test.UUID)
+			if test.wantErr != "" {
+				ms.Error(err)
+				ms.Contains(err.Error(), test.wantErr)
+				return
+			}
+			ms.Equal(test.UUID, u.Uuid.String())
+		})
+	}
+}
+
+func (ms *ModelSuite) TestUser_FindByID() {
+	t := ms.T()
+
+	f := createFixturesForUserFind(ms)
+
+	tests := []struct {
+		name    string
+		ID      int
+		wantErr string
+	}{
+		{
+			name:    "Good",
+			ID:      f.Users[0].ID,
+			wantErr: "",
+		},
+		{
+			name:    "Bad",
+			ID:      0,
+			wantErr: "id must be a positive number",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var u User
+			err := u.FindByID(test.ID)
+			if test.wantErr != "" {
+				ms.Error(err)
+				ms.Contains(err.Error(), test.wantErr)
+				return
+			}
+			ms.Equal(test.ID, u.ID)
+		})
+	}
+}
+
 func (ms *ModelSuite) TestUser_AttachPhoto() {
 	t := ms.T()
 
@@ -635,8 +729,8 @@ func (ms *ModelSuite) TestUser_AttachPhoto() {
 		t.Errorf("failed to attach photo to user, %s", err)
 	} else {
 		ms.Equal(filename, attachedFile.Name)
-		ms.NotEqual(0, attachedFile.ID)
-		ms.NotEqual(domain.EmptyUUID, attachedFile.UUID.String())
+		ms.True(attachedFile.ID != 0)
+		ms.True(attachedFile.UUID.Version() != 0)
 	}
 
 	if err := ms.DB.Load(&user); err != nil {
@@ -652,27 +746,60 @@ func (ms *ModelSuite) TestUser_AttachPhoto() {
 	}
 }
 
-func CreateUserFixturesForNicknames(ms *ModelSuite, t *testing.T) User {
-	prefix := allPrefixes()[0]
+func (ms *ModelSuite) TestUser_Save() {
+	t := ms.T()
+	f := createFixturesForTestUserSave(ms)
 
-	// Load User test fixtures
-	user := User{
-		Email:     fmt.Sprintf("user1-%s@example.com", t.Name()),
-		FirstName: "Existing",
-		LastName:  "User",
-		Nickname:  prefix + "ExistingU",
-		Uuid:      domain.GetUuid(),
+	tests := []struct {
+		name    string
+		user    User
+		wantErr string
+	}{
+		{
+			name:    "no uuid",
+			user:    f.Users[0],
+			wantErr: "",
+		},
+		{
+			name:    "no uuid, should not conflict with first",
+			user:    f.Users[1],
+			wantErr: "",
+		},
+		{
+			name:    "uuid given",
+			user:    f.Users[2],
+			wantErr: "",
+		},
+		{
+			name:    "update existing",
+			user:    f.Users[3],
+			wantErr: "",
+		},
+		{
+			name:    "validation error",
+			user:    f.Users[4],
+			wantErr: "first_name: FirstName can not be blank.",
+		},
 	}
 
-	if err := ms.DB.Create(&user); err != nil {
-		t.Errorf("could not create test user %v ... %v", user, err)
-		t.FailNow()
-	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := test.user.Save()
+			if test.wantErr != "" {
+				ms.Error(err)
+				ms.Contains(err.Error(), test.wantErr, "unexpected error message")
+				return
+			}
+			ms.NoError(err)
 
-	return user
+			ms.True(test.user.Uuid.Version() != 0)
+			var u User
+			ms.NoError(u.FindByID(test.user.ID))
+		})
+	}
 }
 
-func (ms *ModelSuite) TestUniquifyNickname() {
+func (ms *ModelSuite) TestUser_UniquifyNickname() {
 	t := ms.T()
 	existingUser := CreateUserFixturesForNicknames(ms, t)
 	prefix := allPrefixes()[0]
@@ -718,7 +845,7 @@ func (ms *ModelSuite) TestUniquifyNickname() {
 				return
 			}
 
-			ms.NotEqual(test.dontWant, got)
+			ms.True(test.dontWant != got)
 		})
 	}
 }

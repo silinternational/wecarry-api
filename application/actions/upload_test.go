@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gofrs/uuid"
+
 	"github.com/gobuffalo/buffalo/binding"
 
 	"github.com/silinternational/wecarry-api/aws"
@@ -121,7 +123,9 @@ func (as *ActionSuite) Test_Upload() {
 	}
 
 	as.Equal(filename, u.Name)
-	as.NotEqual(domain.EmptyUUID, u.UUID)
+	fileUUID, err := uuid.FromString(u.UUID)
+	as.NoError(err)
+	as.True(fileUUID.Version() != 0)
 	as.Regexp("^https?", u.URL)
 	as.Equal("image/gif", u.ContentType)
 	as.Equal(6, u.Size)
