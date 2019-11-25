@@ -309,6 +309,63 @@ func (ms *ModelSuite) TestThread_CreateWithParticipants() {
 	ms.Equal(2, n, "incorrect number of thread_participants records created")
 }
 
+func (ms *ModelSuite) TestThread_ensureParticipants() {
+	t := ms.T()
+
+	_, users, _ := CreateUserFixtures(ms, t)
+	posts := CreatePostFixtures(ms, t, users)
+	post := posts[0]
+
+	thread := Thread{
+		PostID: post.ID,
+		Uuid:   domain.GetUuid(),
+	}
+
+	err := DB.Save(&thread)
+	ms.NoError(err, "TestThread_ensureParticipants() error saving new thread for test")
+
+	tests := []struct {
+		name   string
+		userID int
+		want   []uuid.UUID
+	}{
+		{
+			name:   "just creator",
+			userID: users[0].ID,
+			want:   []uuid.UUID{users[0].Uuid},
+		},
+		{
+			name:   "add provider",
+			userID: users[1].ID,
+			want:   []uuid.UUID{users[0].Uuid, users[1].Uuid},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := thread.ensureParticipants(post, test.userID)
+			ms.NoError(err)
+
+			participants, err := thread.GetParticipants([]string{"ID", "Uuid"})
+			ms.NoError(err, "can't get thread participants from thread")
+
+			ids := make([]uuid.UUID, len(participants))
+			for i := range participants {
+				ids[i] = participants[i].Uuid
+			}
+
+			ms.Equal(len(test.want), len(ids), "incorrect number of participants found")
+
+			ms.Contains(ids, test.want[0], "new thread doesn't include post creator as participant")
+
+			if len(test.want) == 2 {
+				ms.Contains(ids, users[1].Uuid, "new thread doesn't include provided user as participant")
+			}
+
+		})
+	}
+}
+
 func (ms *ModelSuite) TestThread_GetLastViewedAt() {
 	t := ms.T()
 
