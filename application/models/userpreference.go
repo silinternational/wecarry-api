@@ -63,12 +63,12 @@ func (p *UserPreference) ValidateUpdate(tx *pop.Connection) (*validate.Errors, e
 }
 
 // FindByUUID loads from DB the UserPreference record identified by the given UUID
-func (p *UserPreference) FindByUUID(id string, selectFields ...string) error {
+func (p *UserPreference) FindByUUID(id string) error {
 	if id == "" {
 		return errors.New("error: user preference uuid must not be blank")
 	}
 
-	if err := DB.Where("uuid = ?", id).Select(selectFields...).First(p); err != nil {
+	if err := DB.Where("uuid = ?", id).First(p); err != nil {
 		return fmt.Errorf("error finding user preference by uuid: %s", err.Error())
 	}
 

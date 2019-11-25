@@ -113,10 +113,8 @@ func (u *User) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 }
 
 // All retrieves all Users from the database.
-func (u *Users) All(selectFields ...string) error {
-	return DB.Select(selectFields...).
-		Order("nickname asc").
-		All(u)
+func (u *Users) All() error {
+	return DB.Order("nickname asc").All(u)
 }
 
 // CreateAccessToken - Create and store new UserAccessToken
@@ -289,12 +287,12 @@ func (u *User) CanUpdatePostStatus(post Post, newStatus PostStatus) bool {
 }
 
 // FindByUUID find a User with the given UUID and loads it from the database.
-func (u *User) FindByUUID(uuid string, selectFields ...string) error {
+func (u *User) FindByUUID(uuid string) error {
 	if uuid == "" {
 		return errors.New("error: uuid must not be blank")
 	}
 
-	if err := DB.Select(selectFields...).Where("uuid = ?", uuid).First(u); err != nil {
+	if err := DB.Where("uuid = ?", uuid).First(u); err != nil {
 		return fmt.Errorf("error finding user by uuid: %s", err.Error())
 	}
 
