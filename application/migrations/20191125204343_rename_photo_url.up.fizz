@@ -1,0 +1,1 @@
+rename_column("users", "photo_url", "auth_photo_url")

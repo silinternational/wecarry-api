@@ -513,7 +513,7 @@ CREATE TABLE public.users (
     updated_at timestamp without time zone NOT NULL,
     uuid uuid NOT NULL,
     photo_file_id integer,
-    photo_url character varying(255),
+    auth_photo_url character varying(255),
     location_id integer
 );
 

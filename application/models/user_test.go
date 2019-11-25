@@ -170,36 +170,36 @@ func (ms *ModelSuite) TestUser_Validate() {
 		{
 			name: "good photoURL",
 			user: User{
-				Email:     "user@example.com",
-				FirstName: "A",
-				LastName:  "User",
-				Nickname:  "A User",
-				Uuid:      domain.GetUuid(),
-				PhotoURL:  nulls.NewString("http://example.com/user/7/avatar"),
+				Email:        "user@example.com",
+				FirstName:    "A",
+				LastName:     "User",
+				Nickname:     "A User",
+				Uuid:         domain.GetUuid(),
+				AuthPhotoURL: nulls.NewString("http://example.com/user/7/avatar"),
 			},
 			wantErr: false,
 		},
 		{
 			name: "blank photoURL",
 			user: User{
-				Email:     "user@example.com",
-				FirstName: "A",
-				LastName:  "User",
-				Nickname:  "A User",
-				Uuid:      domain.GetUuid(),
-				PhotoURL:  nulls.NewString(""),
+				Email:        "user@example.com",
+				FirstName:    "A",
+				LastName:     "User",
+				Nickname:     "A User",
+				Uuid:         domain.GetUuid(),
+				AuthPhotoURL: nulls.NewString(""),
 			},
 			wantErr: false,
 		},
 		{
 			name: "bad photoURL",
 			user: User{
-				Email:     "user@example.com",
-				FirstName: "A",
-				LastName:  "User",
-				Nickname:  "A User",
-				Uuid:      domain.GetUuid(),
-				PhotoURL:  nulls.NewString("badone"),
+				Email:        "user@example.com",
+				FirstName:    "A",
+				LastName:     "User",
+				Nickname:     "A User",
+				Uuid:         domain.GetUuid(),
+				AuthPhotoURL: nulls.NewString("badone"),
 			},
 			wantErr:  true,
 			errField: "photo_url",
@@ -743,6 +743,59 @@ func (ms *ModelSuite) TestUser_AttachPhoto() {
 		ms.Regexp("^https?", got)
 	} else {
 		ms.Fail("user.GetPhotoURL failed, %s", err)
+	}
+}
+
+func (ms *ModelSuite) TestUser_GetPhoto() {
+	t := ms.T()
+	f := createFixturesForTestUserGetPhoto(ms)
+
+	tests := []struct {
+		name    string
+		user    User
+		wantURL string
+		wantNil bool
+		wantErr string
+	}{
+		{
+			name:    "no AuthPhoto, no photo attachment",
+			user:    f.Users[0],
+			wantNil: true,
+		},
+		{
+			name:    "AuthPhoto, and no photo attachment",
+			user:    f.Users[1],
+			wantURL: f.Users[1].AuthPhotoURL.String,
+		},
+		{
+			name:    "no AuthPhoto, but photo attachment",
+			user:    f.Users[2],
+			wantURL: f.Users[2].PhotoFile.URL,
+		},
+		{
+			name:    "AuthPhoto and photo attachment",
+			user:    f.Users[3],
+			wantURL: f.Users[3].PhotoFile.URL,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			url, err := test.user.GetPhotoURL()
+			if test.wantErr != "" {
+				ms.Error(err)
+				ms.Contains(err.Error(), test.wantErr, "unexpected error message")
+				return
+			}
+			ms.NoError(err)
+
+			if test.wantNil {
+				ms.Nil(url)
+				return
+			}
+			ms.NotNil(url)
+			ms.Equal(test.wantURL, *url)
+		})
 	}
 }
 
