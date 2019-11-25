@@ -123,22 +123,18 @@ func (t *Thread) GetParticipants(selectFields []string) ([]User, error) {
 }
 
 func (t *Thread) CreateWithParticipants(postUuid string, user User) error {
+	if user.ID <= 0 {
+		return fmt.Errorf("error creating thread, invalid user ID %v", user.ID)
+	}
+
 	var post Post
 	if err := post.FindByUUID(postUuid); err != nil {
 		return err
 	}
 
-	participants := Users{user}
-
-	// Ensure Post Creator is one of the participants
-	if post.CreatedBy.ID != 0 && post.CreatedBy.ID != user.ID {
-		participants = append(participants, post.CreatedBy)
-	}
-
 	thread := Thread{
-		PostID:       post.ID,
-		Uuid:         domain.GetUuid(),
-		Participants: participants,
+		PostID: post.ID,
+		Uuid:   domain.GetUuid(),
 	}
 
 	if err := DB.Save(&thread); err != nil {
@@ -147,6 +143,41 @@ func (t *Thread) CreateWithParticipants(postUuid string, user User) error {
 	}
 
 	*t = thread
+	return t.ensureParticipants(post, user.ID)
+}
+
+func (t *Thread) ensureParticipants(post Post, userID int) error {
+	threadParticipants, err := t.GetParticipants([]string{})
+	if domain.IsOtherThanNoRows(err) {
+		err = errors.New("error getting threadParticipants for thread: " + err.Error())
+		return err
+	}
+
+	if err := t.createParticipantIfNeeded(threadParticipants, post.CreatedByID); err != nil {
+		return err
+	}
+
+	if userID == post.CreatedByID {
+		return nil
+	}
+
+	return t.createParticipantIfNeeded(threadParticipants, userID)
+}
+
+func (t *Thread) createParticipantIfNeeded(tpUsers Users, userID int) error {
+	for _, tPU := range tpUsers {
+		if tPU.ID == userID {
+			return nil
+		}
+	}
+
+	newTP := ThreadParticipant{}
+	newTP.ThreadID = t.ID
+	newTP.UserID = userID
+	err := DB.Create(&newTP)
+	if err != nil {
+		return fmt.Errorf("error creating threadParticipant on thread ID: %v ... %v", t.ID, err)
+	}
 	return nil
 }
 
