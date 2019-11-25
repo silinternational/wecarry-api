@@ -123,6 +123,10 @@ func (t *Thread) GetParticipants(selectFields []string) ([]User, error) {
 }
 
 func (t *Thread) CreateWithParticipants(postUuid string, user User) error {
+	if user.ID <= 0 {
+		return fmt.Errorf("error creating thread, invalid user ID %v", user.ID)
+	}
+
 	var post Post
 	if err := post.FindByUUID(postUuid); err != nil {
 		return err
@@ -149,13 +153,15 @@ func (t *Thread) ensureParticipants(post Post, userID int) error {
 		return err
 	}
 
-	for _, uID := range []int{post.CreatedByID, userID} {
-		if err := t.createParticipantIfNeeded(threadParticipants, uID); err != nil {
-			return err
-		}
+	if err := t.createParticipantIfNeeded(threadParticipants, post.CreatedByID); err != nil {
+		return err
 	}
 
-	return nil
+	if userID == post.CreatedByID {
+		return nil
+	}
+
+	return t.createParticipantIfNeeded(threadParticipants, userID)
 }
 
 func (t *Thread) createParticipantIfNeeded(tpUsers Users, userID int) error {
