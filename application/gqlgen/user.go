@@ -141,12 +141,8 @@ func (r *queryResolver) Users(ctx context.Context) ([]models.User, error) {
 	}
 
 	users := models.Users{}
-	selectFields := GetSelectFieldsForUsers(ctx)
-	if err := users.All(selectFields...); err != nil {
-		extras := map[string]interface{}{
-			"fields": selectFields,
-		}
-		return nil, reportError(ctx, err, "GetUsers", extras)
+	if err := users.All(); err != nil {
+		return nil, reportError(ctx, err, "GetUsers")
 	}
 
 	return users, nil
@@ -171,7 +167,7 @@ func (r *queryResolver) User(ctx context.Context, id *string) (*models.User, err
 
 	dbUser := models.User{}
 	selectFields := GetSelectFieldsForUsers(ctx)
-	if err := dbUser.FindByUUID(*id, selectFields...); err != nil {
+	if err := dbUser.FindByUUID(*id); err != nil {
 		extras := map[string]interface{}{
 			"fields": selectFields,
 		}

@@ -3,7 +3,6 @@ package gqlgen
 import (
 	"context"
 
-	"github.com/99designs/gqlgen/graphql"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 )
@@ -41,7 +40,7 @@ func (r *messageResolver) Sender(ctx context.Context, obj *models.Message) (*mod
 	if obj == nil {
 		return nil, nil
 	}
-	user, err := obj.GetSender(GetSelectFieldsForUsers(ctx))
+	user, err := obj.GetSender()
 	if err != nil {
 		return nil, reportError(ctx, err, "GetMessageSender")
 	}
@@ -55,7 +54,7 @@ func (r *messageResolver) Thread(ctx context.Context, obj *models.Message) (*mod
 		return nil, nil
 	}
 
-	thread, err := obj.GetThread(getSelectFieldsForThreads(ctx))
+	thread, err := obj.GetThread()
 	if err != nil {
 		return nil, reportError(ctx, err, "GetMessageThread")
 	}
@@ -69,13 +68,9 @@ func (r *queryResolver) Message(ctx context.Context, id *string) (*models.Messag
 		return nil, nil
 	}
 	var message models.Message
-	messageFields := GetSelectFieldsFromRequestFields(MessageFields(), graphql.CollectAllFields(ctx))
 
-	if err := message.FindByUUID(*id, messageFields...); err != nil {
-		extras := map[string]interface{}{
-			"fields": messageFields,
-		}
-		return nil, reportError(ctx, err, "GetMessage", extras)
+	if err := message.FindByUUID(*id); err != nil {
+		return nil, reportError(ctx, err, "GetMessage")
 	}
 
 	return &message, nil

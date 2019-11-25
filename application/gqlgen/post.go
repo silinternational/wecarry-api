@@ -70,13 +70,9 @@ func (r *postResolver) CreatedBy(ctx context.Context, obj *models.Post) (*models
 		return nil, nil
 	}
 
-	selectFields := GetSelectFieldsForUsers(ctx)
-	creator, err := obj.GetCreator(selectFields)
+	creator, err := obj.GetCreator()
 	if err != nil {
-		extras := map[string]interface{}{
-			"fields": selectFields,
-		}
-		return nil, reportError(ctx, err, "GetPostCreator", extras)
+		return nil, reportError(ctx, err, "GetPostCreator")
 	}
 
 	return creator, nil
@@ -88,13 +84,9 @@ func (r *postResolver) Receiver(ctx context.Context, obj *models.Post) (*models.
 		return nil, nil
 	}
 
-	selectFields := GetSelectFieldsForUsers(ctx)
-	receiver, err := obj.GetReceiver(selectFields)
+	receiver, err := obj.GetReceiver()
 	if err != nil {
-		extras := map[string]interface{}{
-			"fields": selectFields,
-		}
-		return nil, reportError(ctx, err, "GetPostReceiver", extras)
+		return nil, reportError(ctx, err, "GetPostReceiver")
 	}
 
 	return receiver, nil
@@ -106,13 +98,9 @@ func (r *postResolver) Provider(ctx context.Context, obj *models.Post) (*models.
 		return nil, nil
 	}
 
-	selectFields := GetSelectFieldsForUsers(ctx)
-	provider, err := obj.GetProvider(selectFields)
+	provider, err := obj.GetProvider()
 	if err != nil {
-		extras := map[string]interface{}{
-			"fields": selectFields,
-		}
-		return nil, reportError(ctx, err, "GetPostProvider", extras)
+		return nil, reportError(ctx, err, "GetPostProvider")
 	}
 
 	return provider, nil
@@ -125,13 +113,9 @@ func (r *postResolver) Organization(ctx context.Context, obj *models.Post) (*mod
 		return nil, nil
 	}
 
-	selectFields := getSelectFieldsForOrganizations(ctx)
-	organization, err := obj.GetOrganization(selectFields)
+	organization, err := obj.GetOrganization()
 	if err != nil {
-		extras := map[string]interface{}{
-			"fields": selectFields,
-		}
-		return nil, reportError(ctx, err, "GetPostOrganization", extras)
+		return nil, reportError(ctx, err, "GetPostOrganization")
 	}
 
 	return organization, nil
@@ -195,13 +179,11 @@ func (r *postResolver) Threads(ctx context.Context, obj *models.Post) ([]models.
 		return nil, nil
 	}
 
-	selectFields := GetSelectFieldsFromRequestFields(ThreadFields(), graphql.CollectAllFields(ctx))
 	user := models.GetCurrentUserFromGqlContext(ctx, TestUser)
-	threads, err := obj.GetThreads(selectFields, user)
+	threads, err := obj.GetThreads(user)
 	if err != nil {
 		extras := map[string]interface{}{
-			"user":   user.Uuid,
-			"fields": selectFields,
+			"user": user.Uuid,
 		}
 		return nil, reportError(ctx, err, "GetPostThreads", extras)
 	}
@@ -267,11 +249,9 @@ func (r *postResolver) IsEditable(ctx context.Context, obj *models.Post) (bool, 
 func (r *queryResolver) Posts(ctx context.Context) ([]models.Post, error) {
 	posts := models.Posts{}
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
-	selectFields := getSelectFieldsForPosts(ctx)
-	if err := posts.FindByUser(ctx, cUser, selectFields...); err != nil {
+	if err := posts.FindByUser(ctx, cUser); err != nil {
 		extras := map[string]interface{}{
-			"user":   cUser.Uuid,
-			"fields": selectFields,
+			"user": cUser.Uuid,
 		}
 		return nil, reportError(ctx, err, "GetPosts", extras)
 	}
@@ -286,11 +266,9 @@ func (r *queryResolver) Post(ctx context.Context, id *string) (*models.Post, err
 	}
 	var post models.Post
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
-	selectFields := getSelectFieldsForPosts(ctx)
-	if err := post.FindByUserAndUUID(ctx, cUser, *id, selectFields...); err != nil {
+	if err := post.FindByUserAndUUID(ctx, cUser, *id); err != nil {
 		extras := map[string]interface{}{
-			"user":   cUser.Uuid,
-			"fields": selectFields,
+			"user": cUser.Uuid,
 		}
 		return nil, reportError(ctx, err, "GetPost", extras)
 	}

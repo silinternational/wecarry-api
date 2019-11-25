@@ -40,8 +40,8 @@ type PostUsers struct {
 // Post Provider assuming their email is not blank.
 func GetPostUsers(post models.Post) PostUsers {
 
-	requester, _ := post.GetReceiver([]string{"Email", "Nickname"})
-	provider, _ := post.GetProvider([]string{"Email", "Nickname"})
+	requester, _ := post.GetReceiver()
+	provider, _ := post.GetProvider()
 
 	var recipients PostUsers
 

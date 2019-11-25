@@ -35,10 +35,10 @@ func (gs *GqlgenSuite) TestMessageQuery() {
 	err := c.Post(query, &resp)
 	gs.NoError(err)
 
-	thread, err := f.Messages[0].GetThread([]string{"uuid", "id"})
+	thread, err := f.Messages[0].GetThread()
 	gs.NoError(err)
 
-	participants, err := thread.GetParticipants([]string{"nickname"})
+	participants, err := thread.GetParticipants()
 	gs.NoError(err)
 	gs.Equal(2, len(participants), "incorrect number of thread participants")
 
@@ -68,10 +68,10 @@ func (gs *GqlgenSuite) TestCreateMessage() {
 	err := c.Post(query, &resp)
 	gs.NoError(err)
 
-	thread, err := f.Messages[0].GetThread([]string{"uuid", "id"})
+	thread, err := f.Messages[0].GetThread()
 	gs.NoError(err)
 
-	messages, err := thread.GetMessages([]string{"id"})
+	messages, err := thread.GetMessages()
 	gs.NoError(err)
 	gs.Equal(3, len(messages), "incorrect number of thread messages")
 

@@ -92,7 +92,7 @@ func (ms *ModelSuite) TestMessage_GetSender() {
 	messages := messageFixtures.Messages
 	users := messageFixtures.Users
 
-	userResults, err := messages[0].GetSender([]string{"id", "nickname", "email"})
+	userResults, err := messages[0].GetSender()
 
 	if err != nil {
 		t.Errorf("unexpected error ... %v", err)
@@ -112,7 +112,7 @@ func (ms *ModelSuite) TestMessage_GetThread() {
 	messages := messageFixtures.Messages
 	threads := messageFixtures.Threads
 
-	threadResults, err := messages[0].GetThread([]string{"id", "uuid", "post_id"})
+	threadResults, err := messages[0].GetThread()
 
 	if err != nil {
 		t.Errorf("unexpected error ... %v", err)
@@ -214,22 +214,13 @@ func (ms *ModelSuite) TestMessage_FindByUUID() {
 	tests := []struct {
 		name          string
 		uuid          string
-		fields        []string
 		wantID        int
 		wantContent   string
 		wantCreatedAt string
 		wantErr       bool
 	}{
-		{name: "good with no extra fields",
+		{name: "good",
 			uuid:          f.Messages[0].Uuid.String(),
-			fields:        []string{"id"},
-			wantID:        f.Messages[0].ID,
-			wantContent:   "",
-			wantCreatedAt: time.Time{}.Format(time.RFC3339),
-		},
-		{name: "good with two extra fields",
-			uuid:          f.Messages[0].Uuid.String(),
-			fields:        []string{"id", "content", "created_at"},
 			wantID:        f.Messages[0].ID,
 			wantContent:   f.Messages[0].Content,
 			wantCreatedAt: f.Messages[0].CreatedAt.Format(time.RFC3339),
@@ -241,7 +232,7 @@ func (ms *ModelSuite) TestMessage_FindByUUID() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var message Message
-			err := message.FindByUUID(test.uuid, test.fields...)
+			err := message.FindByUUID(test.uuid)
 
 			if test.wantErr {
 				ms.Error(err)
