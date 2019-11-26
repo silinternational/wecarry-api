@@ -79,12 +79,12 @@ func (m *Message) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 // It also ensures the associated ThreadParticipant records exist
 func (m *Message) AfterCreate(tx *pop.Connection) error {
 
-	thread, err := m.GetThread([]string{"uuid", "id"})
+	thread, err := m.GetThread()
 	if err != nil {
 		return errors.New("error getting message's Thread ... " + err.Error())
 	}
 
-	post, err := thread.GetPost([]string{"created_by_id", "id"})
+	post, err := thread.GetPost()
 	if err != nil {
 		return errors.New("error getting message's Post ... " + err.Error())
 	}
@@ -110,9 +110,9 @@ func (m *Message) AfterCreate(tx *pop.Connection) error {
 }
 
 // GetSender finds and returns the User that is the Sender of this Message
-func (m *Message) GetSender(requestFields []string) (*User, error) {
+func (m *Message) GetSender() (*User, error) {
 	sender := User{}
-	if err := DB.Select(requestFields...).Find(&sender, m.SentByID); err != nil {
+	if err := DB.Find(&sender, m.SentByID); err != nil {
 		err = fmt.Errorf("error finding message sentBy user with id %v ... %v", m.SentByID, err)
 		return nil, err
 	}
@@ -120,9 +120,9 @@ func (m *Message) GetSender(requestFields []string) (*User, error) {
 }
 
 // GetThread finds and returns the Thread that this Message is attached to
-func (m *Message) GetThread(requestFields []string) (*Thread, error) {
+func (m *Message) GetThread() (*Thread, error) {
 	thread := Thread{}
-	if err := DB.Select(requestFields...).Find(&thread, m.ThreadID); err != nil {
+	if err := DB.Find(&thread, m.ThreadID); err != nil {
 		err = fmt.Errorf("error finding message thread id %v ... %v", m.ThreadID, err)
 		return nil, err
 	}
@@ -181,12 +181,12 @@ func (m *Message) FindByID(id int, eagerFields ...string) error {
 }
 
 // FindByUUID loads from DB the Message record identified by the given UUID
-func (m *Message) FindByUUID(id string, selectFields ...string) error {
+func (m *Message) FindByUUID(id string) error {
 	if id == "" {
 		return errors.New("error: message uuid must not be blank")
 	}
 
-	if err := DB.Where("uuid = ?", id).Select(selectFields...).First(m); err != nil {
+	if err := DB.Where("uuid = ?", id).First(m); err != nil {
 		return fmt.Errorf("error finding message by uuid: %s", err.Error())
 	}
 

@@ -61,10 +61,8 @@ func (t *Thread) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 }
 
 // All retrieves all Threads from the database.
-func (t *Threads) All(selectFields ...string) error {
-	return DB.Select(selectFields...).
-		Order("updated_at desc").
-		All(t)
+func (t *Threads) All() error {
+	return DB.Order("updated_at desc").All(t)
 }
 
 func (t *Thread) FindByUUID(uuid string) error {
@@ -81,29 +79,29 @@ func (t *Thread) FindByUUID(uuid string) error {
 	return nil
 }
 
-func (t *Thread) GetPost(selectFields []string) (*Post, error) {
+func (t *Thread) GetPost() (*Post, error) {
 	if t.PostID <= 0 {
 		if err := t.FindByUUID(t.Uuid.String()); err != nil {
 			return nil, err
 		}
 	}
 	post := Post{}
-	if err := DB.Select(selectFields...).Find(&post, t.PostID); err != nil {
+	if err := DB.Find(&post, t.PostID); err != nil {
 		return nil, fmt.Errorf("error loading post %v %s", t.PostID, err)
 	}
 	return &post, nil
 }
 
-func (t *Thread) GetMessages(selectFields []string) ([]Message, error) {
+func (t *Thread) GetMessages() ([]Message, error) {
 	var messages []Message
-	if err := DB.Select(selectFields...).Where("thread_id = ?", t.ID).All(&messages); err != nil {
+	if err := DB.Where("thread_id = ?", t.ID).All(&messages); err != nil {
 		return messages, fmt.Errorf("error getting messages for thread id %v ... %v", t.ID, err)
 	}
 
 	return messages, nil
 }
 
-func (t *Thread) GetParticipants(selectFields []string) ([]User, error) {
+func (t *Thread) GetParticipants() ([]User, error) {
 	var users []User
 	var threadParticipants []*ThreadParticipant
 
@@ -114,7 +112,7 @@ func (t *Thread) GetParticipants(selectFields []string) ([]User, error) {
 	for _, tp := range threadParticipants {
 		u := User{}
 
-		if err := DB.Select(selectFields...).Find(&u, tp.UserID); err != nil {
+		if err := DB.Find(&u, tp.UserID); err != nil {
 			return users, fmt.Errorf("error finding users on thread %v ... %v", t.ID, err)
 		}
 		users = append(users, u)
@@ -147,7 +145,7 @@ func (t *Thread) CreateWithParticipants(postUuid string, user User) error {
 }
 
 func (t *Thread) ensureParticipants(post Post, userID int) error {
-	threadParticipants, err := t.GetParticipants([]string{})
+	threadParticipants, err := t.GetParticipants()
 	if domain.IsOtherThanNoRows(err) {
 		err = errors.New("error getting threadParticipants for thread: " + err.Error())
 		return err
@@ -219,7 +217,7 @@ func (t *Thread) UnreadMessageCount(userID int, lastViewedAt time.Time) (int, er
 		return count, fmt.Errorf("error in UnreadMessageCount, invalid id %v", userID)
 	}
 
-	msgs, err := t.GetMessages([]string{"created_at"})
+	msgs, err := t.GetMessages()
 	if err != nil {
 		return count, err
 	}

@@ -841,7 +841,7 @@ func (ms *ModelSuite) TestPost_GetCreator() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			user, err := test.post.GetCreator([]string{"uuid"})
+			user, err := test.post.GetCreator()
 			if err != nil {
 				t.Errorf("GetCreator() error = %v", err)
 			} else if user.Uuid != test.want {
@@ -867,7 +867,7 @@ func (ms *ModelSuite) TestPost_GetProvider() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			user, err := test.post.GetProvider([]string{"uuid"})
+			user, err := test.post.GetProvider()
 			if err != nil {
 				t.Errorf("GetProvider() error = %v", err)
 			} else if test.want == nil {
@@ -899,7 +899,7 @@ func (ms *ModelSuite) TestPost_GetReceiver() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			user, err := test.post.GetReceiver([]string{"uuid"})
+			user, err := test.post.GetReceiver()
 			if err != nil {
 				t.Errorf("GetReceiver() error = %v", err)
 			} else if test.want == nil {
@@ -930,7 +930,7 @@ func (ms *ModelSuite) TestPost_GetOrganization() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			org, err := test.post.GetOrganization([]string{"uuid"})
+			org, err := test.post.GetOrganization()
 			if err != nil {
 				t.Errorf("GetOrganization() error = %v", err)
 			} else if org.Uuid != test.want {
@@ -958,7 +958,7 @@ func (ms *ModelSuite) TestPost_GetThreads() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := test.post.GetThreads([]string{"uuid"}, users[0])
+			got, err := test.post.GetThreads(users[0])
 			if err != nil {
 				t.Errorf("GetThreads() error: %v", err)
 			} else {

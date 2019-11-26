@@ -5,21 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/99designs/gqlgen/graphql"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 )
-
-// ThreadFields maps GraphQL fields to their equivalent database fields. For related types, the
-// foreign key field name is provided.
-func ThreadFields() map[string]string {
-	return map[string]string{
-		"id":        "uuid",
-		"postID":    "post_id",
-		"createdAt": "created_at",
-		"updatedAt": "updated_at",
-	}
-}
 
 // Thread is required by gqlgen
 func (r *Resolver) Thread() ThreadResolver {
@@ -35,13 +23,9 @@ func (r *threadResolver) Participants(ctx context.Context, obj *models.Thread) (
 		return nil, nil
 	}
 
-	selectFields := GetSelectFieldsForUsers(ctx)
-	participants, err := obj.GetParticipants(selectFields)
+	participants, err := obj.GetParticipants()
 	if err != nil {
-		extras := map[string]interface{}{
-			"fields": selectFields,
-		}
-		return nil, reportError(ctx, err, "GetThreadParticipants", extras)
+		return nil, reportError(ctx, err, "GetThreadParticipants")
 	}
 
 	return participants, nil
@@ -80,13 +64,9 @@ func (r *threadResolver) Messages(ctx context.Context, obj *models.Thread) ([]mo
 		return nil, nil
 	}
 
-	selectedFields := GetSelectFieldsFromRequestFields(MessageFields(), graphql.CollectAllFields(ctx))
-	messages, err := obj.GetMessages(selectedFields)
+	messages, err := obj.GetMessages()
 	if err != nil {
-		extras := map[string]interface{}{
-			"fields": selectedFields,
-		}
-		return nil, reportError(ctx, err, "GetThreadMessages", extras)
+		return nil, reportError(ctx, err, "GetThreadMessages")
 	}
 
 	return messages, nil
@@ -98,13 +78,9 @@ func (r *threadResolver) PostID(ctx context.Context, obj *models.Thread) (string
 		return "", nil
 	}
 
-	selectedFields := []string{"uuid"}
-	post, err := obj.GetPost(selectedFields)
+	post, err := obj.GetPost()
 	if err != nil {
-		extras := map[string]interface{}{
-			"fields": selectedFields,
-		}
-		return "", reportError(ctx, err, "GetThreadPostID", extras)
+		return "", reportError(ctx, err, "GetThreadPostID")
 	}
 
 	return post.Uuid.String(), nil
@@ -116,13 +92,9 @@ func (r *threadResolver) Post(ctx context.Context, obj *models.Thread) (*models.
 		return nil, nil
 	}
 
-	selectedFields := getSelectFieldsForPosts(ctx)
-	post, err := obj.GetPost(selectedFields)
+	post, err := obj.GetPost()
 	if err != nil {
-		extras := map[string]interface{}{
-			"fields": selectedFields,
-		}
-		return nil, reportError(ctx, err, "GetThreadPost", extras)
+		return nil, reportError(ctx, err, "GetThreadPost")
 	}
 
 	return post, nil
@@ -158,12 +130,9 @@ func (r *threadResolver) UnreadMessageCount(ctx context.Context, obj *models.Thr
 // Threads retrieves the all of the threads
 func (r *queryResolver) Threads(ctx context.Context) ([]models.Thread, error) {
 	threads := models.Threads{}
-	selectFields := getSelectFieldsForThreads(ctx)
-	if err := threads.All(selectFields...); err != nil {
-		extras := map[string]interface{}{
-			"fields": selectFields,
-		}
-		return nil, reportError(ctx, err, "GetThreads", extras)
+
+	if err := threads.All(); err != nil {
+		return nil, reportError(ctx, err, "GetThreads")
 	}
 
 	return threads, nil
@@ -182,12 +151,4 @@ func (r *queryResolver) MyThreads(ctx context.Context) ([]models.Thread, error) 
 	}
 
 	return threads, nil
-}
-
-func getSelectFieldsForThreads(ctx context.Context) []string {
-	selectFields := GetSelectFieldsFromRequestFields(ThreadFields(), graphql.CollectAllFields(ctx))
-
-	selectFields = append(selectFields, "id")
-
-	return selectFields
 }

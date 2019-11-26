@@ -6,14 +6,6 @@ import (
 	"github.com/silinternational/wecarry-api/models"
 )
 
-// OrganizationDomainFields maps GraphQL fields to their equivalent database fields.
-func OrganizationDomainFields() map[string]string {
-	return map[string]string{
-		"organizationID": "organization_id",
-		"domain":         "domain",
-	}
-}
-
 // OrganizationDomain is required by gqlgen
 func (r *Resolver) OrganizationDomain() OrganizationDomainResolver {
 	return &organizationDomainResolver{r}

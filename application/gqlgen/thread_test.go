@@ -50,7 +50,7 @@ func (gs *GqlgenSuite) TestThreadsQuery() {
 	err = thread.Load("Participants")
 	gs.NoError(err)
 
-	participants, err := thread.GetParticipants([]string{"nickname"})
+	participants, err := thread.GetParticipants()
 	gs.NoError(err)
 	gs.Equal(2, len(participants), "incorrect number of thread participants")
 
@@ -104,7 +104,7 @@ func (gs *GqlgenSuite) TestMyThreadsQuery() {
 	err = thread.Load("Participants")
 	gs.NoError(err)
 
-	participants, err := thread.GetParticipants([]string{"nickname"})
+	participants, err := thread.GetParticipants()
 	gs.NoError(err)
 	gs.Equal(2, len(participants), "incorrect number of thread participants")
 
