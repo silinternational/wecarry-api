@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gobuffalo/nulls"
+	"github.com/silinternational/wecarry-api/aws"
 	"github.com/silinternational/wecarry-api/domain"
 )
 
@@ -190,6 +191,44 @@ func CreateFixturesForUserGetPosts(ms *ModelSuite) UserFixtures {
 	return UserFixtures{
 		Users: users,
 		Posts: posts,
+	}
+}
+
+func createFixturesForTestUserGetPhoto(ms *ModelSuite) UserFixtures {
+	ms.NoError(aws.CreateS3Bucket())
+
+	fileFixtures := make([]File, 2)
+	for i := range fileFixtures {
+		var f File
+		err := f.Store(fmt.Sprintf("photo%d.gif", i), []byte("GIF89a"))
+		ms.NoError(err)
+		fileFixtures[i] = f
+	}
+
+	var photoFixture File
+	const filename = "photo.gif"
+	err := photoFixture.Store(filename, []byte("GIF89a"))
+	ms.NoError(err, "failed to create file fixture")
+
+	unique := domain.GetUuid()
+	users := Users{
+		{},
+		{AuthPhotoURL: nulls.NewString("http://www.example.com")},
+		{PhotoFileID: nulls.NewInt(fileFixtures[0].ID)},
+		{AuthPhotoURL: nulls.NewString("http://www.example.com"), PhotoFileID: nulls.NewInt(fileFixtures[1].ID)},
+	}
+	for i := range users {
+		users[i].Uuid = domain.GetUuid()
+		users[i].Email = fmt.Sprintf("%s_user%d@example.com", unique, i)
+		users[i].Nickname = fmt.Sprintf("%s_User%d", unique, i)
+		createFixture(ms, &users[i])
+
+		// ensure the relation is loaded in order to compare filenames
+		ms.NoError(DB.Load(&users[i], "PhotoFile"))
+	}
+
+	return UserFixtures{
+		Users: users,
 	}
 }
 

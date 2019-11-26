@@ -1,11 +1,9 @@
 package models
 
 import (
-	"crypto/md5"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/gobuffalo/events"
@@ -59,7 +57,7 @@ type User struct {
 	AdminRole         UserAdminRole     `json:"admin_role" db:"admin_role"`
 	Uuid              uuid.UUID         `json:"uuid" db:"uuid"`
 	PhotoFileID       nulls.Int         `json:"photo_file_id" db:"photo_file_id"`
-	PhotoURL          nulls.String      `json:"photo_url" db:"photo_url"`
+	AuthPhotoURL      nulls.String      `json:"auth_photo_url" db:"auth_photo_url"`
 	LocationID        nulls.Int         `json:"location_id" db:"location_id"`
 	AccessTokens      []UserAccessToken `has_many:"user_access_tokens" json:"-"`
 	Organizations     Organizations     `many_to_many:"user_organizations" order_by:"name asc" json:"-"`
@@ -96,7 +94,7 @@ func (u *User) Validate(tx *pop.Connection) (*validate.Errors, error) {
 		&validators.StringIsPresent{Field: u.LastName, Name: "LastName"},
 		&validators.StringIsPresent{Field: u.Nickname, Name: "Nickname"},
 		&validators.UUIDIsPresent{Field: u.Uuid, Name: "Uuid"},
-		&NullsStringIsURL{Field: u.PhotoURL, Name: "PhotoURL"},
+		&NullsStringIsURL{Field: u.AuthPhotoURL, Name: "AuthPhotoURL"},
 	), nil
 }
 
@@ -192,11 +190,7 @@ func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
 	u.Email = authUser.Email
 
 	if authUser.PhotoURL != "" {
-		u.PhotoURL = nulls.NewString(authUser.PhotoURL)
-	} else {
-		// ref: https://en.gravatar.com/site/implement/images/
-		hash := md5.Sum([]byte(strings.ToLower(strings.TrimSpace(authUser.Email))))
-		u.PhotoURL = nulls.NewString(fmt.Sprintf("https://www.gravatar.com/avatar/%x.jpg?s=200&d=mp", hash))
+		u.AuthPhotoURL = nulls.NewString(authUser.PhotoURL)
 	}
 
 	// if new user they will need a uuid and a unique Nickname
@@ -370,23 +364,23 @@ func (u *User) AttachPhoto(fileID string) (File, error) {
 	return f, nil
 }
 
-// GetPhotoURL retrieves the photo URL, either from the photo_url database field, or from the attached file
-func (u *User) GetPhotoURL() (string, error) {
+// GetPhotoURL retrieves the photo URL from the attached file
+func (u *User) GetPhotoURL() (*string, error) {
 	if err := DB.Load(u, "PhotoFile"); err != nil {
-		return "", err
+		return nil, err
 	}
 
-	url := u.PhotoURL.String
-	if url == "" {
-		if !u.PhotoFileID.Valid {
-			return "", nil
+	if !u.PhotoFileID.Valid {
+		if u.AuthPhotoURL.Valid {
+			return &u.AuthPhotoURL.String, nil
 		}
-		if err := u.PhotoFile.RefreshURL(); err != nil {
-			return "", err
-		}
-		url = u.PhotoFile.URL
+		return nil, nil
 	}
-	return url, nil
+
+	if err := u.PhotoFile.RefreshURL(); err != nil {
+		return nil, err
+	}
+	return &u.PhotoFile.URL, nil
 }
 
 // Save wraps DB.Save() call to check for errors and operate on attached object

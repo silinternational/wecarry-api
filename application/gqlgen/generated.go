@@ -257,7 +257,7 @@ type UserResolver interface {
 
 	Organizations(ctx context.Context, obj *models.User) ([]models.Organization, error)
 	Posts(ctx context.Context, obj *models.User, role PostRole) ([]models.Post, error)
-	PhotoURL(ctx context.Context, obj *models.User) (string, error)
+	PhotoURL(ctx context.Context, obj *models.User) (*string, error)
 	Preferences(ctx context.Context, obj *models.User) ([]models.UserPreference, error)
 	Location(ctx context.Context, obj *models.User) (*models.Location, error)
 	UnreadMessageCount(ctx context.Context, obj *models.User) (int, error)
@@ -1092,7 +1092,7 @@ type User {
     adminRole: UserAdminRole
     organizations: [Organization!]!
     posts(role: PostRole!): [Post!]!
-    photoURL: String!
+    photoURL: String
     preferences: [UserPreference!]!
     location: Location
     unreadMessageCount: Int!
@@ -4680,15 +4680,12 @@ func (ec *executionContext) _User_photoURL(ctx context.Context, field graphql.Co
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _User_preferences(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
@@ -7532,9 +7529,6 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 					}
 				}()
 				res = ec._User_photoURL(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
 				return res
 			})
 		case "preferences":

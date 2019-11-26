@@ -80,16 +80,15 @@ func (r *userResolver) Posts(ctx context.Context, obj *models.User, role PostRol
 	return posts, nil
 }
 
-// PhotoURL retrieves a URL for the user profile photo or avatar. It can either be an attached photo or
-// a photo belonging to an external profile such as Gravatar or Google.
-func (r *userResolver) PhotoURL(ctx context.Context, obj *models.User) (string, error) {
+// PhotoURL retrieves a URL for the user profile photo or avatar.
+func (r *userResolver) PhotoURL(ctx context.Context, obj *models.User) (*string, error) {
 	if obj == nil {
-		return "", nil
+		return nil, nil
 	}
 
 	photoURL, err := obj.GetPhotoURL()
 	if err != nil {
-		return "", reportError(ctx, err, "GetUserPhotoURL")
+		return nil, reportError(ctx, err, "GetUserPhotoURL")
 	}
 
 	return photoURL, nil
@@ -170,12 +169,8 @@ func (r *queryResolver) User(ctx context.Context, id *string) (*models.User, err
 	}
 
 	dbUser := models.User{}
-	selectFields := GetSelectFieldsForUsers(ctx)
-	if err := dbUser.FindByUUID(*id, selectFields...); err != nil {
-		extras := map[string]interface{}{
-			"fields": selectFields,
-		}
-		return nil, reportError(ctx, err, "GetUser", extras)
+	if err := dbUser.FindByUUID(*id); err != nil {
+		return nil, reportError(ctx, err, "GetUser")
 	}
 
 	return &dbUser, nil

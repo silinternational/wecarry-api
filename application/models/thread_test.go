@@ -409,7 +409,7 @@ func (ms *ModelSuite) TestThread_GetLastViewedAt() {
 			}
 
 			ms.NoError(err)
-			ms.Equal(test.want.Format(time.RFC3339), lastViewedAt.Format(time.RFC3339))
+			ms.WithinDuration(test.want, *lastViewedAt, time.Duration(time.Second))
 		})
 	}
 }
