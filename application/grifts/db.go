@@ -15,6 +15,12 @@ var _ = grift.Namespace("db", func() {
 	grift.Desc("seed", "Seeds a database")
 	_ = grift.Add("seed", func(c *grift.Context) error {
 
+		var existingOrgs models.Organizations
+		_ = models.DB.All(&existingOrgs)
+		if len(existingOrgs) > 0 {
+			return nil
+		}
+
 		// ORGANIZATIONS Table
 		//organizationUuid1, _ := uuid.FromString("f3a79b30-f00e-48a0-a64d-e27748dea22d")
 		organizationUuid2, _ := uuid.FromString("d2e95724-9270-4050-82d9-6a9f9c35c766")
