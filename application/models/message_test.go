@@ -216,32 +216,33 @@ func (ms *ModelSuite) TestMessage_FindByUUID() {
 		uuid          string
 		wantID        int
 		wantContent   string
-		wantCreatedAt string
-		wantErr       bool
+		wantCreatedAt time.Time
+		wantErr       string
 	}{
 		{name: "good",
 			uuid:          f.Messages[0].Uuid.String(),
 			wantID:        f.Messages[0].ID,
 			wantContent:   f.Messages[0].Content,
-			wantCreatedAt: f.Messages[0].CreatedAt.Format(time.RFC3339),
+			wantCreatedAt: f.Messages[0].CreatedAt,
 		},
-		{name: "empty ID", uuid: "", wantErr: true},
-		{name: "wrong id", uuid: domain.GetUuid().String(), wantErr: true},
-		{name: "invalid UUID", uuid: "40FE092C-8FF1-45BE-BCD4-65AD66C1D0DX", wantErr: true},
+		{name: "empty ID", uuid: "", wantErr: "error: message uuid must not be blank"},
+		{name: "wrong id", uuid: domain.GetUuid().String(), wantErr: "sql: no rows in result set"},
+		{name: "invalid UUID", uuid: "40FE092C-8FF1-45BE-BCD4-65AD66C1D0DX", wantErr: "pq: invalid input syntax"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var message Message
 			err := message.FindByUUID(test.uuid)
 
-			if test.wantErr {
+			if test.wantErr != "" {
 				ms.Error(err)
-			} else {
-				ms.NoError(err)
-				ms.Equal(test.wantID, message.ID, "bad message ID")
-				ms.Equal(test.wantContent, message.Content, "bad message Content")
-				ms.Equal(test.wantCreatedAt, message.CreatedAt.Format(time.RFC3339), "bad message CreatedAt")
+				ms.Contains(err.Error(), test.wantErr, "unexpected error, %s", err)
+				return
 			}
+			ms.NoError(err)
+			ms.Equal(test.wantID, message.ID, "bad message ID")
+			ms.Equal(test.wantContent, message.Content, "bad message Content")
+			ms.WithinDuration(test.wantCreatedAt, message.CreatedAt, time.Second, "bad message CreatedAt")
 		})
 	}
 }
