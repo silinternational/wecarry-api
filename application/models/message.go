@@ -193,7 +193,7 @@ func (m *Message) FindByUUID(id string) error {
 	return nil
 }
 
-// FindByUserAndUUID loads from DB the Message record identified by the given UUID
+// FindByUserAndUUID loads from DB the Message record identified by the given UUID, if the given user is allowed.
 func (m *Message) FindByUserAndUUID(user User, id string) error {
 	if err := m.FindByUUID(id); err != nil {
 		return err
