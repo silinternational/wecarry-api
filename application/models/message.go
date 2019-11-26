@@ -192,3 +192,24 @@ func (m *Message) FindByUUID(id string) error {
 
 	return nil
 }
+
+// FindByUserAndUUID loads from DB the Message record identified by the given UUID
+func (m *Message) FindByUserAndUUID(user User, id string) error {
+	if err := m.FindByUUID(id); err != nil {
+		return err
+	}
+
+	if user.AdminRole == UserAdminRoleSuperAdmin {
+		return nil
+	}
+
+	var tp ThreadParticipant
+	if err := tp.FindByThreadIDAndUserID(m.ThreadID, user.ID); err != nil {
+		if domain.IsOtherThanNoRows(err) {
+			return fmt.Errorf("error finding threadParticipant record for message %s, %s", id, err)
+		}
+		return fmt.Errorf("user %s has insufficient permissions to read message %s", user.Uuid.String(), id)
+	}
+
+	return nil
+}

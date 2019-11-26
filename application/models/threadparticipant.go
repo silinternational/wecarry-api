@@ -72,7 +72,6 @@ func (t *ThreadParticipant) FindByThreadIDAndUserID(threadID, userID int) error 
 	if threadID <= 0 || userID <= 0 {
 		return fmt.Errorf("error finding thread_participant, invalid id ... threadID %v, userID %v", threadID, userID)
 	}
-
 	if err := DB.Where("user_id = ? AND thread_id = ?", userID, threadID).First(t); err != nil {
 		return fmt.Errorf("failed to find thread_participant record for user %d and thread %d, %s",
 			userID, threadID, err)

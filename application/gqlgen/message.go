@@ -54,10 +54,14 @@ func (r *queryResolver) Message(ctx context.Context, id *string) (*models.Messag
 	if id == nil {
 		return nil, nil
 	}
+	currentUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 	var message models.Message
 
-	if err := message.FindByUUID(*id); err != nil {
-		return nil, reportError(ctx, err, "GetMessage")
+	if err := message.FindByUserAndUUID(currentUser, *id); err != nil {
+		extras := map[string]interface{}{
+			"user": currentUser.Uuid.String(),
+		}
+		return nil, reportError(ctx, err, "GetMessage", extras)
 	}
 
 	return &message, nil
