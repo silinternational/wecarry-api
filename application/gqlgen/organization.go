@@ -3,23 +3,8 @@ package gqlgen
 import (
 	"context"
 
-	"github.com/99designs/gqlgen/graphql"
 	"github.com/silinternational/wecarry-api/models"
 )
-
-// OrganizationFields maps GraphQL fields to their equivalent database fields. For related types, the
-// foreign key field name is provided.
-func OrganizationFields() map[string]string {
-	return map[string]string{
-		"id":         "uuid",
-		"name":       "name",
-		"url":        "url",
-		"authType":   "auth_type",
-		"authConfig": "auth_config",
-		"createdAt":  "created_at",
-		"updatedAt":  "updated_at",
-	}
-}
 
 // Organization returns the organization resolver. It is required by GraphQL
 func (r *Resolver) Organization() OrganizationResolver {
@@ -56,10 +41,4 @@ func (r *organizationResolver) Domains(ctx context.Context, obj *models.Organiza
 	}
 
 	return domains, nil
-}
-
-func getSelectFieldsForOrganizations(ctx context.Context) []string {
-	selectFields := GetSelectFieldsFromRequestFields(OrganizationFields(), graphql.CollectAllFields(ctx))
-	selectFields = append(selectFields, "id")
-	return selectFields
 }

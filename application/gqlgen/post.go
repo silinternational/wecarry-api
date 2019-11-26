@@ -13,33 +13,6 @@ import (
 	"github.com/vektah/gqlparser/gqlerror"
 )
 
-// PostFields maps GraphQL fields to their equivalent database fields. For related types, the
-// foreign key field name is provided.
-func PostFields() map[string]string {
-	return map[string]string{
-		"id":           "uuid",
-		"createdBy":    "created_by_id",
-		"organization": "organization_id",
-		"type":         "type",
-		"title":        "title",
-		"description":  "description",
-		"size":         "size",
-		"receiver":     "receiver_id",
-		"provider":     "provider_id",
-		"neededAfter":  "needed_after",
-		"neededBefore": "needed_before",
-		"category":     "category",
-		"status":       "status",
-		"createdAt":    "created_at",
-		"updatedAt":    "updated_at",
-		"url":          "url",
-		"cost":         "cost",
-		"photo":        "photo_file_id",
-		"destination":  "destination_id",
-		"origin":       "origin_id",
-	}
-}
-
 // Post returns the post resolver. It is required by GraphQL
 func (r *Resolver) Post() PostResolver {
 	return &postResolver{r}
@@ -353,13 +326,6 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 	}
 
 	return post, nil
-}
-
-func getSelectFieldsForPosts(ctx context.Context) []string {
-	requestFields := graphql.CollectAllFields(ctx)
-	selectFields := GetSelectFieldsFromRequestFields(PostFields(), requestFields)
-	selectFields = append(selectFields, "id")
-	return selectFields
 }
 
 type postInput struct {

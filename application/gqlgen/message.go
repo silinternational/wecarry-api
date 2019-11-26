@@ -7,19 +7,6 @@ import (
 	"github.com/silinternational/wecarry-api/models"
 )
 
-// MessageFields maps GraphQL fields to their equivalent database fields. For related types, the
-// foreign key field name is provided.
-func MessageFields() map[string]string {
-	return map[string]string{
-		"id":        "uuid",
-		"content":   "content",
-		"thread":    "thread_id",
-		"sender":    "sent_by_id",
-		"createdAt": "created_at",
-		"updatedAt": "updated_at",
-	}
-}
-
 // Message returns the message resolver. It is required by GraphQL
 func (r *Resolver) Message() MessageResolver {
 	return &messageResolver{r}

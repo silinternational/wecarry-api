@@ -4,9 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/99designs/gqlgen/graphql"
 	"github.com/gobuffalo/nulls"
-	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 )
 
@@ -15,23 +13,6 @@ var PostRoleMap = map[PostRole]string{
 	PostRoleCreatedby: models.PostsCreated,
 	PostRoleReceiving: models.PostsReceiving,
 	PostRoleProviding: models.PostsProviding,
-}
-
-// UserFields maps GraphQL fields to their equivalent database fields. For related types, the
-// foreign key field name is provided.
-func UserFields() map[string]string {
-	return map[string]string{
-		"id":          "uuid",
-		"email":       "email",
-		"nickname":    "nickname",
-		"accessToken": "access_token",
-		"createdAt":   "created_at",
-		"updatedAt":   "updated_at",
-		"adminRole":   "admin_role",
-		"photoURL":    "photo_url",
-		"photoFile":   "photo_file_id",
-		"location":    "location_id",
-	}
 }
 
 // User is required by gqlgen
@@ -166,26 +147,11 @@ func (r *queryResolver) User(ctx context.Context, id *string) (*models.User, err
 	}
 
 	dbUser := models.User{}
-	selectFields := GetSelectFieldsForUsers(ctx)
 	if err := dbUser.FindByUUID(*id); err != nil {
-		extras := map[string]interface{}{
-			"fields": selectFields,
-		}
-		return nil, reportError(ctx, err, "GetUser", extras)
+		return nil, reportError(ctx, err, "GetUser")
 	}
 
 	return &dbUser, nil
-}
-
-// GetSelectFieldsForUsers returns a list of database fields appropriate for the current query. Foreign keys
-// will be included as needed.
-func GetSelectFieldsForUsers(ctx context.Context) []string {
-	selectFields := GetSelectFieldsFromRequestFields(UserFields(), graphql.CollectAllFields(ctx))
-	selectFields = append(selectFields, "id")
-	if domain.IsStringInSlice("photoURL", graphql.CollectAllFields(ctx)) {
-		selectFields = append(selectFields, "photo_file_id")
-	}
-	return selectFields
 }
 
 // UpdateUser takes data from the GraphQL `UpdateUser` mutation and updates the database. If the

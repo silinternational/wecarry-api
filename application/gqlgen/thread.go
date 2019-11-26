@@ -5,21 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/99designs/gqlgen/graphql"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 )
-
-// ThreadFields maps GraphQL fields to their equivalent database fields. For related types, the
-// foreign key field name is provided.
-func ThreadFields() map[string]string {
-	return map[string]string{
-		"id":        "uuid",
-		"postID":    "post_id",
-		"createdAt": "created_at",
-		"updatedAt": "updated_at",
-	}
-}
 
 // Thread is required by gqlgen
 func (r *Resolver) Thread() ThreadResolver {
@@ -163,12 +151,4 @@ func (r *queryResolver) MyThreads(ctx context.Context) ([]models.Thread, error) 
 	}
 
 	return threads, nil
-}
-
-func getSelectFieldsForThreads(ctx context.Context) []string {
-	selectFields := GetSelectFieldsFromRequestFields(ThreadFields(), graphql.CollectAllFields(ctx))
-
-	selectFields = append(selectFields, "id")
-
-	return selectFields
 }
