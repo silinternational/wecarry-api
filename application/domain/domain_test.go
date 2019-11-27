@@ -15,7 +15,7 @@ type TestSuite struct {
 	suite.Suite
 }
 
-// Test_GqlgenSuite runs the GqlgenSuite test suite
+// Test_TestSuite runs the test suite
 func Test_TestSuite(t *testing.T) {
 	suite.Run(t, new(TestSuite))
 }
