@@ -25,6 +25,11 @@ var DB *pop.Connection
 
 const TokenBytes = 32
 
+// Keep a map of the json tag names for the standard user preferences struct
+// e.g. "time_zone": "time_zone".
+// Having it as a map, makes it easy to check if a potential key is allowed
+var preferencesFieldJson map[string]string
+
 func init() {
 	var err error
 	env := domain.Env.GoEnv
@@ -38,6 +43,11 @@ func init() {
 	// Just make sure we can use the crypto/rand library on our system
 	if _, err = getRandomToken(); err != nil {
 		log.Fatal(fmt.Errorf("error using crypto/rand ... %v", err))
+	}
+
+	preferencesFieldJson, err = domain.GetStructTags("json", StandardPreferences{})
+	if err != nil {
+		log.Fatal(fmt.Errorf("error loading Allowed User Preferences ... %v", err))
 	}
 }
 
