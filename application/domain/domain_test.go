@@ -2,7 +2,7 @@ package domain
 
 import (
 	"errors"
-	"github.com/gobuffalo/suite"
+	"github.com/stretchr/testify/suite"
 	"net/http"
 	"testing"
 	"time"
@@ -12,17 +12,12 @@ import (
 
 // TestSuite establishes a test suite for domain tests
 type TestSuite struct {
-	*suite.Model
+	suite.Suite
 }
 
 // Test_GqlgenSuite runs the GqlgenSuite test suite
 func Test_TestSuite(t *testing.T) {
-	model := suite.NewModel()
-
-	gs := &TestSuite{
-		Model: model,
-	}
-	suite.Run(t, gs)
+	suite.Run(t, new(TestSuite))
 }
 
 func (ts *TestSuite) TestGetFirstStringFromSlice() {
