@@ -377,6 +377,15 @@ func IsLanguageAllowed(lang string) bool {
 	return false
 }
 
+func IsWeightUnitAllowed(unit string) bool {
+	switch unit {
+	case UserPreferenceWeightUnitKGs, UserPreferenceWeightUnitPounds:
+		return true
+	}
+
+	return false
+}
+
 // TranslateWithLang returns the translation of the string identified by translationID, for the given language.
 // Apparently i18n has a global or something that keeps track of translatable phrases once a new packr Box
 // is created.  If no new packr Box has been created, i18n.Tfunc returns an error.
@@ -409,7 +418,10 @@ func IsOtherThanNoRows(err error) bool {
 	return true
 }
 
-func GetStructFieldTags(tagType string, s interface{}) (map[string]string, error) {
+// GetStructTags creates a map with certain types of tags (e.g. json) of a struct's
+// fields.  That tag values are both the keys and values of the map - just to make
+// it easy to check if a certain value is in the map
+func GetStructTags(tagType string, s interface{}) (map[string]string, error) {
 	rt := reflect.TypeOf(s)
 	if rt.Kind() != reflect.Struct {
 		return map[string]string{}, fmt.Errorf("cannot get fieldTags of non structs, not even for %v", rt.Kind())
@@ -422,8 +434,9 @@ func GetStructFieldTags(tagType string, s interface{}) (map[string]string, error
 
 		v := strings.Split(f.Tag.Get(tagType), ",")[0] // use split to ignore tag "options" like omitempty, etc.
 		if v != "" {
-			fieldTags[f.Name] = v
+			fieldTags[v] = v
 		}
 	}
+
 	return fieldTags, nil
 }
