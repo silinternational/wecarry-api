@@ -180,8 +180,8 @@ func (m *Message) FindByID(id int, eagerFields ...string) error {
 	return DB.Find(m, id)
 }
 
-// FindByUUID loads from DB the Message record identified by the given UUID
-func (m *Message) FindByUUID(id string) error {
+// findByUUID loads from DB the Message record identified by the given UUID
+func (m *Message) findByUUID(id string) error {
 	if id == "" {
 		return errors.New("error: message uuid must not be blank")
 	}
@@ -195,7 +195,7 @@ func (m *Message) FindByUUID(id string) error {
 
 // FindByUserAndUUID loads from DB the Message record identified by the given UUID, if the given user is allowed.
 func (m *Message) FindByUserAndUUID(user User, id string) error {
-	if err := m.FindByUUID(id); err != nil {
+	if err := m.findByUUID(id); err != nil {
 		return err
 	}
 

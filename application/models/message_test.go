@@ -232,7 +232,7 @@ func (ms *ModelSuite) TestMessage_FindByUUID() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var message Message
-			err := message.FindByUUID(test.uuid)
+			err := message.findByUUID(test.uuid)
 
 			if test.wantErr != "" {
 				ms.Error(err)
