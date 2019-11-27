@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"runtime"
+	"strings"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/silinternational/wecarry-api/domain"
@@ -37,13 +38,34 @@ func convertGqlLocationInputToDBLocation(input LocationInput) models.Location {
 	return l
 }
 
-func convertUserPreferencesToKeyValues(input []UpdateUserPreferenceInput) [][2]string {
-	keyVals := make([][2]string, len(input))
-	for i, p := range input {
-		keyVals[i] = [2]string{p.Key, p.Value}
+func convertUserPreferencesToStandardPreferences(input *UpdateUserPreferencesInput) (models.StandardPreferences, error) {
+	if input == nil {
+		return models.StandardPreferences{}, nil
 	}
 
-	return keyVals
+	stPrefs := models.StandardPreferences{}
+
+	if input.Language != nil {
+		lang := strings.ToLower(fmt.Sprintf("%v", *input.Language))
+		if !domain.IsLanguageAllowed(lang) {
+			return models.StandardPreferences{}, errors.New("user preference language not allowed ... " + lang)
+		}
+		stPrefs.Language = lang
+	}
+
+	if input.TimeZone != nil {
+		stPrefs.TimeZone = strings.ToLower(*input.TimeZone)
+	}
+
+	if input.WeightUnit != nil {
+		unit := strings.ToLower(fmt.Sprintf("%v", *input.WeightUnit))
+		if !domain.IsWeightUnitAllowed(unit) {
+			return models.StandardPreferences{}, errors.New("user preference weight unit not allowed ... " + unit)
+		}
+		stPrefs.WeightUnit = unit
+	}
+
+	return stPrefs, nil
 }
 
 // getFunctionName provides the filename, line number, and function name of the 2nd caller.
