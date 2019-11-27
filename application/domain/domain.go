@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -81,9 +82,11 @@ const (
 	UserPreferenceLanguageKorean     = "ko"
 	UserPreferenceLanguagePortuguese = "pt"
 
-	UserPreferenceKeyUnits         = "units"
-	UserPreferenceUnitsUSCustomary = "uscs"
-	UserPreferenceUnitsMetric      = "metric"
+	UserPreferenceKeyTimeZone = "time_zone"
+
+	UserPreferenceKeyWeightUnit    = "weight_unit"
+	UserPreferenceWeightUnitPounds = "pounds"
+	UserPreferenceWeightUnitKGs    = "kilograms"
 )
 
 // UI URL Paths
@@ -364,6 +367,16 @@ func GetThreadUIURL(threadUUID string) string {
 	return Env.UIURL + threadUIPath + threadUUID
 }
 
+func IsLanguageAllowed(lang string) bool {
+	switch lang {
+	case UserPreferenceLanguageEnglish, UserPreferenceLanguageFrench, UserPreferenceLanguageKorean,
+		UserPreferenceLanguagePortuguese, UserPreferenceLanguageSpanish:
+		return true
+	}
+
+	return false
+}
+
 // TranslateWithLang returns the translation of the string identified by translationID, for the given language.
 // Apparently i18n has a global or something that keeps track of translatable phrases once a new packr Box
 // is created.  If no new packr Box has been created, i18n.Tfunc returns an error.
@@ -394,4 +407,23 @@ func IsOtherThanNoRows(err error) bool {
 	}
 
 	return true
+}
+
+func GetStructFieldTags(tagType string, s interface{}) (map[string]string, error) {
+	rt := reflect.TypeOf(s)
+	if rt.Kind() != reflect.Struct {
+		return map[string]string{}, fmt.Errorf("cannot get fieldTags of non structs, not even for %v", rt.Kind())
+	}
+
+	fieldTags := map[string]string{}
+
+	for i := 0; i < rt.NumField(); i++ {
+		f := rt.Field(i)
+
+		v := strings.Split(f.Tag.Get(tagType), ",")[0] // use split to ignore tag "options" like omitempty, etc.
+		if v != "" {
+			fieldTags[f.Name] = v
+		}
+	}
+	return fieldTags, nil
 }

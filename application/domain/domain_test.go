@@ -2,15 +2,32 @@ package domain
 
 import (
 	"errors"
+	"github.com/gobuffalo/suite"
 	"net/http"
-	"reflect"
 	"testing"
 	"time"
 
 	"github.com/gofrs/uuid"
 )
 
-func TestGetFirstStringFromSlice(t *testing.T) {
+// TestSuite establishes a test suite for domain tests
+type TestSuite struct {
+	*suite.Model
+}
+
+// Test_GqlgenSuite runs the GqlgenSuite test suite
+func Test_TestSuite(t *testing.T) {
+	model := suite.NewModel()
+
+	gs := &TestSuite{
+		Model: model,
+	}
+	suite.Run(t, gs)
+}
+
+func (ts *TestSuite) TestGetFirstStringFromSlice() {
+	t := ts.T()
+
 	type args struct {
 		s []string
 	}
@@ -50,14 +67,15 @@ func TestGetFirstStringFromSlice(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := GetFirstStringFromSlice(tt.args.s); got != tt.want {
-				t.Errorf("GetFirstStringFromSlice() = \"%v\", want \"%v\"", got, tt.want)
-			}
+			got := GetFirstStringFromSlice(tt.args.s)
+			ts.Equal(tt.want, got)
 		})
 	}
 }
 
-func TestGetBearerTokenFromRequest(t *testing.T) {
+func (ts *TestSuite) TestGetBearerTokenFromRequest() {
+	t := ts.T()
+
 	type args struct {
 		r *http.Request
 	}
@@ -135,14 +153,15 @@ func TestGetBearerTokenFromRequest(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := GetBearerTokenFromRequest(tt.args.r); got != tt.want {
-				t.Errorf("GetBearerTokenFromRequest() = \"%v\", want \"%v\"", got, tt.want)
-			}
+			got := GetBearerTokenFromRequest(tt.args.r)
+			ts.Equal(tt.want, got)
 		})
 	}
 }
 
-func TestGetSubPartKeyValues(t *testing.T) {
+func (ts *TestSuite) TestGetSubPartKeyValues() {
+	t := ts.T()
+
 	type args struct {
 		inString, outerDelimiter, innerDelimiter string
 	}
@@ -217,14 +236,14 @@ func TestGetSubPartKeyValues(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := GetSubPartKeyValues(tt.args.inString, tt.args.outerDelimiter, tt.args.innerDelimiter)
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetSubPartKeyValues() = \"%v\", want \"%v\"", got, tt.want)
-			}
+			ts.Equal(tt.want, got)
 		})
 	}
 }
 
-func TestConvertTimeToStringPtr(t *testing.T) {
+func (ts *TestSuite) TestConvertTimeToStringPtr() {
+	t := ts.T()
+
 	now := time.Now()
 	type args struct {
 		inTime time.Time
@@ -252,14 +271,14 @@ func TestConvertTimeToStringPtr(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			got := ConvertTimeToStringPtr(test.args.inTime)
-			if *got != test.want {
-				t.Errorf("ConvertTimeToStringPtr() = \"%v\", want \"%v\"", *got, test.want)
-			}
+			ts.Equal(test.want, *got)
 		})
 	}
 }
 
-func TestConvertStringPtrToDate(t *testing.T) {
+func (ts *TestSuite) TestConvertStringPtrToDate() {
+	t := ts.T()
+
 	testTime := time.Date(2019, time.August, 12, 0, 0, 0, 0, time.UTC)
 	testStr := testTime.Format("2006-01-02") // not using a const in order to detect code changes
 	emptyStr := ""
@@ -292,64 +311,68 @@ func TestConvertStringPtrToDate(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			got, err := ConvertStringPtrToDate(test.args.inPtr)
-			if test.wantErr == false && err != nil {
-				t.Errorf("Unexpected error %v", err)
-			} else if got != test.want {
-				t.Errorf("ConvertStringPtrToDate() = \"%v\", want \"%v\"", got, test.want)
+			if test.wantErr == false {
+				ts.NoError(err)
 			}
+
+			ts.Equal(test.want, got)
 		})
 	}
 }
 
-func TestIsStringInSlice(t *testing.T) {
-	type TestData struct {
-		Needle   string
-		Haystack []string
-		Expected bool
+func (ts *TestSuite) TestIsStringInSlice() {
+	t := ts.T()
+
+	type testData struct {
+		name     string
+		needle   string
+		haystack []string
+		want     bool
 	}
 
-	allTestData := []TestData{
+	allTestData := []testData{
 		{
-			Needle:   "no",
-			Haystack: []string{},
-			Expected: false,
+			name:     "empty haystack",
+			needle:   "no",
+			haystack: []string{},
+			want:     false,
 		},
 		{
-			Needle:   "no",
-			Haystack: []string{"really", "are you sure"},
-			Expected: false,
+			name:     "not in haystack",
+			needle:   "no",
+			haystack: []string{"really", "are you sure"},
+			want:     false,
 		},
 		{
-			Needle:   "yes",
-			Haystack: []string{"yes"},
-			Expected: true,
+			name:     "in one element haystack",
+			needle:   "yes",
+			haystack: []string{"yes"},
+			want:     true,
 		},
 		{
-			Needle:   "yes",
-			Haystack: []string{"one", "two", "three", "yes"},
-			Expected: true,
+			name:     "in longer haystack",
+			needle:   "yes",
+			haystack: []string{"one", "two", "three", "yes"},
+			want:     true,
 		},
 	}
 
 	for i, td := range allTestData {
-		results := IsStringInSlice(td.Needle, td.Haystack)
-		expected := td.Expected
-
-		if results != expected {
-			t.Errorf("Bad results for test set i = %v. Expected %v, but got %v", i, expected, results)
-			return
-		}
+		t.Run(td.name, func(t *testing.T) {
+			got := IsStringInSlice(td.needle, td.haystack)
+			ts.Equal(td.want, got, "incorrect value for test %v", i)
+		})
 	}
 }
 
-func Test_emptyUuidValue(t *testing.T) {
+func (ts *TestSuite) Test_emptyUuidValue() {
 	val := uuid.UUID{}
-	if val.String() != "00000000-0000-0000-0000-000000000000" {
-		t.Errorf("empty uuid value not as expected, got: %s", val.String())
-	}
+	ts.Equal("00000000-0000-0000-0000-000000000000", val.String(), "incorrect empty uuid value")
 }
 
-func TestEmailDomain(t *testing.T) {
+func (ts *TestSuite) TestEmailDomain() {
+	t := ts.T()
+
 	tests := []struct {
 		name  string
 		email string
@@ -361,14 +384,14 @@ func TestEmailDomain(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			if got := EmailDomain(test.email); got != test.want {
-				t.Errorf("incorrect response from EmailDomain(): %v, expected %v", got, test.want)
-			}
+			got := EmailDomain(test.email)
+			ts.Equal(test.want, got, "incorrect response from EmailDomain()")
 		})
 	}
 }
 
-func TestIsOtherThanNoRows(t *testing.T) {
+func (ts *TestSuite) TestIsOtherThanNoRows() {
+	t := ts.T()
 
 	tests := []struct {
 		name string
@@ -382,9 +405,43 @@ func TestIsOtherThanNoRows(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			got := IsOtherThanNoRows(test.err)
-			if got != test.want {
-				t.Errorf("incorrect response: %v, expected %v", got, test.want)
-			}
+			ts.Equal(test.want, got, "incorrect response")
 		})
 	}
+}
+
+type testStruct struct {
+	Language string `json:"language"`
+	TimeZone string `json:"time_zone"`
+}
+
+func (ts *TestSuite) TestGetStructFieldTags() {
+	tStruct := testStruct{}
+
+	got, err := GetStructFieldTags("json", tStruct)
+	ts.NoError(err)
+
+	gotCount := len(got)
+	wantCount := 2
+	ts.Equal(wantCount, gotCount, "incorrect number of tags")
+
+	fieldName := "Language"
+	gotName := got[fieldName]
+	wantName := "language"
+	ts.Equal(wantName, gotName, "incorrect tag")
+
+	fieldName = "TimeZone"
+	gotName = got[fieldName]
+	wantName = "time_zone"
+	ts.Equal(wantName, gotName, "incorrect tag")
+}
+
+func (ts *TestSuite) TestIsLanguageAllowed() {
+	lang := UserPreferenceLanguageSpanish
+	got := IsLanguageAllowed(lang)
+	ts.True(got, lang+" should be an allowed language")
+
+	lang = "badlanguage"
+	got = IsLanguageAllowed("badlanguage")
+	ts.False(got, lang+" should not be an allowed language")
 }
