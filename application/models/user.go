@@ -560,7 +560,9 @@ func (u *User) GetPreferences() (StandardPreferences, error) {
 	}
 
 	if timeZone, ok := dbPreferences[domain.UserPreferenceKeyTimeZone]; ok {
-		goodPreferences.TimeZone = timeZone
+		if domain.IsTimeZoneAllowed(timeZone) {
+			goodPreferences.TimeZone = timeZone
+		} // IsTimeZoneAllowed logs a message if it's unrecognized
 	}
 
 	if weightUnit, ok := dbPreferences[domain.UserPreferenceKeyWeightUnit]; ok {
@@ -653,6 +655,10 @@ func (u *User) UpdateStandardPreferences(prefs StandardPreferences) (StandardPre
 	}
 
 	if prefs.TimeZone != "" {
+		if !domain.IsTimeZoneAllowed(prefs.TimeZone) {
+			return StandardPreferences{}, errors.New("unexpected UserPreference time zone ... " + prefs.TimeZone)
+		}
+
 		_, err := u.updatePreferenceByKey(domain.UserPreferenceKeyTimeZone, prefs.TimeZone)
 		if err != nil {
 			return StandardPreferences{}, err

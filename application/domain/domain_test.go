@@ -454,3 +454,17 @@ func (ts *TestSuite) TestIsWeightUnitAllowed() {
 	got = IsLanguageAllowed(unit)
 	ts.False(got, unit+" should not be an allowed weight unit")
 }
+
+func (ts *TestSuite) TestIsTimeZoneAllowed() {
+	zone := "America/New_York"
+	got := IsTimeZoneAllowed(zone)
+	ts.True(got, zone+" should be an allowed time zone")
+
+	zone = "Etc/GMT+2"
+	got = IsTimeZoneAllowed(zone)
+	ts.True(got, zone+" should be an allowed time zone")
+
+	zone = "badzone"
+	got = IsLanguageAllowed(zone)
+	ts.False(got, zone+" should not be an allowed language")
+}

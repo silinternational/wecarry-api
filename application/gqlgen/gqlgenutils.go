@@ -54,7 +54,10 @@ func convertUserPreferencesToStandardPreferences(input *UpdateUserPreferencesInp
 	}
 
 	if input.TimeZone != nil {
-		stPrefs.TimeZone = strings.ToLower(*input.TimeZone)
+		if !domain.IsTimeZoneAllowed(*input.TimeZone) {
+			return models.StandardPreferences{}, errors.New("user preference time zone not allowed ... " + *input.TimeZone)
+		}
+		stPrefs.TimeZone = *input.TimeZone
 	}
 
 	if input.WeightUnit != nil {

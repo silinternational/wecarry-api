@@ -1096,12 +1096,12 @@ func (ms *ModelSuite) TestUser_UpdateStandardPreferences() {
 			SPrefs: StandardPreferences{
 				Language:   domain.UserPreferenceLanguageFrench,
 				WeightUnit: domain.UserPreferenceWeightUnitKGs,
-				TimeZone:   "America/New York",
+				TimeZone:   "America/New_York",
 			},
 			want: StandardPreferences{
 				Language:   domain.UserPreferenceLanguageFrench,
 				WeightUnit: domain.UserPreferenceWeightUnitKGs,
-				TimeZone:   "America/New York",
+				TimeZone:   "America/New_York",
 			},
 		},
 		{

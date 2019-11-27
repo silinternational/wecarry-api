@@ -386,6 +386,17 @@ func IsWeightUnitAllowed(unit string) bool {
 	return false
 }
 
+func IsTimeZoneAllowed(name string) bool {
+	_, err := time.LoadLocation(name)
+
+	if err != nil {
+		Logger.Printf("error evaluating timezone %s ... %v", name, err)
+		return false
+	}
+
+	return true
+}
+
 // TranslateWithLang returns the translation of the string identified by translationID, for the given language.
 // Apparently i18n has a global or something that keeps track of translatable phrases once a new packr Box
 // is created.  If no new packr Box has been created, i18n.Tfunc returns an error.
