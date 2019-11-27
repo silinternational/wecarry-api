@@ -209,39 +209,91 @@ func (ms *ModelSuite) TestMessage_FindByID() {
 func (ms *ModelSuite) TestMessage_FindByUUID() {
 	t := ms.T()
 
-	f := Fixtures_Message_FindByUUID(ms)
+	f := Fixtures_Message_Find(ms)
 
 	tests := []struct {
 		name          string
 		uuid          string
 		wantID        int
 		wantContent   string
-		wantCreatedAt string
-		wantErr       bool
+		wantCreatedAt time.Time
+		wantErr       string
 	}{
 		{name: "good",
 			uuid:          f.Messages[0].Uuid.String(),
 			wantID:        f.Messages[0].ID,
 			wantContent:   f.Messages[0].Content,
-			wantCreatedAt: f.Messages[0].CreatedAt.Format(time.RFC3339),
+			wantCreatedAt: f.Messages[0].CreatedAt,
 		},
-		{name: "empty ID", uuid: "", wantErr: true},
-		{name: "wrong id", uuid: domain.GetUuid().String(), wantErr: true},
-		{name: "invalid UUID", uuid: "40FE092C-8FF1-45BE-BCD4-65AD66C1D0DX", wantErr: true},
+		{name: "empty ID", uuid: "", wantErr: "error: message uuid must not be blank"},
+		{name: "wrong id", uuid: domain.GetUuid().String(), wantErr: "sql: no rows in result set"},
+		{name: "invalid UUID", uuid: "40FE092C-8FF1-45BE-BCD4-65AD66C1D0DX", wantErr: "pq: invalid input syntax"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var message Message
-			err := message.FindByUUID(test.uuid)
+			err := message.findByUUID(test.uuid)
 
-			if test.wantErr {
+			if test.wantErr != "" {
 				ms.Error(err)
-			} else {
-				ms.NoError(err)
-				ms.Equal(test.wantID, message.ID, "bad message ID")
-				ms.Equal(test.wantContent, message.Content, "bad message Content")
-				ms.Equal(test.wantCreatedAt, message.CreatedAt.Format(time.RFC3339), "bad message CreatedAt")
+				ms.Contains(err.Error(), test.wantErr, "unexpected error, %s", err)
+				return
 			}
+			ms.NoError(err)
+			ms.Equal(test.wantID, message.ID, "bad message ID")
+			ms.Equal(test.wantContent, message.Content, "bad message Content")
+			ms.WithinDuration(test.wantCreatedAt, message.CreatedAt, time.Second, "bad message CreatedAt")
+		})
+	}
+}
+
+func (ms *ModelSuite) TestMessage_FindByUserAndUUID() {
+	t := ms.T()
+
+	f := Fixtures_Message_Find(ms)
+
+	emptyString := ""
+	badUUID := "40FE092C-8FF1-45BE-BCD4-65AD66C1D0DX"
+	wrongUUID := domain.GetUuid().String()
+
+	tests := []struct {
+		name    string
+		uuid    *string
+		user    User
+		message Message
+		wantErr string
+	}{
+		{name: "empty ID", uuid: &emptyString, wantErr: "error: message uuid must not be blank"},
+		{name: "wrong id", uuid: &wrongUUID, wantErr: "sql: no rows in result set"},
+		{name: "invalid UUID", uuid: &badUUID, wantErr: "pq: invalid input syntax"},
+		{name: "on thread, user", user: f.Users[1], message: f.Messages[0]},
+		{name: "on thread, admin", user: f.Users[2], message: f.Messages[0]},
+		{name: "on thread, salesAdmin", user: f.Users[3], message: f.Messages[0]},
+		{name: "on thread, superAdmin", user: f.Users[4], message: f.Messages[0]},
+		{name: "not on thread, user", user: f.Users[1], message: f.Messages[1], wantErr: "insufficient permissions"},
+		{name: "not on thread, admin", user: f.Users[2], message: f.Messages[1], wantErr: "insufficient permissions"},
+		{name: "not on thread, salesAdmin", user: f.Users[3], message: f.Messages[1], wantErr: "insufficient permissions"},
+		{name: "not on thread, superAdmin", user: f.Users[4], message: f.Messages[1]},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var message Message
+			var testUUID string
+			if test.uuid == nil {
+				testUUID = test.message.Uuid.String()
+			} else {
+				testUUID = *test.uuid
+			}
+			err := message.FindByUserAndUUID(test.user, testUUID)
+
+			if test.wantErr != "" {
+				ms.Error(err)
+				ms.Contains(err.Error(), test.wantErr, "unexpected error")
+				return
+			}
+			ms.NoError(err)
+			ms.Equal(test.message.ID, message.ID, "bad ID")
+			ms.Equal(test.message.Content, message.Content, "bad Content")
 		})
 	}
 }

@@ -167,15 +167,23 @@ func Fixtures_Message_FindByID(ms *ModelSuite, t *testing.T) MessageFixtures {
 	}
 }
 
-func Fixtures_Message_FindByUUID(ms *ModelSuite) MessageFixtures {
+// Fixtures_Message_Find is used by TestMessage_FindByUUID and TestMessage_FindByUserAndUUID
+func Fixtures_Message_Find(ms *ModelSuite) MessageFixtures {
 	org := &Organization{AuthConfig: "{}", Uuid: domain.GetUuid()}
 	createFixture(ms, org)
 
 	unique := domain.GetUuid().String()
 	users := Users{
-		{Email: unique + "user1@example.com", Nickname: unique + "User1", Uuid: domain.GetUuid()},
+		{AdminRole: UserAdminRoleUser},
+		{AdminRole: UserAdminRoleUser},
+		{AdminRole: UserAdminRoleAdmin},
+		{AdminRole: UserAdminRoleSalesAdmin},
+		{AdminRole: UserAdminRoleSuperAdmin},
 	}
 	for i := range users {
+		users[i].Nickname = fmt.Sprintf("user%d_%s", i, unique)
+		users[i].Email = users[i].Nickname + "@example.com"
+		users[i].Uuid = domain.GetUuid()
 		createFixture(ms, &users[i])
 	}
 
@@ -189,26 +197,35 @@ func Fixtures_Message_FindByUUID(ms *ModelSuite) MessageFixtures {
 		createFixture(ms, &posts[i])
 	}
 
-	threads := Threads{
-		{Uuid: domain.GetUuid(), PostID: posts[0].ID},
-	}
+	threads := make(Threads, 2)
 	for i := range threads {
+		threads[i].Uuid = domain.GetUuid()
+		threads[i].PostID = posts[0].ID
 		createFixture(ms, &threads[i])
 	}
 
+	threadParticipants := ThreadParticipants{
+		{ThreadID: threads[0].ID, UserID: users[1].ID},
+		{ThreadID: threads[0].ID, UserID: users[2].ID},
+		{ThreadID: threads[0].ID, UserID: users[3].ID},
+		{ThreadID: threads[0].ID, UserID: users[4].ID},
+	}
+	for i := range threadParticipants {
+		createFixture(ms, &threadParticipants[i])
+	}
+
 	messages := Messages{
-		{
-			Uuid:     domain.GetUuid(),
-			ThreadID: threads[0].ID,
-			SentByID: users[0].ID,
-			Content:  "Love must be sincere. Hate what is evil; cling to what is good.",
-		},
+		{ThreadID: threads[0].ID, Content: "Love must be sincere. Hate what is evil; cling to what is good."},
+		{ThreadID: threads[1].ID, Content: "Love your neighbor as yourself."},
 	}
 	for i := range messages {
+		messages[i].Uuid = domain.GetUuid()
+		messages[i].SentByID = users[0].ID
 		createFixture(ms, &messages[i])
 	}
 
 	return MessageFixtures{
+		Users:    users,
 		Messages: messages,
 	}
 }

@@ -180,14 +180,35 @@ func (m *Message) FindByID(id int, eagerFields ...string) error {
 	return DB.Find(m, id)
 }
 
-// FindByUUID loads from DB the Message record identified by the given UUID
-func (m *Message) FindByUUID(id string) error {
+// findByUUID loads from DB the Message record identified by the given UUID
+func (m *Message) findByUUID(id string) error {
 	if id == "" {
 		return errors.New("error: message uuid must not be blank")
 	}
 
 	if err := DB.Where("uuid = ?", id).First(m); err != nil {
 		return fmt.Errorf("error finding message by uuid: %s", err.Error())
+	}
+
+	return nil
+}
+
+// FindByUserAndUUID loads from DB the Message record identified by the given UUID, if the given user is allowed.
+func (m *Message) FindByUserAndUUID(user User, id string) error {
+	if err := m.findByUUID(id); err != nil {
+		return err
+	}
+
+	if user.AdminRole == UserAdminRoleSuperAdmin {
+		return nil
+	}
+
+	var tp ThreadParticipant
+	if err := tp.FindByThreadIDAndUserID(m.ThreadID, user.ID); err != nil {
+		if domain.IsOtherThanNoRows(err) {
+			return fmt.Errorf("error finding threadParticipant record for message %s, %s", id, err)
+		}
+		return fmt.Errorf("user %s has insufficient permissions to read message %s", user.Uuid, id)
 	}
 
 	return nil

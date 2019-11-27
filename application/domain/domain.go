@@ -422,7 +422,7 @@ func IsOtherThanNoRows(err error) bool {
 		return false
 	}
 
-	if err.Error() == "sql: no rows in result set" {
+	if strings.Contains(err.Error(), "sql: no rows in result set") {
 		return false
 	}
 
