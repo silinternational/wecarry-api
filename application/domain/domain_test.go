@@ -460,6 +460,6 @@ func (ts *TestSuite) TestIsTimeZoneAllowed() {
 	ts.True(got, zone+" should be an allowed time zone")
 
 	zone = "badzone"
-	got = IsLanguageAllowed(zone)
-	ts.False(got, zone+" should not be an allowed language")
+	got = IsTimeZoneAllowed(zone)
+	ts.False(got, zone+" should not be an time zone")
 }

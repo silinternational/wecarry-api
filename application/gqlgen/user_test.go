@@ -112,6 +112,12 @@ func Fixtures_UserQuery(gs *GqlgenSuite, t *testing.T) UserQueryFixtures {
 		{
 			Uuid:   domain.GetUuid(),
 			UserID: users[1].ID,
+			Key:    domain.UserPreferenceKeyTimeZone,
+			Value:  "America/New_York",
+		},
+		{
+			Uuid:   domain.GetUuid(),
+			UserID: users[1].ID,
 			Key:    domain.UserPreferenceKeyWeightUnit,
 			Value:  domain.UserPreferenceWeightUnitPounds,
 		},
@@ -177,7 +183,7 @@ func (gs *GqlgenSuite) TestUserQuery() {
 
 	var resp UserResponse
 
-	allFields := `{ id email nickname adminRole photoURL preferences {language weightUnit}  
+	allFields := `{ id email nickname adminRole photoURL preferences {language timeZone weightUnit}  
 		posts (role: CREATEDBY) {id} organizations {id}
 		location {description country latitude longitude} }`
 	testCases := []testCase{
@@ -206,7 +212,9 @@ func (gs *GqlgenSuite) TestUserQuery() {
 
 				gs.Equal(strings.ToUpper(f.UserPreferences[0].Value), *resp.User.Preferences.Language,
 					"incorrect preference - language")
-				gs.Equal(strings.ToUpper(f.UserPreferences[1].Value), *resp.User.Preferences.WeightUnit,
+				gs.Equal(f.UserPreferences[1].Value, *resp.User.Preferences.TimeZone,
+					"incorrect preference - time zone")
+				gs.Equal(strings.ToUpper(f.UserPreferences[2].Value), *resp.User.Preferences.WeightUnit,
 					"incorrect preference - weight unit")
 			},
 		},
@@ -287,7 +295,7 @@ func (gs *GqlgenSuite) TestUpdateUser() {
 					"incorrect preference - language")
 				gs.Equal(strings.ToUpper(domain.UserPreferenceWeightUnitKGs), *resp.User.Preferences.WeightUnit,
 					"incorrect preference - weightUnit")
-				gs.Equal("", *resp.User.Preferences.TimeZone,
+				gs.Equal("America/New_York", *resp.User.Preferences.TimeZone,
 					"incorrect preference - timeZone")
 			},
 		},

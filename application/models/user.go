@@ -528,10 +528,9 @@ func (u *User) WantsPostNotification(post Post) bool {
 	return true
 }
 
-// GetPreferences returns an StandardPreferences struct
+// GetPreferences returns a StandardPreferences struct
 func (u *User) GetPreferences() (StandardPreferences, error) {
-	uPrefs := UserPreferences{}
-	if err := DB.Where("user_id = ?", u.ID).All(&uPrefs); err != nil {
+	if err := DB.Load(u, "UserPreferences"); err != nil {
 		err := errors.New("error getting user preferences ... " + err.Error())
 		return StandardPreferences{}, err
 	}
@@ -540,7 +539,7 @@ func (u *User) GetPreferences() (StandardPreferences, error) {
 
 	// Build up a map of the User's Preferences in the database while also
 	// checking that they are each allowed
-	for _, uP := range uPrefs {
+	for _, uP := range u.UserPreferences {
 		_, ok := allowedUserPreferenceKeys[uP.Key]
 		if !ok {
 			domain.Logger.Printf("the database included a user preference with an unexpected key %s", uP.Key)
