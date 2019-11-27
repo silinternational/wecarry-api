@@ -1124,3 +1124,101 @@ func (ms *ModelSuite) TestUser_UpdateStandardPreferences() {
 		})
 	}
 }
+
+func (ms *ModelSuite) TestUser_UpdatePreferenceByKey() {
+	t := ms.T()
+
+	f := CreateUserFixtures_TestGetPreference(ms)
+
+	tests := []struct {
+		name  string
+		user  User
+		key   string
+		value string
+		want  UserPreference
+	}{
+		{
+			name:  "Change Lang to French",
+			user:  f.Users[0],
+			key:   domain.UserPreferenceKeyLanguage,
+			value: domain.UserPreferenceLanguageFrench,
+			want: UserPreference{
+				ID:     f.UserPreferences[0].ID,
+				UserID: f.Users[0].ID,
+				Key:    domain.UserPreferenceKeyLanguage,
+				Value:  domain.UserPreferenceLanguageFrench,
+			},
+		},
+		{
+			name:  "Leave KGs unchanged",
+			user:  f.Users[0],
+			key:   domain.UserPreferenceKeyWeightUnit,
+			value: domain.UserPreferenceWeightUnitKGs,
+			want: UserPreference{
+				ID:     f.UserPreferences[1].ID,
+				UserID: f.Users[0].ID,
+				Key:    domain.UserPreferenceKeyWeightUnit,
+				Value:  domain.UserPreferenceWeightUnitKGs,
+			},
+		},
+		{
+			name:  "Add French",
+			user:  f.Users[1],
+			key:   domain.UserPreferenceKeyLanguage,
+			value: domain.UserPreferenceLanguageFrench,
+			want: UserPreference{
+				UserID: f.Users[1].ID,
+				Key:    domain.UserPreferenceKeyLanguage,
+				Value:  domain.UserPreferenceLanguageFrench,
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := test.user.updatePreferenceByKey(test.key, test.value)
+			ms.NoError(err)
+
+			if test.want.ID > 0 {
+				ms.Equal(test.want.ID, got.ID, "incorrect ID result from updatePreferenceByKey()")
+			} else {
+				ms.Greater(got.ID, 0, "non-positive ID from updatePreferenceByKey()")
+			}
+			ms.Equal(test.want.Key, got.Key, "incorrect key result from updatePreferenceByKey()")
+			ms.Equal(test.want.Value, got.Value, "incorrect value result for "+test.want.Key)
+		})
+	}
+}
+
+func (ms *ModelSuite) TestUser_GetPreferences() {
+	t := ms.T()
+
+	f := CreateUserFixtures_TestGetPreference(ms)
+
+	tests := []struct {
+		name string
+		user User
+		want StandardPreferences
+	}{
+		{
+			name: "english and kgs",
+			user: f.Users[0],
+			want: StandardPreferences{
+				Language:   domain.UserPreferenceLanguageEnglish,
+				WeightUnit: domain.UserPreferenceWeightUnitKGs,
+			},
+		},
+		{
+			name: "none",
+			user: f.Users[1],
+			want: StandardPreferences{},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := test.user.GetPreferences()
+			ms.NoError(err)
+
+			ms.Equal(test.want, got, "incorrect result from GetPreferences()")
+		})
+	}
+}
