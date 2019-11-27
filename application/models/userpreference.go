@@ -13,6 +13,12 @@ import (
 	"github.com/silinternational/wecarry-api/domain"
 )
 
+type StandardPreferences struct {
+	Language   string `json:"language"`
+	TimeZone   string `json:"time_zone"`
+	WeightUnit string `json:"weight_unit"`
+}
+
 type UserPreference struct {
 	ID        int       `json:"id" db:"id"`
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
