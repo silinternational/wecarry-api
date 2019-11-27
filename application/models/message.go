@@ -208,7 +208,7 @@ func (m *Message) FindByUserAndUUID(user User, id string) error {
 		if domain.IsOtherThanNoRows(err) {
 			return fmt.Errorf("error finding threadParticipant record for message %s, %s", id, err)
 		}
-		return fmt.Errorf("user %s has insufficient permissions to read message %s", user.Uuid.String(), id)
+		return fmt.Errorf("user %s has insufficient permissions to read message %s", user.Uuid, id)
 	}
 
 	return nil
