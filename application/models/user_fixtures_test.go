@@ -645,14 +645,14 @@ func CreateUserFixtures_TestGetPreference(ms *ModelSuite) UserFixtures {
 		{
 			Uuid:   domain.GetUuid(),
 			UserID: users[0].ID,
-			Key:    "User0Key1",
-			Value:  "User0Val1",
+			Key:    domain.UserPreferenceKeyLanguage,
+			Value:  domain.UserPreferenceLanguageEnglish,
 		},
 		{
 			Uuid:   domain.GetUuid(),
 			UserID: users[0].ID,
-			Key:    "User0Key2",
-			Value:  "User0Val2",
+			Key:    domain.UserPreferenceKeyWeightUnit,
+			Value:  domain.UserPreferenceWeightUnitKGs,
 		},
 	}
 
