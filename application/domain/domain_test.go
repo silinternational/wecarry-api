@@ -418,22 +418,20 @@ type testStruct struct {
 func (ts *TestSuite) TestGetStructFieldTags() {
 	tStruct := testStruct{}
 
-	got, err := GetStructFieldTags("json", tStruct)
+	got, err := GetStructTags("json", tStruct)
 	ts.NoError(err)
 
 	gotCount := len(got)
 	wantCount := 2
 	ts.Equal(wantCount, gotCount, "incorrect number of tags")
 
-	fieldName := "Language"
+	fieldName := "language"
 	gotName := got[fieldName]
-	wantName := "language"
-	ts.Equal(wantName, gotName, "incorrect tag")
+	ts.Equal(fieldName, gotName, "incorrect tag")
 
-	fieldName = "TimeZone"
+	fieldName = "time_zone"
 	gotName = got[fieldName]
-	wantName = "time_zone"
-	ts.Equal(wantName, gotName, "incorrect tag")
+	ts.Equal(fieldName, gotName, "incorrect tag")
 }
 
 func (ts *TestSuite) TestIsLanguageAllowed() {
@@ -442,6 +440,16 @@ func (ts *TestSuite) TestIsLanguageAllowed() {
 	ts.True(got, lang+" should be an allowed language")
 
 	lang = "badlanguage"
-	got = IsLanguageAllowed("badlanguage")
+	got = IsLanguageAllowed(lang)
 	ts.False(got, lang+" should not be an allowed language")
+}
+
+func (ts *TestSuite) TestIsWeightUnitAllowed() {
+	unit := UserPreferenceWeightUnitKGs
+	got := IsWeightUnitAllowed(unit)
+	ts.True(got, unit+" should be an allowed weight unit")
+
+	unit = "badunit"
+	got = IsLanguageAllowed(unit)
+	ts.False(got, unit+" should not be an allowed weight unit")
 }
