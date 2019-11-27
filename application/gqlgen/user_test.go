@@ -262,7 +262,7 @@ func (gs *GqlgenSuite) TestUpdateUser() {
 
 	preferences := fmt.Sprintf(`{weightUnit: %s}`, strings.ToUpper(domain.UserPreferenceWeightUnitKGs))
 
-	requestedFields := `{id nickname photoURL preferences {language, weightUnit} location {description, country}}`
+	requestedFields := `{id nickname photoURL preferences {language, timeZone, weightUnit} location {description, country}}`
 
 	update := fmt.Sprintf(`mutation { user: updateUser(input:{id: "%s", nickname: "%s", location: %s, preferences: %s}) %s }`,
 		userID, newNickname, location, preferences, requestedFields)
@@ -285,7 +285,9 @@ func (gs *GqlgenSuite) TestUpdateUser() {
 				gs.Equal(strings.ToUpper(f.UserPreferences[0].Value), *resp.User.Preferences.Language,
 					"incorrect preference - language")
 				gs.Equal(strings.ToUpper(domain.UserPreferenceWeightUnitKGs), *resp.User.Preferences.WeightUnit,
-					"incorrect preference - weight unit")
+					"incorrect preference - weightUnit")
+				gs.Equal("", *resp.User.Preferences.TimeZone,
+					"incorrect preference - timeZone")
 			},
 		},
 		{
