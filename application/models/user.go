@@ -538,11 +538,12 @@ func (u *User) GetPreferences() (StandardPreferences, error) {
 
 	dbPreferences := map[string]string{}
 
-	// First check if all of this user's preferences in the database are allowed
+	// Build up a map of the User's Preferences in the database while also
+	// checking that they are each allowed
 	for _, uP := range uPrefs {
-		_, ok := preferencesFieldJson[uP.Key]
+		_, ok := allowedUserPreferenceKeys[uP.Key]
 		if !ok {
-			domain.Logger.Printf("in database found unexpected user preference key %s", uP.Key)
+			domain.Logger.Printf("the database included a user preference with an unexpected key %s", uP.Key)
 			continue
 		}
 		dbPreferences[uP.Key] = uP.Value

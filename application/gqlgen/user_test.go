@@ -177,7 +177,8 @@ func (gs *GqlgenSuite) TestUserQuery() {
 
 	var resp UserResponse
 
-	allFields := `{ id email nickname adminRole photoURL preferences {language weightUnit}  posts (role: CREATEDBY) {id} organizations {id}
+	allFields := `{ id email nickname adminRole photoURL preferences {language weightUnit}  
+		posts (role: CREATEDBY) {id} organizations {id}
 		location {description country latitude longitude} }`
 	testCases := []testCase{
 		{

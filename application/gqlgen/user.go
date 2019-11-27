@@ -212,7 +212,8 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 	return &user, nil
 }
 
-// userPreferences resolves the `preferences` property of the user query, retrieving the related records from the database.
+// Preferences resolves the `preferences` property of the user query, retrieving the related records from the database
+// and using them to hydrate a StandardPreferences struct.
 func (r *userResolver) Preferences(ctx context.Context, obj *models.User) (*models.StandardPreferences, error) {
 	if obj == nil {
 		return nil, nil
@@ -227,6 +228,7 @@ func (r *userResolver) Preferences(ctx context.Context, obj *models.User) (*mode
 		return nil, reportError(ctx, err, "GetUserPreferences", extras)
 	}
 
+	// These have particular acceptable values, unlike TimeZone
 	standardPrefs.Language = strings.ToUpper(standardPrefs.Language)
 	standardPrefs.WeightUnit = strings.ToUpper(standardPrefs.WeightUnit)
 

@@ -28,7 +28,7 @@ const TokenBytes = 32
 // Keep a map of the json tag names for the standard user preferences struct
 // e.g. "time_zone": "time_zone".
 // Having it as a map, makes it easy to check if a potential key is allowed
-var preferencesFieldJson map[string]string
+var allowedUserPreferenceKeys map[string]string
 
 func init() {
 	var err error
@@ -45,7 +45,7 @@ func init() {
 		log.Fatal(fmt.Errorf("error using crypto/rand ... %v", err))
 	}
 
-	preferencesFieldJson, err = domain.GetStructTags("json", StandardPreferences{})
+	allowedUserPreferenceKeys, err = domain.GetStructTags("json", StandardPreferences{})
 	if err != nil {
 		log.Fatal(fmt.Errorf("error loading Allowed User Preferences ... %v", err))
 	}

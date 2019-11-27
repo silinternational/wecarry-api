@@ -410,12 +410,13 @@ func (ts *TestSuite) TestIsOtherThanNoRows() {
 	}
 }
 
-type testStruct struct {
-	Language string `json:"language"`
-	TimeZone string `json:"time_zone"`
-}
-
 func (ts *TestSuite) TestGetStructFieldTags() {
+
+	type testStruct struct {
+		Language string `json:"language"`
+		TimeZone string `json:"time_zone"`
+	}
+
 	tStruct := testStruct{}
 
 	got, err := GetStructTags("json", tStruct)
