@@ -64,12 +64,13 @@ type UpdateUserInput struct {
 	Nickname    *string                     `json:"nickname"`
 	PhotoID     *string                     `json:"photoID"`
 	Location    *LocationInput              `json:"location"`
-	Preferences []UpdateUserPreferenceInput `json:"preferences"`
+	Preferences *UpdateUserPreferencesInput `json:"preferences"`
 }
 
-type UpdateUserPreferenceInput struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
+type UpdateUserPreferencesInput struct {
+	Language   *PreferredLanguage   `json:"language"`
+	TimeZone   *string              `json:"timeZone"`
+	WeightUnit *PreferredWeightUnit `json:"weightUnit"`
 }
 
 type PostRole string
@@ -112,5 +113,93 @@ func (e *PostRole) UnmarshalGQL(v interface{}) error {
 }
 
 func (e PostRole) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type PreferredLanguage string
+
+const (
+	PreferredLanguageEn PreferredLanguage = "EN"
+	PreferredLanguageFr PreferredLanguage = "FR"
+	PreferredLanguageSp PreferredLanguage = "SP"
+	PreferredLanguageKo PreferredLanguage = "KO"
+	PreferredLanguagePt PreferredLanguage = "PT"
+)
+
+var AllPreferredLanguage = []PreferredLanguage{
+	PreferredLanguageEn,
+	PreferredLanguageFr,
+	PreferredLanguageSp,
+	PreferredLanguageKo,
+	PreferredLanguagePt,
+}
+
+func (e PreferredLanguage) IsValid() bool {
+	switch e {
+	case PreferredLanguageEn, PreferredLanguageFr, PreferredLanguageSp, PreferredLanguageKo, PreferredLanguagePt:
+		return true
+	}
+	return false
+}
+
+func (e PreferredLanguage) String() string {
+	return string(e)
+}
+
+func (e *PreferredLanguage) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PreferredLanguage(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PreferredLanguage", str)
+	}
+	return nil
+}
+
+func (e PreferredLanguage) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type PreferredWeightUnit string
+
+const (
+	PreferredWeightUnitPounds    PreferredWeightUnit = "POUNDS"
+	PreferredWeightUnitKilograms PreferredWeightUnit = "KILOGRAMS"
+)
+
+var AllPreferredWeightUnit = []PreferredWeightUnit{
+	PreferredWeightUnitPounds,
+	PreferredWeightUnitKilograms,
+}
+
+func (e PreferredWeightUnit) IsValid() bool {
+	switch e {
+	case PreferredWeightUnitPounds, PreferredWeightUnitKilograms:
+		return true
+	}
+	return false
+}
+
+func (e PreferredWeightUnit) String() string {
+	return string(e)
+}
+
+func (e *PreferredWeightUnit) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PreferredWeightUnit(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PreferredWeightUnit", str)
+	}
+	return nil
+}
+
+func (e PreferredWeightUnit) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }

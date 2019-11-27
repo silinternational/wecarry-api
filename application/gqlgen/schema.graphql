@@ -65,15 +65,15 @@ type User {
     organizations: [Organization!]!
     posts(role: PostRole!): [Post!]!
     photoURL: String
-    preferences: [UserPreference!]!
+    preferences: UserPreferences
     location: Location
     unreadMessageCount: Int!
 }
 
-type UserPreference {
-    id: ID!
-    key: String!
-    value: String!
+type UserPreferences {
+    language: String
+    timeZone: String
+    weightUnit: String
 }
 
 input UpdateUserInput {
@@ -81,12 +81,27 @@ input UpdateUserInput {
     nickname: String
     photoID: String
     location: LocationInput
-    preferences: [UpdateUserPreferenceInput!]
+    preferences: UpdateUserPreferencesInput!
 }
 
-input UpdateUserPreferenceInput {
-    key: String!
-    value: String!
+enum PreferredLanguage {
+    EN
+    FR
+    SP
+    KO
+    PT
+}
+
+enum PreferredWeightUnit {
+    POUNDS
+    KILOGRAMS
+}
+
+
+input UpdateUserPreferencesInput {
+    language: PreferredLanguage
+    timeZone: String
+    weightUnit: PreferredWeightUnit
 }
 
 enum PostType {

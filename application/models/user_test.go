@@ -1079,6 +1079,116 @@ func (ms *ModelSuite) TestUser_WantsPostNotification() {
 	}
 }
 
+func (ms *ModelSuite) TestUser_UpdateStandardPreferences() {
+	t := ms.T()
+
+	f := CreateUserFixtures_TestGetPreference(ms)
+
+	tests := []struct {
+		name   string
+		user   User
+		SPrefs StandardPreferences
+		want   StandardPreferences
+	}{
+		{
+			name: "Change Lang, Leave KG, Add TimeZone",
+			user: f.Users[0],
+			SPrefs: StandardPreferences{
+				Language:   domain.UserPreferenceLanguageFrench,
+				WeightUnit: domain.UserPreferenceWeightUnitKGs,
+				TimeZone:   "America/New_York",
+			},
+			want: StandardPreferences{
+				Language:   domain.UserPreferenceLanguageFrench,
+				WeightUnit: domain.UserPreferenceWeightUnitKGs,
+				TimeZone:   "America/New_York",
+			},
+		},
+		{
+			name: "Start with none then add one",
+			user: f.Users[1],
+			SPrefs: StandardPreferences{
+				Language: domain.UserPreferenceLanguageFrench,
+			},
+			want: StandardPreferences{
+				Language: domain.UserPreferenceLanguageFrench,
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := test.user.UpdateStandardPreferences(test.SPrefs)
+			ms.NoError(err)
+
+			ms.Equal(test.want, got, "incorrect result from UpdateStandardPreferences()")
+		})
+	}
+}
+
+func (ms *ModelSuite) TestUser_UpdatePreferenceByKey() {
+	t := ms.T()
+
+	f := CreateUserFixtures_TestGetPreference(ms)
+
+	tests := []struct {
+		name  string
+		user  User
+		key   string
+		value string
+		want  UserPreference
+	}{
+		{
+			name:  "Change Lang to French",
+			user:  f.Users[0],
+			key:   domain.UserPreferenceKeyLanguage,
+			value: domain.UserPreferenceLanguageFrench,
+			want: UserPreference{
+				ID:     f.UserPreferences[0].ID,
+				UserID: f.Users[0].ID,
+				Key:    domain.UserPreferenceKeyLanguage,
+				Value:  domain.UserPreferenceLanguageFrench,
+			},
+		},
+		{
+			name:  "Leave KGs unchanged",
+			user:  f.Users[0],
+			key:   domain.UserPreferenceKeyWeightUnit,
+			value: domain.UserPreferenceWeightUnitKGs,
+			want: UserPreference{
+				ID:     f.UserPreferences[1].ID,
+				UserID: f.Users[0].ID,
+				Key:    domain.UserPreferenceKeyWeightUnit,
+				Value:  domain.UserPreferenceWeightUnitKGs,
+			},
+		},
+		{
+			name:  "Add French",
+			user:  f.Users[1],
+			key:   domain.UserPreferenceKeyLanguage,
+			value: domain.UserPreferenceLanguageFrench,
+			want: UserPreference{
+				UserID: f.Users[1].ID,
+				Key:    domain.UserPreferenceKeyLanguage,
+				Value:  domain.UserPreferenceLanguageFrench,
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := test.user.updatePreferenceByKey(test.key, test.value)
+			ms.NoError(err)
+
+			if test.want.ID > 0 {
+				ms.Equal(test.want.ID, got.ID, "incorrect ID result from updatePreferenceByKey()")
+			} else {
+				ms.Greater(got.ID, 0, "non-positive ID from updatePreferenceByKey()")
+			}
+			ms.Equal(test.want.Key, got.Key, "incorrect key result from updatePreferenceByKey()")
+			ms.Equal(test.want.Value, got.Value, "incorrect value result for "+test.want.Key)
+		})
+	}
+}
+
 func (ms *ModelSuite) TestUser_GetPreferences() {
 	t := ms.T()
 
@@ -1087,101 +1197,28 @@ func (ms *ModelSuite) TestUser_GetPreferences() {
 	tests := []struct {
 		name string
 		user User
-		want []string // Preference Keys
+		want StandardPreferences
 	}{
-		{name: "has some", user: f.Users[0], want: []string{f.UserPreferences[0].Key, f.UserPreferences[1].Key}},
-		{name: "has none", user: f.Users[1], want: []string{}},
+		{
+			name: "english and kgs",
+			user: f.Users[0],
+			want: StandardPreferences{
+				Language:   domain.UserPreferenceLanguageEnglish,
+				WeightUnit: domain.UserPreferenceWeightUnitKGs,
+			},
+		},
+		{
+			name: "none",
+			user: f.Users[1],
+			want: StandardPreferences{},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			got, err := test.user.GetPreferences()
 			ms.NoError(err)
-			ms.Equal(len(test.want), len(got))
 
-			ms.NotNil(got)
-			gotKeys := []string{}
-			for _, g := range got {
-				gotKeys = append(gotKeys, g.Key)
-			}
-
-			ms.Equal(test.want, gotKeys, "incorrect result from GetPreferences()")
-		})
-	}
-}
-
-func (ms *ModelSuite) TestUser_GetPreference() {
-	t := ms.T()
-
-	f := CreateUserFixtures_TestGetPreference(ms)
-
-	tests := []struct {
-		name          string
-		user          User
-		preferenceKey string
-		wantNil       bool
-		want          string
-	}{
-		{name: "exists1", user: f.Users[0], preferenceKey: f.UserPreferences[1].Key, want: f.UserPreferences[1].Value},
-		{name: "not exists1", user: f.Users[0], preferenceKey: "Missing", wantNil: true},
-		{name: "not exists2", user: f.Users[1], preferenceKey: "Missing", wantNil: true},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			got, err := test.user.GetPreference(test.preferenceKey)
-			ms.NoError(err)
-			if test.wantNil {
-				ms.Nil(got, "Expected nil but got a preference")
-				return
-			}
-
-			ms.NotNil(got, "Got nil when expecting preference with Value "+test.want)
-			ms.Equal(test.want, got.Value, "incorrect result from GetPreference()")
-		})
-	}
-}
-
-func (ms *ModelSuite) TestUser_UpdatePreferencesByKey() {
-	t := ms.T()
-
-	f := CreateUserFixtures_TestGetPreference(ms)
-
-	tests := []struct {
-		name          string
-		user          User
-		preferenceKey string
-		newValue      string
-		wantCount     int
-		want          []string
-	}{
-		{
-			name:          "exists1",
-			user:          f.Users[0],
-			preferenceKey: f.UserPreferences[1].Key,
-			newValue:      "Updated1",
-			wantCount:     len(f.UserPreferences),
-			want:          []string{f.UserPreferences[0].Value, "Updated1"},
-		},
-		{
-			name:          "new preference",
-			user:          f.Users[0],
-			preferenceKey: "NewKey",
-			newValue:      "NewValue",
-			wantCount:     len(f.UserPreferences) + 1,
-			want:          []string{f.UserPreferences[0].Value, "Updated1", "NewValue"},
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			got, err := test.user.UpdatePreferencesByKey([][2]string{{test.preferenceKey, test.newValue}})
-			ms.NoError(err)
-			ms.Equal(test.wantCount, len(got), "incorrect number of user preferences")
-
-			gotVals := []string{}
-			for _, p := range got {
-				gotVals = append(gotVals, p.Value)
-			}
-
-			ms.Equal(test.want, gotVals, "incorrect result from UpdatePreferencesByKey()")
+			ms.Equal(test.want, got, "incorrect result from GetPreferences()")
 		})
 	}
 }

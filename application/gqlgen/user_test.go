@@ -2,6 +2,7 @@ package gqlgen
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/gobuffalo/nulls"
@@ -25,10 +26,10 @@ type UserResponse struct {
 		Posts []struct {
 			ID string `json:"id"`
 		}
-		Preferences []struct {
-			ID    string `json:"id"`
-			Key   string `json:"key"`
-			Value string `json:"value"`
+		Preferences struct {
+			Language   *string `json:"language"`
+			TimeZone   *string `json:"timeZone"`
+			WeightUnit *string `json:"weightUnit"`
 		}
 		PhotoURL string `json:"photoURL"`
 		Location struct {
@@ -111,8 +112,14 @@ func Fixtures_UserQuery(gs *GqlgenSuite, t *testing.T) UserQueryFixtures {
 		{
 			Uuid:   domain.GetUuid(),
 			UserID: users[1].ID,
-			Key:    domain.UserPreferenceKeyUnits,
-			Value:  domain.UserPreferenceUnitsMetric,
+			Key:    domain.UserPreferenceKeyTimeZone,
+			Value:  "America/New_York",
+		},
+		{
+			Uuid:   domain.GetUuid(),
+			UserID: users[1].ID,
+			Key:    domain.UserPreferenceKeyWeightUnit,
+			Value:  domain.UserPreferenceWeightUnitPounds,
 		},
 	}
 
@@ -176,7 +183,8 @@ func (gs *GqlgenSuite) TestUserQuery() {
 
 	var resp UserResponse
 
-	allFields := `{ id email nickname adminRole photoURL preferences {key}  posts (role: CREATEDBY) {id} organizations {id}
+	allFields := `{ id email nickname adminRole photoURL preferences {language timeZone weightUnit}  
+		posts (role: CREATEDBY) {id} organizations {id}
 		location {description country latitude longitude} }`
 	testCases := []testCase{
 		{
@@ -202,9 +210,12 @@ func (gs *GqlgenSuite) TestUserQuery() {
 				gs.Equal(f.Locations[0].Latitude.Float64, resp.User.Location.Lat, "incorrect latitude")
 				gs.Equal(f.Locations[0].Longitude.Float64, resp.User.Location.Long, "incorrect longitude")
 
-				gs.Equal(2, len(resp.User.Preferences), "wrong number of UserPreferences")
-				gs.Equal(f.UserPreferences[0].Key, resp.User.Preferences[0].Key, "incorrect preference 0")
-				gs.Equal(f.UserPreferences[1].Key, resp.User.Preferences[1].Key, "incorrect preference 1")
+				gs.Equal(strings.ToUpper(f.UserPreferences[0].Value), *resp.User.Preferences.Language,
+					"incorrect preference - language")
+				gs.Equal(f.UserPreferences[1].Value, *resp.User.Preferences.TimeZone,
+					"incorrect preference - time zone")
+				gs.Equal(strings.ToUpper(f.UserPreferences[2].Value), *resp.User.Preferences.WeightUnit,
+					"incorrect preference - weight unit")
 			},
 		},
 		{
@@ -227,6 +238,7 @@ func (gs *GqlgenSuite) TestUserQuery() {
 	for _, test := range testCases {
 		TestUser = test.TestUser
 		err := c.Post(test.Payload, &resp)
+
 		if test.ExpectError {
 			gs.Error(err)
 		} else {
@@ -257,11 +269,9 @@ func (gs *GqlgenSuite) TestUpdateUser() {
 	newNickname := "U1 New Nickname"
 	location := `{description: "Paris, France", country: "FR", latitude: 48.8588377, longitude: 2.2770202}`
 
-	updatedKey := f.UserPreferences[1].Key
-	updatedValue := f.UserPreferences[1].Value + "-UPDATED"
-	preferences := fmt.Sprintf(`[{key: "%s", value: "%s"}]`, updatedKey, updatedValue)
+	preferences := fmt.Sprintf(`{weightUnit: %s}`, strings.ToUpper(domain.UserPreferenceWeightUnitKGs))
 
-	requestedFields := `{id nickname photoURL preferences {key, value} location {description, country}}`
+	requestedFields := `{id nickname photoURL preferences {language, timeZone, weightUnit} location {description, country}}`
 
 	update := fmt.Sprintf(`mutation { user: updateUser(input:{id: "%s", nickname: "%s", location: %s, preferences: %s}) %s }`,
 		userID, newNickname, location, preferences, requestedFields)
@@ -281,11 +291,12 @@ func (gs *GqlgenSuite) TestUpdateUser() {
 				gs.Equal("Paris, France", resp.User.Location.Description, "incorrect location")
 				gs.Equal("FR", resp.User.Location.Country, "incorrect country")
 
-				gs.Equal(2, len(resp.User.Preferences), "wrong number of UserPreferences")
-				gs.Equal(f.UserPreferences[0].Key, resp.User.Preferences[0].Key, "incorrect preference 0 key")
-				gs.Equal(f.UserPreferences[0].Value, resp.User.Preferences[0].Value, "incorrect preference 0 value")
-				gs.Equal(f.UserPreferences[1].Key, resp.User.Preferences[1].Key, "incorrect preference 1 key")
-				gs.Equal(f.UserPreferences[1].Value+"-UPDATED", resp.User.Preferences[1].Value, "incorrect preference 1 value")
+				gs.Equal(strings.ToUpper(f.UserPreferences[0].Value), *resp.User.Preferences.Language,
+					"incorrect preference - language")
+				gs.Equal(strings.ToUpper(domain.UserPreferenceWeightUnitKGs), *resp.User.Preferences.WeightUnit,
+					"incorrect preference - weightUnit")
+				gs.Equal("America/New_York", *resp.User.Preferences.TimeZone,
+					"incorrect preference - timeZone")
 			},
 		},
 		{
