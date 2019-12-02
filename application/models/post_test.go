@@ -1558,3 +1558,79 @@ func (ms *ModelSuite) TestPost_GetLocationForNotifications() {
 		})
 	}
 }
+
+func (ms *ModelSuite) TestPost_createNewHistory() {
+	t := ms.T()
+	f := createFixturesForTestPost_createNewHistory(ms)
+
+	tests := []struct {
+		name       string
+		post       Post
+		status     PostStatus
+		providerID int
+		wantErr    string
+		want       PostHistories
+	}{
+		{
+			name:       "open to committed",
+			post:       f.Posts[0],
+			status:     PostStatusCommitted,
+			providerID: f.Users[1].ID,
+			want: PostHistories{
+				f.PostHistories[0],
+				{
+					Status:     PostStatusCommitted,
+					ReceiverID: f.PostHistories[0].ReceiverID,
+					ProviderID: nulls.NewInt(f.Users[1].ID),
+				},
+			},
+		},
+		{
+			name:   "null to open",
+			post:   f.Posts[1],
+			status: PostStatusOpen,
+			want:   PostHistories{{Status: PostStatusOpen, ReceiverID: nulls.NewInt(f.Users[1].ID)}},
+		},
+		{
+			name:       "bad provider id",
+			post:       f.Posts[1],
+			status:     PostStatusCommitted,
+			providerID: 999999,
+			wantErr:    `key constraint "post_histories_provider_id_fkey"`,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			test.post.Status = test.status
+
+			if test.providerID > 0 {
+				test.post.ProviderID = nulls.NewInt(test.providerID)
+			}
+
+			err := test.post.createNewHistory()
+			if test.wantErr != "" {
+				ms.Error(err)
+				ms.Contains(err.Error(), test.wantErr, "unexpected error message")
+				return
+			}
+
+			ms.NoError(err, "did not expect any error")
+
+			var histories PostHistories
+			err = DB.Where("post_id = ?", test.post.ID).All(&histories)
+			ms.NoError(err, "unexpected error fetching histories")
+
+			ms.Equal(len(test.want), len(histories), "incorrect number of histories")
+
+			for i := range test.want {
+				ms.Equal(test.want[i].Status, histories[i].Status, "incorrect status")
+				ms.Equal(test.want[i].ReceiverID, histories[i].ReceiverID, "incorrect receiver id")
+
+				if test.providerID > 0 {
+					ms.Equal(test.want[i].ProviderID, histories[i].ProviderID, "incorrect provider id")
+				}
+			}
+		})
+	}
+}

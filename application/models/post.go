@@ -138,6 +138,7 @@ type Post struct {
 	Receiver       User          `belongs_to:"users"`
 	Provider       User          `belongs_to:"users"`
 	Files          PostFiles     `has_many:"post_files"`
+	Histories      PostHistories `has_many:"post_histories"`
 	PhotoFile      File          `belongs_to:"files"`
 	Destination    Location      `belongs_to:"locations"`
 	Origin         Location      `belongs_to:"locations"`
@@ -365,6 +366,11 @@ func (p *Post) BeforeUpdate(tx *pop.Connection) error {
 		return nil
 	}
 
+	err := p.createNewHistory()
+	if err != nil {
+		return err
+	}
+
 	eventData := PostStatusEventData{
 		OldStatus:     oldPost.Status,
 		NewStatus:     p.Status,
@@ -379,6 +385,7 @@ func (p *Post) BeforeUpdate(tx *pop.Connection) error {
 	}
 
 	emitEvent(e)
+
 	return nil
 }
 
@@ -744,4 +751,33 @@ func (p *Post) GetLocationForNotifications() (*Location, error) {
 		postLocation = p.Destination
 	}
 	return &postLocation, nil
+}
+
+// createNewHistory checks if the post has a status that is different than the
+// most recent of its Post History entries.  If so, it creates a new Post History
+// with the Post's new status.
+func (p *Post) createNewHistory() error {
+	var oldPH PostHistory
+
+	err := DB.Where("post_id = ?", p.ID).Last(&oldPH)
+
+	if domain.IsOtherThanNoRows(err) {
+		return err
+	}
+
+	if oldPH.Status != p.Status {
+		newPH := PostHistory{
+			Status:     p.Status,
+			PostID:     p.ID,
+			ReceiverID: p.ReceiverID,
+			ProviderID: p.ProviderID,
+		}
+
+		if err := DB.Create(&newPH); err != nil {
+			return err
+		}
+	}
+
+	return nil
+
 }
