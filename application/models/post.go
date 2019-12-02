@@ -67,6 +67,80 @@ const (
 	PostStatusRemoved   PostStatus = "REMOVED"
 )
 
+type statusTransitionTarget struct {
+	status     PostStatus
+	isBackStep bool
+}
+
+func getStatusTransitions() map[PostStatus][]statusTransitionTarget {
+	return map[PostStatus][]statusTransitionTarget{
+		PostStatusOpen: {
+			{status: PostStatusCommitted},
+			{status: PostStatusRemoved},
+		},
+		PostStatusCommitted: {
+			{status: PostStatusOpen, isBackStep: true},
+			{status: PostStatusAccepted},
+			{status: PostStatusDelivered},
+			{status: PostStatusRemoved},
+		},
+		PostStatusAccepted: {
+			{status: PostStatusOpen},
+			{status: PostStatusCommitted, isBackStep: true}, // new one
+			{status: PostStatusDelivered},
+			{status: PostStatusReceived},
+			{status: PostStatusRemoved},
+		},
+		PostStatusDelivered: {
+			{status: PostStatusCommitted, isBackStep: true}, // new one
+			{status: PostStatusAccepted, isBackStep: true},
+			{status: PostStatusCompleted},
+		},
+		PostStatusReceived: {
+			{status: PostStatusAccepted, isBackStep: true},
+			{status: PostStatusDelivered, isBackStep: true},
+			{status: PostStatusCompleted},
+		},
+		PostStatusCompleted: {
+			{status: PostStatusDelivered, isBackStep: true},
+			{status: PostStatusReceived, isBackStep: true},
+		},
+		PostStatusRemoved: {},
+	}
+}
+
+func isTransitionValid(status1, status2 PostStatus) (bool, error) {
+	transitions := getStatusTransitions()
+	targets, ok := transitions[status1]
+	if !ok {
+		return false, errors.New("unexpected initial status - " + status1.String())
+	}
+
+	for _, target := range targets {
+		if status2 == target.status {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+func isTransitionBackStep(status1, status2 PostStatus) (bool, error) {
+	transitions := getStatusTransitions()
+	targets, ok := transitions[status1]
+	if !ok {
+		return false, errors.New("unexpected initial status - " + status1.String())
+	}
+
+	for _, target := range targets {
+		if status2 == target.status {
+			return target.isBackStep, nil
+		}
+	}
+
+	return false, fmt.Errorf("invalid status transition from %s to %s", status1, status2)
+}
+
 func (e PostStatus) IsValid() bool {
 	switch e {
 	case PostStatusOpen, PostStatusCommitted, PostStatusAccepted, PostStatusDelivered, PostStatusReceived,
@@ -301,24 +375,24 @@ func (v *updateStatusValidator) isRequestValid(errors *validate.Errors) {
 	// Ensure that the new status is compatible with the old one in terms of a transition
 	// allow for doing a step in reverse, in case there was a mistake going forward and
 	// also allowing for some "unofficial" interaction happening outside of the app
-	okTransitions := map[PostStatus][]PostStatus{
-		PostStatusOpen:      {PostStatusCommitted, PostStatusRemoved},
-		PostStatusCommitted: {PostStatusOpen, PostStatusAccepted, PostStatusDelivered, PostStatusRemoved},
-		PostStatusAccepted:  {PostStatusOpen, PostStatusDelivered, PostStatusReceived, PostStatusRemoved},
-		PostStatusDelivered: {PostStatusAccepted, PostStatusCompleted},
-		PostStatusReceived:  {PostStatusAccepted, PostStatusDelivered, PostStatusCompleted},
-		PostStatusCompleted: {PostStatusDelivered, PostStatusReceived},
-		PostStatusRemoved:   {},
-	}
+	//okTransitions := map[PostStatus][]PostStatus{
+	//	PostStatusOpen:      {PostStatusCommitted, PostStatusRemoved},
+	//	PostStatusCommitted: {PostStatusOpen, PostStatusAccepted, PostStatusDelivered, PostStatusRemoved},
+	//	PostStatusAccepted:  {PostStatusOpen, PostStatusDelivered, PostStatusReceived, PostStatusRemoved},
+	//	PostStatusDelivered: {PostStatusAccepted, PostStatusCompleted},
+	//	PostStatusReceived:  {PostStatusAccepted, PostStatusDelivered, PostStatusCompleted},
+	//	PostStatusCompleted: {PostStatusDelivered, PostStatusReceived},
+	//	PostStatusRemoved:   {},
+	//}
 
-	goodStatuses, ok := okTransitions[oldPost.Status]
-	if !ok {
-		msg := "unexpected status '%s' on post %s"
-		domain.ErrLogger.Printf(msg, oldPost.Status, oldPost.Uuid.String())
+	isTransValid, err := isTransitionValid(oldPost.Status, v.Post.Status)
+	if err != nil {
+		v.Message = fmt.Sprintf("%s on post %s", err, uuid)
+		errors.Add(validators.GenerateKey(v.Name), v.Message)
 		return
 	}
 
-	if !IsStatusInSlice(v.Post.Status, goodStatuses) {
+	if !isTransValid {
 		errorMsg := "cannot move post %s from '%s' status to '%s' status"
 		v.Message = fmt.Sprintf(errorMsg, uuid, oldPost.Status, v.Post.Status)
 		errors.Add(validators.GenerateKey(v.Name), v.Message)
