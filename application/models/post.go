@@ -98,7 +98,7 @@ func getStatusTransitions() map[PostStatus][]statusTransitionTarget {
 		},
 		PostStatusReceived: {
 			{status: PostStatusAccepted, isBackStep: true},
-			{status: PostStatusDelivered, isBackStep: true},
+			{status: PostStatusDelivered},
 			{status: PostStatusCompleted},
 		},
 		PostStatusCompleted: {
