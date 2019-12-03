@@ -98,7 +98,6 @@ func getStatusTransitions() map[PostStatus][]statusTransitionTarget {
 		},
 		PostStatusReceived: {
 			{status: PostStatusAccepted, isBackStep: true},
-			{status: PostStatusDelivered, isBackStep: true},
 			{status: PostStatusCompleted},
 		},
 		PostStatusCompleted: {
@@ -371,19 +370,6 @@ func (v *updateStatusValidator) isRequestValid(errors *validate.Errors) {
 	if oldPost.Status == v.Post.Status {
 		return
 	}
-
-	// Ensure that the new status is compatible with the old one in terms of a transition
-	// allow for doing a step in reverse, in case there was a mistake going forward and
-	// also allowing for some "unofficial" interaction happening outside of the app
-	//okTransitions := map[PostStatus][]PostStatus{
-	//	PostStatusOpen:      {PostStatusCommitted, PostStatusRemoved},
-	//	PostStatusCommitted: {PostStatusOpen, PostStatusAccepted, PostStatusDelivered, PostStatusRemoved},
-	//	PostStatusAccepted:  {PostStatusOpen, PostStatusDelivered, PostStatusReceived, PostStatusRemoved},
-	//	PostStatusDelivered: {PostStatusAccepted, PostStatusCompleted},
-	//	PostStatusReceived:  {PostStatusAccepted, PostStatusDelivered, PostStatusCompleted},
-	//	PostStatusCompleted: {PostStatusDelivered, PostStatusReceived},
-	//	PostStatusRemoved:   {},
-	//}
 
 	isTransValid, err := isTransitionValid(oldPost.Status, v.Post.Status)
 	if err != nil {
@@ -865,6 +851,8 @@ func (p *Post) createNewHistory() error {
 	return nil
 }
 
+// popHistory deletes the most recent postHistory entry for a post
+// assuming it's status matches the expected one.
 func (p *Post) popHistory(currentStatus PostStatus) error {
 	var oldPH PostHistory
 
