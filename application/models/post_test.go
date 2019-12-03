@@ -460,16 +460,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			errField: "status",
 		},
 		{
-			name: "good status - from received to received",
-			post: Post{
-				Title:  "New Title",
-				Status: PostStatusReceived,
-				Uuid:   posts[3].Uuid,
-			},
-			wantErr: false,
-		},
-		{
-			name: "good status - from received to accepted",
+			name: "good status - from delivered to accepted",
 			post: Post{
 				Status: PostStatusAccepted,
 				Uuid:   posts[3].Uuid,
@@ -496,6 +487,16 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			name: "bad status - from delivered to open",
 			post: Post{
 				Status: PostStatusOpen,
+				Uuid:   posts[3].Uuid,
+			},
+			wantErr:  true,
+			errField: "status",
+		},
+		{
+			name: "bad status - from delivered to received",
+			post: Post{
+				Title:  "New Title",
+				Status: PostStatusReceived,
 				Uuid:   posts[3].Uuid,
 			},
 			wantErr:  true,
