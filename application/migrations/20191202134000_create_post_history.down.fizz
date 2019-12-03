@@ -1,2 +1,1 @@
-drop_table("post_histories
-")
+drop_table("post_histories")
