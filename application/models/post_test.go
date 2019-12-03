@@ -1,7 +1,9 @@
 package models
 
 import (
+	"bytes"
 	"context"
+	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -475,7 +477,15 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			wantErr: false,
 		},
 		{
-			name: "good status - from received to completed",
+			name: "good status - from delivered to committed",
+			post: Post{
+				Status: PostStatusCommitted,
+				Uuid:   posts[3].Uuid,
+			},
+			wantErr: false,
+		},
+		{
+			name: "good status - from delivered to completed",
 			post: Post{
 				Status: PostStatusCompleted,
 				Uuid:   posts[3].Uuid,
@@ -483,15 +493,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			wantErr: false,
 		},
 		{
-			name: "good status - from received to delivered",
-			post: Post{
-				Status: PostStatusDelivered,
-				Uuid:   posts[3].Uuid,
-			},
-			wantErr: false,
-		},
-		{
-			name: "bad status - from received to open",
+			name: "bad status - from delivered to open",
 			post: Post{
 				Status: PostStatusOpen,
 				Uuid:   posts[3].Uuid,
@@ -500,10 +502,61 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			errField: "status",
 		},
 		{
+			name: "bad status - from delivered to removed",
+			post: Post{
+				Status: PostStatusRemoved,
+				Uuid:   posts[3].Uuid,
+			},
+			wantErr:  true,
+			errField: "status",
+		},
+		{
+			name: "good status - from received to received",
+			post: Post{
+				Title:  "New Title",
+				Status: PostStatusReceived,
+				Uuid:   posts[4].Uuid,
+			},
+			wantErr: false,
+		},
+		{
+			name: "good status - from received to accepted",
+			post: Post{
+				Status: PostStatusAccepted,
+				Uuid:   posts[4].Uuid,
+			},
+			wantErr: false,
+		},
+		{
+			name: "good status - from received to completed",
+			post: Post{
+				Status: PostStatusCompleted,
+				Uuid:   posts[4].Uuid,
+			},
+			wantErr: false,
+		},
+		{
+			name: "good status - from received to delivered",
+			post: Post{
+				Status: PostStatusDelivered,
+				Uuid:   posts[4].Uuid,
+			},
+			wantErr: false,
+		},
+		{
+			name: "bad status - from received to open",
+			post: Post{
+				Status: PostStatusOpen,
+				Uuid:   posts[4].Uuid,
+			},
+			wantErr:  true,
+			errField: "status",
+		},
+		{
 			name: "bad status - from received to committed",
 			post: Post{
 				Status: PostStatusCommitted,
-				Uuid:   posts[3].Uuid,
+				Uuid:   posts[4].Uuid,
 			},
 			wantErr:  true,
 			errField: "status",
@@ -512,7 +565,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			name: "bad status - from received to removed",
 			post: Post{
 				Status: PostStatusRemoved,
-				Uuid:   posts[3].Uuid,
+				Uuid:   posts[4].Uuid,
 			},
 			wantErr:  true,
 			errField: "status",
@@ -522,7 +575,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			post: Post{
 				Title:  "New Title",
 				Status: PostStatusCompleted,
-				Uuid:   posts[4].Uuid,
+				Uuid:   posts[5].Uuid,
 			},
 			wantErr: false,
 		},
@@ -530,7 +583,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			name: "good status - from completed to delivered",
 			post: Post{
 				Status: PostStatusDelivered,
-				Uuid:   posts[4].Uuid,
+				Uuid:   posts[5].Uuid,
 			},
 			wantErr: false,
 		},
@@ -538,7 +591,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			name: "good status - from completed to received",
 			post: Post{
 				Status: PostStatusReceived,
-				Uuid:   posts[4].Uuid,
+				Uuid:   posts[5].Uuid,
 			},
 			wantErr: false,
 		},
@@ -546,7 +599,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			name: "bad status - from completed to open",
 			post: Post{
 				Status: PostStatusOpen,
-				Uuid:   posts[4].Uuid,
+				Uuid:   posts[5].Uuid,
 			},
 			wantErr:  true,
 			errField: "status",
@@ -555,7 +608,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			name: "bad status - from completed to committed",
 			post: Post{
 				Status: PostStatusCommitted,
-				Uuid:   posts[4].Uuid,
+				Uuid:   posts[5].Uuid,
 			},
 			wantErr:  true,
 			errField: "status",
@@ -564,7 +617,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			name: "bad status - from completed to accepted",
 			post: Post{
 				Status: PostStatusAccepted,
-				Uuid:   posts[4].Uuid,
+				Uuid:   posts[5].Uuid,
 			},
 			wantErr:  true,
 			errField: "status",
@@ -573,7 +626,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			name: "bad status - from completed to removed",
 			post: Post{
 				Status: PostStatusRemoved,
-				Uuid:   posts[4].Uuid,
+				Uuid:   posts[5].Uuid,
 			},
 			wantErr:  true,
 			errField: "status",
@@ -583,7 +636,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			post: Post{
 				Title:  "New Title",
 				Status: PostStatusRemoved,
-				Uuid:   posts[5].Uuid,
+				Uuid:   posts[6].Uuid,
 			},
 			wantErr: false,
 		},
@@ -591,7 +644,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			name: "bad status - from removed to open",
 			post: Post{
 				Status: PostStatusOpen,
-				Uuid:   posts[5].Uuid,
+				Uuid:   posts[6].Uuid,
 			},
 			wantErr:  true,
 			errField: "status",
@@ -600,7 +653,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			name: "bad status - from removed to committed",
 			post: Post{
 				Status: PostStatusCommitted,
-				Uuid:   posts[5].Uuid,
+				Uuid:   posts[6].Uuid,
 			},
 			wantErr:  true,
 			errField: "status",
@@ -609,7 +662,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			name: "bad status - from removed to accepted",
 			post: Post{
 				Status: PostStatusAccepted,
-				Uuid:   posts[5].Uuid,
+				Uuid:   posts[6].Uuid,
 			},
 			wantErr:  true,
 			errField: "status",
@@ -618,7 +671,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			name: "bad status - from removed to delivered",
 			post: Post{
 				Status: PostStatusDelivered,
-				Uuid:   posts[5].Uuid,
+				Uuid:   posts[6].Uuid,
 			},
 			wantErr:  true,
 			errField: "status",
@@ -627,7 +680,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			name: "bad status - from removed to received",
 			post: Post{
 				Status: PostStatusReceived,
-				Uuid:   posts[5].Uuid,
+				Uuid:   posts[6].Uuid,
 			},
 			wantErr:  true,
 			errField: "status",
@@ -636,7 +689,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			name: "bad status - from removed to completed",
 			post: Post{
 				Status: PostStatusCompleted,
-				Uuid:   posts[5].Uuid,
+				Uuid:   posts[6].Uuid,
 			},
 			wantErr:  true,
 			errField: "status",
@@ -1623,12 +1676,85 @@ func (ms *ModelSuite) TestPost_createNewHistory() {
 			ms.Equal(len(test.want), len(histories), "incorrect number of histories")
 
 			for i := range test.want {
-				ms.Equal(test.want[i].Status, histories[i].Status, "incorrect status")
+				ms.Equal(test.want[i].Status, histories[i].Status, "incorrect newStatus")
 				ms.Equal(test.want[i].ReceiverID, histories[i].ReceiverID, "incorrect receiver id")
 
 				if test.providerID > 0 {
 					ms.Equal(test.want[i].ProviderID, histories[i].ProviderID, "incorrect provider id")
 				}
+			}
+		})
+	}
+}
+
+func (ms *ModelSuite) TestPost_popHistory() {
+	t := ms.T()
+	f := createFixturesForTestPost_popHistory(ms)
+
+	tests := []struct {
+		name          string
+		post          Post
+		newStatus     PostStatus
+		currentStatus PostStatus
+		providerID    int
+		wantErr       string
+		wantLog       string
+		want          PostHistories
+	}{
+		{
+			name:      "null to open - log error",
+			post:      f.Posts[1],
+			newStatus: PostStatusOpen,
+			wantLog:   "None Found",
+			want:      PostHistories{},
+		},
+		{
+			name:          "from accepted back to committed",
+			post:          f.Posts[0],
+			newStatus:     PostStatusCommitted,
+			currentStatus: PostStatusAccepted,
+			want:          PostHistories{f.PostHistories[0], f.PostHistories[1]},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+
+			var buf bytes.Buffer
+			domain.ErrLogger.SetOutput(&buf)
+
+			defer func() {
+				domain.Logger.SetOutput(os.Stdout)
+			}()
+
+			test.post.Status = test.newStatus
+
+			err := test.post.popHistory(test.currentStatus)
+			if test.wantErr != "" {
+				ms.Error(err)
+				ms.Contains(err.Error(), test.wantErr, "unexpected error message")
+				return
+			}
+
+			ms.NoError(err, "did not expect any error")
+
+			gotLog := buf.String()
+
+			if test.wantLog == "" {
+				ms.Equal("", gotLog, "unexpected logging message")
+			} else {
+				ms.Contains(gotLog, test.wantLog, "did not get expected logging message")
+			}
+
+			var histories PostHistories
+			err = DB.Where("post_id = ?", test.post.ID).All(&histories)
+			ms.NoError(err, "unexpected error fetching histories")
+
+			ms.Equal(len(test.want), len(histories), "incorrect number of histories")
+
+			for i := range test.want {
+				ms.Equal(test.want[i].Status, histories[i].Status, "incorrect status")
+				ms.Equal(test.want[i].ReceiverID, histories[i].ReceiverID, "incorrect receiver id")
 			}
 		})
 	}

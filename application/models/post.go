@@ -86,14 +86,14 @@ func getStatusTransitions() map[PostStatus][]statusTransitionTarget {
 		},
 		PostStatusAccepted: {
 			{status: PostStatusOpen},
-			{status: PostStatusCommitted, isBackStep: true}, // new one
+			{status: PostStatusCommitted, isBackStep: true}, // to correct a false acceptance
 			{status: PostStatusDelivered},
 			{status: PostStatusReceived},
 			{status: PostStatusRemoved},
 		},
 		PostStatusDelivered: {
-			{status: PostStatusCommitted, isBackStep: true}, // new one
-			{status: PostStatusAccepted, isBackStep: true},
+			{status: PostStatusCommitted, isBackStep: true}, // to correct a false delivery
+			{status: PostStatusAccepted, isBackStep: true},  // to correct a false delivery
 			{status: PostStatusCompleted},
 		},
 		PostStatusReceived: {
@@ -102,8 +102,8 @@ func getStatusTransitions() map[PostStatus][]statusTransitionTarget {
 			{status: PostStatusCompleted},
 		},
 		PostStatusCompleted: {
-			{status: PostStatusDelivered, isBackStep: true},
-			{status: PostStatusReceived, isBackStep: true},
+			{status: PostStatusDelivered, isBackStep: true}, // to correct a false completion
+			{status: PostStatusReceived, isBackStep: true},  // to correct a false completion
 		},
 		PostStatusRemoved: {},
 	}
@@ -440,7 +440,17 @@ func (p *Post) BeforeUpdate(tx *pop.Connection) error {
 		return nil
 	}
 
-	err := p.createNewHistory()
+	isBackStep, err := isTransitionBackStep(oldPost.Status, p.Status)
+	if err != nil {
+		return err
+	}
+
+	if isBackStep {
+		err = p.popHistory(oldPost.Status)
+	} else {
+		err = p.createNewHistory()
+	}
+
 	if err != nil {
 		return err
 	}
@@ -853,5 +863,30 @@ func (p *Post) createNewHistory() error {
 	}
 
 	return nil
+}
 
+func (p *Post) popHistory(currentStatus PostStatus) error {
+	var oldPH PostHistory
+
+	if err := DB.Where("post_id = ?", p.ID).Last(&oldPH); err != nil {
+		if domain.IsOtherThanNoRows(err) {
+			return err
+		}
+		domain.ErrLogger.Printf(
+			"error popping post histories for post id %v. None Found", p.ID)
+		return nil
+	}
+
+	if oldPH.Status != currentStatus {
+		domain.ErrLogger.Printf(
+			"error popping post histories for post id %v. Expected newStatus %s but found %s",
+			p.ID, currentStatus, oldPH.Status)
+		return nil
+	}
+
+	if err := DB.Destroy(&oldPH); err != nil {
+		return err
+	}
+
+	return nil
 }
