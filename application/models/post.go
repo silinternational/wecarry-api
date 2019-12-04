@@ -386,18 +386,6 @@ func (v *updateStatusValidator) isRequestValid(errors *validate.Errors) {
 	}
 }
 
-// IsStatusInSlice iterates over a slice of PostStatus, looking for the given
-// status. If found, true is returned. Otherwise, false is returned.
-func IsStatusInSlice(needle PostStatus, haystack []PostStatus) bool {
-	for _, hs := range haystack {
-		if needle == hs {
-			return true
-		}
-	}
-
-	return false
-}
-
 // ValidateUpdate gets run every time you call "pop.ValidateAndUpdate" method.
 func (p *Post) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
