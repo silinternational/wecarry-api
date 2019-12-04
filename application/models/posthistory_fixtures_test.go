@@ -1,10 +1,10 @@
 package models
 
 import (
-	"github.com/silinternational/wecarry-api/domain"
 	"strconv"
 
 	"github.com/gobuffalo/nulls"
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 type PostHistoryFixtures struct {
