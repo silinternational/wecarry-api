@@ -1,5 +1,7 @@
 - id: GetMessageSender
   translation: We had a problem finding the message sender information.
+- id: GetMessageSender.GetPublicProfile
+  translation: We had a problem finding the message sender's profile.
 - id: GetMessageThread
   translation: We had a problem finding the message conversation information.
 - id: GetMessage
@@ -40,10 +42,16 @@
   translation: We had a problem finding the list of domains for the organization.
 - id: GetPostCreator
   translation: We had a problem finding the creator of that request or offer.
+- id: GetPostCreator.GetPublicProfile
+  translation: We had a problem finding the profile of the creator of that request or offer.
 - id: GetPostReceiver
   translation: We had a problem finding the receiver for that request or offer.
+- id: GetPostReceivr.GetPublicProfile
+  translation: We had a problem finding the profile of the receiver of that request or offer.
 - id: GetPostProvider
   translation: We had a problem finding the provider for that request or offer.
+- id: GetPostProvider.GetPublicProfile
+  translation: We had a problem finding the profile of the provider of that request or offer.
 - id: GetPostOrganization
   translation: We had a problem finding the organization for that request or offer.
 - id: GetPostDestination
@@ -88,6 +96,8 @@
   translation: You are not authorized to change the status of that post.
 - id: GetThreadParticipants
   translation: We had a problem getting a list of participants in that conversation.
+- id: GetThreadParticipants.GetPublicProfile
+  translation: We had a problem getting the profiles of the participants in that conversation.
 - id: GetThreadLastViewedAt
   translation: We had a problem finding the time you last viewed that conversation.
 - id: GetThreadMessages

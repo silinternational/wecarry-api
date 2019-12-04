@@ -38,7 +38,7 @@ func (r *postResolver) Status(ctx context.Context, obj *models.Post) (string, er
 }
 
 // CreatedBy resolves the `createdBy` property of the post query. It retrieves the related record from the database.
-func (r *postResolver) CreatedBy(ctx context.Context, obj *models.Post) (*models.User, error) {
+func (r *postResolver) CreatedBy(ctx context.Context, obj *models.Post) (*PublicProfile, error) {
 	if obj == nil {
 		return nil, nil
 	}
@@ -48,11 +48,15 @@ func (r *postResolver) CreatedBy(ctx context.Context, obj *models.Post) (*models
 		return nil, reportError(ctx, err, "GetPostCreator")
 	}
 
-	return creator, nil
+	profile, err := getPublicProfile(creator)
+	if err != nil {
+		return nil, reportError(ctx, err, "GetPostCreator.GetPublicProfile")
+	}
+	return profile, nil
 }
 
 // Receiver resolves the `receiver` property of the post query. It retrieves the related record from the database.
-func (r *postResolver) Receiver(ctx context.Context, obj *models.Post) (*models.User, error) {
+func (r *postResolver) Receiver(ctx context.Context, obj *models.Post) (*PublicProfile, error) {
 	if obj == nil {
 		return nil, nil
 	}
@@ -62,11 +66,16 @@ func (r *postResolver) Receiver(ctx context.Context, obj *models.Post) (*models.
 		return nil, reportError(ctx, err, "GetPostReceiver")
 	}
 
-	return receiver, nil
+	profile, err := getPublicProfile(receiver)
+	if err != nil {
+		return nil, reportError(ctx, err, "GetPostReceiver.GetPublicProfile")
+	}
+
+	return profile, nil
 }
 
 // Provider resolves the `provider` property of the post query. It retrieves the related record from the database.
-func (r *postResolver) Provider(ctx context.Context, obj *models.Post) (*models.User, error) {
+func (r *postResolver) Provider(ctx context.Context, obj *models.Post) (*PublicProfile, error) {
 	if obj == nil {
 		return nil, nil
 	}
@@ -76,7 +85,12 @@ func (r *postResolver) Provider(ctx context.Context, obj *models.Post) (*models.
 		return nil, reportError(ctx, err, "GetPostProvider")
 	}
 
-	return provider, nil
+	profile, err := getPublicProfile(provider)
+	if err != nil {
+		return nil, reportError(ctx, err, "GetPostProvider.GetPublicProfile")
+	}
+
+	return profile, nil
 }
 
 // Organization resolves the `organization` property of the post query. It retrieves the related record from the

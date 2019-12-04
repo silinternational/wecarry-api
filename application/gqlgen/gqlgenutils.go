@@ -71,7 +71,8 @@ func convertUserPreferencesToStandardPreferences(input *UpdateUserPreferencesInp
 	return stPrefs, nil
 }
 
-// getFunctionName provides the filename, line number, and function name of the 2nd caller.
+// getFunctionName provides the filename, line number, and function name of the caller, skipping the top `skip`
+// functions on the stack.
 func getFunctionName(skip int) string {
 	pc, file, line, ok := runtime.Caller(skip)
 	if !ok {
