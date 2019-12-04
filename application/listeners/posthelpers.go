@@ -76,7 +76,7 @@ func getMessageForProvider(postUsers PostUsers, post models.Post, template strin
 	}
 }
 
-func getMessageForRequester(postUsers PostUsers, post models.Post, template string) notifications.Message {
+func getMessageForReceiver(postUsers PostUsers, post models.Post, template string) notifications.Message {
 	data := map[string]interface{}{
 		"uiURL":            domain.Env.UIURL,
 		"appName":          domain.Env.AppName,
@@ -96,7 +96,7 @@ func getMessageForRequester(postUsers PostUsers, post models.Post, template stri
 	}
 }
 
-func sendNotificationRequestFromAcceptedToCommitted(params senderParams) {
+func sendNotificationRequestToProvider(params senderParams) {
 	post := params.post
 	template := params.template
 	postUsers := GetPostUsers(post)
@@ -114,7 +114,7 @@ func sendNotificationRequestFromAcceptedToCommitted(params senderParams) {
 	}
 }
 
-func sendNotificationRequestFromAcceptedOrCommittedToDelivered(params senderParams) {
+func sendNotificationRequestToReceiver(params senderParams) {
 	post := params.post
 	template := params.template
 
@@ -125,12 +125,20 @@ func sendNotificationRequestFromAcceptedOrCommittedToDelivered(params senderPara
 		return
 	}
 
-	msg := getMessageForRequester(postUsers, post, template)
-	msg.Subject = getTranslatedSubject("Email.Subject.Request.FromAcceptedOrCommittedToDelivered", template)
+	msg := getMessageForReceiver(postUsers, post, template)
+	msg.Subject = getTranslatedSubject(params.subject, template)
 
 	if err := notifications.Send(msg); err != nil {
 		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
 	}
+}
+
+func sendNotificationRequestFromAcceptedToCommitted(params senderParams) {
+	sendNotificationRequestToProvider(params)
+}
+
+func sendNotificationRequestFromAcceptedOrCommittedToDelivered(params senderParams) {
+	sendNotificationRequestToReceiver(params)
 }
 
 func sendNotificationRequestFromAcceptedToOpen(params senderParams) {
@@ -159,59 +167,15 @@ func sendNotificationRequestFromAcceptedToOpen(params senderParams) {
 }
 
 func sendNotificationRequestFromAcceptedOrDeliveredToCompleted(params senderParams) {
-	post := params.post
-	template := params.template
-	postUsers := GetPostUsers(post)
-
-	if postUsers.Provider.Nickname == "" {
-		domain.ErrLogger.Printf("error preparing '%s' notification - no provider", template)
-		return
-	}
-
-	msg := getMessageForProvider(postUsers, post, template)
-	msg.Subject = getTranslatedSubject(params.subject, template)
-
-	if err := notifications.Send(msg); err != nil {
-		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
-	}
+	sendNotificationRequestToProvider(params)
 }
 
 func sendNotificationRequestFromAcceptedToRemoved(params senderParams) {
-	post := params.post
-	template := params.template
-
-	postUsers := GetPostUsers(post)
-
-	if postUsers.Provider.Nickname == "" {
-		domain.ErrLogger.Printf("error preparing '%s' notification - no provider", template)
-		return
-	}
-
-	msg := getMessageForProvider(postUsers, post, template)
-	msg.Subject = getTranslatedSubject("Email.Subject.Request.FromAcceptedToRemoved", template)
-
-	if err := notifications.Send(msg); err != nil {
-		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
-	}
+	sendNotificationRequestToProvider(params)
 }
 
 func sendNotificationRequestFromCommittedToAccepted(params senderParams) {
-	post := params.post
-	template := params.template
-
-	postUsers := GetPostUsers(post)
-
-	if postUsers.Provider.Nickname == "" {
-		domain.ErrLogger.Printf("error preparing '%s' notification - no provider", template)
-		return
-	}
-
-	msg := getMessageForProvider(postUsers, post, template)
-	msg.Subject = getTranslatedSubject(params.subject, template)
-
-	if err := notifications.Send(msg); err != nil {
-		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
-	}
+	sendNotificationRequestToProvider(params)
 }
 
 // Until we have status auditing history, we don't know who reverted the Post to `open` status.
@@ -276,98 +240,23 @@ func sendNotificationRequestFromCommittedToOpen(params senderParams) {
 }
 
 func sendNotificationRequestFromCommittedToRemoved(params senderParams) {
-	post := params.post
-	template := params.template
-
-	postUsers := GetPostUsers(post)
-
-	if postUsers.Provider.Nickname == "" {
-		domain.ErrLogger.Printf("error preparing '%s' notification - no provider", template)
-		return
-	}
-
-	msg := getMessageForProvider(postUsers, post, template)
-	msg.Subject = getTranslatedSubject(params.subject, template)
-
-	if err := notifications.Send(msg); err != nil {
-		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
-	}
+	sendNotificationRequestToProvider(params)
 }
 
 func sendNotificationRequestFromDeliveredToAccepted(params senderParams) {
-	post := params.post
-	template := params.template
-
-	postUsers := GetPostUsers(post)
-
-	if postUsers.Provider.Nickname == "" {
-		domain.ErrLogger.Printf("error preparing '%s' notification - no provider", template)
-		return
-	}
-
-	msg := getMessageForRequester(postUsers, post, template)
-	msg.Subject = getTranslatedSubject(params.subject, template)
-
-	if err := notifications.Send(msg); err != nil {
-		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
-	}
+	sendNotificationRequestToReceiver(params)
 }
 
 func sendNotificationRequestFromDeliveredToCommitted(params senderParams) {
-	post := params.post
-	template := params.template
-
-	postUsers := GetPostUsers(post)
-
-	if postUsers.Provider.Nickname == "" {
-		domain.ErrLogger.Printf("error preparing '%s' notification - no provider", template)
-		return
-	}
-
-	msg := getMessageForRequester(postUsers, post, template)
-	msg.Subject = getTranslatedSubject(params.subject, template)
-
-	if err := notifications.Send(msg); err != nil {
-		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
-	}
+	sendNotificationRequestToReceiver(params)
 }
 
 func sendNotificationRequestFromOpenToCommitted(params senderParams) {
-	post := params.post
-	template := params.template
-
-	postUsers := GetPostUsers(post)
-
-	if postUsers.Provider.Nickname == "" {
-		domain.ErrLogger.Printf("error preparing '%s' notification - no provider", template)
-		return
-	}
-
-	msg := getMessageForRequester(postUsers, post, template)
-	msg.Subject = getTranslatedSubject(params.subject, template)
-
-	if err := notifications.Send(msg); err != nil {
-		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
-	}
+	sendNotificationRequestToReceiver(params)
 }
 
 func sendNotificationRequestFromCompletedToAcceptedOrDelivered(params senderParams) {
-	post := params.post
-	template := params.template
-
-	postUsers := GetPostUsers(post)
-
-	if postUsers.Provider.Nickname == "" {
-		domain.ErrLogger.Printf("error preparing '%s' notification - no provider", template)
-		return
-	}
-
-	msg := getMessageForProvider(postUsers, post, template)
-	msg.Subject = getTranslatedSubject(params.subject, template)
-
-	if err := notifications.Send(msg); err != nil {
-		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
-	}
+	sendNotificationRequestToProvider(params)
 }
 
 func sendNotificationEmpty(params senderParams) {
