@@ -88,7 +88,8 @@ func getStatusTransitions() map[PostStatus][]statusTransitionTarget {
 			{status: PostStatusOpen},
 			{status: PostStatusCommitted, isBackStep: true}, // to correct a false acceptance
 			{status: PostStatusDelivered},
-			{status: PostStatusReceived},
+			{status: PostStatusReceived},  // This transition is in here for later, in case one day it's not skippable
+			{status: PostStatusCompleted}, // For now, `DELIVERED` is not a required step
 			{status: PostStatusRemoved},
 		},
 		PostStatusDelivered: {
@@ -102,6 +103,7 @@ func getStatusTransitions() map[PostStatus][]statusTransitionTarget {
 			{status: PostStatusCompleted},
 		},
 		PostStatusCompleted: {
+			{status: PostStatusAccepted, isBackStep: true},  // to correct a false completion
 			{status: PostStatusDelivered, isBackStep: true}, // to correct a false completion
 			{status: PostStatusReceived, isBackStep: true},  // to correct a false completion
 		},
@@ -384,18 +386,6 @@ func (v *updateStatusValidator) isRequestValid(errors *validate.Errors) {
 		v.Message = fmt.Sprintf(errorMsg, uuid, oldPost.Status, v.Post.Status)
 		errors.Add(validators.GenerateKey(v.Name), v.Message)
 	}
-}
-
-// IsStatusInSlice iterates over a slice of PostStatus, looking for the given
-// status. If found, true is returned. Otherwise, false is returned.
-func IsStatusInSlice(needle PostStatus, haystack []PostStatus) bool {
-	for _, hs := range haystack {
-		if needle == hs {
-			return true
-		}
-	}
-
-	return false
 }
 
 // ValidateUpdate gets run every time you call "pop.ValidateAndUpdate" method.

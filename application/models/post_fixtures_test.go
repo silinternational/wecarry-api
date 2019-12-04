@@ -17,13 +17,12 @@ type PostFixtures struct {
 	Locations
 }
 
-func CreateFixturesValidateUpdate(ms *ModelSuite, t *testing.T) []Post {
+func CreateFixturesValidateUpdate_RequestStatus(status PostStatus, ms *ModelSuite, t *testing.T) Post {
 
 	// Create org
 	org := &Organization{
 		ID:         1,
 		Name:       "TestOrg",
-		Url:        nulls.String{},
 		AuthType:   AuthTypeSaml,
 		AuthConfig: "{}",
 		Uuid:       domain.GetUuid(),
@@ -44,90 +43,23 @@ func CreateFixturesValidateUpdate(ms *ModelSuite, t *testing.T) []Post {
 		t.FailNow()
 	}
 
-	locations := []Location{{}, {}, {}, {}, {}, {}, {}}
-	for i := range locations {
-		createFixture(ms, &locations[i])
+	location := Location{}
+	createFixture(ms, &location)
+
+	post := Post{
+		CreatedByID:    user.ID,
+		OrganizationID: org.ID,
+		DestinationID:  location.ID,
+		Type:           PostTypeRequest,
+		Title:          "Test Request",
+		Size:           PostSizeMedium,
+		Uuid:           domain.GetUuid(),
+		Status:         status,
 	}
 
-	// Load Post test fixtures
-	posts := []Post{
-		{
-			CreatedByID:    user.ID,
-			OrganizationID: org.ID,
-			Type:           PostTypeRequest,
-			Title:          "Open Request 0",
-			Size:           PostSizeMedium,
-			Status:         PostStatusOpen,
-			Uuid:           domain.GetUuid(),
-			DestinationID:  locations[0].ID,
-		},
-		{
-			CreatedByID:    user.ID,
-			OrganizationID: org.ID,
-			Type:           PostTypeRequest,
-			Title:          "Committed Request 1",
-			Size:           PostSizeMedium,
-			Status:         PostStatusCommitted,
-			Uuid:           domain.GetUuid(),
-			DestinationID:  locations[1].ID,
-		},
-		{
-			CreatedByID:    user.ID,
-			OrganizationID: org.ID,
-			Type:           PostTypeRequest,
-			Title:          "Accepted Request 2",
-			Size:           PostSizeMedium,
-			Status:         PostStatusAccepted,
-			Uuid:           domain.GetUuid(),
-			DestinationID:  locations[2].ID,
-		},
-		{
-			CreatedByID:    user.ID,
-			OrganizationID: org.ID,
-			Type:           PostTypeRequest,
-			Title:          "Delivered Request 3",
-			Size:           PostSizeMedium,
-			Status:         PostStatusDelivered,
-			Uuid:           domain.GetUuid(),
-			DestinationID:  locations[3].ID,
-		},
-		{
-			CreatedByID:    user.ID,
-			OrganizationID: org.ID,
-			Type:           PostTypeRequest,
-			Title:          "Received Request 4",
-			Size:           PostSizeMedium,
-			Status:         PostStatusReceived,
-			Uuid:           domain.GetUuid(),
-			DestinationID:  locations[4].ID,
-		},
-		{
-			CreatedByID:    user.ID,
-			OrganizationID: org.ID,
-			Type:           PostTypeRequest,
-			Title:          "Completed Request 5",
-			Size:           PostSizeMedium,
-			Status:         PostStatusCompleted,
-			Uuid:           domain.GetUuid(),
-			DestinationID:  locations[5].ID,
-		},
-		{
-			CreatedByID:    user.ID,
-			OrganizationID: org.ID,
-			Type:           PostTypeRequest,
-			Title:          "Removed Request 6",
-			Size:           PostSizeMedium,
-			Status:         PostStatusRemoved,
-			Uuid:           domain.GetUuid(),
-			DestinationID:  locations[6].ID,
-		},
-	}
+	createFixture(ms, &post)
 
-	for i := range posts {
-		createFixture(ms, &posts[i])
-	}
-
-	return posts
+	return post
 }
 
 func CreatePostFixtures(ms *ModelSuite, t *testing.T, users Users) []Post {
