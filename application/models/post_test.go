@@ -1,7 +1,9 @@
 package models
 
 import (
+	"bytes"
 	"context"
+	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -147,11 +149,10 @@ func (ms *ModelSuite) TestPost_ValidateCreate() {
 	t := ms.T()
 
 	tests := []struct {
-		name     string
-		post     Post
-		want     *validate.Errors
-		wantErr  bool
-		errField string
+		name    string
+		post    Post
+		want    *validate.Errors
+		wantErr bool
 	}{
 		{
 			name: "good - open",
@@ -177,8 +178,7 @@ func (ms *ModelSuite) TestPost_ValidateCreate() {
 				Status:         PostStatusAccepted,
 				Uuid:           domain.GetUuid(),
 			},
-			wantErr:  true,
-			errField: "create_status",
+			wantErr: true,
 		},
 		{
 			name: "bad status - committed",
@@ -191,8 +191,7 @@ func (ms *ModelSuite) TestPost_ValidateCreate() {
 				Status:         PostStatusCommitted,
 				Uuid:           domain.GetUuid(),
 			},
-			wantErr:  true,
-			errField: "create_status",
+			wantErr: true,
 		},
 		{
 			name: "bad status - delivered",
@@ -205,8 +204,7 @@ func (ms *ModelSuite) TestPost_ValidateCreate() {
 				Status:         PostStatusDelivered,
 				Uuid:           domain.GetUuid(),
 			},
-			wantErr:  true,
-			errField: "create_status",
+			wantErr: true,
 		},
 		{
 			name: "bad status - received",
@@ -219,8 +217,7 @@ func (ms *ModelSuite) TestPost_ValidateCreate() {
 				Status:         PostStatusReceived,
 				Uuid:           domain.GetUuid(),
 			},
-			wantErr:  true,
-			errField: "create_status",
+			wantErr: true,
 		},
 		{
 			name: "bad status - completed",
@@ -233,8 +230,7 @@ func (ms *ModelSuite) TestPost_ValidateCreate() {
 				Status:         PostStatusCompleted,
 				Uuid:           domain.GetUuid(),
 			},
-			wantErr:  true,
-			errField: "create_status",
+			wantErr: true,
 		},
 		{
 			name: "bad status - removed",
@@ -247,18 +243,19 @@ func (ms *ModelSuite) TestPost_ValidateCreate() {
 				Status:         PostStatusRemoved,
 				Uuid:           domain.GetUuid(),
 			},
-			wantErr:  true,
-			errField: "create_status",
+			wantErr: true,
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			errField := "create_status"
+
 			vErr, _ := test.post.ValidateCreate(DB)
 			if test.wantErr {
 				if vErr.Count() == 0 {
 					t.Errorf("Expected an error, but did not get one")
-				} else if len(vErr.Get(test.errField)) == 0 {
-					t.Errorf("Expected an error on field %v, but got none (errors: %v)", test.errField, vErr.Errors)
+				} else if len(vErr.Get(errField)) == 0 {
+					t.Errorf("Expected an error on field %v, but got none (errors: %v)", errField, vErr.Errors)
 				}
 			} else if (test.wantErr == false) && (vErr.HasAny()) {
 				t.Errorf("Unexpected error: %v", vErr)
@@ -267,23 +264,22 @@ func (ms *ModelSuite) TestPost_ValidateCreate() {
 	}
 }
 
-func (ms *ModelSuite) TestPost_ValidateUpdate() {
+func (ms *ModelSuite) TestPost_ValidateUpdate_OpenRequest() {
 	t := ms.T()
 
-	posts := CreateFixturesValidateUpdate(ms, t)
+	post := CreateFixturesValidateUpdate_RequestStatus(PostStatusOpen, ms, t)
 
 	tests := []struct {
-		name     string
-		post     Post
-		want     *validate.Errors
-		wantErr  bool
-		errField string
+		name    string
+		post    Post
+		want    *validate.Errors
+		wantErr bool
 	}{
 		{
 			name: "good status - from open to open",
 			post: Post{
 				Status: PostStatusOpen,
-				Uuid:   posts[0].Uuid,
+				Uuid:   post.Uuid,
 			},
 			wantErr: false,
 		},
@@ -292,7 +288,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			post: Post{
 				Title:  "New Title",
 				Status: PostStatusCommitted,
-				Uuid:   posts[0].Uuid,
+				Uuid:   post.Uuid,
 			},
 			wantErr: false,
 		},
@@ -300,7 +296,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			name: "good status - from open to removed",
 			post: Post{
 				Status: PostStatusRemoved,
-				Uuid:   posts[0].Uuid,
+				Uuid:   post.Uuid,
 			},
 			wantErr: false,
 		},
@@ -308,44 +304,73 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			name: "bad status - from open to accepted",
 			post: Post{
 				Status: PostStatusAccepted,
-				Uuid:   posts[0].Uuid,
+				Uuid:   post.Uuid,
 			},
-			wantErr:  true,
-			errField: "status",
+			wantErr: true,
 		},
 		{
 			name: "bad status - from open to delivered",
 			post: Post{
 				Status: PostStatusDelivered,
-				Uuid:   posts[0].Uuid,
+				Uuid:   post.Uuid,
 			},
-			wantErr:  true,
-			errField: "status",
+			wantErr: true,
 		},
 		{
 			name: "bad status - from open to received",
 			post: Post{
 				Status: PostStatusReceived,
-				Uuid:   posts[0].Uuid,
+				Uuid:   post.Uuid,
 			},
-			wantErr:  true,
-			errField: "status",
+			wantErr: true,
 		},
 		{
 			name: "bad status - from open to completed",
 			post: Post{
 				Status: PostStatusCompleted,
-				Uuid:   posts[0].Uuid,
+				Uuid:   post.Uuid,
 			},
-			wantErr:  true,
-			errField: "status",
+			wantErr: true,
 		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			errField := "status"
+			test.post.Type = PostTypeRequest // only Requests have been implemented thus far
+			vErr, _ := test.post.ValidateUpdate(DB)
+			if test.wantErr {
+				if vErr.Count() == 0 {
+					t.Errorf("Expected an error, but did not get one")
+				} else if len(vErr.Get(errField)) == 0 {
+					t.Errorf("Expected an error on field %v, but got none (errors: %v)", errField, vErr.Errors)
+				}
+				return
+			}
+
+			if vErr.HasAny() {
+				t.Errorf("Unexpected error: %v", vErr)
+			}
+		})
+	}
+}
+
+func (ms *ModelSuite) TestPost_ValidateUpdate_CommittedRequest() {
+	t := ms.T()
+
+	post := CreateFixturesValidateUpdate_RequestStatus(PostStatusCommitted, ms, t)
+
+	tests := []struct {
+		name    string
+		post    Post
+		want    *validate.Errors
+		wantErr bool
+	}{
 		{
 			name: "good status - from committed to committed",
 			post: Post{
 				Title:  "New Title",
 				Status: PostStatusCommitted,
-				Uuid:   posts[1].Uuid,
+				Uuid:   post.Uuid,
 			},
 			wantErr: false,
 		},
@@ -353,7 +378,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			name: "good status - from committed to open",
 			post: Post{
 				Status: PostStatusOpen,
-				Uuid:   posts[1].Uuid,
+				Uuid:   post.Uuid,
 			},
 			wantErr: false,
 		},
@@ -361,7 +386,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			name: "good status - from committed to accepted",
 			post: Post{
 				Status: PostStatusAccepted,
-				Uuid:   posts[1].Uuid,
+				Uuid:   post.Uuid,
 			},
 			wantErr: false,
 		},
@@ -369,7 +394,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			name: "good status - from committed to delivered",
 			post: Post{
 				Status: PostStatusDelivered,
-				Uuid:   posts[1].Uuid,
+				Uuid:   post.Uuid,
 			},
 			wantErr: false,
 		},
@@ -377,7 +402,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			name: "good status - from committed to removed",
 			post: Post{
 				Status: PostStatusRemoved,
-				Uuid:   posts[1].Uuid,
+				Uuid:   post.Uuid,
 			},
 			wantErr: false,
 		},
@@ -385,26 +410,58 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			name: "bad status - from committed to received",
 			post: Post{
 				Status: PostStatusReceived,
-				Uuid:   posts[1].Uuid,
+				Uuid:   post.Uuid,
 			},
-			wantErr:  true,
-			errField: "status",
+			wantErr: true,
 		},
 		{
 			name: "bad status - from committed to completed",
 			post: Post{
 				Status: PostStatusCompleted,
-				Uuid:   posts[1].Uuid,
+				Uuid:   post.Uuid,
 			},
-			wantErr:  true,
-			errField: "status",
+			wantErr: true,
 		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			errField := "status"
+
+			test.post.Type = PostTypeRequest // only Requests have been implemented thus far
+			vErr, _ := test.post.ValidateUpdate(DB)
+			if test.wantErr {
+				if vErr.Count() == 0 {
+					t.Errorf("Expected an error, but did not get one")
+				} else if len(vErr.Get(errField)) == 0 {
+					t.Errorf("Expected an error on field %v, but got none (errors: %v)", errField, vErr.Errors)
+				}
+				return
+			}
+
+			if vErr.HasAny() {
+				t.Errorf("Unexpected error: %v", vErr)
+			}
+		})
+	}
+}
+
+func (ms *ModelSuite) TestPost_ValidateUpdate_AcceptedRequest() {
+	t := ms.T()
+
+	post := CreateFixturesValidateUpdate_RequestStatus(PostStatusAccepted, ms, t)
+
+	tests := []struct {
+		name    string
+		post    Post
+		want    *validate.Errors
+		wantErr bool
+	}{
 		{
 			name: "good status - from accepted to accepted",
 			post: Post{
 				Title:  "New Title",
 				Status: PostStatusAccepted,
-				Uuid:   posts[2].Uuid,
+				Uuid:   post.Uuid,
 			},
 			wantErr: false,
 		},
@@ -412,7 +469,15 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			name: "good status - from accepted to open",
 			post: Post{
 				Status: PostStatusOpen,
-				Uuid:   posts[2].Uuid,
+				Uuid:   post.Uuid,
+			},
+			wantErr: false,
+		},
+		{
+			name: "good status - from accepted to committed",
+			post: Post{
+				Status: PostStatusCommitted,
+				Uuid:   post.Uuid,
 			},
 			wantErr: false,
 		},
@@ -420,7 +485,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			name: "good status - from accepted to delivered",
 			post: Post{
 				Status: PostStatusDelivered,
-				Uuid:   posts[2].Uuid,
+				Uuid:   post.Uuid,
 			},
 			wantErr: false,
 		},
@@ -428,7 +493,15 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			name: "good status - from accepted to received",
 			post: Post{
 				Status: PostStatusReceived,
-				Uuid:   posts[2].Uuid,
+				Uuid:   post.Uuid,
+			},
+			wantErr: false,
+		},
+		{
+			name: "good status - from accepted to completed",
+			post: Post{
+				Status: PostStatusCompleted,
+				Uuid:   post.Uuid,
 			},
 			wantErr: false,
 		},
@@ -436,34 +509,131 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			name: "good status - from accepted to removed",
 			post: Post{
 				Status: PostStatusRemoved,
-				Uuid:   posts[2].Uuid,
+				Uuid:   post.Uuid,
+			},
+			wantErr: false,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			errField := "status"
+			test.post.Type = PostTypeRequest // only Requests have been implemented thus far
+			vErr, _ := test.post.ValidateUpdate(DB)
+			if test.wantErr {
+				if vErr.Count() == 0 {
+					t.Errorf("Expected an error, but did not get one")
+				} else if len(vErr.Get(errField)) == 0 {
+					t.Errorf("Expected an error on field %v, but got none (errors: %v)", errField, vErr.Errors)
+				}
+				return
+			}
+
+			if vErr.HasAny() {
+				t.Errorf("Unexpected error: %v", vErr)
+			}
+		})
+	}
+}
+
+func (ms *ModelSuite) TestPost_ValidateUpdate_DeliveredRequest() {
+	t := ms.T()
+
+	post := CreateFixturesValidateUpdate_RequestStatus(PostStatusDelivered, ms, t)
+
+	tests := []struct {
+		name    string
+		post    Post
+		want    *validate.Errors
+		wantErr bool
+	}{
+		{
+			name: "good status - from delivered to accepted",
+			post: Post{
+				Status: PostStatusAccepted,
+				Uuid:   post.Uuid,
 			},
 			wantErr: false,
 		},
 		{
-			name: "bad status - from accepted to committed",
+			name: "good status - from delivered to committed",
 			post: Post{
 				Status: PostStatusCommitted,
-				Uuid:   posts[2].Uuid,
+				Uuid:   post.Uuid,
 			},
-			wantErr:  true,
-			errField: "status",
+			wantErr: false,
 		},
 		{
-			name: "bad status - from accepted to completed",
+			name: "good status - from delivered to completed",
 			post: Post{
 				Status: PostStatusCompleted,
-				Uuid:   posts[2].Uuid,
+				Uuid:   post.Uuid,
 			},
-			wantErr:  true,
-			errField: "status",
+			wantErr: false,
 		},
+		{
+			name: "bad status - from delivered to open",
+			post: Post{
+				Status: PostStatusOpen,
+				Uuid:   post.Uuid,
+			},
+			wantErr: true,
+		},
+		{
+			name: "bad status - from delivered to received",
+			post: Post{
+				Title:  "New Title",
+				Status: PostStatusReceived,
+				Uuid:   post.Uuid,
+			},
+			wantErr: true,
+		},
+		{
+			name: "bad status - from delivered to removed",
+			post: Post{
+				Status: PostStatusRemoved,
+				Uuid:   post.Uuid,
+			},
+			wantErr: true,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			errField := "status"
+			test.post.Type = PostTypeRequest // only Requests have been implemented thus far
+			vErr, _ := test.post.ValidateUpdate(DB)
+			if test.wantErr {
+				if vErr.Count() == 0 {
+					t.Errorf("Expected an error, but did not get one")
+				} else if len(vErr.Get(errField)) == 0 {
+					t.Errorf("Expected an error on field %v, but got none (errors: %v)", errField, vErr.Errors)
+				}
+				return
+			}
+
+			if vErr.HasAny() {
+				t.Errorf("Unexpected error: %v", vErr)
+			}
+		})
+	}
+}
+
+func (ms *ModelSuite) TestPost_ValidateUpdate_ReceivedRequest() {
+	t := ms.T()
+
+	post := CreateFixturesValidateUpdate_RequestStatus(PostStatusReceived, ms, t)
+
+	tests := []struct {
+		name    string
+		post    Post
+		want    *validate.Errors
+		wantErr bool
+	}{
 		{
 			name: "good status - from received to received",
 			post: Post{
 				Title:  "New Title",
 				Status: PostStatusReceived,
-				Uuid:   posts[3].Uuid,
+				Uuid:   post.Uuid,
 			},
 			wantErr: false,
 		},
@@ -471,7 +641,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			name: "good status - from received to accepted",
 			post: Post{
 				Status: PostStatusAccepted,
-				Uuid:   posts[3].Uuid,
+				Uuid:   post.Uuid,
 			},
 			wantErr: false,
 		},
@@ -479,15 +649,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			name: "good status - from received to completed",
 			post: Post{
 				Status: PostStatusCompleted,
-				Uuid:   posts[3].Uuid,
-			},
-			wantErr: false,
-		},
-		{
-			name: "good status - from received to delivered",
-			post: Post{
-				Status: PostStatusDelivered,
-				Uuid:   posts[3].Uuid,
+				Uuid:   post.Uuid,
 			},
 			wantErr: false,
 		},
@@ -495,35 +657,74 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			name: "bad status - from received to open",
 			post: Post{
 				Status: PostStatusOpen,
-				Uuid:   posts[3].Uuid,
+				Uuid:   post.Uuid,
 			},
-			wantErr:  true,
-			errField: "status",
+			wantErr: true,
 		},
 		{
 			name: "bad status - from received to committed",
 			post: Post{
 				Status: PostStatusCommitted,
-				Uuid:   posts[3].Uuid,
+				Uuid:   post.Uuid,
 			},
-			wantErr:  true,
-			errField: "status",
+			wantErr: true,
 		},
 		{
 			name: "bad status - from received to removed",
 			post: Post{
 				Status: PostStatusRemoved,
-				Uuid:   posts[3].Uuid,
+				Uuid:   post.Uuid,
 			},
-			wantErr:  true,
-			errField: "status",
+			wantErr: true,
 		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			errField := "status"
+
+			test.post.Type = PostTypeRequest // only Requests have been implemented thus far
+			vErr, _ := test.post.ValidateUpdate(DB)
+			if test.wantErr {
+				if vErr.Count() == 0 {
+					t.Errorf("Expected an error, but did not get one")
+				} else if len(vErr.Get(errField)) == 0 {
+					t.Errorf("Expected an error on field %v, but got none (errors: %v)", errField, vErr.Errors)
+				}
+				return
+			}
+
+			if vErr.HasAny() {
+				t.Errorf("Unexpected error: %v", vErr)
+			}
+		})
+	}
+}
+
+func (ms *ModelSuite) TestPost_ValidateUpdate_CompletedRequest() {
+	t := ms.T()
+
+	post := CreateFixturesValidateUpdate_RequestStatus(PostStatusCompleted, ms, t)
+
+	tests := []struct {
+		name    string
+		post    Post
+		want    *validate.Errors
+		wantErr bool
+	}{
 		{
 			name: "good status - from completed to completed",
 			post: Post{
 				Title:  "New Title",
 				Status: PostStatusCompleted,
-				Uuid:   posts[4].Uuid,
+				Uuid:   post.Uuid,
+			},
+			wantErr: false,
+		},
+		{
+			name: "bad status - from completed to accepted",
+			post: Post{
+				Status: PostStatusAccepted,
+				Uuid:   post.Uuid,
 			},
 			wantErr: false,
 		},
@@ -531,7 +732,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			name: "good status - from completed to delivered",
 			post: Post{
 				Status: PostStatusDelivered,
-				Uuid:   posts[4].Uuid,
+				Uuid:   post.Uuid,
 			},
 			wantErr: false,
 		},
@@ -539,7 +740,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			name: "good status - from completed to received",
 			post: Post{
 				Status: PostStatusReceived,
-				Uuid:   posts[4].Uuid,
+				Uuid:   post.Uuid,
 			},
 			wantErr: false,
 		},
@@ -547,44 +748,66 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			name: "bad status - from completed to open",
 			post: Post{
 				Status: PostStatusOpen,
-				Uuid:   posts[4].Uuid,
+				Uuid:   post.Uuid,
 			},
-			wantErr:  true,
-			errField: "status",
+			wantErr: true,
 		},
 		{
 			name: "bad status - from completed to committed",
 			post: Post{
 				Status: PostStatusCommitted,
-				Uuid:   posts[4].Uuid,
+				Uuid:   post.Uuid,
 			},
-			wantErr:  true,
-			errField: "status",
-		},
-		{
-			name: "bad status - from completed to accepted",
-			post: Post{
-				Status: PostStatusAccepted,
-				Uuid:   posts[4].Uuid,
-			},
-			wantErr:  true,
-			errField: "status",
+			wantErr: true,
 		},
 		{
 			name: "bad status - from completed to removed",
 			post: Post{
 				Status: PostStatusRemoved,
-				Uuid:   posts[4].Uuid,
+				Uuid:   post.Uuid,
 			},
-			wantErr:  true,
-			errField: "status",
+			wantErr: true,
 		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			errField := "status"
+
+			test.post.Type = PostTypeRequest // only Requests have been implemented thus far
+			vErr, _ := test.post.ValidateUpdate(DB)
+			if test.wantErr {
+				if vErr.Count() == 0 {
+					t.Errorf("Expected an error, but did not get one")
+				} else if len(vErr.Get(errField)) == 0 {
+					t.Errorf("Expected an error on field %v, but got none (errors: %v)", errField, vErr.Errors)
+				}
+				return
+			}
+
+			if vErr.HasAny() {
+				t.Errorf("Unexpected error: %v", vErr)
+			}
+		})
+	}
+}
+
+func (ms *ModelSuite) TestPost_ValidateUpdate_RemovedRequest() {
+	t := ms.T()
+
+	post := CreateFixturesValidateUpdate_RequestStatus(PostStatusRemoved, ms, t)
+
+	tests := []struct {
+		name    string
+		post    Post
+		want    *validate.Errors
+		wantErr bool
+	}{
 		{
 			name: "good status - from removed to removed",
 			post: Post{
 				Title:  "New Title",
 				Status: PostStatusRemoved,
-				Uuid:   posts[5].Uuid,
+				Uuid:   post.Uuid,
 			},
 			wantErr: false,
 		},
@@ -592,68 +815,67 @@ func (ms *ModelSuite) TestPost_ValidateUpdate() {
 			name: "bad status - from removed to open",
 			post: Post{
 				Status: PostStatusOpen,
-				Uuid:   posts[5].Uuid,
+				Uuid:   post.Uuid,
 			},
-			wantErr:  true,
-			errField: "status",
+			wantErr: true,
 		},
 		{
 			name: "bad status - from removed to committed",
 			post: Post{
 				Status: PostStatusCommitted,
-				Uuid:   posts[5].Uuid,
+				Uuid:   post.Uuid,
 			},
-			wantErr:  true,
-			errField: "status",
+			wantErr: true,
 		},
 		{
 			name: "bad status - from removed to accepted",
 			post: Post{
 				Status: PostStatusAccepted,
-				Uuid:   posts[5].Uuid,
+				Uuid:   post.Uuid,
 			},
-			wantErr:  true,
-			errField: "status",
+			wantErr: true,
 		},
 		{
 			name: "bad status - from removed to delivered",
 			post: Post{
 				Status: PostStatusDelivered,
-				Uuid:   posts[5].Uuid,
+				Uuid:   post.Uuid,
 			},
-			wantErr:  true,
-			errField: "status",
+			wantErr: true,
 		},
 		{
 			name: "bad status - from removed to received",
 			post: Post{
 				Status: PostStatusReceived,
-				Uuid:   posts[5].Uuid,
+				Uuid:   post.Uuid,
 			},
-			wantErr:  true,
-			errField: "status",
+			wantErr: true,
 		},
 		{
 			name: "bad status - from removed to completed",
 			post: Post{
 				Status: PostStatusCompleted,
-				Uuid:   posts[5].Uuid,
+				Uuid:   post.Uuid,
 			},
-			wantErr:  true,
-			errField: "status",
+			wantErr: true,
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			errField := "status"
+
 			test.post.Type = PostTypeRequest // only Requests have been implemented thus far
 			vErr, _ := test.post.ValidateUpdate(DB)
 			if test.wantErr {
 				if vErr.Count() == 0 {
 					t.Errorf("Expected an error, but did not get one")
-				} else if len(vErr.Get(test.errField)) == 0 {
-					t.Errorf("Expected an error on field %v, but got none (errors: %v)", test.errField, vErr.Errors)
+				} else if len(vErr.Get(errField)) == 0 {
+					t.Errorf("Expected an error on field %v, but got none (errors: %v)", errField, vErr.Errors)
 				}
-			} else if (test.wantErr == false) && (vErr.HasAny()) {
+				return
+			}
+
+			if vErr.HasAny() {
 				t.Errorf("Unexpected error: %v", vErr)
 			}
 		})
@@ -1555,6 +1777,155 @@ func (ms *ModelSuite) TestPost_GetLocationForNotifications() {
 			got, err := tt.post.GetLocationForNotifications()
 			ms.NoError(err)
 			ms.Equal(tt.want, got.Description)
+		})
+	}
+}
+
+func (ms *ModelSuite) TestPost_createNewHistory() {
+	t := ms.T()
+	f := createFixturesForTestPost_createNewHistory(ms)
+
+	tests := []struct {
+		name       string
+		post       Post
+		status     PostStatus
+		providerID int
+		wantErr    string
+		want       PostHistories
+	}{
+		{
+			name:       "open to committed",
+			post:       f.Posts[0],
+			status:     PostStatusCommitted,
+			providerID: f.Users[1].ID,
+			want: PostHistories{
+				f.PostHistories[0],
+				{
+					Status:     PostStatusCommitted,
+					ReceiverID: f.PostHistories[0].ReceiverID,
+					ProviderID: nulls.NewInt(f.Users[1].ID),
+				},
+			},
+		},
+		{
+			name:   "null to open",
+			post:   f.Posts[1],
+			status: PostStatusOpen,
+			want:   PostHistories{{Status: PostStatusOpen, ReceiverID: nulls.NewInt(f.Users[1].ID)}},
+		},
+		{
+			name:       "bad provider id",
+			post:       f.Posts[1],
+			status:     PostStatusCommitted,
+			providerID: 999999,
+			wantErr:    `key constraint "post_histories_provider_id_fkey"`,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			test.post.Status = test.status
+
+			if test.providerID > 0 {
+				test.post.ProviderID = nulls.NewInt(test.providerID)
+			}
+
+			err := test.post.createNewHistory()
+			if test.wantErr != "" {
+				ms.Error(err)
+				ms.Contains(err.Error(), test.wantErr, "unexpected error message")
+				return
+			}
+
+			ms.NoError(err, "did not expect any error")
+
+			var histories PostHistories
+			err = DB.Where("post_id = ?", test.post.ID).All(&histories)
+			ms.NoError(err, "unexpected error fetching histories")
+
+			ms.Equal(len(test.want), len(histories), "incorrect number of histories")
+
+			for i := range test.want {
+				ms.Equal(test.want[i].Status, histories[i].Status, "incorrect newStatus")
+				ms.Equal(test.want[i].ReceiverID, histories[i].ReceiverID, "incorrect receiver id")
+
+				if test.providerID > 0 {
+					ms.Equal(test.want[i].ProviderID, histories[i].ProviderID, "incorrect provider id")
+				}
+			}
+		})
+	}
+}
+
+func (ms *ModelSuite) TestPost_popHistory() {
+	t := ms.T()
+	f := createFixturesForTestPost_popHistory(ms)
+
+	tests := []struct {
+		name          string
+		post          Post
+		newStatus     PostStatus
+		currentStatus PostStatus
+		providerID    int
+		wantErr       string
+		wantLog       string
+		want          PostHistories
+	}{
+		{
+			name:      "null to open - log error",
+			post:      f.Posts[1],
+			newStatus: PostStatusOpen,
+			wantLog:   "None Found",
+			want:      PostHistories{},
+		},
+		{
+			name:          "from accepted back to committed",
+			post:          f.Posts[0],
+			newStatus:     PostStatusCommitted,
+			currentStatus: PostStatusAccepted,
+			want:          PostHistories{f.PostHistories[0], f.PostHistories[1]},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+
+			var buf bytes.Buffer
+			domain.ErrLogger.SetOutput(&buf)
+
+			defer func() {
+				domain.Logger.SetOutput(os.Stdout)
+			}()
+
+			test.post.Status = test.newStatus
+
+			err := test.post.popHistory(test.currentStatus)
+			if test.wantErr != "" {
+				ms.Error(err)
+				ms.Contains(err.Error(), test.wantErr, "unexpected error message")
+				return
+			}
+
+			ms.NoError(err, "did not expect any error")
+
+			gotLog := buf.String()
+
+			if test.wantLog == "" {
+				ms.Equal("", gotLog, "unexpected logging message")
+			} else {
+				ms.Contains(gotLog, test.wantLog, "did not get expected logging message")
+			}
+
+			var histories PostHistories
+			err = DB.Where("post_id = ?", test.post.ID).All(&histories)
+			ms.NoError(err, "unexpected error fetching histories")
+
+			ms.Equal(len(test.want), len(histories), "incorrect number of histories")
+
+			for i := range test.want {
+				ms.Equal(test.want[i].Status, histories[i].Status, "incorrect status")
+				ms.Equal(test.want[i].ReceiverID, histories[i].ReceiverID, "incorrect receiver id")
+			}
 		})
 	}
 }

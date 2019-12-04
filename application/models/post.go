@@ -67,6 +67,82 @@ const (
 	PostStatusRemoved   PostStatus = "REMOVED"
 )
 
+type statusTransitionTarget struct {
+	status     PostStatus
+	isBackStep bool
+}
+
+func getStatusTransitions() map[PostStatus][]statusTransitionTarget {
+	return map[PostStatus][]statusTransitionTarget{
+		PostStatusOpen: {
+			{status: PostStatusCommitted},
+			{status: PostStatusRemoved},
+		},
+		PostStatusCommitted: {
+			{status: PostStatusOpen, isBackStep: true},
+			{status: PostStatusAccepted},
+			{status: PostStatusDelivered},
+			{status: PostStatusRemoved},
+		},
+		PostStatusAccepted: {
+			{status: PostStatusOpen},
+			{status: PostStatusCommitted, isBackStep: true}, // to correct a false acceptance
+			{status: PostStatusDelivered},
+			{status: PostStatusReceived},  // This transition is in here for later, in case one day it's not skippable
+			{status: PostStatusCompleted}, // For now, `DELIVERED` is not a required step
+			{status: PostStatusRemoved},
+		},
+		PostStatusDelivered: {
+			{status: PostStatusCommitted, isBackStep: true}, // to correct a false delivery
+			{status: PostStatusAccepted, isBackStep: true},  // to correct a false delivery
+			{status: PostStatusCompleted},
+		},
+		PostStatusReceived: {
+			{status: PostStatusAccepted, isBackStep: true},
+			{status: PostStatusDelivered},
+			{status: PostStatusCompleted},
+		},
+		PostStatusCompleted: {
+			{status: PostStatusAccepted, isBackStep: true},  // to correct a false completion
+			{status: PostStatusDelivered, isBackStep: true}, // to correct a false completion
+			{status: PostStatusReceived, isBackStep: true},  // to correct a false completion
+		},
+		PostStatusRemoved: {},
+	}
+}
+
+func isTransitionValid(status1, status2 PostStatus) (bool, error) {
+	transitions := getStatusTransitions()
+	targets, ok := transitions[status1]
+	if !ok {
+		return false, errors.New("unexpected initial status - " + status1.String())
+	}
+
+	for _, target := range targets {
+		if status2 == target.status {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+func isTransitionBackStep(status1, status2 PostStatus) (bool, error) {
+	transitions := getStatusTransitions()
+	targets, ok := transitions[status1]
+	if !ok {
+		return false, errors.New("unexpected initial status - " + status1.String())
+	}
+
+	for _, target := range targets {
+		if status2 == target.status {
+			return target.isBackStep, nil
+		}
+	}
+
+	return false, fmt.Errorf("invalid status transition from %s to %s", status1, status2)
+}
+
 func (e PostStatus) IsValid() bool {
 	switch e {
 	case PostStatusOpen, PostStatusCommitted, PostStatusAccepted, PostStatusDelivered, PostStatusReceived,
@@ -138,6 +214,7 @@ type Post struct {
 	Receiver       User          `belongs_to:"users"`
 	Provider       User          `belongs_to:"users"`
 	Files          PostFiles     `has_many:"post_files"`
+	Histories      PostHistories `has_many:"post_histories"`
 	PhotoFile      File          `belongs_to:"files"`
 	Destination    Location      `belongs_to:"locations"`
 	Origin         Location      `belongs_to:"locations"`
@@ -297,43 +374,18 @@ func (v *updateStatusValidator) isRequestValid(errors *validate.Errors) {
 		return
 	}
 
-	// Ensure that the new status is compatible with the old one in terms of a transition
-	// allow for doing a step in reverse, in case there was a mistake going forward and
-	// also allowing for some "unofficial" interaction happening outside of the app
-	okTransitions := map[PostStatus][]PostStatus{
-		PostStatusOpen:      {PostStatusCommitted, PostStatusRemoved},
-		PostStatusCommitted: {PostStatusOpen, PostStatusAccepted, PostStatusDelivered, PostStatusRemoved},
-		PostStatusAccepted:  {PostStatusOpen, PostStatusDelivered, PostStatusReceived, PostStatusRemoved},
-		PostStatusDelivered: {PostStatusAccepted, PostStatusCompleted},
-		PostStatusReceived:  {PostStatusAccepted, PostStatusDelivered, PostStatusCompleted},
-		PostStatusCompleted: {PostStatusDelivered, PostStatusReceived},
-		PostStatusRemoved:   {},
-	}
-
-	goodStatuses, ok := okTransitions[oldPost.Status]
-	if !ok {
-		msg := "unexpected status '%s' on post %s"
-		domain.ErrLogger.Printf(msg, oldPost.Status, oldPost.Uuid.String())
+	isTransValid, err := isTransitionValid(oldPost.Status, v.Post.Status)
+	if err != nil {
+		v.Message = fmt.Sprintf("%s on post %s", err, uuid)
+		errors.Add(validators.GenerateKey(v.Name), v.Message)
 		return
 	}
 
-	if !IsStatusInSlice(v.Post.Status, goodStatuses) {
+	if !isTransValid {
 		errorMsg := "cannot move post %s from '%s' status to '%s' status"
 		v.Message = fmt.Sprintf(errorMsg, uuid, oldPost.Status, v.Post.Status)
 		errors.Add(validators.GenerateKey(v.Name), v.Message)
 	}
-}
-
-// IsStatusInSlice iterates over a slice of PostStatus, looking for the given
-// status. If found, true is returned. Otherwise, false is returned.
-func IsStatusInSlice(needle PostStatus, haystack []PostStatus) bool {
-	for _, hs := range haystack {
-		if needle == hs {
-			return true
-		}
-	}
-
-	return false
 }
 
 // ValidateUpdate gets run every time you call "pop.ValidateAndUpdate" method.
@@ -365,6 +417,21 @@ func (p *Post) BeforeUpdate(tx *pop.Connection) error {
 		return nil
 	}
 
+	isBackStep, err := isTransitionBackStep(oldPost.Status, p.Status)
+	if err != nil {
+		return err
+	}
+
+	if isBackStep {
+		err = p.popHistory(oldPost.Status)
+	} else {
+		err = p.createNewHistory()
+	}
+
+	if err != nil {
+		return err
+	}
+
 	eventData := PostStatusEventData{
 		OldStatus:     oldPost.Status,
 		NewStatus:     p.Status,
@@ -379,6 +446,7 @@ func (p *Post) BeforeUpdate(tx *pop.Connection) error {
 	}
 
 	emitEvent(e)
+
 	return nil
 }
 
@@ -744,4 +812,60 @@ func (p *Post) GetLocationForNotifications() (*Location, error) {
 		postLocation = p.Destination
 	}
 	return &postLocation, nil
+}
+
+// createNewHistory checks if the post has a status that is different than the
+// most recent of its Post History entries.  If so, it creates a new Post History
+// with the Post's new status.
+func (p *Post) createNewHistory() error {
+	var oldPH PostHistory
+
+	err := DB.Where("post_id = ?", p.ID).Last(&oldPH)
+
+	if domain.IsOtherThanNoRows(err) {
+		return err
+	}
+
+	if oldPH.Status != p.Status {
+		newPH := PostHistory{
+			Status:     p.Status,
+			PostID:     p.ID,
+			ReceiverID: p.ReceiverID,
+			ProviderID: p.ProviderID,
+		}
+
+		if err := DB.Create(&newPH); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// popHistory deletes the most recent postHistory entry for a post
+// assuming it's status matches the expected one.
+func (p *Post) popHistory(currentStatus PostStatus) error {
+	var oldPH PostHistory
+
+	if err := DB.Where("post_id = ?", p.ID).Last(&oldPH); err != nil {
+		if domain.IsOtherThanNoRows(err) {
+			return err
+		}
+		domain.ErrLogger.Printf(
+			"error popping post histories for post id %v. None Found", p.ID)
+		return nil
+	}
+
+	if oldPH.Status != currentStatus {
+		domain.ErrLogger.Printf(
+			"error popping post histories for post id %v. Expected newStatus %s but found %s",
+			p.ID, currentStatus, oldPH.Status)
+		return nil
+	}
+
+	if err := DB.Destroy(&oldPH); err != nil {
+		return err
+	}
+
+	return nil
 }

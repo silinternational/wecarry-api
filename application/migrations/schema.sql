@@ -246,6 +246,44 @@ ALTER SEQUENCE public.post_files_id_seq OWNED BY public.post_files.id;
 
 
 --
+-- Name: post_histories; Type: TABLE; Schema: public; Owner: wecarry
+--
+
+CREATE TABLE public.post_histories (
+    id integer NOT NULL,
+    post_id integer NOT NULL,
+    receiver_id integer,
+    provider_id integer,
+    status character varying(255) NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.post_histories OWNER TO wecarry;
+
+--
+-- Name: post_histories_id_seq; Type: SEQUENCE; Schema: public; Owner: wecarry
+--
+
+CREATE SEQUENCE public.post_histories_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.post_histories_id_seq OWNER TO wecarry;
+
+--
+-- Name: post_histories_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wecarry
+--
+
+ALTER SEQUENCE public.post_histories_id_seq OWNED BY public.post_histories.id;
+
+
+--
 -- Name: posts; Type: TABLE; Schema: public; Owner: wecarry
 --
 
@@ -584,6 +622,13 @@ ALTER TABLE ONLY public.post_files ALTER COLUMN id SET DEFAULT nextval('public.p
 
 
 --
+-- Name: post_histories id; Type: DEFAULT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.post_histories ALTER COLUMN id SET DEFAULT nextval('public.post_histories_id_seq'::regclass);
+
+
+--
 -- Name: posts id; Type: DEFAULT; Schema: public; Owner: wecarry
 --
 
@@ -681,6 +726,14 @@ ALTER TABLE ONLY public.post_files
 
 
 --
+-- Name: post_histories post_histories_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.post_histories
+    ADD CONSTRAINT post_histories_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: posts posts_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
 --
 
@@ -769,6 +822,13 @@ CREATE UNIQUE INDEX organizations_uuid_idx ON public.organizations USING btree (
 --
 
 CREATE UNIQUE INDEX post_files_file_id_idx ON public.post_files USING btree (file_id);
+
+
+--
+-- Name: post_histories_created_at_idx; Type: INDEX; Schema: public; Owner: wecarry
+--
+
+CREATE INDEX post_histories_created_at_idx ON public.post_histories USING btree (created_at);
 
 
 --
@@ -929,6 +989,30 @@ ALTER TABLE ONLY public.post_files
 
 ALTER TABLE ONLY public.post_files
     ADD CONSTRAINT post_files_post_id_fkey FOREIGN KEY (post_id) REFERENCES public.posts(id) ON DELETE CASCADE;
+
+
+--
+-- Name: post_histories post_histories_post_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.post_histories
+    ADD CONSTRAINT post_histories_post_id_fkey FOREIGN KEY (post_id) REFERENCES public.posts(id) ON DELETE CASCADE;
+
+
+--
+-- Name: post_histories post_histories_provider_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.post_histories
+    ADD CONSTRAINT post_histories_provider_id_fkey FOREIGN KEY (provider_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
+-- Name: post_histories post_histories_receiver_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.post_histories
+    ADD CONSTRAINT post_histories_receiver_id_fkey FOREIGN KEY (receiver_id) REFERENCES public.users(id) ON DELETE SET NULL;
 
 
 --

@@ -12,17 +12,17 @@ import (
 type PostFixtures struct {
 	Users
 	Posts
+	PostHistories
 	Files
 	Locations
 }
 
-func CreateFixturesValidateUpdate(ms *ModelSuite, t *testing.T) []Post {
+func CreateFixturesValidateUpdate_RequestStatus(status PostStatus, ms *ModelSuite, t *testing.T) Post {
 
 	// Create org
 	org := &Organization{
 		ID:         1,
 		Name:       "TestOrg",
-		Url:        nulls.String{},
 		AuthType:   AuthTypeSaml,
 		AuthConfig: "{}",
 		Uuid:       domain.GetUuid(),
@@ -43,80 +43,23 @@ func CreateFixturesValidateUpdate(ms *ModelSuite, t *testing.T) []Post {
 		t.FailNow()
 	}
 
-	locations := []Location{{}, {}, {}, {}, {}, {}}
-	for i := range locations {
-		createFixture(ms, &locations[i])
+	location := Location{}
+	createFixture(ms, &location)
+
+	post := Post{
+		CreatedByID:    user.ID,
+		OrganizationID: org.ID,
+		DestinationID:  location.ID,
+		Type:           PostTypeRequest,
+		Title:          "Test Request",
+		Size:           PostSizeMedium,
+		Uuid:           domain.GetUuid(),
+		Status:         status,
 	}
 
-	// Load Post test fixtures
-	posts := []Post{
-		{
-			CreatedByID:    user.ID,
-			OrganizationID: org.ID,
-			Type:           PostTypeRequest,
-			Title:          "Open Request 0",
-			Size:           PostSizeMedium,
-			Status:         PostStatusOpen,
-			Uuid:           domain.GetUuid(),
-			DestinationID:  locations[0].ID,
-		},
-		{
-			CreatedByID:    user.ID,
-			OrganizationID: org.ID,
-			Type:           PostTypeRequest,
-			Title:          "Committed Request 1",
-			Size:           PostSizeMedium,
-			Status:         PostStatusCommitted,
-			Uuid:           domain.GetUuid(),
-			DestinationID:  locations[1].ID,
-		},
-		{
-			CreatedByID:    user.ID,
-			OrganizationID: org.ID,
-			Type:           PostTypeRequest,
-			Title:          "Accepted Request 2",
-			Size:           PostSizeMedium,
-			Status:         PostStatusAccepted,
-			Uuid:           domain.GetUuid(),
-			DestinationID:  locations[2].ID,
-		},
-		{
-			CreatedByID:    user.ID,
-			OrganizationID: org.ID,
-			Type:           PostTypeRequest,
-			Title:          "Received Request 3",
-			Size:           PostSizeMedium,
-			Status:         PostStatusReceived,
-			Uuid:           domain.GetUuid(),
-			DestinationID:  locations[3].ID,
-		},
-		{
-			CreatedByID:    user.ID,
-			OrganizationID: org.ID,
-			Type:           PostTypeRequest,
-			Title:          "Completed Request 4",
-			Size:           PostSizeMedium,
-			Status:         PostStatusCompleted,
-			Uuid:           domain.GetUuid(),
-			DestinationID:  locations[4].ID,
-		},
-		{
-			CreatedByID:    user.ID,
-			OrganizationID: org.ID,
-			Type:           PostTypeRequest,
-			Title:          "Removed Request 5",
-			Size:           PostSizeMedium,
-			Status:         PostStatusRemoved,
-			Uuid:           domain.GetUuid(),
-			DestinationID:  locations[5].ID,
-		},
-	}
+	createFixture(ms, &post)
 
-	for i := range posts {
-		createFixture(ms, &posts[i])
-	}
-
-	return posts
+	return post
 }
 
 func CreatePostFixtures(ms *ModelSuite, t *testing.T, users Users) []Post {
@@ -491,5 +434,116 @@ func createFixturesForGetLocationForNotifications(ms *ModelSuite) PostFixtures {
 		Users:     users,
 		Posts:     posts,
 		Locations: locations,
+	}
+}
+
+func createFixturesForTestPost_createNewHistory(ms *ModelSuite) PostFixtures {
+	org := Organization{AuthConfig: "{}", Uuid: domain.GetUuid()}
+	createFixture(ms, &org)
+
+	unique := org.Uuid.String()
+	users := Users{
+		{Email: unique + "_user0@example.com", Nickname: unique + "User0", Uuid: domain.GetUuid()},
+		{Email: unique + "_user1@example.com", Nickname: unique + "User1", Uuid: domain.GetUuid()},
+	}
+	for i := range users {
+		createFixture(ms, &users[i])
+	}
+
+	posts := Posts{
+		{Title: "Post1 Title"},
+		{Title: "Post2 Title"},
+	}
+	locations := make(Locations, len(posts))
+	for i := range posts {
+		locations[i].Description = "location " + strconv.Itoa(i)
+		createFixture(ms, &locations[i])
+
+		posts[i].Uuid = domain.GetUuid()
+		posts[i].Status = PostStatusOpen
+		posts[i].Type = "type"
+		posts[i].Size = PostSizeTiny
+		posts[i].CreatedByID = users[0].ID
+		posts[i].OrganizationID = org.ID
+		posts[i].DestinationID = locations[i].ID
+		posts[i].ReceiverID = nulls.NewInt(users[i].ID)
+		createFixture(ms, &posts[i])
+	}
+
+	pHistory := PostHistory{
+		Status:     PostStatusOpen,
+		PostID:     posts[0].ID,
+		ReceiverID: nulls.NewInt(posts[0].CreatedByID),
+	}
+	createFixture(ms, &pHistory)
+
+	return PostFixtures{
+		Users:         users,
+		Posts:         posts,
+		PostHistories: PostHistories{pHistory},
+	}
+}
+
+func createFixturesForTestPost_popHistory(ms *ModelSuite) PostFixtures {
+	org := Organization{AuthConfig: "{}", Uuid: domain.GetUuid()}
+	createFixture(ms, &org)
+
+	unique := org.Uuid.String()
+	users := Users{
+		{Email: unique + "_user0@example.com", Nickname: unique + "User0", Uuid: domain.GetUuid()},
+		{Email: unique + "_user1@example.com", Nickname: unique + "User1", Uuid: domain.GetUuid()},
+	}
+	for i := range users {
+		createFixture(ms, &users[i])
+	}
+
+	posts := Posts{
+		{Title: "Post1 Title", ProviderID: nulls.NewInt(users[1].ID)},
+		{Title: "Post2 Title"},
+	}
+	locations := make(Locations, len(posts))
+	for i := range posts {
+		locations[i].Description = "location " + strconv.Itoa(i)
+		createFixture(ms, &locations[i])
+
+		posts[i].Uuid = domain.GetUuid()
+		posts[i].Status = PostStatusAccepted
+		posts[i].Type = "type"
+		posts[i].Size = PostSizeTiny
+		posts[i].CreatedByID = users[0].ID
+		posts[i].OrganizationID = org.ID
+		posts[i].DestinationID = locations[i].ID
+		posts[i].ReceiverID = nulls.NewInt(users[i].ID)
+		createFixture(ms, &posts[i])
+	}
+
+	pHistories := PostHistories{
+		{
+			Status:     PostStatusOpen,
+			PostID:     posts[0].ID,
+			ReceiverID: nulls.NewInt(posts[0].CreatedByID),
+		},
+		{
+			Status:     PostStatusCommitted,
+			PostID:     posts[0].ID,
+			ReceiverID: nulls.NewInt(posts[0].CreatedByID),
+			ProviderID: nulls.NewInt(users[1].ID),
+		},
+		{
+			Status:     PostStatusAccepted,
+			PostID:     posts[0].ID,
+			ReceiverID: nulls.NewInt(posts[0].CreatedByID),
+			ProviderID: nulls.NewInt(users[1].ID),
+		},
+	}
+
+	for i := range pHistories {
+		createFixture(ms, &pHistories[i])
+	}
+
+	return PostFixtures{
+		Users:         users,
+		Posts:         posts,
+		PostHistories: pHistories,
 	}
 }
