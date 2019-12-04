@@ -498,20 +498,20 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_AcceptedRequest() {
 			wantErr: false,
 		},
 		{
+			name: "good status - from accepted to completed",
+			post: Post{
+				Status: PostStatusCompleted,
+				Uuid:   post.Uuid,
+			},
+			wantErr: false,
+		},
+		{
 			name: "good status - from accepted to removed",
 			post: Post{
 				Status: PostStatusRemoved,
 				Uuid:   post.Uuid,
 			},
 			wantErr: false,
-		},
-		{
-			name: "bad status - from accepted to completed",
-			post: Post{
-				Status: PostStatusCompleted,
-				Uuid:   post.Uuid,
-			},
-			wantErr: true,
 		},
 	}
 	for _, test := range tests {
@@ -721,6 +721,14 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_CompletedRequest() {
 			wantErr: false,
 		},
 		{
+			name: "bad status - from completed to accepted",
+			post: Post{
+				Status: PostStatusAccepted,
+				Uuid:   post.Uuid,
+			},
+			wantErr: false,
+		},
+		{
 			name: "good status - from completed to delivered",
 			post: Post{
 				Status: PostStatusDelivered,
@@ -748,14 +756,6 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_CompletedRequest() {
 			name: "bad status - from completed to committed",
 			post: Post{
 				Status: PostStatusCommitted,
-				Uuid:   post.Uuid,
-			},
-			wantErr: true,
-		},
-		{
-			name: "bad status - from completed to accepted",
-			post: Post{
-				Status: PostStatusAccepted,
 				Uuid:   post.Uuid,
 			},
 			wantErr: true,

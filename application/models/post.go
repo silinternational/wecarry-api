@@ -88,7 +88,8 @@ func getStatusTransitions() map[PostStatus][]statusTransitionTarget {
 			{status: PostStatusOpen},
 			{status: PostStatusCommitted, isBackStep: true}, // to correct a false acceptance
 			{status: PostStatusDelivered},
-			{status: PostStatusReceived},
+			{status: PostStatusReceived},  // This transition is in here for later, in case one day it's not skippable
+			{status: PostStatusCompleted}, // For now, `DELIVERED` is not a required step
 			{status: PostStatusRemoved},
 		},
 		PostStatusDelivered: {
@@ -102,6 +103,7 @@ func getStatusTransitions() map[PostStatus][]statusTransitionTarget {
 			{status: PostStatusCompleted},
 		},
 		PostStatusCompleted: {
+			{status: PostStatusAccepted, isBackStep: true},  // to correct a false completion
 			{status: PostStatusDelivered, isBackStep: true}, // to correct a false completion
 			{status: PostStatusReceived, isBackStep: true},  // to correct a false completion
 		},
