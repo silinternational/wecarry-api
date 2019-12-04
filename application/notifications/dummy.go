@@ -22,8 +22,6 @@ type dummyTemplate struct {
 	subject, body string
 }
 
-var getT = GetEmailTemplate
-
 var dummyTemplates = map[string]dummyTemplate{
 	domain.MessageTemplateNewRequest: {
 		subject: "new request",
@@ -37,21 +35,29 @@ var dummyTemplates = map[string]dummyTemplate{
 		subject: "new message",
 		body:    "You have a new message.",
 	},
+	domain.MessageTemplateRequestDelivered: {
+		subject: domain.MessageTemplateRequestDelivered,
+		body:    "The status of a request changed from accepted or committed to delivered.",
+	},
 	domain.MessageTemplateRequestReceived: {
 		subject: domain.MessageTemplateRequestReceived,
-		body:    "The status of a request changed from accepted or committed to received.",
+		body:    "The status of a request changed from accepted or delivered to received.",
 	},
-	getT(domain.MessageTemplateRequestFromAcceptedToDelivered): {
+	domain.MessageTemplateRequestNotReceivedAfterall: {
+		subject: domain.MessageTemplateRequestNotReceivedAfterall,
+		body:    "The status of a request changed from completed to accepted or delivered.",
+	},
+	domain.MessageTemplateRequestFromAcceptedToCommitted: {
+		subject: domain.MessageTemplateRequestFromAcceptedToCommitted,
+		body:    "The status of a request changed from accepted to committed.",
+	},
+	domain.MessageTemplateRequestFromAcceptedToDelivered: {
 		subject: domain.MessageTemplateRequestFromAcceptedToDelivered,
-		body:    "The status of a request changed from committed or accepted to delivered.",
+		body:    "The status of a request changed from accepted to delivered.",
 	},
 	domain.MessageTemplateRequestFromAcceptedToOpen: {
 		subject: domain.MessageTemplateRequestFromAcceptedToOpen,
 		body:    "The status of a request changed from accepted to open.",
-	},
-	domain.MessageTemplateRequestFromAcceptedToReceived: {
-		subject: domain.MessageTemplateRequestFromAcceptedToReceived,
-		body:    "The status of a request changed from accepted to received.",
 	},
 	domain.MessageTemplateRequestFromAcceptedToRemoved: {
 		subject: domain.MessageTemplateRequestFromAcceptedToRemoved,
@@ -73,17 +79,13 @@ var dummyTemplates = map[string]dummyTemplate{
 		subject: domain.MessageTemplateRequestFromCommittedToRemoved,
 		body:    "The status of a request changed from committed to removed.",
 	},
-	domain.MessageTemplateRequestFromCompletedToDelivered: {
-		subject: domain.MessageTemplateRequestFromCompletedToDelivered,
-		body:    "The status of a request changed from completed to delivered.",
-	},
-	domain.MessageTemplateRequestFromCompletedToReceived: {
-		subject: domain.MessageTemplateRequestFromCompletedToReceived,
-		body:    "The status of a request changed from completed to received.",
-	},
 	domain.MessageTemplateRequestFromDeliveredToAccepted: {
 		subject: domain.MessageTemplateRequestFromDeliveredToAccepted,
 		body:    "The status of a request changed from delivered to accepted.",
+	},
+	domain.MessageTemplateRequestFromDeliveredToCommitted: {
+		subject: domain.MessageTemplateRequestFromDeliveredToCommitted,
+		body:    "The status of a request changed from delivered to committed.",
 	},
 	domain.MessageTemplateRequestFromDeliveredToCompleted: {
 		subject: domain.MessageTemplateRequestFromDeliveredToCompleted,
@@ -96,18 +98,6 @@ var dummyTemplates = map[string]dummyTemplate{
 	domain.MessageTemplateRequestFromOpenToRemoved: {
 		subject: domain.MessageTemplateRequestFromOpenToRemoved,
 		body:    "The status of a request changed from open to removed.",
-	},
-	domain.MessageTemplateRequestFromReceivedToAccepted: {
-		subject: domain.MessageTemplateRequestFromReceivedToAccepted,
-		body:    "The status of a request changed from received to accepted.",
-	},
-	domain.MessageTemplateRequestFromReceivedToCompleted: {
-		subject: domain.MessageTemplateRequestFromReceivedToCompleted,
-		body:    "The status of a request changed from received to completed.",
-	},
-	domain.MessageTemplateRequestFromReceivedToDelivered: {
-		subject: domain.MessageTemplateRequestFromReceivedToDelivered,
-		body:    "The status of a request changed from received to delivered.",
 	},
 }
 
