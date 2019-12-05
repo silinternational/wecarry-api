@@ -659,7 +659,7 @@ func scopeNotRemoved() pop.ScopeFunc {
 	}
 }
 
-// scope query to not include removed posts
+// scope query to not include removed or completed posts
 func scopeNotCompleted() pop.ScopeFunc {
 	return func(q *pop.Query) *pop.Query {
 		return q.Where("status not in (?)", PostStatusRemoved, PostStatusCompleted)
