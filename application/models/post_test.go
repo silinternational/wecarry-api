@@ -1325,6 +1325,7 @@ func (ms *ModelSuite) TestPost_FindByUserAndUUID() {
 	}{
 		{name: "user 0, post 0", user: f.Users[0], post: f.Posts[0]},
 		{name: "user 0, post 1", user: f.Users[0], post: f.Posts[1]},
+		{name: "user 0, post 2 Removed", user: f.Users[0], post: f.Posts[2], wantErr: "no rows in result set"},
 		{name: "user 1, post 0", user: f.Users[1], post: f.Posts[0]},
 		{name: "user 1, post 1", user: f.Users[1], post: f.Posts[1], wantErr: "no rows in result set"},
 		{name: "non-existent user", post: f.Posts[1], wantErr: "no rows in result set"},
@@ -1526,8 +1527,8 @@ func (ms *ModelSuite) TestPosts_FindByUser() {
 		wantPostIDs []int
 		wantErr     bool
 	}{
-		{name: "user 0", user: f.Users[0], wantPostIDs: []int{f.Posts[2].ID, f.Posts[1].ID, f.Posts[0].ID}},
-		{name: "user 1", user: f.Users[1], wantPostIDs: []int{f.Posts[2].ID, f.Posts[0].ID}},
+		{name: "user 0", user: f.Users[0], wantPostIDs: []int{f.Posts[4].ID, f.Posts[1].ID, f.Posts[0].ID}},
+		{name: "user 1", user: f.Users[1], wantPostIDs: []int{f.Posts[4].ID, f.Posts[0].ID}},
 		{name: "non-existent user", user: User{}, wantPostIDs: []int{}},
 	}
 	for _, test := range tests {

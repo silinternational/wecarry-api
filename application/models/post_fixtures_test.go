@@ -234,7 +234,7 @@ func createFixturesForPostFindByUserAndUUID(ms *ModelSuite) PostFixtures {
 		createFixture(ms, &userOrgs[i])
 	}
 
-	locations := []Location{{}, {}, {}}
+	locations := make([]Location, 3)
 	for i := range locations {
 		createFixture(ms, &locations[i])
 	}
@@ -242,6 +242,8 @@ func createFixturesForPostFindByUserAndUUID(ms *ModelSuite) PostFixtures {
 	posts := Posts{
 		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: orgs[0].ID, DestinationID: locations[0].ID},
 		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: orgs[1].ID, DestinationID: locations[1].ID},
+		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: orgs[0].ID, DestinationID: locations[2].ID,
+			Status: PostStatusRemoved},
 	}
 	for i := range posts {
 		createFixture(ms, &posts[i])
@@ -280,7 +282,7 @@ func CreateFixtures_Posts_FindByUser(ms *ModelSuite) PostFixtures {
 		createFixture(ms, &userOrgs[i])
 	}
 
-	locations := []Location{{}, {}, {}}
+	locations := make([]Location, 5)
 	for i := range locations {
 		createFixture(ms, &locations[i])
 	}
@@ -288,7 +290,11 @@ func CreateFixtures_Posts_FindByUser(ms *ModelSuite) PostFixtures {
 	posts := Posts{
 		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: orgs[0].ID, DestinationID: locations[0].ID},
 		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: orgs[1].ID, DestinationID: locations[1].ID},
-		{Uuid: domain.GetUuid(), CreatedByID: users[1].ID, OrganizationID: orgs[0].ID, DestinationID: locations[2].ID},
+		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: orgs[0].ID, DestinationID: locations[2].ID,
+			Status: PostStatusCompleted},
+		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: orgs[0].ID, DestinationID: locations[3].ID,
+			Status: PostStatusRemoved},
+		{Uuid: domain.GetUuid(), CreatedByID: users[1].ID, OrganizationID: orgs[0].ID, DestinationID: locations[4].ID},
 	}
 	for i := range posts {
 		createFixture(ms, &posts[i])
