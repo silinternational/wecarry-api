@@ -62,8 +62,8 @@ func (r *userResolver) Posts(ctx context.Context, obj *models.User, role PostRol
 	return posts, nil
 }
 
-// PhotoURL retrieves a URL for the user profile photo or avatar.
-func (r *userResolver) PhotoURL(ctx context.Context, obj *models.User) (*string, error) {
+// AvatarURL retrieves a URL for the user profile photo or avatar.
+func (r *userResolver) AvatarURL(ctx context.Context, obj *models.User) (*string, error) {
 	if obj == nil {
 		return nil, nil
 	}
@@ -233,4 +233,33 @@ func (r *userResolver) Preferences(ctx context.Context, obj *models.User) (*mode
 	standardPrefs.WeightUnit = strings.ToUpper(standardPrefs.WeightUnit)
 
 	return &standardPrefs, nil
+}
+
+// getPublicProfiles converts a list of models.User to PublicProfile, hiding private profile information
+func getPublicProfiles(ctx context.Context, users []models.User) []PublicProfile {
+	profiles := make([]PublicProfile, len(users))
+	for i, p := range users {
+		prof := getPublicProfile(ctx, &p)
+		profiles[i] = *prof
+	}
+	return profiles
+}
+
+// getPublicProfile converts a models.User to a PublicProfile, which hides private profile information
+func getPublicProfile(ctx context.Context, user *models.User) *PublicProfile {
+	if user == nil {
+		return nil
+	}
+
+	url, err := user.GetPhotoURL()
+	if err != nil {
+		_ = reportError(ctx, err, "", map[string]interface{}{"user": user.Uuid})
+		return nil
+	}
+
+	return &PublicProfile{
+		ID:        user.Uuid.String(),
+		Nickname:  user.Nickname,
+		AvatarURL: url,
+	}
 }

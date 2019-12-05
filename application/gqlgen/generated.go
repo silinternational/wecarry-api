@@ -130,6 +130,12 @@ type ComplexityRoot struct {
 		UpdatedAt    func(childComplexity int) int
 	}
 
+	PublicProfile struct {
+		AvatarURL func(childComplexity int) int
+		ID        func(childComplexity int) int
+		Nickname  func(childComplexity int) int
+	}
+
 	Query struct {
 		Message   func(childComplexity int, id *string) int
 		MyThreads func(childComplexity int) int
@@ -154,13 +160,13 @@ type ComplexityRoot struct {
 
 	User struct {
 		AdminRole          func(childComplexity int) int
+		AvatarURL          func(childComplexity int) int
 		CreatedAt          func(childComplexity int) int
 		Email              func(childComplexity int) int
 		ID                 func(childComplexity int) int
 		Location           func(childComplexity int) int
 		Nickname           func(childComplexity int) int
 		Organizations      func(childComplexity int) int
-		PhotoURL           func(childComplexity int) int
 		Posts              func(childComplexity int, role PostRole) int
 		Preferences        func(childComplexity int) int
 		UnreadMessageCount func(childComplexity int) int
@@ -183,7 +189,7 @@ type LocationResolver interface {
 }
 type MessageResolver interface {
 	ID(ctx context.Context, obj *models.Message) (string, error)
-	Sender(ctx context.Context, obj *models.Message) (*models.User, error)
+	Sender(ctx context.Context, obj *models.Message) (*PublicProfile, error)
 
 	Thread(ctx context.Context, obj *models.Message) (*models.Thread, error)
 }
@@ -212,9 +218,9 @@ type OrganizationDomainResolver interface {
 type PostResolver interface {
 	ID(ctx context.Context, obj *models.Post) (string, error)
 
-	CreatedBy(ctx context.Context, obj *models.Post) (*models.User, error)
-	Receiver(ctx context.Context, obj *models.Post) (*models.User, error)
-	Provider(ctx context.Context, obj *models.Post) (*models.User, error)
+	CreatedBy(ctx context.Context, obj *models.Post) (*PublicProfile, error)
+	Receiver(ctx context.Context, obj *models.Post) (*PublicProfile, error)
+	Provider(ctx context.Context, obj *models.Post) (*PublicProfile, error)
 	Organization(ctx context.Context, obj *models.Post) (*models.Organization, error)
 
 	Description(ctx context.Context, obj *models.Post) (*string, error)
@@ -244,7 +250,7 @@ type QueryResolver interface {
 }
 type ThreadResolver interface {
 	ID(ctx context.Context, obj *models.Thread) (string, error)
-	Participants(ctx context.Context, obj *models.Thread) ([]models.User, error)
+	Participants(ctx context.Context, obj *models.Thread) ([]PublicProfile, error)
 	Messages(ctx context.Context, obj *models.Thread) ([]models.Message, error)
 	PostID(ctx context.Context, obj *models.Thread) (string, error)
 	Post(ctx context.Context, obj *models.Thread) (*models.Post, error)
@@ -257,7 +263,7 @@ type UserResolver interface {
 
 	Organizations(ctx context.Context, obj *models.User) ([]models.Organization, error)
 	Posts(ctx context.Context, obj *models.User, role PostRole) ([]models.Post, error)
-	PhotoURL(ctx context.Context, obj *models.User) (*string, error)
+	AvatarURL(ctx context.Context, obj *models.User) (*string, error)
 	Preferences(ctx context.Context, obj *models.User) (*models.StandardPreferences, error)
 	Location(ctx context.Context, obj *models.User) (*models.Location, error)
 	UnreadMessageCount(ctx context.Context, obj *models.User) (int, error)
@@ -727,6 +733,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Post.UpdatedAt(childComplexity), true
 
+	case "PublicProfile.avatarURL":
+		if e.complexity.PublicProfile.AvatarURL == nil {
+			break
+		}
+
+		return e.complexity.PublicProfile.AvatarURL(childComplexity), true
+
+	case "PublicProfile.id":
+		if e.complexity.PublicProfile.ID == nil {
+			break
+		}
+
+		return e.complexity.PublicProfile.ID(childComplexity), true
+
+	case "PublicProfile.nickname":
+		if e.complexity.PublicProfile.Nickname == nil {
+			break
+		}
+
+		return e.complexity.PublicProfile.Nickname(childComplexity), true
+
 	case "Query.message":
 		if e.complexity.Query.Message == nil {
 			break
@@ -861,6 +888,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.User.AdminRole(childComplexity), true
 
+	case "User.avatarURL":
+		if e.complexity.User.AvatarURL == nil {
+			break
+		}
+
+		return e.complexity.User.AvatarURL(childComplexity), true
+
 	case "User.createdAt":
 		if e.complexity.User.CreatedAt == nil {
 			break
@@ -902,13 +936,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.User.Organizations(childComplexity), true
-
-	case "User.photoURL":
-		if e.complexity.User.PhotoURL == nil {
-			break
-		}
-
-		return e.complexity.User.PhotoURL(childComplexity), true
 
 	case "User.posts":
 		if e.complexity.User.Posts == nil {
@@ -1092,7 +1119,7 @@ type User {
     adminRole: UserAdminRole
     organizations: [Organization!]!
     posts(role: PostRole!): [Post!]!
-    photoURL: String
+    avatarURL: String
     preferences: UserPreferences
     location: Location
     unreadMessageCount: Int!
@@ -1132,6 +1159,13 @@ input UpdateUserPreferencesInput {
     weightUnit: PreferredWeightUnit
 }
 
+"User fields that can safely be visible to any user in the system"
+type PublicProfile {
+    id: ID!
+    nickname: String!
+    avatarURL: String
+}
+
 enum PostType {
     REQUEST
     OFFER
@@ -1140,9 +1174,9 @@ enum PostType {
 type Post {
     id: ID!
     type: PostType!
-    createdBy: User!
-    receiver: User
-    provider: User
+    createdBy: PublicProfile!
+    receiver: PublicProfile
+    provider: PublicProfile
     organization: Organization
     title: String!
     description: String
@@ -1204,7 +1238,7 @@ input RemoveOrganizationDomainInput {
 
 type Thread {
     id: ID!
-    participants: [User!]!
+    participants: [PublicProfile!]!
     messages: [Message!]!
     postID: String!
     post: Post!
@@ -1216,7 +1250,7 @@ type Thread {
 
 type Message {
     id: ID!
-    sender: User!
+    sender: PublicProfile!
     content: String!
     thread: Thread!
     createdAt: Time!
@@ -1979,10 +2013,10 @@ func (ec *executionContext) _Message_sender(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*models.User)
+	res := resTmp.(*PublicProfile)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, field.Selections, res)
+	return ec.marshalNPublicProfile2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPublicProfile(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Message_content(ctx context.Context, field graphql.CollectedField, obj *models.Message) (ret graphql.Marshaler) {
@@ -2971,10 +3005,10 @@ func (ec *executionContext) _Post_createdBy(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*models.User)
+	res := resTmp.(*PublicProfile)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, field.Selections, res)
+	return ec.marshalNPublicProfile2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPublicProfile(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Post_receiver(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
@@ -3005,10 +3039,10 @@ func (ec *executionContext) _Post_receiver(ctx context.Context, field graphql.Co
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*models.User)
+	res := resTmp.(*PublicProfile)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, field.Selections, res)
+	return ec.marshalOPublicProfile2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPublicProfile(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Post_provider(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
@@ -3039,10 +3073,10 @@ func (ec *executionContext) _Post_provider(ctx context.Context, field graphql.Co
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*models.User)
+	res := resTmp.(*PublicProfile)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, field.Selections, res)
+	return ec.marshalOPublicProfile2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPublicProfile(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Post_organization(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
@@ -3687,6 +3721,114 @@ func (ec *executionContext) _Post_isEditable(ctx context.Context, field graphql.
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _PublicProfile_id(ctx context.Context, field graphql.CollectedField, obj *PublicProfile) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "PublicProfile",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _PublicProfile_nickname(ctx context.Context, field graphql.CollectedField, obj *PublicProfile) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "PublicProfile",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Nickname, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _PublicProfile_avatarURL(ctx context.Context, field graphql.CollectedField, obj *PublicProfile) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "PublicProfile",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AvatarURL, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query_users(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -4104,10 +4246,10 @@ func (ec *executionContext) _Thread_participants(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]models.User)
+	res := resTmp.([]PublicProfile)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNUser2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, field.Selections, res)
+	return ec.marshalNPublicProfile2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPublicProfile(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Thread_messages(ctx context.Context, field graphql.CollectedField, obj *models.Thread) (ret graphql.Marshaler) {
@@ -4669,7 +4811,7 @@ func (ec *executionContext) _User_posts(ctx context.Context, field graphql.Colle
 	return ec.marshalNPost2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _User_photoURL(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_avatarURL(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -4688,7 +4830,7 @@ func (ec *executionContext) _User_photoURL(ctx context.Context, field graphql.Co
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.User().PhotoURL(rctx, obj)
+		return ec.resolvers.User().AvatarURL(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7202,6 +7344,40 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 	return out
 }
 
+var publicProfileImplementors = []string{"PublicProfile"}
+
+func (ec *executionContext) _PublicProfile(ctx context.Context, sel ast.SelectionSet, obj *PublicProfile) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.RequestContext, sel, publicProfileImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PublicProfile")
+		case "id":
+			out.Values[i] = ec._PublicProfile_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "nickname":
+			out.Values[i] = ec._PublicProfile_nickname(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "avatarURL":
+			out.Values[i] = ec._PublicProfile_avatarURL(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var queryImplementors = []string{"Query"}
 
 func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -7529,7 +7705,7 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 				}
 				return res
 			})
-		case "photoURL":
+		case "avatarURL":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
 				defer func() {
@@ -7537,7 +7713,7 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._User_photoURL(ctx, field, obj)
+				res = ec._User_avatarURL(ctx, field, obj)
 				return res
 			})
 		case "preferences":
@@ -8275,6 +8451,57 @@ func (ec *executionContext) marshalNPostType2ᚖgithubᚗcomᚋsilinternational�
 	return v
 }
 
+func (ec *executionContext) marshalNPublicProfile2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPublicProfile(ctx context.Context, sel ast.SelectionSet, v PublicProfile) graphql.Marshaler {
+	return ec._PublicProfile(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNPublicProfile2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPublicProfile(ctx context.Context, sel ast.SelectionSet, v []PublicProfile) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		rctx := &graphql.ResolverContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNPublicProfile2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPublicProfile(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalNPublicProfile2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPublicProfile(ctx context.Context, sel ast.SelectionSet, v *PublicProfile) graphql.Marshaler {
+	if v == nil {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._PublicProfile(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNRemoveOrganizationDomainInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐRemoveOrganizationDomainInput(ctx context.Context, v interface{}) (RemoveOrganizationDomainInput, error) {
 	return ec.unmarshalInputRemoveOrganizationDomainInput(ctx, v)
 }
@@ -8886,6 +9113,17 @@ func (ec *executionContext) marshalOPreferredWeightUnit2ᚖgithubᚗcomᚋsilint
 		return graphql.Null
 	}
 	return v
+}
+
+func (ec *executionContext) marshalOPublicProfile2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPublicProfile(ctx context.Context, sel ast.SelectionSet, v PublicProfile) graphql.Marshaler {
+	return ec._PublicProfile(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalOPublicProfile2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPublicProfile(ctx context.Context, sel ast.SelectionSet, v *PublicProfile) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._PublicProfile(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {

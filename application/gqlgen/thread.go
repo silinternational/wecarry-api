@@ -18,7 +18,7 @@ type threadResolver struct{ *Resolver }
 
 // Participants resolves the `participants` property of the thread query, retrieving the related records from the
 // database.
-func (r *threadResolver) Participants(ctx context.Context, obj *models.Thread) ([]models.User, error) {
+func (r *threadResolver) Participants(ctx context.Context, obj *models.Thread) ([]PublicProfile, error) {
 	if obj == nil {
 		return nil, nil
 	}
@@ -28,7 +28,7 @@ func (r *threadResolver) Participants(ctx context.Context, obj *models.Thread) (
 		return nil, reportError(ctx, err, "GetThreadParticipants")
 	}
 
-	return participants, nil
+	return getPublicProfiles(ctx, participants), nil
 }
 
 // ID resolves the `ID` property of the thread query. It provides the UUID instead of the autoincrement ID.

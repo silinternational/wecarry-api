@@ -49,13 +49,19 @@ type PostResponse struct {
 		IsEditable   bool              `json:"isEditable"`
 		Url          string            `json:"url"`
 		CreatedBy    struct {
-			ID string `json:"id"`
+			ID        string `json:"id"`
+			Nickname  string `json:"nickname"`
+			AvatarURL string `json:"avatarURL"`
 		} `json:"createdBy"`
 		Receiver struct {
-			ID string `json:"id"`
+			ID        string `json:"id"`
+			Nickname  string `json:"nickname"`
+			AvatarURL string `json:"avatarURL"`
 		} `json:"receiver"`
 		Provider struct {
-			ID string `json:"id"`
+			ID        string `json:"id"`
+			Nickname  string `json:"nickname"`
+			AvatarURL string `json:"avatarURL"`
 		} `json:"provider"`
 		Organization struct {
 			ID string `json:"id"`
@@ -75,11 +81,12 @@ func createFixtures_PostQuery(gs *GqlgenSuite) PostQueryFixtures {
 	org := models.Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
 	createFixture(gs, &org)
 
-	users := models.Users{
-		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1 ", Uuid: domain.GetUuid()},
-		{Email: t.Name() + "_user2@example.com", Nickname: t.Name() + " User2 ", Uuid: domain.GetUuid()},
-	}
+	users := make(models.Users, 2)
 	for i := range users {
+		users[i].Email = org.Uuid.String() + "_user" + strconv.Itoa(i) + "@example.com"
+		users[i].Nickname = users[i].Email
+		users[i].Uuid = domain.GetUuid()
+		users[i].AuthPhotoURL = nulls.NewString(users[i].Nickname + ".gif")
 		createFixture(gs, &users[i])
 	}
 
@@ -220,9 +227,9 @@ func (gs *GqlgenSuite) Test_PostQuery() {
 			cost
 			isEditable
 			url
-			createdBy { id }
-			receiver { id }
-			provider { id }
+			createdBy { id nickname avatarURL }
+			receiver { id nickname avatarURL }
+			provider { id nickname avatarURL }
 			organization { id }
 			photo { id }
 			files { id } 
@@ -261,9 +268,15 @@ func (gs *GqlgenSuite) Test_PostQuery() {
 	gs.Equal(f.Posts[0].URL.String, resp.Post.Url)
 	gs.Equal(f.Posts[0].Cost.Float64, cost)
 	gs.Equal(false, resp.Post.IsEditable)
-	gs.Equal(f.Users[0].Uuid.String(), resp.Post.CreatedBy.ID)
-	gs.Equal(f.Users[0].Uuid.String(), resp.Post.Receiver.ID)
-	gs.Equal(f.Users[1].Uuid.String(), resp.Post.Provider.ID)
+	gs.Equal(f.Users[0].Uuid.String(), resp.Post.CreatedBy.ID, "creator ID doesn't match")
+	gs.Equal(f.Users[0].Nickname, resp.Post.CreatedBy.Nickname, "creator nickname doesn't match")
+	gs.Equal(f.Users[0].AuthPhotoURL.String, resp.Post.CreatedBy.AvatarURL, "creator avatar URL doesn't match")
+	gs.Equal(f.Users[0].Uuid.String(), resp.Post.Receiver.ID, "receiver ID doesn't match")
+	gs.Equal(f.Users[0].Nickname, resp.Post.Receiver.Nickname, "receiver nickname doesn't match")
+	gs.Equal(f.Users[0].AuthPhotoURL.String, resp.Post.Receiver.AvatarURL, "receiver avatar URL doesn't match")
+	gs.Equal(f.Users[1].Uuid.String(), resp.Post.Provider.ID, "provider ID doesn't match")
+	gs.Equal(f.Users[1].Nickname, resp.Post.Provider.Nickname, "provider nickname doesn't match")
+	gs.Equal(f.Users[1].AuthPhotoURL.String, resp.Post.Provider.AvatarURL, "provider avatar URL doesn't match")
 	gs.Equal(f.Organization.Uuid.String(), resp.Post.Organization.ID)
 	gs.Equal(f.Files[0].UUID.String(), resp.Post.Photo.ID)
 	gs.Equal(1, len(resp.Post.Files))

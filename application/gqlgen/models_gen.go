@@ -36,6 +36,13 @@ type LocationInput struct {
 	Longitude   *float64 `json:"longitude"`
 }
 
+// User fields that can safely be visible to any user in the system
+type PublicProfile struct {
+	ID        string  `json:"id"`
+	Nickname  string  `json:"nickname"`
+	AvatarURL *string `json:"avatarURL"`
+}
+
 type RemoveOrganizationDomainInput struct {
 	Domain         string `json:"domain"`
 	OrganizationID string `json:"organizationID"`
