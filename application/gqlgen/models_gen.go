@@ -38,8 +38,8 @@ type LocationInput struct {
 
 // User fields that can safely be visible to any user in the system
 type PublicProfile struct {
-	ID        *string `json:"id"`
-	Nickname  *string `json:"nickname"`
+	ID        string  `json:"id"`
+	Nickname  string  `json:"nickname"`
 	AvatarURL *string `json:"avatarURL"`
 }
 

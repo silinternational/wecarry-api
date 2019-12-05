@@ -1161,8 +1161,8 @@ input UpdateUserPreferencesInput {
 
 "User fields that can safely be visible to any user in the system"
 type PublicProfile {
-    id: ID
-    nickname: String
+    id: ID!
+    nickname: String!
     avatarURL: String
 }
 
@@ -3747,12 +3747,15 @@ func (ec *executionContext) _PublicProfile_id(ctx context.Context, field graphql
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOID2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _PublicProfile_nickname(ctx context.Context, field graphql.CollectedField, obj *PublicProfile) (ret graphql.Marshaler) {
@@ -3781,12 +3784,15 @@ func (ec *executionContext) _PublicProfile_nickname(ctx context.Context, field g
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _PublicProfile_avatarURL(ctx context.Context, field graphql.CollectedField, obj *PublicProfile) (ret graphql.Marshaler) {
@@ -7351,8 +7357,14 @@ func (ec *executionContext) _PublicProfile(ctx context.Context, sel ast.Selectio
 			out.Values[i] = graphql.MarshalString("PublicProfile")
 		case "id":
 			out.Values[i] = ec._PublicProfile_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "nickname":
 			out.Values[i] = ec._PublicProfile_nickname(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "avatarURL":
 			out.Values[i] = ec._PublicProfile_avatarURL(ctx, field, obj)
 		default:

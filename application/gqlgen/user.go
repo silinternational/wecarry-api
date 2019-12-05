@@ -236,15 +236,13 @@ func (r *userResolver) Preferences(ctx context.Context, obj *models.User) (*mode
 }
 
 func getPublicProfile(user *models.User) (*PublicProfile, error) {
-	id := user.Uuid.String()
-	nickname := user.Nickname
 	url, err := user.GetPhotoURL()
 	if err != nil {
 		return nil, err
 	}
 	return &PublicProfile{
-		ID:        &id,
-		Nickname:  &nickname,
+		ID:        user.Uuid.String(),
+		Nickname:  user.Nickname,
 		AvatarURL: url,
 	}, nil
 }
