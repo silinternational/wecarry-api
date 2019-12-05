@@ -3,6 +3,7 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/silinternational/wecarry-api/domain"
 	"time"
 
 	"github.com/gobuffalo/nulls"
@@ -60,6 +61,58 @@ func (p *PostHistory) ValidateUpdate(tx *pop.Connection) (*validate.Errors, erro
 func (p *PostHistory) Load(fields ...string) error {
 	if err := DB.Load(p, fields...); err != nil {
 		return fmt.Errorf("error loading data for post history %v, %s", p.ID, err)
+	}
+
+	return nil
+}
+
+// createForPost checks if the post has a status that is different than the
+// most recent of its Post History entries.  If so, it creates a new Post History
+// with the Post's new status.
+func (pH PostHistory) createForPost(post Post) error {
+	err := DB.Where("post_id = ?", post.ID).Last(&pH)
+
+	if domain.IsOtherThanNoRows(err) {
+		return err
+	}
+
+	if pH.Status != post.Status {
+		newPH := PostHistory{
+			Status:     post.Status,
+			PostID:     post.ID,
+			ReceiverID: post.ReceiverID,
+			ProviderID: post.ProviderID,
+		}
+
+		if err := DB.Create(&newPH); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// pop deletes the most recent postHistory entry for a post
+// assuming it's status matches the expected one.
+func (pH PostHistory) popForPost(post Post, currentStatus PostStatus) error {
+	if err := DB.Where("post_id = ?", post.ID).Last(&pH); err != nil {
+		if domain.IsOtherThanNoRows(err) {
+			return err
+		}
+		domain.ErrLogger.Printf(
+			"error popping post histories for post id %v. None Found", post.ID)
+		return nil
+	}
+
+	if pH.Status != currentStatus {
+		domain.ErrLogger.Printf(
+			"error popping post histories for post id %v. Expected newStatus %s but found %s",
+			post.ID, currentStatus, pH.Status)
+		return nil
+	}
+
+	if err := DB.Destroy(&pH); err != nil {
+		return err
 	}
 
 	return nil

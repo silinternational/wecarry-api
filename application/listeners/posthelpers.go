@@ -9,7 +9,7 @@ import (
 	"github.com/silinternational/wecarry-api/notifications"
 )
 
-// TODO create a proper solution for this
+// This is intended as a temporary fill-in
 func getUserLanguage() string {
 	return "en"
 }
@@ -76,7 +76,7 @@ func getMessageForProvider(postUsers PostUsers, post models.Post, template strin
 	}
 }
 
-func getMessageForRequester(postUsers PostUsers, post models.Post, template string) notifications.Message {
+func getMessageForReceiver(postUsers PostUsers, post models.Post, template string) notifications.Message {
 	data := map[string]interface{}{
 		"uiURL":            domain.Env.UIURL,
 		"appName":          domain.Env.AppName,
@@ -96,7 +96,9 @@ func getMessageForRequester(postUsers PostUsers, post models.Post, template stri
 	}
 }
 
-func sendNotificationRequestFromAcceptedOrCommittedToDelivered(template string, post models.Post, eData models.PostStatusEventData) {
+func sendNotificationRequestToProvider(params senderParams) {
+	post := params.post
+	template := params.template
 	postUsers := GetPostUsers(post)
 
 	if postUsers.Provider.Nickname == "" {
@@ -104,15 +106,46 @@ func sendNotificationRequestFromAcceptedOrCommittedToDelivered(template string, 
 		return
 	}
 
-	msg := getMessageForRequester(postUsers, post, template)
-	msg.Subject = getTranslatedSubject("Email.Subject.Request.FromAcceptedOrCommittedToDelivered", template)
+	msg := getMessageForProvider(postUsers, post, template)
+	msg.Subject = getTranslatedSubject(params.subject, template)
 
 	if err := notifications.Send(msg); err != nil {
 		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
 	}
 }
 
-func sendNotificationRequestFromAcceptedToOpen(template string, post models.Post, eData models.PostStatusEventData) {
+func sendNotificationRequestToReceiver(params senderParams) {
+	post := params.post
+	template := params.template
+
+	postUsers := GetPostUsers(post)
+
+	if postUsers.Provider.Nickname == "" {
+		domain.ErrLogger.Printf("error preparing '%s' notification - no provider", template)
+		return
+	}
+
+	msg := getMessageForReceiver(postUsers, post, template)
+	msg.Subject = getTranslatedSubject(params.subject, template)
+
+	if err := notifications.Send(msg); err != nil {
+		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
+	}
+}
+
+func sendNotificationRequestFromAcceptedToCommitted(params senderParams) {
+	sendNotificationRequestToProvider(params)
+}
+
+func sendNotificationRequestFromAcceptedOrCommittedToDelivered(params senderParams) {
+	sendNotificationRequestToReceiver(params)
+}
+
+func sendNotificationRequestFromAcceptedToOpen(params senderParams) {
+	post := params.post
+	template := params.template
+	eData := params.pEventData
+
 	postUsers := GetPostUsers(post)
 
 	oldProvider := models.User{}
@@ -122,79 +155,36 @@ func sendNotificationRequestFromAcceptedToOpen(template string, post models.Post
 		return
 	}
 
-	data := map[string]interface{}{
-		"uiURL":             domain.Env.UIURL,
-		"appName":           domain.Env.AppName,
-		"postURL":           domain.GetPostUIURL(post.Uuid.String()),
-		"postTitle":         post.Title,
-		"requesterNickname": postUsers.Requester.Nickname,
-		"requesterEmail":    postUsers.Requester.Email,
-	}
-
-	msg := notifications.Message{
-		Template:  template,
-		Data:      data,
-		ToName:    oldProvider.Nickname,
-		ToEmail:   oldProvider.Email,
-		FromEmail: domain.Env.EmailFromAddress,
-		Subject:   fmt.Sprintf("You are no longer expected to fulfill a certain %s request", domain.Env.AppName),
-	}
-	if err := notifications.Send(msg); err != nil {
-		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
-	}
-}
-
-func sendNotificationRequestFromAcceptedOrCommittedToReceived(template string, post models.Post, eData models.PostStatusEventData) {
-	postUsers := GetPostUsers(post)
-
-	if postUsers.Provider.Nickname == "" {
-		domain.ErrLogger.Printf("error preparing '%s' notification - no provider", template)
-		return
-	}
-
 	msg := getMessageForProvider(postUsers, post, template)
-	msg.Subject = getTranslatedSubject("Email.Subject.Request.FromAcceptedOrCommittedToReceived", template)
+
+	msg.ToName = oldProvider.Nickname
+	msg.ToEmail = oldProvider.Email
+	msg.Subject = getTranslatedSubject(params.subject, template)
 
 	if err := notifications.Send(msg); err != nil {
 		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
 	}
 }
 
-func sendNotificationRequestFromAcceptedToRemoved(template string, post models.Post, eData models.PostStatusEventData) {
-	postUsers := GetPostUsers(post)
-
-	if postUsers.Provider.Nickname == "" {
-		domain.ErrLogger.Printf("error preparing '%s' notification - no provider", template)
-		return
-	}
-
-	msg := getMessageForProvider(postUsers, post, template)
-	msg.Subject = getTranslatedSubject("Email.Subject.Request.FromAcceptedToRemoved", template)
-
-	if err := notifications.Send(msg); err != nil {
-		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
-	}
+func sendNotificationRequestFromAcceptedOrDeliveredToCompleted(params senderParams) {
+	sendNotificationRequestToProvider(params)
 }
 
-func sendNotificationRequestFromCommittedToAccepted(template string, post models.Post, eData models.PostStatusEventData) {
-	postUsers := GetPostUsers(post)
+func sendNotificationRequestFromAcceptedToRemoved(params senderParams) {
+	sendNotificationRequestToProvider(params)
+}
 
-	if postUsers.Provider.Nickname == "" {
-		domain.ErrLogger.Printf("error preparing '%s' notification - no provider", template)
-		return
-	}
-
-	msg := getMessageForProvider(postUsers, post, template)
-	msg.Subject = getTranslatedSubject("Email.Subject.Request.FromCommittedToAccepted", template)
-
-	if err := notifications.Send(msg); err != nil {
-		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
-	}
+func sendNotificationRequestFromCommittedToAccepted(params senderParams) {
+	sendNotificationRequestToProvider(params)
 }
 
 // Until we have status auditing history, we don't know who reverted the Post to `open` status.
 //  So, tell both the requester and provider about it.
-func sendNotificationRequestFromCommittedToOpen(template string, post models.Post, eData models.PostStatusEventData) {
+func sendNotificationRequestFromCommittedToOpen(params senderParams) {
+	post := params.post
+	template := params.template
+	eData := params.pEventData
+
 	postUsers := GetPostUsers(post)
 
 	oldProvider := models.User{}
@@ -229,7 +219,7 @@ func sendNotificationRequestFromCommittedToOpen(template string, post models.Pos
 		ToName:    postUsers.Requester.Nickname,
 		ToEmail:   postUsers.Requester.Email,
 		FromEmail: domain.Env.EmailFromAddress,
-		Subject:   getTranslatedSubject("Email.Subject.Request.FromCommittedToOpen", template),
+		Subject:   getTranslatedSubject(params.subject, template),
 	}
 
 	if err := notifications.Send(msg); err != nil {
@@ -249,103 +239,132 @@ func sendNotificationRequestFromCommittedToOpen(template string, post models.Pos
 	}
 }
 
-func sendNotificationRequestFromCommittedToRemoved(template string, post models.Post, eData models.PostStatusEventData) {
-	postUsers := GetPostUsers(post)
-
-	if postUsers.Provider.Nickname == "" {
-		domain.ErrLogger.Printf("error preparing '%s' notification - no provider", template)
-		return
-	}
-
-	msg := getMessageForProvider(postUsers, post, template)
-	msg.Subject = getTranslatedSubject("Email.Subject.Request.FromCommittedToRemoved", template)
-
-	if err := notifications.Send(msg); err != nil {
-		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
-	}
+func sendNotificationRequestFromCommittedToRemoved(params senderParams) {
+	sendNotificationRequestToProvider(params)
 }
 
-func sendNotificationRequestFromOpenToCommitted(template string, post models.Post, eData models.PostStatusEventData) {
-	postUsers := GetPostUsers(post)
-
-	if postUsers.Provider.Nickname == "" {
-		domain.ErrLogger.Printf("error preparing '%s' notification - no provider", template)
-		return
-	}
-
-	msg := getMessageForRequester(postUsers, post, template)
-	msg.Subject = getTranslatedSubject("Email.Subject.Request.FromOpenToCommitted", template)
-
-	if err := notifications.Send(msg); err != nil {
-		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
-	}
+func sendNotificationRequestFromDeliveredToAccepted(params senderParams) {
+	sendNotificationRequestToReceiver(params)
 }
 
-func sendNotificationEmpty(template string, post models.Post, eData models.PostStatusEventData) {
-	domain.ErrLogger.Print("Notification not implemented yet for " + template)
+func sendNotificationRequestFromDeliveredToCommitted(params senderParams) {
+	sendNotificationRequestToReceiver(params)
 }
 
-type Sender struct {
-	Template string
-	Sender   func(string, models.Post, models.PostStatusEventData)
+func sendNotificationRequestFromOpenToCommitted(params senderParams) {
+	sendNotificationRequestToReceiver(params)
+}
+
+func sendNotificationRequestFromCompletedToAcceptedOrDelivered(params senderParams) {
+	sendNotificationRequestToProvider(params)
+}
+
+func sendNotificationEmpty(params senderParams) {
+	domain.ErrLogger.Print("Notification not implemented yet for " + params.template)
+}
+
+type senderParams struct {
+	template   string
+	subject    string
+	post       models.Post
+	pEventData models.PostStatusEventData
+}
+
+type sender struct {
+	template string
+	subject  string
+	sender   func(senderParams) // string, string, models.Post, models.PostStatusEventData)
 }
 
 func join(s1, s2 models.PostStatus) string {
 	return fmt.Sprintf("%s-%s", s1, s2)
 }
 
-var statusSenders = map[string]Sender{
-	join(models.PostStatusAccepted, models.PostStatusDelivered): Sender{
-		Template: domain.MessageTemplateRequestFromAcceptedToDelivered,
-		Sender:   sendNotificationRequestFromAcceptedOrCommittedToDelivered},
-	join(models.PostStatusAccepted, models.PostStatusOpen): Sender{
-		Template: domain.MessageTemplateRequestFromAcceptedToOpen,
-		Sender:   sendNotificationRequestFromAcceptedToOpen},
-	join(models.PostStatusAccepted, models.PostStatusReceived): Sender{
-		Template: domain.MessageTemplateRequestFromAcceptedToReceived,
-		Sender:   sendNotificationRequestFromAcceptedOrCommittedToReceived},
-	join(models.PostStatusAccepted, models.PostStatusRemoved): Sender{
-		Template: domain.MessageTemplateRequestFromAcceptedToRemoved,
-		Sender:   sendNotificationRequestFromAcceptedToRemoved},
-	join(models.PostStatusCommitted, models.PostStatusAccepted): Sender{
-		Template: domain.MessageTemplateRequestFromCommittedToAccepted,
-		Sender:   sendNotificationRequestFromCommittedToAccepted},
-	join(models.PostStatusCommitted, models.PostStatusDelivered): Sender{
-		Template: domain.MessageTemplateRequestFromCommittedToDelivered,
-		Sender:   sendNotificationRequestFromAcceptedOrCommittedToDelivered},
-	join(models.PostStatusCommitted, models.PostStatusOpen): Sender{
-		Template: domain.MessageTemplateRequestFromCommittedToOpen,
-		Sender:   sendNotificationRequestFromCommittedToOpen},
-	join(models.PostStatusCommitted, models.PostStatusReceived): Sender{
-		Template: domain.MessageTemplateRequestFromCommittedToReceived,
-		Sender:   sendNotificationRequestFromAcceptedOrCommittedToReceived},
-	join(models.PostStatusCommitted, models.PostStatusRemoved): Sender{
-		Template: domain.MessageTemplateRequestFromCommittedToRemoved,
-		Sender:   sendNotificationRequestFromCommittedToRemoved},
-	join(models.PostStatusCompleted, models.PostStatusDelivered): Sender{
-		Template: domain.MessageTemplateRequestFromCompletedToDelivered,
-		Sender:   sendNotificationEmpty},
-	join(models.PostStatusCompleted, models.PostStatusReceived): Sender{
-		Template: domain.MessageTemplateRequestFromCompletedToReceived,
-		Sender:   sendNotificationEmpty},
-	join(models.PostStatusDelivered, models.PostStatusAccepted): Sender{
-		Template: domain.MessageTemplateRequestFromDeliveredToAccepted,
-		Sender:   sendNotificationEmpty},
-	join(models.PostStatusDelivered, models.PostStatusCompleted): Sender{
-		Template: domain.MessageTemplateRequestFromDeliveredToCompleted,
-		Sender:   sendNotificationEmpty},
-	join(models.PostStatusOpen, models.PostStatusCommitted): Sender{
-		Template: domain.MessageTemplateRequestFromOpenToCommitted,
-		Sender:   sendNotificationRequestFromOpenToCommitted},
-	join(models.PostStatusReceived, models.PostStatusAccepted): Sender{
-		Template: domain.MessageTemplateRequestFromReceivedToAccepted,
-		Sender:   sendNotificationEmpty},
-	join(models.PostStatusReceived, models.PostStatusDelivered): Sender{
-		Template: domain.MessageTemplateRequestFromReceivedToDelivered,
-		Sender:   sendNotificationEmpty},
-	join(models.PostStatusReceived, models.PostStatusCompleted): Sender{
-		Template: domain.MessageTemplateRequestFromReceivedToCompleted,
-		Sender:   sendNotificationEmpty},
+var statusSenders = map[string]sender{
+	join(models.PostStatusAccepted, models.PostStatusCommitted): sender{
+		template: domain.MessageTemplateRequestFromAcceptedToCommitted,
+		subject:  "Email.Subject.Request.FromAcceptedToCommitted",
+		sender:   sendNotificationRequestFromAcceptedToCommitted},
+
+	join(models.PostStatusAccepted, models.PostStatusCompleted): sender{
+		template: domain.MessageTemplateRequestFromAcceptedToCompleted,
+		subject:  "Email.Subject.Request.FromAcceptedOrDeliveredToCompleted",
+		sender:   sendNotificationRequestFromAcceptedOrDeliveredToCompleted},
+
+	join(models.PostStatusAccepted, models.PostStatusOpen): sender{
+		template: domain.MessageTemplateRequestFromAcceptedToOpen,
+		subject:  "Email.Subject.Request.FromAcceptedToOpen",
+		sender:   sendNotificationRequestFromAcceptedToOpen},
+
+	join(models.PostStatusAccepted, models.PostStatusReceived): sender{
+		template: domain.MessageTemplateRequestFromAcceptedToCompleted,
+		subject:  "Email.Subject.Request.FromAcceptedOrDeliveredToCompleted",
+		sender:   sendNotificationRequestFromAcceptedOrDeliveredToCompleted},
+
+	join(models.PostStatusAccepted, models.PostStatusRemoved): sender{
+		template: domain.MessageTemplateRequestFromAcceptedToRemoved,
+		subject:  "Email.Subject.Request.FromAcceptedToRemoved",
+		sender:   sendNotificationRequestFromAcceptedToRemoved},
+
+	join(models.PostStatusCommitted, models.PostStatusAccepted): sender{
+		template: domain.MessageTemplateRequestFromCommittedToAccepted,
+		subject:  "Email.Subject.Request.FromCommittedToAccepted",
+		sender:   sendNotificationRequestFromCommittedToAccepted},
+
+	join(models.PostStatusCommitted, models.PostStatusDelivered): sender{
+		template: domain.MessageTemplateRequestFromCommittedToDelivered,
+		subject:  "Email.Subject.Request.FromAcceptedOrCommittedToDelivered",
+		sender:   sendNotificationRequestFromAcceptedOrCommittedToDelivered},
+
+	join(models.PostStatusCommitted, models.PostStatusOpen): sender{
+		template: domain.MessageTemplateRequestFromCommittedToOpen,
+		subject:  "Email.Subject.Request.FromCommittedToOpen",
+		sender:   sendNotificationRequestFromCommittedToOpen},
+
+	join(models.PostStatusCommitted, models.PostStatusRemoved): sender{
+		template: domain.MessageTemplateRequestFromCommittedToRemoved,
+		subject:  "Email.Subject.Request.FromCommittedToRemoved",
+		sender:   sendNotificationRequestFromCommittedToRemoved},
+
+	join(models.PostStatusCompleted, models.PostStatusAccepted): sender{
+		template: domain.MessageTemplateRequestFromCompletedToAccepted,
+		subject:  "Email.Subject.Request.FromCompletedToAcceptedOrDelivered",
+		sender:   sendNotificationRequestFromCompletedToAcceptedOrDelivered},
+
+	join(models.PostStatusCompleted, models.PostStatusDelivered): sender{
+		template: domain.MessageTemplateRequestFromCompletedToDelivered,
+		subject:  "Email.Subject.Request.FromCompletedToAcceptedOrDelivered",
+		sender:   sendNotificationRequestFromCompletedToAcceptedOrDelivered},
+
+	join(models.PostStatusCompleted, models.PostStatusReceived): sender{
+		template: domain.MessageTemplateRequestFromCompletedToReceived,
+		subject:  "",
+		sender:   sendNotificationEmpty},
+
+	join(models.PostStatusDelivered, models.PostStatusAccepted): sender{
+		template: domain.MessageTemplateRequestFromDeliveredToAccepted,
+		subject:  "Email.Subject.Request.FromDeliveredToAccepted",
+		sender:   sendNotificationRequestFromDeliveredToAccepted},
+
+	join(models.PostStatusDelivered, models.PostStatusCommitted): sender{
+		template: domain.MessageTemplateRequestFromDeliveredToCommitted,
+		subject:  "Email.Subject.Request.FromDeliveredToCommitted",
+		sender:   sendNotificationRequestFromDeliveredToCommitted},
+
+	join(models.PostStatusDelivered, models.PostStatusCompleted): sender{
+		template: domain.MessageTemplateRequestFromDeliveredToCompleted,
+		subject:  "Email.Subject.Request.FromAcceptedOrDeliveredToCompleted",
+		sender:   sendNotificationRequestFromAcceptedOrDeliveredToCompleted},
+
+	join(models.PostStatusOpen, models.PostStatusCommitted): sender{
+		template: domain.MessageTemplateRequestFromOpenToCommitted,
+		subject:  "Email.Subject.Request.FromOpenToCommitted",
+		sender:   sendNotificationRequestFromOpenToCommitted},
+
+	join(models.PostStatusReceived, models.PostStatusCompleted): sender{
+		template: domain.MessageTemplateRequestFromReceivedToCompleted,
+		subject:  "",
+		sender:   sendNotificationEmpty},
 }
 
 func requestStatusUpdatedNotifications(post models.Post, eData models.PostStatusEventData) {
@@ -358,7 +377,14 @@ func requestStatusUpdatedNotifications(post models.Post, eData models.PostStatus
 		return
 	}
 
-	sender.Sender(notifications.GetEmailTemplate(sender.Template), post, eData)
+	params := senderParams{
+		template:   notifications.GetEmailTemplate(sender.template),
+		subject:    sender.subject,
+		post:       post,
+		pEventData: eData,
+	}
+
+	sender.sender(params)
 }
 
 func sendNewPostNotifications(post models.Post, users models.Users) {

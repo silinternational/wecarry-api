@@ -120,16 +120,45 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 		template         string
 		post             models.Post
 		eventData        models.PostStatusEventData
-		sendFunction     func(string, models.Post, models.PostStatusEventData)
+		sendFunction     func(senderParams)
 		wantEmailsSent   int
 		wantToEmail      string
 		wantBodyContains string
 		wantEmailNumber  int
 		wantErrLog       string
 	}{
+		{name: "Good - Accepted to Committed",
+			post: posts[0],
+			eventData: models.PostStatusEventData{
+				OldStatus:     models.PostStatusAccepted,
+				NewStatus:     models.PostStatusCommitted,
+				PostID:        posts[0].ID,
+				OldProviderID: *models.GetIntFromNullsInt(posts[0].ProviderID),
+			},
+			template:         domain.MessageTemplateRequestFromAcceptedToCommitted,
+			sendFunction:     sendNotificationRequestFromAcceptedToCommitted,
+			wantEmailsSent:   1,
+			wantToEmail:      posts[0].Provider.Email,
+			wantBodyContains: "isn't sure yet if they",
+		},
+		{name: "Good - Accepted to Completed",
+			post:             posts[0],
+			template:         domain.MessageTemplateRequestFromAcceptedToCompleted,
+			sendFunction:     sendNotificationRequestFromAcceptedOrDeliveredToCompleted,
+			wantEmailsSent:   1,
+			wantToEmail:      posts[0].Provider.Email,
+			wantBodyContains: "Thank you for fulfilling a request",
+		},
+		{name: "Bad - Accepted to Completed", // No Provider
+			post:         posts[1],
+			template:     domain.MessageTemplateRequestFromAcceptedToCompleted,
+			sendFunction: sendNotificationRequestFromAcceptedOrDeliveredToCompleted,
+			wantErrLog: fmt.Sprintf("error preparing '%s' notification - no provider\n",
+				domain.MessageTemplateRequestReceived),
+		},
 		{name: "Good - Accepted to Delivered",
 			post:             posts[0],
-			template:         domain.MessageTemplateRequestFromAcceptedToDelivered,
+			template:         domain.MessageTemplateRequestDelivered,
 			sendFunction:     sendNotificationRequestFromAcceptedOrCommittedToDelivered,
 			wantEmailsSent:   1,
 			wantToEmail:      posts[0].CreatedBy.Email,
@@ -155,21 +184,6 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 			wantEmailsSent:   1,
 			wantToEmail:      posts[0].Provider.Email,
 			wantBodyContains: "no longer wants you",
-		},
-		{name: "Good - Accepted to Received",
-			post:             posts[0],
-			template:         domain.MessageTemplateRequestFromAcceptedToReceived,
-			sendFunction:     sendNotificationRequestFromAcceptedOrCommittedToReceived,
-			wantEmailsSent:   1,
-			wantToEmail:      posts[0].Provider.Email,
-			wantBodyContains: "Thank you for fulfilling a request",
-		},
-		{name: "Bad - Accepted to Received", // No Provider
-			post:         posts[1],
-			template:     domain.MessageTemplateRequestFromAcceptedToReceived,
-			sendFunction: sendNotificationRequestFromAcceptedOrCommittedToReceived,
-			wantErrLog: fmt.Sprintf("error preparing '%s' notification - no provider\n",
-				domain.MessageTemplateRequestReceived),
 		},
 		{name: "Good - Accepted to Removed",
 			post:             posts[0],
@@ -260,6 +274,45 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 			wantErrLog: fmt.Sprintf("error preparing '%s' notification - no provider\n",
 				domain.MessageTemplateRequestFromCommittedToRemoved),
 		},
+		{name: "Good - Completed to Accepted",
+			post:             posts[0],
+			template:         domain.MessageTemplateRequestFromCompletedToAccepted,
+			sendFunction:     sendNotificationRequestFromCompletedToAcceptedOrDelivered,
+			wantEmailsSent:   1,
+			wantToEmail:      posts[0].Provider.Email,
+			wantBodyContains: "said they haven't received the item after all",
+		},
+		{name: "Bad - Completed to Accepted", // No Provider
+			post:         posts[1],
+			template:     domain.MessageTemplateRequestFromCompletedToAccepted,
+			sendFunction: sendNotificationRequestFromCompletedToAcceptedOrDelivered,
+			wantErrLog: fmt.Sprintf("error preparing '%s' notification - no provider\n",
+				domain.MessageTemplateRequestNotReceivedAfterAll),
+		},
+		{name: "Good - Delivered to Accepted",
+			post:             posts[0],
+			template:         domain.MessageTemplateRequestFromDeliveredToAccepted,
+			sendFunction:     sendNotificationRequestFromDeliveredToAccepted,
+			wantEmailsSent:   1,
+			wantToEmail:      posts[0].CreatedBy.Email,
+			wantBodyContains: "now says they haven't yet delivered it",
+		},
+		{name: "Good - Delivered to Committed",
+			post:             posts[0],
+			template:         domain.MessageTemplateRequestFromDeliveredToCommitted,
+			sendFunction:     sendNotificationRequestFromDeliveredToCommitted,
+			wantEmailsSent:   1,
+			wantToEmail:      posts[0].CreatedBy.Email,
+			wantBodyContains: "now says they haven't yet delivered it",
+		},
+		{name: "Good - Delivered to Completed",
+			post:             posts[0],
+			template:         domain.MessageTemplateRequestReceived,
+			sendFunction:     sendNotificationRequestFromAcceptedOrDeliveredToCompleted,
+			wantEmailsSent:   1,
+			wantToEmail:      posts[0].Provider.Email,
+			wantBodyContains: "Thank you for fulfilling a request",
+		},
 		{name: "Good - Open to Committed",
 			post:             posts[0],
 			template:         domain.MessageTemplateRequestFromOpenToCommitted,
@@ -282,8 +335,14 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 
 			notifications.TestEmailService.DeleteSentMessages()
 
-			template := getT(test.template)
-			test.sendFunction(template, test.post, test.eventData)
+			params := senderParams{
+				template:   getT(test.template),
+				subject:    "test subject",
+				post:       test.post,
+				pEventData: test.eventData,
+			}
+
+			test.sendFunction(params)
 			gotBuf := buf.String()
 			buf.Reset()
 
@@ -313,14 +372,19 @@ func (ms *ModelSuite) TestGetTranslatedSubject() {
 			want:          "Request marked as delivered on " + domain.Env.AppName,
 		},
 		{
+			name:          "from accepted to committed",
+			translationID: "Email.Subject.Request.FromAcceptedToCommitted",
+			want:          "Oops, you are not yet expected to fulfill a certain " + domain.Env.AppName + " request",
+		},
+		{
+			name:          "from accepted to completed",
+			translationID: "Email.Subject.Request.FromAcceptedOrDeliveredToCompleted",
+			want:          "Thank you for fulfilling a request on " + domain.Env.AppName,
+		},
+		{
 			name:          "from accepted to open",
 			translationID: "Email.Subject.Request.FromAcceptedToOpen",
 			want:          "You are no longer expected to fulfill a certain " + domain.Env.AppName + " request",
-		},
-		{
-			name:          "from accepted to received",
-			translationID: "Email.Subject.Request.FromAcceptedOrCommittedToReceived",
-			want:          "Thank you for fulfilling a request on " + domain.Env.AppName,
 		},
 		{
 			name:          "from accepted to removed",
@@ -341,6 +405,21 @@ func (ms *ModelSuite) TestGetTranslatedSubject() {
 			name:          "from committed to removed",
 			translationID: "Email.Subject.Request.FromCommittedToRemoved",
 			want:          "Request removed on " + domain.Env.AppName,
+		},
+		{
+			name:          "from completed to accepted",
+			translationID: "Email.Subject.Request.FromCompletedToAcceptedOrDelivered",
+			want:          "Oops, request not received on " + domain.Env.AppName + " after all",
+		},
+		{
+			name:          "from delivered to accepted",
+			translationID: "Email.Subject.Request.FromDeliveredToAccepted",
+			want:          "Request not delivered after all on " + domain.Env.AppName,
+		},
+		{
+			name:          "from delivered to committed",
+			translationID: "Email.Subject.Request.FromDeliveredToCommitted",
+			want:          "Request not delivered after all on " + domain.Env.AppName,
 		},
 		{
 			name:          "from open to committed",

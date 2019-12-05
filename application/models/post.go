@@ -423,9 +423,11 @@ func (p *Post) BeforeUpdate(tx *pop.Connection) error {
 	}
 
 	if isBackStep {
-		err = p.popHistory(oldPost.Status)
+		var pH PostHistory
+		err = pH.popForPost(*p, oldPost.Status)
 	} else {
-		err = p.createNewHistory()
+		var pH PostHistory
+		err = pH.createForPost(*p)
 	}
 
 	if err != nil {
@@ -812,60 +814,4 @@ func (p *Post) GetLocationForNotifications() (*Location, error) {
 		postLocation = p.Destination
 	}
 	return &postLocation, nil
-}
-
-// createNewHistory checks if the post has a status that is different than the
-// most recent of its Post History entries.  If so, it creates a new Post History
-// with the Post's new status.
-func (p *Post) createNewHistory() error {
-	var oldPH PostHistory
-
-	err := DB.Where("post_id = ?", p.ID).Last(&oldPH)
-
-	if domain.IsOtherThanNoRows(err) {
-		return err
-	}
-
-	if oldPH.Status != p.Status {
-		newPH := PostHistory{
-			Status:     p.Status,
-			PostID:     p.ID,
-			ReceiverID: p.ReceiverID,
-			ProviderID: p.ProviderID,
-		}
-
-		if err := DB.Create(&newPH); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// popHistory deletes the most recent postHistory entry for a post
-// assuming it's status matches the expected one.
-func (p *Post) popHistory(currentStatus PostStatus) error {
-	var oldPH PostHistory
-
-	if err := DB.Where("post_id = ?", p.ID).Last(&oldPH); err != nil {
-		if domain.IsOtherThanNoRows(err) {
-			return err
-		}
-		domain.ErrLogger.Printf(
-			"error popping post histories for post id %v. None Found", p.ID)
-		return nil
-	}
-
-	if oldPH.Status != currentStatus {
-		domain.ErrLogger.Printf(
-			"error popping post histories for post id %v. Expected newStatus %s but found %s",
-			p.ID, currentStatus, oldPH.Status)
-		return nil
-	}
-
-	if err := DB.Destroy(&oldPH); err != nil {
-		return err
-	}
-
-	return nil
 }
