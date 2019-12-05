@@ -7,7 +7,7 @@ func SendNewUserWelcomes() error {
 	// m.Subject = "New User Welcome"
 	// m.From = ""
 	// m.To = []string{}
-	// err := m.AddBody(r.HTML("new_user_welcome.html"), render.Data{})
+	// err := m.AddBody(r.HTML("new_user_welcome.plush.html"), render.Data{})
 	// if err != nil {
 	// 	return err
 	// }
