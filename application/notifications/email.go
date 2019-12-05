@@ -25,8 +25,8 @@ func GetEmailTemplate(key string) string {
 		domain.MessageTemplateRequestFromAcceptedToReceived:   domain.MessageTemplateRequestReceived,
 		domain.MessageTemplateRequestFromAcceptedToCompleted:  domain.MessageTemplateRequestReceived,
 		domain.MessageTemplateRequestFromCommittedToReceived:  domain.MessageTemplateRequestReceived,
-		domain.MessageTemplateRequestFromCompletedToAccepted:  domain.MessageTemplateRequestNotReceivedAfterall,
-		domain.MessageTemplateRequestFromCompletedToDelivered: domain.MessageTemplateRequestNotReceivedAfterall,
+		domain.MessageTemplateRequestFromCompletedToAccepted:  domain.MessageTemplateRequestNotReceivedAfterAll,
+		domain.MessageTemplateRequestFromCompletedToDelivered: domain.MessageTemplateRequestNotReceivedAfterAll,
 	}
 
 	template, ok := weirdTemplates[key]

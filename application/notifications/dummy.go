@@ -43,8 +43,8 @@ var dummyTemplates = map[string]dummyTemplate{
 		subject: domain.MessageTemplateRequestReceived,
 		body:    "The status of a request changed from accepted or delivered to received.",
 	},
-	domain.MessageTemplateRequestNotReceivedAfterall: {
-		subject: domain.MessageTemplateRequestNotReceivedAfterall,
+	domain.MessageTemplateRequestNotReceivedAfterAll: {
+		subject: domain.MessageTemplateRequestNotReceivedAfterAll,
 		body:    "The status of a request changed from completed to accepted or delivered.",
 	},
 	domain.MessageTemplateRequestFromAcceptedToCommitted: {

@@ -149,12 +149,12 @@
   translation: Request removed on {{.AppName}}
 
 - id: Email.Subject.Request.FromCompletedToAcceptedOrDelivered
-  translation: Oops, request not received on {{.AppName}} afterall
+  translation: Oops, request not received on {{.AppName}} after all
 
 - id: Email.Subject.Request.FromDeliveredToAccepted
-  translation: Request not delivered afterall on {{.AppName}}
+  translation: Request not delivered after all on {{.AppName}}
 - id: Email.Subject.Request.FromDeliveredToCommitted
-  translation: Request not delivered afterall on {{.AppName}}
+  translation: Request not delivered after all on {{.AppName}}
 
 - id: Email.Subject.Request.FromOpenToCommitted
   translation: Potential provider on {{.AppName}}

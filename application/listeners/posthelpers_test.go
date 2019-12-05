@@ -280,14 +280,14 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 			sendFunction:     sendNotificationRequestFromCompletedToAcceptedOrDelivered,
 			wantEmailsSent:   1,
 			wantToEmail:      posts[0].Provider.Email,
-			wantBodyContains: "said they haven't received the item afterall",
+			wantBodyContains: "said they haven't received the item after all",
 		},
 		{name: "Bad - Completed to Accepted", // No Provider
 			post:         posts[1],
 			template:     domain.MessageTemplateRequestFromCompletedToAccepted,
 			sendFunction: sendNotificationRequestFromCompletedToAcceptedOrDelivered,
 			wantErrLog: fmt.Sprintf("error preparing '%s' notification - no provider\n",
-				domain.MessageTemplateRequestNotReceivedAfterall),
+				domain.MessageTemplateRequestNotReceivedAfterAll),
 		},
 		{name: "Good - Delivered to Accepted",
 			post:             posts[0],
@@ -409,17 +409,17 @@ func (ms *ModelSuite) TestGetTranslatedSubject() {
 		{
 			name:          "from completed to accepted",
 			translationID: "Email.Subject.Request.FromCompletedToAcceptedOrDelivered",
-			want:          "Oops, request not received on " + domain.Env.AppName + " afterall",
+			want:          "Oops, request not received on " + domain.Env.AppName + " after all",
 		},
 		{
 			name:          "from delivered to accepted",
 			translationID: "Email.Subject.Request.FromDeliveredToAccepted",
-			want:          "Request not delivered afterall on " + domain.Env.AppName,
+			want:          "Request not delivered after all on " + domain.Env.AppName,
 		},
 		{
 			name:          "from delivered to committed",
 			translationID: "Email.Subject.Request.FromDeliveredToCommitted",
-			want:          "Request not delivered afterall on " + domain.Env.AppName,
+			want:          "Request not delivered after all on " + domain.Env.AppName,
 		},
 		{
 			name:          "from open to committed",

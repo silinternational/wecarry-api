@@ -73,7 +73,7 @@ const (
 	MessageTemplateRequestFromReceivedToCompleted  = "request_from_received_to_completed"
 	MessageTemplateRequestDelivered                = "request_delivered"
 	MessageTemplateRequestReceived                 = "request_received"
-	MessageTemplateRequestNotReceivedAfterall      = "request_not_received_afterall"
+	MessageTemplateRequestNotReceivedAfterAll      = "request_not_received_after_all"
 )
 
 // User preferences
