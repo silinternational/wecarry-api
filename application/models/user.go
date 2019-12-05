@@ -1,9 +1,11 @@
 package models
 
 import (
+	"crypto/md5"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/gobuffalo/events"
@@ -372,7 +374,10 @@ func (u *User) GetPhotoURL() (*string, error) {
 		if u.AuthPhotoURL.Valid {
 			return &u.AuthPhotoURL.String, nil
 		}
-		return nil, nil
+		// ref: https://en.gravatar.com/site/implement/images/
+		hash := md5.Sum([]byte(strings.ToLower(strings.TrimSpace(u.Email))))
+		url := fmt.Sprintf("https://www.gravatar.com/avatar/%x.jpg?s=200&d=mp", hash)
+		return &url, nil
 	}
 
 	if err := u.PhotoFile.RefreshURL(); err != nil {
