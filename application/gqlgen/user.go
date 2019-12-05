@@ -235,6 +235,7 @@ func (r *userResolver) Preferences(ctx context.Context, obj *models.User) (*mode
 	return &standardPrefs, nil
 }
 
+// getPublicProfile converts a models.User to a PublicProfile, which hides private profile information
 func getPublicProfile(user *models.User) (*PublicProfile, error) {
 	url, err := user.GetPhotoURL()
 	if err != nil {
