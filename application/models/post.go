@@ -659,6 +659,13 @@ func scopeNotRemoved() pop.ScopeFunc {
 	}
 }
 
+// scope query to not include removed or completed posts
+func scopeNotCompleted() pop.ScopeFunc {
+	return func(q *pop.Query) *pop.Query {
+		return q.Where("status not in (?)", PostStatusRemoved, PostStatusCompleted)
+	}
+}
+
 // FindByUserAndUUID finds the post identified by the given UUID if it belongs to the same organization as the
 // given user and if the post has not been marked as removed.
 func (p *Post) FindByUserAndUUID(ctx context.Context, user User, uuid string) error {
@@ -666,11 +673,12 @@ func (p *Post) FindByUserAndUUID(ctx context.Context, user User, uuid string) er
 		Where("uuid = ?", uuid).First(p)
 }
 
-// FindByUser finds all posts belonging to the same organization as the given user and not marked as removed.
+// FindByUser finds all posts belonging to the same organization as the given user and not marked as
+// completed or removed.
 func (p *Posts) FindByUser(ctx context.Context, user User) error {
 	return DB.
 		Scope(scopeUserOrgs(user)).
-		Scope(scopeNotRemoved()).
+		Scope(scopeNotCompleted()).
 		Order("created_at desc").
 		All(p)
 }
