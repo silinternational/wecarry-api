@@ -64,7 +64,7 @@ type User {
     adminRole: UserAdminRole
     organizations: [Organization!]!
     posts(role: PostRole!): [Post!]!
-    photoURL: String
+    avatarURL: String
     preferences: UserPreferences
     location: Location
     unreadMessageCount: Int!

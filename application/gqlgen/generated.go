@@ -160,13 +160,13 @@ type ComplexityRoot struct {
 
 	User struct {
 		AdminRole          func(childComplexity int) int
+		AvatarURL          func(childComplexity int) int
 		CreatedAt          func(childComplexity int) int
 		Email              func(childComplexity int) int
 		ID                 func(childComplexity int) int
 		Location           func(childComplexity int) int
 		Nickname           func(childComplexity int) int
 		Organizations      func(childComplexity int) int
-		PhotoURL           func(childComplexity int) int
 		Posts              func(childComplexity int, role PostRole) int
 		Preferences        func(childComplexity int) int
 		UnreadMessageCount func(childComplexity int) int
@@ -263,7 +263,7 @@ type UserResolver interface {
 
 	Organizations(ctx context.Context, obj *models.User) ([]models.Organization, error)
 	Posts(ctx context.Context, obj *models.User, role PostRole) ([]models.Post, error)
-	PhotoURL(ctx context.Context, obj *models.User) (*string, error)
+	AvatarURL(ctx context.Context, obj *models.User) (*string, error)
 	Preferences(ctx context.Context, obj *models.User) (*models.StandardPreferences, error)
 	Location(ctx context.Context, obj *models.User) (*models.Location, error)
 	UnreadMessageCount(ctx context.Context, obj *models.User) (int, error)
@@ -888,6 +888,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.User.AdminRole(childComplexity), true
 
+	case "User.avatarURL":
+		if e.complexity.User.AvatarURL == nil {
+			break
+		}
+
+		return e.complexity.User.AvatarURL(childComplexity), true
+
 	case "User.createdAt":
 		if e.complexity.User.CreatedAt == nil {
 			break
@@ -929,13 +936,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.User.Organizations(childComplexity), true
-
-	case "User.photoURL":
-		if e.complexity.User.PhotoURL == nil {
-			break
-		}
-
-		return e.complexity.User.PhotoURL(childComplexity), true
 
 	case "User.posts":
 		if e.complexity.User.Posts == nil {
@@ -1119,7 +1119,7 @@ type User {
     adminRole: UserAdminRole
     organizations: [Organization!]!
     posts(role: PostRole!): [Post!]!
-    photoURL: String
+    avatarURL: String
     preferences: UserPreferences
     location: Location
     unreadMessageCount: Int!
@@ -4811,7 +4811,7 @@ func (ec *executionContext) _User_posts(ctx context.Context, field graphql.Colle
 	return ec.marshalNPost2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _User_photoURL(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_avatarURL(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -4830,7 +4830,7 @@ func (ec *executionContext) _User_photoURL(ctx context.Context, field graphql.Co
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.User().PhotoURL(rctx, obj)
+		return ec.resolvers.User().AvatarURL(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7705,7 +7705,7 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 				}
 				return res
 			})
-		case "photoURL":
+		case "avatarURL":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
 				defer func() {
@@ -7713,7 +7713,7 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._User_photoURL(ctx, field, obj)
+				res = ec._User_avatarURL(ctx, field, obj)
 				return res
 			})
 		case "preferences":

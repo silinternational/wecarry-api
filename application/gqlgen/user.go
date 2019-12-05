@@ -62,8 +62,8 @@ func (r *userResolver) Posts(ctx context.Context, obj *models.User, role PostRol
 	return posts, nil
 }
 
-// PhotoURL retrieves a URL for the user profile photo or avatar.
-func (r *userResolver) PhotoURL(ctx context.Context, obj *models.User) (*string, error) {
+// AvatarURL retrieves a URL for the user profile photo or avatar.
+func (r *userResolver) AvatarURL(ctx context.Context, obj *models.User) (*string, error) {
 	if obj == nil {
 		return nil, nil
 	}
