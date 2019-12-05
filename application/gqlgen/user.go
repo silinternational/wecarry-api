@@ -247,11 +247,16 @@ func getPublicProfiles(ctx context.Context, users []models.User) []PublicProfile
 
 // getPublicProfile converts a models.User to a PublicProfile, which hides private profile information
 func getPublicProfile(ctx context.Context, user *models.User) *PublicProfile {
+	if user == nil {
+		return nil
+	}
+
 	url, err := user.GetPhotoURL()
 	if err != nil {
 		_ = reportError(ctx, err, "", map[string]interface{}{"user": user.Uuid})
 		return nil
 	}
+
 	return &PublicProfile{
 		ID:        user.Uuid.String(),
 		Nickname:  user.Nickname,
