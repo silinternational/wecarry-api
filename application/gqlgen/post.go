@@ -48,11 +48,7 @@ func (r *postResolver) CreatedBy(ctx context.Context, obj *models.Post) (*Public
 		return nil, reportError(ctx, err, "GetPostCreator")
 	}
 
-	profile, err := getPublicProfile(creator)
-	if err != nil {
-		return nil, reportError(ctx, err, "GetPostCreator.GetPublicProfile")
-	}
-	return profile, nil
+	return getPublicProfile(ctx, creator), nil
 }
 
 // Receiver resolves the `receiver` property of the post query. It retrieves the related record from the database.
@@ -66,12 +62,7 @@ func (r *postResolver) Receiver(ctx context.Context, obj *models.Post) (*PublicP
 		return nil, reportError(ctx, err, "GetPostReceiver")
 	}
 
-	profile, err := getPublicProfile(receiver)
-	if err != nil {
-		return nil, reportError(ctx, err, "GetPostReceiver.GetPublicProfile")
-	}
-
-	return profile, nil
+	return getPublicProfile(ctx, receiver), nil
 }
 
 // Provider resolves the `provider` property of the post query. It retrieves the related record from the database.
@@ -85,12 +76,7 @@ func (r *postResolver) Provider(ctx context.Context, obj *models.Post) (*PublicP
 		return nil, reportError(ctx, err, "GetPostProvider")
 	}
 
-	profile, err := getPublicProfile(provider)
-	if err != nil {
-		return nil, reportError(ctx, err, "GetPostProvider.GetPublicProfile")
-	}
-
-	return profile, nil
+	return getPublicProfile(ctx, provider), nil
 }
 
 // Organization resolves the `organization` property of the post query. It retrieves the related record from the

@@ -32,12 +32,7 @@ func (r *messageResolver) Sender(ctx context.Context, obj *models.Message) (*Pub
 		return nil, reportError(ctx, err, "GetMessageSender")
 	}
 
-	profile, err := getPublicProfile(user)
-	if err != nil {
-		return nil, reportError(ctx, err, "GetMessageSender.GetPublicProfile")
-	}
-
-	return profile, nil
+	return getPublicProfile(ctx, user), nil
 }
 
 // Thread resolves the `thread` property of the message query

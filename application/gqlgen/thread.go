@@ -28,15 +28,7 @@ func (r *threadResolver) Participants(ctx context.Context, obj *models.Thread) (
 		return nil, reportError(ctx, err, "GetThreadParticipants")
 	}
 
-	profiles := make([]PublicProfile, len(participants))
-	for i, p := range participants {
-		prof, err := getPublicProfile(&p)
-		if err != nil {
-			return nil, reportError(ctx, err, "GetThreadParticipants.GetPublicProfile")
-		}
-		profiles[i] = *prof
-	}
-	return profiles, nil
+	return getPublicProfiles(ctx, participants), nil
 }
 
 // ID resolves the `ID` property of the thread query. It provides the UUID instead of the autoincrement ID.

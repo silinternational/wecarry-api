@@ -235,15 +235,26 @@ func (r *userResolver) Preferences(ctx context.Context, obj *models.User) (*mode
 	return &standardPrefs, nil
 }
 
+// getPublicProfiles converts a list of models.User to PublicProfile, hiding private profile information
+func getPublicProfiles(ctx context.Context, users []models.User) []PublicProfile {
+	profiles := make([]PublicProfile, len(users))
+	for i, p := range users {
+		prof := getPublicProfile(ctx, &p)
+		profiles[i] = *prof
+	}
+	return profiles
+}
+
 // getPublicProfile converts a models.User to a PublicProfile, which hides private profile information
-func getPublicProfile(user *models.User) (*PublicProfile, error) {
+func getPublicProfile(ctx context.Context, user *models.User) *PublicProfile {
 	url, err := user.GetPhotoURL()
 	if err != nil {
-		return nil, err
+		_ = reportError(ctx, err, "", map[string]interface{}{"user": user.Uuid})
+		return nil
 	}
 	return &PublicProfile{
 		ID:        user.Uuid.String(),
 		Nickname:  user.Nickname,
 		AvatarURL: url,
-	}, nil
+	}
 }
