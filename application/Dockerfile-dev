@@ -1,5 +1,7 @@
 FROM gobuffalo/buffalo:v0.14.6
 
+RUN chmod -R o=,g=rwX $GOPATH/pkg
+
 RUN apt-get update && apt-get install -y \
     nano \
     curl \
@@ -12,11 +14,14 @@ RUN curl -o /usr/local/bin/whenavail https://bitbucket.org/silintl/docker-whenav
 RUN mkdir -p /wecarry
 WORKDIR /wecarry
 
-
 RUN echo 'alias ll="ls -al"' >> ~/.bashrc
 
 ADD . .
+RUN chmod 660 /wecarry/go.* && chmod 770 /wecarry
 ENV GO111MODULE=on
+
+RUN useradd user && usermod -a -G root user && mkdir /home/user && chown user.user /home/user
+USER user
 RUN go get ./...
 RUN go get github.com/gobuffalo/suite
 RUN go get github.com/gobuffalo/httptest
