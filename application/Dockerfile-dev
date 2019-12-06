@@ -25,5 +25,6 @@ USER user
 RUN go get ./...
 RUN go get github.com/gobuffalo/suite
 RUN go get github.com/gobuffalo/httptest
+RUN go get github.com/markbates/grift
 
 CMD ["buffalo", "dev"]
