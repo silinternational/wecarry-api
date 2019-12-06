@@ -2,7 +2,6 @@ package grifts
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/gobuffalo/nulls"
 	"github.com/gofrs/uuid"
@@ -218,9 +217,6 @@ var _ = grift.Namespace("db", func() {
 				Size:           models.PostSizeMedium,
 				Uuid:           postUuid1,
 				ReceiverID:     nulls.NewInt(1),
-				NeededAfter:    time.Date(2019, time.July, 19, 0, 0, 0, 0, time.UTC),
-				NeededBefore:   time.Date(2019, time.August, 3, 0, 0, 0, 0, time.UTC),
-				Category:       "Unknown",
 				Description:    nulls.NewString("Missing my good, old, Canadian maple syrupy goodness"),
 			},
 			{
@@ -234,8 +230,6 @@ var _ = grift.Namespace("db", func() {
 				Size:           models.PostSizeSmall,
 				Uuid:           postUuid2,
 				ReceiverID:     nulls.NewInt(2),
-				NeededBefore:   time.Date(2019, time.August, 3, 0, 0, 0, 0, time.UTC),
-				Category:       "Food",
 				Description:    nulls.NewString("Jiffy Peanut Butter goes on our daily bread!"),
 			},
 			{
@@ -249,8 +243,6 @@ var _ = grift.Namespace("db", func() {
 				Size:           models.PostSizeTiny,
 				Uuid:           postUuid3,
 				ReceiverID:     nulls.NewInt(3),
-				NeededAfter:    time.Date(2019, time.July, 18, 0, 0, 0, 0, time.UTC),
-				Category:       "Personal",
 				Description:    nulls.NewString("Please save me from having painfully cracked lips!"),
 			},
 			{
@@ -264,9 +256,6 @@ var _ = grift.Namespace("db", func() {
 				Size:           models.PostSizeSmall,
 				Uuid:           postUuid4,
 				ReceiverID:     nulls.NewInt(4),
-				NeededAfter:    time.Date(2019, time.August, 3, 0, 0, 0, 0, time.UTC),
-				NeededBefore:   time.Date(2019, time.September, 1, 0, 0, 0, 0, time.UTC),
-				Category:       "Food",
 				Description:    nulls.NewString("I already have chocolate, but I need peanut butter."),
 			},
 			{
@@ -280,7 +269,6 @@ var _ = grift.Namespace("db", func() {
 				Size:           models.PostSizeTiny,
 				Uuid:           postUuid5,
 				ReceiverID:     nulls.NewInt(5),
-				Category:       "Mints",
 				Description:    nulls.NewString("The original celebrated curiously strong mints"),
 			},
 		}

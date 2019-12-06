@@ -128,15 +128,11 @@ type Post {
     destination: Location!
     origin: Location
     size: PostSize!
-    neededAfter: String
-    neededBefore: String
-    category: String!
     status: String!
     threads: [Thread!]!
     createdAt: Time!
     updatedAt: Time!
     url: String
-    cost: String
     kilograms: Float
     photo: File
     files: [File!]!
@@ -211,11 +207,7 @@ input CreatePostInput {
     destination: LocationInput!
     origin: LocationInput
     size: PostSize!
-    neededAfter: String
-    neededBefore: String
-    category: String
     url: String
-    cost: String
     kilograms: Float
     photoID: ID
 }
@@ -233,11 +225,7 @@ input UpdatePostInput {
     destination: LocationInput
     origin: LocationInput
     size: PostSize
-    neededAfter: String
-    neededBefore: String
-    category: String
     url: String
-    cost: String
     kilograms: Float
     photoID: ID
 }

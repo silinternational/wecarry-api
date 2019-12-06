@@ -39,13 +39,9 @@ type PostResponse struct {
 			Long        float64 `json:"longitude"`
 		} `json:"origin"`
 		Size         models.PostSize   `json:"size"`
-		NeededAfter  string            `json:"neededAfter"`
-		NeededBefore string            `json:"neededBefore"`
-		Category     string            `json:"category"`
 		Status       models.PostStatus `json:"status"`
 		CreatedAt    string            `json:"createdAt"`
 		UpdatedAt    string            `json:"updatedAt"`
-		Cost         string            `json:"cost"`
 		Kilograms    float64           `json:"kilograms"`
 		IsEditable   bool              `json:"isEditable"`
 		Url          string            `json:"url"`
@@ -131,12 +127,8 @@ func createFixtures_PostQuery(gs *GqlgenSuite) PostQueryFixtures {
 			DestinationID:  locations[0].ID,
 			OriginID:       nulls.NewInt(locations[1].ID),
 			Size:           models.PostSizeSmall,
-			NeededAfter:    time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
-			NeededBefore:   time.Date(2099, 1, 1, 0, 0, 0, 0, time.UTC),
-			Category:       "OTHER",
 			Description:    nulls.NewString("This is a description"),
 			URL:            nulls.NewString("https://www.example.com/items/101"),
-			Cost:           nulls.NewFloat64(1.0),
 			Kilograms:      11.11,
 		},
 		{
@@ -211,22 +203,18 @@ func (gs *GqlgenSuite) Test_PostQuery() {
 	f := createFixtures_PostQuery(gs)
 	c := getGqlClient()
 
-	query := `{ post(id: "` + f.Posts[0].Uuid.String() + `") 
-		{ 
-			id 
+	query := `{ post(id: "` + f.Posts[0].Uuid.String() + `")
+		{
+			id
 		    type
 			title
 			description
 			destination {description country latitude longitude}
 			origin {description country latitude longitude}
 			size
-			neededAfter
-			neededBefore
-			category
 			status
 			createdAt
 			updatedAt
-			cost
 			kilograms
 			isEditable
 			url
@@ -235,7 +223,7 @@ func (gs *GqlgenSuite) Test_PostQuery() {
 			provider { id nickname avatarURL }
 			organization { id }
 			photo { id }
-			files { id } 
+			files { id }
 		}}`
 
 	var resp PostResponse
@@ -260,19 +248,10 @@ func (gs *GqlgenSuite) Test_PostQuery() {
 	gs.Equal(f.Locations[1].Longitude.Float64, resp.Post.Origin.Long)
 
 	gs.Equal(f.Posts[0].Size, resp.Post.Size)
-	gs.Equal(f.Posts[0].NeededAfter.Format(time.RFC3339), resp.Post.NeededAfter)
-	gs.Equal(f.Posts[0].NeededBefore.Format(time.RFC3339), resp.Post.NeededBefore)
-	gs.Equal(f.Posts[0].Category, resp.Post.Category)
 	gs.Equal(f.Posts[0].Status, resp.Post.Status)
 	gs.Equal(f.Posts[0].CreatedAt.Format(time.RFC3339), resp.Post.CreatedAt)
 	gs.Equal(f.Posts[0].UpdatedAt.Format(time.RFC3339), resp.Post.UpdatedAt)
-
-	cost, err := strconv.ParseFloat(resp.Post.Cost, 64)
-	gs.NoError(err, "couldn't parse cost field as a float")
-	gs.Equal(f.Posts[0].Cost.Float64, cost)
-
 	gs.Equal(f.Posts[0].Kilograms, resp.Post.Kilograms)
-
 	gs.Equal(f.Posts[0].URL.String, resp.Post.Url)
 	gs.Equal(false, resp.Post.IsEditable)
 	gs.Equal(f.Users[0].Uuid.String(), resp.Post.CreatedBy.ID, "creator ID doesn't match")
@@ -401,22 +380,18 @@ func (gs *GqlgenSuite) Test_UpdatePost() {
 	var postsResp PostResponse
 
 	input := `id: "` + f.Posts[0].Uuid.String() + `" photoID: "` + f.Files[1].UUID.String() + `"` +
-		` 
+		`
 			description: "new description"
 			destination: {description:"dest" country:"dc" latitude:1.1 longitude:2.2}
 			origin: {description:"origin" country:"oc" latitude:3.3 longitude:4.4}
 			size: TINY
-			neededAfter: "2019-11-01"
-			neededBefore: "2019-12-25"
-			category: "cat"
-			url: "example.com" 
-			cost: "1.00"
+			url: "example.com"
 			kilograms: 22.22
 		`
-	query := `mutation { post: updatePost(input: {` + input + `}) { id photo { id } description 
-			destination { description country latitude longitude} 
+	query := `mutation { post: updatePost(input: {` + input + `}) { id photo { id } description
+			destination { description country latitude longitude}
 			origin { description country latitude longitude}
-			size neededAfter neededBefore category url cost kilograms isEditable}}`
+			size url kilograms isEditable}}`
 
 	TestUser = f.Users[0]
 	c.MustPost(query, &postsResp)
@@ -438,17 +413,13 @@ func (gs *GqlgenSuite) Test_UpdatePost() {
 	gs.Equal(3.3, postsResp.Post.Origin.Lat)
 	gs.Equal(4.4, postsResp.Post.Origin.Long)
 	gs.Equal(models.PostSizeTiny, postsResp.Post.Size)
-	gs.Equal("2019-11-01T00:00:00Z", postsResp.Post.NeededAfter)
-	gs.Equal("2019-12-25T00:00:00Z", postsResp.Post.NeededBefore)
-	gs.Equal("cat", postsResp.Post.Category)
 	gs.Equal("example.com", postsResp.Post.Url)
-	gs.Equal("1", postsResp.Post.Cost)
 	gs.Equal(22.22, postsResp.Post.Kilograms)
 	gs.Equal(true, postsResp.Post.IsEditable)
 
 	// Attempt to edit a locked post
 	TestUser = f.Users[1]
-	input = `id: "` + f.Posts[0].Uuid.String() + `" category: "new category"`
+	input = `id: "` + f.Posts[0].Uuid.String() + `" description: "new description"`
 	query = `mutation { post: updatePost(input: {` + input + `}) { id status}}`
 
 	gs.Error(c.Post(query, &postsResp))
@@ -507,22 +478,18 @@ func (gs *GqlgenSuite) Test_CreatePost() {
 
 	input := `orgID: "` + f.Organization.Uuid.String() + `"` +
 		`photoID: "` + f.File.UUID.String() + `"` +
-		` 
+		`
 			type: REQUEST
 			title: "title"
 			description: "new description"
 			destination: {description:"dest" country:"dc" latitude:1.1 longitude:2.2}
 			size: TINY
-			neededAfter: "2019-11-01"
-			neededBefore: "2019-12-25"
-			category: "cat"
-			url: "example.com" 
-			cost: "1.00"
+			url: "example.com"
 		`
-	query := `mutation { post: createPost(input: {` + input + `}) { organization { id } photo { id } type title 
-			description destination { description country latitude longitude } 
+	query := `mutation { post: createPost(input: {` + input + `}) { organization { id } photo { id } type title
+			description destination { description country latitude longitude }
 			origin { description country latitude longitude }
-			size neededAfter neededBefore category url cost kilograms}}`
+			size url kilograms }}`
 
 	TestUser = f.User
 	gs.NoError(c.Post(query, &postsResp))
@@ -542,11 +509,7 @@ func (gs *GqlgenSuite) Test_CreatePost() {
 	gs.Equal(0.0, postsResp.Post.Origin.Lat)
 	gs.Equal(0.0, postsResp.Post.Origin.Long)
 	gs.Equal(models.PostSizeTiny, postsResp.Post.Size)
-	gs.Equal("2019-11-01T00:00:00Z", postsResp.Post.NeededAfter)
-	gs.Equal("2019-12-25T00:00:00Z", postsResp.Post.NeededBefore)
-	gs.Equal("cat", postsResp.Post.Category)
 	gs.Equal("example.com", postsResp.Post.Url)
-	gs.Equal("1", postsResp.Post.Cost)
 	gs.Equal(0.0, postsResp.Post.Kilograms)
 }
 
