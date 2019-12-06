@@ -20,15 +20,16 @@ type OrganizationDomainResponse struct {
 }
 
 func createFixtures_OrganizationDomain(gs *GqlgenSuite) OrganizationDomainFixtures {
-	org := models.Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	org := models.Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
 	createFixture(gs, &org)
 
-	unique := org.Uuid.String()
+	unique := org.UUID.String()
 	users := models.Users{
-		{Email: unique + "_user@example.com", Nickname: unique + " User ", Uuid: domain.GetUuid()},
-		{Email: unique + "_admin@example.com", Nickname: unique + " Admin ", Uuid: domain.GetUuid()},
+		{Email: unique + "_user@example.com", Nickname: unique + " User "},
+		{Email: unique + "_admin@example.com", Nickname: unique + " Admin "},
 	}
 	for i := range users {
+		users[i].UUID = domain.GetUUID()
 		createFixture(gs, &users[i])
 	}
 
@@ -65,7 +66,7 @@ func (gs *GqlgenSuite) Test_CreateOrganizationDomain() {
 	testDomain := "example.com"
 	allFieldsQuery := `organizationID domain`
 	allFieldsInput := fmt.Sprintf(`organizationID:"%s" domain:"%s"`,
-		f.Organization.Uuid.String(), testDomain)
+		f.Organization.UUID.String(), testDomain)
 
 	var resp OrganizationDomainResponse
 	TestUser = f.Users[1]
@@ -75,7 +76,7 @@ func (gs *GqlgenSuite) Test_CreateOrganizationDomain() {
 
 	gs.Equal(1, len(resp.OrganizationDomain), "wrong number of domains in response")
 	gs.Equal(testDomain, resp.OrganizationDomain[0].Domain, "received wrong domain")
-	gs.Equal(f.Organization.Uuid.String(), resp.OrganizationDomain[0].OrganizationID, "received wrong org ID")
+	gs.Equal(f.Organization.UUID.String(), resp.OrganizationDomain[0].OrganizationID, "received wrong org ID")
 
 	var orgs models.Organizations
 	err = gs.DB.Eager().Where("name = ?", f.Organization.Name).All(&orgs)

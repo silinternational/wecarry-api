@@ -24,7 +24,7 @@ func (gs *GqlgenSuite) TestResolver() {
 	orgFix := []models.Organization{
 		{
 			Name:       "ACME",
-			Uuid:       domain.GetUuid(),
+			UUID:       domain.GetUUID(),
 			AuthType:   models.AuthTypeSaml,
 			AuthConfig: "[]",
 		},
@@ -34,7 +34,7 @@ func (gs *GqlgenSuite) TestResolver() {
 	// Load User test fixtures
 	userFix := models.Users{
 		{
-			Uuid:      domain.GetUuid(),
+			UUID:      domain.GetUUID(),
 			Email:     "clark.kent@example.org",
 			FirstName: "Clark",
 			LastName:  "Kent",
@@ -68,7 +68,7 @@ func (gs *GqlgenSuite) TestResolver() {
 			Status:         models.PostStatusOpen,
 			Title:          "Maple Syrup",
 			Size:           models.PostSizeMedium,
-			Uuid:           domain.GetUuid(),
+			UUID:           domain.GetUUID(),
 			ReceiverID:     nulls.NewInt(userFix[0].ID),
 			Description:    nulls.NewString("Missing my good, old, Canadian maple syrupy goodness"),
 			DestinationID:  location.ID,
@@ -79,7 +79,7 @@ func (gs *GqlgenSuite) TestResolver() {
 	// Load Thread test fixtures
 	threadFix := models.Threads{
 		{
-			Uuid:   domain.GetUuid(),
+			UUID:   domain.GetUUID(),
 			PostID: postFix[0].ID,
 		},
 	}
@@ -98,7 +98,7 @@ func (gs *GqlgenSuite) TestResolver() {
 	MessageFix := models.Messages{
 		{
 			ThreadID: threadFix[0].ID,
-			Uuid:     domain.GetUuid(),
+			UUID:     domain.GetUUID(),
 			SentByID: userFix[0].ID,
 			Content:  "Any chance you can bring some PB?",
 		},
@@ -127,8 +127,8 @@ func (gs *GqlgenSuite) TestResolver() {
 			Destination struct {
 				Description string `json:"description"`
 			} `json:"destination"`
-			Size         models.PostSize `json:"size"`
-			Description  string          `json:"description"`
+			Size        models.PostSize `json:"size"`
+			Description string          `json:"description"`
 		} `json:"posts"`
 	}
 
@@ -148,7 +148,7 @@ func (gs *GqlgenSuite) TestResolver() {
 	}
 
 	strResults = postsResp.Posts[0].ID
-	strExpected = postFix[0].Uuid.String()
+	strExpected = postFix[0].UUID.String()
 
 	if strResults != strExpected {
 		t.Errorf("bad Post ID results. \n  Expected %v, \n   but got %v", strExpected, strResults)
@@ -184,7 +184,7 @@ func (gs *GqlgenSuite) TestResolver() {
 	}
 
 	strResults = threadsResp.Threads[0].ID
-	strExpected = threadFix[0].Uuid.String()
+	strExpected = threadFix[0].UUID.String()
 
 	if strResults != strExpected {
 		t.Errorf("bad thread ID results. \n  Expected %v, \n   but got %v", strExpected, strResults)
@@ -192,7 +192,7 @@ func (gs *GqlgenSuite) TestResolver() {
 	}
 
 	strResults = threadsResp.Threads[0].PostID
-	strExpected = postFix[0].Uuid.String()
+	strExpected = postFix[0].UUID.String()
 
 	if strResults != strExpected {
 		t.Errorf("bad thread postID results. \n  Expected %v, \n   but got %v", strExpected, strResults)
@@ -226,7 +226,7 @@ func (gs *GqlgenSuite) TestResolver() {
 	}
 
 	strResults = usersResp.Users[0].ID
-	strExpected = userFix[0].Uuid.String()
+	strExpected = userFix[0].UUID.String()
 
 	if strResults != strExpected {
 		t.Errorf("bad user ID results. \n  Expected %v, \n   but got %v", strExpected, strResults)

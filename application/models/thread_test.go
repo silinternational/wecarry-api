@@ -25,14 +25,14 @@ func (ms *ModelSuite) TestThread_Validate() {
 			name: "minimum",
 			thread: Thread{
 				PostID: 1,
-				Uuid:   domain.GetUuid(),
+				UUID:   domain.GetUUID(),
 			},
 			wantErr: false,
 		},
 		{
 			name: "missing post_id",
 			thread: Thread{
-				Uuid: domain.GetUuid(),
+				UUID: domain.GetUUID(),
 			},
 			wantErr:  true,
 			errField: "post_id",
@@ -75,9 +75,9 @@ func (ms *ModelSuite) TestThread_FindByUUID() {
 		want    Thread
 		wantErr bool
 	}{
-		{name: "good", uuid: threadFixtures.Threads[0].Uuid.String(), want: threadFixtures.Threads[0]},
+		{name: "good", uuid: threadFixtures.Threads[0].UUID.String(), want: threadFixtures.Threads[0]},
 		{name: "blank uuid", uuid: "", wantErr: true},
-		{name: "wrong uuid", uuid: domain.GetUuid().String(), wantErr: true},
+		{name: "wrong uuid", uuid: domain.GetUUID().String(), wantErr: true},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -90,8 +90,8 @@ func (ms *ModelSuite) TestThread_FindByUUID() {
 			} else {
 				if err != nil {
 					t.Errorf("FindByUUID() error = %v", err)
-				} else if thread.Uuid != test.want.Uuid {
-					t.Errorf("FindByUUID() got = %s, want %s", thread.Uuid, test.want.Uuid)
+				} else if thread.UUID != test.want.UUID {
+					t.Errorf("FindByUUID() got = %s, want %s", thread.UUID, test.want.UUID)
 				}
 			}
 		})
@@ -127,8 +127,8 @@ func (ms *ModelSuite) TestThread_GetPost() {
 			} else {
 				if err != nil {
 					t.Errorf("GetPost() error = %v", err)
-				} else if got.Uuid != test.want.Uuid {
-					t.Errorf("GetPost() got = %s, want %s", got.Uuid, test.want.Uuid)
+				} else if got.UUID != test.want.UUID {
+					t.Errorf("GetPost() got = %s, want %s", got.UUID, test.want.UUID)
 				}
 			}
 		})
@@ -152,15 +152,15 @@ func (ms *ModelSuite) TestThread_GetMessages() {
 			name:   "one message",
 			thread: threadFixtures.Threads[0],
 			want: []uuid.UUID{
-				threadFixtures.Messages[0].Uuid,
+				threadFixtures.Messages[0].UUID,
 			},
 		},
 		{
 			name:   "two messages",
 			thread: threadFixtures.Threads[1],
 			want: []uuid.UUID{
-				threadFixtures.Messages[1].Uuid,
-				threadFixtures.Messages[2].Uuid,
+				threadFixtures.Messages[1].UUID,
+				threadFixtures.Messages[2].UUID,
 			},
 		},
 	}
@@ -177,7 +177,7 @@ func (ms *ModelSuite) TestThread_GetMessages() {
 				} else {
 					ids := make([]uuid.UUID, len(got))
 					for i := range got {
-						ids[i] = got[i].Uuid
+						ids[i] = got[i].UUID
 					}
 					if !reflect.DeepEqual(ids, test.want) {
 						t.Errorf("GetMessages() got = %s, want %s", ids, test.want)
@@ -205,15 +205,15 @@ func (ms *ModelSuite) TestThread_GetParticipants() {
 			name:   "one participant",
 			thread: threadFixtures.Threads[0],
 			want: []uuid.UUID{
-				users[0].Uuid,
+				users[0].UUID,
 			},
 		},
 		{
 			name:   "two participants",
 			thread: threadFixtures.Threads[1],
 			want: []uuid.UUID{
-				users[1].Uuid,
-				users[0].Uuid,
+				users[1].UUID,
+				users[0].UUID,
 			},
 		},
 	}
@@ -230,7 +230,7 @@ func (ms *ModelSuite) TestThread_GetParticipants() {
 				} else {
 					ids := make([]uuid.UUID, len(got))
 					for i := range got {
-						ids[i] = got[i].Uuid
+						ids[i] = got[i].UUID
 					}
 					if !reflect.DeepEqual(ids, test.want) {
 						t.Errorf("GetParticipants() got = %s, want %s", ids, test.want)
@@ -249,7 +249,7 @@ func (ms *ModelSuite) TestThread_CreateWithParticipants() {
 	post := posts[0]
 
 	var thread Thread
-	if err := thread.CreateWithParticipants(post.Uuid.String(), users[1]); err != nil {
+	if err := thread.CreateWithParticipants(post.UUID.String(), users[1]); err != nil {
 		t.Errorf("TestThread_CreateWithParticipants() error = %v", err)
 		t.FailNow()
 	}
@@ -268,11 +268,11 @@ func (ms *ModelSuite) TestThread_CreateWithParticipants() {
 
 	ids := make([]uuid.UUID, len(participants))
 	for i := range threadFromDB.Participants {
-		ids[i] = threadFromDB.Participants[i].Uuid
+		ids[i] = threadFromDB.Participants[i].UUID
 	}
 
-	ms.Contains(ids, users[0].Uuid, "new thread doesn't include post creator as participant")
-	ms.Contains(ids, users[1].Uuid, "new thread doesn't include provided user as participant")
+	ms.Contains(ids, users[0].UUID, "new thread doesn't include post creator as participant")
+	ms.Contains(ids, users[1].UUID, "new thread doesn't include provided user as participant")
 	ms.Equal(2, len(ids), "incorrect number of participants found")
 
 	var tp ThreadParticipants
@@ -292,7 +292,7 @@ func (ms *ModelSuite) TestThread_ensureParticipants() {
 
 	thread := Thread{
 		PostID: post.ID,
-		Uuid:   domain.GetUuid(),
+		UUID:   domain.GetUUID(),
 	}
 
 	err := DB.Save(&thread)
@@ -306,12 +306,12 @@ func (ms *ModelSuite) TestThread_ensureParticipants() {
 		{
 			name:   "just creator",
 			userID: users[0].ID,
-			want:   []uuid.UUID{users[0].Uuid},
+			want:   []uuid.UUID{users[0].UUID},
 		},
 		{
 			name:   "add provider",
 			userID: users[1].ID,
-			want:   []uuid.UUID{users[0].Uuid, users[1].Uuid},
+			want:   []uuid.UUID{users[0].UUID, users[1].UUID},
 		},
 	}
 
@@ -325,7 +325,7 @@ func (ms *ModelSuite) TestThread_ensureParticipants() {
 
 			ids := make([]uuid.UUID, len(participants))
 			for i := range participants {
-				ids[i] = participants[i].Uuid
+				ids[i] = participants[i].UUID
 			}
 
 			ms.Equal(len(test.want), len(ids), "incorrect number of participants found")
@@ -333,7 +333,7 @@ func (ms *ModelSuite) TestThread_ensureParticipants() {
 			ms.Contains(ids, test.want[0], "new thread doesn't include post creator as participant")
 
 			if len(test.want) == 2 {
-				ms.Contains(ids, users[1].Uuid, "new thread doesn't include provided user as participant")
+				ms.Contains(ids, users[1].UUID, "new thread doesn't include provided user as participant")
 			}
 
 		})

@@ -28,7 +28,7 @@ type Organization struct {
 	Url                 nulls.String         `json:"url" db:"url"`
 	AuthType            string               `json:"auth_type" db:"auth_type"`
 	AuthConfig          string               `json:"auth_config" db:"auth_config"`
-	Uuid                uuid.UUID            `json:"uuid" db:"uuid"`
+	UUID                uuid.UUID            `json:"uuid" db:"uuid"`
 	Users               Users                `many_to_many:"user_organizations" order_by:"nickname"`
 	OrganizationDomains []OrganizationDomain `has_many:"organization_domains" order_by:"domain asc"`
 }
@@ -47,7 +47,7 @@ func (o *Organization) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
 		&validators.StringIsPresent{Field: o.Name, Name: "Name"},
 		&validators.StringIsPresent{Field: o.AuthType, Name: "AuthType"},
-		&validators.UUIDIsPresent{Field: o.Uuid, Name: "Uuid"},
+		&validators.UUIDIsPresent{Field: o.UUID, Name: "UUID"},
 	), nil
 }
 
@@ -132,8 +132,8 @@ func (o *Organization) RemoveDomain(domain string) error {
 
 // Save wrap DB.Save() call to check for errors and operate on attached object
 func (o *Organization) Save() error {
-	if o.Uuid.Version() == 0 {
-		o.Uuid = domain.GetUuid()
+	if o.UUID.Version() == 0 {
+		o.UUID = domain.GetUUID()
 	}
 
 	validationErrs, err := o.Validate(DB)

@@ -19,7 +19,7 @@ func (r *messageResolver) ID(ctx context.Context, obj *models.Message) (string, 
 	if obj == nil {
 		return "", nil
 	}
-	return obj.Uuid.String(), nil
+	return obj.UUID.String(), nil
 }
 
 // Sender resolves the `sender` property of the message query
@@ -59,7 +59,7 @@ func (r *queryResolver) Message(ctx context.Context, id *string) (*models.Messag
 
 	if err := message.FindByUserAndUUID(currentUser, *id); err != nil {
 		extras := map[string]interface{}{
-			"user": currentUser.Uuid.String(),
+			"user": currentUser.UUID.String(),
 		}
 		return nil, reportError(ctx, err, "GetMessage", extras)
 	}
@@ -71,10 +71,10 @@ func convertGqlCreateMessageInputToDBMessage(gqlMessage CreateMessageInput, user
 
 	var thread models.Thread
 
-	threadUuid := domain.ConvertStrPtrToString(gqlMessage.ThreadID)
-	if threadUuid != "" {
+	threadUUID := domain.ConvertStrPtrToString(gqlMessage.ThreadID)
+	if threadUUID != "" {
 		var err error
-		err = thread.FindByUUID(threadUuid)
+		err = thread.FindByUUID(threadUUID)
 		if err != nil {
 			return models.Message{}, err
 		}
@@ -88,7 +88,7 @@ func convertGqlCreateMessageInputToDBMessage(gqlMessage CreateMessageInput, user
 	}
 
 	dbMessage := models.Message{}
-	dbMessage.Uuid = domain.GetUuid()
+	dbMessage.UUID = domain.GetUUID()
 	dbMessage.Content = gqlMessage.Content
 	dbMessage.ThreadID = thread.ID
 	dbMessage.SentByID = user.ID
@@ -100,7 +100,7 @@ func convertGqlCreateMessageInputToDBMessage(gqlMessage CreateMessageInput, user
 func (r *mutationResolver) CreateMessage(ctx context.Context, input CreateMessageInput) (*models.Message, error) {
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 	extras := map[string]interface{}{
-		"user": cUser.Uuid,
+		"user": cUser.UUID,
 	}
 	message, err := convertGqlCreateMessageInputToDBMessage(input, cUser)
 	if err != nil {

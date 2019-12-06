@@ -63,13 +63,13 @@ func (ms *ModelSuite) TestThreadParticipant_Validate() {
 // TestThreadParticipant_UpdateLastViewedAt and TestThread_UpdateLastViewedAt
 func CreateFixtures_ThreadParticipant_UpdateLastViewedAt(ms *ModelSuite, t *testing.T) ThreadFixtures {
 
-	org := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	org := Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
 	createFixture(ms, &org)
 
-	unique := org.Uuid.String()
+	unique := org.UUID.String()
 	users := Users{
-		{Email: unique + "_user0@example.com", Nickname: unique + " User0", Uuid: domain.GetUuid()},
-		{Email: unique + "_user1@example.com", Nickname: unique + " User1", Uuid: domain.GetUuid()},
+		{Email: unique + "_user0@example.com", Nickname: unique + " User0", UUID: domain.GetUUID()},
+		{Email: unique + "_user1@example.com", Nickname: unique + " User1", UUID: domain.GetUUID()},
 	}
 	for i := range users {
 		createFixture(ms, &users[i])
@@ -93,7 +93,7 @@ func CreateFixtures_ThreadParticipant_UpdateLastViewedAt(ms *ModelSuite, t *test
 			Status:         PostStatusOpen,
 			Title:          "Maple Syrup",
 			Size:           PostSizeMedium,
-			Uuid:           domain.GetUuid(),
+			UUID:           domain.GetUUID(),
 			DestinationID:  location.ID,
 		},
 	}
@@ -102,7 +102,7 @@ func CreateFixtures_ThreadParticipant_UpdateLastViewedAt(ms *ModelSuite, t *test
 	}
 
 	threads := Threads{
-		{Uuid: domain.GetUuid(), PostID: posts[0].ID},
+		{UUID: domain.GetUUID(), PostID: posts[0].ID},
 	}
 	for i := range threads {
 		createFixture(ms, &threads[i])
@@ -170,11 +170,11 @@ func (ms *ModelSuite) TestThreadParticipant_UpdateLastViewedAt() {
 func CreateFixtures_ThreadParticipant_FindByThreadIDAndUserID(ms *ModelSuite) ThreadFixtures {
 	t := ms.T()
 
-	org := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	org := Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
 	createFixture(ms, &org)
 
 	users := Users{
-		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1", Uuid: domain.GetUuid()},
+		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1", UUID: domain.GetUUID()},
 	}
 	for i := range users {
 		createFixture(ms, &users[i])
@@ -184,14 +184,14 @@ func CreateFixtures_ThreadParticipant_FindByThreadIDAndUserID(ms *ModelSuite) Th
 	createFixture(ms, &location)
 
 	posts := Posts{
-		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID, DestinationID: location.ID},
+		{UUID: domain.GetUUID(), CreatedByID: users[0].ID, OrganizationID: org.ID, DestinationID: location.ID},
 	}
 	for i := range posts {
 		createFixture(ms, &posts[i])
 	}
 
 	threads := Threads{
-		{Uuid: domain.GetUuid(), PostID: posts[0].ID},
+		{UUID: domain.GetUUID(), PostID: posts[0].ID},
 	}
 	for i := range threads {
 		createFixture(ms, &threads[i])
@@ -248,11 +248,11 @@ func (ms *ModelSuite) TestThreadParticipant_FindByThreadIDAndUserID() {
 // ThreadParticipant_UpdateLastNotifiedAt test
 func CreateFixtures_ThreadParticipant_UpdateLastNotifiedAt(ms *ModelSuite, t *testing.T) ThreadFixtures {
 
-	org := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	org := Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
 	createFixture(ms, &org)
 
 	users := Users{
-		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1", Uuid: domain.GetUuid()},
+		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1", UUID: domain.GetUUID()},
 	}
 	for i := range users {
 		createFixture(ms, &users[i])
@@ -262,14 +262,14 @@ func CreateFixtures_ThreadParticipant_UpdateLastNotifiedAt(ms *ModelSuite, t *te
 	createFixture(ms, &location)
 
 	posts := Posts{
-		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID, DestinationID: location.ID},
+		{UUID: domain.GetUUID(), CreatedByID: users[0].ID, OrganizationID: org.ID, DestinationID: location.ID},
 	}
 	for i := range posts {
 		createFixture(ms, &posts[i])
 	}
 
 	threads := Threads{
-		{Uuid: domain.GetUuid(), PostID: posts[0].ID},
+		{UUID: domain.GetUUID(), PostID: posts[0].ID},
 	}
 	for i := range threads {
 		createFixture(ms, &threads[i])

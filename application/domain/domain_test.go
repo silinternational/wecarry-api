@@ -360,7 +360,7 @@ func (ts *TestSuite) TestIsStringInSlice() {
 	}
 }
 
-func (ts *TestSuite) Test_emptyUuidValue() {
+func (ts *TestSuite) Test_emptyUUIDValue() {
 	val := uuid.UUID{}
 	ts.Equal("00000000-0000-0000-0000-000000000000", val.String(), "incorrect empty uuid value")
 }

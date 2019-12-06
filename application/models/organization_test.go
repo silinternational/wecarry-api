@@ -24,7 +24,7 @@ func (ms *ModelSuite) TestOrganization_FindOrgByUUID() {
 	}{
 		{
 			name: "found",
-			args: args{org.Uuid.String()},
+			args: args{org.UUID.String()},
 			want: org,
 		},
 		{
@@ -49,7 +49,7 @@ func (ms *ModelSuite) TestOrganization_FindOrgByUUID() {
 			} else {
 				if err != nil {
 					t.Errorf("FindByUUID() returned an error: %v", err)
-				} else if org.Uuid != test.want.Uuid {
+				} else if org.UUID != test.want.UUID {
 					t.Errorf("found %v, expected %v", org, test.want)
 				}
 			}
@@ -107,11 +107,11 @@ func (ms *ModelSuite) TestOrganization_Create() {
 				t.Errorf("Unexpected error %v", err)
 			} else {
 				var org Organization
-				err := org.FindByUUID(test.org.Uuid.String())
+				err := org.FindByUUID(test.org.UUID.String())
 				if err != nil {
 					t.Errorf("Couldn't find new org %v: %v", test.org.Name, err)
 				}
-				if org.Uuid != test.org.Uuid {
+				if org.UUID != test.org.UUID {
 					t.Errorf("newly created org doesn't match, found %v, expected %v", org, test.org)
 				}
 			}
@@ -136,7 +136,7 @@ func (ms *ModelSuite) TestOrganization_Validate() {
 			name: "minimum",
 			org: Organization{
 				Name:       "Bits 'R' Us",
-				Uuid:       domain.GetUuid(),
+				UUID:       domain.GetUUID(),
 				AuthType:   AuthTypeSaml,
 				AuthConfig: "{}",
 			},
@@ -145,7 +145,7 @@ func (ms *ModelSuite) TestOrganization_Validate() {
 		{
 			name: "missing name",
 			org: Organization{
-				Uuid:       domain.GetUuid(),
+				UUID:       domain.GetUUID(),
 				AuthType:   AuthTypeSaml,
 				AuthConfig: "{}",
 			},
@@ -166,7 +166,7 @@ func (ms *ModelSuite) TestOrganization_Validate() {
 			name: "missing auth type",
 			org: Organization{
 				Name:       "Babelfish Warehouse",
-				Uuid:       domain.GetUuid(),
+				UUID:       domain.GetUUID(),
 				AuthConfig: "{}",
 			},
 			wantErr:  true,
@@ -229,7 +229,7 @@ func (ms *ModelSuite) TestOrganization_FindByDomain() {
 			} else {
 				if err != nil {
 					t.Errorf("OrganizationFindByDomain() returned an error: %v", err)
-				} else if org.Uuid != test.want.Uuid {
+				} else if org.UUID != test.want.UUID {
 					t.Errorf("found %v, expected %v", org, test.want)
 				}
 			}
@@ -246,7 +246,7 @@ func createOrgFixtures(ms *ModelSuite, t *testing.T) (Organization, Organization
 	// Load Organization test fixtures
 	org := Organization{
 		Name:       "ACME",
-		Uuid:       domain.GetUuid(),
+		UUID:       domain.GetUUID(),
 		AuthType:   AuthTypeSaml,
 		AuthConfig: "{}",
 	}
@@ -280,7 +280,7 @@ func (ms *ModelSuite) TestOrganization_AddRemoveDomain() {
 			Url:        nulls.String{},
 			AuthType:   "na",
 			AuthConfig: "{}",
-			Uuid:       domain.GetUuid(),
+			UUID:       domain.GetUUID(),
 		},
 		{
 			ID:         2,
@@ -290,7 +290,7 @@ func (ms *ModelSuite) TestOrganization_AddRemoveDomain() {
 			Url:        nulls.String{},
 			AuthType:   "na",
 			AuthConfig: "{}",
-			Uuid:       domain.GetUuid(),
+			UUID:       domain.GetUUID(),
 		},
 	}
 	for i := range orgFixtures {
@@ -343,7 +343,7 @@ func (ms *ModelSuite) TestOrganization_Save() {
 			Url:        nulls.String{},
 			AuthType:   "na",
 			AuthConfig: "{}",
-			Uuid:       domain.GetUuid(),
+			UUID:       domain.GetUUID(),
 		},
 		{
 			ID:         2,
@@ -353,7 +353,7 @@ func (ms *ModelSuite) TestOrganization_Save() {
 			Url:        nulls.String{},
 			AuthType:   "na",
 			AuthConfig: "{}",
-			Uuid:       domain.GetUuid(),
+			UUID:       domain.GetUUID(),
 		},
 	}
 	for i := range orgFixtures {
@@ -387,7 +387,7 @@ func (ms *ModelSuite) TestOrganization_Save() {
 		Url:        nulls.String{},
 		AuthType:   AuthTypeSaml,
 		AuthConfig: "{}",
-		Uuid:       domain.GetUuid(),
+		UUID:       domain.GetUUID(),
 	}
 
 	err = newOrg.Save()
@@ -413,7 +413,7 @@ func (ms *ModelSuite) TestOrganization_All() {
 			Url:        nulls.String{},
 			AuthType:   "na",
 			AuthConfig: "{}",
-			Uuid:       domain.GetUuid(),
+			UUID:       domain.GetUUID(),
 		},
 		{
 			ID:         2,
@@ -423,7 +423,7 @@ func (ms *ModelSuite) TestOrganization_All() {
 			Url:        nulls.String{},
 			AuthType:   "na",
 			AuthConfig: "{}",
-			Uuid:       domain.GetUuid(),
+			UUID:       domain.GetUUID(),
 		},
 	}
 	for i := range orgFixtures {

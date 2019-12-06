@@ -39,10 +39,10 @@ func Fixtures_CreateOrganization(gs *GqlgenSuite) OrganizationFixtures {
 	}
 	// Don't save to the database, that's for the test to do.
 
-	unique := domain.GetUuid().String()
+	unique := domain.GetUUID().String()
 	users := models.Users{
 		{
-			Uuid:      domain.GetUuid(),
+			UUID:      domain.GetUUID(),
 			Email:     unique + "_user1@example.com",
 			Nickname:  unique + " User1",
 			AdminRole: models.UserAdminRoleSuperAdmin,
@@ -95,5 +95,5 @@ func (gs *GqlgenSuite) Test_CreateOrganization() {
 	domains, _ := orgs[0].GetDomains()
 	gs.Equal(0, len(domains), "new organization has unexpected domains")
 
-	gs.Equal(resp.Organization.ID, orgs[0].Uuid.String(), "UUID doesn't match")
+	gs.Equal(resp.Organization.ID, orgs[0].UUID.String(), "UUID doesn't match")
 }

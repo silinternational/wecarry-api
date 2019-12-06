@@ -22,7 +22,7 @@ func (ms *ModelSuite) TestFile_Validate() {
 		{
 			name: "minimum",
 			file: File{
-				UUID: domain.GetUuid(),
+				UUID: domain.GetUUID(),
 			},
 			wantErr: false,
 		},

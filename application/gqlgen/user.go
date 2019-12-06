@@ -28,7 +28,7 @@ func (r *userResolver) ID(ctx context.Context, obj *models.User) (string, error)
 	if obj == nil {
 		return "", nil
 	}
-	return obj.Uuid.String(), nil
+	return obj.UUID.String(), nil
 }
 
 // Organizations retrieves the list of Organizations to which the queried user is associated
@@ -138,7 +138,7 @@ func (r *queryResolver) User(ctx context.Context, id *string) (*models.User, err
 	}
 
 	role := currentUser.AdminRole
-	if role != models.UserAdminRoleSuperAdmin && currentUser.Uuid.String() != *id {
+	if role != models.UserAdminRoleSuperAdmin && currentUser.UUID.String() != *id {
 		err := errors.New("insufficient permissions")
 		extras := map[string]interface{}{
 			"role": role,
@@ -223,7 +223,7 @@ func (r *userResolver) Preferences(ctx context.Context, obj *models.User) (*mode
 	standardPrefs, err := obj.GetPreferences()
 	if err != nil {
 		extras := map[string]interface{}{
-			"user": user.Uuid,
+			"user": user.UUID,
 		}
 		return nil, reportError(ctx, err, "GetUserPreferences", extras)
 	}
@@ -253,12 +253,12 @@ func getPublicProfile(ctx context.Context, user *models.User) *PublicProfile {
 
 	url, err := user.GetPhotoURL()
 	if err != nil {
-		_ = reportError(ctx, err, "", map[string]interface{}{"user": user.Uuid})
+		_ = reportError(ctx, err, "", map[string]interface{}{"user": user.UUID})
 		return nil
 	}
 
 	return &PublicProfile{
-		ID:        user.Uuid.String(),
+		ID:        user.UUID.String(),
 		Nickname:  user.Nickname,
 		AvatarURL: url,
 	}

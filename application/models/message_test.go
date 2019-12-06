@@ -20,7 +20,7 @@ func (ms *ModelSuite) TestMessage_Validate() {
 		{
 			name: "minimum",
 			message: Message{
-				Uuid:     domain.GetUuid(),
+				UUID:     domain.GetUUID(),
 				ThreadID: 1,
 				SentByID: 1,
 				Content:  "foo",
@@ -40,7 +40,7 @@ func (ms *ModelSuite) TestMessage_Validate() {
 		{
 			name: "missing thread_id",
 			message: Message{
-				Uuid:     domain.GetUuid(),
+				UUID:     domain.GetUUID(),
 				SentByID: 1,
 				Content:  "foo",
 			},
@@ -50,7 +50,7 @@ func (ms *ModelSuite) TestMessage_Validate() {
 		{
 			name: "missing sent_by_id",
 			message: Message{
-				Uuid:     domain.GetUuid(),
+				UUID:     domain.GetUUID(),
 				ThreadID: 1,
 				Content:  "foo",
 			},
@@ -60,7 +60,7 @@ func (ms *ModelSuite) TestMessage_Validate() {
 		{
 			name: "missing content",
 			message: Message{
-				Uuid:     domain.GetUuid(),
+				UUID:     domain.GetUUID(),
 				ThreadID: 1,
 				SentByID: 1,
 			},
@@ -120,7 +120,7 @@ func (ms *ModelSuite) TestMessage_GetThread() {
 	}
 
 	ms.Equal(threads[0].ID, threadResults.ID, "Bad thread ID")
-	ms.Equal(threads[0].Uuid, threadResults.Uuid, "Bad thread UUID")
+	ms.Equal(threads[0].UUID, threadResults.UUID, "Bad thread UUID")
 	ms.Equal(threads[0].PostID, threadResults.PostID, "Bad thread PostID")
 }
 
@@ -129,7 +129,7 @@ func (ms *ModelSuite) TestMessage_Create() {
 
 	f := Fixtures_Message_Create(ms, t)
 	msg := Message{
-		Uuid:     domain.GetUuid(),
+		UUID:     domain.GetUUID(),
 		ThreadID: f.Threads[0].ID,
 		SentByID: f.Users[0].ID,
 		Content:  `Owe nothing to anyone, except to love one another.`,
@@ -152,7 +152,7 @@ func (ms *ModelSuite) TestMessage_Create() {
 				ms.Error(err)
 			} else {
 				ms.NoError(err)
-				ms.Equal(test.msg.Uuid, message.Uuid, "incorrect message UUID")
+				ms.Equal(test.msg.UUID, message.UUID, "incorrect message UUID")
 				_ = ms.DB.Reload(&f.Threads[0])
 				ms.WithinDuration(time.Now(), f.Threads[0].UpdatedAt, time.Second,
 					"thread.updated_at was not set to the current time")
@@ -200,7 +200,7 @@ func (ms *ModelSuite) TestMessage_FindByID() {
 				ms.NoError(err)
 				ms.Equal(test.wantMessage.ID, message.ID, "bad message id")
 				ms.Equal(test.wantSentBy.ID, message.SentBy.ID, "bad message sent_by id")
-				ms.Equal(test.wantThread.Uuid, message.Thread.Uuid, "bad message thread id")
+				ms.Equal(test.wantThread.UUID, message.Thread.UUID, "bad message thread id")
 			}
 		})
 	}
@@ -220,13 +220,13 @@ func (ms *ModelSuite) TestMessage_FindByUUID() {
 		wantErr       string
 	}{
 		{name: "good",
-			uuid:          f.Messages[0].Uuid.String(),
+			uuid:          f.Messages[0].UUID.String(),
 			wantID:        f.Messages[0].ID,
 			wantContent:   f.Messages[0].Content,
 			wantCreatedAt: f.Messages[0].CreatedAt,
 		},
 		{name: "empty ID", uuid: "", wantErr: "error: message uuid must not be blank"},
-		{name: "wrong id", uuid: domain.GetUuid().String(), wantErr: "sql: no rows in result set"},
+		{name: "wrong id", uuid: domain.GetUUID().String(), wantErr: "sql: no rows in result set"},
 		{name: "invalid UUID", uuid: "40FE092C-8FF1-45BE-BCD4-65AD66C1D0DX", wantErr: "pq: invalid input syntax"},
 	}
 	for _, test := range tests {
@@ -254,7 +254,7 @@ func (ms *ModelSuite) TestMessage_FindByUserAndUUID() {
 
 	emptyString := ""
 	badUUID := "40FE092C-8FF1-45BE-BCD4-65AD66C1D0DX"
-	wrongUUID := domain.GetUuid().String()
+	wrongUUID := domain.GetUUID().String()
 
 	tests := []struct {
 		name    string
@@ -280,7 +280,7 @@ func (ms *ModelSuite) TestMessage_FindByUserAndUUID() {
 			var message Message
 			var testUUID string
 			if test.uuid == nil {
-				testUUID = test.message.Uuid.String()
+				testUUID = test.message.UUID.String()
 			} else {
 				testUUID = *test.uuid
 			}
@@ -307,7 +307,7 @@ func (ms *ModelSuite) TestMessage_AfterCreate() {
 	eagerThreadPLVA := eagerThreadP.LastViewedAt
 
 	newMessage := Message{
-		Uuid:     domain.GetUuid(),
+		UUID:     domain.GetUUID(),
 		ThreadID: lazyThreadP.ThreadID,
 		SentByID: lazyThreadP.UserID,
 		Content:  "This message should update LastViewedAt",

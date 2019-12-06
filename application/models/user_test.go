@@ -19,7 +19,7 @@ import (
 func (ms *ModelSuite) TestUser_FindOrCreateFromAuthUser() {
 	t := ms.T()
 
-	unique := domain.GetUuid().String()
+	unique := domain.GetUUID().String()
 
 	// create org for test
 	org := &Organization{
@@ -27,7 +27,7 @@ func (ms *ModelSuite) TestUser_FindOrCreateFromAuthUser() {
 		Url:        nulls.String{},
 		AuthType:   AuthTypeSaml,
 		AuthConfig: "{}",
-		Uuid:       domain.GetUuid(),
+		UUID:       domain.GetUUID(),
 	}
 	createFixture(ms, org)
 
@@ -110,7 +110,7 @@ func (ms *ModelSuite) TestUser_Validate() {
 				FirstName: "A",
 				LastName:  "User",
 				Nickname:  "A User",
-				Uuid:      domain.GetUuid(),
+				UUID:      domain.GetUUID(),
 			},
 			wantErr: false,
 		},
@@ -120,7 +120,7 @@ func (ms *ModelSuite) TestUser_Validate() {
 				FirstName: "A",
 				LastName:  "User",
 				Nickname:  "A User",
-				Uuid:      domain.GetUuid(),
+				UUID:      domain.GetUUID(),
 			},
 			wantErr:  true,
 			errField: "email",
@@ -131,7 +131,7 @@ func (ms *ModelSuite) TestUser_Validate() {
 				Email:    "user@example.com",
 				LastName: "User",
 				Nickname: "A User",
-				Uuid:     domain.GetUuid(),
+				UUID:     domain.GetUUID(),
 			},
 			wantErr:  true,
 			errField: "first_name",
@@ -142,7 +142,7 @@ func (ms *ModelSuite) TestUser_Validate() {
 				Email:     "user@example.com",
 				FirstName: "A",
 				Nickname:  "A User",
-				Uuid:      domain.GetUuid(),
+				UUID:      domain.GetUUID(),
 			},
 			wantErr:  true,
 			errField: "last_name",
@@ -153,7 +153,7 @@ func (ms *ModelSuite) TestUser_Validate() {
 				Email:     "user@example.com",
 				FirstName: "A",
 				LastName:  "User",
-				Uuid:      domain.GetUuid(),
+				UUID:      domain.GetUUID(),
 			},
 			wantErr:  true,
 			errField: "nickname",
@@ -176,7 +176,7 @@ func (ms *ModelSuite) TestUser_Validate() {
 				FirstName:    "A",
 				LastName:     "User",
 				Nickname:     "A User",
-				Uuid:         domain.GetUuid(),
+				UUID:         domain.GetUUID(),
 				AuthPhotoURL: nulls.NewString("http://example.com/user/7/avatar"),
 			},
 			wantErr: false,
@@ -188,7 +188,7 @@ func (ms *ModelSuite) TestUser_Validate() {
 				FirstName:    "A",
 				LastName:     "User",
 				Nickname:     "A User",
-				Uuid:         domain.GetUuid(),
+				UUID:         domain.GetUUID(),
 				AuthPhotoURL: nulls.NewString(""),
 			},
 			wantErr: false,
@@ -200,7 +200,7 @@ func (ms *ModelSuite) TestUser_Validate() {
 				FirstName:    "A",
 				LastName:     "User",
 				Nickname:     "A User",
-				Uuid:         domain.GetUuid(),
+				UUID:         domain.GetUUID(),
 				AuthPhotoURL: nulls.NewString("badone"),
 			},
 			wantErr:  true,
@@ -453,7 +453,7 @@ func (ms *ModelSuite) TestUser_GetPosts() {
 				user:     f.Users[0],
 				postRole: PostsCreated,
 			},
-			want: []uuid.UUID{f.Posts[3].Uuid, f.Posts[2].Uuid, f.Posts[1].Uuid, f.Posts[0].Uuid},
+			want: []uuid.UUID{f.Posts[3].UUID, f.Posts[2].UUID, f.Posts[1].UUID, f.Posts[0].UUID},
 		},
 		{
 			name: "providing by",
@@ -461,7 +461,7 @@ func (ms *ModelSuite) TestUser_GetPosts() {
 				user:     f.Users[1],
 				postRole: PostsProviding,
 			},
-			want: []uuid.UUID{f.Posts[1].Uuid, f.Posts[0].Uuid},
+			want: []uuid.UUID{f.Posts[1].UUID, f.Posts[0].UUID},
 		},
 		{
 			name: "receiving by",
@@ -469,7 +469,7 @@ func (ms *ModelSuite) TestUser_GetPosts() {
 				user:     f.Users[1],
 				postRole: PostsReceiving,
 			},
-			want: []uuid.UUID{f.Posts[3].Uuid, f.Posts[2].Uuid},
+			want: []uuid.UUID{f.Posts[3].UUID, f.Posts[2].UUID},
 		},
 	}
 	for _, test := range tests {
@@ -481,7 +481,7 @@ func (ms *ModelSuite) TestUser_GetPosts() {
 
 			ids := make([]uuid.UUID, len(got))
 			for i, p := range got {
-				ids[i] = p.Uuid
+				ids[i] = p.UUID
 			}
 			if !reflect.DeepEqual(ids, test.want) {
 				t.Errorf("GetOrgIDs() = \"%v\", want \"%v\"", ids, test.want)
@@ -521,14 +521,14 @@ func (ms *ModelSuite) TestUser_CanEditOrganization() {
 			Url:        nulls.String{},
 			AuthType:   AuthTypeSaml,
 			AuthConfig: "{}",
-			Uuid:       domain.GetUuid(),
+			UUID:       domain.GetUUID(),
 		},
 		{
 			Name:       "Org2",
 			Url:        nulls.String{},
 			AuthType:   AuthTypeSaml,
 			AuthConfig: "{}",
-			Uuid:       domain.GetUuid(),
+			UUID:       domain.GetUUID(),
 		},
 	}
 	for i := range orgFixtures {
@@ -541,7 +541,7 @@ func (ms *ModelSuite) TestUser_CanEditOrganization() {
 		LastName:  "User",
 		Nickname:  "test_user",
 		AdminRole: UserAdminRoleUser,
-		Uuid:      domain.GetUuid(),
+		UUID:      domain.GetUUID(),
 	}
 	createFixture(ms, &user)
 
@@ -653,7 +653,7 @@ func (ms *ModelSuite) TestUser_FindByUUID() {
 	}{
 		{
 			name:    "Good",
-			UUID:    f.Users[0].Uuid.String(),
+			UUID:    f.Users[0].UUID.String(),
 			wantErr: "",
 		},
 		{
@@ -672,7 +672,7 @@ func (ms *ModelSuite) TestUser_FindByUUID() {
 				ms.Contains(err.Error(), test.wantErr)
 				return
 			}
-			ms.Equal(test.UUID, u.Uuid.String())
+			ms.Equal(test.UUID, u.UUID.String())
 		})
 	}
 }
@@ -846,7 +846,7 @@ func (ms *ModelSuite) TestUser_Save() {
 			}
 			ms.NoError(err)
 
-			ms.True(test.user.Uuid.Version() != 0)
+			ms.True(test.user.UUID.Version() != 0)
 			var u User
 			ms.NoError(u.FindByID(test.user.ID))
 		})
@@ -907,7 +907,7 @@ func (ms *ModelSuite) TestUser_UniquifyNickname() {
 func (ms *ModelSuite) TestUser_SetLocation() {
 	t := ms.T()
 
-	user := User{Uuid: domain.GetUuid(), Email: t.Name() + "_user@example.com", Nickname: t.Name() + "_User"}
+	user := User{UUID: domain.GetUUID(), Email: t.Name() + "_user@example.com", Nickname: t.Name() + "_User"}
 	createFixture(ms, &user)
 
 	locationFixtures := Locations{
@@ -1007,7 +1007,7 @@ func (ms *ModelSuite) TestUser_GetThreads() {
 		want []uuid.UUID
 	}{
 		{name: "no threads", user: f.Users[1], want: []uuid.UUID{}},
-		{name: "two threads", user: f.Users[0], want: []uuid.UUID{f.Threads[1].Uuid, f.Threads[0].Uuid}},
+		{name: "two threads", user: f.Users[0], want: []uuid.UUID{f.Threads[1].UUID, f.Threads[0].UUID}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -1016,7 +1016,7 @@ func (ms *ModelSuite) TestUser_GetThreads() {
 
 			ids := make([]uuid.UUID, len(got))
 			for i := range got {
-				ids[i] = got[i].Uuid
+				ids[i] = got[i].UUID
 			}
 			ms.Equal(test.want, ids, "incorrect list of threads returned")
 		})
