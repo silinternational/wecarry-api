@@ -236,7 +236,7 @@ type PostResolver interface {
 
 	URL(ctx context.Context, obj *models.Post) (*string, error)
 	Cost(ctx context.Context, obj *models.Post) (*string, error)
-	Kilograms(ctx context.Context, obj *models.Post) (*string, error)
+	Kilograms(ctx context.Context, obj *models.Post) (*float64, error)
 	Photo(ctx context.Context, obj *models.Post) (*models.File, error)
 	Files(ctx context.Context, obj *models.Post) ([]models.File, error)
 	IsEditable(ctx context.Context, obj *models.Post) (bool, error)
@@ -1201,7 +1201,7 @@ type Post {
     updatedAt: Time!
     url: String
     cost: String
-    kilograms: String
+    kilograms: Float
     photo: File
     files: [File!]!
     isEditable: Boolean!
@@ -1280,7 +1280,7 @@ input CreatePostInput {
     category: String
     url: String
     cost: String
-    kilograms: String
+    kilograms: Float
     photoID: ID
 }
 
@@ -1302,7 +1302,7 @@ input UpdatePostInput {
     category: String
     url: String
     cost: String
-    kilograms: String
+    kilograms: Float
     photoID: ID
 }
 
@@ -3653,10 +3653,10 @@ func (ec *executionContext) _Post_kilograms(ctx context.Context, field graphql.C
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(*float64)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalOFloat2ᚖfloat64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Post_photo(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
@@ -6419,7 +6419,7 @@ func (ec *executionContext) unmarshalInputCreatePostInput(ctx context.Context, o
 			}
 		case "kilograms":
 			var err error
-			it.Kilograms, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			it.Kilograms, err = ec.unmarshalOFloat2ᚖfloat64(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -6635,7 +6635,7 @@ func (ec *executionContext) unmarshalInputUpdatePostInput(ctx context.Context, o
 			}
 		case "kilograms":
 			var err error
-			it.Kilograms, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			it.Kilograms, err = ec.unmarshalOFloat2ᚖfloat64(ctx, v)
 			if err != nil {
 				return it, err
 			}

@@ -183,14 +183,13 @@ func (r *postResolver) Cost(ctx context.Context, obj *models.Post) (*string, err
 }
 
 // Kilograms resolves the `kilograms` property of the post query, converting float64 to string
-func (r *postResolver) Kilograms(ctx context.Context, obj *models.Post) (*string, error) {
+func (r *postResolver) Kilograms(ctx context.Context, obj *models.Post) (*float64, error) {
 	if obj == nil {
-		k := "0.0"
+		k := 0.0
 		return &k, nil
 	}
 
-	k := strconv.FormatFloat(obj.Kilograms, 'f', -1, 64)
-	return &k, nil
+	return &obj.Kilograms, nil
 }
 
 // Photo retrieves the file attached as the primary photo
@@ -328,13 +327,8 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 		post.Cost = nulls.NewFloat64(c)
 	}
 
-	if input.Kilograms != nil && *(input.Kilograms) != "" {
-		k, err := strconv.ParseFloat(*input.Kilograms, 64)
-		if err != nil {
-			err = fmt.Errorf("error converting kilograms %v ... %v", input.Kilograms, err.Error())
-			return models.Post{}, err
-		}
-		post.Kilograms = k
+	if input.Kilograms != nil {
+		post.Kilograms = *input.Kilograms
 	}
 
 	if input.PhotoID != nil {
@@ -362,7 +356,7 @@ type postInput struct {
 	Category     *string
 	URL          *string
 	Cost         *string
-	Kilograms    *string
+	Kilograms    *float64
 	PhotoID      *string
 }
 

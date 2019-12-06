@@ -137,7 +137,7 @@ type Post {
     updatedAt: Time!
     url: String
     cost: String
-    kilograms: String
+    kilograms: Float
     photo: File
     files: [File!]!
     isEditable: Boolean!
@@ -216,7 +216,7 @@ input CreatePostInput {
     category: String
     url: String
     cost: String
-    kilograms: String
+    kilograms: Float
     photoID: ID
 }
 
@@ -238,7 +238,7 @@ input UpdatePostInput {
     category: String
     url: String
     cost: String
-    kilograms: String
+    kilograms: Float
     photoID: ID
 }
 

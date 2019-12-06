@@ -46,7 +46,7 @@ type PostResponse struct {
 		CreatedAt    string            `json:"createdAt"`
 		UpdatedAt    string            `json:"updatedAt"`
 		Cost         string            `json:"cost"`
-		Kilograms    string            `json:"kilograms"`
+		Kilograms    float64           `json:"kilograms"`
 		IsEditable   bool              `json:"isEditable"`
 		Url          string            `json:"url"`
 		CreatedBy    struct {
@@ -271,9 +271,7 @@ func (gs *GqlgenSuite) Test_PostQuery() {
 	gs.NoError(err, "couldn't parse cost field as a float")
 	gs.Equal(f.Posts[0].Cost.Float64, cost)
 
-	kilograms, err := strconv.ParseFloat(resp.Post.Kilograms, 64)
-	gs.NoError(err, "couldn't parse kilograms field as a float")
-	gs.Equal(f.Posts[0].Kilograms, kilograms)
+	gs.Equal(f.Posts[0].Kilograms, resp.Post.Kilograms)
 
 	gs.Equal(f.Posts[0].URL.String, resp.Post.Url)
 	gs.Equal(false, resp.Post.IsEditable)
@@ -413,7 +411,7 @@ func (gs *GqlgenSuite) Test_UpdatePost() {
 			category: "cat"
 			url: "example.com" 
 			cost: "1.00"
-			kilograms: "22.22"
+			kilograms: 22.22
 		`
 	query := `mutation { post: updatePost(input: {` + input + `}) { id photo { id } description 
 			destination { description country latitude longitude} 
@@ -445,7 +443,7 @@ func (gs *GqlgenSuite) Test_UpdatePost() {
 	gs.Equal("cat", postsResp.Post.Category)
 	gs.Equal("example.com", postsResp.Post.Url)
 	gs.Equal("1", postsResp.Post.Cost)
-	gs.Equal("22.22", postsResp.Post.Kilograms)
+	gs.Equal(22.22, postsResp.Post.Kilograms)
 	gs.Equal(true, postsResp.Post.IsEditable)
 
 	// Attempt to edit a locked post
@@ -549,7 +547,7 @@ func (gs *GqlgenSuite) Test_CreatePost() {
 	gs.Equal("cat", postsResp.Post.Category)
 	gs.Equal("example.com", postsResp.Post.Url)
 	gs.Equal("1", postsResp.Post.Cost)
-	gs.Equal("0", postsResp.Post.Kilograms)
+	gs.Equal(0.0, postsResp.Post.Kilograms)
 }
 
 type UpdatePostStatusFixtures struct {
