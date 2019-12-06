@@ -13,16 +13,16 @@ type OrganizationFixtures struct {
 }
 
 func createFixturesForOrganizationGetUsers(ms *ModelSuite) OrganizationFixtures {
-	org := Organization{AuthConfig: "{}", Uuid: domain.GetUuid()}
+	org := Organization{AuthConfig: "{}", UUID: domain.GetUUID()}
 	createFixture(ms, &org)
 
 	nicknames := []string{"alice", "john", "bob"}
-	unique := org.Uuid.String()
+	unique := org.UUID.String()
 	users := make(Users, len(nicknames))
 	for i := range users {
 		users[i].Email = "user" + strconv.Itoa(i) + unique + "example.com"
 		users[i].Nickname = nicknames[i] + unique
-		users[i].Uuid = domain.GetUuid()
+		users[i].UUID = domain.GetUUID()
 
 		createFixture(ms, &users[i])
 	}
@@ -47,7 +47,7 @@ func CreateFixturesForOrganizationGetDomains(ms *ModelSuite) OrganizationFixture
 	org := Organization{
 		AuthType:   AuthTypeSaml,
 		AuthConfig: "{}",
-		Uuid:       domain.GetUuid(),
+		UUID:       domain.GetUUID(),
 	}
 	createFixture(ms, &org)
 
@@ -74,7 +74,7 @@ func CreateFixturesForOrganizationGetDomains(ms *ModelSuite) OrganizationFixture
 		FirstName: "Existing",
 		LastName:  "User",
 		Nickname:  "Existing User ",
-		Uuid:      domain.GetUuid(),
+		UUID:      domain.GetUUID(),
 	}
 	createFixture(ms, &user)
 

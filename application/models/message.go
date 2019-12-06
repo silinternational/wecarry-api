@@ -18,7 +18,7 @@ type Message struct {
 	ID        int       `json:"id" db:"id"`
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
-	Uuid      uuid.UUID `json:"uuid" db:"uuid"`
+	UUID      uuid.UUID `json:"uuid" db:"uuid"`
 	ThreadID  int       `json:"thread_id" db:"thread_id"`
 	SentByID  int       `json:"sent_by_id" db:"sent_by_id"`
 	Content   string    `json:"content" db:"content"`
@@ -55,7 +55,7 @@ func (m Messages) String() string {
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
 func (m *Message) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
-		&validators.UUIDIsPresent{Field: m.Uuid, Name: "Uuid"},
+		&validators.UUIDIsPresent{Field: m.UUID, Name: "UUID"},
 		&validators.IntIsPresent{Field: m.ThreadID, Name: "ThreadID"},
 		&validators.IntIsPresent{Field: m.SentByID, Name: "SentByID"},
 		&validators.StringIsPresent{Field: m.Content, Name: "Content"},
@@ -205,7 +205,7 @@ func (m *Message) FindByUserAndUUID(user User, id string) error {
 		if domain.IsOtherThanNoRows(err) {
 			return fmt.Errorf("error finding threadParticipant record for message %s, %s", id, err)
 		}
-		return fmt.Errorf("user %s has insufficient permissions to read message %s", user.Uuid, id)
+		return fmt.Errorf("user %s has insufficient permissions to read message %s", user.UUID, id)
 	}
 
 	return nil

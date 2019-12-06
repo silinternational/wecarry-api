@@ -24,5 +24,5 @@ func (o *OrganizationDomain) GetOrganizationUUID() (string, error) {
 	if err := DB.Load(o, "Organization"); err != nil {
 		return "", err
 	}
-	return o.Organization.Uuid.String(), nil
+	return o.Organization.UUID.String(), nil
 }

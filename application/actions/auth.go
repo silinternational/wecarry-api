@@ -147,7 +147,7 @@ func createAuthUser(
 	var uos []AuthOrgOption
 	for _, uo := range user.Organizations {
 		uos = append(uos, AuthOrgOption{
-			ID:      uo.Uuid.String(),
+			ID:      uo.UUID.String(),
 			Name:    uo.Name,
 			LogoURL: uo.Url.String,
 		})
@@ -159,7 +159,7 @@ func createAuthUser(
 	}
 
 	authUser := AuthUser{
-		ID:                   user.Uuid.String(),
+		ID:                   user.UUID.String(),
 		Name:                 user.FirstName + " " + user.LastName,
 		Nickname:             user.Nickname,
 		Email:                user.Email,
@@ -209,7 +209,7 @@ func AuthRequest(c buffalo.Context) error {
 			"unable to find an organization for this user", extras)
 	}
 
-	orgID := org.Uuid.String()
+	orgID := org.UUID.String()
 	c.Session().Set(OrgIDSessionKey, orgID)
 	err = c.Session().Save()
 	if err != nil {
@@ -369,7 +369,7 @@ func AuthDestroy(c buffalo.Context) error {
 	}
 
 	// set person on rollbar session
-	domain.RollbarSetPerson(c, uat.User.Uuid.String(), uat.User.Nickname, uat.User.Email)
+	domain.RollbarSetPerson(c, uat.User.UUID.String(), uat.User.Nickname, uat.User.Email)
 
 	authPro, err := org.GetAuthProvider()
 	if err != nil {
@@ -426,7 +426,7 @@ func SetCurrentUser(next buffalo.Handler) buffalo.Handler {
 		c.Set("current_user", user)
 
 		// set person on rollbar session
-		domain.RollbarSetPerson(c, user.Uuid.String(), user.Nickname, user.Email)
+		domain.RollbarSetPerson(c, user.UUID.String(), user.Nickname, user.Email)
 		msg := fmt.Sprintf("user %s authenticated with bearer token from ip %s", user.Email, c.Request().RemoteAddr)
 		extras := map[string]interface{}{
 			"user_id": user.ID,

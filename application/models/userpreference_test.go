@@ -25,7 +25,7 @@ func (ms *ModelSuite) TestUserPreference_Validate() {
 		{
 			name: "minimum",
 			pref: UserPreference{
-				Uuid:   domain.GetUuid(),
+				UUID:   domain.GetUUID(),
 				UserID: 1,
 				Key:    "key",
 				Value:  "value",
@@ -45,7 +45,7 @@ func (ms *ModelSuite) TestUserPreference_Validate() {
 		{
 			name: "missing user_id",
 			pref: UserPreference{
-				Uuid:  domain.GetUuid(),
+				UUID:  domain.GetUUID(),
 				Key:   "key",
 				Value: "value",
 			},
@@ -55,7 +55,7 @@ func (ms *ModelSuite) TestUserPreference_Validate() {
 		{
 			name: "missing key",
 			pref: UserPreference{
-				Uuid:   domain.GetUuid(),
+				UUID:   domain.GetUUID(),
 				UserID: 1,
 				Value:  "value",
 			},
@@ -65,7 +65,7 @@ func (ms *ModelSuite) TestUserPreference_Validate() {
 		{
 			name: "missing value",
 			pref: UserPreference{
-				Uuid:   domain.GetUuid(),
+				UUID:   domain.GetUUID(),
 				UserID: 1,
 				Key:    "key",
 			},
@@ -89,14 +89,14 @@ func (ms *ModelSuite) TestUserPreference_Validate() {
 }
 
 func createFixturesForUserPreferenceFindByUUID(ms *ModelSuite) UserPreferenceFixtures {
-	unique := domain.GetUuid().String()
-	user := User{Uuid: domain.GetUuid(), Email: unique + "_user@example.com", Nickname: unique + "_User"}
+	unique := domain.GetUUID().String()
+	user := User{UUID: domain.GetUUID(), Email: unique + "_user@example.com", Nickname: unique + "_User"}
 	createFixture(ms, &user)
 
 	userPreferences := make(UserPreferences, 2)
 	for i := range userPreferences {
 		userPreferences[i] = UserPreference{
-			Uuid:   domain.GetUuid(),
+			UUID:   domain.GetUUID(),
 			UserID: user.ID,
 			Key:    "k",
 			Value:  "v",
@@ -118,9 +118,9 @@ func (ms *ModelSuite) TestUserPreference_FindByUUID() {
 		uuid    string
 		wantErr string
 	}{
-		{name: "good", uuid: f.UserPreferences[0].Uuid.String()},
+		{name: "good", uuid: f.UserPreferences[0].UUID.String()},
 		{name: "bad", wantErr: "user preference uuid must not be blank"},
-		{name: "not found", uuid: domain.GetUuid().String(), wantErr: "sql: no rows in result set"},
+		{name: "not found", uuid: domain.GetUUID().String(), wantErr: "sql: no rows in result set"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -132,14 +132,14 @@ func (ms *ModelSuite) TestUserPreference_FindByUUID() {
 				return
 			}
 			ms.NoError(err)
-			ms.Equal(test.uuid, u.Uuid.String())
+			ms.Equal(test.uuid, u.UUID.String())
 		})
 	}
 }
 
 func createFixturesForUserPreferenceSave(ms *ModelSuite) UserPreferenceFixtures {
-	unique := domain.GetUuid().String()
-	user := User{Uuid: domain.GetUuid(), Email: unique + "_user@example.com", Nickname: unique + "_User"}
+	unique := domain.GetUUID().String()
+	user := User{UUID: domain.GetUUID(), Email: unique + "_user@example.com", Nickname: unique + "_User"}
 	createFixture(ms, &user)
 
 	userPreferences := make(UserPreferences, 2)
@@ -181,7 +181,7 @@ func (ms *ModelSuite) TestUserPreference_Save() {
 			ms.NoError(err)
 
 			var u UserPreference
-			ms.NoError(u.FindByUUID(test.pref.Uuid.String()))
+			ms.NoError(u.FindByUUID(test.pref.UUID.String()))
 			ms.Equal(test.pref.UserID, u.UserID)
 			ms.Equal(test.pref.Key, u.Key)
 			ms.Equal(test.pref.Value, u.Value)

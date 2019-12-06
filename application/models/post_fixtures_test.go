@@ -25,7 +25,7 @@ func CreateFixturesValidateUpdate_RequestStatus(status PostStatus, ms *ModelSuit
 		Name:       "TestOrg",
 		AuthType:   AuthTypeSaml,
 		AuthConfig: "{}",
-		Uuid:       domain.GetUuid(),
+		UUID:       domain.GetUUID(),
 	}
 	createFixture(ms, org)
 
@@ -35,7 +35,7 @@ func CreateFixturesValidateUpdate_RequestStatus(status PostStatus, ms *ModelSuit
 		FirstName: "Existing",
 		LastName:  "User",
 		Nickname:  "Existing User ",
-		Uuid:      domain.GetUuid(),
+		UUID:      domain.GetUUID(),
 	}
 
 	if err := ms.DB.Create(&user); err != nil {
@@ -53,7 +53,7 @@ func CreateFixturesValidateUpdate_RequestStatus(status PostStatus, ms *ModelSuit
 		Type:           PostTypeRequest,
 		Title:          "Test Request",
 		Size:           PostSizeMedium,
-		Uuid:           domain.GetUuid(),
+		UUID:           domain.GetUUID(),
 		Status:         status,
 	}
 
@@ -79,9 +79,6 @@ func CreatePostFixtures(ms *ModelSuite, t *testing.T, users Users) []Post {
 			Type:           PostTypeRequest,
 			OrganizationID: users[0].Organizations[0].ID,
 			Title:          "A Request",
-			Size:           PostSizeMedium,
-			Status:         PostStatusOpen,
-			Uuid:           domain.GetUuid(),
 			ProviderID:     nulls.NewInt(users[1].ID),
 			DestinationID:  locations[0].ID,
 		},
@@ -90,14 +87,14 @@ func CreatePostFixtures(ms *ModelSuite, t *testing.T, users Users) []Post {
 			Type:           PostTypeOffer,
 			OrganizationID: users[0].Organizations[0].ID,
 			Title:          "An Offer",
-			Size:           PostSizeMedium,
-			Status:         PostStatusOpen,
-			Uuid:           domain.GetUuid(),
 			ReceiverID:     nulls.NewInt(users[1].ID),
 			DestinationID:  locations[1].ID,
 		},
 	}
 	for i := range posts {
+		posts[i].Size = PostSizeMedium
+		posts[i].Status = PostStatusOpen
+		posts[i].UUID = domain.GetUUID()
 		if err := ms.DB.Create(&posts[i]); err != nil {
 			t.Errorf("could not create test post ... %v", err)
 			t.FailNow()
@@ -111,15 +108,15 @@ func CreatePostFixtures(ms *ModelSuite, t *testing.T, users Users) []Post {
 }
 
 func createFixturesForTestPostCreate(ms *ModelSuite) PostFixtures {
-	org := Organization{AuthConfig: "{}", Uuid: domain.GetUuid()}
+	org := Organization{AuthConfig: "{}", UUID: domain.GetUUID()}
 	createFixture(ms, &org)
 
-	unique := org.Uuid.String()
-	user := User{Uuid: domain.GetUuid(), Email: unique + "_user@example.com", Nickname: unique + "_User"}
+	unique := org.UUID.String()
+	user := User{UUID: domain.GetUUID(), Email: unique + "_user@example.com", Nickname: unique + "_User"}
 	createFixture(ms, &user)
 
 	posts := Posts{
-		{Uuid: domain.GetUuid(), Title: "title"},
+		{UUID: domain.GetUUID(), Title: "title"},
 		{Title: "title"},
 		{},
 	}
@@ -144,11 +141,11 @@ func createFixturesForTestPostCreate(ms *ModelSuite) PostFixtures {
 }
 
 func createFixturesForTestPostUpdate(ms *ModelSuite) PostFixtures {
-	org := Organization{AuthConfig: "{}", Uuid: domain.GetUuid()}
+	org := Organization{AuthConfig: "{}", UUID: domain.GetUUID()}
 	createFixture(ms, &org)
 
-	unique := org.Uuid.String()
-	user := User{Uuid: domain.GetUuid(), Email: unique + "_user@example.com", Nickname: unique + "_User"}
+	unique := org.UUID.String()
+	user := User{UUID: domain.GetUUID(), Email: unique + "_user@example.com", Nickname: unique + "_User"}
 	createFixture(ms, &user)
 
 	posts := Posts{
@@ -160,7 +157,7 @@ func createFixturesForTestPostUpdate(ms *ModelSuite) PostFixtures {
 		locations[i].Description = "location " + strconv.Itoa(i)
 		createFixture(ms, &locations[i])
 
-		posts[i].Uuid = domain.GetUuid()
+		posts[i].UUID = domain.GetUUID()
 		posts[i].Status = PostStatusOpen
 		posts[i].Type = "type"
 		posts[i].Size = PostSizeTiny
@@ -208,20 +205,20 @@ func CreateFixturesForPostsGetFiles(ms *ModelSuite) PostFixtures {
 }
 
 func createFixturesForPostFindByUserAndUUID(ms *ModelSuite) PostFixtures {
-	orgs := Organizations{
-		{Uuid: domain.GetUuid(), AuthConfig: "{}"},
-		{Uuid: domain.GetUuid(), AuthConfig: "{}"},
-	}
+	orgs := Organizations{{}, {}}
 	for i := range orgs {
+		orgs[i].UUID = domain.GetUUID()
+		orgs[i].AuthConfig = "{}"
 		createFixture(ms, &orgs[i])
 	}
 
-	unique := domain.GetUuid().String()
+	unique := domain.GetUUID().String()
 	users := Users{
-		{Email: unique + "_user0@example.com", Nickname: unique + "User0", Uuid: domain.GetUuid()},
-		{Email: unique + "_user1@example.com", Nickname: unique + "User1", Uuid: domain.GetUuid()},
+		{Email: unique + "_user0@example.com", Nickname: unique + "User0"},
+		{Email: unique + "_user1@example.com", Nickname: unique + "User1"},
 	}
 	for i := range users {
+		users[i].UUID = domain.GetUUID()
 		createFixture(ms, &users[i])
 	}
 
@@ -240,12 +237,13 @@ func createFixturesForPostFindByUserAndUUID(ms *ModelSuite) PostFixtures {
 	}
 
 	posts := Posts{
-		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: orgs[0].ID, DestinationID: locations[0].ID},
-		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: orgs[1].ID, DestinationID: locations[1].ID},
-		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: orgs[0].ID, DestinationID: locations[2].ID,
+		{CreatedByID: users[0].ID, OrganizationID: orgs[0].ID, DestinationID: locations[0].ID},
+		{CreatedByID: users[0].ID, OrganizationID: orgs[1].ID, DestinationID: locations[1].ID},
+		{CreatedByID: users[0].ID, OrganizationID: orgs[0].ID, DestinationID: locations[2].ID,
 			Status: PostStatusRemoved},
 	}
 	for i := range posts {
+		posts[i].UUID = domain.GetUUID()
 		createFixture(ms, &posts[i])
 	}
 
@@ -256,20 +254,20 @@ func createFixturesForPostFindByUserAndUUID(ms *ModelSuite) PostFixtures {
 }
 
 func CreateFixtures_Posts_FindByUser(ms *ModelSuite) PostFixtures {
-	orgs := Organizations{
-		{Uuid: domain.GetUuid(), AuthConfig: "{}"},
-		{Uuid: domain.GetUuid(), AuthConfig: "{}"},
-	}
+	orgs := Organizations{{}, {}}
 	for i := range orgs {
+		orgs[i].UUID = domain.GetUUID()
+		orgs[i].AuthConfig = "{}"
 		createFixture(ms, &orgs[i])
 	}
 
-	unique := domain.GetUuid().String()
+	unique := domain.GetUUID().String()
 	users := Users{
-		{Email: unique + "_user0@example.com", Nickname: unique + "User0", Uuid: domain.GetUuid()},
-		{Email: unique + "_user1@example.com", Nickname: unique + "User1", Uuid: domain.GetUuid()},
+		{Email: unique + "_user0@example.com", Nickname: unique + "User0"},
+		{Email: unique + "_user1@example.com", Nickname: unique + "User1"},
 	}
 	for i := range users {
+		users[i].UUID = domain.GetUUID()
 		createFixture(ms, &users[i])
 	}
 
@@ -288,15 +286,15 @@ func CreateFixtures_Posts_FindByUser(ms *ModelSuite) PostFixtures {
 	}
 
 	posts := Posts{
-		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: orgs[0].ID, DestinationID: locations[0].ID},
-		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: orgs[1].ID, DestinationID: locations[1].ID},
-		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: orgs[0].ID, DestinationID: locations[2].ID,
-			Status: PostStatusCompleted},
-		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: orgs[0].ID, DestinationID: locations[3].ID,
-			Status: PostStatusRemoved},
-		{Uuid: domain.GetUuid(), CreatedByID: users[1].ID, OrganizationID: orgs[0].ID, DestinationID: locations[4].ID},
+		{CreatedByID: users[0].ID, OrganizationID: orgs[0].ID},
+		{CreatedByID: users[0].ID, OrganizationID: orgs[1].ID},
+		{CreatedByID: users[0].ID, OrganizationID: orgs[0].ID, Status: PostStatusCompleted},
+		{CreatedByID: users[0].ID, OrganizationID: orgs[0].ID, Status: PostStatusRemoved},
+		{CreatedByID: users[1].ID, OrganizationID: orgs[0].ID},
 	}
 	for i := range posts {
+		posts[i].UUID = domain.GetUUID()
+		posts[i].DestinationID = locations[i].ID
 		createFixture(ms, &posts[i])
 	}
 
@@ -307,23 +305,25 @@ func CreateFixtures_Posts_FindByUser(ms *ModelSuite) PostFixtures {
 }
 
 func CreateFixtures_Post_IsEditable(ms *ModelSuite) PostFixtures {
-	org := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	org := Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
 	createFixture(ms, &org)
 
-	unique := org.Uuid.String()
+	unique := org.UUID.String()
 	users := Users{
-		{Email: unique + "_user0@example.com", Nickname: unique + "User0", Uuid: domain.GetUuid()},
-		{Email: unique + "_user1@example.com", Nickname: unique + "User1", Uuid: domain.GetUuid()},
+		{Email: unique + "_user0@example.com", Nickname: unique + "User0"},
+		{Email: unique + "_user1@example.com", Nickname: unique + "User1"},
 	}
 	for i := range users {
+		users[i].UUID = domain.GetUUID()
 		createFixture(ms, &users[i])
 	}
 
-	userOrgs := UserOrganizations{
-		{OrganizationID: org.ID, UserID: users[0].ID, AuthID: users[0].Email, AuthEmail: users[0].Email},
-		{OrganizationID: org.ID, UserID: users[1].ID, AuthID: users[1].Email, AuthEmail: users[1].Email},
-	}
+	userOrgs := UserOrganizations{{}, {}}
 	for i := range userOrgs {
+		userOrgs[i].OrganizationID = org.ID
+		userOrgs[i].UserID = users[i].ID
+		userOrgs[i].AuthID = users[i].Email
+		userOrgs[i].AuthEmail = users[i].Email
 		createFixture(ms, &userOrgs[i])
 	}
 
@@ -337,7 +337,7 @@ func CreateFixtures_Post_IsEditable(ms *ModelSuite) PostFixtures {
 		{Status: PostStatusCompleted},
 	}
 	for i := range posts {
-		posts[i].Uuid = domain.GetUuid()
+		posts[i].UUID = domain.GetUUID()
 		posts[i].CreatedByID = users[0].ID
 		posts[i].OrganizationID = org.ID
 		posts[i].DestinationID = locations[i].ID
@@ -353,24 +353,26 @@ func CreateFixtures_Post_IsEditable(ms *ModelSuite) PostFixtures {
 func createFixturesForPostGetAudience(ms *ModelSuite) PostFixtures {
 	orgs := make(Organizations, 2)
 	for i := range orgs {
-		orgs[i] = Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+		orgs[i] = Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
 		createFixture(ms, &orgs[i])
 	}
 
-	unique := orgs[0].Uuid.String()
+	unique := orgs[0].UUID.String()
 	users := Users{
-		{Email: unique + "_user0@example.com", Nickname: unique + "User0", Uuid: domain.GetUuid()},
-		{Email: unique + "_user1@example.com", Nickname: unique + "User1", Uuid: domain.GetUuid()},
+		{Email: unique + "_user0@example.com", Nickname: unique + "User0"},
+		{Email: unique + "_user1@example.com", Nickname: unique + "User1"},
 	}
 	for i := range users {
+		users[i].UUID = domain.GetUUID()
 		createFixture(ms, &users[i])
 	}
 
-	userOrgs := UserOrganizations{
-		{OrganizationID: orgs[0].ID, UserID: users[0].ID, AuthID: users[0].Email, AuthEmail: users[0].Email},
-		{OrganizationID: orgs[0].ID, UserID: users[1].ID, AuthID: users[1].Email, AuthEmail: users[1].Email},
-	}
+	userOrgs := UserOrganizations{{}, {}}
 	for i := range userOrgs {
+		userOrgs[i].OrganizationID = orgs[0].ID
+		userOrgs[i].UserID = users[i].ID
+		userOrgs[i].AuthID = users[i].Email
+		userOrgs[i].AuthEmail = users[i].Email
 		createFixture(ms, &userOrgs[i])
 	}
 
@@ -384,7 +386,7 @@ func createFixturesForPostGetAudience(ms *ModelSuite) PostFixtures {
 		{OrganizationID: orgs[1].ID}, // no users
 	}
 	for i := range posts {
-		posts[i].Uuid = domain.GetUuid()
+		posts[i].UUID = domain.GetUUID()
 		posts[i].CreatedByID = users[0].ID
 		posts[i].DestinationID = locations[i].ID
 		createFixture(ms, &posts[i])
@@ -397,12 +399,12 @@ func createFixturesForPostGetAudience(ms *ModelSuite) PostFixtures {
 }
 
 func createFixturesForGetLocationForNotifications(ms *ModelSuite) PostFixtures {
-	org := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	org := Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
 	createFixture(ms, &org)
 
-	unique := org.Uuid.String()
+	unique := org.UUID.String()
 	users := Users{
-		{Email: unique + "_user1@example.com", Nickname: unique + "User1", Uuid: domain.GetUuid()},
+		{Email: unique + "_user1@example.com", Nickname: unique + "User1", UUID: domain.GetUUID()},
 	}
 	for i := range users {
 		createFixture(ms, &users[i])
@@ -430,7 +432,7 @@ func createFixturesForGetLocationForNotifications(ms *ModelSuite) PostFixtures {
 	}
 	for i := range posts {
 		posts[i].OrganizationID = org.ID
-		posts[i].Uuid = domain.GetUuid()
+		posts[i].UUID = domain.GetUUID()
 		posts[i].CreatedByID = users[0].ID
 		posts[i].DestinationID = locations[i].ID
 		createFixture(ms, &posts[i])

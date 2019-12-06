@@ -18,7 +18,7 @@ func (r *organizationResolver) ID(ctx context.Context, obj *models.Organization)
 	if obj == nil {
 		return "", nil
 	}
-	return obj.Uuid.String(), nil
+	return obj.UUID.String(), nil
 }
 
 // URL resolves the `URL` property, converting a nulls.String to a *string.

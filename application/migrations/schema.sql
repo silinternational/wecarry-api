@@ -303,7 +303,7 @@ CREATE TABLE public.posts (
     photo_file_id integer,
     destination_id integer NOT NULL,
     origin_id integer,
-    kilograms numeric(13,4)
+    kilograms numeric(13,4) DEFAULT '0'::numeric NOT NULL
 );
 
 

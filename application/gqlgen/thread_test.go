@@ -35,9 +35,9 @@ func (gs *GqlgenSuite) TestThreadsQuery() {
 
 	gs.NoError(err)
 
-	gs.Equal(f.Threads[0].Uuid.String(), resp.Threads[0].ID)
-	gs.Equal(f.Posts[0].Uuid.String(), resp.Threads[0].Post.ID)
-	gs.Equal(f.Messages[0].Uuid.String(), resp.Threads[0].Messages[0].ID)
+	gs.Equal(f.Threads[0].UUID.String(), resp.Threads[0].ID)
+	gs.Equal(f.Posts[0].UUID.String(), resp.Threads[0].Post.ID)
+	gs.Equal(f.Messages[0].UUID.String(), resp.Threads[0].Messages[0].ID)
 	gs.Equal(f.Messages[0].Content, resp.Threads[0].Messages[0].Content)
 	gs.Equal(f.Users[1].Nickname, resp.Threads[0].Messages[0].Sender.Nickname)
 
@@ -89,8 +89,8 @@ func (gs *GqlgenSuite) TestMyThreadsQuery() {
 
 	gs.NoError(err)
 
-	gs.Equal(f.Threads[0].Uuid.String(), resp.MyThreads[0].ID)
-	gs.Equal(f.Messages[0].Uuid.String(), resp.MyThreads[0].Messages[0].ID)
+	gs.Equal(f.Threads[0].UUID.String(), resp.MyThreads[0].ID)
+	gs.Equal(f.Messages[0].UUID.String(), resp.MyThreads[0].Messages[0].ID)
 	gs.Equal(f.Messages[0].Content, resp.MyThreads[0].Messages[0].Content)
 	gs.Equal(f.Users[1].Nickname, resp.MyThreads[0].Messages[0].Sender.Nickname)
 

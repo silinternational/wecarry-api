@@ -9,7 +9,7 @@ import (
 func (ms *ModelSuite) TestOrganizationDomain_GetOrganizationUUID() {
 	t := ms.T()
 
-	org := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	org := Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
 	createFixture(ms, &org)
 
 	orgDomain := OrganizationDomain{OrganizationID: org.ID, Domain: "example.com"}
@@ -24,7 +24,7 @@ func (ms *ModelSuite) TestOrganizationDomain_GetOrganizationUUID() {
 		{
 			name:      "valid",
 			orgDomain: orgDomain,
-			want:      org.Uuid.String(),
+			want:      org.UUID.String(),
 		},
 		{
 			name:      "error",

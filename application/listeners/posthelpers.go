@@ -60,7 +60,7 @@ func getMessageForProvider(postUsers PostUsers, post models.Post, template strin
 	data := map[string]interface{}{
 		"uiURL":             domain.Env.UIURL,
 		"appName":           domain.Env.AppName,
-		"postURL":           domain.GetPostUIURL(post.Uuid.String()),
+		"postURL":           domain.GetPostUIURL(post.UUID.String()),
 		"postTitle":         post.Title,
 		"postDescription":   post.Description,
 		"requesterNickname": postUsers.Requester.Nickname,
@@ -80,7 +80,7 @@ func getMessageForReceiver(postUsers PostUsers, post models.Post, template strin
 	data := map[string]interface{}{
 		"uiURL":            domain.Env.UIURL,
 		"appName":          domain.Env.AppName,
-		"postURL":          domain.GetPostUIURL(post.Uuid.String()),
+		"postURL":          domain.GetPostUIURL(post.UUID.String()),
 		"postTitle":        post.Title,
 		"postDescription":  post.Description,
 		"providerNickname": postUsers.Provider.Nickname,
@@ -205,7 +205,7 @@ func sendNotificationRequestFromCommittedToOpen(params senderParams) {
 	data := map[string]interface{}{
 		"uiURL":             domain.Env.UIURL,
 		"appName":           domain.Env.AppName,
-		"postURL":           domain.GetPostUIURL(post.Uuid.String()),
+		"postURL":           domain.GetPostUIURL(post.UUID.String()),
 		"postTitle":         post.Title,
 		"providerNickname":  providerNickname,
 		"providerEmail":     providerEmail,
@@ -418,7 +418,7 @@ func sendNewPostNotification(user models.User, post models.Post) error {
 		Data: map[string]interface{}{
 			"appName":   domain.Env.AppName,
 			"uiURL":     domain.Env.UIURL,
-			"postURL":   domain.GetPostUIURL(post.Uuid.String()),
+			"postURL":   domain.GetPostUIURL(post.UUID.String()),
 			"postTitle": post.Title,
 		},
 	}

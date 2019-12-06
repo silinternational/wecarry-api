@@ -10,8 +10,8 @@ import (
 func createUserOrganizationFixtures(ms *ModelSuite, t *testing.T) {
 	// reset db tables
 
-	singleUuid := domain.GetUuid()
-	twoUuid := domain.GetUuid()
+	singleUUID := domain.GetUUID()
+	twoUUID := domain.GetUUID()
 
 	users := []User{
 		{
@@ -20,7 +20,7 @@ func createUserOrganizationFixtures(ms *ModelSuite, t *testing.T) {
 			LastName:  "Result",
 			Nickname:  "Single",
 			AdminRole: UserAdminRoleUser,
-			Uuid:      singleUuid,
+			UUID:      singleUUID,
 		},
 		{
 			Email:     "two@domain.com",
@@ -28,15 +28,15 @@ func createUserOrganizationFixtures(ms *ModelSuite, t *testing.T) {
 			LastName:  "Results",
 			Nickname:  "Two",
 			AdminRole: UserAdminRoleUser,
-			Uuid:      twoUuid,
+			UUID:      twoUUID,
 		},
 	}
 	for i := range users {
 		createFixture(ms, &users[i])
 	}
 
-	org1uuid := domain.GetUuid()
-	org2uuid := domain.GetUuid()
+	org1uuid := domain.GetUUID()
+	org2uuid := domain.GetUUID()
 
 	orgs := []Organization{
 		{
@@ -44,14 +44,14 @@ func createUserOrganizationFixtures(ms *ModelSuite, t *testing.T) {
 			Url:        nulls.String{},
 			AuthType:   "",
 			AuthConfig: "{}",
-			Uuid:       org1uuid,
+			UUID:       org1uuid,
 		},
 		{
 			Name:       "Org2",
 			Url:        nulls.String{},
 			AuthType:   "",
 			AuthConfig: "{}",
-			Uuid:       org2uuid,
+			UUID:       org2uuid,
 		},
 	}
 	for i := range orgs {

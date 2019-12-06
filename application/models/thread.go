@@ -17,7 +17,7 @@ type Thread struct {
 	ID           int       `json:"id" db:"id"`
 	CreatedAt    time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at" db:"updated_at"`
-	Uuid         uuid.UUID `json:"uuid" db:"uuid"`
+	UUID         uuid.UUID `json:"uuid" db:"uuid"`
 	PostID       int       `json:"post_id" db:"post_id"`
 	Post         Post      `belongs_to:"posts"`
 	Messages     Messages  `has_many:"messages"`
@@ -42,7 +42,7 @@ func (t Threads) String() string {
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
 func (t *Thread) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
-		&validators.UUIDIsPresent{Field: t.Uuid, Name: "Uuid"},
+		&validators.UUIDIsPresent{Field: t.UUID, Name: "UUID"},
 		&validators.IntIsPresent{Field: t.PostID, Name: "PostID"},
 	), nil
 }
@@ -78,7 +78,7 @@ func (t *Thread) FindByUUID(uuid string) error {
 
 func (t *Thread) GetPost() (*Post, error) {
 	if t.PostID <= 0 {
-		if err := t.FindByUUID(t.Uuid.String()); err != nil {
+		if err := t.FindByUUID(t.UUID.String()); err != nil {
 			return nil, err
 		}
 	}
@@ -117,19 +117,19 @@ func (t *Thread) GetParticipants() ([]User, error) {
 	return users, nil
 }
 
-func (t *Thread) CreateWithParticipants(postUuid string, user User) error {
+func (t *Thread) CreateWithParticipants(postUUID string, user User) error {
 	if user.ID <= 0 {
 		return fmt.Errorf("error creating thread, invalid user ID %v", user.ID)
 	}
 
 	var post Post
-	if err := post.FindByUUID(postUuid); err != nil {
+	if err := post.FindByUUID(postUUID); err != nil {
 		return err
 	}
 
 	thread := Thread{
 		PostID: post.ID,
-		Uuid:   domain.GetUuid(),
+		UUID:   domain.GetUUID(),
 	}
 
 	if err := DB.Save(&thread); err != nil {
@@ -200,7 +200,7 @@ func (t *Thread) UpdateLastViewedAt(userID int, time time.Time) error {
 // Load reads the selected fields from the database
 func (t *Thread) Load(fields ...string) error {
 	if err := DB.Load(t, fields...); err != nil {
-		return fmt.Errorf("error loading data for thread %s, %s", t.Uuid.String(), err)
+		return fmt.Errorf("error loading data for thread %s, %s", t.UUID.String(), err)
 	}
 
 	return nil

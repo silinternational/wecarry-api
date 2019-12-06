@@ -237,9 +237,9 @@ func GetCurrentTime() string {
 	return time.Now().Format(DateTimeFormat)
 }
 
-// GetUuid creates a new, unique version 4 (random) UUID and returns it
+// GetUUID creates a new, unique version 4 (random) UUID and returns it
 // as a uuid2.UUID. Errors are ignored.
-func GetUuid() uuid2.UUID {
+func GetUUID() uuid2.UUID {
 	uuid, err := uuid2.NewV4()
 	if err != nil {
 		ErrLogger.Printf("error creating new uuid2 ... %v", err)

@@ -36,7 +36,7 @@ func (r *threadResolver) ID(ctx context.Context, obj *models.Thread) (string, er
 	if obj == nil {
 		return "", nil
 	}
-	return obj.Uuid.String(), nil
+	return obj.UUID.String(), nil
 }
 
 // LastViewedAt retrieves the last_viewed_at field for the current user on the thread
@@ -49,7 +49,7 @@ func (r *threadResolver) LastViewedAt(ctx context.Context, obj *models.Thread) (
 	lastViewedAt, err := obj.GetLastViewedAt(currentUser)
 	if err != nil {
 		extras := map[string]interface{}{
-			"user": currentUser.Uuid,
+			"user": currentUser.UUID,
 		}
 		return nil, reportError(ctx, err, "GetThreadLastViewedAt", extras)
 	}
@@ -83,7 +83,7 @@ func (r *threadResolver) PostID(ctx context.Context, obj *models.Thread) (string
 		return "", reportError(ctx, err, "GetThreadPostID")
 	}
 
-	return post.Uuid.String(), nil
+	return post.UUID.String(), nil
 }
 
 // Post retrieves the post to which the queried thread belongs.
@@ -145,7 +145,7 @@ func (r *queryResolver) MyThreads(ctx context.Context) ([]models.Thread, error) 
 	threads, err := currentUser.GetThreads()
 	if err != nil {
 		extras := map[string]interface{}{
-			"user": currentUser.Uuid,
+			"user": currentUser.UUID,
 		}
 		return nil, reportError(ctx, err, "GetMyThreads", extras)
 	}

@@ -63,7 +63,7 @@ func (f *File) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 // Store takes a byte slice and stores it into S3 and saves the metadata in the database file table.
 // None of the struct members of `f` are used as input, but are updated if the function is successful.
 func (f *File) Store(name string, content []byte) error {
-	fileUUID := domain.GetUuid()
+	fileUUID := domain.GetUUID()
 
 	if len(content) > domain.MaxFileSize {
 		return fmt.Errorf("file too large (%d bytes), max is %d bytes", len(content), domain.MaxFileSize)

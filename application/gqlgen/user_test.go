@@ -53,7 +53,7 @@ type UserQueryFixtures struct {
 
 // Fixtures_UserQuery creates fixtures for Test_UserQuery
 func Fixtures_UserQuery(gs *GqlgenSuite, t *testing.T) UserQueryFixtures {
-	org := &models.Organization{AuthConfig: "{}", Uuid: domain.GetUuid()}
+	org := &models.Organization{AuthConfig: "{}", UUID: domain.GetUUID()}
 	createFixture(gs, org)
 
 	locations := []models.Location{
@@ -70,7 +70,6 @@ func Fixtures_UserQuery(gs *GqlgenSuite, t *testing.T) UserQueryFixtures {
 
 	users := models.Users{
 		{
-			Uuid:      domain.GetUuid(),
 			Email:     t.Name() + "_user1@example.com",
 			Nickname:  t.Name() + " User1",
 			FirstName: "First1",
@@ -78,7 +77,6 @@ func Fixtures_UserQuery(gs *GqlgenSuite, t *testing.T) UserQueryFixtures {
 			AdminRole: models.UserAdminRoleSuperAdmin,
 		},
 		{
-			Uuid:       domain.GetUuid(),
 			Email:      t.Name() + "_user2@example.com",
 			Nickname:   t.Name() + " User2",
 			AdminRole:  models.UserAdminRoleSalesAdmin,
@@ -88,6 +86,7 @@ func Fixtures_UserQuery(gs *GqlgenSuite, t *testing.T) UserQueryFixtures {
 		},
 	}
 	for i := range users {
+		users[i].UUID = domain.GetUUID()
 		createFixture(gs, &users[i])
 	}
 
@@ -105,19 +104,16 @@ func Fixtures_UserQuery(gs *GqlgenSuite, t *testing.T) UserQueryFixtures {
 	// Load UserPreferences test fixtures
 	userPreferences := models.UserPreferences{
 		{
-			Uuid:   domain.GetUuid(),
 			UserID: users[1].ID,
 			Key:    domain.UserPreferenceKeyLanguage,
 			Value:  domain.UserPreferenceLanguageFrench,
 		},
 		{
-			Uuid:   domain.GetUuid(),
 			UserID: users[1].ID,
 			Key:    domain.UserPreferenceKeyTimeZone,
 			Value:  "America/New_York",
 		},
 		{
-			Uuid:   domain.GetUuid(),
 			UserID: users[1].ID,
 			Key:    domain.UserPreferenceKeyWeightUnit,
 			Value:  domain.UserPreferenceWeightUnitPounds,
@@ -125,12 +121,12 @@ func Fixtures_UserQuery(gs *GqlgenSuite, t *testing.T) UserQueryFixtures {
 	}
 
 	for i := range userPreferences {
+		userPreferences[i].UUID = domain.GetUUID()
 		createFixture(gs, &userPreferences[i])
 	}
 
 	posts := models.Posts{
 		{
-			Uuid:           domain.GetUuid(),
 			CreatedByID:    users[1].ID,
 			OrganizationID: org.ID,
 			ProviderID:     nulls.NewInt(users[1].ID),
@@ -138,6 +134,7 @@ func Fixtures_UserQuery(gs *GqlgenSuite, t *testing.T) UserQueryFixtures {
 		},
 	}
 	for i := range posts {
+		posts[i].UUID = domain.GetUUID()
 		createFixture(gs, &posts[i])
 	}
 
@@ -190,22 +187,22 @@ func (gs *GqlgenSuite) TestUserQuery() {
 	testCases := []testCase{
 		{
 			Name:     "all fields",
-			Payload:  `{user(id: "` + f.Users[1].Uuid.String() + `")` + allFields + "}",
+			Payload:  `{user(id: "` + f.Users[1].UUID.String() + `")` + allFields + "}",
 			TestUser: f.Users[0],
 			Test: func(t *testing.T) {
 				if err := gs.DB.Load(&(f.Users[1]), "PhotoFile"); err != nil {
 					t.Errorf("failed to load user fixture, %s", err)
 				}
-				gs.Equal(f.Users[1].Uuid.String(), resp.User.ID, "incorrect ID")
+				gs.Equal(f.Users[1].UUID.String(), resp.User.ID, "incorrect ID")
 				gs.Equal(f.Users[1].Email, resp.User.Email, "incorrect Email")
 				gs.Equal(f.Users[1].Nickname, resp.User.Nickname, "incorrect Nickname")
 				gs.Equal(f.Users[1].AdminRole, resp.User.AdminRole, "incorrect AdminRole")
 				gs.Equal(f.Users[1].PhotoFile.URL, resp.User.AvatarURL, "incorrect AvatarURL")
 				gs.Regexp("^https?", resp.User.AvatarURL, "invalid AvatarURL")
 				gs.Equal(1, len(resp.User.Posts), "wrong number of posts")
-				gs.Equal(f.Posts[0].Uuid.String(), resp.User.Posts[0].ID, "incorrect Post ID")
+				gs.Equal(f.Posts[0].UUID.String(), resp.User.Posts[0].ID, "incorrect Post ID")
 				gs.Equal(1, len(resp.User.Organizations), "wrong number of Organizations")
-				gs.Equal(f.Organization.Uuid.String(), resp.User.Organizations[0].ID, "incorrect Organization ID")
+				gs.Equal(f.Organization.UUID.String(), resp.User.Organizations[0].ID, "incorrect Organization ID")
 				gs.Equal(f.Locations[0].Description, resp.User.Location.Description, "incorrect location")
 				gs.Equal(f.Locations[0].Country, resp.User.Location.Country, "incorrect country")
 				gs.Equal(f.Locations[0].Latitude.Float64, resp.User.Location.Lat, "incorrect latitude")
@@ -224,12 +221,12 @@ func (gs *GqlgenSuite) TestUserQuery() {
 			Payload:  `{user ` + allFields + "}",
 			TestUser: f.Users[1],
 			Test: func(t *testing.T) {
-				gs.Equal(f.Users[1].Uuid.String(), resp.User.ID, "incorrect ID")
+				gs.Equal(f.Users[1].UUID.String(), resp.User.ID, "incorrect ID")
 			},
 		},
 		{
 			Name:        "not allowed",
-			Payload:     `{user(id: "` + f.Users[0].Uuid.String() + `")` + allFields + "}",
+			Payload:     `{user(id: "` + f.Users[0].UUID.String() + `")` + allFields + "}",
 			TestUser:    f.Users[1],
 			Test:        func(t *testing.T) {},
 			ExpectError: true,
@@ -266,7 +263,7 @@ func (gs *GqlgenSuite) TestUpdateUser() {
 
 	var resp UserResponse
 
-	userID := f.Users[1].Uuid.String()
+	userID := f.Users[1].UUID.String()
 	newNickname := "U1 New Nickname"
 	location := `{description: "Paris, France", country: "FR", latitude: 48.8588377, longitude: 2.2770202}`
 
@@ -303,7 +300,7 @@ func (gs *GqlgenSuite) TestUpdateUser() {
 		{
 			Name: "not allowed",
 			Payload: fmt.Sprintf(`mutation {updateUser(input:{id: \"%v\", location: \"%v\"}) {nickname}}`,
-				f.Users[0].Uuid, location),
+				f.Users[0].UUID, location),
 			TestUser:    f.Users[1],
 			Test:        func(t *testing.T) {},
 			ExpectError: true,
@@ -324,10 +321,10 @@ func (gs *GqlgenSuite) TestUpdateUser() {
 	}
 }
 
-func createFixturesForGetPublicProfile()UserQueryFixtures {
-	unique := domain.GetUuid().String()
-	user :=  models.User{
-		Uuid: domain.GetUuid(),
+func createFixturesForGetPublicProfile() UserQueryFixtures {
+	unique := domain.GetUUID().String()
+	user := models.User{
+		UUID:         domain.GetUUID(),
 		Nickname:     "user0" + unique,
 		AuthPhotoURL: nulls.NewString("https://example.com/userphoto/1"),
 	}
@@ -338,23 +335,23 @@ func (gs *GqlgenSuite) Test_getPublicProfile() {
 	t := gs.T()
 	f := createFixturesForGetPublicProfile()
 	tests := []struct {
-		name string
-		user *models.User
-		want PublicProfile
+		name    string
+		user    *models.User
+		want    PublicProfile
 		wantNil bool
 	}{
 		{
 			name: "fully-specified User",
 			user: &f.Users[0],
 			want: PublicProfile{
-				ID:        f.Users[0].Uuid.String(),
+				ID:        f.Users[0].UUID.String(),
 				Nickname:  f.Users[0].Nickname,
 				AvatarURL: &f.Users[0].AuthPhotoURL.String,
 			},
 		},
 		{
-			name: "nil user",
-			user: 	nil,
+			name:    "nil user",
+			user:    nil,
 			wantNil: true,
 		},
 	}

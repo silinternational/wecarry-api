@@ -57,7 +57,7 @@ type User struct {
 	LastName          string            `json:"last_name" db:"last_name"`
 	Nickname          string            `json:"nickname" db:"nickname"`
 	AdminRole         UserAdminRole     `json:"admin_role" db:"admin_role"`
-	Uuid              uuid.UUID         `json:"uuid" db:"uuid"`
+	UUID              uuid.UUID         `json:"uuid" db:"uuid"`
 	PhotoFileID       nulls.Int         `json:"photo_file_id" db:"photo_file_id"`
 	AuthPhotoURL      nulls.String      `json:"auth_photo_url" db:"auth_photo_url"`
 	LocationID        nulls.Int         `json:"location_id" db:"location_id"`
@@ -94,7 +94,7 @@ func (u *User) Validate(tx *pop.Connection) (*validate.Errors, error) {
 		&validators.StringIsPresent{Field: u.FirstName, Name: "FirstName"},
 		&validators.StringIsPresent{Field: u.LastName, Name: "LastName"},
 		&validators.StringIsPresent{Field: u.Nickname, Name: "Nickname"},
-		&validators.UUIDIsPresent{Field: u.Uuid, Name: "Uuid"},
+		&validators.UUIDIsPresent{Field: u.UUID, Name: "UUID"},
 		&NullsStringIsURL{Field: u.AuthPhotoURL, Name: "AuthPhotoURL"},
 	), nil
 }
@@ -170,7 +170,7 @@ func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
 		if userOrgs[0].AuthID != authUser.UserID {
 			return errors.New("a user in this organization with this email address already exists with different user id")
 		}
-		err = DB.Where("uuid = ?", userOrgs[0].User.Uuid).First(u)
+		err = DB.Where("uuid = ?", userOrgs[0].User.UUID).First(u)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -192,7 +192,7 @@ func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
 
 	// if new user they will need a uuid and a unique Nickname
 	if newUser {
-		u.Uuid = domain.GetUuid()
+		u.UUID = domain.GetUUID()
 
 		u.Nickname = authUser.Nickname
 		if err := u.uniquifyNickname(); err != nil {
@@ -223,7 +223,7 @@ func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
 	if newUser {
 		e := events.Event{
 			Kind:    domain.EventApiUserCreated,
-			Message: "Nickname: " + u.Nickname + "  Uuid: " + u.Uuid.String(),
+			Message: "Nickname: " + u.Nickname + "  UUID: " + u.UUID.String(),
 			Payload: events.Payload{"user": u},
 		}
 		emitEvent(e)
@@ -385,8 +385,8 @@ func (u *User) GetPhotoURL() (*string, error) {
 
 // Save wraps DB.Save() call to check for errors and operate on attached object
 func (u *User) Save() error {
-	if u.Uuid.Version() == 0 {
-		u.Uuid = domain.GetUuid()
+	if u.UUID.Version() == 0 {
+		u.UUID = domain.GetUUID()
 	}
 	validationErrs, err := u.Validate(DB)
 	if validationErrs != nil && validationErrs.HasAny() {
@@ -426,7 +426,7 @@ func (u *User) uniquifyNickname() error {
 	}
 
 	if err != nil {
-		return fmt.Errorf("last error looking for unique nickname for existingUser %v ... %v", u.Uuid, err)
+		return fmt.Errorf("last error looking for unique nickname for existingUser %v ... %v", u.UUID, err)
 	}
 
 	return fmt.Errorf("failed finding unique nickname for user %s %s", u.FirstName, u.LastName)
@@ -480,12 +480,12 @@ func (u *User) UnreadMessageCount() ([]UnreadThread, error) {
 		msgCount, err := tp.Thread.UnreadMessageCount(u.ID, tp.LastViewedAt)
 		if err != nil {
 			domain.ErrLogger.Printf("error getting count of unread messages for thread %s ... %v",
-				tp.Thread.Uuid, err)
+				tp.Thread.UUID, err)
 			continue
 		}
 
 		if msgCount > 0 {
-			unreads = append(unreads, UnreadThread{ThreadUUID: tp.Thread.Uuid, Count: msgCount})
+			unreads = append(unreads, UnreadThread{ThreadUUID: tp.Thread.UUID, Count: msgCount})
 		}
 	}
 
