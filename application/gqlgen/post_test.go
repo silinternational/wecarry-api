@@ -116,7 +116,6 @@ func createFixtures_PostQuery(gs *GqlgenSuite) PostQueryFixtures {
 
 	posts := models.Posts{
 		{
-			UUID:           domain.GetUUID(),
 			CreatedByID:    users[0].ID,
 			ReceiverID:     nulls.NewInt(users[0].ID),
 			ProviderID:     nulls.NewInt(users[1].ID),
@@ -132,7 +131,6 @@ func createFixtures_PostQuery(gs *GqlgenSuite) PostQueryFixtures {
 			Kilograms:      11.11,
 		},
 		{
-			UUID:           domain.GetUUID(),
 			CreatedByID:    users[0].ID,
 			ProviderID:     nulls.NewInt(users[0].ID),
 			OrganizationID: org.ID,
@@ -140,6 +138,7 @@ func createFixtures_PostQuery(gs *GqlgenSuite) PostQueryFixtures {
 		},
 	}
 	for i := range posts {
+		posts[i].UUID = domain.GetUUID()
 		createFixture(gs, &posts[i])
 	}
 
@@ -283,10 +282,11 @@ func createFixtures_UpdatePost(gs *GqlgenSuite) UpdatePostFixtures {
 	createFixture(gs, &org)
 
 	users := models.Users{
-		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1 ", UUID: domain.GetUUID()},
-		{Email: t.Name() + "_user2@example.com", Nickname: t.Name() + " User2 ", UUID: domain.GetUUID()},
+		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1 "},
+		{Email: t.Name() + "_user2@example.com", Nickname: t.Name() + " User2 "},
 	}
 	for i := range users {
+		users[i].UUID = domain.GetUUID()
 		createFixture(gs, &users[i])
 	}
 
@@ -318,7 +318,6 @@ func createFixtures_UpdatePost(gs *GqlgenSuite) UpdatePostFixtures {
 			Title:          "An Offer",
 			Size:           models.PostSizeLarge,
 			Status:         models.PostStatusOpen,
-			UUID:           domain.GetUUID(),
 			ReceiverID:     nulls.NewInt(users[1].ID),
 			DestinationID:  locations[0].ID, // test update of existing location
 			// leave OriginID nil to test adding a location
@@ -326,6 +325,7 @@ func createFixtures_UpdatePost(gs *GqlgenSuite) UpdatePostFixtures {
 	}
 
 	for i := range posts {
+		posts[i].UUID = domain.GetUUID()
 		createFixture(gs, &posts[i])
 	}
 

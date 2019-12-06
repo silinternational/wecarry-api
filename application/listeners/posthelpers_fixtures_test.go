@@ -40,24 +40,22 @@ func CreateFixtures_GetPostRecipients(ms *ModelSuite, t *testing.T) orgUserPostF
 			FirstName: "Existing1",
 			LastName:  "User",
 			Nickname:  "Existing1 User " + unique,
-			UUID:      domain.GetUUID(),
 		},
 		{
 			Email:     "user2-" + unique + "@example.com",
 			FirstName: "Existing2",
 			LastName:  "User",
 			Nickname:  "Existing2 User " + unique,
-			UUID:      domain.GetUUID(),
 		},
 		{
 			Email:     "not_participating-" + unique + "@example.com",
 			FirstName: "Not",
 			LastName:  "Participating",
 			Nickname:  "Not Participating " + unique,
-			UUID:      domain.GetUUID(),
 		},
 	}
 	for i := range users {
+		users[i].UUID = domain.GetUUID()
 		if err := ms.DB.Create(&users[i]); err != nil {
 			t.Errorf("could not create test user %v ... %v", users[i], err)
 			t.FailNow()
@@ -94,7 +92,6 @@ func CreateFixtures_GetPostRecipients(ms *ModelSuite, t *testing.T) orgUserPostF
 			Title:          "First Request",
 			Size:           models.PostSizeMedium,
 			Status:         models.PostStatusOpen,
-			UUID:           domain.GetUUID(),
 			ProviderID:     nulls.NewInt(users[1].ID),
 			ReceiverID:     nulls.NewInt(users[0].ID),
 			DestinationID:  locations[0].ID,
@@ -106,12 +103,12 @@ func CreateFixtures_GetPostRecipients(ms *ModelSuite, t *testing.T) orgUserPostF
 			Title:          "Second Request",
 			Size:           models.PostSizeMedium,
 			Status:         models.PostStatusOpen,
-			UUID:           domain.GetUUID(),
 			ReceiverID:     nulls.NewInt(users[0].ID),
 			DestinationID:  locations[1].ID,
 		},
 	}
 	for i := range posts {
+		posts[i].UUID = domain.GetUUID()
 		if err := ms.DB.Create(&posts[i]); err != nil {
 			t.Errorf("could not create test post ... %v", err)
 			t.FailNow()
@@ -153,24 +150,22 @@ func CreateFixtures_RequestStatusUpdatedNotifications(ms *ModelSuite, t *testing
 			FirstName: "Existing1",
 			LastName:  "User",
 			Nickname:  "Existing1 User " + unique,
-			UUID:      domain.GetUUID(),
 		},
 		{
 			Email:     "user2-" + unique + "@example.com",
 			FirstName: "Existing2",
 			LastName:  "User",
 			Nickname:  "Existing2 User " + unique,
-			UUID:      domain.GetUUID(),
 		},
 		{
 			Email:     "not_participating-" + unique + "@example.com",
 			FirstName: "Not",
 			LastName:  "Participating",
 			Nickname:  "Not Participating " + unique,
-			UUID:      domain.GetUUID(),
 		},
 	}
 	for i := range users {
+		users[i].UUID = domain.GetUUID()
 		if err := ms.DB.Create(&users[i]); err != nil {
 			t.Errorf("could not create test user %v ... %v", users[i], err)
 			t.FailNow()
@@ -208,7 +203,6 @@ func CreateFixtures_RequestStatusUpdatedNotifications(ms *ModelSuite, t *testing
 			Title:          "First Request",
 			Size:           models.PostSizeMedium,
 			Status:         models.PostStatusOpen,
-			UUID:           domain.GetUUID(),
 			ProviderID:     nulls.NewInt(users[1].ID),
 			ReceiverID:     nulls.NewInt(users[0].ID),
 			DestinationID:  locations[0].ID,
@@ -220,12 +214,12 @@ func CreateFixtures_RequestStatusUpdatedNotifications(ms *ModelSuite, t *testing
 			Title:          "Second Request",
 			Size:           models.PostSizeMedium,
 			Status:         models.PostStatusOpen,
-			UUID:           domain.GetUUID(),
 			ReceiverID:     nulls.NewInt(users[0].ID),
 			DestinationID:  locations[1].ID,
 		},
 	}
 	for i := range posts {
+		posts[i].UUID = domain.GetUUID()
 		if err := ms.DB.Create(&posts[i]); err != nil {
 			t.Errorf("could not create test post ... %v", err)
 			t.FailNow()
@@ -267,24 +261,22 @@ func CreateFixtures_sendNotificationRequestFromStatus(ms *ModelSuite, t *testing
 			FirstName: "Existing1",
 			LastName:  "User",
 			Nickname:  "Existing1 User " + unique,
-			UUID:      domain.GetUUID(),
 		},
 		{
 			Email:     "user2-" + unique + "@example.com",
 			FirstName: "Existing2",
 			LastName:  "User",
 			Nickname:  "Existing2 User " + unique,
-			UUID:      domain.GetUUID(),
 		},
 		{
 			Email:     "not_participating-" + unique + "@example.com",
 			FirstName: "Not",
 			LastName:  "Participating",
 			Nickname:  "Not Participating " + unique,
-			UUID:      domain.GetUUID(),
 		},
 	}
 	for i := range users {
+		users[i].UUID = domain.GetUUID()
 		if err := ms.DB.Create(&users[i]); err != nil {
 			t.Errorf("could not create test user %v ... %v", users[i], err)
 			t.FailNow()
@@ -322,7 +314,6 @@ func CreateFixtures_sendNotificationRequestFromStatus(ms *ModelSuite, t *testing
 			Title:          "First Request",
 			Size:           models.PostSizeMedium,
 			Status:         models.PostStatusOpen,
-			UUID:           domain.GetUUID(),
 			ProviderID:     nulls.NewInt(users[1].ID),
 			ReceiverID:     nulls.NewInt(users[0].ID),
 			DestinationID:  locations[0].ID,
@@ -334,12 +325,12 @@ func CreateFixtures_sendNotificationRequestFromStatus(ms *ModelSuite, t *testing
 			Title:          "Second Request",
 			Size:           models.PostSizeMedium,
 			Status:         models.PostStatusOpen,
-			UUID:           domain.GetUUID(),
 			ReceiverID:     nulls.NewInt(users[0].ID),
 			DestinationID:  locations[1].ID,
 		},
 	}
 	for i := range posts {
+		posts[i].UUID = domain.GetUUID()
 		if err := ms.DB.Create(&posts[i]); err != nil {
 			t.Errorf("could not create test post ... %v", err)
 			t.FailNow()

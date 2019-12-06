@@ -23,10 +23,11 @@ func createFixtures_ThreadQuery(gs *GqlgenSuite) threadQueryFixtures {
 	createFixture(gs, &org)
 
 	users := models.Users{
-		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1 ", UUID: domain.GetUUID()},
-		{Email: t.Name() + "_user2@example.com", Nickname: t.Name() + " User2 ", UUID: domain.GetUUID()},
+		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1 "},
+		{Email: t.Name() + "_user2@example.com", Nickname: t.Name() + " User2 "},
 	}
 	for i := range users {
+		users[i].UUID = domain.GetUUID()
 		createFixture(gs, &users[i])
 	}
 
@@ -59,7 +60,6 @@ func createFixtures_ThreadQuery(gs *GqlgenSuite) threadQueryFixtures {
 
 	posts := models.Posts{
 		{
-			UUID:           domain.GetUUID(),
 			CreatedByID:    users[0].ID,
 			OrganizationID: org.ID,
 			Type:           models.PostTypeRequest,
@@ -69,7 +69,6 @@ func createFixtures_ThreadQuery(gs *GqlgenSuite) threadQueryFixtures {
 			Size:           models.PostSizeSmall,
 		},
 		{
-			UUID:           domain.GetUUID(),
 			CreatedByID:    users[0].ID,
 			ProviderID:     nulls.NewInt(users[0].ID),
 			OrganizationID: org.ID,
@@ -77,6 +76,7 @@ func createFixtures_ThreadQuery(gs *GqlgenSuite) threadQueryFixtures {
 		},
 	}
 	for i := range posts {
+		posts[i].UUID = domain.GetUUID()
 		createFixture(gs, &posts[i])
 	}
 
@@ -96,19 +96,18 @@ func createFixtures_ThreadQuery(gs *GqlgenSuite) threadQueryFixtures {
 
 	messages := models.Messages{
 		{
-			UUID:     domain.GetUUID(),
 			ThreadID: threads[0].ID,
 			SentByID: users[1].ID,
 			Content:  "Message from " + users[1].Nickname,
 		},
 		{
-			UUID:     domain.GetUUID(),
 			ThreadID: threads[0].ID,
 			SentByID: users[0].ID,
 			Content:  "Reply from " + users[0].Nickname,
 		},
 	}
 	for i := range messages {
+		messages[i].UUID = domain.GetUUID()
 		createFixture(gs, &messages[i])
 	}
 

@@ -70,7 +70,6 @@ func Fixtures_UserQuery(gs *GqlgenSuite, t *testing.T) UserQueryFixtures {
 
 	users := models.Users{
 		{
-			UUID:      domain.GetUUID(),
 			Email:     t.Name() + "_user1@example.com",
 			Nickname:  t.Name() + " User1",
 			FirstName: "First1",
@@ -78,7 +77,6 @@ func Fixtures_UserQuery(gs *GqlgenSuite, t *testing.T) UserQueryFixtures {
 			AdminRole: models.UserAdminRoleSuperAdmin,
 		},
 		{
-			UUID:       domain.GetUUID(),
 			Email:      t.Name() + "_user2@example.com",
 			Nickname:   t.Name() + " User2",
 			AdminRole:  models.UserAdminRoleSalesAdmin,
@@ -88,6 +86,7 @@ func Fixtures_UserQuery(gs *GqlgenSuite, t *testing.T) UserQueryFixtures {
 		},
 	}
 	for i := range users {
+		users[i].UUID = domain.GetUUID()
 		createFixture(gs, &users[i])
 	}
 
@@ -105,19 +104,16 @@ func Fixtures_UserQuery(gs *GqlgenSuite, t *testing.T) UserQueryFixtures {
 	// Load UserPreferences test fixtures
 	userPreferences := models.UserPreferences{
 		{
-			UUID:   domain.GetUUID(),
 			UserID: users[1].ID,
 			Key:    domain.UserPreferenceKeyLanguage,
 			Value:  domain.UserPreferenceLanguageFrench,
 		},
 		{
-			UUID:   domain.GetUUID(),
 			UserID: users[1].ID,
 			Key:    domain.UserPreferenceKeyTimeZone,
 			Value:  "America/New_York",
 		},
 		{
-			UUID:   domain.GetUUID(),
 			UserID: users[1].ID,
 			Key:    domain.UserPreferenceKeyWeightUnit,
 			Value:  domain.UserPreferenceWeightUnitPounds,
@@ -125,12 +121,12 @@ func Fixtures_UserQuery(gs *GqlgenSuite, t *testing.T) UserQueryFixtures {
 	}
 
 	for i := range userPreferences {
+		userPreferences[i].UUID = domain.GetUUID()
 		createFixture(gs, &userPreferences[i])
 	}
 
 	posts := models.Posts{
 		{
-			UUID:           domain.GetUUID(),
 			CreatedByID:    users[1].ID,
 			OrganizationID: org.ID,
 			ProviderID:     nulls.NewInt(users[1].ID),
@@ -138,6 +134,7 @@ func Fixtures_UserQuery(gs *GqlgenSuite, t *testing.T) UserQueryFixtures {
 		},
 	}
 	for i := range posts {
+		posts[i].UUID = domain.GetUUID()
 		createFixture(gs, &posts[i])
 	}
 

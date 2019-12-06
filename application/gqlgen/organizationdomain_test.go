@@ -25,10 +25,11 @@ func createFixtures_OrganizationDomain(gs *GqlgenSuite) OrganizationDomainFixtur
 
 	unique := org.UUID.String()
 	users := models.Users{
-		{Email: unique + "_user@example.com", Nickname: unique + " User ", UUID: domain.GetUUID()},
-		{Email: unique + "_admin@example.com", Nickname: unique + " Admin ", UUID: domain.GetUUID()},
+		{Email: unique + "_user@example.com", Nickname: unique + " User "},
+		{Email: unique + "_admin@example.com", Nickname: unique + " Admin "},
 	}
 	for i := range users {
+		users[i].UUID = domain.GetUUID()
 		createFixture(gs, &users[i])
 	}
 
