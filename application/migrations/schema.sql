@@ -306,7 +306,8 @@ CREATE TABLE public.posts (
     cost numeric(13,4),
     photo_file_id integer,
     destination_id integer NOT NULL,
-    origin_id integer
+    origin_id integer,
+    kilograms numeric(13,4)
 );
 
 

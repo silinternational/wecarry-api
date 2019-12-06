@@ -206,6 +206,7 @@ type Post struct {
 	Description    nulls.String  `json:"description" db:"description"`
 	URL            nulls.String  `json:"url" db:"url"`
 	Cost           nulls.Float64 `json:"cost" db:"cost"`
+	Kilograms      float64       `json:"kilograms" db:"kilograms"`
 	PhotoFileID    nulls.Int     `json:"photo_file_id" db:"photo_file_id"`
 	DestinationID  int           `json:"destination_id" db:"destination_id"`
 	OriginID       nulls.Int     `json:"origin_id" db:"origin_id"`

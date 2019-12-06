@@ -1,0 +1,1 @@
+add_column("posts", "kilograms", "numeric(13,4)", {null: false})
