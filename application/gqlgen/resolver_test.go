@@ -3,7 +3,6 @@ package gqlgen
 import (
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/99designs/gqlgen/client"
 	"github.com/99designs/gqlgen/handler"
@@ -71,9 +70,6 @@ func (gs *GqlgenSuite) TestResolver() {
 			Size:           models.PostSizeMedium,
 			Uuid:           domain.GetUuid(),
 			ReceiverID:     nulls.NewInt(userFix[0].ID),
-			NeededAfter:    time.Date(2019, time.July, 19, 0, 0, 0, 0, time.UTC),
-			NeededBefore:   time.Date(2019, time.August, 3, 0, 0, 0, 0, time.UTC),
-			Category:       "Unknown",
 			Description:    nulls.NewString("Missing my good, old, Canadian maple syrupy goodness"),
 			DestinationID:  location.ID,
 		},
@@ -132,15 +128,12 @@ func (gs *GqlgenSuite) TestResolver() {
 				Description string `json:"description"`
 			} `json:"destination"`
 			Size         models.PostSize `json:"size"`
-			NeededAfter  string          `json:"neededAfter"`
-			NeededBefore string          `json:"neededBefore"`
-			Category     string          `json:"category"`
 			Description  string          `json:"description"`
 		} `json:"posts"`
 	}
 
 	c.MustPost(
-		`{posts {id type status title destination {description} size neededAfter neededBefore category description}}`,
+		`{posts {id type status title destination {description} size description}}`,
 		&postsResp,
 	)
 

@@ -200,12 +200,8 @@ type Post struct {
 	Uuid           uuid.UUID     `json:"uuid" db:"uuid"`
 	ReceiverID     nulls.Int     `json:"receiver_id" db:"receiver_id"`
 	ProviderID     nulls.Int     `json:"provider_id" db:"provider_id"`
-	NeededAfter    time.Time     `json:"needed_after" db:"needed_after"`
-	NeededBefore   time.Time     `json:"needed_before" db:"needed_before"`
-	Category       string        `json:"category" db:"category"`
 	Description    nulls.String  `json:"description" db:"description"`
 	URL            nulls.String  `json:"url" db:"url"`
-	Cost           nulls.Float64 `json:"cost" db:"cost"`
 	Kilograms      float64       `json:"kilograms" db:"kilograms"`
 	PhotoFileID    nulls.Int     `json:"photo_file_id" db:"photo_file_id"`
 	DestinationID  int           `json:"destination_id" db:"destination_id"`

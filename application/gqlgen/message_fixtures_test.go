@@ -5,7 +5,6 @@ import (
 
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
-	"time"
 )
 
 type messageQueryFixtures struct {
@@ -68,9 +67,6 @@ func createFixtures_MessageQuery(gs *GqlgenSuite) messageQueryFixtures {
 			Title:          "A Request",
 			DestinationID:  locations[0].ID,
 			Size:           models.PostSizeSmall,
-			NeededAfter:    time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
-			NeededBefore:   time.Date(2099, 1, 1, 0, 0, 0, 0, time.UTC),
-			Category:       "OTHER",
 		},
 		{
 			Uuid:           domain.GetUuid(),

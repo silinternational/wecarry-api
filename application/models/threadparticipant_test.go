@@ -94,9 +94,6 @@ func CreateFixtures_ThreadParticipant_UpdateLastViewedAt(ms *ModelSuite, t *test
 			Title:          "Maple Syrup",
 			Size:           PostSizeMedium,
 			Uuid:           domain.GetUuid(),
-			NeededAfter:    time.Now(),
-			NeededBefore:   time.Date(2029, time.August, 3, 0, 0, 0, 0, time.UTC),
-			Category:       "Unknown",
 			DestinationID:  location.ID,
 		},
 	}

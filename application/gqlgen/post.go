@@ -3,12 +3,9 @@ package gqlgen
 import (
 	"context"
 	"errors"
-	"fmt"
-	"strconv"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/gobuffalo/nulls"
-	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 	"github.com/vektah/gqlparser/gqlerror"
 )
@@ -130,22 +127,6 @@ func (r *postResolver) Origin(ctx context.Context, obj *models.Post) (*models.Lo
 	return origin, nil
 }
 
-// NeededAfter resolves the `neededAfter` property of the post query, converting a time.Time to a RFC3339 *string
-func (r *postResolver) NeededAfter(ctx context.Context, obj *models.Post) (*string, error) {
-	if obj == nil {
-		return nil, nil
-	}
-	return domain.ConvertTimeToStringPtr(obj.NeededAfter), nil
-}
-
-// NeededBefore resolves the `neededBefore` property of the post query, converting a time.Time to a RFC3339 *string
-func (r *postResolver) NeededBefore(ctx context.Context, obj *models.Post) (*string, error) {
-	if obj == nil {
-		return nil, nil
-	}
-	return domain.ConvertTimeToStringPtr(obj.NeededBefore), nil
-}
-
 // Threads resolves the `threads` property of the post query, retrieving the related records from the database.
 func (r *postResolver) Threads(ctx context.Context, obj *models.Post) ([]models.Thread, error) {
 	if obj == nil {
@@ -170,16 +151,6 @@ func (r *postResolver) URL(ctx context.Context, obj *models.Post) (*string, erro
 		return nil, nil
 	}
 	return models.GetStringFromNullsString(obj.URL), nil
-}
-
-// Cost resolves the `cost` property of the post query, converting float64 to *string
-func (r *postResolver) Cost(ctx context.Context, obj *models.Post) (*string, error) {
-	if (obj == nil) || (!obj.Cost.Valid) {
-		return nil, nil
-	}
-
-	c := strconv.FormatFloat(obj.Cost.Float64, 'f', -1, 64)
-	return &c, nil
 }
 
 // Kilograms resolves the `kilograms` property of the post query, converting float64 to string
@@ -294,37 +265,8 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 		post.Size = *input.Size
 	}
 
-	if input.NeededAfter != nil {
-		neededAfter, err := domain.ConvertStringPtrToDate(input.NeededAfter)
-		if err != nil {
-			err = fmt.Errorf("error converting NeededAfter %v ... %v", input.NeededAfter, err.Error())
-			return models.Post{}, err
-		}
-		post.NeededAfter = neededAfter
-	}
-
-	if input.NeededBefore != nil {
-		neededBefore, err := domain.ConvertStringPtrToDate(input.NeededBefore)
-		if err != nil {
-			err = fmt.Errorf("error converting NeededBefore %v ... %v", input.NeededBefore, err.Error())
-			return models.Post{}, err
-		}
-		post.NeededBefore = neededBefore
-	}
-
-	setOptionalStringField(input.Category, &post.Category)
-
 	if input.URL != nil {
 		post.URL = nulls.NewString(*input.URL)
-	}
-
-	if input.Cost != nil && *(input.Cost) != "" {
-		c, err := strconv.ParseFloat(*input.Cost, 64)
-		if err != nil {
-			err = fmt.Errorf("error converting cost %v ... %v", input.Cost, err.Error())
-			return models.Post{}, err
-		}
-		post.Cost = nulls.NewFloat64(c)
 	}
 
 	if input.Kilograms != nil {
@@ -351,11 +293,7 @@ type postInput struct {
 	Destination  *LocationInput
 	Origin       *LocationInput
 	Size         *models.PostSize
-	NeededAfter  *string
-	NeededBefore *string
-	Category     *string
 	URL          *string
-	Cost         *string
 	Kilograms    *float64
 	PhotoID      *string
 }
