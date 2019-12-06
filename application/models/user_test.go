@@ -1,8 +1,10 @@
 package models
 
 import (
+	"crypto/md5"
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/gofrs/uuid"
@@ -751,17 +753,19 @@ func (ms *ModelSuite) TestUser_GetPhoto() {
 	t := ms.T()
 	f := createFixturesForTestUserGetPhoto(ms)
 
+	hash := md5.Sum([]byte(strings.ToLower(strings.TrimSpace(f.Users[0].Email))))
+	gravatarURL := fmt.Sprintf("https://www.gravatar.com/avatar/%x.jpg?s=200&d=mp", hash)
+
 	tests := []struct {
 		name    string
 		user    User
 		wantURL string
-		wantNil bool
 		wantErr string
 	}{
 		{
 			name:    "no AuthPhoto, no photo attachment",
 			user:    f.Users[0],
-			wantNil: true,
+			wantURL: gravatarURL,
 		},
 		{
 			name:    "AuthPhoto, and no photo attachment",
@@ -790,10 +794,6 @@ func (ms *ModelSuite) TestUser_GetPhoto() {
 			}
 			ms.NoError(err)
 
-			if test.wantNil {
-				ms.Nil(url)
-				return
-			}
 			ms.NotNil(url)
 			ms.Equal(test.wantURL, *url)
 		})

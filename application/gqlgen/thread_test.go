@@ -12,11 +12,7 @@ type threadsResponse struct {
 			Content string `json:"content"`
 			Sender  struct {
 				ID       string `json:"id"`
-				Email    string `json:"email"`
 				Nickname string `json:"nickname"`
-				Location struct {
-					Description string `json:"description"`
-				} `json:"location"`
 			} `json:"sender"`
 		} `json:"messages"`
 		Post struct {
@@ -30,7 +26,7 @@ func (gs *GqlgenSuite) TestThreadsQuery() {
 	c := getGqlClient()
 
 	query := `{ threads
-		{ id post { id } participants {nickname} messages {id content sender { location { description }}}}  }`
+		{ id post { id } participants {nickname} messages {id content sender { nickname }}}  }`
 
 	var resp threadsResponse
 
@@ -43,8 +39,7 @@ func (gs *GqlgenSuite) TestThreadsQuery() {
 	gs.Equal(f.Posts[0].Uuid.String(), resp.Threads[0].Post.ID)
 	gs.Equal(f.Messages[0].Uuid.String(), resp.Threads[0].Messages[0].ID)
 	gs.Equal(f.Messages[0].Content, resp.Threads[0].Messages[0].Content)
-	gs.Equal(f.Messages[0].SentBy.Nickname, resp.Threads[0].Messages[0].Sender.Nickname)
-	gs.Equal(f.Messages[0].SentBy.Location.Description, resp.Threads[0].Messages[0].Sender.Location.Description)
+	gs.Equal(f.Users[1].Nickname, resp.Threads[0].Messages[0].Sender.Nickname)
 
 	thread := f.Threads[0]
 	err = thread.Load("Participants")
@@ -85,7 +80,7 @@ func (gs *GqlgenSuite) TestMyThreadsQuery() {
 	c := getGqlClient()
 
 	query := `{ myThreads
-		{ id participants {nickname} messages {id content sender { location { description }}}}  }`
+		{ id participants {nickname} messages {id content sender { nickname }}}  }`
 
 	var resp myThreadsResponse
 
@@ -97,8 +92,7 @@ func (gs *GqlgenSuite) TestMyThreadsQuery() {
 	gs.Equal(f.Threads[0].Uuid.String(), resp.MyThreads[0].ID)
 	gs.Equal(f.Messages[0].Uuid.String(), resp.MyThreads[0].Messages[0].ID)
 	gs.Equal(f.Messages[0].Content, resp.MyThreads[0].Messages[0].Content)
-	gs.Equal(f.Messages[0].SentBy.Nickname, resp.MyThreads[0].Messages[0].Sender.Nickname)
-	gs.Equal(f.Messages[0].SentBy.Location.Description, resp.MyThreads[0].Messages[0].Sender.Location.Description)
+	gs.Equal(f.Users[1].Nickname, resp.MyThreads[0].Messages[0].Sender.Nickname)
 
 	thread := f.Threads[0]
 	err = thread.Load("Participants")

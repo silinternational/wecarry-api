@@ -23,7 +23,7 @@ func (r *messageResolver) ID(ctx context.Context, obj *models.Message) (string, 
 }
 
 // Sender resolves the `sender` property of the message query
-func (r *messageResolver) Sender(ctx context.Context, obj *models.Message) (*models.User, error) {
+func (r *messageResolver) Sender(ctx context.Context, obj *models.Message) (*PublicProfile, error) {
 	if obj == nil {
 		return nil, nil
 	}
@@ -32,7 +32,7 @@ func (r *messageResolver) Sender(ctx context.Context, obj *models.Message) (*mod
 		return nil, reportError(ctx, err, "GetMessageSender")
 	}
 
-	return user, nil
+	return getPublicProfile(ctx, user), nil
 }
 
 // Thread resolves the `thread` property of the message query

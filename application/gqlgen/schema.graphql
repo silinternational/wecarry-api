@@ -64,7 +64,7 @@ type User {
     adminRole: UserAdminRole
     organizations: [Organization!]!
     posts(role: PostRole!): [Post!]!
-    photoURL: String
+    avatarURL: String
     preferences: UserPreferences
     location: Location
     unreadMessageCount: Int!
@@ -104,6 +104,13 @@ input UpdateUserPreferencesInput {
     weightUnit: PreferredWeightUnit
 }
 
+"User fields that can safely be visible to any user in the system"
+type PublicProfile {
+    id: ID!
+    nickname: String!
+    avatarURL: String
+}
+
 enum PostType {
     REQUEST
     OFFER
@@ -112,9 +119,9 @@ enum PostType {
 type Post {
     id: ID!
     type: PostType!
-    createdBy: User!
-    receiver: User
-    provider: User
+    createdBy: PublicProfile!
+    receiver: PublicProfile
+    provider: PublicProfile
     organization: Organization
     title: String!
     description: String
@@ -177,7 +184,7 @@ input RemoveOrganizationDomainInput {
 
 type Thread {
     id: ID!
-    participants: [User!]!
+    participants: [PublicProfile!]!
     messages: [Message!]!
     postID: String!
     post: Post!
@@ -189,7 +196,7 @@ type Thread {
 
 type Message {
     id: ID!
-    sender: User!
+    sender: PublicProfile!
     content: String!
     thread: Thread!
     createdAt: Time!

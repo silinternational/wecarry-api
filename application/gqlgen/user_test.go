@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/nulls"
 	"github.com/silinternational/wecarry-api/aws"
 	"github.com/silinternational/wecarry-api/domain"
@@ -31,8 +32,8 @@ type UserResponse struct {
 			TimeZone   *string `json:"timeZone"`
 			WeightUnit *string `json:"weightUnit"`
 		}
-		PhotoURL string `json:"photoURL"`
-		Location struct {
+		AvatarURL string `json:"avatarURL"`
+		Location  struct {
 			Description string  `json:"description"`
 			Country     string  `json:"country"`
 			Lat         float64 `json:"latitude"`
@@ -183,7 +184,7 @@ func (gs *GqlgenSuite) TestUserQuery() {
 
 	var resp UserResponse
 
-	allFields := `{ id email nickname adminRole photoURL preferences {language timeZone weightUnit}  
+	allFields := `{ id email nickname adminRole avatarURL preferences {language timeZone weightUnit}  
 		posts (role: CREATEDBY) {id} organizations {id}
 		location {description country latitude longitude} }`
 	testCases := []testCase{
@@ -199,8 +200,8 @@ func (gs *GqlgenSuite) TestUserQuery() {
 				gs.Equal(f.Users[1].Email, resp.User.Email, "incorrect Email")
 				gs.Equal(f.Users[1].Nickname, resp.User.Nickname, "incorrect Nickname")
 				gs.Equal(f.Users[1].AdminRole, resp.User.AdminRole, "incorrect AdminRole")
-				gs.Equal(f.Users[1].PhotoFile.URL, resp.User.PhotoURL, "incorrect PhotoURL")
-				gs.Regexp("^https?", resp.User.PhotoURL, "invalid PhotoURL")
+				gs.Equal(f.Users[1].PhotoFile.URL, resp.User.AvatarURL, "incorrect AvatarURL")
+				gs.Regexp("^https?", resp.User.AvatarURL, "invalid AvatarURL")
 				gs.Equal(1, len(resp.User.Posts), "wrong number of posts")
 				gs.Equal(f.Posts[0].Uuid.String(), resp.User.Posts[0].ID, "incorrect Post ID")
 				gs.Equal(1, len(resp.User.Organizations), "wrong number of Organizations")
@@ -271,7 +272,7 @@ func (gs *GqlgenSuite) TestUpdateUser() {
 
 	preferences := fmt.Sprintf(`{weightUnit: %s}`, strings.ToUpper(domain.UserPreferenceWeightUnitKGs))
 
-	requestedFields := `{id nickname photoURL preferences {language, timeZone, weightUnit} location {description, country}}`
+	requestedFields := `{id nickname avatarURL preferences {language, timeZone, weightUnit} location {description, country}}`
 
 	update := fmt.Sprintf(`mutation { user: updateUser(input:{id: "%s", nickname: "%s", location: %s, preferences: %s}) %s }`,
 		userID, newNickname, location, preferences, requestedFields)
@@ -286,8 +287,8 @@ func (gs *GqlgenSuite) TestUpdateUser() {
 					t.Errorf("failed to load user fixture, %s", err)
 				}
 				gs.Equal(newNickname, resp.User.Nickname, "incorrect Nickname")
-				gs.Equal(f.Users[1].PhotoFile.URL, resp.User.PhotoURL, "incorrect PhotoURL")
-				gs.Regexp("^https?", resp.User.PhotoURL, "invalid PhotoURL")
+				gs.Equal(f.Users[1].PhotoFile.URL, resp.User.AvatarURL, "incorrect AvatarURL")
+				gs.Regexp("^https?", resp.User.AvatarURL, "invalid AvatarURL")
 				gs.Equal("Paris, France", resp.User.Location.Description, "incorrect location")
 				gs.Equal("FR", resp.User.Location.Country, "incorrect country")
 
@@ -320,5 +321,56 @@ func (gs *GqlgenSuite) TestUpdateUser() {
 			gs.NoError(err)
 		}
 		t.Run(test.Name, test.Test)
+	}
+}
+
+func createFixturesForGetPublicProfile()UserQueryFixtures {
+	unique := domain.GetUuid().String()
+	user :=  models.User{
+		Uuid: domain.GetUuid(),
+		Nickname:     "user0" + unique,
+		AuthPhotoURL: nulls.NewString("https://example.com/userphoto/1"),
+	}
+	return UserQueryFixtures{Users: models.Users{user}}
+}
+
+func (gs *GqlgenSuite) Test_getPublicProfile() {
+	t := gs.T()
+	f := createFixturesForGetPublicProfile()
+	tests := []struct {
+		name string
+		user *models.User
+		want PublicProfile
+		wantNil bool
+	}{
+		{
+			name: "fully-specified User",
+			user: &f.Users[0],
+			want: PublicProfile{
+				ID:        f.Users[0].Uuid.String(),
+				Nickname:  f.Users[0].Nickname,
+				AvatarURL: &f.Users[0].AuthPhotoURL.String,
+			},
+		},
+		{
+			name: "nil user",
+			user: 	nil,
+			wantNil: true,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var ctx *buffalo.DefaultContext
+			profile := getPublicProfile(ctx, test.user)
+
+			if test.wantNil {
+				gs.Nil(profile)
+				return
+			}
+			gs.NotNil(profile)
+			gs.Equal(test.want.ID, profile.ID, "ID doesn't match")
+			gs.Equal(test.want.Nickname, profile.Nickname, "Nickname doesn't match")
+			gs.Equal(*test.want.AvatarURL, *profile.AvatarURL, "AvatarURL doesn't match")
+		})
 	}
 }

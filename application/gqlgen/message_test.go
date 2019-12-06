@@ -6,11 +6,7 @@ type messageResponse struct {
 		Content string `json:"content"`
 		Sender  struct {
 			ID       string `json:"id"`
-			Email    string `json:"email"`
 			Nickname string `json:"nickname"`
-			Location struct {
-				Description string `json:"description"`
-			} `json:"location"`
 		} `json:"sender"`
 		Thread struct {
 			ID           string `json:"id"`
@@ -27,7 +23,7 @@ func (gs *GqlgenSuite) TestMessageQuery() {
 	c := getGqlClient()
 
 	query := `{ message(id: "` + f.Messages[0].Uuid.String() + `")
-		{ id content sender { location { description }} thread {id participants {nickname}}}}`
+		{ id content sender { nickname } thread {id participants {nickname}}}}`
 
 	var resp messageResponse
 
@@ -44,8 +40,7 @@ func (gs *GqlgenSuite) TestMessageQuery() {
 
 	gs.Equal(f.Messages[0].Uuid.String(), resp.Message.ID)
 	gs.Equal(f.Messages[0].Content, resp.Message.Content)
-	gs.Equal(f.Messages[0].SentBy.Nickname, resp.Message.Sender.Nickname)
-	gs.Equal(f.Messages[0].SentBy.Location.Description, resp.Message.Sender.Location.Description)
+	gs.Equal(f.Users[1].Nickname, resp.Message.Sender.Nickname)
 	gs.Equal(thread.Uuid.String(), resp.Message.Thread.ID)
 	gs.Equal(participants[0].Nickname, resp.Message.Thread.Participants[0].Nickname)
 	gs.Equal(participants[1].Nickname, resp.Message.Thread.Participants[1].Nickname)

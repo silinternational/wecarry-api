@@ -13,7 +13,7 @@ migratetestdb: testdb
 	docker-compose run --rm test whenavail testdb 5432 10 buffalo-pop pop migrate up
 
 gqlgen:
-	docker-compose run --rm buffalo /bin/bash -c "go generate ./gqlgen ; chown 1000.1000 gqlgen/generated.go gqlgen/models_gen.go"
+	docker-compose run --rm buffalo /bin/bash -c "go generate ./gqlgen"
 
 adminer:
 	docker-compose up -d adminer
