@@ -3,7 +3,7 @@
 --
 
 -- Dumped from database version 9.6.13
--- Dumped by pg_dump version 11.3 (Debian 11.3-1.pgdg90+1)
+-- Dumped by pg_dump version 12.1 (Debian 12.1-1.pgdg100+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -17,8 +17,6 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 SET default_tablespace = '';
-
-SET default_with_oids = false;
 
 --
 -- Name: files; Type: TABLE; Schema: public; Owner: wecarry
