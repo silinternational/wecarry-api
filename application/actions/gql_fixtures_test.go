@@ -33,7 +33,6 @@ func Fixtures_CreateOrganization(as *ActionSuite, t *testing.T) OrgFixtures {
 			LastName:  "Admin",
 			Nickname:  "sales_admin",
 			AdminRole: models.UserAdminRoleSalesAdmin,
-			UUID:      domain.GetUUID(),
 		},
 		{
 			Email:     "member@domain.com",
@@ -41,7 +40,6 @@ func Fixtures_CreateOrganization(as *ActionSuite, t *testing.T) OrgFixtures {
 			LastName:  "Member",
 			Nickname:  "org_member",
 			AdminRole: models.UserAdminRoleUser,
-			UUID:      domain.GetUUID(),
 		},
 		{
 			Email:     "admin@domain.com",
@@ -49,7 +47,6 @@ func Fixtures_CreateOrganization(as *ActionSuite, t *testing.T) OrgFixtures {
 			LastName:  "Admin",
 			Nickname:  "org_admin",
 			AdminRole: models.UserAdminRoleUser,
-			UUID:      domain.GetUUID(),
 		},
 		{
 			Email:     "admin@other.com",
@@ -57,10 +54,10 @@ func Fixtures_CreateOrganization(as *ActionSuite, t *testing.T) OrgFixtures {
 			LastName:  "Admin",
 			Nickname:  "other_org_admin",
 			AdminRole: models.UserAdminRoleUser,
-			UUID:      domain.GetUUID(),
 		},
 	}
 	for i := range users {
+		users[i].UUID = domain.GetUUID()
 		err := as.DB.Create(&users[i])
 		if err != nil {
 			t.Errorf("unable to create user fixture %s: %s", users[i].Nickname, err)
@@ -73,17 +70,16 @@ func Fixtures_CreateOrganization(as *ActionSuite, t *testing.T) OrgFixtures {
 			Url:        nulls.String{},
 			AuthType:   models.AuthTypeSaml,
 			AuthConfig: "{}",
-			UUID:       domain.GetUUID(),
 		},
 		{
 			Name:       "Org2",
 			Url:        nulls.String{},
 			AuthType:   models.AuthTypeSaml,
 			AuthConfig: "{}",
-			UUID:       domain.GetUUID(),
 		},
 	}
 	for i := range orgs {
+		orgs[i].UUID = domain.GetUUID()
 		err := as.DB.Create(&orgs[i])
 		if err != nil {
 			t.Errorf("unable to create orgs fixture named %s: %s", orgs[i].Name, err)

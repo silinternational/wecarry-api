@@ -47,7 +47,6 @@ func Fixtures_GetOrgAndUserOrgs(as *ActionSuite, t *testing.T) UserOrgFixtures {
 			FirstName: "First",
 			LastName:  "User",
 			Nickname:  "User1",
-			UUID:      domain.GetUUID(),
 			AdminRole: models.UserAdminRoleSuperAdmin,
 		},
 		{
@@ -55,11 +54,11 @@ func Fixtures_GetOrgAndUserOrgs(as *ActionSuite, t *testing.T) UserOrgFixtures {
 			FirstName: "Second",
 			LastName:  "User",
 			Nickname:  "User2",
-			UUID:      domain.GetUUID(),
 		},
 	}
 
 	for i := range users {
+		users[i].UUID = domain.GetUUID()
 		if err := as.DB.Create(&users[i]); err != nil {
 			t.Errorf("could not create test user ... %v", err)
 			t.FailNow()
@@ -127,7 +126,6 @@ func Fixtures_CreateAuthUser(as *ActionSuite, t *testing.T) UserOrgFixtures {
 			FirstName: "First",
 			LastName:  "User",
 			Nickname:  "User1",
-			UUID:      domain.GetUUID(),
 			AdminRole: models.UserAdminRoleSuperAdmin,
 		},
 		{
@@ -135,11 +133,11 @@ func Fixtures_CreateAuthUser(as *ActionSuite, t *testing.T) UserOrgFixtures {
 			FirstName: "Second",
 			LastName:  "User",
 			Nickname:  "User2",
-			UUID:      domain.GetUUID(),
 		},
 	}
 
 	for i := range users {
+		users[i].UUID = domain.GetUUID()
 		if err := as.DB.Create(&users[i]); err != nil {
 			t.Errorf("could not create test user ... %v", err)
 			t.FailNow()
