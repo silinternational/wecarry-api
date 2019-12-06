@@ -17,7 +17,7 @@ func init() {
 	sender = ssender.NewSendgridSender(domain.Env.SendGridAPIKey)
 
 	r = render.New(render.Options{
-		HTMLLayout:   "layout.html",
+		HTMLLayout:   "layout.plush.html",
 		TemplatesBox: packr.New("app:mailers:templates", "../templates/mail"),
 		Helpers:      render.Helpers{},
 	})
