@@ -328,9 +328,7 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 		post.Cost = nulls.NewFloat64(c)
 	}
 
-	if input.Kilograms == nil || *(input.Kilograms) == "" {
-		post.Kilograms = 0.0
-	} else {
+	if input.Kilograms != nil && *(input.Kilograms) != "" {
 		k, err := strconv.ParseFloat(*input.Kilograms, 64)
 		if err != nil {
 			err = fmt.Errorf("error converting kilograms %v ... %v", input.Kilograms, err.Error())
