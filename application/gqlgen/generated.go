@@ -114,6 +114,7 @@ type ComplexityRoot struct {
 		Files        func(childComplexity int) int
 		ID           func(childComplexity int) int
 		IsEditable   func(childComplexity int) int
+		Kilograms    func(childComplexity int) int
 		NeededAfter  func(childComplexity int) int
 		NeededBefore func(childComplexity int) int
 		Organization func(childComplexity int) int
@@ -229,6 +230,7 @@ type PostResolver interface {
 
 	URL(ctx context.Context, obj *models.Post) (*string, error)
 	Cost(ctx context.Context, obj *models.Post) (*string, error)
+	Kilograms(ctx context.Context, obj *models.Post) (*string, error)
 	Photo(ctx context.Context, obj *models.Post) (*models.File, error)
 	Files(ctx context.Context, obj *models.Post) ([]models.File, error)
 	IsEditable(ctx context.Context, obj *models.Post) (bool, error)
@@ -628,6 +630,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Post.IsEditable(childComplexity), true
+
+	case "Post.kilograms":
+		if e.complexity.Post.Kilograms == nil {
+			break
+		}
+
+		return e.complexity.Post.Kilograms(childComplexity), true
 
 	case "Post.neededAfter":
 		if e.complexity.Post.NeededAfter == nil {
@@ -1158,6 +1167,7 @@ type Post {
     updatedAt: Time!
     url: String
     cost: String
+    kilograms: String
     photo: File
     files: [File!]!
     isEditable: Boolean!
@@ -1236,6 +1246,7 @@ input CreatePostInput {
     category: String
     url: String
     cost: String
+    kilograms: String
     photoID: ID
 }
 
@@ -1257,6 +1268,7 @@ input UpdatePostInput {
     category: String
     url: String
     cost: String
+    kilograms: String
     photoID: ID
 }
 
@@ -3565,6 +3577,40 @@ func (ec *executionContext) _Post_cost(ctx context.Context, field graphql.Collec
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Post().Cost(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Post_kilograms(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Post",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Post().Kilograms(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6229,6 +6275,12 @@ func (ec *executionContext) unmarshalInputCreatePostInput(ctx context.Context, o
 			if err != nil {
 				return it, err
 			}
+		case "kilograms":
+			var err error
+			it.Kilograms, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		case "photoID":
 			var err error
 			it.PhotoID, err = ec.unmarshalOID2ᚖstring(ctx, v)
@@ -6436,6 +6488,12 @@ func (ec *executionContext) unmarshalInputUpdatePostInput(ctx context.Context, o
 		case "cost":
 			var err error
 			it.Cost, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "kilograms":
+			var err error
+			it.Kilograms, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -7150,6 +7208,17 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 					}
 				}()
 				res = ec._Post_cost(ctx, field, obj)
+				return res
+			})
+		case "kilograms":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Post_kilograms(ctx, field, obj)
 				return res
 			})
 		case "photo":

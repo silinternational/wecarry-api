@@ -57,6 +57,8 @@ models:
         resolver: true
       origin:
         resolver: true
+      kilograms:
+        resolver: true
   Thread:
     model: models.Thread
     fields:

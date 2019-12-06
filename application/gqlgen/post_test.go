@@ -46,6 +46,7 @@ type PostResponse struct {
 		CreatedAt    string            `json:"createdAt"`
 		UpdatedAt    string            `json:"updatedAt"`
 		Cost         string            `json:"cost"`
+		Kilograms    string            `json:"kilograms"`
 		IsEditable   bool              `json:"isEditable"`
 		Url          string            `json:"url"`
 		CreatedBy    struct {
@@ -129,6 +130,7 @@ func createFixtures_PostQuery(gs *GqlgenSuite) PostQueryFixtures {
 			Description:    nulls.NewString("This is a description"),
 			URL:            nulls.NewString("https://www.example.com/items/101"),
 			Cost:           nulls.NewFloat64(1.0),
+			Kilograms:      11.11,
 		},
 		{
 			Uuid:           domain.GetUuid(),
@@ -218,6 +220,7 @@ func (gs *GqlgenSuite) Test_PostQuery() {
 			createdAt
 			updatedAt
 			cost
+			kilograms
 			isEditable
 			url
 			createdBy { id }
@@ -256,10 +259,16 @@ func (gs *GqlgenSuite) Test_PostQuery() {
 	gs.Equal(f.Posts[0].Status, resp.Post.Status)
 	gs.Equal(f.Posts[0].CreatedAt.Format(time.RFC3339), resp.Post.CreatedAt)
 	gs.Equal(f.Posts[0].UpdatedAt.Format(time.RFC3339), resp.Post.UpdatedAt)
+
 	cost, err := strconv.ParseFloat(resp.Post.Cost, 64)
 	gs.NoError(err, "couldn't parse cost field as a float")
-	gs.Equal(f.Posts[0].URL.String, resp.Post.Url)
 	gs.Equal(f.Posts[0].Cost.Float64, cost)
+
+	kilograms, err := strconv.ParseFloat(resp.Post.Kilograms, 64)
+	gs.NoError(err, "couldn't parse kilograms field as a float")
+	gs.Equal(f.Posts[0].Kilograms, kilograms)
+
+	gs.Equal(f.Posts[0].URL.String, resp.Post.Url)
 	gs.Equal(false, resp.Post.IsEditable)
 	gs.Equal(f.Users[0].Uuid.String(), resp.Post.CreatedBy.ID)
 	gs.Equal(f.Users[0].Uuid.String(), resp.Post.Receiver.ID)
@@ -391,11 +400,12 @@ func (gs *GqlgenSuite) Test_UpdatePost() {
 			category: "cat"
 			url: "example.com" 
 			cost: "1.00"
+			kilograms: "22.22"
 		`
 	query := `mutation { post: updatePost(input: {` + input + `}) { id photo { id } description 
 			destination { description country latitude longitude} 
 			origin { description country latitude longitude}
-			size neededAfter neededBefore category url cost isEditable}}`
+			size neededAfter neededBefore category url cost kilograms isEditable}}`
 
 	TestUser = f.Users[0]
 	c.MustPost(query, &postsResp)
@@ -422,6 +432,7 @@ func (gs *GqlgenSuite) Test_UpdatePost() {
 	gs.Equal("cat", postsResp.Post.Category)
 	gs.Equal("example.com", postsResp.Post.Url)
 	gs.Equal("1", postsResp.Post.Cost)
+	gs.Equal("22.22", postsResp.Post.Kilograms)
 	gs.Equal(true, postsResp.Post.IsEditable)
 
 	// Attempt to edit a locked post
@@ -500,7 +511,7 @@ func (gs *GqlgenSuite) Test_CreatePost() {
 	query := `mutation { post: createPost(input: {` + input + `}) { organization { id } photo { id } type title 
 			description destination { description country latitude longitude } 
 			origin { description country latitude longitude }
-			size neededAfter neededBefore category url cost }}`
+			size neededAfter neededBefore category url cost kilograms}}`
 
 	TestUser = f.User
 	gs.NoError(c.Post(query, &postsResp))
@@ -525,6 +536,7 @@ func (gs *GqlgenSuite) Test_CreatePost() {
 	gs.Equal("cat", postsResp.Post.Category)
 	gs.Equal("example.com", postsResp.Post.Url)
 	gs.Equal("1", postsResp.Post.Cost)
+	gs.Equal("0", postsResp.Post.Kilograms)
 }
 
 type UpdatePostStatusFixtures struct {

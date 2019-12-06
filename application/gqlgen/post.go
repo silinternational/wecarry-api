@@ -182,6 +182,17 @@ func (r *postResolver) Cost(ctx context.Context, obj *models.Post) (*string, err
 	return &c, nil
 }
 
+// Kilograms resolves the `kilograms` property of the post query, converting float64 to string
+func (r *postResolver) Kilograms(ctx context.Context, obj *models.Post) (*string, error) {
+	if obj == nil {
+		k := "0.0"
+		return &k, nil
+	}
+
+	k := strconv.FormatFloat(obj.Kilograms, 'f', -1, 64)
+	return &k, nil
+}
+
 // Photo retrieves the file attached as the primary photo
 func (r *postResolver) Photo(ctx context.Context, obj *models.Post) (*models.File, error) {
 	if obj == nil {
@@ -317,6 +328,17 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 		post.Cost = nulls.NewFloat64(c)
 	}
 
+	if input.Kilograms == nil || *(input.Kilograms) == "" {
+		post.Kilograms = 0.0
+	} else {
+		k, err := strconv.ParseFloat(*input.Kilograms, 64)
+		if err != nil {
+			err = fmt.Errorf("error converting kilograms %v ... %v", input.Kilograms, err.Error())
+			return models.Post{}, err
+		}
+		post.Kilograms = k
+	}
+
 	if input.PhotoID != nil {
 		if file, err := post.AttachPhoto(*input.PhotoID); err != nil {
 			graphql.AddError(ctx, gqlerror.Errorf("Error attaching photo to Post, %s", err.Error()))
@@ -342,6 +364,7 @@ type postInput struct {
 	Category     *string
 	URL          *string
 	Cost         *string
+	Kilograms    *string
 	PhotoID      *string
 }
 
