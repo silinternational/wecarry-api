@@ -222,16 +222,16 @@ type PostCreatedEventData struct {
 	PostID int
 }
 
-// String is not required by pop and may be deleted
+// String can be helpful for serializing the model
 func (p Post) String() string {
 	jp, _ := json.Marshal(p)
 	return string(jp)
 }
 
-// Posts is not required by pop and may be deleted
+// Posts is merely for convenience and brevity
 type Posts []Post
 
-// String is not required by pop and may be deleted
+// String can be helpful for serializing the model
 func (p Posts) String() string {
 	jp, _ := json.Marshal(p)
 	return string(jp)
@@ -298,7 +298,6 @@ func (p *Post) SetProviderWithStatus(status PostStatus, currentUser User) {
 }
 
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
-// This method is not required and may be deleted.
 func (p *Post) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
 		&validators.IntIsPresent{Field: p.CreatedByID, Name: "CreatedBy"},

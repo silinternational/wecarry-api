@@ -28,23 +28,22 @@ type File struct {
 	ContentType   string    `json:"content_type" db:"content_type"`
 }
 
-// String is not required by pop and may be deleted
+// String can be helpful for serializing the model
 func (f File) String() string {
 	ji, _ := json.Marshal(f)
 	return string(ji)
 }
 
-// Files is not required by pop and may be deleted
+// Files is merely for convenience and brevity
 type Files []File
 
-// String is not required by pop and may be deleted
+// String can be helpful for serializing the model
 func (i Files) String() string {
 	ji, _ := json.Marshal(i)
 	return string(ji)
 }
 
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
-// This method is not required and may be deleted.
 func (f *File) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
 		&validators.UUIDIsPresent{Field: f.UUID, Name: "UUID"},
@@ -52,13 +51,11 @@ func (f *File) Validate(tx *pop.Connection) (*validate.Errors, error) {
 }
 
 // ValidateCreate gets run every time you call "pop.ValidateAndCreate" method.
-// This method is not required and may be deleted.
 func (f *File) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }
 
 // ValidateUpdate gets run every time you call "pop.ValidateAndUpdate" method.
-// This method is not required and may be deleted.
 func (f *File) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }

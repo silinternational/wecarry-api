@@ -24,23 +24,22 @@ type Thread struct {
 	Participants Users     `many_to_many:"thread_participants"`
 }
 
-// String is not required by pop and may be deleted
+// String can be helpful for serializing the model
 func (t Thread) String() string {
 	jt, _ := json.Marshal(t)
 	return string(jt)
 }
 
-// Threads is not required by pop and may be deleted
+// Threads is merely for convenience and brevity
 type Threads []Thread
 
-// String is not required by pop and may be deleted
+// String can be helpful for serializing the model
 func (t Threads) String() string {
 	jt, _ := json.Marshal(t)
 	return string(jt)
 }
 
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
-// This method is not required and may be deleted.
 func (t *Thread) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
 		&validators.UUIDIsPresent{Field: t.Uuid, Name: "Uuid"},
@@ -49,13 +48,11 @@ func (t *Thread) Validate(tx *pop.Connection) (*validate.Errors, error) {
 }
 
 // ValidateCreate gets run every time you call "pop.ValidateAndCreate" method.
-// This method is not required and may be deleted.
 func (t *Thread) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }
 
 // ValidateUpdate gets run every time you call "pop.ValidateAndUpdate" method.
-// This method is not required and may be deleted.
 func (t *Thread) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }

@@ -37,23 +37,22 @@ type MessageCreatedEventData struct {
 	MessageRecipients      []struct{ Nickname, Email string }
 }
 
-// String is not required by pop and may be deleted
+// String can be helpful for serializing the model
 func (m Message) String() string {
 	jm, _ := json.Marshal(m)
 	return string(jm)
 }
 
-// Messages is not required by pop and may be deleted
+// Messages is merely for convenience and brevity
 type Messages []Message
 
-// String is not required by pop and may be deleted
+// String can be helpful for serializing the model
 func (m Messages) String() string {
 	jm, _ := json.Marshal(m)
 	return string(jm)
 }
 
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
-// This method is not required and may be deleted.
 func (m *Message) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
 		&validators.UUIDIsPresent{Field: m.Uuid, Name: "Uuid"},
@@ -64,13 +63,11 @@ func (m *Message) Validate(tx *pop.Connection) (*validate.Errors, error) {
 }
 
 // ValidateCreate gets run every time you call "pop.ValidateAndCreate" method.
-// This method is not required and may be deleted.
 func (m *Message) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }
 
 // ValidateUpdate gets run every time you call "pop.ValidateAndUpdate" method.
-// This method is not required and may be deleted.
 func (m *Message) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }
