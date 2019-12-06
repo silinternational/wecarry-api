@@ -448,7 +448,7 @@ func (ms *ModelSuite) TestSendNewPostNotification() {
 	}{
 		{
 			name:    "error - no user email",
-			post:    models.Post{Uuid: domain.GetUuid(), Title: "post title", Type: models.PostTypeRequest},
+			post:    models.Post{UUID: domain.GetUUID(), Title: "post title", Type: models.PostTypeRequest},
 			wantErr: "'To' email address is required",
 		},
 		{
@@ -456,7 +456,7 @@ func (ms *ModelSuite) TestSendNewPostNotification() {
 			user: models.User{
 				Email: "user@example.com",
 			},
-			post:    models.Post{Uuid: domain.GetUuid(), Title: "post title", Type: "bogus"},
+			post:    models.Post{UUID: domain.GetUUID(), Title: "post title", Type: "bogus"},
 			wantErr: "invalid template name",
 		},
 		{
@@ -464,7 +464,7 @@ func (ms *ModelSuite) TestSendNewPostNotification() {
 			user: models.User{
 				Email: "user@example.com",
 			},
-			post:     models.Post{Uuid: domain.GetUuid(), Title: "post title", Type: models.PostTypeRequest},
+			post:     models.Post{UUID: domain.GetUUID(), Title: "post title", Type: models.PostTypeRequest},
 			wantBody: "There is a new request",
 		},
 		{
@@ -472,7 +472,7 @@ func (ms *ModelSuite) TestSendNewPostNotification() {
 			user: models.User{
 				Email: "user@example.com",
 			},
-			post:     models.Post{Uuid: domain.GetUuid(), Title: "post title", Type: models.PostTypeOffer},
+			post:     models.Post{UUID: domain.GetUUID(), Title: "post title", Type: models.PostTypeOffer},
 			wantBody: "There is a new offer",
 		},
 	}
@@ -498,7 +498,7 @@ func (ms *ModelSuite) TestSendNewPostNotification() {
 			body := notifications.TestEmailService.GetLastBody()
 			ms.Contains(body, test.wantBody, "Body doesn't contain expected string")
 			ms.Contains(body, test.post.Title, "Body doesn't contain post title")
-			ms.Contains(body, test.post.Uuid.String(), "Body doesn't contain post UUID")
+			ms.Contains(body, test.post.UUID.String(), "Body doesn't contain post UUID")
 		})
 	}
 }

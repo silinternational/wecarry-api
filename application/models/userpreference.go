@@ -23,7 +23,7 @@ type UserPreference struct {
 	ID        int       `json:"id" db:"id"`
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
-	Uuid      uuid.UUID `json:"uuid" db:"uuid"`
+	UUID      uuid.UUID `json:"uuid" db:"uuid"`
 	UserID    int       `json:"user_id" db:"user_id"`
 	Key       string    `json:"key" db:"key"`
 	Value     string    `json:"value" db:"value"`
@@ -49,7 +49,7 @@ func (p UserPreferences) String() string {
 // This method is not required and may be deleted.
 func (p *UserPreference) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
-		&validators.UUIDIsPresent{Field: p.Uuid, Name: "Uuid"},
+		&validators.UUIDIsPresent{Field: p.UUID, Name: "UUID"},
 		&validators.IntIsPresent{Field: p.UserID, Name: "UserID"},
 		&validators.StringIsPresent{Field: p.Key, Name: "Key"},
 		&validators.StringIsPresent{Field: p.Value, Name: "Value"},
@@ -83,8 +83,8 @@ func (p *UserPreference) FindByUUID(id string) error {
 
 // Save wraps DB.Save() call to create a UUID if it's empty and check for errors
 func (p *UserPreference) Save() error {
-	if p.Uuid.Version() == 0 {
-		p.Uuid = domain.GetUuid()
+	if p.UUID.Version() == 0 {
+		p.UUID = domain.GetUUID()
 	}
 
 	validationErrs, err := p.Validate(DB)

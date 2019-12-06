@@ -112,7 +112,7 @@ func (ms *ModelSuite) TestUserAccessToken_FindByBearerToken() {
 			} else {
 				if err != nil {
 					t.Errorf("FindByAccessToken() returned an error: %v", err)
-				} else if u.User.Uuid != test.want.Uuid {
+				} else if u.User.UUID != test.want.UUID {
 					t.Errorf("found %v, expected %v", u, test.want)
 				}
 			}
@@ -146,19 +146,19 @@ func CreateUserAccessTokenFixtures(ms *ModelSuite, user User, userOrgs UserOrgan
 }
 
 func CreateUserFixtures_GetOrg(ms *ModelSuite, t *testing.T) ([]Organization, Users, UserOrganizations) {
-	unique := domain.GetUuid().String()
+	unique := domain.GetUUID().String()
 
 	// Load Organization test fixtures
 	orgs := []Organization{
 		{
 			Name:       fmt.Sprintf("ACME-%s", unique),
-			Uuid:       domain.GetUuid(),
+			UUID:       domain.GetUUID(),
 			AuthType:   AuthTypeSaml,
 			AuthConfig: "{}",
 		},
 		{
 			Name:       fmt.Sprintf("Starfleet Academy-%s", unique),
-			Uuid:       domain.GetUuid(),
+			UUID:       domain.GetUUID(),
 			AuthType:   AuthTypeGoogle,
 			AuthConfig: "{}",
 		},
@@ -177,14 +177,14 @@ func CreateUserFixtures_GetOrg(ms *ModelSuite, t *testing.T) ([]Organization, Us
 			FirstName: "Existing",
 			LastName:  "User",
 			Nickname:  fmt.Sprintf("Existing User %s", unique),
-			Uuid:      domain.GetUuid(),
+			UUID:      domain.GetUUID(),
 		},
 		{
 			Email:     fmt.Sprintf("user2-%s@example.com", unique),
 			FirstName: "Another",
 			LastName:  "User",
 			Nickname:  fmt.Sprintf("Another User %s", unique),
-			Uuid:      domain.GetUuid(),
+			UUID:      domain.GetUUID(),
 		},
 	}
 	for i := range users {
@@ -287,12 +287,12 @@ type AccessTokenFixtures struct {
 
 // CreateFixtures_GetUser creates test fixtures for the GetUser test function
 func CreateFixtures_GetUser(ms *ModelSuite, t *testing.T) AccessTokenFixtures {
-	org := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	org := Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
 	createFixture(ms, &org)
 
 	users := Users{
-		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1", Uuid: domain.GetUuid()},
-		{Email: t.Name() + "_user2@example.com", Nickname: t.Name() + " User2", Uuid: domain.GetUuid()},
+		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1", UUID: domain.GetUUID()},
+		{Email: t.Name() + "_user2@example.com", Nickname: t.Name() + " User2", UUID: domain.GetUUID()},
 	}
 	for i := range users {
 		createFixture(ms, &users[i])
@@ -341,8 +341,8 @@ func (ms *ModelSuite) TestUserAccessToken_GetUser() {
 		want    string
 		wantErr bool
 	}{
-		{name: "user1", token: f.UserAccessTokens[0], want: f.Users[0].Uuid.String()},
-		{name: "user2", token: f.UserAccessTokens[1], want: f.Users[1].Uuid.String()},
+		{name: "user1", token: f.UserAccessTokens[0], want: f.Users[0].UUID.String()},
+		{name: "user2", token: f.UserAccessTokens[1], want: f.Users[1].UUID.String()},
 		{name: "noUserOrg", token: UserAccessToken{}, wantErr: true},
 	}
 	for _, test := range tests {
@@ -356,8 +356,8 @@ func (ms *ModelSuite) TestUserAccessToken_GetUser() {
 			} else {
 				if err != nil {
 					t.Errorf("GetUser() returned an error: %v", err)
-				} else if got.Uuid.String() != test.want {
-					t.Errorf("found %v, expected %v", got.Uuid.String(), test.want)
+				} else if got.UUID.String() != test.want {
+					t.Errorf("found %v, expected %v", got.UUID.String(), test.want)
 				}
 			}
 		})
@@ -366,12 +366,12 @@ func (ms *ModelSuite) TestUserAccessToken_GetUser() {
 
 // CreateFixtures_DeleteIfExpired creates test fixtures for the DeleteIfExpired test function
 func CreateFixtures_DeleteIfExpired(ms *ModelSuite, t *testing.T) AccessTokenFixtures {
-	org := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	org := Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
 	createFixture(ms, &org)
 
 	users := Users{
-		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1", Uuid: domain.GetUuid()},
-		{Email: t.Name() + "_user2@example.com", Nickname: t.Name() + " User2", Uuid: domain.GetUuid()},
+		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1", UUID: domain.GetUUID()},
+		{Email: t.Name() + "_user2@example.com", Nickname: t.Name() + " User2", UUID: domain.GetUUID()},
 	}
 	for i := range users {
 		createFixture(ms, &users[i])
@@ -437,12 +437,12 @@ func (ms *ModelSuite) TestUserAccessToken_DeleteIfExpired() {
 
 // CreateFixtures_Renew creates test fixtures for the Renew test function
 func CreateFixtures_Renew(ms *ModelSuite, t *testing.T) AccessTokenFixtures {
-	org := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	org := Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
 	createFixture(ms, &org)
 
 	users := Users{
-		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1", Uuid: domain.GetUuid()},
-		{Email: t.Name() + "_user2@example.com", Nickname: t.Name() + " User2", Uuid: domain.GetUuid()},
+		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1", UUID: domain.GetUUID()},
+		{Email: t.Name() + "_user2@example.com", Nickname: t.Name() + " User2", UUID: domain.GetUUID()},
 	}
 	for i := range users {
 		createFixture(ms, &users[i])
@@ -504,12 +504,12 @@ func (ms *ModelSuite) TestUserAccessToken_Renew() {
 
 func createFixtures_UserAccessTokensDeleteExpired(ms *ModelSuite, t *testing.T) AccessTokenFixtures {
 
-	org := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	org := Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
 	createFixture(ms, &org)
 
 	users := Users{
-		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1", Uuid: domain.GetUuid()},
-		{Email: t.Name() + "_user2@example.com", Nickname: t.Name() + " User2", Uuid: domain.GetUuid()},
+		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1", UUID: domain.GetUUID()},
+		{Email: t.Name() + "_user2@example.com", Nickname: t.Name() + " User2", UUID: domain.GetUUID()},
 	}
 	for i := range users {
 		createFixture(ms, &users[i])

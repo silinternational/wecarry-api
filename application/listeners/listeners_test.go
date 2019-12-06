@@ -150,10 +150,10 @@ func (ms *ModelSuite) TestSendNewMessageNotification() {
 }
 
 func createFixturesForSendPostCreatedNotifications(ms *ModelSuite) PostFixtures {
-	org := models.Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	org := models.Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
 	createFixture(ms, &org)
 
-	unique := org.Uuid.String()
+	unique := org.UUID.String()
 	users := make(models.Users, 3)
 	userLocations := make(models.Locations, len(users))
 	userOrgs := make(models.UserOrganizations, len(users))
@@ -164,7 +164,7 @@ func createFixturesForSendPostCreatedNotifications(ms *ModelSuite) PostFixtures 
 		users[i] = models.User{
 			Email:      fmt.Sprintf("%s_user%d@example.com", unique, i),
 			Nickname:   fmt.Sprintf("%s_User%d", unique, i),
-			Uuid:       domain.GetUuid(),
+			UUID:       domain.GetUUID(),
 			LocationID: nulls.NewInt(userLocations[i].ID),
 		}
 		createFixture(ms, &users[i])
@@ -181,7 +181,7 @@ func createFixturesForSendPostCreatedNotifications(ms *ModelSuite) PostFixtures 
 
 	post := models.Post{
 		OrganizationID: org.ID,
-		Uuid:           domain.GetUuid(),
+		UUID:           domain.GetUUID(),
 		CreatedByID:    users[0].ID,
 		DestinationID:  location.ID,
 		Type:           models.PostTypeOffer,

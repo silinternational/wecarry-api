@@ -38,14 +38,14 @@ type PostResponse struct {
 			Lat         float64 `json:"latitude"`
 			Long        float64 `json:"longitude"`
 		} `json:"origin"`
-		Size         models.PostSize   `json:"size"`
-		Status       models.PostStatus `json:"status"`
-		CreatedAt    string            `json:"createdAt"`
-		UpdatedAt    string            `json:"updatedAt"`
-		Kilograms    float64           `json:"kilograms"`
-		IsEditable   bool              `json:"isEditable"`
-		Url          string            `json:"url"`
-		CreatedBy    struct {
+		Size       models.PostSize   `json:"size"`
+		Status     models.PostStatus `json:"status"`
+		CreatedAt  string            `json:"createdAt"`
+		UpdatedAt  string            `json:"updatedAt"`
+		Kilograms  float64           `json:"kilograms"`
+		IsEditable bool              `json:"isEditable"`
+		Url        string            `json:"url"`
+		CreatedBy  struct {
 			ID        string `json:"id"`
 			Nickname  string `json:"nickname"`
 			AvatarURL string `json:"avatarURL"`
@@ -75,14 +75,14 @@ type PostResponse struct {
 func createFixtures_PostQuery(gs *GqlgenSuite) PostQueryFixtures {
 	t := gs.T()
 
-	org := models.Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	org := models.Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
 	createFixture(gs, &org)
 
 	users := make(models.Users, 2)
 	for i := range users {
-		users[i].Email = org.Uuid.String() + "_user" + strconv.Itoa(i) + "@example.com"
+		users[i].Email = org.UUID.String() + "_user" + strconv.Itoa(i) + "@example.com"
 		users[i].Nickname = users[i].Email
-		users[i].Uuid = domain.GetUuid()
+		users[i].UUID = domain.GetUUID()
 		users[i].AuthPhotoURL = nulls.NewString(users[i].Nickname + ".gif")
 		createFixture(gs, &users[i])
 	}
@@ -116,7 +116,7 @@ func createFixtures_PostQuery(gs *GqlgenSuite) PostQueryFixtures {
 
 	posts := models.Posts{
 		{
-			Uuid:           domain.GetUuid(),
+			UUID:           domain.GetUUID(),
 			CreatedByID:    users[0].ID,
 			ReceiverID:     nulls.NewInt(users[0].ID),
 			ProviderID:     nulls.NewInt(users[1].ID),
@@ -132,7 +132,7 @@ func createFixtures_PostQuery(gs *GqlgenSuite) PostQueryFixtures {
 			Kilograms:      11.11,
 		},
 		{
-			Uuid:           domain.GetUuid(),
+			UUID:           domain.GetUUID(),
 			CreatedByID:    users[0].ID,
 			ProviderID:     nulls.NewInt(users[0].ID),
 			OrganizationID: org.ID,
@@ -144,7 +144,7 @@ func createFixtures_PostQuery(gs *GqlgenSuite) PostQueryFixtures {
 	}
 
 	threads := []models.Thread{
-		{Uuid: domain.GetUuid(), PostID: posts[0].ID},
+		{UUID: domain.GetUUID(), PostID: posts[0].ID},
 	}
 	for i := range threads {
 		createFixture(gs, &threads[i])
@@ -203,7 +203,7 @@ func (gs *GqlgenSuite) Test_PostQuery() {
 	f := createFixtures_PostQuery(gs)
 	c := getGqlClient()
 
-	query := `{ post(id: "` + f.Posts[0].Uuid.String() + `")
+	query := `{ post(id: "` + f.Posts[0].UUID.String() + `")
 		{
 			id
 		    type
@@ -232,7 +232,7 @@ func (gs *GqlgenSuite) Test_PostQuery() {
 	err := c.Post(query, &resp)
 	gs.NoError(err)
 
-	gs.Equal(f.Posts[0].Uuid.String(), resp.Post.ID)
+	gs.Equal(f.Posts[0].UUID.String(), resp.Post.ID)
 	gs.Equal(f.Posts[0].Type, resp.Post.Type)
 	gs.Equal(f.Posts[0].Title, resp.Post.Title)
 	gs.Equal(f.Posts[0].Description.String, resp.Post.Description)
@@ -254,16 +254,16 @@ func (gs *GqlgenSuite) Test_PostQuery() {
 	gs.Equal(f.Posts[0].Kilograms, resp.Post.Kilograms)
 	gs.Equal(f.Posts[0].URL.String, resp.Post.Url)
 	gs.Equal(false, resp.Post.IsEditable)
-	gs.Equal(f.Users[0].Uuid.String(), resp.Post.CreatedBy.ID, "creator ID doesn't match")
+	gs.Equal(f.Users[0].UUID.String(), resp.Post.CreatedBy.ID, "creator ID doesn't match")
 	gs.Equal(f.Users[0].Nickname, resp.Post.CreatedBy.Nickname, "creator nickname doesn't match")
 	gs.Equal(f.Users[0].AuthPhotoURL.String, resp.Post.CreatedBy.AvatarURL, "creator avatar URL doesn't match")
-	gs.Equal(f.Users[0].Uuid.String(), resp.Post.Receiver.ID, "receiver ID doesn't match")
+	gs.Equal(f.Users[0].UUID.String(), resp.Post.Receiver.ID, "receiver ID doesn't match")
 	gs.Equal(f.Users[0].Nickname, resp.Post.Receiver.Nickname, "receiver nickname doesn't match")
 	gs.Equal(f.Users[0].AuthPhotoURL.String, resp.Post.Receiver.AvatarURL, "receiver avatar URL doesn't match")
-	gs.Equal(f.Users[1].Uuid.String(), resp.Post.Provider.ID, "provider ID doesn't match")
+	gs.Equal(f.Users[1].UUID.String(), resp.Post.Provider.ID, "provider ID doesn't match")
 	gs.Equal(f.Users[1].Nickname, resp.Post.Provider.Nickname, "provider nickname doesn't match")
 	gs.Equal(f.Users[1].AuthPhotoURL.String, resp.Post.Provider.AvatarURL, "provider avatar URL doesn't match")
-	gs.Equal(f.Organization.Uuid.String(), resp.Post.Organization.ID)
+	gs.Equal(f.Organization.UUID.String(), resp.Post.Organization.ID)
 	gs.Equal(f.Files[0].UUID.String(), resp.Post.Photo.ID)
 	gs.Equal(1, len(resp.Post.Files))
 	gs.Equal(f.Files[1].UUID.String(), resp.Post.Files[0].ID)
@@ -279,12 +279,12 @@ type UpdatePostFixtures struct {
 func createFixtures_UpdatePost(gs *GqlgenSuite) UpdatePostFixtures {
 	t := gs.T()
 
-	org := models.Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	org := models.Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
 	createFixture(gs, &org)
 
 	users := models.Users{
-		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1 ", Uuid: domain.GetUuid()},
-		{Email: t.Name() + "_user2@example.com", Nickname: t.Name() + " User2 ", Uuid: domain.GetUuid()},
+		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1 ", UUID: domain.GetUUID()},
+		{Email: t.Name() + "_user2@example.com", Nickname: t.Name() + " User2 ", UUID: domain.GetUUID()},
 	}
 	for i := range users {
 		createFixture(gs, &users[i])
@@ -318,7 +318,7 @@ func createFixtures_UpdatePost(gs *GqlgenSuite) UpdatePostFixtures {
 			Title:          "An Offer",
 			Size:           models.PostSizeLarge,
 			Status:         models.PostStatusOpen,
-			Uuid:           domain.GetUuid(),
+			UUID:           domain.GetUUID(),
 			ReceiverID:     nulls.NewInt(users[1].ID),
 			DestinationID:  locations[0].ID, // test update of existing location
 			// leave OriginID nil to test adding a location
@@ -379,7 +379,7 @@ func (gs *GqlgenSuite) Test_UpdatePost() {
 
 	var postsResp PostResponse
 
-	input := `id: "` + f.Posts[0].Uuid.String() + `" photoID: "` + f.Files[1].UUID.String() + `"` +
+	input := `id: "` + f.Posts[0].UUID.String() + `" photoID: "` + f.Files[1].UUID.String() + `"` +
 		`
 			description: "new description"
 			destination: {description:"dest" country:"dc" latitude:1.1 longitude:2.2}
@@ -401,7 +401,7 @@ func (gs *GqlgenSuite) Test_UpdatePost() {
 		t.FailNow()
 	}
 
-	gs.Equal(f.Posts[0].Uuid.String(), postsResp.Post.ID)
+	gs.Equal(f.Posts[0].UUID.String(), postsResp.Post.ID)
 	gs.Equal(f.Files[1].UUID.String(), postsResp.Post.Photo.ID)
 	gs.Equal("new description", postsResp.Post.Description)
 	gs.Equal("dest", postsResp.Post.Destination.Description)
@@ -419,7 +419,7 @@ func (gs *GqlgenSuite) Test_UpdatePost() {
 
 	// Attempt to edit a locked post
 	TestUser = f.Users[1]
-	input = `id: "` + f.Posts[0].Uuid.String() + `" description: "new description"`
+	input = `id: "` + f.Posts[0].UUID.String() + `" description: "new description"`
 	query = `mutation { post: updatePost(input: {` + input + `}) { id status}}`
 
 	gs.Error(c.Post(query, &postsResp))
@@ -434,13 +434,13 @@ type CreatePostFixtures struct {
 func createFixtures_CreatePost(gs *GqlgenSuite) CreatePostFixtures {
 	t := gs.T()
 
-	org := models.Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	org := models.Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
 	createFixture(gs, &org)
 
 	user := models.User{
 		Email:    t.Name() + "_user1@example.com",
 		Nickname: t.Name() + " User1",
-		Uuid:     domain.GetUuid(),
+		UUID:     domain.GetUUID(),
 	}
 	createFixture(gs, &user)
 
@@ -476,7 +476,7 @@ func (gs *GqlgenSuite) Test_CreatePost() {
 
 	var postsResp PostResponse
 
-	input := `orgID: "` + f.Organization.Uuid.String() + `"` +
+	input := `orgID: "` + f.Organization.UUID.String() + `"` +
 		`photoID: "` + f.File.UUID.String() + `"` +
 		`
 			type: REQUEST
@@ -494,7 +494,7 @@ func (gs *GqlgenSuite) Test_CreatePost() {
 	TestUser = f.User
 	gs.NoError(c.Post(query, &postsResp))
 
-	gs.Equal(f.Organization.Uuid.String(), postsResp.Post.Organization.ID)
+	gs.Equal(f.Organization.UUID.String(), postsResp.Post.Organization.ID)
 	gs.Equal(f.File.UUID.String(), postsResp.Post.Photo.ID)
 	gs.Equal(models.PostTypeRequest, postsResp.Post.Type)
 	gs.Equal("title", postsResp.Post.Title)
@@ -519,17 +519,17 @@ type UpdatePostStatusFixtures struct {
 }
 
 func createFixturesForUpdatePostStatus(gs *GqlgenSuite) UpdatePostStatusFixtures {
-	org := models.Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	org := models.Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
 	createFixture(gs, &org)
 
-	unique := org.Uuid.String()
+	unique := org.UUID.String()
 	users := make(models.Users, 2)
 	userOrgs := make(models.UserOrganizations, len(users))
 	for i := range users {
 		users[i] = models.User{
 			Email:    fmt.Sprintf("%s_user%d@example.com", unique, i),
 			Nickname: fmt.Sprintf("%s_User%d", unique, i),
-			Uuid:     domain.GetUuid(),
+			UUID:     domain.GetUUID(),
 		}
 		createFixture(gs, &users[i])
 
@@ -550,7 +550,7 @@ func createFixturesForUpdatePostStatus(gs *GqlgenSuite) UpdatePostStatusFixtures
 		posts[i].CreatedByID = users[0].ID
 		posts[i].ReceiverID = nulls.NewInt(users[0].ID)
 		posts[i].OrganizationID = org.ID
-		posts[i].Uuid = domain.GetUuid()
+		posts[i].UUID = domain.GetUUID()
 		posts[i].DestinationID = locations[i].ID
 		posts[i].Title = "title"
 		posts[i].Size = models.PostSizeSmall
@@ -591,7 +591,7 @@ func (gs *GqlgenSuite) Test_UpdatePostStatus() {
 	}
 
 	for _, step := range steps {
-		input := `id: "` + f.Posts[0].Uuid.String() + `", status: ` + step.status.String()
+		input := `id: "` + f.Posts[0].UUID.String() + `", status: ` + step.status.String()
 		query := `mutation { post: updatePostStatus(input: {` + input + `}) {id status}}`
 
 		TestUser = step.user

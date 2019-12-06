@@ -18,12 +18,12 @@ type orgUserPostFixtures struct {
 
 func CreateFixtures_GetPostRecipients(ms *ModelSuite, t *testing.T) orgUserPostFixtures {
 
-	unique := domain.GetUuid().String()
+	unique := domain.GetUUID().String()
 
 	// Load Organization test fixtures
 	org := models.Organization{
 		Name:       "ACME-" + unique,
-		Uuid:       domain.GetUuid(),
+		UUID:       domain.GetUUID(),
 		AuthType:   models.AuthTypeSaml,
 		AuthConfig: "{}",
 	}
@@ -40,21 +40,21 @@ func CreateFixtures_GetPostRecipients(ms *ModelSuite, t *testing.T) orgUserPostF
 			FirstName: "Existing1",
 			LastName:  "User",
 			Nickname:  "Existing1 User " + unique,
-			Uuid:      domain.GetUuid(),
+			UUID:      domain.GetUUID(),
 		},
 		{
 			Email:     "user2-" + unique + "@example.com",
 			FirstName: "Existing2",
 			LastName:  "User",
 			Nickname:  "Existing2 User " + unique,
-			Uuid:      domain.GetUuid(),
+			UUID:      domain.GetUUID(),
 		},
 		{
 			Email:     "not_participating-" + unique + "@example.com",
 			FirstName: "Not",
 			LastName:  "Participating",
 			Nickname:  "Not Participating " + unique,
-			Uuid:      domain.GetUuid(),
+			UUID:      domain.GetUUID(),
 		},
 	}
 	for i := range users {
@@ -94,7 +94,7 @@ func CreateFixtures_GetPostRecipients(ms *ModelSuite, t *testing.T) orgUserPostF
 			Title:          "First Request",
 			Size:           models.PostSizeMedium,
 			Status:         models.PostStatusOpen,
-			Uuid:           domain.GetUuid(),
+			UUID:           domain.GetUUID(),
 			ProviderID:     nulls.NewInt(users[1].ID),
 			ReceiverID:     nulls.NewInt(users[0].ID),
 			DestinationID:  locations[0].ID,
@@ -106,7 +106,7 @@ func CreateFixtures_GetPostRecipients(ms *ModelSuite, t *testing.T) orgUserPostF
 			Title:          "Second Request",
 			Size:           models.PostSizeMedium,
 			Status:         models.PostStatusOpen,
-			Uuid:           domain.GetUuid(),
+			UUID:           domain.GetUUID(),
 			ReceiverID:     nulls.NewInt(users[0].ID),
 			DestinationID:  locations[1].ID,
 		},
@@ -131,12 +131,12 @@ func CreateFixtures_GetPostRecipients(ms *ModelSuite, t *testing.T) orgUserPostF
 
 func CreateFixtures_RequestStatusUpdatedNotifications(ms *ModelSuite, t *testing.T) orgUserPostFixtures {
 
-	unique := domain.GetUuid().String()
+	unique := domain.GetUUID().String()
 
 	// Load Organization test fixtures
 	org := models.Organization{
 		Name:       "ACME-" + unique,
-		Uuid:       domain.GetUuid(),
+		UUID:       domain.GetUUID(),
 		AuthType:   models.AuthTypeSaml,
 		AuthConfig: "{}",
 	}
@@ -153,21 +153,21 @@ func CreateFixtures_RequestStatusUpdatedNotifications(ms *ModelSuite, t *testing
 			FirstName: "Existing1",
 			LastName:  "User",
 			Nickname:  "Existing1 User " + unique,
-			Uuid:      domain.GetUuid(),
+			UUID:      domain.GetUUID(),
 		},
 		{
 			Email:     "user2-" + unique + "@example.com",
 			FirstName: "Existing2",
 			LastName:  "User",
 			Nickname:  "Existing2 User " + unique,
-			Uuid:      domain.GetUuid(),
+			UUID:      domain.GetUUID(),
 		},
 		{
 			Email:     "not_participating-" + unique + "@example.com",
 			FirstName: "Not",
 			LastName:  "Participating",
 			Nickname:  "Not Participating " + unique,
-			Uuid:      domain.GetUuid(),
+			UUID:      domain.GetUUID(),
 		},
 	}
 	for i := range users {
@@ -208,7 +208,7 @@ func CreateFixtures_RequestStatusUpdatedNotifications(ms *ModelSuite, t *testing
 			Title:          "First Request",
 			Size:           models.PostSizeMedium,
 			Status:         models.PostStatusOpen,
-			Uuid:           domain.GetUuid(),
+			UUID:           domain.GetUUID(),
 			ProviderID:     nulls.NewInt(users[1].ID),
 			ReceiverID:     nulls.NewInt(users[0].ID),
 			DestinationID:  locations[0].ID,
@@ -220,7 +220,7 @@ func CreateFixtures_RequestStatusUpdatedNotifications(ms *ModelSuite, t *testing
 			Title:          "Second Request",
 			Size:           models.PostSizeMedium,
 			Status:         models.PostStatusOpen,
-			Uuid:           domain.GetUuid(),
+			UUID:           domain.GetUUID(),
 			ReceiverID:     nulls.NewInt(users[0].ID),
 			DestinationID:  locations[1].ID,
 		},
@@ -245,12 +245,12 @@ func CreateFixtures_RequestStatusUpdatedNotifications(ms *ModelSuite, t *testing
 
 func CreateFixtures_sendNotificationRequestFromStatus(ms *ModelSuite, t *testing.T) orgUserPostFixtures {
 
-	unique := domain.GetUuid().String()
+	unique := domain.GetUUID().String()
 
 	// Load Organization test fixtures
 	org := models.Organization{
 		Name:       "ACME-" + unique,
-		Uuid:       domain.GetUuid(),
+		UUID:       domain.GetUUID(),
 		AuthType:   models.AuthTypeSaml,
 		AuthConfig: "{}",
 	}
@@ -267,21 +267,21 @@ func CreateFixtures_sendNotificationRequestFromStatus(ms *ModelSuite, t *testing
 			FirstName: "Existing1",
 			LastName:  "User",
 			Nickname:  "Existing1 User " + unique,
-			Uuid:      domain.GetUuid(),
+			UUID:      domain.GetUUID(),
 		},
 		{
 			Email:     "user2-" + unique + "@example.com",
 			FirstName: "Existing2",
 			LastName:  "User",
 			Nickname:  "Existing2 User " + unique,
-			Uuid:      domain.GetUuid(),
+			UUID:      domain.GetUUID(),
 		},
 		{
 			Email:     "not_participating-" + unique + "@example.com",
 			FirstName: "Not",
 			LastName:  "Participating",
 			Nickname:  "Not Participating " + unique,
-			Uuid:      domain.GetUuid(),
+			UUID:      domain.GetUUID(),
 		},
 	}
 	for i := range users {
@@ -322,7 +322,7 @@ func CreateFixtures_sendNotificationRequestFromStatus(ms *ModelSuite, t *testing
 			Title:          "First Request",
 			Size:           models.PostSizeMedium,
 			Status:         models.PostStatusOpen,
-			Uuid:           domain.GetUuid(),
+			UUID:           domain.GetUUID(),
 			ProviderID:     nulls.NewInt(users[1].ID),
 			ReceiverID:     nulls.NewInt(users[0].ID),
 			DestinationID:  locations[0].ID,
@@ -334,7 +334,7 @@ func CreateFixtures_sendNotificationRequestFromStatus(ms *ModelSuite, t *testing
 			Title:          "Second Request",
 			Size:           models.PostSizeMedium,
 			Status:         models.PostStatusOpen,
-			Uuid:           domain.GetUuid(),
+			UUID:           domain.GetUUID(),
 			ReceiverID:     nulls.NewInt(users[0].ID),
 			DestinationID:  locations[1].ID,
 		},
@@ -358,10 +358,10 @@ func CreateFixtures_sendNotificationRequestFromStatus(ms *ModelSuite, t *testing
 }
 
 func createFixturesForTestSendNewPostNotifications(ms *ModelSuite) orgUserPostFixtures {
-	org := models.Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	org := models.Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
 	createFixture(ms, &org)
 
-	unique := org.Uuid.String()
+	unique := org.UUID.String()
 	users := make(models.Users, 3)
 	userLocations := make(models.Locations, len(users))
 	for i := range users {
@@ -371,7 +371,7 @@ func createFixturesForTestSendNewPostNotifications(ms *ModelSuite) orgUserPostFi
 		users[i] = models.User{
 			Email:      fmt.Sprintf("%s_user%d@example.com", unique, i),
 			Nickname:   fmt.Sprintf("%s_User%d", unique, i),
-			Uuid:       domain.GetUuid(),
+			UUID:       domain.GetUUID(),
 			LocationID: nulls.NewInt(userLocations[i].ID),
 		}
 		createFixture(ms, &users[i])
@@ -392,7 +392,7 @@ func createFixturesForTestSendNewPostNotifications(ms *ModelSuite) orgUserPostFi
 	}
 	for i := range posts {
 		posts[i].OrganizationID = org.ID
-		posts[i].Uuid = domain.GetUuid()
+		posts[i].UUID = domain.GetUUID()
 		posts[i].CreatedByID = users[0].ID
 		posts[i].DestinationID = locations[i].ID
 		createFixture(ms, &posts[i])

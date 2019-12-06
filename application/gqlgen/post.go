@@ -22,7 +22,7 @@ func (r *postResolver) ID(ctx context.Context, obj *models.Post) (string, error)
 	if obj == nil {
 		return "", nil
 	}
-	return obj.Uuid.String(), nil
+	return obj.UUID.String(), nil
 }
 
 // Status field resolver. This is here to satisfy the generated postResolver. It is unclear why
@@ -137,7 +137,7 @@ func (r *postResolver) Threads(ctx context.Context, obj *models.Post) ([]models.
 	threads, err := obj.GetThreads(user)
 	if err != nil {
 		extras := map[string]interface{}{
-			"user": user.Uuid,
+			"user": user.UUID,
 		}
 		return nil, reportError(ctx, err, "GetPostThreads", extras)
 	}
@@ -205,7 +205,7 @@ func (r *queryResolver) Posts(ctx context.Context) ([]models.Post, error) {
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 	if err := posts.FindByUser(ctx, cUser); err != nil {
 		extras := map[string]interface{}{
-			"user": cUser.Uuid,
+			"user": cUser.UUID,
 		}
 		return nil, reportError(ctx, err, "GetPosts", extras)
 	}
@@ -222,7 +222,7 @@ func (r *queryResolver) Post(ctx context.Context, id *string) (*models.Post, err
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 	if err := post.FindByUserAndUUID(ctx, cUser, *id); err != nil {
 		extras := map[string]interface{}{
-			"user": cUser.Uuid,
+			"user": cUser.UUID,
 		}
 		return nil, reportError(ctx, err, "GetPost", extras)
 	}
@@ -302,7 +302,7 @@ type postInput struct {
 func (r *mutationResolver) CreatePost(ctx context.Context, input postInput) (*models.Post, error) {
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 	extras := map[string]interface{}{
-		"user": cUser.Uuid,
+		"user": cUser.UUID,
 	}
 
 	post, err := convertGqlPostInputToDBPost(ctx, input, cUser)
@@ -333,7 +333,7 @@ func (r *mutationResolver) CreatePost(ctx context.Context, input postInput) (*mo
 func (r *mutationResolver) UpdatePost(ctx context.Context, input postInput) (*models.Post, error) {
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 	extras := map[string]interface{}{
-		"user": cUser.Uuid,
+		"user": cUser.UUID,
 	}
 
 	post, err := convertGqlPostInputToDBPost(ctx, input, cUser)
@@ -378,7 +378,7 @@ func (r *mutationResolver) UpdatePostStatus(ctx context.Context, input UpdatePos
 
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 	extras := map[string]interface{}{
-		"user":      cUser.Uuid,
+		"user":      cUser.UUID,
 		"oldStatus": post.Status,
 		"newStatus": input.Status,
 	}

@@ -19,12 +19,12 @@ type threadQueryFixtures struct {
 func createFixtures_ThreadQuery(gs *GqlgenSuite) threadQueryFixtures {
 	t := gs.T()
 
-	org := models.Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	org := models.Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
 	createFixture(gs, &org)
 
 	users := models.Users{
-		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1 ", Uuid: domain.GetUuid()},
-		{Email: t.Name() + "_user2@example.com", Nickname: t.Name() + " User2 ", Uuid: domain.GetUuid()},
+		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1 ", UUID: domain.GetUUID()},
+		{Email: t.Name() + "_user2@example.com", Nickname: t.Name() + " User2 ", UUID: domain.GetUUID()},
 	}
 	for i := range users {
 		createFixture(gs, &users[i])
@@ -59,7 +59,7 @@ func createFixtures_ThreadQuery(gs *GqlgenSuite) threadQueryFixtures {
 
 	posts := models.Posts{
 		{
-			Uuid:           domain.GetUuid(),
+			UUID:           domain.GetUUID(),
 			CreatedByID:    users[0].ID,
 			OrganizationID: org.ID,
 			Type:           models.PostTypeRequest,
@@ -69,7 +69,7 @@ func createFixtures_ThreadQuery(gs *GqlgenSuite) threadQueryFixtures {
 			Size:           models.PostSizeSmall,
 		},
 		{
-			Uuid:           domain.GetUuid(),
+			UUID:           domain.GetUUID(),
 			CreatedByID:    users[0].ID,
 			ProviderID:     nulls.NewInt(users[0].ID),
 			OrganizationID: org.ID,
@@ -81,7 +81,7 @@ func createFixtures_ThreadQuery(gs *GqlgenSuite) threadQueryFixtures {
 	}
 
 	threads := models.Threads{
-		{Uuid: domain.GetUuid(), PostID: posts[0].ID},
+		{UUID: domain.GetUUID(), PostID: posts[0].ID},
 	}
 	for i := range threads {
 		createFixture(gs, &threads[i])
@@ -96,13 +96,13 @@ func createFixtures_ThreadQuery(gs *GqlgenSuite) threadQueryFixtures {
 
 	messages := models.Messages{
 		{
-			Uuid:     domain.GetUuid(),
+			UUID:     domain.GetUUID(),
 			ThreadID: threads[0].ID,
 			SentByID: users[1].ID,
 			Content:  "Message from " + users[1].Nickname,
 		},
 		{
-			Uuid:     domain.GetUuid(),
+			UUID:     domain.GetUUID(),
 			ThreadID: threads[0].ID,
 			SentByID: users[0].ID,
 			Content:  "Reply from " + users[0].Nickname,

@@ -30,7 +30,7 @@ func Fixtures_Upload(as *ActionSuite, t *testing.T) UploadFixtures {
 	// Load Org test fixtures
 	org := &models.Organization{
 		AuthConfig: "{}",
-		Uuid:       domain.GetUuid(),
+		UUID:       domain.GetUUID(),
 	}
 	err := as.DB.Create(org)
 	if err != nil {
@@ -40,7 +40,7 @@ func Fixtures_Upload(as *ActionSuite, t *testing.T) UploadFixtures {
 
 	// Load User test fixture
 	user := models.User{
-		Uuid: domain.GetUuid(),
+		UUID: domain.GetUUID(),
 	}
 
 	if err := as.DB.Create(&user); err != nil {

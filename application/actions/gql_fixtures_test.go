@@ -33,7 +33,7 @@ func Fixtures_CreateOrganization(as *ActionSuite, t *testing.T) OrgFixtures {
 			LastName:  "Admin",
 			Nickname:  "sales_admin",
 			AdminRole: models.UserAdminRoleSalesAdmin,
-			Uuid:      domain.GetUuid(),
+			UUID:      domain.GetUUID(),
 		},
 		{
 			Email:     "member@domain.com",
@@ -41,7 +41,7 @@ func Fixtures_CreateOrganization(as *ActionSuite, t *testing.T) OrgFixtures {
 			LastName:  "Member",
 			Nickname:  "org_member",
 			AdminRole: models.UserAdminRoleUser,
-			Uuid:      domain.GetUuid(),
+			UUID:      domain.GetUUID(),
 		},
 		{
 			Email:     "admin@domain.com",
@@ -49,7 +49,7 @@ func Fixtures_CreateOrganization(as *ActionSuite, t *testing.T) OrgFixtures {
 			LastName:  "Admin",
 			Nickname:  "org_admin",
 			AdminRole: models.UserAdminRoleUser,
-			Uuid:      domain.GetUuid(),
+			UUID:      domain.GetUUID(),
 		},
 		{
 			Email:     "admin@other.com",
@@ -57,7 +57,7 @@ func Fixtures_CreateOrganization(as *ActionSuite, t *testing.T) OrgFixtures {
 			LastName:  "Admin",
 			Nickname:  "other_org_admin",
 			AdminRole: models.UserAdminRoleUser,
-			Uuid:      domain.GetUuid(),
+			UUID:      domain.GetUUID(),
 		},
 	}
 	for i := range users {
@@ -73,14 +73,14 @@ func Fixtures_CreateOrganization(as *ActionSuite, t *testing.T) OrgFixtures {
 			Url:        nulls.String{},
 			AuthType:   models.AuthTypeSaml,
 			AuthConfig: "{}",
-			Uuid:       domain.GetUuid(),
+			UUID:       domain.GetUUID(),
 		},
 		{
 			Name:       "Org2",
 			Url:        nulls.String{},
 			AuthType:   models.AuthTypeSaml,
 			AuthConfig: "{}",
-			Uuid:       domain.GetUuid(),
+			UUID:       domain.GetUUID(),
 		},
 	}
 	for i := range orgs {

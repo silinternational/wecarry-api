@@ -31,7 +31,7 @@ func (ms *ModelSuite) TestPost_Validate() {
 				Title:          "A Request",
 				Size:           PostSizeMedium,
 				Status:         PostStatusOpen,
-				Uuid:           domain.GetUuid(),
+				UUID:           domain.GetUUID(),
 			},
 			wantErr: false,
 		},
@@ -43,7 +43,7 @@ func (ms *ModelSuite) TestPost_Validate() {
 				Title:          "A Request",
 				Size:           PostSizeMedium,
 				Status:         PostStatusOpen,
-				Uuid:           domain.GetUuid(),
+				UUID:           domain.GetUUID(),
 			},
 			wantErr:  true,
 			errField: "created_by",
@@ -56,7 +56,7 @@ func (ms *ModelSuite) TestPost_Validate() {
 				Title:          "A Request",
 				Size:           PostSizeMedium,
 				Status:         PostStatusOpen,
-				Uuid:           domain.GetUuid(),
+				UUID:           domain.GetUUID(),
 			},
 			wantErr:  true,
 			errField: "type",
@@ -69,7 +69,7 @@ func (ms *ModelSuite) TestPost_Validate() {
 				Title:       "A Request",
 				Size:        PostSizeMedium,
 				Status:      PostStatusOpen,
-				Uuid:        domain.GetUuid(),
+				UUID:        domain.GetUUID(),
 			},
 			wantErr:  true,
 			errField: "organization_id",
@@ -82,7 +82,7 @@ func (ms *ModelSuite) TestPost_Validate() {
 				OrganizationID: 1,
 				Size:           PostSizeMedium,
 				Status:         PostStatusOpen,
-				Uuid:           domain.GetUuid(),
+				UUID:           domain.GetUUID(),
 			},
 			wantErr:  true,
 			errField: "title",
@@ -95,7 +95,7 @@ func (ms *ModelSuite) TestPost_Validate() {
 				OrganizationID: 1,
 				Title:          "A Request",
 				Status:         PostStatusOpen,
-				Uuid:           domain.GetUuid(),
+				UUID:           domain.GetUUID(),
 			},
 			wantErr:  true,
 			errField: "size",
@@ -108,7 +108,7 @@ func (ms *ModelSuite) TestPost_Validate() {
 				OrganizationID: 1,
 				Title:          "A Request",
 				Size:           PostSizeMedium,
-				Uuid:           domain.GetUuid(),
+				UUID:           domain.GetUUID(),
 			},
 			wantErr:  true,
 			errField: "status",
@@ -161,7 +161,7 @@ func (ms *ModelSuite) TestPost_ValidateCreate() {
 				Title:          "A Request",
 				Size:           PostSizeMedium,
 				Status:         PostStatusOpen,
-				Uuid:           domain.GetUuid(),
+				UUID:           domain.GetUUID(),
 			},
 			wantErr: false,
 		},
@@ -174,7 +174,7 @@ func (ms *ModelSuite) TestPost_ValidateCreate() {
 				Title:          "A Request",
 				Size:           PostSizeMedium,
 				Status:         PostStatusAccepted,
-				Uuid:           domain.GetUuid(),
+				UUID:           domain.GetUUID(),
 			},
 			wantErr: true,
 		},
@@ -187,7 +187,7 @@ func (ms *ModelSuite) TestPost_ValidateCreate() {
 				Title:          "A Request",
 				Size:           PostSizeMedium,
 				Status:         PostStatusCommitted,
-				Uuid:           domain.GetUuid(),
+				UUID:           domain.GetUUID(),
 			},
 			wantErr: true,
 		},
@@ -200,7 +200,7 @@ func (ms *ModelSuite) TestPost_ValidateCreate() {
 				Title:          "A Request",
 				Size:           PostSizeMedium,
 				Status:         PostStatusDelivered,
-				Uuid:           domain.GetUuid(),
+				UUID:           domain.GetUUID(),
 			},
 			wantErr: true,
 		},
@@ -213,7 +213,7 @@ func (ms *ModelSuite) TestPost_ValidateCreate() {
 				Title:          "A Request",
 				Size:           PostSizeMedium,
 				Status:         PostStatusReceived,
-				Uuid:           domain.GetUuid(),
+				UUID:           domain.GetUUID(),
 			},
 			wantErr: true,
 		},
@@ -226,7 +226,7 @@ func (ms *ModelSuite) TestPost_ValidateCreate() {
 				Title:          "A Request",
 				Size:           PostSizeMedium,
 				Status:         PostStatusCompleted,
-				Uuid:           domain.GetUuid(),
+				UUID:           domain.GetUUID(),
 			},
 			wantErr: true,
 		},
@@ -239,7 +239,7 @@ func (ms *ModelSuite) TestPost_ValidateCreate() {
 				Title:          "A Request",
 				Size:           PostSizeMedium,
 				Status:         PostStatusRemoved,
-				Uuid:           domain.GetUuid(),
+				UUID:           domain.GetUUID(),
 			},
 			wantErr: true,
 		},
@@ -277,7 +277,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_OpenRequest() {
 			name: "good status - from open to open",
 			post: Post{
 				Status: PostStatusOpen,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: false,
 		},
@@ -286,7 +286,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_OpenRequest() {
 			post: Post{
 				Title:  "New Title",
 				Status: PostStatusCommitted,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: false,
 		},
@@ -294,7 +294,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_OpenRequest() {
 			name: "good status - from open to removed",
 			post: Post{
 				Status: PostStatusRemoved,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: false,
 		},
@@ -302,7 +302,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_OpenRequest() {
 			name: "bad status - from open to accepted",
 			post: Post{
 				Status: PostStatusAccepted,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: true,
 		},
@@ -310,7 +310,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_OpenRequest() {
 			name: "bad status - from open to delivered",
 			post: Post{
 				Status: PostStatusDelivered,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: true,
 		},
@@ -318,7 +318,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_OpenRequest() {
 			name: "bad status - from open to received",
 			post: Post{
 				Status: PostStatusReceived,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: true,
 		},
@@ -326,7 +326,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_OpenRequest() {
 			name: "bad status - from open to completed",
 			post: Post{
 				Status: PostStatusCompleted,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: true,
 		},
@@ -368,7 +368,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_CommittedRequest() {
 			post: Post{
 				Title:  "New Title",
 				Status: PostStatusCommitted,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: false,
 		},
@@ -376,7 +376,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_CommittedRequest() {
 			name: "good status - from committed to open",
 			post: Post{
 				Status: PostStatusOpen,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: false,
 		},
@@ -384,7 +384,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_CommittedRequest() {
 			name: "good status - from committed to accepted",
 			post: Post{
 				Status: PostStatusAccepted,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: false,
 		},
@@ -392,7 +392,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_CommittedRequest() {
 			name: "good status - from committed to delivered",
 			post: Post{
 				Status: PostStatusDelivered,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: false,
 		},
@@ -400,7 +400,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_CommittedRequest() {
 			name: "good status - from committed to removed",
 			post: Post{
 				Status: PostStatusRemoved,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: false,
 		},
@@ -408,7 +408,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_CommittedRequest() {
 			name: "bad status - from committed to received",
 			post: Post{
 				Status: PostStatusReceived,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: true,
 		},
@@ -416,7 +416,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_CommittedRequest() {
 			name: "bad status - from committed to completed",
 			post: Post{
 				Status: PostStatusCompleted,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: true,
 		},
@@ -459,7 +459,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_AcceptedRequest() {
 			post: Post{
 				Title:  "New Title",
 				Status: PostStatusAccepted,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: false,
 		},
@@ -467,7 +467,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_AcceptedRequest() {
 			name: "good status - from accepted to open",
 			post: Post{
 				Status: PostStatusOpen,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: false,
 		},
@@ -475,7 +475,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_AcceptedRequest() {
 			name: "good status - from accepted to committed",
 			post: Post{
 				Status: PostStatusCommitted,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: false,
 		},
@@ -483,7 +483,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_AcceptedRequest() {
 			name: "good status - from accepted to delivered",
 			post: Post{
 				Status: PostStatusDelivered,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: false,
 		},
@@ -491,7 +491,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_AcceptedRequest() {
 			name: "good status - from accepted to received",
 			post: Post{
 				Status: PostStatusReceived,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: false,
 		},
@@ -499,7 +499,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_AcceptedRequest() {
 			name: "good status - from accepted to completed",
 			post: Post{
 				Status: PostStatusCompleted,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: false,
 		},
@@ -507,7 +507,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_AcceptedRequest() {
 			name: "good status - from accepted to removed",
 			post: Post{
 				Status: PostStatusRemoved,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: false,
 		},
@@ -548,7 +548,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_DeliveredRequest() {
 			name: "good status - from delivered to accepted",
 			post: Post{
 				Status: PostStatusAccepted,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: false,
 		},
@@ -556,7 +556,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_DeliveredRequest() {
 			name: "good status - from delivered to committed",
 			post: Post{
 				Status: PostStatusCommitted,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: false,
 		},
@@ -564,7 +564,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_DeliveredRequest() {
 			name: "good status - from delivered to completed",
 			post: Post{
 				Status: PostStatusCompleted,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: false,
 		},
@@ -572,7 +572,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_DeliveredRequest() {
 			name: "bad status - from delivered to open",
 			post: Post{
 				Status: PostStatusOpen,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: true,
 		},
@@ -581,7 +581,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_DeliveredRequest() {
 			post: Post{
 				Title:  "New Title",
 				Status: PostStatusReceived,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: true,
 		},
@@ -589,7 +589,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_DeliveredRequest() {
 			name: "bad status - from delivered to removed",
 			post: Post{
 				Status: PostStatusRemoved,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: true,
 		},
@@ -631,7 +631,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_ReceivedRequest() {
 			post: Post{
 				Title:  "New Title",
 				Status: PostStatusReceived,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: false,
 		},
@@ -639,7 +639,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_ReceivedRequest() {
 			name: "good status - from received to accepted",
 			post: Post{
 				Status: PostStatusAccepted,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: false,
 		},
@@ -647,7 +647,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_ReceivedRequest() {
 			name: "good status - from received to completed",
 			post: Post{
 				Status: PostStatusCompleted,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: false,
 		},
@@ -655,7 +655,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_ReceivedRequest() {
 			name: "bad status - from received to open",
 			post: Post{
 				Status: PostStatusOpen,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: true,
 		},
@@ -663,7 +663,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_ReceivedRequest() {
 			name: "bad status - from received to committed",
 			post: Post{
 				Status: PostStatusCommitted,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: true,
 		},
@@ -671,7 +671,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_ReceivedRequest() {
 			name: "bad status - from received to removed",
 			post: Post{
 				Status: PostStatusRemoved,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: true,
 		},
@@ -714,7 +714,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_CompletedRequest() {
 			post: Post{
 				Title:  "New Title",
 				Status: PostStatusCompleted,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: false,
 		},
@@ -722,7 +722,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_CompletedRequest() {
 			name: "bad status - from completed to accepted",
 			post: Post{
 				Status: PostStatusAccepted,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: false,
 		},
@@ -730,7 +730,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_CompletedRequest() {
 			name: "good status - from completed to delivered",
 			post: Post{
 				Status: PostStatusDelivered,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: false,
 		},
@@ -738,7 +738,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_CompletedRequest() {
 			name: "good status - from completed to received",
 			post: Post{
 				Status: PostStatusReceived,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: false,
 		},
@@ -746,7 +746,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_CompletedRequest() {
 			name: "bad status - from completed to open",
 			post: Post{
 				Status: PostStatusOpen,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: true,
 		},
@@ -754,7 +754,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_CompletedRequest() {
 			name: "bad status - from completed to committed",
 			post: Post{
 				Status: PostStatusCommitted,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: true,
 		},
@@ -762,7 +762,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_CompletedRequest() {
 			name: "bad status - from completed to removed",
 			post: Post{
 				Status: PostStatusRemoved,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: true,
 		},
@@ -805,7 +805,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_RemovedRequest() {
 			post: Post{
 				Title:  "New Title",
 				Status: PostStatusRemoved,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: false,
 		},
@@ -813,7 +813,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_RemovedRequest() {
 			name: "bad status - from removed to open",
 			post: Post{
 				Status: PostStatusOpen,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: true,
 		},
@@ -821,7 +821,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_RemovedRequest() {
 			name: "bad status - from removed to committed",
 			post: Post{
 				Status: PostStatusCommitted,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: true,
 		},
@@ -829,7 +829,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_RemovedRequest() {
 			name: "bad status - from removed to accepted",
 			post: Post{
 				Status: PostStatusAccepted,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: true,
 		},
@@ -837,7 +837,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_RemovedRequest() {
 			name: "bad status - from removed to delivered",
 			post: Post{
 				Status: PostStatusDelivered,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: true,
 		},
@@ -845,7 +845,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_RemovedRequest() {
 			name: "bad status - from removed to received",
 			post: Post{
 				Status: PostStatusReceived,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: true,
 		},
@@ -853,7 +853,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_RemovedRequest() {
 			name: "bad status - from removed to completed",
 			post: Post{
 				Status: PostStatusCompleted,
-				Uuid:   post.Uuid,
+				UUID:   post.UUID,
 			},
 			wantErr: true,
 		},
@@ -916,7 +916,7 @@ func (ms *ModelSuite) TestPost_Create() {
 			}
 			ms.NoError(err)
 
-			ms.True(test.post.Uuid.Version() != 0)
+			ms.True(test.post.UUID.Version() != 0)
 			var p Post
 			ms.NoError(p.FindByID(test.post.ID))
 		})
@@ -954,7 +954,7 @@ func (ms *ModelSuite) TestPost_Update() {
 			}
 			ms.NoError(err)
 
-			ms.True(test.post.Uuid.Version() != 0)
+			ms.True(test.post.UUID.Version() != 0)
 			var p Post
 			ms.NoError(p.FindByID(test.post.ID))
 		})
@@ -1023,9 +1023,9 @@ func (ms *ModelSuite) TestPost_FindByUUID() {
 		want    Post
 		wantErr bool
 	}{
-		{name: "good", uuid: posts[0].Uuid.String(), want: posts[0]},
+		{name: "good", uuid: posts[0].UUID.String(), want: posts[0]},
 		{name: "blank uuid", uuid: "", wantErr: true},
-		{name: "wrong uuid", uuid: domain.GetUuid().String(), wantErr: true},
+		{name: "wrong uuid", uuid: domain.GetUUID().String(), wantErr: true},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -1038,8 +1038,8 @@ func (ms *ModelSuite) TestPost_FindByUUID() {
 			} else {
 				if err != nil {
 					t.Errorf("FindByUUID() error = %v", err)
-				} else if post.Uuid != test.want.Uuid {
-					t.Errorf("FindByUUID() got = %s, want %s", post.Uuid, test.want.Uuid)
+				} else if post.UUID != test.want.UUID {
+					t.Errorf("FindByUUID() got = %s, want %s", post.UUID, test.want.UUID)
 				}
 			}
 		})
@@ -1057,15 +1057,15 @@ func (ms *ModelSuite) TestPost_GetCreator() {
 		post Post
 		want uuid.UUID
 	}{
-		{name: "good", post: posts[0], want: posts[0].CreatedBy.Uuid},
+		{name: "good", post: posts[0], want: posts[0].CreatedBy.UUID},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			user, err := test.post.GetCreator()
 			if err != nil {
 				t.Errorf("GetCreator() error = %v", err)
-			} else if user.Uuid != test.want {
-				t.Errorf("GetCreator() got = %s, want %s", user.Uuid, test.want)
+			} else if user.UUID != test.want {
+				t.Errorf("GetCreator() got = %s, want %s", user.UUID, test.want)
 			}
 		})
 	}
@@ -1082,7 +1082,7 @@ func (ms *ModelSuite) TestPost_GetProvider() {
 		post Post
 		want *uuid.UUID
 	}{
-		{name: "good", post: posts[0], want: &posts[0].Provider.Uuid},
+		{name: "good", post: posts[0], want: &posts[0].Provider.UUID},
 		{name: "nil", post: posts[1], want: nil},
 	}
 	for _, test := range tests {
@@ -1092,12 +1092,12 @@ func (ms *ModelSuite) TestPost_GetProvider() {
 				t.Errorf("GetProvider() error = %v", err)
 			} else if test.want == nil {
 				if user != nil {
-					t.Errorf("expected nil, got %s", user.Uuid.String())
+					t.Errorf("expected nil, got %s", user.UUID.String())
 				}
 			} else if user == nil {
 				t.Errorf("received nil, expected %v", test.want.String())
-			} else if user.Uuid != *test.want {
-				t.Errorf("GetProvider() got = %s, want %s", user.Uuid, test.want)
+			} else if user.UUID != *test.want {
+				t.Errorf("GetProvider() got = %s, want %s", user.UUID, test.want)
 			}
 		})
 	}
@@ -1114,7 +1114,7 @@ func (ms *ModelSuite) TestPost_GetReceiver() {
 		post Post
 		want *uuid.UUID
 	}{
-		{name: "good", post: posts[1], want: &posts[1].Receiver.Uuid},
+		{name: "good", post: posts[1], want: &posts[1].Receiver.UUID},
 		{name: "nil", post: posts[0], want: nil},
 	}
 	for _, test := range tests {
@@ -1124,12 +1124,12 @@ func (ms *ModelSuite) TestPost_GetReceiver() {
 				t.Errorf("GetReceiver() error = %v", err)
 			} else if test.want == nil {
 				if user != nil {
-					t.Errorf("expected nil, got %s", user.Uuid.String())
+					t.Errorf("expected nil, got %s", user.UUID.String())
 				}
 			} else if user == nil {
 				t.Errorf("received nil, expected %v", test.want.String())
-			} else if user.Uuid != *test.want {
-				t.Errorf("GetProvider() got = %s, want %s", user.Uuid, test.want)
+			} else if user.UUID != *test.want {
+				t.Errorf("GetProvider() got = %s, want %s", user.UUID, test.want)
 			}
 		})
 	}
@@ -1146,15 +1146,15 @@ func (ms *ModelSuite) TestPost_GetOrganization() {
 		post Post
 		want uuid.UUID
 	}{
-		{name: "good", post: posts[0], want: posts[0].Organization.Uuid},
+		{name: "good", post: posts[0], want: posts[0].Organization.UUID},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			org, err := test.post.GetOrganization()
 			if err != nil {
 				t.Errorf("GetOrganization() error = %v", err)
-			} else if org.Uuid != test.want {
-				t.Errorf("GetOrganization() got = %s, want %s", org.Uuid, test.want)
+			} else if org.UUID != test.want {
+				t.Errorf("GetOrganization() got = %s, want %s", org.UUID, test.want)
 			}
 		})
 	}
@@ -1174,7 +1174,7 @@ func (ms *ModelSuite) TestPost_GetThreads() {
 		want []uuid.UUID
 	}{
 		{name: "no threads", post: posts[1], want: []uuid.UUID{}},
-		{name: "two threads", post: posts[0], want: []uuid.UUID{threads[1].Uuid, threads[0].Uuid}},
+		{name: "two threads", post: posts[0], want: []uuid.UUID{threads[1].UUID, threads[0].UUID}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -1184,7 +1184,7 @@ func (ms *ModelSuite) TestPost_GetThreads() {
 			} else {
 				ids := make([]uuid.UUID, len(got))
 				for i := range got {
-					ids[i] = got[i].Uuid
+					ids[i] = got[i].UUID
 				}
 				if !reflect.DeepEqual(ids, test.want) {
 					t.Errorf("GetThreads() got = %s, want %s", ids, test.want)
@@ -1335,7 +1335,7 @@ func (ms *ModelSuite) TestPost_FindByUserAndUUID() {
 		t.Run(test.name, func(t *testing.T) {
 			var post Post
 			var c context.Context
-			err := post.FindByUserAndUUID(c, test.user, test.post.Uuid.String())
+			err := post.FindByUserAndUUID(c, test.user, test.post.UUID.String())
 
 			if test.wantErr != "" {
 				ms.Error(err)
@@ -1352,10 +1352,10 @@ func (ms *ModelSuite) TestPost_FindByUserAndUUID() {
 func (ms *ModelSuite) TestPost_GetSetDestination() {
 	t := ms.T()
 
-	user := User{Uuid: domain.GetUuid(), Email: t.Name() + "_user@example.com", Nickname: t.Name() + "_User"}
+	user := User{UUID: domain.GetUUID(), Email: t.Name() + "_user@example.com", Nickname: t.Name() + "_User"}
 	createFixture(ms, &user)
 
-	organization := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	organization := Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
 	createFixture(ms, &organization)
 
 	locations := Locations{
@@ -1393,10 +1393,10 @@ func (ms *ModelSuite) TestPost_GetSetDestination() {
 func (ms *ModelSuite) TestPost_GetSetOrigin() {
 	t := ms.T()
 
-	user := User{Uuid: domain.GetUuid(), Email: t.Name() + "_user@example.com", Nickname: t.Name() + "_User"}
+	user := User{UUID: domain.GetUUID(), Email: t.Name() + "_user@example.com", Nickname: t.Name() + "_User"}
 	createFixture(ms, &user)
 
-	organization := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	organization := Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
 	createFixture(ms, &organization)
 
 	location := Location{}

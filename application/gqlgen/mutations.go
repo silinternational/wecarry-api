@@ -14,7 +14,7 @@ type mutationResolver struct{ *Resolver }
 func (r *mutationResolver) CreateOrganization(ctx context.Context, input CreateOrganizationInput) (*models.Organization, error) {
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 	extras := map[string]interface{}{
-		"user": cUser.Uuid,
+		"user": cUser.UUID,
 	}
 	if !cUser.CanCreateOrganization() {
 		extras["user.admin_role"] = cUser.AdminRole
@@ -40,7 +40,7 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input CreateO
 func (r *mutationResolver) UpdateOrganization(ctx context.Context, input UpdateOrganizationInput) (*models.Organization, error) {
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 	extras := map[string]interface{}{
-		"user": cUser.Uuid,
+		"user": cUser.UUID,
 	}
 
 	var org models.Organization
@@ -71,7 +71,7 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, input UpdateO
 func (r *mutationResolver) CreateOrganizationDomain(ctx context.Context, input CreateOrganizationDomainInput) ([]models.OrganizationDomain, error) {
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 	extras := map[string]interface{}{
-		"user": cUser.Uuid,
+		"user": cUser.UUID,
 	}
 
 	var org models.Organization
@@ -101,7 +101,7 @@ func (r *mutationResolver) CreateOrganizationDomain(ctx context.Context, input C
 func (r *mutationResolver) RemoveOrganizationDomain(ctx context.Context, input RemoveOrganizationDomainInput) ([]models.OrganizationDomain, error) {
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 	extras := map[string]interface{}{
-		"user": cUser.Uuid,
+		"user": cUser.UUID,
 	}
 
 	var org models.Organization
@@ -131,7 +131,7 @@ func (r *mutationResolver) RemoveOrganizationDomain(ctx context.Context, input R
 func (r *mutationResolver) SetThreadLastViewedAt(ctx context.Context, input SetThreadLastViewedAtInput) (*models.Thread, error) {
 	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
 	extras := map[string]interface{}{
-		"user": cUser.Uuid,
+		"user": cUser.UUID,
 	}
 
 	var thread models.Thread

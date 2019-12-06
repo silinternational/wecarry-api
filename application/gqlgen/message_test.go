@@ -22,7 +22,7 @@ func (gs *GqlgenSuite) TestMessageQuery() {
 	f := createFixtures_MessageQuery(gs)
 	c := getGqlClient()
 
-	query := `{ message(id: "` + f.Messages[0].Uuid.String() + `")
+	query := `{ message(id: "` + f.Messages[0].UUID.String() + `")
 		{ id content sender { nickname } thread {id participants {nickname}}}}`
 
 	var resp messageResponse
@@ -38,10 +38,10 @@ func (gs *GqlgenSuite) TestMessageQuery() {
 	gs.NoError(err)
 	gs.Equal(2, len(participants), "incorrect number of thread participants")
 
-	gs.Equal(f.Messages[0].Uuid.String(), resp.Message.ID)
+	gs.Equal(f.Messages[0].UUID.String(), resp.Message.ID)
 	gs.Equal(f.Messages[0].Content, resp.Message.Content)
 	gs.Equal(f.Users[1].Nickname, resp.Message.Sender.Nickname)
-	gs.Equal(thread.Uuid.String(), resp.Message.Thread.ID)
+	gs.Equal(thread.UUID.String(), resp.Message.Thread.ID)
 	gs.Equal(participants[0].Nickname, resp.Message.Thread.Participants[0].Nickname)
 	gs.Equal(participants[1].Nickname, resp.Message.Thread.Participants[1].Nickname)
 }
@@ -52,8 +52,8 @@ func (gs *GqlgenSuite) TestCreateMessage() {
 
 	newContent := "New Message Created"
 
-	input := `postID: "` + f.Posts[0].Uuid.String() + `" ` +
-		`threadID: "` + f.Threads[0].Uuid.String() + `" content: "` + newContent + `" `
+	input := `postID: "` + f.Posts[0].UUID.String() + `" ` +
+		`threadID: "` + f.Threads[0].UUID.String() + `" content: "` + newContent + `" `
 	query := `mutation { message: createMessage (input: {` + input +
 		`}) { id content thread {id}}}`
 
@@ -71,5 +71,5 @@ func (gs *GqlgenSuite) TestCreateMessage() {
 	gs.Equal(3, len(messages), "incorrect number of thread messages")
 
 	gs.Equal(newContent, resp.Message.Content)
-	gs.Equal(thread.Uuid.String(), resp.Message.Thread.ID)
+	gs.Equal(thread.UUID.String(), resp.Message.Thread.ID)
 }

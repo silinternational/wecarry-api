@@ -45,11 +45,11 @@ func NewThreadMessageHandler(args worker.Args) error {
 		Data: map[string]interface{}{
 			"appName":        domain.Env.AppName,
 			"uiURL":          domain.Env.UIURL,
-			"postURL":        domain.GetPostUIURL(m.Thread.Post.Uuid.String()),
+			"postURL":        domain.GetPostUIURL(m.Thread.Post.UUID.String()),
 			"postTitle":      m.Thread.Post.Title,
 			"messageContent": m.Content,
 			"sentByNickname": m.SentBy.Nickname,
-			"threadURL":      domain.GetThreadUIURL(m.Thread.Uuid.String()),
+			"threadURL":      domain.GetThreadUIURL(m.Thread.UUID.String()),
 		},
 		FromEmail: domain.Env.EmailFromAddress,
 	}

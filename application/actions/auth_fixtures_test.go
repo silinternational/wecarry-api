@@ -22,7 +22,7 @@ func Fixtures_GetOrgAndUserOrgs(as *ActionSuite, t *testing.T) UserOrgFixtures {
 		Url:        nulls.String{},
 		AuthType:   models.AuthTypeSaml,
 		AuthConfig: "{}",
-		Uuid:       domain.GetUuid(),
+		UUID:       domain.GetUUID(),
 	}
 	err := as.DB.Create(org)
 	if err != nil {
@@ -47,7 +47,7 @@ func Fixtures_GetOrgAndUserOrgs(as *ActionSuite, t *testing.T) UserOrgFixtures {
 			FirstName: "First",
 			LastName:  "User",
 			Nickname:  "User1",
-			Uuid:      domain.GetUuid(),
+			UUID:      domain.GetUUID(),
 			AdminRole: models.UserAdminRoleSuperAdmin,
 		},
 		{
@@ -55,7 +55,7 @@ func Fixtures_GetOrgAndUserOrgs(as *ActionSuite, t *testing.T) UserOrgFixtures {
 			FirstName: "Second",
 			LastName:  "User",
 			Nickname:  "User2",
-			Uuid:      domain.GetUuid(),
+			UUID:      domain.GetUUID(),
 		},
 	}
 
@@ -102,7 +102,7 @@ func Fixtures_CreateAuthUser(as *ActionSuite, t *testing.T) UserOrgFixtures {
 		Url:        nulls.String{},
 		AuthType:   models.AuthTypeSaml,
 		AuthConfig: "{}",
-		Uuid:       domain.GetUuid(),
+		UUID:       domain.GetUUID(),
 	}
 	err := as.DB.Create(org)
 	if err != nil {
@@ -127,7 +127,7 @@ func Fixtures_CreateAuthUser(as *ActionSuite, t *testing.T) UserOrgFixtures {
 			FirstName: "First",
 			LastName:  "User",
 			Nickname:  "User1",
-			Uuid:      domain.GetUuid(),
+			UUID:      domain.GetUUID(),
 			AdminRole: models.UserAdminRoleSuperAdmin,
 		},
 		{
@@ -135,7 +135,7 @@ func Fixtures_CreateAuthUser(as *ActionSuite, t *testing.T) UserOrgFixtures {
 			FirstName: "Second",
 			LastName:  "User",
 			Nickname:  "User2",
-			Uuid:      domain.GetUuid(),
+			UUID:      domain.GetUUID(),
 		},
 	}
 

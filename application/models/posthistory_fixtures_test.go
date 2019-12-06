@@ -16,13 +16,13 @@ type PostHistoryFixtures struct {
 }
 
 func createFixturesForTestPostHistory_Load(ms *ModelSuite) PostHistoryFixtures {
-	org := Organization{AuthConfig: "{}", Uuid: domain.GetUuid()}
+	org := Organization{AuthConfig: "{}", UUID: domain.GetUUID()}
 	createFixture(ms, &org)
 
-	unique := org.Uuid.String()
+	unique := org.UUID.String()
 	users := Users{
-		{Email: unique + "_user0@example.com", Nickname: unique + "User0", Uuid: domain.GetUuid()},
-		{Email: unique + "_user1@example.com", Nickname: unique + "User1", Uuid: domain.GetUuid()},
+		{Email: unique + "_user0@example.com", Nickname: unique + "User0", UUID: domain.GetUUID()},
+		{Email: unique + "_user1@example.com", Nickname: unique + "User1", UUID: domain.GetUUID()},
 	}
 	for i := range users {
 		createFixture(ms, &users[i])
@@ -37,7 +37,7 @@ func createFixturesForTestPostHistory_Load(ms *ModelSuite) PostHistoryFixtures {
 		locations[i].Description = "location " + strconv.Itoa(i)
 		createFixture(ms, &locations[i])
 
-		posts[i].Uuid = domain.GetUuid()
+		posts[i].UUID = domain.GetUUID()
 		posts[i].Status = PostStatusOpen
 		posts[i].Type = "type"
 		posts[i].Size = PostSizeTiny
@@ -63,13 +63,13 @@ func createFixturesForTestPostHistory_Load(ms *ModelSuite) PostHistoryFixtures {
 }
 
 func createFixturesForTestPostHistory_pop(ms *ModelSuite) PostFixtures {
-	org := Organization{AuthConfig: "{}", Uuid: domain.GetUuid()}
+	org := Organization{AuthConfig: "{}", UUID: domain.GetUUID()}
 	createFixture(ms, &org)
 
-	unique := org.Uuid.String()
+	unique := org.UUID.String()
 	users := Users{
-		{Email: unique + "_user0@example.com", Nickname: unique + "User0", Uuid: domain.GetUuid()},
-		{Email: unique + "_user1@example.com", Nickname: unique + "User1", Uuid: domain.GetUuid()},
+		{Email: unique + "_user0@example.com", Nickname: unique + "User0", UUID: domain.GetUUID()},
+		{Email: unique + "_user1@example.com", Nickname: unique + "User1", UUID: domain.GetUUID()},
 	}
 	for i := range users {
 		createFixture(ms, &users[i])
@@ -84,7 +84,7 @@ func createFixturesForTestPostHistory_pop(ms *ModelSuite) PostFixtures {
 		locations[i].Description = "location " + strconv.Itoa(i)
 		createFixture(ms, &locations[i])
 
-		posts[i].Uuid = domain.GetUuid()
+		posts[i].UUID = domain.GetUUID()
 		posts[i].Status = PostStatusAccepted
 		posts[i].Type = "type"
 		posts[i].Size = PostSizeTiny
@@ -127,13 +127,13 @@ func createFixturesForTestPostHistory_pop(ms *ModelSuite) PostFixtures {
 }
 
 func createFixturesForTestPostHistory_createForPost(ms *ModelSuite) PostFixtures {
-	org := Organization{AuthConfig: "{}", Uuid: domain.GetUuid()}
+	org := Organization{AuthConfig: "{}", UUID: domain.GetUUID()}
 	createFixture(ms, &org)
 
-	unique := org.Uuid.String()
+	unique := org.UUID.String()
 	users := Users{
-		{Email: unique + "_user0@example.com", Nickname: unique + "User0", Uuid: domain.GetUuid()},
-		{Email: unique + "_user1@example.com", Nickname: unique + "User1", Uuid: domain.GetUuid()},
+		{Email: unique + "_user0@example.com", Nickname: unique + "User0", UUID: domain.GetUUID()},
+		{Email: unique + "_user1@example.com", Nickname: unique + "User1", UUID: domain.GetUUID()},
 	}
 	for i := range users {
 		createFixture(ms, &users[i])
@@ -148,7 +148,7 @@ func createFixturesForTestPostHistory_createForPost(ms *ModelSuite) PostFixtures
 		locations[i].Description = "location " + strconv.Itoa(i)
 		createFixture(ms, &locations[i])
 
-		posts[i].Uuid = domain.GetUuid()
+		posts[i].UUID = domain.GetUUID()
 		posts[i].Status = PostStatusOpen
 		posts[i].Type = "type"
 		posts[i].Size = PostSizeTiny

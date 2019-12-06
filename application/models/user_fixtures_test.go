@@ -21,19 +21,19 @@ type UserMessageFixtures struct {
 
 func CreateUserFixtures(ms *ModelSuite, t *testing.T) ([]Organization, Users, UserOrganizations) {
 
-	unique := domain.GetUuid().String()
+	unique := domain.GetUUID().String()
 
 	// Load Organization test fixtures
 	orgs := []Organization{
 		{
 			Name:       fmt.Sprintf("Starfleet Academy-%s", unique),
-			Uuid:       domain.GetUuid(),
+			UUID:       domain.GetUUID(),
 			AuthType:   AuthTypeSaml,
 			AuthConfig: "{}",
 		},
 		{
 			Name:       fmt.Sprintf("ACME-%s", unique),
-			Uuid:       domain.GetUuid(),
+			UUID:       domain.GetUUID(),
 			AuthType:   AuthTypeSaml,
 			AuthConfig: "{}",
 		},
@@ -50,21 +50,21 @@ func CreateUserFixtures(ms *ModelSuite, t *testing.T) ([]Organization, Users, Us
 			FirstName: "Existing",
 			LastName:  "User",
 			Nickname:  fmt.Sprintf("Existing User %s", unique),
-			Uuid:      domain.GetUuid(),
+			UUID:      domain.GetUUID(),
 		},
 		{
 			Email:     fmt.Sprintf("user2-%s@example.com", unique),
 			FirstName: "Another",
 			LastName:  "User",
 			Nickname:  fmt.Sprintf("Another User %s", unique),
-			Uuid:      domain.GetUuid(),
+			UUID:      domain.GetUUID(),
 		},
 		{
 			Email:     fmt.Sprintf("not_participating-%s@example.com", unique),
 			FirstName: "Not",
 			LastName:  "Participating",
 			Nickname:  fmt.Sprintf("Not Participating %s", unique),
-			Uuid:      domain.GetUuid(),
+			UUID:      domain.GetUUID(),
 		},
 	}
 
@@ -95,10 +95,10 @@ func CreateUserFixtures(ms *ModelSuite, t *testing.T) ([]Organization, Users, Us
 }
 
 func CreateUserFixtures_CanEditAllPosts(ms *ModelSuite) UserFixtures {
-	org := Organization{AuthConfig: "{}", Uuid: domain.GetUuid()}
+	org := Organization{AuthConfig: "{}", UUID: domain.GetUUID()}
 	createFixture(ms, &org)
 
-	unique := org.Uuid.String()
+	unique := org.UUID.String()
 	users := Users{
 		{AdminRole: UserAdminRoleSuperAdmin},
 		{AdminRole: UserAdminRoleSalesAdmin},
@@ -110,7 +110,7 @@ func CreateUserFixtures_CanEditAllPosts(ms *ModelSuite) UserFixtures {
 	for i := range users {
 		users[i].Email = "user" + strconv.Itoa(i) + unique + "example.com"
 		users[i].Nickname = users[i].Email
-		users[i].Uuid = domain.GetUuid()
+		users[i].UUID = domain.GetUUID()
 
 		createFixture(ms, &users[i])
 	}
@@ -138,13 +138,13 @@ func CreateUserFixtures_CanEditAllPosts(ms *ModelSuite) UserFixtures {
 }
 
 func createFixturesForUserFind(ms *ModelSuite) UserFixtures {
-	org := &Organization{AuthConfig: "{}", Uuid: domain.GetUuid()}
+	org := &Organization{AuthConfig: "{}", UUID: domain.GetUUID()}
 	createFixture(ms, org)
 
-	unique := domain.GetUuid().String()
+	unique := domain.GetUUID().String()
 	users := Users{
-		{Email: unique + "user1@example.com", Nickname: unique + "User1", Uuid: domain.GetUuid()},
-		{Email: unique + "user2@example.com", Nickname: unique + "User2", Uuid: domain.GetUuid()},
+		{Email: unique + "user1@example.com", Nickname: unique + "User1", UUID: domain.GetUUID()},
+		{Email: unique + "user2@example.com", Nickname: unique + "User2", UUID: domain.GetUUID()},
 	}
 	for i := range users {
 		createFixture(ms, &users[i])
@@ -156,13 +156,13 @@ func createFixturesForUserFind(ms *ModelSuite) UserFixtures {
 }
 
 func CreateFixturesForUserGetPosts(ms *ModelSuite) UserFixtures {
-	org := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	org := Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
 	createFixture(ms, &org)
 
-	unique := org.Uuid.String()
+	unique := org.UUID.String()
 	users := Users{
-		{Email: unique + "user0@example.com", Nickname: unique + "User 0", Uuid: domain.GetUuid()},
-		{Email: unique + "user1@example.com", Nickname: unique + "User 1", Uuid: domain.GetUuid()},
+		{Email: unique + "user0@example.com", Nickname: unique + "User 0", UUID: domain.GetUUID()},
+		{Email: unique + "user1@example.com", Nickname: unique + "User 1", UUID: domain.GetUUID()},
 	}
 	for i := range users {
 		createFixture(ms, &users[i])
@@ -183,7 +183,7 @@ func CreateFixturesForUserGetPosts(ms *ModelSuite) UserFixtures {
 	for i := range posts {
 		posts[i].CreatedByID = users[0].ID
 		posts[i].OrganizationID = org.ID
-		posts[i].Uuid = domain.GetUuid()
+		posts[i].UUID = domain.GetUUID()
 		posts[i].DestinationID = locations[i].ID
 		createFixture(ms, &posts[i])
 	}
@@ -210,7 +210,7 @@ func createFixturesForTestUserGetPhoto(ms *ModelSuite) UserFixtures {
 	err := photoFixture.Store(filename, []byte("GIF89a"))
 	ms.NoError(err, "failed to create file fixture")
 
-	unique := domain.GetUuid()
+	unique := domain.GetUUID()
 	users := Users{
 		{},
 		{AuthPhotoURL: nulls.NewString("http://www.example.com")},
@@ -218,7 +218,7 @@ func createFixturesForTestUserGetPhoto(ms *ModelSuite) UserFixtures {
 		{AuthPhotoURL: nulls.NewString("http://www.example.com"), PhotoFileID: nulls.NewInt(fileFixtures[1].ID)},
 	}
 	for i := range users {
-		users[i].Uuid = domain.GetUuid()
+		users[i].UUID = domain.GetUUID()
 		users[i].Email = fmt.Sprintf("%s_user%d@example.com", unique, i)
 		users[i].Nickname = fmt.Sprintf("%s_User%d", unique, i)
 		createFixture(ms, &users[i])
@@ -233,7 +233,7 @@ func createFixturesForTestUserGetPhoto(ms *ModelSuite) UserFixtures {
 }
 
 func createFixturesForTestUserSave(ms *ModelSuite) UserFixtures {
-	unique := domain.GetUuid()
+	unique := domain.GetUUID()
 	users := make(Users, 5)
 	for i := range users {
 		users[i] = User{
@@ -243,7 +243,7 @@ func createFixturesForTestUserSave(ms *ModelSuite) UserFixtures {
 			LastName:  fmt.Sprintf("Last"),
 		}
 	}
-	users[2].Uuid = domain.GetUuid()
+	users[2].UUID = domain.GetUUID()
 	createFixture(ms, &users[3])
 	users[3].FirstName = "New"
 	users[4].FirstName = ""
@@ -262,7 +262,7 @@ func CreateUserFixturesForNicknames(ms *ModelSuite, t *testing.T) User {
 		FirstName: "Existing",
 		LastName:  "User",
 		Nickname:  prefix + "ExistingU",
-		Uuid:      domain.GetUuid(),
+		UUID:      domain.GetUUID(),
 	}
 
 	if err := ms.DB.Create(&user); err != nil {
@@ -275,12 +275,12 @@ func CreateUserFixturesForNicknames(ms *ModelSuite, t *testing.T) User {
 
 func CreateUserFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) UserMessageFixtures {
 
-	unique := domain.GetUuid().String()
+	unique := domain.GetUUID().String()
 
 	// Load Organization test fixtures
 	org := Organization{
 		Name:       fmt.Sprintf("ACME-%s", unique),
-		Uuid:       domain.GetUuid(),
+		UUID:       domain.GetUUID(),
 		AuthType:   AuthTypeSaml,
 		AuthConfig: "{}",
 	}
@@ -294,14 +294,14 @@ func CreateUserFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) UserMes
 			FirstName: "Eager",
 			LastName:  "User",
 			Nickname:  fmt.Sprintf("Eager User %s", unique),
-			Uuid:      domain.GetUuid(),
+			UUID:      domain.GetUUID(),
 		},
 		{
 			Email:     fmt.Sprintf("user2-%s@example.com", unique),
 			FirstName: "Lazy",
 			LastName:  "User",
 			Nickname:  fmt.Sprintf("Lazy User %s", unique),
-			Uuid:      domain.GetUuid(),
+			UUID:      domain.GetUUID(),
 		},
 	}
 
@@ -342,7 +342,7 @@ func CreateUserFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) UserMes
 			Title:          "Open Request 0",
 			Size:           PostSizeMedium,
 			Status:         PostStatusOpen,
-			Uuid:           domain.GetUuid(),
+			UUID:           domain.GetUUID(),
 			ProviderID:     nulls.NewInt(users[1].ID),
 			DestinationID:  locations[0].ID,
 		},
@@ -353,7 +353,7 @@ func CreateUserFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) UserMes
 			Title:          "Committed Request 1",
 			Size:           PostSizeMedium,
 			Status:         PostStatusOpen,
-			Uuid:           domain.GetUuid(),
+			UUID:           domain.GetUUID(),
 			ProviderID:     nulls.NewInt(users[0].ID),
 			DestinationID:  locations[1].ID,
 		},
@@ -365,11 +365,11 @@ func CreateUserFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) UserMes
 
 	threads := []Thread{
 		{
-			Uuid:   domain.GetUuid(),
+			UUID:   domain.GetUUID(),
 			PostID: posts[0].ID,
 		},
 		{
-			Uuid:   domain.GetUuid(),
+			UUID:   domain.GetUUID(),
 			PostID: posts[1].ID,
 		},
 	}
@@ -413,42 +413,42 @@ func CreateUserFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) UserMes
 	// I can't seem to give them custom times
 	messages := Messages{
 		{
-			Uuid:      domain.GetUuid(),
+			UUID:      domain.GetUUID(),
 			ThreadID:  threads[0].ID,        // user 0's post
 			SentByID:  posts[0].CreatedByID, // user 0 (Eager)
 			Content:   "I can being chocolate if you bring PB",
 			CreatedAt: oldOldTime,
 		},
 		{
-			Uuid:      domain.GetUuid(),
+			UUID:      domain.GetUUID(),
 			ThreadID:  threads[0].ID,           // user 0's post
 			SentByID:  posts[0].ProviderID.Int, // user 1 (Lazy)
 			Content:   "Great",
 			CreatedAt: oldTime,
 		},
 		{
-			Uuid:      domain.GetUuid(),
+			UUID:      domain.GetUUID(),
 			ThreadID:  threads[0].ID,        // user 0's post
 			SentByID:  posts[0].CreatedByID, // user 0 (Eager)
 			Content:   "Can you get it here by next week?",
 			CreatedAt: tNow, // Lazy User doesn't see this one
 		},
 		{
-			Uuid:      domain.GetUuid(),
+			UUID:      domain.GetUUID(),
 			ThreadID:  threads[1].ID,        // user 1's post
 			SentByID:  posts[1].CreatedByID, // user 1 (Lazy)
 			Content:   "I can being PB if you bring chocolate",
 			CreatedAt: oldTime,
 		},
 		{
-			Uuid:      domain.GetUuid(),
+			UUID:      domain.GetUUID(),
 			ThreadID:  threads[1].ID,           // user 1's post
 			SentByID:  posts[1].ProviderID.Int, // user 0 (Eager)
 			Content:   "Did you see my other message?",
 			CreatedAt: tNow, // Lazy User doesn't see this one
 		},
 		{
-			Uuid:      domain.GetUuid(),
+			UUID:      domain.GetUUID(),
 			ThreadID:  threads[1].ID,           // user 1's post
 			SentByID:  posts[1].ProviderID.Int, // user 0 (Eager)
 			Content:   "Anyone Home?",
@@ -459,7 +459,7 @@ func CreateUserFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) UserMes
 	for _, m := range messages {
 		if err := ms.DB.RawQuery(`INSERT INTO messages (content, created_at, sent_by_id, thread_id, updated_at, uuid)`+
 			`VALUES (?, ?, ?, ?, ?, ?)`,
-			m.Content, m.CreatedAt, m.SentByID, m.ThreadID, m.CreatedAt, m.Uuid).Exec(); err != nil {
+			m.Content, m.CreatedAt, m.SentByID, m.ThreadID, m.CreatedAt, m.UUID).Exec(); err != nil {
 			t.Errorf("error loading messages ... %v", err)
 			t.FailNow()
 		}
@@ -481,14 +481,14 @@ type UserFixtures struct {
 }
 
 func CreateUserFixtures_GetThreads(ms *ModelSuite) UserFixtures {
-	unique := domain.GetUuid().String()
+	unique := domain.GetUUID().String()
 
-	org := Organization{Uuid: domain.GetUuid(), AuthConfig: "{}"}
+	org := Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
 	createFixture(ms, &org)
 
 	users := Users{
-		{Email: unique + "_user0@example.com", Nickname: unique + "_user0", Uuid: domain.GetUuid()},
-		{Email: unique + "_user1@example.com", Nickname: unique + "_user1", Uuid: domain.GetUuid()},
+		{Email: unique + "_user0@example.com", Nickname: unique + "_user0", UUID: domain.GetUUID()},
+		{Email: unique + "_user1@example.com", Nickname: unique + "_user1", UUID: domain.GetUUID()},
 	}
 	for i := range users {
 		createFixture(ms, &users[i])
@@ -498,15 +498,15 @@ func CreateUserFixtures_GetThreads(ms *ModelSuite) UserFixtures {
 	createFixture(ms, &location)
 
 	posts := Posts{
-		{Uuid: domain.GetUuid(), CreatedByID: users[0].ID, OrganizationID: org.ID, DestinationID: location.ID},
+		{UUID: domain.GetUUID(), CreatedByID: users[0].ID, OrganizationID: org.ID, DestinationID: location.ID},
 	}
 	for i := range posts {
 		createFixture(ms, &posts[i])
 	}
 
 	threads := []Thread{
-		{Uuid: domain.GetUuid(), PostID: posts[0].ID},
-		{Uuid: domain.GetUuid(), PostID: posts[0].ID},
+		{UUID: domain.GetUUID(), PostID: posts[0].ID},
+		{UUID: domain.GetUUID(), PostID: posts[0].ID},
 	}
 	for i := range threads {
 		createFixture(ms, &threads[i])
@@ -527,11 +527,11 @@ func CreateUserFixtures_GetThreads(ms *ModelSuite) UserFixtures {
 }
 
 func CreateFixturesForUserWantsPostNotification(ms *ModelSuite) UserFixtures {
-	org := Organization{AuthConfig: "{}", Uuid: domain.GetUuid()}
+	org := Organization{AuthConfig: "{}", UUID: domain.GetUUID()}
 	createFixture(ms, &org)
 
 	nicknames := []string{"alice", "bob"}
-	unique := org.Uuid.String()
+	unique := org.UUID.String()
 	users := make(Users, len(nicknames))
 	userLocations := make(Locations, len(users))
 	userOrgFixtures := make(UserOrganizations, len(users))
@@ -542,7 +542,7 @@ func CreateFixturesForUserWantsPostNotification(ms *ModelSuite) UserFixtures {
 		users[i] = User{
 			Email:      "user" + strconv.Itoa(i) + unique + "@example.com",
 			Nickname:   nicknames[i] + unique,
-			Uuid:       domain.GetUuid(),
+			UUID:       domain.GetUUID(),
 			LocationID: nulls.NewInt(userLocations[i].ID),
 		}
 		createFixture(ms, &users[i])
@@ -613,7 +613,7 @@ func CreateFixturesForUserWantsPostNotification(ms *ModelSuite) UserFixtures {
 		},
 	}
 	for i := range posts {
-		posts[i].Uuid = domain.GetUuid()
+		posts[i].UUID = domain.GetUUID()
 		posts[i].CreatedByID = users[0].ID
 		posts[i].OrganizationID = org.ID
 		posts[i].DestinationID = postLocations[i].ID
@@ -628,13 +628,13 @@ func CreateFixturesForUserWantsPostNotification(ms *ModelSuite) UserFixtures {
 
 func CreateUserFixtures_TestGetPreference(ms *ModelSuite) UserFixtures {
 	nicknames := []string{"alice", "bob"}
-	unique := domain.GetUuid().String()
+	unique := domain.GetUUID().String()
 	users := make(Users, len(nicknames))
 	for i := range users {
 		users[i] = User{
 			Email:    "user" + strconv.Itoa(i) + unique + "@example.com",
 			Nickname: nicknames[i] + unique,
-			Uuid:     domain.GetUuid(),
+			UUID:     domain.GetUUID(),
 		}
 
 		createFixture(ms, &users[i])
@@ -643,13 +643,13 @@ func CreateUserFixtures_TestGetPreference(ms *ModelSuite) UserFixtures {
 	// Load UserPreferences test fixtures
 	userPreferences := UserPreferences{
 		{
-			Uuid:   domain.GetUuid(),
+			UUID:   domain.GetUUID(),
 			UserID: users[0].ID,
 			Key:    domain.UserPreferenceKeyLanguage,
 			Value:  domain.UserPreferenceLanguageEnglish,
 		},
 		{
-			Uuid:   domain.GetUuid(),
+			UUID:   domain.GetUUID(),
 			UserID: users[0].ID,
 			Key:    domain.UserPreferenceKeyWeightUnit,
 			Value:  domain.UserPreferenceWeightUnitKGs,

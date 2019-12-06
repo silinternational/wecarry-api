@@ -21,15 +21,15 @@ func CreateThreadFixtures(ms *ModelSuite, post Post) ThreadFixtures {
 	// Load Thread test fixtures
 	threads := []Thread{
 		{
-			Uuid:   domain.GetUuid(),
+			UUID:   domain.GetUUID(),
 			PostID: post.ID,
 		},
 		{
-			Uuid:   domain.GetUuid(),
+			UUID:   domain.GetUUID(),
 			PostID: post.ID,
 		},
 		{
-			Uuid:   domain.GetUuid(),
+			UUID:   domain.GetUUID(),
 			PostID: post.ID,
 		},
 	}
@@ -60,19 +60,19 @@ func CreateThreadFixtures(ms *ModelSuite, post Post) ThreadFixtures {
 	// Load Message test fixtures
 	messages := Messages{
 		{
-			Uuid:     domain.GetUuid(),
+			UUID:     domain.GetUUID(),
 			ThreadID: threads[0].ID,
 			SentByID: post.CreatedByID,
 			Content:  "I can being chocolate if you bring PB",
 		},
 		{
-			Uuid:     domain.GetUuid(),
+			UUID:     domain.GetUUID(),
 			ThreadID: threads[1].ID,
 			SentByID: post.ProviderID.Int,
 			Content:  "I can being PB if you bring chocolate",
 		},
 		{
-			Uuid:     domain.GetUuid(),
+			UUID:     domain.GetUUID(),
 			ThreadID: threads[1].ID,
 			SentByID: post.CreatedByID,
 			Content:  "Great!",
@@ -88,12 +88,12 @@ func CreateThreadFixtures(ms *ModelSuite, post Post) ThreadFixtures {
 
 func CreateThreadFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) ThreadFixtures {
 
-	unique := domain.GetUuid().String()
+	unique := domain.GetUUID().String()
 
 	// Load Organization test fixtures
 	org := Organization{
 		Name:       fmt.Sprintf("ACME-%s", unique),
-		Uuid:       domain.GetUuid(),
+		UUID:       domain.GetUUID(),
 		AuthType:   AuthTypeSaml,
 		AuthConfig: "{}",
 	}
@@ -107,14 +107,14 @@ func CreateThreadFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) Threa
 			FirstName: "Eager",
 			LastName:  "User",
 			Nickname:  fmt.Sprintf("Eager User %s", unique),
-			Uuid:      domain.GetUuid(),
+			UUID:      domain.GetUUID(),
 		},
 		{
 			Email:     fmt.Sprintf("user2-%s@example.com", unique),
 			FirstName: "Lazy",
 			LastName:  "User",
 			Nickname:  fmt.Sprintf("Lazy User %s", unique),
-			Uuid:      domain.GetUuid(),
+			UUID:      domain.GetUUID(),
 		},
 	}
 	for i := range users {
@@ -154,7 +154,7 @@ func CreateThreadFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) Threa
 			Title:          "Open Request 0",
 			Size:           PostSizeMedium,
 			Status:         PostStatusOpen,
-			Uuid:           domain.GetUuid(),
+			UUID:           domain.GetUUID(),
 			ProviderID:     nulls.NewInt(users[1].ID),
 			DestinationID:  locations[0].ID,
 		},
@@ -165,7 +165,7 @@ func CreateThreadFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) Threa
 			Title:          "Committed Request 1",
 			Size:           PostSizeMedium,
 			Status:         PostStatusOpen,
-			Uuid:           domain.GetUuid(),
+			UUID:           domain.GetUUID(),
 			ProviderID:     nulls.NewInt(users[0].ID),
 			DestinationID:  locations[1].ID,
 		},
@@ -177,11 +177,11 @@ func CreateThreadFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) Threa
 
 	threads := []Thread{
 		{
-			Uuid:   domain.GetUuid(),
+			UUID:   domain.GetUUID(),
 			PostID: posts[0].ID,
 		},
 		{
-			Uuid:   domain.GetUuid(),
+			UUID:   domain.GetUUID(),
 			PostID: posts[1].ID,
 		},
 	}
@@ -225,42 +225,42 @@ func CreateThreadFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) Threa
 	// I can't seem to give them custom times
 	messages := Messages{
 		{
-			Uuid:      domain.GetUuid(),
+			UUID:      domain.GetUUID(),
 			ThreadID:  threads[0].ID,        // user 0's post
 			SentByID:  posts[0].CreatedByID, // user 0 (Eager)
 			Content:   "I can being chocolate if you bring PB",
 			CreatedAt: oldOldTime,
 		},
 		{
-			Uuid:      domain.GetUuid(),
+			UUID:      domain.GetUUID(),
 			ThreadID:  threads[0].ID,           // user 0's post
 			SentByID:  posts[0].ProviderID.Int, // user 1 (Lazy)
 			Content:   "Great",
 			CreatedAt: oldTime,
 		},
 		{
-			Uuid:      domain.GetUuid(),
+			UUID:      domain.GetUUID(),
 			ThreadID:  threads[0].ID,        // user 0's post
 			SentByID:  posts[0].CreatedByID, // user 0 (Eager)
 			Content:   "Can you get it here by next week?",
 			CreatedAt: tNow, // Lazy User doesn't see this one
 		},
 		{
-			Uuid:      domain.GetUuid(),
+			UUID:      domain.GetUUID(),
 			ThreadID:  threads[1].ID,        // user 1's post
 			SentByID:  posts[1].CreatedByID, // user 1 (Lazy)
 			Content:   "I can being PB if you bring chocolate",
 			CreatedAt: oldTime,
 		},
 		{
-			Uuid:      domain.GetUuid(),
+			UUID:      domain.GetUUID(),
 			ThreadID:  threads[1].ID,           // user 1's post
 			SentByID:  posts[1].ProviderID.Int, // user 0 (Eager)
 			Content:   "Did you see my other message?",
 			CreatedAt: tNow, // Lazy User doesn't see this one
 		},
 		{
-			Uuid:      domain.GetUuid(),
+			UUID:      domain.GetUUID(),
 			ThreadID:  threads[1].ID,           // user 1's post
 			SentByID:  posts[1].ProviderID.Int, // user 0 (Eager)
 			Content:   "Anyone Home?",
@@ -271,7 +271,7 @@ func CreateThreadFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) Threa
 	for _, m := range messages {
 		if err := ms.DB.RawQuery(`INSERT INTO messages (content, created_at, sent_by_id, thread_id, updated_at, uuid)`+
 			`VALUES (?, ?, ?, ?, ?, ?)`,
-			m.Content, m.CreatedAt, m.SentByID, m.ThreadID, m.CreatedAt, m.Uuid).Exec(); err != nil {
+			m.Content, m.CreatedAt, m.SentByID, m.ThreadID, m.CreatedAt, m.UUID).Exec(); err != nil {
 			t.Errorf("error loading messages ... %v", err)
 			t.FailNow()
 		}

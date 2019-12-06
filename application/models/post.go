@@ -197,7 +197,7 @@ type Post struct {
 	Status         PostStatus    `json:"status" db:"status"`
 	Title          string        `json:"title" db:"title"`
 	Size           PostSize      `json:"size" db:"size"`
-	Uuid           uuid.UUID     `json:"uuid" db:"uuid"`
+	UUID           uuid.UUID     `json:"uuid" db:"uuid"`
 	ReceiverID     nulls.Int     `json:"receiver_id" db:"receiver_id"`
 	ProviderID     nulls.Int     `json:"provider_id" db:"provider_id"`
 	Description    nulls.String  `json:"description" db:"description"`
@@ -239,8 +239,8 @@ func (p Posts) String() string {
 
 // Create stores the Post data as a new record in the database.
 func (p *Post) Create() error {
-	if p.Uuid.Version() == 0 {
-		p.Uuid = domain.GetUuid()
+	if p.UUID.Version() == 0 {
+		p.UUID = domain.GetUUID()
 	}
 
 	valErrs, err := DB.ValidateAndCreate(p)
@@ -306,7 +306,7 @@ func (p *Post) Validate(tx *pop.Connection) (*validate.Errors, error) {
 		&validators.IntIsPresent{Field: p.OrganizationID, Name: "OrganizationID"},
 		&validators.StringIsPresent{Field: p.Title, Name: "Title"},
 		&validators.StringIsPresent{Field: p.Size.String(), Name: "Size"},
-		&validators.UUIDIsPresent{Field: p.Uuid, Name: "Uuid"},
+		&validators.UUIDIsPresent{Field: p.UUID, Name: "UUID"},
 		&validators.StringIsPresent{Field: p.Status.String(), Name: "Status"},
 	), nil
 }
@@ -361,7 +361,7 @@ func (v *updateStatusValidator) isOfferValid(errors *validate.Errors) {
 
 func (v *updateStatusValidator) isRequestValid(errors *validate.Errors) {
 	oldPost := Post{}
-	uuid := v.Post.Uuid.String()
+	uuid := v.Post.UUID.String()
 	if err := oldPost.FindByUUID(uuid); err != nil {
 		v.Message = fmt.Sprintf("error finding existing post by UUID %s ... %v", uuid, err)
 		errors.Add(validators.GenerateKey(v.Name), v.Message)
@@ -406,7 +406,7 @@ type PostStatusEventData struct {
 func (p *Post) BeforeUpdate(tx *pop.Connection) error {
 	oldPost := Post{}
 	if err := tx.Find(&oldPost, p.ID); err != nil {
-		domain.ErrLogger.Printf("error finding original post before update - uuid %v ... %v", p.Uuid, err)
+		domain.ErrLogger.Printf("error finding original post before update - uuid %v ... %v", p.UUID, err)
 		return nil
 	}
 
