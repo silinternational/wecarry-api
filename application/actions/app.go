@@ -2,7 +2,6 @@ package actions
 
 import (
 	"github.com/gobuffalo/buffalo"
-	"github.com/gobuffalo/buffalo-pop/pop/popmw"
 	i18n "github.com/gobuffalo/mw-i18n"
 	paramlogger "github.com/gobuffalo/mw-paramlogger"
 	"github.com/gobuffalo/packr/v2"
@@ -10,7 +9,6 @@ import (
 	"github.com/rs/cors"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/listeners"
-	"github.com/silinternational/wecarry-api/models"
 )
 
 var app *buffalo.App
@@ -50,14 +48,8 @@ func App() *buffalo.App {
 		// Log request parameters (filters apply).
 		app.Use(paramlogger.ParameterLogger)
 
-		// Wraps each request in a transaction.
-		//  c.Value("tx").(*pop.Connection)
-		// Remove to disable this.
-		app.Use(popmw.Transaction(models.DB))
-
 		//  Added for authorization
 		app.Use(SetCurrentUser)
-		app.Middleware.Skip(SetCurrentUser, HomeHandler)
 
 		var err error
 		domain.T, err = i18n.New(packr.New("locales", "../locales"), "en")
@@ -66,7 +58,6 @@ func App() *buffalo.App {
 		}
 		app.Use(domain.T.Middleware())
 
-		app.GET("/", HomeHandler)
 		app.POST("/gql/", GQLHandler)
 
 		app.POST("/upload/", UploadHandler)

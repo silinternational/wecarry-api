@@ -21,9 +21,6 @@ import (
 )
 
 const (
-	ErrorLevelWarn              = "warn"
-	ErrorLevelError             = "error"
-	ErrorLevelCritical          = "critical"
 	DateFormat                  = "2006-01-02"
 	MaxFileSize                 = 1 << 21 // 10 Mebibytes
 	AccessTokenLifetimeSeconds  = 3600
