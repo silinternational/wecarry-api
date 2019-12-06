@@ -21,10 +21,11 @@ func createFixturesForTestPostHistory_Load(ms *ModelSuite) PostHistoryFixtures {
 
 	unique := org.UUID.String()
 	users := Users{
-		{Email: unique + "_user0@example.com", Nickname: unique + "User0", UUID: domain.GetUUID()},
-		{Email: unique + "_user1@example.com", Nickname: unique + "User1", UUID: domain.GetUUID()},
+		{Email: unique + "_user0@example.com", Nickname: unique + "User0"},
+		{Email: unique + "_user1@example.com", Nickname: unique + "User1"},
 	}
 	for i := range users {
+		users[i].UUID = domain.GetUUID()
 		createFixture(ms, &users[i])
 	}
 
@@ -68,10 +69,11 @@ func createFixturesForTestPostHistory_pop(ms *ModelSuite) PostFixtures {
 
 	unique := org.UUID.String()
 	users := Users{
-		{Email: unique + "_user0@example.com", Nickname: unique + "User0", UUID: domain.GetUUID()},
-		{Email: unique + "_user1@example.com", Nickname: unique + "User1", UUID: domain.GetUUID()},
+		{Email: unique + "_user0@example.com", Nickname: unique + "User0"},
+		{Email: unique + "_user1@example.com", Nickname: unique + "User1"},
 	}
 	for i := range users {
+		users[i].UUID = domain.GetUUID()
 		createFixture(ms, &users[i])
 	}
 
@@ -132,10 +134,11 @@ func createFixturesForTestPostHistory_createForPost(ms *ModelSuite) PostFixtures
 
 	unique := org.UUID.String()
 	users := Users{
-		{Email: unique + "_user0@example.com", Nickname: unique + "User0", UUID: domain.GetUUID()},
-		{Email: unique + "_user1@example.com", Nickname: unique + "User1", UUID: domain.GetUUID()},
+		{Email: unique + "_user0@example.com", Nickname: unique + "User0"},
+		{Email: unique + "_user1@example.com", Nickname: unique + "User1"},
 	}
 	for i := range users {
+		users[i].UUID = domain.GetUUID()
 		createFixture(ms, &users[i])
 	}
 
