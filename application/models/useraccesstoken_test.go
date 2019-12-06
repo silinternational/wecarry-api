@@ -151,19 +151,17 @@ func CreateUserFixtures_GetOrg(ms *ModelSuite, t *testing.T) ([]Organization, Us
 	// Load Organization test fixtures
 	orgs := []Organization{
 		{
-			Name:       fmt.Sprintf("ACME-%s", unique),
-			UUID:       domain.GetUUID(),
-			AuthType:   AuthTypeSaml,
-			AuthConfig: "{}",
+			Name:     fmt.Sprintf("ACME-%s", unique),
+			AuthType: AuthTypeSaml,
 		},
 		{
-			Name:       fmt.Sprintf("Starfleet Academy-%s", unique),
-			UUID:       domain.GetUUID(),
-			AuthType:   AuthTypeGoogle,
-			AuthConfig: "{}",
+			Name:     fmt.Sprintf("Starfleet Academy-%s", unique),
+			AuthType: AuthTypeGoogle,
 		},
 	}
 	for i := range orgs {
+		orgs[i].AuthConfig = "{}"
+		orgs[i].UUID = domain.GetUUID()
 		if err := ms.DB.Create(&orgs[i]); err != nil {
 			t.Errorf("error creating org %+v ...\n %v \n", orgs[i], err)
 			t.FailNow()
@@ -177,17 +175,16 @@ func CreateUserFixtures_GetOrg(ms *ModelSuite, t *testing.T) ([]Organization, Us
 			FirstName: "Existing",
 			LastName:  "User",
 			Nickname:  fmt.Sprintf("Existing User %s", unique),
-			UUID:      domain.GetUUID(),
 		},
 		{
 			Email:     fmt.Sprintf("user2-%s@example.com", unique),
 			FirstName: "Another",
 			LastName:  "User",
 			Nickname:  fmt.Sprintf("Another User %s", unique),
-			UUID:      domain.GetUUID(),
 		},
 	}
 	for i := range users {
+		users[i].UUID = domain.GetUUID()
 		if err := ms.DB.Create(&users[i]); err != nil {
 			t.Errorf("could not create test user %v ... %v", users[i], err)
 			t.FailNow()
@@ -195,21 +192,12 @@ func CreateUserFixtures_GetOrg(ms *ModelSuite, t *testing.T) ([]Organization, Us
 	}
 
 	// Load UserOrganization test fixtures
-	userOrgs := UserOrganizations{
-		{
-			OrganizationID: orgs[0].ID,
-			UserID:         users[0].ID,
-			AuthID:         users[0].Email,
-			AuthEmail:      users[0].Email,
-		},
-		{
-			OrganizationID: orgs[1].ID,
-			UserID:         users[1].ID,
-			AuthID:         users[1].Email,
-			AuthEmail:      users[1].Email,
-		},
-	}
+	userOrgs := UserOrganizations{{}, {}}
 	for i := range userOrgs {
+		userOrgs[i].OrganizationID = orgs[i].ID
+		userOrgs[i].UserID = users[i].ID
+		userOrgs[i].AuthID = users[i].Email
+		userOrgs[i].AuthEmail = users[i].Email
 		if err := ms.DB.Create(&userOrgs[i]); err != nil {
 			t.Errorf("could not create test user org ... %v. uo = %+v", err, userOrgs[i])
 			t.FailNow()
@@ -298,11 +286,12 @@ func CreateFixtures_GetUser(ms *ModelSuite, t *testing.T) AccessTokenFixtures {
 		createFixture(ms, &users[i])
 	}
 
-	userOrgs := UserOrganizations{
-		{OrganizationID: org.ID, UserID: users[0].ID, AuthID: users[0].Email, AuthEmail: users[0].Email},
-		{OrganizationID: org.ID, UserID: users[1].ID, AuthID: users[1].Email, AuthEmail: users[1].Email},
-	}
+	userOrgs := UserOrganizations{{}, {}}
 	for i := range userOrgs {
+		userOrgs[i].OrganizationID = org.ID
+		userOrgs[i].UserID = users[i].ID
+		userOrgs[i].AuthID = users[i].Email
+		userOrgs[i].AuthEmail = users[i].Email
 		createFixture(ms, &userOrgs[i])
 	}
 
@@ -370,18 +359,20 @@ func CreateFixtures_DeleteIfExpired(ms *ModelSuite, t *testing.T) AccessTokenFix
 	createFixture(ms, &org)
 
 	users := Users{
-		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1", UUID: domain.GetUUID()},
-		{Email: t.Name() + "_user2@example.com", Nickname: t.Name() + " User2", UUID: domain.GetUUID()},
+		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1"},
+		{Email: t.Name() + "_user2@example.com", Nickname: t.Name() + " User2"},
 	}
 	for i := range users {
+		users[i].UUID = domain.GetUUID()
 		createFixture(ms, &users[i])
 	}
 
-	userOrgs := UserOrganizations{
-		{OrganizationID: org.ID, UserID: users[0].ID, AuthID: users[0].Email, AuthEmail: users[0].Email},
-		{OrganizationID: org.ID, UserID: users[1].ID, AuthID: users[1].Email, AuthEmail: users[1].Email},
-	}
+	userOrgs := UserOrganizations{{}, {}}
 	for i := range userOrgs {
+		userOrgs[i].OrganizationID = org.ID
+		userOrgs[i].UserID = users[i].ID
+		userOrgs[i].AuthID = users[i].Email
+		userOrgs[i].AuthEmail = users[i].Email
 		createFixture(ms, &userOrgs[i])
 	}
 
@@ -441,18 +432,20 @@ func CreateFixtures_Renew(ms *ModelSuite, t *testing.T) AccessTokenFixtures {
 	createFixture(ms, &org)
 
 	users := Users{
-		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1", UUID: domain.GetUUID()},
-		{Email: t.Name() + "_user2@example.com", Nickname: t.Name() + " User2", UUID: domain.GetUUID()},
+		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1"},
+		{Email: t.Name() + "_user2@example.com", Nickname: t.Name() + " User2"},
 	}
 	for i := range users {
+		users[i].UUID = domain.GetUUID()
 		createFixture(ms, &users[i])
 	}
 
-	userOrgs := UserOrganizations{
-		{OrganizationID: org.ID, UserID: users[0].ID, AuthID: users[0].Email, AuthEmail: users[0].Email},
-		{OrganizationID: org.ID, UserID: users[1].ID, AuthID: users[1].Email, AuthEmail: users[1].Email},
-	}
+	userOrgs := UserOrganizations{{}, {}}
 	for i := range userOrgs {
+		userOrgs[i].OrganizationID = org.ID
+		userOrgs[i].UserID = users[i].ID
+		userOrgs[i].AuthID = users[i].Email
+		userOrgs[i].AuthEmail = users[i].Email
 		createFixture(ms, &userOrgs[i])
 	}
 
@@ -508,18 +501,20 @@ func createFixtures_UserAccessTokensDeleteExpired(ms *ModelSuite, t *testing.T) 
 	createFixture(ms, &org)
 
 	users := Users{
-		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1", UUID: domain.GetUUID()},
-		{Email: t.Name() + "_user2@example.com", Nickname: t.Name() + " User2", UUID: domain.GetUUID()},
+		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1"},
+		{Email: t.Name() + "_user2@example.com", Nickname: t.Name() + " User2"},
 	}
 	for i := range users {
+		users[i].UUID = domain.GetUUID()
 		createFixture(ms, &users[i])
 	}
 
-	userOrgs := UserOrganizations{
-		{OrganizationID: org.ID, UserID: users[0].ID, AuthID: users[0].Email, AuthEmail: users[0].Email},
-		{OrganizationID: org.ID, UserID: users[1].ID, AuthID: users[1].Email, AuthEmail: users[1].Email},
-	}
+	userOrgs := UserOrganizations{{}, {}}
 	for i := range userOrgs {
+		userOrgs[i].OrganizationID = org.ID
+		userOrgs[i].UserID = users[i].ID
+		userOrgs[i].AuthID = users[i].Email
+		userOrgs[i].AuthEmail = users[i].Email
 		createFixture(ms, &userOrgs[i])
 	}
 
