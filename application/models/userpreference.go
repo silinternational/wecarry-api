@@ -86,7 +86,7 @@ func (p *UserPreference) Save() error {
 
 	validationErrs, err := p.Validate(DB)
 	if validationErrs != nil && validationErrs.HasAny() {
-		return errors.New(FlattenPopErrors(validationErrs))
+		return errors.New(flattenPopErrors(validationErrs))
 	}
 	if err != nil {
 		return err
