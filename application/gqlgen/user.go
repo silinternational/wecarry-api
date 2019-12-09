@@ -9,8 +9,8 @@ import (
 	"github.com/silinternational/wecarry-api/models"
 )
 
-// PostRoleMap is used to convert PostRole gql enum values to values used by models
-var PostRoleMap = map[PostRole]string{
+// postRoleMap is used to convert PostRole gql enum values to values used by models
+var postRoleMap = map[PostRole]string{
 	PostRoleCreatedby: models.PostsCreated,
 	PostRoleReceiving: models.PostsReceiving,
 	PostRoleProviding: models.PostsProviding,
@@ -51,7 +51,7 @@ func (r *userResolver) Posts(ctx context.Context, obj *models.User, role PostRol
 		return nil, nil
 	}
 
-	posts, err := obj.GetPosts(PostRoleMap[role])
+	posts, err := obj.GetPosts(postRoleMap[role])
 	if err != nil {
 		extras := map[string]interface{}{
 			"role": role,
