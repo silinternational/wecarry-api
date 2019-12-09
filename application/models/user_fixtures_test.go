@@ -623,3 +623,44 @@ func CreateUserFixtures_TestGetPreference(ms *ModelSuite) UserFixtures {
 
 	return UserFixtures{Users: users, UserPreferences: userPreferences}
 }
+
+func CreateUserFixtures_TestGetLanguagePreference(ms *ModelSuite) UserFixtures {
+	nicknames := []string{"alice", "bob", "andre"}
+	unique := domain.GetUUID().String()
+	users := make(Users, len(nicknames))
+	for i := range users {
+		users[i] = User{
+			Email:    "user" + strconv.Itoa(i) + unique + "@example.com",
+			Nickname: nicknames[i] + unique,
+			UUID:     domain.GetUUID(),
+		}
+
+		createFixture(ms, &users[i])
+	}
+
+	// Load UserPreferences test fixtures
+	userPreferences := UserPreferences{
+		{
+			UserID: users[0].ID,
+			Key:    domain.UserPreferenceKeyLanguage,
+			Value:  domain.UserPreferenceLanguageEnglish,
+		},
+		{
+			UserID: users[0].ID,
+			Key:    domain.UserPreferenceKeyWeightUnit,
+			Value:  domain.UserPreferenceWeightUnitKGs,
+		},
+		{
+			UserID: users[2].ID,
+			Key:    domain.UserPreferenceKeyLanguage,
+			Value:  domain.UserPreferenceLanguageFrench,
+		},
+	}
+
+	for i := range userPreferences {
+		userPreferences[i].UUID = domain.GetUUID()
+		createFixture(ms, &userPreferences[i])
+	}
+
+	return UserFixtures{Users: users, UserPreferences: userPreferences}
+}

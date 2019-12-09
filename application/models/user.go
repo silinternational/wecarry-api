@@ -550,132 +550,39 @@ func (u *User) GetPreferences() (StandardPreferences, error) {
 		dbPreferences[uP.Key] = uP.Value
 	}
 
-	var goodPreferences StandardPreferences
+	finalValues := map[string]string{}
 
-	if language, ok := dbPreferences[domain.UserPreferenceKeyLanguage]; ok {
-		if domain.IsLanguageAllowed(language) {
-			goodPreferences.Language = language
-		} else {
-			domain.Logger.Print("user preference language in database not allowed ... " + language)
+	fieldAndValidators := getPreferencesFieldsAndValidators(StandardPreferences{})
+	for fieldName, fV := range fieldAndValidators {
+		if value, ok := dbPreferences[fieldName]; ok {
+			if fV.validator(value) {
+				finalValues[fieldName] = value
+			} else {
+				domain.Logger.Printf("user preference %s in database not allowed ... %s", fieldName, value)
+			}
 		}
 	}
 
-	if timeZone, ok := dbPreferences[domain.UserPreferenceKeyTimeZone]; ok {
-		if domain.IsTimeZoneAllowed(timeZone) {
-			goodPreferences.TimeZone = timeZone
-		} // IsTimeZoneAllowed logs a message if it's unrecognized
-	}
+	var finalPreferences StandardPreferences
+	finalPreferences.hydrateValues(finalValues)
 
-	if weightUnit, ok := dbPreferences[domain.UserPreferenceKeyWeightUnit]; ok {
-		if domain.IsWeightUnitAllowed(weightUnit) {
-			goodPreferences.WeightUnit = weightUnit
-		} else {
-			domain.Logger.Print("user preference weight unit in database not allowed ... " + weightUnit)
-		}
-	}
-
-	return goodPreferences, nil
+	return finalPreferences, nil
 }
 
-func (u *User) createPreference(key, value string) (UserPreference, error) {
-	uPref := UserPreference{}
-
-	if u.ID <= 0 {
-		return UserPreference{}, errors.New("invalid user ID in createPreference.")
-	}
-
-	_ = DB.Where("user_id = ?", u.ID).Where("key = ?", key).First(&uPref)
-	if uPref.ID > 0 {
-		err := fmt.Errorf("can't create UserPreference with key %s.  Already exists with id %v.", key, uPref.ID)
-		return UserPreference{}, err
-	}
-
-	uPref.UserID = u.ID
-	uPref.Key = key
-	uPref.Value = value
-
-	if err := uPref.Save(); err != nil {
-		return UserPreference{}, err
-	}
-
-	return uPref, nil
-}
-
-func (u *User) getPreference(key string) (*UserPreference, error) {
-	uPref := UserPreference{}
-
-	err := DB.Where("user_id = ?", u.ID).Where("key = ?", key).First(&uPref)
-	if err != nil {
-		if domain.IsOtherThanNoRows(err) {
-			return nil, err
-		}
-		return nil, nil
-	}
-
-	return &uPref, nil
-}
-
-// updatePreferenceByKey will also create a new instance, if a match is not found for that user
-func (u *User) updatePreferenceByKey(key, value string) (UserPreference, error) {
-
-	uPref, err := u.getPreference(key)
-	if err != nil {
-		return UserPreference{}, err
-	}
-
-	if uPref == nil {
-		return u.createPreference(key, value)
-	}
-
-	if uPref.Value == value {
-		return *uPref, nil
-	}
-
-	uPref.Value = value
-
-	if err := uPref.Save(); err != nil {
-		return UserPreference{}, err
-	}
-
-	return *uPref, nil
-}
-
-// UpdatePreferencesByKey will also create new instances for preferences that don't exist for that user.
-// It assumes the user already has a valid ID
+// UpdateStandardPreferences validates and updates a user's standard preferences
 func (u *User) UpdateStandardPreferences(prefs StandardPreferences) (StandardPreferences, error) {
-
-	if prefs.Language != "" {
-		if !domain.IsLanguageAllowed(prefs.Language) {
-			return StandardPreferences{}, errors.New("unexpected UserPreference language ... " + prefs.Language)
-		}
-
-		_, err := u.updatePreferenceByKey(domain.UserPreferenceKeyLanguage, prefs.Language)
-		if err != nil {
-			return StandardPreferences{}, err
-		}
-	}
-
-	if prefs.TimeZone != "" {
-		if !domain.IsTimeZoneAllowed(prefs.TimeZone) {
-			return StandardPreferences{}, errors.New("unexpected UserPreference time zone ... " + prefs.TimeZone)
-		}
-
-		_, err := u.updatePreferenceByKey(domain.UserPreferenceKeyTimeZone, prefs.TimeZone)
-		if err != nil {
-			return StandardPreferences{}, err
-		}
-	}
-
-	if prefs.WeightUnit != "" {
-		if !domain.IsWeightUnitAllowed(prefs.WeightUnit) {
-			return StandardPreferences{}, errors.New("unexpected UserPreference weight unit ... " + prefs.WeightUnit)
-		}
-
-		_, err := u.updatePreferenceByKey(domain.UserPreferenceKeyWeightUnit, prefs.WeightUnit)
-		if err != nil {
-			return StandardPreferences{}, err
-		}
+	if err := updateUsersStandardPreferences(*u, prefs); err != nil {
+		return StandardPreferences{}, err
 	}
 
 	return u.GetPreferences()
+}
+
+func (u User) GetLanguagePreference() string {
+	prefs, err := u.GetPreferences()
+	if err != nil || prefs.Language == "" {
+		return domain.UserPreferenceLanguageEnglish
+	}
+
+	return prefs.Language
 }

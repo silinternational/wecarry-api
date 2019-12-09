@@ -62,6 +62,10 @@ func CreateFixtures_GetPostRecipients(ms *ModelSuite, t *testing.T) orgUserPostF
 		}
 	}
 
+	_, err := users[1].UpdateStandardPreferences(models.StandardPreferences{Language: domain.UserPreferenceLanguageFrench})
+
+	ms.NoError(err, "could not create language preference for user "+users[1].Nickname)
+
 	// Load UserOrganization test fixtures
 	userOrg := models.UserOrganization{
 		OrganizationID: org.ID,
