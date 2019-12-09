@@ -264,7 +264,7 @@ func newConfig(provider *Provider, scopes []string) *oauth2.Config {
 		ClientID:     provider.ClientKey,
 		ClientSecret: provider.Secret,
 		RedirectURL:  provider.CallbackURL,
-		Endpoint:     Endpoint,
+		Endpoint:     endpoint,
 		Scopes:       []string{},
 	}
 
