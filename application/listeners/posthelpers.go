@@ -11,11 +11,11 @@ import (
 
 var argAppName = map[string]string{"AppName": domain.Env.AppName}
 
-func getTranslatedSubject(language, translationID, template string) string {
+func getTranslatedSubject(language, translationID string) string {
 	subj, err := domain.TranslateWithLang(language, translationID, argAppName)
 
 	if err != nil {
-		domain.ErrLogger.Printf("error translating '%s' notification subject, %s", template, err)
+		domain.ErrLogger.Printf("error translating '%s' notification subject, %s", translationID, err)
 	}
 
 	return subj
@@ -111,7 +111,7 @@ func sendNotificationRequestToProvider(params senderParams) {
 	}
 
 	msg := getMessageForProvider(postUsers, post, template)
-	msg.Subject = getTranslatedSubject(postUsers.Provider.Language, params.subject, template)
+	msg.Subject = getTranslatedSubject(postUsers.Provider.Language, params.subject)
 
 	if err := notifications.Send(msg); err != nil {
 		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
@@ -130,7 +130,7 @@ func sendNotificationRequestToReceiver(params senderParams) {
 	}
 
 	msg := getMessageForReceiver(postUsers, post, template)
-	msg.Subject = getTranslatedSubject(postUsers.Receiver.Language, params.subject, template)
+	msg.Subject = getTranslatedSubject(postUsers.Receiver.Language, params.subject)
 
 	if err := notifications.Send(msg); err != nil {
 		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
@@ -163,7 +163,7 @@ func sendNotificationRequestFromAcceptedToOpen(params senderParams) {
 
 	msg.ToName = oldProvider.Nickname
 	msg.ToEmail = oldProvider.Email
-	msg.Subject = getTranslatedSubject(oldProvider.GetLanguagePreference(), params.subject, template)
+	msg.Subject = getTranslatedSubject(oldProvider.GetLanguagePreference(), params.subject)
 
 	if err := notifications.Send(msg); err != nil {
 		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
@@ -223,7 +223,7 @@ func sendNotificationRequestFromCommittedToOpen(params senderParams) {
 		ToName:    postUsers.Receiver.Nickname,
 		ToEmail:   postUsers.Receiver.Email,
 		FromEmail: domain.Env.EmailFromAddress,
-		Subject:   getTranslatedSubject(postUsers.Receiver.Language, params.subject, template),
+		Subject:   getTranslatedSubject(postUsers.Receiver.Language, params.subject),
 	}
 
 	if err := notifications.Send(msg); err != nil {
@@ -237,7 +237,7 @@ func sendNotificationRequestFromCommittedToOpen(params senderParams) {
 
 	msg.ToName = oldProvider.Nickname
 	msg.ToEmail = oldProvider.Email
-	msg.Subject = getTranslatedSubject(oldProvider.GetLanguagePreference(), params.subject, template)
+	msg.Subject = getTranslatedSubject(oldProvider.GetLanguagePreference(), params.subject)
 
 	if err := notifications.Send(msg); err != nil {
 		domain.ErrLogger.Printf("error sending '%s' notification to requester, %s", template, err)

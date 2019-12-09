@@ -438,14 +438,13 @@ func (ms *ModelSuite) TestGetTranslatedSubject() {
 		},
 	}
 
-	template := "test subject"
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			language := domain.UserPreferenceLanguageEnglish
 			if test.language != "" {
 				language = test.language
 			}
-			got := getTranslatedSubject(language, test.translationID, template)
+			got := getTranslatedSubject(language, test.translationID)
 			ms.Equal(test.want, got, "bad subject translation")
 		})
 	}
