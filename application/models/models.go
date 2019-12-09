@@ -19,8 +19,7 @@ import (
 	"github.com/silinternational/wecarry-api/domain"
 )
 
-// DB is a connection to your database to be used
-// throughout your application.
+// DB is a connection to the database to be used throughout the application.
 var DB *pop.Connection
 
 const TokenBytes = 32

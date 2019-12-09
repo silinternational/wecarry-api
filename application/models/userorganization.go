@@ -27,23 +27,22 @@ type UserOrganization struct {
 	Organization   Organization `belongs_to:"organizations"`
 }
 
-// String is not required by pop and may be deleted
+// String can be helpful for serializing the model
 func (u UserOrganization) String() string {
 	ju, _ := json.Marshal(u)
 	return string(ju)
 }
 
-// UserOrganizations is not required by pop and may be deleted
+// UserOrganizations is merely for convenience and brevity
 type UserOrganizations []UserOrganization
 
-// String is not required by pop and may be deleted
+// String can be helpful for serializing the model
 func (u UserOrganizations) String() string {
 	ju, _ := json.Marshal(u)
 	return string(ju)
 }
 
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
-// This method is not required and may be deleted.
 func (u *UserOrganization) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
 		&validators.IntIsPresent{Field: u.OrganizationID, Name: "OrganizationID"},
@@ -55,13 +54,11 @@ func (u *UserOrganization) Validate(tx *pop.Connection) (*validate.Errors, error
 }
 
 // ValidateCreate gets run every time you call "pop.ValidateAndCreate" method.
-// This method is not required and may be deleted.
 func (u *UserOrganization) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }
 
 // ValidateUpdate gets run every time you call "pop.ValidateAndUpdate" method.
-// This method is not required and may be deleted.
 func (u *UserOrganization) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }

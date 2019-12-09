@@ -11,11 +11,6 @@ import (
 	"jaytaylor.com/html2text"
 )
 
-const (
-	SendGridEndpointMailSend = "/v3/mail/send"
-	SendGridAPIUrl           = "https://api.sendgrid.com"
-)
-
 type SendGridService struct {
 }
 

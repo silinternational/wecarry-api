@@ -6,7 +6,7 @@ import (
 	"github.com/silinternational/wecarry-api/models"
 )
 
-// File returns the file resolver
+// Location returns the location resolver
 func (r *Resolver) Location() LocationResolver {
 	return &locationResolver{r}
 }
