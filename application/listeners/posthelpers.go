@@ -26,37 +26,37 @@ func getTranslatedSubject(translationID, template string) string {
 	return subj
 }
 
-type PostUser struct {
+type postUser struct {
 	Nickname string
 	Email    string
 }
 
-type PostUsers struct {
-	Requester PostUser
-	Provider  PostUser
+type postUsers struct {
+	Requester postUser
+	Provider  postUser
 }
 
-// GetPostUsers returns up to two entries for the Post Requester and
+// getPostUsers returns up to two entries for the Post Requester and
 // Post Provider assuming their email is not blank.
-func GetPostUsers(post models.Post) PostUsers {
+func getPostUsers(post models.Post) postUsers {
 
 	requester, _ := post.GetReceiver()
 	provider, _ := post.GetProvider()
 
-	var recipients PostUsers
+	var recipients postUsers
 
 	if requester != nil {
-		recipients.Requester = PostUser{Nickname: requester.Nickname, Email: requester.Email}
+		recipients.Requester = postUser{Nickname: requester.Nickname, Email: requester.Email}
 	}
 
 	if provider != nil {
-		recipients.Provider = PostUser{Nickname: provider.Nickname, Email: provider.Email}
+		recipients.Provider = postUser{Nickname: provider.Nickname, Email: provider.Email}
 	}
 
 	return recipients
 }
 
-func getMessageForProvider(postUsers PostUsers, post models.Post, template string) notifications.Message {
+func getMessageForProvider(postUsers postUsers, post models.Post, template string) notifications.Message {
 	data := map[string]interface{}{
 		"uiURL":             domain.Env.UIURL,
 		"appName":           domain.Env.AppName,
@@ -76,7 +76,7 @@ func getMessageForProvider(postUsers PostUsers, post models.Post, template strin
 	}
 }
 
-func getMessageForReceiver(postUsers PostUsers, post models.Post, template string) notifications.Message {
+func getMessageForReceiver(postUsers postUsers, post models.Post, template string) notifications.Message {
 	data := map[string]interface{}{
 		"uiURL":            domain.Env.UIURL,
 		"appName":          domain.Env.AppName,
@@ -99,7 +99,7 @@ func getMessageForReceiver(postUsers PostUsers, post models.Post, template strin
 func sendNotificationRequestToProvider(params senderParams) {
 	post := params.post
 	template := params.template
-	postUsers := GetPostUsers(post)
+	postUsers := getPostUsers(post)
 
 	if postUsers.Provider.Nickname == "" {
 		domain.ErrLogger.Printf("error preparing '%s' notification - no provider", template)
@@ -118,7 +118,7 @@ func sendNotificationRequestToReceiver(params senderParams) {
 	post := params.post
 	template := params.template
 
-	postUsers := GetPostUsers(post)
+	postUsers := getPostUsers(post)
 
 	if postUsers.Provider.Nickname == "" {
 		domain.ErrLogger.Printf("error preparing '%s' notification - no provider", template)
@@ -146,7 +146,7 @@ func sendNotificationRequestFromAcceptedToOpen(params senderParams) {
 	template := params.template
 	eData := params.pEventData
 
-	postUsers := GetPostUsers(post)
+	postUsers := getPostUsers(post)
 
 	oldProvider := models.User{}
 	if err := oldProvider.FindByID(eData.OldProviderID); err != nil {
@@ -185,7 +185,7 @@ func sendNotificationRequestFromCommittedToOpen(params senderParams) {
 	template := params.template
 	eData := params.pEventData
 
-	postUsers := GetPostUsers(post)
+	postUsers := getPostUsers(post)
 
 	oldProvider := models.User{}
 	if err := oldProvider.FindByID(eData.OldProviderID); err != nil {

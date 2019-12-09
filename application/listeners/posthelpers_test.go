@@ -21,24 +21,24 @@ func (ms *ModelSuite) TestGetPostUsers() {
 	tests := []struct {
 		name          string
 		id            int
-		wantRequester PostUser
-		wantProvider  PostUser
+		wantRequester postUser
+		wantProvider  postUser
 		wantErr       bool
 	}{
 		{name: "Request by User0 with User1 as Provider",
 			id: posts[0].ID,
-			wantRequester: PostUser{
+			wantRequester: postUser{
 				Nickname: users[0].Nickname,
 				Email:    users[0].Email,
 			},
-			wantProvider: PostUser{
+			wantProvider: postUser{
 				Nickname: users[1].Nickname,
 				Email:    users[1].Email,
 			},
 		},
 		{name: "Request by User0 with no Provider",
 			id: posts[1].ID,
-			wantRequester: PostUser{
+			wantRequester: postUser{
 				Nickname: users[0].Nickname,
 				Email:    users[0].Email,
 			},
@@ -51,7 +51,7 @@ func (ms *ModelSuite) TestGetPostUsers() {
 			err := post.FindByID(test.id)
 			ms.NoError(err, "error finding post for test")
 
-			postUsers := GetPostUsers(post)
+			postUsers := getPostUsers(post)
 
 			if test.wantErr {
 				ms.Error(err)
