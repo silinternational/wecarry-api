@@ -50,6 +50,7 @@ func App() *buffalo.App {
 
 		//  Added for authorization
 		app.Use(SetCurrentUser)
+		app.Middleware.Skip(SetCurrentUser, statusHandler)
 
 		var err error
 		domain.T, err = i18n.New(packr.New("locales", "../locales"), "en")
@@ -57,6 +58,8 @@ func App() *buffalo.App {
 			_ = app.Stop(err)
 		}
 		app.Use(domain.T.Middleware())
+
+		app.GET("/site/status", statusHandler)
 
 		app.POST("/gql/", GQLHandler)
 
