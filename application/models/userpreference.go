@@ -172,3 +172,25 @@ func (p *UserPreference) updateForUserByKey(user User, key, value string) error 
 
 	return p.Save()
 }
+
+func updateUsersStandardPreferences(user User, prefs StandardPreferences) error {
+	fieldAndValidators := getPreferencesFieldsAndValidators(prefs)
+	for fieldName, fV := range fieldAndValidators {
+		if fV.fieldValue == "" {
+			continue
+		}
+
+		if !fV.validator(fV.fieldValue) {
+			return fmt.Errorf("unexpected UserPreference %s ... %s", fieldName, fV.fieldValue)
+		}
+
+		var p UserPreference
+
+		err := p.updateForUserByKey(user, fieldName, fV.fieldValue)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}

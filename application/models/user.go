@@ -571,24 +571,8 @@ func (u *User) GetPreferences() (StandardPreferences, error) {
 
 // UpdateStandardPreferences validates and updates a user's standard preferences
 func (u *User) UpdateStandardPreferences(prefs StandardPreferences) (StandardPreferences, error) {
-
-	fieldAndValidators := getPreferencesFieldsAndValidators(prefs)
-	for fieldName, fV := range fieldAndValidators {
-		if fV.fieldValue == "" {
-			continue
-		}
-
-		if !fV.validator(fV.fieldValue) {
-			return StandardPreferences{}, fmt.Errorf(
-				"unexpected UserPreference %s ... %s", fieldName, fV.fieldValue)
-		}
-
-		var p UserPreference
-
-		err := p.updateForUserByKey(*u, fieldName, fV.fieldValue)
-		if err != nil {
-			return StandardPreferences{}, err
-		}
+	if err := updateUsersStandardPreferences(*u, prefs); err != nil {
+		return StandardPreferences{}, err
 	}
 
 	return u.GetPreferences()
