@@ -192,18 +192,18 @@ func (ms *ModelSuite) TestUserPreference_Save() {
 }
 
 func (ms *ModelSuite) TestStandardPreferences_hydrateValues() {
-	values := [3]string{
-		domain.UserPreferenceLanguageFrench,
-		"America/New_York",
-		domain.UserPreferenceWeightUnitKGs,
+	values := map[string]string{
+		domain.UserPreferenceKeyLanguage:   domain.UserPreferenceLanguageFrench,
+		domain.UserPreferenceKeyTimeZone:   "America/New_York",
+		domain.UserPreferenceKeyWeightUnit: domain.UserPreferenceWeightUnitKGs,
 	}
 	sps := StandardPreferences{}
 	sps.hydrateValues(values)
 
 	want := StandardPreferences{
-		Language:   values[0],
-		TimeZone:   values[1],
-		WeightUnit: values[2],
+		Language:   values[domain.UserPreferenceKeyLanguage],
+		TimeZone:   values[domain.UserPreferenceKeyTimeZone],
+		WeightUnit: values[domain.UserPreferenceKeyWeightUnit],
 	}
 
 	ms.Equal(want, sps)
@@ -215,14 +215,14 @@ func (ms *ModelSuite) TestUserPreference_getPreferencesFieldsAndValidators() {
 		TimeZone:   "America/New_York",
 		WeightUnit: domain.UserPreferenceWeightUnitKGs,
 	}
-	fieldNames, fields, valrs := getPreferencesFieldsAndValidators(sps)
+	fAndVs := getPreferencesFieldsAndValidators(sps)
 
-	wantFNames := [3]string{domain.UserPreferenceKeyLanguage,
-		domain.UserPreferenceKeyTimeZone, domain.UserPreferenceKeyWeightUnit}
-	ms.Equal(wantFNames, fieldNames, "incorrect field names")
-
-	wantFields := [3]string{sps.Language, sps.TimeZone, sps.WeightUnit}
-	ms.Equal(wantFields, fields, "incorrect field values")
+	wantValues := [3]string{sps.Language, sps.TimeZone, sps.WeightUnit}
+	gotValues := [3]string{
+		fAndVs[domain.UserPreferenceKeyLanguage].fieldValue,
+		fAndVs[domain.UserPreferenceKeyTimeZone].fieldValue,
+		fAndVs[domain.UserPreferenceKeyWeightUnit].fieldValue}
+	ms.Equal(wantValues, gotValues, "incorrect field values")
 
 	wantValrs := [3]string{
 		runtime.FuncForPC(reflect.ValueOf(domain.IsLanguageAllowed).Pointer()).Name(),
@@ -231,9 +231,9 @@ func (ms *ModelSuite) TestUserPreference_getPreferencesFieldsAndValidators() {
 	}
 
 	gotValrs := [3]string{
-		runtime.FuncForPC(reflect.ValueOf(valrs[0]).Pointer()).Name(),
-		runtime.FuncForPC(reflect.ValueOf(valrs[1]).Pointer()).Name(),
-		runtime.FuncForPC(reflect.ValueOf(valrs[2]).Pointer()).Name(),
+		runtime.FuncForPC(reflect.ValueOf(fAndVs[domain.UserPreferenceKeyLanguage].validator).Pointer()).Name(),
+		runtime.FuncForPC(reflect.ValueOf(fAndVs[domain.UserPreferenceKeyTimeZone].validator).Pointer()).Name(),
+		runtime.FuncForPC(reflect.ValueOf(fAndVs[domain.UserPreferenceKeyWeightUnit].validator).Pointer()).Name(),
 	}
 
 	ms.Equal(wantValrs, gotValrs, "incorrect validators")

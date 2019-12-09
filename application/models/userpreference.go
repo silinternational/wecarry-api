@@ -19,11 +19,10 @@ type StandardPreferences struct {
 	WeightUnit string `json:"weight_unit"`
 }
 
-func (s *StandardPreferences) hydrateValues(values [3]string) {
-	s.Language = values[0]
-	s.TimeZone = values[1]
-	s.WeightUnit = values[2]
-
+func (s *StandardPreferences) hydrateValues(values map[string]string) {
+	s.Language = values[domain.UserPreferenceKeyLanguage]
+	s.TimeZone = values[domain.UserPreferenceKeyTimeZone]
+	s.WeightUnit = values[domain.UserPreferenceKeyWeightUnit]
 }
 
 type UserPreference struct {
@@ -102,15 +101,27 @@ func (p *UserPreference) Save() error {
 	return DB.Save(p)
 }
 
-func getPreferencesFieldsAndValidators(prefs StandardPreferences) ([3]string, [3]string, [3]func(string) bool) {
-	fieldNames := [3]string{
-		domain.UserPreferenceKeyLanguage,
-		domain.UserPreferenceKeyTimeZone,
-		domain.UserPreferenceKeyWeightUnit,
+type fieldAndValidator struct {
+	fieldValue string
+	validator  func(string) bool
+}
+
+func getPreferencesFieldsAndValidators(prefs StandardPreferences) map[string]fieldAndValidator {
+	fieldAndValidators := map[string]fieldAndValidator{}
+	fieldAndValidators[domain.UserPreferenceKeyLanguage] = fieldAndValidator{
+		fieldValue: prefs.Language,
+		validator:  domain.IsLanguageAllowed,
 	}
-	fields := [3]string{prefs.Language, prefs.TimeZone, prefs.WeightUnit}
-	validators := [3]func(string) bool{domain.IsLanguageAllowed, domain.IsTimeZoneAllowed, domain.IsWeightUnitAllowed}
-	return fieldNames, fields, validators
+	fieldAndValidators[domain.UserPreferenceKeyTimeZone] = fieldAndValidator{
+		fieldValue: prefs.TimeZone,
+		validator:  domain.IsTimeZoneAllowed,
+	}
+	fieldAndValidators[domain.UserPreferenceKeyWeightUnit] = fieldAndValidator{
+		fieldValue: prefs.WeightUnit,
+		validator:  domain.IsWeightUnitAllowed,
+	}
+
+	return fieldAndValidators
 }
 
 func (p *UserPreference) createForUser(user User, key, value string) error {

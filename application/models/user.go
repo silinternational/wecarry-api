@@ -550,15 +550,15 @@ func (u *User) GetPreferences() (StandardPreferences, error) {
 		dbPreferences[uP.Key] = uP.Value
 	}
 
-	finalValues := [3]string{}
+	finalValues := map[string]string{}
 
-	fieldNames, _, valrs := getPreferencesFieldsAndValidators(StandardPreferences{})
-	for i, v := range valrs {
-		if value, ok := dbPreferences[fieldNames[i]]; ok {
-			if v(value) {
-				finalValues[i] = value
+	fieldAndValidators := getPreferencesFieldsAndValidators(StandardPreferences{})
+	for fieldName, fV := range fieldAndValidators {
+		if value, ok := dbPreferences[fieldName]; ok {
+			if fV.validator(value) {
+				finalValues[fieldName] = value
 			} else {
-				domain.Logger.Printf("user preference %s in database not allowed ... %s", fieldNames[i], value)
+				domain.Logger.Printf("user preference %s in database not allowed ... %s", fieldName, value)
 			}
 		}
 	}
@@ -571,21 +571,21 @@ func (u *User) GetPreferences() (StandardPreferences, error) {
 
 // UpdateStandardPreferences validates and updates a user's standard preferences
 func (u *User) UpdateStandardPreferences(prefs StandardPreferences) (StandardPreferences, error) {
-	fieldNames, fields, valrs := getPreferencesFieldsAndValidators(prefs)
 
-	for i, v := range valrs {
-		if fields[i] == "" {
+	fieldAndValidators := getPreferencesFieldsAndValidators(prefs)
+	for fieldName, fV := range fieldAndValidators {
+		if fV.fieldValue == "" {
 			continue
 		}
 
-		if !v(fields[i]) {
+		if !fV.validator(fV.fieldValue) {
 			return StandardPreferences{}, fmt.Errorf(
-				"unexpected UserPreference %s ... %s", fieldNames[i], fields[i])
+				"unexpected UserPreference %s ... %s", fieldName, fV.fieldValue)
 		}
 
 		var p UserPreference
 
-		err := p.updateForUserByKey(*u, fieldNames[i], fields[i])
+		err := p.updateForUserByKey(*u, fieldName, fV.fieldValue)
 		if err != nil {
 			return StandardPreferences{}, err
 		}
