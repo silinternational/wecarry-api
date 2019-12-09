@@ -28,10 +28,12 @@ func (ms *ModelSuite) TestGetPostUsers() {
 		{name: "Request by User0 with User1 as Provider",
 			id: posts[0].ID,
 			wantRequester: PostUser{
+				Language: domain.UserPreferenceLanguageEnglish,
 				Nickname: users[0].Nickname,
 				Email:    users[0].Email,
 			},
 			wantProvider: PostUser{
+				Language: domain.UserPreferenceLanguageFrench,
 				Nickname: users[1].Nickname,
 				Email:    users[1].Email,
 			},
@@ -39,6 +41,7 @@ func (ms *ModelSuite) TestGetPostUsers() {
 		{name: "Request by User0 with no Provider",
 			id: posts[1].ID,
 			wantRequester: PostUser{
+				Language: domain.UserPreferenceLanguageEnglish,
 				Nickname: users[0].Nickname,
 				Email:    users[0].Email,
 			},
@@ -57,7 +60,7 @@ func (ms *ModelSuite) TestGetPostUsers() {
 				ms.Error(err)
 			} else {
 				ms.NoError(err)
-				ms.Equal(test.wantRequester, postUsers.Requester)
+				ms.Equal(test.wantRequester, postUsers.Receiver)
 				ms.Equal(test.wantProvider, postUsers.Provider)
 			}
 		})
@@ -245,7 +248,7 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 			wantToEmail:      posts[0].Provider.Email,
 			wantBodyContains: "no longer has a provider",
 		},
-		{name: "Good - Committed to Open - Requester",
+		{name: "Good - Committed to Open - Receiver",
 			post: posts[0],
 			eventData: models.PostStatusEventData{
 				OldStatus:     models.PostStatusCommitted,

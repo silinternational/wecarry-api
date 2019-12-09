@@ -10,30 +10,39 @@ import (
 )
 
 type PostUser struct {
+	Language string
 	Nickname string
 	Email    string
 }
 
 type PostUsers struct {
-	Requester PostUser
-	Provider  PostUser
+	Receiver PostUser
+	Provider PostUser
 }
 
-// GetPostUsers returns up to two entries for the Post Requester and
+// GetPostUsers returns up to two entries for the Post Receiver and
 // Post Provider assuming their email is not blank.
 func GetPostUsers(post models.Post) PostUsers {
 
-	requester, _ := post.GetReceiver()
+	receiver, _ := post.GetReceiver()
 	provider, _ := post.GetProvider()
 
 	var recipients PostUsers
 
-	if requester != nil {
-		recipients.Requester = PostUser{Nickname: requester.Nickname, Email: requester.Email}
+	if receiver != nil {
+		recipients.Receiver = PostUser{
+			Language: receiver.GetLanguagePreference(),
+			Nickname: receiver.Nickname,
+			Email:    receiver.Email,
+		}
 	}
 
 	if provider != nil {
-		recipients.Provider = PostUser{Nickname: provider.Nickname, Email: provider.Email}
+		recipients.Provider = PostUser{
+			Language: provider.GetLanguagePreference(),
+			Nickname: provider.Nickname,
+			Email:    provider.Email,
+		}
 	}
 
 	return recipients
@@ -41,13 +50,13 @@ func GetPostUsers(post models.Post) PostUsers {
 
 func getMessageForProvider(postUsers PostUsers, post models.Post, template string) notifications.Message {
 	data := map[string]interface{}{
-		"uiURL":             domain.Env.UIURL,
-		"appName":           domain.Env.AppName,
-		"postURL":           domain.GetPostUIURL(post.UUID.String()),
-		"postTitle":         post.Title,
-		"postDescription":   post.Description,
-		"requesterNickname": postUsers.Requester.Nickname,
-		"requesterEmail":    postUsers.Requester.Email,
+		"uiURL":            domain.Env.UIURL,
+		"appName":          domain.Env.AppName,
+		"postURL":          domain.GetPostUIURL(post.UUID.String()),
+		"postTitle":        post.Title,
+		"postDescription":  post.Description,
+		"receiverNickname": postUsers.Receiver.Nickname,
+		"receiverEmail":    postUsers.Receiver.Email,
 	}
 
 	return notifications.Message{
@@ -73,8 +82,8 @@ func getMessageForReceiver(postUsers PostUsers, post models.Post, template strin
 	return notifications.Message{
 		Template:  template,
 		Data:      data,
-		ToName:    postUsers.Requester.Nickname,
-		ToEmail:   postUsers.Requester.Email,
+		ToName:    postUsers.Receiver.Nickname,
+		ToEmail:   postUsers.Receiver.Email,
 		FromEmail: domain.Env.EmailFromAddress,
 	}
 }
@@ -90,7 +99,7 @@ func sendNotificationRequestToProvider(params senderParams) {
 	}
 
 	msg := getMessageForProvider(postUsers, post, template)
-	msg.Subject = domain.GetTranslatedSubject(params.subject, template)
+	msg.Subject = getTranslatedSubject(postUsers.Provider.Language, params.subject)
 
 	if err := notifications.Send(msg); err != nil {
 		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
@@ -109,7 +118,7 @@ func sendNotificationRequestToReceiver(params senderParams) {
 	}
 
 	msg := getMessageForReceiver(postUsers, post, template)
-	msg.Subject = domain.GetTranslatedSubject(params.subject, template)
+	msg.Subject = getTranslatedSubject(postUsers.Receiver.Language, params.subject)
 
 	if err := notifications.Send(msg); err != nil {
 		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
@@ -142,7 +151,7 @@ func sendNotificationRequestFromAcceptedToOpen(params senderParams) {
 
 	msg.ToName = oldProvider.Nickname
 	msg.ToEmail = oldProvider.Email
-	msg.Subject = domain.GetTranslatedSubject(params.subject, template)
+	msg.Subject = getTranslatedSubject(oldProvider.GetLanguagePreference(), params.subject)
 
 	if err := notifications.Send(msg); err != nil {
 		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
@@ -162,7 +171,7 @@ func sendNotificationRequestFromCommittedToAccepted(params senderParams) {
 }
 
 // Until we have status auditing history, we don't know who reverted the Post to `open` status.
-//  So, tell both the requester and provider about it.
+//  So, tell both the receiver and provider about it.
 func sendNotificationRequestFromCommittedToOpen(params senderParams) {
 	post := params.post
 	template := params.template
@@ -184,25 +193,25 @@ func sendNotificationRequestFromCommittedToOpen(params senderParams) {
 		providerEmail = "Missing Email"
 	}
 
-	// First notify requester
+	// First notify receiver
 	data := map[string]interface{}{
-		"uiURL":             domain.Env.UIURL,
-		"appName":           domain.Env.AppName,
-		"postURL":           domain.GetPostUIURL(post.UUID.String()),
-		"postTitle":         post.Title,
-		"providerNickname":  providerNickname,
-		"providerEmail":     providerEmail,
-		"requesterNickname": postUsers.Requester.Nickname,
-		"requesterEmail":    postUsers.Requester.Email,
+		"uiURL":            domain.Env.UIURL,
+		"appName":          domain.Env.AppName,
+		"postURL":          domain.GetPostUIURL(post.UUID.String()),
+		"postTitle":        post.Title,
+		"providerNickname": providerNickname,
+		"providerEmail":    providerEmail,
+		"receiverNickname": postUsers.Receiver.Nickname,
+		"receiverEmail":    postUsers.Receiver.Email,
 	}
 
 	msg := notifications.Message{
 		Template:  template,
 		Data:      data,
-		ToName:    postUsers.Requester.Nickname,
-		ToEmail:   postUsers.Requester.Email,
+		ToName:    postUsers.Receiver.Nickname,
+		ToEmail:   postUsers.Receiver.Email,
 		FromEmail: domain.Env.EmailFromAddress,
-		Subject:   domain.GetTranslatedSubject(params.subject, template),
+		Subject:   getTranslatedSubject(postUsers.Receiver.Language, params.subject),
 	}
 
 	if err := notifications.Send(msg); err != nil {
@@ -216,6 +225,7 @@ func sendNotificationRequestFromCommittedToOpen(params senderParams) {
 
 	msg.ToName = oldProvider.Nickname
 	msg.ToEmail = oldProvider.Email
+	msg.Subject = getTranslatedSubject(oldProvider.GetLanguagePreference(), params.subject)
 
 	if err := notifications.Send(msg); err != nil {
 		domain.ErrLogger.Printf("error sending '%s' notification to requester, %s", template, err)

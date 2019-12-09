@@ -469,6 +469,7 @@ func (ts *TestSuite) TestGetTranslatedSubject() {
 
 	tests := []struct {
 		name          string
+		language      string
 		translationID string
 		want          string
 	}{
@@ -476,6 +477,12 @@ func (ts *TestSuite) TestGetTranslatedSubject() {
 			name:          "delivered",
 			translationID: "Email.Subject.Request.FromAcceptedOrCommittedToDelivered",
 			want:          "Request marked as delivered on " + Env.AppName,
+		},
+		{
+			name:          "delivered in Spanish",
+			language:      UserPreferenceLanguageSpanish,
+			translationID: "Email.Subject.Request.FromAcceptedOrCommittedToDelivered",
+			want:          "Su solicitud se marcó como entregada en " + Env.AppName,
 		},
 		{
 			name:          "from accepted to committed",
@@ -534,12 +541,14 @@ func (ts *TestSuite) TestGetTranslatedSubject() {
 		},
 	}
 
-	template := "test subject"
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got := GetTranslatedSubject(test.translationID, template)
+			language := UserPreferenceLanguageEnglish
+			if test.language != "" {
+				language = test.language
+			}
+			got := GetTranslatedSubject(language, test.translationID)
 			ts.Equal(test.want, got, "bad subject translation")
 		})
 	}
 }
-
