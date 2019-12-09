@@ -19,6 +19,13 @@ type StandardPreferences struct {
 	WeightUnit string `json:"weight_unit"`
 }
 
+func (s *StandardPreferences) hydrateValues(values [3]string) {
+	s.Language = values[0]
+	s.TimeZone = values[1]
+	s.WeightUnit = values[2]
+
+}
+
 type UserPreference struct {
 	ID        int       `json:"id" db:"id"`
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
@@ -96,4 +103,64 @@ func (p *UserPreference) Save() error {
 	}
 
 	return DB.Save(p)
+}
+
+func getPreferencesFieldsAndValidators(prefs StandardPreferences) ([3]string, [3]string, [3]func(string) bool) {
+	fieldNames := [3]string{
+		domain.UserPreferenceKeyLanguage,
+		domain.UserPreferenceKeyTimeZone,
+		domain.UserPreferenceKeyWeightUnit,
+	}
+	fields := [3]string{prefs.Language, prefs.TimeZone, prefs.WeightUnit}
+	validators := [3]func(string) bool{domain.IsLanguageAllowed, domain.IsTimeZoneAllowed, domain.IsWeightUnitAllowed}
+	return fieldNames, fields, validators
+}
+
+func (p *UserPreference) createForUser(user User, key, value string) error {
+
+	if user.ID <= 0 {
+		return errors.New("invalid user ID in userpreference.createForUser.")
+	}
+
+	_ = DB.Where("user_id = ?", user.ID).Where("key = ?", key).First(p)
+	if p.ID > 0 {
+		err := fmt.Errorf("can't create UserPreference with key %s.  Already exists with id %v.", key, p.ID)
+		return err
+	}
+
+	p.UserID = user.ID
+	p.Key = key
+	p.Value = value
+
+	return p.Save()
+}
+
+func (p *UserPreference) getForUser(user User, key string) error {
+	err := DB.Where("user_id = ?", user.ID).Where("key = ?", key).First(p)
+	if domain.IsOtherThanNoRows(err) {
+		return err
+	}
+
+	return nil
+}
+
+// updateForUserByKey will also create a new instance, if a match is not found for that user
+func (p *UserPreference) updateForUserByKey(user User, key, value string) error {
+
+	err := p.getForUser(user, key)
+	if err != nil {
+		return err
+	}
+
+	if p.ID == 0 {
+		return p.createForUser(user, key, value)
+	}
+
+	if p.Value == value {
+		return nil
+	}
+
+	p.Value = value
+
+	return p.Save()
 }

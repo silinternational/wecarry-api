@@ -1,6 +1,8 @@
 package models
 
 import (
+	"reflect"
+	"runtime"
 	"strconv"
 	"testing"
 
@@ -185,6 +187,119 @@ func (ms *ModelSuite) TestUserPreference_Save() {
 			ms.Equal(test.pref.UserID, u.UserID)
 			ms.Equal(test.pref.Key, u.Key)
 			ms.Equal(test.pref.Value, u.Value)
+		})
+	}
+}
+
+func (ms *ModelSuite) TestStandardPreferences_hydrateValues() {
+	values := [3]string{
+		domain.UserPreferenceLanguageFrench,
+		"America/New_York",
+		domain.UserPreferenceWeightUnitKGs,
+	}
+	sps := StandardPreferences{}
+	sps.hydrateValues(values)
+
+	want := StandardPreferences{
+		Language:   values[0],
+		TimeZone:   values[1],
+		WeightUnit: values[2],
+	}
+
+	ms.Equal(want, sps)
+}
+
+func (ms *ModelSuite) TestUserPreference_getPreferencesFieldsAndValidators() {
+	sps := StandardPreferences{
+		Language:   domain.UserPreferenceLanguageFrench,
+		TimeZone:   "America/New_York",
+		WeightUnit: domain.UserPreferenceWeightUnitKGs,
+	}
+	fieldNames, fields, valrs := getPreferencesFieldsAndValidators(sps)
+
+	wantFNames := [3]string{domain.UserPreferenceKeyLanguage,
+		domain.UserPreferenceKeyTimeZone, domain.UserPreferenceKeyWeightUnit}
+	ms.Equal(wantFNames, fieldNames, "incorrect field names")
+
+	wantFields := [3]string{sps.Language, sps.TimeZone, sps.WeightUnit}
+	ms.Equal(wantFields, fields, "incorrect field values")
+
+	wantValrs := [3]string{
+		runtime.FuncForPC(reflect.ValueOf(domain.IsLanguageAllowed).Pointer()).Name(),
+		runtime.FuncForPC(reflect.ValueOf(domain.IsTimeZoneAllowed).Pointer()).Name(),
+		runtime.FuncForPC(reflect.ValueOf(domain.IsWeightUnitAllowed).Pointer()).Name(),
+	}
+
+	gotValrs := [3]string{
+		runtime.FuncForPC(reflect.ValueOf(valrs[0]).Pointer()).Name(),
+		runtime.FuncForPC(reflect.ValueOf(valrs[1]).Pointer()).Name(),
+		runtime.FuncForPC(reflect.ValueOf(valrs[2]).Pointer()).Name(),
+	}
+
+	ms.Equal(wantValrs, gotValrs, "incorrect validators")
+}
+
+func (ms *ModelSuite) TestUserPreference_updateForUserByKey() {
+	t := ms.T()
+
+	f := CreateUserFixtures_TestGetPreference(ms)
+
+	tests := []struct {
+		name  string
+		user  User
+		key   string
+		value string
+		want  UserPreference
+	}{
+		{
+			name:  "Change Lang to French",
+			user:  f.Users[0],
+			key:   domain.UserPreferenceKeyLanguage,
+			value: domain.UserPreferenceLanguageFrench,
+			want: UserPreference{
+				ID:     f.UserPreferences[0].ID,
+				UserID: f.Users[0].ID,
+				Key:    domain.UserPreferenceKeyLanguage,
+				Value:  domain.UserPreferenceLanguageFrench,
+			},
+		},
+		{
+			name:  "Leave KGs unchanged",
+			user:  f.Users[0],
+			key:   domain.UserPreferenceKeyWeightUnit,
+			value: domain.UserPreferenceWeightUnitKGs,
+			want: UserPreference{
+				ID:     f.UserPreferences[1].ID,
+				UserID: f.Users[0].ID,
+				Key:    domain.UserPreferenceKeyWeightUnit,
+				Value:  domain.UserPreferenceWeightUnitKGs,
+			},
+		},
+		{
+			name:  "Add French",
+			user:  f.Users[1],
+			key:   domain.UserPreferenceKeyLanguage,
+			value: domain.UserPreferenceLanguageFrench,
+			want: UserPreference{
+				UserID: f.Users[1].ID,
+				Key:    domain.UserPreferenceKeyLanguage,
+				Value:  domain.UserPreferenceLanguageFrench,
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			p := UserPreference{}
+			err := p.updateForUserByKey(test.user, test.key, test.value)
+			ms.NoError(err)
+
+			if test.want.ID > 0 {
+				ms.Equal(test.want.ID, p.ID, "incorrect ID result from updatePreferenceByKey()")
+			} else {
+				ms.Greater(p.ID, 0, "non-positive ID from updatePreferenceByKey()")
+			}
+			ms.Equal(test.want.Key, p.Key, "incorrect key result from updatePreferenceByKey()")
+			ms.Equal(test.want.Value, p.Value, "incorrect value result for "+test.want.Key)
 		})
 	}
 }
