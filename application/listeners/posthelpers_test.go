@@ -28,10 +28,12 @@ func (ms *ModelSuite) TestGetPostUsers() {
 		{name: "Request by User0 with User1 as Provider",
 			id: posts[0].ID,
 			wantRequester: postUser{
+				Language: domain.UserPreferenceLanguageEnglish,
 				Nickname: users[0].Nickname,
 				Email:    users[0].Email,
 			},
 			wantProvider: postUser{
+				Language: domain.UserPreferenceLanguageFrench,
 				Nickname: users[1].Nickname,
 				Email:    users[1].Email,
 			},
@@ -39,6 +41,7 @@ func (ms *ModelSuite) TestGetPostUsers() {
 		{name: "Request by User0 with no Provider",
 			id: posts[1].ID,
 			wantRequester: postUser{
+				Language: domain.UserPreferenceLanguageEnglish,
 				Nickname: users[0].Nickname,
 				Email:    users[0].Email,
 			},
@@ -57,7 +60,7 @@ func (ms *ModelSuite) TestGetPostUsers() {
 				ms.Error(err)
 			} else {
 				ms.NoError(err)
-				ms.Equal(test.wantRequester, postUsers.Requester)
+				ms.Equal(test.wantRequester, postUsers.Receiver)
 				ms.Equal(test.wantProvider, postUsers.Provider)
 			}
 		})
@@ -245,7 +248,7 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 			wantToEmail:      posts[0].Provider.Email,
 			wantBodyContains: "no longer has a provider",
 		},
-		{name: "Good - Committed to Open - Requester",
+		{name: "Good - Committed to Open - Receiver",
 			post: posts[0],
 			eventData: models.PostStatusEventData{
 				OldStatus:     models.PostStatusCommitted,
@@ -356,85 +359,6 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 		})
 	}
 
-}
-
-func (ms *ModelSuite) TestGetTranslatedSubject() {
-	t := ms.T()
-
-	tests := []struct {
-		name          string
-		translationID string
-		want          string
-	}{
-		{
-			name:          "delivered",
-			translationID: "Email.Subject.Request.FromAcceptedOrCommittedToDelivered",
-			want:          "Request marked as delivered on " + domain.Env.AppName,
-		},
-		{
-			name:          "from accepted to committed",
-			translationID: "Email.Subject.Request.FromAcceptedToCommitted",
-			want:          "Oops, you are not yet expected to fulfill a certain " + domain.Env.AppName + " request",
-		},
-		{
-			name:          "from accepted to completed",
-			translationID: "Email.Subject.Request.FromAcceptedOrDeliveredToCompleted",
-			want:          "Thank you for fulfilling a request on " + domain.Env.AppName,
-		},
-		{
-			name:          "from accepted to open",
-			translationID: "Email.Subject.Request.FromAcceptedToOpen",
-			want:          "You are no longer expected to fulfill a certain " + domain.Env.AppName + " request",
-		},
-		{
-			name:          "from accepted to removed",
-			translationID: "Email.Subject.Request.FromAcceptedToRemoved",
-			want:          "You are no longer expected to fulfill a certain " + domain.Env.AppName + " request",
-		},
-		{
-			name:          "from committed to accepted",
-			translationID: "Email.Subject.Request.FromCommittedToAccepted",
-			want:          "Your offer was accepted on " + domain.Env.AppName,
-		},
-		{
-			name:          "from committed to open",
-			translationID: "Email.Subject.Request.FromCommittedToOpen",
-			want:          "Request lost its provider on " + domain.Env.AppName,
-		},
-		{
-			name:          "from committed to removed",
-			translationID: "Email.Subject.Request.FromCommittedToRemoved",
-			want:          "Request removed on " + domain.Env.AppName,
-		},
-		{
-			name:          "from completed to accepted",
-			translationID: "Email.Subject.Request.FromCompletedToAcceptedOrDelivered",
-			want:          "Oops, request not received on " + domain.Env.AppName + " after all",
-		},
-		{
-			name:          "from delivered to accepted",
-			translationID: "Email.Subject.Request.FromDeliveredToAccepted",
-			want:          "Request not delivered after all on " + domain.Env.AppName,
-		},
-		{
-			name:          "from delivered to committed",
-			translationID: "Email.Subject.Request.FromDeliveredToCommitted",
-			want:          "Request not delivered after all on " + domain.Env.AppName,
-		},
-		{
-			name:          "from open to committed",
-			translationID: "Email.Subject.Request.FromOpenToCommitted",
-			want:          "Potential provider on " + domain.Env.AppName,
-		},
-	}
-
-	template := "test subject"
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			got := getTranslatedSubject(test.translationID, template)
-			ms.Equal(test.want, got, "bad subject translation")
-		})
-	}
 }
 
 func (ms *ModelSuite) TestSendNewPostNotification() {

@@ -19,6 +19,12 @@ type StandardPreferences struct {
 	WeightUnit string `json:"weight_unit"`
 }
 
+func (s *StandardPreferences) hydrateValues(values map[string]string) {
+	s.Language = values[domain.UserPreferenceKeyLanguage]
+	s.TimeZone = values[domain.UserPreferenceKeyTimeZone]
+	s.WeightUnit = values[domain.UserPreferenceKeyWeightUnit]
+}
+
 type UserPreference struct {
 	ID        int       `json:"id" db:"id"`
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
@@ -93,4 +99,98 @@ func (p *UserPreference) Save() error {
 	}
 
 	return DB.Save(p)
+}
+
+type fieldAndValidator struct {
+	fieldValue string
+	validator  func(string) bool
+}
+
+func getPreferencesFieldsAndValidators(prefs StandardPreferences) map[string]fieldAndValidator {
+	fieldAndValidators := map[string]fieldAndValidator{}
+	fieldAndValidators[domain.UserPreferenceKeyLanguage] = fieldAndValidator{
+		fieldValue: prefs.Language,
+		validator:  domain.IsLanguageAllowed,
+	}
+	fieldAndValidators[domain.UserPreferenceKeyTimeZone] = fieldAndValidator{
+		fieldValue: prefs.TimeZone,
+		validator:  domain.IsTimeZoneAllowed,
+	}
+	fieldAndValidators[domain.UserPreferenceKeyWeightUnit] = fieldAndValidator{
+		fieldValue: prefs.WeightUnit,
+		validator:  domain.IsWeightUnitAllowed,
+	}
+
+	return fieldAndValidators
+}
+
+func (p *UserPreference) createForUser(user User, key, value string) error {
+
+	if user.ID <= 0 {
+		return errors.New("invalid user ID in userpreference.createForUser.")
+	}
+
+	_ = DB.Where("user_id = ?", user.ID).Where("key = ?", key).First(p)
+	if p.ID > 0 {
+		err := fmt.Errorf("can't create UserPreference with key %s.  Already exists with id %v.", key, p.ID)
+		return err
+	}
+
+	p.UserID = user.ID
+	p.Key = key
+	p.Value = value
+
+	return p.Save()
+}
+
+func (p *UserPreference) getForUser(user User, key string) error {
+	err := DB.Where("user_id = ?", user.ID).Where("key = ?", key).First(p)
+	if domain.IsOtherThanNoRows(err) {
+		return err
+	}
+
+	return nil
+}
+
+// updateForUserByKey will also create a new instance, if a match is not found for that user
+func (p *UserPreference) updateForUserByKey(user User, key, value string) error {
+
+	err := p.getForUser(user, key)
+	if err != nil {
+		return err
+	}
+
+	if p.ID == 0 {
+		return p.createForUser(user, key, value)
+	}
+
+	if p.Value == value {
+		return nil
+	}
+
+	p.Value = value
+
+	return p.Save()
+}
+
+func updateUsersStandardPreferences(user User, prefs StandardPreferences) error {
+	fieldAndValidators := getPreferencesFieldsAndValidators(prefs)
+	for fieldName, fV := range fieldAndValidators {
+		if fV.fieldValue == "" {
+			continue
+		}
+
+		if !fV.validator(fV.fieldValue) {
+			return fmt.Errorf("unexpected UserPreference %s ... %s", fieldName, fV.fieldValue)
+		}
+
+		var p UserPreference
+
+		err := p.updateForUserByKey(user, fieldName, fV.fieldValue)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

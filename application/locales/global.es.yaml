@@ -1,2 +1,5 @@
 - id: GetMessageSender
   translation: tuvimos un problema para encontrar la información del remitente del mensaje
+
+- id: Email.Subject.Request.FromAcceptedOrCommittedToDelivered
+  translation: Su solicitud se marcó como entregada en {{.AppName}}

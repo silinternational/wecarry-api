@@ -40,8 +40,9 @@ func newThreadMessageHandler(args worker.Args) error {
 		return errors.New("failed to load Participants and Post in new thread message handler")
 	}
 
+	template := domain.MessageTemplateNewThreadMessage
 	msg := notifications.Message{
-		Template: domain.MessageTemplateNewThreadMessage,
+		Template: template,
 		Data: map[string]interface{}{
 			"appName":        domain.Env.AppName,
 			"uiURL":          domain.Env.UIURL,
@@ -52,6 +53,7 @@ func newThreadMessageHandler(args worker.Args) error {
 			"threadURL":      domain.GetThreadUIURL(m.Thread.UUID.String()),
 		},
 		FromEmail: domain.Env.EmailFromAddress,
+		Subject:   domain.GetTranslatedSubject("Email.Subject.Message.Created", template),
 	}
 
 	var lastErr error

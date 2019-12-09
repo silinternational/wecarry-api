@@ -463,3 +463,92 @@ func (ts *TestSuite) TestIsTimeZoneAllowed() {
 	got = IsTimeZoneAllowed(zone)
 	ts.False(got, zone+" should not be an time zone")
 }
+
+func (ts *TestSuite) TestGetTranslatedSubject() {
+	t := ts.T()
+
+	tests := []struct {
+		name          string
+		language      string
+		translationID string
+		want          string
+	}{
+		{
+			name:          "delivered",
+			translationID: "Email.Subject.Request.FromAcceptedOrCommittedToDelivered",
+			want:          "Request marked as delivered on " + Env.AppName,
+		},
+		{
+			name:          "delivered in Spanish",
+			language:      UserPreferenceLanguageSpanish,
+			translationID: "Email.Subject.Request.FromAcceptedOrCommittedToDelivered",
+			want:          "Su solicitud se marcó como entregada en " + Env.AppName,
+		},
+		{
+			name:          "from accepted to committed",
+			translationID: "Email.Subject.Request.FromAcceptedToCommitted",
+			want:          "Oops, you are not yet expected to fulfill a certain " + Env.AppName + " request",
+		},
+		{
+			name:          "from accepted to completed",
+			translationID: "Email.Subject.Request.FromAcceptedOrDeliveredToCompleted",
+			want:          "Thank you for fulfilling a request on " + Env.AppName,
+		},
+		{
+			name:          "from accepted to open",
+			translationID: "Email.Subject.Request.FromAcceptedToOpen",
+			want:          "You are no longer expected to fulfill a certain " + Env.AppName + " request",
+		},
+		{
+			name:          "from accepted to removed",
+			translationID: "Email.Subject.Request.FromAcceptedToRemoved",
+			want:          "You are no longer expected to fulfill a certain " + Env.AppName + " request",
+		},
+		{
+			name:          "from committed to accepted",
+			translationID: "Email.Subject.Request.FromCommittedToAccepted",
+			want:          "Your offer was accepted on " + Env.AppName,
+		},
+		{
+			name:          "from committed to open",
+			translationID: "Email.Subject.Request.FromCommittedToOpen",
+			want:          "Request lost its provider on " + Env.AppName,
+		},
+		{
+			name:          "from committed to removed",
+			translationID: "Email.Subject.Request.FromCommittedToRemoved",
+			want:          "Request removed on " + Env.AppName,
+		},
+		{
+			name:          "from completed to accepted",
+			translationID: "Email.Subject.Request.FromCompletedToAcceptedOrDelivered",
+			want:          "Oops, request not received on " + Env.AppName + " after all",
+		},
+		{
+			name:          "from delivered to accepted",
+			translationID: "Email.Subject.Request.FromDeliveredToAccepted",
+			want:          "Request not delivered after all on " + Env.AppName,
+		},
+		{
+			name:          "from delivered to committed",
+			translationID: "Email.Subject.Request.FromDeliveredToCommitted",
+			want:          "Request not delivered after all on " + Env.AppName,
+		},
+		{
+			name:          "from open to committed",
+			translationID: "Email.Subject.Request.FromOpenToCommitted",
+			want:          "Potential provider on " + Env.AppName,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			language := UserPreferenceLanguageEnglish
+			if test.language != "" {
+				language = test.language
+			}
+			got := GetTranslatedSubject(language, test.translationID)
+			ts.Equal(test.want, got, "bad subject translation")
+		})
+	}
+}
