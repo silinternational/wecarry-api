@@ -15,17 +15,17 @@ const (
 	NewThreadMessage = "new_thread_message"
 )
 
-var W worker.Worker
+var w worker.Worker
 
 func init() {
-	W = worker.NewSimple()
-	if err := W.Register(NewThreadMessage, NewThreadMessageHandler); err != nil {
+	w = worker.NewSimple()
+	if err := w.Register(NewThreadMessage, newThreadMessageHandler); err != nil {
 		domain.ErrLogger.Printf("error registering '%s' worker, %s", NewThreadMessage, err)
 	}
 }
 
-// NewThreadMessageHandler is the Worker handler for new notifications of new Thread Messages
-func NewThreadMessageHandler(args worker.Args) error {
+// newThreadMessageHandler is the Worker handler for new notifications of new Thread Messages
+func newThreadMessageHandler(args worker.Args) error {
 	id, ok := args[domain.ArgMessageID].(int)
 	if !ok || id <= 0 {
 		return fmt.Errorf("no message ID provided to %s worker, args = %+v", NewThreadMessage, args)
@@ -62,7 +62,7 @@ func NewThreadMessageHandler(args worker.Args) error {
 
 		var tp models.ThreadParticipant
 		if err := tp.FindByThreadIDAndUserID(m.ThreadID, p.ID); err != nil {
-			domain.ErrLogger.Printf("NewThreadMessageHandler error, %s", err)
+			domain.ErrLogger.Printf("newThreadMessageHandler error, %s", err)
 			lastErr = err
 			continue
 		}
@@ -80,7 +80,7 @@ func NewThreadMessageHandler(args worker.Args) error {
 		}
 
 		if err := tp.UpdateLastNotifiedAt(time.Now()); err != nil {
-			domain.ErrLogger.Printf("NewThreadMessageHandler error, %s", err)
+			domain.ErrLogger.Printf("newThreadMessageHandler error, %s", err)
 			lastErr = err
 		}
 	}
@@ -95,7 +95,7 @@ func SubmitDelayed(handler string, delay time.Duration, args map[string]interfac
 		Args:    args,
 		Handler: handler,
 	}
-	if err := W.PerformIn(job, delay); err != nil {
+	if err := w.PerformIn(job, delay); err != nil {
 		domain.ErrLogger.Print(err)
 		return err
 	}
