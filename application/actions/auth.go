@@ -3,13 +3,13 @@ package actions
 import (
 	"errors"
 	"fmt"
-
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/buffalo/render"
+	"github.com/gobuffalo/events"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 )
@@ -311,6 +311,15 @@ func AuthCallback(c buffalo.Context) error {
 
 	// set person on rollbar session
 	domain.RollbarSetPerson(c, authUser.ID, authUser.Nickname, authUser.Email)
+
+	e := events.Event{
+		Kind:    domain.EventApiAuthUserLoggedIn,
+		Message: "User Logged In",
+	}
+
+	if err = events.Emit(e); err != nil {
+		domain.ErrLogger.Printf("error emitting event %s ... %v", e.Kind, err)
+	}
 
 	return c.Redirect(302, getLoginSuccessRedirectURL(authUser, returnTo))
 }
