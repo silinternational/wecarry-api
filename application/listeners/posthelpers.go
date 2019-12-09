@@ -36,16 +36,16 @@ type PostUsers struct {
 // Post Provider assuming their email is not blank.
 func GetPostUsers(post models.Post) PostUsers {
 
-	requester, _ := post.GetReceiver()
+	receiver, _ := post.GetReceiver()
 	provider, _ := post.GetProvider()
 
 	var recipients PostUsers
 
-	if requester != nil {
+	if receiver != nil {
 		recipients.Receiver = PostUser{
-			Language: requester.GetLanguagePreference(),
-			Nickname: requester.Nickname,
-			Email:    requester.Email,
+			Language: receiver.GetLanguagePreference(),
+			Nickname: receiver.Nickname,
+			Email:    receiver.Email,
 		}
 	}
 
@@ -62,13 +62,13 @@ func GetPostUsers(post models.Post) PostUsers {
 
 func getMessageForProvider(postUsers PostUsers, post models.Post, template string) notifications.Message {
 	data := map[string]interface{}{
-		"uiURL":             domain.Env.UIURL,
-		"appName":           domain.Env.AppName,
-		"postURL":           domain.GetPostUIURL(post.UUID.String()),
-		"postTitle":         post.Title,
-		"postDescription":   post.Description,
-		"requesterNickname": postUsers.Receiver.Nickname,
-		"requesterEmail":    postUsers.Receiver.Email,
+		"uiURL":            domain.Env.UIURL,
+		"appName":          domain.Env.AppName,
+		"postURL":          domain.GetPostUIURL(post.UUID.String()),
+		"postTitle":        post.Title,
+		"postDescription":  post.Description,
+		"receiverNickname": postUsers.Receiver.Nickname,
+		"receiverEmail":    postUsers.Receiver.Email,
 	}
 
 	return notifications.Message{
@@ -183,7 +183,7 @@ func sendNotificationRequestFromCommittedToAccepted(params senderParams) {
 }
 
 // Until we have status auditing history, we don't know who reverted the Post to `open` status.
-//  So, tell both the requester and provider about it.
+//  So, tell both the receiver and provider about it.
 func sendNotificationRequestFromCommittedToOpen(params senderParams) {
 	post := params.post
 	template := params.template
@@ -205,16 +205,16 @@ func sendNotificationRequestFromCommittedToOpen(params senderParams) {
 		providerEmail = "Missing Email"
 	}
 
-	// First notify requester
+	// First notify receiver
 	data := map[string]interface{}{
-		"uiURL":             domain.Env.UIURL,
-		"appName":           domain.Env.AppName,
-		"postURL":           domain.GetPostUIURL(post.UUID.String()),
-		"postTitle":         post.Title,
-		"providerNickname":  providerNickname,
-		"providerEmail":     providerEmail,
-		"requesterNickname": postUsers.Receiver.Nickname,
-		"requesterEmail":    postUsers.Receiver.Email,
+		"uiURL":            domain.Env.UIURL,
+		"appName":          domain.Env.AppName,
+		"postURL":          domain.GetPostUIURL(post.UUID.String()),
+		"postTitle":        post.Title,
+		"providerNickname": providerNickname,
+		"providerEmail":    providerEmail,
+		"receiverNickname": postUsers.Receiver.Nickname,
+		"receiverEmail":    postUsers.Receiver.Email,
 	}
 
 	msg := notifications.Message{
