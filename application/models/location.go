@@ -22,13 +22,13 @@ type Location struct {
 	Longitude   nulls.Float64 `json:"longitude" db:"longitude"`
 }
 
-// String is not required by pop and may be deleted
+// String can be helpful for serializing the model
 func (l Location) String() string {
 	ji, _ := json.Marshal(l)
 	return string(ji)
 }
 
-// Locations is not required by pop and may be deleted
+// Locations is merely for convenience and brevity
 type Locations []Location
 
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.

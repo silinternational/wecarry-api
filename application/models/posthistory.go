@@ -24,35 +24,32 @@ type PostHistory struct {
 	Provider   User       `belongs_to:"users"`
 }
 
-// String is not required by pop and may be deleted
+// String can be helpful for serializing the model
 func (p PostHistory) String() string {
 	jt, _ := json.Marshal(p)
 	return string(jt)
 }
 
-// PostHistories is not required by pop and may be deleted
+// PostHistories is merely for convenience and brevity
 type PostHistories []PostHistory
 
-// String is not required by pop and may be deleted
+// String can be helpful for serializing the model
 func (p PostHistories) String() string {
 	jt, _ := json.Marshal(p)
 	return string(jt)
 }
 
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
-// This method is not required and may be deleted.
 func (p *PostHistory) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(), nil
 }
 
 // ValidateCreate gets run every time you call "pop.ValidateAndCreate" method.
-// This method is not required and may be deleted.
 func (p *PostHistory) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }
 
 // ValidateUpdate gets run every time you call "pop.ValidateAndUpdate" method.
-// This method is not required and may be deleted.
 func (p *PostHistory) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }

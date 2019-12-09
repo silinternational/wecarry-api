@@ -24,23 +24,22 @@ type UserAccessToken struct {
 	UserOrganization   UserOrganization `belongs_to:"user_organizations"`
 }
 
-// String is not required by pop and may be deleted
+// String can be helpful for serializing the model
 func (u UserAccessToken) String() string {
 	ju, _ := json.Marshal(u)
 	return string(ju)
 }
 
-// UserAccessTokens is not required by pop and may be deleted
+// UserAccessTokens is merely for convenience and brevity
 type UserAccessTokens []UserAccessToken
 
-// String is not required by pop and may be deleted
+// String can be helpful for serializing the model
 func (u UserAccessTokens) String() string {
 	ju, _ := json.Marshal(u)
 	return string(ju)
 }
 
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
-// This method is not required and may be deleted.
 func (u *UserAccessToken) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
 		&validators.IntIsPresent{Field: u.UserID, Name: "UserID"},
@@ -50,13 +49,11 @@ func (u *UserAccessToken) Validate(tx *pop.Connection) (*validate.Errors, error)
 }
 
 // ValidateCreate gets run every time you call "pop.ValidateAndCreate" method.
-// This method is not required and may be deleted.
 func (u *UserAccessToken) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }
 
 // ValidateUpdate gets run every time you call "pop.ValidateAndUpdate" method.
-// This method is not required and may be deleted.
 func (u *UserAccessToken) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }

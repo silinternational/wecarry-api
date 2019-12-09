@@ -1,7 +1,5 @@
 dev: buffalo migrate adminer
 
-all: buffalo migrate adminer ppa playground
-
 migrate: db
 	docker-compose run --rm buffalo whenavail db 5432 10 buffalo-pop pop migrate up
 	docker-compose run --rm buffalo /bin/bash -c "grift private:seed && grift db:seed && grift minio:seed"
@@ -17,12 +15,6 @@ gqlgen:
 
 adminer:
 	docker-compose up -d adminer
-
-playground:
-	docker-compose up -d playground
-
-ppa:
-	docker-compose up -d phppgadmin
 
 buffalo: db
 	docker-compose up -d buffalo
