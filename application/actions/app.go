@@ -49,7 +49,7 @@ func App() *buffalo.App {
 		app.Use(paramlogger.ParameterLogger)
 
 		//  Added for authorization
-		app.Use(SetCurrentUser)
+		app.Use(setCurrentUser)
 
 		var err error
 		domain.T, err = i18n.New(packr.New("locales", "../locales"), "en")
@@ -58,19 +58,19 @@ func App() *buffalo.App {
 		}
 		app.Use(domain.T.Middleware())
 
-		app.POST("/gql/", GQLHandler)
+		app.POST("/gql/", gqlHandler)
 
-		app.POST("/upload/", UploadHandler)
+		app.POST("/upload/", uploadHandler)
 
 		auth := app.Group("/auth")
-		auth.Middleware.Skip(SetCurrentUser, AuthRequest, AuthCallback, AuthDestroy)
+		auth.Middleware.Skip(setCurrentUser, authRequest, authCallback, authDestroy)
 
-		auth.POST("/login", AuthRequest)
+		auth.POST("/login", authRequest)
 
-		auth.GET("/callback", AuthCallback)  // for Google Oauth
-		auth.POST("/callback", AuthCallback) // for SAML
+		auth.GET("/callback", authCallback)  // for Google Oauth
+		auth.POST("/callback", authCallback) // for SAML
 
-		auth.GET("/logout", AuthDestroy)
+		auth.GET("/logout", authDestroy)
 
 		listeners.RegisterListeners()
 	}
