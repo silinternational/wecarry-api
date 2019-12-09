@@ -9,23 +9,6 @@ import (
 	"github.com/silinternational/wecarry-api/notifications"
 )
 
-// This is intended as a temporary fill-in
-func getUserLanguage() string {
-	return "en"
-}
-
-var argAppName = map[string]string{"AppName": domain.Env.AppName}
-
-func getTranslatedSubject(translationID, template string) string {
-	subj, err := domain.TranslateWithLang(getUserLanguage(), translationID, argAppName)
-
-	if err != nil {
-		domain.ErrLogger.Printf("error translating '%s' notification subject, %s", template, err)
-	}
-
-	return subj
-}
-
 type PostUser struct {
 	Nickname string
 	Email    string
@@ -107,7 +90,7 @@ func sendNotificationRequestToProvider(params senderParams) {
 	}
 
 	msg := getMessageForProvider(postUsers, post, template)
-	msg.Subject = getTranslatedSubject(params.subject, template)
+	msg.Subject = domain.GetTranslatedSubject(params.subject, template)
 
 	if err := notifications.Send(msg); err != nil {
 		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
@@ -126,7 +109,7 @@ func sendNotificationRequestToReceiver(params senderParams) {
 	}
 
 	msg := getMessageForReceiver(postUsers, post, template)
-	msg.Subject = getTranslatedSubject(params.subject, template)
+	msg.Subject = domain.GetTranslatedSubject(params.subject, template)
 
 	if err := notifications.Send(msg); err != nil {
 		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
@@ -159,7 +142,7 @@ func sendNotificationRequestFromAcceptedToOpen(params senderParams) {
 
 	msg.ToName = oldProvider.Nickname
 	msg.ToEmail = oldProvider.Email
-	msg.Subject = getTranslatedSubject(params.subject, template)
+	msg.Subject = domain.GetTranslatedSubject(params.subject, template)
 
 	if err := notifications.Send(msg); err != nil {
 		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
@@ -219,7 +202,7 @@ func sendNotificationRequestFromCommittedToOpen(params senderParams) {
 		ToName:    postUsers.Requester.Nickname,
 		ToEmail:   postUsers.Requester.Email,
 		FromEmail: domain.Env.EmailFromAddress,
-		Subject:   getTranslatedSubject(params.subject, template),
+		Subject:   domain.GetTranslatedSubject(params.subject, template),
 	}
 
 	if err := notifications.Send(msg); err != nil {
