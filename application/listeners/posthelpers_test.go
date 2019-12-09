@@ -33,7 +33,7 @@ func (ms *ModelSuite) TestGetPostUsers() {
 				Email:    users[0].Email,
 			},
 			wantProvider: PostUser{
-				Language: domain.UserPreferenceLanguageEnglish,
+				Language: domain.UserPreferenceLanguageFrench,
 				Nickname: users[1].Nickname,
 				Email:    users[1].Email,
 			},
@@ -366,6 +366,7 @@ func (ms *ModelSuite) TestGetTranslatedSubject() {
 
 	tests := []struct {
 		name          string
+		language      string
 		translationID string
 		want          string
 	}{
@@ -373,6 +374,12 @@ func (ms *ModelSuite) TestGetTranslatedSubject() {
 			name:          "delivered",
 			translationID: "Email.Subject.Request.FromAcceptedOrCommittedToDelivered",
 			want:          "Request marked as delivered on " + domain.Env.AppName,
+		},
+		{
+			name:          "delivered in Spanish",
+			language:      domain.UserPreferenceLanguageSpanish,
+			translationID: "Email.Subject.Request.FromAcceptedOrCommittedToDelivered",
+			want:          "Su solicitud se marcó como entregada en " + domain.Env.AppName,
 		},
 		{
 			name:          "from accepted to committed",
@@ -434,7 +441,11 @@ func (ms *ModelSuite) TestGetTranslatedSubject() {
 	template := "test subject"
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got := getTranslatedSubject(domain.UserPreferenceLanguageEnglish, test.translationID, template)
+			language := domain.UserPreferenceLanguageEnglish
+			if test.language != "" {
+				language = test.language
+			}
+			got := getTranslatedSubject(language, test.translationID, template)
 			ms.Equal(test.want, got, "bad subject translation")
 		})
 	}
