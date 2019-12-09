@@ -130,11 +130,11 @@ func init() {
 	Logger.SetOutput(os.Stdout)
 	ErrLogger.SetOutput(os.Stderr)
 
-	ReadEnv()
+	readEnv()
 }
 
-// ReadEnv loads environment data into `Env`
-func ReadEnv() {
+// readEnv loads environment data into `Env`
+func readEnv() {
 	n, err := strconv.Atoi(envy.Get("ACCESS_TOKEN_LIFETIME_SECONDS", strconv.Itoa(AccessTokenLifetimeSeconds)))
 	if err != nil {
 		ErrLogger.Printf("error converting token lifetime env var ... %v", err)
