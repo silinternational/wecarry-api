@@ -21,7 +21,7 @@ var _ = grift.Namespace("db", func() {
 		}
 
 		// ORGANIZATIONS Table
-		organizationUuid2, _ := uuid.FromString("d2e95724-9270-4050-82d9-6a9f9c35c766")
+		organizationUUID2, _ := uuid.FromString("d2e95724-9270-4050-82d9-6a9f9c35c766")
 		fixtureOrgs := []*models.Organization{
 			// Org ID 1 is reserved for an organization to be defined in `private.go`, not committed to the VCS.
 			{
