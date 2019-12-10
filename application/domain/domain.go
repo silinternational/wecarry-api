@@ -282,6 +282,10 @@ func EmailDomain(email string) string {
 
 func RollbarMiddleware(next buffalo.Handler) buffalo.Handler {
 	return func(c buffalo.Context) error {
+		if Env.RollbarToken == "" {
+			return next(c)
+		}
+
 		client := rollbar.New(
 			Env.RollbarToken,
 			Env.GoEnv,
