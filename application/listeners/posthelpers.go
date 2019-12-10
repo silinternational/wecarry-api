@@ -16,8 +16,8 @@ type postUser struct {
 }
 
 type postUsers struct {
-	Receiver PostUser
-	Provider PostUser
+	Receiver postUser
+	Provider postUser
 }
 
 // getPostUsers returns up to two entries for the Post Requester and
