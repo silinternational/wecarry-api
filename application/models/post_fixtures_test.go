@@ -116,8 +116,8 @@ func createFixturesForTestPostCreate(ms *ModelSuite) PostFixtures {
 	createFixture(ms, &user)
 
 	posts := Posts{
-		{UUID: domain.GetUUID(), Title: "title"},
-		{Title: "title"},
+		{UUID: domain.GetUUID(), Title: "title0"},
+		{Title: "title1"},
 		{},
 	}
 	locations := make(Locations, len(posts))
@@ -126,7 +126,7 @@ func createFixturesForTestPostCreate(ms *ModelSuite) PostFixtures {
 		createFixture(ms, &locations[i])
 
 		posts[i].Status = PostStatusOpen
-		posts[i].Type = "type"
+		posts[i].Type = PostTypeRequest
 		posts[i].Size = PostSizeTiny
 		posts[i].CreatedByID = user.ID
 		posts[i].OrganizationID = org.ID
