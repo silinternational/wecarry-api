@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"strconv"
 	"testing"
 	"time"
 
@@ -9,12 +10,63 @@ import (
 	"github.com/silinternational/wecarry-api/models"
 )
 
-type OrgFixtures struct {
-	Users models.Users
-	Orgs  models.Organizations
+type OrganizationFixtures struct {
+	models.Users
+	models.Organizations
 }
 
-func Fixtures_CreateOrganization(as *ActionSuite, t *testing.T) OrgFixtures {
+func fixturesForCreateOrganization(as *ActionSuite) OrganizationFixtures {
+	orgs := models.Organizations{
+		{
+			Name:       "Primary",
+			Url:        nulls.NewString("example.com"),
+			AuthType:   models.AuthTypeSaml,
+			AuthConfig: "{}",
+		},
+		{
+			Name:		"New",
+			Url:        nulls.NewString("example.org"),
+			AuthType:   models.AuthTypeSaml,
+			AuthConfig: "{}",
+		},
+	}
+	// Don't save "New" to the database, that's for the test to do.
+	createFixture(as, &orgs[0])
+
+	unique := domain.GetUUID().String()
+	users := models.Users{
+		{
+			UUID:      domain.GetUUID(),
+			Email:     unique + "_user1@example.com",
+			Nickname:  unique + " User1",
+			AdminRole: models.UserAdminRoleSuperAdmin,
+		},
+	}
+	userOrgs := make(models.UserOrganizations, len(users))
+	accessTokenFixtures := make([]models.UserAccessToken, len(users))
+	for i := range users {
+		createFixture(as, &users[i])
+
+		userOrgs[i].UserID = users[i].ID
+		userOrgs[i].OrganizationID = orgs[0].ID
+		userOrgs[i].AuthID = unique + "_auth_user" + strconv.Itoa(i)
+		userOrgs[i].AuthEmail = unique + users[i].Email
+		createFixture(as, &userOrgs[i])
+
+		accessTokenFixtures[i].UserID =             users[i].ID
+		accessTokenFixtures[i].UserOrganizationID = userOrgs[i].ID
+		accessTokenFixtures[i].AccessToken =        models.HashClientIdAccessToken(users[i].Nickname)
+		accessTokenFixtures[i].ExpiresAt =          time.Now().Add(time.Minute * 60)
+		createFixture(as, &accessTokenFixtures[i])
+	}
+
+	return OrganizationFixtures{
+		Users:         users,
+		Organizations: orgs,
+	}
+}
+
+func fixturesForOrganizationCreateRemoveUpdate(as *ActionSuite, t *testing.T) OrganizationFixtures {
 
 	// Array indexes for convenience in references
 	const (
@@ -156,8 +208,45 @@ func Fixtures_CreateOrganization(as *ActionSuite, t *testing.T) OrgFixtures {
 		}
 	}
 
-	return OrgFixtures{
+	return OrganizationFixtures{
 		Users: users,
-		Orgs:  orgs,
+		Organizations:  orgs,
+	}
+}
+
+func fixturesForOrganizationDomain(as *ActionSuite) OrganizationFixtures {
+	org := models.Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
+	createFixture(as, &org)
+
+	unique := org.UUID.String()
+	users := models.Users{
+		{Email: unique + "_user@example.com", Nickname: unique + " User "},
+		{Email: unique + "_admin@example.com", Nickname: unique + " Admin "},
+	}
+	userOrgs := models.UserOrganizations{
+		{Role: "user"},
+		{Role: "admin"},
+	}
+	accessTokenFixtures := make([]models.UserAccessToken, len(users))
+	for i := range users {
+		users[i].UUID = domain.GetUUID()
+		createFixture(as, &users[i])
+
+		userOrgs[i].UserID = users[i].ID
+		userOrgs[i].OrganizationID = org.ID
+		userOrgs[i].AuthID = unique + "_auth_user" + strconv.Itoa(i)
+		userOrgs[i].AuthEmail = unique + users[i].Email
+		createFixture(as, &userOrgs[i])
+
+		accessTokenFixtures[i].UserID =             users[i].ID
+		accessTokenFixtures[i].UserOrganizationID = userOrgs[i].ID
+		accessTokenFixtures[i].AccessToken =        models.HashClientIdAccessToken(users[i].Nickname)
+		accessTokenFixtures[i].ExpiresAt =          time.Now().Add(time.Minute * 60)
+		createFixture(as, &accessTokenFixtures[i])
+	}
+
+	return OrganizationFixtures{
+		Organizations: models.Organizations{org},
+		Users:        users,
 	}
 }
