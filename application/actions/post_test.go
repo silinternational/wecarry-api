@@ -15,56 +15,62 @@ type PostQueryFixtures struct {
 	models.Locations
 }
 
+type PostsResponse struct {
+	Posts []Post `json:"posts"`
+}
+
 type PostResponse struct {
-	Post struct {
-		ID          string          `json:"id"`
-		Type        models.PostType `json:"type"`
-		Title       string          `json:"title"`
-		Description string          `json:"description"`
-		Destination struct {
-			Description string  `json:"description"`
-			Country     string  `json:"country"`
-			Lat         float64 `json:"latitude"`
-			Long        float64 `json:"longitude"`
-		} `json:"destination"`
-		Origin struct {
-			Description string  `json:"description"`
-			Country     string  `json:"country"`
-			Lat         float64 `json:"latitude"`
-			Long        float64 `json:"longitude"`
-		} `json:"origin"`
-		Size       models.PostSize   `json:"size"`
-		Status     models.PostStatus `json:"status"`
-		CreatedAt  string            `json:"createdAt"`
-		UpdatedAt  string            `json:"updatedAt"`
-		Kilograms  float64           `json:"kilograms"`
-		IsEditable bool              `json:"isEditable"`
-		Url        string            `json:"url"`
-		CreatedBy  struct {
-			ID        string `json:"id"`
-			Nickname  string `json:"nickname"`
-			AvatarURL string `json:"avatarURL"`
-		} `json:"createdBy"`
-		Receiver struct {
-			ID        string `json:"id"`
-			Nickname  string `json:"nickname"`
-			AvatarURL string `json:"avatarURL"`
-		} `json:"receiver"`
-		Provider struct {
-			ID        string `json:"id"`
-			Nickname  string `json:"nickname"`
-			AvatarURL string `json:"avatarURL"`
-		} `json:"provider"`
-		Organization struct {
-			ID string `json:"id"`
-		} `json:"organization"`
-		Photo struct {
-			ID string `json:"id"`
-		} `json:"photo"`
-		Files []struct {
-			ID string `json:"id"`
-		} `json:"files"`
-	} `json:"post"`
+	Post Post `json:"post"`
+}
+
+type Post struct {
+	ID          string          `json:"id"`
+	Type        models.PostType `json:"type"`
+	Title       string          `json:"title"`
+	Description string          `json:"description"`
+	Destination struct {
+		Description string  `json:"description"`
+		Country     string  `json:"country"`
+		Lat         float64 `json:"latitude"`
+		Long        float64 `json:"longitude"`
+	} `json:"destination"`
+	Origin struct {
+		Description string  `json:"description"`
+		Country     string  `json:"country"`
+		Lat         float64 `json:"latitude"`
+		Long        float64 `json:"longitude"`
+	} `json:"origin"`
+	Size       models.PostSize   `json:"size"`
+	Status     models.PostStatus `json:"status"`
+	CreatedAt  string            `json:"createdAt"`
+	UpdatedAt  string            `json:"updatedAt"`
+	Kilograms  float64           `json:"kilograms"`
+	IsEditable bool              `json:"isEditable"`
+	Url        string            `json:"url"`
+	CreatedBy  struct {
+		ID        string `json:"id"`
+		Nickname  string `json:"nickname"`
+		AvatarURL string `json:"avatarURL"`
+	} `json:"createdBy"`
+	Receiver struct {
+		ID        string `json:"id"`
+		Nickname  string `json:"nickname"`
+		AvatarURL string `json:"avatarURL"`
+	} `json:"receiver"`
+	Provider struct {
+		ID        string `json:"id"`
+		Nickname  string `json:"nickname"`
+		AvatarURL string `json:"avatarURL"`
+	} `json:"provider"`
+	Organization struct {
+		ID string `json:"id"`
+	} `json:"organization"`
+	Photo struct {
+		ID string `json:"id"`
+	} `json:"photo"`
+	Files []struct {
+		ID string `json:"id"`
+	} `json:"files"`
 }
 
 func (as *ActionSuite) Test_PostQuery() {
@@ -133,6 +139,25 @@ func (as *ActionSuite) Test_PostQuery() {
 	as.Equal(f.Files[0].UUID.String(), resp.Post.Photo.ID)
 	as.Equal(1, len(resp.Post.Files))
 	as.Equal(f.Files[1].UUID.String(), resp.Post.Files[0].ID)
+}
+
+func (as *ActionSuite) Test_PostsQuery() {
+	f := createFixturesForPostQuery(as)
+
+	query := `{ posts
+		{
+			id
+			title
+		}}`
+
+	var resp PostsResponse
+
+	err := as.testGqlQuery(query, f.Users[1].Nickname, &resp)
+	as.NoError(err)
+
+	as.Equal(2, len(resp.Posts))
+	as.Equal(f.Posts[1].UUID.String(), resp.Posts[0].ID)
+	as.Equal(f.Posts[1].Title, resp.Posts[0].Title)
 }
 
 func (as *ActionSuite) Test_UpdatePost() {
