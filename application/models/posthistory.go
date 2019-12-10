@@ -120,7 +120,7 @@ func (pH PostHistory) popForPost(post Post, currentStatus PostStatus) error {
 func (pH *PostHistory) getLastForPost(post Post) error {
 	if err := DB.Where("post_id = ?", post.ID).Last(pH); err != nil {
 		if domain.IsOtherThanNoRows(err) {
-			return err
+			return fmt.Errorf("error getting last Post History for post %v ... %v", post.ID, err)
 		}
 	}
 	return nil
