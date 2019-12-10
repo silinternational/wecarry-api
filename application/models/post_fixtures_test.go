@@ -38,10 +38,7 @@ func CreateFixturesValidateUpdate_RequestStatus(status PostStatus, ms *ModelSuit
 		UUID:      domain.GetUUID(),
 	}
 
-	if err := ms.DB.Create(&user); err != nil {
-		t.Errorf("could not create test user %v ... %v", user.Email, err)
-		t.FailNow()
-	}
+	createFixture(ms, &user)
 
 	location := Location{}
 	createFixture(ms, &location)
@@ -170,6 +167,110 @@ func createFixturesForTestPostUpdate(ms *ModelSuite) PostFixtures {
 	return PostFixtures{
 		Users: Users{user},
 		Posts: posts,
+	}
+}
+
+func createFixturesForTestPost_manageStatusTransition_forwardProgression(ms *ModelSuite) PostFixtures {
+	org := Organization{AuthConfig: "{}", UUID: domain.GetUUID()}
+	createFixture(ms, &org)
+
+	unique := domain.GetUUID().String()
+	users := Users{
+		{Email: unique + "_user0@example.com", Nickname: unique + "User0"},
+		{Email: unique + "_user1@example.com", Nickname: unique + "User1"},
+	}
+	for i := range users {
+		users[i].UUID = domain.GetUUID()
+		createFixture(ms, &users[i])
+	}
+
+	posts := Posts{
+		{Title: "Open Request", Status: PostStatusOpen},
+		{Title: "Committed Request", Status: PostStatusCommitted, ProviderID: nulls.NewInt(users[0].ID)},
+	}
+	locations := make(Locations, len(posts))
+	for i := range posts {
+		locations[i].Description = "location " + strconv.Itoa(i)
+		createFixture(ms, &locations[i])
+
+		posts[i].UUID = domain.GetUUID()
+		posts[i].Type = PostTypeRequest
+		posts[i].Size = PostSizeTiny
+		posts[i].CreatedByID = users[i].ID
+		posts[i].OrganizationID = org.ID
+		posts[i].DestinationID = locations[i].ID
+		createFixture(ms, &posts[i])
+	}
+
+	postHistories := PostHistories{
+		{Status: PostStatusOpen},
+		{Status: PostStatusCommitted, ProviderID: posts[1].ProviderID},
+	}
+
+	for i := range postHistories {
+		postHistories[i].PostID = posts[i].ID
+		postHistories[i].ReceiverID = posts[i].ReceiverID
+		createFixture(ms, &postHistories[i])
+	}
+
+	return PostFixtures{
+		Users:         users,
+		Posts:         posts,
+		PostHistories: postHistories,
+	}
+}
+
+func createFixturesForTestPost_manageStatusTransition_backwardProgression(ms *ModelSuite) PostFixtures {
+	org := Organization{AuthConfig: "{}", UUID: domain.GetUUID()}
+	createFixture(ms, &org)
+
+	unique := domain.GetUUID().String()
+	users := Users{
+		{Email: unique + "_user0@example.com", Nickname: unique + "User0"},
+		{Email: unique + "_user1@example.com", Nickname: unique + "User1"},
+	}
+	for i := range users {
+		users[i].UUID = domain.GetUUID()
+		createFixture(ms, &users[i])
+	}
+
+	posts := Posts{
+		{Title: "Committed Request", Status: PostStatusCommitted, ProviderID: nulls.NewInt(users[1].ID)},
+		{Title: "Accepted Request", Status: PostStatusAccepted, ProviderID: nulls.NewInt(users[0].ID)},
+	}
+	locations := make(Locations, len(posts))
+	for i := range posts {
+		locations[i].Description = "location " + strconv.Itoa(i)
+		createFixture(ms, &locations[i])
+
+		posts[i].UUID = domain.GetUUID()
+		posts[i].Type = PostTypeRequest
+		posts[i].Size = PostSizeTiny
+		posts[i].CreatedByID = users[i].ID
+		posts[i].OrganizationID = org.ID
+		posts[i].DestinationID = locations[i].ID
+		createFixture(ms, &posts[i])
+	}
+
+	postHistories := PostHistories{
+		{Status: PostStatusOpen, PostID: posts[0].ID, ReceiverID: posts[0].ReceiverID},
+		{Status: PostStatusCommitted, PostID: posts[0].ID, ReceiverID: posts[0].ReceiverID,
+			ProviderID: posts[0].ProviderID},
+		{Status: PostStatusOpen, PostID: posts[1].ID, ReceiverID: posts[1].ReceiverID},
+		{Status: PostStatusCommitted, PostID: posts[1].ID, ReceiverID: posts[1].ReceiverID,
+			ProviderID: posts[1].ProviderID},
+		{Status: PostStatusAccepted, PostID: posts[1].ID, ReceiverID: posts[1].ReceiverID,
+			ProviderID: posts[1].ProviderID},
+	}
+
+	for i := range postHistories {
+		createFixture(ms, &postHistories[i])
+	}
+
+	return PostFixtures{
+		Users:         users,
+		Posts:         posts,
+		PostHistories: postHistories,
 	}
 }
 

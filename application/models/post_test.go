@@ -968,6 +968,126 @@ func (ms *ModelSuite) TestPost_Update() {
 	}
 }
 
+func (ms *ModelSuite) TestPost_manageStatusTransition_forwardProgression() {
+	t := ms.T()
+	f := createFixturesForTestPost_manageStatusTransition_forwardProgression(ms)
+
+	tests := []struct {
+		name       string
+		post       Post
+		newStatus  PostStatus
+		providerID nulls.Int
+		wantErr    string
+	}{
+		{
+			name:      "open to open - no change",
+			post:      f.Posts[0],
+			newStatus: PostStatusOpen,
+			wantErr:   "",
+		},
+		{
+			name:       "open to committed - new history with provider",
+			post:       f.Posts[0],
+			newStatus:  PostStatusCommitted,
+			providerID: nulls.NewInt(f.Users[1].ID),
+			wantErr:    "",
+		},
+		{
+			name:       "committed to accepted - new history",
+			post:       f.Posts[1],
+			newStatus:  PostStatusAccepted,
+			providerID: f.Posts[1].ProviderID,
+			wantErr:    "",
+		},
+		{
+			name:       "get error",
+			post:       f.Posts[1],
+			newStatus:  "BadStatus",
+			providerID: f.Posts[1].ProviderID,
+			wantErr:    "invalid status transition from ACCEPTED to BadStatus",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			test.post.Status = test.newStatus
+			test.post.ProviderID = test.providerID
+			err := test.post.manageStatusTransition()
+			if test.wantErr != "" {
+				ms.Error(err)
+				ms.Contains(err.Error(), test.wantErr, "unexpected error message")
+				return
+			}
+			ms.NoError(err)
+
+			ph := PostHistory{}
+			err = ph.getLastForPost(test.post)
+			ms.NoError(err)
+
+			ms.Equal(test.newStatus, ph.Status, "incorrect Status ")
+			ms.Equal(test.post.ReceiverID, ph.ReceiverID, "incorrect ReceiverID ")
+			ms.Equal(test.providerID, ph.ProviderID, "incorrect ProviderID ")
+		})
+	}
+}
+
+func (ms *ModelSuite) TestPost_manageStatusTransition_backwardProgression() {
+	t := ms.T()
+	f := createFixturesForTestPost_manageStatusTransition_backwardProgression(ms)
+
+	tests := []struct {
+		name       string
+		post       Post
+		newStatus  PostStatus
+		providerID nulls.Int
+		wantErr    string
+	}{
+		{
+			name:       "committed to committed - no change",
+			post:       f.Posts[0],
+			newStatus:  PostStatusCommitted,
+			providerID: f.Posts[0].ProviderID,
+			wantErr:    "",
+		},
+		{
+			name:       "committed to open - lost history with provider",
+			post:       f.Posts[0],
+			newStatus:  PostStatusOpen,
+			providerID: nulls.Int{},
+			wantErr:    "",
+		},
+		{
+			name:       "accepted to committed - lost history but has provider",
+			post:       f.Posts[1],
+			newStatus:  PostStatusCommitted,
+			providerID: f.Posts[1].ProviderID,
+			wantErr:    "",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			test.post.Status = test.newStatus
+			test.post.ProviderID = test.providerID
+			err := test.post.manageStatusTransition()
+			if test.wantErr != "" {
+				ms.Error(err)
+				ms.Contains(err.Error(), test.wantErr, "unexpected error message")
+				return
+			}
+			ms.NoError(err)
+
+			ph := PostHistory{}
+			err = ph.getLastForPost(test.post)
+			ms.NoError(err)
+
+			ms.Equal(test.newStatus, ph.Status, "incorrect Status ")
+			ms.Equal(test.post.ReceiverID, ph.ReceiverID, "incorrect ReceiverID ")
+			ms.Equal(test.providerID, ph.ProviderID, "incorrect ProviderID ")
+		})
+	}
+}
+
 func (ms *ModelSuite) TestPost_FindByID() {
 	t := ms.T()
 
