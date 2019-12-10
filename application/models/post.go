@@ -402,25 +402,29 @@ type PostStatusEventData struct {
 	PostID        int
 }
 
-func (p *Post) BeforeUpdate(tx *pop.Connection) error {
-	oldPost := Post{}
-	if err := tx.Find(&oldPost, p.ID); err != nil {
-		domain.ErrLogger.Printf("error finding original post before update - uuid %v ... %v", p.UUID, err)
+func (p *Post) manageStatusTransition() error {
+	if p.Status == "" {
 		return nil
 	}
 
-	if oldPost.Status == "" || oldPost.Status == p.Status {
+	lastPostHistory := PostHistory{}
+	if err := lastPostHistory.getLastForPost(*p); err != nil {
+		return err
+	}
+
+	lastStatus := lastPostHistory.Status
+	if p.Status == lastStatus {
 		return nil
 	}
 
-	isBackStep, err := isTransitionBackStep(oldPost.Status, p.Status)
+	isBackStep, err := isTransitionBackStep(lastStatus, p.Status)
 	if err != nil {
 		return err
 	}
 
 	if isBackStep {
 		var pH PostHistory
-		err = pH.popForPost(*p, oldPost.Status)
+		err = pH.popForPost(*p, lastStatus)
 	} else {
 		var pH PostHistory
 		err = pH.createForPost(*p)
@@ -431,7 +435,7 @@ func (p *Post) BeforeUpdate(tx *pop.Connection) error {
 	}
 
 	eventData := PostStatusEventData{
-		OldStatus:     oldPost.Status,
+		OldStatus:     lastStatus,
 		NewStatus:     p.Status,
 		PostID:        p.ID,
 		OldProviderID: *GetIntFromNullsInt(p.ProviderID),
@@ -450,6 +454,11 @@ func (p *Post) BeforeUpdate(tx *pop.Connection) error {
 
 // Make sure there is no provider on an Open Request
 func (p *Post) AfterUpdate(tx *pop.Connection) error {
+
+	if err := p.manageStatusTransition(); err != nil {
+		return err
+	}
+
 	if p.Type != PostTypeRequest || p.Status != PostStatusOpen {
 		return nil
 	}
