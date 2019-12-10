@@ -919,6 +919,13 @@ func (ms *ModelSuite) TestPost_Create() {
 			ms.True(test.post.UUID.Version() != 0)
 			var p Post
 			ms.NoError(p.FindByID(test.post.ID))
+
+			pHistories := PostHistories{}
+			err = ms.DB.Where("post_id = ?", p.ID).All(&pHistories)
+			ms.NoError(err)
+
+			ms.Equal(1, len(pHistories), "incorrect number of PostHistories")
+			ms.Equal(PostStatusOpen, pHistories[0].Status, "incorrect status on PostHistory")
 		})
 	}
 }
