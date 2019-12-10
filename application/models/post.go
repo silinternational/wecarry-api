@@ -128,6 +128,10 @@ func isTransitionValid(status1, status2 PostStatus) (bool, error) {
 }
 
 func isTransitionBackStep(status1, status2 PostStatus) (bool, error) {
+	if status1 == "" {
+		return false, nil
+	}
+
 	transitions := getStatusTransitions()
 	targets, ok := transitions[status1]
 	if !ok {
@@ -438,7 +442,7 @@ func (p *Post) manageStatusTransition() error {
 		OldStatus:     lastStatus,
 		NewStatus:     p.Status,
 		PostID:        p.ID,
-		OldProviderID: *GetIntFromNullsInt(p.ProviderID),
+		OldProviderID: *GetIntFromNullsInt(lastPostHistory.ProviderID),
 	}
 
 	e := events.Event{
@@ -478,6 +482,11 @@ func (p *Post) AfterUpdate(tx *pop.Connection) error {
 func (p *Post) AfterCreate(tx *pop.Connection) error {
 	if p.Type != PostTypeRequest || p.Status != PostStatusOpen {
 		return nil
+	}
+
+	var pH PostHistory
+	if err := pH.createForPost(*p); err != nil {
+		return err
 	}
 
 	e := events.Event{
