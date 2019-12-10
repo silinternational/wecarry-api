@@ -259,8 +259,8 @@ func (u *User) CanEditOrganization(orgId int) bool {
 	return false
 }
 
-// CanEditAllPosts indicates whether the user is allowed to edit all posts.
-func (u *User) CanEditAllPosts() bool {
+// canEditAllPosts indicates whether the user is allowed to edit all posts.
+func (u *User) canEditAllPosts() bool {
 	return u.AdminRole == UserAdminRoleSuperAdmin
 }
 
@@ -377,7 +377,7 @@ func (u *User) GetPhotoURL() (*string, error) {
 		return &url, nil
 	}
 
-	if err := u.PhotoFile.RefreshURL(); err != nil {
+	if err := u.PhotoFile.refreshURL(); err != nil {
 		return nil, err
 	}
 	return &u.PhotoFile.URL, nil
@@ -390,7 +390,7 @@ func (u *User) Save() error {
 	}
 	validationErrs, err := u.Validate(DB)
 	if validationErrs != nil && validationErrs.HasAny() {
-		return errors.New(FlattenPopErrors(validationErrs))
+		return errors.New(flattenPopErrors(validationErrs))
 	}
 	if err != nil {
 		return err

@@ -75,7 +75,7 @@ func (js *JobSuite) TestNewThreadMessageHandler() {
 			args := map[string]interface{}{
 				domain.ArgMessageID: test.message.ID,
 			}
-			err := NewThreadMessageHandler(args)
+			err := newThreadMessageHandler(args)
 
 			if test.wantErr {
 				js.Error(err)

@@ -9,28 +9,28 @@ import (
 	"github.com/silinternational/wecarry-api/notifications"
 )
 
-type PostUser struct {
+type postUser struct {
 	Language string
 	Nickname string
 	Email    string
 }
 
-type PostUsers struct {
-	Receiver PostUser
-	Provider PostUser
+type postUsers struct {
+	Receiver postUser
+	Provider postUser
 }
 
-// GetPostUsers returns up to two entries for the Post Receiver and
+// getPostUsers returns up to two entries for the Post Requester and
 // Post Provider assuming their email is not blank.
-func GetPostUsers(post models.Post) PostUsers {
+func getPostUsers(post models.Post) postUsers {
 
 	receiver, _ := post.GetReceiver()
 	provider, _ := post.GetProvider()
 
-	var recipients PostUsers
+	var recipients postUsers
 
 	if receiver != nil {
-		recipients.Receiver = PostUser{
+		recipients.Receiver = postUser{
 			Language: receiver.GetLanguagePreference(),
 			Nickname: receiver.Nickname,
 			Email:    receiver.Email,
@@ -38,7 +38,7 @@ func GetPostUsers(post models.Post) PostUsers {
 	}
 
 	if provider != nil {
-		recipients.Provider = PostUser{
+		recipients.Provider = postUser{
 			Language: provider.GetLanguagePreference(),
 			Nickname: provider.Nickname,
 			Email:    provider.Email,
@@ -48,7 +48,7 @@ func GetPostUsers(post models.Post) PostUsers {
 	return recipients
 }
 
-func getMessageForProvider(postUsers PostUsers, post models.Post, template string) notifications.Message {
+func getMessageForProvider(postUsers postUsers, post models.Post, template string) notifications.Message {
 	data := map[string]interface{}{
 		"uiURL":            domain.Env.UIURL,
 		"appName":          domain.Env.AppName,
@@ -68,7 +68,7 @@ func getMessageForProvider(postUsers PostUsers, post models.Post, template strin
 	}
 }
 
-func getMessageForReceiver(postUsers PostUsers, post models.Post, template string) notifications.Message {
+func getMessageForReceiver(postUsers postUsers, post models.Post, template string) notifications.Message {
 	data := map[string]interface{}{
 		"uiURL":            domain.Env.UIURL,
 		"appName":          domain.Env.AppName,
@@ -91,7 +91,7 @@ func getMessageForReceiver(postUsers PostUsers, post models.Post, template strin
 func sendNotificationRequestToProvider(params senderParams) {
 	post := params.post
 	template := params.template
-	postUsers := GetPostUsers(post)
+	postUsers := getPostUsers(post)
 
 	if postUsers.Provider.Nickname == "" {
 		domain.ErrLogger.Printf("error preparing '%s' notification - no provider", template)
@@ -110,7 +110,7 @@ func sendNotificationRequestToReceiver(params senderParams) {
 	post := params.post
 	template := params.template
 
-	postUsers := GetPostUsers(post)
+	postUsers := getPostUsers(post)
 
 	if postUsers.Provider.Nickname == "" {
 		domain.ErrLogger.Printf("error preparing '%s' notification - no provider", template)
@@ -138,7 +138,7 @@ func sendNotificationRequestFromAcceptedToOpen(params senderParams) {
 	template := params.template
 	eData := params.pEventData
 
-	postUsers := GetPostUsers(post)
+	postUsers := getPostUsers(post)
 
 	oldProvider := models.User{}
 	if err := oldProvider.FindByID(eData.OldProviderID); err != nil {
@@ -177,7 +177,7 @@ func sendNotificationRequestFromCommittedToOpen(params senderParams) {
 	template := params.template
 	eData := params.pEventData
 
-	postUsers := GetPostUsers(post)
+	postUsers := getPostUsers(post)
 
 	oldProvider := models.User{}
 	if err := oldProvider.FindByID(eData.OldProviderID); err != nil {

@@ -16,16 +16,14 @@ var _ = grift.Namespace("db", func() {
 
 		var existingOrgs models.Organizations
 		_ = models.DB.All(&existingOrgs)
-		if len(existingOrgs) > 0 {
+		if len(existingOrgs) > 1 {
 			return nil
 		}
 
 		// ORGANIZATIONS Table
 		organizationUUID2, _ := uuid.FromString("d2e95724-9270-4050-82d9-6a9f9c35c766")
 		fixtureOrgs := []*models.Organization{
-			// Org ID 1 is reserved for an organization to be defined in `private.go`, not committed to the VCS.
 			{
-				ID:         2,
 				UUID:       organizationUUID2,
 				Name:       "Other",
 				AuthType:   models.AuthTypeSaml,
@@ -33,12 +31,19 @@ var _ = grift.Namespace("db", func() {
 			},
 		}
 
-		for _, org := range fixtureOrgs {
-			err := models.DB.Create(org)
+		for i, org := range fixtureOrgs {
+			err := models.DB.Create(fixtureOrgs[i])
 			if err != nil {
 				err = fmt.Errorf("error loading organization fixture ... %+v\n %v", org, err.Error())
 				return err
 			}
+		}
+
+		var primaryOrgID int
+		if len(existingOrgs) > 0 {
+			primaryOrgID = existingOrgs[0].ID
+		} else {
+			primaryOrgID = fixtureOrgs[0].ID
 		}
 
 		// USERS Table
@@ -49,7 +54,6 @@ var _ = grift.Namespace("db", func() {
 		userUUID5, _ := uuid.FromString("2a96a5a6-971a-403d-8276-c41657bc57ce")
 		fixtureUsers := []*models.User{
 			{
-				ID:        1,
 				UUID:      userUUID1,
 				Email:     "clark.kent@example.org",
 				FirstName: "Clark",
@@ -57,7 +61,6 @@ var _ = grift.Namespace("db", func() {
 				Nickname:  "Reporter38",
 			},
 			{
-				ID:        2,
 				UUID:      userUUID2,
 				Email:     "jane.eyre@example.org",
 				FirstName: "Jane",
@@ -65,7 +68,6 @@ var _ = grift.Namespace("db", func() {
 				Nickname:  "Charlotte47",
 			},
 			{
-				ID:        3,
 				UUID:      userUUID3,
 				Email:     "jane.doe@example.org",
 				FirstName: "Jane",
@@ -73,7 +75,6 @@ var _ = grift.Namespace("db", func() {
 				Nickname:  "Unknown42",
 			},
 			{
-				ID:        4,
 				UUID:      userUUID4,
 				Email:     "denethor.ben.ecthelion@example.org",
 				FirstName: "Denethor",
@@ -81,7 +82,6 @@ var _ = grift.Namespace("db", func() {
 				Nickname:  "Gondor2930",
 			},
 			{
-				ID:        5,
 				UUID:      userUUID5,
 				Email:     "john.smith@example.org",
 				FirstName: "John",
@@ -90,8 +90,8 @@ var _ = grift.Namespace("db", func() {
 			},
 		}
 
-		for _, user := range fixtureUsers {
-			err := models.DB.Create(user)
+		for i, user := range fixtureUsers {
+			err := models.DB.Create(fixtureUsers[i])
 			if err != nil {
 				err = fmt.Errorf("error loading user fixture ... %+v\n %v", user, err.Error())
 				return err
@@ -101,49 +101,45 @@ var _ = grift.Namespace("db", func() {
 		// USER_ORGANIZATIONS Table
 		fixtureUserOrgs := []*models.UserOrganization{
 			{
-				ID:             1,
-				OrganizationID: 1,
-				UserID:         1,
+				OrganizationID:	primaryOrgID,
+				UserID:         fixtureUsers[0].ID,
 				Role:           models.UserOrganizationRoleAdmin,
 				AuthEmail:      "clark.kent@example.org",
 				AuthID:         "clark_kent",
 			},
 			{
-				ID:             2,
-				OrganizationID: 1,
-				UserID:         2,
+				OrganizationID:	primaryOrgID,
+				UserID:         fixtureUsers[0].ID,
 				Role:           models.UserOrganizationRoleUser,
 				AuthEmail:      "jane.eyre@example.org",
 				AuthID:         "jane_eyre",
 			},
 			{
-				ID:             3,
-				OrganizationID: 1,
-				UserID:         3,
+				OrganizationID:	primaryOrgID,
+				UserID:         fixtureUsers[0].ID,
 				Role:           models.UserOrganizationRoleUser,
 				AuthEmail:      "jane.doe@example.org",
 				AuthID:         "jane_doe",
 			},
 			{
-				ID:             4,
-				OrganizationID: 1,
-				UserID:         4,
+				OrganizationID:	primaryOrgID,
+				UserID:         fixtureUsers[0].ID,
 				Role:           models.UserOrganizationRoleUser,
 				AuthEmail:      "denethor.ben.ecthelion@example.org",
 				AuthID:         "denethor_ecthelion",
 			},
 			{
-				ID:             5,
-				OrganizationID: 2,
-				UserID:         5,
+				OrganizationID: fixtureOrgs[0].ID,
+				UserID:         fixtureUsers[0].ID,
 				Role:           models.UserOrganizationRoleAdmin,
 				AuthEmail:      "john.smith@example.org",
 				AuthID:         "john_smith",
 			},
 		}
 
-		for _, userOrgs := range fixtureUserOrgs {
-			err := models.DB.Create(userOrgs)
+		for i, userOrgs := range fixtureUserOrgs {
+			fixtureUserOrgs[i].UserID = fixtureUsers[i].ID
+			err := models.DB.Create(fixtureUserOrgs[i])
 			if err != nil {
 				err = fmt.Errorf("error loading user organizations fixture ... %+v\n %v", userOrgs, err.Error())
 				return err
@@ -184,8 +180,8 @@ var _ = grift.Namespace("db", func() {
 			},
 		}
 
-		for _, loc := range fixtureLocations {
-			err := models.DB.Create(loc)
+		for i, loc := range fixtureLocations {
+			err := models.DB.Create(fixtureLocations[i])
 			if err != nil {
 				err = fmt.Errorf("error loading locations fixture ... %+v\n %v", loc, err.Error())
 				return err
@@ -200,74 +196,53 @@ var _ = grift.Namespace("db", func() {
 		postUUID5, _ := uuid.FromString("35e2b332-a968-4932-b205-ca0d1eabdf0e")
 		fixturePosts := []*models.Post{
 			{
-				ID:             1,
-				CreatedByID:    1,
 				Type:           models.PostTypeRequest,
-				OrganizationID: 1,
-				Status:         models.PostStatusOpen,
+				OrganizationID:	primaryOrgID,
 				Title:          "Maple Syrup",
-				DestinationID:  1,
 				Size:           models.PostSizeMedium,
 				UUID:           postUUID1,
-				ReceiverID:     nulls.NewInt(1),
 				Description:    nulls.NewString("Missing my good, old, Canadian maple syrupy goodness"),
 			},
 			{
-				ID:             2,
-				CreatedByID:    2,
 				Type:           models.PostTypeRequest,
-				OrganizationID: 1,
-				Status:         models.PostStatusOpen,
+				OrganizationID:	primaryOrgID,
 				Title:          "Jif Peanut Butter",
-				DestinationID:  2,
 				Size:           models.PostSizeSmall,
 				UUID:           postUUID2,
-				ReceiverID:     nulls.NewInt(2),
 				Description:    nulls.NewString("Jiffy Peanut Butter goes on our daily bread!"),
 			},
 			{
-				ID:             3,
-				CreatedByID:    3,
 				Type:           models.PostTypeRequest,
-				OrganizationID: 1,
-				Status:         models.PostStatusOpen,
+				OrganizationID:	primaryOrgID,
 				Title:          "Burt's Bee's Lip Balm",
-				DestinationID:  3,
 				Size:           models.PostSizeTiny,
 				UUID:           postUUID3,
-				ReceiverID:     nulls.NewInt(3),
 				Description:    nulls.NewString("Please save me from having painfully cracked lips!"),
 			},
 			{
-				ID:             4,
-				CreatedByID:    4,
 				Type:           models.PostTypeRequest,
-				OrganizationID: 1,
-				Status:         models.PostStatusOpen,
+				OrganizationID:	primaryOrgID,
 				Title:          "Peanut Butter",
-				DestinationID:  4,
 				Size:           models.PostSizeSmall,
 				UUID:           postUUID4,
-				ReceiverID:     nulls.NewInt(4),
 				Description:    nulls.NewString("I already have chocolate, but I need peanut butter."),
 			},
 			{
-				ID:             5,
-				CreatedByID:    5,
 				Type:           models.PostTypeRequest,
-				OrganizationID: 2,
-				Status:         models.PostStatusOpen,
+				OrganizationID: fixtureOrgs[0].ID,
 				Title:          "Altoids",
-				DestinationID:  5,
 				Size:           models.PostSizeTiny,
 				UUID:           postUUID5,
-				ReceiverID:     nulls.NewInt(5),
 				Description:    nulls.NewString("The original celebrated curiously strong mints"),
 			},
 		}
 
-		for _, post := range fixturePosts {
-			err := models.DB.Create(post)
+		for i, post := range fixturePosts {
+			fixturePosts[i].DestinationID = fixtureLocations[i].ID
+			fixturePosts[i].Status = models.PostStatusOpen
+			fixturePosts[i].CreatedByID = fixtureUsers[i].ID
+			fixturePosts[i].ReceiverID = nulls.NewInt(fixtureUsers[i].ID)
+			err := models.DB.Create(fixturePosts[i])
 			if err != nil {
 				err = fmt.Errorf("error loading post fixture ... %+v\n %v", post, err.Error())
 				return err
@@ -281,29 +256,22 @@ var _ = grift.Namespace("db", func() {
 		threadUUID4, _ := uuid.FromString("7781642d-50d0-43da-9af2-e21133b4af91")
 		fixtureThreads := []*models.Thread{
 			{
-				ID:     1,
 				UUID:   threadUUID1,
-				PostID: 1,
 			},
 			{
-				ID:     2,
 				UUID:   threadUUID2,
-				PostID: 2,
 			},
 			{
-				ID:     3,
 				UUID:   threadUUID3,
-				PostID: 3,
 			},
 			{
-				ID:     4,
 				UUID:   threadUUID4,
-				PostID: 4,
 			},
 		}
 
-		for _, thread := range fixtureThreads {
-			err := models.DB.Create(thread)
+		for i, thread := range fixtureThreads {
+			fixtureThreads[i].PostID = fixturePosts[i].ID
+			err := models.DB.Create(fixtureThreads[i])
 			if err != nil {
 				err = fmt.Errorf("error loading thread fixture ... %+v\n %v", thread, err.Error())
 				return err
@@ -313,44 +281,37 @@ var _ = grift.Namespace("db", func() {
 		// THREAD_PARTICIPANTS Table
 		fixtureParticipants := []*models.ThreadParticipant{
 			{
-				ID:       1,
-				ThreadID: 1,
-				UserID:   1,
+				ThreadID: fixtureThreads[0].ID,
+				UserID:   fixtureUsers[0].ID,
 			},
 			{
-				ID:       2,
-				ThreadID: 1,
-				UserID:   5,
+				ThreadID: fixtureThreads[0].ID,
+				UserID:   fixtureUsers[4].ID,
 			},
 			{
-				ID:       3,
-				ThreadID: 2,
-				UserID:   2,
+				ThreadID: fixtureThreads[1].ID,
+				UserID:   fixtureUsers[1].ID,
 			},
 			{
-				ID:       4,
-				ThreadID: 2,
-				UserID:   5,
+				ThreadID: fixtureThreads[1].ID,
+				UserID:   fixtureUsers[4].ID,
 			},
 			{
-				ID:       5,
-				ThreadID: 3,
-				UserID:   3,
+				ThreadID: fixtureThreads[2].ID,
+				UserID:   fixtureUsers[2].ID,
 			},
 			{
-				ID:       6,
-				ThreadID: 3,
-				UserID:   5,
+				ThreadID: fixtureThreads[2].ID,
+				UserID:   fixtureUsers[4].ID,
 			},
 			{
-				ID:       7,
-				ThreadID: 4,
-				UserID:   4,
+				ThreadID: fixtureThreads[3].ID,
+				UserID:   fixtureUsers[3].ID,
 			},
 		}
 
-		for _, participant := range fixtureParticipants {
-			err := models.DB.Create(participant)
+		for i, participant := range fixtureParticipants {
+			err := models.DB.Create(fixtureParticipants[i])
 			if err != nil {
 				err = fmt.Errorf("error loading thread participant fixture ... %+v\n %v", participant, err.Error())
 				return err
@@ -367,58 +328,51 @@ var _ = grift.Namespace("db", func() {
 		messageUUID7, _ := uuid.FromString("d9e54392-1a5f-4e6e-b74a-10756b8a9812")
 		fixtureMessages := []*models.Message{
 			{
-				ThreadID: 1,
-				ID:       1,
+				ThreadID: fixtureThreads[0].ID,
 				UUID:     messageUUID1,
-				SentByID: 5,
+				SentByID: fixtureUsers[4].ID,
 				Content:  "Any chance you can bring some PB?",
 			},
 			{
-				ThreadID: 1,
-				ID:       2,
+				ThreadID: fixtureThreads[0].ID,
 				UUID:     messageUUID2,
-				SentByID: 1,
+				SentByID: fixtureUsers[0].ID,
 				Content:  "Absolutely!",
 			},
 			{
-				ThreadID: 1,
-				ID:       3,
+				ThreadID: fixtureThreads[0].ID,
 				UUID:     messageUUID3,
-				SentByID: 5,
+				SentByID: fixtureUsers[4].ID,
 				Content:  "Thanks 😁",
 			},
 			{
-				ThreadID: 2,
-				ID:       4,
+				ThreadID: fixtureThreads[1].ID,
 				UUID:     messageUUID4,
-				SentByID: 5,
+				SentByID: fixtureUsers[4].ID,
 				Content:  "red plum jam, if possible",
 			},
 			{
-				ThreadID: 3,
-				ID:       5,
+				ThreadID: fixtureThreads[2].ID,
 				UUID:     messageUUID5,
-				SentByID: 3,
+				SentByID: fixtureUsers[2].ID,
 				Content:  "Did you find any Wintergreen Altoids?",
 			},
 			{
-				ThreadID: 3,
-				ID:       6,
+				ThreadID: fixtureThreads[2].ID,
 				UUID:     messageUUID6,
-				SentByID: 5,
+				SentByID: fixtureUsers[4].ID,
 				Content:  "No luck, sorry",
 			},
 			{
-				ThreadID: 4,
-				ID:       7,
+				ThreadID: fixtureThreads[3].ID,
 				UUID:     messageUUID7,
-				SentByID: 4,
+				SentByID: fixtureUsers[3].ID,
 				Content:  "I haven't heard from my son, either. Have you seen him recently?",
 			},
 		}
 
-		for _, message := range fixtureMessages {
-			err := models.DB.Create(message)
+		for i, message := range fixtureMessages {
+			err := models.DB.Create(fixtureMessages[i])
 			if err != nil {
 				err = fmt.Errorf("error loading message fixture ... %+v\n %v", message, err.Error())
 				return err

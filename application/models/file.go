@@ -103,7 +103,7 @@ func (f *File) FindByUUID(fileUUID string) error {
 		return err
 	}
 
-	if err := file.RefreshURL(); err != nil {
+	if err := file.refreshURL(); err != nil {
 		return err
 	}
 
@@ -111,8 +111,8 @@ func (f *File) FindByUUID(fileUUID string) error {
 	return nil
 }
 
-// RefreshURL ensures the file URL is good for at least a few minutes
-func (f *File) RefreshURL() error {
+// refreshURL ensures the file URL is good for at least a few minutes
+func (f *File) refreshURL() error {
 	if f.URLExpiration.After(time.Now().Add(time.Minute * 5)) {
 		return nil
 	}

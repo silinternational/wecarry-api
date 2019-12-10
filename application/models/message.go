@@ -135,7 +135,7 @@ func (m *Message) Create() error {
 	}
 
 	if len(valErrs.Errors) > 0 {
-		return errors.New(FlattenPopErrors(valErrs))
+		return errors.New(flattenPopErrors(valErrs))
 	}
 
 	// Touch the "updatedAt" field on the thread so thread lists can easily be sorted by last activity

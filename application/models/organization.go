@@ -135,7 +135,7 @@ func (o *Organization) Save() error {
 
 	validationErrs, err := o.Validate(DB)
 	if validationErrs != nil && validationErrs.HasAny() {
-		return errors.New(FlattenPopErrors(validationErrs))
+		return errors.New(flattenPopErrors(validationErrs))
 	}
 	if err != nil {
 		return err

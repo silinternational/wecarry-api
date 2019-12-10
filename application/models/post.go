@@ -249,7 +249,7 @@ func (p *Post) Create() error {
 	}
 
 	if len(valErrs.Errors) > 0 {
-		vErrs := FlattenPopErrors(valErrs)
+		vErrs := flattenPopErrors(valErrs)
 		return errors.New(vErrs)
 	}
 
@@ -264,7 +264,7 @@ func (p *Post) Update() error {
 	}
 
 	if len(valErrs.Errors) > 0 {
-		vErrs := FlattenPopErrors(valErrs)
+		vErrs := flattenPopErrors(valErrs)
 		return errors.New(vErrs)
 	}
 
@@ -595,7 +595,7 @@ func (p *Post) GetFiles() ([]File, error) {
 	files := make([]File, len(pf))
 	for i, p := range pf {
 		files[i] = p.File
-		if err := files[i].RefreshURL(); err != nil {
+		if err := files[i].refreshURL(); err != nil {
 			return files, err
 		}
 	}
@@ -632,7 +632,7 @@ func (p *Post) GetPhoto() (*File, error) {
 		return nil, nil
 	}
 
-	if err := p.PhotoFile.RefreshURL(); err != nil {
+	if err := p.PhotoFile.refreshURL(); err != nil {
 		return nil, err
 	}
 
@@ -745,7 +745,7 @@ func (p *Post) IsEditable(user User) (bool, error) {
 		}
 	}
 
-	if user.ID != p.CreatedByID && !user.CanEditAllPosts() {
+	if user.ID != p.CreatedByID && !user.canEditAllPosts() {
 		return false, nil
 	}
 

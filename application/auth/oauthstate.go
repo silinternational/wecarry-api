@@ -17,10 +17,10 @@ import (
 	"github.com/silinternational/wecarry-api/domain"
 )
 
-// Store can/should be set by applications using an oauth2 provider like google.
+// store can/should be set by applications using an oauth2 provider like google.
 // The default is a cookie store.
 // Borrowed from gothic
-var Store sessions.Store
+var store sessions.Store
 var defaultStore sessions.Store
 
 var keySet = false
@@ -31,15 +31,15 @@ func init() {
 
 	cookieStore := sessions.NewCookieStore([]byte(key))
 	cookieStore.Options.HttpOnly = true
-	Store = cookieStore
-	defaultStore = Store
+	store = cookieStore
+	defaultStore = store
 }
 
-// SessionName is the key used to access the session store.
-const SessionName = "_oauth2_session"
+// sessionName is the key used to access the session store.
+const sessionName = "_oauth2_session"
 
 func CheckSessionStore() string {
-	if !keySet && defaultStore == Store {
+	if !keySet && defaultStore == store {
 		return "no SESSION_SECRET environment variable is set. " +
 			"The default cookie store is not available and any calls will fail. " +
 			"Ignore this warning if you are using a different store."
@@ -70,7 +70,7 @@ func ValidateState(req *http.Request, sess goth.Session) error {
 // StoreInSession stores a specified key/value pair in the session.
 // Borrowed from gothic
 func StoreInSession(key string, value string, req *http.Request, res http.ResponseWriter) error {
-	session, _ := Store.New(req, SessionName)
+	session, _ := store.New(req, sessionName)
 
 	if err := updateSessionValue(session, key, value); err != nil {
 		return err
@@ -83,7 +83,7 @@ func StoreInSession(key string, value string, req *http.Request, res http.Respon
 // If no value has previously been stored at the specified key, it will return an error.
 // Borrowed from gothic
 func GetFromSession(key string, req *http.Request) (string, error) {
-	session, _ := Store.Get(req, SessionName)
+	session, _ := store.Get(req, sessionName)
 	value, err := getSessionValue(session, key)
 	if err != nil {
 		return "", errors.New("could not find a matching session for this request")
@@ -155,7 +155,7 @@ var SetState = func(req *http.Request) string {
 // Logout invalidates a user session.
 // Borrowed from gothic
 func Logout(res http.ResponseWriter, req *http.Request) error {
-	session, err := Store.Get(req, SessionName)
+	session, err := store.Get(req, sessionName)
 	if err != nil {
 		return err
 	}

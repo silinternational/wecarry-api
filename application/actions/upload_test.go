@@ -86,7 +86,7 @@ func Fixtures_Upload(as *ActionSuite, t *testing.T) UploadFixtures {
 	}
 }
 
-// Test_Upload tests the actions.UploadHandler function
+// Test_Upload tests the actions.uploadHandler function
 func (as *ActionSuite) Test_Upload() {
 	t := as.T()
 	fixtures := Fixtures_Upload(as, t)
@@ -98,7 +98,7 @@ func (as *ActionSuite) Test_Upload() {
 	const filename = "test.gif"
 
 	f := httptest.File{
-		ParamName: FileFieldName,
+		ParamName: fileFieldName,
 		FileName:  filename,
 		Reader:    bytes.NewReader([]byte("GIF87a")),
 	}

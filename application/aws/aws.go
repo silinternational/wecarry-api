@@ -33,7 +33,7 @@ type awsConfig struct {
 // presigned URL expiration
 const urlLifespan = 10 * time.Minute
 
-func GetS3ConfigFromEnv() awsConfig {
+func getS3ConfigFromEnv() awsConfig {
 	var a awsConfig
 	a.awsAccessKeyID = domain.Env.AwsS3AccessKeyID
 	a.awsSecretAccessKey = domain.Env.AwsS3SecretAccessKey
@@ -49,7 +49,7 @@ func GetS3ConfigFromEnv() awsConfig {
 	return a
 }
 
-func CreateS3Service(config awsConfig) (*s3.S3, error) {
+func createS3Service(config awsConfig) (*s3.S3, error) {
 	sess, err := session.NewSession(&aws.Config{
 		Credentials:      credentials.NewStaticCredentials(config.awsAccessKeyID, config.awsSecretAccessKey, ""),
 		Endpoint:         aws.String(config.awsEndpoint),
@@ -89,9 +89,9 @@ func getObjectURL(config awsConfig, svc *s3.S3, key string) (ObjectUrl, error) {
 
 // StoreFile saves content in an AWS S3 bucket or compatible storage, depending on environment configuration.
 func StoreFile(key, contentType string, content []byte) (ObjectUrl, error) {
-	config := GetS3ConfigFromEnv()
+	config := getS3ConfigFromEnv()
 
-	svc, err := CreateS3Service(config)
+	svc, err := createS3Service(config)
 	if err != nil {
 		return ObjectUrl{}, err
 	}
@@ -121,9 +121,9 @@ func StoreFile(key, contentType string, content []byte) (ObjectUrl, error) {
 // GetFileURL retrieves a URL from which a stored object can be loaded. The URL should not require external
 // credentials to access. It may reference a file with public_read access or it may be a pre-signed URL.
 func GetFileURL(key string) (ObjectUrl, error) {
-	config := GetS3ConfigFromEnv()
+	config := getS3ConfigFromEnv()
 
-	svc, err := CreateS3Service(config)
+	svc, err := createS3Service(config)
 	if err != nil {
 		return ObjectUrl{}, err
 	}
@@ -139,9 +139,9 @@ func CreateS3Bucket() error {
 		return errors.New("CreateS3Bucket should only be used in test and development")
 	}
 
-	config := GetS3ConfigFromEnv()
+	config := getS3ConfigFromEnv()
 
-	svc, err := CreateS3Service(config)
+	svc, err := createS3Service(config)
 	if err != nil {
 		return err
 	}
