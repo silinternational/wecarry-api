@@ -133,7 +133,7 @@ func (r *postResolver) Threads(ctx context.Context, obj *models.Post) ([]models.
 		return nil, nil
 	}
 
-	user := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+	user := models.GetCurrentUserFromGqlContext(ctx)
 	threads, err := obj.GetThreads(user)
 	if err != nil {
 		extras := map[string]interface{}{
@@ -195,14 +195,14 @@ func (r *postResolver) IsEditable(ctx context.Context, obj *models.Post) (bool, 
 	if obj == nil {
 		return false, nil
 	}
-	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+	cUser := models.GetCurrentUserFromGqlContext(ctx)
 	return obj.IsEditable(cUser)
 }
 
 // Posts resolves the `posts` query
 func (r *queryResolver) Posts(ctx context.Context) ([]models.Post, error) {
 	posts := models.Posts{}
-	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+	cUser := models.GetCurrentUserFromGqlContext(ctx)
 	if err := posts.FindByUser(ctx, cUser); err != nil {
 		extras := map[string]interface{}{
 			"user": cUser.UUID,
@@ -219,7 +219,7 @@ func (r *queryResolver) Post(ctx context.Context, id *string) (*models.Post, err
 		return nil, nil
 	}
 	var post models.Post
-	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+	cUser := models.GetCurrentUserFromGqlContext(ctx)
 	if err := post.FindByUserAndUUID(ctx, cUser, *id); err != nil {
 		extras := map[string]interface{}{
 			"user": cUser.UUID,
@@ -285,22 +285,22 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 }
 
 type postInput struct {
-	ID           *string
-	OrgID        *string
-	Type         *models.PostType
-	Title        *string
-	Description  *string
-	Destination  *LocationInput
-	Origin       *LocationInput
-	Size         *models.PostSize
-	URL          *string
-	Kilograms    *float64
-	PhotoID      *string
+	ID          *string
+	OrgID       *string
+	Type        *models.PostType
+	Title       *string
+	Description *string
+	Destination *LocationInput
+	Origin      *LocationInput
+	Size        *models.PostSize
+	URL         *string
+	Kilograms   *float64
+	PhotoID     *string
 }
 
 // CreatePost resolves the `createPost` mutation.
 func (r *mutationResolver) CreatePost(ctx context.Context, input postInput) (*models.Post, error) {
-	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+	cUser := models.GetCurrentUserFromGqlContext(ctx)
 	extras := map[string]interface{}{
 		"user": cUser.UUID,
 	}
@@ -331,7 +331,7 @@ func (r *mutationResolver) CreatePost(ctx context.Context, input postInput) (*mo
 
 // UpdatePost resolves the `updatePost` mutation.
 func (r *mutationResolver) UpdatePost(ctx context.Context, input postInput) (*models.Post, error) {
-	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+	cUser := models.GetCurrentUserFromGqlContext(ctx)
 	extras := map[string]interface{}{
 		"user": cUser.UUID,
 	}
@@ -376,7 +376,7 @@ func (r *mutationResolver) UpdatePostStatus(ctx context.Context, input UpdatePos
 		return nil, reportError(ctx, err, "UpdatePostStatus.FindPost")
 	}
 
-	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+	cUser := models.GetCurrentUserFromGqlContext(ctx)
 	extras := map[string]interface{}{
 		"user":      cUser.UUID,
 		"oldStatus": post.Status,
