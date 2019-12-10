@@ -581,8 +581,8 @@ func (ms *ModelSuite) TestGetRandomToken() {
 
 	got := len(got1)
 
-	thirds := TokenBytes / 3
-	if TokenBytes%3 > 0 {
+	thirds := tokenBytes / 3
+	if tokenBytes%3 > 0 {
 		thirds++
 	}
 

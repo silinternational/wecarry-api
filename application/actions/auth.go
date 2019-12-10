@@ -172,7 +172,7 @@ func createAuthUser(
 	return authUser, nil
 }
 
-func AuthRequest(c buffalo.Context) error {
+func authRequest(c buffalo.Context) error {
 	clientID := c.Param(ClientIDParam)
 	if clientID == "" {
 		return authRequestError(c, http.StatusBadRequest, domain.MissingClientID,
@@ -236,9 +236,9 @@ func AuthRequest(c buffalo.Context) error {
 
 }
 
-// AuthCallback assumes the user has logged in to the IDP or Oauth service and now their browser
+// authCallback assumes the user has logged in to the IDP or Oauth service and now their browser
 // has been redirected back with the final response
-func AuthCallback(c buffalo.Context) error {
+func authCallback(c buffalo.Context) error {
 	clientID, ok := c.Session().Get(ClientIDSessionKey).(string)
 	if !ok {
 		return logErrorAndRedirect(c, domain.MissingSessionClientID,
@@ -348,9 +348,9 @@ func logErrorAndRedirect(c buffalo.Context, code, message string, extras ...map[
 	return c.Redirect(http.StatusFound, uiUrl)
 }
 
-// AuthDestroy uses the bearer token to find the user's access token and
+// authDestroy uses the bearer token to find the user's access token and
 //  calls the appropriate provider's logout function.
-func AuthDestroy(c buffalo.Context) error {
+func authDestroy(c buffalo.Context) error {
 	tokenParam := c.Param(LogoutToken)
 	if tokenParam == "" {
 		return logErrorAndRedirect(c, domain.MissingLogoutToken,
@@ -396,7 +396,7 @@ func AuthDestroy(c buffalo.Context) error {
 	return c.Redirect(http.StatusFound, redirectURL)
 }
 
-func SetCurrentUser(next buffalo.Handler) buffalo.Handler {
+func setCurrentUser(next buffalo.Handler) buffalo.Handler {
 	return func(c buffalo.Context) error {
 		bearerToken := domain.GetBearerTokenFromRequest(c.Request())
 		if bearerToken == "" {

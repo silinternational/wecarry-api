@@ -89,7 +89,7 @@ func (l *Location) Create() error {
 	}
 
 	if len(valErrs.Errors) > 0 {
-		vErrs := FlattenPopErrors(valErrs)
+		vErrs := flattenPopErrors(valErrs)
 		return errors.New(vErrs)
 	}
 

@@ -592,7 +592,7 @@ func (ms *ModelSuite) TestUser_CanEditAllPosts() {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			ms.Equal(test.want, test.user.CanEditAllPosts(), "CanEditAllPosts() incorrect result")
+			ms.Equal(test.want, test.user.canEditAllPosts(), "canEditAllPosts() incorrect result")
 		})
 	}
 }
@@ -636,7 +636,7 @@ func (ms *ModelSuite) TestUser_CanUpdatePostStatus() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			ms.Equal(test.want, test.user.CanUpdatePostStatus(test.post, test.newStatus),
-				"CanEditAllPosts() incorrect result")
+				"incorrect result")
 		})
 	}
 }

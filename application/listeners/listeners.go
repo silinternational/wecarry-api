@@ -10,10 +10,10 @@ import (
 )
 
 const (
-	UserAccessTokensCleanupDelayMinutes = 480
+	userAccessTokensCleanupDelayMinutes = 480
 )
 
-var UserAccessTokensNextCleanupTime time.Time
+var userAccessTokensNextCleanupTime time.Time
 
 type apiListener struct {
 	name     string
@@ -80,11 +80,11 @@ func userAccessTokensCleanup(e events.Event) {
 	}
 
 	now := time.Now()
-	if !now.After(UserAccessTokensNextCleanupTime) {
+	if !now.After(userAccessTokensNextCleanupTime) {
 		return
 	}
 
-	UserAccessTokensNextCleanupTime = now.Add(time.Duration(time.Minute * UserAccessTokensCleanupDelayMinutes))
+	userAccessTokensNextCleanupTime = now.Add(time.Duration(time.Minute * userAccessTokensCleanupDelayMinutes))
 
 	var uats models.UserAccessTokens
 	deleted, err := uats.DeleteExpired()

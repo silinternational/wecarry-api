@@ -8,7 +8,7 @@ import (
 	"github.com/silinternational/wecarry-api/gqlgen"
 )
 
-func GQLHandler(c buffalo.Context) error {
+func gqlHandler(c buffalo.Context) error {
 	h := handler.GraphQL(gqlgen.NewExecutableSchema(gqlgen.Config{Resolvers: &gqlgen.Resolver{}}))
 	newCtx := context.WithValue(c.Request().Context(), "BuffaloContext", c)
 	h.ServeHTTP(c.Response(), c.Request().WithContext(newCtx))

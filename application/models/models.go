@@ -22,7 +22,7 @@ import (
 // DB is a connection to the database to be used throughout the application.
 var DB *pop.Connection
 
-const TokenBytes = 32
+const tokenBytes = 32
 
 // Keep a map of the json tag names for the standard user preferences struct
 // e.g. "time_zone": "time_zone".
@@ -51,7 +51,7 @@ func init() {
 }
 
 func getRandomToken() (string, error) {
-	rb := make([]byte, TokenBytes)
+	rb := make([]byte, tokenBytes)
 
 	_, err := rand.Read(rb)
 	if err != nil {
@@ -125,8 +125,8 @@ func GetCurrentUser(c buffalo.Context) User {
 	return User{}
 }
 
-// FlattenPopErrors - pop validation errors are complex structures, this flattens them to a simple string
-func FlattenPopErrors(popErrs *validate.Errors) string {
+// flattenPopErrors - pop validation errors are complex structures, this flattens them to a simple string
+func flattenPopErrors(popErrs *validate.Errors) string {
 	var msg string
 	for key, val := range popErrs.Errors {
 		msg += fmt.Sprintf("%s: %s |", key, strings.Join(val, ", "))
@@ -135,8 +135,8 @@ func FlattenPopErrors(popErrs *validate.Errors) string {
 	return msg
 }
 
-// IsSqlNoRowsErr Checks if given error is a no results/rows error and therefore not really an error at all
-func IsSqlNoRowsErr(err error) bool {
+// isSqlNoRowsErr Checks if given error is a no results/rows error and therefore not really an error at all
+func isSqlNoRowsErr(err error) bool {
 	if err != nil && errors.Cause(err) == sql.ErrNoRows {
 		return true
 	}
