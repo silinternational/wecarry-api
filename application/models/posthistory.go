@@ -115,8 +115,6 @@ func (pH PostHistory) popForPost(post Post, currentStatus PostStatus) error {
 	return nil
 }
 
-// pop deletes the most recent postHistory entry for a post
-// assuming it's status matches the expected one.
 func (pH *PostHistory) getLastForPost(post Post) error {
 	if err := DB.Where("post_id = ?", post.ID).Last(pH); err != nil {
 		if domain.IsOtherThanNoRows(err) {
