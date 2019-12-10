@@ -426,11 +426,10 @@ func (p *Post) manageStatusTransition() error {
 		return err
 	}
 
+	var pH PostHistory
 	if isBackStep {
-		var pH PostHistory
 		err = pH.popForPost(*p, lastStatus)
 	} else {
-		var pH PostHistory
 		err = pH.createForPost(*p)
 	}
 
