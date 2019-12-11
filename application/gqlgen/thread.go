@@ -45,7 +45,7 @@ func (r *threadResolver) LastViewedAt(ctx context.Context, obj *models.Thread) (
 		return nil, nil
 	}
 
-	currentUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+	currentUser := models.GetCurrentUserFromGqlContext(ctx)
 	lastViewedAt, err := obj.GetLastViewedAt(currentUser)
 	if err != nil {
 		extras := map[string]interface{}{
@@ -105,7 +105,7 @@ func (r *threadResolver) UnreadMessageCount(ctx context.Context, obj *models.Thr
 	if obj == nil {
 		return 0, nil
 	}
-	user := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+	user := models.GetCurrentUserFromGqlContext(ctx)
 
 	lastViewedAt, err := obj.GetLastViewedAt(user)
 	if err != nil {
@@ -140,7 +140,7 @@ func (r *queryResolver) Threads(ctx context.Context) ([]models.Thread, error) {
 
 // MyThreads retrieves all of the threads for the current user
 func (r *queryResolver) MyThreads(ctx context.Context) ([]models.Thread, error) {
-	currentUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+	currentUser := models.GetCurrentUserFromGqlContext(ctx)
 
 	threads, err := currentUser.GetThreads()
 	if err != nil {

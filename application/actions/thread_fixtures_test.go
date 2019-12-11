@@ -1,13 +1,15 @@
-package gqlgen
+package actions
 
 import (
 	"github.com/gobuffalo/nulls"
+	"strconv"
+	"time"
 
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 )
 
-type messageQueryFixtures struct {
+type threadQueryFixtures struct {
 	models.Organization
 	models.Users
 	models.Posts
@@ -16,26 +18,32 @@ type messageQueryFixtures struct {
 	models.Locations
 }
 
-func createFixtures_MessageQuery(gs *GqlgenSuite) messageQueryFixtures {
-	t := gs.T()
-
+func createFixturesForThreadQuery(as *ActionSuite) threadQueryFixtures {
 	org := models.Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
-	createFixture(gs, &org)
+	createFixture(as, &org)
 
-	users := models.Users{
-		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1 ", UUID: domain.GetUUID()},
-		{Email: t.Name() + "_user2@example.com", Nickname: t.Name() + " User2 ", UUID: domain.GetUUID()},
-	}
+	unique := org.UUID.String()
+	users := make(models.Users, 2)
+	userOrgs := make(models.UserOrganizations, len(users))
+	accessTokenFixtures := make([]models.UserAccessToken, len(users))
 	for i := range users {
-		createFixture(gs, &users[i])
-	}
+		users[i].UUID = domain.GetUUID()
+		users[i].Email = unique + "_user" + strconv.Itoa(i) + "@example.com"
+		users[i].Nickname = unique + "_auth_user" + strconv.Itoa(i)
+		users[i].AuthPhotoURL = nulls.NewString(users[i].Nickname + ".gif")
+		createFixture(as, &users[i])
 
-	userOrgs := models.UserOrganizations{
-		{OrganizationID: org.ID, UserID: users[0].ID, AuthID: t.Name() + "_auth_user1", AuthEmail: users[0].Email},
-		{OrganizationID: org.ID, UserID: users[1].ID, AuthID: t.Name() + "_auth_user2", AuthEmail: users[1].Email},
-	}
-	for i := range userOrgs {
-		createFixture(gs, &userOrgs[i])
+		userOrgs[i].UserID = users[i].ID
+		userOrgs[i].OrganizationID = org.ID
+		userOrgs[i].AuthID = unique + "_auth_user" + strconv.Itoa(i)
+		userOrgs[i].AuthEmail = unique + users[i].Email
+		createFixture(as, &userOrgs[i])
+
+		accessTokenFixtures[i].UserID = users[i].ID
+		accessTokenFixtures[i].UserOrganizationID = userOrgs[i].ID
+		accessTokenFixtures[i].AccessToken = models.HashClientIdAccessToken(users[i].Nickname)
+		accessTokenFixtures[i].ExpiresAt = time.Now().Add(time.Minute * 60)
+		createFixture(as, &accessTokenFixtures[i])
 	}
 
 	locations := models.Locations{
@@ -54,12 +62,11 @@ func createFixtures_MessageQuery(gs *GqlgenSuite) messageQueryFixtures {
 		{},
 	}
 	for i := range locations {
-		createFixture(gs, &locations[i])
+		createFixture(as, &locations[i])
 	}
 
 	posts := models.Posts{
 		{
-			UUID:           domain.GetUUID(),
 			CreatedByID:    users[0].ID,
 			OrganizationID: org.ID,
 			Type:           models.PostTypeRequest,
@@ -69,7 +76,6 @@ func createFixtures_MessageQuery(gs *GqlgenSuite) messageQueryFixtures {
 			Size:           models.PostSizeSmall,
 		},
 		{
-			UUID:           domain.GetUUID(),
 			CreatedByID:    users[0].ID,
 			ProviderID:     nulls.NewInt(users[0].ID),
 			OrganizationID: org.ID,
@@ -77,42 +83,42 @@ func createFixtures_MessageQuery(gs *GqlgenSuite) messageQueryFixtures {
 		},
 	}
 	for i := range posts {
-		createFixture(gs, &posts[i])
+		posts[i].UUID = domain.GetUUID()
+		createFixture(as, &posts[i])
 	}
 
 	threads := models.Threads{
 		{UUID: domain.GetUUID(), PostID: posts[0].ID},
 	}
 	for i := range threads {
-		createFixture(gs, &threads[i])
+		createFixture(as, &threads[i])
 	}
 
 	threadParticipants := models.ThreadParticipants{
 		{ThreadID: threads[0].ID, UserID: posts[0].CreatedByID},
 	}
 	for i := range threadParticipants {
-		createFixture(gs, &threadParticipants[i])
+		createFixture(as, &threadParticipants[i])
 	}
 
 	messages := models.Messages{
 		{
-			UUID:     domain.GetUUID(),
 			ThreadID: threads[0].ID,
 			SentByID: users[1].ID,
 			Content:  "Message from " + users[1].Nickname,
 		},
 		{
-			UUID:     domain.GetUUID(),
 			ThreadID: threads[0].ID,
 			SentByID: users[0].ID,
 			Content:  "Reply from " + users[0].Nickname,
 		},
 	}
 	for i := range messages {
-		createFixture(gs, &messages[i])
+		messages[i].UUID = domain.GetUUID()
+		createFixture(as, &messages[i])
 	}
 
-	return messageQueryFixtures{
+	return threadQueryFixtures{
 		Organization: org,
 		Users:        users,
 		Posts:        posts,

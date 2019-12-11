@@ -90,11 +90,7 @@ func GetIntFromNullsInt(in nulls.Int) *int {
 	return &output
 }
 
-func GetCurrentUserFromGqlContext(ctx context.Context, testUser User) User {
-	if testUser.ID > 0 {
-		return testUser
-	}
-
+func GetCurrentUserFromGqlContext(ctx context.Context) User {
 	bc, ok := ctx.Value("BuffaloContext").(buffalo.Context)
 	if !ok {
 		return User{}

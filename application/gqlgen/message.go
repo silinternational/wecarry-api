@@ -54,7 +54,7 @@ func (r *queryResolver) Message(ctx context.Context, id *string) (*models.Messag
 	if id == nil {
 		return nil, nil
 	}
-	currentUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+	currentUser := models.GetCurrentUserFromGqlContext(ctx)
 	var message models.Message
 
 	if err := message.FindByUserAndUUID(currentUser, *id); err != nil {
@@ -98,7 +98,7 @@ func convertGqlCreateMessageInputToDBMessage(gqlMessage CreateMessageInput, user
 
 // CreateMessage is a mutation resolver for creating a new message
 func (r *mutationResolver) CreateMessage(ctx context.Context, input CreateMessageInput) (*models.Message, error) {
-	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+	cUser := models.GetCurrentUserFromGqlContext(ctx)
 	extras := map[string]interface{}{
 		"user": cUser.UUID,
 	}

@@ -22,3 +22,11 @@ func Test_ActionSuite(t *testing.T) {
 	}
 	suite.Run(t, as)
 }
+
+func createFixture(as *ActionSuite, f interface{}) {
+	err := as.DB.Create(f)
+	if err != nil {
+		as.T().Errorf("error creating %T fixture, %s", f, err)
+		as.T().FailNow()
+	}
+}

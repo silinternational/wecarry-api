@@ -12,7 +12,7 @@ type mutationResolver struct{ *Resolver }
 
 // CreateOrganization adds a new organization, if the current user has appropriate permissions.
 func (r *mutationResolver) CreateOrganization(ctx context.Context, input CreateOrganizationInput) (*models.Organization, error) {
-	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+	cUser := models.GetCurrentUserFromGqlContext(ctx)
 	extras := map[string]interface{}{
 		"user": cUser.UUID,
 	}
@@ -38,7 +38,7 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input CreateO
 
 // UpdateOrganization updates an organization, if the current user has appropriate permissions.
 func (r *mutationResolver) UpdateOrganization(ctx context.Context, input UpdateOrganizationInput) (*models.Organization, error) {
-	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+	cUser := models.GetCurrentUserFromGqlContext(ctx)
 	extras := map[string]interface{}{
 		"user": cUser.UUID,
 	}
@@ -69,7 +69,7 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, input UpdateO
 
 // CreateOrganizationDomain is the resolver for the `createOrganizationDomain` mutation
 func (r *mutationResolver) CreateOrganizationDomain(ctx context.Context, input CreateOrganizationDomainInput) ([]models.OrganizationDomain, error) {
-	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+	cUser := models.GetCurrentUserFromGqlContext(ctx)
 	extras := map[string]interface{}{
 		"user": cUser.UUID,
 	}
@@ -99,7 +99,7 @@ func (r *mutationResolver) CreateOrganizationDomain(ctx context.Context, input C
 
 // RemoveOrganizationDomain is the resolver for the `removeOrganizationDomain` mutation
 func (r *mutationResolver) RemoveOrganizationDomain(ctx context.Context, input RemoveOrganizationDomainInput) ([]models.OrganizationDomain, error) {
-	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+	cUser := models.GetCurrentUserFromGqlContext(ctx)
 	extras := map[string]interface{}{
 		"user": cUser.UUID,
 	}
@@ -129,7 +129,7 @@ func (r *mutationResolver) RemoveOrganizationDomain(ctx context.Context, input R
 
 // SetThreadLastViewedAt sets the last viewed time for the current user on the given thread
 func (r *mutationResolver) SetThreadLastViewedAt(ctx context.Context, input SetThreadLastViewedAtInput) (*models.Thread, error) {
-	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+	cUser := models.GetCurrentUserFromGqlContext(ctx)
 	extras := map[string]interface{}{
 		"user": cUser.UUID,
 	}

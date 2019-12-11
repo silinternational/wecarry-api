@@ -2,13 +2,6 @@
 
 package gqlgen
 
-import (
-	"github.com/silinternational/wecarry-api/models"
-) // THIS CODE IS A STARTING POINT ONLY. IT WILL NOT BE UPDATED WITH SCHEMA CHANGES.
-
-// TestUser is intended as a way to inject a "current User" for unit tests
-var TestUser models.User
-
 // Resolver is required by gqlgen
 type Resolver struct{}
 
