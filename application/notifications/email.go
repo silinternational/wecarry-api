@@ -24,6 +24,7 @@ func GetEmailTemplate(key string) string {
 		domain.MessageTemplateRequestFromCommittedToDelivered: domain.MessageTemplateRequestDelivered,
 		domain.MessageTemplateRequestFromAcceptedToReceived:   domain.MessageTemplateRequestReceived,
 		domain.MessageTemplateRequestFromAcceptedToCompleted:  domain.MessageTemplateRequestReceived,
+		domain.MessageTemplateRequestFromDeliveredToCompleted: domain.MessageTemplateRequestReceived,
 		domain.MessageTemplateRequestFromCommittedToReceived:  domain.MessageTemplateRequestReceived,
 		domain.MessageTemplateRequestFromCompletedToAccepted:  domain.MessageTemplateRequestNotReceivedAfterAll,
 		domain.MessageTemplateRequestFromCompletedToDelivered: domain.MessageTemplateRequestNotReceivedAfterAll,
