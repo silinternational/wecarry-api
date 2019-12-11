@@ -65,6 +65,10 @@ func CreateUserFixtures(tx *pop.Connection, t *testing.T, n int) UserFixtures {
 		userOrgs[i].AuthEmail = unique + users[i].Email
 		CreateFixture(tx, t, &userOrgs[i])
 
+		if err := tx.Load(&users[i], "Organizations"); err != nil {
+			t.Errorf("failed to load organizations on users[%d] fixture, %s", i, err)
+		}
+
 		accessTokenFixtures[i].UserID = users[i].ID
 		accessTokenFixtures[i].UserOrganizationID = userOrgs[i].ID
 		accessTokenFixtures[i].AccessToken = models.HashClientIdAccessToken(users[i].Nickname)

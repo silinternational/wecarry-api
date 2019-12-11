@@ -7,6 +7,7 @@ import (
 
 	"github.com/gobuffalo/nulls"
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/internal/test"
 	"github.com/silinternational/wecarry-api/models"
 )
 
@@ -33,54 +34,11 @@ func CreateFixtures_GetPostRecipients(ms *ModelSuite, t *testing.T) orgUserPostF
 		t.FailNow()
 	}
 
-	// Load User test fixtures
-	users := models.Users{
-		{
-			Email:     "user1-" + unique + "@example.com",
-			FirstName: "Existing1",
-			LastName:  "User",
-			Nickname:  "Existing1 User " + unique,
-		},
-		{
-			Email:     "user2-" + unique + "@example.com",
-			FirstName: "Existing2",
-			LastName:  "User",
-			Nickname:  "Existing2 User " + unique,
-		},
-		{
-			Email:     "not_participating-" + unique + "@example.com",
-			FirstName: "Not",
-			LastName:  "Participating",
-			Nickname:  "Not Participating " + unique,
-		},
-	}
-	for i := range users {
-		users[i].UUID = domain.GetUUID()
-		if err := ms.DB.Create(&users[i]); err != nil {
-			t.Errorf("could not create test user %v ... %v", users[i], err)
-			t.FailNow()
-		}
-	}
+	userFixtures := test.CreateUserFixtures(ms.DB, t, 3)
 
-	_, err := users[1].UpdateStandardPreferences(models.StandardPreferences{Language: domain.UserPreferenceLanguageFrench})
+	_, err := userFixtures.Users[1].UpdateStandardPreferences(models.StandardPreferences{Language: domain.UserPreferenceLanguageFrench})
 
-	ms.NoError(err, "could not create language preference for user "+users[1].Nickname)
-
-	// Load UserOrganization test fixtures
-	userOrg := models.UserOrganization{
-		OrganizationID: org.ID,
-		UserID:         users[0].ID,
-		AuthID:         users[0].Email,
-		AuthEmail:      users[0].Email,
-	}
-	if err := ms.DB.Create(&userOrg); err != nil {
-		t.Errorf("could not create test user org ... %v. uo = %+v", err, userOrg)
-		t.FailNow()
-	}
-
-	if err := models.DB.Load(&users[0], "Organizations"); err != nil {
-		t.Errorf("failed to load organizations on users[0] fixture, %s", err)
-	}
+	ms.NoError(err, "could not create language preference for user "+userFixtures.Users[1].Nickname)
 
 	locations := []models.Location{{}, {}}
 	for i := range locations {
@@ -90,24 +48,24 @@ func CreateFixtures_GetPostRecipients(ms *ModelSuite, t *testing.T) orgUserPostF
 	// Load Post test fixtures
 	posts := []models.Post{
 		{
-			CreatedByID:    users[0].ID,
+			CreatedByID:    userFixtures.Users[0].ID,
 			Type:           models.PostTypeRequest,
-			OrganizationID: users[0].Organizations[0].ID,
+			OrganizationID: userFixtures.Users[0].Organizations[0].ID,
 			Title:          "First Request",
 			Size:           models.PostSizeMedium,
 			Status:         models.PostStatusOpen,
-			ProviderID:     nulls.NewInt(users[1].ID),
-			ReceiverID:     nulls.NewInt(users[0].ID),
+			ProviderID:     nulls.NewInt(userFixtures.Users[1].ID),
+			ReceiverID:     nulls.NewInt(userFixtures.Users[0].ID),
 			DestinationID:  locations[0].ID,
 		},
 		{
-			CreatedByID:    users[0].ID,
+			CreatedByID:    userFixtures.Users[0].ID,
 			Type:           models.PostTypeRequest,
-			OrganizationID: users[0].Organizations[0].ID,
+			OrganizationID: userFixtures.Users[0].Organizations[0].ID,
 			Title:          "Second Request",
 			Size:           models.PostSizeMedium,
 			Status:         models.PostStatusOpen,
-			ReceiverID:     nulls.NewInt(users[0].ID),
+			ReceiverID:     nulls.NewInt(userFixtures.Users[0].ID),
 			DestinationID:  locations[1].ID,
 		},
 	}
@@ -125,7 +83,7 @@ func CreateFixtures_GetPostRecipients(ms *ModelSuite, t *testing.T) orgUserPostF
 
 	return orgUserPostFixtures{
 		orgs:  models.Organizations{org},
-		users: users,
+		users: userFixtures.Users,
 		posts: posts,
 	}
 }
@@ -147,51 +105,7 @@ func CreateFixtures_RequestStatusUpdatedNotifications(ms *ModelSuite, t *testing
 		t.FailNow()
 	}
 
-	// Load User test fixtures
-	users := models.Users{
-		{
-			Email:     "user1-" + unique + "@example.com",
-			FirstName: "Existing1",
-			LastName:  "User",
-			Nickname:  "Existing1 User " + unique,
-		},
-		{
-			Email:     "user2-" + unique + "@example.com",
-			FirstName: "Existing2",
-			LastName:  "User",
-			Nickname:  "Existing2 User " + unique,
-		},
-		{
-			Email:     "not_participating-" + unique + "@example.com",
-			FirstName: "Not",
-			LastName:  "Participating",
-			Nickname:  "Not Participating " + unique,
-		},
-	}
-	for i := range users {
-		users[i].UUID = domain.GetUUID()
-		if err := ms.DB.Create(&users[i]); err != nil {
-			t.Errorf("could not create test user %v ... %v", users[i], err)
-			t.FailNow()
-		}
-	}
-
-	// Load UserOrganization test fixtures
-	userOrg := models.UserOrganization{
-
-		OrganizationID: org.ID,
-		UserID:         users[0].ID,
-		AuthID:         users[0].Email,
-		AuthEmail:      users[0].Email,
-	}
-	if err := ms.DB.Create(&userOrg); err != nil {
-		t.Errorf("could not create test user org ... %v. uo = %+v", err, userOrg)
-		t.FailNow()
-	}
-
-	if err := models.DB.Load(&users[0], "Organizations"); err != nil {
-		t.Errorf("failed to load organizations on users[0] fixture, %s", err)
-	}
+	userFixtures := test.CreateUserFixtures(ms.DB, t, 3)
 
 	locations := []models.Location{{}, {}}
 	for i := range locations {
@@ -201,24 +115,24 @@ func CreateFixtures_RequestStatusUpdatedNotifications(ms *ModelSuite, t *testing
 	// Load Post test fixtures
 	posts := []models.Post{
 		{
-			CreatedByID:    users[0].ID,
+			CreatedByID:    userFixtures.Users[0].ID,
 			Type:           models.PostTypeRequest,
-			OrganizationID: users[0].Organizations[0].ID,
+			OrganizationID: userFixtures.Users[0].Organizations[0].ID,
 			Title:          "First Request",
 			Size:           models.PostSizeMedium,
 			Status:         models.PostStatusOpen,
-			ProviderID:     nulls.NewInt(users[1].ID),
-			ReceiverID:     nulls.NewInt(users[0].ID),
+			ProviderID:     nulls.NewInt(userFixtures.Users[1].ID),
+			ReceiverID:     nulls.NewInt(userFixtures.Users[0].ID),
 			DestinationID:  locations[0].ID,
 		},
 		{
-			CreatedByID:    users[0].ID,
+			CreatedByID:    userFixtures.Users[0].ID,
 			Type:           models.PostTypeRequest,
-			OrganizationID: users[0].Organizations[0].ID,
+			OrganizationID: userFixtures.Users[0].Organizations[0].ID,
 			Title:          "Second Request",
 			Size:           models.PostSizeMedium,
 			Status:         models.PostStatusOpen,
-			ReceiverID:     nulls.NewInt(users[0].ID),
+			ReceiverID:     nulls.NewInt(userFixtures.Users[0].ID),
 			DestinationID:  locations[1].ID,
 		},
 	}
@@ -236,7 +150,7 @@ func CreateFixtures_RequestStatusUpdatedNotifications(ms *ModelSuite, t *testing
 
 	return orgUserPostFixtures{
 		orgs:  models.Organizations{org},
-		users: users,
+		users: userFixtures.Users,
 		posts: posts,
 	}
 }

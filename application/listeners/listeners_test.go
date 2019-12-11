@@ -9,13 +9,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/silinternational/wecarry-api/notifications"
-
 	"github.com/gobuffalo/events"
-	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/suite"
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/internal/test"
 	"github.com/silinternational/wecarry-api/models"
+	"github.com/silinternational/wecarry-api/notifications"
 )
 
 type ModelSuite struct {
@@ -153,28 +152,7 @@ func createFixturesForSendPostCreatedNotifications(ms *ModelSuite) PostFixtures 
 	org := models.Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
 	createFixture(ms, &org)
 
-	unique := org.UUID.String()
-	users := make(models.Users, 3)
-	userLocations := make(models.Locations, len(users))
-	userOrgs := make(models.UserOrganizations, len(users))
-	for i := range users {
-		userLocations[i].Country = "US"
-		createFixture(ms, &userLocations[i])
-
-		users[i] = models.User{
-			Email:      fmt.Sprintf("%s_user%d@example.com", unique, i),
-			Nickname:   fmt.Sprintf("%s_User%d", unique, i),
-			UUID:       domain.GetUUID(),
-			LocationID: nulls.NewInt(userLocations[i].ID),
-		}
-		createFixture(ms, &users[i])
-
-		userOrgs[i].OrganizationID = org.ID
-		userOrgs[i].UserID = users[i].ID
-		userOrgs[i].AuthEmail = users[i].Email
-		userOrgs[i].AuthID = users[i].Email
-		createFixture(ms, &(userOrgs[i]))
-	}
+	userFixtures := test.CreateUserFixtures(ms.DB, ms.T(), 3)
 
 	location := models.Location{Country: "US"}
 	createFixture(ms, &location)
@@ -182,14 +160,14 @@ func createFixturesForSendPostCreatedNotifications(ms *ModelSuite) PostFixtures 
 	post := models.Post{
 		OrganizationID: org.ID,
 		UUID:           domain.GetUUID(),
-		CreatedByID:    users[0].ID,
+		CreatedByID:    userFixtures.Users[0].ID,
 		DestinationID:  location.ID,
 		Type:           models.PostTypeOffer,
 	}
 	createFixture(ms, &post)
 
 	return PostFixtures{
-		Users: users,
+		Users: userFixtures.Users,
 		Posts: models.Posts{post},
 	}
 }
