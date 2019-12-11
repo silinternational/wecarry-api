@@ -5,6 +5,7 @@ import (
 	"github.com/silinternational/wecarry-api/aws"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
+	"github.com/silinternational/wecarry-api/test"
 	"strconv"
 	"time"
 )
@@ -166,28 +167,7 @@ func createFixturesForUpdatePost(as *ActionSuite) UpdatePostFixtures {
 	org := models.Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
 	createFixture(as, &org)
 
-	unique := org.UUID.String()
-	users := make(models.Users, 2)
-	userOrgs := make(models.UserOrganizations, len(users))
-	accessTokenFixtures := make([]models.UserAccessToken, len(users))
-	for i := range users {
-		users[i].UUID = domain.GetUUID()
-		users[i].Email = unique + "_user" + strconv.Itoa(i) + "@example.com"
-		users[i].Nickname = unique + "_auth_user" + strconv.Itoa(i)
-		createFixture(as, &users[i])
-
-		userOrgs[i].UserID = users[i].ID
-		userOrgs[i].OrganizationID = org.ID
-		userOrgs[i].AuthID = unique + "_auth_user" + strconv.Itoa(i)
-		userOrgs[i].AuthEmail = unique + users[i].Email
-		createFixture(as, &userOrgs[i])
-
-		accessTokenFixtures[i].UserID = users[i].ID
-		accessTokenFixtures[i].UserOrganizationID = userOrgs[i].ID
-		accessTokenFixtures[i].AccessToken = models.HashClientIdAccessToken(users[i].Nickname)
-		accessTokenFixtures[i].ExpiresAt = time.Now().Add(time.Minute * 60)
-		createFixture(as, &accessTokenFixtures[i])
-	}
+	userFixtures := test.CreateUserFixtures(as.DB, t, 2)
 
 	locations := []models.Location{
 		{
@@ -203,13 +183,13 @@ func createFixturesForUpdatePost(as *ActionSuite) UpdatePostFixtures {
 
 	posts := models.Posts{
 		{
-			CreatedByID:    users[0].ID,
+			CreatedByID:    userFixtures.Users[0].ID,
 			Type:           models.PostTypeRequest,
 			OrganizationID: org.ID,
 			Title:          "An Offer",
 			Size:           models.PostSizeLarge,
 			Status:         models.PostStatusOpen,
-			ReceiverID:     nulls.NewInt(users[1].ID),
+			ReceiverID:     nulls.NewInt(userFixtures.Users[1].ID),
 			DestinationID:  locations[0].ID, // test update of existing location
 			// leave OriginID nil to test adding a location
 		},
@@ -257,7 +237,7 @@ func createFixturesForUpdatePost(as *ActionSuite) UpdatePostFixtures {
 
 	return UpdatePostFixtures{
 		Posts: posts,
-		Users: users,
+		Users: userFixtures.Users,
 		Files: fileFixtures,
 	}
 }
