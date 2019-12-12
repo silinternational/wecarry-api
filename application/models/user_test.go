@@ -362,7 +362,7 @@ func (ms *ModelSuite) TestUser_GetOrganizations() {
 
 func (ms *ModelSuite) TestUser_FindUserOrganization() {
 	t := ms.T()
-	users, orgs := createUserOrganizationFixtures(ms, t)
+	users, orgs := createUserOrganizationFixtures(ms)
 
 	type args struct {
 		user User

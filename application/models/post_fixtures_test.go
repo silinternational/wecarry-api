@@ -269,8 +269,7 @@ func createFixturesForPostFindByUserAndUUID(ms *ModelSuite) PostFixtures {
 		createFixture(ms, &orgs[i])
 	}
 
-	uf := CreateUserFixtures(ms.DB, 2)
-	users := uf.Users
+	users := CreateUserFixtures(ms.DB, 2).Users
 
 	// both users are in org 0, but need user 0 to also be in org 1
 	createFixture(ms, &UserOrganization{
@@ -310,8 +309,7 @@ func CreateFixtures_Posts_FindByUser(ms *ModelSuite) PostFixtures {
 		createFixture(ms, &orgs[i])
 	}
 
-	uf := CreateUserFixtures(ms.DB, 2)
-	users := uf.Users
+	users := CreateUserFixtures(ms.DB, 2).Users
 
 	// both users are in org 0, but need user 0 to also be in org 1
 	createFixture(ms, &UserOrganization{
@@ -380,8 +378,7 @@ func createFixturesForPostGetAudience(ms *ModelSuite) PostFixtures {
 		createFixture(ms, &orgs[i])
 	}
 
-	uf := CreateUserFixtures(ms.DB, 2)
-	users := uf.Users
+	users := CreateUserFixtures(ms.DB, 2).Users
 
 	locations := []Location{{}, {}}
 	for i := range locations {

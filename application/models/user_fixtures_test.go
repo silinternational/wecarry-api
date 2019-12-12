@@ -34,8 +34,7 @@ func createFixturesForUserGetOrganizations(ms *ModelSuite) ([]Organization, User
 		createFixture(ms, &orgs[i])
 	}
 
-	uf := CreateUserFixtures(ms.DB, 1)
-	users := uf.Users
+	users := CreateUserFixtures(ms.DB, 1).Users
 
 	// user is already in org 0, but need user to also be in org 1
 	createFixture(ms, &UserOrganization{
@@ -449,8 +448,7 @@ func CreateFixturesForUserWantsPostNotification(ms *ModelSuite) UserPostFixtures
 }
 
 func CreateUserFixtures_TestGetPreference(ms *ModelSuite) UserPostFixtures {
-	uf := CreateUserFixtures(ms.DB, 2)
-	users := uf.Users
+	users := CreateUserFixtures(ms.DB, 2).Users
 
 	// Load UserPreferences test fixtures
 	userPreferences := UserPreferences{
@@ -471,15 +469,11 @@ func CreateUserFixtures_TestGetPreference(ms *ModelSuite) UserPostFixtures {
 		createFixture(ms, &userPreferences[i])
 	}
 
-	return UserPostFixtures{
-		Users:           users,
-		UserPreferences: userPreferences,
-	}
+	return UserPostFixtures{Users: users, UserPreferences: userPreferences}
 }
 
 func CreateUserFixtures_TestGetLanguagePreference(ms *ModelSuite) Users {
-	uf := CreateUserFixtures(ms.DB, 3)
-	users := uf.Users
+	users := CreateUserFixtures(ms.DB, 3).Users
 
 	// Load UserPreferences test fixtures
 	userPreferences := UserPreferences{
