@@ -1,8 +1,10 @@
-<p>You have a new message on <a href="<%= uiURL %>"><%= appName %></a>.</p>
 <h4><a href="<%= postURL %>"><%= postTitle %></a></h4>
+<p>
+    You have a new message from <%= sentByNickname %>:
+</p>
+
 <p><%= messageContent %></p>
-&mdash; <%= sentByNickname %><br>
-<br>
-Read the full <a href="<%= threadURL %>">Conversation</a> on <%= appName %>
-<br>
-<br>
+
+<p>
+    Read the full <a href="<%= threadURL %>">Conversation</a> at <a href="<%= threadURL %>"><%= threadURL %></a>
+</p>
