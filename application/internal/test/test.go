@@ -82,18 +82,3 @@ func CreateUserFixtures(tx *pop.Connection, t *testing.T, n int) UserFixtures {
 		Locations:    locations,
 	}
 }
-
-//func CreatePostFixtures(tx *pop.Connection, t *testing.T, n int) models.Posts {
-//	postDestinations := make(models.Locations, n)
-//	posts := make(models.Posts, n)
-//	for i := range posts {
-//		MustCreate(tx, postDestinations[i])
-//
-//		posts[i].UUID = domain.GetUUID()
-//		posts[i].CreatedByID = users[1].ID
-//		posts[i].OrganizationID = org.ID
-//		posts[i].ProviderID = nulls.NewInt(users[1].ID)
-//		posts[i].DestinationID = postDestinations[i].ID
-//		MustCreate(tx, &posts[i])
-//	}
-//}
