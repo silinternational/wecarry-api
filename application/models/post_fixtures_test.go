@@ -405,6 +405,63 @@ func CreateFixtures_Posts_FindByUser(ms *ModelSuite) PostFixtures {
 	}
 }
 
+func createFixtures_Posts_FilterByUserTypeAndContents(ms *ModelSuite) PostFixtures {
+	orgs := Organizations{{}, {}}
+	for i := range orgs {
+		orgs[i].UUID = domain.GetUUID()
+		orgs[i].AuthConfig = "{}"
+		createFixture(ms, &orgs[i])
+	}
+
+	unique := domain.GetUUID().String()
+	users := Users{
+		{Email: unique + "_user0@example.com", Nickname: unique + "User0"},
+		{Email: unique + "_user1@example.com", Nickname: unique + "User1"},
+	}
+	for i := range users {
+		users[i].UUID = domain.GetUUID()
+		createFixture(ms, &users[i])
+	}
+
+	userOrgs := UserOrganizations{
+		{OrganizationID: orgs[0].ID, UserID: users[0].ID, AuthID: users[0].Email, AuthEmail: users[0].Email},
+		{OrganizationID: orgs[1].ID, UserID: users[0].ID, AuthID: users[0].Email, AuthEmail: users[0].Email},
+		{OrganizationID: orgs[1].ID, UserID: users[1].ID, AuthID: users[1].Email, AuthEmail: users[1].Email},
+	}
+	for i := range userOrgs {
+		createFixture(ms, &userOrgs[i])
+	}
+
+	locations := make([]Location, 6)
+	for i := range locations {
+		createFixture(ms, &locations[i])
+	}
+
+	posts := Posts{
+		{CreatedByID: users[0].ID, OrganizationID: orgs[0].ID, Title: "With Match"},
+		{CreatedByID: users[0].ID, OrganizationID: orgs[1].ID, Title: "MXtch In Description",
+			Description: nulls.NewString("This has the lower case match in it.")},
+		{CreatedByID: users[0].ID, OrganizationID: orgs[0].ID, Status: PostStatusCompleted,
+			Title: "With Match But Completed"},
+		{CreatedByID: users[0].ID, OrganizationID: orgs[0].ID, Status: PostStatusRemoved,
+			Title: "With Match But Removed"},
+		{CreatedByID: users[1].ID, OrganizationID: orgs[1].ID, Title: "User1 No MXtch"},
+		{CreatedByID: users[1].ID, OrganizationID: orgs[1].ID, Title: "User1 With MATCH"},
+	}
+
+	for i := range posts {
+		posts[i].UUID = domain.GetUUID()
+		posts[i].DestinationID = locations[i].ID
+		posts[i].Type = PostTypeRequest
+		createFixture(ms, &posts[i])
+	}
+
+	return PostFixtures{
+		Users: users,
+		Posts: posts,
+	}
+}
+
 func CreateFixtures_Post_IsEditable(ms *ModelSuite) PostFixtures {
 	org := Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
 	createFixture(ms, &org)
