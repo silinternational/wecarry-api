@@ -394,3 +394,18 @@ func (r *mutationResolver) UpdatePostStatus(ctx context.Context, input UpdatePos
 
 	return &post, nil
 }
+
+// RequestsSearch resolves the `requestsSearch` query by finding requests that contain
+//  a certain string in their Title or Description
+func (r *queryResolver) SearchRequests(ctx context.Context, text string) ([]models.Post, error) {
+	posts := models.Posts{}
+	cUser := models.GetCurrentUserFromGqlContext(ctx)
+	if err := posts.FilterByUserTypeAndContents(ctx, cUser, models.PostTypeRequest, text); err != nil {
+		extras := map[string]interface{}{
+			"user": cUser.UUID,
+		}
+		return nil, reportError(ctx, err, "GetPosts", extras)
+	}
+
+	return posts, nil
+}

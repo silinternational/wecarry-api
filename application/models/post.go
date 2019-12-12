@@ -696,6 +696,21 @@ func (p *Posts) FindByUser(ctx context.Context, user User) error {
 		All(p)
 }
 
+// FilterByUserAndContents finds all posts belonging to the same organization as the given user,
+// not marked as completed or removed and containing a certain search text.
+func (p *Posts) FilterByUserTypeAndContents(ctx context.Context, user User, pType PostType, contains string) error {
+	where := `title like ? or description like ?`
+	contains = `%` + contains + `%`
+
+	return DB.
+		Scope(scopeUserOrgs(user)).
+		Scope(scopeNotCompleted()).
+		Where(where, contains, contains).
+		Where(`type = ?`, pType).
+		Order("created_at desc").
+		All(p)
+}
+
 // GetDestination reads the destination record, if it exists, and returns the Location object.
 func (p *Post) GetDestination() (*Location, error) {
 	location := Location{}
