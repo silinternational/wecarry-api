@@ -3,7 +3,6 @@ package gqlgen
 import (
 	"context"
 	"errors"
-
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/gobuffalo/nulls"
 	"github.com/silinternational/wecarry-api/models"
@@ -400,6 +399,7 @@ func (r *mutationResolver) UpdatePostStatus(ctx context.Context, input UpdatePos
 func (r *queryResolver) SearchRequests(ctx context.Context, text string) ([]models.Post, error) {
 	posts := models.Posts{}
 	cUser := models.GetCurrentUserFromGqlContext(ctx)
+
 	if err := posts.FilterByUserTypeAndContents(ctx, cUser, models.PostTypeRequest, text); err != nil {
 		extras := map[string]interface{}{
 			"user": cUser.UUID,

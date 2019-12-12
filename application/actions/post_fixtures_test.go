@@ -160,6 +160,91 @@ func createFixturesForPostQuery(as *ActionSuite) PostQueryFixtures {
 	}
 }
 
+func createFixturesForSearchRequestsQuery(as *ActionSuite) PostQueryFixtures {
+	org := models.Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
+	createFixture(as, &org)
+
+	unique := org.UUID.String()
+	users := make(models.Users, 2)
+	userOrgs := make(models.UserOrganizations, len(users))
+	accessTokenFixtures := make([]models.UserAccessToken, len(users))
+	for i := range users {
+		users[i].UUID = domain.GetUUID()
+		users[i].Email = unique + "_user" + strconv.Itoa(i) + "@example.com"
+		users[i].Nickname = unique + "_auth_user" + strconv.Itoa(i)
+		users[i].AuthPhotoURL = nulls.NewString(users[i].Nickname + ".gif")
+		createFixture(as, &users[i])
+
+		userOrgs[i].UserID = users[i].ID
+		userOrgs[i].OrganizationID = org.ID
+		userOrgs[i].AuthID = unique + "_auth_user" + strconv.Itoa(i)
+		userOrgs[i].AuthEmail = unique + users[i].Email
+		createFixture(as, &userOrgs[i])
+
+		accessTokenFixtures[i].UserID = users[i].ID
+		accessTokenFixtures[i].UserOrganizationID = userOrgs[i].ID
+		accessTokenFixtures[i].AccessToken = models.HashClientIdAccessToken(users[i].Nickname)
+		accessTokenFixtures[i].ExpiresAt = time.Now().Add(time.Minute * 60)
+		createFixture(as, &accessTokenFixtures[i])
+	}
+
+	locations := []models.Location{
+		{
+			Description: "Miami, FL, USA",
+			Country:     "US",
+			Latitude:    nulls.NewFloat64(25.7617),
+			Longitude:   nulls.NewFloat64(-80.1918),
+		},
+		{
+			Description: "Toronto, Canada",
+			Country:     "CA",
+			Latitude:    nulls.NewFloat64(43.6532),
+			Longitude:   nulls.NewFloat64(-79.3832),
+		},
+		{},
+	}
+	for i := range locations {
+		createFixture(as, &locations[i])
+	}
+
+	posts := models.Posts{
+		{
+			CreatedByID:    users[0].ID,
+			ReceiverID:     nulls.NewInt(users[0].ID),
+			ProviderID:     nulls.NewInt(users[1].ID),
+			OrganizationID: org.ID,
+			Type:           models.PostTypeRequest,
+			Status:         models.PostStatusCommitted,
+			Title:          "A Match",
+			DestinationID:  locations[0].ID,
+			OriginID:       nulls.NewInt(locations[1].ID),
+			Size:           models.PostSizeSmall,
+			Description:    nulls.NewString("This is a description"),
+			URL:            nulls.NewString("https://www.example.com/items/101"),
+			Kilograms:      11.11,
+		},
+		{
+			CreatedByID:    users[0].ID,
+			ProviderID:     nulls.NewInt(users[0].ID),
+			OrganizationID: org.ID,
+			DestinationID:  locations[2].ID,
+			Title:          "Not a MXtch",
+			Type:           models.PostTypeRequest,
+		},
+	}
+	for i := range posts {
+		posts[i].UUID = domain.GetUUID()
+		createFixture(as, &posts[i])
+	}
+
+	return PostQueryFixtures{
+		Organization: org,
+		Users:        users,
+		Posts:        posts,
+		Locations:    locations,
+	}
+}
+
 func createFixturesForUpdatePost(as *ActionSuite) UpdatePostFixtures {
 	t := as.T()
 

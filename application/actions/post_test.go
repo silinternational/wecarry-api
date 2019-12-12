@@ -19,6 +19,10 @@ type PostsResponse struct {
 	Posts []Post `json:"posts"`
 }
 
+type SearchRequestsResponse struct {
+	Posts []Post `json:"searchRequests"`
+}
+
 type PostResponse struct {
 	Post Post `json:"post"`
 }
@@ -288,4 +292,22 @@ func (as *ActionSuite) Test_UpdatePostStatus() {
 			as.Equal(step.status, postsResp.Post.Status)
 		}
 	}
+}
+
+func (as *ActionSuite) Test_SearchRequests() {
+	f := createFixturesForSearchRequestsQuery(as)
+	query := `{ searchRequests(text: "match")
+		{
+			id
+			title
+		}}`
+
+	var resp SearchRequestsResponse
+
+	err := as.testGqlQuery(query, f.Users[0].Nickname, &resp)
+	as.NoError(err)
+
+	as.Equal(1, len(resp.Posts), "incorrect number of posts returned")
+	as.Equal(f.Posts[0].UUID.String(), resp.Posts[0].ID)
+	as.Equal(f.Posts[0].Title, resp.Posts[0].Title)
 }
