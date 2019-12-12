@@ -18,23 +18,8 @@ type orgUserPostFixtures struct {
 }
 
 func CreateFixtures_GetPostRecipients(ms *ModelSuite, t *testing.T) orgUserPostFixtures {
-
-	unique := domain.GetUUID().String()
-
-	// Load Organization test fixtures
-	org := models.Organization{
-		Name:       "ACME-" + unique,
-		UUID:       domain.GetUUID(),
-		AuthType:   models.AuthTypeSaml,
-		AuthConfig: "{}",
-	}
-
-	if err := ms.DB.Create(&org); err != nil {
-		t.Errorf("error creating org %+v ...\n %v \n", org, err)
-		t.FailNow()
-	}
-
 	userFixtures := test.CreateUserFixtures(ms.DB, t, 3)
+	org := userFixtures.Organization
 
 	_, err := userFixtures.Users[1].UpdateStandardPreferences(models.StandardPreferences{Language: domain.UserPreferenceLanguageFrench})
 
@@ -89,23 +74,8 @@ func CreateFixtures_GetPostRecipients(ms *ModelSuite, t *testing.T) orgUserPostF
 }
 
 func CreateFixtures_RequestStatusUpdatedNotifications(ms *ModelSuite, t *testing.T) orgUserPostFixtures {
-
-	unique := domain.GetUUID().String()
-
-	// Load Organization test fixtures
-	org := models.Organization{
-		Name:       "ACME-" + unique,
-		UUID:       domain.GetUUID(),
-		AuthType:   models.AuthTypeSaml,
-		AuthConfig: "{}",
-	}
-
-	if err := ms.DB.Create(&org); err != nil {
-		t.Errorf("error creating org %+v ...\n %v \n", org, err)
-		t.FailNow()
-	}
-
 	userFixtures := test.CreateUserFixtures(ms.DB, t, 3)
+	org := userFixtures.Organization
 
 	locations := []models.Location{{}, {}}
 	for i := range locations {

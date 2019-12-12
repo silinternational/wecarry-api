@@ -149,10 +149,8 @@ func (ms *ModelSuite) TestSendNewMessageNotification() {
 }
 
 func createFixturesForSendPostCreatedNotifications(ms *ModelSuite) PostFixtures {
-	org := models.Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
-	createFixture(ms, &org)
-
 	userFixtures := test.CreateUserFixtures(ms.DB, ms.T(), 3)
+	org := userFixtures.Organization
 
 	location := models.Location{Country: "US"}
 	createFixture(ms, &location)

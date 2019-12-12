@@ -17,10 +17,8 @@ type threadQueryFixtures struct {
 }
 
 func createFixturesForThreadQuery(as *ActionSuite) threadQueryFixtures {
-	org := models.Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
-	createFixture(as, &org)
-
 	userFixtures := test.CreateUserFixtures(as.DB, as.T(), 2)
+	org := userFixtures.Organization
 
 	locations := models.Locations{
 		{

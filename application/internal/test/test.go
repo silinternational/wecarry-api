@@ -32,8 +32,8 @@ func CreateFixture(tx *pop.Connection, t *testing.T, f interface{}) {
 func CreateUserFixtures(tx *pop.Connection, t *testing.T, n int) UserFixtures {
 	var org models.Organization
 	if err := tx.First(&org); err != nil {
-		t.Errorf("CreateUserFixtures() requires an existing org record, %s", err)
-		t.FailNow()
+		org = models.Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
+		CreateFixture(tx, t, &org)
 	}
 
 	unique := org.UUID.String()

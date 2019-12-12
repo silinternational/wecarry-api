@@ -17,10 +17,8 @@ type messageQueryFixtures struct {
 }
 
 func createFixtures_MessageQuery(as *ActionSuite) messageQueryFixtures {
-	org := models.Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
-	createFixture(as, &org)
-
 	userFixtures := test.CreateUserFixtures(as.DB, as.T(), 2)
+	org := userFixtures.Organization
 
 	posts := models.Posts{
 		{

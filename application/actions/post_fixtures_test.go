@@ -29,10 +29,8 @@ type UpdatePostStatusFixtures struct {
 func createFixturesForPostQuery(as *ActionSuite) PostQueryFixtures {
 	t := as.T()
 
-	org := models.Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
-	test.CreateFixture(as.DB, t, &org)
-
 	userFixtures := test.CreateUserFixtures(as.DB, t, 2)
+	org := userFixtures.Organization
 
 	locations := []models.Location{
 		{
@@ -140,10 +138,8 @@ func createFixturesForPostQuery(as *ActionSuite) PostQueryFixtures {
 func createFixturesForUpdatePost(as *ActionSuite) UpdatePostFixtures {
 	t := as.T()
 
-	org := models.Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
-	test.CreateFixture(as.DB, t, &org)
-
 	userFixtures := test.CreateUserFixtures(as.DB, t, 2)
+	org := userFixtures.Organization
 
 	locations := []models.Location{
 		{
@@ -221,10 +217,8 @@ func createFixturesForUpdatePost(as *ActionSuite) UpdatePostFixtures {
 func createFixturesForCreatePost(as *ActionSuite) CreatePostFixtures {
 	t := as.T()
 
-	org := models.Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
-	test.CreateFixture(as.DB, t, &org)
-
 	userFixtures := test.CreateUserFixtures(as.DB, t, 1)
+	org := userFixtures.Organization
 
 	if err := aws.CreateS3Bucket(); err != nil {
 		t.Errorf("failed to create S3 bucket, %s", err)
@@ -245,10 +239,8 @@ func createFixturesForCreatePost(as *ActionSuite) CreatePostFixtures {
 }
 
 func createFixturesForUpdatePostStatus(as *ActionSuite) UpdatePostStatusFixtures {
-	org := models.Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
-	test.CreateFixture(as.DB, as.T(), &org)
-
 	userFixtures := test.CreateUserFixtures(as.DB, as.T(), 2)
+	org := userFixtures.Organization
 
 	posts := make(models.Posts, 1)
 	locations := make(models.Locations, len(posts))
