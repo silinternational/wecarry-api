@@ -16,7 +16,6 @@ import (
 	mwi18n "github.com/gobuffalo/mw-i18n"
 	"github.com/gobuffalo/packr/v2"
 	uuid2 "github.com/gofrs/uuid"
-	"github.com/nicksnyder/go-i18n/i18n"
 	"github.com/rollbar/rollbar-go"
 )
 
@@ -412,11 +411,7 @@ func TranslateWithLang(lang, translationID string, args ...interface{}) (string,
 		}
 	}
 
-	t2, err := i18n.Tfunc(lang)
-	if err != nil {
-		return "", err
-	}
-	return t2(translationID, args...), nil
+	return T.TranslateWithLang(lang, translationID, args...)
 }
 
 // IsOtherThanNoRows returns false if the error is nil or is just reporting that there
