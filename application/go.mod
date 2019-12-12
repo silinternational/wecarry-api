@@ -8,12 +8,12 @@ require (
 	github.com/beevik/etree v1.1.0 // indirect
 	github.com/cockroachdb/cockroach-go v0.0.0-20190925194419-606b3d062051 // indirect
 	github.com/go-chi/chi v3.3.2+incompatible
-	github.com/gobuffalo/buffalo v0.15.1
+	github.com/gobuffalo/buffalo v0.15.3
 	github.com/gobuffalo/buffalo-pop v1.23.1
-	github.com/gobuffalo/envy v1.7.1
+	github.com/gobuffalo/envy v1.8.1
 	github.com/gobuffalo/events v1.4.0
 	github.com/gobuffalo/httptest v1.4.0
-	github.com/gobuffalo/mw-i18n v0.0.0-20190129204410-552713a3ebb4
+	github.com/gobuffalo/mw-i18n v0.0.0-20191212073857-95b5d236d455
 	github.com/gobuffalo/mw-paramlogger v0.0.0-20190224201358-0d45762ab655
 	github.com/gobuffalo/nulls v0.1.0
 	github.com/gobuffalo/packr/v2 v2.7.1
