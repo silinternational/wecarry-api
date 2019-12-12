@@ -7,9 +7,7 @@ require (
 	github.com/aws/aws-sdk-go v1.25.0
 	github.com/beevik/etree v1.1.0 // indirect
 	github.com/cockroachdb/cockroach-go v0.0.0-20190925194419-606b3d062051 // indirect
-	github.com/go-chi/chi v3.3.2+incompatible
 	github.com/gobuffalo/buffalo v0.15.3
-	github.com/gobuffalo/buffalo-pop v1.23.1
 	github.com/gobuffalo/envy v1.8.1
 	github.com/gobuffalo/events v1.4.0
 	github.com/gobuffalo/httptest v1.4.0
@@ -25,7 +23,6 @@ require (
 	github.com/jackc/pgconn v1.1.0 // indirect
 	github.com/markbates/goth v1.56.0
 	github.com/markbates/grift v1.5.0
-	github.com/nicksnyder/go-i18n v1.10.0
 	github.com/olekukonko/tablewriter v0.0.2 // indirect
 	github.com/paganotoni/sendgrid-sender v1.0.5
 	github.com/pkg/errors v0.8.1
