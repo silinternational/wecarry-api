@@ -7,7 +7,6 @@ import (
 	"github.com/gobuffalo/nulls"
 	"github.com/silinternational/wecarry-api/aws"
 	"github.com/silinternational/wecarry-api/domain"
-	"github.com/silinternational/wecarry-api/internal/test"
 	"github.com/silinternational/wecarry-api/models"
 )
 
@@ -22,7 +21,7 @@ type UserQueryFixtures struct {
 
 func fixturesForUserQuery(as *ActionSuite) UserQueryFixtures {
 	org := &models.Organization{AuthConfig: "{}", UUID: domain.GetUUID()}
-	test.CreateFixture(as.DB, as.T(), org)
+	createFixture(as, org)
 
 	locations := []models.Location{
 		{

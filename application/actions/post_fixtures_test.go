@@ -49,7 +49,7 @@ func createFixturesForPostQuery(as *ActionSuite) PostQueryFixtures {
 		{},
 	}
 	for i := range locations {
-		test.CreateFixture(as.DB, t, &locations[i])
+		createFixture(as, &locations[i])
 	}
 
 	posts := models.Posts{
@@ -77,21 +77,21 @@ func createFixturesForPostQuery(as *ActionSuite) PostQueryFixtures {
 	}
 	for i := range posts {
 		posts[i].UUID = domain.GetUUID()
-		test.CreateFixture(as.DB, t, &posts[i])
+		createFixture(as, &posts[i])
 	}
 
 	threads := []models.Thread{
 		{UUID: domain.GetUUID(), PostID: posts[0].ID},
 	}
 	for i := range threads {
-		test.CreateFixture(as.DB, t, &threads[i])
+		createFixture(as, &threads[i])
 	}
 
 	threadParticipants := []models.ThreadParticipant{
 		{ThreadID: threads[0].ID, UserID: posts[0].CreatedByID},
 	}
 	for i := range threadParticipants {
-		test.CreateFixture(as.DB, t, &threadParticipants[i])
+		createFixture(as, &threadParticipants[i])
 	}
 
 	if err := aws.CreateS3Bucket(); err != nil {
@@ -152,7 +152,7 @@ func createFixturesForUpdatePost(as *ActionSuite) UpdatePostFixtures {
 		},
 	}
 	for i := range locations {
-		test.CreateFixture(as.DB, t, &locations[i])
+		createFixture(as, &locations[i])
 	}
 
 	posts := models.Posts{
@@ -171,7 +171,7 @@ func createFixturesForUpdatePost(as *ActionSuite) UpdatePostFixtures {
 
 	for i := range posts {
 		posts[i].UUID = domain.GetUUID()
-		test.CreateFixture(as.DB, t, &posts[i])
+		createFixture(as, &posts[i])
 	}
 
 	if err := aws.CreateS3Bucket(); err != nil {
@@ -248,7 +248,7 @@ func createFixturesForUpdatePostStatus(as *ActionSuite) UpdatePostStatusFixtures
 	posts := make(models.Posts, 1)
 	locations := make(models.Locations, len(posts))
 	for i := range posts {
-		test.CreateFixture(as.DB, as.T(), &locations[i])
+		createFixture(as, &locations[i])
 
 		posts[i].CreatedByID = users[0].ID
 		posts[i].ReceiverID = nulls.NewInt(users[0].ID)
@@ -259,7 +259,7 @@ func createFixturesForUpdatePostStatus(as *ActionSuite) UpdatePostStatusFixtures
 		posts[i].Size = models.PostSizeSmall
 		posts[i].Type = models.PostTypeRequest
 		posts[i].Status = models.PostStatusOpen
-		test.CreateFixture(as.DB, as.T(), &posts[i])
+		createFixture(as, &posts[i])
 	}
 
 	return UpdatePostStatusFixtures{
