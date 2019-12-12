@@ -19,6 +19,7 @@ type messageQueryFixtures struct {
 func createFixtures_MessageQuery(as *ActionSuite) messageQueryFixtures {
 	userFixtures := test.CreateUserFixtures(as.DB, as.T(), 2)
 	org := userFixtures.Organization
+	users := userFixtures.Users
 
 	posts := models.Posts{
 		{
@@ -28,7 +29,7 @@ func createFixtures_MessageQuery(as *ActionSuite) messageQueryFixtures {
 			Size:   models.PostSizeSmall,
 		},
 		{
-			ProviderID: nulls.NewInt(userFixtures.Users[0].ID),
+			ProviderID: nulls.NewInt(users[0].ID),
 		},
 	}
 	locations := make(models.Locations, len(posts))
@@ -36,7 +37,7 @@ func createFixtures_MessageQuery(as *ActionSuite) messageQueryFixtures {
 		createFixture(as, &locations[i])
 
 		posts[i].UUID = domain.GetUUID()
-		posts[i].CreatedByID = userFixtures.Users[0].ID
+		posts[i].CreatedByID = users[0].ID
 		posts[i].OrganizationID = org.ID
 		posts[i].DestinationID = locations[i].ID
 		createFixture(as, &posts[i])
@@ -60,14 +61,14 @@ func createFixtures_MessageQuery(as *ActionSuite) messageQueryFixtures {
 		{
 			UUID:     domain.GetUUID(),
 			ThreadID: threads[0].ID,
-			SentByID: userFixtures.Users[1].ID,
-			Content:  "Message from " + userFixtures.Users[1].Nickname,
+			SentByID: users[1].ID,
+			Content:  "Message from " + users[1].Nickname,
 		},
 		{
 			UUID:     domain.GetUUID(),
 			ThreadID: threads[0].ID,
-			SentByID: userFixtures.Users[0].ID,
-			Content:  "Reply from " + userFixtures.Users[0].Nickname,
+			SentByID: users[0].ID,
+			Content:  "Reply from " + users[0].Nickname,
 		},
 	}
 	for i := range messages {
@@ -76,7 +77,7 @@ func createFixtures_MessageQuery(as *ActionSuite) messageQueryFixtures {
 
 	return messageQueryFixtures{
 		Organization: org,
-		Users:        userFixtures.Users,
+		Users:        users,
 		Posts:        posts,
 		Threads:      threads,
 		Locations:    locations,

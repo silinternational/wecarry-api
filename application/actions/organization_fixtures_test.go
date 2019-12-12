@@ -35,12 +35,13 @@ func fixturesForCreateOrganization(as *ActionSuite) OrganizationFixtures {
 	createFixture(as, &orgs[0])
 
 	userFixtures := test.CreateUserFixtures(as.DB, as.T(), 1)
+	users := userFixtures.Users
 
-	userFixtures.Users[0].AdminRole = models.UserAdminRoleSuperAdmin
-	as.NoError(as.DB.Save(&userFixtures.Users[0]))
+	users[0].AdminRole = models.UserAdminRoleSuperAdmin
+	as.NoError(as.DB.Save(&users[0]))
 
 	return OrganizationFixtures{
-		Users:         userFixtures.Users,
+		Users:         users,
 		Organizations: orgs,
 	}
 }

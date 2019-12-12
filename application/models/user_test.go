@@ -227,7 +227,8 @@ func (ms *ModelSuite) TestUser_Validate() {
 func (ms *ModelSuite) TestUser_CreateAccessToken() {
 	t := ms.T()
 
-	orgs, users, _ := CreateUserFixtures(ms, t)
+	uf := CreateUserFixtures(ms.DB, 1)
+	users := uf.Users
 
 	type args struct {
 		user     *User
@@ -266,7 +267,7 @@ func (ms *ModelSuite) TestUser_CreateAccessToken() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			expectedExpiry := createAccessTokenExpiry().Unix()
-			token, expiry, err := test.args.user.CreateAccessToken(orgs[0], test.args.clientID)
+			token, expiry, err := test.args.user.CreateAccessToken(uf.Organization, test.args.clientID)
 			if test.wantErr {
 				if err == nil {
 					t.Errorf("expected error, but did not get one")
@@ -295,14 +296,13 @@ func (ms *ModelSuite) TestUser_CreateAccessToken() {
 
 	uat := &UserAccessToken{}
 	count, _ := ms.DB.Where("user_id = ?", users[0].ID).Count(uat)
-	if count != 2 {
-		t.Errorf("did not find correct number of user access tokens, want 2, got %v", count)
-	}
+	ms.Equal(3, count, "did not find correct number of user access tokens")
 }
 
 func (ms *ModelSuite) TestUser_GetOrgIDs() {
 	t := ms.T()
-	orgs, users, _ := CreateUserFixtures(ms, t)
+
+	orgs, users := createFixturesForUserGetOrganizations(ms)
 
 	tests := []struct {
 		name string
@@ -328,7 +328,8 @@ func (ms *ModelSuite) TestUser_GetOrgIDs() {
 
 func (ms *ModelSuite) TestUser_GetOrganizations() {
 	t := ms.T()
-	orgs, users, _ := CreateUserFixtures(ms, t)
+
+	orgs, users := createFixturesForUserGetOrganizations(ms)
 
 	tests := []struct {
 		name string
@@ -644,7 +645,7 @@ func (ms *ModelSuite) TestUser_CanUpdatePostStatus() {
 func (ms *ModelSuite) TestUser_FindByUUID() {
 	t := ms.T()
 
-	f := createFixturesForUserFind(ms)
+	f := CreateUserFixtures(ms.DB, 1)
 
 	tests := []struct {
 		name    string
@@ -680,7 +681,7 @@ func (ms *ModelSuite) TestUser_FindByUUID() {
 func (ms *ModelSuite) TestUser_FindByID() {
 	t := ms.T()
 
-	f := createFixturesForUserFind(ms)
+	f := CreateUserFixtures(ms.DB, 1)
 
 	tests := []struct {
 		name    string
@@ -1162,7 +1163,7 @@ func (ms *ModelSuite) TestUser_GetPreferences() {
 func (ms *ModelSuite) TestUser_GetLanguagePreference() {
 	t := ms.T()
 
-	f := CreateUserFixtures_TestGetLanguagePreference(ms)
+	users := CreateUserFixtures_TestGetLanguagePreference(ms)
 
 	tests := []struct {
 		name string
@@ -1171,17 +1172,17 @@ func (ms *ModelSuite) TestUser_GetLanguagePreference() {
 	}{
 		{
 			name: "english",
-			user: f.Users[0],
+			user: users[0],
 			want: domain.UserPreferenceLanguageEnglish,
 		},
 		{
 			name: "none so english default",
-			user: f.Users[1],
+			user: users[1],
 			want: domain.UserPreferenceLanguageEnglish,
 		},
 		{
 			name: "",
-			user: f.Users[2],
+			user: users[2],
 			want: domain.UserPreferenceLanguageFrench,
 		},
 	}

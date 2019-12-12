@@ -3,89 +3,34 @@ package models
 import (
 	"testing"
 
-	"github.com/gobuffalo/nulls"
 	"github.com/silinternational/wecarry-api/domain"
 )
 
-func createUserOrganizationFixtures(ms *ModelSuite, t *testing.T) {
-	// reset db tables
-
-	singleUUID := domain.GetUUID()
-	twoUUID := domain.GetUUID()
-
-	users := []User{
-		{
-			Email:     "single@domain.com",
-			FirstName: "Single",
-			LastName:  "Result",
-			Nickname:  "Single",
-			AdminRole: UserAdminRoleUser,
-			UUID:      singleUUID,
-		},
-		{
-			Email:     "two@domain.com",
-			FirstName: "Two",
-			LastName:  "Results",
-			Nickname:  "Two",
-			AdminRole: UserAdminRoleUser,
-			UUID:      twoUUID,
-		},
-	}
-	for i := range users {
-		createFixture(ms, &users[i])
-	}
-
-	org1uuid := domain.GetUUID()
-	org2uuid := domain.GetUUID()
-
-	orgs := []Organization{
-		{
-			Name:       "Org1",
-			Url:        nulls.String{},
-			AuthType:   "",
-			AuthConfig: "{}",
-			UUID:       org1uuid,
-		},
-		{
-			Name:       "Org2",
-			Url:        nulls.String{},
-			AuthType:   "",
-			AuthConfig: "{}",
-			UUID:       org2uuid,
-		},
-	}
+func createUserOrganizationFixtures(ms *ModelSuite, t *testing.T) Users {
+	orgs := Organizations{{}, {}}
 	for i := range orgs {
+		orgs[i].UUID = domain.GetUUID()
+		orgs[i].AuthConfig = "{}"
 		createFixture(ms, &orgs[i])
 	}
 
-	userOrgs := []UserOrganization{
-		{
-			OrganizationID: orgs[0].ID,
-			UserID:         users[0].ID,
-			AuthID:         "one",
-			AuthEmail:      "single@domain.com",
-		},
-		{
-			OrganizationID: orgs[0].ID,
-			UserID:         users[1].ID,
-			AuthID:         "two",
-			AuthEmail:      "two@domain.com",
-		},
-		{
-			OrganizationID: orgs[1].ID,
-			UserID:         users[1].ID,
-			AuthID:         "two",
-			AuthEmail:      "two@domain.com",
-		},
-	}
-	for i := range userOrgs {
-		createFixture(ms, &userOrgs[i])
-	}
+	uf := CreateUserFixtures(ms.DB, 2)
+	users := uf.Users
+
+	// both users are in org 0, but need user 0 to also be in org 1
+	createFixture(ms, &UserOrganization{
+		OrganizationID: orgs[1].ID,
+		UserID:         users[0].ID,
+		AuthID:         users[0].Email,
+		AuthEmail:      users[0].Email,
+	})
+
+	return uf.Users
 }
 
 func (ms *ModelSuite) TestUserOrganization_FindByAuthEmail() {
 	t := ms.T()
-	createUserOrganizationFixtures(ms, t)
+	users := createUserOrganizationFixtures(ms, t)
 
 	type args struct {
 		authEmail string
@@ -110,13 +55,13 @@ func (ms *ModelSuite) TestUserOrganization_FindByAuthEmail() {
 		},
 		{
 			name:    "single user org result",
-			args:    args{authEmail: "single@domain.com"},
+			args:    args{authEmail: users[1].Email},
 			want:    1,
 			wantErr: false,
 		},
 		{
 			name:    "two user org results",
-			args:    args{authEmail: "two@domain.com"},
+			args:    args{authEmail: users[0].Email},
 			want:    2,
 			wantErr: false,
 		},

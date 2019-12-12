@@ -1091,7 +1091,8 @@ func (ms *ModelSuite) TestPost_manageStatusTransition_backwardProgression() {
 func (ms *ModelSuite) TestPost_FindByID() {
 	t := ms.T()
 
-	_, users, _ := CreateUserFixtures(ms, t)
+	uf := CreateUserFixtures(ms.DB, 2)
+	users := uf.Users
 	posts := CreatePostFixtures(ms, t, users)
 
 	tests := []struct {
@@ -1141,8 +1142,8 @@ func (ms *ModelSuite) TestPost_FindByID() {
 func (ms *ModelSuite) TestPost_FindByUUID() {
 	t := ms.T()
 
-	_, users, _ := CreateUserFixtures(ms, t)
-	posts := CreatePostFixtures(ms, t, users)
+	uf := CreateUserFixtures(ms.DB, 2)
+	posts := CreatePostFixtures(ms, t, uf.Users)
 
 	tests := []struct {
 		name    string
@@ -1176,8 +1177,8 @@ func (ms *ModelSuite) TestPost_FindByUUID() {
 func (ms *ModelSuite) TestPost_GetCreator() {
 	t := ms.T()
 
-	_, users, _ := CreateUserFixtures(ms, t)
-	posts := CreatePostFixtures(ms, t, users)
+	uf := CreateUserFixtures(ms.DB, 2)
+	posts := CreatePostFixtures(ms, t, uf.Users)
 
 	tests := []struct {
 		name string
@@ -1201,8 +1202,8 @@ func (ms *ModelSuite) TestPost_GetCreator() {
 func (ms *ModelSuite) TestPost_GetProvider() {
 	t := ms.T()
 
-	_, users, _ := CreateUserFixtures(ms, t)
-	posts := CreatePostFixtures(ms, t, users)
+	uf := CreateUserFixtures(ms.DB, 2)
+	posts := CreatePostFixtures(ms, t, uf.Users)
 
 	tests := []struct {
 		name string
@@ -1233,8 +1234,8 @@ func (ms *ModelSuite) TestPost_GetProvider() {
 func (ms *ModelSuite) TestPost_GetReceiver() {
 	t := ms.T()
 
-	_, users, _ := CreateUserFixtures(ms, t)
-	posts := CreatePostFixtures(ms, t, users)
+	uf := CreateUserFixtures(ms.DB, 2)
+	posts := CreatePostFixtures(ms, t, uf.Users)
 
 	tests := []struct {
 		name string
@@ -1265,8 +1266,8 @@ func (ms *ModelSuite) TestPost_GetReceiver() {
 func (ms *ModelSuite) TestPost_GetOrganization() {
 	t := ms.T()
 
-	_, users, _ := CreateUserFixtures(ms, t)
-	posts := CreatePostFixtures(ms, t, users)
+	uf := CreateUserFixtures(ms.DB, 2)
+	posts := CreatePostFixtures(ms, t, uf.Users)
 
 	tests := []struct {
 		name string
@@ -1290,7 +1291,8 @@ func (ms *ModelSuite) TestPost_GetOrganization() {
 func (ms *ModelSuite) TestPost_GetThreads() {
 	t := ms.T()
 
-	_, users, _ := CreateUserFixtures(ms, t)
+	uf := CreateUserFixtures(ms.DB, 2)
+	users := uf.Users
 	posts := CreatePostFixtures(ms, t, users)
 	threadFixtures := CreateThreadFixtures(ms, posts[0])
 	threads := threadFixtures.Threads
@@ -1574,8 +1576,8 @@ func (ms *ModelSuite) TestPost_GetSetOrigin() {
 
 func (ms *ModelSuite) TestPost_NewWithUser() {
 	t := ms.T()
-	_, users, _ := CreateUserFixtures(ms, t)
-	user := users[0]
+	uf := CreateUserFixtures(ms.DB, 1)
+	user := uf.Users[0]
 
 	tests := []struct {
 		name           string
@@ -1615,8 +1617,8 @@ func (ms *ModelSuite) TestPost_NewWithUser() {
 
 func (ms *ModelSuite) TestPost_SetProviderWithStatus() {
 	t := ms.T()
-	_, users, _ := CreateUserFixtures(ms, t)
-	user := users[0]
+	uf := CreateUserFixtures(ms.DB, 1)
+	user := uf.Users[0]
 
 	tests := []struct {
 		name           string
