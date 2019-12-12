@@ -19,6 +19,7 @@ type threadQueryFixtures struct {
 func createFixturesForThreadQuery(as *ActionSuite) threadQueryFixtures {
 	userFixtures := test.CreateUserFixtures(as.DB, as.T(), 2)
 	org := userFixtures.Organization
+	users := userFixtures.Users
 
 	locations := models.Locations{
 		{
@@ -41,7 +42,7 @@ func createFixturesForThreadQuery(as *ActionSuite) threadQueryFixtures {
 
 	posts := models.Posts{
 		{
-			CreatedByID:    userFixtures.Users[0].ID,
+			CreatedByID:    users[0].ID,
 			OrganizationID: org.ID,
 			Type:           models.PostTypeRequest,
 			Status:         models.PostStatusCommitted,
@@ -50,8 +51,8 @@ func createFixturesForThreadQuery(as *ActionSuite) threadQueryFixtures {
 			Size:           models.PostSizeSmall,
 		},
 		{
-			CreatedByID:    userFixtures.Users[0].ID,
-			ProviderID:     nulls.NewInt(userFixtures.Users[0].ID),
+			CreatedByID:    users[0].ID,
+			ProviderID:     nulls.NewInt(users[0].ID),
 			OrganizationID: org.ID,
 			DestinationID:  locations[2].ID,
 		},
@@ -78,13 +79,13 @@ func createFixturesForThreadQuery(as *ActionSuite) threadQueryFixtures {
 	messages := models.Messages{
 		{
 			ThreadID: threads[0].ID,
-			SentByID: userFixtures.Users[1].ID,
-			Content:  "Message from " + userFixtures.Users[1].Nickname,
+			SentByID: users[1].ID,
+			Content:  "Message from " + users[1].Nickname,
 		},
 		{
 			ThreadID: threads[0].ID,
-			SentByID: userFixtures.Users[0].ID,
-			Content:  "Reply from " + userFixtures.Users[0].Nickname,
+			SentByID: users[0].ID,
+			Content:  "Reply from " + users[0].Nickname,
 		},
 	}
 	for i := range messages {
@@ -94,7 +95,7 @@ func createFixturesForThreadQuery(as *ActionSuite) threadQueryFixtures {
 
 	return threadQueryFixtures{
 		Organization: org,
-		Users:        userFixtures.Users,
+		Users:        users,
 		Posts:        posts,
 		Threads:      threads,
 		Locations:    locations,

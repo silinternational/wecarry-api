@@ -151,6 +151,7 @@ func (ms *ModelSuite) TestSendNewMessageNotification() {
 func createFixturesForSendPostCreatedNotifications(ms *ModelSuite) PostFixtures {
 	userFixtures := test.CreateUserFixtures(ms.DB, ms.T(), 3)
 	org := userFixtures.Organization
+	users := userFixtures.Users
 
 	location := models.Location{Country: "US"}
 	createFixture(ms, &location)
@@ -158,14 +159,14 @@ func createFixturesForSendPostCreatedNotifications(ms *ModelSuite) PostFixtures 
 	post := models.Post{
 		OrganizationID: org.ID,
 		UUID:           domain.GetUUID(),
-		CreatedByID:    userFixtures.Users[0].ID,
+		CreatedByID:    users[0].ID,
 		DestinationID:  location.ID,
 		Type:           models.PostTypeOffer,
 	}
 	createFixture(ms, &post)
 
 	return PostFixtures{
-		Users: userFixtures.Users,
+		Users: users,
 		Posts: models.Posts{post},
 	}
 }

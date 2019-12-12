@@ -20,10 +20,11 @@ type orgUserPostFixtures struct {
 func CreateFixtures_GetPostRecipients(ms *ModelSuite, t *testing.T) orgUserPostFixtures {
 	userFixtures := test.CreateUserFixtures(ms.DB, t, 3)
 	org := userFixtures.Organization
+	users := userFixtures.Users
 
-	_, err := userFixtures.Users[1].UpdateStandardPreferences(models.StandardPreferences{Language: domain.UserPreferenceLanguageFrench})
+	_, err := users[1].UpdateStandardPreferences(models.StandardPreferences{Language: domain.UserPreferenceLanguageFrench})
 
-	ms.NoError(err, "could not create language preference for user "+userFixtures.Users[1].Nickname)
+	ms.NoError(err, "could not create language preference for user "+users[1].Nickname)
 
 	locations := []models.Location{{}, {}}
 	for i := range locations {
@@ -33,24 +34,24 @@ func CreateFixtures_GetPostRecipients(ms *ModelSuite, t *testing.T) orgUserPostF
 	// Load Post test fixtures
 	posts := []models.Post{
 		{
-			CreatedByID:    userFixtures.Users[0].ID,
+			CreatedByID:    users[0].ID,
 			Type:           models.PostTypeRequest,
-			OrganizationID: userFixtures.Users[0].Organizations[0].ID,
+			OrganizationID: users[0].Organizations[0].ID,
 			Title:          "First Request",
 			Size:           models.PostSizeMedium,
 			Status:         models.PostStatusOpen,
-			ProviderID:     nulls.NewInt(userFixtures.Users[1].ID),
-			ReceiverID:     nulls.NewInt(userFixtures.Users[0].ID),
+			ProviderID:     nulls.NewInt(users[1].ID),
+			ReceiverID:     nulls.NewInt(users[0].ID),
 			DestinationID:  locations[0].ID,
 		},
 		{
-			CreatedByID:    userFixtures.Users[0].ID,
+			CreatedByID:    users[0].ID,
 			Type:           models.PostTypeRequest,
-			OrganizationID: userFixtures.Users[0].Organizations[0].ID,
+			OrganizationID: users[0].Organizations[0].ID,
 			Title:          "Second Request",
 			Size:           models.PostSizeMedium,
 			Status:         models.PostStatusOpen,
-			ReceiverID:     nulls.NewInt(userFixtures.Users[0].ID),
+			ReceiverID:     nulls.NewInt(users[0].ID),
 			DestinationID:  locations[1].ID,
 		},
 	}
@@ -68,7 +69,7 @@ func CreateFixtures_GetPostRecipients(ms *ModelSuite, t *testing.T) orgUserPostF
 
 	return orgUserPostFixtures{
 		orgs:  models.Organizations{org},
-		users: userFixtures.Users,
+		users: users,
 		posts: posts,
 	}
 }
@@ -76,6 +77,7 @@ func CreateFixtures_GetPostRecipients(ms *ModelSuite, t *testing.T) orgUserPostF
 func CreateFixtures_RequestStatusUpdatedNotifications(ms *ModelSuite, t *testing.T) orgUserPostFixtures {
 	userFixtures := test.CreateUserFixtures(ms.DB, t, 3)
 	org := userFixtures.Organization
+	users := userFixtures.Users
 
 	locations := []models.Location{{}, {}}
 	for i := range locations {
@@ -85,24 +87,24 @@ func CreateFixtures_RequestStatusUpdatedNotifications(ms *ModelSuite, t *testing
 	// Load Post test fixtures
 	posts := []models.Post{
 		{
-			CreatedByID:    userFixtures.Users[0].ID,
+			CreatedByID:    users[0].ID,
 			Type:           models.PostTypeRequest,
-			OrganizationID: userFixtures.Users[0].Organizations[0].ID,
+			OrganizationID: users[0].Organizations[0].ID,
 			Title:          "First Request",
 			Size:           models.PostSizeMedium,
 			Status:         models.PostStatusOpen,
-			ProviderID:     nulls.NewInt(userFixtures.Users[1].ID),
-			ReceiverID:     nulls.NewInt(userFixtures.Users[0].ID),
+			ProviderID:     nulls.NewInt(users[1].ID),
+			ReceiverID:     nulls.NewInt(users[0].ID),
 			DestinationID:  locations[0].ID,
 		},
 		{
-			CreatedByID:    userFixtures.Users[0].ID,
+			CreatedByID:    users[0].ID,
 			Type:           models.PostTypeRequest,
-			OrganizationID: userFixtures.Users[0].Organizations[0].ID,
+			OrganizationID: users[0].Organizations[0].ID,
 			Title:          "Second Request",
 			Size:           models.PostSizeMedium,
 			Status:         models.PostStatusOpen,
-			ReceiverID:     nulls.NewInt(userFixtures.Users[0].ID),
+			ReceiverID:     nulls.NewInt(users[0].ID),
 			DestinationID:  locations[1].ID,
 		},
 	}
@@ -120,7 +122,7 @@ func CreateFixtures_RequestStatusUpdatedNotifications(ms *ModelSuite, t *testing
 
 	return orgUserPostFixtures{
 		orgs:  models.Organizations{org},
-		users: userFixtures.Users,
+		users: users,
 		posts: posts,
 	}
 }

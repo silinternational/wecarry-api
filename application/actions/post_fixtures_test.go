@@ -31,6 +31,7 @@ func createFixturesForPostQuery(as *ActionSuite) PostQueryFixtures {
 
 	userFixtures := test.CreateUserFixtures(as.DB, t, 2)
 	org := userFixtures.Organization
+	users := userFixtures.Users
 
 	locations := []models.Location{
 		{
@@ -53,9 +54,9 @@ func createFixturesForPostQuery(as *ActionSuite) PostQueryFixtures {
 
 	posts := models.Posts{
 		{
-			CreatedByID:    userFixtures.Users[0].ID,
-			ReceiverID:     nulls.NewInt(userFixtures.Users[0].ID),
-			ProviderID:     nulls.NewInt(userFixtures.Users[1].ID),
+			CreatedByID:    users[0].ID,
+			ReceiverID:     nulls.NewInt(users[0].ID),
+			ProviderID:     nulls.NewInt(users[1].ID),
 			OrganizationID: org.ID,
 			Type:           models.PostTypeRequest,
 			Status:         models.PostStatusCommitted,
@@ -68,8 +69,8 @@ func createFixturesForPostQuery(as *ActionSuite) PostQueryFixtures {
 			Kilograms:      11.11,
 		},
 		{
-			CreatedByID:    userFixtures.Users[0].ID,
-			ProviderID:     nulls.NewInt(userFixtures.Users[0].ID),
+			CreatedByID:    users[0].ID,
+			ProviderID:     nulls.NewInt(users[0].ID),
 			OrganizationID: org.ID,
 			DestinationID:  locations[2].ID,
 		},
@@ -127,7 +128,7 @@ func createFixturesForPostQuery(as *ActionSuite) PostQueryFixtures {
 
 	return PostQueryFixtures{
 		Organization: org,
-		Users:        userFixtures.Users,
+		Users:        users,
 		Posts:        posts,
 		Files:        fileFixtures,
 		Threads:      threads,
@@ -140,6 +141,7 @@ func createFixturesForUpdatePost(as *ActionSuite) UpdatePostFixtures {
 
 	userFixtures := test.CreateUserFixtures(as.DB, t, 2)
 	org := userFixtures.Organization
+	users := userFixtures.Users
 
 	locations := []models.Location{
 		{
@@ -155,13 +157,13 @@ func createFixturesForUpdatePost(as *ActionSuite) UpdatePostFixtures {
 
 	posts := models.Posts{
 		{
-			CreatedByID:    userFixtures.Users[0].ID,
+			CreatedByID:    users[0].ID,
 			Type:           models.PostTypeRequest,
 			OrganizationID: org.ID,
 			Title:          "An Offer",
 			Size:           models.PostSizeLarge,
 			Status:         models.PostStatusOpen,
-			ReceiverID:     nulls.NewInt(userFixtures.Users[1].ID),
+			ReceiverID:     nulls.NewInt(users[1].ID),
 			DestinationID:  locations[0].ID, // test update of existing location
 			// leave OriginID nil to test adding a location
 		},
@@ -209,7 +211,7 @@ func createFixturesForUpdatePost(as *ActionSuite) UpdatePostFixtures {
 
 	return UpdatePostFixtures{
 		Posts: posts,
-		Users: userFixtures.Users,
+		Users: users,
 		Files: fileFixtures,
 	}
 }
@@ -241,14 +243,15 @@ func createFixturesForCreatePost(as *ActionSuite) CreatePostFixtures {
 func createFixturesForUpdatePostStatus(as *ActionSuite) UpdatePostStatusFixtures {
 	userFixtures := test.CreateUserFixtures(as.DB, as.T(), 2)
 	org := userFixtures.Organization
+	users := userFixtures.Users
 
 	posts := make(models.Posts, 1)
 	locations := make(models.Locations, len(posts))
 	for i := range posts {
 		test.CreateFixture(as.DB, as.T(), &locations[i])
 
-		posts[i].CreatedByID = userFixtures.Users[0].ID
-		posts[i].ReceiverID = nulls.NewInt(userFixtures.Users[0].ID)
+		posts[i].CreatedByID = users[0].ID
+		posts[i].ReceiverID = nulls.NewInt(users[0].ID)
 		posts[i].OrganizationID = org.ID
 		posts[i].UUID = domain.GetUUID()
 		posts[i].DestinationID = locations[i].ID
@@ -261,6 +264,6 @@ func createFixturesForUpdatePostStatus(as *ActionSuite) UpdatePostStatusFixtures
 
 	return UpdatePostStatusFixtures{
 		Posts: posts,
-		Users: userFixtures.Users,
+		Users: users,
 	}
 }
