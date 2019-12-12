@@ -188,52 +188,19 @@ func createFixturesForSearchRequestsQuery(as *ActionSuite) PostQueryFixtures {
 		createFixture(as, &accessTokenFixtures[i])
 	}
 
-	locations := []models.Location{
-		{
-			Description: "Miami, FL, USA",
-			Country:     "US",
-			Latitude:    nulls.NewFloat64(25.7617),
-			Longitude:   nulls.NewFloat64(-80.1918),
-		},
-		{
-			Description: "Toronto, Canada",
-			Country:     "CA",
-			Latitude:    nulls.NewFloat64(43.6532),
-			Longitude:   nulls.NewFloat64(-79.3832),
-		},
-		{},
-	}
+	locations := []models.Location{{}, {}}
 	for i := range locations {
 		createFixture(as, &locations[i])
 	}
 
-	posts := models.Posts{
-		{
-			CreatedByID:    users[0].ID,
-			ReceiverID:     nulls.NewInt(users[0].ID),
-			ProviderID:     nulls.NewInt(users[1].ID),
-			OrganizationID: org.ID,
-			Type:           models.PostTypeRequest,
-			Status:         models.PostStatusCommitted,
-			Title:          "A Match",
-			DestinationID:  locations[0].ID,
-			OriginID:       nulls.NewInt(locations[1].ID),
-			Size:           models.PostSizeSmall,
-			Description:    nulls.NewString("This is a description"),
-			URL:            nulls.NewString("https://www.example.com/items/101"),
-			Kilograms:      11.11,
-		},
-		{
-			CreatedByID:    users[0].ID,
-			ProviderID:     nulls.NewInt(users[0].ID),
-			OrganizationID: org.ID,
-			DestinationID:  locations[2].ID,
-			Title:          "Not a MXtch",
-			Type:           models.PostTypeRequest,
-		},
-	}
+	posts := models.Posts{{Title: "A Match"}, {Title: "Not a MXtch"}}
 	for i := range posts {
+		posts[i].CreatedByID = users[0].ID
+		posts[i].ReceiverID = nulls.NewInt(users[0].ID)
 		posts[i].UUID = domain.GetUUID()
+		posts[i].OrganizationID = org.ID
+		posts[i].Type = models.PostTypeRequest
+		posts[i].DestinationID = locations[i].ID
 		createFixture(as, &posts[i])
 	}
 

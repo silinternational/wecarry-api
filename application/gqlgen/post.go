@@ -3,6 +3,7 @@ package gqlgen
 import (
 	"context"
 	"errors"
+
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/gobuffalo/nulls"
 	"github.com/silinternational/wecarry-api/models"
@@ -394,7 +395,7 @@ func (r *mutationResolver) UpdatePostStatus(ctx context.Context, input UpdatePos
 	return &post, nil
 }
 
-// RequestsSearch resolves the `requestsSearch` query by finding requests that contain
+// SearchRequests resolves the `searchRequests` query by finding requests that contain
 //  a certain string in their Title or Description
 func (r *queryResolver) SearchRequests(ctx context.Context, text string) ([]models.Post, error) {
 	posts := models.Posts{}
