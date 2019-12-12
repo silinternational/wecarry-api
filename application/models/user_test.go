@@ -362,7 +362,7 @@ func (ms *ModelSuite) TestUser_GetOrganizations() {
 
 func (ms *ModelSuite) TestUser_FindUserOrganization() {
 	t := ms.T()
-	createUserOrganizationFixtures(ms, t)
+	users, orgs := createUserOrganizationFixtures(ms, t)
 
 	type args struct {
 		user User
@@ -376,52 +376,45 @@ func (ms *ModelSuite) TestUser_FindUserOrganization() {
 		{
 			name: "user 1, org 1",
 			args: args{
-				user: User{Email: "single@domain.com"},
-				org:  Organization{Name: "Org1"},
+				user: users[0],
+				org:  orgs[0],
 			},
 			wantErr: false,
 		},
 		{
 			name: "user 2, org 1",
 			args: args{
-				user: User{Email: "two@domain.com"},
-				org:  Organization{Name: "Org1"},
-			},
-			wantErr: false,
-		},
-		{
-			name: "user 2, org 2",
-			args: args{
-				user: User{Email: "two@domain.com"},
-				org:  Organization{Name: "Org2"},
+				user: users[1],
+				org:  orgs[0],
 			},
 			wantErr: false,
 		},
 		{
 			name: "user 1, org 2",
 			args: args{
-				user: User{Email: "single@domain.com"},
-				org:  Organization{Name: "Org2"},
+				user: users[0],
+				org:  orgs[1],
+			},
+			wantErr: false,
+		},
+		{
+			name: "user 2, org 2",
+			args: args{
+				user: users[1],
+				org:  orgs[1],
 			},
 			wantErr: true,
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			var user User
-			if err := ms.DB.Where("email = ?", test.args.user.Email).First(&user); err != nil {
-				t.Errorf("couldn't find test user '%v'", test.args.user.Email)
-			}
-
-			var org Organization
-			if err := ms.DB.Where("name = ?", test.args.org.Name).First(&org); err != nil {
-				t.Errorf("couldn't find test org '%v'", test.args.org.Name)
-			}
-
+			user := test.args.user
+			org := test.args.org
 			uo, err := user.FindUserOrganization(org)
+			fmt.Printf("uo %d, user %d, org %d", uo.ID, user.ID, org.ID)
 			if test.wantErr {
 				if err == nil {
-					t.Errorf("Expected an error, but did not get one")
+					t.Errorf("Expected an error, but did not get one, %v", uo.ID)
 				}
 			} else {
 				if err != nil {

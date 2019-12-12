@@ -6,7 +6,7 @@ import (
 	"github.com/silinternational/wecarry-api/domain"
 )
 
-func createUserOrganizationFixtures(ms *ModelSuite, t *testing.T) Users {
+func createUserOrganizationFixtures(ms *ModelSuite, t *testing.T) (Users, Organizations) {
 	orgs := Organizations{{}, {}}
 	for i := range orgs {
 		orgs[i].UUID = domain.GetUUID()
@@ -25,12 +25,12 @@ func createUserOrganizationFixtures(ms *ModelSuite, t *testing.T) Users {
 		AuthEmail:      users[0].Email,
 	})
 
-	return uf.Users
+	return uf.Users, orgs
 }
 
 func (ms *ModelSuite) TestUserOrganization_FindByAuthEmail() {
 	t := ms.T()
-	users := createUserOrganizationFixtures(ms, t)
+	users, _ := createUserOrganizationFixtures(ms, t)
 
 	type args struct {
 		authEmail string
