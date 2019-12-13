@@ -62,25 +62,9 @@ func (ms *ModelSuite) TestThreadParticipant_Validate() {
 // CreateFixtures_ThreadParticipant_UpdateLastViewedAt is used by
 // TestThreadParticipant_UpdateLastViewedAt and TestThread_UpdateLastViewedAt
 func CreateFixtures_ThreadParticipant_UpdateLastViewedAt(ms *ModelSuite, t *testing.T) ThreadFixtures {
-
-	org := Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
-	createFixture(ms, &org)
-
-	unique := org.UUID.String()
-	users := Users{
-		{Email: unique + "_user0@example.com", Nickname: unique + " User0", UUID: domain.GetUUID()},
-		{Email: unique + "_user1@example.com", Nickname: unique + " User1", UUID: domain.GetUUID()},
-	}
-	for i := range users {
-		createFixture(ms, &users[i])
-	}
-
-	userOrgs := UserOrganizations{
-		{OrganizationID: org.ID, UserID: users[0].ID, AuthID: users[0].Email, AuthEmail: users[0].Email},
-	}
-	for i := range userOrgs {
-		createFixture(ms, &userOrgs[i])
-	}
+	uf := CreateUserFixtures(ms.DB, 2)
+	org := uf.Organization
+	users := uf.Users
 
 	location := Location{}
 	createFixture(ms, &location)
@@ -168,17 +152,9 @@ func (ms *ModelSuite) TestThreadParticipant_UpdateLastViewedAt() {
 }
 
 func CreateFixtures_ThreadParticipant_FindByThreadIDAndUserID(ms *ModelSuite) ThreadFixtures {
-	t := ms.T()
-
-	org := Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
-	createFixture(ms, &org)
-
-	users := Users{
-		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1", UUID: domain.GetUUID()},
-	}
-	for i := range users {
-		createFixture(ms, &users[i])
-	}
+	uf := CreateUserFixtures(ms.DB, 1)
+	org := uf.Organization
+	users := uf.Users
 
 	location := Location{}
 	createFixture(ms, &location)
@@ -247,16 +223,9 @@ func (ms *ModelSuite) TestThreadParticipant_FindByThreadIDAndUserID() {
 // CreateFixtures_ThreadParticipant_UpdateLastNotifiedAt creates test fixtures for the
 // ThreadParticipant_UpdateLastNotifiedAt test
 func CreateFixtures_ThreadParticipant_UpdateLastNotifiedAt(ms *ModelSuite, t *testing.T) ThreadFixtures {
-
-	org := Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
-	createFixture(ms, &org)
-
-	users := Users{
-		{Email: t.Name() + "_user1@example.com", Nickname: t.Name() + " User1", UUID: domain.GetUUID()},
-	}
-	for i := range users {
-		createFixture(ms, &users[i])
-	}
+	uf := CreateUserFixtures(ms.DB, 1)
+	org := uf.Organization
+	users := uf.Users
 
 	location := Location{}
 	createFixture(ms, &location)

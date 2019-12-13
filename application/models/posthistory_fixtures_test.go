@@ -16,18 +16,9 @@ type PostHistoryFixtures struct {
 }
 
 func createFixturesForTestPostHistory_Load(ms *ModelSuite) PostHistoryFixtures {
-	org := Organization{AuthConfig: "{}", UUID: domain.GetUUID()}
-	createFixture(ms, &org)
-
-	unique := org.UUID.String()
-	users := Users{
-		{Email: unique + "_user0@example.com", Nickname: unique + "User0"},
-		{Email: unique + "_user1@example.com", Nickname: unique + "User1"},
-	}
-	for i := range users {
-		users[i].UUID = domain.GetUUID()
-		createFixture(ms, &users[i])
-	}
+	uf := CreateUserFixtures(ms.DB, 2)
+	org := uf.Organization
+	users := uf.Users
 
 	posts := Posts{
 		{Title: "Post1 Title"},
@@ -64,18 +55,9 @@ func createFixturesForTestPostHistory_Load(ms *ModelSuite) PostHistoryFixtures {
 }
 
 func createFixturesForTestPostHistory_pop(ms *ModelSuite) PostFixtures {
-	org := Organization{AuthConfig: "{}", UUID: domain.GetUUID()}
-	createFixture(ms, &org)
-
-	unique := org.UUID.String()
-	users := Users{
-		{Email: unique + "_user0@example.com", Nickname: unique + "User0"},
-		{Email: unique + "_user1@example.com", Nickname: unique + "User1"},
-	}
-	for i := range users {
-		users[i].UUID = domain.GetUUID()
-		createFixture(ms, &users[i])
-	}
+	uf := CreateUserFixtures(ms.DB, 2)
+	org := uf.Organization
+	users := uf.Users
 
 	posts := Posts{
 		{Title: "Post1 Title", ProviderID: nulls.NewInt(users[1].ID)},
@@ -129,18 +111,9 @@ func createFixturesForTestPostHistory_pop(ms *ModelSuite) PostFixtures {
 }
 
 func createFixturesForTestPostHistory_createForPost(ms *ModelSuite) PostFixtures {
-	org := Organization{AuthConfig: "{}", UUID: domain.GetUUID()}
-	createFixture(ms, &org)
-
-	unique := org.UUID.String()
-	users := Users{
-		{Email: unique + "_user0@example.com", Nickname: unique + "User0"},
-		{Email: unique + "_user1@example.com", Nickname: unique + "User1"},
-	}
-	for i := range users {
-		users[i].UUID = domain.GetUUID()
-		createFixture(ms, &users[i])
-	}
+	uf := CreateUserFixtures(ms.DB, 2)
+	org := uf.Organization
+	users := uf.Users
 
 	posts := Posts{
 		{Title: "Post1 Title"},

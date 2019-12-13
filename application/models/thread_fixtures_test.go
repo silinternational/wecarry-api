@@ -1,7 +1,6 @@
 package models
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -74,48 +73,9 @@ func CreateThreadFixtures(ms *ModelSuite, post Post) ThreadFixtures {
 }
 
 func CreateThreadFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) ThreadFixtures {
-
-	unique := domain.GetUUID().String()
-
-	// Load Organization test fixtures
-	org := Organization{
-		Name:       fmt.Sprintf("ACME-%s", unique),
-		UUID:       domain.GetUUID(),
-		AuthType:   AuthTypeSaml,
-		AuthConfig: "{}",
-	}
-
-	createFixture(ms, &org)
-
-	// Load User test fixtures
-	users := Users{
-		{
-			Email:     fmt.Sprintf("user1-%s@example.com", unique),
-			FirstName: "Eager",
-			LastName:  "User",
-			Nickname:  fmt.Sprintf("Eager User %s", unique),
-		},
-		{
-			Email:     fmt.Sprintf("user2-%s@example.com", unique),
-			FirstName: "Lazy",
-			LastName:  "User",
-			Nickname:  fmt.Sprintf("Lazy User %s", unique),
-		},
-	}
-	for i := range users {
-		users[i].UUID = domain.GetUUID()
-		createFixture(ms, &users[i])
-	}
-
-	// Load UserOrganization test fixtures
-	userOrgs := UserOrganizations{{}, {}}
-	for i := range userOrgs {
-		userOrgs[i].OrganizationID = org.ID
-		userOrgs[i].UserID = users[i].ID
-		userOrgs[i].AuthID = users[i].Email
-		userOrgs[i].AuthEmail = users[i].Email
-		createFixture(ms, &userOrgs[i])
-	}
+	uf := CreateUserFixtures(ms.DB, 2)
+	org := uf.Organization
+	users := uf.Users
 
 	locations := []Location{{}, {}}
 	for i := range locations {
