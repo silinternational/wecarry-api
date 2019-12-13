@@ -81,27 +81,14 @@ func createFixturesForSearchRequestsQuery(as *ActionSuite) PostQueryFixtures {
 	org := userFixtures.Organization
 	users := userFixtures.Users
 
-	locations := []models.Location{{}, {}}
-	for i := range locations {
-		createFixture(as, &locations[i])
-	}
-
-	posts := models.Posts{{Title: "A Match"}, {Title: "Not a MXtch"}}
-	for i := range posts {
-		posts[i].CreatedByID = users[0].ID
-		posts[i].ReceiverID = nulls.NewInt(users[0].ID)
-		posts[i].UUID = domain.GetUUID()
-		posts[i].OrganizationID = org.ID
-		posts[i].Type = models.PostTypeRequest
-		posts[i].DestinationID = locations[i].ID
-		createFixture(as, &posts[i])
-	}
+	posts := test.CreatePostFixtures(as.DB, 2, false)
+	posts[0].Title = "A Match"
+	as.NoError(as.DB.Save(&posts[0]))
 
 	return PostQueryFixtures{
 		Organization: org,
 		Users:        users,
 		Posts:        posts,
-		Locations:    locations,
 	}
 }
 

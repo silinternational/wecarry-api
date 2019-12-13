@@ -11,7 +11,6 @@ type PostQueryFixtures struct {
 	models.Users
 	models.Posts
 	models.Threads
-	models.Locations
 }
 
 type PostsResponse struct {
