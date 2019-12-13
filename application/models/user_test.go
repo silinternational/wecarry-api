@@ -7,12 +7,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gofrs/uuid"
-
-	"github.com/silinternational/wecarry-api/auth"
-
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
+	"github.com/gofrs/uuid"
+	"github.com/silinternational/wecarry-api/auth"
 	"github.com/silinternational/wecarry-api/domain"
 )
 
@@ -411,7 +409,6 @@ func (ms *ModelSuite) TestUser_FindUserOrganization() {
 			user := test.args.user
 			org := test.args.org
 			uo, err := user.FindUserOrganization(org)
-			fmt.Printf("uo %d, user %d, org %d", uo.ID, user.ID, org.ID)
 			if test.wantErr {
 				if err == nil {
 					t.Errorf("Expected an error, but did not get one, %v", uo.ID)
