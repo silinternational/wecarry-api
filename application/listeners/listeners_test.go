@@ -153,7 +153,13 @@ func createFixturesForSendPostCreatedNotifications(ms *ModelSuite) PostFixtures 
 	org := userFixtures.Organization
 	users := userFixtures.Users
 
-	location := models.Location{Country: "US"}
+	for i := range users {
+		ms.NoError(ms.DB.Load(&users[i], "Location"))
+		users[i].Location.Country = "KH"
+		ms.NoError(ms.DB.Save(&users[i].Location))
+	}
+
+	location := models.Location{Country: "KH"}
 	createFixture(ms, &location)
 
 	post := models.Post{
@@ -166,7 +172,6 @@ func createFixturesForSendPostCreatedNotifications(ms *ModelSuite) PostFixtures 
 	createFixture(ms, &post)
 
 	return PostFixtures{
-		Users: users,
 		Posts: models.Posts{post},
 	}
 }
