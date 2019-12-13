@@ -2,7 +2,6 @@ package listeners
 
 import (
 	"fmt"
-	"strconv"
 	"testing"
 
 	"github.com/gobuffalo/nulls"
@@ -186,26 +185,10 @@ func createFixturesForTestSendNewPostNotifications(ms *ModelSuite) orgUserPostFi
 		createFixture(ms, &users[i])
 	}
 
-	locations := make(models.Locations, 1)
-	for i := range locations {
-		locations[i].Description = "location " + strconv.Itoa(i)
-		locations[i].Country = "US"
-		createFixture(ms, &locations[i])
-	}
-
-	posts := models.Posts{
-		{
-			Type:     models.PostTypeRequest,
-			OriginID: nulls.NewInt(locations[0].ID),
-		},
-	}
-	for i := range posts {
-		posts[i].OrganizationID = org.ID
-		posts[i].UUID = domain.GetUUID()
-		posts[i].CreatedByID = users[0].ID
-		posts[i].DestinationID = locations[i].ID
-		createFixture(ms, &posts[i])
-	}
+	posts := test.CreatePostFixtures(ms.DB, 1, false)
+	ms.NoError(ms.DB.Load(&posts[0], "Origin"))
+	posts[0].Origin.Country = "US"
+	ms.NoError(ms.DB.Save(&posts[0].Origin))
 
 	return orgUserPostFixtures{
 		users: users,
