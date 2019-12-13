@@ -43,46 +43,10 @@ func CreateFixtures_RequestStatusUpdatedNotifications(ms *ModelSuite, t *testing
 	org := userFixtures.Organization
 	users := userFixtures.Users
 
-	locations := []models.Location{{}, {}}
-	for i := range locations {
-		createFixture(ms, &locations[i])
-	}
-
-	// Load Post test fixtures
-	posts := []models.Post{
-		{
-			CreatedByID:    users[0].ID,
-			Type:           models.PostTypeRequest,
-			OrganizationID: users[0].Organizations[0].ID,
-			Title:          "First Request",
-			Size:           models.PostSizeMedium,
-			Status:         models.PostStatusOpen,
-			ProviderID:     nulls.NewInt(users[1].ID),
-			ReceiverID:     nulls.NewInt(users[0].ID),
-			DestinationID:  locations[0].ID,
-		},
-		{
-			CreatedByID:    users[0].ID,
-			Type:           models.PostTypeRequest,
-			OrganizationID: users[0].Organizations[0].ID,
-			Title:          "Second Request",
-			Size:           models.PostSizeMedium,
-			Status:         models.PostStatusOpen,
-			ReceiverID:     nulls.NewInt(users[0].ID),
-			DestinationID:  locations[1].ID,
-		},
-	}
-	for i := range posts {
-		posts[i].UUID = domain.GetUUID()
-		if err := ms.DB.Create(&posts[i]); err != nil {
-			t.Errorf("could not create test post ... %v", err)
-			t.FailNow()
-		}
-		if err := models.DB.Load(&posts[i], "CreatedBy", "Provider", "Receiver", "Organization"); err != nil {
-			t.Errorf("Error loading post associations: %s", err)
-			t.FailNow()
-		}
-	}
+	posts := test.CreatePostFixtures(ms.DB, 2, false)
+	posts[0].Status = models.PostStatusCommitted
+	posts[0].ProviderID = nulls.NewInt(users[1].ID)
+	ms.NoError(ms.DB.Save(&posts[0]))
 
 	return orgUserPostFixtures{
 		orgs:  models.Organizations{org},
