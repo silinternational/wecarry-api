@@ -28,7 +28,8 @@ func MustCreate(tx *pop.Connection, f interface{}) {
 
 // CreateUserFixtures generates any number of user records for testing. Locations, UserOrganizations, and
 // UserAccessTokens are also created for each user. The access token for each user is the same as the user's nickname.
-// At least one Organization must exist. All user fixtures will be assigned to the first Organization in the DB.
+// All user fixtures will be assigned to the first Organization in the DB. If no Organization exists, one will be
+// created.
 func CreateUserFixtures(tx *pop.Connection, t *testing.T, n int) UserFixtures {
 	var org models.Organization
 	if err := tx.First(&org); err != nil {
@@ -36,7 +37,7 @@ func CreateUserFixtures(tx *pop.Connection, t *testing.T, n int) UserFixtures {
 		MustCreate(tx, &org)
 	}
 
-	unique := org.UUID.String()
+	unique := domain.GetUUID().String()
 
 	users := make(models.Users, n)
 	locations := make(models.Locations, n)
@@ -81,4 +82,40 @@ func CreateUserFixtures(tx *pop.Connection, t *testing.T, n int) UserFixtures {
 		Users:        users,
 		Locations:    locations,
 	}
+}
+
+// CreatePostFixtures generates any number of post records for testing. Location records for post destination are also
+// created. All post fixtures will be assigned to the first Organization in the DB. If no Organization exists, one will
+// be created. All posts are created by the first User in the DB. If no User exists, one will be created.
+func CreatePostFixtures(tx *pop.Connection, n int) models.Posts {
+	var org models.Organization
+	if err := tx.First(&org); err != nil {
+		org = models.Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
+		MustCreate(tx, &org)
+	}
+
+	var user models.User
+	if err := tx.First(&user); err != nil {
+		user = models.User{UUID: domain.GetUUID()}
+		MustCreate(tx, &user)
+	}
+
+	posts := make(models.Posts, n)
+	locations := make(models.Locations, len(posts))
+	for i := range posts {
+		MustCreate(tx, &locations[i])
+
+		posts[i].CreatedByID = user.ID
+		posts[i].ReceiverID = nulls.NewInt(user.ID)
+		posts[i].OrganizationID = org.ID
+		posts[i].UUID = domain.GetUUID()
+		posts[i].DestinationID = locations[i].ID
+		posts[i].Title = "title " + strconv.Itoa(i)
+		posts[i].Size = models.PostSizeSmall
+		posts[i].Type = models.PostTypeRequest
+		posts[i].Status = models.PostStatusOpen
+		MustCreate(tx, &posts[i])
+	}
+
+	return posts
 }

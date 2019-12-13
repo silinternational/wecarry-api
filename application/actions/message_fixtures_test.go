@@ -1,7 +1,6 @@
 package actions
 
 import (
-	"github.com/gobuffalo/nulls"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/internal/test"
 	"github.com/silinternational/wecarry-api/models"
@@ -13,7 +12,6 @@ type messageQueryFixtures struct {
 	models.Posts
 	models.Threads
 	models.Messages
-	models.Locations
 }
 
 func createFixtures_MessageQuery(as *ActionSuite) messageQueryFixtures {
@@ -21,27 +19,7 @@ func createFixtures_MessageQuery(as *ActionSuite) messageQueryFixtures {
 	org := userFixtures.Organization
 	users := userFixtures.Users
 
-	posts := models.Posts{
-		{
-			Type:   models.PostTypeRequest,
-			Status: models.PostStatusCommitted,
-			Title:  "A Request",
-			Size:   models.PostSizeSmall,
-		},
-		{
-			ProviderID: nulls.NewInt(users[0].ID),
-		},
-	}
-	locations := make(models.Locations, len(posts))
-	for i := range posts {
-		createFixture(as, &locations[i])
-
-		posts[i].UUID = domain.GetUUID()
-		posts[i].CreatedByID = users[0].ID
-		posts[i].OrganizationID = org.ID
-		posts[i].DestinationID = locations[i].ID
-		createFixture(as, &posts[i])
-	}
+	posts := test.CreatePostFixtures(as.DB, 1)
 
 	threads := models.Threads{
 		{UUID: domain.GetUUID(), PostID: posts[0].ID},
@@ -80,7 +58,6 @@ func createFixtures_MessageQuery(as *ActionSuite) messageQueryFixtures {
 		Users:        users,
 		Posts:        posts,
 		Threads:      threads,
-		Locations:    locations,
 		Messages:     messages,
 	}
 }
