@@ -1,11 +1,5 @@
 package models
 
-import (
-	"strconv"
-
-	"github.com/silinternational/wecarry-api/domain"
-)
-
 type OrganizationFixtures struct {
 	Organizations
 	OrganizationDomains
@@ -13,28 +7,15 @@ type OrganizationFixtures struct {
 }
 
 func createFixturesForOrganizationGetUsers(ms *ModelSuite) OrganizationFixtures {
-	org := Organization{AuthConfig: "{}", UUID: domain.GetUUID()}
-	createFixture(ms, &org)
+	uf := CreateUserFixtures(ms.DB, 3)
+	org := uf.Organization
+	users := uf.Users
 
+	// nicknames in unsorted order
 	nicknames := []string{"alice", "john", "bob"}
-	unique := org.UUID.String()
-	users := make(Users, len(nicknames))
 	for i := range users {
-		users[i].Email = "user" + strconv.Itoa(i) + unique + "example.com"
-		users[i].Nickname = nicknames[i] + unique
-		users[i].UUID = domain.GetUUID()
-
-		createFixture(ms, &users[i])
-	}
-
-	userOrgFixtures := make(UserOrganizations, len(nicknames))
-	for i := range userOrgFixtures {
-		userOrgFixtures[i].OrganizationID = org.ID
-		userOrgFixtures[i].UserID = users[i].ID
-		userOrgFixtures[i].AuthID = users[i].Email
-		userOrgFixtures[i].AuthEmail = users[i].Email
-
-		createFixture(ms, &userOrgFixtures[i])
+		users[i].Nickname = nicknames[i]
+		ms.NoError(ms.DB.Save(&users[i]))
 	}
 
 	return OrganizationFixtures{
@@ -44,12 +25,9 @@ func createFixturesForOrganizationGetUsers(ms *ModelSuite) OrganizationFixtures 
 }
 
 func CreateFixturesForOrganizationGetDomains(ms *ModelSuite) OrganizationFixtures {
-	org := Organization{
-		AuthType:   AuthTypeSaml,
-		AuthConfig: "{}",
-		UUID:       domain.GetUUID(),
-	}
-	createFixture(ms, &org)
+	uf := CreateUserFixtures(ms.DB, 1)
+	org := uf.Organization
+	user := uf.Users[0]
 
 	orgDomains := OrganizationDomains{
 		{
@@ -68,15 +46,6 @@ func CreateFixturesForOrganizationGetDomains(ms *ModelSuite) OrganizationFixture
 	for i := range orgDomains {
 		createFixture(ms, &orgDomains[i])
 	}
-
-	user := User{
-		Email:     "user1@example.com",
-		FirstName: "Existing",
-		LastName:  "User",
-		Nickname:  "Existing User ",
-		UUID:      domain.GetUUID(),
-	}
-	createFixture(ms, &user)
 
 	return OrganizationFixtures{
 		Organizations:       Organizations{org},

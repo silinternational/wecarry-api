@@ -1,7 +1,6 @@
 package models
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -17,18 +16,9 @@ type MessageFixtures struct {
 }
 
 func Fixtures_Message_GetSender(ms *ModelSuite, t *testing.T) MessageFixtures {
-	org := &Organization{AuthConfig: "{}", UUID: domain.GetUUID()}
-	createFixture(ms, org)
-
-	unique := domain.GetUUID().String()
-	users := Users{
-		{Email: unique + "user1@example.com", Nickname: unique + "User1"},
-		{Email: unique + "user2@example.com", Nickname: unique + "User2"},
-	}
-	for i := range users {
-		users[i].UUID = domain.GetUUID()
-		createFixture(ms, &users[i])
-	}
+	uf := CreateUserFixtures(ms.DB, 2)
+	org := uf.Organization
+	users := uf.Users
 
 	location := Location{}
 	createFixture(ms, &location)
@@ -62,18 +52,9 @@ func Fixtures_Message_GetSender(ms *ModelSuite, t *testing.T) MessageFixtures {
 }
 
 func Fixtures_Message_Create(ms *ModelSuite, t *testing.T) MessageFixtures {
-	org := &Organization{AuthConfig: "{}", UUID: domain.GetUUID()}
-	createFixture(ms, org)
-
-	unique := domain.GetUUID().String()
-	users := Users{
-		{Email: unique + "user1@example.com", Nickname: unique + "User1"},
-		{Email: unique + "user2@example.com", Nickname: unique + "User2"},
-	}
-	for i := range users {
-		users[i].UUID = domain.GetUUID()
-		createFixture(ms, &users[i])
-	}
+	uf := CreateUserFixtures(ms.DB, 2)
+	org := uf.Organization
+	users := uf.Users
 
 	location := Location{}
 	createFixture(ms, &location)
@@ -113,18 +94,9 @@ func Fixtures_Message_Create(ms *ModelSuite, t *testing.T) MessageFixtures {
 }
 
 func Fixtures_Message_FindByID(ms *ModelSuite, t *testing.T) MessageFixtures {
-	org := &Organization{AuthConfig: "{}", UUID: domain.GetUUID()}
-	createFixture(ms, org)
-
-	unique := domain.GetUUID().String()
-	users := Users{
-		{Email: unique + "user1@example.com", Nickname: unique + "User1"},
-		{Email: unique + "user2@example.com", Nickname: unique + "User2"},
-	}
-	for i := range users {
-		users[i].UUID = domain.GetUUID()
-		createFixture(ms, &users[i])
-	}
+	uf := CreateUserFixtures(ms.DB, 2)
+	org := uf.Organization
+	users := uf.Users
 
 	location := Location{}
 	createFixture(ms, &location)
@@ -158,22 +130,20 @@ func Fixtures_Message_FindByID(ms *ModelSuite, t *testing.T) MessageFixtures {
 
 // Fixtures_Message_Find is used by TestMessage_FindByUUID and TestMessage_FindByUserAndUUID
 func Fixtures_Message_Find(ms *ModelSuite) MessageFixtures {
-	org := &Organization{AuthConfig: "{}", UUID: domain.GetUUID()}
-	createFixture(ms, org)
+	uf := CreateUserFixtures(ms.DB, 5)
+	org := uf.Organization
+	users := uf.Users
 
-	unique := domain.GetUUID().String()
-	users := Users{
-		{AdminRole: UserAdminRoleUser},
-		{AdminRole: UserAdminRoleUser},
-		{AdminRole: UserAdminRoleAdmin},
-		{AdminRole: UserAdminRoleSalesAdmin},
-		{AdminRole: UserAdminRoleSuperAdmin},
+	roles := []UserAdminRole{
+		UserAdminRoleUser,
+		UserAdminRoleUser,
+		UserAdminRoleAdmin,
+		UserAdminRoleSalesAdmin,
+		UserAdminRoleSuperAdmin,
 	}
 	for i := range users {
-		users[i].Nickname = fmt.Sprintf("user%d_%s", i, unique)
-		users[i].Email = users[i].Nickname + "@example.com"
-		users[i].UUID = domain.GetUUID()
-		createFixture(ms, &users[i])
+		users[i].AdminRole = roles[i]
+		ms.NoError(ms.DB.Save(&users[i]))
 	}
 
 	location := Location{}
@@ -218,57 +188,9 @@ func Fixtures_Message_Find(ms *ModelSuite) MessageFixtures {
 }
 
 func CreateMessageFixtures_AfterCreate(ms *ModelSuite, t *testing.T) MessageFixtures {
-
-	unique := domain.GetUUID().String()
-
-	// Load Organization test fixtures
-	org := Organization{
-		Name:       fmt.Sprintf("ACME-%s", unique),
-		UUID:       domain.GetUUID(),
-		AuthType:   AuthTypeSaml,
-		AuthConfig: "{}",
-	}
-
-	createFixture(ms, &org)
-
-	// Load User test fixtures
-	users := Users{
-		{
-			Email:     fmt.Sprintf("user1-%s@example.com", unique),
-			FirstName: "Eager",
-			LastName:  "User",
-			Nickname:  fmt.Sprintf("Eager User %s", unique),
-		},
-		{
-			Email:     fmt.Sprintf("user2-%s@example.com", unique),
-			FirstName: "Lazy",
-			LastName:  "User",
-			Nickname:  fmt.Sprintf("Lazy User %s", unique),
-		},
-	}
-	for i := range users {
-		users[i].UUID = domain.GetUUID()
-		createFixture(ms, &users[i])
-	}
-
-	// Load UserOrganization test fixtures
-	userOrgs := UserOrganizations{
-		{
-			OrganizationID: org.ID,
-			UserID:         users[0].ID,
-			AuthID:         users[0].Email,
-			AuthEmail:      users[0].Email,
-		},
-		{
-			OrganizationID: org.ID,
-			UserID:         users[1].ID,
-			AuthID:         users[1].Email,
-			AuthEmail:      users[1].Email,
-		},
-	}
-	for i := range userOrgs {
-		createFixture(ms, &userOrgs[i])
-	}
+	uf := CreateUserFixtures(ms.DB, 2)
+	org := uf.Organization
+	users := uf.Users
 
 	locations := []Location{{}, {}}
 	for i := range locations {

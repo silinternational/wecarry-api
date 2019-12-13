@@ -2,10 +2,8 @@ package actions
 
 import (
 	"github.com/gobuffalo/nulls"
-	"strconv"
-	"time"
-
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/internal/test"
 	"github.com/silinternational/wecarry-api/models"
 )
 
@@ -19,41 +17,19 @@ type messageQueryFixtures struct {
 }
 
 func createFixtures_MessageQuery(as *ActionSuite) messageQueryFixtures {
-	org := models.Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
-	createFixture(as, &org)
-
-	unique := org.UUID.String()
-	users := make(models.Users, 2)
-	accessTokenFixtures := make([]models.UserAccessToken, len(users))
-	userOrgs := make(models.UserOrganizations, len(users))
-	for i := range users {
-		users[i].UUID = domain.GetUUID()
-		users[i].Email = unique + "_user" + strconv.Itoa(i) + "@example.com"
-		users[i].Nickname = unique + "_auth_user" + strconv.Itoa(i)
-		createFixture(as, &users[i])
-
-		userOrgs[i].UserID = users[i].ID
-		userOrgs[i].OrganizationID = org.ID
-		userOrgs[i].AuthID = unique + "_auth_user" + strconv.Itoa(i)
-		userOrgs[i].AuthEmail = unique + users[i].Email
-		createFixture(as, &userOrgs[i])
-
-		accessTokenFixtures[i].UserID =             users[i].ID
-		accessTokenFixtures[i].UserOrganizationID = userOrgs[i].ID
-		accessTokenFixtures[i].AccessToken =        models.HashClientIdAccessToken(users[i].Nickname)
-		accessTokenFixtures[i].ExpiresAt =          time.Now().Add(time.Minute * 60)
-		createFixture(as, &accessTokenFixtures[i])
-	}
+	userFixtures := test.CreateUserFixtures(as.DB, as.T(), 2)
+	org := userFixtures.Organization
+	users := userFixtures.Users
 
 	posts := models.Posts{
 		{
-			Type:           models.PostTypeRequest,
-			Status:         models.PostStatusCommitted,
-			Title:          "A Request",
-			Size:           models.PostSizeSmall,
+			Type:   models.PostTypeRequest,
+			Status: models.PostStatusCommitted,
+			Title:  "A Request",
+			Size:   models.PostSizeSmall,
 		},
 		{
-			ProviderID:     nulls.NewInt(users[0].ID),
+			ProviderID: nulls.NewInt(users[0].ID),
 		},
 	}
 	locations := make(models.Locations, len(posts))

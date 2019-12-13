@@ -120,8 +120,10 @@ func CreateFileFixtures(ms *ModelSuite, posts Posts) Files {
 
 func (ms *ModelSuite) TestFile_FindByUUID() {
 	t := ms.T()
-	_, users, _ := CreateUserFixtures(ms, t)
-	posts := CreatePostFixtures(ms, t, users)
+
+	uf := CreateUserFixtures(ms.DB, 2)
+	posts := CreatePostFixtures(ms, t, uf.Users)
+
 	if err := aws.CreateS3Bucket(); err != nil {
 		t.Errorf("failed to create S3 bucket, %s", err)
 		t.FailNow()

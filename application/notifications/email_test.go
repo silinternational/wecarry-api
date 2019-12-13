@@ -2,8 +2,10 @@ package notifications
 
 import (
 	"testing"
+	"text/template"
 
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSend(t *testing.T) {
@@ -17,9 +19,9 @@ func TestSend(t *testing.T) {
 			"uiURL":          "example.com",
 			"appName":        "Our App",
 			"postURL":        "mypost.example.com",
-			"postTitle":      "My Post",
-			"messageContent": "I can bring it",
-			"sentByNickname": "Fred",
+			"postTitle":      "My Post<script>doBadThings()</script>",
+			"messageContent": "I can bring it<script>doBadThings()</script>",
+			"sentByNickname": "Fred<script>doBadThings()</script>",
 			"threadURL":      "ourthread.example.com",
 		},
 	}
@@ -36,4 +38,8 @@ func TestSend(t *testing.T) {
 		t.Errorf("incorrect number of messages sent (%d)", n)
 		t.FailNow()
 	}
+
+	body := testService.GetLastBody()
+	assert.Contains(t, body, template.HTMLEscapeString(msg.Data["messageContent"].(string)))
+	assert.NotContains(t, body, "<script>")
 }

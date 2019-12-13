@@ -2,10 +2,8 @@ package actions
 
 import (
 	"github.com/gobuffalo/nulls"
-	"strconv"
-	"time"
-
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/internal/test"
 	"github.com/silinternational/wecarry-api/models"
 )
 
@@ -19,32 +17,9 @@ type threadQueryFixtures struct {
 }
 
 func createFixturesForThreadQuery(as *ActionSuite) threadQueryFixtures {
-	org := models.Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
-	createFixture(as, &org)
-
-	unique := org.UUID.String()
-	users := make(models.Users, 2)
-	userOrgs := make(models.UserOrganizations, len(users))
-	accessTokenFixtures := make([]models.UserAccessToken, len(users))
-	for i := range users {
-		users[i].UUID = domain.GetUUID()
-		users[i].Email = unique + "_user" + strconv.Itoa(i) + "@example.com"
-		users[i].Nickname = unique + "_auth_user" + strconv.Itoa(i)
-		users[i].AuthPhotoURL = nulls.NewString(users[i].Nickname + ".gif")
-		createFixture(as, &users[i])
-
-		userOrgs[i].UserID = users[i].ID
-		userOrgs[i].OrganizationID = org.ID
-		userOrgs[i].AuthID = unique + "_auth_user" + strconv.Itoa(i)
-		userOrgs[i].AuthEmail = unique + users[i].Email
-		createFixture(as, &userOrgs[i])
-
-		accessTokenFixtures[i].UserID = users[i].ID
-		accessTokenFixtures[i].UserOrganizationID = userOrgs[i].ID
-		accessTokenFixtures[i].AccessToken = models.HashClientIdAccessToken(users[i].Nickname)
-		accessTokenFixtures[i].ExpiresAt = time.Now().Add(time.Minute * 60)
-		createFixture(as, &accessTokenFixtures[i])
-	}
+	userFixtures := test.CreateUserFixtures(as.DB, as.T(), 2)
+	org := userFixtures.Organization
+	users := userFixtures.Users
 
 	locations := models.Locations{
 		{
