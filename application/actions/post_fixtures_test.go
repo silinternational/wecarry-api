@@ -141,25 +141,9 @@ func createFixturesForCreatePost(as *ActionSuite) CreatePostFixtures {
 
 func createFixturesForUpdatePostStatus(as *ActionSuite) UpdatePostStatusFixtures {
 	userFixtures := test.CreateUserFixtures(as.DB, as.T(), 2)
-	org := userFixtures.Organization
 	users := userFixtures.Users
 
-	posts := make(models.Posts, 1)
-	locations := make(models.Locations, len(posts))
-	for i := range posts {
-		createFixture(as, &locations[i])
-
-		posts[i].CreatedByID = users[0].ID
-		posts[i].ReceiverID = nulls.NewInt(users[0].ID)
-		posts[i].OrganizationID = org.ID
-		posts[i].UUID = domain.GetUUID()
-		posts[i].DestinationID = locations[i].ID
-		posts[i].Title = "title"
-		posts[i].Size = models.PostSizeSmall
-		posts[i].Type = models.PostTypeRequest
-		posts[i].Status = models.PostStatusOpen
-		createFixture(as, &posts[i])
-	}
+	posts := test.CreatePostFixtures(as.DB, 1, false)
 
 	return UpdatePostStatusFixtures{
 		Posts: posts,
