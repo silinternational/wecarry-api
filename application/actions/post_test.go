@@ -167,7 +167,7 @@ func (as *ActionSuite) Test_UpdatePost() {
 
 	var postsResp PostResponse
 
-	input := `id: "` + f.Posts[0].UUID.String() + `" photoID: "` + f.Files[1].UUID.String() + `"` +
+	input := `id: "` + f.Posts[0].UUID.String() + `" photoID: "` + f.Files[0].UUID.String() + `"` +
 		`
 			description: "new description"
 			destination: {description:"dest" country:"dc" latitude:1.1 longitude:2.2}
@@ -189,7 +189,7 @@ func (as *ActionSuite) Test_UpdatePost() {
 	}
 
 	as.Equal(f.Posts[0].UUID.String(), postsResp.Post.ID)
-	as.Equal(f.Files[1].UUID.String(), postsResp.Post.Photo.ID)
+	as.Equal(f.Files[0].UUID.String(), postsResp.Post.Photo.ID)
 	as.Equal("new description", postsResp.Post.Description)
 	as.Equal("dest", postsResp.Post.Destination.Description)
 	as.Equal("dc", postsResp.Post.Destination.Country)

@@ -96,79 +96,22 @@ func createFixturesForUpdatePost(as *ActionSuite) UpdatePostFixtures {
 	t := as.T()
 
 	userFixtures := test.CreateUserFixtures(as.DB, t, 2)
-	org := userFixtures.Organization
 	users := userFixtures.Users
 
-	locations := []models.Location{
-		{
-			Description: "Miami, FL, USA",
-			Country:     "US",
-			Latitude:    nulls.NewFloat64(25.7617),
-			Longitude:   nulls.NewFloat64(-80.1918),
-		},
-	}
-	for i := range locations {
-		createFixture(as, &locations[i])
-	}
+	posts := test.CreatePostFixtures(as.DB, 1, false)
+	posts[0].OriginID = nulls.Int{}
+	as.NoError(as.DB.Save(&posts[0]))
 
-	posts := models.Posts{
-		{
-			CreatedByID:    users[0].ID,
-			Type:           models.PostTypeRequest,
-			OrganizationID: org.ID,
-			Title:          "An Offer",
-			Size:           models.PostSizeLarge,
-			Status:         models.PostStatusOpen,
-			ReceiverID:     nulls.NewInt(users[1].ID),
-			DestinationID:  locations[0].ID, // test update of existing location
-			// leave OriginID nil to test adding a location
-		},
-	}
-
-	for i := range posts {
-		posts[i].UUID = domain.GetUUID()
-		createFixture(as, &posts[i])
-	}
-
-	if err := aws.CreateS3Bucket(); err != nil {
-		t.Errorf("failed to create S3 bucket, %s", err)
-		t.FailNow()
-	}
-
-	// create file fixtures
-	fileData := []struct {
-		name    string
-		content []byte
-	}{
-		{
-			name:    "photo.gif",
-			content: []byte("GIF89a"),
-		},
-		{
-			name:    "new_photo.webp",
-			content: []byte("RIFFxxxxWEBPVP"),
-		},
-	}
-	fileFixtures := make([]models.File, len(fileData))
-	for i, fileDatum := range fileData {
-		var f models.File
-		if err := f.Store(fileDatum.name, fileDatum.content); err != nil {
-			t.Errorf("failed to create file fixture, %s", err)
-			t.FailNow()
-		}
-		fileFixtures[i] = f
-	}
-
-	// attach photo
-	if _, err := posts[0].AttachPhoto(fileFixtures[0].UUID.String()); err != nil {
-		t.Errorf("failed to attach photo to post, %s", err)
+	var fileFixture models.File
+	if err := fileFixture.Store("new_photo.webp", []byte("RIFFxxxxWEBPVP")); err != nil {
+		t.Errorf("failed to create file fixture, %s", err)
 		t.FailNow()
 	}
 
 	return UpdatePostFixtures{
 		Posts: posts,
 		Users: users,
-		Files: fileFixtures,
+		Files: models.Files{fileFixture},
 	}
 }
 
