@@ -33,52 +33,10 @@ func createFixturesForPostQuery(as *ActionSuite) PostQueryFixtures {
 	org := userFixtures.Organization
 	users := userFixtures.Users
 
-	locations := []models.Location{
-		{
-			Description: "Miami, FL, USA",
-			Country:     "US",
-			Latitude:    nulls.NewFloat64(25.7617),
-			Longitude:   nulls.NewFloat64(-80.1918),
-		},
-		{
-			Description: "Toronto, Canada",
-			Country:     "CA",
-			Latitude:    nulls.NewFloat64(43.6532),
-			Longitude:   nulls.NewFloat64(-79.3832),
-		},
-		{},
-	}
-	for i := range locations {
-		createFixture(as, &locations[i])
-	}
-
-	posts := models.Posts{
-		{
-			CreatedByID:    users[0].ID,
-			ReceiverID:     nulls.NewInt(users[0].ID),
-			ProviderID:     nulls.NewInt(users[1].ID),
-			OrganizationID: org.ID,
-			Type:           models.PostTypeRequest,
-			Status:         models.PostStatusCommitted,
-			Title:          "A Request",
-			DestinationID:  locations[0].ID,
-			OriginID:       nulls.NewInt(locations[1].ID),
-			Size:           models.PostSizeSmall,
-			Description:    nulls.NewString("This is a description"),
-			URL:            nulls.NewString("https://www.example.com/items/101"),
-			Kilograms:      11.11,
-		},
-		{
-			CreatedByID:    users[0].ID,
-			ProviderID:     nulls.NewInt(users[0].ID),
-			OrganizationID: org.ID,
-			DestinationID:  locations[2].ID,
-		},
-	}
-	for i := range posts {
-		posts[i].UUID = domain.GetUUID()
-		createFixture(as, &posts[i])
-	}
+	posts := test.CreatePostFixtures(as.DB, 2, true)
+	posts[0].Status = models.PostStatusCommitted
+	posts[0].ProviderID = nulls.NewInt(users[1].ID)
+	as.NoError(as.DB.Save(&posts[0]))
 
 	threads := []models.Thread{
 		{UUID: domain.GetUUID(), PostID: posts[0].ID},
@@ -99,29 +57,13 @@ func createFixturesForPostQuery(as *ActionSuite) PostQueryFixtures {
 		t.FailNow()
 	}
 
-	fileData := []struct {
-		name    string
-		content []byte
-	}{
-		{"photo.gif", []byte("GIF89a")},
-		{"dummy.pdf", []byte("%PDF-")},
-	}
-	fileFixtures := make([]models.File, len(fileData))
-	for i, fileDatum := range fileData {
-		var f models.File
-		if err := f.Store(fileDatum.name, fileDatum.content); err != nil {
-			t.Errorf("failed to create file fixture, %s", err)
-			t.FailNow()
-		}
-		fileFixtures[i] = f
-	}
-
-	if _, err := posts[0].AttachPhoto(fileFixtures[0].UUID.String()); err != nil {
-		t.Errorf("failed to attach photo to post, %s", err)
+	var fileFixture models.File
+	if err := fileFixture.Store("dummy.pdf", []byte("%PDF-")); err != nil {
+		t.Errorf("failed to create file fixture, %s", err)
 		t.FailNow()
 	}
 
-	if _, err := posts[0].AttachFile(fileFixtures[1].UUID.String()); err != nil {
+	if _, err := posts[0].AttachFile(fileFixture.UUID.String()); err != nil {
 		t.Errorf("failed to attach file to post, %s", err)
 		t.FailNow()
 	}
@@ -130,9 +72,7 @@ func createFixturesForPostQuery(as *ActionSuite) PostQueryFixtures {
 		Organization: org,
 		Users:        users,
 		Posts:        posts,
-		Files:        fileFixtures,
 		Threads:      threads,
-		Locations:    locations,
 	}
 }
 
