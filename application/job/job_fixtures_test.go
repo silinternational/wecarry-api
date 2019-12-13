@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/internal/test"
 	"github.com/silinternational/wecarry-api/models"
 )
 
@@ -21,22 +22,9 @@ func createFixture(js *JobSuite, f interface{}) {
 	}
 }
 func CreateFixtures_TestNewThreadMessageHandler(js *JobSuite) MessageFixtures {
-	org := &models.Organization{AuthConfig: "{}", UUID: domain.GetUUID()}
-	createFixture(js, org)
-
-	unique := domain.GetUUID().String()
-	users := models.Users{
-		{Email: unique + "user0@example.com", Nickname: unique + "User0", UUID: domain.GetUUID()},
-		{Email: unique + "user1@example.com", Nickname: unique + "User1", UUID: domain.GetUUID()},
-		{Email: unique + "user2@example.com", Nickname: unique + "User2", UUID: domain.GetUUID()},
-		{Email: unique + "user3@example.com", Nickname: unique + "User3", UUID: domain.GetUUID()},
-		{Email: unique + "user4@example.com", Nickname: unique + "User4", UUID: domain.GetUUID()},
-		{Email: unique + "user5@example.com", Nickname: unique + "User5", UUID: domain.GetUUID()},
-		{Email: unique + "user6@example.com", Nickname: unique + "User6", UUID: domain.GetUUID()},
-	}
-	for i := range users {
-		createFixture(js, &users[i])
-	}
+	uf := test.CreateUserFixtures(js.DB, js.T(), 7)
+	org := uf.Organization
+	users := uf.Users
 
 	location := models.Location{}
 	createFixture(js, &location)

@@ -14,11 +14,11 @@ type DummyMobileService struct {
 	numberSent int
 }
 
-type template struct {
+type msgTemplate struct {
 	subject, body string
 }
 
-var templateData = map[string]template{
+var templateData = map[string]msgTemplate{
 	domain.MessageTemplateNewThreadMessage: {
 		subject: "new message", body: "You have a new message."},
 	domain.MessageTemplateNewRequest: {
