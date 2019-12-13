@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"os"
 	"testing"
+	"text/template"
 	"time"
 
 	"github.com/gobuffalo/suite"
@@ -91,6 +92,9 @@ func (js *JobSuite) TestNewThreadMessageHandler() {
 				expect := time.Now()
 				js.WithinDuration(expect, tp.LastNotifiedAt, time.Second,
 					"last notified time not correct, got %v, wanted %v", tp.LastNotifiedAt, expect)
+
+				body := notifications.TestEmailService.GetLastBody()
+				js.Contains(body, template.HTMLEscapeString(test.message.Content))
 			}
 		})
 	}
