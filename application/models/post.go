@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gobuffalo/buffalo"
@@ -692,6 +693,20 @@ func (p *Posts) FindByUser(ctx context.Context, user User) error {
 	return DB.
 		Scope(scopeUserOrgs(user)).
 		Scope(scopeNotCompleted()).
+		Order("created_at desc").
+		All(p)
+}
+
+// FilterByUserAndContents finds all posts belonging to the same organization as the given user,
+// not marked as completed or removed and containing a certain search text.
+func (p *Posts) FilterByUserTypeAndContents(ctx context.Context, user User, pType PostType, contains string) error {
+	where := "type = ? and (LOWER(title) like ? or LOWER(description) like ?)"
+	contains = `%` + strings.ToLower(contains) + `%`
+
+	return DB.
+		Scope(scopeUserOrgs(user)).
+		Scope(scopeNotCompleted()).
+		Where(where, pType, contains, contains).
 		Order("created_at desc").
 		All(p)
 }

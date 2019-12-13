@@ -1679,6 +1679,56 @@ func (ms *ModelSuite) TestPosts_FindByUser() {
 	}
 }
 
+func (ms *ModelSuite) TestPost_FilterByUserTypeAndContents() {
+	t := ms.T()
+	f := createFixtures_Posts_FilterByUserTypeAndContents(ms)
+
+	tests := []struct {
+		name        string
+		user        User
+		matchText   string
+		postType    PostType
+		wantPostIDs []int
+		wantErr     bool
+	}{
+		{name: "user 0 matching case request", user: f.Users[0], matchText: "Match",
+			postType:    PostTypeRequest,
+			wantPostIDs: []int{f.Posts[5].ID, f.Posts[1].ID, f.Posts[0].ID}},
+		{name: "user 0 lower case request", user: f.Users[0], matchText: "match",
+			postType:    PostTypeRequest,
+			wantPostIDs: []int{f.Posts[5].ID, f.Posts[1].ID, f.Posts[0].ID}},
+		{name: "user 0 just an offer", user: f.Users[0], matchText: "Match",
+			postType:    PostTypeOffer,
+			wantPostIDs: []int{}},
+
+		{name: "user 1", user: f.Users[1], matchText: "Match",
+			postType:    PostTypeRequest,
+			wantPostIDs: []int{f.Posts[5].ID, f.Posts[1].ID}},
+		{name: "non-existent user", user: User{}, matchText: "Match",
+			postType:    PostTypeRequest,
+			wantPostIDs: []int{}},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			posts := Posts{}
+			var c context.Context
+			err := posts.FilterByUserTypeAndContents(c, test.user, test.postType, test.matchText)
+
+			if test.wantErr {
+				ms.Error(err)
+				return
+			}
+
+			ms.NoError(err)
+			postIDs := make([]int, len(posts))
+			for i := range posts {
+				postIDs[i] = posts[i].ID
+			}
+			ms.Equal(test.wantPostIDs, postIDs)
+		})
+	}
+}
+
 func (ms *ModelSuite) TestPost_IsEditable() {
 	t := ms.T()
 

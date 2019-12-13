@@ -289,3 +289,21 @@ func (as *ActionSuite) Test_UpdatePostStatus() {
 		}
 	}
 }
+
+func (as *ActionSuite) Test_SearchRequests() {
+	f := createFixturesForSearchRequestsQuery(as)
+	query := `{ posts: searchRequests(text: "match")
+		{
+			id
+			title
+		}}`
+
+	var resp PostsResponse
+
+	err := as.testGqlQuery(query, f.Users[0].Nickname, &resp)
+	as.NoError(err)
+
+	as.Equal(1, len(resp.Posts), "incorrect number of posts returned")
+	as.Equal(f.Posts[0].UUID.String(), resp.Posts[0].ID)
+	as.Equal(f.Posts[0].Title, resp.Posts[0].Title)
+}
