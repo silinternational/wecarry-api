@@ -1,7 +1,6 @@
 package actions
 
 import (
-	"github.com/gobuffalo/nulls"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/internal/test"
 	"github.com/silinternational/wecarry-api/models"
@@ -13,7 +12,6 @@ type threadQueryFixtures struct {
 	models.Posts
 	models.Threads
 	models.Messages
-	models.Locations
 }
 
 func createFixturesForThreadQuery(as *ActionSuite) threadQueryFixtures {
@@ -21,46 +19,7 @@ func createFixturesForThreadQuery(as *ActionSuite) threadQueryFixtures {
 	org := userFixtures.Organization
 	users := userFixtures.Users
 
-	locations := models.Locations{
-		{
-			Description: "Miami, FL, USA",
-			Country:     "US",
-			Latitude:    nulls.NewFloat64(25.7617),
-			Longitude:   nulls.NewFloat64(-80.1918),
-		},
-		{
-			Description: "Toronto, Canada",
-			Country:     "CA",
-			Latitude:    nulls.NewFloat64(43.6532),
-			Longitude:   nulls.NewFloat64(-79.3832),
-		},
-		{},
-	}
-	for i := range locations {
-		createFixture(as, &locations[i])
-	}
-
-	posts := models.Posts{
-		{
-			CreatedByID:    users[0].ID,
-			OrganizationID: org.ID,
-			Type:           models.PostTypeRequest,
-			Status:         models.PostStatusCommitted,
-			Title:          "A Request",
-			DestinationID:  locations[0].ID,
-			Size:           models.PostSizeSmall,
-		},
-		{
-			CreatedByID:    users[0].ID,
-			ProviderID:     nulls.NewInt(users[0].ID),
-			OrganizationID: org.ID,
-			DestinationID:  locations[2].ID,
-		},
-	}
-	for i := range posts {
-		posts[i].UUID = domain.GetUUID()
-		createFixture(as, &posts[i])
-	}
+	posts := test.CreatePostFixtures(as.DB, 1, false)
 
 	threads := models.Threads{
 		{UUID: domain.GetUUID(), PostID: posts[0].ID},
@@ -98,7 +57,6 @@ func createFixturesForThreadQuery(as *ActionSuite) threadQueryFixtures {
 		Users:        users,
 		Posts:        posts,
 		Threads:      threads,
-		Locations:    locations,
 		Messages:     messages,
 	}
 }
