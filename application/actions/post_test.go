@@ -19,10 +19,6 @@ type PostsResponse struct {
 	Posts []Post `json:"posts"`
 }
 
-type SearchRequestsResponse struct {
-	Posts []Post `json:"searchRequests"`
-}
-
 type PostResponse struct {
 	Post Post `json:"post"`
 }
@@ -296,13 +292,13 @@ func (as *ActionSuite) Test_UpdatePostStatus() {
 
 func (as *ActionSuite) Test_SearchRequests() {
 	f := createFixturesForSearchRequestsQuery(as)
-	query := `{ searchRequests(text: "match")
+	query := `{ posts: searchRequests(text: "match")
 		{
 			id
 			title
 		}}`
 
-	var resp SearchRequestsResponse
+	var resp PostsResponse
 
 	err := as.testGqlQuery(query, f.Users[0].Nickname, &resp)
 	as.NoError(err)
