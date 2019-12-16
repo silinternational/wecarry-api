@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"reflect"
 	"strconv"
 	"time"
 
@@ -20,6 +21,17 @@ type UserFixtures struct {
 
 // MustCreate saves a record to the database. Panics if any error occurs.
 func MustCreate(tx *pop.Connection, f interface{}) {
+	value := reflect.ValueOf(f)
+
+	if value.Type().Kind() != reflect.Ptr {
+		panic("createFixture requires a pointer")
+	}
+
+	uuidField := value.Elem().FieldByName("UUID")
+	if uuidField.IsValid() {
+		uuidField.Set(reflect.ValueOf(domain.GetUUID()))
+	}
+
 	err := tx.Create(f)
 	if err != nil {
 		panic(fmt.Sprintf("error creating %T fixture, %s", f, err))
@@ -33,11 +45,11 @@ func MustCreate(tx *pop.Connection, f interface{}) {
 func CreateUserFixtures(tx *pop.Connection, n int) UserFixtures {
 	var org Organization
 	if err := tx.First(&org); err != nil {
-		org = Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
+		org = Organization{AuthConfig: "{}"}
 		MustCreate(tx, &org)
 	}
 
-	unique := org.UUID.String()
+	unique := domain.GetUUID().String()
 
 	users := make(Users, n)
 	locations := make(Locations, n)
