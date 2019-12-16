@@ -64,8 +64,8 @@ func (ms *ModelSuite) TestThread_Validate() {
 func (ms *ModelSuite) TestThread_FindByUUID() {
 	t := ms.T()
 
-	uf := createUserFixtures(ms.DB, 2)
-	posts := CreatePostFixtures(ms, t, uf.Users)
+	_ = createUserFixtures(ms.DB, 2)
+	posts := createPostFixtures(ms.DB, 1, 1, false)
 	threadFixtures := CreateThreadFixtures(ms, posts[0])
 
 	tests := []struct {
@@ -100,8 +100,8 @@ func (ms *ModelSuite) TestThread_FindByUUID() {
 func (ms *ModelSuite) TestThread_GetPost() {
 	t := ms.T()
 
-	uf := createUserFixtures(ms.DB, 2)
-	posts := CreatePostFixtures(ms, t, uf.Users)
+	_ = createUserFixtures(ms.DB, 2)
+	posts := createPostFixtures(ms.DB, 1, 1, false)
 	threadFixtures := CreateThreadFixtures(ms, posts[0])
 
 	tests := []struct {
@@ -137,8 +137,8 @@ func (ms *ModelSuite) TestThread_GetPost() {
 func (ms *ModelSuite) TestThread_GetMessages() {
 	t := ms.T()
 
-	uf := createUserFixtures(ms.DB, 2)
-	posts := CreatePostFixtures(ms, t, uf.Users)
+	_ = createUserFixtures(ms.DB, 2)
+	posts := createPostFixtures(ms.DB, 1, 1, false)
 	threadFixtures := CreateThreadFixtures(ms, posts[0])
 
 	tests := []struct {
@@ -191,7 +191,7 @@ func (ms *ModelSuite) TestThread_GetParticipants() {
 	t := ms.T()
 
 	users := createUserFixtures(ms.DB, 2).Users
-	posts := CreatePostFixtures(ms, t, users)
+	posts := createPostFixtures(ms.DB, 1, 1, false)
 	threadFixtures := CreateThreadFixtures(ms, posts[0])
 
 	tests := []struct {
@@ -211,7 +211,7 @@ func (ms *ModelSuite) TestThread_GetParticipants() {
 			name:   "two participants",
 			thread: threadFixtures.Threads[1],
 			want: []uuid.UUID{
-				users[1].UUID,
+				threadFixtures.Users[0].UUID,
 				users[0].UUID,
 			},
 		},
@@ -244,7 +244,7 @@ func (ms *ModelSuite) TestThread_CreateWithParticipants() {
 	t := ms.T()
 
 	users := createUserFixtures(ms.DB, 2).Users
-	posts := CreatePostFixtures(ms, t, users)
+	posts := createPostFixtures(ms.DB, 1, 0, false)
 	post := posts[0]
 
 	var thread Thread
@@ -286,7 +286,7 @@ func (ms *ModelSuite) TestThread_ensureParticipants() {
 	t := ms.T()
 
 	users := createUserFixtures(ms.DB, 2).Users
-	posts := CreatePostFixtures(ms, t, users)
+	posts := createPostFixtures(ms.DB, 1, 1, false)
 	post := posts[0]
 
 	thread := Thread{
@@ -343,7 +343,7 @@ func (ms *ModelSuite) TestThread_GetLastViewedAt() {
 	t := ms.T()
 
 	users := createUserFixtures(ms.DB, 2).Users
-	posts := CreatePostFixtures(ms, t, users)
+	posts := createPostFixtures(ms.DB, 1, 1, false)
 	threadFixtures := CreateThreadFixtures(ms, posts[0])
 
 	tests := []struct {

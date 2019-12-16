@@ -41,51 +41,6 @@ func CreateFixturesValidateUpdate_RequestStatus(status PostStatus, ms *ModelSuit
 	return post
 }
 
-func CreatePostFixtures(ms *ModelSuite, t *testing.T, users Users) []Post {
-	if err := ms.DB.Load(&users[0], "Organizations"); err != nil {
-		t.Errorf("failed to load organizations on users[0] fixture, %s", err)
-	}
-
-	locations := []Location{{}, {}}
-	for i := range locations {
-		createFixture(ms, &locations[i])
-	}
-
-	// Load Post test fixtures
-	posts := []Post{
-		{
-			CreatedByID:    users[0].ID,
-			Type:           PostTypeRequest,
-			OrganizationID: users[0].Organizations[0].ID,
-			Title:          "A Request",
-			ProviderID:     nulls.NewInt(users[1].ID),
-			DestinationID:  locations[0].ID,
-		},
-		{
-			CreatedByID:    users[0].ID,
-			Type:           PostTypeOffer,
-			OrganizationID: users[0].Organizations[0].ID,
-			Title:          "An Offer",
-			ReceiverID:     nulls.NewInt(users[1].ID),
-			DestinationID:  locations[1].ID,
-		},
-	}
-	for i := range posts {
-		posts[i].Size = PostSizeMedium
-		posts[i].Status = PostStatusOpen
-		posts[i].UUID = domain.GetUUID()
-		if err := ms.DB.Create(&posts[i]); err != nil {
-			t.Errorf("could not create test post ... %v", err)
-			t.FailNow()
-		}
-		if err := ms.DB.Load(&posts[i], "CreatedBy", "Provider", "Receiver", "Organization"); err != nil {
-			t.Errorf("Error loading post associations: %s", err)
-			t.FailNow()
-		}
-	}
-	return posts
-}
-
 func createFixturesForTestPostCreate(ms *ModelSuite) PostFixtures {
 	uf := createUserFixtures(ms.DB, 1)
 	org := uf.Organization

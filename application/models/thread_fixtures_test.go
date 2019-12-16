@@ -17,6 +17,13 @@ type ThreadFixtures struct {
 }
 
 func CreateThreadFixtures(ms *ModelSuite, post Post) ThreadFixtures {
+	// need another User for these fixtures, to act as the Provider and 2nd Thread Participant
+	uf := createUserFixtures(ms.DB, 1)
+
+	post.Status = PostStatusCommitted
+	post.ProviderID = nulls.NewInt(uf.Users[0].ID)
+	ms.NoError(ms.DB.Save(&post))
+
 	// Load Thread test fixtures
 	threads := make(Threads, 3)
 	for i := range threads {
@@ -34,7 +41,7 @@ func CreateThreadFixtures(ms *ModelSuite, post Post) ThreadFixtures {
 		},
 		{
 			ThreadID: threads[1].ID,
-			UserID:   post.ProviderID.Int,
+			UserID:   uf.Users[0].ID,
 		},
 		{
 			ThreadID: threads[1].ID,
@@ -54,7 +61,7 @@ func CreateThreadFixtures(ms *ModelSuite, post Post) ThreadFixtures {
 		},
 		{
 			ThreadID: threads[1].ID,
-			SentByID: post.ProviderID.Int,
+			SentByID: uf.Users[0].ID,
 			Content:  "I can being PB if you bring chocolate",
 		},
 		{
@@ -69,7 +76,12 @@ func CreateThreadFixtures(ms *ModelSuite, post Post) ThreadFixtures {
 		createFixture(ms, &messages[i])
 	}
 
-	return ThreadFixtures{Threads: threads, Messages: messages, ThreadParticipants: threadParticipants}
+	return ThreadFixtures{
+		Threads:            threads,
+		Messages:           messages,
+		ThreadParticipants: threadParticipants,
+		Users:              uf.Users,
+	}
 }
 
 func CreateThreadFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) ThreadFixtures {

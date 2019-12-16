@@ -93,6 +93,62 @@ func createUserFixtures(tx *pop.Connection, n int) UserFixtures {
 	}
 }
 
+// CreatePostFixtures generates any number of post records for testing. Related Location and File records are also
+// created. All post fixtures will be assigned to the first Organization in the DB. If no Organization exists,
+// one will be created. All posts are created by the first User in the DB. If no User exists, one will be created.
+func createPostFixtures(tx *pop.Connection, nRequests, nOffers int, createFiles bool) Posts {
+	var org Organization
+	if err := tx.First(&org); err != nil {
+		org = Organization{AuthConfig: "{}"}
+		mustCreate(tx, &org)
+	}
+
+	var user User
+	if err := tx.First(&user); err != nil {
+		user = User{}
+		mustCreate(tx, &user)
+	}
+
+	totalPosts := nRequests + nOffers
+	locations := createLocationFixtures(tx, totalPosts*2)
+
+	var files Files
+	if createFiles {
+		files = createFileFixtures(totalPosts)
+	}
+
+	posts := make(Posts, totalPosts)
+	created := 0
+	for i := range posts {
+		if created < nRequests {
+			posts[i].Type = PostTypeRequest
+			posts[i].ReceiverID = nulls.NewInt(user.ID)
+		} else {
+			posts[i].Type = PostTypeOffer
+			posts[i].ProviderID = nulls.NewInt(user.ID)
+		}
+		posts[i].CreatedByID = user.ID
+		posts[i].OrganizationID = org.ID
+		posts[i].DestinationID = locations[i*2].ID
+		posts[i].OriginID = nulls.NewInt(locations[i*2+1].ID)
+		posts[i].Title = "title " + strconv.Itoa(i)
+		posts[i].Description = nulls.NewString("description " + strconv.Itoa(i))
+		posts[i].Size = PostSizeSmall
+		posts[i].Status = PostStatusOpen
+		posts[i].URL = nulls.NewString("https://www.example.com/" + strconv.Itoa(i))
+		posts[i].Kilograms = float64(i) * 0.1
+
+		if createFiles {
+			posts[i].PhotoFileID = nulls.NewInt(files[i].ID)
+		}
+
+		mustCreate(tx, &posts[i])
+		created++
+	}
+
+	return posts
+}
+
 // createLocationFixtures generates any number of location records for testing.
 func createLocationFixtures(tx *pop.Connection, n int) Locations {
 	countries := []string{"US", "CA", "MX", "TH", "FR", "PG"}
@@ -107,4 +163,16 @@ func createLocationFixtures(tx *pop.Connection, n int) Locations {
 		mustCreate(tx, &locations[i])
 	}
 	return locations
+}
+
+func createFileFixtures(n int) Files {
+	fileFixtures := make([]File, n)
+	for i := range fileFixtures {
+		var f File
+		if err := f.Store(strconv.Itoa(rand.Int())+".gif", []byte("GIF89a")); err != nil {
+			panic(fmt.Sprintf("failed to create file fixture, %s", err))
+		}
+		fileFixtures[i] = f
+	}
+	return fileFixtures
 }

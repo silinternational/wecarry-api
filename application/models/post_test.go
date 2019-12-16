@@ -1092,7 +1092,7 @@ func (ms *ModelSuite) TestPost_FindByID() {
 	t := ms.T()
 
 	users := createUserFixtures(ms.DB, 2).Users
-	posts := CreatePostFixtures(ms, t, users)
+	posts := createPostFixtures(ms.DB, 1, 1, false)
 
 	tests := []struct {
 		name          string
@@ -1108,11 +1108,11 @@ func (ms *ModelSuite) TestPost_FindByID() {
 			wantPost: posts[0],
 		},
 		{name: "good with two related fields",
-			id:            posts[0].ID,
+			id:            posts[1].ID,
 			eagerFields:   []string{"CreatedBy", "Provider"},
-			wantPost:      posts[0],
+			wantPost:      posts[1],
 			wantCreatedBy: users[0],
-			wantProvider:  users[1],
+			wantProvider:  users[0],
 		},
 		{name: "zero ID", id: 0, wantErr: true},
 		{name: "wrong id", id: 99999, wantErr: true},
@@ -1131,7 +1131,7 @@ func (ms *ModelSuite) TestPost_FindByID() {
 					ms.Equal(test.wantCreatedBy.ID, post.CreatedBy.ID, "bad post createdby id")
 				}
 				if test.wantProvider.ID != 0 {
-					ms.Equal(test.wantProvider.ID, post.Provider.ID, "bod post provider id")
+					ms.Equal(test.wantProvider.ID, post.Provider.ID, "bad post provider id")
 				}
 			}
 		})
@@ -1141,8 +1141,8 @@ func (ms *ModelSuite) TestPost_FindByID() {
 func (ms *ModelSuite) TestPost_FindByUUID() {
 	t := ms.T()
 
-	uf := createUserFixtures(ms.DB, 2)
-	posts := CreatePostFixtures(ms, t, uf.Users)
+	_ = createUserFixtures(ms.DB, 2)
+	posts := createPostFixtures(ms.DB, 1, 1, false)
 
 	tests := []struct {
 		name    string
@@ -1177,14 +1177,14 @@ func (ms *ModelSuite) TestPost_GetCreator() {
 	t := ms.T()
 
 	uf := createUserFixtures(ms.DB, 2)
-	posts := CreatePostFixtures(ms, t, uf.Users)
+	posts := createPostFixtures(ms.DB, 1, 1, false)
 
 	tests := []struct {
 		name string
 		post Post
 		want uuid.UUID
 	}{
-		{name: "good", post: posts[0], want: posts[0].CreatedBy.UUID},
+		{name: "good", post: posts[0], want: uf.Users[0].UUID},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -1202,15 +1202,15 @@ func (ms *ModelSuite) TestPost_GetProvider() {
 	t := ms.T()
 
 	uf := createUserFixtures(ms.DB, 2)
-	posts := CreatePostFixtures(ms, t, uf.Users)
+	posts := createPostFixtures(ms.DB, 1, 1, false)
 
 	tests := []struct {
 		name string
 		post Post
 		want *uuid.UUID
 	}{
-		{name: "good", post: posts[0], want: &posts[0].Provider.UUID},
-		{name: "nil", post: posts[1], want: nil},
+		{name: "good", post: posts[1], want: &uf.Users[0].UUID},
+		{name: "nil", post: posts[0], want: nil},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -1234,15 +1234,15 @@ func (ms *ModelSuite) TestPost_GetReceiver() {
 	t := ms.T()
 
 	uf := createUserFixtures(ms.DB, 2)
-	posts := CreatePostFixtures(ms, t, uf.Users)
+	posts := createPostFixtures(ms.DB, 1, 1, false)
 
 	tests := []struct {
 		name string
 		post Post
 		want *uuid.UUID
 	}{
-		{name: "good", post: posts[1], want: &posts[1].Receiver.UUID},
-		{name: "nil", post: posts[0], want: nil},
+		{name: "good", post: posts[0], want: &uf.Users[0].UUID},
+		{name: "nil", post: posts[1], want: nil},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -1265,8 +1265,9 @@ func (ms *ModelSuite) TestPost_GetReceiver() {
 func (ms *ModelSuite) TestPost_GetOrganization() {
 	t := ms.T()
 
-	uf := createUserFixtures(ms.DB, 2)
-	posts := CreatePostFixtures(ms, t, uf.Users)
+	_ = createUserFixtures(ms.DB, 2)
+	posts := createPostFixtures(ms.DB, 1, 1, false)
+	ms.NoError(ms.DB.Load(&posts, "Organization"))
 
 	tests := []struct {
 		name string
@@ -1291,7 +1292,7 @@ func (ms *ModelSuite) TestPost_GetThreads() {
 	t := ms.T()
 
 	users := createUserFixtures(ms.DB, 2).Users
-	posts := CreatePostFixtures(ms, t, users)
+	posts := createPostFixtures(ms.DB, 1, 1, false)
 	threadFixtures := CreateThreadFixtures(ms, posts[0])
 	threads := threadFixtures.Threads
 
