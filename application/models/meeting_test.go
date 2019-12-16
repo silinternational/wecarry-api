@@ -9,6 +9,7 @@ import (
 	"github.com/silinternational/wecarry-api/domain"
 )
 
+// TestMeeting_Validate ensures errors are thrown for missing required fields
 func (ms *ModelSuite) TestMeeting_Validate() {
 	t := ms.T()
 	tests := []struct {
@@ -107,6 +108,7 @@ func (ms *ModelSuite) TestMeeting_Validate() {
 	}
 }
 
+// TestMeeting_FindByUUID tests the FindByUUID function of the Meeting model
 func (ms *ModelSuite) TestMeeting_FindByUUID() {
 	t := ms.T()
 

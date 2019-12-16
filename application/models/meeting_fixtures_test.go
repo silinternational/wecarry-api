@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// CreateMeetingFixtures creates two meetings associated with the first user passed in.
 func CreateMeetingFixtures(ms *ModelSuite, t *testing.T, users Users) Meetings {
 	if err := ms.DB.Load(&users[0], "Organizations"); err != nil {
 		t.Errorf("failed to load organizations on users[0] fixture, %s", err)
