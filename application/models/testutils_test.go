@@ -25,7 +25,7 @@ func mustCreate(tx *pop.Connection, f interface{}) {
 	value := reflect.ValueOf(f)
 
 	if value.Type().Kind() != reflect.Ptr {
-		panic("createFixture requires a pointer")
+		panic("mustCreate requires a pointer")
 	}
 
 	uuidField := value.Elem().FieldByName("UUID")
