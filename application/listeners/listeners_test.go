@@ -149,7 +149,7 @@ func (ms *ModelSuite) TestSendNewMessageNotification() {
 }
 
 func createFixturesForSendPostCreatedNotifications(ms *ModelSuite) PostFixtures {
-	userFixtures := test.CreateUserFixtures(ms.DB, ms.T(), 3)
+	userFixtures := test.CreateUserFixtures(ms.DB, 3)
 	org := userFixtures.Organization
 	users := userFixtures.Users
 

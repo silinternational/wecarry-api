@@ -29,7 +29,7 @@ type UpdatePostStatusFixtures struct {
 func createFixturesForPostQuery(as *ActionSuite) PostQueryFixtures {
 	t := as.T()
 
-	userFixtures := test.CreateUserFixtures(as.DB, t, 2)
+	userFixtures := test.CreateUserFixtures(as.DB, 2)
 	org := userFixtures.Organization
 	users := userFixtures.Users
 
@@ -77,7 +77,7 @@ func createFixturesForPostQuery(as *ActionSuite) PostQueryFixtures {
 }
 
 func createFixturesForSearchRequestsQuery(as *ActionSuite) PostQueryFixtures {
-	userFixtures := test.CreateUserFixtures(as.DB, as.T(), 2)
+	userFixtures := test.CreateUserFixtures(as.DB, 2)
 	org := userFixtures.Organization
 	users := userFixtures.Users
 
@@ -95,7 +95,7 @@ func createFixturesForSearchRequestsQuery(as *ActionSuite) PostQueryFixtures {
 func createFixturesForUpdatePost(as *ActionSuite) UpdatePostFixtures {
 	t := as.T()
 
-	userFixtures := test.CreateUserFixtures(as.DB, t, 2)
+	userFixtures := test.CreateUserFixtures(as.DB, 2)
 	users := userFixtures.Users
 
 	posts := test.CreatePostFixtures(as.DB, 1, false)
@@ -118,7 +118,7 @@ func createFixturesForUpdatePost(as *ActionSuite) UpdatePostFixtures {
 func createFixturesForCreatePost(as *ActionSuite) CreatePostFixtures {
 	t := as.T()
 
-	userFixtures := test.CreateUserFixtures(as.DB, t, 1)
+	userFixtures := test.CreateUserFixtures(as.DB, 1)
 	org := userFixtures.Organization
 
 	if err := aws.CreateS3Bucket(); err != nil {
@@ -140,7 +140,7 @@ func createFixturesForCreatePost(as *ActionSuite) CreatePostFixtures {
 }
 
 func createFixturesForUpdatePostStatus(as *ActionSuite) UpdatePostStatusFixtures {
-	userFixtures := test.CreateUserFixtures(as.DB, as.T(), 2)
+	userFixtures := test.CreateUserFixtures(as.DB, 2)
 	users := userFixtures.Users
 
 	posts := test.CreatePostFixtures(as.DB, 1, false)

@@ -15,7 +15,7 @@ type threadQueryFixtures struct {
 }
 
 func createFixturesForThreadQuery(as *ActionSuite) threadQueryFixtures {
-	userFixtures := test.CreateUserFixtures(as.DB, as.T(), 2)
+	userFixtures := test.CreateUserFixtures(as.DB, 2)
 	org := userFixtures.Organization
 	users := userFixtures.Users
 

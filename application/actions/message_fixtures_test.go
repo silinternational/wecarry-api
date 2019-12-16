@@ -15,7 +15,7 @@ type messageQueryFixtures struct {
 }
 
 func createFixtures_MessageQuery(as *ActionSuite) messageQueryFixtures {
-	userFixtures := test.CreateUserFixtures(as.DB, as.T(), 2)
+	userFixtures := test.CreateUserFixtures(as.DB, 2)
 	org := userFixtures.Organization
 	users := userFixtures.Users
 

@@ -5,7 +5,6 @@ import (
 	"math/rand"
 	"reflect"
 	"strconv"
-	"testing"
 	"time"
 
 	"github.com/gobuffalo/nulls"
@@ -43,7 +42,7 @@ func MustCreate(tx *pop.Connection, f interface{}) {
 // UserAccessTokens are also created for each user. The access token for each user is the same as the user's nickname.
 // All user fixtures will be assigned to the first Organization in the DB. If no Organization exists, one will be
 // created.
-func CreateUserFixtures(tx *pop.Connection, t *testing.T, n int) UserFixtures {
+func CreateUserFixtures(tx *pop.Connection, n int) UserFixtures {
 	var org models.Organization
 	if err := tx.First(&org); err != nil {
 		org = models.Organization{AuthConfig: "{}"}
@@ -69,12 +68,12 @@ func CreateUserFixtures(tx *pop.Connection, t *testing.T, n int) UserFixtures {
 
 		userOrgs[i].UserID = users[i].ID
 		userOrgs[i].OrganizationID = org.ID
-		userOrgs[i].AuthID = unique + "_auth_user" + strconv.Itoa(i)
-		userOrgs[i].AuthEmail = unique + users[i].Email
+		userOrgs[i].AuthID = users[i].Email
+		userOrgs[i].AuthEmail = users[i].Email
 		MustCreate(tx, &userOrgs[i])
 
 		if err := tx.Load(&users[i], "Organizations"); err != nil {
-			t.Errorf("failed to load organizations on users[%d] fixture, %s", i, err)
+			panic(fmt.Sprintf("failed to load organizations on users[%d] fixture, %s", i, err))
 		}
 
 		accessTokenFixtures[i].UserID = users[i].ID

@@ -34,7 +34,7 @@ func fixturesForCreateOrganization(as *ActionSuite) OrganizationFixtures {
 	// Don't save "New" to the database, that's for the test to do.
 	createFixture(as, &orgs[0])
 
-	userFixtures := test.CreateUserFixtures(as.DB, as.T(), 1)
+	userFixtures := test.CreateUserFixtures(as.DB, 1)
 	users := userFixtures.Users
 
 	users[0].AdminRole = models.UserAdminRoleSuperAdmin

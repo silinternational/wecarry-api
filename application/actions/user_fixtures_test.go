@@ -18,7 +18,7 @@ type UserQueryFixtures struct {
 }
 
 func fixturesForUserQuery(as *ActionSuite) UserQueryFixtures {
-	uf := test.CreateUserFixtures(as.DB, as.T(), 2)
+	uf := test.CreateUserFixtures(as.DB, 2)
 	users := uf.Users
 	org := uf.Organization
 

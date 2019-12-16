@@ -17,7 +17,7 @@ type orgUserPostFixtures struct {
 }
 
 func CreateFixtures_GetPostUsers(ms *ModelSuite, t *testing.T) orgUserPostFixtures {
-	userFixtures := test.CreateUserFixtures(ms.DB, t, 3)
+	userFixtures := test.CreateUserFixtures(ms.DB, 3)
 	org := userFixtures.Organization
 	users := userFixtures.Users
 
@@ -38,7 +38,7 @@ func CreateFixtures_GetPostUsers(ms *ModelSuite, t *testing.T) orgUserPostFixtur
 }
 
 func CreateFixtures_RequestStatusUpdatedNotifications(ms *ModelSuite, t *testing.T) orgUserPostFixtures {
-	userFixtures := test.CreateUserFixtures(ms.DB, t, 3)
+	userFixtures := test.CreateUserFixtures(ms.DB, 3)
 	org := userFixtures.Organization
 	users := userFixtures.Users
 
