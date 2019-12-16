@@ -12,6 +12,7 @@ import (
 	"time"
 )
 
+// Meeting represents an event where people gather together from different locations
 type Meeting struct {
 	ID          int          `json:"id" db:"id"`
 	UUID        uuid.UUID    `json:"uuid" db:"uuid"`
@@ -72,6 +73,7 @@ func (m *Meeting) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }
 
+// FindByUUID finds a meeting by the UUID field and loads its CreatedBy field
 func (m *Meeting) FindByUUID(uuid string) error {
 	if uuid == "" {
 		return errors.New("error finding message: uuid must not be blank")
@@ -105,7 +107,7 @@ func (m *Meeting) AttachImage(fileID string) (File, error) {
 	return f, nil
 }
 
-// GetImage retrieves the file attached as the Post photo
+// GetImage retrieves the file attached as the Meeting Image
 func (m *Meeting) GetImage() (*File, error) {
 	if err := DB.Load(m, "ImageFile"); err != nil {
 		return nil, err
