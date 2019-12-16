@@ -73,7 +73,7 @@ func CreateThreadFixtures(ms *ModelSuite, post Post) ThreadFixtures {
 }
 
 func CreateThreadFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) ThreadFixtures {
-	uf := CreateUserFixtures(ms.DB, 2)
+	uf := createUserFixtures(ms.DB, 2)
 	org := uf.Organization
 	users := uf.Users
 

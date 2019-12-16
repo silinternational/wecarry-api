@@ -16,7 +16,7 @@ type MessageFixtures struct {
 }
 
 func Fixtures_Message_GetSender(ms *ModelSuite, t *testing.T) MessageFixtures {
-	uf := CreateUserFixtures(ms.DB, 2)
+	uf := createUserFixtures(ms.DB, 2)
 	org := uf.Organization
 	users := uf.Users
 
@@ -52,7 +52,7 @@ func Fixtures_Message_GetSender(ms *ModelSuite, t *testing.T) MessageFixtures {
 }
 
 func Fixtures_Message_Create(ms *ModelSuite, t *testing.T) MessageFixtures {
-	uf := CreateUserFixtures(ms.DB, 2)
+	uf := createUserFixtures(ms.DB, 2)
 	org := uf.Organization
 	users := uf.Users
 
@@ -94,7 +94,7 @@ func Fixtures_Message_Create(ms *ModelSuite, t *testing.T) MessageFixtures {
 }
 
 func Fixtures_Message_FindByID(ms *ModelSuite, t *testing.T) MessageFixtures {
-	uf := CreateUserFixtures(ms.DB, 2)
+	uf := createUserFixtures(ms.DB, 2)
 	org := uf.Organization
 	users := uf.Users
 
@@ -130,7 +130,7 @@ func Fixtures_Message_FindByID(ms *ModelSuite, t *testing.T) MessageFixtures {
 
 // Fixtures_Message_Find is used by TestMessage_FindByUUID and TestMessage_FindByUserAndUUID
 func Fixtures_Message_Find(ms *ModelSuite) MessageFixtures {
-	uf := CreateUserFixtures(ms.DB, 5)
+	uf := createUserFixtures(ms.DB, 5)
 	org := uf.Organization
 	users := uf.Users
 
@@ -188,7 +188,7 @@ func Fixtures_Message_Find(ms *ModelSuite) MessageFixtures {
 }
 
 func CreateMessageFixtures_AfterCreate(ms *ModelSuite, t *testing.T) MessageFixtures {
-	uf := CreateUserFixtures(ms.DB, 2)
+	uf := createUserFixtures(ms.DB, 2)
 	org := uf.Organization
 	users := uf.Users
 

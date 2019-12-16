@@ -34,7 +34,7 @@ func createFixturesForUserGetOrganizations(ms *ModelSuite) ([]Organization, User
 		createFixture(ms, &orgs[i])
 	}
 
-	users := CreateUserFixtures(ms.DB, 1).Users
+	users := createUserFixtures(ms.DB, 1).Users
 
 	// user is already in org 0, but need user to also be in org 1
 	createFixture(ms, &UserOrganization{
@@ -91,7 +91,7 @@ func CreateUserFixtures_CanEditAllPosts(ms *ModelSuite) UserPostFixtures {
 }
 
 func CreateFixturesForUserGetPosts(ms *ModelSuite) UserPostFixtures {
-	uf := CreateUserFixtures(ms.DB, 2)
+	uf := createUserFixtures(ms.DB, 2)
 	org := uf.Organization
 	users := uf.Users
 
@@ -201,7 +201,7 @@ func CreateUserFixturesForNicknames(ms *ModelSuite, t *testing.T) User {
 }
 
 func CreateUserFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) UserMessageFixtures {
-	uf := CreateUserFixtures(ms.DB, 2)
+	uf := createUserFixtures(ms.DB, 2)
 	org := uf.Organization
 	users := uf.Users
 
@@ -340,7 +340,7 @@ type UserPostFixtures struct {
 }
 
 func CreateUserFixtures_GetThreads(ms *ModelSuite) UserPostFixtures {
-	uf := CreateUserFixtures(ms.DB, 2)
+	uf := createUserFixtures(ms.DB, 2)
 	org := uf.Organization
 	users := uf.Users
 
@@ -373,7 +373,7 @@ func CreateUserFixtures_GetThreads(ms *ModelSuite) UserPostFixtures {
 }
 
 func CreateFixturesForUserWantsPostNotification(ms *ModelSuite) UserPostFixtures {
-	uf := CreateUserFixtures(ms.DB, 2)
+	uf := createUserFixtures(ms.DB, 2)
 	org := uf.Organization
 	users := uf.Users
 
@@ -448,7 +448,7 @@ func CreateFixturesForUserWantsPostNotification(ms *ModelSuite) UserPostFixtures
 }
 
 func CreateUserFixtures_TestGetPreference(ms *ModelSuite) UserPostFixtures {
-	users := CreateUserFixtures(ms.DB, 2).Users
+	users := createUserFixtures(ms.DB, 2).Users
 
 	// Load UserPreferences test fixtures
 	userPreferences := UserPreferences{
@@ -473,7 +473,7 @@ func CreateUserFixtures_TestGetPreference(ms *ModelSuite) UserPostFixtures {
 }
 
 func CreateUserFixtures_TestGetLanguagePreference(ms *ModelSuite) Users {
-	users := CreateUserFixtures(ms.DB, 3).Users
+	users := createUserFixtures(ms.DB, 3).Users
 
 	// Load UserPreferences test fixtures
 	userPreferences := UserPreferences{

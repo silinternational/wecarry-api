@@ -16,7 +16,7 @@ type PostHistoryFixtures struct {
 }
 
 func createFixturesForTestPostHistory_Load(ms *ModelSuite) PostHistoryFixtures {
-	uf := CreateUserFixtures(ms.DB, 2)
+	uf := createUserFixtures(ms.DB, 2)
 	org := uf.Organization
 	users := uf.Users
 
@@ -55,7 +55,7 @@ func createFixturesForTestPostHistory_Load(ms *ModelSuite) PostHistoryFixtures {
 }
 
 func createFixturesForTestPostHistory_pop(ms *ModelSuite) PostFixtures {
-	uf := CreateUserFixtures(ms.DB, 2)
+	uf := createUserFixtures(ms.DB, 2)
 	org := uf.Organization
 	users := uf.Users
 
@@ -111,7 +111,7 @@ func createFixturesForTestPostHistory_pop(ms *ModelSuite) PostFixtures {
 }
 
 func createFixturesForTestPostHistory_createForPost(ms *ModelSuite) PostFixtures {
-	uf := CreateUserFixtures(ms.DB, 2)
+	uf := createUserFixtures(ms.DB, 2)
 	org := uf.Organization
 	users := uf.Users
 

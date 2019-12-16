@@ -225,7 +225,7 @@ func (ms *ModelSuite) TestUser_Validate() {
 func (ms *ModelSuite) TestUser_CreateAccessToken() {
 	t := ms.T()
 
-	uf := CreateUserFixtures(ms.DB, 1)
+	uf := createUserFixtures(ms.DB, 1)
 	users := uf.Users
 
 	type args struct {
@@ -635,7 +635,7 @@ func (ms *ModelSuite) TestUser_CanUpdatePostStatus() {
 func (ms *ModelSuite) TestUser_FindByUUID() {
 	t := ms.T()
 
-	f := CreateUserFixtures(ms.DB, 1)
+	f := createUserFixtures(ms.DB, 1)
 
 	tests := []struct {
 		name    string
@@ -671,7 +671,7 @@ func (ms *ModelSuite) TestUser_FindByUUID() {
 func (ms *ModelSuite) TestUser_FindByID() {
 	t := ms.T()
 
-	f := CreateUserFixtures(ms.DB, 1)
+	f := createUserFixtures(ms.DB, 1)
 
 	tests := []struct {
 		name    string

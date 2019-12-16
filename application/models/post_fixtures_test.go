@@ -18,7 +18,7 @@ type PostFixtures struct {
 }
 
 func CreateFixturesValidateUpdate_RequestStatus(status PostStatus, ms *ModelSuite, t *testing.T) Post {
-	uf := CreateUserFixtures(ms.DB, 1)
+	uf := createUserFixtures(ms.DB, 1)
 	org := uf.Organization
 	user := uf.Users[0]
 
@@ -87,7 +87,7 @@ func CreatePostFixtures(ms *ModelSuite, t *testing.T, users Users) []Post {
 }
 
 func createFixturesForTestPostCreate(ms *ModelSuite) PostFixtures {
-	uf := CreateUserFixtures(ms.DB, 1)
+	uf := createUserFixtures(ms.DB, 1)
 	org := uf.Organization
 	user := uf.Users[0]
 
@@ -117,7 +117,7 @@ func createFixturesForTestPostCreate(ms *ModelSuite) PostFixtures {
 }
 
 func createFixturesForTestPostUpdate(ms *ModelSuite) PostFixtures {
-	uf := CreateUserFixtures(ms.DB, 1)
+	uf := createUserFixtures(ms.DB, 1)
 	org := uf.Organization
 	user := uf.Users[0]
 
@@ -147,7 +147,7 @@ func createFixturesForTestPostUpdate(ms *ModelSuite) PostFixtures {
 }
 
 func createFixturesForTestPost_manageStatusTransition_forwardProgression(ms *ModelSuite) PostFixtures {
-	uf := CreateUserFixtures(ms.DB, 2)
+	uf := createUserFixtures(ms.DB, 2)
 	org := uf.Organization
 	users := uf.Users
 
@@ -188,7 +188,7 @@ func createFixturesForTestPost_manageStatusTransition_forwardProgression(ms *Mod
 }
 
 func createFixturesForTestPost_manageStatusTransition_backwardProgression(ms *ModelSuite) PostFixtures {
-	uf := CreateUserFixtures(ms.DB, 2)
+	uf := createUserFixtures(ms.DB, 2)
 	org := uf.Organization
 	users := uf.Users
 
@@ -233,7 +233,7 @@ func createFixturesForTestPost_manageStatusTransition_backwardProgression(ms *Mo
 }
 
 func CreateFixturesForPostsGetFiles(ms *ModelSuite) PostFixtures {
-	uf := CreateUserFixtures(ms.DB, 1)
+	uf := createUserFixtures(ms.DB, 1)
 	organization := uf.Organization
 	user := uf.Users[0]
 
@@ -269,7 +269,7 @@ func createFixturesForPostFindByUserAndUUID(ms *ModelSuite) PostFixtures {
 		createFixture(ms, &orgs[i])
 	}
 
-	users := CreateUserFixtures(ms.DB, 2).Users
+	users := createUserFixtures(ms.DB, 2).Users
 
 	// both users are in org 0, but need user 0 to also be in org 1
 	createFixture(ms, &UserOrganization{
@@ -309,7 +309,7 @@ func CreateFixtures_Posts_FindByUser(ms *ModelSuite) PostFixtures {
 		createFixture(ms, &orgs[i])
 	}
 
-	users := CreateUserFixtures(ms.DB, 2).Users
+	users := createUserFixtures(ms.DB, 2).Users
 
 	// both users are in org 0, but need user 0 to also be in org 1
 	createFixture(ms, &UserOrganization{
@@ -401,7 +401,7 @@ func createFixtures_Posts_FilterByUserTypeAndContents(ms *ModelSuite) PostFixtur
 }
 
 func CreateFixtures_Post_IsEditable(ms *ModelSuite) PostFixtures {
-	uf := CreateUserFixtures(ms.DB, 2)
+	uf := createUserFixtures(ms.DB, 2)
 	org := uf.Organization
 	users := uf.Users
 
@@ -435,7 +435,7 @@ func createFixturesForPostGetAudience(ms *ModelSuite) PostFixtures {
 		createFixture(ms, &orgs[i])
 	}
 
-	users := CreateUserFixtures(ms.DB, 2).Users
+	users := createUserFixtures(ms.DB, 2).Users
 
 	locations := []Location{{}, {}}
 	for i := range locations {
@@ -460,7 +460,7 @@ func createFixturesForPostGetAudience(ms *ModelSuite) PostFixtures {
 }
 
 func createFixturesForGetLocationForNotifications(ms *ModelSuite) PostFixtures {
-	uf := CreateUserFixtures(ms.DB, 1)
+	uf := createUserFixtures(ms.DB, 1)
 	org := uf.Organization
 	users := uf.Users
 

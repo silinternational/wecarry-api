@@ -20,8 +20,8 @@ type UserFixtures struct {
 	Locations
 }
 
-// MustCreate saves a record to the database. Panics if any error occurs.
-func MustCreate(tx *pop.Connection, f interface{}) {
+// mustCreate saves a record to the database. Panics if any error occurs.
+func mustCreate(tx *pop.Connection, f interface{}) {
 	value := reflect.ValueOf(f)
 
 	if value.Type().Kind() != reflect.Ptr {
@@ -39,15 +39,15 @@ func MustCreate(tx *pop.Connection, f interface{}) {
 	}
 }
 
-// CreateUserFixtures generates any number of user records for testing. Locations, UserOrganizations, and
+// createUserFixtures generates any number of user records for testing. Locations, UserOrganizations, and
 // UserAccessTokens are also created for each user. The access token for each user is the same as the user's nickname.
 // All user fixtures will be assigned to the first Organization in the DB. If no Organization exists, one will be
 // created.
-func CreateUserFixtures(tx *pop.Connection, n int) UserFixtures {
+func createUserFixtures(tx *pop.Connection, n int) UserFixtures {
 	var org Organization
 	if err := tx.First(&org); err != nil {
 		org = Organization{AuthConfig: "{}"}
-		MustCreate(tx, &org)
+		mustCreate(tx, &org)
 	}
 
 	unique := domain.GetUUID().String()
@@ -65,13 +65,13 @@ func CreateUserFixtures(tx *pop.Connection, n int) UserFixtures {
 		users[i].AuthPhotoURL = nulls.NewString("http://example.com/" + users[i].Nickname + ".gif")
 		users[i].LocationID = nulls.NewInt(locations[i].ID)
 		users[i].AdminRole = UserAdminRoleUser
-		MustCreate(tx, &users[i])
+		mustCreate(tx, &users[i])
 
 		userOrgs[i].UserID = users[i].ID
 		userOrgs[i].OrganizationID = org.ID
 		userOrgs[i].AuthID = users[i].Email
 		userOrgs[i].AuthEmail = users[i].Email
-		MustCreate(tx, &userOrgs[i])
+		mustCreate(tx, &userOrgs[i])
 
 		if err := tx.Load(&users[i], "Organizations"); err != nil {
 			panic(fmt.Sprintf("failed to load organizations on users[%d] fixture, %s", i, err))
@@ -81,7 +81,7 @@ func CreateUserFixtures(tx *pop.Connection, n int) UserFixtures {
 		accessTokenFixtures[i].UserOrganizationID = userOrgs[i].ID
 		accessTokenFixtures[i].AccessToken = HashClientIdAccessToken(users[i].Nickname)
 		accessTokenFixtures[i].ExpiresAt = time.Now().Add(time.Minute * 60)
-		MustCreate(tx, &accessTokenFixtures[i])
+		mustCreate(tx, &accessTokenFixtures[i])
 	}
 
 	return UserFixtures{
@@ -104,7 +104,7 @@ func createLocationFixtures(tx *pop.Connection, n int) Locations {
 			Latitude:    nulls.NewFloat64(rand.Float64()*180 - 90),
 			Longitude:   nulls.NewFloat64(rand.Float64()*360 - 180),
 		}
-		MustCreate(tx, &locations[i])
+		mustCreate(tx, &locations[i])
 	}
 	return locations
 }

@@ -64,7 +64,7 @@ func (ms *ModelSuite) TestThread_Validate() {
 func (ms *ModelSuite) TestThread_FindByUUID() {
 	t := ms.T()
 
-	uf := CreateUserFixtures(ms.DB, 2)
+	uf := createUserFixtures(ms.DB, 2)
 	posts := CreatePostFixtures(ms, t, uf.Users)
 	threadFixtures := CreateThreadFixtures(ms, posts[0])
 
@@ -100,7 +100,7 @@ func (ms *ModelSuite) TestThread_FindByUUID() {
 func (ms *ModelSuite) TestThread_GetPost() {
 	t := ms.T()
 
-	uf := CreateUserFixtures(ms.DB, 2)
+	uf := createUserFixtures(ms.DB, 2)
 	posts := CreatePostFixtures(ms, t, uf.Users)
 	threadFixtures := CreateThreadFixtures(ms, posts[0])
 
@@ -137,7 +137,7 @@ func (ms *ModelSuite) TestThread_GetPost() {
 func (ms *ModelSuite) TestThread_GetMessages() {
 	t := ms.T()
 
-	uf := CreateUserFixtures(ms.DB, 2)
+	uf := createUserFixtures(ms.DB, 2)
 	posts := CreatePostFixtures(ms, t, uf.Users)
 	threadFixtures := CreateThreadFixtures(ms, posts[0])
 
@@ -190,7 +190,7 @@ func (ms *ModelSuite) TestThread_GetMessages() {
 func (ms *ModelSuite) TestThread_GetParticipants() {
 	t := ms.T()
 
-	users := CreateUserFixtures(ms.DB, 2).Users
+	users := createUserFixtures(ms.DB, 2).Users
 	posts := CreatePostFixtures(ms, t, users)
 	threadFixtures := CreateThreadFixtures(ms, posts[0])
 
@@ -243,7 +243,7 @@ func (ms *ModelSuite) TestThread_GetParticipants() {
 func (ms *ModelSuite) TestThread_CreateWithParticipants() {
 	t := ms.T()
 
-	users := CreateUserFixtures(ms.DB, 2).Users
+	users := createUserFixtures(ms.DB, 2).Users
 	posts := CreatePostFixtures(ms, t, users)
 	post := posts[0]
 
@@ -285,7 +285,7 @@ func (ms *ModelSuite) TestThread_CreateWithParticipants() {
 func (ms *ModelSuite) TestThread_ensureParticipants() {
 	t := ms.T()
 
-	users := CreateUserFixtures(ms.DB, 2).Users
+	users := createUserFixtures(ms.DB, 2).Users
 	posts := CreatePostFixtures(ms, t, users)
 	post := posts[0]
 
@@ -342,7 +342,7 @@ func (ms *ModelSuite) TestThread_ensureParticipants() {
 func (ms *ModelSuite) TestThread_GetLastViewedAt() {
 	t := ms.T()
 
-	users := CreateUserFixtures(ms.DB, 2).Users
+	users := createUserFixtures(ms.DB, 2).Users
 	posts := CreatePostFixtures(ms, t, users)
 	threadFixtures := CreateThreadFixtures(ms, posts[0])
 
