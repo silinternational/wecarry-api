@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"math/rand"
 	"reflect"
 	"strconv"
 	"time"
@@ -51,18 +52,12 @@ func CreateUserFixtures(tx *pop.Connection, n int) UserFixtures {
 
 	unique := domain.GetUUID().String()
 
+	locations := createLocationFixtures(tx, n)
+
 	users := make(Users, n)
-	locations := make(Locations, n)
 	userOrgs := make(UserOrganizations, n)
 	accessTokenFixtures := make(UserAccessTokens, n)
 	for i := range users {
-		locations[i].Country = "US"
-		locations[i].Description = "Miami, FL, US"
-		locations[i].Latitude = nulls.NewFloat64(25.7617)
-		locations[i].Longitude = nulls.NewFloat64(-80.1918)
-		MustCreate(tx, &locations[i])
-
-		users[i].UUID = domain.GetUUID()
 		users[i].Email = unique + "_user" + strconv.Itoa(i) + "@example.com"
 		users[i].Nickname = unique + "_auth_user" + strconv.Itoa(i)
 		users[i].FirstName = "first" + strconv.Itoa(i)
@@ -96,4 +91,20 @@ func CreateUserFixtures(tx *pop.Connection, n int) UserFixtures {
 		UserAccessTokens:  accessTokenFixtures,
 		Locations:         locations,
 	}
+}
+
+// createLocationFixtures generates any number of location records for testing.
+func createLocationFixtures(tx *pop.Connection, n int) Locations {
+	countries := []string{"US", "CA", "MX", "TH", "FR", "PG"}
+	locations := make(Locations, n)
+	for i := range locations {
+		locations[i] = Location{
+			Country:     countries[rand.Intn(6)],
+			Description: "Random Location " + strconv.Itoa(rand.Int()),
+			Latitude:    nulls.NewFloat64(rand.Float64()*180 - 90),
+			Longitude:   nulls.NewFloat64(rand.Float64()*360 - 180),
+		}
+		MustCreate(tx, &locations[i])
+	}
+	return locations
 }
