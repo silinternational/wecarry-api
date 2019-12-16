@@ -1,7 +1,7 @@
 create_table("meetings") {
 	t.Column("id", "integer", {primary: true})
 	t.Column("uuid", "uuid", {})
-	t.Column("name", "string", {})
+	t.Column("name", "character varying(80)", {})
 	t.Column("description", "character varying(4096)", {null: true})
 	t.Column("more_info_url", "string", {null: true})
 	t.Column("image_file_id", "integer", {null: true})

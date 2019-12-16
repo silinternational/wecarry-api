@@ -101,7 +101,7 @@ ALTER SEQUENCE public.locations_id_seq OWNED BY public.locations.id;
 CREATE TABLE public.meetings (
     id integer NOT NULL,
     uuid uuid NOT NULL,
-    name character varying(255) NOT NULL,
+    name character varying(80) NOT NULL,
     description character varying(4096),
     more_info_url character varying(255),
     image_file_id integer,
