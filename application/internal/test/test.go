@@ -3,6 +3,7 @@ package test
 import (
 	"fmt"
 	"math/rand"
+	"reflect"
 	"strconv"
 	"testing"
 	"time"
@@ -21,6 +22,17 @@ type UserFixtures struct {
 
 // MustCreate saves a record to the database. Panics if any error occurs.
 func MustCreate(tx *pop.Connection, f interface{}) {
+	value := reflect.ValueOf(f)
+
+	if value.Type().Kind() != reflect.Ptr {
+		panic("createFixture requires a pointer")
+	}
+
+	uuidField := value.Elem().FieldByName("UUID")
+	if uuidField.IsValid() {
+		uuidField.Set(reflect.ValueOf(domain.GetUUID()))
+	}
+
 	err := tx.Create(f)
 	if err != nil {
 		panic(fmt.Sprintf("error creating %T fixture, %s", f, err))
@@ -34,7 +46,7 @@ func MustCreate(tx *pop.Connection, f interface{}) {
 func CreateUserFixtures(tx *pop.Connection, t *testing.T, n int) UserFixtures {
 	var org models.Organization
 	if err := tx.First(&org); err != nil {
-		org = models.Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
+		org = models.Organization{AuthConfig: "{}"}
 		MustCreate(tx, &org)
 	}
 
@@ -46,7 +58,6 @@ func CreateUserFixtures(tx *pop.Connection, t *testing.T, n int) UserFixtures {
 	userOrgs := make(models.UserOrganizations, n)
 	accessTokenFixtures := make(models.UserAccessTokens, n)
 	for i := range users {
-		users[i].UUID = domain.GetUUID()
 		users[i].Email = unique + "_user" + strconv.Itoa(i) + "@example.com"
 		users[i].Nickname = unique + "_auth_user" + strconv.Itoa(i)
 		users[i].FirstName = "first" + strconv.Itoa(i)
@@ -86,13 +97,13 @@ func CreateUserFixtures(tx *pop.Connection, t *testing.T, n int) UserFixtures {
 func CreatePostFixtures(tx *pop.Connection, n int, createFiles bool) models.Posts {
 	var org models.Organization
 	if err := tx.First(&org); err != nil {
-		org = models.Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
+		org = models.Organization{AuthConfig: "{}"}
 		MustCreate(tx, &org)
 	}
 
 	var user models.User
 	if err := tx.First(&user); err != nil {
-		user = models.User{UUID: domain.GetUUID()}
+		user = models.User{}
 		MustCreate(tx, &user)
 	}
 
@@ -108,7 +119,6 @@ func CreatePostFixtures(tx *pop.Connection, n int, createFiles bool) models.Post
 		posts[i].CreatedByID = user.ID
 		posts[i].ReceiverID = nulls.NewInt(user.ID)
 		posts[i].OrganizationID = org.ID
-		posts[i].UUID = domain.GetUUID()
 		posts[i].DestinationID = locations[i*2].ID
 		posts[i].OriginID = nulls.NewInt(locations[i*2+1].ID)
 		posts[i].Title = "title " + strconv.Itoa(i)
