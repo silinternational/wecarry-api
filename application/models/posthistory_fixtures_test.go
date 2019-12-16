@@ -17,28 +17,9 @@ type PostHistoryFixtures struct {
 
 func createFixturesForTestPostHistory_Load(ms *ModelSuite) PostHistoryFixtures {
 	uf := createUserFixtures(ms.DB, 2)
-	org := uf.Organization
 	users := uf.Users
 
-	posts := Posts{
-		{Title: "Post1 Title"},
-		{Title: "Post2 Title"},
-	}
-	locations := make(Locations, len(posts))
-	for i := range posts {
-		locations[i].Description = "location " + strconv.Itoa(i)
-		createFixture(ms, &locations[i])
-
-		posts[i].UUID = domain.GetUUID()
-		posts[i].Status = PostStatusOpen
-		posts[i].Type = "type"
-		posts[i].Size = PostSizeTiny
-		posts[i].CreatedByID = users[0].ID
-		posts[i].OrganizationID = org.ID
-		posts[i].DestinationID = locations[i].ID
-		posts[i].ReceiverID = nulls.NewInt(users[i].ID)
-		createFixture(ms, &posts[i])
-	}
+	posts := createPostFixtures(ms.DB, 2, 0, false)
 
 	pHistory := PostHistory{
 		Status:     PostStatusOpen,
@@ -112,39 +93,12 @@ func createFixturesForTestPostHistory_pop(ms *ModelSuite) PostFixtures {
 
 func createFixturesForTestPostHistory_createForPost(ms *ModelSuite) PostFixtures {
 	uf := createUserFixtures(ms.DB, 2)
-	org := uf.Organization
 	users := uf.Users
 
-	posts := Posts{
-		{Title: "Post1 Title"},
-		{Title: "Post2 Title"},
-	}
-	locations := make(Locations, len(posts))
-	for i := range posts {
-		locations[i].Description = "location " + strconv.Itoa(i)
-		createFixture(ms, &locations[i])
-
-		posts[i].UUID = domain.GetUUID()
-		posts[i].Status = PostStatusOpen
-		posts[i].Type = "type"
-		posts[i].Size = PostSizeTiny
-		posts[i].CreatedByID = users[0].ID
-		posts[i].OrganizationID = org.ID
-		posts[i].DestinationID = locations[i].ID
-		posts[i].ReceiverID = nulls.NewInt(users[i].ID)
-		createFixture(ms, &posts[i])
-	}
-
-	pHistory := PostHistory{
-		Status:     PostStatusOpen,
-		PostID:     posts[0].ID,
-		ReceiverID: nulls.NewInt(posts[0].CreatedByID),
-	}
-	createFixture(ms, &pHistory)
+	posts := createPostFixtures(ms.DB, 2, 0, false)
 
 	return PostFixtures{
-		Users:         users,
-		Posts:         posts,
-		PostHistories: PostHistories{pHistory},
+		Users: users,
+		Posts: posts,
 	}
 }

@@ -1926,32 +1926,38 @@ func (ms *ModelSuite) TestPost_GetLocationForNotifications() {
 	t := ms.T()
 	f := createFixturesForGetLocationForNotifications(ms)
 
+	var requestOrigin Location
+	ms.NoError(ms.DB.Find(&requestOrigin, f.Posts[1].OriginID.Int))
+
+	var offerDestination Location
+	ms.NoError(ms.DB.Find(&offerDestination, f.Posts[2].DestinationID))
+
 	tests := []struct {
 		name string
 		post Post
-		want string
+		want int
 	}{
 		{
-			name: "offer",
+			name: "request with no origin",
 			post: f.Posts[0],
-			want: f.Locations[0].Description,
+			want: 0,
 		},
 		{
 			name: "request",
 			post: f.Posts[1],
-			want: f.Locations[3].Description,
+			want: requestOrigin.ID,
 		},
 		{
-			name: "request with no origin",
+			name: "offer",
 			post: f.Posts[2],
-			want: "",
+			want: offerDestination.ID,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := tt.post.GetLocationForNotifications()
 			ms.NoError(err)
-			ms.Equal(tt.want, got.Description)
+			ms.Equal(tt.want, got.ID)
 		})
 	}
 }

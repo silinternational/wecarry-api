@@ -189,42 +189,16 @@ func Fixtures_Message_Find(ms *ModelSuite) MessageFixtures {
 
 func CreateMessageFixtures_AfterCreate(ms *ModelSuite, t *testing.T) MessageFixtures {
 	uf := createUserFixtures(ms.DB, 2)
-	org := uf.Organization
 	users := uf.Users
 
-	locations := []Location{{}, {}}
-	for i := range locations {
-		createFixture(ms, &locations[i])
-	}
-
 	// Each user has a request and is a provider on the other user's post
-	posts := Posts{
-		{
-			CreatedByID:    users[0].ID,
-			OrganizationID: org.ID,
-			Type:           PostTypeRequest,
-			Title:          "Open Request 0",
-			Size:           PostSizeMedium,
-			Status:         PostStatusOpen,
-			ProviderID:     nulls.NewInt(users[1].ID),
-			DestinationID:  locations[0].ID,
-		},
-		{
-			CreatedByID:    users[1].ID,
-			OrganizationID: org.ID,
-			Type:           PostTypeRequest,
-			Title:          "Committed Request 1",
-			Size:           PostSizeMedium,
-			Status:         PostStatusOpen,
-			ProviderID:     nulls.NewInt(users[0].ID),
-			DestinationID:  locations[1].ID,
-		},
-	}
-
-	for i := range posts {
-		posts[i].UUID = domain.GetUUID()
-		createFixture(ms, &posts[i])
-	}
+	posts := createPostFixtures(ms.DB, 2, 0, false)
+	posts[0].Status = PostStatusCommitted
+	posts[0].ProviderID = nulls.NewInt(users[1].ID)
+	posts[1].Status = PostStatusCommitted
+	posts[1].CreatedByID = users[1].ID
+	posts[1].ProviderID = nulls.NewInt(users[0].ID)
+	ms.NoError(ms.DB.Save(&posts))
 
 	threads := []Thread{{PostID: posts[0].ID}, {PostID: posts[1].ID}}
 
