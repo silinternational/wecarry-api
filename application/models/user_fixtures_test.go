@@ -377,6 +377,12 @@ func CreateFixturesForUserWantsPostNotification(ms *ModelSuite) UserPostFixtures
 	org := uf.Organization
 	users := uf.Users
 
+	for i := range users {
+		ms.NoError(ms.DB.Load(&users[i], "Location"))
+		users[i].Location.Country = "US"
+		ms.NoError(ms.DB.Save(&users[i].Location))
+	}
+
 	postLocations := Locations{
 		{ // Post 0 Destination
 			Description: "close",
