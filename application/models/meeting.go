@@ -62,13 +62,11 @@ func (m *Meeting) Validate(tx *pop.Connection) (*validate.Errors, error) {
 }
 
 // ValidateCreate gets run every time you call "pop.ValidateAndCreate" method.
-// This method is not required and may be deleted.
 func (m *Meeting) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }
 
 // ValidateUpdate gets run every time you call "pop.ValidateAndUpdate" method.
-// This method is not required and may be deleted.
 func (m *Meeting) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }
@@ -79,9 +77,7 @@ func (m *Meeting) FindByUUID(uuid string) error {
 		return errors.New("error finding message: uuid must not be blank")
 	}
 
-	queryString := fmt.Sprintf("uuid = '%s'", uuid)
-
-	if err := DB.Eager("CreatedBy").Where(queryString).First(m); err != nil {
+	if err := DB.Eager("CreatedBy").Where("uuid = ?", uuid).First(m); err != nil {
 		return fmt.Errorf("error finding message by uuid: %s", err.Error())
 	}
 
@@ -93,7 +89,8 @@ func (m *Meeting) FindByUUID(uuid string) error {
 func (m *Meeting) AttachImage(fileID string) (File, error) {
 	var f File
 	if err := f.FindByUUID(fileID); err != nil {
-		return f, nil // in case client can't recognize this error we'll fail silently
+		err = fmt.Errorf("error finding meeting image with id %s ... %s", fileID, err)
+		return f, err
 	}
 
 	m.ImageFileID = nulls.NewInt(f.ID)
