@@ -211,6 +211,7 @@ input CreatePostInput {
     url: String
     kilograms: Float
     photoID: ID
+    meetingID: ID
 }
 
 input CreateMessageInput {

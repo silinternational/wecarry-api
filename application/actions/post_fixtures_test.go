@@ -1,6 +1,10 @@
 package actions
 
 import (
+	"math/rand"
+	"strconv"
+	"time"
+
 	"github.com/gobuffalo/nulls"
 	"github.com/silinternational/wecarry-api/aws"
 	"github.com/silinternational/wecarry-api/domain"
@@ -19,6 +23,7 @@ type CreatePostFixtures struct {
 	models.Users
 	models.Organization
 	models.File
+	models.Meetings
 }
 
 type UpdatePostStatusFixtures struct {
@@ -132,10 +137,30 @@ func createFixturesForCreatePost(as *ActionSuite) CreatePostFixtures {
 		t.FailNow()
 	}
 
+	meetingLocations := test.CreateLocationFixtures(as.DB, 1)
+
+	meetings := make(models.Meetings, 1)
+	for i := range meetings {
+		iString := strconv.Itoa(i)
+		start := time.Now().Add(time.Duration(rand.Intn(10000)) * time.Hour)
+		meetings[i] = models.Meeting{
+			Name:        "Meeting " + iString,
+			Description: nulls.NewString("Meeting Description " + iString),
+			MoreInfoURL: nulls.NewString("https://example.com/meeting/" + iString),
+			StartDate:   start,
+			EndDate:     start.Add(time.Duration(rand.Intn(200)) * time.Hour),
+			CreatedByID: userFixtures.Users[0].ID,
+			ImageFileID: nulls.Int{},
+			LocationID:  meetingLocations[i].ID,
+		}
+		test.MustCreate(as.DB, &meetings[i])
+	}
+
 	return CreatePostFixtures{
 		Users:        userFixtures.Users,
 		Organization: org,
 		File:         fileFixture,
+		Meetings:     meetings,
 	}
 }
 

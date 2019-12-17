@@ -193,33 +193,36 @@ func (e PostSize) String() string {
 }
 
 type Post struct {
-	ID             int           `json:"id" db:"id"`
-	CreatedAt      time.Time     `json:"created_at" db:"created_at"`
-	UpdatedAt      time.Time     `json:"updated_at" db:"updated_at"`
-	CreatedByID    int           `json:"created_by_id" db:"created_by_id"`
-	Type           PostType      `json:"type" db:"type"`
-	OrganizationID int           `json:"organization_id" db:"organization_id"`
-	Status         PostStatus    `json:"status" db:"status"`
-	Title          string        `json:"title" db:"title"`
-	Size           PostSize      `json:"size" db:"size"`
-	UUID           uuid.UUID     `json:"uuid" db:"uuid"`
-	ReceiverID     nulls.Int     `json:"receiver_id" db:"receiver_id"`
-	ProviderID     nulls.Int     `json:"provider_id" db:"provider_id"`
-	Description    nulls.String  `json:"description" db:"description"`
-	URL            nulls.String  `json:"url" db:"url"`
-	Kilograms      float64       `json:"kilograms" db:"kilograms"`
-	PhotoFileID    nulls.Int     `json:"photo_file_id" db:"photo_file_id"`
-	DestinationID  int           `json:"destination_id" db:"destination_id"`
-	OriginID       nulls.Int     `json:"origin_id" db:"origin_id"`
-	CreatedBy      User          `belongs_to:"users"`
-	Organization   Organization  `belongs_to:"organizations"`
-	Receiver       User          `belongs_to:"users"`
-	Provider       User          `belongs_to:"users"`
-	Files          PostFiles     `has_many:"post_files"`
-	Histories      PostHistories `has_many:"post_histories"`
-	PhotoFile      File          `belongs_to:"files"`
-	Destination    Location      `belongs_to:"locations"`
-	Origin         Location      `belongs_to:"locations"`
+	ID             int          `json:"id" db:"id"`
+	CreatedAt      time.Time    `json:"created_at" db:"created_at"`
+	UpdatedAt      time.Time    `json:"updated_at" db:"updated_at"`
+	CreatedByID    int          `json:"created_by_id" db:"created_by_id"`
+	Type           PostType     `json:"type" db:"type"`
+	OrganizationID int          `json:"organization_id" db:"organization_id"`
+	Status         PostStatus   `json:"status" db:"status"`
+	Title          string       `json:"title" db:"title"`
+	Size           PostSize     `json:"size" db:"size"`
+	UUID           uuid.UUID    `json:"uuid" db:"uuid"`
+	ReceiverID     nulls.Int    `json:"receiver_id" db:"receiver_id"`
+	ProviderID     nulls.Int    `json:"provider_id" db:"provider_id"`
+	Description    nulls.String `json:"description" db:"description"`
+	URL            nulls.String `json:"url" db:"url"`
+	Kilograms      float64      `json:"kilograms" db:"kilograms"`
+	PhotoFileID    nulls.Int    `json:"photo_file_id" db:"photo_file_id"`
+	DestinationID  int          `json:"destination_id" db:"destination_id"`
+	OriginID       nulls.Int    `json:"origin_id" db:"origin_id"`
+	MeetingID      nulls.Int    `json:"meeting_id" db:"meeting_id"`
+
+	CreatedBy    User          `belongs_to:"users"`
+	Organization Organization  `belongs_to:"organizations"`
+	Receiver     User          `belongs_to:"users"`
+	Provider     User          `belongs_to:"users"`
+	Files        PostFiles     `has_many:"post_files"`
+	Histories    PostHistories `has_many:"post_histories"`
+	PhotoFile    File          `belongs_to:"files"`
+	Destination  Location      `belongs_to:"locations"`
+	Origin       Location      `belongs_to:"locations"`
+	Meeting      Meeting       `belongs_to:"meetings"`
 }
 
 // PostCreatedEventData holds data needed by the New Post event listener
