@@ -66,6 +66,8 @@ models:
         resolver: true
       createdBy:
         resolver: true
+      location:
+        resolver: true
       moreInfoURL:
         resolver: true
   Thread:

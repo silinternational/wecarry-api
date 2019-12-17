@@ -44,17 +44,17 @@ func (r *meetingResolver) Description(ctx context.Context, obj *models.Meeting) 
 }
 
 // Location resolves the `location` property of the meeting query, retrieving the related record from the database.
-func (r *meetingResolver) Location(ctx context.Context, obj *models.Meeting) (models.Location, error) {
+func (r *meetingResolver) Location(ctx context.Context, obj *models.Meeting) (*models.Location, error) {
 	if obj == nil {
-		return models.Location{}, nil
+		return &models.Location{}, nil
 	}
 
 	location, err := obj.GetLocation()
 	if err != nil {
-		return models.Location{}, reportError(ctx, err, "GetMeetingLocation")
+		return &models.Location{}, reportError(ctx, err, "GetMeetingLocation")
 	}
 
-	return location, nil
+	return &location, nil
 }
 
 // Description resolves the `description` property, converting a nulls.String to a *string.
@@ -79,10 +79,11 @@ func (r *meetingResolver) Image(ctx context.Context, obj *models.Meeting) (*mode
 	return image, nil
 }
 
-// Meetings resolves the `meetings` query
+// Meetings resolves the `meetings` query by getting a list of meetings that have an
+// end date in the future
 func (r *queryResolver) Meetings(ctx context.Context) ([]models.Meeting, error) {
 	meetings := models.Meetings{}
-	if err := meetings.FindFuture(); err != nil {
+	if err := meetings.FindCurrentAndFuture(); err != nil {
 		extras := map[string]interface{}{}
 		return nil, reportError(ctx, err, "GetMeetings", extras)
 	}

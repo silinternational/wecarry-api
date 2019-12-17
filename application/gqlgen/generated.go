@@ -209,6 +209,7 @@ type MeetingResolver interface {
 
 	CreatedBy(ctx context.Context, obj *models.Meeting) (*PublicProfile, error)
 	Image(ctx context.Context, obj *models.Meeting) (*models.File, error)
+	Location(ctx context.Context, obj *models.Meeting) (*models.Location, error)
 }
 type MessageResolver interface {
 	ID(ctx context.Context, obj *models.Message) (string, error)
@@ -2438,13 +2439,13 @@ func (ec *executionContext) _Meeting_location(ctx context.Context, field graphql
 		Object:   "Meeting",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Location, nil
+		return ec.resolvers.Meeting().Location(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2456,10 +2457,10 @@ func (ec *executionContext) _Meeting_location(ctx context.Context, field graphql
 		}
 		return graphql.Null
 	}
-	res := resTmp.(models.Location)
+	res := resTmp.(*models.Location)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNLocation2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐLocation(ctx, field.Selections, res)
+	return ec.marshalNLocation2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐLocation(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Message_id(ctx context.Context, field graphql.CollectedField, obj *models.Message) (ret graphql.Marshaler) {
@@ -7373,10 +7374,19 @@ func (ec *executionContext) _Meeting(ctx context.Context, sel ast.SelectionSet, 
 				return res
 			})
 		case "location":
-			out.Values[i] = ec._Meeting_location(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Meeting_location(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
