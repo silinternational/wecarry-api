@@ -1253,7 +1253,7 @@ input CreatePostInput {
     url: String
     kilograms: Float
     photoID: ID
-    eventID: ID
+    meetingID: ID
 }
 
 input CreateMessageInput {
@@ -6292,9 +6292,9 @@ func (ec *executionContext) unmarshalInputCreatePostInput(ctx context.Context, o
 			if err != nil {
 				return it, err
 			}
-		case "eventID":
+		case "meetingID":
 			var err error
-			it.EventID, err = ec.unmarshalOID2ᚖstring(ctx, v)
+			it.MeetingID, err = ec.unmarshalOID2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}

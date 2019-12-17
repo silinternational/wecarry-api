@@ -282,10 +282,10 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 		}
 	}
 
-	if input.EventID != nil {
+	if input.MeetingID != nil {
 		var meeting models.Meeting
-		if err := meeting.FindByUUID(*input.EventID); err != nil {
-			return models.Post{}, fmt.Errorf("invalid Event ID, %s", err)
+		if err := meeting.FindByUUID(*input.MeetingID); err != nil {
+			return models.Post{}, fmt.Errorf("invalid meetingID, %s", err)
 		}
 		post.MeetingID = nulls.NewInt(meeting.ID)
 	}
@@ -305,7 +305,7 @@ type postInput struct {
 	URL         *string
 	Kilograms   *float64
 	PhotoID     *string
-	EventID     *string
+	MeetingID   *string
 }
 
 // CreatePost resolves the `createPost` mutation.

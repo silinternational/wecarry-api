@@ -218,7 +218,7 @@ func (as *ActionSuite) Test_CreatePost() {
 
 	input := `orgID: "` + f.Organization.UUID.String() + `"` +
 		`photoID: "` + f.File.UUID.String() + `"` +
-		`eventID: "` + f.Meetings[0].UUID.String() + `"` +
+		`meetingID: "` + f.Meetings[0].UUID.String() + `"` +
 		`
 			type: REQUEST
 			title: "title"
