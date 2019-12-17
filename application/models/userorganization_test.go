@@ -14,7 +14,7 @@ func createUserOrganizationFixtures(ms *ModelSuite) (Users, Organizations) {
 		createFixture(ms, &orgs[i])
 	}
 
-	users := CreateUserFixtures(ms.DB, 2).Users
+	users := createUserFixtures(ms.DB, 2).Users
 
 	// both users are in org 0, but need user 0 to also be in org 1
 	createFixture(ms, &UserOrganization{

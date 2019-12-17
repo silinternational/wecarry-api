@@ -10,9 +10,7 @@ type PostQueryFixtures struct {
 	models.Organization
 	models.Users
 	models.Posts
-	models.Files
 	models.Threads
-	models.Locations
 }
 
 type PostsResponse struct {
@@ -109,15 +107,17 @@ func (as *ActionSuite) Test_PostQuery() {
 	as.Equal(f.Posts[0].Title, resp.Post.Title)
 	as.Equal(f.Posts[0].Description.String, resp.Post.Description)
 
-	as.Equal(f.Locations[0].Description, resp.Post.Destination.Description)
-	as.Equal(f.Locations[0].Country, resp.Post.Destination.Country)
-	as.Equal(f.Locations[0].Latitude.Float64, resp.Post.Destination.Lat)
-	as.Equal(f.Locations[0].Longitude.Float64, resp.Post.Destination.Long)
+	as.NoError(as.DB.Load(&f.Posts[0], "Destination", "Origin", "PhotoFile", "Files.File"))
 
-	as.Equal(f.Locations[1].Description, resp.Post.Origin.Description)
-	as.Equal(f.Locations[1].Country, resp.Post.Origin.Country)
-	as.Equal(f.Locations[1].Latitude.Float64, resp.Post.Origin.Lat)
-	as.Equal(f.Locations[1].Longitude.Float64, resp.Post.Origin.Long)
+	as.Equal(f.Posts[0].Destination.Description, resp.Post.Destination.Description)
+	as.Equal(f.Posts[0].Destination.Country, resp.Post.Destination.Country)
+	as.Equal(f.Posts[0].Destination.Latitude.Float64, resp.Post.Destination.Lat)
+	as.Equal(f.Posts[0].Destination.Longitude.Float64, resp.Post.Destination.Long)
+
+	as.Equal(f.Posts[0].Origin.Description, resp.Post.Origin.Description)
+	as.Equal(f.Posts[0].Origin.Country, resp.Post.Origin.Country)
+	as.Equal(f.Posts[0].Origin.Latitude.Float64, resp.Post.Origin.Lat)
+	as.Equal(f.Posts[0].Origin.Longitude.Float64, resp.Post.Origin.Long)
 
 	as.Equal(f.Posts[0].Size, resp.Post.Size)
 	as.Equal(f.Posts[0].Status, resp.Post.Status)
@@ -136,9 +136,9 @@ func (as *ActionSuite) Test_PostQuery() {
 	as.Equal(f.Users[1].Nickname, resp.Post.Provider.Nickname, "provider nickname doesn't match")
 	as.Equal(f.Users[1].AuthPhotoURL.String, resp.Post.Provider.AvatarURL, "provider avatar URL doesn't match")
 	as.Equal(f.Organization.UUID.String(), resp.Post.Organization.ID)
-	as.Equal(f.Files[0].UUID.String(), resp.Post.Photo.ID)
+	as.Equal(f.Posts[0].PhotoFile.UUID.String(), resp.Post.Photo.ID)
 	as.Equal(1, len(resp.Post.Files))
-	as.Equal(f.Files[1].UUID.String(), resp.Post.Files[0].ID)
+	as.Equal(f.Posts[0].Files[0].File.UUID.String(), resp.Post.Files[0].ID)
 }
 
 func (as *ActionSuite) Test_PostsQuery() {
@@ -167,7 +167,7 @@ func (as *ActionSuite) Test_UpdatePost() {
 
 	var postsResp PostResponse
 
-	input := `id: "` + f.Posts[0].UUID.String() + `" photoID: "` + f.Files[1].UUID.String() + `"` +
+	input := `id: "` + f.Posts[0].UUID.String() + `" photoID: "` + f.Files[0].UUID.String() + `"` +
 		`
 			description: "new description"
 			destination: {description:"dest" country:"dc" latitude:1.1 longitude:2.2}
@@ -189,7 +189,7 @@ func (as *ActionSuite) Test_UpdatePost() {
 	}
 
 	as.Equal(f.Posts[0].UUID.String(), postsResp.Post.ID)
-	as.Equal(f.Files[1].UUID.String(), postsResp.Post.Photo.ID)
+	as.Equal(f.Files[0].UUID.String(), postsResp.Post.Photo.ID)
 	as.Equal("new description", postsResp.Post.Description)
 	as.Equal("dest", postsResp.Post.Destination.Description)
 	as.Equal("dc", postsResp.Post.Destination.Country)

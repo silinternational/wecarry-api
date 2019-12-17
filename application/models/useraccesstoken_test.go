@@ -119,7 +119,7 @@ func (ms *ModelSuite) TestUserAccessToken_FindByBearerToken() {
 }
 
 func CreateUserAccessTokenFixtures(ms *ModelSuite) ([]string, User) {
-	uf := CreateUserFixtures(ms.DB, 1)
+	uf := createUserFixtures(ms.DB, 1)
 	user := uf.Users[0]
 	userOrgs := uf.UserOrganizations
 
@@ -278,7 +278,7 @@ type AccessTokenFixtures struct {
 func (ms *ModelSuite) TestUserAccessToken_GetUser() {
 	t := ms.T()
 
-	f := CreateUserFixtures(ms.DB, 2)
+	f := createUserFixtures(ms.DB, 2)
 
 	tests := []struct {
 		name    string
@@ -311,7 +311,7 @@ func (ms *ModelSuite) TestUserAccessToken_GetUser() {
 
 // CreateFixtures_DeleteIfExpired creates test fixtures for the DeleteIfExpired test function
 func CreateFixtures_DeleteIfExpired(ms *ModelSuite, t *testing.T) AccessTokenFixtures {
-	uf := CreateUserFixtures(ms.DB, 2)
+	uf := createUserFixtures(ms.DB, 2)
 	users := uf.Users
 	userOrgs := uf.UserOrganizations
 
@@ -367,7 +367,7 @@ func (ms *ModelSuite) TestUserAccessToken_DeleteIfExpired() {
 
 // CreateFixtures_Renew creates test fixtures for the Renew test function
 func CreateFixtures_Renew(ms *ModelSuite, t *testing.T) AccessTokenFixtures {
-	uf := CreateUserFixtures(ms.DB, 2)
+	uf := createUserFixtures(ms.DB, 2)
 	users := uf.Users
 	userOrgs := uf.UserOrganizations
 
@@ -418,7 +418,7 @@ func (ms *ModelSuite) TestUserAccessToken_Renew() {
 }
 
 func createFixtures_UserAccessTokensDeleteExpired(ms *ModelSuite, t *testing.T) AccessTokenFixtures {
-	uf := CreateUserFixtures(ms.DB, 2)
+	uf := createUserFixtures(ms.DB, 2)
 	users := uf.Users
 	userOrgs := uf.UserOrganizations
 

@@ -17,6 +17,13 @@ type ThreadFixtures struct {
 }
 
 func CreateThreadFixtures(ms *ModelSuite, post Post) ThreadFixtures {
+	// need another User for these fixtures, to act as the Provider and 2nd Thread Participant
+	uf := createUserFixtures(ms.DB, 1)
+
+	post.Status = PostStatusCommitted
+	post.ProviderID = nulls.NewInt(uf.Users[0].ID)
+	ms.NoError(ms.DB.Save(&post))
+
 	// Load Thread test fixtures
 	threads := make(Threads, 3)
 	for i := range threads {
@@ -34,7 +41,7 @@ func CreateThreadFixtures(ms *ModelSuite, post Post) ThreadFixtures {
 		},
 		{
 			ThreadID: threads[1].ID,
-			UserID:   post.ProviderID.Int,
+			UserID:   uf.Users[0].ID,
 		},
 		{
 			ThreadID: threads[1].ID,
@@ -54,7 +61,7 @@ func CreateThreadFixtures(ms *ModelSuite, post Post) ThreadFixtures {
 		},
 		{
 			ThreadID: threads[1].ID,
-			SentByID: post.ProviderID.Int,
+			SentByID: uf.Users[0].ID,
 			Content:  "I can being PB if you bring chocolate",
 		},
 		{
@@ -69,42 +76,26 @@ func CreateThreadFixtures(ms *ModelSuite, post Post) ThreadFixtures {
 		createFixture(ms, &messages[i])
 	}
 
-	return ThreadFixtures{Threads: threads, Messages: messages, ThreadParticipants: threadParticipants}
+	return ThreadFixtures{
+		Threads:            threads,
+		Messages:           messages,
+		ThreadParticipants: threadParticipants,
+		Users:              uf.Users,
+	}
 }
 
 func CreateThreadFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) ThreadFixtures {
-	uf := CreateUserFixtures(ms.DB, 2)
-	org := uf.Organization
+	uf := createUserFixtures(ms.DB, 2)
 	users := uf.Users
 
-	locations := []Location{{}, {}}
-	for i := range locations {
-		createFixture(ms, &locations[i])
-	}
-
 	// Each user has a request and is a provider on the other user's post
-	posts := Posts{
-		{
-			CreatedByID: users[0].ID,
-			Title:       "Open Request 0",
-			ProviderID:  nulls.NewInt(users[1].ID),
-		},
-		{
-			CreatedByID: users[1].ID,
-			Title:       "Committed Request 1",
-			ProviderID:  nulls.NewInt(users[0].ID),
-		},
-	}
-
-	for i := range posts {
-		posts[i].OrganizationID = org.ID
-		posts[i].Type = PostTypeRequest
-		posts[i].Size = PostSizeMedium
-		posts[i].Status = PostStatusOpen
-		posts[i].UUID = domain.GetUUID()
-		posts[i].DestinationID = locations[i].ID
-		createFixture(ms, &posts[i])
-	}
+	posts := createPostFixtures(ms.DB, 2, 0, false)
+	posts[0].Status = PostStatusCommitted
+	posts[0].ProviderID = nulls.NewInt(users[1].ID)
+	posts[1].Status = PostStatusCommitted
+	posts[1].CreatedByID = users[1].ID
+	posts[1].ProviderID = nulls.NewInt(users[0].ID)
+	ms.NoError(ms.DB.Save(&posts))
 
 	threads := []Thread{{PostID: posts[0].ID}, {PostID: posts[1].ID}}
 

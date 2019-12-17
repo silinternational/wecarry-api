@@ -83,10 +83,10 @@ func (as *ActionSuite) TestUserQuery() {
 				as.Equal(f.Posts[0].UUID.String(), resp.User.Posts[0].ID, "incorrect Post ID")
 				as.Equal(1, len(resp.User.Organizations), "wrong number of Organizations")
 				as.Equal(f.Organization.UUID.String(), resp.User.Organizations[0].ID, "incorrect Organization ID")
-				as.Equal(f.Locations[0].Description, resp.User.Location.Description, "incorrect location")
-				as.Equal(f.Locations[0].Country, resp.User.Location.Country, "incorrect country")
-				as.Equal(f.Locations[0].Latitude.Float64, resp.User.Location.Lat, "incorrect latitude")
-				as.Equal(f.Locations[0].Longitude.Float64, resp.User.Location.Long, "incorrect longitude")
+				as.Equal(f.Locations[1].Description, resp.User.Location.Description, "incorrect location")
+				as.Equal(f.Locations[1].Country, resp.User.Location.Country, "incorrect country")
+				as.InDelta(f.Locations[1].Latitude.Float64, resp.User.Location.Lat, 0.0001, "incorrect latitude")
+				as.InDelta(f.Locations[1].Longitude.Float64, resp.User.Location.Long, 0.0001, "incorrect longitude")
 
 				as.Equal(strings.ToUpper(f.UserPreferences[0].Value), *resp.User.Preferences.Language,
 					"incorrect preference - language")
