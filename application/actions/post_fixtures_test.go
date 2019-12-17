@@ -1,14 +1,15 @@
 package actions
 
 import (
+	"math/rand"
+	"strconv"
+	"time"
+
 	"github.com/gobuffalo/nulls"
 	"github.com/silinternational/wecarry-api/aws"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/internal/test"
 	"github.com/silinternational/wecarry-api/models"
-	"math/rand"
-	"strconv"
-	"time"
 )
 
 type UpdatePostFixtures struct {
@@ -136,10 +137,7 @@ func createFixturesForCreatePost(as *ActionSuite) CreatePostFixtures {
 		t.FailNow()
 	}
 
-	meetingLocations := make(models.Locations, 1)
-	for i := range meetingLocations {
-		test.MustCreate(as.DB, &meetingLocations[i])
-	}
+	meetingLocations := test.CreateLocationFixtures(as.DB, 1)
 
 	meetings := make(models.Meetings, 1)
 	for i := range meetings {
@@ -157,8 +155,6 @@ func createFixturesForCreatePost(as *ActionSuite) CreatePostFixtures {
 		}
 		test.MustCreate(as.DB, &meetings[i])
 	}
-
-	as.NoError(as.DB.Load(&meetings, "CreatedBy", "Location"))
 
 	return CreatePostFixtures{
 		Users:        userFixtures.Users,
