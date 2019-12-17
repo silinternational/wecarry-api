@@ -3,6 +3,7 @@ package gqlgen
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/gobuffalo/nulls"
@@ -281,6 +282,14 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 		}
 	}
 
+	if input.EventID != nil {
+		var meeting models.Meeting
+		if err := meeting.FindByUUID(*input.EventID); err != nil {
+			return models.Post{}, fmt.Errorf("invalid Event ID, %s", err)
+		}
+		post.MeetingID = nulls.NewInt(meeting.ID)
+	}
+
 	return post, nil
 }
 
@@ -296,6 +305,7 @@ type postInput struct {
 	URL         *string
 	Kilograms   *float64
 	PhotoID     *string
+	EventID     *string
 }
 
 // CreatePost resolves the `createPost` mutation.
@@ -311,18 +321,18 @@ func (r *mutationResolver) CreatePost(ctx context.Context, input postInput) (*mo
 	}
 
 	dest := convertGqlLocationInputToDBLocation(*input.Destination)
-	if err1 := dest.Create(); err1 != nil {
-		return nil, reportError(ctx, err1, "CreatePost.SetDestination", extras)
+	if err = dest.Create(); err != nil {
+		return nil, reportError(ctx, err, "CreatePost.SetDestination", extras)
 	}
 	post.DestinationID = dest.ID
 
-	if err2 := post.Create(); err2 != nil {
-		return nil, reportError(ctx, err2, "CreatePost", extras)
+	if err = post.Create(); err != nil {
+		return nil, reportError(ctx, err, "CreatePost", extras)
 	}
 
 	if input.Origin != nil {
-		if err4 := post.SetOrigin(convertGqlLocationInputToDBLocation(*input.Origin)); err4 != nil {
-			return nil, reportError(ctx, err4, "CreatePost.SetOrigin", extras)
+		if err = post.SetOrigin(convertGqlLocationInputToDBLocation(*input.Origin)); err != nil {
+			return nil, reportError(ctx, err, "CreatePost.SetOrigin", extras)
 		}
 	}
 

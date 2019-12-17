@@ -218,6 +218,7 @@ func (as *ActionSuite) Test_CreatePost() {
 
 	input := `orgID: "` + f.Organization.UUID.String() + `"` +
 		`photoID: "` + f.File.UUID.String() + `"` +
+		`eventID: "` + f.Meetings[0].UUID.String() + `"` +
 		`
 			type: REQUEST
 			title: "title"
@@ -235,6 +236,7 @@ func (as *ActionSuite) Test_CreatePost() {
 
 	as.Equal(f.Organization.UUID.String(), postsResp.Post.Organization.ID)
 	as.Equal(f.File.UUID.String(), postsResp.Post.Photo.ID)
+	//as.Equal(f.Meetings[0].UUID.String(), postsResp.Post.Meeting.ID)
 	as.Equal(models.PostTypeRequest, postsResp.Post.Type)
 	as.Equal("title", postsResp.Post.Title)
 	as.Equal("new description", postsResp.Post.Description)

@@ -6,6 +6,9 @@ import (
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/internal/test"
 	"github.com/silinternational/wecarry-api/models"
+	"math/rand"
+	"strconv"
+	"time"
 )
 
 type UpdatePostFixtures struct {
@@ -19,6 +22,7 @@ type CreatePostFixtures struct {
 	models.Users
 	models.Organization
 	models.File
+	models.Meetings
 }
 
 type UpdatePostStatusFixtures struct {
@@ -132,10 +136,35 @@ func createFixturesForCreatePost(as *ActionSuite) CreatePostFixtures {
 		t.FailNow()
 	}
 
+	meetingLocations := make(models.Locations, 1)
+	for i := range meetingLocations {
+		test.MustCreate(as.DB, &meetingLocations[i])
+	}
+
+	meetings := make(models.Meetings, 1)
+	for i := range meetings {
+		iString := strconv.Itoa(i)
+		start := time.Now().Add(time.Duration(rand.Intn(10000)) * time.Hour)
+		meetings[i] = models.Meeting{
+			Name:        "Meeting " + iString,
+			Description: nulls.NewString("Meeting Description " + iString),
+			MoreInfoURL: nulls.NewString("https://example.com/meeting/" + iString),
+			StartDate:   start,
+			EndDate:     start.Add(time.Duration(rand.Intn(200)) * time.Hour),
+			CreatedByID: userFixtures.Users[0].ID,
+			ImageFileID: nulls.Int{},
+			LocationID:  meetingLocations[i].ID,
+		}
+		test.MustCreate(as.DB, &meetings[i])
+	}
+
+	as.NoError(as.DB.Load(&meetings, "CreatedBy", "Location"))
+
 	return CreatePostFixtures{
 		Users:        userFixtures.Users,
 		Organization: org,
 		File:         fileFixture,
+		Meetings:     meetings,
 	}
 }
 
