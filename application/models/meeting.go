@@ -9,6 +9,7 @@ import (
 	"github.com/gobuffalo/validate/validators"
 	"github.com/gofrs/uuid"
 	"github.com/pkg/errors"
+	"github.com/silinternational/wecarry-api/domain"
 	"time"
 )
 
@@ -84,7 +85,45 @@ func (m *Meeting) FindByUUID(uuid string) error {
 	return nil
 }
 
-// FindFuture finds the meetings that have an EndDate in the future
+// FindCurrent finds the meetings that have StartDate before today an EndDate after today (inclusive on both)
+// Don't send testNow param for non-test code.
+// For testing with a different "now" time, use a one-entry slice, i.e. []time.Time{<my test time>}...
+func (m *Meetings) FindCurrent(testNow ...time.Time) error {
+	timeNow := time.Now()
+	if len(testNow) > 0 {
+		timeNow = testNow[0]
+	}
+
+	now := timeNow.Format(domain.DateTimeFormat)
+	where := "start_date <= ? and end_date >= ?"
+
+	if err := DB.Eager("CreatedBy").Where(where, now, now).All(m); err != nil {
+		return fmt.Errorf("error finding meeting with start_date and end_date straddling %s ... %s",
+			now, err.Error())
+	}
+
+	return nil
+}
+
+// FindCurrentAndFuture finds the meetings that have an EndDate in the future
+// Don't send testNow param for non-test code.
+// For testing with a different "now" time, use a one-entry slice, i.e. []time.Time{<my test time>}...
+func (m *Meetings) FindCurrentAndFuture(testNow ...time.Time) error {
+	timeNow := time.Now()
+	if len(testNow) > 0 {
+		timeNow = testNow[0]
+	}
+
+	now := timeNow.Format(domain.DateTimeFormat)
+
+	if err := DB.Eager("CreatedBy").Where("end_date > ?", now).All(m); err != nil {
+		return fmt.Errorf("error finding meeting with end_date before %s ... %s", now, err.Error())
+	}
+
+	return nil
+}
+
+// FindFuture finds the meetings that have a StartDate in the future
 // Don't send testNow param for non-test code.
 // For testing with a different "now" time, use a one-entry slice, i.e. []time.Time{<my test time>}...
 func (m *Meetings) FindFuture(testNow ...time.Time) error {
@@ -93,10 +132,32 @@ func (m *Meetings) FindFuture(testNow ...time.Time) error {
 		timeNow = testNow[0]
 	}
 
-	now := timeNow.Format(`2006-01-02 15:04:05`)
+	now := timeNow.Format(domain.DateTimeFormat)
 
-	if err := DB.Eager("CreatedBy").Where("end_date > ?", now).All(m); err != nil {
-		return fmt.Errorf("error finding meeting with end_date before %s ... %s", now, err.Error())
+	if err := DB.Eager("CreatedBy").Where("start_date > ?", now).All(m); err != nil {
+		return fmt.Errorf("error finding meeting with start_date after %s ... %s", now, err.Error())
+	}
+
+	return nil
+}
+
+// FindRecent finds the meetings that have an EndDate within the past <domain.RecentMeetingDelay> days
+// (not including today)
+// Don't send testNow param for non-test code.
+// For testing with a different "now" time, use a one-entry slice, i.e. []time.Time{<my test time>}...
+func (m *Meetings) FindRecent(testNow ...time.Time) error {
+	timeNow := time.Now()
+	if len(testNow) > 0 {
+		timeNow = testNow[0]
+	}
+
+	yesterday := timeNow.Add(-domain.DurationDay).Format(domain.DateTimeFormat)
+	recentDate := timeNow.Add(-domain.RecentMeetingDelay)
+	where := "end_date between ? and ?"
+
+	if err := DB.Eager("CreatedBy").Where(where, recentDate, yesterday).All(m); err != nil {
+		return fmt.Errorf("error finding meeting with end_date between %s and %s ... %s",
+			recentDate, yesterday, err.Error())
 	}
 
 	return nil
