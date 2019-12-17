@@ -139,6 +139,42 @@ func (ms *ModelSuite) TestMeeting_FindByUUID() {
 	}
 }
 
+// TestMeeting_FindFuture tests the FindFuture function of the Meeting model
+func (ms *ModelSuite) TestMeeting_FindFuture() {
+	t := ms.T()
+
+	uf := CreateUserFixtures(ms.DB, 1)
+	meetings := CreateMeetingFixtures_TestMeetings_FindFuture(ms, t, uf.Users)
+
+	// 1440 minutes per day
+	nearFuture := time.Time(meetings[1].EndDate).Add(time.Duration(time.Minute * 3000))
+	farFuture := time.Time(meetings[2].EndDate).Add(time.Duration(time.Minute * 3000))
+
+	tests := []struct {
+		name    string
+		want    []string
+		testNow time.Time
+	}{
+		{name: "two now", testNow: time.Now(), want: []string{meetings[1].Name, meetings[2].Name}},
+		{name: "one future", testNow: nearFuture, want: []string{meetings[2].Name}},
+		{name: "empty far future", testNow: farFuture, want: []string{}},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var meetings Meetings
+			err := meetings.FindFuture([]time.Time{test.testNow}...)
+			ms.NoError(err, "unexpected error")
+
+			mNames := make([]string, len(meetings))
+			for i, m := range meetings {
+				mNames[i] = m.Name
+			}
+
+			ms.Equal(test.want, mNames, "incorrect list of future meetings")
+		})
+	}
+}
+
 // TestMeeting_AttachImage_GetImage tests the AttachImage and GetImage methods of models.Meeting
 func (ms *ModelSuite) TestMeeting_AttachImage_GetImage() {
 	t := ms.T()

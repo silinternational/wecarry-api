@@ -74,11 +74,29 @@ func (m *Meeting) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 // FindByUUID finds a meeting by the UUID field and loads its CreatedBy field
 func (m *Meeting) FindByUUID(uuid string) error {
 	if uuid == "" {
-		return errors.New("error finding message: uuid must not be blank")
+		return errors.New("error finding meeting: uuid must not be blank")
 	}
 
 	if err := DB.Eager("CreatedBy").Where("uuid = ?", uuid).First(m); err != nil {
-		return fmt.Errorf("error finding message by uuid: %s", err.Error())
+		return fmt.Errorf("error finding meeting by uuid: %s", err.Error())
+	}
+
+	return nil
+}
+
+// FindFuture finds the meetings that have an EndDate in the future
+// Don't send testNow param for non-test code.
+// For testing with a different "now" time, use a one-entry slice, i.e. []time.Time{<my test time>}...
+func (m *Meetings) FindFuture(testNow ...time.Time) error {
+	timeNow := time.Now()
+	if len(testNow) > 0 {
+		timeNow = testNow[0]
+	}
+
+	now := timeNow.Format(`2006-01-02 15:04:05`)
+
+	if err := DB.Eager("CreatedBy").Where("end_date > ?", now).All(m); err != nil {
+		return fmt.Errorf("error finding meeting with end_date before %s ... %s", now, err.Error())
 	}
 
 	return nil
@@ -119,4 +137,22 @@ func (m *Meeting) GetImage() (*File, error) {
 	}
 
 	return &m.ImageFile, nil
+}
+
+func (m *Meeting) GetCreator() (*User, error) {
+	creator := User{}
+	if err := DB.Find(&creator, m.CreatedByID); err != nil {
+		return nil, err
+	}
+	return &creator, nil
+}
+
+// GetLocation returns the related Location object.
+func (m *Meeting) GetLocation() (Location, error) {
+	location := Location{}
+	if err := DB.Find(&location, m.LocationID); err != nil {
+		return location, err
+	}
+
+	return location, nil
 }

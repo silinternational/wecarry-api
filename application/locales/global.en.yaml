@@ -1,3 +1,11 @@
+- id: GetMeetingCreator
+  translation: We had a problem finding the creator of that event.
+- id: GetMeetingImage
+  translation: We had a problem finding the image for that event.
+- id: GetMeetingLocation
+  translation: We had a problem finding the location of that event.
+- id: GetMeetings
+  translation: We had a problem finding a list of events.
 - id: GetMessageSender
   translation: We had a problem finding the message sender information.
 - id: GetMessageThread
