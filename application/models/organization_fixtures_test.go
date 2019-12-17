@@ -7,7 +7,7 @@ type OrganizationFixtures struct {
 }
 
 func createFixturesForOrganizationGetUsers(ms *ModelSuite) OrganizationFixtures {
-	uf := CreateUserFixtures(ms.DB, 3)
+	uf := createUserFixtures(ms.DB, 3)
 	org := uf.Organization
 	users := uf.Users
 
@@ -25,7 +25,7 @@ func createFixturesForOrganizationGetUsers(ms *ModelSuite) OrganizationFixtures 
 }
 
 func CreateFixturesForOrganizationGetDomains(ms *ModelSuite) OrganizationFixtures {
-	uf := CreateUserFixtures(ms.DB, 1)
+	uf := createUserFixtures(ms.DB, 1)
 	org := uf.Organization
 	user := uf.Users[0]
 

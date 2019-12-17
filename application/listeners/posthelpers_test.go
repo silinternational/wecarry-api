@@ -14,7 +14,7 @@ import (
 func (ms *ModelSuite) TestGetPostUsers() {
 	t := ms.T()
 
-	orgUserPostFixtures := CreateFixtures_GetPostRecipients(ms, t)
+	orgUserPostFixtures := CreateFixtures_GetPostUsers(ms, t)
 	users := orgUserPostFixtures.users
 	posts := orgUserPostFixtures.posts
 
