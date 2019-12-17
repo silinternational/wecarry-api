@@ -112,7 +112,7 @@ func (ms *ModelSuite) TestMeeting_Validate() {
 func (ms *ModelSuite) TestMeeting_FindByUUID() {
 	t := ms.T()
 
-	uf := CreateUserFixtures(ms.DB, 2)
+	uf := createUserFixtures(ms.DB, 2)
 	meetings := CreateMeetingFixtures(ms, t, uf.Users)
 
 	tests := []struct {

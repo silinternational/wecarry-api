@@ -22,7 +22,7 @@ func createFixture(js *JobSuite, f interface{}) {
 	}
 }
 func CreateFixtures_TestNewThreadMessageHandler(js *JobSuite) MessageFixtures {
-	uf := test.CreateUserFixtures(js.DB, js.T(), 7)
+	uf := test.CreateUserFixtures(js.DB, 7)
 	org := uf.Organization
 	users := uf.Users
 
