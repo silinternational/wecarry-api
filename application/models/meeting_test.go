@@ -112,8 +112,8 @@ func (ms *ModelSuite) TestMeeting_Validate() {
 func (ms *ModelSuite) TestMeeting_FindByUUID() {
 	t := ms.T()
 
-	uf := CreateUserFixtures(ms.DB, 2)
-	meetings := CreateMeetingFixtures(ms, t, uf.Users)
+	uf := createUserFixtures(ms.DB, 2)
+	meetings := createMeetingFixtures(ms, t, uf.Users)
 
 	tests := []struct {
 		name    string
@@ -143,8 +143,8 @@ func (ms *ModelSuite) TestMeeting_FindByUUID() {
 func (ms *ModelSuite) TestMeeting_FindFuture() {
 	t := ms.T()
 
-	uf := CreateUserFixtures(ms.DB, 1)
-	meetings := CreateMeetingFixtures_TestMeetings_FindFuture(ms, t, uf.Users)
+	uf := createUserFixtures(ms.DB, 1)
+	meetings := createMeetingFixtures_TestMeetings_FindFuture(ms, t, uf.Users)
 
 	// 1440 minutes per day
 	nearFuture := time.Time(meetings[1].EndDate).Add(time.Duration(time.Minute * 3000))

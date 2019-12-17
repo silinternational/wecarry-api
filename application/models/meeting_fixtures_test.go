@@ -7,8 +7,8 @@ import (
 	"time"
 )
 
-// CreateMeetingFixtures creates two meetings associated with the first user passed in.
-func CreateMeetingFixtures(ms *ModelSuite, t *testing.T, users Users) Meetings {
+// createMeetingFixtures creates two meetings associated with the first user passed in.
+func createMeetingFixtures(ms *ModelSuite, t *testing.T, users Users) Meetings {
 	if err := ms.DB.Load(&users[0], "Organizations"); err != nil {
 		t.Errorf("failed to load organizations on users[0] fixture, %s", err)
 	}
@@ -41,11 +41,11 @@ func CreateMeetingFixtures(ms *ModelSuite, t *testing.T, users Users) Meetings {
 	return meetings
 }
 
-// CreateMeetingFixtures_TestMeetings_FindFuture creates three meetings associated with the same user.
+// createMeetingFixtures_TestMeetings_FindFuture creates three meetings associated with the same user.
 //  The first meeting will have dates in the past,
 //  the second will have StartDate in the past and EndDate in the future,
 //  the third will have dates in the future.
-func CreateMeetingFixtures_TestMeetings_FindFuture(ms *ModelSuite, t *testing.T, users Users) Meetings {
+func createMeetingFixtures_TestMeetings_FindFuture(ms *ModelSuite, t *testing.T, users Users) Meetings {
 	if err := ms.DB.Load(&users[0], "Organizations"); err != nil {
 		t.Errorf("failed to load organizations on users[0] fixture, %s", err)
 	}
