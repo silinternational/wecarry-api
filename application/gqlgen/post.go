@@ -320,11 +320,20 @@ func (r *mutationResolver) CreatePost(ctx context.Context, input postInput) (*mo
 		return nil, reportError(ctx, err, "CreatePost.ProcessInput", extras)
 	}
 
-	dest := convertGqlLocationInputToDBLocation(*input.Destination)
-	if err = dest.Create(); err != nil {
-		return nil, reportError(ctx, err, "CreatePost.SetDestination", extras)
+	if input.MeetingID != nil && post.MeetingID.Valid {
+		var meeting models.Meeting
+		if err := meeting.FindByUUID(*input.MeetingID); err != nil {
+			extras["meetingID"] = *input.MeetingID
+			return nil, reportError(ctx, err, "CreatePost.SetDestination", extras)
+		}
+		post.DestinationID = meeting.LocationID
+	} else {
+		dest := convertGqlLocationInputToDBLocation(*input.Destination)
+		if err = dest.Create(); err != nil {
+			return nil, reportError(ctx, err, "CreatePost.SetDestination", extras)
+		}
+		post.DestinationID = dest.ID
 	}
-	post.DestinationID = dest.ID
 
 	if err = post.Create(); err != nil {
 		return nil, reportError(ctx, err, "CreatePost", extras)

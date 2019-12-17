@@ -218,7 +218,6 @@ func (as *ActionSuite) Test_CreatePost() {
 
 	input := `orgID: "` + f.Organization.UUID.String() + `"` +
 		`photoID: "` + f.File.UUID.String() + `"` +
-		`meetingID: "` + f.Meetings[0].UUID.String() + `"` +
 		`
 			type: REQUEST
 			title: "title"
@@ -236,7 +235,6 @@ func (as *ActionSuite) Test_CreatePost() {
 
 	as.Equal(f.Organization.UUID.String(), postsResp.Post.Organization.ID)
 	as.Equal(f.File.UUID.String(), postsResp.Post.Photo.ID)
-	//as.Equal(f.Meetings[0].UUID.String(), postsResp.Post.Meeting.ID)
 	as.Equal(models.PostTypeRequest, postsResp.Post.Type)
 	as.Equal("title", postsResp.Post.Title)
 	as.Equal("new description", postsResp.Post.Description)
@@ -252,6 +250,30 @@ func (as *ActionSuite) Test_CreatePost() {
 	as.Equal(models.PostSizeTiny, postsResp.Post.Size)
 	as.Equal("example.com", postsResp.Post.Url)
 	as.Equal(0.0, postsResp.Post.Kilograms)
+
+	// meeting-based request
+	input = `orgID: "` + f.Organization.UUID.String() + `"` +
+		`meetingID: "` + f.Meetings[0].UUID.String() + `"` +
+		`
+			type: REQUEST
+			title: "title"
+			description: "new description"
+			destination: {description:"dest" country:"dc" latitude:1.1 longitude:2.2}
+			size: TINY
+			url: "example.com"
+		`
+	query = `mutation { post: createPost(input: {` + input + `}) {
+		destination { description country latitude longitude }}}`
+
+	as.NoError(as.testGqlQuery(query, f.Users[0].Nickname, &postsResp))
+
+	//as.Equal(f.Meetings[0].UUID.String(), postsResp.Post.Meeting.ID)
+
+	as.NoError(as.DB.Load(&f.Meetings[0]), "Location")
+	as.Equal(f.Meetings[0].Location.Description, postsResp.Post.Destination.Description)
+	as.Equal(f.Meetings[0].Location.Country, postsResp.Post.Destination.Country)
+	as.Equal(f.Meetings[0].Location.Latitude.Float64, postsResp.Post.Destination.Lat)
+	as.Equal(f.Meetings[0].Location.Longitude.Float64, postsResp.Post.Destination.Long)
 }
 
 func (as *ActionSuite) Test_UpdatePostStatus() {
