@@ -191,6 +191,20 @@ func (r *postResolver) Files(ctx context.Context, obj *models.Post) ([]models.Fi
 	return files, nil
 }
 
+// Meeting resolves the `meeting` property of the post query, retrieving the related record from the database.
+func (r *postResolver) Meeting(ctx context.Context, obj *models.Post) (*models.Meeting, error) {
+	if obj == nil {
+		return nil, nil
+	}
+
+	meeting, err := obj.Meeting()
+	if err != nil {
+		return nil, reportError(ctx, err, "GetPostMeeting")
+	}
+
+	return meeting, nil
+}
+
 // IsEditable indicates whether the user is allowed to edit the post
 func (r *postResolver) IsEditable(ctx context.Context, obj *models.Post) (bool, error) {
 	if obj == nil {

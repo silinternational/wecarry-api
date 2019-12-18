@@ -222,7 +222,6 @@ type Post struct {
 	PhotoFile    File          `belongs_to:"files"`
 	Destination  Location      `belongs_to:"locations"`
 	Origin       Location      `belongs_to:"locations"`
-	Meeting      Meeting       `belongs_to:"meetings"`
 }
 
 // PostCreatedEventData holds data needed by the New Post event listener
@@ -853,4 +852,17 @@ func (p *Post) GetLocationForNotifications() (*Location, error) {
 		postLocation = p.Destination
 	}
 	return &postLocation, nil
+}
+
+// Meeting reads the meeting record, if it exists, and returns the object.
+func (p *Post) Meeting() (*Meeting, error) {
+	if !p.MeetingID.Valid {
+		return nil, nil
+	}
+	var meeting Meeting
+	if err := DB.Find(&meeting, p.MeetingID); err != nil {
+		return nil, err
+	}
+
+	return &meeting, nil
 }

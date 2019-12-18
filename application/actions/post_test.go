@@ -69,6 +69,9 @@ type Post struct {
 	Files []struct {
 		ID string `json:"id"`
 	} `json:"files"`
+	Meeting struct {
+		ID string `json:"id"`
+	} `json:"meeting"`
 }
 
 func (as *ActionSuite) Test_PostQuery() {
@@ -263,11 +266,12 @@ func (as *ActionSuite) Test_CreatePost() {
 			url: "example.com"
 		`
 	query = `mutation { post: createPost(input: {` + input + `}) {
-		destination { description country latitude longitude }}}`
+		destination { description country latitude longitude }
+		meeting { id } }}`
 
 	as.NoError(as.testGqlQuery(query, f.Users[0].Nickname, &postsResp))
 
-	//as.Equal(f.Meetings[0].UUID.String(), postsResp.Post.Meeting.ID)
+	as.Equal(f.Meetings[0].UUID.String(), postsResp.Post.Meeting.ID)
 
 	as.NoError(as.DB.Load(&f.Meetings[0]), "Location")
 	as.Equal(f.Meetings[0].Location.Description, postsResp.Post.Destination.Description)
