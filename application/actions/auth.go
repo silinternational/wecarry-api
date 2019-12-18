@@ -352,8 +352,6 @@ func authRequestError(c buffalo.Context, httpStatus int, errorCode, message stri
 		Trace: errorCode,
 	}
 
-	fmt.Printf("\n\nAAAAAAAAAA  %v  %v\n\n", httpStatus, authError)
-
 	return c.Render(httpStatus, render.JSON(authError))
 }
 
