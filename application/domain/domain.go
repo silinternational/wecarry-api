@@ -166,8 +166,9 @@ func readEnv() {
 }
 
 type AppError struct {
-	Code    string `json:"Code"`
-	Message string `json:"Message,omitempty"`
+	Code  int    `json:"code"`
+	Error string `json:"error"`
+	Trace string `json:"trace,omitempty"`
 }
 
 // GetFirstStringFromSlice returns the first string in the given slice, or an empty

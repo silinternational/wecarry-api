@@ -195,8 +195,13 @@ func authRequest(c buffalo.Context) error {
 	// find org for auth config and processing
 	org, userOrgs, err := getOrgAndUserOrgs(authEmail, c)
 	if err != nil {
-		return authRequestError(c, http.StatusInternalServerError, domain.ErrorFindingOrgUserOrgs,
-			fmt.Sprintf("error getting org and userOrgs ... %v", err), extras)
+		if domain.IsOtherThanNoRows(err) {
+			return authRequestError(c, http.StatusInternalServerError, domain.ErrorFindingOrgUserOrgs,
+				fmt.Sprintf("error getting org and userOrgs ... %v", err), extras)
+		} else {
+			return authRequestError(c, http.StatusNotFound, domain.ErrorFindingOrgUserOrgs,
+				"Could not find org or userOrgs for  "+authEmail, extras)
+		}
 	}
 
 	// User has more than one organization affiliation, return list to choose from
@@ -342,8 +347,13 @@ func authRequestError(c buffalo.Context, httpStatus int, errorCode, message stri
 	domain.Error(c, message, allExtras)
 
 	authError := domain.AppError{
-		Code: errorCode,
+		Code:  httpStatus,
+		Error: errorCode,
+		Trace: errorCode,
 	}
+
+	fmt.Printf("\n\nAAAAAAAAAA  %v  %v\n\n", httpStatus, authError)
+
 	return c.Render(httpStatus, render.JSON(authError))
 }
 
