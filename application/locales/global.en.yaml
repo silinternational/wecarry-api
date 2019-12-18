@@ -8,6 +8,8 @@
   translation: We had a problem finding the location of that meeting.
 - id: GetMeetings
   translation: We had a problem finding a list of meeting.
+- id: GetRecentMeetings
+  translation: We had a problem finding a list of recent meetings.
 - id: GetMessageSender
   translation: We had a problem finding the message sender information.
 - id: GetMessageThread
