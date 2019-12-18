@@ -857,7 +857,7 @@ func (p *Post) GetLocationForNotifications() (*Location, error) {
 	return &postLocation, nil
 }
 
-// Meeting reads the meeting record, if it exists, and returns the object.
+// Meeting reads the meeting record, if it exists, and returns a pointer to the object.
 func (p *Post) Meeting() (*Meeting, error) {
 	if !p.MeetingID.Valid {
 		return nil, nil
