@@ -2,7 +2,6 @@ package listeners
 
 import (
 	"fmt"
-	"strconv"
 	"testing"
 
 	"github.com/gobuffalo/nulls"
@@ -17,8 +16,8 @@ type orgUserPostFixtures struct {
 	posts models.Posts
 }
 
-func CreateFixtures_GetPostRecipients(ms *ModelSuite, t *testing.T) orgUserPostFixtures {
-	userFixtures := test.CreateUserFixtures(ms.DB, t, 3)
+func CreateFixtures_GetPostUsers(ms *ModelSuite, t *testing.T) orgUserPostFixtures {
+	userFixtures := test.CreateUserFixtures(ms.DB, 3)
 	org := userFixtures.Organization
 	users := userFixtures.Users
 
@@ -26,46 +25,10 @@ func CreateFixtures_GetPostRecipients(ms *ModelSuite, t *testing.T) orgUserPostF
 
 	ms.NoError(err, "could not create language preference for user "+users[1].Nickname)
 
-	locations := []models.Location{{}, {}}
-	for i := range locations {
-		createFixture(ms, &locations[i])
-	}
-
-	// Load Post test fixtures
-	posts := []models.Post{
-		{
-			CreatedByID:    users[0].ID,
-			Type:           models.PostTypeRequest,
-			OrganizationID: users[0].Organizations[0].ID,
-			Title:          "First Request",
-			Size:           models.PostSizeMedium,
-			Status:         models.PostStatusOpen,
-			ProviderID:     nulls.NewInt(users[1].ID),
-			ReceiverID:     nulls.NewInt(users[0].ID),
-			DestinationID:  locations[0].ID,
-		},
-		{
-			CreatedByID:    users[0].ID,
-			Type:           models.PostTypeRequest,
-			OrganizationID: users[0].Organizations[0].ID,
-			Title:          "Second Request",
-			Size:           models.PostSizeMedium,
-			Status:         models.PostStatusOpen,
-			ReceiverID:     nulls.NewInt(users[0].ID),
-			DestinationID:  locations[1].ID,
-		},
-	}
-	for i := range posts {
-		posts[i].UUID = domain.GetUUID()
-		if err := ms.DB.Create(&posts[i]); err != nil {
-			t.Errorf("could not create test post ... %v", err)
-			t.FailNow()
-		}
-		if err := models.DB.Load(&posts[i], "CreatedBy", "Provider", "Receiver", "Organization"); err != nil {
-			t.Errorf("Error loading post associations: %s", err)
-			t.FailNow()
-		}
-	}
+	posts := test.CreatePostFixtures(ms.DB, 2, false)
+	posts[0].Status = models.PostStatusCommitted
+	posts[0].ProviderID = nulls.NewInt(users[1].ID)
+	ms.NoError(ms.DB.Save(&posts[0]))
 
 	return orgUserPostFixtures{
 		orgs:  models.Organizations{org},
@@ -75,50 +38,14 @@ func CreateFixtures_GetPostRecipients(ms *ModelSuite, t *testing.T) orgUserPostF
 }
 
 func CreateFixtures_RequestStatusUpdatedNotifications(ms *ModelSuite, t *testing.T) orgUserPostFixtures {
-	userFixtures := test.CreateUserFixtures(ms.DB, t, 3)
+	userFixtures := test.CreateUserFixtures(ms.DB, 3)
 	org := userFixtures.Organization
 	users := userFixtures.Users
 
-	locations := []models.Location{{}, {}}
-	for i := range locations {
-		createFixture(ms, &locations[i])
-	}
-
-	// Load Post test fixtures
-	posts := []models.Post{
-		{
-			CreatedByID:    users[0].ID,
-			Type:           models.PostTypeRequest,
-			OrganizationID: users[0].Organizations[0].ID,
-			Title:          "First Request",
-			Size:           models.PostSizeMedium,
-			Status:         models.PostStatusOpen,
-			ProviderID:     nulls.NewInt(users[1].ID),
-			ReceiverID:     nulls.NewInt(users[0].ID),
-			DestinationID:  locations[0].ID,
-		},
-		{
-			CreatedByID:    users[0].ID,
-			Type:           models.PostTypeRequest,
-			OrganizationID: users[0].Organizations[0].ID,
-			Title:          "Second Request",
-			Size:           models.PostSizeMedium,
-			Status:         models.PostStatusOpen,
-			ReceiverID:     nulls.NewInt(users[0].ID),
-			DestinationID:  locations[1].ID,
-		},
-	}
-	for i := range posts {
-		posts[i].UUID = domain.GetUUID()
-		if err := ms.DB.Create(&posts[i]); err != nil {
-			t.Errorf("could not create test post ... %v", err)
-			t.FailNow()
-		}
-		if err := models.DB.Load(&posts[i], "CreatedBy", "Provider", "Receiver", "Organization"); err != nil {
-			t.Errorf("Error loading post associations: %s", err)
-			t.FailNow()
-		}
-	}
+	posts := test.CreatePostFixtures(ms.DB, 2, false)
+	posts[0].Status = models.PostStatusCommitted
+	posts[0].ProviderID = nulls.NewInt(users[1].ID)
+	ms.NoError(ms.DB.Save(&posts[0]))
 
 	return orgUserPostFixtures{
 		orgs:  models.Organizations{org},
@@ -258,26 +185,10 @@ func createFixturesForTestSendNewPostNotifications(ms *ModelSuite) orgUserPostFi
 		createFixture(ms, &users[i])
 	}
 
-	locations := make(models.Locations, 1)
-	for i := range locations {
-		locations[i].Description = "location " + strconv.Itoa(i)
-		locations[i].Country = "US"
-		createFixture(ms, &locations[i])
-	}
-
-	posts := models.Posts{
-		{
-			Type:     models.PostTypeRequest,
-			OriginID: nulls.NewInt(locations[0].ID),
-		},
-	}
-	for i := range posts {
-		posts[i].OrganizationID = org.ID
-		posts[i].UUID = domain.GetUUID()
-		posts[i].CreatedByID = users[0].ID
-		posts[i].DestinationID = locations[i].ID
-		createFixture(ms, &posts[i])
-	}
+	posts := test.CreatePostFixtures(ms.DB, 1, false)
+	ms.NoError(ms.DB.Load(&posts[0], "Origin"))
+	posts[0].Origin.Country = "US"
+	ms.NoError(ms.DB.Save(&posts[0].Origin))
 
 	return orgUserPostFixtures{
 		users: users,

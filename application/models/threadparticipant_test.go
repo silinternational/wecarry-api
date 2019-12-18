@@ -62,7 +62,7 @@ func (ms *ModelSuite) TestThreadParticipant_Validate() {
 // CreateFixtures_ThreadParticipant_UpdateLastViewedAt is used by
 // TestThreadParticipant_UpdateLastViewedAt and TestThread_UpdateLastViewedAt
 func CreateFixtures_ThreadParticipant_UpdateLastViewedAt(ms *ModelSuite, t *testing.T) ThreadFixtures {
-	uf := CreateUserFixtures(ms.DB, 2)
+	uf := createUserFixtures(ms.DB, 2)
 	org := uf.Organization
 	users := uf.Users
 
@@ -152,7 +152,7 @@ func (ms *ModelSuite) TestThreadParticipant_UpdateLastViewedAt() {
 }
 
 func CreateFixtures_ThreadParticipant_FindByThreadIDAndUserID(ms *ModelSuite) ThreadFixtures {
-	uf := CreateUserFixtures(ms.DB, 1)
+	uf := createUserFixtures(ms.DB, 1)
 	org := uf.Organization
 	users := uf.Users
 
@@ -223,7 +223,7 @@ func (ms *ModelSuite) TestThreadParticipant_FindByThreadIDAndUserID() {
 // CreateFixtures_ThreadParticipant_UpdateLastNotifiedAt creates test fixtures for the
 // ThreadParticipant_UpdateLastNotifiedAt test
 func CreateFixtures_ThreadParticipant_UpdateLastNotifiedAt(ms *ModelSuite, t *testing.T) ThreadFixtures {
-	uf := CreateUserFixtures(ms.DB, 1)
+	uf := createUserFixtures(ms.DB, 1)
 	org := uf.Organization
 	users := uf.Users
 

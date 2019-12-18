@@ -34,7 +34,7 @@ func createFixturesForUserGetOrganizations(ms *ModelSuite) ([]Organization, User
 		createFixture(ms, &orgs[i])
 	}
 
-	users := CreateUserFixtures(ms.DB, 1).Users
+	users := createUserFixtures(ms.DB, 1).Users
 
 	// user is already in org 0, but need user to also be in org 1
 	createFixture(ms, &UserOrganization{
@@ -91,29 +91,17 @@ func CreateUserFixtures_CanEditAllPosts(ms *ModelSuite) UserPostFixtures {
 }
 
 func CreateFixturesForUserGetPosts(ms *ModelSuite) UserPostFixtures {
-	uf := CreateUserFixtures(ms.DB, 2)
-	org := uf.Organization
+	uf := createUserFixtures(ms.DB, 2)
 	users := uf.Users
 
-	const numberOfPosts = 4
-	locations := make([]Location, numberOfPosts)
-	for i := range locations {
-		createFixture(ms, &locations[i])
-	}
-
-	posts := []Post{
-		{ProviderID: nulls.NewInt(users[1].ID)},
-		{ProviderID: nulls.NewInt(users[1].ID)},
-		{ReceiverID: nulls.NewInt(users[1].ID)},
-		{ReceiverID: nulls.NewInt(users[1].ID)},
-	}
-	for i := range posts {
-		posts[i].CreatedByID = users[0].ID
-		posts[i].OrganizationID = org.ID
-		posts[i].UUID = domain.GetUUID()
-		posts[i].DestinationID = locations[i].ID
-		createFixture(ms, &posts[i])
-	}
+	posts := createPostFixtures(ms.DB, 2, 2, false)
+	posts[0].SetProviderWithStatus(PostStatusCommitted, users[1])
+	posts[1].SetProviderWithStatus(PostStatusCommitted, users[1])
+	posts[2].Status = PostStatusCommitted
+	posts[2].ReceiverID = nulls.NewInt(users[1].ID)
+	posts[3].Status = PostStatusCommitted
+	posts[3].ReceiverID = nulls.NewInt(users[1].ID)
+	ms.NoError(ms.DB.Save(&posts))
 
 	return UserPostFixtures{
 		Users: users,
@@ -201,39 +189,17 @@ func CreateUserFixturesForNicknames(ms *ModelSuite, t *testing.T) User {
 }
 
 func CreateUserFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) UserMessageFixtures {
-	uf := CreateUserFixtures(ms.DB, 2)
-	org := uf.Organization
+	uf := createUserFixtures(ms.DB, 2)
 	users := uf.Users
 
-	locations := []Location{{}, {}}
-	for i := range locations {
-		createFixture(ms, &locations[i])
-	}
-
 	// Each user has a request and is a provider on the other user's post
-	posts := Posts{
-		{
-			CreatedByID:   users[0].ID,
-			Title:         "Open Request 0",
-			ProviderID:    nulls.NewInt(users[1].ID),
-			DestinationID: locations[0].ID,
-		},
-		{
-			CreatedByID:   users[1].ID,
-			Title:         "Committed Request 1",
-			ProviderID:    nulls.NewInt(users[0].ID),
-			DestinationID: locations[1].ID,
-		},
-	}
-
-	for i := range posts {
-		posts[i].OrganizationID = org.ID
-		posts[i].Type = PostTypeRequest
-		posts[i].Size = PostSizeMedium
-		posts[i].Status = PostStatusOpen
-		posts[i].UUID = domain.GetUUID()
-		createFixture(ms, &posts[i])
-	}
+	posts := createPostFixtures(ms.DB, 2, 0, false)
+	posts[0].Status = PostStatusCommitted
+	posts[0].ProviderID = nulls.NewInt(users[1].ID)
+	posts[1].Status = PostStatusCommitted
+	posts[1].CreatedByID = users[1].ID
+	posts[1].ProviderID = nulls.NewInt(users[0].ID)
+	ms.NoError(ms.DB.Save(&posts))
 
 	threads := []Thread{{PostID: posts[0].ID}, {PostID: posts[1].ID}}
 
@@ -340,7 +306,7 @@ type UserPostFixtures struct {
 }
 
 func CreateUserFixtures_GetThreads(ms *ModelSuite) UserPostFixtures {
-	uf := CreateUserFixtures(ms.DB, 2)
+	uf := createUserFixtures(ms.DB, 2)
 	org := uf.Organization
 	users := uf.Users
 
@@ -373,9 +339,15 @@ func CreateUserFixtures_GetThreads(ms *ModelSuite) UserPostFixtures {
 }
 
 func CreateFixturesForUserWantsPostNotification(ms *ModelSuite) UserPostFixtures {
-	uf := CreateUserFixtures(ms.DB, 2)
+	uf := createUserFixtures(ms.DB, 2)
 	org := uf.Organization
 	users := uf.Users
+
+	for i := range users {
+		ms.NoError(ms.DB.Load(&users[i], "Location"))
+		users[i].Location.Country = "US"
+		ms.NoError(ms.DB.Save(&users[i].Location))
+	}
 
 	postLocations := Locations{
 		{ // Post 0 Destination
@@ -448,7 +420,7 @@ func CreateFixturesForUserWantsPostNotification(ms *ModelSuite) UserPostFixtures
 }
 
 func CreateUserFixtures_TestGetPreference(ms *ModelSuite) UserPostFixtures {
-	users := CreateUserFixtures(ms.DB, 2).Users
+	users := createUserFixtures(ms.DB, 2).Users
 
 	// Load UserPreferences test fixtures
 	userPreferences := UserPreferences{
@@ -473,7 +445,7 @@ func CreateUserFixtures_TestGetPreference(ms *ModelSuite) UserPostFixtures {
 }
 
 func CreateUserFixtures_TestGetLanguagePreference(ms *ModelSuite) Users {
-	users := CreateUserFixtures(ms.DB, 3).Users
+	users := createUserFixtures(ms.DB, 3).Users
 
 	// Load UserPreferences test fixtures
 	userPreferences := UserPreferences{

@@ -1,0 +1,5 @@
+drop_foreign_key("posts", "meeting_fk")
+drop_index("posts", "posts_meeting_id_idx")
+drop_column("posts", "meeting_id")
+
+drop_table("meetings")

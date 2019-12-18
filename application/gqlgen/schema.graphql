@@ -7,6 +7,9 @@ type Query {
     threads: [Thread!]!
     myThreads: [Thread!]!
     message(id: ID): Message!
+    meetings: [Meeting!]!
+    meeting(id: ID): Meeting
+    recentMeetings: [Meeting!]!
 }
 
 type Mutation {
@@ -140,6 +143,20 @@ type Post {
     isEditable: Boolean!
 }
 
+type Meeting {
+    id: ID!
+    name: String!
+    description: String
+    moreInfoURL: String
+    startDate: String!
+    endDate: String!
+    createdAt: Time!
+    updatedAt: Time!
+    createdBy: PublicProfile!
+    imageFile: File
+    location: Location!
+}
+
 type Organization {
     id: ID!
     name: String!
@@ -211,6 +228,7 @@ input CreatePostInput {
     url: String
     kilograms: Float
     photoID: ID
+    meetingID: ID
 }
 
 input CreateMessageInput {

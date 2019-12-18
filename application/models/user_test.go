@@ -225,7 +225,7 @@ func (ms *ModelSuite) TestUser_Validate() {
 func (ms *ModelSuite) TestUser_CreateAccessToken() {
 	t := ms.T()
 
-	uf := CreateUserFixtures(ms.DB, 1)
+	uf := createUserFixtures(ms.DB, 1)
 	users := uf.Users
 
 	type args struct {
@@ -635,7 +635,7 @@ func (ms *ModelSuite) TestUser_CanUpdatePostStatus() {
 func (ms *ModelSuite) TestUser_FindByUUID() {
 	t := ms.T()
 
-	f := CreateUserFixtures(ms.DB, 1)
+	f := createUserFixtures(ms.DB, 1)
 
 	tests := []struct {
 		name    string
@@ -671,7 +671,7 @@ func (ms *ModelSuite) TestUser_FindByUUID() {
 func (ms *ModelSuite) TestUser_FindByID() {
 	t := ms.T()
 
-	f := CreateUserFixtures(ms.DB, 1)
+	f := createUserFixtures(ms.DB, 1)
 
 	tests := []struct {
 		name    string
@@ -1181,6 +1181,42 @@ func (ms *ModelSuite) TestUser_GetLanguagePreference() {
 			got := test.user.GetLanguagePreference()
 
 			ms.Equal(test.want, got, "incorrect result from GetLanguagePreference()")
+		})
+	}
+}
+
+func (ms *ModelSuite) TestUser_GetRealName() {
+	t := ms.T()
+
+	tests := []struct {
+		name string
+		user User
+		want string
+	}{
+		{
+			name: "first and last",
+			user: User{
+				FirstName: "John",
+				LastName:  "Doe",
+			},
+			want: "John Doe",
+		},
+		{
+			name: "first only",
+			user: User{FirstName: "Cher"},
+			want: "Cher",
+		},
+		{
+			name: "last only",
+			user: User{LastName: "Bono"},
+			want: "Bono",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got := test.user.GetRealName()
+
+			ms.Equal(test.want, got, "incorrect result from GetRealName()")
 		})
 	}
 }
