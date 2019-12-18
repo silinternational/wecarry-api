@@ -738,6 +738,9 @@ func (p *Post) GetOrigin() (*Location, error) {
 
 // SetDestination sets the destination location fields, creating a new record in the database if necessary.
 func (p *Post) SetDestination(location Location) error {
+	if p.MeetingID.Valid {
+		return errors.New("Attempted to set destination on event-based post")
+	}
 	location.ID = p.DestinationID
 	p.Destination = location
 	return DB.Update(&p.Destination)
