@@ -288,6 +288,7 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 			return models.Post{}, fmt.Errorf("invalid meetingID, %s", err)
 		}
 		post.MeetingID = nulls.NewInt(meeting.ID)
+		post.DestinationID = meeting.LocationID
 	}
 
 	return post, nil
@@ -320,14 +321,7 @@ func (r *mutationResolver) CreatePost(ctx context.Context, input postInput) (*mo
 		return nil, reportError(ctx, err, "CreatePost.ProcessInput", extras)
 	}
 
-	if input.MeetingID != nil && post.MeetingID.Valid {
-		var meeting models.Meeting
-		if err := meeting.FindByUUID(*input.MeetingID); err != nil {
-			extras["meetingID"] = *input.MeetingID
-			return nil, reportError(ctx, err, "CreatePost.SetDestination", extras)
-		}
-		post.DestinationID = meeting.LocationID
-	} else {
+	if !post.MeetingID.Valid {
 		dest := convertGqlLocationInputToDBLocation(*input.Destination)
 		if err = dest.Create(); err != nil {
 			return nil, reportError(ctx, err, "CreatePost.SetDestination", extras)
