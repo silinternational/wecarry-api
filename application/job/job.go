@@ -72,7 +72,7 @@ func newThreadMessageHandler(args worker.Args) error {
 			continue
 		}
 
-		msg.ToName = p.Nickname
+		msg.ToName = p.GetRealName()
 		msg.ToEmail = p.Email
 		msg.Subject = domain.GetTranslatedSubject(p.GetLanguagePreference(), "Email.Subject.Message.Created")
 
