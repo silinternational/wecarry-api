@@ -15,11 +15,6 @@ type SES struct {
 
 // Send a message
 func (s *SES) Send(msg Message) error {
-	apiKey := domain.Env.SendGridAPIKey
-	if apiKey == "" {
-		return errors.New("SendGrid API key is required")
-	}
-
 	msg.Data["uiURL"] = domain.Env.UIURL
 	msg.Data["appName"] = domain.Env.AppName
 
