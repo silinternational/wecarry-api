@@ -148,6 +148,17 @@ func (orgs *Organizations) All() error {
 	return DB.All(orgs)
 }
 
+func (orgs *Organizations) AllWhereUserIsOrgAdmin(cUser User) error {
+	if cUser.AdminRole == UserAdminRoleSuperAdmin || cUser.AdminRole == UserAdminRoleSalesAdmin {
+		return orgs.All()
+	}
+
+	return DB.
+		Scope(scopeUserAdminOrgs(cUser)).
+		Order("name asc").
+		All(orgs)
+}
+
 // GetDomains finds and returns all related OrganizationDomain rows.
 func (o *Organization) GetDomains() ([]OrganizationDomain, error) {
 	if err := DB.Load(o, "OrganizationDomains"); err != nil {
@@ -168,4 +179,30 @@ func (o *Organization) GetUsers() (Users, error) {
 	}
 
 	return o.Users, nil
+}
+
+// scope query to only include organizations that the cUser is an admin of
+func scopeUserAdminOrgs(cUser User) pop.ScopeFunc {
+	return func(q *pop.Query) *pop.Query {
+		var adminOrgIDs []int
+
+		_ = DB.Load(&cUser, "UserOrganizations")
+
+		for _, uo := range cUser.UserOrganizations {
+			if uo.Role == UserOrganizationRoleAdmin {
+				adminOrgIDs = append(adminOrgIDs, uo.OrganizationID)
+			}
+		}
+
+		// convert []int to []interface{}
+		s := make([]interface{}, len(adminOrgIDs))
+		for i, v := range adminOrgIDs {
+			s[i] = v
+		}
+
+		if len(s) == 0 {
+			return q.Where("id = -1")
+		}
+		return q.Where("id IN (?)", s...)
+	}
 }

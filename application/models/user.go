@@ -243,7 +243,34 @@ func (u *User) CanCreateOrganization() bool {
 	return u.AdminRole == UserAdminRoleSuperAdmin || u.AdminRole == UserAdminRoleSalesAdmin
 }
 
+// CanViewOrganization returns true if the given user is allowed to view the specified organization
+func (u *User) CanViewOrganization(orgId int) bool {
+	// if user is a system admin, allow
+	if u.AdminRole == UserAdminRoleSuperAdmin || u.AdminRole == UserAdminRoleSalesAdmin {
+		return true
+	}
+
+	// make sure we're checking current user orgs
+	err := DB.Load(u, "UserOrganizations")
+	if err != nil {
+		return false
+	}
+
+	for _, uo := range u.UserOrganizations {
+		if uo.OrganizationID == orgId && uo.Role == UserOrganizationRoleAdmin {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (u *User) CanEditOrganization(orgId int) bool {
+	// if user is a system admin, allow
+	if u.AdminRole == UserAdminRoleSuperAdmin || u.AdminRole == UserAdminRoleSalesAdmin {
+		return true
+	}
+
 	// make sure we're checking current user orgs
 	err := DB.Load(u, "UserOrganizations")
 	if err != nil {

@@ -96,7 +96,12 @@ func reportError(ctx context.Context, err error, errID string, extras ...map[str
 			allExtras[key] = val
 		}
 	}
-	domain.Error(c, err.Error(), allExtras)
+
+	errStr := errID
+	if err != nil {
+		errStr = err.Error()
+	}
+	domain.Error(c, errStr, allExtras)
 
 	if domain.T == nil {
 		return errors.New(errID)
