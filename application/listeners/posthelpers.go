@@ -149,7 +149,7 @@ func sendNotificationRequestFromAcceptedToOpen(params senderParams) {
 
 	msg := getMessageForProvider(postUsers, post, template)
 
-	msg.ToName = oldProvider.Nickname
+	msg.ToName = oldProvider.GetRealName()
 	msg.ToEmail = oldProvider.Email
 	msg.Subject = domain.GetTranslatedSubject(oldProvider.GetLanguagePreference(), params.subject)
 
@@ -223,7 +223,7 @@ func sendNotificationRequestFromCommittedToOpen(params senderParams) {
 		return
 	}
 
-	msg.ToName = oldProvider.Nickname
+	msg.ToName = oldProvider.GetRealName()
 	msg.ToEmail = oldProvider.Email
 	msg.Subject = domain.GetTranslatedSubject(oldProvider.GetLanguagePreference(), params.subject)
 

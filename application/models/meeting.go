@@ -9,6 +9,7 @@ import (
 	"github.com/gobuffalo/validate/validators"
 	"github.com/gofrs/uuid"
 	"github.com/pkg/errors"
+	"github.com/silinternational/wecarry-api/domain"
 	"time"
 )
 
@@ -74,11 +75,63 @@ func (m *Meeting) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 // FindByUUID finds a meeting by the UUID field and loads its CreatedBy field
 func (m *Meeting) FindByUUID(uuid string) error {
 	if uuid == "" {
-		return errors.New("error finding message: uuid must not be blank")
+		return errors.New("error finding meeting: uuid must not be blank")
 	}
 
 	if err := DB.Eager("CreatedBy").Where("uuid = ?", uuid).First(m); err != nil {
-		return fmt.Errorf("error finding message by uuid: %s", err.Error())
+		return fmt.Errorf("error finding meeting by uuid: %s", err.Error())
+	}
+
+	return nil
+}
+
+// FindOnDate finds the meetings that have StartDate before timeInFocus-date and an EndDate after it
+// (inclusive on both)
+func (m *Meetings) FindOnDate(timeInFocus time.Time) error {
+	date := timeInFocus.Format(domain.DateTimeFormat)
+	where := "start_date <= ? and end_date >= ?"
+
+	if err := DB.Eager("CreatedBy").Where(where, date, date).All(m); err != nil {
+		return fmt.Errorf("error finding meeting with start_date and end_date straddling %s ... %s",
+			date, err.Error())
+	}
+
+	return nil
+}
+
+// FindOnOrAfterDate finds the meetings that have an EndDate on or after the timeInFocus-date
+func (m *Meetings) FindOnOrAfterDate(timeInFocus time.Time) error {
+
+	date := timeInFocus.Format(domain.DateTimeFormat)
+
+	if err := DB.Eager("CreatedBy").Where("end_date >= ?", date).All(m); err != nil {
+		return fmt.Errorf("error finding meeting with end_date before %s ... %s", date, err.Error())
+	}
+
+	return nil
+}
+
+// FindAfterDate finds the meetings that have a StartDate after the timeInFocus-date
+func (m *Meetings) FindAfterDate(timeInFocus time.Time) error {
+	date := timeInFocus.Format(domain.DateTimeFormat)
+
+	if err := DB.Eager("CreatedBy").Where("start_date > ?", date).All(m); err != nil {
+		return fmt.Errorf("error finding meeting with start_date after %s ... %s", date, err.Error())
+	}
+
+	return nil
+}
+
+// FindRecent finds the meetings that have an EndDate within the past <domain.RecentMeetingDelay> days
+// before timeInFocus-date (not inclusive)
+func (m *Meetings) FindRecent(timeInFocus time.Time) error {
+	yesterday := timeInFocus.Add(-domain.DurationDay).Format(domain.DateTimeFormat)
+	recentDate := timeInFocus.Add(-domain.RecentMeetingDelay)
+	where := "end_date between ? and ?"
+
+	if err := DB.Eager("CreatedBy").Where(where, recentDate, yesterday).All(m); err != nil {
+		return fmt.Errorf("error finding meeting with end_date between %s and %s ... %s",
+			recentDate, yesterday, err.Error())
 	}
 
 	return nil
@@ -119,4 +172,22 @@ func (m *Meeting) GetImage() (*File, error) {
 	}
 
 	return &m.ImageFile, nil
+}
+
+func (m *Meeting) GetCreator() (*User, error) {
+	creator := User{}
+	if err := DB.Find(&creator, m.CreatedByID); err != nil {
+		return nil, err
+	}
+	return &creator, nil
+}
+
+// GetLocation returns the related Location object.
+func (m *Meeting) GetLocation() (Location, error) {
+	location := Location{}
+	if err := DB.Find(&location, m.LocationID); err != nil {
+		return location, err
+	}
+
+	return location, nil
 }

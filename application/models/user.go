@@ -586,3 +586,8 @@ func (u User) GetLanguagePreference() string {
 
 	return prefs.Language
 }
+
+// GetRealName returns the real name, first and last, of the user
+func (u *User) GetRealName() string {
+	return strings.TrimSpace(u.FirstName + " " + u.LastName)
+}

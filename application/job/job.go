@@ -53,7 +53,6 @@ func newThreadMessageHandler(args worker.Args) error {
 			"threadURL":      domain.GetThreadUIURL(m.Thread.UUID.String()),
 		},
 		FromEmail: domain.Env.EmailFromAddress,
-		Subject:   domain.GetTranslatedSubject("Email.Subject.Message.Created", template),
 	}
 
 	var lastErr error
@@ -73,8 +72,10 @@ func newThreadMessageHandler(args worker.Args) error {
 			continue
 		}
 
-		msg.ToName = p.Nickname
+		msg.ToName = p.GetRealName()
 		msg.ToEmail = p.Email
+		msg.Subject = domain.GetTranslatedSubject(p.GetLanguagePreference(), "Email.Subject.Message.Created")
+
 		if err := notifications.Send(msg); err != nil {
 			domain.ErrLogger.Printf("error sending 'New Thread Message' notification, %s", err)
 			lastErr = err

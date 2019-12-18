@@ -59,6 +59,23 @@ models:
         resolver: true
       kilograms:
         resolver: true
+  Meeting:
+    model: models.Meeting
+    fields:
+      id:
+        resolver: true
+      createdBy:
+        resolver: true
+      startDate:
+        resolver: true
+      endDate:
+        resolver: true
+      location:
+        resolver: true
+      imageFile:
+        resolver: true
+      moreInfoURL:
+        resolver: true
   Thread:
     model: models.Thread
     fields:
