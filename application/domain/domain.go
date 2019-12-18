@@ -24,7 +24,7 @@ const (
 	MaxFileSize                 = 1 << 21 // 10 Mebibytes
 	AccessTokenLifetimeSeconds  = 3600
 	DateTimeFormat              = "2006-01-02 15:04:05"
-	NewMessageNotificationDelay = 10 * time.Minute
+	NewMessageNotificationDelay = 1 * time.Minute
 	DefaultProximityDistanceKm  = 1000
 	DurationDay                 = time.Duration(time.Hour * 24)
 	DurationWeek                = time.Duration(DurationDay * 7)
