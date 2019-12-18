@@ -7,7 +7,7 @@
 - id: GetMeetingLocation
   translation: We had a problem finding the location of that meeting.
 - id: GetMeetings
-  translation: We had a problem finding a list of meeting.
+  translation: We had a problem finding a list of meetings.
 - id: GetRecentMeetings
   translation: We had a problem finding a list of recent meetings.
 - id: GetMessageSender
