@@ -148,8 +148,8 @@ type Meeting {
     name: String!
     description: String
     moreInfoURL: String
-    startDate: Time!
-    endDate: Time!
+    startDate: String!
+    endDate: String!
     createdAt: Time!
     updatedAt: Time!
     createdBy: PublicProfile!

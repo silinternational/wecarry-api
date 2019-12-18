@@ -139,8 +139,8 @@ func (ms *ModelSuite) TestMeeting_FindByUUID() {
 	}
 }
 
-// TestMeeting_FindCurrent tests the FindCurrent function of the Meeting model
-func (ms *ModelSuite) TestMeeting_FindCurrent() {
+// TestMeeting_FindOnDate tests the FindOnDate function of the Meeting model
+func (ms *ModelSuite) TestMeeting_FindOnDate() {
 	t := ms.T()
 
 	meetings := createMeetingFixtures_FindByTime(ms)
@@ -161,7 +161,7 @@ func (ms *ModelSuite) TestMeeting_FindCurrent() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var meetings Meetings
-			err := meetings.FindCurrent([]time.Time{test.testNow}...)
+			err := meetings.FindOnDate(test.testNow)
 			ms.NoError(err, "unexpected error")
 
 			mNames := make([]string, len(meetings))
@@ -183,8 +183,8 @@ func getMeetingNames(meetings Meetings) []string {
 	return mNames
 }
 
-// TestMeeting_FindCurrentAndFuture tests the FindCurrentAndFuture function of the Meeting model
-func (ms *ModelSuite) TestMeeting_FindCurrentAndFuture() {
+// TestMeeting_FindOnOrAfterDate tests the FindOnOrAfterDate function of the Meeting model
+func (ms *ModelSuite) TestMeeting_FindOnOrAfterDate() {
 	t := ms.T()
 
 	meetings := createMeetingFixtures_FindByTime(ms)
@@ -207,7 +207,7 @@ func (ms *ModelSuite) TestMeeting_FindCurrentAndFuture() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var meetings Meetings
-			err := meetings.FindCurrentAndFuture([]time.Time{test.testNow}...)
+			err := meetings.FindOnOrAfterDate(test.testNow)
 			ms.NoError(err, "unexpected error")
 
 			mNames := getMeetingNames(meetings)
@@ -216,8 +216,8 @@ func (ms *ModelSuite) TestMeeting_FindCurrentAndFuture() {
 	}
 }
 
-// TestMeeting_FindFuture tests the FindFuture function of the Meeting model
-func (ms *ModelSuite) TestMeeting_FindFuture() {
+// TestMeeting_FindAfterDate tests the FindAfterDate function of the Meeting model
+func (ms *ModelSuite) TestMeeting_FindAfterDate() {
 	t := ms.T()
 
 	meetings := createMeetingFixtures_FindByTime(ms)
@@ -240,7 +240,7 @@ func (ms *ModelSuite) TestMeeting_FindFuture() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var meetings Meetings
-			err := meetings.FindFuture([]time.Time{test.testNow}...)
+			err := meetings.FindAfterDate(test.testNow)
 			ms.NoError(err, "unexpected error")
 
 			mNames := getMeetingNames(meetings)
@@ -273,7 +273,7 @@ func (ms *ModelSuite) TestMeeting_FindRecent() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var meetings Meetings
-			err := meetings.FindRecent([]time.Time{test.testNow}...)
+			err := meetings.FindRecent(test.testNow)
 			ms.NoError(err, "unexpected error")
 
 			mNames := getMeetingNames(meetings)

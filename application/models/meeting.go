@@ -85,74 +85,48 @@ func (m *Meeting) FindByUUID(uuid string) error {
 	return nil
 }
 
-// FindCurrent finds the meetings that have StartDate before today an EndDate after today (inclusive on both)
-// Don't send testNow param for non-test code.
-// For testing with a different "now" time, use a one-entry slice, i.e. []time.Time{<my test time>}...
-func (m *Meetings) FindCurrent(testNow ...time.Time) error {
-	timeNow := time.Now()
-	if len(testNow) > 0 {
-		timeNow = testNow[0]
-	}
-
-	now := timeNow.Format(domain.DateTimeFormat)
+// FindOnDate finds the meetings that have StartDate before timeInFocus-date and an EndDate after it
+// (inclusive on both)
+func (m *Meetings) FindOnDate(timeInFocus time.Time) error {
+	date := timeInFocus.Format(domain.DateTimeFormat)
 	where := "start_date <= ? and end_date >= ?"
 
-	if err := DB.Eager("CreatedBy").Where(where, now, now).All(m); err != nil {
+	if err := DB.Eager("CreatedBy").Where(where, date, date).All(m); err != nil {
 		return fmt.Errorf("error finding meeting with start_date and end_date straddling %s ... %s",
-			now, err.Error())
+			date, err.Error())
 	}
 
 	return nil
 }
 
-// FindCurrentAndFuture finds the meetings that have an EndDate in the future
-// Don't send testNow param for non-test code.
-// For testing with a different "now" time, use a one-entry slice, i.e. []time.Time{<my test time>}...
-func (m *Meetings) FindCurrentAndFuture(testNow ...time.Time) error {
-	timeNow := time.Now()
-	if len(testNow) > 0 {
-		timeNow = testNow[0]
-	}
+// FindOnOrAfterDate finds the meetings that have an EndDate on or after the timeInFocus-date
+func (m *Meetings) FindOnOrAfterDate(timeInFocus time.Time) error {
 
-	now := timeNow.Format(domain.DateTimeFormat)
+	date := timeInFocus.Format(domain.DateTimeFormat)
 
-	if err := DB.Eager("CreatedBy").Where("end_date > ?", now).All(m); err != nil {
-		return fmt.Errorf("error finding meeting with end_date before %s ... %s", now, err.Error())
+	if err := DB.Eager("CreatedBy").Where("end_date >= ?", date).All(m); err != nil {
+		return fmt.Errorf("error finding meeting with end_date before %s ... %s", date, err.Error())
 	}
 
 	return nil
 }
 
-// FindFuture finds the meetings that have a StartDate in the future
-// Don't send testNow param for non-test code.
-// For testing with a different "now" time, use a one-entry slice, i.e. []time.Time{<my test time>}...
-func (m *Meetings) FindFuture(testNow ...time.Time) error {
-	timeNow := time.Now()
-	if len(testNow) > 0 {
-		timeNow = testNow[0]
-	}
+// FindAfterDate finds the meetings that have a StartDate after the timeInFocus-date
+func (m *Meetings) FindAfterDate(timeInFocus time.Time) error {
+	date := timeInFocus.Format(domain.DateTimeFormat)
 
-	now := timeNow.Format(domain.DateTimeFormat)
-
-	if err := DB.Eager("CreatedBy").Where("start_date > ?", now).All(m); err != nil {
-		return fmt.Errorf("error finding meeting with start_date after %s ... %s", now, err.Error())
+	if err := DB.Eager("CreatedBy").Where("start_date > ?", date).All(m); err != nil {
+		return fmt.Errorf("error finding meeting with start_date after %s ... %s", date, err.Error())
 	}
 
 	return nil
 }
 
 // FindRecent finds the meetings that have an EndDate within the past <domain.RecentMeetingDelay> days
-// (not including today)
-// Don't send testNow param for non-test code.
-// For testing with a different "now" time, use a one-entry slice, i.e. []time.Time{<my test time>}...
-func (m *Meetings) FindRecent(testNow ...time.Time) error {
-	timeNow := time.Now()
-	if len(testNow) > 0 {
-		timeNow = testNow[0]
-	}
-
-	yesterday := timeNow.Add(-domain.DurationDay).Format(domain.DateTimeFormat)
-	recentDate := timeNow.Add(-domain.RecentMeetingDelay)
+// before timeInFocus-date (not inclusive)
+func (m *Meetings) FindRecent(timeInFocus time.Time) error {
+	yesterday := timeInFocus.Add(-domain.DurationDay).Format(domain.DateTimeFormat)
+	recentDate := timeInFocus.Add(-domain.RecentMeetingDelay)
 	where := "end_date between ? and ?"
 
 	if err := DB.Eager("CreatedBy").Where(where, recentDate, yesterday).All(m); err != nil {

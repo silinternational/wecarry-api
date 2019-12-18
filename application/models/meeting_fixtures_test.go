@@ -19,6 +19,7 @@ func createMeetingFixtures(ms *ModelSuite, t *testing.T, users Users) Meetings {
 
 	meetings := Meetings{
 		{
+			UUID:        domain.GetUUID(),
 			CreatedByID: users[0].ID,
 			Name:        "Meeting 1",
 			LocationID:  locations[0].ID,
@@ -26,6 +27,7 @@ func createMeetingFixtures(ms *ModelSuite, t *testing.T, users Users) Meetings {
 			EndDate:     time.Now(),
 		},
 		{
+			UUID:        domain.GetUUID(),
 			CreatedByID: users[0].ID,
 			Name:        "Meeting 2",
 			LocationID:  locations[1].ID,
@@ -33,10 +35,7 @@ func createMeetingFixtures(ms *ModelSuite, t *testing.T, users Users) Meetings {
 			EndDate:     time.Now(),
 		},
 	}
-	for i := range meetings {
-		meetings[i].UUID = domain.GetUUID()
-		createFixture(ms, &meetings[i])
-	}
+	createFixture(ms, &meetings)
 	return meetings
 }
 
