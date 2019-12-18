@@ -68,6 +68,8 @@ models:
         resolver: true
       location:
         resolver: true
+      imageFile:
+        resolver: true
       moreInfoURL:
         resolver: true
   Thread:

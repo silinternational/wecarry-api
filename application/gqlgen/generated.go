@@ -75,7 +75,7 @@ type ComplexityRoot struct {
 		Description func(childComplexity int) int
 		EndDate     func(childComplexity int) int
 		ID          func(childComplexity int) int
-		Image       func(childComplexity int) int
+		ImageFile   func(childComplexity int) int
 		Location    func(childComplexity int) int
 		MoreInfoURL func(childComplexity int) int
 		Name        func(childComplexity int) int
@@ -208,7 +208,7 @@ type MeetingResolver interface {
 	MoreInfoURL(ctx context.Context, obj *models.Meeting) (*string, error)
 
 	CreatedBy(ctx context.Context, obj *models.Meeting) (*PublicProfile, error)
-	Image(ctx context.Context, obj *models.Meeting) (*models.File, error)
+	ImageFile(ctx context.Context, obj *models.Meeting) (*models.File, error)
 	Location(ctx context.Context, obj *models.Meeting) (*models.Location, error)
 }
 type MessageResolver interface {
@@ -412,12 +412,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Meeting.ID(childComplexity), true
 
-	case "Meeting.image":
-		if e.complexity.Meeting.Image == nil {
+	case "Meeting.imageFile":
+		if e.complexity.Meeting.ImageFile == nil {
 			break
 		}
 
-		return e.complexity.Meeting.Image(childComplexity), true
+		return e.complexity.Meeting.ImageFile(childComplexity), true
 
 	case "Meeting.location":
 		if e.complexity.Meeting.Location == nil {
@@ -1304,7 +1304,7 @@ type Meeting {
     createdAt: Time!
     updatedAt: Time!
     createdBy: PublicProfile!
-    image: File
+    imageFile: File
     location: Location!
 }
 
@@ -2392,7 +2392,7 @@ func (ec *executionContext) _Meeting_createdBy(ctx context.Context, field graphq
 	return ec.marshalNPublicProfile2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPublicProfile(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Meeting_image(ctx context.Context, field graphql.CollectedField, obj *models.Meeting) (ret graphql.Marshaler) {
+func (ec *executionContext) _Meeting_imageFile(ctx context.Context, field graphql.CollectedField, obj *models.Meeting) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -2411,7 +2411,7 @@ func (ec *executionContext) _Meeting_image(ctx context.Context, field graphql.Co
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Meeting().Image(rctx, obj)
+		return ec.resolvers.Meeting().ImageFile(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7362,7 +7362,7 @@ func (ec *executionContext) _Meeting(ctx context.Context, sel ast.SelectionSet, 
 				}
 				return res
 			})
-		case "image":
+		case "imageFile":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
 				defer func() {
@@ -7370,7 +7370,7 @@ func (ec *executionContext) _Meeting(ctx context.Context, sel ast.SelectionSet, 
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Meeting_image(ctx, field, obj)
+				res = ec._Meeting_imageFile(ctx, field, obj)
 				return res
 			})
 		case "location":

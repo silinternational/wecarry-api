@@ -1,6 +1,8 @@
 package actions
 
 import (
+	"github.com/gobuffalo/nulls"
+	"github.com/silinternational/wecarry-api/aws"
 	"github.com/silinternational/wecarry-api/domain"
 	"time"
 
@@ -12,6 +14,13 @@ func createFixturesForMeetings(as *ActionSuite) meetingQueryFixtures {
 	uf := test.CreateUserFixtures(as.DB, 1)
 	user := uf.Users[0]
 	locations := test.CreateLocationFixtures(as.DB, 4)
+
+	err := aws.CreateS3Bucket()
+	as.NoError(err, "failed to create S3 bucket, %s", err)
+
+	var fileFixture models.File
+	err = fileFixture.Store("new_photo.webp", []byte("RIFFxxxxWEBPVP"))
+	as.NoError(err, "failed to create ImageFile fixture")
 
 	meetings := models.Meetings{
 		{
@@ -36,6 +45,7 @@ func createFixturesForMeetings(as *ActionSuite) meetingQueryFixtures {
 			LocationID:  locations[2].ID,
 			StartDate:   time.Now().Add(time.Duration(-domain.DurationWeek * 2)),
 			EndDate:     time.Now().Add(time.Duration(domain.DurationWeek * 2)),
+			ImageFileID: nulls.NewInt(fileFixture.ID),
 		},
 		{
 			CreatedByID: user.ID,
@@ -50,6 +60,7 @@ func createFixturesForMeetings(as *ActionSuite) meetingQueryFixtures {
 		meetings[i].UUID = domain.GetUUID()
 		createFixture(as, &meetings[i])
 	}
+
 	return meetingQueryFixtures{
 		Locations: locations,
 		Meetings:  meetings,

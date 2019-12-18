@@ -66,7 +66,7 @@ func (r *meetingResolver) MoreInfoURL(ctx context.Context, obj *models.Meeting) 
 }
 
 // Image retrieves the file associated with the meeting
-func (r *meetingResolver) Image(ctx context.Context, obj *models.Meeting) (*models.File, error) {
+func (r *meetingResolver) ImageFile(ctx context.Context, obj *models.Meeting) (*models.File, error) {
 	if obj == nil {
 		return nil, nil
 	}

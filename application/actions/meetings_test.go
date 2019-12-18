@@ -30,7 +30,10 @@ type meeting struct {
 	} `json:"createdBy"`
 	StartDate time.Time `json:"startDate"`
 	EndDate   time.Time `json:"endDate"`
-	Location  struct {
+	ImageFile struct {
+		ID string `json:"id"`
+	} `json:"imageFile"`
+	Location struct {
 		Country string `json:"country"`
 	} `json:"location"`
 }
@@ -49,6 +52,7 @@ func (as *ActionSuite) Test_MeetingsQuery() {
 			createdBy { nickname}
 			startDate
 			endDate
+			imageFile {id}
 			location {country}
 		}}`
 
@@ -73,6 +77,15 @@ func (as *ActionSuite) Test_MeetingsQuery() {
 			"incorrect meeting StartDate")
 		as.Equal(testMtg.EndDate.Format(domain.DateFormat), gotMtg.EndDate.Format(domain.DateFormat),
 			"incorrect meeting EndDate")
+
+		image, err := testMtg.GetImage()
+		as.NoError(err, "unexpected error getting ImageFile")
+		wantUUID := ""
+		if image != nil {
+			wantUUID = image.UUID.String()
+		}
+		as.Equal(wantUUID, gotMtg.ImageFile.ID, "incorrect ImageFile")
+
 		as.Equal(testLocation.Country, gotMtg.Location.Country, "incorrect meeting Location")
 	}
 }

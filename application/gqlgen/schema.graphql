@@ -151,7 +151,7 @@ type Meeting {
     createdAt: Time!
     updatedAt: Time!
     createdBy: PublicProfile!
-    image: File
+    imageFile: File
     location: Location!
 }
 
