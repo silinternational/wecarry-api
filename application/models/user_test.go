@@ -1184,3 +1184,39 @@ func (ms *ModelSuite) TestUser_GetLanguagePreference() {
 		})
 	}
 }
+
+func (ms *ModelSuite) TestUser_GetRealName() {
+	t := ms.T()
+
+	tests := []struct {
+		name string
+		user User
+		want string
+	}{
+		{
+			name: "first and last",
+			user: User{
+				FirstName: "John",
+				LastName:  "Doe",
+			},
+			want: "John Doe",
+		},
+		{
+			name: "first only",
+			user: User{FirstName: "Cher"},
+			want: "Cher",
+		},
+		{
+			name: "last only",
+			user: User{LastName: "Bono"},
+			want: "Bono",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got := test.user.GetRealName()
+
+			ms.Equal(test.want, got, "incorrect result from GetRealName()")
+		})
+	}
+}
