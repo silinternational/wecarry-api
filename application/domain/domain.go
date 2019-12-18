@@ -102,12 +102,14 @@ var Env struct {
 	AccessTokenLifetimeSeconds int
 	AppName                    string
 	AuthCallbackURL            string
-	AwsS3Region                string
+	AwsRegion                  string
 	AwsS3Endpoint              string
 	AwsS3DisableSSL            bool
 	AwsS3Bucket                string
 	AwsS3AccessKeyID           string
 	AwsS3SecretAccessKey       string
+	AwsSESAccessKeyID          string
+	AwsSESSecretAccessKey      string
 	EmailService               string
 	EmailFromAddress           string
 	GoEnv                      string
@@ -142,12 +144,14 @@ func readEnv() {
 	Env.AccessTokenLifetimeSeconds = n
 	Env.AppName = envy.Get("APP_NAME", "WeCarry")
 	Env.AuthCallbackURL = envy.Get("AUTH_CALLBACK_URL", "")
-	Env.AwsS3Region = envy.Get("AWS_REGION", "")
+	Env.AwsRegion = envy.Get("AWS_REGION", "")
 	Env.AwsS3Endpoint = envy.Get("AWS_S3_ENDPOINT", "")
 	Env.AwsS3DisableSSL, _ = strconv.ParseBool(envy.Get("AWS_S3_DISABLE_SSL", "false"))
 	Env.AwsS3Bucket = envy.Get("AWS_S3_BUCKET", "")
 	Env.AwsS3AccessKeyID = envy.Get("AWS_S3_ACCESS_KEY_ID", "")
 	Env.AwsS3SecretAccessKey = envy.Get("AWS_S3_SECRET_ACCESS_KEY", "")
+	Env.AwsSESAccessKeyID = envy.Get("AWS_SES_ACCESS_KEY_ID", Env.AwsS3AccessKeyID)
+	Env.AwsSESSecretAccessKey = envy.Get("AWS_SES_SECRET_ACCESS_KEY", Env.AwsS3SecretAccessKey)
 	Env.EmailService = envy.Get("EMAIL_SERVICE", "sendgrid")
 	Env.EmailFromAddress = envy.Get("EMAIL_FROM_ADDRESS", "no_reply@example.com")
 	Env.GoEnv = envy.Get("GO_ENV", "development")
