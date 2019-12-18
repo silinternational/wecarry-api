@@ -26,6 +26,9 @@ const (
 	DateTimeFormat              = "2006-01-02 15:04:05"
 	NewMessageNotificationDelay = 1 * time.Minute
 	DefaultProximityDistanceKm  = 1000
+	DurationDay                 = time.Duration(time.Hour * 24)
+	DurationWeek                = time.Duration(DurationDay * 7)
+	RecentMeetingDelay          = DurationDay * 30
 )
 
 // Event Kinds

@@ -113,7 +113,7 @@ func (ms *ModelSuite) TestMeeting_FindByUUID() {
 	t := ms.T()
 
 	uf := createUserFixtures(ms.DB, 2)
-	meetings := CreateMeetingFixtures(ms, t, uf.Users)
+	meetings := createMeetingFixtures(ms, t, uf.Users)
 
 	tests := []struct {
 		name    string
@@ -135,6 +135,149 @@ func (ms *ModelSuite) TestMeeting_FindByUUID() {
 			}
 			ms.NoError(err, "unexpected error")
 			ms.Equal(test.want.UUID, meeting.UUID, "incorrect uuid")
+		})
+	}
+}
+
+// TestMeeting_FindOnDate tests the FindOnDate function of the Meeting model
+func (ms *ModelSuite) TestMeeting_FindOnDate() {
+	t := ms.T()
+
+	meetings := createMeetingFixtures_FindByTime(ms)
+
+	nearFuture := time.Time(meetings[1].EndDate) // Also the start date of meetings[2]
+	farFuture := time.Time(meetings[3].EndDate).Add(domain.DurationDay * 2)
+
+	tests := []struct {
+		name    string
+		want    []string
+		testNow time.Time
+	}{
+		{name: "one for actual now", testNow: time.Now(), want: []string{meetings[2].Name}},
+		{name: "two for now in near future", testNow: nearFuture,
+			want: []string{meetings[1].Name, meetings[2].Name}},
+		{name: "empty for now in far future", testNow: farFuture, want: []string{}},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var meetings Meetings
+			err := meetings.FindOnDate(test.testNow)
+			ms.NoError(err, "unexpected error")
+
+			mNames := make([]string, len(meetings))
+			for i, m := range meetings {
+				mNames[i] = m.Name
+			}
+
+			ms.Equal(test.want, mNames, "incorrect list of future meetings")
+		})
+	}
+}
+
+func getMeetingNames(meetings Meetings) []string {
+	mNames := make([]string, len(meetings))
+	for i, m := range meetings {
+		mNames[i] = m.Name
+	}
+
+	return mNames
+}
+
+// TestMeeting_FindOnOrAfterDate tests the FindOnOrAfterDate function of the Meeting model
+func (ms *ModelSuite) TestMeeting_FindOnOrAfterDate() {
+	t := ms.T()
+
+	meetings := createMeetingFixtures_FindByTime(ms)
+
+	// Two days after meetings[2] ends
+	nearFuture := time.Time(meetings[2].EndDate).Add(domain.DurationDay * 2)
+
+	// Two days after meetings[3] ends
+	farFuture := time.Time(meetings[3].EndDate).Add(domain.DurationDay * 2)
+
+	tests := []struct {
+		name    string
+		want    []string
+		testNow time.Time
+	}{
+		{name: "two for actual now", testNow: time.Now(), want: []string{meetings[2].Name, meetings[3].Name}},
+		{name: "one for now in future", testNow: nearFuture, want: []string{meetings[3].Name}},
+		{name: "empty for now in far future", testNow: farFuture, want: []string{}},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var meetings Meetings
+			err := meetings.FindOnOrAfterDate(test.testNow)
+			ms.NoError(err, "unexpected error")
+
+			mNames := getMeetingNames(meetings)
+			ms.Equal(test.want, mNames, "incorrect list of future meetings")
+		})
+	}
+}
+
+// TestMeeting_FindAfterDate tests the FindAfterDate function of the Meeting model
+func (ms *ModelSuite) TestMeeting_FindAfterDate() {
+	t := ms.T()
+
+	meetings := createMeetingFixtures_FindByTime(ms)
+
+	// Two days before meetings[2] starts
+	nearPast := time.Time(meetings[2].StartDate).Add(-domain.DurationDay * 2)
+
+	// Two days after meetings[2] ends
+	nearFuture := time.Time(meetings[2].EndDate).Add(domain.DurationDay * 2)
+
+	tests := []struct {
+		name    string
+		want    []string
+		testNow time.Time
+	}{
+		{name: "two for now in past", testNow: nearPast, want: []string{meetings[2].Name, meetings[3].Name}},
+		{name: "one for actual now", testNow: time.Now(), want: []string{meetings[3].Name}},
+		{name: "empty for now in near future", testNow: nearFuture, want: []string{}},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var meetings Meetings
+			err := meetings.FindAfterDate(test.testNow)
+			ms.NoError(err, "unexpected error")
+
+			mNames := getMeetingNames(meetings)
+			ms.Equal(test.want, mNames, "incorrect list of future meetings")
+		})
+	}
+}
+
+// TestMeeting_FindRecent tests the FindRecent function of the Meeting model
+func (ms *ModelSuite) TestMeeting_FindRecent() {
+	t := ms.T()
+
+	meetings := createMeetingFixtures_FindByTime(ms)
+
+	// Two days after meetings[2] ends
+	nearFuture := time.Time(meetings[2].EndDate).Add(domain.DurationDay * 2)
+
+	// Five weeks after meetings[3] ends
+	farFuture := time.Time(meetings[3].EndDate).Add(domain.DurationWeek * 5)
+
+	tests := []struct {
+		name    string
+		want    []string
+		testNow time.Time
+	}{
+		{name: "one for actual now", testNow: time.Now(), want: []string{meetings[1].Name}},
+		{name: "two for now in near future", testNow: nearFuture, want: []string{meetings[1].Name, meetings[2].Name}},
+		{name: "empty far now in far future", testNow: farFuture, want: []string{}},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var meetings Meetings
+			err := meetings.FindRecent(test.testNow)
+			ms.NoError(err, "unexpected error")
+
+			mNames := getMeetingNames(meetings)
+			ms.Equal(test.want, mNames, "incorrect list of future meetings")
 		})
 	}
 }
