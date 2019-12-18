@@ -149,6 +149,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
+		Meeting        func(childComplexity int, id *string) int
 		Meetings       func(childComplexity int) int
 		Message        func(childComplexity int, id *string) int
 		MyThreads      func(childComplexity int) int
@@ -270,6 +271,7 @@ type QueryResolver interface {
 	MyThreads(ctx context.Context) ([]models.Thread, error)
 	Message(ctx context.Context, id *string) (*models.Message, error)
 	Meetings(ctx context.Context) ([]models.Meeting, error)
+	Meeting(ctx context.Context, id *string) (*models.Meeting, error)
 }
 type ThreadResolver interface {
 	ID(ctx context.Context, obj *models.Thread) (string, error)
@@ -833,6 +835,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PublicProfile.Nickname(childComplexity), true
 
+	case "Query.meeting":
+		if e.complexity.Query.Meeting == nil {
+			break
+		}
+
+		args, err := ec.field_Query_meeting_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Meeting(childComplexity, args["id"].(*string)), true
+
 	case "Query.meetings":
 		if e.complexity.Query.Meetings == nil {
 			break
@@ -1161,6 +1175,7 @@ var parsedSchema = gqlparser.MustLoadSchema(
     myThreads: [Thread!]!
     message(id: ID): Message!
     meetings: [Meeting!]!
+    meeting(id: ID): Meeting
 }
 
 type Mutation {
@@ -1592,6 +1607,20 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_meeting_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *string
+	if tmp, ok := rawArgs["id"]; ok {
+		arg0, err = ec.unmarshalOID2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -4595,6 +4624,47 @@ func (ec *executionContext) _Query_meetings(ctx context.Context, field graphql.C
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNMeeting2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeeting(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_meeting(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_meeting_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Meeting(rctx, args["id"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*models.Meeting)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOMeeting2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeeting(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -8072,6 +8142,17 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				return res
 			})
+		case "meeting":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_meeting(ctx, field)
+				return res
+			})
 		case "__type":
 			out.Values[i] = ec._Query___type(ctx, field)
 		case "__schema":
@@ -9647,6 +9728,17 @@ func (ec *executionContext) unmarshalOLocationInput2ᚖgithubᚗcomᚋsilinterna
 	}
 	res, err := ec.unmarshalOLocationInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐLocationInput(ctx, v)
 	return &res, err
+}
+
+func (ec *executionContext) marshalOMeeting2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeeting(ctx context.Context, sel ast.SelectionSet, v models.Meeting) graphql.Marshaler {
+	return ec._Meeting(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalOMeeting2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeeting(ctx context.Context, sel ast.SelectionSet, v *models.Meeting) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Meeting(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOOrganization2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganization(ctx context.Context, sel ast.SelectionSet, v models.Organization) graphql.Marshaler {

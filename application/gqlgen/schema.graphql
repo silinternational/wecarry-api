@@ -8,6 +8,7 @@ type Query {
     myThreads: [Thread!]!
     message(id: ID): Message!
     meetings: [Meeting!]!
+    meeting(id: ID): Meeting
 }
 
 type Mutation {

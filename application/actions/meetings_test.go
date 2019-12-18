@@ -16,7 +16,7 @@ type meetingsResponse struct {
 	Meetings []meeting `json:"meetings"`
 }
 
-type MeetingResponse struct {
+type meetingResponse struct {
 	Meeting meeting `json:"meeting"`
 }
 
@@ -36,6 +36,57 @@ type meeting struct {
 	Location struct {
 		Country string `json:"country"`
 	} `json:"location"`
+}
+
+func (as *ActionSuite) Test_MeetingQuery() {
+	f := createFixturesForMeetings(as)
+	meetings := f.Meetings
+
+	testMtg := meetings[2]
+
+	query := `{ meeting(id: "` + testMtg.UUID.String() + `")
+		{
+			id
+		    name
+            description
+			moreInfoURL
+			createdBy { nickname}
+			startDate
+			endDate
+			imageFile {id}
+			location {country}
+		}}`
+
+	var resp meetingResponse
+
+	user := f.Users[0]
+
+	err := as.testGqlQuery(query, user.Nickname, &resp)
+	as.NoError(err)
+
+	testLocation := f.Locations[2]
+	gotMtg := resp.Meeting
+
+	as.Equal(testMtg.UUID.String(), gotMtg.ID, "incorrect meeting UUID")
+	as.Equal(testMtg.Name, gotMtg.Name, "incorrect meeting Name")
+	as.Equal(testMtg.Description.String, gotMtg.Description, "incorrect meeting Description")
+	as.Equal(testMtg.MoreInfoURL.String, gotMtg.MoreInfoURL, "incorrect meeting MoreInfoURL")
+	as.Equal(user.Nickname, gotMtg.CreatedBy.Nickname, "incorrect meeting CreatedBy")
+	as.Equal(testMtg.StartDate.Format(domain.DateFormat), gotMtg.StartDate.Format(domain.DateFormat),
+		"incorrect meeting StartDate")
+	as.Equal(testMtg.EndDate.Format(domain.DateFormat), gotMtg.EndDate.Format(domain.DateFormat),
+		"incorrect meeting EndDate")
+
+	image, err := testMtg.GetImage()
+	as.NoError(err, "unexpected error getting ImageFile")
+	wantUUID := ""
+	if image != nil {
+		wantUUID = image.UUID.String()
+	}
+	as.Equal(wantUUID, gotMtg.ImageFile.ID, "incorrect ImageFile")
+
+	as.Equal(testLocation.Country, gotMtg.Location.Country, "incorrect meeting Location")
+
 }
 
 func (as *ActionSuite) Test_MeetingsQuery() {

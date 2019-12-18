@@ -90,3 +90,17 @@ func (r *queryResolver) Meetings(ctx context.Context) ([]models.Meeting, error) 
 
 	return meetings, nil
 }
+
+// Meeting resolves the `meeting` query
+func (r *queryResolver) Meeting(ctx context.Context, id *string) (*models.Meeting, error) {
+	if id == nil {
+		return nil, nil
+	}
+	var meeting models.Meeting
+	if err := meeting.FindByUUID(*id); err != nil {
+		extras := map[string]interface{}{}
+		return nil, reportError(ctx, err, "GetMeeting", extras)
+	}
+
+	return &meeting, nil
+}
