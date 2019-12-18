@@ -3,7 +3,6 @@ package actions
 import (
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
-	"time"
 )
 
 type meetingQueryFixtures struct {
@@ -14,10 +13,6 @@ type meetingQueryFixtures struct {
 
 type meetingsResponse struct {
 	Meetings []meeting `json:"meetings"`
-}
-
-type recentMeetingsResponse struct {
-	Meetings []meeting `json:"recentmeetings"`
 }
 
 type meetingResponse struct {
@@ -32,8 +27,8 @@ type meeting struct {
 	CreatedBy   struct {
 		Nickname string `json:"nickname"`
 	} `json:"createdBy"`
-	StartDate time.Time `json:"startDate"`
-	EndDate   time.Time `json:"endDate"`
+	StartDate string `json:"startDate"`
+	EndDate   string `json:"endDate"`
 	ImageFile struct {
 		ID string `json:"id"`
 	} `json:"imageFile"`
@@ -76,9 +71,9 @@ func (as *ActionSuite) Test_MeetingQuery() {
 	as.Equal(testMtg.Description.String, gotMtg.Description, "incorrect meeting Description")
 	as.Equal(testMtg.MoreInfoURL.String, gotMtg.MoreInfoURL, "incorrect meeting MoreInfoURL")
 	as.Equal(user.Nickname, gotMtg.CreatedBy.Nickname, "incorrect meeting CreatedBy")
-	as.Equal(testMtg.StartDate.Format(domain.DateFormat), gotMtg.StartDate.Format(domain.DateFormat),
+	as.Equal(testMtg.StartDate.Format(domain.DateFormat), gotMtg.StartDate,
 		"incorrect meeting StartDate")
-	as.Equal(testMtg.EndDate.Format(domain.DateFormat), gotMtg.EndDate.Format(domain.DateFormat),
+	as.Equal(testMtg.EndDate.Format(domain.DateFormat), gotMtg.EndDate,
 		"incorrect meeting EndDate")
 
 	image, err := testMtg.GetImage()
@@ -101,13 +96,13 @@ func (as *ActionSuite) Test_MeetingsQuery() {
 		{
 			id
 		    name
-            description
-			moreInfoURL
-			createdBy { nickname}
-			startDate
-			endDate
-			imageFile {id}
-			location {country}
+		    description
+		    moreInfoURL
+		    createdBy { nickname}
+		    startDate
+		    endDate
+		    imageFile {id}
+		    location {country}
 		}}`
 
 	var resp meetingsResponse
@@ -127,9 +122,9 @@ func (as *ActionSuite) Test_MeetingsQuery() {
 		as.Equal(wantMtg.Description.String, gotMtg.Description, "incorrect meeting Description")
 		as.Equal(wantMtg.MoreInfoURL.String, gotMtg.MoreInfoURL, "incorrect meeting MoreInfoURL")
 		as.Equal(user.Nickname, gotMtg.CreatedBy.Nickname, "incorrect meeting CreatedBy")
-		as.Equal(wantMtg.StartDate.Format(domain.DateFormat), gotMtg.StartDate.Format(domain.DateFormat),
+		as.Equal(wantMtg.StartDate.Format(domain.DateFormat), gotMtg.StartDate,
 			"incorrect meeting StartDate")
-		as.Equal(wantMtg.EndDate.Format(domain.DateFormat), gotMtg.EndDate.Format(domain.DateFormat),
+		as.Equal(wantMtg.EndDate.Format(domain.DateFormat), gotMtg.EndDate,
 			"incorrect meeting EndDate")
 
 		image, err := wantMtg.GetImage()
@@ -148,15 +143,15 @@ func (as *ActionSuite) Test_RecentMeetingsQuery() {
 	f := createFixturesForMeetings(as)
 	meetings := f.Meetings
 
-	query := `{ recentMeetings
+	query := `{ meetings: recentMeetings
 		{
-			id
+		    id
 		    name
-			startDate
-			endDate
+		    startDate
+		    endDate
 		}}`
 
-	var resp recentMeetingsResponse
+	var resp meetingsResponse
 
 	user := f.Users[0]
 
@@ -170,8 +165,8 @@ func (as *ActionSuite) Test_RecentMeetingsQuery() {
 
 	as.Equal(wantMtg.UUID.String(), gotMtg.ID, "incorrect meeting UUID")
 	as.Equal(wantMtg.Name, gotMtg.Name, "incorrect meeting Name")
-	as.Equal(wantMtg.StartDate.Format(domain.DateFormat), gotMtg.StartDate.Format(domain.DateFormat),
+	as.Equal(wantMtg.StartDate.Format(domain.DateFormat), gotMtg.StartDate,
 		"incorrect meeting StartDate")
-	as.Equal(wantMtg.EndDate.Format(domain.DateFormat), gotMtg.EndDate.Format(domain.DateFormat),
+	as.Equal(wantMtg.EndDate.Format(domain.DateFormat), gotMtg.EndDate,
 		"incorrect meeting EndDate")
 }

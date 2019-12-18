@@ -208,6 +208,8 @@ type MeetingResolver interface {
 
 	Description(ctx context.Context, obj *models.Meeting) (*string, error)
 	MoreInfoURL(ctx context.Context, obj *models.Meeting) (*string, error)
+	StartDate(ctx context.Context, obj *models.Meeting) (string, error)
+	EndDate(ctx context.Context, obj *models.Meeting) (string, error)
 
 	CreatedBy(ctx context.Context, obj *models.Meeting) (*PublicProfile, error)
 	ImageFile(ctx context.Context, obj *models.Meeting) (*models.File, error)
@@ -1324,8 +1326,8 @@ type Meeting {
     name: String!
     description: String
     moreInfoURL: String
-    startDate: Time!
-    endDate: Time!
+    startDate: String!
+    endDate: String!
     createdAt: Time!
     updatedAt: Time!
     createdBy: PublicProfile!
@@ -2259,13 +2261,13 @@ func (ec *executionContext) _Meeting_startDate(ctx context.Context, field graphq
 		Object:   "Meeting",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.StartDate, nil
+		return ec.resolvers.Meeting().StartDate(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2277,10 +2279,10 @@ func (ec *executionContext) _Meeting_startDate(ctx context.Context, field graphq
 		}
 		return graphql.Null
 	}
-	res := resTmp.(time.Time)
+	res := resTmp.(string)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Meeting_endDate(ctx context.Context, field graphql.CollectedField, obj *models.Meeting) (ret graphql.Marshaler) {
@@ -2296,13 +2298,13 @@ func (ec *executionContext) _Meeting_endDate(ctx context.Context, field graphql.
 		Object:   "Meeting",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.EndDate, nil
+		return ec.resolvers.Meeting().EndDate(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2314,10 +2316,10 @@ func (ec *executionContext) _Meeting_endDate(ctx context.Context, field graphql.
 		}
 		return graphql.Null
 	}
-	res := resTmp.(time.Time)
+	res := resTmp.(string)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Meeting_createdAt(ctx context.Context, field graphql.CollectedField, obj *models.Meeting) (ret graphql.Marshaler) {
@@ -7446,15 +7448,33 @@ func (ec *executionContext) _Meeting(ctx context.Context, sel ast.SelectionSet, 
 				return res
 			})
 		case "startDate":
-			out.Values[i] = ec._Meeting_startDate(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Meeting_startDate(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "endDate":
-			out.Values[i] = ec._Meeting_endDate(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Meeting_endDate(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "createdAt":
 			out.Values[i] = ec._Meeting_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

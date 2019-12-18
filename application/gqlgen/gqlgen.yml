@@ -66,6 +66,10 @@ models:
         resolver: true
       createdBy:
         resolver: true
+      startDate:
+        resolver: true
+      endDate:
+        resolver: true
       location:
         resolver: true
       imageFile:

@@ -2,6 +2,9 @@ package gqlgen
 
 import (
 	"context"
+	"time"
+
+	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 )
 
@@ -56,12 +59,30 @@ func (r *meetingResolver) Location(ctx context.Context, obj *models.Meeting) (*m
 	return &location, nil
 }
 
-// Description resolves the `description` property, converting a nulls.String to a *string.
+// MoreInfoURL resolves the `moreInfoURL` property, converting a nulls.String to a *string.
 func (r *meetingResolver) MoreInfoURL(ctx context.Context, obj *models.Meeting) (*string, error) {
 	if obj == nil {
 		return nil, nil
 	}
 	return models.GetStringFromNullsString(obj.MoreInfoURL), nil
+}
+
+// StartDate resolves the `startDate` property, converting a time.Time to a string.
+func (r *meetingResolver) StartDate(ctx context.Context, obj *models.Meeting) (string, error) {
+	if obj == nil {
+		return "", nil
+	}
+	date := obj.StartDate.Format(domain.DateFormat)
+	return date, nil
+}
+
+// EndDate resolves the `endDate` property, converting a time.Time to a string.
+func (r *meetingResolver) EndDate(ctx context.Context, obj *models.Meeting) (string, error) {
+	if obj == nil {
+		return "", nil
+	}
+	date := obj.EndDate.Format(domain.DateFormat)
+	return date, nil
 }
 
 // Image retrieves the file associated with the meeting
@@ -82,7 +103,7 @@ func (r *meetingResolver) ImageFile(ctx context.Context, obj *models.Meeting) (*
 // end date in the future
 func (r *queryResolver) Meetings(ctx context.Context) ([]models.Meeting, error) {
 	meetings := models.Meetings{}
-	if err := meetings.FindCurrentAndFuture(); err != nil {
+	if err := meetings.FindOnOrAfterDate(time.Now()); err != nil {
 		extras := map[string]interface{}{}
 		return nil, reportError(ctx, err, "GetMeetings", extras)
 	}
@@ -94,7 +115,7 @@ func (r *queryResolver) Meetings(ctx context.Context) ([]models.Meeting, error) 
 // end date in the last <domain.RecentMeetingDelay> time period
 func (r *queryResolver) RecentMeetings(ctx context.Context) ([]models.Meeting, error) {
 	meetings := models.Meetings{}
-	if err := meetings.FindRecent(); err != nil {
+	if err := meetings.FindRecent(time.Now()); err != nil {
 		extras := map[string]interface{}{}
 		return nil, reportError(ctx, err, "GetRecentMeetings", extras)
 	}
