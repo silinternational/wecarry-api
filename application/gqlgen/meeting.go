@@ -2,7 +2,6 @@ package gqlgen
 
 import (
 	"context"
-
 	"github.com/silinternational/wecarry-api/models"
 )
 
@@ -86,6 +85,18 @@ func (r *queryResolver) Meetings(ctx context.Context) ([]models.Meeting, error) 
 	if err := meetings.FindCurrentAndFuture(); err != nil {
 		extras := map[string]interface{}{}
 		return nil, reportError(ctx, err, "GetMeetings", extras)
+	}
+
+	return meetings, nil
+}
+
+// RecentMeetings resolves the `recentMeetings` query by getting a list of meetings that have an
+// end date in the last <domain.RecentMeetingDelay> time period
+func (r *queryResolver) RecentMeetings(ctx context.Context) ([]models.Meeting, error) {
+	meetings := models.Meetings{}
+	if err := meetings.FindRecent(); err != nil {
+		extras := map[string]interface{}{}
+		return nil, reportError(ctx, err, "GetRecentMeetings", extras)
 	}
 
 	return meetings, nil

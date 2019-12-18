@@ -9,6 +9,7 @@ type Query {
     message(id: ID): Message!
     meetings: [Meeting!]!
     meeting(id: ID): Meeting
+    recentMeetings: [Meeting!]!
 }
 
 type Mutation {

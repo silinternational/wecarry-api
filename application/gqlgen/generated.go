@@ -155,6 +155,7 @@ type ComplexityRoot struct {
 		MyThreads      func(childComplexity int) int
 		Post           func(childComplexity int, id *string) int
 		Posts          func(childComplexity int) int
+		RecentMeetings func(childComplexity int) int
 		SearchRequests func(childComplexity int, text string) int
 		Threads        func(childComplexity int) int
 		User           func(childComplexity int, id *string) int
@@ -272,6 +273,7 @@ type QueryResolver interface {
 	Message(ctx context.Context, id *string) (*models.Message, error)
 	Meetings(ctx context.Context) ([]models.Meeting, error)
 	Meeting(ctx context.Context, id *string) (*models.Meeting, error)
+	RecentMeetings(ctx context.Context) ([]models.Meeting, error)
 }
 type ThreadResolver interface {
 	ID(ctx context.Context, obj *models.Thread) (string, error)
@@ -892,6 +894,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Posts(childComplexity), true
 
+	case "Query.recentMeetings":
+		if e.complexity.Query.RecentMeetings == nil {
+			break
+		}
+
+		return e.complexity.Query.RecentMeetings(childComplexity), true
+
 	case "Query.searchRequests":
 		if e.complexity.Query.SearchRequests == nil {
 			break
@@ -1176,6 +1185,7 @@ var parsedSchema = gqlparser.MustLoadSchema(
     message(id: ID): Message!
     meetings: [Meeting!]!
     meeting(id: ID): Meeting
+    recentMeetings: [Meeting!]!
 }
 
 type Mutation {
@@ -4667,6 +4677,43 @@ func (ec *executionContext) _Query_meeting(ctx context.Context, field graphql.Co
 	return ec.marshalOMeeting2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeeting(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Query_recentMeetings(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().RecentMeetings(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]models.Meeting)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNMeeting2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeeting(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -8151,6 +8198,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_meeting(ctx, field)
+				return res
+			})
+		case "recentMeetings":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_recentMeetings(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			})
 		case "__type":
