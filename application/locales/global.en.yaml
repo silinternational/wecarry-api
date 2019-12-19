@@ -46,10 +46,6 @@
   translation: We had a problem finding the conversation to update its last-viewed time.
 - id: SetThreadLastViewedAt
   translation: We had a problem updating the conversation last-viewed time.
-- id: GetOrganizationDomainOrganizationID
-  translation: We had a problem finding the domain ID.
-- id: GetOrganizationDomains
-  translation: We had a problem finding the list of domains for the organization.
 - id: GetPostCreator
   translation: We had a problem finding the creator of that request or offer.
 - id: GetPostReceiver
@@ -176,3 +172,15 @@
 # New Message notification subject
 - id: Email.Subject.Message.Created
   translation: New message from {{.sentByNickname}} on {{.AppName}}
+
+# Organization
+- id: GetOrganizationDomainOrganizationID
+  translation: We had a problem finding the domain ID.
+- id: GetOrganizationDomains
+  translation: We had a problem finding the list of domains for the organization.
+- id: ViewOrganization.NotFound
+  translation: Organization not found
+- id: ViewOrganization.Error
+  translation: There was a problem viewing that organization
+- id: ListOrganizations.Error
+  translation: There was a problem listing organizations

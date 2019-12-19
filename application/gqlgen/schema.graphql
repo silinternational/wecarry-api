@@ -7,6 +7,8 @@ type Query {
     threads: [Thread!]!
     myThreads: [Thread!]!
     message(id: ID): Message!
+    organizations: [Organization!]!
+    organization(id: ID): Organization!
     meetings: [Meeting!]!
     meeting(id: ID): Meeting
     recentMeetings: [Meeting!]!

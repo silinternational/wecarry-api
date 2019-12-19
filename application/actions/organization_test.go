@@ -8,6 +8,10 @@ import (
 	"strings"
 
 	"github.com/gobuffalo/httptest"
+	"github.com/gobuffalo/nulls"
+
+	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/internal/test"
 	"github.com/silinternational/wecarry-api/models"
 )
 
@@ -228,4 +232,176 @@ func (as *ActionSuite) Test_OrganizationCreateRemoveUpdate() {
 		}
 
 	}
+}
+
+func (as *ActionSuite) Test_OrganizationViewAndList() {
+	t := as.T()
+
+	// create organizations
+	org1 := models.Organization{
+		Name:       "Org1",
+		Url:        nulls.String{},
+		AuthType:   models.AuthTypeSaml,
+		AuthConfig: "{}",
+		UUID:       domain.GetUUID(),
+	}
+	test.MustCreate(as.DB, &org1)
+	// create organizations
+	org2 := models.Organization{
+		Name:       "Org2",
+		Url:        nulls.String{},
+		AuthType:   models.AuthTypeSaml,
+		AuthConfig: "{}",
+		UUID:       domain.GetUUID(),
+	}
+	test.MustCreate(as.DB, &org2)
+
+	userFixtures := test.CreateUserFixtures(as.DB, 4)
+	for i, _ := range userFixtures.Users {
+		_ = as.DB.Load(&userFixtures.Users[i], "UserOrganizations", "AccessTokens")
+	}
+
+	// user 0 will be a super admin, user 1 will be a sales admin, and user 2 will be an org admin for org1, user 3 will be a user
+	userFixtures.Users[0].AdminRole = models.UserAdminRoleSuperAdmin
+	as.NoError(as.DB.Save(&userFixtures.Users[0]))
+
+	userFixtures.Users[1].AdminRole = models.UserAdminRoleSalesAdmin
+	as.NoError(as.DB.Save(&userFixtures.Users[1]))
+
+	userFixtures.Users[2].UserOrganizations[0].Role = models.UserOrganizationRoleAdmin
+	as.NoError(as.DB.Save(&userFixtures.Users[2].UserOrganizations[0]))
+
+	// Test view org1 for each user. users 0,1,2 should succeed, user 3 should fail
+	viewOrg1Payload := fmt.Sprintf(`{organization(id: "%s"){id}}`, org1.UUID.String())
+	listOrgsPayload := `{organizations{id}}`
+
+	type org struct {
+		ID string `json:"id"`
+	}
+
+	type singleOrgResp struct {
+		Organization org `json:"organization"`
+	}
+
+	type orgs struct {
+		Organizations []org `json:"organizations"`
+	}
+
+	type testCase struct {
+		Name        string
+		Token       string
+		Payload     string
+		Response    interface{}
+		Expect      interface{}
+		ExpectError bool
+	}
+
+	testCases := []testCase{
+		{
+			Name:     "View org 1 as user 0 (super admin)",
+			Token:    userFixtures.Users[0].Nickname,
+			Payload:  viewOrg1Payload,
+			Response: &singleOrgResp{},
+			Expect: &singleOrgResp{
+				org{ID: org1.UUID.String()},
+			},
+			ExpectError: false,
+		},
+		{
+			Name:     "View org 1 as user 1 (sales admin)",
+			Token:    userFixtures.Users[1].Nickname,
+			Payload:  viewOrg1Payload,
+			Response: &singleOrgResp{},
+			Expect: &singleOrgResp{
+				org{ID: org1.UUID.String()},
+			},
+			ExpectError: false,
+		},
+		{
+			Name:     "View org 1 as user 2 (org admin)",
+			Token:    userFixtures.Users[2].Nickname,
+			Payload:  viewOrg1Payload,
+			Response: &singleOrgResp{},
+			Expect: &singleOrgResp{
+				org{ID: org1.UUID.String()},
+			},
+			ExpectError: false,
+		},
+		{
+			Name:     "View org 1 as user 3 (normal user)",
+			Token:    userFixtures.Users[3].Nickname,
+			Payload:  viewOrg1Payload,
+			Response: &singleOrgResp{},
+			Expect: &singleOrgResp{
+				org{},
+			},
+			ExpectError: true,
+		},
+		{
+			Name:     "List orgs as user 0 (super admin)",
+			Token:    userFixtures.Users[0].Nickname,
+			Payload:  listOrgsPayload,
+			Response: &orgs{},
+			Expect: &orgs{
+				[]org{
+					{
+						ID: org1.UUID.String(),
+					},
+					{
+						ID: org2.UUID.String(),
+					},
+				},
+			},
+			ExpectError: false,
+		},
+		{
+			Name:     "List orgs as user 1 (sales admin)",
+			Token:    userFixtures.Users[1].Nickname,
+			Payload:  listOrgsPayload,
+			Response: &orgs{},
+			Expect: &orgs{
+				[]org{
+					{
+						ID: org1.UUID.String(),
+					},
+					{
+						ID: org2.UUID.String(),
+					},
+				},
+			},
+			ExpectError: false,
+		},
+		{
+			Name:     "List orgs as user 2 (org admin)",
+			Token:    userFixtures.Users[2].Nickname,
+			Payload:  listOrgsPayload,
+			Response: &orgs{},
+			Expect: &orgs{
+				[]org{
+					{
+						ID: org1.UUID.String(),
+					},
+				},
+			},
+			ExpectError: false,
+		},
+		{
+			Name:        "List orgs as user 3 (normal user)",
+			Token:       userFixtures.Users[3].Nickname,
+			Payload:     listOrgsPayload,
+			Response:    &orgs{},
+			Expect:      &orgs{[]org{}},
+			ExpectError: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		err := as.testGqlQuery(tc.Payload, tc.Token, &tc.Response)
+		if tc.ExpectError && err == nil {
+			t.Errorf("did not get expected errors in test %s, response: +%v", tc.Name, tc.Response)
+		}
+
+		as.Equal(tc.Expect, tc.Response, tc.Name)
+	}
+
 }
