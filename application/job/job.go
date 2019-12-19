@@ -47,7 +47,7 @@ func newThreadMessageHandler(args worker.Args) error {
 			"appName":        domain.Env.AppName,
 			"uiURL":          domain.Env.UIURL,
 			"postURL":        domain.GetPostUIURL(m.Thread.Post.UUID.String()),
-			"postTitle":      m.Thread.Post.Title,
+			"postTitle":      domain.Truncate(m.Thread.Post.Title, "...", 16),
 			"messageContent": m.Content,
 			"sentByNickname": m.SentBy.Nickname,
 			"threadURL":      domain.GetThreadUIURL(m.Thread.UUID.String()),

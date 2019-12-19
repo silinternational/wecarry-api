@@ -552,3 +552,51 @@ func (ts *TestSuite) TestGetTranslatedSubject() {
 		})
 	}
 }
+
+func TestTruncate(t *testing.T) {
+	type args struct {
+		str    string
+		suffix string
+		length int
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "string shorter than length, not changed",
+			args: args{
+				str:    "hello",
+				suffix: "...",
+				length: 16,
+			},
+			want: "hello",
+		},
+		{
+			name: "string truncated, empty suffix",
+			args: args{
+				str:    "hello",
+				suffix: "",
+				length: 3,
+			},
+			want: "hel",
+		},
+		{
+			name: "string truncated, with suffix",
+			args: args{
+				str:    "hello there",
+				suffix: "...",
+				length: 10,
+			},
+			want: "hello t...",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := Truncate(tt.args.str, tt.args.suffix, tt.args.length); got != tt.want {
+				t.Errorf("Truncate() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
