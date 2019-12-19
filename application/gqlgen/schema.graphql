@@ -233,7 +233,29 @@ input CreatePostInput {
     meetingID: ID
 }
 
+input UpdatePostInput {
+    id: ID!
+    title: String
+    description: String
+    destination: LocationInput
+    origin: LocationInput
+    size: PostSize
+    url: String
+    kilograms: Float
+    photoID: ID
+}
+
 input CreateMeetingInput {
+    name: String!
+    description: String
+    startDate: String!
+    endDate: String!
+    moreInfoURL: String
+    imageFileID: ID
+    location: LocationInput!
+}
+
+input UpdateMeetingInput {
     name: String!
     description: String
     startDate: String!
@@ -247,18 +269,6 @@ input CreateMessageInput {
     content: String!
     postID: String!
     threadID: String
-}
-
-input UpdatePostInput {
-    id: ID!
-    title: String
-    description: String
-    destination: LocationInput
-    origin: LocationInput
-    size: PostSize
-    url: String
-    kilograms: Float
-    photoID: ID
 }
 
 type File {

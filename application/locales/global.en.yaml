@@ -1,3 +1,9 @@
+- id: CreateMeeting
+  translation: We had a problem creating the new meeting.
+- id: CreateMeeting.ProcessInput
+  translation: We had a problem processing the information to create that meeting.
+- id: CreateMeeting.SetLocation
+  translation: We had a problem setting the location for that new meeting.
 - id: GetMeeting
   translation: We had a problem finding that meeting.
 - id: GetMeetingCreator
@@ -10,6 +16,10 @@
   translation: We had a problem finding a list of meetings.
 - id: GetRecentMeetings
   translation: We had a problem finding a list of recent meetings.
+- id: UpdateMeeting
+  translation: We had a problem updating the meeting.
+- id: UpdateMeeting.ProcessInput
+  translation: We had a problem creating the new meeting.
 - id: GetMessageSender
   translation: We had a problem finding the message sender information.
 - id: GetMessageThread

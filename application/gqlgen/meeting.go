@@ -227,3 +227,16 @@ func (r *mutationResolver) CreateMeeting(ctx context.Context, input meetingInput
 
 	return &meeting, nil
 }
+
+// UpdateMeeting resolves the `updateMeeting` mutation.
+func (r *mutationResolver) UpdateMeeting(ctx context.Context, input meetingInput) (*models.Meeting, error) {
+	cUser := models.GetCurrentUserFromGqlContext(ctx)
+	extras := map[string]interface{}{
+		"user": cUser.UUID,
+	}
+
+	meeting, err := convertGqlMeetingInputToDBMeeting(ctx, input, cUser)
+	if err != nil {
+		return nil, reportError(ctx, err, "UpdateMeeting.ProcessInput", extras)
+	}
+}
