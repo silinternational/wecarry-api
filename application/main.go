@@ -4,6 +4,7 @@ import (
 	"github.com/rollbar/rollbar-go"
 	"github.com/silinternational/wecarry-api/actions"
 	"github.com/silinternational/wecarry-api/domain"
+	"os"
 )
 
 var GitCommitHash string
@@ -25,7 +26,10 @@ func main() {
 	app := actions.App()
 	rollbar.WrapAndWait(func() {
 		if err := app.Serve(); err != nil {
-			panic(err)
+			if err.Error() != "context canceled" {
+				panic(err)
+			}
+			os.Exit(0)
 		}
 	})
 
