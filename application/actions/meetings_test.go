@@ -1,8 +1,6 @@
 package actions
 
 import (
-	"fmt"
-
 	"github.com/gofrs/uuid"
 
 	"github.com/silinternational/wecarry-api/domain"
@@ -194,16 +192,15 @@ func (as *ActionSuite) Test_CreateMeeting() {
 			description location { description country latitude longitude }
 			startDate endDate moreInfoURL }}`
 
-	var gotMtg meeting
+	var resp meetingResponse
+	as.NoError(as.testGqlQuery(query, user.Nickname, &resp))
 
-	as.NoError(as.testGqlQuery(query, user.Nickname, &gotMtg))
-
-	fmt.Printf("\n AAAAAAAAAAAA %+v\n", gotMtg)
+	gotMtg := resp.Meeting
 
 	emptyUUID := uuid.UUID{}
 	as.NotEqual(emptyUUID, gotMtg.ID, "don't want empty UUID")
 	as.Equal("name", gotMtg.Name, "incorrect meeting Name")
-	as.Equal("description", gotMtg.Description, "incorrect meeting Description")
+	as.Equal("new description", gotMtg.Description, "incorrect meeting Description")
 	as.Equal("example.com", gotMtg.MoreInfoURL, "incorrect meeting MoreInfoURL")
 	as.Equal(user.Nickname, gotMtg.CreatedBy.Nickname, "incorrect meeting CreatedBy")
 	as.Equal("2025-03-01", gotMtg.StartDate,
@@ -211,7 +208,7 @@ func (as *ActionSuite) Test_CreateMeeting() {
 	as.Equal("2025-03-21", gotMtg.EndDate,
 		"incorrect meeting EndDate")
 
-	as.Equal(f.File.UUID, gotMtg.ImageFile.ID, "incorrect ImageFileID")
+	as.Equal(f.File.UUID.String(), gotMtg.ImageFile.ID, "incorrect ImageFileID")
 
 	as.Equal("dc", gotMtg.Location.Country, "incorrect meeting Location.Country")
 }
