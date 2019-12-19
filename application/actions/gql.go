@@ -12,7 +12,7 @@ import (
 func gqlHandler(c buffalo.Context) error {
 	body, err := ioutil.ReadAll(c.Request().Body)
 	if err == nil {
-		c.Logger().Printf("request body: %s", body)
+		c.Logger().Debugf("request body: %s", body)
 	}
 
 	h := handler.GraphQL(gqlgen.NewExecutableSchema(gqlgen.Config{Resolvers: &gqlgen.Resolver{}}))
