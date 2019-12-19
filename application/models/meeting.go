@@ -191,3 +191,22 @@ func (m *Meeting) GetLocation() (Location, error) {
 
 	return location, nil
 }
+
+// Create stores the Meeting data as a new record in the database.
+func (m *Meeting) Create() error {
+	if m.UUID.Version() == 0 {
+		m.UUID = domain.GetUUID()
+	}
+
+	valErrs, err := DB.ValidateAndCreate(m)
+	if err != nil {
+		return err
+	}
+
+	if len(valErrs.Errors) > 0 {
+		vErrs := flattenPopErrors(valErrs)
+		return errors.New(vErrs)
+	}
+
+	return nil
+}

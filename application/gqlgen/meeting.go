@@ -4,6 +4,10 @@ import (
 	"context"
 	"time"
 
+	"github.com/99designs/gqlgen/graphql"
+	"github.com/gobuffalo/nulls"
+	"github.com/vektah/gqlparser/gqlerror"
+
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 )
@@ -132,6 +136,93 @@ func (r *queryResolver) Meeting(ctx context.Context, id *string) (*models.Meetin
 	if err := meeting.FindByUUID(*id); err != nil {
 		extras := map[string]interface{}{}
 		return nil, reportError(ctx, err, "GetMeeting", extras)
+	}
+
+	return &meeting, nil
+}
+
+// convertGqlMeetingInputToDBMeeting takes a `MeetingInput` and either finds a record matching the UUID given in `input.ID` or
+// creates a new `models.Meeting` with a new UUID. In either case, all properties that are not `nil` are set to the value
+// provided in `input`
+func convertGqlMeetingInputToDBMeeting(ctx context.Context, input meetingInput, currentUser models.User) (models.Meeting, error) {
+	meeting := models.Meeting{}
+
+	if input.ID != nil {
+		if err := meeting.FindByUUID(*input.ID); err != nil {
+			return meeting, err
+		}
+	} else {
+		meeting.CreatedByID = currentUser.ID
+	}
+
+	setOptionalStringField(input.Name, &meeting.Name)
+
+	if input.Description != nil {
+		meeting.Description = nulls.NewString(*input.Description)
+	}
+
+	if input.MoreInfoURL != nil {
+		meeting.MoreInfoURL = nulls.NewString(*input.MoreInfoURL)
+	}
+
+	if input.StartDate != nil {
+		startTime, err := domain.ConvertStringPtrToDate(input.StartDate)
+		if err != nil {
+			return models.Meeting{}, err
+		}
+		meeting.StartDate = startTime
+	}
+
+	if input.EndDate != nil {
+		endTime, err := domain.ConvertStringPtrToDate(input.EndDate)
+		if err != nil {
+			return models.Meeting{}, err
+		}
+		meeting.EndDate = endTime
+	}
+
+	if input.ImageFileID != nil {
+		if file, err := meeting.AttachImage(*input.ImageFileID); err != nil {
+			graphql.AddError(ctx, gqlerror.Errorf("Error attaching image file to Meeting, %s", err.Error()))
+		} else {
+			meeting.ImageFile = file
+		}
+	}
+
+	return meeting, nil
+}
+
+type meetingInput struct {
+	ID          *string
+	Name        *string
+	Description *string
+	StartDate   *string
+	EndDate     *string
+	MoreInfoURL *string
+	ImageFileID *string
+	Location    *LocationInput
+}
+
+// CreateMeeting resolves the `createMeeting` mutation.
+func (r *mutationResolver) CreateMeeting(ctx context.Context, input meetingInput) (*models.Meeting, error) {
+	cUser := models.GetCurrentUserFromGqlContext(ctx)
+	extras := map[string]interface{}{
+		"user": cUser.UUID,
+	}
+
+	meeting, err := convertGqlMeetingInputToDBMeeting(ctx, input, cUser)
+	if err != nil {
+		return nil, reportError(ctx, err, "CreateMeeting.ProcessInput", extras)
+	}
+
+	location := convertGqlLocationInputToDBLocation(*input.Location)
+	if err = location.Create(); err != nil {
+		return nil, reportError(ctx, err, "CreateMeeting.SetLocation", extras)
+	}
+	meeting.LocationID = location.ID
+
+	if err = meeting.Create(); err != nil {
+		return nil, reportError(ctx, err, "CreateMeeting", extras)
 	}
 
 	return &meeting, nil

@@ -93,6 +93,7 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
+		CreateMeeting            func(childComplexity int, input meetingInput) int
 		CreateMessage            func(childComplexity int, input CreateMessageInput) int
 		CreateOrganization       func(childComplexity int, input CreateOrganizationInput) int
 		CreateOrganizationDomain func(childComplexity int, input CreateOrganizationDomainInput) int
@@ -227,6 +228,7 @@ type MutationResolver interface {
 	UpdatePost(ctx context.Context, input postInput) (*models.Post, error)
 	UpdatePostStatus(ctx context.Context, input UpdatePostStatusInput) (*models.Post, error)
 	UpdateUser(ctx context.Context, input UpdateUserInput) (*models.User, error)
+	CreateMeeting(ctx context.Context, input meetingInput) (*models.Meeting, error)
 	CreateMessage(ctx context.Context, input CreateMessageInput) (*models.Message, error)
 	CreateOrganization(ctx context.Context, input CreateOrganizationInput) (*models.Organization, error)
 	UpdateOrganization(ctx context.Context, input UpdateOrganizationInput) (*models.Organization, error)
@@ -503,6 +505,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Message.UpdatedAt(childComplexity), true
+
+	case "Mutation.createMeeting":
+		if e.complexity.Mutation.CreateMeeting == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createMeeting_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateMeeting(childComplexity, args["input"].(meetingInput)), true
 
 	case "Mutation.createMessage":
 		if e.complexity.Mutation.CreateMessage == nil {
@@ -1204,6 +1218,7 @@ type Mutation {
     updatePost(input: UpdatePostInput!): Post!
     updatePostStatus(input: UpdatePostStatusInput!): Post!
     updateUser(input: UpdateUserInput!): User!
+    createMeeting(input: CreateMeetingInput!): Meeting!
     createMessage(input: CreateMessageInput!): Message!
     createOrganization(input: CreateOrganizationInput!): Organization!
     updateOrganization(input: UpdateOrganizationInput!): Organization!
@@ -1419,6 +1434,16 @@ input CreatePostInput {
     meetingID: ID
 }
 
+input CreateMeetingInput {
+    name: String!
+    description: String
+    startDate: String!
+    endDate: String!
+    moreInfoURL: String
+    imageFileID: ID
+    location: LocationInput!
+}
+
 input CreateMessageInput {
     content: String!
     postID: String!
@@ -1477,6 +1502,20 @@ input UpdatePostStatusInput {
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_Mutation_createMeeting_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 meetingInput
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalNCreateMeetingInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐmeetingInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
 
 func (ec *executionContext) field_Mutation_createMessage_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -2910,6 +2949,50 @@ func (ec *executionContext) _Mutation_updateUser(ctx context.Context, field grap
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_createMeeting(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_createMeeting_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateMeeting(rctx, args["input"].(meetingInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Meeting)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNMeeting2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeeting(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_createMessage(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6860,6 +6943,60 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputCreateMeetingInput(ctx context.Context, obj interface{}) (meetingInput, error) {
+	var it meetingInput
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "name":
+			var err error
+			it.Name, err = ec.unmarshalNString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "description":
+			var err error
+			it.Description, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "startDate":
+			var err error
+			it.StartDate, err = ec.unmarshalNString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "endDate":
+			var err error
+			it.EndDate, err = ec.unmarshalNString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "moreInfoURL":
+			var err error
+			it.MoreInfoURL, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "imageFileID":
+			var err error
+			it.ImageFileID, err = ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "location":
+			var err error
+			it.Location, err = ec.unmarshalNLocationInput2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐLocationInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCreateMessageInput(ctx context.Context, obj interface{}) (CreateMessageInput, error) {
 	var it CreateMessageInput
 	var asMap = obj.(map[string]interface{})
@@ -7690,6 +7827,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "updateUser":
 			out.Values[i] = ec._Mutation_updateUser(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "createMeeting":
+			out.Values[i] = ec._Mutation_createMeeting(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -8854,6 +8996,10 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) unmarshalNCreateMeetingInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐmeetingInput(ctx context.Context, v interface{}) (meetingInput, error) {
+	return ec.unmarshalInputCreateMeetingInput(ctx, v)
+}
+
 func (ec *executionContext) unmarshalNCreateMessageInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐCreateMessageInput(ctx context.Context, v interface{}) (CreateMessageInput, error) {
 	return ec.unmarshalInputCreateMessageInput(ctx, v)
 }
@@ -9022,6 +9168,16 @@ func (ec *executionContext) marshalNMeeting2ᚕgithubᚗcomᚋsilinternational�
 	}
 	wg.Wait()
 	return ret
+}
+
+func (ec *executionContext) marshalNMeeting2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeeting(ctx context.Context, sel ast.SelectionSet, v *models.Meeting) graphql.Marshaler {
+	if v == nil {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Meeting(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNMessage2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMessage(ctx context.Context, sel ast.SelectionSet, v models.Message) graphql.Marshaler {

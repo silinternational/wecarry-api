@@ -1031,7 +1031,7 @@ ALTER TABLE ONLY public.posts
 --
 
 ALTER TABLE ONLY public.meetings
-    ADD CONSTRAINT meetings_created_by_id_fkey FOREIGN KEY (created_by_id) REFERENCES public.users(id) ON DELETE CASCADE;
+    ADD CONSTRAINT meetings_created_by_id_fkey FOREIGN KEY (created_by_id) REFERENCES public.users(id) ON DELETE SET NULL;
 
 
 --
@@ -1047,7 +1047,7 @@ ALTER TABLE ONLY public.meetings
 --
 
 ALTER TABLE ONLY public.meetings
-    ADD CONSTRAINT meetings_location_id_fkey FOREIGN KEY (location_id) REFERENCES public.locations(id) ON DELETE CASCADE;
+    ADD CONSTRAINT meetings_location_id_fkey FOREIGN KEY (location_id) REFERENCES public.locations(id);
 
 
 --
