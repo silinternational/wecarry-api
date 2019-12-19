@@ -59,6 +59,8 @@ models:
         resolver: true
       kilograms:
         resolver: true
+      meeting:
+        resolver: true
   Meeting:
     model: models.Meeting
     fields:
