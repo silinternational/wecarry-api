@@ -158,7 +158,7 @@
 - id: Email.Subject.Request.FromCommittedToOpen
   translation: Request lost its provider on {{.AppName}}
 - id: Email.Subject.Request.FromCommittedToRemoved
-  translation: Request removed on {{.AppName}}
+  translation: Your {{.AppName}} offer for "{{.postTitle}}" is no longer needed
 
 - id: Email.Subject.Request.FromCompletedToAcceptedOrDelivered
   translation: Request not received on {{.AppName}} after all
