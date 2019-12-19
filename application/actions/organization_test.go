@@ -286,14 +286,12 @@ func (as *ActionSuite) Test_OrganizationViewAndList() {
 	}
 
 	type testCase struct {
-		Name                 string
-		Token                string
-		Payload              string
-		Response             interface{}
-		Expect               interface{}
-		ExpectError          bool
-		ExpectSubStrings     []string
-		DontExpectSubStrings []string
+		Name        string
+		Token       string
+		Payload     string
+		Response    interface{}
+		Expect      interface{}
+		ExpectError bool
 	}
 
 	testCases := []testCase{
@@ -305,8 +303,7 @@ func (as *ActionSuite) Test_OrganizationViewAndList() {
 			Expect: &singleOrgResp{
 				org{ID: org1.UUID.String()},
 			},
-			ExpectError:      false,
-			ExpectSubStrings: []string{org1.UUID.String()},
+			ExpectError: false,
 		},
 		{
 			Name:     "View org 1 as user 1 (sales admin)",
@@ -316,8 +313,7 @@ func (as *ActionSuite) Test_OrganizationViewAndList() {
 			Expect: &singleOrgResp{
 				org{ID: org1.UUID.String()},
 			},
-			ExpectError:      false,
-			ExpectSubStrings: []string{org1.UUID.String()},
+			ExpectError: false,
 		},
 		{
 			Name:     "View org 1 as user 2 (org admin)",
@@ -327,8 +323,7 @@ func (as *ActionSuite) Test_OrganizationViewAndList() {
 			Expect: &singleOrgResp{
 				org{ID: org1.UUID.String()},
 			},
-			ExpectError:      false,
-			ExpectSubStrings: []string{org1.UUID.String()},
+			ExpectError: false,
 		},
 		{
 			Name:     "View org 1 as user 3 (normal user)",
@@ -355,8 +350,7 @@ func (as *ActionSuite) Test_OrganizationViewAndList() {
 					},
 				},
 			},
-			ExpectError:      false,
-			ExpectSubStrings: []string{org1.UUID.String(), org2.UUID.String()},
+			ExpectError: false,
 		},
 		{
 			Name:     "List orgs as user 1 (sales admin)",
@@ -373,8 +367,7 @@ func (as *ActionSuite) Test_OrganizationViewAndList() {
 					},
 				},
 			},
-			ExpectError:      false,
-			ExpectSubStrings: []string{org1.UUID.String(), org2.UUID.String()},
+			ExpectError: false,
 		},
 		{
 			Name:     "List orgs as user 2 (org admin)",
@@ -388,18 +381,15 @@ func (as *ActionSuite) Test_OrganizationViewAndList() {
 					},
 				},
 			},
-			ExpectError:          false,
-			ExpectSubStrings:     []string{org1.UUID.String()},
-			DontExpectSubStrings: []string{org2.UUID.String()},
+			ExpectError: false,
 		},
 		{
-			Name:                 "List orgs as user 3 (normal user)",
-			Token:                userFixtures.Users[3].Nickname,
-			Payload:              listOrgsPayload,
-			Response:             &orgs{},
-			Expect:               &orgs{[]org{}},
-			ExpectError:          false,
-			DontExpectSubStrings: []string{org1.UUID.String(), org2.UUID.String()},
+			Name:        "List orgs as user 3 (normal user)",
+			Token:       userFixtures.Users[3].Nickname,
+			Payload:     listOrgsPayload,
+			Response:    &orgs{},
+			Expect:      &orgs{[]org{}},
+			ExpectError: false,
 		},
 	}
 
