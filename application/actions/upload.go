@@ -30,7 +30,10 @@ func uploadHandler(c buffalo.Context) error {
 	if err != nil {
 		domain.ErrLogger.Printf("error getting uploaded file from context ... %v", err)
 		return c.Render(http.StatusInternalServerError, render.JSON(UploadResponse{
-			Error: &domain.AppError{Code: domain.ErrorReceivingFile, Message: err.Error()},
+			Error: &domain.AppError{
+				Code: http.StatusInternalServerError,
+				Key:  domain.ErrorReceivingFile,
+			},
 		}))
 	}
 
@@ -38,7 +41,10 @@ func uploadHandler(c buffalo.Context) error {
 	if err != nil {
 		domain.ErrLogger.Printf("error reading uploaded file ... %v", err)
 		return c.Render(http.StatusInternalServerError, render.JSON(UploadResponse{
-			Error: &domain.AppError{Code: domain.UnableToReadFile, Message: err.Error()},
+			Error: &domain.AppError{
+				Code: http.StatusInternalServerError,
+				Key:  domain.UnableToReadFile,
+			},
 		}))
 	}
 
@@ -46,7 +52,10 @@ func uploadHandler(c buffalo.Context) error {
 	if err := fileObject.Store(f.Filename, content); err != nil {
 		domain.ErrLogger.Printf("error storing uploaded file ... %v", err)
 		return c.Render(http.StatusInternalServerError, render.JSON(UploadResponse{
-			Error: &domain.AppError{Code: domain.UnableToStoreFile, Message: err.Error()},
+			Error: &domain.AppError{
+				Code: http.StatusInternalServerError,
+				Key:  domain.UnableToStoreFile,
+			},
 		}))
 	}
 

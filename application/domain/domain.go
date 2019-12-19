@@ -24,8 +24,11 @@ const (
 	MaxFileSize                 = 1 << 21 // 10 Mebibytes
 	AccessTokenLifetimeSeconds  = 3600
 	DateTimeFormat              = "2006-01-02 15:04:05"
-	NewMessageNotificationDelay = 10 * time.Minute
+	NewMessageNotificationDelay = 1 * time.Minute
 	DefaultProximityDistanceKm  = 1000
+	DurationDay                 = time.Duration(time.Hour * 24)
+	DurationWeek                = time.Duration(DurationDay * 7)
+	RecentMeetingDelay          = DurationDay * 30
 )
 
 // Event Kinds
@@ -102,12 +105,14 @@ var Env struct {
 	AccessTokenLifetimeSeconds int
 	AppName                    string
 	AuthCallbackURL            string
-	AwsS3Region                string
+	AwsRegion                  string
 	AwsS3Endpoint              string
 	AwsS3DisableSSL            bool
 	AwsS3Bucket                string
 	AwsS3AccessKeyID           string
 	AwsS3SecretAccessKey       string
+	AwsSESAccessKeyID          string
+	AwsSESSecretAccessKey      string
 	EmailService               string
 	EmailFromAddress           string
 	GoEnv                      string
@@ -142,12 +147,14 @@ func readEnv() {
 	Env.AccessTokenLifetimeSeconds = n
 	Env.AppName = envy.Get("APP_NAME", "WeCarry")
 	Env.AuthCallbackURL = envy.Get("AUTH_CALLBACK_URL", "")
-	Env.AwsS3Region = envy.Get("AWS_REGION", "")
+	Env.AwsRegion = envy.Get("AWS_REGION", "")
 	Env.AwsS3Endpoint = envy.Get("AWS_S3_ENDPOINT", "")
 	Env.AwsS3DisableSSL, _ = strconv.ParseBool(envy.Get("AWS_S3_DISABLE_SSL", "false"))
 	Env.AwsS3Bucket = envy.Get("AWS_S3_BUCKET", "")
 	Env.AwsS3AccessKeyID = envy.Get("AWS_S3_ACCESS_KEY_ID", "")
 	Env.AwsS3SecretAccessKey = envy.Get("AWS_S3_SECRET_ACCESS_KEY", "")
+	Env.AwsSESAccessKeyID = envy.Get("AWS_SES_ACCESS_KEY_ID", Env.AwsS3AccessKeyID)
+	Env.AwsSESSecretAccessKey = envy.Get("AWS_SES_SECRET_ACCESS_KEY", Env.AwsS3SecretAccessKey)
 	Env.EmailService = envy.Get("EMAIL_SERVICE", "sendgrid")
 	Env.EmailFromAddress = envy.Get("EMAIL_FROM_ADDRESS", "no_reply@example.com")
 	Env.GoEnv = envy.Get("GO_ENV", "development")
@@ -163,8 +170,11 @@ func readEnv() {
 }
 
 type AppError struct {
-	Code    string `json:"Code"`
-	Message string `json:"Message,omitempty"`
+	Code int `json:"code"`
+
+	// Don't change the value of these Key entries without making a corresponding change on the UI,
+	// since these will be converted to human-friendly texts on the UI
+	Key string `json:"key"`
 }
 
 // GetFirstStringFromSlice returns the first string in the given slice, or an empty
@@ -451,14 +461,24 @@ func GetStructTags(tagType string, s interface{}) (map[string]string, error) {
 	return fieldTags, nil
 }
 
-func GetTranslatedSubject(language, translationID string) string {
-	var argAppName = map[string]string{"AppName": Env.AppName}
+func GetTranslatedSubject(language, translationID string, translationData map[string]string) string {
+	translationData["AppName"] = Env.AppName
 
-	subj, err := TranslateWithLang(language, translationID, argAppName)
+	subj, err := TranslateWithLang(language, translationID, translationData)
 
 	if err != nil {
 		ErrLogger.Printf("error translating '%s' notification subject, %s", translationID, err)
 	}
 
 	return subj
+}
+
+// Truncate returns the given string truncated to length including the suffix if originally longer than length
+func Truncate(str, suffix string, length int) string {
+	a := []rune(str)
+	s := []rune(suffix)
+	if len(a) > length {
+		return string(a[0:length-len(s)]) + suffix
+	}
+	return str
 }

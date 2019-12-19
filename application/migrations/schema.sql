@@ -95,6 +95,49 @@ ALTER SEQUENCE public.locations_id_seq OWNED BY public.locations.id;
 
 
 --
+-- Name: meetings; Type: TABLE; Schema: public; Owner: wecarry
+--
+
+CREATE TABLE public.meetings (
+    id integer NOT NULL,
+    uuid uuid NOT NULL,
+    name character varying(80) NOT NULL,
+    description character varying(4096),
+    more_info_url character varying(255),
+    image_file_id integer,
+    created_by_id integer,
+    location_id integer NOT NULL,
+    start_date date NOT NULL,
+    end_date date NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.meetings OWNER TO wecarry;
+
+--
+-- Name: meetings_id_seq; Type: SEQUENCE; Schema: public; Owner: wecarry
+--
+
+CREATE SEQUENCE public.meetings_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.meetings_id_seq OWNER TO wecarry;
+
+--
+-- Name: meetings_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wecarry
+--
+
+ALTER SEQUENCE public.meetings_id_seq OWNED BY public.meetings.id;
+
+
+--
 -- Name: messages; Type: TABLE; Schema: public; Owner: wecarry
 --
 
@@ -303,7 +346,8 @@ CREATE TABLE public.posts (
     photo_file_id integer,
     destination_id integer NOT NULL,
     origin_id integer,
-    kilograms numeric(13,4) DEFAULT '0'::numeric NOT NULL
+    kilograms numeric(13,4) DEFAULT '0'::numeric NOT NULL,
+    meeting_id integer
 );
 
 
@@ -589,6 +633,13 @@ ALTER TABLE ONLY public.locations ALTER COLUMN id SET DEFAULT nextval('public.lo
 
 
 --
+-- Name: meetings id; Type: DEFAULT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.meetings ALTER COLUMN id SET DEFAULT nextval('public.meetings_id_seq'::regclass);
+
+
+--
 -- Name: messages id; Type: DEFAULT; Schema: public; Owner: wecarry
 --
 
@@ -686,6 +737,14 @@ ALTER TABLE ONLY public.files
 
 ALTER TABLE ONLY public.locations
     ADD CONSTRAINT locations_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: meetings meetings_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.meetings
+    ADD CONSTRAINT meetings_pkey PRIMARY KEY (id);
 
 
 --
@@ -792,6 +851,20 @@ CREATE UNIQUE INDEX files_uuid_idx ON public.files USING btree (uuid);
 
 
 --
+-- Name: meetings_location_id_idx; Type: INDEX; Schema: public; Owner: wecarry
+--
+
+CREATE UNIQUE INDEX meetings_location_id_idx ON public.meetings USING btree (location_id);
+
+
+--
+-- Name: meetings_uuid_idx; Type: INDEX; Schema: public; Owner: wecarry
+--
+
+CREATE UNIQUE INDEX meetings_uuid_idx ON public.meetings USING btree (uuid);
+
+
+--
 -- Name: messages_uuid_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
@@ -831,6 +904,13 @@ CREATE INDEX post_histories_created_at_idx ON public.post_histories USING btree 
 --
 
 CREATE UNIQUE INDEX posts_destination_id_idx ON public.posts USING btree (destination_id);
+
+
+--
+-- Name: posts_meeting_id_idx; Type: INDEX; Schema: public; Owner: wecarry
+--
+
+CREATE UNIQUE INDEX posts_meeting_id_idx ON public.posts USING btree (meeting_id);
 
 
 --
@@ -936,6 +1016,38 @@ CREATE UNIQUE INDEX users_photo_file_id_idx ON public.users USING btree (photo_f
 --
 
 CREATE UNIQUE INDEX users_uuid_idx ON public.users USING btree (uuid);
+
+
+--
+-- Name: posts meeting_fk; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.posts
+    ADD CONSTRAINT meeting_fk FOREIGN KEY (meeting_id) REFERENCES public.meetings(id) ON DELETE SET NULL;
+
+
+--
+-- Name: meetings meetings_created_by_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.meetings
+    ADD CONSTRAINT meetings_created_by_id_fkey FOREIGN KEY (created_by_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: meetings meetings_image_file_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.meetings
+    ADD CONSTRAINT meetings_image_file_id_fkey FOREIGN KEY (image_file_id) REFERENCES public.files(id) ON DELETE SET NULL;
+
+
+--
+-- Name: meetings meetings_location_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.meetings
+    ADD CONSTRAINT meetings_location_id_fkey FOREIGN KEY (location_id) REFERENCES public.locations(id) ON DELETE CASCADE;
 
 
 --

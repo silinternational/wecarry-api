@@ -1091,8 +1091,8 @@ func (ms *ModelSuite) TestPost_manageStatusTransition_backwardProgression() {
 func (ms *ModelSuite) TestPost_FindByID() {
 	t := ms.T()
 
-	users := CreateUserFixtures(ms.DB, 2).Users
-	posts := CreatePostFixtures(ms, t, users)
+	users := createUserFixtures(ms.DB, 2).Users
+	posts := createPostFixtures(ms.DB, 1, 1, false)
 
 	tests := []struct {
 		name          string
@@ -1108,11 +1108,11 @@ func (ms *ModelSuite) TestPost_FindByID() {
 			wantPost: posts[0],
 		},
 		{name: "good with two related fields",
-			id:            posts[0].ID,
+			id:            posts[1].ID,
 			eagerFields:   []string{"CreatedBy", "Provider"},
-			wantPost:      posts[0],
+			wantPost:      posts[1],
 			wantCreatedBy: users[0],
-			wantProvider:  users[1],
+			wantProvider:  users[0],
 		},
 		{name: "zero ID", id: 0, wantErr: true},
 		{name: "wrong id", id: 99999, wantErr: true},
@@ -1131,7 +1131,7 @@ func (ms *ModelSuite) TestPost_FindByID() {
 					ms.Equal(test.wantCreatedBy.ID, post.CreatedBy.ID, "bad post createdby id")
 				}
 				if test.wantProvider.ID != 0 {
-					ms.Equal(test.wantProvider.ID, post.Provider.ID, "bod post provider id")
+					ms.Equal(test.wantProvider.ID, post.Provider.ID, "bad post provider id")
 				}
 			}
 		})
@@ -1141,8 +1141,8 @@ func (ms *ModelSuite) TestPost_FindByID() {
 func (ms *ModelSuite) TestPost_FindByUUID() {
 	t := ms.T()
 
-	uf := CreateUserFixtures(ms.DB, 2)
-	posts := CreatePostFixtures(ms, t, uf.Users)
+	_ = createUserFixtures(ms.DB, 2)
+	posts := createPostFixtures(ms.DB, 1, 1, false)
 
 	tests := []struct {
 		name    string
@@ -1176,15 +1176,15 @@ func (ms *ModelSuite) TestPost_FindByUUID() {
 func (ms *ModelSuite) TestPost_GetCreator() {
 	t := ms.T()
 
-	uf := CreateUserFixtures(ms.DB, 2)
-	posts := CreatePostFixtures(ms, t, uf.Users)
+	uf := createUserFixtures(ms.DB, 2)
+	posts := createPostFixtures(ms.DB, 1, 1, false)
 
 	tests := []struct {
 		name string
 		post Post
 		want uuid.UUID
 	}{
-		{name: "good", post: posts[0], want: posts[0].CreatedBy.UUID},
+		{name: "good", post: posts[0], want: uf.Users[0].UUID},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -1201,16 +1201,16 @@ func (ms *ModelSuite) TestPost_GetCreator() {
 func (ms *ModelSuite) TestPost_GetProvider() {
 	t := ms.T()
 
-	uf := CreateUserFixtures(ms.DB, 2)
-	posts := CreatePostFixtures(ms, t, uf.Users)
+	uf := createUserFixtures(ms.DB, 2)
+	posts := createPostFixtures(ms.DB, 1, 1, false)
 
 	tests := []struct {
 		name string
 		post Post
 		want *uuid.UUID
 	}{
-		{name: "good", post: posts[0], want: &posts[0].Provider.UUID},
-		{name: "nil", post: posts[1], want: nil},
+		{name: "good", post: posts[1], want: &uf.Users[0].UUID},
+		{name: "nil", post: posts[0], want: nil},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -1233,16 +1233,16 @@ func (ms *ModelSuite) TestPost_GetProvider() {
 func (ms *ModelSuite) TestPost_GetReceiver() {
 	t := ms.T()
 
-	uf := CreateUserFixtures(ms.DB, 2)
-	posts := CreatePostFixtures(ms, t, uf.Users)
+	uf := createUserFixtures(ms.DB, 2)
+	posts := createPostFixtures(ms.DB, 1, 1, false)
 
 	tests := []struct {
 		name string
 		post Post
 		want *uuid.UUID
 	}{
-		{name: "good", post: posts[1], want: &posts[1].Receiver.UUID},
-		{name: "nil", post: posts[0], want: nil},
+		{name: "good", post: posts[0], want: &uf.Users[0].UUID},
+		{name: "nil", post: posts[1], want: nil},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -1265,8 +1265,9 @@ func (ms *ModelSuite) TestPost_GetReceiver() {
 func (ms *ModelSuite) TestPost_GetOrganization() {
 	t := ms.T()
 
-	uf := CreateUserFixtures(ms.DB, 2)
-	posts := CreatePostFixtures(ms, t, uf.Users)
+	_ = createUserFixtures(ms.DB, 2)
+	posts := createPostFixtures(ms.DB, 1, 1, false)
+	ms.NoError(ms.DB.Load(&posts, "Organization"))
 
 	tests := []struct {
 		name string
@@ -1290,8 +1291,8 @@ func (ms *ModelSuite) TestPost_GetOrganization() {
 func (ms *ModelSuite) TestPost_GetThreads() {
 	t := ms.T()
 
-	users := CreateUserFixtures(ms.DB, 2).Users
-	posts := CreatePostFixtures(ms, t, users)
+	users := createUserFixtures(ms.DB, 2).Users
+	posts := createPostFixtures(ms.DB, 1, 1, false)
 	threadFixtures := CreateThreadFixtures(ms, posts[0])
 	threads := threadFixtures.Threads
 
@@ -1574,7 +1575,7 @@ func (ms *ModelSuite) TestPost_GetSetOrigin() {
 
 func (ms *ModelSuite) TestPost_NewWithUser() {
 	t := ms.T()
-	user := CreateUserFixtures(ms.DB, 1).Users[0]
+	user := createUserFixtures(ms.DB, 1).Users[0]
 
 	tests := []struct {
 		name           string
@@ -1614,7 +1615,7 @@ func (ms *ModelSuite) TestPost_NewWithUser() {
 
 func (ms *ModelSuite) TestPost_SetProviderWithStatus() {
 	t := ms.T()
-	user := CreateUserFixtures(ms.DB, 1).Users[0]
+	user := createUserFixtures(ms.DB, 1).Users[0]
 
 	tests := []struct {
 		name           string
@@ -1925,32 +1926,80 @@ func (ms *ModelSuite) TestPost_GetLocationForNotifications() {
 	t := ms.T()
 	f := createFixturesForGetLocationForNotifications(ms)
 
+	var requestOrigin Location
+	ms.NoError(ms.DB.Find(&requestOrigin, f.Posts[1].OriginID.Int))
+
+	var offerDestination Location
+	ms.NoError(ms.DB.Find(&offerDestination, f.Posts[2].DestinationID))
+
 	tests := []struct {
 		name string
 		post Post
-		want string
+		want int
 	}{
 		{
-			name: "offer",
+			name: "request with no origin",
 			post: f.Posts[0],
-			want: f.Locations[0].Description,
+			want: 0,
 		},
 		{
 			name: "request",
 			post: f.Posts[1],
-			want: f.Locations[3].Description,
+			want: requestOrigin.ID,
 		},
 		{
-			name: "request with no origin",
+			name: "offer",
 			post: f.Posts[2],
-			want: "",
+			want: offerDestination.ID,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := tt.post.GetLocationForNotifications()
 			ms.NoError(err)
-			ms.Equal(tt.want, got.Description)
+			ms.Equal(tt.want, got.ID)
+		})
+	}
+}
+
+func (ms *ModelSuite) TestPost_Meeting() {
+	t := ms.T()
+	posts := createPostFixtures(ms.DB, 2, 0, false)
+	meeting := Meeting{
+		UUID:        domain.GetUUID(),
+		Name:        "a meeting",
+		CreatedByID: posts[0].CreatedByID,
+		LocationID:  posts[0].DestinationID,
+	}
+	createFixture(ms, &meeting)
+	posts[0].MeetingID = nulls.NewInt(meeting.ID)
+	ms.NoError(ms.DB.Save(&posts[0]))
+
+	tests := []struct {
+		name string
+		post Post
+		want *uuid.UUID
+	}{
+		{
+			name: "has meeting",
+			post: posts[0],
+			want: &meeting.UUID,
+		},
+		{
+			name: "no meeting",
+			post: posts[1],
+			want: nil,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := test.post.Meeting()
+			ms.NoError(err)
+			if test.want == nil {
+				ms.Nil(got)
+				return
+			}
+			ms.Equal(*test.want, got.UUID)
 		})
 	}
 }

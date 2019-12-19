@@ -128,10 +128,14 @@ func (ms *ModelSuite) TestPostHistory_createForPost() {
 			status:     PostStatusCommitted,
 			providerID: f.Users[1].ID,
 			want: PostHistories{
-				f.PostHistories[0],
+				{
+					Status:     PostStatusOpen,
+					PostID:     f.Posts[0].ID,
+					ReceiverID: nulls.NewInt(f.Posts[0].CreatedByID),
+				},
 				{
 					Status:     PostStatusCommitted,
-					ReceiverID: f.PostHistories[0].ReceiverID,
+					ReceiverID: nulls.NewInt(f.Users[0].ID),
 					ProviderID: nulls.NewInt(f.Users[1].ID),
 				},
 			},
@@ -140,7 +144,7 @@ func (ms *ModelSuite) TestPostHistory_createForPost() {
 			name:   "null to open",
 			post:   f.Posts[1],
 			status: PostStatusOpen,
-			want:   PostHistories{{Status: PostStatusOpen, ReceiverID: nulls.NewInt(f.Users[1].ID)}},
+			want:   PostHistories{{Status: PostStatusOpen, ReceiverID: nulls.NewInt(f.Users[0].ID)}},
 		},
 		{
 			name:       "bad provider id",

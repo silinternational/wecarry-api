@@ -14,7 +14,7 @@ import (
 func (ms *ModelSuite) TestGetPostUsers() {
 	t := ms.T()
 
-	orgUserPostFixtures := CreateFixtures_GetPostRecipients(ms, t)
+	orgUserPostFixtures := CreateFixtures_GetPostUsers(ms, t)
 	users := orgUserPostFixtures.users
 	posts := orgUserPostFixtures.posts
 
@@ -142,7 +142,7 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 			sendFunction:     sendNotificationRequestFromAcceptedToCommitted,
 			wantEmailsSent:   1,
 			wantToEmail:      posts[0].Provider.Email,
-			wantBodyContains: "isn't sure yet if they",
+			wantBodyContains: "isn't ready after all to have you fulfill",
 		},
 		{name: "Good - Accepted to Completed",
 			post:             posts[0],
@@ -150,7 +150,7 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 			sendFunction:     sendNotificationRequestFromAcceptedOrDeliveredToCompleted,
 			wantEmailsSent:   1,
 			wantToEmail:      posts[0].Provider.Email,
-			wantBodyContains: "Thank you for fulfilling a request",
+			wantBodyContains: "reported that they have received",
 		},
 		{name: "Bad - Accepted to Completed", // No Provider
 			post:         posts[1],
@@ -165,7 +165,7 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 			sendFunction:     sendNotificationRequestFromAcceptedOrCommittedToDelivered,
 			wantEmailsSent:   1,
 			wantToEmail:      posts[0].CreatedBy.Email,
-			wantBodyContains: "says they have delivered it",
+			wantBodyContains: "reported that they have delivered your request",
 		},
 		{name: "Bad - Accepted to Delivered", // No Provider
 			post:         posts[1],
@@ -186,7 +186,7 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 			sendFunction:     sendNotificationRequestFromAcceptedToOpen,
 			wantEmailsSent:   1,
 			wantToEmail:      posts[0].Provider.Email,
-			wantBodyContains: "no longer wants you",
+			wantBodyContains: "isn't ready after all to have you fulfill",
 		},
 		{name: "Good - Accepted to Removed",
 			post:             posts[0],
@@ -224,7 +224,7 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 			sendFunction:     sendNotificationRequestFromAcceptedOrCommittedToDelivered,
 			wantEmailsSent:   1,
 			wantToEmail:      posts[0].CreatedBy.Email,
-			wantBodyContains: "they have delivered it",
+			wantBodyContains: "reported that they have delivered your request",
 		},
 		{name: "Bad - Committed to Delivered", // No Provider
 			post:         posts[1],
@@ -246,7 +246,7 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 			wantEmailsSent:   2,
 			wantEmailNumber:  1,
 			wantToEmail:      posts[0].Provider.Email,
-			wantBodyContains: "no longer has a provider",
+			wantBodyContains: "request has been cancelled",
 		},
 		{name: "Good - Committed to Open - Receiver",
 			post: posts[0],
@@ -260,7 +260,7 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 			sendFunction:     sendNotificationRequestFromCommittedToOpen,
 			wantEmailsSent:   2,
 			wantToEmail:      posts[0].CreatedBy.Email,
-			wantBodyContains: "no longer has a provider",
+			wantBodyContains: "request has been cancelled",
 		},
 		{name: "Good - Committed to Removed",
 			post:             posts[0],
@@ -283,7 +283,7 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 			sendFunction:     sendNotificationRequestFromCompletedToAcceptedOrDelivered,
 			wantEmailsSent:   1,
 			wantToEmail:      posts[0].Provider.Email,
-			wantBodyContains: "said they haven't received the item after all",
+			wantBodyContains: "but now have corrected that",
 		},
 		{name: "Bad - Completed to Accepted", // No Provider
 			post:         posts[1],
@@ -298,7 +298,7 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 			sendFunction:     sendNotificationRequestFromDeliveredToAccepted,
 			wantEmailsSent:   1,
 			wantToEmail:      posts[0].CreatedBy.Email,
-			wantBodyContains: "now says they haven't yet delivered it",
+			wantBodyContains: "corrected themselves to say they haven't",
 		},
 		{name: "Good - Delivered to Committed",
 			post:             posts[0],
@@ -306,7 +306,7 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 			sendFunction:     sendNotificationRequestFromDeliveredToCommitted,
 			wantEmailsSent:   1,
 			wantToEmail:      posts[0].CreatedBy.Email,
-			wantBodyContains: "now says they haven't yet delivered it",
+			wantBodyContains: "corrected themselves to say they haven't",
 		},
 		{name: "Good - Delivered to Completed",
 			post:             posts[0],
@@ -314,7 +314,7 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 			sendFunction:     sendNotificationRequestFromAcceptedOrDeliveredToCompleted,
 			wantEmailsSent:   1,
 			wantToEmail:      posts[0].Provider.Email,
-			wantBodyContains: "Thank you for fulfilling a request",
+			wantBodyContains: "reported that they have received",
 		},
 		{name: "Good - Open to Committed",
 			post:             posts[0],

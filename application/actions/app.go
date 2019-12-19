@@ -60,6 +60,7 @@ func App() *buffalo.App {
 		app.Use(domain.T.Middleware())
 
 		app.GET("/site/status", statusHandler)
+		app.Middleware.Skip(buffalo.RequestLogger, statusHandler)
 
 		app.POST("/gql/", gqlHandler)
 
