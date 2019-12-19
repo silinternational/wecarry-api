@@ -1961,3 +1961,45 @@ func (ms *ModelSuite) TestPost_GetLocationForNotifications() {
 		})
 	}
 }
+
+func (ms *ModelSuite) TestPost_Meeting() {
+	t := ms.T()
+	posts := createPostFixtures(ms.DB, 2, 0, false)
+	meeting := Meeting{
+		UUID:        domain.GetUUID(),
+		Name:        "a meeting",
+		CreatedByID: posts[0].CreatedByID,
+		LocationID:  posts[0].DestinationID,
+	}
+	createFixture(ms, &meeting)
+	posts[0].MeetingID = nulls.NewInt(meeting.ID)
+	ms.NoError(ms.DB.Save(&posts[0]))
+
+	tests := []struct {
+		name string
+		post Post
+		want *uuid.UUID
+	}{
+		{
+			name: "has meeting",
+			post: posts[0],
+			want: &meeting.UUID,
+		},
+		{
+			name: "no meeting",
+			post: posts[1],
+			want: nil,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := test.post.Meeting()
+			ms.NoError(err)
+			if test.want == nil {
+				ms.Nil(got)
+				return
+			}
+			ms.Equal(*test.want, got.UUID)
+		})
+	}
+}

@@ -140,6 +140,7 @@ type Post {
     kilograms: Float
     photo: File
     files: [File!]!
+    meeting: Meeting
     isEditable: Boolean!
 }
 

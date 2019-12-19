@@ -12,7 +12,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/ses"
 	"github.com/silinternational/wecarry-api/domain"
+	"jaytaylor.com/html2text"
 )
 
 type ObjectUrl struct {
@@ -38,7 +40,7 @@ func getS3ConfigFromEnv() awsConfig {
 	a.awsAccessKeyID = domain.Env.AwsS3AccessKeyID
 	a.awsSecretAccessKey = domain.Env.AwsS3SecretAccessKey
 	a.awsEndpoint = domain.Env.AwsS3Endpoint
-	a.awsRegion = domain.Env.AwsS3Region
+	a.awsRegion = domain.Env.AwsRegion
 	a.awsS3Bucket = domain.Env.AwsS3Bucket
 	a.awsDisableSSL = domain.Env.AwsS3DisableSSL
 
@@ -158,4 +160,70 @@ func CreateS3Bucket() error {
 		}
 	}
 	return nil
+}
+
+// SendEmail sends a message using SES
+func SendEmail(to, from, subject, body string) error {
+	svc, err := createSESService(getSESConfigFromEnv())
+	if err != nil {
+		return fmt.Errorf("SendEmail failed creating SES service, %s", err)
+	}
+
+	tbody, err := html2text.FromString(body)
+	if err != nil {
+		domain.Logger.Printf("error converting html email to plain text ... %s", err.Error())
+		tbody = body
+	}
+
+	input := &ses.SendEmailInput{
+		Destination: &ses.Destination{
+			ToAddresses: []*string{
+				aws.String(to),
+			},
+		},
+		Message: &ses.Message{
+			Body: &ses.Body{
+				Html: &ses.Content{
+					Charset: aws.String("UTF-8"),
+					Data:    aws.String(body),
+				},
+				Text: &ses.Content{
+					Charset: aws.String("UTF-8"),
+					Data:    aws.String(tbody),
+				},
+			},
+			Subject: &ses.Content{
+				Charset: aws.String("UTF-8"),
+				Data:    aws.String(subject),
+			},
+		},
+		Source: aws.String(from),
+	}
+
+	result, err := svc.SendEmail(input)
+	if err != nil {
+		return fmt.Errorf("SendEmail failed using SES, %s", err)
+	}
+
+	domain.Logger.Printf("Message sent using SES, message ID: %s", *result.MessageId)
+	return nil
+}
+
+func getSESConfigFromEnv() awsConfig {
+	return awsConfig{
+		awsAccessKeyID:     domain.Env.AwsSESAccessKeyID,
+		awsSecretAccessKey: domain.Env.AwsSESSecretAccessKey,
+		awsRegion:          domain.Env.AwsRegion,
+	}
+}
+
+func createSESService(config awsConfig) (*ses.SES, error) {
+	sess, err := session.NewSession(&aws.Config{
+		Credentials: credentials.NewStaticCredentials(config.awsAccessKeyID, config.awsSecretAccessKey, ""),
+		Region:      aws.String(config.awsRegion),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return ses.New(sess), nil
 }
