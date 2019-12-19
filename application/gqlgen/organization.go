@@ -3,7 +3,6 @@ package gqlgen
 import (
 	"context"
 	"errors"
-	"github.com/silinternational/wecarry-api/domain"
 
 	"github.com/silinternational/wecarry-api/models"
 )
@@ -23,8 +22,7 @@ func (r *queryResolver) Organizations(ctx context.Context) ([]models.Organizatio
 
 	// get list of orgs that cUser is allowed to see
 	orgs := models.Organizations{}
-	err := orgs.AllWhereUserIsOrgAdmin(cUser)
-	if err != nil {
+	if err := orgs.AllWhereUserIsOrgAdmin(cUser); err != nil {
 		return orgs, reportError(ctx, err, "ListOrganizations.Error", extras)
 	}
 
@@ -39,8 +37,7 @@ func (r *queryResolver) Organization(ctx context.Context, id *string) (*models.O
 	}
 
 	org := &models.Organization{}
-	err := org.FindByUUID(*id)
-	if domain.IsOtherThanNoRows(err) {
+	if err := org.FindByUUID(*id); err != nil {
 		return org, reportError(ctx, err, "ViewOrganization.Error", extras)
 	}
 

@@ -15,6 +15,7 @@ import (
 	"github.com/gobuffalo/validate/validators"
 	"github.com/gofrs/uuid"
 	"github.com/pkg/errors"
+
 	"github.com/silinternational/wecarry-api/auth"
 	"github.com/silinternational/wecarry-api/domain"
 )
@@ -251,8 +252,7 @@ func (u *User) CanViewOrganization(orgId int) bool {
 	}
 
 	// make sure we're checking current user orgs
-	err := DB.Load(u, "UserOrganizations")
-	if err != nil {
+	if err := DB.Load(u, "UserOrganizations"); err != nil {
 		return false
 	}
 
@@ -272,8 +272,7 @@ func (u *User) CanEditOrganization(orgId int) bool {
 	}
 
 	// make sure we're checking current user orgs
-	err := DB.Load(u, "UserOrganizations")
-	if err != nil {
+	if err := DB.Load(u, "UserOrganizations"); err != nil {
 		return false
 	}
 

@@ -4,13 +4,15 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"strings"
+
 	"github.com/gobuffalo/httptest"
 	"github.com/gobuffalo/nulls"
+
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/internal/test"
 	"github.com/silinternational/wecarry-api/models"
-	"io/ioutil"
-	"strings"
 )
 
 // OrganizationResponse is for marshalling Organization query and mutation responses
