@@ -175,7 +175,7 @@ func createAuthUser(
 func authRequest(c buffalo.Context) error {
 	clientID := c.Param(ClientIDParam)
 	if clientID == "" {
-		return authRequestError(c, http.StatusBadRequest, domain.MissingClientID,
+		return authRequestError(c, http.StatusBadRequest, domain.ErrorMissingClientID,
 			ClientIDParam+" is required to login")
 	}
 
@@ -183,7 +183,7 @@ func authRequest(c buffalo.Context) error {
 
 	authEmail := c.Param(AuthEmailParam)
 	if authEmail == "" {
-		return authRequestError(c, http.StatusBadRequest, domain.MissingAuthEmail,
+		return authRequestError(c, http.StatusBadRequest, domain.ErrorMissingAuthEmail,
 			AuthEmailParam+" is required to login")
 	}
 	c.Session().Set(AuthEmailSessionKey, authEmail)
@@ -210,7 +210,7 @@ func authRequest(c buffalo.Context) error {
 	}
 
 	if org.ID == 0 {
-		return authRequestError(c, http.StatusBadRequest, domain.CannotFindOrg,
+		return authRequestError(c, http.StatusBadRequest, domain.ErrorCannotFindOrg,
 			"unable to find an organization for this user", extras)
 	}
 
@@ -246,13 +246,13 @@ func authRequest(c buffalo.Context) error {
 func authCallback(c buffalo.Context) error {
 	clientID, ok := c.Session().Get(ClientIDSessionKey).(string)
 	if !ok {
-		return logErrorAndRedirect(c, domain.MissingSessionClientID,
+		return logErrorAndRedirect(c, domain.ErrorMissingSessionClientID,
 			ClientIDSessionKey+" session entry is required to complete login")
 	}
 
 	authEmail, ok := c.Session().Get(AuthEmailSessionKey).(string)
 	if !ok {
-		return logErrorAndRedirect(c, domain.MissingSessionAuthEmail,
+		return logErrorAndRedirect(c, domain.ErrorMissingSessionAuthEmail,
 			AuthEmailSessionKey+" session entry is required to complete login")
 	}
 
@@ -267,14 +267,14 @@ func authCallback(c buffalo.Context) error {
 
 	orgID, ok := c.Session().Get(OrgIDSessionKey).(string)
 	if !ok {
-		return logErrorAndRedirect(c, domain.MissingSessionOrgID,
+		return logErrorAndRedirect(c, domain.ErrorMissingSessionOrgID,
 			OrgIDSessionKey+" session entry is required to complete login")
 	}
 
 	org := models.Organization{}
 	err = org.FindByUUID(orgID)
 	if err != nil {
-		return logErrorAndRedirect(c, domain.ErrorFindingOrg,
+		return logErrorAndRedirect(c, domain.ErrorFindingOrgByID,
 			fmt.Sprintf("error finding org with UUID %s ... %v", orgID, err.Error()))
 	}
 
@@ -369,7 +369,7 @@ func logErrorAndRedirect(c buffalo.Context, code, message string, extras ...map[
 func authDestroy(c buffalo.Context) error {
 	tokenParam := c.Param(LogoutToken)
 	if tokenParam == "" {
-		return logErrorAndRedirect(c, domain.MissingLogoutToken,
+		return logErrorAndRedirect(c, domain.ErrorMissingLogoutToken,
 			LogoutToken+" is required to logout")
 	}
 

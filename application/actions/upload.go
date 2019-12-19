@@ -43,7 +43,7 @@ func uploadHandler(c buffalo.Context) error {
 		return c.Render(http.StatusInternalServerError, render.JSON(UploadResponse{
 			Error: &domain.AppError{
 				Code: http.StatusInternalServerError,
-				Key:  domain.UnableToReadFile,
+				Key:  domain.ErrorUnableToReadFile,
 			},
 		}))
 	}
@@ -54,7 +54,7 @@ func uploadHandler(c buffalo.Context) error {
 		return c.Render(http.StatusInternalServerError, render.JSON(UploadResponse{
 			Error: &domain.AppError{
 				Code: http.StatusInternalServerError,
-				Key:  domain.UnableToStoreFile,
+				Key:  domain.ErrorUnableToStoreFile,
 			},
 		}))
 	}
