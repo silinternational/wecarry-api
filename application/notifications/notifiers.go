@@ -6,6 +6,7 @@ import (
 
 const (
 	EmailServiceSendGrid = "sendgrid"
+	EmailServiceSES      = "ses"
 	EmailServiceDummy    = "dummy"
 	MobileServiceTwilio  = "twilio"
 	MobileServiceDummy   = "dummy"
@@ -28,6 +29,8 @@ func (e *EmailNotifier) Send(msg Message) error {
 	switch emailServiceType {
 	case EmailServiceSendGrid:
 		emailService = &SendGridService{}
+	case EmailServiceSES:
+		emailService = &SES{}
 	case EmailServiceDummy:
 		emailService = &TestEmailService
 	default:
