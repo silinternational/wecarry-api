@@ -9,9 +9,9 @@ create_table("meetings") {
 	t.Column("location_id", "integer", {})
 	t.Column("start_date", "date", {})
 	t.Column("end_date", "date", {})
-	t.ForeignKey("created_by_id", {"users": ["id"]}, {"on_delete": "cascade"})
+	t.ForeignKey("created_by_id", {"users": ["id"]}, {"on_delete": "set null"})
 	t.ForeignKey("image_file_id", {"files": ["id"]}, {"on_delete": "set null"})
-	t.ForeignKey("location_id", {"locations": ["id"]}, {"on_delete": "cascade"})
+	t.ForeignKey("location_id", {"locations": ["id"]})
 	t.Timestamps()
 }
 

@@ -191,6 +191,20 @@ func (r *postResolver) Files(ctx context.Context, obj *models.Post) ([]models.Fi
 	return files, nil
 }
 
+// Meeting resolves the `meeting` property of the post query, retrieving the related record from the database.
+func (r *postResolver) Meeting(ctx context.Context, obj *models.Post) (*models.Meeting, error) {
+	if obj == nil {
+		return nil, nil
+	}
+
+	meeting, err := obj.Meeting()
+	if err != nil {
+		return nil, reportError(ctx, err, "GetPostMeeting")
+	}
+
+	return meeting, nil
+}
+
 // IsEditable indicates whether the user is allowed to edit the post
 func (r *postResolver) IsEditable(ctx context.Context, obj *models.Post) (bool, error) {
 	if obj == nil {
@@ -288,6 +302,7 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 			return models.Post{}, fmt.Errorf("invalid meetingID, %s", err)
 		}
 		post.MeetingID = nulls.NewInt(meeting.ID)
+		post.DestinationID = meeting.LocationID
 	}
 
 	return post, nil
@@ -320,11 +335,13 @@ func (r *mutationResolver) CreatePost(ctx context.Context, input postInput) (*mo
 		return nil, reportError(ctx, err, "CreatePost.ProcessInput", extras)
 	}
 
-	dest := convertGqlLocationInputToDBLocation(*input.Destination)
-	if err = dest.Create(); err != nil {
-		return nil, reportError(ctx, err, "CreatePost.SetDestination", extras)
+	if !post.MeetingID.Valid {
+		dest := convertGqlLocationInputToDBLocation(*input.Destination)
+		if err = dest.Create(); err != nil {
+			return nil, reportError(ctx, err, "CreatePost.SetDestination", extras)
+		}
+		post.DestinationID = dest.ID
 	}
-	post.DestinationID = dest.ID
 
 	if err = post.Create(); err != nil {
 		return nil, reportError(ctx, err, "CreatePost", extras)
