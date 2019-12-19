@@ -212,3 +212,41 @@ func (as *ActionSuite) Test_CreateMeeting() {
 
 	as.Equal("dc", gotMtg.Location.Country, "incorrect meeting Location.Country")
 }
+
+func (as *ActionSuite) Test_UpdateMeeting() {
+	f := createFixturesForMeetings(as)
+
+	var resp meetingResponse
+
+	input := `id: "` + f.Meetings[0].UUID.String() + `" imageFileID: "` + f.File.UUID.String() + `"` +
+		`
+			name: "new name"
+			description: "new description"
+			location: {description:"new location" country:"dc" latitude:1.1 longitude:2.2}
+			startDate: "2025-09-19"
+			endDate: "2025-09-29"
+			moreInfoURL: "new.example.com"
+		`
+	query := `mutation { meeting: updateMeeting(input: {` + input + `}) { id imageFile { id } 
+			createdBy { nickname } name description
+			location { description country latitude longitude}
+			startDate endDate moreInfoURL }}`
+
+	as.NoError(as.testGqlQuery(query, f.Users[0].Nickname, &resp))
+
+	err := as.DB.Load(&(f.Meetings[0]), "ImageFile")
+	as.NoError(err, "failed to load meeting fixture, %s")
+
+	gotMtg := resp.Meeting
+
+	as.Equal(f.Meetings[0].UUID.String(), gotMtg.ID)
+	as.Equal("new name", gotMtg.Name, "incorrect meeting.Name")
+	as.Equal("new description", gotMtg.Description, "incorrect meeting.Description")
+	as.Equal("new.example.com", gotMtg.MoreInfoURL, "incorrect meeting MoreInfoURL")
+	as.Equal(f.Users[0].Nickname, gotMtg.CreatedBy.Nickname, "incorrect meeting CreatedBy")
+	as.Equal("2025-09-19", gotMtg.StartDate, "incorrect meeting StartDate")
+	as.Equal("2025-09-29", gotMtg.EndDate, "incorrect meeting EndDate")
+
+	as.Equal(f.File.UUID.String(), gotMtg.ImageFile.ID)
+	as.Equal("dc", gotMtg.Location.Country, "incorrect meeting Location.Country")
+}

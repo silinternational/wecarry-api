@@ -100,6 +100,7 @@ type ComplexityRoot struct {
 		CreatePost               func(childComplexity int, input postInput) int
 		RemoveOrganizationDomain func(childComplexity int, input RemoveOrganizationDomainInput) int
 		SetThreadLastViewedAt    func(childComplexity int, input SetThreadLastViewedAtInput) int
+		UpdateMeeting            func(childComplexity int, input meetingInput) int
 		UpdateOrganization       func(childComplexity int, input UpdateOrganizationInput) int
 		UpdatePost               func(childComplexity int, input postInput) int
 		UpdatePostStatus         func(childComplexity int, input UpdatePostStatusInput) int
@@ -229,6 +230,7 @@ type MutationResolver interface {
 	UpdatePostStatus(ctx context.Context, input UpdatePostStatusInput) (*models.Post, error)
 	UpdateUser(ctx context.Context, input UpdateUserInput) (*models.User, error)
 	CreateMeeting(ctx context.Context, input meetingInput) (*models.Meeting, error)
+	UpdateMeeting(ctx context.Context, input meetingInput) (*models.Meeting, error)
 	CreateMessage(ctx context.Context, input CreateMessageInput) (*models.Message, error)
 	CreateOrganization(ctx context.Context, input CreateOrganizationInput) (*models.Organization, error)
 	UpdateOrganization(ctx context.Context, input UpdateOrganizationInput) (*models.Organization, error)
@@ -589,6 +591,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.SetThreadLastViewedAt(childComplexity, args["input"].(SetThreadLastViewedAtInput)), true
+
+	case "Mutation.updateMeeting":
+		if e.complexity.Mutation.UpdateMeeting == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateMeeting_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateMeeting(childComplexity, args["input"].(meetingInput)), true
 
 	case "Mutation.updateOrganization":
 		if e.complexity.Mutation.UpdateOrganization == nil {
@@ -1219,6 +1233,7 @@ type Mutation {
     updatePostStatus(input: UpdatePostStatusInput!): Post!
     updateUser(input: UpdateUserInput!): User!
     createMeeting(input: CreateMeetingInput!): Meeting!
+    updateMeeting(input: UpdateMeetingInput!): Meeting!
     createMessage(input: CreateMessageInput!): Message!
     createOrganization(input: CreateOrganizationInput!): Organization!
     updateOrganization(input: UpdateOrganizationInput!): Organization!
@@ -1434,7 +1449,30 @@ input CreatePostInput {
     meetingID: ID
 }
 
+input UpdatePostInput {
+    id: ID!
+    title: String
+    description: String
+    destination: LocationInput
+    origin: LocationInput
+    size: PostSize
+    url: String
+    kilograms: Float
+    photoID: ID
+}
+
 input CreateMeetingInput {
+    name: String!
+    description: String
+    startDate: String!
+    endDate: String!
+    moreInfoURL: String
+    imageFileID: ID
+    location: LocationInput!
+}
+
+input UpdateMeetingInput {
+    id: ID!
     name: String!
     description: String
     startDate: String!
@@ -1448,18 +1486,6 @@ input CreateMessageInput {
     content: String!
     postID: String!
     threadID: String
-}
-
-input UpdatePostInput {
-    id: ID!
-    title: String
-    description: String
-    destination: LocationInput
-    origin: LocationInput
-    size: PostSize
-    url: String
-    kilograms: Float
-    photoID: ID
 }
 
 type File {
@@ -1593,6 +1619,20 @@ func (ec *executionContext) field_Mutation_setThreadLastViewedAt_args(ctx contex
 	var arg0 SetThreadLastViewedAtInput
 	if tmp, ok := rawArgs["input"]; ok {
 		arg0, err = ec.unmarshalNSetThreadLastViewedAtInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐSetThreadLastViewedAtInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateMeeting_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 meetingInput
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalNUpdateMeetingInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐmeetingInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2978,6 +3018,50 @@ func (ec *executionContext) _Mutation_createMeeting(ctx context.Context, field g
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Mutation().CreateMeeting(rctx, args["input"].(meetingInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Meeting)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNMeeting2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeeting(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_updateMeeting(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_updateMeeting_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateMeeting(rctx, args["input"].(meetingInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7249,6 +7333,66 @@ func (ec *executionContext) unmarshalInputSetThreadLastViewedAtInput(ctx context
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputUpdateMeetingInput(ctx context.Context, obj interface{}) (meetingInput, error) {
+	var it meetingInput
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "id":
+			var err error
+			it.ID, err = ec.unmarshalNID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "name":
+			var err error
+			it.Name, err = ec.unmarshalNString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "description":
+			var err error
+			it.Description, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "startDate":
+			var err error
+			it.StartDate, err = ec.unmarshalNString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "endDate":
+			var err error
+			it.EndDate, err = ec.unmarshalNString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "moreInfoURL":
+			var err error
+			it.MoreInfoURL, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "imageFileID":
+			var err error
+			it.ImageFileID, err = ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "location":
+			var err error
+			it.Location, err = ec.unmarshalNLocationInput2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐLocationInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputUpdateOrganizationInput(ctx context.Context, obj interface{}) (UpdateOrganizationInput, error) {
 	var it UpdateOrganizationInput
 	var asMap = obj.(map[string]interface{})
@@ -7832,6 +7976,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "createMeeting":
 			out.Values[i] = ec._Mutation_createMeeting(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "updateMeeting":
+			out.Values[i] = ec._Mutation_updateMeeting(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -9624,6 +9773,10 @@ func (ec *executionContext) marshalNTime2ᚖtimeᚐTime(ctx context.Context, sel
 		return graphql.Null
 	}
 	return ec.marshalNTime2timeᚐTime(ctx, sel, *v)
+}
+
+func (ec *executionContext) unmarshalNUpdateMeetingInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐmeetingInput(ctx context.Context, v interface{}) (meetingInput, error) {
+	return ec.unmarshalInputUpdateMeetingInput(ctx, v)
 }
 
 func (ec *executionContext) unmarshalNUpdateOrganizationInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐUpdateOrganizationInput(ctx context.Context, v interface{}) (UpdateOrganizationInput, error) {

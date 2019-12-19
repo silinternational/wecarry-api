@@ -239,4 +239,16 @@ func (r *mutationResolver) UpdateMeeting(ctx context.Context, input meetingInput
 	if err != nil {
 		return nil, reportError(ctx, err, "UpdateMeeting.ProcessInput", extras)
 	}
+
+	if err := meeting.Update(); err != nil {
+		return nil, reportError(ctx, err, "UpdateMeeting", extras)
+	}
+
+	if input.Location != nil {
+		if err = meeting.SetLocation(convertGqlLocationInputToDBLocation(*input.Location)); err != nil {
+			return nil, reportError(ctx, err, "UpdateMeeting.SetLocation", extras)
+		}
+	}
+
+	return &meeting, nil
 }

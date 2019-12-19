@@ -18,6 +18,7 @@ type Mutation {
     updatePostStatus(input: UpdatePostStatusInput!): Post!
     updateUser(input: UpdateUserInput!): User!
     createMeeting(input: CreateMeetingInput!): Meeting!
+    updateMeeting(input: UpdateMeetingInput!): Meeting!
     createMessage(input: CreateMessageInput!): Message!
     createOrganization(input: CreateOrganizationInput!): Organization!
     updateOrganization(input: UpdateOrganizationInput!): Organization!
@@ -256,6 +257,7 @@ input CreateMeetingInput {
 }
 
 input UpdateMeetingInput {
+    id: ID!
     name: String!
     description: String
     startDate: String!
