@@ -170,8 +170,11 @@ func readEnv() {
 }
 
 type AppError struct {
-	Code    string `json:"Code"`
-	Message string `json:"Message,omitempty"`
+	Code int `json:"code"`
+
+	// Don't change the value of these Key entries without making a corresponding change on the UI,
+	// since these will be converted to human-friendly texts on the UI
+	Key string `json:"key"`
 }
 
 // GetFirstStringFromSlice returns the first string in the given slice, or an empty

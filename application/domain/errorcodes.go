@@ -1,5 +1,10 @@
 package domain
 
+// ********************************************************************
+// Don't change the value of these Key entries without making a corresponding change on the UI,
+// since these will be converted to human-friendly texts on the UI
+// ********************************************************************
+
 // ClientID is required on various requests
 // actions.AuthRequest
 const MissingClientID = "MissingClientID"
