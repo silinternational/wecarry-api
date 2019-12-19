@@ -205,7 +205,7 @@ func SendEmail(to, from, subject, body string) error {
 		return fmt.Errorf("SendEmail failed using SES, %s", err)
 	}
 
-	domain.Logger.Printf("Message sent, message ID: %s", *result.MessageId)
+	domain.Logger.Printf("Message sent using SES, message ID: %s", *result.MessageId)
 	return nil
 }
 
