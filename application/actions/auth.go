@@ -347,9 +347,8 @@ func authRequestError(c buffalo.Context, httpStatus int, errorCode, message stri
 	domain.Error(c, message, allExtras)
 
 	authError := domain.AppError{
-		Code:  httpStatus,
-		Error: errorCode,
-		Trace: errorCode,
+		Code: httpStatus,
+		Key:  errorCode,
 	}
 
 	return c.Render(httpStatus, render.JSON(authError))
