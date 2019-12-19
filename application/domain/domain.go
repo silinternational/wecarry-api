@@ -461,14 +461,24 @@ func GetStructTags(tagType string, s interface{}) (map[string]string, error) {
 	return fieldTags, nil
 }
 
-func GetTranslatedSubject(language, translationID string) string {
-	var argAppName = map[string]string{"AppName": Env.AppName}
+func GetTranslatedSubject(language, translationID string, translationData map[string]string) string {
+	translationData["AppName"] = Env.AppName
 
-	subj, err := TranslateWithLang(language, translationID, argAppName)
+	subj, err := TranslateWithLang(language, translationID, translationData)
 
 	if err != nil {
 		ErrLogger.Printf("error translating '%s' notification subject, %s", translationID, err)
 	}
 
 	return subj
+}
+
+// Truncate returns the given string truncated to length including the suffix if originally longer than length
+func Truncate(str, suffix string, length int) string {
+	a := []rune(str)
+	s := []rune(suffix)
+	if len(a) > length {
+		return string(a[0:length-len(s)]) + suffix
+	}
+	return str
 }

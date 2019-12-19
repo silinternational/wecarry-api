@@ -9,6 +9,8 @@ import (
 	"github.com/silinternational/wecarry-api/notifications"
 )
 
+const postTitleKey = "postTitle"
+
 type postUser struct {
 	Language string
 	Nickname string
@@ -53,7 +55,7 @@ func getMessageForProvider(postUsers postUsers, post models.Post, template strin
 		"uiURL":            domain.Env.UIURL,
 		"appName":          domain.Env.AppName,
 		"postURL":          domain.GetPostUIURL(post.UUID.String()),
-		"postTitle":        post.Title,
+		"postTitle":        domain.Truncate(post.Title, "...", 16),
 		"postDescription":  post.Description,
 		"receiverNickname": postUsers.Receiver.Nickname,
 		"receiverEmail":    postUsers.Receiver.Email,
@@ -73,7 +75,7 @@ func getMessageForReceiver(postUsers postUsers, post models.Post, template strin
 		"uiURL":            domain.Env.UIURL,
 		"appName":          domain.Env.AppName,
 		"postURL":          domain.GetPostUIURL(post.UUID.String()),
-		"postTitle":        post.Title,
+		"postTitle":        domain.Truncate(post.Title, "...", 16),
 		"postDescription":  post.Description,
 		"providerNickname": postUsers.Provider.Nickname,
 		"providerEmail":    postUsers.Provider.Email,
@@ -99,7 +101,8 @@ func sendNotificationRequestToProvider(params senderParams) {
 	}
 
 	msg := getMessageForProvider(postUsers, post, template)
-	msg.Subject = domain.GetTranslatedSubject(postUsers.Provider.Language, params.subject)
+	msg.Subject = domain.GetTranslatedSubject(postUsers.Provider.Language, params.subject,
+		map[string]string{postTitleKey: post.Title})
 
 	if err := notifications.Send(msg); err != nil {
 		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
@@ -118,7 +121,8 @@ func sendNotificationRequestToReceiver(params senderParams) {
 	}
 
 	msg := getMessageForReceiver(postUsers, post, template)
-	msg.Subject = domain.GetTranslatedSubject(postUsers.Receiver.Language, params.subject)
+	msg.Subject = domain.GetTranslatedSubject(postUsers.Receiver.Language, params.subject,
+		map[string]string{postTitleKey: post.Title})
 
 	if err := notifications.Send(msg); err != nil {
 		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
@@ -151,7 +155,8 @@ func sendNotificationRequestFromAcceptedToOpen(params senderParams) {
 
 	msg.ToName = oldProvider.GetRealName()
 	msg.ToEmail = oldProvider.Email
-	msg.Subject = domain.GetTranslatedSubject(oldProvider.GetLanguagePreference(), params.subject)
+	msg.Subject = domain.GetTranslatedSubject(oldProvider.GetLanguagePreference(), params.subject,
+		map[string]string{postTitleKey: post.Title})
 
 	if err := notifications.Send(msg); err != nil {
 		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
@@ -198,7 +203,7 @@ func sendNotificationRequestFromCommittedToOpen(params senderParams) {
 		"uiURL":            domain.Env.UIURL,
 		"appName":          domain.Env.AppName,
 		"postURL":          domain.GetPostUIURL(post.UUID.String()),
-		"postTitle":        post.Title,
+		"postTitle":        domain.Truncate(post.Title, "...", 16),
 		"providerNickname": providerNickname,
 		"providerEmail":    providerEmail,
 		"receiverNickname": postUsers.Receiver.Nickname,
@@ -211,7 +216,8 @@ func sendNotificationRequestFromCommittedToOpen(params senderParams) {
 		ToName:    postUsers.Receiver.Nickname,
 		ToEmail:   postUsers.Receiver.Email,
 		FromEmail: domain.Env.EmailFromAddress,
-		Subject:   domain.GetTranslatedSubject(postUsers.Receiver.Language, params.subject),
+		Subject: domain.GetTranslatedSubject(postUsers.Receiver.Language, params.subject,
+			map[string]string{postTitleKey: post.Title}),
 	}
 
 	if err := notifications.Send(msg); err != nil {
@@ -225,7 +231,8 @@ func sendNotificationRequestFromCommittedToOpen(params senderParams) {
 
 	msg.ToName = oldProvider.GetRealName()
 	msg.ToEmail = oldProvider.Email
-	msg.Subject = domain.GetTranslatedSubject(oldProvider.GetLanguagePreference(), params.subject)
+	msg.Subject = domain.GetTranslatedSubject(oldProvider.GetLanguagePreference(), params.subject,
+		map[string]string{postTitleKey: post.Title})
 
 	if err := notifications.Send(msg); err != nil {
 		domain.ErrLogger.Printf("error sending '%s' notification to requester, %s", template, err)
@@ -412,7 +419,7 @@ func sendNewPostNotification(user models.User, post models.Post) error {
 			"appName":   domain.Env.AppName,
 			"uiURL":     domain.Env.UIURL,
 			"postURL":   domain.GetPostUIURL(post.UUID.String()),
-			"postTitle": post.Title,
+			"postTitle": domain.Truncate(post.Title, "...", 16),
 		},
 	}
 	return notifications.Send(msg)

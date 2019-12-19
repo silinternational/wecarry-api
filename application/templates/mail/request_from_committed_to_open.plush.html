@@ -1,10 +1,7 @@
-<p>A request on <a href="<%= uiURL %>"><%= appName %></a> no longer has a provider.</p>
 <h4><a href="<%= postURL %>"><%= postTitle %></a></h4>
-<p>We can't say who at this point, but one of you - either the requester or provider -
-    knocked this request back from being committed to just being open.  So, no one is
-    expected to fulfill the request until a different person commits to it.</p>
-<br>
-The requester is <%= receiverNickname %>. <br>
-The person who had offered to fulfill the request was <%= providerNickname %>.
-<br>
-<br>
+<p>
+    <%= providerNickname %>'s offer to fulfill <%= receiverNickname %>'s request has been cancelled.
+</p>
+<p>
+    For request details and to communicate, go to <a href="<%= postURL %>"><%= postURL %></a>.
+</p>

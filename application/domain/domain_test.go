@@ -466,6 +466,7 @@ func (ts *TestSuite) TestIsTimeZoneAllowed() {
 
 func (ts *TestSuite) TestGetTranslatedSubject() {
 	t := ts.T()
+	postTitle := "MyPost"
 
 	tests := []struct {
 		name          string
@@ -476,7 +477,7 @@ func (ts *TestSuite) TestGetTranslatedSubject() {
 		{
 			name:          "delivered",
 			translationID: "Email.Subject.Request.FromAcceptedOrCommittedToDelivered",
-			want:          "Request marked as delivered on " + Env.AppName,
+			want:          `Your ` + Env.AppName + ` request for "` + postTitle + `" has been delivered!`,
 		},
 		{
 			name:          "delivered in Spanish",
@@ -487,7 +488,7 @@ func (ts *TestSuite) TestGetTranslatedSubject() {
 		{
 			name:          "from accepted to committed",
 			translationID: "Email.Subject.Request.FromAcceptedToCommitted",
-			want:          "Oops, you are not yet expected to fulfill a certain " + Env.AppName + " request",
+			want:          `Your ` + Env.AppName + ` offer for "` + postTitle + `" may no longer be needed`,
 		},
 		{
 			name:          "from accepted to completed",
@@ -497,17 +498,17 @@ func (ts *TestSuite) TestGetTranslatedSubject() {
 		{
 			name:          "from accepted to open",
 			translationID: "Email.Subject.Request.FromAcceptedToOpen",
-			want:          "You are no longer expected to fulfill a certain " + Env.AppName + " request",
+			want:          `Your ` + Env.AppName + ` offer for "` + postTitle + `" is no longer needed`,
 		},
 		{
 			name:          "from accepted to removed",
 			translationID: "Email.Subject.Request.FromAcceptedToRemoved",
-			want:          "You are no longer expected to fulfill a certain " + Env.AppName + " request",
+			want:          `Your ` + Env.AppName + ` offer for "` + postTitle + `" is no longer needed`,
 		},
 		{
 			name:          "from committed to accepted",
 			translationID: "Email.Subject.Request.FromCommittedToAccepted",
-			want:          "Your offer was accepted on " + Env.AppName,
+			want:          `Your ` + Env.AppName + ` offer for "` + postTitle + `" has been accepted!`,
 		},
 		{
 			name:          "from committed to open",
@@ -517,12 +518,12 @@ func (ts *TestSuite) TestGetTranslatedSubject() {
 		{
 			name:          "from committed to removed",
 			translationID: "Email.Subject.Request.FromCommittedToRemoved",
-			want:          "Request removed on " + Env.AppName,
+			want:          `Your ` + Env.AppName + ` offer for "` + postTitle + `" is no longer needed`,
 		},
 		{
 			name:          "from completed to accepted",
 			translationID: "Email.Subject.Request.FromCompletedToAcceptedOrDelivered",
-			want:          "Oops, request not received on " + Env.AppName + " after all",
+			want:          "Request not received on " + Env.AppName + " after all",
 		},
 		{
 			name:          "from delivered to accepted",
@@ -537,7 +538,7 @@ func (ts *TestSuite) TestGetTranslatedSubject() {
 		{
 			name:          "from open to committed",
 			translationID: "Email.Subject.Request.FromOpenToCommitted",
-			want:          "Potential provider on " + Env.AppName,
+			want:          "Potential provider on " + Env.AppName + ` for "` + postTitle + `"`,
 		},
 	}
 
@@ -547,8 +548,66 @@ func (ts *TestSuite) TestGetTranslatedSubject() {
 			if test.language != "" {
 				language = test.language
 			}
-			got := GetTranslatedSubject(language, test.translationID)
+			got := GetTranslatedSubject(language, test.translationID,
+				map[string]string{"postTitle": postTitle})
 			ts.Equal(test.want, got, "bad subject translation")
+		})
+	}
+}
+
+func TestTruncate(t *testing.T) {
+	type args struct {
+		str    string
+		suffix string
+		length int
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "string shorter than length, not changed",
+			args: args{
+				str:    "hello",
+				suffix: "...",
+				length: 16,
+			},
+			want: "hello",
+		},
+		{
+			name: "string truncated, empty suffix",
+			args: args{
+				str:    "hello",
+				suffix: "",
+				length: 3,
+			},
+			want: "hel",
+		},
+		{
+			name: "string truncated, with suffix",
+			args: args{
+				str:    "hello there",
+				suffix: "...",
+				length: 10,
+			},
+			want: "hello t...",
+		},
+		{
+			name: "string is length, not truncated",
+			args: args{
+				str:    "hello there",
+				suffix: "...",
+				length: 11,
+			},
+			want: "hello there",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := Truncate(tt.args.str, tt.args.suffix, tt.args.length); got != tt.want {
+				t.Errorf("Truncate() = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }
