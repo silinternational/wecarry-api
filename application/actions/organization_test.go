@@ -249,7 +249,6 @@ func (as *ActionSuite) Test_OrganizationViewAndList() {
 		Url:                 nulls.String{},
 		AuthType:            models.AuthTypeSaml,
 		AuthConfig:          "{}",
-		UUID:                domain.GetUUID(),
 	}
 	test.MustCreate(as.DB, &org2)
 
