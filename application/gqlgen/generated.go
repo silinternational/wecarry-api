@@ -128,6 +128,7 @@ type ComplexityRoot struct {
 		ID           func(childComplexity int) int
 		IsEditable   func(childComplexity int) int
 		Kilograms    func(childComplexity int) int
+		Meeting      func(childComplexity int) int
 		Organization func(childComplexity int) int
 		Origin       func(childComplexity int) int
 		Photo        func(childComplexity int) int
@@ -262,6 +263,7 @@ type PostResolver interface {
 	Kilograms(ctx context.Context, obj *models.Post) (*float64, error)
 	Photo(ctx context.Context, obj *models.Post) (*models.File, error)
 	Files(ctx context.Context, obj *models.Post) ([]models.File, error)
+	Meeting(ctx context.Context, obj *models.Post) (*models.Meeting, error)
 	IsEditable(ctx context.Context, obj *models.Post) (bool, error)
 }
 type QueryResolver interface {
@@ -733,6 +735,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Post.Kilograms(childComplexity), true
+
+	case "Post.meeting":
+		if e.complexity.Post.Meeting == nil {
+			break
+		}
+
+		return e.complexity.Post.Meeting(childComplexity), true
 
 	case "Post.organization":
 		if e.complexity.Post.Organization == nil {
@@ -1318,6 +1327,7 @@ type Post {
     kilograms: Float
     photo: File
     files: [File!]!
+    meeting: Meeting
     isEditable: Boolean!
 }
 
@@ -4136,6 +4146,40 @@ func (ec *executionContext) _Post_files(ctx context.Context, field graphql.Colle
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNFile2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐFile(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Post_meeting(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Post",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Post().Meeting(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*models.Meeting)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOMeeting2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeeting(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Post_isEditable(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
@@ -8013,6 +8057,17 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
+				return res
+			})
+		case "meeting":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Post_meeting(ctx, field, obj)
 				return res
 			})
 		case "isEditable":

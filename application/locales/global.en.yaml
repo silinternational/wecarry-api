@@ -68,6 +68,8 @@
   translation: We had a problem finding the photo for that request or offer.
 - id: GetPostFiles
   translation: We had a problem finding the list of attachments for that request or offer.
+- id: GetPostMeeting
+  translation: We had a problem finding the meeting associated with that request or offer.
 - id: GetPosts
   translation: We had a problem finding a list of requests and offers.
 - id: GetPost
