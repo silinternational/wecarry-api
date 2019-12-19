@@ -461,10 +461,10 @@ func GetStructTags(tagType string, s interface{}) (map[string]string, error) {
 	return fieldTags, nil
 }
 
-func GetTranslatedSubject(language, translationID string) string {
-	var argAppName = map[string]string{"AppName": Env.AppName}
+func GetTranslatedSubject(language, translationID string, translationData map[string]string) string {
+	translationData["AppName"] = Env.AppName
 
-	subj, err := TranslateWithLang(language, translationID, argAppName)
+	subj, err := TranslateWithLang(language, translationID, translationData)
 
 	if err != nil {
 		ErrLogger.Printf("error translating '%s' notification subject, %s", translationID, err)
