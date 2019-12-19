@@ -145,25 +145,25 @@
 
 # Request Post Status Transition email subjects
 - id: Email.Subject.Request.FromAcceptedToCommitted
-  translation: Oops, you are not yet expected to fulfill a certain {{.AppName}} request
+  translation: Your {{.AppName}} offer for "{{.postTitle}}" may no longer be needed
 - id: Email.Subject.Request.FromAcceptedOrCommittedToDelivered
-  translation: Request marked as delivered on {{.AppName}}
+  translation: Your {{.AppName}} request for "{{.postTitle}}" has been delivered!
 - id: Email.Subject.Request.FromAcceptedToOpen
-  translation: You are no longer expected to fulfill a certain {{.AppName}} request
+  translation: Your {{.AppName}} offer for "{{.postTitle}}" is no longer needed
 - id: Email.Subject.Request.FromAcceptedOrDeliveredToCompleted
   translation: Thank you for fulfilling a request on {{.AppName}}
 - id: Email.Subject.Request.FromAcceptedToRemoved
-  translation: You are no longer expected to fulfill a certain {{.AppName}} request
+  translation: Your {{.AppName}} offer for "{{.postTitle}}" is no longer needed
 
 - id: Email.Subject.Request.FromCommittedToAccepted
-  translation: Your offer was accepted on {{.AppName}}
+  translation: Your {{.AppName}} offer for "{{.postTitle}}" has been accepted!
 - id: Email.Subject.Request.FromCommittedToOpen
   translation: Request lost its provider on {{.AppName}}
 - id: Email.Subject.Request.FromCommittedToRemoved
-  translation: Request removed on {{.AppName}}
+  translation: Your {{.AppName}} offer for "{{.postTitle}}" is no longer needed
 
 - id: Email.Subject.Request.FromCompletedToAcceptedOrDelivered
-  translation: Oops, request not received on {{.AppName}} after all
+  translation: Request not received on {{.AppName}} after all
 
 - id: Email.Subject.Request.FromDeliveredToAccepted
   translation: Request not delivered after all on {{.AppName}}
@@ -171,8 +171,8 @@
   translation: Request not delivered after all on {{.AppName}}
 
 - id: Email.Subject.Request.FromOpenToCommitted
-  translation: Potential provider on {{.AppName}}
+  translation: Potential provider on {{.AppName}} for "{{.postTitle}}"
 
 # New Message notification subject
 - id: Email.Subject.Message.Created
-  translation: New message on {{.AppName}}
+  translation: New message from {{.sentByNickname}} on {{.AppName}}
