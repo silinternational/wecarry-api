@@ -66,5 +66,6 @@ func createFixturesForMeetings(as *ActionSuite) meetingQueryFixtures {
 		Locations: locations,
 		Meetings:  meetings,
 		Users:     uf.Users,
+		File:      fileFixture,
 	}
 }

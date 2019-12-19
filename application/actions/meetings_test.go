@@ -1,6 +1,10 @@
 package actions
 
 import (
+	"fmt"
+
+	"github.com/gofrs/uuid"
+
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 )
@@ -9,6 +13,7 @@ type meetingQueryFixtures struct {
 	models.Locations
 	models.Meetings
 	models.Users
+	models.File
 }
 
 type meetingsResponse struct {
@@ -169,4 +174,44 @@ func (as *ActionSuite) Test_RecentMeetingsQuery() {
 		"incorrect meeting StartDate")
 	as.Equal(wantMtg.EndDate.Format(domain.DateFormat), gotMtg.EndDate,
 		"incorrect meeting EndDate")
+}
+
+func (as *ActionSuite) Test_CreateMeeting() {
+	f := createFixturesForMeetings(as)
+	user := f.Users[0]
+
+	input := `imageFileID: "` + f.File.UUID.String() + `"` +
+		`
+			name: "name"
+			description: "new description"
+			location: {description:"meeting location" country:"dc" latitude:1.1 longitude:2.2}
+			startDate: "2025-03-01"
+			endDate: "2025-03-21"
+			moreInfoURL: "example.com"
+		`
+	query := `mutation { meeting: createMeeting(input: {` + input + `}) 
+			{ createdBy { nickname } imageFile { id } name
+			description location { description country latitude longitude }
+			startDate endDate moreInfoURL }}`
+
+	var gotMtg meeting
+
+	as.NoError(as.testGqlQuery(query, user.Nickname, &gotMtg))
+
+	fmt.Printf("\n AAAAAAAAAAAA %+v\n", gotMtg)
+
+	emptyUUID := uuid.UUID{}
+	as.NotEqual(emptyUUID, gotMtg.ID, "don't want empty UUID")
+	as.Equal("name", gotMtg.Name, "incorrect meeting Name")
+	as.Equal("description", gotMtg.Description, "incorrect meeting Description")
+	as.Equal("example.com", gotMtg.MoreInfoURL, "incorrect meeting MoreInfoURL")
+	as.Equal(user.Nickname, gotMtg.CreatedBy.Nickname, "incorrect meeting CreatedBy")
+	as.Equal("2025-03-01", gotMtg.StartDate,
+		"incorrect meeting StartDate")
+	as.Equal("2025-03-21", gotMtg.EndDate,
+		"incorrect meeting EndDate")
+
+	as.Equal(f.File.UUID, gotMtg.ImageFile.ID, "incorrect ImageFileID")
+
+	as.Equal("dc", gotMtg.Location.Country, "incorrect meeting Location.Country")
 }
