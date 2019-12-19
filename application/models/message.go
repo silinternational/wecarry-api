@@ -139,9 +139,9 @@ func (m *Message) Create() error {
 	}
 
 	// Touch the "updatedAt" field on the thread so thread lists can easily be sorted by last activity
-	if err2 := DB.Load(m, "Thread"); err2 == nil {
-		if err3 := DB.Save(&m.Thread); err3 != nil {
-			domain.Logger.Print("failed to save thread on message create,", err3.Error())
+	if err := DB.Load(m, "Thread"); err == nil {
+		if err := m.Thread.Update(); err != nil {
+			domain.Logger.Print("failed to save thread on message create,", err.Error())
 		}
 	}
 

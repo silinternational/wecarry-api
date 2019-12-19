@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -83,5 +84,20 @@ func (t *ThreadParticipant) UpdateLastNotifiedAt(newTime time.Time) error {
 	if err := DB.Update(t); err != nil {
 		return fmt.Errorf("failed to update thread_participant.last_notified_at, %s", err)
 	}
+	return nil
+}
+
+// Create stores the ThreadParticipant data as a new record in the database.
+func (t *ThreadParticipant) Create() error {
+	valErrs, err := DB.ValidateAndCreate(t)
+	if err != nil {
+		return err
+	}
+
+	if len(valErrs.Errors) > 0 {
+		vErrs := flattenPopErrors(valErrs)
+		return errors.New(vErrs)
+	}
+
 	return nil
 }

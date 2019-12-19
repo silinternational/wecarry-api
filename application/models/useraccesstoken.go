@@ -163,3 +163,18 @@ func (u *UserAccessTokens) DeleteExpired() (int, error) {
 
 	return deleted, lastErr
 }
+
+// Create stores the UserAccessToken data as a new record in the database.
+func (u *UserAccessToken) Create() error {
+	valErrs, err := DB.ValidateAndCreate(u)
+	if err != nil {
+		return err
+	}
+
+	if len(valErrs.Errors) > 0 {
+		vErrs := flattenPopErrors(valErrs)
+		return errors.New(vErrs)
+	}
+
+	return nil
+}

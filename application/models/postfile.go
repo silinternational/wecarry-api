@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"errors"
 	"time"
 
 	"github.com/gobuffalo/pop"
@@ -46,4 +47,19 @@ func (p *PostFile) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) 
 // ValidateUpdate gets run every time you call "pop.ValidateAndUpdate" method.
 func (p *PostFile) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
+}
+
+// Create stores the PostFile data as a new record in the database.
+func (p *PostFile) Create() error {
+	valErrs, err := DB.ValidateAndCreate(p)
+	if err != nil {
+		return err
+	}
+
+	if len(valErrs.Errors) > 0 {
+		vErrs := flattenPopErrors(valErrs)
+		return errors.New(vErrs)
+	}
+
+	return nil
 }

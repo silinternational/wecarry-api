@@ -96,6 +96,21 @@ func (l *Location) Create() error {
 	return nil
 }
 
+// Update writes the Location data to an existing database record.
+func (l *Location) Update() error {
+	valErrs, err := DB.ValidateAndUpdate(l)
+	if err != nil {
+		return err
+	}
+
+	if len(valErrs.Errors) > 0 {
+		vErrs := flattenPopErrors(valErrs)
+		return errors.New(vErrs)
+	}
+
+	return nil
+}
+
 // DistanceKm calculates the distance in km between two locations
 func (l *Location) DistanceKm(loc2 Location) float64 {
 	if !l.Latitude.Valid || !l.Longitude.Valid || !loc2.Latitude.Valid || !loc2.Longitude.Valid {

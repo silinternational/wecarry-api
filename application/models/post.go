@@ -583,7 +583,8 @@ func (p *Post) AttachFile(fileID string) (File, error) {
 		return f, err
 	}
 
-	if err := DB.Save(&PostFile{PostID: p.ID, FileID: f.ID}); err != nil {
+	postFile := PostFile{PostID: p.ID, FileID: f.ID}
+	if err := postFile.Create(); err != nil {
 		return f, err
 	}
 
@@ -743,7 +744,7 @@ func (p *Post) SetDestination(location Location) error {
 	}
 	location.ID = p.DestinationID
 	p.Destination = location
-	return DB.Update(&p.Destination)
+	return p.Destination.Update()
 }
 
 // SetOrigin sets the origin location fields, creating a new record in the database if necessary.
@@ -751,9 +752,9 @@ func (p *Post) SetOrigin(location Location) error {
 	if p.OriginID.Valid {
 		location.ID = p.OriginID.Int
 		p.Origin = location
-		return DB.Update(&p.Origin)
+		return p.Origin.Update()
 	}
-	if err := DB.Create(&location); err != nil {
+	if err := location.Create(); err != nil {
 		return err
 	}
 	p.OriginID = nulls.NewInt(location.ID)

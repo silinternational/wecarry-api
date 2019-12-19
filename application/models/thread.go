@@ -132,7 +132,7 @@ func (t *Thread) CreateWithParticipants(postUUID string, user User) error {
 		UUID:   domain.GetUUID(),
 	}
 
-	if err := DB.Save(&thread); err != nil {
+	if err := thread.Create(); err != nil {
 		err = fmt.Errorf("error saving new thread for message: %v", err.Error())
 		return err
 	}
@@ -169,8 +169,7 @@ func (t *Thread) createParticipantIfNeeded(tpUsers Users, userID int) error {
 	newTP := ThreadParticipant{}
 	newTP.ThreadID = t.ID
 	newTP.UserID = userID
-	err := DB.Create(&newTP)
-	if err != nil {
+	if err := newTP.Create(); err != nil {
 		return fmt.Errorf("error creating threadParticipant on thread ID: %v ... %v", t.ID, err)
 	}
 	return nil
@@ -226,4 +225,34 @@ func (t *Thread) UnreadMessageCount(userID int, lastViewedAt time.Time) (int, er
 	}
 
 	return count, nil
+}
+
+// Create stores the Thread data as a new record in the database.
+func (t *Thread) Create() error {
+	valErrs, err := DB.ValidateAndCreate(t)
+	if err != nil {
+		return err
+	}
+
+	if len(valErrs.Errors) > 0 {
+		vErrs := flattenPopErrors(valErrs)
+		return errors.New(vErrs)
+	}
+
+	return nil
+}
+
+// Update writes the Thread data to an existing database record.
+func (t *Thread) Update() error {
+	valErrs, err := DB.ValidateAndUpdate(t)
+	if err != nil {
+		return err
+	}
+
+	if len(valErrs.Errors) > 0 {
+		vErrs := flattenPopErrors(valErrs)
+		return errors.New(vErrs)
+	}
+
+	return nil
 }

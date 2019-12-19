@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/silinternational/wecarry-api/domain"
 	"time"
@@ -81,7 +82,7 @@ func (pH PostHistory) createForPost(post Post) error {
 			ProviderID: post.ProviderID,
 		}
 
-		if err := DB.Create(&newPH); err != nil {
+		if err := newPH.Create(); err != nil {
 			return err
 		}
 	}
@@ -121,5 +122,20 @@ func (pH *PostHistory) getLastForPost(post Post) error {
 			return fmt.Errorf("error getting last Post History for post %v ... %v", post.ID, err)
 		}
 	}
+	return nil
+}
+
+// Create stores the PostHistory data as a new record in the database.
+func (pH *PostHistory) Create() error {
+	valErrs, err := DB.ValidateAndCreate(pH)
+	if err != nil {
+		return err
+	}
+
+	if len(valErrs.Errors) > 0 {
+		vErrs := flattenPopErrors(valErrs)
+		return errors.New(vErrs)
+	}
+
 	return nil
 }

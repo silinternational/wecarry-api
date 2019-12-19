@@ -115,7 +115,7 @@ func (o *Organization) AddDomain(domain string) error {
 
 	orgDomain.Domain = domain
 	orgDomain.OrganizationID = o.ID
-	return DB.Save(&orgDomain)
+	return orgDomain.Create()
 }
 
 func (o *Organization) RemoveDomain(domain string) error {

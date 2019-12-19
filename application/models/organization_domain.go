@@ -26,3 +26,8 @@ func (o *OrganizationDomain) GetOrganizationUUID() (string, error) {
 	}
 	return o.Organization.UUID.String(), nil
 }
+
+// Create stores the OrganizationDomain data as a new record in the database.
+func (o *OrganizationDomain) Create() error {
+	return DB.Create(o)
+}

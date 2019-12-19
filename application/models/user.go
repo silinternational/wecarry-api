@@ -137,7 +137,7 @@ func (u *User) CreateAccessToken(org Organization, clientID string) (string, int
 		ExpiresAt:          expireAt,
 	}
 
-	if err := DB.Save(userAccessToken); err != nil {
+	if err := userAccessToken.Create(); err != nil {
 		return "", 0, err
 	}
 
@@ -201,7 +201,7 @@ func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
 		}
 	}
 
-	err = DB.Save(u)
+	err = u.Save()
 	if err != nil {
 		return fmt.Errorf("unable to create new user record: %s", err.Error())
 	}
@@ -215,7 +215,7 @@ func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
 			AuthEmail:      u.Email,
 			LastLogin:      time.Now(),
 		}
-		err = DB.Save(userOrg)
+		err = userOrg.Create()
 		if err != nil {
 			return fmt.Errorf("unable to create new user_organization record: %s", err.Error())
 		}
@@ -380,7 +380,7 @@ func (u *User) AttachPhoto(fileID string) (File, error) {
 	}
 
 	u.PhotoFileID = nulls.NewInt(f.ID)
-	if err := DB.Save(u); err != nil {
+	if err := u.Save(); err != nil {
 		return f, err
 	}
 
@@ -476,9 +476,9 @@ func (u *User) SetLocation(location Location) error {
 	if u.LocationID.Valid {
 		location.ID = u.LocationID.Int
 		u.Location = location
-		return DB.Update(&u.Location)
+		return u.Location.Update()
 	}
-	if err := DB.Create(&location); err != nil {
+	if err := location.Create(); err != nil {
 		return err
 	}
 	u.LocationID = nulls.NewInt(location.ID)
