@@ -2,6 +2,7 @@ package gqlgen
 
 import (
 	"context"
+	"errors"
 
 	"github.com/silinternational/wecarry-api/models"
 )
@@ -12,6 +13,41 @@ func (r *Resolver) Organization() OrganizationResolver {
 }
 
 type organizationResolver struct{ *Resolver }
+
+func (r *queryResolver) Organizations(ctx context.Context) ([]models.Organization, error) {
+	cUser := models.GetCurrentUserFromGqlContext(ctx)
+	extras := map[string]interface{}{
+		"user": cUser.UUID,
+	}
+
+	// get list of orgs that cUser is allowed to see
+	orgs := models.Organizations{}
+	if err := orgs.AllWhereUserIsOrgAdmin(cUser); err != nil {
+		return orgs, reportError(ctx, err, "ListOrganizations.Error", extras)
+	}
+
+	return orgs, nil
+}
+
+func (r *queryResolver) Organization(ctx context.Context, id *string) (*models.Organization, error) {
+	cUser := models.GetCurrentUserFromGqlContext(ctx)
+	extras := map[string]interface{}{
+		"user":    cUser.UUID,
+		"orgUUID": *id,
+	}
+
+	org := &models.Organization{}
+	if err := org.FindByUUID(*id); err != nil {
+		return org, reportError(ctx, err, "ViewOrganization.Error", extras)
+	}
+
+	if org.ID != 0 && cUser.CanViewOrganization(org.ID) {
+		return org, nil
+	}
+
+	return &models.Organization{}, reportError(ctx, errors.New("user not allowed to view organization"),
+		"ViewOrganization.NotFound", extras)
+}
 
 // ID resolves the `ID` property of the organization query. It provides the UUID instead of the autoincrement ID.
 func (r *organizationResolver) ID(ctx context.Context, obj *models.Organization) (string, error) {
