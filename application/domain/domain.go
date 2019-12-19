@@ -473,7 +473,7 @@ func GetTranslatedSubject(language, translationID string, translationData map[st
 	return subj
 }
 
-// Truncate returns the given string truncated to length and suffixed with suffix if originally longer than length
+// Truncate returns the given string truncated to length including the suffix if originally longer than length
 func Truncate(str, suffix string, length int) string {
 	a := []rune(str)
 	s := []rune(suffix)
