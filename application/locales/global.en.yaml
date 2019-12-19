@@ -19,7 +19,7 @@
 - id: UpdateMeeting
   translation: We had a problem updating the meeting.
 - id: UpdateMeeting.ProcessInput
-  translation: We had a problem creating the new meeting.
+  translation: We had a problem processing the information to update that meeting.
 - id: GetMessageSender
   translation: We had a problem finding the message sender information.
 - id: GetMessageThread
