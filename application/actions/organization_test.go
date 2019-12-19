@@ -237,20 +237,20 @@ func (as *ActionSuite) Test_OrganizationViewAndList() {
 
 	// create organizations
 	org1 := models.Organization{
-		Name:                "Org1",
-		Url:                 nulls.String{},
-		AuthType:            models.AuthTypeSaml,
-		AuthConfig:          "{}",
-		UUID:                domain.GetUUID(),
+		Name:       "Org1",
+		Url:        nulls.String{},
+		AuthType:   models.AuthTypeSaml,
+		AuthConfig: "{}",
+		UUID:       domain.GetUUID(),
 	}
 	test.MustCreate(as.DB, &org1)
 	// create organizations
 	org2 := models.Organization{
-		Name:                "Org2",
-		Url:                 nulls.String{},
-		AuthType:            models.AuthTypeSaml,
-		AuthConfig:          "{}",
-		UUID:                domain.GetUUID(),
+		Name:       "Org2",
+		Url:        nulls.String{},
+		AuthType:   models.AuthTypeSaml,
+		AuthConfig: "{}",
+		UUID:       domain.GetUUID(),
 	}
 	test.MustCreate(as.DB, &org2)
 
@@ -270,117 +270,146 @@ func (as *ActionSuite) Test_OrganizationViewAndList() {
 	as.NoError(as.DB.Save(&userFixtures.Users[2].UserOrganizations[0]))
 
 	// Test view org1 for each user. users 0,1,2 should succeed, user 3 should fail
-	viewOrg1Payload := fmt.Sprintf(`{"query": "{organization(id: \"%s\"){id}}"}`, org1.UUID.String())
-	listOrgsPayload := `{"query": "{organizations{id}}"}`
+	viewOrg1Payload := fmt.Sprintf(`{organization(id: "%s"){id}}`, org1.UUID.String())
+	listOrgsPayload := `{organizations{id}}`
+
+	type org struct {
+		ID string `json:"id"`
+	}
+
+	type singleOrgResp struct {
+		Organization org `json:"organization"`
+	}
+
+	type orgs struct {
+		Organizations []org `json:"organizations"`
+	}
 
 	type testCase struct {
-		Name            string
-		Token           string
-		Payload         string
-		ExpectError     bool
-		ExpectSubStrings []string
+		Name                 string
+		Token                string
+		Payload              string
+		Response             interface{}
+		Expect               interface{}
+		ExpectError          bool
+		ExpectSubStrings     []string
 		DontExpectSubStrings []string
 	}
 
 	testCases := []testCase{
 		{
-			Name: "View org 1 as user 0 (super admin)",
-			Token: userFixtures.Users[0].Nickname,
-			Payload: viewOrg1Payload,
-			ExpectError: false,
+			Name:     "View org 1 as user 0 (super admin)",
+			Token:    userFixtures.Users[0].Nickname,
+			Payload:  viewOrg1Payload,
+			Response: &singleOrgResp{},
+			Expect: &singleOrgResp{
+				org{ID: org1.UUID.String()},
+			},
+			ExpectError:      false,
 			ExpectSubStrings: []string{org1.UUID.String()},
 		},
 		{
-			Name: "View org 1 as user 1 (sales admin)",
-			Token: userFixtures.Users[1].Nickname,
-			Payload: viewOrg1Payload,
-			ExpectError: false,
+			Name:     "View org 1 as user 1 (sales admin)",
+			Token:    userFixtures.Users[1].Nickname,
+			Payload:  viewOrg1Payload,
+			Response: &singleOrgResp{},
+			Expect: &singleOrgResp{
+				org{ID: org1.UUID.String()},
+			},
+			ExpectError:      false,
 			ExpectSubStrings: []string{org1.UUID.String()},
 		},
 		{
-			Name: "View org 1 as user 2 (org admin)",
-			Token: userFixtures.Users[2].Nickname,
-			Payload: viewOrg1Payload,
-			ExpectError: false,
+			Name:     "View org 1 as user 2 (org admin)",
+			Token:    userFixtures.Users[2].Nickname,
+			Payload:  viewOrg1Payload,
+			Response: &singleOrgResp{},
+			Expect: &singleOrgResp{
+				org{ID: org1.UUID.String()},
+			},
+			ExpectError:      false,
 			ExpectSubStrings: []string{org1.UUID.String()},
 		},
 		{
-			Name: "View org 1 as user 3 (normal user)",
-			Token: userFixtures.Users[3].Nickname,
-			Payload: viewOrg1Payload,
+			Name:     "View org 1 as user 3 (normal user)",
+			Token:    userFixtures.Users[3].Nickname,
+			Payload:  viewOrg1Payload,
+			Response: &singleOrgResp{},
+			Expect: &singleOrgResp{
+				org{},
+			},
 			ExpectError: true,
 		},
 		{
-			Name: "List orgs as user 0 (super admin)",
-			Token: userFixtures.Users[0].Nickname,
-			Payload: listOrgsPayload,
-			ExpectError: false,
+			Name:     "List orgs as user 0 (super admin)",
+			Token:    userFixtures.Users[0].Nickname,
+			Payload:  listOrgsPayload,
+			Response: &orgs{},
+			Expect: &orgs{
+				[]org{
+					{
+						ID: org1.UUID.String(),
+					},
+					{
+						ID: org2.UUID.String(),
+					},
+				},
+			},
+			ExpectError:      false,
 			ExpectSubStrings: []string{org1.UUID.String(), org2.UUID.String()},
 		},
 		{
-			Name: "List orgs as user 1 (sales admin)",
-			Token: userFixtures.Users[1].Nickname,
-			Payload: listOrgsPayload,
-			ExpectError: false,
+			Name:     "List orgs as user 1 (sales admin)",
+			Token:    userFixtures.Users[1].Nickname,
+			Payload:  listOrgsPayload,
+			Response: &orgs{},
+			Expect: &orgs{
+				[]org{
+					{
+						ID: org1.UUID.String(),
+					},
+					{
+						ID: org2.UUID.String(),
+					},
+				},
+			},
+			ExpectError:      false,
 			ExpectSubStrings: []string{org1.UUID.String(), org2.UUID.String()},
 		},
 		{
-			Name: "List orgs as user 2 (org admin)",
-			Token: userFixtures.Users[2].Nickname,
-			Payload: listOrgsPayload,
-			ExpectError: false,
-			ExpectSubStrings: []string{org1.UUID.String()},
+			Name:     "List orgs as user 2 (org admin)",
+			Token:    userFixtures.Users[2].Nickname,
+			Payload:  listOrgsPayload,
+			Response: &orgs{},
+			Expect: &orgs{
+				[]org{
+					{
+						ID: org1.UUID.String(),
+					},
+				},
+			},
+			ExpectError:          false,
+			ExpectSubStrings:     []string{org1.UUID.String()},
 			DontExpectSubStrings: []string{org2.UUID.String()},
 		},
 		{
-			Name: "List orgs as user 3 (normal user)",
-			Token: userFixtures.Users[3].Nickname,
-			Payload: listOrgsPayload,
-			ExpectError: false,
+			Name:                 "List orgs as user 3 (normal user)",
+			Token:                userFixtures.Users[3].Nickname,
+			Payload:              listOrgsPayload,
+			Response:             &orgs{},
+			Expect:               &orgs{[]org{}},
+			ExpectError:          false,
 			DontExpectSubStrings: []string{org1.UUID.String(), org2.UUID.String()},
 		},
 	}
 
 	for _, tc := range testCases {
-		payload := bytes.NewReader([]byte(tc.Payload))
-		req := httptest.NewRequest("POST", "/gql", payload)
-		resp := httptest.NewRecorder()
-		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tc.Token))
-		req.Header.Set("content-type", "application/json")
-
-		as.App.ServeHTTP(resp, req)
-
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			t.Error(err)
+		err := as.testGqlQuery(tc.Payload, tc.Token, &tc.Response)
+		if tc.ExpectError && err == nil {
+			t.Errorf("did not get expected errors in test %s, response: +%v", tc.Name, tc.Response)
 		}
 
-		if tc.ExpectError {
-			var errResp gqlErrorResponse
-			err = json.Unmarshal(body, &errResp)
-			if err != nil {
-				t.Error(err)
-			}
-
-			if len(errResp.Errors) == 0 {
-				t.Errorf("did not get expected errors in test %s, response: +%v", tc.Name, errResp)
-			}
-
-			continue
-		}
-
-		for _, sub := range tc.ExpectSubStrings {
-			if !strings.Contains(string(body), sub) {
-				t.Errorf("ExpectSubString \"%s\" not found in response: %s. test case: %s", sub, string(body), tc.Name)
-			}
-		}
-
-		for _, sub := range tc.DontExpectSubStrings {
-			if strings.Contains(string(body), sub) {
-				t.Errorf("DontExpectSubString \"%s\" found in response and should not have been: %s. test case: %s", sub, string(body), tc.Name)
-			}
-		}
-
+		as.Equal(tc.Expect, tc.Response, tc.Name)
 	}
 
 }
