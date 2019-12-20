@@ -248,4 +248,11 @@ func (as *ActionSuite) Test_UpdateMeeting() {
 
 	as.Equal(f.File.UUID.String(), gotMtg.ImageFile.ID)
 	as.Equal("dc", gotMtg.Location.Country, "incorrect meeting Location.Country")
+
+	// Not authorized
+	err = as.testGqlQuery(query, f.Users[1].Nickname, &resp)
+	as.Error(err, "expected an authorization error but did not get one")
+
+	as.Contains(err.Error(), "You are not allowed to edit the information for that meeting.", "incorrect authorization error message")
+
 }
