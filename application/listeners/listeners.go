@@ -1,12 +1,14 @@
 package listeners
 
 import (
+	"errors"
 	"time"
 
 	"github.com/gobuffalo/events"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/job"
 	"github.com/silinternational/wecarry-api/models"
+	"github.com/silinternational/wecarry-api/notifications"
 )
 
 const (
@@ -101,7 +103,19 @@ func userCreated(e events.Event) {
 		return
 	}
 
+	user, ok := e.Payload["user"].(*models.User)
+	if !ok {
+		domain.Logger.Printf("%s Failed to get User from event payload for notification. Event message: %s",
+			domain.GetCurrentTime(), e.Message)
+		return
+	}
+
 	domain.Logger.Printf("%s User Created ... %s", domain.GetCurrentTime(), e.Message)
+
+	if err := sendNewUserWelcome(*user); err != nil {
+		domain.Logger.Printf("%s Failed to send new user welcome to %s. Error: %s",
+			domain.GetCurrentTime(), user.UUID.String(), err)
+	}
 }
 
 func sendNewThreadMessageNotification(e events.Event) {
@@ -171,4 +185,24 @@ func sendPostCreatedNotifications(e events.Event) {
 	}
 
 	sendNewPostNotifications(post, users)
+}
+
+func sendNewUserWelcome(user models.User) error {
+	if user.Email == "" {
+		return errors.New("'To' email address is required")
+	}
+
+	msg := notifications.Message{
+		Template:  domain.MessageTemplateNewUserWelcome,
+		ToName:    user.FirstName + " " + user.LastName,
+		ToEmail:   user.Email,
+		FromEmail: domain.Env.EmailFromAddress,
+		Data: map[string]interface{}{
+			"appName":      domain.Env.AppName,
+			"uiURL":        domain.Env.UIURL,
+			"supportEmail": domain.Env.SupportEmail,
+			"userEmail":    user.Email,
+		},
+	}
+	return notifications.Send(msg)
 }

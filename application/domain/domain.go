@@ -50,6 +50,7 @@ const (
 	MessageTemplateNewOffer                        = "new_offer"
 	MessageTemplateNewRequest                      = "new_request"
 	MessageTemplateNewThreadMessage                = "new_thread_message"
+	MessageTemplateNewUserWelcome                  = "new_user_welcome"
 	MessageTemplateRequestFromAcceptedToCommitted  = "request_from_accepted_to_committed"
 	MessageTemplateRequestFromAcceptedToCompleted  = "request_from_accepted_to_completed"
 	MessageTemplateRequestFromAcceptedToDelivered  = "request_from_accepted_to_delivered"
@@ -124,6 +125,7 @@ var Env struct {
 	RollbarToken               string
 	SendGridAPIKey             string
 	SessionSecret              string
+	SupportEmail               string
 	UIURL                      string
 }
 
@@ -166,6 +168,7 @@ func readEnv() {
 	Env.RollbarToken = envy.Get("ROLLBAR_TOKEN", "")
 	Env.SendGridAPIKey = envy.Get("SENDGRID_API_KEY", "")
 	Env.SessionSecret = envy.Get("SESSION_SECRET", "testing")
+	Env.SupportEmail = envy.Get("SUPPORT_EMAIL", "")
 	Env.UIURL = envy.Get("UI_URL", "dev.wecarry.app")
 }
 

@@ -90,18 +90,31 @@ func (ms *ModelSuite) TestUserCreated() {
 		domain.Logger.SetOutput(os.Stdout)
 	}()
 
-	user := "GoodOne"
+	user := models.User{
+		Email:     "test@test.com",
+		FirstName: "test",
+		LastName:  "user",
+		Nickname:  "testy",
+		AdminRole: models.UserAdminRoleUser,
+		UUID:      domain.GetUUID(),
+	}
 
 	e := events.Event{
 		Kind:    domain.EventApiUserCreated,
-		Message: user,
+		Message: "Nickname: " + user.Nickname + "  UUID: " + user.UUID.String(),
+		Payload: events.Payload{"user": &user},
 	}
 
-	userCreated(e)
-	got := buf.String()
-	want := "User Created ... " + user
+	notifications.TestEmailService.DeleteSentMessages()
 
+	userCreated(e)
+
+	got := buf.String()
+	want := "User Created ... " + e.Message
 	ms.Contains(got, want, "Got an unexpected log entry")
+
+	emailCount := notifications.TestEmailService.GetNumberOfMessagesSent()
+	ms.Equal(1, emailCount, "wrong email count")
 
 }
 

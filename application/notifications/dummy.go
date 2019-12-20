@@ -99,6 +99,10 @@ var dummyTemplates = map[string]dummyTemplate{
 		subject: domain.MessageTemplateRequestFromOpenToRemoved,
 		body:    "The status of a request changed from open to removed.",
 	},
+	domain.MessageTemplateNewUserWelcome: {
+		subject: domain.MessageTemplateNewUserWelcome,
+		body:    "welcome",
+	},
 }
 
 func (t *DummyEmailService) Send(msg Message) error {
