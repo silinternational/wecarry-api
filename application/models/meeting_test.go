@@ -18,6 +18,8 @@ type meetingFixtures struct {
 // TestMeeting_Validate ensures errors are thrown for missing required fields
 func (ms *ModelSuite) TestMeeting_Validate() {
 	t := ms.T()
+	now := time.Now()
+
 	tests := []struct {
 		name     string
 		meeting  Meeting
@@ -32,8 +34,8 @@ func (ms *ModelSuite) TestMeeting_Validate() {
 				Name:        "A Meeting",
 				CreatedByID: 1,
 				LocationID:  1,
-				StartDate:   time.Now(),
-				EndDate:     time.Now(),
+				StartDate:   now,
+				EndDate:     now,
 			},
 			wantErr: false,
 		},
@@ -43,8 +45,8 @@ func (ms *ModelSuite) TestMeeting_Validate() {
 				UUID:       domain.GetUUID(),
 				Name:       "A Meeting",
 				LocationID: 1,
-				StartDate:  time.Now(),
-				EndDate:    time.Now(),
+				StartDate:  now,
+				EndDate:    now,
 			},
 			wantErr:  true,
 			errField: "created_by_id",
@@ -55,8 +57,8 @@ func (ms *ModelSuite) TestMeeting_Validate() {
 				UUID:        domain.GetUUID(),
 				Name:        "A Meeting",
 				CreatedByID: 1,
-				StartDate:   time.Now(),
-				EndDate:     time.Now(),
+				StartDate:   now,
+				EndDate:     now,
 			},
 			wantErr:  true,
 			errField: "location_id",
@@ -68,7 +70,7 @@ func (ms *ModelSuite) TestMeeting_Validate() {
 				Name:        "A Meeting",
 				CreatedByID: 1,
 				LocationID:  1,
-				EndDate:     time.Now(),
+				EndDate:     now,
 			},
 			wantErr:  true,
 			errField: "start_date",
@@ -80,7 +82,7 @@ func (ms *ModelSuite) TestMeeting_Validate() {
 				Name:        "A Meeting",
 				CreatedByID: 1,
 				LocationID:  1,
-				StartDate:   time.Now(),
+				StartDate:   now,
 			},
 			wantErr:  true,
 			errField: "end_date",
@@ -91,11 +93,23 @@ func (ms *ModelSuite) TestMeeting_Validate() {
 				Name:        "A Meeting",
 				CreatedByID: 1,
 				LocationID:  1,
-				StartDate:   time.Now(),
-				EndDate:     time.Now(),
+				StartDate:   now,
+				EndDate:     now,
 			},
 			wantErr:  true,
 			errField: "uuid",
+		},
+		{
+			name: "dates the same",
+			meeting: Meeting{
+				Name:        "A Meeting",
+				UUID:        domain.GetUUID(),
+				CreatedByID: 1,
+				LocationID:  1,
+				StartDate:   now,
+				EndDate:     now,
+			},
+			wantErr: false,
 		},
 		{
 			name: "dates out of order",
@@ -105,7 +119,7 @@ func (ms *ModelSuite) TestMeeting_Validate() {
 				CreatedByID: 1,
 				LocationID:  1,
 				StartDate:   time.Now().Add(time.Duration(domain.DurationDay)),
-				EndDate:     time.Now(),
+				EndDate:     now,
 			},
 			wantErr:  true,
 			errField: "dates",
