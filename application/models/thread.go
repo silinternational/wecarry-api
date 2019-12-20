@@ -129,7 +129,6 @@ func (t *Thread) CreateWithParticipants(postUUID string, user User) error {
 
 	thread := Thread{
 		PostID: post.ID,
-		UUID:   domain.GetUUID(),
 	}
 
 	if err := thread.Create(); err != nil {

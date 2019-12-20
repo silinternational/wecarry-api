@@ -190,10 +190,8 @@ func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
 		u.AuthPhotoURL = nulls.NewString(authUser.PhotoURL)
 	}
 
-	// if new user they will need a uuid and a unique Nickname
+	// if new user they will need a unique Nickname
 	if newUser {
-		u.UUID = domain.GetUUID()
-
 		u.Nickname = authUser.Nickname
 		if err := u.uniquifyNickname(); err != nil {
 			return err
