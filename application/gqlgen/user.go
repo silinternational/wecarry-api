@@ -118,7 +118,7 @@ func (r *queryResolver) Users(ctx context.Context) ([]models.User, error) {
 		extras := map[string]interface{}{
 			"role": role,
 		}
-		return nil, reportError(ctx, err, "GetUsers.NotAllowed", extras)
+		return nil, reportError(ctx, err, "GetUsers.Unauthorized", extras)
 	}
 
 	users := models.Users{}
@@ -143,7 +143,7 @@ func (r *queryResolver) User(ctx context.Context, id *string) (*models.User, err
 		extras := map[string]interface{}{
 			"role": role,
 		}
-		return nil, reportError(ctx, err, "GetUser.NotAllowed", extras)
+		return nil, reportError(ctx, err, "GetUser.Unauthorized", extras)
 	}
 
 	dbUser := models.User{}
@@ -171,7 +171,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 
 	if cUser.AdminRole != models.UserAdminRoleSuperAdmin && cUser.ID != user.ID {
 		err := errors.New("insufficient permissions")
-		return nil, reportError(ctx, err, "UpdateUser.NotAllowed")
+		return nil, reportError(ctx, err, "UpdateUser.Unauthorized")
 	}
 
 	if input.Nickname != nil {

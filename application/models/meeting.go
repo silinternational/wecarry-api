@@ -85,13 +85,17 @@ func (m *Meeting) FindByUUID(uuid string) error {
 	return nil
 }
 
+func getOrdered(m *Meetings, q *pop.Query) error {
+	return q.Order("start_date asc").All(m)
+}
+
 // FindOnDate finds the meetings that have StartDate before timeInFocus-date and an EndDate after it
 // (inclusive on both)
 func (m *Meetings) FindOnDate(timeInFocus time.Time) error {
 	date := timeInFocus.Format(domain.DateTimeFormat)
 	where := "start_date <= ? and end_date >= ?"
 
-	if err := DB.Eager("CreatedBy").Where(where, date, date).All(m); err != nil {
+	if err := getOrdered(m, DB.Eager("CreatedBy").Where(where, date, date)); err != nil {
 		return fmt.Errorf("error finding meeting with start_date and end_date straddling %s ... %s",
 			date, err.Error())
 	}
@@ -104,7 +108,7 @@ func (m *Meetings) FindOnOrAfterDate(timeInFocus time.Time) error {
 
 	date := timeInFocus.Format(domain.DateTimeFormat)
 
-	if err := DB.Eager("CreatedBy").Where("end_date >= ?", date).All(m); err != nil {
+	if err := getOrdered(m, DB.Eager("CreatedBy").Where("end_date >= ?", date)); err != nil {
 		return fmt.Errorf("error finding meeting with end_date before %s ... %s", date, err.Error())
 	}
 
@@ -115,7 +119,7 @@ func (m *Meetings) FindOnOrAfterDate(timeInFocus time.Time) error {
 func (m *Meetings) FindAfterDate(timeInFocus time.Time) error {
 	date := timeInFocus.Format(domain.DateTimeFormat)
 
-	if err := DB.Eager("CreatedBy").Where("start_date > ?", date).All(m); err != nil {
+	if err := getOrdered(m, DB.Eager("CreatedBy").Where("start_date > ?", date)); err != nil {
 		return fmt.Errorf("error finding meeting with start_date after %s ... %s", date, err.Error())
 	}
 
@@ -129,7 +133,7 @@ func (m *Meetings) FindRecent(timeInFocus time.Time) error {
 	recentDate := timeInFocus.Add(-domain.RecentMeetingDelay)
 	where := "end_date between ? and ?"
 
-	if err := DB.Eager("CreatedBy").Where(where, recentDate, yesterday).All(m); err != nil {
+	if err := getOrdered(m, DB.Eager("CreatedBy").Where(where, recentDate, yesterday)); err != nil {
 		return fmt.Errorf("error finding meeting with end_date between %s and %s ... %s",
 			recentDate, yesterday, err.Error())
 	}
@@ -190,4 +194,60 @@ func (m *Meeting) GetLocation() (Location, error) {
 	}
 
 	return location, nil
+}
+
+// SetLocation sets the location field, creating a new record in the database if necessary.
+func (m *Meeting) SetLocation(location Location) error {
+	location.ID = m.LocationID
+	m.Location = location
+	return DB.Update(&m.Location)
+}
+
+// Create stores the Meeting data as a new record in the database.
+func (m *Meeting) Create() error {
+	if m.UUID.Version() == 0 {
+		m.UUID = domain.GetUUID()
+	}
+
+	valErrs, err := DB.ValidateAndCreate(m)
+	if err != nil {
+		return err
+	}
+
+	if len(valErrs.Errors) > 0 {
+		vErrs := flattenPopErrors(valErrs)
+		return errors.New(vErrs)
+	}
+
+	return nil
+}
+
+// Update writes the Meeting data to an existing database record.
+func (m *Meeting) Update() error {
+	valErrs, err := DB.ValidateAndUpdate(m)
+	if err != nil {
+		return err
+	}
+
+	if len(valErrs.Errors) > 0 {
+		vErrs := flattenPopErrors(valErrs)
+		return errors.New(vErrs)
+	}
+
+	return nil
+}
+
+// CanCreate returns a bool based on whether the current user is allowed to create a meeting
+func (m *Meeting) CanCreate(user User) bool {
+	return true
+}
+
+// CanUpdate returns a bool based on whether the current user is allowed to update a meeting
+func (m *Meeting) CanUpdate(user User) bool {
+	switch user.AdminRole {
+	case UserAdminRoleSuperAdmin, UserAdminRoleSalesAdmin, UserAdminRoleAdmin:
+		return true
+	}
+
+	return user.ID == m.CreatedByID
 }

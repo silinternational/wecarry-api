@@ -411,7 +411,7 @@ func (r *mutationResolver) UpdatePostStatus(ctx context.Context, input UpdatePos
 	}
 	if !cUser.CanUpdatePostStatus(post, input.Status) {
 		return nil, reportError(ctx, errors.New("not allowed to change post status"),
-			"UpdatePostStatus.NotAllowed", extras)
+			"UpdatePostStatus.Unauthorized", extras)
 	}
 
 	post.SetProviderWithStatus(input.Status, cUser)
