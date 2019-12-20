@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log"
+	"reflect"
 	"strings"
 
 	"github.com/gobuffalo/buffalo"
@@ -15,6 +16,7 @@ import (
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
 	"github.com/gobuffalo/validate/validators"
+	"github.com/gofrs/uuid"
 	"github.com/pkg/errors"
 	"github.com/silinternational/wecarry-api/domain"
 )
@@ -169,4 +171,52 @@ func emitEvent(e events.Event) {
 	if err := events.Emit(e); err != nil {
 		domain.ErrLogger.Printf("error emitting event %s ... %v", e.Kind, err)
 	}
+}
+
+func create(m interface{}) error {
+	uuidField := reflect.ValueOf(m).Elem().FieldByName("UUID")
+	if uuidField.IsValid() {
+		uuidField.Set(reflect.ValueOf(domain.GetUUID()))
+	}
+
+	valErrs, err := DB.ValidateAndCreate(m)
+	if err != nil {
+		return err
+	}
+
+	if valErrs.HasAny() {
+		return errors.New(flattenPopErrors(valErrs))
+	}
+	return nil
+}
+
+func update(m interface{}) error {
+	valErrs, err := DB.ValidateAndUpdate(m)
+	if err != nil {
+		return err
+	}
+
+	if valErrs.HasAny() {
+		return errors.New(flattenPopErrors(valErrs))
+	}
+	return nil
+}
+
+func save(m interface{}) error {
+	uuidField := reflect.ValueOf(m).Elem().FieldByName("UUID")
+	if uuidField.IsValid() {
+		u := uuidField.Interface().(uuid.UUID)
+		if u.Version() == 0 {
+			uuidField.Set(reflect.ValueOf(domain.GetUUID()))
+		}
+	}
+
+	validationErrs, err := DB.ValidateAndSave(m)
+	if validationErrs != nil && validationErrs.HasAny() {
+		return errors.New(flattenPopErrors(validationErrs))
+	}
+	if err != nil {
+		return err
+	}
+	return nil
 }

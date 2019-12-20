@@ -110,7 +110,7 @@ func (ms *ModelSuite) TestUserCreated() {
 	userCreated(e)
 
 	got := buf.String()
-	want := "User Created ... " + e.Message
+	want := fmt.Sprintf("User Created: %s", e.Message)
 	ms.Contains(got, want, "Got an unexpected log entry")
 
 	emailCount := notifications.TestEmailService.GetNumberOfMessagesSent()

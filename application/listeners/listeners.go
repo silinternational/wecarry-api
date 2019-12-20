@@ -105,16 +105,15 @@ func userCreated(e events.Event) {
 
 	user, ok := e.Payload["user"].(*models.User)
 	if !ok {
-		domain.Logger.Printf("%s Failed to get User from event payload for notification. Event message: %s",
-			domain.GetCurrentTime(), e.Message)
+		domain.Logger.Printf("Failed to get User from event payload for notification. Event message: %s", e.Message)
 		return
 	}
 
-	domain.Logger.Printf("%s User Created ... %s", domain.GetCurrentTime(), e.Message)
+	domain.Logger.Printf("User Created: %s", e.Message)
 
 	if err := sendNewUserWelcome(*user); err != nil {
-		domain.Logger.Printf("%s Failed to send new user welcome to %s. Error: %s",
-			domain.GetCurrentTime(), user.UUID.String(), err)
+		domain.Logger.Printf("Failed to send new user welcome to %s. Error: %s",
+			user.UUID.String(), err)
 	}
 }
 
@@ -194,7 +193,7 @@ func sendNewUserWelcome(user models.User) error {
 
 	msg := notifications.Message{
 		Template:  domain.MessageTemplateNewUserWelcome,
-		ToName:    user.FirstName + " " + user.LastName,
+		ToName:    user.GetRealName(),
 		ToEmail:   user.Email,
 		FromEmail: domain.Env.EmailFromAddress,
 		Data: map[string]interface{}{
@@ -202,6 +201,7 @@ func sendNewUserWelcome(user models.User) error {
 			"uiURL":        domain.Env.UIURL,
 			"supportEmail": domain.Env.SupportEmail,
 			"userEmail":    user.Email,
+			"firstName":    user.FirstName,
 		},
 	}
 	return notifications.Send(msg)

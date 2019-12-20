@@ -88,7 +88,6 @@ func convertGqlCreateMessageInputToDBMessage(gqlMessage CreateMessageInput, user
 	}
 
 	dbMessage := models.Message{}
-	dbMessage.UUID = domain.GetUUID()
 	dbMessage.Content = gqlMessage.Content
 	dbMessage.ThreadID = thread.ID
 	dbMessage.SentByID = user.ID

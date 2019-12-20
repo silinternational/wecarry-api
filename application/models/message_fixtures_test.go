@@ -66,6 +66,7 @@ func Fixtures_Message_Create(ms *ModelSuite, t *testing.T) MessageFixtures {
 
 	threads := Threads{
 		{
+			UUID:      domain.GetUUID(),
 			CreatedAt: time.Now().Add(-10 * time.Minute),
 			UpdatedAt: time.Now().Add(-10 * time.Minute),
 			PostID:    posts[0].ID,

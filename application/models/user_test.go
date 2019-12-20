@@ -707,10 +707,8 @@ func (ms *ModelSuite) TestUser_FindByID() {
 func (ms *ModelSuite) TestUser_AttachPhoto() {
 	t := ms.T()
 
-	user := User{}
-	if err := ms.DB.Create(&user); err != nil {
-		t.Errorf("failed to create user fixture, %s", err)
-	}
+	uf := createUserFixtures(ms.DB, 1)
+	user := uf.Users[0]
 
 	var photoFixture File
 	const filename = "photo.gif"
@@ -896,10 +894,10 @@ func (ms *ModelSuite) TestUser_UniquifyNickname() {
 }
 
 func (ms *ModelSuite) TestUser_SetLocation() {
-	t := ms.T()
-
-	user := User{UUID: domain.GetUUID(), Email: t.Name() + "_user@example.com", Nickname: t.Name() + "_User"}
-	createFixture(ms, &user)
+	uf := createUserFixtures(ms.DB, 1)
+	user := uf.Users[0]
+	user.LocationID = nulls.Int{}
+	ms.NoError(ms.DB.Save(&user))
 
 	locationFixtures := Locations{
 		{
