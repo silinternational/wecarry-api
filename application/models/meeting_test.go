@@ -4,10 +4,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/validate"
 
 	"github.com/silinternational/wecarry-api/domain"
 )
+
+type meetingFixtures struct {
+	Meetings
+	Users
+}
 
 // TestMeeting_Validate ensures errors are thrown for missing required fields
 func (ms *ModelSuite) TestMeeting_Validate() {
@@ -300,8 +306,8 @@ func (ms *ModelSuite) TestMeeting_AttachImage_GetImage() {
 
 	var imageFixture File
 	const filename = "photo.gif"
-	if err := imageFixture.Store(filename, []byte("GIF89a")); err != nil {
-		t.Errorf("failed to create file fixture, %s", err)
+	if fErr := imageFixture.Store(filename, []byte("GIF89a")); fErr != nil {
+		t.Errorf("failed to create file fixture, %v", fErr)
 	}
 
 	attachedFile, err := meeting.AttachImage(imageFixture.UUID.String())
@@ -326,4 +332,63 @@ func (ms *ModelSuite) TestMeeting_AttachImage_GetImage() {
 	} else {
 		ms.Fail("meeting.GetImagefailed, %s", err)
 	}
+}
+
+func (ms *ModelSuite) TestMeeting_GetSetLocation() {
+	t := ms.T()
+
+	user := User{UUID: domain.GetUUID(), Email: t.Name() + "_user@example.com", Nickname: t.Name() + "_User"}
+	createFixture(ms, &user)
+
+	organization := Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
+	createFixture(ms, &organization)
+
+	locations := Locations{
+		{
+			Description: "a place",
+			Country:     "XY",
+			Latitude:    nulls.NewFloat64(1.1),
+			Longitude:   nulls.NewFloat64(2.2),
+		},
+		{
+			Description: "another place",
+			Country:     "AB",
+			Latitude:    nulls.Float64{},
+			Longitude:   nulls.Float64{},
+		},
+	}
+	createFixture(ms, &locations[0]) // only save the first record for now
+
+	meeting := Meeting{CreatedByID: user.ID, Name: "name", LocationID: locations[0].ID}
+	createFixture(ms, &meeting)
+
+	err := meeting.SetLocation(locations[1])
+	ms.NoError(err, "unexpected error from meeting.SetLocation()")
+
+	locationFromDB, err := meeting.GetLocation()
+	ms.NoError(err, "unexpected error from meeting.GetLocation()")
+	locations[1].ID = locationFromDB.ID
+	ms.Equal(locations[1], locationFromDB, "location data doesn't match after update")
+
+	// These are redundant checks, but here to document the fact that a null overwrites previous data.
+	ms.False(locationFromDB.Latitude.Valid)
+	ms.False(locationFromDB.Longitude.Valid)
+}
+
+func (ms *ModelSuite) TestMeeting_CanUpdate() {
+	f := createMeetingFixtures_CanUpdate(ms)
+
+	mtgUser := f.Users[0]
+	superUser := f.Users[1]
+	salesUser := f.Users[2]
+	adminUser := f.Users[3]
+	otherUser := f.Users[4]
+
+	mtg := f.Meetings[0]
+
+	ms.True(mtg.CanUpdate(mtgUser), "meeting creator should be authorized")
+	ms.True(mtg.CanUpdate(superUser), "super admin should be authorized")
+	ms.True(mtg.CanUpdate(salesUser), "sales admin should be authorized")
+	ms.True(mtg.CanUpdate(adminUser), "admin should be authorized")
+	ms.False(mtg.CanUpdate(otherUser), "normal user (non meeting creator) should NOT be authorized")
 }

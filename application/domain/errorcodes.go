@@ -77,3 +77,9 @@ const ErrorUnableToReadFile = "ErrorUnableToReadFile"
 
 // actions.UploadHandler
 const ErrorUnableToStoreFile = "ErrorUnableToStoreFile"
+
+// models.Store
+const ErrorStoreFileTooLarge = "ErrorStoreFileTooLarge"
+
+// models.Store
+const ErrorStoreFileBadContentType = "ErrorStoreFileBadContentType"

@@ -101,6 +101,10 @@ models:
     fields:
       id:
         resolver: true
+  UpdateMeetingInput:
+    model: gqlgen.meetingInput
+  CreateMeetingInput:
+    model: gqlgen.meetingInput
   UpdatePostInput:
     model: gqlgen.postInput
   CreatePostInput:
