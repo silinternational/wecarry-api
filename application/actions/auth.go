@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/buffalo/render"
 	"github.com/gobuffalo/events"
+
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 )
@@ -462,25 +464,25 @@ func setCurrentUser(next buffalo.Handler) buffalo.Handler {
 // getLoginSuccessRedirectURL generates the URL for redirection after a successful login
 func getLoginSuccessRedirectURL(authUser AuthUser, returnTo string) string {
 
-	uiUrl := domain.Env.UIURL + "/#"
+	uiURL := domain.Env.UIURL
 
 	tokenExpiry := time.Unix(authUser.AccessTokenExpiresAt, 0).Format(time.RFC3339)
 	params := fmt.Sprintf("?%s=Bearer&%s=%s&%s=%s",
 		TokenTypeParam, ExpiresUTCParam, tokenExpiry, AccessTokenParam, authUser.AccessToken)
 
+	// Ensure there is one set of /# between uiURL and the returnTo
+	if !strings.HasPrefix(returnTo, `/#`) {
+		returnTo = `/#`
+	}
+
+	// New Users go straight to the welcome page
 	if authUser.IsNew {
-		uiUrl += "/welcome"
+		uiURL += "/#/welcome"
 		if len(returnTo) > 0 {
 			params += "&" + ReturnToParam + "=" + returnTo
 		}
-	} else {
-		if len(returnTo) > 0 && returnTo[0] != '/' {
-			returnTo = "/" + returnTo
-		}
-		uiUrl += returnTo
+		return uiURL + params
 	}
 
-	url := fmt.Sprintf("%s%s", uiUrl, params)
-
-	return url
+	return uiURL + returnTo + params
 }
