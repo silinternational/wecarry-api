@@ -134,7 +134,7 @@ func CreateFixturesForPostsGetFiles(ms *ModelSuite) PostFixtures {
 
 	for i := range files {
 		var file File
-		ms.NoError(file.Store(fmt.Sprintf("file_%d.gif", i), []byte("GIF87a")),
+		ms.Nil(file.Store(fmt.Sprintf("file_%d.gif", i), []byte("GIF87a")),
 			"failed to create file fixture")
 		files[i] = file
 		_, err := post.AttachFile(files[i].UUID.String())
