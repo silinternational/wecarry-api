@@ -1343,9 +1343,7 @@ func (ms *ModelSuite) TestPost_AttachFile() {
 
 	var fileFixture File
 	const filename = "photo.gif"
-	if fErr := fileFixture.Store(filename, []byte("GIF89a")); fErr != nil {
-		t.Errorf("failed to create file fixture, %v", fErr)
-	}
+	ms.Nil(fileFixture.Store(filename, []byte("GIF89a")), "failed to create file fixture")
 
 	if attachedFile, err := post.AttachFile(fileFixture.UUID.String()); err != nil {
 		t.Errorf("failed to attach file to post, %s", err)
@@ -1398,10 +1396,7 @@ func (ms *ModelSuite) TestPost_AttachPhoto_GetPhoto() {
 
 	var photoFixture File
 	const filename = "photo.gif"
-	fErr := photoFixture.Store(filename, []byte("GIF89a"))
-	if fErr != nil {
-		ms.T().Errorf("failed to create file fixture, %v", fErr)
-	}
+	ms.Nil(photoFixture.Store(filename, []byte("GIF89a")), "failed to create file fixture")
 
 	attachedFile, err := post.AttachPhoto(photoFixture.UUID.String())
 	ms.NoError(err, "failed to attach photo to post")

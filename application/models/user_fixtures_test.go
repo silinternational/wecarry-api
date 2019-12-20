@@ -115,15 +115,14 @@ func createFixturesForTestUserGetPhoto(ms *ModelSuite) UserPostFixtures {
 	fileFixtures := make([]File, 2)
 	for i := range fileFixtures {
 		var f File
-		fErr := f.Store(fmt.Sprintf("photo%d.gif", i), []byte("GIF89a"))
-		ms.Nil(fErr)
+		ms.Nil(f.Store(fmt.Sprintf("photo%d.gif", i), []byte("GIF89a")), "unexpected error uploading file")
 		fileFixtures[i] = f
 	}
 
 	var photoFixture File
 	const filename = "photo.gif"
-	fErr := photoFixture.Store(filename, []byte("GIF89a"))
-	ms.Nil(fErr, "failed to create file fixture")
+	err := photoFixture.Store(filename, []byte("GIF89a"))
+	ms.Nil(err, "failed to create file fixture")
 
 	unique := domain.GetUUID()
 	users := Users{

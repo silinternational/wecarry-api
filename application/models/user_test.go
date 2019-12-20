@@ -712,9 +712,7 @@ func (ms *ModelSuite) TestUser_AttachPhoto() {
 
 	var photoFixture File
 	const filename = "photo.gif"
-	if fErr := photoFixture.Store(filename, []byte("GIF89a")); fErr != nil {
-		t.Errorf("failed to create file fixture, %v", fErr)
-	}
+	ms.Nil(photoFixture.Store(filename, []byte("GIF89a")), "failed to create file fixture")
 
 	if attachedFile, err := user.AttachPhoto(photoFixture.UUID.String()); err != nil {
 		t.Errorf("failed to attach photo to user, %s", err)
