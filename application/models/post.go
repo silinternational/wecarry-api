@@ -246,36 +246,12 @@ func (p Posts) String() string {
 
 // Create stores the Post data as a new record in the database.
 func (p *Post) Create() error {
-	if p.UUID.Version() == 0 {
-		p.UUID = domain.GetUUID()
-	}
-
-	valErrs, err := DB.ValidateAndCreate(p)
-	if err != nil {
-		return err
-	}
-
-	if len(valErrs.Errors) > 0 {
-		vErrs := flattenPopErrors(valErrs)
-		return errors.New(vErrs)
-	}
-
-	return nil
+	return create(p)
 }
 
 // Update writes the Post data to an existing database record.
 func (p *Post) Update() error {
-	valErrs, err := DB.ValidateAndUpdate(p)
-	if err != nil {
-		return err
-	}
-
-	if len(valErrs.Errors) > 0 {
-		vErrs := flattenPopErrors(valErrs)
-		return errors.New(vErrs)
-	}
-
-	return nil
+	return update(p)
 }
 
 func (p *Post) NewWithUser(pType PostType, currentUser User) error {
@@ -583,7 +559,8 @@ func (p *Post) AttachFile(fileID string) (File, error) {
 		return f, err
 	}
 
-	if err := DB.Save(&PostFile{PostID: p.ID, FileID: f.ID}); err != nil {
+	postFile := PostFile{PostID: p.ID, FileID: f.ID}
+	if err := postFile.Create(); err != nil {
 		return f, err
 	}
 
@@ -625,7 +602,7 @@ func (p *Post) AttachPhoto(fileID string) (File, error) {
 	p.PhotoFileID = nulls.NewInt(f.ID)
 	// if this is a new object, don't save it yet
 	if p.ID != 0 {
-		if err := DB.Update(p); err != nil {
+		if err := p.Update(); err != nil {
 			return f, err
 		}
 	}
@@ -743,7 +720,7 @@ func (p *Post) SetDestination(location Location) error {
 	}
 	location.ID = p.DestinationID
 	p.Destination = location
-	return DB.Update(&p.Destination)
+	return p.Destination.Update()
 }
 
 // SetOrigin sets the origin location fields, creating a new record in the database if necessary.
@@ -751,13 +728,13 @@ func (p *Post) SetOrigin(location Location) error {
 	if p.OriginID.Valid {
 		location.ID = p.OriginID.Int
 		p.Origin = location
-		return DB.Update(&p.Origin)
+		return p.Origin.Update()
 	}
-	if err := DB.Create(&location); err != nil {
+	if err := location.Create(); err != nil {
 		return err
 	}
 	p.OriginID = nulls.NewInt(location.ID)
-	return DB.Update(p)
+	return p.Update()
 }
 
 // IsEditable response with true if the given user is the owner of the post or an admin,

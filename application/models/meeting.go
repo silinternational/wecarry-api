@@ -3,6 +3,8 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
@@ -10,7 +12,6 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/pkg/errors"
 	"github.com/silinternational/wecarry-api/domain"
-	"time"
 )
 
 // Meeting represents an event where people gather together from different locations
@@ -153,7 +154,7 @@ func (m *Meeting) AttachImage(fileID string) (File, error) {
 	m.ImageFileID = nulls.NewInt(f.ID)
 	// if this is a new object, don't save it yet
 	if m.ID != 0 {
-		if err := DB.Update(m); err != nil {
+		if err := m.Update(); err != nil {
 			return f, err
 		}
 	}
@@ -196,45 +197,21 @@ func (m *Meeting) GetLocation() (Location, error) {
 	return location, nil
 }
 
-// SetLocation sets the location field, creating a new record in the database if necessary.
-func (m *Meeting) SetLocation(location Location) error {
-	location.ID = m.LocationID
-	m.Location = location
-	return DB.Update(&m.Location)
-}
-
 // Create stores the Meeting data as a new record in the database.
 func (m *Meeting) Create() error {
-	if m.UUID.Version() == 0 {
-		m.UUID = domain.GetUUID()
-	}
-
-	valErrs, err := DB.ValidateAndCreate(m)
-	if err != nil {
-		return err
-	}
-
-	if len(valErrs.Errors) > 0 {
-		vErrs := flattenPopErrors(valErrs)
-		return errors.New(vErrs)
-	}
-
-	return nil
+	return create(m)
 }
 
 // Update writes the Meeting data to an existing database record.
 func (m *Meeting) Update() error {
-	valErrs, err := DB.ValidateAndUpdate(m)
-	if err != nil {
-		return err
-	}
+	return update(m)
+}
 
-	if len(valErrs.Errors) > 0 {
-		vErrs := flattenPopErrors(valErrs)
-		return errors.New(vErrs)
-	}
-
-	return nil
+// SetLocation sets the location field, creating a new record in the database if necessary.
+func (m *Meeting) SetLocation(location Location) error {
+	location.ID = m.LocationID
+	m.Location = location
+	return m.Location.Update()
 }
 
 // CanCreate returns a bool based on whether the current user is allowed to create a meeting

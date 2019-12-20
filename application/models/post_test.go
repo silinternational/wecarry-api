@@ -1393,42 +1393,23 @@ func (ms *ModelSuite) TestPost_GetFiles() {
 
 // TestPost_AttachPhoto_GetPhoto tests the AttachPhoto and GetPhoto methods of models.Post
 func (ms *ModelSuite) TestPost_AttachPhoto_GetPhoto() {
-	t := ms.T()
-
-	user := User{}
-	createFixture(ms, &user)
-
-	organization := Organization{AuthConfig: "{}"}
-	createFixture(ms, &organization)
-
-	location := Location{}
-	createFixture(ms, &location)
-
-	post := Post{
-		CreatedByID:    user.ID,
-		OrganizationID: organization.ID,
-		DestinationID:  location.ID,
-	}
-	createFixture(ms, &post)
+	posts := createPostFixtures(ms.DB, 1, 0, false)
+	post := posts[0]
 
 	var photoFixture File
 	const filename = "photo.gif"
-	if fErr := photoFixture.Store(filename, []byte("GIF89a")); fErr != nil {
-		t.Errorf("failed to create file fixture, %v", fErr)
+	fErr := photoFixture.Store(filename, []byte("GIF89a"))
+	if fErr != nil {
+		ms.T().Errorf("failed to create file fixture, %v", fErr)
 	}
 
 	attachedFile, err := post.AttachPhoto(photoFixture.UUID.String())
-	if err != nil {
-		t.Errorf("failed to attach photo to post, %s", err)
-	} else {
-		ms.Equal(filename, attachedFile.Name)
-		ms.True(attachedFile.ID != 0)
-		ms.True(attachedFile.UUID.Version() != 0)
-	}
+	ms.NoError(err, "failed to attach photo to post")
+	ms.Equal(filename, attachedFile.Name)
+	ms.True(attachedFile.ID != 0)
+	ms.True(attachedFile.UUID.Version() != 0)
 
-	if err := DB.Load(&post); err != nil {
-		t.Errorf("failed to load photo relation for test post, %s", err)
-	}
+	ms.NoError(DB.Load(&post), "failed to load photo relation for test post")
 
 	ms.Equal(filename, post.PhotoFile.Name)
 
@@ -1519,19 +1500,10 @@ func (ms *ModelSuite) TestPost_GetSetDestination() {
 }
 
 func (ms *ModelSuite) TestPost_GetSetOrigin() {
-	t := ms.T()
-
-	user := User{UUID: domain.GetUUID(), Email: t.Name() + "_user@example.com", Nickname: t.Name() + "_User"}
-	createFixture(ms, &user)
-
-	organization := Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
-	createFixture(ms, &organization)
-
-	location := Location{}
-	createFixture(ms, &location)
-
-	post := Post{CreatedByID: user.ID, OrganizationID: organization.ID, DestinationID: location.ID}
-	createFixture(ms, &post)
+	posts := createPostFixtures(ms.DB, 1, 0, false)
+	post := posts[0]
+	post.OriginID = nulls.Int{}
+	ms.NoError(ms.DB.Save(&post))
 
 	locationFixtures := Locations{
 		{

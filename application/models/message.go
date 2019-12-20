@@ -128,20 +128,14 @@ func (m *Message) GetThread() (*Thread, error) {
 
 // Create a new message. Sends an `EventApiMessageCreated` event.
 func (m *Message) Create() error {
-	valErrs, err := DB.ValidateAndCreate(m)
-
-	if err != nil {
+	if err := create(m); err != nil {
 		return err
 	}
 
-	if len(valErrs.Errors) > 0 {
-		return errors.New(flattenPopErrors(valErrs))
-	}
-
 	// Touch the "updatedAt" field on the thread so thread lists can easily be sorted by last activity
-	if err2 := DB.Load(m, "Thread"); err2 == nil {
-		if err3 := DB.Save(&m.Thread); err3 != nil {
-			domain.Logger.Print("failed to save thread on message create,", err3.Error())
+	if err := DB.Load(m, "Thread"); err == nil {
+		if err := m.Thread.Update(); err != nil {
+			domain.Logger.Print("failed to save thread on message create,", err.Error())
 		}
 	}
 

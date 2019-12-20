@@ -3,12 +3,12 @@ package models
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/silinternational/wecarry-api/domain"
 	"time"
 
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 type PostHistory struct {
@@ -81,7 +81,7 @@ func (pH PostHistory) createForPost(post Post) error {
 			ProviderID: post.ProviderID,
 		}
 
-		if err := DB.Create(&newPH); err != nil {
+		if err := newPH.Create(); err != nil {
 			return err
 		}
 	}
@@ -122,4 +122,9 @@ func (pH *PostHistory) getLastForPost(post Post) error {
 		}
 	}
 	return nil
+}
+
+// Create stores the PostHistory data as a new record in the database.
+func (pH *PostHistory) Create() error {
+	return create(pH)
 }

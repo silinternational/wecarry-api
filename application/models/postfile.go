@@ -47,3 +47,8 @@ func (p *PostFile) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) 
 func (p *PostFile) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }
+
+// Create stores the PostFile data as a new record in the database.
+func (p *PostFile) Create() error {
+	return create(p)
+}

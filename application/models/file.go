@@ -6,14 +6,12 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/silinternational/wecarry-api/aws"
-
-	"github.com/silinternational/wecarry-api/domain"
-
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
 	"github.com/gobuffalo/validate/validators"
 	"github.com/gofrs/uuid"
+	"github.com/silinternational/wecarry-api/aws"
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 type FileUploadError struct {
@@ -108,7 +106,7 @@ func (f *File) Store(name string, content []byte) *FileUploadError {
 		Size:          len(content),
 		ContentType:   contentType,
 	}
-	if err := DB.Save(&file); err != nil {
+	if err := file.Create(); err != nil {
 		e := FileUploadError{
 			HttpStatus: http.StatusInternalServerError,
 			ErrorCode:  domain.ErrorUnableToStoreFile,
@@ -149,7 +147,7 @@ func (f *File) refreshURL() error {
 	}
 	f.URL = newURL.Url
 	f.URLExpiration = newURL.Expiration
-	if err = DB.Update(f); err != nil {
+	if err = f.Update(); err != nil {
 		return err
 	}
 	return nil
@@ -170,4 +168,14 @@ func detectContentType(content []byte) (string, error) {
 		return detectedType, nil
 	}
 	return "", fmt.Errorf("invalid file type %s", detectedType)
+}
+
+// Create stores the File data as a new record in the database.
+func (f *File) Create() error {
+	return create(f)
+}
+
+// Update writes the File data to an existing database record.
+func (f *File) Update() error {
+	return update(f)
 }

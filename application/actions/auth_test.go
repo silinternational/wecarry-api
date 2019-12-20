@@ -270,6 +270,7 @@ func (as *ActionSuite) TestCreateAuthUser() {
 		Email:     newEmail,
 		FirstName: "First",
 		LastName:  "Last",
+		UserID:    newEmail,
 	}
 
 	var user models.User
