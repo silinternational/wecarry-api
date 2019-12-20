@@ -211,7 +211,7 @@ func (m *Meeting) Update() error {
 func (m *Meeting) SetLocation(location Location) error {
 	location.ID = m.LocationID
 	m.Location = location
-	return m.Update()
+	return m.Location.Update()
 }
 
 // CanCreate returns a bool based on whether the current user is allowed to create a meeting
