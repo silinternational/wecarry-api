@@ -85,3 +85,8 @@ func (u *UserOrganizations) FindByAuthEmail(authEmail string, orgID int) error {
 
 	return nil
 }
+
+// Create stores the UserOrganization data as a new record in the database.
+func (u *UserOrganization) Create() error {
+	return create(u)
+}

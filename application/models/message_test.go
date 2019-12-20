@@ -129,7 +129,6 @@ func (ms *ModelSuite) TestMessage_Create() {
 
 	f := Fixtures_Message_Create(ms, t)
 	msg := Message{
-		UUID:     domain.GetUUID(),
 		ThreadID: f.Threads[0].ID,
 		SentByID: f.Users[0].ID,
 		Content:  `Owe nothing to anyone, except to love one another.`,
@@ -152,7 +151,6 @@ func (ms *ModelSuite) TestMessage_Create() {
 				ms.Error(err)
 			} else {
 				ms.NoError(err)
-				ms.Equal(test.msg.UUID, message.UUID, "incorrect message UUID")
 				_ = ms.DB.Reload(&f.Threads[0])
 				ms.WithinDuration(time.Now(), f.Threads[0].UpdatedAt, time.Second,
 					"thread.updated_at was not set to the current time")

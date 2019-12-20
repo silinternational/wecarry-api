@@ -58,7 +58,7 @@ func (t *ThreadParticipant) ValidateUpdate(tx *pop.Connection) (*validate.Errors
 // UpdateLastViewedAt sets the last viewed time field and writes to the database
 func (t *ThreadParticipant) UpdateLastViewedAt(lastViewedAt time.Time) error {
 	t.LastViewedAt = lastViewedAt
-	if err := DB.Update(t); err != nil {
+	if err := t.Update(); err != nil {
 		return fmt.Errorf("failed to update thread_participant.last_viewed_at, %s", err)
 	}
 	return nil
@@ -80,8 +80,18 @@ func (t *ThreadParticipant) FindByThreadIDAndUserID(threadID, userID int) error 
 // UpdateLastNotifiedAt sets LastNotifiedAt and writes to the database
 func (t *ThreadParticipant) UpdateLastNotifiedAt(newTime time.Time) error {
 	t.LastNotifiedAt = newTime
-	if err := DB.Update(t); err != nil {
+	if err := t.Update(); err != nil {
 		return fmt.Errorf("failed to update thread_participant.last_notified_at, %s", err)
 	}
 	return nil
+}
+
+// Create stores the ThreadParticipant data as a new record in the database.
+func (t *ThreadParticipant) Create() error {
+	return create(t)
+}
+
+// Update writes the ThreadParticipant data to an existing database record.
+func (t *ThreadParticipant) Update() error {
+	return update(t)
 }
