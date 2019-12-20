@@ -89,8 +89,8 @@ func (ms *ModelSuite) TestFile_Store() {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var f File
-			if err := f.Store(tt.args.name, tt.args.content); (err != nil) != tt.wantErr {
-				t.Errorf("Store() error = %v, wantErr %v", err, tt.wantErr)
+			if fErr := f.Store(tt.args.name, tt.args.content); (fErr != nil) != tt.wantErr {
+				t.Errorf("Store() error = %v, wantErr %v", fErr, tt.wantErr)
 			}
 		})
 	}
@@ -103,8 +103,8 @@ func CreateFileFixtures(ms *ModelSuite, posts Posts) Files {
 
 	for i := 0; i < n; i++ {
 		var file File
-		if err := file.Store(fmt.Sprintf("file_%d.gif", i), []byte("GIF87a")); err != nil {
-			t.Errorf("failed to create file fixture %d, %s", i, err)
+		if fErr := file.Store(fmt.Sprintf("file_%d.gif", i), []byte("GIF87a")); fErr != nil {
+			t.Errorf("failed to create file fixture %d, %v", i, fErr)
 			t.FailNow()
 		}
 		files[i] = file

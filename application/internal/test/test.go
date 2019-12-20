@@ -158,8 +158,8 @@ func CreateFileFixtures(n int) models.Files {
 	fileFixtures := make([]models.File, n)
 	for i := range fileFixtures {
 		var f models.File
-		if err := f.Store(strconv.Itoa(rand.Int())+".gif", []byte("GIF89a")); err != nil {
-			panic(fmt.Sprintf("failed to create file fixture, %s", err))
+		if fErr := f.Store(strconv.Itoa(rand.Int())+".gif", []byte("GIF89a")); fErr != nil {
+			panic(fmt.Sprintf("failed to create file fixture, %s", fErr.Message))
 		}
 		fileFixtures[i] = f
 	}

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"testing"
 	"time"
 
@@ -112,15 +113,11 @@ func (as *ActionSuite) Test_Upload() {
 	as.Equal(200, resp.Code, "bad response code, body: \n%s", resp.Body)
 
 	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		t.Error(err)
-	}
+	as.NoError(err, "error reading response body")
 
 	var u UploadResponse
 	err = json.Unmarshal(body, &u)
-	if err != nil {
-		t.Error(err)
-	}
+	as.NoError(err, "error unmarshalling response")
 
 	as.Equal(filename, u.Name)
 	fileUUID, err := uuid.FromString(u.UUID)
@@ -129,4 +126,46 @@ func (as *ActionSuite) Test_Upload() {
 	as.Regexp("^https?", u.URL)
 	as.Equal("image/gif", u.ContentType)
 	as.Equal(6, u.Size)
+
+	// Test Error
+
+	// File too big
+	readerBytes := []byte("GIF87a")
+	massive := make([]byte, 999999999)
+	readerBytes = append(readerBytes, massive...)
+
+	f.Reader = bytes.NewReader(readerBytes)
+	resp, err = req.MultiPartPost(&meta{}, f)
+	as.NoError(err)
+
+	body, err = ioutil.ReadAll(resp.Body)
+	as.NoError(err, "error reading response body")
+
+	var appErr domain.AppError
+	err = json.Unmarshal(body, &appErr)
+	as.NoError(err, "error unmarshalling response")
+
+	as.Equal(http.StatusBadRequest, appErr.Code, "incorrect error code")
+	as.Equal(domain.ErrorStoreFileTooLarge, appErr.Key, "incorrect error code")
+
+	// Bad Content Type
+	const badFilename = "test.bad"
+
+	f = httptest.File{
+		ParamName: fileFieldName,
+		FileName:  badFilename,
+		Reader:    bytes.NewReader([]byte("RIFF1111")),
+	}
+
+	resp, err = req.MultiPartPost(&meta{}, f)
+	as.NoError(err)
+
+	body, err = ioutil.ReadAll(resp.Body)
+	as.NoError(err, "error reading response body")
+
+	err = json.Unmarshal(body, &appErr)
+	as.NoError(err, "error unmarshalling response")
+
+	as.Equal(http.StatusBadRequest, appErr.Code, "incorrect error code")
+	as.Equal(domain.ErrorStoreFileBadContentType, appErr.Key, "incorrect error code")
 }
