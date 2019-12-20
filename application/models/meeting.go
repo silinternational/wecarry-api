@@ -236,3 +236,18 @@ func (m *Meeting) Update() error {
 
 	return nil
 }
+
+// CanCreate returns a bool based on whether the current user is allowed to create a meeting
+func (m *Meeting) CanCreate(user User) bool {
+	return true
+}
+
+// CanUpdate returns a bool based on whether the current user is allowed to update a meeting
+func (m *Meeting) CanUpdate(user User) bool {
+	switch user.AdminRole {
+	case UserAdminRoleSuperAdmin, UserAdminRoleSalesAdmin, UserAdminRoleAdmin:
+		return true
+	}
+
+	return user.ID == m.CreatedByID
+}
