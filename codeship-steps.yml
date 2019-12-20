@@ -52,3 +52,8 @@
   service: tracker
   tag: ^(master|develop)
   command: "true"
+
+- name: rollbar
+  service: rollbar
+  tag: ^(master|develop)
+  command: "/notify.sh"

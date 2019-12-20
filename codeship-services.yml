@@ -54,6 +54,11 @@ tracker:
   image: silintl/app-deployment-tracker-ga:latest
   environment:
     TRACKING_ID: UA-56269387-10
+
+rollbar:
+  image: silintl/notify-rollbar-deployment:latest
+  encrypted_env_file: .env.encrypted
+
 minio:
   image: minio/minio
   command: server /data
