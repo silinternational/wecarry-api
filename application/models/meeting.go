@@ -89,7 +89,7 @@ func (v *dateValidator) IsValid(errors *validate.Errors) {
 		return
 	}
 
-	v.Message = fmt.Sprintf("Start date must come no later thand end date chronologically. Got %s and %s.",
+	v.Message = fmt.Sprintf("Start date must come no later than end date chronologically. Got %s and %s.",
 		v.StartDate.Format(domain.DateFormat), v.EndDate.Format(domain.DateFormat))
 	errors.Add(validators.GenerateKey(v.Name), v.Message)
 }
