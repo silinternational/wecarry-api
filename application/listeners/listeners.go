@@ -105,16 +105,15 @@ func userCreated(e events.Event) {
 
 	user, ok := e.Payload["user"].(*models.User)
 	if !ok {
-		domain.Logger.Printf("%s Failed to get User from event payload for notification. Event message: %s",
-			domain.GetCurrentTime(), e.Message)
+		domain.Logger.Printf("Failed to get User from event payload for notification. Event message: %s", e.Message)
 		return
 	}
 
-	domain.Logger.Printf("%s User Created ... %s", domain.GetCurrentTime(), e.Message)
+	domain.Logger.Printf("User Created: %s", e.Message)
 
 	if err := sendNewUserWelcome(*user); err != nil {
-		domain.Logger.Printf("%s Failed to send new user welcome to %s. Error: %s",
-			domain.GetCurrentTime(), user.UUID.String(), err)
+		domain.Logger.Printf("Failed to send new user welcome to %s. Error: %s",
+			user.UUID.String(), err)
 	}
 }
 
