@@ -201,6 +201,7 @@ func sendNewUserWelcome(user models.User) error {
 			"uiURL":        domain.Env.UIURL,
 			"supportEmail": domain.Env.SupportEmail,
 			"userEmail":    user.Email,
+			"firstName":    user.FirstName,
 		},
 	}
 	return notifications.Send(msg)
