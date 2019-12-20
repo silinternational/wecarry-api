@@ -1,3 +1,11 @@
+- id: CreateMeeting
+  translation: We had a problem creating the new meeting.
+- id: CreateMeeting.ProcessInput
+  translation: We had a problem processing the information to create that meeting.
+- id: CreateMeeting.SetLocation
+  translation: We had a problem setting the location for that new meeting.
+- id: CreateMeeting.Unauthorized
+  translation: You are not allowed to create meetings.
 - id: GetMeeting
   translation: We had a problem finding that meeting.
 - id: GetMeetingCreator
@@ -10,6 +18,12 @@
   translation: We had a problem finding a list of meetings.
 - id: GetRecentMeetings
   translation: We had a problem finding a list of recent meetings.
+- id: UpdateMeeting
+  translation: We had a problem updating the meeting.
+- id: UpdateMeeting.ProcessInput
+  translation: We had a problem processing the information to update that meeting.
+- id: UpdateMeeting.Unauthorized
+  translation: You are not allowed to edit the information for that meeting.
 - id: GetMessageSender
   translation: We had a problem finding the message sender information.
 - id: GetMessageThread
@@ -22,26 +36,26 @@
   translation: We had a problem creating the new message.
 - id: CreateOrganization
   translation: We had a problem creating the new organization.
-- id: CreateOrganization.NotAllowed
-  translation: You are not authorized to create organizations.
+- id: CreateOrganization.Unauthorized
+  translation: You are not allowed to create organizations.
 - id: UpdateOrganization
   translation: We had a problem updating the organization.
 - id: UpdateOrganization.NotFound
   translation: We had a problem finding the organization to update.
-- id: UpdateOrganization.NotAllowed
-  translation: You are not authorized to edit information for that organization.
+- id: UpdateOrganization.Unauthorized
+  translation: You are not allowed to edit information for that organization.
 - id: CreateOrganizationDomain
   translation: We had a problem adding a domain to the organization.
 - id: CreateOrganizationDomain.NotFound
   translation: We had a problem finding the organization to add a domain.
-- id: CreateOrganizationDomain.NotAllowed
-  translation: You are not authorized to add domains to that organization.
+- id: CreateOrganizationDomain.Unauthorized
+  translation: You are not allowed to add domains to that organization.
 - id: RemoveOrganizationDomain
   translation: We had a problem removing a domain from the organization.
 - id: RemoveOrganizationDomain.NotFound
   translation: We had a problem finding the organization to remove a domain.
-- id: RemoveOrganizationDomain.NotAllowed
-  translation: You are not authorized to remove domains from that organization.
+- id: RemoveOrganizationDomain.Unauthorized
+  translation: You are not allowed to remove domains from that organization.
 - id: SetThreadLastViewedAt.NotFound
   translation: We had a problem finding the conversation to update its last-viewed time.
 - id: SetThreadLastViewedAt
@@ -94,8 +108,8 @@
   translation: We had a problem changing the status of that request or offer.
 - id: UpdatePostStatus.FindPost
   translation: We had a problem finding that request or offer for changing its status.
-- id: UpdatePostStatus.NotAllowed
-  translation: You are not authorized to change the status of that post.
+- id: UpdatePostStatus.Unauthorized
+  translation: You are not allowed to change the status of that post.
 - id: GetThreadParticipants
   translation: We had a problem getting a list of participants in that conversation.
 - id: GetThreadLastViewedAt
@@ -120,17 +134,17 @@
   translation: We had a problem finding the location for the user profile.
 - id: GetUserUnreadMessageCount
   translation: We had a problem finding the unread message count for the user profile.
-- id: GetUsers.NotAllowed
+- id: GetUsers.Unauthorized
   translation: You are not allowed to access user profile data.
 - id: GetUsers
   translation: We had a problem finding the list of user profiles.
-- id: GetUser.NotAllowed
+- id: GetUser.Unauthorized
   translation: You are not allowed to access that user profile.
 - id: GetUser
   translation: We had a problem finding the user profile.
 - id: UpdateUser.NotFound
   translation: We had a problem finding the user for the profile update.
-- id: UpdateUser.NotAllowed
+- id: UpdateUser.Unauthorized
   translation: You are not allowed to update that user profile.
 - id: UpdateUser.PhotoNotFound
   translation: We had a problem finding the photo to update the user profile.

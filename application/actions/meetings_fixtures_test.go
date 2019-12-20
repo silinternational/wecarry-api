@@ -12,7 +12,7 @@ import (
 )
 
 func createFixturesForMeetings(as *ActionSuite) meetingQueryFixtures {
-	uf := test.CreateUserFixtures(as.DB, 1)
+	uf := test.CreateUserFixtures(as.DB, 2)
 	user := uf.Users[0]
 	locations := test.CreateLocationFixtures(as.DB, 4)
 
@@ -66,5 +66,6 @@ func createFixturesForMeetings(as *ActionSuite) meetingQueryFixtures {
 		Locations: locations,
 		Meetings:  meetings,
 		Users:     uf.Users,
+		File:      fileFixture,
 	}
 }

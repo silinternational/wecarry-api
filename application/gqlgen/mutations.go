@@ -19,7 +19,7 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input CreateO
 	if !cUser.CanCreateOrganization() {
 		extras["user.admin_role"] = cUser.AdminRole
 		err := errors.New("insufficient permissions")
-		return nil, reportError(ctx, err, "CreateOrganization.NotAllowed", extras)
+		return nil, reportError(ctx, err, "CreateOrganization.Unauthorized", extras)
 	}
 
 	org := models.Organization{
@@ -50,7 +50,7 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, input UpdateO
 
 	if !cUser.CanEditOrganization(org.ID) {
 		err := errors.New("insufficient permissions")
-		return nil, reportError(ctx, err, "UpdateOrganization.NotAllowed", extras)
+		return nil, reportError(ctx, err, "UpdateOrganization.Unauthorized", extras)
 	}
 
 	if input.URL != nil {
@@ -81,7 +81,7 @@ func (r *mutationResolver) CreateOrganizationDomain(ctx context.Context, input C
 
 	if !cUser.CanEditOrganization(org.ID) {
 		err := errors.New("insufficient permissions")
-		return nil, reportError(ctx, err, "CreateOrganizationDomain.NotAllowed", extras)
+		return nil, reportError(ctx, err, "CreateOrganizationDomain.Unauthorized", extras)
 	}
 
 	if err := org.AddDomain(input.Domain); err != nil {
@@ -111,7 +111,7 @@ func (r *mutationResolver) RemoveOrganizationDomain(ctx context.Context, input R
 
 	if !cUser.CanEditOrganization(org.ID) {
 		err := errors.New("insufficient permissions")
-		return nil, reportError(ctx, err, "RemoveOrganizationDomain.NotAllowed", extras)
+		return nil, reportError(ctx, err, "RemoveOrganizationDomain.Unauthorized", extras)
 	}
 
 	if err := org.RemoveDomain(input.Domain); err != nil {
