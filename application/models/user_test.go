@@ -894,10 +894,10 @@ func (ms *ModelSuite) TestUser_UniquifyNickname() {
 }
 
 func (ms *ModelSuite) TestUser_SetLocation() {
-	t := ms.T()
-
-	user := User{UUID: domain.GetUUID(), Email: t.Name() + "_user@example.com", Nickname: t.Name() + "_User"}
-	createFixture(ms, &user)
+	uf := createUserFixtures(ms.DB, 1)
+	user := uf.Users[0]
+	user.LocationID = nulls.Int{}
+	ms.NoError(ms.DB.Save(&user))
 
 	locationFixtures := Locations{
 		{

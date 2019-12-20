@@ -121,7 +121,7 @@ func (f *File) refreshURL() error {
 	}
 	f.URL = newURL.Url
 	f.URLExpiration = newURL.Expiration
-	if err = DB.Update(f); err != nil {
+	if err = f.Update(); err != nil {
 		return err
 	}
 	return nil
@@ -147,4 +147,9 @@ func detectContentType(content []byte) (string, error) {
 // Create stores the File data as a new record in the database.
 func (f *File) Create() error {
 	return create(f)
+}
+
+// Update writes the File data to an existing database record.
+func (f *File) Update() error {
+	return update(f)
 }

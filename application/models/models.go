@@ -189,3 +189,16 @@ func create(m interface{}) error {
 	}
 	return nil
 }
+
+func update(m interface{}) error {
+	valErrs, err := DB.ValidateAndUpdate(m)
+	if err != nil {
+		return err
+	}
+
+	if len(valErrs.Errors) > 0 {
+		vErrs := flattenPopErrors(valErrs)
+		return errors.New(vErrs)
+	}
+	return nil
+}

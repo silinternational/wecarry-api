@@ -112,7 +112,7 @@ func createAccessTokenExpiry() time.Time {
 // Renew extends the token expiration to the configured token lifetime
 func (u *UserAccessToken) Renew() error {
 	u.ExpiresAt = createAccessTokenExpiry()
-	if err := DB.Update(u); err != nil {
+	if err := u.Update(); err != nil {
 		return fmt.Errorf("error renewing access token, %s", err)
 	}
 	return nil
@@ -167,4 +167,9 @@ func (u *UserAccessTokens) DeleteExpired() (int, error) {
 // Create stores the UserAccessToken data as a new record in the database.
 func (u *UserAccessToken) Create() error {
 	return create(u)
+}
+
+// Update writes the UserAccessToken data to an existing database record.
+func (u *UserAccessToken) Update() error {
+	return update(u)
 }

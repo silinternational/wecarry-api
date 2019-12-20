@@ -251,17 +251,7 @@ func (p *Post) Create() error {
 
 // Update writes the Post data to an existing database record.
 func (p *Post) Update() error {
-	valErrs, err := DB.ValidateAndUpdate(p)
-	if err != nil {
-		return err
-	}
-
-	if len(valErrs.Errors) > 0 {
-		vErrs := flattenPopErrors(valErrs)
-		return errors.New(vErrs)
-	}
-
-	return nil
+	return update(p)
 }
 
 func (p *Post) NewWithUser(pType PostType, currentUser User) error {
@@ -612,7 +602,7 @@ func (p *Post) AttachPhoto(fileID string) (File, error) {
 	p.PhotoFileID = nulls.NewInt(f.ID)
 	// if this is a new object, don't save it yet
 	if p.ID != 0 {
-		if err := DB.Update(p); err != nil {
+		if err := p.Update(); err != nil {
 			return f, err
 		}
 	}
@@ -744,7 +734,7 @@ func (p *Post) SetOrigin(location Location) error {
 		return err
 	}
 	p.OriginID = nulls.NewInt(location.ID)
-	return DB.Update(p)
+	return p.Update()
 }
 
 // IsEditable response with true if the given user is the owner of the post or an admin,

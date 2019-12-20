@@ -293,8 +293,12 @@ func (ms *ModelSuite) TestMeeting_AttachImage_GetImage() {
 	createFixture(ms, &location)
 
 	meeting := Meeting{
+		Name:        "a meeting",
+		UUID:        domain.GetUUID(),
 		CreatedByID: user.ID,
 		LocationID:  location.ID,
+		EndDate:     time.Now(),
+		StartDate:   time.Now(),
 	}
 	createFixture(ms, &meeting)
 

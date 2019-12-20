@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"math"
 
@@ -87,17 +86,7 @@ func (l *Location) Create() error {
 
 // Update writes the Location data to an existing database record.
 func (l *Location) Update() error {
-	valErrs, err := DB.ValidateAndUpdate(l)
-	if err != nil {
-		return err
-	}
-
-	if len(valErrs.Errors) > 0 {
-		vErrs := flattenPopErrors(valErrs)
-		return errors.New(vErrs)
-	}
-
-	return nil
+	return update(l)
 }
 
 // DistanceKm calculates the distance in km between two locations

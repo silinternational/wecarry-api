@@ -150,7 +150,7 @@ func (m *Meeting) AttachImage(fileID string) (File, error) {
 	m.ImageFileID = nulls.NewInt(f.ID)
 	// if this is a new object, don't save it yet
 	if m.ID != 0 {
-		if err := DB.Update(m); err != nil {
+		if err := m.Update(); err != nil {
 			return f, err
 		}
 	}
@@ -196,4 +196,9 @@ func (m *Meeting) GetLocation() (Location, error) {
 // Create stores the Meeting data as a new record in the database.
 func (m *Meeting) Create() error {
 	return create(m)
+}
+
+// Update writes the Meeting data to an existing database record.
+func (m *Meeting) Update() error {
+	return update(m)
 }

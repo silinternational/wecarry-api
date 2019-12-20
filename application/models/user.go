@@ -479,7 +479,7 @@ func (u *User) SetLocation(location Location) error {
 		return err
 	}
 	u.LocationID = nulls.NewInt(location.ID)
-	return DB.Update(u)
+	return u.Save()
 }
 
 type UnreadThread struct {

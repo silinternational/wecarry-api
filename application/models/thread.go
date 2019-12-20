@@ -233,15 +233,5 @@ func (t *Thread) Create() error {
 
 // Update writes the Thread data to an existing database record.
 func (t *Thread) Update() error {
-	valErrs, err := DB.ValidateAndUpdate(t)
-	if err != nil {
-		return err
-	}
-
-	if len(valErrs.Errors) > 0 {
-		vErrs := flattenPopErrors(valErrs)
-		return errors.New(vErrs)
-	}
-
-	return nil
+	return update(t)
 }
