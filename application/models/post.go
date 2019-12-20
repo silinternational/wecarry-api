@@ -246,21 +246,7 @@ func (p Posts) String() string {
 
 // Create stores the Post data as a new record in the database.
 func (p *Post) Create() error {
-	if p.UUID.Version() == 0 {
-		p.UUID = domain.GetUUID()
-	}
-
-	valErrs, err := DB.ValidateAndCreate(p)
-	if err != nil {
-		return err
-	}
-
-	if len(valErrs.Errors) > 0 {
-		vErrs := flattenPopErrors(valErrs)
-		return errors.New(vErrs)
-	}
-
-	return nil
+	return create(p)
 }
 
 // Update writes the Post data to an existing database record.

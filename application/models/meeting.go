@@ -3,6 +3,8 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
@@ -10,7 +12,6 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/pkg/errors"
 	"github.com/silinternational/wecarry-api/domain"
-	"time"
 )
 
 // Meeting represents an event where people gather together from different locations
@@ -190,4 +191,9 @@ func (m *Meeting) GetLocation() (Location, error) {
 	}
 
 	return location, nil
+}
+
+// Create stores the Meeting data as a new record in the database.
+func (m *Meeting) Create() error {
+	return create(m)
 }

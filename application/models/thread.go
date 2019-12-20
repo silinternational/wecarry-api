@@ -229,17 +229,7 @@ func (t *Thread) UnreadMessageCount(userID int, lastViewedAt time.Time) (int, er
 
 // Create stores the Thread data as a new record in the database.
 func (t *Thread) Create() error {
-	valErrs, err := DB.ValidateAndCreate(t)
-	if err != nil {
-		return err
-	}
-
-	if len(valErrs.Errors) > 0 {
-		vErrs := flattenPopErrors(valErrs)
-		return errors.New(vErrs)
-	}
-
-	return nil
+	return create(t)
 }
 
 // Update writes the Thread data to an existing database record.

@@ -2,14 +2,13 @@ package models
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
-	"github.com/silinternational/wecarry-api/domain"
 	"time"
 
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 type PostHistory struct {
@@ -127,15 +126,5 @@ func (pH *PostHistory) getLastForPost(post Post) error {
 
 // Create stores the PostHistory data as a new record in the database.
 func (pH *PostHistory) Create() error {
-	valErrs, err := DB.ValidateAndCreate(pH)
-	if err != nil {
-		return err
-	}
-
-	if len(valErrs.Errors) > 0 {
-		vErrs := flattenPopErrors(valErrs)
-		return errors.New(vErrs)
-	}
-
-	return nil
+	return create(pH)
 }

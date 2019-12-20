@@ -6,12 +6,11 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/silinternational/wecarry-api/domain"
-
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
 	"github.com/gobuffalo/validate/validators"
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 type Location struct {
@@ -83,17 +82,7 @@ func (v *geoValidator) IsValid(errors *validate.Errors) {
 
 // Create stores the Location data as a new record in the database.
 func (l *Location) Create() error {
-	valErrs, err := DB.ValidateAndCreate(l)
-	if err != nil {
-		return err
-	}
-
-	if len(valErrs.Errors) > 0 {
-		vErrs := flattenPopErrors(valErrs)
-		return errors.New(vErrs)
-	}
-
-	return nil
+	return create(l)
 }
 
 // Update writes the Location data to an existing database record.

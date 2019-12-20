@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log"
+	"reflect"
 	"strings"
 
 	"github.com/gobuffalo/buffalo"
@@ -169,4 +170,22 @@ func emitEvent(e events.Event) {
 	if err := events.Emit(e); err != nil {
 		domain.ErrLogger.Printf("error emitting event %s ... %v", e.Kind, err)
 	}
+}
+
+func create(m interface{}) error {
+	uuidField := reflect.ValueOf(m).Elem().FieldByName("UUID")
+	if uuidField.IsValid() {
+		uuidField.Set(reflect.ValueOf(domain.GetUUID()))
+	}
+
+	valErrs, err := DB.ValidateAndCreate(m)
+	if err != nil {
+		return err
+	}
+
+	if len(valErrs.Errors) > 0 {
+		vErrs := flattenPopErrors(valErrs)
+		return errors.New(vErrs)
+	}
+	return nil
 }

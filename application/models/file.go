@@ -2,19 +2,16 @@ package models
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"time"
-
-	"github.com/silinternational/wecarry-api/aws"
-
-	"github.com/silinternational/wecarry-api/domain"
 
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
 	"github.com/gobuffalo/validate/validators"
 	"github.com/gofrs/uuid"
+	"github.com/silinternational/wecarry-api/aws"
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 type File struct {
@@ -149,15 +146,5 @@ func detectContentType(content []byte) (string, error) {
 
 // Create stores the File data as a new record in the database.
 func (f *File) Create() error {
-	valErrs, err := DB.ValidateAndCreate(f)
-	if err != nil {
-		return err
-	}
-
-	if len(valErrs.Errors) > 0 {
-		vErrs := flattenPopErrors(valErrs)
-		return errors.New(vErrs)
-	}
-
-	return nil
+	return create(f)
 }

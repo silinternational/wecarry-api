@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"time"
 
@@ -89,15 +88,5 @@ func (u *UserOrganizations) FindByAuthEmail(authEmail string, orgID int) error {
 
 // Create stores the UserOrganization data as a new record in the database.
 func (u *UserOrganization) Create() error {
-	valErrs, err := DB.ValidateAndCreate(u)
-	if err != nil {
-		return err
-	}
-
-	if len(valErrs.Errors) > 0 {
-		vErrs := flattenPopErrors(valErrs)
-		return errors.New(vErrs)
-	}
-
-	return nil
+	return create(u)
 }
