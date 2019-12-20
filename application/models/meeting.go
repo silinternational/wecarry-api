@@ -59,6 +59,7 @@ func (m *Meeting) Validate(tx *pop.Connection) (*validate.Errors, error) {
 		&validators.TimeIsPresent{Field: m.EndDate, Name: "EndDate"},
 		&validators.IntIsPresent{Field: m.CreatedByID, Name: "CreatedByID"},
 		&validators.IntIsPresent{Field: m.LocationID, Name: "LocationID"},
+		&dateValidator{StartDate: m.StartDate, EndDate: m.EndDate, Name: "Dates"},
 	), nil
 }
 
@@ -70,6 +71,23 @@ func (m *Meeting) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) {
 // ValidateUpdate gets run every time you call "pop.ValidateAndUpdate" method.
 func (m *Meeting) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
+}
+
+type dateValidator struct {
+	Name      string
+	StartDate time.Time
+	EndDate   time.Time
+	Message   string
+}
+
+func (v *dateValidator) IsValid(errors *validate.Errors) {
+	if v.StartDate.Before(v.EndDate) {
+		return
+	}
+
+	v.Message = fmt.Sprintf("Start date must come before End date chronologically. Got %s and %s.",
+		v.StartDate.Format(domain.DateFormat), v.EndDate.Format(domain.DateFormat))
+	errors.Add(validators.GenerateKey(v.Name), v.Message)
 }
 
 // FindByUUID finds a meeting by the UUID field and loads its CreatedBy field

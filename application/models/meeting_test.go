@@ -97,6 +97,19 @@ func (ms *ModelSuite) TestMeeting_Validate() {
 			wantErr:  true,
 			errField: "uuid",
 		},
+		{
+			name: "dates out of order",
+			meeting: Meeting{
+				Name:        "A Meeting",
+				UUID:        domain.GetUUID(),
+				CreatedByID: 1,
+				LocationID:  1,
+				StartDate:   time.Now().Add(time.Duration(domain.DurationDay)),
+				EndDate:     time.Now(),
+			},
+			wantErr:  true,
+			errField: "dates",
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
