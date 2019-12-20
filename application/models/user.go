@@ -408,18 +408,7 @@ func (u *User) GetPhotoURL() (*string, error) {
 
 // Save wraps DB.Save() call to check for errors and operate on attached object
 func (u *User) Save() error {
-	if u.UUID.Version() == 0 {
-		u.UUID = domain.GetUUID()
-	}
-	validationErrs, err := u.Validate(DB)
-	if validationErrs != nil && validationErrs.HasAny() {
-		return errors.New(flattenPopErrors(validationErrs))
-	}
-	if err != nil {
-		return err
-	}
-
-	return DB.Save(u)
+	return save(u)
 }
 
 func (u *User) uniquifyNickname() error {

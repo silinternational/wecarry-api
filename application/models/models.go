@@ -16,6 +16,7 @@ import (
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
 	"github.com/gobuffalo/validate/validators"
+	"github.com/gofrs/uuid"
 	"github.com/pkg/errors"
 	"github.com/silinternational/wecarry-api/domain"
 )
@@ -183,9 +184,8 @@ func create(m interface{}) error {
 		return err
 	}
 
-	if len(valErrs.Errors) > 0 {
-		vErrs := flattenPopErrors(valErrs)
-		return errors.New(vErrs)
+	if valErrs.HasAny() {
+		return errors.New(flattenPopErrors(valErrs))
 	}
 	return nil
 }
@@ -196,9 +196,27 @@ func update(m interface{}) error {
 		return err
 	}
 
-	if len(valErrs.Errors) > 0 {
-		vErrs := flattenPopErrors(valErrs)
-		return errors.New(vErrs)
+	if valErrs.HasAny() {
+		return errors.New(flattenPopErrors(valErrs))
+	}
+	return nil
+}
+
+func save(m interface{}) error {
+	uuidField := reflect.ValueOf(m).Elem().FieldByName("UUID")
+	if uuidField.IsValid() {
+		u := uuidField.Interface().(uuid.UUID)
+		if u.Version() == 0 {
+			uuidField.Set(reflect.ValueOf(domain.GetUUID()))
+		}
+	}
+
+	validationErrs, err := DB.ValidateAndSave(m)
+	if validationErrs != nil && validationErrs.HasAny() {
+		return errors.New(flattenPopErrors(validationErrs))
+	}
+	if err != nil {
+		return err
 	}
 	return nil
 }

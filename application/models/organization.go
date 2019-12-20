@@ -15,7 +15,6 @@ import (
 	"github.com/silinternational/wecarry-api/auth"
 	"github.com/silinternational/wecarry-api/auth/google"
 	"github.com/silinternational/wecarry-api/auth/saml"
-	"github.com/silinternational/wecarry-api/domain"
 )
 
 const AuthTypeSaml = "saml"
@@ -129,19 +128,7 @@ func (o *Organization) RemoveDomain(domain string) error {
 
 // Save wrap DB.Save() call to check for errors and operate on attached object
 func (o *Organization) Save() error {
-	if o.UUID.Version() == 0 {
-		o.UUID = domain.GetUUID()
-	}
-
-	validationErrs, err := o.Validate(DB)
-	if validationErrs != nil && validationErrs.HasAny() {
-		return errors.New(flattenPopErrors(validationErrs))
-	}
-	if err != nil {
-		return err
-	}
-
-	return DB.Save(o)
+	return save(o)
 }
 
 func (orgs *Organizations) All() error {
