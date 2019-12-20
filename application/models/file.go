@@ -20,6 +20,10 @@ type FileUploadError struct {
 	Message    string
 }
 
+func (f *FileUploadError) Error() string {
+	return fmt.Sprintf("%d: %s ... %s", f.HttpStatus, f.ErrorCode, f.Message)
+}
+
 type File struct {
 	ID            int       `json:"id" db:"id"`
 	CreatedAt     time.Time `json:"created_at" db:"created_at"`

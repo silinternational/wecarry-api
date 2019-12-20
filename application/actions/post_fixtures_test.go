@@ -63,10 +63,7 @@ func createFixturesForPostQuery(as *ActionSuite) PostQueryFixtures {
 	}
 
 	var fileFixture models.File
-	if fErr := fileFixture.Store("dummy.pdf", []byte("%PDF-")); fErr != nil {
-		t.Errorf("failed to create file fixture, %v", fErr)
-		t.FailNow()
-	}
+	as.Nil(fileFixture.Store("dummy.pdf", []byte("%PDF-")), "failed to create file fixture")
 
 	if _, err := posts[0].AttachFile(fileFixture.UUID.String()); err != nil {
 		t.Errorf("failed to attach file to post, %s", err)
@@ -98,8 +95,6 @@ func createFixturesForSearchRequestsQuery(as *ActionSuite) PostQueryFixtures {
 }
 
 func createFixturesForUpdatePost(as *ActionSuite) UpdatePostFixtures {
-	t := as.T()
-
 	userFixtures := test.CreateUserFixtures(as.DB, 2)
 	users := userFixtures.Users
 
@@ -108,10 +103,7 @@ func createFixturesForUpdatePost(as *ActionSuite) UpdatePostFixtures {
 	as.NoError(as.DB.Save(&posts[0]))
 
 	var fileFixture models.File
-	if fErr := fileFixture.Store("new_photo.webp", []byte("RIFFxxxxWEBPVP")); fErr != nil {
-		t.Errorf("failed to create file fixture, %v", fErr)
-		t.FailNow()
-	}
+	as.Nil(fileFixture.Store("new_photo.webp", []byte("RIFFxxxxWEBPVP")), "failed to create file fixture")
 
 	return UpdatePostFixtures{
 		Posts: posts,
@@ -132,10 +124,7 @@ func createFixturesForCreatePost(as *ActionSuite) CreatePostFixtures {
 	}
 
 	var fileFixture models.File
-	if fErr := fileFixture.Store("photo.gif", []byte("GIF89a")); fErr != nil {
-		t.Errorf("failed to create file fixture, %v", fErr)
-		t.FailNow()
-	}
+	as.Nil(fileFixture.Store("photo.gif", []byte("GIF89a")), "failed to create file fixture")
 
 	meetingLocations := test.CreateLocationFixtures(as.DB, 1)
 
