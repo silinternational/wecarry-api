@@ -319,9 +319,7 @@ func (ms *ModelSuite) TestMeeting_AttachImage_GetImage() {
 
 	var imageFixture File
 	const filename = "photo.gif"
-	if fErr := imageFixture.Store(filename, []byte("GIF89a")); fErr != nil {
-		t.Errorf("failed to create file fixture, %v", fErr)
-	}
+	ms.Nil(imageFixture.Store(filename, []byte("GIF89a")), "failed to create file fixture")
 
 	attachedFile, err := meeting.AttachImage(imageFixture.UUID.String())
 	if err != nil {
