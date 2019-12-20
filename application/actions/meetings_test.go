@@ -197,8 +197,7 @@ func (as *ActionSuite) Test_CreateMeeting() {
 
 	gotMtg := resp.Meeting
 
-	emptyUUID := uuid.UUID{}
-	as.NotEqual(emptyUUID, gotMtg.ID, "don't want empty UUID")
+	as.True(uuid.UUID{}.String() != gotMtg.ID, "don't want empty UUID")
 	as.Equal("name", gotMtg.Name, "incorrect meeting Name")
 	as.Equal("new description", gotMtg.Description, "incorrect meeting Description")
 	as.Equal("example.com", gotMtg.MoreInfoURL, "incorrect meeting MoreInfoURL")
