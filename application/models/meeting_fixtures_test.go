@@ -1,9 +1,10 @@
 package models
 
 import (
-	"github.com/silinternational/wecarry-api/domain"
 	"testing"
 	"time"
+
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 // createMeetingFixtures creates two meetings associated with the first user passed in.
@@ -90,4 +91,38 @@ func createMeetingFixtures_FindByTime(ms *ModelSuite) Meetings {
 		createFixture(ms, &meetings[i])
 	}
 	return meetings
+}
+
+func createMeetingFixtures_CanUpdate(ms *ModelSuite) meetingFixtures {
+	uf := createUserFixtures(ms.DB, 5)
+	locations := createLocationFixtures(ms.DB, 1)
+
+	mtgUser := uf.Users[0]
+
+	superUser := &uf.Users[1]
+	superUser.AdminRole = UserAdminRoleSuperAdmin
+	ms.NoError(superUser.Save())
+
+	salesUser := &uf.Users[2]
+	salesUser.AdminRole = UserAdminRoleSalesAdmin
+	ms.NoError(salesUser.Save())
+
+	adminUser := &uf.Users[3]
+	adminUser.AdminRole = UserAdminRoleAdmin
+	ms.NoError(adminUser.Save())
+
+	meeting := Meeting{
+		CreatedByID: mtgUser.ID,
+		Name:        "Mtg Past",
+		LocationID:  locations[0].ID,
+		StartDate:   time.Now().Add(time.Duration(domain.DurationWeek * 2)),
+		EndDate:     time.Now().Add(time.Duration(domain.DurationWeek * 4)),
+	}
+
+	createFixture(ms, &meeting)
+
+	return meetingFixtures{
+		Meetings: Meetings{meeting},
+		Users:    uf.Users,
+	}
 }

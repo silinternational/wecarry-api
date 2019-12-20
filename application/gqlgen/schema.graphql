@@ -19,6 +19,8 @@ type Mutation {
     updatePost(input: UpdatePostInput!): Post!
     updatePostStatus(input: UpdatePostStatusInput!): Post!
     updateUser(input: UpdateUserInput!): User!
+    createMeeting(input: CreateMeetingInput!): Meeting!
+    updateMeeting(input: UpdateMeetingInput!): Meeting!
     createMessage(input: CreateMessageInput!): Message!
     createOrganization(input: CreateOrganizationInput!): Organization!
     updateOrganization(input: UpdateOrganizationInput!): Organization!
@@ -234,12 +236,6 @@ input CreatePostInput {
     meetingID: ID
 }
 
-input CreateMessageInput {
-    content: String!
-    postID: String!
-    threadID: String
-}
-
 input UpdatePostInput {
     id: ID!
     title: String
@@ -250,6 +246,33 @@ input UpdatePostInput {
     url: String
     kilograms: Float
     photoID: ID
+}
+
+input CreateMeetingInput {
+    name: String!
+    description: String
+    startDate: String!
+    endDate: String!
+    moreInfoURL: String
+    imageFileID: ID
+    location: LocationInput!
+}
+
+input UpdateMeetingInput {
+    id: ID!
+    name: String!
+    description: String
+    startDate: String!
+    endDate: String!
+    moreInfoURL: String
+    imageFileID: ID
+    location: LocationInput!
+}
+
+input CreateMessageInput {
+    content: String!
+    postID: String!
+    threadID: String
 }
 
 type File {

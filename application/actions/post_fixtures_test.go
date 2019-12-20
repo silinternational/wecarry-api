@@ -63,8 +63,8 @@ func createFixturesForPostQuery(as *ActionSuite) PostQueryFixtures {
 	}
 
 	var fileFixture models.File
-	if err := fileFixture.Store("dummy.pdf", []byte("%PDF-")); err != nil {
-		t.Errorf("failed to create file fixture, %s", err)
+	if fErr := fileFixture.Store("dummy.pdf", []byte("%PDF-")); fErr != nil {
+		t.Errorf("failed to create file fixture, %v", fErr)
 		t.FailNow()
 	}
 
@@ -108,8 +108,8 @@ func createFixturesForUpdatePost(as *ActionSuite) UpdatePostFixtures {
 	as.NoError(as.DB.Save(&posts[0]))
 
 	var fileFixture models.File
-	if err := fileFixture.Store("new_photo.webp", []byte("RIFFxxxxWEBPVP")); err != nil {
-		t.Errorf("failed to create file fixture, %s", err)
+	if fErr := fileFixture.Store("new_photo.webp", []byte("RIFFxxxxWEBPVP")); fErr != nil {
+		t.Errorf("failed to create file fixture, %v", fErr)
 		t.FailNow()
 	}
 
@@ -132,8 +132,8 @@ func createFixturesForCreatePost(as *ActionSuite) CreatePostFixtures {
 	}
 
 	var fileFixture models.File
-	if err := fileFixture.Store("photo.gif", []byte("GIF89a")); err != nil {
-		t.Errorf("failed to create file fixture, %s", err)
+	if fErr := fileFixture.Store("photo.gif", []byte("GIF89a")); fErr != nil {
+		t.Errorf("failed to create file fixture, %v", fErr)
 		t.FailNow()
 	}
 

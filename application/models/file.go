@@ -14,6 +14,12 @@ import (
 	"github.com/silinternational/wecarry-api/domain"
 )
 
+type FileUploadError struct {
+	HttpStatus int
+	ErrorCode  string
+	Message    string
+}
+
 type File struct {
 	ID            int       `json:"id" db:"id"`
 	CreatedAt     time.Time `json:"created_at" db:"created_at"`
@@ -60,21 +66,36 @@ func (f *File) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 
 // Store takes a byte slice and stores it into S3 and saves the metadata in the database file table.
 // None of the struct members of `f` are used as input, but are updated if the function is successful.
-func (f *File) Store(name string, content []byte) error {
+func (f *File) Store(name string, content []byte) *FileUploadError {
 	fileUUID := domain.GetUUID()
 
 	if len(content) > domain.MaxFileSize {
-		return fmt.Errorf("file too large (%d bytes), max is %d bytes", len(content), domain.MaxFileSize)
+		e := FileUploadError{
+			HttpStatus: http.StatusBadRequest,
+			ErrorCode:  domain.ErrorStoreFileTooLarge,
+			Message:    fmt.Sprintf("file too large (%d bytes), max is %d bytes", len(content), domain.MaxFileSize),
+		}
+		return &e
 	}
 
 	contentType, err := detectContentType(content)
 	if err != nil {
-		return err
+		e := FileUploadError{
+			HttpStatus: http.StatusBadRequest,
+			ErrorCode:  domain.ErrorStoreFileBadContentType,
+			Message:    err.Error(),
+		}
+		return &e
 	}
 
 	url, err := aws.StoreFile(fileUUID.String(), contentType, content)
 	if err != nil {
-		return err
+		e := FileUploadError{
+			HttpStatus: http.StatusInternalServerError,
+			ErrorCode:  domain.ErrorUnableToStoreFile,
+			Message:    err.Error(),
+		}
+		return &e
 	}
 
 	file := File{
@@ -86,7 +107,12 @@ func (f *File) Store(name string, content []byte) error {
 		ContentType:   contentType,
 	}
 	if err := file.Create(); err != nil {
-		return err
+		e := FileUploadError{
+			HttpStatus: http.StatusInternalServerError,
+			ErrorCode:  domain.ErrorUnableToStoreFile,
+			Message:    err.Error(),
+		}
+		return &e
 	}
 
 	*f = file

@@ -12,7 +12,7 @@ import (
 )
 
 func createFixturesForMeetings(as *ActionSuite) meetingQueryFixtures {
-	uf := test.CreateUserFixtures(as.DB, 1)
+	uf := test.CreateUserFixtures(as.DB, 2)
 	user := uf.Users[0]
 	locations := test.CreateLocationFixtures(as.DB, 4)
 
@@ -20,8 +20,8 @@ func createFixturesForMeetings(as *ActionSuite) meetingQueryFixtures {
 	as.NoError(err, "failed to create S3 bucket, %s", err)
 
 	var fileFixture models.File
-	err = fileFixture.Store("new_photo.webp", []byte("RIFFxxxxWEBPVP"))
-	as.NoError(err, "failed to create ImageFile fixture")
+	fErr := fileFixture.Store("new_photo.webp", []byte("RIFFxxxxWEBPVP"))
+	as.Nil(fErr, "failed to create ImageFile fixture")
 
 	meetings := models.Meetings{
 		{
@@ -66,5 +66,6 @@ func createFixturesForMeetings(as *ActionSuite) meetingQueryFixtures {
 		Locations: locations,
 		Meetings:  meetings,
 		Users:     uf.Users,
+		File:      fileFixture,
 	}
 }
