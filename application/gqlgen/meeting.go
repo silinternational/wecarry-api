@@ -215,6 +215,10 @@ func (r *mutationResolver) CreateMeeting(ctx context.Context, input meetingInput
 		return nil, reportError(ctx, err, "CreateMeeting.ProcessInput", extras)
 	}
 
+	if !meeting.CanCreate(cUser) {
+		return nil, reportError(ctx, err, "CreateMeeting.Unauthorized", extras)
+	}
+
 	location := convertGqlLocationInputToDBLocation(*input.Location)
 	if err = location.Create(); err != nil {
 		return nil, reportError(ctx, err, "CreateMeeting.SetLocation", extras)
@@ -238,6 +242,10 @@ func (r *mutationResolver) UpdateMeeting(ctx context.Context, input meetingInput
 	meeting, err := convertGqlMeetingInputToDBMeeting(ctx, input, cUser)
 	if err != nil {
 		return nil, reportError(ctx, err, "UpdateMeeting.ProcessInput", extras)
+	}
+
+	if !meeting.CanUpdate(cUser) {
+		return nil, reportError(ctx, err, "UpdateMeeting.Unauthorized", extras)
 	}
 
 	if err := meeting.Update(); err != nil {
