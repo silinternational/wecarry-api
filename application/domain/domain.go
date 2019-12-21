@@ -94,8 +94,9 @@ const (
 
 // UI URL Paths
 const (
-	postUIPath   = "/#/requests/"
-	threadUIPath = "/#/messages/"
+	DefaultUIPath = "/#/requests"
+	postUIPath    = "/#/requests/"
+	threadUIPath  = "/#/messages/"
 )
 
 var Logger log.Logger

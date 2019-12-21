@@ -77,7 +77,7 @@ func getOrSetReturnTo(c buffalo.Context) string {
 		var ok bool
 		returnTo, ok = c.Session().Get(ReturnToSessionKey).(string)
 		if !ok {
-			returnTo = "/#"
+			returnTo = domain.DefaultUIPath
 		}
 
 		return returnTo
@@ -472,7 +472,7 @@ func getLoginSuccessRedirectURL(authUser AuthUser, returnTo string) string {
 
 	// Ensure there is one set of /# between uiURL and the returnTo
 	if !strings.HasPrefix(returnTo, `/#`) {
-		returnTo = `/#`
+		returnTo = domain.DefaultUIPath
 	}
 
 	// New Users go straight to the welcome page
