@@ -28,14 +28,14 @@ func (as *ActionSuite) TestGetLoginSuccessRedirectURL() {
 			authUser:      AuthUser{ID: "1", IsNew: true, AccessToken: "new"},
 			returnTo:      "",
 			wantBeginning: uiURL + "/#/welcome?" + TokenTypeParam + "=Bearer&" + ExpiresUTCParam + "=",
-			wantEnd:       "&" + AccessTokenParam + "=new&" + ReturnToParam + "=/#",
+			wantEnd:       "&" + AccessTokenParam + "=new&" + ReturnToParam + "=" + domain.DefaultUIPath,
 		},
 		{
 			name:          "New With Invalid ReturnTo",
 			authUser:      AuthUser{ID: "1", IsNew: true, AccessToken: "new"},
 			returnTo:      "/posts",
 			wantBeginning: uiURL + "/#/welcome?" + TokenTypeParam + "=Bearer&" + ExpiresUTCParam + "=",
-			wantEnd:       "&" + AccessTokenParam + "=new&" + ReturnToParam + "=/#",
+			wantEnd:       "&" + AccessTokenParam + "=new&" + ReturnToParam + "=" + domain.DefaultUIPath,
 		},
 		{
 			name:          "New With Valid ReturnTo",
@@ -48,7 +48,7 @@ func (as *ActionSuite) TestGetLoginSuccessRedirectURL() {
 			name:          "Not New With Invalid ReturnTo",
 			authUser:      AuthUser{ID: "1", IsNew: false, AccessToken: "old1"},
 			returnTo:      "posts",
-			wantBeginning: uiURL + "/#?" + TokenTypeParam + "=Bearer&" + ExpiresUTCParam + "=",
+			wantBeginning: uiURL + domain.DefaultUIPath + "?" + TokenTypeParam + "=Bearer&" + ExpiresUTCParam + "=",
 			wantEnd:       "&" + AccessTokenParam + "=old1",
 		},
 		{
@@ -62,7 +62,7 @@ func (as *ActionSuite) TestGetLoginSuccessRedirectURL() {
 			name:          "Not New With No ReturnTo",
 			authUser:      AuthUser{ID: "1", IsNew: false, AccessToken: "old3"},
 			returnTo:      "",
-			wantBeginning: uiURL + "/#?" + TokenTypeParam + "=Bearer&" + ExpiresUTCParam + "=",
+			wantBeginning: uiURL + domain.DefaultUIPath + "?" + TokenTypeParam + "=Bearer&" + ExpiresUTCParam + "=",
 			wantEnd:       "&" + AccessTokenParam + "=old3",
 		},
 	}
@@ -127,7 +127,7 @@ func (as *ActionSuite) TestGetOrSetReturnTo() {
 			name:         "No Param No Session",
 			param:        "",
 			sessionValue: "",
-			want:         "/#",
+			want:         domain.DefaultUIPath,
 		},
 		{
 			name:         "No Param But With Session",
