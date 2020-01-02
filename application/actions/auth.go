@@ -175,6 +175,10 @@ func createAuthUser(
 }
 
 func authRequest(c buffalo.Context) error {
+
+	// Clear any previous sessions
+	c.Session().Clear()
+
 	clientID := c.Param(ClientIDParam)
 	if clientID == "" {
 		return authRequestError(c, http.StatusBadRequest, domain.ErrorMissingClientID,
@@ -190,7 +194,8 @@ func authRequest(c buffalo.Context) error {
 	}
 	c.Session().Set(AuthEmailSessionKey, authEmail)
 
-	getOrSetReturnTo(c)
+	//getOrSetReturnTo(c)
+	c.Session().Set(ReturnToSessionKey, c.Param(ReturnToParam))
 
 	extras := map[string]interface{}{"authEmail": authEmail}
 
@@ -326,7 +331,11 @@ func authCallback(c buffalo.Context) error {
 		domain.ErrLogger.Printf("error emitting event %s ... %v", e.Kind, err)
 	}
 
-	returnTo := getOrSetReturnTo(c)
+	// returnTo := getOrSetReturnTo(c)
+	returnTo, ok := c.Session().Get(ReturnToSessionKey).(string)
+	if !ok {
+		returnTo = domain.DefaultUIPath
+	}
 	return c.Redirect(302, getLoginSuccessRedirectURL(authUser, returnTo))
 }
 
