@@ -258,8 +258,6 @@ func authCallback(c buffalo.Context) error {
 			AuthEmailSessionKey+" session entry is required to complete login")
 	}
 
-	returnTo := getOrSetReturnTo(c)
-
 	// err := c.Session().Save()
 	// if err != nil {
 	// 	extras := map[string]interface{}{"authEmail": authEmail}
@@ -328,6 +326,7 @@ func authCallback(c buffalo.Context) error {
 		domain.ErrLogger.Printf("error emitting event %s ... %v", e.Kind, err)
 	}
 
+	returnTo := getOrSetReturnTo(c)
 	return c.Redirect(302, getLoginSuccessRedirectURL(authUser, returnTo))
 }
 
@@ -472,7 +471,7 @@ func getLoginSuccessRedirectURL(authUser AuthUser, returnTo string) string {
 
 	// Ensure there is one set of /# between uiURL and the returnTo
 	if !strings.HasPrefix(returnTo, `/#`) {
-		returnTo = domain.DefaultUIPath
+		returnTo = "/#" + returnTo
 	}
 
 	// New Users go straight to the welcome page
