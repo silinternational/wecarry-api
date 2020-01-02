@@ -28,14 +28,14 @@ func (as *ActionSuite) TestGetLoginSuccessRedirectURL() {
 			authUser:      AuthUser{ID: "1", IsNew: true, AccessToken: "new"},
 			returnTo:      "",
 			wantBeginning: uiURL + "/#/welcome?" + TokenTypeParam + "=Bearer&" + ExpiresUTCParam + "=",
-			wantEnd:       "&" + AccessTokenParam + "=new&" + ReturnToParam + "=" + domain.DefaultUIPath,
+			wantEnd:       "&" + AccessTokenParam + "=new&" + ReturnToParam + "=/#",
 		},
 		{
 			name:          "New With Invalid ReturnTo",
 			authUser:      AuthUser{ID: "1", IsNew: true, AccessToken: "new"},
 			returnTo:      "/posts",
 			wantBeginning: uiURL + "/#/welcome?" + TokenTypeParam + "=Bearer&" + ExpiresUTCParam + "=",
-			wantEnd:       "&" + AccessTokenParam + "=new&" + ReturnToParam + "=" + domain.DefaultUIPath,
+			wantEnd:       "&" + AccessTokenParam + "=new&" + ReturnToParam + "=/#/posts",
 		},
 		{
 			name:          "New With Valid ReturnTo",
@@ -47,8 +47,8 @@ func (as *ActionSuite) TestGetLoginSuccessRedirectURL() {
 		{
 			name:          "Not New With Invalid ReturnTo",
 			authUser:      AuthUser{ID: "1", IsNew: false, AccessToken: "old1"},
-			returnTo:      "posts",
-			wantBeginning: uiURL + domain.DefaultUIPath + "?" + TokenTypeParam + "=Bearer&" + ExpiresUTCParam + "=",
+			returnTo:      "/posts",
+			wantBeginning: uiURL + "/#/posts?" + TokenTypeParam + "=Bearer&" + ExpiresUTCParam + "=",
 			wantEnd:       "&" + AccessTokenParam + "=old1",
 		},
 		{
@@ -62,7 +62,7 @@ func (as *ActionSuite) TestGetLoginSuccessRedirectURL() {
 			name:          "Not New With No ReturnTo",
 			authUser:      AuthUser{ID: "1", IsNew: false, AccessToken: "old3"},
 			returnTo:      "",
-			wantBeginning: uiURL + domain.DefaultUIPath + "?" + TokenTypeParam + "=Bearer&" + ExpiresUTCParam + "=",
+			wantBeginning: uiURL + "/#?" + TokenTypeParam + "=Bearer&" + ExpiresUTCParam + "=",
 			wantEnd:       "&" + AccessTokenParam + "=old3",
 		},
 	}

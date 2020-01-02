@@ -462,7 +462,6 @@ func setCurrentUser(next buffalo.Handler) buffalo.Handler {
 
 // getLoginSuccessRedirectURL generates the URL for redirection after a successful login
 func getLoginSuccessRedirectURL(authUser AuthUser, returnTo string) string {
-
 	uiURL := domain.Env.UIURL
 
 	tokenExpiry := time.Unix(authUser.AccessTokenExpiresAt, 0).Format(time.RFC3339)
