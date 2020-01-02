@@ -175,10 +175,6 @@ func createAuthUser(
 }
 
 func authRequest(c buffalo.Context) error {
-
-	// Clear any previous sessions
-	c.Session().Clear()
-
 	clientID := c.Param(ClientIDParam)
 	if clientID == "" {
 		return authRequestError(c, http.StatusBadRequest, domain.ErrorMissingClientID,
@@ -194,8 +190,7 @@ func authRequest(c buffalo.Context) error {
 	}
 	c.Session().Set(AuthEmailSessionKey, authEmail)
 
-	//getOrSetReturnTo(c)
-	c.Session().Set(ReturnToSessionKey, c.Param(ReturnToParam))
+	getOrSetReturnTo(c)
 
 	extras := map[string]interface{}{"authEmail": authEmail}
 
@@ -223,11 +218,6 @@ func authRequest(c buffalo.Context) error {
 
 	orgID := org.UUID.String()
 	c.Session().Set(OrgIDSessionKey, orgID)
-	// err = c.Session().Save()
-	// if err != nil {
-	// 	return authRequestError(c, http.StatusInternalServerError, domain.ErrorSavingAuthRequestSession,
-	// 		fmt.Sprintf("unable to save session ... %v", err), extras)
-	// }
 
 	sp, err := org.GetAuthProvider()
 	if err != nil {
@@ -263,13 +253,6 @@ func authCallback(c buffalo.Context) error {
 			AuthEmailSessionKey+" session entry is required to complete login")
 	}
 
-	// err := c.Session().Save()
-	// if err != nil {
-	// 	extras := map[string]interface{}{"authEmail": authEmail}
-	// 	return logErrorAndRedirect(c, domain.ErrorSavingAuthCallbackSession,
-	// 		fmt.Sprintf("error saving session ... %v", err), extras)
-	// }
-
 	orgID, ok := c.Session().Get(OrgIDSessionKey).(string)
 	if !ok {
 		return logErrorAndRedirect(c, domain.ErrorMissingSessionOrgID,
@@ -296,17 +279,13 @@ func authCallback(c buffalo.Context) error {
 		return logErrorAndRedirect(c, domain.ErrorAuthProvidersCallback, authResp.Error.Error(), extras)
 	}
 
+	returnTo := getOrSetReturnTo(c)
+
 	// if we have an authuser, find or create user in local db and finish login
 	var user models.User
 	if authResp.AuthUser != nil {
 		// login was success, clear session so new login can be initiated if needed
 		c.Session().Clear()
-		// err := c.Session().Save()
-		// if err != nil {
-		// 	extras := map[string]interface{}{"authEmail": authEmail}
-		// 	return logErrorAndRedirect(c, domain.ErrorSavingAuthCallbackSession,
-		// 		fmt.Sprintf("error saving session after clear... %v", err), extras)
-		// }
 
 		err := user.FindOrCreateFromAuthUser(org.ID, authResp.AuthUser)
 		if err != nil {
@@ -331,11 +310,6 @@ func authCallback(c buffalo.Context) error {
 		domain.ErrLogger.Printf("error emitting event %s ... %v", e.Kind, err)
 	}
 
-	// returnTo := getOrSetReturnTo(c)
-	returnTo, ok := c.Session().Get(ReturnToSessionKey).(string)
-	if !ok {
-		returnTo = domain.DefaultUIPath
-	}
 	return c.Redirect(302, getLoginSuccessRedirectURL(authUser, returnTo))
 }
 
