@@ -218,11 +218,11 @@ func authRequest(c buffalo.Context) error {
 
 	orgID := org.UUID.String()
 	c.Session().Set(OrgIDSessionKey, orgID)
-	err = c.Session().Save()
-	if err != nil {
-		return authRequestError(c, http.StatusInternalServerError, domain.ErrorSavingAuthRequestSession,
-			fmt.Sprintf("unable to save session ... %v", err), extras)
-	}
+	// err = c.Session().Save()
+	// if err != nil {
+	// 	return authRequestError(c, http.StatusInternalServerError, domain.ErrorSavingAuthRequestSession,
+	// 		fmt.Sprintf("unable to save session ... %v", err), extras)
+	// }
 
 	sp, err := org.GetAuthProvider()
 	if err != nil {
@@ -260,12 +260,12 @@ func authCallback(c buffalo.Context) error {
 
 	returnTo := getOrSetReturnTo(c)
 
-	err := c.Session().Save()
-	if err != nil {
-		extras := map[string]interface{}{"authEmail": authEmail}
-		return logErrorAndRedirect(c, domain.ErrorSavingAuthCallbackSession,
-			fmt.Sprintf("error saving session ... %v", err), extras)
-	}
+	// err := c.Session().Save()
+	// if err != nil {
+	// 	extras := map[string]interface{}{"authEmail": authEmail}
+	// 	return logErrorAndRedirect(c, domain.ErrorSavingAuthCallbackSession,
+	// 		fmt.Sprintf("error saving session ... %v", err), extras)
+	// }
 
 	orgID, ok := c.Session().Get(OrgIDSessionKey).(string)
 	if !ok {
@@ -274,7 +274,7 @@ func authCallback(c buffalo.Context) error {
 	}
 
 	org := models.Organization{}
-	err = org.FindByUUID(orgID)
+	err := org.FindByUUID(orgID)
 	if err != nil {
 		return logErrorAndRedirect(c, domain.ErrorFindingOrgByID,
 			fmt.Sprintf("error finding org with UUID %s ... %v", orgID, err.Error()))
@@ -298,14 +298,14 @@ func authCallback(c buffalo.Context) error {
 	if authResp.AuthUser != nil {
 		// login was success, clear session so new login can be initiated if needed
 		c.Session().Clear()
-		err := c.Session().Save()
-		if err != nil {
-			extras := map[string]interface{}{"authEmail": authEmail}
-			return logErrorAndRedirect(c, domain.ErrorSavingAuthCallbackSession,
-				fmt.Sprintf("error saving session after clear... %v", err), extras)
-		}
+		// err := c.Session().Save()
+		// if err != nil {
+		// 	extras := map[string]interface{}{"authEmail": authEmail}
+		// 	return logErrorAndRedirect(c, domain.ErrorSavingAuthCallbackSession,
+		// 		fmt.Sprintf("error saving session after clear... %v", err), extras)
+		// }
 
-		err = user.FindOrCreateFromAuthUser(org.ID, authResp.AuthUser)
+		err := user.FindOrCreateFromAuthUser(org.ID, authResp.AuthUser)
 		if err != nil {
 			return logErrorAndRedirect(c, domain.ErrorWithAuthUser, err.Error())
 		}
