@@ -242,58 +242,22 @@ func (ms *ModelSuite) TestOrganization_FindByDomain() {
 	}
 }
 
-func createOrgFixtures(ms *ModelSuite, t *testing.T) (Organization, OrganizationDomain) {
-	// Load Organization test fixtures
-	org := Organization{
-		Name:       "ACME",
-		UUID:       domain.GetUUID(),
-		AuthType:   AuthTypeSaml,
-		AuthConfig: "{}",
-	}
-	if err := ms.DB.Create(&org); err != nil {
-		t.Errorf("could not create org fixtures ... %v", err)
-		t.FailNow()
-	}
-
-	// Load Organization Domains test fixtures
-	orgDomain := OrganizationDomain{
-		OrganizationID: org.ID,
-		Domain:         "example.org",
-	}
-	if err := ms.DB.Create(&orgDomain); err != nil {
-		t.Errorf("could not create org domain fixtures ... %v", err)
-		t.FailNow()
-	}
-
-	return org, orgDomain
-}
-
 func (ms *ModelSuite) TestOrganization_AddRemoveDomain() {
 	t := ms.T()
 
 	orgFixtures := []Organization{
-		{
-			ID:         1,
-			CreatedAt:  time.Time{},
-			UpdatedAt:  time.Time{},
-			Name:       "Org1",
-			Url:        nulls.String{},
-			AuthType:   "na",
-			AuthConfig: "{}",
-			UUID:       domain.GetUUID(),
-		},
-		{
-			ID:         2,
-			CreatedAt:  time.Time{},
-			UpdatedAt:  time.Time{},
-			Name:       "Org2",
-			Url:        nulls.String{},
-			AuthType:   "na",
-			AuthConfig: "{}",
-			UUID:       domain.GetUUID(),
-		},
+		{ID: 1, Name: "Org1"},
+		{ID: 2, Name: "Org2"},
 	}
+
 	for i := range orgFixtures {
+		orgFixtures[i].CreatedAt = time.Time{}
+		orgFixtures[i].UpdatedAt = time.Time{}
+		orgFixtures[i].Url = nulls.String{}
+		orgFixtures[i].AuthType = "na"
+		orgFixtures[i].AuthConfig = "{}"
+		orgFixtures[i].UUID = domain.GetUUID()
+
 		err := ms.DB.Create(&orgFixtures[i])
 		if err != nil {
 			t.Errorf("Unable to create org fixture: %s", err)
@@ -335,28 +299,18 @@ func (ms *ModelSuite) TestOrganization_Save() {
 	t := ms.T()
 
 	orgFixtures := []Organization{
-		{
-			ID:         1,
-			CreatedAt:  time.Time{},
-			UpdatedAt:  time.Time{},
-			Name:       "Org1",
-			Url:        nulls.String{},
-			AuthType:   "na",
-			AuthConfig: "{}",
-			UUID:       domain.GetUUID(),
-		},
-		{
-			ID:         2,
-			CreatedAt:  time.Time{},
-			UpdatedAt:  time.Time{},
-			Name:       "Org2",
-			Url:        nulls.String{},
-			AuthType:   "na",
-			AuthConfig: "{}",
-			UUID:       domain.GetUUID(),
-		},
+		{ID: 1, Name: "Org1"},
+		{ID: 2, Name: "Org2"},
 	}
+
 	for i := range orgFixtures {
+		orgFixtures[i].CreatedAt = time.Time{}
+		orgFixtures[i].UpdatedAt = time.Time{}
+		orgFixtures[i].Url = nulls.String{}
+		orgFixtures[i].AuthType = "na"
+		orgFixtures[i].AuthConfig = "{}"
+		orgFixtures[i].UUID = domain.GetUUID()
+
 		err := ms.DB.Create(&orgFixtures[i])
 		if err != nil {
 			t.Errorf("Unable to create org fixture: %s", err)
@@ -405,28 +359,17 @@ func (ms *ModelSuite) TestOrganization_All() {
 	t := ms.T()
 
 	orgFixtures := []Organization{
-		{
-			ID:         1,
-			CreatedAt:  time.Time{},
-			UpdatedAt:  time.Time{},
-			Name:       "Org1",
-			Url:        nulls.String{},
-			AuthType:   "na",
-			AuthConfig: "{}",
-			UUID:       domain.GetUUID(),
-		},
-		{
-			ID:         2,
-			CreatedAt:  time.Time{},
-			UpdatedAt:  time.Time{},
-			Name:       "Org2",
-			Url:        nulls.String{},
-			AuthType:   "na",
-			AuthConfig: "{}",
-			UUID:       domain.GetUUID(),
-		},
+		{ID: 1, Name: "Org1"},
+		{ID: 2, Name: "Org2"},
 	}
 	for i := range orgFixtures {
+		orgFixtures[i].CreatedAt = time.Time{}
+		orgFixtures[i].UpdatedAt = time.Time{}
+		orgFixtures[i].Url = nulls.String{}
+		orgFixtures[i].AuthType = "na"
+		orgFixtures[i].AuthConfig = "{}"
+		orgFixtures[i].UUID = domain.GetUUID()
+
 		err := ms.DB.Create(&orgFixtures[i])
 		if err != nil {
 			t.Errorf("Unable to create org fixture: %s", err)
@@ -498,4 +441,47 @@ func (ms *ModelSuite) TestOrganization_GetUsers() {
 			ms.Equal(test.wantUserIDs, userIDs)
 		})
 	}
+}
+
+func (ms *ModelSuite) TestOrganization_AllWhereUserIsOrgAdmin() {
+	t := ms.T()
+
+	f := createFixturesForOrganization_AllWhereUserIsOrgAdmin(ms)
+	ofs := f.Organizations
+	ufs := f.Users
+
+	allOrgIDs := []int{ofs[0].ID, ofs[1].ID, ofs[2].ID, ofs[3].ID, ofs[4].ID}
+
+	tests := []struct {
+		name       string
+		user       User
+		wantOrgIDs []int
+		wantErr    string
+	}{
+		{name: "SuperAdmin", user: ufs[0], wantOrgIDs: allOrgIDs},
+		{name: "SalesAdmin", user: ufs[1], wantOrgIDs: allOrgIDs},
+		{name: "NoRole", user: ufs[2], wantOrgIDs: []int{}},
+		{name: "SingleAdmin", user: ufs[3], wantOrgIDs: []int{ofs[3].ID}},
+		{name: "DoubleAdmin", user: ufs[4], wantOrgIDs: []int{ofs[4].ID}},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var got Organizations
+			err := got.AllWhereUserIsOrgAdmin(test.user)
+
+			if test.wantErr != "" {
+				ms.Error(err)
+				ms.Contains(err.Error(), test.wantErr)
+				return
+			}
+
+			ms.NoError(err)
+			gotIDs := make([]int, len(got))
+			for i := range got {
+				gotIDs[i] = got[i].ID
+			}
+			ms.Equal(test.wantOrgIDs, gotIDs, "incorrect list of org IDs")
+		})
+	}
+
 }

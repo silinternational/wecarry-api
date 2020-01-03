@@ -363,6 +363,33 @@ func (ms *ModelSuite) TestMeeting_AttachImage_GetImage() {
 	}
 }
 
+func (ms *ModelSuite) TestMeeting_GetCreator() {
+	t := ms.T()
+
+	user := User{UUID: domain.GetUUID(), Email: t.Name() + "_user@example.com", Nickname: t.Name() + "_User"}
+	createFixture(ms, &user)
+
+	organization := Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
+	createFixture(ms, &organization)
+
+	locations := Locations{
+		{
+			Description: "a place",
+			Country:     "XY",
+			Latitude:    nulls.NewFloat64(1.1),
+			Longitude:   nulls.NewFloat64(2.2),
+		},
+	}
+	createFixture(ms, &locations[0])
+
+	meeting := Meeting{CreatedByID: user.ID, Name: "name", LocationID: locations[0].ID}
+	createFixture(ms, &meeting)
+
+	creator, err := meeting.GetCreator()
+	ms.NoError(err, "unexpected error from meeting.GetCreator()")
+	ms.Equal(user.Nickname, creator.Nickname, "incorrect user/creator of meeting")
+}
+
 func (ms *ModelSuite) TestMeeting_GetSetLocation() {
 	t := ms.T()
 
