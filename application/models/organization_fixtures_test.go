@@ -19,24 +19,17 @@ type OrganizationFixtures struct {
 
 func createOrgFixtures(ms *ModelSuite, t *testing.T) (Organization, OrganizationDomain) {
 	// Load Organization test fixtures
-	org := Organization{
-		Name:       "ACME",
-		UUID:       domain.GetUUID(),
-		AuthType:   AuthTypeSaml,
-		AuthConfig: "{}",
-	}
-	err := ms.DB.Create(&org)
-	ms.NoError(err, "could not create org fixtures")
+	orgs := createOrganizationFixtures(ms.DB, 1)
 
 	// Load Organization Domains test fixtures
 	orgDomain := OrganizationDomain{
-		OrganizationID: org.ID,
+		OrganizationID: orgs[0].ID,
 		Domain:         "example.org",
 	}
-	err = ms.DB.Create(&orgDomain)
+	err := ms.DB.Create(&orgDomain)
 	ms.NoError(err, "could not create org domain fixtures")
 
-	return org, orgDomain
+	return orgs[0], orgDomain
 }
 
 func createFixturesForOrganizationGetUsers(ms *ModelSuite) OrganizationFixtures {
