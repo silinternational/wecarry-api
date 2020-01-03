@@ -7,6 +7,8 @@ import (
 	"io"
 	"strconv"
 	"time"
+
+	"github.com/silinternational/wecarry-api/models"
 )
 
 type CreateMessageInput struct {
@@ -34,13 +36,20 @@ type LocationInput struct {
 	Longitude   *float64 `json:"longitude"`
 }
 
+// User fields that can safely be visible to any user in the system
+type PublicProfile struct {
+	ID        string  `json:"id"`
+	Nickname  string  `json:"nickname"`
+	AvatarURL *string `json:"avatarURL"`
+}
+
 type RemoveOrganizationDomainInput struct {
 	Domain         string `json:"domain"`
 	OrganizationID string `json:"organizationID"`
 }
 
 type SetThreadLastViewedAtInput struct {
-	ThreadID string    `json:"threadId"`
+	ThreadID string    `json:"threadID"`
 	Time     time.Time `json:"time"`
 }
 
@@ -52,10 +61,23 @@ type UpdateOrganizationInput struct {
 	AuthConfig string  `json:"authConfig"`
 }
 
+type UpdatePostStatusInput struct {
+	ID     string            `json:"id"`
+	Status models.PostStatus `json:"status"`
+}
+
 type UpdateUserInput struct {
-	ID       *string        `json:"id"`
-	PhotoID  *string        `json:"photoID"`
-	Location *LocationInput `json:"location"`
+	ID          *string                     `json:"id"`
+	Nickname    *string                     `json:"nickname"`
+	PhotoID     *string                     `json:"photoID"`
+	Location    *LocationInput              `json:"location"`
+	Preferences *UpdateUserPreferencesInput `json:"preferences"`
+}
+
+type UpdateUserPreferencesInput struct {
+	Language   *PreferredLanguage   `json:"language"`
+	TimeZone   *string              `json:"timeZone"`
+	WeightUnit *PreferredWeightUnit `json:"weightUnit"`
 }
 
 type PostRole string
@@ -101,180 +123,90 @@ func (e PostRole) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
-type PostSize string
+type PreferredLanguage string
 
 const (
-	PostSizeTiny   PostSize = "TINY"
-	PostSizeSmall  PostSize = "SMALL"
-	PostSizeMedium PostSize = "MEDIUM"
-	PostSizeLarge  PostSize = "LARGE"
-	PostSizeXlarge PostSize = "XLARGE"
+	PreferredLanguageEn PreferredLanguage = "EN"
+	PreferredLanguageFr PreferredLanguage = "FR"
+	PreferredLanguageSp PreferredLanguage = "SP"
+	PreferredLanguageKo PreferredLanguage = "KO"
+	PreferredLanguagePt PreferredLanguage = "PT"
 )
 
-var AllPostSize = []PostSize{
-	PostSizeTiny,
-	PostSizeSmall,
-	PostSizeMedium,
-	PostSizeLarge,
-	PostSizeXlarge,
+var AllPreferredLanguage = []PreferredLanguage{
+	PreferredLanguageEn,
+	PreferredLanguageFr,
+	PreferredLanguageSp,
+	PreferredLanguageKo,
+	PreferredLanguagePt,
 }
 
-func (e PostSize) IsValid() bool {
+func (e PreferredLanguage) IsValid() bool {
 	switch e {
-	case PostSizeTiny, PostSizeSmall, PostSizeMedium, PostSizeLarge, PostSizeXlarge:
+	case PreferredLanguageEn, PreferredLanguageFr, PreferredLanguageSp, PreferredLanguageKo, PreferredLanguagePt:
 		return true
 	}
 	return false
 }
 
-func (e PostSize) String() string {
+func (e PreferredLanguage) String() string {
 	return string(e)
 }
 
-func (e *PostSize) UnmarshalGQL(v interface{}) error {
+func (e *PreferredLanguage) UnmarshalGQL(v interface{}) error {
 	str, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("enums must be strings")
 	}
 
-	*e = PostSize(str)
+	*e = PreferredLanguage(str)
 	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid PostSize", str)
+		return fmt.Errorf("%s is not a valid PreferredLanguage", str)
 	}
 	return nil
 }
 
-func (e PostSize) MarshalGQL(w io.Writer) {
+func (e PreferredLanguage) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
-type PostStatus string
+type PreferredWeightUnit string
 
 const (
-	PostStatusOpen      PostStatus = "OPEN"
-	PostStatusCommitted PostStatus = "COMMITTED"
-	PostStatusAccepted  PostStatus = "ACCEPTED"
-	PostStatusReceived  PostStatus = "RECEIVED"
-	PostStatusCompleted PostStatus = "COMPLETED"
-	PostStatusRemoved   PostStatus = "REMOVED"
+	PreferredWeightUnitPounds    PreferredWeightUnit = "POUNDS"
+	PreferredWeightUnitKilograms PreferredWeightUnit = "KILOGRAMS"
 )
 
-var AllPostStatus = []PostStatus{
-	PostStatusOpen,
-	PostStatusCommitted,
-	PostStatusAccepted,
-	PostStatusReceived,
-	PostStatusCompleted,
-	PostStatusRemoved,
+var AllPreferredWeightUnit = []PreferredWeightUnit{
+	PreferredWeightUnitPounds,
+	PreferredWeightUnitKilograms,
 }
 
-func (e PostStatus) IsValid() bool {
+func (e PreferredWeightUnit) IsValid() bool {
 	switch e {
-	case PostStatusOpen, PostStatusCommitted, PostStatusAccepted, PostStatusReceived, PostStatusCompleted, PostStatusRemoved:
+	case PreferredWeightUnitPounds, PreferredWeightUnitKilograms:
 		return true
 	}
 	return false
 }
 
-func (e PostStatus) String() string {
+func (e PreferredWeightUnit) String() string {
 	return string(e)
 }
 
-func (e *PostStatus) UnmarshalGQL(v interface{}) error {
+func (e *PreferredWeightUnit) UnmarshalGQL(v interface{}) error {
 	str, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("enums must be strings")
 	}
 
-	*e = PostStatus(str)
+	*e = PreferredWeightUnit(str)
 	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid PostStatus", str)
+		return fmt.Errorf("%s is not a valid PreferredWeightUnit", str)
 	}
 	return nil
 }
 
-func (e PostStatus) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-type PostType string
-
-const (
-	PostTypeRequest PostType = "REQUEST"
-	PostTypeOffer   PostType = "OFFER"
-)
-
-var AllPostType = []PostType{
-	PostTypeRequest,
-	PostTypeOffer,
-}
-
-func (e PostType) IsValid() bool {
-	switch e {
-	case PostTypeRequest, PostTypeOffer:
-		return true
-	}
-	return false
-}
-
-func (e PostType) String() string {
-	return string(e)
-}
-
-func (e *PostType) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = PostType(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid PostType", str)
-	}
-	return nil
-}
-
-func (e PostType) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-type Role string
-
-const (
-	RoleAdmin Role = "ADMIN"
-	RoleUser  Role = "USER"
-)
-
-var AllRole = []Role{
-	RoleAdmin,
-	RoleUser,
-}
-
-func (e Role) IsValid() bool {
-	switch e {
-	case RoleAdmin, RoleUser:
-		return true
-	}
-	return false
-}
-
-func (e Role) String() string {
-	return string(e)
-}
-
-func (e *Role) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = Role(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid Role", str)
-	}
-	return nil
-}
-
-func (e Role) MarshalGQL(w io.Writer) {
+func (e PreferredWeightUnit) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }

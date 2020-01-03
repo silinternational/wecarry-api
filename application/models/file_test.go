@@ -22,7 +22,7 @@ func (ms *ModelSuite) TestFile_Validate() {
 		{
 			name: "minimum",
 			file: File{
-				UUID: domain.GetUuid(),
+				UUID: domain.GetUUID(),
 			},
 			wantErr: false,
 		},
@@ -89,28 +89,29 @@ func (ms *ModelSuite) TestFile_Store() {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var f File
-			if err := f.Store(tt.args.name, tt.args.content); (err != nil) != tt.wantErr {
-				t.Errorf("Store() error = %v, wantErr %v", err, tt.wantErr)
+			if fErr := f.Store(tt.args.name, tt.args.content); (fErr != nil) != tt.wantErr {
+				t.Errorf("Store() error = %v, wantErr %v", fErr, tt.wantErr)
 			}
 		})
 	}
 }
 
-func CreateFileFixtures(t *testing.T, posts Posts) Files {
+func CreateFileFixtures(ms *ModelSuite, posts Posts) Files {
+	t := ms.T()
 	const n = 2
 	files := make(Files, n)
 
 	for i := 0; i < n; i++ {
 		var file File
-		if err := file.Store(fmt.Sprintf("file_%d.gif", i), []byte("GIF87a")); err != nil {
-			t.Errorf("failed to create file fixture %d, %s", i, err)
+		if fErr := file.Store(fmt.Sprintf("file_%d.gif", i), []byte("GIF87a")); fErr != nil {
+			t.Errorf("failed to create file fixture %d, %v", i, fErr)
 			t.FailNow()
 		}
 		files[i] = file
 	}
 
 	files[1].URLExpiration = time.Now().Add(-time.Minute)
-	if err := DB.Save(&files[1]); err != nil {
+	if err := ms.DB.Save(&files[1]); err != nil {
 		t.Errorf("failed to update file fixture")
 	}
 
@@ -119,13 +120,15 @@ func CreateFileFixtures(t *testing.T, posts Posts) Files {
 
 func (ms *ModelSuite) TestFile_FindByUUID() {
 	t := ms.T()
-	_, users, _ := CreateUserFixtures(ms, t)
-	posts := CreatePostFixtures(ms, t, users)
+
+	_ = createUserFixtures(ms.DB, 2)
+	posts := createPostFixtures(ms.DB, 1, 1, false)
+
 	if err := aws.CreateS3Bucket(); err != nil {
 		t.Errorf("failed to create S3 bucket, %s", err)
 		t.FailNow()
 	}
-	files := CreateFileFixtures(t, posts)
+	files := CreateFileFixtures(ms, posts)
 
 	type args struct {
 		fileUUID string

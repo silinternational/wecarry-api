@@ -2,19 +2,15 @@ package actions
 
 import (
 	"github.com/gobuffalo/buffalo"
-	"github.com/gobuffalo/buffalo-pop/pop/popmw"
-	"github.com/gobuffalo/envy"
+	i18n "github.com/gobuffalo/mw-i18n"
 	paramlogger "github.com/gobuffalo/mw-paramlogger"
+	"github.com/gobuffalo/packr/v2"
 	"github.com/gorilla/sessions"
 	"github.com/rs/cors"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/listeners"
-	"github.com/silinternational/wecarry-api/models"
 )
 
-// ENV is used to help switch settings based on where the
-// application is being run. Default is "development".
-var ENV = envy.Get("GO_ENV", "development")
 var app *buffalo.App
 
 // App is where all routes and middleware for buffalo
@@ -33,17 +29,17 @@ var app *buffalo.App
 func App() *buffalo.App {
 	if app == nil {
 		app = buffalo.New(buffalo.Options{
-			Env: ENV,
+			Env: domain.Env.GoEnv,
 			PreWares: []buffalo.PreWare{
 				cors.New(cors.Options{
 					AllowCredentials: true,
-					AllowedOrigins:   []string{envy.Get(domain.UIURLEnv, "*")},
+					AllowedOrigins:   []string{domain.Env.UIURL},
 					AllowedMethods:   []string{"HEAD", "GET", "POST", "PUT", "PATCH", "DELETE"},
 					AllowedHeaders:   []string{"*"},
 				}).Handler,
 			},
 			SessionName:  "_wecarry_session",
-			SessionStore: sessions.NewCookieStore([]byte(envy.Get("SESSION_SECRET", "testing"))),
+			SessionStore: sessions.NewCookieStore([]byte(domain.Env.SessionSecret)),
 		})
 
 		// Initialize and attach "rollbar" to context
@@ -52,32 +48,36 @@ func App() *buffalo.App {
 		// Log request parameters (filters apply).
 		app.Use(paramlogger.ParameterLogger)
 
-		// Wraps each request in a transaction.
-		//  c.Value("tx").(*pop.Connection)
-		// Remove to disable this.
-		app.Use(popmw.Transaction(models.DB))
-
 		//  Added for authorization
-		app.Use(SetCurrentUser)
-		app.Middleware.Skip(SetCurrentUser, HomeHandler)
+		app.Use(setCurrentUser)
+		app.Middleware.Skip(setCurrentUser, statusHandler)
 
-		app.GET("/", HomeHandler)
-		app.POST("/gql/", GQLHandler)
+		var err error
+		domain.T, err = i18n.New(packr.New("locales", "../locales"), "en")
+		if err != nil {
+			_ = app.Stop(err)
+		}
+		app.Use(domain.T.Middleware())
 
-		app.POST("/upload/", UploadHandler)
+		app.GET("/site/status", statusHandler)
+		app.Middleware.Skip(buffalo.RequestLogger, statusHandler)
+
+		app.POST("/gql/", gqlHandler)
+
+		app.POST("/upload/", uploadHandler)
 
 		auth := app.Group("/auth")
-		auth.Middleware.Skip(SetCurrentUser, AuthRequest, AuthCallback, AuthDestroy)
+		auth.Middleware.Skip(setCurrentUser, authRequest, authCallback, authDestroy)
 
-		auth.POST("/login", AuthRequest)
+		auth.POST("/login", authRequest)
 
-		auth.GET("/callback", AuthCallback)  // for Google Oauth
-		auth.POST("/callback", AuthCallback) // for SAML
+		auth.GET("/callback", authCallback)  // for Google Oauth
+		auth.POST("/callback", authCallback) // for SAML
 
-		auth.GET("/logout", AuthDestroy)
+		auth.GET("/logout", authDestroy)
+
+		listeners.RegisterListeners()
 	}
-
-	listeners.RegisterListeners()
 
 	return app
 }

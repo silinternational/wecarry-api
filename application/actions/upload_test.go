@@ -5,8 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"testing"
 	"time"
+
+	"github.com/gofrs/uuid"
 
 	"github.com/gobuffalo/buffalo/binding"
 
@@ -28,7 +31,7 @@ func Fixtures_Upload(as *ActionSuite, t *testing.T) UploadFixtures {
 	// Load Org test fixtures
 	org := &models.Organization{
 		AuthConfig: "{}",
-		Uuid:       domain.GetUuid(),
+		UUID:       domain.GetUUID(),
 	}
 	err := as.DB.Create(org)
 	if err != nil {
@@ -38,7 +41,7 @@ func Fixtures_Upload(as *ActionSuite, t *testing.T) UploadFixtures {
 
 	// Load User test fixture
 	user := models.User{
-		Uuid: domain.GetUuid(),
+		UUID: domain.GetUUID(),
 	}
 
 	if err := as.DB.Create(&user); err != nil {
@@ -84,10 +87,9 @@ func Fixtures_Upload(as *ActionSuite, t *testing.T) UploadFixtures {
 	}
 }
 
-// Test_Upload tests the actions.UploadHandler function
+// Test_Upload tests the actions.uploadHandler function
 func (as *ActionSuite) Test_Upload() {
 	t := as.T()
-	models.ResetTables(as.T(), as.DB)
 	fixtures := Fixtures_Upload(as, t)
 
 	type meta struct {
@@ -97,7 +99,7 @@ func (as *ActionSuite) Test_Upload() {
 	const filename = "test.gif"
 
 	f := httptest.File{
-		ParamName: FileFieldName,
+		ParamName: fileFieldName,
 		FileName:  filename,
 		Reader:    bytes.NewReader([]byte("GIF87a")),
 	}
@@ -111,19 +113,59 @@ func (as *ActionSuite) Test_Upload() {
 	as.Equal(200, resp.Code, "bad response code, body: \n%s", resp.Body)
 
 	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		t.Error(err)
-	}
+	as.NoError(err, "error reading response body")
 
 	var u UploadResponse
 	err = json.Unmarshal(body, &u)
-	if err != nil {
-		t.Error(err)
-	}
+	as.NoError(err, "error unmarshalling response")
 
 	as.Equal(filename, u.Name)
-	as.NotEqual(domain.EmptyUUID, u.UUID)
+	fileUUID, err := uuid.FromString(u.UUID)
+	as.NoError(err)
+	as.True(fileUUID.Version() != 0)
 	as.Regexp("^https?", u.URL)
 	as.Equal("image/gif", u.ContentType)
 	as.Equal(6, u.Size)
+
+	// Test Error
+
+	// File too big
+	readerBytes := []byte("GIF87a")
+	massive := make([]byte, 2099999)
+	readerBytes = append(readerBytes, massive...)
+
+	f.Reader = bytes.NewReader(readerBytes)
+	resp, err = req.MultiPartPost(&meta{}, f)
+	as.NoError(err)
+
+	body, err = ioutil.ReadAll(resp.Body)
+	as.NoError(err, "error reading response body")
+
+	var appErr domain.AppError
+	err = json.Unmarshal(body, &appErr)
+	as.NoError(err, "error unmarshalling response")
+
+	as.Equal(http.StatusBadRequest, appErr.Code, "incorrect error code")
+	as.Equal(domain.ErrorStoreFileTooLarge, appErr.Key, "incorrect error code")
+
+	// Bad Content Type
+	const badFilename = "test.bad"
+
+	f = httptest.File{
+		ParamName: fileFieldName,
+		FileName:  badFilename,
+		Reader:    bytes.NewReader([]byte("RIFF1111")),
+	}
+
+	resp, err = req.MultiPartPost(&meta{}, f)
+	as.NoError(err)
+
+	body, err = ioutil.ReadAll(resp.Body)
+	as.NoError(err, "error reading response body")
+
+	err = json.Unmarshal(body, &appErr)
+	as.NoError(err, "error unmarshalling response")
+
+	as.Equal(http.StatusBadRequest, appErr.Code, "incorrect error code")
+	as.Equal(domain.ErrorStoreFileBadContentType, appErr.Key, "incorrect error code")
 }

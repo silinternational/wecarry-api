@@ -18,3 +18,11 @@ func Test_ModelSuite(t *testing.T) {
 	}
 	suite.Run(t, as)
 }
+
+func createFixture(ms *ModelSuite, f interface{}) {
+	err := ms.DB.Create(f)
+	if err != nil {
+		ms.T().Errorf("error creating %T fixture, %s", f, err)
+		ms.T().FailNow()
+	}
+}

@@ -1,0 +1,23 @@
+create_table("meetings") {
+	t.Column("id", "integer", {primary: true})
+	t.Column("uuid", "uuid", {})
+	t.Column("name", "character varying(80)", {})
+	t.Column("description", "character varying(4096)", {null: true})
+	t.Column("more_info_url", "string", {null: true})
+	t.Column("image_file_id", "integer", {null: true})
+	t.Column("created_by_id", "integer", {null: true})
+	t.Column("location_id", "integer", {})
+	t.Column("start_date", "date", {})
+	t.Column("end_date", "date", {})
+	t.ForeignKey("created_by_id", {"users": ["id"]}, {"on_delete": "set null"})
+	t.ForeignKey("image_file_id", {"files": ["id"]}, {"on_delete": "set null"})
+	t.ForeignKey("location_id", {"locations": ["id"]})
+	t.Timestamps()
+}
+
+add_index("meetings", "uuid", {"unique": true})
+add_index("meetings", "location_id", {"unique": true})
+
+add_column("posts", "meeting_id", "integer", {null: true})
+add_index("posts", "meeting_id", {"unique": true})
+add_foreign_key("posts", "meeting_id", {"meetings": ["id"]}, {"name": "meeting_fk", "on_delete": "set null"})

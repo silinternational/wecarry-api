@@ -3,101 +3,152 @@ package gqlgen
 import (
 	"context"
 	"fmt"
+	"time"
 
-	"github.com/99designs/gqlgen/graphql"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 )
 
-func ThreadFields() map[string]string {
-	return map[string]string{
-		"id":        "uuid",
-		"postID":    "post_id",
-		"createdAt": "created_at",
-		"updatedAt": "updated_at",
-	}
-}
-
+// Thread is required by gqlgen
 func (r *Resolver) Thread() ThreadResolver {
 	return &threadResolver{r}
 }
 
 type threadResolver struct{ *Resolver }
 
-func (r *threadResolver) Participants(ctx context.Context, obj *models.Thread) ([]*models.User, error) {
+// Participants resolves the `participants` property of the thread query, retrieving the related records from the
+// database.
+func (r *threadResolver) Participants(ctx context.Context, obj *models.Thread) ([]PublicProfile, error) {
 	if obj == nil {
 		return nil, nil
 	}
 
-	return obj.GetParticipants(GetSelectFieldsForUsers(ctx))
+	participants, err := obj.GetParticipants()
+	if err != nil {
+		return nil, reportError(ctx, err, "GetThreadParticipants")
+	}
+
+	return getPublicProfiles(ctx, participants), nil
 }
 
+// ID resolves the `ID` property of the thread query. It provides the UUID instead of the autoincrement ID.
 func (r *threadResolver) ID(ctx context.Context, obj *models.Thread) (string, error) {
 	if obj == nil {
 		return "", nil
 	}
-	return obj.Uuid.String(), nil
+	return obj.UUID.String(), nil
 }
 
-func (r *threadResolver) Messages(ctx context.Context, obj *models.Thread) ([]*models.Message, error) {
+// LastViewedAt retrieves the last_viewed_at field for the current user on the thread
+func (r *threadResolver) LastViewedAt(ctx context.Context, obj *models.Thread) (*time.Time, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	selectedFields := GetSelectFieldsFromRequestFields(MessageFields(), graphql.CollectAllFields(ctx))
-	return obj.GetMessages(selectedFields)
+
+	currentUser := models.GetCurrentUserFromGqlContext(ctx)
+	lastViewedAt, err := obj.GetLastViewedAt(currentUser)
+	if err != nil {
+		extras := map[string]interface{}{
+			"user": currentUser.UUID,
+		}
+		return nil, reportError(ctx, err, "GetThreadLastViewedAt", extras)
+	}
+
+	return lastViewedAt, nil
 }
 
+// Messages resolves the `messages` property of the thread query, retrieving the related records from the
+// database.
+func (r *threadResolver) Messages(ctx context.Context, obj *models.Thread) ([]models.Message, error) {
+	if obj == nil {
+		return nil, nil
+	}
+
+	messages, err := obj.GetMessages()
+	if err != nil {
+		return nil, reportError(ctx, err, "GetThreadMessages")
+	}
+
+	return messages, nil
+}
+
+// PostID retrieves the UUID of the post to which the queried thread belongs.
 func (r *threadResolver) PostID(ctx context.Context, obj *models.Thread) (string, error) {
 	if obj == nil {
 		return "", nil
 	}
-	if post, err := obj.GetPost([]string{"uuid"}); err == nil {
-		return post.Uuid.String(), nil
-	} else {
-		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
-		return "", err
+
+	post, err := obj.GetPost()
+	if err != nil {
+		return "", reportError(ctx, err, "GetThreadPostID")
 	}
+
+	return post.UUID.String(), nil
 }
 
+// Post retrieves the post to which the queried thread belongs.
 func (r *threadResolver) Post(ctx context.Context, obj *models.Thread) (*models.Post, error) {
-	selectedFields := getSelectFieldsForPosts(ctx)
-	return obj.GetPost(selectedFields)
+	if obj == nil {
+		return nil, nil
+	}
+
+	post, err := obj.GetPost()
+	if err != nil {
+		return nil, reportError(ctx, err, "GetThreadPost")
+	}
+
+	return post, nil
 }
 
-func (r *queryResolver) Threads(ctx context.Context) ([]*models.Thread, error) {
-	var threads []*models.Thread
+// UnreadMessageCount retrieves the number of unread messages the current user has on the queried thread.
+func (r *threadResolver) UnreadMessageCount(ctx context.Context, obj *models.Thread) (int, error) {
+	if obj == nil {
+		return 0, nil
+	}
+	user := models.GetCurrentUserFromGqlContext(ctx)
 
-	db := models.DB
+	lastViewedAt, err := obj.GetLastViewedAt(user)
+	if err != nil {
+		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
+		return 0, nil
+	}
 
-	selectFields := getSelectFieldsForThreads(graphql.CollectAllFields(ctx))
-	if err := db.Select(selectFields...).All(&threads); err != nil {
-		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
-		return []*models.Thread{}, fmt.Errorf("error getting threads: %v", err)
+	if lastViewedAt == nil {
+		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx),
+			fmt.Sprintf("lastViewedAt nil for user %v on thread %v", user.ID, obj.ID))
+		return 0, nil
+	}
+
+	count, err2 := obj.UnreadMessageCount(user.ID, *lastViewedAt)
+	if err2 != nil {
+		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx), err2.Error())
+		return 0, nil
+	}
+	return count, nil
+}
+
+// Threads retrieves the all of the threads
+func (r *queryResolver) Threads(ctx context.Context) ([]models.Thread, error) {
+	threads := models.Threads{}
+
+	if err := threads.All(); err != nil {
+		return nil, reportError(ctx, err, "GetThreads")
 	}
 
 	return threads, nil
 }
 
-func (r *queryResolver) MyThreads(ctx context.Context) ([]*models.Thread, error) {
-	var threads []*models.Thread
+// MyThreads retrieves all of the threads for the current user
+func (r *queryResolver) MyThreads(ctx context.Context) ([]models.Thread, error) {
+	currentUser := models.GetCurrentUserFromGqlContext(ctx)
 
-	db := models.DB
-	currentUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
-
-	query := db.Q().LeftJoin("thread_participants tp", "threads.id = tp.thread_id")
-	query = query.Where("tp.user_id = ?", currentUser.ID)
-	if err := query.All(&threads); err != nil {
-		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
-		return []*models.Thread{}, fmt.Errorf("error getting threads: %v", err)
+	threads, err := currentUser.GetThreads()
+	if err != nil {
+		extras := map[string]interface{}{
+			"user": currentUser.UUID,
+		}
+		return nil, reportError(ctx, err, "GetMyThreads", extras)
 	}
 
 	return threads, nil
-}
-
-func getSelectFieldsForThreads(requestFields []string) []string {
-	selectFields := GetSelectFieldsFromRequestFields(ThreadFields(), requestFields)
-
-	selectFields = append(selectFields, "id")
-
-	return selectFields
 }

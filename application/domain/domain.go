@@ -1,71 +1,184 @@
 package domain
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"reflect"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
-	"github.com/gobuffalo/envy"
-	"github.com/rollbar/rollbar-go"
-
 	"github.com/gobuffalo/buffalo"
-
+	"github.com/gobuffalo/envy"
+	mwi18n "github.com/gobuffalo/mw-i18n"
+	"github.com/gobuffalo/packr/v2"
 	uuid2 "github.com/gofrs/uuid"
+	"github.com/rollbar/rollbar-go"
 )
 
 const (
-	ErrorLevelWarn             = "warn"
-	ErrorLevelError            = "error"
-	ErrorLevelCritical         = "critical"
-	AdminRoleSuperDuperAdmin   = "SuperDuperAdmin"
-	AdminRoleSalesAdmin        = "SalesAdmin"
-	EmptyUUID                  = "00000000-0000-0000-0000-000000000000"
-	DateFormat                 = "2006-01-02"
-	MaxFileSize                = 1 << 21 // 10 Mebibytes
-	AccessTokenLifetimeSeconds = 3600
-	DateTimeFormat             = "2006-01-02 15:04:05"
-)
-
-// Environment Variables
-const (
-	UIURLEnv                      = "UI_URL"
-	AccessTokenLifetimeSecondsEnv = "ACCESS_TOKEN_LIFETIME_SECONDS"
-	SendGridAPIKeyEnv             = "SENDGRID_API_KEY"
-	EmailServiceEnv               = "EMAIL_SERVICE"
-	MobileServiceEnv              = "MOBILE_SERVICE"
+	DateFormat                  = "2006-01-02"
+	MaxFileSize                 = 1 << 21 // 10 Mebibytes
+	AccessTokenLifetimeSeconds  = 3600
+	DateTimeFormat              = "2006-01-02 15:04:05"
+	NewMessageNotificationDelay = 1 * time.Minute
+	DefaultProximityDistanceKm  = 1000
+	DurationDay                 = time.Duration(time.Hour * 24)
+	DurationWeek                = time.Duration(DurationDay * 7)
+	RecentMeetingDelay          = DurationDay * 30
 )
 
 // Event Kinds
 const (
-	EventApiUserCreated      = "api:user:created"
-	EventApiAuthUserLoggedIn = "api:auth:user:loggedin"
-	EventApiMessageCreated   = "api:message:created"
+	EventApiUserCreated       = "api:user:created"
+	EventApiAuthUserLoggedIn  = "api:auth:user:loggedin"
+	EventApiMessageCreated    = "api:message:created"
+	EventApiPostStatusUpdated = "api:post:status:updated"
+	EventApiPostCreated       = "api:post:status:created"
+)
+
+// Event and Job argument names
+const (
+	ArgMessageID = "message_id"
 )
 
 // Notification Message Template Names
 const (
-	MessageTemplateNewMessage = "new_message"
-	MessageTemplateNewRequest = "new_request"
+	MessageTemplateNewOffer                        = "new_offer"
+	MessageTemplateNewRequest                      = "new_request"
+	MessageTemplateNewThreadMessage                = "new_thread_message"
+	MessageTemplateNewUserWelcome                  = "new_user_welcome"
+	MessageTemplateRequestFromAcceptedToCommitted  = "request_from_accepted_to_committed"
+	MessageTemplateRequestFromAcceptedToCompleted  = "request_from_accepted_to_completed"
+	MessageTemplateRequestFromAcceptedToDelivered  = "request_from_accepted_to_delivered"
+	MessageTemplateRequestFromAcceptedToOpen       = "request_from_accepted_to_open"
+	MessageTemplateRequestFromAcceptedToReceived   = "request_from_accepted_to_received"
+	MessageTemplateRequestFromAcceptedToRemoved    = "request_from_accepted_to_removed"
+	MessageTemplateRequestFromCommittedToAccepted  = "request_from_committed_to_accepted"
+	MessageTemplateRequestFromCommittedToDelivered = "request_from_committed_to_delivered"
+	MessageTemplateRequestFromCommittedToOpen      = "request_from_committed_to_open"
+	MessageTemplateRequestFromCommittedToReceived  = "request_from_committed_to_received"
+	MessageTemplateRequestFromCommittedToRemoved   = "request_from_committed_to_removed"
+	MessageTemplateRequestFromCompletedToAccepted  = "request_from_completed_to_accepted"
+	MessageTemplateRequestFromCompletedToDelivered = "request_from_completed_to_delivered"
+	MessageTemplateRequestFromCompletedToReceived  = "request_from_completed_to_received"
+	MessageTemplateRequestFromDeliveredToAccepted  = "request_from_delivered_to_accepted"
+	MessageTemplateRequestFromDeliveredToCommitted = "request_from_delivered_to_committed"
+	MessageTemplateRequestFromDeliveredToCompleted = "request_from_delivered_to_completed"
+	MessageTemplateRequestFromOpenToCommitted      = "request_from_open_to_committed"
+	MessageTemplateRequestFromOpenToRemoved        = "request_from_open_to_removed"
+	MessageTemplateRequestFromReceivedToCompleted  = "request_from_received_to_completed"
+	MessageTemplateRequestDelivered                = "request_delivered"
+	MessageTemplateRequestReceived                 = "request_received"
+	MessageTemplateRequestNotReceivedAfterAll      = "request_not_received_after_all"
 )
 
-// NoExtras is exported for use when making calls to RollbarError and rollbarMessage to reduce
-// typing map[string]interface{} when no extras are needed
-var NoExtras map[string]interface{}
+// User preferences
+const (
+	UserPreferenceKeyLanguage        = "language"
+	UserPreferenceLanguageEnglish    = "en"
+	UserPreferenceLanguageFrench     = "fr"
+	UserPreferenceLanguageSpanish    = "es"
+	UserPreferenceLanguageKorean     = "ko"
+	UserPreferenceLanguagePortuguese = "pt"
+
+	UserPreferenceKeyTimeZone = "time_zone"
+
+	UserPreferenceKeyWeightUnit    = "weight_unit"
+	UserPreferenceWeightUnitPounds = "pounds"
+	UserPreferenceWeightUnitKGs    = "kilograms"
+)
+
+// UI URL Paths
+const (
+	DefaultUIPath = "/#/requests"
+	postUIPath    = "/#/requests/"
+	threadUIPath  = "/#/messages/"
+)
 
 var Logger log.Logger
 var ErrLogger log.Logger
 
+// Env holds environment variable values loaded by init()
+var Env struct {
+	AccessTokenLifetimeSeconds int
+	AppName                    string
+	AuthCallbackURL            string
+	AwsRegion                  string
+	AwsS3Endpoint              string
+	AwsS3DisableSSL            bool
+	AwsS3Bucket                string
+	AwsS3AccessKeyID           string
+	AwsS3SecretAccessKey       string
+	AwsSESAccessKeyID          string
+	AwsSESSecretAccessKey      string
+	EmailService               string
+	EmailFromAddress           string
+	GoEnv                      string
+	GoogleKey                  string
+	GoogleSecret               string
+	MobileService              string
+	PlaygroundPort             string
+	RollbarServerRoot          string
+	RollbarToken               string
+	SendGridAPIKey             string
+	SessionSecret              string
+	SupportEmail               string
+	UIURL                      string
+}
+
+// T is the Buffalo i18n translator
+var T *mwi18n.Translator
+
 func init() {
 	Logger.SetOutput(os.Stdout)
 	ErrLogger.SetOutput(os.Stderr)
+
+	readEnv()
+}
+
+// readEnv loads environment data into `Env`
+func readEnv() {
+	n, err := strconv.Atoi(envy.Get("ACCESS_TOKEN_LIFETIME_SECONDS", strconv.Itoa(AccessTokenLifetimeSeconds)))
+	if err != nil {
+		ErrLogger.Printf("error converting token lifetime env var ... %v", err)
+		n = AccessTokenLifetimeSeconds
+	}
+	Env.AccessTokenLifetimeSeconds = n
+	Env.AppName = envy.Get("APP_NAME", "WeCarry")
+	Env.AuthCallbackURL = envy.Get("AUTH_CALLBACK_URL", "")
+	Env.AwsRegion = envy.Get("AWS_REGION", "")
+	Env.AwsS3Endpoint = envy.Get("AWS_S3_ENDPOINT", "")
+	Env.AwsS3DisableSSL, _ = strconv.ParseBool(envy.Get("AWS_S3_DISABLE_SSL", "false"))
+	Env.AwsS3Bucket = envy.Get("AWS_S3_BUCKET", "")
+	Env.AwsS3AccessKeyID = envy.Get("AWS_S3_ACCESS_KEY_ID", "")
+	Env.AwsS3SecretAccessKey = envy.Get("AWS_S3_SECRET_ACCESS_KEY", "")
+	Env.AwsSESAccessKeyID = envy.Get("AWS_SES_ACCESS_KEY_ID", Env.AwsS3AccessKeyID)
+	Env.AwsSESSecretAccessKey = envy.Get("AWS_SES_SECRET_ACCESS_KEY", Env.AwsS3SecretAccessKey)
+	Env.EmailService = envy.Get("EMAIL_SERVICE", "sendgrid")
+	Env.EmailFromAddress = envy.Get("EMAIL_FROM_ADDRESS", "no_reply@example.com")
+	Env.GoEnv = envy.Get("GO_ENV", "development")
+	Env.GoogleKey = envy.Get("GOOGLE_KEY", "")
+	Env.GoogleSecret = envy.Get("GOOGLE_SECRET", "")
+	Env.MobileService = envy.Get("MOBILE_SERVICE", "dummy")
+	Env.PlaygroundPort = envy.Get("PORT", "3000")
+	Env.RollbarServerRoot = envy.Get("ROLLBAR_SERVER_ROOT", "github.com/silinternational/wecarry-api")
+	Env.RollbarToken = envy.Get("ROLLBAR_TOKEN", "")
+	Env.SendGridAPIKey = envy.Get("SENDGRID_API_KEY", "")
+	Env.SessionSecret = envy.Get("SESSION_SECRET", "testing")
+	Env.SupportEmail = envy.Get("SUPPORT_EMAIL", "")
+	Env.UIURL = envy.Get("UI_URL", "dev.wecarry.app")
 }
 
 type AppError struct {
-	Code    string `json:"Code"`
-	Message string `json:"Message,omitempty"`
+	Code int `json:"code"`
+
+	// Don't change the value of these Key entries without making a corresponding change on the UI,
+	// since these will be converted to human-friendly texts on the UI
+	Key string `json:"key"`
 }
 
 // GetFirstStringFromSlice returns the first string in the given slice, or an empty
@@ -137,9 +250,9 @@ func GetCurrentTime() string {
 	return time.Now().Format(DateTimeFormat)
 }
 
-// GetUuid creates a new, unique version 4 (random) UUID and returns it
+// GetUUID creates a new, unique version 4 (random) UUID and returns it
 // as a uuid2.UUID. Errors are ignored.
-func GetUuid() uuid2.UUID {
+func GetUUID() uuid2.UUID {
 	uuid, err := uuid2.NewV4()
 	if err != nil {
 		ErrLogger.Printf("error creating new uuid2 ... %v", err)
@@ -182,12 +295,16 @@ func EmailDomain(email string) string {
 
 func RollbarMiddleware(next buffalo.Handler) buffalo.Handler {
 	return func(c buffalo.Context) error {
+		if Env.RollbarToken == "" {
+			return next(c)
+		}
+
 		client := rollbar.New(
-			envy.Get("ROLLBAR_TOKEN", ""),
-			envy.Get("GO_ENV", "development"),
+			Env.RollbarToken,
+			Env.GoEnv,
 			"",
 			"",
-			envy.Get("ROLLBAR_SERVER_ROOT", "github.com/silinternational/wecarry-api"))
+			Env.RollbarServerRoot)
 
 		c.Set("rollbar", client)
 
@@ -195,21 +312,48 @@ func RollbarMiddleware(next buffalo.Handler) buffalo.Handler {
 	}
 }
 
+func mergeExtras(extras []map[string]interface{}) map[string]interface{} {
+	var allExtras map[string]interface{}
+
+	// I didn't think I would need this, but without it at least one test was failing
+	// The code allowed a map[string]interface{} to get through (i.e. not in a slice)
+	// without the compiler complaining
+	if len(extras) == 1 {
+		return extras[0]
+	}
+
+	for _, e := range extras {
+		for k, v := range e {
+			allExtras[k] = v
+		}
+	}
+
+	return allExtras
+}
+
 // Error log error and send to Rollbar
-func Error(c buffalo.Context, msg string, extras map[string]interface{}) {
-	c.Logger().Error(msg, extras)
-	rollbarMessage(c, rollbar.ERR, msg, extras)
+func Error(c buffalo.Context, msg string, extras ...map[string]interface{}) {
+	// Avoid panics running tests when c doesn't have the necessary nested methods
+	cType := fmt.Sprintf("%T", c)
+	if cType == "models.EmptyContext" {
+		return
+	}
+
+	es := mergeExtras(extras)
+	c.Logger().Error(msg, es)
+	rollbarMessage(c, rollbar.ERR, msg, es)
 }
 
 // Warn log warning and send to Rollbar
-func Warn(c buffalo.Context, msg string, extras map[string]interface{}) {
-	c.Logger().Warn(msg, extras)
-	rollbarMessage(c, rollbar.WARN, msg, extras)
+func Warn(c buffalo.Context, msg string, extras ...map[string]interface{}) {
+	es := mergeExtras(extras)
+	c.Logger().Warn(msg, es)
+	rollbarMessage(c, rollbar.WARN, msg, es)
 }
 
 // Log info message
-func Info(c buffalo.Context, msg string, extras map[string]interface{}) {
-	c.Logger().Info(msg, extras)
+func Info(c buffalo.Context, msg string, extras ...map[string]interface{}) {
+	c.Logger().Info(msg, mergeExtras(extras))
 }
 
 // rollbarMessage is a wrapper function to call rollbar's client.MessageWithExtras function from client stored in context
@@ -228,4 +372,117 @@ func RollbarSetPerson(c buffalo.Context, id, username, email string) {
 		rc.SetPerson(id, username, email)
 		return
 	}
+}
+
+// GetPostUIURL returns a UI URL for the given Post
+func GetPostUIURL(postUUID string) string {
+	return Env.UIURL + postUIPath + postUUID
+}
+
+// GetThreadUIURL returns a UI URL for the given Thread
+func GetThreadUIURL(threadUUID string) string {
+	return Env.UIURL + threadUIPath + threadUUID
+}
+
+func IsLanguageAllowed(lang string) bool {
+	switch lang {
+	case UserPreferenceLanguageEnglish, UserPreferenceLanguageFrench, UserPreferenceLanguageKorean,
+		UserPreferenceLanguagePortuguese, UserPreferenceLanguageSpanish:
+		return true
+	}
+
+	return false
+}
+
+func IsWeightUnitAllowed(unit string) bool {
+	switch unit {
+	case UserPreferenceWeightUnitKGs, UserPreferenceWeightUnitPounds:
+		return true
+	}
+
+	return false
+}
+
+func IsTimeZoneAllowed(name string) bool {
+	_, err := time.LoadLocation(name)
+
+	if err != nil {
+		Logger.Printf("error evaluating timezone %s ... %v", name, err)
+		return false
+	}
+
+	return true
+}
+
+// TranslateWithLang returns the translation of the string identified by translationID, for the given language.
+// Apparently i18n has a global or something that keeps track of translatable phrases once a new packr Box
+// is created.  If no new packr Box has been created, i18n.Tfunc returns an error.
+func TranslateWithLang(lang, translationID string, args ...interface{}) (string, error) {
+	if T == nil {
+		_, err := mwi18n.New(packr.New("locales", "../locales"), "en")
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return T.TranslateWithLang(lang, translationID, args...)
+}
+
+// IsOtherThanNoRows returns false if the error is nil or is just reporting that there
+//   were no rows in the result set for a sql query.
+func IsOtherThanNoRows(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	if strings.Contains(err.Error(), "sql: no rows in result set") {
+		return false
+	}
+
+	return true
+}
+
+// GetStructTags creates a map with certain types of tags (e.g. json) of a struct's
+// fields.  That tag values are both the keys and values of the map - just to make
+// it easy to check if a certain value is in the map
+func GetStructTags(tagType string, s interface{}) (map[string]string, error) {
+	rt := reflect.TypeOf(s)
+	if rt.Kind() != reflect.Struct {
+		return map[string]string{}, fmt.Errorf("cannot get fieldTags of non structs, not even for %v", rt.Kind())
+	}
+
+	fieldTags := map[string]string{}
+
+	for i := 0; i < rt.NumField(); i++ {
+		f := rt.Field(i)
+
+		v := strings.Split(f.Tag.Get(tagType), ",")[0] // use split to ignore tag "options" like omitempty, etc.
+		if v != "" {
+			fieldTags[v] = v
+		}
+	}
+
+	return fieldTags, nil
+}
+
+func GetTranslatedSubject(language, translationID string, translationData map[string]string) string {
+	translationData["AppName"] = Env.AppName
+
+	subj, err := TranslateWithLang(language, translationID, translationData)
+
+	if err != nil {
+		ErrLogger.Printf("error translating '%s' notification subject, %s", translationID, err)
+	}
+
+	return subj
+}
+
+// Truncate returns the given string truncated to length including the suffix if originally longer than length
+func Truncate(str, suffix string, length int) string {
+	a := []rune(str)
+	s := []rune(suffix)
+	if len(a) > length {
+		return string(a[0:length-len(s)]) + suffix
+	}
+	return str
 }

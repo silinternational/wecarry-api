@@ -7,9 +7,12 @@ create_table("locations") {
 	t.DisableTimestamps()
 }
 
-add_column("posts", "destination_id", "integer", {null: true})
+drop_column("posts", "destination")
+drop_column("posts", "origin")
+
+add_column("posts", "destination_id", "integer", {})
 add_index("posts", "destination_id", {"unique": true})
-add_foreign_key("posts", "destination_id", {"locations": ["id"]}, {"name": "post_destination_fk", "on_delete": "set null"})
+add_foreign_key("posts", "destination_id", {"locations": ["id"]}, {"name": "post_destination_fk"})
 
 add_column("posts", "origin_id", "integer", {null: true})
 add_index("posts", "origin_id", {"unique": true})

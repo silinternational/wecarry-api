@@ -1,20 +1,20 @@
 package models
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
-
-	"github.com/silinternational/wecarry-api/auth/google"
-
-	"github.com/silinternational/wecarry-api/auth"
-	"github.com/silinternational/wecarry-api/auth/saml"
-
-	"github.com/gofrs/uuid"
 
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
 	"github.com/gobuffalo/validate/validators"
+	"github.com/gofrs/uuid"
+	"github.com/pkg/errors"
+
+	"github.com/silinternational/wecarry-api/auth"
+	"github.com/silinternational/wecarry-api/auth/google"
+	"github.com/silinternational/wecarry-api/auth/saml"
 )
 
 const AuthTypeSaml = "saml"
@@ -28,31 +28,34 @@ type Organization struct {
 	Url                 nulls.String         `json:"url" db:"url"`
 	AuthType            string               `json:"auth_type" db:"auth_type"`
 	AuthConfig          string               `json:"auth_config" db:"auth_config"`
-	Uuid                uuid.UUID            `json:"uuid" db:"uuid"`
-	Users               Users                `many_to_many:"user_organizations"`
-	OrganizationDomains []OrganizationDomain `has_many:"organization_domains"`
+	UUID                uuid.UUID            `json:"uuid" db:"uuid"`
+	Users               Users                `many_to_many:"user_organizations" order_by:"nickname"`
+	OrganizationDomains []OrganizationDomain `has_many:"organization_domains" order_by:"domain asc"`
+}
+
+// String is used to serialize error extras
+func (o Organization) String() string {
+	ju, _ := json.Marshal(o)
+	return string(ju)
 }
 
 type Organizations []Organization
 
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
-// This method is not required and may be deleted.
 func (o *Organization) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
 		&validators.StringIsPresent{Field: o.Name, Name: "Name"},
 		&validators.StringIsPresent{Field: o.AuthType, Name: "AuthType"},
-		&validators.UUIDIsPresent{Field: o.Uuid, Name: "Uuid"},
+		&validators.UUIDIsPresent{Field: o.UUID, Name: "UUID"},
 	), nil
 }
 
 // ValidateCreate gets run every time you call "pop.ValidateAndCreate" method.
-// This method is not required and may be deleted.
 func (o *Organization) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }
 
 // ValidateUpdate gets run every time you call "pop.ValidateAndUpdate" method.
-// This method is not required and may be deleted.
 func (o *Organization) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }
@@ -73,7 +76,7 @@ func (o *Organization) GetAuthProvider() (auth.Provider, error) {
 func (o *Organization) FindByUUID(uuid string) error {
 
 	if uuid == "" {
-		return fmt.Errorf("error: org uuid must not be blank")
+		return errors.New("error: org uuid must not be blank")
 	}
 
 	if err := DB.Where("uuid = ?", uuid).First(o); err != nil {
@@ -111,57 +114,82 @@ func (o *Organization) AddDomain(domain string) error {
 
 	orgDomain.Domain = domain
 	orgDomain.OrganizationID = o.ID
-	err = DB.Save(&orgDomain)
-	if err != nil {
-		return err
-	}
-
-	err = DB.Load(o, "OrganizationDomains")
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return orgDomain.Create()
 }
 
 func (o *Organization) RemoveDomain(domain string) error {
 	var orgDomain OrganizationDomain
-	err := DB.Where("organization_id = ? and domain = ?", o.ID, domain).First(&orgDomain)
-	if err != nil {
+	if err := DB.Where("organization_id = ? and domain = ?", o.ID, domain).First(&orgDomain); err != nil {
 		return err
 	}
 
-	err = DB.Destroy(&orgDomain)
-	if err != nil {
-		return err
-	}
-
-	err = DB.Load(o, "OrganizationDomains")
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return DB.Destroy(&orgDomain)
 }
 
 // Save wrap DB.Save() call to check for errors and operate on attached object
 func (o *Organization) Save() error {
-	validationErrs, err := o.Validate(DB)
-	if validationErrs != nil && validationErrs.HasAny() {
-		return fmt.Errorf(FlattenPopErrors(validationErrs))
-	}
-	if err != nil {
-		return err
-	}
-
-	return DB.Save(o)
+	return save(o)
 }
 
-func (orgs *Organizations) ListAll() error {
+func (orgs *Organizations) All() error {
 	return DB.All(orgs)
 }
 
-func (orgs *Organizations) ListAllForUser(user User) error {
-	return DB.Q().LeftJoin("user_organizations uo", "organizations.id = uo.organization_id").
-		Where("uo.user_id = ?", user.ID).All(orgs)
+func (orgs *Organizations) AllWhereUserIsOrgAdmin(cUser User) error {
+	if cUser.AdminRole == UserAdminRoleSuperAdmin || cUser.AdminRole == UserAdminRoleSalesAdmin {
+		return orgs.All()
+	}
+
+	return DB.
+		Scope(scopeUserAdminOrgs(cUser)).
+		Order("name asc").
+		All(orgs)
+}
+
+// GetDomains finds and returns all related OrganizationDomain rows.
+func (o *Organization) GetDomains() ([]OrganizationDomain, error) {
+	if err := DB.Load(o, "OrganizationDomains"); err != nil {
+		return nil, err
+	}
+
+	return o.OrganizationDomains, nil
+}
+
+// GetUsers finds and returns all related Users.
+func (o *Organization) GetUsers() (Users, error) {
+	if o.ID <= 0 {
+		return nil, errors.New("invalid Organization ID")
+	}
+
+	if err := DB.Load(o, "Users"); err != nil {
+		return nil, err
+	}
+
+	return o.Users, nil
+}
+
+// scope query to only include organizations that the cUser is an admin of
+func scopeUserAdminOrgs(cUser User) pop.ScopeFunc {
+	return func(q *pop.Query) *pop.Query {
+		var adminOrgIDs []int
+
+		_ = DB.Load(&cUser, "UserOrganizations")
+
+		for _, uo := range cUser.UserOrganizations {
+			if uo.Role == UserOrganizationRoleAdmin {
+				adminOrgIDs = append(adminOrgIDs, uo.OrganizationID)
+			}
+		}
+
+		// convert []int to []interface{}
+		s := make([]interface{}, len(adminOrgIDs))
+		for i, v := range adminOrgIDs {
+			s[i] = v
+		}
+
+		if len(s) == 0 {
+			return q.Where("id = -1")
+		}
+		return q.Where("id IN (?)", s...)
+	}
 }

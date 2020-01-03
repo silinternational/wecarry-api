@@ -12,11 +12,18 @@ import (
 	"github.com/gobuffalo/events"
 	"github.com/gobuffalo/suite"
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/internal/test"
 	"github.com/silinternational/wecarry-api/models"
+	"github.com/silinternational/wecarry-api/notifications"
 )
 
 type ModelSuite struct {
 	*suite.Model
+}
+
+type PostFixtures struct {
+	models.Users
+	models.Posts
 }
 
 func Test_ModelSuite(t *testing.T) {
@@ -83,25 +90,37 @@ func (ms *ModelSuite) TestUserCreated() {
 		domain.Logger.SetOutput(os.Stdout)
 	}()
 
-	user := "GoodOne"
+	user := models.User{
+		Email:     "test@test.com",
+		FirstName: "test",
+		LastName:  "user",
+		Nickname:  "testy",
+		AdminRole: models.UserAdminRoleUser,
+		UUID:      domain.GetUUID(),
+	}
 
 	e := events.Event{
 		Kind:    domain.EventApiUserCreated,
-		Message: user,
+		Message: "Nickname: " + user.Nickname + "  UUID: " + user.UUID.String(),
+		Payload: events.Payload{"user": &user},
 	}
 
-	userCreated(e)
-	got := buf.String()
-	want := "User Created ... " + user
+	notifications.TestEmailService.DeleteSentMessages()
 
+	userCreated(e)
+
+	got := buf.String()
+	want := fmt.Sprintf("User Created: %s", e.Message)
 	ms.Contains(got, want, "Got an unexpected log entry")
+
+	emailCount := notifications.TestEmailService.GetNumberOfMessagesSent()
+	ms.Equal(1, emailCount, "wrong email count")
 
 }
 
 func (ms *ModelSuite) TestUserAccessTokensCleanup() {
-	models.ResetTables(ms.T(), ms.DB)
 
-	UserAccessTokensNextCleanupTime = time.Now().Add(-time.Duration(time.Hour))
+	userAccessTokensNextCleanupTime = time.Now().Add(-time.Duration(time.Hour))
 
 	var buf bytes.Buffer
 	domain.Logger.SetOutput(&buf)
@@ -135,9 +154,56 @@ func (ms *ModelSuite) TestSendNewMessageNotification() {
 		Message: "New Message from",
 	}
 
-	sendNewMessageNotification(e)
+	sendNewThreadMessageNotification(e)
 	got := buf.String()
 	want := "Message Created ... New Message from"
 
 	ms.Contains(got, want, "Got an unexpected log entry")
+}
+
+func createFixturesForSendPostCreatedNotifications(ms *ModelSuite) PostFixtures {
+	userFixtures := test.CreateUserFixtures(ms.DB, 3)
+	org := userFixtures.Organization
+	users := userFixtures.Users
+
+	for i := range users {
+		ms.NoError(ms.DB.Load(&users[i], "Location"))
+		users[i].Location.Country = "KH"
+		ms.NoError(ms.DB.Save(&users[i].Location))
+	}
+
+	location := models.Location{Country: "KH"}
+	createFixture(ms, &location)
+
+	post := models.Post{
+		OrganizationID: org.ID,
+		UUID:           domain.GetUUID(),
+		CreatedByID:    users[0].ID,
+		DestinationID:  location.ID,
+		Type:           models.PostTypeOffer,
+	}
+	createFixture(ms, &post)
+
+	return PostFixtures{
+		Posts: models.Posts{post},
+	}
+}
+
+func (ms *ModelSuite) TestSendPostCreatedNotifications() {
+	f := createFixturesForSendPostCreatedNotifications(ms)
+
+	e := events.Event{
+		Kind:    domain.EventApiPostCreated,
+		Message: "Post created",
+		Payload: events.Payload{"eventData": models.PostCreatedEventData{
+			PostID: f.Posts[0].ID,
+		}},
+	}
+
+	notifications.TestEmailService.DeleteSentMessages()
+
+	sendPostCreatedNotifications(e)
+
+	emailCount := notifications.TestEmailService.GetNumberOfMessagesSent()
+	ms.Equal(2, emailCount, "wrong email count")
 }

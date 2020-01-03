@@ -1,12 +1,17 @@
 package domain
 
+// ********************************************************************
+// Don't change the value of these Key entries without making a corresponding change on the UI,
+// since these will be converted to human-friendly texts on the UI
+// ********************************************************************
+
 // ClientID is required on various requests
 // actions.AuthRequest
-const MissingClientID = "MissingClientID"
+const ErrorMissingClientID = "ErrorMissingClientID"
 
 // AuthEmail is required on authentication requests
 // actions.AuthRequest
-const MissingAuthEmail = "MissingAuthEmail"
+const ErrorMissingAuthEmail = "ErrorMissingAuthEmail"
 
 // There was an error during the auth request process when trying to
 // find an organization or userorganizations
@@ -16,7 +21,7 @@ const ErrorFindingOrgUserOrgs = "ErrorFindingOrgUserOrgs"
 // An appropriate organization was not found
 // for the user making an authentication request
 // actions.AuthRequest
-const CannotFindOrg = "CannotFindOrg"
+const ErrorCannotFindOrg = "ErrorCannotFindOrg"
 
 // actions.AuthRequest
 const ErrorSavingAuthRequestSession = "ErrorSavingAuthRequestSession"
@@ -28,19 +33,19 @@ const ErrorLoadingAuthProvider = "ErrorLoadingAuthProvider"
 const ErrorGettingAuthURL = "ErrorGettingAuthURL"
 
 // actions.AuthCallback
-const MissingSessionAuthEmail = "MissingSessionAuthEmail"
+const ErrorMissingSessionAuthEmail = "ErrorMissingSessionAuthEmail"
 
 // actions.AuthCallback
-const MissingSessionClientID = "MissingSessionClientID"
+const ErrorMissingSessionClientID = "ErrorMissingSessionClientID"
 
 // actions.AuthCallback
-const MissingSessionOrgID = "MissingSessionOrgID"
+const ErrorMissingSessionOrgID = "ErrorMissingSessionOrgID"
 
 // actions.AuthCallback
 const ErrorSavingAuthCallbackSession = "ErrorSavingAuthCallbackSession"
 
 // actions.AuthCallback
-const ErrorFindingOrg = "ErrorFindingOrg"
+const ErrorFindingOrgByID = "ErrorFindingOrgByID"
 
 // actions.AuthCallback
 const ErrorAuthProvidersCallback = "ErrorAuthProvidersCallback"
@@ -50,7 +55,7 @@ const ErrorWithAuthUser = "ErrorWithAuthUser"
 
 // token param is required on a logout request
 // actions.AuthDestroy
-const MissingLogoutToken = "MissingLogoutToken"
+const ErrorMissingLogoutToken = "ErrorMissingLogoutToken"
 
 // actions.AuthDestroy
 const ErrorFindingAccessToken = "ErrorFindingAccessToken"
@@ -68,7 +73,13 @@ const ErrorDeletingAccessToken = "ErrorDeletingAccessToken"
 const ErrorReceivingFile = "ErrorReceivingFile"
 
 // actions.UploadHandler
-const UnableToReadFile = "UnableToReadFile"
+const ErrorUnableToReadFile = "ErrorUnableToReadFile"
 
 // actions.UploadHandler
-const UnableToStoreFile = "UnableToStoreFile"
+const ErrorUnableToStoreFile = "ErrorUnableToStoreFile"
+
+// models.Store
+const ErrorStoreFileTooLarge = "ErrorStoreFileTooLarge"
+
+// models.Store
+const ErrorStoreFileBadContentType = "ErrorStoreFileBadContentType"

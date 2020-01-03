@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func (ms *ModelSuite) TestFindOrgByUUID() {
+func (ms *ModelSuite) TestOrganization_FindOrgByUUID() {
 	t := ms.T()
 	org, _ := createOrgFixtures(ms, t)
 
@@ -24,7 +24,7 @@ func (ms *ModelSuite) TestFindOrgByUUID() {
 	}{
 		{
 			name: "found",
-			args: args{org.Uuid.String()},
+			args: args{org.UUID.String()},
 			want: org,
 		},
 		{
@@ -49,7 +49,7 @@ func (ms *ModelSuite) TestFindOrgByUUID() {
 			} else {
 				if err != nil {
 					t.Errorf("FindByUUID() returned an error: %v", err)
-				} else if org.Uuid != test.want.Uuid {
+				} else if org.UUID != test.want.UUID {
 					t.Errorf("found %v, expected %v", org, test.want)
 				}
 			}
@@ -61,7 +61,7 @@ func (ms *ModelSuite) TestFindOrgByUUID() {
 	}
 }
 
-func (ms *ModelSuite) TestCreateOrganization() {
+func (ms *ModelSuite) TestOrganization_Create() {
 	t := ms.T()
 	tests := []struct {
 		name    string
@@ -72,7 +72,6 @@ func (ms *ModelSuite) TestCreateOrganization() {
 			name: "full",
 			org: Organization{
 				Name:       "ACME",
-				Uuid:       domain.GetUuid(),
 				AuthType:   AuthTypeSaml,
 				AuthConfig: "{}",
 				Url:        nulls.NewString("https://www.example.com"),
@@ -83,7 +82,6 @@ func (ms *ModelSuite) TestCreateOrganization() {
 			name: "minimum",
 			org: Organization{
 				Name:       "Bits 'R' Us",
-				Uuid:       domain.GetUuid(),
 				AuthType:   AuthTypeSaml,
 				AuthConfig: "{}",
 			},
@@ -93,7 +91,6 @@ func (ms *ModelSuite) TestCreateOrganization() {
 			name: "missing auth config",
 			org: Organization{
 				Name:     "Bits 'R' Us",
-				Uuid:     domain.GetUuid(),
 				AuthType: AuthTypeSaml,
 			},
 			wantErr: true,
@@ -101,7 +98,7 @@ func (ms *ModelSuite) TestCreateOrganization() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := ms.DB.Create(&test.org)
+			err := test.org.Save()
 			if test.wantErr == true {
 				if err == nil {
 					t.Errorf("Expected an error, but did not get one")
@@ -110,11 +107,11 @@ func (ms *ModelSuite) TestCreateOrganization() {
 				t.Errorf("Unexpected error %v", err)
 			} else {
 				var org Organization
-				err := org.FindByUUID(test.org.Uuid.String())
+				err := org.FindByUUID(test.org.UUID.String())
 				if err != nil {
 					t.Errorf("Couldn't find new org %v: %v", test.org.Name, err)
 				}
-				if org.Uuid != test.org.Uuid {
+				if org.UUID != test.org.UUID {
 					t.Errorf("newly created org doesn't match, found %v, expected %v", org, test.org)
 				}
 			}
@@ -127,7 +124,7 @@ func (ms *ModelSuite) TestCreateOrganization() {
 	}
 }
 
-func (ms *ModelSuite) TestValidateOrganization() {
+func (ms *ModelSuite) TestOrganization_Validate() {
 	t := ms.T()
 	tests := []struct {
 		name     string
@@ -139,7 +136,7 @@ func (ms *ModelSuite) TestValidateOrganization() {
 			name: "minimum",
 			org: Organization{
 				Name:       "Bits 'R' Us",
-				Uuid:       domain.GetUuid(),
+				UUID:       domain.GetUUID(),
 				AuthType:   AuthTypeSaml,
 				AuthConfig: "{}",
 			},
@@ -148,7 +145,7 @@ func (ms *ModelSuite) TestValidateOrganization() {
 		{
 			name: "missing name",
 			org: Organization{
-				Uuid:       domain.GetUuid(),
+				UUID:       domain.GetUUID(),
 				AuthType:   AuthTypeSaml,
 				AuthConfig: "{}",
 			},
@@ -169,7 +166,7 @@ func (ms *ModelSuite) TestValidateOrganization() {
 			name: "missing auth type",
 			org: Organization{
 				Name:       "Babelfish Warehouse",
-				Uuid:       domain.GetUuid(),
+				UUID:       domain.GetUUID(),
 				AuthConfig: "{}",
 			},
 			wantErr:  true,
@@ -192,7 +189,7 @@ func (ms *ModelSuite) TestValidateOrganization() {
 	}
 }
 
-func (ms *ModelSuite) TestOrganizationFindByDomain() {
+func (ms *ModelSuite) TestOrganization_FindByDomain() {
 	t := ms.T()
 	org, orgDomain := createOrgFixtures(ms, t)
 
@@ -232,7 +229,7 @@ func (ms *ModelSuite) TestOrganizationFindByDomain() {
 			} else {
 				if err != nil {
 					t.Errorf("OrganizationFindByDomain() returned an error: %v", err)
-				} else if org.Uuid != test.want.Uuid {
+				} else if org.UUID != test.want.UUID {
 					t.Errorf("found %v, expected %v", org, test.want)
 				}
 			}
@@ -249,7 +246,7 @@ func createOrgFixtures(ms *ModelSuite, t *testing.T) (Organization, Organization
 	// Load Organization test fixtures
 	org := Organization{
 		Name:       "ACME",
-		Uuid:       domain.GetUuid(),
+		UUID:       domain.GetUUID(),
 		AuthType:   AuthTypeSaml,
 		AuthConfig: "{}",
 	}
@@ -273,7 +270,6 @@ func createOrgFixtures(ms *ModelSuite, t *testing.T) (Organization, Organization
 
 func (ms *ModelSuite) TestOrganization_AddRemoveDomain() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	orgFixtures := []Organization{
 		{
@@ -284,7 +280,7 @@ func (ms *ModelSuite) TestOrganization_AddRemoveDomain() {
 			Url:        nulls.String{},
 			AuthType:   "na",
 			AuthConfig: "{}",
-			Uuid:       domain.GetUuid(),
+			UUID:       domain.GetUUID(),
 		},
 		{
 			ID:         2,
@@ -294,7 +290,7 @@ func (ms *ModelSuite) TestOrganization_AddRemoveDomain() {
 			Url:        nulls.String{},
 			AuthType:   "na",
 			AuthConfig: "{}",
-			Uuid:       domain.GetUuid(),
+			UUID:       domain.GetUUID(),
 		},
 	}
 	for i := range orgFixtures {
@@ -306,34 +302,30 @@ func (ms *ModelSuite) TestOrganization_AddRemoveDomain() {
 	}
 
 	err := orgFixtures[0].AddDomain("first.com")
-	if err != nil {
-		t.Errorf("unable to add first domain to Org1: %s", err)
-	} else if len(orgFixtures[0].OrganizationDomains) != 1 {
+	ms.NoError(err, "unable to add first domain to Org1: %s", err)
+	domains, _ := orgFixtures[0].GetDomains()
+	if len(domains) != 1 {
 		t.Errorf("did not get error, but failed to add first domain to Org1")
 	}
 
 	err = orgFixtures[0].AddDomain("second.com")
-	if err != nil {
-		t.Errorf("unable to add second domain to Org1: %s", err)
-	} else if len(orgFixtures[0].OrganizationDomains) != 2 {
+	ms.NoError(err, "unable to add second domain to Org1: %s", err)
+	domains, _ = orgFixtures[0].GetDomains()
+	if len(domains) != 2 {
 		t.Errorf("did not get error, but failed to add second domain to Org1")
 	}
 
 	err = orgFixtures[1].AddDomain("second.com")
-	if err == nil {
-		t.Errorf("was to add existing domain (second.com) to Org2 but should have gotten error")
-	}
-
-	if len(orgFixtures[0].OrganizationDomains) != 2 {
+	ms.Error(err, "was to add existing domain (second.com) to Org2 but should have gotten error")
+	domains, _ = orgFixtures[0].GetDomains()
+	if len(domains) != 2 {
 		t.Errorf("after reloading org domains we did not get what we expected (%v), got: %v", 2, len(orgFixtures[0].OrganizationDomains))
 	}
 
 	err = orgFixtures[0].RemoveDomain("first.com")
-	if err != nil {
-		t.Errorf("unable to remove domain: %s", err)
-	}
-
-	if len(orgFixtures[0].OrganizationDomains) != 1 {
+	ms.NoError(err, "unable to remove domain: %s", err)
+	domains, _ = orgFixtures[0].GetDomains()
+	if len(domains) != 1 {
 		t.Errorf("org domains count after removing domain is not correct, expected %v, got: %v", 1, len(orgFixtures[0].OrganizationDomains))
 	}
 
@@ -341,7 +333,6 @@ func (ms *ModelSuite) TestOrganization_AddRemoveDomain() {
 
 func (ms *ModelSuite) TestOrganization_Save() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	orgFixtures := []Organization{
 		{
@@ -352,7 +343,7 @@ func (ms *ModelSuite) TestOrganization_Save() {
 			Url:        nulls.String{},
 			AuthType:   "na",
 			AuthConfig: "{}",
-			Uuid:       domain.GetUuid(),
+			UUID:       domain.GetUUID(),
 		},
 		{
 			ID:         2,
@@ -362,7 +353,7 @@ func (ms *ModelSuite) TestOrganization_Save() {
 			Url:        nulls.String{},
 			AuthType:   "na",
 			AuthConfig: "{}",
-			Uuid:       domain.GetUuid(),
+			UUID:       domain.GetUUID(),
 		},
 	}
 	for i := range orgFixtures {
@@ -396,7 +387,7 @@ func (ms *ModelSuite) TestOrganization_Save() {
 		Url:        nulls.String{},
 		AuthType:   AuthTypeSaml,
 		AuthConfig: "{}",
-		Uuid:       domain.GetUuid(),
+		UUID:       domain.GetUUID(),
 	}
 
 	err = newOrg.Save()
@@ -410,9 +401,8 @@ func (ms *ModelSuite) TestOrganization_Save() {
 
 }
 
-func (ms *ModelSuite) TestOrganization_ListAll() {
+func (ms *ModelSuite) TestOrganization_All() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
 	orgFixtures := []Organization{
 		{
@@ -423,7 +413,7 @@ func (ms *ModelSuite) TestOrganization_ListAll() {
 			Url:        nulls.String{},
 			AuthType:   "na",
 			AuthConfig: "{}",
-			Uuid:       domain.GetUuid(),
+			UUID:       domain.GetUUID(),
 		},
 		{
 			ID:         2,
@@ -433,7 +423,7 @@ func (ms *ModelSuite) TestOrganization_ListAll() {
 			Url:        nulls.String{},
 			AuthType:   "na",
 			AuthConfig: "{}",
-			Uuid:       domain.GetUuid(),
+			UUID:       domain.GetUUID(),
 		},
 	}
 	for i := range orgFixtures {
@@ -445,7 +435,7 @@ func (ms *ModelSuite) TestOrganization_ListAll() {
 	}
 
 	var allOrgs Organizations
-	err := allOrgs.ListAll()
+	err := allOrgs.All()
 	if err != nil {
 		t.Error(err)
 	}
@@ -456,86 +446,56 @@ func (ms *ModelSuite) TestOrganization_ListAll() {
 
 }
 
-func (ms *ModelSuite) TestOrganization_ListAllForUser() {
+func (ms *ModelSuite) TestOrganization_GetDomains() {
+	f := CreateFixturesForOrganizationGetDomains(ms)
+
+	orgDomains, err := f.Organizations[0].GetDomains()
+	ms.NoError(err)
+
+	domains := make([]string, len(orgDomains))
+	for i := range orgDomains {
+		domains[i] = orgDomains[i].Domain
+	}
+
+	expected := []string{
+		f.OrganizationDomains[1].Domain,
+		f.OrganizationDomains[2].Domain,
+		f.OrganizationDomains[0].Domain,
+	}
+
+	ms.Equal(expected, domains, "incorrect list of domains")
+}
+
+func (ms *ModelSuite) TestOrganization_GetUsers() {
 	t := ms.T()
-	ResetTables(t, ms.DB)
 
-	orgFixtures := []Organization{
-		{
-			ID:         1,
-			CreatedAt:  time.Time{},
-			UpdatedAt:  time.Time{},
-			Name:       "Org1",
-			Url:        nulls.String{},
-			AuthType:   "na",
-			AuthConfig: "{}",
-			Uuid:       domain.GetUuid(),
-		},
-		{
-			ID:         2,
-			CreatedAt:  time.Time{},
-			UpdatedAt:  time.Time{},
-			Name:       "Org2",
-			Url:        nulls.String{},
-			AuthType:   "na",
-			AuthConfig: "{}",
-			Uuid:       domain.GetUuid(),
-		},
-	}
-	for i := range orgFixtures {
-		err := ms.DB.Create(&orgFixtures[i])
-		if err != nil {
-			t.Errorf("Unable to create org fixture: %s", err)
-			t.FailNow()
-		}
-	}
+	f := createFixturesForOrganizationGetUsers(ms)
 
-	userFixtures := []User{
-		{
-			ID:        1,
-			Email:     "user1@test.com",
-			FirstName: "user",
-			LastName:  "one",
-			Nickname:  "user_one",
-			AdminRole: nulls.String{},
-			Uuid:      domain.GetUuid(),
-		},
+	tests := []struct {
+		name        string
+		org         Organization
+		wantUserIDs []int
+		wantErr     string
+	}{
+		{name: "org 0", org: f.Organizations[0], wantUserIDs: []int{f.Users[0].ID, f.Users[2].ID, f.Users[1].ID}},
+		{name: "non-existent org", org: Organization{}, wantErr: "invalid Organization ID"},
 	}
-	for i := range userFixtures {
-		err := ms.DB.Create(&userFixtures[i])
-		if err != nil {
-			t.Errorf("Unable to create user fixture: %s", err)
-			t.FailNow()
-		}
-	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			users, err := test.org.GetUsers()
 
-	userOrgFixtures := []UserOrganization{
-		{
-			ID:             1,
-			OrganizationID: 1,
-			UserID:         1,
-			Role:           UserOrganizationRoleUser,
-			AuthID:         "user_one",
-			AuthEmail:      "user1@test.com",
-			LastLogin:      time.Time{},
-		},
-	}
-	for i := range userOrgFixtures {
-		err := ms.DB.Create(&userOrgFixtures[i])
-		if err != nil {
-			t.Errorf("Unable to create user_organization fixture: %s", err)
-			t.FailNow()
-		}
-	}
+			if test.wantErr != "" {
+				ms.Error(err)
+				ms.Contains(err.Error(), test.wantErr)
+				return
+			}
 
-	var userOrgs Organizations
-	err := userOrgs.ListAllForUser(userFixtures[0])
-	if err != nil {
-		t.Error(err)
+			ms.NoError(err)
+			userIDs := make([]int, len(users))
+			for i := range users {
+				userIDs[i] = users[i].ID
+			}
+			ms.Equal(test.wantUserIDs, userIDs)
+		})
 	}
-
-	if len(userOrgs) != len(userOrgFixtures) {
-		t.Errorf("Did not get expected number of orgs for user, got %v, wanted %v", len(userOrgs), len(userOrgFixtures))
-	}
-
 }

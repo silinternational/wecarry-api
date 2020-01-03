@@ -5,7 +5,7 @@ import "github.com/silinternational/wecarry-api/domain"
 var notifiers []Notifier
 
 func init() {
-	email := EmailNotifier{}
+	email := EmailNotifier{} // The type of sender is determined by domain.Env.EmailService
 	notifiers = append(notifiers, &email)
 }
 

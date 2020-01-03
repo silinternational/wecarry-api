@@ -11,8 +11,8 @@ import (
 	"github.com/silinternational/wecarry-api/models"
 )
 
-// FileFieldName is the multipart field name for the file upload.
-const FileFieldName = "file"
+// fileFieldName is the multipart field name for the file upload.
+const fileFieldName = "file"
 
 // UploadResponse is a JSON response for the /upload endpoint
 type UploadResponse struct {
@@ -24,13 +24,16 @@ type UploadResponse struct {
 	Size        int              `json:"size,omitempty"`
 }
 
-// UploadHandler responds to POST requests at /upload
-func UploadHandler(c buffalo.Context) error {
-	f, err := c.File(FileFieldName)
+// uploadHandler responds to POST requests at /upload
+func uploadHandler(c buffalo.Context) error {
+	f, err := c.File(fileFieldName)
 	if err != nil {
 		domain.ErrLogger.Printf("error getting uploaded file from context ... %v", err)
 		return c.Render(http.StatusInternalServerError, render.JSON(UploadResponse{
-			Error: &domain.AppError{Code: domain.ErrorReceivingFile, Message: err.Error()},
+			Error: &domain.AppError{
+				Code: http.StatusInternalServerError,
+				Key:  domain.ErrorReceivingFile,
+			},
 		}))
 	}
 
@@ -38,15 +41,19 @@ func UploadHandler(c buffalo.Context) error {
 	if err != nil {
 		domain.ErrLogger.Printf("error reading uploaded file ... %v", err)
 		return c.Render(http.StatusInternalServerError, render.JSON(UploadResponse{
-			Error: &domain.AppError{Code: domain.UnableToReadFile, Message: err.Error()},
+			Error: &domain.AppError{
+				Code: http.StatusInternalServerError,
+				Key:  domain.ErrorUnableToReadFile,
+			},
 		}))
 	}
 
 	var fileObject models.File
-	if err := fileObject.Store(f.Filename, content); err != nil {
-		domain.ErrLogger.Printf("error storing uploaded file ... %v", err)
-		return c.Render(http.StatusInternalServerError, render.JSON(UploadResponse{
-			Error: &domain.AppError{Code: domain.UnableToStoreFile, Message: err.Error()},
+	if fErr := fileObject.Store(f.Filename, content); fErr != nil {
+		domain.ErrLogger.Printf("error storing uploaded file ... %v", fErr)
+		return c.Render(fErr.HttpStatus, render.JSON(domain.AppError{
+			Code: fErr.HttpStatus,
+			Key:  fErr.ErrorCode,
 		}))
 	}
 

@@ -6,15 +6,23 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/silinternational/wecarry-api/aws"
-
-	"github.com/silinternational/wecarry-api/domain"
-
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
 	"github.com/gobuffalo/validate/validators"
 	"github.com/gofrs/uuid"
+	"github.com/silinternational/wecarry-api/aws"
+	"github.com/silinternational/wecarry-api/domain"
 )
+
+type FileUploadError struct {
+	HttpStatus int
+	ErrorCode  string
+	Message    string
+}
+
+func (f *FileUploadError) Error() string {
+	return fmt.Sprintf("%d: %s ... %s", f.HttpStatus, f.ErrorCode, f.Message)
+}
 
 type File struct {
 	ID            int       `json:"id" db:"id"`
@@ -28,23 +36,22 @@ type File struct {
 	ContentType   string    `json:"content_type" db:"content_type"`
 }
 
-// String is not required by pop and may be deleted
+// String can be helpful for serializing the model
 func (f File) String() string {
 	ji, _ := json.Marshal(f)
 	return string(ji)
 }
 
-// Files is not required by pop and may be deleted
+// Files is merely for convenience and brevity
 type Files []File
 
-// String is not required by pop and may be deleted
+// String can be helpful for serializing the model
 func (i Files) String() string {
 	ji, _ := json.Marshal(i)
 	return string(ji)
 }
 
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
-// This method is not required and may be deleted.
 func (f *File) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
 		&validators.UUIDIsPresent{Field: f.UUID, Name: "UUID"},
@@ -52,34 +59,47 @@ func (f *File) Validate(tx *pop.Connection) (*validate.Errors, error) {
 }
 
 // ValidateCreate gets run every time you call "pop.ValidateAndCreate" method.
-// This method is not required and may be deleted.
 func (f *File) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }
 
 // ValidateUpdate gets run every time you call "pop.ValidateAndUpdate" method.
-// This method is not required and may be deleted.
 func (f *File) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }
 
 // Store takes a byte slice and stores it into S3 and saves the metadata in the database file table.
 // None of the struct members of `f` are used as input, but are updated if the function is successful.
-func (f *File) Store(name string, content []byte) error {
-	fileUUID := domain.GetUuid()
+func (f *File) Store(name string, content []byte) *FileUploadError {
+	fileUUID := domain.GetUUID()
 
 	if len(content) > domain.MaxFileSize {
-		return fmt.Errorf("file too large (%d bytes), max is %d bytes", len(content), domain.MaxFileSize)
+		e := FileUploadError{
+			HttpStatus: http.StatusBadRequest,
+			ErrorCode:  domain.ErrorStoreFileTooLarge,
+			Message:    fmt.Sprintf("file too large (%d bytes), max is %d bytes", len(content), domain.MaxFileSize),
+		}
+		return &e
 	}
 
 	contentType, err := detectContentType(content)
 	if err != nil {
-		return err
+		e := FileUploadError{
+			HttpStatus: http.StatusBadRequest,
+			ErrorCode:  domain.ErrorStoreFileBadContentType,
+			Message:    err.Error(),
+		}
+		return &e
 	}
 
 	url, err := aws.StoreFile(fileUUID.String(), contentType, content)
 	if err != nil {
-		return err
+		e := FileUploadError{
+			HttpStatus: http.StatusInternalServerError,
+			ErrorCode:  domain.ErrorUnableToStoreFile,
+			Message:    err.Error(),
+		}
+		return &e
 	}
 
 	file := File{
@@ -90,8 +110,13 @@ func (f *File) Store(name string, content []byte) error {
 		Size:          len(content),
 		ContentType:   contentType,
 	}
-	if err := DB.Save(&file); err != nil {
-		return err
+	if err := file.Create(); err != nil {
+		e := FileUploadError{
+			HttpStatus: http.StatusInternalServerError,
+			ErrorCode:  domain.ErrorUnableToStoreFile,
+			Message:    err.Error(),
+		}
+		return &e
 	}
 
 	*f = file
@@ -106,7 +131,7 @@ func (f *File) FindByUUID(fileUUID string) error {
 		return err
 	}
 
-	if err := file.RefreshURL(); err != nil {
+	if err := file.refreshURL(); err != nil {
 		return err
 	}
 
@@ -114,8 +139,8 @@ func (f *File) FindByUUID(fileUUID string) error {
 	return nil
 }
 
-// RefreshURL ensures the file URL is good for at least a few minutes
-func (f *File) RefreshURL() error {
+// refreshURL ensures the file URL is good for at least a few minutes
+func (f *File) refreshURL() error {
 	if f.URLExpiration.After(time.Now().Add(time.Minute * 5)) {
 		return nil
 	}
@@ -126,7 +151,7 @@ func (f *File) RefreshURL() error {
 	}
 	f.URL = newURL.Url
 	f.URLExpiration = newURL.Expiration
-	if err = DB.Update(f); err != nil {
+	if err = f.Update(); err != nil {
 		return err
 	}
 	return nil
@@ -147,4 +172,14 @@ func detectContentType(content []byte) (string, error) {
 		return detectedType, nil
 	}
 	return "", fmt.Errorf("invalid file type %s", detectedType)
+}
+
+// Create stores the File data as a new record in the database.
+func (f *File) Create() error {
+	return create(f)
+}
+
+// Update writes the File data to an existing database record.
+func (f *File) Update() error {
+	return update(f)
 }

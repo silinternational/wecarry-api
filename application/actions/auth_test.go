@@ -6,7 +6,6 @@ import (
 
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/buffalo/render"
-	"github.com/gobuffalo/envy"
 	"github.com/silinternational/wecarry-api/auth"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
@@ -15,7 +14,7 @@ import (
 func (as *ActionSuite) TestGetLoginSuccessRedirectURL() {
 	t := as.T()
 
-	uiURL := envy.Get(domain.UIURLEnv, "")
+	uiURL := domain.Env.UIURL
 
 	tests := []struct {
 		name          string
@@ -29,26 +28,33 @@ func (as *ActionSuite) TestGetLoginSuccessRedirectURL() {
 			authUser:      AuthUser{ID: "1", IsNew: true, AccessToken: "new"},
 			returnTo:      "",
 			wantBeginning: uiURL + "/#/welcome?" + TokenTypeParam + "=Bearer&" + ExpiresUTCParam + "=",
-			wantEnd:       "&" + AccessTokenParam + "=new",
+			wantEnd:       "&" + AccessTokenParam + "=new&" + ReturnToParam + "=/#",
 		},
 		{
-			name:          "New With ReturnTo",
+			name:          "New With Invalid ReturnTo",
 			authUser:      AuthUser{ID: "1", IsNew: true, AccessToken: "new"},
 			returnTo:      "/posts",
 			wantBeginning: uiURL + "/#/welcome?" + TokenTypeParam + "=Bearer&" + ExpiresUTCParam + "=",
-			wantEnd:       "&" + AccessTokenParam + "=new&" + ReturnToParam + "=/posts",
+			wantEnd:       "&" + AccessTokenParam + "=new&" + ReturnToParam + "=/#/posts",
 		},
 		{
-			name:          "Not New ReturnTo Without a Slash",
+			name:          "New With Valid ReturnTo",
+			authUser:      AuthUser{ID: "1", IsNew: true, AccessToken: "new"},
+			returnTo:      "/#/posts",
+			wantBeginning: uiURL + "/#/welcome?" + TokenTypeParam + "=Bearer&" + ExpiresUTCParam + "=",
+			wantEnd:       "&" + AccessTokenParam + "=new&" + ReturnToParam + "=/#/posts",
+		},
+		{
+			name:          "Not New With Invalid ReturnTo",
 			authUser:      AuthUser{ID: "1", IsNew: false, AccessToken: "old1"},
-			returnTo:      "posts",
+			returnTo:      "/posts",
 			wantBeginning: uiURL + "/#/posts?" + TokenTypeParam + "=Bearer&" + ExpiresUTCParam + "=",
 			wantEnd:       "&" + AccessTokenParam + "=old1",
 		},
 		{
 			name:          "Not New With a Good ReturnTo",
 			authUser:      AuthUser{ID: "1", IsNew: false, AccessToken: "old2"},
-			returnTo:      "/posts",
+			returnTo:      "/#/posts",
 			wantBeginning: uiURL + "/#/posts?" + TokenTypeParam + "=Bearer&" + ExpiresUTCParam + "=",
 			wantEnd:       "&" + AccessTokenParam + "=old2",
 		},
@@ -121,7 +127,7 @@ func (as *ActionSuite) TestGetOrSetReturnTo() {
 			name:         "No Param No Session",
 			param:        "",
 			sessionValue: "",
-			want:         "/#",
+			want:         domain.DefaultUIPath,
 		},
 		{
 			name:         "No Param But With Session",
@@ -189,7 +195,6 @@ func (as *ActionSuite) TestGetOrSetReturnTo() {
 // This doesn't test for errors, since it's too complicated with the call to domain.Error()
 func (as *ActionSuite) TestGetOrgAndUserOrgs() {
 	t := as.T()
-	models.ResetTables(t, as.DB)
 
 	fixtures := Fixtures_GetOrgAndUserOrgs(as, t)
 	orgFixture := fixtures.orgs[0]
@@ -264,7 +269,6 @@ func (as *ActionSuite) TestGetOrgAndUserOrgs() {
 
 func (as *ActionSuite) TestCreateAuthUser() {
 	t := as.T()
-	models.ResetTables(t, as.DB)
 	orgFixture := Fixtures_CreateAuthUser(as, t).orgs[0]
 
 	newEmail := "new@example.com"
@@ -273,6 +277,7 @@ func (as *ActionSuite) TestCreateAuthUser() {
 		Email:     newEmail,
 		FirstName: "First",
 		LastName:  "Last",
+		UserID:    newEmail,
 	}
 
 	var user models.User

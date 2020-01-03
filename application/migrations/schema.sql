@@ -3,7 +3,7 @@
 --
 
 -- Dumped from database version 9.6.13
--- Dumped by pg_dump version 11.3 (Debian 11.3-1.pgdg90+1)
+-- Dumped by pg_dump version 12.1 (Debian 12.1-1.pgdg100+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -17,8 +17,6 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 SET default_tablespace = '';
-
-SET default_with_oids = false;
 
 --
 -- Name: files; Type: TABLE; Schema: public; Owner: wecarry
@@ -94,6 +92,49 @@ ALTER TABLE public.locations_id_seq OWNER TO wecarry;
 --
 
 ALTER SEQUENCE public.locations_id_seq OWNED BY public.locations.id;
+
+
+--
+-- Name: meetings; Type: TABLE; Schema: public; Owner: wecarry
+--
+
+CREATE TABLE public.meetings (
+    id integer NOT NULL,
+    uuid uuid NOT NULL,
+    name character varying(80) NOT NULL,
+    description character varying(4096),
+    more_info_url character varying(255),
+    image_file_id integer,
+    created_by_id integer,
+    location_id integer NOT NULL,
+    start_date date NOT NULL,
+    end_date date NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.meetings OWNER TO wecarry;
+
+--
+-- Name: meetings_id_seq; Type: SEQUENCE; Schema: public; Owner: wecarry
+--
+
+CREATE SEQUENCE public.meetings_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.meetings_id_seq OWNER TO wecarry;
+
+--
+-- Name: meetings_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wecarry
+--
+
+ALTER SEQUENCE public.meetings_id_seq OWNED BY public.meetings.id;
 
 
 --
@@ -246,6 +287,44 @@ ALTER SEQUENCE public.post_files_id_seq OWNED BY public.post_files.id;
 
 
 --
+-- Name: post_histories; Type: TABLE; Schema: public; Owner: wecarry
+--
+
+CREATE TABLE public.post_histories (
+    id integer NOT NULL,
+    post_id integer NOT NULL,
+    receiver_id integer,
+    provider_id integer,
+    status character varying(255) NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.post_histories OWNER TO wecarry;
+
+--
+-- Name: post_histories_id_seq; Type: SEQUENCE; Schema: public; Owner: wecarry
+--
+
+CREATE SEQUENCE public.post_histories_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.post_histories_id_seq OWNER TO wecarry;
+
+--
+-- Name: post_histories_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wecarry
+--
+
+ALTER SEQUENCE public.post_histories_id_seq OWNED BY public.post_histories.id;
+
+
+--
 -- Name: posts; Type: TABLE; Schema: public; Owner: wecarry
 --
 
@@ -256,23 +335,19 @@ CREATE TABLE public.posts (
     organization_id integer NOT NULL,
     status character varying(255) NOT NULL,
     title character varying(255) NOT NULL,
-    destination character varying(255),
-    origin character varying(255),
     size character varying(255) NOT NULL,
     uuid uuid NOT NULL,
     receiver_id integer,
     provider_id integer,
-    needed_after date NOT NULL,
-    needed_before date NOT NULL,
-    category character varying(255) NOT NULL,
     description character varying(4096),
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL,
     url character varying(255),
-    cost numeric(13,4),
     photo_file_id integer,
-    destination_id integer,
-    origin_id integer
+    destination_id integer NOT NULL,
+    origin_id integer,
+    kilograms numeric(13,4) DEFAULT '0'::numeric NOT NULL,
+    meeting_id integer
 );
 
 
@@ -320,7 +395,8 @@ CREATE TABLE public.thread_participants (
     user_id integer NOT NULL,
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL,
-    last_viewed_at timestamp without time zone DEFAULT '1900-01-01 00:00:00'::timestamp without time zone NOT NULL
+    last_viewed_at timestamp without time zone DEFAULT '1900-01-01 00:00:00'::timestamp without time zone NOT NULL,
+    last_notified_at timestamp without time zone DEFAULT '1900-01-01 00:00:00'::timestamp without time zone NOT NULL
 );
 
 
@@ -462,6 +538,44 @@ ALTER SEQUENCE public.user_organizations_id_seq OWNED BY public.user_organizatio
 
 
 --
+-- Name: user_preferences; Type: TABLE; Schema: public; Owner: wecarry
+--
+
+CREATE TABLE public.user_preferences (
+    id integer NOT NULL,
+    uuid uuid NOT NULL,
+    user_id integer NOT NULL,
+    key character varying(4096) NOT NULL,
+    value character varying(4096) NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.user_preferences OWNER TO wecarry;
+
+--
+-- Name: user_preferences_id_seq; Type: SEQUENCE; Schema: public; Owner: wecarry
+--
+
+CREATE SEQUENCE public.user_preferences_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.user_preferences_id_seq OWNER TO wecarry;
+
+--
+-- Name: user_preferences_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wecarry
+--
+
+ALTER SEQUENCE public.user_preferences_id_seq OWNED BY public.user_preferences.id;
+
+
+--
 -- Name: users; Type: TABLE; Schema: public; Owner: wecarry
 --
 
@@ -471,12 +585,12 @@ CREATE TABLE public.users (
     first_name character varying(255) NOT NULL,
     last_name character varying(255) NOT NULL,
     nickname character varying(255) NOT NULL,
-    admin_role character varying(255),
+    admin_role character varying(255) NOT NULL,
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL,
     uuid uuid NOT NULL,
     photo_file_id integer,
-    photo_url character varying(255),
+    auth_photo_url character varying(255),
     location_id integer
 );
 
@@ -519,6 +633,13 @@ ALTER TABLE ONLY public.locations ALTER COLUMN id SET DEFAULT nextval('public.lo
 
 
 --
+-- Name: meetings id; Type: DEFAULT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.meetings ALTER COLUMN id SET DEFAULT nextval('public.meetings_id_seq'::regclass);
+
+
+--
 -- Name: messages id; Type: DEFAULT; Schema: public; Owner: wecarry
 --
 
@@ -544,6 +665,13 @@ ALTER TABLE ONLY public.organizations ALTER COLUMN id SET DEFAULT nextval('publi
 --
 
 ALTER TABLE ONLY public.post_files ALTER COLUMN id SET DEFAULT nextval('public.post_files_id_seq'::regclass);
+
+
+--
+-- Name: post_histories id; Type: DEFAULT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.post_histories ALTER COLUMN id SET DEFAULT nextval('public.post_histories_id_seq'::regclass);
 
 
 --
@@ -582,6 +710,13 @@ ALTER TABLE ONLY public.user_organizations ALTER COLUMN id SET DEFAULT nextval('
 
 
 --
+-- Name: user_preferences id; Type: DEFAULT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.user_preferences ALTER COLUMN id SET DEFAULT nextval('public.user_preferences_id_seq'::regclass);
+
+
+--
 -- Name: users id; Type: DEFAULT; Schema: public; Owner: wecarry
 --
 
@@ -602,6 +737,14 @@ ALTER TABLE ONLY public.files
 
 ALTER TABLE ONLY public.locations
     ADD CONSTRAINT locations_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: meetings meetings_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.meetings
+    ADD CONSTRAINT meetings_pkey PRIMARY KEY (id);
 
 
 --
@@ -634,6 +777,14 @@ ALTER TABLE ONLY public.organizations
 
 ALTER TABLE ONLY public.post_files
     ADD CONSTRAINT post_files_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: post_histories post_histories_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.post_histories
+    ADD CONSTRAINT post_histories_pkey PRIMARY KEY (id);
 
 
 --
@@ -677,6 +828,14 @@ ALTER TABLE ONLY public.user_organizations
 
 
 --
+-- Name: user_preferences user_preferences_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.user_preferences
+    ADD CONSTRAINT user_preferences_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
 --
 
@@ -689,6 +848,20 @@ ALTER TABLE ONLY public.users
 --
 
 CREATE UNIQUE INDEX files_uuid_idx ON public.files USING btree (uuid);
+
+
+--
+-- Name: meetings_location_id_idx; Type: INDEX; Schema: public; Owner: wecarry
+--
+
+CREATE UNIQUE INDEX meetings_location_id_idx ON public.meetings USING btree (location_id);
+
+
+--
+-- Name: meetings_uuid_idx; Type: INDEX; Schema: public; Owner: wecarry
+--
+
+CREATE UNIQUE INDEX meetings_uuid_idx ON public.meetings USING btree (uuid);
 
 
 --
@@ -720,10 +893,24 @@ CREATE UNIQUE INDEX post_files_file_id_idx ON public.post_files USING btree (fil
 
 
 --
+-- Name: post_histories_created_at_idx; Type: INDEX; Schema: public; Owner: wecarry
+--
+
+CREATE INDEX post_histories_created_at_idx ON public.post_histories USING btree (created_at);
+
+
+--
 -- Name: posts_destination_id_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
 CREATE UNIQUE INDEX posts_destination_id_idx ON public.posts USING btree (destination_id);
+
+
+--
+-- Name: posts_meeting_id_idx; Type: INDEX; Schema: public; Owner: wecarry
+--
+
+CREATE UNIQUE INDEX posts_meeting_id_idx ON public.posts USING btree (meeting_id);
 
 
 --
@@ -790,6 +977,13 @@ CREATE UNIQUE INDEX user_organizations_organization_id_user_id_idx ON public.use
 
 
 --
+-- Name: user_preferences_uuid_idx; Type: INDEX; Schema: public; Owner: wecarry
+--
+
+CREATE UNIQUE INDEX user_preferences_uuid_idx ON public.user_preferences USING btree (uuid);
+
+
+--
 -- Name: users_email_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
@@ -825,6 +1019,38 @@ CREATE UNIQUE INDEX users_uuid_idx ON public.users USING btree (uuid);
 
 
 --
+-- Name: posts meeting_fk; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.posts
+    ADD CONSTRAINT meeting_fk FOREIGN KEY (meeting_id) REFERENCES public.meetings(id) ON DELETE SET NULL;
+
+
+--
+-- Name: meetings meetings_created_by_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.meetings
+    ADD CONSTRAINT meetings_created_by_id_fkey FOREIGN KEY (created_by_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
+-- Name: meetings meetings_image_file_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.meetings
+    ADD CONSTRAINT meetings_image_file_id_fkey FOREIGN KEY (image_file_id) REFERENCES public.files(id) ON DELETE SET NULL;
+
+
+--
+-- Name: meetings meetings_location_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.meetings
+    ADD CONSTRAINT meetings_location_id_fkey FOREIGN KEY (location_id) REFERENCES public.locations(id);
+
+
+--
 -- Name: messages messages_sent_by_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
@@ -853,7 +1079,7 @@ ALTER TABLE ONLY public.organization_domains
 --
 
 ALTER TABLE ONLY public.posts
-    ADD CONSTRAINT post_destination_fk FOREIGN KEY (destination_id) REFERENCES public.locations(id) ON DELETE SET NULL;
+    ADD CONSTRAINT post_destination_fk FOREIGN KEY (destination_id) REFERENCES public.locations(id);
 
 
 --
@@ -870,6 +1096,30 @@ ALTER TABLE ONLY public.post_files
 
 ALTER TABLE ONLY public.post_files
     ADD CONSTRAINT post_files_post_id_fkey FOREIGN KEY (post_id) REFERENCES public.posts(id) ON DELETE CASCADE;
+
+
+--
+-- Name: post_histories post_histories_post_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.post_histories
+    ADD CONSTRAINT post_histories_post_id_fkey FOREIGN KEY (post_id) REFERENCES public.posts(id) ON DELETE CASCADE;
+
+
+--
+-- Name: post_histories post_histories_provider_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.post_histories
+    ADD CONSTRAINT post_histories_provider_id_fkey FOREIGN KEY (provider_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
+-- Name: post_histories post_histories_receiver_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.post_histories
+    ADD CONSTRAINT post_histories_receiver_id_fkey FOREIGN KEY (receiver_id) REFERENCES public.users(id) ON DELETE SET NULL;
 
 
 --
@@ -974,6 +1224,14 @@ ALTER TABLE ONLY public.user_organizations
 
 ALTER TABLE ONLY public.user_organizations
     ADD CONSTRAINT user_organizations_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: user_preferences user_preferences_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.user_preferences
+    ADD CONSTRAINT user_preferences_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 
 --

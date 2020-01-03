@@ -6,31 +6,34 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"fmt"
-	"github.com/gobuffalo/events"
-	"github.com/gobuffalo/validate/validators"
-	"github.com/silinternational/wecarry-api/domain"
 	"log"
+	"reflect"
 	"strings"
 
-	"github.com/pkg/errors"
-
-	"github.com/gobuffalo/validate"
-
 	"github.com/gobuffalo/buffalo"
-	"github.com/gobuffalo/envy"
+	"github.com/gobuffalo/events"
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
+	"github.com/gobuffalo/validate"
+	"github.com/gobuffalo/validate/validators"
+	"github.com/gofrs/uuid"
+	"github.com/pkg/errors"
+	"github.com/silinternational/wecarry-api/domain"
 )
 
-// DB is a connection to your database to be used
-// throughout your application.
+// DB is a connection to the database to be used throughout the application.
 var DB *pop.Connection
 
-const TokenBytes = 32
+const tokenBytes = 32
+
+// Keep a map of the json tag names for the standard user preferences struct
+// e.g. "time_zone": "time_zone".
+// Having it as a map, makes it easy to check if a potential key is allowed
+var allowedUserPreferenceKeys map[string]string
 
 func init() {
 	var err error
-	env := envy.Get("GO_ENV", "development")
+	env := domain.Env.GoEnv
 	DB, err = pop.Connect(env)
 	if err != nil {
 		domain.ErrLogger.Printf("error connecting to database ... %v", err)
@@ -42,10 +45,15 @@ func init() {
 	if _, err = getRandomToken(); err != nil {
 		log.Fatal(fmt.Errorf("error using crypto/rand ... %v", err))
 	}
+
+	allowedUserPreferenceKeys, err = domain.GetStructTags("json", StandardPreferences{})
+	if err != nil {
+		log.Fatal(fmt.Errorf("error loading Allowed User Preferences ... %v", err))
+	}
 }
 
 func getRandomToken() (string, error) {
-	rb := make([]byte, TokenBytes)
+	rb := make([]byte, tokenBytes)
 
 	_, err := rand.Read(rb)
 	if err != nil {
@@ -63,11 +71,28 @@ func ConvertStringPtrToNullsString(inPtr *string) nulls.String {
 	return nulls.NewString(*inPtr)
 }
 
-func GetCurrentUserFromGqlContext(ctx context.Context, testUser User) User {
-	if testUser.ID > 0 {
-		return testUser
+// GetStringFromNullsString returns a pointer to make it easier for calling
+// functions to return a pointer without an extra line of code.
+func GetStringFromNullsString(inString nulls.String) *string {
+	output := ""
+	if inString.Valid {
+		output = inString.String
 	}
 
+	return &output
+}
+
+// GetIntFromNullsInt returns a pointer to make it easier for calling
+// functions to return a pointer without an extra line of code.
+func GetIntFromNullsInt(in nulls.Int) *int {
+	output := int(0)
+	if in.Valid {
+		output = in.Int
+	}
+	return &output
+}
+
+func GetCurrentUserFromGqlContext(ctx context.Context) User {
 	bc, ok := ctx.Value("BuffaloContext").(buffalo.Context)
 	if !ok {
 		return User{}
@@ -98,8 +123,8 @@ func GetCurrentUser(c buffalo.Context) User {
 	return User{}
 }
 
-// FlattenPopErrors - pop validation errors are complex structures, this flattens them to a simple string
-func FlattenPopErrors(popErrs *validate.Errors) string {
+// flattenPopErrors - pop validation errors are complex structures, this flattens them to a simple string
+func flattenPopErrors(popErrs *validate.Errors) string {
 	var msg string
 	for key, val := range popErrs.Errors {
 		msg += fmt.Sprintf("%s: %s |", key, strings.Join(val, ", "))
@@ -108,8 +133,8 @@ func FlattenPopErrors(popErrs *validate.Errors) string {
 	return msg
 }
 
-// IsSqlNoRowsErr Checks if given error is a no results/rows error and therefore not really an error at all
-func IsSqlNoRowsErr(err error) bool {
+// isSqlNoRowsErr Checks if given error is a no results/rows error and therefore not really an error at all
+func isSqlNoRowsErr(err error) bool {
 	if err != nil && errors.Cause(err) == sql.ErrNoRows {
 		return true
 	}
@@ -146,4 +171,52 @@ func emitEvent(e events.Event) {
 	if err := events.Emit(e); err != nil {
 		domain.ErrLogger.Printf("error emitting event %s ... %v", e.Kind, err)
 	}
+}
+
+func create(m interface{}) error {
+	uuidField := reflect.ValueOf(m).Elem().FieldByName("UUID")
+	if uuidField.IsValid() {
+		uuidField.Set(reflect.ValueOf(domain.GetUUID()))
+	}
+
+	valErrs, err := DB.ValidateAndCreate(m)
+	if err != nil {
+		return err
+	}
+
+	if valErrs.HasAny() {
+		return errors.New(flattenPopErrors(valErrs))
+	}
+	return nil
+}
+
+func update(m interface{}) error {
+	valErrs, err := DB.ValidateAndUpdate(m)
+	if err != nil {
+		return err
+	}
+
+	if valErrs.HasAny() {
+		return errors.New(flattenPopErrors(valErrs))
+	}
+	return nil
+}
+
+func save(m interface{}) error {
+	uuidField := reflect.ValueOf(m).Elem().FieldByName("UUID")
+	if uuidField.IsValid() {
+		u := uuidField.Interface().(uuid.UUID)
+		if u.Version() == 0 {
+			uuidField.Set(reflect.ValueOf(domain.GetUUID()))
+		}
+	}
+
+	validationErrs, err := DB.ValidateAndSave(m)
+	if validationErrs != nil && validationErrs.HasAny() {
+		return errors.New(flattenPopErrors(validationErrs))
+	}
+	if err != nil {
+		return err
+	}
+	return nil
 }

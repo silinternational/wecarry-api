@@ -1,0 +1,12 @@
+create_table("post_histories") {
+	t.Column("id", "integer", {primary: true})
+	t.Column("post_id", "integer", {})
+	t.Column("receiver_id", "integer", {"null": true})
+	t.Column("provider_id", "integer", {"null": true})
+	t.Column("status", "string", {})
+	t.ForeignKey("post_id", {"posts": ["id"]}, {"on_delete": "cascade"})
+	t.ForeignKey("receiver_id", {"users": ["id"]}, {"on_delete": "set null"})
+	t.ForeignKey("provider_id", {"users": ["id"]}, {"on_delete": "set null"})
+	t.Timestamps()
+    t.Index("created_at", {"unique": false})
+}

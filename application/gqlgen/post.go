@@ -2,165 +2,166 @@ package gqlgen
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"strconv"
-
-	"github.com/gobuffalo/nulls"
 
 	"github.com/99designs/gqlgen/graphql"
-	"github.com/silinternational/wecarry-api/domain"
+	"github.com/gobuffalo/nulls"
 	"github.com/silinternational/wecarry-api/models"
 	"github.com/vektah/gqlparser/gqlerror"
 )
 
-// PostFields maps GraphQL fields to their equivalent database fields. For related types, the
-// foreign key field name is provided.
-func PostFields() map[string]string {
-	return map[string]string{
-		"id":           "uuid",
-		"createdBy":    "created_by_id",
-		"organization": "organization_id",
-		"type":         "type",
-		"title":        "title",
-		"description":  "description",
-		"size":         "size",
-		"receiver":     "receiver_id",
-		"provider":     "provider_id",
-		"neededAfter":  "needed_after",
-		"neededBefore": "needed_before",
-		"category":     "category",
-		"status":       "status",
-		"createdAt":    "created_at",
-		"updatedAt":    "updated_at",
-		"url":          "url",
-		"cost":         "cost",
-		"photo":        "photo_file_id",
-		"destination":  "destination_id",
-		"origin":       "origin_id",
-	}
-}
-
+// Post returns the post resolver. It is required by GraphQL
 func (r *Resolver) Post() PostResolver {
 	return &postResolver{r}
 }
 
 type postResolver struct{ *Resolver }
 
+// ID resolves the `ID` property of the post query. It provides the UUID instead of the autoincrement ID.
 func (r *postResolver) ID(ctx context.Context, obj *models.Post) (string, error) {
 	if obj == nil {
 		return "", nil
 	}
-	return obj.Uuid.String(), nil
+	return obj.UUID.String(), nil
 }
 
-func (r *postResolver) Type(ctx context.Context, obj *models.Post) (PostType, error) {
+// Status field resolver. This is here to satisfy the generated postResolver. It is unclear why
+// gqlgen needs it, and it seems to be used only by the mutation responses (not the post query).
+func (r *postResolver) Status(ctx context.Context, obj *models.Post) (string, error) {
 	if obj == nil {
 		return "", nil
 	}
-	return PostType(obj.Type), nil
+	return obj.Status.String(), nil
 }
 
-func (r *postResolver) CreatedBy(ctx context.Context, obj *models.Post) (*models.User, error) {
+// CreatedBy resolves the `createdBy` property of the post query. It retrieves the related record from the database.
+func (r *postResolver) CreatedBy(ctx context.Context, obj *models.Post) (*PublicProfile, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	return obj.GetCreator(GetSelectFieldsForUsers(ctx))
+
+	creator, err := obj.GetCreator()
+	if err != nil {
+		return nil, reportError(ctx, err, "GetPostCreator")
+	}
+
+	return getPublicProfile(ctx, creator), nil
 }
 
-func (r *postResolver) Receiver(ctx context.Context, obj *models.Post) (*models.User, error) {
+// Receiver resolves the `receiver` property of the post query. It retrieves the related record from the database.
+func (r *postResolver) Receiver(ctx context.Context, obj *models.Post) (*PublicProfile, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	return obj.GetReceiver(GetSelectFieldsForUsers(ctx))
+
+	receiver, err := obj.GetReceiver()
+	if err != nil {
+		return nil, reportError(ctx, err, "GetPostReceiver")
+	}
+
+	return getPublicProfile(ctx, receiver), nil
 }
 
-func (r *postResolver) Provider(ctx context.Context, obj *models.Post) (*models.User, error) {
+// Provider resolves the `provider` property of the post query. It retrieves the related record from the database.
+func (r *postResolver) Provider(ctx context.Context, obj *models.Post) (*PublicProfile, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	return obj.GetProvider(GetSelectFieldsForUsers(ctx))
+
+	provider, err := obj.GetProvider()
+	if err != nil {
+		return nil, reportError(ctx, err, "GetPostProvider")
+	}
+
+	return getPublicProfile(ctx, provider), nil
 }
 
+// Organization resolves the `organization` property of the post query. It retrieves the related record from the
+// database.
 func (r *postResolver) Organization(ctx context.Context, obj *models.Post) (*models.Organization, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	selectFields := getSelectFieldsForOrganizations(ctx)
-	return obj.GetOrganization(selectFields)
+
+	organization, err := obj.GetOrganization()
+	if err != nil {
+		return nil, reportError(ctx, err, "GetPostOrganization")
+	}
+
+	return organization, nil
 }
 
+// Description resolves the `description` property, converting a nulls.String to a *string.
 func (r *postResolver) Description(ctx context.Context, obj *models.Post) (*string, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	return GetStringFromNullsString(obj.Description), nil
+	return models.GetStringFromNullsString(obj.Description), nil
 }
 
+// Destination resolves the `destination` property of the post query, retrieving the related record from the database.
 func (r *postResolver) Destination(ctx context.Context, obj *models.Post) (*models.Location, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	return obj.GetDestination()
+
+	destination, err := obj.GetDestination()
+	if err != nil {
+		return nil, reportError(ctx, err, "GetPostDestination")
+	}
+
+	return destination, nil
 }
 
+// Origin resolves the `origin` property of the post query, retrieving the related record from the database.
 func (r *postResolver) Origin(ctx context.Context, obj *models.Post) (*models.Location, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	return obj.GetOrigin()
-}
 
-func (r *postResolver) Size(ctx context.Context, obj *models.Post) (PostSize, error) {
-	if obj == nil {
-		return "", nil
+	origin, err := obj.GetOrigin()
+	if err != nil {
+		return nil, reportError(ctx, err, "GetPostOrigin")
 	}
-	return PostSize(obj.Size), nil
+
+	return origin, nil
 }
 
-func (r *postResolver) NeededAfter(ctx context.Context, obj *models.Post) (*string, error) {
-	if obj == nil {
-		return nil, nil
-	}
-	return domain.ConvertTimeToStringPtr(obj.NeededAfter), nil
-}
-
-func (r *postResolver) NeededBefore(ctx context.Context, obj *models.Post) (*string, error) {
+// Threads resolves the `threads` property of the post query, retrieving the related records from the database.
+func (r *postResolver) Threads(ctx context.Context, obj *models.Post) ([]models.Thread, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	return domain.ConvertTimeToStringPtr(obj.NeededBefore), nil
-}
 
-func (r *postResolver) Threads(ctx context.Context, obj *models.Post) ([]*models.Thread, error) {
-	if obj == nil {
-		return nil, nil
+	user := models.GetCurrentUserFromGqlContext(ctx)
+	threads, err := obj.GetThreads(user)
+	if err != nil {
+		extras := map[string]interface{}{
+			"user": user.UUID,
+		}
+		return nil, reportError(ctx, err, "GetPostThreads", extras)
 	}
-	selectFields := GetSelectFieldsFromRequestFields(ThreadFields(), graphql.CollectAllFields(ctx))
-	user := models.GetCurrentUserFromGqlContext(ctx, TestUser)
-	return obj.GetThreads(selectFields, user)
+
+	return threads, nil
 }
 
-func (r *postResolver) MyThreadID(ctx context.Context, obj *models.Post) (*string, error) {
-	if obj == nil {
-		return nil, nil
-	}
-	return obj.GetThreadIdForUser(models.GetCurrentUserFromGqlContext(ctx, TestUser))
-}
-
+// URL resolves the `url` property of the post query, converting nulls.String to a *string
 func (r *postResolver) URL(ctx context.Context, obj *models.Post) (*string, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	return GetStringFromNullsString(obj.URL), nil
+	return models.GetStringFromNullsString(obj.URL), nil
 }
 
-func (r *postResolver) Cost(ctx context.Context, obj *models.Post) (*string, error) {
-	if (obj == nil) || (!obj.Cost.Valid) {
-		return nil, nil
+// Kilograms resolves the `kilograms` property of the post query, converting float64 to string
+func (r *postResolver) Kilograms(ctx context.Context, obj *models.Post) (*float64, error) {
+	if obj == nil {
+		k := 0.0
+		return &k, nil
 	}
 
-	c := strconv.FormatFloat(obj.Cost.Float64, 'f', -1, 64)
-	return &c, nil
+	return &obj.Kilograms, nil
 }
 
 // Photo retrieves the file attached as the primary photo
@@ -169,45 +170,76 @@ func (r *postResolver) Photo(ctx context.Context, obj *models.Post) (*models.Fil
 		return nil, nil
 	}
 
-	return obj.GetPhoto()
+	photo, err := obj.GetPhoto()
+	if err != nil {
+		return nil, reportError(ctx, err, "GetPostPhoto")
+	}
+
+	return photo, nil
 }
 
 // Files retrieves the list of files attached to the post, not including the primary photo
-func (r *postResolver) Files(ctx context.Context, obj *models.Post) ([]*models.File, error) {
+func (r *postResolver) Files(ctx context.Context, obj *models.Post) ([]models.File, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	return obj.GetFiles()
+	files, err := obj.GetFiles()
+	if err != nil {
+		return nil, reportError(ctx, err, "GetPostFiles")
+	}
+
+	return files, nil
 }
 
-func (r *queryResolver) Posts(ctx context.Context) ([]*models.Post, error) {
+// Meeting resolves the `meeting` property of the post query, retrieving the related record from the database.
+func (r *postResolver) Meeting(ctx context.Context, obj *models.Post) (*models.Meeting, error) {
+	if obj == nil {
+		return nil, nil
+	}
+
+	meeting, err := obj.Meeting()
+	if err != nil {
+		return nil, reportError(ctx, err, "GetPostMeeting")
+	}
+
+	return meeting, nil
+}
+
+// IsEditable indicates whether the user is allowed to edit the post
+func (r *postResolver) IsEditable(ctx context.Context, obj *models.Post) (bool, error) {
+	if obj == nil {
+		return false, nil
+	}
+	cUser := models.GetCurrentUserFromGqlContext(ctx)
+	return obj.IsEditable(cUser)
+}
+
+// Posts resolves the `posts` query
+func (r *queryResolver) Posts(ctx context.Context) ([]models.Post, error) {
 	posts := models.Posts{}
-	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
-	selectFields := getSelectFieldsForPosts(ctx)
-	if err := posts.FindByUser(ctx, cUser, selectFields...); err != nil {
-		graphql.AddError(ctx, gqlerror.Errorf("Error getting posts: %v", err.Error()))
-		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
-		return []*models.Post{}, err
+	cUser := models.GetCurrentUserFromGqlContext(ctx)
+	if err := posts.FindByUser(ctx, cUser); err != nil {
+		extras := map[string]interface{}{
+			"user": cUser.UUID,
+		}
+		return nil, reportError(ctx, err, "GetPosts", extras)
 	}
 
-	pp := make([]*models.Post, len(posts))
-	for i := range posts {
-		pp[i] = &(posts[i])
-	}
-	return pp, nil
+	return posts, nil
 }
 
+// Post resolves the `post` query
 func (r *queryResolver) Post(ctx context.Context, id *string) (*models.Post, error) {
 	if id == nil {
 		return nil, nil
 	}
 	var post models.Post
-	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
-	selectFields := getSelectFieldsForPosts(ctx)
-	if err := post.FindByUserAndUUID(ctx, cUser, *id, selectFields...); err != nil {
-		graphql.AddError(ctx, gqlerror.Errorf("Error getting post: %v", err.Error()))
-		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), map[string]interface{}{"post_id": *id})
-		return &models.Post{}, err
+	cUser := models.GetCurrentUserFromGqlContext(ctx)
+	if err := post.FindByUserAndUUID(ctx, cUser, *id); err != nil {
+		extras := map[string]interface{}{
+			"user": cUser.UUID,
+		}
+		return nil, reportError(ctx, err, "GetPost", extras)
 	}
 
 	return &post, nil
@@ -224,24 +256,8 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 			return post, err
 		}
 	} else {
-		post.Uuid = domain.GetUuid()
-		post.CreatedByID = currentUser.ID
-		// TODO: This should probably be done in the model package
-		if input.Type != nil {
-			switch *input.Type {
-			case models.PostTypeRequest:
-				post.ReceiverID = nulls.NewInt(currentUser.ID)
-			case models.PostTypeOffer:
-				post.ProviderID = nulls.NewInt(currentUser.ID)
-			}
-		}
-	}
-
-	if input.Status != nil {
-		post.Status = input.Status.String()
-		if *input.Status == PostStatusCommitted {
-			// TODO: This should probably be done in the model package, especially if the logic becomes more complex
-			post.ProviderID = nulls.NewInt(currentUser.ID)
+		if err := post.NewWithUser(*input.Type, currentUser); err != nil {
+			return post, err
 		}
 	}
 
@@ -254,10 +270,6 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 		post.OrganizationID = org.ID
 	}
 
-	if input.Type != nil {
-		post.Type = input.Type.String()
-	}
-
 	setOptionalStringField(input.Title, &post.Title)
 
 	if input.Description != nil {
@@ -265,40 +277,15 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 	}
 
 	if input.Size != nil {
-		post.Size = (*input.Size).String()
+		post.Size = *input.Size
 	}
-
-	if input.NeededAfter != nil {
-		neededAfter, err := domain.ConvertStringPtrToDate(input.NeededAfter)
-		if err != nil {
-			err = fmt.Errorf("error converting NeededAfter %v ... %v", input.NeededAfter, err.Error())
-			return models.Post{}, err
-		}
-		post.NeededAfter = neededAfter
-	}
-
-	if input.NeededBefore != nil {
-		neededBefore, err := domain.ConvertStringPtrToDate(input.NeededBefore)
-		if err != nil {
-			err = fmt.Errorf("error converting NeededBefore %v ... %v", input.NeededBefore, err.Error())
-			return models.Post{}, err
-		}
-		post.NeededBefore = neededBefore
-	}
-
-	setOptionalStringField(input.Category, &post.Category)
 
 	if input.URL != nil {
 		post.URL = nulls.NewString(*input.URL)
 	}
 
-	if input.Cost != nil && *(input.Cost) != "" {
-		c, err := strconv.ParseFloat(*input.Cost, 64)
-		if err != nil {
-			err = fmt.Errorf("error converting cost %v ... %v", input.Cost, err.Error())
-			return models.Post{}, err
-		}
-		post.Cost = nulls.NewFloat64(c)
+	if input.Kilograms != nil {
+		post.Kilograms = *input.Kilograms
 	}
 
 	if input.PhotoID != nil {
@@ -309,93 +296,144 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 		}
 	}
 
+	if input.MeetingID != nil {
+		var meeting models.Meeting
+		if err := meeting.FindByUUID(*input.MeetingID); err != nil {
+			return models.Post{}, fmt.Errorf("invalid meetingID, %s", err)
+		}
+		post.MeetingID = nulls.NewInt(meeting.ID)
+		post.DestinationID = meeting.LocationID
+	}
+
 	return post, nil
 }
 
-func getSelectFieldsForPosts(ctx context.Context) []string {
-	requestFields := graphql.CollectAllFields(ctx)
-	selectFields := GetSelectFieldsFromRequestFields(PostFields(), requestFields)
-	selectFields = append(selectFields, "id")
-	return selectFields
-}
-
 type postInput struct {
-	ID           *string
-	Status       *PostStatus
-	OrgID        *string
-	Type         *PostType
-	Title        *string
-	Description  *string
-	Destination  *LocationInput
-	Origin       *LocationInput
-	Size         *PostSize
-	NeededAfter  *string
-	NeededBefore *string
-	Category     *string
-	URL          *string
-	Cost         *string
-	PhotoID      *string
+	ID          *string
+	OrgID       *string
+	Type        *models.PostType
+	Title       *string
+	Description *string
+	Destination *LocationInput
+	Origin      *LocationInput
+	Size        *models.PostSize
+	URL         *string
+	Kilograms   *float64
+	PhotoID     *string
+	MeetingID   *string
 }
 
+// CreatePost resolves the `createPost` mutation.
 func (r *mutationResolver) CreatePost(ctx context.Context, input postInput) (*models.Post, error) {
-	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+	cUser := models.GetCurrentUserFromGqlContext(ctx)
+	extras := map[string]interface{}{
+		"user": cUser.UUID,
+	}
+
 	post, err := convertGqlPostInputToDBPost(ctx, input, cUser)
 	if err != nil {
-		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
-		return &models.Post{}, err
+		return nil, reportError(ctx, err, "CreatePost.ProcessInput", extras)
 	}
 
-	if err := models.DB.Create(&post); err != nil {
-		return &models.Post{}, err
-	}
-
-	if input.Destination != nil {
-		err := post.SetDestination(convertGqlLocationInputToDBLocation(*input.Destination))
-		if err != nil {
-			domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
-			return &models.Post{}, err
+	if !post.MeetingID.Valid {
+		dest := convertGqlLocationInputToDBLocation(*input.Destination)
+		if err = dest.Create(); err != nil {
+			return nil, reportError(ctx, err, "CreatePost.SetDestination", extras)
 		}
+		post.DestinationID = dest.ID
+	}
+
+	if err = post.Create(); err != nil {
+		return nil, reportError(ctx, err, "CreatePost", extras)
 	}
 
 	if input.Origin != nil {
-		err := post.SetOrigin(convertGqlLocationInputToDBLocation(*input.Origin))
-		if err != nil {
-			domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
-			return &models.Post{}, err
+		if err = post.SetOrigin(convertGqlLocationInputToDBLocation(*input.Origin)); err != nil {
+			return nil, reportError(ctx, err, "CreatePost.SetOrigin", extras)
 		}
 	}
 
 	return &post, nil
 }
 
+// UpdatePost resolves the `updatePost` mutation.
 func (r *mutationResolver) UpdatePost(ctx context.Context, input postInput) (*models.Post, error) {
-	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
-	post, err := convertGqlPostInputToDBPost(ctx, input, cUser)
-	if err != nil {
-		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
-		return &models.Post{}, err
+	cUser := models.GetCurrentUserFromGqlContext(ctx)
+	extras := map[string]interface{}{
+		"user": cUser.UUID,
 	}
 
-	if err := models.DB.Update(&post); err != nil {
-		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
-		return &models.Post{}, err
+	post, err := convertGqlPostInputToDBPost(ctx, input, cUser)
+	if err != nil {
+		return nil, reportError(ctx, err, "UpdatePost.ProcessInput", extras)
+	}
+
+	var dbPost models.Post
+	_ = dbPost.FindByID(post.ID)
+	if editable, err2 := dbPost.IsEditable(cUser); err2 != nil {
+		return nil, reportError(ctx, err2, "UpdatePost.GetEditable", extras)
+	} else if !editable {
+		return nil, reportError(ctx, errors.New("attempt to update a non-editable post"),
+			"UpdatePost.NotEditable", extras)
+	}
+
+	if err3 := post.Update(); err3 != nil {
+		return nil, reportError(ctx, err3, "UpdatePost", extras)
 	}
 
 	if input.Destination != nil {
-		err := post.SetDestination(convertGqlLocationInputToDBLocation(*input.Destination))
-		if err != nil {
-			domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
-			return &models.Post{}, err
+		if err4 := post.SetDestination(convertGqlLocationInputToDBLocation(*input.Destination)); err4 != nil {
+			return nil, reportError(ctx, err4, "UpdatePost.SetDestination", extras)
 		}
 	}
 
 	if input.Origin != nil {
-		err := post.SetOrigin(convertGqlLocationInputToDBLocation(*input.Origin))
-		if err != nil {
-			domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
-			return &models.Post{}, err
+		if err5 := post.SetOrigin(convertGqlLocationInputToDBLocation(*input.Origin)); err5 != nil {
+			return nil, reportError(ctx, err5, "UpdatePost.SetOrigin", extras)
 		}
 	}
 
 	return &post, nil
+}
+
+// UpdatePostStatus resolves the `updatePostStatus` mutation.
+func (r *mutationResolver) UpdatePostStatus(ctx context.Context, input UpdatePostStatusInput) (*models.Post, error) {
+	var post models.Post
+	if err := post.FindByUUID(input.ID); err != nil {
+		return nil, reportError(ctx, err, "UpdatePostStatus.FindPost")
+	}
+
+	cUser := models.GetCurrentUserFromGqlContext(ctx)
+	extras := map[string]interface{}{
+		"user":      cUser.UUID,
+		"oldStatus": post.Status,
+		"newStatus": input.Status,
+	}
+	if !cUser.CanUpdatePostStatus(post, input.Status) {
+		return nil, reportError(ctx, errors.New("not allowed to change post status"),
+			"UpdatePostStatus.Unauthorized", extras)
+	}
+
+	post.SetProviderWithStatus(input.Status, cUser)
+	if err := post.Update(); err != nil {
+		return nil, reportError(ctx, err, "UpdatePostStatus", extras)
+	}
+
+	return &post, nil
+}
+
+// SearchRequests resolves the `searchRequests` query by finding requests that contain
+//  a certain string in their Title or Description
+func (r *queryResolver) SearchRequests(ctx context.Context, text string) ([]models.Post, error) {
+	posts := models.Posts{}
+	cUser := models.GetCurrentUserFromGqlContext(ctx)
+
+	if err := posts.FilterByUserTypeAndContents(ctx, cUser, models.PostTypeRequest, text); err != nil {
+		extras := map[string]interface{}{
+			"user": cUser.UUID,
+		}
+		return nil, reportError(ctx, err, "GetPosts", extras)
+	}
+
+	return posts, nil
 }

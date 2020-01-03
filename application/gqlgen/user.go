@@ -2,188 +2,264 @@ package gqlgen
 
 import (
 	"context"
-	"fmt"
+	"errors"
+	"strings"
 
 	"github.com/gobuffalo/nulls"
-
-	"github.com/99designs/gqlgen/graphql"
-	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
-	"github.com/vektah/gqlparser/gqlerror"
 )
 
-var PostRoleMap = map[PostRole]string{
-	PostRoleCreatedby: models.PostRoleCreatedby,
-	PostRoleReceiving: models.PostRoleReceiving,
-	PostRoleProviding: models.PostRoleProviding,
+// postRoleMap is used to convert PostRole gql enum values to values used by models
+var postRoleMap = map[PostRole]string{
+	PostRoleCreatedby: models.PostsCreated,
+	PostRoleReceiving: models.PostsReceiving,
+	PostRoleProviding: models.PostsProviding,
 }
 
-// UserFields maps GraphQL fields to their equivalent database fields. For related types, the
-// foreign key field name is provided.
-func UserFields() map[string]string {
-	return map[string]string{
-		"id":          "uuid",
-		"email":       "email",
-		"nickname":    "nickname",
-		"accessToken": "access_token",
-		"createdAt":   "created_at",
-		"updatedAt":   "updated_at",
-		"adminRole":   "admin_role",
-		"photoURL":    "photo_url",
-		"photoFile":   "photo_file_id",
-		"location":    "location_id",
-	}
-}
-
+// User is required by gqlgen
 func (r *Resolver) User() UserResolver {
 	return &userResolver{r}
 }
 
 type userResolver struct{ *Resolver }
 
+// ID provides the UUID instead of the autoincrement ID.
 func (r *userResolver) ID(ctx context.Context, obj *models.User) (string, error) {
 	if obj == nil {
 		return "", nil
 	}
-	return obj.Uuid.String(), nil
+	return obj.UUID.String(), nil
 }
 
-func (r *userResolver) AdminRole(ctx context.Context, obj *models.User) (*Role, error) {
+// Organizations retrieves the list of Organizations to which the queried user is associated
+func (r *userResolver) Organizations(ctx context.Context, obj *models.User) ([]models.Organization, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	a := Role(obj.AdminRole.String)
-	return &a, nil
+
+	organizations, err := obj.GetOrganizations()
+	if err != nil {
+		return nil, reportError(ctx, err, "GetUserOrganizations")
+	}
+
+	return organizations, nil
 }
 
-func (r *userResolver) Organizations(ctx context.Context, obj *models.User) ([]*models.Organization, error) {
+// Posts retrieves the list of Posts associated with the queried user, where association is defined by the given `role`.
+func (r *userResolver) Posts(ctx context.Context, obj *models.User, role PostRole) ([]models.Post, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	return obj.GetOrganizations()
+
+	posts, err := obj.GetPosts(postRoleMap[role])
+	if err != nil {
+		extras := map[string]interface{}{
+			"role": role,
+		}
+		return nil, reportError(ctx, err, "GetUserPosts", extras)
+	}
+
+	return posts, nil
 }
 
-func (r *userResolver) Posts(ctx context.Context, obj *models.User, role PostRole) ([]*models.Post, error) {
+// AvatarURL retrieves a URL for the user profile photo or avatar.
+func (r *userResolver) AvatarURL(ctx context.Context, obj *models.User) (*string, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	return obj.GetPosts(PostRoleMap[role])
-}
 
-// PhotoURL retrieves a URL for the user profile photo or avatar. It can either be an attached photo or
-// a photo belonging to an external profile such as Gravatar or Google.
-func (r *userResolver) PhotoURL(ctx context.Context, obj *models.User) (string, error) {
-	if obj == nil {
-		return "", nil
+	photoURL, err := obj.GetPhotoURL()
+	if err != nil {
+		return nil, reportError(ctx, err, "GetUserPhotoURL")
 	}
-	return obj.GetPhotoURL()
+
+	return photoURL, nil
 }
 
+// Location retrieves the queried user's location.
 func (r *userResolver) Location(ctx context.Context, obj *models.User) (*models.Location, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	return obj.GetLocation()
-}
 
-func (r *queryResolver) Users(ctx context.Context) ([]*models.User, error) {
-	db := models.DB
-	var dbUsers []*models.User
-
-	currentUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
-
-	if currentUser.AdminRole.String != domain.AdminRoleSuperDuperAdmin {
-		err := fmt.Errorf("not authorized")
-		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
-		return []*models.User{}, err
+	location, err := obj.GetLocation()
+	if err != nil {
+		return nil, reportError(ctx, err, "GetUserLocation")
 	}
 
-	if err := db.Select(GetSelectFieldsForUsers(ctx)...).All(&dbUsers); err != nil {
-		graphql.AddError(ctx, gqlerror.Errorf("Error getting users: %v", err.Error()))
-		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
-		return []*models.User{}, err
-	}
-
-	return dbUsers, nil
+	return location, nil
 }
 
+// UnreadMessageCount calculates the number of unread messages for the queried user
+func (r *userResolver) UnreadMessageCount(ctx context.Context, obj *models.User) (int, error) {
+	if obj == nil {
+		return 0, nil
+	}
+	mCounts, err := obj.UnreadMessageCount()
+
+	if err != nil {
+		return 0, reportError(ctx, err, "GetUserUnreadMessageCount")
+	}
+	total := 0
+	for _, c := range mCounts {
+		total += c.Count
+	}
+
+	return total, nil
+}
+
+// Users retrieves a list of users
+func (r *queryResolver) Users(ctx context.Context) ([]models.User, error) {
+	currentUser := models.GetCurrentUserFromGqlContext(ctx)
+
+	role := currentUser.AdminRole
+	if role != models.UserAdminRoleSuperAdmin {
+		err := errors.New("insufficient permissions")
+		extras := map[string]interface{}{
+			"role": role,
+		}
+		return nil, reportError(ctx, err, "GetUsers.Unauthorized", extras)
+	}
+
+	users := models.Users{}
+	if err := users.All(); err != nil {
+		return nil, reportError(ctx, err, "GetUsers")
+	}
+
+	return users, nil
+}
+
+// User retrieves a single user
 func (r *queryResolver) User(ctx context.Context, id *string) (*models.User, error) {
-	dbUser := models.User{}
-
-	currentUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+	currentUser := models.GetCurrentUserFromGqlContext(ctx)
 
 	if id == nil {
 		return &currentUser, nil
 	}
 
-	if currentUser.AdminRole.String != domain.AdminRoleSuperDuperAdmin && currentUser.Uuid.String() != *id {
-		err := fmt.Errorf("not authorized")
-		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
-		return &dbUser, err
+	role := currentUser.AdminRole
+	if role != models.UserAdminRoleSuperAdmin && currentUser.UUID.String() != *id {
+		err := errors.New("insufficient permissions")
+		extras := map[string]interface{}{
+			"role": role,
+		}
+		return nil, reportError(ctx, err, "GetUser.Unauthorized", extras)
 	}
 
-	if err := models.DB.Select(GetSelectFieldsForUsers(ctx)...).Where("uuid = ?", id).First(&dbUser); err != nil {
-		graphql.AddError(ctx, gqlerror.Errorf("Error getting user: %v", err.Error()))
-		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
-		return &dbUser, err
+	dbUser := models.User{}
+	if err := dbUser.FindByUUID(*id); err != nil {
+		return nil, reportError(ctx, err, "GetUser")
 	}
 
 	return &dbUser, nil
-}
-
-// GetSelectFieldsForUsers returns a list of database fields appropriate for the current query. Foreign keys
-// will be included as needed.
-func GetSelectFieldsForUsers(ctx context.Context) []string {
-	selectFields := GetSelectFieldsFromRequestFields(UserFields(), graphql.CollectAllFields(ctx))
-	selectFields = append(selectFields, "id")
-	if domain.IsStringInSlice("photoURL", graphql.CollectAllFields(ctx)) {
-		selectFields = append(selectFields, "photo_file_id")
-	}
-	return selectFields
 }
 
 // UpdateUser takes data from the GraphQL `UpdateUser` mutation and updates the database. If the
 // user ID is provided and the current user is allowed to edit profiles, that user will be updated.
 // Otherwise, the current authenticated user is updated.
 func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput) (*models.User, error) {
-	cUser := models.GetCurrentUserFromGqlContext(ctx, TestUser)
+	cUser := models.GetCurrentUserFromGqlContext(ctx)
 	var user models.User
 
 	if input.ID != nil {
-		err := user.FindByUUID(*(input.ID))
-		if err != nil {
-			domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
-			return &models.User{}, err
+		if err := user.FindByUUID(*(input.ID)); err != nil {
+			return nil, reportError(ctx, err, "UpdateUser.NotFound")
 		}
 	} else {
 		user = cUser
 	}
 
-	if cUser.AdminRole.String != domain.AdminRoleSuperDuperAdmin && cUser.ID != user.ID {
-		err := fmt.Errorf("user not allowed to edit user profiles")
-		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
-		return &models.User{}, err
+	if cUser.AdminRole != models.UserAdminRoleSuperAdmin && cUser.ID != user.ID {
+		err := errors.New("insufficient permissions")
+		return nil, reportError(ctx, err, "UpdateUser.Unauthorized")
+	}
+
+	if input.Nickname != nil {
+		user.Nickname = *input.Nickname
 	}
 
 	if input.PhotoID != nil {
 		var file models.File
-		err := file.FindByUUID(*input.PhotoID)
-		if err != nil {
-			domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
-			return &models.User{}, err
+		if err := file.FindByUUID(*input.PhotoID); err != nil {
+			return nil, reportError(ctx, err, "UpdateUser.PhotoNotFound")
 		}
 		user.PhotoFileID = nulls.NewInt(file.ID)
 	}
 
 	if input.Location != nil {
-		err := user.SetLocation(convertGqlLocationInputToDBLocation(*input.Location))
-		if err != nil {
-			domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
-			return &models.User{}, err
+		if err := user.SetLocation(convertGqlLocationInputToDBLocation(*input.Location)); err != nil {
+			return nil, reportError(ctx, err, "UpdateUser.SetLocationError")
 		}
 	}
 
-	err := user.Save()
+	// No deleting of preferences supported at this time
+	if input.Preferences != nil {
+		standardPrefs, err := convertUserPreferencesToStandardPreferences(input.Preferences)
 
-	return &user, err
+		if err != nil {
+			return nil, reportError(ctx, err, "UpdateUser.PreferencesInput")
+		}
+
+		if standardPrefs, err = user.UpdateStandardPreferences(standardPrefs); err != nil {
+			return nil, reportError(ctx, err, "UpdateUser.Preferences")
+		}
+	}
+
+	if err := user.Save(); err != nil {
+		return nil, reportError(ctx, err, "UpdateUser")
+	}
+
+	return &user, nil
+}
+
+// Preferences resolves the `preferences` property of the user query, retrieving the related records from the database
+// and using them to hydrate a StandardPreferences struct.
+func (r *userResolver) Preferences(ctx context.Context, obj *models.User) (*models.StandardPreferences, error) {
+	if obj == nil {
+		return nil, nil
+	}
+
+	user := models.GetCurrentUserFromGqlContext(ctx)
+	standardPrefs, err := obj.GetPreferences()
+	if err != nil {
+		extras := map[string]interface{}{
+			"user": user.UUID,
+		}
+		return nil, reportError(ctx, err, "GetUserPreferences", extras)
+	}
+
+	// These have particular acceptable values, unlike TimeZone
+	standardPrefs.Language = strings.ToUpper(standardPrefs.Language)
+	standardPrefs.WeightUnit = strings.ToUpper(standardPrefs.WeightUnit)
+
+	return &standardPrefs, nil
+}
+
+// getPublicProfiles converts a list of models.User to PublicProfile, hiding private profile information
+func getPublicProfiles(ctx context.Context, users []models.User) []PublicProfile {
+	profiles := make([]PublicProfile, len(users))
+	for i, p := range users {
+		prof := getPublicProfile(ctx, &p)
+		profiles[i] = *prof
+	}
+	return profiles
+}
+
+// getPublicProfile converts a models.User to a PublicProfile, which hides private profile information
+func getPublicProfile(ctx context.Context, user *models.User) *PublicProfile {
+	if user == nil {
+		return nil
+	}
+
+	url, err := user.GetPhotoURL()
+	if err != nil {
+		_ = reportError(ctx, err, "", map[string]interface{}{"user": user.UUID})
+		return nil
+	}
+
+	return &PublicProfile{
+		ID:        user.UUID.String(),
+		Nickname:  user.Nickname,
+		AvatarURL: url,
+	}
 }

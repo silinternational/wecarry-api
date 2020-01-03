@@ -1,0 +1,5 @@
+add_column("posts", "needed_after", "date", {})
+add_column("posts", "needed_before", "date", {})
+add_column("posts", "category", "string", {})
+add_column("posts", "cost", "numeric(13,4)", {null: true})
+

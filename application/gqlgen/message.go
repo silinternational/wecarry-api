@@ -3,72 +3,78 @@ package gqlgen
 import (
 	"context"
 
-	"github.com/99designs/gqlgen/graphql"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
-	"github.com/vektah/gqlparser/gqlerror"
 )
 
-func MessageFields() map[string]string {
-	return map[string]string{
-		"id":        "uuid",
-		"content":   "content",
-		"thread":    "thread_id",
-		"sender":    "sent_by_id",
-		"createdAt": "created_at",
-		"updatedAt": "updated_at",
-	}
-}
-
+// Message returns the message resolver. It is required by GraphQL
 func (r *Resolver) Message() MessageResolver {
 	return &messageResolver{r}
 }
 
 type messageResolver struct{ *Resolver }
 
+// ID resolves the `ID` property of the message query
 func (r *messageResolver) ID(ctx context.Context, obj *models.Message) (string, error) {
 	if obj == nil {
 		return "", nil
 	}
-	return obj.Uuid.String(), nil
+	return obj.UUID.String(), nil
 }
 
-func (r *messageResolver) Sender(ctx context.Context, obj *models.Message) (*models.User, error) {
+// Sender resolves the `sender` property of the message query
+func (r *messageResolver) Sender(ctx context.Context, obj *models.Message) (*PublicProfile, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	return obj.GetSender(GetSelectFieldsForUsers(ctx))
+	user, err := obj.GetSender()
+	if err != nil {
+		return nil, reportError(ctx, err, "GetMessageSender")
+	}
+
+	return getPublicProfile(ctx, user), nil
 }
 
+// Thread resolves the `thread` property of the message query
 func (r *messageResolver) Thread(ctx context.Context, obj *models.Message) (*models.Thread, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	selectFields := getSelectFieldsForThreads(graphql.CollectAllFields(ctx))
-	return obj.GetThread(selectFields)
+
+	thread, err := obj.GetThread()
+	if err != nil {
+		return nil, reportError(ctx, err, "GetMessageThread")
+	}
+
+	return thread, nil
 }
 
+// Message resolves the `message` model
 func (r *queryResolver) Message(ctx context.Context, id *string) (*models.Message, error) {
-	message := models.Message{}
-	messageFields := GetSelectFieldsFromRequestFields(MessageFields(), graphql.CollectAllFields(ctx))
+	if id == nil {
+		return nil, nil
+	}
+	currentUser := models.GetCurrentUserFromGqlContext(ctx)
+	var message models.Message
 
-	if err := models.DB.Select(messageFields...).Where("uuid = ?", id).First(&message); err != nil {
-		graphql.AddError(ctx, gqlerror.Errorf("error getting message: %v", err.Error()))
-		domain.Error(models.GetBuffaloContextFromGqlContext(ctx), err.Error(), domain.NoExtras)
-		return &models.Message{}, err
+	if err := message.FindByUserAndUUID(currentUser, *id); err != nil {
+		extras := map[string]interface{}{
+			"user": currentUser.UUID.String(),
+		}
+		return nil, reportError(ctx, err, "GetMessage", extras)
 	}
 
 	return &message, nil
 }
 
-func ConvertGqlCreateMessageInputToDBMessage(gqlMessage CreateMessageInput, user models.User) (models.Message, error) {
+func convertGqlCreateMessageInputToDBMessage(gqlMessage CreateMessageInput, user models.User) (models.Message, error) {
 
 	var thread models.Thread
 
-	threadUuid := domain.ConvertStrPtrToString(gqlMessage.ThreadID)
-	if threadUuid != "" {
+	threadUUID := domain.ConvertStrPtrToString(gqlMessage.ThreadID)
+	if threadUUID != "" {
 		var err error
-		err = thread.FindByUUID(threadUuid)
+		err = thread.FindByUUID(threadUUID)
 		if err != nil {
 			return models.Message{}, err
 		}
@@ -82,10 +88,27 @@ func ConvertGqlCreateMessageInputToDBMessage(gqlMessage CreateMessageInput, user
 	}
 
 	dbMessage := models.Message{}
-	dbMessage.Uuid = domain.GetUuid()
 	dbMessage.Content = gqlMessage.Content
 	dbMessage.ThreadID = thread.ID
 	dbMessage.SentByID = user.ID
 
 	return dbMessage, nil
+}
+
+// CreateMessage is a mutation resolver for creating a new message
+func (r *mutationResolver) CreateMessage(ctx context.Context, input CreateMessageInput) (*models.Message, error) {
+	cUser := models.GetCurrentUserFromGqlContext(ctx)
+	extras := map[string]interface{}{
+		"user": cUser.UUID,
+	}
+	message, err := convertGqlCreateMessageInputToDBMessage(input, cUser)
+	if err != nil {
+		return nil, reportError(ctx, err, "CreateMessage.ParseInput", extras)
+	}
+
+	if err2 := message.Create(); err2 != nil {
+		return nil, reportError(ctx, err2, "CreateMessage", extras)
+	}
+
+	return &message, nil
 }

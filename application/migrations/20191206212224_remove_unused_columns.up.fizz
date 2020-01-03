@@ -1,0 +1,4 @@
+drop_column("posts", "cost")
+drop_column("posts", "category")
+drop_column("posts", "needed_before")
+drop_column("posts", "needed_after")

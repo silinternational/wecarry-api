@@ -2,11 +2,11 @@ package google_test
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/providers/google"
+	"github.com/silinternational/wecarry-api/domain"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -15,8 +15,8 @@ func Test_New(t *testing.T) {
 	a := assert.New(t)
 
 	provider := googleProvider()
-	a.Equal(provider.ClientKey, os.Getenv("GOOGLE_KEY"))
-	a.Equal(provider.Secret, os.Getenv("GOOGLE_SECRET"))
+	a.Equal(provider.ClientKey, domain.Env.GoogleKey)
+	a.Equal(provider.Secret, domain.Env.GoogleSecret)
 	a.Equal(provider.CallbackURL, "/foo")
 }
 
@@ -29,7 +29,7 @@ func Test_BeginAuth(t *testing.T) {
 	s := session.(*google.Session)
 	a.NoError(err)
 	a.Contains(s.AuthURL, "accounts.google.com/o/oauth2/auth")
-	a.Contains(s.AuthURL, fmt.Sprintf("client_id=%s", os.Getenv("GOOGLE_KEY")))
+	a.Contains(s.AuthURL, fmt.Sprintf("client_id=%s", domain.Env.GoogleKey))
 	a.Contains(s.AuthURL, "state=test_state")
 	a.Contains(s.AuthURL, "scope=email")
 }
@@ -47,7 +47,7 @@ func Test_BeginAuthWithPrompt(t *testing.T) {
 	s := session.(*google.Session)
 	a.NoError(err)
 	a.Contains(s.AuthURL, "accounts.google.com/o/oauth2/auth")
-	a.Contains(s.AuthURL, fmt.Sprintf("client_id=%s", os.Getenv("GOOGLE_KEY")))
+	a.Contains(s.AuthURL, fmt.Sprintf("client_id=%s", domain.Env.GoogleKey))
 	a.Contains(s.AuthURL, "state=test_state")
 	a.Contains(s.AuthURL, "scope=email")
 	a.Contains(s.AuthURL, "prompt=test+prompts")
@@ -74,5 +74,5 @@ func Test_SessionFromJSON(t *testing.T) {
 }
 
 func googleProvider() *google.Provider {
-	return google.New(os.Getenv("GOOGLE_KEY"), os.Getenv("GOOGLE_SECRET"), "/foo")
+	return google.New(domain.Env.GoogleKey, domain.Env.GoogleSecret, "/foo")
 }

@@ -2,28 +2,20 @@ package aws
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"net/url"
-	"strconv"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws/awserr"
-
-	"github.com/gobuffalo/envy"
-
-	"github.com/aws/aws-sdk-go/aws/credentials"
-
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/ses"
+	"github.com/silinternational/wecarry-api/domain"
+	"jaytaylor.com/html2text"
 )
-
-const AwsS3RegionEnv = "AWS_REGION"
-const AwsS3EndpointEnv = "AWS_S3_ENDPOINT"
-const AwsS3DisableSSLEnv = "AWS_S3_DISABLE_SSL"
-const AwsS3BucketEnv = "AWS_S3_BUCKET"
-const AwsS3AccessKeyIDEnv = "AWS_S3_ACCESS_KEY_ID"
-const AwsS3SecretAccessKeyEnv = "AWS_S3_SECRET_ACCESS_KEY"
 
 type ObjectUrl struct {
 	Url        string
@@ -43,17 +35,14 @@ type awsConfig struct {
 // presigned URL expiration
 const urlLifespan = 10 * time.Minute
 
-func GetS3ConfigFromEnv() awsConfig {
+func getS3ConfigFromEnv() awsConfig {
 	var a awsConfig
-	a.awsAccessKeyID = envy.Get(AwsS3AccessKeyIDEnv, "")
-	a.awsSecretAccessKey = envy.Get(AwsS3SecretAccessKeyEnv, "")
-	a.awsEndpoint = envy.Get(AwsS3EndpointEnv, "")
-	a.awsRegion = envy.Get(AwsS3RegionEnv, "")
-	a.awsS3Bucket = envy.Get(AwsS3BucketEnv, "")
-
-	if disableSSL, err := strconv.ParseBool(envy.Get(AwsS3DisableSSLEnv, "false")); err == nil {
-		a.awsDisableSSL = disableSSL
-	}
+	a.awsAccessKeyID = domain.Env.AwsS3AccessKeyID
+	a.awsSecretAccessKey = domain.Env.AwsS3SecretAccessKey
+	a.awsEndpoint = domain.Env.AwsS3Endpoint
+	a.awsRegion = domain.Env.AwsRegion
+	a.awsS3Bucket = domain.Env.AwsS3Bucket
+	a.awsDisableSSL = domain.Env.AwsS3DisableSSL
 
 	if len(a.awsEndpoint) > 0 {
 		// a non-empty endpoint means minIO is in use, which doesn't support the S3 object URL scheme
@@ -62,7 +51,7 @@ func GetS3ConfigFromEnv() awsConfig {
 	return a
 }
 
-func CreateS3Service(config awsConfig) (*s3.S3, error) {
+func createS3Service(config awsConfig) (*s3.S3, error) {
 	sess, err := session.NewSession(&aws.Config{
 		Credentials:      credentials.NewStaticCredentials(config.awsAccessKeyID, config.awsSecretAccessKey, ""),
 		Endpoint:         aws.String(config.awsEndpoint),
@@ -102,9 +91,9 @@ func getObjectURL(config awsConfig, svc *s3.S3, key string) (ObjectUrl, error) {
 
 // StoreFile saves content in an AWS S3 bucket or compatible storage, depending on environment configuration.
 func StoreFile(key, contentType string, content []byte) (ObjectUrl, error) {
-	config := GetS3ConfigFromEnv()
+	config := getS3ConfigFromEnv()
 
-	svc, err := CreateS3Service(config)
+	svc, err := createS3Service(config)
 	if err != nil {
 		return ObjectUrl{}, err
 	}
@@ -134,9 +123,9 @@ func StoreFile(key, contentType string, content []byte) (ObjectUrl, error) {
 // GetFileURL retrieves a URL from which a stored object can be loaded. The URL should not require external
 // credentials to access. It may reference a file with public_read access or it may be a pre-signed URL.
 func GetFileURL(key string) (ObjectUrl, error) {
-	config := GetS3ConfigFromEnv()
+	config := getS3ConfigFromEnv()
 
-	svc, err := CreateS3Service(config)
+	svc, err := createS3Service(config)
 	if err != nil {
 		return ObjectUrl{}, err
 	}
@@ -147,20 +136,19 @@ func GetFileURL(key string) (ObjectUrl, error) {
 // CreateS3Bucket creates an S3 bucket with a name defined by an environment variable. If the bucket already
 // exists, it will not return an error.
 func CreateS3Bucket() error {
-	env := envy.Get("GO_ENV", "development")
+	env := domain.Env.GoEnv
 	if env != "test" && env != "development" {
-		return fmt.Errorf("CreateS3Bucket should only be used in test and development")
+		return errors.New("CreateS3Bucket should only be used in test and development")
 	}
 
-	config := GetS3ConfigFromEnv()
+	config := getS3ConfigFromEnv()
 
-	svc, err := CreateS3Service(config)
+	svc, err := createS3Service(config)
 	if err != nil {
 		return err
 	}
 
-	bucketName := envy.Get(AwsS3BucketEnv, "")
-	c := &s3.CreateBucketInput{Bucket: &bucketName}
+	c := &s3.CreateBucketInput{Bucket: &domain.Env.AwsS3Bucket}
 	if _, err := svc.CreateBucket(c); err != nil {
 		if aerr, ok := err.(awserr.Error); ok {
 			switch aerr.Code() {
@@ -172,4 +160,70 @@ func CreateS3Bucket() error {
 		}
 	}
 	return nil
+}
+
+// SendEmail sends a message using SES
+func SendEmail(to, from, subject, body string) error {
+	svc, err := createSESService(getSESConfigFromEnv())
+	if err != nil {
+		return fmt.Errorf("SendEmail failed creating SES service, %s", err)
+	}
+
+	tbody, err := html2text.FromString(body)
+	if err != nil {
+		domain.Logger.Printf("error converting html email to plain text ... %s", err.Error())
+		tbody = body
+	}
+
+	input := &ses.SendEmailInput{
+		Destination: &ses.Destination{
+			ToAddresses: []*string{
+				aws.String(to),
+			},
+		},
+		Message: &ses.Message{
+			Body: &ses.Body{
+				Html: &ses.Content{
+					Charset: aws.String("UTF-8"),
+					Data:    aws.String(body),
+				},
+				Text: &ses.Content{
+					Charset: aws.String("UTF-8"),
+					Data:    aws.String(tbody),
+				},
+			},
+			Subject: &ses.Content{
+				Charset: aws.String("UTF-8"),
+				Data:    aws.String(subject),
+			},
+		},
+		Source: aws.String(from),
+	}
+
+	result, err := svc.SendEmail(input)
+	if err != nil {
+		return fmt.Errorf("SendEmail failed using SES, %s", err)
+	}
+
+	domain.Logger.Printf("Message sent using SES, message ID: %s", *result.MessageId)
+	return nil
+}
+
+func getSESConfigFromEnv() awsConfig {
+	return awsConfig{
+		awsAccessKeyID:     domain.Env.AwsSESAccessKeyID,
+		awsSecretAccessKey: domain.Env.AwsSESSecretAccessKey,
+		awsRegion:          domain.Env.AwsRegion,
+	}
+}
+
+func createSESService(config awsConfig) (*ses.SES, error) {
+	sess, err := session.NewSession(&aws.Config{
+		Credentials: credentials.NewStaticCredentials(config.awsAccessKeyID, config.awsSecretAccessKey, ""),
+		Region:      aws.String(config.awsRegion),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return ses.New(sess), nil
 }

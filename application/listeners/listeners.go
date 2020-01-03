@@ -1,21 +1,21 @@
 package listeners
 
 import (
+	"errors"
 	"time"
-
-	"github.com/gobuffalo/envy"
 
 	"github.com/gobuffalo/events"
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/job"
 	"github.com/silinternational/wecarry-api/models"
 	"github.com/silinternational/wecarry-api/notifications"
 )
 
 const (
-	UserAccessTokensCleanupDelayMinutes = 480
+	userAccessTokensCleanupDelayMinutes = 480
 )
 
-var UserAccessTokensNextCleanupTime time.Time
+var userAccessTokensNextCleanupTime time.Time
 
 type apiListener struct {
 	name     string
@@ -28,24 +28,38 @@ type apiListener struct {
 // themselves still need to verify the event kind
 //
 var apiListeners = map[string][]apiListener{
-	domain.EventApiUserCreated: []apiListener{
+	domain.EventApiUserCreated: {
 		{
 			name:     "user-created",
 			listener: userCreated,
 		},
 	},
 
-	domain.EventApiAuthUserLoggedIn: []apiListener{
+	domain.EventApiAuthUserLoggedIn: {
 		{
 			name:     "trigger-user-access-tokens-cleanup",
 			listener: userAccessTokensCleanup,
 		},
 	},
 
-	domain.EventApiMessageCreated: []apiListener{
+	domain.EventApiMessageCreated: {
 		{
 			name:     "send-new-message-notification",
-			listener: sendNewMessageNotification,
+			listener: sendNewThreadMessageNotification,
+		},
+	},
+
+	domain.EventApiPostStatusUpdated: {
+		{
+			name:     "post-status-updated-notification",
+			listener: sendPostStatusUpdatedNotification,
+		},
+	},
+
+	domain.EventApiPostCreated: {
+		{
+			name:     "post-created-notification",
+			listener: sendPostCreatedNotifications,
 		},
 	},
 }
@@ -56,7 +70,7 @@ func RegisterListeners() {
 		for _, l := range listeners {
 			_, err := events.NamedListen(l.name, l.listener)
 			if err != nil {
-				domain.ErrLogger.Print("Failed registering listener: " + l.name)
+				domain.ErrLogger.Print("Failed registering listener:", l.name, err)
 			}
 		}
 	}
@@ -68,11 +82,11 @@ func userAccessTokensCleanup(e events.Event) {
 	}
 
 	now := time.Now()
-	if !now.After(UserAccessTokensNextCleanupTime) {
+	if !now.After(userAccessTokensNextCleanupTime) {
 		return
 	}
 
-	UserAccessTokensNextCleanupTime = now.Add(time.Duration(time.Minute * UserAccessTokensCleanupDelayMinutes))
+	userAccessTokensNextCleanupTime = now.Add(time.Duration(time.Minute * userAccessTokensCleanupDelayMinutes))
 
 	var uats models.UserAccessTokens
 	deleted, err := uats.DeleteExpired()
@@ -89,42 +103,106 @@ func userCreated(e events.Event) {
 		return
 	}
 
-	domain.Logger.Printf("%s User Created ... %s", domain.GetCurrentTime(), e.Message)
+	user, ok := e.Payload["user"].(*models.User)
+	if !ok {
+		domain.Logger.Printf("Failed to get User from event payload for notification. Event message: %s", e.Message)
+		return
+	}
+
+	domain.Logger.Printf("User Created: %s", e.Message)
+
+	if err := sendNewUserWelcome(*user); err != nil {
+		domain.Logger.Printf("Failed to send new user welcome to %s. Error: %s",
+			user.UUID.String(), err)
+	}
 }
 
-func sendNewMessageNotification(e events.Event) {
+func sendNewThreadMessageNotification(e events.Event) {
 	if e.Kind != domain.EventApiMessageCreated {
 		return
 	}
 
-	domain.Logger.Printf("%s Message Created ... %s", domain.GetCurrentTime(), e.Message)
+	domain.Logger.Printf("%s Thread Message Created ... %s", domain.GetCurrentTime(), e.Message)
 
-	mEData, ok := e.Payload["eventData"].(models.MessageCreatedEventData)
+	id, ok := e.Payload[domain.ArgMessageID].(int)
 	if !ok {
-		domain.ErrLogger.Print("unable to parse Message Created event payload")
+		domain.ErrLogger.Print("sendNewThreadMessageNotification: unable to read message ID from event payload")
 		return
 	}
 
-	uiUrl := envy.Get(domain.UIURLEnv, "")
-	data := map[string]interface{}{
-		"postURL":        uiUrl + "/#/requests/" + mEData.PostUUID,
-		"postTitle":      mEData.PostTitle,
-		"messageContent": mEData.MessageContent,
-		"sentByNickname": mEData.MessageCreatorNickName,
-		"threadURL":      uiUrl + "/#/messages/" + mEData.ThreadUUID,
+	if err := job.SubmitDelayed(job.NewThreadMessage, domain.NewMessageNotificationDelay,
+		map[string]interface{}{domain.ArgMessageID: id}); err != nil {
+		domain.ErrLogger.Printf("error starting 'New Message' job, %s", err)
+	}
+}
+
+func sendPostStatusUpdatedNotification(e events.Event) {
+	if e.Kind != domain.EventApiPostStatusUpdated {
+		return
 	}
 
-	for _, r := range mEData.MessageRecipients {
-		msg := notifications.Message{
-			Template:  domain.MessageTemplateNewMessage,
-			Data:      data,
-			FromName:  mEData.MessageCreatorNickName,
-			FromEmail: mEData.MessageCreatorEmail,
-			ToName:    r.Nickname,
-			ToEmail:   r.Email,
-		}
-		if err := notifications.Send(msg); err != nil {
-			domain.ErrLogger.Printf("error sending 'New Message' notification, %s", err)
-		}
+	pEData, ok := e.Payload["eventData"].(models.PostStatusEventData)
+	if !ok {
+		domain.ErrLogger.Print("unable to parse Post Status Updated event payload")
+		return
 	}
+
+	pid := pEData.PostID
+
+	post := models.Post{}
+	if err := post.FindByID(pid); err != nil {
+		domain.ErrLogger.Printf("unable to find post from event with id %v ... %s", pid, err)
+	}
+
+	if post.Type != models.PostTypeRequest {
+		return
+	}
+
+	requestStatusUpdatedNotifications(post, pEData)
+}
+
+func sendPostCreatedNotifications(e events.Event) {
+	if e.Kind != domain.EventApiPostCreated {
+		return
+	}
+
+	eventData, ok := e.Payload["eventData"].(models.PostCreatedEventData)
+	if !ok {
+		domain.ErrLogger.Printf("Post Created event payload incorrect type: %T", e.Payload["eventData"])
+		return
+	}
+
+	var post models.Post
+	if err := post.FindByID(eventData.PostID); err != nil {
+		domain.ErrLogger.Printf("unable to find post %d from post-created event, %s", eventData.PostID, err)
+	}
+
+	users, err := post.GetAudience()
+	if err != nil {
+		domain.ErrLogger.Print("unable to get post audience in event listener, ", err.Error())
+		return
+	}
+
+	sendNewPostNotifications(post, users)
+}
+
+func sendNewUserWelcome(user models.User) error {
+	if user.Email == "" {
+		return errors.New("'To' email address is required")
+	}
+
+	msg := notifications.Message{
+		Template:  domain.MessageTemplateNewUserWelcome,
+		ToName:    user.GetRealName(),
+		ToEmail:   user.Email,
+		FromEmail: domain.Env.EmailFromAddress,
+		Data: map[string]interface{}{
+			"appName":      domain.Env.AppName,
+			"uiURL":        domain.Env.UIURL,
+			"supportEmail": domain.Env.SupportEmail,
+			"userEmail":    user.Email,
+			"firstName":    user.FirstName,
+		},
+	}
+	return notifications.Send(msg)
 }

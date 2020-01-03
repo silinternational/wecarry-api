@@ -1,15 +1,28 @@
 package domain
 
 import (
+	"errors"
+	"github.com/stretchr/testify/suite"
 	"net/http"
-	"reflect"
 	"testing"
 	"time"
 
 	"github.com/gofrs/uuid"
 )
 
-func TestGetFirstStringFromSlice(t *testing.T) {
+// TestSuite establishes a test suite for domain tests
+type TestSuite struct {
+	suite.Suite
+}
+
+// Test_TestSuite runs the test suite
+func Test_TestSuite(t *testing.T) {
+	suite.Run(t, new(TestSuite))
+}
+
+func (ts *TestSuite) TestGetFirstStringFromSlice() {
+	t := ts.T()
+
 	type args struct {
 		s []string
 	}
@@ -49,14 +62,15 @@ func TestGetFirstStringFromSlice(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := GetFirstStringFromSlice(tt.args.s); got != tt.want {
-				t.Errorf("GetFirstStringFromSlice() = \"%v\", want \"%v\"", got, tt.want)
-			}
+			got := GetFirstStringFromSlice(tt.args.s)
+			ts.Equal(tt.want, got)
 		})
 	}
 }
 
-func TestGetBearerTokenFromRequest(t *testing.T) {
+func (ts *TestSuite) TestGetBearerTokenFromRequest() {
+	t := ts.T()
+
 	type args struct {
 		r *http.Request
 	}
@@ -134,14 +148,15 @@ func TestGetBearerTokenFromRequest(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := GetBearerTokenFromRequest(tt.args.r); got != tt.want {
-				t.Errorf("GetBearerTokenFromRequest() = \"%v\", want \"%v\"", got, tt.want)
-			}
+			got := GetBearerTokenFromRequest(tt.args.r)
+			ts.Equal(tt.want, got)
 		})
 	}
 }
 
-func TestGetSubPartKeyValues(t *testing.T) {
+func (ts *TestSuite) TestGetSubPartKeyValues() {
+	t := ts.T()
+
 	type args struct {
 		inString, outerDelimiter, innerDelimiter string
 	}
@@ -216,14 +231,14 @@ func TestGetSubPartKeyValues(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := GetSubPartKeyValues(tt.args.inString, tt.args.outerDelimiter, tt.args.innerDelimiter)
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetSubPartKeyValues() = \"%v\", want \"%v\"", got, tt.want)
-			}
+			ts.Equal(tt.want, got)
 		})
 	}
 }
 
-func TestConvertTimeToStringPtr(t *testing.T) {
+func (ts *TestSuite) TestConvertTimeToStringPtr() {
+	t := ts.T()
+
 	now := time.Now()
 	type args struct {
 		inTime time.Time
@@ -251,14 +266,14 @@ func TestConvertTimeToStringPtr(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			got := ConvertTimeToStringPtr(test.args.inTime)
-			if *got != test.want {
-				t.Errorf("ConvertTimeToStringPtr() = \"%v\", want \"%v\"", *got, test.want)
-			}
+			ts.Equal(test.want, *got)
 		})
 	}
 }
 
-func TestConvertStringPtrToDate(t *testing.T) {
+func (ts *TestSuite) TestConvertStringPtrToDate() {
+	t := ts.T()
+
 	testTime := time.Date(2019, time.August, 12, 0, 0, 0, 0, time.UTC)
 	testStr := testTime.Format("2006-01-02") // not using a const in order to detect code changes
 	emptyStr := ""
@@ -291,64 +306,68 @@ func TestConvertStringPtrToDate(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			got, err := ConvertStringPtrToDate(test.args.inPtr)
-			if test.wantErr == false && err != nil {
-				t.Errorf("Unexpected error %v", err)
-			} else if got != test.want {
-				t.Errorf("ConvertStringPtrToDate() = \"%v\", want \"%v\"", got, test.want)
+			if test.wantErr == false {
+				ts.NoError(err)
 			}
+
+			ts.Equal(test.want, got)
 		})
 	}
 }
 
-func TestIsStringInSlice(t *testing.T) {
-	type TestData struct {
-		Needle   string
-		Haystack []string
-		Expected bool
+func (ts *TestSuite) TestIsStringInSlice() {
+	t := ts.T()
+
+	type testData struct {
+		name     string
+		needle   string
+		haystack []string
+		want     bool
 	}
 
-	allTestData := []TestData{
+	allTestData := []testData{
 		{
-			Needle:   "no",
-			Haystack: []string{},
-			Expected: false,
+			name:     "empty haystack",
+			needle:   "no",
+			haystack: []string{},
+			want:     false,
 		},
 		{
-			Needle:   "no",
-			Haystack: []string{"really", "are you sure"},
-			Expected: false,
+			name:     "not in haystack",
+			needle:   "no",
+			haystack: []string{"really", "are you sure"},
+			want:     false,
 		},
 		{
-			Needle:   "yes",
-			Haystack: []string{"yes"},
-			Expected: true,
+			name:     "in one element haystack",
+			needle:   "yes",
+			haystack: []string{"yes"},
+			want:     true,
 		},
 		{
-			Needle:   "yes",
-			Haystack: []string{"one", "two", "three", "yes"},
-			Expected: true,
+			name:     "in longer haystack",
+			needle:   "yes",
+			haystack: []string{"one", "two", "three", "yes"},
+			want:     true,
 		},
 	}
 
 	for i, td := range allTestData {
-		results := IsStringInSlice(td.Needle, td.Haystack)
-		expected := td.Expected
-
-		if results != expected {
-			t.Errorf("Bad results for test set i = %v. Expected %v, but got %v", i, expected, results)
-			return
-		}
+		t.Run(td.name, func(t *testing.T) {
+			got := IsStringInSlice(td.needle, td.haystack)
+			ts.Equal(td.want, got, "incorrect value for test %v", i)
+		})
 	}
 }
 
-func Test_emptyUuidValue(t *testing.T) {
+func (ts *TestSuite) Test_emptyUUIDValue() {
 	val := uuid.UUID{}
-	if val.String() != "00000000-0000-0000-0000-000000000000" {
-		t.Errorf("empty uuid value not as expected, got: %s", val.String())
-	}
+	ts.Equal("00000000-0000-0000-0000-000000000000", val.String(), "incorrect empty uuid value")
 }
 
-func TestEmailDomain(t *testing.T) {
+func (ts *TestSuite) TestEmailDomain() {
+	t := ts.T()
+
 	tests := []struct {
 		name  string
 		email string
@@ -360,8 +379,234 @@ func TestEmailDomain(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			if got := EmailDomain(test.email); got != test.want {
-				t.Errorf("incorrect response from EmailDomain(): %v, expected %v", got, test.want)
+			got := EmailDomain(test.email)
+			ts.Equal(test.want, got, "incorrect response from EmailDomain()")
+		})
+	}
+}
+
+func (ts *TestSuite) TestIsOtherThanNoRows() {
+	t := ts.T()
+
+	tests := []struct {
+		name string
+		err  error
+		want bool
+	}{
+		{name: "real error", err: errors.New("Real Error"), want: true},
+		{name: "no rows error", err: errors.New("sql: no rows in result set"), want: false},
+		{name: "nil error", err: nil, want: false},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got := IsOtherThanNoRows(test.err)
+			ts.Equal(test.want, got, "incorrect response")
+		})
+	}
+}
+
+func (ts *TestSuite) TestGetStructFieldTags() {
+
+	type testStruct struct {
+		Language string `json:"language"`
+		TimeZone string `json:"time_zone"`
+	}
+
+	tStruct := testStruct{}
+
+	got, err := GetStructTags("json", tStruct)
+	ts.NoError(err)
+
+	gotCount := len(got)
+	wantCount := 2
+	ts.Equal(wantCount, gotCount, "incorrect number of tags")
+
+	fieldName := "language"
+	gotName := got[fieldName]
+	ts.Equal(fieldName, gotName, "incorrect tag")
+
+	fieldName = "time_zone"
+	gotName = got[fieldName]
+	ts.Equal(fieldName, gotName, "incorrect tag")
+}
+
+func (ts *TestSuite) TestIsLanguageAllowed() {
+	lang := UserPreferenceLanguageSpanish
+	got := IsLanguageAllowed(lang)
+	ts.True(got, lang+" should be an allowed language")
+
+	lang = "badlanguage"
+	got = IsLanguageAllowed(lang)
+	ts.False(got, lang+" should not be an allowed language")
+}
+
+func (ts *TestSuite) TestIsWeightUnitAllowed() {
+	unit := UserPreferenceWeightUnitKGs
+	got := IsWeightUnitAllowed(unit)
+	ts.True(got, unit+" should be an allowed weight unit")
+
+	unit = "badunit"
+	got = IsLanguageAllowed(unit)
+	ts.False(got, unit+" should not be an allowed weight unit")
+}
+
+func (ts *TestSuite) TestIsTimeZoneAllowed() {
+	zone := "America/New_York"
+	got := IsTimeZoneAllowed(zone)
+	ts.True(got, zone+" should be an allowed time zone")
+
+	zone = "Etc/GMT+2"
+	got = IsTimeZoneAllowed(zone)
+	ts.True(got, zone+" should be an allowed time zone")
+
+	zone = "badzone"
+	got = IsTimeZoneAllowed(zone)
+	ts.False(got, zone+" should not be an time zone")
+}
+
+func (ts *TestSuite) TestGetTranslatedSubject() {
+	t := ts.T()
+	postTitle := "MyPost"
+
+	tests := []struct {
+		name          string
+		language      string
+		translationID string
+		want          string
+	}{
+		{
+			name:          "delivered",
+			translationID: "Email.Subject.Request.FromAcceptedOrCommittedToDelivered",
+			want:          `Your ` + Env.AppName + ` request for "` + postTitle + `" has been delivered!`,
+		},
+		{
+			name:          "delivered in Spanish",
+			language:      UserPreferenceLanguageSpanish,
+			translationID: "Email.Subject.Request.FromAcceptedOrCommittedToDelivered",
+			want:          "Su solicitud se marcó como entregada en " + Env.AppName,
+		},
+		{
+			name:          "from accepted to committed",
+			translationID: "Email.Subject.Request.FromAcceptedToCommitted",
+			want:          `Your ` + Env.AppName + ` offer for "` + postTitle + `" may no longer be needed`,
+		},
+		{
+			name:          "from accepted to completed",
+			translationID: "Email.Subject.Request.FromAcceptedOrDeliveredToCompleted",
+			want:          "Thank you for fulfilling a request on " + Env.AppName,
+		},
+		{
+			name:          "from accepted to open",
+			translationID: "Email.Subject.Request.FromAcceptedToOpen",
+			want:          `Your ` + Env.AppName + ` offer for "` + postTitle + `" is no longer needed`,
+		},
+		{
+			name:          "from accepted to removed",
+			translationID: "Email.Subject.Request.FromAcceptedToRemoved",
+			want:          `Your ` + Env.AppName + ` offer for "` + postTitle + `" is no longer needed`,
+		},
+		{
+			name:          "from committed to accepted",
+			translationID: "Email.Subject.Request.FromCommittedToAccepted",
+			want:          `Your ` + Env.AppName + ` offer for "` + postTitle + `" has been accepted!`,
+		},
+		{
+			name:          "from committed to open",
+			translationID: "Email.Subject.Request.FromCommittedToOpen",
+			want:          "Request lost its provider on " + Env.AppName,
+		},
+		{
+			name:          "from committed to removed",
+			translationID: "Email.Subject.Request.FromCommittedToRemoved",
+			want:          `Your ` + Env.AppName + ` offer for "` + postTitle + `" is no longer needed`,
+		},
+		{
+			name:          "from completed to accepted",
+			translationID: "Email.Subject.Request.FromCompletedToAcceptedOrDelivered",
+			want:          "Request not received on " + Env.AppName + " after all",
+		},
+		{
+			name:          "from delivered to accepted",
+			translationID: "Email.Subject.Request.FromDeliveredToAccepted",
+			want:          "Request not delivered after all on " + Env.AppName,
+		},
+		{
+			name:          "from delivered to committed",
+			translationID: "Email.Subject.Request.FromDeliveredToCommitted",
+			want:          "Request not delivered after all on " + Env.AppName,
+		},
+		{
+			name:          "from open to committed",
+			translationID: "Email.Subject.Request.FromOpenToCommitted",
+			want:          "Potential provider on " + Env.AppName + ` for "` + postTitle + `"`,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			language := UserPreferenceLanguageEnglish
+			if test.language != "" {
+				language = test.language
+			}
+			got := GetTranslatedSubject(language, test.translationID,
+				map[string]string{"postTitle": postTitle})
+			ts.Equal(test.want, got, "bad subject translation")
+		})
+	}
+}
+
+func TestTruncate(t *testing.T) {
+	type args struct {
+		str    string
+		suffix string
+		length int
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "string shorter than length, not changed",
+			args: args{
+				str:    "hello",
+				suffix: "...",
+				length: 16,
+			},
+			want: "hello",
+		},
+		{
+			name: "string truncated, empty suffix",
+			args: args{
+				str:    "hello",
+				suffix: "",
+				length: 3,
+			},
+			want: "hel",
+		},
+		{
+			name: "string truncated, with suffix",
+			args: args{
+				str:    "hello there",
+				suffix: "...",
+				length: 10,
+			},
+			want: "hello t...",
+		},
+		{
+			name: "string is length, not truncated",
+			args: args{
+				str:    "hello there",
+				suffix: "...",
+				length: 11,
+			},
+			want: "hello there",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := Truncate(tt.args.str, tt.args.suffix, tt.args.length); got != tt.want {
+				t.Errorf("Truncate() = %v, want %v", got, tt.want)
 			}
 		})
 	}

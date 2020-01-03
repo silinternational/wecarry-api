@@ -1,17 +1,26 @@
 type Query {
-    users: [User]!
+    users: [User!]!
     user(id: ID): User
-    posts: [Post]!
+    posts: [Post!]!
     post(id: ID): Post
-    threads: [Thread]!
-    myThreads: [Thread]!
+    searchRequests(text: String!): [Post!]!
+    threads: [Thread!]!
+    myThreads: [Thread!]!
     message(id: ID): Message!
+    organizations: [Organization!]!
+    organization(id: ID): Organization!
+    meetings: [Meeting!]!
+    meeting(id: ID): Meeting
+    recentMeetings: [Meeting!]!
 }
 
 type Mutation {
     createPost(input: CreatePostInput!): Post!
     updatePost(input: UpdatePostInput!): Post!
+    updatePostStatus(input: UpdatePostStatusInput!): Post!
     updateUser(input: UpdateUserInput!): User!
+    createMeeting(input: CreateMeetingInput!): Meeting!
+    updateMeeting(input: UpdateMeetingInput!): Meeting!
     createMessage(input: CreateMessageInput!): Message!
     createOrganization(input: CreateOrganizationInput!): Organization!
     updateOrganization(input: UpdateOrganizationInput!): Organization!
@@ -23,7 +32,9 @@ type Mutation {
 # Date and Time in RFC3339 format
 scalar Time
 
-enum Role {
+enum UserAdminRole {
+    SUPERADMIN
+    SALESADMIN
     ADMIN
     USER
 }
@@ -38,6 +49,7 @@ enum PostStatus {
     OPEN
     COMMITTED
     ACCEPTED
+    DELIVERED
     RECEIVED
     COMPLETED
     REMOVED
@@ -55,19 +67,56 @@ type User {
     id: ID!
     email: String!
     nickname: String!
-    createdAt: Time
-    updatedAt: Time
-    adminRole: Role
+    createdAt: Time!
+    updatedAt: Time!
+    adminRole: UserAdminRole
     organizations: [Organization!]!
     posts(role: PostRole!): [Post!]!
-    photoURL: String!
+    avatarURL: String
+    preferences: UserPreferences
     location: Location
+    unreadMessageCount: Int!
+}
+
+type UserPreferences {
+    language: String
+    timeZone: String
+    weightUnit: String
 }
 
 input UpdateUserInput {
     id: ID
+    nickname: String
     photoID: String
     location: LocationInput
+    preferences: UpdateUserPreferencesInput
+}
+
+enum PreferredLanguage {
+    EN
+    FR
+    SP
+    KO
+    PT
+}
+
+enum PreferredWeightUnit {
+    POUNDS
+    KILOGRAMS
+}
+
+
+input UpdateUserPreferencesInput {
+    language: PreferredLanguage
+    timeZone: String
+    weightUnit: PreferredWeightUnit
+}
+
+"User fields that can safely be visible to any user in the system"
+type PublicProfile {
+    id: ID!
+    nickname: String!
+    avatarURL: String
 }
 
 enum PostType {
@@ -78,35 +127,47 @@ enum PostType {
 type Post {
     id: ID!
     type: PostType!
-    createdBy: User!
-    receiver: User
-    provider: User
+    createdBy: PublicProfile!
+    receiver: PublicProfile
+    provider: PublicProfile
     organization: Organization
     title: String!
     description: String
-    destination: Location
+    destination: Location!
     origin: Location
     size: PostSize!
-    neededAfter: String
-    neededBefore: String
-    category: String!
     status: String!
-    threads: [Thread]!
-    createdAt: Time
-    updatedAt: Time
-    myThreadID: String
+    threads: [Thread!]!
+    createdAt: Time!
+    updatedAt: Time!
     url: String
-    cost: String
+    kilograms: Float
     photo: File
     files: [File!]!
+    meeting: Meeting
+    isEditable: Boolean!
+}
+
+type Meeting {
+    id: ID!
+    name: String!
+    description: String
+    moreInfoURL: String
+    startDate: String!
+    endDate: String!
+    createdAt: Time!
+    updatedAt: Time!
+    createdBy: PublicProfile!
+    imageFile: File
+    location: Location!
 }
 
 type Organization {
     id: ID!
     name: String!
     url: String
-    createdAt: Time
-    updatedAt: Time
+    createdAt: Time!
+    updatedAt: Time!
     domains: [OrganizationDomain!]!
 }
 
@@ -142,21 +203,23 @@ input RemoveOrganizationDomainInput {
 
 type Thread {
     id: ID!
-    participants: [User!]!
+    participants: [PublicProfile!]!
     messages: [Message!]!
     postID: String!
     post: Post!
-    createdAt: Time
-    updatedAt: Time
+    lastViewedAt: Time!
+    createdAt: Time!
+    updatedAt: Time!
+    unreadMessageCount: Int!
 }
 
 type Message {
     id: ID!
-    sender: User!
+    sender: PublicProfile!
     content: String!
     thread: Thread!
-    createdAt: Time
-    updatedAt: Time
+    createdAt: Time!
+    updatedAt: Time!
 }
 
 input CreatePostInput {
@@ -164,37 +227,52 @@ input CreatePostInput {
     type: PostType!
     title: String!
     description: String
-    destination: LocationInput
+    destination: LocationInput!
     origin: LocationInput
     size: PostSize!
-    neededAfter: String
-    neededBefore: String
-    category: String
     url: String
-    cost: String
+    kilograms: Float
     photoID: ID
+    meetingID: ID
+}
+
+input UpdatePostInput {
+    id: ID!
+    title: String
+    description: String
+    destination: LocationInput
+    origin: LocationInput
+    size: PostSize
+    url: String
+    kilograms: Float
+    photoID: ID
+}
+
+input CreateMeetingInput {
+    name: String!
+    description: String
+    startDate: String!
+    endDate: String!
+    moreInfoURL: String
+    imageFileID: ID
+    location: LocationInput!
+}
+
+input UpdateMeetingInput {
+    id: ID!
+    name: String!
+    description: String
+    startDate: String!
+    endDate: String!
+    moreInfoURL: String
+    imageFileID: ID
+    location: LocationInput!
 }
 
 input CreateMessageInput {
     content: String!
     postID: String!
     threadID: String
-}
-
-input UpdatePostInput {
-    id: ID!
-    status: PostStatus
-    title: String
-    description: String
-    destination: LocationInput
-    origin: LocationInput
-    size: PostSize
-    neededAfter: String
-    neededBefore: String
-    category: String
-    url: String
-    cost: String
-    photoID: ID
 }
 
 type File {
@@ -207,7 +285,7 @@ type File {
 }
 
 input SetThreadLastViewedAtInput {
-    threadId: ID!
+    threadID: ID!
     time: Time!
 }
 
@@ -225,4 +303,9 @@ input LocationInput {
     country: String!
     latitude: Float
     longitude: Float
+}
+
+input UpdatePostStatusInput {
+    id: ID!
+    status: PostStatus!
 }
