@@ -506,25 +506,7 @@ func (ms *ModelSuite) TestUser_CanCreateOrganization() {
 func (ms *ModelSuite) TestUser_CanEditOrganization() {
 	t := ms.T()
 
-	orgFixtures := []Organization{
-		{
-			Name:       "Org1",
-			Url:        nulls.String{},
-			AuthType:   AuthTypeSaml,
-			AuthConfig: "{}",
-			UUID:       domain.GetUUID(),
-		},
-		{
-			Name:       "Org2",
-			Url:        nulls.String{},
-			AuthType:   AuthTypeSaml,
-			AuthConfig: "{}",
-			UUID:       domain.GetUUID(),
-		},
-	}
-	for i := range orgFixtures {
-		createFixture(ms, &orgFixtures[i])
-	}
+	orgFixtures := createOrganizationFixtures(ms.DB, 2)
 
 	user := User{
 		Email:     "test@com.com",
@@ -635,25 +617,7 @@ func (ms *ModelSuite) TestUser_CanUpdatePostStatus() {
 func (ms *ModelSuite) TestUser_CanViewOrganization() {
 	t := ms.T()
 
-	orgFixtures := []Organization{
-		{
-			Name:       "Org1",
-			Url:        nulls.String{},
-			AuthType:   AuthTypeSaml,
-			AuthConfig: "{}",
-			UUID:       domain.GetUUID(),
-		},
-		{
-			Name:       "Org2",
-			Url:        nulls.String{},
-			AuthType:   AuthTypeSaml,
-			AuthConfig: "{}",
-			UUID:       domain.GetUUID(),
-		},
-	}
-	for i := range orgFixtures {
-		createFixture(ms, &orgFixtures[i])
-	}
+	orgFixtures := createOrganizationFixtures(ms.DB, 2)
 
 	user := User{
 		Email:     "test@com.com",
