@@ -364,13 +364,8 @@ func (ms *ModelSuite) TestMeeting_AttachImage_GetImage() {
 }
 
 func (ms *ModelSuite) TestMeeting_GetCreator() {
-	t := ms.T()
-
-	user := User{UUID: domain.GetUUID(), Email: t.Name() + "_user@example.com", Nickname: t.Name() + "_User"}
-	createFixture(ms, &user)
-
-	organization := Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
-	createFixture(ms, &organization)
+	uf := createUserFixtures(ms.DB, 1)
+	user := uf.Users[0]
 
 	locations := Locations{
 		{
@@ -391,13 +386,8 @@ func (ms *ModelSuite) TestMeeting_GetCreator() {
 }
 
 func (ms *ModelSuite) TestMeeting_GetSetLocation() {
-	t := ms.T()
-
-	user := User{UUID: domain.GetUUID(), Email: t.Name() + "_user@example.com", Nickname: t.Name() + "_User"}
-	createFixture(ms, &user)
-
-	organization := Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
-	createFixture(ms, &organization)
+	uf := createUserFixtures(ms.DB, 1)
+	user := uf.Users[0]
 
 	locations := Locations{
 		{
