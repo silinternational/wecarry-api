@@ -245,25 +245,7 @@ func (ms *ModelSuite) TestOrganization_FindByDomain() {
 func (ms *ModelSuite) TestOrganization_AddRemoveDomain() {
 	t := ms.T()
 
-	orgFixtures := []Organization{
-		{ID: 1, Name: "Org1"},
-		{ID: 2, Name: "Org2"},
-	}
-
-	for i := range orgFixtures {
-		orgFixtures[i].CreatedAt = time.Time{}
-		orgFixtures[i].UpdatedAt = time.Time{}
-		orgFixtures[i].Url = nulls.String{}
-		orgFixtures[i].AuthType = "na"
-		orgFixtures[i].AuthConfig = "{}"
-		orgFixtures[i].UUID = domain.GetUUID()
-
-		err := ms.DB.Create(&orgFixtures[i])
-		if err != nil {
-			t.Errorf("Unable to create org fixture: %s", err)
-			t.FailNow()
-		}
-	}
+	orgFixtures := createOrganizationFixtures(ms.DB, 2)
 
 	err := orgFixtures[0].AddDomain("first.com")
 	ms.NoError(err, "unable to add first domain to Org1: %s", err)
@@ -358,24 +340,7 @@ func (ms *ModelSuite) TestOrganization_Save() {
 func (ms *ModelSuite) TestOrganization_All() {
 	t := ms.T()
 
-	orgFixtures := []Organization{
-		{ID: 1, Name: "Org1"},
-		{ID: 2, Name: "Org2"},
-	}
-	for i := range orgFixtures {
-		orgFixtures[i].CreatedAt = time.Time{}
-		orgFixtures[i].UpdatedAt = time.Time{}
-		orgFixtures[i].Url = nulls.String{}
-		orgFixtures[i].AuthType = "na"
-		orgFixtures[i].AuthConfig = "{}"
-		orgFixtures[i].UUID = domain.GetUUID()
-
-		err := ms.DB.Create(&orgFixtures[i])
-		if err != nil {
-			t.Errorf("Unable to create org fixture: %s", err)
-			t.FailNow()
-		}
-	}
+	orgFixtures := createOrganizationFixtures(ms.DB, 2)
 
 	var allOrgs Organizations
 	err := allOrgs.All()
