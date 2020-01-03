@@ -187,6 +187,10 @@
 - id: Email.Subject.Message.Created
   translation: New message from {{.sentByNickname}} on {{.AppName}}
 
+# New User welcome subject
+- id: Email.Subject.Welcome
+  translation: Welcome to {{.AppName}}
+
 # Organization
 - id: GetOrganizationDomainOrganizationID
   translation: We had a problem finding the domain ID.
