@@ -39,11 +39,9 @@ func uploadHandler(c buffalo.Context) error {
 
 	if f.Size > int64(domain.MaxFileSize) {
 		domain.ErrLogger.Printf("file upload size (%v) greater than max file size (%v)", f.Size, domain.MaxFileSize)
-		return c.Render(http.StatusInternalServerError, render.JSON(UploadResponse{
-			Error: &domain.AppError{
-				Code: http.StatusBadRequest,
-				Key:  domain.ErrorStoreFileTooLarge,
-			},
+		return c.Render(http.StatusBadRequest, render.JSON(domain.AppError{
+			Code: http.StatusBadRequest,
+			Key:  domain.ErrorStoreFileTooLarge,
 		}))
 	}
 
