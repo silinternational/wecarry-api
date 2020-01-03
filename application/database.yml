@@ -12,5 +12,5 @@ test:
 staging:
   url: {{envOr "DATABASE_URL" "postgres://wecarry:wecarry@127.0.0.1:5432/wecarry_staging?sslmode=disable"}}
 
-production:
+prod:
   url: {{envOr "DATABASE_URL" "postgres://wecarry:wecarry@127.0.0.1:5432/wecarry_production?sslmode=disable"}}

@@ -191,11 +191,15 @@ func sendNewUserWelcome(user models.User) error {
 		return errors.New("'To' email address is required")
 	}
 
+	language := user.GetLanguagePreference()
+	subject := domain.GetTranslatedSubject(language, "Email.Subject.Welcome", map[string]string{})
+
 	msg := notifications.Message{
 		Template:  domain.MessageTemplateNewUserWelcome,
 		ToName:    user.GetRealName(),
 		ToEmail:   user.Email,
 		FromEmail: domain.Env.EmailFromAddress,
+		Subject:   subject,
 		Data: map[string]interface{}{
 			"appName":      domain.Env.AppName,
 			"uiURL":        domain.Env.UIURL,
