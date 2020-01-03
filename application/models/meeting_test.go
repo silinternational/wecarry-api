@@ -367,17 +367,10 @@ func (ms *ModelSuite) TestMeeting_GetCreator() {
 	uf := createUserFixtures(ms.DB, 1)
 	user := uf.Users[0]
 
-	locations := Locations{
-		{
-			Description: "a place",
-			Country:     "XY",
-			Latitude:    nulls.NewFloat64(1.1),
-			Longitude:   nulls.NewFloat64(2.2),
-		},
-	}
-	createFixture(ms, &locations[0])
+	location := Location{}
+	createFixture(ms, &location)
 
-	meeting := Meeting{CreatedByID: user.ID, Name: "name", LocationID: locations[0].ID}
+	meeting := Meeting{CreatedByID: user.ID, Name: "name", LocationID: location.ID}
 	createFixture(ms, &meeting)
 
 	creator, err := meeting.GetCreator()
