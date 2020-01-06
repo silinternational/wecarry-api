@@ -506,25 +506,7 @@ func (ms *ModelSuite) TestUser_CanCreateOrganization() {
 func (ms *ModelSuite) TestUser_CanEditOrganization() {
 	t := ms.T()
 
-	orgFixtures := []Organization{
-		{
-			Name:       "Org1",
-			Url:        nulls.String{},
-			AuthType:   AuthTypeSaml,
-			AuthConfig: "{}",
-			UUID:       domain.GetUUID(),
-		},
-		{
-			Name:       "Org2",
-			Url:        nulls.String{},
-			AuthType:   AuthTypeSaml,
-			AuthConfig: "{}",
-			UUID:       domain.GetUUID(),
-		},
-	}
-	for i := range orgFixtures {
-		createFixture(ms, &orgFixtures[i])
-	}
+	orgFixtures := createOrganizationFixtures(ms.DB, 2)
 
 	user := User{
 		Email:     "test@com.com",
@@ -629,6 +611,49 @@ func (ms *ModelSuite) TestUser_CanUpdatePostStatus() {
 			ms.Equal(test.want, test.user.CanUpdatePostStatus(test.post, test.newStatus),
 				"incorrect result")
 		})
+	}
+}
+
+func (ms *ModelSuite) TestUser_CanViewOrganization() {
+	t := ms.T()
+
+	orgFixtures := createOrganizationFixtures(ms.DB, 2)
+
+	user := User{
+		Email:     "test@com.com",
+		FirstName: "Test",
+		LastName:  "User",
+		Nickname:  "test_user",
+		AdminRole: UserAdminRoleUser,
+		UUID:      domain.GetUUID(),
+	}
+	createFixture(ms, &user)
+
+	userOrgFixtures := []UserOrganization{
+		{
+			OrganizationID: orgFixtures[0].ID,
+			UserID:         user.ID,
+			Role:           UserOrganizationRoleAdmin,
+			AuthID:         "abc123",
+			AuthEmail:      "test@com.com",
+		},
+		{
+			OrganizationID: orgFixtures[1].ID,
+			UserID:         user.ID,
+			Role:           UserOrganizationRoleUser,
+			AuthID:         "123abc",
+			AuthEmail:      "test@com.com",
+		},
+	}
+	for i := range userOrgFixtures {
+		createFixture(ms, &userOrgFixtures[i])
+	}
+
+	if !user.CanViewOrganization(orgFixtures[0].ID) {
+		t.Error("user unable to view org that they should be able to view")
+	}
+	if user.CanViewOrganization(orgFixtures[1].ID) {
+		t.Error("user is able to view org that they should not be able to view")
 	}
 }
 
