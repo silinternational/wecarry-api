@@ -14,3 +14,10 @@ staging:
 
 prod:
   url: {{envOr "DATABASE_URL" "postgres://wecarry:wecarry@127.0.0.1:5432/wecarry_production?sslmode=disable"}}
+
+scrutinizer:
+  dialect: postgres
+  database: scrutinizer
+  user: scrutinizer
+  password: scrutinizer
+  host: localhost
