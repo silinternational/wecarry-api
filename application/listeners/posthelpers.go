@@ -412,7 +412,7 @@ func sendNewPostNotification(user models.User, post models.Post) error {
 
 	msg := notifications.Message{
 		Template:  newPostTemplates[post.Type.String()],
-		ToName:    user.Nickname,
+		ToName:    user.GetRealName(),
 		ToEmail:   user.Email,
 		FromEmail: domain.Env.EmailFromAddress,
 		Data: map[string]interface{}{
