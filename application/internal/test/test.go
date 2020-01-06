@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gobuffalo/nulls"
@@ -164,4 +165,21 @@ func CreateFileFixtures(n int) models.Files {
 		fileFixtures[i] = f
 	}
 	return fileFixtures
+}
+
+func StringContains(haystack, needle string) string {
+	if strings.Contains(haystack, needle) {
+		return ""
+	}
+	lenHS := len(haystack)
+	maxIndex := len(needle)
+
+	if lenHS <= maxIndex {
+		maxIndex = lenHS - 1
+	}
+
+	return "\n-- string does not contain substring --\n  " +
+		haystack[:maxIndex] +
+		" ... \n-- does not contain --\n" +
+		needle
 }
