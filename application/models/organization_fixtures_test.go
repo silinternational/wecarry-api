@@ -108,7 +108,7 @@ func createFixturesForOrganization_AllWhereUserIsOrgAdmin(ms *ModelSuite) Organi
 	users[0].AdminRole = UserAdminRoleSuperAdmin
 	users[1].AdminRole = UserAdminRoleSalesAdmin
 
-	uOrgRoles := [5]string{UserOrganizationRoleUser, UserOrganizationRoleUser, UserOrganizationRoleUser,
+	uOrgRoles := [userCount]string{UserOrganizationRoleUser, UserOrganizationRoleUser, UserOrganizationRoleUser,
 		UserOrganizationRoleAdmin, UserOrganizationRoleAdmin}
 
 	for i := range users {
