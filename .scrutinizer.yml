@@ -34,6 +34,6 @@ build:
             MINIO_SECRET_KEY: abcd1234
           ramdisks:
             - /data
-          command: "server /data"
+          command: "minio server /data"
 
   root_path: './application'
