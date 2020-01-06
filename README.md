@@ -11,7 +11,7 @@ In an appropriate directory:
 * cd wecarry-api
 * cp .env.example .env
 
-In application/grifts, copy private.example.go to private.go and 
+In application/grifts, copy private.go.example to private.go and 
 correct the example values.
 
 * make
