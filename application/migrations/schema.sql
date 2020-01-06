@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 9.6.13
+-- Dumped from database version 11.6 (Debian 11.6-1.pgdg90+1)
 -- Dumped by pg_dump version 12.1 (Debian 12.1-1.pgdg100+1)
 
 SET statement_timeout = 0;
@@ -42,6 +42,7 @@ ALTER TABLE public.files OWNER TO wecarry;
 --
 
 CREATE SEQUENCE public.files_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -78,6 +79,7 @@ ALTER TABLE public.locations OWNER TO wecarry;
 --
 
 CREATE SEQUENCE public.locations_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -121,6 +123,7 @@ ALTER TABLE public.meetings OWNER TO wecarry;
 --
 
 CREATE SEQUENCE public.meetings_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -159,6 +162,7 @@ ALTER TABLE public.messages OWNER TO wecarry;
 --
 
 CREATE SEQUENCE public.messages_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -195,6 +199,7 @@ ALTER TABLE public.organization_domains OWNER TO wecarry;
 --
 
 CREATE SEQUENCE public.organization_domains_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -234,6 +239,7 @@ ALTER TABLE public.organizations OWNER TO wecarry;
 --
 
 CREATE SEQUENCE public.organizations_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -270,6 +276,7 @@ ALTER TABLE public.post_files OWNER TO wecarry;
 --
 
 CREATE SEQUENCE public.post_files_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -308,6 +315,7 @@ ALTER TABLE public.post_histories OWNER TO wecarry;
 --
 
 CREATE SEQUENCE public.post_histories_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -358,6 +366,7 @@ ALTER TABLE public.posts OWNER TO wecarry;
 --
 
 CREATE SEQUENCE public.posts_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -407,6 +416,7 @@ ALTER TABLE public.thread_participants OWNER TO wecarry;
 --
 
 CREATE SEQUENCE public.thread_participants_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -443,6 +453,7 @@ ALTER TABLE public.threads OWNER TO wecarry;
 --
 
 CREATE SEQUENCE public.threads_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -481,6 +492,7 @@ ALTER TABLE public.user_access_tokens OWNER TO wecarry;
 --
 
 CREATE SEQUENCE public.user_access_tokens_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -521,6 +533,7 @@ ALTER TABLE public.user_organizations OWNER TO wecarry;
 --
 
 CREATE SEQUENCE public.user_organizations_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -559,6 +572,7 @@ ALTER TABLE public.user_preferences OWNER TO wecarry;
 --
 
 CREATE SEQUENCE public.user_preferences_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -602,6 +616,7 @@ ALTER TABLE public.users OWNER TO wecarry;
 --
 
 CREATE SEQUENCE public.users_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
