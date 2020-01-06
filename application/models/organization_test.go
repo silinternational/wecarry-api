@@ -1,9 +1,8 @@
 package models
 
 import (
-	"time"
-
 	"github.com/gobuffalo/nulls"
+
 	"github.com/silinternational/wecarry-api/domain"
 
 	"testing"
@@ -280,25 +279,7 @@ func (ms *ModelSuite) TestOrganization_AddRemoveDomain() {
 func (ms *ModelSuite) TestOrganization_Save() {
 	t := ms.T()
 
-	orgFixtures := []Organization{
-		{ID: 1, Name: "Org1"},
-		{ID: 2, Name: "Org2"},
-	}
-
-	for i := range orgFixtures {
-		orgFixtures[i].CreatedAt = time.Time{}
-		orgFixtures[i].UpdatedAt = time.Time{}
-		orgFixtures[i].Url = nulls.String{}
-		orgFixtures[i].AuthType = "na"
-		orgFixtures[i].AuthConfig = "{}"
-		orgFixtures[i].UUID = domain.GetUUID()
-
-		err := ms.DB.Create(&orgFixtures[i])
-		if err != nil {
-			t.Errorf("Unable to create org fixture: %s", err)
-			t.FailNow()
-		}
-	}
+	orgFixtures := createOrganizationFixtures(ms.DB, 2)
 
 	// test save of existing organization
 	orgFixtures[0].Name = "changed"
@@ -415,19 +396,19 @@ func (ms *ModelSuite) TestOrganization_AllWhereUserIsOrgAdmin() {
 	ofs := f.Organizations
 	ufs := f.Users
 
-	allOrgIDs := []int{ofs[0].ID, ofs[1].ID, ofs[2].ID, ofs[3].ID, ofs[4].ID}
+	allOrgIDs := []string{ofs[0].Name, ofs[1].Name, ofs[2].Name, ofs[3].Name, ofs[4].Name}
 
 	tests := []struct {
 		name       string
 		user       User
-		wantOrgIDs []int
+		wantOrgIDs []string
 		wantErr    string
 	}{
 		{name: "SuperAdmin", user: ufs[0], wantOrgIDs: allOrgIDs},
 		{name: "SalesAdmin", user: ufs[1], wantOrgIDs: allOrgIDs},
-		{name: "NoRole", user: ufs[2], wantOrgIDs: []int{}},
-		{name: "SingleAdmin", user: ufs[3], wantOrgIDs: []int{ofs[3].ID}},
-		{name: "DoubleAdmin", user: ufs[4], wantOrgIDs: []int{ofs[4].ID}},
+		{name: "NoRole", user: ufs[2], wantOrgIDs: []string{}},
+		{name: "Admin User 4", user: ufs[3], wantOrgIDs: []string{ofs[3].Name}},
+		{name: "Admin User 5", user: ufs[4], wantOrgIDs: []string{ofs[4].Name, ofs[3].Name}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -441,11 +422,11 @@ func (ms *ModelSuite) TestOrganization_AllWhereUserIsOrgAdmin() {
 			}
 
 			ms.NoError(err)
-			gotIDs := make([]int, len(got))
+			gotNames := make([]string, len(got))
 			for i := range got {
-				gotIDs[i] = got[i].ID
+				gotNames[i] = got[i].Name
 			}
-			ms.Equal(test.wantOrgIDs, gotIDs, "incorrect list of org IDs")
+			ms.Equal(test.wantOrgIDs, gotNames, "incorrect list of org Names")
 		})
 	}
 

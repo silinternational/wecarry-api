@@ -85,8 +85,8 @@ func createFixturesForOrganization_AllWhereUserIsOrgAdmin(ms *ModelSuite) Organi
 		{ID: 1, Name: "NoAdmin"},
 		{ID: 2, Name: "NoAdmin"},
 		{ID: 3, Name: "NoAdmin"},
-		{ID: 4, Name: "Admin1&2"},
-		{ID: 5, Name: "Admin1"},
+		{ID: 4, Name: "Admin Users 4 & 5"},
+		{ID: 5, Name: "Admin User 5"},
 	}
 	for i := range orgs {
 		orgs[i].CreatedAt = time.Time{}
@@ -100,7 +100,7 @@ func createFixturesForOrganization_AllWhereUserIsOrgAdmin(ms *ModelSuite) Organi
 		ms.NoError(err, "Unable to create org fixture")
 	}
 
-	userCount := 5
+	const userCount = 5
 	users := make(Users, userCount)
 	userOrgs := make(UserOrganizations, userCount+1)
 	unique := domain.GetUUID().String()
@@ -108,8 +108,8 @@ func createFixturesForOrganization_AllWhereUserIsOrgAdmin(ms *ModelSuite) Organi
 	users[0].AdminRole = UserAdminRoleSuperAdmin
 	users[1].AdminRole = UserAdminRoleSalesAdmin
 
-	uOrgRoles := [6]string{UserOrganizationRoleUser, UserOrganizationRoleUser, UserOrganizationRoleUser,
-		UserOrganizationRoleAdmin, UserOrganizationRoleAdmin, UserOrganizationRoleAdmin}
+	uOrgRoles := [5]string{UserOrganizationRoleUser, UserOrganizationRoleUser, UserOrganizationRoleUser,
+		UserOrganizationRoleAdmin, UserOrganizationRoleAdmin}
 
 	for i := range users {
 		users[i].Email = unique + "_user" + strconv.Itoa(i) + "@example.com"
@@ -132,10 +132,12 @@ func createFixturesForOrganization_AllWhereUserIsOrgAdmin(ms *ModelSuite) Organi
 
 	repeatAdmin := userOrgs[5]
 
+	// Make the last (fifth) user also an admin for the fourth organization
 	repeatAdmin.UserID = users[4].ID
 	repeatAdmin.OrganizationID = orgs[3].ID
 	repeatAdmin.AuthID = "extra_" + users[4].Email
 	repeatAdmin.AuthEmail = users[4].Email
+	repeatAdmin.Role = UserOrganizationRoleAdmin
 	mustCreate(ms.DB, &repeatAdmin)
 
 	if err := ms.DB.Load(&users[4], "Organizations"); err != nil {
