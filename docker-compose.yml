@@ -44,14 +44,14 @@ services:
     command: buffalo test
 
   db:
-    image: postgres:9.6.13
+    image: postgres:11.6
     environment:
       POSTGRES_USER: wecarry
       POSTGRES_PASSWORD: wecarry
       POSTGRES_DB: wecarry
 
   testdb:
-    image: postgres:9.6.13
+    image: postgres:11.6
     environment:
       POSTGRES_USER: wecarry
       POSTGRES_PASSWORD: wecarry
