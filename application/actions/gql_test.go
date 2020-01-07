@@ -3,9 +3,11 @@ package actions
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"testing"
 
 	"github.com/gobuffalo/httptest"
 
@@ -55,12 +57,8 @@ func jsonEscapeString(s string) string {
 	return string(b[1 : len(b)-1])
 }
 
-func gqlMeetingResp(as *ActionSuite, accessToken string, httpMethod string) domain.AppError {
-
-	query := `{ meetings {id name}}`
-
-	body := strings.NewReader(fmt.Sprintf(`{"query":"%s"}`, jsonEscapeString(query)))
-	req := httptest.NewRequest(httpMethod, "/gql", body)
+func makeCall(as *ActionSuite, httpMethod, route, accessToken string, body io.Reader) []byte {
+	req := httptest.NewRequest(httpMethod, route, body)
 
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
 	req.Header.Set("content-type", "application/json")
@@ -70,40 +68,80 @@ func gqlMeetingResp(as *ActionSuite, accessToken string, httpMethod string) doma
 
 	responseBody, err := ioutil.ReadAll(rr.Body)
 	as.NoError(err)
+	return responseBody
+}
+
+func gqlMeetingResp(as *ActionSuite, accessToken string, httpMethod string) domain.AppError {
+
+	query := `{ meetings {id name}}`
+
+	body := strings.NewReader(fmt.Sprintf(`{"query":"%s"}`, jsonEscapeString(query)))
+
+	responseBody := makeCall(as, httpMethod, "/gql", accessToken, body)
 
 	var gqlResponse domain.AppError
-	err = json.Unmarshal(responseBody, &gqlResponse)
+	err := json.Unmarshal(responseBody, &gqlResponse)
 	as.NoError(err, "unmarshalling gql error response")
 	return gqlResponse
 }
 
-func (as *ActionSuite) Test_GqlBadGetQuery() {
+func (as *ActionSuite) Test_GqlBadQueries() {
+	t := as.T()
 
 	f := createFixturesForMeetings(as)
 	user := f.Users[0]
-	accessToken := user.Nickname
 
-	httpMethod := "GET"
-	gqlResponse := gqlMeetingResp(as, accessToken, httpMethod)
-	want := domain.AppError{
-		Code: http.StatusMethodNotAllowed,
-		Key:  domain.ErrorMethodNotAllowed,
+	tests := []struct {
+		name        string
+		httpMethod  string
+		accessToken string
+		want        domain.AppError
+	}{
+		{
+			name:        "bad because of GET",
+			httpMethod:  "GET",
+			accessToken: user.Nickname,
+			want: domain.AppError{
+				Code: http.StatusMethodNotAllowed,
+				Key:  domain.ErrorMethodNotAllowed,
+			},
+		},
+		{
+			name:        "bad because of no auth",
+			httpMethod:  "POST",
+			accessToken: "Bad one",
+			want: domain.AppError{
+				Code: http.StatusUnauthorized,
+				Key:  domain.ErrorNotAuthenticated,
+			},
+		},
 	}
 
-	as.Equal(want, gqlResponse, "incorrect app error")
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got := gqlMeetingResp(as, test.accessToken, test.httpMethod)
+			as.Equal(test.want, got, "incorrect app error")
+		})
+	}
 }
 
-func (as *ActionSuite) Test_GqlBadLogin() {
+func (as *ActionSuite) Test_BadRoute() {
+	f := createFixturesForMeetings(as)
+	user := f.Users[0]
 
-	_ = createFixturesForMeetings(as)
-
-	accessToken := "bad one"
+	accessToken := user.Nickname
 	httpMethod := "POST"
-	gqlResponse := gqlMeetingResp(as, accessToken, httpMethod)
+
+	body := strings.NewReader("anything=goes")
+	responseBody := makeCall(as, httpMethod, "/wonderland", accessToken, body)
+
+	var gqlResponse domain.AppError
+	err := json.Unmarshal(responseBody, &gqlResponse)
+	as.NoError(err, "unmarshalling gql error response")
 
 	want := domain.AppError{
-		Code: http.StatusUnauthorized,
-		Key:  domain.ErrorNotAuthenticated,
+		Code: http.StatusNotFound,
+		Key:  domain.ErrorRouteNotFound,
 	}
 
 	as.Equal(want, gqlResponse, "incorrect app error")
