@@ -263,7 +263,7 @@ func (ms *ModelSuite) TestThread_CreateWithParticipants() {
 			threadFromDB.PostID, post.ID)
 	}
 
-	participants, err := threadFromDB.GetParticipants()
+	participants, _ := threadFromDB.GetParticipants()
 
 	ids := make([]uuid.UUID, len(participants))
 	for i := range threadFromDB.Participants {
