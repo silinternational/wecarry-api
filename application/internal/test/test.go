@@ -1,12 +1,13 @@
 package test
 
 import (
-	"errors"
 	"fmt"
 	"math/rand"
 	"reflect"
+	"runtime/debug"
 	"strconv"
 	"strings"
+	"testing"
 	"time"
 
 	"github.com/gobuffalo/nulls"
@@ -169,9 +170,9 @@ func CreateFileFixtures(n int) models.Files {
 	return fileFixtures
 }
 
-func AssertStringContains(haystack, needle string, outputLen int) error {
+func AssertStringContains(t *testing.T, haystack, needle string, outputLen int) {
 	if strings.Contains(haystack, needle) {
-		return nil
+		return
 	}
 
 	haystackOut := haystack
@@ -180,8 +181,24 @@ func AssertStringContains(haystack, needle string, outputLen int) error {
 		haystackOut = haystack[:outputLen-1]
 	}
 
-	return errors.New("-- string does not contain substring --\n  " +
+	stack := string(debug.Stack())
+	//start := strings.Index(stack, "\n")
+
+	stackRows := strings.Split(stack, "\n")
+	testLine := ""
+
+	for _, row := range stackRows {
+		if strings.Contains(row, "_test.go") {
+			testLine = "   runtime/debug.Stack  ...  " + row + "\n"
+			break
+		}
+	}
+
+	msg := testLine + "-- string does not contain substring --\n  " +
 		haystackOut +
 		" ... \n-- does not contain --\n  " +
-		needle)
+		needle
+
+	t.Errorf(msg)
+	return
 }
