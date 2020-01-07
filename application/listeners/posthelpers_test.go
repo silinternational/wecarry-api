@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/internal/test"
 	"github.com/silinternational/wecarry-api/models"
 	"github.com/silinternational/wecarry-api/notifications"
 )
@@ -99,7 +100,8 @@ func (ms *ModelSuite) TestRequestStatusUpdatedNotifications() {
 	requestStatusUpdatedNotifications(posts[0], postStatusEData)
 
 	got = buf.String()
-	ms.Contains(got, "unexpected status transition 'OPEN-ACCEPTED'", "Got an unexpected error log entry")
+	want := "unexpected status transition 'OPEN-ACCEPTED'"
+	test.AssertStringContains(t, got, want, 45)
 
 }
 
@@ -333,29 +335,29 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 		},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, nextT := range tests {
+		t.Run(nextT.name, func(t *testing.T) {
 
 			notifications.TestEmailService.DeleteSentMessages()
 
 			params := senderParams{
-				template:   getT(test.template),
+				template:   getT(nextT.template),
 				subject:    "test subject",
-				post:       test.post,
-				pEventData: test.eventData,
+				post:       nextT.post,
+				pEventData: nextT.eventData,
 			}
 
-			test.sendFunction(params)
+			nextT.sendFunction(params)
 			gotBuf := buf.String()
 			buf.Reset()
 
 			emailCount := notifications.TestEmailService.GetNumberOfMessagesSent()
-			toEmail := notifications.TestEmailService.GetToEmailByIndex(test.wantEmailNumber)
+			toEmail := notifications.TestEmailService.GetToEmailByIndex(nextT.wantEmailNumber)
 			body := notifications.TestEmailService.GetLastBody()
-			ms.Equal(test.wantEmailsSent, emailCount, "wrong email count")
-			ms.Equal(test.wantToEmail, toEmail, "bad To Email")
-			ms.Equal(test.wantErrLog, gotBuf, "wrong error log entry")
-			ms.Contains(body, test.wantBodyContains, "Body doesn't contain expected string")
+			ms.Equal(nextT.wantEmailsSent, emailCount, "wrong email count")
+			ms.Equal(nextT.wantToEmail, toEmail, "bad To Email")
+			ms.Equal(nextT.wantErrLog, gotBuf, "wrong error log entry")
+			test.AssertStringContains(t, body, nextT.wantBodyContains, 99)
 		})
 	}
 
@@ -400,14 +402,14 @@ func (ms *ModelSuite) TestSendNewPostNotification() {
 			wantBody: "There is a new offer",
 		},
 	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, nextT := range tests {
+		t.Run(nextT.name, func(t *testing.T) {
 			notifications.TestEmailService.DeleteSentMessages()
 
-			err := sendNewPostNotification(test.user, test.post)
-			if test.wantErr != "" {
+			err := sendNewPostNotification(nextT.user, nextT.post)
+			if nextT.wantErr != "" {
 				ms.Error(err)
-				ms.Contains(err.Error(), test.wantErr)
+				ms.Contains(err.Error(), nextT.wantErr)
 				return
 			}
 
@@ -417,12 +419,13 @@ func (ms *ModelSuite) TestSendNewPostNotification() {
 			ms.Equal(1, emailCount, "wrong email count")
 
 			toEmail := notifications.TestEmailService.GetLastToEmail()
-			ms.Equal(test.user.Email, toEmail, "bad 'To' address")
+			ms.Equal(nextT.user.Email, toEmail, "bad 'To' address")
 
 			body := notifications.TestEmailService.GetLastBody()
-			ms.Contains(body, test.wantBody, "Body doesn't contain expected string")
-			ms.Contains(body, test.post.Title, "Body doesn't contain post title")
-			ms.Contains(body, test.post.UUID.String(), "Body doesn't contain post UUID")
+
+			test.AssertStringContains(t, body, nextT.wantBody, 99)
+			test.AssertStringContains(t, body, nextT.post.Title, 99)
+			test.AssertStringContains(t, body, nextT.post.UUID.String(), 99)
 		})
 	}
 }
@@ -476,6 +479,7 @@ func (ms *ModelSuite) TestSendNewPostNotifications() {
 				if user.Email == "" {
 					continue
 				}
+
 				ms.Contains(toAddresses, user.Email, "did not find user address %s", user.Email)
 			}
 		})

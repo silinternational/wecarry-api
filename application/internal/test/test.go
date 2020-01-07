@@ -4,11 +4,15 @@ import (
 	"fmt"
 	"math/rand"
 	"reflect"
+	"runtime/debug"
 	"strconv"
+	"strings"
+	"testing"
 	"time"
 
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
+
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 )
@@ -164,4 +168,39 @@ func CreateFileFixtures(n int) models.Files {
 		fileFixtures[i] = f
 	}
 	return fileFixtures
+}
+
+// AssertStringContains makes the test fail if the string does not contain the substring.
+// It outputs one line from the stack trace along with a message about the failure.
+// The stack trace line chosen is the first one that contains "_test.go" in the hope
+// of showing which line called this function.
+func AssertStringContains(t *testing.T, haystack, needle string, outputLen int) {
+	if strings.Contains(haystack, needle) {
+		return
+	}
+
+	haystackOut := haystack
+
+	if len(haystack) > outputLen {
+		haystackOut = haystack[:outputLen-1]
+	}
+
+	stack := string(debug.Stack())
+	stackRows := strings.Split(stack, "\n")
+	testLine := ""
+
+	for _, row := range stackRows {
+		if strings.Contains(row, "_test.go") {
+			testLine = "   runtime/debug.Stack  ...  " + row + "\n"
+			break
+		}
+	}
+
+	msg := testLine + "-- string does not contain substring --\n  " +
+		haystackOut +
+		" ... \n-- does not contain --\n  " +
+		needle
+
+	t.Errorf(msg)
+	return
 }
