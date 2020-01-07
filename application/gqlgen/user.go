@@ -200,7 +200,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 			return nil, reportError(ctx, err, "UpdateUser.PreferencesInput")
 		}
 
-		if standardPrefs, err = user.UpdateStandardPreferences(standardPrefs); err != nil {
+		if _, err = user.UpdateStandardPreferences(standardPrefs); err != nil {
 			return nil, reportError(ctx, err, "UpdateUser.Preferences")
 		}
 	}

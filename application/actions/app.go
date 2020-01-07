@@ -1,12 +1,15 @@
 package actions
 
 import (
+	"net/http"
+
 	"github.com/gobuffalo/buffalo"
 	i18n "github.com/gobuffalo/mw-i18n"
 	paramlogger "github.com/gobuffalo/mw-paramlogger"
 	"github.com/gobuffalo/packr/v2"
 	"github.com/gorilla/sessions"
 	"github.com/rs/cors"
+
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/listeners"
 )
@@ -41,6 +44,12 @@ func App() *buffalo.App {
 			SessionName:  "_wecarry_session",
 			SessionStore: sessions.NewCookieStore([]byte(domain.Env.SessionSecret)),
 		})
+
+		// If you add a new status entry here, then also add it to getErrorCodeFromStatus
+		app.ErrorHandlers[http.StatusUnauthorized] = customErrorHandler        // 401
+		app.ErrorHandlers[http.StatusNotFound] = customErrorHandler            // 404
+		app.ErrorHandlers[http.StatusMethodNotAllowed] = customErrorHandler    // 405
+		app.ErrorHandlers[http.StatusInternalServerError] = customErrorHandler // 500
 
 		// Initialize and attach "rollbar" to context
 		app.Use(domain.RollbarMiddleware)
