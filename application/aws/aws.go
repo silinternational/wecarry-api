@@ -205,9 +205,8 @@ func rawEmail(to, from, subject, body string) []byte {
 	b.WriteString(`Content-Type: multipart/alternative; boundary="` + alternativeWriter.Boundary() + `"` + "\n\n")
 
 	w, err := alternativeWriter.CreatePart(textproto.MIMEHeader{
-		"Content-Type":              {"text/plain", `charset="utf/8"`},
-		"Content-Transfer-Encoding": {"7bit"},
-		"Content-Disposition":       {"inline"},
+		"Content-Type":        {"text/plain", "charset=utf-8"},
+		"Content-Disposition": {"inline"},
 	})
 	if err != nil {
 		domain.ErrLogger.Printf("failed to create MIME text part, %s", err)
@@ -224,9 +223,8 @@ func rawEmail(to, from, subject, body string) []byte {
 	}
 
 	w, err = relatedWriter.CreatePart(textproto.MIMEHeader{
-		"Content-Type":              {"text/html", `charset="utf/8"`},
-		"Content-Transfer-Encoding": {"7bit"},
-		"Content-Disposition":       {"inline"},
+		"Content-Type":        {"text/html", "charset=utf-8"},
+		"Content-Disposition": {"inline"},
 	})
 	if err != nil {
 		domain.ErrLogger.Printf("failed to create MIME html part, %s", err)
