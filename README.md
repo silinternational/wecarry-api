@@ -12,6 +12,10 @@ In an appropriate directory:
 * git clone git@github.com:silinternational/wecarry-api.git
 * cd wecarry-api
 * cp .env.example .env
+
+In application/grifts, copy private.go.example to private.go and 
+correct the example values.
+
 * make
 
 Note that the data provided in `.env.example` will not allow

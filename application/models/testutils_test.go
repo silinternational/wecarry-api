@@ -39,6 +39,20 @@ func mustCreate(tx *pop.Connection, f interface{}) {
 	}
 }
 
+// createOrganizationFixtures generates any number of organization records for testing.
+//  Their names will be called "Org1", "Org2", ...
+func createOrganizationFixtures(tx *pop.Connection, n int) Organizations {
+	organizations := make(Organizations, n)
+	for i := range organizations {
+		organizations[i].Name = fmt.Sprintf("Org%v", i+1)
+		organizations[i].AuthType = AuthTypeSaml
+		organizations[i].AuthConfig = "{}"
+		mustCreate(tx, &organizations[i])
+	}
+
+	return organizations
+}
+
 // createUserFixtures generates any number of user records for testing. Locations, UserOrganizations, and
 // UserAccessTokens are also created for each user. The access token for each user is the same as the user's nickname.
 // All user fixtures will be assigned to the first Organization in the DB. If no Organization exists, one will be
