@@ -187,6 +187,38 @@ func SendEmail(to, from, subject, body string) error {
 	return nil
 }
 
+// rawEmail generates a multi-part MIME email message with a plain text, html text, and inline logo attachment as
+// follows:
+//
+// * multipart/alternative
+//   * text/plain
+//   * multipart/related
+//     * text/html
+//     * image/png
+//
+// Abbreviated example of the generated email message:
+//  From: from@example.com
+//	To: to@example.com
+//	Subject: subject text
+//	Content-Type: multipart/alternative; boundary="boundary_alternative"
+//
+//	--boundary_alternative
+//	Content-Type: text/plain
+//
+//	Plain text body
+//	--boundary_alternative
+//	Content-type: multipart/related; boundary="boundary_related"
+//
+//	--boundary_related
+//	Content-Type: text/html
+//
+//	HTML body
+//	--boundary_related
+//	Content-Type: image/png
+//	Content-Transfer-Encoding: base64
+//	Content-ID: <logo>
+//	--boundary_related--
+//	--boundary_alternative--
 func rawEmail(to, from, subject, body string) []byte {
 	tbody, err := html2text.FromString(body)
 	if err != nil {
