@@ -1,6 +1,7 @@
 package test
 
 import (
+	"errors"
 	"fmt"
 	"math/rand"
 	"reflect"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
+
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 )
@@ -167,19 +169,19 @@ func CreateFileFixtures(n int) models.Files {
 	return fileFixtures
 }
 
-func StringContains(haystack, needle string) string {
+func AssertStringContains(haystack, needle string, outputLen int) error {
 	if strings.Contains(haystack, needle) {
-		return ""
-	}
-	lenHS := len(haystack)
-	maxIndex := len(needle)
-
-	if lenHS <= maxIndex {
-		maxIndex = lenHS - 1
+		return nil
 	}
 
-	return "\n-- string does not contain substring --\n  " +
-		haystack[:maxIndex] +
-		" ... \n-- does not contain --\n" +
-		needle
+	haystackOut := haystack
+
+	if len(haystack) > outputLen {
+		haystackOut = haystack[:outputLen-1]
+	}
+
+	return errors.New("-- string does not contain substring --\n  " +
+		haystackOut +
+		" ... \n-- does not contain --\n  " +
+		needle)
 }
