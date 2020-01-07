@@ -121,6 +121,8 @@ models:
     model: models.UserAdminRole
   UserPreferences:
     model: models.StandardPreferences
+  Watch:
+    model: models.Watch
 
 #directives:
 #  deprecated:

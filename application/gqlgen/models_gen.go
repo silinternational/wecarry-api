@@ -29,6 +29,10 @@ type CreateOrganizationInput struct {
 	AuthConfig string  `json:"authConfig"`
 }
 
+type CreateWatchInput struct {
+	Location *LocationInput `json:"location"`
+}
+
 type LocationInput struct {
 	Description string   `json:"description"`
 	Country     string   `json:"country"`
@@ -46,6 +50,10 @@ type PublicProfile struct {
 type RemoveOrganizationDomainInput struct {
 	Domain         string `json:"domain"`
 	OrganizationID string `json:"organizationID"`
+}
+
+type RemoveWatchInput struct {
+	ID string `json:"id"`
 }
 
 type SetThreadLastViewedAtInput struct {
@@ -78,6 +86,11 @@ type UpdateUserPreferencesInput struct {
 	Language   *PreferredLanguage   `json:"language"`
 	TimeZone   *string              `json:"timeZone"`
 	WeightUnit *PreferredWeightUnit `json:"weightUnit"`
+}
+
+type UpdateWatchInput struct {
+	ID       string         `json:"id"`
+	Location *LocationInput `json:"location"`
 }
 
 type PostRole string
