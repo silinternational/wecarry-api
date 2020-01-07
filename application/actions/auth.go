@@ -101,15 +101,17 @@ func getOrgAndUserOrgs(
 
 	var org models.Organization
 	var userOrgs models.UserOrganizations
-	err := userOrgs.FindByAuthEmail(authEmail, orgID)
+	if err := userOrgs.FindByAuthEmail(authEmail, orgID); err != nil {
+		return org, userOrgs, err
+	}
+
 	if len(userOrgs) == 1 {
 		org = userOrgs[0].Organization
 	}
 
 	// no user_organization records yet, see if we have an organization for user's email domain
 	if len(userOrgs) == 0 {
-		err = org.FindByDomain(domain.EmailDomain(authEmail))
-		if err != nil {
+		if err := org.FindByDomain(domain.EmailDomain(authEmail)); err != nil {
 			return org, userOrgs, err
 		}
 		if org.AuthType == "" {

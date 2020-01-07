@@ -370,7 +370,7 @@ func rollbarMessage(c buffalo.Context, level string, msg string, extras map[stri
 	}
 }
 
-// RollbarSetPerson sets person on the rollbar context for futher logging
+// RollbarSetPerson sets person on the rollbar context for further logging
 func RollbarSetPerson(c buffalo.Context, id, username, email string) {
 	rc, ok := c.Value("rollbar").(*rollbar.Client)
 	if ok {
