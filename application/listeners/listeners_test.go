@@ -137,8 +137,7 @@ func (ms *ModelSuite) TestUserAccessTokensCleanup() {
 	userAccessTokensCleanup(e)
 	got := buf.String()
 	want := "Deleted 0 expired user access tokens during cleanup"
-
-	ms.Contains(got, want, "Got an unexpected log entry")
+	test.AssertStringContains(ms.T(), got, want, 72)
 }
 
 func (ms *ModelSuite) TestSendNewMessageNotification() {
@@ -158,7 +157,7 @@ func (ms *ModelSuite) TestSendNewMessageNotification() {
 	got := buf.String()
 	want := "Message Created ... New Message from"
 
-	ms.Contains(got, want, "Got an unexpected log entry")
+	test.AssertStringContains(ms.T(), got, want, 64)
 }
 
 func createFixturesForSendPostCreatedNotifications(ms *ModelSuite) PostFixtures {
