@@ -129,7 +129,11 @@ func (p *Provider) AuthCallback(c buffalo.Context) auth.Response {
 		return resp
 	}
 
-	gu, err := p.FetchUser(sess)
+	var gu goth.User
+	if gu, err = p.FetchUser(sess); err != nil {
+		resp.Error = err
+		return resp
+	}
 
 	authUser := auth.User{
 		FirstName: gu.FirstName,

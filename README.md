@@ -1,5 +1,7 @@
 # Welcome to the WeCarry.App server code!
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/silinternational/wecarry-api)](https://goreportcard.com/report/github.com/silinternational/wecarry-api)
+
 ## Requirements
 
 This software needs docker-compose version 1.24.0 at least.
