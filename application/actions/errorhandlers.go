@@ -11,7 +11,7 @@ import (
 )
 
 type errorResponse struct {
-	Trace        string              `json:"trace" xml:"trace"`
+	Error        string              `json:"error" xml:"error"`
 	Code         int                 `json:"code" xml:"code,attr"`
 	ContextApp   interface{}         `json:"context_app" xml:"context_app"`
 	CurrentRoute interface{}         `json:"current_route" xml:"current_route"`
@@ -63,7 +63,7 @@ func customErrorHandler(status int, origErr error, c buffalo.Context) error {
 	}
 
 	err := json.NewEncoder(c.Response()).Encode(&errorResponse{
-		Trace:        origErr.Error(),
+		Error:        origErr.Error(),
 		Code:         status,
 		ContextApp:   c.Value("app"),
 		CurrentRoute: c.Value("current_route"),
