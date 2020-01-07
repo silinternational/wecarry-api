@@ -170,6 +170,10 @@ func CreateFileFixtures(n int) models.Files {
 	return fileFixtures
 }
 
+// AssertStringContains makes the test fail if the string does not contain the substring.
+// It outputs one line from the stack trace along with a message about the failure.
+// The stack trace line chosen is the first one that contains "_test.go" in the hope
+// of showing which line called this function.
 func AssertStringContains(t *testing.T, haystack, needle string, outputLen int) {
 	if strings.Contains(haystack, needle) {
 		return
@@ -182,8 +186,6 @@ func AssertStringContains(t *testing.T, haystack, needle string, outputLen int) 
 	}
 
 	stack := string(debug.Stack())
-	//start := strings.Index(stack, "\n")
-
 	stackRows := strings.Split(stack, "\n")
 	testLine := ""
 
