@@ -3,12 +3,10 @@ module github.com/silinternational/wecarry-api
 go 1.13
 
 require (
-	cloud.google.com/go v0.36.0 // indirect
 	github.com/99designs/gqlgen v0.10.1
 	github.com/aws/aws-sdk-go v1.25.0
 	github.com/beevik/etree v1.1.0 // indirect
 	github.com/cockroachdb/cockroach-go v0.0.0-20190925194419-606b3d062051 // indirect
-	github.com/go-sql-driver/mysql v1.4.1 // indirect
 	github.com/gobuffalo/buffalo v0.15.3
 	github.com/gobuffalo/envy v1.8.1
 	github.com/gobuffalo/events v1.4.0
@@ -23,7 +21,6 @@ require (
 	github.com/gofrs/uuid v3.2.0+incompatible
 	github.com/gorilla/sessions v1.2.0
 	github.com/jackc/pgconn v1.1.0 // indirect
-	github.com/jackc/pgx v3.5.0+incompatible // indirect
 	github.com/markbates/goth v1.56.0
 	github.com/markbates/grift v1.5.0
 	github.com/olekukonko/tablewriter v0.0.2 // indirect

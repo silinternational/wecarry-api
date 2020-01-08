@@ -133,11 +133,16 @@ var Env struct {
 // T is the Buffalo i18n translator
 var T *mwi18n.Translator
 
+// Assets is a packr box with asset files such as images
+var Assets *packr.Box
+
 func init() {
 	Logger.SetOutput(os.Stdout)
 	ErrLogger.SetOutput(os.Stderr)
 
 	readEnv()
+
+	Assets = packr.New("Assets", "../assets")
 }
 
 // readEnv loads environment data into `Env`
@@ -365,7 +370,7 @@ func rollbarMessage(c buffalo.Context, level string, msg string, extras map[stri
 	}
 }
 
-// RollbarSetPerson sets person on the rollbar context for futher logging
+// RollbarSetPerson sets person on the rollbar context for further logging
 func RollbarSetPerson(c buffalo.Context, id, username, email string) {
 	rc, ok := c.Value("rollbar").(*rollbar.Client)
 	if ok {

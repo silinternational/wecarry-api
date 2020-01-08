@@ -1,0 +1,87 @@
+package grifts
+
+import (
+	"encoding/json"
+	"fmt"
+
+	"github.com/silinternational/wecarry-api/auth/saml"
+
+	"github.com/gofrs/uuid"
+	"github.com/markbates/grift/grift"
+	"github.com/silinternational/wecarry-api/models"
+)
+
+var _ = grift.Namespace("private", func() {
+
+	_ = grift.Desc("seed", "Seeds a database")
+	_ = grift.Add("seed", func(c *grift.Context) error {
+
+		var existingOrgs models.Organizations
+		_ = models.DB.All(&existingOrgs)
+		if len(existingOrgs) > 0 {
+			return nil
+		}
+
+		// ORGANIZATIONS Table
+		organizationUUID1, _ := uuid.FromString("ABC-123-etc")
+		organization1AuthConfig := saml.Config{
+			IDPEntityID:                 "idp.example.com",
+			SPEntityID:                  "http://wecarry.local:3000",
+			SingleSignOnURL:             "https://idp.example.com/saml2/idp/SSOService.php",
+			SingleLogoutURL:             "https://idp.example.com/saml2/idp/SingleLogoutService.php",
+			AudienceURI:                 "http://wecarry.local:3000",
+			AssertionConsumerServiceURL: "http://wecarry.local:3000/auth/callback",
+			IDPPublicCert: `-----BEGIN CERTIFICATE-----
+MIIDABC...123Pw==
+-----END CERTIFICATE-----`,
+			SPPublicCert: `-----BEGIN CERTIFICATE-----
+MIIEABC...432A=
+-----END CERTIFICATE-----
+`,
+			SPPrivateKey: `-----BEGIN PRIVATE KEY-----
+MIIGABC...123gT
+-----END PRIVATE KEY-----
+`,
+			SignRequest:               true,
+			CheckResponseSigning:      true,
+			RequireEncryptedAssertion: false,
+			AttributeMap:              nil,
+		}
+		organization1AuthConfigJson, _ := json.Marshal(organization1AuthConfig)
+		fixtureOrgs := []*models.Organization{
+			{
+				ID:         1,
+				UUID:       organizationUUID1,
+				Name:       "ExamleOrg",
+				AuthType:   models.AuthTypeSaml,
+				AuthConfig: string(organization1AuthConfigJson),
+			},
+		}
+
+		for _, org := range fixtureOrgs {
+			err := models.DB.Create(org)
+			if err != nil {
+				err = fmt.Errorf("error loading organization fixture ... %+v\n %v", org, err.Error())
+				return err
+			}
+		}
+
+		fixtureOrgDomains := []*models.OrganizationDomain{
+			{
+				ID:             1,
+				OrganizationID: 1,
+				Domain:         "example.org",
+			},
+		}
+
+		for _, orgD := range fixtureOrgDomains {
+			err := models.DB.Create(orgD)
+			if err != nil {
+				err = fmt.Errorf("error loading organization_domains fixture ... %+v\n %v", orgD, err.Error())
+				return err
+			}
+		}
+
+		return nil
+	})
+})

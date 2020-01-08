@@ -20,6 +20,7 @@ services:
       UI_URL: http://wecarry.local:5000
       DATABASE_URL: postgres://wecarry:wecarry@db:5432/wecarry?sslmode=disable
       GO_ENV: development
+      SUPPORT_EMAIL: forget_about_it@example.com
     depends_on:
       - db
       - minio
@@ -43,14 +44,14 @@ services:
     command: buffalo test
 
   db:
-    image: postgres:9.6.13
+    image: postgres:11.6
     environment:
       POSTGRES_USER: wecarry
       POSTGRES_PASSWORD: wecarry
       POSTGRES_DB: wecarry
 
   testdb:
-    image: postgres:9.6.13
+    image: postgres:11.6
     environment:
       POSTGRES_USER: wecarry
       POSTGRES_PASSWORD: wecarry

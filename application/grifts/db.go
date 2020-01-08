@@ -101,28 +101,28 @@ var _ = grift.Namespace("db", func() {
 		// USER_ORGANIZATIONS Table
 		fixtureUserOrgs := []*models.UserOrganization{
 			{
-				OrganizationID:	primaryOrgID,
+				OrganizationID: primaryOrgID,
 				UserID:         fixtureUsers[0].ID,
 				Role:           models.UserOrganizationRoleAdmin,
 				AuthEmail:      "clark.kent@example.org",
 				AuthID:         "clark_kent",
 			},
 			{
-				OrganizationID:	primaryOrgID,
+				OrganizationID: primaryOrgID,
 				UserID:         fixtureUsers[0].ID,
 				Role:           models.UserOrganizationRoleUser,
 				AuthEmail:      "jane.eyre@example.org",
 				AuthID:         "jane_eyre",
 			},
 			{
-				OrganizationID:	primaryOrgID,
+				OrganizationID: primaryOrgID,
 				UserID:         fixtureUsers[0].ID,
 				Role:           models.UserOrganizationRoleUser,
 				AuthEmail:      "jane.doe@example.org",
 				AuthID:         "jane_doe",
 			},
 			{
-				OrganizationID:	primaryOrgID,
+				OrganizationID: primaryOrgID,
 				UserID:         fixtureUsers[0].ID,
 				Role:           models.UserOrganizationRoleUser,
 				AuthEmail:      "denethor.ben.ecthelion@example.org",
@@ -197,7 +197,7 @@ var _ = grift.Namespace("db", func() {
 		fixturePosts := []*models.Post{
 			{
 				Type:           models.PostTypeRequest,
-				OrganizationID:	primaryOrgID,
+				OrganizationID: primaryOrgID,
 				Title:          "Maple Syrup",
 				Size:           models.PostSizeMedium,
 				UUID:           postUUID1,
@@ -205,7 +205,7 @@ var _ = grift.Namespace("db", func() {
 			},
 			{
 				Type:           models.PostTypeRequest,
-				OrganizationID:	primaryOrgID,
+				OrganizationID: primaryOrgID,
 				Title:          "Jif Peanut Butter",
 				Size:           models.PostSizeSmall,
 				UUID:           postUUID2,
@@ -213,7 +213,7 @@ var _ = grift.Namespace("db", func() {
 			},
 			{
 				Type:           models.PostTypeRequest,
-				OrganizationID:	primaryOrgID,
+				OrganizationID: primaryOrgID,
 				Title:          "Burt's Bee's Lip Balm",
 				Size:           models.PostSizeTiny,
 				UUID:           postUUID3,
@@ -221,7 +221,7 @@ var _ = grift.Namespace("db", func() {
 			},
 			{
 				Type:           models.PostTypeRequest,
-				OrganizationID:	primaryOrgID,
+				OrganizationID: primaryOrgID,
 				Title:          "Peanut Butter",
 				Size:           models.PostSizeSmall,
 				UUID:           postUUID4,
@@ -256,16 +256,16 @@ var _ = grift.Namespace("db", func() {
 		threadUUID4, _ := uuid.FromString("7781642d-50d0-43da-9af2-e21133b4af91")
 		fixtureThreads := []*models.Thread{
 			{
-				UUID:   threadUUID1,
+				UUID: threadUUID1,
 			},
 			{
-				UUID:   threadUUID2,
+				UUID: threadUUID2,
 			},
 			{
-				UUID:   threadUUID3,
+				UUID: threadUUID3,
 			},
 			{
-				UUID:   threadUUID4,
+				UUID: threadUUID4,
 			},
 		}
 

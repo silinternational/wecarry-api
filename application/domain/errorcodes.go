@@ -5,6 +5,21 @@ package domain
 // since these will be converted to human-friendly texts on the UI
 // ********************************************************************
 
+// Unexpected http status code
+const ErrorUnexpectedHTTPStatus = "ErrorUnexpectedHTTPStatus"
+
+// 401 http.StatusUnauthorized
+const ErrorNotAuthenticated = "ErrorNotAuthenticated"
+
+// 404 http.StatusNotFound
+const ErrorRouteNotFound = "ErrorRouteNotFound"
+
+// 405 http.StatusMethodNotAllowed
+const ErrorMethodNotAllowed = "ErrorMethodNotAllowed"
+
+// 500 http.StatusInternalServerError
+const ErrorInternalServerError = "ErrorInternalServerError"
+
 // ClientID is required on various requests
 // actions.AuthRequest
 const ErrorMissingClientID = "ErrorMissingClientID"
