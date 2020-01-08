@@ -346,7 +346,7 @@ func logErrorAndRedirect(c buffalo.Context, code, message string, extras ...map[
 
 	domain.Error(c, message, allExtras)
 
-	uiUrl := domain.Env.UIURL + "/#/login?error=true"
+	uiUrl := domain.Env.UIURL + "/#/login"
 	return c.Redirect(http.StatusFound, uiUrl)
 }
 
