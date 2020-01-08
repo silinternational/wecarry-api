@@ -45,6 +45,8 @@ func App() *buffalo.App {
 			SessionStore: sessions.NewCookieStore([]byte(domain.Env.SessionSecret)),
 		})
 
+		registerCustomErrorHandler(app)
+
 		// If you add a new status entry here, then also add it to getErrorCodeFromStatus
 		app.ErrorHandlers[http.StatusUnauthorized] = customErrorHandler        // 401
 		app.ErrorHandlers[http.StatusNotFound] = customErrorHandler            // 404
@@ -89,4 +91,10 @@ func App() *buffalo.App {
 	}
 
 	return app
+}
+
+func registerCustomErrorHandler(app *buffalo.App) {
+	for i := 401; i < 600; i++ {
+		app.ErrorHandlers[i] = customErrorHandler
+	}
 }
