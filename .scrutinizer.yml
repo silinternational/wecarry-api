@@ -17,12 +17,12 @@ build:
           AWS_S3_SECRET_ACCESS_KEY: abcd1234
           AWS_S3_DISABLE_SSL: true
           AWS_S3_BUCKET: wca-test-bucket
+        docker: true
       tests:
         override:
           - go-scrutinizer-run
           - govet-run
           - golint-run
-          - go get ./... && go test ./...
       services:
         postgres: 11.5
         minio:
@@ -34,5 +34,9 @@ build:
             MINIO_SECRET_KEY: abcd1234
           ramdisks:
             - /data
+      commands:
+        - command: docker build -t wecarry -f Dockerfile-dev .
+        - command: buffalo-pop pop migrate up
+        - command: buffalo test
 
   root_path: './application'
