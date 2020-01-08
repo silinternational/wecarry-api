@@ -20,4 +20,4 @@ scrutinizer:
   database: scrutinizer
   user: scrutinizer
   password: scrutinizer
-  host: localhost
+  host: {{envOr "DOCKER_IP" "localhost"}}
