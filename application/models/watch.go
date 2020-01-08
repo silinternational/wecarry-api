@@ -15,7 +15,7 @@ import (
 
 // Watch is the model for storing post watches that trigger notifications on the conditions specified
 type Watch struct {
-	ID         uuid.UUID `json:"id" db:"id"`
+	ID         int       `json:"id" db:"id"`
 	CreatedAt  time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at" db:"updated_at"`
 	UUID       uuid.UUID `json:"uuid" db:"uuid"`
@@ -56,6 +56,16 @@ func (w *Watch) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }
 
+// Create stores the Watch data as a new record in the database.
+func (w *Watch) Create() error {
+	return create(w)
+}
+
+// Update writes the Watch data to an existing database record.
+func (w *Watch) Update() error {
+	return update(w)
+}
+
 // FindByUUID loads from DB the Watch record identified by the given UUID
 func (w *Watch) FindByUUID(id string) error {
 	if id == "" {
@@ -69,19 +79,9 @@ func (w *Watch) FindByUUID(id string) error {
 	return nil
 }
 
-// Create stores the Watch data as a new record in the database.
-func (w *Watch) Create() error {
-	return create(w)
-}
-
-// Update writes the Watch data to an existing database record.
-func (w *Watch) Update() error {
-	return update(w)
-}
-
 // FindByUser returns all watches owned by the given user.
 func (w *Watches) FindByUser(user User) error {
-	if err := DB.Where("owner_id = ?", user.ID).All(w); err != nil {
+	if err := DB.Where("owner_id = ?", user.ID).Order("updated_at desc").All(w); err != nil {
 		return err
 	}
 
