@@ -1783,10 +1783,16 @@ func (ms *ModelSuite) TestPost_canUserChangeStatus() {
 			want:      false,
 		},
 		{
-			name:      "Committed",
-			post:      Post{CreatedByID: 1},
+			name:      "Open to Committed",
+			post:      Post{CreatedByID: 1, Status: PostStatusOpen, Type: PostTypeRequest},
 			newStatus: PostStatusCommitted,
 			want:      true,
+		},
+		{
+			name:      "Committed to Committed",
+			post:      Post{CreatedByID: 1, Status: PostStatusCommitted, Type: PostTypeRequest},
+			newStatus: PostStatusCommitted,
+			want:      false,
 		},
 		{
 			name:      "Accepted",
@@ -1813,10 +1819,18 @@ func (ms *ModelSuite) TestPost_canUserChangeStatus() {
 			want:      false,
 		},
 		{
-			name:      "Request Delivered",
+			name:      "Request Delivered By Provider",
 			newStatus: PostStatusDelivered,
-			post:      Post{Type: PostTypeRequest, CreatedByID: 1},
+			post:      Post{Type: PostTypeRequest, CreatedByID: 1, ProviderID: nulls.NewInt(2)},
+			user:      User{ID: 2},
 			want:      true,
+		},
+		{
+			name:      "Request Delivered By non-Provider",
+			newStatus: PostStatusDelivered,
+			post:      Post{Type: PostTypeRequest, CreatedByID: 1, ProviderID: nulls.NewInt(2)},
+			user:      User{ID: 3},
+			want:      false,
 		},
 		{
 			name:      "Completed",
@@ -1832,10 +1846,9 @@ func (ms *ModelSuite) TestPost_canUserChangeStatus() {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.newStatus.String(), func(t *testing.T) {
-			if got := tt.post.canUserChangeStatus(tt.user, tt.newStatus); got != tt.want {
-				t.Errorf("isStatusEditable() = %v, want %v", got, tt.want)
-			}
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.post.canUserChangeStatus(tt.user, tt.newStatus)
+			ms.Equal(tt.want, got)
 		})
 	}
 }
