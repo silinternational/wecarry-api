@@ -425,7 +425,7 @@ func (u *User) uniquifyNickname() error {
 
 	// User the first nickname prefix that makes it unique
 	for _, p := range allPrefixes() {
-		u.Nickname = p + simpleNN
+		u.Nickname = p + " " + simpleNN
 
 		var existingUser User
 		err = DB.Where("nickname = ?", u.Nickname).First(&existingUser)
