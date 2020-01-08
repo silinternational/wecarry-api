@@ -417,7 +417,7 @@ func (u *User) uniquifyNickname() error {
 	if simpleNN == "" {
 		simpleNN = u.FirstName
 		if len(u.LastName) > 0 {
-			simpleNN = u.FirstName + u.LastName[:1]
+			simpleNN = u.FirstName + " " + u.LastName[:1]
 		}
 	}
 

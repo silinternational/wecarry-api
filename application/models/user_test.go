@@ -884,7 +884,7 @@ func (ms *ModelSuite) TestUser_UniquifyNickname() {
 		{
 			name: "No Change, OK Last Name",
 			user: User{FirstName: "New", LastName: "User"},
-			want: prefix + " NewU",
+			want: prefix + " New U",
 		},
 		{
 			name: "Expect Change",
