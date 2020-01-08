@@ -99,7 +99,7 @@ type ComplexityRoot struct {
 		CreateOrganization       func(childComplexity int, input CreateOrganizationInput) int
 		CreateOrganizationDomain func(childComplexity int, input CreateOrganizationDomainInput) int
 		CreatePost               func(childComplexity int, input postInput) int
-		CreateWatch              func(childComplexity int, input CreateWatchInput) int
+		CreateWatch              func(childComplexity int, input watchInput) int
 		RemoveOrganizationDomain func(childComplexity int, input RemoveOrganizationDomainInput) int
 		RemoveWatch              func(childComplexity int, input RemoveWatchInput) int
 		SetThreadLastViewedAt    func(childComplexity int, input SetThreadLastViewedAtInput) int
@@ -108,7 +108,7 @@ type ComplexityRoot struct {
 		UpdatePost               func(childComplexity int, input postInput) int
 		UpdatePostStatus         func(childComplexity int, input UpdatePostStatusInput) int
 		UpdateUser               func(childComplexity int, input UpdateUserInput) int
-		UpdateWatch              func(childComplexity int, input UpdateWatchInput) int
+		UpdateWatch              func(childComplexity int, input watchInput) int
 	}
 
 	Organization struct {
@@ -250,9 +250,9 @@ type MutationResolver interface {
 	CreateOrganizationDomain(ctx context.Context, input CreateOrganizationDomainInput) ([]models.OrganizationDomain, error)
 	RemoveOrganizationDomain(ctx context.Context, input RemoveOrganizationDomainInput) ([]models.OrganizationDomain, error)
 	SetThreadLastViewedAt(ctx context.Context, input SetThreadLastViewedAtInput) (*models.Thread, error)
-	CreateWatch(ctx context.Context, input CreateWatchInput) (*models.Watch, error)
-	UpdateWatch(ctx context.Context, input UpdateWatchInput) (*models.Watch, error)
-	RemoveWatch(ctx context.Context, input RemoveWatchInput) (*models.Watch, error)
+	CreateWatch(ctx context.Context, input watchInput) (*models.Watch, error)
+	UpdateWatch(ctx context.Context, input watchInput) (*models.Watch, error)
+	RemoveWatch(ctx context.Context, input RemoveWatchInput) ([]models.Watch, error)
 }
 type OrganizationResolver interface {
 	ID(ctx context.Context, obj *models.Organization) (string, error)
@@ -602,7 +602,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateWatch(childComplexity, args["input"].(CreateWatchInput)), true
+		return e.complexity.Mutation.CreateWatch(childComplexity, args["input"].(watchInput)), true
 
 	case "Mutation.removeOrganizationDomain":
 		if e.complexity.Mutation.RemoveOrganizationDomain == nil {
@@ -710,7 +710,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateWatch(childComplexity, args["input"].(UpdateWatchInput)), true
+		return e.complexity.Mutation.UpdateWatch(childComplexity, args["input"].(watchInput)), true
 
 	case "Organization.createdAt":
 		if e.complexity.Organization.CreatedAt == nil {
@@ -1352,7 +1352,7 @@ type Mutation {
     setThreadLastViewedAt(input: SetThreadLastViewedAtInput!): Thread!
     createWatch(input: CreateWatchInput!): Watch!
     updateWatch(input: UpdateWatchInput!): Watch!
-    removeWatch(input: RemoveWatchInput!): Watch!
+    removeWatch(input: RemoveWatchInput!): [Watch!]!
 }
 
 # Date and Time in RFC3339 format
@@ -1734,9 +1734,9 @@ func (ec *executionContext) field_Mutation_createPost_args(ctx context.Context, 
 func (ec *executionContext) field_Mutation_createWatch_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 CreateWatchInput
+	var arg0 watchInput
 	if tmp, ok := rawArgs["input"]; ok {
-		arg0, err = ec.unmarshalNCreateWatchInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐCreateWatchInput(ctx, tmp)
+		arg0, err = ec.unmarshalNCreateWatchInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐwatchInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1860,9 +1860,9 @@ func (ec *executionContext) field_Mutation_updateUser_args(ctx context.Context, 
 func (ec *executionContext) field_Mutation_updateWatch_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 UpdateWatchInput
+	var arg0 watchInput
 	if tmp, ok := rawArgs["input"]; ok {
-		arg0, err = ec.unmarshalNUpdateWatchInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐUpdateWatchInput(ctx, tmp)
+		arg0, err = ec.unmarshalNUpdateWatchInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐwatchInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3557,7 +3557,7 @@ func (ec *executionContext) _Mutation_createWatch(ctx context.Context, field gra
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateWatch(rctx, args["input"].(CreateWatchInput))
+		return ec.resolvers.Mutation().CreateWatch(rctx, args["input"].(watchInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3601,7 +3601,7 @@ func (ec *executionContext) _Mutation_updateWatch(ctx context.Context, field gra
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateWatch(rctx, args["input"].(UpdateWatchInput))
+		return ec.resolvers.Mutation().UpdateWatch(rctx, args["input"].(watchInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3657,10 +3657,10 @@ func (ec *executionContext) _Mutation_removeWatch(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*models.Watch)
+	res := resTmp.([]models.Watch)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNWatch2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐWatch(ctx, field.Selections, res)
+	return ec.marshalNWatch2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐWatch(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Organization_id(ctx context.Context, field graphql.CollectedField, obj *models.Organization) (ret graphql.Marshaler) {
@@ -7795,8 +7795,8 @@ func (ec *executionContext) unmarshalInputCreatePostInput(ctx context.Context, o
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputCreateWatchInput(ctx context.Context, obj interface{}) (CreateWatchInput, error) {
-	var it CreateWatchInput
+func (ec *executionContext) unmarshalInputCreateWatchInput(ctx context.Context, obj interface{}) (watchInput, error) {
+	var it watchInput
 	var asMap = obj.(map[string]interface{})
 
 	for k, v := range asMap {
@@ -8179,15 +8179,15 @@ func (ec *executionContext) unmarshalInputUpdateUserPreferencesInput(ctx context
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputUpdateWatchInput(ctx context.Context, obj interface{}) (UpdateWatchInput, error) {
-	var it UpdateWatchInput
+func (ec *executionContext) unmarshalInputUpdateWatchInput(ctx context.Context, obj interface{}) (watchInput, error) {
+	var it watchInput
 	var asMap = obj.(map[string]interface{})
 
 	for k, v := range asMap {
 		switch k {
 		case "id":
 			var err error
-			it.ID, err = ec.unmarshalNID2string(ctx, v)
+			it.ID, err = ec.unmarshalNID2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -9889,7 +9889,7 @@ func (ec *executionContext) unmarshalNCreatePostInput2githubᚗcomᚋsilinternat
 	return ec.unmarshalInputCreatePostInput(ctx, v)
 }
 
-func (ec *executionContext) unmarshalNCreateWatchInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐCreateWatchInput(ctx context.Context, v interface{}) (CreateWatchInput, error) {
+func (ec *executionContext) unmarshalNCreateWatchInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐwatchInput(ctx context.Context, v interface{}) (watchInput, error) {
 	return ec.unmarshalInputCreateWatchInput(ctx, v)
 }
 
@@ -10527,7 +10527,7 @@ func (ec *executionContext) unmarshalNUpdateUserInput2githubᚗcomᚋsilinternat
 	return ec.unmarshalInputUpdateUserInput(ctx, v)
 }
 
-func (ec *executionContext) unmarshalNUpdateWatchInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐUpdateWatchInput(ctx context.Context, v interface{}) (UpdateWatchInput, error) {
+func (ec *executionContext) unmarshalNUpdateWatchInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐwatchInput(ctx context.Context, v interface{}) (watchInput, error) {
 	return ec.unmarshalInputUpdateWatchInput(ctx, v)
 }
 

@@ -69,7 +69,55 @@ func (w *Watch) FindByUUID(id string) error {
 	return nil
 }
 
-// Save wraps DB.Save() call to create a UUID if it's empty and check for errors
-func (w *Watch) Save() error {
-	return save(w)
+// Create stores the Watch data as a new record in the database.
+func (w *Watch) Create() error {
+	return create(w)
+}
+
+// Update writes the Watch data to an existing database record.
+func (w *Watch) Update() error {
+	return update(w)
+}
+
+// FindByUser returns all watches owned by the given user.
+func (w *Watches) FindByUser(user User) error {
+	if err := DB.Where("owner_id = ?", user.ID).All(w); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// GetOwner returns the owner of the watch.
+func (w *Watch) GetOwner() (*User, error) {
+	owner := User{}
+	if err := DB.Find(&owner, w.OwnerID); err != nil {
+		return nil, err
+	}
+	return &owner, nil
+}
+
+// GetLocation returns the related Location object.
+func (w *Watch) GetLocation() (*Location, error) {
+	location := &Location{}
+	if !w.LocationID.Valid {
+		return nil, nil
+	}
+	if err := DB.Find(location, w.LocationID); err != nil {
+		return nil, err
+	}
+	return location, nil
+}
+
+// SetLocation sets the location field, creating a new record in the database if necessary.
+func (w *Watch) SetLocation(location Location) error {
+	if w.LocationID.Valid {
+		location.ID = w.LocationID.Int
+		return location.Update()
+	}
+	if err := location.Create(); err != nil {
+		return err
+	}
+	w.LocationID = nulls.NewInt(location.ID)
+	return w.Update()
 }

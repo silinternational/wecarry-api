@@ -30,7 +30,7 @@ type Mutation {
     setThreadLastViewedAt(input: SetThreadLastViewedAtInput!): Thread!
     createWatch(input: CreateWatchInput!): Watch!
     updateWatch(input: UpdateWatchInput!): Watch!
-    removeWatch(input: RemoveWatchInput!): Watch!
+    removeWatch(input: RemoveWatchInput!): [Watch!]!
 }
 
 # Date and Time in RFC3339 format
