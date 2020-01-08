@@ -22,7 +22,7 @@ build:
           - go-scrutinizer-run
           - govet-run
           - golint-run
-          - buffalo test
+          - go get ./... && buffalo test
       services:
         postgres: 11.5
         minio:
