@@ -1,9 +1,9 @@
 create_table("watches") {
 	t.Column("id", "integer", {primary: true})
 	t.Column("uuid", "uuid", {})
-	t.Column("user_id", "integer", {})
+	t.Column("owner_id", "integer", {})
 	t.Column("location_id", "integer", {null: true})
-	t.ForeignKey("user_id", {"users": ["id"]}, {"on_delete": "cascade"})
+	t.ForeignKey("owner_id", {"users": ["id"]}, {"on_delete": "cascade"})
 	t.Foreign_key("location_id", {"locations": ["id"]}, {"on_delete": "set null"})
 	t.Index("location_id", {"unique": true})
 	t.Timestamps()

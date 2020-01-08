@@ -19,7 +19,7 @@ type Watch struct {
 	CreatedAt  time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at" db:"updated_at"`
 	UUID       uuid.UUID `json:"uuid" db:"uuid"`
-	UserID     int       `json:"user_id" db:"user_id"`
+	OwnerID    int       `json:"owner_id" db:"owner_id"`
 	LocationID nulls.Int `json:"location_id" db:"location_id"`
 }
 
@@ -42,7 +42,7 @@ func (w Watches) String() string {
 func (w *Watch) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
 		&validators.UUIDIsPresent{Field: w.UUID, Name: "UUID"},
-		&validators.IntIsPresent{Field: w.UserID, Name: "UserID"},
+		&validators.IntIsPresent{Field: w.OwnerID, Name: "OwnerID"},
 	), nil
 }
 

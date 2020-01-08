@@ -640,7 +640,7 @@ ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
 CREATE TABLE public.watches (
     id integer NOT NULL,
     uuid uuid NOT NULL,
-    user_id integer NOT NULL,
+    owner_id integer NOT NULL,
     location_id integer,
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL
@@ -1326,11 +1326,11 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: watches watches_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
+-- Name: watches watches_owner_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.watches
-    ADD CONSTRAINT watches_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+    ADD CONSTRAINT watches_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 
 --

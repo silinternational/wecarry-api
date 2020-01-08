@@ -20,26 +20,26 @@ func (ms *ModelSuite) TestWatch_Validate() {
 		{
 			name: "minimum",
 			watch: Watch{
-				UUID:   domain.GetUUID(),
-				UserID: 1,
+				UUID:    domain.GetUUID(),
+				OwnerID: 1,
 			},
 			wantErr: false,
 		},
 		{
 			name: "missing UUID",
 			watch: Watch{
-				UserID: 1,
+				OwnerID: 1,
 			},
 			wantErr:  true,
 			errField: "uuid",
 		},
 		{
-			name: "missing user_id",
+			name: "missing owner_id",
 			watch: Watch{
 				UUID: domain.GetUUID(),
 			},
 			wantErr:  true,
-			errField: "user_id",
+			errField: "owner_id",
 		},
 	}
 	for _, test := range tests {
