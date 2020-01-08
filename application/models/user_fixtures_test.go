@@ -175,7 +175,7 @@ func CreateUserFixturesForNicknames(ms *ModelSuite, t *testing.T) User {
 		Email:     fmt.Sprintf("user1-%s@example.com", t.Name()),
 		FirstName: "Existing",
 		LastName:  "User",
-		Nickname:  prefix + "ExistingU",
+		Nickname:  prefix + " Existing U",
 		UUID:      domain.GetUUID(),
 	}
 

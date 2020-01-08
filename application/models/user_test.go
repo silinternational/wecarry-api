@@ -869,31 +869,30 @@ func (ms *ModelSuite) TestUser_UniquifyNickname() {
 	t := ms.T()
 	existingUser := CreateUserFixturesForNicknames(ms, t)
 	prefix := allPrefixes()[0]
+	prefix2 := allPrefixes()[1]
 
 	tests := []struct {
-		name     string
-		user     User
-		want     string
-		dontWant string
+		name string
+		user User
+		want string
 	}{
 		{
 			name: "No Change, Blank Last Name",
 			user: User{FirstName: "New"},
-			want: prefix + "New",
+			want: prefix + " New",
 		},
 		{
 			name: "No Change, OK Last Name",
 			user: User{FirstName: "New", LastName: "User"},
-			want: prefix + "NewU",
 		},
 		{
 			name: "Expect Change",
 			user: User{
 				FirstName: existingUser.FirstName,
 				LastName:  existingUser.LastName,
-				Nickname:  existingUser.Nickname[len(prefix):], //remove the prefix so it can be added back on
+				Nickname:  existingUser.Nickname[len(prefix)+1:], //remove the prefix so it can be added back on
 			},
-			dontWant: existingUser.Nickname,
+			want: prefix2 + " " + existingUser.FirstName + " " + existingUser.LastName[:1],
 		},
 	}
 
@@ -910,8 +909,6 @@ func (ms *ModelSuite) TestUser_UniquifyNickname() {
 				ms.Equal(test.want, got)
 				return
 			}
-
-			ms.True(test.dontWant != got)
 		})
 	}
 }
