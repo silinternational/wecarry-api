@@ -23,6 +23,12 @@ build:
           - go-scrutinizer-run
           - govet-run
           - golint-run
+          -
+            command: docker build -t wecarry -f Dockerfile-dev .
+          -
+            command: buffalo-pop pop migrate up
+          -
+            command: buffalo test
       services:
         postgres: 11.5
         minio:
@@ -35,8 +41,6 @@ build:
           ramdisks:
             - /data
       commands:
-        - command: docker build -t wecarry -f Dockerfile-dev .
-        - command: buffalo-pop pop migrate up
-        - command: buffalo test
+
 
   root_path: './application'
