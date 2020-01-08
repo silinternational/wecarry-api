@@ -26,7 +26,7 @@ build:
       services:
         postgres: 11.5
         minio:
-          image: minio/minio
+          image: silintl/minio-default-server
           ports:
             - 9000
           env:
@@ -34,6 +34,5 @@ build:
             MINIO_SECRET_KEY: abcd1234
           ramdisks:
             - /data
-          command: 'minio server /data'
 
   root_path: './application'
