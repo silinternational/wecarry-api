@@ -22,7 +22,7 @@ build:
           - go-scrutinizer-run
           - govet-run
           - golint-run
-          - go get ./... && go test
+          - go get ./... && go test ./...
       services:
         postgres: 11.5
         minio:
