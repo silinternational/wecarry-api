@@ -1326,6 +1326,14 @@ ALTER TABLE ONLY public.users
 
 
 --
+-- Name: watches watches_location_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.watches
+    ADD CONSTRAINT watches_location_id_fkey FOREIGN KEY (location_id) REFERENCES public.locations(id) ON DELETE CASCADE;
+
+
+--
 -- Name: watches watches_owner_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
