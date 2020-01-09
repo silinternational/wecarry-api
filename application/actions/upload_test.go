@@ -131,7 +131,7 @@ func (as *ActionSuite) Test_Upload() {
 
 	// File too big
 	readerBytes := []byte("GIF87a")
-	massive := make([]byte, 10485760+1) // ten megabytes plus one
+	massive := make([]byte, domain.Megabyte*10+1) // ten megabytes plus one
 	readerBytes = append(readerBytes, massive...)
 
 	f.Reader = bytes.NewReader(readerBytes)

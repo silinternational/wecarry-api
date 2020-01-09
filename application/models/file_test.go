@@ -59,7 +59,7 @@ func (ms *ModelSuite) TestFile_Store() {
 		t.FailNow()
 	}
 
-	maxFileSize := 10485760 // ten megabytes
+	maxFileSize := domain.Megabyte * 10
 	biggishGifFile := make([]byte, maxFileSize)
 	tooBigFile := make([]byte, maxFileSize+1)
 	for i, b := range []byte("GIF87a") {

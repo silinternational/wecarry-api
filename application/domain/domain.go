@@ -20,6 +20,7 @@ import (
 )
 
 const (
+	Megabyte                    = 1048576
 	DateFormat                  = "2006-01-02"
 	MaxFileSize                 = 1024 * 1024 * 10 // 10 Megabytes
 	AccessTokenLifetimeSeconds  = 3600
