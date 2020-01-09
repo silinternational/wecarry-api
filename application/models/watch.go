@@ -10,6 +10,8 @@ import (
 	"github.com/gobuffalo/validate"
 	"github.com/gobuffalo/validate/validators"
 	"github.com/gofrs/uuid"
+
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 // Watch is the model for storing post watches that trigger notifications on the conditions specified
@@ -112,4 +114,21 @@ func (w *Watch) SetLocation(location Location) error {
 // Destroy wraps the Pop function of the same name
 func (w *Watch) Destroy() error {
 	return DB.Destroy(w)
+}
+
+// matchesPost returns true if the Watch matches the Post
+func (w *Watch) matchesPost(post Post) bool {
+	dest, err := post.GetDestination()
+	if err != nil {
+		domain.ErrLogger.Printf("failed to get post %s destination in Watches.FindMatch, %s", post.UUID, err)
+		return false
+	}
+	loc, err := w.GetLocation()
+	if err != nil {
+		domain.ErrLogger.Printf("failed to get watch %s location in Watches.FindMatch, %s", w.UUID, err)
+	}
+	if loc.IsNear(*dest) {
+		return true
+	}
+	return false
 }
