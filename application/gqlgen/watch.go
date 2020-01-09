@@ -2,6 +2,7 @@ package gqlgen
 
 import (
 	"context"
+	"errors"
 
 	"github.com/gobuffalo/nulls"
 
@@ -114,18 +115,19 @@ func (r *mutationResolver) CreateWatch(ctx context.Context, input watchInput) (*
 
 // UpdateWatch resolves the `updateWatch` mutation.
 func (r *mutationResolver) UpdateWatch(ctx context.Context, input watchInput) (*models.Watch, error) {
-	cUser := models.GetCurrentUserFromGqlContext(ctx)
+	currentUser := models.GetCurrentUserFromGqlContext(ctx)
 	extras := map[string]interface{}{
-		"user": cUser.UUID,
+		"user": currentUser.UUID,
 	}
 
-	watch, err := convertWatchInput(ctx, input, cUser)
+	watch, err := convertWatchInput(ctx, input, currentUser)
 	if err != nil {
 		return nil, reportError(ctx, err, "UpdateWatch.ProcessInput", extras)
 	}
 
-	if watch.OwnerID != cUser.ID {
-		return nil, reportError(ctx, err, "UpdateWatch.NotFound", extras)
+	if watch.OwnerID != currentUser.ID {
+		return nil, reportError(ctx, errors.New("user attempted to update non-owned Watch"),
+			"UpdateWatch.NotFound", extras)
 	}
 
 	if err := watch.Update(); err != nil {
