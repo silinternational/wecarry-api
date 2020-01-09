@@ -409,17 +409,46 @@ func (r *mutationResolver) UpdatePostStatus(ctx context.Context, input UpdatePos
 		"oldStatus": post.Status,
 		"newStatus": input.Status,
 	}
+
+	if post.Type == models.PostTypeRequest && input.Status == models.PostStatusCommitted {
+		if err := addCommitterToRequest(cUser, post, input); err != nil {
+			return nil, reportError(ctx, err, "UpdatePostStatus.AddCommitter", extras)
+		}
+		return &post, nil
+	}
+
 	if !cUser.CanUpdatePostStatus(post, input.Status) {
 		return nil, reportError(ctx, errors.New("not allowed to change post status"),
 			"UpdatePostStatus.Unauthorized", extras)
 	}
 
-	post.SetProviderWithStatus(input.Status, cUser)
+	if err := post.SetProviderWithStatus(input.Status, input.UserID); err != nil {
+		return nil, reportError(ctx, errors.New("error setting provider with status: "+err.Error()),
+			"UpdatePostStatus.SetProvider", extras)
+	}
+
 	if err := post.Update(); err != nil {
 		return nil, reportError(ctx, err, "UpdatePostStatus", extras)
 	}
 
 	return &post, nil
+}
+
+func addCommitterToRequest(cUser models.User, post models.Post, input UpdatePostStatusInput) error {
+	if input.UserID == nil {
+		return errors.New("not allowed to add committer to Post without a User ID")
+	}
+
+	if *input.UserID == cUser.UUID.String() {
+		return errors.New("not allowed to add the requester as a committer on a Post")
+	}
+
+	var reqCom models.RequestCommitter
+	if err := reqCom.NewWithUserUUID(post.ID, *input.UserID); err != nil {
+		return errors.New("error creating new request committer: " + err.Error())
+	}
+
+	return reqCom.Create()
 }
 
 // SearchRequests resolves the `searchRequests` query by finding requests that contain

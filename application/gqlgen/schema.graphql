@@ -308,4 +308,5 @@ input LocationInput {
 input UpdatePostStatusInput {
     id: ID!
     status: PostStatus!
+    userID: ID
 }

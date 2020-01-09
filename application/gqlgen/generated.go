@@ -1546,6 +1546,7 @@ input LocationInput {
 input UpdatePostStatusInput {
     id: ID!
     status: PostStatus!
+    userID: ID
 }
 `},
 )
@@ -7636,6 +7637,12 @@ func (ec *executionContext) unmarshalInputUpdatePostStatusInput(ctx context.Cont
 		case "status":
 			var err error
 			it.Status, err = ec.unmarshalNPostStatus2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostStatus(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "userID":
+			var err error
+			it.UserID, err = ec.unmarshalOID2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}

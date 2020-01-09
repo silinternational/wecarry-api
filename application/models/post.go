@@ -79,23 +79,21 @@ func getStatusTransitions() map[PostStatus][]statusTransitionTarget {
 			{status: PostStatusCommitted},
 			{status: PostStatusRemoved},
 		},
-		PostStatusCommitted: {
+		PostStatusCommitted: { // These should never happen now - Posts will never stay on Committed
 			{status: PostStatusOpen, isBackStep: true},
 			{status: PostStatusAccepted},
 			{status: PostStatusDelivered},
 			{status: PostStatusRemoved},
 		},
 		PostStatusAccepted: {
-			{status: PostStatusOpen},
-			{status: PostStatusCommitted, isBackStep: true}, // to correct a false acceptance
+			{status: PostStatusOpen, isBackStep: true}, // to correct a false acceptance
 			{status: PostStatusDelivered},
 			{status: PostStatusReceived},  // This transition is in here for later, in case one day it's not skippable
 			{status: PostStatusCompleted}, // For now, `DELIVERED` is not a required step
 			{status: PostStatusRemoved},
 		},
 		PostStatusDelivered: {
-			{status: PostStatusCommitted, isBackStep: true}, // to correct a false delivery
-			{status: PostStatusAccepted, isBackStep: true},  // to correct a false delivery
+			{status: PostStatusAccepted, isBackStep: true}, // to correct a false delivery
 			{status: PostStatusCompleted},
 		},
 		PostStatusReceived: {
@@ -272,12 +270,21 @@ func (p *Post) NewWithUser(pType PostType, currentUser User) error {
 	return nil
 }
 
-func (p *Post) SetProviderWithStatus(status PostStatus, currentUser User) {
+func (p *Post) SetProviderWithStatus(status PostStatus, committerID *string) error {
+	if p.Type == PostTypeRequest && status == PostStatusAccepted {
+		if committerID == nil {
+			return errors.New("committer ID must not be nil")
+		}
 
-	if p.Type == PostTypeRequest && status == PostStatusCommitted {
-		p.ProviderID = nulls.NewInt(currentUser.ID)
+		var user User
+
+		if err := user.FindByUUID(*committerID); err != nil {
+			return errors.New("error finding committer: " + err.Error())
+		}
+		p.ProviderID = nulls.NewInt(user.ID)
 	}
 	p.Status = status
+	return nil
 }
 
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
@@ -407,6 +414,8 @@ func (p *Post) manageStatusTransition() error {
 
 	var pH PostHistory
 	if isBackStep {
+		// first try to find or recreate a request committer object
+		p.recreateRequestCommitter(p.Status)
 		err = pH.popForPost(*p, lastStatus)
 	} else {
 		err = pH.createForPost(*p)
@@ -839,4 +848,23 @@ func (p *Post) Meeting() (*Meeting, error) {
 	}
 
 	return &meeting, nil
+}
+
+func (p *Post) recreateRequestCommitter(newStatus PostStatus) error {
+	if newStatus != PostStatusOpen {
+		return nil
+	}
+
+	if !p.ProviderID.Valid {
+		return errors.New("may not recreate a request committer without a Provider ID")
+	}
+
+	var reqCom RequestCommitter
+	if err := reqCom.FindByPostIDAndUserID(p.ID, p.ProviderID.Int); err != nil {
+		reqCom.PostID = p.ID
+		reqCom.UserID = p.ProviderID.Int
+		return reqCom.Create()
+	}
+
+	return nil
 }
