@@ -4,7 +4,6 @@ import (
 	"github.com/gobuffalo/nulls"
 	"github.com/gofrs/uuid"
 
-	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/internal/test"
 	"github.com/silinternational/wecarry-api/models"
 )
@@ -34,24 +33,14 @@ type watch struct {
 }
 
 func createFixturesForWatches(as *ActionSuite) watchQueryFixtures {
+	// make 2 users, 1 that has Watches, and another that will try to mess with those Watches
 	uf := test.CreateUserFixtures(as.DB, 2)
-	user := uf.Users[0]
 	locations := test.CreateLocationFixtures(as.DB, 2)
-
-	watches := models.Watches{
-		{
-			OwnerID:    user.ID,
-			LocationID: nulls.NewInt(locations[0].ID),
-		},
-		{
-			OwnerID:    user.ID,
-			LocationID: nulls.NewInt(locations[1].ID),
-		},
-	}
-
+	watches := make(models.Watches, 2)
 	for i := range watches {
-		watches[i].UUID = domain.GetUUID()
-		createFixture(as, &watches[i])
+		watches[i].OwnerID = uf.Users[0].ID
+		watches[i].LocationID = nulls.NewInt(locations[i].ID)
+		test.MustCreate(as.DB, &watches[i])
 	}
 
 	return watchQueryFixtures{
