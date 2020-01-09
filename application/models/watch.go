@@ -120,12 +120,12 @@ func (w *Watch) Destroy() error {
 func (w *Watch) matchesPost(post Post) bool {
 	dest, err := post.GetDestination()
 	if err != nil {
-		domain.ErrLogger.Printf("failed to get post %s destination in Watches.FindMatch, %s", post.UUID, err)
+		domain.ErrLogger.Printf("failed to get post %s destination in Watch.matchesPost, %s", post.UUID, err)
 		return false
 	}
 	loc, err := w.GetLocation()
 	if err != nil {
-		domain.ErrLogger.Printf("failed to get watch %s location in Watches.FindMatch, %s", w.UUID, err)
+		domain.ErrLogger.Printf("failed to get watch %s location in Watch.matchesPost, %s", w.UUID, err)
 	}
 	if loc.IsNear(*dest) {
 		return true
