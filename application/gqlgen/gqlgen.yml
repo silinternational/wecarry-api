@@ -121,6 +121,12 @@ models:
     model: models.UserAdminRole
   UserPreferences:
     model: models.StandardPreferences
+  Watch:
+    model: models.Watch
+  CreateWatchInput:
+    model: gqlgen.watchInput
+  UpdateWatchInput:
+    model: gqlgen.watchInput
 
 #directives:
 #  deprecated:
