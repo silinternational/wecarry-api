@@ -778,20 +778,14 @@ func (p *Post) canUserChangeStatus(user User, newStatus PostStatus) bool {
 		return true
 	}
 
-	if newStatus == PostStatusCommitted {
-		return true
-	}
-
-	if p.ProviderID.Int != user.ID && p.ReceiverID.Int != user.ID {
-		return false
-	}
-
-	if p.Type == PostTypeRequest && newStatus == PostStatusDelivered {
-		return true
-	}
-
-	if p.Type == PostTypeOffer && newStatus == PostStatusReceived {
-		return true
+	switch p.Type {
+	case PostTypeRequest:
+		if p.Status == PostStatusOpen && newStatus == PostStatusCommitted {
+			return true
+		}
+		return newStatus == PostStatusDelivered && p.ProviderID.Int == user.ID
+	case PostTypeOffer:
+		return newStatus == PostStatusReceived && p.ReceiverID.Int == user.ID
 	}
 
 	return false

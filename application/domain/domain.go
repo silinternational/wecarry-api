@@ -20,8 +20,9 @@ import (
 )
 
 const (
+	Megabyte                    = 1048576
 	DateFormat                  = "2006-01-02"
-	MaxFileSize                 = 1 << 21 // 10 Mebibytes
+	MaxFileSize                 = 1024 * 1024 * 10 // 10 Megabytes
 	AccessTokenLifetimeSeconds  = 3600
 	DateTimeFormat              = "2006-01-02 15:04:05"
 	NewMessageNotificationDelay = 1 * time.Minute

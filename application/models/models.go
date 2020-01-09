@@ -175,7 +175,7 @@ func emitEvent(e events.Event) {
 
 func create(m interface{}) error {
 	uuidField := reflect.ValueOf(m).Elem().FieldByName("UUID")
-	if uuidField.IsValid() {
+	if uuidField.IsValid() && uuidField.Interface().(uuid.UUID).Version() == 0 {
 		uuidField.Set(reflect.ValueOf(domain.GetUUID()))
 	}
 
@@ -204,11 +204,8 @@ func update(m interface{}) error {
 
 func save(m interface{}) error {
 	uuidField := reflect.ValueOf(m).Elem().FieldByName("UUID")
-	if uuidField.IsValid() {
-		u := uuidField.Interface().(uuid.UUID)
-		if u.Version() == 0 {
-			uuidField.Set(reflect.ValueOf(domain.GetUUID()))
-		}
+	if uuidField.IsValid() && uuidField.Interface().(uuid.UUID).Version() == 0 {
+		uuidField.Set(reflect.ValueOf(domain.GetUUID()))
 	}
 
 	validationErrs, err := DB.ValidateAndSave(m)
