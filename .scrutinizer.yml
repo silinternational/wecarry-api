@@ -26,7 +26,7 @@ build:
           -
             command: docker build -t wecarry -f Dockerfile-dev .
           -
-            command: docker run wecarry bash -c "buffalo-pop pop migrate up && buffalo test"
+            command: docker run --env GO_ENV=scrutinizer wecarry bash -c "buffalo-pop pop migrate up && buffalo test"
       services:
         postgres: 11.5
         minio:
