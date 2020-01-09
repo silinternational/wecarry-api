@@ -5,7 +5,6 @@ import (
 
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
-	"github.com/gobuffalo/validate"
 
 	"github.com/silinternational/wecarry-api/domain"
 )
@@ -15,7 +14,6 @@ func (ms *ModelSuite) TestWatch_Validate() {
 	tests := []struct {
 		name     string
 		watch    Watch
-		want     *validate.Errors
 		wantErr  bool
 		errField string
 	}{

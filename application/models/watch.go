@@ -1,7 +1,6 @@
 package models
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -23,20 +22,8 @@ type Watch struct {
 	LocationID nulls.Int `json:"location_id" db:"location_id"`
 }
 
-// String can be helpful for serializing the model
-func (w Watch) String() string {
-	jw, _ := json.Marshal(w)
-	return string(jw)
-}
-
-// Watches is merely for convenience and brevity
+// Watches is used for struct-attached functions that operate on lists of objects
 type Watches []Watch
-
-// String can be helpful for serializing the model
-func (w Watches) String() string {
-	jw, _ := json.Marshal(w)
-	return string(jw)
-}
 
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
 func (w *Watch) Validate(tx *pop.Connection) (*validate.Errors, error) {
