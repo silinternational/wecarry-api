@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gobuffalo/validate"
+
 	"github.com/silinternational/wecarry-api/aws"
 	"github.com/silinternational/wecarry-api/domain"
 )
@@ -52,22 +53,38 @@ func (ms *ModelSuite) TestFile_Validate() {
 func (ms *ModelSuite) TestFile_Store() {
 	t := ms.T()
 
+	// This is needed in for when this test is run on its own
+	if err := aws.CreateS3Bucket(); err != nil {
+		t.Errorf("failed to create S3 bucket, %s", err)
+		t.FailNow()
+	}
+
+	maxFileSize := 10485760 // ten megabytes
+	biggishGifFile := make([]byte, maxFileSize)
+	tooBigFile := make([]byte, maxFileSize+1)
+	for i, b := range []byte("GIF87a") {
+		biggishGifFile[i] = b
+		tooBigFile[i] = b
+	}
+
 	type args struct {
 		name    string
 		content []byte
 	}
 	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
+		name     string
+		args     args
+		wantErr  bool
+		wantCode string
 	}{
 		{
 			name: "empty file",
 			args: args{
-				name:    "empty",
+				name:    "file0.gif",
 				content: []byte{},
 			},
-			wantErr: true,
+			wantErr:  true,
+			wantCode: "ErrorStoreFileBadContentType",
 		},
 		{
 			name: "GIF87a file",
@@ -80,18 +97,32 @@ func (ms *ModelSuite) TestFile_Store() {
 		{
 			name: "large file",
 			args: args{
-				name:    "large_file",
-				content: make([]byte, domain.MaxFileSize+1),
+				name:    "file2.gif",
+				content: tooBigFile,
 			},
-			wantErr: true,
+			wantErr:  true,
+			wantCode: "ErrorStoreFileTooLarge",
+		},
+		{
+			name: "just small enough GIF87a file",
+			args: args{
+				name:    "file3.gif",
+				content: biggishGifFile,
+			},
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var f File
-			if fErr := f.Store(tt.args.name, tt.args.content); (fErr != nil) != tt.wantErr {
-				t.Errorf("Store() error = %v, wantErr %v", fErr, tt.wantErr)
+			fErr := f.Store(tt.args.name, tt.args.content)
+			if tt.wantErr {
+				ms.NotNil(fErr)
+				ms.Equal(fErr.ErrorCode, tt.wantCode, "incorrect error type")
+				return
 			}
+
+			ms.Nil(fErr, "unexpected error")
 		})
 	}
 }
