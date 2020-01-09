@@ -226,3 +226,7 @@
   translation: We had a problem setting the location for your Watch
 - id: RemoveWatch
   translation: We had a problem removing that Watch
+- id: RemoveWatch.NotFound
+  translation: We had a problem finding the Watch to be removed
+- id: RemoveWatch.FindByUser
+  translation: We had a problem getting a list of remaining Watches

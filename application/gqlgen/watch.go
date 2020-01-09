@@ -144,15 +144,27 @@ func (r *mutationResolver) UpdateWatch(ctx context.Context, input watchInput) (*
 // RemoveWatch resolves the `removeWatch` mutation.
 func (r *mutationResolver) RemoveWatch(ctx context.Context, input RemoveWatchInput) ([]models.Watch, error) {
 	currentUser := models.GetCurrentUserFromGqlContext(ctx)
+	extras := map[string]interface{}{
+		"user": currentUser.UUID,
+	}
 
-	// do the deletion here
+	var watch models.Watch
+	if err := watch.FindByUUID(input.ID); err != nil {
+		return nil, reportError(ctx, err, "RemoveWatch.NotFound", extras)
+	}
+
+	if watch.OwnerID != currentUser.ID {
+		return nil, reportError(ctx, errors.New("user attempted to delete non-owned Watch"),
+			"RemoveWatch.NotFound", extras)
+	}
+
+	if err := watch.Destroy(); err != nil {
+		return nil, reportError(ctx, err, "RemoveWatch", extras)
+	}
 
 	var watches models.Watches
 	if err := watches.FindByUser(currentUser); err != nil {
-		extras := map[string]interface{}{
-			"user": currentUser.UUID,
-		}
-		return nil, reportError(ctx, err, "RemoveWatch", extras)
+		return nil, reportError(ctx, err, "RemoveWatch.FindByUser", extras)
 	}
 
 	return watches, nil

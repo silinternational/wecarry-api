@@ -121,3 +121,8 @@ func (w *Watch) SetLocation(location Location) error {
 	w.LocationID = nulls.NewInt(location.ID)
 	return w.Update()
 }
+
+// Destroy wraps the Pop function of the same name
+func (w *Watch) Destroy() error {
+	return DB.Destroy(w)
+}
