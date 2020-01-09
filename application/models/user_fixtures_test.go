@@ -338,7 +338,7 @@ func CreateUserFixtures_GetThreads(ms *ModelSuite) UserPostFixtures {
 }
 
 func CreateFixturesForUserWantsPostNotification(ms *ModelSuite) UserPostFixtures {
-	uf := createUserFixtures(ms.DB, 2)
+	uf := createUserFixtures(ms.DB, 3)
 	org := uf.Organization
 	users := uf.Users
 
@@ -378,9 +378,7 @@ func CreateFixturesForUserWantsPostNotification(ms *ModelSuite) UserPostFixtures
 			Country:     "US",
 		},
 	}
-	for i := range postLocations {
-		createFixture(ms, &postLocations[i])
-	}
+	createFixture(ms, &postLocations)
 
 	posts := Posts{
 		{
@@ -411,6 +409,10 @@ func CreateFixturesForUserWantsPostNotification(ms *ModelSuite) UserPostFixtures
 		posts[i].DestinationID = postLocations[i].ID
 		createFixture(ms, &posts[i])
 	}
+
+	watches := createWatchFixtures(ms.DB, users)
+	// user 2 has a watch for the location of post 4
+	ms.NoError(watches[4].SetLocation(postLocations[4]))
 
 	return UserPostFixtures{
 		Users: users,
