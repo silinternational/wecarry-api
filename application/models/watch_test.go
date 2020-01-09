@@ -91,7 +91,7 @@ func (ms *ModelSuite) TestWatch_FindByUUID() {
 			err := watch.FindByUUID(test.uuid)
 			if test.wantErr != "" {
 				ms.Error(err)
-				ms.Contains(err.Error(), test.wantErr, "wrong error type", err)
+				ms.Contains(err.Error(), test.wantErr, "wrong error type")
 				return
 			}
 			ms.NoError(err, "unexpected error")
