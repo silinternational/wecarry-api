@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gobuffalo/nulls"
+
 	"github.com/silinternational/wecarry-api/aws"
 	"github.com/silinternational/wecarry-api/domain"
 )
@@ -410,9 +411,14 @@ func CreateFixturesForUserWantsPostNotification(ms *ModelSuite) UserPostFixtures
 		createFixture(ms, &posts[i])
 	}
 
-	watches := createWatchFixtures(ms.DB, users)
 	// user 2 has a watch for the location of post 4
-	ms.NoError(watches[4].SetLocation(postLocations[4]))
+	watchLocation := postLocations[4]
+	watchLocation.ID = 0
+	createFixture(ms, &watchLocation)
+	createFixture(ms, &Watch{
+		OwnerID:    users[2].ID,
+		LocationID: nulls.NewInt(watchLocation.ID),
+	})
 
 	return UserPostFixtures{
 		Users: users,
