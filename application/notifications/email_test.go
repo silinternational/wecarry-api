@@ -9,9 +9,10 @@ import (
 )
 
 func TestSend(t *testing.T) {
+	nickname := "nickname"
 	msg := Message{
 		FromName:  "from name",
-		FromEmail: domain.EmailFromAddress("nickname"),
+		FromEmail: domain.EmailFromAddress(&nickname),
 		ToName:    "to name",
 		ToEmail:   "to@example.com",
 		Template:  domain.MessageTemplateNewThreadMessage,
