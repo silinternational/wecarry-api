@@ -26,5 +26,7 @@ build:
           -
             command: cd ..
           -
+            command: touch .env
+          -
             command: docker-compose run test
   root_path: './application'
