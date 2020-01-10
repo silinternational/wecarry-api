@@ -420,6 +420,8 @@ func sendNewPostNotification(user models.User, post models.Post) error {
 	}
 
 	msg := notifications.Message{
+		Subject: domain.GetTranslatedSubject(user.GetLanguagePreference(),
+			"Email.Subject.NewRequest", map[string]string{}),
 		Template:  newPostTemplates[post.Type.String()],
 		ToName:    user.GetRealName(),
 		ToEmail:   user.Email,

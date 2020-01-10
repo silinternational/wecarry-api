@@ -191,6 +191,10 @@
 - id: Email.Subject.Welcome
   translation: Welcome to {{.AppName}}
 
+# New Request subject
+- id: Email.Subject.NewRequest
+  translation: New Request on {{.AppName}}
+
 # Organization
 - id: GetOrganizationDomainOrganizationID
   translation: We had a problem finding the domain ID.
