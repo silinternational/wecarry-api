@@ -167,6 +167,8 @@
 
 - id: Email.Subject.Request.FromCommittedToAccepted
   translation: Your {{.AppName}} offer for "{{.postTitle}}" has been accepted!
+- id: Email.Subject.Request.FromCommittedToCommitted
+  translation: Potential provider on {{.AppName}} for "{{.postTitle}}"
 - id: Email.Subject.Request.FromCommittedToOpen
   translation: Request lost its provider on {{.AppName}}
 - id: Email.Subject.Request.FromCommittedToRemoved

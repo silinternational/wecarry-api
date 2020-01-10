@@ -175,6 +175,10 @@ func sendNotificationRequestFromCommittedToAccepted(params senderParams) {
 	sendNotificationRequestToProvider(params)
 }
 
+func sendNotificationRequestFromCommittedToCommitted(params senderParams) {
+	sendNotificationRequestToReceiver(params)
+}
+
 // Until we have status auditing history, we don't know who reverted the Post to `open` status.
 //  So, tell both the receiver and provider about it.
 func sendNotificationRequestFromCommittedToOpen(params senderParams) {
@@ -305,6 +309,11 @@ var statusSenders = map[string]sender{
 		template: domain.MessageTemplateRequestFromAcceptedToRemoved,
 		subject:  "Email.Subject.Request.FromAcceptedToRemoved",
 		sender:   sendNotificationRequestFromAcceptedToRemoved},
+
+	join(models.PostStatusCommitted, models.PostStatusCommitted): sender{
+		template: domain.MessageTemplateRequestFromCommittedToCommitted,
+		subject:  "Email.Subject.Request.FromCommittedToCommitted",
+		sender:   sendNotificationRequestFromCommittedToCommitted},
 
 	join(models.PostStatusCommitted, models.PostStatusAccepted): sender{
 		template: domain.MessageTemplateRequestFromCommittedToAccepted,
