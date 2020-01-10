@@ -34,6 +34,7 @@ require (
 	github.com/ssor/bom v0.0.0-20170718123548-6386211fdfcf // indirect
 	github.com/stretchr/testify v1.4.0
 	github.com/vektah/gqlparser v1.1.2
+	golang.org/x/image v0.0.0-20191214001246-9130b4cfad52
 	golang.org/x/oauth2 v0.0.0-20181203162652-d668ce993890
 	jaytaylor.com/html2text v0.0.0-20190408195923-01ec452cbe43
 )
