@@ -419,6 +419,11 @@ func sendNewPostNotification(user models.User, post models.Post) error {
 		receiverNickname = receiver.Nickname
 	}
 
+	postDestination := ""
+	if dest, err := post.GetDestination(); err == nil && dest != nil {
+		postDestination = dest.Description
+	}
+
 	msg := notifications.Message{
 		Subject: domain.GetTranslatedSubject(user.GetLanguagePreference(),
 			"Email.Subject.NewRequest", map[string]string{}),
@@ -432,6 +437,8 @@ func sendNewPostNotification(user models.User, post models.Post) error {
 			"postURL":          domain.GetPostUIURL(post.UUID.String()),
 			"postTitle":        domain.Truncate(post.Title, "...", 16),
 			"receiverNickname": receiverNickname,
+			"postDescription":  post.Description,
+			"postDestination":  postDestination,
 		},
 	}
 	return notifications.Send(msg)
