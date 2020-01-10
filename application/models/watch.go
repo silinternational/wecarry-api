@@ -116,7 +116,7 @@ func (w *Watch) Destroy() error {
 	return DB.Destroy(w)
 }
 
-// matchesPost returns true if the Watch matches the Post
+// matchesPost returns true if the Watch's Location is near the Post's Destination
 func (w *Watch) matchesPost(post Post) bool {
 	dest, err := post.GetDestination()
 	if err != nil {
