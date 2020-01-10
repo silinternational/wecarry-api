@@ -52,7 +52,7 @@ func newThreadMessageHandler(args worker.Args) error {
 			"sentByNickname": m.SentBy.Nickname,
 			"threadURL":      domain.GetThreadUIURL(m.Thread.UUID.String()),
 		},
-		FromEmail: domain.Env.EmailFromAddress,
+		FromEmail: domain.EmailFromAddress(&m.SentBy.Nickname),
 	}
 
 	var lastErr error

@@ -11,7 +11,7 @@ import (
 func TestSend(t *testing.T) {
 	msg := Message{
 		FromName:  "from name",
-		FromEmail: "from@example.com",
+		FromEmail: domain.EmailFromAddress("nickname"),
 		ToName:    "to name",
 		ToEmail:   "to@example.com",
 		Template:  domain.MessageTemplateNewThreadMessage,
