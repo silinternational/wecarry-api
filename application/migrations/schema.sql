@@ -634,6 +634,44 @@ ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
 
 
 --
+-- Name: watches; Type: TABLE; Schema: public; Owner: wecarry
+--
+
+CREATE TABLE public.watches (
+    id integer NOT NULL,
+    uuid uuid NOT NULL,
+    owner_id integer NOT NULL,
+    location_id integer,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.watches OWNER TO wecarry;
+
+--
+-- Name: watches_id_seq; Type: SEQUENCE; Schema: public; Owner: wecarry
+--
+
+CREATE SEQUENCE public.watches_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.watches_id_seq OWNER TO wecarry;
+
+--
+-- Name: watches_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wecarry
+--
+
+ALTER SEQUENCE public.watches_id_seq OWNED BY public.watches.id;
+
+
+--
 -- Name: files id; Type: DEFAULT; Schema: public; Owner: wecarry
 --
 
@@ -736,6 +774,13 @@ ALTER TABLE ONLY public.user_preferences ALTER COLUMN id SET DEFAULT nextval('pu
 --
 
 ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_id_seq'::regclass);
+
+
+--
+-- Name: watches id; Type: DEFAULT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.watches ALTER COLUMN id SET DEFAULT nextval('public.watches_id_seq'::regclass);
 
 
 --
@@ -856,6 +901,14 @@ ALTER TABLE ONLY public.user_preferences
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: watches watches_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.watches
+    ADD CONSTRAINT watches_pkey PRIMARY KEY (id);
 
 
 --
@@ -1031,6 +1084,13 @@ CREATE UNIQUE INDEX users_photo_file_id_idx ON public.users USING btree (photo_f
 --
 
 CREATE UNIQUE INDEX users_uuid_idx ON public.users USING btree (uuid);
+
+
+--
+-- Name: watches_location_id_idx; Type: INDEX; Schema: public; Owner: wecarry
+--
+
+CREATE UNIQUE INDEX watches_location_id_idx ON public.watches USING btree (location_id);
 
 
 --
@@ -1263,6 +1323,22 @@ ALTER TABLE ONLY public.users
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_locations_id_fk FOREIGN KEY (location_id) REFERENCES public.locations(id) ON DELETE SET NULL;
+
+
+--
+-- Name: watches watches_location_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.watches
+    ADD CONSTRAINT watches_location_id_fkey FOREIGN KEY (location_id) REFERENCES public.locations(id) ON DELETE CASCADE;
+
+
+--
+-- Name: watches watches_owner_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.watches
+    ADD CONSTRAINT watches_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 
 --

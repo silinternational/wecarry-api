@@ -493,3 +493,13 @@ func Truncate(str, suffix string, length int) string {
 	}
 	return str
 }
+
+// EmailFromAddress combines a name with the configured from address for use in an email From header. If name is nil,
+// only the App Name will be used.
+func EmailFromAddress(name *string) string {
+	addr := Env.AppName + " <" + Env.EmailFromAddress + ">"
+	if name != nil {
+		addr = *name + " via " + addr
+	}
+	return addr
+}

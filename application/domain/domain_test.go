@@ -611,3 +611,31 @@ func TestTruncate(t *testing.T) {
 		})
 	}
 }
+
+func (ts *TestSuite) TestEmailFromAddress() {
+	nickname := "nickname"
+
+	tests := []struct {
+		name string
+		arg  *string
+		want string
+	}{
+		{
+			name: "name given",
+			arg:  &nickname,
+			want: "nickname via WeCarry <no_reply@example.com>",
+		},
+		{
+			name: "no name given",
+			arg:  nil,
+			want: "WeCarry <no_reply@example.com>",
+		},
+	}
+	for _, tt := range tests {
+		ts.T().Run(tt.name, func(t *testing.T) {
+			if got := EmailFromAddress(tt.arg); got != tt.want {
+				t.Errorf("EmailFromAddress() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

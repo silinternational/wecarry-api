@@ -524,6 +524,14 @@ func (u *User) WantsPostNotification(post Post) bool {
 		return false
 	}
 
+	if u.isNearPost(post) {
+		return true
+	}
+
+	return u.hasMatchingWatch(post)
+}
+
+func (u *User) isNearPost(post Post) bool {
 	if err := DB.Load(u, "Location"); err != nil {
 		domain.ErrLogger.Printf("load of user location failed, %s", err)
 		return false
@@ -531,15 +539,29 @@ func (u *User) WantsPostNotification(post Post) bool {
 
 	postLocation, err := post.GetLocationForNotifications()
 	if err != nil {
-		domain.ErrLogger.Print(err.Error())
+		domain.ErrLogger.Printf("failed to get post location, %s", err)
 		return false
 	}
 
-	if !u.Location.IsNear(*postLocation) {
+	if u.Location.IsNear(*postLocation) {
+		return true
+	}
+	return false
+}
+
+func (u *User) hasMatchingWatch(post Post) bool {
+	watches := Watches{}
+	if err := watches.FindByUser(*u); err != nil {
+		domain.ErrLogger.Printf("failed to get watch list, %s", err)
 		return false
 	}
+	for _, watch := range watches {
+		if watch.matchesPost(post) {
+			return true
+		}
+	}
 
-	return true
+	return false
 }
 
 // GetPreferences returns a StandardPreferences struct

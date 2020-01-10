@@ -47,6 +47,7 @@ type ResolverRoot interface {
 	Query() QueryResolver
 	Thread() ThreadResolver
 	User() UserResolver
+	Watch() WatchResolver
 }
 
 type DirectiveRoot struct {
@@ -98,13 +99,16 @@ type ComplexityRoot struct {
 		CreateOrganization       func(childComplexity int, input CreateOrganizationInput) int
 		CreateOrganizationDomain func(childComplexity int, input CreateOrganizationDomainInput) int
 		CreatePost               func(childComplexity int, input postInput) int
+		CreateWatch              func(childComplexity int, input watchInput) int
 		RemoveOrganizationDomain func(childComplexity int, input RemoveOrganizationDomainInput) int
+		RemoveWatch              func(childComplexity int, input RemoveWatchInput) int
 		SetThreadLastViewedAt    func(childComplexity int, input SetThreadLastViewedAtInput) int
 		UpdateMeeting            func(childComplexity int, input meetingInput) int
 		UpdateOrganization       func(childComplexity int, input UpdateOrganizationInput) int
 		UpdatePost               func(childComplexity int, input postInput) int
 		UpdatePostStatus         func(childComplexity int, input UpdatePostStatusInput) int
 		UpdateUser               func(childComplexity int, input UpdateUserInput) int
+		UpdateWatch              func(childComplexity int, input watchInput) int
 	}
 
 	Organization struct {
@@ -156,6 +160,7 @@ type ComplexityRoot struct {
 		Meetings       func(childComplexity int) int
 		Message        func(childComplexity int, id *string) int
 		MyThreads      func(childComplexity int) int
+		MyWatches      func(childComplexity int) int
 		Organization   func(childComplexity int, id *string) int
 		Organizations  func(childComplexity int) int
 		Post           func(childComplexity int, id *string) int
@@ -199,6 +204,12 @@ type ComplexityRoot struct {
 		TimeZone   func(childComplexity int) int
 		WeightUnit func(childComplexity int) int
 	}
+
+	Watch struct {
+		ID       func(childComplexity int) int
+		Location func(childComplexity int) int
+		Owner    func(childComplexity int) int
+	}
 }
 
 type FileResolver interface {
@@ -239,6 +250,9 @@ type MutationResolver interface {
 	CreateOrganizationDomain(ctx context.Context, input CreateOrganizationDomainInput) ([]models.OrganizationDomain, error)
 	RemoveOrganizationDomain(ctx context.Context, input RemoveOrganizationDomainInput) ([]models.OrganizationDomain, error)
 	SetThreadLastViewedAt(ctx context.Context, input SetThreadLastViewedAtInput) (*models.Thread, error)
+	CreateWatch(ctx context.Context, input watchInput) (*models.Watch, error)
+	UpdateWatch(ctx context.Context, input watchInput) (*models.Watch, error)
+	RemoveWatch(ctx context.Context, input RemoveWatchInput) ([]models.Watch, error)
 }
 type OrganizationResolver interface {
 	ID(ctx context.Context, obj *models.Organization) (string, error)
@@ -286,6 +300,7 @@ type QueryResolver interface {
 	Meetings(ctx context.Context) ([]models.Meeting, error)
 	Meeting(ctx context.Context, id *string) (*models.Meeting, error)
 	RecentMeetings(ctx context.Context) ([]models.Meeting, error)
+	MyWatches(ctx context.Context) ([]models.Watch, error)
 }
 type ThreadResolver interface {
 	ID(ctx context.Context, obj *models.Thread) (string, error)
@@ -306,6 +321,11 @@ type UserResolver interface {
 	Preferences(ctx context.Context, obj *models.User) (*models.StandardPreferences, error)
 	Location(ctx context.Context, obj *models.User) (*models.Location, error)
 	UnreadMessageCount(ctx context.Context, obj *models.User) (int, error)
+}
+type WatchResolver interface {
+	ID(ctx context.Context, obj *models.Watch) (string, error)
+	Owner(ctx context.Context, obj *models.Watch) (*PublicProfile, error)
+	Location(ctx context.Context, obj *models.Watch) (*models.Location, error)
 }
 
 type executableSchema struct {
@@ -572,6 +592,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreatePost(childComplexity, args["input"].(postInput)), true
 
+	case "Mutation.createWatch":
+		if e.complexity.Mutation.CreateWatch == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createWatch_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateWatch(childComplexity, args["input"].(watchInput)), true
+
 	case "Mutation.removeOrganizationDomain":
 		if e.complexity.Mutation.RemoveOrganizationDomain == nil {
 			break
@@ -583,6 +615,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.RemoveOrganizationDomain(childComplexity, args["input"].(RemoveOrganizationDomainInput)), true
+
+	case "Mutation.removeWatch":
+		if e.complexity.Mutation.RemoveWatch == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_removeWatch_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.RemoveWatch(childComplexity, args["input"].(RemoveWatchInput)), true
 
 	case "Mutation.setThreadLastViewedAt":
 		if e.complexity.Mutation.SetThreadLastViewedAt == nil {
@@ -655,6 +699,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.UpdateUser(childComplexity, args["input"].(UpdateUserInput)), true
+
+	case "Mutation.updateWatch":
+		if e.complexity.Mutation.UpdateWatch == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateWatch_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateWatch(childComplexity, args["input"].(watchInput)), true
 
 	case "Organization.createdAt":
 		if e.complexity.Organization.CreatedAt == nil {
@@ -918,6 +974,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.MyThreads(childComplexity), true
 
+	case "Query.myWatches":
+		if e.complexity.Query.MyWatches == nil {
+			break
+		}
+
+		return e.complexity.Query.MyWatches(childComplexity), true
+
 	case "Query.organization":
 		if e.complexity.Query.Organization == nil {
 			break
@@ -1174,6 +1237,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.UserPreferences.WeightUnit(childComplexity), true
 
+	case "Watch.id":
+		if e.complexity.Watch.ID == nil {
+			break
+		}
+
+		return e.complexity.Watch.ID(childComplexity), true
+
+	case "Watch.location":
+		if e.complexity.Watch.Location == nil {
+			break
+		}
+
+		return e.complexity.Watch.Location(childComplexity), true
+
+	case "Watch.owner":
+		if e.complexity.Watch.Owner == nil {
+			break
+		}
+
+		return e.complexity.Watch.Owner(childComplexity), true
+
 	}
 	return 0, false
 }
@@ -1250,6 +1334,7 @@ var parsedSchema = gqlparser.MustLoadSchema(
     meetings: [Meeting!]!
     meeting(id: ID): Meeting
     recentMeetings: [Meeting!]!
+    myWatches: [Watch!]!
 }
 
 type Mutation {
@@ -1265,6 +1350,9 @@ type Mutation {
     createOrganizationDomain(input: CreateOrganizationDomainInput!): [OrganizationDomain!]!
     removeOrganizationDomain(input: RemoveOrganizationDomainInput!): [OrganizationDomain!]!
     setThreadLastViewedAt(input: SetThreadLastViewedAtInput!): Thread!
+    createWatch(input: CreateWatchInput!): Watch!
+    updateWatch(input: UpdateWatchInput!): Watch!
+    removeWatch(input: RemoveWatchInput!): [Watch!]!
 }
 
 # Date and Time in RFC3339 format
@@ -1548,6 +1636,25 @@ input UpdatePostStatusInput {
     status: PostStatus!
     userID: ID
 }
+
+type Watch {
+    id: ID!
+    owner: PublicProfile!
+    location: Location
+}
+
+input CreateWatchInput {
+    location: LocationInput
+}
+
+input UpdateWatchInput {
+    id: ID!
+    location: LocationInput
+}
+
+input RemoveWatchInput {
+    id: ID!
+}
 `},
 )
 
@@ -1625,12 +1732,40 @@ func (ec *executionContext) field_Mutation_createPost_args(ctx context.Context, 
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_createWatch_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 watchInput
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalNCreateWatchInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐwatchInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_removeOrganizationDomain_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 RemoveOrganizationDomainInput
 	if tmp, ok := rawArgs["input"]; ok {
 		arg0, err = ec.unmarshalNRemoveOrganizationDomainInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐRemoveOrganizationDomainInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_removeWatch_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 RemoveWatchInput
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalNRemoveWatchInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐRemoveWatchInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1715,6 +1850,20 @@ func (ec *executionContext) field_Mutation_updateUser_args(ctx context.Context, 
 	var arg0 UpdateUserInput
 	if tmp, ok := rawArgs["input"]; ok {
 		arg0, err = ec.unmarshalNUpdateUserInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐUpdateUserInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateWatch_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 watchInput
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalNUpdateWatchInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐwatchInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3383,6 +3532,138 @@ func (ec *executionContext) _Mutation_setThreadLastViewedAt(ctx context.Context,
 	return ec.marshalNThread2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐThread(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Mutation_createWatch(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_createWatch_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateWatch(rctx, args["input"].(watchInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Watch)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNWatch2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐWatch(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_updateWatch(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_updateWatch_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateWatch(rctx, args["input"].(watchInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Watch)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNWatch2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐWatch(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_removeWatch(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_removeWatch_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().RemoveWatch(rctx, args["input"].(RemoveWatchInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]models.Watch)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNWatch2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐWatch(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Organization_id(ctx context.Context, field graphql.CollectedField, obj *models.Organization) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -5048,6 +5329,43 @@ func (ec *executionContext) _Query_recentMeetings(ctx context.Context, field gra
 	return ec.marshalNMeeting2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeeting(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Query_myWatches(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().MyWatches(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]models.Watch)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNWatch2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐWatch(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -5995,6 +6313,114 @@ func (ec *executionContext) _UserPreferences_weightUnit(ctx context.Context, fie
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalOString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Watch_id(ctx context.Context, field graphql.CollectedField, obj *models.Watch) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Watch",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Watch().ID(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Watch_owner(ctx context.Context, field graphql.CollectedField, obj *models.Watch) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Watch",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Watch().Owner(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*PublicProfile)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNPublicProfile2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPublicProfile(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Watch_location(ctx context.Context, field graphql.CollectedField, obj *models.Watch) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Watch",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Watch().Location(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*models.Location)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOLocation2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐLocation(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
@@ -7370,6 +7796,24 @@ func (ec *executionContext) unmarshalInputCreatePostInput(ctx context.Context, o
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputCreateWatchInput(ctx context.Context, obj interface{}) (watchInput, error) {
+	var it watchInput
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "location":
+			var err error
+			it.Location, err = ec.unmarshalOLocationInput2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐLocationInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputLocationInput(ctx context.Context, obj interface{}) (LocationInput, error) {
 	var it LocationInput
 	var asMap = obj.(map[string]interface{})
@@ -7421,6 +7865,24 @@ func (ec *executionContext) unmarshalInputRemoveOrganizationDomainInput(ctx cont
 		case "organizationID":
 			var err error
 			it.OrganizationID, err = ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputRemoveWatchInput(ctx context.Context, obj interface{}) (RemoveWatchInput, error) {
+	var it RemoveWatchInput
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "id":
+			var err error
+			it.ID, err = ec.unmarshalNID2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -7715,6 +8177,30 @@ func (ec *executionContext) unmarshalInputUpdateUserPreferencesInput(ctx context
 		case "weightUnit":
 			var err error
 			it.WeightUnit, err = ec.unmarshalOPreferredWeightUnit2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPreferredWeightUnit(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpdateWatchInput(ctx context.Context, obj interface{}) (watchInput, error) {
+	var it watchInput
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "id":
+			var err error
+			it.ID, err = ec.unmarshalNID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "location":
+			var err error
+			it.Location, err = ec.unmarshalOLocationInput2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐLocationInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -8138,6 +8624,21 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "setThreadLastViewedAt":
 			out.Values[i] = ec._Mutation_setThreadLastViewedAt(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "createWatch":
+			out.Values[i] = ec._Mutation_createWatch(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "updateWatch":
+			out.Values[i] = ec._Mutation_updateWatch(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "removeWatch":
+			out.Values[i] = ec._Mutation_removeWatch(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -8735,6 +9236,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				return res
 			})
+		case "myWatches":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_myWatches(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "__type":
 			out.Values[i] = ec._Query___type(ctx, field)
 		case "__schema":
@@ -9041,6 +9556,67 @@ func (ec *executionContext) _UserPreferences(ctx context.Context, sel ast.Select
 	return out
 }
 
+var watchImplementors = []string{"Watch"}
+
+func (ec *executionContext) _Watch(ctx context.Context, sel ast.SelectionSet, obj *models.Watch) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.RequestContext, sel, watchImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Watch")
+		case "id":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Watch_id(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "owner":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Watch_owner(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "location":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Watch_location(ctx, field, obj)
+				return res
+			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var __DirectiveImplementors = []string{"__Directive"}
 
 func (ec *executionContext) ___Directive(ctx context.Context, sel ast.SelectionSet, obj *introspection.Directive) graphql.Marshaler {
@@ -9318,6 +9894,10 @@ func (ec *executionContext) unmarshalNCreateOrganizationInput2githubᚗcomᚋsil
 
 func (ec *executionContext) unmarshalNCreatePostInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐpostInput(ctx context.Context, v interface{}) (postInput, error) {
 	return ec.unmarshalInputCreatePostInput(ctx, v)
+}
+
+func (ec *executionContext) unmarshalNCreateWatchInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐwatchInput(ctx context.Context, v interface{}) (watchInput, error) {
+	return ec.unmarshalInputCreateWatchInput(ctx, v)
 }
 
 func (ec *executionContext) marshalNFile2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐFile(ctx context.Context, sel ast.SelectionSet, v models.File) graphql.Marshaler {
@@ -9811,6 +10391,10 @@ func (ec *executionContext) unmarshalNRemoveOrganizationDomainInput2githubᚗcom
 	return ec.unmarshalInputRemoveOrganizationDomainInput(ctx, v)
 }
 
+func (ec *executionContext) unmarshalNRemoveWatchInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐRemoveWatchInput(ctx context.Context, v interface{}) (RemoveWatchInput, error) {
+	return ec.unmarshalInputRemoveWatchInput(ctx, v)
+}
+
 func (ec *executionContext) unmarshalNSetThreadLastViewedAtInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐSetThreadLastViewedAtInput(ctx context.Context, v interface{}) (SetThreadLastViewedAtInput, error) {
 	return ec.unmarshalInputSetThreadLastViewedAtInput(ctx, v)
 }
@@ -9950,6 +10534,10 @@ func (ec *executionContext) unmarshalNUpdateUserInput2githubᚗcomᚋsilinternat
 	return ec.unmarshalInputUpdateUserInput(ctx, v)
 }
 
+func (ec *executionContext) unmarshalNUpdateWatchInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐwatchInput(ctx context.Context, v interface{}) (watchInput, error) {
+	return ec.unmarshalInputUpdateWatchInput(ctx, v)
+}
+
 func (ec *executionContext) marshalNUser2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx context.Context, sel ast.SelectionSet, v models.User) graphql.Marshaler {
 	return ec._User(ctx, sel, &v)
 }
@@ -9999,6 +10587,57 @@ func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋsilinternationalᚋwe
 		return graphql.Null
 	}
 	return ec._User(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNWatch2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐWatch(ctx context.Context, sel ast.SelectionSet, v models.Watch) graphql.Marshaler {
+	return ec._Watch(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNWatch2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐWatch(ctx context.Context, sel ast.SelectionSet, v []models.Watch) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		rctx := &graphql.ResolverContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNWatch2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐWatch(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalNWatch2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐWatch(ctx context.Context, sel ast.SelectionSet, v *models.Watch) graphql.Marshaler {
+	if v == nil {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Watch(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
