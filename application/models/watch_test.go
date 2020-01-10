@@ -168,6 +168,8 @@ func (ms *ModelSuite) TestWatch_matchesPost() {
 
 	dest, err := posts[0].GetDestination()
 	ms.NoError(err)
+	dest.ID = 0
+	ms.NoError(dest.Create())
 	ms.NoError(watches[0].SetLocation(*dest))
 
 	ms.NoError(watches[1].SetLocation(Location{Country: "XX", Description: "-"}))
