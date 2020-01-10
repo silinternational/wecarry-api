@@ -161,3 +161,41 @@ func (ms *ModelSuite) TestWatch_GetSetLocation() {
 	ms.InDelta(newLoc.Latitude.Float64, got.Latitude.Float64, 0.0001, "latitude doesn't match")
 	ms.InDelta(newLoc.Longitude.Float64, got.Longitude.Float64, 0.0001, "longitude doesn't match")
 }
+
+func (ms *ModelSuite) TestWatch_matchesPost() {
+	posts := createPostFixtures(ms.DB, 1, 0, false)
+	watches := createWatchFixtures(ms.DB, createUserFixtures(ms.DB, 1).Users)
+
+	dest, err := posts[0].GetDestination()
+	ms.NoError(err)
+	dest.ID = 0
+	ms.NoError(dest.Create())
+	ms.NoError(watches[0].SetLocation(*dest))
+
+	ms.NoError(watches[1].SetLocation(Location{Country: "XX", Description: "-"}))
+
+	tests := []struct {
+		name  string
+		watch Watch
+		post  Post
+		want  bool
+	}{
+		{
+			name:  "match",
+			watch: watches[0],
+			post:  posts[0],
+			want:  true,
+		},
+		{
+			name:  "not match",
+			watch: watches[1],
+			post:  posts[0],
+			want:  false,
+		},
+	}
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			ms.Equal(tt.want, tt.watch.matchesPost(tt.post))
+		})
+	}
+}

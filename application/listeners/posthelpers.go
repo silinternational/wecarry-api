@@ -410,16 +410,35 @@ func sendNewPostNotification(user models.User, post models.Post) error {
 		models.PostTypeOffer.String():   domain.MessageTemplateNewOffer,
 	}
 
+	receiver, err := post.GetReceiver()
+	if err != nil {
+		return err
+	}
+	receiverNickname := ""
+	if receiver != nil {
+		receiverNickname = receiver.Nickname
+	}
+
+	postDestination := ""
+	if dest, err := post.GetDestination(); err == nil && dest != nil {
+		postDestination = dest.Description
+	}
+
 	msg := notifications.Message{
+		Subject: domain.GetTranslatedSubject(user.GetLanguagePreference(),
+			"Email.Subject.NewRequest", map[string]string{}),
 		Template:  newPostTemplates[post.Type.String()],
 		ToName:    user.GetRealName(),
 		ToEmail:   user.Email,
 		FromEmail: domain.Env.EmailFromAddress,
 		Data: map[string]interface{}{
-			"appName":   domain.Env.AppName,
-			"uiURL":     domain.Env.UIURL,
-			"postURL":   domain.GetPostUIURL(post.UUID.String()),
-			"postTitle": domain.Truncate(post.Title, "...", 16),
+			"appName":          domain.Env.AppName,
+			"uiURL":            domain.Env.UIURL,
+			"postURL":          domain.GetPostUIURL(post.UUID.String()),
+			"postTitle":        domain.Truncate(post.Title, "...", 16),
+			"receiverNickname": receiverNickname,
+			"postDescription":  post.Description,
+			"postDestination":  postDestination,
 		},
 	}
 	return notifications.Send(msg)
