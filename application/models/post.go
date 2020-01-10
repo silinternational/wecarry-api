@@ -79,21 +79,23 @@ func getStatusTransitions() map[PostStatus][]statusTransitionTarget {
 			{status: PostStatusCommitted},
 			{status: PostStatusRemoved},
 		},
-		PostStatusCommitted: { // These should never happen now - Posts will never stay on Committed
+		PostStatusCommitted: {
 			{status: PostStatusOpen, isBackStep: true},
 			{status: PostStatusAccepted},
 			{status: PostStatusDelivered},
 			{status: PostStatusRemoved},
 		},
 		PostStatusAccepted: {
-			{status: PostStatusOpen, isBackStep: true}, // to correct a false acceptance
+			{status: PostStatusOpen},
+			{status: PostStatusCommitted, isBackStep: true}, // to correct a false acceptance
 			{status: PostStatusDelivered},
 			{status: PostStatusReceived},  // This transition is in here for later, in case one day it's not skippable
 			{status: PostStatusCompleted}, // For now, `DELIVERED` is not a required step
 			{status: PostStatusRemoved},
 		},
 		PostStatusDelivered: {
-			{status: PostStatusAccepted, isBackStep: true}, // to correct a false delivery
+			{status: PostStatusCommitted, isBackStep: true}, // to correct a false acceptance
+			{status: PostStatusAccepted, isBackStep: true},  // to correct a false delivery
 			{status: PostStatusCompleted},
 		},
 		PostStatusReceived: {
@@ -415,7 +417,7 @@ func (p *Post) manageStatusTransition() error {
 	var pH PostHistory
 	if isBackStep {
 		// first try to find or recreate a request committer object
-		p.recreateRequestCommitter(p.Status)
+		p.backToCommitted(p.Status)
 		err = pH.popForPost(*p, lastStatus)
 	} else {
 		err = pH.createForPost(*p)
@@ -850,21 +852,24 @@ func (p *Post) Meeting() (*Meeting, error) {
 	return &meeting, nil
 }
 
-func (p *Post) recreateRequestCommitter(newStatus PostStatus) error {
-	if newStatus != PostStatusOpen {
+func (p *Post) backToCommitted(newStatus PostStatus) error {
+	if newStatus != PostStatusCommitted {
 		return nil
 	}
 
 	if !p.ProviderID.Valid {
-		return errors.New("may not recreate a request committer without a Provider ID")
+		return errors.New("may not move back to committed status without a Provider ID")
 	}
 
 	var reqCom RequestCommitter
 	if err := reqCom.FindByPostIDAndUserID(p.ID, p.ProviderID.Int); err != nil {
 		reqCom.PostID = p.ID
 		reqCom.UserID = p.ProviderID.Int
-		return reqCom.Create()
+		if err := reqCom.Create(); err != nil {
+			return errors.New("error moving back to committed status: " + err.Error())
+		}
 	}
 
-	return nil
+	p.ProviderID = nulls.Int{}
+	return p.Update()
 }

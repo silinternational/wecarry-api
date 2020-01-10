@@ -414,7 +414,6 @@ func (r *mutationResolver) UpdatePostStatus(ctx context.Context, input UpdatePos
 		if err := addCommitterToRequest(cUser, post, input); err != nil {
 			return nil, reportError(ctx, err, "UpdatePostStatus.AddCommitter", extras)
 		}
-		return &post, nil
 	}
 
 	if !cUser.CanUpdatePostStatus(post, input.Status) {
