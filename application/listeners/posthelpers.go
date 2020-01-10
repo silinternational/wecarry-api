@@ -66,7 +66,7 @@ func getMessageForProvider(postUsers postUsers, post models.Post, template strin
 		Data:      data,
 		ToName:    postUsers.Provider.Nickname,
 		ToEmail:   postUsers.Provider.Email,
-		FromEmail: domain.Env.EmailFromAddress,
+		FromEmail: domain.EmailFromAddress(nil),
 	}
 }
 
@@ -86,7 +86,7 @@ func getMessageForReceiver(postUsers postUsers, post models.Post, template strin
 		Data:      data,
 		ToName:    postUsers.Receiver.Nickname,
 		ToEmail:   postUsers.Receiver.Email,
-		FromEmail: domain.Env.EmailFromAddress,
+		FromEmail: domain.EmailFromAddress(nil),
 	}
 }
 
@@ -215,7 +215,7 @@ func sendNotificationRequestFromCommittedToOpen(params senderParams) {
 		Data:      data,
 		ToName:    postUsers.Receiver.Nickname,
 		ToEmail:   postUsers.Receiver.Email,
-		FromEmail: domain.Env.EmailFromAddress,
+		FromEmail: domain.EmailFromAddress(nil),
 		Subject: domain.GetTranslatedSubject(postUsers.Receiver.Language, params.subject,
 			map[string]string{postTitleKey: post.Title}),
 	}
@@ -430,7 +430,7 @@ func sendNewPostNotification(user models.User, post models.Post) error {
 		Template:  newPostTemplates[post.Type.String()],
 		ToName:    user.GetRealName(),
 		ToEmail:   user.Email,
-		FromEmail: domain.Env.EmailFromAddress,
+		FromEmail: domain.EmailFromAddress(nil),
 		Data: map[string]interface{}{
 			"appName":          domain.Env.AppName,
 			"uiURL":            domain.Env.UIURL,
