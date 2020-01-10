@@ -24,21 +24,7 @@ build:
           - govet-run
           - golint-run
           -
-            command: docker build -t wecarry -f Dockerfile-dev .
+            command: cd ..
           -
-            command: docker run --env GO_ENV=scrutinizer --env DOCKER_IP=$DOCKER_IP wecarry bash -c "buffalo-pop pop migrate up && buffalo test"
-      services:
-        postgres: 11.5
-        minio:
-          image: silintl/minio-default-server
-          ports:
-            - 9000
-          env:
-            MINIO_ACCESS_KEY: abc123
-            MINIO_SECRET_KEY: abcd1234
-          ramdisks:
-            - /data
-      commands:
-
-
+            command: docker-compose run test
   root_path: './application'
