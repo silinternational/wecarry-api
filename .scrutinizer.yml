@@ -11,6 +11,7 @@ build:
       AWS_S3_SECRET_ACCESS_KEY: abcd1234
       AWS_S3_DISABLE_SSL: true
       AWS_S3_BUCKET: wca-test-bucket
+      AWS_REGION: us-east-1
   nodes:
     analysis:
       project_setup:
