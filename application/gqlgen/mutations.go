@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/gobuffalo/nulls"
+
 	"github.com/silinternational/wecarry-api/models"
 )
 
@@ -27,6 +28,14 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input CreateO
 		Url:        models.ConvertStringPtrToNullsString(input.URL),
 		AuthType:   input.AuthType,
 		AuthConfig: input.AuthConfig,
+	}
+
+	if input.LogoFileID != nil {
+		var file models.File
+		if err := file.FindByUUID(*input.LogoFileID); err != nil {
+			return nil, reportError(ctx, err, "CreateOrganization.LogoFileNotFound")
+		}
+		org.LogoFileID = nulls.NewInt(file.ID)
 	}
 
 	if err := org.Save(); err != nil {
@@ -55,6 +64,14 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, input UpdateO
 
 	if input.URL != nil {
 		org.Url = nulls.NewString(*input.URL)
+	}
+
+	if input.LogoFileID != nil {
+		var file models.File
+		if err := file.FindByUUID(*input.LogoFileID); err != nil {
+			return nil, reportError(ctx, err, "UpdateOrganization.LogoFileNotFound")
+		}
+		org.LogoFileID = nulls.NewInt(file.ID)
 	}
 
 	org.Name = input.Name

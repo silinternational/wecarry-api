@@ -29,6 +29,7 @@ type Organization struct {
 	AuthType            string               `json:"auth_type" db:"auth_type"`
 	AuthConfig          string               `json:"auth_config" db:"auth_config"`
 	UUID                uuid.UUID            `json:"uuid" db:"uuid"`
+	LogoFileID          nulls.Int            `json:"logo_file_id" db:"logo_file_id"`
 	Users               Users                `many_to_many:"user_organizations" order_by:"nickname"`
 	OrganizationDomains []OrganizationDomain `has_many:"organization_domains" order_by:"domain asc"`
 }
@@ -192,4 +193,19 @@ func scopeUserAdminOrgs(cUser User) pop.ScopeFunc {
 		}
 		return q.Where("id IN (?)", s...)
 	}
+}
+
+// LogoURL retrieves the logo URL from the attached file
+func (o *Organization) LogoURL() (*string, error) {
+	if o.LogoFileID.Valid {
+		var file File
+		if err := DB.Find(&file, o.LogoFileID); err != nil {
+			return nil, fmt.Errorf("couldn't find org file %d, %s", o.LogoFileID.Int, err)
+		}
+		if err := file.refreshURL(); err != nil {
+			return nil, fmt.Errorf("error getting logo URL, %s", err)
+		}
+		return &file.URL, nil
+	}
+	return nil, nil
 }

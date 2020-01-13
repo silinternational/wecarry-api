@@ -115,6 +115,7 @@ type ComplexityRoot struct {
 		CreatedAt func(childComplexity int) int
 		Domains   func(childComplexity int) int
 		ID        func(childComplexity int) int
+		LogoURL   func(childComplexity int) int
 		Name      func(childComplexity int) int
 		URL       func(childComplexity int) int
 		UpdatedAt func(childComplexity int) int
@@ -260,6 +261,7 @@ type OrganizationResolver interface {
 	URL(ctx context.Context, obj *models.Organization) (*string, error)
 
 	Domains(ctx context.Context, obj *models.Organization) ([]models.OrganizationDomain, error)
+	LogoURL(ctx context.Context, obj *models.Organization) (*string, error)
 }
 type OrganizationDomainResolver interface {
 	OrganizationID(ctx context.Context, obj *models.OrganizationDomain) (string, error)
@@ -323,7 +325,6 @@ type UserResolver interface {
 	UnreadMessageCount(ctx context.Context, obj *models.User) (int, error)
 }
 type WatchResolver interface {
-	ID(ctx context.Context, obj *models.Watch) (string, error)
 	Owner(ctx context.Context, obj *models.Watch) (*PublicProfile, error)
 	Location(ctx context.Context, obj *models.Watch) (*models.Location, error)
 }
@@ -732,6 +733,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Organization.ID(childComplexity), true
+
+	case "Organization.logoURL":
+		if e.complexity.Organization.LogoURL == nil {
+			break
+		}
+
+		return e.complexity.Organization.LogoURL(childComplexity), true
 
 	case "Organization.name":
 		if e.complexity.Organization.Name == nil {
@@ -1495,6 +1503,7 @@ type Organization {
     createdAt: Time!
     updatedAt: Time!
     domains: [OrganizationDomain!]!
+    logoURL: String
 }
 
 input CreateOrganizationInput {
@@ -1502,6 +1511,7 @@ input CreateOrganizationInput {
     url: String
     authType: String!
     authConfig: String!
+    logoFileID: ID
 }
 
 input UpdateOrganizationInput {
@@ -1510,6 +1520,7 @@ input UpdateOrganizationInput {
     url: String
     authType: String!
     authConfig: String!
+    logoFileID: ID
 }
 
 type OrganizationDomain {
@@ -3880,6 +3891,40 @@ func (ec *executionContext) _Organization_domains(ctx context.Context, field gra
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNOrganizationDomain2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganizationDomain(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Organization_logoURL(ctx context.Context, field graphql.CollectedField, obj *models.Organization) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Organization",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Organization().LogoURL(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _OrganizationDomain_domain(ctx context.Context, field graphql.CollectedField, obj *models.OrganizationDomain) (ret graphql.Marshaler) {
@@ -6327,13 +6372,13 @@ func (ec *executionContext) _Watch_id(ctx context.Context, field graphql.Collect
 		Object:   "Watch",
 		Field:    field,
 		Args:     nil,
-		IsMethod: true,
+		IsMethod: false,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Watch().ID(rctx, obj)
+		return obj.ID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6345,10 +6390,10 @@ func (ec *executionContext) _Watch_id(ctx context.Context, field graphql.Collect
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(int)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNID2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Watch_owner(ctx context.Context, field graphql.CollectedField, obj *models.Watch) (ret graphql.Marshaler) {
@@ -7711,6 +7756,12 @@ func (ec *executionContext) unmarshalInputCreateOrganizationInput(ctx context.Co
 			if err != nil {
 				return it, err
 			}
+		case "logoFileID":
+			var err error
+			it.LogoFileID, err = ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		}
 	}
 
@@ -8008,6 +8059,12 @@ func (ec *executionContext) unmarshalInputUpdateOrganizationInput(ctx context.Co
 		case "authConfig":
 			var err error
 			it.AuthConfig, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "logoFileID":
+			var err error
+			it.LogoFileID, err = ec.unmarshalOID2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -8709,6 +8766,17 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
+				return res
+			})
+		case "logoURL":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Organization_logoURL(ctx, field, obj)
 				return res
 			})
 		default:
@@ -9561,19 +9629,10 @@ func (ec *executionContext) _Watch(ctx context.Context, sel ast.SelectionSet, ob
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Watch")
 		case "id":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Watch_id(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			})
+			out.Values[i] = ec._Watch_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "owner":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -9932,6 +9991,20 @@ func (ec *executionContext) marshalNFile2ᚕgithubᚗcomᚋsilinternationalᚋwe
 	}
 	wg.Wait()
 	return ret
+}
+
+func (ec *executionContext) unmarshalNID2int(ctx context.Context, v interface{}) (int, error) {
+	return graphql.UnmarshalIntID(v)
+}
+
+func (ec *executionContext) marshalNID2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
+	res := graphql.MarshalIntID(v)
+	if res == graphql.Null {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+	}
+	return res
 }
 
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {

@@ -228,7 +228,8 @@ CREATE TABLE public.organizations (
     auth_config jsonb NOT NULL,
     uuid uuid NOT NULL,
     created_at timestamp without time zone NOT NULL,
-    updated_at timestamp without time zone NOT NULL
+    updated_at timestamp without time zone NOT NULL,
+    logo_file_id integer
 );
 
 
@@ -947,6 +948,13 @@ CREATE UNIQUE INDEX organization_domains_domain_idx ON public.organization_domai
 
 
 --
+-- Name: organizations_logo_file_id_idx; Type: INDEX; Schema: public; Owner: wecarry
+--
+
+CREATE UNIQUE INDEX organizations_logo_file_id_idx ON public.organizations USING btree (logo_file_id);
+
+
+--
 -- Name: organizations_uuid_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
@@ -1147,6 +1155,14 @@ ALTER TABLE ONLY public.messages
 
 ALTER TABLE ONLY public.organization_domains
     ADD CONSTRAINT organization_domains_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id) ON DELETE CASCADE;
+
+
+--
+-- Name: organizations organizations_files_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.organizations
+    ADD CONSTRAINT organizations_files_id_fk FOREIGN KEY (logo_file_id) REFERENCES public.files(id) ON DELETE SET NULL;
 
 
 --
