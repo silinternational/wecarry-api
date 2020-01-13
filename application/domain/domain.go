@@ -306,6 +306,10 @@ func RollbarMiddleware(next buffalo.Handler) buffalo.Handler {
 			return next(c)
 		}
 
+		if Env.GoEnv == "test" {
+			return next(c)
+		}
+
 		client := rollbar.New(
 			Env.RollbarToken,
 			Env.GoEnv,
