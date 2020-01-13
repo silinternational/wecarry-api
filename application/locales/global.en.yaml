@@ -191,6 +191,10 @@
 - id: Email.Subject.Welcome
   translation: Welcome to {{.AppName}}
 
+# New Request subject
+- id: Email.Subject.NewRequest
+  translation: New Request on {{.AppName}}
+
 # Organization
 - id: GetOrganizationDomainOrganizationID
   translation: We had a problem finding the domain ID.
@@ -202,3 +206,31 @@
   translation: There was a problem viewing that organization
 - id: ListOrganizations.Error
   translation: There was a problem listing organizations
+
+# Watch
+- id: GetWatchCreator
+  translation: We had a problem finding the Watch creator
+- id: GetWatchLocation
+  translation: We had a problem finding the Watch location
+- id: MyWatches
+  translation: We had a problem getting a list of your Watches
+- id: CreateWatch
+  translation: We had a problem creating a new Watch
+- id: CreateWatch.SetLocation
+  translation: We had a problem setting the location for your new Watch
+- id: CreateWatch.ProcessInput
+  translation: We had a problem processing the information for your new Watch
+- id: UpdateWatch
+  translation: We had a problem updating your Watch
+- id: UpdateWatch.ProcessInput
+  translation: We had a problem processing the information to update your Watch
+- id: UpdateWatch.NotFound
+  translation: Watch not found
+- id: UpdateWatch.SetLocation
+  translation: We had a problem setting the location for your Watch
+- id: RemoveWatch
+  translation: We had a problem removing that Watch
+- id: RemoveWatch.NotFound
+  translation: We had a problem finding the Watch to be removed
+- id: RemoveWatch.FindByUser
+  translation: We had a problem getting a list of remaining Watches

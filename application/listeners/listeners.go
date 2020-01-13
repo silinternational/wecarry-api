@@ -198,7 +198,7 @@ func sendNewUserWelcome(user models.User) error {
 		Template:  domain.MessageTemplateNewUserWelcome,
 		ToName:    user.GetRealName(),
 		ToEmail:   user.Email,
-		FromEmail: domain.Env.EmailFromAddress,
+		FromEmail: domain.EmailFromAddress(nil),
 		Subject:   subject,
 		Data: map[string]interface{}{
 			"appName":      domain.Env.AppName,

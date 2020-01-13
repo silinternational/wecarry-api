@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gobuffalo/nulls"
+
 	"github.com/silinternational/wecarry-api/aws"
 	"github.com/silinternational/wecarry-api/domain"
 )
@@ -175,7 +176,7 @@ func CreateUserFixturesForNicknames(ms *ModelSuite, t *testing.T) User {
 		Email:     fmt.Sprintf("user1-%s@example.com", t.Name()),
 		FirstName: "Existing",
 		LastName:  "User",
-		Nickname:  prefix + "ExistingU",
+		Nickname:  prefix + " Existing U",
 		UUID:      domain.GetUUID(),
 	}
 
@@ -338,7 +339,7 @@ func CreateUserFixtures_GetThreads(ms *ModelSuite) UserPostFixtures {
 }
 
 func CreateFixturesForUserWantsPostNotification(ms *ModelSuite) UserPostFixtures {
-	uf := createUserFixtures(ms.DB, 2)
+	uf := createUserFixtures(ms.DB, 3)
 	org := uf.Organization
 	users := uf.Users
 
@@ -378,9 +379,7 @@ func CreateFixturesForUserWantsPostNotification(ms *ModelSuite) UserPostFixtures
 			Country:     "US",
 		},
 	}
-	for i := range postLocations {
-		createFixture(ms, &postLocations[i])
-	}
+	createFixture(ms, &postLocations)
 
 	posts := Posts{
 		{
@@ -411,6 +410,15 @@ func CreateFixturesForUserWantsPostNotification(ms *ModelSuite) UserPostFixtures
 		posts[i].DestinationID = postLocations[i].ID
 		createFixture(ms, &posts[i])
 	}
+
+	// user 2 has a watch for the location of post 4
+	watchLocation := postLocations[4]
+	watchLocation.ID = 0
+	createFixture(ms, &watchLocation)
+	createFixture(ms, &Watch{
+		OwnerID:    users[2].ID,
+		LocationID: nulls.NewInt(watchLocation.ID),
+	})
 
 	return UserPostFixtures{
 		Users: users,
