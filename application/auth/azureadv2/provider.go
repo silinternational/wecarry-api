@@ -8,9 +8,11 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/gobuffalo/buffalo"
 	"github.com/markbates/goth"
 	"golang.org/x/oauth2"
 
+	"github.com/silinternational/wecarry-api/auth"
 	"github.com/silinternational/wecarry-api/domain"
 )
 
@@ -20,6 +22,8 @@ const (
 	tokenURLTemplate string = "https://login.microsoftonline.com/%s/oauth2/v2.0/token"
 	graphAPIResource string = "https://graph.microsoft.com/v1.0/"
 )
+
+const ProviderName = "azureadv2"
 
 type (
 	// TenantType are the well known tenant types to scope the users that can authenticate. TenantType is not an
@@ -73,10 +77,8 @@ func New(jsonConfig json.RawMessage) (*Provider, error) {
 		return &Provider{}, err
 	}
 
-	scopes := []ScopeType{"profile", "email"}
 	opts := ProviderOptions{
-		Scopes: scopes,
-		Tenant: "",
+		Tenant: TenantType(domain.Env.AzureADTenant),
 	}
 
 	p := &Provider{
@@ -247,4 +249,117 @@ func scopesToStrings(scopes ...ScopeType) []string {
 		strs[i] = string(scopes[i])
 	}
 	return strs
+}
+
+func (p *Provider) AuthCallback(c buffalo.Context) auth.Response {
+	res := c.Response()
+	req := c.Request()
+
+	resp := auth.Response{}
+
+	defer auth.Logout(res, req)
+
+	msg := auth.CheckSessionStore()
+	if msg != "" {
+		domain.Logger.Printf("got message from Google's CheckSessionStore() in AuthCallback ... %s", msg)
+		fmt.Println("google_provider: " + msg)
+	}
+
+	value, err := auth.GetFromSession(ProviderName, req)
+	if err != nil {
+		resp.Error = err
+		return resp
+	}
+
+	sess, err := p.UnmarshalSession(value)
+	if err != nil {
+		resp.Error = err
+		return resp
+	}
+
+	err = auth.ValidateState(req, sess)
+	if err != nil {
+		resp.Error = err
+		return resp
+	}
+
+	user, err := p.FetchUser(sess)
+	if err == nil {
+		authUser := auth.User{
+			FirstName: user.FirstName,
+			LastName:  user.LastName,
+			Email:     user.Email,
+			UserID:    user.UserID,
+			Nickname:  user.NickName,
+		}
+
+		resp.AuthUser = &authUser
+
+		// user can be found with existing session data
+		return resp
+	}
+
+	// get new token and retry fetch
+	_, err = sess.Authorize(p, req.URL.Query())
+	if err != nil {
+		resp.Error = err
+		return resp
+	}
+
+	err = auth.StoreInSession(ProviderName, sess.Marshal(), req, res)
+
+	if err != nil {
+		resp.Error = err
+		return resp
+	}
+
+	var gu goth.User
+	if gu, err = p.FetchUser(sess); err != nil {
+		resp.Error = err
+		return resp
+	}
+
+	authUser := auth.User{
+		FirstName: gu.FirstName,
+		LastName:  gu.LastName,
+		Email:     gu.Email,
+		UserID:    gu.UserID,
+		Nickname:  gu.NickName,
+		PhotoURL:  gu.AvatarURL,
+	}
+
+	resp.AuthUser = &authUser
+	return resp
+}
+
+func (p *Provider) AuthRequest(c buffalo.Context) (string, error) {
+
+	req := c.Request()
+
+	sess, err := p.BeginAuth(auth.SetState(req))
+	if err != nil {
+		return "", err
+	}
+
+	url, err := sess.GetAuthURL()
+	if err != nil {
+		return "", err
+	}
+
+	err = auth.StoreInSession(ProviderName, sess.Marshal(), req, c.Response())
+
+	if err != nil {
+		return "", err
+	}
+
+	return url, err
+}
+
+func (p *Provider) Logout(c buffalo.Context) auth.Response {
+	resp := auth.Response{}
+	err := auth.Logout(c.Response(), c.Request())
+	if err != nil {
+		resp.Error = err
+	}
+	return resp
 }
