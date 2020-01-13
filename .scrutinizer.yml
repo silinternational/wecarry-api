@@ -4,7 +4,7 @@ build:
   environment:
     go: go1.13.5
     variables:
-      GO_ENV: scrutinizer
+      GO_ENV: test
       EMAIL_SERVICE: dummy
       AWS_S3_ENDPOINT: http://localhost:9000
       AWS_S3_ACCESS_KEY_ID: abc123
