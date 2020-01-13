@@ -18,17 +18,29 @@ build:
           AWS_S3_DISABLE_SSL: true
           AWS_S3_BUCKET: wca-test-bucket
         docker: true
+      services:
+        postgres: 11.5
+        minio:
+          image: silintl/minio-default-server
+          ports:
+            - 9000
+          env:
+            MINIO_ACCESS_KEY: abc123
+            MINIO_SECRET_KEY: abcd1234
+          ramdisks:
+            - /data
       tests:
         override:
           - go-scrutinizer-run
           - govet-run
           - golint-run
-          -
-            command: cd ..
-          -
-            command: touch .env
-          -
-            command: docker-compose run test
+      coverage:
+        tests:
+          override:
+            - command: ./scrutinizer-test.sh
+              coverage:
+                file: 'cover.out'
+                format: 'go-cc'
   root_path: './application'
 filter:
   excluded_paths:
