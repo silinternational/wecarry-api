@@ -309,7 +309,7 @@ func authCallback(c buffalo.Context) error {
 	}
 
 	if err = events.Emit(e); err != nil {
-		domain.ErrLogger.Printf("error emitting event %s ... %v", e.Kind, err)
+		domain.Error(c, fmt.Sprintf("error emitting event %s ... %v", e.Kind, err))
 	}
 
 	return c.Redirect(302, getLoginSuccessRedirectURL(authUser, returnTo))
@@ -408,13 +408,15 @@ func setCurrentUser(next buffalo.Handler) buffalo.Handler {
 		var userAccessToken models.UserAccessToken
 		err := userAccessToken.FindByBearerToken(bearerToken)
 		if err != nil {
-			domain.ErrLogger.Print(err.Error())
+			if domain.IsOtherThanNoRows(err) {
+				domain.Error(c, err.Error())
+			}
 			return c.Error(http.StatusUnauthorized, errors.New("invalid bearer token"))
 		}
 
 		isExpired, err := userAccessToken.DeleteIfExpired()
 		if err != nil {
-			domain.ErrLogger.Print(err.Error())
+			domain.Error(c, err.Error())
 		}
 
 		if isExpired {

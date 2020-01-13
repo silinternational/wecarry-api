@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -28,7 +29,7 @@ type UploadResponse struct {
 func uploadHandler(c buffalo.Context) error {
 	f, err := c.File(fileFieldName)
 	if err != nil {
-		domain.ErrLogger.Printf("error getting uploaded file from context ... %v", err)
+		domain.Error(c, fmt.Sprintf("error getting uploaded file from context ... %v", err))
 		return c.Render(http.StatusInternalServerError, render.JSON(UploadResponse{
 			Error: &domain.AppError{
 				Code: http.StatusInternalServerError,
@@ -38,7 +39,7 @@ func uploadHandler(c buffalo.Context) error {
 	}
 
 	if f.Size > int64(domain.MaxFileSize) {
-		domain.ErrLogger.Printf("file upload size (%v) greater than max file size (%v)", f.Size, domain.MaxFileSize)
+		domain.Error(c, fmt.Sprintf("file upload size (%v) greater than max (%v)", f.Size, domain.MaxFileSize))
 		return c.Render(http.StatusBadRequest, render.JSON(domain.AppError{
 			Code: http.StatusBadRequest,
 			Key:  domain.ErrorStoreFileTooLarge,
@@ -47,7 +48,7 @@ func uploadHandler(c buffalo.Context) error {
 
 	content, err := ioutil.ReadAll(f)
 	if err != nil {
-		domain.ErrLogger.Printf("error reading uploaded file ... %v", err)
+		domain.Error(c, fmt.Sprintf("error reading uploaded file ... %v", err))
 		return c.Render(http.StatusInternalServerError, render.JSON(UploadResponse{
 			Error: &domain.AppError{
 				Code: http.StatusInternalServerError,
@@ -58,7 +59,7 @@ func uploadHandler(c buffalo.Context) error {
 
 	var fileObject models.File
 	if fErr := fileObject.Store(f.Filename, content); fErr != nil {
-		domain.ErrLogger.Printf("error storing uploaded file ... %v", fErr)
+		domain.Error(c, fmt.Sprintf("error storing uploaded file ... %v", fErr))
 		return c.Render(fErr.HttpStatus, render.JSON(domain.AppError{
 			Code: fErr.HttpStatus,
 			Key:  fErr.ErrorCode,
