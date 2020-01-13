@@ -19,5 +19,6 @@ tar -xvzf buffalo_0.15.3_Linux_x86_64.tar.gz
 chmod a+x buffalo
 
 # migrate db and run tests
+export GO_ENV=scrutinizer
 buffalo-pop pop migrate up
 ./buffalo test -coverprofile=coverage.out ./...
