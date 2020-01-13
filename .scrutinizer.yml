@@ -32,7 +32,7 @@ build:
   root_path: './application'
 filter:
   excluded_paths:
-    - *_test.go
-    - *_fixtures_test.go
-    - gqlgen/generated.go
-    - gqlgen/models_gen.go
+    - "*_test.go"
+    - "*_fixtures_test.go"
+    - "gqlgen/generated.go"
+    - "gqlgen/models_gen.go"
