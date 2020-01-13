@@ -21,18 +21,18 @@ build:
           - go-scrutinizer-run
           - govet-run
           - golint-run
-    services:
-      postgres: 11.5
-      minio:
-        image: silintl/minio-default-server
-        ports:
-          - 9000
-        env:
-          MINIO_ACCESS_KEY: abc123
-          MINIO_SECRET_KEY: abcd1234
-        ramdisks:
-          - /data
     coverage:
+      services:
+        postgres: 11.5
+        minio:
+          image: silintl/minio-default-server
+          ports:
+            - 9000
+          env:
+            MINIO_ACCESS_KEY: abc123
+            MINIO_SECRET_KEY: abcd1234
+          ramdisks:
+            - /data
       tests:
         override:
           - command: ./scrutinizer-test.sh
