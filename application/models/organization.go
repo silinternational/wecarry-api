@@ -13,12 +13,14 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/silinternational/wecarry-api/auth"
+	"github.com/silinternational/wecarry-api/auth/azureadv2"
 	"github.com/silinternational/wecarry-api/auth/google"
 	"github.com/silinternational/wecarry-api/auth/saml"
 )
 
 const AuthTypeSaml = "saml"
 const AuthTypeGoogle = "google"
+const AuthTypeAzureAD = "azureadv2"
 
 type Organization struct {
 	ID                  int                  `json:"id" db:"id"`
@@ -68,6 +70,10 @@ func (o *Organization) GetAuthProvider() (auth.Provider, error) {
 
 	if o.AuthType == AuthTypeGoogle {
 		return google.New([]byte(o.AuthConfig))
+	}
+
+	if o.AuthType == AuthTypeAzureAD {
+		return azureadv2.New([]byte(o.AuthConfig))
 	}
 
 	return &auth.EmptyProvider{}, fmt.Errorf("unsupported auth provider type: %s", o.AuthType)
