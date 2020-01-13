@@ -1,18 +1,17 @@
 checks:
   go: true
 build:
+  environment:
+    go: go1.13.5
+    variables:
+      GO_ENV: scrutinizer
+      EMAIL_SERVICE: dummy
+      AWS_S3_ENDPOINT: http://localhost:9000
+      AWS_S3_ACCESS_KEY_ID: abc123
+      AWS_S3_SECRET_ACCESS_KEY: abcd1234
+      AWS_S3_DISABLE_SSL: true
+      AWS_S3_BUCKET: wca-test-bucket
   nodes:
-    environment:
-      go:
-        version: go1.13.5
-      variables:
-        GO_ENV: scrutinizer
-        EMAIL_SERVICE: dummy
-        AWS_S3_ENDPOINT: http://localhost:9000
-        AWS_S3_ACCESS_KEY_ID: abc123
-        AWS_S3_SECRET_ACCESS_KEY: abcd1234
-        AWS_S3_DISABLE_SSL: true
-        AWS_S3_BUCKET: wca-test-bucket
     analysis:
       project_setup:
         override:
