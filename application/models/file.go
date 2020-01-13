@@ -1,8 +1,13 @@
 package models
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"image"
+	_ "image/gif" // enable decoding of GIF images
+	"image/jpeg"  // decode/encode JPEG images
+	_ "image/png" // enable decoding of PNG images
 	"net/http"
 	"time"
 
@@ -10,6 +15,8 @@ import (
 	"github.com/gobuffalo/validate"
 	"github.com/gobuffalo/validate/validators"
 	"github.com/gofrs/uuid"
+	_ "golang.org/x/image/webp" // enable decoding of WEBP images
+
 	"github.com/silinternational/wecarry-api/aws"
 	"github.com/silinternational/wecarry-api/domain"
 )
@@ -90,6 +97,17 @@ func (f *File) Store(name string, content []byte) *FileUploadError {
 			Message:    err.Error(),
 		}
 		return &e
+	}
+
+	// if possible, re-encode the image to strip EXIF metadata
+	img, _, err := image.Decode(bytes.NewReader(content))
+	if err == nil {
+		buf := new(bytes.Buffer)
+		if err := jpeg.Encode(buf, img, nil); err == nil {
+			content = buf.Bytes()
+			contentType = "image/jpg"
+			name = name + ".jpeg"
+		}
 	}
 
 	url, err := aws.StoreFile(fileUUID.String(), contentType, content)
