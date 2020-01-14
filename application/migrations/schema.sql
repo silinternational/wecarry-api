@@ -19,7 +19,7 @@ SET row_security = off;
 SET default_tablespace = '';
 
 --
--- Name: files; Type: TABLE; Schema: public; Owner: scrutinizer
+-- Name: files; Type: TABLE; Schema: public; Owner: wecarry
 --
 
 CREATE TABLE public.files (
@@ -35,10 +35,10 @@ CREATE TABLE public.files (
 );
 
 
-ALTER TABLE public.files OWNER TO scrutinizer;
+ALTER TABLE public.files OWNER TO wecarry;
 
 --
--- Name: files_id_seq; Type: SEQUENCE; Schema: public; Owner: scrutinizer
+-- Name: files_id_seq; Type: SEQUENCE; Schema: public; Owner: wecarry
 --
 
 CREATE SEQUENCE public.files_id_seq
@@ -50,17 +50,17 @@ CREATE SEQUENCE public.files_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.files_id_seq OWNER TO scrutinizer;
+ALTER TABLE public.files_id_seq OWNER TO wecarry;
 
 --
--- Name: files_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: scrutinizer
+-- Name: files_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wecarry
 --
 
 ALTER SEQUENCE public.files_id_seq OWNED BY public.files.id;
 
 
 --
--- Name: locations; Type: TABLE; Schema: public; Owner: scrutinizer
+-- Name: locations; Type: TABLE; Schema: public; Owner: wecarry
 --
 
 CREATE TABLE public.locations (
@@ -72,10 +72,10 @@ CREATE TABLE public.locations (
 );
 
 
-ALTER TABLE public.locations OWNER TO scrutinizer;
+ALTER TABLE public.locations OWNER TO wecarry;
 
 --
--- Name: locations_id_seq; Type: SEQUENCE; Schema: public; Owner: scrutinizer
+-- Name: locations_id_seq; Type: SEQUENCE; Schema: public; Owner: wecarry
 --
 
 CREATE SEQUENCE public.locations_id_seq
@@ -87,17 +87,17 @@ CREATE SEQUENCE public.locations_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.locations_id_seq OWNER TO scrutinizer;
+ALTER TABLE public.locations_id_seq OWNER TO wecarry;
 
 --
--- Name: locations_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: scrutinizer
+-- Name: locations_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wecarry
 --
 
 ALTER SEQUENCE public.locations_id_seq OWNED BY public.locations.id;
 
 
 --
--- Name: meetings; Type: TABLE; Schema: public; Owner: scrutinizer
+-- Name: meetings; Type: TABLE; Schema: public; Owner: wecarry
 --
 
 CREATE TABLE public.meetings (
@@ -116,10 +116,10 @@ CREATE TABLE public.meetings (
 );
 
 
-ALTER TABLE public.meetings OWNER TO scrutinizer;
+ALTER TABLE public.meetings OWNER TO wecarry;
 
 --
--- Name: meetings_id_seq; Type: SEQUENCE; Schema: public; Owner: scrutinizer
+-- Name: meetings_id_seq; Type: SEQUENCE; Schema: public; Owner: wecarry
 --
 
 CREATE SEQUENCE public.meetings_id_seq
@@ -131,17 +131,17 @@ CREATE SEQUENCE public.meetings_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.meetings_id_seq OWNER TO scrutinizer;
+ALTER TABLE public.meetings_id_seq OWNER TO wecarry;
 
 --
--- Name: meetings_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: scrutinizer
+-- Name: meetings_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wecarry
 --
 
 ALTER SEQUENCE public.meetings_id_seq OWNED BY public.meetings.id;
 
 
 --
--- Name: messages; Type: TABLE; Schema: public; Owner: scrutinizer
+-- Name: messages; Type: TABLE; Schema: public; Owner: wecarry
 --
 
 CREATE TABLE public.messages (
@@ -155,10 +155,10 @@ CREATE TABLE public.messages (
 );
 
 
-ALTER TABLE public.messages OWNER TO scrutinizer;
+ALTER TABLE public.messages OWNER TO wecarry;
 
 --
--- Name: messages_id_seq; Type: SEQUENCE; Schema: public; Owner: scrutinizer
+-- Name: messages_id_seq; Type: SEQUENCE; Schema: public; Owner: wecarry
 --
 
 CREATE SEQUENCE public.messages_id_seq
@@ -170,17 +170,17 @@ CREATE SEQUENCE public.messages_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.messages_id_seq OWNER TO scrutinizer;
+ALTER TABLE public.messages_id_seq OWNER TO wecarry;
 
 --
--- Name: messages_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: scrutinizer
+-- Name: messages_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wecarry
 --
 
 ALTER SEQUENCE public.messages_id_seq OWNED BY public.messages.id;
 
 
 --
--- Name: organization_domains; Type: TABLE; Schema: public; Owner: scrutinizer
+-- Name: organization_domains; Type: TABLE; Schema: public; Owner: wecarry
 --
 
 CREATE TABLE public.organization_domains (
@@ -192,10 +192,10 @@ CREATE TABLE public.organization_domains (
 );
 
 
-ALTER TABLE public.organization_domains OWNER TO scrutinizer;
+ALTER TABLE public.organization_domains OWNER TO wecarry;
 
 --
--- Name: organization_domains_id_seq; Type: SEQUENCE; Schema: public; Owner: scrutinizer
+-- Name: organization_domains_id_seq; Type: SEQUENCE; Schema: public; Owner: wecarry
 --
 
 CREATE SEQUENCE public.organization_domains_id_seq
@@ -207,17 +207,17 @@ CREATE SEQUENCE public.organization_domains_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.organization_domains_id_seq OWNER TO scrutinizer;
+ALTER TABLE public.organization_domains_id_seq OWNER TO wecarry;
 
 --
--- Name: organization_domains_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: scrutinizer
+-- Name: organization_domains_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wecarry
 --
 
 ALTER SEQUENCE public.organization_domains_id_seq OWNED BY public.organization_domains.id;
 
 
 --
--- Name: organizations; Type: TABLE; Schema: public; Owner: scrutinizer
+-- Name: organizations; Type: TABLE; Schema: public; Owner: wecarry
 --
 
 CREATE TABLE public.organizations (
@@ -233,10 +233,10 @@ CREATE TABLE public.organizations (
 );
 
 
-ALTER TABLE public.organizations OWNER TO scrutinizer;
+ALTER TABLE public.organizations OWNER TO wecarry;
 
 --
--- Name: organizations_id_seq; Type: SEQUENCE; Schema: public; Owner: scrutinizer
+-- Name: organizations_id_seq; Type: SEQUENCE; Schema: public; Owner: wecarry
 --
 
 CREATE SEQUENCE public.organizations_id_seq
@@ -248,17 +248,17 @@ CREATE SEQUENCE public.organizations_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.organizations_id_seq OWNER TO scrutinizer;
+ALTER TABLE public.organizations_id_seq OWNER TO wecarry;
 
 --
--- Name: organizations_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: scrutinizer
+-- Name: organizations_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wecarry
 --
 
 ALTER SEQUENCE public.organizations_id_seq OWNED BY public.organizations.id;
 
 
 --
--- Name: post_files; Type: TABLE; Schema: public; Owner: scrutinizer
+-- Name: post_files; Type: TABLE; Schema: public; Owner: wecarry
 --
 
 CREATE TABLE public.post_files (
@@ -270,10 +270,10 @@ CREATE TABLE public.post_files (
 );
 
 
-ALTER TABLE public.post_files OWNER TO scrutinizer;
+ALTER TABLE public.post_files OWNER TO wecarry;
 
 --
--- Name: post_files_id_seq; Type: SEQUENCE; Schema: public; Owner: scrutinizer
+-- Name: post_files_id_seq; Type: SEQUENCE; Schema: public; Owner: wecarry
 --
 
 CREATE SEQUENCE public.post_files_id_seq
@@ -285,17 +285,17 @@ CREATE SEQUENCE public.post_files_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.post_files_id_seq OWNER TO scrutinizer;
+ALTER TABLE public.post_files_id_seq OWNER TO wecarry;
 
 --
--- Name: post_files_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: scrutinizer
+-- Name: post_files_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wecarry
 --
 
 ALTER SEQUENCE public.post_files_id_seq OWNED BY public.post_files.id;
 
 
 --
--- Name: post_histories; Type: TABLE; Schema: public; Owner: scrutinizer
+-- Name: post_histories; Type: TABLE; Schema: public; Owner: wecarry
 --
 
 CREATE TABLE public.post_histories (
@@ -309,10 +309,10 @@ CREATE TABLE public.post_histories (
 );
 
 
-ALTER TABLE public.post_histories OWNER TO scrutinizer;
+ALTER TABLE public.post_histories OWNER TO wecarry;
 
 --
--- Name: post_histories_id_seq; Type: SEQUENCE; Schema: public; Owner: scrutinizer
+-- Name: post_histories_id_seq; Type: SEQUENCE; Schema: public; Owner: wecarry
 --
 
 CREATE SEQUENCE public.post_histories_id_seq
@@ -324,17 +324,17 @@ CREATE SEQUENCE public.post_histories_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.post_histories_id_seq OWNER TO scrutinizer;
+ALTER TABLE public.post_histories_id_seq OWNER TO wecarry;
 
 --
--- Name: post_histories_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: scrutinizer
+-- Name: post_histories_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wecarry
 --
 
 ALTER SEQUENCE public.post_histories_id_seq OWNED BY public.post_histories.id;
 
 
 --
--- Name: posts; Type: TABLE; Schema: public; Owner: scrutinizer
+-- Name: posts; Type: TABLE; Schema: public; Owner: wecarry
 --
 
 CREATE TABLE public.posts (
@@ -360,10 +360,10 @@ CREATE TABLE public.posts (
 );
 
 
-ALTER TABLE public.posts OWNER TO scrutinizer;
+ALTER TABLE public.posts OWNER TO wecarry;
 
 --
--- Name: posts_id_seq; Type: SEQUENCE; Schema: public; Owner: scrutinizer
+-- Name: posts_id_seq; Type: SEQUENCE; Schema: public; Owner: wecarry
 --
 
 CREATE SEQUENCE public.posts_id_seq
@@ -375,17 +375,54 @@ CREATE SEQUENCE public.posts_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.posts_id_seq OWNER TO scrutinizer;
+ALTER TABLE public.posts_id_seq OWNER TO wecarry;
 
 --
--- Name: posts_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: scrutinizer
+-- Name: posts_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wecarry
 --
 
 ALTER SEQUENCE public.posts_id_seq OWNED BY public.posts.id;
 
 
 --
--- Name: schema_migration; Type: TABLE; Schema: public; Owner: scrutinizer
+-- Name: request_committers; Type: TABLE; Schema: public; Owner: wecarry
+--
+
+CREATE TABLE public.request_committers (
+    id integer NOT NULL,
+    post_id integer NOT NULL,
+    user_id integer NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.request_committers OWNER TO wecarry;
+
+--
+-- Name: request_committers_id_seq; Type: SEQUENCE; Schema: public; Owner: wecarry
+--
+
+CREATE SEQUENCE public.request_committers_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.request_committers_id_seq OWNER TO wecarry;
+
+--
+-- Name: request_committers_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wecarry
+--
+
+ALTER SEQUENCE public.request_committers_id_seq OWNED BY public.request_committers.id;
+
+
+--
+-- Name: schema_migration; Type: TABLE; Schema: public; Owner: wecarry
 --
 
 CREATE TABLE public.schema_migration (
@@ -393,10 +430,10 @@ CREATE TABLE public.schema_migration (
 );
 
 
-ALTER TABLE public.schema_migration OWNER TO scrutinizer;
+ALTER TABLE public.schema_migration OWNER TO wecarry;
 
 --
--- Name: thread_participants; Type: TABLE; Schema: public; Owner: scrutinizer
+-- Name: thread_participants; Type: TABLE; Schema: public; Owner: wecarry
 --
 
 CREATE TABLE public.thread_participants (
@@ -410,10 +447,10 @@ CREATE TABLE public.thread_participants (
 );
 
 
-ALTER TABLE public.thread_participants OWNER TO scrutinizer;
+ALTER TABLE public.thread_participants OWNER TO wecarry;
 
 --
--- Name: thread_participants_id_seq; Type: SEQUENCE; Schema: public; Owner: scrutinizer
+-- Name: thread_participants_id_seq; Type: SEQUENCE; Schema: public; Owner: wecarry
 --
 
 CREATE SEQUENCE public.thread_participants_id_seq
@@ -425,17 +462,17 @@ CREATE SEQUENCE public.thread_participants_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.thread_participants_id_seq OWNER TO scrutinizer;
+ALTER TABLE public.thread_participants_id_seq OWNER TO wecarry;
 
 --
--- Name: thread_participants_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: scrutinizer
+-- Name: thread_participants_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wecarry
 --
 
 ALTER SEQUENCE public.thread_participants_id_seq OWNED BY public.thread_participants.id;
 
 
 --
--- Name: threads; Type: TABLE; Schema: public; Owner: scrutinizer
+-- Name: threads; Type: TABLE; Schema: public; Owner: wecarry
 --
 
 CREATE TABLE public.threads (
@@ -447,10 +484,10 @@ CREATE TABLE public.threads (
 );
 
 
-ALTER TABLE public.threads OWNER TO scrutinizer;
+ALTER TABLE public.threads OWNER TO wecarry;
 
 --
--- Name: threads_id_seq; Type: SEQUENCE; Schema: public; Owner: scrutinizer
+-- Name: threads_id_seq; Type: SEQUENCE; Schema: public; Owner: wecarry
 --
 
 CREATE SEQUENCE public.threads_id_seq
@@ -462,17 +499,17 @@ CREATE SEQUENCE public.threads_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.threads_id_seq OWNER TO scrutinizer;
+ALTER TABLE public.threads_id_seq OWNER TO wecarry;
 
 --
--- Name: threads_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: scrutinizer
+-- Name: threads_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wecarry
 --
 
 ALTER SEQUENCE public.threads_id_seq OWNED BY public.threads.id;
 
 
 --
--- Name: user_access_tokens; Type: TABLE; Schema: public; Owner: scrutinizer
+-- Name: user_access_tokens; Type: TABLE; Schema: public; Owner: wecarry
 --
 
 CREATE TABLE public.user_access_tokens (
@@ -486,10 +523,10 @@ CREATE TABLE public.user_access_tokens (
 );
 
 
-ALTER TABLE public.user_access_tokens OWNER TO scrutinizer;
+ALTER TABLE public.user_access_tokens OWNER TO wecarry;
 
 --
--- Name: user_access_tokens_id_seq; Type: SEQUENCE; Schema: public; Owner: scrutinizer
+-- Name: user_access_tokens_id_seq; Type: SEQUENCE; Schema: public; Owner: wecarry
 --
 
 CREATE SEQUENCE public.user_access_tokens_id_seq
@@ -501,17 +538,17 @@ CREATE SEQUENCE public.user_access_tokens_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.user_access_tokens_id_seq OWNER TO scrutinizer;
+ALTER TABLE public.user_access_tokens_id_seq OWNER TO wecarry;
 
 --
--- Name: user_access_tokens_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: scrutinizer
+-- Name: user_access_tokens_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wecarry
 --
 
 ALTER SEQUENCE public.user_access_tokens_id_seq OWNED BY public.user_access_tokens.id;
 
 
 --
--- Name: user_organizations; Type: TABLE; Schema: public; Owner: scrutinizer
+-- Name: user_organizations; Type: TABLE; Schema: public; Owner: wecarry
 --
 
 CREATE TABLE public.user_organizations (
@@ -527,10 +564,10 @@ CREATE TABLE public.user_organizations (
 );
 
 
-ALTER TABLE public.user_organizations OWNER TO scrutinizer;
+ALTER TABLE public.user_organizations OWNER TO wecarry;
 
 --
--- Name: user_organizations_id_seq; Type: SEQUENCE; Schema: public; Owner: scrutinizer
+-- Name: user_organizations_id_seq; Type: SEQUENCE; Schema: public; Owner: wecarry
 --
 
 CREATE SEQUENCE public.user_organizations_id_seq
@@ -542,17 +579,17 @@ CREATE SEQUENCE public.user_organizations_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.user_organizations_id_seq OWNER TO scrutinizer;
+ALTER TABLE public.user_organizations_id_seq OWNER TO wecarry;
 
 --
--- Name: user_organizations_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: scrutinizer
+-- Name: user_organizations_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wecarry
 --
 
 ALTER SEQUENCE public.user_organizations_id_seq OWNED BY public.user_organizations.id;
 
 
 --
--- Name: user_preferences; Type: TABLE; Schema: public; Owner: scrutinizer
+-- Name: user_preferences; Type: TABLE; Schema: public; Owner: wecarry
 --
 
 CREATE TABLE public.user_preferences (
@@ -566,10 +603,10 @@ CREATE TABLE public.user_preferences (
 );
 
 
-ALTER TABLE public.user_preferences OWNER TO scrutinizer;
+ALTER TABLE public.user_preferences OWNER TO wecarry;
 
 --
--- Name: user_preferences_id_seq; Type: SEQUENCE; Schema: public; Owner: scrutinizer
+-- Name: user_preferences_id_seq; Type: SEQUENCE; Schema: public; Owner: wecarry
 --
 
 CREATE SEQUENCE public.user_preferences_id_seq
@@ -581,17 +618,17 @@ CREATE SEQUENCE public.user_preferences_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.user_preferences_id_seq OWNER TO scrutinizer;
+ALTER TABLE public.user_preferences_id_seq OWNER TO wecarry;
 
 --
--- Name: user_preferences_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: scrutinizer
+-- Name: user_preferences_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wecarry
 --
 
 ALTER SEQUENCE public.user_preferences_id_seq OWNED BY public.user_preferences.id;
 
 
 --
--- Name: users; Type: TABLE; Schema: public; Owner: scrutinizer
+-- Name: users; Type: TABLE; Schema: public; Owner: wecarry
 --
 
 CREATE TABLE public.users (
@@ -610,10 +647,10 @@ CREATE TABLE public.users (
 );
 
 
-ALTER TABLE public.users OWNER TO scrutinizer;
+ALTER TABLE public.users OWNER TO wecarry;
 
 --
--- Name: users_id_seq; Type: SEQUENCE; Schema: public; Owner: scrutinizer
+-- Name: users_id_seq; Type: SEQUENCE; Schema: public; Owner: wecarry
 --
 
 CREATE SEQUENCE public.users_id_seq
@@ -625,17 +662,17 @@ CREATE SEQUENCE public.users_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.users_id_seq OWNER TO scrutinizer;
+ALTER TABLE public.users_id_seq OWNER TO wecarry;
 
 --
--- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: scrutinizer
+-- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wecarry
 --
 
 ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
 
 
 --
--- Name: watches; Type: TABLE; Schema: public; Owner: scrutinizer
+-- Name: watches; Type: TABLE; Schema: public; Owner: wecarry
 --
 
 CREATE TABLE public.watches (
@@ -648,10 +685,10 @@ CREATE TABLE public.watches (
 );
 
 
-ALTER TABLE public.watches OWNER TO scrutinizer;
+ALTER TABLE public.watches OWNER TO wecarry;
 
 --
--- Name: watches_id_seq; Type: SEQUENCE; Schema: public; Owner: scrutinizer
+-- Name: watches_id_seq; Type: SEQUENCE; Schema: public; Owner: wecarry
 --
 
 CREATE SEQUENCE public.watches_id_seq
@@ -663,129 +700,136 @@ CREATE SEQUENCE public.watches_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.watches_id_seq OWNER TO scrutinizer;
+ALTER TABLE public.watches_id_seq OWNER TO wecarry;
 
 --
--- Name: watches_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: scrutinizer
+-- Name: watches_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wecarry
 --
 
 ALTER SEQUENCE public.watches_id_seq OWNED BY public.watches.id;
 
 
 --
--- Name: files id; Type: DEFAULT; Schema: public; Owner: scrutinizer
+-- Name: files id; Type: DEFAULT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.files ALTER COLUMN id SET DEFAULT nextval('public.files_id_seq'::regclass);
 
 
 --
--- Name: locations id; Type: DEFAULT; Schema: public; Owner: scrutinizer
+-- Name: locations id; Type: DEFAULT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.locations ALTER COLUMN id SET DEFAULT nextval('public.locations_id_seq'::regclass);
 
 
 --
--- Name: meetings id; Type: DEFAULT; Schema: public; Owner: scrutinizer
+-- Name: meetings id; Type: DEFAULT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.meetings ALTER COLUMN id SET DEFAULT nextval('public.meetings_id_seq'::regclass);
 
 
 --
--- Name: messages id; Type: DEFAULT; Schema: public; Owner: scrutinizer
+-- Name: messages id; Type: DEFAULT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.messages ALTER COLUMN id SET DEFAULT nextval('public.messages_id_seq'::regclass);
 
 
 --
--- Name: organization_domains id; Type: DEFAULT; Schema: public; Owner: scrutinizer
+-- Name: organization_domains id; Type: DEFAULT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.organization_domains ALTER COLUMN id SET DEFAULT nextval('public.organization_domains_id_seq'::regclass);
 
 
 --
--- Name: organizations id; Type: DEFAULT; Schema: public; Owner: scrutinizer
+-- Name: organizations id; Type: DEFAULT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.organizations ALTER COLUMN id SET DEFAULT nextval('public.organizations_id_seq'::regclass);
 
 
 --
--- Name: post_files id; Type: DEFAULT; Schema: public; Owner: scrutinizer
+-- Name: post_files id; Type: DEFAULT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.post_files ALTER COLUMN id SET DEFAULT nextval('public.post_files_id_seq'::regclass);
 
 
 --
--- Name: post_histories id; Type: DEFAULT; Schema: public; Owner: scrutinizer
+-- Name: post_histories id; Type: DEFAULT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.post_histories ALTER COLUMN id SET DEFAULT nextval('public.post_histories_id_seq'::regclass);
 
 
 --
--- Name: posts id; Type: DEFAULT; Schema: public; Owner: scrutinizer
+-- Name: posts id; Type: DEFAULT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.posts ALTER COLUMN id SET DEFAULT nextval('public.posts_id_seq'::regclass);
 
 
 --
--- Name: thread_participants id; Type: DEFAULT; Schema: public; Owner: scrutinizer
+-- Name: request_committers id; Type: DEFAULT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.request_committers ALTER COLUMN id SET DEFAULT nextval('public.request_committers_id_seq'::regclass);
+
+
+--
+-- Name: thread_participants id; Type: DEFAULT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.thread_participants ALTER COLUMN id SET DEFAULT nextval('public.thread_participants_id_seq'::regclass);
 
 
 --
--- Name: threads id; Type: DEFAULT; Schema: public; Owner: scrutinizer
+-- Name: threads id; Type: DEFAULT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.threads ALTER COLUMN id SET DEFAULT nextval('public.threads_id_seq'::regclass);
 
 
 --
--- Name: user_access_tokens id; Type: DEFAULT; Schema: public; Owner: scrutinizer
+-- Name: user_access_tokens id; Type: DEFAULT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.user_access_tokens ALTER COLUMN id SET DEFAULT nextval('public.user_access_tokens_id_seq'::regclass);
 
 
 --
--- Name: user_organizations id; Type: DEFAULT; Schema: public; Owner: scrutinizer
+-- Name: user_organizations id; Type: DEFAULT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.user_organizations ALTER COLUMN id SET DEFAULT nextval('public.user_organizations_id_seq'::regclass);
 
 
 --
--- Name: user_preferences id; Type: DEFAULT; Schema: public; Owner: scrutinizer
+-- Name: user_preferences id; Type: DEFAULT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.user_preferences ALTER COLUMN id SET DEFAULT nextval('public.user_preferences_id_seq'::regclass);
 
 
 --
--- Name: users id; Type: DEFAULT; Schema: public; Owner: scrutinizer
+-- Name: users id; Type: DEFAULT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_id_seq'::regclass);
 
 
 --
--- Name: watches id; Type: DEFAULT; Schema: public; Owner: scrutinizer
+-- Name: watches id; Type: DEFAULT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.watches ALTER COLUMN id SET DEFAULT nextval('public.watches_id_seq'::regclass);
 
 
 --
--- Name: files files_pkey; Type: CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: files files_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.files
@@ -793,7 +837,7 @@ ALTER TABLE ONLY public.files
 
 
 --
--- Name: locations locations_pkey; Type: CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: locations locations_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.locations
@@ -801,7 +845,7 @@ ALTER TABLE ONLY public.locations
 
 
 --
--- Name: meetings meetings_pkey; Type: CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: meetings meetings_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.meetings
@@ -809,7 +853,7 @@ ALTER TABLE ONLY public.meetings
 
 
 --
--- Name: messages messages_pkey; Type: CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: messages messages_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.messages
@@ -817,7 +861,7 @@ ALTER TABLE ONLY public.messages
 
 
 --
--- Name: organization_domains organization_domains_pkey; Type: CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: organization_domains organization_domains_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.organization_domains
@@ -825,7 +869,7 @@ ALTER TABLE ONLY public.organization_domains
 
 
 --
--- Name: organizations organizations_pkey; Type: CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: organizations organizations_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.organizations
@@ -833,7 +877,7 @@ ALTER TABLE ONLY public.organizations
 
 
 --
--- Name: post_files post_files_pkey; Type: CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: post_files post_files_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.post_files
@@ -841,7 +885,7 @@ ALTER TABLE ONLY public.post_files
 
 
 --
--- Name: post_histories post_histories_pkey; Type: CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: post_histories post_histories_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.post_histories
@@ -849,7 +893,7 @@ ALTER TABLE ONLY public.post_histories
 
 
 --
--- Name: posts posts_pkey; Type: CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: posts posts_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.posts
@@ -857,7 +901,15 @@ ALTER TABLE ONLY public.posts
 
 
 --
--- Name: thread_participants thread_participants_pkey; Type: CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: request_committers request_committers_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.request_committers
+    ADD CONSTRAINT request_committers_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: thread_participants thread_participants_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.thread_participants
@@ -865,7 +917,7 @@ ALTER TABLE ONLY public.thread_participants
 
 
 --
--- Name: threads threads_pkey; Type: CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: threads threads_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.threads
@@ -873,7 +925,7 @@ ALTER TABLE ONLY public.threads
 
 
 --
--- Name: user_access_tokens user_access_tokens_pkey; Type: CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: user_access_tokens user_access_tokens_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.user_access_tokens
@@ -881,7 +933,7 @@ ALTER TABLE ONLY public.user_access_tokens
 
 
 --
--- Name: user_organizations user_organizations_pkey; Type: CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: user_organizations user_organizations_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.user_organizations
@@ -889,7 +941,7 @@ ALTER TABLE ONLY public.user_organizations
 
 
 --
--- Name: user_preferences user_preferences_pkey; Type: CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: user_preferences user_preferences_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.user_preferences
@@ -897,7 +949,7 @@ ALTER TABLE ONLY public.user_preferences
 
 
 --
--- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.users
@@ -905,7 +957,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: watches watches_pkey; Type: CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: watches watches_pkey; Type: CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.watches
@@ -913,196 +965,196 @@ ALTER TABLE ONLY public.watches
 
 
 --
--- Name: files_uuid_idx; Type: INDEX; Schema: public; Owner: scrutinizer
+-- Name: files_uuid_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
 CREATE UNIQUE INDEX files_uuid_idx ON public.files USING btree (uuid);
 
 
 --
--- Name: meetings_location_id_idx; Type: INDEX; Schema: public; Owner: scrutinizer
+-- Name: meetings_location_id_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
 CREATE UNIQUE INDEX meetings_location_id_idx ON public.meetings USING btree (location_id);
 
 
 --
--- Name: meetings_uuid_idx; Type: INDEX; Schema: public; Owner: scrutinizer
+-- Name: meetings_uuid_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
 CREATE UNIQUE INDEX meetings_uuid_idx ON public.meetings USING btree (uuid);
 
 
 --
--- Name: messages_uuid_idx; Type: INDEX; Schema: public; Owner: scrutinizer
+-- Name: messages_uuid_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
 CREATE UNIQUE INDEX messages_uuid_idx ON public.messages USING btree (uuid);
 
 
 --
--- Name: organization_domains_domain_idx; Type: INDEX; Schema: public; Owner: scrutinizer
+-- Name: organization_domains_domain_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
 CREATE UNIQUE INDEX organization_domains_domain_idx ON public.organization_domains USING btree (domain);
 
 
 --
--- Name: organizations_logo_file_id_idx; Type: INDEX; Schema: public; Owner: scrutinizer
+-- Name: organizations_logo_file_id_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
 CREATE UNIQUE INDEX organizations_logo_file_id_idx ON public.organizations USING btree (logo_file_id);
 
 
 --
--- Name: organizations_uuid_idx; Type: INDEX; Schema: public; Owner: scrutinizer
+-- Name: organizations_uuid_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
 CREATE UNIQUE INDEX organizations_uuid_idx ON public.organizations USING btree (uuid);
 
 
 --
--- Name: post_files_file_id_idx; Type: INDEX; Schema: public; Owner: scrutinizer
+-- Name: post_files_file_id_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
 CREATE UNIQUE INDEX post_files_file_id_idx ON public.post_files USING btree (file_id);
 
 
 --
--- Name: post_histories_created_at_idx; Type: INDEX; Schema: public; Owner: scrutinizer
+-- Name: post_histories_created_at_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
 CREATE INDEX post_histories_created_at_idx ON public.post_histories USING btree (created_at);
 
 
 --
--- Name: posts_destination_id_idx; Type: INDEX; Schema: public; Owner: scrutinizer
+-- Name: posts_destination_id_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
 CREATE UNIQUE INDEX posts_destination_id_idx ON public.posts USING btree (destination_id);
 
 
 --
--- Name: posts_meeting_id_idx; Type: INDEX; Schema: public; Owner: scrutinizer
+-- Name: posts_meeting_id_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
 CREATE UNIQUE INDEX posts_meeting_id_idx ON public.posts USING btree (meeting_id);
 
 
 --
--- Name: posts_origin_id_idx; Type: INDEX; Schema: public; Owner: scrutinizer
+-- Name: posts_origin_id_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
 CREATE UNIQUE INDEX posts_origin_id_idx ON public.posts USING btree (origin_id);
 
 
 --
--- Name: posts_photo_file_id_idx; Type: INDEX; Schema: public; Owner: scrutinizer
+-- Name: posts_photo_file_id_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
 CREATE UNIQUE INDEX posts_photo_file_id_idx ON public.posts USING btree (photo_file_id);
 
 
 --
--- Name: posts_uuid_idx; Type: INDEX; Schema: public; Owner: scrutinizer
+-- Name: posts_uuid_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
 CREATE UNIQUE INDEX posts_uuid_idx ON public.posts USING btree (uuid);
 
 
 --
--- Name: schema_migration_version_idx; Type: INDEX; Schema: public; Owner: scrutinizer
+-- Name: schema_migration_version_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
 CREATE UNIQUE INDEX schema_migration_version_idx ON public.schema_migration USING btree (version);
 
 
 --
--- Name: threads_uuid_idx; Type: INDEX; Schema: public; Owner: scrutinizer
+-- Name: threads_uuid_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
 CREATE UNIQUE INDEX threads_uuid_idx ON public.threads USING btree (uuid);
 
 
 --
--- Name: user_access_tokens_access_token_idx; Type: INDEX; Schema: public; Owner: scrutinizer
+-- Name: user_access_tokens_access_token_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
 CREATE UNIQUE INDEX user_access_tokens_access_token_idx ON public.user_access_tokens USING btree (access_token);
 
 
 --
--- Name: user_organizations_organization_id_auth_email_idx; Type: INDEX; Schema: public; Owner: scrutinizer
+-- Name: user_organizations_organization_id_auth_email_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
 CREATE UNIQUE INDEX user_organizations_organization_id_auth_email_idx ON public.user_organizations USING btree (organization_id, auth_email);
 
 
 --
--- Name: user_organizations_organization_id_auth_id_idx; Type: INDEX; Schema: public; Owner: scrutinizer
+-- Name: user_organizations_organization_id_auth_id_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
 CREATE UNIQUE INDEX user_organizations_organization_id_auth_id_idx ON public.user_organizations USING btree (organization_id, auth_id);
 
 
 --
--- Name: user_organizations_organization_id_user_id_idx; Type: INDEX; Schema: public; Owner: scrutinizer
+-- Name: user_organizations_organization_id_user_id_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
 CREATE UNIQUE INDEX user_organizations_organization_id_user_id_idx ON public.user_organizations USING btree (organization_id, user_id);
 
 
 --
--- Name: user_preferences_uuid_idx; Type: INDEX; Schema: public; Owner: scrutinizer
+-- Name: user_preferences_uuid_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
 CREATE UNIQUE INDEX user_preferences_uuid_idx ON public.user_preferences USING btree (uuid);
 
 
 --
--- Name: users_email_idx; Type: INDEX; Schema: public; Owner: scrutinizer
+-- Name: users_email_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
 CREATE UNIQUE INDEX users_email_idx ON public.users USING btree (email);
 
 
 --
--- Name: users_location_id_idx; Type: INDEX; Schema: public; Owner: scrutinizer
+-- Name: users_location_id_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
 CREATE UNIQUE INDEX users_location_id_idx ON public.users USING btree (location_id);
 
 
 --
--- Name: users_nickname_idx; Type: INDEX; Schema: public; Owner: scrutinizer
+-- Name: users_nickname_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
 CREATE UNIQUE INDEX users_nickname_idx ON public.users USING btree (nickname);
 
 
 --
--- Name: users_photo_file_id_idx; Type: INDEX; Schema: public; Owner: scrutinizer
+-- Name: users_photo_file_id_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
 CREATE UNIQUE INDEX users_photo_file_id_idx ON public.users USING btree (photo_file_id);
 
 
 --
--- Name: users_uuid_idx; Type: INDEX; Schema: public; Owner: scrutinizer
+-- Name: users_uuid_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
 CREATE UNIQUE INDEX users_uuid_idx ON public.users USING btree (uuid);
 
 
 --
--- Name: watches_location_id_idx; Type: INDEX; Schema: public; Owner: scrutinizer
+-- Name: watches_location_id_idx; Type: INDEX; Schema: public; Owner: wecarry
 --
 
 CREATE UNIQUE INDEX watches_location_id_idx ON public.watches USING btree (location_id);
 
 
 --
--- Name: posts meeting_fk; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: posts meeting_fk; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.posts
@@ -1110,7 +1162,7 @@ ALTER TABLE ONLY public.posts
 
 
 --
--- Name: meetings meetings_created_by_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: meetings meetings_created_by_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.meetings
@@ -1118,7 +1170,7 @@ ALTER TABLE ONLY public.meetings
 
 
 --
--- Name: meetings meetings_image_file_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: meetings meetings_image_file_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.meetings
@@ -1126,7 +1178,7 @@ ALTER TABLE ONLY public.meetings
 
 
 --
--- Name: meetings meetings_location_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: meetings meetings_location_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.meetings
@@ -1134,7 +1186,7 @@ ALTER TABLE ONLY public.meetings
 
 
 --
--- Name: messages messages_sent_by_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: messages messages_sent_by_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.messages
@@ -1142,7 +1194,7 @@ ALTER TABLE ONLY public.messages
 
 
 --
--- Name: messages messages_thread_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: messages messages_thread_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.messages
@@ -1150,7 +1202,7 @@ ALTER TABLE ONLY public.messages
 
 
 --
--- Name: organization_domains organization_domains_organization_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: organization_domains organization_domains_organization_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.organization_domains
@@ -1158,7 +1210,7 @@ ALTER TABLE ONLY public.organization_domains
 
 
 --
--- Name: organizations organizations_files_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: organizations organizations_files_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.organizations
@@ -1166,7 +1218,7 @@ ALTER TABLE ONLY public.organizations
 
 
 --
--- Name: posts post_destination_fk; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: posts post_destination_fk; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.posts
@@ -1174,7 +1226,7 @@ ALTER TABLE ONLY public.posts
 
 
 --
--- Name: post_files post_files_file_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: post_files post_files_file_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.post_files
@@ -1182,7 +1234,7 @@ ALTER TABLE ONLY public.post_files
 
 
 --
--- Name: post_files post_files_post_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: post_files post_files_post_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.post_files
@@ -1190,7 +1242,7 @@ ALTER TABLE ONLY public.post_files
 
 
 --
--- Name: post_histories post_histories_post_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: post_histories post_histories_post_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.post_histories
@@ -1198,7 +1250,7 @@ ALTER TABLE ONLY public.post_histories
 
 
 --
--- Name: post_histories post_histories_provider_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: post_histories post_histories_provider_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.post_histories
@@ -1206,7 +1258,7 @@ ALTER TABLE ONLY public.post_histories
 
 
 --
--- Name: post_histories post_histories_receiver_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: post_histories post_histories_receiver_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.post_histories
@@ -1214,7 +1266,7 @@ ALTER TABLE ONLY public.post_histories
 
 
 --
--- Name: posts post_origin_fk; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: posts post_origin_fk; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.posts
@@ -1222,7 +1274,7 @@ ALTER TABLE ONLY public.posts
 
 
 --
--- Name: posts posts_created_by_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: posts posts_created_by_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.posts
@@ -1230,7 +1282,7 @@ ALTER TABLE ONLY public.posts
 
 
 --
--- Name: posts posts_files_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: posts posts_files_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.posts
@@ -1238,7 +1290,7 @@ ALTER TABLE ONLY public.posts
 
 
 --
--- Name: posts posts_organization_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: posts posts_organization_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.posts
@@ -1246,7 +1298,7 @@ ALTER TABLE ONLY public.posts
 
 
 --
--- Name: posts posts_provider_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: posts posts_provider_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.posts
@@ -1254,7 +1306,7 @@ ALTER TABLE ONLY public.posts
 
 
 --
--- Name: posts posts_receiver_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: posts posts_receiver_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.posts
@@ -1262,7 +1314,23 @@ ALTER TABLE ONLY public.posts
 
 
 --
--- Name: thread_participants thread_participants_thread_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: request_committers request_committers_post_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.request_committers
+    ADD CONSTRAINT request_committers_post_id_fkey FOREIGN KEY (post_id) REFERENCES public.posts(id) ON DELETE CASCADE;
+
+
+--
+-- Name: request_committers request_committers_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
+--
+
+ALTER TABLE ONLY public.request_committers
+    ADD CONSTRAINT request_committers_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: thread_participants thread_participants_thread_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.thread_participants
@@ -1270,7 +1338,7 @@ ALTER TABLE ONLY public.thread_participants
 
 
 --
--- Name: thread_participants thread_participants_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: thread_participants thread_participants_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.thread_participants
@@ -1278,7 +1346,7 @@ ALTER TABLE ONLY public.thread_participants
 
 
 --
--- Name: threads threads_post_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: threads threads_post_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.threads
@@ -1286,7 +1354,7 @@ ALTER TABLE ONLY public.threads
 
 
 --
--- Name: user_access_tokens user_access_tokens_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: user_access_tokens user_access_tokens_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.user_access_tokens
@@ -1294,7 +1362,7 @@ ALTER TABLE ONLY public.user_access_tokens
 
 
 --
--- Name: user_access_tokens user_access_tokens_user_organization_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: user_access_tokens user_access_tokens_user_organization_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.user_access_tokens
@@ -1302,7 +1370,7 @@ ALTER TABLE ONLY public.user_access_tokens
 
 
 --
--- Name: user_organizations user_organizations_organization_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: user_organizations user_organizations_organization_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.user_organizations
@@ -1310,7 +1378,7 @@ ALTER TABLE ONLY public.user_organizations
 
 
 --
--- Name: user_organizations user_organizations_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: user_organizations user_organizations_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.user_organizations
@@ -1318,7 +1386,7 @@ ALTER TABLE ONLY public.user_organizations
 
 
 --
--- Name: user_preferences user_preferences_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: user_preferences user_preferences_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.user_preferences
@@ -1326,7 +1394,7 @@ ALTER TABLE ONLY public.user_preferences
 
 
 --
--- Name: users users_files_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: users users_files_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.users
@@ -1334,7 +1402,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: users users_locations_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: users users_locations_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.users
@@ -1342,7 +1410,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: watches watches_location_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: watches watches_location_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.watches
@@ -1350,7 +1418,7 @@ ALTER TABLE ONLY public.watches
 
 
 --
--- Name: watches watches_owner_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: watches watches_owner_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wecarry
 --
 
 ALTER TABLE ONLY public.watches
