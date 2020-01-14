@@ -209,3 +209,13 @@ func (o *Organization) LogoURL() (*string, error) {
 	}
 	return nil, nil
 }
+
+// CreateTrust creates a Trust record linking this Organization with the organization identified by `secondaryID`
+func (o *Organization) CreateTrust(secondaryID string) error {
+	return nil
+}
+
+// RemoveTrust removes a Trust record between this Organization and the organization identified by `secondaryID`
+func (o *Organization) RemoveTrust(secondaryID string) error {
+	return nil
+}

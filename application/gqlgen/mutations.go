@@ -162,3 +162,51 @@ func (r *mutationResolver) SetThreadLastViewedAt(ctx context.Context, input SetT
 
 	return &thread, nil
 }
+
+// CreateTrust establishes a Trust between two organizations
+func (r *mutationResolver) CreateTrust(ctx context.Context, input CreateTrustInput) (*models.Organization, error) {
+	cUser := models.GetCurrentUserFromGqlContext(ctx)
+	extras := map[string]interface{}{
+		"user": cUser.UUID,
+	}
+
+	var organization models.Organization
+	if err := organization.FindByUUID(input.PrimaryID); err != nil {
+		return nil, reportError(ctx, err, "CreateTrust.FindPrimaryOrganization", extras)
+	}
+
+	if !cUser.CanEditOrganization(organization.ID) {
+		err := errors.New("insufficient permissions")
+		return nil, reportError(ctx, err, "CreateTrust.Unauthorized", extras)
+	}
+
+	if err := organization.CreateTrust(input.SecondaryID); err != nil {
+		return nil, reportError(ctx, err, "CreateTrust", extras)
+	}
+
+	return &organization, nil
+}
+
+// RemoveTrust removes a Trust between two organizations
+func (r *mutationResolver) RemoveTrust(ctx context.Context, input RemoveTrustInput) (*models.Organization, error) {
+	cUser := models.GetCurrentUserFromGqlContext(ctx)
+	extras := map[string]interface{}{
+		"user": cUser.UUID,
+	}
+
+	var organization models.Organization
+	if err := organization.FindByUUID(input.PrimaryID); err != nil {
+		return nil, reportError(ctx, err, "RemoveTrust.FindPrimaryOrganization", extras)
+	}
+
+	if !cUser.CanEditOrganization(organization.ID) {
+		err := errors.New("insufficient permissions")
+		return nil, reportError(ctx, err, "RemoveTrust.Unauthorized", extras)
+	}
+
+	if err := organization.RemoveTrust(input.SecondaryID); err != nil {
+		return nil, reportError(ctx, err, "RemoveTrust", extras)
+	}
+
+	return &organization, nil
+}
