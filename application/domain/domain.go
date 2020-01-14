@@ -76,6 +76,7 @@ const (
 	MessageTemplateRequestDelivered                = "request_delivered"
 	MessageTemplateRequestReceived                 = "request_received"
 	MessageTemplateRequestNotReceivedAfterAll      = "request_not_received_after_all"
+	MessageTemplateCommittmentNotAccepted          = "request_committment_not_accepted"
 )
 
 // User preferences

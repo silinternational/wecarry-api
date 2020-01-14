@@ -171,12 +171,62 @@ func sendNotificationRequestFromAcceptedToRemoved(params senderParams) {
 	sendNotificationRequestToProvider(params)
 }
 
+func sendRejectionToCommitter(committer models.User, post models.Post) {
+	template := domain.MessageTemplateCommittmentNotAccepted
+	committerNickname := committer.Nickname
+	committerEmail := committer.Email
+
+	if committerNickname == "" {
+		committerNickname = "Unknown User"
+		committerEmail = "Missing Email"
+	}
+
+	data := map[string]interface{}{
+		"uiURL":             domain.Env.UIURL,
+		"appName":           domain.Env.AppName,
+		"postURL":           domain.GetPostUIURL(post.UUID.String()),
+		"postTitle":         domain.Truncate(post.Title, "...", 16),
+		"committerNickname": committerNickname,
+		"committerEmail":    committerEmail,
+	}
+
+	subject := "Email.Subject.Request.CommittmentRejected"
+
+	msg := notifications.Message{
+		Template:  template,
+		Data:      data,
+		ToName:    committer.GetRealName(),
+		ToEmail:   committerEmail,
+		FromEmail: domain.EmailFromAddress(nil),
+		Subject: domain.GetTranslatedSubject(committer.GetLanguagePreference(), subject,
+			map[string]string{postTitleKey: post.Title}),
+	}
+
+	if err := notifications.Send(msg); err != nil {
+		domain.ErrLogger.Printf("error sending '%s' notification to rejected committer, %s", template, err)
+	}
+}
+
 func sendNotificationRequestFromCommittedToAccepted(params senderParams) {
 	sendNotificationRequestToProvider(params)
+
+	post := params.post
+
+	var committers models.RequestCommitters
+	if err := committers.FindByPostID(post.ID); err != nil {
+		domain.ErrLogger.Printf("error finding rejected providers for post id, %v ... %v",
+			post.ID, err)
+	}
+
+	for _, c := range committers {
+		sendRejectionToCommitter(c.User, post)
+	}
+
 }
 
 func sendNotificationRequestFromCommittedToCommitted(params senderParams) {
 	sendNotificationRequestToReceiver(params)
+
 }
 
 // Until we have status auditing history, we don't know who reverted the Post to `open` status.
