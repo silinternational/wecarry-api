@@ -416,11 +416,6 @@ func (as *ActionSuite) Test_UpdateOrganization() {
 	f := fixturesForUpdateOrganization(as)
 
 	var resp OrganizationResponse
-	/*
-	   createdAt: Time!
-	   updatedAt: Time!
-	   trusts: [Organization!]!*
-	*/
 	allFieldsQuery := `id domains { domain organizationID } name url logoURL trustedOrganizations { id }`
 	allFieldsInput := fmt.Sprintf(
 		`id:"%s" name:"%s" url:"%s" authType:"%s" authConfig:"%s" logoFileID:"%s"`,
