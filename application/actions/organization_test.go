@@ -438,7 +438,7 @@ func (as *ActionSuite) Test_UpdateOrganization() {
 	err = as.DB.Where("name = ?", f.Organizations[0].Name).All(&orgs)
 	as.NoError(err)
 
-	as.GreaterOrEqual(1, len(orgs), "no Organization record created")
+	as.GreaterOrEqual(1, len(orgs), "no Organization found")
 	as.Equal(f.Organizations[0].Name, orgs[0].Name, "Name doesn't match")
 	as.Equal(f.Organizations[0].Url, orgs[0].Url, "URL doesn't match")
 	as.Equal(f.Organizations[0].AuthType, orgs[0].AuthType, "AuthType doesn't match")
