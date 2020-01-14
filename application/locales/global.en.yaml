@@ -73,7 +73,7 @@
 - id: RemoveOrganizationDomain.Unauthorized
   translation: You are not allowed to remove domains from that organization.
 - id: GetOrganizationDomainOrganizationID
-  translation: We had a problem finding the domain ID.
+  translation: We had a problem finding the organization ID for that domain.
 - id: GetOrganizationDomains
   translation: We had a problem finding the list of domains for the organization.
 
