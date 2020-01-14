@@ -223,25 +223,20 @@ func (o *Organization) RemoveTrust(secondaryID string) error {
 
 // TrustedOrganizations gets a list of connected Organizations, either primary or secondary
 func (o *Organization) TrustedOrganizations() (Organizations, error) {
-	primary := Trusts{}
-	if err := primary.FindByOrgIDPrimary(o.ID); domain.IsOtherThanNoRows(err) {
+	t := Trusts{}
+	if err := t.FindByOrgID(o.ID); domain.IsOtherThanNoRows(err) {
 		return nil, err
 	}
-	secondary := Trusts{}
-	if err := secondary.FindByOrgIDSecondary(o.ID); domain.IsOtherThanNoRows(err) {
-		return nil, err
+	ids := make([]interface{}, len(t))
+	for i := range t {
+		if o.ID == t[i].PrimaryID {
+			ids[i] = t[i].SecondaryID
+		} else {
+			ids[i] = t[i].PrimaryID
+		}
 	}
-
-	trustedOrgIDs := make([]interface{}, len(primary)+len(secondary))
-	for i := range primary {
-		trustedOrgIDs[i] = primary[i].SecondaryID
-	}
-	for i := range secondary {
-		trustedOrgIDs[len(primary)+i] = secondary[i].PrimaryID
-	}
-
 	trustedOrgs := Organizations{}
-	if err := DB.Where("id in (?)", trustedOrgIDs...).All(&trustedOrgs); err != nil {
+	if err := DB.Where("id in (?)", ids...).All(&trustedOrgs); err != nil {
 		return nil, err
 	}
 	return trustedOrgs, nil

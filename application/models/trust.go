@@ -65,18 +65,9 @@ func (t *Trust) FindByOrgIDs(id1, id2 int) error {
 	return nil
 }
 
-// FindByOrgIDPrimary returns all trusts where a given Organization is the Primary org
-func (t *Trusts) FindByOrgIDPrimary(id int) error {
-	if err := DB.Where("primary_id = ?", id).All(t); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// FindByOrgIDSecondary returns all trusts where a given Organization is the Secondary org
-func (t *Trusts) FindByOrgIDSecondary(id int) error {
-	if err := DB.Where("secondary_id = ?", id).All(t); err != nil {
+// FindByOrgID returns all trusts where a given Organization is either the Primary or Secondary org
+func (t *Trusts) FindByOrgID(id int) error {
+	if err := DB.Where("primary_id = ? OR secondary_id = ?", id, id).All(t); err != nil {
 		return err
 	}
 
