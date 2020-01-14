@@ -434,6 +434,8 @@ func (as *ActionSuite) Test_UpdateOrganization() {
 	as.Equal(f.Organizations[0].Name, resp.Organization.Name, "received wrong name")
 	as.Equal(f.Organizations[0].Url.String, resp.Organization.URL, "received wrong URL")
 	as.Equal(f.File.URL, resp.Organization.LogoURL, "received wrong logo URL")
+
+	// check Domains
 	as.Equal(2, len(resp.Organization.Domains))
 	domains := make([]string, len(resp.Organization.TrustedOrganizations))
 	for i := range domains {
@@ -441,6 +443,8 @@ func (as *ActionSuite) Test_UpdateOrganization() {
 	}
 	as.Contains(domains, f.OrganizationDomains[0].Domain)
 	as.Contains(domains, f.OrganizationDomains[1].Domain)
+
+	// check TrustedOrganizations
 	as.Equal(2, len(resp.Organization.TrustedOrganizations))
 	ids := make([]string, len(resp.Organization.TrustedOrganizations))
 	for i := range ids {
