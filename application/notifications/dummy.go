@@ -47,10 +47,6 @@ var dummyTemplates = map[string]dummyTemplate{
 		subject: domain.MessageTemplateRequestNotReceivedAfterAll,
 		body:    "The status of a request changed from completed to accepted or delivered.",
 	},
-	domain.MessageTemplateRequestFromAcceptedToCommitted: {
-		subject: domain.MessageTemplateRequestFromAcceptedToCommitted,
-		body:    "The status of a request changed from accepted to committed.",
-	},
 	domain.MessageTemplateRequestFromAcceptedToDelivered: {
 		subject: domain.MessageTemplateRequestFromAcceptedToDelivered,
 		body:    "The status of a request changed from accepted to delivered.",
@@ -63,37 +59,17 @@ var dummyTemplates = map[string]dummyTemplate{
 		subject: domain.MessageTemplateRequestFromAcceptedToRemoved,
 		body:    "The status of a request changed from accepted to removed.",
 	},
-	domain.MessageTemplateRequestFromCommittedToAccepted: {
-		subject: domain.MessageTemplateRequestFromCommittedToAccepted,
-		body:    "The status of a request changed from committed to accepted.",
-	},
-	domain.MessageTemplateRequestFromCommittedToDelivered: {
-		subject: domain.MessageTemplateRequestFromCommittedToDelivered,
-		body:    "The status of a request changed from committed to delivered.",
-	},
-	domain.MessageTemplateRequestFromCommittedToOpen: {
-		subject: domain.MessageTemplateRequestFromCommittedToOpen,
-		body:    "The status of a request changed from committed to open.",
-	},
-	domain.MessageTemplateRequestFromCommittedToRemoved: {
-		subject: domain.MessageTemplateRequestFromCommittedToRemoved,
-		body:    "The status of a request changed from committed to removed.",
+	domain.MessageTemplateRequestFromOpenToAccepted: {
+		subject: domain.MessageTemplateRequestFromOpenToAccepted,
+		body:    "The status of a request changed from open to accepted.",
 	},
 	domain.MessageTemplateRequestFromDeliveredToAccepted: {
 		subject: domain.MessageTemplateRequestFromDeliveredToAccepted,
 		body:    "The status of a request changed from delivered to accepted.",
 	},
-	domain.MessageTemplateRequestFromDeliveredToCommitted: {
-		subject: domain.MessageTemplateRequestFromDeliveredToCommitted,
-		body:    "The status of a request changed from delivered to committed.",
-	},
 	domain.MessageTemplateRequestFromDeliveredToCompleted: {
 		subject: domain.MessageTemplateRequestFromDeliveredToCompleted,
 		body:    "The status of a request changed from delivered to completed.",
-	},
-	domain.MessageTemplateRequestFromOpenToCommitted: {
-		subject: domain.MessageTemplateRequestFromOpenToCommitted,
-		body:    "The status of a request changed from open to committed.",
 	},
 	domain.MessageTemplateRequestFromOpenToRemoved: {
 		subject: domain.MessageTemplateRequestFromOpenToRemoved,

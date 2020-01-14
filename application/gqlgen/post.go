@@ -410,12 +410,6 @@ func (r *mutationResolver) UpdatePostStatus(ctx context.Context, input UpdatePos
 		"newStatus": input.Status,
 	}
 
-	if post.Type == models.PostTypeRequest && input.Status == models.PostStatusCommitted {
-		if err := addCommitterToRequest(cUser, post, input); err != nil {
-			return nil, reportError(ctx, err, "UpdatePostStatus.AddCommitter", extras)
-		}
-	}
-
 	if !cUser.CanUpdatePostStatus(post, input.Status) {
 		return nil, reportError(ctx, errors.New("not allowed to change post status"),
 			"UpdatePostStatus.Unauthorized", extras)

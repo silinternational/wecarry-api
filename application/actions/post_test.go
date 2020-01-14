@@ -289,13 +289,13 @@ func (as *ActionSuite) Test_UpdatePostStatus() {
 	provider := f.Users[1]
 
 	steps := []struct {
-		status  models.PostStatus
-		user    models.User
-		wantErr bool
+		status      models.PostStatus
+		user        models.User
+		committerID string
+		wantErr     bool
 	}{
-		{status: models.PostStatusCommitted, user: provider, wantErr: false},
-		{status: models.PostStatusAccepted, user: provider, wantErr: true},
-		{status: models.PostStatusAccepted, user: creator, wantErr: false},
+		{status: models.PostStatusAccepted, user: provider, committerID: provider.UUID.String(), wantErr: true},
+		{status: models.PostStatusAccepted, user: creator, committerID: provider.UUID.String(), wantErr: false},
 		{status: models.PostStatusReceived, user: provider, wantErr: true},
 		{status: models.PostStatusReceived, user: creator, wantErr: false},
 		{status: models.PostStatusDelivered, user: provider, wantErr: false},
@@ -306,6 +306,9 @@ func (as *ActionSuite) Test_UpdatePostStatus() {
 
 	for _, step := range steps {
 		input := `id: "` + f.Posts[0].UUID.String() + `", status: ` + step.status.String()
+		if step.committerID != "" {
+			input += `, userID: "` + step.committerID + `"`
+		}
 		query := `mutation { post: updatePostStatus(input: {` + input + `}) {id status}}`
 
 		err := as.testGqlQuery(query, step.user.Nickname, &postsResp)

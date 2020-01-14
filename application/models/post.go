@@ -76,6 +76,7 @@ type statusTransitionTarget struct {
 func getStatusTransitions() map[PostStatus][]statusTransitionTarget {
 	return map[PostStatus][]statusTransitionTarget{
 		PostStatusOpen: {
+			{status: PostStatusAccepted},
 			{status: PostStatusCommitted},
 			{status: PostStatusRemoved},
 		},

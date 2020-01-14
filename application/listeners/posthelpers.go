@@ -129,10 +129,6 @@ func sendNotificationRequestToReceiver(params senderParams) {
 	}
 }
 
-func sendNotificationRequestFromAcceptedToCommitted(params senderParams) {
-	sendNotificationRequestToProvider(params)
-}
-
 func sendNotificationRequestFromAcceptedOrCommittedToDelivered(params senderParams) {
 	sendNotificationRequestToReceiver(params)
 }
@@ -207,7 +203,7 @@ func sendRejectionToCommitter(committer models.User, post models.Post) {
 	}
 }
 
-func sendNotificationRequestFromCommittedToAccepted(params senderParams) {
+func sendNotificationRequestFromOpenToAccepted(params senderParams) {
 	sendNotificationRequestToProvider(params)
 
 	post := params.post
@@ -335,11 +331,6 @@ func join(s1, s2 models.PostStatus) string {
 }
 
 var statusSenders = map[string]sender{
-	join(models.PostStatusAccepted, models.PostStatusCommitted): sender{
-		template: domain.MessageTemplateRequestFromAcceptedToCommitted,
-		subject:  "Email.Subject.Request.FromAcceptedToCommitted",
-		sender:   sendNotificationRequestFromAcceptedToCommitted},
-
 	join(models.PostStatusAccepted, models.PostStatusCompleted): sender{
 		template: domain.MessageTemplateRequestFromAcceptedToCompleted,
 		subject:  "Email.Subject.Request.FromAcceptedOrDeliveredToCompleted",
@@ -359,31 +350,6 @@ var statusSenders = map[string]sender{
 		template: domain.MessageTemplateRequestFromAcceptedToRemoved,
 		subject:  "Email.Subject.Request.FromAcceptedToRemoved",
 		sender:   sendNotificationRequestFromAcceptedToRemoved},
-
-	join(models.PostStatusCommitted, models.PostStatusCommitted): sender{
-		template: domain.MessageTemplateRequestFromCommittedToCommitted,
-		subject:  "Email.Subject.Request.FromCommittedToCommitted",
-		sender:   sendNotificationRequestFromCommittedToCommitted},
-
-	join(models.PostStatusCommitted, models.PostStatusAccepted): sender{
-		template: domain.MessageTemplateRequestFromCommittedToAccepted,
-		subject:  "Email.Subject.Request.FromCommittedToAccepted",
-		sender:   sendNotificationRequestFromCommittedToAccepted},
-
-	join(models.PostStatusCommitted, models.PostStatusDelivered): sender{
-		template: domain.MessageTemplateRequestFromCommittedToDelivered,
-		subject:  "Email.Subject.Request.FromAcceptedOrCommittedToDelivered",
-		sender:   sendNotificationRequestFromAcceptedOrCommittedToDelivered},
-
-	join(models.PostStatusCommitted, models.PostStatusOpen): sender{
-		template: domain.MessageTemplateRequestFromCommittedToOpen,
-		subject:  "Email.Subject.Request.FromCommittedToOpen",
-		sender:   sendNotificationRequestFromCommittedToOpen},
-
-	join(models.PostStatusCommitted, models.PostStatusRemoved): sender{
-		template: domain.MessageTemplateRequestFromCommittedToRemoved,
-		subject:  "Email.Subject.Request.FromCommittedToRemoved",
-		sender:   sendNotificationRequestFromCommittedToRemoved},
 
 	join(models.PostStatusCompleted, models.PostStatusAccepted): sender{
 		template: domain.MessageTemplateRequestFromCompletedToAccepted,
@@ -405,20 +371,15 @@ var statusSenders = map[string]sender{
 		subject:  "Email.Subject.Request.FromDeliveredToAccepted",
 		sender:   sendNotificationRequestFromDeliveredToAccepted},
 
-	join(models.PostStatusDelivered, models.PostStatusCommitted): sender{
-		template: domain.MessageTemplateRequestFromDeliveredToCommitted,
-		subject:  "Email.Subject.Request.FromDeliveredToCommitted",
-		sender:   sendNotificationRequestFromDeliveredToCommitted},
-
 	join(models.PostStatusDelivered, models.PostStatusCompleted): sender{
 		template: domain.MessageTemplateRequestFromDeliveredToCompleted,
 		subject:  "Email.Subject.Request.FromAcceptedOrDeliveredToCompleted",
 		sender:   sendNotificationRequestFromAcceptedOrDeliveredToCompleted},
 
-	join(models.PostStatusOpen, models.PostStatusCommitted): sender{
-		template: domain.MessageTemplateRequestFromOpenToCommitted,
-		subject:  "Email.Subject.Request.FromOpenToCommitted",
-		sender:   sendNotificationRequestFromOpenToCommitted},
+	join(models.PostStatusOpen, models.PostStatusAccepted): sender{
+		template: domain.MessageTemplateRequestFromOpenToAccepted,
+		subject:  "Email.Subject.Request.FromOpenToAccepted",
+		sender:   sendNotificationRequestFromOpenToAccepted},
 
 	join(models.PostStatusReceived, models.PostStatusCompleted): sender{
 		template: domain.MessageTemplateRequestFromReceivedToCompleted,
