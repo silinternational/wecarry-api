@@ -1,1 +1,1 @@
-drop_column("organizations", "logo_id")
+drop_column("organizations", "logo_file_id")
