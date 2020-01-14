@@ -238,14 +238,25 @@ func fixturesForOrganizationDomain(as *ActionSuite) OrganizationFixtures {
 }
 
 func fixturesForUpdateOrganization(as *ActionSuite) OrganizationFixtures {
-	var org models.Organization
-	org = models.Organization{
-		Name:       "default org",
-		AuthType:   models.AuthTypeSaml,
-		AuthConfig: "{}",
-		Url:        nulls.NewString("https://www.example.com"),
+	orgs := make([]models.Organization, 3)
+	orgs[0].Name = "default org"
+	orgs[1].Name = "trusted org 1"
+	orgs[2].Name = "trusted org 2"
+	for i := range orgs {
+		orgs[i].AuthType = models.AuthTypeSaml
+		orgs[i].AuthConfig = "{}"
+		orgs[i].Url = nulls.NewString("https://www.example.com")
+		test.MustCreate(as.DB, &orgs[i])
 	}
-	test.MustCreate(as.DB, &org)
+
+	trusts := make([]models.Trust, 2)
+	trusts[0].PrimaryID = orgs[0].ID
+	trusts[0].SecondaryID = orgs[1].ID
+	trusts[1].PrimaryID = orgs[2].ID
+	trusts[1].SecondaryID = orgs[0].ID
+	for i := range trusts {
+		test.MustCreate(as.DB, &trusts[i])
+	}
 
 	userFixtures := test.CreateUserFixtures(as.DB, 1)
 	users := userFixtures.Users
@@ -258,7 +269,7 @@ func fixturesForUpdateOrganization(as *ActionSuite) OrganizationFixtures {
 
 	return OrganizationFixtures{
 		Users:         users,
-		Organizations: models.Organizations{org},
+		Organizations: orgs,
 		File:          file,
 	}
 }

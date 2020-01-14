@@ -100,6 +100,10 @@ func (r *organizationResolver) TrustedOrganizations(ctx context.Context, obj *mo
 		return nil, nil
 	}
 
-	organizations := []models.Organization{}
+	organizations, err := obj.TrustedOrganizations()
+	if err != nil {
+		return nil, reportError(ctx, err, "GetOrganizationTrustedOrganizations")
+	}
+
 	return organizations, nil
 }

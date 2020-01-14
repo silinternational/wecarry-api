@@ -15,6 +15,7 @@ import (
 	"github.com/silinternational/wecarry-api/auth"
 	"github.com/silinternational/wecarry-api/auth/google"
 	"github.com/silinternational/wecarry-api/auth/saml"
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 const AuthTypeSaml = "saml"
@@ -218,4 +219,30 @@ func (o *Organization) CreateTrust(secondaryID string) error {
 // RemoveTrust removes a Trust record between this Organization and the organization identified by `secondaryID`
 func (o *Organization) RemoveTrust(secondaryID string) error {
 	return nil
+}
+
+// TrustedOrganizations gets a list of connected Organizations, either primary or secondary
+func (o *Organization) TrustedOrganizations() (Organizations, error) {
+	primary := Trusts{}
+	if err := primary.FindByOrgIDPrimary(o.ID); domain.IsOtherThanNoRows(err) {
+		return nil, err
+	}
+	secondary := Trusts{}
+	if err := secondary.FindByOrgIDSecondary(o.ID); domain.IsOtherThanNoRows(err) {
+		return nil, err
+	}
+
+	trustedOrgIDs := make([]interface{}, len(primary)+len(secondary))
+	for i := range primary {
+		trustedOrgIDs[i] = primary[i].SecondaryID
+	}
+	for i := range secondary {
+		trustedOrgIDs[len(primary)+i] = secondary[i].PrimaryID
+	}
+
+	trustedOrgs := Organizations{}
+	if err := DB.Where("id in (?)", trustedOrgIDs...).All(&trustedOrgs); err != nil {
+		return nil, err
+	}
+	return trustedOrgs, nil
 }
