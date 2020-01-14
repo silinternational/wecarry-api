@@ -1,0 +1,49 @@
+checks:
+  go: true
+build:
+  environment:
+    go: go1.13.5
+    variables:
+      GO_ENV: test
+      EMAIL_SERVICE: dummy
+      AWS_S3_ENDPOINT: http://localhost:9000
+      AWS_S3_ACCESS_KEY_ID: abc123
+      AWS_S3_SECRET_ACCESS_KEY: abcd1234
+      AWS_S3_DISABLE_SSL: true
+      AWS_S3_BUCKET: wca-test-bucket
+      AWS_REGION: us-east-1
+  nodes:
+    analysis:
+      project_setup:
+        override:
+          - 'true'
+      tests:
+        override:
+          - go-scrutinizer-run
+          - govet-run
+          - golint-run
+    coverage:
+      services:
+        postgres: 11.5
+        minio:
+          image: silintl/minio-default-server
+          ports:
+            - 9000
+          env:
+            MINIO_ACCESS_KEY: abc123
+            MINIO_SECRET_KEY: abcd1234
+          ramdisks:
+            - /data
+      tests:
+        override:
+          - command: ./scrutinizer-test.sh
+            coverage:
+              file: 'cover.out'
+              format: 'go-cc'
+  root_path: './application'
+filter:
+  excluded_paths:
+    - "*_test.go"
+    - "*_fixtures_test.go"
+    - "gqlgen/generated.go"
+    - "gqlgen/models_gen.go"
