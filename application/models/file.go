@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"image"
+	"image/color"
+	"image/draw"
 	_ "image/gif" // enable decoding of GIF images
 	"image/jpeg"  // decode/encode JPEG images
 	_ "image/png" // enable decoding of PNG images
@@ -99,11 +101,14 @@ func (f *File) Store(name string, content []byte) *FileUploadError {
 		return &e
 	}
 
-	// if possible, re-encode the image to strip EXIF metadata
+	// If possible, strip EXIF metadata by re-encoding the image. Also sets background to white.
 	img, _, err := image.Decode(bytes.NewReader(content))
 	if err == nil {
+		dst := image.NewRGBA(img.Bounds())
+		draw.Draw(dst, dst.Bounds(), image.NewUniform(color.White), image.Point{}, draw.Src)
+		draw.Draw(dst, dst.Bounds(), img, img.Bounds().Min, draw.Over)
 		buf := new(bytes.Buffer)
-		if err := jpeg.Encode(buf, img, nil); err == nil {
+		if err := jpeg.Encode(buf, dst, nil); err == nil {
 			content = buf.Bytes()
 			contentType = "image/jpg"
 			name = name + ".jpeg"
