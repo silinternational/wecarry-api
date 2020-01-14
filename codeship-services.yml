@@ -21,6 +21,7 @@ app:
     AWS_S3_ENDPOINT: http://minio:9000
     AWS_S3_DISABLE_SSL: true
     AWS_S3_BUCKET: wca-test-bucket
+    DOCKER_IP: testdb
   encrypted_env_file: .env.encrypted
   working_dir: /wecarry
   command: true
@@ -28,9 +29,9 @@ app:
 testdb:
   image: postgres:11.6
   environment:
-    POSTGRES_USER: wecarry
-    POSTGRES_PASSWORD: wecarry
-    POSTGRES_DB: wecarry_test
+    POSTGRES_USER: scrutinizer
+    POSTGRES_PASSWORD: scrutinizer
+    POSTGRES_DB: scrutinizer
 
 binary:
   build:
