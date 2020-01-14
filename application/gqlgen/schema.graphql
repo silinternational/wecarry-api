@@ -173,6 +173,7 @@ type Organization {
     createdAt: Time!
     updatedAt: Time!
     domains: [OrganizationDomain!]!
+    logoURL: String
 }
 
 input CreateOrganizationInput {
@@ -180,6 +181,7 @@ input CreateOrganizationInput {
     url: String
     authType: String!
     authConfig: String!
+    logoFileID: ID
 }
 
 input UpdateOrganizationInput {
@@ -188,6 +190,7 @@ input UpdateOrganizationInput {
     url: String
     authType: String!
     authConfig: String!
+    logoFileID: ID
 }
 
 type OrganizationDomain {

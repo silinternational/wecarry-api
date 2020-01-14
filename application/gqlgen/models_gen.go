@@ -27,6 +27,7 @@ type CreateOrganizationInput struct {
 	URL        *string `json:"url"`
 	AuthType   string  `json:"authType"`
 	AuthConfig string  `json:"authConfig"`
+	LogoFileID *string `json:"logoFileID"`
 }
 
 type LocationInput struct {
@@ -63,6 +64,7 @@ type UpdateOrganizationInput struct {
 	URL        *string `json:"url"`
 	AuthType   string  `json:"authType"`
 	AuthConfig string  `json:"authConfig"`
+	LogoFileID *string `json:"logoFileID"`
 }
 
 type UpdatePostStatusInput struct {

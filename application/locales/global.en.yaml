@@ -34,16 +34,32 @@
   translation: We had a problem processing the new message.
 - id: CreateMessage
   translation: We had a problem creating the new message.
+
+# Organization
 - id: CreateOrganization
   translation: We had a problem creating the new organization.
 - id: CreateOrganization.Unauthorized
   translation: You are not allowed to create organizations.
+- id: CreateOrganization.LogoFileNotFound
+  translation: We had a problem finding the logo file for the new organization.
 - id: UpdateOrganization
   translation: We had a problem updating the organization.
 - id: UpdateOrganization.NotFound
   translation: We had a problem finding the organization to update.
 - id: UpdateOrganization.Unauthorized
   translation: You are not allowed to edit information for that organization.
+- id: UpdateOrganization.LogoFileNotFound
+  translation: We had a problem finding the logo file for that organization.
+- id: GetOrganizationLogoURL
+  translation: We had a problem getting the logo for that organization.
+- id: ViewOrganization.NotFound
+  translation: Organization not found
+- id: ViewOrganization.Error
+  translation: There was a problem viewing that organization
+- id: ListOrganizations.Error
+  translation: There was a problem listing organizations
+
+#OrganizationDomain
 - id: CreateOrganizationDomain
   translation: We had a problem adding a domain to the organization.
 - id: CreateOrganizationDomain.NotFound
@@ -56,6 +72,12 @@
   translation: We had a problem finding the organization to remove a domain.
 - id: RemoveOrganizationDomain.Unauthorized
   translation: You are not allowed to remove domains from that organization.
+- id: GetOrganizationDomainOrganizationID
+  translation: We had a problem finding the organization ID for that domain.
+- id: GetOrganizationDomains
+  translation: We had a problem finding the list of domains for the organization.
+
+
 - id: SetThreadLastViewedAt.NotFound
   translation: We had a problem finding the conversation to update its last-viewed time.
 - id: SetThreadLastViewedAt
@@ -198,18 +220,6 @@
 # New Request subject
 - id: Email.Subject.NewRequest
   translation: New Request on {{.AppName}}
-
-# Organization
-- id: GetOrganizationDomainOrganizationID
-  translation: We had a problem finding the domain ID.
-- id: GetOrganizationDomains
-  translation: We had a problem finding the list of domains for the organization.
-- id: ViewOrganization.NotFound
-  translation: Organization not found
-- id: ViewOrganization.Error
-  translation: There was a problem viewing that organization
-- id: ListOrganizations.Error
-  translation: There was a problem listing organizations
 
 # Watch
 - id: GetWatchCreator
