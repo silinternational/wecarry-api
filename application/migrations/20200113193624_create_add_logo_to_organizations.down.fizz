@@ -1,0 +1,1 @@
+drop_column("organizations", "logo_file_id")
