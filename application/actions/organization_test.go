@@ -434,11 +434,18 @@ func (as *ActionSuite) Test_UpdateOrganization() {
 	as.Equal(f.Organizations[0].Name, resp.Organization.Name, "received wrong name")
 	as.Equal(f.Organizations[0].Url.String, resp.Organization.URL, "received wrong URL")
 	as.Equal(f.File.URL, resp.Organization.LogoURL, "received wrong logo URL")
-	as.Equal(0, len(resp.Organization.Domains))
+	as.Equal(2, len(resp.Organization.Domains))
+	domains := make([]string, len(resp.Organization.TrustedOrganizations))
+	for i := range domains {
+		domains[i] = resp.Organization.Domains[i].Domain
+	}
+	as.Contains(domains, f.OrganizationDomains[0].Domain)
+	as.Contains(domains, f.OrganizationDomains[1].Domain)
 	as.Equal(2, len(resp.Organization.TrustedOrganizations))
 	ids := make([]string, len(resp.Organization.TrustedOrganizations))
 	for i := range ids {
 		ids[i] = resp.Organization.TrustedOrganizations[i].ID
+		as.Equal(f.Organizations[0].UUID.String(), resp.Organization.Domains[i].OrganizationID)
 	}
 	as.Contains(ids, f.Organizations[1].UUID.String())
 	as.Contains(ids, f.Organizations[2].UUID.String())
@@ -452,7 +459,7 @@ func (as *ActionSuite) Test_UpdateOrganization() {
 	as.Equal(f.Organizations[0].Url, orgs[0].Url, "URL doesn't match")
 	as.Equal(f.Organizations[0].AuthType, orgs[0].AuthType, "AuthType doesn't match")
 	as.Equal(f.Organizations[0].AuthConfig, orgs[0].AuthConfig, "AuthConfig doesn't match")
-	domains, _ := orgs[0].GetDomains()
-	as.Equal(0, len(domains), "updated organization has unexpected domains")
+	dbDomains, _ := orgs[0].GetDomains()
+	as.Equal(2, len(dbDomains), "updated organization has unexpected domains")
 	as.Equal(resp.Organization.ID, orgs[0].UUID.String(), "UUID from query doesn't match database")
 }

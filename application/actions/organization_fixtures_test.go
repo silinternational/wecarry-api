@@ -16,6 +16,7 @@ type OrganizationFixtures struct {
 	models.Users
 	models.Organizations
 	models.File
+	models.OrganizationDomains
 }
 
 func fixturesForCreateOrganization(as *ActionSuite) OrganizationFixtures {
@@ -258,6 +259,15 @@ func fixturesForUpdateOrganization(as *ActionSuite) OrganizationFixtures {
 		test.MustCreate(as.DB, &trusts[i])
 	}
 
+	domains := make([]models.OrganizationDomain, 2)
+	for i := range domains {
+		domains[i] = models.OrganizationDomain{
+			OrganizationID: orgs[0].ID,
+			Domain:         strconv.Itoa(i) + orgs[0].UUID.String() + ".example.com",
+		}
+		test.MustCreate(as.DB, &domains[i])
+	}
+
 	userFixtures := test.CreateUserFixtures(as.DB, 1)
 	users := userFixtures.Users
 
@@ -268,8 +278,9 @@ func fixturesForUpdateOrganization(as *ActionSuite) OrganizationFixtures {
 	as.Nil(file.Store("photo.gif", []byte("GIF89a")), "unexpected error storing file")
 
 	return OrganizationFixtures{
-		Users:         users,
-		Organizations: orgs,
-		File:          file,
+		Users:               users,
+		Organizations:       orgs,
+		File:                file,
+		OrganizationDomains: domains,
 	}
 }
