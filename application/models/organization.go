@@ -213,11 +213,33 @@ func (o *Organization) LogoURL() (*string, error) {
 
 // CreateTrust creates a Trust record linking this Organization with the organization identified by `secondaryID`
 func (o *Organization) CreateTrust(secondaryID string) error {
+	var secondaryOrg Organization
+	if err := secondaryOrg.FindByUUID(secondaryID); err != nil {
+		return fmt.Errorf("CreateTrust, error finding secondary org, %s", err)
+	}
+	var t Trust
+	t.PrimaryID = o.ID
+	t.SecondaryID = secondaryOrg.ID
+	if err := t.Create(); err != nil {
+		return fmt.Errorf("failed to create new Trust, %s", err)
+	}
 	return nil
 }
 
 // RemoveTrust removes a Trust record between this Organization and the organization identified by `secondaryID`
 func (o *Organization) RemoveTrust(secondaryID string) error {
+	var secondaryOrg Organization
+	if err := secondaryOrg.FindByUUID(secondaryID); err != nil {
+		return fmt.Errorf("RemoveTrust, error finding secondary org, %s", err)
+	}
+	var t Trust
+	if err := t.FindByOrgIDs(o.ID, secondaryOrg.ID); err == nil {
+		return DB.Destroy(&t)
+	} else {
+		if domain.IsOtherThanNoRows(err) {
+			return fmt.Errorf("RemoveTrust, error finding Trust record, %s", err)
+		}
+	}
 	return nil
 }
 
@@ -234,6 +256,9 @@ func (o *Organization) TrustedOrganizations() (Organizations, error) {
 		} else {
 			ids[i] = t[i].PrimaryID
 		}
+	}
+	if len(t) < 1 {
+		return Organizations{}, nil
 	}
 	trustedOrgs := Organizations{}
 	if err := DB.Where("id in (?)", ids...).All(&trustedOrgs); err != nil {

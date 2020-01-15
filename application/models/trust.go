@@ -8,6 +8,8 @@ import (
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
 	"github.com/gobuffalo/validate/validators"
+
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 // Trust is the model for storing Organization connections, also known as Trusts
@@ -42,12 +44,13 @@ func (t *Trust) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 
 // Create stores the Trust data as a new record in the database.
 func (t *Trust) Create() error {
+	if err := t.FindByOrgIDs(t.PrimaryID, t.SecondaryID); err == nil {
+		// already exists
+		return nil
+	} else if domain.IsOtherThanNoRows(err) {
+		return err
+	}
 	return create(t)
-}
-
-// Update writes the Trust data to an existing database record.
-func (t *Trust) Update() error {
-	return update(t)
 }
 
 // FindByOrgIDs loads from DB the Trust record identified by the given Organization IDs. The two arguments are

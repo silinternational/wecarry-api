@@ -250,15 +250,6 @@ func fixturesForUpdateOrganization(as *ActionSuite) OrganizationFixtures {
 		test.MustCreate(as.DB, &orgs[i])
 	}
 
-	trusts := make([]models.Trust, 2)
-	trusts[0].PrimaryID = orgs[0].ID
-	trusts[0].SecondaryID = orgs[1].ID
-	trusts[1].PrimaryID = orgs[2].ID
-	trusts[1].SecondaryID = orgs[0].ID
-	for i := range trusts {
-		test.MustCreate(as.DB, &trusts[i])
-	}
-
 	domains := make([]models.OrganizationDomain, 2)
 	for i := range domains {
 		domains[i] = models.OrganizationDomain{
@@ -282,5 +273,77 @@ func fixturesForUpdateOrganization(as *ActionSuite) OrganizationFixtures {
 		Organizations:       orgs,
 		File:                file,
 		OrganizationDomains: domains,
+	}
+}
+
+func fixturesForCreateTrust(as *ActionSuite) OrganizationFixtures {
+	orgs := make([]models.Organization, 3)
+	orgs[0].Name = "default org"
+	orgs[1].Name = "trusted org 1"
+	orgs[2].Name = "trusted org 2"
+	for i := range orgs {
+		orgs[i].AuthType = models.AuthTypeSaml
+		orgs[i].AuthConfig = "{}"
+		orgs[i].Url = nulls.NewString("https://www.example.com")
+		test.MustCreate(as.DB, &orgs[i])
+	}
+
+	trusts := make([]models.Trust, 1)
+	trusts[0].PrimaryID = orgs[1].ID
+	trusts[0].SecondaryID = orgs[0].ID
+	for i := range trusts {
+		test.MustCreate(as.DB, &trusts[i])
+	}
+
+	userFixtures := test.CreateUserFixtures(as.DB, 1)
+	users := userFixtures.Users
+
+	users[0].AdminRole = models.UserAdminRoleSuperAdmin
+	as.NoError(as.DB.Save(&users[0]))
+
+	var file models.File
+	as.Nil(file.Store("photo.gif", []byte("GIF89a")), "unexpected error storing file")
+
+	return OrganizationFixtures{
+		Users:         users,
+		Organizations: orgs,
+		File:          file,
+	}
+}
+
+func fixturesForRemoveTrust(as *ActionSuite) OrganizationFixtures {
+	orgs := make([]models.Organization, 3)
+	orgs[0].Name = "default org"
+	orgs[1].Name = "trusted org 1"
+	orgs[2].Name = "trusted org 2"
+	for i := range orgs {
+		orgs[i].AuthType = models.AuthTypeSaml
+		orgs[i].AuthConfig = "{}"
+		orgs[i].Url = nulls.NewString("https://www.example.com")
+		test.MustCreate(as.DB, &orgs[i])
+	}
+
+	trusts := make([]models.Trust, 2)
+	trusts[0].PrimaryID = orgs[1].ID
+	trusts[0].SecondaryID = orgs[0].ID
+	trusts[1].PrimaryID = orgs[0].ID
+	trusts[1].SecondaryID = orgs[2].ID
+	for i := range trusts {
+		test.MustCreate(as.DB, &trusts[i])
+	}
+
+	userFixtures := test.CreateUserFixtures(as.DB, 1)
+	users := userFixtures.Users
+
+	users[0].AdminRole = models.UserAdminRoleSuperAdmin
+	as.NoError(as.DB.Save(&users[0]))
+
+	var file models.File
+	as.Nil(file.Store("photo.gif", []byte("GIF89a")), "unexpected error storing file")
+
+	return OrganizationFixtures{
+		Users:         users,
+		Organizations: orgs,
+		File:          file,
 	}
 }

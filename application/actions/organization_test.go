@@ -416,7 +416,7 @@ func (as *ActionSuite) Test_UpdateOrganization() {
 	f := fixturesForUpdateOrganization(as)
 
 	var resp OrganizationResponse
-	allFieldsQuery := `id domains { domain organizationID } name url logoURL trustedOrganizations { id }`
+	allFieldsQuery := `id domains { domain organizationID } name url logoURL`
 	allFieldsInput := fmt.Sprintf(
 		`id:"%s" name:"%s" url:"%s" authType:"%s" authConfig:"%s" logoFileID:"%s"`,
 		f.Organizations[0].UUID.String(),
@@ -437,22 +437,13 @@ func (as *ActionSuite) Test_UpdateOrganization() {
 
 	// check Domains
 	as.Equal(2, len(resp.Organization.Domains))
-	domains := make([]string, len(resp.Organization.TrustedOrganizations))
+	domains := make([]string, len(resp.Organization.Domains))
 	for i := range domains {
 		domains[i] = resp.Organization.Domains[i].Domain
+		as.Equal(f.Organizations[0].UUID.String(), resp.Organization.Domains[i].OrganizationID)
 	}
 	as.Contains(domains, f.OrganizationDomains[0].Domain)
 	as.Contains(domains, f.OrganizationDomains[1].Domain)
-
-	// check TrustedOrganizations
-	as.Equal(2, len(resp.Organization.TrustedOrganizations))
-	ids := make([]string, len(resp.Organization.TrustedOrganizations))
-	for i := range ids {
-		ids[i] = resp.Organization.TrustedOrganizations[i].ID
-		as.Equal(f.Organizations[0].UUID.String(), resp.Organization.Domains[i].OrganizationID)
-	}
-	as.Contains(ids, f.Organizations[1].UUID.String())
-	as.Contains(ids, f.Organizations[2].UUID.String())
 
 	// compare against database record to ensure all fields were updated
 	var orgs models.Organizations
@@ -466,4 +457,57 @@ func (as *ActionSuite) Test_UpdateOrganization() {
 	dbDomains, _ := orgs[0].GetDomains()
 	as.Equal(2, len(dbDomains), "updated organization has unexpected domains")
 	as.Equal(resp.Organization.ID, orgs[0].UUID.String(), "UUID from query doesn't match database")
+}
+
+func (as *ActionSuite) Test_CreateTrust() {
+	f := fixturesForCreateTrust(as)
+
+	var resp OrganizationResponse
+	allFieldsQuery := `id name trustedOrganizations { id }`
+	allFieldsInput := fmt.Sprintf(
+		`primaryID:"%s" secondaryID:"%s"`,
+		f.Organizations[0].UUID.String(),
+		f.Organizations[2].UUID.String())
+
+	query := fmt.Sprintf("mutation{organization: createTrust(input: {%s}) {%s}}",
+		allFieldsInput, allFieldsQuery)
+	err := as.testGqlQuery(query, f.Users[0].Nickname, &resp)
+	as.NoError(err)
+
+	as.Equal(f.Organizations[0].Name, resp.Organization.Name, "received wrong name")
+
+	// check TrustedOrganizations
+	as.Equal(2, len(resp.Organization.TrustedOrganizations))
+	ids := make([]string, len(resp.Organization.TrustedOrganizations))
+	for i := range ids {
+		ids[i] = resp.Organization.TrustedOrganizations[i].ID
+	}
+	as.Contains(ids, f.Organizations[1].UUID.String())
+	as.Contains(ids, f.Organizations[2].UUID.String())
+}
+
+func (as *ActionSuite) Test_RemoveTrust() {
+	f := fixturesForRemoveTrust(as)
+
+	var resp OrganizationResponse
+	allFieldsQuery := `id name trustedOrganizations { id }`
+	allFieldsInput := fmt.Sprintf(
+		`primaryID:"%s" secondaryID:"%s"`,
+		f.Organizations[0].UUID.String(),
+		f.Organizations[2].UUID.String())
+
+	query := fmt.Sprintf("mutation{organization: removeTrust(input: {%s}) {%s}}",
+		allFieldsInput, allFieldsQuery)
+	err := as.testGqlQuery(query, f.Users[0].Nickname, &resp)
+	as.NoError(err)
+
+	as.Equal(f.Organizations[0].Name, resp.Organization.Name, "received wrong name")
+
+	// check TrustedOrganizations
+	as.Equal(1, len(resp.Organization.TrustedOrganizations))
+	ids := make([]string, len(resp.Organization.TrustedOrganizations))
+	for i := range ids {
+		ids[i] = resp.Organization.TrustedOrganizations[i].ID
+	}
+	as.Contains(ids, f.Organizations[1].UUID.String())
 }
