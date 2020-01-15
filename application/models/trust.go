@@ -29,6 +29,7 @@ func (t *Trust) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
 		&validators.IntIsPresent{Field: t.PrimaryID, Name: "PrimaryID"},
 		&validators.IntIsPresent{Field: t.PrimaryID, Name: "SecondaryID"},
+		&validators.IntsAreNotEqual{ValueOne: t.PrimaryID, ValueTwo: t.SecondaryID, Name: "SecondaryEqualsPrimary"},
 	), nil
 }
 
