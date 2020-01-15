@@ -40,7 +40,7 @@ refer to domain/errorcodes.go.  In particular, the related codes are those
 that have a comment referring to actions.AuthRequest.
 
 ### Office365/AzureAD
-To enable authentication via AzureAD, an organization record will need to be created 
+To add an organization using AzureAD authentication, create a database organization record  
 that includes an auth_type of `azureadv2` and an auth_config like the following ... 
 
 ```
@@ -58,8 +58,8 @@ in the docker-compose file. It will probably also require environment changes on
 UI side.)
 
 ### Google
-To enable authentication via Google, an organization record will 
-need to be created that includes an auth_type of `google` and an auth_config like the following ... 
+To add an organization using Google authentication, create a database organization record  
+that includes an auth_type of `google` and an auth_config like the following ... 
 
 ```
 {}
