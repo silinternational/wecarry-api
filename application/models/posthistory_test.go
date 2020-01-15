@@ -58,11 +58,11 @@ func (ms *ModelSuite) TestPost_pop() {
 			want:      PostHistories{},
 		},
 		{
-			name:          "from accepted back to committed",
+			name:          "from accepted back to open",
 			post:          f.Posts[0],
-			newStatus:     PostStatusCommitted,
+			newStatus:     PostStatusOpen,
 			currentStatus: PostStatusAccepted,
-			want:          PostHistories{f.PostHistories[0], f.PostHistories[1]},
+			want:          PostHistories{f.PostHistories[0]},
 		},
 	}
 
@@ -123,9 +123,9 @@ func (ms *ModelSuite) TestPostHistory_createForPost() {
 		want       PostHistories
 	}{
 		{
-			name:       "open to committed",
+			name:       "open to accepted",
 			post:       f.Posts[0],
-			status:     PostStatusCommitted,
+			status:     PostStatusAccepted,
 			providerID: f.Users[1].ID,
 			want: PostHistories{
 				{
@@ -134,7 +134,7 @@ func (ms *ModelSuite) TestPostHistory_createForPost() {
 					ReceiverID: nulls.NewInt(f.Posts[0].CreatedByID),
 				},
 				{
-					Status:     PostStatusCommitted,
+					Status:     PostStatusAccepted,
 					ReceiverID: nulls.NewInt(f.Users[0].ID),
 					ProviderID: nulls.NewInt(f.Users[1].ID),
 				},
@@ -149,7 +149,7 @@ func (ms *ModelSuite) TestPostHistory_createForPost() {
 		{
 			name:       "bad provider id",
 			post:       f.Posts[1],
-			status:     PostStatusCommitted,
+			status:     PostStatusAccepted,
 			providerID: 999999,
 			wantErr:    `key constraint "post_histories_provider_id_fkey"`,
 		},

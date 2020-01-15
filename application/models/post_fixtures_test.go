@@ -89,7 +89,7 @@ func createFixturesForTestPost_manageStatusTransition_forwardProgression(ms *Mod
 	posts[1].Status = PostStatusAccepted
 	posts[1].CreatedByID = users[1].ID
 	posts[1].ProviderID = nulls.NewInt(users[0].ID)
-	ms.NoError(ms.DB.Save(&posts))
+	ms.NoError(ms.DB.Save(&posts[1]))
 
 	return PostFixtures{
 		Users: users,
@@ -109,9 +109,6 @@ func createFixturesForTestPost_manageStatusTransition_backwardProgression(ms *Mo
 	posts[1].CreatedByID = users[1].ID
 	posts[1].ProviderID = nulls.NewInt(users[0].ID)
 	ms.NoError(ms.DB.Save(&posts))
-
-	posts[1].Status = PostStatusAccepted
-	ms.NoError(ms.DB.Save(&posts[1]))
 
 	return PostFixtures{
 		Users: users,

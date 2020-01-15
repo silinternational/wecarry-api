@@ -26,7 +26,7 @@ func CreateFixtures_GetPostUsers(ms *ModelSuite, t *testing.T) orgUserPostFixtur
 	ms.NoError(err, "could not create language preference for user "+users[1].Nickname)
 
 	posts := test.CreatePostFixtures(ms.DB, 2, false)
-	posts[0].Status = models.PostStatusOpen
+	posts[0].Status = models.PostStatusAccepted
 	posts[0].ProviderID = nulls.NewInt(users[1].ID)
 	ms.NoError(ms.DB.Save(&posts[0]))
 
@@ -42,20 +42,13 @@ func CreateFixtures_RequestStatusUpdatedNotifications(ms *ModelSuite, t *testing
 	org := userFixtures.Organization
 	users := userFixtures.Users
 
-	posts := test.CreatePostFixtures(ms.DB, 2, false)
-	//posts[0].Status = models.PostStatusOpen
-	//posts[0].ProviderID = nulls.NewInt(users[1].ID)
-	//ms.NoError(ms.DB.Save(&posts[0]))
-	//fmt.Printf("\nDDDDDDDDD %+v\n", posts[0])
+	tU := models.User{}
+	ms.NoError(tU.FindByID(users[1].ID))
 
-	targetPost := models.Post{}
-	ms.NoError(targetPost.FindByID(posts[0].ID))
-	targetPost.Status = models.PostStatusOpen
-	targetPost.ProviderID = nulls.NewInt(users[1].ID)
-	ms.NoError(ms.DB.Save(&targetPost))
-	provider, err := targetPost.GetProvider()
-	ms.NoError(err)
-	fmt.Printf("\nEEEEEEEEEEE %+v\n", provider)
+	posts := test.CreatePostFixtures(ms.DB, 2, false)
+	posts[0].Status = models.PostStatusAccepted
+	posts[0].ProviderID = nulls.NewInt(users[1].ID)
+	ms.NoError(posts[0].Update())
 
 	return orgUserPostFixtures{
 		orgs:  models.Organizations{org},

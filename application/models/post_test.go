@@ -179,19 +179,6 @@ func (ms *ModelSuite) TestPost_ValidateCreate() {
 			wantErr: true,
 		},
 		{
-			name: "bad status - committed",
-			post: Post{
-				CreatedByID:    1,
-				OrganizationID: 1,
-				Type:           PostTypeRequest,
-				Title:          "A Request",
-				Size:           PostSizeMedium,
-				Status:         PostStatusCommitted,
-				UUID:           domain.GetUUID(),
-			},
-			wantErr: true,
-		},
-		{
 			name: "bad status - delivered",
 			post: Post{
 				CreatedByID:    1,
@@ -282,10 +269,10 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_OpenRequest() {
 			wantErr: false,
 		},
 		{
-			name: "good status - from open to committed",
+			name: "good status - from open to accepted",
 			post: Post{
 				Title:  "New Title",
-				Status: PostStatusCommitted,
+				Status: PostStatusAccepted,
 				UUID:   post.UUID,
 			},
 			wantErr: false,
@@ -299,12 +286,12 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_OpenRequest() {
 			wantErr: false,
 		},
 		{
-			name: "bad status - from open to accepted",
+			name: "good status - from open to accepted",
 			post: Post{
 				Status: PostStatusAccepted,
 				UUID:   post.UUID,
 			},
-			wantErr: true,
+			wantErr: false,
 		},
 		{
 			name: "bad status - from open to delivered",
@@ -352,97 +339,6 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_OpenRequest() {
 	}
 }
 
-func (ms *ModelSuite) TestPost_ValidateUpdate_CommittedRequest() {
-	t := ms.T()
-
-	post := CreateFixturesValidateUpdate_RequestStatus(PostStatusCommitted, ms, t)
-
-	tests := []struct {
-		name    string
-		post    Post
-		want    *validate.Errors
-		wantErr bool
-	}{
-		{
-			name: "good status - from committed to committed",
-			post: Post{
-				Title:  "New Title",
-				Status: PostStatusCommitted,
-				UUID:   post.UUID,
-			},
-			wantErr: false,
-		},
-		{
-			name: "good status - from committed to open",
-			post: Post{
-				Status: PostStatusOpen,
-				UUID:   post.UUID,
-			},
-			wantErr: false,
-		},
-		{
-			name: "good status - from committed to accepted",
-			post: Post{
-				Status: PostStatusAccepted,
-				UUID:   post.UUID,
-			},
-			wantErr: false,
-		},
-		{
-			name: "good status - from committed to delivered",
-			post: Post{
-				Status: PostStatusDelivered,
-				UUID:   post.UUID,
-			},
-			wantErr: false,
-		},
-		{
-			name: "good status - from committed to removed",
-			post: Post{
-				Status: PostStatusRemoved,
-				UUID:   post.UUID,
-			},
-			wantErr: false,
-		},
-		{
-			name: "bad status - from committed to received",
-			post: Post{
-				Status: PostStatusReceived,
-				UUID:   post.UUID,
-			},
-			wantErr: true,
-		},
-		{
-			name: "bad status - from committed to completed",
-			post: Post{
-				Status: PostStatusCompleted,
-				UUID:   post.UUID,
-			},
-			wantErr: true,
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			errField := "status"
-
-			test.post.Type = PostTypeRequest // only Requests have been implemented thus far
-			vErr, _ := test.post.ValidateUpdate(DB)
-			if test.wantErr {
-				if vErr.Count() == 0 {
-					t.Errorf("Expected an error, but did not get one")
-				} else if len(vErr.Get(errField)) == 0 {
-					t.Errorf("Expected an error on field %v, but got none (errors: %v)", errField, vErr.Errors)
-				}
-				return
-			}
-
-			if vErr.HasAny() {
-				t.Errorf("Unexpected error: %v", vErr)
-			}
-		})
-	}
-}
-
 func (ms *ModelSuite) TestPost_ValidateUpdate_AcceptedRequest() {
 	t := ms.T()
 
@@ -467,14 +363,6 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_AcceptedRequest() {
 			name: "good status - from accepted to open",
 			post: Post{
 				Status: PostStatusOpen,
-				UUID:   post.UUID,
-			},
-			wantErr: false,
-		},
-		{
-			name: "good status - from accepted to committed",
-			post: Post{
-				Status: PostStatusCommitted,
 				UUID:   post.UUID,
 			},
 			wantErr: false,
@@ -548,14 +436,6 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_DeliveredRequest() {
 			name: "good status - from delivered to accepted",
 			post: Post{
 				Status: PostStatusAccepted,
-				UUID:   post.UUID,
-			},
-			wantErr: false,
-		},
-		{
-			name: "good status - from delivered to committed",
-			post: Post{
-				Status: PostStatusCommitted,
 				UUID:   post.UUID,
 			},
 			wantErr: false,
@@ -660,14 +540,6 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_ReceivedRequest() {
 			wantErr: true,
 		},
 		{
-			name: "bad status - from received to committed",
-			post: Post{
-				Status: PostStatusCommitted,
-				UUID:   post.UUID,
-			},
-			wantErr: true,
-		},
-		{
 			name: "bad status - from received to removed",
 			post: Post{
 				Status: PostStatusRemoved,
@@ -751,14 +623,6 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_CompletedRequest() {
 			wantErr: true,
 		},
 		{
-			name: "bad status - from completed to committed",
-			post: Post{
-				Status: PostStatusCommitted,
-				UUID:   post.UUID,
-			},
-			wantErr: true,
-		},
-		{
 			name: "bad status - from completed to removed",
 			post: Post{
 				Status: PostStatusRemoved,
@@ -813,14 +677,6 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_RemovedRequest() {
 			name: "bad status - from removed to open",
 			post: Post{
 				Status: PostStatusOpen,
-				UUID:   post.UUID,
-			},
-			wantErr: true,
-		},
-		{
-			name: "bad status - from removed to committed",
-			post: Post{
-				Status: PostStatusCommitted,
 				UUID:   post.UUID,
 			},
 			wantErr: true,
@@ -986,9 +842,9 @@ func (ms *ModelSuite) TestPost_manageStatusTransition_forwardProgression() {
 			wantErr:   "",
 		},
 		{
-			name:       "open to committed - new history with provider",
+			name:       "open to accepted - new history with provider",
 			post:       f.Posts[0],
-			newStatus:  PostStatusCommitted,
+			newStatus:  PostStatusAccepted,
 			providerID: nulls.NewInt(f.Users[1].ID),
 			wantErr:    "",
 		},
@@ -1043,24 +899,17 @@ func (ms *ModelSuite) TestPost_manageStatusTransition_backwardProgression() {
 		wantErr    string
 	}{
 		{
-			name:       "committed to committed - no change",
+			name:       "accepted to accepted - no change",
 			post:       f.Posts[0],
-			newStatus:  PostStatusCommitted,
+			newStatus:  PostStatusAccepted,
 			providerID: f.Posts[0].ProviderID,
 			wantErr:    "",
 		},
 		{
-			name:       "committed to open - lost history with provider",
+			name:       "accepted to open",
 			post:       f.Posts[0],
 			newStatus:  PostStatusOpen,
 			providerID: nulls.Int{},
-			wantErr:    "",
-		},
-		{
-			name:       "accepted to committed - lost history but has provider",
-			post:       f.Posts[1],
-			newStatus:  PostStatusCommitted,
-			providerID: f.Posts[1].ProviderID,
 			wantErr:    "",
 		},
 	}
@@ -1590,18 +1439,17 @@ func (ms *ModelSuite) TestPost_SetProviderWithStatus() {
 		pType          PostType
 		wantProviderID nulls.Int
 	}{
-		{name: "Committed Request", status: PostStatusCommitted,
+		{name: "Accepted Request", status: PostStatusAccepted,
 			pType: PostTypeRequest, wantProviderID: nulls.NewInt(user.ID)},
-		{name: "Not Committed Request", status: PostStatusAccepted,
-			pType: PostTypeRequest, wantProviderID: nulls.Int{}},
-		{name: "Committed Offer", status: PostStatusCommitted,
+		{name: "Accepted Offer", status: PostStatusAccepted,
 			pType: PostTypeOffer, wantProviderID: nulls.Int{}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var post Post
 			post.Type = test.pType
-			post.SetProviderWithStatus(test.status, user)
+			userID := user.UUID.String()
+			post.SetProviderWithStatus(test.status, &userID)
 
 			ms.Equal(test.wantProviderID, post.ProviderID)
 			ms.Equal(test.status, post.Status)
@@ -1736,7 +1584,6 @@ func (ms *ModelSuite) TestPost_isPostEditable() {
 		want   bool
 	}{
 		{status: PostStatusOpen, want: true},
-		{status: PostStatusCommitted, want: true},
 		{status: PostStatusAccepted, want: true},
 		{status: PostStatusReceived, want: true},
 		{status: PostStatusDelivered, want: true},
@@ -1783,16 +1630,11 @@ func (ms *ModelSuite) TestPost_canUserChangeStatus() {
 			want:      false,
 		},
 		{
-			name:      "Open to Committed",
+			name:      "Open to Accepted",
 			post:      Post{CreatedByID: 1, Status: PostStatusOpen, Type: PostTypeRequest},
-			newStatus: PostStatusCommitted,
+			user:      User{ID: 1},
+			newStatus: PostStatusAccepted,
 			want:      true,
-		},
-		{
-			name:      "Committed to Committed",
-			post:      Post{CreatedByID: 1, Status: PostStatusCommitted, Type: PostTypeRequest},
-			newStatus: PostStatusCommitted,
-			want:      false,
 		},
 		{
 			name:      "Accepted",

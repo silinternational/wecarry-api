@@ -599,15 +599,16 @@ func (ms *ModelSuite) TestUser_CanUpdatePostStatus() {
 			want:      false,
 		},
 		{
-			name:      "Open to Committed",
+			name:      "Open to Accepted",
 			post:      Post{CreatedByID: 1, Status: PostStatusOpen, Type: PostTypeRequest},
-			newStatus: PostStatusCommitted,
+			user:      User{ID: 1},
+			newStatus: PostStatusAccepted,
 			want:      true,
 		},
 		{
-			name:      "Committed to Committed",
-			post:      Post{CreatedByID: 1, Status: PostStatusCommitted, Type: PostTypeRequest},
-			newStatus: PostStatusCommitted,
+			name:      "Accepted to Accepted",
+			post:      Post{CreatedByID: 1, Status: PostStatusAccepted, Type: PostTypeRequest},
+			newStatus: PostStatusAccepted,
 			want:      false,
 		},
 	}
