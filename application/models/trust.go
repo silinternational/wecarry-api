@@ -28,7 +28,7 @@ type Trusts []Trust
 func (t *Trust) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
 		&validators.IntIsPresent{Field: t.PrimaryID, Name: "PrimaryID"},
-		&validators.IntIsPresent{Field: t.PrimaryID, Name: "SecondaryID"},
+		&validators.IntIsPresent{Field: t.SecondaryID, Name: "SecondaryID"},
 		&validators.IntsAreNotEqual{ValueOne: t.PrimaryID, ValueTwo: t.SecondaryID, Name: "SecondaryEqualsPrimary"},
 	), nil
 }
@@ -45,7 +45,8 @@ func (t *Trust) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 
 // Create stores the Trust data as a new record in the database.
 func (t *Trust) Create() error {
-	if err := t.FindByOrgIDs(t.PrimaryID, t.SecondaryID); err == nil {
+	var t2 Trust
+	if err := t2.FindByOrgIDs(t.PrimaryID, t.SecondaryID); err == nil {
 		// already exists
 		return nil
 	} else if domain.IsOtherThanNoRows(err) {
