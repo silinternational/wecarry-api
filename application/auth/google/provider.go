@@ -78,7 +78,6 @@ func (p *Provider) AuthCallback(c buffalo.Context) auth.Response {
 	msg := auth.CheckSessionStore()
 	if msg != "" {
 		domain.Logger.Printf("got message from Google's CheckSessionStore() in AuthCallback ... %s", msg)
-		fmt.Println("google_provider: " + msg)
 	}
 
 	value, err := auth.GetFromSession(ProviderName, req)
