@@ -40,15 +40,15 @@ refer to domain/errorcodes.go.  In particular, the related codes are those
 that have a comment referring to actions.AuthRequest.
 
 ### Office365/AzureAD
-To enable authentication via AzureAD, an organization record will 
-need to be created that includes an auth_type of `azureadv2` and an auth_config like the following ... 
+To enable authentication via AzureAD, an organization record will need to be created 
+that includes an auth_type of `azureadv2` and an auth_config like the following ... 
 
 ```
 {}
 ```
 
-The three environment variables `AZURE_AD_TENANT`, `AZURE_AD_KEY` and `AZURE_AD_SECRET` will need to be 
-set for the appropriate Azure AD oauth account and application. 
+The three environment variables `AZURE_AD_TENANT`, `AZURE_AD_KEY` and `AZURE_AD_SECRET` 
+will need to be set for the appropriate Azure AD oauth account and application. 
 (see https://docs.nylas.com/docs/o365-oauth-setup)
 
 For local development, if you are using `http`, then you will need to 
