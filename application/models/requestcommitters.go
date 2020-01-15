@@ -59,8 +59,7 @@ func (r *RequestCommitters) FindByPostID(postID int) error {
 		return fmt.Errorf("error finding request_committer, invalid id %v", postID)
 	}
 
-	where := "post_id = ? AND post_type = ?"
-	if err := DB.Eager("User").Where(where, postID, PostTypeRequest).All(r); err != nil {
+	if err := DB.Eager("User").Where("post_id = ?", postID).All(r); err != nil {
 		return fmt.Errorf("failed to find request_committer record for post %d, %s",
 			postID, err)
 	}

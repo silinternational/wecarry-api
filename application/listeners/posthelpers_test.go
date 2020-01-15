@@ -96,11 +96,11 @@ func (ms *ModelSuite) TestRequestStatusUpdatedNotifications() {
 	buf.Reset()
 
 	// Logging message expected about bad transition
-	postStatusEData.NewStatus = models.PostStatusAccepted
+	postStatusEData.NewStatus = models.PostStatusDelivered
 	requestStatusUpdatedNotifications(posts[0], postStatusEData)
 
 	got = buf.String()
-	want := "unexpected status transition 'OPEN-ACCEPTED'"
+	want := "unexpected status transition 'OPEN-DELIVERED'"
 	test.AssertStringContains(t, got, want, 45)
 
 }
@@ -241,8 +241,8 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 			template:         domain.MessageTemplateRequestFromOpenToAccepted,
 			sendFunction:     sendNotificationRequestFromOpenToAccepted,
 			wantEmailsSent:   1,
-			wantToEmail:      posts[0].CreatedBy.Email,
-			wantBodyContains: "has offered",
+			wantToEmail:      posts[0].Provider.Email,
+			wantBodyContains: "has accepted your offer",
 		},
 		{name: "Bad - Open to Accepted", // No Provider
 			post:         posts[1],

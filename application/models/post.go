@@ -60,7 +60,6 @@ type PostStatus string
 
 const (
 	PostStatusOpen      PostStatus = "OPEN"
-	PostStatusCommitted PostStatus = "COMMITTED"
 	PostStatusAccepted  PostStatus = "ACCEPTED"
 	PostStatusDelivered PostStatus = "DELIVERED"
 	PostStatusReceived  PostStatus = "RECEIVED"
@@ -77,26 +76,17 @@ func getStatusTransitions() map[PostStatus][]statusTransitionTarget {
 	return map[PostStatus][]statusTransitionTarget{
 		PostStatusOpen: {
 			{status: PostStatusAccepted},
-			{status: PostStatusCommitted},
-			{status: PostStatusRemoved},
-		},
-		PostStatusCommitted: {
-			{status: PostStatusOpen, isBackStep: true},
-			{status: PostStatusAccepted},
-			{status: PostStatusDelivered},
 			{status: PostStatusRemoved},
 		},
 		PostStatusAccepted: {
-			{status: PostStatusOpen},
-			{status: PostStatusCommitted, isBackStep: true}, // to correct a false acceptance
+			{status: PostStatusOpen, isBackStep: true}, // to correct a false acceptance
 			{status: PostStatusDelivered},
 			{status: PostStatusReceived},  // This transition is in here for later, in case one day it's not skippable
 			{status: PostStatusCompleted}, // For now, `DELIVERED` is not a required step
 			{status: PostStatusRemoved},
 		},
 		PostStatusDelivered: {
-			{status: PostStatusCommitted, isBackStep: true}, // to correct a false acceptance
-			{status: PostStatusAccepted, isBackStep: true},  // to correct a false delivery
+			{status: PostStatusAccepted, isBackStep: true}, // to correct a false delivery
 			{status: PostStatusCompleted},
 		},
 		PostStatusReceived: {
@@ -151,7 +141,7 @@ func isTransitionBackStep(status1, status2 PostStatus) (bool, error) {
 
 func (e PostStatus) IsValid() bool {
 	switch e {
-	case PostStatusOpen, PostStatusCommitted, PostStatusAccepted, PostStatusDelivered, PostStatusReceived,
+	case PostStatusOpen, PostStatusAccepted, PostStatusDelivered, PostStatusReceived,
 		PostStatusCompleted, PostStatusRemoved:
 		return true
 	}
@@ -417,8 +407,6 @@ func (p *Post) manageStatusTransition() error {
 
 	var pH PostHistory
 	if isBackStep {
-		// first try to find or recreate a request committer object
-		p.backToCommitted(p.Status)
 		err = pH.popForPost(*p, lastStatus)
 	} else {
 		err = pH.createForPost(*p)
@@ -772,7 +760,7 @@ func (p *Post) IsEditable(user User) (bool, error) {
 // isPostEditable defines at which states can posts be edited.
 func (p *Post) isPostEditable() bool {
 	switch p.Status {
-	case PostStatusOpen, PostStatusCommitted, PostStatusAccepted, PostStatusReceived, PostStatusDelivered:
+	case PostStatusOpen, PostStatusAccepted, PostStatusReceived, PostStatusDelivered:
 		return true
 	default:
 		return false
@@ -792,9 +780,6 @@ func (p *Post) canUserChangeStatus(user User, newStatus PostStatus) bool {
 
 	switch p.Type {
 	case PostTypeRequest:
-		if p.Status == PostStatusOpen && newStatus == PostStatusCommitted {
-			return true
-		}
 		return newStatus == PostStatusDelivered && p.ProviderID.Int == user.ID
 	case PostTypeOffer:
 		return newStatus == PostStatusReceived && p.ReceiverID.Int == user.ID
@@ -851,26 +836,4 @@ func (p *Post) Meeting() (*Meeting, error) {
 	}
 
 	return &meeting, nil
-}
-
-func (p *Post) backToCommitted(newStatus PostStatus) error {
-	if newStatus != PostStatusCommitted {
-		return nil
-	}
-
-	if !p.ProviderID.Valid {
-		return errors.New("may not move back to committed status without a Provider ID")
-	}
-
-	var reqCom RequestCommitter
-	if err := reqCom.FindByPostIDAndUserID(p.ID, p.ProviderID.Int); err != nil {
-		reqCom.PostID = p.ID
-		reqCom.UserID = p.ProviderID.Int
-		if err := reqCom.Create(); err != nil {
-			return errors.New("error moving back to committed status: " + err.Error())
-		}
-	}
-
-	p.ProviderID = nulls.Int{}
-	return p.Update()
 }

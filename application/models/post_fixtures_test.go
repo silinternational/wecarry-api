@@ -86,7 +86,7 @@ func createFixturesForTestPost_manageStatusTransition_forwardProgression(ms *Mod
 	users := uf.Users
 
 	posts := createPostFixtures(ms.DB, 2, 0, false)
-	posts[1].Status = PostStatusCommitted
+	posts[1].Status = PostStatusAccepted
 	posts[1].CreatedByID = users[1].ID
 	posts[1].ProviderID = nulls.NewInt(users[0].ID)
 	ms.NoError(ms.DB.Save(&posts))
@@ -102,10 +102,10 @@ func createFixturesForTestPost_manageStatusTransition_backwardProgression(ms *Mo
 	users := uf.Users
 
 	posts := createPostFixtures(ms.DB, 2, 0, false)
-	posts[0].Status = PostStatusCommitted
+	posts[0].Status = PostStatusAccepted
 	posts[0].CreatedByID = users[0].ID
 	posts[0].ProviderID = nulls.NewInt(users[1].ID)
-	posts[1].Status = PostStatusCommitted
+	posts[1].Status = PostStatusAccepted
 	posts[1].CreatedByID = users[1].ID
 	posts[1].ProviderID = nulls.NewInt(users[0].ID)
 	ms.NoError(ms.DB.Save(&posts))
@@ -197,7 +197,7 @@ func CreateFixtures_Posts_FindByUser(ms *ModelSuite) PostFixtures {
 
 	posts := createPostFixtures(ms.DB, 5, 0, false)
 	posts[1].OrganizationID = orgs[1].ID
-	posts[2].Status = PostStatusCommitted
+	posts[2].Status = PostStatusOpen
 	posts[3].Status = PostStatusRemoved
 	posts[4].CreatedByID = users[1].ID
 	ms.NoError(ms.DB.Save(&posts))
