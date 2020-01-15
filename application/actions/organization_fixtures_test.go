@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gobuffalo/nulls"
+
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/internal/test"
 	"github.com/silinternational/wecarry-api/models"
@@ -14,6 +15,7 @@ import (
 type OrganizationFixtures struct {
 	models.Users
 	models.Organizations
+	models.File
 }
 
 func fixturesForCreateOrganization(as *ActionSuite) OrganizationFixtures {
@@ -40,9 +42,13 @@ func fixturesForCreateOrganization(as *ActionSuite) OrganizationFixtures {
 	users[0].AdminRole = models.UserAdminRoleSuperAdmin
 	as.NoError(as.DB.Save(&users[0]))
 
+	var file models.File
+	as.Nil(file.Store("photo.gif", []byte("GIF89a")), "unexpected error storing file")
+
 	return OrganizationFixtures{
 		Users:         users,
 		Organizations: orgs,
+		File:          file,
 	}
 }
 
@@ -228,5 +234,31 @@ func fixturesForOrganizationDomain(as *ActionSuite) OrganizationFixtures {
 	return OrganizationFixtures{
 		Organizations: models.Organizations{org},
 		Users:         users,
+	}
+}
+
+func fixturesForUpdateOrganization(as *ActionSuite) OrganizationFixtures {
+	var org models.Organization
+	org = models.Organization{
+		Name:       "default org",
+		AuthType:   models.AuthTypeSaml,
+		AuthConfig: "{}",
+		Url:        nulls.NewString("https://www.example.com"),
+	}
+	test.MustCreate(as.DB, &org)
+
+	userFixtures := test.CreateUserFixtures(as.DB, 1)
+	users := userFixtures.Users
+
+	users[0].AdminRole = models.UserAdminRoleSuperAdmin
+	as.NoError(as.DB.Save(&users[0]))
+
+	var file models.File
+	as.Nil(file.Store("photo.gif", []byte("GIF89a")), "unexpected error storing file")
+
+	return OrganizationFixtures{
+		Users:         users,
+		Organizations: models.Organizations{org},
+		File:          file,
 	}
 }

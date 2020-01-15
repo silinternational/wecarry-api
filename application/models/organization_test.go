@@ -61,6 +61,9 @@ func (ms *ModelSuite) TestOrganization_FindOrgByUUID() {
 }
 
 func (ms *ModelSuite) TestOrganization_Create() {
+	var file File
+	ms.Nil(file.Store("logo.gif", []byte("GIF89a")), "unexpected error storing file")
+
 	t := ms.T()
 	tests := []struct {
 		name    string
@@ -74,6 +77,7 @@ func (ms *ModelSuite) TestOrganization_Create() {
 				AuthType:   AuthTypeSaml,
 				AuthConfig: "{}",
 				Url:        nulls.NewString("https://www.example.com"),
+				LogoFileID: nulls.NewInt(file.ID),
 			},
 			wantErr: false,
 		},
@@ -280,6 +284,8 @@ func (ms *ModelSuite) TestOrganization_Save() {
 	t := ms.T()
 
 	orgFixtures := createOrganizationFixtures(ms.DB, 2)
+	var file File
+	ms.Nil(file.Store("logo.gif", []byte("GIF89a")), "unexpected error storing file")
 
 	// test save of existing organization
 	orgFixtures[0].Name = "changed"
@@ -304,7 +310,7 @@ func (ms *ModelSuite) TestOrganization_Save() {
 		Url:        nulls.String{},
 		AuthType:   AuthTypeSaml,
 		AuthConfig: "{}",
-		UUID:       domain.GetUUID(),
+		LogoFileID: nulls.NewInt(file.ID),
 	}
 
 	err = newOrg.Save()
@@ -430,4 +436,41 @@ func (ms *ModelSuite) TestOrganization_AllWhereUserIsOrgAdmin() {
 		})
 	}
 
+}
+
+func (ms *ModelSuite) TestOrganization_LogoURL() {
+	t := ms.T()
+
+	orgFixtures := createOrganizationFixtures(ms.DB, 1)
+	var file File
+	ms.NoError(ms.DB.Find(&file, orgFixtures[0].LogoFileID.Int))
+	logoURL := file.URL
+
+	tests := []struct {
+		name    string
+		org     Organization
+		want    string
+		wantNil bool
+		wantErr string
+	}{
+		{name: "good", org: orgFixtures[0], want: logoURL},
+		{name: "bad", org: Organization{LogoFileID: nulls.NewInt(1)}, wantErr: "no rows in result set"},
+		{name: "no file", org: Organization{}, wantNil: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			logoURL, err := tt.org.LogoURL()
+			if tt.wantErr != "" {
+				ms.Errorf(err, "expected error %s but got no error", tt.wantErr, err)
+				ms.Contains(err.Error(), tt.wantErr)
+				return
+			}
+			ms.NoError(err)
+			if tt.wantNil {
+				ms.Nil(logoURL)
+				return
+			}
+			ms.Equal(tt.want, *logoURL)
+		})
+	}
 }

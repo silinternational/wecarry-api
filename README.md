@@ -1,6 +1,8 @@
 # Welcome to the WeCarry.App server code!
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/silinternational/wecarry-api)](https://goreportcard.com/report/github.com/silinternational/wecarry-api)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/silinternational/wecarry-api/badges/quality-score.png?b=develop)](https://scrutinizer-ci.com/g/silinternational/wecarry-api/?branch=develop)
+[![Codeship Status for silinternational/wecarry-api](https://app.codeship.com/projects/2ff9d1b0-8c61-0137-e598-0e4ef29cce88/status?branch=master)](https://app.codeship.com/projects/355314)
 
 ## Requirements
 

@@ -1,0 +1,3 @@
+add_column("organizations", "logo_file_id", "integer", {null: true})
+add_index("organizations", "logo_file_id", {"unique": true})
+add_foreign_key("organizations", "logo_file_id", {"files": ["id"]}, {"on_delete": "set null"})

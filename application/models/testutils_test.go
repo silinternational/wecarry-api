@@ -42,11 +42,16 @@ func mustCreate(tx *pop.Connection, f interface{}) {
 // createOrganizationFixtures generates any number of organization records for testing.
 //  Their names will be called "Org1", "Org2", ...
 func createOrganizationFixtures(tx *pop.Connection, n int) Organizations {
+	files := make([]File, n)
 	organizations := make(Organizations, n)
 	for i := range organizations {
+		if err := files[i].Store("logo.gif", []byte("GIF89a")); err != nil {
+			panic("unexpected error storing org logo")
+		}
 		organizations[i].Name = fmt.Sprintf("Org%v", i+1)
 		organizations[i].AuthType = AuthTypeSaml
 		organizations[i].AuthConfig = "{}"
+		organizations[i].LogoFileID = nulls.NewInt(files[i].ID)
 		mustCreate(tx, &organizations[i])
 	}
 

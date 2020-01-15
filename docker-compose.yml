@@ -39,6 +39,7 @@ services:
     environment:
       EMAIL_SERVICE: dummy
       GO_ENV: test
+      DOCKER_IP: testdb
     depends_on:
       - testdb
       - minio
@@ -55,9 +56,9 @@ services:
   testdb:
     image: postgres:11.6
     environment:
-      POSTGRES_USER: wecarry
-      POSTGRES_PASSWORD: wecarry
-      POSTGRES_DB: wecarry_test
+      POSTGRES_USER: scrutinizer
+      POSTGRES_PASSWORD: scrutinizer
+      POSTGRES_DB: scrutinizer
 
   # http://localhost:8080/?pgsql=db&username=wecarry&db=wecarry&ns=public
   adminer:
