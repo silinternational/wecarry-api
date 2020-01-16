@@ -121,6 +121,8 @@ var Env struct {
 	AzureADTenant              string
 	EmailService               string
 	EmailFromAddress           string
+	FacebookKey                string
+	FacebookSecret             string
 	GoEnv                      string
 	GoogleKey                  string
 	GoogleSecret               string

@@ -14,11 +14,13 @@ import (
 
 	"github.com/silinternational/wecarry-api/auth"
 	"github.com/silinternational/wecarry-api/auth/azureadv2"
+	"github.com/silinternational/wecarry-api/auth/facebook"
 	"github.com/silinternational/wecarry-api/auth/google"
 	"github.com/silinternational/wecarry-api/auth/saml"
 )
 
 const AuthTypeSaml = "saml"
+const AuthTypeFacebook = "facebook"
 const AuthTypeGoogle = "google"
 const AuthTypeAzureAD = "azureadv2"
 
@@ -71,6 +73,10 @@ func (o *Organization) GetAuthProvider() (auth.Provider, error) {
 
 	if o.AuthType == AuthTypeGoogle {
 		return google.New([]byte(o.AuthConfig))
+	}
+
+	if o.AuthType == AuthTypeFacebook {
+		return facebook.New([]byte(o.AuthConfig))
 	}
 
 	if o.AuthType == AuthTypeAzureAD {

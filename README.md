@@ -59,6 +59,23 @@ use `http:localhost` as the host for the WeCarry API, due to AzureAD's policies.
 in the docker-compose file. It will probably also require environment changes on the
 UI side.)
 
+### Facebook
+To add an organization using Facebook authentication, create a database organization record  
+that includes an auth_type of `facebook` and an auth_config like the following ... 
+
+```
+{}
+```
+
+The three environment variables `FACEBOOK_KEY` and `FACEBOOK_SECRET` 
+will need to be set for the appropriate Facebook oauth account and application.
+
+For local development, if you are using `http`, then you will need to 
+use `http:localhost` as the host for the WeCarry API, due to AzureAD's policies.
+(This affects the `AUTH_CALLBACK_URL` in the `.env` file and the `buffalo.environment.HOST` value
+in the docker-compose file. It will probably also require environment changes on the
+UI side.)
+
 ### Google
 To add an organization using Google authentication, create a database organization record  
 that includes an auth_type of `google` and an auth_config like the following ... 
