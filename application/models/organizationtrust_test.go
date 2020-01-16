@@ -93,7 +93,7 @@ func (ms *ModelSuite) TestTrust_Create() {
 				PrimaryID:   tt.trust.PrimaryID,
 				SecondaryID: tt.trust.SecondaryID,
 			}
-			err := newTrust.Create()
+			err := newTrust.CreateSymmetric()
 			if tt.wantErr != "" {
 				ms.Error(err)
 				ms.Contains(err.Error(), tt.wantErr, "wrong error type")
@@ -126,7 +126,7 @@ func (ms *ModelSuite) TestTrust_Remove() {
 		want    int
 		wantErr string
 	}{
-		{name: "not existing", trust: OrganizationTrust{PrimaryID: orgs[0].ID, SecondaryID: orgs[2].ID}, wantErr: "no rows"},
+		{name: "not existing", trust: OrganizationTrust{PrimaryID: orgs[0].ID, SecondaryID: orgs[2].ID}, want: 1},
 		{name: "exists", trust: OrganizationTrust{PrimaryID: orgs[0].ID, SecondaryID: orgs[1].ID}, want: 0},
 		{name: "invalid1", trust: OrganizationTrust{PrimaryID: 0, SecondaryID: orgs[1].ID}, wantErr: "must be valid"},
 		{name: "invalid2", trust: OrganizationTrust{PrimaryID: orgs[0].ID, SecondaryID: 0}, wantErr: "must be valid"},
@@ -134,7 +134,7 @@ func (ms *ModelSuite) TestTrust_Remove() {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var trust OrganizationTrust
-			err := trust.Remove(tt.trust.PrimaryID, tt.trust.SecondaryID)
+			err := trust.RemoveSymmetric(tt.trust.PrimaryID, tt.trust.SecondaryID)
 			if tt.wantErr != "" {
 				ms.Error(err)
 				ms.Contains(err.Error(), tt.wantErr, "wrong error type")

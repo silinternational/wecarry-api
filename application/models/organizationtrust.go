@@ -43,42 +43,59 @@ func (o *OrganizationTrust) ValidateUpdate(tx *pop.Connection) (*validate.Errors
 	return validate.NewErrors(), nil
 }
 
-// Create stores the OrganizationTrust data as a new record in the database. Also creates a mirrored copy of the given OrganizationTrust.
-func (o *OrganizationTrust) Create() error {
-	var t2 OrganizationTrust
-	if err := t2.FindByOrgIDs(o.PrimaryID, o.SecondaryID); err == nil {
-		// already exists
-		return nil
-	} else if domain.IsOtherThanNoRows(err) {
+// CreateSymmetric creates two records to make a two-way trust connection
+func (o *OrganizationTrust) CreateSymmetric() error {
+	if err := o.Create(); err != nil {
 		return err
 	}
-	if err := create(o); err != nil {
-		return err
-	}
+
 	mirror := OrganizationTrust{
 		PrimaryID:   o.SecondaryID,
 		SecondaryID: o.PrimaryID,
 	}
-	if err := create(&mirror); err != nil {
+	if err := mirror.Create(); err != nil {
 		_ = DB.Destroy(o)
+	}
+
+	return nil
+}
+
+// Create stores an OrganizationTrust record with the given Organization IDs
+func (o *OrganizationTrust) Create() error {
+	trust := *o
+	if err := trust.FindByOrgIDs(o.PrimaryID, o.SecondaryID); err == nil {
+		return nil
+	} else if domain.IsOtherThanNoRows(err) {
 		return err
+	}
+	return create(&trust)
+}
+
+// RemoveSymmetric destroys two OrganizationTrust records identified by the given Organization IDs
+func (o *OrganizationTrust) RemoveSymmetric(orgID1, orgID2 int) error {
+	err1 := o.Remove(orgID1, orgID2)
+	err2 := o.Remove(orgID2, orgID1)
+	if err1 != nil {
+		return fmt.Errorf("remove Trust failed on the first record, %s", err1)
+	}
+	if err2 != nil {
+		return fmt.Errorf("remove Trust failed on the second record, %s", err2)
 	}
 	return nil
 }
 
-// Remove destroys two OrganizationTrust records identified by the given Organization IDs
+// Remove destroys the OrganizationTrust record identified by the given Organization IDs
 func (o *OrganizationTrust) Remove(orgID1, orgID2 int) error {
-	var t1, t2 OrganizationTrust
-	if err := t1.FindByOrgIDs(orgID1, orgID2); err != nil {
-		return fmt.Errorf("remove OrganizationTrust failed locating the first OrganizationTrust record, %s", err)
+	var trust OrganizationTrust
+	if err := trust.FindByOrgIDs(orgID1, orgID2); err != nil {
+		if domain.IsOtherThanNoRows(err) {
+			return err
+		} else {
+			domain.Logger.Printf("no record found when removing organization trust %d - %d", orgID1, orgID2)
+			return nil
+		}
 	}
-	if err := t2.FindByOrgIDs(orgID2, orgID1); err != nil {
-		return fmt.Errorf("remove OrganizationTrust failed locating the second OrganizationTrust record, %s", err)
-	}
-	if err := DB.Destroy(&t1); err != nil {
-		return fmt.Errorf("remove OrganizationTrust failed to destroy the first OrganizationTrust record, %s", err)
-	}
-	return DB.Destroy(&t2)
+	return DB.Destroy(&trust)
 }
 
 // FindByOrgIDs loads from DB the OrganizationTrust record identified by the given Organization IDs.

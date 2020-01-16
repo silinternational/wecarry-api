@@ -220,7 +220,7 @@ func (o *Organization) CreateTrust(secondaryID string) error {
 	var t OrganizationTrust
 	t.PrimaryID = o.ID
 	t.SecondaryID = secondaryOrg.ID
-	if err := t.Create(); err != nil {
+	if err := t.CreateSymmetric(); err != nil {
 		return fmt.Errorf("failed to create new OrganizationTrust, %s", err)
 	}
 	return nil
@@ -233,7 +233,7 @@ func (o *Organization) RemoveTrust(secondaryID string) error {
 		return fmt.Errorf("RemoveTrust, error finding secondary org, %s", err)
 	}
 	var t OrganizationTrust
-	return t.Remove(o.ID, secondaryOrg.ID)
+	return t.RemoveSymmetric(o.ID, secondaryOrg.ID)
 }
 
 // TrustedOrganizations gets a list of connected Organizations, either primary or secondary

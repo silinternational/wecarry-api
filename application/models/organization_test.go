@@ -480,7 +480,7 @@ func (ms *ModelSuite) TestOrganization_CreateTrust() {
 
 	orgs := createOrganizationFixtures(ms.DB, 4)
 	trust := OrganizationTrust{PrimaryID: orgs[0].ID, SecondaryID: orgs[1].ID}
-	ms.NoError(trust.Create())
+	ms.NoError(trust.CreateSymmetric())
 
 	tests := []struct {
 		name      string
@@ -521,8 +521,8 @@ func (ms *ModelSuite) TestOrganization_RemoveTrust() {
 		{PrimaryID: orgs[0].ID, SecondaryID: orgs[1].ID},
 		{PrimaryID: orgs[1].ID, SecondaryID: orgs[2].ID},
 	}
-	ms.NoError(trusts[0].Create())
-	ms.NoError(trusts[1].Create())
+	ms.NoError(trusts[0].CreateSymmetric())
+	ms.NoError(trusts[1].CreateSymmetric())
 
 	tests := []struct {
 		name      string
@@ -533,7 +533,7 @@ func (ms *ModelSuite) TestOrganization_RemoveTrust() {
 	}{
 		{name: "exists", primary: orgs[0], secondary: orgs[1], want: 0},
 		{name: "reverse exists", primary: orgs[2], secondary: orgs[1], want: 0},
-		{name: "not existing", primary: orgs[3], secondary: orgs[0], wantErr: "no rows in result set"},
+		{name: "not existing", primary: orgs[3], secondary: orgs[0], want: 0},
 		{name: "bad org", primary: Organization{}, secondary: orgs[0], wantErr: "must be valid"},
 		{name: "bad org2", primary: orgs[0], secondary: Organization{}, wantErr: "no rows in result set"},
 	}
@@ -561,8 +561,8 @@ func (ms *ModelSuite) TestOrganization_TrustedOrganizations() {
 		{PrimaryID: orgs[0].ID, SecondaryID: orgs[1].ID},
 		{PrimaryID: orgs[2].ID, SecondaryID: orgs[0].ID},
 	}
-	ms.NoError(trusts[0].Create())
-	ms.NoError(trusts[1].Create())
+	ms.NoError(trusts[0].CreateSymmetric())
+	ms.NoError(trusts[1].CreateSymmetric())
 
 	tests := []struct {
 		name    string
