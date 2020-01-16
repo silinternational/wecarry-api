@@ -217,6 +217,43 @@ ALTER SEQUENCE public.organization_domains_id_seq OWNED BY public.organization_d
 
 
 --
+-- Name: organization_trusts; Type: TABLE; Schema: public; Owner: scrutinizer
+--
+
+CREATE TABLE public.organization_trusts (
+    id integer NOT NULL,
+    primary_id integer NOT NULL,
+    secondary_id integer NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.organization_trusts OWNER TO scrutinizer;
+
+--
+-- Name: organization_trusts_id_seq; Type: SEQUENCE; Schema: public; Owner: scrutinizer
+--
+
+CREATE SEQUENCE public.organization_trusts_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.organization_trusts_id_seq OWNER TO scrutinizer;
+
+--
+-- Name: organization_trusts_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: scrutinizer
+--
+
+ALTER SEQUENCE public.organization_trusts_id_seq OWNED BY public.organization_trusts.id;
+
+
+--
 -- Name: organizations; Type: TABLE; Schema: public; Owner: scrutinizer
 --
 
@@ -472,43 +509,6 @@ ALTER SEQUENCE public.threads_id_seq OWNED BY public.threads.id;
 
 
 --
--- Name: trusts; Type: TABLE; Schema: public; Owner: scrutinizer
---
-
-CREATE TABLE public.trusts (
-    id integer NOT NULL,
-    primary_id integer NOT NULL,
-    secondary_id integer NOT NULL,
-    created_at timestamp without time zone NOT NULL,
-    updated_at timestamp without time zone NOT NULL
-);
-
-
-ALTER TABLE public.trusts OWNER TO scrutinizer;
-
---
--- Name: trusts_id_seq; Type: SEQUENCE; Schema: public; Owner: scrutinizer
---
-
-CREATE SEQUENCE public.trusts_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.trusts_id_seq OWNER TO scrutinizer;
-
---
--- Name: trusts_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: scrutinizer
---
-
-ALTER SEQUENCE public.trusts_id_seq OWNED BY public.trusts.id;
-
-
---
 -- Name: user_access_tokens; Type: TABLE; Schema: public; Owner: scrutinizer
 --
 
@@ -745,6 +745,13 @@ ALTER TABLE ONLY public.organization_domains ALTER COLUMN id SET DEFAULT nextval
 
 
 --
+-- Name: organization_trusts id; Type: DEFAULT; Schema: public; Owner: scrutinizer
+--
+
+ALTER TABLE ONLY public.organization_trusts ALTER COLUMN id SET DEFAULT nextval('public.organization_trusts_id_seq'::regclass);
+
+
+--
 -- Name: organizations id; Type: DEFAULT; Schema: public; Owner: scrutinizer
 --
 
@@ -784,13 +791,6 @@ ALTER TABLE ONLY public.thread_participants ALTER COLUMN id SET DEFAULT nextval(
 --
 
 ALTER TABLE ONLY public.threads ALTER COLUMN id SET DEFAULT nextval('public.threads_id_seq'::regclass);
-
-
---
--- Name: trusts id; Type: DEFAULT; Schema: public; Owner: scrutinizer
---
-
-ALTER TABLE ONLY public.trusts ALTER COLUMN id SET DEFAULT nextval('public.trusts_id_seq'::regclass);
 
 
 --
@@ -869,6 +869,14 @@ ALTER TABLE ONLY public.organization_domains
 
 
 --
+-- Name: organization_trusts organization_trusts_pkey; Type: CONSTRAINT; Schema: public; Owner: scrutinizer
+--
+
+ALTER TABLE ONLY public.organization_trusts
+    ADD CONSTRAINT organization_trusts_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: organizations organizations_pkey; Type: CONSTRAINT; Schema: public; Owner: scrutinizer
 --
 
@@ -914,14 +922,6 @@ ALTER TABLE ONLY public.thread_participants
 
 ALTER TABLE ONLY public.threads
     ADD CONSTRAINT threads_pkey PRIMARY KEY (id);
-
-
---
--- Name: trusts trusts_pkey; Type: CONSTRAINT; Schema: public; Owner: scrutinizer
---
-
-ALTER TABLE ONLY public.trusts
-    ADD CONSTRAINT trusts_pkey PRIMARY KEY (id);
 
 
 --
@@ -1000,6 +1000,13 @@ CREATE UNIQUE INDEX organization_domains_domain_idx ON public.organization_domai
 
 
 --
+-- Name: organization_trusts_primary_id_secondary_id_idx; Type: INDEX; Schema: public; Owner: scrutinizer
+--
+
+CREATE UNIQUE INDEX organization_trusts_primary_id_secondary_id_idx ON public.organization_trusts USING btree (primary_id, secondary_id);
+
+
+--
 -- Name: organizations_logo_file_id_idx; Type: INDEX; Schema: public; Owner: scrutinizer
 --
 
@@ -1074,13 +1081,6 @@ CREATE UNIQUE INDEX schema_migration_version_idx ON public.schema_migration USIN
 --
 
 CREATE UNIQUE INDEX threads_uuid_idx ON public.threads USING btree (uuid);
-
-
---
--- Name: trusts_primary_id_secondary_id_idx; Type: INDEX; Schema: public; Owner: scrutinizer
---
-
-CREATE UNIQUE INDEX trusts_primary_id_secondary_id_idx ON public.trusts USING btree (primary_id, secondary_id);
 
 
 --
@@ -1217,6 +1217,22 @@ ALTER TABLE ONLY public.organization_domains
 
 
 --
+-- Name: organization_trusts organization_trusts_primary_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
+--
+
+ALTER TABLE ONLY public.organization_trusts
+    ADD CONSTRAINT organization_trusts_primary_id_fkey FOREIGN KEY (primary_id) REFERENCES public.organizations(id) ON DELETE CASCADE;
+
+
+--
+-- Name: organization_trusts organization_trusts_secondary_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
+--
+
+ALTER TABLE ONLY public.organization_trusts
+    ADD CONSTRAINT organization_trusts_secondary_id_fkey FOREIGN KEY (secondary_id) REFERENCES public.organizations(id) ON DELETE CASCADE;
+
+
+--
 -- Name: organizations organizations_files_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
 --
 
@@ -1342,22 +1358,6 @@ ALTER TABLE ONLY public.thread_participants
 
 ALTER TABLE ONLY public.threads
     ADD CONSTRAINT threads_post_id_fkey FOREIGN KEY (post_id) REFERENCES public.posts(id) ON DELETE CASCADE;
-
-
---
--- Name: trusts trusts_primary_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
---
-
-ALTER TABLE ONLY public.trusts
-    ADD CONSTRAINT trusts_primary_id_fkey FOREIGN KEY (primary_id) REFERENCES public.organizations(id) ON DELETE CASCADE;
-
-
---
--- Name: trusts trusts_secondary_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
---
-
-ALTER TABLE ONLY public.trusts
-    ADD CONSTRAINT trusts_secondary_id_fkey FOREIGN KEY (secondary_id) REFERENCES public.organizations(id) ON DELETE CASCADE;
 
 
 --

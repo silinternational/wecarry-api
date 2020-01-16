@@ -163,8 +163,8 @@ func (r *mutationResolver) SetThreadLastViewedAt(ctx context.Context, input SetT
 	return &thread, nil
 }
 
-// CreateTrust establishes a Trust between two organizations
-func (r *mutationResolver) CreateTrust(ctx context.Context, input CreateTrustInput) (*models.Organization, error) {
+// CreateOrganizationTrust establishes a OrganizationTrust between two organizations
+func (r *mutationResolver) CreateOrganizationTrust(ctx context.Context, input CreateOrganizationTrustInput) (*models.Organization, error) {
 	cUser := models.GetCurrentUserFromGqlContext(ctx)
 	extras := map[string]interface{}{
 		"user": cUser.UUID,
@@ -172,23 +172,23 @@ func (r *mutationResolver) CreateTrust(ctx context.Context, input CreateTrustInp
 
 	var organization models.Organization
 	if err := organization.FindByUUID(input.PrimaryID); err != nil {
-		return nil, reportError(ctx, err, "CreateTrust.FindPrimaryOrganization", extras)
+		return nil, reportError(ctx, err, "CreateOrganizationTrust.FindPrimaryOrganization", extras)
 	}
 
-	if !cUser.CanEditOrganization(organization.ID) {
+	if !cUser.CanCreateOrganization() {
 		err := errors.New("insufficient permissions")
-		return nil, reportError(ctx, err, "CreateTrust.Unauthorized", extras)
+		return nil, reportError(ctx, err, "CreateOrganizationTrust.Unauthorized", extras)
 	}
 
 	if err := organization.CreateTrust(input.SecondaryID); err != nil {
-		return nil, reportError(ctx, err, "CreateTrust", extras)
+		return nil, reportError(ctx, err, "CreateOrganizationTrust", extras)
 	}
 
 	return &organization, nil
 }
 
-// RemoveTrust removes a Trust between two organizations
-func (r *mutationResolver) RemoveTrust(ctx context.Context, input RemoveTrustInput) (*models.Organization, error) {
+// RemoveOrganizationTrust removes a OrganizationTrust between two organizations
+func (r *mutationResolver) RemoveOrganizationTrust(ctx context.Context, input RemoveOrganizationTrustInput) (*models.Organization, error) {
 	cUser := models.GetCurrentUserFromGqlContext(ctx)
 	extras := map[string]interface{}{
 		"user": cUser.UUID,
@@ -196,16 +196,16 @@ func (r *mutationResolver) RemoveTrust(ctx context.Context, input RemoveTrustInp
 
 	var organization models.Organization
 	if err := organization.FindByUUID(input.PrimaryID); err != nil {
-		return nil, reportError(ctx, err, "RemoveTrust.FindPrimaryOrganization", extras)
+		return nil, reportError(ctx, err, "RemoveOrganizationTrust.FindPrimaryOrganization", extras)
 	}
 
-	if !cUser.CanEditOrganization(organization.ID) {
+	if !cUser.CanCreateOrganization() {
 		err := errors.New("insufficient permissions")
-		return nil, reportError(ctx, err, "RemoveTrust.Unauthorized", extras)
+		return nil, reportError(ctx, err, "RemoveOrganizationTrust.Unauthorized", extras)
 	}
 
 	if err := organization.RemoveTrust(input.SecondaryID); err != nil {
-		return nil, reportError(ctx, err, "RemoveTrust", extras)
+		return nil, reportError(ctx, err, "RemoveOrganizationTrust", extras)
 	}
 
 	return &organization, nil

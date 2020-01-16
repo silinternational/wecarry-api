@@ -469,7 +469,7 @@ func (as *ActionSuite) Test_CreateTrust() {
 		f.Organizations[0].UUID.String(),
 		f.Organizations[2].UUID.String())
 
-	query := fmt.Sprintf("mutation{organization: createTrust(input: {%s}) {%s}}",
+	query := fmt.Sprintf("mutation{organization: createOrganizationTrust(input: {%s}) {%s}}",
 		allFieldsInput, allFieldsQuery)
 	err := as.testGqlQuery(query, f.Users[0].Nickname, &resp)
 	as.NoError(err)
@@ -496,7 +496,7 @@ func (as *ActionSuite) Test_RemoveTrust() {
 		f.Organizations[0].UUID.String(),
 		f.Organizations[2].UUID.String())
 
-	query := fmt.Sprintf("mutation{organization: removeTrust(input: {%s}) {%s}}",
+	query := fmt.Sprintf("mutation{organization: removeOrganizationTrust(input: {%s}) {%s}}",
 		allFieldsInput, allFieldsQuery)
 	err := as.testGqlQuery(query, f.Users[0].Nickname, &resp)
 	as.NoError(err)

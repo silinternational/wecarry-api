@@ -479,7 +479,7 @@ func (ms *ModelSuite) TestOrganization_CreateTrust() {
 	t := ms.T()
 
 	orgs := createOrganizationFixtures(ms.DB, 4)
-	trust := Trust{PrimaryID: orgs[0].ID, SecondaryID: orgs[1].ID}
+	trust := OrganizationTrust{PrimaryID: orgs[0].ID, SecondaryID: orgs[1].ID}
 	ms.NoError(trust.Create())
 
 	tests := []struct {
@@ -517,7 +517,7 @@ func (ms *ModelSuite) TestOrganization_RemoveTrust() {
 	t := ms.T()
 
 	orgs := createOrganizationFixtures(ms.DB, 4)
-	trusts := Trusts{
+	trusts := OrganizationTrusts{
 		{PrimaryID: orgs[0].ID, SecondaryID: orgs[1].ID},
 		{PrimaryID: orgs[1].ID, SecondaryID: orgs[2].ID},
 	}
@@ -557,7 +557,7 @@ func (ms *ModelSuite) TestOrganization_TrustedOrganizations() {
 	t := ms.T()
 
 	orgs := createOrganizationFixtures(ms.DB, 4)
-	trusts := Trusts{
+	trusts := OrganizationTrusts{
 		{PrimaryID: orgs[0].ID, SecondaryID: orgs[1].ID},
 		{PrimaryID: orgs[2].ID, SecondaryID: orgs[0].ID},
 	}

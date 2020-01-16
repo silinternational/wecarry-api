@@ -31,8 +31,8 @@ type Mutation {
     createWatch(input: CreateWatchInput!): Watch!
     updateWatch(input: UpdateWatchInput!): Watch!
     removeWatch(input: RemoveWatchInput!): [Watch!]!
-    createTrust(input: CreateTrustInput!): Organization!
-    removeTrust(input: RemoveTrustInput!): Organization!
+    createOrganizationTrust(input: CreateOrganizationTrustInput!): Organization!
+    removeOrganizationTrust(input: RemoveOrganizationTrustInput!): Organization!
 }
 
 # Date and Time in RFC3339 format
@@ -339,12 +339,12 @@ input RemoveWatchInput {
     id: ID!
 }
 
-input CreateTrustInput {
+input CreateOrganizationTrustInput {
     primaryID: ID!
     secondaryID: ID!
 }
 
-input RemoveTrustInput {
+input RemoveOrganizationTrustInput {
     primaryID: ID!
     secondaryID: ID!
 }

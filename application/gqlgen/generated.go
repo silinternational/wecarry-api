@@ -98,11 +98,11 @@ type ComplexityRoot struct {
 		CreateMessage            func(childComplexity int, input CreateMessageInput) int
 		CreateOrganization       func(childComplexity int, input CreateOrganizationInput) int
 		CreateOrganizationDomain func(childComplexity int, input CreateOrganizationDomainInput) int
+		CreateOrganizationTrust  func(childComplexity int, input CreateOrganizationTrustInput) int
 		CreatePost               func(childComplexity int, input postInput) int
-		CreateTrust              func(childComplexity int, input CreateTrustInput) int
 		CreateWatch              func(childComplexity int, input watchInput) int
 		RemoveOrganizationDomain func(childComplexity int, input RemoveOrganizationDomainInput) int
-		RemoveTrust              func(childComplexity int, input RemoveTrustInput) int
+		RemoveOrganizationTrust  func(childComplexity int, input RemoveOrganizationTrustInput) int
 		RemoveWatch              func(childComplexity int, input RemoveWatchInput) int
 		SetThreadLastViewedAt    func(childComplexity int, input SetThreadLastViewedAtInput) int
 		UpdateMeeting            func(childComplexity int, input meetingInput) int
@@ -257,8 +257,8 @@ type MutationResolver interface {
 	CreateWatch(ctx context.Context, input watchInput) (*models.Watch, error)
 	UpdateWatch(ctx context.Context, input watchInput) (*models.Watch, error)
 	RemoveWatch(ctx context.Context, input RemoveWatchInput) ([]models.Watch, error)
-	CreateTrust(ctx context.Context, input CreateTrustInput) (*models.Organization, error)
-	RemoveTrust(ctx context.Context, input RemoveTrustInput) (*models.Organization, error)
+	CreateOrganizationTrust(ctx context.Context, input CreateOrganizationTrustInput) (*models.Organization, error)
+	RemoveOrganizationTrust(ctx context.Context, input RemoveOrganizationTrustInput) (*models.Organization, error)
 }
 type OrganizationResolver interface {
 	ID(ctx context.Context, obj *models.Organization) (string, error)
@@ -588,6 +588,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreateOrganizationDomain(childComplexity, args["input"].(CreateOrganizationDomainInput)), true
 
+	case "Mutation.createOrganizationTrust":
+		if e.complexity.Mutation.CreateOrganizationTrust == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createOrganizationTrust_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateOrganizationTrust(childComplexity, args["input"].(CreateOrganizationTrustInput)), true
+
 	case "Mutation.createPost":
 		if e.complexity.Mutation.CreatePost == nil {
 			break
@@ -599,18 +611,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CreatePost(childComplexity, args["input"].(postInput)), true
-
-	case "Mutation.createTrust":
-		if e.complexity.Mutation.CreateTrust == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_createTrust_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.CreateTrust(childComplexity, args["input"].(CreateTrustInput)), true
 
 	case "Mutation.createWatch":
 		if e.complexity.Mutation.CreateWatch == nil {
@@ -636,17 +636,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.RemoveOrganizationDomain(childComplexity, args["input"].(RemoveOrganizationDomainInput)), true
 
-	case "Mutation.removeTrust":
-		if e.complexity.Mutation.RemoveTrust == nil {
+	case "Mutation.removeOrganizationTrust":
+		if e.complexity.Mutation.RemoveOrganizationTrust == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_removeTrust_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_removeOrganizationTrust_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.RemoveTrust(childComplexity, args["input"].(RemoveTrustInput)), true
+		return e.complexity.Mutation.RemoveOrganizationTrust(childComplexity, args["input"].(RemoveOrganizationTrustInput)), true
 
 	case "Mutation.removeWatch":
 		if e.complexity.Mutation.RemoveWatch == nil {
@@ -1399,8 +1399,8 @@ type Mutation {
     createWatch(input: CreateWatchInput!): Watch!
     updateWatch(input: UpdateWatchInput!): Watch!
     removeWatch(input: RemoveWatchInput!): [Watch!]!
-    createTrust(input: CreateTrustInput!): Organization!
-    removeTrust(input: RemoveTrustInput!): Organization!
+    createOrganizationTrust(input: CreateOrganizationTrustInput!): Organization!
+    removeOrganizationTrust(input: RemoveOrganizationTrustInput!): Organization!
 }
 
 # Date and Time in RFC3339 format
@@ -1707,12 +1707,12 @@ input RemoveWatchInput {
     id: ID!
 }
 
-input CreateTrustInput {
+input CreateOrganizationTrustInput {
     primaryID: ID!
     secondaryID: ID!
 }
 
-input RemoveTrustInput {
+input RemoveOrganizationTrustInput {
     primaryID: ID!
     secondaryID: ID!
 }
@@ -1765,6 +1765,20 @@ func (ec *executionContext) field_Mutation_createOrganizationDomain_args(ctx con
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_createOrganizationTrust_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 CreateOrganizationTrustInput
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalNCreateOrganizationTrustInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐCreateOrganizationTrustInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_createOrganization_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1785,20 +1799,6 @@ func (ec *executionContext) field_Mutation_createPost_args(ctx context.Context, 
 	var arg0 postInput
 	if tmp, ok := rawArgs["input"]; ok {
 		arg0, err = ec.unmarshalNCreatePostInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐpostInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_createTrust_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 CreateTrustInput
-	if tmp, ok := rawArgs["input"]; ok {
-		arg0, err = ec.unmarshalNCreateTrustInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐCreateTrustInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1835,12 +1835,12 @@ func (ec *executionContext) field_Mutation_removeOrganizationDomain_args(ctx con
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_removeTrust_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_removeOrganizationTrust_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 RemoveTrustInput
+	var arg0 RemoveOrganizationTrustInput
 	if tmp, ok := rawArgs["input"]; ok {
-		arg0, err = ec.unmarshalNRemoveTrustInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐRemoveTrustInput(ctx, tmp)
+		arg0, err = ec.unmarshalNRemoveOrganizationTrustInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐRemoveOrganizationTrustInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3753,7 +3753,7 @@ func (ec *executionContext) _Mutation_removeWatch(ctx context.Context, field gra
 	return ec.marshalNWatch2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐWatch(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_createTrust(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_createOrganizationTrust(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -3770,7 +3770,7 @@ func (ec *executionContext) _Mutation_createTrust(ctx context.Context, field gra
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_createTrust_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_createOrganizationTrust_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -3779,7 +3779,7 @@ func (ec *executionContext) _Mutation_createTrust(ctx context.Context, field gra
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateTrust(rctx, args["input"].(CreateTrustInput))
+		return ec.resolvers.Mutation().CreateOrganizationTrust(rctx, args["input"].(CreateOrganizationTrustInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3797,7 +3797,7 @@ func (ec *executionContext) _Mutation_createTrust(ctx context.Context, field gra
 	return ec.marshalNOrganization2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganization(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_removeTrust(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_removeOrganizationTrust(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -3814,7 +3814,7 @@ func (ec *executionContext) _Mutation_removeTrust(ctx context.Context, field gra
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_removeTrust_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_removeOrganizationTrust_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -3823,7 +3823,7 @@ func (ec *executionContext) _Mutation_removeTrust(ctx context.Context, field gra
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().RemoveTrust(rctx, args["input"].(RemoveTrustInput))
+		return ec.resolvers.Mutation().RemoveOrganizationTrust(rctx, args["input"].(RemoveOrganizationTrustInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7972,6 +7972,30 @@ func (ec *executionContext) unmarshalInputCreateOrganizationInput(ctx context.Co
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputCreateOrganizationTrustInput(ctx context.Context, obj interface{}) (CreateOrganizationTrustInput, error) {
+	var it CreateOrganizationTrustInput
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "primaryID":
+			var err error
+			it.PrimaryID, err = ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "secondaryID":
+			var err error
+			it.SecondaryID, err = ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCreatePostInput(ctx context.Context, obj interface{}) (postInput, error) {
 	var it postInput
 	var asMap = obj.(map[string]interface{})
@@ -8041,30 +8065,6 @@ func (ec *executionContext) unmarshalInputCreatePostInput(ctx context.Context, o
 		case "meetingID":
 			var err error
 			it.MeetingID, err = ec.unmarshalOID2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputCreateTrustInput(ctx context.Context, obj interface{}) (CreateTrustInput, error) {
-	var it CreateTrustInput
-	var asMap = obj.(map[string]interface{})
-
-	for k, v := range asMap {
-		switch k {
-		case "primaryID":
-			var err error
-			it.PrimaryID, err = ec.unmarshalNID2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "secondaryID":
-			var err error
-			it.SecondaryID, err = ec.unmarshalNID2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -8152,8 +8152,8 @@ func (ec *executionContext) unmarshalInputRemoveOrganizationDomainInput(ctx cont
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputRemoveTrustInput(ctx context.Context, obj interface{}) (RemoveTrustInput, error) {
-	var it RemoveTrustInput
+func (ec *executionContext) unmarshalInputRemoveOrganizationTrustInput(ctx context.Context, obj interface{}) (RemoveOrganizationTrustInput, error) {
+	var it RemoveOrganizationTrustInput
 	var asMap = obj.(map[string]interface{})
 
 	for k, v := range asMap {
@@ -8944,13 +8944,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "createTrust":
-			out.Values[i] = ec._Mutation_createTrust(ctx, field)
+		case "createOrganizationTrust":
+			out.Values[i] = ec._Mutation_createOrganizationTrust(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "removeTrust":
-			out.Values[i] = ec._Mutation_removeTrust(ctx, field)
+		case "removeOrganizationTrust":
+			out.Values[i] = ec._Mutation_removeOrganizationTrust(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -10229,12 +10229,12 @@ func (ec *executionContext) unmarshalNCreateOrganizationInput2githubᚗcomᚋsil
 	return ec.unmarshalInputCreateOrganizationInput(ctx, v)
 }
 
-func (ec *executionContext) unmarshalNCreatePostInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐpostInput(ctx context.Context, v interface{}) (postInput, error) {
-	return ec.unmarshalInputCreatePostInput(ctx, v)
+func (ec *executionContext) unmarshalNCreateOrganizationTrustInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐCreateOrganizationTrustInput(ctx context.Context, v interface{}) (CreateOrganizationTrustInput, error) {
+	return ec.unmarshalInputCreateOrganizationTrustInput(ctx, v)
 }
 
-func (ec *executionContext) unmarshalNCreateTrustInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐCreateTrustInput(ctx context.Context, v interface{}) (CreateTrustInput, error) {
-	return ec.unmarshalInputCreateTrustInput(ctx, v)
+func (ec *executionContext) unmarshalNCreatePostInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐpostInput(ctx context.Context, v interface{}) (postInput, error) {
+	return ec.unmarshalInputCreatePostInput(ctx, v)
 }
 
 func (ec *executionContext) unmarshalNCreateWatchInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐwatchInput(ctx context.Context, v interface{}) (watchInput, error) {
@@ -10732,8 +10732,8 @@ func (ec *executionContext) unmarshalNRemoveOrganizationDomainInput2githubᚗcom
 	return ec.unmarshalInputRemoveOrganizationDomainInput(ctx, v)
 }
 
-func (ec *executionContext) unmarshalNRemoveTrustInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐRemoveTrustInput(ctx context.Context, v interface{}) (RemoveTrustInput, error) {
-	return ec.unmarshalInputRemoveTrustInput(ctx, v)
+func (ec *executionContext) unmarshalNRemoveOrganizationTrustInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐRemoveOrganizationTrustInput(ctx context.Context, v interface{}) (RemoveOrganizationTrustInput, error) {
+	return ec.unmarshalInputRemoveOrganizationTrustInput(ctx, v)
 }
 
 func (ec *executionContext) unmarshalNRemoveWatchInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐRemoveWatchInput(ctx context.Context, v interface{}) (RemoveWatchInput, error) {

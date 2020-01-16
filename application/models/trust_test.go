@@ -6,20 +6,20 @@ import (
 
 type trustFixtures struct {
 	Organizations
-	Trusts
+	OrganizationTrusts
 }
 
 func (ms *ModelSuite) TestTrust_Validate() {
 	t := ms.T()
 	tests := []struct {
 		name     string
-		trust    Trust
+		trust    OrganizationTrust
 		wantErr  bool
 		errField string
 	}{
 		{
 			name: "minimum",
-			trust: Trust{
+			trust: OrganizationTrust{
 				PrimaryID:   1,
 				SecondaryID: 2,
 			},
@@ -27,7 +27,7 @@ func (ms *ModelSuite) TestTrust_Validate() {
 		},
 		{
 			name: "missing primary_id",
-			trust: Trust{
+			trust: OrganizationTrust{
 				SecondaryID: 2,
 			},
 			wantErr:  true,
@@ -35,7 +35,7 @@ func (ms *ModelSuite) TestTrust_Validate() {
 		},
 		{
 			name: "missing secondary_id",
-			trust: Trust{
+			trust: OrganizationTrust{
 				PrimaryID: 1,
 			},
 			wantErr:  true,
@@ -43,7 +43,7 @@ func (ms *ModelSuite) TestTrust_Validate() {
 		},
 		{
 			name: "primary_id = secondary_id",
-			trust: Trust{
+			trust: OrganizationTrust{
 				SecondaryID: 1,
 				PrimaryID:   1,
 			},
@@ -70,7 +70,7 @@ func (ms *ModelSuite) TestTrust_Create() {
 	t := ms.T()
 
 	orgs := createOrganizationFixtures(ms.DB, 4)
-	trusts := Trusts{
+	trusts := OrganizationTrusts{
 		{PrimaryID: orgs[0].ID, SecondaryID: orgs[1].ID},
 		{PrimaryID: orgs[1].ID, SecondaryID: orgs[0].ID},
 	}
@@ -78,18 +78,18 @@ func (ms *ModelSuite) TestTrust_Create() {
 
 	tests := []struct {
 		name    string
-		trust   Trust
+		trust   OrganizationTrust
 		want    int
 		wantErr string
 	}{
-		{name: "exists", trust: Trust{PrimaryID: orgs[0].ID, SecondaryID: orgs[1].ID}, want: 1},
-		{name: "new", trust: Trust{PrimaryID: orgs[0].ID, SecondaryID: orgs[2].ID}, want: 2},
-		{name: "invalid1", trust: Trust{PrimaryID: 0, SecondaryID: orgs[1].ID}, wantErr: "must be valid"},
-		{name: "invalid2", trust: Trust{PrimaryID: orgs[0].ID, SecondaryID: 0}, wantErr: "must be valid"},
+		{name: "exists", trust: OrganizationTrust{PrimaryID: orgs[0].ID, SecondaryID: orgs[1].ID}, want: 1},
+		{name: "new", trust: OrganizationTrust{PrimaryID: orgs[0].ID, SecondaryID: orgs[2].ID}, want: 2},
+		{name: "invalid1", trust: OrganizationTrust{PrimaryID: 0, SecondaryID: orgs[1].ID}, wantErr: "must be valid"},
+		{name: "invalid2", trust: OrganizationTrust{PrimaryID: orgs[0].ID, SecondaryID: 0}, wantErr: "must be valid"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			newTrust := Trust{
+			newTrust := OrganizationTrust{
 				PrimaryID:   tt.trust.PrimaryID,
 				SecondaryID: tt.trust.SecondaryID,
 			}
@@ -105,7 +105,7 @@ func (ms *ModelSuite) TestTrust_Create() {
 			orgs, err := org.TrustedOrganizations()
 			ms.NoError(err)
 
-			ms.Equal(tt.want, len(orgs), "incorrect number of Trust records")
+			ms.Equal(tt.want, len(orgs), "incorrect number of OrganizationTrust records")
 		})
 	}
 }
@@ -114,7 +114,7 @@ func (ms *ModelSuite) TestTrust_Remove() {
 	t := ms.T()
 
 	orgs := createOrganizationFixtures(ms.DB, 3)
-	trusts := Trusts{
+	trusts := OrganizationTrusts{
 		{PrimaryID: orgs[0].ID, SecondaryID: orgs[1].ID},
 		{PrimaryID: orgs[1].ID, SecondaryID: orgs[0].ID},
 	}
@@ -122,18 +122,18 @@ func (ms *ModelSuite) TestTrust_Remove() {
 
 	tests := []struct {
 		name    string
-		trust   Trust
+		trust   OrganizationTrust
 		want    int
 		wantErr string
 	}{
-		{name: "not existing", trust: Trust{PrimaryID: orgs[0].ID, SecondaryID: orgs[2].ID}, wantErr: "no rows"},
-		{name: "exists", trust: Trust{PrimaryID: orgs[0].ID, SecondaryID: orgs[1].ID}, want: 0},
-		{name: "invalid1", trust: Trust{PrimaryID: 0, SecondaryID: orgs[1].ID}, wantErr: "must be valid"},
-		{name: "invalid2", trust: Trust{PrimaryID: orgs[0].ID, SecondaryID: 0}, wantErr: "must be valid"},
+		{name: "not existing", trust: OrganizationTrust{PrimaryID: orgs[0].ID, SecondaryID: orgs[2].ID}, wantErr: "no rows"},
+		{name: "exists", trust: OrganizationTrust{PrimaryID: orgs[0].ID, SecondaryID: orgs[1].ID}, want: 0},
+		{name: "invalid1", trust: OrganizationTrust{PrimaryID: 0, SecondaryID: orgs[1].ID}, wantErr: "must be valid"},
+		{name: "invalid2", trust: OrganizationTrust{PrimaryID: orgs[0].ID, SecondaryID: 0}, wantErr: "must be valid"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var trust Trust
+			var trust OrganizationTrust
 			err := trust.Remove(tt.trust.PrimaryID, tt.trust.SecondaryID)
 			if tt.wantErr != "" {
 				ms.Error(err)
@@ -150,7 +150,7 @@ func (ms *ModelSuite) TestTrust_Remove() {
 			orgs2, err := org2.TrustedOrganizations()
 			ms.NoError(err)
 
-			ms.Equal(tt.want, len(orgs1)+len(orgs2), "incorrect number of Trust records")
+			ms.Equal(tt.want, len(orgs1)+len(orgs2), "incorrect number of OrganizationTrust records")
 		})
 	}
 }
@@ -159,7 +159,7 @@ func (ms *ModelSuite) TestTrust_FindByOrgIDs() {
 	t := ms.T()
 
 	orgs := createOrganizationFixtures(ms.DB, 4)
-	trusts := Trusts{
+	trusts := OrganizationTrusts{
 		{PrimaryID: orgs[0].ID, SecondaryID: orgs[1].ID},
 		{PrimaryID: orgs[1].ID, SecondaryID: orgs[0].ID},
 	}
@@ -169,7 +169,7 @@ func (ms *ModelSuite) TestTrust_FindByOrgIDs() {
 		name    string
 		id1     int
 		id2     int
-		want    Trust
+		want    OrganizationTrust
 		wantErr string
 	}{
 		{name: "0 and 1", id1: orgs[0].ID, id2: orgs[1].ID, want: trusts[0]},
@@ -178,7 +178,7 @@ func (ms *ModelSuite) TestTrust_FindByOrgIDs() {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var trust Trust
+			var trust OrganizationTrust
 			err := trust.FindByOrgIDs(tt.id1, tt.id2)
 			if tt.wantErr != "" {
 				ms.Error(err)
@@ -198,7 +198,7 @@ func (ms *ModelSuite) TestTrusts_FindByOrgID() {
 	t := ms.T()
 
 	orgs := createOrganizationFixtures(ms.DB, 4)
-	trusts := Trusts{
+	trusts := OrganizationTrusts{
 		{PrimaryID: orgs[0].ID, SecondaryID: orgs[1].ID},
 		{PrimaryID: orgs[1].ID, SecondaryID: orgs[0].ID},
 		{PrimaryID: orgs[1].ID, SecondaryID: orgs[2].ID},
@@ -209,17 +209,17 @@ func (ms *ModelSuite) TestTrusts_FindByOrgID() {
 	tests := []struct {
 		name    string
 		id      int
-		want    Trusts
+		want    OrganizationTrusts
 		wantErr string
 	}{
-		{name: "0", id: orgs[0].ID, want: Trusts{trusts[0]}},
-		{name: "1", id: orgs[1].ID, want: Trusts{trusts[1], trusts[2]}},
-		{name: "2", id: orgs[2].ID, want: Trusts{trusts[3]}},
-		{name: "3", id: orgs[3].ID, want: Trusts{}},
+		{name: "0", id: orgs[0].ID, want: OrganizationTrusts{trusts[0]}},
+		{name: "1", id: orgs[1].ID, want: OrganizationTrusts{trusts[1], trusts[2]}},
+		{name: "2", id: orgs[2].ID, want: OrganizationTrusts{trusts[3]}},
+		{name: "3", id: orgs[3].ID, want: OrganizationTrusts{}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var trusts Trusts
+			var trusts OrganizationTrusts
 			err := trusts.FindByOrgID(tt.id)
 			if tt.wantErr != "" {
 				ms.Error(err)

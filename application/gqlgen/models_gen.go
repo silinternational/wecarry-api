@@ -30,7 +30,7 @@ type CreateOrganizationInput struct {
 	LogoFileID *string `json:"logoFileID"`
 }
 
-type CreateTrustInput struct {
+type CreateOrganizationTrustInput struct {
 	PrimaryID   string `json:"primaryID"`
 	SecondaryID string `json:"secondaryID"`
 }
@@ -54,7 +54,7 @@ type RemoveOrganizationDomainInput struct {
 	OrganizationID string `json:"organizationID"`
 }
 
-type RemoveTrustInput struct {
+type RemoveOrganizationTrustInput struct {
 	PrimaryID   string `json:"primaryID"`
 	SecondaryID string `json:"secondaryID"`
 }

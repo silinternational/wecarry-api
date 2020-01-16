@@ -1,4 +1,4 @@
-create_table("trusts") {
+create_table("organization_trusts") {
 	t.Column("id", "integer", {primary: true})
 	t.Column("primary_id", "integer", {})
 	t.Column("secondary_id", "integer", {})

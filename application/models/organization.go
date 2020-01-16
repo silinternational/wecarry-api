@@ -211,34 +211,34 @@ func (o *Organization) LogoURL() (*string, error) {
 	return nil, nil
 }
 
-// CreateTrust creates a Trust record linking this Organization with the organization identified by `secondaryID`
+// CreateTrust creates a OrganizationTrust record linking this Organization with the organization identified by `secondaryID`
 func (o *Organization) CreateTrust(secondaryID string) error {
 	var secondaryOrg Organization
 	if err := secondaryOrg.FindByUUID(secondaryID); err != nil {
 		return fmt.Errorf("CreateTrust, error finding secondary org, %s", err)
 	}
-	var t Trust
+	var t OrganizationTrust
 	t.PrimaryID = o.ID
 	t.SecondaryID = secondaryOrg.ID
 	if err := t.Create(); err != nil {
-		return fmt.Errorf("failed to create new Trust, %s", err)
+		return fmt.Errorf("failed to create new OrganizationTrust, %s", err)
 	}
 	return nil
 }
 
-// RemoveTrust removes a Trust record between this Organization and the organization identified by `secondaryID`
+// RemoveTrust removes a OrganizationTrust record between this Organization and the organization identified by `secondaryID`
 func (o *Organization) RemoveTrust(secondaryID string) error {
 	var secondaryOrg Organization
 	if err := secondaryOrg.FindByUUID(secondaryID); err != nil {
 		return fmt.Errorf("RemoveTrust, error finding secondary org, %s", err)
 	}
-	var t Trust
+	var t OrganizationTrust
 	return t.Remove(o.ID, secondaryOrg.ID)
 }
 
 // TrustedOrganizations gets a list of connected Organizations, either primary or secondary
 func (o *Organization) TrustedOrganizations() (Organizations, error) {
-	t := Trusts{}
+	t := OrganizationTrusts{}
 	if err := t.FindByOrgID(o.ID); domain.IsOtherThanNoRows(err) {
 		return nil, err
 	}

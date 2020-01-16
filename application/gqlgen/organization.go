@@ -93,7 +93,7 @@ func (r *organizationResolver) LogoURL(ctx context.Context, obj *models.Organiza
 	return logoURL, nil
 }
 
-// TrustedOrganizations lists all of the Organizations connected to this Organization by a Trust
+// TrustedOrganizations lists all of the Organizations connected to this Organization by a OrganizationTrust
 func (r *organizationResolver) TrustedOrganizations(ctx context.Context, obj *models.Organization) ([]models.Organization, error) {
 	if obj == nil {
 		return nil, nil
