@@ -174,6 +174,8 @@ func readEnv() {
 	Env.AzureADTenant = envy.Get("AZURE_AD_TENANT", "")
 	Env.EmailService = envy.Get("EMAIL_SERVICE", "sendgrid")
 	Env.EmailFromAddress = envy.Get("EMAIL_FROM_ADDRESS", "no_reply@example.com")
+	Env.FacebookKey = envy.Get("FACEBOOK_KEY", "")
+	Env.FacebookSecret = envy.Get("FACEBOOK_SECRET", "")
 	Env.GoEnv = envy.Get("GO_ENV", "development")
 	Env.GoogleKey = envy.Get("GOOGLE_KEY", "")
 	Env.GoogleSecret = envy.Get("GOOGLE_SECRET", "")
