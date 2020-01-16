@@ -332,7 +332,7 @@ func verifyEmails(c buffalo.Context, originalAuthEmail, authRespEmail string) er
 
 	if emailDomain == respDomain {
 		domain.Warn(c, "authentication emails don't match: " + originalAuthEmail +
-			" vs. "+authRespEmail)
+			" vs. " + authRespEmail)
 		return nil
 	}
 
