@@ -242,12 +242,12 @@ func (o *Organization) TrustedOrganizations() (Organizations, error) {
 	if err := t.FindByOrgID(o.ID); domain.IsOtherThanNoRows(err) {
 		return nil, err
 	}
+	if len(t) < 1 {
+		return Organizations{}, nil
+	}
 	ids := make([]interface{}, len(t))
 	for i := range t {
 		ids[i] = t[i].SecondaryID
-	}
-	if len(t) < 1 {
-		return Organizations{}, nil
 	}
 	trustedOrgs := Organizations{}
 	if err := DB.Where("id in (?)", ids...).All(&trustedOrgs); err != nil {
