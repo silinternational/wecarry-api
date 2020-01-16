@@ -533,7 +533,7 @@ func (ms *ModelSuite) TestOrganization_RemoveTrust() {
 	}{
 		{name: "exists", primary: orgs[0], secondary: orgs[1], want: 0},
 		{name: "reverse exists", primary: orgs[2], secondary: orgs[1], want: 0},
-		{name: "not existing", primary: orgs[3], secondary: orgs[0], want: 0},
+		{name: "not existing", primary: orgs[3], secondary: orgs[0], wantErr: "no rows in result set"},
 		{name: "bad org", primary: Organization{}, secondary: orgs[0], wantErr: "must be valid"},
 		{name: "bad org2", primary: orgs[0], secondary: Organization{}, wantErr: "no rows in result set"},
 	}

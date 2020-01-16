@@ -321,7 +321,7 @@ func fixturesForRemoveTrust(as *ActionSuite) OrganizationFixtures {
 
 	trusts := models.Trusts{
 		{PrimaryID: orgs[0].ID, SecondaryID: orgs[1].ID},
-		{PrimaryID: orgs[1].ID, SecondaryID: orgs[2].ID},
+		{PrimaryID: orgs[0].ID, SecondaryID: orgs[2].ID},
 	}
 	as.NoError(trusts[0].Create())
 	as.NoError(trusts[1].Create())

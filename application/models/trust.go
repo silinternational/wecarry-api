@@ -66,6 +66,21 @@ func (t *Trust) Create() error {
 	return nil
 }
 
+// Remove destroys two Trust records identified by the given Organization IDs
+func (t *Trust) Remove(orgID1, orgID2 int) error {
+	var t1, t2 Trust
+	if err := t1.FindByOrgIDs(orgID1, orgID2); err != nil {
+		return fmt.Errorf("remove Trust failed locating the first Trust record, %s", err)
+	}
+	if err := t2.FindByOrgIDs(orgID2, orgID1); err != nil {
+		return fmt.Errorf("remove Trust failed locating the second Trust record, %s", err)
+	}
+	if err := DB.Destroy(&t1); err != nil {
+		return fmt.Errorf("remove Trust failed to destroy the first Trust record, %s", err)
+	}
+	return DB.Destroy(&t2)
+}
+
 // FindByOrgIDs loads from DB the Trust record identified by the given Organization IDs.
 func (t *Trust) FindByOrgIDs(id1, id2 int) error {
 	if id1 <= 0 || id2 <= 0 {

@@ -233,14 +233,7 @@ func (o *Organization) RemoveTrust(secondaryID string) error {
 		return fmt.Errorf("RemoveTrust, error finding secondary org, %s", err)
 	}
 	var t Trust
-	if err := t.FindByOrgIDs(o.ID, secondaryOrg.ID); err == nil {
-		return DB.Destroy(&t)
-	} else {
-		if domain.IsOtherThanNoRows(err) {
-			return fmt.Errorf("RemoveTrust, error finding Trust record, %s", err)
-		}
-	}
-	return nil
+	return t.Remove(o.ID, secondaryOrg.ID)
 }
 
 // TrustedOrganizations gets a list of connected Organizations, either primary or secondary

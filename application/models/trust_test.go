@@ -110,6 +110,51 @@ func (ms *ModelSuite) TestTrust_Create() {
 	}
 }
 
+func (ms *ModelSuite) TestTrust_Remove() {
+	t := ms.T()
+
+	orgs := createOrganizationFixtures(ms.DB, 3)
+	trusts := Trusts{
+		{PrimaryID: orgs[0].ID, SecondaryID: orgs[1].ID},
+		{PrimaryID: orgs[1].ID, SecondaryID: orgs[0].ID},
+	}
+	createFixture(ms, &trusts)
+
+	tests := []struct {
+		name    string
+		trust   Trust
+		want    int
+		wantErr string
+	}{
+		{name: "not existing", trust: Trust{PrimaryID: orgs[0].ID, SecondaryID: orgs[2].ID}, wantErr: "no rows"},
+		{name: "exists", trust: Trust{PrimaryID: orgs[0].ID, SecondaryID: orgs[1].ID}, want: 0},
+		{name: "invalid1", trust: Trust{PrimaryID: 0, SecondaryID: orgs[1].ID}, wantErr: "must be valid"},
+		{name: "invalid2", trust: Trust{PrimaryID: orgs[0].ID, SecondaryID: 0}, wantErr: "must be valid"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var trust Trust
+			err := trust.Remove(tt.trust.PrimaryID, tt.trust.SecondaryID)
+			if tt.wantErr != "" {
+				ms.Error(err)
+				ms.Contains(err.Error(), tt.wantErr, "wrong error type")
+				return
+			}
+			ms.NoError(err, "unexpected error")
+
+			org1 := Organization{ID: tt.trust.PrimaryID}
+			orgs1, err := org1.TrustedOrganizations()
+			ms.NoError(err)
+
+			org2 := Organization{ID: tt.trust.SecondaryID}
+			orgs2, err := org2.TrustedOrganizations()
+			ms.NoError(err)
+
+			ms.Equal(tt.want, len(orgs1)+len(orgs2), "incorrect number of Trust records")
+		})
+	}
+}
+
 func (ms *ModelSuite) TestTrust_FindByOrgIDs() {
 	t := ms.T()
 
