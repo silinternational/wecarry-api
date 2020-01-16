@@ -479,12 +479,8 @@ func (ms *ModelSuite) TestOrganization_CreateTrust() {
 	t := ms.T()
 
 	orgs := createOrganizationFixtures(ms.DB, 4)
-	trusts := make([]Trust, 1)
-	trusts[0].PrimaryID = orgs[0].ID
-	trusts[0].SecondaryID = orgs[1].ID
-	for i := range trusts {
-		mustCreate(ms.DB, &trusts[i])
-	}
+	trust := Trust{PrimaryID: orgs[0].ID, SecondaryID: orgs[1].ID}
+	ms.NoError(trust.Create())
 
 	tests := []struct {
 		name      string
@@ -521,14 +517,12 @@ func (ms *ModelSuite) TestOrganization_RemoveTrust() {
 	t := ms.T()
 
 	orgs := createOrganizationFixtures(ms.DB, 4)
-	trusts := make([]Trust, 2)
-	trusts[0].PrimaryID = orgs[0].ID
-	trusts[0].SecondaryID = orgs[1].ID
-	trusts[1].PrimaryID = orgs[1].ID
-	trusts[1].SecondaryID = orgs[2].ID
-	for i := range trusts {
-		mustCreate(ms.DB, &trusts[i])
+	trusts := Trusts{
+		{PrimaryID: orgs[0].ID, SecondaryID: orgs[1].ID},
+		{PrimaryID: orgs[1].ID, SecondaryID: orgs[2].ID},
 	}
+	ms.NoError(trusts[0].Create())
+	ms.NoError(trusts[1].Create())
 
 	tests := []struct {
 		name      string
@@ -563,14 +557,12 @@ func (ms *ModelSuite) TestOrganization_TrustedOrganizations() {
 	t := ms.T()
 
 	orgs := createOrganizationFixtures(ms.DB, 4)
-	trusts := make([]Trust, 2)
-	trusts[0].PrimaryID = orgs[0].ID
-	trusts[0].SecondaryID = orgs[1].ID
-	trusts[1].PrimaryID = orgs[2].ID
-	trusts[1].SecondaryID = orgs[0].ID
-	for i := range trusts {
-		mustCreate(ms.DB, &trusts[i])
+	trusts := Trusts{
+		{PrimaryID: orgs[0].ID, SecondaryID: orgs[1].ID},
+		{PrimaryID: orgs[2].ID, SecondaryID: orgs[0].ID},
 	}
+	ms.NoError(trusts[0].Create())
+	ms.NoError(trusts[1].Create())
 
 	tests := []struct {
 		name    string

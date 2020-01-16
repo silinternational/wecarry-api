@@ -43,7 +43,7 @@ func (t *Trust) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }
 
-// Create stores the Trust data as a new record in the database.
+// Create stores the Trust data as a new record in the database. Also creates a mirrored copy of the given Trust.
 func (t *Trust) Create() error {
 	var t2 Trust
 	if err := t2.FindByOrgIDs(t.PrimaryID, t.SecondaryID); err == nil {
@@ -52,27 +52,36 @@ func (t *Trust) Create() error {
 	} else if domain.IsOtherThanNoRows(err) {
 		return err
 	}
-	return create(t)
+	if err := create(t); err != nil {
+		return err
+	}
+	mirror := Trust{
+		PrimaryID:   t.SecondaryID,
+		SecondaryID: t.PrimaryID,
+	}
+	if err := create(&mirror); err != nil {
+		_ = DB.Destroy(t)
+		return err
+	}
+	return nil
 }
 
-// FindByOrgIDs loads from DB the Trust record identified by the given Organization IDs. The two arguments are
-// reversible.
+// FindByOrgIDs loads from DB the Trust record identified by the given Organization IDs.
 func (t *Trust) FindByOrgIDs(id1, id2 int) error {
 	if id1 <= 0 || id2 <= 0 {
 		return errors.New("error: both organization IDs must be valid")
 	}
 
-	if err := DB.Where("primary_id = ? AND secondary_id = ? OR primary_id = ? AND secondary_id = ?",
-		id1, id2, id2, id1).First(t); err != nil {
+	if err := DB.Where("primary_id = ? AND secondary_id = ?", id1, id2).First(t); err != nil {
 		return fmt.Errorf("error finding Trust by org ids, %s", err.Error())
 	}
 
 	return nil
 }
 
-// FindByOrgID returns all trusts where a given Organization is either the Primary or Secondary org
+// FindByOrgID returns all trusts where a given Organization is the Primary org
 func (t *Trusts) FindByOrgID(id int) error {
-	if err := DB.Where("primary_id = ? OR secondary_id = ?", id, id).All(t); err != nil {
+	if err := DB.Where("primary_id = ?", id).All(t); err != nil {
 		return err
 	}
 

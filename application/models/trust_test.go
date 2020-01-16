@@ -66,28 +66,15 @@ func (ms *ModelSuite) TestTrust_Validate() {
 	}
 }
 
-func createTrustFixtures(ms *ModelSuite) trustFixtures {
-	orgs := createOrganizationFixtures(ms.DB, 4)
-
-	trusts := make([]Trust, 2)
-	trusts[0].PrimaryID = orgs[1].ID
-	trusts[0].SecondaryID = orgs[0].ID
-	trusts[1].PrimaryID = orgs[1].ID
-	trusts[1].SecondaryID = orgs[2].ID
-	for i := range trusts {
-		mustCreate(ms.DB, &trusts[i])
-	}
-
-	return trustFixtures{
-		Organizations: orgs,
-		Trusts:        trusts,
-	}
-}
-
 func (ms *ModelSuite) TestTrust_Create() {
 	t := ms.T()
 
-	orgs := createTrustFixtures(ms).Organizations
+	orgs := createOrganizationFixtures(ms.DB, 4)
+	trusts := Trusts{
+		{PrimaryID: orgs[0].ID, SecondaryID: orgs[1].ID},
+		{PrimaryID: orgs[1].ID, SecondaryID: orgs[0].ID},
+	}
+	createFixture(ms, &trusts)
 
 	tests := []struct {
 		name    string
@@ -95,10 +82,8 @@ func (ms *ModelSuite) TestTrust_Create() {
 		want    int
 		wantErr string
 	}{
-		{name: "0 and 1", trust: Trust{PrimaryID: orgs[0].ID, SecondaryID: orgs[1].ID}, want: 1},
-		{name: "1 and 0", trust: Trust{PrimaryID: orgs[1].ID, SecondaryID: orgs[0].ID}, want: 2},
-		{name: "0 and 2", trust: Trust{PrimaryID: orgs[0].ID, SecondaryID: orgs[2].ID}, want: 2},
-		{name: "2 and 0", trust: Trust{PrimaryID: orgs[2].ID, SecondaryID: orgs[0].ID}, want: 2},
+		{name: "exists", trust: Trust{PrimaryID: orgs[0].ID, SecondaryID: orgs[1].ID}, want: 1},
+		{name: "new", trust: Trust{PrimaryID: orgs[0].ID, SecondaryID: orgs[2].ID}, want: 2},
 		{name: "invalid1", trust: Trust{PrimaryID: 0, SecondaryID: orgs[1].ID}, wantErr: "must be valid"},
 		{name: "invalid2", trust: Trust{PrimaryID: orgs[0].ID, SecondaryID: 0}, wantErr: "must be valid"},
 	}
@@ -128,7 +113,12 @@ func (ms *ModelSuite) TestTrust_Create() {
 func (ms *ModelSuite) TestTrust_FindByOrgIDs() {
 	t := ms.T()
 
-	f := createTrustFixtures(ms)
+	orgs := createOrganizationFixtures(ms.DB, 4)
+	trusts := Trusts{
+		{PrimaryID: orgs[0].ID, SecondaryID: orgs[1].ID},
+		{PrimaryID: orgs[1].ID, SecondaryID: orgs[0].ID},
+	}
+	createFixture(ms, &trusts)
 
 	tests := []struct {
 		name    string
@@ -137,10 +127,9 @@ func (ms *ModelSuite) TestTrust_FindByOrgIDs() {
 		want    Trust
 		wantErr string
 	}{
-		{name: "0 and 1", id1: f.Organizations[0].ID, id2: f.Organizations[1].ID, want: f.Trusts[0]},
-		{name: "1 and 0", id1: f.Organizations[1].ID, id2: f.Organizations[0].ID, want: f.Trusts[0]},
-		{name: "0 and 2", id1: f.Organizations[0].ID, id2: f.Organizations[2].ID, wantErr: "no rows"},
-		{name: "2 and 0", id1: f.Organizations[2].ID, id2: f.Organizations[0].ID, wantErr: "no rows"},
+		{name: "0 and 1", id1: orgs[0].ID, id2: orgs[1].ID, want: trusts[0]},
+		{name: "1 and 0", id1: orgs[1].ID, id2: orgs[0].ID, want: trusts[1]},
+		{name: "0 and 2", id1: orgs[0].ID, id2: orgs[2].ID, wantErr: "no rows"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -163,7 +152,14 @@ func (ms *ModelSuite) TestTrust_FindByOrgIDs() {
 func (ms *ModelSuite) TestTrusts_FindByOrgID() {
 	t := ms.T()
 
-	f := createTrustFixtures(ms)
+	orgs := createOrganizationFixtures(ms.DB, 4)
+	trusts := Trusts{
+		{PrimaryID: orgs[0].ID, SecondaryID: orgs[1].ID},
+		{PrimaryID: orgs[1].ID, SecondaryID: orgs[0].ID},
+		{PrimaryID: orgs[1].ID, SecondaryID: orgs[2].ID},
+		{PrimaryID: orgs[2].ID, SecondaryID: orgs[1].ID},
+	}
+	createFixture(ms, &trusts)
 
 	tests := []struct {
 		name    string
@@ -171,10 +167,10 @@ func (ms *ModelSuite) TestTrusts_FindByOrgID() {
 		want    Trusts
 		wantErr string
 	}{
-		{name: "0", id: f.Organizations[0].ID, want: Trusts{f.Trusts[0]}},
-		{name: "1", id: f.Organizations[1].ID, want: Trusts{f.Trusts[0], f.Trusts[1]}},
-		{name: "2", id: f.Organizations[2].ID, want: Trusts{f.Trusts[1]}},
-		{name: "3", id: f.Organizations[3].ID, want: Trusts{}},
+		{name: "0", id: orgs[0].ID, want: Trusts{trusts[0]}},
+		{name: "1", id: orgs[1].ID, want: Trusts{trusts[1], trusts[2]}},
+		{name: "2", id: orgs[2].ID, want: Trusts{trusts[3]}},
+		{name: "3", id: orgs[3].ID, want: Trusts{}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
