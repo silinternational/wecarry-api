@@ -285,6 +285,13 @@ func authCallback(c buffalo.Context) error {
 
 	// if we have an authuser, find or create user in local db and finish login
 	var user models.User
+
+	if err := verifyEmails(c, authEmail, authResp.AuthUser.Email); err != nil {
+		c.Session().Clear()
+		extras := map[string]interface{}{"authEmail": authEmail}
+		return logErrorAndRedirect(c, domain.ErrorAuthEmailMismatch, err.Error(), extras)
+	}
+
 	if authResp.AuthUser != nil {
 		// login was success, clear session so new login can be initiated if needed
 		c.Session().Clear()
@@ -313,6 +320,24 @@ func authCallback(c buffalo.Context) error {
 	}
 
 	return c.Redirect(302, getLoginSuccessRedirectURL(authUser, returnTo))
+}
+
+func verifyEmails(c buffalo.Context, originalAuthEmail, authRespEmail string) error {
+	if originalAuthEmail == authRespEmail {
+		return nil
+	}
+
+	emailDomain := domain.EmailDomain(originalAuthEmail)
+	respDomain := domain.EmailDomain(authRespEmail)
+
+	if emailDomain == respDomain {
+		domain.Warn(c, "authentication emails don't match: " + originalAuthEmail +
+			" vs. " + authRespEmail)
+		return nil
+	}
+
+	return errors.New("authentication email domains don't match: " + originalAuthEmail +
+		" vs. " + authRespEmail)
 }
 
 func mergeExtras(code string, extras ...map[string]interface{}) map[string]interface{} {

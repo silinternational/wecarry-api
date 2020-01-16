@@ -66,6 +66,9 @@ const ErrorFindingOrgByID = "ErrorFindingOrgByID"
 const ErrorAuthProvidersCallback = "ErrorAuthProvidersCallback"
 
 // actions.AuthCallback
+const ErrorAuthEmailMismatch = "ErrorAuthEmailMismatch"
+
+// actions.AuthCallback
 const ErrorWithAuthUser = "ErrorWithAuthUser"
 
 // token param is required on a logout request
