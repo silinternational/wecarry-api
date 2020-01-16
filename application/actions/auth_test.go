@@ -48,7 +48,7 @@ func (as *ActionSuite) TestVerifyEmails() {
 				params: map[string]string{},
 			}
 
-			gotErr := verifyEmails(test.authEmail, test.respEmail, c)
+			gotErr := verifyEmails(c, test.authEmail, test.respEmail)
 			if test.wantErr {
 				as.Error(gotErr, "missing expected error")
 				return

@@ -286,7 +286,7 @@ func authCallback(c buffalo.Context) error {
 	// if we have an authuser, find or create user in local db and finish login
 	var user models.User
 
-	if err := verifyEmails(authEmail, authResp.AuthUser.Email, c); err != nil {
+	if err := verifyEmails(c, authEmail, authResp.AuthUser.Email); err != nil {
 		c.Session().Clear()
 		extras := map[string]interface{}{"authEmail": authEmail}
 		return logErrorAndRedirect(c, domain.ErrorAuthEmailMismatch, err.Error(), extras)
@@ -322,7 +322,7 @@ func authCallback(c buffalo.Context) error {
 	return c.Redirect(302, getLoginSuccessRedirectURL(authUser, returnTo))
 }
 
-func verifyEmails(originalAuthEmail, authRespEmail string, c buffalo.Context) error {
+func verifyEmails(c buffalo.Context, originalAuthEmail, authRespEmail string) error {
 	if originalAuthEmail == authRespEmail {
 		return nil
 	}
