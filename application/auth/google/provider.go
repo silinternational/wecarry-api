@@ -58,6 +58,7 @@ type Provider struct {
 	providerName string
 }
 
+// Logout calls auth.Logout
 func (p *Provider) Logout(c buffalo.Context) auth.Response {
 	resp := auth.Response{}
 	err := auth.Logout(c.Response(), c.Request())
@@ -67,6 +68,7 @@ func (p *Provider) Logout(c buffalo.Context) auth.Response {
 	return resp
 }
 
+// AuthCallback deals with the session and the provider to access basic information about the user.
 func (p *Provider) AuthCallback(c buffalo.Context) auth.Response {
 	res := c.Response()
 	req := c.Request()
@@ -165,6 +167,7 @@ func (p *Provider) Client() *http.Client {
 // Debug is a no-op for the google package.
 func (p *Provider) Debug(debug bool) {}
 
+// AuthRequest calls BeginAuth and returns the URL for the authentication end-point
 func (p *Provider) AuthRequest(c buffalo.Context) (string, error) {
 
 	req := c.Request()
