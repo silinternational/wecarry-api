@@ -244,11 +244,7 @@ func (o *Organization) TrustedOrganizations() (Organizations, error) {
 	}
 	ids := make([]interface{}, len(t))
 	for i := range t {
-		if o.ID == t[i].PrimaryID {
-			ids[i] = t[i].SecondaryID
-		} else {
-			ids[i] = t[i].PrimaryID
-		}
+		ids[i] = t[i].SecondaryID
 	}
 	if len(t) < 1 {
 		return Organizations{}, nil
