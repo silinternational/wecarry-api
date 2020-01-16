@@ -327,11 +327,8 @@ func verifyEmails(c buffalo.Context, originalAuthEmail, authRespEmail string) er
 		return nil
 	}
 
-	emailParts := strings.Split(originalAuthEmail, "@")
-	emailDomain := emailParts[len(emailParts)-1]
-
-	respParts := strings.Split(authRespEmail, "@")
-	respDomain := respParts[len(respParts)-1]
+	emailDomain := domain.EmailDomain(originalAuthEmail)
+	respDomain := domain.EmailDomain(authRespEmail)
 
 	if emailDomain == respDomain {
 		domain.Warn(c, "authentication emails don't match: "+originalAuthEmail+
