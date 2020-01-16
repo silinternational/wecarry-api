@@ -471,8 +471,11 @@ func (as *ActionSuite) Test_CreateTrust() {
 
 	query := fmt.Sprintf("mutation{organization: createOrganizationTrust(input: {%s}) {%s}}",
 		allFieldsInput, allFieldsQuery)
-	err := as.testGqlQuery(query, f.Users[0].Nickname, &resp)
-	as.NoError(err)
+
+	// should fail as regular admin user
+	as.Error(as.testGqlQuery(query, f.Users[1].Nickname, &resp))
+
+	as.NoError(as.testGqlQuery(query, f.Users[0].Nickname, &resp))
 
 	as.Equal(f.Organizations[0].Name, resp.Organization.Name, "received wrong name")
 
@@ -498,8 +501,11 @@ func (as *ActionSuite) Test_RemoveTrust() {
 
 	query := fmt.Sprintf("mutation{organization: removeOrganizationTrust(input: {%s}) {%s}}",
 		allFieldsInput, allFieldsQuery)
-	err := as.testGqlQuery(query, f.Users[0].Nickname, &resp)
-	as.NoError(err)
+
+	// should fail as regular admin user
+	as.Error(as.testGqlQuery(query, f.Users[1].Nickname, &resp))
+
+	as.NoError(as.testGqlQuery(query, f.Users[0].Nickname, &resp))
 
 	as.Equal(f.Organizations[0].Name, resp.Organization.Name, "received wrong name")
 
