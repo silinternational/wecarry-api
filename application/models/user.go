@@ -241,6 +241,11 @@ func (u *User) CanCreateOrganization() bool {
 	return u.AdminRole == UserAdminRoleSuperAdmin || u.AdminRole == UserAdminRoleSalesAdmin
 }
 
+// CanCreateOrganizationTrust returns true if the given user is allowed to create an OrganizationTrust
+func (u *User) CanCreateOrganizationTrust() bool {
+	return u.AdminRole == UserAdminRoleSuperAdmin || u.AdminRole == UserAdminRoleSalesAdmin
+}
+
 // CanViewOrganization returns true if the given user is allowed to view the specified organization
 func (u *User) CanViewOrganization(orgId int) bool {
 	// if user is a system admin, allow

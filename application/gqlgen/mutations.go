@@ -175,7 +175,7 @@ func (r *mutationResolver) CreateOrganizationTrust(ctx context.Context, input Cr
 		return nil, reportError(ctx, err, "CreateOrganizationTrust.FindPrimaryOrganization", extras)
 	}
 
-	if !cUser.CanCreateOrganization() {
+	if !cUser.CanCreateOrganizationTrust() {
 		err := errors.New("insufficient permissions")
 		return nil, reportError(ctx, err, "CreateOrganizationTrust.Unauthorized", extras)
 	}
@@ -199,7 +199,7 @@ func (r *mutationResolver) RemoveOrganizationTrust(ctx context.Context, input Re
 		return nil, reportError(ctx, err, "RemoveOrganizationTrust.FindPrimaryOrganization", extras)
 	}
 
-	if !cUser.CanCreateOrganization() {
+	if !cUser.CanCreateOrganizationTrust() {
 		err := errors.New("insufficient permissions")
 		return nil, reportError(ctx, err, "RemoveOrganizationTrust.Unauthorized", extras)
 	}
