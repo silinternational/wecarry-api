@@ -127,10 +127,7 @@ auth_config like the following ...
 }
 ```
 
-## Untested Auth Options
-(The code for this has not been tested completely)
-
-### Twitter
+### Twitter (Dicey Auth Option)
 To add an organization using Twitter authentication, create a database organization record  
 that includes an auth_type of `twitter` and an auth_config like the following ... 
 
