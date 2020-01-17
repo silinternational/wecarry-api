@@ -141,3 +141,49 @@ func mockTwitter(f func(*httptest.Server)) {
 	requestURL = originalRequestURL
 	endpointProfile = originalEndpointProfile
 }
+
+func TestGetFirstLastFromName(t *testing.T) {
+
+	type args struct {
+		s []string
+	}
+	tests := []struct {
+		name     string
+		userName string
+		want     [2]string
+	}{
+		{
+			name:     "one name",
+			userName: "OneName",
+			want:     [2]string{"OneName", "OneName"},
+		},
+		{
+			name:     "one space",
+			userName: "First Last",
+			want:     [2]string{"First", "Last"},
+		},
+		{
+			name:     "two spaces",
+			userName: "First Middle Last",
+			want:     [2]string{"First", "Middle Last"},
+		},
+		{
+			name:     "one undesrscore",
+			userName: "First_Last",
+			want:     [2]string{"First", "Last"},
+		},
+		{
+			name:     "two underscores",
+			userName: "First_Middle_Last",
+			want:     [2]string{"First", "Middle_Last"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a := assert.New(t)
+			gotF, gotL := getFirstLastFromName(tt.userName)
+
+			a.Equal(tt.want, [2]string{gotF, gotL}, "incorrect names")
+		})
+	}
+}

@@ -8,6 +8,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"fmt"
 
@@ -121,6 +122,22 @@ func (p *Provider) AuthRequest(c buffalo.Context) (string, error) {
 	return url, err
 }
 
+func getFirstLastFromName(name string) (string, string) {
+	if strings.Contains(name, " ") {
+		parts := strings.Split(name, " ")
+		if len(parts) > 1 {
+			return parts[0], strings.Join(parts[1:], " ")
+		}
+	}
+
+	parts := strings.Split(name, "_")
+	if len(parts) > 1 {
+		return parts[0], strings.Join(parts[1:], "_")
+	}
+
+	return name, name
+}
+
 // AuthCallback deals with the session and the provider to access basic information about the user.
 func (p *Provider) AuthCallback(c buffalo.Context) auth.Response {
 	res := c.Response()
@@ -156,8 +173,8 @@ func (p *Provider) AuthCallback(c buffalo.Context) auth.Response {
 	user, err := p.FetchUser(sess)
 	if err == nil {
 		authUser := auth.User{
-			FirstName: user.FirstName,
-			LastName:  user.LastName,
+			FirstName: user.Name,
+			LastName:  user.Name,
 			Email:     user.Email,
 			UserID:    user.UserID,
 			Nickname:  user.NickName,
@@ -190,8 +207,8 @@ func (p *Provider) AuthCallback(c buffalo.Context) auth.Response {
 	}
 
 	authUser := auth.User{
-		FirstName: gu.FirstName,
-		LastName:  gu.LastName,
+		FirstName: gu.Name,
+		LastName:  gu.Name,
 		Email:     gu.Email,
 		UserID:    gu.UserID,
 		Nickname:  gu.NickName,

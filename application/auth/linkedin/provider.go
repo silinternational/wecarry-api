@@ -46,7 +46,7 @@ func New(jsonConfig json.RawMessage) (*Provider, error) {
 		return &Provider{}, err
 	}
 
-	scopes := []string{"profile", "email"}
+	scopes := []string{}
 
 	p := &Provider{
 		ClientKey:    linkedInKey,
