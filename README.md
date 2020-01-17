@@ -67,7 +67,7 @@ that includes an auth_type of `facebook` and an auth_config like the following .
 {}
 ```
 
-The three environment variables `FACEBOOK_KEY` and `FACEBOOK_SECRET` 
+The two environment variables `FACEBOOK_KEY` and `FACEBOOK_SECRET` 
 will need to be set for the appropriate Facebook oauth account and application.
 
 For local development, if you are using `http`, then you will need to 
