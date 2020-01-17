@@ -246,6 +246,27 @@ func (u *User) CanCreateOrganizationTrust() bool {
 	return u.AdminRole == UserAdminRoleSuperAdmin || u.AdminRole == UserAdminRoleSalesAdmin
 }
 
+// CanRemoveOrganizationTrust returns true if the given user is allowed to remove an OrganizationTrust
+func (u *User) CanRemoveOrganizationTrust(orgId int) bool {
+	// if user is a system admin, allow
+	if u.AdminRole == UserAdminRoleSuperAdmin || u.AdminRole == UserAdminRoleSalesAdmin {
+		return true
+	}
+
+	// make sure we're checking current user orgs
+	if err := DB.Load(u, "UserOrganizations"); err != nil {
+		return false
+	}
+
+	for _, uo := range u.UserOrganizations {
+		if uo.OrganizationID == orgId && uo.Role == UserOrganizationRoleAdmin {
+			return true
+		}
+	}
+
+	return false
+}
+
 // CanViewOrganization returns true if the given user is allowed to view the specified organization
 func (u *User) CanViewOrganization(orgId int) bool {
 	// if user is a system admin, allow
