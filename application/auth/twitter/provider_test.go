@@ -12,23 +12,27 @@ import (
 	"github.com/markbates/goth"
 	"github.com/mrjones/oauth"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 func Test_New(t *testing.T) {
 	t.Parallel()
 	a := assert.New(t)
 
-	provider := twitterProvider()
-	a.Equal(provider.ClientKey, os.Getenv("TWITTER_KEY"))
-	a.Equal(provider.Secret, os.Getenv("TWITTER_SECRET"))
+	provider, err := twitterProvider()
+	a.NoError(err)
+	a.Equal(provider.ClientKey, domain.Env.TwitterKey)
+	a.Equal(provider.Secret, domain.Env.TwitterSecret)
 	a.Equal(provider.CallbackURL, "/foo")
 }
 
 func Test_Implements_Provider(t *testing.T) {
 	t.Parallel()
 	a := assert.New(t)
+	provider, _ := twitterProvider()
 
-	a.Implements((*goth.Provider)(nil), twitterProvider())
+	a.Implements((*goth.Provider)(nil), provider)
 }
 
 func Test_BeginAuth(t *testing.T) {
@@ -36,7 +40,7 @@ func Test_BeginAuth(t *testing.T) {
 	a := assert.New(t)
 
 	mockTwitter(func(ts *httptest.Server) {
-		provider := twitterProvider()
+		provider, err := twitterProvider()
 		session, err := provider.BeginAuth("state")
 		s := session.(*Session)
 		a.NoError(err)
@@ -60,7 +64,7 @@ func Test_FetchUser(t *testing.T) {
 	a := assert.New(t)
 
 	mockTwitter(func(ts *httptest.Server) {
-		provider := twitterProvider()
+		provider, _ := twitterProvider()
 		session := Session{AccessToken: &oauth.AccessToken{Token: "TOKEN", Secret: "SECRET"}}
 
 		user, err := provider.FetchUser(&session)
@@ -81,7 +85,7 @@ func Test_SessionFromJSON(t *testing.T) {
 	t.Parallel()
 	a := assert.New(t)
 
-	provider := twitterProvider()
+	provider, _ := twitterProvider()
 
 	s, err := provider.UnmarshalSession(`{"AuthURL":"http://com/auth_url","AccessToken":{"Token":"1234567890","Secret":"secret!!","AdditionalData":{}},"RequestToken":{"Token":"0987654321","Secret":"!!secret"}}`)
 	a.NoError(err)
@@ -93,8 +97,13 @@ func Test_SessionFromJSON(t *testing.T) {
 	a.Equal(session.RequestToken.Secret, "!!secret")
 }
 
-func twitterProvider() *Provider {
-	return New(os.Getenv("TWITTER_KEY"), os.Getenv("TWITTER_SECRET"), "/foo")
+func twitterProvider() (*Provider, error) {
+
+	domain.Env.TwitterKey = "abc123"
+	domain.Env.TwitterSecret = "abc123"
+	domain.Env.AuthCallbackURL = "/foo"
+
+	return New([]byte(""))
 }
 
 func twitterProviderAuthenticate() *Provider {
