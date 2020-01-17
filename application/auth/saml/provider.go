@@ -98,10 +98,12 @@ func (p *Provider) initSAMLServiceProvider() error {
 	return nil
 }
 
+// AuthRequest returns the URL for the authentication end-point
 func (p *Provider) AuthRequest(c buffalo.Context) (string, error) {
 	return p.SamlProvider.BuildAuthURL("")
 }
 
+// AuthCallback gets information about the user from the saml assertion.
 func (p *Provider) AuthCallback(c buffalo.Context) auth.Response {
 	resp := auth.Response{}
 

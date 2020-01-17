@@ -250,6 +250,7 @@ func scopesToStrings(scopes ...ScopeType) []string {
 	return strs
 }
 
+// AuthCallback deals with the session and the provider to access basic information about the user.
 func (p *Provider) AuthCallback(c buffalo.Context) auth.Response {
 	res := c.Response()
 	req := c.Request()
@@ -330,6 +331,7 @@ func (p *Provider) AuthCallback(c buffalo.Context) auth.Response {
 	return resp
 }
 
+// AuthRequest calls BeginAuth and returns the URL for the authentication end-point
 func (p *Provider) AuthRequest(c buffalo.Context) (string, error) {
 
 	req := c.Request()
@@ -353,6 +355,7 @@ func (p *Provider) AuthRequest(c buffalo.Context) (string, error) {
 	return url, err
 }
 
+// Logout calls auth.Logout
 func (p *Provider) Logout(c buffalo.Context) auth.Response {
 	resp := auth.Response{}
 	err := auth.Logout(c.Response(), c.Request())

@@ -121,9 +121,13 @@ var Env struct {
 	AzureADTenant              string
 	EmailService               string
 	EmailFromAddress           string
+	FacebookKey                string
+	FacebookSecret             string
 	GoEnv                      string
 	GoogleKey                  string
 	GoogleSecret               string
+	LinkedInKey                string
+	LinkedInSecret             string
 	MobileService              string
 	PlaygroundPort             string
 	RollbarServerRoot          string
@@ -131,6 +135,8 @@ var Env struct {
 	SendGridAPIKey             string
 	SessionSecret              string
 	SupportEmail               string
+	TwitterKey                 string
+	TwitterSecret              string
 	UIURL                      string
 }
 
@@ -172,9 +178,13 @@ func readEnv() {
 	Env.AzureADTenant = envy.Get("AZURE_AD_TENANT", "")
 	Env.EmailService = envy.Get("EMAIL_SERVICE", "sendgrid")
 	Env.EmailFromAddress = envy.Get("EMAIL_FROM_ADDRESS", "no_reply@example.com")
+	Env.FacebookKey = envy.Get("FACEBOOK_KEY", "")
+	Env.FacebookSecret = envy.Get("FACEBOOK_SECRET", "")
 	Env.GoEnv = envy.Get("GO_ENV", "development")
 	Env.GoogleKey = envy.Get("GOOGLE_KEY", "")
 	Env.GoogleSecret = envy.Get("GOOGLE_SECRET", "")
+	Env.LinkedInKey = envy.Get("LINKED_IN_KEY", "")
+	Env.LinkedInSecret = envy.Get("LINKED_IN_SECRET", "")
 	Env.MobileService = envy.Get("MOBILE_SERVICE", "dummy")
 	Env.PlaygroundPort = envy.Get("PORT", "3000")
 	Env.RollbarServerRoot = envy.Get("ROLLBAR_SERVER_ROOT", "github.com/silinternational/wecarry-api")
@@ -182,6 +192,8 @@ func readEnv() {
 	Env.SendGridAPIKey = envy.Get("SENDGRID_API_KEY", "")
 	Env.SessionSecret = envy.Get("SESSION_SECRET", "testing")
 	Env.SupportEmail = envy.Get("SUPPORT_EMAIL", "")
+	Env.TwitterKey = envy.Get("TWITTER_KEY", "")
+	Env.TwitterSecret = envy.Get("TWITTER_SECRET", "")
 	Env.UIURL = envy.Get("UI_URL", "dev.wecarry.app")
 }
 
