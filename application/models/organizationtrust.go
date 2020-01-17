@@ -54,7 +54,12 @@ func (o *OrganizationTrust) CreateSymmetric() error {
 		SecondaryID: o.PrimaryID,
 	}
 	if err := mirror.Create(); err != nil {
-		_ = DB.Destroy(o)
+		msg := fmt.Sprintf("failed to create mirror of trust %d - %d, %s", o.PrimaryID, o.SecondaryID, err)
+		err = DB.Destroy(o)
+		if err != nil {
+			return fmt.Errorf("failed to delete primary trust after %s, %s", msg, err)
+		}
+		return errors.New(msg)
 	}
 
 	return nil
@@ -90,10 +95,9 @@ func (o *OrganizationTrust) Remove(orgID1, orgID2 int) error {
 	if err := trust.FindByOrgIDs(orgID1, orgID2); err != nil {
 		if domain.IsOtherThanNoRows(err) {
 			return err
-		} else {
-			domain.Logger.Printf("no record found when removing organization trust %d - %d", orgID1, orgID2)
-			return nil
 		}
+		domain.Logger.Printf("no record found when removing organization trust %d - %d", orgID1, orgID2)
+		return nil
 	}
 	return DB.Destroy(&trust)
 }
