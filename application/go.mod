@@ -18,7 +18,7 @@ require (
 	github.com/gobuffalo/packr/v2 v2.7.1
 	github.com/gobuffalo/pop v4.12.2+incompatible
 	github.com/gobuffalo/suite v2.8.1+incompatible
-	github.com/gobuffalo/validate v2.0.3+incompatible
+	github.com/gobuffalo/validate v2.0.4+incompatible
 	github.com/gofrs/uuid v3.2.0+incompatible
 	github.com/gorilla/pat v0.0.0-20180118222023-199c85a7f6d1
 	github.com/gorilla/sessions v1.2.0

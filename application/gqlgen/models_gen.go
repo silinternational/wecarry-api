@@ -30,6 +30,11 @@ type CreateOrganizationInput struct {
 	LogoFileID *string `json:"logoFileID"`
 }
 
+type CreateOrganizationTrustInput struct {
+	PrimaryID   string `json:"primaryID"`
+	SecondaryID string `json:"secondaryID"`
+}
+
 type LocationInput struct {
 	Description string   `json:"description"`
 	Country     string   `json:"country"`
@@ -47,6 +52,11 @@ type PublicProfile struct {
 type RemoveOrganizationDomainInput struct {
 	Domain         string `json:"domain"`
 	OrganizationID string `json:"organizationID"`
+}
+
+type RemoveOrganizationTrustInput struct {
+	PrimaryID   string `json:"primaryID"`
+	SecondaryID string `json:"secondaryID"`
 }
 
 type RemoveWatchInput struct {

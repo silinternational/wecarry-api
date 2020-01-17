@@ -244,3 +244,19 @@
   translation: We had a problem finding the Watch to be removed
 - id: RemoveWatch.FindByUser
   translation: We had a problem getting a list of remaining Watches
+
+# Trust
+- id: GetOrganizationTrustedOrganizations
+  translation: We had a problem getting a list of trusted organizations
+- id: CreateTrust.FindPrimaryOrganization
+  translation: We had a problem finding the organization to create the Trust
+- id: CreateTrust.Unauthorized
+  translation: We had a problem finding the organization to create the Trust
+- id: CreateOrganizationTrust
+  translation: We had a problem creating the Trust
+- id: RemoveTrust.FindPrimaryOrganization
+  translation: We had a problem finding the organization to remove the Trust
+- id: RemoveTrust.Unauthorized
+  translation: We had a problem finding the organization to remove the Trust
+- id: RemoveTrust
+  translation: We had a problem removing the Trust
