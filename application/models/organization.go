@@ -13,13 +13,21 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/silinternational/wecarry-api/auth"
+	"github.com/silinternational/wecarry-api/auth/azureadv2"
+	"github.com/silinternational/wecarry-api/auth/facebook"
 	"github.com/silinternational/wecarry-api/auth/google"
+	"github.com/silinternational/wecarry-api/auth/linkedin"
 	"github.com/silinternational/wecarry-api/auth/saml"
+	"github.com/silinternational/wecarry-api/auth/twitter"
 	"github.com/silinternational/wecarry-api/domain"
 )
 
-const AuthTypeSaml = "saml"
+const AuthTypeAzureAD = "azureadv2"
+const AuthTypeFacebook = "facebook"
 const AuthTypeGoogle = "google"
+const AuthTypeLinkedIn = "linkedin"
+const AuthTypeSaml = "saml"
+const AuthTypeTwitter = "twitter"
 
 type Organization struct {
 	ID                  int                  `json:"id" db:"id"`
@@ -64,12 +72,20 @@ func (o *Organization) ValidateUpdate(tx *pop.Connection) (*validate.Errors, err
 
 func (o *Organization) GetAuthProvider() (auth.Provider, error) {
 
-	if o.AuthType == AuthTypeSaml {
-		return saml.New([]byte(o.AuthConfig))
-	}
-
-	if o.AuthType == AuthTypeGoogle {
+	switch o.AuthType {
+	case AuthTypeAzureAD:
+		return azureadv2.New([]byte(o.AuthConfig))
+	case AuthTypeFacebook:
+		return facebook.New([]byte(o.AuthConfig))
+	case AuthTypeGoogle:
 		return google.New([]byte(o.AuthConfig))
+	case AuthTypeLinkedIn:
+		return linkedin.New([]byte(o.AuthConfig))
+	case AuthTypeSaml:
+		return saml.New([]byte(o.AuthConfig))
+	case AuthTypeTwitter:
+		return twitter.New([]byte(o.AuthConfig))
+
 	}
 
 	return &auth.EmptyProvider{}, fmt.Errorf("unsupported auth provider type: %s", o.AuthType)
