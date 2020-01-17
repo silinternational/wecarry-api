@@ -217,6 +217,43 @@ ALTER SEQUENCE public.organization_domains_id_seq OWNED BY public.organization_d
 
 
 --
+-- Name: organization_trusts; Type: TABLE; Schema: public; Owner: scrutinizer
+--
+
+CREATE TABLE public.organization_trusts (
+    id integer NOT NULL,
+    primary_id integer NOT NULL,
+    secondary_id integer NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.organization_trusts OWNER TO scrutinizer;
+
+--
+-- Name: organization_trusts_id_seq; Type: SEQUENCE; Schema: public; Owner: scrutinizer
+--
+
+CREATE SEQUENCE public.organization_trusts_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.organization_trusts_id_seq OWNER TO scrutinizer;
+
+--
+-- Name: organization_trusts_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: scrutinizer
+--
+
+ALTER SEQUENCE public.organization_trusts_id_seq OWNED BY public.organization_trusts.id;
+
+
+--
 -- Name: organizations; Type: TABLE; Schema: public; Owner: scrutinizer
 --
 
@@ -745,6 +782,13 @@ ALTER TABLE ONLY public.organization_domains ALTER COLUMN id SET DEFAULT nextval
 
 
 --
+-- Name: organization_trusts id; Type: DEFAULT; Schema: public; Owner: scrutinizer
+--
+
+ALTER TABLE ONLY public.organization_trusts ALTER COLUMN id SET DEFAULT nextval('public.organization_trusts_id_seq'::regclass);
+
+
+--
 -- Name: organizations id; Type: DEFAULT; Schema: public; Owner: scrutinizer
 --
 
@@ -866,6 +910,14 @@ ALTER TABLE ONLY public.messages
 
 ALTER TABLE ONLY public.organization_domains
     ADD CONSTRAINT organization_domains_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: organization_trusts organization_trusts_pkey; Type: CONSTRAINT; Schema: public; Owner: scrutinizer
+--
+
+ALTER TABLE ONLY public.organization_trusts
+    ADD CONSTRAINT organization_trusts_pkey PRIMARY KEY (id);
 
 
 --
@@ -997,6 +1049,13 @@ CREATE UNIQUE INDEX messages_uuid_idx ON public.messages USING btree (uuid);
 --
 
 CREATE UNIQUE INDEX organization_domains_domain_idx ON public.organization_domains USING btree (domain);
+
+
+--
+-- Name: organization_trusts_primary_id_secondary_id_idx; Type: INDEX; Schema: public; Owner: scrutinizer
+--
+
+CREATE UNIQUE INDEX organization_trusts_primary_id_secondary_id_idx ON public.organization_trusts USING btree (primary_id, secondary_id);
 
 
 --
@@ -1207,6 +1266,22 @@ ALTER TABLE ONLY public.messages
 
 ALTER TABLE ONLY public.organization_domains
     ADD CONSTRAINT organization_domains_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id) ON DELETE CASCADE;
+
+
+--
+-- Name: organization_trusts organization_trusts_primary_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
+--
+
+ALTER TABLE ONLY public.organization_trusts
+    ADD CONSTRAINT organization_trusts_primary_id_fkey FOREIGN KEY (primary_id) REFERENCES public.organizations(id) ON DELETE CASCADE;
+
+
+--
+-- Name: organization_trusts organization_trusts_secondary_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
+--
+
+ALTER TABLE ONLY public.organization_trusts
+    ADD CONSTRAINT organization_trusts_secondary_id_fkey FOREIGN KEY (secondary_id) REFERENCES public.organizations(id) ON DELETE CASCADE;
 
 
 --

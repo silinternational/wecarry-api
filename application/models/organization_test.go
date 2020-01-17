@@ -1,11 +1,11 @@
 package models
 
 import (
+	"testing"
+
 	"github.com/gobuffalo/nulls"
 
 	"github.com/silinternational/wecarry-api/domain"
-
-	"testing"
 )
 
 func (ms *ModelSuite) TestOrganization_FindOrgByUUID() {
@@ -471,6 +471,123 @@ func (ms *ModelSuite) TestOrganization_LogoURL() {
 				return
 			}
 			ms.Equal(tt.want, *logoURL)
+		})
+	}
+}
+
+func (ms *ModelSuite) TestOrganization_CreateTrust() {
+	t := ms.T()
+
+	orgs := createOrganizationFixtures(ms.DB, 4)
+	trust := OrganizationTrust{PrimaryID: orgs[0].ID, SecondaryID: orgs[1].ID}
+	ms.NoError(trust.CreateSymmetric())
+
+	tests := []struct {
+		name      string
+		primary   Organization
+		secondary Organization
+		want      int
+		wantErr   string
+	}{
+		{name: "pre-existing", primary: orgs[0], secondary: orgs[1], want: 1},
+		{name: "reverse exists", primary: orgs[1], secondary: orgs[0], want: 1},
+		{name: "new for org 0", primary: orgs[0], secondary: orgs[2], want: 2},
+		{name: "new for org 1", primary: orgs[1], secondary: orgs[2], want: 2},
+		{name: "new for org 3", primary: orgs[3], secondary: orgs[0], want: 1},
+		{name: "bad org", primary: Organization{}, secondary: orgs[0], wantErr: "must be valid"},
+		{name: "bad org2", primary: orgs[0], secondary: Organization{}, wantErr: "no rows in result set"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.primary.CreateTrust(tt.secondary.UUID.String())
+			if tt.wantErr != "" {
+				ms.Errorf(err, "expected error %s but got no error", tt.wantErr, err)
+				ms.Contains(err.Error(), tt.wantErr)
+				return
+			}
+			ms.NoError(err)
+			trustedOrgs, err := tt.primary.TrustedOrganizations()
+			ms.NoError(err)
+			ms.Equal(tt.want, len(trustedOrgs))
+		})
+	}
+}
+
+func (ms *ModelSuite) TestOrganization_RemoveTrust() {
+	t := ms.T()
+
+	orgs := createOrganizationFixtures(ms.DB, 4)
+	trusts := OrganizationTrusts{
+		{PrimaryID: orgs[0].ID, SecondaryID: orgs[1].ID},
+		{PrimaryID: orgs[1].ID, SecondaryID: orgs[2].ID},
+	}
+	ms.NoError(trusts[0].CreateSymmetric())
+	ms.NoError(trusts[1].CreateSymmetric())
+
+	tests := []struct {
+		name      string
+		primary   Organization
+		secondary Organization
+		want      int
+		wantErr   string
+	}{
+		{name: "exists", primary: orgs[0], secondary: orgs[1], want: 0},
+		{name: "reverse exists", primary: orgs[2], secondary: orgs[1], want: 0},
+		{name: "not existing", primary: orgs[3], secondary: orgs[0], want: 0},
+		{name: "bad org", primary: Organization{}, secondary: orgs[0], wantErr: "must be valid"},
+		{name: "bad org2", primary: orgs[0], secondary: Organization{}, wantErr: "no rows in result set"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.primary.RemoveTrust(tt.secondary.UUID.String())
+			if tt.wantErr != "" {
+				ms.Errorf(err, "expected error %s but got no error", tt.wantErr, err)
+				ms.Contains(err.Error(), tt.wantErr)
+				return
+			}
+			ms.NoError(err)
+			trustedOrgs, err := tt.primary.TrustedOrganizations()
+			ms.NoError(err)
+			ms.Equal(tt.want, len(trustedOrgs))
+		})
+	}
+}
+
+func (ms *ModelSuite) TestOrganization_TrustedOrganizations() {
+	t := ms.T()
+
+	orgs := createOrganizationFixtures(ms.DB, 4)
+	trusts := OrganizationTrusts{
+		{PrimaryID: orgs[0].ID, SecondaryID: orgs[1].ID},
+		{PrimaryID: orgs[2].ID, SecondaryID: orgs[0].ID},
+	}
+	ms.NoError(trusts[0].CreateSymmetric())
+	ms.NoError(trusts[1].CreateSymmetric())
+
+	tests := []struct {
+		name    string
+		primary Organization
+		want    []int
+	}{
+		{name: "exists", primary: orgs[0], want: []int{orgs[1].ID, orgs[2].ID}},
+		{name: "exists", primary: orgs[1], want: []int{orgs[0].ID}},
+		{name: "exists", primary: orgs[2], want: []int{orgs[0].ID}},
+		{name: "exists", primary: orgs[3], want: []int{}},
+		{name: "bad org", primary: Organization{}, want: []int{}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.primary.TrustedOrganizations()
+			ms.NoError(err, "unexpected error from UUT")
+			ms.Equal(len(tt.want), len(got), "received incorrect number of orgs")
+			ids := make([]int, len(got))
+			for i := range got {
+				ids[i] = got[i].ID
+				ms.Contains(tt.want, got[i].ID, "received unexpected org in trusted list")
+			}
+			for i := range tt.want {
+				ms.Contains(ids, tt.want[i], "didn't get expected org in trusted list")
+			}
 		})
 	}
 }
