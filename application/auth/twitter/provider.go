@@ -35,7 +35,7 @@ var (
 // one manually.
 //
 // If you'd like to use authenticate instead of authorize, use NewAuthenticate instead.
-func New(clientKey, secret, callbackURL string) (*Provider, error) {
+func New(jsonConfig json.RawMessage) (*Provider, error) {
 
 	twitterKey := domain.Env.TwitterKey
 	twitterSecret := domain.Env.TwitterSecret

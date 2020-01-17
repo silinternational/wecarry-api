@@ -36,7 +36,7 @@ const ProviderName = "linkedin"
 // New creates a new linkedin provider, and sets up important connection details.
 // You should always call `linkedin.New` to get a new Provider. Never try to create
 // one manually.
-func New(clientKey, secret, callbackURL string, scopes ...string) (*Provider, error) {
+func New(jsonConfig json.RawMessage) (*Provider, error) {
 
 	linkedInKey := domain.Env.LinkedInKey
 	linkedInSecret := domain.Env.LinkedInSecret
@@ -45,6 +45,8 @@ func New(clientKey, secret, callbackURL string, scopes ...string) (*Provider, er
 		err := errors.New("missing required environment variable for LinkedIn Auth Provider")
 		return &Provider{}, err
 	}
+
+	scopes := []string{"profile", "email"}
 
 	p := &Provider{
 		ClientKey:    linkedInKey,
