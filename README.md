@@ -58,7 +58,7 @@ use `http:localhost` as the host for the WeCarry API, due to AzureAD's policies.
 (This affects the `AUTH_CALLBACK_URL` in the `.env` file and the `buffalo.environment.HOST` value
 in the docker-compose file.)
 
-### Facebook
+### Facebook  (NOT FULLY TESTED YET - Getting a 500 from FB)
 To add an organization using Facebook authentication, create a database organization record  
 that includes an auth_type of `facebook` and an auth_config like the following ... 
 
