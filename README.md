@@ -117,3 +117,28 @@ auth_config like the following ...
  "AssertionConsumerServiceURL": "http://example.local:3000/auth/callback"
 }
 ```
+
+## Untested Auth Options
+(The code for these has not been tested completely)
+
+### LinkedIn
+To add an organization using LinkedIn authentication, create a database organization record  
+that includes an auth_type of `linkedin` and an auth_config like the following ... 
+
+```
+{}
+```
+
+The two environment variables `LINKED_IN_KEY` and `LINKED_IN_SECRET` will need to be 
+set for the appropriate LinkedIn oauth developer account. 
+
+### Twitter
+To add an organization using Twitter authentication, create a database organization record  
+that includes an auth_type of `twitter` and an auth_config like the following ... 
+
+```
+{}
+```
+
+The two environment variables `TWITTER_KEY` and `TWITTER_SECRET` will need to be 
+set for the appropriate LinkedIn oauth developer account. 
