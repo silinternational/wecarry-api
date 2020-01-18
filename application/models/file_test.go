@@ -275,3 +275,10 @@ func (ms *ModelSuite) Test_detectContentType() {
 		})
 	}
 }
+
+func (ms *ModelSuite) TestFiles_DeleteUnlinked() {
+	_ = createPostFixtures(ms.DB, 10, 0, true)
+	_ = createFileFixtures(2)
+	f := Files{}
+	ms.NoError(f.DeleteUnlinked())
+}

@@ -206,3 +206,63 @@ func (f *File) Create() error {
 func (f *File) Update() error {
 	return update(f)
 }
+
+// DeleteUnlinked removes all files that are no longer linked to any database records
+func (f *Files) DeleteUnlinked() error {
+	var files Files
+	if err := DB.Select("id").All(&files); err != nil {
+		return err
+	}
+
+	toDelete := make(map[int]bool, len(files))
+	for i := range files {
+		toDelete[files[i].ID] = true
+	}
+
+	var posts Posts
+	if err := DB.Select("photo_file_id").Where("photo_file_id is not null").All(&posts); err != nil {
+		return err
+	}
+	for _, p := range posts {
+		toDelete[p.PhotoFileID.Int] = false
+	}
+
+	var postFiles PostFiles
+	if err := DB.Select("file_id").All(&postFiles); err != nil {
+		return err
+	}
+	for _, m := range postFiles {
+		toDelete[m.FileID] = false
+	}
+
+	var meetings Meetings
+	if err := DB.Select("image_file_id").Where("image_file_id is not null").All(&meetings); err != nil {
+		return err
+	}
+	for _, m := range meetings {
+		toDelete[m.ImageFileID.Int] = false
+	}
+
+	var organizations Organizations
+	if err := DB.Select("logo_file_id").Where("logo_file_id is not null").All(&organizations); err != nil {
+		return err
+	}
+	for _, m := range organizations {
+		toDelete[m.LogoFileID.Int] = false
+	}
+
+	var users Users
+	if err := DB.Select("photo_file_id").Where("photo_file_id is not null").All(&users); err != nil {
+		return err
+	}
+	for _, m := range users {
+		toDelete[m.PhotoFileID.Int] = false
+	}
+
+	for id, del := range toDelete {
+		if del {
+			_ = DB.Destroy(&File{ID: id})
+		}
+	}
+	return nil
+}

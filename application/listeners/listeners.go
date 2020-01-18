@@ -4,7 +4,9 @@ import (
 	"errors"
 	"time"
 
+	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/events"
+
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/job"
 	"github.com/silinternational/wecarry-api/models"
@@ -13,9 +15,11 @@ import (
 
 const (
 	userAccessTokensCleanupDelayMinutes = 480
+	filesCleanupDelayMinutes            = 1440
 )
 
-var userAccessTokensNextCleanupTime time.Time
+var userAccessTokensNextCleanupAfter time.Time
+var filesNextCleanupAfter time.Time
 
 type apiListener struct {
 	name     string
@@ -62,6 +66,13 @@ var apiListeners = map[string][]apiListener{
 			listener: sendPostCreatedNotifications,
 		},
 	},
+
+	buffalo.EvtRouteStarted: {
+		{
+			name:     "route-started",
+			listener: routeStartedListener,
+		},
+	},
 }
 
 // RegisterListeners registers all the listeners to be used by the app
@@ -82,11 +93,11 @@ func userAccessTokensCleanup(e events.Event) {
 	}
 
 	now := time.Now()
-	if !now.After(userAccessTokensNextCleanupTime) {
+	if !now.After(userAccessTokensNextCleanupAfter) {
 		return
 	}
 
-	userAccessTokensNextCleanupTime = now.Add(time.Duration(time.Minute * userAccessTokensCleanupDelayMinutes))
+	userAccessTokensNextCleanupAfter = now.Add(time.Duration(time.Minute * userAccessTokensCleanupDelayMinutes))
 
 	var uats models.UserAccessTokens
 	deleted, err := uats.DeleteExpired()
@@ -209,4 +220,24 @@ func sendNewUserWelcome(user models.User) error {
 		},
 	}
 	return notifications.Send(msg)
+}
+
+func routeStartedListener(e events.Event) {
+	if e.Kind != buffalo.EvtRouteStarted {
+		return
+	}
+	route := e.Payload["route"].(buffalo.RouteInfo)
+	if route.PathName == "uploadPath" {
+		now := time.Now()
+		if !now.After(filesNextCleanupAfter) {
+			return
+		}
+
+		filesNextCleanupAfter = now.Add(time.Duration(time.Minute * filesCleanupDelayMinutes))
+
+		var files models.Files
+		if err := files.DeleteUnlinked(); err != nil {
+			domain.ErrLogger.Printf("error in DeleteUnlinked, %s", err)
+		}
+	}
 }
