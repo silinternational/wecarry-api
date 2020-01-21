@@ -277,14 +277,37 @@ func (ms *ModelSuite) Test_detectContentType() {
 }
 
 func (ms *ModelSuite) TestFiles_DeleteUnlinked() {
-	const linkedFiles = 10
-	const unlinkedFiles = 2
+	const (
+		nUnlinkedFiles = 2
+		nPosts         = 2
+		nMeetings      = 2
+		nOrganizations = 2
+		nUsers         = 2
+	)
 
-	_ = createPostFixtures(ms.DB, linkedFiles, 0, true)
-	_ = createFileFixtures(unlinkedFiles)
+	_ = createFileFixtures(nUnlinkedFiles)
+
+	posts := createPostFixtures(ms.DB, nPosts, 0, true)
+
+	postFiles := createFileFixtures(nPosts)
+	for i, p := range postFiles {
+		_, err := posts[i].AttachFile(p.UUID.String())
+		ms.NoError(err)
+	}
+
+	_ = createMeetingFixtures(ms.DB, nMeetings)
+
+	_ = createOrganizationFixtures(ms.DB, nOrganizations)
+
+	users := createUserFixtures(ms.DB, nUsers).Users
+	userPhotos := createFileFixtures(nUsers)
+	for i, u := range users {
+		_, err := u.AttachPhoto(userPhotos[i].UUID.String())
+		ms.NoError(err)
+	}
+
 	f := Files{}
 	ms.NoError(f.DeleteUnlinked())
-
 	n, _ := DB.Count(&f)
-	ms.Equal(linkedFiles, n, "wrong number of files remain")
+	ms.Equal(nPosts*2+nMeetings+nOrganizations+nUsers, n, "wrong number of files remain")
 }

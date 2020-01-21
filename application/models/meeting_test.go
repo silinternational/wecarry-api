@@ -146,7 +146,7 @@ func (ms *ModelSuite) TestMeeting_FindByUUID() {
 	t := ms.T()
 
 	uf := createUserFixtures(ms.DB, 2)
-	meetings := createMeetingFixtures(ms, t, uf.Users)
+	meetings := createMeetingFixtures_FindByUUID(ms, t, uf.Users)
 
 	tests := []struct {
 		name    string
