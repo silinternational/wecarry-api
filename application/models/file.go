@@ -231,8 +231,8 @@ func (f *Files) DeleteUnlinked() error {
 	if err := DB.Select("file_id").All(&postFiles); err != nil {
 		return err
 	}
-	for _, m := range postFiles {
-		toDelete[m.FileID] = false
+	for _, p := range postFiles {
+		toDelete[p.FileID] = false
 	}
 
 	var meetings Meetings
@@ -247,16 +247,16 @@ func (f *Files) DeleteUnlinked() error {
 	if err := DB.Select("logo_file_id").Where("logo_file_id is not null").All(&organizations); err != nil {
 		return err
 	}
-	for _, m := range organizations {
-		toDelete[m.LogoFileID.Int] = false
+	for _, o := range organizations {
+		toDelete[o.LogoFileID.Int] = false
 	}
 
 	var users Users
 	if err := DB.Select("photo_file_id").Where("photo_file_id is not null").All(&users); err != nil {
 		return err
 	}
-	for _, m := range users {
-		toDelete[m.PhotoFileID.Int] = false
+	for _, u := range users {
+		toDelete[u.PhotoFileID.Int] = false
 	}
 
 	for id, del := range toDelete {
