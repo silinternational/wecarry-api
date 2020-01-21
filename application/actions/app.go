@@ -63,7 +63,7 @@ func App() *buffalo.App {
 
 		//  Added for authorization
 		app.Use(setCurrentUser)
-		app.Middleware.Skip(setCurrentUser, statusHandler)
+		app.Middleware.Skip(setCurrentUser, statusHandler, adminHandler)
 
 		var err error
 		domain.T, err = i18n.New(packr.New("locales", "../locales"), "en")
@@ -82,7 +82,7 @@ func App() *buffalo.App {
 		app.GET("/admin", adminHandler)
 
 		auth := app.Group("/auth")
-		auth.Middleware.Skip(setCurrentUser, authRequest, authCallback, authDestroy)
+		auth.Middleware.Skip(setCurrentUser, authRequest, authCallback, authDestroy, adminHandler)
 
 		auth.POST("/login", authRequest)
 
