@@ -106,6 +106,7 @@ var ErrLogger log.Logger
 // Env holds environment variable values loaded by init()
 var Env struct {
 	AccessTokenLifetimeSeconds int
+	AdminToken                 string
 	AppName                    string
 	AuthCallbackURL            string
 	AwsRegion                  string
@@ -163,6 +164,7 @@ func readEnv() {
 		n = AccessTokenLifetimeSeconds
 	}
 	Env.AccessTokenLifetimeSeconds = n
+	Env.AdminToken = envy.Get("ADMIN_TOKEN", "")
 	Env.AppName = envy.Get("APP_NAME", "WeCarry")
 	Env.AuthCallbackURL = envy.Get("AUTH_CALLBACK_URL", "")
 	Env.AwsRegion = envy.Get("AWS_REGION", "")

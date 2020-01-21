@@ -1,6 +1,8 @@
 package actions
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -104,9 +106,18 @@ func registerCustomErrorHandler(app *buffalo.App) {
 }
 
 func adminHandler(c buffalo.Context) error {
-	if err := job.SubmitDelayed(job.FileCleanup, time.Second, nil); err != nil {
-		domain.ErrLogger.Printf("file cleanup job not started, %s", err)
+	if domain.Env.AdminToken == "" {
+		return c.Error(http.StatusInternalServerError, errors.New("no admin bearer token configured"))
 	}
 
-	return nil
+	bearerToken := domain.GetBearerTokenFromRequest(c.Request())
+	if domain.Env.AdminToken != bearerToken {
+		return c.Error(http.StatusUnauthorized, errors.New("incorrect bearer token provided"))
+	}
+
+	if err := job.SubmitDelayed(job.FileCleanup, time.Second, nil); err != nil {
+		return c.Error(http.StatusInternalServerError, fmt.Errorf("file cleanup job not started, %s", err))
+	}
+
+	return c.Render(http.StatusNoContent, nil)
 }
