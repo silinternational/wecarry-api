@@ -99,7 +99,8 @@ func newThreadMessageHandler(args worker.Args) error {
 
 // fileCleanupHandler removes unlinked files
 func fileCleanupHandler(args worker.Args) error {
-	return models.Files{}.DeleteUnlinked()
+	files := models.Files{}
+	return files.DeleteUnlinked()
 }
 
 // SubmitDelayed enqueues a new Worker job for the given handler. Arguments can be provided in `args`.
