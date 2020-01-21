@@ -277,8 +277,14 @@ func (ms *ModelSuite) Test_detectContentType() {
 }
 
 func (ms *ModelSuite) TestFiles_DeleteUnlinked() {
-	_ = createPostFixtures(ms.DB, 10, 0, true)
-	_ = createFileFixtures(2)
+	const linkedFiles = 10
+	const unlinkedFiles = 2
+
+	_ = createPostFixtures(ms.DB, linkedFiles, 0, true)
+	_ = createFileFixtures(unlinkedFiles)
 	f := Files{}
 	ms.NoError(f.DeleteUnlinked())
+
+	n, _ := DB.Count(&f)
+	ms.Equal(linkedFiles, n, "wrong number of files remain")
 }
