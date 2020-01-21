@@ -100,7 +100,10 @@ func newThreadMessageHandler(args worker.Args) error {
 // fileCleanupHandler removes unlinked files
 func fileCleanupHandler(args worker.Args) error {
 	files := models.Files{}
-	return files.DeleteUnlinked()
+	if err := files.DeleteUnlinked(); err != nil {
+		return fmt.Errorf("file cleanup failed with error, %s", err)
+	}
+	return nil
 }
 
 // SubmitDelayed enqueues a new Worker job for the given handler. Arguments can be provided in `args`.
