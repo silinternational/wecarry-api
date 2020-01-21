@@ -4,7 +4,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/events"
 
 	"github.com/silinternational/wecarry-api/domain"
@@ -15,11 +14,9 @@ import (
 
 const (
 	userAccessTokensCleanupDelayMinutes = 480
-	filesCleanupDelayMinutes            = 1440
 )
 
 var userAccessTokensNextCleanupAfter time.Time
-var filesNextCleanupAfter time.Time
 
 type apiListener struct {
 	name     string
@@ -64,13 +61,6 @@ var apiListeners = map[string][]apiListener{
 		{
 			name:     "post-created-notification",
 			listener: sendPostCreatedNotifications,
-		},
-	},
-
-	buffalo.EvtRouteStarted: {
-		{
-			name:     "route-started",
-			listener: routeStartedListener,
 		},
 	},
 }
@@ -220,24 +210,4 @@ func sendNewUserWelcome(user models.User) error {
 		},
 	}
 	return notifications.Send(msg)
-}
-
-func routeStartedListener(e events.Event) {
-	if e.Kind != buffalo.EvtRouteStarted {
-		return
-	}
-	route := e.Payload["route"].(buffalo.RouteInfo)
-	if route.PathName == "uploadPath" {
-		now := time.Now()
-		if !now.After(filesNextCleanupAfter) {
-			return
-		}
-
-		filesNextCleanupAfter = now.Add(time.Duration(time.Minute * filesCleanupDelayMinutes))
-
-		var files models.Files
-		if err := files.DeleteUnlinked(); err != nil {
-			domain.ErrLogger.Printf("error in DeleteUnlinked, %s", err)
-		}
-	}
 }

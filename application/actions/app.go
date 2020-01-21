@@ -2,6 +2,7 @@ package actions
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gobuffalo/buffalo"
 	i18n "github.com/gobuffalo/mw-i18n"
@@ -11,6 +12,7 @@ import (
 	"github.com/rs/cors"
 
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/job"
 	"github.com/silinternational/wecarry-api/listeners"
 )
 
@@ -77,6 +79,8 @@ func App() *buffalo.App {
 
 		app.POST("/upload/", uploadHandler)
 
+		app.GET("/admin", adminHandler)
+
 		auth := app.Group("/auth")
 		auth.Middleware.Skip(setCurrentUser, authRequest, authCallback, authDestroy)
 
@@ -97,4 +101,12 @@ func registerCustomErrorHandler(app *buffalo.App) {
 	for i := 401; i < 600; i++ {
 		app.ErrorHandlers[i] = customErrorHandler
 	}
+}
+
+func adminHandler(c buffalo.Context) error {
+	if err := job.SubmitDelayed(job.FileCleanup, time.Second, nil); err != nil {
+		domain.ErrLogger.Printf("file cleanup job not started, %s", err)
+	}
+
+	return nil
 }

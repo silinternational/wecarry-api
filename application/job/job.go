@@ -13,6 +13,7 @@ import (
 
 const (
 	NewThreadMessage = "new_thread_message"
+	FileCleanup      = "file_cleanup"
 )
 
 var w worker.Worker
@@ -21,6 +22,9 @@ func init() {
 	w = worker.NewSimple()
 	if err := w.Register(NewThreadMessage, newThreadMessageHandler); err != nil {
 		domain.ErrLogger.Printf("error registering '%s' worker, %s", NewThreadMessage, err)
+	}
+	if err := w.Register(FileCleanup, fileCleanupHandler); err != nil {
+		domain.ErrLogger.Printf("error registering '%s' worker, %s", FileCleanup, err)
 	}
 }
 
@@ -91,6 +95,11 @@ func newThreadMessageHandler(args worker.Args) error {
 	}
 
 	return lastErr
+}
+
+// fileCleanupHandler removes unlinked files
+func fileCleanupHandler(args worker.Args) error {
+	return models.Files{}.DeleteUnlinked()
 }
 
 // SubmitDelayed enqueues a new Worker job for the given handler. Arguments can be provided in `args`.
