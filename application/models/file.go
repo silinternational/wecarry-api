@@ -261,7 +261,18 @@ func (f *Files) DeleteUnlinked() error {
 
 	for id, del := range toDelete {
 		if del {
-			_ = DB.Destroy(&File{ID: id})
+			var file File
+			if err := DB.Select("id", "uuid").Find(&file, id); err != nil {
+				domain.ErrLogger.Printf("file %d not found, %s", id, err)
+			}
+
+			if err := aws.RemoveFile(file.UUID.String()); err != nil {
+				domain.ErrLogger.Printf("error removing from S3, id='%s', %s", file.UUID.String(), err)
+			}
+
+			if err := DB.Destroy(&file); err != nil {
+				domain.ErrLogger.Printf("file %d destroy error, %s", id, err)
+			}
 		}
 	}
 	return nil
