@@ -149,7 +149,7 @@ type Post {
     destination: Location!
     origin: Location
     size: PostSize!
-    status: String!
+    status: PostStatus!
     threads: [Thread!]!
     createdAt: Time!
     updatedAt: Time!

@@ -285,7 +285,6 @@ type PostResolver interface {
 	Destination(ctx context.Context, obj *models.Post) (*models.Location, error)
 	Origin(ctx context.Context, obj *models.Post) (*models.Location, error)
 
-	Status(ctx context.Context, obj *models.Post) (string, error)
 	Threads(ctx context.Context, obj *models.Post) ([]models.Thread, error)
 
 	URL(ctx context.Context, obj *models.Post) (*string, error)
@@ -1525,7 +1524,7 @@ type Post {
     destination: Location!
     origin: Location
     size: PostSize!
-    status: String!
+    status: PostStatus!
     threads: [Thread!]!
     createdAt: Time!
     updatedAt: Time!
@@ -4628,13 +4627,13 @@ func (ec *executionContext) _Post_status(ctx context.Context, field graphql.Coll
 		Object:   "Post",
 		Field:    field,
 		Args:     nil,
-		IsMethod: true,
+		IsMethod: false,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Post().Status(rctx, obj)
+		return obj.Status, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4646,10 +4645,10 @@ func (ec *executionContext) _Post_status(ctx context.Context, field graphql.Coll
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(models.PostStatus)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNPostStatus2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Post_threads(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
@@ -9298,19 +9297,10 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "status":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Post_status(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			})
+			out.Values[i] = ec._Post_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "threads":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {

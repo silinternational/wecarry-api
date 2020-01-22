@@ -26,15 +26,6 @@ func (r *postResolver) ID(ctx context.Context, obj *models.Post) (string, error)
 	return obj.UUID.String(), nil
 }
 
-// Status field resolver. This is here to satisfy the generated postResolver. It is unclear why
-// gqlgen needs it, and it seems to be used only by the mutation responses (not the post query).
-func (r *postResolver) Status(ctx context.Context, obj *models.Post) (string, error) {
-	if obj == nil {
-		return "", nil
-	}
-	return obj.Status.String(), nil
-}
-
 // CreatedBy resolves the `createdBy` property of the post query. It retrieves the related record from the database.
 func (r *postResolver) CreatedBy(ctx context.Context, obj *models.Post) (*PublicProfile, error) {
 	if obj == nil {
