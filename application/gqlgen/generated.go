@@ -151,6 +151,7 @@ type ComplexityRoot struct {
 		Type         func(childComplexity int) int
 		URL          func(childComplexity int) int
 		UpdatedAt    func(childComplexity int) int
+		Visibility   func(childComplexity int) int
 	}
 
 	PublicProfile struct {
@@ -961,6 +962,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Post.UpdatedAt(childComplexity), true
 
+	case "Post.visibility":
+		if e.complexity.Post.Visibility == nil {
+			break
+		}
+
+		return e.complexity.Post.Visibility(childComplexity), true
+
 	case "PublicProfile.avatarURL":
 		if e.complexity.PublicProfile.AvatarURL == nil {
 			break
@@ -1437,6 +1445,13 @@ enum PostSize {
     XLARGE
 }
 
+# Visibility for Posts, ALL organizations, TRUSTED organizations, or SAME organization only
+enum PostVisibility {
+    ALL
+    TRUSTED
+    SAME
+}
+
 type User {
     id: ID!
     email: String!
@@ -1520,6 +1535,7 @@ type Post {
     files: [File!]!
     meeting: Meeting
     isEditable: Boolean!
+    visibility: PostVisibility!
 }
 
 type Meeting {
@@ -1612,6 +1628,7 @@ input CreatePostInput {
     kilograms: Float
     photoID: ID
     meetingID: ID
+    visibility: PostVisibility
 }
 
 input UpdatePostInput {
@@ -1624,6 +1641,7 @@ input UpdatePostInput {
     url: String
     kilograms: Float
     photoID: ID
+    visibility: PostVisibility
 }
 
 input CreateMeetingInput {
@@ -4955,6 +4973,43 @@ func (ec *executionContext) _Post_isEditable(ctx context.Context, field graphql.
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Post_visibility(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Post",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Visibility, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(models.PostVisibility)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNPostVisibility2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostVisibility(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _PublicProfile_id(ctx context.Context, field graphql.CollectedField, obj *PublicProfile) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -8068,6 +8123,12 @@ func (ec *executionContext) unmarshalInputCreatePostInput(ctx context.Context, o
 			if err != nil {
 				return it, err
 			}
+		case "visibility":
+			var err error
+			it.Visibility, err = ec.unmarshalOPostVisibility2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostVisibility(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		}
 	}
 
@@ -8383,6 +8444,12 @@ func (ec *executionContext) unmarshalInputUpdatePostInput(ctx context.Context, o
 		case "photoID":
 			var err error
 			it.PhotoID, err = ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "visibility":
+			var err error
+			it.Visibility, err = ec.unmarshalOPostVisibility2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostVisibility(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -9340,6 +9407,11 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 				}
 				return res
 			})
+		case "visibility":
+			out.Values[i] = ec._Post_visibility(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -10677,6 +10749,15 @@ func (ec *executionContext) marshalNPostType2ᚖgithubᚗcomᚋsilinternational�
 	return v
 }
 
+func (ec *executionContext) unmarshalNPostVisibility2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostVisibility(ctx context.Context, v interface{}) (models.PostVisibility, error) {
+	var res models.PostVisibility
+	return res, res.UnmarshalGQL(v)
+}
+
+func (ec *executionContext) marshalNPostVisibility2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostVisibility(ctx context.Context, sel ast.SelectionSet, v models.PostVisibility) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) marshalNPublicProfile2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPublicProfile(ctx context.Context, sel ast.SelectionSet, v PublicProfile) graphql.Marshaler {
 	return ec._PublicProfile(ctx, sel, &v)
 }
@@ -11369,6 +11450,30 @@ func (ec *executionContext) marshalOPostSize2ᚖgithubᚗcomᚋsilinternational�
 		return graphql.Null
 	}
 	return ec.marshalOPostSize2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostSize(ctx, sel, *v)
+}
+
+func (ec *executionContext) unmarshalOPostVisibility2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostVisibility(ctx context.Context, v interface{}) (models.PostVisibility, error) {
+	var res models.PostVisibility
+	return res, res.UnmarshalGQL(v)
+}
+
+func (ec *executionContext) marshalOPostVisibility2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostVisibility(ctx context.Context, sel ast.SelectionSet, v models.PostVisibility) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) unmarshalOPostVisibility2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostVisibility(ctx context.Context, v interface{}) (*models.PostVisibility, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalOPostVisibility2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostVisibility(ctx, v)
+	return &res, err
+}
+
+func (ec *executionContext) marshalOPostVisibility2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostVisibility(ctx context.Context, sel ast.SelectionSet, v *models.PostVisibility) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
 }
 
 func (ec *executionContext) unmarshalOPreferredLanguage2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPreferredLanguage(ctx context.Context, v interface{}) (PreferredLanguage, error) {

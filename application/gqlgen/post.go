@@ -288,6 +288,10 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 		post.Kilograms = *input.Kilograms
 	}
 
+	if input.Visibility != nil {
+		post.Visibility = *input.Visibility
+	}
+
 	if input.PhotoID != nil {
 		if file, err := post.AttachPhoto(*input.PhotoID); err != nil {
 			graphql.AddError(ctx, gqlerror.Errorf("Error attaching photo to Post, %s", err.Error()))
@@ -321,6 +325,7 @@ type postInput struct {
 	Kilograms   *float64
 	PhotoID     *string
 	MeetingID   *string
+	Visibility  *models.PostVisibility
 }
 
 // CreatePost resolves the `createPost` mutation.

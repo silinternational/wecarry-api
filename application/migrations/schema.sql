@@ -393,7 +393,8 @@ CREATE TABLE public.posts (
     destination_id integer NOT NULL,
     origin_id integer,
     kilograms numeric(13,4) DEFAULT '0'::numeric NOT NULL,
-    meeting_id integer
+    meeting_id integer,
+    visibility character varying(255) DEFAULT 'SAME'::character varying NOT NULL
 );
 
 

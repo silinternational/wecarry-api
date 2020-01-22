@@ -69,6 +69,13 @@ enum PostSize {
     XLARGE
 }
 
+# Visibility for Posts, ALL organizations, TRUSTED organizations, or SAME organization only
+enum PostVisibility {
+    ALL
+    TRUSTED
+    SAME
+}
+
 type User {
     id: ID!
     email: String!
@@ -152,6 +159,7 @@ type Post {
     files: [File!]!
     meeting: Meeting
     isEditable: Boolean!
+    visibility: PostVisibility!
 }
 
 type Meeting {
@@ -244,6 +252,7 @@ input CreatePostInput {
     kilograms: Float
     photoID: ID
     meetingID: ID
+    visibility: PostVisibility
 }
 
 input UpdatePostInput {
@@ -256,6 +265,7 @@ input UpdatePostInput {
     url: String
     kilograms: Float
     photoID: ID
+    visibility: PostVisibility
 }
 
 input CreateMeetingInput {

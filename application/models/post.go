@@ -73,6 +73,43 @@ type statusTransitionTarget struct {
 	isBackStep bool
 }
 
+type PostVisibility string
+
+const (
+	PostVisibilityAll     PostVisibility = "ALL"
+	PostVisibilityTrusted PostVisibility = "TRUSTED"
+	PostVisibilitySame    PostVisibility = "SAME"
+)
+
+func (e PostVisibility) IsValid() bool {
+	switch e {
+	case PostVisibilityAll, PostVisibilityTrusted, PostVisibilitySame:
+		return true
+	}
+	return false
+}
+
+func (e PostVisibility) String() string {
+	return string(e)
+}
+
+func (e *PostVisibility) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PostVisibility(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PostVisibility", str)
+	}
+	return nil
+}
+
+func (e PostVisibility) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
 func getStatusTransitions() map[PostStatus][]statusTransitionTarget {
 	return map[PostStatus][]statusTransitionTarget{
 		PostStatusOpen: {
@@ -193,25 +230,26 @@ func (e PostSize) String() string {
 }
 
 type Post struct {
-	ID             int          `json:"id" db:"id"`
-	CreatedAt      time.Time    `json:"created_at" db:"created_at"`
-	UpdatedAt      time.Time    `json:"updated_at" db:"updated_at"`
-	CreatedByID    int          `json:"created_by_id" db:"created_by_id"`
-	Type           PostType     `json:"type" db:"type"`
-	OrganizationID int          `json:"organization_id" db:"organization_id"`
-	Status         PostStatus   `json:"status" db:"status"`
-	Title          string       `json:"title" db:"title"`
-	Size           PostSize     `json:"size" db:"size"`
-	UUID           uuid.UUID    `json:"uuid" db:"uuid"`
-	ReceiverID     nulls.Int    `json:"receiver_id" db:"receiver_id"`
-	ProviderID     nulls.Int    `json:"provider_id" db:"provider_id"`
-	Description    nulls.String `json:"description" db:"description"`
-	URL            nulls.String `json:"url" db:"url"`
-	Kilograms      float64      `json:"kilograms" db:"kilograms"`
-	PhotoFileID    nulls.Int    `json:"photo_file_id" db:"photo_file_id"`
-	DestinationID  int          `json:"destination_id" db:"destination_id"`
-	OriginID       nulls.Int    `json:"origin_id" db:"origin_id"`
-	MeetingID      nulls.Int    `json:"meeting_id" db:"meeting_id"`
+	ID             int            `json:"id" db:"id"`
+	CreatedAt      time.Time      `json:"created_at" db:"created_at"`
+	UpdatedAt      time.Time      `json:"updated_at" db:"updated_at"`
+	CreatedByID    int            `json:"created_by_id" db:"created_by_id"`
+	Type           PostType       `json:"type" db:"type"`
+	OrganizationID int            `json:"organization_id" db:"organization_id"`
+	Status         PostStatus     `json:"status" db:"status"`
+	Title          string         `json:"title" db:"title"`
+	Size           PostSize       `json:"size" db:"size"`
+	UUID           uuid.UUID      `json:"uuid" db:"uuid"`
+	ReceiverID     nulls.Int      `json:"receiver_id" db:"receiver_id"`
+	ProviderID     nulls.Int      `json:"provider_id" db:"provider_id"`
+	Description    nulls.String   `json:"description" db:"description"`
+	URL            nulls.String   `json:"url" db:"url"`
+	Kilograms      float64        `json:"kilograms" db:"kilograms"`
+	PhotoFileID    nulls.Int      `json:"photo_file_id" db:"photo_file_id"`
+	DestinationID  int            `json:"destination_id" db:"destination_id"`
+	OriginID       nulls.Int      `json:"origin_id" db:"origin_id"`
+	MeetingID      nulls.Int      `json:"meeting_id" db:"meeting_id"`
+	Visibility     PostVisibility `json:"visibility" db:"visibility"`
 
 	CreatedBy    User          `belongs_to:"users"`
 	Organization Organization  `belongs_to:"organizations"`
