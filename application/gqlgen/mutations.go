@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/gobuffalo/nulls"
+
 	"github.com/silinternational/wecarry-api/models"
 )
 
@@ -27,6 +28,14 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input CreateO
 		Url:        models.ConvertStringPtrToNullsString(input.URL),
 		AuthType:   input.AuthType,
 		AuthConfig: input.AuthConfig,
+	}
+
+	if input.LogoFileID != nil {
+		var file models.File
+		if err := file.FindByUUID(*input.LogoFileID); err != nil {
+			return nil, reportError(ctx, err, "CreateOrganization.LogoFileNotFound")
+		}
+		org.LogoFileID = nulls.NewInt(file.ID)
 	}
 
 	if err := org.Save(); err != nil {
@@ -55,6 +64,14 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, input UpdateO
 
 	if input.URL != nil {
 		org.Url = nulls.NewString(*input.URL)
+	}
+
+	if input.LogoFileID != nil {
+		var file models.File
+		if err := file.FindByUUID(*input.LogoFileID); err != nil {
+			return nil, reportError(ctx, err, "UpdateOrganization.LogoFileNotFound")
+		}
+		org.LogoFileID = nulls.NewInt(file.ID)
 	}
 
 	org.Name = input.Name
@@ -144,4 +161,52 @@ func (r *mutationResolver) SetThreadLastViewedAt(ctx context.Context, input SetT
 	}
 
 	return &thread, nil
+}
+
+// CreateOrganizationTrust establishes a OrganizationTrust between two organizations
+func (r *mutationResolver) CreateOrganizationTrust(ctx context.Context, input CreateOrganizationTrustInput) (*models.Organization, error) {
+	cUser := models.GetCurrentUserFromGqlContext(ctx)
+	extras := map[string]interface{}{
+		"user": cUser.UUID,
+	}
+
+	var organization models.Organization
+	if err := organization.FindByUUID(input.PrimaryID); err != nil {
+		return nil, reportError(ctx, err, "CreateOrganizationTrust.FindPrimaryOrganization", extras)
+	}
+
+	if !cUser.CanCreateOrganizationTrust() {
+		err := errors.New("insufficient permissions")
+		return nil, reportError(ctx, err, "CreateOrganizationTrust.Unauthorized", extras)
+	}
+
+	if err := organization.CreateTrust(input.SecondaryID); err != nil {
+		return nil, reportError(ctx, err, "CreateOrganizationTrust", extras)
+	}
+
+	return &organization, nil
+}
+
+// RemoveOrganizationTrust removes a OrganizationTrust between two organizations
+func (r *mutationResolver) RemoveOrganizationTrust(ctx context.Context, input RemoveOrganizationTrustInput) (*models.Organization, error) {
+	cUser := models.GetCurrentUserFromGqlContext(ctx)
+	extras := map[string]interface{}{
+		"user": cUser.UUID,
+	}
+
+	var organization models.Organization
+	if err := organization.FindByUUID(input.PrimaryID); err != nil {
+		return nil, reportError(ctx, err, "RemoveOrganizationTrust.FindPrimaryOrganization", extras)
+	}
+
+	if !cUser.CanRemoveOrganizationTrust(organization.ID) {
+		err := errors.New("insufficient permissions")
+		return nil, reportError(ctx, err, "RemoveOrganizationTrust.Unauthorized", extras)
+	}
+
+	if err := organization.RemoveTrust(input.SecondaryID); err != nil {
+		return nil, reportError(ctx, err, "RemoveOrganizationTrust", extras)
+	}
+
+	return &organization, nil
 }

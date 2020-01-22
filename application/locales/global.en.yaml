@@ -34,16 +34,32 @@
   translation: We had a problem processing the new message.
 - id: CreateMessage
   translation: We had a problem creating the new message.
+
+# Organization
 - id: CreateOrganization
   translation: We had a problem creating the new organization.
 - id: CreateOrganization.Unauthorized
   translation: You are not allowed to create organizations.
+- id: CreateOrganization.LogoFileNotFound
+  translation: We had a problem finding the logo file for the new organization.
 - id: UpdateOrganization
   translation: We had a problem updating the organization.
 - id: UpdateOrganization.NotFound
   translation: We had a problem finding the organization to update.
 - id: UpdateOrganization.Unauthorized
   translation: You are not allowed to edit information for that organization.
+- id: UpdateOrganization.LogoFileNotFound
+  translation: We had a problem finding the logo file for that organization.
+- id: GetOrganizationLogoURL
+  translation: We had a problem getting the logo for that organization.
+- id: ViewOrganization.NotFound
+  translation: Organization not found
+- id: ViewOrganization.Error
+  translation: There was a problem viewing that organization
+- id: ListOrganizations.Error
+  translation: There was a problem listing organizations
+
+#OrganizationDomain
 - id: CreateOrganizationDomain
   translation: We had a problem adding a domain to the organization.
 - id: CreateOrganizationDomain.NotFound
@@ -56,6 +72,12 @@
   translation: We had a problem finding the organization to remove a domain.
 - id: RemoveOrganizationDomain.Unauthorized
   translation: You are not allowed to remove domains from that organization.
+- id: GetOrganizationDomainOrganizationID
+  translation: We had a problem finding the organization ID for that domain.
+- id: GetOrganizationDomains
+  translation: We had a problem finding the list of domains for the organization.
+
+
 - id: SetThreadLastViewedAt.NotFound
   translation: We had a problem finding the conversation to update its last-viewed time.
 - id: SetThreadLastViewedAt
@@ -191,14 +213,50 @@
 - id: Email.Subject.Welcome
   translation: Welcome to {{.AppName}}
 
-# Organization
-- id: GetOrganizationDomainOrganizationID
-  translation: We had a problem finding the domain ID.
-- id: GetOrganizationDomains
-  translation: We had a problem finding the list of domains for the organization.
-- id: ViewOrganization.NotFound
-  translation: Organization not found
-- id: ViewOrganization.Error
-  translation: There was a problem viewing that organization
-- id: ListOrganizations.Error
-  translation: There was a problem listing organizations
+# New Request subject
+- id: Email.Subject.NewRequest
+  translation: New Request on {{.AppName}}
+
+# Watch
+- id: GetWatchCreator
+  translation: We had a problem finding the Watch creator
+- id: GetWatchLocation
+  translation: We had a problem finding the Watch location
+- id: MyWatches
+  translation: We had a problem getting a list of your Watches
+- id: CreateWatch
+  translation: We had a problem creating a new Watch
+- id: CreateWatch.SetLocation
+  translation: We had a problem setting the location for your new Watch
+- id: CreateWatch.ProcessInput
+  translation: We had a problem processing the information for your new Watch
+- id: UpdateWatch
+  translation: We had a problem updating your Watch
+- id: UpdateWatch.ProcessInput
+  translation: We had a problem processing the information to update your Watch
+- id: UpdateWatch.NotFound
+  translation: Watch not found
+- id: UpdateWatch.SetLocation
+  translation: We had a problem setting the location for your Watch
+- id: RemoveWatch
+  translation: We had a problem removing that Watch
+- id: RemoveWatch.NotFound
+  translation: We had a problem finding the Watch to be removed
+- id: RemoveWatch.FindByUser
+  translation: We had a problem getting a list of remaining Watches
+
+# Trust
+- id: GetOrganizationTrustedOrganizations
+  translation: We had a problem getting a list of trusted organizations
+- id: CreateTrust.FindPrimaryOrganization
+  translation: We had a problem finding the organization to create the Trust
+- id: CreateTrust.Unauthorized
+  translation: We had a problem finding the organization to create the Trust
+- id: CreateOrganizationTrust
+  translation: We had a problem creating the Trust
+- id: RemoveTrust.FindPrimaryOrganization
+  translation: We had a problem finding the organization to remove the Trust
+- id: RemoveTrust.Unauthorized
+  translation: We had a problem finding the organization to remove the Trust
+- id: RemoveTrust
+  translation: We had a problem removing the Trust

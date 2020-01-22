@@ -27,6 +27,12 @@ type CreateOrganizationInput struct {
 	URL        *string `json:"url"`
 	AuthType   string  `json:"authType"`
 	AuthConfig string  `json:"authConfig"`
+	LogoFileID *string `json:"logoFileID"`
+}
+
+type CreateOrganizationTrustInput struct {
+	PrimaryID   string `json:"primaryID"`
+	SecondaryID string `json:"secondaryID"`
 }
 
 type LocationInput struct {
@@ -48,6 +54,15 @@ type RemoveOrganizationDomainInput struct {
 	OrganizationID string `json:"organizationID"`
 }
 
+type RemoveOrganizationTrustInput struct {
+	PrimaryID   string `json:"primaryID"`
+	SecondaryID string `json:"secondaryID"`
+}
+
+type RemoveWatchInput struct {
+	ID string `json:"id"`
+}
+
 type SetThreadLastViewedAtInput struct {
 	ThreadID string    `json:"threadID"`
 	Time     time.Time `json:"time"`
@@ -59,6 +74,7 @@ type UpdateOrganizationInput struct {
 	URL        *string `json:"url"`
 	AuthType   string  `json:"authType"`
 	AuthConfig string  `json:"authConfig"`
+	LogoFileID *string `json:"logoFileID"`
 }
 
 type UpdatePostStatusInput struct {

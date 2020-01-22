@@ -78,3 +78,31 @@ func (r *organizationResolver) Domains(ctx context.Context, obj *models.Organiza
 
 	return domains, nil
 }
+
+// LogoURL retrieves a URL for the organization logo.
+func (r *organizationResolver) LogoURL(ctx context.Context, obj *models.Organization) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+
+	logoURL, err := obj.LogoURL()
+	if err != nil {
+		return nil, reportError(ctx, err, "GetOrganizationLogoURL")
+	}
+
+	return logoURL, nil
+}
+
+// TrustedOrganizations lists all of the Organizations connected to this Organization by a OrganizationTrust
+func (r *organizationResolver) TrustedOrganizations(ctx context.Context, obj *models.Organization) ([]models.Organization, error) {
+	if obj == nil {
+		return nil, nil
+	}
+
+	organizations, err := obj.TrustedOrganizations()
+	if err != nil {
+		return nil, reportError(ctx, err, "GetOrganizationTrustedOrganizations")
+	}
+
+	return organizations, nil
+}

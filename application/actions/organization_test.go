@@ -23,10 +23,14 @@ type OrganizationResponse struct {
 		URL       string `json:"url"`
 		CreatedAt string `json:"createdAt"`
 		UpdatedAt string `json:"updatedAt"`
+		LogoURL   string `json:"logoURL"`
 		Domains   []struct {
 			Domain         string `json:"domain"`
 			OrganizationID string `json:"organizationID"`
 		} `json:"domains"`
+		TrustedOrganizations []struct {
+			ID string `json:"id"`
+		} `json:"trustedOrganizations"`
 	} `json:"organization"`
 }
 
@@ -36,13 +40,14 @@ func (as *ActionSuite) Test_CreateOrganization() {
 
 	var resp OrganizationResponse
 
-	allFieldsQuery := `id domains { domain organizationID } name url`
+	allFieldsQuery := `id domains { domain organizationID } name url logoURL`
 	allFieldsInput := fmt.Sprintf(
-		`name:"%s" url:"%s" authType:"%s" authConfig:"%s"`,
+		`name:"%s" url:"%s" authType:"%s" authConfig:"%s" logoFileID:"%s"`,
 		f.Organizations[1].Name,
 		f.Organizations[1].Url.String,
 		f.Organizations[1].AuthType,
-		f.Organizations[1].AuthConfig)
+		f.Organizations[1].AuthConfig,
+		f.File.UUID.String())
 
 	query := fmt.Sprintf("mutation{organization: createOrganization(input: {%s}) {%s}}",
 		allFieldsInput, allFieldsQuery)
@@ -51,6 +56,7 @@ func (as *ActionSuite) Test_CreateOrganization() {
 
 	as.Equal(f.Organizations[1].Name, resp.Organization.Name, "received wrong name")
 	as.Equal(f.Organizations[1].Url.String, resp.Organization.URL, "received wrong URL")
+	as.Equal(f.File.URL, resp.Organization.LogoURL, "received wrong logo URL")
 	as.Equal(0, len(resp.Organization.Domains))
 
 	var orgs models.Organizations
@@ -404,4 +410,110 @@ func (as *ActionSuite) Test_OrganizationViewAndList() {
 		as.Equal(tc.Expect, tc.Response, tc.Name)
 	}
 
+}
+
+func (as *ActionSuite) Test_UpdateOrganization() {
+	f := fixturesForUpdateOrganization(as)
+
+	var resp OrganizationResponse
+	allFieldsQuery := `id domains { domain organizationID } name url logoURL`
+	allFieldsInput := fmt.Sprintf(
+		`id:"%s" name:"%s" url:"%s" authType:"%s" authConfig:"%s" logoFileID:"%s"`,
+		f.Organizations[0].UUID.String(),
+		f.Organizations[0].Name,
+		f.Organizations[0].Url.String,
+		f.Organizations[0].AuthType,
+		f.Organizations[0].AuthConfig,
+		f.File.UUID.String())
+
+	query := fmt.Sprintf("mutation{organization: updateOrganization(input: {%s}) {%s}}",
+		allFieldsInput, allFieldsQuery)
+	err := as.testGqlQuery(query, f.Users[0].Nickname, &resp)
+	as.NoError(err)
+
+	as.Equal(f.Organizations[0].Name, resp.Organization.Name, "received wrong name")
+	as.Equal(f.Organizations[0].Url.String, resp.Organization.URL, "received wrong URL")
+	as.Equal(f.File.URL, resp.Organization.LogoURL, "received wrong logo URL")
+
+	// check Domains
+	as.Equal(2, len(resp.Organization.Domains))
+	domains := make([]string, len(resp.Organization.Domains))
+	for i := range domains {
+		domains[i] = resp.Organization.Domains[i].Domain
+		as.Equal(f.Organizations[0].UUID.String(), resp.Organization.Domains[i].OrganizationID)
+	}
+	as.Contains(domains, f.OrganizationDomains[0].Domain)
+	as.Contains(domains, f.OrganizationDomains[1].Domain)
+
+	// compare against database record to ensure all fields were updated
+	var orgs models.Organizations
+	err = as.DB.Where("name = ?", f.Organizations[0].Name).All(&orgs)
+	as.NoError(err)
+	as.GreaterOrEqual(1, len(orgs), "no Organization found")
+	as.Equal(f.Organizations[0].Name, orgs[0].Name, "Name doesn't match")
+	as.Equal(f.Organizations[0].Url, orgs[0].Url, "URL doesn't match")
+	as.Equal(f.Organizations[0].AuthType, orgs[0].AuthType, "AuthType doesn't match")
+	as.Equal(f.Organizations[0].AuthConfig, orgs[0].AuthConfig, "AuthConfig doesn't match")
+	dbDomains, _ := orgs[0].GetDomains()
+	as.Equal(2, len(dbDomains), "updated organization has unexpected domains")
+	as.Equal(resp.Organization.ID, orgs[0].UUID.String(), "UUID from query doesn't match database")
+}
+
+func (as *ActionSuite) Test_CreateTrust() {
+	f := fixturesForCreateTrust(as)
+
+	var resp OrganizationResponse
+	allFieldsQuery := `id name trustedOrganizations { id }`
+	allFieldsInput := fmt.Sprintf(
+		`primaryID:"%s" secondaryID:"%s"`,
+		f.Organizations[0].UUID.String(),
+		f.Organizations[2].UUID.String())
+
+	query := fmt.Sprintf("mutation{organization: createOrganizationTrust(input: {%s}) {%s}}",
+		allFieldsInput, allFieldsQuery)
+
+	// should fail as regular admin user
+	as.Error(as.testGqlQuery(query, f.Users[1].Nickname, &resp))
+
+	as.NoError(as.testGqlQuery(query, f.Users[0].Nickname, &resp))
+
+	as.Equal(f.Organizations[0].Name, resp.Organization.Name, "received wrong name")
+
+	// check TrustedOrganizations
+	as.Equal(2, len(resp.Organization.TrustedOrganizations))
+	ids := make([]string, len(resp.Organization.TrustedOrganizations))
+	for i := range ids {
+		ids[i] = resp.Organization.TrustedOrganizations[i].ID
+	}
+	as.Contains(ids, f.Organizations[1].UUID.String())
+	as.Contains(ids, f.Organizations[2].UUID.String())
+}
+
+func (as *ActionSuite) Test_RemoveTrust() {
+	f := fixturesForRemoveTrust(as)
+
+	var resp OrganizationResponse
+	allFieldsQuery := `id name trustedOrganizations { id }`
+	allFieldsInput := fmt.Sprintf(
+		`primaryID:"%s" secondaryID:"%s"`,
+		f.Organizations[0].UUID.String(),
+		f.Organizations[2].UUID.String())
+
+	query := fmt.Sprintf("mutation{organization: removeOrganizationTrust(input: {%s}) {%s}}",
+		allFieldsInput, allFieldsQuery)
+
+	// should fail as regular admin user
+	as.Error(as.testGqlQuery(query, f.Users[1].Nickname, &resp))
+
+	as.NoError(as.testGqlQuery(query, f.Users[0].Nickname, &resp))
+
+	as.Equal(f.Organizations[0].Name, resp.Organization.Name, "received wrong name")
+
+	// check TrustedOrganizations
+	as.Equal(1, len(resp.Organization.TrustedOrganizations))
+	ids := make([]string, len(resp.Organization.TrustedOrganizations))
+	for i := range ids {
+		ids[i] = resp.Organization.TrustedOrganizations[i].ID
+	}
+	as.Contains(ids, f.Organizations[1].UUID.String())
 }

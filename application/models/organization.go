@@ -13,12 +13,21 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/silinternational/wecarry-api/auth"
+	"github.com/silinternational/wecarry-api/auth/azureadv2"
+	"github.com/silinternational/wecarry-api/auth/facebook"
 	"github.com/silinternational/wecarry-api/auth/google"
+	"github.com/silinternational/wecarry-api/auth/linkedin"
 	"github.com/silinternational/wecarry-api/auth/saml"
+	"github.com/silinternational/wecarry-api/auth/twitter"
+	"github.com/silinternational/wecarry-api/domain"
 )
 
-const AuthTypeSaml = "saml"
+const AuthTypeAzureAD = "azureadv2"
+const AuthTypeFacebook = "facebook"
 const AuthTypeGoogle = "google"
+const AuthTypeLinkedIn = "linkedin"
+const AuthTypeSaml = "saml"
+const AuthTypeTwitter = "twitter"
 
 type Organization struct {
 	ID                  int                  `json:"id" db:"id"`
@@ -29,6 +38,7 @@ type Organization struct {
 	AuthType            string               `json:"auth_type" db:"auth_type"`
 	AuthConfig          string               `json:"auth_config" db:"auth_config"`
 	UUID                uuid.UUID            `json:"uuid" db:"uuid"`
+	LogoFileID          nulls.Int            `json:"logo_file_id" db:"logo_file_id"`
 	Users               Users                `many_to_many:"user_organizations" order_by:"nickname"`
 	OrganizationDomains []OrganizationDomain `has_many:"organization_domains" order_by:"domain asc"`
 }
@@ -62,12 +72,20 @@ func (o *Organization) ValidateUpdate(tx *pop.Connection) (*validate.Errors, err
 
 func (o *Organization) GetAuthProvider() (auth.Provider, error) {
 
-	if o.AuthType == AuthTypeSaml {
-		return saml.New([]byte(o.AuthConfig))
-	}
-
-	if o.AuthType == AuthTypeGoogle {
+	switch o.AuthType {
+	case AuthTypeAzureAD:
+		return azureadv2.New([]byte(o.AuthConfig))
+	case AuthTypeFacebook:
+		return facebook.New([]byte(o.AuthConfig))
+	case AuthTypeGoogle:
 		return google.New([]byte(o.AuthConfig))
+	case AuthTypeLinkedIn:
+		return linkedin.New([]byte(o.AuthConfig))
+	case AuthTypeSaml:
+		return saml.New([]byte(o.AuthConfig))
+	case AuthTypeTwitter:
+		return twitter.New([]byte(o.AuthConfig))
+
 	}
 
 	return &auth.EmptyProvider{}, fmt.Errorf("unsupported auth provider type: %s", o.AuthType)
@@ -192,4 +210,64 @@ func scopeUserAdminOrgs(cUser User) pop.ScopeFunc {
 		}
 		return q.Where("id IN (?)", s...)
 	}
+}
+
+// LogoURL retrieves the logo URL from the attached file
+func (o *Organization) LogoURL() (*string, error) {
+	if o.LogoFileID.Valid {
+		var file File
+		if err := DB.Find(&file, o.LogoFileID); err != nil {
+			return nil, fmt.Errorf("couldn't find org file %d, %s", o.LogoFileID.Int, err)
+		}
+		if err := file.refreshURL(); err != nil {
+			return nil, fmt.Errorf("error getting logo URL, %s", err)
+		}
+		return &file.URL, nil
+	}
+	return nil, nil
+}
+
+// CreateTrust creates a OrganizationTrust record linking this Organization with the organization identified by `secondaryID`
+func (o *Organization) CreateTrust(secondaryID string) error {
+	var secondaryOrg Organization
+	if err := secondaryOrg.FindByUUID(secondaryID); err != nil {
+		return fmt.Errorf("CreateTrust, error finding secondary org, %s", err)
+	}
+	var t OrganizationTrust
+	t.PrimaryID = o.ID
+	t.SecondaryID = secondaryOrg.ID
+	if err := t.CreateSymmetric(); err != nil {
+		return fmt.Errorf("failed to create new OrganizationTrust, %s", err)
+	}
+	return nil
+}
+
+// RemoveTrust removes a OrganizationTrust record between this Organization and the organization identified by `secondaryID`
+func (o *Organization) RemoveTrust(secondaryID string) error {
+	var secondaryOrg Organization
+	if err := secondaryOrg.FindByUUID(secondaryID); err != nil {
+		return fmt.Errorf("RemoveTrust, error finding secondary org, %s", err)
+	}
+	var t OrganizationTrust
+	return t.RemoveSymmetric(o.ID, secondaryOrg.ID)
+}
+
+// TrustedOrganizations gets a list of connected Organizations, either primary or secondary
+func (o *Organization) TrustedOrganizations() (Organizations, error) {
+	t := OrganizationTrusts{}
+	if err := t.FindByOrgID(o.ID); domain.IsOtherThanNoRows(err) {
+		return nil, err
+	}
+	if len(t) < 1 {
+		return Organizations{}, nil
+	}
+	ids := make([]interface{}, len(t))
+	for i := range t {
+		ids[i] = t[i].SecondaryID
+	}
+	trustedOrgs := Organizations{}
+	if err := DB.Where("id in (?)", ids...).All(&trustedOrgs); err != nil {
+		return nil, err
+	}
+	return trustedOrgs, nil
 }

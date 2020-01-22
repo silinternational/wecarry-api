@@ -11,18 +11,21 @@ require (
 	github.com/gobuffalo/envy v1.8.1
 	github.com/gobuffalo/events v1.4.0
 	github.com/gobuffalo/httptest v1.4.0
+	github.com/gobuffalo/logger v1.0.3
 	github.com/gobuffalo/mw-i18n v0.0.0-20191212073857-95b5d236d455
 	github.com/gobuffalo/mw-paramlogger v0.0.0-20190224201358-0d45762ab655
 	github.com/gobuffalo/nulls v0.1.0
 	github.com/gobuffalo/packr/v2 v2.7.1
 	github.com/gobuffalo/pop v4.12.2+incompatible
 	github.com/gobuffalo/suite v2.8.1+incompatible
-	github.com/gobuffalo/validate v2.0.3+incompatible
+	github.com/gobuffalo/validate v2.0.4+incompatible
 	github.com/gofrs/uuid v3.2.0+incompatible
+	github.com/gorilla/pat v0.0.0-20180118222023-199c85a7f6d1
 	github.com/gorilla/sessions v1.2.0
 	github.com/jackc/pgconn v1.1.0 // indirect
 	github.com/markbates/goth v1.56.0
 	github.com/markbates/grift v1.5.0
+	github.com/mrjones/oauth v0.0.0-20180629183705-f4e24b6d100c
 	github.com/olekukonko/tablewriter v0.0.2 // indirect
 	github.com/paganotoni/sendgrid-sender v1.0.5
 	github.com/pkg/errors v0.8.1
@@ -34,6 +37,7 @@ require (
 	github.com/ssor/bom v0.0.0-20170718123548-6386211fdfcf // indirect
 	github.com/stretchr/testify v1.4.0
 	github.com/vektah/gqlparser v1.1.2
+	golang.org/x/image v0.0.0-20191214001246-9130b4cfad52
 	golang.org/x/oauth2 v0.0.0-20181203162652-d668ce993890
 	jaytaylor.com/html2text v0.0.0-20190408195923-01ec452cbe43
 )

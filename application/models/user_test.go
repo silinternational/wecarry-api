@@ -1084,6 +1084,12 @@ func (ms *ModelSuite) TestUser_WantsPostNotification() {
 			post: f.Posts[4],
 			want: false,
 		},
+		{
+			name: "yes, I have a watch for that location",
+			user: f.Users[2],
+			post: f.Posts[4],
+			want: true,
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

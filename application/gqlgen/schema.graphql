@@ -12,6 +12,7 @@ type Query {
     meetings: [Meeting!]!
     meeting(id: ID): Meeting
     recentMeetings: [Meeting!]!
+    myWatches: [Watch!]!
 }
 
 type Mutation {
@@ -27,6 +28,11 @@ type Mutation {
     createOrganizationDomain(input: CreateOrganizationDomainInput!): [OrganizationDomain!]!
     removeOrganizationDomain(input: RemoveOrganizationDomainInput!): [OrganizationDomain!]!
     setThreadLastViewedAt(input: SetThreadLastViewedAtInput!): Thread!
+    createWatch(input: CreateWatchInput!): Watch!
+    updateWatch(input: UpdateWatchInput!): Watch!
+    removeWatch(input: RemoveWatchInput!): [Watch!]!
+    createOrganizationTrust(input: CreateOrganizationTrustInput!): Organization!
+    removeOrganizationTrust(input: RemoveOrganizationTrustInput!): Organization!
 }
 
 # Date and Time in RFC3339 format
@@ -169,6 +175,8 @@ type Organization {
     createdAt: Time!
     updatedAt: Time!
     domains: [OrganizationDomain!]!
+    logoURL: String
+    trustedOrganizations: [Organization!]!
 }
 
 input CreateOrganizationInput {
@@ -176,6 +184,7 @@ input CreateOrganizationInput {
     url: String
     authType: String!
     authConfig: String!
+    logoFileID: ID
 }
 
 input UpdateOrganizationInput {
@@ -184,6 +193,7 @@ input UpdateOrganizationInput {
     url: String
     authType: String!
     authConfig: String!
+    logoFileID: ID
 }
 
 type OrganizationDomain {
@@ -308,4 +318,33 @@ input LocationInput {
 input UpdatePostStatusInput {
     id: ID!
     status: PostStatus!
+}
+
+type Watch {
+    id: ID!
+    owner: PublicProfile!
+    location: Location
+}
+
+input CreateWatchInput {
+    location: LocationInput
+}
+
+input UpdateWatchInput {
+    id: ID!
+    location: LocationInput
+}
+
+input RemoveWatchInput {
+    id: ID!
+}
+
+input CreateOrganizationTrustInput {
+    primaryID: ID!
+    secondaryID: ID!
+}
+
+input RemoveOrganizationTrustInput {
+    primaryID: ID!
+    secondaryID: ID!
 }

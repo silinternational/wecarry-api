@@ -52,7 +52,7 @@ func newThreadMessageHandler(args worker.Args) error {
 			"sentByNickname": m.SentBy.Nickname,
 			"threadURL":      domain.GetThreadUIURL(m.Thread.UUID.String()),
 		},
-		FromEmail: domain.Env.EmailFromAddress,
+		FromEmail: domain.EmailFromAddress(&m.SentBy.Nickname),
 	}
 
 	var lastErr error
@@ -100,10 +100,5 @@ func SubmitDelayed(handler string, delay time.Duration, args map[string]interfac
 		Args:    args,
 		Handler: handler,
 	}
-	if err := w.PerformIn(job, delay); err != nil {
-		domain.ErrLogger.Print(err)
-		return err
-	}
-
-	return nil
+	return w.PerformIn(job, delay)
 }

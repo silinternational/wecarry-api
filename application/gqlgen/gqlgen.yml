@@ -22,6 +22,8 @@ models:
     fields:
       id:
         resolver: true
+      logoURL:
+        resolver: true
   OrganizationDomain:
     model: models.OrganizationDomain
     fields:
@@ -121,6 +123,15 @@ models:
     model: models.UserAdminRole
   UserPreferences:
     model: models.StandardPreferences
+  Watch:
+    model: models.Watch
+    fields:
+      id:
+        resolver: true
+  CreateWatchInput:
+    model: gqlgen.watchInput
+  UpdateWatchInput:
+    model: gqlgen.watchInput
 
 #directives:
 #  deprecated:

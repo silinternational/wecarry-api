@@ -241,6 +241,32 @@ func (u *User) CanCreateOrganization() bool {
 	return u.AdminRole == UserAdminRoleSuperAdmin || u.AdminRole == UserAdminRoleSalesAdmin
 }
 
+// CanCreateOrganizationTrust returns true if the given user is allowed to create an OrganizationTrust
+func (u *User) CanCreateOrganizationTrust() bool {
+	return u.AdminRole == UserAdminRoleSuperAdmin || u.AdminRole == UserAdminRoleSalesAdmin
+}
+
+// CanRemoveOrganizationTrust returns true if the given user is allowed to remove an OrganizationTrust
+func (u *User) CanRemoveOrganizationTrust(orgId int) bool {
+	// if user is a system admin, allow
+	if u.AdminRole == UserAdminRoleSuperAdmin || u.AdminRole == UserAdminRoleSalesAdmin {
+		return true
+	}
+
+	// make sure we're checking current user orgs
+	if err := DB.Load(u, "UserOrganizations"); err != nil {
+		return false
+	}
+
+	for _, uo := range u.UserOrganizations {
+		if uo.OrganizationID == orgId && uo.Role == UserOrganizationRoleAdmin {
+			return true
+		}
+	}
+
+	return false
+}
+
 // CanViewOrganization returns true if the given user is allowed to view the specified organization
 func (u *User) CanViewOrganization(orgId int) bool {
 	// if user is a system admin, allow
@@ -524,6 +550,14 @@ func (u *User) WantsPostNotification(post Post) bool {
 		return false
 	}
 
+	if u.isNearPost(post) {
+		return true
+	}
+
+	return u.hasMatchingWatch(post)
+}
+
+func (u *User) isNearPost(post Post) bool {
 	if err := DB.Load(u, "Location"); err != nil {
 		domain.ErrLogger.Printf("load of user location failed, %s", err)
 		return false
@@ -531,15 +565,29 @@ func (u *User) WantsPostNotification(post Post) bool {
 
 	postLocation, err := post.GetLocationForNotifications()
 	if err != nil {
-		domain.ErrLogger.Print(err.Error())
+		domain.ErrLogger.Printf("failed to get post location, %s", err)
 		return false
 	}
 
-	if !u.Location.IsNear(*postLocation) {
+	if u.Location.IsNear(*postLocation) {
+		return true
+	}
+	return false
+}
+
+func (u *User) hasMatchingWatch(post Post) bool {
+	watches := Watches{}
+	if err := watches.FindByUser(*u); err != nil {
+		domain.ErrLogger.Printf("failed to get watch list, %s", err)
 		return false
 	}
+	for _, watch := range watches {
+		if watch.matchesPost(post) {
+			return true
+		}
+	}
 
-	return true
+	return false
 }
 
 // GetPreferences returns a StandardPreferences struct
