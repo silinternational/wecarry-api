@@ -639,3 +639,56 @@ func (ts *TestSuite) TestEmailFromAddress() {
 		})
 	}
 }
+
+func (ts *TestSuite) TestRemoveUnwantedChars() {
+	tests := []struct {
+		name    string
+		str     string
+		allowed string
+		want    string
+	}{
+		{name: "simple", str: "abc", allowed: "", want: "abc"},
+		{name: "none shall pass", str: "!@#$", allowed: "", want: ""},
+		{name: "empty str", str: "", allowed: "#", want: ""},
+		{name: "Korean", str: string([]rune{0xae40}), want: string([]rune{0xae40})},
+		{name: "Flag", str: string([]rune{0x1f1fa, 0x1f1f8}), want: string([]rune{0x1f1fa, 0x1f1f8})},
+		{name: "Zero-width joiner", str: string([]rune{0x1f468, 0x200d, 0x1f9b3}),
+			want: string([]rune{0x1f468, 0x200d, 0x1f9b3})},
+		{name: "Flag", str: string([]rune{0x1f1fa, 0x1f1f8}), want: string([]rune{0x1f1fa, 0x1f1f8})},
+		{name: "Chinese", str: string([]rune{0x540d, 0x79f0}), want: ""},
+		{name: "Script", str: "<script></script>", allowed: "-_ .,'&", want: "scriptscript"},
+		{name: "Spanish", str: "José", allowed: "", want: "José"},
+	}
+	for _, tt := range tests {
+		ts.T().Run(tt.name, func(t *testing.T) {
+			ts.Equal(tt.want, RemoveUnwantedChars(tt.str, tt.allowed))
+		})
+	}
+}
+
+func (ts *TestSuite) TestIsSafeRune() {
+	tests := []struct {
+		name string
+		r    rune
+		want bool
+	}{
+		{name: "Latin Supplement 1", r: 0xc0, want: true},
+		{name: "Latin Extended A", r: 0x100, want: true},
+		{name: "Zero Width Joiner", r: 0x200d, want: true},
+		{name: "Dingbat", r: 0x2700, want: true},
+		{name: "Korean", r: 0xac00, want: true},
+		{name: "Variation Selector 16", r: 0xfe0f, want: true},
+		{name: "Regional Indicator Symbol A", r: 0x1f1e6, want: true},
+		{name: "Pictograph", r: 0x1f334, want: true},
+		{name: "Emoji", r: 0x1f61b, want: true},
+		{name: "Transportation symbol", r: 0x1f6ec, want: true},
+		{name: "Supplemental symbol", r: 0x1f91f, want: true},
+		{name: "<", r: '<', want: false},
+		{name: "CR", r: 0x0d, want: false},
+	}
+	for _, tt := range tests {
+		ts.T().Run(tt.name, func(t *testing.T) {
+			ts.Equal(tt.want, isSafeRune(tt.r))
+		})
+	}
+}

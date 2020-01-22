@@ -434,6 +434,7 @@ func (u *User) GetPhotoURL() (*string, error) {
 
 // Save wraps DB.Save() call to check for errors and operate on attached object
 func (u *User) Save() error {
+	u.Nickname = domain.RemoveUnwantedChars(u.Nickname, "-_ .,'&@")
 	return save(u)
 }
 
