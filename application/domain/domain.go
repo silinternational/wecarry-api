@@ -528,12 +528,13 @@ func EmailFromAddress(name *string) string {
 
 // RemoveUnwantedChars removes characters from `str` that are not in `allowed` and not in "safe" character ranges.
 func RemoveUnwantedChars(str, allowed string) string {
-	return strings.Map(func(r rune) rune {
+	filter := func(r rune) rune {
 		if strings.IndexRune(allowed, r) >= 0 || isSafeRune(r) {
 			return r
 		}
 		return -1
-	}, str)
+	}
+	return strings.Map(filter, str)
 }
 
 func isSafeRune(r rune) bool {
