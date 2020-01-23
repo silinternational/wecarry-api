@@ -17,6 +17,7 @@ import (
 	"github.com/gobuffalo/validate/validators"
 	"github.com/gofrs/uuid"
 	"github.com/pkg/errors"
+
 	"github.com/silinternational/wecarry-api/domain"
 )
 
@@ -669,17 +670,10 @@ func (p *Post) GetPhoto() (*File, error) {
 func scopeUserOrgs(cUser User) pop.ScopeFunc {
 	return func(q *pop.Query) *pop.Query {
 		orgs := cUser.GetOrgIDs()
-
-		// convert []int to []interface{}
-		s := make([]interface{}, len(orgs))
-		for i, v := range orgs {
-			s[i] = v
-		}
-
-		if len(s) == 0 {
+		if len(orgs) == 0 {
 			return q.Where("organization_id = -1")
 		}
-		return q.Where("organization_id IN (?)", s...)
+		return q.Where("organization_id IN (?)", convertSliceFromIntToInterface(orgs)...)
 	}
 }
 

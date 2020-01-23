@@ -199,11 +199,7 @@ func scopeUserAdminOrgs(cUser User) pop.ScopeFunc {
 			}
 		}
 
-		// convert []int to []interface{}
-		s := make([]interface{}, len(adminOrgIDs))
-		for i, v := range adminOrgIDs {
-			s[i] = v
-		}
+		s := convertSliceFromIntToInterface(adminOrgIDs)
 
 		if len(s) == 0 {
 			return q.Where("id = -1")
