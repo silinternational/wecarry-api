@@ -10,11 +10,14 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/envy"
 	mwi18n "github.com/gobuffalo/mw-i18n"
 	"github.com/gobuffalo/packr/v2"
+	"github.com/gobuffalo/validate"
+	"github.com/gobuffalo/validate/validators"
 	uuid2 "github.com/gofrs/uuid"
 	"github.com/rollbar/rollbar-go"
 )
@@ -525,4 +528,65 @@ func EmailFromAddress(name *string) string {
 		addr = *name + " via " + addr
 	}
 	return addr
+}
+
+// RemoveUnwantedChars removes characters from `str` that are not in `allowed` and not in "safe" character ranges.
+func RemoveUnwantedChars(str, allowed string) string {
+	filter := func(r rune) rune {
+		if strings.IndexRune(allowed, r) >= 0 || isSafeRune(r) {
+			return r
+		}
+		return -1
+	}
+	return strings.Map(filter, str)
+}
+
+func isSafeRune(r rune) bool {
+	var safeRanges = &unicode.RangeTable{
+		R16: []unicode.Range16{
+			{Lo: 0x0030, Hi: 0x0039, Stride: 1}, // 0-9
+			{Lo: 0x0041, Hi: 0x005a, Stride: 1}, // upper-case Latin
+			{Lo: 0x0061, Hi: 0x007a, Stride: 1}, // lower-case Latin
+			{Lo: 0x00c0, Hi: 0x00ff, Stride: 1}, // Latin 1 supplement
+			{Lo: 0x0100, Hi: 0x017f, Stride: 1}, // Latin extended A
+			{Lo: 0x200d, Hi: 0x200d, Stride: 1}, // Zero-width Joiner
+			{Lo: 0x2600, Hi: 0x26ff, Stride: 1}, // symbols
+			{Lo: 0x2700, Hi: 0x27bf, Stride: 1}, // dingbat
+			{Lo: 0xac00, Hi: 0xd7a3, Stride: 1}, // Hangul (Korean)
+			{Lo: 0xfe0f, Hi: 0xfe0f, Stride: 1}, // variation selector 16
+		},
+		R32: []unicode.Range32{
+			{Lo: 0x1f1e6, Hi: 0x1f1ff, Stride: 1}, // regional indicator symbol
+			{Lo: 0x1f300, Hi: 0x1f5ff, Stride: 1}, // pictographs
+			{Lo: 0x1f600, Hi: 0x1f64f, Stride: 1}, // emoji
+			{Lo: 0x1f680, Hi: 0x1f6ff, Stride: 1}, // transport
+			{Lo: 0x1f900, Hi: 0x1f9ff, Stride: 1}, // supplemental symbols and pictographs
+		},
+	}
+
+	return unicode.In(r, safeRanges)
+}
+
+// StringIsVisible is a validator to ensure at least one character is visible, i.e. not whitespace or control char.
+type StringIsVisible struct {
+	Name    string
+	Field   string
+	Message string
+}
+
+// IsValid adds an error if the field is not empty and not a url.
+func (v *StringIsVisible) IsValid(errors *validate.Errors) {
+	var asciiSpace = map[int32]bool{'\t': true, '\n': true, '\v': true, '\f': true, '\r': true, ' ': true}
+	for _, c := range v.Field {
+		if !asciiSpace[c] && unicode.IsGraphic(c) && c != 0xfe0f { // VS16 (0xfe0f) is "Graphic" but invisible
+			return
+		}
+	}
+
+	if len(v.Message) > 0 {
+		errors.Add(validators.GenerateKey(v.Name), v.Message)
+		return
+	}
+
+	errors.Add(validators.GenerateKey(v.Name), fmt.Sprintf("%s must have a visible character.", v.Name))
 }

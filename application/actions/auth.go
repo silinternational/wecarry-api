@@ -203,8 +203,9 @@ func authRequest(c buffalo.Context) error {
 			return authRequestError(c, http.StatusInternalServerError, domain.ErrorFindingOrgUserOrgs,
 				fmt.Sprintf("error getting org and userOrgs ... %v", err), extras)
 		} else {
+			extras["email"] = authEmail
 			return authRequestError(c, http.StatusNotFound, domain.ErrorFindingOrgUserOrgs,
-				"Could not find org or userOrgs for  "+authEmail, extras)
+				"Could not find org or userOrgs", extras)
 		}
 	}
 
@@ -331,8 +332,8 @@ func verifyEmails(c buffalo.Context, originalAuthEmail, authRespEmail string) er
 	respDomain := domain.EmailDomain(authRespEmail)
 
 	if emailDomain == respDomain {
-		domain.Warn(c, "authentication emails don't match: " + originalAuthEmail +
-			" vs. " + authRespEmail)
+		msg := "authentication emails don't match: " + originalAuthEmail + " vs. " + authRespEmail
+		domain.Warn(c, msg)
 		return nil
 	}
 
