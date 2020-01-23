@@ -16,6 +16,8 @@ import (
 	"github.com/gobuffalo/envy"
 	mwi18n "github.com/gobuffalo/mw-i18n"
 	"github.com/gobuffalo/packr/v2"
+	"github.com/gobuffalo/validate"
+	"github.com/gobuffalo/validate/validators"
 	uuid2 "github.com/gofrs/uuid"
 	"github.com/rollbar/rollbar-go"
 )
@@ -561,4 +563,28 @@ func isSafeRune(r rune) bool {
 	}
 
 	return unicode.In(r, safeRanges)
+}
+
+// StringIsVisible is a validator to ensure at least one character is visible, i.e. not whitespace or control char.
+type StringIsVisible struct {
+	Name    string
+	Field   string
+	Message string
+}
+
+// IsValid adds an error if the field is not empty and not a url.
+func (v *StringIsVisible) IsValid(errors *validate.Errors) {
+	var asciiSpace = map[int32]bool{'\t': true, '\n': true, '\v': true, '\f': true, '\r': true, ' ': true}
+	for _, c := range v.Field {
+		if !asciiSpace[c] && unicode.IsGraphic(c) && c != 0xfe0f { // VS16 (0xfe0f) is "Graphic" but invisible
+			return
+		}
+	}
+
+	if len(v.Message) > 0 {
+		errors.Add(validators.GenerateKey(v.Name), v.Message)
+		return
+	}
+
+	errors.Add(validators.GenerateKey(v.Name), fmt.Sprintf("%s must have a visible character.", v.Name))
 }

@@ -2,6 +2,7 @@ package domain
 
 import (
 	"errors"
+	"github.com/gobuffalo/validate"
 	"github.com/stretchr/testify/suite"
 	"net/http"
 	"testing"
@@ -689,6 +690,67 @@ func (ts *TestSuite) TestIsSafeRune() {
 	for _, tt := range tests {
 		ts.T().Run(tt.name, func(t *testing.T) {
 			ts.Equal(tt.want, isSafeRune(tt.r))
+		})
+	}
+}
+
+func (ts *TestSuite) TestStringIsVisible_IsValid() {
+	tests := []struct {
+		name    string
+		field   string
+		message string
+		nErrors int
+	}{
+		{
+			name:    "no error",
+			field:   "visible string",
+			nErrors: 0,
+		},
+		{
+			name:    "empty string, custom message",
+			field:   "",
+			message: "An error message",
+			nErrors: 1,
+		},
+		{
+			name:    "VS16",
+			field:   string([]rune{0xfe0f}),
+			nErrors: 1,
+		},
+		{
+			name:    "ZWJ",
+			field:   string([]rune{0xfe0f}),
+			nErrors: 1,
+		},
+		{
+			name:    "ASCII whitespace",
+			field:   " \t\n\v\f\r",
+			nErrors: 1,
+		},
+		{
+			name:    "visible mixed with invisible",
+			field:   string([]rune{0x1f468, 0x200d, 0x1f9b0}),
+			nErrors: 0,
+		},
+	}
+	for _, tt := range tests {
+		ts.T().Run(tt.name, func(t *testing.T) {
+			vErr := validate.NewErrors()
+
+			v := &StringIsVisible{
+				Name:    "field_name",
+				Field:   tt.field,
+				Message: tt.message,
+			}
+			v.IsValid(vErr)
+			ts.Equal(tt.nErrors, len(vErr.Errors))
+			if tt.nErrors > 0 {
+				if tt.message == "" {
+					ts.Equal([]string{v.Name + " must have a visible character."}, vErr.Get(v.Name))
+				} else {
+					ts.Equal([]string{tt.message}, vErr.Get(v.Name))
+				}
+			}
 		})
 	}
 }
