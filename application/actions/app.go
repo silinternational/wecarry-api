@@ -65,7 +65,7 @@ func App() *buffalo.App {
 
 		//  Added for authorization
 		app.Use(setCurrentUser)
-		app.Middleware.Skip(setCurrentUser, statusHandler, adminHandler)
+		app.Middleware.Skip(setCurrentUser, statusHandler, serviceHandler)
 
 		var err error
 		domain.T, err = i18n.New(packr.New("locales", "../locales"), "en")
@@ -81,10 +81,10 @@ func App() *buffalo.App {
 
 		app.POST("/upload/", uploadHandler)
 
-		app.GET("/admin", adminHandler)
+		app.GET("/service", serviceHandler)
 
 		auth := app.Group("/auth")
-		auth.Middleware.Skip(setCurrentUser, authRequest, authCallback, authDestroy, adminHandler)
+		auth.Middleware.Skip(setCurrentUser, authRequest, authCallback, authDestroy, serviceHandler)
 
 		auth.POST("/login", authRequest)
 
@@ -105,13 +105,13 @@ func registerCustomErrorHandler(app *buffalo.App) {
 	}
 }
 
-func adminHandler(c buffalo.Context) error {
-	if domain.Env.AdminToken == "" {
-		return c.Error(http.StatusInternalServerError, errors.New("no admin bearer token configured"))
+func serviceHandler(c buffalo.Context) error {
+	if domain.Env.ServiceIntegrationToken == "" {
+		return c.Error(http.StatusInternalServerError, errors.New("no ServiceIntegrationToken configured"))
 	}
 
 	bearerToken := domain.GetBearerTokenFromRequest(c.Request())
-	if domain.Env.AdminToken != bearerToken {
+	if domain.Env.ServiceIntegrationToken != bearerToken {
 		return c.Error(http.StatusUnauthorized, errors.New("incorrect bearer token provided"))
 	}
 
