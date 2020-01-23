@@ -120,7 +120,7 @@ func (ms *ModelSuite) TestUserCreated() {
 
 func (ms *ModelSuite) TestUserAccessTokensCleanup() {
 
-	userAccessTokensNextCleanupTime = time.Now().Add(-time.Duration(time.Hour))
+	userAccessTokensNextCleanupAfter = time.Now().Add(-time.Duration(time.Hour))
 
 	var buf bytes.Buffer
 	domain.Logger.SetOutput(&buf)
