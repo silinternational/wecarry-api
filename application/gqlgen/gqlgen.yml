@@ -119,6 +119,8 @@ models:
     model: models.PostStatus
   PostSize:
     model: models.PostSize
+  PostVisibility:
+    model: models.PostVisibility
   UserAdminRole:
     model: models.UserAdminRole
   UserPreferences:

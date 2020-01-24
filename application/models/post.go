@@ -17,6 +17,7 @@ import (
 	"github.com/gobuffalo/validate/validators"
 	"github.com/gofrs/uuid"
 	"github.com/pkg/errors"
+
 	"github.com/silinternational/wecarry-api/domain"
 )
 
@@ -71,6 +72,43 @@ const (
 type statusTransitionTarget struct {
 	status     PostStatus
 	isBackStep bool
+}
+
+type PostVisibility string
+
+const (
+	PostVisibilityAll     PostVisibility = "ALL"
+	PostVisibilityTrusted PostVisibility = "TRUSTED"
+	PostVisibilitySame    PostVisibility = "SAME"
+)
+
+func (e PostVisibility) IsValid() bool {
+	switch e {
+	case PostVisibilityAll, PostVisibilityTrusted, PostVisibilitySame:
+		return true
+	}
+	return false
+}
+
+func (e PostVisibility) String() string {
+	return string(e)
+}
+
+func (e *PostVisibility) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PostVisibility(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PostVisibility", str)
+	}
+	return nil
+}
+
+func (e PostVisibility) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func getStatusTransitions() map[PostStatus][]statusTransitionTarget {
@@ -193,25 +231,26 @@ func (e PostSize) String() string {
 }
 
 type Post struct {
-	ID             int          `json:"id" db:"id"`
-	CreatedAt      time.Time    `json:"created_at" db:"created_at"`
-	UpdatedAt      time.Time    `json:"updated_at" db:"updated_at"`
-	CreatedByID    int          `json:"created_by_id" db:"created_by_id"`
-	Type           PostType     `json:"type" db:"type"`
-	OrganizationID int          `json:"organization_id" db:"organization_id"`
-	Status         PostStatus   `json:"status" db:"status"`
-	Title          string       `json:"title" db:"title"`
-	Size           PostSize     `json:"size" db:"size"`
-	UUID           uuid.UUID    `json:"uuid" db:"uuid"`
-	ReceiverID     nulls.Int    `json:"receiver_id" db:"receiver_id"`
-	ProviderID     nulls.Int    `json:"provider_id" db:"provider_id"`
-	Description    nulls.String `json:"description" db:"description"`
-	URL            nulls.String `json:"url" db:"url"`
-	Kilograms      float64      `json:"kilograms" db:"kilograms"`
-	PhotoFileID    nulls.Int    `json:"photo_file_id" db:"photo_file_id"`
-	DestinationID  int          `json:"destination_id" db:"destination_id"`
-	OriginID       nulls.Int    `json:"origin_id" db:"origin_id"`
-	MeetingID      nulls.Int    `json:"meeting_id" db:"meeting_id"`
+	ID             int            `json:"id" db:"id"`
+	CreatedAt      time.Time      `json:"created_at" db:"created_at"`
+	UpdatedAt      time.Time      `json:"updated_at" db:"updated_at"`
+	CreatedByID    int            `json:"created_by_id" db:"created_by_id"`
+	Type           PostType       `json:"type" db:"type"`
+	OrganizationID int            `json:"organization_id" db:"organization_id"`
+	Status         PostStatus     `json:"status" db:"status"`
+	Title          string         `json:"title" db:"title"`
+	Size           PostSize       `json:"size" db:"size"`
+	UUID           uuid.UUID      `json:"uuid" db:"uuid"`
+	ReceiverID     nulls.Int      `json:"receiver_id" db:"receiver_id"`
+	ProviderID     nulls.Int      `json:"provider_id" db:"provider_id"`
+	Description    nulls.String   `json:"description" db:"description"`
+	URL            nulls.String   `json:"url" db:"url"`
+	Kilograms      float64        `json:"kilograms" db:"kilograms"`
+	PhotoFileID    nulls.Int      `json:"photo_file_id" db:"photo_file_id"`
+	DestinationID  int            `json:"destination_id" db:"destination_id"`
+	OriginID       nulls.Int      `json:"origin_id" db:"origin_id"`
+	MeetingID      nulls.Int      `json:"meeting_id" db:"meeting_id"`
+	Visibility     PostVisibility `json:"visibility" db:"visibility"`
 
 	CreatedBy    User          `belongs_to:"users"`
 	Organization Organization  `belongs_to:"organizations"`
@@ -246,6 +285,9 @@ func (p Posts) String() string {
 
 // Create stores the Post data as a new record in the database.
 func (p *Post) Create() error {
+	if p.Visibility == "" {
+		p.Visibility = PostVisibilitySame
+	}
 	return create(p)
 }
 
@@ -631,17 +673,10 @@ func (p *Post) GetPhoto() (*File, error) {
 func scopeUserOrgs(cUser User) pop.ScopeFunc {
 	return func(q *pop.Query) *pop.Query {
 		orgs := cUser.GetOrgIDs()
-
-		// convert []int to []interface{}
-		s := make([]interface{}, len(orgs))
-		for i, v := range orgs {
-			s[i] = v
-		}
-
-		if len(s) == 0 {
+		if len(orgs) == 0 {
 			return q.Where("organization_id = -1")
 		}
-		return q.Where("organization_id IN (?)", s...)
+		return q.Where("organization_id IN (?)", convertSliceFromIntToInterface(orgs)...)
 	}
 }
 
@@ -666,17 +701,34 @@ func (p *Post) FindByUserAndUUID(ctx context.Context, user User, uuid string) er
 		Where("uuid = ?", uuid).First(p)
 }
 
-// FindByUser finds all posts belonging to the same organization as the given user and not marked as
-// completed or removed.
+// FindByUser finds all posts visible to the current user. NOTE: at present, the posts are not sorted correctly; need
+// to find a better way to construct the query
 func (p *Posts) FindByUser(ctx context.Context, user User) error {
-	return DB.
-		Scope(scopeUserOrgs(user)).
-		Scope(scopeNotCompleted()).
-		Order("created_at desc").
-		All(p)
+	q := DB.RawQuery(`
+	WITH o AS (
+		SELECT id FROM organizations WHERE id IN (
+			SELECT organization_id FROM user_organizations WHERE user_id = ?
+		)
+	)
+	SELECT * FROM posts WHERE
+	(
+		organization_id IN (SELECT id FROM o)
+		OR
+		organization_id IN (
+			SELECT id FROM organizations WHERE id IN (
+				SELECT secondary_id FROM organization_trusts WHERE primary_id IN (SELECT id FROM o)
+			)
+		) AND visibility IN (?, ?)
+	)
+	AND status not in (?, ?) ORDER BY created_at desc`,
+		user.ID, PostVisibilityAll, PostVisibilityTrusted, PostStatusRemoved, PostStatusCompleted)
+	if err := q.All(p); err != nil {
+		return fmt.Errorf("error finding posts for user %s, %s", user.UUID.String(), err)
+	}
+	return nil
 }
 
-// FilterByUserAndContents finds all posts belonging to the same organization as the given user,
+// FilterByUserTypeAndContents finds all posts belonging to the same organization as the given user,
 // not marked as completed or removed and containing a certain search text.
 func (p *Posts) FilterByUserTypeAndContents(ctx context.Context, user User, pType PostType, contains string) error {
 	where := "type = ? and (LOWER(title) like ? or LOWER(description) like ?)"
