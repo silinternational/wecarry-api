@@ -718,9 +718,10 @@ func (p *Posts) FindByUser(ctx context.Context, user User) error {
 			SELECT id FROM organizations WHERE id IN (
 				SELECT secondary_id FROM organization_trusts WHERE primary_id IN (SELECT id FROM o)
 			)
-		) AND visibility IN ('ALL', 'TRUSTED')
+		) AND visibility IN (?, ?)
 	)
-	AND status not in ('REMOVED', 'COMPLETED') ORDER BY created_at desc`, user.ID)
+	AND status not in (?, ?) ORDER BY created_at desc`,
+		user.ID, PostVisibilityAll, PostVisibilityTrusted, PostStatusRemoved, PostStatusCompleted)
 	if err := q.All(p); err != nil {
 		return fmt.Errorf("error finding posts for user %s, %s", user.UUID.String(), err)
 	}
