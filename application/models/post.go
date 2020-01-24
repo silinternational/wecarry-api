@@ -285,6 +285,9 @@ func (p Posts) String() string {
 
 // Create stores the Post data as a new record in the database.
 func (p *Post) Create() error {
+	if p.Visibility == "" {
+		p.Visibility = PostVisibilitySame
+	}
 	return create(p)
 }
 
