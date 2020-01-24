@@ -267,35 +267,3 @@ func (o *Organization) TrustedOrganizations() (Organizations, error) {
 	}
 	return trustedOrgs, nil
 }
-
-// TrustedOrganizationIDs returns the IDs of connected Organizations; returned slice may contain duplicates
-func (orgs *Organizations) TrustedOrganizationIDs() ([]int, error) {
-	var allTrustedIDs []int
-	for _, org := range *orgs {
-		orgTrustedIDs, err := org.TrustedOrganizationIDs()
-		if err != nil {
-			domain.ErrLogger.Print("error compiling list of trusted organizations, " + err.Error())
-		} else {
-			for _, i := range orgTrustedIDs {
-				allTrustedIDs = append(allTrustedIDs, i)
-			}
-		}
-	}
-	return allTrustedIDs, nil
-}
-
-// TrustedOrganizationIDs returns the IDs of connected Organizations
-func (o *Organization) TrustedOrganizationIDs() ([]int, error) {
-	trusts := OrganizationTrusts{}
-	if err := trusts.FindByOrgID(o.ID); domain.IsOtherThanNoRows(err) {
-		return nil, err
-	}
-	if len(trusts) < 1 {
-		return []int{}, nil
-	}
-	ids := make([]int, len(trusts))
-	for i := range trusts {
-		ids[i] = trusts[i].SecondaryID
-	}
-	return ids, nil
-}

@@ -680,34 +680,6 @@ func scopeUserOrgs(cUser User) pop.ScopeFunc {
 	}
 }
 
-// scope query to include posts from an organization associated with the current user, and posts with
-// visibility ALL or TRUSTED and belonging to an organization trusted by one or more of the user's organizations
-func scopeTrustedOrganizations(cUser User) pop.ScopeFunc {
-	return func(q *pop.Query) *pop.Query {
-		userOrgs, err := cUser.GetOrganizations()
-		userOrgIDs := make([]interface{}, len(userOrgs))
-		for i, org := range userOrgs {
-			userOrgIDs[i] = org.ID
-		}
-
-		var trustedOrgIDs []int
-		if err != nil {
-			domain.ErrLogger.Printf("failed to get Organizations, user %s, %s", cUser.UUID.String(), err)
-		}
-		trustedOrgIDs, err = userOrgs.TrustedOrganizationIDs()
-		if err != nil {
-			domain.ErrLogger.Printf("failed to get TrustedOrganizations, user %s, %s", cUser.UUID.String(), err)
-		}
-
-		if len(trustedOrgIDs) == 0 {
-			return q.Where("organization_id = -1")
-		}
-		//return q.Where(`organization_id IN (?) AND (visibility IN ("ALL", "TRUSTED"))`, convertSliceFromIntToInterface(trustedOrgIDs)...)
-		return q.Where("visibility IN (?)", PostVisibilityAll, PostVisibilityTrusted).
-			Where("organization_id IN (?)", convertSliceFromIntToInterface(trustedOrgIDs)...)
-	}
-}
-
 // scope query to not include removed posts
 func scopeNotRemoved() pop.ScopeFunc {
 	return func(q *pop.Query) *pop.Query {
@@ -732,22 +704,31 @@ func (p *Post) FindByUserAndUUID(ctx context.Context, user User, uuid string) er
 // FindByUser finds all posts visible to the current user. NOTE: at present, the posts are not sorted correctly; need
 // to find a better way to construct the query
 func (p *Posts) FindByUser(ctx context.Context, user User) error {
-	q := DB.Scope(scopeUserOrgs(user)).Scope(scopeNotCompleted()).Order("created_at desc")
+	q := DB.RawQuery(`
+	SELECT * FROM posts WHERE
+	(
+		(
+			organization_id IN (
+				SELECT id FROM organizations WHERE id IN (
+					SELECT secondary_id FROM organization_trusts WHERE primary_id IN (
+						SELECT id FROM organizations WHERE id IN (
+							SELECT organization_id FROM user_organizations WHERE user_id = (?)
+						)
+					)
+				)
+			) AND visibility IN ('ALL', 'TRUSTED')
+		) OR (
+			organization_id IN (
+				SELECT id FROM organizations WHERE id IN (
+					SELECT organization_id FROM user_organizations WHERE user_id = (?)
+				)
+			)
+		)
+	)
+	AND status not in ('REMOVED', 'COMPLETED') ORDER BY created_at desc`, user.ID, user.ID)
 	if err := q.All(p); err != nil {
-		return errors.New("error finding posts in user organization(s), " + err.Error())
+		return fmt.Errorf("error finding posts for user %s, %s", user.UUID.String(), err)
 	}
-
-	q = DB.Scope(scopeTrustedOrganizations(user)).Scope(scopeNotCompleted()).Order("created_at desc")
-	var p2 Posts
-	if err := q.All(&p2); err != nil {
-		domain.ErrLogger.Print("error finding posts in trusted organization(s)", err.Error())
-		return nil
-	}
-
-	for i := range p2 {
-		*p = append(*p, p2[i])
-	}
-
 	return nil
 }
 
