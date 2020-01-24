@@ -1621,7 +1621,7 @@ func (ms *ModelSuite) TestPosts_FindByUser() {
 		wantErr     bool
 	}{
 		{name: "user 0", user: f.Users[0],
-			wantPostIDs: []int{f.Posts[4].ID, f.Posts[1].ID, f.Posts[0].ID, f.Posts[6].ID, f.Posts[5].ID}},
+			wantPostIDs: []int{f.Posts[6].ID, f.Posts[5].ID, f.Posts[4].ID, f.Posts[1].ID, f.Posts[0].ID}},
 		{name: "user 1", user: f.Users[1], wantPostIDs: []int{f.Posts[4].ID, f.Posts[0].ID}},
 		{name: "non-existent user", user: User{}, wantPostIDs: []int{}},
 	}
