@@ -1,7 +1,10 @@
 package actions
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gobuffalo/buffalo"
 	i18n "github.com/gobuffalo/mw-i18n"
@@ -11,6 +14,7 @@ import (
 	"github.com/rs/cors"
 
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/job"
 	"github.com/silinternational/wecarry-api/listeners"
 )
 
@@ -61,7 +65,7 @@ func App() *buffalo.App {
 
 		//  Added for authorization
 		app.Use(setCurrentUser)
-		app.Middleware.Skip(setCurrentUser, statusHandler)
+		app.Middleware.Skip(setCurrentUser, statusHandler, serviceHandler)
 
 		var err error
 		domain.T, err = i18n.New(packr.New("locales", "../locales"), "en")
@@ -77,8 +81,10 @@ func App() *buffalo.App {
 
 		app.POST("/upload/", uploadHandler)
 
+		app.GET("/service", serviceHandler)
+
 		auth := app.Group("/auth")
-		auth.Middleware.Skip(setCurrentUser, authRequest, authCallback, authDestroy)
+		auth.Middleware.Skip(setCurrentUser, authRequest, authCallback, authDestroy, serviceHandler)
 
 		auth.POST("/login", authRequest)
 
@@ -97,4 +103,21 @@ func registerCustomErrorHandler(app *buffalo.App) {
 	for i := 401; i < 600; i++ {
 		app.ErrorHandlers[i] = customErrorHandler
 	}
+}
+
+func serviceHandler(c buffalo.Context) error {
+	if domain.Env.ServiceIntegrationToken == "" {
+		return c.Error(http.StatusInternalServerError, errors.New("no ServiceIntegrationToken configured"))
+	}
+
+	bearerToken := domain.GetBearerTokenFromRequest(c.Request())
+	if domain.Env.ServiceIntegrationToken != bearerToken {
+		return c.Error(http.StatusUnauthorized, errors.New("incorrect bearer token provided"))
+	}
+
+	if err := job.SubmitDelayed(job.FileCleanup, time.Second, nil); err != nil {
+		return c.Error(http.StatusInternalServerError, fmt.Errorf("file cleanup job not started, %s", err))
+	}
+
+	return c.Render(http.StatusNoContent, nil)
 }

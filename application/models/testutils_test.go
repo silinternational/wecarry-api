@@ -196,3 +196,38 @@ func createFileFixtures(n int) Files {
 	}
 	return fileFixtures
 }
+
+// createMeetingFixtures generates any number of meeting records for testing. Related Location and File records are also
+// created. All meeting fixtures will be assigned to the first Organization in the DB. If no Organization exists,
+// one will be created. All posts are created by the first User in the DB. If no User exists, one will be created.
+func createMeetingFixtures(tx *pop.Connection, nMeetings int) Meetings {
+	var org Organization
+	if err := tx.First(&org); err != nil {
+		org = Organization{AuthConfig: "{}"}
+		mustCreate(tx, &org)
+	}
+
+	var user User
+	if err := tx.First(&user); err != nil {
+		user = User{}
+		mustCreate(tx, &user)
+	}
+
+	locations := createLocationFixtures(tx, nMeetings)
+
+	files := createFileFixtures(nMeetings)
+
+	meetings := make(Meetings, nMeetings)
+	for i := range meetings {
+		meetings[i].CreatedByID = user.ID
+		meetings[i].Name = "meeting " + strconv.Itoa(i)
+		meetings[i].LocationID = locations[i].ID
+		meetings[i].StartDate = time.Now()
+		meetings[i].EndDate = time.Now().Add(time.Hour * 24)
+		meetings[i].ImageFileID = nulls.NewInt(files[i].ID)
+
+		mustCreate(tx, &meetings[i])
+	}
+
+	return meetings
+}
