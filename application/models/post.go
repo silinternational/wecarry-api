@@ -705,27 +705,22 @@ func (p *Post) FindByUserAndUUID(ctx context.Context, user User, uuid string) er
 // to find a better way to construct the query
 func (p *Posts) FindByUser(ctx context.Context, user User) error {
 	q := DB.RawQuery(`
-	SELECT * FROM posts WHERE
-	(
-		(
-			organization_id IN (
-				SELECT id FROM organizations WHERE id IN (
-					SELECT secondary_id FROM organization_trusts WHERE primary_id IN (
-						SELECT id FROM organizations WHERE id IN (
-							SELECT organization_id FROM user_organizations WHERE user_id = (?)
-						)
-					)
-				)
-			) AND visibility IN ('ALL', 'TRUSTED')
-		) OR (
-			organization_id IN (
-				SELECT id FROM organizations WHERE id IN (
-					SELECT organization_id FROM user_organizations WHERE user_id = (?)
-				)
-			)
+	WITH o AS (
+		SELECT id FROM organizations WHERE id IN (
+			SELECT organization_id FROM user_organizations WHERE user_id = ?
 		)
 	)
-	AND status not in ('REMOVED', 'COMPLETED') ORDER BY created_at desc`, user.ID, user.ID)
+	SELECT * FROM posts WHERE
+	(
+		organization_id IN (SELECT id FROM o)
+		OR
+		organization_id IN (
+			SELECT id FROM organizations WHERE id IN (
+				SELECT secondary_id FROM organization_trusts WHERE primary_id IN (SELECT id FROM o)
+			)
+		) AND visibility IN ('ALL', 'TRUSTED')
+	)
+	AND status not in ('REMOVED', 'COMPLETED') ORDER BY created_at desc`, user.ID)
 	if err := q.All(p); err != nil {
 		return fmt.Errorf("error finding posts for user %s, %s", user.UUID.String(), err)
 	}
