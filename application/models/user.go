@@ -15,6 +15,7 @@ import (
 	"github.com/gobuffalo/validate/validators"
 	"github.com/gofrs/uuid"
 	"github.com/pkg/errors"
+
 	"github.com/silinternational/wecarry-api/auth"
 	"github.com/silinternational/wecarry-api/domain"
 )
@@ -96,6 +97,7 @@ func (u *User) Validate(tx *pop.Connection) (*validate.Errors, error) {
 		&validators.StringIsPresent{Field: u.Nickname, Name: "Nickname"},
 		&validators.UUIDIsPresent{Field: u.UUID, Name: "UUID"},
 		&NullsStringIsURL{Field: u.AuthPhotoURL, Name: "AuthPhotoURL"},
+		&domain.StringIsVisible{Field: u.Nickname, Name: "Nickname"},
 	), nil
 }
 
@@ -200,7 +202,7 @@ func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
 
 	err = u.Save()
 	if err != nil {
-		return fmt.Errorf("unable to create new user record: %s", err.Error())
+		return fmt.Errorf("unable to save user record: %s", err.Error())
 	}
 
 	if len(userOrgs) == 0 {
@@ -358,7 +360,7 @@ func HashClientIdAccessToken(accessToken string) string {
 	return fmt.Sprintf("%x", sha256.Sum256([]byte(accessToken)))
 }
 
-func (u *User) GetOrganizations() ([]Organization, error) {
+func (u *User) GetOrganizations() (Organizations, error) {
 	if err := DB.Load(u, "Organizations"); err != nil {
 		return nil, fmt.Errorf("error getting organizations for user id %v ... %v", u.ID, err)
 	}
@@ -434,6 +436,7 @@ func (u *User) GetPhotoURL() (*string, error) {
 
 // Save wraps DB.Save() call to check for errors and operate on attached object
 func (u *User) Save() error {
+	u.Nickname = domain.RemoveUnwantedChars(u.Nickname, "-_ .,'&@")
 	return save(u)
 }
 

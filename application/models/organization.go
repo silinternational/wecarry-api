@@ -199,11 +199,7 @@ func scopeUserAdminOrgs(cUser User) pop.ScopeFunc {
 			}
 		}
 
-		// convert []int to []interface{}
-		s := make([]interface{}, len(adminOrgIDs))
-		for i, v := range adminOrgIDs {
-			s[i] = v
-		}
+		s := convertSliceFromIntToInterface(adminOrgIDs)
 
 		if len(s) == 0 {
 			return q.Where("id = -1")
@@ -252,7 +248,7 @@ func (o *Organization) RemoveTrust(secondaryID string) error {
 	return t.RemoveSymmetric(o.ID, secondaryOrg.ID)
 }
 
-// TrustedOrganizations gets a list of connected Organizations, either primary or secondary
+// TrustedOrganizations gets a list of connected Organizations
 func (o *Organization) TrustedOrganizations() (Organizations, error) {
 	t := OrganizationTrusts{}
 	if err := t.FindByOrgID(o.ID); domain.IsOtherThanNoRows(err) {

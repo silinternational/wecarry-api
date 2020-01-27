@@ -45,6 +45,7 @@ type Post struct {
 	Kilograms  float64           `json:"kilograms"`
 	IsEditable bool              `json:"isEditable"`
 	Url        string            `json:"url"`
+	Visibility string            `json:"visibility"`
 	CreatedBy  struct {
 		ID        string `json:"id"`
 		Nickname  string `json:"nickname"`
@@ -92,6 +93,7 @@ func (as *ActionSuite) Test_PostQuery() {
 			kilograms
 			isEditable
 			url
+			visibility
 			createdBy { id nickname avatarURL }
 			receiver { id nickname avatarURL }
 			provider { id nickname avatarURL }
@@ -128,6 +130,7 @@ func (as *ActionSuite) Test_PostQuery() {
 	as.Equal(f.Posts[0].UpdatedAt.Format(time.RFC3339), resp.Post.UpdatedAt)
 	as.Equal(f.Posts[0].Kilograms, resp.Post.Kilograms)
 	as.Equal(f.Posts[0].URL.String, resp.Post.Url)
+	as.Equal(f.Posts[0].Visibility.String(), resp.Post.Visibility)
 	as.Equal(false, resp.Post.IsEditable)
 	as.Equal(f.Users[0].UUID.String(), resp.Post.CreatedBy.ID, "creator ID doesn't match")
 	as.Equal(f.Users[0].Nickname, resp.Post.CreatedBy.Nickname, "creator nickname doesn't match")
@@ -178,11 +181,12 @@ func (as *ActionSuite) Test_UpdatePost() {
 			size: TINY
 			url: "example.com"
 			kilograms: 22.22
+			visibility: ALL
 		`
 	query := `mutation { post: updatePost(input: {` + input + `}) { id photo { id } description
 			destination { description country latitude longitude}
 			origin { description country latitude longitude}
-			size url kilograms isEditable}}`
+			size url kilograms visibility isEditable}}`
 
 	as.NoError(as.testGqlQuery(query, f.Users[0].Nickname, &postsResp))
 
@@ -205,6 +209,7 @@ func (as *ActionSuite) Test_UpdatePost() {
 	as.Equal(models.PostSizeTiny, postsResp.Post.Size)
 	as.Equal("example.com", postsResp.Post.Url)
 	as.Equal(22.22, postsResp.Post.Kilograms)
+	as.Equal("ALL", postsResp.Post.Visibility)
 	as.Equal(true, postsResp.Post.IsEditable)
 
 	// Attempt to edit a locked post
@@ -228,11 +233,12 @@ func (as *ActionSuite) Test_CreatePost() {
 			destination: {description:"dest" country:"dc" latitude:1.1 longitude:2.2}
 			size: TINY
 			url: "example.com"
+			visibility: ALL
 		`
 	query := `mutation { post: createPost(input: {` + input + `}) { organization { id } photo { id } type title
 			description destination { description country latitude longitude }
 			origin { description country latitude longitude }
-			size url kilograms }}`
+			size url kilograms visibility }}`
 
 	as.NoError(as.testGqlQuery(query, f.Users[0].Nickname, &postsResp))
 
@@ -253,6 +259,7 @@ func (as *ActionSuite) Test_CreatePost() {
 	as.Equal(models.PostSizeTiny, postsResp.Post.Size)
 	as.Equal("example.com", postsResp.Post.Url)
 	as.Equal(0.0, postsResp.Post.Kilograms)
+	as.Equal("ALL", postsResp.Post.Visibility)
 
 	// meeting-based request
 	input = `orgID: "` + f.Organization.UUID.String() + `"` +

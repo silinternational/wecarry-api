@@ -217,3 +217,11 @@ func save(m interface{}) error {
 	}
 	return nil
 }
+
+func convertSliceFromIntToInterface(intSlice []int) []interface{} {
+	s := make([]interface{}, len(intSlice))
+	for i, v := range intSlice {
+		s[i] = v
+	}
+	return s
+}
