@@ -92,7 +92,7 @@ func (f *File) Store(name string, content []byte) *FileUploadError {
 		return &e
 	}
 
-	contentType, err := detectContentType(content)
+	contentType, err := validateContentType(content)
 	if err != nil {
 		e := FileUploadError{
 			HttpStatus: http.StatusBadRequest,
@@ -209,7 +209,7 @@ func (f *File) refreshURL() error {
 	return nil
 }
 
-func detectContentType(content []byte) (string, error) {
+func validateContentType(content []byte) (string, error) {
 	allowedTypes := []string{
 		"image/bmp",
 		"image/gif",
