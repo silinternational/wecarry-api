@@ -79,7 +79,8 @@ func (r *postResolver) Committers(ctx context.Context, obj *models.Post) ([]Publ
 		return nil, reportError(ctx, err, "GetPostCommitters")
 	}
 
-	return committers, nil
+	profiles := getPublicProfiles(ctx, committers)
+	return profiles, nil
 }
 
 // Organization resolves the `organization` property of the post query. It retrieves the related record from the
@@ -437,15 +438,25 @@ func (r *mutationResolver) UpdatePostStatus(ctx context.Context, input UpdatePos
 	return &post, nil
 }
 
-func addCommitterToRequest(ctx context.Context, input AddCommitterInput) error {
+func (r *mutationResolver) AddCommitter(ctx context.Context, input AddCommitterInput) (*models.Post, error) {
+	var post models.Post
+	if err := post.FindByUUID(input.PostID); err != nil {
+		return nil, reportError(ctx, err, "UpdatePostStatus.FindPost")
+	}
 	cUser := models.GetCurrentUserFromGqlContext(ctx)
 
 	var reqCom models.RequestCommitter
 	if err := reqCom.NewWithPostUUID(input.PostID, cUser.ID); err != nil {
-		return errors.New("error creating new request committer: " + err.Error())
+		return nil, reportError(ctx, errors.New("error preparing new request committer: "+err.Error()),
+			"Post.AddRequestCommitter")
 	}
 
-	return reqCom.Create()
+	if err := reqCom.Create(); err != nil {
+		return nil, reportError(ctx, errors.New("error creating new request committer: "+err.Error()),
+			"Post.AddRequestCommitter")
+	}
+
+	return &post, nil
 }
 
 // SearchRequests resolves the `searchRequests` query by finding requests that contain
