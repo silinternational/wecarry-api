@@ -9,6 +9,8 @@ import (
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
 	"github.com/gobuffalo/validate/validators"
+
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 type RequestCommitter struct {
@@ -61,8 +63,10 @@ func (r *RequestCommitters) FindByPostID(postID int) error {
 	}
 
 	if err := DB.Eager("User").Where("post_id = ?", postID).All(r); err != nil {
-		return fmt.Errorf("failed to find request_committer record for post %d, %s",
-			postID, err)
+		if domain.IsOtherThanNoRows(err) {
+			return fmt.Errorf("failed to find request_committer record for post %d, %s",
+				postID, err)
+		}
 	}
 
 	return nil
