@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"image"
-	"image/color"
-	"image/draw"
-	_ "image/gif" // enable decoding of GIF images
-	"image/jpeg"  // decode/encode JPEG images
-	_ "image/png" // enable decoding of PNG images
+	"image/gif"
+	"image/jpeg"
+	"image/png"
+	"mime"
 	"net/http"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/gobuffalo/pop"
@@ -91,7 +92,7 @@ func (f *File) Store(name string, content []byte) *FileUploadError {
 		return &e
 	}
 
-	contentType, err := detectContentType(content)
+	contentType, err := validateContentType(content)
 	if err != nil {
 		e := FileUploadError{
 			HttpStatus: http.StatusBadRequest,
@@ -101,19 +102,8 @@ func (f *File) Store(name string, content []byte) *FileUploadError {
 		return &e
 	}
 
-	// If possible, strip EXIF metadata by re-encoding the image. Also sets background to white.
-	img, _, err := image.Decode(bytes.NewReader(content))
-	if err == nil {
-		dst := image.NewRGBA(img.Bounds())
-		draw.Draw(dst, dst.Bounds(), image.NewUniform(color.White), image.Point{}, draw.Src)
-		draw.Draw(dst, dst.Bounds(), img, img.Bounds().Min, draw.Over)
-		buf := new(bytes.Buffer)
-		if err := jpeg.Encode(buf, dst, nil); err == nil {
-			content = buf.Bytes()
-			contentType = "image/jpg"
-			name = name + ".jpeg"
-		}
-	}
+	removeMetadata(&contentType, &content)
+	changeFileExtension(&name, contentType)
 
 	url, err := aws.StoreFile(fileUUID.String(), contentType, content)
 	if err != nil {
@@ -144,6 +134,45 @@ func (f *File) Store(name string, content []byte) *FileUploadError {
 
 	*f = file
 	return nil
+}
+
+// removeMetadata removes, if possible, all EXIF metadata by re-encoding the image. If the encoding type changes,
+// `contentType` will be modified accordingly.
+func removeMetadata(contentType *string, content *[]byte) {
+	img, _, err := image.Decode(bytes.NewReader(*content))
+	if err != nil {
+		return
+	}
+	buf := new(bytes.Buffer)
+	switch *contentType {
+	case "image/jpg":
+		if err := jpeg.Encode(buf, img, nil); err == nil {
+			*content = buf.Bytes()
+		}
+	case "image/gif":
+		if err := gif.Encode(buf, img, nil); err == nil {
+			*content = buf.Bytes()
+		}
+	case "image/png":
+		if err := png.Encode(buf, img); err == nil {
+			*content = buf.Bytes()
+		}
+	case "image/webp":
+		if err := png.Encode(buf, img); err == nil {
+			*content = buf.Bytes()
+			*contentType = "image/png"
+		}
+	}
+}
+
+// changeFileExtension attempts to make the file extension match the given content type
+func changeFileExtension(name *string, contentType string) {
+	ext, err := mime.ExtensionsByType(contentType)
+	if err != nil || len(ext) < 1 {
+		return
+	}
+	*name = strings.TrimSuffix(*name, filepath.Ext(*name)) + ext[0]
+
 }
 
 // FindByUUID locates an file by UUID and returns the result, including a valid URL.
@@ -180,7 +209,7 @@ func (f *File) refreshURL() error {
 	return nil
 }
 
-func detectContentType(content []byte) (string, error) {
+func validateContentType(content []byte) (string, error) {
 	allowedTypes := []string{
 		"image/bmp",
 		"image/gif",
