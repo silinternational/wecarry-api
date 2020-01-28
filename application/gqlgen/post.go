@@ -68,6 +68,20 @@ func (r *postResolver) Provider(ctx context.Context, obj *models.Post) (*PublicP
 	return getPublicProfile(ctx, provider), nil
 }
 
+// Committers resolves the `committers` property of the post query, retrieving the related records from the database.
+func (r *postResolver) Committers(ctx context.Context, obj *models.Post) ([]models.RequestCommitter, error) {
+	if obj == nil {
+		return nil, nil
+	}
+
+	committers, err := obj.GetCommitters()
+	if err != nil {
+		return nil, reportError(ctx, err, "GetPostCommitters")
+	}
+
+	return committers, nil
+}
+
 // Organization resolves the `organization` property of the post query. It retrieves the related record from the
 // database.
 func (r *postResolver) Organization(ctx context.Context, obj *models.Post) (*models.Organization, error) {
@@ -423,17 +437,11 @@ func (r *mutationResolver) UpdatePostStatus(ctx context.Context, input UpdatePos
 	return &post, nil
 }
 
-func addCommitterToRequest(cUser models.User, post models.Post, input UpdatePostStatusInput) error {
-	if input.UserID == nil {
-		return errors.New("not allowed to add committer to Post without a User ID")
-	}
-
-	if *input.UserID == cUser.UUID.String() {
-		return errors.New("not allowed to add the requester as a committer on a Post")
-	}
+func addCommitterToRequest(ctx context.Context, input AddCommitterInput) error {
+	cUser := models.GetCurrentUserFromGqlContext(ctx)
 
 	var reqCom models.RequestCommitter
-	if err := reqCom.NewWithUserUUID(post.ID, *input.UserID); err != nil {
+	if err := reqCom.NewWithPostUUID(input.PostID, cUser.ID); err != nil {
 		return errors.New("error creating new request committer: " + err.Error())
 	}
 
