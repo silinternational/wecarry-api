@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -68,19 +69,19 @@ func (r *RequestCommitters) FindByPostID(postID int) error {
 }
 
 // FindByPostIDAndUserID reads a request record by the given Post ID and User ID
-func (r *RequestCommitter) FindByPostIDAndUserID(postID, userID int) error {
-	if postID <= 0 || userID <= 0 {
-		return fmt.Errorf("error finding request_committer, invalid id ... postID %v, userID %v",
-			postID, userID)
-	}
-
-	where := "user_id = ? AND post_id = ? AND post_type = ?"
-	if err := DB.Where(where, userID, postID, PostTypeRequest).First(r); err != nil {
-		return fmt.Errorf("failed to find request_committer record for user %d and post %d, %s",
-			userID, postID, err)
-	}
-	return nil
-}
+//func (r *RequestCommitter) FindByPostIDAndUserID(postID, userID int) error {
+//	if postID <= 0 || userID <= 0 {
+//		return fmt.Errorf("error finding request_committer, invalid id ... postID %v, userID %v",
+//			postID, userID)
+//	}
+//
+//	where := "user_id = ? AND post_id = ? AND post_type = ?"
+//	if err := DB.Where(where, userID, postID, PostTypeRequest).First(r); err != nil {
+//		return fmt.Errorf("failed to find request_committer record for user %d and post %d, %s",
+//			userID, postID, err)
+//	}
+//	return nil
+//}
 
 // Create stores the RequestCommitter data as a new record in the database.
 func (r *RequestCommitter) Create() error {
@@ -92,18 +93,27 @@ func (r *RequestCommitter) Update() error {
 	return update(r)
 }
 
-func (r *RequestCommitter) NewWithUserUUID(postID int, userUUID string) error {
-	var user *User
-	if err := user.FindByUUID(userUUID); err != nil {
+func (r *RequestCommitter) NewWithPostUUID(postUUID string, userID int) error {
+	var user User
+	if err := user.FindByID(userID); err != nil {
 		return err
 	}
 
-	var post *Post
-	if err := post.FindByID(postID); err != nil {
+	var post Post
+	if err := post.FindByUUID(postUUID); err != nil {
 		return err
+	}
+
+	if post.Type != PostTypeRequest {
+		return fmt.Errorf("Post Type must be Request not %s", post.Type)
+	}
+
+	if post.CreatedByID == userID {
+		return errors.New("Request Commmitter User must not be the Post's Receiver.")
 	}
 
 	r.PostID = post.ID
 	r.UserID = user.ID
+
 	return nil
 }
