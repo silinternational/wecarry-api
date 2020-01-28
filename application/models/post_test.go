@@ -1494,6 +1494,35 @@ func (ms *ModelSuite) TestPosts_FindByUser() {
 	}
 }
 
+func (ms *ModelSuite) TestPosts_GetCommitters() {
+	t := ms.T()
+
+	f := createFixturesFor_Posts_GetCommitters(ms)
+	rcs := f.RequestCommitters
+
+	tests := []struct {
+		name             string
+		post             Post
+		wantCommitterIDs []int
+	}{
+		{name: "rcs for first post", post: f.Posts[0], wantCommitterIDs: []int{rcs[0].ID, rcs[1].ID}},
+		{name: "no rcs for second post", post: f.Posts[1], wantCommitterIDs: []int{}},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			post := test.post
+			rcs, err := post.GetCommitters()
+			ms.NoError(err, "unexpected error")
+
+			ids := make([]int, len(rcs))
+			for i, rc := range rcs {
+				ids[i] = rc.ID
+			}
+			ms.Equal(test.wantCommitterIDs, ids)
+		})
+	}
+}
+
 func (ms *ModelSuite) TestPost_FilterByUserTypeAndContents() {
 	t := ms.T()
 	f := createFixtures_Posts_FilterByUserTypeAndContents(ms)

@@ -322,6 +322,16 @@ func (p *Post) SetProviderWithStatus(status PostStatus, committerID *string) err
 	return nil
 }
 
+func (p *Post) GetCommitters() (RequestCommitters, error) {
+	if p.Type != PostTypeRequest {
+		return RequestCommitters{}, nil
+	}
+
+	committers := RequestCommitters{}
+	err := committers.FindByPostID(p.ID)
+	return committers, err
+}
+
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
 func (p *Post) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
