@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func (ms *ModelSuite) TestFindByPostID() {
+func (ms *ModelSuite) TestFindUsersByPostID() {
 	f := createCommittersFixtures(ms)
 	posts := f.Posts
 	rcs := f.RequestCommitters
@@ -17,22 +17,22 @@ func (ms *ModelSuite) TestFindByPostID() {
 		{
 			name:    "first post",
 			post:    posts[0],
-			wantIDs: []int{rcs[0].ID, rcs[1].ID, rcs[2].ID},
+			wantIDs: []int{rcs[0].UserID, rcs[1].UserID, rcs[2].UserID},
 		},
 		{
 			name:    "second post",
 			post:    posts[1],
-			wantIDs: []int{rcs[3].ID, rcs[4].ID},
+			wantIDs: []int{rcs[3].UserID, rcs[4].UserID},
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			committers := RequestCommitters{}
-			err := committers.FindByPostID(test.post.ID)
+			users, err := committers.FindUsersByPostID(test.post.ID)
 			ms.NoError(err, "unexpected error")
-			ids := make([]int, len(committers))
-			for i, c := range committers {
-				ids[i] = c.ID
+			ids := make([]int, len(users))
+			for i, u := range users {
+				ids[i] = u.ID
 			}
 
 			ms.Equal(test.wantIDs, ids)
@@ -72,6 +72,7 @@ func (ms *ModelSuite) TestNewWithPostUUID() {
 			if test.wantErr != "" {
 				ms.Error(err, "expected an error but did not get one")
 				ms.Equal(test.wantErr, err.Error(), "incorrect error message")
+				return
 			}
 			ms.NoError(err, "unexpected error")
 			ms.Equal(test.post.ID, committer.PostID, "incorrect Post ID")

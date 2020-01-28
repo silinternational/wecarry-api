@@ -69,7 +69,7 @@ func (r *postResolver) Provider(ctx context.Context, obj *models.Post) (*PublicP
 }
 
 // Committers resolves the `committers` property of the post query, retrieving the related records from the database.
-func (r *postResolver) Committers(ctx context.Context, obj *models.Post) ([]models.RequestCommitter, error) {
+func (r *postResolver) Committers(ctx context.Context, obj *models.Post) ([]PublicProfile, error) {
 	if obj == nil {
 		return nil, nil
 	}

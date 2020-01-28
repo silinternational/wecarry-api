@@ -57,19 +57,23 @@ func (r *RequestCommitter) ValidateUpdate(tx *pop.Connection) (*validate.Errors,
 }
 
 // FindByPostIDAndUserID reads a request record by the given Post ID and User ID
-func (r *RequestCommitters) FindByPostID(postID int) error {
+func (r *RequestCommitters) FindUsersByPostID(postID int) (Users, error) {
 	if postID <= 0 {
-		return fmt.Errorf("error finding request_committer, invalid id %v", postID)
+		return Users{}, fmt.Errorf("error finding request_committer, invalid id %v", postID)
 	}
 
 	if err := DB.Eager("User").Where("post_id = ?", postID).All(r); err != nil {
 		if domain.IsOtherThanNoRows(err) {
-			return fmt.Errorf("failed to find request_committer record for post %d, %s",
+			return Users{}, fmt.Errorf("failed to find request_committer record for post %d, %s",
 				postID, err)
 		}
 	}
+	users := make(Users, len(*r))
+	for i, rc := range *r {
+		users[i] = rc.User
+	}
 
-	return nil
+	return users, nil
 }
 
 // FindByPostIDAndUserID reads a request record by the given Post ID and User ID

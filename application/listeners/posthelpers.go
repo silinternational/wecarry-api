@@ -209,13 +209,14 @@ func sendNotificationRequestFromOpenToAccepted(params senderParams) {
 	post := params.post
 
 	var committers models.RequestCommitters
-	if err := committers.FindByPostID(post.ID); err != nil {
+	users, err := committers.FindUsersByPostID(post.ID)
+	if err != nil {
 		domain.ErrLogger.Printf("error finding rejected providers for post id, %v ... %v",
 			post.ID, err)
 	}
 
-	for _, c := range committers {
-		sendRejectionToCommitter(c.User, post)
+	for _, u := range users {
+		sendRejectionToCommitter(u, post)
 	}
 
 }

@@ -1505,7 +1505,7 @@ func (ms *ModelSuite) TestPosts_GetCommitters() {
 		post             Post
 		wantCommitterIDs []int
 	}{
-		{name: "rcs for first post", post: f.Posts[0], wantCommitterIDs: []int{rcs[0].ID, rcs[1].ID}},
+		{name: "rcs for first post", post: f.Posts[0], wantCommitterIDs: []int{rcs[0].UserID, rcs[1].UserID}},
 		{name: "no rcs for second post", post: f.Posts[1], wantCommitterIDs: []int{}},
 	}
 	for _, test := range tests {
