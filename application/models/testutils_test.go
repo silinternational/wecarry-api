@@ -169,6 +169,44 @@ func createPostFixtures(tx *pop.Connection, nRequests, nOffers int, createFiles 
 	return posts
 }
 
+// createRequestCommitterFixtures generates any number of Request Committer records for testing.
+// All of these will be assigned to the first Post (Request) in the DB, which has the first User as
+// its CreatedBy.
+// If necessary, User and Post fixtures will also be created.
+func createRequestCommitterFixtures(tx *pop.Connection, nPosts, nCommitters int) RequestCommitters {
+	var posts Posts
+	if err := tx.All(&posts); err != nil {
+		createPostFixtures(tx, nPosts, 0, false)
+	}
+	if len(posts) < nPosts {
+		createPostFixtures(tx, nPosts-len(posts), 0, false)
+	}
+
+	posts = Posts{}
+	tx.All(&posts)
+
+	var users Users
+	if err := tx.All(&users); err != nil {
+		createUserFixtures(tx, nCommitters+1)
+	}
+	if len(users) < nCommitters+1 {
+		createUserFixtures(tx, nCommitters+1-len(users))
+	}
+	users = Users{}
+	tx.All(&users)
+
+	committers := make(RequestCommitters, nCommitters)
+	for i := range committers {
+		committers[i] = RequestCommitter{
+			PostID: posts[0].ID,
+			UserID: users[i+1].ID,
+		}
+		mustCreate(tx, &committers[i])
+	}
+
+	return committers
+}
+
 // createLocationFixtures generates any number of location records for testing.
 func createLocationFixtures(tx *pop.Connection, n int) Locations {
 	countries := []string{"US", "CA", "MX", "TH", "FR", "PG"}
