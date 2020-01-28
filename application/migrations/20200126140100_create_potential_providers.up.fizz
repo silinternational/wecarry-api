@@ -1,4 +1,4 @@
-create_table("request_committers") {
+create_table("potential_providers") {
 	t.Column("id", "integer", {primary: true})
 	t.Column("post_id", "integer", {})
 	t.Column("user_id", "integer", {})

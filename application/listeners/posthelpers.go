@@ -167,8 +167,8 @@ func sendNotificationRequestFromAcceptedToRemoved(params senderParams) {
 	sendNotificationRequestToProvider(params)
 }
 
-func sendRejectionToCommitter(committer models.User, post models.Post) {
-	template := domain.MessageTemplateCommittmentNotAccepted
+func sendRejectionToPotentialProvider(committer models.User, post models.Post) {
+	template := domain.MessageTemplatePotentialProviderNotAccepted
 	committerNickname := committer.Nickname
 	committerEmail := committer.Email
 
@@ -208,15 +208,15 @@ func sendNotificationRequestFromOpenToAccepted(params senderParams) {
 
 	post := params.post
 
-	var committers models.RequestCommitters
-	users, err := committers.FindUsersByPostID(post.ID)
+	var providers models.PotentialProviders
+	users, err := providers.FindUsersByPostID(post.ID)
 	if err != nil {
-		domain.ErrLogger.Printf("error finding rejected providers for post id, %v ... %v",
+		domain.ErrLogger.Printf("error finding rejected potential providers for post id, %v ... %v",
 			post.ID, err)
 	}
 
 	for _, u := range users {
-		sendRejectionToCommitter(u, post)
+		sendRejectionToPotentialProvider(u, post)
 	}
 
 }

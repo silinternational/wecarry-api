@@ -11,10 +11,6 @@ import (
 	"github.com/silinternational/wecarry-api/models"
 )
 
-type AddCommitterInput struct {
-	PostID string `json:"postID"`
-}
-
 type CreateMessageInput struct {
 	Content  string  `json:"content"`
 	PostID   string  `json:"postID"`

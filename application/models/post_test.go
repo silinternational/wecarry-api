@@ -1498,7 +1498,7 @@ func (ms *ModelSuite) TestPosts_GetCommitters() {
 	t := ms.T()
 
 	f := createFixturesFor_Posts_GetCommitters(ms)
-	rcs := f.RequestCommitters
+	rcs := f.PotentialProviders
 
 	tests := []struct {
 		name             string
@@ -1511,7 +1511,7 @@ func (ms *ModelSuite) TestPosts_GetCommitters() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			post := test.post
-			rcs, err := post.GetCommitters()
+			rcs, err := post.GetPotentialProviders()
 			ms.NoError(err, "unexpected error")
 
 			ids := make([]int, len(rcs))

@@ -15,7 +15,7 @@ type PostFixtures struct {
 	PostHistories
 	Files
 	Locations
-	RequestCommitters
+	PotentialProviders
 }
 
 func CreateFixturesValidateUpdate_RequestStatus(status PostStatus, ms *ModelSuite, t *testing.T) Post {
@@ -230,11 +230,11 @@ func CreateFixtures_Posts_FindByUser(ms *ModelSuite) PostFixtures {
 
 func createFixturesFor_Posts_GetCommitters(ms *ModelSuite) PostFixtures {
 	posts := createPostFixtures(ms.DB, 2, 0, false)
-	committers := createRequestCommitterFixtures(ms.DB, 2, 2)
+	committers := createPotentialProviderFixtures(ms.DB, 2, 2)
 
 	return PostFixtures{
-		Posts:             posts,
-		RequestCommitters: committers,
+		Posts:              posts,
+		PotentialProviders: committers,
 	}
 }
 

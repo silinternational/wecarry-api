@@ -305,16 +305,16 @@ func (p *Post) NewWithUser(pType PostType, currentUser User) error {
 	return nil
 }
 
-func (p *Post) SetProviderWithStatus(status PostStatus, committerID *string) error {
+func (p *Post) SetProviderWithStatus(status PostStatus, providerID *string) error {
 	if p.Type == PostTypeRequest && status == PostStatusAccepted {
-		if committerID == nil {
-			return errors.New("committer ID must not be nil")
+		if providerID == nil {
+			return errors.New("provider ID must not be nil")
 		}
 
 		var user User
 
-		if err := user.FindByUUID(*committerID); err != nil {
-			return errors.New("error finding committer: " + err.Error())
+		if err := user.FindByUUID(*providerID); err != nil {
+			return errors.New("error finding provider: " + err.Error())
 		}
 		p.ProviderID = nulls.NewInt(user.ID)
 	}
@@ -322,13 +322,13 @@ func (p *Post) SetProviderWithStatus(status PostStatus, committerID *string) err
 	return nil
 }
 
-func (p *Post) GetCommitters() (Users, error) {
+func (p *Post) GetPotentialProviders() (Users, error) {
 	if p.Type != PostTypeRequest {
 		return Users{}, nil
 	}
 
-	committers := RequestCommitters{}
-	users, err := committers.FindUsersByPostID(p.ID)
+	providers := PotentialProviders{}
+	users, err := providers.FindUsersByPostID(p.ID)
 	return users, err
 }
 

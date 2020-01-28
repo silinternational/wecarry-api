@@ -423,10 +423,10 @@ ALTER SEQUENCE public.posts_id_seq OWNED BY public.posts.id;
 
 
 --
--- Name: request_committers; Type: TABLE; Schema: public; Owner: scrutinizer
+-- Name: potential_providers; Type: TABLE; Schema: public; Owner: scrutinizer
 --
 
-CREATE TABLE public.request_committers (
+CREATE TABLE public.potential_providers (
     id integer NOT NULL,
     post_id integer NOT NULL,
     user_id integer NOT NULL,
@@ -435,13 +435,13 @@ CREATE TABLE public.request_committers (
 );
 
 
-ALTER TABLE public.request_committers OWNER TO scrutinizer;
+ALTER TABLE public.potential_providers OWNER TO scrutinizer;
 
 --
--- Name: request_committers_id_seq; Type: SEQUENCE; Schema: public; Owner: scrutinizer
+-- Name: potential_providers_id_seq; Type: SEQUENCE; Schema: public; Owner: scrutinizer
 --
 
-CREATE SEQUENCE public.request_committers_id_seq
+CREATE SEQUENCE public.potential_providers_id_seq
     AS integer
     START WITH 1
     INCREMENT BY 1
@@ -450,13 +450,13 @@ CREATE SEQUENCE public.request_committers_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.request_committers_id_seq OWNER TO scrutinizer;
+ALTER TABLE public.potential_providers_id_seq OWNER TO scrutinizer;
 
 --
--- Name: request_committers_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: scrutinizer
+-- Name: potential_providers_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: scrutinizer
 --
 
-ALTER SEQUENCE public.request_committers_id_seq OWNED BY public.request_committers.id;
+ALTER SEQUENCE public.potential_providers_id_seq OWNED BY public.potential_providers.id;
 
 
 --
@@ -818,10 +818,10 @@ ALTER TABLE ONLY public.posts ALTER COLUMN id SET DEFAULT nextval('public.posts_
 
 
 --
--- Name: request_committers id; Type: DEFAULT; Schema: public; Owner: scrutinizer
+-- Name: potential_providers id; Type: DEFAULT; Schema: public; Owner: scrutinizer
 --
 
-ALTER TABLE ONLY public.request_committers ALTER COLUMN id SET DEFAULT nextval('public.request_committers_id_seq'::regclass);
+ALTER TABLE ONLY public.potential_providers ALTER COLUMN id SET DEFAULT nextval('public.potential_providers_id_seq'::regclass);
 
 
 --
@@ -954,11 +954,11 @@ ALTER TABLE ONLY public.posts
 
 
 --
--- Name: request_committers request_committers_pkey; Type: CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: potential_providers potential_providers_pkey; Type: CONSTRAINT; Schema: public; Owner: scrutinizer
 --
 
-ALTER TABLE ONLY public.request_committers
-    ADD CONSTRAINT request_committers_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.potential_providers
+    ADD CONSTRAINT potential_providers_pkey PRIMARY KEY (id);
 
 
 --
@@ -1390,19 +1390,19 @@ ALTER TABLE ONLY public.posts
 
 
 --
--- Name: request_committers request_committers_post_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: potential_providers potential_providers_post_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
 --
 
-ALTER TABLE ONLY public.request_committers
-    ADD CONSTRAINT request_committers_post_id_fkey FOREIGN KEY (post_id) REFERENCES public.posts(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.potential_providers
+    ADD CONSTRAINT potential_providers_post_id_fkey FOREIGN KEY (post_id) REFERENCES public.posts(id) ON DELETE CASCADE;
 
 
 --
--- Name: request_committers request_committers_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
+-- Name: potential_providers potential_providers_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: scrutinizer
 --
 
-ALTER TABLE ONLY public.request_committers
-    ADD CONSTRAINT request_committers_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.potential_providers
+    ADD CONSTRAINT potential_providers_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 
 --

@@ -169,11 +169,11 @@ func createPostFixtures(tx *pop.Connection, nRequests, nOffers int, createFiles 
 	return posts
 }
 
-// createRequestCommitterFixtures generates any number of Request Committer records for testing.
+// createPotentialProviderFixtures generates any number of PotentialProvider records for testing.
 // All of these will be assigned to the first Post (Request) in the DB, which has the first User as
 // its CreatedBy.
 // If necessary, User and Post fixtures will also be created.
-func createRequestCommitterFixtures(tx *pop.Connection, nPosts, nCommitters int) RequestCommitters {
+func createPotentialProviderFixtures(tx *pop.Connection, nPosts, nProviders int) PotentialProviders {
 	var posts Posts
 	if err := tx.All(&posts); err != nil {
 		createPostFixtures(tx, nPosts, 0, false)
@@ -187,24 +187,24 @@ func createRequestCommitterFixtures(tx *pop.Connection, nPosts, nCommitters int)
 
 	var users Users
 	if err := tx.All(&users); err != nil {
-		createUserFixtures(tx, nCommitters+1)
+		createUserFixtures(tx, nProviders+1)
 	}
-	if len(users) < nCommitters+1 {
-		createUserFixtures(tx, nCommitters+1-len(users))
+	if len(users) < nProviders+1 {
+		createUserFixtures(tx, nProviders+1-len(users))
 	}
 	users = Users{}
 	tx.All(&users)
 
-	committers := make(RequestCommitters, nCommitters)
-	for i := range committers {
-		committers[i] = RequestCommitter{
+	providers := make(PotentialProviders, nProviders)
+	for i := range providers {
+		providers[i] = PotentialProvider{
 			PostID: posts[0].ID,
 			UserID: users[i+1].ID,
 		}
-		mustCreate(tx, &committers[i])
+		mustCreate(tx, &providers[i])
 	}
 
-	return committers
+	return providers
 }
 
 // createLocationFixtures generates any number of location records for testing.

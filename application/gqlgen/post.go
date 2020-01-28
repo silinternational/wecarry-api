@@ -68,18 +68,19 @@ func (r *postResolver) Provider(ctx context.Context, obj *models.Post) (*PublicP
 	return getPublicProfile(ctx, provider), nil
 }
 
-// Committers resolves the `committers` property of the post query, retrieving the related records from the database.
-func (r *postResolver) Committers(ctx context.Context, obj *models.Post) ([]PublicProfile, error) {
+// PotentialProviders resolves the `potentialProviders` property of the post query,
+// retrieving the related records from the database.
+func (r *postResolver) PotentialProviders(ctx context.Context, obj *models.Post) ([]PublicProfile, error) {
 	if obj == nil {
 		return nil, nil
 	}
 
-	committers, err := obj.GetCommitters()
+	providers, err := obj.GetPotentialProviders()
 	if err != nil {
-		return nil, reportError(ctx, err, "GetPostCommitters")
+		return nil, reportError(ctx, err, "GetPotentialProviders")
 	}
 
-	profiles := getPublicProfiles(ctx, committers)
+	profiles := getPublicProfiles(ctx, providers)
 	return profiles, nil
 }
 
@@ -438,22 +439,22 @@ func (r *mutationResolver) UpdatePostStatus(ctx context.Context, input UpdatePos
 	return &post, nil
 }
 
-func (r *mutationResolver) AddCommitter(ctx context.Context, input AddCommitterInput) (*models.Post, error) {
+func (r *mutationResolver) AddPotentialProvider(ctx context.Context, postID string) (*models.Post, error) {
 	var post models.Post
-	if err := post.FindByUUID(input.PostID); err != nil {
+	if err := post.FindByUUID(postID); err != nil {
 		return nil, reportError(ctx, err, "UpdatePostStatus.FindPost")
 	}
 	cUser := models.GetCurrentUserFromGqlContext(ctx)
 
-	var reqCom models.RequestCommitter
-	if err := reqCom.NewWithPostUUID(input.PostID, cUser.ID); err != nil {
-		return nil, reportError(ctx, errors.New("error preparing new request committer: "+err.Error()),
-			"Post.AddRequestCommitter")
+	var reqCom models.PotentialProvider
+	if err := reqCom.NewWithPostUUID(postID, cUser.ID); err != nil {
+		return nil, reportError(ctx, errors.New("error preparing potential provider: "+err.Error()),
+			"Post.AddPotentialProvider")
 	}
 
 	if err := reqCom.Create(); err != nil {
-		return nil, reportError(ctx, errors.New("error creating new request committer: "+err.Error()),
-			"Post.AddRequestCommitter")
+		return nil, reportError(ctx, errors.New("error creating potential provider: "+err.Error()),
+			"Post.AddPotentialProvider")
 	}
 
 	return &post, nil

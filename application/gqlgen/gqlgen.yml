@@ -55,7 +55,7 @@ models:
         resolver: true
       provider:
         resolver: true
-      committers:
+      potentialProviders:
         resolver: true
       destination:
         resolver: true

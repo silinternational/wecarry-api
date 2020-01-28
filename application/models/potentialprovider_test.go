@@ -5,9 +5,9 @@ import (
 )
 
 func (ms *ModelSuite) TestFindUsersByPostID() {
-	f := createCommittersFixtures(ms)
+	f := createProvidersFixtures(ms)
 	posts := f.Posts
-	rcs := f.RequestCommitters
+	rcs := f.PotentialProviders
 	t := ms.T()
 	tests := []struct {
 		name    string
@@ -27,8 +27,8 @@ func (ms *ModelSuite) TestFindUsersByPostID() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			committers := RequestCommitters{}
-			users, err := committers.FindUsersByPostID(test.post.ID)
+			providers := PotentialProviders{}
+			users, err := providers.FindUsersByPostID(test.post.ID)
 			ms.NoError(err, "unexpected error")
 			ids := make([]int, len(users))
 			for i, u := range users {
@@ -41,7 +41,7 @@ func (ms *ModelSuite) TestFindUsersByPostID() {
 }
 
 func (ms *ModelSuite) TestNewWithPostUUID() {
-	f := createCommittersFixtures(ms)
+	f := createProvidersFixtures(ms)
 	users := f.Users
 	posts := f.Posts
 
@@ -57,7 +57,7 @@ func (ms *ModelSuite) TestNewWithPostUUID() {
 			name:    "bad - using post's CreatedBy",
 			post:    posts[0],
 			userID:  users[0].ID,
-			wantErr: "Request Commmitter User must not be the Post's Receiver.",
+			wantErr: "PotentialProvider User must not be the Post's Receiver.",
 		},
 		{
 			name:   "good - second post second user",
@@ -67,16 +67,16 @@ func (ms *ModelSuite) TestNewWithPostUUID() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			committer := RequestCommitter{}
-			err := committer.NewWithPostUUID(test.post.UUID.String(), test.userID)
+			provider := PotentialProvider{}
+			err := provider.NewWithPostUUID(test.post.UUID.String(), test.userID)
 			if test.wantErr != "" {
 				ms.Error(err, "expected an error but did not get one")
 				ms.Equal(test.wantErr, err.Error(), "incorrect error message")
 				return
 			}
 			ms.NoError(err, "unexpected error")
-			ms.Equal(test.post.ID, committer.PostID, "incorrect Post ID")
-			ms.Equal(test.userID, committer.UserID, "incorrect User ID")
+			ms.Equal(test.post.ID, provider.PostID, "incorrect Post ID")
+			ms.Equal(test.userID, provider.UserID, "incorrect User ID")
 		})
 	}
 }
