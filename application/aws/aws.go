@@ -137,6 +137,25 @@ func GetFileURL(key string) (ObjectUrl, error) {
 	return getObjectURL(config, svc, key)
 }
 
+// RemoveFile removes a file from the configured AWS S3 bucket.
+func RemoveFile(key string) error {
+	config := getS3ConfigFromEnv()
+
+	svc, err := createS3Service(config)
+	if err != nil {
+		return err
+	}
+
+	if _, err := svc.DeleteObject(&s3.DeleteObjectInput{
+		Bucket: aws.String(config.awsS3Bucket),
+		Key:    aws.String(key),
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // CreateS3Bucket creates an S3 bucket with a name defined by an environment variable. If the bucket already
 // exists, it will not return an error.
 func CreateS3Bucket() error {

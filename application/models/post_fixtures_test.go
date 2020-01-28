@@ -177,13 +177,24 @@ func createFixturesForPostFindByUserAndUUID(ms *ModelSuite) PostFixtures {
 	}
 }
 
+//        Org0                Org1          Org2
+//        |  |                |  |           |
+//        |  +----+-----------+  +-----+-----+
+//        |       |                    |
+//       User1  User0                Trust
+//
+// Org0: Post0, Post2, Post3, Post4
+// Org1: Post1
+// Org2: Post5, Post6, Post7
+//
 func CreateFixtures_Posts_FindByUser(ms *ModelSuite) PostFixtures {
-	orgs := Organizations{{}, {}}
-	for i := range orgs {
-		orgs[i].UUID = domain.GetUUID()
-		orgs[i].AuthConfig = "{}"
-		createFixture(ms, &orgs[i])
+	orgs := createOrganizationFixtures(ms.DB, 3)
+
+	trusts := OrganizationTrusts{
+		{PrimaryID: orgs[1].ID, SecondaryID: orgs[2].ID},
+		{PrimaryID: orgs[2].ID, SecondaryID: orgs[1].ID},
 	}
+	createFixture(ms, &trusts)
 
 	users := createUserFixtures(ms.DB, 2).Users
 
@@ -195,11 +206,16 @@ func CreateFixtures_Posts_FindByUser(ms *ModelSuite) PostFixtures {
 		AuthEmail:      users[0].Email,
 	})
 
-	posts := createPostFixtures(ms.DB, 5, 0, false)
+	posts := createPostFixtures(ms.DB, 8, 0, false)
 	posts[1].OrganizationID = orgs[1].ID
 	posts[2].Status = PostStatusCommitted
 	posts[3].Status = PostStatusRemoved
 	posts[4].CreatedByID = users[1].ID
+	posts[5].OrganizationID = orgs[2].ID
+	posts[5].Visibility = PostVisibilityAll
+	posts[6].OrganizationID = orgs[2].ID
+	posts[6].Visibility = PostVisibilityTrusted
+	posts[7].OrganizationID = orgs[2].ID
 	ms.NoError(ms.DB.Save(&posts))
 
 	// can't go directly to "completed"

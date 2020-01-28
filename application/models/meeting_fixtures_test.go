@@ -7,8 +7,8 @@ import (
 	"github.com/silinternational/wecarry-api/domain"
 )
 
-// createMeetingFixtures creates two meetings associated with the first user passed in.
-func createMeetingFixtures(ms *ModelSuite, t *testing.T, users Users) Meetings {
+// createMeetingFixtures_FindByUUID creates two meetings associated with the first user passed in.
+func createMeetingFixtures_FindByUUID(ms *ModelSuite, t *testing.T, users Users) Meetings {
 	if err := ms.DB.Load(&users[0], "Organizations"); err != nil {
 		t.Errorf("failed to load organizations on users[0] fixture, %s", err)
 	}

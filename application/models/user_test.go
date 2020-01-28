@@ -157,6 +157,18 @@ func (ms *ModelSuite) TestUser_Validate() {
 			errField: "nickname",
 		},
 		{
+			name: "invisible nickname",
+			user: User{
+				Email:     "user@example.com",
+				FirstName: "A",
+				LastName:  "User",
+				UUID:      domain.GetUUID(),
+				Nickname:  string([]rune{0xfe0f}),
+			},
+			wantErr:  true,
+			errField: "nickname",
+		},
+		{
 			name: "missing uuid",
 			user: User{
 				Email:     "user@example.com",

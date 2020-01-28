@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/gobuffalo/events"
+
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/job"
 	"github.com/silinternational/wecarry-api/models"
@@ -15,7 +16,7 @@ const (
 	userAccessTokensCleanupDelayMinutes = 480
 )
 
-var userAccessTokensNextCleanupTime time.Time
+var userAccessTokensNextCleanupAfter time.Time
 
 type apiListener struct {
 	name     string
@@ -82,11 +83,11 @@ func userAccessTokensCleanup(e events.Event) {
 	}
 
 	now := time.Now()
-	if !now.After(userAccessTokensNextCleanupTime) {
+	if !now.After(userAccessTokensNextCleanupAfter) {
 		return
 	}
 
-	userAccessTokensNextCleanupTime = now.Add(time.Duration(time.Minute * userAccessTokensCleanupDelayMinutes))
+	userAccessTokensNextCleanupAfter = now.Add(time.Duration(time.Minute * userAccessTokensCleanupDelayMinutes))
 
 	var uats models.UserAccessTokens
 	deleted, err := uats.DeleteExpired()
