@@ -311,3 +311,38 @@ func (ms *ModelSuite) TestFiles_DeleteUnlinked() {
 	n, _ := DB.Count(&f)
 	ms.Equal(nPosts*2+nMeetings+nOrganizations+nUsers, n, "wrong number of files remain")
 }
+
+func (ms *ModelSuite) Test_changeFileExtension() {
+	tests := []struct {
+		name        string
+		filename    string
+		contentType string
+		want        string
+	}{
+		{
+			name:        "png to gif",
+			filename:    "file.png",
+			contentType: "image/gif",
+			want:        "file.gif",
+		},
+		{
+			name:        "webp to png",
+			filename:    "file.webp",
+			contentType: "image/png",
+			want:        "file.png",
+		},
+		{
+			name:        "bad type",
+			filename:    "file.webp",
+			contentType: "file/xyz",
+			want:        "file.webp",
+		},
+	}
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			n := tt.filename
+			changeFileExtension(&n, tt.contentType)
+			ms.Equal(tt.want, n)
+		})
+	}
+}
