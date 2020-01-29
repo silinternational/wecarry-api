@@ -1498,25 +1498,25 @@ func (ms *ModelSuite) TestPosts_GetCommitters() {
 	t := ms.T()
 
 	f := createFixturesFor_Posts_GetCommitters(ms)
-	rcs := f.PotentialProviders
+	pps := f.PotentialProviders
 
 	tests := []struct {
 		name             string
 		post             Post
 		wantCommitterIDs []int
 	}{
-		{name: "rcs for first post", post: f.Posts[0], wantCommitterIDs: []int{rcs[0].UserID, rcs[1].UserID}},
-		{name: "no rcs for second post", post: f.Posts[1], wantCommitterIDs: []int{}},
+		{name: "pps for first post", post: f.Posts[0], wantCommitterIDs: []int{pps[0].UserID, pps[1].UserID}},
+		{name: "no pps for second post", post: f.Posts[1], wantCommitterIDs: []int{}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			post := test.post
-			rcs, err := post.GetPotentialProviders()
+			pps, err := post.GetPotentialProviders()
 			ms.NoError(err, "unexpected error")
 
-			ids := make([]int, len(rcs))
-			for i, rc := range rcs {
-				ids[i] = rc.ID
+			ids := make([]int, len(pps))
+			for i, pp := range pps {
+				ids[i] = pp.ID
 			}
 			ms.Equal(test.wantCommitterIDs, ids)
 		})

@@ -8,9 +8,9 @@ import (
 )
 
 func (ms *ModelSuite) TestFindUsersByPostID() {
-	f := createProvidersFixtures(ms)
+	f := createPotentialProvidersFixtures(ms)
 	posts := f.Posts
-	rcs := f.PotentialProviders
+	pps := f.PotentialProviders
 	t := ms.T()
 	tests := []struct {
 		name    string
@@ -20,12 +20,12 @@ func (ms *ModelSuite) TestFindUsersByPostID() {
 		{
 			name:    "first post",
 			post:    posts[0],
-			wantIDs: []int{rcs[0].UserID, rcs[1].UserID, rcs[2].UserID},
+			wantIDs: []int{pps[0].UserID, pps[1].UserID, pps[2].UserID},
 		},
 		{
 			name:    "second post",
 			post:    posts[1],
-			wantIDs: []int{rcs[3].UserID, rcs[4].UserID},
+			wantIDs: []int{pps[3].UserID, pps[4].UserID},
 		},
 	}
 	for _, test := range tests {
@@ -44,7 +44,7 @@ func (ms *ModelSuite) TestFindUsersByPostID() {
 }
 
 func (ms *ModelSuite) TestFindWithPostUUIDAndUserID() {
-	f := createProvidersFixtures(ms)
+	f := createPotentialProvidersFixtures(ms)
 	posts := f.Posts
 	users := f.Users
 	pps := f.PotentialProviders
@@ -98,7 +98,7 @@ func (ms *ModelSuite) TestFindWithPostUUIDAndUserID() {
 }
 
 func (ms *ModelSuite) TestFindWithPostUUIDAndUserUUID() {
-	f := createProvidersFixtures(ms)
+	f := createPotentialProvidersFixtures(ms)
 	posts := f.Posts
 	users := f.Users
 	pps := f.PotentialProviders
@@ -152,7 +152,7 @@ func (ms *ModelSuite) TestFindWithPostUUIDAndUserUUID() {
 }
 
 func (ms *ModelSuite) TestDestroyWithPostUUIDAndUserID() {
-	f := createProvidersFixtures(ms)
+	f := createPotentialProvidersFixtures(ms)
 	posts := f.Posts
 	users := f.Users
 	pps := f.PotentialProviders
@@ -217,7 +217,7 @@ func (ms *ModelSuite) TestDestroyWithPostUUIDAndUserID() {
 }
 
 func (ms *ModelSuite) TestDestroyWithPostUUIDAndUserUUID() {
-	f := createProvidersFixtures(ms)
+	f := createPotentialProvidersFixtures(ms)
 	posts := f.Posts
 	users := f.Users
 	pps := f.PotentialProviders
@@ -282,7 +282,7 @@ func (ms *ModelSuite) TestDestroyWithPostUUIDAndUserUUID() {
 }
 
 func (ms *ModelSuite) TestNewWithPostUUID() {
-	f := createProvidersFixtures(ms)
+	f := createPotentialProvidersFixtures(ms)
 	users := f.Users
 	posts := f.Posts
 
