@@ -173,11 +173,23 @@ func (m *Meeting) AttachImage(fileID string) (File, error) {
 		return f, err
 	}
 
+	oldID := m.ImageFileID
 	m.ImageFileID = nulls.NewInt(f.ID)
 	// if this is a new object, don't save it yet
 	if m.ID != 0 {
 		if err := m.Update(); err != nil {
 			return f, err
+		}
+	}
+
+	if err := f.SetLinked(); err != nil {
+		domain.ErrLogger.Printf("error marking meeting image file %d as linked, %s", f.ID, err)
+	}
+
+	if oldID.Valid {
+		oldFile := File{ID: oldID.Int}
+		if err := oldFile.ClearLinked(); err != nil {
+			domain.ErrLogger.Printf("error marking old meeting image file %d as unlinked, %s", oldFile.ID, err)
 		}
 	}
 

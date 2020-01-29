@@ -46,7 +46,7 @@ func createOrganizationFixtures(tx *pop.Connection, n int) Organizations {
 	organizations := make(Organizations, n)
 	for i := range organizations {
 		if err := files[i].Store("logo.gif", []byte("GIF89a")); err != nil {
-			panic("unexpected error storing org logo")
+			panic("unexpected error storing org logo " + err.Error())
 		}
 		organizations[i].Name = fmt.Sprintf("Org%v", i+1)
 		organizations[i].AuthType = AuthTypeSaml

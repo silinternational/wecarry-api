@@ -6,6 +6,7 @@ import (
 
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/validate"
+	"github.com/gofrs/uuid"
 
 	"github.com/silinternational/wecarry-api/domain"
 )
@@ -315,10 +316,59 @@ func (ms *ModelSuite) TestMeeting_FindRecent() {
 	}
 }
 
-// TestMeeting_AttachImage_GetImage tests the AttachImage and GetImage methods of models.Meeting
-func (ms *ModelSuite) TestMeeting_AttachImage_GetImage() {
-	t := ms.T()
+func (ms *ModelSuite) TestMeeting_AttachImage() {
+	meetings := createMeetingFixtures(ms.DB, 3)
+	files := createFileFixtures(3)
+	meetings[1].ImageFileID = nulls.NewInt(files[0].ID)
+	ms.NoError(ms.DB.UpdateColumns(&meetings[1], "image_file_id"))
 
+	tests := []struct {
+		name     string
+		org      Meeting
+		oldImage *File
+		newImage string
+		want     File
+		wantErr  string
+	}{
+		{
+			name:     "no previous file",
+			org:      meetings[0],
+			newImage: files[1].UUID.String(),
+			want:     files[1],
+		},
+		{
+			name:     "previous file",
+			org:      meetings[1],
+			oldImage: &files[0],
+			newImage: files[2].UUID.String(),
+			want:     files[2],
+		},
+		{
+			name:     "bad ID",
+			org:      meetings[2],
+			newImage: uuid.UUID{}.String(),
+			wantErr:  "no rows in result set",
+		},
+	}
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			got, err := tt.org.AttachImage(tt.newImage)
+			if tt.wantErr != "" {
+				ms.Error(err, "did not get expected error")
+				ms.Contains(err.Error(), tt.wantErr)
+				return
+			}
+			ms.NoError(err, "unexpected error")
+			ms.Equal(tt.want.UUID.String(), got.UUID.String(), "wrong file returned")
+			ms.Equal(true, got.Linked, "new image file is not marked as linked")
+			if tt.oldImage != nil {
+				ms.Equal(false, tt.oldImage.Linked, "old image file is not marked as unlinked")
+			}
+		})
+	}
+}
+
+func (ms *ModelSuite) TestMeeting_GetImage() {
 	user := User{}
 	createFixture(ms, &user)
 
@@ -340,26 +390,14 @@ func (ms *ModelSuite) TestMeeting_AttachImage_GetImage() {
 	ms.Nil(imageFixture.Store(filename, []byte("GIF89a")), "failed to create file fixture")
 
 	attachedFile, err := meeting.AttachImage(imageFixture.UUID.String())
-	if err != nil {
-		t.Errorf("failed to attach image to meeting, %s", err)
-	} else {
-		ms.Equal(filename, attachedFile.Name)
-		ms.True(attachedFile.ID != 0)
-		ms.True(attachedFile.UUID.Version() != 0)
-	}
-
-	if err := DB.Load(&meeting); err != nil {
-		t.Errorf("failed to load image relation for test meeting, %s", err)
-	}
-
-	ms.Equal(filename, meeting.ImageFile.Name)
+	ms.NoError(err)
 
 	if got, err := meeting.GetImage(); err == nil {
 		ms.Equal(attachedFile.UUID.String(), got.UUID.String())
 		ms.True(got.URLExpiration.After(time.Now().Add(time.Minute)))
 		ms.Equal(filename, got.Name)
 	} else {
-		ms.Fail("meeting.GetImagefailed, %s", err)
+		ms.Fail("meeting.GetImage failed, %s", err)
 	}
 }
 

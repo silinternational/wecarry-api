@@ -44,6 +44,7 @@ type File struct {
 	Name          string    `json:"name" db:"name"`
 	Size          int       `json:"size" db:"size"`
 	ContentType   string    `json:"content_type" db:"content_type"`
+	Linked        bool      `json:"linked" db:"linked"`
 }
 
 // String can be helpful for serializing the model
@@ -308,4 +309,16 @@ func (f *Files) DeleteUnlinked() error {
 		}
 	}
 	return nil
+}
+
+// SetLinked marks the file as linked. The struct need not be hydrated; only the ID is needed.
+func (f *File) SetLinked() error {
+	f.Linked = true
+	return DB.UpdateColumns(f, "linked")
+}
+
+// ClearLinked marks the file as unlinked. The struct need not be hydrated; only the ID is needed.
+func (f *File) ClearLinked() error {
+	f.Linked = false
+	return DB.UpdateColumns(f, "linked")
 }
