@@ -240,74 +240,30 @@ func (f *File) Update() error {
 // DeleteUnlinked removes all files that are no longer linked to any database records
 func (f *Files) DeleteUnlinked() error {
 	var files Files
-	if err := DB.Select("id").All(&files); err != nil {
+	if err := DB.Select("id", "uuid").Where("linked = 0").All(&files); err != nil {
 		return err
 	}
 
-	toDelete := make(map[int]bool, len(files))
-	for i := range files {
-		toDelete[files[i].ID] = true
-	}
-
-	var posts Posts
-	if err := DB.Select("photo_file_id").Where("photo_file_id is not null").All(&posts); err != nil {
-		return err
-	}
-	for _, p := range posts {
-		toDelete[p.PhotoFileID.Int] = false
-	}
-
-	var postFiles PostFiles
-	if err := DB.Select("file_id").All(&postFiles); err != nil {
-		return err
-	}
-	for _, p := range postFiles {
-		toDelete[p.FileID] = false
-	}
-
-	var meetings Meetings
-	if err := DB.Select("image_file_id").Where("image_file_id is not null").All(&meetings); err != nil {
-		return err
-	}
-	for _, m := range meetings {
-		toDelete[m.ImageFileID.Int] = false
-	}
-
-	var organizations Organizations
-	if err := DB.Select("logo_file_id").Where("logo_file_id is not null").All(&organizations); err != nil {
-		return err
-	}
-	for _, o := range organizations {
-		toDelete[o.LogoFileID.Int] = false
-	}
-
-	var users Users
-	if err := DB.Select("photo_file_id").Where("photo_file_id is not null").All(&users); err != nil {
-		return err
-	}
-	for _, u := range users {
-		toDelete[u.PhotoFileID.Int] = false
-	}
-
-	for id, del := range toDelete {
-		if !del {
-			continue
-		}
-		var file File
-		if err := DB.Select("id", "uuid").Find(&file, id); err != nil {
-			domain.ErrLogger.Printf("file %d not found, %s", id, err)
-			continue
-		}
-
+	nRemovedFromDB := 0
+	nRemovedFromS3 := 0
+	for _, file := range files {
 		if err := aws.RemoveFile(file.UUID.String()); err != nil {
 			domain.ErrLogger.Printf("error removing from S3, id='%s', %s", file.UUID.String(), err)
 			continue
 		}
+		nRemovedFromS3++
 
 		if err := DB.Destroy(&file); err != nil {
-			domain.ErrLogger.Printf("file %d destroy error, %s", id, err)
+			domain.ErrLogger.Printf("file %d destroy error, %s", file.ID, err)
+			continue
 		}
+		nRemovedFromDB++
 	}
+
+	if nRemovedFromDB < len(files) || nRemovedFromS3 < len(files) {
+		domain.ErrLogger.Printf("not all unlinked files were removed")
+	}
+	domain.Logger.Printf("removed %d from S3, %d from file table", nRemovedFromS3, nRemovedFromDB)
 	return nil
 }
 
