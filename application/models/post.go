@@ -332,6 +332,15 @@ func (p *Post) GetPotentialProviders() (Users, error) {
 	return users, err
 }
 
+func (p *Post) DestroyPotentialProviders(status PostStatus, user User) error {
+	if p.Type != PostTypeRequest || status != PostStatusCompleted {
+		return nil
+	}
+
+	var pps PotentialProviders
+	return pps.DestroyAllWithPostUUID(p.UUID.String(), user)
+}
+
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
 func (p *Post) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(

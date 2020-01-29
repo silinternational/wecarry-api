@@ -174,3 +174,18 @@ func (p *PotentialProvider) DestroyWithPostUUIDAndUserUUID(postUUID, userUUID st
 
 	return DB.Destroy(p)
 }
+
+func (p *PotentialProviders) DestroyAllWithPostUUID(postUUID string, currentUser User) error {
+	var post Post
+	if err := post.FindByUUID(postUUID); err != nil {
+		return errors.New("unable to find Post in order to remove PotentialProviders: " + err.Error())
+	}
+
+	if currentUser.AdminRole != UserAdminRoleSuperAdmin && currentUser.ID != post.CreatedByID {
+		return fmt.Errorf("user %v has insufficient permissions to destroy PotentialProviders for Post %v",
+			currentUser.ID, post.ID)
+	}
+
+	DB.Where("post_id = ?", post.ID).All(p)
+	return DB.Destroy(p)
+}

@@ -2,6 +2,7 @@ package models
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"testing"
 	"time"
@@ -1852,6 +1853,69 @@ func (ms *ModelSuite) TestPost_Meeting() {
 				return
 			}
 			ms.Equal(*test.want, got.UUID)
+		})
+	}
+}
+
+func (ms *ModelSuite) TestPost_DestroyPotentialProviders() {
+	f := createPotentialProvidersFixtures(ms)
+	posts := f.Posts
+	users := f.Users
+	pps := f.PotentialProviders
+	t := ms.T()
+	tests := []struct {
+		name        string
+		currentUser User
+		post        Post
+		status      PostStatus
+		wantIDs     []int
+		wantErr     string
+	}{
+		{
+			name:        "no change: wrong status",
+			currentUser: users[0],
+			post:        posts[1],
+			status:      PostStatusAccepted,
+			wantIDs:     []int{pps[0].ID, pps[1].ID, pps[2].ID, pps[3].ID, pps[4].ID},
+		},
+		{
+			name:        "good: Post Creator as current user",
+			currentUser: users[0],
+			post:        posts[0],
+			status:      PostStatusCompleted,
+			wantIDs:     []int{pps[3].ID, pps[4].ID},
+		},
+		{
+			name:        "bad: current user is potential provider but not Post Creator",
+			currentUser: users[2],
+			post:        posts[0],
+			status:      PostStatusCompleted,
+			wantErr: fmt.Sprintf(`user %v has insufficient permissions to destroy PotentialProviders for Post %v`,
+				users[2].ID, posts[0].ID),
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := test.post.DestroyPotentialProviders(test.status, test.currentUser)
+
+			if test.wantErr != "" {
+				ms.Error(err, "did not get error as expected")
+				ms.Equal(test.wantErr, err.Error(), "wrong error message")
+				return
+			}
+
+			ms.NoError(err, "unexpected error")
+
+			var provs PotentialProviders
+			err = DB.All(&provs)
+			ms.NoError(err, "error just getting PotentialProviders back out of the DB.")
+
+			pIDs := make([]int, len(provs))
+			for i, p := range provs {
+				pIDs[i] = p.ID
+			}
+
+			ms.Equal(test.wantIDs, pIDs)
 		})
 	}
 }

@@ -7,7 +7,7 @@ import (
 	"github.com/gofrs/uuid"
 )
 
-func (ms *ModelSuite) TestFindUsersByPostID() {
+func (ms *ModelSuite) TestPotentialProviders_FindUsersByPostID() {
 	f := createPotentialProvidersFixtures(ms)
 	posts := f.Posts
 	pps := f.PotentialProviders
@@ -43,7 +43,7 @@ func (ms *ModelSuite) TestFindUsersByPostID() {
 	}
 }
 
-func (ms *ModelSuite) TestFindWithPostUUIDAndUserID() {
+func (ms *ModelSuite) TestPotentialProvider_FindWithPostUUIDAndUserID() {
 	f := createPotentialProvidersFixtures(ms)
 	posts := f.Posts
 	users := f.Users
@@ -97,7 +97,7 @@ func (ms *ModelSuite) TestFindWithPostUUIDAndUserID() {
 	}
 }
 
-func (ms *ModelSuite) TestFindWithPostUUIDAndUserUUID() {
+func (ms *ModelSuite) TestPotentialProvider_FindWithPostUUIDAndUserUUID() {
 	f := createPotentialProvidersFixtures(ms)
 	posts := f.Posts
 	users := f.Users
@@ -151,7 +151,7 @@ func (ms *ModelSuite) TestFindWithPostUUIDAndUserUUID() {
 	}
 }
 
-func (ms *ModelSuite) TestDestroyWithPostUUIDAndUserID() {
+func (ms *ModelSuite) TestPotentialProvider_DestroyWithPostUUIDAndUserID() {
 	f := createPotentialProvidersFixtures(ms)
 	posts := f.Posts
 	users := f.Users
@@ -216,7 +216,7 @@ func (ms *ModelSuite) TestDestroyWithPostUUIDAndUserID() {
 	}
 }
 
-func (ms *ModelSuite) TestDestroyWithPostUUIDAndUserUUID() {
+func (ms *ModelSuite) TestPotentialProvider_DestroyWithPostUUIDAndUserUUID() {
 	f := createPotentialProvidersFixtures(ms)
 	posts := f.Posts
 	users := f.Users
@@ -258,6 +258,67 @@ func (ms *ModelSuite) TestDestroyWithPostUUIDAndUserUUID() {
 			provider := PotentialProvider{}
 			err := provider.DestroyWithPostUUIDAndUserUUID(
 				test.post.UUID.String(), test.ppUserUUID.String(), test.currentUser)
+
+			if test.wantErr != "" {
+				ms.Error(err, "did not get error as expected")
+				ms.Equal(test.wantErr, err.Error(), "wrong error message")
+				return
+			}
+
+			ms.NoError(err, "unexpected error")
+
+			var provs PotentialProviders
+			err = DB.All(&provs)
+			ms.NoError(err, "error just getting PotentialProviders back out of the DB.")
+
+			pIDs := make([]int, len(provs))
+			for i, p := range provs {
+				pIDs[i] = p.ID
+			}
+
+			ms.Equal(test.wantIDs, pIDs)
+		})
+	}
+}
+
+func (ms *ModelSuite) TestPotentialProviders_DestroyAllWithPostUUID() {
+	f := createPotentialProvidersFixtures(ms)
+	posts := f.Posts
+	users := f.Users
+	pps := f.PotentialProviders
+	t := ms.T()
+	tests := []struct {
+		name        string
+		currentUser User
+		post        Post
+		wantIDs     []int
+		wantErr     string
+	}{
+		{
+			name:        "good: Post Creator as current user",
+			currentUser: users[0],
+			post:        posts[0],
+			wantIDs:     []int{pps[3].ID, pps[4].ID},
+		},
+		{
+			name:        "bad: current user is potential provider but not Post Creator",
+			currentUser: users[2],
+			post:        posts[0],
+			wantErr: fmt.Sprintf(`user %v has insufficient permissions to destroy PotentialProviders for Post %v`,
+				users[2].ID, posts[0].ID),
+		},
+		{
+			name:        "bad: current user is not Post Creator",
+			currentUser: users[1],
+			post:        posts[1],
+			wantErr: fmt.Sprintf(`user %v has insufficient permissions to destroy PotentialProviders for Post %v`,
+				users[1].ID, posts[1].ID),
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			providers := PotentialProviders{}
+			err := providers.DestroyAllWithPostUUID(test.post.UUID.String(), test.currentUser)
 
 			if test.wantErr != "" {
 				ms.Error(err, "did not get error as expected")

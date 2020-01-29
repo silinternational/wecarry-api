@@ -436,6 +436,11 @@ func (r *mutationResolver) UpdatePostStatus(ctx context.Context, input UpdatePos
 		return nil, reportError(ctx, err, "UpdatePostStatus", extras)
 	}
 
+	if err := post.DestroyPotentialProviders(input.Status, cUser); err != nil {
+		return nil, reportError(ctx, errors.New("error destroying post's potential providers: "+err.Error()),
+			"UpdatePostStatus.DestroyPotentialProviders", extras)
+	}
+
 	return &post, nil
 }
 
