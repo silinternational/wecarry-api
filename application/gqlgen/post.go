@@ -446,15 +446,51 @@ func (r *mutationResolver) AddPotentialProvider(ctx context.Context, postID stri
 	}
 	cUser := models.GetCurrentUserFromGqlContext(ctx)
 
-	var reqCom models.PotentialProvider
-	if err := reqCom.NewWithPostUUID(postID, cUser.ID); err != nil {
+	var provider models.PotentialProvider
+	if err := provider.NewWithPostUUID(postID, cUser.ID); err != nil {
 		return nil, reportError(ctx, errors.New("error preparing potential provider: "+err.Error()),
 			"Post.AddPotentialProvider")
 	}
 
-	if err := reqCom.Create(); err != nil {
+	if err := provider.Create(); err != nil {
 		return nil, reportError(ctx, errors.New("error creating potential provider: "+err.Error()),
 			"Post.AddPotentialProvider")
+	}
+
+	return &post, nil
+}
+
+func (r *mutationResolver) RemoveMeAsPotentialProvider(ctx context.Context, postID string) (*models.Post, error) {
+	cUser := models.GetCurrentUserFromGqlContext(ctx)
+
+	var provider models.PotentialProvider
+
+	if err := provider.DestroyWithPostUUIDAndUserID(postID, cUser.ID, cUser); err != nil {
+		return nil, reportError(ctx, errors.New("error removing potential provider: "+err.Error()),
+			"Post.RemoveMeAsPotentialProvider")
+	}
+
+	var post models.Post
+	if err := post.FindByUUID(postID); err != nil {
+		return nil, reportError(ctx, err, "Post.RemoveMeAsPotentialProvider")
+	}
+
+	return &post, nil
+}
+
+func (r *mutationResolver) RemovePotentialProvider(ctx context.Context, postID, userID string) (*models.Post, error) {
+	cUser := models.GetCurrentUserFromGqlContext(ctx)
+
+	var provider models.PotentialProvider
+
+	if err := provider.DestroyWithPostUUIDAndUserUUID(postID, userID, cUser); err != nil {
+		return nil, reportError(ctx, errors.New("error removing potential provider: "+err.Error()),
+			"Post.RemovePotentialProvider")
+	}
+
+	var post models.Post
+	if err := post.FindByUUID(postID); err != nil {
+		return nil, reportError(ctx, err, "Post.RemovePotentialProvider")
 	}
 
 	return &post, nil

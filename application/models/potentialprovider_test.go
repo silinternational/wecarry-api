@@ -1,7 +1,10 @@
 package models
 
 import (
+	"fmt"
 	"testing"
+
+	"github.com/gofrs/uuid"
 )
 
 func (ms *ModelSuite) TestFindUsersByPostID() {
@@ -36,6 +39,244 @@ func (ms *ModelSuite) TestFindUsersByPostID() {
 			}
 
 			ms.Equal(test.wantIDs, ids)
+		})
+	}
+}
+
+func (ms *ModelSuite) TestFindWithPostUUIDAndUserID() {
+	f := createProvidersFixtures(ms)
+	posts := f.Posts
+	users := f.Users
+	pps := f.PotentialProviders
+	t := ms.T()
+	tests := []struct {
+		name        string
+		currentUser User
+		post        Post
+		ppUserID    int
+		wantID      int
+		wantErr     string
+	}{
+		{
+			name:        "good: post Creator as current user",
+			currentUser: users[0],
+			post:        posts[0],
+			ppUserID:    users[1].ID,
+			wantID:      pps[0].ID,
+		},
+		{
+			name:        "good: potential provider as current user",
+			currentUser: users[2],
+			post:        posts[0],
+			ppUserID:    users[2].ID,
+			wantID:      pps[1].ID,
+		},
+		{
+			name:        "bad: current user is not potential provider",
+			currentUser: users[1],
+			post:        posts[1],
+			ppUserID:    users[3].ID,
+			wantErr: fmt.Sprintf("user %v has insufficient permissions to access PotentialProvider %v",
+				users[1].ID, pps[4].ID),
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			provider := PotentialProvider{}
+			err := provider.FindWithPostUUIDAndUserID(test.post.UUID.String(), test.ppUserID, test.currentUser)
+
+			if test.wantErr != "" {
+				ms.Error(err, "did not get error as expected")
+				ms.Equal(test.wantErr, err.Error(), "wrong error message")
+				return
+			}
+
+			ms.NoError(err, "unexpected error")
+			ms.Equal(test.wantID, provider.ID)
+		})
+	}
+}
+
+func (ms *ModelSuite) TestFindWithPostUUIDAndUserUUID() {
+	f := createProvidersFixtures(ms)
+	posts := f.Posts
+	users := f.Users
+	pps := f.PotentialProviders
+	t := ms.T()
+	tests := []struct {
+		name        string
+		currentUser User
+		post        Post
+		ppUserUUID  uuid.UUID
+		wantID      int
+		wantErr     string
+	}{
+		{
+			name:        "good: post Creator as current user",
+			currentUser: users[0],
+			post:        posts[0],
+			ppUserUUID:  users[1].UUID,
+			wantID:      pps[0].ID,
+		},
+		{
+			name:        "good: potential provider as current user",
+			currentUser: users[2],
+			post:        posts[0],
+			ppUserUUID:  users[2].UUID,
+			wantID:      pps[1].ID,
+		},
+		{
+			name:        "bad: current user is not potential provider",
+			currentUser: users[1],
+			post:        posts[1],
+			ppUserUUID:  users[3].UUID,
+			wantErr: fmt.Sprintf("user %v has insufficient permissions to access PotentialProvider %v",
+				users[1].ID, pps[4].ID),
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			provider := PotentialProvider{}
+			err := provider.FindWithPostUUIDAndUserUUID(test.post.UUID.String(), test.ppUserUUID.String(), test.currentUser)
+
+			if test.wantErr != "" {
+				ms.Error(err, "did not get error as expected")
+				ms.Equal(test.wantErr, err.Error(), "wrong error message")
+				return
+			}
+
+			ms.NoError(err, "unexpected error")
+			ms.Equal(test.wantID, provider.ID)
+		})
+	}
+}
+
+func (ms *ModelSuite) TestDestroyWithPostUUIDAndUserID() {
+	f := createProvidersFixtures(ms)
+	posts := f.Posts
+	users := f.Users
+	pps := f.PotentialProviders
+	t := ms.T()
+	tests := []struct {
+		name        string
+		currentUser User
+		post        Post
+		ppUserID    int
+		wantIDs     []int
+		wantErr     string
+	}{
+		{
+			name:        "good: post Creator as current user",
+			currentUser: users[0],
+			post:        posts[0],
+			ppUserID:    users[1].ID,
+			wantIDs:     []int{pps[1].ID, pps[2].ID, pps[3].ID, pps[4].ID},
+		},
+		{
+			name:        "good: potential provider as current user",
+			currentUser: users[2],
+			post:        posts[0],
+			ppUserID:    users[2].ID,
+			wantIDs:     []int{pps[2].ID, pps[3].ID, pps[4].ID},
+		},
+		{
+			name:        "bad: current user is not potential provider",
+			currentUser: users[1],
+			post:        posts[1],
+			ppUserID:    users[3].ID,
+			wantErr: fmt.Sprintf(`unable to find PotentialProvider in order to delete it: `+
+				`user %v has insufficient permissions to access PotentialProvider %v`,
+				users[1].ID, pps[4].ID),
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			provider := PotentialProvider{}
+			err := provider.DestroyWithPostUUIDAndUserID(test.post.UUID.String(), test.ppUserID, test.currentUser)
+
+			if test.wantErr != "" {
+				ms.Error(err, "did not get error as expected")
+				ms.Equal(test.wantErr, err.Error(), "wrong error message")
+				return
+			}
+
+			ms.NoError(err, "unexpected error")
+
+			var provs PotentialProviders
+			err = DB.All(&provs)
+			ms.NoError(err, "error just getting PotentialProviders back out of the DB.")
+
+			pIDs := make([]int, len(provs))
+			for i, p := range provs {
+				pIDs[i] = p.ID
+			}
+
+			ms.Equal(test.wantIDs, pIDs)
+		})
+	}
+}
+
+func (ms *ModelSuite) TestDestroyWithPostUUIDAndUserUUID() {
+	f := createProvidersFixtures(ms)
+	posts := f.Posts
+	users := f.Users
+	pps := f.PotentialProviders
+	t := ms.T()
+	tests := []struct {
+		name        string
+		currentUser User
+		post        Post
+		ppUserUUID  uuid.UUID
+		wantIDs     []int
+		wantErr     string
+	}{
+		{
+			name:        "good: post Creator as current user",
+			currentUser: users[0],
+			post:        posts[0],
+			ppUserUUID:  users[1].UUID, // first PotentialProvider gets deleted
+			wantIDs:     []int{pps[1].ID, pps[2].ID, pps[3].ID, pps[4].ID},
+		},
+		{
+			name:        "good: potential provider as current user",
+			currentUser: users[2],
+			post:        posts[0],
+			ppUserUUID:  users[2].UUID, // second PotentialProvider also gets deleted
+			wantIDs:     []int{pps[2].ID, pps[3].ID, pps[4].ID},
+		},
+		{
+			name:        "bad: current user is not potential provider",
+			currentUser: users[1],
+			post:        posts[1],
+			ppUserUUID:  users[3].UUID,
+			wantErr: fmt.Sprintf(`unable to find PotentialProvider in order to delete it: `+
+				`user %v has insufficient permissions to access PotentialProvider %v`, users[1].ID, pps[4].ID),
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			provider := PotentialProvider{}
+			err := provider.DestroyWithPostUUIDAndUserUUID(
+				test.post.UUID.String(), test.ppUserUUID.String(), test.currentUser)
+
+			if test.wantErr != "" {
+				ms.Error(err, "did not get error as expected")
+				ms.Equal(test.wantErr, err.Error(), "wrong error message")
+				return
+			}
+
+			ms.NoError(err, "unexpected error")
+
+			var provs PotentialProviders
+			err = DB.All(&provs)
+			ms.NoError(err, "error just getting PotentialProviders back out of the DB.")
+
+			pIDs := make([]int, len(provs))
+			for i, p := range provs {
+				pIDs[i] = p.ID
+			}
+
+			ms.Equal(test.wantIDs, pIDs)
 		})
 	}
 }

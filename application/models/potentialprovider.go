@@ -24,8 +24,8 @@ type PotentialProvider struct {
 }
 
 // String can be helpful for serializing the model
-func (r PotentialProvider) String() string {
-	jt, _ := json.Marshal(r)
+func (p PotentialProvider) String() string {
+	jt, _ := json.Marshal(p)
 	return string(jt)
 }
 
@@ -33,75 +33,108 @@ func (r PotentialProvider) String() string {
 type PotentialProviders []PotentialProvider
 
 // String can be helpful for serializing the model
-func (r PotentialProviders) String() string {
-	jt, _ := json.Marshal(r)
+func (p PotentialProviders) String() string {
+	jt, _ := json.Marshal(p)
 	return string(jt)
 }
 
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
-func (r *PotentialProvider) Validate(tx *pop.Connection) (*validate.Errors, error) {
+func (p *PotentialProvider) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
-		&validators.IntIsPresent{Field: r.PostID, Name: "PostID"},
-		&validators.IntIsPresent{Field: r.UserID, Name: "UserID"},
+		&validators.IntIsPresent{Field: p.PostID, Name: "PostID"},
+		&validators.IntIsPresent{Field: p.UserID, Name: "UserID"},
 	), nil
 }
 
 // ValidateCreate gets run every time you call "pop.ValidateAndCreate" method.
-func (r *PotentialProvider) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) {
+func (p *PotentialProvider) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }
 
 // ValidateUpdate gets run every time you call "pop.ValidateAndUpdate" method.
-func (r *PotentialProvider) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
+func (p *PotentialProvider) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }
 
+// Create stores the PotentialProvider data as a new record in the database.
+func (p *PotentialProvider) Create() error {
+	return create(p)
+}
+
+// Update writes the PotentialProvider data to an existing database record.
+func (p *PotentialProvider) Update() error {
+	return update(p)
+}
+
 // FindByPostIDAndUserID reads a request record by the given Post ID and User ID
-func (r *PotentialProviders) FindUsersByPostID(postID int) (Users, error) {
+func (p *PotentialProviders) FindUsersByPostID(postID int) (Users, error) {
 	if postID <= 0 {
 		return Users{}, fmt.Errorf("error finding potential_provider, invalid id %v", postID)
 	}
 
-	if err := DB.Eager("User").Where("post_id = ?", postID).All(r); err != nil {
+	if err := DB.Eager("User").Where("post_id = ?", postID).All(p); err != nil {
 		if domain.IsOtherThanNoRows(err) {
 			return Users{}, fmt.Errorf("failed to find potential_provider record for post %d, %s",
 				postID, err)
 		}
 	}
-	users := make(Users, len(*r))
-	for i, rc := range *r {
-		users[i] = rc.User
+	users := make(Users, len(*p))
+	for i, pp := range *p {
+		users[i] = pp.User
 	}
 
 	return users, nil
 }
 
-// FindByPostIDAndUserID reads a request record by the given Post ID and User ID
-//func (r *PotentialProvider) FindByPostIDAndUserID(postID, userID int) error {
-//	if postID <= 0 || userID <= 0 {
-//		return fmt.Errorf("error finding potential_provider, invalid id ... postID %v, userID %v",
-//			postID, userID)
-//	}
-//
-//	where := "user_id = ? AND post_id = ? AND post_type = ?"
-//	if err := DB.Where(where, userID, postID, PostTypeRequest).First(r); err != nil {
-//		return fmt.Errorf("failed to find potential_provider record for user %d and post %d, %s",
-//			userID, postID, err)
-//	}
-//	return nil
-//}
+func (p *PotentialProvider) assertAuthorized(post Post, currentUser User) error {
+	if currentUser.AdminRole == UserAdminRoleSuperAdmin || currentUser.ID == post.CreatedByID {
+		return nil
+	}
+	if p.UserID == currentUser.ID {
+		return nil
+	}
 
-// Create stores the PotentialProvider data as a new record in the database.
-func (r *PotentialProvider) Create() error {
-	return create(r)
+	return fmt.Errorf("user %v has insufficient permissions to access PotentialProvider %v",
+		currentUser.ID, p.ID)
 }
 
-// Update writes the PotentialProvider data to an existing database record.
-func (r *PotentialProvider) Update() error {
-	return update(r)
+func (p *PotentialProvider) FindWithPostUUIDAndUserID(postUUID string, userID int, currentUser User) error {
+	var post Post
+	if err := post.FindByUUID(postUUID); err != nil {
+		return errors.New("unable to find Post in order to find PotentialProvider: " + err.Error())
+	}
+
+	var user User
+	if err := user.FindByID(userID); err != nil {
+		return errors.New("unable to find User in order to find PotentialProvider: " + err.Error())
+	}
+
+	if err := DB.Where("post_id = ? AND user_id = ?", post.ID, user.ID).First(p); err != nil {
+		return errors.New("unable to find PotentialProvider: " + err.Error())
+	}
+
+	return p.assertAuthorized(post, currentUser)
 }
 
-func (r *PotentialProvider) NewWithPostUUID(postUUID string, userID int) error {
+func (p *PotentialProvider) FindWithPostUUIDAndUserUUID(postUUID, userUUID string, currentUser User) error {
+	var post Post
+	if err := post.FindByUUID(postUUID); err != nil {
+		return errors.New("unable to find Post in order to find PotentialProvider: " + err.Error())
+	}
+
+	var user User
+	if err := user.FindByUUID(userUUID); err != nil {
+		return errors.New("unable to find User in order to find PotentialProvider: " + err.Error())
+	}
+
+	if err := DB.Where("post_id = ? AND user_id = ?", post.ID, user.ID).First(p); err != nil {
+		return errors.New("unable to find PotentialProvider: " + err.Error())
+	}
+
+	return p.assertAuthorized(post, currentUser)
+}
+
+func (p *PotentialProvider) NewWithPostUUID(postUUID string, userID int) error {
 	var user User
 	if err := user.FindByID(userID); err != nil {
 		return err
@@ -120,8 +153,24 @@ func (r *PotentialProvider) NewWithPostUUID(postUUID string, userID int) error {
 		return errors.New("PotentialProvider User must not be the Post's Receiver.")
 	}
 
-	r.PostID = post.ID
-	r.UserID = user.ID
+	p.PostID = post.ID
+	p.UserID = user.ID
 
 	return nil
+}
+
+func (p *PotentialProvider) DestroyWithPostUUIDAndUserID(postUUID string, userID int, currentUser User) error {
+	if err := p.FindWithPostUUIDAndUserID(postUUID, userID, currentUser); err != nil {
+		return errors.New("unable to find PotentialProvider in order to delete it: " + err.Error())
+	}
+
+	return DB.Destroy(p)
+}
+
+func (p *PotentialProvider) DestroyWithPostUUIDAndUserUUID(postUUID, userUUID string, currentUser User) error {
+	if err := p.FindWithPostUUIDAndUserUUID(postUUID, userUUID, currentUser); err != nil {
+		return errors.New("unable to find PotentialProvider in order to delete it: " + err.Error())
+	}
+
+	return DB.Destroy(p)
 }

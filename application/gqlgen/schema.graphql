@@ -20,6 +20,8 @@ type Mutation {
     updatePost(input: UpdatePostInput!): Post!
     updatePostStatus(input: UpdatePostStatusInput!): Post!
     addPotentialProvider(postID: String!): Post!
+    removeMeAsPotentialProvider(postID: String!): Post!
+    removePotentialProvider(postID: String!, userID: String!): Post!
     updateUser(input: UpdateUserInput!): User!
     createMeeting(input: CreateMeetingInput!): Meeting!
     updateMeeting(input: UpdateMeetingInput!): Meeting!
