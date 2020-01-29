@@ -605,6 +605,9 @@ func (p *Post) AttachFile(fileID string) (File, error) {
 	if err := postFile.Create(); err != nil {
 		return f, err
 	}
+	if err := f.SetLinked(); err != nil {
+		domain.ErrLogger.Printf("error marking new post file %d as linked, %s", f.ID, err)
+	}
 
 	return f, nil
 }
