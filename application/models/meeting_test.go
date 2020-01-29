@@ -324,7 +324,7 @@ func (ms *ModelSuite) TestMeeting_AttachImage() {
 
 	tests := []struct {
 		name     string
-		org      Meeting
+		meeting  Meeting
 		oldImage *File
 		newImage string
 		want     File
@@ -332,27 +332,27 @@ func (ms *ModelSuite) TestMeeting_AttachImage() {
 	}{
 		{
 			name:     "no previous file",
-			org:      meetings[0],
+			meeting:  meetings[0],
 			newImage: files[1].UUID.String(),
 			want:     files[1],
 		},
 		{
 			name:     "previous file",
-			org:      meetings[1],
+			meeting:  meetings[1],
 			oldImage: &files[0],
 			newImage: files[2].UUID.String(),
 			want:     files[2],
 		},
 		{
 			name:     "bad ID",
-			org:      meetings[2],
+			meeting:  meetings[2],
 			newImage: uuid.UUID{}.String(),
 			wantErr:  "no rows in result set",
 		},
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			got, err := tt.org.AttachImage(tt.newImage)
+			got, err := tt.meeting.AttachImage(tt.newImage)
 			if tt.wantErr != "" {
 				ms.Error(err, "did not get expected error")
 				ms.Contains(err.Error(), tt.wantErr)
