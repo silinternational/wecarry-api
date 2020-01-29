@@ -175,11 +175,8 @@ func (m *Meeting) AttachImage(fileID string) (File, error) {
 
 	oldID := m.ImageFileID
 	m.ImageFileID = nulls.NewInt(f.ID)
-	// if this is a new object, don't save it yet
-	if m.ID != 0 {
-		if err := m.Update(); err != nil {
-			return f, err
-		}
+	if err := DB.UpdateColumns(m, "image_file_id"); err != nil {
+		return f, err
 	}
 
 	if err := f.SetLinked(); err != nil {
