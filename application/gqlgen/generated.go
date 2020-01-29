@@ -94,24 +94,26 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		AddPotentialProvider     func(childComplexity int, postID string) int
-		CreateMeeting            func(childComplexity int, input meetingInput) int
-		CreateMessage            func(childComplexity int, input CreateMessageInput) int
-		CreateOrganization       func(childComplexity int, input CreateOrganizationInput) int
-		CreateOrganizationDomain func(childComplexity int, input CreateOrganizationDomainInput) int
-		CreateOrganizationTrust  func(childComplexity int, input CreateOrganizationTrustInput) int
-		CreatePost               func(childComplexity int, input postInput) int
-		CreateWatch              func(childComplexity int, input watchInput) int
-		RemoveOrganizationDomain func(childComplexity int, input RemoveOrganizationDomainInput) int
-		RemoveOrganizationTrust  func(childComplexity int, input RemoveOrganizationTrustInput) int
-		RemoveWatch              func(childComplexity int, input RemoveWatchInput) int
-		SetThreadLastViewedAt    func(childComplexity int, input SetThreadLastViewedAtInput) int
-		UpdateMeeting            func(childComplexity int, input meetingInput) int
-		UpdateOrganization       func(childComplexity int, input UpdateOrganizationInput) int
-		UpdatePost               func(childComplexity int, input postInput) int
-		UpdatePostStatus         func(childComplexity int, input UpdatePostStatusInput) int
-		UpdateUser               func(childComplexity int, input UpdateUserInput) int
-		UpdateWatch              func(childComplexity int, input watchInput) int
+		AddPotentialProvider        func(childComplexity int, postID string) int
+		CreateMeeting               func(childComplexity int, input meetingInput) int
+		CreateMessage               func(childComplexity int, input CreateMessageInput) int
+		CreateOrganization          func(childComplexity int, input CreateOrganizationInput) int
+		CreateOrganizationDomain    func(childComplexity int, input CreateOrganizationDomainInput) int
+		CreateOrganizationTrust     func(childComplexity int, input CreateOrganizationTrustInput) int
+		CreatePost                  func(childComplexity int, input postInput) int
+		CreateWatch                 func(childComplexity int, input watchInput) int
+		RemoveMeAsPotentialProvider func(childComplexity int, postID string) int
+		RemoveOrganizationDomain    func(childComplexity int, input RemoveOrganizationDomainInput) int
+		RemoveOrganizationTrust     func(childComplexity int, input RemoveOrganizationTrustInput) int
+		RemovePotentialProvider     func(childComplexity int, postID string, userID string) int
+		RemoveWatch                 func(childComplexity int, input RemoveWatchInput) int
+		SetThreadLastViewedAt       func(childComplexity int, input SetThreadLastViewedAtInput) int
+		UpdateMeeting               func(childComplexity int, input meetingInput) int
+		UpdateOrganization          func(childComplexity int, input UpdateOrganizationInput) int
+		UpdatePost                  func(childComplexity int, input postInput) int
+		UpdatePostStatus            func(childComplexity int, input UpdatePostStatusInput) int
+		UpdateUser                  func(childComplexity int, input UpdateUserInput) int
+		UpdateWatch                 func(childComplexity int, input watchInput) int
 	}
 
 	Organization struct {
@@ -249,6 +251,8 @@ type MutationResolver interface {
 	UpdatePost(ctx context.Context, input postInput) (*models.Post, error)
 	UpdatePostStatus(ctx context.Context, input UpdatePostStatusInput) (*models.Post, error)
 	AddPotentialProvider(ctx context.Context, postID string) (*models.Post, error)
+	RemoveMeAsPotentialProvider(ctx context.Context, postID string) (*models.Post, error)
+	RemovePotentialProvider(ctx context.Context, postID string, userID string) (*models.Post, error)
 	UpdateUser(ctx context.Context, input UpdateUserInput) (*models.User, error)
 	CreateMeeting(ctx context.Context, input meetingInput) (*models.Meeting, error)
 	UpdateMeeting(ctx context.Context, input meetingInput) (*models.Meeting, error)
@@ -640,6 +644,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreateWatch(childComplexity, args["input"].(watchInput)), true
 
+	case "Mutation.removeMeAsPotentialProvider":
+		if e.complexity.Mutation.RemoveMeAsPotentialProvider == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_removeMeAsPotentialProvider_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.RemoveMeAsPotentialProvider(childComplexity, args["postID"].(string)), true
+
 	case "Mutation.removeOrganizationDomain":
 		if e.complexity.Mutation.RemoveOrganizationDomain == nil {
 			break
@@ -663,6 +679,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.RemoveOrganizationTrust(childComplexity, args["input"].(RemoveOrganizationTrustInput)), true
+
+	case "Mutation.removePotentialProvider":
+		if e.complexity.Mutation.RemovePotentialProvider == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_removePotentialProvider_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.RemovePotentialProvider(childComplexity, args["postID"].(string), args["userID"].(string)), true
 
 	case "Mutation.removeWatch":
 		if e.complexity.Mutation.RemoveWatch == nil {
@@ -1418,6 +1446,8 @@ type Mutation {
     updatePost(input: UpdatePostInput!): Post!
     updatePostStatus(input: UpdatePostStatusInput!): Post!
     addPotentialProvider(postID: String!): Post!
+    removeMeAsPotentialProvider(postID: String!): Post!
+    removePotentialProvider(postID: String!, userID: String!): Post!
     updateUser(input: UpdateUserInput!): User!
     createMeeting(input: CreateMeetingInput!): Meeting!
     updateMeeting(input: UpdateMeetingInput!): Meeting!
@@ -1878,6 +1908,20 @@ func (ec *executionContext) field_Mutation_createWatch_args(ctx context.Context,
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_removeMeAsPotentialProvider_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["postID"]; ok {
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["postID"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_removeOrganizationDomain_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1903,6 +1947,28 @@ func (ec *executionContext) field_Mutation_removeOrganizationTrust_args(ctx cont
 		}
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_removePotentialProvider_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["postID"]; ok {
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["postID"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["userID"]; ok {
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["userID"] = arg1
 	return args, nil
 }
 
@@ -3309,6 +3375,94 @@ func (ec *executionContext) _Mutation_addPotentialProvider(ctx context.Context, 
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Mutation().AddPotentialProvider(rctx, args["postID"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Post)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNPost2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_removeMeAsPotentialProvider(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_removeMeAsPotentialProvider_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().RemoveMeAsPotentialProvider(rctx, args["postID"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Post)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNPost2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_removePotentialProvider(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_removePotentialProvider_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().RemovePotentialProvider(rctx, args["postID"].(string), args["userID"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9076,6 +9230,16 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "addPotentialProvider":
 			out.Values[i] = ec._Mutation_addPotentialProvider(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "removeMeAsPotentialProvider":
+			out.Values[i] = ec._Mutation_removeMeAsPotentialProvider(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "removePotentialProvider":
+			out.Values[i] = ec._Mutation_removePotentialProvider(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}

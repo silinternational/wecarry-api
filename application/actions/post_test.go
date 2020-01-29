@@ -21,6 +21,11 @@ type PostResponse struct {
 	Post Post `json:"post"`
 }
 
+type PotentialProvider struct {
+	ID       string `json:"id"`
+	Nickname string `json:"nickname"`
+}
+
 type Post struct {
 	ID          string          `json:"id"`
 	Type        models.PostType `json:"type"`
@@ -61,7 +66,8 @@ type Post struct {
 		Nickname  string `json:"nickname"`
 		AvatarURL string `json:"avatarURL"`
 	} `json:"provider"`
-	Organization struct {
+	PotentialProviders []PotentialProvider `json:"potentialProviders"`
+	Organization       struct {
 		ID string `json:"id"`
 	} `json:"organization"`
 	Photo struct {
