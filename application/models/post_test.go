@@ -1389,6 +1389,59 @@ func (ms *ModelSuite) TestPost_GetFiles() {
 	ms.Equal(expectedFilenames, receivedFilenames, "incorrect list of files")
 }
 
+func (ms *ModelSuite) TestPost_AttachPhoto() {
+	posts := createPostFixtures(ms.DB, 3, 0, false)
+
+	files := createFileFixtures(3)
+	posts[1].PhotoFileID = nulls.NewInt(files[0].ID)
+	ms.NoError(ms.DB.UpdateColumns(&posts[1], "photo_file_id"))
+
+	tests := []struct {
+		name     string
+		post     Post
+		oldImage *File
+		newImage string
+		want     File
+		wantErr  string
+	}{
+		{
+			name:     "no previous file",
+			post:     posts[0],
+			newImage: files[1].UUID.String(),
+			want:     files[1],
+		},
+		{
+			name:     "previous file",
+			post:     posts[1],
+			oldImage: &files[0],
+			newImage: files[2].UUID.String(),
+			want:     files[2],
+		},
+		{
+			name:     "bad ID",
+			post:     posts[2],
+			newImage: uuid.UUID{}.String(),
+			wantErr:  "no rows in result set",
+		},
+	}
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			got, err := tt.post.AttachPhoto(tt.newImage)
+			if tt.wantErr != "" {
+				ms.Error(err, "did not get expected error")
+				ms.Contains(err.Error(), tt.wantErr)
+				return
+			}
+			ms.NoError(err, "unexpected error")
+			ms.Equal(tt.want.UUID.String(), got.UUID.String(), "wrong file returned")
+			ms.Equal(true, got.Linked, "new post photo file is not marked as linked")
+			if tt.oldImage != nil {
+				ms.Equal(false, tt.oldImage.Linked, "old post photo file is not marked as unlinked")
+			}
+		})
+	}
+}
+
 // TestPost_AttachPhoto_GetPhoto tests the AttachPhoto and GetPhoto methods of models.Post
 func (ms *ModelSuite) TestPost_AttachPhoto_GetPhoto() {
 	posts := createPostFixtures(ms.DB, 1, 0, false)
