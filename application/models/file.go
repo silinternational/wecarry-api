@@ -240,7 +240,7 @@ func (f *File) Update() error {
 // DeleteUnlinked removes all files that are no longer linked to any database records
 func (f *Files) DeleteUnlinked() error {
 	var files Files
-	if err := DB.Select("id", "uuid").Where("linked = 0").All(&files); err != nil {
+	if err := DB.Select("id", "uuid").Where("linked = FALSE").All(&files); err != nil {
 		return err
 	}
 
