@@ -2,13 +2,10 @@ package models
 
 import (
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
-
-	"github.com/silinternational/wecarry-api/domain"
 )
 
 type PostFile struct {
@@ -54,35 +51,4 @@ func (p *PostFile) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) 
 // Create stores the PostFile data as a new record in the database.
 func (p *PostFile) Create() error {
 	return create(p)
-}
-
-// AttachFile assigns a previously-stored File to this PostFile. Parameter `fileID` is the UUID
-// of the file to attach.
-func (p *PostFile) AttachFile(fileID string) (File, error) {
-	if p.ID < 1 {
-		return File{}, fmt.Errorf("invalid PostFile ID %d", p.ID)
-	}
-
-	var f File
-	if err := f.FindByUUID(fileID); err != nil {
-		err = fmt.Errorf("error finding post file with id %s ... %s", fileID, err)
-		return f, err
-	}
-
-	oldID := p.FileID
-	p.FileID = f.ID
-	if err := DB.UpdateColumns(p, "file_id"); err != nil {
-		return f, err
-	}
-
-	if err := f.SetLinked(); err != nil {
-		domain.ErrLogger.Printf("error marking post file %d as linked, %s", f.ID, err)
-	}
-
-	oldFile := File{ID: oldID}
-	if err := oldFile.ClearLinked(); err != nil {
-		domain.ErrLogger.Printf("error marking post file %d as unlinked, %s", oldFile.ID, err)
-	}
-
-	return f, nil
 }
