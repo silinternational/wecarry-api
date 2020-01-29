@@ -51,7 +51,7 @@ func createOrganizationFixtures(tx *pop.Connection, n int) Organizations {
 		organizations[i].Name = fmt.Sprintf("Org%v", i+1)
 		organizations[i].AuthType = AuthTypeSaml
 		organizations[i].AuthConfig = "{}"
-		organizations[i].LogoFileID = nulls.NewInt(files[i].ID)
+		_, _ = organizations[i].AttachLogo(files[i].UUID.String())
 		mustCreate(tx, &organizations[i])
 	}
 
@@ -159,7 +159,7 @@ func createPostFixtures(tx *pop.Connection, nRequests, nOffers int, createFiles 
 		posts[i].Visibility = PostVisibilitySame
 
 		if createFiles {
-			posts[i].PhotoFileID = nulls.NewInt(files[i].ID)
+			_, _ = posts[i].AttachPhoto(files[i].UUID.String())
 		}
 
 		mustCreate(tx, &posts[i])
@@ -224,8 +224,7 @@ func createMeetingFixtures(tx *pop.Connection, nMeetings int) Meetings {
 		meetings[i].LocationID = locations[i].ID
 		meetings[i].StartDate = time.Now()
 		meetings[i].EndDate = time.Now().Add(time.Hour * 24)
-		meetings[i].ImageFileID = nulls.NewInt(files[i].ID)
-
+		_, _ = meetings[i].AttachImage(files[i].UUID.String())
 		mustCreate(tx, &meetings[i])
 	}
 
