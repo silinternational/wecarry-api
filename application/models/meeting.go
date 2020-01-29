@@ -167,6 +167,10 @@ func (m *Meetings) FindRecent(timeInFocus time.Time) error {
 // AttachImage assigns a previously-stored File to this Meeting as its image. Parameter `fileID` is the UUID
 // of the image to attach.
 func (m *Meeting) AttachImage(fileID string) (File, error) {
+	if m.ID < 1 {
+		return File{}, fmt.Errorf("invalid Meeting ID %d", m.ID)
+	}
+
 	var f File
 	if err := f.FindByUUID(fileID); err != nil {
 		err = fmt.Errorf("error finding meeting image with id %s ... %s", fileID, err)

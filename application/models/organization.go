@@ -271,6 +271,10 @@ func (o *Organization) TrustedOrganizations() (Organizations, error) {
 // AttachLogo assigns a previously-stored File to this Organization as its logo. Parameter `fileID` is the UUID
 // of the file to attach.
 func (o *Organization) AttachLogo(fileID string) (File, error) {
+	if o.ID < 1 {
+		return File{}, fmt.Errorf("invalid Organization ID %d", o.ID)
+	}
+
 	var f File
 	if err := f.FindByUUID(fileID); err != nil {
 		err = fmt.Errorf("error finding organization logo with id %s ... %s", fileID, err)
