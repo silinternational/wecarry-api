@@ -70,21 +70,35 @@ func (o *Organization) ValidateUpdate(tx *pop.Connection) (*validate.Errors, err
 	return validate.NewErrors(), nil
 }
 
-func (o *Organization) GetAuthProvider() (auth.Provider, error) {
+func (o *Organization) GetAuthProvider(authEmail string) (auth.Provider, error) {
+	// Use type and config from organization by default
+	authType := o.AuthType
+	authConfig := o.AuthConfig
 
-	switch o.AuthType {
+	// Check if organization domain has override auth config to use instead of default
+	authDomain := domain.EmailDomain(authEmail)
+	var orgDomain OrganizationDomain
+	if err := orgDomain.FindByDomain(authDomain); err != nil {
+		return &auth.EmptyProvider{}, err
+	}
+	if orgDomain.AuthType.String != "" {
+		authType = orgDomain.AuthType.String
+		authConfig = orgDomain.AuthConfig.String
+	}
+
+	switch authType {
 	case AuthTypeAzureAD:
-		return azureadv2.New([]byte(o.AuthConfig))
+		return azureadv2.New([]byte(authConfig))
 	case AuthTypeFacebook:
-		return facebook.New([]byte(o.AuthConfig))
+		return facebook.New([]byte(authConfig))
 	case AuthTypeGoogle:
-		return google.New([]byte(o.AuthConfig))
+		return google.New([]byte(authConfig))
 	case AuthTypeLinkedIn:
-		return linkedin.New([]byte(o.AuthConfig))
+		return linkedin.New([]byte(authConfig))
 	case AuthTypeSaml:
-		return saml.New([]byte(o.AuthConfig))
+		return saml.New([]byte(authConfig))
 	case AuthTypeTwitter:
-		return twitter.New([]byte(o.AuthConfig))
+		return twitter.New([]byte(authConfig))
 
 	}
 

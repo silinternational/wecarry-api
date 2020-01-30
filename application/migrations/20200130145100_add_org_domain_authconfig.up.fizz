@@ -1,0 +1,2 @@
+add_column("organization_domains", "auth_type", "string", {null: true})
+add_column("organization_domains", "auth_config", "string", {null: true})

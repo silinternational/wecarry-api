@@ -222,7 +222,7 @@ func authRequest(c buffalo.Context) error {
 	orgID := org.UUID.String()
 	c.Session().Set(OrgIDSessionKey, orgID)
 
-	sp, err := org.GetAuthProvider()
+	sp, err := org.GetAuthProvider(authEmail)
 	if err != nil {
 		return authRequestError(c, http.StatusInternalServerError, domain.ErrorLoadingAuthProvider,
 			fmt.Sprintf("unable to load auth provider for '%s' ... %v", org.Name, err), extras)

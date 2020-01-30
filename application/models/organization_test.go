@@ -6,6 +6,8 @@ import (
 	"github.com/gobuffalo/nulls"
 	"github.com/gofrs/uuid"
 
+	"github.com/silinternational/wecarry-api/auth/facebook"
+	"github.com/silinternational/wecarry-api/auth/google"
 	"github.com/silinternational/wecarry-api/domain"
 )
 
@@ -642,5 +644,53 @@ func (ms *ModelSuite) TestOrganization_AttachLogo() {
 				ms.Equal(false, tt.oldLogo.Linked, "old logo file is not marked as unlinked")
 			}
 		})
+	}
+}
+
+func (ms *ModelSuite) TestOrganization_GetAuthProvider() {
+	uid := domain.GetUUID()
+	org := Organization{
+		Name:       "testorg1",
+		AuthType:   AuthTypeFacebook,
+		AuthConfig: "{}",
+		UUID:       uid,
+	}
+	err := org.Save()
+	ms.NoError(err, "unable to create organization fixture")
+
+	orgDomain1 := OrganizationDomain{
+		OrganizationID: org.ID,
+		Domain:         "domain1.com",
+		AuthType:       nulls.String{},
+		AuthConfig:     nulls.String{},
+	}
+	err = orgDomain1.Save()
+	ms.NoError(err, "unable to create orgDomain1 fixture")
+
+	orgDomain2 := OrganizationDomain{
+		OrganizationID: org.ID,
+		Domain:         "domain2.com",
+		AuthType:       nulls.NewString(AuthTypeGoogle),
+		AuthConfig:     nulls.String{},
+	}
+	err = orgDomain2.Save()
+	ms.NoError(err, "unable to create orgDomain2 fixture")
+
+	var o Organization
+	err = o.FindByUUID(uid.String())
+	ms.NoError(err, "unable to find organization fixture")
+
+	// should get type facebook:
+	provider, err := o.GetAuthProvider("test@domain1.com")
+	ms.NoError(err, "unable to get authprovider for test@domain1.com")
+	if _, ok := provider.(*facebook.Provider); !ok {
+		ms.Fail("auth provider not expected facebook type")
+	}
+
+	// should get type google:
+	provider, err = o.GetAuthProvider("test@domain2.com")
+	ms.NoError(err, "unable to get authprovider for test@domain2.com")
+	if _, ok := provider.(*google.Provider); !ok {
+		ms.Fail("auth provider not expected google type")
 	}
 }

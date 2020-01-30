@@ -1,0 +1,2 @@
+drop_column("organization_domains", "auth_config")
+drop_column("organization_domains", "auth_type")
