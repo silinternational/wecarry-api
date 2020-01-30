@@ -57,10 +57,10 @@ func (p *PotentialProvider) ValidateUpdate(tx *pop.Connection) (*validate.Errors
 	return validate.NewErrors(), nil
 }
 
-// PotentialProviderCreatedEventData holds data needed by the event listener that deals with a new PotentialProvider
-type PotentialProviderCreatedEventData struct {
-	PotentialProviderID int
-	PostID              int
+// PotentialProviderEventData holds data needed by the event listener that deals with a single PotentialProvider
+type PotentialProviderEventData struct {
+	UserID int
+	PostID int
 }
 
 // Create stores the PotentialProvider data as a new record in the database.
@@ -70,13 +70,13 @@ func (p *PotentialProvider) Create() error {
 		return err
 	}
 
-	eventData := PotentialProviderCreatedEventData{
-		PotentialProviderID: p.UserID,
-		PostID:              p.ID,
+	eventData := PotentialProviderEventData{
+		UserID: p.UserID,
+		PostID: p.PostID,
 	}
 
 	e := events.Event{
-		Kind:    domain.EventApiPotentialProvideCreated,
+		Kind:    domain.EventApiPotentialProviderCreated,
 		Message: "Potential Provider created",
 		Payload: events.Payload{"eventData": eventData},
 	}
@@ -184,22 +184,58 @@ func (p *PotentialProvider) NewWithPostUUID(postUUID string, userID int) error {
 	return nil
 }
 
+// DestroyWithPostUUIDAndUserID meant for when a user removes themself as a PotentialProvider
 func (p *PotentialProvider) DestroyWithPostUUIDAndUserID(postUUID string, userID int, currentUser User) error {
 	if err := p.FindWithPostUUIDAndUserID(postUUID, userID, currentUser); err != nil {
 		return errors.New("unable to find PotentialProvider in order to delete it: " + err.Error())
 	}
 
-	return DB.Destroy(p)
+	if err := DB.Destroy(p); err != nil {
+		return err
+	}
+
+	eventData := PotentialProviderEventData{
+		UserID: p.UserID,
+		PostID: p.PostID,
+	}
+
+	e := events.Event{
+		Kind:    domain.EventApiPotentialProviderSelfDestroyed,
+		Message: "Potential Provider self destroyed",
+		Payload: events.Payload{"eventData": eventData},
+	}
+
+	emitEvent(e)
+	return nil
 }
 
+// DestroyWithPostUUIDAndUserUUID meant for when a Requester removes another user as a PotentialProvider
 func (p *PotentialProvider) DestroyWithPostUUIDAndUserUUID(postUUID, userUUID string, currentUser User) error {
 	if err := p.FindWithPostUUIDAndUserUUID(postUUID, userUUID, currentUser); err != nil {
 		return errors.New("unable to find PotentialProvider in order to delete it: " + err.Error())
 	}
 
-	return DB.Destroy(p)
+	if err := DB.Destroy(p); err != nil {
+		return err
+	}
+
+	eventData := PotentialProviderEventData{
+		UserID: p.UserID,
+		PostID: p.PostID,
+	}
+
+	e := events.Event{
+		Kind:    domain.EventApiPotentialProviderRejected,
+		Message: "Potential Provider destroyed",
+		Payload: events.Payload{"eventData": eventData},
+	}
+
+	emitEvent(e)
+	return nil
 }
 
+// DestroyAllWithPostUUID is meant to be called when PotentialProviders are no longer needed for a Post,
+// e.g. when it is Completed
 func (p *PotentialProviders) DestroyAllWithPostUUID(postUUID string, currentUser User) error {
 	var post Post
 	if err := post.FindByUUID(postUUID); err != nil {
@@ -212,5 +248,6 @@ func (p *PotentialProviders) DestroyAllWithPostUUID(postUUID string, currentUser
 	}
 
 	DB.Where("post_id = ?", post.ID).All(p)
+
 	return DB.Destroy(p)
 }

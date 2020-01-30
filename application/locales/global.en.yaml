@@ -192,6 +192,8 @@
 # Notifications regarding Request offers/potential providers
 - id: Email.Subject.Request.OfferRejected
   translation: Your {{.AppName}} offer for "{{.postTitle}}" was not accepted
+- id: Email.Subject.Request.OfferRetracted
+  translation: An offer to fulfill your rqeust on {{.AppName}} has been retracted
 - id: Email.Subject.Request.NewOffer
   translation: You have received a new offer on {{.AppName}} to fulfill your request
 

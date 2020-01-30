@@ -168,7 +168,7 @@ func sendNotificationRequestFromAcceptedToRemoved(params senderParams) {
 }
 
 func sendRejectionToPotentialProvider(potentialProvider models.User, post models.Post) {
-	template := domain.MessageTemplatePotentialProviderNotAccepted
+	template := domain.MessageTemplatePotentialProviderRejected
 	ppNickname := potentialProvider.Nickname
 	ppEmail := potentialProvider.Email
 
@@ -379,6 +379,62 @@ func sendNewPostNotification(user models.User, post models.Post) error {
 			"receiverNickname": receiverNickname,
 			"postDescription":  post.Description,
 			"postDestination":  postDestination,
+		},
+	}
+	return notifications.Send(msg)
+}
+
+func sendPotentialProviderCreatedNotification(providerNickname string, requester models.User, post models.Post) error {
+	msg := notifications.Message{
+		Subject: domain.GetTranslatedSubject(requester.GetLanguagePreference(),
+			"Email.Subject.Request.NewOffer", map[string]string{}),
+		Template:  domain.MessageTemplatePotentialProviderCreated,
+		ToName:    requester.GetRealName(),
+		ToEmail:   requester.Email,
+		FromEmail: domain.EmailFromAddress(nil),
+		Data: map[string]interface{}{
+			"appName":          domain.Env.AppName,
+			"uiURL":            domain.Env.UIURL,
+			"postURL":          domain.GetPostUIURL(post.UUID.String()),
+			"postTitle":        domain.Truncate(post.Title, "...", 16),
+			"providerNickname": providerNickname,
+		},
+	}
+	return notifications.Send(msg)
+}
+
+func sendPotentialProviderSelfDestroyedNotification(providerNickname string, requester models.User, post models.Post) error {
+	msg := notifications.Message{
+		Subject: domain.GetTranslatedSubject(requester.GetLanguagePreference(),
+			"Email.Subject.Request.OfferRetracted", map[string]string{}),
+		Template:  domain.MessageTemplatePotentialProviderSelfDestroyed,
+		ToName:    requester.GetRealName(),
+		ToEmail:   requester.Email,
+		FromEmail: domain.EmailFromAddress(nil),
+		Data: map[string]interface{}{
+			"appName":          domain.Env.AppName,
+			"uiURL":            domain.Env.UIURL,
+			"postURL":          domain.GetPostUIURL(post.UUID.String()),
+			"postTitle":        domain.Truncate(post.Title, "...", 16),
+			"providerNickname": providerNickname,
+		},
+	}
+	return notifications.Send(msg)
+}
+func sendPotentialProviderRejectedNotification(provider models.User, requester string, post models.Post) error {
+	msg := notifications.Message{
+		Subject: domain.GetTranslatedSubject(provider.GetLanguagePreference(),
+			"Email.Subject.Request.NewOffer", map[string]string{}),
+		Template:  domain.MessageTemplatePotentialProviderRejected,
+		ToName:    provider.GetRealName(),
+		ToEmail:   provider.Email,
+		FromEmail: domain.EmailFromAddress(nil),
+		Data: map[string]interface{}{
+			"appName":           domain.Env.AppName,
+			"uiURL":             domain.Env.UIURL,
+			"postURL":           domain.GetPostUIURL(post.UUID.String()),
+			"postTitle":         domain.Truncate(post.Title, "...", 16),
+			"requesterNickname": requester,
 		},
 	}
 	return notifications.Send(msg)
