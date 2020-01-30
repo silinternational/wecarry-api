@@ -243,6 +243,7 @@ func (f *Files) DeleteUnlinked() error {
 	if err := DB.Select("id", "uuid").Where("linked = FALSE").All(&files); err != nil {
 		return err
 	}
+	domain.Logger.Printf("unlinked files: %d", len(files))
 
 	nRemovedFromDB := 0
 	nRemovedFromS3 := 0
