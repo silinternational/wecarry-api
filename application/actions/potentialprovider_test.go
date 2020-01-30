@@ -6,12 +6,12 @@ import (
 	"github.com/silinternational/wecarry-api/internal/test"
 )
 
-func (as *ActionSuite) Test_AddPotentialProvider() {
+func (as *ActionSuite) Test_AddMeAsPotentialProvider() {
 
 	f := test.CreatePotentialProvidersFixtures(as.DB)
 	posts := f.Posts
 
-	qTemplate := `mutation {post: addPotentialProvider (postID: "%s")` +
+	const qTemplate = `mutation {post: addMeAsPotentialProvider (postID: "%s")` +
 		` {id title potentialProviders{id nickname}}}`
 
 	// Add one to Post with none
@@ -21,8 +21,8 @@ func (as *ActionSuite) Test_AddPotentialProvider() {
 
 	err := as.testGqlQuery(query, f.Users[1].Nickname, &resp)
 	as.NoError(err)
-	as.Equal(f.Posts[2].UUID.String(), resp.Post.ID, "incorrect Post UUID")
-	as.Equal(f.Posts[2].Title, resp.Post.Title, "incorrect Post title")
+	as.Equal(posts[2].UUID.String(), resp.Post.ID, "incorrect Post UUID")
+	as.Equal(posts[2].Title, resp.Post.Title, "incorrect Post title")
 
 	want := []PotentialProvider{{ID: f.Users[1].UUID.String(), Nickname: f.Users[1].Nickname}}
 	as.Equal(want, resp.Post.PotentialProviders, "incorrect potential providers")
@@ -32,8 +32,8 @@ func (as *ActionSuite) Test_AddPotentialProvider() {
 
 	err = as.testGqlQuery(query, f.Users[1].Nickname, &resp)
 	as.NoError(err)
-	as.Equal(f.Posts[1].UUID.String(), resp.Post.ID, "incorrect Post UUID")
-	as.Equal(f.Posts[1].Title, resp.Post.Title, "incorrect Post title")
+	as.Equal(posts[1].UUID.String(), resp.Post.ID, "incorrect Post UUID")
+	as.Equal(posts[1].Title, resp.Post.Title, "incorrect Post title")
 
 	want = []PotentialProvider{
 		{ID: f.Users[2].UUID.String(), Nickname: f.Users[2].Nickname},
@@ -57,8 +57,8 @@ func (as *ActionSuite) Test_RemoveMeAsPotentialProvider() {
 
 	err := as.testGqlQuery(query, f.Users[2].Nickname, &resp)
 	as.NoError(err)
-	as.Equal(f.Posts[1].UUID.String(), resp.Post.ID, "incorrect Post UUID")
-	as.Equal(f.Posts[1].Title, resp.Post.Title, "incorrect Post title")
+	as.Equal(posts[1].UUID.String(), resp.Post.ID, "incorrect Post UUID")
+	as.Equal(posts[1].Title, resp.Post.Title, "incorrect Post title")
 
 	want := []PotentialProvider{{ID: f.Users[3].UUID.String(), Nickname: f.Users[3].Nickname}}
 	as.Equal(want, resp.Post.PotentialProviders, "incorrect potential providers")
@@ -79,8 +79,8 @@ func (as *ActionSuite) Test_RemovePotentialProvider() {
 
 	err := as.testGqlQuery(query, f.Users[2].Nickname, &resp)
 	as.NoError(err)
-	as.Equal(f.Posts[1].UUID.String(), resp.Post.ID, "incorrect Post UUID")
-	as.Equal(f.Posts[1].Title, resp.Post.Title, "incorrect Post title")
+	as.Equal(posts[1].UUID.String(), resp.Post.ID, "incorrect Post UUID")
+	as.Equal(posts[1].Title, resp.Post.Title, "incorrect Post title")
 
 	want := []PotentialProvider{{ID: f.Users[3].UUID.String(), Nickname: f.Users[3].Nickname}}
 	as.Equal(want, resp.Post.PotentialProviders, "incorrect potential providers")

@@ -111,34 +111,13 @@ func (p *PotentialProviders) FindUsersByPostID(postID int) (Users, error) {
 	return users, nil
 }
 
-func (p *PotentialProvider) assertAuthorized(post Post, currentUser User) error {
+func (p *PotentialProvider) CanUserAccessPotentialProvider(post Post, currentUser User) bool {
 	if currentUser.AdminRole == UserAdminRoleSuperAdmin || currentUser.ID == post.CreatedByID {
-		return nil
+		return true
 	}
-	if p.UserID == currentUser.ID {
-		return nil
-	}
-
-	return fmt.Errorf("user %v has insufficient permissions to access PotentialProvider %v",
-		currentUser.ID, p.ID)
-}
-
-func (p *PotentialProvider) FindWithPostUUIDAndUserID(postUUID string, userID int, currentUser User) error {
-	var post Post
-	if err := post.FindByUUID(postUUID); err != nil {
-		return errors.New("unable to find Post in order to find PotentialProvider: " + err.Error())
-	}
-
-	var user User
-	if err := user.FindByID(userID); err != nil {
-		return errors.New("unable to find User in order to find PotentialProvider: " + err.Error())
-	}
-
-	if err := DB.Where("post_id = ? AND user_id = ?", post.ID, user.ID).First(p); err != nil {
-		return errors.New("unable to find PotentialProvider: " + err.Error())
-	}
-
-	return p.assertAuthorized(post, currentUser)
+	return p.UserID == currentUser.ID
+	//fmt.Errorf("user %v has insufficient permissions to access PotentialProvider %v",
+	//	currentUser.ID, p.ID)
 }
 
 func (p *PotentialProvider) FindWithPostUUIDAndUserUUID(postUUID, userUUID string, currentUser User) error {
@@ -156,7 +135,7 @@ func (p *PotentialProvider) FindWithPostUUIDAndUserUUID(postUUID, userUUID strin
 		return errors.New("unable to find PotentialProvider: " + err.Error())
 	}
 
-	return p.assertAuthorized(post, currentUser)
+	return nil
 }
 
 func (p *PotentialProvider) NewWithPostUUID(postUUID string, userID int) error {
@@ -184,19 +163,7 @@ func (p *PotentialProvider) NewWithPostUUID(postUUID string, userID int) error {
 	return nil
 }
 
-func (p *PotentialProvider) DestroyWithPostUUIDAndUserID(postUUID string, userID int, currentUser User) error {
-	if err := p.FindWithPostUUIDAndUserID(postUUID, userID, currentUser); err != nil {
-		return errors.New("unable to find PotentialProvider in order to delete it: " + err.Error())
-	}
-
-	return DB.Destroy(p)
-}
-
-func (p *PotentialProvider) DestroyWithPostUUIDAndUserUUID(postUUID, userUUID string, currentUser User) error {
-	if err := p.FindWithPostUUIDAndUserUUID(postUUID, userUUID, currentUser); err != nil {
-		return errors.New("unable to find PotentialProvider in order to delete it: " + err.Error())
-	}
-
+func (p *PotentialProvider) Destroy() error {
 	return DB.Destroy(p)
 }
 
@@ -211,6 +178,8 @@ func (p *PotentialProviders) DestroyAllWithPostUUID(postUUID string, currentUser
 			currentUser.ID, post.ID)
 	}
 
-	DB.Where("post_id = ?", post.ID).All(p)
+	if err := DB.Where("post_id = ?", post.ID).All(p); err != nil {
+		return errors.New("unable to find Post's Potential Providers in order to remove them: " + err.Error())
+	}
 	return DB.Destroy(p)
 }
