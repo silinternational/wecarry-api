@@ -46,12 +46,15 @@ func createOrganizationFixtures(tx *pop.Connection, n int) Organizations {
 	organizations := make(Organizations, n)
 	for i := range organizations {
 		if err := files[i].Store("logo.gif", []byte("GIF89a")); err != nil {
-			panic("unexpected error storing org logo " + err.Error())
+			panic("error storing org logo, " + err.Error())
 		}
 		organizations[i].Name = fmt.Sprintf("Org%v", i+1)
 		organizations[i].AuthType = AuthTypeSaml
 		organizations[i].AuthConfig = "{}"
-		_, _ = organizations[i].AttachLogo(files[i].UUID.String())
+		if _, err := organizations[i].AttachLogo(files[i].UUID.String()); err != nil {
+			panic("error attaching logo to org fixture, " + err.Error())
+		}
+
 		mustCreate(tx, &organizations[i])
 	}
 
@@ -159,7 +162,9 @@ func createPostFixtures(tx *pop.Connection, nRequests, nOffers int, createFiles 
 		posts[i].Visibility = PostVisibilitySame
 
 		if createFiles {
-			_, _ = posts[i].AttachPhoto(files[i].UUID.String())
+			if _, err := posts[i].AttachPhoto(files[i].UUID.String()); err != nil {
+				panic("error attaching photo to post fixture, " + err.Error())
+			}
 		}
 
 		mustCreate(tx, &posts[i])
@@ -224,7 +229,9 @@ func createMeetingFixtures(tx *pop.Connection, nMeetings int) Meetings {
 		meetings[i].LocationID = locations[i].ID
 		meetings[i].StartDate = time.Now()
 		meetings[i].EndDate = time.Now().Add(time.Hour * 24)
-		_, _ = meetings[i].AttachImage(files[i].UUID.String())
+		if _, err := meetings[i].AttachImage(files[i].UUID.String()); err != nil {
+			panic("error attaching image to meeting fixture, " + err.Error())
+		}
 		mustCreate(tx, &meetings[i])
 	}
 
