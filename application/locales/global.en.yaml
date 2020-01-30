@@ -184,15 +184,16 @@
   translation: Thank you for fulfilling a request on {{.AppName}}
 - id: Email.Subject.Request.FromAcceptedToRemoved
   translation: Your {{.AppName}} offer for "{{.postTitle}}" is no longer needed
-
-- id: Email.Subject.Request.OfferRejected
-  translation: Your {{.AppName}} offer for "{{.postTitle}}" was not accepted
-
 - id: Email.Subject.Request.FromCompletedToAcceptedOrDelivered
   translation: Request not received on {{.AppName}} after all
-
 - id: Email.Subject.Request.FromDeliveredToAccepted
   translation: Request not delivered after all on {{.AppName}}
+
+# Notifications regarding Request offers/potential providers
+- id: Email.Subject.Request.OfferRejected
+  translation: Your {{.AppName}} offer for "{{.postTitle}}" was not accepted
+- id: Email.Subject.Request.NewOffer
+  translation: You have received a new offer on {{.AppName}} to fulfill your request
 
 # New Message notification subject
 - id: Email.Subject.Message.Created
