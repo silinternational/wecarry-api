@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/gobuffalo/events"
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
 	"github.com/gobuffalo/validate/validators"
@@ -56,9 +57,33 @@ func (p *PotentialProvider) ValidateUpdate(tx *pop.Connection) (*validate.Errors
 	return validate.NewErrors(), nil
 }
 
+// PotentialProviderCreatedEventData holds data needed by the event listener that deals with a new PotentialProvider
+type PotentialProviderCreatedEventData struct {
+	PotentialProviderID int
+	PostID              int
+}
+
 // Create stores the PotentialProvider data as a new record in the database.
 func (p *PotentialProvider) Create() error {
-	return create(p)
+
+	if err := create(p); err != nil {
+		return err
+	}
+
+	eventData := PotentialProviderCreatedEventData{
+		PotentialProviderID: p.UserID,
+		PostID:              p.ID,
+	}
+
+	e := events.Event{
+		Kind:    domain.EventApiPotentialProvideCreated,
+		Message: "Potential Provider created",
+		Payload: events.Payload{"eventData": eventData},
+	}
+
+	emitEvent(e)
+
+	return nil
 }
 
 // Update writes the PotentialProvider data to an existing database record.
