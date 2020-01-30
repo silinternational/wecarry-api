@@ -264,13 +264,13 @@ func (ms *ModelSuite) Test_detectContentType() {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := detectContentType(tt.content)
+			got, err := validateContentType(tt.content)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("detectContentType() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("validateContentType() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("detectContentType() got = %v, want %v", got, tt.want)
+				t.Errorf("validateContentType() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -310,4 +310,39 @@ func (ms *ModelSuite) TestFiles_DeleteUnlinked() {
 	ms.NoError(f.DeleteUnlinked())
 	n, _ := DB.Count(&f)
 	ms.Equal(nPosts*2+nMeetings+nOrganizations+nUsers, n, "wrong number of files remain")
+}
+
+func (ms *ModelSuite) Test_changeFileExtension() {
+	tests := []struct {
+		name        string
+		filename    string
+		contentType string
+		want        string
+	}{
+		{
+			name:        "png to gif",
+			filename:    "file.png",
+			contentType: "image/gif",
+			want:        "file.gif",
+		},
+		{
+			name:        "webp to png",
+			filename:    "file.webp",
+			contentType: "image/png",
+			want:        "file.png",
+		},
+		{
+			name:        "bad type",
+			filename:    "file.webp",
+			contentType: "file/xyz",
+			want:        "file.webp",
+		},
+	}
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			n := tt.filename
+			changeFileExtension(&n, tt.contentType)
+			ms.Equal(tt.want, n)
+		})
+	}
 }
