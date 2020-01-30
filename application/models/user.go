@@ -399,14 +399,30 @@ func (u *User) GetPosts(postRole string) ([]Post, error) {
 
 // AttachPhoto assigns a previously-stored File to this User as a profile photo
 func (u *User) AttachPhoto(fileID string) (File, error) {
+	if u.ID < 1 {
+		return File{}, fmt.Errorf("invalid User ID %d", u.ID)
+	}
+
 	var f File
 	if err := f.FindByUUID(fileID); err != nil {
 		return f, err
 	}
 
+	oldID := u.PhotoFileID
 	u.PhotoFileID = nulls.NewInt(f.ID)
-	if err := u.Save(); err != nil {
+	if err := DB.UpdateColumns(u, "photo_file_id"); err != nil {
 		return f, err
+	}
+
+	if err := f.SetLinked(); err != nil {
+		domain.ErrLogger.Printf("error marking user photo file %d as linked, %s", f.ID, err)
+	}
+
+	if oldID.Valid {
+		oldFile := File{ID: oldID.Int}
+		if err := oldFile.ClearLinked(); err != nil {
+			domain.ErrLogger.Printf("error marking old user photo file %d as unlinked, %s", oldFile.ID, err)
+		}
 	}
 
 	return f, nil

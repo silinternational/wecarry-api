@@ -267,3 +267,34 @@ func (o *Organization) TrustedOrganizations() (Organizations, error) {
 	}
 	return trustedOrgs, nil
 }
+
+// AttachLogo assigns a previously-stored File to this Organization as its logo. Parameter `fileID` is the UUID
+// of the file to attach.
+func (o *Organization) AttachLogo(fileID string) (File, error) {
+	var f File
+	if err := f.FindByUUID(fileID); err != nil {
+		err = fmt.Errorf("error finding organization logo with id %s ... %s", fileID, err)
+		return f, err
+	}
+
+	oldID := o.LogoFileID
+	o.LogoFileID = nulls.NewInt(f.ID)
+	if o.ID > 0 {
+		if err := DB.UpdateColumns(o, "logo_file_id"); err != nil {
+			return f, err
+		}
+	}
+
+	if err := f.SetLinked(); err != nil {
+		domain.ErrLogger.Printf("error marking org logo file %d as linked, %s", f.ID, err)
+	}
+
+	if oldID.Valid {
+		oldFile := File{ID: oldID.Int}
+		if err := oldFile.ClearLinked(); err != nil {
+			domain.ErrLogger.Printf("error marking old org logo file %d as unlinked, %s", oldFile.ID, err)
+		}
+	}
+
+	return f, nil
+}
