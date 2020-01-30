@@ -1482,7 +1482,6 @@ enum PostRole {
 
 enum PostStatus {
     OPEN
-    COMMITTED
     ACCEPTED
     DELIVERED
     RECEIVED

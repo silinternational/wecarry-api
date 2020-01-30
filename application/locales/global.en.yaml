@@ -176,9 +176,7 @@
   translation: We had a problem updating the user profile.
 
 # Request Post Status Transition email subjects
-- id: Email.Subject.Request.FromAcceptedToCommitted
-  translation: Your {{.AppName}} offer for "{{.postTitle}}" may no longer be needed
-- id: Email.Subject.Request.FromAcceptedOrCommittedToDelivered
+- id: Email.Subject.Request.FromAcceptedToDelivered
   translation: Your {{.AppName}} request for "{{.postTitle}}" has been delivered!
 - id: Email.Subject.Request.FromAcceptedToOpen
   translation: Your {{.AppName}} offer for "{{.postTitle}}" is no longer needed
@@ -187,27 +185,14 @@
 - id: Email.Subject.Request.FromAcceptedToRemoved
   translation: Your {{.AppName}} offer for "{{.postTitle}}" is no longer needed
 
-- id: Email.Subject.Request.FromCommittedToAccepted
-  translation: Your {{.AppName}} offer for "{{.postTitle}}" has been accepted!
-- id: Email.Subject.Request.CommittmentRejected
+- id: Email.Subject.Request.OfferRejected
   translation: Your {{.AppName}} offer for "{{.postTitle}}" was not accepted
-- id: Email.Subject.Request.FromCommittedToCommitted
-  translation: Potential provider on {{.AppName}} for "{{.postTitle}}"
-- id: Email.Subject.Request.FromCommittedToOpen
-  translation: Request lost its provider on {{.AppName}}
-- id: Email.Subject.Request.FromCommittedToRemoved
-  translation: Your {{.AppName}} offer for "{{.postTitle}}" is no longer needed
 
 - id: Email.Subject.Request.FromCompletedToAcceptedOrDelivered
   translation: Request not received on {{.AppName}} after all
 
 - id: Email.Subject.Request.FromDeliveredToAccepted
   translation: Request not delivered after all on {{.AppName}}
-- id: Email.Subject.Request.FromDeliveredToCommitted
-  translation: Request not delivered after all on {{.AppName}}
-
-- id: Email.Subject.Request.FromOpenToCommitted
-  translation: Potential provider on {{.AppName}} for "{{.postTitle}}"
 
 # New Message notification subject
 - id: Email.Subject.Message.Created

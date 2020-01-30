@@ -19,7 +19,7 @@ func (ms *ModelSuite) TestPostHistory_Load() {
 		wantEmail   string
 	}{
 		{
-			name:        "open to committed",
+			name:        "open",
 			postHistory: f.PostHistories[0],
 			wantEmail:   f.Users[0].Email,
 		},

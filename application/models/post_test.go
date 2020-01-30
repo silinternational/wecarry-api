@@ -850,13 +850,6 @@ func (ms *ModelSuite) TestPost_manageStatusTransition_forwardProgression() {
 			wantErr:    "",
 		},
 		{
-			name:       "committed to accepted - new history",
-			post:       f.Posts[1],
-			newStatus:  PostStatusAccepted,
-			providerID: f.Posts[1].ProviderID,
-			wantErr:    "",
-		},
-		{
 			name:       "get error",
 			post:       f.Posts[1],
 			newStatus:  "BadStatus",
@@ -1495,19 +1488,19 @@ func (ms *ModelSuite) TestPosts_FindByUser() {
 	}
 }
 
-func (ms *ModelSuite) TestPosts_GetCommitters() {
+func (ms *ModelSuite) TestPosts_GetPotentialProviders() {
 	t := ms.T()
 
-	f := createFixturesFor_Posts_GetCommitters(ms)
+	f := createFixturesFor_Posts_GetPotentialProviders(ms)
 	pps := f.PotentialProviders
 
 	tests := []struct {
-		name             string
-		post             Post
-		wantCommitterIDs []int
+		name      string
+		post      Post
+		wantPPIDs []int
 	}{
-		{name: "pps for first post", post: f.Posts[0], wantCommitterIDs: []int{pps[0].UserID, pps[1].UserID}},
-		{name: "no pps for second post", post: f.Posts[1], wantCommitterIDs: []int{}},
+		{name: "pps for first post", post: f.Posts[0], wantPPIDs: []int{pps[0].UserID, pps[1].UserID}},
+		{name: "no pps for second post", post: f.Posts[1], wantPPIDs: []int{}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -1519,7 +1512,7 @@ func (ms *ModelSuite) TestPosts_GetCommitters() {
 			for i, pp := range pps {
 				ids[i] = pp.ID
 			}
-			ms.Equal(test.wantCommitterIDs, ids)
+			ms.Equal(test.wantPPIDs, ids)
 		})
 	}
 }

@@ -164,7 +164,7 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 		{name: "Good - Accepted to Delivered",
 			post:             posts[0],
 			template:         domain.MessageTemplateRequestDelivered,
-			sendFunction:     sendNotificationRequestFromAcceptedOrCommittedToDelivered,
+			sendFunction:     sendNotificationRequestFromAcceptedToDelivered,
 			wantEmailsSent:   1,
 			wantToEmail:      posts[0].CreatedBy.Email,
 			wantBodyContains: "reported that they have delivered your request",
@@ -172,7 +172,7 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 		{name: "Bad - Accepted to Delivered", // No Provider
 			post:         posts[1],
 			template:     domain.MessageTemplateRequestFromAcceptedToDelivered,
-			sendFunction: sendNotificationRequestFromAcceptedOrCommittedToDelivered,
+			sendFunction: sendNotificationRequestFromAcceptedToDelivered,
 			wantErrLog: fmt.Sprintf("error preparing '%s' notification - no provider\n",
 				getT(domain.MessageTemplateRequestFromAcceptedToDelivered)),
 		},

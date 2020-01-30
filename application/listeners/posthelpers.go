@@ -129,7 +129,7 @@ func sendNotificationRequestToReceiver(params senderParams) {
 	}
 }
 
-func sendNotificationRequestFromAcceptedOrCommittedToDelivered(params senderParams) {
+func sendNotificationRequestFromAcceptedToDelivered(params senderParams) {
 	sendNotificationRequestToReceiver(params)
 }
 
@@ -167,39 +167,39 @@ func sendNotificationRequestFromAcceptedToRemoved(params senderParams) {
 	sendNotificationRequestToProvider(params)
 }
 
-func sendRejectionToPotentialProvider(committer models.User, post models.Post) {
+func sendRejectionToPotentialProvider(potentialProvider models.User, post models.Post) {
 	template := domain.MessageTemplatePotentialProviderNotAccepted
-	committerNickname := committer.Nickname
-	committerEmail := committer.Email
+	ppNickname := potentialProvider.Nickname
+	ppEmail := potentialProvider.Email
 
-	if committerNickname == "" {
-		committerNickname = "Unknown User"
-		committerEmail = "Missing Email"
+	if ppNickname == "" {
+		ppNickname = "Unknown User"
+		ppEmail = "Missing Email"
 	}
 
 	data := map[string]interface{}{
-		"uiURL":             domain.Env.UIURL,
-		"appName":           domain.Env.AppName,
-		"postURL":           domain.GetPostUIURL(post.UUID.String()),
-		"postTitle":         domain.Truncate(post.Title, "...", 16),
-		"committerNickname": committerNickname,
-		"committerEmail":    committerEmail,
+		"uiURL":      domain.Env.UIURL,
+		"appName":    domain.Env.AppName,
+		"postURL":    domain.GetPostUIURL(post.UUID.String()),
+		"postTitle":  domain.Truncate(post.Title, "...", 16),
+		"ppNickname": ppNickname,
+		"ppEmail":    ppEmail,
 	}
 
-	subject := "Email.Subject.Request.CommittmentRejected"
+	subject := "Email.Subject.Request.OfferRejected"
 
 	msg := notifications.Message{
 		Template:  template,
 		Data:      data,
-		ToName:    committer.GetRealName(),
-		ToEmail:   committerEmail,
+		ToName:    potentialProvider.GetRealName(),
+		ToEmail:   ppEmail,
 		FromEmail: domain.EmailFromAddress(nil),
-		Subject: domain.GetTranslatedSubject(committer.GetLanguagePreference(), subject,
+		Subject: domain.GetTranslatedSubject(potentialProvider.GetLanguagePreference(), subject,
 			map[string]string{postTitleKey: post.Title}),
 	}
 
 	if err := notifications.Send(msg); err != nil {
-		domain.ErrLogger.Printf("error sending '%s' notification to rejected committer, %s", template, err)
+		domain.ErrLogger.Printf("error sending '%s' notification to rejected potentialProvider, %s", template, err)
 	}
 }
 
@@ -221,88 +221,7 @@ func sendNotificationRequestFromOpenToAccepted(params senderParams) {
 
 }
 
-func sendNotificationRequestFromCommittedToCommitted(params senderParams) {
-	sendNotificationRequestToReceiver(params)
-
-}
-
-// Until we have status auditing history, we don't know who reverted the Post to `open` status.
-//  So, tell both the receiver and provider about it.
-func sendNotificationRequestFromCommittedToOpen(params senderParams) {
-	post := params.post
-	template := params.template
-	eData := params.pEventData
-
-	postUsers := getPostUsers(post)
-
-	oldProvider := models.User{}
-	if err := oldProvider.FindByID(eData.OldProviderID); err != nil {
-		domain.ErrLogger.Printf("error preparing '%s' notification for old provider id, %v ... %v",
-			template, eData.OldProviderID, err)
-	}
-
-	providerNickname := oldProvider.Nickname
-	providerEmail := oldProvider.Email
-
-	if providerNickname == "" {
-		providerNickname = "Unknown User"
-		providerEmail = "Missing Email"
-	}
-
-	// First notify receiver
-	data := map[string]interface{}{
-		"uiURL":            domain.Env.UIURL,
-		"appName":          domain.Env.AppName,
-		"postURL":          domain.GetPostUIURL(post.UUID.String()),
-		"postTitle":        domain.Truncate(post.Title, "...", 16),
-		"providerNickname": providerNickname,
-		"providerEmail":    providerEmail,
-		"receiverNickname": postUsers.Receiver.Nickname,
-		"receiverEmail":    postUsers.Receiver.Email,
-	}
-
-	msg := notifications.Message{
-		Template:  template,
-		Data:      data,
-		ToName:    postUsers.Receiver.Nickname,
-		ToEmail:   postUsers.Receiver.Email,
-		FromEmail: domain.EmailFromAddress(nil),
-		Subject: domain.GetTranslatedSubject(postUsers.Receiver.Language, params.subject,
-			map[string]string{postTitleKey: post.Title}),
-	}
-
-	if err := notifications.Send(msg); err != nil {
-		domain.ErrLogger.Printf("error sending '%s' notification to old provider, %s", template, err)
-	}
-
-	// Now notify the old provider
-	if oldProvider.Nickname == "" {
-		return
-	}
-
-	msg.ToName = oldProvider.GetRealName()
-	msg.ToEmail = oldProvider.Email
-	msg.Subject = domain.GetTranslatedSubject(oldProvider.GetLanguagePreference(), params.subject,
-		map[string]string{postTitleKey: post.Title})
-
-	if err := notifications.Send(msg); err != nil {
-		domain.ErrLogger.Printf("error sending '%s' notification to requester, %s", template, err)
-	}
-}
-
-func sendNotificationRequestFromCommittedToRemoved(params senderParams) {
-	sendNotificationRequestToProvider(params)
-}
-
 func sendNotificationRequestFromDeliveredToAccepted(params senderParams) {
-	sendNotificationRequestToReceiver(params)
-}
-
-func sendNotificationRequestFromDeliveredToCommitted(params senderParams) {
-	sendNotificationRequestToReceiver(params)
-}
-
-func sendNotificationRequestFromOpenToCommitted(params senderParams) {
 	sendNotificationRequestToReceiver(params)
 }
 
