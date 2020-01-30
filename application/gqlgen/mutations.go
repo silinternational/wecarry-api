@@ -31,11 +31,9 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input CreateO
 	}
 
 	if input.LogoFileID != nil {
-		var file models.File
-		if err := file.FindByUUID(*input.LogoFileID); err != nil {
+		if _, err := org.AttachLogo(*input.LogoFileID); err != nil {
 			return nil, reportError(ctx, err, "CreateOrganization.LogoFileNotFound")
 		}
-		org.LogoFileID = nulls.NewInt(file.ID)
 	}
 
 	if err := org.Save(); err != nil {
@@ -67,11 +65,9 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, input UpdateO
 	}
 
 	if input.LogoFileID != nil {
-		var file models.File
-		if err := file.FindByUUID(*input.LogoFileID); err != nil {
+		if _, err := org.AttachLogo(*input.LogoFileID); err != nil {
 			return nil, reportError(ctx, err, "UpdateOrganization.LogoFileNotFound")
 		}
-		org.LogoFileID = nulls.NewInt(file.ID)
 	}
 
 	org.Name = input.Name

@@ -31,7 +31,8 @@ CREATE TABLE public.files (
     size integer NOT NULL,
     content_type character varying(255) NOT NULL,
     created_at timestamp without time zone NOT NULL,
-    updated_at timestamp without time zone NOT NULL
+    updated_at timestamp without time zone NOT NULL,
+    linked boolean DEFAULT false NOT NULL
 );
 
 
