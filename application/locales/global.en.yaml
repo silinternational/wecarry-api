@@ -186,6 +186,8 @@
   translation: Your {{.AppName}} offer for "{{.postTitle}}" is no longer needed
 - id: Email.Subject.Request.FromCompletedToAcceptedOrDelivered
   translation: Request not received on {{.AppName}} after all
+- id: Email.Subject.Request.FromOpenToAccepted
+  translation: Your offer to fulfill a {{.AppName}} request has been accepted
 - id: Email.Subject.Request.FromDeliveredToAccepted
   translation: Request not delivered after all on {{.AppName}}
 
