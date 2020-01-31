@@ -14,6 +14,7 @@ import (
 const (
 	NewThreadMessage = "new_thread_message"
 	FileCleanup      = "file_cleanup"
+	TokenCleanup     = "token_cleanup"
 )
 
 var w worker.Worker
@@ -25,6 +26,9 @@ func init() {
 	}
 	if err := w.Register(FileCleanup, fileCleanupHandler); err != nil {
 		domain.ErrLogger.Printf("error registering '%s' worker, %s", FileCleanup, err)
+	}
+	if err := w.Register(TokenCleanup, tokenCleanupHandler); err != nil {
+		domain.ErrLogger.Printf("error registering '%s' worker, %s", TokenCleanup, err)
 	}
 }
 
@@ -103,6 +107,18 @@ func fileCleanupHandler(args worker.Args) error {
 	if err := files.DeleteUnlinked(); err != nil {
 		return fmt.Errorf("file cleanup failed with error, %s", err)
 	}
+	return nil
+}
+
+// tokenCleanupHandler removes expired user access tokens
+func tokenCleanupHandler(args worker.Args) error {
+	u := models.UserAccessTokens{}
+	deleted, err := u.DeleteExpired()
+	if err != nil {
+		return fmt.Errorf("error cleaning expired user access tokens: %v", err)
+	}
+
+	domain.Logger.Printf("Deleted %v expired user access tokens during cleanup", deleted)
 	return nil
 }
 

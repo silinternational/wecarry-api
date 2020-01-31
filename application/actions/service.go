@@ -36,14 +36,14 @@ const (
 
 	// ServiceTaskTokenCleanup removes expired user access tokens
 	ServiceTaskTokenCleanup ServiceTaskName = "token_cleanup"
-
-	// ServiceTaskLoadTestPrep prepares for a load test -- ignored if GoEnv == production
-	ServiceTaskLoadTestPrep ServiceTaskName = "load_test_prep"
 )
 
 var serviceTasks = map[ServiceTaskName]ServiceTask{
 	ServiceTaskFileCleanup: {
 		Handler: fileCleanupHandler,
+	},
+	ServiceTaskTokenCleanup: {
+		Handler: tokenCleanupHandler,
 	},
 }
 
@@ -61,14 +61,13 @@ func serviceHandler(c buffalo.Context) error {
 	if err != nil {
 		return c.Error(http.StatusInternalServerError, fmt.Errorf("error reading request body, %s", err))
 	}
-	domain.Logger.Printf("service request body: %s", string(body))
 
 	var input ServiceInput
 	if err := json.Unmarshal(body, &input); err != nil {
 		return c.Error(http.StatusBadRequest, fmt.Errorf("error parsing request body, %s", err))
 	}
 
-	domain.Logger.Printf("task: %s", input.Task)
+	domain.Logger.Printf("scheduling service task '%s'", input.Task)
 
 	if task, ok := serviceTasks[input.Task]; ok {
 		if err := task.Handler(c); err != nil {
@@ -82,6 +81,13 @@ func serviceHandler(c buffalo.Context) error {
 func fileCleanupHandler(c buffalo.Context) error {
 	if err := job.SubmitDelayed(job.FileCleanup, time.Second, nil); err != nil {
 		return c.Error(http.StatusInternalServerError, fmt.Errorf("file cleanup job not started, %s", err))
+	}
+	return nil
+}
+
+func tokenCleanupHandler(c buffalo.Context) error {
+	if err := job.SubmitDelayed(job.TokenCleanup, time.Second, nil); err != nil {
+		return c.Error(http.StatusInternalServerError, fmt.Errorf("token cleanup job not started, %s", err))
 	}
 	return nil
 }

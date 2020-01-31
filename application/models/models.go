@@ -21,6 +21,11 @@ import (
 	"github.com/silinternational/wecarry-api/domain"
 )
 
+// Count can be used to receive the results of a SQL COUNT
+type Count struct {
+	N int `db:"count"`
+}
+
 // DB is a connection to the database to be used throughout the application.
 var DB *pop.Connection
 
