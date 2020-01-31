@@ -52,6 +52,7 @@ func (o *OrganizationDomain) Create() error {
 	return create(o)
 }
 
+// FindByDomain finds a record by the domain name
 func (o *OrganizationDomain) FindByDomain(domainName string) error {
 	return DB.Where("domain = ?", domainName).First(o)
 }
