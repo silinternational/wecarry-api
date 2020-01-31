@@ -213,7 +213,7 @@ type PotentialProvidersFixtures struct {
 }
 
 // CreatePotentialProviderFixtures generates five PotentialProvider records for testing.
-// If necessary, four User and three Post fixtures will also be created.  The Posts will
+// Four User and three Post fixtures will also be created.  The Posts will
 // all be created by the first user.
 // The first Post will have all but the first user as a potential provider.
 // The second Post will have the last two users as potential providers.

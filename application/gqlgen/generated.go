@@ -94,7 +94,7 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		AddPotentialProvider        func(childComplexity int, postID string) int
+		AddMeAsPotentialProvider    func(childComplexity int, postID string) int
 		CreateMeeting               func(childComplexity int, input meetingInput) int
 		CreateMessage               func(childComplexity int, input CreateMessageInput) int
 		CreateOrganization          func(childComplexity int, input CreateOrganizationInput) int
@@ -250,7 +250,7 @@ type MutationResolver interface {
 	CreatePost(ctx context.Context, input postInput) (*models.Post, error)
 	UpdatePost(ctx context.Context, input postInput) (*models.Post, error)
 	UpdatePostStatus(ctx context.Context, input UpdatePostStatusInput) (*models.Post, error)
-	AddPotentialProvider(ctx context.Context, postID string) (*models.Post, error)
+	AddMeAsPotentialProvider(ctx context.Context, postID string) (*models.Post, error)
 	RemoveMeAsPotentialProvider(ctx context.Context, postID string) (*models.Post, error)
 	RemovePotentialProvider(ctx context.Context, postID string, userID string) (*models.Post, error)
 	UpdateUser(ctx context.Context, input UpdateUserInput) (*models.User, error)
@@ -548,17 +548,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Message.UpdatedAt(childComplexity), true
 
-	case "Mutation.addPotentialProvider":
-		if e.complexity.Mutation.AddPotentialProvider == nil {
+	case "Mutation.addMeAsPotentialProvider":
+		if e.complexity.Mutation.AddMeAsPotentialProvider == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_addPotentialProvider_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_addMeAsPotentialProvider_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.AddPotentialProvider(childComplexity, args["postID"].(string)), true
+		return e.complexity.Mutation.AddMeAsPotentialProvider(childComplexity, args["postID"].(string)), true
 
 	case "Mutation.createMeeting":
 		if e.complexity.Mutation.CreateMeeting == nil {
@@ -1445,7 +1445,7 @@ type Mutation {
     createPost(input: CreatePostInput!): Post!
     updatePost(input: UpdatePostInput!): Post!
     updatePostStatus(input: UpdatePostStatusInput!): Post!
-    addPotentialProvider(postID: String!): Post!
+    addMeAsPotentialProvider(postID: String!): Post!
     removeMeAsPotentialProvider(postID: String!): Post!
     removePotentialProvider(postID: String!, userID: String!): Post!
     updateUser(input: UpdateUserInput!): User!
@@ -1795,7 +1795,7 @@ input RemoveOrganizationTrustInput {
 
 // region    ***************************** args.gotpl *****************************
 
-func (ec *executionContext) field_Mutation_addPotentialProvider_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_addMeAsPotentialProvider_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -3347,7 +3347,7 @@ func (ec *executionContext) _Mutation_updatePostStatus(ctx context.Context, fiel
 	return ec.marshalNPost2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_addPotentialProvider(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_addMeAsPotentialProvider(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -3364,7 +3364,7 @@ func (ec *executionContext) _Mutation_addPotentialProvider(ctx context.Context, 
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_addPotentialProvider_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_addMeAsPotentialProvider_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -3373,7 +3373,7 @@ func (ec *executionContext) _Mutation_addPotentialProvider(ctx context.Context, 
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().AddPotentialProvider(rctx, args["postID"].(string))
+		return ec.resolvers.Mutation().AddMeAsPotentialProvider(rctx, args["postID"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9227,8 +9227,8 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "addPotentialProvider":
-			out.Values[i] = ec._Mutation_addPotentialProvider(ctx, field)
+		case "addMeAsPotentialProvider":
+			out.Values[i] = ec._Mutation_addMeAsPotentialProvider(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}

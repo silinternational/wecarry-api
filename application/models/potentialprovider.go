@@ -111,34 +111,13 @@ func (p *PotentialProviders) FindUsersByPostID(postID int) (Users, error) {
 	return users, nil
 }
 
-func (p *PotentialProvider) assertAuthorized(post Post, currentUser User) error {
+func (p *PotentialProvider) CanUserAccessPotentialProvider(post Post, currentUser User) bool {
 	if currentUser.AdminRole == UserAdminRoleSuperAdmin || currentUser.ID == post.CreatedByID {
-		return nil
+		return true
 	}
-	if p.UserID == currentUser.ID {
-		return nil
-	}
-
-	return fmt.Errorf("user %v has insufficient permissions to access PotentialProvider %v",
-		currentUser.ID, p.ID)
-}
-
-func (p *PotentialProvider) FindWithPostUUIDAndUserID(postUUID string, userID int, currentUser User) error {
-	var post Post
-	if err := post.FindByUUID(postUUID); err != nil {
-		return errors.New("unable to find Post in order to find PotentialProvider: " + err.Error())
-	}
-
-	var user User
-	if err := user.FindByID(userID); err != nil {
-		return errors.New("unable to find User in order to find PotentialProvider: " + err.Error())
-	}
-
-	if err := DB.Where("post_id = ? AND user_id = ?", post.ID, user.ID).First(p); err != nil {
-		return errors.New("unable to find PotentialProvider: " + err.Error())
-	}
-
-	return p.assertAuthorized(post, currentUser)
+	return p.UserID == currentUser.ID
+	//fmt.Errorf("user %v has insufficient permissions to access PotentialProvider %v",
+	//	currentUser.ID, p.ID)
 }
 
 func (p *PotentialProvider) FindWithPostUUIDAndUserUUID(postUUID, userUUID string, currentUser User) error {
@@ -156,7 +135,7 @@ func (p *PotentialProvider) FindWithPostUUIDAndUserUUID(postUUID, userUUID strin
 		return errors.New("unable to find PotentialProvider: " + err.Error())
 	}
 
-	return p.assertAuthorized(post, currentUser)
+	return nil
 }
 
 func (p *PotentialProvider) NewWithPostUUID(postUUID string, userID int) error {
@@ -184,58 +163,10 @@ func (p *PotentialProvider) NewWithPostUUID(postUUID string, userID int) error {
 	return nil
 }
 
-// DestroyWithPostUUIDAndUserID meant for when a user removes themself as a PotentialProvider
-func (p *PotentialProvider) DestroyWithPostUUIDAndUserID(postUUID string, userID int, currentUser User) error {
-	if err := p.FindWithPostUUIDAndUserID(postUUID, userID, currentUser); err != nil {
-		return errors.New("unable to find PotentialProvider in order to delete it: " + err.Error())
-	}
-
-	if err := DB.Destroy(p); err != nil {
-		return err
-	}
-
-	eventData := PotentialProviderEventData{
-		UserID: p.UserID,
-		PostID: p.PostID,
-	}
-
-	e := events.Event{
-		Kind:    domain.EventApiPotentialProviderSelfDestroyed,
-		Message: "Potential Provider self destroyed",
-		Payload: events.Payload{"eventData": eventData},
-	}
-
-	emitEvent(e)
-	return nil
+func (p *PotentialProvider) Destroy() error {
+	return DB.Destroy(p)
 }
 
-// DestroyWithPostUUIDAndUserUUID meant for when a Requester removes another user as a PotentialProvider
-func (p *PotentialProvider) DestroyWithPostUUIDAndUserUUID(postUUID, userUUID string, currentUser User) error {
-	if err := p.FindWithPostUUIDAndUserUUID(postUUID, userUUID, currentUser); err != nil {
-		return errors.New("unable to find PotentialProvider in order to delete it: " + err.Error())
-	}
-
-	if err := DB.Destroy(p); err != nil {
-		return err
-	}
-
-	eventData := PotentialProviderEventData{
-		UserID: p.UserID,
-		PostID: p.PostID,
-	}
-
-	e := events.Event{
-		Kind:    domain.EventApiPotentialProviderRejected,
-		Message: "Potential Provider destroyed",
-		Payload: events.Payload{"eventData": eventData},
-	}
-
-	emitEvent(e)
-	return nil
-}
-
-// DestroyAllWithPostUUID is meant to be called when PotentialProviders are no longer needed for a Post,
-// e.g. when it is Completed
 func (p *PotentialProviders) DestroyAllWithPostUUID(postUUID string, currentUser User) error {
 	var post Post
 	if err := post.FindByUUID(postUUID); err != nil {
@@ -247,7 +178,8 @@ func (p *PotentialProviders) DestroyAllWithPostUUID(postUUID string, currentUser
 			currentUser.ID, post.ID)
 	}
 
-	DB.Where("post_id = ?", post.ID).All(p)
-
+	if err := DB.Where("post_id = ?", post.ID).All(p); err != nil {
+		return errors.New("unable to find Post's Potential Providers in order to remove them: " + err.Error())
+	}
 	return DB.Destroy(p)
 }
