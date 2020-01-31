@@ -132,6 +132,18 @@
   translation: We had a problem finding that request or offer for changing its status.
 - id: UpdatePostStatus.Unauthorized
   translation: You are not allowed to change the status of that post.
+- id: Post.FindPost
+  translation: We had a problem finding that request.
+- id: Post.AddMeAsPotentialProvider
+  translation: We had a problem registering your offer to fulfill a request.
+- id: Post.RemoveMeAsPotentialProvider
+  translation: We had a problem cancelling your offer to fufill a request.
+- id: Post.RemoveMeAsPotentialProvider.NotAuthorized
+  translation: You are not allowed to cancel that user's offer.
+- id: Post.RemovePotentialProvider
+  translation: We had a problem cancelling that offer to fulfill a request.
+- id: Post.RemovePotentialProvider.NotAuthorized
+  translation: You are not allowed to cancel that user's offer.
 - id: GetThreadParticipants
   translation: We had a problem getting a list of participants in that conversation.
 - id: GetThreadLastViewedAt
