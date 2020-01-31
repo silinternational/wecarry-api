@@ -141,7 +141,7 @@ func (r *mutationResolver) UpdateOrganizationDomain(ctx context.Context, input C
 
 	domains, err2 := org.GetDomains()
 	if err2 != nil {
-		// don't return an error since the AddDomain operation succeeded
+		// don't return an error since the operation succeeded
 		_ = reportError(ctx, err2, "", extras)
 	}
 
