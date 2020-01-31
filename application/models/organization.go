@@ -70,6 +70,7 @@ func (o *Organization) ValidateUpdate(tx *pop.Connection) (*validate.Errors, err
 	return validate.NewErrors(), nil
 }
 
+// GetAuthProvider returns the auth provider associated with the domain of `authEmail`, if assigned, otherwise from the Organization's auth provider.
 func (o *Organization) GetAuthProvider(authEmail string) (auth.Provider, error) {
 	// Use type and config from organization by default
 	authType := o.AuthType
