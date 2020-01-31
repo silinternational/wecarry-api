@@ -2,7 +2,6 @@ package listeners
 
 import (
 	"errors"
-	"time"
 
 	"github.com/gobuffalo/events"
 
@@ -11,12 +10,6 @@ import (
 	"github.com/silinternational/wecarry-api/models"
 	"github.com/silinternational/wecarry-api/notifications"
 )
-
-const (
-	userAccessTokensCleanupDelayMinutes = 480
-)
-
-var userAccessTokensNextCleanupAfter time.Time
 
 type apiListener struct {
 	name     string
@@ -33,13 +26,6 @@ var apiListeners = map[string][]apiListener{
 		{
 			name:     "user-created",
 			listener: userCreated,
-		},
-	},
-
-	domain.EventApiAuthUserLoggedIn: {
-		{
-			name:     "trigger-user-access-tokens-cleanup",
-			listener: userAccessTokensCleanup,
 		},
 	},
 
@@ -75,28 +61,6 @@ func RegisterListeners() {
 			}
 		}
 	}
-}
-
-func userAccessTokensCleanup(e events.Event) {
-	if e.Kind != domain.EventApiAuthUserLoggedIn {
-		return
-	}
-
-	now := time.Now()
-	if !now.After(userAccessTokensNextCleanupAfter) {
-		return
-	}
-
-	userAccessTokensNextCleanupAfter = now.Add(time.Duration(time.Minute * userAccessTokensCleanupDelayMinutes))
-
-	var uats models.UserAccessTokens
-	deleted, err := uats.DeleteExpired()
-	if err != nil {
-		domain.ErrLogger.Printf("%s Last error deleting expired user access tokens during cleanup ... %v",
-			domain.GetCurrentTime(), err)
-	}
-
-	domain.Logger.Printf("%s Deleted %v expired user access tokens during cleanup", domain.GetCurrentTime(), deleted)
 }
 
 func userCreated(e events.Event) {
