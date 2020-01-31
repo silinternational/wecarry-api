@@ -74,8 +74,8 @@ const (
 	MessageTemplateRequestDelivered                = "request_delivered"
 	MessageTemplateRequestReceived                 = "request_received"
 	MessageTemplateRequestNotReceivedAfterAll      = "request_not_received_after_all"
-	MessageTemplatePotentialProviderRejected       = "request_potentialprovider_rejected"
 	MessageTemplatePotentialProviderCreated        = "request_potentialprovider_created"
+	MessageTemplatePotentialProviderRejected       = "request_potentialprovider_rejected"
 	MessageTemplatePotentialProviderSelfDestroyed  = "request_potentialprovider_self_destroyed"
 )
 

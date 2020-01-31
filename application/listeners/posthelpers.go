@@ -90,6 +90,25 @@ func getMessageForReceiver(postUsers postUsers, post models.Post, template strin
 	}
 }
 
+func getPotentialProviderMessageForReceiver(
+	requester models.User, providerNickname, template string, post models.Post) notifications.Message {
+	data := map[string]interface{}{
+		"appName":          domain.Env.AppName,
+		"uiURL":            domain.Env.UIURL,
+		"postURL":          domain.GetPostUIURL(post.UUID.String()),
+		"postTitle":        domain.Truncate(post.Title, "...", 16),
+		"providerNickname": providerNickname,
+	}
+
+	return notifications.Message{
+		Template:  template,
+		Data:      data,
+		ToName:    requester.GetRealName(),
+		ToEmail:   requester.Email,
+		FromEmail: domain.EmailFromAddress(nil),
+	}
+}
+
 func sendNotificationRequestToProvider(params senderParams) {
 	post := params.post
 	template := params.template
@@ -385,42 +404,22 @@ func sendNewPostNotification(user models.User, post models.Post) error {
 }
 
 func sendPotentialProviderCreatedNotification(providerNickname string, requester models.User, post models.Post) error {
-	msg := notifications.Message{
-		Subject: domain.GetTranslatedSubject(requester.GetLanguagePreference(),
-			"Email.Subject.Request.NewOffer", map[string]string{}),
-		Template:  domain.MessageTemplatePotentialProviderCreated,
-		ToName:    requester.GetRealName(),
-		ToEmail:   requester.Email,
-		FromEmail: domain.EmailFromAddress(nil),
-		Data: map[string]interface{}{
-			"appName":          domain.Env.AppName,
-			"uiURL":            domain.Env.UIURL,
-			"postURL":          domain.GetPostUIURL(post.UUID.String()),
-			"postTitle":        domain.Truncate(post.Title, "...", 16),
-			"providerNickname": providerNickname,
-		},
-	}
+	template := domain.MessageTemplatePotentialProviderCreated
+	msg := getPotentialProviderMessageForReceiver(requester, providerNickname, template, post)
+	msg.Subject = domain.GetTranslatedSubject(requester.GetLanguagePreference(),
+		"Email.Subject.Request.NewOffer", map[string]string{})
+
 	return notifications.Send(msg)
 }
 
 func sendPotentialProviderSelfDestroyedNotification(providerNickname string, requester models.User, post models.Post) error {
-	msg := notifications.Message{
-		Subject: domain.GetTranslatedSubject(requester.GetLanguagePreference(),
-			"Email.Subject.Request.OfferRetracted", map[string]string{}),
-		Template:  domain.MessageTemplatePotentialProviderSelfDestroyed,
-		ToName:    requester.GetRealName(),
-		ToEmail:   requester.Email,
-		FromEmail: domain.EmailFromAddress(nil),
-		Data: map[string]interface{}{
-			"appName":          domain.Env.AppName,
-			"uiURL":            domain.Env.UIURL,
-			"postURL":          domain.GetPostUIURL(post.UUID.String()),
-			"postTitle":        domain.Truncate(post.Title, "...", 16),
-			"providerNickname": providerNickname,
-		},
-	}
+	template := domain.MessageTemplatePotentialProviderSelfDestroyed
+	msg := getPotentialProviderMessageForReceiver(requester, providerNickname, template, post)
+	msg.Subject = domain.GetTranslatedSubject(requester.GetLanguagePreference(),
+		"Email.Subject.Request.OfferRetracted", map[string]string{})
 	return notifications.Send(msg)
 }
+
 func sendPotentialProviderRejectedNotification(provider models.User, requester string, post models.Post) error {
 	msg := notifications.Message{
 		Subject: domain.GetTranslatedSubject(provider.GetLanguagePreference(),

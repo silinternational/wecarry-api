@@ -79,6 +79,18 @@ var dummyTemplates = map[string]dummyTemplate{
 		subject: domain.MessageTemplateNewUserWelcome,
 		body:    "welcome",
 	},
+	domain.MessageTemplatePotentialProviderCreated: {
+		subject: domain.MessageTemplatePotentialProviderCreated,
+		body:    "Someone has offered to fulfill your request",
+	},
+	domain.MessageTemplatePotentialProviderRejected: {
+		subject: domain.MessageTemplatePotentialProviderRejected,
+		body:    "Your offer to fulfill a request was not accepted",
+	},
+	domain.MessageTemplatePotentialProviderSelfDestroyed: {
+		subject: domain.MessageTemplatePotentialProviderSelfDestroyed,
+		body:    "An offer to fulfill your request was retracted",
+	},
 }
 
 func (t *DummyEmailService) Send(msg Message) error {

@@ -116,8 +116,6 @@ func (p *PotentialProvider) CanUserAccessPotentialProvider(post Post, currentUse
 		return true
 	}
 	return p.UserID == currentUser.ID
-	//fmt.Errorf("user %v has insufficient permissions to access PotentialProvider %v",
-	//	currentUser.ID, p.ID)
 }
 
 func (p *PotentialProvider) FindWithPostUUIDAndUserUUID(postUUID, userUUID string, currentUser User) error {

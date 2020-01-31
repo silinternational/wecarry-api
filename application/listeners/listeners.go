@@ -261,7 +261,7 @@ func potentialProviderSelfDestroyed(e events.Event) {
 }
 
 func potentialProviderRejected(e events.Event) {
-	if e.Kind != domain.EventApiPostCreated {
+	if e.Kind != domain.EventApiPotentialProviderRejected {
 		return
 	}
 
