@@ -4,7 +4,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
 	"github.com/gobuffalo/validate/validators"
@@ -16,8 +15,8 @@ type OrganizationDomain struct {
 	UpdatedAt      time.Time    `json:"updated_at" db:"updated_at"`
 	OrganizationID int          `json:"organization_id" db:"organization_id"`
 	Domain         string       `json:"domain" db:"domain"`
-	AuthType       nulls.String `json:"auth_type" db:"auth_type"`
-	AuthConfig     nulls.String `json:"auth_config" db:"auth_config"`
+	AuthType       string       `json:"auth_type" db:"auth_type"`
+	AuthConfig     string       `json:"auth_config" db:"auth_config"`
 	Organization   Organization `belongs_to:"organizations"`
 }
 

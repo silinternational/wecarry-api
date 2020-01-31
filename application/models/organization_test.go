@@ -253,22 +253,22 @@ func (ms *ModelSuite) TestOrganization_AddRemoveDomain() {
 
 	orgFixtures := createOrganizationFixtures(ms.DB, 2)
 
-	err := orgFixtures[0].AddDomain("first.com")
+	err := orgFixtures[0].AddDomain("first.com", "", "")
 	ms.NoError(err, "unable to add first domain to Org1: %s", err)
 	domains, _ := orgFixtures[0].GetDomains()
 	if len(domains) != 1 {
 		t.Errorf("did not get error, but failed to add first domain to Org1")
 	}
 
-	err = orgFixtures[0].AddDomain("second.com")
+	err = orgFixtures[0].AddDomain("second.com", "", "")
 	ms.NoError(err, "unable to add second domain to Org1: %s", err)
 	domains, _ = orgFixtures[0].GetDomains()
 	if len(domains) != 2 {
 		t.Errorf("did not get error, but failed to add second domain to Org1")
 	}
 
-	err = orgFixtures[1].AddDomain("second.com")
-	ms.Error(err, "was to add existing domain (second.com) to Org2 but should have gotten error")
+	err = orgFixtures[1].AddDomain("second.com", "", "")
+	ms.Error(err, "was able to add existing domain (second.com) to Org2 but should have gotten error")
 	domains, _ = orgFixtures[0].GetDomains()
 	if len(domains) != 2 {
 		t.Errorf("after reloading org domains we did not get what we expected (%v), got: %v", 2, len(orgFixtures[0].OrganizationDomains))
@@ -661,8 +661,8 @@ func (ms *ModelSuite) TestOrganization_GetAuthProvider() {
 	orgDomain1 := OrganizationDomain{
 		OrganizationID: org.ID,
 		Domain:         "domain1.com",
-		AuthType:       nulls.String{},
-		AuthConfig:     nulls.String{},
+		AuthType:       "",
+		AuthConfig:     "",
 	}
 	err = orgDomain1.Save()
 	ms.NoError(err, "unable to create orgDomain1 fixture")
@@ -670,8 +670,8 @@ func (ms *ModelSuite) TestOrganization_GetAuthProvider() {
 	orgDomain2 := OrganizationDomain{
 		OrganizationID: org.ID,
 		Domain:         "domain2.com",
-		AuthType:       nulls.NewString(AuthTypeGoogle),
-		AuthConfig:     nulls.String{},
+		AuthType:       AuthTypeGoogle,
+		AuthConfig:     "",
 	}
 	err = orgDomain2.Save()
 	ms.NoError(err, "unable to create orgDomain2 fixture")

@@ -6,6 +6,7 @@ import (
 
 	"github.com/gobuffalo/nulls"
 
+	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 )
 
@@ -97,8 +98,45 @@ func (r *mutationResolver) CreateOrganizationDomain(ctx context.Context, input C
 		return nil, reportError(ctx, err, "CreateOrganizationDomain.Unauthorized", extras)
 	}
 
-	if err := org.AddDomain(input.Domain); err != nil {
+	if err := org.AddDomain(input.Domain, domain.ConvertStrPtrToString(input.AuthType), domain.ConvertStrPtrToString(input.AuthConfig)); err != nil {
 		return nil, reportError(ctx, err, "CreateOrganizationDomain", extras)
+	}
+
+	domains, err2 := org.GetDomains()
+	if err2 != nil {
+		// don't return an error since the AddDomain operation succeeded
+		_ = reportError(ctx, err2, "", extras)
+	}
+
+	return domains, nil
+}
+
+// UpdateOrganizationDomain is the resolver for the `updateOrganizationDomain` mutation
+func (r *mutationResolver) UpdateOrganizationDomain(ctx context.Context, input CreateOrganizationDomainInput) ([]models.OrganizationDomain, error) {
+	cUser := models.GetCurrentUserFromGqlContext(ctx)
+	extras := map[string]interface{}{
+		"user": cUser.UUID,
+	}
+
+	var org models.Organization
+	if err := org.FindByUUID(input.OrganizationID); err != nil {
+		return nil, reportError(ctx, err, "UpdateOrganizationDomain.NotFound", extras)
+	}
+
+	if !cUser.CanEditOrganization(org.ID) {
+		err := errors.New("insufficient permissions")
+		return nil, reportError(ctx, err, "UpdateOrganizationDomain.Unauthorized", extras)
+	}
+
+	var orgDomain models.OrganizationDomain
+	if err := orgDomain.FindByDomain(input.Domain); err != nil {
+		return nil, reportError(ctx, err, "UpdateOrganizationDomain.NotFound", extras)
+	}
+
+	orgDomain.AuthType = *input.AuthType
+	orgDomain.AuthConfig = *input.AuthConfig
+	if err := orgDomain.Save(); err != nil {
+		return nil, reportError(ctx, err, "UpdateOrganizationDomain.SaveError", extras)
 	}
 
 	domains, err2 := org.GetDomains()
