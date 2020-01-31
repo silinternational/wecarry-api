@@ -133,7 +133,7 @@ func (r *mutationResolver) UpdateOrganizationDomain(ctx context.Context, input C
 		return nil, reportError(ctx, err, "UpdateOrganizationDomain.NotFound", extras)
 	}
 
-	orgDomain.AuthType = *input.AuthType
+	orgDomain.AuthType = domain.ConvertStrPtrToString(input.AuthType)
 	orgDomain.AuthConfig = domain.ConvertStrPtrToString(input.AuthConfig)
 	if err := orgDomain.Save(); err != nil {
 		return nil, reportError(ctx, err, "UpdateOrganizationDomain.SaveError", extras)
