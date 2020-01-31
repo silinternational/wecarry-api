@@ -846,6 +846,10 @@ func (p *Post) canUserChangeStatus(user User, newStatus PostStatus) bool {
 	}
 
 	if p.CreatedByID == user.ID {
+		// Creator can't move off of Delivered except to Completed
+		if p.Status == PostStatusDelivered {
+			return newStatus == PostStatusCompleted
+		}
 		return true
 	}
 
