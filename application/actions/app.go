@@ -1,8 +1,6 @@
 package actions
 
 import (
-	"net/http"
-
 	"github.com/gobuffalo/buffalo"
 	i18n "github.com/gobuffalo/mw-i18n"
 	paramlogger "github.com/gobuffalo/mw-paramlogger"
@@ -87,10 +85,4 @@ func App() *buffalo.App {
 	}
 
 	return app
-}
-
-func registerCustomErrorHandler(app *buffalo.App) {
-	for i := 401; i < 600; i++ {
-		app.ErrorHandlers[i] = customErrorHandler
-	}
 }
