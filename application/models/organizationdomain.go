@@ -15,6 +15,8 @@ type OrganizationDomain struct {
 	UpdatedAt      time.Time    `json:"updated_at" db:"updated_at"`
 	OrganizationID int          `json:"organization_id" db:"organization_id"`
 	Domain         string       `json:"domain" db:"domain"`
+	AuthType       string       `json:"auth_type" db:"auth_type"`
+	AuthConfig     string       `json:"auth_config" db:"auth_config"`
 	Organization   Organization `belongs_to:"organizations"`
 }
 
@@ -47,4 +49,14 @@ func (o *OrganizationDomain) GetOrganizationUUID() (string, error) {
 // Create stores the OrganizationDomain data as a new record in the database.
 func (o *OrganizationDomain) Create() error {
 	return create(o)
+}
+
+// FindByDomain finds a record by the domain name
+func (o *OrganizationDomain) FindByDomain(domainName string) error {
+	return DB.Where("domain = ?", domainName).First(o)
+}
+
+// Save wrap DB.Save() call to check for errors and operate on attached object
+func (o *OrganizationDomain) Save() error {
+	return save(o)
 }

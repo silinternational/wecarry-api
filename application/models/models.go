@@ -3,7 +3,6 @@ package models
 import (
 	"context"
 	"crypto/rand"
-	"database/sql"
 	"encoding/base64"
 	"fmt"
 	"log"
@@ -18,6 +17,7 @@ import (
 	"github.com/gobuffalo/validate/validators"
 	"github.com/gofrs/uuid"
 	"github.com/pkg/errors"
+
 	"github.com/silinternational/wecarry-api/domain"
 )
 
@@ -131,15 +131,6 @@ func flattenPopErrors(popErrs *validate.Errors) string {
 	}
 
 	return msg
-}
-
-// isSqlNoRowsErr Checks if given error is a no results/rows error and therefore not really an error at all
-func isSqlNoRowsErr(err error) bool {
-	if err != nil && errors.Cause(err) == sql.ErrNoRows {
-		return true
-	}
-
-	return false
 }
 
 // NullsStringIsURL is a model field validator
