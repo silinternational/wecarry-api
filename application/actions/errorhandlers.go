@@ -10,17 +10,17 @@ import (
 )
 
 func getErrorCodeFromStatus(status int) string {
-	switch status {
-	case http.StatusUnauthorized:
-		return domain.ErrorNotAuthenticated
-	case http.StatusNotFound:
-		return domain.ErrorRouteNotFound
-	case http.StatusMethodNotAllowed:
-		return domain.ErrorMethodNotAllowed
-	case http.StatusInternalServerError:
-		return domain.ErrorInternalServerError
+	var codes = map[int]string{
+		http.StatusBadRequest:          domain.ErrorBadRequest,
+		http.StatusUnauthorized:        domain.ErrorNotAuthenticated,
+		http.StatusNotFound:            domain.ErrorRouteNotFound,
+		http.StatusMethodNotAllowed:    domain.ErrorMethodNotAllowed,
+		http.StatusUnprocessableEntity: domain.ErrorUnprocessableEntity,
+		http.StatusInternalServerError: domain.ErrorInternalServerError,
 	}
-
+	if s, ok := codes[status]; ok {
+		return s
+	}
 	return domain.ErrorUnexpectedHTTPStatus
 }
 
