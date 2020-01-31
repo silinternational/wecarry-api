@@ -18,3 +18,4 @@ generated/
 .vendor/
 *.aes
 application/grifts/private.go
+application/migrations/schema.sql

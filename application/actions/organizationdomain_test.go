@@ -18,11 +18,11 @@ type OrganizationDomainResponse struct {
 	} `json:"domain"`
 }
 
-func (as *ActionSuite) Test_CreateOrganizationDomain() {
+func (as *ActionSuite) Test_CreateUpdateOrganizationDomain() {
 	f := fixturesForOrganizationDomain(as)
 
 	testDomain := "example.com"
-	allFieldsQuery := `organizationID domain`
+	allFieldsQuery := `organizationID domain authType authConfig`
 	allFieldsInput := fmt.Sprintf(`organizationID:"%s" domain:"%s"`,
 		f.Organizations[0].UUID.String(), testDomain)
 
@@ -43,4 +43,35 @@ func (as *ActionSuite) Test_CreateOrganizationDomain() {
 	as.GreaterOrEqual(1, len(orgs), "no Organization found")
 	as.Equal(1, len(orgs[0].OrganizationDomains), "wrong number of domains in DB")
 	as.Equal(testDomain, orgs[0].OrganizationDomains[0].Domain, "wrong domain in DB")
+
+	// Test updating orgdomains
+	validUpdateInput := fmt.Sprintf(`organizationID:"%s" domain:"%s" authType:"saml", authConfig:"{}"`,
+		f.Organizations[0].UUID.String(), testDomain)
+
+	query = fmt.Sprintf("mutation{domain: updateOrganizationDomain(input: {%s}) {%s}}",
+		validUpdateInput, allFieldsQuery)
+	var resp2 OrganizationDomainResponse
+	err = as.testGqlQuery(query, f.Users[1].Nickname, &resp2)
+	as.NoError(err)
+
+	// User without admin role - should error
+	validUpdateInput = fmt.Sprintf(`organizationID:"%s" domain:"%s" authType:"saml", authConfig:"{}"`,
+		f.Organizations[0].UUID.String(), testDomain)
+
+	query = fmt.Sprintf("mutation{domain: updateOrganizationDomain(input: {%s}) {%s}}",
+		validUpdateInput, allFieldsQuery)
+	var resp3 OrganizationDomainResponse
+	err = as.testGqlQuery(query, f.Users[0].Nickname, &resp3)
+	as.Error(err)
+
+	// User with admin role but invalid domain - should error
+	inValidUpdateInput := fmt.Sprintf(`organizationID:"%s" domain:"%s" authType:"saml", authConfig:"{}"`,
+		f.Organizations[0].UUID.String(), "invalid.com")
+
+	query = fmt.Sprintf("mutation{domain: updateOrganizationDomain(input: {%s}) {%s}}",
+		inValidUpdateInput, allFieldsQuery)
+	var resp4 OrganizationDomainResponse
+	err = as.testGqlQuery(query, f.Users[1].Nickname, &resp4)
+	as.Error(err)
+
 }

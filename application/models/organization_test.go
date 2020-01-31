@@ -6,6 +6,8 @@ import (
 	"github.com/gobuffalo/nulls"
 	"github.com/gofrs/uuid"
 
+	"github.com/silinternational/wecarry-api/auth/facebook"
+	"github.com/silinternational/wecarry-api/auth/google"
 	"github.com/silinternational/wecarry-api/domain"
 )
 
@@ -251,22 +253,22 @@ func (ms *ModelSuite) TestOrganization_AddRemoveDomain() {
 
 	orgFixtures := createOrganizationFixtures(ms.DB, 2)
 
-	err := orgFixtures[0].AddDomain("first.com")
+	err := orgFixtures[0].AddDomain("first.com", "", "")
 	ms.NoError(err, "unable to add first domain to Org1: %s", err)
 	domains, _ := orgFixtures[0].GetDomains()
 	if len(domains) != 1 {
 		t.Errorf("did not get error, but failed to add first domain to Org1")
 	}
 
-	err = orgFixtures[0].AddDomain("second.com")
+	err = orgFixtures[0].AddDomain("second.com", "", "")
 	ms.NoError(err, "unable to add second domain to Org1: %s", err)
 	domains, _ = orgFixtures[0].GetDomains()
 	if len(domains) != 2 {
 		t.Errorf("did not get error, but failed to add second domain to Org1")
 	}
 
-	err = orgFixtures[1].AddDomain("second.com")
-	ms.Error(err, "was to add existing domain (second.com) to Org2 but should have gotten error")
+	err = orgFixtures[1].AddDomain("second.com", "", "")
+	ms.Error(err, "was able to add existing domain (second.com) to Org2 but should have gotten error")
 	domains, _ = orgFixtures[0].GetDomains()
 	if len(domains) != 2 {
 		t.Errorf("after reloading org domains we did not get what we expected (%v), got: %v", 2, len(orgFixtures[0].OrganizationDomains))
@@ -643,4 +645,48 @@ func (ms *ModelSuite) TestOrganization_AttachLogo() {
 			}
 		})
 	}
+}
+
+func (ms *ModelSuite) TestOrganization_GetAuthProvider() {
+	uid := domain.GetUUID()
+	org := Organization{
+		Name:       "testorg1",
+		AuthType:   AuthTypeFacebook,
+		AuthConfig: "{}",
+		UUID:       uid,
+	}
+	err := org.Save()
+	ms.NoError(err, "unable to create organization fixture")
+
+	orgDomain1 := OrganizationDomain{
+		OrganizationID: org.ID,
+		Domain:         "domain1.com",
+		AuthType:       "",
+		AuthConfig:     "",
+	}
+	err = orgDomain1.Save()
+	ms.NoError(err, "unable to create orgDomain1 fixture")
+
+	orgDomain2 := OrganizationDomain{
+		OrganizationID: org.ID,
+		Domain:         "domain2.com",
+		AuthType:       AuthTypeGoogle,
+		AuthConfig:     "",
+	}
+	err = orgDomain2.Save()
+	ms.NoError(err, "unable to create orgDomain2 fixture")
+
+	var o Organization
+	err = o.FindByUUID(uid.String())
+	ms.NoError(err, "unable to find organization fixture")
+
+	// should get type facebook:
+	provider, err := o.GetAuthProvider("test@domain1.com")
+	ms.NoError(err, "unable to get authprovider for test@domain1.com")
+	ms.IsType(&facebook.Provider{}, provider, "auth provider not expected facebook type")
+
+	// should get type google:
+	provider, err = o.GetAuthProvider("test@domain2.com")
+	ms.NoError(err, "unable to get authprovider for test@domain2.com")
+	ms.IsType(&google.Provider{}, provider, "auth provider not expected google type")
 }
