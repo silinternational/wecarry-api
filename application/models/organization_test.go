@@ -683,14 +683,10 @@ func (ms *ModelSuite) TestOrganization_GetAuthProvider() {
 	// should get type facebook:
 	provider, err := o.GetAuthProvider("test@domain1.com")
 	ms.NoError(err, "unable to get authprovider for test@domain1.com")
-	if _, ok := provider.(*facebook.Provider); !ok {
-		ms.Fail("auth provider not expected facebook type")
-	}
+	ms.IsType(&facebook.Provider{}, provider, "auth provider not expected facebook type")
 
 	// should get type google:
 	provider, err = o.GetAuthProvider("test@domain2.com")
 	ms.NoError(err, "unable to get authprovider for test@domain2.com")
-	if _, ok := provider.(*google.Provider); !ok {
-		ms.Fail("auth provider not expected google type")
-	}
+	ms.IsType(&google.Provider{}, provider, "auth provider not expected google type")
 }

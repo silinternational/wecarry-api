@@ -269,7 +269,7 @@ func authCallback(c buffalo.Context) error {
 			fmt.Sprintf("error finding org with UUID %s ... %v", orgID, err.Error()))
 	}
 
-	ap, err := org.GetAuthProvider()
+	ap, err := org.GetAuthProvider(authEmail)
 	if err != nil {
 		extras := map[string]interface{}{"authEmail": authEmail}
 		return logErrorAndRedirect(c, domain.ErrorLoadingAuthProvider,
@@ -399,7 +399,12 @@ func authDestroy(c buffalo.Context) error {
 	// set person on rollbar session
 	domain.RollbarSetPerson(c, uat.User.UUID.String(), uat.User.Nickname, uat.User.Email)
 
-	authPro, err := org.GetAuthProvider()
+	authUser, err := uat.GetUser()
+	if err != nil {
+		return logErrorAndRedirect(c, domain.ErrorAuthProvidersLogout, err.Error())
+	}
+
+	authPro, err := org.GetAuthProvider(authUser.Email)
 	if err != nil {
 		return logErrorAndRedirect(c, domain.ErrorLoadingAuthProvider, err.Error())
 	}
