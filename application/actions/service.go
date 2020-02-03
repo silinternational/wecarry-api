@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"time"
 
 	"github.com/gobuffalo/buffalo"
 
@@ -79,14 +78,14 @@ func serviceHandler(c buffalo.Context) error {
 }
 
 func fileCleanupHandler(c buffalo.Context) error {
-	if err := job.SubmitDelayed(job.FileCleanup, time.Second, nil); err != nil {
+	if err := job.Submit(job.FileCleanup, nil); err != nil {
 		return c.Error(http.StatusInternalServerError, fmt.Errorf("file cleanup job not started, %s", err))
 	}
 	return nil
 }
 
 func tokenCleanupHandler(c buffalo.Context) error {
-	if err := job.SubmitDelayed(job.TokenCleanup, time.Second, nil); err != nil {
+	if err := job.Submit(job.TokenCleanup, nil); err != nil {
 		return c.Error(http.StatusInternalServerError, fmt.Errorf("token cleanup job not started, %s", err))
 	}
 	return nil

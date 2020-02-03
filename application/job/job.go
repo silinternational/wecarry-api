@@ -131,3 +131,13 @@ func SubmitDelayed(handler string, delay time.Duration, args map[string]interfac
 	}
 	return w.PerformIn(job, delay)
 }
+
+// Submit enqueues a new Worker job for the given handler. Arguments can be provided in `args`.
+func Submit(handler string, args map[string]interface{}) error {
+	job := worker.Job{
+		Queue:   "default",
+		Args:    args,
+		Handler: handler,
+	}
+	return w.Perform(job)
+}
