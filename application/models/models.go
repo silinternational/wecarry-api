@@ -216,3 +216,11 @@ func convertSliceFromIntToInterface(intSlice []int) []interface{} {
 	}
 	return s
 }
+
+func IsDBConnected() bool {
+	var org Organization
+	if err := DB.First(&org); err != nil {
+		return !domain.IsOtherThanNoRows(err)
+	}
+	return true
+}
