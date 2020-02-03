@@ -117,11 +117,14 @@ func CreatePostFixtures(tx *pop.Connection, n int, createFiles bool) models.Post
 		files = CreateFileFixtures(n)
 	}
 
+	futureDate := time.Now().Add(4 * domain.DurationWeek)
+
 	posts := make(models.Posts, n)
 	for i := range posts {
 		posts[i].CreatedByID = user.ID
 		posts[i].ReceiverID = nulls.NewInt(user.ID)
 		posts[i].OrganizationID = org.ID
+		posts[i].NeededBefore = futureDate
 		posts[i].DestinationID = locations[i*2].ID
 		posts[i].OriginID = nulls.NewInt(locations[i*2+1].ID)
 		posts[i].Title = "title " + strconv.Itoa(i)

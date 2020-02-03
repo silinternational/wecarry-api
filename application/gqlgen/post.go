@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/gobuffalo/nulls"
@@ -263,6 +264,10 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 
 	setOptionalStringField(input.Title, &post.Title)
 
+	if input.NeededBefore != nil {
+		post.NeededBefore = *input.NeededBefore
+	}
+
 	if input.Description != nil {
 		post.Description = nulls.NewString(*input.Description)
 	}
@@ -304,19 +309,20 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 }
 
 type postInput struct {
-	ID          *string
-	OrgID       *string
-	Type        *models.PostType
-	Title       *string
-	Description *string
-	Destination *LocationInput
-	Origin      *LocationInput
-	Size        *models.PostSize
-	URL         *string
-	Kilograms   *float64
-	PhotoID     *string
-	MeetingID   *string
-	Visibility  *models.PostVisibility
+	ID           *string
+	OrgID        *string
+	Type         *models.PostType
+	Title        *string
+	Description  *string
+	NeededBefore *time.Time
+	Destination  *LocationInput
+	Origin       *LocationInput
+	Size         *models.PostSize
+	URL          *string
+	Kilograms    *float64
+	PhotoID      *string
+	MeetingID    *string
+	Visibility   *models.PostVisibility
 }
 
 // CreatePost resolves the `createPost` mutation.
