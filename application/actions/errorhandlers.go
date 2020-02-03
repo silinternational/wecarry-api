@@ -9,7 +9,6 @@ import (
 	"github.com/silinternational/wecarry-api/domain"
 )
 
-// If you add a new status entry here, then also add it to getErrorCodeFromStatus
 var httpErrorCodes = map[int]string{
 	http.StatusBadRequest:          domain.ErrorBadRequest,
 	http.StatusUnauthorized:        domain.ErrorNotAuthenticated,
