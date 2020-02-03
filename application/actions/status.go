@@ -12,7 +12,7 @@ import (
 func statusHandler(c buffalo.Context) error {
 	var orgs models.Organizations
 	if err := orgs.All(); err != nil {
-		c.Render(http.StatusInternalServerError, r.JSON(map[string]string{"status": "error"}))
+		return c.Render(http.StatusInternalServerError, r.JSON(map[string]string{"status": "error"}))
 	}
 	return c.Render(200, r.JSON(map[string]string{"status": "good"}))
 }
