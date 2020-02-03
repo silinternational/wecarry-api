@@ -2,10 +2,12 @@ package grifts
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/gobuffalo/nulls"
 	"github.com/gofrs/uuid"
 	"github.com/markbates/grift/grift"
+	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 )
 
@@ -189,6 +191,7 @@ var _ = grift.Namespace("db", func() {
 		}
 
 		// POSTS Table
+		futureDate := time.Now().Add(8 * domain.DurationWeek)
 		postUUID1, _ := uuid.FromString("270fa549-65f2-43c0-ac27-78a054cf49a1")
 		postUUID2, _ := uuid.FromString("028164cd-a8f5-43b9-98d0-f8a7778ea2f1")
 		postUUID3, _ := uuid.FromString("e625a482-c8ff-4f52-b8ed-73e6b3eac4d7")
@@ -242,6 +245,7 @@ var _ = grift.Namespace("db", func() {
 			fixturePosts[i].Status = models.PostStatusOpen
 			fixturePosts[i].CreatedByID = fixtureUsers[i].ID
 			fixturePosts[i].ReceiverID = nulls.NewInt(fixtureUsers[i].ID)
+			fixturePosts[i].NeededBefore = futureDate
 			err := models.DB.Create(fixturePosts[i])
 			if err != nil {
 				err = fmt.Errorf("error loading post fixture ... %+v\n %v", post, err.Error())

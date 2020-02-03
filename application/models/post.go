@@ -237,6 +237,7 @@ type Post struct {
 	CreatedByID    int            `json:"created_by_id" db:"created_by_id"`
 	Type           PostType       `json:"type" db:"type"`
 	OrganizationID int            `json:"organization_id" db:"organization_id"`
+	NeededBefore   time.Time      `json:"needed_before" db:"needed_before"`
 	Status         PostStatus     `json:"status" db:"status"`
 	Title          string         `json:"title" db:"title"`
 	Size           PostSize       `json:"size" db:"size"`
