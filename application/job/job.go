@@ -19,16 +19,18 @@ const (
 
 var w worker.Worker
 
+var handlers = map[string]func(worker.Args) error{
+	NewThreadMessage: newThreadMessageHandler,
+	FileCleanup:      fileCleanupHandler,
+	TokenCleanup:     tokenCleanupHandler,
+}
+
 func init() {
 	w = worker.NewSimple()
-	if err := w.Register(NewThreadMessage, newThreadMessageHandler); err != nil {
-		domain.ErrLogger.Printf("error registering '%s' worker, %s", NewThreadMessage, err)
-	}
-	if err := w.Register(FileCleanup, fileCleanupHandler); err != nil {
-		domain.ErrLogger.Printf("error registering '%s' worker, %s", FileCleanup, err)
-	}
-	if err := w.Register(TokenCleanup, tokenCleanupHandler); err != nil {
-		domain.ErrLogger.Printf("error registering '%s' worker, %s", TokenCleanup, err)
+	for key, handler := range handlers {
+		if err := w.Register(key, handler); err != nil {
+			domain.ErrLogger.Printf("error registering '%s' handler, %s", key, err)
+		}
 	}
 }
 
