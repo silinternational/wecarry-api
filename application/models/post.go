@@ -624,6 +624,9 @@ func (p *Post) AttachFile(fileID string) (File, error) {
 	if err := postFile.Create(); err != nil {
 		return f, err
 	}
+	if err := f.SetLinked(); err != nil {
+		domain.ErrLogger.Printf("error marking new post file %d as linked, %s", f.ID, err)
+	}
 
 	return f, nil
 }
@@ -657,14 +660,25 @@ func (p *Post) GetFiles() ([]File, error) {
 func (p *Post) AttachPhoto(fileID string) (File, error) {
 	var f File
 	if err := f.FindByUUID(fileID); err != nil {
-		return f, nil // in case client can't recognize this error we'll fail silently
+		return f, err
 	}
 
+	oldID := p.PhotoFileID
 	p.PhotoFileID = nulls.NewInt(f.ID)
-	// if this is a new object, don't save it yet
-	if p.ID != 0 {
-		if err := p.Update(); err != nil {
+	if p.ID > 0 {
+		if err := DB.UpdateColumns(p, "photo_file_id"); err != nil {
 			return f, err
+		}
+	}
+
+	if err := f.SetLinked(); err != nil {
+		domain.ErrLogger.Printf("error marking post image file %d as linked, %s", f.ID, err)
+	}
+
+	if oldID.Valid {
+		oldFile := File{ID: oldID.Int}
+		if err := oldFile.ClearLinked(); err != nil {
+			domain.ErrLogger.Printf("error marking old post image file %d as unlinked, %s", oldFile.ID, err)
 		}
 	}
 

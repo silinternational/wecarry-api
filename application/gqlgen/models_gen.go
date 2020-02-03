@@ -18,8 +18,10 @@ type CreateMessageInput struct {
 }
 
 type CreateOrganizationDomainInput struct {
-	Domain         string `json:"domain"`
-	OrganizationID string `json:"organizationID"`
+	Domain         string  `json:"domain"`
+	OrganizationID string  `json:"organizationID"`
+	AuthType       *string `json:"authType"`
+	AuthConfig     *string `json:"authConfig"`
 }
 
 type CreateOrganizationInput struct {

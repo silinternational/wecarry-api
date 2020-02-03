@@ -1,0 +1,3 @@
+add_column("files", "linked", "bool", {"default": 0})
+
+sql("UPDATE files SET linked = true")

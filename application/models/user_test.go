@@ -749,34 +749,56 @@ func (ms *ModelSuite) TestUser_FindByID() {
 }
 
 func (ms *ModelSuite) TestUser_AttachPhoto() {
-	t := ms.T()
+	uf := createUserFixtures(ms.DB, 3)
+	users := uf.Users
 
-	uf := createUserFixtures(ms.DB, 1)
-	user := uf.Users[0]
+	files := createFileFixtures(3)
+	users[1].PhotoFileID = nulls.NewInt(files[0].ID)
+	ms.NoError(ms.DB.UpdateColumns(&users[1], "photo_file_id"))
 
-	var photoFixture File
-	const filename = "photo.gif"
-	ms.Nil(photoFixture.Store(filename, []byte("GIF89a")), "failed to create file fixture")
-
-	if attachedFile, err := user.AttachPhoto(photoFixture.UUID.String()); err != nil {
-		t.Errorf("failed to attach photo to user, %s", err)
-	} else {
-		ms.Equal(filename, attachedFile.Name)
-		ms.True(attachedFile.ID != 0)
-		ms.True(attachedFile.UUID.Version() != 0)
+	tests := []struct {
+		name     string
+		user     User
+		oldImage *File
+		newImage string
+		want     File
+		wantErr  string
+	}{
+		{
+			name:     "no previous file",
+			user:     users[0],
+			newImage: files[1].UUID.String(),
+			want:     files[1],
+		},
+		{
+			name:     "previous file",
+			user:     users[1],
+			oldImage: &files[0],
+			newImage: files[2].UUID.String(),
+			want:     files[2],
+		},
+		{
+			name:     "bad ID",
+			user:     users[2],
+			newImage: uuid.UUID{}.String(),
+			wantErr:  "no rows in result set",
+		},
 	}
-
-	if err := ms.DB.Load(&user); err != nil {
-		t.Errorf("failed to load photo relation for test user, %s", err)
-	}
-
-	ms.Equal(filename, user.PhotoFile.Name)
-
-	if got, err := user.GetPhotoURL(); err == nil {
-		ms.NotNil(got)
-		ms.Regexp("^https?", *got)
-	} else {
-		ms.Fail("user.GetPhotoURL failed, %s", err)
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			got, err := tt.user.AttachPhoto(tt.newImage)
+			if tt.wantErr != "" {
+				ms.Error(err, "did not get expected error")
+				ms.Contains(err.Error(), tt.wantErr)
+				return
+			}
+			ms.NoError(err, "unexpected error")
+			ms.Equal(tt.want.UUID.String(), got.UUID.String(), "wrong file returned")
+			ms.Equal(true, got.Linked, "new user photo file is not marked as linked")
+			if tt.oldImage != nil {
+				ms.Equal(false, tt.oldImage.Linked, "old user photo file is not marked as unlinked")
+			}
+		})
 	}
 }
 
