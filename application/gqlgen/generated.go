@@ -110,6 +110,7 @@ type ComplexityRoot struct {
 		SetThreadLastViewedAt       func(childComplexity int, input SetThreadLastViewedAtInput) int
 		UpdateMeeting               func(childComplexity int, input meetingInput) int
 		UpdateOrganization          func(childComplexity int, input UpdateOrganizationInput) int
+		UpdateOrganizationDomain    func(childComplexity int, input CreateOrganizationDomainInput) int
 		UpdatePost                  func(childComplexity int, input postInput) int
 		UpdatePostStatus            func(childComplexity int, input UpdatePostStatusInput) int
 		UpdateUser                  func(childComplexity int, input UpdateUserInput) int
