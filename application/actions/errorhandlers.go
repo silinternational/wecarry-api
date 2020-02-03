@@ -19,7 +19,7 @@ var httpErrorCodes = map[int]string{
 }
 
 func registerCustomErrorHandler(app *buffalo.App) {
-	for i := 401; i < 600; i++ {
+	for i := 400; i < 600; i++ {
 		app.ErrorHandlers[i] = customErrorHandler
 	}
 }
