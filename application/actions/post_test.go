@@ -27,7 +27,7 @@ type Post struct {
 	Type         models.PostType `json:"type"`
 	Title        string          `json:"title"`
 	Description  string          `json:"description"`
-	NeededBefore time.Time       `json:"neededBefore"`
+	NeededBefore *time.Time      `json:"neededBefore"`
 	Destination  struct {
 		Description string  `json:"description"`
 		Country     string  `json:"country"`
@@ -115,9 +115,9 @@ func (as *ActionSuite) Test_PostQuery() {
 	as.Equal(f.Posts[0].Title, resp.Post.Title)
 	as.Equal(f.Posts[0].Description.String, resp.Post.Description)
 
-	wantDate := f.Posts[0].NeededBefore
+	wantDate := f.Posts[0].NeededBefore.Time
 	wantDate = time.Date(wantDate.Year(), wantDate.Month(), wantDate.Day(), 0, 0, 0, 0, time.UTC)
-	as.Equal(wantDate, resp.Post.NeededBefore, "incorrect NeededBefore date")
+	as.Equal(&wantDate, resp.Post.NeededBefore, "incorrect NeededBefore date")
 
 	as.NoError(as.DB.Load(&f.Posts[0], "Destination", "Origin", "PhotoFile", "Files.File"))
 
@@ -239,7 +239,6 @@ func (as *ActionSuite) Test_CreatePost() {
 			type: REQUEST
 			title: "title"
 			description: "new description"
-			neededBefore: "` + neededBefore + `"
 			destination: {description:"dest" country:"dc" latitude:1.1 longitude:2.2}
 			size: TINY
 			url: "example.com"
@@ -251,13 +250,14 @@ func (as *ActionSuite) Test_CreatePost() {
 			size url kilograms visibility }}`
 
 	as.NoError(as.testGqlQuery(query, f.Users[0].Nickname, &postsResp))
+	//var nilTime *time.Time
 
 	as.Equal(f.Organization.UUID.String(), postsResp.Post.Organization.ID)
 	as.Equal(f.File.UUID.String(), postsResp.Post.Photo.ID)
 	as.Equal(models.PostTypeRequest, postsResp.Post.Type)
 	as.Equal("title", postsResp.Post.Title)
 	as.Equal("new description", postsResp.Post.Description)
-	as.Equal(neededBefore[:10], postsResp.Post.NeededBefore.Format(domain.DateFormat))
+	as.Nil(postsResp.Post.NeededBefore)
 	as.Equal(models.PostStatus(""), postsResp.Post.Status)
 	as.Equal("dest", postsResp.Post.Destination.Description)
 	as.Equal("dc", postsResp.Post.Destination.Country)
@@ -285,7 +285,7 @@ func (as *ActionSuite) Test_CreatePost() {
 			url: "example.com"
 		`
 	query = `mutation { post: createPost(input: {` + input + `}) {
-		destination { description country latitude longitude }
+		neededBefore destination { description country latitude longitude }
 		meeting { id } }}`
 
 	as.NoError(as.testGqlQuery(query, f.Users[0].Nickname, &postsResp))
@@ -294,7 +294,10 @@ func (as *ActionSuite) Test_CreatePost() {
 
 	as.NoError(as.DB.Load(&f.Meetings[0]), "Location")
 	as.Equal(f.Meetings[0].Location.Description, postsResp.Post.Destination.Description)
+
+	as.NotNil(postsResp.Post.NeededBefore)
 	as.Equal(neededBefore[:10], postsResp.Post.NeededBefore.Format(domain.DateFormat))
+
 	as.Equal(f.Meetings[0].Location.Country, postsResp.Post.Destination.Country)
 	as.Equal(f.Meetings[0].Location.Latitude.Float64, postsResp.Post.Destination.Lat)
 	as.Equal(f.Meetings[0].Location.Longitude.Float64, postsResp.Post.Destination.Long)

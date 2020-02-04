@@ -288,7 +288,7 @@ type PostResolver interface {
 
 	Description(ctx context.Context, obj *models.Post) (*string, error)
 	Destination(ctx context.Context, obj *models.Post) (*models.Location, error)
-
+	NeededBefore(ctx context.Context, obj *models.Post) (*time.Time, error)
 	Origin(ctx context.Context, obj *models.Post) (*models.Location, error)
 
 	Threads(ctx context.Context, obj *models.Post) ([]models.Thread, error)
@@ -1562,7 +1562,7 @@ type Post {
     title: String!
     description: String
     destination: Location!
-    neededBefore: Time!
+    neededBefore: Time
     origin: Location
     size: PostSize!
     status: PostStatus!
@@ -1666,7 +1666,7 @@ input CreatePostInput {
     title: String!
     description: String
     destination: LocationInput!
-    neededBefore: Time!
+    neededBefore: Time
     origin: LocationInput
     size: PostSize!
     url: String
@@ -4735,28 +4735,25 @@ func (ec *executionContext) _Post_neededBefore(ctx context.Context, field graphq
 		Object:   "Post",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.NeededBefore, nil
+		return ec.resolvers.Post().NeededBefore(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(time.Time)
+	res := resTmp.(*time.Time)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Post_origin(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
@@ -8316,7 +8313,7 @@ func (ec *executionContext) unmarshalInputCreatePostInput(ctx context.Context, o
 			}
 		case "neededBefore":
 			var err error
-			it.NeededBefore, err = ec.unmarshalNTime2ᚖtimeᚐTime(ctx, v)
+			it.NeededBefore, err = ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -9536,10 +9533,16 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 				return res
 			})
 		case "neededBefore":
-			out.Values[i] = ec._Post_neededBefore(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Post_neededBefore(ctx, field, obj)
+				return res
+			})
 		case "origin":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {

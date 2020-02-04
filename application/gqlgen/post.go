@@ -92,6 +92,15 @@ func (r *postResolver) Description(ctx context.Context, obj *models.Post) (*stri
 	return models.GetStringFromNullsString(obj.Description), nil
 }
 
+// NeededBefore resolves the `neededBefore` property of the post query, converting a nulls.Time to a *time.Time.
+func (r *postResolver) NeededBefore(ctx context.Context, obj *models.Post) (*time.Time, error) {
+	if obj == nil {
+		return nil, nil
+	}
+
+	return models.GetTimeFromNullsTime(obj.NeededBefore), nil
+}
+
 // Destination resolves the `destination` property of the post query, retrieving the related record from the database.
 func (r *postResolver) Destination(ctx context.Context, obj *models.Post) (*models.Location, error) {
 	if obj == nil {
@@ -265,7 +274,7 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 	setOptionalStringField(input.Title, &post.Title)
 
 	if input.NeededBefore != nil {
-		post.NeededBefore = *input.NeededBefore
+		post.NeededBefore = nulls.NewTime(*input.NeededBefore)
 	}
 
 	if input.Description != nil {

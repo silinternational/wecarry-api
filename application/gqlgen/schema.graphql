@@ -148,7 +148,7 @@ type Post {
     title: String!
     description: String
     destination: Location!
-    neededBefore: Time!
+    neededBefore: Time
     origin: Location
     size: PostSize!
     status: PostStatus!
@@ -252,7 +252,7 @@ input CreatePostInput {
     title: String!
     description: String
     destination: LocationInput!
-    neededBefore: Time!
+    neededBefore: Time
     origin: LocationInput
     size: PostSize!
     url: String

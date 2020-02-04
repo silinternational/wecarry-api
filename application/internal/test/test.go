@@ -124,7 +124,7 @@ func CreatePostFixtures(tx *pop.Connection, n int, createFiles bool) models.Post
 		posts[i].CreatedByID = user.ID
 		posts[i].ReceiverID = nulls.NewInt(user.ID)
 		posts[i].OrganizationID = org.ID
-		posts[i].NeededBefore = futureDate
+		posts[i].NeededBefore = nulls.NewTime(futureDate)
 		posts[i].DestinationID = locations[i*2].ID
 		posts[i].OriginID = nulls.NewInt(locations[i*2+1].ID)
 		posts[i].Title = "title " + strconv.Itoa(i)
