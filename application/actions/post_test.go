@@ -250,7 +250,6 @@ func (as *ActionSuite) Test_CreatePost() {
 			size url kilograms visibility }}`
 
 	as.NoError(as.testGqlQuery(query, f.Users[0].Nickname, &postsResp))
-	//var nilTime *time.Time
 
 	as.Equal(f.Organization.UUID.String(), postsResp.Post.Organization.ID)
 	as.Equal(f.File.UUID.String(), postsResp.Post.Photo.ID)
