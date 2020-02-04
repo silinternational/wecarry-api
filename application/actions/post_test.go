@@ -27,7 +27,7 @@ type Post struct {
 	Type         models.PostType `json:"type"`
 	Title        string          `json:"title"`
 	Description  string          `json:"description"`
-	NeededBefore *time.Time      `json:"neededBefore"`
+	NeededBefore string          `json:"neededBefore"`
 	Destination  struct {
 		Description string  `json:"description"`
 		Country     string  `json:"country"`
@@ -115,9 +115,8 @@ func (as *ActionSuite) Test_PostQuery() {
 	as.Equal(f.Posts[0].Title, resp.Post.Title)
 	as.Equal(f.Posts[0].Description.String, resp.Post.Description)
 
-	wantDate := f.Posts[0].NeededBefore.Time
-	wantDate = time.Date(wantDate.Year(), wantDate.Month(), wantDate.Day(), 0, 0, 0, 0, time.UTC)
-	as.Equal(&wantDate, resp.Post.NeededBefore, "incorrect NeededBefore date")
+	wantDate := f.Posts[0].NeededBefore.Time.Format(domain.DateFormat)
+	as.Equal(wantDate, resp.Post.NeededBefore, "incorrect NeededBefore date")
 
 	as.NoError(as.DB.Load(&f.Posts[0], "Destination", "Origin", "PhotoFile", "Files.File"))
 
@@ -191,6 +190,7 @@ func (as *ActionSuite) Test_UpdatePost() {
 			visibility: ALL
 		`
 	query := `mutation { post: updatePost(input: {` + input + `}) { id photo { id } description
+			neededBefore
 			destination { description country latitude longitude}
 			origin { description country latitude longitude}
 			size url kilograms visibility isEditable}}`
@@ -205,6 +205,7 @@ func (as *ActionSuite) Test_UpdatePost() {
 	as.Equal(f.Posts[0].UUID.String(), postsResp.Post.ID)
 	as.Equal(f.Files[0].UUID.String(), postsResp.Post.Photo.ID)
 	as.Equal("new description", postsResp.Post.Description)
+	as.Equal(f.Posts[0].NeededBefore.Time.Format(domain.DateFormat), postsResp.Post.NeededBefore)
 	as.Equal("dest", postsResp.Post.Destination.Description)
 	as.Equal("dc", postsResp.Post.Destination.Country)
 	as.Equal(1.1, postsResp.Post.Destination.Lat)
@@ -224,6 +225,22 @@ func (as *ActionSuite) Test_UpdatePost() {
 	query = `mutation { post: updatePost(input: {` + input + `}) { id status}}`
 
 	as.Error(as.testGqlQuery(query, f.Users[1].Nickname, &postsResp))
+
+	newNeededBefore := "2999-12-25"
+	// Modify post's NeededBefore
+	input = `id: "` + f.Posts[0].UUID.String() + `"
+		neededBefore: "` + newNeededBefore + `"`
+	query = `mutation { post: updatePost(input: {` + input + `}) { id neededBefore }}`
+
+	as.NoError(as.testGqlQuery(query, f.Users[0].Nickname, &postsResp))
+	as.Equal(newNeededBefore, postsResp.Post.NeededBefore, "incorrect NeededBefore")
+
+	// Null out post's NeededBefore
+	input = `id: "` + f.Posts[0].UUID.String() + `"	neededBefore: ""`
+	query = `mutation { post: updatePost(input: {` + input + `}) { id neededBefore }}`
+
+	as.NoError(as.testGqlQuery(query, f.Users[0].Nickname, &postsResp))
+	as.Equal("", postsResp.Post.NeededBefore, "incorrect NeededBefore")
 }
 
 func (as *ActionSuite) Test_CreatePost() {
@@ -231,7 +248,7 @@ func (as *ActionSuite) Test_CreatePost() {
 
 	var postsResp PostResponse
 
-	neededBefore := "2030-12-25T00:00:00Z"
+	neededBefore := "2030-12-25"
 
 	input := `orgID: "` + f.Organization.UUID.String() + `"` +
 		`photoID: "` + f.File.UUID.String() + `"` +
@@ -256,7 +273,7 @@ func (as *ActionSuite) Test_CreatePost() {
 	as.Equal(models.PostTypeRequest, postsResp.Post.Type)
 	as.Equal("title", postsResp.Post.Title)
 	as.Equal("new description", postsResp.Post.Description)
-	as.Nil(postsResp.Post.NeededBefore)
+	as.Equal("", postsResp.Post.NeededBefore)
 	as.Equal(models.PostStatus(""), postsResp.Post.Status)
 	as.Equal("dest", postsResp.Post.Destination.Description)
 	as.Equal("dc", postsResp.Post.Destination.Country)
@@ -295,7 +312,7 @@ func (as *ActionSuite) Test_CreatePost() {
 	as.Equal(f.Meetings[0].Location.Description, postsResp.Post.Destination.Description)
 
 	as.NotNil(postsResp.Post.NeededBefore)
-	as.Equal(neededBefore[:10], postsResp.Post.NeededBefore.Format(domain.DateFormat))
+	as.Equal(neededBefore, postsResp.Post.NeededBefore)
 
 	as.Equal(f.Meetings[0].Location.Country, postsResp.Post.Destination.Country)
 	as.Equal(f.Meetings[0].Location.Latitude.Float64, postsResp.Post.Destination.Lat)

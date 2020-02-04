@@ -288,7 +288,7 @@ type PostResolver interface {
 
 	Description(ctx context.Context, obj *models.Post) (*string, error)
 	Destination(ctx context.Context, obj *models.Post) (*models.Location, error)
-	NeededBefore(ctx context.Context, obj *models.Post) (*time.Time, error)
+	NeededBefore(ctx context.Context, obj *models.Post) (*string, error)
 	Origin(ctx context.Context, obj *models.Post) (*models.Location, error)
 
 	Threads(ctx context.Context, obj *models.Post) ([]models.Thread, error)
@@ -1562,7 +1562,7 @@ type Post {
     title: String!
     description: String
     destination: Location!
-    neededBefore: Time
+    neededBefore: String
     origin: Location
     size: PostSize!
     status: PostStatus!
@@ -1666,7 +1666,7 @@ input CreatePostInput {
     title: String!
     description: String
     destination: LocationInput!
-    neededBefore: Time
+    neededBefore: String
     origin: LocationInput
     size: PostSize!
     url: String
@@ -1681,7 +1681,7 @@ input UpdatePostInput {
     title: String
     description: String
     destination: LocationInput
-    neededBefore: Time
+    neededBefore: String
     origin: LocationInput
     size: PostSize
     url: String
@@ -4750,10 +4750,10 @@ func (ec *executionContext) _Post_neededBefore(ctx context.Context, field graphq
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*time.Time)
+	res := resTmp.(*string)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Post_origin(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
@@ -8313,7 +8313,7 @@ func (ec *executionContext) unmarshalInputCreatePostInput(ctx context.Context, o
 			}
 		case "neededBefore":
 			var err error
-			it.NeededBefore, err = ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			it.NeededBefore, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -8649,7 +8649,7 @@ func (ec *executionContext) unmarshalInputUpdatePostInput(ctx context.Context, o
 			}
 		case "neededBefore":
 			var err error
-			it.NeededBefore, err = ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			it.NeededBefore, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -11809,29 +11809,6 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 		return graphql.Null
 	}
 	return ec.marshalOString2string(ctx, sel, *v)
-}
-
-func (ec *executionContext) unmarshalOTime2timeᚐTime(ctx context.Context, v interface{}) (time.Time, error) {
-	return graphql.UnmarshalTime(v)
-}
-
-func (ec *executionContext) marshalOTime2timeᚐTime(ctx context.Context, sel ast.SelectionSet, v time.Time) graphql.Marshaler {
-	return graphql.MarshalTime(v)
-}
-
-func (ec *executionContext) unmarshalOTime2ᚖtimeᚐTime(ctx context.Context, v interface{}) (*time.Time, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalOTime2timeᚐTime(ctx, v)
-	return &res, err
-}
-
-func (ec *executionContext) marshalOTime2ᚖtimeᚐTime(ctx context.Context, sel ast.SelectionSet, v *time.Time) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec.marshalOTime2timeᚐTime(ctx, sel, *v)
 }
 
 func (ec *executionContext) unmarshalOUpdateUserPreferencesInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐUpdateUserPreferencesInput(ctx context.Context, v interface{}) (UpdateUserPreferencesInput, error) {

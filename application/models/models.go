@@ -8,7 +8,6 @@ import (
 	"log"
 	"reflect"
 	"strings"
-	"time"
 
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/events"
@@ -93,15 +92,15 @@ func GetIntFromNullsInt(in nulls.Int) *int {
 	return &output
 }
 
-// GetTimeFromNullsTime returns a pointer to make it easier for calling
-// functions to return a pointer without an extra line of code.
-func GetTimeFromNullsTime(inTime nulls.Time) *time.Time {
-	var output *time.Time
+// GetTimeFromNullsTime returns a pointer to a string that looks
+// like a date based on a nulls.Time value
+func GetStringFromNullsTime(inTime nulls.Time) *string {
+	var output string
 	if inTime.Valid {
-		output = &inTime.Time
+		output = inTime.Time.Format(domain.DateFormat)
 	}
 
-	return output
+	return &output
 }
 
 func GetCurrentUserFromGqlContext(ctx context.Context) User {
