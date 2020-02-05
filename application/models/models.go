@@ -97,6 +97,17 @@ func GetIntFromNullsInt(in nulls.Int) *int {
 	return &output
 }
 
+// GetStringFromNullsTime returns a pointer to a string that looks
+// like a date based on a nulls.Time value
+func GetStringFromNullsTime(inTime nulls.Time) *string {
+	var output string
+	if inTime.Valid {
+		output = inTime.Time.Format(domain.DateFormat)
+	}
+
+	return &output
+}
+
 func GetCurrentUserFromGqlContext(ctx context.Context) User {
 	bc, ok := ctx.Value("BuffaloContext").(buffalo.Context)
 	if !ok {

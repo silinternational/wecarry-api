@@ -70,7 +70,9 @@ enum PostSize {
     XLARGE
 }
 
-# Visibility for Posts, ALL organizations, TRUSTED organizations, or SAME organization only
+"""
+Visibility for Posts, ALL organizations, TRUSTED organizations, or SAME organization only
+"""
 enum PostVisibility {
     ALL
     TRUSTED
@@ -148,6 +150,7 @@ type Post {
     title: String!
     description: String
     destination: Location!
+    neededBefore: String
     origin: Location
     size: PostSize!
     status: PostStatus!
@@ -251,6 +254,7 @@ input CreatePostInput {
     title: String!
     description: String
     destination: LocationInput!
+    neededBefore: String
     origin: LocationInput
     size: PostSize!
     url: String
@@ -265,6 +269,7 @@ input UpdatePostInput {
     title: String
     description: String
     destination: LocationInput
+    neededBefore: String
     origin: LocationInput
     size: PostSize
     url: String

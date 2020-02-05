@@ -126,6 +126,35 @@ func (ms *ModelSuite) TestPost_Validate() {
 			wantErr:  true,
 			errField: "uuid",
 		},
+		{
+			name: "bad neededBefore (today)",
+			post: Post{
+				CreatedByID:    1,
+				Type:           PostTypeRequest,
+				OrganizationID: 1,
+				Title:          "A Request",
+				NeededBefore:   nulls.NewTime(time.Now()),
+				Size:           PostSizeMedium,
+				Status:         PostStatusOpen,
+				UUID:           domain.GetUUID(),
+			},
+			wantErr:  true,
+			errField: "needed_before",
+		},
+		{
+			name: "good neededBefore (tommorrow)",
+			post: Post{
+				CreatedByID:    1,
+				Type:           PostTypeRequest,
+				OrganizationID: 1,
+				Title:          "A Request",
+				NeededBefore:   nulls.NewTime(time.Now().Add(domain.DurationDay)),
+				Size:           PostSizeMedium,
+				Status:         PostStatusOpen,
+				UUID:           domain.GetUUID(),
+			},
+			wantErr: false,
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

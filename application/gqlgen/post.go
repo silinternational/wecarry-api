@@ -7,8 +7,10 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/gobuffalo/nulls"
-	"github.com/silinternational/wecarry-api/models"
 	"github.com/vektah/gqlparser/gqlerror"
+
+	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/models"
 )
 
 // Post returns the post resolver. It is required by GraphQL
@@ -89,6 +91,15 @@ func (r *postResolver) Description(ctx context.Context, obj *models.Post) (*stri
 		return nil, nil
 	}
 	return models.GetStringFromNullsString(obj.Description), nil
+}
+
+// NeededBefore resolves the `neededBefore` property of the post query, converting a nulls.Time to a *time.Time.
+func (r *postResolver) NeededBefore(ctx context.Context, obj *models.Post) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+
+	return models.GetStringFromNullsTime(obj.NeededBefore), nil
 }
 
 // Destination resolves the `destination` property of the post query, retrieving the related record from the database.
@@ -263,6 +274,18 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 
 	setOptionalStringField(input.Title, &post.Title)
 
+	if input.NeededBefore != nil {
+		if *input.NeededBefore == "" {
+			post.NeededBefore = nulls.Time{}
+		} else {
+			neededBefore, err := domain.ConvertStringPtrToDate(input.NeededBefore)
+			if err != nil {
+				return models.Post{}, err
+			}
+			post.NeededBefore = nulls.NewTime(neededBefore)
+		}
+	}
+
 	if input.Description != nil {
 		post.Description = nulls.NewString(*input.Description)
 	}
@@ -304,19 +327,20 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 }
 
 type postInput struct {
-	ID          *string
-	OrgID       *string
-	Type        *models.PostType
-	Title       *string
-	Description *string
-	Destination *LocationInput
-	Origin      *LocationInput
-	Size        *models.PostSize
-	URL         *string
-	Kilograms   *float64
-	PhotoID     *string
-	MeetingID   *string
-	Visibility  *models.PostVisibility
+	ID           *string
+	OrgID        *string
+	Type         *models.PostType
+	Title        *string
+	Description  *string
+	NeededBefore *string
+	Destination  *LocationInput
+	Origin       *LocationInput
+	Size         *models.PostSize
+	URL          *string
+	Kilograms    *float64
+	PhotoID      *string
+	MeetingID    *string
+	Visibility   *models.PostVisibility
 }
 
 // CreatePost resolves the `createPost` mutation.
