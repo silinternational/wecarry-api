@@ -240,10 +240,18 @@ func (f *File) Update() error {
 // DeleteUnlinked removes all files that are no longer linked to any database records
 func (f *Files) DeleteUnlinked() error {
 	var files Files
-	if err := DB.Select("id", "uuid").Where("linked = FALSE").All(&files); err != nil {
+	if err := DB.Select("id", "uuid").
+		Where("linked = FALSE AND updated_at < ?", time.Now().Add(-4*domain.DurationWeek)).
+		All(&files); err != nil {
 		return err
 	}
 	domain.Logger.Printf("unlinked files: %d", len(files))
+	if len(files) > domain.Env.MaxFileDelete {
+		return fmt.Errorf("attempted to delete too many files, MaxFileDelete=%d", domain.Env.MaxFileDelete)
+	}
+	if len(files) == 0 {
+		return nil
+	}
 
 	nRemovedFromDB := 0
 	nRemovedFromS3 := 0
