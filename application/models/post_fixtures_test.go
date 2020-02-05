@@ -175,15 +175,15 @@ func createFixturesForPostFindByUserAndUUID(ms *ModelSuite) PostFixtures {
 	}
 }
 
-//        Org0                Org1          Org2
-//        |  |                |  |           |
-//        |  +----+-----------+  +-----+-----+
-//        |       |                    |
-//       User1  User0                Trust
+//        Org0                Org1           Org2
+//        |  |                | | |          | |
+//        |  +----+-----------+ | +----+-----+ +
+//        |       |             |      |       |
+//       User1  User0        User3   Trust   User2
 //
-// Org0: Post0, Post2, Post3, Post4
-// Org1: Post1
-// Org2: Post5, Post6, Post7
+// Org0: Post0 (SAME), Post2 (SAME, COMPLETED), Post3 (SAME, REMOVED), Post4 (SAME)
+// Org1: Post1 (SAME)
+// Org2: Post5 (ALL), Post6 (TRUSTED), Post7 (SAME)
 //
 func CreateFixtures_Posts_FindByUser(ms *ModelSuite) PostFixtures {
 	orgs := createOrganizationFixtures(ms.DB, 3)
@@ -194,15 +194,24 @@ func CreateFixtures_Posts_FindByUser(ms *ModelSuite) PostFixtures {
 	}
 	createFixture(ms, &trusts)
 
-	users := createUserFixtures(ms.DB, 2).Users
+	users := createUserFixtures(ms.DB, 4).Users
 
-	// both users are in org 0, but need user 0 to also be in org 1
 	createFixture(ms, &UserOrganization{
 		OrganizationID: orgs[1].ID,
 		UserID:         users[0].ID,
 		AuthID:         users[0].Email,
 		AuthEmail:      users[0].Email,
 	})
+
+	uo, err := users[2].FindUserOrganization(orgs[0])
+	ms.NoError(err)
+	uo.OrganizationID = orgs[2].ID
+	ms.NoError(DB.UpdateColumns(&uo, "organization_id"))
+
+	uo, err = users[3].FindUserOrganization(orgs[0])
+	ms.NoError(err)
+	uo.OrganizationID = orgs[1].ID
+	ms.NoError(DB.UpdateColumns(&uo, "organization_id"))
 
 	posts := createPostFixtures(ms.DB, 8, 0, false)
 	posts[1].OrganizationID = orgs[1].ID

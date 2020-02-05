@@ -278,14 +278,19 @@ func (ms *ModelSuite) Test_detectContentType() {
 
 func (ms *ModelSuite) TestFiles_DeleteUnlinked() {
 	const (
-		nUnlinkedFiles = 2
-		nPosts         = 2
-		nMeetings      = 2
-		nOrganizations = 2
-		nUsers         = 2
+		nOldUnlinkedFiles = 2
+		nNewUnlinkedFiles = 2
+		nPosts            = 2
+		nMeetings         = 2
+		nOrganizations    = 2
+		nUsers            = 2
 	)
 
-	_ = createFileFixtures(nUnlinkedFiles)
+	_ = createFileFixtures(nOldUnlinkedFiles)
+
+	ms.NoError(DB.RawQuery("UPDATE files set updated_at = ?", time.Now().Add(-5*domain.DurationWeek)).Exec())
+
+	_ = createFileFixtures(nNewUnlinkedFiles)
 
 	posts := createPostFixtures(ms.DB, nPosts, 0, true)
 
@@ -307,9 +312,14 @@ func (ms *ModelSuite) TestFiles_DeleteUnlinked() {
 	}
 
 	f := Files{}
+
+	domain.Env.MaxFileDelete = 1
+	ms.Error(f.DeleteUnlinked())
+
+	domain.Env.MaxFileDelete = 2
 	ms.NoError(f.DeleteUnlinked())
 	n, _ := DB.Count(&f)
-	ms.Equal(nPosts*2+nMeetings+nOrganizations+nUsers, n, "wrong number of files remain")
+	ms.Equal(nPosts*2+nMeetings+nOrganizations+nUsers+nNewUnlinkedFiles, n, "wrong number of files remain")
 }
 
 func (ms *ModelSuite) Test_changeFileExtension() {
