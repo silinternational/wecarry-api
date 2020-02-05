@@ -325,9 +325,7 @@ func (p *Post) SetProviderWithStatus(status PostStatus, currentUser User) {
 
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
 func (p *Post) Validate(tx *pop.Connection) (*validate.Errors, error) {
-	tomorrow := time.Now()
-	tomorrow = time.Date(tomorrow.Year(), tomorrow.Month(), tomorrow.Day(), 0, 0, 0, 0, time.UTC)
-	tomorrow = tomorrow.Add(domain.DurationDay)
+	tomorrow := time.Now().Truncate(domain.DurationDay).Add(domain.DurationDay)
 
 	// If null, make it pass by pretending it's in the future
 	neededBeforeDate := time.Now().Add(domain.DurationWeek)
@@ -374,13 +372,6 @@ func (p *Post) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) {
 		},
 	), nil
 	//return validate.NewErrors(), nil
-}
-
-type futureDateValidator struct {
-	Name    string
-	Field   nulls.Time
-	Context buffalo.Context
-	Message string
 }
 
 type updateStatusValidator struct {
