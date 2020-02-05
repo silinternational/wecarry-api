@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"image"
-	"image/color"
-	"image/draw"
-	_ "image/gif" // enable decoding of GIF images
-	"image/jpeg"  // decode/encode JPEG images
-	_ "image/png" // enable decoding of PNG images
+	"image/gif"
+	"image/jpeg"
+	"image/png"
+	"mime"
 	"net/http"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/gobuffalo/pop"
@@ -43,6 +44,7 @@ type File struct {
 	Name          string    `json:"name" db:"name"`
 	Size          int       `json:"size" db:"size"`
 	ContentType   string    `json:"content_type" db:"content_type"`
+	Linked        bool      `json:"linked" db:"linked"`
 }
 
 // String can be helpful for serializing the model
@@ -91,7 +93,7 @@ func (f *File) Store(name string, content []byte) *FileUploadError {
 		return &e
 	}
 
-	contentType, err := detectContentType(content)
+	contentType, err := validateContentType(content)
 	if err != nil {
 		e := FileUploadError{
 			HttpStatus: http.StatusBadRequest,
@@ -101,19 +103,8 @@ func (f *File) Store(name string, content []byte) *FileUploadError {
 		return &e
 	}
 
-	// If possible, strip EXIF metadata by re-encoding the image. Also sets background to white.
-	img, _, err := image.Decode(bytes.NewReader(content))
-	if err == nil {
-		dst := image.NewRGBA(img.Bounds())
-		draw.Draw(dst, dst.Bounds(), image.NewUniform(color.White), image.Point{}, draw.Src)
-		draw.Draw(dst, dst.Bounds(), img, img.Bounds().Min, draw.Over)
-		buf := new(bytes.Buffer)
-		if err := jpeg.Encode(buf, dst, nil); err == nil {
-			content = buf.Bytes()
-			contentType = "image/jpg"
-			name = name + ".jpeg"
-		}
-	}
+	removeMetadata(&contentType, &content)
+	changeFileExtension(&name, contentType)
 
 	url, err := aws.StoreFile(fileUUID.String(), contentType, content)
 	if err != nil {
@@ -144,6 +135,45 @@ func (f *File) Store(name string, content []byte) *FileUploadError {
 
 	*f = file
 	return nil
+}
+
+// removeMetadata removes, if possible, all EXIF metadata by re-encoding the image. If the encoding type changes,
+// `contentType` will be modified accordingly.
+func removeMetadata(contentType *string, content *[]byte) {
+	img, _, err := image.Decode(bytes.NewReader(*content))
+	if err != nil {
+		return
+	}
+	buf := new(bytes.Buffer)
+	switch *contentType {
+	case "image/jpg":
+		if err := jpeg.Encode(buf, img, nil); err == nil {
+			*content = buf.Bytes()
+		}
+	case "image/gif":
+		if err := gif.Encode(buf, img, nil); err == nil {
+			*content = buf.Bytes()
+		}
+	case "image/png":
+		if err := png.Encode(buf, img); err == nil {
+			*content = buf.Bytes()
+		}
+	case "image/webp":
+		if err := png.Encode(buf, img); err == nil {
+			*content = buf.Bytes()
+			*contentType = "image/png"
+		}
+	}
+}
+
+// changeFileExtension attempts to make the file extension match the given content type
+func changeFileExtension(name *string, contentType string) {
+	ext, err := mime.ExtensionsByType(contentType)
+	if err != nil || len(ext) < 1 {
+		return
+	}
+	*name = strings.TrimSuffix(*name, filepath.Ext(*name)) + ext[0]
+
 }
 
 // FindByUUID locates an file by UUID and returns the result, including a valid URL.
@@ -180,7 +210,7 @@ func (f *File) refreshURL() error {
 	return nil
 }
 
-func detectContentType(content []byte) (string, error) {
+func validateContentType(content []byte) (string, error) {
 	allowedTypes := []string{
 		"image/bmp",
 		"image/gif",
@@ -210,73 +240,50 @@ func (f *File) Update() error {
 // DeleteUnlinked removes all files that are no longer linked to any database records
 func (f *Files) DeleteUnlinked() error {
 	var files Files
-	if err := DB.Select("id").All(&files); err != nil {
+	if err := DB.Select("id", "uuid").
+		Where("linked = FALSE AND updated_at < ?", time.Now().Add(-4*domain.DurationWeek)).
+		All(&files); err != nil {
 		return err
 	}
-
-	toDelete := make(map[int]bool, len(files))
-	for i := range files {
-		toDelete[files[i].ID] = true
+	domain.Logger.Printf("unlinked files: %d", len(files))
+	if len(files) > domain.Env.MaxFileDelete {
+		return fmt.Errorf("attempted to delete too many files, MaxFileDelete=%d", domain.Env.MaxFileDelete)
+	}
+	if len(files) == 0 {
+		return nil
 	}
 
-	var posts Posts
-	if err := DB.Select("photo_file_id").Where("photo_file_id is not null").All(&posts); err != nil {
-		return err
-	}
-	for _, p := range posts {
-		toDelete[p.PhotoFileID.Int] = false
-	}
-
-	var postFiles PostFiles
-	if err := DB.Select("file_id").All(&postFiles); err != nil {
-		return err
-	}
-	for _, p := range postFiles {
-		toDelete[p.FileID] = false
-	}
-
-	var meetings Meetings
-	if err := DB.Select("image_file_id").Where("image_file_id is not null").All(&meetings); err != nil {
-		return err
-	}
-	for _, m := range meetings {
-		toDelete[m.ImageFileID.Int] = false
-	}
-
-	var organizations Organizations
-	if err := DB.Select("logo_file_id").Where("logo_file_id is not null").All(&organizations); err != nil {
-		return err
-	}
-	for _, o := range organizations {
-		toDelete[o.LogoFileID.Int] = false
-	}
-
-	var users Users
-	if err := DB.Select("photo_file_id").Where("photo_file_id is not null").All(&users); err != nil {
-		return err
-	}
-	for _, u := range users {
-		toDelete[u.PhotoFileID.Int] = false
-	}
-
-	for id, del := range toDelete {
-		if !del {
-			continue
-		}
-		var file File
-		if err := DB.Select("id", "uuid").Find(&file, id); err != nil {
-			domain.ErrLogger.Printf("file %d not found, %s", id, err)
-			continue
-		}
-
+	nRemovedFromDB := 0
+	nRemovedFromS3 := 0
+	for _, file := range files {
 		if err := aws.RemoveFile(file.UUID.String()); err != nil {
 			domain.ErrLogger.Printf("error removing from S3, id='%s', %s", file.UUID.String(), err)
 			continue
 		}
+		nRemovedFromS3++
 
 		if err := DB.Destroy(&file); err != nil {
-			domain.ErrLogger.Printf("file %d destroy error, %s", id, err)
+			domain.ErrLogger.Printf("file %d destroy error, %s", file.ID, err)
+			continue
 		}
+		nRemovedFromDB++
 	}
+
+	if nRemovedFromDB < len(files) || nRemovedFromS3 < len(files) {
+		domain.ErrLogger.Printf("not all unlinked files were removed")
+	}
+	domain.Logger.Printf("removed %d from S3, %d from file table", nRemovedFromS3, nRemovedFromDB)
 	return nil
+}
+
+// SetLinked marks the file as linked. The struct need not be hydrated; only the ID is needed.
+func (f *File) SetLinked() error {
+	f.Linked = true
+	return DB.UpdateColumns(f, "linked")
+}
+
+// ClearLinked marks the file as unlinked. The struct need not be hydrated; only the ID is needed.
+func (f *File) ClearLinked() error {
+	f.Linked = false
+	return DB.UpdateColumns(f, "linked")
 }

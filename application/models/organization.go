@@ -70,21 +70,36 @@ func (o *Organization) ValidateUpdate(tx *pop.Connection) (*validate.Errors, err
 	return validate.NewErrors(), nil
 }
 
-func (o *Organization) GetAuthProvider() (auth.Provider, error) {
+// GetAuthProvider returns the auth provider associated with the domain of `authEmail`, if assigned, otherwise from the Organization's auth provider.
+func (o *Organization) GetAuthProvider(authEmail string) (auth.Provider, error) {
+	// Use type and config from organization by default
+	authType := o.AuthType
+	authConfig := o.AuthConfig
 
-	switch o.AuthType {
+	// Check if organization domain has override auth config to use instead of default
+	authDomain := domain.EmailDomain(authEmail)
+	var orgDomain OrganizationDomain
+	if err := orgDomain.FindByDomain(authDomain); err != nil {
+		return &auth.EmptyProvider{}, err
+	}
+	if orgDomain.AuthType != "" {
+		authType = orgDomain.AuthType
+		authConfig = orgDomain.AuthConfig
+	}
+
+	switch authType {
 	case AuthTypeAzureAD:
-		return azureadv2.New([]byte(o.AuthConfig))
+		return azureadv2.New([]byte(authConfig))
 	case AuthTypeFacebook:
-		return facebook.New([]byte(o.AuthConfig))
+		return facebook.New([]byte(authConfig))
 	case AuthTypeGoogle:
-		return google.New([]byte(o.AuthConfig))
+		return google.New([]byte(authConfig))
 	case AuthTypeLinkedIn:
-		return linkedin.New([]byte(o.AuthConfig))
+		return linkedin.New([]byte(authConfig))
 	case AuthTypeSaml:
-		return saml.New([]byte(o.AuthConfig))
+		return saml.New([]byte(authConfig))
 	case AuthTypeTwitter:
-		return twitter.New([]byte(o.AuthConfig))
+		return twitter.New([]byte(authConfig))
 
 	}
 
@@ -117,21 +132,20 @@ func (o *Organization) FindByDomain(domain string) error {
 	return nil
 }
 
-func (o *Organization) AddDomain(domain string) error {
-	// make sure domain is not registered to another org first
+func (o *Organization) AddDomain(domainName, authType, authConfig string) error {
+	// make sure domainName is not already in use
 	var orgDomain OrganizationDomain
-
-	count, err := DB.Where("domain = ?", domain).Count(&orgDomain)
-	if err != nil {
+	if err := orgDomain.FindByDomain(domainName); domain.IsOtherThanNoRows(err) {
 		return err
 	}
-
-	if count > 0 {
-		return fmt.Errorf("this domain (%s) is already in use", domain)
+	if orgDomain.ID != 0 {
+		return fmt.Errorf("this domainName (%s) is already in use", domainName)
 	}
 
-	orgDomain.Domain = domain
+	orgDomain.Domain = domainName
 	orgDomain.OrganizationID = o.ID
+	orgDomain.AuthType = authType
+	orgDomain.AuthConfig = authConfig
 	return orgDomain.Create()
 }
 
@@ -266,4 +280,35 @@ func (o *Organization) TrustedOrganizations() (Organizations, error) {
 		return nil, err
 	}
 	return trustedOrgs, nil
+}
+
+// AttachLogo assigns a previously-stored File to this Organization as its logo. Parameter `fileID` is the UUID
+// of the file to attach.
+func (o *Organization) AttachLogo(fileID string) (File, error) {
+	var f File
+	if err := f.FindByUUID(fileID); err != nil {
+		err = fmt.Errorf("error finding organization logo with id %s ... %s", fileID, err)
+		return f, err
+	}
+
+	oldID := o.LogoFileID
+	o.LogoFileID = nulls.NewInt(f.ID)
+	if o.ID > 0 {
+		if err := DB.UpdateColumns(o, "logo_file_id"); err != nil {
+			return f, err
+		}
+	}
+
+	if err := f.SetLinked(); err != nil {
+		domain.ErrLogger.Printf("error marking org logo file %d as linked, %s", f.ID, err)
+	}
+
+	if oldID.Valid {
+		oldFile := File{ID: oldID.Int}
+		if err := oldFile.ClearLinked(); err != nil {
+			domain.ErrLogger.Printf("error marking old org logo file %d as unlinked, %s", oldFile.ID, err)
+		}
+	}
+
+	return f, nil
 }

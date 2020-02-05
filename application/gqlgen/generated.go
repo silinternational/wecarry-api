@@ -107,6 +107,7 @@ type ComplexityRoot struct {
 		SetThreadLastViewedAt    func(childComplexity int, input SetThreadLastViewedAtInput) int
 		UpdateMeeting            func(childComplexity int, input meetingInput) int
 		UpdateOrganization       func(childComplexity int, input UpdateOrganizationInput) int
+		UpdateOrganizationDomain func(childComplexity int, input CreateOrganizationDomainInput) int
 		UpdatePost               func(childComplexity int, input postInput) int
 		UpdatePostStatus         func(childComplexity int, input UpdatePostStatusInput) int
 		UpdateUser               func(childComplexity int, input UpdateUserInput) int
@@ -125,6 +126,8 @@ type ComplexityRoot struct {
 	}
 
 	OrganizationDomain struct {
+		AuthConfig     func(childComplexity int) int
+		AuthType       func(childComplexity int) int
 		Domain         func(childComplexity int) int
 		OrganizationID func(childComplexity int) int
 	}
@@ -253,6 +256,7 @@ type MutationResolver interface {
 	CreateOrganization(ctx context.Context, input CreateOrganizationInput) (*models.Organization, error)
 	UpdateOrganization(ctx context.Context, input UpdateOrganizationInput) (*models.Organization, error)
 	CreateOrganizationDomain(ctx context.Context, input CreateOrganizationDomainInput) ([]models.OrganizationDomain, error)
+	UpdateOrganizationDomain(ctx context.Context, input CreateOrganizationDomainInput) ([]models.OrganizationDomain, error)
 	RemoveOrganizationDomain(ctx context.Context, input RemoveOrganizationDomainInput) ([]models.OrganizationDomain, error)
 	SetThreadLastViewedAt(ctx context.Context, input SetThreadLastViewedAtInput) (*models.Thread, error)
 	CreateWatch(ctx context.Context, input watchInput) (*models.Watch, error)
@@ -696,6 +700,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.UpdateOrganization(childComplexity, args["input"].(UpdateOrganizationInput)), true
 
+	case "Mutation.updateOrganizationDomain":
+		if e.complexity.Mutation.UpdateOrganizationDomain == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateOrganizationDomain_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateOrganizationDomain(childComplexity, args["input"].(CreateOrganizationDomainInput)), true
+
 	case "Mutation.updatePost":
 		if e.complexity.Mutation.UpdatePost == nil {
 			break
@@ -799,6 +815,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Organization.UpdatedAt(childComplexity), true
+
+	case "OrganizationDomain.authConfig":
+		if e.complexity.OrganizationDomain.AuthConfig == nil {
+			break
+		}
+
+		return e.complexity.OrganizationDomain.AuthConfig(childComplexity), true
+
+	case "OrganizationDomain.authType":
+		if e.complexity.OrganizationDomain.AuthType == nil {
+			break
+		}
+
+		return e.complexity.OrganizationDomain.AuthType(childComplexity), true
 
 	case "OrganizationDomain.domain":
 		if e.complexity.OrganizationDomain.Domain == nil {
@@ -1401,6 +1431,7 @@ type Mutation {
     createOrganization(input: CreateOrganizationInput!): Organization!
     updateOrganization(input: UpdateOrganizationInput!): Organization!
     createOrganizationDomain(input: CreateOrganizationDomainInput!): [OrganizationDomain!]!
+    updateOrganizationDomain(input: CreateOrganizationDomainInput!): [OrganizationDomain!]!
     removeOrganizationDomain(input: RemoveOrganizationDomainInput!): [OrganizationDomain!]!
     setThreadLastViewedAt(input: SetThreadLastViewedAtInput!): Thread!
     createWatch(input: CreateWatchInput!): Watch!
@@ -1444,7 +1475,9 @@ enum PostSize {
     XLARGE
 }
 
-# Visibility for Posts, ALL organizations, TRUSTED organizations, or SAME organization only
+"""
+Visibility for Posts, ALL organizations, TRUSTED organizations, or SAME organization only
+"""
 enum PostVisibility {
     ALL
     TRUSTED
@@ -1582,11 +1615,15 @@ input UpdateOrganizationInput {
 type OrganizationDomain {
     domain: String!
     organizationID: ID!
+    authType: String!
+    authConfig: String!
 }
 
 input CreateOrganizationDomainInput {
     domain: String!
     organizationID: ID!
+    authType: String
+    authConfig: String
 }
 
 input RemoveOrganizationDomainInput {
@@ -1900,6 +1937,20 @@ func (ec *executionContext) field_Mutation_updateMeeting_args(ctx context.Contex
 	var arg0 meetingInput
 	if tmp, ok := rawArgs["input"]; ok {
 		arg0, err = ec.unmarshalNUpdateMeetingInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐmeetingInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateOrganizationDomain_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 CreateOrganizationDomainInput
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalNCreateOrganizationDomainInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐCreateOrganizationDomainInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3550,6 +3601,50 @@ func (ec *executionContext) _Mutation_createOrganizationDomain(ctx context.Conte
 	return ec.marshalNOrganizationDomain2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganizationDomain(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Mutation_updateOrganizationDomain(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_updateOrganizationDomain_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateOrganizationDomain(rctx, args["input"].(CreateOrganizationDomainInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]models.OrganizationDomain)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNOrganizationDomain2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganizationDomain(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Mutation_removeOrganizationDomain(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -4220,6 +4315,80 @@ func (ec *executionContext) _OrganizationDomain_organizationID(ctx context.Conte
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _OrganizationDomain_authType(ctx context.Context, field graphql.CollectedField, obj *models.OrganizationDomain) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "OrganizationDomain",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AuthType, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _OrganizationDomain_authConfig(ctx context.Context, field graphql.CollectedField, obj *models.OrganizationDomain) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "OrganizationDomain",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AuthConfig, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Post_id(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
@@ -7978,6 +8147,18 @@ func (ec *executionContext) unmarshalInputCreateOrganizationDomainInput(ctx cont
 			if err != nil {
 				return it, err
 			}
+		case "authType":
+			var err error
+			it.AuthType, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "authConfig":
+			var err error
+			it.AuthConfig, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		}
 	}
 
@@ -8985,6 +9166,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "updateOrganizationDomain":
+			out.Values[i] = ec._Mutation_updateOrganizationDomain(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "removeOrganizationDomain":
 			out.Values[i] = ec._Mutation_removeOrganizationDomain(ctx, field)
 			if out.Values[i] == graphql.Null {
@@ -9162,6 +9348,16 @@ func (ec *executionContext) _OrganizationDomain(ctx context.Context, sel ast.Sel
 				}
 				return res
 			})
+		case "authType":
+			out.Values[i] = ec._OrganizationDomain_authType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "authConfig":
+			out.Values[i] = ec._OrganizationDomain_authConfig(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

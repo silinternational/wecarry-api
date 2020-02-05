@@ -26,6 +26,7 @@ type Mutation {
     createOrganization(input: CreateOrganizationInput!): Organization!
     updateOrganization(input: UpdateOrganizationInput!): Organization!
     createOrganizationDomain(input: CreateOrganizationDomainInput!): [OrganizationDomain!]!
+    updateOrganizationDomain(input: CreateOrganizationDomainInput!): [OrganizationDomain!]!
     removeOrganizationDomain(input: RemoveOrganizationDomainInput!): [OrganizationDomain!]!
     setThreadLastViewedAt(input: SetThreadLastViewedAtInput!): Thread!
     createWatch(input: CreateWatchInput!): Watch!
@@ -69,7 +70,9 @@ enum PostSize {
     XLARGE
 }
 
-# Visibility for Posts, ALL organizations, TRUSTED organizations, or SAME organization only
+"""
+Visibility for Posts, ALL organizations, TRUSTED organizations, or SAME organization only
+"""
 enum PostVisibility {
     ALL
     TRUSTED
@@ -207,11 +210,15 @@ input UpdateOrganizationInput {
 type OrganizationDomain {
     domain: String!
     organizationID: ID!
+    authType: String!
+    authConfig: String!
 }
 
 input CreateOrganizationDomainInput {
     domain: String!
     organizationID: ID!
+    authType: String
+    authConfig: String
 }
 
 input RemoveOrganizationDomainInput {

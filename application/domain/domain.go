@@ -132,6 +132,7 @@ var Env struct {
 	GoogleSecret               string
 	LinkedInKey                string
 	LinkedInSecret             string
+	MaxFileDelete              int
 	MobileService              string
 	PlaygroundPort             string
 	RollbarServerRoot          string
@@ -161,12 +162,7 @@ func init() {
 
 // readEnv loads environment data into `Env`
 func readEnv() {
-	n, err := strconv.Atoi(envy.Get("ACCESS_TOKEN_LIFETIME_SECONDS", strconv.Itoa(AccessTokenLifetimeSeconds)))
-	if err != nil {
-		ErrLogger.Printf("error converting token lifetime env var ... %v", err)
-		n = AccessTokenLifetimeSeconds
-	}
-	Env.AccessTokenLifetimeSeconds = n
+	Env.AccessTokenLifetimeSeconds = envToInt("ACCESS_TOKEN_LIFETIME_SECONDS", AccessTokenLifetimeSeconds)
 	Env.ServiceIntegrationToken = envy.Get("SERVICE_INTEGRATION_TOKEN", "")
 	Env.AppName = envy.Get("APP_NAME", "WeCarry")
 	Env.AuthCallbackURL = envy.Get("AUTH_CALLBACK_URL", "")
@@ -190,6 +186,7 @@ func readEnv() {
 	Env.GoogleSecret = envy.Get("GOOGLE_SECRET", "")
 	Env.LinkedInKey = envy.Get("LINKED_IN_KEY", "")
 	Env.LinkedInSecret = envy.Get("LINKED_IN_SECRET", "")
+	Env.MaxFileDelete = envToInt("MAX_FILE_DELETE", 10)
 	Env.MobileService = envy.Get("MOBILE_SERVICE", "dummy")
 	Env.PlaygroundPort = envy.Get("PORT", "3000")
 	Env.RollbarServerRoot = envy.Get("ROLLBAR_SERVER_ROOT", "github.com/silinternational/wecarry-api")
@@ -200,6 +197,16 @@ func readEnv() {
 	Env.TwitterKey = envy.Get("TWITTER_KEY", "")
 	Env.TwitterSecret = envy.Get("TWITTER_SECRET", "")
 	Env.UIURL = envy.Get("UI_URL", "dev.wecarry.app")
+}
+
+func envToInt(name string, def int) int {
+	s := envy.Get(name, strconv.Itoa(def))
+	n, err := strconv.Atoi(s)
+	if err != nil {
+		ErrLogger.Printf("invalid environment variable %s = %s, must be a number, %s", name, s, err)
+		return def
+	}
+	return n
 }
 
 type AppError struct {

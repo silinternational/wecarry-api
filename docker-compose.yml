@@ -40,6 +40,10 @@ services:
       EMAIL_SERVICE: dummy
       GO_ENV: test
       DOCKER_IP: testdb
+      FACEBOOK_KEY: test
+      FACEBOOK_SECRET: test
+      GOOGLE_KEY: test
+      GOOGLE_SECRET: test
     depends_on:
       - testdb
       - minio
