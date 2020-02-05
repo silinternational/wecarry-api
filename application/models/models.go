@@ -92,7 +92,7 @@ func GetIntFromNullsInt(in nulls.Int) *int {
 	return &output
 }
 
-// GetTimeFromNullsTime returns a pointer to a string that looks
+// GetStringFromNullsTime returns a pointer to a string that looks
 // like a date based on a nulls.Time value
 func GetStringFromNullsTime(inTime nulls.Time) *string {
 	var output string
