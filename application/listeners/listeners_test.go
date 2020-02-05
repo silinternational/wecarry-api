@@ -107,7 +107,7 @@ func (ms *ModelSuite) TestUserCreated() {
 
 	notifications.TestEmailService.DeleteSentMessages()
 
-	userCreated(e)
+	userCreatedSendWelcomeMessage(e)
 
 	got := buf.String()
 	want := fmt.Sprintf("User Created: %s", e.Message)
