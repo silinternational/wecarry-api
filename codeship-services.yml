@@ -26,6 +26,7 @@ app:
     FACEBOOK_SECRET: test
     GOOGLE_KEY: test
     GOOGLE_SECRET: test
+    SERVICE_INTEGRATION_TOKEN: abc123test
   encrypted_env_file: .env.encrypted
   working_dir: /wecarry
   command: true

@@ -38,7 +38,6 @@ const (
 // Event Kinds
 const (
 	EventApiUserCreated       = "api:user:created"
-	EventApiAuthUserLoggedIn  = "api:auth:user:loggedin"
 	EventApiMessageCreated    = "api:message:created"
 	EventApiPostStatusUpdated = "api:post:status:updated"
 	EventApiPostCreated       = "api:post:status:created"

@@ -16,6 +16,7 @@ build:
       FACEBOOK_SECRET: test
       GOOGLE_KEY: test
       GOOGLE_SECRET: test
+      SERVICE_INTEGRATION_TOKEN: abc123test
   nodes:
     analysis:
       project_setup:
