@@ -37,6 +37,7 @@ type CreateOrganizationTrustInput struct {
 	SecondaryID string `json:"secondaryID"`
 }
 
+// Specify a Geographic location
 type LocationInput struct {
 	Description string   `json:"description"`
 	Country     string   `json:"country"`
@@ -84,10 +85,13 @@ type UpdatePostStatusInput struct {
 	Status models.PostStatus `json:"status"`
 }
 
+// Update User profile information. If ID is not specified, the authenticated user is assumed.
 type UpdateUserInput struct {
-	ID          *string                     `json:"id"`
-	Nickname    *string                     `json:"nickname"`
-	PhotoID     *string                     `json:"photoID"`
+	ID       *string `json:"id"`
+	Nickname *string `json:"nickname"`
+	// File ID of avatar photo. Omit or null makes no change, empty string removes photo.
+	PhotoID *string `json:"photoID"`
+	// Specify the user's "home" location. If the description is an empty string, the location is removed from the profile.
 	Location    *LocationInput              `json:"location"`
 	Preferences *UpdateUserPreferencesInput `json:"preferences"`
 }
