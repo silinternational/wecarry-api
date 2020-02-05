@@ -226,7 +226,7 @@ func (as *ActionSuite) Test_UpdatePost() {
 
 	as.Error(as.testGqlQuery(query, f.Users[1].Nickname, &postsResp))
 
-	newNeededBefore := "2999-12-25"
+	newNeededBefore := "2099-12-25"
 	// Modify post's NeededBefore
 	input = `id: "` + f.Posts[0].UUID.String() + `"
 		neededBefore: "` + newNeededBefore + `"`
