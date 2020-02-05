@@ -325,6 +325,16 @@ func (p *Post) SetProviderWithStatus(status PostStatus, currentUser User) {
 
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
 func (p *Post) Validate(tx *pop.Connection) (*validate.Errors, error) {
+	tomorrow := time.Now()
+	tomorrow = time.Date(tomorrow.Year(), tomorrow.Month(), tomorrow.Day(), 0, 0, 0, 0, time.UTC)
+	tomorrow = tomorrow.Add(domain.DurationDay)
+
+	// If null, make it pass by pretending it's in the future
+	neededBeforeDate := time.Now().Add(domain.DurationWeek)
+	if p.NeededBefore.Valid {
+		neededBeforeDate = p.NeededBefore.Time
+	}
+
 	return validate.Validate(
 		&validators.IntIsPresent{Field: p.CreatedByID, Name: "CreatedBy"},
 		&validators.StringIsPresent{Field: p.Type.String(), Name: "Type"},
@@ -333,6 +343,9 @@ func (p *Post) Validate(tx *pop.Connection) (*validate.Errors, error) {
 		&validators.StringIsPresent{Field: p.Size.String(), Name: "Size"},
 		&validators.UUIDIsPresent{Field: p.UUID, Name: "UUID"},
 		&validators.StringIsPresent{Field: p.Status.String(), Name: "Status"},
+		&validators.TimeAfterTime{FirstName: "NeededBefore", FirstTime: neededBeforeDate,
+			SecondName: "Tomorrow", SecondTime: tomorrow,
+			Message: fmt.Sprintf("Post neededBefore must not be before tomorrow. Got %v", neededBeforeDate)},
 	), nil
 }
 
@@ -361,6 +374,13 @@ func (p *Post) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) {
 		},
 	), nil
 	//return validate.NewErrors(), nil
+}
+
+type futureDateValidator struct {
+	Name    string
+	Field   nulls.Time
+	Context buffalo.Context
+	Message string
 }
 
 type updateStatusValidator struct {
