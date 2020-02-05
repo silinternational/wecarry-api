@@ -14,17 +14,23 @@ import (
 const (
 	NewThreadMessage = "new_thread_message"
 	FileCleanup      = "file_cleanup"
+	TokenCleanup     = "token_cleanup"
 )
 
 var w worker.Worker
 
+var handlers = map[string]func(worker.Args) error{
+	NewThreadMessage: newThreadMessageHandler,
+	FileCleanup:      fileCleanupHandler,
+	TokenCleanup:     tokenCleanupHandler,
+}
+
 func init() {
 	w = worker.NewSimple()
-	if err := w.Register(NewThreadMessage, newThreadMessageHandler); err != nil {
-		domain.ErrLogger.Printf("error registering '%s' worker, %s", NewThreadMessage, err)
-	}
-	if err := w.Register(FileCleanup, fileCleanupHandler); err != nil {
-		domain.ErrLogger.Printf("error registering '%s' worker, %s", FileCleanup, err)
+	for key, handler := range handlers {
+		if err := w.Register(key, handler); err != nil {
+			domain.ErrLogger.Printf("error registering '%s' handler, %s", key, err)
+		}
 	}
 }
 
@@ -106,6 +112,18 @@ func fileCleanupHandler(args worker.Args) error {
 	return nil
 }
 
+// tokenCleanupHandler removes expired user access tokens
+func tokenCleanupHandler(args worker.Args) error {
+	u := models.UserAccessTokens{}
+	deleted, err := u.DeleteExpired()
+	if err != nil {
+		return fmt.Errorf("error cleaning expired user access tokens: %v", err)
+	}
+
+	domain.Logger.Printf("Deleted %v expired user access tokens during cleanup", deleted)
+	return nil
+}
+
 // SubmitDelayed enqueues a new Worker job for the given handler. Arguments can be provided in `args`.
 func SubmitDelayed(handler string, delay time.Duration, args map[string]interface{}) error {
 	job := worker.Job{
@@ -114,4 +132,14 @@ func SubmitDelayed(handler string, delay time.Duration, args map[string]interfac
 		Handler: handler,
 	}
 	return w.PerformIn(job, delay)
+}
+
+// Submit enqueues a new Worker job for the given handler. Arguments can be provided in `args`.
+func Submit(handler string, args map[string]interface{}) error {
+	job := worker.Job{
+		Queue:   "default",
+		Args:    args,
+		Handler: handler,
+	}
+	return w.Perform(job)
 }
