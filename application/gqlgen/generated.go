@@ -145,6 +145,7 @@ type ComplexityRoot struct {
 		IsEditable         func(childComplexity int) int
 		Kilograms          func(childComplexity int) int
 		Meeting            func(childComplexity int) int
+		NeededBefore       func(childComplexity int) int
 		Organization       func(childComplexity int) int
 		Origin             func(childComplexity int) int
 		Photo              func(childComplexity int) int

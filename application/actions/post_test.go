@@ -5,6 +5,7 @@ import (
 
 	"github.com/gofrs/uuid"
 
+	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/internal/test"
 	"github.com/silinternational/wecarry-api/models"
 )
