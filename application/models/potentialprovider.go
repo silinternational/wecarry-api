@@ -57,10 +57,10 @@ func (p *PotentialProvider) ValidateUpdate(tx *pop.Connection) (*validate.Errors
 	return validate.NewErrors(), nil
 }
 
-// PotentialProviderCreatedEventData holds data needed by the event listener that deals with a new PotentialProvider
-type PotentialProviderCreatedEventData struct {
-	PotentialProviderID int
-	PostID              int
+// PotentialProviderEventData holds data needed by the event listener that deals with a single PotentialProvider
+type PotentialProviderEventData struct {
+	UserID int
+	PostID int
 }
 
 // Create stores the PotentialProvider data as a new record in the database.
@@ -70,13 +70,13 @@ func (p *PotentialProvider) Create() error {
 		return err
 	}
 
-	eventData := PotentialProviderCreatedEventData{
-		PotentialProviderID: p.UserID,
-		PostID:              p.ID,
+	eventData := PotentialProviderEventData{
+		UserID: p.UserID,
+		PostID: p.PostID,
 	}
 
 	e := events.Event{
-		Kind:    domain.EventApiPotentialProvideCreated,
+		Kind:    domain.EventApiPotentialProviderCreated,
 		Message: "Potential Provider created",
 		Payload: events.Payload{"eventData": eventData},
 	}
@@ -116,8 +116,6 @@ func (p *PotentialProvider) CanUserAccessPotentialProvider(post Post, currentUse
 		return true
 	}
 	return p.UserID == currentUser.ID
-	//fmt.Errorf("user %v has insufficient permissions to access PotentialProvider %v",
-	//	currentUser.ID, p.ID)
 }
 
 func (p *PotentialProvider) FindWithPostUUIDAndUserUUID(postUUID, userUUID string, currentUser User) error {

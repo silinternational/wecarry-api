@@ -447,7 +447,7 @@ func (r *mutationResolver) UpdatePostStatus(ctx context.Context, input UpdatePos
 func (r *mutationResolver) AddMeAsPotentialProvider(ctx context.Context, postID string) (*models.Post, error) {
 	var post models.Post
 	if err := post.FindByUUID(postID); err != nil {
-		return nil, reportError(ctx, err, "UpdatePostStatus.FindPost")
+		return nil, reportError(ctx, err, "Post.FindPost")
 	}
 	cUser := models.GetCurrentUserFromGqlContext(ctx)
 

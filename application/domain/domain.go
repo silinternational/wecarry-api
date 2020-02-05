@@ -37,12 +37,14 @@ const (
 
 // Event Kinds
 const (
-	EventApiUserCreated             = "api:user:created"
-	EventApiAuthUserLoggedIn        = "api:auth:user:loggedin"
-	EventApiMessageCreated          = "api:message:created"
-	EventApiPostStatusUpdated       = "api:post:status:updated"
-	EventApiPostCreated             = "api:post:status:created"
-	EventApiPotentialProvideCreated = "api:potentialprovider:created"
+	EventApiUserCreated                    = "api:user:created"
+	EventApiAuthUserLoggedIn               = "api:auth:user:loggedin"
+	EventApiMessageCreated                 = "api:message:created"
+	EventApiPostStatusUpdated              = "api:post:status:updated"
+	EventApiPostCreated                    = "api:post:status:created"
+	EventApiPotentialProviderCreated       = "api:potentialprovider:created"
+	EventApiPotentialProviderRejected      = "api:potentialprovider:rejected"
+	EventApiPotentialProviderSelfDestroyed = "api:potentialprovider:selfdestroyed"
 )
 
 // Event and Job argument names
@@ -72,7 +74,9 @@ const (
 	MessageTemplateRequestDelivered                = "request_delivered"
 	MessageTemplateRequestReceived                 = "request_received"
 	MessageTemplateRequestNotReceivedAfterAll      = "request_not_received_after_all"
-	MessageTemplatePotentialProviderNotAccepted    = "request_potential_provider_not_accepted"
+	MessageTemplatePotentialProviderCreated        = "request_potentialprovider_created"
+	MessageTemplatePotentialProviderRejected       = "request_potentialprovider_rejected"
+	MessageTemplatePotentialProviderSelfDestroyed  = "request_potentialprovider_self_destroyed"
 )
 
 // User preferences

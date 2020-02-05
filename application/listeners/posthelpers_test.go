@@ -403,3 +403,84 @@ func (ms *ModelSuite) TestSendNewPostNotifications() {
 		})
 	}
 }
+
+func (ms *ModelSuite) TestSendPotentialProviderCreatedNotification() {
+	t := ms.T()
+	provider := "Pete Provider"
+	requester := models.User{
+		Email: "user@example.com",
+	}
+	post := models.Post{UUID: domain.GetUUID(), Title: "post title", Type: models.PostTypeRequest}
+	wantBody := "has offered to help fulfill your request"
+
+	notifications.TestEmailService.DeleteSentMessages()
+
+	err := sendPotentialProviderCreatedNotification(provider, requester, post)
+	ms.NoError(err)
+
+	emailCount := notifications.TestEmailService.GetNumberOfMessagesSent()
+	ms.Equal(1, emailCount, "wrong email count")
+
+	toEmail := notifications.TestEmailService.GetLastToEmail()
+	ms.Equal(requester.Email, toEmail, "bad 'To' address")
+
+	body := notifications.TestEmailService.GetLastBody()
+
+	test.AssertStringContains(t, body, wantBody, 99)
+	test.AssertStringContains(t, body, post.Title, 99)
+	test.AssertStringContains(t, body, post.UUID.String(), 99)
+}
+
+func (ms *ModelSuite) TestSendPotentialProviderSelfDestroyedNotification() {
+	t := ms.T()
+	provider := "Pete Provider"
+	requester := models.User{
+		Email: "user@example.com",
+	}
+	post := models.Post{UUID: domain.GetUUID(), Title: "post title", Type: models.PostTypeRequest}
+	wantBody := "indicated they can't fulfill your request afterall"
+
+	notifications.TestEmailService.DeleteSentMessages()
+
+	err := sendPotentialProviderSelfDestroyedNotification(provider, requester, post)
+	ms.NoError(err)
+
+	emailCount := notifications.TestEmailService.GetNumberOfMessagesSent()
+	ms.Equal(1, emailCount, "wrong email count")
+
+	toEmail := notifications.TestEmailService.GetLastToEmail()
+	ms.Equal(requester.Email, toEmail, "bad 'To' address")
+
+	body := notifications.TestEmailService.GetLastBody()
+
+	test.AssertStringContains(t, body, wantBody, 99)
+	test.AssertStringContains(t, body, post.Title, 99)
+	test.AssertStringContains(t, body, post.UUID.String(), 99)
+}
+
+func (ms *ModelSuite) TestSendPotentialProviderRejectedNotification() {
+	t := ms.T()
+	requester := "Rodger Requester"
+	provider := models.User{
+		Email: "user@example.com",
+	}
+	post := models.Post{UUID: domain.GetUUID(), Title: "post title", Type: models.PostTypeRequest}
+	wantBody := "is not prepared to have you fulfill their request"
+
+	notifications.TestEmailService.DeleteSentMessages()
+
+	err := sendPotentialProviderRejectedNotification(provider, requester, post)
+	ms.NoError(err)
+
+	emailCount := notifications.TestEmailService.GetNumberOfMessagesSent()
+	ms.Equal(1, emailCount, "wrong email count")
+
+	toEmail := notifications.TestEmailService.GetLastToEmail()
+	ms.Equal(provider.Email, toEmail, "bad 'To' address")
+
+	body := notifications.TestEmailService.GetLastBody()
+
+	test.AssertStringContains(t, body, wantBody, 99)
+	test.AssertStringContains(t, body, post.Title, 99)
+	test.AssertStringContains(t, body, post.UUID.String(), 99)
+}

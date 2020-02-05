@@ -63,6 +63,27 @@ var apiListeners = map[string][]apiListener{
 			listener: sendPostCreatedNotifications,
 		},
 	},
+
+	domain.EventApiPotentialProviderCreated: {
+		{
+			name:     "potentialprovider-created-notification",
+			listener: potentialProviderCreated,
+		},
+	},
+
+	domain.EventApiPotentialProviderSelfDestroyed: {
+		{
+			name:     "potentialprovider-self-destroyed-notification",
+			listener: potentialProviderSelfDestroyed,
+		},
+	},
+
+	domain.EventApiPotentialProviderRejected: {
+		{
+			name:     "potentialprovider-rejected-notification",
+			listener: potentialProviderRejected,
+		},
+	},
 }
 
 // RegisterListeners registers all the listeners to be used by the app
@@ -185,6 +206,84 @@ func sendPostCreatedNotifications(e events.Event) {
 	}
 
 	sendNewPostNotifications(post, users)
+}
+
+func potentialProviderCreated(e events.Event) {
+	if e.Kind != domain.EventApiPotentialProviderCreated {
+		return
+	}
+
+	eventData, ok := e.Payload["eventData"].(models.PotentialProviderEventData)
+	if !ok {
+		domain.ErrLogger.Printf("PotentialProvider event payload incorrect type: %T", e.Payload["eventData"])
+		return
+	}
+
+	var potentialProvider models.User
+	if err := potentialProvider.FindByID(eventData.UserID); err != nil {
+		domain.ErrLogger.Printf("unable to find PotentialProvider User %d, %s", eventData.UserID, err)
+	}
+
+	var post models.Post
+	if err := post.FindByID(eventData.PostID); err != nil {
+		domain.ErrLogger.Printf("unable to find post %d from PotentialProvider event, %s", eventData.PostID, err)
+	}
+
+	creator := post.CreatedBy
+
+	sendPotentialProviderCreatedNotification(potentialProvider.Nickname, creator, post)
+}
+
+func potentialProviderSelfDestroyed(e events.Event) {
+	if e.Kind != domain.EventApiPotentialProviderSelfDestroyed {
+		return
+	}
+
+	eventData, ok := e.Payload["eventData"].(models.PotentialProviderEventData)
+	if !ok {
+		domain.ErrLogger.Printf("PotentialProvider event payload incorrect type: %T", e.Payload["eventData"])
+		return
+	}
+
+	var potentialProvider models.User
+	if err := potentialProvider.FindByID(eventData.UserID); err != nil {
+		domain.ErrLogger.Printf("unable to find PotentialProvider User %d, %s", eventData.UserID, err)
+	}
+
+	var post models.Post
+	if err := post.FindByID(eventData.PostID); err != nil {
+		domain.ErrLogger.Printf("unable to find post %d from PotentialProvider event, %s", eventData.PostID, err)
+	}
+
+	creator := post.CreatedBy
+
+	sendPotentialProviderSelfDestroyedNotification(potentialProvider.Nickname, creator, post)
+}
+
+func potentialProviderRejected(e events.Event) {
+	if e.Kind != domain.EventApiPotentialProviderRejected {
+		return
+	}
+
+	eventData, ok := e.Payload["eventData"].(models.PotentialProviderEventData)
+	if !ok {
+		domain.ErrLogger.Printf("PotentialProvider event payload incorrect type: %T", e.Payload["eventData"])
+		return
+	}
+
+	var potentialProvider models.User
+	if err := potentialProvider.FindByID(eventData.UserID); err != nil {
+		domain.ErrLogger.Printf("unable to find PotentialProvider User %d, %s", eventData.UserID, err)
+	}
+
+	var post models.Post
+	if err := post.FindByID(eventData.PostID); err != nil {
+		domain.ErrLogger.Printf("unable to find post %d from PotentialProvider event, %s", eventData.PostID, err)
+	}
+
+	creator := post.CreatedBy.Nickname
+
+	sendPotentialProviderRejectedNotification(potentialProvider, creator, post)
 }
 
 func sendNewUserWelcome(user models.User) error {

@@ -860,12 +860,23 @@ func (p *Post) canUserChangeStatus(user User, newStatus PostStatus) bool {
 	}
 
 	if p.CreatedByID == user.ID {
+		// Creator can't move off of Delivered except to Completed
+		if p.Status == PostStatusDelivered {
+			return newStatus == PostStatusCompleted
+		}
 		return true
 	}
 
 	switch p.Type {
 	case PostTypeRequest:
-		return newStatus == PostStatusDelivered && p.ProviderID.Int == user.ID
+		if p.ProviderID.Int != user.ID {
+			return false
+		}
+		if newStatus == PostStatusDelivered {
+			return true
+		}
+		// for cancelling a DELIVERED status
+		return newStatus == PostStatusAccepted && p.Status == PostStatusDelivered
 	case PostTypeOffer:
 		return newStatus == PostStatusReceived && p.ReceiverID.Int == user.ID
 	}
