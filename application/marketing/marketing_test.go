@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"strings"
 	"testing"
 
@@ -82,16 +81,12 @@ func (ts *TestSuite) Test_callApi() {
 				}
 				var resp ApiRequest
 				err = json.Unmarshal([]byte(got), &resp)
-				if err != nil {
-					t.Errorf("unable to unmarshal api response: %s", err.Error())
-					return
-				}
+				ts.NoError(err, "unable to unmarshal api response")
+
 				// ignore response headers for test
 				ar.Headers = map[string]string{}
 				resp.Headers = map[string]string{}
-				if !reflect.DeepEqual(resp, ar) {
-					t.Errorf("callApi() got = %v, want %v", resp, ar)
-				}
+				ts.Equal(resp, ar, "api response does not match expected")
 			}
 		})
 	}
@@ -126,6 +121,7 @@ func apiRequestHandler(res http.ResponseWriter, req *http.Request) {
 
 func (ts *TestSuite) TestAddUserToList() {
 	t := ts.T()
+	t.Skip("this test is for actually calling MailChimp, so it is skipped from regular runs")
 
 	type args struct {
 		u          models.User

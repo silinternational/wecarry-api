@@ -101,7 +101,7 @@ func callApi(apiRequest ApiRequest) (string, error) {
 			apiRequest.Method, apiRequest.URL, err.Error())
 	}
 
-	if resp.StatusCode > 204 {
+	if resp.StatusCode > http.StatusNoContent {
 		return string(bodyText), fmt.Errorf(
 			"unexpected api response status code (%v) calling %s %s",
 			resp.StatusCode, apiRequest.Method, apiRequest.URL)
