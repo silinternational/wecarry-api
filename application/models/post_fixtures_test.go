@@ -183,7 +183,7 @@ func createFixturesForPostFindByUserAndUUID(ms *ModelSuite) PostFixtures {
 //        |       |             |      |       |
 //       User1  User0        User3   Trust   User2
 //
-// Org0: Post0 (SAME), Post2 (SAME), Post3 (SAME), Post4 (SAME)
+// Org0: Post0 (SAME), Post2 (SAME, COMPLETED), Post3 (SAME, REMOVED), Post4 (SAME)
 // Org1: Post1 (SAME)
 // Org2: Post5 (ALL), Post6 (TRUSTED), Post7 (SAME)
 //
