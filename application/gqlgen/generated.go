@@ -1484,7 +1484,9 @@ enum PostSize {
     XLARGE
 }
 
-# Visibility for Posts, ALL organizations, TRUSTED organizations, or SAME organization only
+"""
+Visibility for Posts, ALL organizations, TRUSTED organizations, or SAME organization only
+"""
 enum PostVisibility {
     ALL
     TRUSTED

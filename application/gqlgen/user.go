@@ -5,7 +5,6 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/gobuffalo/nulls"
 	"github.com/silinternational/wecarry-api/models"
 )
 
@@ -179,11 +178,9 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 	}
 
 	if input.PhotoID != nil {
-		var file models.File
-		if err := file.FindByUUID(*input.PhotoID); err != nil {
+		if _, err := user.AttachPhoto(*input.PhotoID); err != nil {
 			return nil, reportError(ctx, err, "UpdateUser.PhotoNotFound")
 		}
-		user.PhotoFileID = nulls.NewInt(file.ID)
 	}
 
 	if input.Location != nil {
