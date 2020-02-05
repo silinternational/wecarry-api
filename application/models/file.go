@@ -249,6 +249,9 @@ func (f *Files) DeleteUnlinked() error {
 	if len(files) > domain.Env.MaxFileDelete {
 		return fmt.Errorf("attempted to delete too many files, MaxFileDelete=%d", domain.Env.MaxFileDelete)
 	}
+	if len(files) == 0 {
+		return nil
+	}
 
 	nRemovedFromDB := 0
 	nRemovedFromS3 := 0

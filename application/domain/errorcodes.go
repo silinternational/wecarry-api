@@ -8,6 +8,9 @@ package domain
 // Unexpected http status code
 const ErrorUnexpectedHTTPStatus = "ErrorUnexpectedHTTPStatus"
 
+// 400 http.StatusBadRequest
+const ErrorBadRequest = "ErrorBadRequest"
+
 // 401 http.StatusUnauthorized
 const ErrorNotAuthenticated = "ErrorNotAuthenticated"
 
@@ -16,6 +19,9 @@ const ErrorRouteNotFound = "ErrorRouteNotFound"
 
 // 405 http.StatusMethodNotAllowed
 const ErrorMethodNotAllowed = "ErrorMethodNotAllowed"
+
+// 422 http.StatusUnprocessableEntity
+const ErrorUnprocessableEntity = "ErrorUnprocessableEntity"
 
 // 500 http.StatusInternalServerError
 const ErrorInternalServerError = "ErrorInternalServerError"
