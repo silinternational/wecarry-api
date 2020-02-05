@@ -47,6 +47,8 @@ models:
     fields:
       id:
         resolver: true
+      neededBefore:
+        resolver: true
       organization:
         resolver: true
       createdBy:
