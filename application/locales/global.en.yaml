@@ -168,8 +168,8 @@
   translation: We had a problem finding the user for the profile update.
 - id: UpdateUser.Unauthorized
   translation: You are not allowed to update that user profile.
-- id: UpdateUser.PhotoNotFound
-  translation: We had a problem finding the photo to update the user profile.
+- id: UpdateUser.UpdatePhoto
+  translation: We had a problem changing the photo on your user profile.
 - id: UpdateUser.SetLocationError
   translation: We had a problem setting the location on the user profile.
 - id: UpdateUser

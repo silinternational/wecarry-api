@@ -178,8 +178,14 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 	}
 
 	if input.PhotoID != nil {
-		if _, err := user.AttachPhoto(*input.PhotoID); err != nil {
-			return nil, reportError(ctx, err, "UpdateUser.PhotoNotFound")
+		var err error
+		if *input.PhotoID == "" {
+			err = user.RemovePhoto()
+		} else {
+			_, err = user.AttachPhoto(*input.PhotoID)
+		}
+		if err != nil {
+			return nil, reportError(ctx, err, "UpdateUser.UpdatePhoto")
 		}
 	}
 

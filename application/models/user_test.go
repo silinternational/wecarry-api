@@ -801,6 +801,52 @@ func (ms *ModelSuite) TestUser_AttachPhoto() {
 	}
 }
 
+func (ms *ModelSuite) TestUser_RemovePhoto() {
+	uf := createUserFixtures(ms.DB, 2)
+	users := uf.Users
+
+	files := createFileFixtures(2)
+	users[1].PhotoFileID = nulls.NewInt(files[0].ID)
+	ms.NoError(ms.DB.UpdateColumns(&users[1], "photo_file_id"))
+
+	tests := []struct {
+		name     string
+		user     User
+		oldImage *File
+		want     File
+		wantErr  string
+	}{
+		{
+			name: "no file",
+			user: users[0],
+		},
+		{
+			name:     "has a file",
+			user:     users[1],
+			oldImage: &files[0],
+		},
+		{
+			name:    "bad ID",
+			user:    User{},
+			wantErr: "invalid User ID",
+		},
+	}
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			err := tt.user.RemovePhoto()
+			if tt.wantErr != "" {
+				ms.Error(err, "did not get expected error")
+				ms.Contains(err.Error(), tt.wantErr)
+				return
+			}
+			ms.NoError(err, "unexpected error")
+			if tt.oldImage != nil {
+				ms.Equal(false, tt.oldImage.Linked, "old user photo file is not marked as unlinked")
+			}
+		})
+	}
+}
+
 func (ms *ModelSuite) TestUser_GetPhoto() {
 	t := ms.T()
 	f := createFixturesForTestUserGetPhoto(ms)
@@ -972,31 +1018,50 @@ func (ms *ModelSuite) TestUser_SetLocation() {
 			Latitude:    nulls.Float64{},
 			Longitude:   nulls.Float64{},
 		},
+		{
+			Description: "",
+		},
 	}
 
-	err := user.SetLocation(locationFixtures[0])
-	ms.NoError(err, "unexpected error from user.SetLocation()")
+	tests := []struct {
+		name        string
+		newLocation Location
+		wantNil     bool
+	}{
+		{
+			name:        "previously unset",
+			newLocation: locationFixtures[0],
+		},
+		{
+			name:        "overwrite location with new info",
+			newLocation: locationFixtures[1],
+		},
+		{
+			name:        "remove location",
+			newLocation: locationFixtures[2],
+			wantNil:     true,
+		},
+	}
 
-	locationFromDB, err := user.GetLocation()
-	ms.NoError(err, "unexpected error from user.GetLocation()")
+	for _, test := range tests {
+		ms.T().Run(test.name, func(t *testing.T) {
+			err := user.SetLocation(test.newLocation)
+			ms.NoError(err, "unexpected error from user.SetLocation()")
 
-	locationFixtures[0].ID = locationFromDB.ID
-	ms.Equal(locationFixtures[0], *locationFromDB, "user location data doesn't match new location")
+			beforeUpdate := user.LocationID
+			locationFromDB, err := user.GetLocation()
+			ms.NoError(err, "unexpected error from user.GetLocation()")
 
-	err = user.SetLocation(locationFixtures[1])
-	ms.NoError(err, "unexpected error from user.SetLocation()")
-
-	locationFromDB, err = user.GetLocation()
-	ms.NoError(err, "unexpected error from user.GetLocation()")
-	ms.Equal(locationFixtures[0].ID, locationFromDB.ID,
-		"Location ID doesn't match -- location record was probably not reused")
-
-	locationFixtures[1].ID = locationFromDB.ID
-	ms.Equal(locationFixtures[1], *locationFromDB, "user location data doesn't match after update")
-
-	// These are redundant checks, but here to document the fact that a null overwrites previous data.
-	ms.False(locationFromDB.Latitude.Valid)
-	ms.False(locationFromDB.Longitude.Valid)
+			if test.wantNil {
+				ms.Nil(locationFromDB)
+			} else {
+				test.newLocation.ID = locationFromDB.ID
+				ms.Equal(test.newLocation, *locationFromDB, "user location data doesn't match new location")
+				ms.Equal(beforeUpdate.Int, locationFromDB.ID,
+					"Location ID changed -- location record was probably not reused")
+			}
+		})
+	}
 }
 
 func (ms *ModelSuite) TestUser_UnreadMessageCount() {
