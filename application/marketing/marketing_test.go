@@ -34,60 +34,75 @@ func (ts *TestSuite) Test_callApi() {
 
 	mux.HandleFunc("/", apiRequestHandler)
 
-	type args struct {
-		apiRequests []ApiRequest
-	}
 	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
+		name       string
+		apiRequest ApiRequest
+		wantErr    bool
 	}{
 		{
-			name:    "callApi tests",
+			name:    "GET request",
 			wantErr: false,
-			args: args{
-				apiRequests: []ApiRequest{
-					{
-						Method:      http.MethodGet,
-						URL:         srv.URL,
-						Body:        `{"key": "value"}`,
-						ContentType: "application/json",
-						Username:    "user",
-						Password:    "pass",
-						Headers:     nil,
-					},
-					{
-						Method:      http.MethodPost,
-						URL:         srv.URL,
-						Body:        `{"key": "value"}`,
-						ContentType: "application/json",
-						Username:    "user",
-						Password:    "pass",
-						Headers: map[string]string{
-							"something": "else",
-						},
-					},
+			apiRequest: ApiRequest{
+				Method:      http.MethodGet,
+				URL:         srv.URL,
+				Body:        `{"key": "value"}`,
+				ContentType: "application/json",
+				Username:    "user",
+				Password:    "pass",
+				Headers:     nil,
+			},
+		},
+		{
+			name:    "POST request",
+			wantErr: false,
+			apiRequest: ApiRequest{
+				Method:      http.MethodPost,
+				URL:         srv.URL,
+				Body:        `{"key": "value"}`,
+				ContentType: "application/json",
+				Username:    "user",
+				Password:    "pass",
+				Headers: map[string]string{
+					"something": "else",
+				},
+			},
+		},
+		{
+			name:    "Failed delete request - bad url",
+			wantErr: true,
+			apiRequest: ApiRequest{
+				Method:      http.MethodDelete,
+				URL:         "http://invalid/",
+				Body:        `{"key": "value"}`,
+				ContentType: "application/json",
+				Username:    "user",
+				Password:    "pass",
+				Headers: map[string]string{
+					"something": "else",
 				},
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			for _, ar := range tt.args.apiRequests {
-				got, err := callApi(ar)
-				if (err != nil) != tt.wantErr {
-					t.Errorf("callApi() error = %v, wantErr %v", err, tt.wantErr)
-					return
-				}
-				var resp ApiRequest
-				err = json.Unmarshal([]byte(got), &resp)
-				ts.NoError(err, "unable to unmarshal api response")
-
-				// ignore response headers for test
-				ar.Headers = map[string]string{}
-				resp.Headers = map[string]string{}
-				ts.Equal(resp, ar, "api response does not match expected")
+			got, err := callApi(tt.apiRequest)
+			if err != nil && tt.wantErr {
+				return
 			}
+			if err == nil && tt.wantErr {
+				t.Errorf("callApi() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			var resp ApiRequest
+			err = json.Unmarshal([]byte(got), &resp)
+			ts.NoError(err, "unable to unmarshal api response")
+
+			// ignore response headers for test
+			tt.apiRequest.Headers = map[string]string{}
+			resp.Headers = map[string]string{}
+			ts.Equal(resp, tt.apiRequest, "api response does not match expected")
+
 		})
 	}
 }
