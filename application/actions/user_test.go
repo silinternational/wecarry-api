@@ -37,7 +37,7 @@ type User struct {
 		WeightUnit *string `json:"weightUnit"`
 	}
 	AvatarURL string `json:"avatarURL"`
-	Location  struct {
+	Location  *struct {
 		Description string  `json:"description"`
 		Country     string  `json:"country"`
 		Lat         float64 `json:"latitude"`
@@ -189,7 +189,6 @@ func (as *ActionSuite) TestUpdateUser() {
 
 	var resp UserResponse
 
-	userID := f.Users[1].UUID.String()
 	newNickname := "U1 New Nickname"
 	location := `{description: "Paris, France", country: "FR", latitude: 48.8588377, longitude: 2.2770202}`
 
@@ -197,8 +196,9 @@ func (as *ActionSuite) TestUpdateUser() {
 
 	requestedFields := `{id nickname avatarURL preferences {language, timeZone, weightUnit} location {description, country}}`
 
-	update := fmt.Sprintf(`mutation { user: updateUser(input:{id: "%s", nickname: "%s", location: %s, preferences: %s}) %s }`,
-		userID, newNickname, location, preferences, requestedFields)
+	update := fmt.Sprintf(`mutation { user: updateUser(input:{id: "%s", nickname: "%s", location: %s,
+			preferences: %s, photoID: "%s"}) %s }`,
+		f.Users[1].UUID.String(), newNickname, location, preferences, f.Files[0].UUID.String(), requestedFields)
 
 	testCases := []testCase{
 		{
@@ -225,15 +225,33 @@ func (as *ActionSuite) TestUpdateUser() {
 		},
 		{
 			Name: "not allowed",
-			Payload: fmt.Sprintf(`mutation {updateUser(input:{id: \"%v\", location: \"%v\"}) {nickname}}`,
+			Payload: fmt.Sprintf(`mutation {user: updateUser(input:{id: "%v", location: %v}) {nickname}}`,
 				f.Users[0].UUID, location),
 			TestUser:    f.Users[1],
 			Test:        func(t *testing.T) {},
 			ExpectError: true,
 		},
+		{
+			Name: "remove photo",
+			Payload: fmt.Sprintf(`mutation {user: updateUser(input:{id: "%v", location: %v}) {avatarURL}}`,
+				f.Users[1].UUID, location),
+			TestUser: f.Users[0],
+			Test: func(t *testing.T) {
+				as.Equal(f.Users[1].AuthPhotoURL.String, resp.User.AvatarURL, "expected photo to be deleted")
+			},
+		},
+		{
+			Name:     "remove location",
+			Payload:  fmt.Sprintf(`mutation {user: updateUser(input:{id: "%v"}) {location{description}}}`, f.Users[1].UUID),
+			TestUser: f.Users[0],
+			Test: func(t *testing.T) {
+				as.Nil(resp.User.Location, "expected location to be deleted")
+			},
+		},
 	}
 
 	for _, test := range testCases {
+		resp = UserResponse{}
 		err := as.testGqlQuery(test.Payload, test.TestUser.Nickname, &resp)
 
 		if test.ExpectError {
