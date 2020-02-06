@@ -43,8 +43,6 @@ func (as *ActionSuite) Test_AddMeAsPotentialProvider() {
 	as.Equal(want, resp.Post.PotentialProviders, "incorrect potential providers")
 
 	// Add a repeat
-
-	// Add one to Post with two already
 	query = fmt.Sprintf(qTemplate, posts[1].UUID.String())
 
 	err = as.testGqlQuery(query, f.Users[1].Nickname, &resp)
