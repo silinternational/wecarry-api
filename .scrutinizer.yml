@@ -17,6 +17,7 @@ build:
       GOOGLE_KEY: test
       GOOGLE_SECRET: test
       SERVICE_INTEGRATION_TOKEN: abc123test
+      TEST_DATABASE_URL: postgres://scrutinizer:scrutinizer@localhost:5432/scrutinizer?sslmode=disable
   nodes:
     analysis:
       project_setup:
