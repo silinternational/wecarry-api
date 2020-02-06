@@ -132,6 +132,10 @@ var Env struct {
 	LinkedInKey                string
 	LinkedInSecret             string
 	MaxFileDelete              int
+	MailChimpAPIBaseURL        string
+	MailChimpAPIKey            string
+	MailChimpListID            string
+	MailChimpUsername          string
 	MobileService              string
 	PlaygroundPort             string
 	RollbarServerRoot          string
@@ -186,6 +190,10 @@ func readEnv() {
 	Env.LinkedInKey = envy.Get("LINKED_IN_KEY", "")
 	Env.LinkedInSecret = envy.Get("LINKED_IN_SECRET", "")
 	Env.MaxFileDelete = envToInt("MAX_FILE_DELETE", 10)
+	Env.MailChimpAPIBaseURL = envy.Get("MAILCHIMP_API_BASE_URL", "https://us4.api.mailchimp.com/3.0")
+	Env.MailChimpAPIKey = envy.Get("MAILCHIMP_API_KEY", "")
+	Env.MailChimpListID = envy.Get("MAILCHIMP_LIST_ID", "")
+	Env.MailChimpUsername = envy.Get("MAILCHIMP_USERNAME", "")
 	Env.MobileService = envy.Get("MOBILE_SERVICE", "dummy")
 	Env.PlaygroundPort = envy.Get("PORT", "3000")
 	Env.RollbarServerRoot = envy.Get("ROLLBAR_SERVER_ROOT", "github.com/silinternational/wecarry-api")

@@ -107,11 +107,13 @@ func (ms *ModelSuite) TestUserCreated() {
 
 	notifications.TestEmailService.DeleteSentMessages()
 
-	userCreated(e)
+	userCreatedLogger(e)
 
 	got := buf.String()
 	want := fmt.Sprintf("User Created: %s", e.Message)
 	test.AssertStringContains(ms.T(), got, want, 74)
+
+	userCreatedSendWelcomeMessage(e)
 
 	emailCount := notifications.TestEmailService.GetNumberOfMessagesSent()
 	ms.Equal(1, emailCount, "wrong email count")

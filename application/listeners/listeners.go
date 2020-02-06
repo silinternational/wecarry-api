@@ -7,6 +7,7 @@ import (
 
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/job"
+	"github.com/silinternational/wecarry-api/marketing"
 	"github.com/silinternational/wecarry-api/models"
 	"github.com/silinternational/wecarry-api/notifications"
 )
@@ -24,8 +25,16 @@ type apiListener struct {
 var apiListeners = map[string][]apiListener{
 	domain.EventApiUserCreated: {
 		{
-			name:     "user-created",
-			listener: userCreated,
+			name:     "user-created-logger",
+			listener: userCreatedLogger,
+		},
+		{
+			name:     "user-created-send-welcome-message",
+			listener: userCreatedSendWelcomeMessage,
+		},
+		{
+			name:     "user-created-add-to-marketing-list",
+			listener: userCreatedAddToMarketingList,
 		},
 	},
 
@@ -84,22 +93,63 @@ func RegisterListeners() {
 	}
 }
 
-func userCreated(e events.Event) {
+func userCreatedLogger(e events.Event) {
+	if e.Kind != domain.EventApiUserCreated {
+		return
+	}
+
+	domain.Logger.Printf("User Created: %s", e.Message)
+}
+
+func userCreatedSendWelcomeMessage(e events.Event) {
 	if e.Kind != domain.EventApiUserCreated {
 		return
 	}
 
 	user, ok := e.Payload["user"].(*models.User)
 	if !ok {
-		domain.Logger.Printf("Failed to get User from event payload for notification. Event message: %s", e.Message)
+		domain.Logger.Printf("Failed to get User from event payload for sending welcome message. Event message: %s", e.Message)
 		return
 	}
-
-	domain.Logger.Printf("User Created: %s", e.Message)
 
 	if err := sendNewUserWelcome(*user); err != nil {
 		domain.Logger.Printf("Failed to send new user welcome to %s. Error: %s",
 			user.UUID.String(), err)
+	}
+}
+
+func userCreatedAddToMarketingList(e events.Event) {
+	if e.Kind != domain.EventApiUserCreated {
+		return
+	}
+
+	user, ok := e.Payload["user"].(*models.User)
+	if !ok {
+		domain.Logger.Printf(
+			"Failed to get User from event payload for adding to marketing list. Event message: %s", e.Message)
+		return
+	}
+
+	// ensure env vars are present
+	if domain.Env.MailChimpAPIKey == "" {
+		domain.Logger.Printf("missing required env var for MAILCHIMP_API_KEY. need to add %s to list", user.Email)
+		return
+	}
+	if domain.Env.MailChimpListID == "" {
+		domain.Logger.Printf("missing required env var for MAILCHIMP_LIST_ID. need to add %s to list", user.Email)
+		return
+	}
+	if domain.Env.MailChimpUsername == "" {
+		domain.Logger.Printf("missing required env var for MAILCHIMP_USERNAME. need to add %s to list", user.Email)
+		return
+	}
+
+	err := marketing.AddUserToList(*user, domain.Env.MailChimpAPIBaseURL, domain.Env.MailChimpListID,
+		domain.Env.MailChimpUsername, domain.Env.MailChimpAPIKey)
+
+	if err != nil {
+		domain.ErrLogger.Printf("error calling marketing.AddUserToList when trying to add %s: %s",
+			user.Email, err.Error())
 	}
 }
 
