@@ -1036,11 +1036,6 @@ func (ms *ModelSuite) TestUser_SetLocation() {
 			name:        "overwrite location with new info",
 			newLocation: locationFixtures[1],
 		},
-		{
-			name:        "remove location",
-			newLocation: locationFixtures[2],
-			wantNil:     true,
-		},
 	}
 
 	for _, test := range tests {
@@ -1048,7 +1043,6 @@ func (ms *ModelSuite) TestUser_SetLocation() {
 			err := user.SetLocation(test.newLocation)
 			ms.NoError(err, "unexpected error from user.SetLocation()")
 
-			beforeUpdate := user.LocationID
 			locationFromDB, err := user.GetLocation()
 			ms.NoError(err, "unexpected error from user.GetLocation()")
 
@@ -1057,9 +1051,46 @@ func (ms *ModelSuite) TestUser_SetLocation() {
 			} else {
 				test.newLocation.ID = locationFromDB.ID
 				ms.Equal(test.newLocation, *locationFromDB, "user location data doesn't match new location")
-				ms.Equal(beforeUpdate.Int, locationFromDB.ID,
-					"Location ID changed -- location record was probably not reused")
 			}
+		})
+	}
+}
+
+func (ms *ModelSuite) TestUser_RemoveLocation() {
+	uf := createUserFixtures(ms.DB, 2)
+	uf.Users[0].LocationID = nulls.Int{}
+	ms.NoError(ms.DB.Save(&uf.Users[0]))
+
+	tests := []struct {
+		name    string
+		user    User
+		wantNil bool
+	}{
+		{
+			name: "user has no location",
+			user: uf.Users[0],
+		},
+		{
+			name: "user has a location",
+			user: uf.Users[1],
+		},
+	}
+
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			id := tt.user.LocationID
+			fmt.Print(id)
+			err := tt.user.RemoveLocation()
+			ms.NoError(err, "unexpected error from user.RemoveLocation()")
+
+			locationFromDB, err := tt.user.GetLocation()
+			ms.NoError(err, "unexpected error from user.GetLocation()")
+			ms.Nil(locationFromDB)
+
+			loc := Location{}
+			err = ms.DB.Find(&loc, id)
+			ms.Error(err)
+			ms.Equal("sql: no rows in result set", err.Error())
 		})
 	}
 }

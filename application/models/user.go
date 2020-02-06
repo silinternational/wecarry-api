@@ -526,15 +526,6 @@ func (u *User) GetLocation() (*Location, error) {
 
 // SetLocation sets the user location fields, creating a new record in the database if necessary.
 func (u *User) SetLocation(location Location) error {
-	if location.Description == "" {
-		if u.LocationID.Valid {
-			if err := DB.Destroy(&Location{ID: u.LocationID.Int}); err != nil {
-				return err
-			}
-			u.LocationID = nulls.Int{}
-		}
-		return nil
-	}
 	if u.LocationID.Valid {
 		location.ID = u.LocationID.Int
 		u.Location = location
@@ -545,6 +536,18 @@ func (u *User) SetLocation(location Location) error {
 	}
 	u.LocationID = nulls.NewInt(location.ID)
 	return u.Save()
+}
+
+// RemoveLocation removes the location record associated with the user
+func (u *User) RemoveLocation() error {
+	if u.LocationID.Valid {
+		if err := DB.Destroy(&Location{ID: u.LocationID.Int}); err != nil {
+			return err
+		}
+		u.LocationID = nulls.Int{}
+		// don't need to save the user because the database foreign key constraint is set to "ON DELETE SET NULL"
+	}
+	return nil
 }
 
 type UnreadThread struct {
