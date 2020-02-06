@@ -1806,7 +1806,7 @@ input LocationInput {
 input UpdatePostStatusInput {
     id: ID!
     status: PostStatus!
-    userID: ID
+    providerUserID: ID
 }
 
 type Watch {
@@ -8986,9 +8986,9 @@ func (ec *executionContext) unmarshalInputUpdatePostStatusInput(ctx context.Cont
 			if err != nil {
 				return it, err
 			}
-		case "userID":
+		case "providerUserID":
 			var err error
-			it.UserID, err = ec.unmarshalOID2ᚖstring(ctx, v)
+			it.ProviderUserID, err = ec.unmarshalOID2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}

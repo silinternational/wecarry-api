@@ -48,7 +48,7 @@ func (as *ActionSuite) Test_RemoveMeAsPotentialProvider() {
 	f := test.CreatePotentialProvidersFixtures(as.DB)
 	posts := f.Posts
 
-	qTemplate := `mutation {post: removeMeAsPotentialProvider (postID: "%s")` +
+	const qTemplate = `mutation {post: removeMeAsPotentialProvider (postID: "%s")` +
 		` {id title potentialProviders{id nickname}}}`
 
 	var resp PostResponse
@@ -69,7 +69,7 @@ func (as *ActionSuite) Test_RemovePotentialProvider() {
 	f := test.CreatePotentialProvidersFixtures(as.DB)
 	posts := f.Posts
 
-	qTemplate := `mutation {post: removePotentialProvider (postID: "%s", userID: "%s")` +
+	const qTemplate = `mutation {post: removePotentialProvider (postID: "%s", userID: "%s")` +
 		` {id title potentialProviders{id nickname}}}`
 
 	var resp PostResponse

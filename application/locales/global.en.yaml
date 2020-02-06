@@ -134,16 +134,20 @@
   translation: You are not allowed to change the status of that post.
 - id: Post.FindPost
   translation: We had a problem finding that request.
-- id: Post.AddMeAsPotentialProvider
+- id: AddMeAsPotentialProvider
   translation: We had a problem registering your offer to fulfill a request.
-- id: Post.RemoveMeAsPotentialProvider
+- id: RemoveMeAsPotentialProvider
   translation: We had a problem cancelling your offer to fufill a request.
-- id: Post.RemoveMeAsPotentialProvider.NotAuthorized
+- id: RemoveMeAsPotentialProvider.NotAuthorized
   translation: You are not allowed to cancel that user's offer.
-- id: Post.RemovePotentialProvider
+- id: RemoveMeAsPotentialProvider.FindPost
+  translation: We had a problem finding the request associated with your offer.
+- id: RemovePotentialProvider
   translation: We had a problem cancelling that offer to fulfill a request.
-- id: Post.RemovePotentialProvider.NotAuthorized
+- id: RemovePotentialProvider.NotAuthorized
   translation: You are not allowed to cancel that user's offer.
+- id: RemovePotentialProvider.FindPost
+  translation: We had a problem finding the request associated with that offer.
 - id: GetThreadParticipants
   translation: We had a problem getting a list of participants in that conversation.
 - id: GetThreadLastViewedAt

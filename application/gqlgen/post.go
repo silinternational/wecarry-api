@@ -451,7 +451,7 @@ func (r *mutationResolver) UpdatePostStatus(ctx context.Context, input UpdatePos
 			"UpdatePostStatus.Unauthorized", extras)
 	}
 
-	if err := post.SetProviderWithStatus(input.Status, input.UserID); err != nil {
+	if err := post.SetProviderWithStatus(input.Status, input.ProviderUserID); err != nil {
 		return nil, reportError(ctx, errors.New("error setting provider with status: "+err.Error()),
 			"UpdatePostStatus.SetProvider", extras)
 	}
@@ -478,12 +478,12 @@ func (r *mutationResolver) AddMeAsPotentialProvider(ctx context.Context, postID 
 	var provider models.PotentialProvider
 	if err := provider.NewWithPostUUID(postID, cUser.ID); err != nil {
 		return nil, reportError(ctx, errors.New("error preparing potential provider: "+err.Error()),
-			"Post.AddMeAsPotentialProvider")
+			"AddMeAsPotentialProvider")
 	}
 
 	if err := provider.Create(); err != nil {
 		return nil, reportError(ctx, errors.New("error creating potential provider: "+err.Error()),
-			"Post.AddMeAsPotentialProvider")
+			"AddMeAsPotentialProvider")
 	}
 
 	return &post, nil
@@ -496,12 +496,12 @@ func (r *mutationResolver) RemoveMeAsPotentialProvider(ctx context.Context, post
 
 	if err := provider.FindWithPostUUIDAndUserUUID(postID, cUser.UUID.String(), cUser); err != nil {
 		return nil, reportError(ctx, errors.New("unable to find PotentialProvider in order to delete it: "+err.Error()),
-			"Post.RemoveMeAsPotentialProvider")
+			"RemoveMeAsPotentialProvider")
 	}
 
 	var post models.Post
 	if err := post.FindByUUID(postID); err != nil {
-		return nil, reportError(ctx, err, "Post.RemoveMeAsPotentialProvider")
+		return nil, reportError(ctx, err, "RemoveMeAsPotentialProvider.FindPost")
 	}
 
 	extras := map[string]interface{}{
@@ -511,16 +511,16 @@ func (r *mutationResolver) RemoveMeAsPotentialProvider(ctx context.Context, post
 
 	if !provider.CanUserAccessPotentialProvider(post, cUser) {
 		return nil, reportError(ctx, errors.New("user not allowed to access PotentialProvider"),
-			"Post.RemoveMeAsPotentialProvider.NotAuthorized", extras)
+			"RemoveMeAsPotentialProvider.NotAuthorized", extras)
 	}
 
 	if err := provider.Destroy(); err != nil {
 		return nil, reportError(ctx, errors.New("error removing potential provider: "+err.Error()),
-			"Post.RemoveMeAsPotentialProvider", extras)
+			"RemoveMeAsPotentialProvider", extras)
 	}
 
 	if err := post.FindByUUID(postID); err != nil {
-		return nil, reportError(ctx, err, "Post.RemoveMeAsPotentialProvider")
+		return nil, reportError(ctx, err, "RemoveMeAsPotentialProvider.FindPost")
 	}
 
 	return &post, nil
@@ -533,12 +533,12 @@ func (r *mutationResolver) RemovePotentialProvider(ctx context.Context, postID, 
 
 	if err := provider.FindWithPostUUIDAndUserUUID(postID, cUser.UUID.String(), cUser); err != nil {
 		return nil, reportError(ctx, errors.New("unable to find PotentialProvider in order to delete it: "+err.Error()),
-			"Post.RemovePotentialProvider")
+			"RemovePotentialProvider")
 	}
 
 	var post models.Post
 	if err := post.FindByUUID(postID); err != nil {
-		return nil, reportError(ctx, err, "Post.RemovePotentialProvider")
+		return nil, reportError(ctx, err, "RemovePotentialProvider.FindPost")
 	}
 
 	extras := map[string]interface{}{
@@ -548,16 +548,16 @@ func (r *mutationResolver) RemovePotentialProvider(ctx context.Context, postID, 
 
 	if !provider.CanUserAccessPotentialProvider(post, cUser) {
 		return nil, reportError(ctx, errors.New("user not allowed to access PotentialProvider"),
-			"Post.RemovePotentialProvider.NotAuthorized", extras)
+			"RemovePotentialProvider.NotAuthorized", extras)
 	}
 
 	if err := provider.Destroy(); err != nil {
 		return nil, reportError(ctx, errors.New("error removing potential provider: "+err.Error()),
-			"Post.RemovePotentialProvider", extras)
+			"RemovePotentialProvider", extras)
 	}
 
 	if err := post.FindByUUID(postID); err != nil {
-		return nil, reportError(ctx, err, "Post.RemovePotentialProvider")
+		return nil, reportError(ctx, err, "RemovePotentialProvider.FindPost")
 	}
 
 	return &post, nil

@@ -80,9 +80,9 @@ type UpdateOrganizationInput struct {
 }
 
 type UpdatePostStatusInput struct {
-	ID     string            `json:"id"`
-	Status models.PostStatus `json:"status"`
-	UserID *string           `json:"userID"`
+	ID             string            `json:"id"`
+	Status         models.PostStatus `json:"status"`
+	ProviderUserID *string           `json:"providerUserID"`
 }
 
 type UpdateUserInput struct {

@@ -244,16 +244,16 @@ type Post struct {
 	MeetingID      nulls.Int      `json:"meeting_id" db:"meeting_id"`
 	Visibility     PostVisibility `json:"visibility" db:"visibility"`
 
-	CreatedBy          User               `belongs_to:"users"`
-	Organization       Organization       `belongs_to:"organizations"`
-	Receiver           User               `belongs_to:"users"`
-	Provider           User               `belongs_to:"users"`
-	PotentialProviders PotentialProviders `has_many:"potential_providers"`
-	Files              PostFiles          `has_many:"post_files"`
-	Histories          PostHistories      `has_many:"post_histories"`
-	PhotoFile          File               `belongs_to:"files"`
-	Destination        Location           `belongs_to:"locations"`
-	Origin             Location           `belongs_to:"locations"`
+	CreatedBy    User         `belongs_to:"users"`
+	Organization Organization `belongs_to:"organizations"`
+	Receiver     User         `belongs_to:"users"`
+	Provider     User         `belongs_to:"users"`
+
+	Files       PostFiles     `has_many:"post_files"`
+	Histories   PostHistories `has_many:"post_histories"`
+	PhotoFile   File          `belongs_to:"files"`
+	Destination Location      `belongs_to:"locations"`
+	Origin      Location      `belongs_to:"locations"`
 }
 
 // PostCreatedEventData holds data needed by the New Post event listener
@@ -307,6 +307,8 @@ func (p *Post) NewWithUser(pType PostType, currentUser User) error {
 	return nil
 }
 
+// SetProviderWithStatus sets the new Status of the Post and if needed it
+// also sets the ProviderID (i.e. when the new status is ACCEPTED)
 func (p *Post) SetProviderWithStatus(status PostStatus, providerID *string) error {
 	if p.Type == PostTypeRequest && status == PostStatusAccepted {
 		if providerID == nil {
@@ -324,6 +326,8 @@ func (p *Post) SetProviderWithStatus(status PostStatus, providerID *string) erro
 	return nil
 }
 
+// GetPotentialProviders returns the User objects associated with the Post's
+// PotentialProviders
 func (p *Post) GetPotentialProviders() (Users, error) {
 	if p.Type != PostTypeRequest {
 		return Users{}, nil
@@ -334,6 +338,8 @@ func (p *Post) GetPotentialProviders() (Users, error) {
 	return users, err
 }
 
+// DestroyPotentialProviders destroys all the PotentialProvider records
+// associated with the Post if the Post's status is COMPLETED
 func (p *Post) DestroyPotentialProviders(status PostStatus, user User) error {
 	if p.Type != PostTypeRequest || status != PostStatusCompleted {
 		return nil

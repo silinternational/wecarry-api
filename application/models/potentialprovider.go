@@ -91,7 +91,7 @@ func (p *PotentialProvider) Update() error {
 	return update(p)
 }
 
-// FindByPostIDAndUserID reads a request record by the given Post ID and User ID
+// FindUsersByPostID gets the Users associated with the PotentialProviders
 func (p *PotentialProviders) FindUsersByPostID(postID int) (Users, error) {
 	if postID <= 0 {
 		return Users{}, fmt.Errorf("error finding potential_provider, invalid id %v", postID)
@@ -111,6 +111,8 @@ func (p *PotentialProviders) FindUsersByPostID(postID int) (Users, error) {
 	return users, nil
 }
 
+// CanUserAccessPotentialProvider returns whether the current user is a SuperAdmin, the Post's creator or
+// the user associated with the PotentialProvider
 func (p *PotentialProvider) CanUserAccessPotentialProvider(post Post, currentUser User) bool {
 	if currentUser.AdminRole == UserAdminRoleSuperAdmin || currentUser.ID == post.CreatedByID {
 		return true
@@ -118,6 +120,7 @@ func (p *PotentialProvider) CanUserAccessPotentialProvider(post Post, currentUse
 	return p.UserID == currentUser.ID
 }
 
+// FindWithPostUUIDAndUserUUID  finds the PotentialProvider associated with both the postUUID and the userUUID
 func (p *PotentialProvider) FindWithPostUUIDAndUserUUID(postUUID, userUUID string, currentUser User) error {
 	var post Post
 	if err := post.FindByUUID(postUUID); err != nil {
@@ -136,6 +139,7 @@ func (p *PotentialProvider) FindWithPostUUIDAndUserUUID(postUUID, userUUID strin
 	return nil
 }
 
+// NewWithPostUUID populates a new PotentialProvider but does not save it
 func (p *PotentialProvider) NewWithPostUUID(postUUID string, userID int) error {
 	var user User
 	if err := user.FindByID(userID); err != nil {
@@ -161,10 +165,13 @@ func (p *PotentialProvider) NewWithPostUUID(postUUID string, userID int) error {
 	return nil
 }
 
+// Destroy destroys the PotentialProvider
 func (p *PotentialProvider) Destroy() error {
 	return DB.Destroy(p)
 }
 
+// DestroyAllWithPostUUID Destroys all the PotentialProviders associated with a Post depending
+//  on whether the current user is a SuperAdmin or the Post's creator.
 func (p *PotentialProviders) DestroyAllWithPostUUID(postUUID string, currentUser User) error {
 	var post Post
 	if err := post.FindByUUID(postUUID); err != nil {
