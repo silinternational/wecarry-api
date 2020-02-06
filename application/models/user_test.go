@@ -1018,9 +1018,6 @@ func (ms *ModelSuite) TestUser_SetLocation() {
 			Latitude:    nulls.Float64{},
 			Longitude:   nulls.Float64{},
 		},
-		{
-			Description: "",
-		},
 	}
 
 	tests := []struct {
