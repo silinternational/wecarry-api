@@ -34,9 +34,9 @@ app:
 testdb:
   image: postgres:11.6
   environment:
-    POSTGRES_USER: scrutinizer
-    POSTGRES_PASSWORD: scrutinizer
-    POSTGRES_DB: scrutinizer
+    POSTGRES_USER: wecarry
+    POSTGRES_PASSWORD: wecarry
+    POSTGRES_DB: wecarry_test
 
 binary:
   build:
