@@ -183,7 +183,7 @@ func (as *ActionSuite) TestUpdateUser() {
 		Name        string
 		Payload     string
 		TestUser    models.User
-		ExpectError bool
+		ExpectError string
 		Test        func(t *testing.T)
 	}
 
@@ -229,7 +229,7 @@ func (as *ActionSuite) TestUpdateUser() {
 				f.Users[0].UUID, location),
 			TestUser:    f.Users[1],
 			Test:        func(t *testing.T) {},
-			ExpectError: true,
+			ExpectError: "not allowed",
 		},
 		{
 			Name: "remove photo",
@@ -241,8 +241,9 @@ func (as *ActionSuite) TestUpdateUser() {
 			},
 		},
 		{
-			Name:     "remove location",
-			Payload:  fmt.Sprintf(`mutation {user: updateUser(input:{id: "%v"}) {location{description}}}`, f.Users[1].UUID),
+			Name: "remove location",
+			Payload: fmt.Sprintf(`mutation {user: updateUser(input:{id: "%v"}) {location{description}}}`,
+				f.Users[1].UUID),
 			TestUser: f.Users[0],
 			Test: func(t *testing.T) {
 				as.Nil(resp.User.Location, "expected location to be deleted")
@@ -254,8 +255,9 @@ func (as *ActionSuite) TestUpdateUser() {
 		resp = UserResponse{}
 		err := as.testGqlQuery(test.Payload, test.TestUser.Nickname, &resp)
 
-		if test.ExpectError {
+		if test.ExpectError != "" {
 			as.Error(err)
+			as.Contains(err.Error(), test.ExpectError)
 		} else {
 			as.NoError(err)
 		}
