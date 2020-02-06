@@ -89,9 +89,9 @@ type UpdatePostStatusInput struct {
 type UpdateUserInput struct {
 	ID       *string `json:"id"`
 	Nickname *string `json:"nickname"`
-	// File ID of avatar photo. Omit or null makes no change, empty string removes photo.
+	// File ID of avatar photo. If omitted or `null`, the photo is removed from the profile.
 	PhotoID *string `json:"photoID"`
-	// Specify the user's "home" location. If the description is an empty string, the location is removed from the profile.
+	// Specify the user's "home" location. If omitted or `null`, the location is removed from the profile.
 	Location    *LocationInput              `json:"location"`
 	Preferences *UpdateUserPreferencesInput `json:"preferences"`
 }
