@@ -44,6 +44,7 @@ func (p *PotentialProvider) Validate(tx *pop.Connection) (*validate.Errors, erro
 	return validate.Validate(
 		&validators.IntIsPresent{Field: p.PostID, Name: "PostID"},
 		&validators.IntIsPresent{Field: p.UserID, Name: "UserID"},
+		&uniqueTogetherValidator{Object: p, Name: "UniqueTogether"},
 	), nil
 }
 
@@ -55,6 +56,33 @@ func (p *PotentialProvider) ValidateCreate(tx *pop.Connection) (*validate.Errors
 // ValidateUpdate gets run every time you call "pop.ValidateAndUpdate" method.
 func (p *PotentialProvider) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
+}
+
+type uniqueTogetherValidator struct {
+	Name    string
+	Object  *PotentialProvider
+	Message string
+}
+
+// IsValid ensures there are no other PotentialProviders with both the
+// same PostID and UserID
+func (v *uniqueTogetherValidator) IsValid(errors *validate.Errors) {
+	p := PotentialProvider{}
+	pID := v.Object.PostID
+	uID := v.Object.UserID
+	if err := DB.Where("post_id = ? and user_id = ?", pID, uID).First(&p); err != nil {
+		if domain.IsOtherThanNoRows(err) {
+			v.Message = "Error database for duplicate potential providers: " + err.Error()
+			errors.Add(validators.GenerateKey(v.Name), v.Message)
+		}
+		return
+	}
+
+	// No error means we found a match
+	v.Message = fmt.Sprintf("Duplicate potential provider exists with PostID: %v and UserID: %v",
+		pID, uID)
+	errors.Add(validators.GenerateKey(v.Name), v.Message)
+	return
 }
 
 // PotentialProviderEventData holds data needed by the event listener that deals with a single PotentialProvider
