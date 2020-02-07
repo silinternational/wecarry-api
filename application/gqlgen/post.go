@@ -298,8 +298,10 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 	}
 
 	if input.PhotoID == nil {
-		if err := post.RemovePhoto(); err != nil {
-			return models.Post{}, err
+		if post.ID > 0 {
+			if err := post.RemovePhoto(); err != nil {
+				return models.Post{}, err
+			}
 		}
 	} else {
 		if _, err := post.AttachPhoto(*input.PhotoID); err != nil {
