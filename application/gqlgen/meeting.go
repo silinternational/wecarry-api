@@ -155,7 +155,7 @@ func convertGqlMeetingInputToDBMeeting(ctx context.Context, input meetingInput, 
 		meeting.CreatedByID = currentUser.ID
 	}
 
-	setOptionalStringField(input.Name, &meeting.Name)
+	setStringField(input.Name, &meeting.Name)
 
 	if input.Description != nil {
 		meeting.Description = nulls.NewString(*input.Description)

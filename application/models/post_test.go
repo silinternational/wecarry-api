@@ -1471,8 +1471,52 @@ func (ms *ModelSuite) TestPost_AttachPhoto() {
 	}
 }
 
-// TestPost_AttachPhoto_GetPhoto tests the AttachPhoto and GetPhoto methods of models.Post
-func (ms *ModelSuite) TestPost_AttachPhoto_GetPhoto() {
+func (ms *ModelSuite) TestPost_RemovePhoto() {
+	posts := createPostFixtures(ms.DB, 3, 0, false)
+
+	files := createFileFixtures(3)
+	posts[1].PhotoFileID = nulls.NewInt(files[0].ID)
+	ms.NoError(ms.DB.UpdateColumns(&posts[1], "photo_file_id"))
+
+	tests := []struct {
+		name     string
+		post     Post
+		oldImage *File
+		wantErr  string
+	}{
+		{
+			name: "no previous file",
+			post: posts[0],
+		},
+		{
+			name:     "previous file",
+			post:     posts[1],
+			oldImage: &files[0],
+		},
+		{
+			name:    "bad ID",
+			post:    Post{},
+			wantErr: "invalid Post ID",
+		},
+	}
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			err := tt.post.RemovePhoto()
+			if tt.wantErr != "" {
+				ms.Error(err, "did not get expected error")
+				ms.Contains(err.Error(), tt.wantErr)
+				return
+			}
+			ms.NoError(err, "unexpected error")
+			if tt.oldImage != nil {
+				ms.Equal(false, tt.oldImage.Linked, "old post photo file is not marked as unlinked")
+			}
+		})
+	}
+}
+
+// TestPost_GetPhoto tests the GetPhoto method of models.Post
+func (ms *ModelSuite) TestPost_GetPhoto() {
 	posts := createPostFixtures(ms.DB, 1, 0, false)
 	post := posts[0]
 
@@ -1576,7 +1620,7 @@ func (ms *ModelSuite) TestPost_GetSetDestination() {
 	ms.False(locationFromDB.Longitude.Valid)
 }
 
-func (ms *ModelSuite) TestPost_GetSetOrigin() {
+func (ms *ModelSuite) TestPost_Origin() {
 	posts := createPostFixtures(ms.DB, 1, 0, false)
 	post := posts[0]
 	post.OriginID = nulls.Int{}
@@ -1620,6 +1664,12 @@ func (ms *ModelSuite) TestPost_GetSetOrigin() {
 	// These are redundant checks, but here to document the fact that a null overwrites previous data.
 	ms.False(locationFromDB.Latitude.Valid)
 	ms.False(locationFromDB.Longitude.Valid)
+
+	ms.NoError(post.RemoveOrigin())
+	ms.False(post.OriginID.Valid, "expected the origin to have been removed")
+	err = ms.DB.Find(locationFromDB, locationFromDB.ID)
+	ms.Error(err, "expected error when looking for removed origin")
+	ms.False(domain.IsOtherThanNoRows(err), "unexpected error type finding old origin, "+err.Error())
 }
 
 func (ms *ModelSuite) TestPost_NewWithUser() {

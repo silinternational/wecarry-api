@@ -14,16 +14,36 @@ import (
 	"github.com/silinternational/wecarry-api/models"
 )
 
-func setOptionalStringField(input *string, output *string) {
+func setStringField(input *string, output *string) {
 	if input != nil {
 		*output = *input
+		return
 	}
+	*output = ""
+}
+
+func setOptionalStringField(input *string, output *nulls.String) {
+	if input != nil {
+		*output = nulls.NewString(*input)
+		return
+	}
+	*output = nulls.String{}
+}
+
+func setFloatField(input *float64, output *float64) {
+	if input != nil {
+		*output = *input
+		return
+	}
+	*output = 0.0
 }
 
 func setOptionalFloatField(input *float64, output *nulls.Float64) {
 	if input != nil {
 		*output = nulls.NewFloat64(*input)
+		return
 	}
+	*output = nulls.Float64{}
 }
 
 func convertGqlLocationInputToDBLocation(input LocationInput) models.Location {
