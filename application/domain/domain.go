@@ -233,6 +233,7 @@ type ErrLogProxy struct {
 func (e *ErrLogProxy) SetOutput(w io.Writer) {
 	e.LocalLog.SetOutput(w)
 }
+
 func (e *ErrLogProxy) Printf(format string, a ...interface{}) {
 	// Send to local logger
 	e.LocalLog.Printf(format, a...)
@@ -243,6 +244,7 @@ func (e *ErrLogProxy) Printf(format string, a ...interface{}) {
 	}
 	e.RemoteLog.Errorf(rollbar.ERR, format, a...)
 }
+
 func (e *ErrLogProxy) InitRollbar() {
 	e.RemoteLog = rollbar.New(
 		Env.RollbarToken,
