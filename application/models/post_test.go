@@ -859,17 +859,37 @@ func (ms *ModelSuite) TestPost_manageStatusTransition_forwardProgression() {
 	f := createFixturesForTestPost_manageStatusTransition_forwardProgression(ms)
 
 	tests := []struct {
-		name       string
-		post       Post
-		newStatus  PostStatus
-		providerID nulls.Int
-		wantErr    string
+		name            string
+		post            Post
+		newStatus       PostStatus
+		providerID      nulls.Int
+		wantCompletedOn bool
+		wantErr         string
 	}{
 		{
 			name:      "open to open - no change",
 			post:      f.Posts[0],
 			newStatus: PostStatusOpen,
 			wantErr:   "",
+		},
+		{
+			name:       "open to accepted - new history with provider",
+			post:       f.Posts[0],
+			newStatus:  PostStatusAccepted,
+			providerID: nulls.NewInt(f.Users[1].ID),
+			wantErr:    "",
+		},
+		{
+			name:            "accepted to completed - CompletedOn added",
+			post:            f.Posts[2],
+			newStatus:       PostStatusCompleted,
+			wantCompletedOn: true,
+		},
+		{
+			name:            "delivered to completed - CompletedOn added",
+			post:            f.Posts[3],
+			newStatus:       PostStatusCompleted,
+			wantCompletedOn: true,
 		},
 		{
 			name:       "open to accepted - new history with provider",
@@ -906,6 +926,11 @@ func (ms *ModelSuite) TestPost_manageStatusTransition_forwardProgression() {
 			ms.Equal(test.newStatus, ph.Status, "incorrect Status ")
 			ms.Equal(test.post.ReceiverID, ph.ReceiverID, "incorrect ReceiverID ")
 			ms.Equal(test.providerID, ph.ProviderID, "incorrect ProviderID ")
+
+			if test.wantCompletedOn {
+				ms.True(test.post.CompletedOn.Valid, "expected a valid CompletedOn date")
+
+			}
 		})
 	}
 }

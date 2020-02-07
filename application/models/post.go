@@ -230,6 +230,7 @@ type Post struct {
 	OrganizationID int            `json:"organization_id" db:"organization_id"`
 	NeededBefore   nulls.Time     `json:"needed_before" db:"needed_before"`
 	Status         PostStatus     `json:"status" db:"status"`
+	CompletedOn    nulls.Time     `json:"completed_on" db:"completed_on"`
 	Title          string         `json:"title" db:"title"`
 	Size           PostSize       `json:"size" db:"size"`
 	UUID           uuid.UUID      `json:"uuid" db:"uuid"`
@@ -510,6 +511,34 @@ func (p *Post) manageStatusTransition() error {
 	}
 
 	emitEvent(e)
+
+	// If completed, hydrate CompletedOn. If not completed, nullify CompletedOn
+	// Don't use p.UpdateColumns, due to this being called by the AfterUpdate function
+	switch p.Status {
+	case PostStatusCompleted:
+		if !p.CompletedOn.Valid {
+			err := DB.RawQuery(
+				fmt.Sprintf(`UPDATE posts set completed_on = '%s' where ID = %v`,
+					time.Now().Format(domain.DateFormat), p.ID)).Exec()
+			if err != nil {
+				domain.ErrLogger.Printf("unable to set Post.CompletedOn for ID: %v, %s", p.ID, err)
+			}
+			if err := DB.Reload(p); err != nil {
+				domain.ErrLogger.Printf("unable to reload Post ID: %v, %s", p.ID, err)
+			}
+		}
+	case PostStatusOpen, PostStatusAccepted, PostStatusDelivered:
+		if p.CompletedOn.Valid {
+			err := DB.RawQuery(
+				fmt.Sprintf(`UPDATE posts set completed_on = NULL where ID = %v`, p.ID)).Exec()
+			if err != nil {
+				domain.ErrLogger.Printf("unable to nullify Post.CompletedOn for ID: %v, %s", p.ID, err)
+			}
+			if err := DB.Reload(p); err != nil {
+				domain.ErrLogger.Printf("unable to reload Post ID: %v, %s", p.ID, err)
+			}
+		}
+	}
 
 	return nil
 }

@@ -86,11 +86,20 @@ func createFixturesForTestPost_manageStatusTransition_forwardProgression(ms *Mod
 	uf := createUserFixtures(ms.DB, 2)
 	users := uf.Users
 
-	posts := createPostFixtures(ms.DB, 2, 0, false)
+	posts := createPostFixtures(ms.DB, 4, 0, false)
 	posts[1].Status = PostStatusAccepted
 	posts[1].CreatedByID = users[1].ID
 	posts[1].ProviderID = nulls.NewInt(users[0].ID)
 	ms.NoError(ms.DB.Save(&posts[1]))
+
+	// Give these new statuses while by-passing the status transition validation
+	for i, status := range [2]PostStatus{PostStatusAccepted, PostStatusDelivered} {
+		id := i + 2
+		posts[id].Status = status
+		err := DB.RawQuery(
+			fmt.Sprintf(`UPDATE posts set status = '%s' where ID = %v`, status, posts[id].ID)).Exec()
+		ms.NoError(err, "unexpected error creating post fixture")
+	}
 
 	return PostFixtures{
 		Users: users,
