@@ -17,9 +17,7 @@ import (
 func setStringField(input *string, output *string) {
 	if input != nil {
 		*output = *input
-		return
 	}
-	*output = ""
 }
 
 func setOptionalStringField(input *string, output *nulls.String) {
@@ -33,9 +31,7 @@ func setOptionalStringField(input *string, output *nulls.String) {
 func setFloatField(input *float64, output *float64) {
 	if input != nil {
 		*output = *input
-		return
 	}
-	*output = 0.0
 }
 
 func setOptionalFloatField(input *float64, output *nulls.Float64) {
