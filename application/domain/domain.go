@@ -385,7 +385,10 @@ func RollbarMiddleware(next buffalo.Handler) buffalo.Handler {
 
 		c.Set("rollbar", client)
 
-		return next(c)
+		err := next(c)
+
+		client.Close()
+		return err
 	}
 }
 
