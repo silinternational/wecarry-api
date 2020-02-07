@@ -27,13 +27,26 @@ func (as *ActionSuite) Test_AddMeAsPotentialProvider() {
 	want := []PotentialProvider{{ID: f.Users[1].UUID.String(), Nickname: f.Users[1].Nickname}}
 	as.Equal(want, resp.Post.PotentialProviders, "incorrect potential providers")
 
-	// Add one to Post with two alread
+	// Add one to Post with two already
 	query = fmt.Sprintf(qTemplate, posts[1].UUID.String())
 
 	err = as.testGqlQuery(query, f.Users[1].Nickname, &resp)
 	as.NoError(err)
 	as.Equal(posts[1].UUID.String(), resp.Post.ID, "incorrect Post UUID")
 	as.Equal(posts[1].Title, resp.Post.Title, "incorrect Post title")
+
+	want = []PotentialProvider{
+		{ID: f.Users[2].UUID.String(), Nickname: f.Users[2].Nickname},
+		{ID: f.Users[3].UUID.String(), Nickname: f.Users[3].Nickname},
+		{ID: f.Users[1].UUID.String(), Nickname: f.Users[1].Nickname},
+	}
+	as.Equal(want, resp.Post.PotentialProviders, "incorrect potential providers")
+
+	// Add a repeat
+	query = fmt.Sprintf(qTemplate, posts[1].UUID.String())
+
+	err = as.testGqlQuery(query, f.Users[1].Nickname, &resp)
+	as.Error(err, "expected an error (unique together) but didn't get one")
 
 	want = []PotentialProvider{
 		{ID: f.Users[2].UUID.String(), Nickname: f.Users[2].Nickname},

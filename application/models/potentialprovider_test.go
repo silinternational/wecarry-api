@@ -189,3 +189,42 @@ func (ms *ModelSuite) TestNewWithPostUUID() {
 		})
 	}
 }
+
+func (ms *ModelSuite) TestPotentialProvider_Validate() {
+	f := createPotentialProvidersFixtures(ms)
+	users := f.Users
+	posts := f.Posts
+
+	t := ms.T()
+	tests := []struct {
+		name     string
+		postID   int
+		userID   int
+		wantIDs  []int
+		wantErrs map[string][]string
+	}{
+		{
+			name:     "good - second post second user",
+			postID:   posts[1].ID,
+			userID:   users[1].ID,
+			wantErrs: map[string][]string{},
+		},
+		{
+			name:   "bad - duplicate",
+			postID: posts[1].ID,
+			userID: users[3].ID,
+			wantErrs: map[string][]string{
+				"unique_together": {
+					fmt.Sprintf("Duplicate potential provider exists with PostID: %v and UserID: %v", posts[1].ID, users[3].ID)}},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			provider := PotentialProvider{PostID: test.postID, UserID: test.userID}
+			vErrors, err := provider.Validate(ms.DB)
+
+			ms.NoError(err, "unexpected error")
+			ms.Equal(test.wantErrs, vErrors.Errors, "incorrect validation errors")
+		})
+	}
+}
