@@ -440,13 +440,14 @@ func (u *User) RemovePhoto() error {
 		return err
 	}
 
-	if oldID.Valid {
-		oldFile := File{ID: oldID.Int}
-		if err := oldFile.ClearLinked(); err != nil {
-			domain.ErrLogger.Printf("error marking old user photo file %d as unlinked, %s", oldFile.ID, err)
-		}
+	if !oldID.Valid {
+		return nil
 	}
 
+	oldFile := File{ID: oldID.Int}
+	if err := oldFile.ClearLinked(); err != nil {
+		domain.ErrLogger.Printf("error marking old user photo file %d as unlinked, %s", oldFile.ID, err)
+	}
 	return nil
 }
 
@@ -540,13 +541,15 @@ func (u *User) SetLocation(location Location) error {
 
 // RemoveLocation removes the location record associated with the user
 func (u *User) RemoveLocation() error {
-	if u.LocationID.Valid {
-		if err := DB.Destroy(&Location{ID: u.LocationID.Int}); err != nil {
-			return err
-		}
-		u.LocationID = nulls.Int{}
-		// don't need to save the user because the database foreign key constraint is set to "ON DELETE SET NULL"
+	if !u.LocationID.Valid {
+		return nil
 	}
+
+	if err := DB.Destroy(&Location{ID: u.LocationID.Int}); err != nil {
+		return err
+	}
+	u.LocationID = nulls.Int{}
+	// don't need to save the user because the database foreign key constraint is set to "ON DELETE SET NULL"
 	return nil
 }
 
