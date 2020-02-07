@@ -180,16 +180,17 @@ func (as *ActionSuite) Test_UpdatePost() {
 	var postsResp PostResponse
 
 	input := `id: "` + f.Posts[0].UUID.String() + `" photoID: "` + f.Files[0].UUID.String() + `"` +
-		`
+		`   title: "title"
 			description: "new description"
 			destination: {description:"dest" country:"dc" latitude:1.1 longitude:2.2}
 			origin: {description:"origin" country:"oc" latitude:3.3 longitude:4.4}
 			size: TINY
 			url: "example.com"
 			kilograms: 22.22
+			neededBefore: "2099-12-31"
 			visibility: ALL
 		`
-	query := `mutation { post: updatePost(input: {` + input + `}) { id photo { id } description
+	query := `mutation { post: updatePost(input: {` + input + `}) { id photo { id } title description
 			neededBefore
 			destination { description country latitude longitude}
 			origin { description country latitude longitude}
@@ -204,8 +205,9 @@ func (as *ActionSuite) Test_UpdatePost() {
 
 	as.Equal(f.Posts[0].UUID.String(), postsResp.Post.ID)
 	as.Equal(f.Files[0].UUID.String(), postsResp.Post.Photo.ID)
+	as.Equal("title", postsResp.Post.Title)
 	as.Equal("new description", postsResp.Post.Description)
-	as.Equal(f.Posts[0].NeededBefore.Time.Format(domain.DateFormat), postsResp.Post.NeededBefore)
+	as.Equal("2099-12-31", postsResp.Post.NeededBefore)
 	as.Equal("dest", postsResp.Post.Destination.Description)
 	as.Equal("dc", postsResp.Post.Destination.Country)
 	as.Equal(1.1, postsResp.Post.Destination.Lat)
@@ -236,7 +238,7 @@ func (as *ActionSuite) Test_UpdatePost() {
 	as.Equal(newNeededBefore, postsResp.Post.NeededBefore, "incorrect NeededBefore")
 
 	// Null out post's NeededBefore
-	input = `id: "` + f.Posts[0].UUID.String() + `"	neededBefore: ""`
+	input = `id: "` + f.Posts[0].UUID.String() + `"	neededBefore: null`
 	query = `mutation { post: updatePost(input: {` + input + `}) { id neededBefore }}`
 
 	as.NoError(as.testGqlQuery(query, f.Users[0].Nickname, &postsResp))
