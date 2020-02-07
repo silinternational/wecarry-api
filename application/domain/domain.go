@@ -166,7 +166,6 @@ func init() {
 // readEnv loads environment data into `Env`
 func readEnv() {
 	Env.AccessTokenLifetimeSeconds = envToInt("ACCESS_TOKEN_LIFETIME_SECONDS", AccessTokenLifetimeSeconds)
-	Env.ServiceIntegrationToken = envy.Get("SERVICE_INTEGRATION_TOKEN", "")
 	Env.AppName = envy.Get("APP_NAME", "WeCarry")
 	Env.AuthCallbackURL = envy.Get("AUTH_CALLBACK_URL", "")
 	Env.AwsRegion = envy.Get("AWS_REGION", "")
@@ -199,6 +198,7 @@ func readEnv() {
 	Env.RollbarServerRoot = envy.Get("ROLLBAR_SERVER_ROOT", "github.com/silinternational/wecarry-api")
 	Env.RollbarToken = envy.Get("ROLLBAR_TOKEN", "")
 	Env.SendGridAPIKey = envy.Get("SENDGRID_API_KEY", "")
+	Env.ServiceIntegrationToken = envy.Get("SERVICE_INTEGRATION_TOKEN", "")
 	Env.SessionSecret = envy.Get("SESSION_SECRET", "testing")
 	Env.SupportEmail = envy.Get("SUPPORT_EMAIL", "")
 	Env.TwitterKey = envy.Get("TWITTER_KEY", "")
