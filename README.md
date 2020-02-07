@@ -142,3 +142,23 @@ The problem with Twitter is that its users don't necessarily have a separate
 First Name and Last Name. We added a function that either uses a space or 
 underscore as the separator (based on the User.Name) or just duplicates the
 User.Name as both the First and Last Names.
+
+## GraphQL API
+
+### API Documentation
+
+Reference the GraphQL Schema at application/gqlgen/schema.graphql or use
+GraphQL introspection to access the schema from the running app. API tools such
+as [Insomnia](https://insomnia.rest) include an interactive schema browser that 
+make use of GraphQL introspection.
+ 
+### Conventions
+
+#### Implicit `null` vs explicit `null
+
+The standard established for this API is both implicit null (field
+omitted from mutation) and explicit null (`null` specified in mutation) 
+will erase or set to `null`. Note that this does not address the
+GraphQL spec requirement to not modify an omitted field. The reference UI 
+implementation, [wecarry-ui](https://github.com/silinternational/wecarry-ui),
+will always include all supported fields.

@@ -1484,12 +1484,13 @@ enum PostSize {
     XLARGE
 }
 
-"""
-Visibility for Posts, ALL organizations, TRUSTED organizations, or SAME organization only
-"""
+"Visibility for Posts, ALL organizations, TRUSTED organizations, or SAME organization only"
 enum PostVisibility {
+    "Visible to all users from all organizations in the system"
     ALL
+    "Visible to users from all organizations trusted by the viewing user's organization"
     TRUSTED
+    "Visible only to users from the same organization as the viewing user"
     SAME
 }
 
@@ -1514,10 +1515,15 @@ type UserPreferences {
     weightUnit: String
 }
 
+"Update User profile information. If ID is not specified, the authenticated user is assumed."
 input UpdateUserInput {
     id: ID
     nickname: String
+    "File ID of avatar photo. If omitted or ` + "`" + `null` + "`" + `, the photo is removed from the profile."
     photoID: String
+    """
+    Specify the user's "home" location. If omitted or ` + "`" + `null` + "`" + `, the location is removed from the profile.
+    """
     location: LocationInput
     preferences: UpdateUserPreferencesInput
 }
@@ -1733,6 +1739,7 @@ input SetThreadLastViewedAtInput {
     time: Time!
 }
 
+"Describes a Geographic location"
 type Location {
     description: String!
     # Country, ISO 3166-1 Alpha-2 code
@@ -1741,6 +1748,7 @@ type Location {
     longitude: Float
 }
 
+"Specify a Geographic location"
 input LocationInput {
     description: String!
     # Country, ISO 3166-1 Alpha-2 code
