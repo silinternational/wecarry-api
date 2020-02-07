@@ -66,7 +66,7 @@ func RegisterListeners() {
 		for _, l := range listeners {
 			_, err := events.NamedListen(l.name, l.listener)
 			if err != nil {
-				domain.ErrLogger.Print("Failed registering listener:", l.name, err)
+				domain.ErrLogger.Printf("Failed registering listener: %s, err: %s", l.name, err.Error())
 			}
 		}
 	}
@@ -141,7 +141,7 @@ func sendNewThreadMessageNotification(e events.Event) {
 
 	id, ok := e.Payload[domain.ArgMessageID].(int)
 	if !ok {
-		domain.ErrLogger.Print("sendNewThreadMessageNotification: unable to read message ID from event payload")
+		domain.ErrLogger.Printf("sendNewThreadMessageNotification: unable to read message ID from event payload")
 		return
 	}
 
@@ -158,7 +158,7 @@ func sendPostStatusUpdatedNotification(e events.Event) {
 
 	pEData, ok := e.Payload["eventData"].(models.PostStatusEventData)
 	if !ok {
-		domain.ErrLogger.Print("unable to parse Post Status Updated event payload")
+		domain.ErrLogger.Printf("unable to parse Post Status Updated event payload")
 		return
 	}
 
@@ -194,7 +194,7 @@ func sendPostCreatedNotifications(e events.Event) {
 
 	users, err := post.GetAudience()
 	if err != nil {
-		domain.ErrLogger.Print("unable to get post audience in event listener, ", err.Error())
+		domain.ErrLogger.Printf("unable to get post audience in event listener: %s", err.Error())
 		return
 	}
 
