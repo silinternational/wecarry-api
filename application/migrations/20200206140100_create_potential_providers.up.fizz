@@ -6,3 +6,5 @@ create_table("potential_providers") {
 	t.ForeignKey("user_id", {"users": ["id"]}, {"on_delete": "cascade"})
 	t.Timestamps()
 }
+
+add_index("potential_providers", ["post_id", "user_id"], {"unique": true})
