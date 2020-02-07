@@ -76,7 +76,7 @@ enum PostVisibility {
     ALL
     "Visible to users from all organizations trusted by the Post creator's organization"
     TRUSTED
-    "Visible only to users from the same organization as the viewing user"
+    "Visible only to users from the same organization as the Post creator"
     SAME
 }
 
