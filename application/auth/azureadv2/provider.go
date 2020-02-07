@@ -233,7 +233,7 @@ func userFromReader(r io.Reader, user *goth.User) error {
 	user.NickName = u.DisplayName
 	user.Location = u.OfficeLocation
 	user.UserID = u.ID
-	user.AvatarURL = graphAPIResource + fmt.Sprintf("users/%s/photo/$value", u.ID)
+	//user.AvatarURL = graphAPIResource + fmt.Sprintf("users/%s/photo/$value", u.ID)
 	// Make sure all of the information returned is available via RawData
 	if err := json.Unmarshal(userBytes, &user.RawData); err != nil {
 		return err
