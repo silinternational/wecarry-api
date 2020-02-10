@@ -117,11 +117,14 @@ func CreatePostFixtures(tx *pop.Connection, n int, createFiles bool) models.Post
 		files = CreateFileFixtures(n)
 	}
 
+	futureDate := time.Now().Add(4 * domain.DurationWeek)
+
 	posts := make(models.Posts, n)
 	for i := range posts {
 		posts[i].CreatedByID = user.ID
 		posts[i].ReceiverID = nulls.NewInt(user.ID)
 		posts[i].OrganizationID = org.ID
+		posts[i].NeededBefore = nulls.NewTime(futureDate)
 		posts[i].DestinationID = locations[i*2].ID
 		posts[i].OriginID = nulls.NewInt(locations[i*2+1].ID)
 		posts[i].Title = "title " + strconv.Itoa(i)
@@ -130,7 +133,7 @@ func CreatePostFixtures(tx *pop.Connection, n int, createFiles bool) models.Post
 		posts[i].Type = models.PostTypeRequest
 		posts[i].Status = models.PostStatusOpen
 		posts[i].URL = nulls.NewString("https://www.example.com/" + strconv.Itoa(i))
-		posts[i].Kilograms = float64(i) * 0.1
+		posts[i].Kilograms = nulls.NewFloat64(float64(i) * 0.1)
 		posts[i].Visibility = models.PostVisibilitySame
 
 		if createFiles {

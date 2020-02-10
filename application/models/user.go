@@ -428,6 +428,29 @@ func (u *User) AttachPhoto(fileID string) (File, error) {
 	return f, nil
 }
 
+// RemovePhoto removes an attached photo from the User profile
+func (u *User) RemovePhoto() error {
+	if u.ID < 1 {
+		return fmt.Errorf("invalid User ID %d", u.ID)
+	}
+
+	oldID := u.PhotoFileID
+	u.PhotoFileID = nulls.Int{}
+	if err := DB.UpdateColumns(u, "photo_file_id"); err != nil {
+		return err
+	}
+
+	if !oldID.Valid {
+		return nil
+	}
+
+	oldFile := File{ID: oldID.Int}
+	if err := oldFile.ClearLinked(); err != nil {
+		domain.ErrLogger.Printf("error marking old user photo file %d as unlinked, %s", oldFile.ID, err)
+	}
+	return nil
+}
+
 // GetPhotoURL retrieves the photo URL from the attached file
 func (u *User) GetPhotoURL() (*string, error) {
 	if err := DB.Load(u, "PhotoFile"); err != nil {
@@ -514,6 +537,20 @@ func (u *User) SetLocation(location Location) error {
 	}
 	u.LocationID = nulls.NewInt(location.ID)
 	return u.Save()
+}
+
+// RemoveLocation removes the location record associated with the user
+func (u *User) RemoveLocation() error {
+	if !u.LocationID.Valid {
+		return nil
+	}
+
+	if err := DB.Destroy(&Location{ID: u.LocationID.Int}); err != nil {
+		return err
+	}
+	u.LocationID = nulls.Int{}
+	// don't need to save the user because the database foreign key constraint is set to "ON DELETE SET NULL"
+	return nil
 }
 
 type UnreadThread struct {

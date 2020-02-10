@@ -177,16 +177,23 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 		user.Nickname = *input.Nickname
 	}
 
-	if input.PhotoID != nil {
-		if _, err := user.AttachPhoto(*input.PhotoID); err != nil {
-			return nil, reportError(ctx, err, "UpdateUser.PhotoNotFound")
-		}
+	var err error
+	if input.PhotoID == nil {
+		err = user.RemovePhoto()
+	} else {
+		_, err = user.AttachPhoto(*input.PhotoID)
+	}
+	if err != nil {
+		return nil, reportError(ctx, err, "UpdateUser.UpdatePhoto")
 	}
 
-	if input.Location != nil {
-		if err := user.SetLocation(convertGqlLocationInputToDBLocation(*input.Location)); err != nil {
-			return nil, reportError(ctx, err, "UpdateUser.SetLocationError")
-		}
+	if input.Location == nil {
+		err = user.RemoveLocation()
+	} else {
+		err = user.SetLocation(convertGqlLocationInputToDBLocation(*input.Location))
+	}
+	if err != nil {
+		return nil, reportError(ctx, err, "UpdateUser.SetLocationError")
 	}
 
 	// No deleting of preferences supported at this time
@@ -202,7 +209,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 		}
 	}
 
-	if err := user.Save(); err != nil {
+	if err = user.Save(); err != nil {
 		return nil, reportError(ctx, err, "UpdateUser")
 	}
 

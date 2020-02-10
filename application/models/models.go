@@ -21,6 +21,11 @@ import (
 	"github.com/silinternational/wecarry-api/domain"
 )
 
+// Count can be used to receive the results of a SQL COUNT
+type Count struct {
+	N int `db:"count"`
+}
+
 // DB is a connection to the database to be used throughout the application.
 var DB *pop.Connection
 
@@ -89,6 +94,17 @@ func GetIntFromNullsInt(in nulls.Int) *int {
 	if in.Valid {
 		output = in.Int
 	}
+	return &output
+}
+
+// GetStringFromNullsTime returns a pointer to a string that looks
+// like a date based on a nulls.Time value
+func GetStringFromNullsTime(inTime nulls.Time) *string {
+	var output string
+	if inTime.Valid {
+		output = inTime.Time.Format(domain.DateFormat)
+	}
+
 	return &output
 }
 

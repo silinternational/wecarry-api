@@ -142,26 +142,20 @@ func (u *UserAccessToken) DeleteIfExpired() (bool, error) {
 	return false, nil
 }
 
+// DeleteExpired removes all expired UserAccessToken records
 func (u *UserAccessTokens) DeleteExpired() (int, error) {
-	deleted := 0
-	var lastErr error
-
-	var uats UserAccessTokens
-	if err := DB.All(&uats); err != nil {
-		return deleted, err
+	var c Count
+	err := DB.RawQuery("SELECT COUNT(*) FROM user_access_tokens WHERE expires_at < ?", time.Now()).First(&c)
+	if err != nil || c.N == 0 {
+		return 0, err
 	}
 
-	for _, u := range uats {
-		isExpired, err := u.DeleteIfExpired()
-		if isExpired && err == nil {
-			deleted++
-		}
-		if err != nil {
-			lastErr = err
-		}
+	err = DB.RawQuery("DELETE FROM user_access_tokens WHERE expires_at < ?", time.Now()).Exec()
+	if err != nil {
+		return 0, err
 	}
 
-	return deleted, lastErr
+	return c.N, nil
 }
 
 // Create stores the UserAccessToken data as a new record in the database.

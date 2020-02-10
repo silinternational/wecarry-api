@@ -237,6 +237,7 @@ type Post struct {
 	CreatedByID    int            `json:"created_by_id" db:"created_by_id"`
 	Type           PostType       `json:"type" db:"type"`
 	OrganizationID int            `json:"organization_id" db:"organization_id"`
+	NeededBefore   nulls.Time     `json:"needed_before" db:"needed_before"`
 	Status         PostStatus     `json:"status" db:"status"`
 	Title          string         `json:"title" db:"title"`
 	Size           PostSize       `json:"size" db:"size"`
@@ -245,7 +246,7 @@ type Post struct {
 	ProviderID     nulls.Int      `json:"provider_id" db:"provider_id"`
 	Description    nulls.String   `json:"description" db:"description"`
 	URL            nulls.String   `json:"url" db:"url"`
-	Kilograms      float64        `json:"kilograms" db:"kilograms"`
+	Kilograms      nulls.Float64  `json:"kilograms" db:"kilograms"`
 	PhotoFileID    nulls.Int      `json:"photo_file_id" db:"photo_file_id"`
 	DestinationID  int            `json:"destination_id" db:"destination_id"`
 	OriginID       nulls.Int      `json:"origin_id" db:"origin_id"`
@@ -324,6 +325,14 @@ func (p *Post) SetProviderWithStatus(status PostStatus, currentUser User) {
 
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
 func (p *Post) Validate(tx *pop.Connection) (*validate.Errors, error) {
+	tomorrow := time.Now().Truncate(domain.DurationDay).Add(domain.DurationDay)
+
+	// If null, make it pass by pretending it's in the future
+	neededBeforeDate := time.Now().Add(domain.DurationWeek)
+	if p.NeededBefore.Valid {
+		neededBeforeDate = p.NeededBefore.Time
+	}
+
 	return validate.Validate(
 		&validators.IntIsPresent{Field: p.CreatedByID, Name: "CreatedBy"},
 		&validators.StringIsPresent{Field: p.Type.String(), Name: "Type"},
@@ -332,6 +341,9 @@ func (p *Post) Validate(tx *pop.Connection) (*validate.Errors, error) {
 		&validators.StringIsPresent{Field: p.Size.String(), Name: "Size"},
 		&validators.UUIDIsPresent{Field: p.UUID, Name: "UUID"},
 		&validators.StringIsPresent{Field: p.Status.String(), Name: "Status"},
+		&validators.TimeAfterTime{FirstName: "NeededBefore", FirstTime: neededBeforeDate,
+			SecondName: "Tomorrow", SecondTime: tomorrow,
+			Message: fmt.Sprintf("Post neededBefore must not be before tomorrow. Got %v", neededBeforeDate)},
 	), nil
 }
 
@@ -492,7 +504,7 @@ func (p *Post) AfterUpdate(tx *pop.Connection) error {
 	// Don't try to use DB.Update inside AfterUpdate, since that gets into an eternal loop
 	if err := DB.RawQuery(
 		fmt.Sprintf(`UPDATE posts set provider_id = NULL where ID = %v`, p.ID)).Exec(); err != nil {
-		domain.ErrLogger.Print("error removing provider id from post ... " + err.Error())
+		domain.ErrLogger.Printf("error removing provider id from post: %s", err.Error())
 	}
 
 	return nil

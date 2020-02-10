@@ -1,11 +1,6 @@
 package actions
 
 import (
-	"errors"
-	"fmt"
-	"net/http"
-	"time"
-
 	"github.com/gobuffalo/buffalo"
 	i18n "github.com/gobuffalo/mw-i18n"
 	paramlogger "github.com/gobuffalo/mw-paramlogger"
@@ -14,7 +9,6 @@ import (
 	"github.com/rs/cors"
 
 	"github.com/silinternational/wecarry-api/domain"
-	"github.com/silinternational/wecarry-api/job"
 	"github.com/silinternational/wecarry-api/listeners"
 )
 
@@ -51,12 +45,6 @@ func App() *buffalo.App {
 
 		registerCustomErrorHandler(app)
 
-		// If you add a new status entry here, then also add it to getErrorCodeFromStatus
-		app.ErrorHandlers[http.StatusUnauthorized] = customErrorHandler        // 401
-		app.ErrorHandlers[http.StatusNotFound] = customErrorHandler            // 404
-		app.ErrorHandlers[http.StatusMethodNotAllowed] = customErrorHandler    // 405
-		app.ErrorHandlers[http.StatusInternalServerError] = customErrorHandler // 500
-
 		// Initialize and attach "rollbar" to context
 		app.Use(domain.RollbarMiddleware)
 
@@ -81,7 +69,7 @@ func App() *buffalo.App {
 
 		app.POST("/upload/", uploadHandler)
 
-		app.GET("/service", serviceHandler)
+		app.POST("/service", serviceHandler)
 
 		auth := app.Group("/auth")
 		auth.Middleware.Skip(setCurrentUser, authRequest, authCallback, authDestroy, serviceHandler)
@@ -97,27 +85,4 @@ func App() *buffalo.App {
 	}
 
 	return app
-}
-
-func registerCustomErrorHandler(app *buffalo.App) {
-	for i := 401; i < 600; i++ {
-		app.ErrorHandlers[i] = customErrorHandler
-	}
-}
-
-func serviceHandler(c buffalo.Context) error {
-	if domain.Env.ServiceIntegrationToken == "" {
-		return c.Error(http.StatusInternalServerError, errors.New("no ServiceIntegrationToken configured"))
-	}
-
-	bearerToken := domain.GetBearerTokenFromRequest(c.Request())
-	if domain.Env.ServiceIntegrationToken != bearerToken {
-		return c.Error(http.StatusUnauthorized, errors.New("incorrect bearer token provided"))
-	}
-
-	if err := job.SubmitDelayed(job.FileCleanup, time.Second, nil); err != nil {
-		return c.Error(http.StatusInternalServerError, fmt.Errorf("file cleanup job not started, %s", err))
-	}
-
-	return c.Render(http.StatusNoContent, nil)
 }

@@ -2,21 +2,15 @@ package listeners
 
 import (
 	"errors"
-	"time"
 
 	"github.com/gobuffalo/events"
 
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/job"
+	"github.com/silinternational/wecarry-api/marketing"
 	"github.com/silinternational/wecarry-api/models"
 	"github.com/silinternational/wecarry-api/notifications"
 )
-
-const (
-	userAccessTokensCleanupDelayMinutes = 480
-)
-
-var userAccessTokensNextCleanupAfter time.Time
 
 type apiListener struct {
 	name     string
@@ -31,15 +25,16 @@ type apiListener struct {
 var apiListeners = map[string][]apiListener{
 	domain.EventApiUserCreated: {
 		{
-			name:     "user-created",
-			listener: userCreated,
+			name:     "user-created-logger",
+			listener: userCreatedLogger,
 		},
-	},
-
-	domain.EventApiAuthUserLoggedIn: {
 		{
-			name:     "trigger-user-access-tokens-cleanup",
-			listener: userAccessTokensCleanup,
+			name:     "user-created-send-welcome-message",
+			listener: userCreatedSendWelcomeMessage,
+		},
+		{
+			name:     "user-created-add-to-marketing-list",
+			listener: userCreatedAddToMarketingList,
 		},
 	},
 
@@ -71,50 +66,69 @@ func RegisterListeners() {
 		for _, l := range listeners {
 			_, err := events.NamedListen(l.name, l.listener)
 			if err != nil {
-				domain.ErrLogger.Print("Failed registering listener:", l.name, err)
+				domain.ErrLogger.Printf("Failed registering listener: %s, err: %s", l.name, err.Error())
 			}
 		}
 	}
 }
 
-func userAccessTokensCleanup(e events.Event) {
-	if e.Kind != domain.EventApiAuthUserLoggedIn {
+func userCreatedLogger(e events.Event) {
+	if e.Kind != domain.EventApiUserCreated {
 		return
 	}
 
-	now := time.Now()
-	if !now.After(userAccessTokensNextCleanupAfter) {
-		return
-	}
-
-	userAccessTokensNextCleanupAfter = now.Add(time.Duration(time.Minute * userAccessTokensCleanupDelayMinutes))
-
-	var uats models.UserAccessTokens
-	deleted, err := uats.DeleteExpired()
-	if err != nil {
-		domain.ErrLogger.Printf("%s Last error deleting expired user access tokens during cleanup ... %v",
-			domain.GetCurrentTime(), err)
-	}
-
-	domain.Logger.Printf("%s Deleted %v expired user access tokens during cleanup", domain.GetCurrentTime(), deleted)
+	domain.Logger.Printf("User Created: %s", e.Message)
 }
 
-func userCreated(e events.Event) {
+func userCreatedSendWelcomeMessage(e events.Event) {
 	if e.Kind != domain.EventApiUserCreated {
 		return
 	}
 
 	user, ok := e.Payload["user"].(*models.User)
 	if !ok {
-		domain.Logger.Printf("Failed to get User from event payload for notification. Event message: %s", e.Message)
+		domain.ErrLogger.Printf("Failed to get User from event payload for sending welcome message. Event message: %s", e.Message)
 		return
 	}
 
-	domain.Logger.Printf("User Created: %s", e.Message)
-
 	if err := sendNewUserWelcome(*user); err != nil {
-		domain.Logger.Printf("Failed to send new user welcome to %s. Error: %s",
+		domain.ErrLogger.Printf("Failed to send new user welcome to %s. Error: %s",
 			user.UUID.String(), err)
+	}
+}
+
+func userCreatedAddToMarketingList(e events.Event) {
+	if e.Kind != domain.EventApiUserCreated {
+		return
+	}
+
+	user, ok := e.Payload["user"].(*models.User)
+	if !ok {
+		domain.ErrLogger.Printf(
+			"Failed to get User from event payload for adding to marketing list. Event message: %s", e.Message)
+		return
+	}
+
+	// ensure env vars are present
+	if domain.Env.MailChimpAPIKey == "" {
+		domain.ErrLogger.Printf("missing required env var for MAILCHIMP_API_KEY. need to add %s to list", user.Email)
+		return
+	}
+	if domain.Env.MailChimpListID == "" {
+		domain.ErrLogger.Printf("missing required env var for MAILCHIMP_LIST_ID. need to add %s to list", user.Email)
+		return
+	}
+	if domain.Env.MailChimpUsername == "" {
+		domain.ErrLogger.Printf("missing required env var for MAILCHIMP_USERNAME. need to add %s to list", user.Email)
+		return
+	}
+
+	err := marketing.AddUserToList(*user, domain.Env.MailChimpAPIBaseURL, domain.Env.MailChimpListID,
+		domain.Env.MailChimpUsername, domain.Env.MailChimpAPIKey)
+
+	if err != nil {
+		domain.ErrLogger.Printf("error calling marketing.AddUserToList when trying to add %s: %s",
+			user.Email, err.Error())
 	}
 }
 
@@ -127,7 +141,7 @@ func sendNewThreadMessageNotification(e events.Event) {
 
 	id, ok := e.Payload[domain.ArgMessageID].(int)
 	if !ok {
-		domain.ErrLogger.Print("sendNewThreadMessageNotification: unable to read message ID from event payload")
+		domain.ErrLogger.Printf("sendNewThreadMessageNotification: unable to read message ID from event payload")
 		return
 	}
 
@@ -144,7 +158,7 @@ func sendPostStatusUpdatedNotification(e events.Event) {
 
 	pEData, ok := e.Payload["eventData"].(models.PostStatusEventData)
 	if !ok {
-		domain.ErrLogger.Print("unable to parse Post Status Updated event payload")
+		domain.ErrLogger.Printf("unable to parse Post Status Updated event payload")
 		return
 	}
 
@@ -180,7 +194,7 @@ func sendPostCreatedNotifications(e events.Event) {
 
 	users, err := post.GetAudience()
 	if err != nil {
-		domain.ErrLogger.Print("unable to get post audience in event listener, ", err.Error())
+		domain.ErrLogger.Printf("unable to get post audience in event listener: %s", err.Error())
 		return
 	}
 

@@ -126,6 +126,35 @@ func (ms *ModelSuite) TestPost_Validate() {
 			wantErr:  true,
 			errField: "uuid",
 		},
+		{
+			name: "bad neededBefore (today)",
+			post: Post{
+				CreatedByID:    1,
+				Type:           PostTypeRequest,
+				OrganizationID: 1,
+				Title:          "A Request",
+				NeededBefore:   nulls.NewTime(time.Now()),
+				Size:           PostSizeMedium,
+				Status:         PostStatusOpen,
+				UUID:           domain.GetUUID(),
+			},
+			wantErr:  true,
+			errField: "needed_before",
+		},
+		{
+			name: "good neededBefore (tommorrow)",
+			post: Post{
+				CreatedByID:    1,
+				Type:           PostTypeRequest,
+				OrganizationID: 1,
+				Title:          "A Request",
+				NeededBefore:   nulls.NewTime(time.Now().Add(domain.DurationDay)),
+				Size:           PostSizeMedium,
+				Status:         PostStatusOpen,
+				UUID:           domain.GetUUID(),
+			},
+			wantErr: false,
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -1676,6 +1705,8 @@ func (ms *ModelSuite) TestPosts_FindByUser() {
 		{name: "user 0", user: f.Users[0],
 			wantPostIDs: []int{f.Posts[6].ID, f.Posts[5].ID, f.Posts[4].ID, f.Posts[1].ID, f.Posts[0].ID}},
 		{name: "user 1", user: f.Users[1], wantPostIDs: []int{f.Posts[4].ID, f.Posts[0].ID}},
+		{name: "user 2", user: f.Users[2], wantPostIDs: []int{f.Posts[7].ID, f.Posts[6].ID, f.Posts[5].ID}},
+		{name: "user 3", user: f.Users[3], wantPostIDs: []int{f.Posts[6].ID, f.Posts[5].ID, f.Posts[1].ID}},
 		{name: "non-existent user", user: User{}, wantPostIDs: []int{}},
 	}
 	for _, test := range tests {

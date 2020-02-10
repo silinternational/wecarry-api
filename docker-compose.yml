@@ -10,6 +10,7 @@ services:
       - ./dev:/wecarry/dev
     ports:
       - "3000:3000"
+      - "6060:6060"
     env_file:
       - ./.env
     environment:
@@ -60,9 +61,9 @@ services:
   testdb:
     image: postgres:11.6
     environment:
-      POSTGRES_USER: scrutinizer
-      POSTGRES_PASSWORD: scrutinizer
-      POSTGRES_DB: scrutinizer
+      POSTGRES_USER: wecarry
+      POSTGRES_PASSWORD: wecarry
+      POSTGRES_DB: wecarry_test
 
   # http://localhost:8080/?pgsql=db&username=wecarry&db=wecarry&ns=public
   adminer:

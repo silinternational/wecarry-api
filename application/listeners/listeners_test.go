@@ -7,10 +7,10 @@ import (
 	"reflect"
 	"runtime"
 	"testing"
-	"time"
 
 	"github.com/gobuffalo/events"
 	"github.com/gobuffalo/suite"
+
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/internal/test"
 	"github.com/silinternational/wecarry-api/models"
@@ -107,37 +107,17 @@ func (ms *ModelSuite) TestUserCreated() {
 
 	notifications.TestEmailService.DeleteSentMessages()
 
-	userCreated(e)
+	userCreatedLogger(e)
 
 	got := buf.String()
 	want := fmt.Sprintf("User Created: %s", e.Message)
 	test.AssertStringContains(ms.T(), got, want, 74)
 
+	userCreatedSendWelcomeMessage(e)
+
 	emailCount := notifications.TestEmailService.GetNumberOfMessagesSent()
 	ms.Equal(1, emailCount, "wrong email count")
 
-}
-
-func (ms *ModelSuite) TestUserAccessTokensCleanup() {
-
-	userAccessTokensNextCleanupAfter = time.Now().Add(-time.Duration(time.Hour))
-
-	var buf bytes.Buffer
-	domain.Logger.SetOutput(&buf)
-
-	defer func() {
-		domain.Logger.SetOutput(os.Stdout)
-	}()
-
-	e := events.Event{
-		Kind:    domain.EventApiAuthUserLoggedIn,
-		Message: "Should get a log",
-	}
-
-	userAccessTokensCleanup(e)
-	got := buf.String()
-	want := "Deleted 0 expired user access tokens during cleanup"
-	test.AssertStringContains(ms.T(), got, want, 72)
 }
 
 func (ms *ModelSuite) TestSendNewMessageNotification() {
