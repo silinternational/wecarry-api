@@ -160,7 +160,7 @@ func createPostFixtures(tx *pop.Connection, nRequests, nOffers int, createFiles 
 		posts[i].Size = PostSizeSmall
 		posts[i].Status = PostStatusOpen
 		posts[i].URL = nulls.NewString("https://www.example.com/" + strconv.Itoa(i))
-		posts[i].Kilograms = float64(i) * 0.1
+		posts[i].Kilograms = nulls.NewFloat64(float64(i) * 0.1)
 		posts[i].Visibility = PostVisibilitySame
 
 		if createFiles {

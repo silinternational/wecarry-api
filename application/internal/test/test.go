@@ -133,7 +133,7 @@ func CreatePostFixtures(tx *pop.Connection, n int, createFiles bool) models.Post
 		posts[i].Type = models.PostTypeRequest
 		posts[i].Status = models.PostStatusOpen
 		posts[i].URL = nulls.NewString("https://www.example.com/" + strconv.Itoa(i))
-		posts[i].Kilograms = float64(i) * 0.1
+		posts[i].Kilograms = nulls.NewFloat64(float64(i) * 0.1)
 		posts[i].Visibility = models.PostVisibilitySame
 
 		if createFiles {
