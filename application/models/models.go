@@ -90,11 +90,11 @@ func GetStringFromNullsString(inString nulls.String) *string {
 // GetIntFromNullsInt returns a pointer to make it easier for calling
 // functions to return a pointer without an extra line of code.
 func GetIntFromNullsInt(in nulls.Int) *int {
+	output := int(0)
 	if in.Valid {
-		output := in.Int
-		return &output
+		output = in.Int
 	}
-	return nil
+	return &output
 }
 
 // GetStringFromNullsTime returns a pointer to a string that looks

@@ -28,12 +28,6 @@ func setOptionalStringField(input *string, output *nulls.String) {
 	*output = nulls.String{}
 }
 
-func setFloatField(input *float64, output *float64) {
-	if input != nil {
-		*output = *input
-	}
-}
-
 func setOptionalFloatField(input *float64, output *nulls.Float64) {
 	if input != nil {
 		*output = nulls.NewFloat64(*input)
