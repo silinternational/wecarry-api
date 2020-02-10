@@ -156,7 +156,7 @@ func (r *postResolver) URL(ctx context.Context, obj *models.Post) (*string, erro
 	return models.GetStringFromNullsString(obj.URL), nil
 }
 
-// Kilograms resolves the `kilograms` property of the post query, converting float64 to string
+// Kilograms resolves the `kilograms` property of the post query as a pointer to a float64
 func (r *postResolver) Kilograms(ctx context.Context, obj *models.Post) (*float64, error) {
 	if obj == nil {
 		return nil, nil
