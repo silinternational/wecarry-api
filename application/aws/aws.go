@@ -222,14 +222,14 @@ func SendEmail(to, from, subject, body string) error {
 //	Content-Type: multipart/alternative; boundary="boundary_alternative"
 //
 //	--boundary_alternative
-//	Content-Type: text/plain
+//	Content-Type: text/plain; charset=utf-8
 //
 //	Plain text body
 //	--boundary_alternative
 //	Content-type: multipart/related; boundary="boundary_related"
 //
 //	--boundary_related
-//	Content-Type: text/html
+//	Content-Type: text/html; charset=utf-8
 //
 //	HTML body
 //	--boundary_related
@@ -253,10 +253,11 @@ func rawEmail(to, from, subject, body string) []byte {
 	b.WriteString("MIME-Version: 1.0\n")
 
 	alternativeWriter := multipart.NewWriter(b)
-	b.WriteString(`Content-Type: multipart/alternative; boundary="` + alternativeWriter.Boundary() + `"` + "\n\n")
+	b.WriteString(`Content-Type: multipart/alternative; type="text/plain"; boundary="` +
+		alternativeWriter.Boundary() + `"` + "\n\n")
 
 	w, err := alternativeWriter.CreatePart(textproto.MIMEHeader{
-		"Content-Type":        {"text/plain", "charset=utf-8"},
+		"Content-Type":        {"text/plain; charset=utf-8"},
 		"Content-Disposition": {"inline"},
 	})
 	if err != nil {
@@ -267,14 +268,14 @@ func rawEmail(to, from, subject, body string) []byte {
 
 	relatedWriter := multipart.NewWriter(b)
 	_, err = alternativeWriter.CreatePart(textproto.MIMEHeader{
-		"Content-Type": {`multipart/related; boundary="` + relatedWriter.Boundary() + `"`},
+		"Content-Type": {`multipart/related; type="text/html"; boundary="` + relatedWriter.Boundary() + `"`},
 	})
 	if err != nil {
 		domain.ErrLogger.Printf("failed to create MIME related part, %s", err)
 	}
 
 	w, err = relatedWriter.CreatePart(textproto.MIMEHeader{
-		"Content-Type":        {"text/html", "charset=utf-8"},
+		"Content-Type":        {"text/html; charset=utf-8"},
 		"Content-Disposition": {"inline"},
 	})
 	if err != nil {

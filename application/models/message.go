@@ -94,12 +94,12 @@ func (m *Message) AfterCreate(tx *pop.Connection) error {
 	threadP := ThreadParticipant{}
 
 	if err := threadP.FindByThreadIDAndUserID(m.ThreadID, m.SentByID); err != nil {
-		domain.ErrLogger.Print("aftercreate new message " + err.Error())
+		domain.ErrLogger.Printf("aftercreate new message %s", err.Error())
 		return nil
 	}
 
 	if err := threadP.UpdateLastViewedAt(time.Now()); err != nil {
-		domain.ErrLogger.Print("aftercreate new message " + err.Error())
+		domain.ErrLogger.Printf("aftercreate new message %s", err.Error())
 		return nil
 	}
 

@@ -2,6 +2,7 @@ package domain
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -103,7 +104,7 @@ const (
 )
 
 var Logger log.Logger
-var ErrLogger log.Logger
+var ErrLogger ErrLogProxy
 
 // Env holds environment variable values loaded by init()
 var Env struct {
@@ -155,18 +156,16 @@ var T *mwi18n.Translator
 var Assets *packr.Box
 
 func init() {
+	readEnv()
 	Logger.SetOutput(os.Stdout)
 	ErrLogger.SetOutput(os.Stderr)
-
-	readEnv()
-
+	ErrLogger.InitRollbar()
 	Assets = packr.New("Assets", "../assets")
 }
 
 // readEnv loads environment data into `Env`
 func readEnv() {
 	Env.AccessTokenLifetimeSeconds = envToInt("ACCESS_TOKEN_LIFETIME_SECONDS", AccessTokenLifetimeSeconds)
-	Env.ServiceIntegrationToken = envy.Get("SERVICE_INTEGRATION_TOKEN", "")
 	Env.AppName = envy.Get("APP_NAME", "WeCarry")
 	Env.AuthCallbackURL = envy.Get("AUTH_CALLBACK_URL", "")
 	Env.AwsRegion = envy.Get("AWS_REGION", "")
@@ -199,6 +198,7 @@ func readEnv() {
 	Env.RollbarServerRoot = envy.Get("ROLLBAR_SERVER_ROOT", "github.com/silinternational/wecarry-api")
 	Env.RollbarToken = envy.Get("ROLLBAR_TOKEN", "")
 	Env.SendGridAPIKey = envy.Get("SENDGRID_API_KEY", "")
+	Env.ServiceIntegrationToken = envy.Get("SERVICE_INTEGRATION_TOKEN", "")
 	Env.SessionSecret = envy.Get("SESSION_SECRET", "testing")
 	Env.SupportEmail = envy.Get("SUPPORT_EMAIL", "")
 	Env.TwitterKey = envy.Get("TWITTER_KEY", "")
@@ -222,6 +222,36 @@ type AppError struct {
 	// Don't change the value of these Key entries without making a corresponding change on the UI,
 	// since these will be converted to human-friendly texts on the UI
 	Key string `json:"key"`
+}
+
+// ErrLogProxy wraps standard error logger plus sends to Rollbar
+type ErrLogProxy struct {
+	LocalLog  log.Logger
+	RemoteLog *rollbar.Client
+}
+
+func (e *ErrLogProxy) SetOutput(w io.Writer) {
+	e.LocalLog.SetOutput(w)
+}
+
+func (e *ErrLogProxy) Printf(format string, a ...interface{}) {
+	// Send to local logger
+	e.LocalLog.Printf(format, a...)
+
+	// Only send to remote log if not in test env
+	if Env.GoEnv == "test" {
+		return
+	}
+	e.RemoteLog.Errorf(rollbar.ERR, format, a...)
+}
+
+func (e *ErrLogProxy) InitRollbar() {
+	e.RemoteLog = rollbar.New(
+		Env.RollbarToken,
+		Env.GoEnv,
+		"",
+		"",
+		Env.RollbarServerRoot)
 }
 
 // GetFirstStringFromSlice returns the first string in the given slice, or an empty
@@ -355,7 +385,10 @@ func RollbarMiddleware(next buffalo.Handler) buffalo.Handler {
 
 		c.Set("rollbar", client)
 
-		return next(c)
+		err := next(c)
+
+		client.Close()
+		return err
 	}
 }
 

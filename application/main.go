@@ -1,10 +1,12 @@
 package main
 
 import (
+	"os"
+
 	"github.com/rollbar/rollbar-go"
+
 	"github.com/silinternational/wecarry-api/actions"
 	"github.com/silinternational/wecarry-api/domain"
-	"os"
 )
 
 var GitCommitHash string

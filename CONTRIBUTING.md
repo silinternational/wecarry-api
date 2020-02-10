@@ -137,3 +137,15 @@ To run the gqlgen code generator, execute `make gqlgen`. This runs`go generate
 The graphql.org site has easy-to-read documentation on the schema format and 
 other GraphQL information. The schema help is at
 [https://graphql.org/learn/schema](https://graphql.org/learn/schema)
+
+## Profiling with pprof
+
+To use pprof for profiling WeCarry, it is available when `GO_ENV=development`. 
+When running via `make` locally, `docker exec` into the buffalo container and
+run commands like `go tool pprof  http://localhost:6060/debug/pprof/heap` to 
+view the results. 
+
+Good resources:
+
+ - https://blog.gobuffalo.io/how-to-use-pprof-with-buffalo-983e5d71e418
+ - https://jvns.ca/blog/2017/09/24/profiling-go-with-pprof/

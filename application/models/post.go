@@ -530,7 +530,7 @@ func (p *Post) AfterUpdate(tx *pop.Connection) error {
 	// Don't try to use DB.Update inside AfterUpdate, since that gets into an eternal loop
 	if err := DB.RawQuery(
 		fmt.Sprintf(`UPDATE posts set provider_id = NULL where ID = %v`, p.ID)).Exec(); err != nil {
-		domain.ErrLogger.Print("error removing provider id from post ... " + err.Error())
+		domain.ErrLogger.Printf("error removing provider id from post: %s", err.Error())
 	}
 
 	return nil

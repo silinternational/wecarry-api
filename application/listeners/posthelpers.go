@@ -249,7 +249,7 @@ func sendNotificationRequestFromCompletedToAcceptedOrDelivered(params senderPara
 }
 
 func sendNotificationEmpty(params senderParams) {
-	domain.ErrLogger.Print("Notification not implemented yet for " + params.template)
+	domain.ErrLogger.Printf("Notification not implemented yet for %s", params.template)
 }
 
 type senderParams struct {
