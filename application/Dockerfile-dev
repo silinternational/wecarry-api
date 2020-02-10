@@ -27,4 +27,5 @@ RUN go get github.com/gobuffalo/suite
 RUN go get github.com/gobuffalo/httptest
 RUN go get github.com/markbates/grift
 
+EXPOSE 6060
 CMD ["buffalo", "dev"]

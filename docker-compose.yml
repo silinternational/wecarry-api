@@ -10,6 +10,7 @@ services:
       - ./dev:/wecarry/dev
     ports:
       - "3000:3000"
+      - "6060:6060"
     env_file:
       - ./.env
     environment:
