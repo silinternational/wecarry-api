@@ -134,7 +134,7 @@ func (as *ActionSuite) Test_PostQuery() {
 	as.Equal(f.Posts[0].Status, resp.Post.Status)
 	as.Equal(f.Posts[0].CreatedAt.Format(time.RFC3339), resp.Post.CreatedAt)
 	as.Equal(f.Posts[0].UpdatedAt.Format(time.RFC3339), resp.Post.UpdatedAt)
-	as.Equal(f.Posts[0].Kilograms, resp.Post.Kilograms)
+	as.Equal(f.Posts[0].Kilograms.Float64, resp.Post.Kilograms)
 	as.Equal(f.Posts[0].URL.String, resp.Post.Url)
 	as.Equal(f.Posts[0].Visibility.String(), resp.Post.Visibility)
 	as.Equal(false, resp.Post.IsEditable)

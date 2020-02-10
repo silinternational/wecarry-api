@@ -159,11 +159,13 @@ func (r *postResolver) URL(ctx context.Context, obj *models.Post) (*string, erro
 // Kilograms resolves the `kilograms` property of the post query, converting float64 to string
 func (r *postResolver) Kilograms(ctx context.Context, obj *models.Post) (*float64, error) {
 	if obj == nil {
-		k := 0.0
-		return &k, nil
+		return nil, nil
+	}
+	if !obj.Kilograms.Valid {
+		return nil, nil
 	}
 
-	return &obj.Kilograms, nil
+	return &obj.Kilograms.Float64, nil
 }
 
 // Photo retrieves the file attached as the primary photo
@@ -298,8 +300,10 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 		post.URL = nulls.NewString(*input.URL)
 	}
 
-	if input.Kilograms != nil {
-		post.Kilograms = *input.Kilograms
+	if input.Kilograms == nil {
+		post.Kilograms = nulls.Float64{}
+	} else {
+		post.Kilograms = nulls.NewFloat64(*input.Kilograms)
 	}
 
 	if input.Visibility != nil {
