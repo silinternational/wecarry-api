@@ -291,7 +291,7 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 	}
 
 	setOptionalStringField(input.URL, &post.URL)
-	setFloatField(input.Kilograms, &post.Kilograms)
+	setFloatField(input.Kilograms, &post.Kilograms.Float64)
 
 	if input.Visibility == nil {
 		post.Visibility = models.PostVisibilitySame
