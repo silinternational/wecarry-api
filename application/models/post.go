@@ -730,6 +730,10 @@ func (p *Post) FindByUserAndUUID(ctx context.Context, user User, uuid string) er
 // FindByUser finds all posts visible to the current user. NOTE: at present, the posts are not sorted correctly; need
 // to find a better way to construct the query
 func (p *Posts) FindByUser(ctx context.Context, user User) error {
+	if user.ID == 0 {
+		return errors.New("invalid User ID in Posts.FindByUser")
+	}
+
 	q := DB.RawQuery(`
 	WITH o AS (
 		SELECT id FROM organizations WHERE id IN (
@@ -740,6 +744,8 @@ func (p *Posts) FindByUser(ctx context.Context, user User) error {
 	(
 		organization_id IN (SELECT id FROM o)
 		OR
+		visibility = ?
+		OR
 		organization_id IN (
 			SELECT id FROM organizations WHERE id IN (
 				SELECT secondary_id FROM organization_trusts WHERE primary_id IN (SELECT id FROM o)
@@ -747,7 +753,7 @@ func (p *Posts) FindByUser(ctx context.Context, user User) error {
 		) AND visibility IN (?, ?)
 	)
 	AND status not in (?, ?) ORDER BY created_at desc`,
-		user.ID, PostVisibilityAll, PostVisibilityTrusted, PostStatusRemoved, PostStatusCompleted)
+		user.ID, PostVisibilityAll, PostVisibilityAll, PostVisibilityTrusted, PostStatusRemoved, PostStatusCompleted)
 	if err := q.All(p); err != nil {
 		return fmt.Errorf("error finding posts for user %s, %s", user.UUID.String(), err)
 	}
