@@ -96,12 +96,80 @@ func CreateFixturesForUserGetPosts(ms *ModelSuite) UserPostFixtures {
 	users := uf.Users
 
 	posts := createPostFixtures(ms.DB, 2, 2, false)
-	posts[0].SetProviderWithStatus(PostStatusCommitted, users[1])
-	posts[1].SetProviderWithStatus(PostStatusCommitted, users[1])
-	posts[2].Status = PostStatusCommitted
+	userID := users[1].UUID.String()
+	posts[0].SetProviderWithStatus(PostStatusAccepted, &userID)
+	posts[1].SetProviderWithStatus(PostStatusAccepted, &userID)
+	posts[2].Status = PostStatusAccepted
 	posts[2].ReceiverID = nulls.NewInt(users[1].ID)
-	posts[3].Status = PostStatusCommitted
+	posts[3].Status = PostStatusAccepted
 	posts[3].ReceiverID = nulls.NewInt(users[1].ID)
+	ms.NoError(ms.DB.Save(&posts))
+
+	return UserPostFixtures{
+		Users: users,
+		Posts: posts,
+	}
+}
+
+//        Org0          Org1            Org2
+//        | |           | | |          | |    \
+//        | +-------+---+ | +----+-----+ +    |
+//        |         |            |       |    |
+//       User0    User1         Trust   User2  User3 (SuperAdmin)
+//
+// Org0: Post0 (SAME)    <cannot be seen by User2>
+// Org1: Post1 (SAME)    <cannot be seen by User0 and User2>
+// Org2: Post2 (ALL)     <seen by all>,
+//		 Post3 (TRUSTED) <cannot be seen by User0>,
+//		 Post4 (SAME)    <cannot be seen by User0 and User1>
+//
+func CreateFixturesForUserCanViewPost(ms *ModelSuite) UserPostFixtures {
+	orgs := createOrganizationFixtures(ms.DB, 3)
+
+	trusts := OrganizationTrusts{
+		{PrimaryID: orgs[1].ID, SecondaryID: orgs[2].ID},
+		{PrimaryID: orgs[2].ID, SecondaryID: orgs[1].ID},
+	}
+	createFixture(ms, &trusts)
+
+	users := createUserFixtures(ms.DB, 4).Users
+	users[3].AdminRole = UserAdminRoleSuperAdmin
+	ms.NoError(ms.DB.Save(&users[3]))
+
+	// Give User1 a second Org
+	createFixture(ms, &UserOrganization{
+		OrganizationID: orgs[1].ID,
+		UserID:         users[1].ID,
+		AuthID:         users[1].Email,
+		AuthEmail:      users[1].Email,
+	})
+
+	// Switch User2's org to Org2
+	uo, err := users[2].FindUserOrganization(orgs[0])
+	ms.NoError(err)
+	uo.OrganizationID = orgs[2].ID
+	ms.NoError(DB.UpdateColumns(&uo, "organization_id"))
+
+	// Switch User3's org to Org2
+	uo, err = users[3].FindUserOrganization(orgs[0])
+	ms.NoError(err)
+	uo.OrganizationID = orgs[2].ID
+	ms.NoError(DB.UpdateColumns(&uo, "organization_id"))
+
+	posts := createPostFixtures(ms.DB, 5, 0, false)
+	posts[1].OrganizationID = orgs[1].ID
+	posts[1].CreatedByID = users[1].ID
+
+	posts[2].OrganizationID = orgs[2].ID
+	posts[2].CreatedByID = users[2].ID
+	posts[2].Visibility = PostVisibilityAll
+
+	posts[3].OrganizationID = orgs[2].ID
+	posts[3].CreatedByID = users[2].ID
+	posts[3].Visibility = PostVisibilityTrusted
+
+	posts[4].OrganizationID = orgs[2].ID
+	posts[4].CreatedByID = users[2].ID
 	ms.NoError(ms.DB.Save(&posts))
 
 	return UserPostFixtures{
@@ -194,9 +262,9 @@ func CreateUserFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) UserMes
 
 	// Each user has a request and is a provider on the other user's post
 	posts := createPostFixtures(ms.DB, 2, 0, false)
-	posts[0].Status = PostStatusCommitted
+	posts[0].Status = PostStatusAccepted
 	posts[0].ProviderID = nulls.NewInt(users[1].ID)
-	posts[1].Status = PostStatusCommitted
+	posts[1].Status = PostStatusAccepted
 	posts[1].CreatedByID = users[1].ID
 	posts[1].ProviderID = nulls.NewInt(users[0].ID)
 	ms.NoError(ms.DB.Save(&posts))

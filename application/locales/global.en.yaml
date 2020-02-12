@@ -132,6 +132,26 @@
   translation: We had a problem finding that request or offer for changing its status.
 - id: UpdatePostStatus.Unauthorized
   translation: You are not allowed to change the status of that post.
+- id: Post.FindPost
+  translation: We had a problem finding that request.
+- id: AddMeAsPotentialProvider
+  translation: We had a problem registering your offer to fulfill a request.
+- id: AddMeAsPotentialProvider.FindPost
+  translation: We had a problem finding that request to register your offer to fulfill it.
+- id: AddMeAsPotentialProvider.BadPostStatus
+  translation: That request has a status that does not allow offers.
+- id: RemoveMeAsPotentialProvider
+  translation: We had a problem cancelling your offer to fufill a request.
+- id: RemoveMeAsPotentialProvider.NotAuthorized
+  translation: You are not allowed to cancel that user's offer.
+- id: RemoveMeAsPotentialProvider.FindPost
+  translation: We had a problem finding the request associated with your offer.
+- id: RemovePotentialProvider
+  translation: We had a problem cancelling that offer to fulfill a request.
+- id: RemovePotentialProvider.NotAuthorized
+  translation: You are not allowed to cancel that user's offer.
+- id: RemovePotentialProvider.FindPost
+  translation: We had a problem finding the request associated with that offer.
 - id: GetThreadParticipants
   translation: We had a problem getting a list of participants in that conversation.
 - id: GetThreadLastViewedAt
@@ -176,9 +196,7 @@
   translation: We had a problem updating the user profile.
 
 # Request Post Status Transition email subjects
-- id: Email.Subject.Request.FromAcceptedToCommitted
-  translation: Your {{.AppName}} offer for "{{.postTitle}}" may no longer be needed
-- id: Email.Subject.Request.FromAcceptedOrCommittedToDelivered
+- id: Email.Subject.Request.FromAcceptedToDelivered
   translation: Your {{.AppName}} request for "{{.postTitle}}" has been delivered!
 - id: Email.Subject.Request.FromAcceptedToOpen
   translation: Your {{.AppName}} offer for "{{.postTitle}}" is no longer needed
@@ -186,24 +204,20 @@
   translation: Thank you for fulfilling a request on {{.AppName}}
 - id: Email.Subject.Request.FromAcceptedToRemoved
   translation: Your {{.AppName}} offer for "{{.postTitle}}" is no longer needed
-
-- id: Email.Subject.Request.FromCommittedToAccepted
-  translation: Your {{.AppName}} offer for "{{.postTitle}}" has been accepted!
-- id: Email.Subject.Request.FromCommittedToOpen
-  translation: Request lost its provider on {{.AppName}}
-- id: Email.Subject.Request.FromCommittedToRemoved
-  translation: Your {{.AppName}} offer for "{{.postTitle}}" is no longer needed
-
 - id: Email.Subject.Request.FromCompletedToAcceptedOrDelivered
   translation: Request not received on {{.AppName}} after all
-
+- id: Email.Subject.Request.FromOpenToAccepted
+  translation: Your offer to fulfill a {{.AppName}} request has been accepted
 - id: Email.Subject.Request.FromDeliveredToAccepted
   translation: Request not delivered after all on {{.AppName}}
-- id: Email.Subject.Request.FromDeliveredToCommitted
-  translation: Request not delivered after all on {{.AppName}}
 
-- id: Email.Subject.Request.FromOpenToCommitted
-  translation: Potential provider on {{.AppName}} for "{{.postTitle}}"
+# Notifications regarding Request offers/potential providers
+- id: Email.Subject.Request.OfferRejected
+  translation: Your {{.AppName}} offer for "{{.postTitle}}" was not accepted
+- id: Email.Subject.Request.OfferRetracted
+  translation: An offer to fulfill your request on {{.AppName}} has been retracted
+- id: Email.Subject.Request.NewOffer
+  translation: You have received a new offer on {{.AppName}} to fulfill your request
 
 # New Message notification subject
 - id: Email.Subject.Message.Created

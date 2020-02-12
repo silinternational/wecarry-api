@@ -61,7 +61,6 @@ type PostStatus string
 
 const (
 	PostStatusOpen      PostStatus = "OPEN"
-	PostStatusCommitted PostStatus = "COMMITTED"
 	PostStatusAccepted  PostStatus = "ACCEPTED"
 	PostStatusDelivered PostStatus = "DELIVERED"
 	PostStatusReceived  PostStatus = "RECEIVED"
@@ -114,26 +113,18 @@ func (e PostVisibility) MarshalGQL(w io.Writer) {
 func getStatusTransitions() map[PostStatus][]statusTransitionTarget {
 	return map[PostStatus][]statusTransitionTarget{
 		PostStatusOpen: {
-			{status: PostStatusCommitted},
-			{status: PostStatusRemoved},
-		},
-		PostStatusCommitted: {
-			{status: PostStatusOpen, isBackStep: true},
 			{status: PostStatusAccepted},
-			{status: PostStatusDelivered},
 			{status: PostStatusRemoved},
 		},
 		PostStatusAccepted: {
-			{status: PostStatusOpen},
-			{status: PostStatusCommitted, isBackStep: true}, // to correct a false acceptance
+			{status: PostStatusOpen, isBackStep: true}, // to correct a false acceptance
 			{status: PostStatusDelivered},
 			{status: PostStatusReceived},  // This transition is in here for later, in case one day it's not skippable
 			{status: PostStatusCompleted}, // For now, `DELIVERED` is not a required step
 			{status: PostStatusRemoved},
 		},
 		PostStatusDelivered: {
-			{status: PostStatusCommitted, isBackStep: true}, // to correct a false delivery
-			{status: PostStatusAccepted, isBackStep: true},  // to correct a false delivery
+			{status: PostStatusAccepted, isBackStep: true}, // to correct a false delivery
 			{status: PostStatusCompleted},
 		},
 		PostStatusReceived: {
@@ -188,7 +179,7 @@ func isTransitionBackStep(status1, status2 PostStatus) (bool, error) {
 
 func (e PostStatus) IsValid() bool {
 	switch e {
-	case PostStatusOpen, PostStatusCommitted, PostStatusAccepted, PostStatusDelivered, PostStatusReceived,
+	case PostStatusOpen, PostStatusAccepted, PostStatusDelivered, PostStatusReceived,
 		PostStatusCompleted, PostStatusRemoved:
 		return true
 	}
@@ -253,15 +244,16 @@ type Post struct {
 	MeetingID      nulls.Int      `json:"meeting_id" db:"meeting_id"`
 	Visibility     PostVisibility `json:"visibility" db:"visibility"`
 
-	CreatedBy    User          `belongs_to:"users"`
-	Organization Organization  `belongs_to:"organizations"`
-	Receiver     User          `belongs_to:"users"`
-	Provider     User          `belongs_to:"users"`
-	Files        PostFiles     `has_many:"post_files"`
-	Histories    PostHistories `has_many:"post_histories"`
-	PhotoFile    File          `belongs_to:"files"`
-	Destination  Location      `belongs_to:"locations"`
-	Origin       Location      `belongs_to:"locations"`
+	CreatedBy    User         `belongs_to:"users"`
+	Organization Organization `belongs_to:"organizations"`
+	Receiver     User         `belongs_to:"users"`
+	Provider     User         `belongs_to:"users"`
+
+	Files       PostFiles     `has_many:"post_files"`
+	Histories   PostHistories `has_many:"post_histories"`
+	PhotoFile   File          `belongs_to:"files"`
+	Destination Location      `belongs_to:"locations"`
+	Origin      Location      `belongs_to:"locations"`
 }
 
 // PostCreatedEventData holds data needed by the New Post event listener
@@ -315,12 +307,46 @@ func (p *Post) NewWithUser(pType PostType, currentUser User) error {
 	return nil
 }
 
-func (p *Post) SetProviderWithStatus(status PostStatus, currentUser User) {
+// SetProviderWithStatus sets the new Status of the Post and if needed it
+// also sets the ProviderID (i.e. when the new status is ACCEPTED)
+func (p *Post) SetProviderWithStatus(status PostStatus, providerID *string) error {
+	if p.Type == PostTypeRequest && status == PostStatusAccepted {
+		if providerID == nil {
+			return errors.New("provider ID must not be nil")
+		}
 
-	if p.Type == PostTypeRequest && status == PostStatusCommitted {
-		p.ProviderID = nulls.NewInt(currentUser.ID)
+		var user User
+
+		if err := user.FindByUUID(*providerID); err != nil {
+			return errors.New("error finding provider: " + err.Error())
+		}
+		p.ProviderID = nulls.NewInt(user.ID)
 	}
 	p.Status = status
+	return nil
+}
+
+// GetPotentialProviders returns the User objects associated with the Post's
+// PotentialProviders
+func (p *Post) GetPotentialProviders() (Users, error) {
+	if p.Type != PostTypeRequest {
+		return Users{}, nil
+	}
+
+	providers := PotentialProviders{}
+	users, err := providers.FindUsersByPostID(p.ID)
+	return users, err
+}
+
+// DestroyPotentialProviders destroys all the PotentialProvider records
+// associated with the Post if the Post's status is COMPLETED
+func (p *Post) DestroyPotentialProviders(status PostStatus, user User) error {
+	if p.Type != PostTypeRequest || status != PostStatusCompleted {
+		return nil
+	}
+
+	var pps PotentialProviders
+	return pps.DestroyAllWithPostUUID(p.UUID.String(), user)
 }
 
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
@@ -554,6 +580,18 @@ func (p *Post) FindByUUID(uuid string) error {
 
 	if err := DB.Eager("CreatedBy").Where(queryString).First(p); err != nil {
 		return fmt.Errorf("error finding post by uuid: %s", err.Error())
+	}
+
+	return nil
+}
+
+func (p *Post) FindByUUIDForCurrentUser(uuid string, user User) error {
+	if err := p.FindByUUID(uuid); err != nil {
+		return err
+	}
+
+	if !user.canViewPost(*p) {
+		return fmt.Errorf("unauthorized: user %v may not view post %v.", user.ID, p.ID)
 	}
 
 	return nil
@@ -844,7 +882,7 @@ func (p *Post) IsEditable(user User) (bool, error) {
 // isPostEditable defines at which states can posts be edited.
 func (p *Post) isPostEditable() bool {
 	switch p.Status {
-	case PostStatusOpen, PostStatusCommitted, PostStatusAccepted, PostStatusReceived, PostStatusDelivered:
+	case PostStatusOpen, PostStatusAccepted, PostStatusReceived, PostStatusDelivered:
 		return true
 	default:
 		return false
@@ -859,15 +897,23 @@ func (p *Post) canUserChangeStatus(user User, newStatus PostStatus) bool {
 	}
 
 	if p.CreatedByID == user.ID {
+		// Creator can't move off of Delivered except to Completed
+		if p.Status == PostStatusDelivered {
+			return newStatus == PostStatusCompleted
+		}
 		return true
 	}
 
 	switch p.Type {
 	case PostTypeRequest:
-		if p.Status == PostStatusOpen && newStatus == PostStatusCommitted {
+		if p.ProviderID.Int != user.ID {
+			return false
+		}
+		if newStatus == PostStatusDelivered {
 			return true
 		}
-		return newStatus == PostStatusDelivered && p.ProviderID.Int == user.ID
+		// for cancelling a DELIVERED status
+		return newStatus == PostStatusAccepted && p.Status == PostStatusDelivered
 	case PostTypeOffer:
 		return newStatus == PostStatusReceived && p.ReceiverID.Int == user.ID
 	}

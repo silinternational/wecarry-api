@@ -3,7 +3,10 @@ package actions
 import (
 	"time"
 
+	"github.com/gofrs/uuid"
+
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/internal/test"
 	"github.com/silinternational/wecarry-api/models"
 )
 
@@ -20,6 +23,11 @@ type PostsResponse struct {
 
 type PostResponse struct {
 	Post Post `json:"post"`
+}
+
+type PotentialProvider struct {
+	ID       string `json:"id"`
+	Nickname string `json:"nickname"`
 }
 
 type Post struct {
@@ -63,7 +71,8 @@ type Post struct {
 		Nickname  string `json:"nickname"`
 		AvatarURL string `json:"avatarURL"`
 	} `json:"provider"`
-	Organization struct {
+	PotentialProviders []PotentialProvider `json:"potentialProviders"`
+	Organization       struct {
 		ID string `json:"id"`
 	} `json:"organization"`
 	Photo struct {
@@ -328,13 +337,13 @@ func (as *ActionSuite) Test_UpdatePostStatus() {
 	provider := f.Users[1]
 
 	steps := []struct {
-		status  models.PostStatus
-		user    models.User
-		wantErr bool
+		status     models.PostStatus
+		user       models.User
+		providerID string
+		wantErr    bool
 	}{
-		{status: models.PostStatusCommitted, user: provider, wantErr: false},
-		{status: models.PostStatusAccepted, user: provider, wantErr: true},
-		{status: models.PostStatusAccepted, user: creator, wantErr: false},
+		{status: models.PostStatusAccepted, user: provider, providerID: provider.UUID.String(), wantErr: true},
+		{status: models.PostStatusAccepted, user: creator, providerID: provider.UUID.String(), wantErr: false},
 		{status: models.PostStatusReceived, user: provider, wantErr: true},
 		{status: models.PostStatusReceived, user: creator, wantErr: false},
 		{status: models.PostStatusDelivered, user: provider, wantErr: false},
@@ -345,7 +354,52 @@ func (as *ActionSuite) Test_UpdatePostStatus() {
 
 	for _, step := range steps {
 		input := `id: "` + f.Posts[0].UUID.String() + `", status: ` + step.status.String()
+		if step.providerID != "" {
+			input += `, providerUserID: "` + step.providerID + `"`
+		}
 		query := `mutation { post: updatePostStatus(input: {` + input + `}) {id status}}`
+
+		err := as.testGqlQuery(query, step.user.Nickname, &postsResp)
+		if step.wantErr {
+			as.Error(err, "user=%s, query=%s", step.user.Nickname, query)
+		} else {
+			as.NoError(err, "user=%s, query=%s", step.user.Nickname, query)
+			as.Equal(step.status, postsResp.Post.Status)
+		}
+	}
+}
+
+func (as *ActionSuite) Test_UpdatePostStatus_DestroyPotentialProviders() {
+	f := test.CreatePotentialProvidersFixtures(as.DB)
+	users := f.Users
+
+	var postsResp PostResponse
+
+	creator := f.Users[0]
+	provider := f.Users[1]
+
+	post0 := f.Posts[0]
+	post0.Status = models.PostStatusAccepted
+	err := post0.Update()
+	as.NoError(err, "unable to change Posts's status to prepare for test")
+
+	steps := []struct {
+		status    models.PostStatus
+		user      models.User
+		wantPPIDs []uuid.UUID
+		wantErr   bool
+	}{
+		{status: models.PostStatusReceived, user: creator,
+			wantPPIDs: []uuid.UUID{users[1].UUID, users[2].UUID, users[3].UUID}},
+		{status: models.PostStatusDelivered, user: creator,
+			wantPPIDs: []uuid.UUID{users[1].UUID, users[2].UUID, users[3].UUID}},
+		{status: models.PostStatusCompleted, user: provider, wantErr: true},
+		{status: models.PostStatusCompleted, user: creator, wantPPIDs: []uuid.UUID{}},
+	}
+
+	for _, step := range steps {
+		input := `id: "` + f.Posts[0].UUID.String() + `", status: ` + step.status.String()
+		query := `mutation { post: updatePostStatus(input: {` + input + `}) {id status potentialProviders {id}}}`
 
 		err := as.testGqlQuery(query, step.user.Nickname, &postsResp)
 		if step.wantErr {

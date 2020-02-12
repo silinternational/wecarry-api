@@ -19,6 +19,9 @@ type Mutation {
     createPost(input: CreatePostInput!): Post!
     updatePost(input: UpdatePostInput!): Post!
     updatePostStatus(input: UpdatePostStatusInput!): Post!
+    addMeAsPotentialProvider(postID: String!): Post!
+    removeMeAsPotentialProvider(postID: String!): Post!
+    removePotentialProvider(postID: String!, userID: String!): Post!
     updateUser(input: UpdateUserInput!): User!
     createMeeting(input: CreateMeetingInput!): Meeting!
     updateMeeting(input: UpdateMeetingInput!): Meeting!
@@ -54,7 +57,6 @@ enum PostRole {
 
 enum PostStatus {
     OPEN
-    COMMITTED
     ACCEPTED
     DELIVERED
     RECEIVED
@@ -152,6 +154,7 @@ type Post {
     createdBy: PublicProfile!
     receiver: PublicProfile
     provider: PublicProfile
+    potentialProviders: [PublicProfile!]
     organization: Organization
     title: String!
     description: String
@@ -346,6 +349,7 @@ input LocationInput {
 input UpdatePostStatusInput {
     id: ID!
     status: PostStatus!
+    providerUserID: ID
 }
 
 type Watch {

@@ -76,7 +76,7 @@ func (ms *ModelSuite) TestRequestStatusUpdatedNotifications() {
 
 	postStatusEData := models.PostStatusEventData{
 		OldStatus: models.PostStatusOpen,
-		NewStatus: models.PostStatusCommitted,
+		NewStatus: models.PostStatusAccepted,
 		PostID:    posts[0].ID,
 	}
 
@@ -96,11 +96,11 @@ func (ms *ModelSuite) TestRequestStatusUpdatedNotifications() {
 	buf.Reset()
 
 	// Logging message expected about bad transition
-	postStatusEData.NewStatus = models.PostStatusAccepted
+	postStatusEData.NewStatus = models.PostStatusDelivered
 	requestStatusUpdatedNotifications(posts[0], postStatusEData)
 
 	got = buf.String()
-	want := "unexpected status transition 'OPEN-ACCEPTED'"
+	want := "unexpected status transition 'OPEN-DELIVERED'"
 	test.AssertStringContains(t, got, want, 45)
 
 }
@@ -132,16 +132,16 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 		wantEmailNumber  int
 		wantErrLog       string
 	}{
-		{name: "Good - Accepted to Committed",
+		{name: "Good - Accepted to Open",
 			post: posts[0],
 			eventData: models.PostStatusEventData{
 				OldStatus:     models.PostStatusAccepted,
-				NewStatus:     models.PostStatusCommitted,
+				NewStatus:     models.PostStatusOpen,
 				PostID:        posts[0].ID,
 				OldProviderID: *models.GetIntFromNullsInt(posts[0].ProviderID),
 			},
-			template:         domain.MessageTemplateRequestFromAcceptedToCommitted,
-			sendFunction:     sendNotificationRequestFromAcceptedToCommitted,
+			template:         domain.MessageTemplateRequestFromAcceptedToOpen,
+			sendFunction:     sendNotificationRequestFromAcceptedToOpen,
 			wantEmailsSent:   1,
 			wantToEmail:      posts[0].Provider.Email,
 			wantBodyContains: "isn't ready after all to have you fulfill",
@@ -164,7 +164,7 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 		{name: "Good - Accepted to Delivered",
 			post:             posts[0],
 			template:         domain.MessageTemplateRequestDelivered,
-			sendFunction:     sendNotificationRequestFromAcceptedOrCommittedToDelivered,
+			sendFunction:     sendNotificationRequestFromAcceptedToDelivered,
 			wantEmailsSent:   1,
 			wantToEmail:      posts[0].CreatedBy.Email,
 			wantBodyContains: "reported that they have delivered your request",
@@ -172,7 +172,7 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 		{name: "Bad - Accepted to Delivered", // No Provider
 			post:         posts[1],
 			template:     domain.MessageTemplateRequestFromAcceptedToDelivered,
-			sendFunction: sendNotificationRequestFromAcceptedOrCommittedToDelivered,
+			sendFunction: sendNotificationRequestFromAcceptedToDelivered,
 			wantErrLog: fmt.Sprintf("error preparing '%s' notification - no provider\n",
 				getT(domain.MessageTemplateRequestFromAcceptedToDelivered)),
 		},
@@ -205,80 +205,6 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 			wantErrLog: fmt.Sprintf("error preparing '%s' notification - no provider\n",
 				domain.MessageTemplateRequestFromAcceptedToRemoved),
 		},
-		{name: "Good - Committed to Accepted",
-			post:             posts[0],
-			template:         domain.MessageTemplateRequestFromCommittedToAccepted,
-			sendFunction:     sendNotificationRequestFromCommittedToAccepted,
-			wantEmailsSent:   1,
-			wantToEmail:      posts[0].Provider.Email,
-			wantBodyContains: "has accepted your offer",
-		},
-		{name: "Bad - Committed to Accepted", // No Provider
-			post:         posts[1],
-			template:     domain.MessageTemplateRequestFromCommittedToAccepted,
-			sendFunction: sendNotificationRequestFromCommittedToAccepted,
-			wantErrLog: fmt.Sprintf("error preparing '%s' notification - no provider\n",
-				domain.MessageTemplateRequestFromCommittedToAccepted),
-		},
-		{name: "Good - Committed to Delivered",
-			post:             posts[0],
-			template:         domain.MessageTemplateRequestFromCommittedToDelivered,
-			sendFunction:     sendNotificationRequestFromAcceptedOrCommittedToDelivered,
-			wantEmailsSent:   1,
-			wantToEmail:      posts[0].CreatedBy.Email,
-			wantBodyContains: "reported that they have delivered your request",
-		},
-		{name: "Bad - Committed to Delivered", // No Provider
-			post:         posts[1],
-			template:     domain.MessageTemplateRequestFromCommittedToDelivered,
-			sendFunction: sendNotificationRequestFromAcceptedOrCommittedToDelivered,
-			wantErrLog: fmt.Sprintf("error preparing '%s' notification - no provider\n",
-				getT(domain.MessageTemplateRequestFromCommittedToDelivered)),
-		},
-		{name: "Good - Committed to Open - Provider",
-			post: posts[0],
-			eventData: models.PostStatusEventData{
-				OldStatus:     models.PostStatusCommitted,
-				NewStatus:     models.PostStatusOpen,
-				PostID:        posts[0].ID,
-				OldProviderID: *models.GetIntFromNullsInt(posts[0].ProviderID),
-			},
-			template:         domain.MessageTemplateRequestFromCommittedToOpen,
-			sendFunction:     sendNotificationRequestFromCommittedToOpen,
-			wantEmailsSent:   2,
-			wantEmailNumber:  1,
-			wantToEmail:      posts[0].Provider.Email,
-			wantBodyContains: "request has been cancelled",
-		},
-		{name: "Good - Committed to Open - Receiver",
-			post: posts[0],
-			eventData: models.PostStatusEventData{
-				OldStatus:     models.PostStatusCommitted,
-				NewStatus:     models.PostStatusOpen,
-				PostID:        posts[0].ID,
-				OldProviderID: *models.GetIntFromNullsInt(posts[0].ProviderID),
-			},
-			template:         domain.MessageTemplateRequestFromCommittedToOpen,
-			sendFunction:     sendNotificationRequestFromCommittedToOpen,
-			wantEmailsSent:   2,
-			wantToEmail:      posts[0].CreatedBy.Email,
-			wantBodyContains: "request has been cancelled",
-		},
-		{name: "Good - Committed to Removed",
-			post:             posts[0],
-			template:         domain.MessageTemplateRequestFromCommittedToRemoved,
-			sendFunction:     sendNotificationRequestFromCommittedToRemoved,
-			wantEmailsSent:   1,
-			wantToEmail:      posts[0].Provider.Email,
-			wantBodyContains: "has removed this request",
-		},
-		{name: "Bad - Committed to Removed", // No Provider
-			post:         posts[1],
-			template:     domain.MessageTemplateRequestFromCommittedToRemoved,
-			sendFunction: sendNotificationRequestFromCommittedToRemoved,
-			wantErrLog: fmt.Sprintf("error preparing '%s' notification - no provider\n",
-				domain.MessageTemplateRequestFromCommittedToRemoved),
-		},
 		{name: "Good - Completed to Accepted",
 			post:             posts[0],
 			template:         domain.MessageTemplateRequestFromCompletedToAccepted,
@@ -302,14 +228,6 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 			wantToEmail:      posts[0].CreatedBy.Email,
 			wantBodyContains: "corrected themselves to say they haven't",
 		},
-		{name: "Good - Delivered to Committed",
-			post:             posts[0],
-			template:         domain.MessageTemplateRequestFromDeliveredToCommitted,
-			sendFunction:     sendNotificationRequestFromDeliveredToCommitted,
-			wantEmailsSent:   1,
-			wantToEmail:      posts[0].CreatedBy.Email,
-			wantBodyContains: "corrected themselves to say they haven't",
-		},
 		{name: "Good - Delivered to Completed",
 			post:             posts[0],
 			template:         domain.MessageTemplateRequestReceived,
@@ -318,20 +236,20 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 			wantToEmail:      posts[0].Provider.Email,
 			wantBodyContains: "reported that they have received",
 		},
-		{name: "Good - Open to Committed",
+		{name: "Good - Open to Accepted",
 			post:             posts[0],
-			template:         domain.MessageTemplateRequestFromOpenToCommitted,
-			sendFunction:     sendNotificationRequestFromOpenToCommitted,
+			template:         domain.MessageTemplateRequestFromOpenToAccepted,
+			sendFunction:     sendNotificationRequestFromOpenToAccepted,
 			wantEmailsSent:   1,
-			wantToEmail:      posts[0].CreatedBy.Email,
-			wantBodyContains: "has offered",
+			wantToEmail:      posts[0].Provider.Email,
+			wantBodyContains: "has accepted your offer",
 		},
-		{name: "Bad - Open to Committed", // No Provider
+		{name: "Bad - Open to Accepted", // No Provider
 			post:         posts[1],
-			template:     domain.MessageTemplateRequestFromOpenToCommitted,
-			sendFunction: sendNotificationRequestFromOpenToCommitted,
+			template:     domain.MessageTemplateRequestFromOpenToAccepted,
+			sendFunction: sendNotificationRequestFromOpenToAccepted,
 			wantErrLog: fmt.Sprintf("error preparing '%s' notification - no provider\n",
-				domain.MessageTemplateRequestFromOpenToCommitted),
+				domain.MessageTemplateRequestFromOpenToAccepted),
 		},
 	}
 
@@ -484,4 +402,85 @@ func (ms *ModelSuite) TestSendNewPostNotifications() {
 			}
 		})
 	}
+}
+
+func (ms *ModelSuite) TestSendPotentialProviderCreatedNotification() {
+	t := ms.T()
+	provider := "Pete Provider"
+	requester := models.User{
+		Email: "user@example.com",
+	}
+	post := models.Post{UUID: domain.GetUUID(), Title: "post title", Type: models.PostTypeRequest}
+	wantBody := "has offered to help fulfill your request"
+
+	notifications.TestEmailService.DeleteSentMessages()
+
+	err := sendPotentialProviderCreatedNotification(provider, requester, post)
+	ms.NoError(err)
+
+	emailCount := notifications.TestEmailService.GetNumberOfMessagesSent()
+	ms.Equal(1, emailCount, "wrong email count")
+
+	toEmail := notifications.TestEmailService.GetLastToEmail()
+	ms.Equal(requester.Email, toEmail, "bad 'To' address")
+
+	body := notifications.TestEmailService.GetLastBody()
+
+	test.AssertStringContains(t, body, wantBody, 99)
+	test.AssertStringContains(t, body, post.Title, 99)
+	test.AssertStringContains(t, body, post.UUID.String(), 99)
+}
+
+func (ms *ModelSuite) TestSendPotentialProviderSelfDestroyedNotification() {
+	t := ms.T()
+	provider := "Pete Provider"
+	requester := models.User{
+		Email: "user@example.com",
+	}
+	post := models.Post{UUID: domain.GetUUID(), Title: "post title", Type: models.PostTypeRequest}
+	wantBody := "indicated they can't fulfill your request afterall"
+
+	notifications.TestEmailService.DeleteSentMessages()
+
+	err := sendPotentialProviderSelfDestroyedNotification(provider, requester, post)
+	ms.NoError(err)
+
+	emailCount := notifications.TestEmailService.GetNumberOfMessagesSent()
+	ms.Equal(1, emailCount, "wrong email count")
+
+	toEmail := notifications.TestEmailService.GetLastToEmail()
+	ms.Equal(requester.Email, toEmail, "bad 'To' address")
+
+	body := notifications.TestEmailService.GetLastBody()
+
+	test.AssertStringContains(t, body, wantBody, 99)
+	test.AssertStringContains(t, body, post.Title, 99)
+	test.AssertStringContains(t, body, post.UUID.String(), 99)
+}
+
+func (ms *ModelSuite) TestSendPotentialProviderRejectedNotification() {
+	t := ms.T()
+	requester := "Rodger Requester"
+	provider := models.User{
+		Email: "user@example.com",
+	}
+	post := models.Post{UUID: domain.GetUUID(), Title: "post title", Type: models.PostTypeRequest}
+	wantBody := "is not prepared to have you fulfill their request"
+
+	notifications.TestEmailService.DeleteSentMessages()
+
+	err := sendPotentialProviderRejectedNotification(provider, requester, post)
+	ms.NoError(err)
+
+	emailCount := notifications.TestEmailService.GetNumberOfMessagesSent()
+	ms.Equal(1, emailCount, "wrong email count")
+
+	toEmail := notifications.TestEmailService.GetLastToEmail()
+	ms.Equal(provider.Email, toEmail, "bad 'To' address")
+
+	body := notifications.TestEmailService.GetLastBody()
+
+	test.AssertStringContains(t, body, wantBody, 99)
+	test.AssertStringContains(t, body, post.Title, 99)
+	test.AssertStringContains(t, body, post.UUID.String(), 99)
 }
