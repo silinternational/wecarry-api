@@ -136,6 +136,10 @@
   translation: We had a problem finding that request.
 - id: AddMeAsPotentialProvider
   translation: We had a problem registering your offer to fulfill a request.
+- id: AddMeAsPotentialProvider.FindPost
+  translation: We had a problem finding that request to register your offer to fulfill it.
+- id: AddMeAsPotentialProvider.BadPostStatus
+  translation: That request has a status that does not allow offers.
 - id: RemoveMeAsPotentialProvider
   translation: We had a problem cancelling your offer to fufill a request.
 - id: RemoveMeAsPotentialProvider.NotAuthorized

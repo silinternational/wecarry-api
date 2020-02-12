@@ -42,7 +42,7 @@ func (as *ActionSuite) Test_AddMeAsPotentialProvider() {
 	}
 	as.Equal(want, resp.Post.PotentialProviders, "incorrect potential providers")
 
-	// Add a repeat
+	// Adding a repeat gives an error
 	query = fmt.Sprintf(qTemplate, posts[1].UUID.String())
 
 	err = as.testGqlQuery(query, f.Users[1].Nickname, &resp)
@@ -54,6 +54,12 @@ func (as *ActionSuite) Test_AddMeAsPotentialProvider() {
 		{ID: f.Users[1].UUID.String(), Nickname: f.Users[1].Nickname},
 	}
 	as.Equal(want, resp.Post.PotentialProviders, "incorrect potential providers")
+
+	// Adding one for a different Org gives an error
+	err = as.testGqlQuery(query, f.Users[4].Nickname, &resp)
+	as.Error(err, "expected an error (unauthorized) but didn't get one")
+	as.Equal(want, resp.Post.PotentialProviders, "incorrect potential providers")
+
 }
 
 func (as *ActionSuite) Test_RemoveMeAsPotentialProvider() {
