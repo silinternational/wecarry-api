@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/gobuffalo/nulls"
 	"github.com/silinternational/wecarry-api/domain"
@@ -99,6 +100,14 @@ func createFixturesForTestPost_manageStatusTransition_forwardProgression(ms *Mod
 		err := DB.RawQuery(
 			fmt.Sprintf(`UPDATE posts set status = '%s' where ID = %v`, status, posts[id].ID)).Exec()
 		ms.NoError(err, "unexpected error creating post fixture")
+
+		// Artificially add in a PostHistory as if it had already happened
+		pHistory := PostHistory{
+			Status: status,
+			PostID: posts[id].ID,
+		}
+		mustCreate(ms.DB, &pHistory)
+
 	}
 
 	return PostFixtures{
@@ -111,7 +120,7 @@ func createFixturesForTestPost_manageStatusTransition_backwardProgression(ms *Mo
 	uf := createUserFixtures(ms.DB, 2)
 	users := uf.Users
 
-	posts := createPostFixtures(ms.DB, 2, 0, false)
+	posts := createPostFixtures(ms.DB, 5, 0, false)
 	posts[0].Status = PostStatusAccepted
 	posts[0].CreatedByID = users[0].ID
 	posts[0].ProviderID = nulls.NewInt(users[1].ID)
@@ -119,6 +128,43 @@ func createFixturesForTestPost_manageStatusTransition_backwardProgression(ms *Mo
 	posts[1].CreatedByID = users[1].ID
 	posts[1].ProviderID = nulls.NewInt(users[0].ID)
 	ms.NoError(ms.DB.Save(&posts))
+
+	// Give these new statuses while by-passing the status transition validation
+	for i, status := range [3]PostStatus{PostStatusAccepted, PostStatusAccepted, PostStatusDelivered} {
+		id := i + 2
+		posts[id].Status = status
+		posts[id].CompletedOn = nulls.NewTime(time.Now())
+		posts[id].ProviderID = nulls.NewInt(users[1].ID)
+		err := DB.RawQuery(
+			fmt.Sprintf(`UPDATE posts set status = '%s' where ID = %v`, status, posts[id].ID)).Exec()
+		ms.NoError(err, "unexpected error creating post fixture")
+
+		// Artificially add in two PostHistory entries as if they had already happened
+		pHistory := PostHistory{
+			Status:     status,
+			PostID:     posts[id].ID,
+			ReceiverID: nulls.NewInt(users[0].ID),
+			ProviderID: nulls.NewInt(users[1].ID),
+		}
+		mustCreate(ms.DB, &pHistory)
+
+		pHistory = PostHistory{
+			Status:     PostStatusCompleted,
+			PostID:     posts[id].ID,
+			ReceiverID: nulls.NewInt(users[0].ID),
+			ProviderID: nulls.NewInt(users[1].ID),
+		}
+		mustCreate(ms.DB, &pHistory)
+
+		pHistory = PostHistory{
+			Status:     status,
+			PostID:     posts[id].ID,
+			ReceiverID: nulls.NewInt(users[0].ID),
+			ProviderID: nulls.NewInt(users[1].ID),
+		}
+		mustCreate(ms.DB, &pHistory)
+
+	}
 
 	return PostFixtures{
 		Users: users,

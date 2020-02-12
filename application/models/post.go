@@ -486,6 +486,7 @@ func (p *Post) manageStatusTransition() error {
 		return err
 	}
 
+	fmt.Printf("\nAAAAAAA %v %v, %v, %v", isBackStep, lastPostHistory.Status, lastPostHistory.ReceiverID, p.Status)
 	var pH PostHistory
 	if isBackStep {
 		err = pH.popForPost(*p, lastStatus)
@@ -493,6 +494,7 @@ func (p *Post) manageStatusTransition() error {
 		err = pH.createForPost(*p)
 	}
 
+	fmt.Printf("\nBBBBBBBBBB %v\n", p.Status)
 	if err != nil {
 		return err
 	}

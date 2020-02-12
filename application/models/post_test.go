@@ -929,7 +929,8 @@ func (ms *ModelSuite) TestPost_manageStatusTransition_forwardProgression() {
 
 			if test.wantCompletedOn {
 				ms.True(test.post.CompletedOn.Valid, "expected a valid CompletedOn date")
-
+			} else {
+				ms.False(test.post.CompletedOn.Valid, "expected a null CompletedOn date")
 			}
 		})
 	}
@@ -940,25 +941,47 @@ func (ms *ModelSuite) TestPost_manageStatusTransition_backwardProgression() {
 	f := createFixturesForTestPost_manageStatusTransition_backwardProgression(ms)
 
 	tests := []struct {
-		name       string
-		post       Post
-		newStatus  PostStatus
-		providerID nulls.Int
-		wantErr    string
+		name            string
+		post            Post
+		newStatus       PostStatus
+		providerID      nulls.Int
+		wantCompletedOn bool
+		wantErr         string
 	}{
+		//{
+		//	name:       "accepted to accepted - no change",
+		//	post:       f.Posts[0],
+		//	newStatus:  PostStatusAccepted,
+		//	providerID: f.Posts[0].ProviderID,
+		//	wantErr:    "",
+		//},
+		//{
+		//	name:       "accepted to open",
+		//	post:       f.Posts[0],
+		//	newStatus:  PostStatusOpen,
+		//	providerID: nulls.Int{},
+		//	wantErr:    "",
+		//},
+		//{
+		//	name:            "completed to removed - CompletedOn Saved",
+		//	post:            f.Posts[2],
+		//	newStatus:       PostStatusRemoved,
+		//	providerID:      f.Posts[2].ProviderID,
+		//	wantCompletedOn: true,
+		//},
+		//{
+		//	name:            "completed to accepted - CompletedOn Dropped",
+		//	post:            f.Posts[3],
+		//	newStatus:       PostStatusAccepted,
+		//	providerID:      f.Posts[3].ProviderID,
+		//	wantCompletedOn: false,
+		//},
 		{
-			name:       "accepted to accepted - no change",
-			post:       f.Posts[0],
-			newStatus:  PostStatusAccepted,
-			providerID: f.Posts[0].ProviderID,
-			wantErr:    "",
-		},
-		{
-			name:       "accepted to open",
-			post:       f.Posts[0],
-			newStatus:  PostStatusOpen,
-			providerID: nulls.Int{},
-			wantErr:    "",
+			name:            "completed to delivered - CompletedOn Dropped",
+			post:            f.Posts[4],
+			newStatus:       PostStatusDelivered,
+			providerID:      f.Posts[4].ProviderID,
+			wantCompletedOn: false,
 		},
 	}
 
@@ -966,6 +989,7 @@ func (ms *ModelSuite) TestPost_manageStatusTransition_backwardProgression() {
 		t.Run(test.name, func(t *testing.T) {
 			test.post.Status = test.newStatus
 			test.post.ProviderID = test.providerID
+			println("aaaaaaaa")
 			err := test.post.manageStatusTransition()
 			if test.wantErr != "" {
 				ms.Error(err)
@@ -981,6 +1005,13 @@ func (ms *ModelSuite) TestPost_manageStatusTransition_backwardProgression() {
 			ms.Equal(test.newStatus, ph.Status, "incorrect Status ")
 			ms.Equal(test.post.ReceiverID, ph.ReceiverID, "incorrect ReceiverID ")
 			ms.Equal(test.providerID, ph.ProviderID, "incorrect ProviderID ")
+
+			if test.wantCompletedOn {
+				ms.True(test.post.CompletedOn.Valid, "expected a valid CompletedOn date")
+			} else {
+				ms.False(test.post.CompletedOn.Valid, "expected a null CompletedOn date")
+			}
+
 		})
 	}
 }
