@@ -238,7 +238,7 @@ type Post struct {
 	ProviderID     nulls.Int      `json:"provider_id" db:"provider_id"`
 	Description    nulls.String   `json:"description" db:"description"`
 	URL            nulls.String   `json:"url" db:"url"`
-	Kilograms      float64        `json:"kilograms" db:"kilograms"`
+	Kilograms      nulls.Float64  `json:"kilograms" db:"kilograms"`
 	PhotoFileID    nulls.Int      `json:"photo_file_id" db:"photo_file_id"`
 	DestinationID  int            `json:"destination_id" db:"destination_id"`
 	OriginID       nulls.Int      `json:"origin_id" db:"origin_id"`
@@ -559,7 +559,7 @@ func (p *Post) AfterUpdate(tx *pop.Connection) error {
 	// Don't try to use DB.Update inside AfterUpdate, since that gets into an eternal loop
 	if err := DB.RawQuery(
 		fmt.Sprintf(`UPDATE posts set provider_id = NULL where ID = %v`, p.ID)).Exec(); err != nil {
-		domain.ErrLogger.Print("error removing provider id from post ... " + err.Error())
+		domain.ErrLogger.Printf("error removing provider id from post: %s", err.Error())
 	}
 
 	return nil

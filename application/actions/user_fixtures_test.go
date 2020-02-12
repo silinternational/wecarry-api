@@ -15,6 +15,7 @@ type UserQueryFixtures struct {
 	models.Posts
 	models.Locations
 	models.UserPreferences
+	models.Files
 }
 
 func fixturesForUserQuery(as *ActionSuite) UserQueryFixtures {
@@ -80,5 +81,6 @@ func fixturesForUserQuery(as *ActionSuite) UserQueryFixtures {
 		UserPreferences: userPreferences,
 		Posts:           posts,
 		Locations:       uf.Locations,
+		Files:           models.Files{f},
 	}
 }

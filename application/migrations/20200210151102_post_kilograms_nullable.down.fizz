@@ -1,0 +1,2 @@
+sql("UPDATE posts SET kilograms = 0 WHERE kilograms IS NULL")
+change_column("posts", "kilograms", "numeric(13,4)", {"default": 0})
