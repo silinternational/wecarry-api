@@ -219,7 +219,7 @@ func (r *postResolver) IsEditable(ctx context.Context, obj *models.Post) (bool, 
 }
 
 // Posts resolves the `posts` query
-func (r *queryResolver) Posts(ctx context.Context) ([]models.Post, error) {
+func (r *queryResolver) Posts(ctx context.Context, destination, origin *LocationInput, searchText *string) ([]models.Post, error) {
 	posts := models.Posts{}
 	cUser := models.GetCurrentUserFromGqlContext(ctx)
 	if err := posts.FindByUser(ctx, cUser); err != nil {

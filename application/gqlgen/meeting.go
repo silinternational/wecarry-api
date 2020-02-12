@@ -89,7 +89,7 @@ func (r *meetingResolver) EndDate(ctx context.Context, obj *models.Meeting) (str
 	return date, nil
 }
 
-// Image retrieves the file associated with the meeting
+// ImageFile retrieves the file associated with the meeting
 func (r *meetingResolver) ImageFile(ctx context.Context, obj *models.Meeting) (*models.File, error) {
 	if obj == nil {
 		return nil, nil
@@ -103,9 +103,25 @@ func (r *meetingResolver) ImageFile(ctx context.Context, obj *models.Meeting) (*
 	return image, nil
 }
 
+func (r *meetingResolver) Posts(ctx context.Context, obj *models.Meeting) ([]models.Post, error) {
+	return models.Posts{}, nil
+}
+
+func (r *meetingResolver) Invitations(ctx context.Context, obj *models.Meeting) ([]MeetingInvitation, error) {
+	return []MeetingInvitation{}, nil
+}
+
+func (r *meetingResolver) Participants(ctx context.Context, obj *models.Meeting) ([]MeetingParticipant, error) {
+	return []MeetingParticipant{}, nil
+}
+
+func (r *meetingResolver) Visibility(ctx context.Context, obj *models.Meeting) (MeetingVisibility, error) {
+	return MeetingVisibilityPrivate, nil
+}
+
 // Meetings resolves the `meetings` query by getting a list of meetings that have an
 // end date in the future
-func (r *queryResolver) Meetings(ctx context.Context) ([]models.Meeting, error) {
+func (r *queryResolver) Meetings(ctx context.Context, endAfter, endBefore, startAfter, startBefore *string) ([]models.Meeting, error) {
 	meetings := models.Meetings{}
 	if err := meetings.FindOnOrAfterDate(time.Now()); err != nil {
 		extras := map[string]interface{}{}
@@ -201,6 +217,7 @@ type meetingInput struct {
 	MoreInfoURL *string
 	ImageFileID *string
 	Location    *LocationInput
+	Visibility  MeetingVisibility
 }
 
 // CreateMeeting resolves the `createMeeting` mutation.

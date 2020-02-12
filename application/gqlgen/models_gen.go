@@ -11,6 +11,29 @@ import (
 	"github.com/silinternational/wecarry-api/models"
 )
 
+// Bulk create `MeetingInvitation`s.
+type CreateMeetingInvitationsInput struct {
+	// ID of the `Meeting`
+	MeetingID string `json:"meetingID"`
+	// ID of the `User` making the invitations
+	UserID string `json:"userID"`
+	// Email addresses of the invitees
+	Emails []string `json:"emails"`
+}
+
+// Confirm a `MeetingInvitation` and create a new `MeetingParticipant`. If a `User` does not exist with the given `email`
+// a new `User` will be created.
+type CreateMeetingParticipantInput struct {
+	// ID of the `Meeting`
+	MeetingID string `json:"meetingID"`
+	// Email address of the invitee
+	Email string `json:"email"`
+	// Confirmation code from the `MeetingInvitation`. If not provided, the `Meeting` must be a non-private meeting.
+	ConfirmationCode *string `json:"confirmationCode"`
+	// Add as a `Meeting` Organizer. Authenticated `User` must be authorized [definition TBD] to do this.
+	Organizer *bool `json:"organizer"`
+}
+
 type CreateMessageInput struct {
 	Content  string  `json:"content"`
 	PostID   string  `json:"postID"`
@@ -45,11 +68,52 @@ type LocationInput struct {
 	Longitude   *float64 `json:"longitude"`
 }
 
+// Invitation to a `Meeting`. An invitation must be confirmed by the invitee before they may be added to a `Meeting`.
+type MeetingInvitation struct {
+	// ID of the `Meeting`
+	MeetingID string `json:"meetingID"`
+	// ID of the `User` making the invitation
+	UserID string `json:"userID"`
+	// Email address of the invitee
+	Email string `json:"email"`
+	// Gravatar image URL. Always a valid URL, but depending on the email address, it may reference a generic avatar.
+	AvatarURL string `json:"avatarURL"`
+}
+
+// Confirmed participant of a `Meeting`. An invited person will not appear as a `MeetingParticipant` until they have
+// confirmed a `MeetingInvitation`.
+type MeetingParticipant struct {
+	// ID of the `Meeting`
+	MeetingID string `json:"meetingID"`
+	// `User` ID of the `Meeting` participant
+	UserID string `json:"userID"`
+	// `User` is a meeting Organizer
+	Organizer *bool `json:"organizer"`
+	// ID of the `MeetingInvitation`, valid if the participant was invited. `null` indicates the `User` self-joined
+	InvitationID *string `json:"invitationID"`
+}
+
 // User fields that can safely be visible to any user in the system
 type PublicProfile struct {
 	ID        string  `json:"id"`
 	Nickname  string  `json:"nickname"`
 	AvatarURL *string `json:"avatarURL"`
+}
+
+// Cancel a `MeetingInvitation`.
+type RemoveMeetingInvitationInput struct {
+	// ID of the `Meeting`
+	MeetingID string `json:"meetingID"`
+	// Email addresse of the invitee to remove
+	Emails string `json:"emails"`
+}
+
+// Remove a `MeetingParticipant`.
+type RemoveMeetingParticipantInput struct {
+	// ID of the `Meeting`
+	MeetingID string `json:"meetingID"`
+	// `User` ID of the `Meeting` participant to remove
+	UserID string `json:"userID"`
 }
 
 type RemoveOrganizationDomainInput struct {
@@ -100,6 +164,56 @@ type UpdateUserPreferencesInput struct {
 	Language   *PreferredLanguage   `json:"language"`
 	TimeZone   *string              `json:"timeZone"`
 	WeightUnit *PreferredWeightUnit `json:"weightUnit"`
+}
+
+// Visibility for Meetings (Events), determines who can see a `Meeting`.
+type MeetingVisibility string
+
+const (
+	// Visible to invitees and all app users
+	MeetingVisibilityAll MeetingVisibility = "ALL"
+	// Visible to invitees and members of the `Meeting` organization and affiliated organizations
+	MeetingVisibilityTrusted MeetingVisibility = "TRUSTED"
+	// Visible to invitees and members of the `Meeting` organization
+	MeetingVisibilityOrganization MeetingVisibility = "ORGANIZATION"
+	// Visible only to invitees
+	MeetingVisibilityPrivate MeetingVisibility = "PRIVATE"
+)
+
+var AllMeetingVisibility = []MeetingVisibility{
+	MeetingVisibilityAll,
+	MeetingVisibilityTrusted,
+	MeetingVisibilityOrganization,
+	MeetingVisibilityPrivate,
+}
+
+func (e MeetingVisibility) IsValid() bool {
+	switch e {
+	case MeetingVisibilityAll, MeetingVisibilityTrusted, MeetingVisibilityOrganization, MeetingVisibilityPrivate:
+		return true
+	}
+	return false
+}
+
+func (e MeetingVisibility) String() string {
+	return string(e)
+}
+
+func (e *MeetingVisibility) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = MeetingVisibility(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid MeetingVisibility", str)
+	}
+	return nil
+}
+
+func (e MeetingVisibility) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 type PostRole string
