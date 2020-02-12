@@ -330,6 +330,45 @@ func (u *User) CanUpdatePostStatus(post Post, newStatus PostStatus) bool {
 	return post.canUserChangeStatus(*u, newStatus)
 }
 
+func (u *User) canViewPost(post Post) bool {
+	if u.AdminRole == UserAdminRoleSuperAdmin {
+		return true
+	}
+
+	if post.Visibility == PostVisibilityAll {
+		return true
+	}
+
+	// post creator can view it
+	if u.ID == post.CreatedByID {
+		return true
+	}
+
+	// If the user has a matching org, then yes
+	uOrgIDs := u.GetOrgIDs()
+	for _, oID := range uOrgIDs {
+		if oID == post.OrganizationID {
+			return true
+		}
+	}
+
+	// No matching or, so no if not open to trusted orgs
+	if post.Visibility == PostVisibilitySame {
+		return false
+	}
+
+	// Check Trusted Orgs
+	var orgTrust OrganizationTrust
+	for _, oID := range uOrgIDs {
+		err := orgTrust.FindByOrgIDs(post.OrganizationID, oID)
+		if err == nil {
+			return true
+		}
+	}
+
+	return false
+}
+
 // FindByUUID find a User with the given UUID and loads it from the database.
 func (u *User) FindByUUID(uuid string) error {
 	if uuid == "" {

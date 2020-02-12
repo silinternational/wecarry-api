@@ -473,11 +473,18 @@ func (r *mutationResolver) UpdatePostStatus(ctx context.Context, input UpdatePos
 }
 
 func (r *mutationResolver) AddMeAsPotentialProvider(ctx context.Context, postID string) (*models.Post, error) {
-	var post models.Post
-	if err := post.FindByUUID(postID); err != nil {
-		return nil, reportError(ctx, err, "Post.FindPost")
-	}
 	cUser := models.GetCurrentUserFromGqlContext(ctx)
+
+	var post models.Post
+	if err := post.FindByUUIDForCurrentUser(postID, cUser); err != nil {
+		return nil, reportError(ctx, err, "AddMeAsPotentialProvider.FindPost")
+	}
+
+	if post.Status != models.PostStatusOpen {
+		return nil, reportError(ctx, errors.New(
+			"Can only create PotentialProvider for a Post that has Status=Open. Got "+post.Status.String()),
+			"AddMeAsPotentialProvider.BadPostStatus")
+	}
 
 	var provider models.PotentialProvider
 	if err := provider.NewWithPostUUID(postID, cUser.ID); err != nil {

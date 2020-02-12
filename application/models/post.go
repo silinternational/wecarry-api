@@ -585,6 +585,18 @@ func (p *Post) FindByUUID(uuid string) error {
 	return nil
 }
 
+func (p *Post) FindByUUIDForCurrentUser(uuid string, user User) error {
+	if err := p.FindByUUID(uuid); err != nil {
+		return err
+	}
+
+	if !user.canViewPost(*p) {
+		return fmt.Errorf("unauthorized: user %v may not view post %v.", user.ID, p.ID)
+	}
+
+	return nil
+}
+
 func (p *Post) GetCreator() (*User, error) {
 	creator := User{}
 	if err := DB.Find(&creator, p.CreatedByID); err != nil {

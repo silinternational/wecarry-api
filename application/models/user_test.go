@@ -633,6 +633,78 @@ func (ms *ModelSuite) TestUser_CanUpdatePostStatus() {
 	}
 }
 
+func (ms *ModelSuite) TestUser_CanViewPost() {
+	t := ms.T()
+
+	f := CreateFixturesForUserCanViewPost(ms)
+	users := f.Users
+	posts := f.Posts
+
+	tests := []struct {
+		name      string
+		post      Post
+		user      User
+		newStatus PostStatus
+		want      bool
+	}{
+		{
+			name: "Creator",
+			post: posts[0],
+			user: users[0],
+			want: true,
+		},
+		{
+			name: "SuperAdmin",
+			post: posts[0],
+			user: users[3],
+			want: true,
+		},
+		{
+			name: "User's Org",
+			post: posts[0],
+			user: users[1],
+			want: true,
+		},
+		{
+			name: "All with User's untrusted Org",
+			post: posts[2],
+			user: users[0],
+			want: true,
+		},
+		{
+			name: "Trusted with User's trusted Org",
+			post: posts[3],
+			user: users[1],
+			want: true,
+		},
+		{
+			name: "Trusted with User's untrusted Org",
+			post: posts[3],
+			user: users[0],
+			want: false,
+		},
+		{
+			name: "Same with User's untrusted Org",
+			post: posts[4],
+			user: users[0],
+			want: false,
+		},
+		{
+			name: "Same with User's trusted Org",
+			post: posts[4],
+			user: users[1],
+			want: false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ms.Equal(test.want, test.user.canViewPost(test.post),
+				"incorrect result")
+		})
+	}
+}
+
 func (ms *ModelSuite) TestUser_CanViewOrganization() {
 	t := ms.T()
 
