@@ -561,7 +561,7 @@ type MeetingParticipant {
     "`User` ID of the `Meeting` participant"
     userID: ID!
     "`User` is a meeting Organizer"
-    organizer: Boolean
+    isOrganizer: Boolean
     "ID of the `MeetingInvitation`, valid if the participant was invited. `null` indicates the `User` self-joined"
     invitationID: ID
 }
@@ -578,7 +578,7 @@ input CreateMeetingParticipantInput {
     "Confirmation code from the `MeetingInvitation`. If not provided, the `Meeting` must be a non-private meeting."
     confirmationCode: String
     "Add as a `Meeting` Organizer. Authenticated `User` must be authorized [definition TBD] to do this. "
-    organizer: Boolean
+    isOrganizer: Boolean
 }
 
 """
