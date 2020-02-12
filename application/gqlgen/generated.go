@@ -97,8 +97,8 @@ type ComplexityRoot struct {
 
 	MeetingParticipant struct {
 		InvitationID func(childComplexity int) int
+		IsOrganizer  func(childComplexity int) int
 		MeetingID    func(childComplexity int) int
-		Organizer    func(childComplexity int) int
 		UserID       func(childComplexity int) int
 	}
 
@@ -597,19 +597,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.MeetingParticipant.InvitationID(childComplexity), true
 
+	case "MeetingParticipant.isOrganizer":
+		if e.complexity.MeetingParticipant.IsOrganizer == nil {
+			break
+		}
+
+		return e.complexity.MeetingParticipant.IsOrganizer(childComplexity), true
+
 	case "MeetingParticipant.meetingID":
 		if e.complexity.MeetingParticipant.MeetingID == nil {
 			break
 		}
 
 		return e.complexity.MeetingParticipant.MeetingID(childComplexity), true
-
-	case "MeetingParticipant.organizer":
-		if e.complexity.MeetingParticipant.Organizer == nil {
-			break
-		}
-
-		return e.complexity.MeetingParticipant.Organizer(childComplexity), true
 
 	case "MeetingParticipant.userID":
 		if e.complexity.MeetingParticipant.UserID == nil {
@@ -2147,7 +2147,7 @@ type MeetingParticipant {
     "` + "`" + `User` + "`" + ` ID of the ` + "`" + `Meeting` + "`" + ` participant"
     userID: ID!
     "` + "`" + `User` + "`" + ` is a meeting Organizer"
-    organizer: Boolean
+    isOrganizer: Boolean
     "ID of the ` + "`" + `MeetingInvitation` + "`" + `, valid if the participant was invited. ` + "`" + `null` + "`" + ` indicates the ` + "`" + `User` + "`" + ` self-joined"
     invitationID: ID
 }
@@ -2159,12 +2159,10 @@ a new ` + "`" + `User` + "`" + ` will be created.
 input CreateMeetingParticipantInput {
     "ID of the ` + "`" + `Meeting` + "`" + `"
     meetingID: ID!
-    "Email address of the invitee"
-    email: String!
     "Confirmation code from the ` + "`" + `MeetingInvitation` + "`" + `. If not provided, the ` + "`" + `Meeting` + "`" + ` must be a non-private meeting."
     confirmationCode: String
     "Add as a ` + "`" + `Meeting` + "`" + ` Organizer. Authenticated ` + "`" + `User` + "`" + ` must be authorized [definition TBD] to do this. "
-    organizer: Boolean
+    isOrganizer: Boolean
 }
 
 """
@@ -3839,7 +3837,7 @@ func (ec *executionContext) _MeetingParticipant_userID(ctx context.Context, fiel
 	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _MeetingParticipant_organizer(ctx context.Context, field graphql.CollectedField, obj *MeetingParticipant) (ret graphql.Marshaler) {
+func (ec *executionContext) _MeetingParticipant_isOrganizer(ctx context.Context, field graphql.CollectedField, obj *MeetingParticipant) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -3858,7 +3856,7 @@ func (ec *executionContext) _MeetingParticipant_organizer(ctx context.Context, f
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Organizer, nil
+		return obj.IsOrganizer, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9339,21 +9337,15 @@ func (ec *executionContext) unmarshalInputCreateMeetingParticipantInput(ctx cont
 			if err != nil {
 				return it, err
 			}
-		case "email":
-			var err error
-			it.Email, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "confirmationCode":
 			var err error
 			it.ConfirmationCode, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-		case "organizer":
+		case "isOrganizer":
 			var err error
-			it.Organizer, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			it.IsOrganizer, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -10471,8 +10463,8 @@ func (ec *executionContext) _MeetingParticipant(ctx context.Context, sel ast.Sel
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "organizer":
-			out.Values[i] = ec._MeetingParticipant_organizer(ctx, field, obj)
+		case "isOrganizer":
+			out.Values[i] = ec._MeetingParticipant_isOrganizer(ctx, field, obj)
 		case "invitationID":
 			out.Values[i] = ec._MeetingParticipant_invitationID(ctx, field, obj)
 		default:

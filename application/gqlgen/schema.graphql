@@ -573,8 +573,6 @@ a new `User` will be created.
 input CreateMeetingParticipantInput {
     "ID of the `Meeting`"
     meetingID: ID!
-    "Email address of the invitee"
-    email: String!
     "Confirmation code from the `MeetingInvitation`. If not provided, the `Meeting` must be a non-private meeting."
     confirmationCode: String
     "Add as a `Meeting` Organizer. Authenticated `User` must be authorized [definition TBD] to do this. "

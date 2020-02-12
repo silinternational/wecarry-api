@@ -26,12 +26,10 @@ type CreateMeetingInvitationsInput struct {
 type CreateMeetingParticipantInput struct {
 	// ID of the `Meeting`
 	MeetingID string `json:"meetingID"`
-	// Email address of the invitee
-	Email string `json:"email"`
 	// Confirmation code from the `MeetingInvitation`. If not provided, the `Meeting` must be a non-private meeting.
 	ConfirmationCode *string `json:"confirmationCode"`
 	// Add as a `Meeting` Organizer. Authenticated `User` must be authorized [definition TBD] to do this.
-	Organizer *bool `json:"organizer"`
+	IsOrganizer *bool `json:"isOrganizer"`
 }
 
 type CreateMessageInput struct {
@@ -88,7 +86,7 @@ type MeetingParticipant struct {
 	// `User` ID of the `Meeting` participant
 	UserID string `json:"userID"`
 	// `User` is a meeting Organizer
-	Organizer *bool `json:"organizer"`
+	IsOrganizer *bool `json:"isOrganizer"`
 	// ID of the `MeetingInvitation`, valid if the participant was invited. `null` indicates the `User` self-joined
 	InvitationID *string `json:"invitationID"`
 }
