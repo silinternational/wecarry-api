@@ -1,0 +1,1 @@
+sql(`delete from post_histories where status = 'COMMITTED';`)

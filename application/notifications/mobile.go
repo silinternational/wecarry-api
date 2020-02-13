@@ -23,10 +23,6 @@ var templateData = map[string]msgTemplate{
 		subject: "new message", body: "You have a new message."},
 	domain.MessageTemplateNewRequest: {
 		subject: "new request", body: "There is a new request for an item from your location."},
-	domain.MessageTemplateRequestFromOpenToCommitted: {
-		subject: "potential provider", body: "Someone has offered to fulfill your request."},
-	domain.MessageTemplateRequestFromCommittedToAccepted: {
-		subject: "offer accepted", body: "The requester has accepted your offer."},
 }
 
 func (t *DummyMobileService) Send(msg Message) error {

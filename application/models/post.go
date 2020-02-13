@@ -61,7 +61,6 @@ type PostStatus string
 
 const (
 	PostStatusOpen      PostStatus = "OPEN"
-	PostStatusCommitted PostStatus = "COMMITTED"
 	PostStatusAccepted  PostStatus = "ACCEPTED"
 	PostStatusDelivered PostStatus = "DELIVERED"
 	PostStatusReceived  PostStatus = "RECEIVED"
@@ -114,26 +113,18 @@ func (e PostVisibility) MarshalGQL(w io.Writer) {
 func getStatusTransitions() map[PostStatus][]statusTransitionTarget {
 	return map[PostStatus][]statusTransitionTarget{
 		PostStatusOpen: {
-			{status: PostStatusCommitted},
-			{status: PostStatusRemoved},
-		},
-		PostStatusCommitted: {
-			{status: PostStatusOpen, isBackStep: true},
 			{status: PostStatusAccepted},
-			{status: PostStatusDelivered},
 			{status: PostStatusRemoved},
 		},
 		PostStatusAccepted: {
-			{status: PostStatusOpen},
-			{status: PostStatusCommitted, isBackStep: true}, // to correct a false acceptance
+			{status: PostStatusOpen, isBackStep: true}, // to correct a false acceptance
 			{status: PostStatusDelivered},
 			{status: PostStatusReceived},  // This transition is in here for later, in case one day it's not skippable
 			{status: PostStatusCompleted}, // For now, `DELIVERED` is not a required step
 			{status: PostStatusRemoved},
 		},
 		PostStatusDelivered: {
-			{status: PostStatusCommitted, isBackStep: true}, // to correct a false delivery
-			{status: PostStatusAccepted, isBackStep: true},  // to correct a false delivery
+			{status: PostStatusAccepted, isBackStep: true}, // to correct a false delivery
 			{status: PostStatusCompleted},
 		},
 		PostStatusReceived: {
@@ -188,7 +179,7 @@ func isTransitionBackStep(status1, status2 PostStatus) (bool, error) {
 
 func (e PostStatus) IsValid() bool {
 	switch e {
-	case PostStatusOpen, PostStatusCommitted, PostStatusAccepted, PostStatusDelivered, PostStatusReceived,
+	case PostStatusOpen, PostStatusAccepted, PostStatusDelivered, PostStatusReceived,
 		PostStatusCompleted, PostStatusRemoved:
 		return true
 	}
@@ -253,15 +244,16 @@ type Post struct {
 	MeetingID      nulls.Int      `json:"meeting_id" db:"meeting_id"`
 	Visibility     PostVisibility `json:"visibility" db:"visibility"`
 
-	CreatedBy    User          `belongs_to:"users"`
-	Organization Organization  `belongs_to:"organizations"`
-	Receiver     User          `belongs_to:"users"`
-	Provider     User          `belongs_to:"users"`
-	Files        PostFiles     `has_many:"post_files"`
-	Histories    PostHistories `has_many:"post_histories"`
-	PhotoFile    File          `belongs_to:"files"`
-	Destination  Location      `belongs_to:"locations"`
-	Origin       Location      `belongs_to:"locations"`
+	CreatedBy    User         `belongs_to:"users"`
+	Organization Organization `belongs_to:"organizations"`
+	Receiver     User         `belongs_to:"users"`
+	Provider     User         `belongs_to:"users"`
+
+	Files       PostFiles     `has_many:"post_files"`
+	Histories   PostHistories `has_many:"post_histories"`
+	PhotoFile   File          `belongs_to:"files"`
+	Destination Location      `belongs_to:"locations"`
+	Origin      Location      `belongs_to:"locations"`
 }
 
 // PostCreatedEventData holds data needed by the New Post event listener
@@ -315,12 +307,46 @@ func (p *Post) NewWithUser(pType PostType, currentUser User) error {
 	return nil
 }
 
-func (p *Post) SetProviderWithStatus(status PostStatus, currentUser User) {
+// SetProviderWithStatus sets the new Status of the Post and if needed it
+// also sets the ProviderID (i.e. when the new status is ACCEPTED)
+func (p *Post) SetProviderWithStatus(status PostStatus, providerID *string) error {
+	if p.Type == PostTypeRequest && status == PostStatusAccepted {
+		if providerID == nil {
+			return errors.New("provider ID must not be nil")
+		}
 
-	if p.Type == PostTypeRequest && status == PostStatusCommitted {
-		p.ProviderID = nulls.NewInt(currentUser.ID)
+		var user User
+
+		if err := user.FindByUUID(*providerID); err != nil {
+			return errors.New("error finding provider: " + err.Error())
+		}
+		p.ProviderID = nulls.NewInt(user.ID)
 	}
 	p.Status = status
+	return nil
+}
+
+// GetPotentialProviders returns the User objects associated with the Post's
+// PotentialProviders
+func (p *Post) GetPotentialProviders() (Users, error) {
+	if p.Type != PostTypeRequest {
+		return Users{}, nil
+	}
+
+	providers := PotentialProviders{}
+	users, err := providers.FindUsersByPostID(p.ID)
+	return users, err
+}
+
+// DestroyPotentialProviders destroys all the PotentialProvider records
+// associated with the Post if the Post's status is COMPLETED
+func (p *Post) DestroyPotentialProviders(status PostStatus, user User) error {
+	if p.Type != PostTypeRequest || status != PostStatusCompleted {
+		return nil
+	}
+
+	var pps PotentialProviders
+	return pps.DestroyAllWithPostUUID(p.UUID.String(), user)
 }
 
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
@@ -559,6 +585,18 @@ func (p *Post) FindByUUID(uuid string) error {
 	return nil
 }
 
+func (p *Post) FindByUUIDForCurrentUser(uuid string, user User) error {
+	if err := p.FindByUUID(uuid); err != nil {
+		return err
+	}
+
+	if !user.canViewPost(*p) {
+		return fmt.Errorf("unauthorized: user %v may not view post %v.", user.ID, p.ID)
+	}
+
+	return nil
+}
+
 func (p *Post) GetCreator() (*User, error) {
 	creator := User{}
 	if err := DB.Find(&creator, p.CreatedByID); err != nil {
@@ -678,6 +716,29 @@ func (p *Post) AttachPhoto(fileID string) (File, error) {
 	return f, nil
 }
 
+// RemovePhoto removes an attached photo from the Post
+func (p *Post) RemovePhoto() error {
+	if p.ID < 1 {
+		return fmt.Errorf("invalid Post ID %d", p.ID)
+	}
+
+	oldID := p.PhotoFileID
+	p.PhotoFileID = nulls.Int{}
+	if err := DB.UpdateColumns(p, "photo_file_id"); err != nil {
+		return err
+	}
+
+	if !oldID.Valid {
+		return nil
+	}
+
+	oldFile := File{ID: oldID.Int}
+	if err := oldFile.ClearLinked(); err != nil {
+		domain.ErrLogger.Printf("error marking old post photo file %d as unlinked, %s", oldFile.ID, err)
+	}
+	return nil
+}
+
 // GetPhoto retrieves the file attached as the Post photo
 func (p *Post) GetPhoto() (*File, error) {
 	if err := DB.Load(p, "PhotoFile"); err != nil {
@@ -730,6 +791,10 @@ func (p *Post) FindByUserAndUUID(ctx context.Context, user User, uuid string) er
 // FindByUser finds all posts visible to the current user. NOTE: at present, the posts are not sorted correctly; need
 // to find a better way to construct the query
 func (p *Posts) FindByUser(ctx context.Context, user User) error {
+	if user.ID == 0 {
+		return errors.New("invalid User ID in Posts.FindByUser")
+	}
+
 	q := DB.RawQuery(`
 	WITH o AS (
 		SELECT id FROM organizations WHERE id IN (
@@ -740,6 +805,8 @@ func (p *Posts) FindByUser(ctx context.Context, user User) error {
 	(
 		organization_id IN (SELECT id FROM o)
 		OR
+		visibility = ?
+		OR
 		organization_id IN (
 			SELECT id FROM organizations WHERE id IN (
 				SELECT secondary_id FROM organization_trusts WHERE primary_id IN (SELECT id FROM o)
@@ -747,7 +814,7 @@ func (p *Posts) FindByUser(ctx context.Context, user User) error {
 		) AND visibility IN (?, ?)
 	)
 	AND status not in (?, ?) ORDER BY created_at desc`,
-		user.ID, PostVisibilityAll, PostVisibilityTrusted, PostStatusRemoved, PostStatusCompleted)
+		user.ID, PostVisibilityAll, PostVisibilityAll, PostVisibilityTrusted, PostStatusRemoved, PostStatusCompleted)
 	if err := q.All(p); err != nil {
 		return fmt.Errorf("error finding posts for user %s, %s", user.UUID.String(), err)
 	}
@@ -789,6 +856,20 @@ func (p *Post) GetOrigin() (*Location, error) {
 	}
 
 	return &location, nil
+}
+
+// RemoveOrigin removes the origin from the post
+func (p *Post) RemoveOrigin() error {
+	if !p.OriginID.Valid {
+		return nil
+	}
+
+	if err := DB.Destroy(&Location{ID: p.OriginID.Int}); err != nil {
+		return err
+	}
+	p.OriginID = nulls.Int{}
+	// don't need to save the post because the database foreign key constraint is set to "ON DELETE SET NULL"
+	return nil
 }
 
 // SetDestination sets the destination location fields, creating a new record in the database if necessary.
@@ -838,7 +919,7 @@ func (p *Post) IsEditable(user User) (bool, error) {
 // isPostEditable defines at which states can posts be edited.
 func (p *Post) isPostEditable() bool {
 	switch p.Status {
-	case PostStatusOpen, PostStatusCommitted, PostStatusAccepted, PostStatusReceived, PostStatusDelivered:
+	case PostStatusOpen, PostStatusAccepted, PostStatusReceived, PostStatusDelivered:
 		return true
 	default:
 		return false
@@ -853,15 +934,23 @@ func (p *Post) canUserChangeStatus(user User, newStatus PostStatus) bool {
 	}
 
 	if p.CreatedByID == user.ID {
+		// Creator can't move off of Delivered except to Completed
+		if p.Status == PostStatusDelivered {
+			return newStatus == PostStatusCompleted
+		}
 		return true
 	}
 
 	switch p.Type {
 	case PostTypeRequest:
-		if p.Status == PostStatusOpen && newStatus == PostStatusCommitted {
+		if p.ProviderID.Int != user.ID {
+			return false
+		}
+		if newStatus == PostStatusDelivered {
 			return true
 		}
-		return newStatus == PostStatusDelivered && p.ProviderID.Int == user.ID
+		// for cancelling a DELIVERED status
+		return newStatus == PostStatusAccepted && p.Status == PostStatusDelivered
 	case PostTypeOffer:
 		return newStatus == PostStatusReceived && p.ReceiverID.Int == user.ID
 	}

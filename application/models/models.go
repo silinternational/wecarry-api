@@ -79,12 +79,12 @@ func ConvertStringPtrToNullsString(inPtr *string) nulls.String {
 // GetStringFromNullsString returns a pointer to make it easier for calling
 // functions to return a pointer without an extra line of code.
 func GetStringFromNullsString(inString nulls.String) *string {
-	output := ""
 	if inString.Valid {
-		output = inString.String
+		output := inString.String
+		return &output
 	}
 
-	return &output
+	return nil
 }
 
 // GetIntFromNullsInt returns a pointer to make it easier for calling
@@ -100,12 +100,12 @@ func GetIntFromNullsInt(in nulls.Int) *int {
 // GetStringFromNullsTime returns a pointer to a string that looks
 // like a date based on a nulls.Time value
 func GetStringFromNullsTime(inTime nulls.Time) *string {
-	var output string
 	if inTime.Valid {
-		output = inTime.Time.Format(domain.DateFormat)
+		output := inTime.Time.Format(domain.DateFormat)
+		return &output
 	}
 
-	return &output
+	return nil
 }
 
 func GetCurrentUserFromGqlContext(ctx context.Context) User {
