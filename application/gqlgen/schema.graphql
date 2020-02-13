@@ -1,4 +1,10 @@
 type Query {
+    """
+    NOT YET IMPLEMENTED --
+    Return the system configuration information, such as a list of AuthTypes
+    """
+    systemConfig: SystemConfig!
+
     users: [User!]!
     user(id: ID): User
 
@@ -115,7 +121,9 @@ type Mutation {
 
     """
     NOT YET IMPLEMENTED --
-    Confirm a `MeetingInvitation` and create a new `MeetingParticipant`
+    Validate a `MeetingInvitation` and create a new `MeetingParticipant`. If the `MeetingParticipant.User` contains
+    one or more `Organizations`, the user should be redirected to the standard login page. Otherwise, login should
+    proceed through one of the configured `AuthType`s described by the `systemConfig` query.
     """
     createMeetingParticipant(input: CreateMeetingParticipantInput!): MeetingParticipant!
 
@@ -548,7 +556,7 @@ input RemoveMeetingInvitationInput {
     "ID of the `Meeting`"
     meetingID: ID!
     "Email addresse of the invitee to remove"
-    emails: String!
+    email: String!
 }
 
 """
@@ -556,11 +564,10 @@ Confirmed participant of a `Meeting`. An invited person will not appear as a `Me
 confirmed a `MeetingInvitation`.
 """
 type MeetingParticipant {
-    "ID of the `Meeting`"
-    meetingID: ID!
-    "`User` ID of the `Meeting` participant"
-    userID: ID!
-    "`User` is a meeting Organizer"
+    meeting: Meeting!
+    "`User` information for the `Meeting` participant"
+    user: User!
+    "true if `User` is a meeting Organizer"
     isOrganizer: Boolean
     "ID of the `MeetingInvitation`, valid if the participant was invited. `null` indicates the `User` self-joined"
     invitationID: ID
@@ -587,4 +594,26 @@ input RemoveMeetingParticipantInput {
     meetingID: ID!
     "`User` ID of the `Meeting` participant to remove"
     userID: ID!
+}
+
+"""
+NOT YET IMPLEMENTED --
+System configuration information
+"""
+type SystemConfig {
+    "Authentication type for login outside the context of an `Organization`, such as for `Meeting` participants"
+    authTypes: [AuthType!]!
+}
+
+"""
+NOT YET IMPLEMENTED --
+Authentication type for login outside the context of an `Organization`, such as for `Meeting` participants
+"""
+type AuthType {
+    "Display name of the auth type. e.g. 'Facebook'"
+    name: String!
+    "Fully-qualified login URL for the auth type"
+    loginURL: String!
+    "Logo for user selection of login method"
+    logo: File
 }

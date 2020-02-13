@@ -54,6 +54,12 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	AuthType struct {
+		LoginURL func(childComplexity int) int
+		Logo     func(childComplexity int) int
+		Name     func(childComplexity int) int
+	}
+
 	File struct {
 		ContentType   func(childComplexity int) int
 		ID            func(childComplexity int) int
@@ -98,8 +104,8 @@ type ComplexityRoot struct {
 	MeetingParticipant struct {
 		InvitationID func(childComplexity int) int
 		IsOrganizer  func(childComplexity int) int
-		MeetingID    func(childComplexity int) int
-		UserID       func(childComplexity int) int
+		Meeting      func(childComplexity int) int
+		User         func(childComplexity int) int
 	}
 
 	Message struct {
@@ -198,9 +204,14 @@ type ComplexityRoot struct {
 		Posts          func(childComplexity int, destination *LocationInput, origin *LocationInput, searchText *string) int
 		RecentMeetings func(childComplexity int) int
 		SearchRequests func(childComplexity int, text string) int
+		SystemConfig   func(childComplexity int) int
 		Threads        func(childComplexity int) int
 		User           func(childComplexity int, id *string) int
 		Users          func(childComplexity int) int
+	}
+
+	SystemConfig struct {
+		AuthTypes func(childComplexity int) int
 	}
 
 	Thread struct {
@@ -331,6 +342,7 @@ type PostResolver interface {
 	IsEditable(ctx context.Context, obj *models.Post) (bool, error)
 }
 type QueryResolver interface {
+	SystemConfig(ctx context.Context) (*SystemConfig, error)
 	Users(ctx context.Context) ([]models.User, error)
 	User(ctx context.Context, id *string) (*models.User, error)
 	Posts(ctx context.Context, destination *LocationInput, origin *LocationInput, searchText *string) ([]models.Post, error)
@@ -386,6 +398,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "AuthType.loginURL":
+		if e.complexity.AuthType.LoginURL == nil {
+			break
+		}
+
+		return e.complexity.AuthType.LoginURL(childComplexity), true
+
+	case "AuthType.logo":
+		if e.complexity.AuthType.Logo == nil {
+			break
+		}
+
+		return e.complexity.AuthType.Logo(childComplexity), true
+
+	case "AuthType.name":
+		if e.complexity.AuthType.Name == nil {
+			break
+		}
+
+		return e.complexity.AuthType.Name(childComplexity), true
 
 	case "File.contentType":
 		if e.complexity.File.ContentType == nil {
@@ -604,19 +637,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.MeetingParticipant.IsOrganizer(childComplexity), true
 
-	case "MeetingParticipant.meetingID":
-		if e.complexity.MeetingParticipant.MeetingID == nil {
+	case "MeetingParticipant.meeting":
+		if e.complexity.MeetingParticipant.Meeting == nil {
 			break
 		}
 
-		return e.complexity.MeetingParticipant.MeetingID(childComplexity), true
+		return e.complexity.MeetingParticipant.Meeting(childComplexity), true
 
-	case "MeetingParticipant.userID":
-		if e.complexity.MeetingParticipant.UserID == nil {
+	case "MeetingParticipant.user":
+		if e.complexity.MeetingParticipant.User == nil {
 			break
 		}
 
-		return e.complexity.MeetingParticipant.UserID(childComplexity), true
+		return e.complexity.MeetingParticipant.User(childComplexity), true
 
 	case "Message.content":
 		if e.complexity.Message.Content == nil {
@@ -1302,6 +1335,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.SearchRequests(childComplexity, args["text"].(string)), true
 
+	case "Query.systemConfig":
+		if e.complexity.Query.SystemConfig == nil {
+			break
+		}
+
+		return e.complexity.Query.SystemConfig(childComplexity), true
+
 	case "Query.threads":
 		if e.complexity.Query.Threads == nil {
 			break
@@ -1327,6 +1367,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Users(childComplexity), true
+
+	case "SystemConfig.authTypes":
+		if e.complexity.SystemConfig.AuthTypes == nil {
+			break
+		}
+
+		return e.complexity.SystemConfig.AuthTypes(childComplexity), true
 
 	case "Thread.createdAt":
 		if e.complexity.Thread.CreatedAt == nil {
@@ -1585,6 +1632,12 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 
 var parsedSchema = gqlparser.MustLoadSchema(
 	&ast.Source{Name: "schema.graphql", Input: `type Query {
+    """
+    NOT YET IMPLEMENTED --
+    Return the system configuration information, such as a list of AuthTypes
+    """
+    systemConfig: SystemConfig!
+
     users: [User!]!
     user(id: ID): User
 
@@ -1701,7 +1754,9 @@ type Mutation {
 
     """
     NOT YET IMPLEMENTED --
-    Confirm a ` + "`" + `MeetingInvitation` + "`" + ` and create a new ` + "`" + `MeetingParticipant` + "`" + `
+    Validate a ` + "`" + `MeetingInvitation` + "`" + ` and create a new ` + "`" + `MeetingParticipant` + "`" + `. If the ` + "`" + `MeetingParticipant.User` + "`" + ` contains
+    one or more ` + "`" + `Organizations` + "`" + `, the user should be redirected to the standard login page. Otherwise, login should
+    proceed through one of the configured ` + "`" + `AuthType` + "`" + `s described by the ` + "`" + `systemConfig` + "`" + ` query.
     """
     createMeetingParticipant(input: CreateMeetingParticipantInput!): MeetingParticipant!
 
@@ -2134,7 +2189,7 @@ input RemoveMeetingInvitationInput {
     "ID of the ` + "`" + `Meeting` + "`" + `"
     meetingID: ID!
     "Email addresse of the invitee to remove"
-    emails: String!
+    email: String!
 }
 
 """
@@ -2142,11 +2197,10 @@ Confirmed participant of a ` + "`" + `Meeting` + "`" + `. An invited person will
 confirmed a ` + "`" + `MeetingInvitation` + "`" + `.
 """
 type MeetingParticipant {
-    "ID of the ` + "`" + `Meeting` + "`" + `"
-    meetingID: ID!
-    "` + "`" + `User` + "`" + ` ID of the ` + "`" + `Meeting` + "`" + ` participant"
-    userID: ID!
-    "` + "`" + `User` + "`" + ` is a meeting Organizer"
+    meeting: Meeting!
+    "` + "`" + `User` + "`" + ` information for the ` + "`" + `Meeting` + "`" + ` participant"
+    user: User!
+    "true if ` + "`" + `User` + "`" + ` is a meeting Organizer"
     isOrganizer: Boolean
     "ID of the ` + "`" + `MeetingInvitation` + "`" + `, valid if the participant was invited. ` + "`" + `null` + "`" + ` indicates the ` + "`" + `User` + "`" + ` self-joined"
     invitationID: ID
@@ -2173,6 +2227,28 @@ input RemoveMeetingParticipantInput {
     meetingID: ID!
     "` + "`" + `User` + "`" + ` ID of the ` + "`" + `Meeting` + "`" + ` participant to remove"
     userID: ID!
+}
+
+"""
+NOT YET IMPLEMENTED --
+System configuration information
+"""
+type SystemConfig {
+    "Authentication type for login outside the context of an ` + "`" + `Organization` + "`" + `, such as for ` + "`" + `Meeting` + "`" + ` participants"
+    authTypes: [AuthType!]!
+}
+
+"""
+NOT YET IMPLEMENTED --
+Authentication type for login outside the context of an ` + "`" + `Organization` + "`" + `, such as for ` + "`" + `Meeting` + "`" + ` participants
+"""
+type AuthType {
+    "Display name of the auth type. e.g. 'Facebook'"
+    name: String!
+    "Fully-qualified login URL for the auth type"
+    loginURL: String!
+    "Logo for user selection of login method"
+    logo: File
 }
 `},
 )
@@ -2704,6 +2780,114 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _AuthType_name(ctx context.Context, field graphql.CollectedField, obj *AuthType) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "AuthType",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _AuthType_loginURL(ctx context.Context, field graphql.CollectedField, obj *AuthType) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "AuthType",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LoginURL, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _AuthType_logo(ctx context.Context, field graphql.CollectedField, obj *AuthType) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "AuthType",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Logo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*models.File)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOFile2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐFile(ctx, field.Selections, res)
+}
 
 func (ec *executionContext) _File_id(ctx context.Context, field graphql.CollectedField, obj *models.File) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
@@ -3763,7 +3947,7 @@ func (ec *executionContext) _MeetingInvitation_avatarURL(ctx context.Context, fi
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _MeetingParticipant_meetingID(ctx context.Context, field graphql.CollectedField, obj *MeetingParticipant) (ret graphql.Marshaler) {
+func (ec *executionContext) _MeetingParticipant_meeting(ctx context.Context, field graphql.CollectedField, obj *MeetingParticipant) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -3782,7 +3966,7 @@ func (ec *executionContext) _MeetingParticipant_meetingID(ctx context.Context, f
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.MeetingID, nil
+		return obj.Meeting, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3794,13 +3978,13 @@ func (ec *executionContext) _MeetingParticipant_meetingID(ctx context.Context, f
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*models.Meeting)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNMeeting2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeeting(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _MeetingParticipant_userID(ctx context.Context, field graphql.CollectedField, obj *MeetingParticipant) (ret graphql.Marshaler) {
+func (ec *executionContext) _MeetingParticipant_user(ctx context.Context, field graphql.CollectedField, obj *MeetingParticipant) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -3819,7 +4003,7 @@ func (ec *executionContext) _MeetingParticipant_userID(ctx context.Context, fiel
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.UserID, nil
+		return obj.User, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3831,10 +4015,10 @@ func (ec *executionContext) _MeetingParticipant_userID(ctx context.Context, fiel
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*models.User)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _MeetingParticipant_isOrganizer(ctx context.Context, field graphql.CollectedField, obj *MeetingParticipant) (ret graphql.Marshaler) {
@@ -6462,6 +6646,43 @@ func (ec *executionContext) _PublicProfile_avatarURL(ctx context.Context, field 
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Query_systemConfig(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().SystemConfig(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*SystemConfig)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNSystemConfig2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐSystemConfig(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query_users(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -7100,6 +7321,43 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalO__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _SystemConfig_authTypes(ctx context.Context, field graphql.CollectedField, obj *SystemConfig) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "SystemConfig",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AuthTypes, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]AuthType)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNAuthType2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐAuthType(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Thread_id(ctx context.Context, field graphql.CollectedField, obj *models.Thread) (ret graphql.Marshaler) {
@@ -9643,9 +9901,9 @@ func (ec *executionContext) unmarshalInputRemoveMeetingInvitationInput(ctx conte
 			if err != nil {
 				return it, err
 			}
-		case "emails":
+		case "email":
 			var err error
-			it.Emails, err = ec.unmarshalNString2string(ctx, v)
+			it.Email, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -10089,6 +10347,40 @@ func (ec *executionContext) unmarshalInputUpdateWatchInput(ctx context.Context, 
 
 // region    **************************** object.gotpl ****************************
 
+var authTypeImplementors = []string{"AuthType"}
+
+func (ec *executionContext) _AuthType(ctx context.Context, sel ast.SelectionSet, obj *AuthType) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.RequestContext, sel, authTypeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AuthType")
+		case "name":
+			out.Values[i] = ec._AuthType_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "loginURL":
+			out.Values[i] = ec._AuthType_loginURL(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "logo":
+			out.Values[i] = ec._AuthType_logo(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var fileImplementors = []string{"File"}
 
 func (ec *executionContext) _File(ctx context.Context, sel ast.SelectionSet, obj *models.File) graphql.Marshaler {
@@ -10453,13 +10745,13 @@ func (ec *executionContext) _MeetingParticipant(ctx context.Context, sel ast.Sel
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("MeetingParticipant")
-		case "meetingID":
-			out.Values[i] = ec._MeetingParticipant_meetingID(ctx, field, obj)
+		case "meeting":
+			out.Values[i] = ec._MeetingParticipant_meeting(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "userID":
-			out.Values[i] = ec._MeetingParticipant_userID(ctx, field, obj)
+		case "user":
+			out.Values[i] = ec._MeetingParticipant_user(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -11145,6 +11437,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
+		case "systemConfig":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_systemConfig(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "users":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -11336,6 +11642,33 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Values[i] = ec._Query___type(ctx, field)
 		case "__schema":
 			out.Values[i] = ec._Query___schema(ctx, field)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var systemConfigImplementors = []string{"SystemConfig"}
+
+func (ec *executionContext) _SystemConfig(ctx context.Context, sel ast.SelectionSet, obj *SystemConfig) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.RequestContext, sel, systemConfigImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SystemConfig")
+		case "authTypes":
+			out.Values[i] = ec._SystemConfig_authTypes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -11943,6 +12276,47 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 // endregion **************************** object.gotpl ****************************
 
 // region    ***************************** type.gotpl *****************************
+
+func (ec *executionContext) marshalNAuthType2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐAuthType(ctx context.Context, sel ast.SelectionSet, v AuthType) graphql.Marshaler {
+	return ec._AuthType(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAuthType2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐAuthType(ctx context.Context, sel ast.SelectionSet, v []AuthType) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		rctx := &graphql.ResolverContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNAuthType2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐAuthType(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
 
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	return graphql.UnmarshalBoolean(v)
@@ -12706,6 +13080,20 @@ func (ec *executionContext) marshalNString2ᚖstring(ctx context.Context, sel as
 		return graphql.Null
 	}
 	return ec.marshalNString2string(ctx, sel, *v)
+}
+
+func (ec *executionContext) marshalNSystemConfig2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐSystemConfig(ctx context.Context, sel ast.SelectionSet, v SystemConfig) graphql.Marshaler {
+	return ec._SystemConfig(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNSystemConfig2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐSystemConfig(ctx context.Context, sel ast.SelectionSet, v *SystemConfig) graphql.Marshaler {
+	if v == nil {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._SystemConfig(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNThread2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐThread(ctx context.Context, sel ast.SelectionSet, v models.Thread) graphql.Marshaler {

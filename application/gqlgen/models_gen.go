@@ -11,6 +11,17 @@ import (
 	"github.com/silinternational/wecarry-api/models"
 )
 
+// NOT YET IMPLEMENTED --
+// Authentication type for login outside the context of an `Organization`, such as for `Meeting` participants
+type AuthType struct {
+	// Display name of the auth type. e.g. 'Facebook'
+	Name string `json:"name"`
+	// Fully-qualified login URL for the auth type
+	LoginURL string `json:"loginURL"`
+	// Logo for user selection of login method
+	Logo *models.File `json:"logo"`
+}
+
 // Bulk create `MeetingInvitation`s.
 type CreateMeetingInvitationsInput struct {
 	// ID of the `Meeting`
@@ -81,11 +92,10 @@ type MeetingInvitation struct {
 // Confirmed participant of a `Meeting`. An invited person will not appear as a `MeetingParticipant` until they have
 // confirmed a `MeetingInvitation`.
 type MeetingParticipant struct {
-	// ID of the `Meeting`
-	MeetingID string `json:"meetingID"`
-	// `User` ID of the `Meeting` participant
-	UserID string `json:"userID"`
-	// `User` is a meeting Organizer
+	Meeting *models.Meeting `json:"meeting"`
+	// `User` information for the `Meeting` participant
+	User *models.User `json:"user"`
+	// true if `User` is a meeting Organizer
 	IsOrganizer *bool `json:"isOrganizer"`
 	// ID of the `MeetingInvitation`, valid if the participant was invited. `null` indicates the `User` self-joined
 	InvitationID *string `json:"invitationID"`
@@ -103,7 +113,7 @@ type RemoveMeetingInvitationInput struct {
 	// ID of the `Meeting`
 	MeetingID string `json:"meetingID"`
 	// Email addresse of the invitee to remove
-	Emails string `json:"emails"`
+	Email string `json:"email"`
 }
 
 // Remove a `MeetingParticipant`.
@@ -131,6 +141,13 @@ type RemoveWatchInput struct {
 type SetThreadLastViewedAtInput struct {
 	ThreadID string    `json:"threadID"`
 	Time     time.Time `json:"time"`
+}
+
+// NOT YET IMPLEMENTED --
+// System configuration information
+type SystemConfig struct {
+	// Authentication type for login outside the context of an `Organization`, such as for `Meeting` participants
+	AuthTypes []AuthType `json:"authTypes"`
 }
 
 type UpdateOrganizationInput struct {
