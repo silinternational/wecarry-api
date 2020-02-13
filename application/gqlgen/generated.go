@@ -1761,6 +1761,7 @@ type Mutation {
     Validate a ` + "`" + `MeetingInvitation` + "`" + ` and create a new ` + "`" + `MeetingParticipant` + "`" + `. If the ` + "`" + `MeetingParticipant.User` + "`" + ` contains
     one or more ` + "`" + `Organizations` + "`" + `, the user should be redirected to the standard login page. Otherwise, login should
     proceed through one of the configured ` + "`" + `AuthType` + "`" + `s described by the ` + "`" + `systemConfig` + "`" + ` query.
+    If the ` + "`" + `Meeting` + "`" + ` is not private, no ` + "`" + `MeetingInvitation` + "`" + ` is needed and the ` + "`" + `confirmationCode` + "`" + ` may be omitted.
     """
     createMeetingParticipant(input: CreateMeetingParticipantInput!): MeetingParticipant!
 
