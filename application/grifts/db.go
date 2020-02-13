@@ -7,6 +7,7 @@ import (
 	"github.com/gobuffalo/nulls"
 	"github.com/gofrs/uuid"
 	"github.com/markbates/grift/grift"
+
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 )
@@ -179,6 +180,24 @@ var _ = grift.Namespace("db", func() {
 				Country:     "CA",
 				Latitude:    nulls.NewFloat64(43.6532),
 				Longitude:   nulls.NewFloat64(-79.3832),
+			},
+			{
+				Description: "Nairobi, Kenya",
+				Country:     "KE",
+				Latitude:    nulls.NewFloat64(-1.2921),
+				Longitude:   nulls.NewFloat64(36.8219),
+			},
+			{
+				Description: "Brasília, Brazil",
+				Country:     "BR",
+				Latitude:    nulls.NewFloat64(-15.8267),
+				Longitude:   nulls.NewFloat64(-47.9218),
+			},
+			{
+				Description: "Chiang Mai, Thailand",
+				Country:     "TH",
+				Latitude:    nulls.NewFloat64(18.7953),
+				Longitude:   nulls.NewFloat64(98.9620),
 			},
 		}
 
@@ -379,6 +398,47 @@ var _ = grift.Namespace("db", func() {
 			err := models.DB.Create(fixtureMessages[i])
 			if err != nil {
 				err = fmt.Errorf("error loading message fixture ... %+v\n %v", message, err.Error())
+				return err
+			}
+		}
+
+		// MEETINGS Table
+		meetingUUID1, _ := uuid.FromString("4a747184-7c7e-426f-a1fc-c310428f3d8d")
+		meetingUUID2, _ := uuid.FromString("48b9279f-d31f-41f5-8926-c5231c278aaa")
+		meetingUUID3, _ := uuid.FromString("7beac887-a03f-436f-addb-16a2e2880d67")
+		fixtureMeetings := []*models.Meeting{
+			{
+				UUID:        meetingUUID1,
+				CreatedByID: fixtureUsers[0].ID,
+				Name:        "IT Connect / ICCM",
+				MoreInfoURL: nulls.NewString("https://iccm.africa"),
+				LocationID:  fixtureLocations[5].ID,
+				StartDate:   time.Date(2020, 3, 15, 0, 0, 0, 0, time.UTC),
+				EndDate:     time.Date(2020, 3, 21, 0, 0, 0, 0, time.UTC),
+			},
+			{
+				UUID:        meetingUUID2,
+				CreatedByID: fixtureUsers[0].ID,
+				Name:        "The Send Brazil",
+				MoreInfoURL: nulls.NewString("http://thesend.org.br/en-2/"),
+				LocationID:  fixtureLocations[6].ID,
+				StartDate:   time.Date(2021, 2, 8, 0, 0, 0, 0, time.UTC),
+				EndDate:     time.Date(2021, 2, 8, 0, 0, 0, 0, time.UTC),
+			},
+			{
+				UUID:        meetingUUID3,
+				CreatedByID: fixtureUsers[4].ID,
+				Name:        "ICON20",
+				LocationID:  fixtureLocations[7].ID,
+				StartDate:   time.Date(2020, 4, 4, 0, 0, 0, 0, time.UTC),
+				EndDate:     time.Date(2020, 4, 9, 0, 0, 0, 0, time.UTC),
+			},
+		}
+
+		for i, meeting := range fixtureMeetings {
+			err := models.DB.Create(fixtureMeetings[i])
+			if err != nil {
+				err = fmt.Errorf("error loading meeting fixture ... %+v\n %v", meeting, err.Error())
 				return err
 			}
 		}
