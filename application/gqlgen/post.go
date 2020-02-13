@@ -107,13 +107,22 @@ func (r *postResolver) Description(ctx context.Context, obj *models.Post) (*stri
 	return models.GetStringFromNullsString(obj.Description), nil
 }
 
-// NeededBefore resolves the `neededBefore` property of the post query, converting a nulls.Time to a *time.Time.
+// NeededBefore resolves the `neededBefore` property of the post query, converting a nulls.Time to a *string.
 func (r *postResolver) NeededBefore(ctx context.Context, obj *models.Post) (*string, error) {
 	if obj == nil {
 		return nil, nil
 	}
 
 	return models.GetStringFromNullsTime(obj.NeededBefore), nil
+}
+
+// CompletedOn resolves the `completedOn` property of the post query, converting a nulls.Time to a *string.
+func (r *postResolver) CompletedOn(ctx context.Context, obj *models.Post) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+
+	return models.GetStringFromNullsTime(obj.CompletedOn), nil
 }
 
 // Destination resolves the `destination` property of the post query, retrieving the related record from the database.
