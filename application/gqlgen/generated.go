@@ -1935,7 +1935,10 @@ type Meeting {
     imageFile: File
     location: Location!
 
-    "Posts (Requests) associated with the meeting"
+    """
+    NOT YET IMPLEMENTED --
+    Posts (Requests) associated with the meeting
+    """
     posts: [Post!]!
 
     """
