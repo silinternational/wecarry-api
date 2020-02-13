@@ -864,20 +864,17 @@ func (ms *ModelSuite) TestPost_manageStatusTransition_forwardProgression() {
 		newStatus       PostStatus
 		providerID      nulls.Int
 		wantCompletedOn bool
-		wantErr         string
 	}{
 		{
 			name:      "open to open - no change",
 			post:      f.Posts[0],
 			newStatus: PostStatusOpen,
-			wantErr:   "",
 		},
 		{
 			name:       "open to accepted - new history with provider",
 			post:       f.Posts[0],
 			newStatus:  PostStatusAccepted,
 			providerID: nulls.NewInt(f.Users[1].ID),
-			wantErr:    "",
 		},
 		{
 			name:            "accepted to completed - CompletedOn added",
@@ -896,14 +893,12 @@ func (ms *ModelSuite) TestPost_manageStatusTransition_forwardProgression() {
 			post:       f.Posts[0],
 			newStatus:  PostStatusAccepted,
 			providerID: nulls.NewInt(f.Users[1].ID),
-			wantErr:    "",
 		},
 		{
 			name:       "get error",
 			post:       f.Posts[1],
 			newStatus:  "BadStatus",
 			providerID: f.Posts[1].ProviderID,
-			wantErr:    "invalid status transition from ACCEPTED to BadStatus",
 		},
 	}
 
@@ -912,11 +907,6 @@ func (ms *ModelSuite) TestPost_manageStatusTransition_forwardProgression() {
 			test.post.Status = test.newStatus
 			test.post.ProviderID = test.providerID
 			err := test.post.manageStatusTransition()
-			if test.wantErr != "" {
-				ms.Error(err)
-				ms.Contains(err.Error(), test.wantErr, "unexpected error message")
-				return
-			}
 			ms.NoError(err)
 
 			ph := PostHistory{}
@@ -948,39 +938,32 @@ func (ms *ModelSuite) TestPost_manageStatusTransition_backwardProgression() {
 		wantCompletedOn bool
 		wantErr         string
 	}{
-		//{
-		//	name:       "accepted to accepted - no change",
-		//	post:       f.Posts[0],
-		//	newStatus:  PostStatusAccepted,
-		//	providerID: f.Posts[0].ProviderID,
-		//	wantErr:    "",
-		//},
-		//{
-		//	name:       "accepted to open",
-		//	post:       f.Posts[0],
-		//	newStatus:  PostStatusOpen,
-		//	providerID: nulls.Int{},
-		//	wantErr:    "",
-		//},
-		//{
-		//	name:            "completed to removed - CompletedOn Saved",
-		//	post:            f.Posts[2],
-		//	newStatus:       PostStatusRemoved,
-		//	providerID:      f.Posts[2].ProviderID,
-		//	wantCompletedOn: true,
-		//},
-		//{
-		//	name:            "completed to accepted - CompletedOn Dropped",
-		//	post:            f.Posts[3],
-		//	newStatus:       PostStatusAccepted,
-		//	providerID:      f.Posts[3].ProviderID,
-		//	wantCompletedOn: false,
-		//},
+		{
+			name:       "accepted to accepted - no change",
+			post:       f.Posts[0],
+			newStatus:  PostStatusAccepted,
+			providerID: f.Posts[0].ProviderID,
+			wantErr:    "",
+		},
+		{
+			name:       "accepted to open",
+			post:       f.Posts[1],
+			newStatus:  PostStatusOpen,
+			providerID: nulls.Int{},
+			wantErr:    "",
+		},
+		{
+			name:            "completed to accepted - CompletedOn Dropped",
+			post:            f.Posts[2],
+			newStatus:       PostStatusAccepted,
+			providerID:      f.Posts[2].ProviderID,
+			wantCompletedOn: false,
+		},
 		{
 			name:            "completed to delivered - CompletedOn Dropped",
-			post:            f.Posts[4],
+			post:            f.Posts[3],
 			newStatus:       PostStatusDelivered,
-			providerID:      f.Posts[4].ProviderID,
+			providerID:      f.Posts[3].ProviderID,
 			wantCompletedOn: false,
 		},
 	}
@@ -989,7 +972,6 @@ func (ms *ModelSuite) TestPost_manageStatusTransition_backwardProgression() {
 		t.Run(test.name, func(t *testing.T) {
 			test.post.Status = test.newStatus
 			test.post.ProviderID = test.providerID
-			println("aaaaaaaa")
 			err := test.post.manageStatusTransition()
 			if test.wantErr != "" {
 				ms.Error(err)

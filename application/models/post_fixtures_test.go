@@ -93,21 +93,19 @@ func createFixturesForTestPost_manageStatusTransition_forwardProgression(ms *Mod
 	posts[1].ProviderID = nulls.NewInt(users[0].ID)
 	ms.NoError(ms.DB.Save(&posts[1]))
 
+	// Give the last Post an intermediate PostHistory
+	pHistory := PostHistory{
+		Status: PostStatusAccepted,
+		PostID: posts[3].ID,
+	}
+	mustCreate(ms.DB, &pHistory)
+
 	// Give these new statuses while by-passing the status transition validation
 	for i, status := range [2]PostStatus{PostStatusAccepted, PostStatusDelivered} {
 		id := i + 2
+
 		posts[id].Status = status
-		err := DB.RawQuery(
-			fmt.Sprintf(`UPDATE posts set status = '%s' where ID = %v`, status, posts[id].ID)).Exec()
-		ms.NoError(err, "unexpected error creating post fixture")
-
-		// Artificially add in a PostHistory as if it had already happened
-		pHistory := PostHistory{
-			Status: status,
-			PostID: posts[id].ID,
-		}
-		mustCreate(ms.DB, &pHistory)
-
+		ms.NoError(ms.DB.Save(&posts[id]))
 	}
 
 	return PostFixtures{
@@ -120,7 +118,9 @@ func createFixturesForTestPost_manageStatusTransition_backwardProgression(ms *Mo
 	uf := createUserFixtures(ms.DB, 2)
 	users := uf.Users
 
-	posts := createPostFixtures(ms.DB, 5, 0, false)
+	posts := createPostFixtures(ms.DB, 4, 0, false)
+
+	// Put the first two posts into ACCEPTED status (also give them matching PostHistory entries)
 	posts[0].Status = PostStatusAccepted
 	posts[0].CreatedByID = users[0].ID
 	posts[0].ProviderID = nulls.NewInt(users[1].ID)
@@ -129,41 +129,29 @@ func createFixturesForTestPost_manageStatusTransition_backwardProgression(ms *Mo
 	posts[1].ProviderID = nulls.NewInt(users[0].ID)
 	ms.NoError(ms.DB.Save(&posts))
 
-	// Give these new statuses while by-passing the status transition validation
-	for i, status := range [3]PostStatus{PostStatusAccepted, PostStatusAccepted, PostStatusDelivered} {
-		id := i + 2
-		posts[id].Status = status
-		posts[id].CompletedOn = nulls.NewTime(time.Now())
-		posts[id].ProviderID = nulls.NewInt(users[1].ID)
-		err := DB.RawQuery(
-			fmt.Sprintf(`UPDATE posts set status = '%s' where ID = %v`, status, posts[id].ID)).Exec()
-		ms.NoError(err, "unexpected error creating post fixture")
+	// add in a PostHistory entry as if it had already happened
+	pHistory := PostHistory{
+		Status:     PostStatusAccepted,
+		PostID:     posts[2].ID,
+		ReceiverID: nulls.NewInt(users[0].ID),
+		ProviderID: nulls.NewInt(users[1].ID),
+	}
+	mustCreate(ms.DB, &pHistory)
 
-		// Artificially add in two PostHistory entries as if they had already happened
-		pHistory := PostHistory{
-			Status:     status,
-			PostID:     posts[id].ID,
-			ReceiverID: nulls.NewInt(users[0].ID),
-			ProviderID: nulls.NewInt(users[1].ID),
-		}
-		mustCreate(ms.DB, &pHistory)
+	pHistory = PostHistory{
+		Status:     PostStatusDelivered,
+		PostID:     posts[3].ID,
+		ReceiverID: nulls.NewInt(users[0].ID),
+		ProviderID: nulls.NewInt(users[1].ID),
+	}
+	mustCreate(ms.DB, &pHistory)
 
-		pHistory = PostHistory{
-			Status:     PostStatusCompleted,
-			PostID:     posts[id].ID,
-			ReceiverID: nulls.NewInt(users[0].ID),
-			ProviderID: nulls.NewInt(users[1].ID),
-		}
-		mustCreate(ms.DB, &pHistory)
-
-		pHistory = PostHistory{
-			Status:     status,
-			PostID:     posts[id].ID,
-			ReceiverID: nulls.NewInt(users[0].ID),
-			ProviderID: nulls.NewInt(users[1].ID),
-		}
-		mustCreate(ms.DB, &pHistory)
-
+	for i := 2; i < 4; i++ {
+		// AfterUpdate creates the new PostHistory for this status
+		posts[i].Status = PostStatusCompleted
+		posts[i].CompletedOn = nulls.NewTime(time.Now())
+		posts[i].ProviderID = nulls.NewInt(users[1].ID)
+		ms.NoError(ms.DB.Save(&posts[i]))
 	}
 
 	return PostFixtures{

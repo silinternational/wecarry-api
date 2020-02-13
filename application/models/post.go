@@ -173,8 +173,8 @@ func isTransitionBackStep(status1, status2 PostStatus) (bool, error) {
 			return target.isBackStep, nil
 		}
 	}
-
-	return false, fmt.Errorf("invalid status transition from %s to %s", status1, status2)
+	// Not worrying about invalid transitions, since this is called by AfterUpdate
+	return false, nil
 }
 
 func (e PostStatus) IsValid() bool {
@@ -470,7 +470,6 @@ func (p *Post) manageStatusTransition() error {
 	if p.Status == "" {
 		return nil
 	}
-
 	lastPostHistory := PostHistory{}
 	if err := lastPostHistory.getLastForPost(*p); err != nil {
 		return err
@@ -486,7 +485,6 @@ func (p *Post) manageStatusTransition() error {
 		return err
 	}
 
-	fmt.Printf("\nAAAAAAA %v %v, %v, %v", isBackStep, lastPostHistory.Status, lastPostHistory.ReceiverID, p.Status)
 	var pH PostHistory
 	if isBackStep {
 		err = pH.popForPost(*p, lastStatus)
@@ -494,7 +492,6 @@ func (p *Post) manageStatusTransition() error {
 		err = pH.createForPost(*p)
 	}
 
-	fmt.Printf("\nBBBBBBBBBB %v\n", p.Status)
 	if err != nil {
 		return err
 	}
