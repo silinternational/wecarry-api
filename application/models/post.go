@@ -716,6 +716,29 @@ func (p *Post) AttachPhoto(fileID string) (File, error) {
 	return f, nil
 }
 
+// RemovePhoto removes an attached photo from the Post
+func (p *Post) RemovePhoto() error {
+	if p.ID < 1 {
+		return fmt.Errorf("invalid Post ID %d", p.ID)
+	}
+
+	oldID := p.PhotoFileID
+	p.PhotoFileID = nulls.Int{}
+	if err := DB.UpdateColumns(p, "photo_file_id"); err != nil {
+		return err
+	}
+
+	if !oldID.Valid {
+		return nil
+	}
+
+	oldFile := File{ID: oldID.Int}
+	if err := oldFile.ClearLinked(); err != nil {
+		domain.ErrLogger.Printf("error marking old post photo file %d as unlinked, %s", oldFile.ID, err)
+	}
+	return nil
+}
+
 // GetPhoto retrieves the file attached as the Post photo
 func (p *Post) GetPhoto() (*File, error) {
 	if err := DB.Load(p, "PhotoFile"); err != nil {
@@ -833,6 +856,20 @@ func (p *Post) GetOrigin() (*Location, error) {
 	}
 
 	return &location, nil
+}
+
+// RemoveOrigin removes the origin from the post
+func (p *Post) RemoveOrigin() error {
+	if !p.OriginID.Valid {
+		return nil
+	}
+
+	if err := DB.Destroy(&Location{ID: p.OriginID.Int}); err != nil {
+		return err
+	}
+	p.OriginID = nulls.Int{}
+	// don't need to save the post because the database foreign key constraint is set to "ON DELETE SET NULL"
+	return nil
 }
 
 // SetDestination sets the destination location fields, creating a new record in the database if necessary.

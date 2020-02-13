@@ -126,6 +126,8 @@
   translation: We had a problem setting the destination to update that request or offer.
 - id: UpdatePost.SetOrigin
   translation: We had a problem setting the origin to update that request or offer.
+- id: UpdatePost.RemoveOrigin
+  translation: We had a problem removing the origin from that request or offer.
 - id: UpdatePostStatus
   translation: We had a problem changing the status of that request or offer.
 - id: UpdatePostStatus.FindPost

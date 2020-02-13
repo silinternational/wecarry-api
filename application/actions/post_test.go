@@ -34,15 +34,15 @@ type Post struct {
 	ID           string          `json:"id"`
 	Type         models.PostType `json:"type"`
 	Title        string          `json:"title"`
-	Description  string          `json:"description"`
-	NeededBefore string          `json:"neededBefore"`
+	Description  *string         `json:"description"`
+	NeededBefore *string         `json:"neededBefore"`
 	Destination  struct {
 		Description string  `json:"description"`
 		Country     string  `json:"country"`
 		Lat         float64 `json:"latitude"`
 		Long        float64 `json:"longitude"`
 	} `json:"destination"`
-	Origin struct {
+	Origin *struct {
 		Description string  `json:"description"`
 		Country     string  `json:"country"`
 		Lat         float64 `json:"latitude"`
@@ -52,9 +52,9 @@ type Post struct {
 	Status     models.PostStatus `json:"status"`
 	CreatedAt  string            `json:"createdAt"`
 	UpdatedAt  string            `json:"updatedAt"`
-	Kilograms  float64           `json:"kilograms"`
+	Kilograms  *float64          `json:"kilograms"`
 	IsEditable bool              `json:"isEditable"`
-	Url        string            `json:"url"`
+	Url        *string           `json:"url"`
 	Visibility string            `json:"visibility"`
 	CreatedBy  struct {
 		ID        string `json:"id"`
@@ -75,13 +75,13 @@ type Post struct {
 	Organization       struct {
 		ID string `json:"id"`
 	} `json:"organization"`
-	Photo struct {
+	Photo *struct {
 		ID string `json:"id"`
 	} `json:"photo"`
 	Files []struct {
 		ID string `json:"id"`
 	} `json:"files"`
-	Meeting struct {
+	Meeting *struct {
 		ID string `json:"id"`
 	} `json:"meeting"`
 }
@@ -122,10 +122,10 @@ func (as *ActionSuite) Test_PostQuery() {
 	as.Equal(f.Posts[0].UUID.String(), resp.Post.ID)
 	as.Equal(f.Posts[0].Type, resp.Post.Type)
 	as.Equal(f.Posts[0].Title, resp.Post.Title)
-	as.Equal(f.Posts[0].Description.String, resp.Post.Description)
+	as.Equal(f.Posts[0].Description.String, *resp.Post.Description)
 
 	wantDate := f.Posts[0].NeededBefore.Time.Format(domain.DateFormat)
-	as.Equal(wantDate, resp.Post.NeededBefore, "incorrect NeededBefore date")
+	as.Equal(wantDate, *resp.Post.NeededBefore, "incorrect NeededBefore date")
 
 	as.NoError(as.DB.Load(&f.Posts[0], "Destination", "Origin", "PhotoFile", "Files.File"))
 
@@ -143,8 +143,8 @@ func (as *ActionSuite) Test_PostQuery() {
 	as.Equal(f.Posts[0].Status, resp.Post.Status)
 	as.Equal(f.Posts[0].CreatedAt.Format(time.RFC3339), resp.Post.CreatedAt)
 	as.Equal(f.Posts[0].UpdatedAt.Format(time.RFC3339), resp.Post.UpdatedAt)
-	as.Equal(f.Posts[0].Kilograms.Float64, resp.Post.Kilograms)
-	as.Equal(f.Posts[0].URL.String, resp.Post.Url)
+	as.Equal(f.Posts[0].Kilograms.Float64, *resp.Post.Kilograms)
+	as.Equal(f.Posts[0].URL.String, *resp.Post.Url)
 	as.Equal(f.Posts[0].Visibility.String(), resp.Post.Visibility)
 	as.Equal(false, resp.Post.IsEditable)
 	as.Equal(f.Users[0].UUID.String(), resp.Post.CreatedBy.ID, "creator ID doesn't match")
@@ -189,16 +189,17 @@ func (as *ActionSuite) Test_UpdatePost() {
 	var postsResp PostResponse
 
 	input := `id: "` + f.Posts[0].UUID.String() + `" photoID: "` + f.Files[0].UUID.String() + `"` +
-		`
+		`   title: "title"
 			description: "new description"
 			destination: {description:"dest" country:"dc" latitude:1.1 longitude:2.2}
 			origin: {description:"origin" country:"oc" latitude:3.3 longitude:4.4}
 			size: TINY
 			url: "example.com"
 			kilograms: 22.22
+			neededBefore: "2099-12-31"
 			visibility: ALL
 		`
-	query := `mutation { post: updatePost(input: {` + input + `}) { id photo { id } description
+	query := `mutation { post: updatePost(input: {` + input + `}) { id photo { id } title description
 			neededBefore
 			destination { description country latitude longitude}
 			origin { description country latitude longitude}
@@ -213,8 +214,9 @@ func (as *ActionSuite) Test_UpdatePost() {
 
 	as.Equal(f.Posts[0].UUID.String(), postsResp.Post.ID)
 	as.Equal(f.Files[0].UUID.String(), postsResp.Post.Photo.ID)
-	as.Equal("new description", postsResp.Post.Description)
-	as.Equal(f.Posts[0].NeededBefore.Time.Format(domain.DateFormat), postsResp.Post.NeededBefore)
+	as.Equal("title", postsResp.Post.Title)
+	as.Equal("new description", *postsResp.Post.Description)
+	as.Equal("2099-12-31", *postsResp.Post.NeededBefore)
 	as.Equal("dest", postsResp.Post.Destination.Description)
 	as.Equal("dc", postsResp.Post.Destination.Country)
 	as.Equal(1.1, postsResp.Post.Destination.Lat)
@@ -224,8 +226,8 @@ func (as *ActionSuite) Test_UpdatePost() {
 	as.Equal(3.3, postsResp.Post.Origin.Lat)
 	as.Equal(4.4, postsResp.Post.Origin.Long)
 	as.Equal(models.PostSizeTiny, postsResp.Post.Size)
-	as.Equal("example.com", postsResp.Post.Url)
-	as.Equal(22.22, postsResp.Post.Kilograms)
+	as.Equal("example.com", *postsResp.Post.Url)
+	as.Equal(22.22, *postsResp.Post.Kilograms)
 	as.Equal("ALL", postsResp.Post.Visibility)
 	as.Equal(true, postsResp.Post.IsEditable)
 
@@ -242,14 +244,22 @@ func (as *ActionSuite) Test_UpdatePost() {
 	query = `mutation { post: updatePost(input: {` + input + `}) { id neededBefore }}`
 
 	as.NoError(as.testGqlQuery(query, f.Users[0].Nickname, &postsResp))
-	as.Equal(newNeededBefore, postsResp.Post.NeededBefore, "incorrect NeededBefore")
+	as.Equal(newNeededBefore, *postsResp.Post.NeededBefore, "incorrect NeededBefore")
 
-	// Null out post's NeededBefore
-	input = `id: "` + f.Posts[0].UUID.String() + `"	neededBefore: ""`
-	query = `mutation { post: updatePost(input: {` + input + `}) { id neededBefore }}`
+	// Null out post's nullable fields
+	input = `id: "` + f.Posts[0].UUID.String() + `"`
+	query = `mutation { post: updatePost(input: {` + input + `}) { id description url neededBefore kilograms
+		photo { id } origin { description } meeting { id }  }}`
 
+	postsResp = PostResponse{}
 	as.NoError(as.testGqlQuery(query, f.Users[0].Nickname, &postsResp))
-	as.Equal("", postsResp.Post.NeededBefore, "incorrect NeededBefore")
+	as.Nil(postsResp.Post.Description, "Description is not nil")
+	as.Nil(postsResp.Post.Url, "URL is not nil")
+	as.Nil(postsResp.Post.NeededBefore, "NeededBefore is not nil")
+	as.Nil(postsResp.Post.Kilograms, "Kilograms is not nil")
+	as.Nil(postsResp.Post.Photo, "Photo is not nil")
+	as.Nil(postsResp.Post.Origin, "Origin is not nil")
+	as.Nil(postsResp.Post.Meeting, "Meeting is not nil")
 }
 
 func (as *ActionSuite) Test_CreatePost() {
@@ -266,9 +276,11 @@ func (as *ActionSuite) Test_CreatePost() {
 			title: "title"
 			description: "new description"
 			destination: {description:"dest" country:"dc" latitude:1.1 longitude:2.2}
+			origin: {description:"origin" country:"oc" latitude:3.3 longitude:4.4}
 			size: TINY
 			url: "example.com"
 			visibility: ALL
+			kilograms: 1.5
 		`
 	query := `mutation { post: createPost(input: {` + input + `}) { organization { id } photo { id } type title
 			neededBefore description destination { description country latitude longitude }
@@ -281,20 +293,20 @@ func (as *ActionSuite) Test_CreatePost() {
 	as.Equal(f.File.UUID.String(), postsResp.Post.Photo.ID)
 	as.Equal(models.PostTypeRequest, postsResp.Post.Type)
 	as.Equal("title", postsResp.Post.Title)
-	as.Equal("new description", postsResp.Post.Description)
-	as.Equal("", postsResp.Post.NeededBefore)
+	as.Equal("new description", *postsResp.Post.Description)
+	as.Nil(postsResp.Post.NeededBefore)
 	as.Equal(models.PostStatus(""), postsResp.Post.Status)
 	as.Equal("dest", postsResp.Post.Destination.Description)
 	as.Equal("dc", postsResp.Post.Destination.Country)
 	as.Equal(1.1, postsResp.Post.Destination.Lat)
 	as.Equal(2.2, postsResp.Post.Destination.Long)
-	as.Equal("", postsResp.Post.Origin.Description)
-	as.Equal("", postsResp.Post.Origin.Country)
-	as.Equal(0.0, postsResp.Post.Origin.Lat)
-	as.Equal(0.0, postsResp.Post.Origin.Long)
+	as.Equal("origin", postsResp.Post.Origin.Description)
+	as.Equal("oc", postsResp.Post.Origin.Country)
+	as.Equal(3.3, postsResp.Post.Origin.Lat)
+	as.Equal(4.4, postsResp.Post.Origin.Long)
 	as.Equal(models.PostSizeTiny, postsResp.Post.Size)
-	as.Equal("example.com", postsResp.Post.Url)
-	as.Equal(0.0, postsResp.Post.Kilograms)
+	as.Equal("example.com", *postsResp.Post.Url)
+	as.Equal(1.5, *postsResp.Post.Kilograms)
 	as.Equal("ALL", postsResp.Post.Visibility)
 
 	// meeting-based request
@@ -321,7 +333,7 @@ func (as *ActionSuite) Test_CreatePost() {
 	as.Equal(f.Meetings[0].Location.Description, postsResp.Post.Destination.Description)
 
 	as.NotNil(postsResp.Post.NeededBefore)
-	as.Equal(neededBefore, postsResp.Post.NeededBefore)
+	as.Equal(neededBefore, *postsResp.Post.NeededBefore)
 
 	as.Equal(f.Meetings[0].Location.Country, postsResp.Post.Destination.Country)
 	as.Equal(f.Meetings[0].Location.Latitude.Float64, postsResp.Post.Destination.Lat)
