@@ -1724,6 +1724,10 @@ type Mutation {
     createPost(input: CreatePostInput!): Post!
     updatePost(input: UpdatePostInput!): Post!
     updatePostStatus(input: UpdatePostStatusInput!): Post!
+
+    """
+    Update User profile information. If ID is not specified, the authenticated user is assumed.
+    """
     updateUser(input: UpdateUserInput!): User!
     createMeeting(input: CreateMeetingInput!): Meeting!
     updateMeeting(input: UpdateMeetingInput!): Meeting!
@@ -1847,7 +1851,7 @@ type UserPreferences {
     weightUnit: String
 }
 
-"Update User profile information. If ID is not specified, the authenticated user is assumed."
+"Input object for ` + "`" + `updateUser` + "`" + `"
 input UpdateUserInput {
     id: ID
     nickname: String
@@ -2170,9 +2174,7 @@ type MeetingInvitation {
     avatarURL: String!
 }
 
-"""
-Bulk create ` + "`" + `MeetingInvitation` + "`" + `s.
-"""
+"Input object for ` + "`" + `createMeetingInvitations` + "`" + `"
 input CreateMeetingInvitationsInput {
     "ID of the ` + "`" + `Meeting` + "`" + `"
     meetingID: ID!
@@ -2182,9 +2184,7 @@ input CreateMeetingInvitationsInput {
     emails: [String!]!
 }
 
-"""
-Cancel a ` + "`" + `MeetingInvitation` + "`" + `.
-"""
+"Input object for ` + "`" + `removeMeetingInvitation` + "`" + `"
 input RemoveMeetingInvitationInput {
     "ID of the ` + "`" + `Meeting` + "`" + `"
     meetingID: ID!
@@ -2206,10 +2206,7 @@ type MeetingParticipant {
     invitationID: ID
 }
 
-"""
-Confirm a ` + "`" + `MeetingInvitation` + "`" + ` and create a new ` + "`" + `MeetingParticipant` + "`" + `. If a ` + "`" + `User` + "`" + ` does not exist with the given ` + "`" + `email` + "`" + `
-a new ` + "`" + `User` + "`" + ` will be created.
-"""
+"Input object for ` + "`" + `createMeetingParticipant` + "`" + `"
 input CreateMeetingParticipantInput {
     "ID of the ` + "`" + `Meeting` + "`" + `"
     meetingID: ID!
@@ -2219,9 +2216,7 @@ input CreateMeetingParticipantInput {
     isOrganizer: Boolean
 }
 
-"""
-Remove a ` + "`" + `MeetingParticipant` + "`" + `.
-"""
+"Input object for ` + "`" + `removeMeetingParticipant` + "`" + `"
 input RemoveMeetingParticipantInput {
     "ID of the ` + "`" + `Meeting` + "`" + `"
     meetingID: ID!

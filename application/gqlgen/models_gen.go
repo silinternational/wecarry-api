@@ -22,7 +22,7 @@ type AuthType struct {
 	Logo *models.File `json:"logo"`
 }
 
-// Bulk create `MeetingInvitation`s.
+// Input object for `createMeetingInvitations`
 type CreateMeetingInvitationsInput struct {
 	// ID of the `Meeting`
 	MeetingID string `json:"meetingID"`
@@ -32,8 +32,7 @@ type CreateMeetingInvitationsInput struct {
 	Emails []string `json:"emails"`
 }
 
-// Confirm a `MeetingInvitation` and create a new `MeetingParticipant`. If a `User` does not exist with the given `email`
-// a new `User` will be created.
+// Input object for `createMeetingParticipant`
 type CreateMeetingParticipantInput struct {
 	// ID of the `Meeting`
 	MeetingID string `json:"meetingID"`
@@ -108,7 +107,7 @@ type PublicProfile struct {
 	AvatarURL *string `json:"avatarURL"`
 }
 
-// Cancel a `MeetingInvitation`.
+// Input object for `removeMeetingInvitation`
 type RemoveMeetingInvitationInput struct {
 	// ID of the `Meeting`
 	MeetingID string `json:"meetingID"`
@@ -116,7 +115,7 @@ type RemoveMeetingInvitationInput struct {
 	Email string `json:"email"`
 }
 
-// Remove a `MeetingParticipant`.
+// Input object for `removeMeetingParticipant`
 type RemoveMeetingParticipantInput struct {
 	// ID of the `Meeting`
 	MeetingID string `json:"meetingID"`
@@ -164,7 +163,7 @@ type UpdatePostStatusInput struct {
 	Status models.PostStatus `json:"status"`
 }
 
-// Update User profile information. If ID is not specified, the authenticated user is assumed.
+// Input object for `updateUser`
 type UpdateUserInput struct {
 	ID       *string `json:"id"`
 	Nickname *string `json:"nickname"`
