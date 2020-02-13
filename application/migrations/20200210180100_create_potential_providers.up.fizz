@@ -8,3 +8,12 @@ create_table("potential_providers") {
 }
 
 add_index("potential_providers", ["post_id", "user_id"], {"unique": true})
+
+sql(
+    `insert into potential_providers (post_id, user_id, created_at, updated_at)
+         select p.id, p.provider_id, p.updated_at, p.updated_at
+         from posts p
+         where p.status = 'COMMITTED';
+
+     update posts set status = 'OPEN', provider_id = NULL where status = 'COMMITTED';`
+ )

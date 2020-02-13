@@ -616,6 +616,18 @@ func (p *Post) FindByUUID(uuid string) error {
 	return nil
 }
 
+func (p *Post) FindByUUIDForCurrentUser(uuid string, user User) error {
+	if err := p.FindByUUID(uuid); err != nil {
+		return err
+	}
+
+	if !user.canViewPost(*p) {
+		return fmt.Errorf("unauthorized: user %v may not view post %v.", user.ID, p.ID)
+	}
+
+	return nil
+}
+
 func (p *Post) GetCreator() (*User, error) {
 	creator := User{}
 	if err := DB.Find(&creator, p.CreatedByID); err != nil {
@@ -735,6 +747,29 @@ func (p *Post) AttachPhoto(fileID string) (File, error) {
 	return f, nil
 }
 
+// RemovePhoto removes an attached photo from the Post
+func (p *Post) RemovePhoto() error {
+	if p.ID < 1 {
+		return fmt.Errorf("invalid Post ID %d", p.ID)
+	}
+
+	oldID := p.PhotoFileID
+	p.PhotoFileID = nulls.Int{}
+	if err := DB.UpdateColumns(p, "photo_file_id"); err != nil {
+		return err
+	}
+
+	if !oldID.Valid {
+		return nil
+	}
+
+	oldFile := File{ID: oldID.Int}
+	if err := oldFile.ClearLinked(); err != nil {
+		domain.ErrLogger.Printf("error marking old post photo file %d as unlinked, %s", oldFile.ID, err)
+	}
+	return nil
+}
+
 // GetPhoto retrieves the file attached as the Post photo
 func (p *Post) GetPhoto() (*File, error) {
 	if err := DB.Load(p, "PhotoFile"); err != nil {
@@ -787,6 +822,10 @@ func (p *Post) FindByUserAndUUID(ctx context.Context, user User, uuid string) er
 // FindByUser finds all posts visible to the current user. NOTE: at present, the posts are not sorted correctly; need
 // to find a better way to construct the query
 func (p *Posts) FindByUser(ctx context.Context, user User) error {
+	if user.ID == 0 {
+		return errors.New("invalid User ID in Posts.FindByUser")
+	}
+
 	q := DB.RawQuery(`
 	WITH o AS (
 		SELECT id FROM organizations WHERE id IN (
@@ -797,6 +836,8 @@ func (p *Posts) FindByUser(ctx context.Context, user User) error {
 	(
 		organization_id IN (SELECT id FROM o)
 		OR
+		visibility = ?
+		OR
 		organization_id IN (
 			SELECT id FROM organizations WHERE id IN (
 				SELECT secondary_id FROM organization_trusts WHERE primary_id IN (SELECT id FROM o)
@@ -804,7 +845,7 @@ func (p *Posts) FindByUser(ctx context.Context, user User) error {
 		) AND visibility IN (?, ?)
 	)
 	AND status not in (?, ?) ORDER BY created_at desc`,
-		user.ID, PostVisibilityAll, PostVisibilityTrusted, PostStatusRemoved, PostStatusCompleted)
+		user.ID, PostVisibilityAll, PostVisibilityAll, PostVisibilityTrusted, PostStatusRemoved, PostStatusCompleted)
 	if err := q.All(p); err != nil {
 		return fmt.Errorf("error finding posts for user %s, %s", user.UUID.String(), err)
 	}
@@ -846,6 +887,20 @@ func (p *Post) GetOrigin() (*Location, error) {
 	}
 
 	return &location, nil
+}
+
+// RemoveOrigin removes the origin from the post
+func (p *Post) RemoveOrigin() error {
+	if !p.OriginID.Valid {
+		return nil
+	}
+
+	if err := DB.Destroy(&Location{ID: p.OriginID.Int}); err != nil {
+		return err
+	}
+	p.OriginID = nulls.Int{}
+	// don't need to save the post because the database foreign key constraint is set to "ON DELETE SET NULL"
+	return nil
 }
 
 // SetDestination sets the destination location fields, creating a new record in the database if necessary.
