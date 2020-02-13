@@ -81,8 +81,9 @@ type UpdateOrganizationInput struct {
 }
 
 type UpdatePostStatusInput struct {
-	ID     string            `json:"id"`
-	Status models.PostStatus `json:"status"`
+	ID             string            `json:"id"`
+	Status         models.PostStatus `json:"status"`
+	ProviderUserID *string           `json:"providerUserID"`
 }
 
 // Update User profile information. If ID is not specified, the authenticated user is assumed.

@@ -194,9 +194,9 @@ func CreateMessageFixtures_AfterCreate(ms *ModelSuite, t *testing.T) MessageFixt
 
 	// Each user has a request and is a provider on the other user's post
 	posts := createPostFixtures(ms.DB, 2, 0, false)
-	posts[0].Status = PostStatusCommitted
+	posts[0].Status = PostStatusAccepted
 	posts[0].ProviderID = nulls.NewInt(users[1].ID)
-	posts[1].Status = PostStatusCommitted
+	posts[1].Status = PostStatusAccepted
 	posts[1].CreatedByID = users[1].ID
 	posts[1].ProviderID = nulls.NewInt(users[0].ID)
 	ms.NoError(ms.DB.Save(&posts))

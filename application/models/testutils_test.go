@@ -176,6 +176,44 @@ func createPostFixtures(tx *pop.Connection, nRequests, nOffers int, createFiles 
 	return posts
 }
 
+// createPotentialProviderFixtures generates any number of PotentialProvider records for testing.
+// All of these will be assigned to the first Post (Request) in the DB, which has the first User as
+// its CreatedBy.
+// If necessary, User and Post fixtures will also be created.
+func createPotentialProviderFixtures(tx *pop.Connection, nPosts, nProviders int) PotentialProviders {
+	var posts Posts
+	if err := tx.All(&posts); err != nil {
+		createPostFixtures(tx, nPosts, 0, false)
+	}
+	if len(posts) < nPosts {
+		createPostFixtures(tx, nPosts-len(posts), 0, false)
+	}
+
+	posts = Posts{}
+	tx.All(&posts)
+
+	var users Users
+	if err := tx.All(&users); err != nil {
+		createUserFixtures(tx, nProviders+1)
+	}
+	if len(users) < nProviders+1 {
+		createUserFixtures(tx, nProviders+1-len(users))
+	}
+	users = Users{}
+	tx.All(&users)
+
+	providers := make(PotentialProviders, nProviders)
+	for i := range providers {
+		providers[i] = PotentialProvider{
+			PostID: posts[0].ID,
+			UserID: users[i+1].ID,
+		}
+		mustCreate(tx, &providers[i])
+	}
+
+	return providers
+}
+
 // createLocationFixtures generates any number of location records for testing.
 func createLocationFixtures(tx *pop.Connection, n int) Locations {
 	countries := []string{"US", "CA", "MX", "TH", "FR", "PG"}
@@ -202,6 +240,38 @@ func createFileFixtures(n int) Files {
 		fileFixtures[i] = f
 	}
 	return fileFixtures
+}
+
+type potentialProvidersFixtures struct {
+	Users
+	Posts
+	PotentialProviders
+}
+
+// createPotentialProviderFixtures generates five PotentialProvider records for testing.
+// If necessary, four User and three Post fixtures will also be created.  The Posts will
+// all be created by the first user.
+// The first Post will have all but the first user as a potential provider.
+// The second Post will have the last two users as potential providers.
+// The third Post won't have any potential providers
+func createPotentialProvidersFixtures(ms *ModelSuite) potentialProvidersFixtures {
+	uf := createUserFixtures(ms.DB, 4)
+	posts := createPostFixtures(ms.DB, 3, 0, false)
+	providers := PotentialProviders{}
+
+	for i, p := range posts[:2] {
+		for _, u := range uf.Users[i+1:] {
+			c := PotentialProvider{PostID: p.ID, UserID: u.ID}
+			c.Create()
+			providers = append(providers, c)
+		}
+	}
+
+	return potentialProvidersFixtures{
+		Users:              uf.Users,
+		Posts:              posts,
+		PotentialProviders: providers,
+	}
 }
 
 // createMeetingFixtures generates any number of meeting records for testing. Related Location and File records are also

@@ -477,19 +477,14 @@ func (ts *TestSuite) TestGetTranslatedSubject() {
 	}{
 		{
 			name:          "delivered",
-			translationID: "Email.Subject.Request.FromAcceptedOrCommittedToDelivered",
+			translationID: "Email.Subject.Request.FromAcceptedToDelivered",
 			want:          `Your ` + Env.AppName + ` request for "` + postTitle + `" has been delivered!`,
 		},
 		{
 			name:          "delivered in Spanish",
 			language:      UserPreferenceLanguageSpanish,
-			translationID: "Email.Subject.Request.FromAcceptedOrCommittedToDelivered",
+			translationID: "Email.Subject.Request.FromAcceptedToDelivered",
 			want:          "Su solicitud se marcó como entregada en " + Env.AppName,
-		},
-		{
-			name:          "from accepted to committed",
-			translationID: "Email.Subject.Request.FromAcceptedToCommitted",
-			want:          `Your ` + Env.AppName + ` offer for "` + postTitle + `" may no longer be needed`,
 		},
 		{
 			name:          "from accepted to completed",
@@ -507,21 +502,6 @@ func (ts *TestSuite) TestGetTranslatedSubject() {
 			want:          `Your ` + Env.AppName + ` offer for "` + postTitle + `" is no longer needed`,
 		},
 		{
-			name:          "from committed to accepted",
-			translationID: "Email.Subject.Request.FromCommittedToAccepted",
-			want:          `Your ` + Env.AppName + ` offer for "` + postTitle + `" has been accepted!`,
-		},
-		{
-			name:          "from committed to open",
-			translationID: "Email.Subject.Request.FromCommittedToOpen",
-			want:          "Request lost its provider on " + Env.AppName,
-		},
-		{
-			name:          "from committed to removed",
-			translationID: "Email.Subject.Request.FromCommittedToRemoved",
-			want:          `Your ` + Env.AppName + ` offer for "` + postTitle + `" is no longer needed`,
-		},
-		{
 			name:          "from completed to accepted",
 			translationID: "Email.Subject.Request.FromCompletedToAcceptedOrDelivered",
 			want:          "Request not received on " + Env.AppName + " after all",
@@ -530,16 +510,6 @@ func (ts *TestSuite) TestGetTranslatedSubject() {
 			name:          "from delivered to accepted",
 			translationID: "Email.Subject.Request.FromDeliveredToAccepted",
 			want:          "Request not delivered after all on " + Env.AppName,
-		},
-		{
-			name:          "from delivered to committed",
-			translationID: "Email.Subject.Request.FromDeliveredToCommitted",
-			want:          "Request not delivered after all on " + Env.AppName,
-		},
-		{
-			name:          "from open to committed",
-			translationID: "Email.Subject.Request.FromOpenToCommitted",
-			want:          "Potential provider on " + Env.AppName + ` for "` + postTitle + `"`,
 		},
 	}
 
