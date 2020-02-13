@@ -199,6 +199,12 @@ var _ = grift.Namespace("db", func() {
 				Latitude:    nulls.NewFloat64(18.7953),
 				Longitude:   nulls.NewFloat64(98.9620),
 			},
+			{
+				Description: "Milwaukee, WI, USA",
+				Country:     "US",
+				Latitude:    nulls.NewFloat64(43.0389),
+				Longitude:   nulls.NewFloat64(-87.9065),
+			},
 		}
 
 		for i, loc := range fixtureLocations {
@@ -402,10 +408,50 @@ var _ = grift.Namespace("db", func() {
 			}
 		}
 
+		// FILES Table
+		fileUUID1, _ := uuid.FromString("a7103b02-9b50-49a1-9776-b63f1cb7e84b")
+		fileUUID2, _ := uuid.FromString("a74569e6-fd54-4945-a9de-c05c711938ee")
+		fileUUID3, _ := uuid.FromString("c1eed7f0-2c8f-4d17-911c-99a54d29b0a1")
+		fixtureFiles := []*models.File{
+			{
+				UUID:          fileUUID1,
+				Name:          "iccmlogo.png",
+				URL:           "https://iccm.africa/img/iccmlogo.png",
+				URLExpiration: time.Date(2099, 12, 31, 0, 0, 0, 0, time.UTC),
+				Size:          5279,
+				ContentType:   "image/png",
+			},
+			{
+				UUID:          fileUUID2,
+				Name:          "thesend.png",
+				URL:           "http://thesend.org.br/wp-content/uploads/2019/06/logo.png",
+				URLExpiration: time.Date(2099, 12, 31, 0, 0, 0, 0, time.UTC),
+				Size:          15,
+				ContentType:   "image/png",
+			},
+			{
+				UUID:          fileUUID3,
+				Name:          "logo.png",
+				URL:           "https://static.wixstatic.com/media/f85009_a5b1c807a4a34e3284576f8e0cf334ca~mv2.jpg/v1/fill/w_755,h_1008,al_c,q_85/f85009_a5b1c807a4a34e3284576f8e0cf334ca~mv2.jpg",
+				URLExpiration: time.Date(2099, 12, 31, 0, 0, 0, 0, time.UTC),
+				Size:          15000,
+				ContentType:   "image/jpg",
+			},
+		}
+
+		for i, file := range fixtureFiles {
+			err := models.DB.Create(fixtureFiles[i])
+			if err != nil {
+				err = fmt.Errorf("error loading file fixture ... %+v\n %v", file, err.Error())
+				return err
+			}
+		}
+
 		// MEETINGS Table
 		meetingUUID1, _ := uuid.FromString("4a747184-7c7e-426f-a1fc-c310428f3d8d")
 		meetingUUID2, _ := uuid.FromString("48b9279f-d31f-41f5-8926-c5231c278aaa")
 		meetingUUID3, _ := uuid.FromString("7beac887-a03f-436f-addb-16a2e2880d67")
+		meetingUUID4, _ := uuid.FromString("d5c8185e-a084-494f-a549-adb73f3686ee")
 		fixtureMeetings := []*models.Meeting{
 			{
 				UUID:        meetingUUID1,
@@ -413,6 +459,7 @@ var _ = grift.Namespace("db", func() {
 				Name:        "IT Connect / ICCM",
 				MoreInfoURL: nulls.NewString("https://iccm.africa"),
 				LocationID:  fixtureLocations[5].ID,
+				ImageFileID: nulls.NewInt(fixtureFiles[0].ID),
 				StartDate:   time.Date(2020, 3, 15, 0, 0, 0, 0, time.UTC),
 				EndDate:     time.Date(2020, 3, 21, 0, 0, 0, 0, time.UTC),
 			},
@@ -422,6 +469,7 @@ var _ = grift.Namespace("db", func() {
 				Name:        "The Send Brazil",
 				MoreInfoURL: nulls.NewString("http://thesend.org.br/en-2/"),
 				LocationID:  fixtureLocations[6].ID,
+				ImageFileID: nulls.NewInt(fixtureFiles[1].ID),
 				StartDate:   time.Date(2021, 2, 8, 0, 0, 0, 0, time.UTC),
 				EndDate:     time.Date(2021, 2, 8, 0, 0, 0, 0, time.UTC),
 			},
@@ -433,7 +481,15 @@ var _ = grift.Namespace("db", func() {
 				StartDate:   time.Date(2020, 4, 4, 0, 0, 0, 0, time.UTC),
 				EndDate:     time.Date(2020, 4, 9, 0, 0, 0, 0, time.UTC),
 			},
-		}
+			{
+				UUID:        meetingUUID4,
+				CreatedByID: fixtureUsers[2].ID,
+				Name:        "Fresh Fish Suppliers of America",
+				LocationID:  fixtureLocations[8].ID,
+				ImageFileID: nulls.NewInt(fixtureFiles[2].ID),
+				StartDate:   time.Date(2020, 4, 4, 0, 0, 0, 0, time.UTC),
+				EndDate:     time.Date(2020, 4, 9, 0, 0, 0, 0, time.UTC),
+			}}
 
 		for i, meeting := range fixtureMeetings {
 			err := models.DB.Create(fixtureMeetings[i])
