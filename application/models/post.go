@@ -788,8 +788,7 @@ func (p *Post) FindByUserAndUUID(ctx context.Context, user User, uuid string) er
 		Where("uuid = ?", uuid).First(p)
 }
 
-// FindByUser finds all posts visible to the current user. NOTE: at present, the posts are not sorted correctly; need
-// to find a better way to construct the query
+// FindByUser finds all posts visible to the current user.
 func (p *Posts) FindByUser(ctx context.Context, user User, destination, origin *Location, searchText *string) error {
 	if user.ID == 0 {
 		return errors.New("invalid User ID in Posts.FindByUser")
@@ -825,9 +824,21 @@ func (p *Posts) FindByUser(ctx context.Context, user User, destination, origin *
 		args = append(args, likeText)
 	}
 
+	posts := Posts{}
 	q := DB.RawQuery(selectClause+" ORDER BY created_at desc", args...)
-	if err := q.All(p); err != nil {
+	if err := q.All(&posts); err != nil {
 		return fmt.Errorf("error finding posts for user %s, %s", user.UUID.String(), err)
+	}
+
+	if destination != nil {
+		posts = posts.FilterDestination(*destination)
+	}
+	if origin != nil {
+		posts = posts.FilterOrigin(*origin)
+	}
+
+	for i := range posts {
+		*p = append(*p, posts[i])
 	}
 	return nil
 }
@@ -1003,4 +1014,29 @@ func (p *Post) Meeting() (*Meeting, error) {
 	}
 
 	return &meeting, nil
+}
+
+// FilterDestination returns a list of all posts with a Destination near the given location. The database is not
+// touched.
+func (p Posts) FilterDestination(location Location) Posts {
+	filtered := make(Posts, 0)
+	for i := range p {
+		_ = DB.Load(&p[i], "Destination")
+		if p[i].Destination.IsNear(location) {
+			filtered = append(filtered, p[i])
+		}
+	}
+	return filtered
+}
+
+// FilterOrigin returns a list of all posts that have an Origin near the given location. The database is not touched.
+func (p Posts) FilterOrigin(location Location) Posts {
+	filtered := make(Posts, 0)
+	for i := range p {
+		_ = DB.Load(&p[i], "Origin")
+		if p[i].Origin.IsNear(location) {
+			filtered = append(filtered, p[i])
+		}
+	}
+	return filtered
 }

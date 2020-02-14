@@ -1462,17 +1462,14 @@ var parsedSchema = gqlparser.MustLoadSchema(
     Posts, aka Requests. With no parameters supplied, all posts visible to the authenticated user are returned. Filter
     parameters only remove from this default list and never include posts that are not visible to the authenticated
     user. For posts associated with a ` + "`" + `User` + "`" + ` or ` + "`" + `Meeting` + "`" + `, use the ` + "`" + `posts` + "`" + ` field on ` + "`" + `User` + "`" + ` and ` + "`" + `Meeting` + "`" + `.
-    NOT YET IMPLEMENTED: ` + "`" + `destination` + "`" + `, ` + "`" + `origin` + "`" + `, ` + "`" + `searchText` + "`" + `
     """
     posts(
         """
-        NOT YET IMPLEMENTED --
         Only include posts that have a destination near the given location.
         """
         destination: LocationInput,
 
         """
-        NOT YET IMPLEMENTED --
         Only include posts that have an origin near the given location.
         """
         origin: LocationInput
