@@ -987,13 +987,7 @@ func (ms *ModelSuite) TestPost_manageStatusTransition_backwardProgression() {
 			ms.Equal(test.newStatus, ph.Status, "incorrect Status ")
 			ms.Equal(test.post.ReceiverID, ph.ReceiverID, "incorrect ReceiverID ")
 			ms.Equal(test.providerID, ph.ProviderID, "incorrect ProviderID ")
-
-			if test.wantCompletedOn {
-				ms.True(test.post.CompletedOn.Valid, "expected a valid CompletedOn date")
-			} else {
-				ms.False(test.post.CompletedOn.Valid, "expected a null CompletedOn date")
-			}
-
+			ms.Equal(test.wantCompletedOn, test.post.CompletedOn.Valid, "incorrect CompletedOn valuie")
 		})
 	}
 }

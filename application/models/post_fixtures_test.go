@@ -102,10 +102,10 @@ func createFixturesForTestPost_manageStatusTransition_forwardProgression(ms *Mod
 
 	// Give these new statuses while by-passing the status transition validation
 	for i, status := range [2]PostStatus{PostStatusAccepted, PostStatusDelivered} {
-		id := i + 2
+		index := i + 2
 
-		posts[id].Status = status
-		ms.NoError(ms.DB.Save(&posts[id]))
+		posts[index].Status = status
+		ms.NoError(ms.DB.Save(&posts[index]))
 	}
 
 	return PostFixtures{
