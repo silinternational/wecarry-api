@@ -490,6 +490,18 @@ func (u *User) RemovePhoto() error {
 	return nil
 }
 
+func (u *User) GetPhotoID() (*string, error) {
+	if err := DB.Load(u, "PhotoFile"); err != nil {
+		return nil, err
+	}
+	if u.PhotoFileID.Valid {
+		photoID := u.PhotoFile.UUID.String()
+		return &photoID, nil
+	}
+
+	return nil, nil
+}
+
 // GetPhotoURL retrieves the photo URL from the attached file
 func (u *User) GetPhotoURL() (*string, error) {
 	if err := DB.Load(u, "PhotoFile"); err != nil {
