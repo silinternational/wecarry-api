@@ -4,6 +4,7 @@ import (
 	"github.com/gofrs/uuid"
 
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/gqlgen"
 	"github.com/silinternational/wecarry-api/models"
 )
 
@@ -186,7 +187,7 @@ func (as *ActionSuite) Test_CreateMeeting() {
 			startDate: "2025-03-01"
 			endDate: "2025-03-21"
 			moreInfoURL: "example.com"
-			visibility: PRIVATE
+			visibility: ` + gqlgen.MeetingVisibilityInviteOnly.String() + `
 		`
 	query := `mutation { meeting: createMeeting(input: {` + input + `})
 			{ createdBy { nickname } imageFile { id } name
@@ -226,7 +227,7 @@ func (as *ActionSuite) Test_UpdateMeeting() {
 			startDate: "2025-09-19"
 			endDate: "2025-09-29"
 			moreInfoURL: "new.example.com"
-			visibility: PRIVATE
+			visibility: ` + gqlgen.MeetingVisibilityInviteOnly.String() + `
 		`
 	query := `mutation { meeting: updateMeeting(input: {` + input + `}) { id imageFile { id }
 			createdBy { nickname } name description
