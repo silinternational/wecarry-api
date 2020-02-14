@@ -62,10 +62,16 @@ func createFixturesForMeetings(as *ActionSuite) meetingQueryFixtures {
 		createFixture(as, &meetings[i])
 	}
 
+	posts := test.CreatePostFixtures(as.DB, 3, false)
+	posts[0].MeetingID = nulls.NewInt(meetings[2].ID)
+	posts[1].MeetingID = nulls.NewInt(meetings[2].ID)
+	as.NoError(as.DB.Update(&posts))
+
 	return meetingQueryFixtures{
 		Locations: locations,
 		Meetings:  meetings,
 		Users:     uf.Users,
 		File:      fileFixture,
+		Posts:     posts,
 	}
 }

@@ -329,7 +329,6 @@ type Meeting {
     location: Location!
 
     """
-    NOT YET IMPLEMENTED --
     Posts (Requests) associated with the meeting
     """
     posts: [Post!]!
