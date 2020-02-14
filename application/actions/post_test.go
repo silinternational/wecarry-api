@@ -118,7 +118,7 @@ const allPostFields = `{
 func (as *ActionSuite) Test_PostQuery() {
 	f := createFixturesForPostQuery(as)
 
-	query := `{ post(id: "` + f.Posts[0].UUID.String() + `")` + allPostFields
+	query := `{ post(id: "` + f.Posts[0].UUID.String() + `")` + allPostFields + "}"
 
 	var resp PostResponse
 
