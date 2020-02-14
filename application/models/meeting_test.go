@@ -471,11 +471,11 @@ func (ms *ModelSuite) TestMeeting_CanUpdate() {
 }
 
 func (ms *ModelSuite) TestMeeting_GetPosts() {
-	meetings := createMeetingFixtures(ms.DB, 3)
+	meetings := createMeetingFixtures(ms.DB, 2)
 
 	posts := createPostFixtures(ms.DB, 3, 0, false)
-	posts[0].MeetingID = nulls.NewInt(meetings[2].ID)
-	posts[1].MeetingID = nulls.NewInt(meetings[2].ID)
+	posts[0].MeetingID = nulls.NewInt(meetings[1].ID)
+	posts[1].MeetingID = nulls.NewInt(meetings[1].ID)
 	ms.NoError(ms.DB.Update(&posts))
 
 	tests := []struct {
@@ -490,13 +490,8 @@ func (ms *ModelSuite) TestMeeting_GetPosts() {
 			wantIDs: []int{},
 		},
 		{
-			name:    "none",
-			meeting: meetings[1],
-			wantIDs: []int{},
-		},
-		{
 			name:    "two",
-			meeting: meetings[2],
+			meeting: meetings[1],
 			wantIDs: []int{posts[1].ID, posts[0].ID},
 		},
 	}
