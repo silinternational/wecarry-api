@@ -37,6 +37,7 @@ type User struct {
 		WeightUnit *string `json:"weightUnit"`
 	}
 	AvatarURL string `json:"avatarURL"`
+	PhotoID   string `json:"photoID"`
 	Location  *struct {
 		Description string  `json:"description"`
 		Country     string  `json:"country"`
@@ -61,7 +62,7 @@ func (as *ActionSuite) TestUserQuery() {
 
 	var resp UserResponse
 
-	allFields := `{ id email nickname adminRole avatarURL preferences {language timeZone weightUnit}
+	allFields := `{ id email nickname adminRole avatarURL photoID preferences {language timeZone weightUnit}
 		posts (role: CREATEDBY) {id} organizations {id}
 		location {description country latitude longitude} }`
 	testCases := []testCase{
@@ -78,6 +79,7 @@ func (as *ActionSuite) TestUserQuery() {
 				as.Equal(f.Users[1].Nickname, resp.User.Nickname, "incorrect Nickname")
 				as.Equal(f.Users[1].AdminRole, resp.User.AdminRole, "incorrect AdminRole")
 				as.Equal(f.Users[1].PhotoFile.URL, resp.User.AvatarURL, "incorrect AvatarURL")
+				as.Equal(f.Users[1].PhotoFile.UUID.String(), resp.User.PhotoID, "incorrect PhotoID")
 				as.Regexp("^https?", resp.User.AvatarURL, "invalid AvatarURL")
 				as.Equal(1, len(resp.User.Posts), "wrong number of posts")
 				as.Equal(f.Posts[0].UUID.String(), resp.User.Posts[0].ID, "incorrect Post ID")

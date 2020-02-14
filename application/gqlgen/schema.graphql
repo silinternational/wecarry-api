@@ -210,6 +210,7 @@ type User {
     organizations: [Organization!]!
     posts(role: PostRole!): [Post!]!
     avatarURL: String
+    photoID: String
     preferences: UserPreferences
     location: Location
     unreadMessageCount: Int!
