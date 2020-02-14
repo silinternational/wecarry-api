@@ -1591,6 +1591,8 @@ func (ms *ModelSuite) TestPosts_FindByUser() {
 	tests := []struct {
 		name        string
 		user        User
+		dest        *Location
+		orig        *Location
 		wantPostIDs []int
 		wantErr     bool
 	}{
@@ -1600,12 +1602,14 @@ func (ms *ModelSuite) TestPosts_FindByUser() {
 		{name: "user 2", user: f.Users[2], wantPostIDs: []int{f.Posts[7].ID, f.Posts[6].ID, f.Posts[5].ID}},
 		{name: "user 3", user: f.Users[3], wantPostIDs: []int{f.Posts[6].ID, f.Posts[5].ID, f.Posts[1].ID}},
 		{name: "non-existent user", user: User{}, wantErr: true},
+		{name: "destination", user: f.Users[0], dest: &Location{Country: "AU"}, wantPostIDs: []int{f.Posts[0].ID}},
+		{name: "origin", user: f.Users[0], orig: &Location{Country: "AU"}, wantPostIDs: []int{f.Posts[1].ID}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			posts := Posts{}
 			var c context.Context
-			err := posts.FindByUser(c, test.user, nil, nil, nil)
+			err := posts.FindByUser(c, test.user, test.dest, test.orig, nil)
 
 			if test.wantErr {
 				ms.Error(err)
