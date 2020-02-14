@@ -820,8 +820,7 @@ func (p *Posts) FindByUser(ctx context.Context, user User, destination, origin *
 	if searchText != nil {
 		selectClause = selectClause + " AND (LOWER(title) LIKE ? or LOWER(description) LIKE ?)"
 		likeText := "%" + strings.ToLower(*searchText) + "%"
-		args = append(args, likeText)
-		args = append(args, likeText)
+		args = append(args, likeText, likeText)
 	}
 
 	posts := Posts{}
@@ -837,6 +836,7 @@ func (p *Posts) FindByUser(ctx context.Context, user User, destination, origin *
 		posts = posts.FilterOrigin(*origin)
 	}
 
+	*p = Posts{}
 	for i := range posts {
 		*p = append(*p, posts[i])
 	}
@@ -1020,8 +1020,8 @@ func (p *Post) Meeting() (*Meeting, error) {
 // touched.
 func (p Posts) FilterDestination(location Location) Posts {
 	filtered := make(Posts, 0)
+	_ = DB.Load(&p, "Destination")
 	for i := range p {
-		_ = DB.Load(&p[i], "Destination")
 		if p[i].Destination.IsNear(location) {
 			filtered = append(filtered, p[i])
 		}
@@ -1032,8 +1032,8 @@ func (p Posts) FilterDestination(location Location) Posts {
 // FilterOrigin returns a list of all posts that have an Origin near the given location. The database is not touched.
 func (p Posts) FilterOrigin(location Location) Posts {
 	filtered := make(Posts, 0)
+	_ = DB.Load(&p, "Origin")
 	for i := range p {
-		_ = DB.Load(&p[i], "Origin")
 		if p[i].Origin.IsNear(location) {
 			filtered = append(filtered, p[i])
 		}

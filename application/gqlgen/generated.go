@@ -1684,19 +1684,13 @@ var parsedSchema = gqlparser.MustLoadSchema(
     user. For posts associated with a ` + "`" + `User` + "`" + ` or ` + "`" + `Meeting` + "`" + `, use the ` + "`" + `posts` + "`" + ` field on ` + "`" + `User` + "`" + ` and ` + "`" + `Meeting` + "`" + `.
     """
     posts(
-        """
-        Only include posts that have a destination near the given location.
-        """
+        "Only include posts that have a destination near the given location."
         destination: LocationInput,
 
-        """
-        Only include posts that have an origin near the given location.
-        """
+        "Only include posts that have an origin near the given location."
         origin: LocationInput
 
-        """
-        Search by text in ` + "`" + `title` + "`" + ` or ` + "`" + `description` + "`" + `
-        """
+        "Search by text in ` + "`" + `title` + "`" + ` or ` + "`" + `description` + "`" + `"
         searchText: String
     ): [Post!]!
 
