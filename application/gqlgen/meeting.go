@@ -116,7 +116,7 @@ func (r *meetingResolver) Participants(ctx context.Context, obj *models.Meeting)
 }
 
 func (r *meetingResolver) Visibility(ctx context.Context, obj *models.Meeting) (MeetingVisibility, error) {
-	return MeetingVisibilityPrivate, nil
+	return MeetingVisibilityInviteOnly, nil
 }
 
 // Meetings resolves the `meetings` query by getting a list of meetings that have an

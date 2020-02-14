@@ -36,7 +36,7 @@ type CreateMeetingInvitationsInput struct {
 type CreateMeetingParticipantInput struct {
 	// ID of the `Meeting`
 	MeetingID string `json:"meetingID"`
-	// Confirmation code from the `MeetingInvitation`. If not provided, the `Meeting` must be a non-private meeting.
+	// Confirmation code from the `MeetingInvitation`. If not provided, the `Meeting` must not be `INVITE_ONLY`.
 	ConfirmationCode *string `json:"confirmationCode"`
 	// Add as a `Meeting` Organizer. Authenticated `User` must be authorized [definition TBD] to do this.
 	IsOrganizer *bool `json:"isOrganizer"`
@@ -191,19 +191,19 @@ const (
 	// Visible to invitees and members of the `Meeting` organization
 	MeetingVisibilityOrganization MeetingVisibility = "ORGANIZATION"
 	// Visible only to invitees
-	MeetingVisibilityPrivate MeetingVisibility = "PRIVATE"
+	MeetingVisibilityInviteOnly MeetingVisibility = "INVITE_ONLY"
 )
 
 var AllMeetingVisibility = []MeetingVisibility{
 	MeetingVisibilityAll,
 	MeetingVisibilityTrusted,
 	MeetingVisibilityOrganization,
-	MeetingVisibilityPrivate,
+	MeetingVisibilityInviteOnly,
 }
 
 func (e MeetingVisibility) IsValid() bool {
 	switch e {
-	case MeetingVisibilityAll, MeetingVisibilityTrusted, MeetingVisibilityOrganization, MeetingVisibilityPrivate:
+	case MeetingVisibilityAll, MeetingVisibilityTrusted, MeetingVisibilityOrganization, MeetingVisibilityInviteOnly:
 		return true
 	}
 	return false
