@@ -206,6 +206,7 @@ type ComplexityRoot struct {
 		Location           func(childComplexity int) int
 		Nickname           func(childComplexity int) int
 		Organizations      func(childComplexity int) int
+		PhotoID            func(childComplexity int) int
 		Posts              func(childComplexity int, role PostRole) int
 		Preferences        func(childComplexity int) int
 		UnreadMessageCount func(childComplexity int) int
@@ -340,6 +341,7 @@ type UserResolver interface {
 	Organizations(ctx context.Context, obj *models.User) ([]models.Organization, error)
 	Posts(ctx context.Context, obj *models.User, role PostRole) ([]models.Post, error)
 	AvatarURL(ctx context.Context, obj *models.User) (*string, error)
+	PhotoID(ctx context.Context, obj *models.User) (*string, error)
 	Preferences(ctx context.Context, obj *models.User) (*models.StandardPreferences, error)
 	Location(ctx context.Context, obj *models.User) (*models.Location, error)
 	UnreadMessageCount(ctx context.Context, obj *models.User) (int, error)
@@ -1326,6 +1328,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.User.Organizations(childComplexity), true
 
+	case "User.photoID":
+		if e.complexity.User.PhotoID == nil {
+			break
+		}
+
+		return e.complexity.User.PhotoID(childComplexity), true
+
 	case "User.posts":
 		if e.complexity.User.Posts == nil {
 			break
@@ -1557,6 +1566,7 @@ type User {
     organizations: [Organization!]!
     posts(role: PostRole!): [Post!]!
     avatarURL: String
+    photoID: String
     preferences: UserPreferences
     location: Location
     unreadMessageCount: Int!
@@ -6957,6 +6967,40 @@ func (ec *executionContext) _User_avatarURL(ctx context.Context, field graphql.C
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _User_photoID(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "User",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.User().PhotoID(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _User_preferences(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -10507,6 +10551,17 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 					}
 				}()
 				res = ec._User_avatarURL(ctx, field, obj)
+				return res
+			})
+		case "photoID":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._User_photoID(ctx, field, obj)
 				return res
 			})
 		case "preferences":

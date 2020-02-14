@@ -490,6 +490,7 @@ func (u *User) RemovePhoto() error {
 	return nil
 }
 
+// GetPhotoID retrieves the UUID of the User's photo file
 func (u *User) GetPhotoID() (*string, error) {
 	if err := DB.Load(u, "PhotoFile"); err != nil {
 		return nil, err
