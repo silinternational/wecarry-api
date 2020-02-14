@@ -746,3 +746,13 @@ func (u User) GetLanguagePreference() string {
 func (u *User) GetRealName() string {
 	return strings.TrimSpace(u.FirstName + " " + u.LastName)
 }
+
+// HasOrganization returns true if the user has one or more organization connections
+func (u *User) HasOrganization() bool {
+	var c Count
+	err := DB.RawQuery("SELECT COUNT(*) FROM user_organizations WHERE user_id = ?", u.ID).First(&c)
+	if err != nil || c.N == 0 {
+		return false
+	}
+	return true
+}

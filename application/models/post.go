@@ -794,6 +794,11 @@ func (p *Posts) FindByUser(ctx context.Context, user User, destination, origin *
 		return errors.New("invalid User ID in Posts.FindByUser")
 	}
 
+	if !user.HasOrganization() {
+		*p = Posts{}
+		return nil
+	}
+
 	selectClause := `
 	WITH o AS (
 		SELECT id FROM organizations WHERE id IN (

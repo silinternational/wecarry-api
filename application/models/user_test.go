@@ -10,6 +10,7 @@ import (
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
 	"github.com/gofrs/uuid"
+
 	"github.com/silinternational/wecarry-api/auth"
 	"github.com/silinternational/wecarry-api/domain"
 )
@@ -1447,6 +1448,36 @@ func (ms *ModelSuite) TestUser_GetRealName() {
 			got := test.user.GetRealName()
 
 			ms.Equal(test.want, got, "incorrect result from GetRealName()")
+		})
+	}
+}
+
+func (ms *ModelSuite) TestUser_HasOrganization() {
+	f := createUserFixtures(ms.DB, 2)
+	users := f.Users
+	ms.NoError(ms.DB.Destroy(&f.UserOrganizations[1]))
+
+	tests := []struct {
+		name string
+		user User
+		want bool
+	}{
+		{
+			name: "true",
+			user: users[0],
+			want: true,
+		},
+		{
+			name: "false",
+			user: users[1],
+			want: false,
+		},
+	}
+	for _, test := range tests {
+		ms.T().Run(test.name, func(t *testing.T) {
+			got := test.user.HasOrganization()
+
+			ms.Equal(test.want, got, "incorrect result from HasOrganization()")
 		})
 	}
 }
