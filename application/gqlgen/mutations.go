@@ -244,3 +244,20 @@ func (r *mutationResolver) RemoveOrganizationTrust(ctx context.Context, input Re
 
 	return &organization, nil
 }
+
+func (r *mutationResolver) CreateMeetingInvitations(ctx context.Context, input CreateMeetingInvitationsInput) ([]MeetingInvitation, error) {
+	return []MeetingInvitation{}, nil
+}
+
+func (r *mutationResolver) CreateMeetingParticipant(ctx context.Context, input CreateMeetingParticipantInput) (*MeetingParticipant, error) {
+	var m MeetingParticipant
+	return &m, nil
+}
+
+func (r *mutationResolver) RemoveMeetingInvitation(ctx context.Context, input RemoveMeetingInvitationInput) ([]MeetingInvitation, error) {
+	return []MeetingInvitation{}, nil
+}
+
+func (r *mutationResolver) RemoveMeetingParticipant(ctx context.Context, input RemoveMeetingParticipantInput) ([]MeetingParticipant, error) {
+	return []MeetingParticipant{}, nil
+}
