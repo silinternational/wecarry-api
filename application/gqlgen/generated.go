@@ -177,6 +177,7 @@ type ComplexityRoot struct {
 		Organization       func(childComplexity int) int
 		Origin             func(childComplexity int) int
 		Photo              func(childComplexity int) int
+		PhotoID            func(childComplexity int) int
 		PotentialProviders func(childComplexity int) int
 		Provider           func(childComplexity int) int
 		Receiver           func(childComplexity int) int
@@ -346,6 +347,7 @@ type PostResolver interface {
 	URL(ctx context.Context, obj *models.Post) (*string, error)
 	Kilograms(ctx context.Context, obj *models.Post) (*float64, error)
 	Photo(ctx context.Context, obj *models.Post) (*models.File, error)
+	PhotoID(ctx context.Context, obj *models.Post) (*string, error)
 	Files(ctx context.Context, obj *models.Post) ([]models.File, error)
 	Meeting(ctx context.Context, obj *models.Post) (*models.Meeting, error)
 	IsEditable(ctx context.Context, obj *models.Post) (bool, error)
@@ -1178,6 +1180,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Post.Photo(childComplexity), true
 
+	case "Post.photoID":
+		if e.complexity.Post.PhotoID == nil {
+			break
+		}
+
+		return e.complexity.Post.PhotoID(childComplexity), true
+
 	case "Post.potentialProviders":
 		if e.complexity.Post.PotentialProviders == nil {
 			break
@@ -1998,6 +2007,8 @@ type Post {
     kilograms: Float
     "Photo of the item"
     photo: File
+    "UUID of the photo of the item"
+    photoID: ID
     "List of attached files. Does not include the post photo."
     files: [File!]!
     "Meeting associated with this post. Affects visibility of the post."
@@ -6724,6 +6735,40 @@ func (ec *executionContext) _Post_photo(ctx context.Context, field graphql.Colle
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalOFile2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐFile(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Post_photoID(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Post",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Post().PhotoID(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOID2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Post_files(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
@@ -11730,6 +11775,17 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 					}
 				}()
 				res = ec._Post_photo(ctx, field, obj)
+				return res
+			})
+		case "photoID":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Post_photoID(ctx, field, obj)
 				return res
 			})
 		case "files":
