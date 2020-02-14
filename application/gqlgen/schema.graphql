@@ -305,6 +305,8 @@ type Post {
     kilograms: Float
     "Photo of the item"
     photo: File
+    "UUID of the photo of the item"
+    photoID: ID
     "List of attached files. Does not include the post photo."
     files: [File!]!
     "Meeting associated with this post. Affects visibility of the post."

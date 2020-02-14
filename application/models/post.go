@@ -756,6 +756,19 @@ func (p *Post) GetPhoto() (*File, error) {
 	return &p.PhotoFile, nil
 }
 
+// GetPhotoID retrieves UUID of the file attached as the Post photo
+func (p *Post) GetPhotoID() (*string, error) {
+	if err := DB.Load(p, "PhotoFile"); err != nil {
+		return nil, err
+	}
+
+	if p.PhotoFileID.Valid {
+		photoID := p.PhotoFile.UUID.String()
+		return &photoID, nil
+	}
+	return nil, nil
+}
+
 // scope query to only include posts from an organization associated with the current user
 func scopeUserOrgs(cUser User) pop.ScopeFunc {
 	return func(q *pop.Query) *pop.Query {
