@@ -205,6 +205,24 @@ func (r *postResolver) Photo(ctx context.Context, obj *models.Post) (*models.Fil
 	return photo, nil
 }
 
+// PhotoID retrieves the ID for the user profile photo
+func (r *postResolver) PhotoID(ctx context.Context, obj *models.Post) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+
+	if !obj.PhotoFileID.Valid {
+		return nil, nil
+	}
+
+	photoID, err := obj.GetPhotoID()
+	if err != nil {
+		return nil, reportError(ctx, err, "GetUserPhotoID")
+	}
+
+	return photoID, nil
+}
+
 // Files retrieves the list of files attached to the post, not including the primary photo
 func (r *postResolver) Files(ctx context.Context, obj *models.Post) ([]models.File, error) {
 	if obj == nil {
@@ -242,7 +260,7 @@ func (r *postResolver) IsEditable(ctx context.Context, obj *models.Post) (bool, 
 }
 
 // Posts resolves the `posts` query
-func (r *queryResolver) Posts(ctx context.Context) ([]models.Post, error) {
+func (r *queryResolver) Posts(ctx context.Context, destination, origin *LocationInput, searchText *string) ([]models.Post, error) {
 	posts := models.Posts{}
 	cUser := models.GetCurrentUserFromGqlContext(ctx)
 	if err := posts.FindByUser(ctx, cUser); err != nil {

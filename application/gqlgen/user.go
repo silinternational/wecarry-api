@@ -75,6 +75,24 @@ func (r *userResolver) AvatarURL(ctx context.Context, obj *models.User) (*string
 	return photoURL, nil
 }
 
+// PhotoID retrieves the ID for the user profile photo
+func (r *userResolver) PhotoID(ctx context.Context, obj *models.User) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+
+	if !obj.PhotoFileID.Valid {
+		return nil, nil
+	}
+
+	photoID, err := obj.GetPhotoID()
+	if err != nil {
+		return nil, reportError(ctx, err, "GetUserPhotoID")
+	}
+
+	return photoID, nil
+}
+
 // Location retrieves the queried user's location.
 func (r *userResolver) Location(ctx context.Context, obj *models.User) (*models.Location, error) {
 	if obj == nil {
