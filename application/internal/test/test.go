@@ -208,3 +208,58 @@ func AssertStringContains(t *testing.T, haystack, needle string, outputLen int) 
 	t.Errorf(msg)
 	return
 }
+
+type PotentialProvidersFixtures struct {
+	models.Users
+	models.Posts
+	models.PotentialProviders
+}
+
+// CreatePotentialProviderFixtures generates five PotentialProvider records for testing.
+// Five User and three Post fixtures will also be created.  The Posts will
+// all be created by the first user.
+// The first Post will have all but the first user as a potential provider.
+// The second Post will have the last two users as potential providers.
+// The third Post won't have any potential providers.
+// The Fifth User will be with a different Organization.
+func CreatePotentialProvidersFixtures(tx *pop.Connection) PotentialProvidersFixtures {
+	uf := CreateUserFixtures(tx, 5)
+	posts := CreatePostFixtures(tx, 3, false)
+	providers := models.PotentialProviders{}
+
+	for i, p := range posts[:2] {
+		for _, u := range uf.Users[i+1 : 4] {
+			c := models.PotentialProvider{PostID: p.ID, UserID: u.ID}
+			c.Create()
+			providers = append(providers, c)
+		}
+	}
+
+	// Put the last user in a new org
+	org2 := models.Organization{
+		Name:       "Extra Org",
+		AuthType:   models.AuthTypeGoogle,
+		AuthConfig: "{}",
+		UUID:       domain.GetUUID(),
+	}
+	MustCreate(tx, &org2)
+
+	users := uf.Users
+
+	// Switch User4's org to org2
+	uo, err := users[4].FindUserOrganization(uf.Organization)
+	if err != nil {
+		panic("Couldn't find User4's UserOrg: " + err.Error())
+	}
+
+	uo.OrganizationID = org2.ID
+	if err := tx.UpdateColumns(&uo, "organization_id"); err != nil {
+		panic("Couldn't change User4's UserOrg: " + err.Error())
+	}
+
+	return PotentialProvidersFixtures{
+		Users:              uf.Users,
+		Posts:              posts,
+		PotentialProviders: providers,
+	}
+}

@@ -39,7 +39,7 @@ func createFixturesForPostQuery(as *ActionSuite) PostQueryFixtures {
 	users := userFixtures.Users
 
 	posts := test.CreatePostFixtures(as.DB, 2, true)
-	posts[0].Status = models.PostStatusCommitted
+	posts[0].Status = models.PostStatusAccepted
 	posts[0].ProviderID = nulls.NewInt(users[1].ID)
 	as.NoError(as.DB.Save(&posts[0]))
 

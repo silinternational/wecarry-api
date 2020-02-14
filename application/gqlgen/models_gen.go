@@ -159,8 +159,9 @@ type UpdateOrganizationInput struct {
 }
 
 type UpdatePostStatusInput struct {
-	ID     string            `json:"id"`
-	Status models.PostStatus `json:"status"`
+	ID             string            `json:"id"`
+	Status         models.PostStatus `json:"status"`
+	ProviderUserID *string           `json:"providerUserID"`
 }
 
 // Input object for `updateUser`

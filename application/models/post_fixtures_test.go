@@ -15,6 +15,7 @@ type PostFixtures struct {
 	PostHistories
 	Files
 	Locations
+	PotentialProviders
 }
 
 func CreateFixturesValidateUpdate_RequestStatus(status PostStatus, ms *ModelSuite, t *testing.T) Post {
@@ -86,10 +87,10 @@ func createFixturesForTestPost_manageStatusTransition_forwardProgression(ms *Mod
 	users := uf.Users
 
 	posts := createPostFixtures(ms.DB, 2, 0, false)
-	posts[1].Status = PostStatusCommitted
+	posts[1].Status = PostStatusAccepted
 	posts[1].CreatedByID = users[1].ID
 	posts[1].ProviderID = nulls.NewInt(users[0].ID)
-	ms.NoError(ms.DB.Save(&posts))
+	ms.NoError(ms.DB.Save(&posts[1]))
 
 	return PostFixtures{
 		Users: users,
@@ -102,16 +103,13 @@ func createFixturesForTestPost_manageStatusTransition_backwardProgression(ms *Mo
 	users := uf.Users
 
 	posts := createPostFixtures(ms.DB, 2, 0, false)
-	posts[0].Status = PostStatusCommitted
+	posts[0].Status = PostStatusAccepted
 	posts[0].CreatedByID = users[0].ID
 	posts[0].ProviderID = nulls.NewInt(users[1].ID)
-	posts[1].Status = PostStatusCommitted
+	posts[1].Status = PostStatusAccepted
 	posts[1].CreatedByID = users[1].ID
 	posts[1].ProviderID = nulls.NewInt(users[0].ID)
 	ms.NoError(ms.DB.Save(&posts))
-
-	posts[1].Status = PostStatusAccepted
-	ms.NoError(ms.DB.Save(&posts[1]))
 
 	return PostFixtures{
 		Users: users,
@@ -217,7 +215,7 @@ func CreateFixtures_Posts_FindByUser(ms *ModelSuite) PostFixtures {
 
 	posts := createPostFixtures(ms.DB, 8, 0, false)
 	posts[1].OrganizationID = orgs[1].ID
-	posts[2].Status = PostStatusCommitted
+	posts[2].Status = PostStatusOpen
 	posts[3].Status = PostStatusRemoved
 	posts[4].CreatedByID = users[1].ID
 	posts[5].OrganizationID = orgs[2].ID
@@ -236,6 +234,16 @@ func CreateFixtures_Posts_FindByUser(ms *ModelSuite) PostFixtures {
 	return PostFixtures{
 		Users: users,
 		Posts: posts,
+	}
+}
+
+func createFixturesFor_Posts_GetPotentialProviders(ms *ModelSuite) PostFixtures {
+	posts := createPostFixtures(ms.DB, 2, 0, false)
+	pps := createPotentialProviderFixtures(ms.DB, 2, 2)
+
+	return PostFixtures{
+		Posts:              posts,
+		PotentialProviders: pps,
 	}
 }
 

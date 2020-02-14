@@ -74,10 +74,10 @@ Internal handling of errors consists mostly of the built-in `errors` type. When
 an error propagates up to the `gqlgen` package, the internal error should be
 logged and a new user-focused and localized message should be returned from 
 the resolver function. Translation of error messages is handled by the Buffalo
-`Translate` function. Translation keys consist of the query or mutation name,
-optionally followed by a short description of the point of failure. You may use
-the helper function `reportError` which handles all of these steps. Translation
-text is stored in the `locales` folder.
+`Translate` function. Translation keys consist of an initial identifier related to 
+a model, query or mutation name, optionally followed by a short description of the 
+point of failure. You may use the helper function `reportError` which handles all of 
+these steps. Translation text is stored in the `locales` folder.
  
 For example:
 

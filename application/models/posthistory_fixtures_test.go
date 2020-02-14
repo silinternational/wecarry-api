@@ -67,12 +67,6 @@ func createFixturesForTestPostHistory_pop(ms *ModelSuite) PostFixtures {
 			ReceiverID: nulls.NewInt(posts[0].CreatedByID),
 		},
 		{
-			Status:     PostStatusCommitted,
-			PostID:     posts[0].ID,
-			ReceiverID: nulls.NewInt(posts[0].CreatedByID),
-			ProviderID: nulls.NewInt(users[1].ID),
-		},
-		{
 			Status:     PostStatusAccepted,
 			PostID:     posts[0].ID,
 			ReceiverID: nulls.NewInt(posts[0].CreatedByID),

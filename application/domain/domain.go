@@ -38,10 +38,14 @@ const (
 
 // Event Kinds
 const (
-	EventApiUserCreated       = "api:user:created"
-	EventApiMessageCreated    = "api:message:created"
-	EventApiPostStatusUpdated = "api:post:status:updated"
-	EventApiPostCreated       = "api:post:status:created"
+	EventApiUserCreated                    = "api:user:created"
+	EventApiAuthUserLoggedIn               = "api:auth:user:loggedin"
+	EventApiMessageCreated                 = "api:message:created"
+	EventApiPostStatusUpdated              = "api:post:status:updated"
+	EventApiPostCreated                    = "api:post:status:created"
+	EventApiPotentialProviderCreated       = "api:potentialprovider:created"
+	EventApiPotentialProviderRejected      = "api:potentialprovider:rejected"
+	EventApiPotentialProviderSelfDestroyed = "api:potentialprovider:selfdestroyed"
 )
 
 // Event and Job argument names
@@ -55,29 +59,25 @@ const (
 	MessageTemplateNewRequest                      = "new_request"
 	MessageTemplateNewThreadMessage                = "new_thread_message"
 	MessageTemplateNewUserWelcome                  = "new_user_welcome"
-	MessageTemplateRequestFromAcceptedToCommitted  = "request_from_accepted_to_committed"
 	MessageTemplateRequestFromAcceptedToCompleted  = "request_from_accepted_to_completed"
 	MessageTemplateRequestFromAcceptedToDelivered  = "request_from_accepted_to_delivered"
 	MessageTemplateRequestFromAcceptedToOpen       = "request_from_accepted_to_open"
 	MessageTemplateRequestFromAcceptedToReceived   = "request_from_accepted_to_received"
 	MessageTemplateRequestFromAcceptedToRemoved    = "request_from_accepted_to_removed"
-	MessageTemplateRequestFromCommittedToAccepted  = "request_from_committed_to_accepted"
-	MessageTemplateRequestFromCommittedToDelivered = "request_from_committed_to_delivered"
-	MessageTemplateRequestFromCommittedToOpen      = "request_from_committed_to_open"
-	MessageTemplateRequestFromCommittedToReceived  = "request_from_committed_to_received"
-	MessageTemplateRequestFromCommittedToRemoved   = "request_from_committed_to_removed"
 	MessageTemplateRequestFromCompletedToAccepted  = "request_from_completed_to_accepted"
 	MessageTemplateRequestFromCompletedToDelivered = "request_from_completed_to_delivered"
 	MessageTemplateRequestFromCompletedToReceived  = "request_from_completed_to_received"
 	MessageTemplateRequestFromDeliveredToAccepted  = "request_from_delivered_to_accepted"
-	MessageTemplateRequestFromDeliveredToCommitted = "request_from_delivered_to_committed"
 	MessageTemplateRequestFromDeliveredToCompleted = "request_from_delivered_to_completed"
-	MessageTemplateRequestFromOpenToCommitted      = "request_from_open_to_committed"
+	MessageTemplateRequestFromOpenToAccepted       = "request_from_open_to_accepted"
 	MessageTemplateRequestFromOpenToRemoved        = "request_from_open_to_removed"
 	MessageTemplateRequestFromReceivedToCompleted  = "request_from_received_to_completed"
 	MessageTemplateRequestDelivered                = "request_delivered"
 	MessageTemplateRequestReceived                 = "request_received"
 	MessageTemplateRequestNotReceivedAfterAll      = "request_not_received_after_all"
+	MessageTemplatePotentialProviderCreated        = "request_potentialprovider_created"
+	MessageTemplatePotentialProviderRejected       = "request_potentialprovider_rejected"
+	MessageTemplatePotentialProviderSelfDestroyed  = "request_potentialprovider_self_destroyed"
 )
 
 // User preferences

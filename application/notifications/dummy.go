@@ -37,7 +37,7 @@ var dummyTemplates = map[string]dummyTemplate{
 	},
 	domain.MessageTemplateRequestDelivered: {
 		subject: domain.MessageTemplateRequestDelivered,
-		body:    "The status of a request changed from accepted or committed to delivered.",
+		body:    "The status of a request changed from accepted to delivered.",
 	},
 	domain.MessageTemplateRequestReceived: {
 		subject: domain.MessageTemplateRequestReceived,
@@ -46,10 +46,6 @@ var dummyTemplates = map[string]dummyTemplate{
 	domain.MessageTemplateRequestNotReceivedAfterAll: {
 		subject: domain.MessageTemplateRequestNotReceivedAfterAll,
 		body:    "The status of a request changed from completed to accepted or delivered.",
-	},
-	domain.MessageTemplateRequestFromAcceptedToCommitted: {
-		subject: domain.MessageTemplateRequestFromAcceptedToCommitted,
-		body:    "The status of a request changed from accepted to committed.",
 	},
 	domain.MessageTemplateRequestFromAcceptedToDelivered: {
 		subject: domain.MessageTemplateRequestFromAcceptedToDelivered,
@@ -63,37 +59,17 @@ var dummyTemplates = map[string]dummyTemplate{
 		subject: domain.MessageTemplateRequestFromAcceptedToRemoved,
 		body:    "The status of a request changed from accepted to removed.",
 	},
-	domain.MessageTemplateRequestFromCommittedToAccepted: {
-		subject: domain.MessageTemplateRequestFromCommittedToAccepted,
-		body:    "The status of a request changed from committed to accepted.",
-	},
-	domain.MessageTemplateRequestFromCommittedToDelivered: {
-		subject: domain.MessageTemplateRequestFromCommittedToDelivered,
-		body:    "The status of a request changed from committed to delivered.",
-	},
-	domain.MessageTemplateRequestFromCommittedToOpen: {
-		subject: domain.MessageTemplateRequestFromCommittedToOpen,
-		body:    "The status of a request changed from committed to open.",
-	},
-	domain.MessageTemplateRequestFromCommittedToRemoved: {
-		subject: domain.MessageTemplateRequestFromCommittedToRemoved,
-		body:    "The status of a request changed from committed to removed.",
+	domain.MessageTemplateRequestFromOpenToAccepted: {
+		subject: domain.MessageTemplateRequestFromOpenToAccepted,
+		body:    "The status of a request changed from open to accepted.",
 	},
 	domain.MessageTemplateRequestFromDeliveredToAccepted: {
 		subject: domain.MessageTemplateRequestFromDeliveredToAccepted,
 		body:    "The status of a request changed from delivered to accepted.",
 	},
-	domain.MessageTemplateRequestFromDeliveredToCommitted: {
-		subject: domain.MessageTemplateRequestFromDeliveredToCommitted,
-		body:    "The status of a request changed from delivered to committed.",
-	},
 	domain.MessageTemplateRequestFromDeliveredToCompleted: {
 		subject: domain.MessageTemplateRequestFromDeliveredToCompleted,
 		body:    "The status of a request changed from delivered to completed.",
-	},
-	domain.MessageTemplateRequestFromOpenToCommitted: {
-		subject: domain.MessageTemplateRequestFromOpenToCommitted,
-		body:    "The status of a request changed from open to committed.",
 	},
 	domain.MessageTemplateRequestFromOpenToRemoved: {
 		subject: domain.MessageTemplateRequestFromOpenToRemoved,
@@ -102,6 +78,18 @@ var dummyTemplates = map[string]dummyTemplate{
 	domain.MessageTemplateNewUserWelcome: {
 		subject: domain.MessageTemplateNewUserWelcome,
 		body:    "welcome",
+	},
+	domain.MessageTemplatePotentialProviderCreated: {
+		subject: domain.MessageTemplatePotentialProviderCreated,
+		body:    "Someone has offered to fulfill your request",
+	},
+	domain.MessageTemplatePotentialProviderRejected: {
+		subject: domain.MessageTemplatePotentialProviderRejected,
+		body:    "Your offer to fulfill a request was not accepted",
+	},
+	domain.MessageTemplatePotentialProviderSelfDestroyed: {
+		subject: domain.MessageTemplatePotentialProviderSelfDestroyed,
+		body:    "An offer to fulfill your request was retracted",
 	},
 }
 
@@ -121,8 +109,8 @@ func (t *DummyEmailService) Send(msg Message) error {
 		return errors.New(errMsg)
 	}
 
-	domain.Logger.Printf("dummy message subject: %s, recipient: %s, data: %+v",
-		msg.Subject, msg.ToName, msg.Data)
+	domain.Logger.Printf("dummy message subject: %s, recipient: %s",
+		msg.Subject, msg.ToName)
 
 	t.sentMessages = append(t.sentMessages,
 		dummyMessage{

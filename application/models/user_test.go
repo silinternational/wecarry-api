@@ -611,15 +611,16 @@ func (ms *ModelSuite) TestUser_CanUpdatePostStatus() {
 			want:      false,
 		},
 		{
-			name:      "Open to Committed",
+			name:      "Open to Accepted",
 			post:      Post{CreatedByID: 1, Status: PostStatusOpen, Type: PostTypeRequest},
-			newStatus: PostStatusCommitted,
+			user:      User{ID: 1},
+			newStatus: PostStatusAccepted,
 			want:      true,
 		},
 		{
-			name:      "Committed to Committed",
-			post:      Post{CreatedByID: 1, Status: PostStatusCommitted, Type: PostTypeRequest},
-			newStatus: PostStatusCommitted,
+			name:      "Accepted to Accepted",
+			post:      Post{CreatedByID: 1, Status: PostStatusAccepted, Type: PostTypeRequest},
+			newStatus: PostStatusAccepted,
 			want:      false,
 		},
 	}
@@ -627,6 +628,78 @@ func (ms *ModelSuite) TestUser_CanUpdatePostStatus() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			ms.Equal(test.want, test.user.CanUpdatePostStatus(test.post, test.newStatus),
+				"incorrect result")
+		})
+	}
+}
+
+func (ms *ModelSuite) TestUser_CanViewPost() {
+	t := ms.T()
+
+	f := CreateFixturesForUserCanViewPost(ms)
+	users := f.Users
+	posts := f.Posts
+
+	tests := []struct {
+		name      string
+		post      Post
+		user      User
+		newStatus PostStatus
+		want      bool
+	}{
+		{
+			name: "Creator",
+			post: posts[0],
+			user: users[0],
+			want: true,
+		},
+		{
+			name: "SuperAdmin",
+			post: posts[0],
+			user: users[3],
+			want: true,
+		},
+		{
+			name: "User's Org",
+			post: posts[0],
+			user: users[1],
+			want: true,
+		},
+		{
+			name: "All with User's untrusted Org",
+			post: posts[2],
+			user: users[0],
+			want: true,
+		},
+		{
+			name: "Trusted with User's trusted Org",
+			post: posts[3],
+			user: users[1],
+			want: true,
+		},
+		{
+			name: "Trusted with User's untrusted Org",
+			post: posts[3],
+			user: users[0],
+			want: false,
+		},
+		{
+			name: "Same with User's untrusted Org",
+			post: posts[4],
+			user: users[0],
+			want: false,
+		},
+		{
+			name: "Same with User's trusted Org",
+			post: posts[4],
+			user: users[1],
+			want: false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ms.Equal(test.want, test.user.canViewPost(test.post),
 				"incorrect result")
 		})
 	}
