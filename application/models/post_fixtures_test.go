@@ -247,7 +247,7 @@ func createFixturesFor_Posts_GetPotentialProviders(ms *ModelSuite) PostFixtures 
 	}
 }
 
-func createFixtures_Posts_FilterByUserTypeAndContents(ms *ModelSuite) PostFixtures {
+func createFixtures_Posts_FindByUser_SearchText(ms *ModelSuite) PostFixtures {
 	orgs := Organizations{{}, {}}
 	for i := range orgs {
 		orgs[i].UUID = domain.GetUUID()

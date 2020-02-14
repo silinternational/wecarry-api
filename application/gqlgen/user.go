@@ -190,7 +190,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 	if input.Location == nil {
 		err = user.RemoveLocation()
 	} else {
-		err = user.SetLocation(convertGqlLocationInputToDBLocation(*input.Location))
+		err = user.SetLocation(convertLocation(*input.Location))
 	}
 	if err != nil {
 		return nil, reportError(ctx, err, "UpdateUser.SetLocationError")

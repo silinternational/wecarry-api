@@ -177,9 +177,8 @@ type ComplexityRoot struct {
 		Organization   func(childComplexity int, id *string) int
 		Organizations  func(childComplexity int) int
 		Post           func(childComplexity int, id *string) int
-		Posts          func(childComplexity int) int
+		Posts          func(childComplexity int, destination *LocationInput, origin *LocationInput, searchText *string) int
 		RecentMeetings func(childComplexity int) int
-		SearchRequests func(childComplexity int, text string) int
 		Threads        func(childComplexity int) int
 		User           func(childComplexity int, id *string) int
 		Users          func(childComplexity int) int
@@ -311,9 +310,8 @@ type PostResolver interface {
 type QueryResolver interface {
 	Users(ctx context.Context) ([]models.User, error)
 	User(ctx context.Context, id *string) (*models.User, error)
-	Posts(ctx context.Context) ([]models.Post, error)
+	Posts(ctx context.Context, destination *LocationInput, origin *LocationInput, searchText *string) ([]models.Post, error)
 	Post(ctx context.Context, id *string) (*models.Post, error)
-	SearchRequests(ctx context.Context, text string) ([]models.Post, error)
 	Threads(ctx context.Context) ([]models.Thread, error)
 	MyThreads(ctx context.Context) ([]models.Thread, error)
 	Message(ctx context.Context, id *string) (*models.Message, error)
@@ -1160,7 +1158,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.Query.Posts(childComplexity), true
+		args, err := ec.field_Query_posts_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Posts(childComplexity, args["destination"].(*LocationInput), args["origin"].(*LocationInput), args["searchText"].(*string)), true
 
 	case "Query.recentMeetings":
 		if e.complexity.Query.RecentMeetings == nil {
@@ -1168,18 +1171,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.RecentMeetings(childComplexity), true
-
-	case "Query.searchRequests":
-		if e.complexity.Query.SearchRequests == nil {
-			break
-		}
-
-		args, err := ec.field_Query_searchRequests_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.SearchRequests(childComplexity, args["text"].(string)), true
 
 	case "Query.threads":
 		if e.complexity.Query.Threads == nil {
@@ -1466,9 +1457,33 @@ var parsedSchema = gqlparser.MustLoadSchema(
 	&ast.Source{Name: "schema.graphql", Input: `type Query {
     users: [User!]!
     user(id: ID): User
-    posts: [Post!]!
+
+    """
+    Posts, aka Requests. With no parameters supplied, all posts visible to the authenticated user are returned. Filter
+    parameters only remove from this default list and never include posts that are not visible to the authenticated
+    user. For posts associated with a ` + "`" + `User` + "`" + ` or ` + "`" + `Meeting` + "`" + `, use the ` + "`" + `posts` + "`" + ` field on ` + "`" + `User` + "`" + ` and ` + "`" + `Meeting` + "`" + `.
+    NOT YET IMPLEMENTED: ` + "`" + `destination` + "`" + `, ` + "`" + `origin` + "`" + `, ` + "`" + `searchText` + "`" + `
+    """
+    posts(
+        """
+        NOT YET IMPLEMENTED --
+        Only include posts that have a destination near the given location.
+        """
+        destination: LocationInput,
+
+        """
+        NOT YET IMPLEMENTED --
+        Only include posts that have an origin near the given location.
+        """
+        origin: LocationInput
+
+        """
+        Search by text in ` + "`" + `title` + "`" + ` or ` + "`" + `description` + "`" + `
+        """
+        searchText: String
+    ): [Post!]!
+
     post(id: ID): Post
-    searchRequests(text: String!): [Post!]!
     threads: [Thread!]!
     myThreads: [Thread!]!
     message(id: ID): Message!
@@ -2277,17 +2292,33 @@ func (ec *executionContext) field_Query_post_args(ctx context.Context, rawArgs m
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_searchRequests_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_posts_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["text"]; ok {
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+	var arg0 *LocationInput
+	if tmp, ok := rawArgs["destination"]; ok {
+		arg0, err = ec.unmarshalOLocationInput2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐLocationInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["text"] = arg0
+	args["destination"] = arg0
+	var arg1 *LocationInput
+	if tmp, ok := rawArgs["origin"]; ok {
+		arg1, err = ec.unmarshalOLocationInput2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐLocationInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["origin"] = arg1
+	var arg2 *string
+	if tmp, ok := rawArgs["searchText"]; ok {
+		arg2, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["searchText"] = arg2
 	return args, nil
 }
 
@@ -5758,10 +5789,17 @@ func (ec *executionContext) _Query_posts(ctx context.Context, field graphql.Coll
 		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_posts_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Posts(rctx)
+		return ec.resolvers.Query().Posts(rctx, args["destination"].(*LocationInput), args["origin"].(*LocationInput), args["searchText"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5818,50 +5856,6 @@ func (ec *executionContext) _Query_post(ctx context.Context, field graphql.Colle
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalOPost2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Query_searchRequests(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Query",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_searchRequests_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	rctx.Args = args
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().SearchRequests(rctx, args["text"].(string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]models.Post)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNPost2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_threads(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -10139,20 +10133,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_post(ctx, field)
-				return res
-			})
-		case "searchRequests":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_searchRequests(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
 				return res
 			})
 		case "threads":

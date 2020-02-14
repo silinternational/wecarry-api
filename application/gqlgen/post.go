@@ -233,10 +233,15 @@ func (r *postResolver) IsEditable(ctx context.Context, obj *models.Post) (bool, 
 }
 
 // Posts resolves the `posts` query
-func (r *queryResolver) Posts(ctx context.Context) ([]models.Post, error) {
+func (r *queryResolver) Posts(ctx context.Context, destination, origin *LocationInput, searchText *string) (
+	[]models.Post, error) {
+
 	posts := models.Posts{}
 	cUser := models.GetCurrentUserFromGqlContext(ctx)
-	if err := posts.FindByUser(ctx, cUser); err != nil {
+
+	err := posts.FindByUser(ctx, cUser, convertOptionalLocation(destination), convertOptionalLocation(origin),
+		searchText)
+	if err != nil {
 		extras := map[string]interface{}{
 			"user": cUser.UUID,
 		}
@@ -371,7 +376,7 @@ func (r *mutationResolver) CreatePost(ctx context.Context, input postInput) (*mo
 	}
 
 	if !post.MeetingID.Valid {
-		dest := convertGqlLocationInputToDBLocation(*input.Destination)
+		dest := convertLocation(*input.Destination)
 		if err = dest.Create(); err != nil {
 			return nil, reportError(ctx, err, "CreatePost.SetDestination", extras)
 		}
@@ -383,7 +388,7 @@ func (r *mutationResolver) CreatePost(ctx context.Context, input postInput) (*mo
 	}
 
 	if input.Origin != nil {
-		if err = post.SetOrigin(convertGqlLocationInputToDBLocation(*input.Origin)); err != nil {
+		if err = post.SetOrigin(convertLocation(*input.Origin)); err != nil {
 			return nil, reportError(ctx, err, "CreatePost.SetOrigin", extras)
 		}
 	}
@@ -417,7 +422,7 @@ func (r *mutationResolver) UpdatePost(ctx context.Context, input postInput) (*mo
 	}
 
 	if input.Destination != nil {
-		if err := post.SetDestination(convertGqlLocationInputToDBLocation(*input.Destination)); err != nil {
+		if err := post.SetDestination(convertLocation(*input.Destination)); err != nil {
 			return nil, reportError(ctx, err, "UpdatePost.SetDestination", extras)
 		}
 	}
@@ -427,7 +432,7 @@ func (r *mutationResolver) UpdatePost(ctx context.Context, input postInput) (*mo
 			return nil, reportError(ctx, err, "UpdatePost.RemoveOrigin", extras)
 		}
 	} else {
-		if err := post.SetOrigin(convertGqlLocationInputToDBLocation(*input.Origin)); err != nil {
+		if err := post.SetOrigin(convertLocation(*input.Origin)); err != nil {
 			return nil, reportError(ctx, err, "UpdatePost.SetOrigin", extras)
 		}
 	}
@@ -571,20 +576,4 @@ func (r *mutationResolver) RemovePotentialProvider(ctx context.Context, postID, 
 	}
 
 	return &post, nil
-}
-
-// SearchRequests resolves the `searchRequests` query by finding requests that contain
-//  a certain string in their Title or Description
-func (r *queryResolver) SearchRequests(ctx context.Context, text string) ([]models.Post, error) {
-	posts := models.Posts{}
-	cUser := models.GetCurrentUserFromGqlContext(ctx)
-
-	if err := posts.FilterByUserTypeAndContents(ctx, cUser, models.PostTypeRequest, text); err != nil {
-		extras := map[string]interface{}{
-			"user": cUser.UUID,
-		}
-		return nil, reportError(ctx, err, "GetPosts", extras)
-	}
-
-	return posts, nil
 }
