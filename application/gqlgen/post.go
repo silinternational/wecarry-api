@@ -107,13 +107,22 @@ func (r *postResolver) Description(ctx context.Context, obj *models.Post) (*stri
 	return models.GetStringFromNullsString(obj.Description), nil
 }
 
-// NeededBefore resolves the `neededBefore` property of the post query, converting a nulls.Time to a *time.Time.
+// NeededBefore resolves the `neededBefore` property of the post query, converting a nulls.Time to a *string.
 func (r *postResolver) NeededBefore(ctx context.Context, obj *models.Post) (*string, error) {
 	if obj == nil {
 		return nil, nil
 	}
 
 	return models.GetStringFromNullsTime(obj.NeededBefore), nil
+}
+
+// CompletedOn resolves the `completedOn` property of the post query, converting a nulls.Time to a *string.
+func (r *postResolver) CompletedOn(ctx context.Context, obj *models.Post) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+
+	return models.GetStringFromNullsTime(obj.CompletedOn), nil
 }
 
 // Destination resolves the `destination` property of the post query, retrieving the related record from the database.
@@ -194,6 +203,24 @@ func (r *postResolver) Photo(ctx context.Context, obj *models.Post) (*models.Fil
 	}
 
 	return photo, nil
+}
+
+// PhotoID retrieves the ID for the user profile photo
+func (r *postResolver) PhotoID(ctx context.Context, obj *models.Post) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+
+	if !obj.PhotoFileID.Valid {
+		return nil, nil
+	}
+
+	photoID, err := obj.GetPhotoID()
+	if err != nil {
+		return nil, reportError(ctx, err, "GetUserPhotoID")
+	}
+
+	return photoID, nil
 }
 
 // Files retrieves the list of files attached to the post, not including the primary photo

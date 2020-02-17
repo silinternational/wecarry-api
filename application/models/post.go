@@ -173,8 +173,8 @@ func isTransitionBackStep(status1, status2 PostStatus) (bool, error) {
 			return target.isBackStep, nil
 		}
 	}
-
-	return false, fmt.Errorf("invalid status transition from %s to %s", status1, status2)
+	// Not worrying about invalid transitions, since this is called by AfterUpdate
+	return false, nil
 }
 
 func (e PostStatus) IsValid() bool {
@@ -230,6 +230,7 @@ type Post struct {
 	OrganizationID int            `json:"organization_id" db:"organization_id"`
 	NeededBefore   nulls.Time     `json:"needed_before" db:"needed_before"`
 	Status         PostStatus     `json:"status" db:"status"`
+	CompletedOn    nulls.Time     `json:"completed_on" db:"completed_on"`
 	Title          string         `json:"title" db:"title"`
 	Size           PostSize       `json:"size" db:"size"`
 	UUID           uuid.UUID      `json:"uuid" db:"uuid"`
@@ -469,7 +470,6 @@ func (p *Post) manageStatusTransition() error {
 	if p.Status == "" {
 		return nil
 	}
-
 	lastPostHistory := PostHistory{}
 	if err := lastPostHistory.getLastForPost(*p); err != nil {
 		return err
@@ -510,6 +510,34 @@ func (p *Post) manageStatusTransition() error {
 	}
 
 	emitEvent(e)
+
+	// If completed, hydrate CompletedOn. If not completed, nullify CompletedOn
+	// Don't use p.UpdateColumns, due to this being called by the AfterUpdate function
+	switch p.Status {
+	case PostStatusCompleted:
+		if !p.CompletedOn.Valid {
+			err := DB.RawQuery(
+				fmt.Sprintf(`UPDATE posts set completed_on = '%s' where ID = %v`,
+					time.Now().Format(domain.DateFormat), p.ID)).Exec()
+			if err != nil {
+				domain.ErrLogger.Printf("unable to set Post.CompletedOn for ID: %v, %s", p.ID, err)
+			}
+			if err := DB.Reload(p); err != nil {
+				domain.ErrLogger.Printf("unable to reload Post ID: %v, %s", p.ID, err)
+			}
+		}
+	case PostStatusOpen, PostStatusAccepted, PostStatusDelivered:
+		if p.CompletedOn.Valid {
+			err := DB.RawQuery(
+				fmt.Sprintf(`UPDATE posts set completed_on = NULL where ID = %v`, p.ID)).Exec()
+			if err != nil {
+				domain.ErrLogger.Printf("unable to nullify Post.CompletedOn for ID: %v, %s", p.ID, err)
+			}
+			if err := DB.Reload(p); err != nil {
+				domain.ErrLogger.Printf("unable to reload Post ID: %v, %s", p.ID, err)
+			}
+		}
+	}
 
 	return nil
 }
@@ -754,6 +782,19 @@ func (p *Post) GetPhoto() (*File, error) {
 	}
 
 	return &p.PhotoFile, nil
+}
+
+// GetPhotoID retrieves UUID of the file attached as the Post photo
+func (p *Post) GetPhotoID() (*string, error) {
+	if err := DB.Load(p, "PhotoFile"); err != nil {
+		return nil, err
+	}
+
+	if p.PhotoFileID.Valid {
+		photoID := p.PhotoFile.UUID.String()
+		return &photoID, nil
+	}
+	return nil, nil
 }
 
 // scope query to only include posts from an organization associated with the current user
