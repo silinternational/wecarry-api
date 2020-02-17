@@ -223,7 +223,7 @@
 
 # New Message notification subject
 - id: Email.Subject.Message.Created
-  translation: {{.AppName}} message from {{.sentByNickname}} about {{.postTitle}}
+  translation: "{{.AppName}} message from {{.sentByNickname}} about {{.postTitle}}"
 
 # New User welcome subject
 - id: Email.Subject.Welcome
