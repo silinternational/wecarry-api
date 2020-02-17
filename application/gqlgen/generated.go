@@ -164,6 +164,7 @@ type ComplexityRoot struct {
 	}
 
 	Post struct {
+		CompletedOn        func(childComplexity int) int
 		CreatedAt          func(childComplexity int) int
 		CreatedBy          func(childComplexity int) int
 		Description        func(childComplexity int) int
@@ -340,6 +341,7 @@ type PostResolver interface {
 	Description(ctx context.Context, obj *models.Post) (*string, error)
 	Destination(ctx context.Context, obj *models.Post) (*models.Location, error)
 	NeededBefore(ctx context.Context, obj *models.Post) (*string, error)
+	CompletedOn(ctx context.Context, obj *models.Post) (*string, error)
 	Origin(ctx context.Context, obj *models.Post) (*models.Location, error)
 
 	Threads(ctx context.Context, obj *models.Post) ([]models.Thread, error)
@@ -1088,6 +1090,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.OrganizationDomain.OrganizationID(childComplexity), true
+
+	case "Post.completedOn":
+		if e.complexity.Post.CompletedOn == nil {
+			break
+		}
+
+		return e.complexity.Post.CompletedOn(childComplexity), true
 
 	case "Post.createdAt":
 		if e.complexity.Post.CreatedAt == nil {
@@ -1989,6 +1998,8 @@ type Post {
     destination: Location!
     "Date (yyyy-mm-dd) before which the item will be needed. The record may be hidden or removed after this date."
     neededBefore: Date
+    "Date (yyyy-mm-dd) on which the request moved into the COMPLETED status"
+    completedOn: Date
     "Optional geographic location where the item can be picked up, purchased, or otherwise obtained"
     origin: Location
     "Broad category of the size of item"
@@ -6402,6 +6413,40 @@ func (ec *executionContext) _Post_neededBefore(ctx context.Context, field graphq
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Post().NeededBefore(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalODate2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Post_completedOn(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Post",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Post().CompletedOn(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11697,6 +11742,17 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 					}
 				}()
 				res = ec._Post_neededBefore(ctx, field, obj)
+				return res
+			})
+		case "completedOn":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Post_completedOn(ctx, field, obj)
 				return res
 			})
 		case "origin":
