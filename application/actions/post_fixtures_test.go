@@ -38,10 +38,15 @@ func createFixturesForPostQuery(as *ActionSuite) PostQueryFixtures {
 	org := userFixtures.Organization
 	users := userFixtures.Users
 
-	posts := test.CreatePostFixtures(as.DB, 2, true)
+	posts := test.CreatePostFixtures(as.DB, 3, true)
 	posts[0].Status = models.PostStatusAccepted
 	posts[0].ProviderID = nulls.NewInt(users[1].ID)
 	as.NoError(as.DB.Save(&posts[0]))
+
+	posts[2].Status = models.PostStatusCompleted
+	posts[2].CompletedOn = nulls.NewTime(time.Now())
+	posts[2].ProviderID = nulls.NewInt(users[1].ID)
+	as.NoError(as.DB.Save(&posts[2]))
 
 	threads := []models.Thread{
 		{UUID: domain.GetUUID(), PostID: posts[0].ID},

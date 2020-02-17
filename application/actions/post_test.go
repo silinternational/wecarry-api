@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -36,6 +37,7 @@ type Post struct {
 	Title        string          `json:"title"`
 	Description  *string         `json:"description"`
 	NeededBefore *string         `json:"neededBefore"`
+	CompletedOn  *string         `json:"completedOn"`
 	Destination  struct {
 		Description string  `json:"description"`
 		Country     string  `json:"country"`
@@ -88,14 +90,14 @@ type Post struct {
 
 func (as *ActionSuite) Test_PostQuery() {
 	f := createFixturesForPostQuery(as)
-
-	query := `{ post(id: "` + f.Posts[0].UUID.String() + `")
+	const queryTemplate = `{ post(id: "%s")
 		{
 			id
 		    type
 			title
 			description
 			neededBefore
+			completedOn
 			destination {description country latitude longitude}
 			origin {description country latitude longitude}
 			size
@@ -114,6 +116,8 @@ func (as *ActionSuite) Test_PostQuery() {
 			files { id }
 		}}`
 
+	query := fmt.Sprintf(queryTemplate, f.Posts[0].UUID)
+
 	var resp PostResponse
 
 	err := as.testGqlQuery(query, f.Users[1].Nickname, &resp)
@@ -126,6 +130,7 @@ func (as *ActionSuite) Test_PostQuery() {
 
 	wantDate := f.Posts[0].NeededBefore.Time.Format(domain.DateFormat)
 	as.Equal(wantDate, *resp.Post.NeededBefore, "incorrect NeededBefore date")
+	as.Nil(resp.Post.CompletedOn, "expected a nil completedOn date string")
 
 	as.NoError(as.DB.Load(&f.Posts[0], "Destination", "Origin", "PhotoFile", "Files.File"))
 
@@ -160,6 +165,14 @@ func (as *ActionSuite) Test_PostQuery() {
 	as.Equal(f.Posts[0].PhotoFile.UUID.String(), resp.Post.Photo.ID)
 	as.Equal(1, len(resp.Post.Files))
 	as.Equal(f.Posts[0].Files[0].File.UUID.String(), resp.Post.Files[0].ID)
+
+	// Check an actual CompletedOn field
+	query = fmt.Sprintf(queryTemplate, f.Posts[2].UUID)
+	err = as.testGqlQuery(query, f.Users[1].Nickname, &resp)
+	as.NoError(err)
+
+	wantDate = f.Posts[2].CompletedOn.Time.Format(domain.DateFormat)
+	as.Equal(wantDate, *resp.Post.CompletedOn, "incorrect CompletedOn date")
 }
 
 func (as *ActionSuite) Test_PostsQuery() {
@@ -369,14 +382,23 @@ func (as *ActionSuite) Test_UpdatePostStatus() {
 		if step.providerID != "" {
 			input += `, providerUserID: "` + step.providerID + `"`
 		}
-		query := `mutation { post: updatePostStatus(input: {` + input + `}) {id status}}`
+		query := `mutation { post: updatePostStatus(input: {` + input + `}) {id status completedOn}}`
 
 		err := as.testGqlQuery(query, step.user.Nickname, &postsResp)
 		if step.wantErr {
 			as.Error(err, "user=%s, query=%s", step.user.Nickname, query)
+			continue
+		}
+
+		as.NoError(err, "user=%s, query=%s", step.user.Nickname, query)
+		as.Equal(step.status, postsResp.Post.Status)
+
+		if step.status == models.PostStatusCompleted {
+			as.NotNil(postsResp.Post.CompletedOn, "expected valid CompletedOn date.")
+			as.Equal(time.Now().Format(domain.DateFormat), *postsResp.Post.CompletedOn,
+				"incorrect CompletedOn date.")
 		} else {
-			as.NoError(err, "user=%s, query=%s", step.user.Nickname, query)
-			as.Equal(step.status, postsResp.Post.Status)
+			as.Nil(postsResp.Post.CompletedOn, "expected nil CompletedOn field.")
 		}
 	}
 }
