@@ -172,7 +172,7 @@ func (as *ActionSuite) Test_PostQuery() {
 	as.Equal(f.Posts[0].Files[0].File.UUID.String(), resp.Post.Files[0].ID)
 
 	// Check an actual CompletedOn field
-	query = fmt.Sprintf(`{ post(id: "%s") %s }`, f.Posts[2].UUID)
+	query = fmt.Sprintf(`{ post(id: "%s") %s }`, f.Posts[2].UUID, allPostFields)
 	err = as.testGqlQuery(query, f.Users[1].Nickname, &resp)
 	as.NoError(err)
 
