@@ -1391,6 +1391,31 @@ func (ms *ModelSuite) TestPost_RemovePhoto() {
 }
 
 // TestPost_GetPhoto tests the GetPhoto method of models.Post
+func (ms *ModelSuite) TestPost_GetPhotoID() {
+	posts := createPostFixtures(ms.DB, 1, 0, false)
+	post := posts[0]
+
+	var photoFixture File
+	const filename = "photo.gif"
+	ms.Nil(photoFixture.Store(filename, []byte("GIF89a")), "failed to create file fixture")
+
+	attachedFile, err := post.AttachPhoto(photoFixture.UUID.String())
+	ms.NoError(err, "failed to attach photo to post")
+	ms.Equal(filename, attachedFile.Name)
+	ms.True(attachedFile.ID != 0)
+	ms.True(attachedFile.UUID.Version() != 0)
+
+	ms.NoError(DB.Load(&post), "failed to load photo relation for test post")
+
+	ms.Equal(filename, post.PhotoFile.Name)
+
+	got, err := post.GetPhotoID()
+	ms.NoError(err, "unexpected error")
+	attachedFileUUID := attachedFile.UUID.String()
+	ms.Equal(&attachedFileUUID, got)
+}
+
+// TestPost_GetPhoto tests the GetPhoto method of models.Post
 func (ms *ModelSuite) TestPost_GetPhoto() {
 	posts := createPostFixtures(ms.DB, 1, 0, false)
 	post := posts[0]
