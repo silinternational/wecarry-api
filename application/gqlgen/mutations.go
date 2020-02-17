@@ -277,7 +277,7 @@ func (r *mutationResolver) CreateMeetingInvitations(ctx context.Context, input C
 	}
 	if len(badEmails) > 0 {
 		emailList := strings.Join(badEmails, ", ")
-		graphql.AddError(ctx, gqlerror.Errorf("problem creating invitation for %v", emailList)
+		graphql.AddError(ctx, gqlerror.Errorf("problem creating invitation for %v", emailList))
 	}
 
 	invitations, err := m.Invitations()
