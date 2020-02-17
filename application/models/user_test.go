@@ -920,6 +920,55 @@ func (ms *ModelSuite) TestUser_RemovePhoto() {
 	}
 }
 
+func (ms *ModelSuite) TestUser_GetPhotoID() {
+	t := ms.T()
+	f := createFixturesForTestUserGetPhoto(ms)
+	photoID2 := f.Users[2].PhotoFile.UUID.String()
+	photoID3 := f.Users[3].PhotoFile.UUID.String()
+
+	tests := []struct {
+		name    string
+		user    User
+		wantID  *string
+		wantErr string
+	}{
+		{
+			name:   "no AuthPhoto, no photo attachment",
+			user:   f.Users[0],
+			wantID: nil,
+		},
+		{
+			name:   "AuthPhoto, and no photo attachment",
+			user:   f.Users[1],
+			wantID: nil,
+		},
+		{
+			name:   "no AuthPhoto, but photo attachment",
+			user:   f.Users[2],
+			wantID: &photoID2,
+		},
+		{
+			name:   "AuthPhoto and photo attachment",
+			user:   f.Users[3],
+			wantID: &photoID3,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			photoID, err := test.user.GetPhotoID()
+			if test.wantErr != "" {
+				ms.Error(err)
+				ms.Contains(err.Error(), test.wantErr, "unexpected error message")
+				return
+			}
+			ms.NoError(err)
+
+			ms.Equal(test.wantID, photoID, "incorrect photo id.")
+		})
+	}
+}
+
 func (ms *ModelSuite) TestUser_GetPhoto() {
 	t := ms.T()
 	f := createFixturesForTestUserGetPhoto(ms)
