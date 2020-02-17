@@ -469,3 +469,48 @@ func (ms *ModelSuite) TestMeeting_CanUpdate() {
 	ms.True(mtg.CanUpdate(adminUser), "admin should be authorized")
 	ms.False(mtg.CanUpdate(otherUser), "normal user (non meeting creator) should NOT be authorized")
 }
+
+func (ms *ModelSuite) TestMeeting_GetPosts() {
+	meetings := createMeetingFixtures(ms.DB, 2)
+
+	posts := createPostFixtures(ms.DB, 3, 0, false)
+	posts[0].MeetingID = nulls.NewInt(meetings[1].ID)
+	posts[1].MeetingID = nulls.NewInt(meetings[1].ID)
+	ms.NoError(ms.DB.Update(&posts))
+
+	tests := []struct {
+		name    string
+		meeting Meeting
+		wantIDs []int
+		wantErr string
+	}{
+		{
+			name:    "none",
+			meeting: meetings[0],
+			wantIDs: []int{},
+		},
+		{
+			name:    "two",
+			meeting: meetings[1],
+			wantIDs: []int{posts[1].ID, posts[0].ID},
+		},
+	}
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			got, err := tt.meeting.GetPosts()
+			if tt.wantErr != "" {
+				ms.Error(err, "did not get expected error")
+				ms.Contains(err.Error(), tt.wantErr)
+				return
+			}
+			ms.NoError(err, "unexpected error")
+
+			pIDs := make([]int, len(got))
+			for i, p := range got {
+				pIDs[i] = p.ID
+			}
+
+			ms.Equal(tt.wantIDs, pIDs)
+		})
+	}
+}

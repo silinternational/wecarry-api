@@ -32,7 +32,7 @@ type Meeting struct {
 	CreatedBy User     `belongs_to:"users"`
 	ImageFile File     `belongs_to:"files"`
 	Location  Location `belongs_to:"locations"`
-	Posts     Posts    `has_many:"posts" fk_id:"id" order_by:"updated_at desc"`
+	Posts     Posts    `has_many:"posts" fk_id:"meeting_id" order_by:"updated_at desc"`
 }
 
 // String is not required by pop and may be deleted
@@ -260,4 +260,13 @@ func (m *Meeting) CanUpdate(user User) bool {
 	}
 
 	return user.ID == m.CreatedByID
+}
+
+// GetPosts return all associated Posts
+func (m *Meeting) GetPosts() ([]Post, error) {
+	if err := DB.Load(m, "Posts"); err != nil {
+		return nil, fmt.Errorf("error getting posts for meeting id %v ... %v", m.ID, err)
+	}
+
+	return m.Posts, nil
 }

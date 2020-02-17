@@ -104,7 +104,10 @@ func (r *meetingResolver) ImageFile(ctx context.Context, obj *models.Meeting) (*
 }
 
 func (r *meetingResolver) Posts(ctx context.Context, obj *models.Meeting) ([]models.Post, error) {
-	return models.Posts{}, nil
+	if obj == nil {
+		return nil, nil
+	}
+	return obj.GetPosts()
 }
 
 func (r *meetingResolver) Invitations(ctx context.Context, obj *models.Meeting) ([]MeetingInvitation, error) {

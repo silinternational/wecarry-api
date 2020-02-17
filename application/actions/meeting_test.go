@@ -13,6 +13,7 @@ type meetingQueryFixtures struct {
 	models.Meetings
 	models.Users
 	models.File
+	models.Posts
 }
 
 type meetingsResponse struct {
@@ -28,17 +29,20 @@ type meeting struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	MoreInfoURL string `json:"moreInfoURL"`
+	StartDate   string `json:"startDate"`
+	EndDate     string `json:"endDate"`
 	CreatedBy   struct {
 		Nickname string `json:"nickname"`
 	} `json:"createdBy"`
-	StartDate string `json:"startDate"`
-	EndDate   string `json:"endDate"`
 	ImageFile struct {
 		ID string `json:"id"`
 	} `json:"imageFile"`
 	Location struct {
 		Country string `json:"country"`
 	} `json:"location"`
+	Posts []struct {
+		ID string `json:"id"`
+	} `json:"posts"`
 }
 
 func (as *ActionSuite) Test_MeetingQuery() {
@@ -53,11 +57,12 @@ func (as *ActionSuite) Test_MeetingQuery() {
 		    name
             description
 			moreInfoURL
-			createdBy { nickname}
 			startDate
 			endDate
+			createdBy {nickname}
 			imageFile {id}
 			location {country}
+			posts {id}
 		}}`
 
 	var resp meetingResponse
@@ -90,6 +95,9 @@ func (as *ActionSuite) Test_MeetingQuery() {
 
 	as.Equal(testLocation.Country, gotMtg.Location.Country, "incorrect meeting Location")
 
+	as.Equal(2, len(gotMtg.Posts), "incorrect number of meeting posts")
+	as.Equal(f.Posts[1].UUID.String(), gotMtg.Posts[0].ID, "wrong post returned in meeting posts")
+	as.Equal(f.Posts[0].UUID.String(), gotMtg.Posts[1].ID, "wrong post returned in meeting posts")
 }
 
 func (as *ActionSuite) Test_MeetingsQuery() {
