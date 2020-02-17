@@ -334,10 +334,7 @@ type Meeting {
     """
     posts: [Post!]!
 
-    """
-    NOT YET IMPLEMENTED --
-    Who can see this meeting
-    """
+    "NOT YET IMPLEMENTED -- Who can see this meeting"
     visibility: MeetingVisibility!
 
     """
@@ -346,10 +343,7 @@ type Meeting {
     """
     invitations: [MeetingInvitation!]!
 
-    """
-    NOT YET IMPLEMENTED --
-    Participants of a `Meeting` are able to see all posts associated with the `Meeting`
-    """
+    "NOT YET IMPLEMENTED -- Participants of a `Meeting` are able to see all posts associated with the `Meeting`"
     participants: [MeetingParticipant!]!
 }
 
@@ -492,10 +486,7 @@ input CreateMeetingInput {
     imageFileID: ID
     location: LocationInput!
     
-    """
-    NOT YET IMPLEMENTED --
-    Who can see this meeting
-    """
+    "NOT YET IMPLEMENTED -- Who can see this meeting"
     visibility: MeetingVisibility!
 }
 
@@ -509,10 +500,7 @@ input UpdateMeetingInput {
     imageFileID: ID
     location: LocationInput!
 
-    """
-    NOT YET IMPLEMENTED --
-    Who can see this meeting
-    """
+    "NOT YET IMPLEMENTED -- Who can see this meeting"
     visibility: MeetingVisibility!
 }
 

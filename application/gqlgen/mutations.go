@@ -3,8 +3,11 @@ package gqlgen
 import (
 	"context"
 	"errors"
+	"strings"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/gobuffalo/nulls"
+	"github.com/vektah/gqlparser/gqlerror"
 
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
@@ -264,11 +267,17 @@ func (r *mutationResolver) CreateMeetingInvitations(ctx context.Context, input C
 		InviterID: cUser.ID,
 	}
 
+	badEmails := make([]string, 0)
 	for _, email := range input.Emails {
 		inv.Email = email
 		if err := inv.Create(); err != nil {
+			badEmails = append(badEmails, email)
 			domain.ErrLogger.Printf("error creating meeting invitation for email '%s', %s", email, err)
 		}
+	}
+	if len(badEmails) > 0 {
+		emailList := strings.Join(badEmails, ", ")
+		graphql.AddError(ctx, gqlerror.Errorf("problem creating invitation for %v", emailList)
 	}
 
 	invitations, err := m.Invitations()
