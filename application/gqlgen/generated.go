@@ -1997,13 +1997,9 @@ type Post {
     "Geographic location where item is needed"
     destination: Location!
     "Date (yyyy-mm-dd) before which the item will be needed. The record may be hidden or removed after this date."
-<<<<<<< HEAD
-    neededBefore: String
-    "Date (yyyy-mm-dd) on which the request moved into the COMMITTED status"
-    completedOn: String
-=======
     neededBefore: Date
->>>>>>> develop
+    "Date (yyyy-mm-dd) on which the request moved into the COMPLETED status"
+    completedOn: Date
     "Optional geographic location where the item can be picked up, purchased, or otherwise obtained"
     origin: Location
     "Broad category of the size of item"
@@ -6462,7 +6458,7 @@ func (ec *executionContext) _Post_completedOn(ctx context.Context, field graphql
 	res := resTmp.(*string)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalODate2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Post_origin(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {

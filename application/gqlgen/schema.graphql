@@ -287,9 +287,8 @@ type Post {
     destination: Location!
     "Date (yyyy-mm-dd) before which the item will be needed. The record may be hidden or removed after this date."
     neededBefore: Date
-    neededBefore: String
     "Date (yyyy-mm-dd) on which the request moved into the COMPLETED status"
-    completedOn: String
+    completedOn: Date
     "Optional geographic location where the item can be picked up, purchased, or otherwise obtained"
     origin: Location
     "Broad category of the size of item"
