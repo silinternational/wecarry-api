@@ -764,7 +764,11 @@ func (u *User) GetRealName() string {
 func (u *User) HasOrganization() bool {
 	var c Count
 	err := DB.RawQuery("SELECT COUNT(*) FROM user_organizations WHERE user_id = ?", u.ID).First(&c)
-	if err != nil || c.N == 0 {
+	if err != nil {
+		domain.ErrLogger.Printf("error counting user organizations, user = '%s', err = %s", u.UUID, err)
+		return false
+	}
+	if c.N == 0 {
 		return false
 	}
 	return true
