@@ -1,1 +1,3 @@
 add_column("posts", "completed_on", "date", {null: true})
+
+sql(`update posts set completed_on = updated_at where status = 'COMPLETED';`)
