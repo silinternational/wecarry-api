@@ -114,10 +114,7 @@ type Mutation {
     createOrganizationTrust(input: CreateOrganizationTrustInput!): Organization!
     removeOrganizationTrust(input: RemoveOrganizationTrustInput!): Organization!
 
-    """
-    NOT YET IMPLEMENTED --
-    Bulk create `MeetingInvitation`s
-    """
+    "Bulk create `MeetingInvitation`s and return the updated list of invitations for the specified meeting."
     createMeetingInvitations(input: CreateMeetingInvitationsInput!): [MeetingInvitation!]!
 
     """
@@ -599,7 +596,7 @@ type MeetingInvitation {
     "ID of the `Meeting`"
     meetingID: ID!
     "ID of the `User` making the invitation"
-    userID: ID!
+    inviterID: ID!
     "Email address of the invitee"
     email: String!
     "Gravatar image URL. Always a valid URL, but depending on the email address, it may reference a generic avatar."
@@ -610,10 +607,12 @@ type MeetingInvitation {
 input CreateMeetingInvitationsInput {
     "ID of the `Meeting`"
     meetingID: ID!
-    "ID of the `User` making the invitations"
-    userID: ID!
+
     "Email addresses of the invitees"
     emails: [String!]!
+
+    "NOT YET IMPLEMENTED -- Send email invitations. Default is 'false', do not send any emails."
+    sendEmail: Boolean
 }
 
 "Input object for `removeMeetingInvitation`"

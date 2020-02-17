@@ -110,8 +110,8 @@ func (r *meetingResolver) Posts(ctx context.Context, obj *models.Meeting) ([]mod
 	return obj.GetPosts()
 }
 
-func (r *meetingResolver) Invitations(ctx context.Context, obj *models.Meeting) ([]MeetingInvitation, error) {
-	return []MeetingInvitation{}, nil
+func (r *meetingResolver) Invitations(ctx context.Context, obj *models.Meeting) ([]models.MeetingInvitation, error) {
+	return []models.MeetingInvitation{}, nil
 }
 
 func (r *meetingResolver) Participants(ctx context.Context, obj *models.Meeting) ([]MeetingParticipant, error) {

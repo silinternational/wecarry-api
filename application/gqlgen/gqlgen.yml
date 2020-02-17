@@ -140,11 +140,8 @@ models:
     model: gqlgen.watchInput
   UpdateWatchInput:
     model: gqlgen.watchInput
-
-#directives:
-#  deprecated:
-#    skip_runtime: true
-#  include:
-#    skip_runtime: true
-#  skip:
-#    skip_runtime: true
+  MeetingInvitation:
+    model: models.MeetingInvitation
+    fields:
+      avatarURL:
+        resolver: true

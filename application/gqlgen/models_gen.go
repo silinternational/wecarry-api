@@ -26,10 +26,10 @@ type AuthType struct {
 type CreateMeetingInvitationsInput struct {
 	// ID of the `Meeting`
 	MeetingID string `json:"meetingID"`
-	// ID of the `User` making the invitations
-	UserID string `json:"userID"`
 	// Email addresses of the invitees
 	Emails []string `json:"emails"`
+	// NOT YET IMPLEMENTED -- Send email invitations. Default is 'false', do not send any emails.
+	SendEmail *bool `json:"sendEmail"`
 }
 
 // Input object for `createMeetingParticipant`
@@ -74,18 +74,6 @@ type LocationInput struct {
 	Country     string   `json:"country"`
 	Latitude    *float64 `json:"latitude"`
 	Longitude   *float64 `json:"longitude"`
-}
-
-// Invitation to a `Meeting`. An invitation must be confirmed by the invitee before they may be added to a `Meeting`.
-type MeetingInvitation struct {
-	// ID of the `Meeting`
-	MeetingID string `json:"meetingID"`
-	// ID of the `User` making the invitation
-	UserID string `json:"userID"`
-	// Email address of the invitee
-	Email string `json:"email"`
-	// Gravatar image URL. Always a valid URL, but depending on the email address, it may reference a generic avatar.
-	AvatarURL string `json:"avatarURL"`
 }
 
 // Confirmed participant of a `Meeting`. An invited person will not appear as a `MeetingParticipant` until they have

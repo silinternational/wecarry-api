@@ -245,8 +245,37 @@ func (r *mutationResolver) RemoveOrganizationTrust(ctx context.Context, input Re
 	return &organization, nil
 }
 
-func (r *mutationResolver) CreateMeetingInvitations(ctx context.Context, input CreateMeetingInvitationsInput) ([]MeetingInvitation, error) {
-	return []MeetingInvitation{}, nil
+// CreateMeetingInvitations implements the `createMeetingInvitations` mutation
+func (r *mutationResolver) CreateMeetingInvitations(ctx context.Context, input CreateMeetingInvitationsInput) (
+	[]models.MeetingInvitation, error) {
+
+	cUser := models.GetCurrentUserFromGqlContext(ctx)
+	extras := map[string]interface{}{
+		"user": cUser.UUID,
+	}
+
+	var m models.Meeting
+	if err := m.FindByUUID(input.MeetingID); err != nil {
+		return nil, reportError(ctx, err, "CreateMeetingInvitation.FindMeeting", extras)
+	}
+
+	inv := models.MeetingInvitation{
+		MeetingID: m.ID,
+		InviterID: cUser.ID,
+	}
+
+	for _, email := range input.Emails {
+		inv.Email = email
+		if err := inv.Create(); err != nil {
+			domain.ErrLogger.Printf("error creating meeting invitation for email '%s', %s", email, err)
+		}
+	}
+
+	invitations, err := m.Invitations()
+	if err != nil {
+		return nil, reportError(ctx, err, "CreateMeetingInvitation.ListInvitations", extras)
+	}
+	return invitations, nil
 }
 
 func (r *mutationResolver) CreateMeetingParticipant(ctx context.Context, input CreateMeetingParticipantInput) (*MeetingParticipant, error) {
@@ -254,8 +283,8 @@ func (r *mutationResolver) CreateMeetingParticipant(ctx context.Context, input C
 	return &m, nil
 }
 
-func (r *mutationResolver) RemoveMeetingInvitation(ctx context.Context, input RemoveMeetingInvitationInput) ([]MeetingInvitation, error) {
-	return []MeetingInvitation{}, nil
+func (r *mutationResolver) RemoveMeetingInvitation(ctx context.Context, input RemoveMeetingInvitationInput) ([]models.MeetingInvitation, error) {
+	return []models.MeetingInvitation{}, nil
 }
 
 func (r *mutationResolver) RemoveMeetingParticipant(ctx context.Context, input RemoveMeetingParticipantInput) ([]MeetingParticipant, error) {

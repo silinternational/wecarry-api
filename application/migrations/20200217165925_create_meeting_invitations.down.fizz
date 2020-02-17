@@ -1,0 +1,1 @@
+drop_table("meeting_invitations")
