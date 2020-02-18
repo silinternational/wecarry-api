@@ -177,10 +177,11 @@ func (ms *ModelSuite) TestPost_ValidateCreate() {
 	t := ms.T()
 
 	tests := []struct {
-		name    string
-		post    Post
-		want    *validate.Errors
-		wantErr bool
+		name     string
+		post     Post
+		want     *validate.Errors
+		wantErr  bool
+		errField string
 	}{
 		{
 			name: "good - open",
@@ -206,7 +207,8 @@ func (ms *ModelSuite) TestPost_ValidateCreate() {
 				Status:         PostStatusAccepted,
 				UUID:           domain.GetUUID(),
 			},
-			wantErr: true,
+			wantErr:  true,
+			errField: "create_status",
 		},
 		{
 			name: "bad status - delivered",
@@ -219,7 +221,8 @@ func (ms *ModelSuite) TestPost_ValidateCreate() {
 				Status:         PostStatusDelivered,
 				UUID:           domain.GetUUID(),
 			},
-			wantErr: true,
+			wantErr:  true,
+			errField: "create_status",
 		},
 		{
 			name: "bad status - received",
@@ -232,7 +235,8 @@ func (ms *ModelSuite) TestPost_ValidateCreate() {
 				Status:         PostStatusReceived,
 				UUID:           domain.GetUUID(),
 			},
-			wantErr: true,
+			wantErr:  true,
+			errField: "create_status",
 		},
 		{
 			name: "bad status - completed",
@@ -245,7 +249,8 @@ func (ms *ModelSuite) TestPost_ValidateCreate() {
 				Status:         PostStatusCompleted,
 				UUID:           domain.GetUUID(),
 			},
-			wantErr: true,
+			wantErr:  true,
+			errField: "create_status",
 		},
 		{
 			name: "bad status - removed",
@@ -258,7 +263,8 @@ func (ms *ModelSuite) TestPost_ValidateCreate() {
 				Status:         PostStatusRemoved,
 				UUID:           domain.GetUUID(),
 			},
-			wantErr: true,
+			wantErr:  true,
+			errField: "create_status",
 		},
 		{
 			name: "bad neededBefore (today)",
@@ -272,7 +278,8 @@ func (ms *ModelSuite) TestPost_ValidateCreate() {
 				Status:         PostStatusOpen,
 				UUID:           domain.GetUUID(),
 			},
-			wantErr: true,
+			wantErr:  true,
+			errField: "needed_before",
 		},
 		{
 			name: "good neededBefore (tommorrow)",
@@ -291,14 +298,12 @@ func (ms *ModelSuite) TestPost_ValidateCreate() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			errField := "create_status"
-
 			vErr, _ := test.post.ValidateCreate(DB)
 			if test.wantErr {
 				if vErr.Count() == 0 {
 					t.Errorf("Expected an error, but did not get one")
-				} else if len(vErr.Get(errField)) == 0 {
-					t.Errorf("Expected an error on field %v, but got none (errors: %v)", errField, vErr.Errors)
+				} else if len(vErr.Get(test.errField)) == 0 {
+					t.Errorf("Expected an error on %v, but got none (errors: %v)", test.errField, vErr.Errors)
 				}
 			} else if (test.wantErr == false) && (vErr.HasAny()) {
 				t.Errorf("Unexpected error: %v", vErr)
