@@ -31,7 +31,7 @@ const (
 	ExpiresUTCParam = "expires-utc"
 
 	// http params for the Invite type and key
-	InviteKey         = "invite-key"
+	InviteCode        = "code"
 	InviteType        = "invite-type"
 	InviteTypeMeeting = "meeting"
 
@@ -59,7 +59,6 @@ type AuthOrgOption struct {
 }
 
 type AuthInviteResponse struct {
-	ID       string `json:"ID"`
 	Type     string `json:"type"`
 	Name     string `json:"name"`
 	ImageURL string `json:"imageURL"`
@@ -153,9 +152,9 @@ func provideOrgOptions(userOrgs models.UserOrganizations, c buffalo.Context) err
 
 // TODO stub
 func meetingAuthRequest(c buffalo.Context, extras map[string]interface{}) error {
-	inviteKey := c.Param(InviteKey)
-	if inviteKey == "" {
-		return authRequestError(c, http.StatusBadRequest, domain.ErrorInvalidInviteKey,
+	inviteCode := c.Param(InviteCode)
+	if inviteCode == "" {
+		return authRequestError(c, http.StatusBadRequest, domain.ErrorInvalidInviteCode,
 			"missing Invite Key.", extras)
 	}
 
@@ -220,24 +219,22 @@ func createAuthUser(
 }
 
 func authInvite(c buffalo.Context) error {
-	inviteKey := c.Param(InviteKey)
+	inviteCode := c.Param(InviteCode)
 
-	if inviteKey == "" {
-		return authRequestError(c, http.StatusBadRequest, domain.ErrorInvalidInviteKey,
-			"missing Invite Key.")
+	if inviteCode == "" {
+		return authRequestError(c, http.StatusBadRequest, domain.ErrorInvalidInviteCode,
+			"missing Invite Code.")
 	}
 
-	extras := map[string]interface{}{"authInviteKey": inviteKey}
+	extras := map[string]interface{}{"authInviteCode": inviteCode}
 
-	// TODO Replace this with code that uses the inviteKey to get the meeting
 	var meeting models.Meeting
-	if err := models.DB.Eager("ImageFile").First(&meeting); err != nil {
-		return authRequestError(c, http.StatusBadRequest, domain.ErrorInvalidInviteKey,
-			"invalid Invite Key.", extras)
+	if err := meeting.FindByInviteCode(inviteCode); err != nil {
+		return authRequestError(c, http.StatusBadRequest, domain.ErrorInvalidInviteCode,
+			"error validating Invite Code: "+err.Error(), extras)
 	}
 
 	resp := AuthInviteResponse{
-		ID:   meeting.UUID.String(),
 		Type: InviteTypeMeeting,
 		Name: meeting.Name,
 	}

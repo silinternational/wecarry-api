@@ -462,6 +462,7 @@ var _ = grift.Namespace("db", func() {
 				ImageFileID: nulls.NewInt(fixtureFiles[0].ID),
 				StartDate:   time.Date(2020, 3, 15, 0, 0, 0, 0, time.UTC),
 				EndDate:     time.Date(2020, 3, 21, 0, 0, 0, 0, time.UTC),
+				InviteCode:  nulls.NewUUID(meetingUUID1),
 			},
 			{
 				UUID:        meetingUUID2,
