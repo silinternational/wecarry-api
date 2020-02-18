@@ -40,3 +40,25 @@ func (m *meetingInvitationResolver) AvatarURL(ctx context.Context, obj *models.M
 
 	return obj.AvatarURL(), nil
 }
+
+func (m *meetingInvitationResolver) Meeting(ctx context.Context, obj *models.MeetingInvitation) (*models.Meeting, error) {
+	if obj == nil {
+		return nil, nil
+	}
+
+	mtg, err := obj.Meeting()
+	return &mtg, err
+}
+
+func (m *meetingInvitationResolver) Inviter(ctx context.Context, obj *models.MeetingInvitation) (*PublicProfile, error) {
+	if obj == nil {
+		return nil, nil
+	}
+
+	inviter, err := obj.Inviter()
+	if err != nil {
+		return nil, reportError(ctx, err, "MeetingInvitation.GetInviter")
+	}
+
+	return getPublicProfile(ctx, &inviter), nil
+}

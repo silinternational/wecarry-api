@@ -84,8 +84,8 @@ type MeetingParticipant struct {
 	User *models.User `json:"user"`
 	// true if `User` is a meeting Organizer
 	IsOrganizer *bool `json:"isOrganizer"`
-	// ID of the `MeetingInvitation`, valid if the participant was invited. `null` indicates the `User` self-joined
-	InvitationID *string `json:"invitationID"`
+	// The `MeetingInvitation`, valid if the participant was invited. `null` indicates the `User` self-joined
+	Invitation *models.MeetingInvitation `json:"invitation"`
 }
 
 // User fields that can safely be visible to any user in the system

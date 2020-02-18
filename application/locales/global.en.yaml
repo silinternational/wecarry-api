@@ -282,3 +282,5 @@
   translation: We had a problem finding the meeting for the new invitations
 - id: CreateMeetingInvitation.ListInvitations
   translation: We had a problem getting the list of invitations after adding the new invitations
+- id: MeetingInvitation.GetInviter
+  translation: We had a problem getting the user profile of the inviter

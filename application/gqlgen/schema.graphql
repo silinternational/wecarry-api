@@ -581,10 +581,9 @@ input RemoveOrganizationTrustInput {
 Invitation to a `Meeting`. An invitation must be confirmed by the invitee before they may be added to a `Meeting`.
 """
 type MeetingInvitation {
-    "ID of the `Meeting`"
-    meetingID: ID!
-    "ID of the `User` making the invitation"
-    inviterID: ID!
+    meeting: Meeting!
+    "`User` making the invitation"
+    inviter: PublicProfile!
     "Email address of the invitee"
     email: String!
     "Gravatar image URL. Always a valid URL, but depending on the email address, it may reference a generic avatar."
@@ -621,8 +620,8 @@ type MeetingParticipant {
     user: User!
     "true if `User` is a meeting Organizer"
     isOrganizer: Boolean
-    "ID of the `MeetingInvitation`, valid if the participant was invited. `null` indicates the `User` self-joined"
-    invitationID: ID
+    "The `MeetingInvitation`, valid if the participant was invited. `null` indicates the `User` self-joined"
+    invitation: MeetingInvitation
 }
 
 "Input object for `createMeetingParticipant`"
