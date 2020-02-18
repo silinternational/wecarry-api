@@ -72,7 +72,9 @@ func App() *buffalo.App {
 		app.POST("/service", serviceHandler)
 
 		auth := app.Group("/auth")
-		auth.Middleware.Skip(setCurrentUser, authRequest, authCallback, authDestroy, serviceHandler)
+		auth.Middleware.Skip(setCurrentUser, authInvite, authRequest, authCallback, authDestroy, serviceHandler)
+
+		auth.POST("/invite", authInvite)
 
 		auth.POST("/login", authRequest)
 

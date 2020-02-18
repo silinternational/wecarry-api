@@ -30,14 +30,15 @@ const (
 	// http param for expires utc
 	ExpiresUTCParam = "expires-utc"
 
+	// http params for the Invite type and key
+	InviteKey         = "invite-key"
+	InviteType        = "invite-type"
+	InviteTypeMeeting = "meeting"
+
 	// logout http param for what is normally the bearer token
 	LogoutToken = "token"
 
-	// http params for the Invite type and key
-	InviteType = "invite-type"
-	InviteKey  = "invite-key"
-
-	InviteTypeMeeting = "meeting"
+	MeetingIDSessionKey = "meeting-id"
 
 	// http param for organization id
 	OrgIDParam      = "org-id"
@@ -55,6 +56,13 @@ type AuthOrgOption struct {
 	ID      string `json:"ID"`
 	Name    string `json:"Name"`
 	LogoURL string `json:"LogoURL"`
+}
+
+type AuthInviteResponse struct {
+	ID       string `json:"ID"`
+	Type     string `json:"type"`
+	Name     string `json:"name"`
+	ImageURL string `json:"imageURL"`
 }
 
 type AuthUser struct {
@@ -143,6 +151,7 @@ func provideOrgOptions(userOrgs models.UserOrganizations, c buffalo.Context) err
 	return c.Render(http.StatusOK, render.JSON(resp))
 }
 
+// TODO stub
 func meetingAuthRequest(c buffalo.Context, extras map[string]interface{}) error {
 	inviteKey := c.Param(InviteKey)
 	if inviteKey == "" {
@@ -150,6 +159,7 @@ func meetingAuthRequest(c buffalo.Context, extras map[string]interface{}) error 
 			"missing Invite Key.", extras)
 	}
 
+	return nil
 }
 
 func nonOrgAuthRequest(c buffalo.Context, extras map[string]interface{}) error {
@@ -207,6 +217,35 @@ func createAuthUser(
 	}
 
 	return authUser, nil
+}
+
+func authInvite(c buffalo.Context) error {
+	inviteKey := c.Param(InviteKey)
+
+	if inviteKey == "" {
+		return authRequestError(c, http.StatusBadRequest, domain.ErrorInvalidInviteKey,
+			"missing Invite Key.")
+	}
+
+	extras := map[string]interface{}{"authInviteKey": inviteKey}
+
+	// TODO Replace this with code that uses the inviteKey to get the meeting
+	var meeting models.Meeting
+	if err := models.DB.Eager("ImageFile").First(&meeting); err != nil {
+		return authRequestError(c, http.StatusBadRequest, domain.ErrorInvalidInviteKey,
+			"invalid Invite Key.", extras)
+	}
+
+	resp := AuthInviteResponse{
+		ID:   meeting.UUID.String(),
+		Type: InviteTypeMeeting,
+		Name: meeting.Name,
+	}
+	if meeting.ImageFileID.Valid {
+		resp.ImageURL = meeting.ImageFile.URL
+	}
+
+	return c.Render(http.StatusOK, render.JSON(resp))
 }
 
 func authRequest(c buffalo.Context) error {
