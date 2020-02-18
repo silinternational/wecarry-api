@@ -1,4 +1,4 @@
-create_table("meeting_invitations") {
+create_table("meeting_invites") {
 	t.Column("id", "integer", {primary: true})
 	t.Timestamps()
 	t.Column("meeting_id", "integer", {})

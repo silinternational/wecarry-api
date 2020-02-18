@@ -27,13 +27,13 @@ func (r *queryResolver) SystemConfig(ctx context.Context) (*SystemConfig, error)
 	return nil, nil
 }
 
-func (r *Resolver) MeetingInvitation() MeetingInvitationResolver {
-	return &meetingInvitationResolver{r}
+func (r *Resolver) MeetingInvite() MeetingInviteResolver {
+	return &meetingInviteResolver{r}
 }
 
-type meetingInvitationResolver struct{ *Resolver }
+type meetingInviteResolver struct{ *Resolver }
 
-func (m *meetingInvitationResolver) AvatarURL(ctx context.Context, obj *models.MeetingInvitation) (string, error) {
+func (m *meetingInviteResolver) AvatarURL(ctx context.Context, obj *models.MeetingInvite) (string, error) {
 	if obj == nil {
 		return "", nil
 	}
@@ -41,7 +41,7 @@ func (m *meetingInvitationResolver) AvatarURL(ctx context.Context, obj *models.M
 	return obj.AvatarURL(), nil
 }
 
-func (m *meetingInvitationResolver) Meeting(ctx context.Context, obj *models.MeetingInvitation) (*models.Meeting, error) {
+func (m *meetingInviteResolver) Meeting(ctx context.Context, obj *models.MeetingInvite) (*models.Meeting, error) {
 	if obj == nil {
 		return nil, nil
 	}
@@ -50,14 +50,14 @@ func (m *meetingInvitationResolver) Meeting(ctx context.Context, obj *models.Mee
 	return &mtg, err
 }
 
-func (m *meetingInvitationResolver) Inviter(ctx context.Context, obj *models.MeetingInvitation) (*PublicProfile, error) {
+func (m *meetingInviteResolver) Inviter(ctx context.Context, obj *models.MeetingInvite) (*PublicProfile, error) {
 	if obj == nil {
 		return nil, nil
 	}
 
 	inviter, err := obj.Inviter()
 	if err != nil {
-		return nil, reportError(ctx, err, "MeetingInvitation.GetInviter")
+		return nil, reportError(ctx, err, "MeetingInvite.GetInviter")
 	}
 
 	return getPublicProfile(ctx, &inviter), nil

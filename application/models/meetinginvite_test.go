@@ -8,17 +8,17 @@ import (
 	"github.com/silinternational/wecarry-api/domain"
 )
 
-func (ms *ModelSuite) TestMeetingInvitation_Validate() {
+func (ms *ModelSuite) TestMeetingInvite_Validate() {
 	t := ms.T()
 	tests := []struct {
 		name     string
-		inv      MeetingInvitation
+		inv      MeetingInvite
 		wantErr  bool
 		errField string
 	}{
 		{
 			name: "minimum",
-			inv: MeetingInvitation{
+			inv: MeetingInvite{
 				MeetingID: 1,
 				InviterID: 1,
 				Secret:    domain.GetUUID(),
@@ -28,7 +28,7 @@ func (ms *ModelSuite) TestMeetingInvitation_Validate() {
 		},
 		{
 			name: "missing MeetingID",
-			inv: MeetingInvitation{
+			inv: MeetingInvite{
 				InviterID: 1,
 				Secret:    domain.GetUUID(),
 				Email:     "foo@example.com",
@@ -38,7 +38,7 @@ func (ms *ModelSuite) TestMeetingInvitation_Validate() {
 		},
 		{
 			name: "missing InviterID",
-			inv: MeetingInvitation{
+			inv: MeetingInvite{
 				MeetingID: 1,
 				Secret:    domain.GetUUID(),
 				Email:     "foo@example.com",
@@ -48,7 +48,7 @@ func (ms *ModelSuite) TestMeetingInvitation_Validate() {
 		},
 		{
 			name: "missing Secret",
-			inv: MeetingInvitation{
+			inv: MeetingInvite{
 				MeetingID: 1,
 				InviterID: 1,
 				Email:     "foo@example.com",
@@ -58,7 +58,7 @@ func (ms *ModelSuite) TestMeetingInvitation_Validate() {
 		},
 		{
 			name: "missing Email",
-			inv: MeetingInvitation{
+			inv: MeetingInvite{
 				MeetingID: 1,
 				InviterID: 1,
 				Secret:    domain.GetUUID(),
@@ -82,18 +82,18 @@ func (ms *ModelSuite) TestMeetingInvitation_Validate() {
 	}
 }
 
-func (ms *ModelSuite) TestMeetingInvitation_Create() {
+func (ms *ModelSuite) TestMeetingInvite_Create() {
 	meetings := createMeetingFixtures(ms.DB, 2)
 	inviter := createUserFixtures(ms.DB, 1).Users[0]
 
 	tests := []struct {
 		name    string
-		invite  MeetingInvitation
+		invite  MeetingInvite
 		wantErr string
 	}{
 		{
 			name: "good",
-			invite: MeetingInvitation{
+			invite: MeetingInvite{
 				MeetingID: meetings[0].ID,
 				InviterID: inviter.ID,
 				Email:     "foo@example.com",
@@ -101,7 +101,7 @@ func (ms *ModelSuite) TestMeetingInvitation_Create() {
 		},
 		{
 			name:    "fail validation",
-			invite:  MeetingInvitation{},
+			invite:  MeetingInvite{},
 			wantErr: "Email does not match the email format.",
 		},
 	}
@@ -118,25 +118,25 @@ func (ms *ModelSuite) TestMeetingInvitation_Create() {
 	}
 }
 
-func (ms *ModelSuite) TestMeetingInvitation_Meeting() {
+func (ms *ModelSuite) TestMeetingInvite_Meeting() {
 	meetings := createMeetingFixtures(ms.DB, 2)
 
 	tests := []struct {
 		name    string
-		invite  MeetingInvitation
+		invite  MeetingInvite
 		want    Meeting
 		wantErr string
 	}{
 		{
 			name: "good",
-			invite: MeetingInvitation{
+			invite: MeetingInvite{
 				MeetingID: meetings[0].ID,
 			},
 			want: meetings[0],
 		},
 		{
 			name: "bad",
-			invite: MeetingInvitation{
+			invite: MeetingInvite{
 				MeetingID: 0,
 			},
 			wantErr: "sql: no rows in result set",
@@ -155,25 +155,25 @@ func (ms *ModelSuite) TestMeetingInvitation_Meeting() {
 	}
 }
 
-func (ms *ModelSuite) TestMeetingInvitation_Inviter() {
+func (ms *ModelSuite) TestMeetingInvite_Inviter() {
 	user := createUserFixtures(ms.DB, 2).Users[0]
 
 	tests := []struct {
 		name    string
-		invite  MeetingInvitation
+		invite  MeetingInvite
 		want    User
 		wantErr string
 	}{
 		{
 			name: "good",
-			invite: MeetingInvitation{
+			invite: MeetingInvite{
 				InviterID: user.ID,
 			},
 			want: user,
 		},
 		{
 			name:    "bad",
-			invite:  MeetingInvitation{},
+			invite:  MeetingInvite{},
 			wantErr: "sql: no rows in result set",
 		},
 	}

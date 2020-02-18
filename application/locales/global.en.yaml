@@ -277,10 +277,10 @@
 - id: RemoveTrust
   translation: We had a problem removing the Trust
 
-# MeetingInvitation
-- id: CreateMeetingInvitation.FindMeeting
-  translation: We had a problem finding the meeting for the new invitations
-- id: CreateMeetingInvitation.ListInvitations
-  translation: We had a problem getting the list of invitations after adding the new invitations
-- id: MeetingInvitation.GetInviter
+# MeetingInvite
+- id: CreateMeetingInvite.FindMeeting
+  translation: We had a problem finding the meeting for the new invites
+- id: CreateMeetingInvite.ListInvites
+  translation: We had a problem getting the list of invites after adding the new invites
+- id: MeetingInvite.GetInviter
   translation: We had a problem getting the user profile of the inviter

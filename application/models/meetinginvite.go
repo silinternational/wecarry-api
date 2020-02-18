@@ -11,8 +11,8 @@ import (
 	"github.com/silinternational/wecarry-api/domain"
 )
 
-// MeetingInvitation is the model for storing meeting invitations sent to prospective users, linked to a meeting/event
-type MeetingInvitation struct {
+// MeetingInvite is the model for storing meeting invites sent to prospective users, linked to a meeting/event
+type MeetingInvite struct {
 	ID        int       `json:"id" db:"id"`
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
@@ -22,11 +22,11 @@ type MeetingInvitation struct {
 	Email     string    `json:"email" db:"email"`
 }
 
-// MeetingInvitations is used for methods that operate on lists of objects
-type MeetingInvitations []MeetingInvitation
+// MeetingInvites is used for methods that operate on lists of objects
+type MeetingInvites []MeetingInvite
 
 // Validate gets run every time you call one of: pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate
-func (m *MeetingInvitation) Validate(tx *pop.Connection) (*validate.Errors, error) {
+func (m *MeetingInvite) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
 		&validators.IntIsPresent{Field: m.MeetingID, Name: "MeetingID"},
 		&validators.IntIsPresent{Field: m.InviterID, Name: "InviterID"},
@@ -35,33 +35,33 @@ func (m *MeetingInvitation) Validate(tx *pop.Connection) (*validate.Errors, erro
 	), nil
 }
 
-// Create validates and stores the MeetingInvitation data as a new record in the database.
-func (m *MeetingInvitation) Create() error {
+// Create validates and stores the MeetingInvite data as a new record in the database.
+func (m *MeetingInvite) Create() error {
 	m.Secret = domain.GetUUID()
 
 	err := create(m)
 	if err == nil {
 		return err
 	}
-	if err.Error() == `pq: duplicate key value violates unique constraint "meeting_invitations_meeting_id_email_idx"` {
+	if err.Error() == `pq: duplicate key value violates unique constraint "meeting_invites_meeting_id_email_idx"` {
 		return nil
 	}
 	return err
 }
 
 // Meeting returns the related Meeting record
-func (m *MeetingInvitation) Meeting() (Meeting, error) {
+func (m *MeetingInvite) Meeting() (Meeting, error) {
 	var meeting Meeting
 	return meeting, DB.Find(&meeting, m.MeetingID)
 }
 
 // Inviter returns the related User record of the inviter
-func (m *MeetingInvitation) Inviter() (User, error) {
+func (m *MeetingInvite) Inviter() (User, error) {
 	var user User
 	return user, DB.Find(&user, m.InviterID)
 }
 
 // AvatarURL returns a generated gravatar URL for the inivitee
-func (m *MeetingInvitation) AvatarURL() string {
+func (m *MeetingInvite) AvatarURL() string {
 	return gravatarURL(m.Email)
 }

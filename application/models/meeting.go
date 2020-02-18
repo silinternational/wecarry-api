@@ -271,8 +271,8 @@ func (m *Meeting) GetPosts() ([]Post, error) {
 	return m.Posts, nil
 }
 
-func (m *Meeting) Invitations() (MeetingInvitations, error) {
-	i := MeetingInvitations{}
+func (m *Meeting) Invites() (MeetingInvites, error) {
+	i := MeetingInvites{}
 	if err := DB.Where("meeting_id = ?", m.ID).All(&i); err != nil {
 		return i, err
 	}

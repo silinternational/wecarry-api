@@ -22,13 +22,13 @@ type AuthType struct {
 	Logo *models.File `json:"logo"`
 }
 
-// Input object for `createMeetingInvitations`
-type CreateMeetingInvitationsInput struct {
+// Input object for `createMeetingInvites`
+type CreateMeetingInvitesInput struct {
 	// ID of the `Meeting`
 	MeetingID string `json:"meetingID"`
 	// Email addresses of the invitees
 	Emails []string `json:"emails"`
-	// NOT YET IMPLEMENTED -- Send email invitations. Default is 'false', do not send any emails.
+	// NOT YET IMPLEMENTED -- Send email invites. Default is 'false', do not send any emails.
 	SendEmail *bool `json:"sendEmail"`
 }
 
@@ -36,7 +36,7 @@ type CreateMeetingInvitationsInput struct {
 type CreateMeetingParticipantInput struct {
 	// ID of the `Meeting`
 	MeetingID string `json:"meetingID"`
-	// Confirmation code from the `MeetingInvitation`. If not provided, the `Meeting` must not be `INVITE_ONLY`.
+	// Confirmation code from the `MeetingInvite`. If not provided, the `Meeting` must not be `INVITE_ONLY`.
 	ConfirmationCode *string `json:"confirmationCode"`
 	// Add as a `Meeting` Organizer. Authenticated `User` must be authorized [definition TBD] to do this.
 	IsOrganizer *bool `json:"isOrganizer"`
@@ -77,15 +77,15 @@ type LocationInput struct {
 }
 
 // Confirmed participant of a `Meeting`. An invited person will not appear as a `MeetingParticipant` until they have
-// confirmed a `MeetingInvitation`.
+// confirmed a `MeetingInvite`.
 type MeetingParticipant struct {
 	Meeting *models.Meeting `json:"meeting"`
 	// `User` information for the `Meeting` participant
 	User *models.User `json:"user"`
 	// true if `User` is a meeting Organizer
 	IsOrganizer *bool `json:"isOrganizer"`
-	// The `MeetingInvitation`, valid if the participant was invited. `null` indicates the `User` self-joined
-	Invitation *models.MeetingInvitation `json:"invitation"`
+	// The `MeetingInvite`, valid if the participant was invited. `null` indicates the `User` self-joined
+	Invite *models.MeetingInvite `json:"invite"`
 }
 
 // User fields that can safely be visible to any user in the system
@@ -95,8 +95,8 @@ type PublicProfile struct {
 	AvatarURL *string `json:"avatarURL"`
 }
 
-// Input object for `removeMeetingInvitation`
-type RemoveMeetingInvitationInput struct {
+// Input object for `removeMeetingInvite`
+type RemoveMeetingInviteInput struct {
 	// ID of the `Meeting`
 	MeetingID string `json:"meetingID"`
 	// Email addresse of the invitee to remove

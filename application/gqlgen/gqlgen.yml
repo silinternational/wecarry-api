@@ -140,8 +140,8 @@ models:
     model: gqlgen.watchInput
   UpdateWatchInput:
     model: gqlgen.watchInput
-  MeetingInvitation:
-    model: models.MeetingInvitation
+  MeetingInvite:
+    model: models.MeetingInvite
     fields:
       avatarURL:
         resolver: true

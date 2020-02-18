@@ -48,15 +48,11 @@ type meeting struct {
 	} `json:"posts"`
 }
 
-type meetingInvitationsResponse struct {
-	MeetingInvitations []meetingInvitation `json:"meetingInvitations"`
+type meetingInvitesResponse struct {
+	MeetingInvites []meetingInvite `json:"MeetingInvites"`
 }
 
-type meetingInvitationResponse struct {
-	MeetingInvitation meetingInvitation `json:"meetingInvitation"`
-}
-
-type meetingInvitation struct {
+type meetingInvite struct {
 	Meeting struct {
 		ID string `json:"id"`
 	} `json:"meeting"`
@@ -67,7 +63,7 @@ type meetingInvitation struct {
 	AvatarURL string `json:"avatarURL"`
 }
 
-const allMeetingInvitationFields = "meeting {id} inviter {id} email avatarURL"
+const allMeetingInviteFields = "meeting {id} inviter {id} email avatarURL"
 
 func (as *ActionSuite) Test_MeetingQuery() {
 	f := createFixturesForMeetings(as)
@@ -292,12 +288,12 @@ func (as *ActionSuite) Test_UpdateMeeting() {
 
 }
 
-func (as *ActionSuite) Test_CreateMeetingInvitations() {
+func (as *ActionSuite) Test_CreateMeetingInvites() {
 	f := createFixturesForMeetings(as)
 
-	var resp meetingInvitationsResponse
+	var resp meetingInvitesResponse
 
-	const queryTemplate = `mutation { meetingInvitations : createMeetingInvitations(input: %s) { %s } }`
+	const queryTemplate = `mutation { meetingInvites : createMeetingInvites(input: %s) { %s } }`
 
 	type testCase struct {
 		Name        string
@@ -342,7 +338,7 @@ func (as *ActionSuite) Test_CreateMeetingInvitations() {
 		}
 		input := fmt.Sprintf(`{ meetingID: "%s" emails: [%+v] sendEmail: false }`, tc.MeetingID, emails)
 
-		query := fmt.Sprintf(queryTemplate, input, allMeetingInvitationFields)
+		query := fmt.Sprintf(queryTemplate, input, allMeetingInviteFields)
 		err := as.testGqlQuery(query, tc.TestUser.Nickname, &resp)
 
 		if tc.ExpectError != "" {
@@ -351,11 +347,11 @@ func (as *ActionSuite) Test_CreateMeetingInvitations() {
 		} else {
 			as.NoError(err)
 		}
-		as.Equal(tc.GoodEmails, len(resp.MeetingInvitations))
-		for i := range resp.MeetingInvitations {
-			as.Equal(resp.MeetingInvitations[i].Email, "email"+strconv.Itoa(i)+"@example.com")
-			as.Equal(resp.MeetingInvitations[i].Meeting.ID, f.Meetings[0].UUID.String())
-			as.Equal(resp.MeetingInvitations[i].Inviter.ID, f.Users[0].UUID.String())
+		as.Equal(tc.GoodEmails, len(resp.MeetingInvites))
+		for i := range resp.MeetingInvites {
+			as.Equal(resp.MeetingInvites[i].Email, "email"+strconv.Itoa(i)+"@example.com")
+			as.Equal(resp.MeetingInvites[i].Meeting.ID, f.Meetings[0].UUID.String())
+			as.Equal(resp.MeetingInvites[i].Inviter.ID, f.Users[0].UUID.String())
 		}
 	}
 }
