@@ -280,16 +280,6 @@ func CreateFixtures_Posts_FindByUser(ms *ModelSuite) PostFixtures {
 	}
 }
 
-func createFixturesFor_Posts_GetPotentialProviders(ms *ModelSuite) PostFixtures {
-	posts := createPostFixtures(ms.DB, 2, 0, false)
-	pps := createPotentialProviderFixtures(ms.DB, 2, 2)
-
-	return PostFixtures{
-		Posts:              posts,
-		PotentialProviders: pps,
-	}
-}
-
 func createFixtures_Posts_FilterByUserTypeAndContents(ms *ModelSuite) PostFixtures {
 	orgs := Organizations{{}, {}}
 	for i := range orgs {
