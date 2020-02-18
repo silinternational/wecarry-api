@@ -85,6 +85,12 @@ func (ms *ModelSuite) TestMeetingInvite_Validate() {
 func (ms *ModelSuite) TestMeetingInvite_Create() {
 	meetings := createMeetingFixtures(ms.DB, 2)
 	inviter := createUserFixtures(ms.DB, 1).Users[0]
+	invite := MeetingInvite{
+		MeetingID: meetings[0].ID,
+		InviterID: inviter.ID,
+		Email:     "existing@example.com",
+	}
+	ms.NoError(invite.Create())
 
 	tests := []struct {
 		name    string
@@ -104,6 +110,24 @@ func (ms *ModelSuite) TestMeetingInvite_Create() {
 			invite:  MeetingInvite{},
 			wantErr: "Email does not match the email format.",
 		},
+		{
+			name: "bad foreign key",
+			invite: MeetingInvite{
+				MeetingID: 99999,
+				InviterID: inviter.ID,
+				Email:     "foo@example.com",
+			},
+			wantErr: "foreign key constraint",
+		},
+		{
+			name: "don't fail on duplicate",
+			invite: MeetingInvite{
+				MeetingID: meetings[0].ID,
+				InviterID: inviter.ID,
+				Email:     "existing@example.com",
+			},
+			wantErr: "",
+		},
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
@@ -113,6 +137,7 @@ func (ms *ModelSuite) TestMeetingInvite_Create() {
 				ms.Contains(err.Error(), tt.wantErr, "wrong error message")
 				return
 			}
+			ms.NoError(err)
 			ms.False(tt.invite.Secret == uuid.Nil, "didn't get a valid secret code")
 		})
 	}

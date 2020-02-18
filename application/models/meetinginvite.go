@@ -37,14 +37,16 @@ func (m *MeetingInvite) Validate(tx *pop.Connection) (*validate.Errors, error) {
 
 // Create validates and stores the MeetingInvite data as a new record in the database.
 func (m *MeetingInvite) Create() error {
-	m.Secret = domain.GetUUID()
+	invite := *m
+	invite.Secret = domain.GetUUID()
 
-	err := create(m)
-	if err == nil {
-		return err
+	err := create(&invite)
+	if err != nil && err.Error() ==
+		`pq: duplicate key value violates unique constraint "meeting_invites_meeting_id_email_idx"` {
+		err = nil
 	}
-	if err.Error() == `pq: duplicate key value violates unique constraint "meeting_invites_meeting_id_email_idx"` {
-		return nil
+	if err == nil {
+		*m = invite
 	}
 	return err
 }
