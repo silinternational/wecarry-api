@@ -1,0 +1,1 @@
+add_index("posts", "meeting_id", {"unique": true})

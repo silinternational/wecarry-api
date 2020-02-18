@@ -1,0 +1,1 @@
+drop_index("posts", "posts_meeting_id_idx")
