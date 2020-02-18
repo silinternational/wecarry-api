@@ -45,7 +45,10 @@ const ErrorFindingOrgUserOrgs = "ErrorFindingOrgUserOrgs"
 const ErrorCannotFindOrg = "ErrorCannotFindOrg"
 
 // actions.AuthRequest
-const ErrorSavingAuthRequestSession = "ErrorSavingAuthRequestSession"
+const ErrorInvalidInviteType = "ErrorInvalidInviteType"
+
+// actions.AuthRequest
+const ErrorInvalidInviteKey = "ErrorInvalidInviteKey"
 
 // actions.AuthRequest and others
 const ErrorLoadingAuthProvider = "ErrorLoadingAuthProvider"

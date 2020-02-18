@@ -33,6 +33,12 @@ const (
 	// logout http param for what is normally the bearer token
 	LogoutToken = "token"
 
+	// http params for the Invite type and key
+	InviteType = "invite-type"
+	InviteKey  = "invite-key"
+
+	InviteTypeMeeting = "meeting"
+
 	// http param for organization id
 	OrgIDParam      = "org-id"
 	OrgIDSessionKey = "OrgID"
@@ -137,6 +143,34 @@ func provideOrgOptions(userOrgs models.UserOrganizations, c buffalo.Context) err
 	return c.Render(http.StatusOK, render.JSON(resp))
 }
 
+func meetingAuthRequest(c buffalo.Context, extras map[string]interface{}) error {
+	inviteKey := c.Param(InviteKey)
+	if inviteKey == "" {
+		return authRequestError(c, http.StatusBadRequest, domain.ErrorInvalidInviteKey,
+			"missing Invite Key.", extras)
+	}
+
+}
+
+func nonOrgAuthRequest(c buffalo.Context, extras map[string]interface{}) error {
+	inviteType := c.Param(InviteType)
+
+	if inviteType == "" {
+		return authRequestError(c, http.StatusBadRequest, domain.ErrorCannotFindOrg,
+			"unable to find an organization for this user", extras)
+	}
+
+	switch inviteType {
+	case InviteTypeMeeting:
+		return meetingAuthRequest(c, extras)
+	default:
+		return authRequestError(c, http.StatusBadRequest, domain.ErrorInvalidInviteType,
+			"Invite Type '"+inviteType+"' is not valid.", extras)
+	}
+
+	return nil
+}
+
 func createAuthUser(
 	clientID string,
 	user models.User,
@@ -214,8 +248,7 @@ func authRequest(c buffalo.Context) error {
 	}
 
 	if org.ID == 0 {
-		return authRequestError(c, http.StatusBadRequest, domain.ErrorCannotFindOrg,
-			"unable to find an organization for this user", extras)
+		return nonOrgAuthRequest(c, extras)
 	}
 
 	orgID := org.UUID.String()
