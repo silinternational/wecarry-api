@@ -42,6 +42,8 @@ func createFixturesForPostQuery(as *ActionSuite) PostQueryFixtures {
 	posts[0].Status = models.PostStatusAccepted
 	posts[0].ProviderID = nulls.NewInt(users[1].ID)
 	as.NoError(as.DB.Save(&posts[0]))
+	as.NoError(posts[0].SetDestination(models.Location{Description: "Australia", Country: "AU"}))
+	as.NoError(posts[1].SetOrigin(models.Location{Description: "Australia", Country: "AU"}))
 
 	posts[2].Status = models.PostStatusCompleted
 	posts[2].CompletedOn = nulls.NewTime(time.Now())

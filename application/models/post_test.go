@@ -1652,6 +1652,8 @@ func (ms *ModelSuite) TestPosts_FindByUser() {
 	tests := []struct {
 		name        string
 		user        User
+		dest        *Location
+		orig        *Location
 		wantPostIDs []int
 		wantErr     bool
 	}{
@@ -1661,12 +1663,14 @@ func (ms *ModelSuite) TestPosts_FindByUser() {
 		{name: "user 2", user: f.Users[2], wantPostIDs: []int{f.Posts[7].ID, f.Posts[6].ID, f.Posts[5].ID}},
 		{name: "user 3", user: f.Users[3], wantPostIDs: []int{f.Posts[6].ID, f.Posts[5].ID, f.Posts[1].ID}},
 		{name: "non-existent user", user: User{}, wantErr: true},
+		{name: "destination", user: f.Users[0], dest: &Location{Country: "AU"}, wantPostIDs: []int{f.Posts[0].ID}},
+		{name: "origin", user: f.Users[0], orig: &Location{Country: "AU"}, wantPostIDs: []int{f.Posts[1].ID}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			posts := Posts{}
 			var c context.Context
-			err := posts.FindByUser(c, test.user)
+			err := posts.FindByUser(c, test.user, test.dest, test.orig, nil)
 
 			if test.wantErr {
 				ms.Error(err)
@@ -1712,9 +1716,9 @@ func (ms *ModelSuite) TestPosts_GetPotentialProviders() {
 	}
 }
 
-func (ms *ModelSuite) TestPost_FilterByUserTypeAndContents() {
+func (ms *ModelSuite) TestPosts_FindByUser_SearchText() {
 	t := ms.T()
-	f := createFixtures_Posts_FilterByUserTypeAndContents(ms)
+	f := createFixtures_Posts_FindByUser_SearchText(ms)
 
 	tests := []struct {
 		name        string
@@ -1730,22 +1734,19 @@ func (ms *ModelSuite) TestPost_FilterByUserTypeAndContents() {
 		{name: "user 0 lower case request", user: f.Users[0], matchText: "match",
 			postType:    PostTypeRequest,
 			wantPostIDs: []int{f.Posts[5].ID, f.Posts[1].ID, f.Posts[0].ID}},
-		{name: "user 0 just an offer", user: f.Users[0], matchText: "Match",
-			postType:    PostTypeOffer,
-			wantPostIDs: []int{}},
-
 		{name: "user 1", user: f.Users[1], matchText: "Match",
 			postType:    PostTypeRequest,
 			wantPostIDs: []int{f.Posts[5].ID, f.Posts[1].ID}},
 		{name: "non-existent user", user: User{}, matchText: "Match",
-			postType:    PostTypeRequest,
-			wantPostIDs: []int{}},
+			postType: PostTypeRequest,
+			wantErr:  true,
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			posts := Posts{}
 			var c context.Context
-			err := posts.FilterByUserTypeAndContents(c, test.user, test.postType, test.matchText)
+			err := posts.FindByUser(c, test.user, nil, nil, &test.matchText)
 
 			if test.wantErr {
 				ms.Error(err)

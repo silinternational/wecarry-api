@@ -12,37 +12,19 @@ type Query {
     Posts, aka Requests. With no parameters supplied, all posts visible to the authenticated user are returned. Filter
     parameters only remove from this default list and never include posts that are not visible to the authenticated
     user. For posts associated with a `User` or `Meeting`, use the `posts` field on `User` and `Meeting`.
-    NOT YET IMPLEMENTED: `destination`, `origin`, `searchText`
     """
     posts(
-        """
-        NOT YET IMPLEMENTED --
-        Only include posts that have a destination near the given location.
-        """
+        "Only include posts that have a destination near the given location."
         destination: LocationInput,
 
-        """
-        NOT YET IMPLEMENTED --
-        Only include posts that have an origin near the given location.
-        """
+        "Only include posts that have an origin near the given location."
         origin: LocationInput
 
-        """
-        NOT YET IMPLEMENTED --
-        Search by text in `title` or `description`
-        """
+        "Search by text in `title` or `description`"
         searchText: String
     ): [Post!]!
 
     post(id: ID): Post
-
-    """
-    DEPRECATED: `Query.searchRequests` will be replaced by the `searchText` parameter of `Query.posts`
-    """
-    searchRequests(
-        text: String!
-    ): [Post!]!  @deprecated(reason: "`Query.searchRequests` will be replaced by the `text` parameter of `Query.posts`")
-
     threads: [Thread!]!
     myThreads: [Thread!]!
     message(id: ID): Message!

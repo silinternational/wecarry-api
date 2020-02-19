@@ -274,6 +274,9 @@ func CreateFixtures_Posts_FindByUser(ms *ModelSuite) PostFixtures {
 	posts[2].Status = PostStatusCompleted
 	ms.NoError(ms.DB.Save(&posts[2]))
 
+	ms.NoError(posts[0].SetDestination(Location{Description: "Australia", Country: "AU"}))
+	ms.NoError(posts[1].SetOrigin(Location{Description: "Australia", Country: "AU"}))
+
 	return PostFixtures{
 		Users: users,
 		Posts: posts,
@@ -290,7 +293,7 @@ func createFixturesFor_Posts_GetPotentialProviders(ms *ModelSuite) PostFixtures 
 	}
 }
 
-func createFixtures_Posts_FilterByUserTypeAndContents(ms *ModelSuite) PostFixtures {
+func createFixtures_Posts_FindByUser_SearchText(ms *ModelSuite) PostFixtures {
 	orgs := Organizations{{}, {}}
 	for i := range orgs {
 		orgs[i].UUID = domain.GetUUID()

@@ -2,6 +2,7 @@ package actions
 
 import (
 	"fmt"
+	"testing"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -89,36 +90,40 @@ type Post struct {
 	} `json:"meeting"`
 }
 
-func (as *ActionSuite) Test_PostQuery() {
-	f := createFixturesForPostQuery(as)
-	const queryTemplate = `{ post(id: "%s")
-		{
+const allPostFields = `{
 			id
 		    type
+			createdBy { id nickname avatarURL }
+			receiver { id nickname avatarURL }
+			provider { id nickname avatarURL }
+            potentialProviders { id nickname avatarURL }
+			organization { id }
 			title
 			description
+			destination {description country latitude longitude}
 			neededBefore
 			completedOn
 			destination {description country latitude longitude}
 			origin {description country latitude longitude}
 			size
 			status
+            threads { id }
 			createdAt
 			updatedAt
-			kilograms
-			isEditable
 			url
-			visibility
-			createdBy { id nickname avatarURL }
-			receiver { id nickname avatarURL }
-			provider { id nickname avatarURL }
-			organization { id }
-			photoID
+			kilograms
 			photo { id }
+			photoID
 			files { id }
-		}}`
+            meeting { id }
+			isEditable
+			visibility
+		}`
 
-	query := fmt.Sprintf(queryTemplate, f.Posts[0].UUID)
+func (as *ActionSuite) Test_PostQuery() {
+	f := createFixturesForPostQuery(as)
+
+	query := fmt.Sprintf(`{ post(id: "%s") %s }`, f.Posts[0].UUID, allPostFields)
 
 	var resp PostResponse
 
@@ -170,7 +175,7 @@ func (as *ActionSuite) Test_PostQuery() {
 	as.Equal(f.Posts[0].Files[0].File.UUID.String(), resp.Post.Files[0].ID)
 
 	// Check an actual CompletedOn field
-	query = fmt.Sprintf(queryTemplate, f.Posts[2].UUID)
+	query = fmt.Sprintf(`{ post(id: "%s") %s }`, f.Posts[2].UUID, allPostFields)
 	err = as.testGqlQuery(query, f.Users[1].Nickname, &resp)
 	as.NoError(err)
 
@@ -181,20 +186,79 @@ func (as *ActionSuite) Test_PostQuery() {
 func (as *ActionSuite) Test_PostsQuery() {
 	f := createFixturesForPostQuery(as)
 
-	query := `{ posts
-		{
-			id
-			title
-		}}`
+	type testCase struct {
+		Name        string
+		SearchText  string
+		Destination string
+		Origin      string
+		TestUser    models.User
+		ExpectError bool
+		Test        func(t *testing.T)
+	}
+
+	const queryTemplate = `{ posts (searchText: %s, destination: %s, origin: %s)` + allPostFields + `}`
 
 	var resp PostsResponse
 
-	err := as.testGqlQuery(query, f.Users[1].Nickname, &resp)
-	as.NoError(err)
+	testCases := []testCase{
+		{
+			Name:        "default",
+			SearchText:  "null",
+			Destination: "null",
+			Origin:      "null",
+			TestUser:    f.Users[1],
+			Test: func(t *testing.T) {
+				as.Equal(2, len(resp.Posts))
+				as.Equal(f.Posts[0].UUID.String(), resp.Posts[1].ID)
+				as.Equal(f.Posts[1].UUID.String(), resp.Posts[0].ID)
+			},
+		},
+		{
+			Name:        "searchText filter",
+			SearchText:  `"title 0"`,
+			Destination: "null",
+			Origin:      "null",
+			TestUser:    f.Users[1],
+			Test: func(t *testing.T) {
+				as.Equal(1, len(resp.Posts))
+				as.Equal(f.Posts[0].UUID.String(), resp.Posts[0].ID)
+			},
+		},
+		{
+			Name:        "destination filter",
+			SearchText:  "null",
+			Destination: `{description:"Australia",country:"AU"}`,
+			Origin:      "null",
+			TestUser:    f.Users[1],
+			Test: func(t *testing.T) {
+				as.Equal(1, len(resp.Posts))
+				as.Equal(f.Posts[0].UUID.String(), resp.Posts[0].ID)
+			},
+		},
+		{
+			Name:        "origin filter",
+			SearchText:  "null",
+			Destination: "null",
+			Origin:      `{description:"Australia",country:"AU"}`,
+			TestUser:    f.Users[1],
+			Test: func(t *testing.T) {
+				as.Equal(1, len(resp.Posts))
+				as.Equal(f.Posts[1].UUID.String(), resp.Posts[0].ID)
+			},
+		},
+	}
 
-	as.Equal(2, len(resp.Posts))
-	as.Equal(f.Posts[1].UUID.String(), resp.Posts[0].ID)
-	as.Equal(f.Posts[1].Title, resp.Posts[0].Title)
+	for _, tc := range testCases {
+		query := fmt.Sprintf(queryTemplate, tc.SearchText, tc.Destination, tc.Origin)
+		err := as.testGqlQuery(query, tc.TestUser.Nickname, &resp)
+
+		if tc.ExpectError {
+			as.Error(err)
+		} else {
+			as.NoError(err)
+		}
+		as.T().Run(tc.Name, tc.Test)
+	}
 }
 
 func (as *ActionSuite) Test_UpdatePost() {
@@ -446,22 +510,4 @@ func (as *ActionSuite) Test_UpdatePostStatus_DestroyPotentialProviders() {
 			as.Equal(step.status, postsResp.Post.Status)
 		}
 	}
-}
-
-func (as *ActionSuite) Test_SearchRequests() {
-	f := createFixturesForSearchRequestsQuery(as)
-	query := `{ posts: searchRequests(text: "match")
-		{
-			id
-			title
-		}}`
-
-	var resp PostsResponse
-
-	err := as.testGqlQuery(query, f.Users[0].Nickname, &resp)
-	as.NoError(err)
-
-	as.Equal(1, len(resp.Posts), "incorrect number of posts returned")
-	as.Equal(f.Posts[0].UUID.String(), resp.Posts[0].ID)
-	as.Equal(f.Posts[0].Title, resp.Posts[0].Title)
 }
