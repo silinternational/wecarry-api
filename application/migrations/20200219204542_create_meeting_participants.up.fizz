@@ -1,0 +1,12 @@
+create_table("meeting_participants") {
+	t.Column("id", "integer", {primary: true})
+	t.Timestamps()
+	t.Column("meeting_id", "integer", {})
+	t.Column("user_id", "integer", {})
+	t.Column("invite_id", "integer", {"null": true})
+	t.Column("is_organizer", "boolean", {})
+	t.ForeignKey("meeting_id", {"meetings": ["id"]}, {"on_delete": "cascade"})
+	t.ForeignKey("user_id", {"users": ["id"]}, {"on_delete": "cascade"})
+	t.ForeignKey("invite_id", {"meeting_invites": ["id"]}, {"on_delete": "set null"})
+	t.Index(["meeting_id","user_id"], {"unique": true})
+}

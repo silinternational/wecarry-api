@@ -40,6 +40,7 @@ type ResolverRoot interface {
 	Location() LocationResolver
 	Meeting() MeetingResolver
 	MeetingInvite() MeetingInviteResolver
+	MeetingParticipant() MeetingParticipantResolver
 	Message() MessageResolver
 	Mutation() MutationResolver
 	Organization() OrganizationResolver
@@ -282,12 +283,15 @@ type MeetingResolver interface {
 	Posts(ctx context.Context, obj *models.Meeting) ([]models.Post, error)
 	Visibility(ctx context.Context, obj *models.Meeting) (MeetingVisibility, error)
 	Invites(ctx context.Context, obj *models.Meeting) ([]models.MeetingInvite, error)
-	Participants(ctx context.Context, obj *models.Meeting) ([]MeetingParticipant, error)
+	Participants(ctx context.Context, obj *models.Meeting) ([]models.MeetingParticipant, error)
 }
 type MeetingInviteResolver interface {
 	Inviter(ctx context.Context, obj *models.MeetingInvite) (*PublicProfile, error)
 
 	AvatarURL(ctx context.Context, obj *models.MeetingInvite) (string, error)
+}
+type MeetingParticipantResolver interface {
+	Invite(ctx context.Context, obj *models.MeetingParticipant) (*models.MeetingInvite, error)
 }
 type MessageResolver interface {
 	ID(ctx context.Context, obj *models.Message) (string, error)
@@ -319,8 +323,8 @@ type MutationResolver interface {
 	RemoveOrganizationTrust(ctx context.Context, input RemoveOrganizationTrustInput) (*models.Organization, error)
 	CreateMeetingInvites(ctx context.Context, input CreateMeetingInvitesInput) ([]models.MeetingInvite, error)
 	RemoveMeetingInvite(ctx context.Context, input RemoveMeetingInviteInput) ([]models.MeetingInvite, error)
-	CreateMeetingParticipant(ctx context.Context, input CreateMeetingParticipantInput) (*MeetingParticipant, error)
-	RemoveMeetingParticipant(ctx context.Context, input RemoveMeetingParticipantInput) ([]MeetingParticipant, error)
+	CreateMeetingParticipant(ctx context.Context, input CreateMeetingParticipantInput) (*models.MeetingParticipant, error)
+	RemoveMeetingParticipant(ctx context.Context, input RemoveMeetingParticipantInput) ([]models.MeetingParticipant, error)
 }
 type OrganizationResolver interface {
 	ID(ctx context.Context, obj *models.Organization) (string, error)
@@ -2017,21 +2021,16 @@ type Meeting {
     imageFile: File
     location: Location!
 
-    """
-    Posts (Requests) associated with the meeting
-    """
+    "Posts (Requests) associated with the meeting"
     posts: [Post!]!
 
     "NOT YET IMPLEMENTED -- Who can see this meeting"
     visibility: MeetingVisibility!
 
-    """
-    NOT YET IMPLEMENTED --
-    Invites to the ` + "`" + `Meeting` + "`" + ` that have been sent to the invitee for their confirmation to join the ` + "`" + `Meeting` + "`" + `
-    """
+    "Invites to the ` + "`" + `Meeting` + "`" + ` that have been sent to the invitee for their confirmation to join the ` + "`" + `Meeting` + "`" + `"
     invites: [MeetingInvite!]!
 
-    "NOT YET IMPLEMENTED -- Participants of a ` + "`" + `Meeting` + "`" + ` are able to see all posts associated with the ` + "`" + `Meeting` + "`" + `"
+    "Participants of a ` + "`" + `Meeting` + "`" + ` are able to see all posts associated with the ` + "`" + `Meeting` + "`" + `"
     participants: [MeetingParticipant!]!
 }
 
@@ -3930,10 +3929,10 @@ func (ec *executionContext) _Meeting_participants(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]MeetingParticipant)
+	res := resTmp.([]models.MeetingParticipant)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNMeetingParticipant2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐMeetingParticipant(ctx, field.Selections, res)
+	return ec.marshalNMeetingParticipant2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeetingParticipant(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _MeetingInvite_meeting(ctx context.Context, field graphql.CollectedField, obj *models.MeetingInvite) (ret graphql.Marshaler) {
@@ -4084,7 +4083,7 @@ func (ec *executionContext) _MeetingInvite_avatarURL(ctx context.Context, field 
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _MeetingParticipant_meeting(ctx context.Context, field graphql.CollectedField, obj *MeetingParticipant) (ret graphql.Marshaler) {
+func (ec *executionContext) _MeetingParticipant_meeting(ctx context.Context, field graphql.CollectedField, obj *models.MeetingParticipant) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -4097,13 +4096,13 @@ func (ec *executionContext) _MeetingParticipant_meeting(ctx context.Context, fie
 		Object:   "MeetingParticipant",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Meeting, nil
+		return obj.Meeting()
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4115,13 +4114,13 @@ func (ec *executionContext) _MeetingParticipant_meeting(ctx context.Context, fie
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*models.Meeting)
+	res := resTmp.(models.Meeting)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNMeeting2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeeting(ctx, field.Selections, res)
+	return ec.marshalNMeeting2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeeting(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _MeetingParticipant_user(ctx context.Context, field graphql.CollectedField, obj *MeetingParticipant) (ret graphql.Marshaler) {
+func (ec *executionContext) _MeetingParticipant_user(ctx context.Context, field graphql.CollectedField, obj *models.MeetingParticipant) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -4134,13 +4133,13 @@ func (ec *executionContext) _MeetingParticipant_user(ctx context.Context, field 
 		Object:   "MeetingParticipant",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.User, nil
+		return obj.User()
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4152,13 +4151,13 @@ func (ec *executionContext) _MeetingParticipant_user(ctx context.Context, field 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*models.User)
+	res := resTmp.(models.User)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _MeetingParticipant_isOrganizer(ctx context.Context, field graphql.CollectedField, obj *MeetingParticipant) (ret graphql.Marshaler) {
+func (ec *executionContext) _MeetingParticipant_isOrganizer(ctx context.Context, field graphql.CollectedField, obj *models.MeetingParticipant) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -4186,13 +4185,13 @@ func (ec *executionContext) _MeetingParticipant_isOrganizer(ctx context.Context,
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*bool)
+	res := resTmp.(bool)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+	return ec.marshalOBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _MeetingParticipant_invite(ctx context.Context, field graphql.CollectedField, obj *MeetingParticipant) (ret graphql.Marshaler) {
+func (ec *executionContext) _MeetingParticipant_invite(ctx context.Context, field graphql.CollectedField, obj *models.MeetingParticipant) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -4205,13 +4204,13 @@ func (ec *executionContext) _MeetingParticipant_invite(ctx context.Context, fiel
 		Object:   "MeetingParticipant",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Invite, nil
+		return ec.resolvers.MeetingParticipant().Invite(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5498,10 +5497,10 @@ func (ec *executionContext) _Mutation_createMeetingParticipant(ctx context.Conte
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*MeetingParticipant)
+	res := resTmp.(*models.MeetingParticipant)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNMeetingParticipant2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐMeetingParticipant(ctx, field.Selections, res)
+	return ec.marshalNMeetingParticipant2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeetingParticipant(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_removeMeetingParticipant(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -5542,10 +5541,10 @@ func (ec *executionContext) _Mutation_removeMeetingParticipant(ctx context.Conte
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]MeetingParticipant)
+	res := resTmp.([]models.MeetingParticipant)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNMeetingParticipant2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐMeetingParticipant(ctx, field.Selections, res)
+	return ec.marshalNMeetingParticipant2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeetingParticipant(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Organization_id(ctx context.Context, field graphql.CollectedField, obj *models.Organization) (ret graphql.Marshaler) {
@@ -11121,7 +11120,7 @@ func (ec *executionContext) _MeetingInvite(ctx context.Context, sel ast.Selectio
 
 var meetingParticipantImplementors = []string{"MeetingParticipant"}
 
-func (ec *executionContext) _MeetingParticipant(ctx context.Context, sel ast.SelectionSet, obj *MeetingParticipant) graphql.Marshaler {
+func (ec *executionContext) _MeetingParticipant(ctx context.Context, sel ast.SelectionSet, obj *models.MeetingParticipant) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.RequestContext, sel, meetingParticipantImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -11133,17 +11132,26 @@ func (ec *executionContext) _MeetingParticipant(ctx context.Context, sel ast.Sel
 		case "meeting":
 			out.Values[i] = ec._MeetingParticipant_meeting(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "user":
 			out.Values[i] = ec._MeetingParticipant_user(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "isOrganizer":
 			out.Values[i] = ec._MeetingParticipant_isOrganizer(ctx, field, obj)
 		case "invite":
-			out.Values[i] = ec._MeetingParticipant_invite(ctx, field, obj)
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._MeetingParticipant_invite(ctx, field, obj)
+				return res
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -13035,11 +13043,11 @@ func (ec *executionContext) marshalNMeetingInvite2ᚕgithubᚗcomᚋsilinternati
 	return ret
 }
 
-func (ec *executionContext) marshalNMeetingParticipant2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐMeetingParticipant(ctx context.Context, sel ast.SelectionSet, v MeetingParticipant) graphql.Marshaler {
+func (ec *executionContext) marshalNMeetingParticipant2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeetingParticipant(ctx context.Context, sel ast.SelectionSet, v models.MeetingParticipant) graphql.Marshaler {
 	return ec._MeetingParticipant(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNMeetingParticipant2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐMeetingParticipant(ctx context.Context, sel ast.SelectionSet, v []MeetingParticipant) graphql.Marshaler {
+func (ec *executionContext) marshalNMeetingParticipant2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeetingParticipant(ctx context.Context, sel ast.SelectionSet, v []models.MeetingParticipant) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -13063,7 +13071,7 @@ func (ec *executionContext) marshalNMeetingParticipant2ᚕgithubᚗcomᚋsilinte
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNMeetingParticipant2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐMeetingParticipant(ctx, sel, v[i])
+			ret[i] = ec.marshalNMeetingParticipant2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeetingParticipant(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -13076,7 +13084,7 @@ func (ec *executionContext) marshalNMeetingParticipant2ᚕgithubᚗcomᚋsilinte
 	return ret
 }
 
-func (ec *executionContext) marshalNMeetingParticipant2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐMeetingParticipant(ctx context.Context, sel ast.SelectionSet, v *MeetingParticipant) graphql.Marshaler {
+func (ec *executionContext) marshalNMeetingParticipant2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeetingParticipant(ctx context.Context, sel ast.SelectionSet, v *models.MeetingParticipant) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")

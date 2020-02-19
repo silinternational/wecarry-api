@@ -76,18 +76,6 @@ type LocationInput struct {
 	Longitude   *float64 `json:"longitude"`
 }
 
-// Confirmed participant of a `Meeting`. An invited person will not appear as a `MeetingParticipant` until they have
-// confirmed a `MeetingInvite`.
-type MeetingParticipant struct {
-	Meeting *models.Meeting `json:"meeting"`
-	// `User` information for the `Meeting` participant
-	User *models.User `json:"user"`
-	// true if `User` is a meeting Organizer
-	IsOrganizer *bool `json:"isOrganizer"`
-	// The `MeetingInvite`, valid if the participant was invited. `null` indicates the `User` self-joined
-	Invite *models.MeetingInvite `json:"invite"`
-}
-
 // User fields that can safely be visible to any user in the system
 type PublicProfile struct {
 	ID        string  `json:"id"`

@@ -17,6 +17,8 @@ type meetingQueryFixtures struct {
 	models.Users
 	models.File
 	models.Posts
+	models.MeetingInvites
+	models.MeetingParticipants
 }
 
 type meetingsResponse struct {
@@ -46,7 +48,21 @@ type meeting struct {
 	Posts []struct {
 		ID string `json:"id"`
 	} `json:"posts"`
+	Invites []struct {
+		Email string `json:"email"`
+	} `json:"invites"`
+	Participants []struct {
+		User struct {
+			ID string `json:"id"`
+		} `json:"user"`
+		Meeting struct {
+			ID string `json:"id"`
+		} `json:"meeting"`
+	} `json:"participants"`
 }
+
+const allMeetingFields = `id name description moreInfoURL startDate endDate createdBy {nickname} imageFile {id}
+	location {country} posts {id} invites {email} participants {user{id} meeting{id}}`
 
 type meetingInvitesResponse struct {
 	MeetingInvites []meetingInvite `json:"MeetingInvites"`
@@ -65,25 +81,32 @@ type meetingInvite struct {
 
 const allMeetingInviteFields = "meeting {id} inviter {id} email avatarURL"
 
+type meetingParticipantsResponse struct {
+	MeetingParticipants []meetingParticipant `json:"MeetingParticipants"`
+}
+
+type meetingParticipant struct {
+	Meeting struct {
+		ID string `json:"id"`
+	} `json:"meeting"`
+	User struct {
+		ID string `json:"id"`
+	} `json:"user"`
+	IsOrganizer bool `json:"isOrganizer"`
+	Invite      struct {
+		ID string `json:"id"`
+	} `json:"invite"`
+}
+
+const allMeetingParticipantFields = "meeting {id} user {id} isOrganizer invite {email}"
+
 func (as *ActionSuite) Test_MeetingQuery() {
 	f := createFixturesForMeetings(as)
 	meetings := f.Meetings
 
 	testMtg := meetings[2]
 
-	query := `{ meeting(id: "` + testMtg.UUID.String() + `")
-		{
-			id
-		    name
-            description
-			moreInfoURL
-			startDate
-			endDate
-			createdBy {nickname}
-			imageFile {id}
-			location {country}
-			posts {id}
-		}}`
+	query := `{ meeting(id: "` + testMtg.UUID.String() + `") {` + allMeetingFields + "}}"
 
 	var resp meetingResponse
 
@@ -118,24 +141,24 @@ func (as *ActionSuite) Test_MeetingQuery() {
 	as.Equal(2, len(gotMtg.Posts), "incorrect number of meeting posts")
 	as.Equal(f.Posts[1].UUID.String(), gotMtg.Posts[0].ID, "wrong post returned in meeting posts")
 	as.Equal(f.Posts[0].UUID.String(), gotMtg.Posts[1].ID, "wrong post returned in meeting posts")
+
+	as.Equal(2, len(gotMtg.Invites), "incorrect number of invites")
+	for i := range gotMtg.Invites {
+		as.Equal(f.MeetingInvites[i].Email, gotMtg.Invites[i].Email)
+	}
+
+	as.Equal(2, len(gotMtg.Participants), "incorrect number of participants")
+	for i := range gotMtg.Participants {
+		as.Equal(f.Users[i].UUID.String(), gotMtg.Participants[i].User.ID)
+		as.Equal(testMtg.UUID.String(), gotMtg.Participants[i].Meeting.ID)
+	}
 }
 
 func (as *ActionSuite) Test_MeetingsQuery() {
 	f := createFixturesForMeetings(as)
 	meetings := f.Meetings
 
-	query := `{ meetings
-		{
-			id
-		    name
-		    description
-		    moreInfoURL
-		    createdBy { nickname}
-		    startDate
-		    endDate
-		    imageFile {id}
-		    location {country}
-		}}`
+	query := "{ meetings {" + allMeetingFields + "}}"
 
 	var resp meetingsResponse
 
@@ -217,10 +240,7 @@ func (as *ActionSuite) Test_CreateMeeting() {
 			moreInfoURL: "example.com"
 			visibility: ` + gqlgen.MeetingVisibilityInviteOnly.String() + `
 		`
-	query := `mutation { meeting: createMeeting(input: {` + input + `})
-			{ createdBy { nickname } imageFile { id } name
-			description location { description country latitude longitude }
-			startDate endDate moreInfoURL }}`
+	query := `mutation { meeting: createMeeting(input: {` + input + `}) {` + allMeetingFields + "}}"
 
 	var resp meetingResponse
 	as.NoError(as.testGqlQuery(query, user.Nickname, &resp))
@@ -257,10 +277,7 @@ func (as *ActionSuite) Test_UpdateMeeting() {
 			moreInfoURL: "new.example.com"
 			visibility: ` + gqlgen.MeetingVisibilityInviteOnly.String() + `
 		`
-	query := `mutation { meeting: updateMeeting(input: {` + input + `}) { id imageFile { id }
-			createdBy { nickname } name description
-			location { description country latitude longitude}
-			startDate endDate moreInfoURL }}`
+	query := `mutation { meeting: updateMeeting(input: {` + input + `}) {` + allMeetingFields + "}}"
 
 	as.NoError(as.testGqlQuery(query, f.Users[0].Nickname, &resp))
 
