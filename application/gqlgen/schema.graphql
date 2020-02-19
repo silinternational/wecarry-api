@@ -114,7 +114,10 @@ type Mutation {
     createOrganizationTrust(input: CreateOrganizationTrustInput!): Organization!
     removeOrganizationTrust(input: RemoveOrganizationTrustInput!): Organization!
 
-    "Bulk create `MeetingInvite`s and return the updated list of invites for the specified meeting."
+    """
+    Bulk create `MeetingInvite`s and return the updated list of invites for the specified meeting. Subsequent calls
+    can include existing email addresses without error since duplicates are ignored.
+    """
     createMeetingInvites(input: CreateMeetingInvitesInput!): [MeetingInvite!]!
 
     """
@@ -595,7 +598,7 @@ input CreateMeetingInvitesInput {
     "ID of the `Meeting`"
     meetingID: ID!
 
-    "Email addresses of the invitees"
+    "Email addresses of the invitees. Duplicate values are ignored."
     emails: [String!]!
 
     "NOT YET IMPLEMENTED -- Send email invites. Default is 'false', do not send any emails."
