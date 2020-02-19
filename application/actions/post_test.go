@@ -113,6 +113,7 @@ const allPostFields = `{
 			url
 			kilograms
 			photo { id }
+			photoID
 			files { id }
             meeting { id }
 			isEditable
