@@ -276,3 +276,11 @@
   translation: We had a problem finding the organization to remove the Trust
 - id: RemoveTrust
   translation: We had a problem removing the Trust
+
+# MeetingInvite
+- id: CreateMeetingInvite.FindMeeting
+  translation: We had a problem finding the meeting for the new invites
+- id: CreateMeetingInvite.ListInvites
+  translation: We had a problem getting the list of invites after adding the new invites
+- id: MeetingInvite.GetInviter
+  translation: We had a problem getting the user profile of the inviter

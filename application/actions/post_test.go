@@ -81,7 +81,8 @@ type Post struct {
 	Photo *struct {
 		ID string `json:"id"`
 	} `json:"photo"`
-	Files []struct {
+	PhotoID string `json:"photoID"`
+	Files   []struct {
 		ID string `json:"id"`
 	} `json:"files"`
 	Meeting *struct {
@@ -168,6 +169,7 @@ func (as *ActionSuite) Test_PostQuery() {
 	as.Equal(f.Users[1].AuthPhotoURL.String, resp.Post.Provider.AvatarURL, "provider avatar URL doesn't match")
 	as.Equal(f.Organization.UUID.String(), resp.Post.Organization.ID)
 	as.Equal(f.Posts[0].PhotoFile.UUID.String(), resp.Post.Photo.ID)
+	as.Equal(f.Posts[0].PhotoFile.UUID.String(), resp.Post.PhotoID)
 	as.Equal(1, len(resp.Post.Files))
 	as.Equal(f.Posts[0].Files[0].File.UUID.String(), resp.Post.Files[0].ID)
 

@@ -1,7 +1,6 @@
 package models
 
 import (
-	"crypto/md5"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
@@ -513,9 +512,7 @@ func (u *User) GetPhotoURL() (*string, error) {
 		if u.AuthPhotoURL.Valid {
 			return &u.AuthPhotoURL.String, nil
 		}
-		// ref: https://en.gravatar.com/site/implement/images/
-		hash := md5.Sum([]byte(strings.ToLower(strings.TrimSpace(u.Email))))
-		url := fmt.Sprintf("https://www.gravatar.com/avatar/%x.jpg?s=200&d=mp", hash)
+		url := gravatarURL(u.Email)
 		return &url, nil
 	}
 

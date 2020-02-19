@@ -3,8 +3,11 @@ package gqlgen
 import (
 	"context"
 	"errors"
+	"strings"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/gobuffalo/nulls"
+	"github.com/vektah/gqlparser/gqlerror"
 
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
@@ -245,8 +248,43 @@ func (r *mutationResolver) RemoveOrganizationTrust(ctx context.Context, input Re
 	return &organization, nil
 }
 
-func (r *mutationResolver) CreateMeetingInvitations(ctx context.Context, input CreateMeetingInvitationsInput) ([]MeetingInvitation, error) {
-	return []MeetingInvitation{}, nil
+// CreateMeetingInvites implements the `createMeetingInvites` mutation
+func (r *mutationResolver) CreateMeetingInvites(ctx context.Context, input CreateMeetingInvitesInput) (
+	[]models.MeetingInvite, error) {
+
+	cUser := models.GetCurrentUserFromGqlContext(ctx)
+	extras := map[string]interface{}{
+		"user": cUser.UUID,
+	}
+
+	var m models.Meeting
+	if err := m.FindByUUID(input.MeetingID); err != nil {
+		return nil, reportError(ctx, err, "CreateMeetingInvite.FindMeeting", extras)
+	}
+
+	inv := models.MeetingInvite{
+		MeetingID: m.ID,
+		InviterID: cUser.ID,
+	}
+
+	badEmails := make([]string, 0)
+	for _, email := range input.Emails {
+		inv.Email = email
+		if err := inv.Create(); err != nil {
+			badEmails = append(badEmails, email)
+			domain.ErrLogger.Printf("error creating meeting invite for email '%s', %s", email, err)
+		}
+	}
+	if len(badEmails) > 0 {
+		emailList := strings.Join(badEmails, ", ")
+		graphql.AddError(ctx, gqlerror.Errorf("problem creating invite for %v", emailList))
+	}
+
+	invites, err := m.Invites()
+	if err != nil {
+		return nil, reportError(ctx, err, "CreateMeetingInvite.ListInvites", extras)
+	}
+	return invites, nil
 }
 
 func (r *mutationResolver) CreateMeetingParticipant(ctx context.Context, input CreateMeetingParticipantInput) (*MeetingParticipant, error) {
@@ -254,8 +292,8 @@ func (r *mutationResolver) CreateMeetingParticipant(ctx context.Context, input C
 	return &m, nil
 }
 
-func (r *mutationResolver) RemoveMeetingInvitation(ctx context.Context, input RemoveMeetingInvitationInput) ([]MeetingInvitation, error) {
-	return []MeetingInvitation{}, nil
+func (r *mutationResolver) RemoveMeetingInvite(ctx context.Context, input RemoveMeetingInviteInput) ([]models.MeetingInvite, error) {
+	return []models.MeetingInvite{}, nil
 }
 
 func (r *mutationResolver) RemoveMeetingParticipant(ctx context.Context, input RemoveMeetingParticipantInput) ([]MeetingParticipant, error) {

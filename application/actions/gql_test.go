@@ -45,11 +45,13 @@ func (as *ActionSuite) testGqlQuery(gqlQuery, accessToken string, response inter
 	err = json.Unmarshal(responseBody, &gqlResponse)
 	as.NoError(err)
 
+	as.NoError(json.Unmarshal(gqlResponse.Data, &response))
+
 	if len(gqlResponse.Errors) > 0 {
 		return fmt.Errorf("gql error: %v", gqlResponse.Errors)
 	}
 
-	return json.Unmarshal(gqlResponse.Data, &response)
+	return nil
 }
 
 func jsonEscapeString(s string) string {
