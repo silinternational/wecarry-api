@@ -26,7 +26,7 @@ type AuthType struct {
 type CreateMeetingInvitesInput struct {
 	// ID of the `Meeting`
 	MeetingID string `json:"meetingID"`
-	// Email addresses of the invitees
+	// Email addresses of the invitees. Duplicate values are ignored.
 	Emails []string `json:"emails"`
 	// NOT YET IMPLEMENTED -- Send email invites. Default is 'false', do not send any emails.
 	SendEmail *bool `json:"sendEmail"`
