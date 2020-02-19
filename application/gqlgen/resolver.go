@@ -2,10 +2,6 @@
 
 package gqlgen
 
-import (
-	"context"
-)
-
 // Resolver is required by gqlgen
 type Resolver struct{}
 
@@ -20,7 +16,3 @@ func (r *Resolver) Query() QueryResolver {
 }
 
 type queryResolver struct{ *Resolver }
-
-func (r *queryResolver) SystemConfig(ctx context.Context) (*SystemConfig, error) {
-	return nil, nil
-}

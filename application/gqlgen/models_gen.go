@@ -11,17 +11,6 @@ import (
 	"github.com/silinternational/wecarry-api/models"
 )
 
-// NOT YET IMPLEMENTED --
-// Authentication type for login outside the context of an `Organization`, such as for `Meeting` participants
-type AuthType struct {
-	// Display name of the auth type. e.g. 'Facebook'
-	Name string `json:"name"`
-	// Fully-qualified login URL for the auth type
-	LoginURL string `json:"loginURL"`
-	// Logo for user selection of login method
-	Logo *models.File `json:"logo"`
-}
-
 // Input object for `createMeetingInvitations`
 type CreateMeetingInvitationsInput struct {
 	// ID of the `Meeting`
@@ -140,13 +129,6 @@ type RemoveWatchInput struct {
 type SetThreadLastViewedAtInput struct {
 	ThreadID string    `json:"threadID"`
 	Time     time.Time `json:"time"`
-}
-
-// NOT YET IMPLEMENTED --
-// System configuration information
-type SystemConfig struct {
-	// Authentication type for login outside the context of an `Organization`, such as for `Meeting` participants
-	AuthTypes []AuthType `json:"authTypes"`
 }
 
 type UpdateOrganizationInput struct {
