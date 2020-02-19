@@ -48,21 +48,12 @@ type meeting struct {
 	Posts []struct {
 		ID string `json:"id"`
 	} `json:"posts"`
-	Invites []struct {
-		Email string `json:"email"`
-	} `json:"invites"`
-	Participants []struct {
-		User struct {
-			ID string `json:"id"`
-		} `json:"user"`
-		Meeting struct {
-			ID string `json:"id"`
-		} `json:"meeting"`
-	} `json:"participants"`
+	Invites      []meetingInvite      `json:"invites"`
+	Participants []meetingParticipant `json:"participants"`
 }
 
 const allMeetingFields = `id name description moreInfoURL startDate endDate createdBy {nickname} imageFile {id}
-	location {country} posts {id} invites {email} participants {user{id} meeting{id}}`
+	location {country} posts {id} invites {meeting{id} email} participants {user{id} meeting{id}}`
 
 type meetingInvitesResponse struct {
 	MeetingInvites []meetingInvite `json:"MeetingInvites"`
@@ -144,13 +135,14 @@ func (as *ActionSuite) Test_MeetingQuery() {
 
 	as.Equal(2, len(gotMtg.Invites), "incorrect number of invites")
 	for i := range gotMtg.Invites {
-		as.Equal(f.MeetingInvites[i].Email, gotMtg.Invites[i].Email)
+		as.Equal(testMtg.UUID.String(), gotMtg.Invites[i].Meeting.ID, "wrong meeting ID on invite")
+		as.Equal(f.MeetingInvites[i].Email, gotMtg.Invites[i].Email, "wrong email on invite")
 	}
 
-	as.Equal(2, len(gotMtg.Participants), "incorrect number of participants")
+	as.Equal(2, len(gotMtg.Participants), "wrong number of participants")
 	for i := range gotMtg.Participants {
-		as.Equal(f.Users[i].UUID.String(), gotMtg.Participants[i].User.ID)
-		as.Equal(testMtg.UUID.String(), gotMtg.Participants[i].Meeting.ID)
+		as.Equal(f.Users[i].UUID.String(), gotMtg.Participants[i].User.ID, "wrong user ID on participant")
+		as.Equal(testMtg.UUID.String(), gotMtg.Participants[i].Meeting.ID, "wrong meeting ID on participant")
 	}
 }
 
