@@ -50,11 +50,17 @@ const ErrorInvalidInviteType = "ErrorInvalidInviteType"
 // actions.AuthRequest
 const ErrorInvalidInviteCode = "ErrorInvalidInviteCode"
 
+// actions.AuthRequest
+const ErrorInvalidSessionInviteObjectUUID = "ErrorInvalidSessionInviteObjectUUID"
+
 // actions.AuthRequest and others
 const ErrorLoadingAuthProvider = "ErrorLoadingAuthProvider"
 
 // actions.AuthRequest
 const ErrorGettingAuthURL = "ErrorGettingAuthURL"
+
+// actions.AuthRequest
+const ErrorMissingSessionInviteObjectUUID = "ErrorMissingSessionInviteObjectUUID"
 
 // actions.AuthCallback
 const ErrorMissingSessionAuthEmail = "ErrorMissingSessionAuthEmail"
