@@ -189,6 +189,66 @@ func (l testLogger) WithFields(m map[string]interface{}) logger.FieldLogger {
 	return testLogger{}
 }
 
+func (as *ActionSuite) TestGetAuthInviteResponse() {
+	f := createFixturesForAuthInvite(as)
+	meetings := f.Meetings
+
+	testCases := []struct {
+		name        string
+		param       string
+		want        authInviteResponse
+		wantObjUUID string
+		wantErr     bool
+		wantErrCode string
+	}{
+		{
+			name:        "No Invite Code",
+			wantErr:     true,
+			wantErrCode: "400",
+		},
+		{
+			name:  "Valid Invite Code",
+			param: meetings[1].InviteCode.UUID.String(),
+			want: authInviteResponse{
+				Type:     InviteTypeMeeting,
+				Name:     meetings[1].Name,
+				ImageURL: f.File.URL,
+			},
+			wantObjUUID: meetings[1].UUID.String(),
+		},
+		{
+			name:        "Invalid Invite Code",
+			param:       domain.GetUUID().String(),
+			wantErr:     true,
+			wantErrCode: "404",
+		},
+	}
+	for _, tc := range testCases {
+		// Test the first part and last part of the resulting urls
+		as.T().Run(tc.name, func(t *testing.T) {
+			c := &bufTestCtx{
+				sess:   as.Session,
+				params: map[string]string{},
+			}
+
+			if tc.param != "" {
+				c.params[InviteCode] = tc.param
+			}
+
+			got, err := getAuthInviteResponse(c)
+			if tc.wantErr {
+				as.Error(err, "expected and error but didn't get one")
+				as.Equal(tc.wantErrCode, err.Error(), "invalid error code")
+				return
+			}
+			as.NoError(err)
+			as.Equal(tc.want, got, "incorrect authInviteResponse")
+			as.Equal(InviteTypeMeeting, c.Session().Get(InviteTypeSessionKey), "incorrect session Invite Type")
+			as.Equal(tc.wantObjUUID, c.Session().Get(InviteObjectUUIDSessionKey), "incorrect session Invite Object UUID")
+		})
+	}
+}
+
 func (as *ActionSuite) TestGetOrSetReturnTo() {
 	t := as.T()
 

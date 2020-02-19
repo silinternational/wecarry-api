@@ -1,7 +1,12 @@
 package actions
 
 import (
+	"fmt"
+	"time"
+
+	"github.com/silinternational/wecarry-api/aws"
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/internal/test"
 	"github.com/silinternational/wecarry-api/models"
 
 	"testing"
@@ -13,6 +18,43 @@ type UserOrgFixtures struct {
 	users    models.Users
 	orgs     models.Organizations
 	userOrgs models.UserOrganizations
+}
+
+type meetingFixtures struct {
+	models.Meetings
+	models.File
+}
+
+func createFixturesForAuthInvite(as *ActionSuite) meetingFixtures {
+	uf := test.CreateUserFixtures(as.DB, 2)
+	user := uf.Users[0]
+	locations := test.CreateLocationFixtures(as.DB, 2)
+
+	err := aws.CreateS3Bucket()
+	as.NoError(err, "failed to create S3 bucket, %s", err)
+
+	var fileFixture models.File
+	fErr := fileFixture.Store("new_photo.webp", []byte("RIFFxxxxWEBPVP"))
+	as.Nil(fErr, "failed to create ImageFile fixture")
+
+	meetings := make(models.Meetings, 2)
+	meetings[1].ImageFileID = nulls.NewInt(fileFixture.ID)
+
+	for i := range meetings {
+		meetings[i].CreatedByID = user.ID
+		meetings[i].Name = fmt.Sprintf("Meeting%v", i)
+		meetings[i].StartDate = time.Now().Add(domain.DurationWeek * time.Duration(i+1))
+		meetings[i].EndDate = time.Now().Add(domain.DurationWeek * time.Duration(i+3))
+		meetings[i].UUID = domain.GetUUID()
+		meetings[i].InviteCode = nulls.NewUUID(domain.GetUUID())
+		meetings[i].LocationID = locations[i].ID
+		createFixture(as, &meetings[i])
+	}
+
+	return meetingFixtures{
+		Meetings: meetings,
+		File:     fileFixture,
+	}
 }
 
 func Fixtures_GetOrgAndUserOrgs(as *ActionSuite, t *testing.T) UserOrgFixtures {

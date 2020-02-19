@@ -62,7 +62,7 @@ type AuthOrgOption struct {
 	LogoURL string `json:"LogoURL"`
 }
 
-type AuthInviteResponse struct {
+type authInviteResponse struct {
 	Type     string `json:"type"`
 	Name     string `json:"name"` //  TODO ensure this is XSS safe (i.e. that no javascript gets through - sanitized)
 	ImageURL string `json:"imageURL"`
@@ -104,11 +104,11 @@ func getOrSetReturnTo(c buffalo.Context) string {
 	return returnTo
 }
 
-func authInvite(c buffalo.Context) error {
+func getAuthInviteResponse(c buffalo.Context) (authInviteResponse, error) {
 	inviteCode := c.Param(InviteCode)
 
 	if inviteCode == "" {
-		return authRequestError(c, http.StatusBadRequest, domain.ErrorInvalidInviteCode,
+		return authInviteResponse{}, authRequestError(c, http.StatusBadRequest, domain.ErrorInvalidInviteCode,
 			"missing Invite Code.")
 	}
 
@@ -116,19 +116,28 @@ func authInvite(c buffalo.Context) error {
 
 	var meeting models.Meeting
 	if err := meeting.FindByInviteCode(inviteCode); err != nil {
-		return authRequestError(c, http.StatusBadRequest, domain.ErrorInvalidInviteCode,
+		return authInviteResponse{}, authRequestError(c, http.StatusNotFound, domain.ErrorInvalidInviteCode,
 			"error validating Invite Code: "+err.Error(), extras)
 	}
 
 	c.Session().Set(InviteTypeSessionKey, InviteTypeMeeting)
-	c.Session().Set(InviteObjectUUIDSessionKey, meeting.UUID)
+	c.Session().Set(InviteObjectUUIDSessionKey, meeting.UUID.String())
 
-	resp := AuthInviteResponse{
+	resp := authInviteResponse{
 		Type: InviteTypeMeeting,
 		Name: meeting.Name,
 	}
 	if meeting.ImageFileID.Valid {
 		resp.ImageURL = meeting.ImageFile.URL
+	}
+	return resp, nil
+}
+
+func authInvite(c buffalo.Context) error {
+	// push most of the code out to make it easily testable
+	resp, err := getAuthInviteResponse(c)
+	if err != nil {
+		return err
 	}
 
 	return c.Render(http.StatusOK, render.JSON(resp))
