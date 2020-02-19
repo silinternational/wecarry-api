@@ -2,6 +2,12 @@
 
 package gqlgen
 
+import (
+	"context"
+
+	"github.com/silinternational/wecarry-api/models"
+)
+
 // Resolver is required by gqlgen
 type Resolver struct{}
 
@@ -16,3 +22,39 @@ func (r *Resolver) Query() QueryResolver {
 }
 
 type queryResolver struct{ *Resolver }
+
+func (r *Resolver) MeetingInvite() MeetingInviteResolver {
+	return &meetingInviteResolver{r}
+}
+
+type meetingInviteResolver struct{ *Resolver }
+
+func (m *meetingInviteResolver) AvatarURL(ctx context.Context, obj *models.MeetingInvite) (string, error) {
+	if obj == nil {
+		return "", nil
+	}
+
+	return obj.AvatarURL(), nil
+}
+
+func (m *meetingInviteResolver) Meeting(ctx context.Context, obj *models.MeetingInvite) (*models.Meeting, error) {
+	if obj == nil {
+		return nil, nil
+	}
+
+	mtg, err := obj.Meeting()
+	return &mtg, err
+}
+
+func (m *meetingInviteResolver) Inviter(ctx context.Context, obj *models.MeetingInvite) (*PublicProfile, error) {
+	if obj == nil {
+		return nil, nil
+	}
+
+	inviter, err := obj.Inviter()
+	if err != nil {
+		return nil, reportError(ctx, err, "MeetingInvite.GetInviter")
+	}
+
+	return getPublicProfile(ctx, &inviter), nil
+}
