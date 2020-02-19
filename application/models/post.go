@@ -352,14 +352,6 @@ func (p *Post) DestroyPotentialProviders(status PostStatus, user User) error {
 
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
 func (p *Post) Validate(tx *pop.Connection) (*validate.Errors, error) {
-	tomorrow := time.Now().Truncate(domain.DurationDay).Add(domain.DurationDay)
-
-	// If null, make it pass by pretending it's in the future
-	neededBeforeDate := time.Now().Add(domain.DurationWeek)
-	if p.NeededBefore.Valid {
-		neededBeforeDate = p.NeededBefore.Time
-	}
-
 	return validate.Validate(
 		&validators.IntIsPresent{Field: p.CreatedByID, Name: "CreatedBy"},
 		&validators.StringIsPresent{Field: p.Type.String(), Name: "Type"},
@@ -368,9 +360,6 @@ func (p *Post) Validate(tx *pop.Connection) (*validate.Errors, error) {
 		&validators.StringIsPresent{Field: p.Size.String(), Name: "Size"},
 		&validators.UUIDIsPresent{Field: p.UUID, Name: "UUID"},
 		&validators.StringIsPresent{Field: p.Status.String(), Name: "Status"},
-		&validators.TimeAfterTime{FirstName: "NeededBefore", FirstTime: neededBeforeDate,
-			SecondName: "Tomorrow", SecondTime: tomorrow,
-			Message: fmt.Sprintf("Post neededBefore must not be before tomorrow. Got %v", neededBeforeDate)},
 	), nil
 }
 
@@ -392,11 +381,22 @@ func (v *createStatusValidator) IsValid(errors *validate.Errors) {
 
 // ValidateCreate gets run every time you call "pop.ValidateAndCreate" method.
 func (p *Post) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) {
+	tomorrow := time.Now().Truncate(domain.DurationDay).Add(domain.DurationDay)
+
+	// If null, make it pass by pretending it's in the future
+	neededBeforeDate := time.Now().Add(domain.DurationWeek)
+	if p.NeededBefore.Valid {
+		neededBeforeDate = p.NeededBefore.Time
+	}
+
 	return validate.Validate(
 		&createStatusValidator{
 			Name:   "Create Status",
 			Status: p.Status,
 		},
+		&validators.TimeAfterTime{FirstName: "NeededBefore", FirstTime: neededBeforeDate,
+			SecondName: "Tomorrow", SecondTime: tomorrow,
+			Message: fmt.Sprintf("Post neededBefore must not be before tomorrow. Got %v", neededBeforeDate)},
 	), nil
 	//return validate.NewErrors(), nil
 }
@@ -829,14 +829,18 @@ func (p *Post) FindByUserAndUUID(ctx context.Context, user User, uuid string) er
 		Where("uuid = ?", uuid).First(p)
 }
 
-// FindByUser finds all posts visible to the current user. NOTE: at present, the posts are not sorted correctly; need
-// to find a better way to construct the query
-func (p *Posts) FindByUser(ctx context.Context, user User) error {
+// FindByUser finds all posts visible to the current user.
+func (p *Posts) FindByUser(ctx context.Context, user User, destination, origin *Location, searchText *string) error {
 	if user.ID == 0 {
 		return errors.New("invalid User ID in Posts.FindByUser")
 	}
 
-	q := DB.RawQuery(`
+	if !user.HasOrganization() {
+		*p = Posts{}
+		return nil
+	}
+
+	selectClause := `
 	WITH o AS (
 		SELECT id FROM organizations WHERE id IN (
 			SELECT organization_id FROM user_organizations WHERE user_id = ?
@@ -852,28 +856,37 @@ func (p *Posts) FindByUser(ctx context.Context, user User) error {
 			SELECT id FROM organizations WHERE id IN (
 				SELECT secondary_id FROM organization_trusts WHERE primary_id IN (SELECT id FROM o)
 			)
-		) AND visibility IN (?, ?)
+		) AND visibility = ?
 	)
-	AND status not in (?, ?) ORDER BY created_at desc`,
-		user.ID, PostVisibilityAll, PostVisibilityAll, PostVisibilityTrusted, PostStatusRemoved, PostStatusCompleted)
-	if err := q.All(p); err != nil {
+	AND status not in (?, ?)`
+
+	args := []interface{}{user.ID, PostVisibilityAll, PostVisibilityTrusted, PostStatusRemoved,
+		PostStatusCompleted}
+
+	if searchText != nil {
+		selectClause = selectClause + " AND (LOWER(title) LIKE ? or LOWER(description) LIKE ?)"
+		likeText := "%" + strings.ToLower(*searchText) + "%"
+		args = append(args, likeText, likeText)
+	}
+
+	posts := Posts{}
+	q := DB.RawQuery(selectClause+" ORDER BY created_at desc", args...)
+	if err := q.All(&posts); err != nil {
 		return fmt.Errorf("error finding posts for user %s, %s", user.UUID.String(), err)
 	}
+
+	if destination != nil {
+		posts = posts.FilterDestination(*destination)
+	}
+	if origin != nil {
+		posts = posts.FilterOrigin(*origin)
+	}
+
+	*p = Posts{}
+	for i := range posts {
+		*p = append(*p, posts[i])
+	}
 	return nil
-}
-
-// FilterByUserTypeAndContents finds all posts belonging to the same organization as the given user,
-// not marked as completed or removed and containing a certain search text.
-func (p *Posts) FilterByUserTypeAndContents(ctx context.Context, user User, pType PostType, contains string) error {
-	where := "type = ? and (LOWER(title) like ? or LOWER(description) like ?)"
-	contains = `%` + strings.ToLower(contains) + `%`
-
-	return DB.
-		Scope(scopeUserOrgs(user)).
-		Scope(scopeNotCompleted()).
-		Where(where, pType, contains, contains).
-		Order("created_at desc").
-		All(p)
 }
 
 // GetDestination reads the destination record, if it exists, and returns the Location object.
@@ -1047,4 +1060,29 @@ func (p *Post) Meeting() (*Meeting, error) {
 	}
 
 	return &meeting, nil
+}
+
+// FilterDestination returns a list of all posts with a Destination near the given location. The database is not
+// touched.
+func (p Posts) FilterDestination(location Location) Posts {
+	filtered := make(Posts, 0)
+	_ = DB.Load(&p, "Destination")
+	for i := range p {
+		if p[i].Destination.IsNear(location) {
+			filtered = append(filtered, p[i])
+		}
+	}
+	return filtered
+}
+
+// FilterOrigin returns a list of all posts that have an Origin near the given location. The database is not touched.
+func (p Posts) FilterOrigin(location Location) Posts {
+	filtered := make(Posts, 0)
+	_ = DB.Load(&p, "Origin")
+	for i := range p {
+		if p[i].Origin.IsNear(location) {
+			filtered = append(filtered, p[i])
+		}
+	}
+	return filtered
 }

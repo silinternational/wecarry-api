@@ -11,21 +11,21 @@ import (
 	"github.com/silinternational/wecarry-api/models"
 )
 
-// Input object for `createMeetingInvitations`
-type CreateMeetingInvitationsInput struct {
+// Input object for `createMeetingInvites`
+type CreateMeetingInvitesInput struct {
 	// ID of the `Meeting`
 	MeetingID string `json:"meetingID"`
-	// ID of the `User` making the invitations
-	UserID string `json:"userID"`
-	// Email addresses of the invitees
+	// Email addresses of the invitees. Duplicate values are ignored.
 	Emails []string `json:"emails"`
+	// NOT YET IMPLEMENTED -- Send email invites. Default is 'false', do not send any emails.
+	SendEmail *bool `json:"sendEmail"`
 }
 
 // Input object for `createMeetingParticipant`
 type CreateMeetingParticipantInput struct {
 	// ID of the `Meeting`
 	MeetingID string `json:"meetingID"`
-	// Confirmation code from the `MeetingInvitation`. If not provided, the `Meeting` must not be `INVITE_ONLY`.
+	// Confirmation code from the `MeetingInvite`. If not provided, the `Meeting` must not be `INVITE_ONLY`.
 	ConfirmationCode *string `json:"confirmationCode"`
 	// Add as a `Meeting` Organizer. Authenticated `User` must be authorized [definition TBD] to do this.
 	IsOrganizer *bool `json:"isOrganizer"`
@@ -65,28 +65,16 @@ type LocationInput struct {
 	Longitude   *float64 `json:"longitude"`
 }
 
-// Invitation to a `Meeting`. An invitation must be confirmed by the invitee before they may be added to a `Meeting`.
-type MeetingInvitation struct {
-	// ID of the `Meeting`
-	MeetingID string `json:"meetingID"`
-	// ID of the `User` making the invitation
-	UserID string `json:"userID"`
-	// Email address of the invitee
-	Email string `json:"email"`
-	// Gravatar image URL. Always a valid URL, but depending on the email address, it may reference a generic avatar.
-	AvatarURL string `json:"avatarURL"`
-}
-
 // Confirmed participant of a `Meeting`. An invited person will not appear as a `MeetingParticipant` until they have
-// confirmed a `MeetingInvitation`.
+// confirmed a `MeetingInvite`.
 type MeetingParticipant struct {
 	Meeting *models.Meeting `json:"meeting"`
 	// `User` information for the `Meeting` participant
 	User *models.User `json:"user"`
 	// true if `User` is a meeting Organizer
 	IsOrganizer *bool `json:"isOrganizer"`
-	// ID of the `MeetingInvitation`, valid if the participant was invited. `null` indicates the `User` self-joined
-	InvitationID *string `json:"invitationID"`
+	// The `MeetingInvite`, valid if the participant was invited. `null` indicates the `User` self-joined
+	Invite *models.MeetingInvite `json:"invite"`
 }
 
 // User fields that can safely be visible to any user in the system
@@ -96,8 +84,8 @@ type PublicProfile struct {
 	AvatarURL *string `json:"avatarURL"`
 }
 
-// Input object for `removeMeetingInvitation`
-type RemoveMeetingInvitationInput struct {
+// Input object for `removeMeetingInvite`
+type RemoveMeetingInviteInput struct {
 	// ID of the `Meeting`
 	MeetingID string `json:"meetingID"`
 	// Email addresse of the invitee to remove

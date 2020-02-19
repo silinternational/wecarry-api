@@ -1,7 +1,6 @@
 package models
 
 import (
-	"crypto/md5"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
@@ -513,9 +512,7 @@ func (u *User) GetPhotoURL() (*string, error) {
 		if u.AuthPhotoURL.Valid {
 			return &u.AuthPhotoURL.String, nil
 		}
-		// ref: https://en.gravatar.com/site/implement/images/
-		hash := md5.Sum([]byte(strings.ToLower(strings.TrimSpace(u.Email))))
-		url := fmt.Sprintf("https://www.gravatar.com/avatar/%x.jpg?s=200&d=mp", hash)
+		url := gravatarURL(u.Email)
 		return &url, nil
 	}
 
@@ -758,4 +755,18 @@ func (u User) GetLanguagePreference() string {
 // GetRealName returns the real name, first and last, of the user
 func (u *User) GetRealName() string {
 	return strings.TrimSpace(u.FirstName + " " + u.LastName)
+}
+
+// HasOrganization returns true if the user has one or more organization connections
+func (u *User) HasOrganization() bool {
+	var c Count
+	err := DB.RawQuery("SELECT COUNT(*) FROM user_organizations WHERE user_id = ?", u.ID).First(&c)
+	if err != nil {
+		domain.ErrLogger.Printf("error counting user organizations, user = '%s', err = %s", u.UUID, err)
+		return false
+	}
+	if c.N == 0 {
+		return false
+	}
+	return true
 }

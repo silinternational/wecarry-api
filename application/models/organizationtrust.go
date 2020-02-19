@@ -21,7 +21,7 @@ type OrganizationTrust struct {
 	SecondaryID int       `json:"secondary_id" db:"secondary_id"`
 }
 
-// OrganizationTrusts is used for struct-attached functions that operate on lists of objects
+// OrganizationTrusts is used for methods that operate on lists of objects
 type OrganizationTrusts []OrganizationTrust
 
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.

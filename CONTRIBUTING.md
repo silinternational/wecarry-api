@@ -24,7 +24,7 @@ FindByUUID(uuid string) error`.
 
 ### Unit test naming
 
-Unit test functions that test struct-attached functions should be named like
+Unit test functions that test methods should be named like
 `TestObject_FunctionName` where `Object` is the name of the struct and
 `FunctionName` is the name of the function under test.
 

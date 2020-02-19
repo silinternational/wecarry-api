@@ -2,6 +2,7 @@ package models
 
 import (
 	"context"
+	"crypto/md5"
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
@@ -239,4 +240,11 @@ func IsDBConnected() bool {
 		return !domain.IsOtherThanNoRows(err)
 	}
 	return true
+}
+
+func gravatarURL(email string) string {
+	// ref: https://en.gravatar.com/site/implement/images/
+	hash := md5.Sum([]byte(strings.ToLower(strings.TrimSpace(email))))
+	url := fmt.Sprintf("https://www.gravatar.com/avatar/%x.jpg?s=200&d=mp", hash)
+	return url
 }

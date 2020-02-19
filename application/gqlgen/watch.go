@@ -100,7 +100,7 @@ func (r *mutationResolver) CreateWatch(ctx context.Context, input watchInput) (*
 		return nil, reportError(ctx, err, "CreateWatch.ProcessInput", extras)
 	}
 
-	location := convertGqlLocationInputToDBLocation(*input.Location)
+	location := convertLocation(*input.Location)
 	if err = location.Create(); err != nil {
 		return nil, reportError(ctx, err, "CreateWatch.SetLocation", extras)
 	}
@@ -135,7 +135,7 @@ func (r *mutationResolver) UpdateWatch(ctx context.Context, input watchInput) (*
 	}
 
 	if input.Location != nil {
-		if err = watch.SetLocation(convertGqlLocationInputToDBLocation(*input.Location)); err != nil {
+		if err = watch.SetLocation(convertLocation(*input.Location)); err != nil {
 			return nil, reportError(ctx, err, "UpdateWatch.SetLocation", extras)
 		}
 	}

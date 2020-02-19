@@ -127,6 +127,116 @@ func (ms *ModelSuite) TestPost_Validate() {
 			wantErr:  true,
 			errField: "uuid",
 		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			vErr, _ := test.post.Validate(DB)
+			if test.wantErr {
+				if vErr.Count() == 0 {
+					t.Errorf("Expected an error, but did not get one")
+				} else if len(vErr.Get(test.errField)) == 0 {
+					t.Errorf("Expected an error on field %v, but got none (errors: %v)", test.errField, vErr.Errors)
+				}
+			} else if (test.wantErr == false) && (vErr.HasAny()) {
+				t.Errorf("Unexpected error: %v", vErr)
+			}
+		})
+	}
+}
+
+func (ms *ModelSuite) TestPost_ValidateCreate() {
+	t := ms.T()
+
+	tests := []struct {
+		name     string
+		post     Post
+		want     *validate.Errors
+		wantErr  bool
+		errField string
+	}{
+		{
+			name: "good - open",
+			post: Post{
+				CreatedByID:    1,
+				Type:           PostTypeRequest,
+				OrganizationID: 1,
+				Title:          "A Request",
+				Size:           PostSizeMedium,
+				Status:         PostStatusOpen,
+				UUID:           domain.GetUUID(),
+			},
+			wantErr: false,
+		},
+		{
+			name: "bad status - accepted",
+			post: Post{
+				CreatedByID:    1,
+				Type:           PostTypeRequest,
+				OrganizationID: 1,
+				Title:          "A Request",
+				Size:           PostSizeMedium,
+				Status:         PostStatusAccepted,
+				UUID:           domain.GetUUID(),
+			},
+			wantErr:  true,
+			errField: "create_status",
+		},
+		{
+			name: "bad status - delivered",
+			post: Post{
+				CreatedByID:    1,
+				OrganizationID: 1,
+				Type:           PostTypeRequest,
+				Title:          "A Request",
+				Size:           PostSizeMedium,
+				Status:         PostStatusDelivered,
+				UUID:           domain.GetUUID(),
+			},
+			wantErr:  true,
+			errField: "create_status",
+		},
+		{
+			name: "bad status - received",
+			post: Post{
+				CreatedByID:    1,
+				OrganizationID: 1,
+				Type:           PostTypeRequest,
+				Title:          "A Request",
+				Size:           PostSizeMedium,
+				Status:         PostStatusReceived,
+				UUID:           domain.GetUUID(),
+			},
+			wantErr:  true,
+			errField: "create_status",
+		},
+		{
+			name: "bad status - completed",
+			post: Post{
+				CreatedByID:    1,
+				OrganizationID: 1,
+				Type:           PostTypeRequest,
+				Title:          "A Request",
+				Size:           PostSizeMedium,
+				Status:         PostStatusCompleted,
+				UUID:           domain.GetUUID(),
+			},
+			wantErr:  true,
+			errField: "create_status",
+		},
+		{
+			name: "bad status - removed",
+			post: Post{
+				CreatedByID:    1,
+				OrganizationID: 1,
+				Type:           PostTypeRequest,
+				Title:          "A Request",
+				Size:           PostSizeMedium,
+				Status:         PostStatusRemoved,
+				UUID:           domain.GetUUID(),
+			},
+			wantErr:  true,
+			errField: "create_status",
+		},
 		{
 			name: "bad neededBefore (today)",
 			post: Post{
@@ -159,118 +269,12 @@ func (ms *ModelSuite) TestPost_Validate() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			vErr, _ := test.post.Validate(DB)
-			if test.wantErr {
-				if vErr.Count() == 0 {
-					t.Errorf("Expected an error, but did not get one")
-				} else if len(vErr.Get(test.errField)) == 0 {
-					t.Errorf("Expected an error on field %v, but got none (errors: %v)", test.errField, vErr.Errors)
-				}
-			} else if (test.wantErr == false) && (vErr.HasAny()) {
-				t.Errorf("Unexpected error: %v", vErr)
-			}
-		})
-	}
-}
-
-func (ms *ModelSuite) TestPost_ValidateCreate() {
-	t := ms.T()
-
-	tests := []struct {
-		name    string
-		post    Post
-		want    *validate.Errors
-		wantErr bool
-	}{
-		{
-			name: "good - open",
-			post: Post{
-				CreatedByID:    1,
-				Type:           PostTypeRequest,
-				OrganizationID: 1,
-				Title:          "A Request",
-				Size:           PostSizeMedium,
-				Status:         PostStatusOpen,
-				UUID:           domain.GetUUID(),
-			},
-			wantErr: false,
-		},
-		{
-			name: "bad status - accepted",
-			post: Post{
-				CreatedByID:    1,
-				Type:           PostTypeRequest,
-				OrganizationID: 1,
-				Title:          "A Request",
-				Size:           PostSizeMedium,
-				Status:         PostStatusAccepted,
-				UUID:           domain.GetUUID(),
-			},
-			wantErr: true,
-		},
-		{
-			name: "bad status - delivered",
-			post: Post{
-				CreatedByID:    1,
-				OrganizationID: 1,
-				Type:           PostTypeRequest,
-				Title:          "A Request",
-				Size:           PostSizeMedium,
-				Status:         PostStatusDelivered,
-				UUID:           domain.GetUUID(),
-			},
-			wantErr: true,
-		},
-		{
-			name: "bad status - received",
-			post: Post{
-				CreatedByID:    1,
-				OrganizationID: 1,
-				Type:           PostTypeRequest,
-				Title:          "A Request",
-				Size:           PostSizeMedium,
-				Status:         PostStatusReceived,
-				UUID:           domain.GetUUID(),
-			},
-			wantErr: true,
-		},
-		{
-			name: "bad status - completed",
-			post: Post{
-				CreatedByID:    1,
-				OrganizationID: 1,
-				Type:           PostTypeRequest,
-				Title:          "A Request",
-				Size:           PostSizeMedium,
-				Status:         PostStatusCompleted,
-				UUID:           domain.GetUUID(),
-			},
-			wantErr: true,
-		},
-		{
-			name: "bad status - removed",
-			post: Post{
-				CreatedByID:    1,
-				OrganizationID: 1,
-				Type:           PostTypeRequest,
-				Title:          "A Request",
-				Size:           PostSizeMedium,
-				Status:         PostStatusRemoved,
-				UUID:           domain.GetUUID(),
-			},
-			wantErr: true,
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			errField := "create_status"
-
 			vErr, _ := test.post.ValidateCreate(DB)
 			if test.wantErr {
 				if vErr.Count() == 0 {
 					t.Errorf("Expected an error, but did not get one")
-				} else if len(vErr.Get(errField)) == 0 {
-					t.Errorf("Expected an error on field %v, but got none (errors: %v)", errField, vErr.Errors)
+				} else if len(vErr.Get(test.errField)) == 0 {
+					t.Errorf("Expected an error on %v, but got none (errors: %v)", test.errField, vErr.Errors)
 				}
 			} else if (test.wantErr == false) && (vErr.HasAny()) {
 				t.Errorf("Unexpected error: %v", vErr)
@@ -1648,6 +1652,8 @@ func (ms *ModelSuite) TestPosts_FindByUser() {
 	tests := []struct {
 		name        string
 		user        User
+		dest        *Location
+		orig        *Location
 		wantPostIDs []int
 		wantErr     bool
 	}{
@@ -1657,12 +1663,14 @@ func (ms *ModelSuite) TestPosts_FindByUser() {
 		{name: "user 2", user: f.Users[2], wantPostIDs: []int{f.Posts[7].ID, f.Posts[6].ID, f.Posts[5].ID}},
 		{name: "user 3", user: f.Users[3], wantPostIDs: []int{f.Posts[6].ID, f.Posts[5].ID, f.Posts[1].ID}},
 		{name: "non-existent user", user: User{}, wantErr: true},
+		{name: "destination", user: f.Users[0], dest: &Location{Country: "AU"}, wantPostIDs: []int{f.Posts[0].ID}},
+		{name: "origin", user: f.Users[0], orig: &Location{Country: "AU"}, wantPostIDs: []int{f.Posts[1].ID}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			posts := Posts{}
 			var c context.Context
-			err := posts.FindByUser(c, test.user)
+			err := posts.FindByUser(c, test.user, test.dest, test.orig, nil)
 
 			if test.wantErr {
 				ms.Error(err)
@@ -1709,9 +1717,9 @@ func (ms *ModelSuite) TestPosts_GetPotentialProviders() {
 	}
 }
 
-func (ms *ModelSuite) TestPost_FilterByUserTypeAndContents() {
+func (ms *ModelSuite) TestPosts_FindByUser_SearchText() {
 	t := ms.T()
-	f := createFixtures_Posts_FilterByUserTypeAndContents(ms)
+	f := createFixtures_Posts_FindByUser_SearchText(ms)
 
 	tests := []struct {
 		name        string
@@ -1727,22 +1735,19 @@ func (ms *ModelSuite) TestPost_FilterByUserTypeAndContents() {
 		{name: "user 0 lower case request", user: f.Users[0], matchText: "match",
 			postType:    PostTypeRequest,
 			wantPostIDs: []int{f.Posts[5].ID, f.Posts[1].ID, f.Posts[0].ID}},
-		{name: "user 0 just an offer", user: f.Users[0], matchText: "Match",
-			postType:    PostTypeOffer,
-			wantPostIDs: []int{}},
-
 		{name: "user 1", user: f.Users[1], matchText: "Match",
 			postType:    PostTypeRequest,
 			wantPostIDs: []int{f.Posts[5].ID, f.Posts[1].ID}},
 		{name: "non-existent user", user: User{}, matchText: "Match",
-			postType:    PostTypeRequest,
-			wantPostIDs: []int{}},
+			postType: PostTypeRequest,
+			wantErr:  true,
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			posts := Posts{}
 			var c context.Context
-			err := posts.FilterByUserTypeAndContents(c, test.user, test.postType, test.matchText)
+			err := posts.FindByUser(c, test.user, nil, nil, &test.matchText)
 
 			if test.wantErr {
 				ms.Error(err)
