@@ -295,3 +295,11 @@ func (m *Meeting) Invites() (MeetingInvites, error) {
 	}
 	return i, nil
 }
+
+func (m *Meeting) Participants() (MeetingParticipants, error) {
+	p := MeetingParticipants{}
+	if err := DB.Where("meeting_id = ?", m.ID).All(&p); err != nil {
+		return p, err
+	}
+	return p, nil
+}

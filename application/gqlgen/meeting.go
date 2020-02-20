@@ -111,11 +111,17 @@ func (r *meetingResolver) Posts(ctx context.Context, obj *models.Meeting) ([]mod
 }
 
 func (r *meetingResolver) Invites(ctx context.Context, obj *models.Meeting) ([]models.MeetingInvite, error) {
-	return []models.MeetingInvite{}, nil
+	if obj == nil {
+		return nil, nil
+	}
+	return obj.Invites()
 }
 
-func (r *meetingResolver) Participants(ctx context.Context, obj *models.Meeting) ([]MeetingParticipant, error) {
-	return []MeetingParticipant{}, nil
+func (r *meetingResolver) Participants(ctx context.Context, obj *models.Meeting) ([]models.MeetingParticipant, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return obj.Participants()
 }
 
 func (r *meetingResolver) Visibility(ctx context.Context, obj *models.Meeting) (MeetingVisibility, error) {

@@ -145,3 +145,5 @@ models:
     fields:
       avatarURL:
         resolver: true
+  MeetingParticipant:
+    model: models.MeetingParticipant

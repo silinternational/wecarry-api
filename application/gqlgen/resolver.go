@@ -58,3 +58,43 @@ func (m *meetingInviteResolver) Inviter(ctx context.Context, obj *models.Meeting
 
 	return getPublicProfile(ctx, &inviter), nil
 }
+
+func (r *Resolver) MeetingParticipant() MeetingParticipantResolver {
+	return &meetingParticipantResolver{r}
+}
+
+type meetingParticipantResolver struct{ *Resolver }
+
+func (m *meetingParticipantResolver) Meeting(ctx context.Context, obj *models.MeetingParticipant) (*models.Meeting,
+	error) {
+
+	if obj == nil {
+		return nil, nil
+	}
+
+	mtg, err := obj.Meeting()
+	return &mtg, err
+}
+
+func (m *meetingParticipantResolver) User(ctx context.Context, obj *models.MeetingParticipant) (*PublicProfile, error) {
+	if obj == nil {
+		return nil, nil
+	}
+
+	user, err := obj.User()
+	if err != nil {
+		return nil, reportError(ctx, err, "MeetingParticipant.GetUser")
+	}
+
+	return getPublicProfile(ctx, &user), nil
+}
+
+func (m *meetingParticipantResolver) Invite(ctx context.Context, obj *models.MeetingParticipant) (*models.MeetingInvite,
+	error) {
+
+	if obj == nil {
+		return nil, nil
+	}
+
+	return obj.Invite()
+}
