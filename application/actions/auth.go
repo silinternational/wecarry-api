@@ -361,47 +361,56 @@ func authRequest(c buffalo.Context) error {
 	return finishOrgBasedAuthRequest(c, authEmail, org, userOrgs, extras)
 }
 
-func dealWithMeetingInviteFromCallback(c buffalo.Context, authEmail string) {
-	meetingUUID, ok := c.Session().Get(InviteObjectUUIDSessionKey).(string)
-	if !ok {
-		domain.Error(c, "got meeting invite type from session but not its UUID")
-	}
+func createMeetingParticipant(c buffalo.Context, meetingUUID string, user models.User) {
+
 	var meeting models.Meeting
 	if err := meeting.FindByUUID(meetingUUID); err != nil {
-		domain.Error(c, "expected to find a meeting but got "+err.Error())
+		domain.Error(c, "expected to find a Meeting but got "+err.Error())
 	}
 
-	// TODO First, check if there is already a MeetingParticipant record for this user
-	// TODO and if so then we're done here
+	// If there is already a MeetingParticipant record for this user, we're done
+	var participant models.MeetingParticipant
+	if err := participant.FindByMeetingIDAndUser(meeting.ID, user.ID); err != nil {
+		if domain.IsOtherThanNoRows(err) {
+			domain.Error(c, "error finding a MeetingParticpant: "+err.Error())
+		}
+		return
+	}
 
+	// Try to create a MeetingParticipant record for this user.
 	var invite models.MeetingInvite
-	if err := invite.FindByMeetingIDAndEmail(meeting.ID, authEmail); err != nil {
+	if err := invite.FindByMeetingIDAndEmail(meeting.ID, user.Email); err != nil {
 		domain.Error(c, "expected to find a MeetingInvite but got "+err.Error())
 		return
 	}
 
-	// TODO Create a MeetingParticipant record for this user
-
-	if err := invite.Destroy(); err != nil {
-		domain.Error(c, "error destroying outdated MeetingInvite: "+err.Error())
+	if err := participant.CreateForInvite(invite, user.ID); err != nil {
+		domain.Error(c, "error creating a MeetingParticipant: "+err.Error())
 	}
-	return
 }
 
-func dealWithInviteFromCallback(c buffalo.Context, authEmail string) {
-
-	// Check for an invite in the Session
-	inviteType, ok := c.Session().Get(InviteTypeSessionKey).(string)
-	if !ok {
-		return
-	}
+func dealWithInviteFromCallback(c buffalo.Context, inviteType, objectUUID string, user models.User) {
 
 	switch inviteType {
 	case InviteTypeMeeting:
-		dealWithMeetingInviteFromCallback(c, authEmail)
+		createMeetingParticipant(c, objectUUID, user)
 	default:
 		domain.Error(c, "incorrect meeting invite type in session: "+inviteType)
 	}
+}
+
+func getInviteInfoFromSession(c buffalo.Context) (string, string) {
+	inviteType, ok := c.Session().Get(InviteTypeSessionKey).(string)
+	if !ok {
+		return "", ""
+	}
+
+	objectUUID, ok := c.Session().Get(InviteObjectUUIDSessionKey).(string)
+	if !ok {
+		domain.Error(c, "got meeting invite type from session but not its UUID")
+		return "", ""
+	}
+	return inviteType, objectUUID
 }
 
 // authCallback assumes the user has logged in to the IDP or Oauth service and now their browser
@@ -460,13 +469,18 @@ func authCallback(c buffalo.Context) error {
 		return logErrorAndRedirect(c, domain.ErrorAuthEmailMismatch, err.Error(), extras)
 	}
 
-	dealWithInviteFromCallback(c, authResp.AuthUser.Email)
+	// Check for an invite in the Session
+	inviteType, objectUUID := getInviteInfoFromSession(c)
 
 	// login was success, clear session so new login can be initiated if needed
 	c.Session().Clear()
 
 	if err := user.FindOrCreateFromAuthUser(org.ID, authResp.AuthUser); err != nil {
 		return logErrorAndRedirect(c, domain.ErrorWithAuthUser, err.Error())
+	}
+
+	if inviteType != "" {
+		dealWithInviteFromCallback(c, inviteType, objectUUID, user)
 	}
 
 	authUser, err := createAuthUser(clientID, user, org)
