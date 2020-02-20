@@ -21,7 +21,9 @@ type UserOrgFixtures struct {
 }
 
 type meetingFixtures struct {
+	models.Users
 	models.Meetings
+	models.MeetingInvites
 	models.File
 }
 
@@ -212,5 +214,50 @@ func Fixtures_CreateAuthUser(as *ActionSuite, t *testing.T) UserOrgFixtures {
 	return UserOrgFixtures{
 		users: users,
 		orgs:  models.Organizations{*org},
+	}
+}
+
+func createFixturesForEnsureMeetingParticipant(as *ActionSuite) meetingFixtures {
+	uf := test.CreateUserFixtures(as.DB, 2)
+	users := uf.Users
+	locations := test.CreateLocationFixtures(as.DB, 2)
+
+	err := aws.CreateS3Bucket()
+	as.NoError(err, "failed to create S3 bucket, %s", err)
+
+	var fileFixture models.File
+	fErr := fileFixture.Store("new_photo.webp", []byte("RIFFxxxxWEBPVP"))
+	as.Nil(fErr, "failed to create ImageFile fixture")
+
+	meetings := make(models.Meetings, 2)
+	meetings[1].ImageFileID = nulls.NewInt(fileFixture.ID)
+
+	for i := range meetings {
+		meetings[i].CreatedByID = users[0].ID
+		meetings[i].Name = fmt.Sprintf("Meeting%v", i)
+		meetings[i].StartDate = time.Now().Add(domain.DurationWeek * time.Duration(i+1))
+		meetings[i].EndDate = time.Now().Add(domain.DurationWeek * time.Duration(i+3))
+		meetings[i].UUID = domain.GetUUID()
+		meetings[i].InviteCode = nulls.NewUUID(domain.GetUUID())
+		meetings[i].LocationID = locations[i].ID
+	}
+
+	createFixture(as, &meetings)
+
+	invites := make(models.MeetingInvites, 2)
+	for i := range invites {
+		invites[i].MeetingID = meetings[i].ID
+		invites[i].Email = users[1].Email
+		invites[i].Secret = domain.GetUUID()
+		invites[i].InviterID = users[0].ID
+	}
+
+	createFixture(as, &invites)
+
+	return meetingFixtures{
+		Users:          users,
+		Meetings:       meetings,
+		File:           fileFixture,
+		MeetingInvites: invites,
 	}
 }

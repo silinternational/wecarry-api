@@ -438,3 +438,57 @@ func (as *ActionSuite) TestCreateAuthUser() {
 		t.Errorf("bad email results: expected %v but got %v", expected, results)
 	}
 }
+
+func (as *ActionSuite) TestEnsureMeetingParticipant() {
+	f := createFixturesForEnsureMeetingParticipant(as)
+
+	testCases := []struct {
+		name            string
+		meeting         models.Meeting
+		user            models.User
+		wantParticipant bool
+	}{
+		{
+			name:            "With Invite but no Participant",
+			meeting:         f.Meetings[1],
+			user:            f.Users[1],
+			wantParticipant: true,
+		},
+		{
+			name:            "With Invite and Participant already created",
+			meeting:         f.Meetings[1],
+			user:            f.Users[1],
+			wantParticipant: true,
+		},
+		{
+			name:            "No Invite",
+			meeting:         f.Meetings[1],
+			user:            f.Users[0],
+			wantParticipant: false,
+		},
+	}
+	for _, tc := range testCases {
+		// Test the first part and last part of the resulting urls
+		as.T().Run(tc.name, func(t *testing.T) {
+			c := &bufTestCtx{
+				sess:   as.Session,
+				params: map[string]string{},
+			}
+
+			ensureMeetingParticipant(c, tc.meeting.UUID.String(), tc.user)
+
+			var participants models.MeetingParticipants
+			if tc.wantParticipant {
+				err := models.DB.Where("meeting_id = ? and user_id = ?", tc.meeting.ID, tc.user.ID).All(&participants)
+				as.NoError(err, "unexpected error finding MeetingParticipants")
+				as.Equal(1, len(participants), "incorrect number of MeetingParticipants")
+				return
+			}
+
+			// Don't want a new Participant
+			err := models.DB.Where("meeting_id = ? and user_id = ?", tc.meeting.ID, tc.user.ID).All(&participants)
+			as.NoError(err, "unexpected error finding no MeetingParticipants")
+			as.Equal(0, len(participants), "expected to find no MeetingParticipants")
+		})
+	}
+}
