@@ -140,6 +140,10 @@ func authInvite(c buffalo.Context) error {
 		return err
 	}
 
+	if resp.Name == "" {
+		return nil
+	}
+
 	return c.Render(http.StatusOK, render.JSON(resp))
 }
 
@@ -315,10 +319,6 @@ func finishOrgBasedAuthRequest(c buffalo.Context, authEmail string,
 }
 
 func authRequest(c buffalo.Context) error {
-
-	c.Session().Set(InviteTypeSessionKey, InviteTypeMeeting)
-	c.Session().Set(InviteObjectUUIDSessionKey, "48b9279f-d31f-41f5-8926-c5231c278aaa")
-
 	// Push the Client ID into the Session
 	clientID := c.Param(ClientIDParam)
 	if clientID == "" {
