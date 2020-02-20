@@ -107,25 +107,33 @@ func (r *meetingResolver) Posts(ctx context.Context, obj *models.Meeting) ([]mod
 	if obj == nil {
 		return nil, nil
 	}
-	//TODO: translate error message
-	return obj.GetPosts()
+	posts, err := obj.GetPosts()
+	if err != nil {
+		return nil, reportError(ctx, err, "Meeting.Posts")
+	}
+	return posts, nil
 }
 
 func (r *meetingResolver) Invites(ctx context.Context, obj *models.Meeting) ([]models.MeetingInvite, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	//TODO: translate error message
-	return obj.Invites(models.GetBuffaloContextFromGqlContext(ctx))
+	invites, err := obj.Invites(models.GetBuffaloContextFromGqlContext(ctx))
+	if err != nil {
+		return nil, reportError(ctx, err, "Meeting.Invites")
+	}
+	return invites, nil
 }
 
 func (r *meetingResolver) Participants(ctx context.Context, obj *models.Meeting) ([]models.MeetingParticipant, error) {
 	if obj == nil {
 		return nil, nil
 	}
-
-	//TODO: translate error message
-	return obj.Participants(models.GetBuffaloContextFromGqlContext(ctx))
+	participants, err := obj.Participants(models.GetBuffaloContextFromGqlContext(ctx))
+	if err != nil {
+		return nil, reportError(ctx, err, "Meeting.Participants")
+	}
+	return participants, nil
 }
 
 func (r *meetingResolver) Visibility(ctx context.Context, obj *models.Meeting) (MeetingVisibility, error) {
