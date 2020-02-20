@@ -362,7 +362,6 @@ func authRequest(c buffalo.Context) error {
 }
 
 func createMeetingParticipant(c buffalo.Context, meetingUUID string, user models.User) {
-
 	var meeting models.Meeting
 	if err := meeting.FindByUUID(meetingUUID); err != nil {
 		domain.Error(c, "expected to find a Meeting but got "+err.Error())
@@ -374,6 +373,7 @@ func createMeetingParticipant(c buffalo.Context, meetingUUID string, user models
 		if domain.IsOtherThanNoRows(err) {
 			domain.Error(c, "error finding a MeetingParticpant: "+err.Error())
 		}
+	} else {
 		return
 	}
 
