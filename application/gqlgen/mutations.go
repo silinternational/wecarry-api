@@ -280,7 +280,7 @@ func (r *mutationResolver) CreateMeetingInvites(ctx context.Context, input Creat
 		graphql.AddError(ctx, gqlerror.Errorf("problem creating invite for %v", emailList))
 	}
 
-	invites, err := m.Invites()
+	invites, err := m.Invites(models.GetBuffaloContextFromGqlContext(ctx))
 	if err != nil {
 		return nil, reportError(ctx, err, "CreateMeetingInvite.ListInvites", extras)
 	}

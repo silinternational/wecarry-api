@@ -147,3 +147,10 @@ models:
         resolver: true
   MeetingParticipant:
     model: models.MeetingParticipant
+    fields:
+      meeting:
+        resolver: true
+      user:
+        resolver: true
+      invite:
+        resolver: true

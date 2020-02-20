@@ -83,7 +83,7 @@ func (ms *ModelSuite) TestMeetingInvite_Validate() {
 }
 
 func (ms *ModelSuite) TestMeetingInvite_Create() {
-	meetings := createMeetingFixtures(ms.DB, 2)
+	meetings := createMeetingFixtures(ms.DB, 2).Meetings
 	inviter := createUserFixtures(ms.DB, 1).Users[0]
 	invite := MeetingInvite{
 		MeetingID: meetings[0].ID,
@@ -144,7 +144,7 @@ func (ms *ModelSuite) TestMeetingInvite_Create() {
 }
 
 func (ms *ModelSuite) TestMeetingInvite_Meeting() {
-	meetings := createMeetingFixtures(ms.DB, 2)
+	meetings := createMeetingFixtures(ms.DB, 2).Meetings
 
 	tests := []struct {
 		name    string

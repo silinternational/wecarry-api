@@ -9,4 +9,5 @@ create_table("meeting_participants") {
 	t.ForeignKey("user_id", {"users": ["id"]}, {"on_delete": "cascade"})
 	t.ForeignKey("invite_id", {"meeting_invites": ["id"]}, {"on_delete": "set null"})
 	t.Index(["meeting_id","user_id"], {"unique": true})
+	t.Index("invite_id", {"unique": true})
 }

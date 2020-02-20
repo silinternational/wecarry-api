@@ -53,7 +53,7 @@ func (ms *ModelSuite) TestMeetingParticipant_Validate() {
 }
 
 func (ms *ModelSuite) TestMeetingParticipant_Meeting() {
-	meetings := createMeetingFixtures(ms.DB, 2)
+	meetings := createMeetingFixtures(ms.DB, 2).Meetings
 
 	tests := []struct {
 		name    string
