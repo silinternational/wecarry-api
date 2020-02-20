@@ -220,6 +220,7 @@ func meetingAuthRequest(c buffalo.Context, authEmail string, extras map[string]i
 			return authRequestError(c, http.StatusInternalServerError, domain.ErrorFindingOrgUserOrgs,
 				fmt.Sprintf("error getting org and userOrgs ... %v", err), extras)
 		}
+		// Couldn't find org, so use non-org login
 		return finishInviteAuthRequest(c, authEmail, extras)
 	}
 
@@ -360,6 +361,49 @@ func authRequest(c buffalo.Context) error {
 	return finishOrgBasedAuthRequest(c, authEmail, org, userOrgs, extras)
 }
 
+func dealWithMeetingInviteFromCallback(c buffalo.Context, authEmail string) {
+	meetingUUID, ok := c.Session().Get(InviteObjectUUIDSessionKey).(string)
+	if !ok {
+		domain.Error(c, "got meeting invite type from session but not its UUID")
+	}
+	var meeting models.Meeting
+	if err := meeting.FindByUUID(meetingUUID); err != nil {
+		domain.Error(c, "expected to find a meeting but got "+err.Error())
+	}
+
+	// TODO First, check if there is already a MeetingParticipant record for this user
+	// TODO and if so then we're done here
+
+	var invite models.MeetingInvite
+	if err := invite.FindByMeetingIDAndEmail(meeting.ID, authEmail); err != nil {
+		domain.Error(c, "expected to find a MeetingInvite but got "+err.Error())
+		return
+	}
+
+	// TODO Create a MeetingParticipant record for this user
+
+	if err := invite.Destroy(); err != nil {
+		domain.Error(c, "error destroying outdated MeetingInvite: "+err.Error())
+	}
+	return
+}
+
+func dealWithInviteFromCallback(c buffalo.Context, authEmail string) {
+
+	// Check for an invite in the Session
+	inviteType, ok := c.Session().Get(InviteTypeSessionKey).(string)
+	if !ok {
+		return
+	}
+
+	switch inviteType {
+	case InviteTypeMeeting:
+		dealWithMeetingInviteFromCallback(c, authEmail)
+	default:
+		domain.Error(c, "incorrect meeting invite type in session: "+inviteType)
+	}
+}
+
 // authCallback assumes the user has logged in to the IDP or Oauth service and now their browser
 // has been redirected back with the final response
 func authCallback(c buffalo.Context) error {
@@ -388,20 +432,24 @@ func authCallback(c buffalo.Context) error {
 			fmt.Sprintf("error finding org with UUID %s ... %v", orgID, err.Error()))
 	}
 
+	extras := map[string]interface{}{"authEmail": authEmail}
+
 	ap, err := org.GetAuthProvider(authEmail)
 	if err != nil {
-		extras := map[string]interface{}{"authEmail": authEmail}
 		return logErrorAndRedirect(c, domain.ErrorLoadingAuthProvider,
 			fmt.Sprintf("error loading auth provider for '%s' ... %v", org.Name, err), extras)
 	}
 
 	authResp := ap.AuthCallback(c)
 	if authResp.Error != nil {
-		extras := map[string]interface{}{"authEmail": authEmail}
 		return logErrorAndRedirect(c, domain.ErrorAuthProvidersCallback, authResp.Error.Error(), extras)
 	}
 
 	returnTo := getOrSetReturnTo(c)
+
+	if authResp.AuthUser == nil {
+		return logErrorAndRedirect(c, domain.ErrorAuthProvidersCallback, "nil authResp.AuthUser", extras)
+	}
 
 	// if we have an authuser, find or create user in local db and finish login
 	var user models.User
@@ -412,14 +460,13 @@ func authCallback(c buffalo.Context) error {
 		return logErrorAndRedirect(c, domain.ErrorAuthEmailMismatch, err.Error(), extras)
 	}
 
-	if authResp.AuthUser != nil {
-		// login was success, clear session so new login can be initiated if needed
-		c.Session().Clear()
+	dealWithInviteFromCallback(c, authResp.AuthUser.Email)
 
-		err := user.FindOrCreateFromAuthUser(org.ID, authResp.AuthUser)
-		if err != nil {
-			return logErrorAndRedirect(c, domain.ErrorWithAuthUser, err.Error())
-		}
+	// login was success, clear session so new login can be initiated if needed
+	c.Session().Clear()
+
+	if err := user.FindOrCreateFromAuthUser(org.ID, authResp.AuthUser); err != nil {
+		return logErrorAndRedirect(c, domain.ErrorWithAuthUser, err.Error())
 	}
 
 	authUser, err := createAuthUser(clientID, user, org)

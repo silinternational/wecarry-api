@@ -67,3 +67,11 @@ func (m *MeetingInvite) Inviter() (User, error) {
 func (m *MeetingInvite) AvatarURL() string {
 	return gravatarURL(m.Email)
 }
+
+func (m *MeetingInvite) FindByMeetingIDAndEmail(meetingID int, email string) error {
+	return DB.Where("meeting_id = ? and email = ?", meetingID, email).First(m)
+}
+
+func (m *MeetingInvite) Destroy() error {
+	return m.Destroy()
+}
