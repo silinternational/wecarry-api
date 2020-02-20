@@ -320,6 +320,9 @@ type Meeting {
 
     "Participants of a `Meeting` are able to see all posts associated with the `Meeting`"
     participants: [MeetingParticipant!]!
+
+    "Organizers of a `Meeting` are able to make changes and invite people"
+    organizers: [PublicProfile!]!
 }
 
 type Organization {

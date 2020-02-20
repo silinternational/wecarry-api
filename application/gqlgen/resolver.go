@@ -76,7 +76,7 @@ func (m *meetingParticipantResolver) Meeting(ctx context.Context, obj *models.Me
 	return &mtg, err
 }
 
-func (m *meetingParticipantResolver) User(ctx context.Context, obj *models.MeetingParticipant) (*PublicProfile, error) {
+func (m *meetingParticipantResolver) User(ctx context.Context, obj *models.MeetingParticipant) (*models.User, error) {
 	if obj == nil {
 		return nil, nil
 	}
@@ -86,7 +86,7 @@ func (m *meetingParticipantResolver) User(ctx context.Context, obj *models.Meeti
 		return nil, reportError(ctx, err, "MeetingParticipant.GetUser")
 	}
 
-	return getPublicProfile(ctx, &user), nil
+	return &user, nil
 }
 
 func (m *meetingParticipantResolver) Invite(ctx context.Context, obj *models.MeetingParticipant) (*models.MeetingInvite,

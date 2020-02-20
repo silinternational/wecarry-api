@@ -12,7 +12,7 @@ migratetestdb: testdb
 
 gqlgen:
 	-docker-compose pause buffalo
-	docker-compose run --rm buffalo /bin/bash -c "go generate ./gqlgen"
+	-docker-compose run --rm buffalo /bin/bash -c "go generate ./gqlgen"
 	-docker-compose unpause buffalo
 
 adminer:

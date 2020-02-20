@@ -107,6 +107,7 @@ func (r *meetingResolver) Posts(ctx context.Context, obj *models.Meeting) ([]mod
 	if obj == nil {
 		return nil, nil
 	}
+	//TODO: translate error message
 	return obj.GetPosts()
 }
 
@@ -114,18 +115,33 @@ func (r *meetingResolver) Invites(ctx context.Context, obj *models.Meeting) ([]m
 	if obj == nil {
 		return nil, nil
 	}
-	return obj.Invites()
+	//TODO: translate error message
+	return obj.Invites(models.GetBuffaloContextFromGqlContext(ctx))
 }
 
 func (r *meetingResolver) Participants(ctx context.Context, obj *models.Meeting) ([]models.MeetingParticipant, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	return obj.Participants()
+
+	//TODO: translate error message
+	return obj.Participants(models.GetBuffaloContextFromGqlContext(ctx))
 }
 
 func (r *meetingResolver) Visibility(ctx context.Context, obj *models.Meeting) (MeetingVisibility, error) {
 	return MeetingVisibilityInviteOnly, nil
+}
+
+func (r *meetingResolver) Organizers(ctx context.Context, obj *models.Meeting) ([]PublicProfile, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	users, err := obj.Organizers(models.GetBuffaloContextFromGqlContext(ctx))
+	if err != nil {
+		//TODO: translate error message
+		return nil, err
+	}
+	return getPublicProfiles(ctx, users), nil
 }
 
 // Meetings resolves the `meetings` query by getting a list of meetings that have an

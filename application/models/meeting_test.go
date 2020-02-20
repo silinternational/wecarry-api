@@ -345,7 +345,7 @@ func (ms *ModelSuite) TestMeeting_FindByInviteCode() {
 }
 
 func (ms *ModelSuite) TestMeeting_AttachImage() {
-	meetings := createMeetingFixtures(ms.DB, 3)
+	meetings := createMeetingFixtures(ms.DB, 3).Meetings
 	files := createFileFixtures(3)
 	meetings[1].ImageFileID = nulls.NewInt(files[0].ID)
 	ms.NoError(ms.DB.UpdateColumns(&meetings[1], "image_file_id"))
@@ -499,7 +499,7 @@ func (ms *ModelSuite) TestMeeting_CanUpdate() {
 }
 
 func (ms *ModelSuite) TestMeeting_GetPosts() {
-	meetings := createMeetingFixtures(ms.DB, 2)
+	meetings := createMeetingFixtures(ms.DB, 2).Meetings
 
 	posts := createPostFixtures(ms.DB, 3, 0, false)
 	posts[0].MeetingID = nulls.NewInt(meetings[1].ID)
@@ -539,6 +539,168 @@ func (ms *ModelSuite) TestMeeting_GetPosts() {
 			}
 
 			ms.Equal(tt.wantIDs, pIDs)
+		})
+	}
+}
+
+func (ms *ModelSuite) TestMeeting_Invites() {
+	f := createMeetingFixtures(ms.DB, 2)
+
+	tests := []struct {
+		name       string
+		user       User
+		meeting    Meeting
+		wantEmails []string
+		wantErr    string
+	}{
+		{
+			name:       "creator",
+			user:       f.Users[0],
+			meeting:    f.Meetings[0],
+			wantEmails: []string{"invitee0@example.com", "invitee1@example.com"},
+		},
+		{
+			name:       "organizer",
+			user:       f.Users[1],
+			meeting:    f.Meetings[0],
+			wantEmails: []string{"invitee0@example.com", "invitee1@example.com"},
+		},
+		{
+			name:    "invitee",
+			user:    f.Users[2],
+			meeting: f.Meetings[0],
+			wantErr: "insufficient privileges",
+		},
+	}
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			ctx := &testBuffaloContext{
+				params: map[string]interface{}{},
+			}
+			ctx.Set("current_user", tt.user)
+			got, err := tt.meeting.Invites(ctx)
+			if tt.wantErr != "" {
+				ms.Error(err, "did not get expected error")
+				ms.Contains(err.Error(), tt.wantErr)
+				return
+			}
+			ms.NoError(err, "unexpected error")
+
+			ids := make([]string, len(got))
+			for i, invite := range got {
+				ids[i] = invite.Email
+				ms.Equal(tt.meeting.ID, invite.MeetingID, "wrong meeting ID in invite")
+			}
+
+			ms.Equal(tt.wantEmails, ids)
+		})
+	}
+}
+
+func (ms *ModelSuite) TestMeeting_Participants() {
+	f := createMeetingFixtures(ms.DB, 2)
+
+	tests := []struct {
+		name    string
+		user    User
+		meeting Meeting
+		wantIDs []int
+		wantErr string
+	}{
+		{
+			name:    "creator",
+			user:    f.Users[0],
+			meeting: f.Meetings[0],
+			wantIDs: []int{f.Users[1].ID, f.Users[2].ID, f.Users[3].ID},
+		},
+		{
+			name:    "organizer",
+			user:    f.Users[1],
+			meeting: f.Meetings[0],
+			wantIDs: []int{f.Users[1].ID, f.Users[2].ID, f.Users[3].ID},
+		},
+		{
+			name:    "participant",
+			user:    f.Users[2],
+			meeting: f.Meetings[0],
+			wantErr: "insufficient privileges",
+		},
+	}
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			ctx := &testBuffaloContext{
+				params: map[string]interface{}{},
+			}
+			ctx.Set("current_user", tt.user)
+			got, err := tt.meeting.Participants(ctx)
+			if tt.wantErr != "" {
+				ms.Error(err, "did not get expected error")
+				ms.Contains(err.Error(), tt.wantErr)
+				return
+			}
+			ms.NoError(err, "unexpected error")
+
+			ids := make([]int, len(got))
+			for i, p := range got {
+				ids[i] = p.UserID
+				ms.Equal(tt.meeting.ID, p.MeetingID, "wrong meeting ID in participant")
+			}
+
+			ms.Equal(tt.wantIDs, ids)
+		})
+	}
+}
+
+func (ms *ModelSuite) TestMeeting_Organizers() {
+	f := createMeetingFixtures(ms.DB, 2)
+
+	tests := []struct {
+		name    string
+		user    User
+		meeting Meeting
+		wantIDs []int
+		wantErr string
+	}{
+		{
+			name:    "creator",
+			user:    f.Users[0],
+			meeting: f.Meetings[0],
+			wantIDs: []int{f.Users[1].ID},
+		},
+		{
+			name:    "organizer",
+			user:    f.Users[1],
+			meeting: f.Meetings[0],
+			wantIDs: []int{f.Users[1].ID},
+		},
+		{
+			name:    "participant",
+			user:    f.Users[2],
+			meeting: f.Meetings[0],
+			wantIDs: []int{f.Users[1].ID},
+		},
+	}
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			ctx := &testBuffaloContext{
+				params: map[string]interface{}{},
+			}
+			ctx.Set("current_user", tt.user)
+			got, err := tt.meeting.Organizers(ctx)
+			if tt.wantErr != "" {
+				ms.Error(err, "did not get expected error")
+				ms.Contains(err.Error(), tt.wantErr)
+				return
+			}
+			ms.NoError(err, "unexpected error")
+
+			ids := make([]int, len(got))
+			for i, u := range got {
+				ids[i] = u.ID
+				ms.Equal("", u.LastName, "organizer's name was not omitted")
+			}
+
+			ms.Equal(tt.wantIDs, ids)
 		})
 	}
 }
