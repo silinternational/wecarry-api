@@ -62,7 +62,7 @@ type AuthOrgOption struct {
 
 type authInviteResponse struct {
 	Type     string `json:"type"`
-	Name     string `json:"name"` //  TODO ensure this is XSS safe (i.e. that no javascript gets through - sanitized)
+	Name     string `json:"name"`
 	ImageURL string `json:"imageURL"`
 }
 
@@ -102,6 +102,7 @@ func getOrSetReturnTo(c buffalo.Context) string {
 	return returnTo
 }
 
+// Gets info about an invite object (e.g. a meeting) based on an invite `code`
 func getAuthInviteResponse(c buffalo.Context) (authInviteResponse, error) {
 	inviteCode := c.Param(InviteCode)
 
@@ -131,6 +132,7 @@ func getAuthInviteResponse(c buffalo.Context) (authInviteResponse, error) {
 	return resp, nil
 }
 
+// Gets info about an invite object (e.g. a meeting) based on an invite `code`
 func authInvite(c buffalo.Context) error {
 	// push most of the code out to make it easily testable
 	resp, err := getAuthInviteResponse(c)
@@ -195,11 +197,13 @@ func provideOrgOptions(userOrgs models.UserOrganizations, c buffalo.Context) err
 	return c.Render(http.StatusOK, render.JSON(resp))
 }
 
-func finishInviteAuthRequest(c buffalo.Context, authEmail string, extras map[string]interface{}) error {
+// stub for social logins
+func finishSocialAuthRequest(c buffalo.Context, authEmail string, extras map[string]interface{}) error {
 	return authRequestError(c, http.StatusInternalServerError, "ErrorNotImplemented",
 		"Not ready to do non-Org invite authentication", extras)
 }
 
+// Decide whether a meeting invitee should use social login or org-based login
 func meetingAuthRequest(c buffalo.Context, authEmail string, extras map[string]interface{}) error {
 	meetingUUID, ok := c.Session().Get(InviteObjectUUIDSessionKey).(string)
 	if !ok {
@@ -223,12 +227,13 @@ func meetingAuthRequest(c buffalo.Context, authEmail string, extras map[string]i
 				fmt.Sprintf("error getting org and userOrgs ... %v", err), extras)
 		}
 		// Couldn't find org, so use non-org login
-		return finishInviteAuthRequest(c, authEmail, extras)
+		return finishSocialAuthRequest(c, authEmail, extras)
 	}
 
 	return finishOrgBasedAuthRequest(c, authEmail, org, userOrgs, extras)
 }
 
+// Decide whether an invitee should use social login or org-based login
 func inviteAuthRequest(c buffalo.Context, authEmail, inviteType string) error {
 
 	extras := map[string]interface{}{"authEmail": authEmail, "inviteType": inviteType}
@@ -389,6 +394,7 @@ func ensureMeetingParticipant(c buffalo.Context, meetingUUID string, user models
 	}
 }
 
+// Deals with the situation when a user logins as a response to an invite
 func dealWithInviteFromCallback(c buffalo.Context, inviteType, objectUUID string, user models.User) {
 
 	switch inviteType {
