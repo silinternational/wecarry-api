@@ -56,7 +56,7 @@ func (m *MeetingParticipant) Invite() (*MeetingInvite, error) {
 	return &invite, nil
 }
 
-func (m *MeetingParticipant) FindByMeetingIDAndUser(meetingID, userID int) error {
+func (m *MeetingParticipant) FindByMeetingIDAndUserID(meetingID, userID int) error {
 	return DB.Where("meeting_id = ? and user_id = ?", meetingID, userID).First(m)
 }
 
