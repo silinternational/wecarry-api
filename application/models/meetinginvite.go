@@ -65,7 +65,5 @@ func (m *MeetingInvite) Inviter() (User, error) {
 
 // AvatarURL returns a generated gravatar URL for the inivitee
 func (m *MeetingInvite) AvatarURL() string {
-	var p MeetingParticipant
-	_ = DB.Find(&p, m.ID)
 	return gravatarURL(m.Email)
 }
