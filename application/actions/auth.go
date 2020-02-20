@@ -42,8 +42,6 @@ const (
 	// logout http param for what is normally the bearer token
 	LogoutToken = "token"
 
-	MeetingIDSessionKey = "meeting-id"
-
 	// http param for organization id
 	OrgIDParam      = "org-id"
 	OrgIDSessionKey = "OrgID"
@@ -361,7 +359,9 @@ func authRequest(c buffalo.Context) error {
 	return finishOrgBasedAuthRequest(c, authEmail, org, userOrgs, extras)
 }
 
-func createMeetingParticipant(c buffalo.Context, meetingUUID string, user models.User) {
+// If there is a MeetingInvite for this user, then ensure there is also a
+// MeetingParticipant for them.
+func ensureMeetingParticipant(c buffalo.Context, meetingUUID string, user models.User) {
 	var meeting models.Meeting
 	if err := meeting.FindByUUID(meetingUUID); err != nil {
 		domain.Error(c, "expected to find a Meeting but got "+err.Error())
@@ -369,7 +369,7 @@ func createMeetingParticipant(c buffalo.Context, meetingUUID string, user models
 
 	// If there is already a MeetingParticipant record for this user, we're done
 	var participant models.MeetingParticipant
-	if err := participant.FindByMeetingIDAndUser(meeting.ID, user.ID); err != nil {
+	if err := participant.FindByMeetingIDAndUserID(meeting.ID, user.ID); err != nil {
 		if domain.IsOtherThanNoRows(err) {
 			domain.Error(c, "error finding a MeetingParticpant: "+err.Error())
 		}
@@ -393,7 +393,7 @@ func dealWithInviteFromCallback(c buffalo.Context, inviteType, objectUUID string
 
 	switch inviteType {
 	case InviteTypeMeeting:
-		createMeetingParticipant(c, objectUUID, user)
+		ensureMeetingParticipant(c, objectUUID, user)
 	default:
 		domain.Error(c, "incorrect meeting invite type in session: "+inviteType)
 	}
