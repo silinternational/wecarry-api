@@ -318,7 +318,7 @@ func (ms *ModelSuite) TestMeeting_FindRecent() {
 
 // TestMeeting_FindByUUID tests the FindByUUID function of the Meeting model
 func (ms *ModelSuite) TestMeeting_FindByInviteCode() {
-	meetings := createMeetingFixtures(ms.DB, 2)
+	f := createMeetingFixtures(ms.DB, 2)
 
 	tests := []struct {
 		name    string
@@ -326,7 +326,7 @@ func (ms *ModelSuite) TestMeeting_FindByInviteCode() {
 		want    Meeting
 		wantErr bool
 	}{
-		{name: "good", code: meetings[0].InviteCode.UUID.String(), want: meetings[0]},
+		{name: "good", code: f.Meetings[0].InviteCode.UUID.String(), want: f.Meetings[0]},
 		{name: "blank uuid", code: "", wantErr: true},
 		{name: "wrong uuid", code: domain.GetUUID().String(), wantErr: true},
 	}
