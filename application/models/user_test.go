@@ -1530,3 +1530,43 @@ func (ms *ModelSuite) TestUser_HasOrganization() {
 		})
 	}
 }
+
+func (ms *ModelSuite) TestUser_isMeetingOrganizer() {
+	f := createMeetingFixtures(ms.DB, 2)
+
+	tests := []struct {
+		name    string
+		user    User
+		meeting Meeting
+		want    bool
+	}{
+		{
+			name:    "creator",
+			user:    f.Users[0],
+			meeting: f.Meetings[0],
+			want:    false,
+		},
+		{
+			name:    "organizer",
+			user:    f.Users[1],
+			meeting: f.Meetings[0],
+			want:    true,
+		},
+		{
+			name:    "participant",
+			user:    f.Users[2],
+			meeting: f.Meetings[0],
+			want:    false,
+		},
+	}
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			ctx := &testBuffaloContext{
+				params: map[string]interface{}{},
+			}
+			ctx.Set("current_user", tt.user)
+			got := tt.user.isMeetingOrganizer(ctx, tt.meeting)
+			ms.Equal(tt.want, got)
+		})
+	}
+}

@@ -67,11 +67,56 @@ func createFixturesForMeetings(as *ActionSuite) meetingQueryFixtures {
 	posts[1].MeetingID = nulls.NewInt(meetings[2].ID)
 	as.NoError(as.DB.Update(&posts))
 
+	invites := models.MeetingInvites{
+		{
+			MeetingID: meetings[2].ID,
+			InviterID: user.ID,
+			Email:     "invitee0@example.com",
+		},
+		{
+			MeetingID: meetings[2].ID,
+			InviterID: user.ID,
+			Email:     "invitee1@example.com",
+		},
+		{
+			MeetingID: meetings[1].ID,
+			InviterID: user.ID,
+			Email:     "invitee2@example.com",
+		},
+	}
+	for i := range invites {
+		as.NoError(invites[i].Create())
+	}
+
+	participants := models.MeetingParticipants{
+		{
+			MeetingID:   meetings[2].ID,
+			UserID:      uf.Users[0].ID,
+			InviteID:    nulls.NewInt(invites[0].ID),
+			IsOrganizer: true,
+		},
+		{
+			MeetingID:   meetings[2].ID,
+			UserID:      uf.Users[1].ID,
+			InviteID:    nulls.NewInt(invites[1].ID),
+			IsOrganizer: false,
+		},
+		{
+			MeetingID:   meetings[1].ID,
+			UserID:      uf.Users[1].ID,
+			InviteID:    nulls.NewInt(invites[2].ID),
+			IsOrganizer: false,
+		},
+	}
+	createFixture(as, &participants)
+
 	return meetingQueryFixtures{
-		Locations: locations,
-		Meetings:  meetings,
-		Users:     uf.Users,
-		File:      fileFixture,
-		Posts:     posts,
+		Locations:           locations,
+		Meetings:            meetings,
+		Users:               uf.Users,
+		File:                fileFixture,
+		Posts:               posts,
+		MeetingInvites:      invites,
+		MeetingParticipants: participants,
 	}
 }

@@ -280,15 +280,15 @@ func (r *mutationResolver) CreateMeetingInvites(ctx context.Context, input Creat
 		graphql.AddError(ctx, gqlerror.Errorf("problem creating invite for %v", emailList))
 	}
 
-	invites, err := m.Invites()
+	invites, err := m.Invites(models.GetBuffaloContextFromGqlContext(ctx))
 	if err != nil {
 		return nil, reportError(ctx, err, "CreateMeetingInvite.ListInvites", extras)
 	}
 	return invites, nil
 }
 
-func (r *mutationResolver) CreateMeetingParticipant(ctx context.Context, input CreateMeetingParticipantInput) (*MeetingParticipant, error) {
-	var m MeetingParticipant
+func (r *mutationResolver) CreateMeetingParticipant(ctx context.Context, input CreateMeetingParticipantInput) (*models.MeetingParticipant, error) {
+	var m models.MeetingParticipant
 	return &m, nil
 }
 
@@ -296,6 +296,6 @@ func (r *mutationResolver) RemoveMeetingInvite(ctx context.Context, input Remove
 	return []models.MeetingInvite{}, nil
 }
 
-func (r *mutationResolver) RemoveMeetingParticipant(ctx context.Context, input RemoveMeetingParticipantInput) ([]MeetingParticipant, error) {
-	return []MeetingParticipant{}, nil
+func (r *mutationResolver) RemoveMeetingParticipant(ctx context.Context, input RemoveMeetingParticipantInput) ([]models.MeetingParticipant, error) {
+	return []models.MeetingParticipant{}, nil
 }

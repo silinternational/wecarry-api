@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/events"
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
@@ -769,4 +770,21 @@ func (u *User) HasOrganization() bool {
 		return false
 	}
 	return true
+}
+
+func (u *User) isMeetingOrganizer(ctx buffalo.Context, meeting Meeting) bool {
+	organizers, err := meeting.Organizers(ctx)
+	if err != nil {
+		domain.Error(ctx, "isMeetingOrganizer() error reading list of meeting organizers, "+err.Error())
+	}
+	for _, o := range organizers {
+		if o.ID == u.ID {
+			return true
+		}
+	}
+	return false
+}
+
+func (u *User) isSuperAdmin() bool {
+	return u.AdminRole == UserAdminRoleSuperAdmin
 }

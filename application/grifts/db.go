@@ -499,6 +499,69 @@ var _ = grift.Namespace("db", func() {
 			}
 		}
 
+		// meeting_invites table
+		inviteSecret1, _ := uuid.FromString("ad08446a-65dc-4a31-9c67-497dace2d519")
+		inviteSecret2, _ := uuid.FromString("7351594a-cf3a-4b5c-b133-1f5e029e8e18")
+		inviteSecret3, _ := uuid.FromString("5ef7e8e4-33da-4fa8-a053-1570114018d8")
+		inviteSecret4, _ := uuid.FromString("5521a5cf-83a4-45b9-a579-83f668cee97e")
+		fixtureInvites := []*models.MeetingInvite{
+			{
+				MeetingID: fixtureMeetings[0].ID,
+				InviterID: fixtureUsers[0].ID,
+				Secret:    inviteSecret1,
+				Email:     "clark.kent@example.org",
+			},
+			{
+				MeetingID: fixtureMeetings[0].ID,
+				InviterID: fixtureUsers[0].ID,
+				Secret:    inviteSecret2,
+				Email:     "elmer_fudd@example.org",
+			},
+			{
+				MeetingID: fixtureMeetings[0].ID,
+				InviterID: fixtureUsers[0].ID,
+				Secret:    inviteSecret3,
+				Email:     "another.yahoo@example.com",
+			},
+			{
+				MeetingID: fixtureMeetings[0].ID,
+				InviterID: fixtureUsers[0].ID,
+				Secret:    inviteSecret4,
+				Email:     "jimmy-crack-corn@example.net",
+			},
+		}
+
+		for i, meeting := range fixtureInvites {
+			err := models.DB.Create(fixtureInvites[i])
+			if err != nil {
+				err = fmt.Errorf("error loading invite fixture ... %+v\n %v", meeting, err.Error())
+				return err
+			}
+		}
+
+		// meeting_participants table
+		fixtureMeetingParticipants := []*models.MeetingParticipant{
+			{
+				MeetingID:   fixtureMeetings[0].ID,
+				UserID:      fixtureUsers[0].ID,
+				InviteID:    nulls.NewInt(fixtureInvites[0].ID),
+				IsOrganizer: true,
+			},
+			{
+				MeetingID:   fixtureMeetings[0].ID,
+				UserID:      fixtureUsers[1].ID,
+				IsOrganizer: false,
+			},
+		}
+
+		for i, meeting := range fixtureMeetingParticipants {
+			err := models.DB.Create(fixtureMeetingParticipants[i])
+			if err != nil {
+				err = fmt.Errorf("error loading participant fixture ... %+v\n %v", meeting, err.Error())
+				return err
+			}
+		}
+
 		return nil
 	})
 

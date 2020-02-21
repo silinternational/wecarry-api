@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
 	"github.com/gobuffalo/validate/validators"
 	"github.com/gofrs/uuid"
 	"github.com/pkg/errors"
+
 	"github.com/silinternational/wecarry-api/domain"
 )
 
@@ -271,10 +273,54 @@ func (m *Meeting) GetPosts() ([]Post, error) {
 	return m.Posts, nil
 }
 
-func (m *Meeting) Invites() (MeetingInvites, error) {
+// Invites returns all of the MeetingInvites for this Meeting. Only the meeting creator and organizers are authorized.
+func (m *Meeting) Invites(ctx buffalo.Context) (MeetingInvites, error) {
 	i := MeetingInvites{}
+	if m == nil {
+		return i, nil
+	}
+	currentUser := GetCurrentUser(ctx)
+	if currentUser.ID != m.CreatedByID && !currentUser.isMeetingOrganizer(ctx, *m) && !currentUser.isSuperAdmin() {
+		return i, nil
+	}
 	if err := DB.Where("meeting_id = ?", m.ID).All(&i); err != nil {
 		return i, err
 	}
 	return i, nil
+}
+
+// Participants returns all of the MeetingParticipants for this Meeting. Only the meeting creator and organizers are
+// authorized.
+func (m *Meeting) Participants(ctx buffalo.Context) (MeetingParticipants, error) {
+	p := MeetingParticipants{}
+	if m == nil {
+		return p, nil
+	}
+	currentUser := GetCurrentUser(ctx)
+	if currentUser.ID != m.CreatedByID && !currentUser.isMeetingOrganizer(ctx, *m) && !currentUser.isSuperAdmin() {
+		return p, nil
+	}
+	if err := DB.Where("meeting_id = ?", m.ID).All(&p); err != nil {
+		return p, err
+	}
+	return p, nil
+}
+
+// Organizers returns all of the users who are organizers for this Meeting. No authorization is checked, so
+// any queries should render this as a PublicProfile to limit field visibility.
+func (m *Meeting) Organizers(ctx buffalo.Context) (Users, error) {
+	u := Users{}
+	if m == nil {
+		return u, nil
+	}
+	if err := DB.
+		Select("users.id", "users.uuid", "nickname", "photo_file_id", "auth_photo_url").
+		Where("meeting_participants.is_organizer=true").
+		Where("meeting_participants.meeting_id=?", m.ID).
+		Join("meeting_participants", "meeting_participants.user_id=users.id").
+		All(&u); err != nil {
+
+		return u, err
+	}
+	return u, nil
 }

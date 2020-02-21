@@ -314,22 +314,20 @@ type Meeting {
     imageFile: File
     location: Location!
 
-    """
-    Posts (Requests) associated with the meeting
-    """
+    "Posts (Requests) associated with the meeting"
     posts: [Post!]!
 
     "NOT YET IMPLEMENTED -- Who can see this meeting"
     visibility: MeetingVisibility!
 
-    """
-    NOT YET IMPLEMENTED --
-    Invites to the `Meeting` that have been sent to the invitee for their confirmation to join the `Meeting`
-    """
+    "Invites to the `Meeting` that have been sent to the invitees for their confirmation to join the `Meeting`"
     invites: [MeetingInvite!]!
 
-    "NOT YET IMPLEMENTED -- Participants of a `Meeting` are able to see all posts associated with the `Meeting`"
+    "Participants of a `Meeting` are able to see all posts associated with the `Meeting`"
     participants: [MeetingParticipant!]!
+
+    "Organizers of a `Meeting` are able to make changes and invite people"
+    organizers: [PublicProfile!]!
 }
 
 type Organization {

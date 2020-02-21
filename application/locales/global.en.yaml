@@ -1,3 +1,4 @@
+# Meeting
 - id: CreateMeeting
   translation: We had a problem creating the new meeting.
 - id: CreateMeeting.ProcessInput
@@ -24,6 +25,32 @@
   translation: We had a problem processing the information to update that meeting.
 - id: UpdateMeeting.Unauthorized
   translation: You are not allowed to edit the information for that meeting.
+- id: Meeting.Posts
+  translation: We had a problem finding the posts for the meeting
+- id: Meeting.Invites
+  translation: We had a problem finding the invites for the meeting
+- id: Meeting.Participants
+  translation: We had a problem finding the participants for the meeting
+
+# MeetingInvite
+- id: CreateMeetingInvite.FindMeeting
+  translation: We had a problem finding the meeting for the new invites
+- id: CreateMeetingInvite.ListInvites
+  translation: We had a problem getting the list of invites after adding the new invites
+- id: MeetingInvite.Inviter
+  translation: We had a problem getting the user profile of the inviter
+- id: MeetingInvite.Meeting
+  translation: We had a problem getting the meeting data for the invite
+
+# MeetingParticipant
+- id: MeetingParticipant.Meeting
+  translation: We had a problem finding the meeting for the participant
+- id: MeetingParticipant.User
+  translation: We had a problem finding the user data for the participant
+- id: MeetingParticipant.Invite
+  translation: We had a problem finding the invite data for the participant
+
+# Message
 - id: GetMessageSender
   translation: We had a problem finding the message sender information.
 - id: GetMessageThread
@@ -276,11 +303,3 @@
   translation: We had a problem finding the organization to remove the Trust
 - id: RemoveTrust
   translation: We had a problem removing the Trust
-
-# MeetingInvite
-- id: CreateMeetingInvite.FindMeeting
-  translation: We had a problem finding the meeting for the new invites
-- id: CreateMeetingInvite.ListInvites
-  translation: We had a problem getting the list of invites after adding the new invites
-- id: MeetingInvite.GetInviter
-  translation: We had a problem getting the user profile of the inviter
