@@ -315,7 +315,7 @@ type Meeting {
     "NOT YET IMPLEMENTED -- Who can see this meeting"
     visibility: MeetingVisibility!
 
-    "Invites to the `Meeting` that have been sent to the invitee for their confirmation to join the `Meeting`"
+    "Invites to the `Meeting` that have been sent to the invitees for their confirmation to join the `Meeting`"
     invites: [MeetingInvite!]!
 
     "Participants of a `Meeting` are able to see all posts associated with the `Meeting`"

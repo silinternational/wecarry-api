@@ -547,12 +547,12 @@ var _ = grift.Namespace("db", func() {
 				MeetingID:   fixtureMeetings[0].ID,
 				UserID:      fixtureUsers[0].ID,
 				InviteID:    nulls.NewInt(fixtureInvites[0].ID),
-				IsOrganizer: false,
+				IsOrganizer: true,
 			},
 			{
 				MeetingID:   fixtureMeetings[0].ID,
 				UserID:      fixtureUsers[1].ID,
-				IsOrganizer: true,
+				IsOrganizer: false,
 			},
 		}
 
