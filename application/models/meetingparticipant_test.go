@@ -56,21 +56,21 @@ func (ms *ModelSuite) TestMeetingParticipant_Meeting() {
 	meetings := createMeetingFixtures(ms.DB, 2).Meetings
 
 	tests := []struct {
-		name    string
-		invite  MeetingParticipant
-		want    Meeting
-		wantErr string
+		name        string
+		participant MeetingParticipant
+		want        Meeting
+		wantErr     string
 	}{
 		{
 			name: "good",
-			invite: MeetingParticipant{
+			participant: MeetingParticipant{
 				MeetingID: meetings[0].ID,
 			},
 			want: meetings[0],
 		},
 		{
 			name: "bad",
-			invite: MeetingParticipant{
+			participant: MeetingParticipant{
 				MeetingID: 0,
 			},
 			wantErr: "sql: no rows in result set",
@@ -78,7 +78,7 @@ func (ms *ModelSuite) TestMeetingParticipant_Meeting() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			got, err := tt.invite.Meeting()
+			got, err := tt.participant.Meeting()
 			if tt.wantErr != "" {
 				ms.Error(err, `didn't get expected error: "%s"`, tt.wantErr)
 				ms.Contains(err.Error(), tt.wantErr, "wrong error message")
@@ -93,27 +93,27 @@ func (ms *ModelSuite) TestMeetingParticipant_User() {
 	user := createUserFixtures(ms.DB, 2).Users[0]
 
 	tests := []struct {
-		name    string
-		invite  MeetingParticipant
-		want    User
-		wantErr string
+		name        string
+		participant MeetingParticipant
+		want        User
+		wantErr     string
 	}{
 		{
 			name: "good",
-			invite: MeetingParticipant{
+			participant: MeetingParticipant{
 				UserID: user.ID,
 			},
 			want: user,
 		},
 		{
-			name:    "bad",
-			invite:  MeetingParticipant{},
-			wantErr: "sql: no rows in result set",
+			name:        "bad",
+			participant: MeetingParticipant{},
+			wantErr:     "sql: no rows in result set",
 		},
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			got, err := tt.invite.User()
+			got, err := tt.participant.User()
 			if tt.wantErr != "" {
 				ms.Error(err, `didn't get expected error: "%s"`, tt.wantErr)
 				ms.Contains(err.Error(), tt.wantErr, "wrong error message")
