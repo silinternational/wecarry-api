@@ -372,16 +372,9 @@ func (as *ActionSuite) TestGetOrgAndUserOrgs() {
 
 			c.params[OrgIDParam] = test.param
 
-			resultOrg, resultUserOrgs, _ := getOrgAndUserOrgs(test.authEmail, c)
+			resultUserOrgs, _ := getUserOrgs(c, test.authEmail)
 
 			expected := test.wantOrg
-			results := resultOrg.Name
-
-			if results != expected {
-				t.Errorf("bad Org results for test \"%s\". \nExpected %s\n but got %s",
-					test.name, expected, results)
-				return
-			}
 
 			if len(resultUserOrgs) != test.wantUserOrgCount {
 				t.Errorf("bad results for test \"%s\". \nExpected %v UserOrg(s) but got %v ... \n %+v\n",
@@ -392,7 +385,7 @@ func (as *ActionSuite) TestGetOrgAndUserOrgs() {
 			if test.wantUserOrgCount == 1 {
 
 				expected = test.wantUserOrg
-				results = resultUserOrgs[0].AuthEmail
+				results := resultUserOrgs[0].AuthEmail
 
 				if results != expected {
 					t.Errorf("bad UserOrg results for test \"%s\". \nExpected %s\n but got %s",

@@ -35,9 +35,18 @@ const ErrorMissingClientID = "ErrorMissingClientID"
 const ErrorMissingAuthEmail = "ErrorMissingAuthEmail"
 
 // There was an error during the auth request process when trying to
-// find an organization or userorganizations
+// find an organization for a user with no UserOrganizations
 // actions.AuthRequest
-const ErrorFindingOrgUserOrgs = "ErrorFindingOrgUserOrgs"
+const ErrorFindingOrgForNewUser = "ErrorFindingOrgForNewUser"
+
+// There was an error during the auth request process when trying to
+// find userorganizations
+// actions.AuthRequest
+const ErrorFindingUserOrgs = "ErrorFindingUserOrgs"
+
+// No Organization was found for the authEmail
+// actions.AuthRequest
+const ErrorOrglessUserNotAllowed = "ErrorOrglessUserNotAllowed"
 
 // An appropriate organization was not found
 // for the user making an authentication request

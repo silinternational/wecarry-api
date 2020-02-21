@@ -63,7 +63,8 @@ func (u *UserOrganization) ValidateUpdate(tx *pop.Connection) (*validate.Errors,
 	return validate.NewErrors(), nil
 }
 
-// FindByAuthEmail finds and returns an array of user organizations for the given email address
+// FindByAuthEmail finds UserOrganizations for the given email address. However, if the
+// orgID param is greater than zero, it will find only the one with both that authEmail and orgID.
 func (u *UserOrganizations) FindByAuthEmail(authEmail string, orgID int) error {
 	// Validate email address before query
 	errs := validate.Validate(&validators.EmailIsPresent{Field: authEmail})
@@ -74,7 +75,7 @@ func (u *UserOrganizations) FindByAuthEmail(authEmail string, orgID int) error {
 	where := "auth_email = ?"
 	params := []interface{}{authEmail}
 
-	if orgID != 0 {
+	if orgID > 0 {
 		where += " AND organization_id = ?"
 		params = append(params, orgID)
 	}
