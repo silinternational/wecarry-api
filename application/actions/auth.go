@@ -32,7 +32,6 @@ const (
 
 	// http params for the Invite type and code
 	InviteCode        = "code"
-	InviteType        = "invite-type"
 	InviteTypeMeeting = "meeting"
 
 	// session keys for using invites for authentication
