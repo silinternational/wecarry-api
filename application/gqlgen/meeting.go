@@ -146,7 +146,6 @@ func (r *meetingResolver) Organizers(ctx context.Context, obj *models.Meeting) (
 	}
 	users, err := obj.Organizers(models.GetBuffaloContextFromGqlContext(ctx))
 	if err != nil {
-		//TODO: translate error message
 		return nil, err
 	}
 	return getPublicProfiles(ctx, users), nil
