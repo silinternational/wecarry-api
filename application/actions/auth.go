@@ -444,32 +444,13 @@ func getInviteInfoFromSession(c buffalo.Context) (string, string) {
 	return inviteType, objectUUID
 }
 
-// authCallback assumes the user has logged in to the IDP or Oauth service and now their browser
-// has been redirected back with the final response
-func authCallback(c buffalo.Context) error {
-	clientID, ok := c.Session().Get(ClientIDSessionKey).(string)
-	if !ok {
-		return logErrorAndRedirect(c, domain.ErrorMissingSessionClientID,
-			ClientIDSessionKey+" session entry is required to complete login")
-	}
-
-	authEmail, ok := c.Session().Get(AuthEmailSessionKey).(string)
-	if !ok {
-		return logErrorAndRedirect(c, domain.ErrorMissingSessionAuthEmail,
-			AuthEmailSessionKey+" session entry is required to complete login")
-	}
-
-	orgID, ok := c.Session().Get(OrgIDSessionKey).(string)
-	if !ok {
-		return logErrorAndRedirect(c, domain.ErrorMissingSessionOrgID,
-			OrgIDSessionKey+" session entry is required to complete login")
-	}
+func orgBasedAuthCallback(c buffalo.Context, orgUUID, authEmail, clientID string) error {
 
 	org := models.Organization{}
-	err := org.FindByUUID(orgID)
+	err := org.FindByUUID(orgUUID)
 	if err != nil {
 		return logErrorAndRedirect(c, domain.ErrorFindingOrgByID,
-			fmt.Sprintf("error finding org with UUID %s ... %v", orgID, err.Error()))
+			fmt.Sprintf("error finding org with UUID %s ... %v", orgUUID, err.Error()))
 	}
 
 	extras := map[string]interface{}{"authEmail": authEmail}
@@ -523,6 +504,31 @@ func authCallback(c buffalo.Context) error {
 	domain.RollbarSetPerson(c, authUser.ID, authUser.Nickname, authUser.Email)
 
 	return c.Redirect(302, getLoginSuccessRedirectURL(authUser, returnTo))
+}
+
+// authCallback assumes the user has logged in to the IDP or Oauth service and now their browser
+// has been redirected back with the final response
+func authCallback(c buffalo.Context) error {
+	clientID, ok := c.Session().Get(ClientIDSessionKey).(string)
+	if !ok {
+		return logErrorAndRedirect(c, domain.ErrorMissingSessionClientID,
+			ClientIDSessionKey+" session entry is required to complete login")
+	}
+
+	authEmail, ok := c.Session().Get(AuthEmailSessionKey).(string)
+	if !ok {
+		return logErrorAndRedirect(c, domain.ErrorMissingSessionAuthEmail,
+			AuthEmailSessionKey+" session entry is required to complete login")
+	}
+
+	orgUUID, ok := c.Session().Get(OrgIDSessionKey).(string)
+	if ok {
+		return orgBasedAuthCallback(c, orgUUID, authEmail, clientID)
+	}
+
+	return logErrorAndRedirect(c, domain.ErrorMissingSessionOrgID,
+		OrgIDSessionKey+" session entry is required to complete login")
+
 }
 
 func verifyEmails(c buffalo.Context, originalAuthEmail, authRespEmail string) error {
