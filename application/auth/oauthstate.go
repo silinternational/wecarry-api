@@ -25,6 +25,8 @@ var defaultStore sessions.Store
 
 var keySet = false
 
+var socialAuthConfigs map[string]SocialAuthConfig
+
 func init() {
 	key := []byte(domain.Env.SessionSecret)
 	keySet = len(key) != 0
@@ -33,6 +35,8 @@ func init() {
 	cookieStore.Options.HttpOnly = true
 	store = cookieStore
 	defaultStore = store
+
+	socialAuthConfigs = GetSocialAuthConfigs()
 }
 
 // sessionName is the key used to access the session store.

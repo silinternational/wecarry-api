@@ -81,6 +81,9 @@ const ErrorMissingSessionClientID = "ErrorMissingSessionClientID"
 const ErrorMissingSessionOrgID = "ErrorMissingSessionOrgID"
 
 // actions.AuthCallback
+const ErrorMissingSessionSocialAuthType = "ErrorMissingSessionSocialAuthType"
+
+// actions.AuthCallback
 const ErrorSavingAuthCallbackSession = "ErrorSavingAuthCallbackSession"
 
 // actions.AuthCallback

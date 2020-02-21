@@ -11,6 +11,7 @@ import (
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/buffalo/render"
 
+	"github.com/silinternational/wecarry-api/auth/saml"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 )
@@ -49,6 +50,9 @@ const (
 	// http param and session key for ReturnTo
 	ReturnToParam      = "return-to"
 	ReturnToSessionKey = "ReturnTo"
+
+	// session key for Socual Auth ID
+	SocialAuthTypeSessionKey = "SocialAuthType"
 
 	// http param for token type
 	TokenTypeParam = "token-type"
@@ -454,6 +458,69 @@ func orgBasedAuthCallback(c buffalo.Context, orgUUID, authEmail, clientID string
 	}
 
 	extras := map[string]interface{}{"authEmail": authEmail}
+
+	ap, err := org.GetAuthProvider(authEmail)
+	if err != nil {
+		return logErrorAndRedirect(c, domain.ErrorLoadingAuthProvider,
+			fmt.Sprintf("error loading auth provider for '%s' ... %v", org.Name, err), extras)
+	}
+
+	authResp := ap.AuthCallback(c)
+	if authResp.Error != nil {
+		return logErrorAndRedirect(c, domain.ErrorAuthProvidersCallback, authResp.Error.Error(), extras)
+	}
+
+	returnTo := getOrSetReturnTo(c)
+
+	if authResp.AuthUser == nil {
+		return logErrorAndRedirect(c, domain.ErrorAuthProvidersCallback, "nil authResp.AuthUser", extras)
+	}
+
+	// if we have an authuser, find or create user in local db and finish login
+	var user models.User
+
+	if err := verifyEmails(c, authEmail, authResp.AuthUser.Email); err != nil {
+		c.Session().Clear()
+		extras := map[string]interface{}{"authEmail": authEmail}
+		return logErrorAndRedirect(c, domain.ErrorAuthEmailMismatch, err.Error(), extras)
+	}
+
+	// Check for an invite in the Session
+	inviteType, objectUUID := getInviteInfoFromSession(c)
+
+	// login was success, clear session so new login can be initiated if needed
+	c.Session().Clear()
+
+	if err := user.FindOrCreateFromAuthUser(org.ID, authResp.AuthUser); err != nil {
+		return logErrorAndRedirect(c, domain.ErrorWithAuthUser, err.Error())
+	}
+
+	if inviteType != "" {
+		dealWithInviteFromCallback(c, inviteType, objectUUID, user)
+	}
+
+	authUser, err := createAuthUser(clientID, user, org)
+	if err != nil {
+		return err
+	}
+
+	// set person on rollbar session
+	domain.RollbarSetPerson(c, authUser.ID, authUser.Nickname, authUser.Email)
+
+	return c.Redirect(302, getLoginSuccessRedirectURL(authUser, returnTo))
+}
+
+func socialLoginBasedAuthCallback(c buffalo.Context, authEmail, clientID string) error {
+
+	socialAuthType, ok := c.Session().Get(SocialAuthTypeSessionKey).(string)
+	if !ok {
+		return logErrorAndRedirect(c, domain.ErrorMissingSessionSocialAuthType,
+			SocialAuthTypeSessionKey+" session entry is required to complete login")
+	}
+
+	extras := map[string]interface{}{"authEmail": authEmail}
+
+	var org models.Organization
 
 	ap, err := org.GetAuthProvider(authEmail)
 	if err != nil {
