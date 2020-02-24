@@ -100,7 +100,7 @@ func createUserFixtures(tx *pop.Connection, n int) UserFixtures {
 		}
 
 		accessTokenFixtures[i].UserID = users[i].ID
-		accessTokenFixtures[i].UserOrganizationID = userOrgs[i].ID
+		accessTokenFixtures[i].UserOrganizationID = nulls.NewInt(userOrgs[i].ID)
 		accessTokenFixtures[i].AccessToken = HashClientIdAccessToken(users[i].Nickname)
 		accessTokenFixtures[i].ExpiresAt = time.Now().Add(time.Minute * 60)
 		mustCreate(tx, &accessTokenFixtures[i])

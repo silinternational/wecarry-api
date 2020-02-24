@@ -165,25 +165,25 @@ func fixturesForOrganizationCreateRemoveUpdate(as *ActionSuite, t *testing.T) Or
 	accessTokenFixtures := []models.UserAccessToken{
 		{
 			UserID:             users[SalesAdmin].ID,
-			UserOrganizationID: userOrgs[SalesAdmin].ID,
+			UserOrganizationID: nulls.NewInt(userOrgs[SalesAdmin].ID),
 			AccessToken:        models.HashClientIdAccessToken(users[SalesAdmin].Nickname),
 			ExpiresAt:          time.Now().Add(time.Minute * 60),
 		},
 		{
 			UserID:             users[OrgMember].ID,
-			UserOrganizationID: userOrgs[OrgMember].ID,
+			UserOrganizationID: nulls.NewInt(userOrgs[OrgMember].ID),
 			AccessToken:        models.HashClientIdAccessToken(users[OrgMember].Nickname),
 			ExpiresAt:          time.Now().Add(time.Minute * 60),
 		},
 		{
 			UserID:             users[OrgAdmin].ID,
-			UserOrganizationID: userOrgs[OrgAdmin].ID,
+			UserOrganizationID: nulls.NewInt(userOrgs[OrgAdmin].ID),
 			AccessToken:        models.HashClientIdAccessToken(users[OrgAdmin].Nickname),
 			ExpiresAt:          time.Now().Add(time.Minute * 60),
 		},
 		{
 			UserID:             users[OtherOrgAdmin].ID,
-			UserOrganizationID: userOrgs[OtherOrgAdmin].ID,
+			UserOrganizationID: nulls.NewInt(userOrgs[OtherOrgAdmin].ID),
 			AccessToken:        models.HashClientIdAccessToken(users[OtherOrgAdmin].Nickname),
 			ExpiresAt:          time.Now().Add(time.Minute * 60),
 		},
@@ -226,7 +226,7 @@ func fixturesForOrganizationDomain(as *ActionSuite) OrganizationFixtures {
 		createFixture(as, &userOrgs[i])
 
 		accessTokenFixtures[i].UserID = users[i].ID
-		accessTokenFixtures[i].UserOrganizationID = userOrgs[i].ID
+		accessTokenFixtures[i].UserOrganizationID = nulls.NewInt(userOrgs[i].ID)
 		accessTokenFixtures[i].AccessToken = models.HashClientIdAccessToken(users[i].Nickname)
 		accessTokenFixtures[i].ExpiresAt = time.Now().Add(time.Minute * 60)
 		createFixture(as, &accessTokenFixtures[i])
