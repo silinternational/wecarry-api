@@ -35,21 +35,17 @@ const ProviderName = "facebook"
 // New creates a new Facebook provider, and sets up important connection details.
 // You should always call `facebook.New` to get a new Provider. Never try to create
 // one manually.
-func New(jsonConfig json.RawMessage) (*Provider, error) {
-
-	fbKey := domain.Env.FacebookKey
-	fbSecret := domain.Env.FacebookSecret
-
-	if fbKey == "" || fbSecret == "" {
-		err := errors.New("missing required environment variable for Facebook Auth Provider")
+func New(config struct{ Key, Secret string }) (*Provider, error) {
+	if config.Key == "" || config.Secret == "" {
+		err := errors.New("missing required config value for Facebook Auth Provider")
 		return &Provider{}, err
 	}
 
 	scopes := []string{"public_profile", "email"}
 
 	p := &Provider{
-		ClientKey:    fbKey,
-		Secret:       fbSecret,
+		ClientKey:    config.Key,
+		Secret:       config.Secret,
 		CallbackURL:  domain.Env.AuthCallbackURL,
 		providerName: ProviderName,
 	}
