@@ -133,9 +133,32 @@ func (u *User) CreateAccessToken(org Organization, clientID string) (string, int
 
 	userAccessToken := &UserAccessToken{
 		UserID:             u.ID,
-		UserOrganizationID: userOrg.ID,
+		UserOrganizationID: nulls.NewInt(userOrg.ID),
 		AccessToken:        hash,
 		ExpiresAt:          expireAt,
+	}
+
+	if err := userAccessToken.Create(); err != nil {
+		return "", 0, err
+	}
+
+	return token, expireAt.UTC().Unix(), nil
+}
+
+// CreateAccessToken - Create and store new UserAccessToken
+func (u *User) CreateOrglessAccessToken(clientID string) (string, int64, error) {
+	if clientID == "" {
+		return "", 0, fmt.Errorf("cannot create token with empty clientID for user %s", u.Nickname)
+	}
+
+	token, _ := getRandomToken()
+	hash := HashClientIdAccessToken(clientID + token)
+	expireAt := createAccessTokenExpiry()
+
+	userAccessToken := &UserAccessToken{
+		UserID:      u.ID,
+		AccessToken: hash,
+		ExpiresAt:   expireAt,
 	}
 
 	if err := userAccessToken.Create(); err != nil {
@@ -234,6 +257,52 @@ func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
 	// if err != nil {
 	// 	return fmt.Errorf("unable to reload user after update: %s", err)
 	// }
+
+	return nil
+}
+
+func (u *User) FindOrCreateFromOrglessAuthUser(authUser *auth.User) error {
+
+	if err := DB.Where("email = ?", authUser.Email).First(u); err != nil {
+		if domain.IsOtherThanNoRows(err) {
+			return errors.WithStack(err)
+		}
+	}
+
+	newUser := true
+	if u.ID != 0 {
+		newUser = false
+	}
+
+	// update attributes from authUser
+	u.FirstName = authUser.FirstName
+	u.LastName = authUser.LastName
+	u.Email = authUser.Email
+
+	if authUser.PhotoURL != "" {
+		u.AuthPhotoURL = nulls.NewString(authUser.PhotoURL)
+	}
+
+	// if new user they will need a unique Nickname
+	if newUser {
+		u.Nickname = authUser.Nickname
+		if err := u.uniquifyNickname(); err != nil {
+			return err
+		}
+	}
+
+	if err := u.Save(); err != nil {
+		return fmt.Errorf("unable to save user record: %s", err.Error())
+	}
+
+	if newUser {
+		e := events.Event{
+			Kind:    domain.EventApiUserCreated,
+			Message: "Nickname: " + u.Nickname + "  UUID: " + u.UUID.String(),
+			Payload: events.Payload{"user": u},
+		}
+		emitEvent(e)
+	}
 
 	return nil
 }
