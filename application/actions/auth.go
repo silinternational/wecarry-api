@@ -31,8 +31,8 @@ const (
 	ExpiresUTCParam = "expires-utc"
 
 	// http params for the Invite type and code
-	InviteCode        = "code"
-	InviteTypeMeeting = "meeting"
+	InviteCodeParam        = "code"
+	InviteTypeMeetingParam = "meeting"
 
 	// session keys for using invites for authentication
 	InviteTypeSessionKey       = "InviteType"
@@ -103,7 +103,7 @@ func getOrSetReturnTo(c buffalo.Context) string {
 
 // Gets info about an invite object (e.g. a meeting) based on an invite `code`
 func getAuthInviteResponse(c buffalo.Context) (authInviteResponse, error) {
-	inviteCode := c.Param(InviteCode)
+	inviteCode := c.Param(InviteCodeParam)
 
 	if inviteCode == "" {
 		return authInviteResponse{}, authRequestError(c, http.StatusBadRequest, domain.ErrorInvalidInviteCode,
@@ -118,11 +118,11 @@ func getAuthInviteResponse(c buffalo.Context) (authInviteResponse, error) {
 			"error validating Invite Code: "+err.Error(), extras)
 	}
 
-	c.Session().Set(InviteTypeSessionKey, InviteTypeMeeting)
+	c.Session().Set(InviteTypeSessionKey, InviteTypeMeetingParam)
 	c.Session().Set(InviteObjectUUIDSessionKey, meeting.UUID.String())
 
 	resp := authInviteResponse{
-		Type: InviteTypeMeeting,
+		Type: InviteTypeMeetingParam,
 		Name: meeting.Name,
 	}
 	if meeting.ImageFileID.Valid {
@@ -242,7 +242,7 @@ func inviteAuthRequest(c buffalo.Context, authEmail, inviteType string) error {
 	}
 
 	switch inviteType {
-	case InviteTypeMeeting:
+	case InviteTypeMeetingParam:
 		return meetingAuthRequest(c, authEmail, extras)
 	default:
 		return authRequestError(c, http.StatusBadRequest, domain.ErrorInvalidInviteType,
@@ -388,7 +388,7 @@ func ensureMeetingParticipant(c buffalo.Context, meetingUUID string, user models
 		return
 	}
 
-	if err := participant.CreateForInvite(invite, user.ID); err != nil {
+	if err := participant.CreateFromInvite(invite, user.ID); err != nil {
 		domain.Error(c, "error creating a MeetingParticipant: "+err.Error())
 	}
 }
@@ -397,7 +397,7 @@ func ensureMeetingParticipant(c buffalo.Context, meetingUUID string, user models
 func dealWithInviteFromCallback(c buffalo.Context, inviteType, objectUUID string, user models.User) {
 
 	switch inviteType {
-	case InviteTypeMeeting:
+	case InviteTypeMeetingParam:
 		ensureMeetingParticipant(c, objectUUID, user)
 	default:
 		domain.Error(c, "incorrect meeting invite type in session: "+inviteType)
