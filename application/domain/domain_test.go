@@ -377,6 +377,7 @@ func (ts *TestSuite) TestEmailDomain() {
 		{name: "empty string", email: "", want: ""},
 		{name: "domain only", email: "example.org", want: "example.org"},
 		{name: "full email", email: "user@example.org", want: "example.org"},
+		{name: "full email, mixed case", email: "User@Example.org", want: "example.org"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
