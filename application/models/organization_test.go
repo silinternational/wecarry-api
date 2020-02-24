@@ -649,9 +649,16 @@ func (ms *ModelSuite) TestOrganization_AttachLogo() {
 
 func (ms *ModelSuite) TestOrganization_GetAuthProvider() {
 
-	domain.Env.AzureADTenant = "TestADTenant"
-	domain.Env.AzureADKey = "TestADKey"
-	domain.Env.AzureADSecret = "testADSecret"
+	adTenantID := "TestADTenant"
+	adSecret := "TestADKey"
+	adApplicationID := "testADSecret"
+
+	adAuthConfig :=
+		`{
+    "TenantID": "` + adTenantID + `",
+    "ClientSecret": "` + adSecret + `",
+    "ApplicationID": "` + adApplicationID + `"
+}`
 
 	domain.Env.GoogleKey = "TestGoogleKey"
 	domain.Env.GoogleSecret = "testGoogleSecret"
@@ -660,7 +667,7 @@ func (ms *ModelSuite) TestOrganization_GetAuthProvider() {
 	org := Organization{
 		Name:       "testorg1",
 		AuthType:   AuthTypeAzureAD,
-		AuthConfig: "{}",
+		AuthConfig: adAuthConfig,
 		UUID:       uid,
 	}
 	err := org.Save()
