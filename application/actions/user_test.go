@@ -54,7 +54,7 @@ const allUserFields = `id email nickname createdAt updatedAt adminRole avatarURL
 	location {description country latitude longitude}
 	organizations {id}
 	posts (role: CREATEDBY) {id}
-	meetings {id}
+	meetingsAsParticipant {id}
 	`
 
 // TestUserQuery tests the User GraphQL query
