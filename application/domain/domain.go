@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -8,11 +10,13 @@ import (
 	"os"
 	"reflect"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
 	"unicode"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/envy"
 	mwi18n "github.com/gobuffalo/mw-i18n"
@@ -630,4 +634,54 @@ func (v *StringIsVisible) IsValid(errors *validate.Errors) {
 	}
 
 	errors.Add(validators.GenerateKey(v.Name), fmt.Sprintf("%s must have a visible character.", v.Name))
+}
+
+// ReportError logs an error with details, and returns a user-friendly, translated error identified by translation key
+// string `errID`.
+func ReportError(ctx context.Context, err error, errID string, extras ...map[string]interface{}) error {
+	c := GetBuffaloContextFromGqlContext(ctx)
+	allExtras := map[string]interface{}{
+		"query":    graphql.GetRequestContext(ctx).RawQuery,
+		"function": GetFunctionName(2),
+	}
+	for _, e := range extras {
+		for key, val := range e {
+			allExtras[key] = val
+		}
+	}
+
+	errStr := errID
+	if err != nil {
+		errStr = err.Error()
+	}
+	Error(c, errStr, allExtras)
+
+	if T == nil {
+		return errors.New(errID)
+	}
+	return errors.New(T.Translate(c, errID))
+}
+
+func GetBuffaloContextFromGqlContext(c context.Context) buffalo.Context {
+	bc, ok := c.Value("BuffaloContext").(buffalo.Context)
+	if ok {
+		return bc
+	}
+	return EmptyContext{}
+}
+
+type EmptyContext struct {
+	buffalo.Context
+}
+
+// GetFunctionName provides the filename, line number, and function name of the caller, skipping the top `skip`
+// functions on the stack.
+func GetFunctionName(skip int) string {
+	pc, file, line, ok := runtime.Caller(skip)
+	if !ok {
+		return "?"
+	}
+
+	fn := runtime.FuncForPC(pc)
+	return fmt.Sprintf("%s:%d %s", file, line, fn.Name())
 }

@@ -29,7 +29,7 @@ func (r *messageResolver) Sender(ctx context.Context, obj *models.Message) (*Pub
 	}
 	user, err := obj.GetSender()
 	if err != nil {
-		return nil, reportError(ctx, err, "GetMessageSender")
+		return nil, domain.ReportError(ctx, err, "GetMessageSender")
 	}
 
 	return getPublicProfile(ctx, user), nil
@@ -43,7 +43,7 @@ func (r *messageResolver) Thread(ctx context.Context, obj *models.Message) (*mod
 
 	thread, err := obj.GetThread()
 	if err != nil {
-		return nil, reportError(ctx, err, "GetMessageThread")
+		return nil, domain.ReportError(ctx, err, "GetMessageThread")
 	}
 
 	return thread, nil
@@ -61,7 +61,7 @@ func (r *queryResolver) Message(ctx context.Context, id *string) (*models.Messag
 		extras := map[string]interface{}{
 			"user": currentUser.UUID.String(),
 		}
-		return nil, reportError(ctx, err, "GetMessage", extras)
+		return nil, domain.ReportError(ctx, err, "GetMessage", extras)
 	}
 
 	return &message, nil
@@ -103,11 +103,11 @@ func (r *mutationResolver) CreateMessage(ctx context.Context, input CreateMessag
 	}
 	message, err := convertGqlCreateMessageInputToDBMessage(input, cUser)
 	if err != nil {
-		return nil, reportError(ctx, err, "CreateMessage.ParseInput", extras)
+		return nil, domain.ReportError(ctx, err, "CreateMessage.ParseInput", extras)
 	}
 
 	if err2 := message.Create(); err2 != nil {
-		return nil, reportError(ctx, err2, "CreateMessage", extras)
+		return nil, domain.ReportError(ctx, err2, "CreateMessage", extras)
 	}
 
 	return &message, nil
