@@ -528,9 +528,7 @@ func authCallback(c buffalo.Context) error {
 		return orgBasedAuthCallback(c, orgUUID, authEmail, clientID)
 	}
 
-	return logErrorAndRedirect(c, domain.ErrorMissingSessionOrgID,
-		OrgIDSessionKey+" session entry is required to complete login")
-
+	return socialLoginBasedAuthCallback(c, authEmail, clientID)
 }
 
 func verifyEmails(c buffalo.Context, originalAuthEmail, authRespEmail string) error {

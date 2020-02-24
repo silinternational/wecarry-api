@@ -27,7 +27,11 @@ const (
 	envTypeSecret = "secret"
 )
 
+// SocialAuthConfig holds the Key and Secret for a social auth provider
 type SocialAuthConfig struct{ Key, Secret string }
+
+// Don't Modify outside of the code in this file that sets it.
+var socialAuthConfigs = map[string]SocialAuthConfig{}
 
 // Get the necessary env vars to create the associated SocialAuthConfig
 func getConfig(authType string, envVars map[string]string) SocialAuthConfig {
@@ -104,7 +108,11 @@ func addTwitterConfig(configs map[string]SocialAuthConfig) {
 // getSocialAuthConfigs returns a map of the enabled Social Auth Provider configs
 func getSocialAuthConfigs() map[string]SocialAuthConfig {
 
-	configs := map[string]SocialAuthConfig{}
+	configs := socialAuthConfigs
+	// Don't keep adding the social auth providers after we've already done it once.
+	if len(configs) > 0 {
+		return configs
+	}
 
 	// Maps act as pass-by-reference, so configs gets modified in place
 	addFacebookConfig(configs)

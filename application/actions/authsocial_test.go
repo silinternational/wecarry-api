@@ -5,7 +5,9 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
+	"github.com/silinternational/wecarry-api/auth/facebook"
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/internal/test"
 )
 
 // TestSuite establishes a test suite for domain tests
@@ -84,4 +86,28 @@ func (ts *TestSuite) Test_GetSocialAuthConfigs() {
 		// Others won't be included because of missing values
 	}
 	ts.Equal(want, got, "incorrect configs")
+}
+
+func (ts *TestSuite) Test_GetSocialAuthProvider() {
+	domain.Env.FacebookKey = "testFBKey"
+	domain.Env.FacebookSecret = "testFBSecret"
+
+	got, err := getSocialAuthProvider(AuthTypeFacebook)
+	ts.NoError(err, "unexpected error getting Facebook provider")
+	ts.IsType(&facebook.Provider{}, got, "auth provider not expected facebook type")
+}
+
+func (as *ActionSuite) Test_CreateOrglessAuthUser() {
+
+	uf := test.CreateUserFixtures(as.DB, 2)
+	user := uf.Users[0]
+
+	resultsAuthUser, err := createOrglessAuthUser("12345678", user)
+	as.NoError(err)
+
+	got := resultsAuthUser
+	as.Equal(user.FirstName+" "+user.LastName, got.Name, "incorrect name")
+	as.Equal(user.Nickname, got.Nickname, "incorrect nickname")
+	as.Equal(user.Email, got.Email, "incorrect email")
+	as.True(got.IsNew, "incorrect IsNew")
 }
