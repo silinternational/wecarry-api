@@ -1571,7 +1571,7 @@ func (ms *ModelSuite) TestUser_isMeetingOrganizer() {
 	}
 }
 
-func (ms *ModelSuite) TestUser_Meetings() {
+func (ms *ModelSuite) TestUser_MeetingsAsParticipant() {
 	f := createMeetingFixtures(ms.DB, 2)
 
 	tests := []struct {
