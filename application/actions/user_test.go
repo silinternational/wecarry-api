@@ -19,32 +19,43 @@ type UserResponse struct {
 
 // UserResponse is for marshalling User query and mutation responses
 type User struct {
-	ID            string               `json:"id"`
-	Email         string               `json:"email"`
-	Nickname      string               `json:"nickname"`
-	CreatedAt     string               `json:"createdAt"`
-	UpdatedAt     string               `json:"updatedAt"`
-	AdminRole     models.UserAdminRole `json:"adminRole"`
-	Organizations []struct {
-		ID string `json:"id"`
-	} `json:"organizations"`
-	Posts []struct {
-		ID string `json:"id"`
-	}
+	ID          string               `json:"id"`
+	Email       string               `json:"email"`
+	Nickname    string               `json:"nickname"`
+	CreatedAt   string               `json:"createdAt"`
+	UpdatedAt   string               `json:"updatedAt"`
+	AdminRole   models.UserAdminRole `json:"adminRole"`
+	AvatarURL   string               `json:"avatarURL"`
+	PhotoID     string               `json:"photoID"`
 	Preferences struct {
 		Language   *string `json:"language"`
 		TimeZone   *string `json:"timeZone"`
 		WeightUnit *string `json:"weightUnit"`
 	}
-	AvatarURL string `json:"avatarURL"`
-	PhotoID   string `json:"photoID"`
-	Location  *struct {
+	Location *struct {
 		Description string  `json:"description"`
 		Country     string  `json:"country"`
 		Lat         float64 `json:"latitude"`
 		Long        float64 `json:"longitude"`
 	} `json:"location"`
+	Organizations []struct {
+		ID string `json:"id"`
+	} `json:"organizations"`
+	Posts []struct {
+		ID string `json:"id"`
+	} `json:"posts"`
+	Meetings []struct {
+		ID string `json:"id"`
+	} `json:"meetings"`
 }
+
+const allUserFields = `id email nickname createdAt updatedAt adminRole avatarURL photoID
+	preferences {language timeZone weightUnit}
+	location {description country latitude longitude}
+	organizations {id}
+	posts (role: CREATEDBY) {id}
+	meetings {id}
+	`
 
 // TestUserQuery tests the User GraphQL query
 func (as *ActionSuite) TestUserQuery() {
@@ -62,13 +73,10 @@ func (as *ActionSuite) TestUserQuery() {
 
 	var resp UserResponse
 
-	allFields := `{ id email nickname adminRole avatarURL photoID preferences {language timeZone weightUnit}
-		posts (role: CREATEDBY) {id} organizations {id}
-		location {description country latitude longitude} }`
 	testCases := []testCase{
 		{
 			Name:     "all fields",
-			Payload:  `{user(id: "` + f.Users[1].UUID.String() + `")` + allFields + "}",
+			Payload:  `{user(id: "` + f.Users[1].UUID.String() + `") {` + allUserFields + "}}",
 			TestUser: f.Users[0],
 			Test: func(t *testing.T) {
 				if err := as.DB.Load(&(f.Users[1]), "PhotoFile"); err != nil {
@@ -81,14 +89,6 @@ func (as *ActionSuite) TestUserQuery() {
 				as.Equal(f.Users[1].PhotoFile.URL, resp.User.AvatarURL, "incorrect AvatarURL")
 				as.Equal(f.Users[1].PhotoFile.UUID.String(), resp.User.PhotoID, "incorrect PhotoID")
 				as.Regexp("^https?", resp.User.AvatarURL, "invalid AvatarURL")
-				as.Equal(1, len(resp.User.Posts), "wrong number of posts")
-				as.Equal(f.Posts[0].UUID.String(), resp.User.Posts[0].ID, "incorrect Post ID")
-				as.Equal(1, len(resp.User.Organizations), "wrong number of Organizations")
-				as.Equal(f.Organization.UUID.String(), resp.User.Organizations[0].ID, "incorrect Organization ID")
-				as.Equal(f.Locations[1].Description, resp.User.Location.Description, "incorrect location")
-				as.Equal(f.Locations[1].Country, resp.User.Location.Country, "incorrect country")
-				as.InDelta(f.Locations[1].Latitude.Float64, resp.User.Location.Lat, 0.0001, "incorrect latitude")
-				as.InDelta(f.Locations[1].Longitude.Float64, resp.User.Location.Long, 0.0001, "incorrect longitude")
 
 				as.Equal(strings.ToUpper(f.UserPreferences[0].Value), *resp.User.Preferences.Language,
 					"incorrect preference - language")
@@ -96,11 +96,25 @@ func (as *ActionSuite) TestUserQuery() {
 					"incorrect preference - time zone")
 				as.Equal(strings.ToUpper(f.UserPreferences[2].Value), *resp.User.Preferences.WeightUnit,
 					"incorrect preference - weight unit")
+
+				as.Equal(f.Locations[1].Description, resp.User.Location.Description, "incorrect location")
+				as.Equal(f.Locations[1].Country, resp.User.Location.Country, "incorrect country")
+				as.InDelta(f.Locations[1].Latitude.Float64, resp.User.Location.Lat, 0.0001, "incorrect latitude")
+				as.InDelta(f.Locations[1].Longitude.Float64, resp.User.Location.Long, 0.0001, "incorrect longitude")
+
+				as.Equal(1, len(resp.User.Organizations), "wrong number of Organizations")
+				as.Equal(f.Organization.UUID.String(), resp.User.Organizations[0].ID, "incorrect Organization ID")
+
+				as.Equal(1, len(resp.User.Posts), "wrong number of posts")
+				as.Equal(f.Posts[0].UUID.String(), resp.User.Posts[0].ID, "incorrect Post ID")
+
+				as.Equal(1, len(resp.User.Meetings), "wrong number of meetings")
+				as.Equal(f.Meetings[0].UUID.String(), resp.User.Meetings[0].ID, "incorrect Meeting ID")
 			},
 		},
 		{
 			Name:     "current user",
-			Payload:  `{user ` + allFields + "}",
+			Payload:  `{user {` + allUserFields + "}}",
 			TestUser: f.Users[1],
 			Test: func(t *testing.T) {
 				as.Equal(f.Users[1].UUID.String(), resp.User.ID, "incorrect ID")
@@ -108,7 +122,7 @@ func (as *ActionSuite) TestUserQuery() {
 		},
 		{
 			Name:        "not allowed",
-			Payload:     `{user(id: "` + f.Users[0].UUID.String() + `")` + allFields + "}",
+			Payload:     `{user(id: "` + f.Users[0].UUID.String() + `"){` + allUserFields + "}}",
 			TestUser:    f.Users[1],
 			Test:        func(t *testing.T) {},
 			ExpectError: true,
@@ -196,11 +210,9 @@ func (as *ActionSuite) TestUpdateUser() {
 
 	preferences := fmt.Sprintf(`{weightUnit: %s}`, strings.ToUpper(domain.UserPreferenceWeightUnitKGs))
 
-	requestedFields := `{id nickname avatarURL preferences {language, timeZone, weightUnit} location {description, country}}`
-
 	update := fmt.Sprintf(`mutation { user: updateUser(input:{id: "%s", nickname: "%s", location: %s,
-			preferences: %s, photoID: "%s"}) %s }`,
-		f.Users[1].UUID.String(), newNickname, location, preferences, f.Files[0].UUID.String(), requestedFields)
+			preferences: %s, photoID: "%s"}) {%s} }`,
+		f.Users[1].UUID.String(), newNickname, location, preferences, f.Files[0].UUID.String(), allUserFields)
 
 	testCases := []testCase{
 		{

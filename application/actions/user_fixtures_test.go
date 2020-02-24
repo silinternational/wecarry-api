@@ -1,6 +1,8 @@
 package actions
 
 import (
+	"time"
+
 	"github.com/gobuffalo/nulls"
 	"github.com/silinternational/wecarry-api/aws"
 	"github.com/silinternational/wecarry-api/domain"
@@ -16,6 +18,7 @@ type UserQueryFixtures struct {
 	models.Locations
 	models.UserPreferences
 	models.Files
+	models.Meetings
 }
 
 func fixturesForUserQuery(as *ActionSuite) UserQueryFixtures {
@@ -51,8 +54,9 @@ func fixturesForUserQuery(as *ActionSuite) UserQueryFixtures {
 		createFixture(as, &userPreferences[i])
 	}
 
-	postDestination := models.Location{}
-	createFixture(as, &postDestination)
+	loc := test.CreateLocationFixtures(as.DB, 2)
+	postDestination := loc[0]
+	meetingLocation := loc[1]
 
 	posts := models.Posts{
 		{
@@ -75,6 +79,20 @@ func fixturesForUserQuery(as *ActionSuite) UserQueryFixtures {
 	_, err := users[1].AttachPhoto(f.UUID.String())
 	as.NoError(err, "unexpected error attaching photo to user")
 
+	meetings := models.Meetings{
+		{
+			CreatedByID: users[0].ID,
+			Name:        "Meeting Name",
+			LocationID:  meetingLocation.ID,
+			StartDate:   time.Now().Add(domain.DurationWeek * 4),
+			EndDate:     time.Now().Add(domain.DurationWeek * 5),
+		},
+	}
+	test.MustCreate(as.DB, &meetings[0])
+
+	mp := models.MeetingParticipant{MeetingID: meetings[0].ID, UserID: users[1].ID}
+	test.MustCreate(as.DB, &mp)
+
 	return UserQueryFixtures{
 		Organization:    org,
 		Users:           users,
@@ -82,5 +100,6 @@ func fixturesForUserQuery(as *ActionSuite) UserQueryFixtures {
 		Posts:           posts,
 		Locations:       uf.Locations,
 		Files:           models.Files{f},
+		Meetings:        meetings,
 	}
 }

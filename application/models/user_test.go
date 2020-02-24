@@ -1570,3 +1570,66 @@ func (ms *ModelSuite) TestUser_isMeetingOrganizer() {
 		})
 	}
 }
+
+func (ms *ModelSuite) TestUser_Meetings() {
+	f := createMeetingFixtures(ms.DB, 2)
+
+	tests := []struct {
+		name    string
+		user    User
+		want    []int
+		wantErr string
+	}{
+		{
+			name: "creator",
+			user: f.Users[0],
+			want: []int{},
+		},
+		{
+			name: "organizer",
+			user: f.Users[1],
+			want: []int{f.Meetings[0].ID},
+		},
+		{
+			name: "invited participant",
+			user: f.Users[2],
+			want: []int{f.Meetings[0].ID},
+		},
+		{
+			name: "self-joined participant",
+			user: f.Users[3],
+			want: []int{f.Meetings[0].ID},
+		},
+		{
+			name: "invalid",
+			user: User{},
+			want: []int{},
+		},
+	}
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			// setup
+			ctx := &testBuffaloContext{
+				params: map[string]interface{}{},
+			}
+			ctx.Set("current_user", tt.user)
+
+			// exercise
+			got, err := tt.user.Meetings(ctx)
+
+			// verify
+			if tt.wantErr != "" {
+				ms.Error(err, `expected error "%s" but got none`, tt.wantErr)
+				ms.Contains(err.Error(), tt.wantErr, "unexpected error message")
+				return
+			}
+			ids := make([]int, len(got))
+			for i := range got {
+				ids[i] = got[i].ID
+			}
+			ms.Equal(tt.want, ids)
+
+			// teardown
+		})
+	}
+}
