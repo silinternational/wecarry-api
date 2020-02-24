@@ -47,9 +47,9 @@ that includes an auth_type of `azureadv2` and an auth_config like the following 
 
 ```
 {
-    "TenantID": "edf3cc03-7edf-4299-871a-940bc318789c", 
-    "ClientSecret": "XO;a?UV.6rEC(d+sDhZ6:8*7%GqjVuw?", 
-    "ApplicationID": "4a01326d-5130-4326-92f6-fffe9f3dfc6d"
+    "TenantID": "12345678-abcd-1234-871a-940bc318789c", 
+    "ClientSecret": "nice and crazy complicated secret :-)", 
+    "ApplicationID": "12345678-abcd-1234-92f6-fffe9f3dfc6d"
 }
 ```
 
