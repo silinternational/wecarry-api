@@ -500,7 +500,7 @@ func authCallback(c buffalo.Context) error {
 }
 
 func verifyEmails(c buffalo.Context, originalAuthEmail, authRespEmail string) error {
-	if strings.ToLower(originalAuthEmail) == strings.ToLower(authRespEmail) {
+	if originalAuthEmail == authRespEmail {
 		return nil
 	}
 
