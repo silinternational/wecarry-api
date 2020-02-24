@@ -53,10 +53,6 @@ that includes an auth_type of `azureadv2` and an auth_config like the following 
 }
 ```
 
-The three environment variables `AZURE_AD_TENANT`, `AZURE_AD_KEY` and `AZURE_AD_SECRET` 
-will need to be set for the appropriate Azure AD oauth account and application. 
-(see https://docs.nylas.com/docs/o365-oauth-setup)
-
 For local development, if you are using `http`, then you will need to 
 use `http:localhost` as the host for the WeCarry API, due to AzureAD's policies.
 (This affects the `AUTH_CALLBACK_URL` in the `.env` file and the `buffalo.environment.HOST` value
