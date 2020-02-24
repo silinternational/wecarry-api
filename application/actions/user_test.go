@@ -44,9 +44,9 @@ type User struct {
 	Posts []struct {
 		ID string `json:"id"`
 	} `json:"posts"`
-	Meetings []struct {
+	MeetingsAsParticipant []struct {
 		ID string `json:"id"`
-	} `json:"meetings"`
+	} `json:"meetingsAsParticipant"`
 }
 
 const allUserFields = `id email nickname createdAt updatedAt adminRole avatarURL photoID
@@ -108,8 +108,8 @@ func (as *ActionSuite) TestUserQuery() {
 				as.Equal(1, len(resp.User.Posts), "wrong number of posts")
 				as.Equal(f.Posts[0].UUID.String(), resp.User.Posts[0].ID, "incorrect Post ID")
 
-				as.Equal(1, len(resp.User.Meetings), "wrong number of meetings")
-				as.Equal(f.Meetings[0].UUID.String(), resp.User.Meetings[0].ID, "incorrect Meeting ID")
+				as.Equal(1, len(resp.User.MeetingsAsParticipant), "wrong number of meetings")
+				as.Equal(f.Meetings[0].UUID.String(), resp.User.MeetingsAsParticipant[0].ID, "incorrect Meeting ID")
 			},
 		},
 		{

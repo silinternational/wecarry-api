@@ -1615,7 +1615,7 @@ func (ms *ModelSuite) TestUser_Meetings() {
 			ctx.Set("current_user", tt.user)
 
 			// exercise
-			got, err := tt.user.Meetings(ctx)
+			got, err := tt.user.MeetingsAsParticipant(ctx)
 
 			// verify
 			if tt.wantErr != "" {

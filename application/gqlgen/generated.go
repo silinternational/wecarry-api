@@ -223,20 +223,20 @@ type ComplexityRoot struct {
 	}
 
 	User struct {
-		AdminRole          func(childComplexity int) int
-		AvatarURL          func(childComplexity int) int
-		CreatedAt          func(childComplexity int) int
-		Email              func(childComplexity int) int
-		ID                 func(childComplexity int) int
-		Location           func(childComplexity int) int
-		Meetings           func(childComplexity int) int
-		Nickname           func(childComplexity int) int
-		Organizations      func(childComplexity int) int
-		PhotoID            func(childComplexity int) int
-		Posts              func(childComplexity int, role PostRole) int
-		Preferences        func(childComplexity int) int
-		UnreadMessageCount func(childComplexity int) int
-		UpdatedAt          func(childComplexity int) int
+		AdminRole             func(childComplexity int) int
+		AvatarURL             func(childComplexity int) int
+		CreatedAt             func(childComplexity int) int
+		Email                 func(childComplexity int) int
+		ID                    func(childComplexity int) int
+		Location              func(childComplexity int) int
+		MeetingsAsParticipant func(childComplexity int) int
+		Nickname              func(childComplexity int) int
+		Organizations         func(childComplexity int) int
+		PhotoID               func(childComplexity int) int
+		Posts                 func(childComplexity int, role PostRole) int
+		Preferences           func(childComplexity int) int
+		UnreadMessageCount    func(childComplexity int) int
+		UpdatedAt             func(childComplexity int) int
 	}
 
 	UserPreferences struct {
@@ -1499,12 +1499,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.User.Location(childComplexity), true
 
-	case "User.meetings":
-		if e.complexity.User.Meetings == nil {
+	case "User.meetingsAsParticipant":
+		if e.complexity.User.MeetingsAsParticipant == nil {
 			break
 		}
 
-		return e.complexity.User.Meetings(childComplexity), true
+		return e.complexity.User.MeetingsAsParticipant(childComplexity), true
 
 	case "User.nickname":
 		if e.complexity.User.Nickname == nil {
@@ -1852,7 +1852,7 @@ type User {
     organizations: [Organization!]!
     posts(role: PostRole!): [Post!]!
     "meetings in which the user is a participant"
-    meetings: [Meeting!]!
+    meetingsAsParticipant: [Meeting!]!
 }
 
 type UserPreferences {
@@ -8220,7 +8220,7 @@ func (ec *executionContext) _User_posts(ctx context.Context, field graphql.Colle
 	return ec.marshalNPost2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _User_meetings(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_meetingsAsParticipant(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -8239,7 +8239,7 @@ func (ec *executionContext) _User_meetings(ctx context.Context, field graphql.Co
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Meetings(ctx)
+		return obj.MeetingsAsParticipant(ctx)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12087,7 +12087,7 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 				}
 				return res
 			})
-		case "meetings":
+		case "meetingsAsParticipant":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
 				defer func() {
@@ -12095,7 +12095,7 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._User_meetings(ctx, field, obj)
+				res = ec._User_meetingsAsParticipant(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}

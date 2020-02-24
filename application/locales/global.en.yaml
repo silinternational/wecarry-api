@@ -197,7 +197,7 @@
   translation: We had a problem finding a list of your conversations.
 
 # User
-- id: User.Meetings
+- id: User.MeetingsAsParticipant
   translation: We had a problem getting a list of meetings for you.
 - id: GetUserOrganizations
   translation: We had a problem finding the list of organizations for the user profile.

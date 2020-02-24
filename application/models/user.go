@@ -790,15 +790,15 @@ func (u *User) isSuperAdmin() bool {
 	return u.AdminRole == UserAdminRoleSuperAdmin
 }
 
-// Meetings returns all meetings in which the user is a participant
-func (u *User) Meetings(ctx context.Context) ([]Meeting, error) {
+// MeetingsAsParticipant returns all meetings in which the user is a participant
+func (u *User) MeetingsAsParticipant(ctx context.Context) ([]Meeting, error) {
 	m := Meetings{}
 	if err := DB.
 		Where("meeting_participants.user_id=?", u.ID).
 		Join("meeting_participants", "meeting_participants.meeting_id=meetings.id").
 		All(&m); err != nil {
 
-		return m, domain.ReportError(ctx, err, "User.Meetings", map[string]interface{}{"user": u.UUID})
+		return m, domain.ReportError(ctx, err, "User.MeetingsAsParticipant", map[string]interface{}{"user": u.UUID})
 	}
 	return m, nil
 }

@@ -186,7 +186,7 @@ type User {
     organizations: [Organization!]!
     posts(role: PostRole!): [Post!]!
     "meetings in which the user is a participant"
-    meetings: [Meeting!]!
+    meetingsAsParticipant: [Meeting!]!
 }
 
 type UserPreferences {
