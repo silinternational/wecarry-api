@@ -23,10 +23,6 @@ func (r *Resolver) Query() QueryResolver {
 
 type queryResolver struct{ *Resolver }
 
-func (r *queryResolver) SystemConfig(ctx context.Context) (*SystemConfig, error) {
-	return nil, nil
-}
-
 func (r *Resolver) MeetingInvite() MeetingInviteResolver {
 	return &meetingInviteResolver{r}
 }

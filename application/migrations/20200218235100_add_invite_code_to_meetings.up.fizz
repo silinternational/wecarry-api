@@ -1,0 +1,2 @@
+add_column("meetings", "invite_code", "uuid", {null: true})
+

@@ -25,6 +25,7 @@ type Meeting struct {
 	MoreInfoURL nulls.String `json:"more_info_url" db:"more_info_url"`
 	StartDate   time.Time    `json:"start_date" db:"start_date"`
 	EndDate     time.Time    `json:"end_date" db:"end_date"`
+	InviteCode  nulls.UUID   `json:"invite_code" db:"invite_code"`
 	CreatedAt   time.Time    `json:"created_at" db:"created_at"`
 	UpdatedAt   time.Time    `json:"updated_at" db:"updated_at"`
 	CreatedByID int          `json:"created_by_id" db:"created_by_id"`
@@ -161,6 +162,22 @@ func (m *Meetings) FindRecent(timeInFocus time.Time) error {
 	if err := getOrdered(m, DB.Eager("CreatedBy").Where(where, recentDate, yesterday)); err != nil {
 		return fmt.Errorf("error finding meeting with end_date between %s and %s ... %s",
 			recentDate, yesterday, err.Error())
+	}
+
+	return nil
+}
+
+func (m *Meeting) FindByInviteCode(code string) error {
+	if code == "" {
+		return errors.New("error finding meeting: invite_code must not be blank")
+	}
+
+	if err := DB.Where("invite_code = ?", code).First(m); err != nil {
+		return fmt.Errorf("error finding meeting by invite_code: %s", err.Error())
+	}
+
+	if err := DB.Load(m, "ImageFile"); err != nil {
+		domain.ErrLogger.Printf("error loading meeting image file: " + err.Error())
 	}
 
 	return nil

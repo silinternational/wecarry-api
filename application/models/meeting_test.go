@@ -316,6 +316,34 @@ func (ms *ModelSuite) TestMeeting_FindRecent() {
 	}
 }
 
+// TestMeeting_FindByUUID tests the FindByUUID function of the Meeting model
+func (ms *ModelSuite) TestMeeting_FindByInviteCode() {
+	f := createMeetingFixtures(ms.DB, 2)
+
+	tests := []struct {
+		name    string
+		code    string
+		want    Meeting
+		wantErr bool
+	}{
+		{name: "good", code: f.Meetings[0].InviteCode.UUID.String(), want: f.Meetings[0]},
+		{name: "blank uuid", code: "", wantErr: true},
+		{name: "wrong uuid", code: domain.GetUUID().String(), wantErr: true},
+	}
+	for _, test := range tests {
+		ms.T().Run(test.name, func(t *testing.T) {
+			var meeting Meeting
+			err := meeting.FindByInviteCode(test.code)
+			if test.wantErr {
+				ms.Error(err, "FindByInviteCode() did not return expected error")
+				return
+			}
+			ms.NoError(err, "unexpected error")
+			ms.Equal(test.want.UUID, meeting.UUID, "incorrect uuid")
+		})
+	}
+}
+
 func (ms *ModelSuite) TestMeeting_AttachImage() {
 	meetings := createMeetingFixtures(ms.DB, 3).Meetings
 	files := createFileFixtures(3)

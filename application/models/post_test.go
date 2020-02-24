@@ -1690,7 +1690,8 @@ func (ms *ModelSuite) TestPosts_FindByUser() {
 func (ms *ModelSuite) TestPosts_GetPotentialProviders() {
 	t := ms.T()
 
-	f := createFixturesFor_Posts_GetPotentialProviders(ms)
+	f := createPotentialProvidersFixtures(ms)
+	posts := f.Posts
 	pps := f.PotentialProviders
 
 	tests := []struct {
@@ -1698,8 +1699,8 @@ func (ms *ModelSuite) TestPosts_GetPotentialProviders() {
 		post      Post
 		wantPPIDs []int
 	}{
-		{name: "pps for first post", post: f.Posts[0], wantPPIDs: []int{pps[0].UserID, pps[1].UserID}},
-		{name: "no pps for second post", post: f.Posts[1], wantPPIDs: []int{}},
+		{name: "pps for first post", post: posts[0], wantPPIDs: []int{pps[0].UserID, pps[1].UserID, pps[2].UserID}},
+		{name: "no pps for third post", post: posts[2], wantPPIDs: []int{}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

@@ -1,9 +1,4 @@
 type Query {
-    """
-    NOT YET IMPLEMENTED --
-    Return the system configuration information, such as a list of AuthTypes
-    """
-    systemConfig: SystemConfig!
 
     users: [User!]!
     user(id: ID): User
@@ -107,15 +102,6 @@ type Mutation {
     Remove a `MeetingInvite` and return the remaining invites for the `Meeting`
     """
     removeMeetingInvite(input: RemoveMeetingInviteInput!): [MeetingInvite!]!
-
-    """
-    NOT YET IMPLEMENTED --
-    Validate a `MeetingInvite` and create a new `MeetingParticipant`. If the `MeetingParticipant.User` contains
-    one or more `Organizations`, the user should be redirected to the standard login page. Otherwise, login should
-    proceed through one of the configured `AuthType`s described by the `systemConfig` query.
-    If the `Meeting` is not `INVITE_ONLY`, no `MeetingInvite` is needed and the `confirmationCode` may be omitted.
-    """
-    createMeetingParticipant(input: CreateMeetingParticipantInput!): MeetingParticipant!
 
     """
     NOT YET IMPLEMENTED --
@@ -623,26 +609,4 @@ input RemoveMeetingParticipantInput {
     meetingID: ID!
     "`User` ID of the `Meeting` participant to remove"
     userID: ID!
-}
-
-"""
-NOT YET IMPLEMENTED --
-System configuration information
-"""
-type SystemConfig {
-    "Authentication type for login outside the context of an `Organization`, such as for `Meeting` participants"
-    authTypes: [AuthType!]!
-}
-
-"""
-NOT YET IMPLEMENTED --
-Authentication type for login outside the context of an `Organization`, such as for `Meeting` participants
-"""
-type AuthType {
-    "Display name of the auth type. e.g. 'Facebook'"
-    name: String!
-    "Fully-qualified login URL for the auth type"
-    loginURL: String!
-    "Logo for user selection of login method"
-    logo: File
 }

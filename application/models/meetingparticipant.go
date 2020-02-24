@@ -55,3 +55,16 @@ func (m *MeetingParticipant) Invite() (*MeetingInvite, error) {
 	}
 	return &invite, nil
 }
+
+// FindByMeetingIDAndUserID does what it says
+func (m *MeetingParticipant) FindByMeetingIDAndUserID(meetingID, userID int) error {
+	return DB.Where("meeting_id = ? and user_id = ?", meetingID, userID).First(m)
+}
+
+// CreateFromInvite creates a new MeetingParticipant using the MeetingInvite's information
+func (m *MeetingParticipant) CreateFromInvite(invite MeetingInvite, userID int) error {
+	m.InviteID = nulls.NewInt(invite.ID)
+	m.UserID = userID
+	m.MeetingID = invite.MeetingID
+	return DB.Create(m)
+}
