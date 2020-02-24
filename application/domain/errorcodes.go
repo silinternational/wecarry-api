@@ -63,6 +63,9 @@ const ErrorInvalidInviteCode = "ErrorInvalidInviteCode"
 const ErrorInvalidSessionInviteObjectUUID = "ErrorInvalidSessionInviteObjectUUID"
 
 // actions.AuthRequest and others
+const ErrorGettingSocialAuthProviders = "ErrorGettingSocialAuthProviders"
+
+// actions.AuthRequest and others
 const ErrorLoadingAuthProvider = "ErrorLoadingAuthProvider"
 
 // actions.AuthRequest

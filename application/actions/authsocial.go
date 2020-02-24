@@ -3,9 +3,11 @@ package actions
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/gobuffalo/buffalo"
+	"github.com/gobuffalo/buffalo/render"
 
 	"github.com/silinternational/wecarry-api/auth"
 	"github.com/silinternational/wecarry-api/auth/facebook"
@@ -30,8 +32,11 @@ const (
 // SocialAuthConfig holds the Key and Secret for a social auth provider
 type SocialAuthConfig struct{ Key, Secret string }
 
-// Don't Modify outside of the code in this file that sets it.
+// Don't Modify outside of this file.
 var socialAuthConfigs = map[string]SocialAuthConfig{}
+
+// Don't Modify outside of this file.
+var socialAuthProviders = map[string]auth.Provider{}
 
 // Get the necessary env vars to create the associated SocialAuthConfig
 func getConfig(authType string, envVars map[string]string) SocialAuthConfig {
@@ -142,6 +147,52 @@ func getSocialAuthProvider(authType string) (auth.Provider, error) {
 	}
 
 	return nil, errors.New("unmatched Social Auth Provider: " + authType)
+}
+
+func getSocialAuthProviders() (map[string]auth.Provider, error) {
+	if len(socialAuthProviders) > 0 {
+		return socialAuthProviders, nil
+	}
+	authConfigs := getSocialAuthConfigs()
+	providers := map[string]auth.Provider{}
+	for pType, _ := range authConfigs {
+		next, err := getSocialAuthProvider(pType)
+		if err != nil {
+			return map[string]auth.Provider{}, errors.New("error preparing " + pType + " auth provider: " + err.Error())
+		}
+		providers[pType] = next
+
+	}
+	socialAuthProviders = providers
+	return providers, nil
+}
+
+// stub for social logins
+func finishSocialAuthRequest(c buffalo.Context, extras map[string]interface{}) error {
+	providers, err := getSocialAuthProviders()
+	if err != nil {
+		return authRequestError(c, http.StatusInternalServerError, domain.ErrorGettingSocialAuthProviders,
+			err.Error(), extras)
+	}
+
+	authOptions := []authOption{}
+
+	for pType, p := range providers {
+
+		redirectURL, err := p.AuthRequest(c)
+		if err != nil {
+			return authRequestError(c, http.StatusInternalServerError, domain.ErrorGettingSocialAuthProviders,
+				err.Error(), extras)
+		}
+		next := authOption{
+			Name:        pType,
+			RedirectURL: redirectURL,
+		}
+		authOptions = append(authOptions, next)
+	}
+
+	// Reply with a 200 and leave it to the UI to do the redirect
+	return c.Render(http.StatusOK, render.JSON(authOptions))
 }
 
 func socialLoginBasedAuthCallback(c buffalo.Context, authEmail, clientID string) error {

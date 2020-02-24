@@ -152,7 +152,9 @@ func getUserOrgs(c buffalo.Context, authEmail string) (models.UserOrganizations,
 
 	var userOrgs models.UserOrganizations
 	if err := userOrgs.FindByAuthEmail(authEmail, orgID); err != nil {
-		return userOrgs, err
+		if domain.IsOtherThanNoRows(err) {
+			return userOrgs, err
+		}
 	}
 
 	return userOrgs, nil
@@ -173,7 +175,7 @@ type authError struct {
 	errorMsg   string
 }
 
-func getAuthOption(c buffalo.Context, authEmail string, org models.Organization) (authOption, *authError) {
+func getOrgBasedAuthOption(c buffalo.Context, authEmail string, org models.Organization) (authOption, *authError) {
 	c.Session().Set(OrgIDSessionKey, org.UUID.String())
 
 	sp, err := org.GetAuthProvider(authEmail)
@@ -202,12 +204,6 @@ func getAuthOption(c buffalo.Context, authEmail string, org models.Organization)
 	}
 
 	return option, nil
-}
-
-// stub for social logins
-func finishSocialAuthRequest(c buffalo.Context, authEmail string, extras map[string]interface{}) error {
-	return authRequestError(c, http.StatusInternalServerError, "ErrorNotImplemented",
-		"Not ready to do non-Org invite authentication", extras)
 }
 
 // Decide whether a meeting invitee should use social login or org-based login
@@ -239,7 +235,7 @@ func meetingAuthRequest(c buffalo.Context, authEmail string, extras map[string]i
 
 	// Check if user's email has a domain that matches an Organization
 	org, err := getOrgForNewUser(authEmail)
-	if err != nil {
+	if err != nil && domain.IsOtherThanNoRows(err) {
 		return authRequestError(c, http.StatusNotFound, domain.ErrorFindingOrgForNewUser,
 			"error getting UserOrganizations: "+err.Error(), extras)
 	}
@@ -254,7 +250,7 @@ func meetingAuthRequest(c buffalo.Context, authEmail string, extras map[string]i
 	}
 
 	// If no matching Org, then use social login
-	return finishSocialAuthRequest(c, authEmail, extras)
+	return finishSocialAuthRequest(c, extras)
 }
 
 // Decide whether an invitee should use social login or org-based login
@@ -320,7 +316,7 @@ func finishOrgBasedAuthRequest(c buffalo.Context, authEmail string,
 	authOptions := []authOption{}
 
 	for _, uo := range userOrgs {
-		option, authErr := getAuthOption(c, authEmail, uo.Organization)
+		option, authErr := getOrgBasedAuthOption(c, authEmail, uo.Organization)
 		if authErr != nil {
 			return authRequestError(c, authErr.httpStatus, authErr.errorCode, authErr.errorMsg, extras)
 		}
@@ -386,7 +382,7 @@ func authRequest(c buffalo.Context) error {
 		return finishOrgBasedAuthRequest(c, authEmail, models.UserOrganizations{userOrg}, extras)
 	}
 
-	// If no matching Org, then error, since this isn't base on an invite
+	// If no matching Org, then error, since this isn't based on an invite
 	return authRequestError(c, http.StatusNotFound, domain.ErrorOrglessUserNotAllowed,
 		"no Organization found for this authEmail", extras)
 }
