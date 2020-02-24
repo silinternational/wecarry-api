@@ -118,7 +118,6 @@ type ComplexityRoot struct {
 		AddMeAsPotentialProvider    func(childComplexity int, postID string) int
 		CreateMeeting               func(childComplexity int, input meetingInput) int
 		CreateMeetingInvites        func(childComplexity int, input CreateMeetingInvitesInput) int
-		CreateMeetingParticipant    func(childComplexity int, input CreateMeetingParticipantInput) int
 		CreateMessage               func(childComplexity int, input CreateMessageInput) int
 		CreateOrganization          func(childComplexity int, input CreateOrganizationInput) int
 		CreateOrganizationDomain    func(childComplexity int, input CreateOrganizationDomainInput) int
@@ -317,7 +316,6 @@ type MutationResolver interface {
 	RemoveOrganizationTrust(ctx context.Context, input RemoveOrganizationTrustInput) (*models.Organization, error)
 	CreateMeetingInvites(ctx context.Context, input CreateMeetingInvitesInput) ([]models.MeetingInvite, error)
 	RemoveMeetingInvite(ctx context.Context, input RemoveMeetingInviteInput) ([]models.MeetingInvite, error)
-	CreateMeetingParticipant(ctx context.Context, input CreateMeetingParticipantInput) (*models.MeetingParticipant, error)
 	RemoveMeetingParticipant(ctx context.Context, input RemoveMeetingParticipantInput) ([]models.MeetingParticipant, error)
 }
 type OrganizationResolver interface {
@@ -729,18 +727,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CreateMeetingInvites(childComplexity, args["input"].(CreateMeetingInvitesInput)), true
-
-	case "Mutation.createMeetingParticipant":
-		if e.complexity.Mutation.CreateMeetingParticipant == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_createMeetingParticipant_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.CreateMeetingParticipant(childComplexity, args["input"].(CreateMeetingParticipantInput)), true
 
 	case "Mutation.createMessage":
 		if e.complexity.Mutation.CreateMessage == nil {
@@ -1777,15 +1763,6 @@ type Mutation {
 
     """
     NOT YET IMPLEMENTED --
-    Validate a ` + "`" + `MeetingInvite` + "`" + ` and create a new ` + "`" + `MeetingParticipant` + "`" + `. If the ` + "`" + `MeetingParticipant.User` + "`" + ` contains
-    one or more ` + "`" + `Organizations` + "`" + `, the user should be redirected to the standard login page. Otherwise, login should
-    proceed through a non-Organization login (e.g. Facebook).
-    If the ` + "`" + `Meeting` + "`" + ` is not ` + "`" + `INVITE_ONLY` + "`" + `, no ` + "`" + `MeetingInvitation` + "`" + ` is needed and the ` + "`" + `confirmationCode` + "`" + ` may be omitted.
-    """
-    createMeetingParticipant(input: CreateMeetingParticipantInput!): MeetingParticipant!
-
-    """
-    NOT YET IMPLEMENTED --
     Remove a ` + "`" + `MeetingParticipant` + "`" + ` and return the remaining participants for the ` + "`" + `Meeting` + "`" + `
     """
     removeMeetingParticipant(input: RemoveMeetingParticipantInput!): [MeetingParticipant!]!
@@ -1987,7 +1964,7 @@ type Meeting {
     "NOT YET IMPLEMENTED -- Who can see this meeting"
     visibility: MeetingVisibility!
 
-    "Invites to the ` + "`" + `Meeting` + "`" + ` that have been sent to the invitee for their confirmation to join the ` + "`" + `Meeting` + "`" + `"
+    "Invites to the ` + "`" + `Meeting` + "`" + ` that have been sent to the invitees for their confirmation to join the ` + "`" + `Meeting` + "`" + `"
     invites: [MeetingInvite!]!
 
     "Participants of a ` + "`" + `Meeting` + "`" + ` are able to see all posts associated with the ` + "`" + `Meeting` + "`" + `"
@@ -2318,20 +2295,6 @@ func (ec *executionContext) field_Mutation_createMeetingInvites_args(ctx context
 	var arg0 CreateMeetingInvitesInput
 	if tmp, ok := rawArgs["input"]; ok {
 		arg0, err = ec.unmarshalNCreateMeetingInvitesInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐCreateMeetingInvitesInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_createMeetingParticipant_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 CreateMeetingParticipantInput
-	if tmp, ok := rawArgs["input"]; ok {
-		arg0, err = ec.unmarshalNCreateMeetingParticipantInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐCreateMeetingParticipantInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -5327,50 +5290,6 @@ func (ec *executionContext) _Mutation_removeMeetingInvite(ctx context.Context, f
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNMeetingInvite2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeetingInvite(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Mutation_createMeetingParticipant(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Mutation",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_createMeetingParticipant_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	rctx.Args = args
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateMeetingParticipant(rctx, args["input"].(CreateMeetingParticipantInput))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*models.MeetingParticipant)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNMeetingParticipant2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeetingParticipant(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_removeMeetingParticipant(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -11166,11 +11085,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "createMeetingParticipant":
-			out.Values[i] = ec._Mutation_createMeetingParticipant(ctx, field)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "removeMeetingParticipant":
 			out.Values[i] = ec._Mutation_removeMeetingParticipant(ctx, field)
 			if out.Values[i] == graphql.Null {
@@ -12490,10 +12404,6 @@ func (ec *executionContext) unmarshalNCreateMeetingInvitesInput2githubᚗcomᚋs
 	return ec.unmarshalInputCreateMeetingInvitesInput(ctx, v)
 }
 
-func (ec *executionContext) unmarshalNCreateMeetingParticipantInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐCreateMeetingParticipantInput(ctx context.Context, v interface{}) (CreateMeetingParticipantInput, error) {
-	return ec.unmarshalInputCreateMeetingParticipantInput(ctx, v)
-}
-
 func (ec *executionContext) unmarshalNCreateMessageInput2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐCreateMessageInput(ctx context.Context, v interface{}) (CreateMessageInput, error) {
 	return ec.unmarshalInputCreateMessageInput(ctx, v)
 }
@@ -12794,16 +12704,6 @@ func (ec *executionContext) marshalNMeetingParticipant2ᚕgithubᚗcomᚋsilinte
 	}
 	wg.Wait()
 	return ret
-}
-
-func (ec *executionContext) marshalNMeetingParticipant2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeetingParticipant(ctx context.Context, sel ast.SelectionSet, v *models.MeetingParticipant) graphql.Marshaler {
-	if v == nil {
-		if !ec.HasError(graphql.GetResolverContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	return ec._MeetingParticipant(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNMeetingVisibility2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐMeetingVisibility(ctx context.Context, v interface{}) (MeetingVisibility, error) {

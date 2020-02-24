@@ -210,7 +210,7 @@ func (as *ActionSuite) TestGetAuthInviteResponse() {
 			name:  "Valid Invite Code",
 			param: meetings[1].InviteCode.UUID.String(),
 			want: authInviteResponse{
-				Type:     InviteTypeMeeting,
+				Type:     InviteTypeMeetingParam,
 				Name:     meetings[1].Name,
 				ImageURL: f.File.URL,
 			},
@@ -232,7 +232,7 @@ func (as *ActionSuite) TestGetAuthInviteResponse() {
 			}
 
 			if tc.param != "" {
-				c.params[InviteCode] = tc.param
+				c.params[InviteCodeParam] = tc.param
 			}
 
 			got, err := getAuthInviteResponse(c)
@@ -243,7 +243,7 @@ func (as *ActionSuite) TestGetAuthInviteResponse() {
 			}
 			as.NoError(err)
 			as.Equal(tc.want, got, "incorrect authInviteResponse")
-			as.Equal(InviteTypeMeeting, c.Session().Get(InviteTypeSessionKey), "incorrect session Invite Type")
+			as.Equal(InviteTypeMeetingParam, c.Session().Get(InviteTypeSessionKey), "incorrect session Invite Type")
 			as.Equal(tc.wantObjUUID, c.Session().Get(InviteObjectUUIDSessionKey), "incorrect session Invite Object UUID")
 		})
 	}
