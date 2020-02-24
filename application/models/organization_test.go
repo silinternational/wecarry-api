@@ -6,7 +6,7 @@ import (
 	"github.com/gobuffalo/nulls"
 	"github.com/gofrs/uuid"
 
-	"github.com/silinternational/wecarry-api/auth/facebook"
+	"github.com/silinternational/wecarry-api/auth/azureadv2"
 	"github.com/silinternational/wecarry-api/auth/google"
 	"github.com/silinternational/wecarry-api/domain"
 )
@@ -648,10 +648,18 @@ func (ms *ModelSuite) TestOrganization_AttachLogo() {
 }
 
 func (ms *ModelSuite) TestOrganization_GetAuthProvider() {
+
+	domain.Env.AzureADTenant = "TestADTenant"
+	domain.Env.AzureADKey = "TestADKey"
+	domain.Env.AzureADSecret = "testADSecret"
+
+	domain.Env.GoogleKey = "TestGoogleKey"
+	domain.Env.GoogleSecret = "testGoogleSecret"
+
 	uid := domain.GetUUID()
 	org := Organization{
 		Name:       "testorg1",
-		AuthType:   AuthTypeFacebook,
+		AuthType:   AuthTypeAzureAD,
 		AuthConfig: "{}",
 		UUID:       uid,
 	}
@@ -680,10 +688,10 @@ func (ms *ModelSuite) TestOrganization_GetAuthProvider() {
 	err = o.FindByUUID(uid.String())
 	ms.NoError(err, "unable to find organization fixture")
 
-	// should get type facebook:
+	// should get type azuread:
 	provider, err := o.GetAuthProvider("test@domain1.com")
 	ms.NoError(err, "unable to get authprovider for test@domain1.com")
-	ms.IsType(&facebook.Provider{}, provider, "auth provider not expected facebook type")
+	ms.IsType(&azureadv2.Provider{}, provider, "auth provider not expected azureAD type")
 
 	// should get type google:
 	provider, err = o.GetAuthProvider("test@domain2.com")
