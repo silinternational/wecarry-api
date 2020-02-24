@@ -566,10 +566,10 @@ func (ms *ModelSuite) TestMeeting_Invites() {
 			wantEmails: []string{"invitee0@example.com", "invitee1@example.com"},
 		},
 		{
-			name:    "invitee",
-			user:    f.Users[2],
-			meeting: f.Meetings[0],
-			wantErr: "insufficient privileges",
+			name:       "invitee",
+			user:       f.Users[2],
+			meeting:    f.Meetings[0],
+			wantEmails: []string{},
 		},
 	}
 	for _, tt := range tests {
@@ -623,7 +623,7 @@ func (ms *ModelSuite) TestMeeting_Participants() {
 			name:    "participant",
 			user:    f.Users[2],
 			meeting: f.Meetings[0],
-			wantErr: "insufficient privileges",
+			wantIDs: []int{},
 		},
 	}
 	for _, tt := range tests {

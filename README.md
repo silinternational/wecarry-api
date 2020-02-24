@@ -46,12 +46,12 @@ To add an organization using AzureAD authentication, create a database organizat
 that includes an auth_type of `azureadv2` and an auth_config like the following ... 
 
 ```
-{}
+{
+    "TenantID": "12345678-abcd-1234-871a-940bc318789c", 
+    "ClientSecret": "nice and crazy complicated secret :-)", 
+    "ApplicationID": "12345678-abcd-1234-92f6-fffe9f3dfc6d"
+}
 ```
-
-The three environment variables `AZURE_AD_TENANT`, `AZURE_AD_KEY` and `AZURE_AD_SECRET` 
-will need to be set for the appropriate Azure AD oauth account and application. 
-(see https://docs.nylas.com/docs/o365-oauth-setup)
 
 For local development, if you are using `http`, then you will need to 
 use `http:localhost` as the host for the WeCarry API, due to AzureAD's policies.

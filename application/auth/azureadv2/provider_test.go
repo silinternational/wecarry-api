@@ -4,14 +4,16 @@ import (
 	"testing"
 
 	"github.com/markbates/goth"
-	"github.com/markbates/goth/providers/azureadv2"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/silinternational/wecarry-api/auth/azureadv2"
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 const (
 	applicationID = "6731de76-14a6-49ae-97bc-6eba6914391e"
+	tenantID      = "edf3cc03-7edf-4299-871a-940bc318789c"
 	secret        = "foo"
-	redirectUri   = "https://localhost:3000"
 )
 
 func Test_New(t *testing.T) {
@@ -22,7 +24,7 @@ func Test_New(t *testing.T) {
 	a.Equal(provider.Name(), "azureadv2")
 	a.Equal(provider.ClientKey, applicationID)
 	a.Equal(provider.Secret, secret)
-	a.Equal(provider.CallbackURL, redirectUri)
+	a.Equal(provider.CallbackURL, domain.Env.AuthCallbackURL)
 }
 
 func Test_Implements_Provider(t *testing.T) {
@@ -39,8 +41,7 @@ func Test_BeginAuth(t *testing.T) {
 	session, err := provider.BeginAuth("test_state")
 	a.NoError(err)
 	s := session.(*azureadv2.Session)
-	a.Contains(s.AuthURL, "login.microsoftonline.com/common/oauth2/v2.0/authorize")
-	a.Contains(s.AuthURL, "redirect_uri=https%3A%2F%2Flocalhost%3A3000")
+	a.Contains(s.AuthURL, "login.microsoftonline.com/"+tenantID+"/oauth2/v2.0/authorize")
 	a.Contains(s.AuthURL, "scope=openid+profile+email")
 }
 
@@ -58,5 +59,13 @@ func Test_SessionFromJSON(t *testing.T) {
 }
 
 func azureadProvider() *azureadv2.Provider {
-	return azureadv2.New(applicationID, secret, redirectUri, azureadv2.ProviderOptions{})
+	authConfig :=
+		`{
+    "TenantID": "` + tenantID + `",
+    "ClientSecret": "` + secret + `",
+    "ApplicationID": "` + applicationID + `"
+}`
+
+	p, _ := azureadv2.New([]byte(authConfig))
+	return p
 }

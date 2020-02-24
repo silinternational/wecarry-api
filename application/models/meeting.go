@@ -298,7 +298,7 @@ func (m *Meeting) Invites(ctx buffalo.Context) (MeetingInvites, error) {
 	}
 	currentUser := GetCurrentUser(ctx)
 	if currentUser.ID != m.CreatedByID && !currentUser.isMeetingOrganizer(ctx, *m) && !currentUser.isSuperAdmin() {
-		return i, errors.New("user has insufficient privileges to see meeting invites")
+		return i, nil
 	}
 	if err := DB.Where("meeting_id = ?", m.ID).All(&i); err != nil {
 		return i, err
@@ -315,7 +315,7 @@ func (m *Meeting) Participants(ctx buffalo.Context) (MeetingParticipants, error)
 	}
 	currentUser := GetCurrentUser(ctx)
 	if currentUser.ID != m.CreatedByID && !currentUser.isMeetingOrganizer(ctx, *m) && !currentUser.isSuperAdmin() {
-		return p, errors.New("user has insufficient privileges to see meeting participants")
+		return p, nil
 	}
 	if err := DB.Where("meeting_id = ?", m.ID).All(&p); err != nil {
 		return p, err
