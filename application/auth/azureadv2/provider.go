@@ -85,7 +85,7 @@ func New(jsonConfig json.RawMessage) (*Provider, error) {
 	azureSecret := config.ClientSecret
 
 	if azureKey == "" || azureSecret == "" {
-		err := errors.New("missing required environment variable for AzureAD Auth Provider")
+		err := errors.New("missing config for AzureAD Auth Provider")
 		return &Provider{}, err
 	}
 
