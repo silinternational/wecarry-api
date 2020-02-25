@@ -372,3 +372,74 @@ func (as *ActionSuite) Test_CreateMeetingInvites() {
 		}
 	}
 }
+
+func (as *ActionSuite) Test_RemoveMeetingInvite() {
+	f := createFixturesForMeetings(as)
+
+	var resp meetingInvitesResponse
+
+	const queryTemplate = `mutation { meetingInvites : removeMeetingInvite(input: %s) { %s } }`
+
+	type testCase struct {
+		Name           string
+		Email          string
+		MeetingID      string
+		TestUser       models.User
+		ResponseEmails []string
+		ExpectError    string
+	}
+
+	testCases := []testCase{
+		{
+			Name:           "bad email",
+			Email:          "not_invited@example.com",
+			MeetingID:      f.Meetings[0].UUID.String(),
+			TestUser:       f.Users[0],
+			ResponseEmails: []string{},
+			ExpectError:    "problem removing the meeting invite",
+		},
+		{
+			Name:           "not creator, not organizer",
+			Email:          "invitee2@example.com",
+			MeetingID:      f.Meetings[1].UUID.String(),
+			TestUser:       f.Users[1],
+			ResponseEmails: []string{},
+			ExpectError:    "not allowed",
+		},
+		{
+			Name:           "creator",
+			Email:          "invitee0@example.com",
+			MeetingID:      f.Meetings[2].UUID.String(),
+			TestUser:       f.Users[0],
+			ResponseEmails: []string{"invitee1@example.com"},
+		},
+		{
+			Name:           "organizer",
+			Email:          "invitee1@example.com",
+			MeetingID:      f.Meetings[2].UUID.String(),
+			TestUser:       f.Users[0],
+			ResponseEmails: []string{},
+		},
+	}
+
+	for _, tc := range testCases {
+		input := fmt.Sprintf(`{ meetingID: "%s" email: "%s" }`, tc.MeetingID, tc.Email)
+
+		query := fmt.Sprintf(queryTemplate, input, allMeetingInviteFields)
+		err := as.testGqlQuery(query, tc.TestUser.Nickname, &resp)
+
+		if tc.ExpectError != "" {
+			as.Error(err)
+			as.Contains(err.Error(), tc.ExpectError, "didn't get expected error message")
+			continue
+		} else {
+			as.NoError(err)
+		}
+		as.Equal(len(tc.ResponseEmails), len(resp.MeetingInvites))
+		for i := range resp.MeetingInvites {
+			as.Equal(tc.ResponseEmails[i], resp.MeetingInvites[i].Email)
+			as.Equal(tc.MeetingID, resp.MeetingInvites[i].Meeting.ID)
+			as.Equal(f.Users[0].UUID.String(), resp.MeetingInvites[i].Inviter.ID)
+		}
+	}
+}

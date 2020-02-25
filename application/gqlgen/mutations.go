@@ -296,13 +296,13 @@ func (r *mutationResolver) RemoveMeetingInvite(ctx context.Context, input Remove
 		return nil, reportError(ctx, err, "RemoveMeetingInvite.FindMeeting")
 	}
 
+	c := models.GetBuffaloContextFromGqlContext(ctx)
 	cUser := models.GetCurrentUserFromGqlContext(ctx)
-	if !cUser.CanRemoveMeetingInvite(meeting.ID) {
+	if !cUser.CanRemoveMeetingInvite(c, meeting) {
 		err := errors.New("insufficient permissions")
 		return nil, reportError(ctx, err, "RemoveMeetingInvite.Unauthorized")
 	}
 
-	c := models.GetBuffaloContextFromGqlContext(ctx)
 	if err := meeting.RemoveInvite(c, input.Email); err != nil {
 		return nil, reportError(ctx, err, "RemoveMeetingInvite")
 	}
