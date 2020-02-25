@@ -19,14 +19,19 @@ import (
 )
 
 const (
+	// http param for social auth provider
+	AuthTypeParam = "auth-type"
+
 	// Auth Type Identifiers
 	AuthTypeFacebook = "facebook"
 	AuthTypeGoogle   = "google"
 	AuthTypeLinkedIn = "linkedin"
 	AuthTypeTwitter  = "twitter"
 
-	envTypeKey    = "key"
-	envTypeSecret = "secret"
+	envSocialAuthKey    = "key"
+	envSocialAuthSecret = "secret"
+
+	AuthSelectPath = "%s/auth/select/?%s=%s"
 )
 
 // SocialAuthConfig holds the Key and Secret for a social auth provider
@@ -36,7 +41,7 @@ type SocialAuthConfig struct{ Key, Secret string }
 var socialAuthConfigs = map[string]SocialAuthConfig{}
 
 // Don't Modify outside of this file.
-var socialAuthProviders = map[string]auth.Provider{}
+var socialAuthSelectors = []authSelector{}
 
 // Get the necessary env vars to create the associated SocialAuthConfig
 func getConfig(authType string, envVars map[string]string) SocialAuthConfig {
@@ -57,16 +62,16 @@ func getConfig(authType string, envVars map[string]string) SocialAuthConfig {
 		}
 	}
 
-	config.Key = envVars[envTypeKey]
-	config.Secret = envVars[envTypeSecret]
+	config.Key = envVars[envSocialAuthKey]
+	config.Secret = envVars[envSocialAuthSecret]
 	return config
 }
 
 func addFacebookConfig(configs map[string]SocialAuthConfig) {
 	authType := AuthTypeFacebook
 	envTypes := map[string]string{
-		envTypeKey:    domain.Env.FacebookKey,
-		envTypeSecret: domain.Env.FacebookSecret,
+		envSocialAuthKey:    domain.Env.FacebookKey,
+		envSocialAuthSecret: domain.Env.FacebookSecret,
 	}
 	config := getConfig(authType, envTypes)
 	if config.Key != "" {
@@ -77,8 +82,8 @@ func addFacebookConfig(configs map[string]SocialAuthConfig) {
 func addGoogleConfig(configs map[string]SocialAuthConfig) {
 	authType := AuthTypeGoogle
 	envTypes := map[string]string{
-		envTypeKey:    domain.Env.GoogleKey,
-		envTypeSecret: domain.Env.GoogleSecret,
+		envSocialAuthKey:    domain.Env.GoogleKey,
+		envSocialAuthSecret: domain.Env.GoogleSecret,
 	}
 	config := getConfig(authType, envTypes)
 	if config.Key != "" {
@@ -89,8 +94,8 @@ func addGoogleConfig(configs map[string]SocialAuthConfig) {
 func addLinkedInConfig(configs map[string]SocialAuthConfig) {
 	authType := AuthTypeLinkedIn
 	envTypes := map[string]string{
-		envTypeKey:    domain.Env.LinkedInKey,
-		envTypeSecret: domain.Env.LinkedInSecret,
+		envSocialAuthKey:    domain.Env.LinkedInKey,
+		envSocialAuthSecret: domain.Env.LinkedInSecret,
 	}
 	config := getConfig(authType, envTypes)
 	if config.Key != "" {
@@ -101,8 +106,8 @@ func addLinkedInConfig(configs map[string]SocialAuthConfig) {
 func addTwitterConfig(configs map[string]SocialAuthConfig) {
 	authType := AuthTypeTwitter
 	envTypes := map[string]string{
-		envTypeKey:    domain.Env.TwitterKey,
-		envTypeSecret: domain.Env.TwitterSecret,
+		envSocialAuthKey:    domain.Env.TwitterKey,
+		envSocialAuthSecret: domain.Env.TwitterSecret,
 	}
 	config := getConfig(authType, envTypes)
 	if config.Key != "" {
@@ -149,50 +154,53 @@ func getSocialAuthProvider(authType string) (auth.Provider, error) {
 	return nil, errors.New("unmatched Social Auth Provider: " + authType)
 }
 
-func getSocialAuthProviders() (map[string]auth.Provider, error) {
-	if len(socialAuthProviders) > 0 {
-		return socialAuthProviders, nil
+func getSocialAuthSelectors() []authSelector {
+	if len(socialAuthSelectors) > 0 {
+		return socialAuthSelectors
 	}
 	authConfigs := getSocialAuthConfigs()
-	providers := map[string]auth.Provider{}
+	selectors := []authSelector{}
 	for pType, _ := range authConfigs {
-		next, err := getSocialAuthProvider(pType)
-		if err != nil {
-			return map[string]auth.Provider{}, errors.New("error preparing " + pType + " auth provider: " + err.Error())
+		s := authSelector{
+			Name:        pType,
+			RedirectURL: fmt.Sprintf(AuthSelectPath, domain.Env.ApiBaseURL, AuthTypeParam, pType),
 		}
-		providers[pType] = next
+		selectors = append(selectors, s)
 
 	}
-	socialAuthProviders = providers
-	return providers, nil
+	socialAuthSelectors = selectors
+	return selectors
 }
 
-// stub for social logins
 func finishSocialAuthRequest(c buffalo.Context, extras map[string]interface{}) error {
-	providers, err := getSocialAuthProviders()
-	if err != nil {
-		return authRequestError(c, http.StatusInternalServerError, domain.ErrorGettingSocialAuthProviders,
-			err.Error(), extras)
-	}
-
-	authOptions := []authOption{}
-
-	for pType, p := range providers {
-
-		redirectURL, err := p.AuthRequest(c)
-		if err != nil {
-			return authRequestError(c, http.StatusInternalServerError, domain.ErrorGettingSocialAuthProviders,
-				err.Error(), extras)
-		}
-		next := authOption{
-			Name:        pType,
-			RedirectURL: redirectURL,
-		}
-		authOptions = append(authOptions, next)
-	}
+	selectors := getSocialAuthSelectors()
 
 	// Reply with a 200 and leave it to the UI to do the redirect
-	return c.Render(http.StatusOK, render.JSON(authOptions))
+	return c.Render(http.StatusOK, render.JSON(selectors))
+}
+
+func authSelect(c buffalo.Context) error {
+	authType := c.Param(AuthTypeParam)
+	if authType == "" {
+		return authRequestError(c, http.StatusBadRequest, domain.ErrorMissingAuthType,
+			AuthTypeParam+" is required to login")
+	}
+
+	ap, err := getSocialAuthProvider(authType)
+	if err != nil {
+		return authRequestError(c, http.StatusBadRequest, domain.ErrorLoadingAuthProvider,
+			fmt.Sprintf("error loading social auth provider for '%s' ... %v", authType, err))
+	}
+
+	redirectURL, err := ap.AuthRequest(c)
+	if err != nil {
+		return authRequestError(c, http.StatusInternalServerError, domain.ErrorGettingAuthURL,
+			fmt.Sprintf("error getting social auth url for '%s' ... %v", authType, err))
+	}
+
+	c.Session().Set(SocialAuthTypeSessionKey, authType)
+
+	return c.Redirect(http.StatusFound, redirectURL)
 }
 
 func socialLoginBasedAuthCallback(c buffalo.Context, authEmail, clientID string) error {

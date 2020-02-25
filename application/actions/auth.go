@@ -63,6 +63,11 @@ type authOption struct {
 	RedirectURL string `json:"RedirectURL"`
 }
 
+type authSelector struct {
+	Name        string `json:"Name"`
+	RedirectURL string `json:"RedirectURL"`
+}
+
 type authInviteResponse struct {
 	Type     string `json:"type"`
 	Name     string `json:"name"`
@@ -443,7 +448,6 @@ func getInviteInfoFromSession(c buffalo.Context) (string, string) {
 }
 
 func orgBasedAuthCallback(c buffalo.Context, orgUUID, authEmail, clientID string) error {
-
 	org := models.Organization{}
 	err := org.FindByUUID(orgUUID)
 	if err != nil {
@@ -567,6 +571,8 @@ func authRequestError(c buffalo.Context, httpStatus int, errorCode, message stri
 		Key:  errorCode,
 	}
 
+	c.Session().Clear()
+
 	return c.Render(httpStatus, render.JSON(authError))
 }
 
@@ -575,6 +581,8 @@ func logErrorAndRedirect(c buffalo.Context, code, message string, extras ...map[
 	allExtras := mergeExtras(code, extras...)
 
 	domain.Error(c, message, allExtras)
+
+	c.Session().Clear()
 
 	uiUrl := domain.Env.UIURL + "/#/login"
 	return c.Redirect(http.StatusFound, uiUrl)

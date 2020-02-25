@@ -34,6 +34,10 @@ const ErrorMissingClientID = "ErrorMissingClientID"
 // actions.AuthRequest
 const ErrorMissingAuthEmail = "ErrorMissingAuthEmail"
 
+// AuthType is required on social authentication select calls
+// actions.AuthRequest
+const ErrorMissingAuthType = "ErrorMissingAuthType"
+
 // There was an error during the auth request process when trying to
 // find an organization for a user with no UserOrganizations
 // actions.AuthRequest
@@ -61,9 +65,6 @@ const ErrorInvalidInviteCode = "ErrorInvalidInviteCode"
 
 // actions.AuthRequest
 const ErrorInvalidSessionInviteObjectUUID = "ErrorInvalidSessionInviteObjectUUID"
-
-// actions.AuthRequest and others
-const ErrorGettingSocialAuthProviders = "ErrorGettingSocialAuthProviders"
 
 // actions.AuthRequest and others
 const ErrorLoadingAuthProvider = "ErrorLoadingAuthProvider"

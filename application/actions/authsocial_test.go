@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -26,8 +27,8 @@ func (ts *TestSuite) Test_getConfig() {
 
 	fbConfig := SocialAuthConfig{Key: fbKey, Secret: fbSecret}
 	fbEnvVars := map[string]string{
-		envTypeKey:    fbKey,
-		envTypeSecret: fbSecret,
+		envSocialAuthKey:    fbKey,
+		envSocialAuthSecret: fbSecret,
 	}
 
 	twKey := "testTwitterKey"
@@ -35,8 +36,8 @@ func (ts *TestSuite) Test_getConfig() {
 
 	twConfig := SocialAuthConfig{Key: twKey, Secret: twSecret}
 	twEnvVars := map[string]string{
-		envTypeKey:    twKey,
-		envTypeSecret: twSecret,
+		envSocialAuthKey:    twKey,
+		envSocialAuthSecret: twSecret,
 	}
 
 	tests := []struct {
@@ -95,6 +96,43 @@ func (ts *TestSuite) Test_GetSocialAuthProvider() {
 	got, err := getSocialAuthProvider(AuthTypeFacebook)
 	ts.NoError(err, "unexpected error getting Facebook provider")
 	ts.IsType(&facebook.Provider{}, got, "auth provider not expected facebook type")
+}
+
+func (ts *TestSuite) Test_getSocialAuthSelectors() {
+	fbKey := "testFBKey"
+	fbSecret := "testFBSecret"
+
+	domain.Env.FacebookKey = fbKey
+	domain.Env.FacebookSecret = fbSecret
+
+	domain.Env.GoogleKey = ""
+	domain.Env.GoogleSecret = "testGoogleSecret"
+
+	domain.Env.LinkedInKey = "testLinkedInKey"
+	domain.Env.LinkedInSecret = ""
+
+	twKey := "testTwitterKey"
+	twSecret := "testTwitterSecret"
+
+	domain.Env.TwitterKey = twKey
+	domain.Env.TwitterSecret = twSecret
+
+	domain.Env.ApiBaseURL = "http://wecarry.local:3000"
+
+	got := getSocialAuthSelectors()
+
+	want := []authSelector{
+		{
+			Name:        AuthTypeFacebook,
+			RedirectURL: fmt.Sprintf("%s/auth/select/?%s=%s", domain.Env.ApiBaseURL, AuthTypeParam, AuthTypeFacebook),
+		},
+		{
+			Name:        AuthTypeTwitter,
+			RedirectURL: fmt.Sprintf("%s/auth/select/?%s=%s", domain.Env.ApiBaseURL, AuthTypeParam, AuthTypeTwitter),
+		},
+		// Others won't be included because of missing values
+	}
+	ts.Equal(want, got, "incorrect auth selectors")
 }
 
 func (as *ActionSuite) Test_CreateOrglessAuthUser() {
