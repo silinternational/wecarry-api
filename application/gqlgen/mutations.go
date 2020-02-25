@@ -253,13 +253,16 @@ func (r *mutationResolver) CreateMeetingInvites(ctx context.Context, input Creat
 	[]models.MeetingInvite, error) {
 
 	cUser := models.GetCurrentUserFromGqlContext(ctx)
-	extras := map[string]interface{}{
-		"user": cUser.UUID,
-	}
 
 	var m models.Meeting
 	if err := m.FindByUUID(input.MeetingID); err != nil {
-		return nil, reportError(ctx, err, "CreateMeetingInvite.FindMeeting", extras)
+		return nil, reportError(ctx, err, "CreateMeetingInvite.FindMeeting")
+	}
+
+	c := models.GetBuffaloContextFromGqlContext(ctx)
+	if !cUser.CanCreateMeetingInvite(c, m) {
+		err := errors.New("insufficient permissions")
+		return nil, reportError(ctx, err, "CreateMeetingInvite.Unauthorized")
 	}
 
 	inv := models.MeetingInvite{
@@ -282,7 +285,7 @@ func (r *mutationResolver) CreateMeetingInvites(ctx context.Context, input Creat
 
 	invites, err := m.Invites(models.GetBuffaloContextFromGqlContext(ctx))
 	if err != nil {
-		return nil, reportError(ctx, err, "CreateMeetingInvite.ListInvites", extras)
+		return nil, reportError(ctx, err, "CreateMeetingInvite.ListInvites")
 	}
 	return invites, nil
 }

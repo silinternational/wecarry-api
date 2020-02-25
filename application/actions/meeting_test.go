@@ -338,6 +338,13 @@ func (as *ActionSuite) Test_CreateMeetingInvites() {
 			GoodEmails:  2,
 			ExpectError: "",
 		},
+		{
+			Name:        "not allowed",
+			Emails:      []string{"email0@example.com", "email1@example.com"},
+			MeetingID:   f.Meetings[1].UUID.String(),
+			TestUser:    f.Users[1],
+			ExpectError: "not allowed",
+		},
 	}
 
 	for _, tc := range testCases {
@@ -353,6 +360,7 @@ func (as *ActionSuite) Test_CreateMeetingInvites() {
 		if tc.ExpectError != "" {
 			as.Error(err)
 			as.Contains(err.Error(), tc.ExpectError, "didn't get expected error message")
+			continue
 		} else {
 			as.NoError(err)
 		}

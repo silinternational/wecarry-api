@@ -789,6 +789,10 @@ func (u *User) isSuperAdmin() bool {
 	return u.AdminRole == UserAdminRoleSuperAdmin
 }
 
-func (u *User) CanRemoveMeetingInvite(meetingID int) bool {
-	return true
+func (u *User) CanCreateMeetingInvite(ctx buffalo.Context, meeting Meeting) bool {
+	return u.ID == meeting.CreatedByID || u.isMeetingOrganizer(ctx, meeting) || u.isSuperAdmin()
+}
+
+func (u *User) CanRemoveMeetingInvite(ctx buffalo.Context, meeting Meeting) bool {
+	return u.ID == meeting.CreatedByID || u.isMeetingOrganizer(ctx, meeting) || u.isSuperAdmin()
 }
