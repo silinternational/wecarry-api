@@ -94,7 +94,7 @@ return nil, domain.ReportError(ctx, err, "UpdatePostStatus.Unauthorized", extras
 Errors within a query, such as an authorization failure on a request field, should
 not present an error to the API client. The requested data field should be returned
 as `null`. The cause of the error should be logged to `stderr` and Rollbar using
-`domain.ReportError` if context is available, or `domain.ErrLogger.printf` if no
+`domain.ReportError` if context is available, or `domain.ErrLogger.Printf` if no
 context is available.
 
 #### REST API responses
@@ -120,7 +120,7 @@ err := domain.AppError{
 return c.Render(httpStatus, render.JSON(err))
 ```
 
-In addition, the error should be logged using `Error` or `ErrLogger.printf`
+In addition, the error should be logged using `Error` or `ErrLogger.Printf`
 
 #### Internal error logging
 
