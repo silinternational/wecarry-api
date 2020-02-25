@@ -1755,16 +1755,10 @@ type Mutation {
     """
     createMeetingInvites(input: CreateMeetingInvitesInput!): [MeetingInvite!]!
 
-    """
-    NOT YET IMPLEMENTED --
-    Remove a ` + "`" + `MeetingInvite` + "`" + ` and return the remaining invites for the ` + "`" + `Meeting` + "`" + `
-    """
+    "Remove a ` + "`" + `MeetingInvite` + "`" + ` and return the remaining invites for the ` + "`" + `Meeting` + "`" + `"
     removeMeetingInvite(input: RemoveMeetingInviteInput!): [MeetingInvite!]!
 
-    """
-    NOT YET IMPLEMENTED --
-    Remove a ` + "`" + `MeetingParticipant` + "`" + ` and return the remaining participants for the ` + "`" + `Meeting` + "`" + `
-    """
+    "Remove a ` + "`" + `MeetingParticipant` + "`" + ` and return the remaining participants for the ` + "`" + `Meeting` + "`" + `"
     removeMeetingParticipant(input: RemoveMeetingParticipantInput!): [MeetingParticipant!]!
 }
 

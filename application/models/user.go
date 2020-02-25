@@ -788,3 +788,7 @@ func (u *User) isMeetingOrganizer(ctx buffalo.Context, meeting Meeting) bool {
 func (u *User) isSuperAdmin() bool {
 	return u.AdminRole == UserAdminRoleSuperAdmin
 }
+
+func (u *User) CanRemoveMeetingInvite(meetingID int) bool {
+	return true
+}
