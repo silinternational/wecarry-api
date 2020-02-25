@@ -110,6 +110,7 @@ var ErrLogger ErrLogProxy
 var Env struct {
 	AccessTokenLifetimeSeconds int
 	ServiceIntegrationToken    string
+	ApiBaseURL                 string
 	AppName                    string
 	AuthCallbackURL            string
 	AwsRegion                  string
@@ -163,6 +164,7 @@ func init() {
 // readEnv loads environment data into `Env`
 func readEnv() {
 	Env.AccessTokenLifetimeSeconds = envToInt("ACCESS_TOKEN_LIFETIME_SECONDS", AccessTokenLifetimeSeconds)
+	Env.ApiBaseURL = envy.Get("API_BASE_URL", "")
 	Env.AppName = envy.Get("APP_NAME", "WeCarry")
 	Env.AuthCallbackURL = envy.Get("AUTH_CALLBACK_URL", "")
 	Env.AwsRegion = envy.Get("AWS_REGION", "")

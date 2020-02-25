@@ -72,11 +72,12 @@ func App() *buffalo.App {
 		app.POST("/service", serviceHandler)
 
 		auth := app.Group("/auth")
-		auth.Middleware.Skip(setCurrentUser, authInvite, authRequest, authCallback, authDestroy, serviceHandler)
+		auth.Middleware.Skip(setCurrentUser, authInvite, authRequest, authSelect, authCallback, authDestroy, serviceHandler)
 
 		auth.POST("/invite", authInvite)
 
 		auth.POST("/login", authRequest)
+		auth.GET("/select", authSelect)
 
 		auth.GET("/callback", authCallback)  // for Oauth
 		auth.POST("/callback", authCallback) // for SAML
