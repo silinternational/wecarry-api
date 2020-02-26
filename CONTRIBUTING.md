@@ -120,7 +120,8 @@ err := domain.AppError{
 return c.Render(httpStatus, render.JSON(err))
 ```
 
-In addition, the error should be logged using `Error` or `ErrLogger.Printf`
+In addition, the error should be logged using `Error` or `ErrLogger.Printf`. For 
+auth-related errors, the helper `actions.authRequestError` is available.
 
 #### Internal error logging
 
