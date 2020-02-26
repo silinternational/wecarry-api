@@ -73,7 +73,7 @@ situations. For example:
 #### GraphQL error responses
 
 Errors occurring at the top level of a query or mutation, such as an authorization
-failure of an entire query, should present to the API client with an http OK (200)
+failure of an entire query, should present to the API client an http OK (200)
 response with an `errors` object in the response body. Internally, this is handled
 by the helper function `domain.ReportError`, which takes an `error` and a translation
 key like `"UpdateUser.NotFound"`. The `error` is logged to `stderr` and to Rollbar,
