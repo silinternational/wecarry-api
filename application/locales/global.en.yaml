@@ -35,8 +35,18 @@
 # MeetingInvite
 - id: CreateMeetingInvite.FindMeeting
   translation: We had a problem finding the meeting for the new invites
+- id: CreateMeetingInvite.Unauthorized
+  translation: You are not allowed to create invitations for that meeting
 - id: CreateMeetingInvite.ListInvites
   translation: We had a problem getting the list of invites after adding the new invites
+- id: RemoveMeetingInvite.FindMeeting
+  translation: We had a problem finding the meeting for the invite to be removed
+- id: RemoveMeetingInvite.Unauthorized
+  translation: You are not allowed to remove invitations for that meeting
+- id: RemoveMeetingInvite.ListInvites
+  translation: We had a problem getting the list of invites after removing the new invites
+- id: RemoveMeetingInvite
+  translation: We had a problem removing the meeting invite
 - id: MeetingInvite.Inviter
   translation: We had a problem getting the user profile of the inviter
 - id: MeetingInvite.Meeting

@@ -73,5 +73,5 @@ func (m *MeetingInvite) FindByMeetingIDAndEmail(meetingID int, email string) err
 }
 
 func (m *MeetingInvite) Destroy() error {
-	return m.Destroy()
+	return DB.Destroy(m)
 }

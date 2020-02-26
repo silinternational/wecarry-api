@@ -3,6 +3,7 @@ package actions
 import (
 	"fmt"
 	"strconv"
+	"testing"
 
 	"github.com/gofrs/uuid"
 
@@ -305,62 +306,143 @@ func (as *ActionSuite) Test_CreateMeetingInvites() {
 	const queryTemplate = `mutation { meetingInvites : createMeetingInvites(input: %s) { %s } }`
 
 	type testCase struct {
-		Name        string
-		Emails      []string
-		MeetingID   string
-		TestUser    models.User
-		GoodEmails  int
-		ExpectError string
+		name       string
+		emails     []string
+		meetingID  string
+		testUser   models.User
+		goodEmails int
+		wantErr    string
 	}
 
 	testCases := []testCase{
 		{
-			Name:        "empty list",
-			Emails:      []string{},
-			MeetingID:   f.Meetings[0].UUID.String(),
-			TestUser:    f.Users[0],
-			GoodEmails:  0,
-			ExpectError: "",
+			name:       "empty list",
+			emails:     []string{},
+			meetingID:  f.Meetings[0].UUID.String(),
+			testUser:   f.Users[0],
+			goodEmails: 0,
+			wantErr:    "",
 		},
 		{
-			Name:        "one good, one bad",
-			Emails:      []string{"email0@example.com", "email1example.com"},
-			MeetingID:   f.Meetings[0].UUID.String(),
-			TestUser:    f.Users[0],
-			GoodEmails:  1,
-			ExpectError: "email1example.com",
+			name:       "one good, one bad",
+			emails:     []string{"email0@example.com", "email1example.com"},
+			meetingID:  f.Meetings[0].UUID.String(),
+			testUser:   f.Users[0],
+			goodEmails: 1,
+			wantErr:    "email1example.com",
 		},
 		{
-			Name:        "all good",
-			Emails:      []string{"email0@example.com", "email1@example.com"},
-			MeetingID:   f.Meetings[0].UUID.String(),
-			TestUser:    f.Users[0],
-			GoodEmails:  2,
-			ExpectError: "",
+			name:       "all good",
+			emails:     []string{"email0@example.com", "email1@example.com"},
+			meetingID:  f.Meetings[0].UUID.String(),
+			testUser:   f.Users[0],
+			goodEmails: 2,
+			wantErr:    "",
+		},
+		{
+			name:      "not allowed",
+			emails:    []string{"email0@example.com", "email1@example.com"},
+			meetingID: f.Meetings[1].UUID.String(),
+			testUser:  f.Users[1],
+			wantErr:   "not allowed",
 		},
 	}
 
 	for _, tc := range testCases {
-		emails := ""
-		for _, e := range tc.Emails {
-			emails = emails + `"` + e + `" `
-		}
-		input := fmt.Sprintf(`{ meetingID: "%s" emails: [%+v] sendEmail: false }`, tc.MeetingID, emails)
+		as.T().Run(tc.name, func(t *testing.T) {
+			emails := ""
+			for _, e := range tc.emails {
+				emails = emails + `"` + e + `" `
+			}
+			input := fmt.Sprintf(`{ meetingID: "%s" emails: [%+v] sendEmail: false }`, tc.meetingID, emails)
 
-		query := fmt.Sprintf(queryTemplate, input, allMeetingInviteFields)
-		err := as.testGqlQuery(query, tc.TestUser.Nickname, &resp)
+			query := fmt.Sprintf(queryTemplate, input, allMeetingInviteFields)
+			err := as.testGqlQuery(query, tc.testUser.Nickname, &resp)
 
-		if tc.ExpectError != "" {
-			as.Error(err)
-			as.Contains(err.Error(), tc.ExpectError, "didn't get expected error message")
-		} else {
+			if tc.wantErr != "" {
+				as.Error(err)
+				as.Contains(err.Error(), tc.wantErr, "didn't get expected error message")
+				return
+			}
 			as.NoError(err)
-		}
-		as.Equal(tc.GoodEmails, len(resp.MeetingInvites))
-		for i := range resp.MeetingInvites {
-			as.Equal(resp.MeetingInvites[i].Email, "email"+strconv.Itoa(i)+"@example.com")
-			as.Equal(resp.MeetingInvites[i].Meeting.ID, f.Meetings[0].UUID.String())
-			as.Equal(resp.MeetingInvites[i].Inviter.ID, f.Users[0].UUID.String())
-		}
+			as.Equal(tc.goodEmails, len(resp.MeetingInvites))
+			for i := range resp.MeetingInvites {
+				as.Equal(resp.MeetingInvites[i].Email, "email"+strconv.Itoa(i)+"@example.com")
+				as.Equal(resp.MeetingInvites[i].Meeting.ID, f.Meetings[0].UUID.String())
+				as.Equal(resp.MeetingInvites[i].Inviter.ID, f.Users[0].UUID.String())
+			}
+		})
+	}
+}
+
+func (as *ActionSuite) Test_RemoveMeetingInvite() {
+	f := createFixturesForMeetings(as)
+
+	var resp meetingInvitesResponse
+
+	const queryTemplate = `mutation { meetingInvites : removeMeetingInvite(input: %s) { %s } }`
+
+	type testCase struct {
+		name           string
+		email          string
+		meetingID      string
+		testUser       models.User
+		responseEmails []string
+		wantErr        string
+	}
+
+	testCases := []testCase{
+		{
+			name:           "bad email",
+			email:          "not_invited@example.com",
+			meetingID:      f.Meetings[0].UUID.String(),
+			testUser:       f.Users[0],
+			responseEmails: []string{},
+			wantErr:        "problem removing the meeting invite",
+		},
+		{
+			name:           "not creator, not organizer",
+			email:          "invitee2@example.com",
+			meetingID:      f.Meetings[1].UUID.String(),
+			testUser:       f.Users[1],
+			responseEmails: []string{},
+			wantErr:        "not allowed",
+		},
+		{
+			name:           "creator",
+			email:          "invitee0@example.com",
+			meetingID:      f.Meetings[2].UUID.String(),
+			testUser:       f.Users[0],
+			responseEmails: []string{"invitee1@example.com"},
+		},
+		{
+			name:           "organizer",
+			email:          "invitee1@example.com",
+			meetingID:      f.Meetings[2].UUID.String(),
+			testUser:       f.Users[0],
+			responseEmails: []string{},
+		},
+	}
+
+	for _, tc := range testCases {
+		as.T().Run(tc.name, func(t *testing.T) {
+			input := fmt.Sprintf(`{ meetingID: "%s" email: "%s" }`, tc.meetingID, tc.email)
+
+			query := fmt.Sprintf(queryTemplate, input, allMeetingInviteFields)
+			err := as.testGqlQuery(query, tc.testUser.Nickname, &resp)
+
+			if tc.wantErr != "" {
+				as.Error(err)
+				as.Contains(err.Error(), tc.wantErr, "didn't get expected error message")
+				return
+			}
+			as.NoError(err)
+			as.Equal(len(tc.responseEmails), len(resp.MeetingInvites))
+			for i := range resp.MeetingInvites {
+				as.Equal(tc.responseEmails[i], resp.MeetingInvites[i].Email)
+				as.Equal(tc.meetingID, resp.MeetingInvites[i].Meeting.ID)
+				as.Equal(f.Users[0].UUID.String(), resp.MeetingInvites[i].Inviter.ID)
+			}
+		})
 	}
 }
