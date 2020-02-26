@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"sort"
 	"time"
 
 	"github.com/gobuffalo/buffalo"
@@ -159,11 +160,20 @@ func getSocialAuthSelectors() []authSelector {
 		return socialAuthSelectors
 	}
 	authConfigs := getSocialAuthConfigs()
+
+	// sort the provider types for ease of testing (avoid map's random order)
+	pTypes := []string{}
+	for pt, _ := range authConfigs {
+		pTypes = append(pTypes, pt)
+	}
+
+	sort.Strings(pTypes)
+
 	selectors := []authSelector{}
-	for pType, _ := range authConfigs {
+	for _, pt := range pTypes {
 		s := authSelector{
-			Name:        pType,
-			RedirectURL: fmt.Sprintf(AuthSelectPath, domain.Env.ApiBaseURL, AuthTypeParam, pType),
+			Name:        pt,
+			RedirectURL: fmt.Sprintf(AuthSelectPath, domain.Env.ApiBaseURL, AuthTypeParam, pt),
 		}
 		selectors = append(selectors, s)
 
