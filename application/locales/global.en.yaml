@@ -59,6 +59,14 @@
   translation: We had a problem finding the user data for the participant
 - id: MeetingParticipant.Invite
   translation: We had a problem finding the invite data for the participant
+- id: RemoveMeetingParticipant.FindMeeting
+  translation: We had a problem finding the meeting for the participant to be removed
+- id: RemoveMeetingParticipant.Unauthorized
+  translation: You are not allowed to remove particpants for that meeting
+- id: RemoveMeetingParticipant.ListParticipants
+  translation: We had a problem getting the list of participants after removing the participant
+- id: RemoveMeetingParticipant
+  translation: We had a problem removing the participant
 
 # Message
 - id: GetMessageSender

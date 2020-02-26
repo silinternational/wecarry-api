@@ -810,3 +810,7 @@ func (u *User) CanCreateMeetingInvite(ctx buffalo.Context, meeting Meeting) bool
 func (u *User) CanRemoveMeetingInvite(ctx buffalo.Context, meeting Meeting) bool {
 	return u.ID == meeting.CreatedByID || u.isMeetingOrganizer(ctx, meeting) || u.isSuperAdmin()
 }
+
+func (u *User) CanRemoveMeetingParticipant(ctx buffalo.Context, meeting Meeting) bool {
+	return u.ID == meeting.CreatedByID || u.isMeetingOrganizer(ctx, meeting) || u.isSuperAdmin()
+}

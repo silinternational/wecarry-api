@@ -140,7 +140,7 @@ func (as *ActionSuite) Test_MeetingQuery() {
 		as.Equal(f.MeetingInvites[i].Email, gotMtg.Invites[i].Email, "wrong email on invite")
 	}
 
-	as.Equal(2, len(gotMtg.Participants), "wrong number of participants")
+	as.Equal(3, len(gotMtg.Participants), "wrong number of participants")
 	for i := range gotMtg.Participants {
 		as.Equal(f.Users[i].UUID.String(), gotMtg.Participants[i].User.ID, "wrong user ID on participant")
 		as.Equal(testMtg.UUID.String(), gotMtg.Participants[i].Meeting.ID, "wrong meeting ID on participant")
@@ -442,6 +442,77 @@ func (as *ActionSuite) Test_RemoveMeetingInvite() {
 				as.Equal(tc.responseEmails[i], resp.MeetingInvites[i].Email)
 				as.Equal(tc.meetingID, resp.MeetingInvites[i].Meeting.ID)
 				as.Equal(f.Users[0].UUID.String(), resp.MeetingInvites[i].Inviter.ID)
+			}
+		})
+	}
+}
+
+func (as *ActionSuite) Test_RemoveMeetingParticipant() {
+	f := createFixturesForMeetings(as)
+
+	var resp meetingParticipantsResponse
+
+	const queryTemplate = `mutation { meetingParticipants : removeMeetingParticipant(input: %s) { %s } }`
+
+	type testCase struct {
+		name        string
+		userID      string
+		meetingID   string
+		testUser    models.User
+		responseIDs []string
+		wantErr     string
+	}
+
+	testCases := []testCase{
+		{
+			name:        "userID not a participant",
+			userID:      f.Users[0].UUID.String(),
+			meetingID:   f.Meetings[1].UUID.String(),
+			testUser:    f.Users[0],
+			responseIDs: []string{},
+			wantErr:     "problem removing the participant",
+		},
+		{
+			name:        "test user not creator, not organizer",
+			userID:      f.Users[1].UUID.String(),
+			meetingID:   f.Meetings[1].UUID.String(),
+			testUser:    f.Users[1],
+			responseIDs: []string{},
+			wantErr:     "not allowed",
+		},
+		{
+			name:        "test user is organizer, removing participant",
+			userID:      f.Users[2].UUID.String(),
+			meetingID:   f.Meetings[2].UUID.String(),
+			testUser:    f.Users[1],
+			responseIDs: []string{f.Users[0].UUID.String(), f.Users[1].UUID.String()},
+		},
+		{
+			name:        "test user is creator, removing organizer",
+			userID:      f.Users[1].UUID.String(),
+			meetingID:   f.Meetings[2].UUID.String(),
+			testUser:    f.Users[0],
+			responseIDs: []string{f.Users[0].UUID.String()},
+		},
+	}
+
+	for _, tc := range testCases {
+		as.T().Run(tc.name, func(t *testing.T) {
+			input := fmt.Sprintf(`{ meetingID: "%s" userID: "%s" }`, tc.meetingID, tc.userID)
+
+			query := fmt.Sprintf(queryTemplate, input, allMeetingParticipantFields)
+			err := as.testGqlQuery(query, tc.testUser.Nickname, &resp)
+
+			if tc.wantErr != "" {
+				as.Error(err)
+				as.Contains(err.Error(), tc.wantErr, "didn't get expected error message")
+				return
+			}
+			as.NoError(err)
+			as.Equal(len(tc.responseIDs), len(resp.MeetingParticipants))
+			for i := range resp.MeetingParticipants {
+				as.Equal(tc.responseIDs[i], resp.MeetingParticipants[i].User.ID)
+				as.Equal(tc.meetingID, resp.MeetingParticipants[i].Meeting.ID)
 			}
 		})
 	}
