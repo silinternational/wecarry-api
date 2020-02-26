@@ -107,7 +107,7 @@ func (r *meetingResolver) Posts(ctx context.Context, obj *models.Meeting) ([]mod
 	if obj == nil {
 		return nil, nil
 	}
-	posts, err := obj.GetPosts()
+	posts, err := obj.Posts()
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "Meeting.Posts")
 	}

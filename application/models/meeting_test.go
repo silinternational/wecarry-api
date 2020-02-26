@@ -526,7 +526,7 @@ func (ms *ModelSuite) TestMeeting_GetPosts() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			got, err := tt.meeting.GetPosts()
+			got, err := tt.meeting.Posts()
 			if tt.wantErr != "" {
 				ms.Error(err, "did not get expected error")
 				ms.Contains(err.Error(), tt.wantErr)
