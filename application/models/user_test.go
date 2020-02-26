@@ -94,6 +94,50 @@ func (ms *ModelSuite) TestUser_FindOrCreateFromAuthUser() {
 	}
 }
 
+func (ms *ModelSuite) TestUser_FindOrCreateFromOrglessAuthUser() {
+	t := ms.T()
+
+	_ = createUserFixtures(ms.DB, 2)
+
+	unique := domain.GetUUID().String()
+
+	tests := []struct {
+		name     string
+		authType string
+		authUser *auth.User
+	}{
+		{
+			name:     "create new user: test_user1",
+			authType: AuthTypeFacebook,
+			authUser: &auth.User{
+				FirstName: "Test",
+				LastName:  "User",
+				Email:     fmt.Sprintf("test_user1-%s@domain.com", unique),
+				UserID:    fmt.Sprintf("test_user1-%s", unique),
+			},
+		},
+		{
+			name:     "find existing user: test_user1",
+			authType: AuthTypeFacebook,
+			authUser: &auth.User{
+				FirstName: "Test",
+				LastName:  "User",
+				Email:     fmt.Sprintf("test_user1-%s@domain.com", unique),
+				UserID:    fmt.Sprintf("test_user1-%s", unique),
+			},
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			u := &User{}
+			err := u.FindOrCreateFromOrglessAuthUser(tc.authUser, tc.authType)
+			ms.NoError(err, "unexpected error")
+			ms.True(u.ID != 0, "Did not get a new user ID")
+			ms.Equal(tc.authType, u.SocialAuthProvider.String, "incorrect SocialAuthProvider.")
+		})
+	}
+}
+
 func (ms *ModelSuite) TestUser_Validate() {
 	t := ms.T()
 	tests := []struct {

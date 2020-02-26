@@ -263,7 +263,8 @@ func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
 	return nil
 }
 
-// TODO COMMENT AND TEST
+// FindOrCreateFromOrglessAuthUser creates a new User based on an auth.User and
+// sets its SocialAuthProvider field so they can login again in future.
 func (u *User) FindOrCreateFromOrglessAuthUser(authUser *auth.User, authType string) error {
 
 	if err := DB.Where("email = ?", authUser.Email).First(u); err != nil {
