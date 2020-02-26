@@ -63,7 +63,6 @@ type User struct {
 	PhotoFileID       nulls.Int         `json:"photo_file_id" db:"photo_file_id"`
 	AuthPhotoURL      nulls.String      `json:"auth_photo_url" db:"auth_photo_url"`
 	LocationID        nulls.Int         `json:"location_id" db:"location_id"`
-	AccessTokens      []UserAccessToken `has_many:"user_access_tokens" json:"-"`
 	Organizations     Organizations     `many_to_many:"user_organizations" order_by:"name asc" json:"-"`
 	UserOrganizations UserOrganizations `has_many:"user_organizations" json:"-"`
 	UserPreferences   UserPreferences   `has_many:"user_preferences" json:"-"`
