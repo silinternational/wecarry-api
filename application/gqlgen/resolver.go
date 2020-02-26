@@ -5,6 +5,7 @@ package gqlgen
 import (
 	"context"
 
+	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 )
 
@@ -44,7 +45,7 @@ func (m *meetingInviteResolver) Meeting(ctx context.Context, obj *models.Meeting
 
 	mtg, err := obj.Meeting()
 	if err != nil {
-		return nil, reportError(ctx, err, "MeetingInvite.Meeting")
+		return nil, domain.ReportError(ctx, err, "MeetingInvite.Meeting")
 	}
 	return &mtg, nil
 }
@@ -56,7 +57,7 @@ func (m *meetingInviteResolver) Inviter(ctx context.Context, obj *models.Meeting
 
 	inviter, err := obj.Inviter()
 	if err != nil {
-		return nil, reportError(ctx, err, "MeetingInvite.Inviter")
+		return nil, domain.ReportError(ctx, err, "MeetingInvite.Inviter")
 	}
 
 	return getPublicProfile(ctx, &inviter), nil
@@ -77,7 +78,7 @@ func (m *meetingParticipantResolver) Meeting(ctx context.Context, obj *models.Me
 
 	mtg, err := obj.Meeting()
 	if err != nil {
-		return nil, reportError(ctx, err, "MeetingParticipant.Meeting")
+		return nil, domain.ReportError(ctx, err, "MeetingParticipant.Meeting")
 	}
 	return &mtg, err
 }
@@ -89,7 +90,7 @@ func (m *meetingParticipantResolver) User(ctx context.Context, obj *models.Meeti
 
 	user, err := obj.User()
 	if err != nil {
-		return nil, reportError(ctx, err, "MeetingParticipant.User")
+		return nil, domain.ReportError(ctx, err, "MeetingParticipant.User")
 	}
 
 	return &user, nil
@@ -104,7 +105,7 @@ func (m *meetingParticipantResolver) Invite(ctx context.Context, obj *models.Mee
 
 	inv, err := obj.Invite()
 	if err != nil {
-		return nil, reportError(ctx, err, "MeetingParticipant.Invite")
+		return nil, domain.ReportError(ctx, err, "MeetingParticipant.Invite")
 	}
 
 	return inv, nil

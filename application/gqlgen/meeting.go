@@ -35,7 +35,7 @@ func (r *meetingResolver) CreatedBy(ctx context.Context, obj *models.Meeting) (*
 
 	creator, err := obj.GetCreator()
 	if err != nil {
-		return nil, reportError(ctx, err, "GetMeetingCreator")
+		return nil, domain.ReportError(ctx, err, "GetMeetingCreator")
 	}
 
 	return getPublicProfile(ctx, creator), nil
@@ -57,7 +57,7 @@ func (r *meetingResolver) Location(ctx context.Context, obj *models.Meeting) (*m
 
 	location, err := obj.GetLocation()
 	if err != nil {
-		return &models.Location{}, reportError(ctx, err, "GetMeetingLocation")
+		return &models.Location{}, domain.ReportError(ctx, err, "GetMeetingLocation")
 	}
 
 	return &location, nil
@@ -97,7 +97,7 @@ func (r *meetingResolver) ImageFile(ctx context.Context, obj *models.Meeting) (*
 
 	image, err := obj.GetImage()
 	if err != nil {
-		return nil, reportError(ctx, err, "GetMeetingImage")
+		return nil, domain.ReportError(ctx, err, "GetMeetingImage")
 	}
 
 	return image, nil
@@ -109,7 +109,7 @@ func (r *meetingResolver) Posts(ctx context.Context, obj *models.Meeting) ([]mod
 	}
 	posts, err := obj.GetPosts()
 	if err != nil {
-		return nil, reportError(ctx, err, "Meeting.Posts")
+		return nil, domain.ReportError(ctx, err, "Meeting.Posts")
 	}
 	return posts, nil
 }
@@ -118,9 +118,9 @@ func (r *meetingResolver) Invites(ctx context.Context, obj *models.Meeting) ([]m
 	if obj == nil {
 		return nil, nil
 	}
-	invites, err := obj.Invites(models.GetBuffaloContextFromGqlContext(ctx))
+	invites, err := obj.Invites(domain.GetBuffaloContextFromGqlContext(ctx))
 	if err != nil {
-		return nil, reportError(ctx, err, "Meeting.Invites")
+		return nil, domain.ReportError(ctx, err, "Meeting.Invites")
 	}
 	return invites, nil
 }
@@ -129,9 +129,9 @@ func (r *meetingResolver) Participants(ctx context.Context, obj *models.Meeting)
 	if obj == nil {
 		return nil, nil
 	}
-	participants, err := obj.Participants(models.GetBuffaloContextFromGqlContext(ctx))
+	participants, err := obj.Participants(domain.GetBuffaloContextFromGqlContext(ctx))
 	if err != nil {
-		return nil, reportError(ctx, err, "Meeting.Participants")
+		return nil, domain.ReportError(ctx, err, "Meeting.Participants")
 	}
 	return participants, nil
 }
@@ -144,7 +144,7 @@ func (r *meetingResolver) Organizers(ctx context.Context, obj *models.Meeting) (
 	if obj == nil {
 		return nil, nil
 	}
-	users, err := obj.Organizers(models.GetBuffaloContextFromGqlContext(ctx))
+	users, err := obj.Organizers(domain.GetBuffaloContextFromGqlContext(ctx))
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +157,7 @@ func (r *queryResolver) Meetings(ctx context.Context, endAfter, endBefore, start
 	meetings := models.Meetings{}
 	if err := meetings.FindOnOrAfterDate(time.Now()); err != nil {
 		extras := map[string]interface{}{}
-		return nil, reportError(ctx, err, "GetMeetings", extras)
+		return nil, domain.ReportError(ctx, err, "GetMeetings", extras)
 	}
 
 	return meetings, nil
@@ -169,7 +169,7 @@ func (r *queryResolver) RecentMeetings(ctx context.Context) ([]models.Meeting, e
 	meetings := models.Meetings{}
 	if err := meetings.FindRecent(time.Now()); err != nil {
 		extras := map[string]interface{}{}
-		return nil, reportError(ctx, err, "GetRecentMeetings", extras)
+		return nil, domain.ReportError(ctx, err, "GetRecentMeetings", extras)
 	}
 
 	return meetings, nil
@@ -183,7 +183,7 @@ func (r *queryResolver) Meeting(ctx context.Context, id *string) (*models.Meetin
 	var meeting models.Meeting
 	if err := meeting.FindByUUID(*id); err != nil {
 		extras := map[string]interface{}{}
-		return nil, reportError(ctx, err, "GetMeeting", extras)
+		return nil, domain.ReportError(ctx, err, "GetMeeting", extras)
 	}
 
 	return &meeting, nil
@@ -261,21 +261,21 @@ func (r *mutationResolver) CreateMeeting(ctx context.Context, input meetingInput
 
 	meeting, err := convertGqlMeetingInputToDBMeeting(ctx, input, cUser)
 	if err != nil {
-		return nil, reportError(ctx, err, "CreateMeeting.ProcessInput", extras)
+		return nil, domain.ReportError(ctx, err, "CreateMeeting.ProcessInput", extras)
 	}
 
 	if !meeting.CanCreate(cUser) {
-		return nil, reportError(ctx, err, "CreateMeeting.Unauthorized", extras)
+		return nil, domain.ReportError(ctx, err, "CreateMeeting.Unauthorized", extras)
 	}
 
 	location := convertLocation(*input.Location)
 	if err = location.Create(); err != nil {
-		return nil, reportError(ctx, err, "CreateMeeting.SetLocation", extras)
+		return nil, domain.ReportError(ctx, err, "CreateMeeting.SetLocation", extras)
 	}
 	meeting.LocationID = location.ID
 
 	if err = meeting.Create(); err != nil {
-		return nil, reportError(ctx, err, "CreateMeeting", extras)
+		return nil, domain.ReportError(ctx, err, "CreateMeeting", extras)
 	}
 
 	return &meeting, nil
@@ -290,20 +290,20 @@ func (r *mutationResolver) UpdateMeeting(ctx context.Context, input meetingInput
 
 	meeting, err := convertGqlMeetingInputToDBMeeting(ctx, input, cUser)
 	if err != nil {
-		return nil, reportError(ctx, err, "UpdateMeeting.ProcessInput", extras)
+		return nil, domain.ReportError(ctx, err, "UpdateMeeting.ProcessInput", extras)
 	}
 
 	if !meeting.CanUpdate(cUser) {
-		return nil, reportError(ctx, err, "UpdateMeeting.Unauthorized", extras)
+		return nil, domain.ReportError(ctx, err, "UpdateMeeting.Unauthorized", extras)
 	}
 
 	if err := meeting.Update(); err != nil {
-		return nil, reportError(ctx, err, "UpdateMeeting", extras)
+		return nil, domain.ReportError(ctx, err, "UpdateMeeting", extras)
 	}
 
 	if input.Location != nil {
 		if err = meeting.SetLocation(convertLocation(*input.Location)); err != nil {
-			return nil, reportError(ctx, err, "UpdateMeeting.SetLocation", extras)
+			return nil, domain.ReportError(ctx, err, "UpdateMeeting.SetLocation", extras)
 		}
 	}
 
