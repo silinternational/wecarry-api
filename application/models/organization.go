@@ -178,8 +178,8 @@ func (orgs *Organizations) AllWhereUserIsOrgAdmin(cUser User) error {
 		All(orgs)
 }
 
-// GetDomains finds and returns all related OrganizationDomain rows.
-func (o *Organization) GetDomains() ([]OrganizationDomain, error) {
+// Domains finds and returns all related OrganizationDomain rows.
+func (o *Organization) Domains() ([]OrganizationDomain, error) {
 	if err := DB.Load(o, "OrganizationDomains"); err != nil {
 		return nil, err
 	}

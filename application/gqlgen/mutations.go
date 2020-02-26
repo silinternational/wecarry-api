@@ -105,7 +105,7 @@ func (r *mutationResolver) CreateOrganizationDomain(ctx context.Context, input C
 		return nil, domain.ReportError(ctx, err, "CreateOrganizationDomain", extras)
 	}
 
-	domains, err2 := org.GetDomains()
+	domains, err2 := org.Domains()
 	if err2 != nil {
 		// don't return an error since the AddDomain operation succeeded
 		_ = domain.ReportError(ctx, err2, "", extras)
@@ -142,7 +142,7 @@ func (r *mutationResolver) UpdateOrganizationDomain(ctx context.Context, input C
 		return nil, domain.ReportError(ctx, err, "UpdateOrganizationDomain.SaveError", extras)
 	}
 
-	domains, err2 := org.GetDomains()
+	domains, err2 := org.Domains()
 	if err2 != nil {
 		// don't return an error since the operation succeeded
 		_ = domain.ReportError(ctx, err2, "", extras)
@@ -172,7 +172,7 @@ func (r *mutationResolver) RemoveOrganizationDomain(ctx context.Context, input R
 		return nil, domain.ReportError(ctx, err, "RemoveOrganizationDomain", extras)
 	}
 
-	domains, err2 := org.GetDomains()
+	domains, err2 := org.Domains()
 	if err2 != nil {
 		// don't return an error since the RemoveDomain operation succeeded
 		_ = domain.ReportError(ctx, err2, "", extras)
