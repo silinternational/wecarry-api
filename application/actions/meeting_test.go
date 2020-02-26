@@ -361,9 +361,8 @@ func (as *ActionSuite) Test_CreateMeetingInvites() {
 			as.Error(err)
 			as.Contains(err.Error(), tc.ExpectError, "didn't get expected error message")
 			continue
-		} else {
-			as.NoError(err)
 		}
+		as.NoError(err)
 		as.Equal(tc.GoodEmails, len(resp.MeetingInvites))
 		for i := range resp.MeetingInvites {
 			as.Equal(resp.MeetingInvites[i].Email, "email"+strconv.Itoa(i)+"@example.com")
@@ -432,9 +431,8 @@ func (as *ActionSuite) Test_RemoveMeetingInvite() {
 			as.Error(err)
 			as.Contains(err.Error(), tc.ExpectError, "didn't get expected error message")
 			continue
-		} else {
-			as.NoError(err)
 		}
+		as.NoError(err)
 		as.Equal(len(tc.ResponseEmails), len(resp.MeetingInvites))
 		for i := range resp.MeetingInvites {
 			as.Equal(tc.ResponseEmails[i], resp.MeetingInvites[i].Email)
