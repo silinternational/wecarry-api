@@ -25,7 +25,7 @@ func (r *threadResolver) Participants(ctx context.Context, obj *models.Thread) (
 
 	participants, err := obj.GetParticipants()
 	if err != nil {
-		return nil, reportError(ctx, err, "GetThreadParticipants")
+		return nil, domain.ReportError(ctx, err, "GetThreadParticipants")
 	}
 
 	return getPublicProfiles(ctx, participants), nil
@@ -51,7 +51,7 @@ func (r *threadResolver) LastViewedAt(ctx context.Context, obj *models.Thread) (
 		extras := map[string]interface{}{
 			"user": currentUser.UUID,
 		}
-		return nil, reportError(ctx, err, "GetThreadLastViewedAt", extras)
+		return nil, domain.ReportError(ctx, err, "GetThreadLastViewedAt", extras)
 	}
 
 	return lastViewedAt, nil
@@ -66,7 +66,7 @@ func (r *threadResolver) Messages(ctx context.Context, obj *models.Thread) ([]mo
 
 	messages, err := obj.GetMessages()
 	if err != nil {
-		return nil, reportError(ctx, err, "GetThreadMessages")
+		return nil, domain.ReportError(ctx, err, "GetThreadMessages")
 	}
 
 	return messages, nil
@@ -80,7 +80,7 @@ func (r *threadResolver) PostID(ctx context.Context, obj *models.Thread) (string
 
 	post, err := obj.GetPost()
 	if err != nil {
-		return "", reportError(ctx, err, "GetThreadPostID")
+		return "", domain.ReportError(ctx, err, "GetThreadPostID")
 	}
 
 	return post.UUID.String(), nil
@@ -94,7 +94,7 @@ func (r *threadResolver) Post(ctx context.Context, obj *models.Thread) (*models.
 
 	post, err := obj.GetPost()
 	if err != nil {
-		return nil, reportError(ctx, err, "GetThreadPost")
+		return nil, domain.ReportError(ctx, err, "GetThreadPost")
 	}
 
 	return post, nil
@@ -109,19 +109,19 @@ func (r *threadResolver) UnreadMessageCount(ctx context.Context, obj *models.Thr
 
 	lastViewedAt, err := obj.GetLastViewedAt(user)
 	if err != nil {
-		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx), err.Error())
+		domain.Warn(domain.GetBuffaloContextFromGqlContext(ctx), err.Error())
 		return 0, nil
 	}
 
 	if lastViewedAt == nil {
-		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx),
+		domain.Warn(domain.GetBuffaloContextFromGqlContext(ctx),
 			fmt.Sprintf("lastViewedAt nil for user %v on thread %v", user.ID, obj.ID))
 		return 0, nil
 	}
 
 	count, err2 := obj.UnreadMessageCount(user.ID, *lastViewedAt)
 	if err2 != nil {
-		domain.Warn(models.GetBuffaloContextFromGqlContext(ctx), err2.Error())
+		domain.Warn(domain.GetBuffaloContextFromGqlContext(ctx), err2.Error())
 		return 0, nil
 	}
 	return count, nil
@@ -132,7 +132,7 @@ func (r *queryResolver) Threads(ctx context.Context) ([]models.Thread, error) {
 	threads := models.Threads{}
 
 	if err := threads.All(); err != nil {
-		return nil, reportError(ctx, err, "GetThreads")
+		return nil, domain.ReportError(ctx, err, "GetThreads")
 	}
 
 	return threads, nil
@@ -147,7 +147,7 @@ func (r *queryResolver) MyThreads(ctx context.Context) ([]models.Thread, error) 
 		extras := map[string]interface{}{
 			"user": currentUser.UUID,
 		}
-		return nil, reportError(ctx, err, "GetMyThreads", extras)
+		return nil, domain.ReportError(ctx, err, "GetMyThreads", extras)
 	}
 
 	return threads, nil

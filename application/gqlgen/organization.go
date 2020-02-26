@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 )
 
@@ -23,7 +24,7 @@ func (r *queryResolver) Organizations(ctx context.Context) ([]models.Organizatio
 	// get list of orgs that cUser is allowed to see
 	orgs := models.Organizations{}
 	if err := orgs.AllWhereUserIsOrgAdmin(cUser); err != nil {
-		return orgs, reportError(ctx, err, "ListOrganizations.Error", extras)
+		return orgs, domain.ReportError(ctx, err, "ListOrganizations.Error", extras)
 	}
 
 	return orgs, nil
@@ -38,14 +39,14 @@ func (r *queryResolver) Organization(ctx context.Context, id *string) (*models.O
 
 	org := &models.Organization{}
 	if err := org.FindByUUID(*id); err != nil {
-		return org, reportError(ctx, err, "ViewOrganization.Error", extras)
+		return org, domain.ReportError(ctx, err, "ViewOrganization.Error", extras)
 	}
 
 	if org.ID != 0 && cUser.CanViewOrganization(org.ID) {
 		return org, nil
 	}
 
-	return &models.Organization{}, reportError(ctx, errors.New("user not allowed to view organization"),
+	return &models.Organization{}, domain.ReportError(ctx, errors.New("user not allowed to view organization"),
 		"ViewOrganization.NotFound", extras)
 }
 
@@ -73,7 +74,7 @@ func (r *organizationResolver) Domains(ctx context.Context, obj *models.Organiza
 
 	domains, err := obj.GetDomains()
 	if err != nil {
-		return nil, reportError(ctx, err, "GetOrganizationDomains")
+		return nil, domain.ReportError(ctx, err, "GetOrganizationDomains")
 	}
 
 	return domains, nil
@@ -87,7 +88,7 @@ func (r *organizationResolver) LogoURL(ctx context.Context, obj *models.Organiza
 
 	logoURL, err := obj.LogoURL()
 	if err != nil {
-		return nil, reportError(ctx, err, "GetOrganizationLogoURL")
+		return nil, domain.ReportError(ctx, err, "GetOrganizationLogoURL")
 	}
 
 	return logoURL, nil
@@ -101,7 +102,7 @@ func (r *organizationResolver) TrustedOrganizations(ctx context.Context, obj *mo
 
 	organizations, err := obj.TrustedOrganizations()
 	if err != nil {
-		return nil, reportError(ctx, err, "GetOrganizationTrustedOrganizations")
+		return nil, domain.ReportError(ctx, err, "GetOrganizationTrustedOrganizations")
 	}
 
 	return organizations, nil

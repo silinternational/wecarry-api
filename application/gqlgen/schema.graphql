@@ -169,13 +169,18 @@ type User {
     createdAt: Time!
     updatedAt: Time!
     adminRole: UserAdminRole
-    organizations: [Organization!]!
-    posts(role: PostRole!): [Post!]!
+    "avatarURL is generated from an attached photo if present, an external URL if present, or a Gravatar URL"
     avatarURL: String
+    "`File` ID of the user's photo, if present"
     photoID: String
     preferences: UserPreferences
+    "user's home location"
     location: Location
     unreadMessageCount: Int!
+    organizations: [Organization!]!
+    posts(role: PostRole!): [Post!]!
+    "meetings in which the user is a participant"
+    meetingsAsParticipant: [Meeting!]!
 }
 
 type UserPreferences {
