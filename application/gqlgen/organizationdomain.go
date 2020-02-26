@@ -3,6 +3,7 @@ package gqlgen
 import (
 	"context"
 
+	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 )
 
@@ -21,7 +22,7 @@ func (r *organizationDomainResolver) OrganizationID(ctx context.Context, obj *mo
 
 	id, err := obj.GetOrganizationUUID()
 	if err != nil {
-		return "", reportError(ctx, err, "GetOrganizationDomainOrganizationID")
+		return "", domain.ReportError(ctx, err, "GetOrganizationDomainOrganizationID")
 	}
 
 	return id, nil

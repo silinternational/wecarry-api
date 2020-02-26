@@ -34,7 +34,7 @@ func (r *postResolver) CreatedBy(ctx context.Context, obj *models.Post) (*Public
 
 	creator, err := obj.GetCreator()
 	if err != nil {
-		return nil, reportError(ctx, err, "GetPostCreator")
+		return nil, domain.ReportError(ctx, err, "GetPostCreator")
 	}
 
 	return getPublicProfile(ctx, creator), nil
@@ -48,7 +48,7 @@ func (r *postResolver) Receiver(ctx context.Context, obj *models.Post) (*PublicP
 
 	receiver, err := obj.GetReceiver()
 	if err != nil {
-		return nil, reportError(ctx, err, "GetPostReceiver")
+		return nil, domain.ReportError(ctx, err, "GetPostReceiver")
 	}
 
 	return getPublicProfile(ctx, receiver), nil
@@ -62,7 +62,7 @@ func (r *postResolver) Provider(ctx context.Context, obj *models.Post) (*PublicP
 
 	provider, err := obj.GetProvider()
 	if err != nil {
-		return nil, reportError(ctx, err, "GetPostProvider")
+		return nil, domain.ReportError(ctx, err, "GetPostProvider")
 	}
 
 	return getPublicProfile(ctx, provider), nil
@@ -77,7 +77,7 @@ func (r *postResolver) PotentialProviders(ctx context.Context, obj *models.Post)
 
 	providers, err := obj.GetPotentialProviders()
 	if err != nil {
-		return nil, reportError(ctx, err, "GetPotentialProviders")
+		return nil, domain.ReportError(ctx, err, "GetPotentialProviders")
 	}
 
 	profiles := getPublicProfiles(ctx, providers)
@@ -93,7 +93,7 @@ func (r *postResolver) Organization(ctx context.Context, obj *models.Post) (*mod
 
 	organization, err := obj.GetOrganization()
 	if err != nil {
-		return nil, reportError(ctx, err, "GetPostOrganization")
+		return nil, domain.ReportError(ctx, err, "GetPostOrganization")
 	}
 
 	return organization, nil
@@ -133,7 +133,7 @@ func (r *postResolver) Destination(ctx context.Context, obj *models.Post) (*mode
 
 	destination, err := obj.GetDestination()
 	if err != nil {
-		return nil, reportError(ctx, err, "GetPostDestination")
+		return nil, domain.ReportError(ctx, err, "GetPostDestination")
 	}
 
 	return destination, nil
@@ -147,7 +147,7 @@ func (r *postResolver) Origin(ctx context.Context, obj *models.Post) (*models.Lo
 
 	origin, err := obj.GetOrigin()
 	if err != nil {
-		return nil, reportError(ctx, err, "GetPostOrigin")
+		return nil, domain.ReportError(ctx, err, "GetPostOrigin")
 	}
 
 	return origin, nil
@@ -165,7 +165,7 @@ func (r *postResolver) Threads(ctx context.Context, obj *models.Post) ([]models.
 		extras := map[string]interface{}{
 			"user": user.UUID,
 		}
-		return nil, reportError(ctx, err, "GetPostThreads", extras)
+		return nil, domain.ReportError(ctx, err, "GetPostThreads", extras)
 	}
 
 	return threads, nil
@@ -199,7 +199,7 @@ func (r *postResolver) Photo(ctx context.Context, obj *models.Post) (*models.Fil
 
 	photo, err := obj.GetPhoto()
 	if err != nil {
-		return nil, reportError(ctx, err, "GetPostPhoto")
+		return nil, domain.ReportError(ctx, err, "GetPostPhoto")
 	}
 
 	return photo, nil
@@ -217,7 +217,7 @@ func (r *postResolver) PhotoID(ctx context.Context, obj *models.Post) (*string, 
 
 	photoID, err := obj.GetPhotoID()
 	if err != nil {
-		return nil, reportError(ctx, err, "GetUserPhotoID")
+		return nil, domain.ReportError(ctx, err, "GetUserPhotoID")
 	}
 
 	return photoID, nil
@@ -230,7 +230,7 @@ func (r *postResolver) Files(ctx context.Context, obj *models.Post) ([]models.Fi
 	}
 	files, err := obj.GetFiles()
 	if err != nil {
-		return nil, reportError(ctx, err, "GetPostFiles")
+		return nil, domain.ReportError(ctx, err, "GetPostFiles")
 	}
 
 	return files, nil
@@ -244,7 +244,7 @@ func (r *postResolver) Meeting(ctx context.Context, obj *models.Post) (*models.M
 
 	meeting, err := obj.Meeting()
 	if err != nil {
-		return nil, reportError(ctx, err, "GetPostMeeting")
+		return nil, domain.ReportError(ctx, err, "GetPostMeeting")
 	}
 
 	return meeting, nil
@@ -272,7 +272,7 @@ func (r *queryResolver) Posts(ctx context.Context, destination, origin *Location
 		extras := map[string]interface{}{
 			"user": cUser.UUID,
 		}
-		return nil, reportError(ctx, err, "GetPosts", extras)
+		return nil, domain.ReportError(ctx, err, "GetPosts", extras)
 	}
 
 	return posts, nil
@@ -289,7 +289,7 @@ func (r *queryResolver) Post(ctx context.Context, id *string) (*models.Post, err
 		extras := map[string]interface{}{
 			"user": cUser.UUID,
 		}
-		return nil, reportError(ctx, err, "GetPost", extras)
+		return nil, domain.ReportError(ctx, err, "GetPost", extras)
 	}
 
 	return &post, nil
@@ -399,24 +399,24 @@ func (r *mutationResolver) CreatePost(ctx context.Context, input postInput) (*mo
 
 	post, err := convertGqlPostInputToDBPost(ctx, input, cUser)
 	if err != nil {
-		return nil, reportError(ctx, err, "CreatePost.ProcessInput", extras)
+		return nil, domain.ReportError(ctx, err, "CreatePost.ProcessInput", extras)
 	}
 
 	if !post.MeetingID.Valid {
 		dest := convertLocation(*input.Destination)
 		if err = dest.Create(); err != nil {
-			return nil, reportError(ctx, err, "CreatePost.SetDestination", extras)
+			return nil, domain.ReportError(ctx, err, "CreatePost.SetDestination", extras)
 		}
 		post.DestinationID = dest.ID
 	}
 
 	if err = post.Create(); err != nil {
-		return nil, reportError(ctx, err, "CreatePost", extras)
+		return nil, domain.ReportError(ctx, err, "CreatePost", extras)
 	}
 
 	if input.Origin != nil {
 		if err = post.SetOrigin(convertLocation(*input.Origin)); err != nil {
-			return nil, reportError(ctx, err, "CreatePost.SetOrigin", extras)
+			return nil, domain.ReportError(ctx, err, "CreatePost.SetOrigin", extras)
 		}
 	}
 
@@ -432,35 +432,35 @@ func (r *mutationResolver) UpdatePost(ctx context.Context, input postInput) (*mo
 
 	post, err := convertGqlPostInputToDBPost(ctx, input, cUser)
 	if err != nil {
-		return nil, reportError(ctx, err, "UpdatePost.ProcessInput", extras)
+		return nil, domain.ReportError(ctx, err, "UpdatePost.ProcessInput", extras)
 	}
 
 	var dbPost models.Post
 	_ = dbPost.FindByID(post.ID)
 	if editable, err := dbPost.IsEditable(cUser); err != nil {
-		return nil, reportError(ctx, err, "UpdatePost.GetEditable", extras)
+		return nil, domain.ReportError(ctx, err, "UpdatePost.GetEditable", extras)
 	} else if !editable {
-		return nil, reportError(ctx, errors.New("attempt to update a non-editable post"),
+		return nil, domain.ReportError(ctx, errors.New("attempt to update a non-editable post"),
 			"UpdatePost.NotEditable", extras)
 	}
 
 	if err := post.Update(); err != nil {
-		return nil, reportError(ctx, err, "UpdatePost", extras)
+		return nil, domain.ReportError(ctx, err, "UpdatePost", extras)
 	}
 
 	if input.Destination != nil {
 		if err := post.SetDestination(convertLocation(*input.Destination)); err != nil {
-			return nil, reportError(ctx, err, "UpdatePost.SetDestination", extras)
+			return nil, domain.ReportError(ctx, err, "UpdatePost.SetDestination", extras)
 		}
 	}
 
 	if input.Origin == nil {
 		if err := post.RemoveOrigin(); err != nil {
-			return nil, reportError(ctx, err, "UpdatePost.RemoveOrigin", extras)
+			return nil, domain.ReportError(ctx, err, "UpdatePost.RemoveOrigin", extras)
 		}
 	} else {
 		if err := post.SetOrigin(convertLocation(*input.Origin)); err != nil {
-			return nil, reportError(ctx, err, "UpdatePost.SetOrigin", extras)
+			return nil, domain.ReportError(ctx, err, "UpdatePost.SetOrigin", extras)
 		}
 	}
 
@@ -471,7 +471,7 @@ func (r *mutationResolver) UpdatePost(ctx context.Context, input postInput) (*mo
 func (r *mutationResolver) UpdatePostStatus(ctx context.Context, input UpdatePostStatusInput) (*models.Post, error) {
 	var post models.Post
 	if err := post.FindByUUID(input.ID); err != nil {
-		return nil, reportError(ctx, err, "UpdatePostStatus.FindPost")
+		return nil, domain.ReportError(ctx, err, "UpdatePostStatus.FindPost")
 	}
 
 	cUser := models.GetCurrentUserFromGqlContext(ctx)
@@ -482,21 +482,21 @@ func (r *mutationResolver) UpdatePostStatus(ctx context.Context, input UpdatePos
 	}
 
 	if !cUser.CanUpdatePostStatus(post, input.Status) {
-		return nil, reportError(ctx, errors.New("not allowed to change post status"),
+		return nil, domain.ReportError(ctx, errors.New("not allowed to change post status"),
 			"UpdatePostStatus.Unauthorized", extras)
 	}
 
 	if err := post.SetProviderWithStatus(input.Status, input.ProviderUserID); err != nil {
-		return nil, reportError(ctx, errors.New("error setting provider with status: "+err.Error()),
+		return nil, domain.ReportError(ctx, errors.New("error setting provider with status: "+err.Error()),
 			"UpdatePostStatus.SetProvider", extras)
 	}
 
 	if err := post.Update(); err != nil {
-		return nil, reportError(ctx, err, "UpdatePostStatus", extras)
+		return nil, domain.ReportError(ctx, err, "UpdatePostStatus", extras)
 	}
 
 	if err := post.DestroyPotentialProviders(input.Status, cUser); err != nil {
-		return nil, reportError(ctx, errors.New("error destroying post's potential providers: "+err.Error()),
+		return nil, domain.ReportError(ctx, errors.New("error destroying post's potential providers: "+err.Error()),
 			"UpdatePostStatus.DestroyPotentialProviders", extras)
 	}
 
@@ -508,23 +508,23 @@ func (r *mutationResolver) AddMeAsPotentialProvider(ctx context.Context, postID 
 
 	var post models.Post
 	if err := post.FindByUUIDForCurrentUser(postID, cUser); err != nil {
-		return nil, reportError(ctx, err, "AddMeAsPotentialProvider.FindPost")
+		return nil, domain.ReportError(ctx, err, "AddMeAsPotentialProvider.FindPost")
 	}
 
 	if post.Status != models.PostStatusOpen {
-		return nil, reportError(ctx, errors.New(
+		return nil, domain.ReportError(ctx, errors.New(
 			"Can only create PotentialProvider for a Post that has Status=Open. Got "+post.Status.String()),
 			"AddMeAsPotentialProvider.BadPostStatus")
 	}
 
 	var provider models.PotentialProvider
 	if err := provider.NewWithPostUUID(postID, cUser.ID); err != nil {
-		return nil, reportError(ctx, errors.New("error preparing potential provider: "+err.Error()),
+		return nil, domain.ReportError(ctx, errors.New("error preparing potential provider: "+err.Error()),
 			"AddMeAsPotentialProvider")
 	}
 
 	if err := provider.Create(); err != nil {
-		return nil, reportError(ctx, errors.New("error creating potential provider: "+err.Error()),
+		return nil, domain.ReportError(ctx, errors.New("error creating potential provider: "+err.Error()),
 			"AddMeAsPotentialProvider")
 	}
 
@@ -537,13 +537,13 @@ func (r *mutationResolver) RemoveMeAsPotentialProvider(ctx context.Context, post
 	var provider models.PotentialProvider
 
 	if err := provider.FindWithPostUUIDAndUserUUID(postID, cUser.UUID.String(), cUser); err != nil {
-		return nil, reportError(ctx, errors.New("unable to find PotentialProvider in order to delete it: "+err.Error()),
+		return nil, domain.ReportError(ctx, errors.New("unable to find PotentialProvider in order to delete it: "+err.Error()),
 			"RemoveMeAsPotentialProvider")
 	}
 
 	var post models.Post
 	if err := post.FindByUUID(postID); err != nil {
-		return nil, reportError(ctx, err, "RemoveMeAsPotentialProvider.FindPost")
+		return nil, domain.ReportError(ctx, err, "RemoveMeAsPotentialProvider.FindPost")
 	}
 
 	extras := map[string]interface{}{
@@ -552,17 +552,17 @@ func (r *mutationResolver) RemoveMeAsPotentialProvider(ctx context.Context, post
 	}
 
 	if !provider.CanUserAccessPotentialProvider(post, cUser) {
-		return nil, reportError(ctx, errors.New("user not allowed to access PotentialProvider"),
+		return nil, domain.ReportError(ctx, errors.New("user not allowed to access PotentialProvider"),
 			"RemoveMeAsPotentialProvider.NotAuthorized", extras)
 	}
 
 	if err := provider.Destroy(); err != nil {
-		return nil, reportError(ctx, errors.New("error removing potential provider: "+err.Error()),
+		return nil, domain.ReportError(ctx, errors.New("error removing potential provider: "+err.Error()),
 			"RemoveMeAsPotentialProvider", extras)
 	}
 
 	if err := post.FindByUUID(postID); err != nil {
-		return nil, reportError(ctx, err, "RemoveMeAsPotentialProvider.FindPost")
+		return nil, domain.ReportError(ctx, err, "RemoveMeAsPotentialProvider.FindPost")
 	}
 
 	return &post, nil
@@ -574,13 +574,13 @@ func (r *mutationResolver) RemovePotentialProvider(ctx context.Context, postID, 
 	var provider models.PotentialProvider
 
 	if err := provider.FindWithPostUUIDAndUserUUID(postID, cUser.UUID.String(), cUser); err != nil {
-		return nil, reportError(ctx, errors.New("unable to find PotentialProvider in order to delete it: "+err.Error()),
+		return nil, domain.ReportError(ctx, errors.New("unable to find PotentialProvider in order to delete it: "+err.Error()),
 			"RemovePotentialProvider")
 	}
 
 	var post models.Post
 	if err := post.FindByUUID(postID); err != nil {
-		return nil, reportError(ctx, err, "RemovePotentialProvider.FindPost")
+		return nil, domain.ReportError(ctx, err, "RemovePotentialProvider.FindPost")
 	}
 
 	extras := map[string]interface{}{
@@ -589,17 +589,17 @@ func (r *mutationResolver) RemovePotentialProvider(ctx context.Context, postID, 
 	}
 
 	if !provider.CanUserAccessPotentialProvider(post, cUser) {
-		return nil, reportError(ctx, errors.New("user not allowed to access PotentialProvider"),
+		return nil, domain.ReportError(ctx, errors.New("user not allowed to access PotentialProvider"),
 			"RemovePotentialProvider.NotAuthorized", extras)
 	}
 
 	if err := provider.Destroy(); err != nil {
-		return nil, reportError(ctx, errors.New("error removing potential provider: "+err.Error()),
+		return nil, domain.ReportError(ctx, errors.New("error removing potential provider: "+err.Error()),
 			"RemovePotentialProvider", extras)
 	}
 
 	if err := post.FindByUUID(postID); err != nil {
-		return nil, reportError(ctx, err, "RemovePotentialProvider.FindPost")
+		return nil, domain.ReportError(ctx, err, "RemovePotentialProvider.FindPost")
 	}
 
 	return &post, nil

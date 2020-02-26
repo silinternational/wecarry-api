@@ -117,18 +117,6 @@ func GetCurrentUserFromGqlContext(ctx context.Context) User {
 	return GetCurrentUser(bc)
 }
 
-type EmptyContext struct {
-	buffalo.Context
-}
-
-func GetBuffaloContextFromGqlContext(c context.Context) buffalo.Context {
-	bc, ok := c.Value("BuffaloContext").(buffalo.Context)
-	if ok {
-		return bc
-	}
-	return EmptyContext{}
-}
-
 func GetCurrentUser(c buffalo.Context) User {
 	user := c.Value("current_user")
 

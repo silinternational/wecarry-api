@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 )
 
@@ -38,7 +39,7 @@ func (r *userResolver) Organizations(ctx context.Context, obj *models.User) ([]m
 
 	organizations, err := obj.GetOrganizations()
 	if err != nil {
-		return nil, reportError(ctx, err, "GetUserOrganizations")
+		return nil, domain.ReportError(ctx, err, "GetUserOrganizations")
 	}
 
 	return organizations, nil
@@ -55,7 +56,7 @@ func (r *userResolver) Posts(ctx context.Context, obj *models.User, role PostRol
 		extras := map[string]interface{}{
 			"role": role,
 		}
-		return nil, reportError(ctx, err, "GetUserPosts", extras)
+		return nil, domain.ReportError(ctx, err, "GetUserPosts", extras)
 	}
 
 	return posts, nil
@@ -69,7 +70,7 @@ func (r *userResolver) AvatarURL(ctx context.Context, obj *models.User) (*string
 
 	photoURL, err := obj.GetPhotoURL()
 	if err != nil {
-		return nil, reportError(ctx, err, "GetUserPhotoURL")
+		return nil, domain.ReportError(ctx, err, "GetUserPhotoURL")
 	}
 
 	return photoURL, nil
@@ -87,7 +88,7 @@ func (r *userResolver) PhotoID(ctx context.Context, obj *models.User) (*string, 
 
 	photoID, err := obj.GetPhotoID()
 	if err != nil {
-		return nil, reportError(ctx, err, "GetUserPhotoID")
+		return nil, domain.ReportError(ctx, err, "GetUserPhotoID")
 	}
 
 	return photoID, nil
@@ -101,7 +102,7 @@ func (r *userResolver) Location(ctx context.Context, obj *models.User) (*models.
 
 	location, err := obj.GetLocation()
 	if err != nil {
-		return nil, reportError(ctx, err, "GetUserLocation")
+		return nil, domain.ReportError(ctx, err, "GetUserLocation")
 	}
 
 	return location, nil
@@ -115,7 +116,7 @@ func (r *userResolver) UnreadMessageCount(ctx context.Context, obj *models.User)
 	mCounts, err := obj.UnreadMessageCount()
 
 	if err != nil {
-		return 0, reportError(ctx, err, "GetUserUnreadMessageCount")
+		return 0, domain.ReportError(ctx, err, "GetUserUnreadMessageCount")
 	}
 	total := 0
 	for _, c := range mCounts {
@@ -135,12 +136,12 @@ func (r *queryResolver) Users(ctx context.Context) ([]models.User, error) {
 		extras := map[string]interface{}{
 			"role": role,
 		}
-		return nil, reportError(ctx, err, "GetUsers.Unauthorized", extras)
+		return nil, domain.ReportError(ctx, err, "GetUsers.Unauthorized", extras)
 	}
 
 	users := models.Users{}
 	if err := users.All(); err != nil {
-		return nil, reportError(ctx, err, "GetUsers")
+		return nil, domain.ReportError(ctx, err, "GetUsers")
 	}
 
 	return users, nil
@@ -160,12 +161,12 @@ func (r *queryResolver) User(ctx context.Context, id *string) (*models.User, err
 		extras := map[string]interface{}{
 			"role": role,
 		}
-		return nil, reportError(ctx, err, "GetUser.Unauthorized", extras)
+		return nil, domain.ReportError(ctx, err, "GetUser.Unauthorized", extras)
 	}
 
 	dbUser := models.User{}
 	if err := dbUser.FindByUUID(*id); err != nil {
-		return nil, reportError(ctx, err, "GetUser")
+		return nil, domain.ReportError(ctx, err, "GetUser")
 	}
 
 	return &dbUser, nil
@@ -180,7 +181,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 
 	if input.ID != nil {
 		if err := user.FindByUUID(*(input.ID)); err != nil {
-			return nil, reportError(ctx, err, "UpdateUser.NotFound")
+			return nil, domain.ReportError(ctx, err, "UpdateUser.NotFound")
 		}
 	} else {
 		user = cUser
@@ -188,7 +189,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 
 	if cUser.AdminRole != models.UserAdminRoleSuperAdmin && cUser.ID != user.ID {
 		err := errors.New("insufficient permissions")
-		return nil, reportError(ctx, err, "UpdateUser.Unauthorized")
+		return nil, domain.ReportError(ctx, err, "UpdateUser.Unauthorized")
 	}
 
 	if input.Nickname != nil {
@@ -202,7 +203,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 		_, err = user.AttachPhoto(*input.PhotoID)
 	}
 	if err != nil {
-		return nil, reportError(ctx, err, "UpdateUser.UpdatePhoto")
+		return nil, domain.ReportError(ctx, err, "UpdateUser.UpdatePhoto")
 	}
 
 	if input.Location == nil {
@@ -211,7 +212,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 		err = user.SetLocation(convertLocation(*input.Location))
 	}
 	if err != nil {
-		return nil, reportError(ctx, err, "UpdateUser.SetLocationError")
+		return nil, domain.ReportError(ctx, err, "UpdateUser.SetLocationError")
 	}
 
 	// No deleting of preferences supported at this time
@@ -219,16 +220,16 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 		standardPrefs, err := convertUserPreferencesToStandardPreferences(input.Preferences)
 
 		if err != nil {
-			return nil, reportError(ctx, err, "UpdateUser.PreferencesInput")
+			return nil, domain.ReportError(ctx, err, "UpdateUser.PreferencesInput")
 		}
 
 		if _, err = user.UpdateStandardPreferences(standardPrefs); err != nil {
-			return nil, reportError(ctx, err, "UpdateUser.Preferences")
+			return nil, domain.ReportError(ctx, err, "UpdateUser.Preferences")
 		}
 	}
 
 	if err = user.Save(); err != nil {
-		return nil, reportError(ctx, err, "UpdateUser")
+		return nil, domain.ReportError(ctx, err, "UpdateUser")
 	}
 
 	return &user, nil
@@ -247,7 +248,7 @@ func (r *userResolver) Preferences(ctx context.Context, obj *models.User) (*mode
 		extras := map[string]interface{}{
 			"user": user.UUID,
 		}
-		return nil, reportError(ctx, err, "GetUserPreferences", extras)
+		return nil, domain.ReportError(ctx, err, "GetUserPreferences", extras)
 	}
 
 	// These have particular acceptable values, unlike TimeZone
@@ -275,7 +276,7 @@ func getPublicProfile(ctx context.Context, user *models.User) *PublicProfile {
 
 	url, err := user.GetPhotoURL()
 	if err != nil {
-		_ = reportError(ctx, err, "", map[string]interface{}{"user": user.UUID})
+		_ = domain.ReportError(ctx, err, "", map[string]interface{}{"user": user.UUID})
 		return nil
 	}
 

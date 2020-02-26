@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
@@ -787,4 +788,17 @@ func (u *User) isMeetingOrganizer(ctx buffalo.Context, meeting Meeting) bool {
 
 func (u *User) isSuperAdmin() bool {
 	return u.AdminRole == UserAdminRoleSuperAdmin
+}
+
+// MeetingsAsParticipant returns all meetings in which the user is a participant
+func (u *User) MeetingsAsParticipant(ctx context.Context) ([]Meeting, error) {
+	m := Meetings{}
+	if err := DB.
+		Where("meeting_participants.user_id=?", u.ID).
+		Join("meeting_participants", "meeting_participants.meeting_id=meetings.id").
+		All(&m); err != nil {
+
+		return m, domain.ReportError(ctx, err, "User.MeetingsAsParticipant", map[string]interface{}{"user": u.UUID})
+	}
+	return m, nil
 }
