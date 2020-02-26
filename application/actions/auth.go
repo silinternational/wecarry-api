@@ -255,7 +255,7 @@ func meetingAuthRequest(c buffalo.Context, authEmail string, extras map[string]i
 	}
 
 	// If no matching Org, then use social login
-	return finishSocialAuthRequest(c, extras)
+	return finishInviteBasedSocialAuthRequest(c, extras)
 }
 
 // Decide whether an invitee should use social login or org-based login
@@ -374,8 +374,12 @@ func authRequest(c buffalo.Context) error {
 	// Check if user's email has a domain that matches an Organization
 	org, err := getOrgForNewUser(authEmail)
 	if err != nil {
-		return authRequestError(c, http.StatusNotFound, domain.ErrorFindingOrgForNewUser,
-			"error getting UserOrganizations: "+err.Error(), extras)
+		if domain.IsOtherThanNoRows(err) {
+			return authRequestError(c, http.StatusNotFound, domain.ErrorFindingOrgForNewUser,
+				"error getting UserOrganizations: "+err.Error(), extras)
+		}
+
+		return finishAuthRequestForSocialUser(c, authEmail)
 	}
 
 	// If there is a matching Org, use that

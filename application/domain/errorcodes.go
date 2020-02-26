@@ -48,6 +48,9 @@ const ErrorFindingOrgForNewUser = "ErrorFindingOrgForNewUser"
 // actions.AuthRequest
 const ErrorFindingUserOrgs = "ErrorFindingUserOrgs"
 
+// actions.AuthRequest
+const ErrorFindingUserByEmail = "ErrorFindingUserByEmail"
+
 // No Organization was found for the authEmail
 // actions.AuthRequest
 const ErrorOrglessUserNotAllowed = "ErrorOrglessUserNotAllowed"
@@ -82,13 +85,7 @@ const ErrorMissingSessionAuthEmail = "ErrorMissingSessionAuthEmail"
 const ErrorMissingSessionClientID = "ErrorMissingSessionClientID"
 
 // actions.AuthCallback
-const ErrorMissingSessionOrgID = "ErrorMissingSessionOrgID"
-
-// actions.AuthCallback
 const ErrorMissingSessionSocialAuthType = "ErrorMissingSessionSocialAuthType"
-
-// actions.AuthCallback
-const ErrorSavingAuthCallbackSession = "ErrorSavingAuthCallbackSession"
 
 // actions.AuthCallback
 const ErrorFindingOrgByID = "ErrorFindingOrgByID"
@@ -98,6 +95,9 @@ const ErrorAuthProvidersCallback = "ErrorAuthProvidersCallback"
 
 // actions.AuthCallback
 const ErrorAuthEmailMismatch = "ErrorAuthEmailMismatch"
+
+// actions.AuthCallback
+const ErrorGettingSocialAuthUser = "ErrorGettingSocialAuthUser"
 
 // actions.AuthCallback
 const ErrorWithAuthUser = "ErrorWithAuthUser"

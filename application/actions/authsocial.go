@@ -172,7 +172,36 @@ func getSocialAuthSelectors() []authSelector {
 	return selectors
 }
 
-func finishSocialAuthRequest(c buffalo.Context, extras map[string]interface{}) error {
+func finishAuthRequestForSocialUser(c buffalo.Context, authEmail string) error {
+	var user models.User
+	if err := user.FindByEmail(authEmail); err != nil {
+		return authRequestError(c, http.StatusNotFound, domain.ErrorFindingUserByEmail, err.Error())
+	}
+
+	authType := user.SocialAuthProvider.String
+
+	ap, err := getSocialAuthProvider(authType)
+	if err != nil {
+		return authRequestError(c, http.StatusBadRequest, domain.ErrorLoadingAuthProvider,
+			fmt.Sprintf("error loading social auth provider for '%s' ... %v", authType, err))
+	}
+
+	redirectURL, err := ap.AuthRequest(c)
+	if err != nil {
+		return authRequestError(c, http.StatusInternalServerError, domain.ErrorGettingAuthURL,
+			fmt.Sprintf("error getting social auth url for '%s' ... %v", authType, err))
+	}
+
+	authOptions := []authOption{{Name: authType, RedirectURL: redirectURL}}
+
+	c.Session().Set(SocialAuthTypeSessionKey, authType)
+
+	// Reply with a 200 and leave it to the UI to do the redirect
+	return c.Render(http.StatusOK, render.JSON(authOptions))
+
+}
+
+func finishInviteBasedSocialAuthRequest(c buffalo.Context, extras map[string]interface{}) error {
 	selectors := getSocialAuthSelectors()
 
 	// Reply with a 200 and leave it to the UI to do the redirect
@@ -203,54 +232,74 @@ func authSelect(c buffalo.Context) error {
 	return c.Redirect(http.StatusFound, redirectURL)
 }
 
-func socialLoginBasedAuthCallback(c buffalo.Context, authEmail, clientID string) error {
+type callbackValues struct {
+	authResp auth.Response
+	returnTo string
+	errCode  string
+	errMsg   string
+}
 
-	authType, ok := c.Session().Get(SocialAuthTypeSessionKey).(string)
-	if !ok {
-		return logErrorAndRedirect(c, domain.ErrorMissingSessionSocialAuthType,
-			SocialAuthTypeSessionKey+" session entry is required to complete login")
-	}
-
-	extras := map[string]interface{}{"authEmail": authEmail}
-
+// processSocialAuthCallback is a function that holds code common to both
+// users logging in based on an invite and those that already have a User
+// record.  It gets the appropriate social auth provider,
+// calls its AuthCallback function and checks its authResp values
+// gets the ReturnTo from the session and clears the session.
+func processSocialAuthCallback(c buffalo.Context, authEmail, authType string) callbackValues {
 	ap, err := getSocialAuthProvider(authType)
 	if err != nil {
-		return logErrorAndRedirect(c, domain.ErrorLoadingAuthProvider,
-			fmt.Sprintf("error loading social auth provider for '%s' ... %v", authType, err), extras)
+		return callbackValues{
+			errCode: domain.ErrorLoadingAuthProvider,
+			errMsg:  fmt.Sprintf("error loading social auth provider for '%s' ... %v", authType, err),
+		}
 	}
 
 	authResp := ap.AuthCallback(c)
 	if authResp.Error != nil {
-		return logErrorAndRedirect(c, domain.ErrorAuthProvidersCallback, authResp.Error.Error(), extras)
+		return callbackValues{
+			errCode: domain.ErrorAuthProvidersCallback,
+			errMsg:  authResp.Error.Error(),
+		}
 	}
 
 	returnTo := getOrSetReturnTo(c)
 
 	if authResp.AuthUser == nil {
-		return logErrorAndRedirect(c, domain.ErrorAuthProvidersCallback, "nil authResp.AuthUser", extras)
+		return callbackValues{
+			errCode: domain.ErrorAuthProvidersCallback,
+			errMsg:  "nil authResp.AuthUser",
+		}
 	}
-
-	// if we have an authuser, find or create user in local db and finish login
-	var user models.User
 
 	if authEmail != authResp.AuthUser.Email {
 		c.Session().Clear()
-		extras := map[string]interface{}{"authEmail": authEmail}
-		return logErrorAndRedirect(c, domain.ErrorAuthEmailMismatch, err.Error(), extras)
+		return callbackValues{
+			errCode: domain.ErrorAuthEmailMismatch,
+			errMsg:  err.Error(),
+		}
 	}
 
-	// Check for an invite in the Session
-	inviteType, objectUUID := getInviteInfoFromSession(c)
-
-	// login was success, clear session so new login can be initiated if needed
 	c.Session().Clear()
 
-	if err := user.FindOrCreateFromOrglessAuthUser(authResp.AuthUser); err != nil {
-		return logErrorAndRedirect(c, domain.ErrorWithAuthUser, err.Error())
+	return callbackValues{
+		authResp: authResp,
+		returnTo: returnTo,
+	}
+}
+
+// Finish the auth callback process for an Orgless user that has no invite associated
+// with this login.
+func socialLoginNonInviteBasedAuthCallback(c buffalo.Context, authEmail, authType, clientID string) error {
+	extras := map[string]interface{}{"authEmail": authEmail, "authType": authType}
+
+	var user models.User
+	if err := user.FindBySocialAuthProvider(authEmail, authType); err != nil {
+		return logErrorAndRedirect(c, domain.ErrorGettingSocialAuthUser,
+			fmt.Sprintf("error loading social auth user for '%s' ... %v", authType, err), extras)
 	}
 
-	if inviteType != "" {
-		dealWithInviteFromCallback(c, inviteType, objectUUID, user)
+	callbackValues := processSocialAuthCallback(c, authEmail, authType)
+	if callbackValues.errCode != "" {
+		return logErrorAndRedirect(c, callbackValues.errCode, callbackValues.errMsg, extras)
 	}
 
 	authUser, err := createOrglessAuthUser(clientID, user)
@@ -261,7 +310,53 @@ func socialLoginBasedAuthCallback(c buffalo.Context, authEmail, clientID string)
 	// set person on rollbar session
 	domain.RollbarSetPerson(c, authUser.ID, authUser.Nickname, authUser.Email)
 
-	return c.Redirect(302, getLoginSuccessRedirectURL(authUser, returnTo))
+	return c.Redirect(302, getLoginSuccessRedirectURL(authUser, callbackValues.returnTo))
+}
+
+func socialLoginBasedAuthCallback(c buffalo.Context, authEmail, clientID string) error {
+
+	authType, ok := c.Session().Get(SocialAuthTypeSessionKey).(string)
+	if !ok {
+		return logErrorAndRedirect(c, domain.ErrorMissingSessionSocialAuthType,
+			SocialAuthTypeSessionKey+" session entry is required to complete login")
+	}
+
+	extras := map[string]interface{}{"authEmail": authEmail, "authType": authType}
+
+	// Check for an invite in the Session
+	inviteType, inviteObjectUUID := getInviteInfoFromSession(c)
+
+	// If there is no invite associated with this user, then deal with the User record
+	if inviteObjectUUID == "" {
+		return socialLoginNonInviteBasedAuthCallback(c, authEmail, authType, clientID)
+	}
+
+	// There is an invite associated with this process, so deal ith it
+	callbackValues := processSocialAuthCallback(c, authEmail, authType)
+	if callbackValues.errCode != "" {
+		return logErrorAndRedirect(c, callbackValues.errCode, callbackValues.errMsg, extras)
+	}
+
+	// if we have an authuser, find or create user in local db and finish login
+	var user models.User
+
+	if err := user.FindOrCreateFromOrglessAuthUser(callbackValues.authResp.AuthUser, authType); err != nil {
+		return logErrorAndRedirect(c, domain.ErrorWithAuthUser, err.Error())
+	}
+
+	if inviteType != "" {
+		dealWithInviteFromCallback(c, inviteType, inviteObjectUUID, user)
+	}
+
+	authUser, err := createOrglessAuthUser(clientID, user)
+	if err != nil {
+		return err
+	}
+
+	// set person on rollbar session
+	domain.RollbarSetPerson(c, authUser.ID, authUser.Nickname, authUser.Email)
+
+	return c.Redirect(302, getLoginSuccessRedirectURL(authUser, callbackValues.returnTo))
 }
 
 func createOrglessAuthUser(clientID string, user models.User) (AuthUser, error) {

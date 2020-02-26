@@ -263,7 +263,7 @@ func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
 }
 
 // TODO COMMENT AND TEST
-func (u *User) FindOrCreateFromOrglessAuthUser(authUser *auth.User) error {
+func (u *User) FindOrCreateFromOrglessAuthUser(authUser *auth.User, authType string) error {
 
 	if err := DB.Where("email = ?", authUser.Email).First(u); err != nil {
 		if domain.IsOtherThanNoRows(err) {
@@ -280,6 +280,7 @@ func (u *User) FindOrCreateFromOrglessAuthUser(authUser *auth.User) error {
 	u.FirstName = authUser.FirstName
 	u.LastName = authUser.LastName
 	u.Email = authUser.Email
+	u.SocialAuthProvider = nulls.NewString(authType)
 
 	if authUser.PhotoURL != "" {
 		u.AuthPhotoURL = nulls.NewString(authUser.PhotoURL)
@@ -461,6 +462,16 @@ func (u *User) FindByID(id int, eagerFields ...string) error {
 
 	if err := DB.Eager(eagerFields...).Find(u, id); err != nil {
 		return fmt.Errorf("error finding user by id: %v, ... %v", id, err.Error())
+	}
+
+	return nil
+}
+
+// FindBySocialEmail finds a User with a matching email
+func (u *User) FindByEmail(email string) error {
+	if err := DB.Where("email = ?", email).First(u); err != nil {
+		return fmt.Errorf("error finding user by email: %s, ... %s",
+			email, err.Error())
 	}
 
 	return nil
