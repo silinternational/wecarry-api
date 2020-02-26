@@ -50,27 +50,28 @@ func (e UserAdminRole) String() string {
 
 // User model
 type User struct {
-	ID                int               `json:"id" db:"id"`
-	CreatedAt         time.Time         `json:"created_at" db:"created_at"`
-	UpdatedAt         time.Time         `json:"updated_at" db:"updated_at"`
-	Email             string            `json:"email" db:"email"`
-	FirstName         string            `json:"first_name" db:"first_name"`
-	LastName          string            `json:"last_name" db:"last_name"`
-	Nickname          string            `json:"nickname" db:"nickname"`
-	AdminRole         UserAdminRole     `json:"admin_role" db:"admin_role"`
-	UUID              uuid.UUID         `json:"uuid" db:"uuid"`
-	PhotoFileID       nulls.Int         `json:"photo_file_id" db:"photo_file_id"`
-	AuthPhotoURL      nulls.String      `json:"auth_photo_url" db:"auth_photo_url"`
-	LocationID        nulls.Int         `json:"location_id" db:"location_id"`
-	AccessTokens      []UserAccessToken `has_many:"user_access_tokens" json:"-"`
-	Organizations     Organizations     `many_to_many:"user_organizations" order_by:"name asc" json:"-"`
-	UserOrganizations UserOrganizations `has_many:"user_organizations" json:"-"`
-	UserPreferences   UserPreferences   `has_many:"user_preferences" json:"-"`
-	PostsCreated      Posts             `has_many:"posts" fk_id:"created_by_id" order_by:"updated_at desc"`
-	PostsProviding    Posts             `has_many:"posts" fk_id:"provider_id" order_by:"updated_at desc"`
-	PostsReceiving    Posts             `has_many:"posts" fk_id:"receiver_id" order_by:"updated_at desc"`
-	PhotoFile         File              `belongs_to:"files"`
-	Location          Location          `belongs_to:"locations"`
+	ID                 int               `json:"id" db:"id"`
+	CreatedAt          time.Time         `json:"created_at" db:"created_at"`
+	UpdatedAt          time.Time         `json:"updated_at" db:"updated_at"`
+	Email              string            `json:"email" db:"email"`
+	FirstName          string            `json:"first_name" db:"first_name"`
+	LastName           string            `json:"last_name" db:"last_name"`
+	Nickname           string            `json:"nickname" db:"nickname"`
+	AdminRole          UserAdminRole     `json:"admin_role" db:"admin_role"`
+	UUID               uuid.UUID         `json:"uuid" db:"uuid"`
+	SocialAuthProvider nulls.String      `json:"social_auth_provider" db:"social_auth_provider"`
+	PhotoFileID        nulls.Int         `json:"photo_file_id" db:"photo_file_id"`
+	AuthPhotoURL       nulls.String      `json:"auth_photo_url" db:"auth_photo_url"`
+	LocationID         nulls.Int         `json:"location_id" db:"location_id"`
+	AccessTokens       []UserAccessToken `has_many:"user_access_tokens" json:"-"`
+	Organizations      Organizations     `many_to_many:"user_organizations" order_by:"name asc" json:"-"`
+	UserOrganizations  UserOrganizations `has_many:"user_organizations" json:"-"`
+	UserPreferences    UserPreferences   `has_many:"user_preferences" json:"-"`
+	PostsCreated       Posts             `has_many:"posts" fk_id:"created_by_id" order_by:"updated_at desc"`
+	PostsProviding     Posts             `has_many:"posts" fk_id:"provider_id" order_by:"updated_at desc"`
+	PostsReceiving     Posts             `has_many:"posts" fk_id:"receiver_id" order_by:"updated_at desc"`
+	PhotoFile          File              `belongs_to:"files"`
+	Location           Location          `belongs_to:"locations"`
 }
 
 // String can be helpful for serializing the model
@@ -261,6 +262,7 @@ func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
 	return nil
 }
 
+// TODO COMMENT AND TEST
 func (u *User) FindOrCreateFromOrglessAuthUser(authUser *auth.User) error {
 
 	if err := DB.Where("email = ?", authUser.Email).First(u); err != nil {
@@ -451,6 +453,7 @@ func (u *User) FindByUUID(uuid string) error {
 	return nil
 }
 
+// FindByID finds a User with a given ID and loads it from the database
 func (u *User) FindByID(id int, eagerFields ...string) error {
 	if id <= 0 {
 		return errors.New("error finding user: id must be a positive number")
@@ -458,6 +461,19 @@ func (u *User) FindByID(id int, eagerFields ...string) error {
 
 	if err := DB.Eager(eagerFields...).Find(u, id); err != nil {
 		return fmt.Errorf("error finding user by id: %v, ... %v", id, err.Error())
+	}
+
+	return nil
+}
+
+// FindBySocialAuthProvider finds a User with a matching email and social_auth_provider
+func (u *User) FindBySocialAuthProvider(email, auth_provider string) error {
+
+	err := DB.Where("email = ? and social_auth_provider = ?", email, auth_provider).First(u)
+
+	if err != nil {
+		return fmt.Errorf("error finding user by email and auth provider: %s, %s, ... %s",
+			email, auth_provider, err.Error())
 	}
 
 	return nil
