@@ -419,7 +419,7 @@ func (as *ActionSuite) Test_RemoveMeetingInvite() {
 			name:           "organizer",
 			email:          "invitee1@example.com",
 			meetingID:      f.Meetings[2].UUID.String(),
-			testUser:       f.Users[0],
+			testUser:       f.Users[1],
 			responseEmails: []string{},
 		},
 	}
