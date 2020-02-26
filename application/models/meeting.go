@@ -341,3 +341,11 @@ func (m *Meeting) Organizers(ctx buffalo.Context) (Users, error) {
 	}
 	return u, nil
 }
+
+func (m *Meeting) RemoveInvite(ctx buffalo.Context, email string) error {
+	var invite MeetingInvite
+	if err := invite.FindByMeetingIDAndEmail(m.ID, email); err != nil {
+		return err
+	}
+	return invite.Destroy()
+}

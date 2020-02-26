@@ -335,7 +335,8 @@ func createMeetingFixtures(tx *pop.Connection, nMeetings int) meetingFixtures {
 	}
 
 	return meetingFixtures{
-		Meetings: meetings,
-		Users:    append(Users{user}, participatingUsers...),
+		Meetings:       meetings,
+		MeetingInvites: invites,
+		Users:          append(Users{user}, participatingUsers...),
 	}
 }

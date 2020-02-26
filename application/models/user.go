@@ -899,3 +899,11 @@ func (u *User) MeetingsAsParticipant(ctx context.Context) ([]Meeting, error) {
 	}
 	return m, nil
 }
+
+func (u *User) CanCreateMeetingInvite(ctx buffalo.Context, meeting Meeting) bool {
+	return u.ID == meeting.CreatedByID || u.isMeetingOrganizer(ctx, meeting) || u.isSuperAdmin()
+}
+
+func (u *User) CanRemoveMeetingInvite(ctx buffalo.Context, meeting Meeting) bool {
+	return u.ID == meeting.CreatedByID || u.isMeetingOrganizer(ctx, meeting) || u.isSuperAdmin()
+}

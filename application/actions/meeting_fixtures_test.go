@@ -11,6 +11,13 @@ import (
 	"github.com/silinternational/wecarry-api/models"
 )
 
+//  meeting       creator    invitees            participants   organizers
+//  0 Mtg Past    user 0
+//  1 Mtg Recent  user 0     invitee2            user1
+//  2 Mtg Now     user 0     invitee0, invitee1  user0, user1   user1
+//  3 Mtg Future  user 0
+//
+//  Inviter for all invites is user 0
 func createFixturesForMeetings(as *ActionSuite) meetingQueryFixtures {
 	uf := test.CreateUserFixtures(as.DB, 2)
 	user := uf.Users[0]
@@ -93,13 +100,13 @@ func createFixturesForMeetings(as *ActionSuite) meetingQueryFixtures {
 			MeetingID:   meetings[2].ID,
 			UserID:      uf.Users[0].ID,
 			InviteID:    nulls.NewInt(invites[0].ID),
-			IsOrganizer: true,
+			IsOrganizer: false,
 		},
 		{
 			MeetingID:   meetings[2].ID,
 			UserID:      uf.Users[1].ID,
 			InviteID:    nulls.NewInt(invites[1].ID),
-			IsOrganizer: false,
+			IsOrganizer: true,
 		},
 		{
 			MeetingID:   meetings[1].ID,

@@ -253,13 +253,16 @@ func (r *mutationResolver) CreateMeetingInvites(ctx context.Context, input Creat
 	[]models.MeetingInvite, error) {
 
 	cUser := models.GetCurrentUserFromGqlContext(ctx)
-	extras := map[string]interface{}{
-		"user": cUser.UUID,
-	}
 
 	var m models.Meeting
 	if err := m.FindByUUID(input.MeetingID); err != nil {
-		return nil, domain.ReportError(ctx, err, "CreateMeetingInvite.FindMeeting", extras)
+		return nil, domain.ReportError(ctx, err, "CreateMeetingInvite.FindMeeting")
+	}
+
+	c := domain.GetBuffaloContextFromGqlContext(ctx)
+	if !cUser.CanCreateMeetingInvite(c, m) {
+		err := errors.New("insufficient permissions")
+		return nil, domain.ReportError(ctx, err, "CreateMeetingInvite.Unauthorized")
 	}
 
 	inv := models.MeetingInvite{
@@ -282,18 +285,33 @@ func (r *mutationResolver) CreateMeetingInvites(ctx context.Context, input Creat
 
 	invites, err := m.Invites(domain.GetBuffaloContextFromGqlContext(ctx))
 	if err != nil {
-		return nil, domain.ReportError(ctx, err, "CreateMeetingInvite.ListInvites", extras)
+		return nil, domain.ReportError(ctx, err, "CreateMeetingInvite.ListInvites")
 	}
 	return invites, nil
 }
 
-func (r *mutationResolver) CreateMeetingParticipant(ctx context.Context, input CreateMeetingParticipantInput) (*models.MeetingParticipant, error) {
-	var m models.MeetingParticipant
-	return &m, nil
-}
-
 func (r *mutationResolver) RemoveMeetingInvite(ctx context.Context, input RemoveMeetingInviteInput) ([]models.MeetingInvite, error) {
-	return []models.MeetingInvite{}, nil
+	var meeting models.Meeting
+	if err := meeting.FindByUUID(input.MeetingID); err != nil {
+		return nil, domain.ReportError(ctx, err, "RemoveMeetingInvite.FindMeeting")
+	}
+
+	c := domain.GetBuffaloContextFromGqlContext(ctx)
+	cUser := models.GetCurrentUserFromGqlContext(ctx)
+	if !cUser.CanRemoveMeetingInvite(c, meeting) {
+		err := errors.New("insufficient permissions")
+		return nil, domain.ReportError(ctx, err, "RemoveMeetingInvite.Unauthorized")
+	}
+
+	if err := meeting.RemoveInvite(c, input.Email); err != nil {
+		return nil, domain.ReportError(ctx, err, "RemoveMeetingInvite")
+	}
+
+	invites, err := meeting.Invites(c)
+	if err != nil {
+		return nil, domain.ReportError(ctx, err, "RemoveMeetingInvite.ListInvites")
+	}
+	return invites, nil
 }
 
 func (r *mutationResolver) RemoveMeetingParticipant(ctx context.Context, input RemoveMeetingParticipantInput) ([]models.MeetingParticipant, error) {

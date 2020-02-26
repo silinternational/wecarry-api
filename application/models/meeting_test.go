@@ -13,6 +13,7 @@ import (
 
 type meetingFixtures struct {
 	Meetings
+	MeetingInvites
 	Users
 }
 
@@ -701,6 +702,73 @@ func (ms *ModelSuite) TestMeeting_Organizers() {
 			}
 
 			ms.Equal(tt.wantIDs, ids)
+		})
+	}
+}
+
+func (ms *ModelSuite) TestMeeting_RemoveInvite() {
+	f := createMeetingFixtures(ms.DB, 2)
+
+	tests := []struct {
+		name             string
+		user             User
+		meeting          Meeting
+		email            string
+		remainingInvites []string
+		wantErr          string
+	}{
+		{
+			name:    "wrong email",
+			user:    f.Users[0],
+			meeting: f.Meetings[0],
+			email:   "not-there@example.com",
+			wantErr: "no rows",
+		},
+		{
+			name:             "one remaining",
+			user:             f.Users[0],
+			meeting:          f.Meetings[0],
+			email:            f.MeetingInvites[0].Email,
+			remainingInvites: []string{f.MeetingInvites[1].Email},
+		},
+		{
+			name:             "none remaining",
+			user:             f.Users[0],
+			meeting:          f.Meetings[0],
+			email:            f.MeetingInvites[1].Email,
+			remainingInvites: []string{},
+		},
+	}
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			// setup
+			ctx := &testBuffaloContext{
+				params: map[string]interface{}{},
+			}
+			ctx.Set("current_user", tt.user)
+
+			// execute
+			err := tt.meeting.RemoveInvite(ctx, tt.email)
+
+			// verify
+			if tt.wantErr != "" {
+				ms.Error(err, "did not get expected error")
+				ms.Contains(err.Error(), tt.wantErr)
+				return
+			}
+			ms.NoError(err, "unexpected error")
+
+			remaining, err := tt.meeting.Invites(ctx)
+			ms.NoError(err)
+
+			emails := make([]string, len(remaining))
+			for i, m := range remaining {
+				emails[i] = m.Email
+			}
+
+			ms.Equal(tt.remainingInvites, emails)
+
+			// teardown
 		})
 	}
 }
