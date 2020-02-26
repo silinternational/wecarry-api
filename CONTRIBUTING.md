@@ -79,7 +79,7 @@ by the helper function `domain.ReportError`, which takes an `error` and a transl
 key like `"UpdateUser.NotFound"`. The `error` is logged to `stderr` and to Rollbar,
 and the translation key is localized by Buffalo's `Translate` function and returned
 from the resolver to be processed by `gqlgen`. Translation text is stored in the
-`locales` folder.
+`application/locales` folder.
 
 For example:
 
