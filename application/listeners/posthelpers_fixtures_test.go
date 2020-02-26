@@ -155,7 +155,7 @@ func CreateFixtures_sendNotificationRequestFromStatus(ms *ModelSuite, t *testing
 			t.Errorf("could not create test post ... %v", err)
 			t.FailNow()
 		}
-		if err := models.DB.Load(&posts[i], "CreatedBy", "Provider", "Receiver", "Organization"); err != nil {
+		if err := models.DB.Load(&posts[i], "CreatedBy", "Provider", "Organization"); err != nil {
 			t.Errorf("Error loading post associations: %s", err)
 			t.FailNow()
 		}

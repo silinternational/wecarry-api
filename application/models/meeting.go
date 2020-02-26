@@ -32,7 +32,6 @@ type Meeting struct {
 	ImageFileID nulls.Int    `json:"image_file_id" db:"image_file_id"`
 	LocationID  int          `json:"location_id" db:"location_id"`
 
-	CreatedBy User     `belongs_to:"users"`
 	ImageFile File     `belongs_to:"files"`
 	Location  Location `belongs_to:"locations"`
 }
@@ -103,7 +102,7 @@ func (m *Meeting) FindByUUID(uuid string) error {
 		return errors.New("error finding meeting: uuid must not be blank")
 	}
 
-	if err := DB.Eager("CreatedBy").Where("uuid = ?", uuid).First(m); err != nil {
+	if err := DB.Where("uuid = ?", uuid).First(m); err != nil {
 		return fmt.Errorf("error finding meeting by uuid: %s", err.Error())
 	}
 
@@ -120,7 +119,7 @@ func (m *Meetings) FindOnDate(timeInFocus time.Time) error {
 	date := timeInFocus.Format(domain.DateTimeFormat)
 	where := "start_date <= ? and end_date >= ?"
 
-	if err := getOrdered(m, DB.Eager("CreatedBy").Where(where, date, date)); err != nil {
+	if err := getOrdered(m, DB.Where(where, date, date)); err != nil {
 		return fmt.Errorf("error finding meeting with start_date and end_date straddling %s ... %s",
 			date, err.Error())
 	}
@@ -133,7 +132,7 @@ func (m *Meetings) FindOnOrAfterDate(timeInFocus time.Time) error {
 
 	date := timeInFocus.Format(domain.DateTimeFormat)
 
-	if err := getOrdered(m, DB.Eager("CreatedBy").Where("end_date >= ?", date)); err != nil {
+	if err := getOrdered(m, DB.Where("end_date >= ?", date)); err != nil {
 		return fmt.Errorf("error finding meeting with end_date before %s ... %s", date, err.Error())
 	}
 
@@ -144,7 +143,7 @@ func (m *Meetings) FindOnOrAfterDate(timeInFocus time.Time) error {
 func (m *Meetings) FindAfterDate(timeInFocus time.Time) error {
 	date := timeInFocus.Format(domain.DateTimeFormat)
 
-	if err := getOrdered(m, DB.Eager("CreatedBy").Where("start_date > ?", date)); err != nil {
+	if err := getOrdered(m, DB.Where("start_date > ?", date)); err != nil {
 		return fmt.Errorf("error finding meeting with start_date after %s ... %s", date, err.Error())
 	}
 
@@ -158,7 +157,7 @@ func (m *Meetings) FindRecent(timeInFocus time.Time) error {
 	recentDate := timeInFocus.Add(-domain.RecentMeetingDelay)
 	where := "end_date between ? and ?"
 
-	if err := getOrdered(m, DB.Eager("CreatedBy").Where(where, recentDate, yesterday)); err != nil {
+	if err := getOrdered(m, DB.Where(where, recentDate, yesterday)); err != nil {
 		return fmt.Errorf("error finding meeting with end_date between %s and %s ... %s",
 			recentDate, yesterday, err.Error())
 	}

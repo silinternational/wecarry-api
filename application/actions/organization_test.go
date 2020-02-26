@@ -264,7 +264,7 @@ func (as *ActionSuite) Test_OrganizationViewAndList() {
 
 	userFixtures := test.CreateUserFixtures(as.DB, 4)
 	for i, _ := range userFixtures.Users {
-		_ = as.DB.Load(&userFixtures.Users[i], "UserOrganizations", "AccessTokens")
+		as.NoError(as.DB.Load(&userFixtures.Users[i], "UserOrganizations"))
 	}
 
 	// user 0 will be a super admin, user 1 will be a sales admin, and user 2 will be an org admin for org1, user 3 will be a user

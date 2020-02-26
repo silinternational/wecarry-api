@@ -247,7 +247,6 @@ type Post struct {
 
 	CreatedBy    User         `belongs_to:"users"`
 	Organization Organization `belongs_to:"organizations"`
-	Receiver     User         `belongs_to:"users"`
 	Provider     User         `belongs_to:"users"`
 
 	Files       PostFiles `has_many:"post_files"`

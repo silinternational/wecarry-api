@@ -13,7 +13,6 @@ type PostFile struct {
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 	PostID    int       `json:"post_id" db:"post_id"`
-	Post      Post      `belongs_to:"posts"`
 	FileID    int       `json:"file_id" db:"file_id"`
 	File      File      `belongs_to:"files"`
 }

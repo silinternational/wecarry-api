@@ -33,7 +33,6 @@ type UserPreference struct {
 	UserID    int       `json:"user_id" db:"user_id"`
 	Key       string    `json:"key" db:"key"`
 	Value     string    `json:"value" db:"value"`
-	User      User      `belongs_to:"users"`
 }
 
 // String can be helpful for serializing the model
