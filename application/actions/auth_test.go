@@ -330,7 +330,7 @@ func (as *ActionSuite) TestGetOrSetReturnTo() {
 }
 
 // This doesn't test for errors, since it's too complicated with the call to domain.Error()
-func (as *ActionSuite) TestGetOrgAndUserOrgs() {
+func (as *ActionSuite) TestGetUserOrgs() {
 	t := as.T()
 
 	fixtures := Fixtures_GetOrgAndUserOrgs(as, t)
@@ -397,9 +397,9 @@ func (as *ActionSuite) TestGetOrgAndUserOrgs() {
 	}
 }
 
-func (as *ActionSuite) TestCreateAuthUser() {
+func (as *ActionSuite) TestGetAuthUser() {
 	t := as.T()
-	orgFixture := Fixtures_CreateAuthUser(as, t).orgs[0]
+	orgFixture := Fixtures_getAuthUser(as, t).orgs[0]
 
 	newEmail := "new@example.com"
 
@@ -417,7 +417,7 @@ func (as *ActionSuite) TestCreateAuthUser() {
 		return
 	}
 
-	resultsAuthUser, err := createAuthUser("12345678", user, orgFixture)
+	resultsAuthUser, err := getAuthUser("12345678", user, orgFixture)
 
 	if err != nil {
 		t.Errorf("unexpected error ... %v", err)

@@ -278,7 +278,8 @@ func inviteAuthRequest(c buffalo.Context, authEmail, inviteType string) error {
 	return nil
 }
 
-func createAuthUser(
+// Hydrates an AuthUser struct
+func getAuthUser(
 	clientID string,
 	user models.User,
 	org models.Organization) (AuthUser, error) {
@@ -501,7 +502,7 @@ func orgBasedAuthCallback(c buffalo.Context, orgUUID, authEmail, clientID string
 		dealWithInviteFromCallback(c, inviteType, objectUUID, user)
 	}
 
-	authUser, err := createAuthUser(clientID, user, org)
+	authUser, err := getAuthUser(clientID, user, org)
 	if err != nil {
 		return err
 	}

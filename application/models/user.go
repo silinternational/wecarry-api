@@ -147,7 +147,7 @@ func (u *User) CreateAccessToken(org Organization, clientID string) (string, int
 	return token, expireAt.UTC().Unix(), nil
 }
 
-// CreateAccessToken - Create and store new UserAccessToken
+// CreateOrglessAccessToken - Create and store new UserAccessToken with no associated UserOrg
 func (u *User) CreateOrglessAccessToken(clientID string) (string, int64, error) {
 	if clientID == "" {
 		return "", 0, fmt.Errorf("cannot create token with empty clientID for user %s", u.Nickname)
@@ -469,7 +469,7 @@ func (u *User) FindByID(id int, eagerFields ...string) error {
 	return nil
 }
 
-// FindBySocialEmail finds a User with a matching email
+// FindByEmail finds a User with a matching email
 func (u *User) FindByEmail(email string) error {
 	if err := DB.Where("email = ?", email).First(u); err != nil {
 		return fmt.Errorf("error finding user by email: %s, ... %s",
@@ -481,9 +481,7 @@ func (u *User) FindByEmail(email string) error {
 
 // FindBySocialAuthProvider finds a User with a matching email and social_auth_provider
 func (u *User) FindBySocialAuthProvider(email, auth_provider string) error {
-
 	err := DB.Where("email = ? and social_auth_provider = ?", email, auth_provider).First(u)
-
 	if err != nil {
 		return fmt.Errorf("error finding user by email and auth provider: %s, %s, ... %s",
 			email, auth_provider, err.Error())

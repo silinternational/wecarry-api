@@ -20,11 +20,8 @@ import (
 )
 
 const AuthTypeAzureAD = "azureadv2"
-const AuthTypeFacebook = "facebook"
 const AuthTypeGoogle = "google"
-const AuthTypeLinkedIn = "linkedin"
 const AuthTypeSaml = "saml"
-const AuthTypeTwitter = "twitter"
 
 type Organization struct {
 	ID                  int                  `json:"id" db:"id"`

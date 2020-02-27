@@ -238,7 +238,7 @@ func CreatePotentialProvidersFixtures(tx *pop.Connection) PotentialProvidersFixt
 	// Put the last user in a new org
 	org2 := models.Organization{
 		Name:       "Extra Org",
-		AuthType:   models.AuthTypeGoogle,
+		AuthType:   models.AuthTypeAzureAD,
 		AuthConfig: "{}",
 		UUID:       domain.GetUUID(),
 	}

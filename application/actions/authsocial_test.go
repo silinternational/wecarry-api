@@ -21,39 +21,37 @@ func Test_TestSuite(t *testing.T) {
 	suite.Run(t, new(TestSuite))
 }
 
-func (ts *TestSuite) Test_getConfig() {
+func (ts *TestSuite) Test_addConfig() {
 	fbKey := "testFBKey"
 	fbSecret := "testFBSecret"
 
 	fbConfig := SocialAuthConfig{Key: fbKey, Secret: fbSecret}
-	fbEnvVars := map[string]string{
-		envSocialAuthKey:    fbKey,
-		envSocialAuthSecret: fbSecret,
-	}
 
 	twKey := "testTwitterKey"
 	twSecret := "testTwitterSecret"
 
 	twConfig := SocialAuthConfig{Key: twKey, Secret: twSecret}
-	twEnvVars := map[string]string{
-		envSocialAuthKey:    twKey,
-		envSocialAuthSecret: twSecret,
-	}
 
 	tests := []struct {
 		name     string
 		authType string
-		envVars  map[string]string
-		want     SocialAuthConfig
+		key      string
+		secret   string
+		want     map[string]SocialAuthConfig
 	}{
-		{name: "Facebook", authType: AuthTypeFacebook, envVars: fbEnvVars, want: fbConfig},
-		{name: "Twitter", authType: AuthTypeTwitter, envVars: twEnvVars, want: twConfig},
+		{name: "Facebook", authType: AuthTypeFacebook, key: fbKey, secret: fbSecret,
+			want: map[string]SocialAuthConfig{AuthTypeFacebook: fbConfig}},
+		{name: "Twitter", authType: AuthTypeTwitter, key: twKey, secret: twSecret,
+			want: map[string]SocialAuthConfig{AuthTypeTwitter: twConfig}},
+		{name: "Twitter", authType: AuthTypeLinkedIn, key: "", secret: twSecret,
+			want: map[string]SocialAuthConfig{}},
 	}
 
-	for _, tt := range tests {
-		ts.T().Run(tt.name, func(t *testing.T) {
-			got := getConfig(tt.authType, tt.envVars)
-			ts.Equal(tt.want, got, "incorrect config")
+	for _, tc := range tests {
+		ts.T().Run(tc.name, func(t *testing.T) {
+			configs := map[string]SocialAuthConfig{}
+			addConfig(tc.authType, tc.key, tc.secret, configs)
+			ts.Equal(tc.want, configs, "incorrect SocialAuthConfigs")
 		})
 	}
 }
@@ -135,12 +133,12 @@ func (ts *TestSuite) Test_getSocialAuthSelectors() {
 	ts.Equal(want, got, "incorrect auth selectors")
 }
 
-func (as *ActionSuite) Test_CreateOrglessAuthUser() {
+func (as *ActionSuite) Test_getOrglessAuthUser() {
 
 	uf := test.CreateUserFixtures(as.DB, 2)
 	user := uf.Users[0]
 
-	resultsAuthUser, err := createOrglessAuthUser("12345678", user)
+	resultsAuthUser, err := getOrglessAuthUser("12345678", user)
 	as.NoError(err)
 
 	got := resultsAuthUser

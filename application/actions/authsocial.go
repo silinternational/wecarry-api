@@ -44,79 +44,34 @@ var socialAuthConfigs = map[string]SocialAuthConfig{}
 // Don't Modify outside of this file.
 var socialAuthSelectors = []authSelector{}
 
-// Get the necessary env vars to create the associated SocialAuthConfig
-func getConfig(authType string, envVars map[string]string) SocialAuthConfig {
-	config := SocialAuthConfig{}
-	combinedLen := 0
-	for _, value := range envVars {
-		combinedLen += len(value)
+// If there is a Key and Secret, then add them to the auth providers' configs
+// Maps act as pass-by-reference, so configs gets modified in place
+func addConfig(authType, key, secret string, configs map[string]SocialAuthConfig) {
+	if key == "" || secret == "" {
+		return
 	}
-
-	if combinedLen == 0 {
-		return config
-	}
-
-	for key, value := range envVars {
-		if value == "" {
-			domain.ErrLogger.Printf("missing %s %s env variable.", authType, key)
-			return config
-		}
-	}
-
-	config.Key = envVars[envSocialAuthKey]
-	config.Secret = envVars[envSocialAuthSecret]
-	return config
+	configs[authType] = SocialAuthConfig{Key: key, Secret: secret}
 }
 
 func addFacebookConfig(configs map[string]SocialAuthConfig) {
-	authType := AuthTypeFacebook
-	envTypes := map[string]string{
-		envSocialAuthKey:    domain.Env.FacebookKey,
-		envSocialAuthSecret: domain.Env.FacebookSecret,
-	}
-	config := getConfig(authType, envTypes)
-	if config.Key != "" {
-		configs[authType] = config
-	}
+	addConfig(AuthTypeFacebook, domain.Env.FacebookKey, domain.Env.FacebookSecret, configs)
 }
 
 func addGoogleConfig(configs map[string]SocialAuthConfig) {
-	authType := AuthTypeGoogle
-	envTypes := map[string]string{
-		envSocialAuthKey:    domain.Env.GoogleKey,
-		envSocialAuthSecret: domain.Env.GoogleSecret,
-	}
-	config := getConfig(authType, envTypes)
-	if config.Key != "" {
-		configs[authType] = config
-	}
+	addConfig(AuthTypeGoogle, domain.Env.GoogleKey, domain.Env.GoogleSecret, configs)
 }
 
 func addLinkedInConfig(configs map[string]SocialAuthConfig) {
-	authType := AuthTypeLinkedIn
-	envTypes := map[string]string{
-		envSocialAuthKey:    domain.Env.LinkedInKey,
-		envSocialAuthSecret: domain.Env.LinkedInSecret,
-	}
-	config := getConfig(authType, envTypes)
-	if config.Key != "" {
-		configs[authType] = config
-	}
+	addConfig(AuthTypeLinkedIn, domain.Env.LinkedInKey, domain.Env.LinkedInSecret, configs)
 }
 
 func addTwitterConfig(configs map[string]SocialAuthConfig) {
-	authType := AuthTypeTwitter
-	envTypes := map[string]string{
-		envSocialAuthKey:    domain.Env.TwitterKey,
-		envSocialAuthSecret: domain.Env.TwitterSecret,
-	}
-	config := getConfig(authType, envTypes)
-	if config.Key != "" {
-		configs[authType] = config
-	}
+	addConfig(AuthTypeTwitter, domain.Env.TwitterKey, domain.Env.TwitterSecret, configs)
 }
 
-// getSocialAuthConfigs returns a map of the enabled Social Auth Provider configs
+// getSocialAuthConfigs returns a map of the enabled Social Auth Provider key-secret pairs
+// In theory, this could go into an init function, but there is already
+// one in render.go and it's a bit risky having multiple init functions.
 func getSocialAuthConfigs() map[string]SocialAuthConfig {
 
 	configs := socialAuthConfigs
@@ -138,7 +93,7 @@ func getSocialAuthProvider(authType string) (auth.Provider, error) {
 	authConfigs := getSocialAuthConfigs()
 	config, ok := authConfigs[authType]
 	if !ok {
-		return nil, errors.New("unknown Social Auth Provider: " + authType)
+		return nil, errors.New("unknown Social Auth Provider: " + authType + ".")
 	}
 
 	switch authType {
@@ -152,7 +107,7 @@ func getSocialAuthProvider(authType string) (auth.Provider, error) {
 		return twitter.New(config)
 	}
 
-	return nil, errors.New("unmatched Social Auth Provider: " + authType)
+	return nil, errors.New("unmatched Social Auth Provider: " + authType + ".")
 }
 
 func getSocialAuthSelectors() []authSelector {
@@ -176,16 +131,16 @@ func getSocialAuthSelectors() []authSelector {
 			RedirectURL: fmt.Sprintf(AuthSelectPath, domain.Env.ApiBaseURL, AuthTypeParam, pt),
 		}
 		selectors = append(selectors, s)
-
 	}
 	socialAuthSelectors = selectors
 	return selectors
 }
 
+// For non invite based ... based on a User in the database with a SocialAuthProvider value
 func finishAuthRequestForSocialUser(c buffalo.Context, authEmail string) error {
 	var user models.User
 	if err := user.FindByEmail(authEmail); err != nil {
-		return authRequestError(c, http.StatusNotFound, domain.ErrorFindingUserByEmail, err.Error())
+		return authRequestError(c, http.StatusInternalServerError, domain.ErrorFindingUserByEmail, err.Error())
 	}
 
 	authType := user.SocialAuthProvider.String
@@ -202,6 +157,7 @@ func finishAuthRequestForSocialUser(c buffalo.Context, authEmail string) error {
 			fmt.Sprintf("error getting social auth url for '%s' ... %v", authType, err))
 	}
 
+	// UI expects an array, even when there is only one option
 	authOptions := []authOption{{Name: authType, RedirectURL: redirectURL}}
 
 	c.Session().Set(SocialAuthTypeSessionKey, authType)
@@ -211,6 +167,7 @@ func finishAuthRequestForSocialUser(c buffalo.Context, authEmail string) error {
 
 }
 
+// Just get the list of auth/select/... URLS
 func finishInviteBasedSocialAuthRequest(c buffalo.Context, extras map[string]interface{}) error {
 	selectors := getSocialAuthSelectors()
 
@@ -218,6 +175,7 @@ func finishInviteBasedSocialAuthRequest(c buffalo.Context, extras map[string]int
 	return c.Render(http.StatusOK, render.JSON(selectors))
 }
 
+// Redirect user to their selected social auth provider
 func authSelect(c buffalo.Context) error {
 	authType := c.Param(AuthTypeParam)
 	if authType == "" {
@@ -312,7 +270,7 @@ func socialLoginNonInviteBasedAuthCallback(c buffalo.Context, authEmail, authTyp
 		return logErrorAndRedirect(c, callbackValues.errCode, callbackValues.errMsg, extras)
 	}
 
-	authUser, err := createOrglessAuthUser(clientID, user)
+	authUser, err := getOrglessAuthUser(clientID, user)
 	if err != nil {
 		return err
 	}
@@ -324,7 +282,6 @@ func socialLoginNonInviteBasedAuthCallback(c buffalo.Context, authEmail, authTyp
 }
 
 func socialLoginBasedAuthCallback(c buffalo.Context, authEmail, clientID string) error {
-
 	authType, ok := c.Session().Get(SocialAuthTypeSessionKey).(string)
 	if !ok {
 		return logErrorAndRedirect(c, domain.ErrorMissingSessionSocialAuthType,
@@ -354,11 +311,13 @@ func socialLoginBasedAuthCallback(c buffalo.Context, authEmail, clientID string)
 		return logErrorAndRedirect(c, domain.ErrorWithAuthUser, err.Error())
 	}
 
+	// If the invite is for a meeting, ensure there is a MeetingParticipant record
+	// that matches the MeetingInvite
 	if inviteType != "" {
 		dealWithInviteFromCallback(c, inviteType, inviteObjectUUID, user)
 	}
 
-	authUser, err := createOrglessAuthUser(clientID, user)
+	authUser, err := getOrglessAuthUser(clientID, user)
 	if err != nil {
 		return err
 	}
@@ -369,7 +328,8 @@ func socialLoginBasedAuthCallback(c buffalo.Context, authEmail, clientID string)
 	return c.Redirect(302, getLoginSuccessRedirectURL(authUser, callbackValues.returnTo))
 }
 
-func createOrglessAuthUser(clientID string, user models.User) (AuthUser, error) {
+// Hydrates an AuthUser struct
+func getOrglessAuthUser(clientID string, user models.User) (AuthUser, error) {
 	accessToken, expiresAt, err := user.CreateOrglessAccessToken(clientID)
 
 	if err != nil {
