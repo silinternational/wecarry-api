@@ -479,8 +479,8 @@ func (u *User) FindByEmail(email string) error {
 	return nil
 }
 
-// FindBySocialAuthProvider finds a User with a matching email and social_auth_provider
-func (u *User) FindBySocialAuthProvider(email, auth_provider string) error {
+// FindByEmailAndSocialAuthProvider finds a User with a matching email and social_auth_provider
+func (u *User) FindByEmailAndSocialAuthProvider(email, auth_provider string) error {
 	err := DB.Where("email = ? and social_auth_provider = ?", email, auth_provider).First(u)
 	if err != nil {
 		return fmt.Errorf("error finding user by email and auth provider: %s, %s, ... %s",

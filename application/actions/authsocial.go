@@ -260,7 +260,7 @@ func socialLoginNonInviteBasedAuthCallback(c buffalo.Context, authEmail, authTyp
 	extras := map[string]interface{}{"authEmail": authEmail, "authType": authType}
 
 	var user models.User
-	if err := user.FindBySocialAuthProvider(authEmail, authType); err != nil {
+	if err := user.FindByEmailAndSocialAuthProvider(authEmail, authType); err != nil {
 		return logErrorAndRedirect(c, domain.ErrorGettingSocialAuthUser,
 			fmt.Sprintf("error loading social auth user for '%s' ... %v", authType, err), extras)
 	}
