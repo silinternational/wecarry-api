@@ -56,7 +56,7 @@ func (r *watchResolver) Location(ctx context.Context, obj *models.Watch) (*model
 // MyWatches resolves the `myWatches` query by getting a list of Watches owned by the current user
 func (r *queryResolver) MyWatches(ctx context.Context) ([]models.Watch, error) {
 	watches := models.Watches{}
-	currentUser := models.GetCurrentUserFromGqlContext(ctx)
+	currentUser := models.CurrentUser(ctx)
 	if err := watches.FindByUser(currentUser); err != nil {
 		extras := map[string]interface{}{
 			"user": currentUser.UUID,
@@ -91,7 +91,7 @@ type watchInput struct {
 
 // CreateWatch resolves the `createWatch` mutation.
 func (r *mutationResolver) CreateWatch(ctx context.Context, input watchInput) (*models.Watch, error) {
-	cUser := models.GetCurrentUserFromGqlContext(ctx)
+	cUser := models.CurrentUser(ctx)
 	extras := map[string]interface{}{
 		"user": cUser.UUID,
 	}
@@ -116,7 +116,7 @@ func (r *mutationResolver) CreateWatch(ctx context.Context, input watchInput) (*
 
 // UpdateWatch resolves the `updateWatch` mutation.
 func (r *mutationResolver) UpdateWatch(ctx context.Context, input watchInput) (*models.Watch, error) {
-	currentUser := models.GetCurrentUserFromGqlContext(ctx)
+	currentUser := models.CurrentUser(ctx)
 	extras := map[string]interface{}{
 		"user": currentUser.UUID,
 	}
@@ -146,7 +146,7 @@ func (r *mutationResolver) UpdateWatch(ctx context.Context, input watchInput) (*
 
 // RemoveWatch resolves the `removeWatch` mutation.
 func (r *mutationResolver) RemoveWatch(ctx context.Context, input RemoveWatchInput) ([]models.Watch, error) {
-	currentUser := models.GetCurrentUserFromGqlContext(ctx)
+	currentUser := models.CurrentUser(ctx)
 	extras := map[string]interface{}{
 		"user": currentUser.UUID,
 	}

@@ -296,7 +296,7 @@ func (m *Meeting) Invites(ctx buffalo.Context) (MeetingInvites, error) {
 	if m == nil {
 		return i, nil
 	}
-	currentUser := GetCurrentUser(ctx)
+	currentUser := CurrentUser(ctx)
 	if currentUser.ID != m.CreatedByID && !currentUser.isMeetingOrganizer(ctx, *m) && !currentUser.isSuperAdmin() {
 		return i, nil
 	}
@@ -313,7 +313,7 @@ func (m *Meeting) Participants(ctx buffalo.Context) (MeetingParticipants, error)
 	if m == nil {
 		return p, nil
 	}
-	currentUser := GetCurrentUser(ctx)
+	currentUser := CurrentUser(ctx)
 	if currentUser.ID != m.CreatedByID && !currentUser.isMeetingOrganizer(ctx, *m) && !currentUser.isSuperAdmin() {
 		return p, nil
 	}
