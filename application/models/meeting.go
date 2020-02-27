@@ -221,7 +221,8 @@ func (m *Meeting) ImageFile() (*File, error) {
 	if err := (*m.ImgFile).refreshURL(); err != nil {
 		return nil, err
 	}
-	return m.ImgFile, nil
+	f := *m.ImgFile
+	return &f, nil
 }
 
 func (m *Meeting) GetCreator() (*User, error) {
