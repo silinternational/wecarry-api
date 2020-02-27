@@ -95,7 +95,7 @@ func (r *meetingResolver) ImageFile(ctx context.Context, obj *models.Meeting) (*
 		return nil, nil
 	}
 
-	image, err := obj.GetImage()
+	image, err := obj.ImageFile()
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetMeetingImage")
 	}
@@ -230,10 +230,8 @@ func convertGqlMeetingInputToDBMeeting(ctx context.Context, input meetingInput, 
 	}
 
 	if input.ImageFileID != nil {
-		if file, err := meeting.AttachImage(*input.ImageFileID); err != nil {
+		if _, err := meeting.SetImageFile(*input.ImageFileID); err != nil {
 			graphql.AddError(ctx, gqlerror.Errorf("Error attaching image file to Meeting, %s", err.Error()))
-		} else {
-			meeting.ImageFile = file
 		}
 	}
 

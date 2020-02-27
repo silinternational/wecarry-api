@@ -345,7 +345,7 @@ func (ms *ModelSuite) TestMeeting_FindByInviteCode() {
 	}
 }
 
-func (ms *ModelSuite) TestMeeting_AttachImage() {
+func (ms *ModelSuite) TestMeeting_SetImageFile() {
 	meetings := createMeetingFixtures(ms.DB, 3).Meetings
 	files := createFileFixtures(3)
 	meetings[1].ImageFileID = nulls.NewInt(files[0].ID)
@@ -381,7 +381,7 @@ func (ms *ModelSuite) TestMeeting_AttachImage() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			got, err := tt.meeting.AttachImage(tt.newImage)
+			got, err := tt.meeting.SetImageFile(tt.newImage)
 			if tt.wantErr != "" {
 				ms.Error(err, "did not get expected error")
 				ms.Contains(err.Error(), tt.wantErr)
@@ -397,7 +397,7 @@ func (ms *ModelSuite) TestMeeting_AttachImage() {
 	}
 }
 
-func (ms *ModelSuite) TestMeeting_GetImage() {
+func (ms *ModelSuite) TestMeeting_ImageFile() {
 	user := User{}
 	createFixture(ms, &user)
 
@@ -414,14 +414,18 @@ func (ms *ModelSuite) TestMeeting_GetImage() {
 	}
 	createFixture(ms, &meeting)
 
+	f, err := meeting.ImageFile()
+	ms.NoError(err, "unexpected error from Meeting.ImageFile()")
+	ms.Nil(f, "expected nil returned from Meeting.ImageFile()")
+
 	var imageFixture File
 	const filename = "photo.gif"
 	ms.Nil(imageFixture.Store(filename, []byte("GIF89a")), "failed to create file fixture")
 
-	attachedFile, err := meeting.AttachImage(imageFixture.UUID.String())
+	attachedFile, err := meeting.SetImageFile(imageFixture.UUID.String())
 	ms.NoError(err)
 
-	if got, err := meeting.GetImage(); err == nil {
+	if got, err := meeting.ImageFile(); err == nil {
 		ms.Equal(attachedFile.UUID.String(), got.UUID.String())
 		ms.True(got.URLExpiration.After(time.Now().Add(time.Minute)))
 		ms.Equal(filename, got.Name)

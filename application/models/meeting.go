@@ -32,8 +32,8 @@ type Meeting struct {
 	ImageFileID nulls.Int    `json:"image_file_id" db:"image_file_id"`
 	LocationID  int          `json:"location_id" db:"location_id"`
 
-	ImageFile File     `belongs_to:"files"`
-	Location  Location `belongs_to:"locations"`
+	ImgFile  *File    `belongs_to:"files" fk_id:"ImageFileID"`
+	Location Location `belongs_to:"locations"`
 }
 
 // String is not required by pop and may be deleted
@@ -174,16 +174,12 @@ func (m *Meeting) FindByInviteCode(code string) error {
 		return fmt.Errorf("error finding meeting by invite_code: %s", err.Error())
 	}
 
-	if err := DB.Load(m, "ImageFile"); err != nil {
-		domain.ErrLogger.Printf("error loading meeting image file: " + err.Error())
-	}
-
 	return nil
 }
 
-// AttachImage assigns a previously-stored File to this Meeting as its image. Parameter `fileID` is the UUID
+// SetImageFile assigns a previously-stored File to this Meeting as its image. Parameter `fileID` is the UUID
 // of the image to attach.
-func (m *Meeting) AttachImage(fileID string) (File, error) {
+func (m *Meeting) SetImageFile(fileID string) (File, error) {
 	var f File
 	if err := f.FindByUUID(fileID); err != nil {
 		err = fmt.Errorf("error finding meeting image with id %s ... %s", fileID, err)
@@ -208,25 +204,24 @@ func (m *Meeting) AttachImage(fileID string) (File, error) {
 			domain.ErrLogger.Printf("error marking old meeting image file %d as unlinked, %s", oldFile.ID, err)
 		}
 	}
-
+	m.ImgFile = &f
 	return f, nil
 }
 
-// GetImage retrieves the file attached as the Meeting Image
-func (m *Meeting) GetImage() (*File, error) {
-	if err := DB.Load(m, "ImageFile"); err != nil {
-		return nil, err
-	}
-
+// ImageFile retrieves the file attached as the Meeting Image
+func (m *Meeting) ImageFile() (*File, error) {
 	if !m.ImageFileID.Valid {
 		return nil, nil
 	}
-
-	if err := m.ImageFile.refreshURL(); err != nil {
+	if m.ImgFile == nil {
+		if err := DB.Load(m, "ImgFile"); err != nil {
+			return nil, err
+		}
+	}
+	if err := (*m.ImgFile).refreshURL(); err != nil {
 		return nil, err
 	}
-
-	return &m.ImageFile, nil
+	return m.ImgFile, nil
 }
 
 func (m *Meeting) GetCreator() (*User, error) {
