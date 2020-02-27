@@ -397,9 +397,9 @@ func (as *ActionSuite) TestGetUserOrgs() {
 	}
 }
 
-func (as *ActionSuite) TestGetAuthUser() {
+func (as *ActionSuite) Test_newAuthUser() {
 	t := as.T()
-	orgFixture := Fixtures_getAuthUser(as, t).orgs[0]
+	orgFixture := Fixtures_newAuthUser(as, t).orgs[0]
 
 	newEmail := "new@example.com"
 
@@ -417,7 +417,7 @@ func (as *ActionSuite) TestGetAuthUser() {
 		return
 	}
 
-	resultsAuthUser, err := getAuthUser("12345678", user, orgFixture)
+	resultsAuthUser, err := newOrgBasedAuthUser("12345678", user, orgFixture)
 
 	if err != nil {
 		t.Errorf("unexpected error ... %v", err)

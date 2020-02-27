@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
-	"time"
 
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/buffalo/render"
@@ -35,15 +34,6 @@ const (
 	AuthSelectPath = "%s/auth/select/?%s=%s"
 )
 
-// SocialAuthConfig holds the Key and Secret for a social auth provider
-type SocialAuthConfig struct{ Key, Secret string }
-
-// Don't Modify outside of this file.
-var socialAuthConfigs = map[string]SocialAuthConfig{}
-
-// Don't Modify outside of this file.
-var socialAuthSelectors = []authSelector{}
-
 // If there is a Key and Secret, then add them to the auth providers' configs
 // Maps act as pass-by-reference, so configs gets modified in place
 func addConfig(authType, key, secret string, configs map[string]SocialAuthConfig) {
@@ -69,16 +59,9 @@ func addTwitterConfig(configs map[string]SocialAuthConfig) {
 	addConfig(AuthTypeTwitter, domain.Env.TwitterKey, domain.Env.TwitterSecret, configs)
 }
 
-// getSocialAuthConfigs returns a map of the enabled Social Auth Provider key-secret pairs
-// In theory, this could go into an init function, but there is already
-// one in render.go and it's a bit risky having multiple init functions.
+// Forbidden. Do NOT call this function.  (Only called by init() and a test)
 func getSocialAuthConfigs() map[string]SocialAuthConfig {
-
-	configs := socialAuthConfigs
-	// Don't keep adding the social auth providers after we've already done it once.
-	if len(configs) > 0 {
-		return configs
-	}
+	configs := map[string]SocialAuthConfig{}
 
 	// Maps act as pass-by-reference, so configs gets modified in place
 	addFacebookConfig(configs)
@@ -90,8 +73,7 @@ func getSocialAuthConfigs() map[string]SocialAuthConfig {
 }
 
 func getSocialAuthProvider(authType string) (auth.Provider, error) {
-	authConfigs := getSocialAuthConfigs()
-	config, ok := authConfigs[authType]
+	config, ok := socialAuthConfigs[authType]
 	if !ok {
 		return nil, errors.New("unknown Social Auth Provider: " + authType + ".")
 	}
@@ -110,12 +92,8 @@ func getSocialAuthProvider(authType string) (auth.Provider, error) {
 	return nil, errors.New("unmatched Social Auth Provider: " + authType + ".")
 }
 
-func getSocialAuthSelectors() []authSelector {
-	if len(socialAuthSelectors) > 0 {
-		return socialAuthSelectors
-	}
-	authConfigs := getSocialAuthConfigs()
-
+// Forbidden. Do NOT call this function.  (Only called by init() and a test)
+func getSocialAuthSelectors(authConfigs map[string]SocialAuthConfig) []authSelector {
 	// sort the provider types for ease of testing (avoid map's random order)
 	pTypes := []string{}
 	for pt, _ := range authConfigs {
@@ -132,7 +110,6 @@ func getSocialAuthSelectors() []authSelector {
 		}
 		selectors = append(selectors, s)
 	}
-	socialAuthSelectors = selectors
 	return selectors
 }
 
@@ -169,10 +146,8 @@ func finishAuthRequestForSocialUser(c buffalo.Context, authEmail string) error {
 
 // Just get the list of auth/select/... URLS
 func finishInviteBasedSocialAuthRequest(c buffalo.Context, extras map[string]interface{}) error {
-	selectors := getSocialAuthSelectors()
-
 	// Reply with a 200 and leave it to the UI to do the redirect
-	return c.Render(http.StatusOK, render.JSON(selectors))
+	return c.Render(http.StatusOK, render.JSON(socialAuthSelectors))
 }
 
 // Redirect user to their selected social auth provider
@@ -270,7 +245,7 @@ func socialLoginNonInviteBasedAuthCallback(c buffalo.Context, authEmail, authTyp
 		return logErrorAndRedirect(c, callbackValues.errCode, callbackValues.errMsg, extras)
 	}
 
-	authUser, err := getOrglessAuthUser(clientID, user)
+	authUser, err := newOrglessAuthUser(clientID, user)
 	if err != nil {
 		return err
 	}
@@ -317,7 +292,7 @@ func socialLoginBasedAuthCallback(c buffalo.Context, authEmail, clientID string)
 		dealWithInviteFromCallback(c, inviteType, inviteObjectUUID, user)
 	}
 
-	authUser, err := getOrglessAuthUser(clientID, user)
+	authUser, err := newOrglessAuthUser(clientID, user)
 	if err != nil {
 		return err
 	}
@@ -328,28 +303,12 @@ func socialLoginBasedAuthCallback(c buffalo.Context, authEmail, clientID string)
 	return c.Redirect(302, getLoginSuccessRedirectURL(authUser, callbackValues.returnTo))
 }
 
-// Hydrates an AuthUser struct
-func getOrglessAuthUser(clientID string, user models.User) (AuthUser, error) {
+// Hydrates an AuthUser struct based on a User without an Org
+func newOrglessAuthUser(clientID string, user models.User) (AuthUser, error) {
 	accessToken, expiresAt, err := user.CreateOrglessAccessToken(clientID)
-
 	if err != nil {
 		return AuthUser{}, err
 	}
 
-	isNew := false
-	if time.Since(user.CreatedAt) < time.Duration(time.Second*30) {
-		isNew = true
-	}
-
-	authUser := AuthUser{
-		ID:                   user.UUID.String(),
-		Name:                 user.FirstName + " " + user.LastName,
-		Nickname:             user.Nickname,
-		Email:                user.Email,
-		AccessToken:          accessToken,
-		AccessTokenExpiresAt: expiresAt,
-		IsNew:                isNew,
-	}
-
-	return authUser, nil
+	return hydrateAuthUser(user, accessToken, expiresAt), nil
 }

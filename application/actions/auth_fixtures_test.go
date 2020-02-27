@@ -138,7 +138,7 @@ func Fixtures_GetOrgAndUserOrgs(as *ActionSuite, t *testing.T) UserOrgFixtures {
 	}
 }
 
-func Fixtures_getAuthUser(as *ActionSuite, t *testing.T) UserOrgFixtures {
+func Fixtures_newAuthUser(as *ActionSuite, t *testing.T) UserOrgFixtures {
 	// Load Org test fixtures
 	org := &models.Organization{
 		Name:       "TestOrg1",

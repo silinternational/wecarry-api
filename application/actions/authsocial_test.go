@@ -116,8 +116,8 @@ func (ts *TestSuite) Test_getSocialAuthSelectors() {
 	domain.Env.TwitterSecret = twSecret
 
 	domain.Env.ApiBaseURL = "http://wecarry.local:3000"
-
-	got := getSocialAuthSelectors()
+	configs := getSocialAuthConfigs()
+	got := getSocialAuthSelectors(configs)
 
 	want := []authSelector{
 		{
@@ -133,12 +133,12 @@ func (ts *TestSuite) Test_getSocialAuthSelectors() {
 	ts.Equal(want, got, "incorrect auth selectors")
 }
 
-func (as *ActionSuite) Test_getOrglessAuthUser() {
+func (as *ActionSuite) Test_newOrglessAuthUser() {
 
 	uf := test.CreateUserFixtures(as.DB, 2)
 	user := uf.Users[0]
 
-	resultsAuthUser, err := getOrglessAuthUser("12345678", user)
+	resultsAuthUser, err := newOrglessAuthUser("12345678", user)
 	as.NoError(err)
 
 	got := resultsAuthUser
