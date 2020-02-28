@@ -107,6 +107,13 @@ const (
 	threadUIPath  = "/#/messages/"
 )
 
+// BuffaloContextType is a custom type used as a value key passed to context.WithValue as per the recommendations
+// in the function docs for that function: https://golang.org/pkg/context/#WithValue
+type BuffaloContextType string
+
+// BuffaloContext is the key for the call to context.WithValue in gqlHandler
+const BuffaloContext = BuffaloContextType("BuffaloContext")
+
 var Logger log.Logger
 var ErrLogger ErrLogProxy
 var AuthCallbackURL string
@@ -667,7 +674,7 @@ func ReportError(ctx context.Context, err error, errID string, extras ...map[str
 }
 
 func GetBuffaloContextFromGqlContext(c context.Context) buffalo.Context {
-	bc, ok := c.Value("BuffaloContext").(buffalo.Context)
+	bc, ok := c.Value(BuffaloContext).(buffalo.Context)
 	if ok {
 		return bc
 	}

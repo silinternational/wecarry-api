@@ -1757,7 +1757,7 @@ func (ms *ModelSuite) TestUser_isMeetingOrganizer() {
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
 			ctx := &testBuffaloContext{
-				params: map[string]interface{}{},
+				params: map[interface{}]interface{}{},
 			}
 			ctx.Set("current_user", tt.user)
 			got := tt.user.isMeetingOrganizer(ctx, tt.meeting)
@@ -1805,7 +1805,7 @@ func (ms *ModelSuite) TestUser_MeetingsAsParticipant() {
 		ms.T().Run(tt.name, func(t *testing.T) {
 			// setup
 			ctx := &testBuffaloContext{
-				params: map[string]interface{}{},
+				params: map[interface{}]interface{}{},
 			}
 			ctx.Set("current_user", tt.user)
 

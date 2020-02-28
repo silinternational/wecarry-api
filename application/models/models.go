@@ -109,23 +109,15 @@ func GetStringFromNullsTime(inTime nulls.Time) *string {
 	return nil
 }
 
-func GetCurrentUserFromGqlContext(ctx context.Context) User {
-	bc, ok := ctx.Value("BuffaloContext").(buffalo.Context)
-	if !ok {
-		return User{}
+// CurrentUser retrieves the current user from the context, which can be the context provided by gqlgen or the inner
+// "BuffaloContext" assigned to the value key of the same name.
+func CurrentUser(ctx context.Context) User {
+	bc, ok := ctx.Value(domain.BuffaloContext).(buffalo.Context)
+	if ok {
+		return CurrentUser(bc)
 	}
-	return GetCurrentUser(bc)
-}
-
-func GetCurrentUser(c buffalo.Context) User {
-	user := c.Value("current_user")
-
-	switch user.(type) {
-	case User:
-		return user.(User)
-	}
-
-	return User{}
+	user, _ := ctx.Value("current_user").(User)
+	return user
 }
 
 // flattenPopErrors - pop validation errors are complex structures, this flattens them to a simple string
