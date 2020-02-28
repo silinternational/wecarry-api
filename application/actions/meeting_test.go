@@ -73,6 +73,9 @@ type meetingInvite struct {
 
 const allMeetingInviteFields = "meeting {id} inviter {id} email avatarURL"
 
+type meetingParticipantResponse struct {
+	MeetingParticipant meetingParticipant `json:"MeetingParticipant"`
+}
 type meetingParticipantsResponse struct {
 	MeetingParticipants []meetingParticipant `json:"MeetingParticipants"`
 }
@@ -84,10 +87,8 @@ type meetingParticipant struct {
 	User struct {
 		ID string `json:"id"`
 	} `json:"user"`
-	IsOrganizer bool `json:"isOrganizer"`
-	Invite      struct {
-		ID string `json:"id"`
-	} `json:"invite"`
+	IsOrganizer bool          `json:"isOrganizer"`
+	Invite      meetingInvite `json:"invite"`
 }
 
 const allMeetingParticipantFields = "meeting {id} user {id} isOrganizer invite {email}"
@@ -514,6 +515,59 @@ func (as *ActionSuite) Test_RemoveMeetingParticipant() {
 				as.Equal(tc.responseIDs[i], resp.MeetingParticipants[i].User.ID)
 				as.Equal(tc.meetingID, resp.MeetingParticipants[i].Meeting.ID)
 			}
+		})
+	}
+}
+
+func (as *ActionSuite) Test_CreateMeetingParticipant() {
+	f := createFixturesForMeetings(as)
+
+	var resp meetingParticipantResponse
+
+	const queryTemplate = `mutation { meetingParticipant : createMeetingParticipant(input: %s) { %s } }`
+
+	type testCase struct {
+		name      string
+		invite    models.MeetingInvite
+		meetingID string
+		testUser  models.User
+		wantErr   string
+	}
+
+	testCases := []testCase{
+		{
+			name:      "no code",
+			invite:    models.MeetingInvite{},
+			meetingID: f.Meetings[0].UUID.String(),
+			testUser:  f.Users[0],
+			wantErr:   "yes",
+		},
+		{
+			name:      "good secret code",
+			invite:    f.MeetingInvites[0],
+			meetingID: f.Meetings[0].UUID.String(),
+			testUser:  f.Users[0],
+			wantErr:   "",
+		},
+	}
+
+	for _, tc := range testCases {
+		as.T().Run(tc.name, func(t *testing.T) {
+			input := fmt.Sprintf(`{ meetingID: "%s" code: "%s" }`, tc.meetingID, tc.invite.Secret.String())
+
+			query := fmt.Sprintf(queryTemplate, input, allMeetingParticipantFields)
+			err := as.testGqlQuery(query, tc.testUser.Nickname, &resp)
+
+			if tc.wantErr != "" {
+				as.Error(err)
+				as.Contains(err.Error(), tc.wantErr, "didn't get expected error message")
+				return
+			}
+			as.NoError(err)
+			as.Equal(tc.testUser.UUID.String(), resp.MeetingParticipant.User.ID)
+			as.Equal(tc.meetingID, resp.MeetingParticipant.Meeting.ID)
+			as.Equal(tc.invite.Email, resp.MeetingParticipant.Invite.Email)
+			as.Equal(false, resp.MeetingParticipant.IsOrganizer)
 		})
 	}
 }

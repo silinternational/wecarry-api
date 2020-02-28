@@ -314,6 +314,23 @@ func (r *mutationResolver) RemoveMeetingInvite(ctx context.Context, input Remove
 	return invites, nil
 }
 
+// CreateMeetingParticipant implements the `createMeetingParticipant` mutation
+func (r *mutationResolver) CreateMeetingParticipant(ctx context.Context, input CreateMeetingParticipantInput) (
+	*models.MeetingParticipant, error) {
+
+	var meeting models.Meeting
+	if err := meeting.FindByUUID(input.MeetingID); err != nil {
+		return nil, domain.ReportError(ctx, err, "CreateMeetingParticipant.FindMeeting")
+	}
+
+	bc := domain.GetBuffaloContextFromGqlContext(ctx)
+	var participant models.MeetingParticipant
+	if err := participant.Create(bc, meeting, input.Code); err != nil {
+		return nil, domain.ReportError(ctx, err, "CreateMeetingParticipant")
+	}
+	return &participant, nil
+}
+
 func (r *mutationResolver) RemoveMeetingParticipant(ctx context.Context, input RemoveMeetingParticipantInput) ([]models.MeetingParticipant, error) {
 	var meeting models.Meeting
 	if err := meeting.FindByUUID(input.MeetingID); err != nil {

@@ -811,6 +811,28 @@ func (u *User) CanRemoveMeetingInvite(ctx buffalo.Context, meeting Meeting) bool
 	return u.ID == meeting.CreatedByID || u.isMeetingOrganizer(ctx, meeting) || u.isSuperAdmin()
 }
 
+// CanCreateMeetingParticipant allows the meeting creator, the meeting organizer(s), and super admins to create
+// a MeetingParticipant for any user. In addition, any user can create a MeetingParticipant if the given code
+// matches the meeting invite code OR is a valid secret code for a MeetingInvite on that meeting
+func (u *User) CanCreateMeetingParticipant(ctx buffalo.Context, meeting Meeting, code *string) bool {
+	if u.ID == meeting.CreatedByID || u.isMeetingOrganizer(ctx, meeting) || u.isSuperAdmin() {
+		return true
+	}
+	if code == nil {
+		return false
+	}
+	if meeting.InviteCode.Valid && meeting.InviteCode.UUID.String() == *code {
+		return true
+	}
+	var invite MeetingInvite
+	isCodeGood, err := invite.IsSecretValid(meeting.ID, u.ID, *code)
+	if err != nil {
+		domain.Error(ctx, "error finding MeetingInvite by meeting ID and secret",
+			map[string]interface{}{"meeting": meeting.UUID, "secret": *code})
+	}
+	return isCodeGood
+}
+
 func (u *User) CanRemoveMeetingParticipant(ctx buffalo.Context, meeting Meeting) bool {
 	return u.ID == meeting.CreatedByID || u.isMeetingOrganizer(ctx, meeting) || u.isSuperAdmin()
 }

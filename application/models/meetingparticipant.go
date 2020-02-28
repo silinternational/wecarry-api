@@ -3,10 +3,13 @@ package models
 import (
 	"time"
 
+	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
 	"github.com/gobuffalo/validate/validators"
+
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 // MeetingParticipant is the model for storing meeting participants, users linked to a meeting/event
@@ -66,6 +69,18 @@ func (m *MeetingParticipant) CreateFromInvite(invite MeetingInvite, userID int) 
 	m.InviteID = nulls.NewInt(invite.ID)
 	m.UserID = userID
 	m.MeetingID = invite.MeetingID
+	return DB.Create(m)
+}
+
+// Create a new MeetingParticipant from a meeting ID and code. If `code` is nil, the meeting must be non-INVITE_ONLY.
+// Otherwise, `code` must match either a MeetingInvite secret code or a Meeting invite code.
+func (m *MeetingParticipant) Create(ctx buffalo.Context, meeting Meeting, code *string) error {
+	cUser := CurrentUser(ctx)
+	if !cUser.CanCreateMeetingParticipant(ctx, meeting, code) {
+		return domain.ReportError(ctx, nil, "CreateMeetingParticipant.Unauthorized")
+	}
+	m.UserID = cUser.ID
+	m.MeetingID = meeting.ID
 	return DB.Create(m)
 }
 

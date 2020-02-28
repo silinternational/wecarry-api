@@ -75,3 +75,12 @@ func (m *MeetingInvite) FindByMeetingIDAndEmail(meetingID int, email string) err
 func (m *MeetingInvite) Destroy() error {
 	return DB.Destroy(m)
 }
+
+// IsSecretValid returns true if and only if a MeetingInvite exists that exactly matches all three parameters
+func (m *MeetingInvite) IsSecretValid(meetingID int, userID int, secret string) (bool, error) {
+	err := DB.Where("meeting_id=? AND user_id=? AND secret=?", meetingID, userID, secret).First(m)
+	if domain.IsOtherThanNoRows(err) {
+		return false, err
+	}
+	return err == nil, nil
+}
