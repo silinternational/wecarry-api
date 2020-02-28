@@ -315,5 +315,25 @@ func (r *mutationResolver) RemoveMeetingInvite(ctx context.Context, input Remove
 }
 
 func (r *mutationResolver) RemoveMeetingParticipant(ctx context.Context, input RemoveMeetingParticipantInput) ([]models.MeetingParticipant, error) {
-	return []models.MeetingParticipant{}, nil
+	var meeting models.Meeting
+	if err := meeting.FindByUUID(input.MeetingID); err != nil {
+		return nil, domain.ReportError(ctx, err, "RemoveMeetingParticipant.FindMeeting")
+	}
+
+	c := domain.GetBuffaloContextFromGqlContext(ctx)
+	cUser := models.GetCurrentUserFromGqlContext(ctx)
+	if !cUser.CanRemoveMeetingParticipant(c, meeting) {
+		err := errors.New("insufficient permissions")
+		return nil, domain.ReportError(ctx, err, "RemoveMeetingParticipant.Unauthorized")
+	}
+
+	if err := meeting.RemoveParticipant(c, input.UserID); err != nil {
+		return nil, domain.ReportError(ctx, err, "RemoveMeetingParticipant")
+	}
+
+	participants, err := meeting.Participants(c)
+	if err != nil {
+		return nil, domain.ReportError(ctx, err, "RemoveMeetingParticipant.ListParticipants")
+	}
+	return participants, nil
 }

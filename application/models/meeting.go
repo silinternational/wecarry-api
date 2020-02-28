@@ -349,3 +349,15 @@ func (m *Meeting) RemoveInvite(ctx buffalo.Context, email string) error {
 	}
 	return invite.Destroy()
 }
+
+func (m *Meeting) RemoveParticipant(ctx buffalo.Context, userUUID string) error {
+	var user User
+	if err := user.FindByUUID(userUUID); err != nil {
+		return fmt.Errorf("invalid user ID %s in Meeting.RemoveParticipant, %s", userUUID, err)
+	}
+	var participant MeetingParticipant
+	if err := participant.FindByMeetingIDAndUserID(m.ID, user.ID); err != nil {
+		return fmt.Errorf("failed to load MeetingParticipant in Meeting.RemoveParticipant, %s", err)
+	}
+	return participant.Destroy()
+}
