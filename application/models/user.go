@@ -267,10 +267,8 @@ func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
 // sets its SocialAuthProvider field so they can login again in future.
 func (u *User) FindOrCreateFromOrglessAuthUser(authUser *auth.User, authType string) error {
 
-	if err := DB.Where("email = ?", authUser.Email).First(u); err != nil {
-		if domain.IsOtherThanNoRows(err) {
-			return errors.WithStack(err)
-		}
+	if err := DB.Where("email = ?", authUser.Email).First(u); domain.IsOtherThanNoRows(err) {
+		return errors.WithStack(err)
 	}
 
 	newUser := true

@@ -168,15 +168,12 @@ func getUserOrgs(c buffalo.Context, authEmail string) (models.UserOrganizations,
 // no user_organization records yet, see if we have an organization for user's email domain
 func getOrgForNewUser(authEmail string) (models.Organization, error) {
 	var org models.Organization
-	if err := org.FindByDomain(domain.EmailDomain(authEmail)); err != nil {
-		return org, err
-	}
-	return org, nil
+	return org, org.FindByDomain(domain.EmailDomain(authEmail))
 }
 
 type authError struct {
 	httpStatus int
-	errorCode  string
+	errorKey   string
 	errorMsg   string
 }
 
@@ -187,7 +184,7 @@ func getOrgBasedAuthOption(c buffalo.Context, authEmail string, org models.Organ
 	if err != nil {
 		return authOption{}, &authError{
 			httpStatus: http.StatusInternalServerError,
-			errorCode:  domain.ErrorLoadingAuthProvider,
+			errorKey:   domain.ErrorLoadingAuthProvider,
 			errorMsg:   fmt.Sprintf("unable to load auth provider for '%s' ... %v", org.Name, err),
 		}
 	}
@@ -196,7 +193,7 @@ func getOrgBasedAuthOption(c buffalo.Context, authEmail string, org models.Organ
 	if err != nil {
 		return authOption{}, &authError{
 			httpStatus: http.StatusInternalServerError,
-			errorCode:  domain.ErrorGettingAuthURL,
+			errorKey:   domain.ErrorGettingAuthURL,
 			errorMsg: fmt.Sprintf("unable to determine what the authentication url should be for '%s' ... %v",
 				org.Name, err),
 		}
@@ -278,26 +275,17 @@ func inviteAuthRequest(c buffalo.Context, authEmail, inviteType string) error {
 	return nil
 }
 
-// Hydrates an AuthUser struct
-func getAuthUser(
-	clientID string,
-	user models.User,
-	org models.Organization) (AuthUser, error) {
+// Hydrates an AuthUser struct based on a user with an Org
+func newOrgBasedAuthUser(clientID string, user models.User, org models.Organization) (AuthUser, error) {
 	accessToken, expiresAt, err := user.CreateAccessToken(org, clientID)
-
 	if err != nil {
 		return AuthUser{}, err
 	}
 
-	var uos []authOption
-	for _, uo := range user.Organizations {
-		uos = append(uos, authOption{
-			ID:      uo.UUID.String(),
-			Name:    uo.Name,
-			LogoURL: uo.Url.String,
-		})
-	}
+	return hydrateAuthUser(user, accessToken, expiresAt), nil
+}
 
+func hydrateAuthUser(user models.User, accessToken string, accessTokenExpiresAt int64) AuthUser {
 	isNew := false
 	if time.Since(user.CreatedAt) < time.Duration(time.Second*30) {
 		isNew = true
@@ -309,11 +297,11 @@ func getAuthUser(
 		Nickname:             user.Nickname,
 		Email:                user.Email,
 		AccessToken:          accessToken,
-		AccessTokenExpiresAt: expiresAt,
+		AccessTokenExpiresAt: accessTokenExpiresAt,
 		IsNew:                isNew,
 	}
 
-	return authUser, nil
+	return authUser
 }
 
 func finishOrgBasedAuthRequest(c buffalo.Context, authEmail string,
@@ -324,11 +312,13 @@ func finishOrgBasedAuthRequest(c buffalo.Context, authEmail string,
 	for _, uo := range userOrgs {
 		option, authErr := getOrgBasedAuthOption(c, authEmail, uo.Organization)
 		if authErr != nil {
-			return authRequestError(c, authErr.httpStatus, authErr.errorCode, authErr.errorMsg, extras)
+			return authRequestError(c, authErr.httpStatus, authErr.errorKey, authErr.errorMsg, extras)
 		}
 		authOptions = append(authOptions, option)
 	}
 
+	fmt.Printf("\nBBBBBBBB %v <<<\n", c.Session().Get(ClientIDSessionKey))
+	fmt.Printf("\nCCCCCCCCCC %v <<<\n", authOptions)
 	// Reply with a 200 and leave it to the UI to do the redirect
 	return c.Render(http.StatusOK, render.JSON(authOptions))
 }
@@ -342,7 +332,7 @@ func authRequest(c buffalo.Context) error {
 	}
 
 	c.Session().Set(ClientIDSessionKey, clientID)
-
+	fmt.Printf("\nAAAAAAAAAAA %v\n\n", clientID)
 	// Get the AuthEmail param and push it into the Session
 	authEmail := c.Param(AuthEmailParam)
 	if authEmail == "" {
@@ -502,7 +492,7 @@ func orgBasedAuthCallback(c buffalo.Context, orgUUID, authEmail, clientID string
 		dealWithInviteFromCallback(c, inviteType, objectUUID, user)
 	}
 
-	authUser, err := getAuthUser(clientID, user, org)
+	authUser, err := newOrgBasedAuthUser(clientID, user, org)
 	if err != nil {
 		return err
 	}
@@ -516,6 +506,7 @@ func orgBasedAuthCallback(c buffalo.Context, orgUUID, authEmail, clientID string
 // authCallback assumes the user has logged in to the IDP or Oauth service and now their browser
 // has been redirected back with the final response
 func authCallback(c buffalo.Context) error {
+	fmt.Printf("\nDDDDDDDDDDD  %v<<<\n", c.Session().Get(ClientIDSessionKey))
 	clientID, ok := c.Session().Get(ClientIDSessionKey).(string)
 	if !ok {
 		return logErrorAndRedirect(c, domain.ErrorMissingSessionClientID,
@@ -566,14 +557,14 @@ func mergeExtras(code string, extras ...map[string]interface{}) map[string]inter
 }
 
 // Make extras variadic, so that it can be omitted from the params
-func authRequestError(c buffalo.Context, httpStatus int, errorCode, message string, extras ...map[string]interface{}) error {
-	allExtras := mergeExtras(errorCode, extras...)
+func authRequestError(c buffalo.Context, httpStatus int, errorKey, message string, extras ...map[string]interface{}) error {
+	allExtras := mergeExtras(errorKey, extras...)
 
 	domain.Error(c, message, allExtras)
 
 	authError := domain.AppError{
 		Code: httpStatus,
-		Key:  errorCode,
+		Key:  errorKey,
 	}
 
 	c.Session().Clear()

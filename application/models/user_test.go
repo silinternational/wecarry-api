@@ -2,6 +2,7 @@ package models
 
 import (
 	"crypto/md5"
+	"database/sql"
 	"fmt"
 	"reflect"
 	"strings"
@@ -949,7 +950,7 @@ func (ms *ModelSuite) TestUser_FindByEmail() {
 		{
 			name:    "Bad",
 			email:   "bad@example.com",
-			wantErr: "sql: no rows in result set",
+			wantErr: sql.ErrNoRows.Error(),
 		},
 	}
 
