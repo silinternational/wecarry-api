@@ -44,7 +44,7 @@ func New(config struct{ Key, Secret string }) (*Provider, error) {
 	p := &Provider{
 		ClientKey:    config.Key,
 		Secret:       config.Secret,
-		CallbackURL:  domain.Env.AuthCallbackURL,
+		CallbackURL:  domain.AuthCallbackURL,
 		providerName: ProviderName,
 	}
 	p.consumer = newConsumer(p, authorizeURL)

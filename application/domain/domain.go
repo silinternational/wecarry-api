@@ -109,6 +109,7 @@ const (
 
 var Logger log.Logger
 var ErrLogger ErrLogProxy
+var AuthCallbackURL string
 
 // Env holds environment variable values loaded by init()
 var Env struct {
@@ -163,6 +164,7 @@ func init() {
 	ErrLogger.SetOutput(os.Stderr)
 	ErrLogger.InitRollbar()
 	Assets = packr.New("Assets", "../assets")
+	AuthCallbackURL = Env.ApiBaseURL + "/auth/callback"
 }
 
 // readEnv loads environment data into `Env`

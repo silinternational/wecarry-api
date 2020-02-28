@@ -24,7 +24,7 @@ func Test_New(t *testing.T) {
 	t.Parallel()
 	a := assert.New(t)
 
-	domain.Env.AuthCallbackURL = EnvAuthCallbackURL
+	domain.AuthCallbackURL = EnvAuthCallbackURL
 
 	provider, err := twitterProvider()
 	a.NoError(err)

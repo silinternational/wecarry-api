@@ -44,7 +44,7 @@ func New(config struct{ Key, Secret string }, jsonConfig json.RawMessage) (*Prov
 	p := &Provider{
 		ClientKey:    config.Key,
 		Secret:       config.Secret,
-		CallbackURL:  domain.Env.AuthCallbackURL,
+		CallbackURL:  domain.AuthCallbackURL,
 		providerName: ProviderName,
 	}
 	p.config = newConfig(p, scopes)
