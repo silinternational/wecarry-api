@@ -577,7 +577,7 @@ func (ms *ModelSuite) TestMeeting_Invites() {
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
 			ctx := &testBuffaloContext{
-				params: map[string]interface{}{},
+				params: map[interface{}]interface{}{},
 			}
 			ctx.Set("current_user", tt.user)
 			got, err := tt.meeting.Invites(ctx)
@@ -631,7 +631,7 @@ func (ms *ModelSuite) TestMeeting_Participants() {
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
 			ctx := &testBuffaloContext{
-				params: map[string]interface{}{},
+				params: map[interface{}]interface{}{},
 			}
 			ctx.Set("current_user", tt.user)
 			got, err := tt.meeting.Participants(ctx)
@@ -685,7 +685,7 @@ func (ms *ModelSuite) TestMeeting_Organizers() {
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
 			ctx := &testBuffaloContext{
-				params: map[string]interface{}{},
+				params: map[interface{}]interface{}{},
 			}
 			ctx.Set("current_user", tt.user)
 			got, err := tt.meeting.Organizers(ctx)
@@ -744,7 +744,7 @@ func (ms *ModelSuite) TestMeeting_RemoveInvite() {
 		ms.T().Run(tt.name, func(t *testing.T) {
 			// setup
 			ctx := &testBuffaloContext{
-				params: map[string]interface{}{},
+				params: map[interface{}]interface{}{},
 			}
 			ctx.Set("current_user", tt.user)
 
@@ -803,7 +803,7 @@ func (ms *ModelSuite) TestMeeting_RemoveParticipant() {
 		ms.T().Run(tt.name, func(t *testing.T) {
 			// setup
 			ctx := &testBuffaloContext{
-				params: map[string]interface{}{},
+				params: map[interface{}]interface{}{},
 			}
 			ctx.Set("current_user", tt.testUser)
 

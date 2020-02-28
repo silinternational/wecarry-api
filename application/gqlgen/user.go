@@ -128,7 +128,7 @@ func (r *userResolver) UnreadMessageCount(ctx context.Context, obj *models.User)
 
 // Users retrieves a list of users
 func (r *queryResolver) Users(ctx context.Context) ([]models.User, error) {
-	currentUser := models.GetCurrentUserFromGqlContext(ctx)
+	currentUser := models.CurrentUser(ctx)
 
 	role := currentUser.AdminRole
 	if role != models.UserAdminRoleSuperAdmin {
@@ -149,7 +149,7 @@ func (r *queryResolver) Users(ctx context.Context) ([]models.User, error) {
 
 // User retrieves a single user
 func (r *queryResolver) User(ctx context.Context, id *string) (*models.User, error) {
-	currentUser := models.GetCurrentUserFromGqlContext(ctx)
+	currentUser := models.CurrentUser(ctx)
 
 	if id == nil {
 		return &currentUser, nil
@@ -176,7 +176,7 @@ func (r *queryResolver) User(ctx context.Context, id *string) (*models.User, err
 // user ID is provided and the current user is allowed to edit profiles, that user will be updated.
 // Otherwise, the current authenticated user is updated.
 func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput) (*models.User, error) {
-	cUser := models.GetCurrentUserFromGqlContext(ctx)
+	cUser := models.CurrentUser(ctx)
 	var user models.User
 
 	if input.ID != nil {
@@ -242,7 +242,7 @@ func (r *userResolver) Preferences(ctx context.Context, obj *models.User) (*mode
 		return nil, nil
 	}
 
-	user := models.GetCurrentUserFromGqlContext(ctx)
+	user := models.CurrentUser(ctx)
 	standardPrefs, err := obj.GetPreferences()
 	if err != nil {
 		extras := map[string]interface{}{
