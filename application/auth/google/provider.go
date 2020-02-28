@@ -30,6 +30,7 @@ func New(config struct{ Key, Secret string }, jsonConfig json.RawMessage) (*Prov
 	// If jsonConfig is provided, use it. Otherwise, use the SocialAuthConfig
 	if len(jsonConfig) > 10 { // just some small number to see if it probably has valid data
 		if err := json.Unmarshal(jsonConfig, &config); err != nil {
+			err = errors.New("error unmarshaling google provider config json, " + err.Error())
 			return &Provider{}, err
 		}
 	}
