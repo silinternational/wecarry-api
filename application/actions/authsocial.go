@@ -28,9 +28,6 @@ const (
 	AuthTypeLinkedIn = "linkedin"
 	AuthTypeTwitter  = "twitter"
 
-	envSocialAuthKey    = "key"
-	envSocialAuthSecret = "secret"
-
 	AuthSelectPath = "%s/auth/select/?%s=%s"
 )
 
