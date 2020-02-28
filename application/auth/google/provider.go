@@ -35,7 +35,7 @@ func New(config struct{ Key, Secret string }, jsonConfig json.RawMessage) (*Prov
 	}
 
 	if config.Key == "" || config.Secret == "" {
-		err := errors.New("missing required environment variable for Google Auth Provider")
+		err := errors.New("missing required config value for Google Auth Provider")
 		return &Provider{}, err
 	}
 
