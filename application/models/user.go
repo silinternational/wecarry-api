@@ -128,16 +128,18 @@ func (u *User) CreateAccessToken(org Organization, clientID string) (string, int
 	hash := HashClientIdAccessToken(clientID + token)
 	expireAt := createAccessTokenExpiry()
 
-	userOrg, err := u.FindUserOrganization(org)
-	if err != nil {
-		return "", 0, err
+	userAccessToken := &UserAccessToken{
+		UserID:      u.ID,
+		AccessToken: hash,
+		ExpiresAt:   expireAt,
 	}
 
-	userAccessToken := &UserAccessToken{
-		UserID:             u.ID,
-		UserOrganizationID: nulls.NewInt(userOrg.ID),
-		AccessToken:        hash,
-		ExpiresAt:          expireAt,
+	if org.ID > 0 {
+		userOrg, err := u.FindUserOrganization(org)
+		if err != nil {
+			return "", 0, err
+		}
+		userAccessToken.UserOrganizationID = nulls.NewInt(userOrg.ID)
 	}
 
 	if err := userAccessToken.Create(); err != nil {
@@ -149,25 +151,7 @@ func (u *User) CreateAccessToken(org Organization, clientID string) (string, int
 
 // CreateOrglessAccessToken - Create and store new UserAccessToken with no associated UserOrg
 func (u *User) CreateOrglessAccessToken(clientID string) (string, int64, error) {
-	if clientID == "" {
-		return "", 0, fmt.Errorf("cannot create token with empty clientID for user %s", u.Nickname)
-	}
-
-	token, _ := getRandomToken()
-	hash := HashClientIdAccessToken(clientID + token)
-	expireAt := createAccessTokenExpiry()
-
-	userAccessToken := &UserAccessToken{
-		UserID:      u.ID,
-		AccessToken: hash,
-		ExpiresAt:   expireAt,
-	}
-
-	if err := userAccessToken.Create(); err != nil {
-		return "", 0, err
-	}
-
-	return token, expireAt.UTC().Unix(), nil
+	return u.CreateAccessToken(Organization{}, clientID)
 }
 
 func (u *User) GetOrgIDs() []int {
@@ -180,6 +164,48 @@ func (u *User) GetOrgIDs() []int {
 	}
 
 	return s
+}
+
+func (u *User) hydrateFromAuthUser(authUser *auth.User, authType string) error {
+
+	newUser := true
+	if u.ID != 0 {
+		newUser = false
+	}
+
+	// update attributes from authUser
+	u.FirstName = authUser.FirstName
+	u.LastName = authUser.LastName
+	u.Email = authUser.Email
+
+	if authType != "" {
+		u.SocialAuthProvider = nulls.NewString(authType)
+	}
+
+	if authUser.PhotoURL != "" {
+		u.AuthPhotoURL = nulls.NewString(authUser.PhotoURL)
+	}
+
+	// if new user they will need a unique Nickname
+	if newUser {
+		u.Nickname = authUser.Nickname
+		if err := u.uniquifyNickname(); err != nil {
+			return err
+		}
+	}
+	if err := u.Save(); err != nil {
+		return errors.New("unable to save user record: " + err.Error())
+	}
+
+	if newUser {
+		e := events.Event{
+			Kind:    domain.EventApiUserCreated,
+			Message: "Nickname: " + u.Nickname + "  UUID: " + u.UUID.String(),
+			Payload: events.Payload{"user": u},
+		}
+		emitEvent(e)
+	}
+	return nil
 }
 
 func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
@@ -203,31 +229,8 @@ func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
 		}
 	}
 
-	newUser := true
-	if u.ID != 0 {
-		newUser = false
-	}
-
-	// update attributes from authUser
-	u.FirstName = authUser.FirstName
-	u.LastName = authUser.LastName
-	u.Email = authUser.Email
-
-	if authUser.PhotoURL != "" {
-		u.AuthPhotoURL = nulls.NewString(authUser.PhotoURL)
-	}
-
-	// if new user they will need a unique Nickname
-	if newUser {
-		u.Nickname = authUser.Nickname
-		if err := u.uniquifyNickname(); err != nil {
-			return err
-		}
-	}
-
-	err = u.Save()
-	if err != nil {
-		return fmt.Errorf("unable to save user record: %s", err.Error())
+	if err := u.hydrateFromAuthUser(authUser, ""); err != nil {
+		return err
 	}
 
 	if len(userOrgs) == 0 {
@@ -245,69 +248,17 @@ func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
 		}
 	}
 
-	if newUser {
-		e := events.Event{
-			Kind:    domain.EventApiUserCreated,
-			Message: "Nickname: " + u.Nickname + "  UUID: " + u.UUID.String(),
-			Payload: events.Payload{"user": u},
-		}
-		emitEvent(e)
-	}
-
-	// reload user
-	// err = DB.Eager().Where("id = ?", u.ID).First(u)
-	// if err != nil {
-	// 	return fmt.Errorf("unable to reload user after update: %s", err)
-	// }
-
 	return nil
 }
 
 // FindOrCreateFromOrglessAuthUser creates a new User based on an auth.User and
 // sets its SocialAuthProvider field so they can login again in future.
 func (u *User) FindOrCreateFromOrglessAuthUser(authUser *auth.User, authType string) error {
-
 	if err := DB.Where("email = ?", authUser.Email).First(u); domain.IsOtherThanNoRows(err) {
 		return errors.WithStack(err)
 	}
 
-	newUser := true
-	if u.ID != 0 {
-		newUser = false
-	}
-
-	// update attributes from authUser
-	u.FirstName = authUser.FirstName
-	u.LastName = authUser.LastName
-	u.Email = authUser.Email
-	u.SocialAuthProvider = nulls.NewString(authType)
-
-	if authUser.PhotoURL != "" {
-		u.AuthPhotoURL = nulls.NewString(authUser.PhotoURL)
-	}
-
-	// if new user they will need a unique Nickname
-	if newUser {
-		u.Nickname = authUser.Nickname
-		if err := u.uniquifyNickname(); err != nil {
-			return err
-		}
-	}
-
-	if err := u.Save(); err != nil {
-		return fmt.Errorf("unable to save user record: %s", err.Error())
-	}
-
-	if newUser {
-		e := events.Event{
-			Kind:    domain.EventApiUserCreated,
-			Message: "Nickname: " + u.Nickname + "  UUID: " + u.UUID.String(),
-			Payload: events.Payload{"user": u},
-		}
-		emitEvent(e)
-	}
-
-	return nil
+	return u.hydrateFromAuthUser(authUser, authType)
 }
 
 // CanCreateOrganization returns true if the given user is allowed to create organizations
