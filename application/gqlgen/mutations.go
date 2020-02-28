@@ -259,7 +259,7 @@ func (r *mutationResolver) CreateMeetingInvites(ctx context.Context, input Creat
 		return nil, domain.ReportError(ctx, err, "CreateMeetingInvite.FindMeeting")
 	}
 
-	c := domain.GetBuffaloContextFromGqlContext(ctx)
+	c := domain.GetBuffaloContext(ctx)
 	if !cUser.CanCreateMeetingInvite(c, m) {
 		err := errors.New("insufficient permissions")
 		return nil, domain.ReportError(ctx, err, "CreateMeetingInvite.Unauthorized")
@@ -283,7 +283,7 @@ func (r *mutationResolver) CreateMeetingInvites(ctx context.Context, input Creat
 		graphql.AddError(ctx, gqlerror.Errorf("problem creating invite for %v", emailList))
 	}
 
-	invites, err := m.Invites(domain.GetBuffaloContextFromGqlContext(ctx))
+	invites, err := m.Invites(domain.GetBuffaloContext(ctx))
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "CreateMeetingInvite.ListInvites")
 	}
@@ -296,7 +296,7 @@ func (r *mutationResolver) RemoveMeetingInvite(ctx context.Context, input Remove
 		return nil, domain.ReportError(ctx, err, "RemoveMeetingInvite.FindMeeting")
 	}
 
-	c := domain.GetBuffaloContextFromGqlContext(ctx)
+	c := domain.GetBuffaloContext(ctx)
 	cUser := models.CurrentUser(ctx)
 	if !cUser.CanRemoveMeetingInvite(c, meeting) {
 		err := errors.New("insufficient permissions")
@@ -337,7 +337,7 @@ func (r *mutationResolver) RemoveMeetingParticipant(ctx context.Context, input R
 		return nil, domain.ReportError(ctx, err, "RemoveMeetingParticipant.FindMeeting")
 	}
 
-	c := domain.GetBuffaloContextFromGqlContext(ctx)
+	c := domain.GetBuffaloContext(ctx)
 	cUser := models.CurrentUser(ctx)
 	if !cUser.CanRemoveMeetingParticipant(c, meeting) {
 		err := errors.New("insufficient permissions")

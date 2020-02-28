@@ -77,7 +77,7 @@ func (m *MeetingParticipant) CreateFromInvite(invite MeetingInvite, userID int) 
 // Otherwise, `code` must match either a MeetingInvite secret code or a Meeting invite code.
 func (m *MeetingParticipant) Create(ctx context.Context, meeting Meeting, code *string) error {
 	cUser := CurrentUser(ctx)
-	if !cUser.CanCreateMeetingParticipant(domain.GetBuffaloContextFromGqlContext(ctx), meeting, code) {
+	if !cUser.CanCreateMeetingParticipant(domain.GetBuffaloContext(ctx), meeting, code) {
 		return domain.ReportError(ctx, errors.New("authorization failure adding a MeetingParticipant"),
 			"CreateMeetingParticipant.Unauthorized")
 	}
