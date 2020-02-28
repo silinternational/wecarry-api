@@ -81,6 +81,19 @@ func (m *MeetingParticipant) Create(ctx context.Context, meeting Meeting, code *
 		return domain.ReportError(ctx, errors.New("authorization failure adding a MeetingParticipant"),
 			"CreateMeetingParticipant.Unauthorized")
 	}
+
+	if code != nil {
+		// TODO: check code against meeting invite codes first before looking at invites
+		var invite MeetingInvite
+		if err := invite.FindBySecret(meeting.ID, cUser.Email, *code); err != nil {
+			return domain.ReportError(ctx, errors.New("failure while finding meeting invite, "+err.Error()),
+				"CreateMeetingParticipant.Unauthorized")
+		}
+		if invite.ID > 0 {
+			m.InviteID = nulls.NewInt(invite.ID)
+		}
+	}
+
 	m.UserID = cUser.ID
 	m.MeetingID = meeting.ID
 	if err := DB.Create(m); err != nil {

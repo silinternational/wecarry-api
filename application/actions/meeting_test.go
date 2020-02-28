@@ -547,11 +547,23 @@ func (as *ActionSuite) Test_CreateMeetingParticipant() {
 			meetingID: f.Meetings[0].UUID.String(),
 			testUser:  f.Users[0],
 		},
+		{
+			name:       "regular user",
+			code:       f.MeetingInvites[3].Secret.String(),
+			meetingID:  f.Meetings[3].UUID.String(),
+			testUser:   f.Users[1],
+			wantInvite: f.MeetingInvites[3],
+		},
 	}
 
 	for _, tc := range testCases {
 		as.T().Run(tc.name, func(t *testing.T) {
-			input := fmt.Sprintf(`{ meetingID: "%s" code: "%s" }`, tc.meetingID, tc.code)
+			input := ""
+			if tc.code == "" {
+				input = fmt.Sprintf(`{ meetingID: "%s" }`, tc.meetingID)
+			} else {
+				input = fmt.Sprintf(`{ meetingID: "%s" code: "%s" }`, tc.meetingID, tc.code)
+			}
 
 			query := fmt.Sprintf(queryTemplate, input, allMeetingParticipantFields)
 			err := as.testGqlQuery(query, tc.testUser.Nickname, &resp)
