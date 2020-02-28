@@ -803,7 +803,7 @@ func (ms *ModelSuite) TestMeeting_RemoveParticipant() {
 		ms.T().Run(tt.name, func(t *testing.T) {
 			// setup
 			ctx := &testBuffaloContext{
-				params: map[string]interface{}{},
+				params: map[interface{}]interface{}{},
 			}
 			ctx.Set("current_user", tt.testUser)
 

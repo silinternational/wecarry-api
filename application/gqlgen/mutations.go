@@ -321,7 +321,7 @@ func (r *mutationResolver) RemoveMeetingParticipant(ctx context.Context, input R
 	}
 
 	c := domain.GetBuffaloContextFromGqlContext(ctx)
-	cUser := models.GetCurrentUserFromGqlContext(ctx)
+	cUser := models.CurrentUser(ctx)
 	if !cUser.CanRemoveMeetingParticipant(c, meeting) {
 		err := errors.New("insufficient permissions")
 		return nil, domain.ReportError(ctx, err, "RemoveMeetingParticipant.Unauthorized")
