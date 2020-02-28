@@ -117,21 +117,35 @@ func getSocialAuthSelectors(authConfigs map[string]SocialAuthConfig) []authSelec
 func finishAuthRequestForSocialUser(c buffalo.Context, authEmail string) error {
 	var user models.User
 	if err := user.FindByEmail(authEmail); err != nil {
-		return authRequestError(c, http.StatusInternalServerError, domain.ErrorFindingUserByEmail, err.Error())
+		authErr := authError{
+			httpStatus: http.StatusInternalServerError,
+			errorKey:   domain.ErrorFindingUserByEmail,
+			errorMsg:   err.Error(),
+		}
+		return authRequestError(c, authErr)
 	}
 
 	authType := user.SocialAuthProvider.String
+	extras := map[string]interface{}{"authType": authType}
 
 	ap, err := getSocialAuthProvider(authType)
 	if err != nil {
-		return authRequestError(c, http.StatusBadRequest, domain.ErrorLoadingAuthProvider,
-			fmt.Sprintf("error loading social auth provider for '%s' ... %v", authType, err))
+		authErr := authError{
+			httpStatus: http.StatusBadRequest,
+			errorKey:   domain.ErrorLoadingAuthProvider,
+			errorMsg:   fmt.Sprintf("error loading social auth provider, %v", err),
+		}
+		return authRequestError(c, authErr, extras)
 	}
 
 	redirectURL, err := ap.AuthRequest(c)
 	if err != nil {
-		return authRequestError(c, http.StatusInternalServerError, domain.ErrorGettingAuthURL,
-			fmt.Sprintf("error getting social auth url for '%s' ... %v", authType, err))
+		authErr := authError{
+			httpStatus: http.StatusInternalServerError,
+			errorKey:   domain.ErrorGettingAuthURL,
+			errorMsg:   fmt.Sprintf("error getting social auth url, %v", err),
+		}
+		return authRequestError(c, authErr, extras)
 	}
 
 	// UI expects an array, even when there is only one option
@@ -154,20 +168,34 @@ func finishInviteBasedSocialAuthRequest(c buffalo.Context, extras map[string]int
 func authSelect(c buffalo.Context) error {
 	authType := c.Param(AuthTypeParam)
 	if authType == "" {
-		return authRequestError(c, http.StatusBadRequest, domain.ErrorMissingAuthType,
-			AuthTypeParam+" is required to login")
+		authErr := authError{
+			httpStatus: http.StatusBadRequest,
+			errorKey:   domain.ErrorMissingAuthType,
+			errorMsg:   AuthTypeParam + " is required to login",
+		}
+		return authRequestError(c, authErr)
 	}
+
+	extras := map[string]interface{}{"authType": authType}
 
 	ap, err := getSocialAuthProvider(authType)
 	if err != nil {
-		return authRequestError(c, http.StatusBadRequest, domain.ErrorLoadingAuthProvider,
-			fmt.Sprintf("error loading social auth provider for '%s' ... %v", authType, err))
+		authErr := authError{
+			httpStatus: http.StatusBadRequest,
+			errorKey:   domain.ErrorLoadingAuthProvider,
+			errorMsg:   fmt.Sprintf("error loading social auth provider, %v", err),
+		}
+		return authRequestError(c, authErr, extras)
 	}
 
 	redirectURL, err := ap.AuthRequest(c)
 	if err != nil {
-		return authRequestError(c, http.StatusInternalServerError, domain.ErrorGettingAuthURL,
-			fmt.Sprintf("error getting social auth url for '%s' ... %v", authType, err))
+		authErr := authError{
+			httpStatus: http.StatusInternalServerError,
+			errorKey:   domain.ErrorGettingAuthURL,
+			errorMsg:   fmt.Sprintf("error getting social auth url, %v", err),
+		}
+		return authRequestError(c, authErr, extras)
 	}
 
 	c.Session().Set(SocialAuthTypeSessionKey, authType)
