@@ -527,33 +527,31 @@ func (as *ActionSuite) Test_CreateMeetingParticipant() {
 	const queryTemplate = `mutation { meetingParticipant : createMeetingParticipant(input: %s) { %s } }`
 
 	type testCase struct {
-		name      string
-		invite    models.MeetingInvite
-		meetingID string
-		testUser  models.User
-		wantErr   string
+		name       string
+		code       string
+		meetingID  string
+		testUser   models.User
+		wantInvite models.MeetingInvite
+		wantErr    string
 	}
 
 	testCases := []testCase{
 		{
 			name:      "no code",
-			invite:    models.MeetingInvite{},
 			meetingID: f.Meetings[2].UUID.String(),
 			testUser:  f.Users[2],
 			wantErr:   "not allowed",
 		},
 		{
-			name:      "good secret code",
-			invite:    f.MeetingInvites[0],
+			name:      "meeting creator",
 			meetingID: f.Meetings[0].UUID.String(),
 			testUser:  f.Users[0],
-			wantErr:   "",
 		},
 	}
 
 	for _, tc := range testCases {
 		as.T().Run(tc.name, func(t *testing.T) {
-			input := fmt.Sprintf(`{ meetingID: "%s" code: "%s" }`, tc.meetingID, tc.invite.Secret.String())
+			input := fmt.Sprintf(`{ meetingID: "%s" code: "%s" }`, tc.meetingID, tc.code)
 
 			query := fmt.Sprintf(queryTemplate, input, allMeetingParticipantFields)
 			err := as.testGqlQuery(query, tc.testUser.Nickname, &resp)
@@ -566,7 +564,9 @@ func (as *ActionSuite) Test_CreateMeetingParticipant() {
 			as.NoError(err)
 			as.Equal(tc.testUser.UUID.String(), resp.MeetingParticipant.User.ID)
 			as.Equal(tc.meetingID, resp.MeetingParticipant.Meeting.ID)
-			as.Equal(tc.invite.Email, resp.MeetingParticipant.Invite.Email)
+			if tc.wantInvite.Email != "" {
+				as.Equal(tc.wantInvite.Email, resp.MeetingParticipant.Invite.Email)
+			}
 			as.Equal(false, resp.MeetingParticipant.IsOrganizer)
 		})
 	}
