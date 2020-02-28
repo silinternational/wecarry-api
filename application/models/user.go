@@ -825,7 +825,7 @@ func (u *User) CanCreateMeetingParticipant(ctx buffalo.Context, meeting Meeting,
 		return true
 	}
 	var invite MeetingInvite
-	isCodeGood, err := invite.IsSecretValid(meeting.ID, u.ID, *code)
+	isCodeGood, err := invite.IsSecretValid(meeting.ID, u.Email, *code)
 	if err != nil {
 		domain.Error(ctx, "error finding MeetingInvite by meeting ID and secret",
 			map[string]interface{}{"meeting": meeting.UUID, "secret": *code})

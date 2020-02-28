@@ -559,13 +559,13 @@ func (ms *ModelSuite) TestMeeting_Invites() {
 			name:       "creator",
 			user:       f.Users[0],
 			meeting:    f.Meetings[0],
-			wantEmails: []string{"invitee0@example.com", "invitee1@example.com"},
+			wantEmails: []string{f.MeetingInvites[0].Email, f.MeetingInvites[1].Email},
 		},
 		{
 			name:       "organizer",
 			user:       f.Users[1],
 			meeting:    f.Meetings[0],
-			wantEmails: []string{"invitee0@example.com", "invitee1@example.com"},
+			wantEmails: []string{f.MeetingInvites[0].Email, f.MeetingInvites[1].Email},
 		},
 		{
 			name:       "invitee",

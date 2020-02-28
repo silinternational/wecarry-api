@@ -295,8 +295,8 @@ func (as *ActionSuite) Test_UpdateMeeting() {
 	err = as.testGqlQuery(query, f.Users[1].Nickname, &resp)
 	as.Error(err, "expected an authorization error but did not get one")
 
-	as.Contains(err.Error(), "You are not allowed to edit the information for that meeting.", "incorrect authorization error message")
-
+	as.Contains(err.Error(), "You are not allowed to edit the information for that event.",
+		"incorrect authorization error message")
 }
 
 func (as *ActionSuite) Test_CreateMeetingInvites() {
@@ -399,7 +399,7 @@ func (as *ActionSuite) Test_RemoveMeetingInvite() {
 			meetingID:      f.Meetings[0].UUID.String(),
 			testUser:       f.Users[0],
 			responseEmails: []string{},
-			wantErr:        "problem removing the meeting invite",
+			wantErr:        "problem removing the event invite",
 		},
 		{
 			name:           "not creator, not organizer",
@@ -538,9 +538,9 @@ func (as *ActionSuite) Test_CreateMeetingParticipant() {
 		{
 			name:      "no code",
 			invite:    models.MeetingInvite{},
-			meetingID: f.Meetings[0].UUID.String(),
-			testUser:  f.Users[0],
-			wantErr:   "yes",
+			meetingID: f.Meetings[2].UUID.String(),
+			testUser:  f.Users[2],
+			wantErr:   "not allowed",
 		},
 		{
 			name:      "good secret code",

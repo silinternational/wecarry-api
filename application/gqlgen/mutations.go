@@ -323,10 +323,10 @@ func (r *mutationResolver) CreateMeetingParticipant(ctx context.Context, input C
 		return nil, domain.ReportError(ctx, err, "CreateMeetingParticipant.FindMeeting")
 	}
 
-	bc := domain.GetBuffaloContextFromGqlContext(ctx)
 	var participant models.MeetingParticipant
-	if err := participant.Create(bc, meeting, input.Code); err != nil {
-		return nil, domain.ReportError(ctx, err, "CreateMeetingParticipant")
+	if err := participant.Create(ctx, meeting, input.Code); err != nil {
+		// MeetingParticipant.Create returns localized error messages
+		return nil, err
 	}
 	return &participant, nil
 }

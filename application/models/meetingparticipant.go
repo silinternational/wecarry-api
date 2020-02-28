@@ -1,9 +1,10 @@
 package models
 
 import (
+	"context"
+	"errors"
 	"time"
 
-	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
@@ -74,14 +75,18 @@ func (m *MeetingParticipant) CreateFromInvite(invite MeetingInvite, userID int) 
 
 // Create a new MeetingParticipant from a meeting ID and code. If `code` is nil, the meeting must be non-INVITE_ONLY.
 // Otherwise, `code` must match either a MeetingInvite secret code or a Meeting invite code.
-func (m *MeetingParticipant) Create(ctx buffalo.Context, meeting Meeting, code *string) error {
+func (m *MeetingParticipant) Create(ctx context.Context, meeting Meeting, code *string) error {
 	cUser := CurrentUser(ctx)
-	if !cUser.CanCreateMeetingParticipant(ctx, meeting, code) {
-		return domain.ReportError(ctx, nil, "CreateMeetingParticipant.Unauthorized")
+	if !cUser.CanCreateMeetingParticipant(domain.GetBuffaloContextFromGqlContext(ctx), meeting, code) {
+		return domain.ReportError(ctx, errors.New("authorization failure adding a MeetingParticipant"),
+			"CreateMeetingParticipant.Unauthorized")
 	}
 	m.UserID = cUser.ID
 	m.MeetingID = meeting.ID
-	return DB.Create(m)
+	if err := DB.Create(m); err != nil {
+		return domain.ReportError(ctx, err, "CreateMeetingParticipant")
+	}
+	return nil
 }
 
 func (m *MeetingParticipant) Destroy() error {

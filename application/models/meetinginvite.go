@@ -1,6 +1,7 @@
 package models
 
 import (
+	"errors"
 	"time"
 
 	"github.com/gobuffalo/pop"
@@ -77,10 +78,21 @@ func (m *MeetingInvite) Destroy() error {
 }
 
 // IsSecretValid returns true if and only if a MeetingInvite exists that exactly matches all three parameters
-func (m *MeetingInvite) IsSecretValid(meetingID int, userID int, secret string) (bool, error) {
-	err := DB.Where("meeting_id=? AND user_id=? AND secret=?", meetingID, userID, secret).First(m)
+func (m *MeetingInvite) IsSecretValid(meetingID int, email, secret string) (bool, error) {
+	if meetingID < 1 {
+		return false, errors.New("invalid meeting ID in IsSecretValid")
+	}
+	if email == "" {
+		return false, errors.New("empty email in IsSecretValid")
+	}
+	if secret == "" {
+		return false, errors.New("empty secret in IsSecretValid")
+	}
+	var count Count
+	err := DB.RawQuery("SELECT COUNT(*) FROM meeting_invites WHERE meeting_id=? AND email=? AND secret=?",
+		meetingID, email, secret).First(&count)
 	if domain.IsOtherThanNoRows(err) {
 		return false, err
 	}
-	return err == nil, nil
+	return count.N > 0, nil
 }

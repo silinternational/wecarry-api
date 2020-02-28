@@ -214,3 +214,78 @@ func (ms *ModelSuite) TestMeetingInvite_Inviter() {
 		})
 	}
 }
+
+func (ms *ModelSuite) TestMeetingInvite_IsSecretValid() {
+	f := createMeetingFixtures(ms.DB, 2)
+
+	tests := []struct {
+		name    string
+		meeting int
+		email   string
+		secret  string
+		want    bool
+		wantErr string
+	}{
+		{
+			name:    "bad - wrong meeting",
+			meeting: f.Meetings[1].ID,
+			email:   f.Users[2].Email,
+			secret:  f.MeetingInvites[0].Secret.String(),
+			want:    false,
+		},
+		{
+			name:    "bad - wrong email",
+			meeting: f.Meetings[0].ID,
+			email:   f.Users[0].Email,
+			secret:  f.MeetingInvites[0].Secret.String(),
+			want:    false,
+		},
+		{
+			name:    "bad - wrong secret",
+			meeting: f.Meetings[0].ID,
+			email:   f.Users[2].Email,
+			secret:  f.MeetingInvites[1].Secret.String(),
+			want:    false,
+		},
+		{
+			name:    "bad - meetingID=0",
+			meeting: 0,
+			email:   f.Users[2].Email,
+			secret:  f.MeetingInvites[0].Secret.String(),
+			wantErr: "meeting",
+		},
+		{
+			name:    "bad - empty email",
+			meeting: f.Meetings[0].ID,
+			email:   "",
+			secret:  f.MeetingInvites[1].Secret.String(),
+			wantErr: "email",
+		},
+		{
+			name:    "bad - empty secret",
+			meeting: f.Meetings[0].ID,
+			email:   f.Users[2].Email,
+			secret:  "",
+			wantErr: "secret",
+		},
+		{
+			name:    "good",
+			meeting: f.Meetings[0].ID,
+			email:   f.Users[2].Email,
+			secret:  f.MeetingInvites[0].Secret.String(),
+			want:    true,
+		},
+	}
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			var inv MeetingInvite
+			got, err := inv.IsSecretValid(tt.meeting, tt.email, tt.secret)
+			if tt.wantErr != "" {
+				ms.Error(err, `didn't get expected error: "%s"`, tt.wantErr)
+				ms.Contains(err.Error(), tt.wantErr, "wrong error message")
+				return
+			}
+			ms.Equal(tt.want, got, "IsSecretValid returned the wrong state")
+		})
+	}
+}
