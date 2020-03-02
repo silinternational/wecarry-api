@@ -24,6 +24,8 @@ models:
         resolver: true
       logoURL:
         resolver: true
+      domains:
+        resolver: true
   OrganizationDomain:
     model: models.OrganizationDomain
     fields:
@@ -96,6 +98,8 @@ models:
       lastViewedAt:
         resolver: true
       unreadMessageCount:
+        resolver: true
+      messages:
         resolver: true
   Message:
     model: models.Message
