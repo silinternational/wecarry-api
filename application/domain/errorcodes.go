@@ -27,15 +27,15 @@ const ErrorUnprocessableEntity = "ErrorUnprocessableEntity"
 const ErrorInternalServerError = "ErrorInternalServerError"
 
 // ClientID is required on various requests
-// actions.AuthRequest
+// actions.authRequest
 const ErrorMissingClientID = "ErrorMissingClientID"
 
 // AuthEmail is required on authentication requests
-// actions.AuthRequest
+// actions.authRequest
 const ErrorMissingAuthEmail = "ErrorMissingAuthEmail"
 
 // AuthType is required on social authentication select calls
-// actions.AuthRequest
+// actions.authSelect
 const ErrorMissingAuthType = "ErrorMissingAuthType"
 
 // There was an error during the auth request process when trying to
@@ -45,77 +45,77 @@ const ErrorFindingOrgForNewUser = "ErrorFindingOrgForNewUser"
 
 // There was an error during the auth request process when trying to
 // find userorganizations
-// actions.AuthRequest
+// actions.authRequest and actions.meetingAuthRequest
 const ErrorFindingUserOrgs = "ErrorFindingUserOrgs"
 
-// actions.AuthRequest
+// actions.finishAuthRequestForSocialUser
 const ErrorFindingUserByEmail = "ErrorFindingUserByEmail"
 
 // No Organization was found for the authEmail
-// actions.AuthRequest
+// actions.authRequest
 const ErrorOrglessUserNotAllowed = "ErrorOrglessUserNotAllowed"
 
 // An appropriate organization was not found
 // for the user making an authentication request
-// actions.AuthRequest
+// actions.inviteAuthRequest
 const ErrorCannotFindOrg = "ErrorCannotFindOrg"
 
-// actions.AuthRequest
+// actions.inviteAuthRequest
 const ErrorInvalidInviteType = "ErrorInvalidInviteType"
 
-// actions.AuthRequest
+// actions.getAuthInviteResponse
 const ErrorInvalidInviteCode = "ErrorInvalidInviteCode"
 
-// actions.AuthRequest
+// actions.meetingAuthRequest
 const ErrorInvalidSessionInviteObjectUUID = "ErrorInvalidSessionInviteObjectUUID"
 
-// actions.AuthRequest and others
+// actions - various places
 const ErrorLoadingAuthProvider = "ErrorLoadingAuthProvider"
 
-// actions.AuthRequest
+// actions.getOrgBasedAuthOption, actions.authSelect, and actions.finishAuthRequestForSocialUser
 const ErrorGettingAuthURL = "ErrorGettingAuthURL"
 
-// actions.AuthRequest
+// actions.meetingAuthRequest
 const ErrorMissingSessionInviteObjectUUID = "ErrorMissingSessionInviteObjectUUID"
 
-// actions.AuthCallback
+// actions.authCallback
 const ErrorMissingSessionAuthEmail = "ErrorMissingSessionAuthEmail"
 
-// actions.AuthCallback
+// actions.authCallback
 const ErrorMissingSessionClientID = "ErrorMissingSessionClientID"
 
-// actions.AuthCallback
+// actions.socialLoginBasedAuthCallback
 const ErrorMissingSessionSocialAuthType = "ErrorMissingSessionSocialAuthType"
 
-// actions.AuthCallback
+// actions.orgBasedAuthCallback
 const ErrorFindingOrgByID = "ErrorFindingOrgByID"
 
-// actions.AuthCallback
+// actions several locations
 const ErrorAuthProvidersCallback = "ErrorAuthProvidersCallback"
 
-// actions.AuthCallback
+// actions.orgBasedAuthCallback
 const ErrorAuthEmailMismatch = "ErrorAuthEmailMismatch"
 
-// actions.AuthCallback
+// actions.socialLoginNonInviteBasedAuthCallback
 const ErrorGettingSocialAuthUser = "ErrorGettingSocialAuthUser"
 
-// actions.AuthCallback
+// actions.orgBasedAuthCallback and actions.socialLoginBasedAuthCallback
 const ErrorWithAuthUser = "ErrorWithAuthUser"
 
 // token param is required on a logout request
-// actions.AuthDestroy
+// actions.authDestroy
 const ErrorMissingLogoutToken = "ErrorMissingLogoutToken"
 
-// actions.AuthDestroy
+// actions.authDestroy
 const ErrorFindingAccessToken = "ErrorFindingAccessToken"
 
-// actions.AuthDestroy
+// actions.authDestroy
 const ErrorFindingOrgForAccessToken = "ErrorFindingOrgForAccessToken"
 
-// actions.AuthDestroy
+// actions.authDestroy
 const ErrorAuthProvidersLogout = "ErrorAuthProvidersLogout"
 
-// actions.AuthDestroy
+// actions.authDestroy
 const ErrorDeletingAccessToken = "ErrorDeletingAccessToken"
 
 // actions.UploadHandler
