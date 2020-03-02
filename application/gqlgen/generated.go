@@ -324,6 +324,7 @@ type OrganizationResolver interface {
 
 	URL(ctx context.Context, obj *models.Organization) (*string, error)
 
+	Domains(ctx context.Context, obj *models.Organization) ([]models.OrganizationDomain, error)
 	LogoURL(ctx context.Context, obj *models.Organization) (*string, error)
 	TrustedOrganizations(ctx context.Context, obj *models.Organization) ([]models.Organization, error)
 }
@@ -373,7 +374,7 @@ type QueryResolver interface {
 type ThreadResolver interface {
 	ID(ctx context.Context, obj *models.Thread) (string, error)
 	Participants(ctx context.Context, obj *models.Thread) ([]PublicProfile, error)
-
+	Messages(ctx context.Context, obj *models.Thread) ([]models.Message, error)
 	PostID(ctx context.Context, obj *models.Thread) (string, error)
 	Post(ctx context.Context, obj *models.Thread) (*models.Post, error)
 	LastViewedAt(ctx context.Context, obj *models.Thread) (*time.Time, error)
@@ -5543,7 +5544,7 @@ func (ec *executionContext) _Organization_domains(ctx context.Context, field gra
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Domains()
+		return ec.resolvers.Organization().Domains(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7500,7 +7501,7 @@ func (ec *executionContext) _Thread_messages(ctx context.Context, field graphql.
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Messages()
+		return ec.resolvers.Thread().Messages(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11196,10 +11197,19 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "domains":
-			out.Values[i] = ec._Organization_domains(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Organization_domains(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "logoURL":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -11848,10 +11858,19 @@ func (ec *executionContext) _Thread(ctx context.Context, sel ast.SelectionSet, o
 				return res
 			})
 		case "messages":
-			out.Values[i] = ec._Thread_messages(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Thread_messages(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "postID":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
