@@ -19,7 +19,6 @@ type ThreadParticipant struct {
 	LastViewedAt   time.Time `json:"last_viewed_at" db:"last_viewed_at"`
 	LastNotifiedAt time.Time `json:"last_notified_at" db:"last_notified_at"`
 	Thread         Thread    `belongs_to:"threads"`
-	User           User      `belongs_to:"users"`
 }
 
 // String can be helpful for serializing the model

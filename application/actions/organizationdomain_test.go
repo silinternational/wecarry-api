@@ -37,12 +37,14 @@ func (as *ActionSuite) Test_CreateUpdateOrganizationDomain() {
 	as.Equal(f.Organizations[0].UUID.String(), resp.OrganizationDomain[0].OrganizationID, "received wrong org ID")
 
 	var orgs models.Organizations
-	err = as.DB.Eager().Where("name = ?", f.Organizations[0].Name).All(&orgs)
+	err = as.DB.Where("name = ?", f.Organizations[0].Name).All(&orgs)
 	as.NoError(err)
 
 	as.GreaterOrEqual(1, len(orgs), "no Organization found")
-	as.Equal(1, len(orgs[0].OrganizationDomains), "wrong number of domains in DB")
-	as.Equal(testDomain, orgs[0].OrganizationDomains[0].Domain, "wrong domain in DB")
+	domains, err := orgs[0].Domains()
+	as.NoError(err)
+	as.Equal(1, len(domains), "wrong number of domains in DB")
+	as.Equal(testDomain, domains[0].Domain, "wrong domain in DB")
 
 	// Test updating orgdomains
 	validUpdateInput := fmt.Sprintf(`organizationID:"%s" domain:"%s" authType:"saml", authConfig:"{}"`,

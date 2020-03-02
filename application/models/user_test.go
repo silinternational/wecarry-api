@@ -589,9 +589,9 @@ func (ms *ModelSuite) TestUser_GetPosts() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := test.args.user.GetPosts(test.args.postRole)
+			got, err := test.args.user.Posts(test.args.postRole)
 			if err != nil {
-				t.Errorf("GetPosts() returned error: %s", err)
+				t.Errorf("Posts() returned error: %s", err)
 			}
 
 			ids := make([]uuid.UUID, len(got))

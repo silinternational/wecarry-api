@@ -302,7 +302,7 @@ func createMeetingFixtures(tx *pop.Connection, nMeetings int) meetingFixtures {
 		meetings[i].StartDate = time.Now()
 		meetings[i].EndDate = time.Now().Add(time.Hour * 24)
 		meetings[i].InviteCode = nulls.NewUUID(domain.GetUUID())
-		if _, err := meetings[i].AttachImage(files[i].UUID.String()); err != nil {
+		if _, err := meetings[i].SetImageFile(files[i].UUID.String()); err != nil {
 			panic("error attaching image to meeting fixture, " + err.Error())
 		}
 		mustCreate(tx, &meetings[i])

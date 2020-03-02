@@ -135,7 +135,11 @@ func getAuthInviteResponse(c buffalo.Context) (authInviteResponse, error) {
 		Name: meeting.Name,
 	}
 	if meeting.ImageFileID.Valid {
-		resp.ImageURL = meeting.ImageFile.URL
+		f, err := meeting.ImageFile()
+		if err != nil {
+			domain.ErrLogger.Printf("error loading meeting image file: " + err.Error())
+		}
+		resp.ImageURL = f.URL
 	}
 	return resp, nil
 }

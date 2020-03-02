@@ -24,17 +24,16 @@ const AuthTypeGoogle = "google"
 const AuthTypeSaml = "saml"
 
 type Organization struct {
-	ID                  int                  `json:"id" db:"id"`
-	CreatedAt           time.Time            `json:"created_at" db:"created_at"`
-	UpdatedAt           time.Time            `json:"updated_at" db:"updated_at"`
-	Name                string               `json:"name" db:"name"`
-	Url                 nulls.String         `json:"url" db:"url"`
-	AuthType            string               `json:"auth_type" db:"auth_type"`
-	AuthConfig          string               `json:"auth_config" db:"auth_config"`
-	UUID                uuid.UUID            `json:"uuid" db:"uuid"`
-	LogoFileID          nulls.Int            `json:"logo_file_id" db:"logo_file_id"`
-	Users               Users                `many_to_many:"user_organizations" order_by:"nickname"`
-	OrganizationDomains []OrganizationDomain `has_many:"organization_domains" order_by:"domain asc"`
+	ID         int          `json:"id" db:"id"`
+	CreatedAt  time.Time    `json:"created_at" db:"created_at"`
+	UpdatedAt  time.Time    `json:"updated_at" db:"updated_at"`
+	Name       string       `json:"name" db:"name"`
+	Url        nulls.String `json:"url" db:"url"`
+	AuthType   string       `json:"auth_type" db:"auth_type"`
+	AuthConfig string       `json:"auth_config" db:"auth_config"`
+	UUID       uuid.UUID    `json:"uuid" db:"uuid"`
+	LogoFileID nulls.Int    `json:"logo_file_id" db:"logo_file_id"`
+	Users      Users        `many_to_many:"user_organizations" order_by:"nickname"`
 }
 
 // String is used to serialize error extras
@@ -172,13 +171,14 @@ func (orgs *Organizations) AllWhereUserIsOrgAdmin(cUser User) error {
 		All(orgs)
 }
 
-// GetDomains finds and returns all related OrganizationDomain rows.
-func (o *Organization) GetDomains() ([]OrganizationDomain, error) {
-	if err := DB.Load(o, "OrganizationDomains"); err != nil {
+// Domains finds and returns all related OrganizationDomain rows.
+func (o *Organization) Domains() ([]OrganizationDomain, error) {
+	var domains OrganizationDomains
+	if err := DB.Where("organization_id=?", o.ID).Order("domain asc").All(&domains); err != nil {
 		return nil, err
 	}
 
-	return o.OrganizationDomains, nil
+	return domains, nil
 }
 
 // GetUsers finds and returns all related Users.
