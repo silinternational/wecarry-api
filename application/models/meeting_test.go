@@ -777,6 +777,7 @@ func (ms *ModelSuite) TestMeeting_RemoveInvite() {
 		})
 	}
 }
+
 func (ms *ModelSuite) TestMeeting_RemoveParticipant() {
 	f := createMeetingFixtures(ms.DB, 2)
 
@@ -833,6 +834,87 @@ func (ms *ModelSuite) TestMeeting_RemoveParticipant() {
 			ms.Equal(tt.remainingParticipants, ids)
 
 			// teardown
+		})
+	}
+}
+
+func (ms *ModelSuite) TestMeeting_isCodeValid() {
+	code := domain.GetUUID()
+
+	tests := []struct {
+		name    string
+		meeting Meeting
+		code    string
+		want    bool
+	}{
+		{
+			name:    "yes",
+			meeting: Meeting{InviteCode: nulls.NewUUID(code)},
+			code:    code.String(),
+			want:    true,
+		},
+		{
+			name:    "wrong code",
+			meeting: Meeting{InviteCode: nulls.NewUUID(domain.GetUUID())},
+			code:    code.String(),
+			want:    false,
+		},
+		{
+			name:    "null-value code",
+			meeting: Meeting{InviteCode: nulls.NewUUID(uuid.Nil)},
+			code:    code.String(),
+			want:    false,
+		},
+		{
+			name:    "invalid code",
+			meeting: Meeting{InviteCode: nulls.UUID{}},
+			code:    code.String(),
+			want:    false,
+		},
+	}
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			ms.Equal(tt.want, tt.meeting.IsCodeValid(tt.code), "IsCodeValid returned incorrect result")
+		})
+	}
+}
+
+func (ms *ModelSuite) TestMeeting_isOrganizer() {
+	f := createMeetingFixtures(ms.DB, 2)
+
+	tests := []struct {
+		name    string
+		user    User
+		meeting Meeting
+		want    bool
+	}{
+		{
+			name:    "creator",
+			user:    f.Users[0],
+			meeting: f.Meetings[0],
+			want:    false,
+		},
+		{
+			name:    "organizer",
+			user:    f.Users[1],
+			meeting: f.Meetings[0],
+			want:    true,
+		},
+		{
+			name:    "participant",
+			user:    f.Users[2],
+			meeting: f.Meetings[0],
+			want:    false,
+		},
+	}
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			ctx := &testBuffaloContext{
+				params: map[interface{}]interface{}{},
+			}
+			ctx.Set("current_user", tt.user)
+			got := tt.meeting.isOrganizer(ctx, tt.user.ID)
+			ms.Equal(tt.want, got)
 		})
 	}
 }

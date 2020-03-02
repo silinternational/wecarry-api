@@ -73,27 +73,45 @@ func (m *MeetingParticipant) CreateFromInvite(invite MeetingInvite, userID int) 
 	return DB.Create(m)
 }
 
+func (m *MeetingParticipant) Destroy() error {
+	return DB.Destroy(m)
+}
+
 // Create a new MeetingParticipant from a meeting ID and code. If `code` is nil, the meeting must be non-INVITE_ONLY.
 // Otherwise, `code` must match either a MeetingInvite secret code or a Meeting invite code.
 func (m *MeetingParticipant) Create(ctx context.Context, meeting Meeting, code *string) error {
 	cUser := CurrentUser(ctx)
-	if !cUser.CanCreateMeetingParticipant(domain.GetBuffaloContext(ctx), meeting, code) {
-		return domain.ReportError(ctx, errors.New("authorization failure adding a MeetingParticipant"),
+
+	var p MeetingParticipant
+	if err := p.FindByMeetingIDAndUserID(meeting.ID, cUser.ID); domain.IsOtherThanNoRows(err) {
+		return domain.ReportError(ctx, err,
+			"CreateMeetingParticipant.FindExisting")
+	}
+	if p.ID > 0 {
+		return nil
+	}
+
+	if code == nil {
+		if cUser.CanCreateMeetingParticipant(domain.GetBuffaloContext(ctx), meeting) {
+			return m.createWithoutInvite(ctx, meeting)
+		}
+		return domain.ReportError(ctx, errors.New("user is not allowed to self-join meeting without a code"),
 			"CreateMeetingParticipant.Unauthorized")
 	}
 
-	if code != nil {
-		// TODO: check code against meeting invite codes first before looking at invites
-		var invite MeetingInvite
-		if err := invite.FindBySecret(meeting.ID, cUser.Email, *code); err != nil {
-			return domain.ReportError(ctx, errors.New("failure while finding meeting invite, "+err.Error()),
-				"CreateMeetingParticipant.Unauthorized")
-		}
-		if invite.ID > 0 {
-			m.InviteID = nulls.NewInt(invite.ID)
-		}
+	if meeting.IsCodeValid(*code) {
+		return m.createWithoutInvite(ctx, meeting)
 	}
 
+	var invite MeetingInvite
+	if err := invite.FindBySecret(meeting.ID, cUser.Email, *code); domain.IsOtherThanNoRows(err) {
+		return domain.ReportError(ctx, err, "CreateMeetingParticipant.FindBySecret")
+	}
+	if invite.ID == 0 {
+		return domain.ReportError(ctx, errors.New("invalid invite secret"), "CreateMeetingParticipant.InvalidSecret")
+	}
+
+	m.InviteID = nulls.NewInt(invite.ID)
 	m.UserID = cUser.ID
 	m.MeetingID = meeting.ID
 	if err := DB.Create(m); err != nil {
@@ -102,6 +120,11 @@ func (m *MeetingParticipant) Create(ctx context.Context, meeting Meeting, code *
 	return nil
 }
 
-func (m *MeetingParticipant) Destroy() error {
-	return DB.Destroy(m)
+func (m *MeetingParticipant) createWithoutInvite(ctx context.Context, meeting Meeting) error {
+	m.UserID = CurrentUser(ctx).ID
+	m.MeetingID = meeting.ID
+	if err := DB.Create(m); err != nil {
+		return domain.ReportError(ctx, err, "CreateMeetingParticipant")
+	}
+	return nil
 }

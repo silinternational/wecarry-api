@@ -59,10 +59,16 @@
   translation: We had a problem finding the user data for the participant
 - id: MeetingParticipant.Invite
   translation: We had a problem finding the invite data for the participant
+- id: CreateMeetingParticipant.FindExisting
+  translation: We had an unexpected problem adding you as an event participant
 - id: CreateMeetingParticipant.FindMeeting
   translation: We had a problem finding the event to add you as a participant
 - id: CreateMeetingParticipant.Unauthorized
   translation: You are not allowed to add yourself as a participant in that event
+- id: CreateMeetingParticipant.InvalidSecret
+  translation: That event invite code is not valid for the specified event
+- id: CreateMeetingParticipant.FindBySecret
+  translation: We had a problem validating your invite code for that event
 - id: CreateMeetingParticipant
   translation: We had a problem adding you as a participant in that event
 - id: RemoveMeetingParticipant.FindMeeting

@@ -1,6 +1,7 @@
 package models
 
 import (
+	"database/sql"
 	"testing"
 
 	"github.com/gofrs/uuid"
@@ -215,7 +216,7 @@ func (ms *ModelSuite) TestMeetingInvite_Inviter() {
 	}
 }
 
-func (ms *ModelSuite) TestMeetingInvite_IsSecretValid() {
+func (ms *ModelSuite) TestMeetingInvite_FindBySecret() {
 	f := createMeetingFixtures(ms.DB, 2)
 
 	tests := []struct {
@@ -223,7 +224,7 @@ func (ms *ModelSuite) TestMeetingInvite_IsSecretValid() {
 		meeting int
 		email   string
 		secret  string
-		want    bool
+		want    MeetingInvite
 		wantErr string
 	}{
 		{
@@ -231,61 +232,61 @@ func (ms *ModelSuite) TestMeetingInvite_IsSecretValid() {
 			meeting: f.Meetings[1].ID,
 			email:   f.Users[2].Email,
 			secret:  f.MeetingInvites[0].Secret.String(),
-			want:    false,
+			wantErr: sql.ErrNoRows.Error(),
 		},
 		{
 			name:    "bad - wrong email",
 			meeting: f.Meetings[0].ID,
-			email:   f.Users[0].Email,
+			email:   f.Users[1].Email,
 			secret:  f.MeetingInvites[0].Secret.String(),
-			want:    false,
+			wantErr: sql.ErrNoRows.Error(),
 		},
 		{
 			name:    "bad - wrong secret",
 			meeting: f.Meetings[0].ID,
 			email:   f.Users[2].Email,
 			secret:  f.MeetingInvites[1].Secret.String(),
-			want:    false,
+			wantErr: sql.ErrNoRows.Error(),
 		},
 		{
 			name:    "bad - meetingID=0",
 			meeting: 0,
 			email:   f.Users[2].Email,
 			secret:  f.MeetingInvites[0].Secret.String(),
-			wantErr: "meeting",
+			wantErr: "invalid meeting ID",
 		},
 		{
 			name:    "bad - empty email",
 			meeting: f.Meetings[0].ID,
 			email:   "",
 			secret:  f.MeetingInvites[1].Secret.String(),
-			wantErr: "email",
+			wantErr: "empty email",
 		},
 		{
 			name:    "bad - empty secret",
 			meeting: f.Meetings[0].ID,
 			email:   f.Users[2].Email,
 			secret:  "",
-			wantErr: "secret",
+			wantErr: "empty secret",
 		},
 		{
 			name:    "good",
 			meeting: f.Meetings[0].ID,
 			email:   f.Users[2].Email,
 			secret:  f.MeetingInvites[0].Secret.String(),
-			want:    true,
+			want:    f.MeetingInvites[0],
 		},
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
 			var inv MeetingInvite
-			got, err := inv.IsSecretValid(tt.meeting, tt.email, tt.secret)
+			err := inv.FindBySecret(tt.meeting, tt.email, tt.secret)
 			if tt.wantErr != "" {
 				ms.Error(err, `didn't get expected error: "%s"`, tt.wantErr)
 				ms.Contains(err.Error(), tt.wantErr, "wrong error message")
 				return
 			}
-			ms.Equal(tt.want, got, "IsSecretValid returned the wrong state")
+			ms.Equal(tt.want.ID, inv.ID, "IsSecretValid returned the wrong invite")
 		})
 	}
 }

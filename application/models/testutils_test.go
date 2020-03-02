@@ -334,7 +334,7 @@ func createMeetingFixtures(tx *pop.Connection, nMeetings int) meetingFixtures {
 			invites[i].Email = users[i*usersPerMeeting/invitesPerMeeting+1].Email
 		}
 		if i%invitesPerMeeting == 1 {
-			invites[i].Email = "invitee" + strconv.Itoa(i) + "@example.com"
+			invites[i].Email = users[i*usersPerMeeting/invitesPerMeeting+1].Email
 		}
 		invites[i].MeetingID = meetings[i/invitesPerMeeting].ID
 		invites[i].InviterID = user.ID

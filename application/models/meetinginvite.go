@@ -77,26 +77,6 @@ func (m *MeetingInvite) Destroy() error {
 	return DB.Destroy(m)
 }
 
-// IsSecretValid returns true if and only if a MeetingInvite exists that exactly matches all three parameters
-func (m *MeetingInvite) IsSecretValid(meetingID int, email, secret string) (bool, error) {
-	if meetingID < 1 {
-		return false, errors.New("invalid meeting ID in IsSecretValid")
-	}
-	if email == "" {
-		return false, errors.New("empty email in IsSecretValid")
-	}
-	if secret == "" {
-		return false, errors.New("empty secret in IsSecretValid")
-	}
-	var count Count
-	err := DB.RawQuery("SELECT COUNT(*) FROM meeting_invites WHERE meeting_id=? AND email=? AND secret=?",
-		meetingID, email, secret).First(&count)
-	if domain.IsOtherThanNoRows(err) {
-		return false, err
-	}
-	return count.N > 0, nil
-}
-
 // FindBySecret attempts to find a MeetingInvite that exactly matches a given secret, email, and meetingID
 func (m *MeetingInvite) FindBySecret(meetingID int, email, secret string) error {
 	if meetingID < 1 {
@@ -108,9 +88,5 @@ func (m *MeetingInvite) FindBySecret(meetingID int, email, secret string) error 
 	if secret == "" {
 		return errors.New("empty secret in FindBySecret")
 	}
-	err := DB.Where("meeting_id=? AND email=? AND secret=?", meetingID, email, secret).First(m)
-	if domain.IsOtherThanNoRows(err) {
-		return err
-	}
-	return nil
+	return DB.Where("meeting_id=? AND email=? AND secret=?", meetingID, email, secret).First(m)
 }
