@@ -247,14 +247,12 @@ type Post struct {
 
 	CreatedBy    User         `belongs_to:"users"`
 	Organization Organization `belongs_to:"organizations"`
-	Receiver     User         `belongs_to:"users"`
 	Provider     User         `belongs_to:"users"`
 
-	Files       PostFiles     `has_many:"post_files"`
-	Histories   PostHistories `has_many:"post_histories"`
-	PhotoFile   File          `belongs_to:"files"`
-	Destination Location      `belongs_to:"locations"`
-	Origin      Location      `belongs_to:"locations"`
+	Files       PostFiles `has_many:"post_files"`
+	PhotoFile   File      `belongs_to:"files"`
+	Destination Location  `belongs_to:"locations"`
+	Origin      Location  `belongs_to:"locations"`
 }
 
 // PostCreatedEventData holds data needed by the New Post event listener

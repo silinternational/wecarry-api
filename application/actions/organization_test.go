@@ -69,7 +69,7 @@ func (as *ActionSuite) Test_CreateOrganization() {
 	as.Equal(f.Organizations[1].AuthType, orgs[0].AuthType, "AuthType doesn't match")
 	as.Equal(f.Organizations[1].AuthConfig, orgs[0].AuthConfig, "AuthConfig doesn't match")
 
-	domains, _ := orgs[0].GetDomains()
+	domains, _ := orgs[0].Domains()
 	as.Equal(0, len(domains), "new organization has unexpected domains")
 
 	as.Equal(resp.Organization.ID, orgs[0].UUID.String(), "UUID doesn't match")
@@ -264,7 +264,7 @@ func (as *ActionSuite) Test_OrganizationViewAndList() {
 
 	userFixtures := test.CreateUserFixtures(as.DB, 4)
 	for i, _ := range userFixtures.Users {
-		_ = as.DB.Load(&userFixtures.Users[i], "UserOrganizations", "AccessTokens")
+		as.NoError(as.DB.Load(&userFixtures.Users[i], "UserOrganizations"))
 	}
 
 	// user 0 will be a super admin, user 1 will be a sales admin, and user 2 will be an org admin for org1, user 3 will be a user
@@ -454,7 +454,7 @@ func (as *ActionSuite) Test_UpdateOrganization() {
 	as.Equal(f.Organizations[0].Url, orgs[0].Url, "URL doesn't match")
 	as.Equal(f.Organizations[0].AuthType, orgs[0].AuthType, "AuthType doesn't match")
 	as.Equal(f.Organizations[0].AuthConfig, orgs[0].AuthConfig, "AuthConfig doesn't match")
-	dbDomains, _ := orgs[0].GetDomains()
+	dbDomains, _ := orgs[0].Domains()
 	as.Equal(2, len(dbDomains), "updated organization has unexpected domains")
 	as.Equal(resp.Organization.ID, orgs[0].UUID.String(), "UUID from query doesn't match database")
 }

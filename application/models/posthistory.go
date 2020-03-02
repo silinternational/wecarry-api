@@ -19,9 +19,7 @@ type PostHistory struct {
 	PostID     int        `json:"post_id" db:"post_id"`
 	ReceiverID nulls.Int  `json:"receiver_id" db:"receiver_id"`
 	ProviderID nulls.Int  `json:"provider_id" db:"provider_id"`
-	Post       Post       `belongs_to:"posts"`
 	Receiver   User       `belongs_to:"users"`
-	Provider   User       `belongs_to:"users"`
 }
 
 // String can be helpful for serializing the model
