@@ -20,7 +20,6 @@ type PotentialProvider struct {
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 	PostID    int       `json:"post_id" db:"post_id"`
 	UserID    int       `json:"user_id" db:"user_id"`
-	Post      Post      `belongs_to:"posts"`
 	User      User      `belongs_to:"users"`
 }
 

@@ -51,7 +51,7 @@ func (r *userResolver) Posts(ctx context.Context, obj *models.User, role PostRol
 		return nil, nil
 	}
 
-	posts, err := obj.GetPosts(postRoleMap[role])
+	posts, err := obj.Posts(postRoleMap[role])
 	if err != nil {
 		extras := map[string]interface{}{
 			"role": role,

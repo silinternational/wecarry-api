@@ -120,7 +120,7 @@ func (as *ActionSuite) Test_MeetingQuery() {
 	as.Equal(testMtg.EndDate.Format(domain.DateFormat), gotMtg.EndDate,
 		"incorrect meeting EndDate")
 
-	image, err := testMtg.GetImage()
+	image, err := testMtg.ImageFile()
 	as.NoError(err, "unexpected error getting ImageFile")
 	wantUUID := ""
 	if image != nil {
@@ -175,7 +175,7 @@ func (as *ActionSuite) Test_MeetingsQuery() {
 		as.Equal(wantMtg.EndDate.Format(domain.DateFormat), gotMtg.EndDate,
 			"incorrect meeting EndDate")
 
-		image, err := wantMtg.GetImage()
+		image, err := wantMtg.ImageFile()
 		as.NoError(err, "unexpected error getting ImageFile")
 		wantUUID := ""
 		if image != nil {
@@ -274,9 +274,6 @@ func (as *ActionSuite) Test_UpdateMeeting() {
 
 	as.NoError(as.testGqlQuery(query, f.Users[0].Nickname, &resp))
 
-	err := as.DB.Load(&(f.Meetings[0]), "ImageFile")
-	as.NoError(err, "failed to load meeting fixture, %s")
-
 	gotMtg := resp.Meeting
 
 	as.Equal(f.Meetings[0].UUID.String(), gotMtg.ID)
@@ -291,7 +288,7 @@ func (as *ActionSuite) Test_UpdateMeeting() {
 	as.Equal("dc", gotMtg.Location.Country, "incorrect meeting Location.Country")
 
 	// Not authorized
-	err = as.testGqlQuery(query, f.Users[1].Nickname, &resp)
+	err := as.testGqlQuery(query, f.Users[1].Nickname, &resp)
 	as.Error(err, "expected an authorization error but did not get one")
 
 	as.Contains(err.Error(), "You are not allowed to edit the information for that meeting.", "incorrect authorization error message")

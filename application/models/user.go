@@ -63,13 +63,9 @@ type User struct {
 	PhotoFileID       nulls.Int         `json:"photo_file_id" db:"photo_file_id"`
 	AuthPhotoURL      nulls.String      `json:"auth_photo_url" db:"auth_photo_url"`
 	LocationID        nulls.Int         `json:"location_id" db:"location_id"`
-	AccessTokens      []UserAccessToken `has_many:"user_access_tokens" json:"-"`
 	Organizations     Organizations     `many_to_many:"user_organizations" order_by:"name asc" json:"-"`
 	UserOrganizations UserOrganizations `has_many:"user_organizations" json:"-"`
 	UserPreferences   UserPreferences   `has_many:"user_preferences" json:"-"`
-	PostsCreated      Posts             `has_many:"posts" fk_id:"created_by_id" order_by:"updated_at desc"`
-	PostsProviding    Posts             `has_many:"posts" fk_id:"provider_id" order_by:"updated_at desc"`
-	PostsReceiving    Posts             `has_many:"posts" fk_id:"receiver_id" order_by:"updated_at desc"`
 	PhotoFile         File              `belongs_to:"files"`
 	Location          Location          `belongs_to:"locations"`
 }
@@ -417,23 +413,16 @@ func (u *User) FindUserOrganization(org Organization) (UserOrganization, error) 
 	return userOrg, nil
 }
 
-func (u *User) GetPosts(postRole string) ([]Post, error) {
-	if err := DB.Load(u, postRole); err != nil {
+func (u *User) Posts(postRole string) ([]Post, error) {
+	fk := map[string]string{
+		PostsCreated:   "created_by_id=?",
+		PostsReceiving: "receiver_id=?",
+		PostsProviding: "provider_id=?",
+	}
+	var posts Posts
+	if err := DB.Where(fk[postRole], u.ID).Order("updated_at desc").All(&posts); err != nil {
 		return nil, fmt.Errorf("error getting posts for user id %v ... %v", u.ID, err)
 	}
-
-	var posts Posts
-	switch postRole {
-	case PostsCreated:
-		posts = u.PostsCreated
-
-	case PostsReceiving:
-		posts = u.PostsReceiving
-
-	case PostsProviding:
-		posts = u.PostsProviding
-	}
-
 	return posts, nil
 }
 

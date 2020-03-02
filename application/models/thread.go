@@ -20,7 +20,6 @@ type Thread struct {
 	UUID         uuid.UUID `json:"uuid" db:"uuid"`
 	PostID       int       `json:"post_id" db:"post_id"`
 	Post         Post      `belongs_to:"posts"`
-	Messages     Messages  `has_many:"messages"`
 	Participants Users     `many_to_many:"thread_participants"`
 }
 
@@ -89,7 +88,7 @@ func (t *Thread) GetPost() (*Post, error) {
 	return &post, nil
 }
 
-func (t *Thread) GetMessages() ([]Message, error) {
+func (t *Thread) Messages() ([]Message, error) {
 	var messages []Message
 	if err := DB.Where("thread_id = ?", t.ID).All(&messages); err != nil {
 		return messages, fmt.Errorf("error getting messages for thread id %v ... %v", t.ID, err)
@@ -212,7 +211,7 @@ func (t *Thread) UnreadMessageCount(userID int, lastViewedAt time.Time) (int, er
 		return count, fmt.Errorf("error in UnreadMessageCount, invalid id %v", userID)
 	}
 
-	msgs, err := t.GetMessages()
+	msgs, err := t.Messages()
 	if err != nil {
 		return count, err
 	}
