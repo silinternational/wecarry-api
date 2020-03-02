@@ -14,6 +14,7 @@ import (
 type meetingFixtures struct {
 	Meetings
 	MeetingInvites
+	MeetingParticipants
 	Users
 }
 
@@ -580,7 +581,7 @@ func (ms *ModelSuite) TestMeeting_Invites() {
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
 			ctx := &testBuffaloContext{
-				params: map[string]interface{}{},
+				params: map[interface{}]interface{}{},
 			}
 			ctx.Set("current_user", tt.user)
 			got, err := tt.meeting.Invites(ctx)
@@ -634,7 +635,7 @@ func (ms *ModelSuite) TestMeeting_Participants() {
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
 			ctx := &testBuffaloContext{
-				params: map[string]interface{}{},
+				params: map[interface{}]interface{}{},
 			}
 			ctx.Set("current_user", tt.user)
 			got, err := tt.meeting.Participants(ctx)
@@ -688,7 +689,7 @@ func (ms *ModelSuite) TestMeeting_Organizers() {
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
 			ctx := &testBuffaloContext{
-				params: map[string]interface{}{},
+				params: map[interface{}]interface{}{},
 			}
 			ctx.Set("current_user", tt.user)
 			got, err := tt.meeting.Organizers(ctx)
@@ -747,7 +748,7 @@ func (ms *ModelSuite) TestMeeting_RemoveInvite() {
 		ms.T().Run(tt.name, func(t *testing.T) {
 			// setup
 			ctx := &testBuffaloContext{
-				params: map[string]interface{}{},
+				params: map[interface{}]interface{}{},
 			}
 			ctx.Set("current_user", tt.user)
 
@@ -771,6 +772,65 @@ func (ms *ModelSuite) TestMeeting_RemoveInvite() {
 			}
 
 			ms.Equal(tt.remainingInvites, emails)
+
+			// teardown
+		})
+	}
+}
+func (ms *ModelSuite) TestMeeting_RemoveParticipant() {
+	f := createMeetingFixtures(ms.DB, 2)
+
+	tests := []struct {
+		name                  string
+		testUser              User
+		meeting               Meeting
+		user                  User
+		remainingParticipants []int
+		wantErr               string
+	}{
+		{
+			name:     "user not a participant",
+			testUser: f.Users[0],
+			meeting:  f.Meetings[0],
+			user:     f.Users[0],
+			wantErr:  "no rows",
+		},
+		{
+			name:                  "good",
+			testUser:              f.Users[0],
+			meeting:               f.Meetings[0],
+			user:                  f.Users[1],
+			remainingParticipants: []int{f.MeetingParticipants[1].ID, f.MeetingParticipants[2].ID},
+		},
+	}
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			// setup
+			ctx := &testBuffaloContext{
+				params: map[interface{}]interface{}{},
+			}
+			ctx.Set("current_user", tt.testUser)
+
+			// execute
+			err := tt.meeting.RemoveParticipant(ctx, tt.user.UUID.String())
+
+			// verify
+			if tt.wantErr != "" {
+				ms.Error(err, "did not get expected error")
+				ms.Contains(err.Error(), tt.wantErr)
+				return
+			}
+			ms.NoError(err, "unexpected error")
+
+			remaining, err := tt.meeting.Participants(ctx)
+			ms.NoError(err)
+
+			ids := make([]int, len(remaining))
+			for i, m := range remaining {
+				ids[i] = m.ID
+			}
+
+			ms.Equal(tt.remainingParticipants, ids)
 
 			// teardown
 		})

@@ -252,7 +252,7 @@ type meetingInput struct {
 
 // CreateMeeting resolves the `createMeeting` mutation.
 func (r *mutationResolver) CreateMeeting(ctx context.Context, input meetingInput) (*models.Meeting, error) {
-	cUser := models.GetCurrentUserFromGqlContext(ctx)
+	cUser := models.CurrentUser(ctx)
 	extras := map[string]interface{}{
 		"user": cUser.UUID,
 	}
@@ -281,7 +281,7 @@ func (r *mutationResolver) CreateMeeting(ctx context.Context, input meetingInput
 
 // UpdateMeeting resolves the `updateMeeting` mutation.
 func (r *mutationResolver) UpdateMeeting(ctx context.Context, input meetingInput) (*models.Meeting, error) {
-	cUser := models.GetCurrentUserFromGqlContext(ctx)
+	cUser := models.CurrentUser(ctx)
 	extras := map[string]interface{}{
 		"user": cUser.UUID,
 	}

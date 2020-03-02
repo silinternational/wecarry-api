@@ -291,7 +291,7 @@ func (m *Meeting) Invites(ctx buffalo.Context) (MeetingInvites, error) {
 	if m == nil {
 		return i, nil
 	}
-	currentUser := GetCurrentUser(ctx)
+	currentUser := CurrentUser(ctx)
 	if currentUser.ID != m.CreatedByID && !currentUser.isMeetingOrganizer(ctx, *m) && !currentUser.isSuperAdmin() {
 		return i, nil
 	}
@@ -308,7 +308,7 @@ func (m *Meeting) Participants(ctx buffalo.Context) (MeetingParticipants, error)
 	if m == nil {
 		return p, nil
 	}
-	currentUser := GetCurrentUser(ctx)
+	currentUser := CurrentUser(ctx)
 	if currentUser.ID != m.CreatedByID && !currentUser.isMeetingOrganizer(ctx, *m) && !currentUser.isSuperAdmin() {
 		return p, nil
 	}
@@ -343,4 +343,16 @@ func (m *Meeting) RemoveInvite(ctx buffalo.Context, email string) error {
 		return err
 	}
 	return invite.Destroy()
+}
+
+func (m *Meeting) RemoveParticipant(ctx buffalo.Context, userUUID string) error {
+	var user User
+	if err := user.FindByUUID(userUUID); err != nil {
+		return fmt.Errorf("invalid user ID %s in Meeting.RemoveParticipant, %s", userUUID, err)
+	}
+	var participant MeetingParticipant
+	if err := participant.FindByMeetingIDAndUserID(m.ID, user.ID); err != nil {
+		return fmt.Errorf("failed to load MeetingParticipant in Meeting.RemoveParticipant, %s", err)
+	}
+	return participant.Destroy()
 }

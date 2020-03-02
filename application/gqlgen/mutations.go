@@ -17,7 +17,7 @@ type mutationResolver struct{ *Resolver }
 
 // CreateOrganization adds a new organization, if the current user has appropriate permissions.
 func (r *mutationResolver) CreateOrganization(ctx context.Context, input CreateOrganizationInput) (*models.Organization, error) {
-	cUser := models.GetCurrentUserFromGqlContext(ctx)
+	cUser := models.CurrentUser(ctx)
 	extras := map[string]interface{}{
 		"user": cUser.UUID,
 	}
@@ -49,7 +49,7 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input CreateO
 
 // UpdateOrganization updates an organization, if the current user has appropriate permissions.
 func (r *mutationResolver) UpdateOrganization(ctx context.Context, input UpdateOrganizationInput) (*models.Organization, error) {
-	cUser := models.GetCurrentUserFromGqlContext(ctx)
+	cUser := models.CurrentUser(ctx)
 	extras := map[string]interface{}{
 		"user": cUser.UUID,
 	}
@@ -86,7 +86,7 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, input UpdateO
 
 // CreateOrganizationDomain is the resolver for the `createOrganizationDomain` mutation
 func (r *mutationResolver) CreateOrganizationDomain(ctx context.Context, input CreateOrganizationDomainInput) ([]models.OrganizationDomain, error) {
-	cUser := models.GetCurrentUserFromGqlContext(ctx)
+	cUser := models.CurrentUser(ctx)
 	extras := map[string]interface{}{
 		"user": cUser.UUID,
 	}
@@ -116,7 +116,7 @@ func (r *mutationResolver) CreateOrganizationDomain(ctx context.Context, input C
 
 // UpdateOrganizationDomain is the resolver for the `updateOrganizationDomain` mutation
 func (r *mutationResolver) UpdateOrganizationDomain(ctx context.Context, input CreateOrganizationDomainInput) ([]models.OrganizationDomain, error) {
-	cUser := models.GetCurrentUserFromGqlContext(ctx)
+	cUser := models.CurrentUser(ctx)
 	extras := map[string]interface{}{
 		"user": cUser.UUID,
 	}
@@ -153,7 +153,7 @@ func (r *mutationResolver) UpdateOrganizationDomain(ctx context.Context, input C
 
 // RemoveOrganizationDomain is the resolver for the `removeOrganizationDomain` mutation
 func (r *mutationResolver) RemoveOrganizationDomain(ctx context.Context, input RemoveOrganizationDomainInput) ([]models.OrganizationDomain, error) {
-	cUser := models.GetCurrentUserFromGqlContext(ctx)
+	cUser := models.CurrentUser(ctx)
 	extras := map[string]interface{}{
 		"user": cUser.UUID,
 	}
@@ -183,7 +183,7 @@ func (r *mutationResolver) RemoveOrganizationDomain(ctx context.Context, input R
 
 // SetThreadLastViewedAt sets the last viewed time for the current user on the given thread
 func (r *mutationResolver) SetThreadLastViewedAt(ctx context.Context, input SetThreadLastViewedAtInput) (*models.Thread, error) {
-	cUser := models.GetCurrentUserFromGqlContext(ctx)
+	cUser := models.CurrentUser(ctx)
 	extras := map[string]interface{}{
 		"user": cUser.UUID,
 	}
@@ -202,7 +202,7 @@ func (r *mutationResolver) SetThreadLastViewedAt(ctx context.Context, input SetT
 
 // CreateOrganizationTrust establishes a OrganizationTrust between two organizations
 func (r *mutationResolver) CreateOrganizationTrust(ctx context.Context, input CreateOrganizationTrustInput) (*models.Organization, error) {
-	cUser := models.GetCurrentUserFromGqlContext(ctx)
+	cUser := models.CurrentUser(ctx)
 	extras := map[string]interface{}{
 		"user": cUser.UUID,
 	}
@@ -226,7 +226,7 @@ func (r *mutationResolver) CreateOrganizationTrust(ctx context.Context, input Cr
 
 // RemoveOrganizationTrust removes a OrganizationTrust between two organizations
 func (r *mutationResolver) RemoveOrganizationTrust(ctx context.Context, input RemoveOrganizationTrustInput) (*models.Organization, error) {
-	cUser := models.GetCurrentUserFromGqlContext(ctx)
+	cUser := models.CurrentUser(ctx)
 	extras := map[string]interface{}{
 		"user": cUser.UUID,
 	}
@@ -252,7 +252,7 @@ func (r *mutationResolver) RemoveOrganizationTrust(ctx context.Context, input Re
 func (r *mutationResolver) CreateMeetingInvites(ctx context.Context, input CreateMeetingInvitesInput) (
 	[]models.MeetingInvite, error) {
 
-	cUser := models.GetCurrentUserFromGqlContext(ctx)
+	cUser := models.CurrentUser(ctx)
 
 	var m models.Meeting
 	if err := m.FindByUUID(input.MeetingID); err != nil {
@@ -297,7 +297,7 @@ func (r *mutationResolver) RemoveMeetingInvite(ctx context.Context, input Remove
 	}
 
 	c := domain.GetBuffaloContextFromGqlContext(ctx)
-	cUser := models.GetCurrentUserFromGqlContext(ctx)
+	cUser := models.CurrentUser(ctx)
 	if !cUser.CanRemoveMeetingInvite(c, meeting) {
 		err := errors.New("insufficient permissions")
 		return nil, domain.ReportError(ctx, err, "RemoveMeetingInvite.Unauthorized")
@@ -315,5 +315,25 @@ func (r *mutationResolver) RemoveMeetingInvite(ctx context.Context, input Remove
 }
 
 func (r *mutationResolver) RemoveMeetingParticipant(ctx context.Context, input RemoveMeetingParticipantInput) ([]models.MeetingParticipant, error) {
-	return []models.MeetingParticipant{}, nil
+	var meeting models.Meeting
+	if err := meeting.FindByUUID(input.MeetingID); err != nil {
+		return nil, domain.ReportError(ctx, err, "RemoveMeetingParticipant.FindMeeting")
+	}
+
+	c := domain.GetBuffaloContextFromGqlContext(ctx)
+	cUser := models.CurrentUser(ctx)
+	if !cUser.CanRemoveMeetingParticipant(c, meeting) {
+		err := errors.New("insufficient permissions")
+		return nil, domain.ReportError(ctx, err, "RemoveMeetingParticipant.Unauthorized")
+	}
+
+	if err := meeting.RemoveParticipant(c, input.UserID); err != nil {
+		return nil, domain.ReportError(ctx, err, "RemoveMeetingParticipant")
+	}
+
+	participants, err := meeting.Participants(c)
+	if err != nil {
+		return nil, domain.ReportError(ctx, err, "RemoveMeetingParticipant.ListParticipants")
+	}
+	return participants, nil
 }

@@ -16,7 +16,7 @@ func (r *Resolver) Organization() OrganizationResolver {
 type organizationResolver struct{ *Resolver }
 
 func (r *queryResolver) Organizations(ctx context.Context) ([]models.Organization, error) {
-	cUser := models.GetCurrentUserFromGqlContext(ctx)
+	cUser := models.CurrentUser(ctx)
 	extras := map[string]interface{}{
 		"user": cUser.UUID,
 	}
@@ -31,7 +31,7 @@ func (r *queryResolver) Organizations(ctx context.Context) ([]models.Organizatio
 }
 
 func (r *queryResolver) Organization(ctx context.Context, id *string) (*models.Organization, error) {
-	cUser := models.GetCurrentUserFromGqlContext(ctx)
+	cUser := models.CurrentUser(ctx)
 	extras := map[string]interface{}{
 		"user":    cUser.UUID,
 		"orgUUID": *id,

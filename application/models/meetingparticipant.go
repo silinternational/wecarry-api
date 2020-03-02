@@ -68,3 +68,7 @@ func (m *MeetingParticipant) CreateFromInvite(invite MeetingInvite, userID int) 
 	m.MeetingID = invite.MeetingID
 	return DB.Create(m)
 }
+
+func (m *MeetingParticipant) Destroy() error {
+	return DB.Destroy(m)
+}
