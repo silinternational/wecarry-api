@@ -423,13 +423,13 @@ func mergeExtras(extras []map[string]interface{}) map[string]interface{} {
 // Error log error and send to Rollbar
 func Error(c buffalo.Context, msg string, extras ...map[string]interface{}) {
 	// Avoid panics running tests when c doesn't have the necessary nested methods
-	cType := fmt.Sprintf("%T", c)
-	if cType == "models.EmptyContext" {
+	logger := c.Logger()
+	if logger == nil {
 		return
 	}
 
 	es := mergeExtras(extras)
-	c.Logger().Error(msg, es)
+	logger.Error(msg, es)
 	rollbarMessage(c, rollbar.ERR, msg, es)
 }
 
@@ -648,12 +648,14 @@ func (v *StringIsVisible) IsValid(errors *validate.Errors) {
 }
 
 // ReportError logs an error with details, and returns a user-friendly, translated error identified by translation key
-// string `errID`.
+// string `errID`. If called with a full GraphQL context, the query text will be logged in the extras.
 func ReportError(ctx context.Context, err error, errID string, extras ...map[string]interface{}) error {
-	c := GetBuffaloContextFromGqlContext(ctx)
+	c := GetBuffaloContext(ctx)
 	allExtras := map[string]interface{}{
-		"query":    graphql.GetRequestContext(ctx).RawQuery,
 		"function": GetFunctionName(2),
+	}
+	if r := graphql.GetRequestContext(ctx); r != nil {
+		allExtras["query"] = r.RawQuery
 	}
 	for _, e := range extras {
 		for key, val := range e {
@@ -673,15 +675,21 @@ func ReportError(ctx context.Context, err error, errID string, extras ...map[str
 	return errors.New(T.Translate(c, errID))
 }
 
-func GetBuffaloContextFromGqlContext(c context.Context) buffalo.Context {
+// GetBuffaloContext retrieves a "BuffaloContext" from a wrapped context as constructed by
+// actions.gqlHandler. If it's already a buffalo.Context, it is returned as is, type casted to buffalo.Context.
+func GetBuffaloContext(c context.Context) buffalo.Context {
 	bc, ok := c.Value(BuffaloContext).(buffalo.Context)
 	if ok {
 		return bc
 	}
-	return EmptyContext{}
+	bc, ok = c.(buffalo.Context)
+	if ok {
+		return bc
+	}
+	return emptyContext{}
 }
 
-type EmptyContext struct {
+type emptyContext struct {
 	buffalo.Context
 }
 

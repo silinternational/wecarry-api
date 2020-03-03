@@ -1,6 +1,7 @@
 package models
 
 import (
+	"errors"
 	"time"
 
 	"github.com/gobuffalo/pop"
@@ -74,4 +75,18 @@ func (m *MeetingInvite) FindByMeetingIDAndEmail(meetingID int, email string) err
 
 func (m *MeetingInvite) Destroy() error {
 	return DB.Destroy(m)
+}
+
+// FindBySecret attempts to find a MeetingInvite that exactly matches a given secret, email, and meetingID
+func (m *MeetingInvite) FindBySecret(meetingID int, email, secret string) error {
+	if meetingID < 1 {
+		return errors.New("invalid meeting ID in FindBySecret")
+	}
+	if email == "" {
+		return errors.New("empty email in FindBySecret")
+	}
+	if secret == "" {
+		return errors.New("empty secret in FindBySecret")
+	}
+	return DB.Where("meeting_id=? AND email=? AND secret=?", meetingID, email, secret).First(m)
 }
