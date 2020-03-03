@@ -25,7 +25,7 @@ const ProviderName = "google"
 // New creates a new Google provider, and sets up important connection details.
 // You should always call `google.New` to get a new Provider. Never try to create
 // one manually.
-func New(config struct{ Key, Secret, Tenant string }, jsonConfig json.RawMessage) (*Provider, error) {
+func New(config struct{ Key, Secret string }, jsonConfig json.RawMessage) (*Provider, error) {
 
 	// If jsonConfig is provided, use it. Otherwise, use the SocialAuthConfig
 	if len(jsonConfig) > 10 { // just some small number to see if it probably has valid data

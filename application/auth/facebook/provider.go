@@ -35,7 +35,7 @@ const ProviderName = "facebook"
 // New creates a new Facebook provider, and sets up important connection details.
 // You should always call `facebook.New` to get a new Provider. Never try to create
 // one manually.
-func New(config struct{ Key, Secret, Tenant string }) (*Provider, error) {
+func New(config struct{ Key, Secret string }) (*Provider, error) {
 	if config.Key == "" || config.Secret == "" {
 		err := errors.New("missing required config value for Facebook Auth Provider")
 		return &Provider{}, err

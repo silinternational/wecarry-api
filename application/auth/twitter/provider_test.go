@@ -104,7 +104,7 @@ func Test_SessionFromJSON(t *testing.T) {
 }
 
 func twitterProvider() (*Provider, error) {
-	return New(struct{ Key, Secret, Tenant string }{Key: TwitterKey, Secret: TwitterSecret})
+	return New(struct{ Key, Secret string }{Key: TwitterKey, Secret: TwitterSecret})
 }
 
 func twitterProviderAuthenticate() *Provider {

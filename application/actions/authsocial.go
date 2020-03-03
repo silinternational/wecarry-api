@@ -58,12 +58,11 @@ func addLinkedInConfig(configs map[string]SocialAuthConfig) {
 func addMicrosoftConfig(configs map[string]SocialAuthConfig) {
 	key := domain.Env.MicrosoftKey
 	secret := domain.Env.MicrosoftSecret
-	tenant := domain.Env.MicrosoftTenant
 	if key == "" || secret == "" {
 		return
 	}
 
-	configs[AuthTypeMicrosoft] = SocialAuthConfig{Key: key, Secret: secret, Tenant: tenant}
+	configs[AuthTypeMicrosoft] = SocialAuthConfig{Key: key, Secret: secret}
 }
 
 func addTwitterConfig(configs map[string]SocialAuthConfig) {
@@ -100,10 +99,9 @@ func getSocialAuthProvider(authType string) (auth.Provider, error) {
 	case AuthTypeTwitter:
 		return twitter.New(config)
 	case AuthTypeMicrosoft:
-		azConfig := struct{ ApplicationID, ClientSecret, TenantID string }{
+		azConfig := struct{ ApplicationID, ClientSecret string }{
 			ApplicationID: config.Key,
 			ClientSecret:  config.Secret,
-			TenantID:      config.Tenant,
 		}
 
 		rawJSON, err := json.Marshal(azConfig)
