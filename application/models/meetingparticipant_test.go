@@ -129,7 +129,7 @@ func (ms *ModelSuite) TestMeetingParticipant_User() {
 	}
 }
 
-func (ms *ModelSuite) TestMeetingParticipant_Create() {
+func (ms *ModelSuite) TestMeetingParticipant_FindOrCreate() {
 	f := createMeetingFixtures(ms.DB, 2)
 
 	tests := []struct {
@@ -201,7 +201,7 @@ func (ms *ModelSuite) TestMeetingParticipant_Create() {
 
 			// execute
 			var p MeetingParticipant
-			err := p.Create(ctx, tt.meeting, code)
+			err := p.FindOrCreate(ctx, tt.meeting, code)
 
 			// verify
 			if tt.wantErr != "" {

@@ -84,9 +84,9 @@ func (m *MeetingParticipant) Destroy() error {
 	return DB.Destroy(m)
 }
 
-// Create a new MeetingParticipant from a meeting ID and code. If `code` is nil, the meeting must be non-INVITE_ONLY.
+// FindOrCreate a new MeetingParticipant from a meeting ID and code. If `code` is nil, the meeting must be non-INVITE_ONLY.
 // Otherwise, `code` must match either a MeetingInvite secret code or a Meeting invite code.
-func (m *MeetingParticipant) Create(ctx context.Context, meeting Meeting, code *string) error {
+func (m *MeetingParticipant) FindOrCreate(ctx context.Context, meeting Meeting, code *string) error {
 	cUser := CurrentUser(ctx)
 
 	if err := m.FindByMeetingIDAndUserID(meeting.ID, cUser.ID); domain.IsOtherThanNoRows(err) {
