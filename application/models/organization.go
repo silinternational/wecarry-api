@@ -85,7 +85,7 @@ func (o *Organization) GetAuthProvider(authEmail string) (auth.Provider, error) 
 		return azureadv2.New([]byte(authConfig))
 	case AuthTypeGoogle:
 		return google.New(
-			struct{ Key, Secret string }{
+			struct{ Key, Secret, Tenant string }{
 				Key:    domain.Env.GoogleKey,
 				Secret: domain.Env.GoogleSecret,
 			},

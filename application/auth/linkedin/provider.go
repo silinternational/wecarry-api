@@ -36,7 +36,7 @@ const ProviderName = "linkedin"
 // New creates a new linkedin provider, and sets up important connection details.
 // You should always call `linkedin.New` to get a new Provider. Never try to create
 // one manually.
-func New(config struct{ Key, Secret string }) (*Provider, error) {
+func New(config struct{ Key, Secret, Tenant string }) (*Provider, error) {
 	if config.Key == "" || config.Secret == "" {
 		err := errors.New("missing required config value for LinkedIn Auth Provider")
 		return &Provider{}, err

@@ -36,7 +36,7 @@ var (
 // one manually.
 //
 // If you'd like to use authenticate instead of authorize, use NewAuthenticate instead.
-func New(config struct{ Key, Secret string }) (*Provider, error) {
+func New(config struct{ Key, Secret, Tenant string }) (*Provider, error) {
 	if config.Key == "" || config.Secret == "" {
 		err := errors.New("missing required config value for Twitter Auth Provider")
 		return &Provider{}, err
