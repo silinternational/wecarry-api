@@ -165,21 +165,21 @@ func (ms *ModelSuite) TestThread_GetMessages() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := test.thread.GetMessages()
+			got, err := test.thread.Messages()
 			if test.wantErr {
 				if (err != nil) != test.wantErr {
-					t.Errorf("GetMessages() did not return expected error")
+					t.Errorf("Messages() did not return expected error")
 				}
 			} else {
 				if err != nil {
-					t.Errorf("GetMessages() error = %v", err)
+					t.Errorf("Messages() error = %v", err)
 				} else {
 					ids := make([]uuid.UUID, len(got))
 					for i := range got {
 						ids[i] = got[i].UUID
 					}
 					if !reflect.DeepEqual(ids, test.want) {
-						t.Errorf("GetMessages() got = %s, want %s", ids, test.want)
+						t.Errorf("Messages() got = %s, want %s", ids, test.want)
 					}
 				}
 			}

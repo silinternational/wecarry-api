@@ -10,6 +10,7 @@ import (
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
 	"github.com/gofrs/uuid"
+
 	"github.com/silinternational/wecarry-api/auth"
 	"github.com/silinternational/wecarry-api/domain"
 )
@@ -477,9 +478,9 @@ func (ms *ModelSuite) TestUser_GetPosts() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := test.args.user.GetPosts(test.args.postRole)
+			got, err := test.args.user.Posts(test.args.postRole)
 			if err != nil {
-				t.Errorf("GetPosts() returned error: %s", err)
+				t.Errorf("Posts() returned error: %s", err)
 			}
 
 			ids := make([]uuid.UUID, len(got))
@@ -916,6 +917,55 @@ func (ms *ModelSuite) TestUser_RemovePhoto() {
 			if tt.oldImage != nil {
 				ms.Equal(false, tt.oldImage.Linked, "old user photo file is not marked as unlinked")
 			}
+		})
+	}
+}
+
+func (ms *ModelSuite) TestUser_GetPhotoID() {
+	t := ms.T()
+	f := createFixturesForTestUserGetPhoto(ms)
+	photoID2 := f.Users[2].PhotoFile.UUID.String()
+	photoID3 := f.Users[3].PhotoFile.UUID.String()
+
+	tests := []struct {
+		name    string
+		user    User
+		wantID  *string
+		wantErr string
+	}{
+		{
+			name:   "no AuthPhoto, no photo attachment",
+			user:   f.Users[0],
+			wantID: nil,
+		},
+		{
+			name:   "AuthPhoto, and no photo attachment",
+			user:   f.Users[1],
+			wantID: nil,
+		},
+		{
+			name:   "no AuthPhoto, but photo attachment",
+			user:   f.Users[2],
+			wantID: &photoID2,
+		},
+		{
+			name:   "AuthPhoto and photo attachment",
+			user:   f.Users[3],
+			wantID: &photoID3,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			photoID, err := test.user.GetPhotoID()
+			if test.wantErr != "" {
+				ms.Error(err)
+				ms.Contains(err.Error(), test.wantErr, "unexpected error message")
+				return
+			}
+			ms.NoError(err)
+
+			ms.Equal(test.wantID, photoID, "incorrect photo id.")
 		})
 	}
 }
@@ -1447,6 +1497,139 @@ func (ms *ModelSuite) TestUser_GetRealName() {
 			got := test.user.GetRealName()
 
 			ms.Equal(test.want, got, "incorrect result from GetRealName()")
+		})
+	}
+}
+
+func (ms *ModelSuite) TestUser_HasOrganization() {
+	f := createUserFixtures(ms.DB, 2)
+	users := f.Users
+	ms.NoError(ms.DB.Destroy(&f.UserOrganizations[1]))
+
+	tests := []struct {
+		name string
+		user User
+		want bool
+	}{
+		{
+			name: "true",
+			user: users[0],
+			want: true,
+		},
+		{
+			name: "false",
+			user: users[1],
+			want: false,
+		},
+	}
+	for _, test := range tests {
+		ms.T().Run(test.name, func(t *testing.T) {
+			got := test.user.HasOrganization()
+
+			ms.Equal(test.want, got, "incorrect result from HasOrganization()")
+		})
+	}
+}
+
+func (ms *ModelSuite) TestUser_isMeetingOrganizer() {
+	f := createMeetingFixtures(ms.DB, 2)
+
+	tests := []struct {
+		name    string
+		user    User
+		meeting Meeting
+		want    bool
+	}{
+		{
+			name:    "creator",
+			user:    f.Users[0],
+			meeting: f.Meetings[0],
+			want:    false,
+		},
+		{
+			name:    "organizer",
+			user:    f.Users[1],
+			meeting: f.Meetings[0],
+			want:    true,
+		},
+		{
+			name:    "participant",
+			user:    f.Users[2],
+			meeting: f.Meetings[0],
+			want:    false,
+		},
+	}
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			ctx := &testBuffaloContext{
+				params: map[interface{}]interface{}{},
+			}
+			ctx.Set("current_user", tt.user)
+			got := tt.user.isMeetingOrganizer(ctx, tt.meeting)
+			ms.Equal(tt.want, got)
+		})
+	}
+}
+
+func (ms *ModelSuite) TestUser_MeetingsAsParticipant() {
+	f := createMeetingFixtures(ms.DB, 2)
+
+	tests := []struct {
+		name    string
+		user    User
+		want    []int
+		wantErr string
+	}{
+		{
+			name: "creator",
+			user: f.Users[0],
+			want: []int{},
+		},
+		{
+			name: "organizer",
+			user: f.Users[1],
+			want: []int{f.Meetings[0].ID},
+		},
+		{
+			name: "invited participant",
+			user: f.Users[2],
+			want: []int{f.Meetings[0].ID},
+		},
+		{
+			name: "self-joined participant",
+			user: f.Users[3],
+			want: []int{f.Meetings[0].ID},
+		},
+		{
+			name: "invalid",
+			user: User{},
+			want: []int{},
+		},
+	}
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			// setup
+			ctx := &testBuffaloContext{
+				params: map[interface{}]interface{}{},
+			}
+			ctx.Set("current_user", tt.user)
+
+			// exercise
+			got, err := tt.user.MeetingsAsParticipant(ctx)
+
+			// verify
+			if tt.wantErr != "" {
+				ms.Error(err, `expected error "%s" but got none`, tt.wantErr)
+				ms.Contains(err.Error(), tt.wantErr, "unexpected error message")
+				return
+			}
+			ids := make([]int, len(got))
+			for i := range got {
+				ids[i] = got[i].ID
+			}
+			ms.Equal(tt.want, ids)
+
+			// teardown
 		})
 	}
 }

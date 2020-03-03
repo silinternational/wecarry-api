@@ -1,9 +1,4 @@
 type Query {
-    """
-    NOT YET IMPLEMENTED --
-    Return the system configuration information, such as a list of AuthTypes
-    """
-    systemConfig: SystemConfig!
 
     users: [User!]!
     user(id: ID): User
@@ -12,37 +7,19 @@ type Query {
     Posts, aka Requests. With no parameters supplied, all posts visible to the authenticated user are returned. Filter
     parameters only remove from this default list and never include posts that are not visible to the authenticated
     user. For posts associated with a `User` or `Meeting`, use the `posts` field on `User` and `Meeting`.
-    NOT YET IMPLEMENTED: `destination`, `origin`, `searchText`
     """
     posts(
-        """
-        NOT YET IMPLEMENTED --
-        Only include posts that have a destination near the given location.
-        """
+        "Only include posts that have a destination near the given location."
         destination: LocationInput,
 
-        """
-        NOT YET IMPLEMENTED --
-        Only include posts that have an origin near the given location.
-        """
+        "Only include posts that have an origin near the given location."
         origin: LocationInput
 
-        """
-        NOT YET IMPLEMENTED --
-        Search by text in `title` or `description`
-        """
+        "Search by text in `title` or `description`"
         searchText: String
     ): [Post!]!
 
     post(id: ID): Post
-
-    """
-    DEPRECATED: `Query.searchRequests` will be replaced by the `searchText` parameter of `Query.posts`
-    """
-    searchRequests(
-        text: String!
-    ): [Post!]!  @deprecated(reason: "`Query.searchRequests` will be replaced by the `text` parameter of `Query.posts`")
-
     threads: [Thread!]!
     myThreads: [Thread!]!
     message(id: ID): Message!
@@ -115,30 +92,15 @@ type Mutation {
     removeOrganizationTrust(input: RemoveOrganizationTrustInput!): Organization!
 
     """
-    NOT YET IMPLEMENTED --
-    Bulk create `MeetingInvitation`s
+    Bulk create `MeetingInvite`s and return the updated list of invites for the specified meeting. Subsequent calls
+    can include existing email addresses without error since duplicates are ignored.
     """
-    createMeetingInvitations(input: CreateMeetingInvitationsInput!): [MeetingInvitation!]!
+    createMeetingInvites(input: CreateMeetingInvitesInput!): [MeetingInvite!]!
 
-    """
-    NOT YET IMPLEMENTED --
-    Remove a `MeetingInvitation` and return the remaining invitations for the `Meeting`
-    """
-    removeMeetingInvitation(input: RemoveMeetingInvitationInput!): [MeetingInvitation!]!
+    "Remove a `MeetingInvite` and return the remaining invites for the `Meeting`"
+    removeMeetingInvite(input: RemoveMeetingInviteInput!): [MeetingInvite!]!
 
-    """
-    NOT YET IMPLEMENTED --
-    Validate a `MeetingInvitation` and create a new `MeetingParticipant`. If the `MeetingParticipant.User` contains
-    one or more `Organizations`, the user should be redirected to the standard login page. Otherwise, login should
-    proceed through one of the configured `AuthType`s described by the `systemConfig` query.
-    If the `Meeting` is not `INVITE_ONLY`, no `MeetingInvitation` is needed and the `confirmationCode` may be omitted.
-    """
-    createMeetingParticipant(input: CreateMeetingParticipantInput!): MeetingParticipant!
-
-    """
-    NOT YET IMPLEMENTED --
-    Remove a `MeetingParticipant` and return the remaining participants for the `Meeting`
-    """
+    "Remove a `MeetingParticipant` and return the remaining participants for the `Meeting`"
     removeMeetingParticipant(input: RemoveMeetingParticipantInput!): [MeetingParticipant!]!
 }
 
@@ -207,13 +169,18 @@ type User {
     createdAt: Time!
     updatedAt: Time!
     adminRole: UserAdminRole
-    organizations: [Organization!]!
-    posts(role: PostRole!): [Post!]!
+    "avatarURL is generated from an attached photo if present, an external URL if present, or a Gravatar URL"
     avatarURL: String
+    "`File` ID of the user's photo, if present"
     photoID: String
     preferences: UserPreferences
+    "user's home location"
     location: Location
     unreadMessageCount: Int!
+    organizations: [Organization!]!
+    posts(role: PostRole!): [Post!]!
+    "meetings in which the user is a participant"
+    meetingsAsParticipant: [Meeting!]!
 }
 
 type UserPreferences {
@@ -287,6 +254,8 @@ type Post {
     destination: Location!
     "Date (yyyy-mm-dd) before which the item will be needed. The record may be hidden or removed after this date."
     neededBefore: Date
+    "Date (yyyy-mm-dd) on which the request moved into the COMPLETED status"
+    completedOn: Date
     "Optional geographic location where the item can be picked up, purchased, or otherwise obtained"
     origin: Location
     "Broad category of the size of item"
@@ -305,6 +274,8 @@ type Post {
     kilograms: Float
     "Photo of the item"
     photo: File
+    "UUID of the photo of the item"
+    photoID: ID
     "List of attached files. Does not include the post photo."
     files: [File!]!
     "Meeting associated with this post. Affects visibility of the post."
@@ -328,29 +299,20 @@ type Meeting {
     imageFile: File
     location: Location!
 
-    """
-    NOT YET IMPLEMENTED --
-    Posts (Requests) associated with the meeting
-    """
+    "Posts (Requests) associated with the meeting"
     posts: [Post!]!
 
-    """
-    NOT YET IMPLEMENTED --
-    Who can see this meeting
-    """
+    "NOT YET IMPLEMENTED -- Who can see this meeting"
     visibility: MeetingVisibility!
 
-    """
-    NOT YET IMPLEMENTED --
-    Invitations to the `Meeting` that have been sent to the invitee for their confirmation to join the `Meeting`
-    """
-    invitations: [MeetingInvitation!]!
+    "Invites to the `Meeting` that have been sent to the invitees for their confirmation to join the `Meeting`"
+    invites: [MeetingInvite!]!
 
-    """
-    NOT YET IMPLEMENTED --
-    Participants of a `Meeting` are able to see all posts associated with the `Meeting`
-    """
+    "Participants of a `Meeting` are able to see all posts associated with the `Meeting`"
     participants: [MeetingParticipant!]!
+
+    "Organizers of a `Meeting` are able to make changes and invite people"
+    organizers: [PublicProfile!]!
 }
 
 type Organization {
@@ -492,10 +454,7 @@ input CreateMeetingInput {
     imageFileID: ID
     location: LocationInput!
     
-    """
-    NOT YET IMPLEMENTED --
-    Who can see this meeting
-    """
+    "NOT YET IMPLEMENTED -- Who can see this meeting"
     visibility: MeetingVisibility!
 }
 
@@ -509,10 +468,7 @@ input UpdateMeetingInput {
     imageFileID: ID
     location: LocationInput!
 
-    """
-    NOT YET IMPLEMENTED --
-    Who can see this meeting
-    """
+    "NOT YET IMPLEMENTED -- Who can see this meeting"
     visibility: MeetingVisibility!
 }
 
@@ -590,31 +546,32 @@ input RemoveOrganizationTrustInput {
 }
 
 """
-Invitation to a `Meeting`. An invitation must be confirmed by the invitee before they may be added to a `Meeting`.
+Invite to a `Meeting`. An invite must be confirmed by the invitee before they may be added to a `Meeting`.
 """
-type MeetingInvitation {
-    "ID of the `Meeting`"
-    meetingID: ID!
-    "ID of the `User` making the invitation"
-    userID: ID!
+type MeetingInvite {
+    meeting: Meeting!
+    "`User` making the invite"
+    inviter: PublicProfile!
     "Email address of the invitee"
     email: String!
     "Gravatar image URL. Always a valid URL, but depending on the email address, it may reference a generic avatar."
     avatarURL: String!
 }
 
-"Input object for `createMeetingInvitations`"
-input CreateMeetingInvitationsInput {
+"Input object for `createMeetingInvites`"
+input CreateMeetingInvitesInput {
     "ID of the `Meeting`"
     meetingID: ID!
-    "ID of the `User` making the invitations"
-    userID: ID!
-    "Email addresses of the invitees"
+
+    "Email addresses of the invitees. Duplicate values are ignored."
     emails: [String!]!
+
+    "NOT YET IMPLEMENTED -- Send email invites. Default is 'false', do not send any emails."
+    sendEmail: Boolean
 }
 
-"Input object for `removeMeetingInvitation`"
-input RemoveMeetingInvitationInput {
+"Input object for `removeMeetingInvite`"
+input RemoveMeetingInviteInput {
     "ID of the `Meeting`"
     meetingID: ID!
     "Email addresse of the invitee to remove"
@@ -623,7 +580,7 @@ input RemoveMeetingInvitationInput {
 
 """
 Confirmed participant of a `Meeting`. An invited person will not appear as a `MeetingParticipant` until they have
-confirmed a `MeetingInvitation`.
+confirmed a `MeetingInvite`.
 """
 type MeetingParticipant {
     meeting: Meeting!
@@ -631,15 +588,15 @@ type MeetingParticipant {
     user: User!
     "true if `User` is a meeting Organizer"
     isOrganizer: Boolean
-    "ID of the `MeetingInvitation`, valid if the participant was invited. `null` indicates the `User` self-joined"
-    invitationID: ID
+    "The `MeetingInvite`, valid if the participant was invited. `null` indicates the `User` self-joined"
+    invite: MeetingInvite
 }
 
 "Input object for `createMeetingParticipant`"
 input CreateMeetingParticipantInput {
     "ID of the `Meeting`"
     meetingID: ID!
-    "Confirmation code from the `MeetingInvitation`. If not provided, the `Meeting` must not be `INVITE_ONLY`."
+    "Confirmation code from the `MeetingInvite`. If not provided, the `Meeting` must not be `INVITE_ONLY`."
     confirmationCode: String
     "Add as a `Meeting` Organizer. Authenticated `User` must be authorized [definition TBD] to do this. "
     isOrganizer: Boolean
@@ -651,26 +608,4 @@ input RemoveMeetingParticipantInput {
     meetingID: ID!
     "`User` ID of the `Meeting` participant to remove"
     userID: ID!
-}
-
-"""
-NOT YET IMPLEMENTED --
-System configuration information
-"""
-type SystemConfig {
-    "Authentication type for login outside the context of an `Organization`, such as for `Meeting` participants"
-    authTypes: [AuthType!]!
-}
-
-"""
-NOT YET IMPLEMENTED --
-Authentication type for login outside the context of an `Organization`, such as for `Meeting` participants
-"""
-type AuthType {
-    "Display name of the auth type. e.g. 'Facebook'"
-    name: String!
-    "Fully-qualified login URL for the auth type"
-    loginURL: String!
-    "Logo for user selection of login method"
-    logo: File
 }

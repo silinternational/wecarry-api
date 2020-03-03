@@ -1,13 +1,14 @@
 package models
 
 import (
-	"crypto/md5"
+	"context"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/events"
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
@@ -62,13 +63,9 @@ type User struct {
 	PhotoFileID       nulls.Int         `json:"photo_file_id" db:"photo_file_id"`
 	AuthPhotoURL      nulls.String      `json:"auth_photo_url" db:"auth_photo_url"`
 	LocationID        nulls.Int         `json:"location_id" db:"location_id"`
-	AccessTokens      []UserAccessToken `has_many:"user_access_tokens" json:"-"`
 	Organizations     Organizations     `many_to_many:"user_organizations" order_by:"name asc" json:"-"`
 	UserOrganizations UserOrganizations `has_many:"user_organizations" json:"-"`
 	UserPreferences   UserPreferences   `has_many:"user_preferences" json:"-"`
-	PostsCreated      Posts             `has_many:"posts" fk_id:"created_by_id" order_by:"updated_at desc"`
-	PostsProviding    Posts             `has_many:"posts" fk_id:"provider_id" order_by:"updated_at desc"`
-	PostsReceiving    Posts             `has_many:"posts" fk_id:"receiver_id" order_by:"updated_at desc"`
 	PhotoFile         File              `belongs_to:"files"`
 	Location          Location          `belongs_to:"locations"`
 }
@@ -416,23 +413,16 @@ func (u *User) FindUserOrganization(org Organization) (UserOrganization, error) 
 	return userOrg, nil
 }
 
-func (u *User) GetPosts(postRole string) ([]Post, error) {
-	if err := DB.Load(u, postRole); err != nil {
+func (u *User) Posts(postRole string) ([]Post, error) {
+	fk := map[string]string{
+		PostsCreated:   "created_by_id=?",
+		PostsReceiving: "receiver_id=?",
+		PostsProviding: "provider_id=?",
+	}
+	var posts Posts
+	if err := DB.Where(fk[postRole], u.ID).Order("updated_at desc").All(&posts); err != nil {
 		return nil, fmt.Errorf("error getting posts for user id %v ... %v", u.ID, err)
 	}
-
-	var posts Posts
-	switch postRole {
-	case PostsCreated:
-		posts = u.PostsCreated
-
-	case PostsReceiving:
-		posts = u.PostsReceiving
-
-	case PostsProviding:
-		posts = u.PostsProviding
-	}
-
 	return posts, nil
 }
 
@@ -513,9 +503,7 @@ func (u *User) GetPhotoURL() (*string, error) {
 		if u.AuthPhotoURL.Valid {
 			return &u.AuthPhotoURL.String, nil
 		}
-		// ref: https://en.gravatar.com/site/implement/images/
-		hash := md5.Sum([]byte(strings.ToLower(strings.TrimSpace(u.Email))))
-		url := fmt.Sprintf("https://www.gravatar.com/avatar/%x.jpg?s=200&d=mp", hash)
+		url := gravatarURL(u.Email)
 		return &url, nil
 	}
 
@@ -758,4 +746,60 @@ func (u User) GetLanguagePreference() string {
 // GetRealName returns the real name, first and last, of the user
 func (u *User) GetRealName() string {
 	return strings.TrimSpace(u.FirstName + " " + u.LastName)
+}
+
+// HasOrganization returns true if the user has one or more organization connections
+func (u *User) HasOrganization() bool {
+	var c Count
+	err := DB.RawQuery("SELECT COUNT(*) FROM user_organizations WHERE user_id = ?", u.ID).First(&c)
+	if err != nil {
+		domain.ErrLogger.Printf("error counting user organizations, user = '%s', err = %s", u.UUID, err)
+		return false
+	}
+	if c.N == 0 {
+		return false
+	}
+	return true
+}
+
+func (u *User) isMeetingOrganizer(ctx buffalo.Context, meeting Meeting) bool {
+	organizers, err := meeting.Organizers(ctx)
+	if err != nil {
+		domain.Error(ctx, "isMeetingOrganizer() error reading list of meeting organizers, "+err.Error())
+	}
+	for _, o := range organizers {
+		if o.ID == u.ID {
+			return true
+		}
+	}
+	return false
+}
+
+func (u *User) isSuperAdmin() bool {
+	return u.AdminRole == UserAdminRoleSuperAdmin
+}
+
+// MeetingsAsParticipant returns all meetings in which the user is a participant
+func (u *User) MeetingsAsParticipant(ctx context.Context) ([]Meeting, error) {
+	m := Meetings{}
+	if err := DB.
+		Where("meeting_participants.user_id=?", u.ID).
+		Join("meeting_participants", "meeting_participants.meeting_id=meetings.id").
+		All(&m); err != nil {
+
+		return m, domain.ReportError(ctx, err, "User.MeetingsAsParticipant", map[string]interface{}{"user": u.UUID})
+	}
+	return m, nil
+}
+
+func (u *User) CanCreateMeetingInvite(ctx buffalo.Context, meeting Meeting) bool {
+	return u.ID == meeting.CreatedByID || u.isMeetingOrganizer(ctx, meeting) || u.isSuperAdmin()
+}
+
+func (u *User) CanRemoveMeetingInvite(ctx buffalo.Context, meeting Meeting) bool {
+	return u.ID == meeting.CreatedByID || u.isMeetingOrganizer(ctx, meeting) || u.isSuperAdmin()
+}
+
+func (u *User) CanRemoveMeetingParticipant(ctx buffalo.Context, meeting Meeting) bool {
+	return u.ID == meeting.CreatedByID || u.isMeetingOrganizer(ctx, meeting) || u.isSuperAdmin()
 }

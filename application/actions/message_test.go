@@ -62,7 +62,7 @@ func (as *ActionSuite) TestCreateMessage() {
 	thread, err := f.Messages[0].GetThread()
 	as.NoError(err)
 
-	messages, err := thread.GetMessages()
+	messages, err := thread.Messages()
 	as.NoError(err)
 	as.Equal(3, len(messages), "incorrect number of thread messages")
 

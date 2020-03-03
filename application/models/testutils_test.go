@@ -274,10 +274,10 @@ func createPotentialProvidersFixtures(ms *ModelSuite) potentialProvidersFixtures
 	}
 }
 
-// createMeetingFixtures generates any number of meeting records for testing. Related Location and File records are also
+// createMeetingFixtures generates any number of meeting records for testing. Related records are also
 // created. All meeting fixtures will be assigned to the first Organization in the DB. If no Organization exists,
-// one will be created. All posts are created by the first User in the DB. If no User exists, one will be created.
-func createMeetingFixtures(tx *pop.Connection, nMeetings int) Meetings {
+// one will be created. All meetings are created by the first User in the DB. If no User exists, one will be created.
+func createMeetingFixtures(tx *pop.Connection, nMeetings int) meetingFixtures {
 	var org Organization
 	if err := tx.First(&org); err != nil {
 		org = Organization{AuthConfig: "{}"}
@@ -301,11 +301,43 @@ func createMeetingFixtures(tx *pop.Connection, nMeetings int) Meetings {
 		meetings[i].LocationID = locations[i].ID
 		meetings[i].StartDate = time.Now()
 		meetings[i].EndDate = time.Now().Add(time.Hour * 24)
-		if _, err := meetings[i].AttachImage(files[i].UUID.String()); err != nil {
+		meetings[i].InviteCode = nulls.NewUUID(domain.GetUUID())
+		if _, err := meetings[i].SetImageFile(files[i].UUID.String()); err != nil {
 			panic("error attaching image to meeting fixture, " + err.Error())
 		}
 		mustCreate(tx, &meetings[i])
 	}
 
-	return meetings
+	const invitesPerMeeting = 2 // one pending and one participating
+	invites := make(MeetingInvites, nMeetings*invitesPerMeeting)
+	for i := range invites {
+		invites[i].Email = "invitee" + strconv.Itoa(i) + "@example.com"
+		invites[i].MeetingID = meetings[i/invitesPerMeeting].ID
+		invites[i].InviterID = user.ID
+		if err := invites[i].Create(); err != nil {
+			panic(fmt.Sprintf("error creating invite fixture %d, %s", i, err))
+		}
+	}
+
+	const participantsPerMeeting = 3 // one organizer + one invited + one self-added
+	participatingUsers := createUserFixtures(tx, nMeetings*participantsPerMeeting).Users
+	participants := make(MeetingParticipants, nMeetings*participantsPerMeeting)
+	for i := range participants {
+		participants[i].MeetingID = meetings[i/participantsPerMeeting].ID
+		participants[i].UserID = participatingUsers[i].ID
+		if i%participantsPerMeeting == 0 {
+			participants[i].IsOrganizer = true
+		}
+		if i%participantsPerMeeting == 1 {
+			participants[i].InviteID = nulls.NewInt(invites[i/participantsPerMeeting*invitesPerMeeting].ID)
+		}
+		mustCreate(tx, &participants[i])
+	}
+
+	return meetingFixtures{
+		Meetings:            meetings,
+		MeetingInvites:      invites,
+		MeetingParticipants: participants,
+		Users:               append(Users{user}, participatingUsers...),
+	}
 }

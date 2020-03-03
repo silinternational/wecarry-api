@@ -24,6 +24,8 @@ models:
         resolver: true
       logoURL:
         resolver: true
+      domains:
+        resolver: true
   OrganizationDomain:
     model: models.OrganizationDomain
     fields:
@@ -48,6 +50,8 @@ models:
       id:
         resolver: true
       neededBefore:
+        resolver: true
+      completedOn:
         resolver: true
       organization:
         resolver: true
@@ -95,6 +99,8 @@ models:
         resolver: true
       unreadMessageCount:
         resolver: true
+      messages:
+        resolver: true
   Message:
     model: models.Message
     fields:
@@ -138,11 +144,17 @@ models:
     model: gqlgen.watchInput
   UpdateWatchInput:
     model: gqlgen.watchInput
-
-#directives:
-#  deprecated:
-#    skip_runtime: true
-#  include:
-#    skip_runtime: true
-#  skip:
-#    skip_runtime: true
+  MeetingInvite:
+    model: models.MeetingInvite
+    fields:
+      avatarURL:
+        resolver: true
+  MeetingParticipant:
+    model: models.MeetingParticipant
+    fields:
+      meeting:
+        resolver: true
+      user:
+        resolver: true
+      invite:
+        resolver: true

@@ -173,8 +173,8 @@ func isTransitionBackStep(status1, status2 PostStatus) (bool, error) {
 			return target.isBackStep, nil
 		}
 	}
-
-	return false, fmt.Errorf("invalid status transition from %s to %s", status1, status2)
+	// Not worrying about invalid transitions, since this is called by AfterUpdate
+	return false, nil
 }
 
 func (e PostStatus) IsValid() bool {
@@ -230,6 +230,7 @@ type Post struct {
 	OrganizationID int            `json:"organization_id" db:"organization_id"`
 	NeededBefore   nulls.Time     `json:"needed_before" db:"needed_before"`
 	Status         PostStatus     `json:"status" db:"status"`
+	CompletedOn    nulls.Time     `json:"completed_on" db:"completed_on"`
 	Title          string         `json:"title" db:"title"`
 	Size           PostSize       `json:"size" db:"size"`
 	UUID           uuid.UUID      `json:"uuid" db:"uuid"`
@@ -246,14 +247,12 @@ type Post struct {
 
 	CreatedBy    User         `belongs_to:"users"`
 	Organization Organization `belongs_to:"organizations"`
-	Receiver     User         `belongs_to:"users"`
 	Provider     User         `belongs_to:"users"`
 
-	Files       PostFiles     `has_many:"post_files"`
-	Histories   PostHistories `has_many:"post_histories"`
-	PhotoFile   File          `belongs_to:"files"`
-	Destination Location      `belongs_to:"locations"`
-	Origin      Location      `belongs_to:"locations"`
+	Files       PostFiles `has_many:"post_files"`
+	PhotoFile   File      `belongs_to:"files"`
+	Destination Location  `belongs_to:"locations"`
+	Origin      Location  `belongs_to:"locations"`
 }
 
 // PostCreatedEventData holds data needed by the New Post event listener
@@ -351,14 +350,6 @@ func (p *Post) DestroyPotentialProviders(status PostStatus, user User) error {
 
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
 func (p *Post) Validate(tx *pop.Connection) (*validate.Errors, error) {
-	tomorrow := time.Now().Truncate(domain.DurationDay).Add(domain.DurationDay)
-
-	// If null, make it pass by pretending it's in the future
-	neededBeforeDate := time.Now().Add(domain.DurationWeek)
-	if p.NeededBefore.Valid {
-		neededBeforeDate = p.NeededBefore.Time
-	}
-
 	return validate.Validate(
 		&validators.IntIsPresent{Field: p.CreatedByID, Name: "CreatedBy"},
 		&validators.StringIsPresent{Field: p.Type.String(), Name: "Type"},
@@ -367,9 +358,6 @@ func (p *Post) Validate(tx *pop.Connection) (*validate.Errors, error) {
 		&validators.StringIsPresent{Field: p.Size.String(), Name: "Size"},
 		&validators.UUIDIsPresent{Field: p.UUID, Name: "UUID"},
 		&validators.StringIsPresent{Field: p.Status.String(), Name: "Status"},
-		&validators.TimeAfterTime{FirstName: "NeededBefore", FirstTime: neededBeforeDate,
-			SecondName: "Tomorrow", SecondTime: tomorrow,
-			Message: fmt.Sprintf("Post neededBefore must not be before tomorrow. Got %v", neededBeforeDate)},
 	), nil
 }
 
@@ -391,11 +379,22 @@ func (v *createStatusValidator) IsValid(errors *validate.Errors) {
 
 // ValidateCreate gets run every time you call "pop.ValidateAndCreate" method.
 func (p *Post) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) {
+	tomorrow := time.Now().Truncate(domain.DurationDay).Add(domain.DurationDay)
+
+	// If null, make it pass by pretending it's in the future
+	neededBeforeDate := time.Now().Add(domain.DurationWeek)
+	if p.NeededBefore.Valid {
+		neededBeforeDate = p.NeededBefore.Time
+	}
+
 	return validate.Validate(
 		&createStatusValidator{
 			Name:   "Create Status",
 			Status: p.Status,
 		},
+		&validators.TimeAfterTime{FirstName: "NeededBefore", FirstTime: neededBeforeDate,
+			SecondName: "Tomorrow", SecondTime: tomorrow,
+			Message: fmt.Sprintf("Post neededBefore must not be before tomorrow. Got %v", neededBeforeDate)},
 	), nil
 	//return validate.NewErrors(), nil
 }
@@ -469,7 +468,6 @@ func (p *Post) manageStatusTransition() error {
 	if p.Status == "" {
 		return nil
 	}
-
 	lastPostHistory := PostHistory{}
 	if err := lastPostHistory.getLastForPost(*p); err != nil {
 		return err
@@ -510,6 +508,34 @@ func (p *Post) manageStatusTransition() error {
 	}
 
 	emitEvent(e)
+
+	// If completed, hydrate CompletedOn. If not completed, nullify CompletedOn
+	// Don't use p.UpdateColumns, due to this being called by the AfterUpdate function
+	switch p.Status {
+	case PostStatusCompleted:
+		if !p.CompletedOn.Valid {
+			err := DB.RawQuery(
+				fmt.Sprintf(`UPDATE posts set completed_on = '%s' where ID = %v`,
+					time.Now().Format(domain.DateFormat), p.ID)).Exec()
+			if err != nil {
+				domain.ErrLogger.Printf("unable to set Post.CompletedOn for ID: %v, %s", p.ID, err)
+			}
+			if err := DB.Reload(p); err != nil {
+				domain.ErrLogger.Printf("unable to reload Post ID: %v, %s", p.ID, err)
+			}
+		}
+	case PostStatusOpen, PostStatusAccepted, PostStatusDelivered:
+		if p.CompletedOn.Valid {
+			err := DB.RawQuery(
+				fmt.Sprintf(`UPDATE posts set completed_on = NULL where ID = %v`, p.ID)).Exec()
+			if err != nil {
+				domain.ErrLogger.Printf("unable to nullify Post.CompletedOn for ID: %v, %s", p.ID, err)
+			}
+			if err := DB.Reload(p); err != nil {
+				domain.ErrLogger.Printf("unable to reload Post ID: %v, %s", p.ID, err)
+			}
+		}
+	}
 
 	return nil
 }
@@ -756,6 +782,19 @@ func (p *Post) GetPhoto() (*File, error) {
 	return &p.PhotoFile, nil
 }
 
+// GetPhotoID retrieves UUID of the file attached as the Post photo
+func (p *Post) GetPhotoID() (*string, error) {
+	if err := DB.Load(p, "PhotoFile"); err != nil {
+		return nil, err
+	}
+
+	if p.PhotoFileID.Valid {
+		photoID := p.PhotoFile.UUID.String()
+		return &photoID, nil
+	}
+	return nil, nil
+}
+
 // scope query to only include posts from an organization associated with the current user
 func scopeUserOrgs(cUser User) pop.ScopeFunc {
 	return func(q *pop.Query) *pop.Query {
@@ -788,14 +827,18 @@ func (p *Post) FindByUserAndUUID(ctx context.Context, user User, uuid string) er
 		Where("uuid = ?", uuid).First(p)
 }
 
-// FindByUser finds all posts visible to the current user. NOTE: at present, the posts are not sorted correctly; need
-// to find a better way to construct the query
-func (p *Posts) FindByUser(ctx context.Context, user User) error {
+// FindByUser finds all posts visible to the current user.
+func (p *Posts) FindByUser(ctx context.Context, user User, destination, origin *Location, searchText *string) error {
 	if user.ID == 0 {
 		return errors.New("invalid User ID in Posts.FindByUser")
 	}
 
-	q := DB.RawQuery(`
+	if !user.HasOrganization() {
+		*p = Posts{}
+		return nil
+	}
+
+	selectClause := `
 	WITH o AS (
 		SELECT id FROM organizations WHERE id IN (
 			SELECT organization_id FROM user_organizations WHERE user_id = ?
@@ -811,28 +854,37 @@ func (p *Posts) FindByUser(ctx context.Context, user User) error {
 			SELECT id FROM organizations WHERE id IN (
 				SELECT secondary_id FROM organization_trusts WHERE primary_id IN (SELECT id FROM o)
 			)
-		) AND visibility IN (?, ?)
+		) AND visibility = ?
 	)
-	AND status not in (?, ?) ORDER BY created_at desc`,
-		user.ID, PostVisibilityAll, PostVisibilityAll, PostVisibilityTrusted, PostStatusRemoved, PostStatusCompleted)
-	if err := q.All(p); err != nil {
+	AND status not in (?, ?)`
+
+	args := []interface{}{user.ID, PostVisibilityAll, PostVisibilityTrusted, PostStatusRemoved,
+		PostStatusCompleted}
+
+	if searchText != nil {
+		selectClause = selectClause + " AND (LOWER(title) LIKE ? or LOWER(description) LIKE ?)"
+		likeText := "%" + strings.ToLower(*searchText) + "%"
+		args = append(args, likeText, likeText)
+	}
+
+	posts := Posts{}
+	q := DB.RawQuery(selectClause+" ORDER BY created_at desc", args...)
+	if err := q.All(&posts); err != nil {
 		return fmt.Errorf("error finding posts for user %s, %s", user.UUID.String(), err)
 	}
+
+	if destination != nil {
+		posts = posts.FilterDestination(*destination)
+	}
+	if origin != nil {
+		posts = posts.FilterOrigin(*origin)
+	}
+
+	*p = Posts{}
+	for i := range posts {
+		*p = append(*p, posts[i])
+	}
 	return nil
-}
-
-// FilterByUserTypeAndContents finds all posts belonging to the same organization as the given user,
-// not marked as completed or removed and containing a certain search text.
-func (p *Posts) FilterByUserTypeAndContents(ctx context.Context, user User, pType PostType, contains string) error {
-	where := "type = ? and (LOWER(title) like ? or LOWER(description) like ?)"
-	contains = `%` + strings.ToLower(contains) + `%`
-
-	return DB.
-		Scope(scopeUserOrgs(user)).
-		Scope(scopeNotCompleted()).
-		Where(where, pType, contains, contains).
-		Order("created_at desc").
-		All(p)
 }
 
 // GetDestination reads the destination record, if it exists, and returns the Location object.
@@ -1006,4 +1058,29 @@ func (p *Post) Meeting() (*Meeting, error) {
 	}
 
 	return &meeting, nil
+}
+
+// FilterDestination returns a list of all posts with a Destination near the given location. The database is not
+// touched.
+func (p Posts) FilterDestination(location Location) Posts {
+	filtered := make(Posts, 0)
+	_ = DB.Load(&p, "Destination")
+	for i := range p {
+		if p[i].Destination.IsNear(location) {
+			filtered = append(filtered, p[i])
+		}
+	}
+	return filtered
+}
+
+// FilterOrigin returns a list of all posts that have an Origin near the given location. The database is not touched.
+func (p Posts) FilterOrigin(location Location) Posts {
+	filtered := make(Posts, 0)
+	_ = DB.Load(&p, "Origin")
+	for i := range p {
+		if p[i].Origin.IsNear(location) {
+			filtered = append(filtered, p[i])
+		}
+	}
+	return filtered
 }

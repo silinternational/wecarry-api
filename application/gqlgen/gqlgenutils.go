@@ -1,16 +1,13 @@
 package gqlgen
 
 import (
-	"context"
 	"errors"
 	"fmt"
-	"runtime"
 	"strings"
 
-	"github.com/99designs/gqlgen/graphql"
-	"github.com/silinternational/wecarry-api/domain"
-
 	"github.com/gobuffalo/nulls"
+
+	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 )
 
@@ -36,7 +33,15 @@ func setOptionalFloatField(input *float64, output *nulls.Float64) {
 	*output = nulls.Float64{}
 }
 
-func convertGqlLocationInputToDBLocation(input LocationInput) models.Location {
+func convertOptionalLocation(input *LocationInput) *models.Location {
+	if input != nil {
+		l := convertLocation(*input)
+		return &l
+	}
+	return nil
+}
+
+func convertLocation(input LocationInput) models.Location {
 	l := models.Location{
 		Description: input.Description,
 		Country:     input.Country,
@@ -79,42 +84,4 @@ func convertUserPreferencesToStandardPreferences(input *UpdateUserPreferencesInp
 	}
 
 	return stPrefs, nil
-}
-
-// getFunctionName provides the filename, line number, and function name of the caller, skipping the top `skip`
-// functions on the stack.
-func getFunctionName(skip int) string {
-	pc, file, line, ok := runtime.Caller(skip)
-	if !ok {
-		return "?"
-	}
-
-	fn := runtime.FuncForPC(pc)
-	return fmt.Sprintf("%s:%d %s", file, line, fn.Name())
-}
-
-// reportError logs an error with details, and returns a user-friendly, translated error identified by translation key
-// string `errID`.
-func reportError(ctx context.Context, err error, errID string, extras ...map[string]interface{}) error {
-	c := models.GetBuffaloContextFromGqlContext(ctx)
-	allExtras := map[string]interface{}{
-		"query":    graphql.GetRequestContext(ctx).RawQuery,
-		"function": getFunctionName(2),
-	}
-	for _, e := range extras {
-		for key, val := range e {
-			allExtras[key] = val
-		}
-	}
-
-	errStr := errID
-	if err != nil {
-		errStr = err.Error()
-	}
-	domain.Error(c, errStr, allExtras)
-
-	if domain.T == nil {
-		return errors.New(errID)
-	}
-	return errors.New(domain.T.Translate(c, errID))
 }

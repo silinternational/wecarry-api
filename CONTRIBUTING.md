@@ -24,7 +24,7 @@ FindByUUID(uuid string) error`.
 
 ### Unit test naming
 
-Unit test functions that test struct-attached functions should be named like
+Unit test functions that test methods should be named like
 `TestObject_FunctionName` where `Object` is the name of the struct and
 `FunctionName` is the name of the function under test.
 
@@ -70,24 +70,65 @@ situations. For example:
      
 ### Error handling and presentation
 
-Internal handling of errors consists mostly of the built-in `errors` type. When
-an error propagates up to the `gqlgen` package, the internal error should be
-logged and a new user-focused and localized message should be returned from 
-the resolver function. Translation of error messages is handled by the Buffalo
-`Translate` function. Translation keys consist of an initial identifier related to 
-a model, query or mutation name, optionally followed by a short description of the 
-point of failure. You may use the helper function `reportError` which handles all of 
-these steps. Translation text is stored in the `locales` folder.
- 
+#### GraphQL error responses
+
+Errors occurring at the top level of a query or mutation, such as an authorization
+failure of an entire query, should present to the API client an http OK (200)
+response with an `errors` object in the response body. Internally, this is handled
+by the helper function `domain.ReportError`, which takes an `error` and a translation
+key like `"UpdateUser.NotFound"`. The `error` is logged to `stderr` and to Rollbar,
+and the translation key is localized by Buffalo's `Translate` function and returned
+from the resolver to be processed by `gqlgen`. Translation text is stored in the
+`application/locales` folder.
+
 For example:
 
 ```go
-	extras := map[string]interface{}{
-		"user": cUser.Uuid,
-	}
-    return nil, reportError(ctx, err, "CreatePost.SetDestination", extras)
+extras := map[string]interface{}{
+    "oldStatus": post.Status,
+    "newStatus": input.Status,
+}    
+return nil, domain.ReportError(ctx, err, "UpdatePostStatus.Unauthorized", extras)
 ``` 
 
+Errors within a query, such as an authorization failure on a request field, should
+not present an error to the API client. The requested data field should be returned
+as `null`. The cause of the error should be logged to `stderr` and Rollbar using
+`domain.ReportError` if context is available, or `domain.ErrLogger.Printf` if no
+context is available.
+
+#### REST API responses
+
+Errors occurring in the processing of REST API requests should result in a 400-
+or 500-level http response with a json body containing a `code` and a `key`:
+
+```json
+{
+  "code": 400,
+  "key": "ErrorMissingClientID"
+}
+``` 
+
+This can be generated as follows:
+
+```go
+err := domain.AppError{
+    Code: httpStatus,
+    Key:  errorCode,
+}
+
+return c.Render(httpStatus, render.JSON(err))
+```
+
+In addition, the error should be logged using `Error` or `ErrLogger.Printf`. For 
+auth-related errors, the helper `actions.authRequestError` is available.
+
+#### Internal error logging
+
+Errors that do not justify an error being passed to the API client may be logged
+to `stderr` and Rollbar using `domain.Error` if context is available, or
+`domain.ErrLogger.printf` if no context is available.
+ 
 ## gqlgen
 
 gqlgen generates code to handle GraphQL queries. The primary input is the 

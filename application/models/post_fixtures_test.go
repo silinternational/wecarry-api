@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/gobuffalo/nulls"
 	"github.com/silinternational/wecarry-api/domain"
@@ -86,11 +87,26 @@ func createFixturesForTestPost_manageStatusTransition_forwardProgression(ms *Mod
 	uf := createUserFixtures(ms.DB, 2)
 	users := uf.Users
 
-	posts := createPostFixtures(ms.DB, 2, 0, false)
+	posts := createPostFixtures(ms.DB, 4, 0, false)
 	posts[1].Status = PostStatusAccepted
 	posts[1].CreatedByID = users[1].ID
 	posts[1].ProviderID = nulls.NewInt(users[0].ID)
 	ms.NoError(ms.DB.Save(&posts[1]))
+
+	// Give the last Post an intermediate PostHistory
+	pHistory := PostHistory{
+		Status: PostStatusAccepted,
+		PostID: posts[3].ID,
+	}
+	mustCreate(ms.DB, &pHistory)
+
+	// Give these new statuses while by-passing the status transition validation
+	for i, status := range [2]PostStatus{PostStatusAccepted, PostStatusDelivered} {
+		index := i + 2
+
+		posts[index].Status = status
+		ms.NoError(ms.DB.Save(&posts[index]))
+	}
 
 	return PostFixtures{
 		Users: users,
@@ -102,7 +118,9 @@ func createFixturesForTestPost_manageStatusTransition_backwardProgression(ms *Mo
 	uf := createUserFixtures(ms.DB, 2)
 	users := uf.Users
 
-	posts := createPostFixtures(ms.DB, 2, 0, false)
+	posts := createPostFixtures(ms.DB, 4, 0, false)
+
+	// Put the first two posts into ACCEPTED status (also give them matching PostHistory entries)
 	posts[0].Status = PostStatusAccepted
 	posts[0].CreatedByID = users[0].ID
 	posts[0].ProviderID = nulls.NewInt(users[1].ID)
@@ -110,6 +128,31 @@ func createFixturesForTestPost_manageStatusTransition_backwardProgression(ms *Mo
 	posts[1].CreatedByID = users[1].ID
 	posts[1].ProviderID = nulls.NewInt(users[0].ID)
 	ms.NoError(ms.DB.Save(&posts))
+
+	// add in a PostHistory entry as if it had already happened
+	pHistory := PostHistory{
+		Status:     PostStatusAccepted,
+		PostID:     posts[2].ID,
+		ReceiverID: nulls.NewInt(users[0].ID),
+		ProviderID: nulls.NewInt(users[1].ID),
+	}
+	mustCreate(ms.DB, &pHistory)
+
+	pHistory = PostHistory{
+		Status:     PostStatusDelivered,
+		PostID:     posts[3].ID,
+		ReceiverID: nulls.NewInt(users[0].ID),
+		ProviderID: nulls.NewInt(users[1].ID),
+	}
+	mustCreate(ms.DB, &pHistory)
+
+	for i := 2; i < 4; i++ {
+		// AfterUpdate creates the new PostHistory for this status
+		posts[i].Status = PostStatusCompleted
+		posts[i].CompletedOn = nulls.NewTime(time.Now())
+		posts[i].ProviderID = nulls.NewInt(users[1].ID)
+		ms.NoError(ms.DB.Save(&posts[i]))
+	}
 
 	return PostFixtures{
 		Users: users,
@@ -231,23 +274,16 @@ func CreateFixtures_Posts_FindByUser(ms *ModelSuite) PostFixtures {
 	posts[2].Status = PostStatusCompleted
 	ms.NoError(ms.DB.Save(&posts[2]))
 
+	ms.NoError(posts[0].SetDestination(Location{Description: "Australia", Country: "AU"}))
+	ms.NoError(posts[1].SetOrigin(Location{Description: "Australia", Country: "AU"}))
+
 	return PostFixtures{
 		Users: users,
 		Posts: posts,
 	}
 }
 
-func createFixturesFor_Posts_GetPotentialProviders(ms *ModelSuite) PostFixtures {
-	posts := createPostFixtures(ms.DB, 2, 0, false)
-	pps := createPotentialProviderFixtures(ms.DB, 2, 2)
-
-	return PostFixtures{
-		Posts:              posts,
-		PotentialProviders: pps,
-	}
-}
-
-func createFixtures_Posts_FilterByUserTypeAndContents(ms *ModelSuite) PostFixtures {
+func createFixtures_Posts_FindByUser_SearchText(ms *ModelSuite) PostFixtures {
 	orgs := Organizations{{}, {}}
 	for i := range orgs {
 		orgs[i].UUID = domain.GetUUID()

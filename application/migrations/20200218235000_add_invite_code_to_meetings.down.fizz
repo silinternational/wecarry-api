@@ -1,0 +1,1 @@
+drop_column("meetings", "invite_code")

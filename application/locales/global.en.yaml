@@ -1,3 +1,4 @@
+# Meeting
 - id: CreateMeeting
   translation: We had a problem creating the new meeting.
 - id: CreateMeeting.ProcessInput
@@ -24,6 +25,50 @@
   translation: We had a problem processing the information to update that meeting.
 - id: UpdateMeeting.Unauthorized
   translation: You are not allowed to edit the information for that meeting.
+- id: Meeting.Posts
+  translation: We had a problem finding the posts for the meeting
+- id: Meeting.Invites
+  translation: We had a problem finding the invites for the meeting
+- id: Meeting.Participants
+  translation: We had a problem finding the participants for the meeting
+
+# MeetingInvite
+- id: CreateMeetingInvite.FindMeeting
+  translation: We had a problem finding the meeting for the new invites
+- id: CreateMeetingInvite.Unauthorized
+  translation: You are not allowed to create invitations for that meeting
+- id: CreateMeetingInvite.ListInvites
+  translation: We had a problem getting the list of invites after adding the new invites
+- id: RemoveMeetingInvite.FindMeeting
+  translation: We had a problem finding the meeting for the invite to be removed
+- id: RemoveMeetingInvite.Unauthorized
+  translation: You are not allowed to remove invitations for that meeting
+- id: RemoveMeetingInvite.ListInvites
+  translation: We had a problem getting the list of invites after removing the invite
+- id: RemoveMeetingInvite
+  translation: We had a problem removing the meeting invite
+- id: MeetingInvite.Inviter
+  translation: We had a problem getting the user profile of the inviter
+- id: MeetingInvite.Meeting
+  translation: We had a problem getting the meeting data for the invite
+
+# MeetingParticipant
+- id: MeetingParticipant.Meeting
+  translation: We had a problem finding the meeting for the participant
+- id: MeetingParticipant.User
+  translation: We had a problem finding the user data for the participant
+- id: MeetingParticipant.Invite
+  translation: We had a problem finding the invite data for the participant
+- id: RemoveMeetingParticipant.FindMeeting
+  translation: We had a problem finding the meeting for the participant to be removed
+- id: RemoveMeetingParticipant.Unauthorized
+  translation: You are not allowed to remove particpants for that meeting
+- id: RemoveMeetingParticipant.ListParticipants
+  translation: We had a problem getting the list of participants after removing the participant
+- id: RemoveMeetingParticipant
+  translation: We had a problem removing the participant
+
+# Message
 - id: GetMessageSender
   translation: We had a problem finding the message sender information.
 - id: GetMessageThread
@@ -168,6 +213,10 @@
   translation: We had a problem finding the list of conversations.
 - id: GetMyThreads
   translation: We had a problem finding a list of your conversations.
+
+# User
+- id: User.MeetingsAsParticipant
+  translation: We had a problem getting a list of meetings for you.
 - id: GetUserOrganizations
   translation: We had a problem finding the list of organizations for the user profile.
 - id: GetUserPosts
@@ -223,7 +272,7 @@
 
 # New Message notification subject
 - id: Email.Subject.Message.Created
-  translation: New message from {{.sentByNickname}} on {{.AppName}}
+  translation: "{{.AppName}} message from {{.sentByNickname}} about {{.postTitle}}"
 
 # New User welcome subject
 - id: Email.Subject.Welcome

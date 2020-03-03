@@ -11,8 +11,15 @@ import (
 	"github.com/silinternational/wecarry-api/models"
 )
 
+//  meeting       creator    invitees            participants          organizers
+//  0 Mtg Past    user 0
+//  1 Mtg Recent  user 0     invitee2            user1
+//  2 Mtg Now     user 0     invitee0, invitee1  user0, user1, user2   user1
+//  3 Mtg Future  user 0
+//
+//  Inviter for all invites is user 0
 func createFixturesForMeetings(as *ActionSuite) meetingQueryFixtures {
-	uf := test.CreateUserFixtures(as.DB, 2)
+	uf := test.CreateUserFixtures(as.DB, 3)
 	user := uf.Users[0]
 	locations := test.CreateLocationFixtures(as.DB, 4)
 
@@ -62,10 +69,66 @@ func createFixturesForMeetings(as *ActionSuite) meetingQueryFixtures {
 		createFixture(as, &meetings[i])
 	}
 
+	posts := test.CreatePostFixtures(as.DB, 3, false)
+	posts[0].MeetingID = nulls.NewInt(meetings[2].ID)
+	posts[1].MeetingID = nulls.NewInt(meetings[2].ID)
+	as.NoError(as.DB.Update(&posts))
+
+	invites := models.MeetingInvites{
+		{
+			MeetingID: meetings[2].ID,
+			InviterID: user.ID,
+			Email:     "invitee0@example.com",
+		},
+		{
+			MeetingID: meetings[2].ID,
+			InviterID: user.ID,
+			Email:     "invitee1@example.com",
+		},
+		{
+			MeetingID: meetings[1].ID,
+			InviterID: user.ID,
+			Email:     "invitee2@example.com",
+		},
+	}
+	for i := range invites {
+		as.NoError(invites[i].Create())
+	}
+
+	participants := models.MeetingParticipants{
+		{
+			MeetingID:   meetings[2].ID,
+			UserID:      uf.Users[0].ID,
+			InviteID:    nulls.NewInt(invites[0].ID),
+			IsOrganizer: false,
+		},
+		{
+			MeetingID:   meetings[2].ID,
+			UserID:      uf.Users[1].ID,
+			InviteID:    nulls.NewInt(invites[1].ID),
+			IsOrganizer: true,
+		},
+		{
+			MeetingID:   meetings[1].ID,
+			UserID:      uf.Users[1].ID,
+			InviteID:    nulls.NewInt(invites[2].ID),
+			IsOrganizer: false,
+		},
+		{
+			MeetingID:   meetings[2].ID,
+			UserID:      uf.Users[2].ID,
+			IsOrganizer: false,
+		},
+	}
+	createFixture(as, &participants)
+
 	return meetingQueryFixtures{
-		Locations: locations,
-		Meetings:  meetings,
-		Users:     uf.Users,
-		File:      fileFixture,
+		Locations:           locations,
+		Meetings:            meetings,
+		Users:               uf.Users,
+		File:                fileFixture,
+		Posts:               posts,
+		MeetingInvites:      invites,
+		MeetingParticipants: participants,
 	}
 }

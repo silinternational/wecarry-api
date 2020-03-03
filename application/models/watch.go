@@ -24,7 +24,7 @@ type Watch struct {
 	LocationID nulls.Int `json:"location_id" db:"location_id"`
 }
 
-// Watches is used for struct-attached functions that operate on lists of objects
+// Watches is used for methods that operate on lists of objects
 type Watches []Watch
 
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
