@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 	"github.com/gobuffalo/buffalo/render"
 
 	"github.com/silinternational/wecarry-api/auth"
+	"github.com/silinternational/wecarry-api/auth/azureadv2"
 	"github.com/silinternational/wecarry-api/auth/facebook"
 	"github.com/silinternational/wecarry-api/auth/google"
 	"github.com/silinternational/wecarry-api/auth/linkedin"
@@ -23,10 +25,11 @@ const (
 	AuthTypeParam = "auth-type"
 
 	// Auth Type Identifiers
-	AuthTypeFacebook = "facebook"
-	AuthTypeGoogle   = "google"
-	AuthTypeLinkedIn = "linkedin"
-	AuthTypeTwitter  = "twitter"
+	AuthTypeFacebook  = "facebook"
+	AuthTypeGoogle    = "google"
+	AuthTypeLinkedIn  = "linkedin"
+	AuthTypeMicrosoft = "microsoft"
+	AuthTypeTwitter   = "twitter"
 
 	AuthSelectPath = "%s/auth/select/?%s=%s"
 )
@@ -52,6 +55,10 @@ func addLinkedInConfig(configs map[string]SocialAuthConfig) {
 	addConfig(AuthTypeLinkedIn, domain.Env.LinkedInKey, domain.Env.LinkedInSecret, configs)
 }
 
+func addMicrosoftConfig(configs map[string]SocialAuthConfig) {
+	addConfig(AuthTypeMicrosoft, domain.Env.MicrosoftKey, domain.Env.MicrosoftSecret, configs)
+}
+
 func addTwitterConfig(configs map[string]SocialAuthConfig) {
 	addConfig(AuthTypeTwitter, domain.Env.TwitterKey, domain.Env.TwitterSecret, configs)
 }
@@ -65,6 +72,7 @@ func getSocialAuthConfigs() map[string]SocialAuthConfig {
 	addGoogleConfig(configs)
 	addLinkedInConfig(configs)
 	addTwitterConfig(configs)
+	addMicrosoftConfig(configs)
 
 	return configs
 }
@@ -84,6 +92,17 @@ func getSocialAuthProvider(authType string) (auth.Provider, error) {
 		return linkedin.New(config)
 	case AuthTypeTwitter:
 		return twitter.New(config)
+	case AuthTypeMicrosoft:
+		azConfig := struct{ ApplicationID, ClientSecret string }{
+			ApplicationID: config.Key,
+			ClientSecret:  config.Secret,
+		}
+
+		rawJSON, err := json.Marshal(azConfig)
+		if err != nil {
+			return nil, errors.New("bad Microsoft auth config: " + err.Error())
+		}
+		return azureadv2.New(rawJSON)
 	}
 
 	return nil, errors.New("unmatched Social Auth Provider: " + authType + ".")
@@ -242,7 +261,7 @@ func processSocialAuthCallback(c buffalo.Context, authEmail, authType string) ca
 		c.Session().Clear()
 		return callbackValues{
 			errCode: domain.ErrorAuthEmailMismatch,
-			errMsg: fmt.Sprintf("mismatched emails. Began auth with %s and but auth callback had %s.",
+			errMsg: fmt.Sprintf("mismatched emails. Began auth with %s but auth callback had %s.",
 				authEmail, authResp.AuthUser.Email),
 		}
 	}

@@ -147,6 +147,8 @@ var Env struct {
 	MailChimpAPIKey            string
 	MailChimpListID            string
 	MailChimpUsername          string
+	MicrosoftKey               string
+	MicrosoftSecret            string
 	MobileService              string
 	PlaygroundPort             string
 	RollbarServerRoot          string
@@ -202,6 +204,8 @@ func readEnv() {
 	Env.MailChimpAPIKey = envy.Get("MAILCHIMP_API_KEY", "")
 	Env.MailChimpListID = envy.Get("MAILCHIMP_LIST_ID", "")
 	Env.MailChimpUsername = envy.Get("MAILCHIMP_USERNAME", "")
+	Env.MicrosoftKey = envy.Get("MICROSOFT_KEY", "")
+	Env.MicrosoftSecret = envy.Get("MICROSOFT_SECRET", "")
 	Env.MobileService = envy.Get("MOBILE_SERVICE", "dummy")
 	Env.PlaygroundPort = envy.Get("PORT", "3000")
 	Env.RollbarServerRoot = envy.Get("ROLLBAR_SERVER_ROOT", "github.com/silinternational/wecarry-api")
