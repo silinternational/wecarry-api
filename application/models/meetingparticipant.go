@@ -89,12 +89,11 @@ func (m *MeetingParticipant) Destroy() error {
 func (m *MeetingParticipant) Create(ctx context.Context, meeting Meeting, code *string) error {
 	cUser := CurrentUser(ctx)
 
-	var p MeetingParticipant
-	if err := p.FindByMeetingIDAndUserID(meeting.ID, cUser.ID); domain.IsOtherThanNoRows(err) {
+	if err := m.FindByMeetingIDAndUserID(meeting.ID, cUser.ID); domain.IsOtherThanNoRows(err) {
 		return domain.ReportError(ctx, err,
 			"CreateMeetingParticipant.FindExisting")
 	}
-	if p.ID > 0 {
+	if m.ID > 0 {
 		return nil
 	}
 
