@@ -534,10 +534,9 @@ func (as *ActionSuite) Test_CreateMeetingParticipant() {
 
 	testCases := []testCase{
 		{
-			name:      "no code",
+			name:      "already a participant",
 			meetingID: f.Meetings[2].UUID.String(),
 			testUser:  f.Users[2],
-			wantErr:   "not allowed",
 		},
 		{
 			name:      "meeting creator",
