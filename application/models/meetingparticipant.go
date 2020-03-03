@@ -2,6 +2,7 @@ package models
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"time"
 
@@ -26,6 +27,12 @@ type MeetingParticipant struct {
 
 // MeetingParticipants is used for methods that operate on lists of objects
 type MeetingParticipants []MeetingParticipant
+
+// String is used to serialize the object for error logging
+func (m MeetingParticipant) String() string {
+	jm, _ := json.Marshal(m)
+	return string(jm)
+}
 
 // Validate gets run every time you call one of: pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate
 func (m *MeetingParticipant) Validate(tx *pop.Connection) (*validate.Errors, error) {
