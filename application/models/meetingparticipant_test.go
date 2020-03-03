@@ -1,6 +1,7 @@
 package models
 
 import (
+	"sort"
 	"testing"
 
 	"github.com/gobuffalo/nulls"
@@ -218,6 +219,7 @@ func (ms *ModelSuite) TestMeetingParticipant_Create() {
 			for i := range participants {
 				ids[i] = participants[i].UserID
 			}
+			sort.Ints(ids)
 
 			ms.Equal(tt.userIDs, ids)
 
