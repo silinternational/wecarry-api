@@ -242,7 +242,8 @@ func processSocialAuthCallback(c buffalo.Context, authEmail, authType string) ca
 		c.Session().Clear()
 		return callbackValues{
 			errCode: domain.ErrorAuthEmailMismatch,
-			errMsg:  err.Error(),
+			errMsg: fmt.Sprintf("mismatched emails. Began auth with %s and but auth callback had %s.",
+				authEmail, authResp.AuthUser.Email),
 		}
 	}
 
