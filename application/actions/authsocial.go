@@ -56,13 +56,7 @@ func addLinkedInConfig(configs map[string]SocialAuthConfig) {
 }
 
 func addMicrosoftConfig(configs map[string]SocialAuthConfig) {
-	key := domain.Env.MicrosoftKey
-	secret := domain.Env.MicrosoftSecret
-	if key == "" || secret == "" {
-		return
-	}
-
-	configs[AuthTypeMicrosoft] = SocialAuthConfig{Key: key, Secret: secret}
+	addConfig(AuthTypeMicrosoft, domain.Env.MicrosoftKey, domain.Env.MicrosoftSecret, configs)
 }
 
 func addTwitterConfig(configs map[string]SocialAuthConfig) {
