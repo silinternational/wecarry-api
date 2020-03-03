@@ -118,7 +118,7 @@ func (r *meetingResolver) Invites(ctx context.Context, obj *models.Meeting) ([]m
 	if obj == nil {
 		return nil, nil
 	}
-	invites, err := obj.Invites(domain.GetBuffaloContextFromGqlContext(ctx))
+	invites, err := obj.Invites(domain.GetBuffaloContext(ctx))
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "Meeting.Invites")
 	}
@@ -129,7 +129,7 @@ func (r *meetingResolver) Participants(ctx context.Context, obj *models.Meeting)
 	if obj == nil {
 		return nil, nil
 	}
-	participants, err := obj.Participants(domain.GetBuffaloContextFromGqlContext(ctx))
+	participants, err := obj.Participants(domain.GetBuffaloContext(ctx))
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "Meeting.Participants")
 	}
@@ -144,7 +144,7 @@ func (r *meetingResolver) Organizers(ctx context.Context, obj *models.Meeting) (
 	if obj == nil {
 		return nil, nil
 	}
-	users, err := obj.Organizers(domain.GetBuffaloContextFromGqlContext(ctx))
+	users, err := obj.Organizers(domain.GetBuffaloContext(ctx))
 	if err != nil {
 		return nil, err
 	}

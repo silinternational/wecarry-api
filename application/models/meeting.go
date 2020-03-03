@@ -292,7 +292,7 @@ func (m *Meeting) Invites(ctx buffalo.Context) (MeetingInvites, error) {
 		return i, nil
 	}
 	currentUser := CurrentUser(ctx)
-	if currentUser.ID != m.CreatedByID && !currentUser.isMeetingOrganizer(ctx, *m) && !currentUser.isSuperAdmin() {
+	if currentUser.ID != m.CreatedByID && !m.isOrganizer(ctx, currentUser.ID) && !currentUser.isSuperAdmin() {
 		return i, nil
 	}
 	if err := DB.Where("meeting_id = ?", m.ID).All(&i); err != nil {
@@ -309,7 +309,7 @@ func (m *Meeting) Participants(ctx buffalo.Context) (MeetingParticipants, error)
 		return p, nil
 	}
 	currentUser := CurrentUser(ctx)
-	if currentUser.ID != m.CreatedByID && !currentUser.isMeetingOrganizer(ctx, *m) && !currentUser.isSuperAdmin() {
+	if currentUser.ID != m.CreatedByID && !m.isOrganizer(ctx, currentUser.ID) && !currentUser.isSuperAdmin() {
 		return p, nil
 	}
 	if err := DB.Where("meeting_id = ?", m.ID).All(&p); err != nil {
@@ -355,4 +355,28 @@ func (m *Meeting) RemoveParticipant(ctx buffalo.Context, userUUID string) error 
 		return fmt.Errorf("failed to load MeetingParticipant in Meeting.RemoveParticipant, %s", err)
 	}
 	return participant.Destroy()
+}
+
+func (m *Meeting) IsCodeValid(code string) bool {
+	if m.InviteCode.Valid && m.InviteCode.UUID.String() == code {
+		return true
+	}
+	return false
+}
+
+func (m *Meeting) isOrganizer(ctx buffalo.Context, userID int) bool {
+	organizers, err := m.Organizers(ctx)
+	if err != nil {
+		domain.Error(ctx, "isOrganizer() error reading list of meeting organizers, "+err.Error())
+	}
+	for _, o := range organizers {
+		if o.ID == userID {
+			return true
+		}
+	}
+	return false
+}
+
+func (m *Meeting) isVisible(ctx buffalo.Context, userID int) bool {
+	return true
 }
