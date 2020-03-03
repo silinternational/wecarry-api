@@ -806,19 +806,6 @@ func (u *User) HasOrganization() bool {
 	return true
 }
 
-func (u *User) isMeetingOrganizer(ctx buffalo.Context, meeting Meeting) bool {
-	organizers, err := meeting.Organizers(ctx)
-	if err != nil {
-		domain.Error(ctx, "isMeetingOrganizer() error reading list of meeting organizers, "+err.Error())
-	}
-	for _, o := range organizers {
-		if o.ID == u.ID {
-			return true
-		}
-	}
-	return false
-}
-
 func (u *User) isSuperAdmin() bool {
 	return u.AdminRole == UserAdminRoleSuperAdmin
 }
@@ -837,13 +824,17 @@ func (u *User) MeetingsAsParticipant(ctx context.Context) ([]Meeting, error) {
 }
 
 func (u *User) CanCreateMeetingInvite(ctx buffalo.Context, meeting Meeting) bool {
-	return u.ID == meeting.CreatedByID || u.isMeetingOrganizer(ctx, meeting) || u.isSuperAdmin()
+	return u.ID == meeting.CreatedByID || meeting.isOrganizer(ctx, u.ID) || u.isSuperAdmin()
 }
 
 func (u *User) CanRemoveMeetingInvite(ctx buffalo.Context, meeting Meeting) bool {
-	return u.ID == meeting.CreatedByID || u.isMeetingOrganizer(ctx, meeting) || u.isSuperAdmin()
+	return u.ID == meeting.CreatedByID || meeting.isOrganizer(ctx, u.ID) || u.isSuperAdmin()
+}
+
+func (u *User) CanCreateMeetingParticipant(ctx buffalo.Context, meeting Meeting) bool {
+	return u.ID == meeting.CreatedByID || meeting.isVisible(ctx, u.ID) || u.isSuperAdmin()
 }
 
 func (u *User) CanRemoveMeetingParticipant(ctx buffalo.Context, meeting Meeting) bool {
-	return u.ID == meeting.CreatedByID || u.isMeetingOrganizer(ctx, meeting) || u.isSuperAdmin()
+	return u.ID == meeting.CreatedByID || meeting.isOrganizer(ctx, u.ID) || u.isSuperAdmin()
 }

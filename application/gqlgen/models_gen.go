@@ -25,9 +25,10 @@ type CreateMeetingInvitesInput struct {
 type CreateMeetingParticipantInput struct {
 	// ID of the `Meeting`
 	MeetingID string `json:"meetingID"`
-	// Confirmation code from the `MeetingInvite`. If not provided, the `Meeting` must not be `INVITE_ONLY`.
-	ConfirmationCode *string `json:"confirmationCode"`
-	// Add as a `Meeting` Organizer. Authenticated `User` must be authorized [definition TBD] to do this.
+	// Secret code from the `MeetingInvite` or invite code from the `Meeting`. If the `Meeting` is not `INVITE_ONLY`,
+	// the code may be omitted.
+	Code *string `json:"code"`
+	// NOT YET IMPLEMENTED -- Add as a `Meeting` Organizer. Authenticated `User` must be authorized [definition TBD] to do this.
 	IsOrganizer *bool `json:"isOrganizer"`
 }
 
