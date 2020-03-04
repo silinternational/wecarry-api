@@ -1878,6 +1878,24 @@ type File {
     contentType: String!
 }
 
+"Describes a Geographic location"
+type Location {
+    description: String!
+    # Country, ISO 3166-1 Alpha-2 code
+    country: String!
+    latitude: Float
+    longitude: Float
+}
+
+"Specify a Geographic location"
+input LocationInput {
+    description: String!
+    # Country, ISO 3166-1 Alpha-2 code
+    country: String!
+    latitude: Float
+    longitude: Float
+}
+
 type Meeting {
     id: ID!
     name: String!
@@ -2015,24 +2033,6 @@ input CreateMessageInput {
     content: String!
     postID: String!
     threadID: String
-}
-
-"Describes a Geographic location"
-type Location {
-    description: String!
-    # Country, ISO 3166-1 Alpha-2 code
-    country: String!
-    latitude: Float
-    longitude: Float
-}
-
-"Specify a Geographic location"
-input LocationInput {
-    description: String!
-    # Country, ISO 3166-1 Alpha-2 code
-    country: String!
-    latitude: Float
-    longitude: Float
 }
 
 type Organization {
