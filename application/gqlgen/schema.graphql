@@ -1,31 +1,5 @@
 type Query {
 
-    users: [User!]!
-    user(id: ID): User
-
-    """
-    Posts, aka Requests. With no parameters supplied, all posts visible to the authenticated user are returned. Filter
-    parameters only remove from this default list and never include posts that are not visible to the authenticated
-    user. For posts associated with a `User` or `Meeting`, use the `posts` field on `User` and `Meeting`.
-    """
-    posts(
-        "Only include posts that have a destination near the given location."
-        destination: LocationInput,
-
-        "Only include posts that have an origin near the given location."
-        origin: LocationInput
-
-        "Search by text in `title` or `description`"
-        searchText: String
-    ): [Post!]!
-
-    post(id: ID): Post
-    threads: [Thread!]!
-    myThreads: [Thread!]!
-    message(id: ID): Message!
-    organizations: [Organization!]!
-    organization(id: ID): Organization!
-
     """
     Meetings, aka Events. With no parameters supplied, only future meetings are returned.
     NOT YET IMPLEMENTED: `endAfter`, `endBefore`, `startafter`, `startBefore`
@@ -55,41 +29,44 @@ type Query {
         """
         startBefore: Date
     ): [Meeting!]!
+
     meeting(id: ID): Meeting
+    message(id: ID): Message!
+    myThreads: [Thread!]!
+    myWatches: [Watch!]!
+    organization(id: ID): Organization!
+    organizations: [Organization!]!
+    post(id: ID): Post
+
+    """
+    Posts, aka Requests. With no parameters supplied, all posts visible to the authenticated user are returned. Filter
+    parameters only remove from this default list and never include posts that are not visible to the authenticated
+    user. For posts associated with a `User` or `Meeting`, use the `posts` field on `User` and `Meeting`.
+    """
+    posts(
+        "Only include posts that have a destination near the given location."
+        destination: LocationInput,
+
+        "Only include posts that have an origin near the given location."
+        origin: LocationInput
+
+        "Search by text in `title` or `description`"
+        searchText: String
+    ): [Post!]!
 
     """
     DEPRECATED: `Query.recentMeetings` will be replaced by the `endAfter` parameter of `Query.meetings`
     """
     recentMeetings: [Meeting!]! @deprecated(reason: "`Query.recentMeetings` will be replaced by `endAfter` parameter of `Query.meetings`")
-    myWatches: [Watch!]!
+
+    threads: [Thread!]!
+    user(id: ID): User
+    users: [User!]!
 }
 
 type Mutation {
-    createPost(input: CreatePostInput!): Post!
-    updatePost(input: UpdatePostInput!): Post!
-    updatePostStatus(input: UpdatePostStatusInput!): Post!
-    addMeAsPotentialProvider(postID: String!): Post!
-    removeMeAsPotentialProvider(postID: String!): Post!
-    removePotentialProvider(postID: String!, userID: String!): Post!
-
-    """
-    Update User profile information. If ID is not specified, the authenticated user is assumed.
-    """
-    updateUser(input: UpdateUserInput!): User!
     createMeeting(input: CreateMeetingInput!): Meeting!
     updateMeeting(input: UpdateMeetingInput!): Meeting!
-    createMessage(input: CreateMessageInput!): Message!
-    createOrganization(input: CreateOrganizationInput!): Organization!
-    updateOrganization(input: UpdateOrganizationInput!): Organization!
-    createOrganizationDomain(input: CreateOrganizationDomainInput!): [OrganizationDomain!]!
-    updateOrganizationDomain(input: CreateOrganizationDomainInput!): [OrganizationDomain!]!
-    removeOrganizationDomain(input: RemoveOrganizationDomainInput!): [OrganizationDomain!]!
-    setThreadLastViewedAt(input: SetThreadLastViewedAtInput!): Thread!
-    createWatch(input: CreateWatchInput!): Watch!
-    updateWatch(input: UpdateWatchInput!): Watch!
-    removeWatch(input: RemoveWatchInput!): [Watch!]!
-    createOrganizationTrust(input: CreateOrganizationTrustInput!): Organization!
-    removeOrganizationTrust(input: RemoveOrganizationTrustInput!): Organization!
 
     """
     Bulk create `MeetingInvite`s and return the updated list of invites for the specified meeting. Subsequent calls
@@ -109,53 +86,38 @@ type Mutation {
 
     "Remove a `MeetingParticipant` and return the remaining participants for the `Meeting`"
     removeMeetingParticipant(input: RemoveMeetingParticipantInput!): [MeetingParticipant!]!
-}
 
-"Date and Time in ISO-8601 format (e.g. 2020-02-11T18:08:56Z)"
-scalar Time
+    createMessage(input: CreateMessageInput!): Message!
+    createOrganization(input: CreateOrganizationInput!): Organization!
+    updateOrganization(input: UpdateOrganizationInput!): Organization!
+    createOrganizationDomain(input: CreateOrganizationDomainInput!): [OrganizationDomain!]!
+    removeOrganizationDomain(input: RemoveOrganizationDomainInput!): [OrganizationDomain!]!
+    updateOrganizationDomain(input: CreateOrganizationDomainInput!): [OrganizationDomain!]!
+    createOrganizationTrust(input: CreateOrganizationTrustInput!): Organization!
+    removeOrganizationTrust(input: RemoveOrganizationTrustInput!): Organization!
+    createPost(input: CreatePostInput!): Post!
+    updatePost(input: UpdatePostInput!): Post!
+    updatePostStatus(input: UpdatePostStatusInput!): Post!
+    addMeAsPotentialProvider(postID: String!): Post!
+    removeMeAsPotentialProvider(postID: String!): Post!
+    removePotentialProvider(postID: String!, userID: String!): Post!
+    setThreadLastViewedAt(input: SetThreadLastViewedAtInput!): Thread!
+
+    """
+    Update User profile information. If ID is not specified, the authenticated user is assumed.
+    """
+    updateUser(input: UpdateUserInput!): User!
+
+    createWatch(input: CreateWatchInput!): Watch!
+    removeWatch(input: RemoveWatchInput!): [Watch!]!
+    updateWatch(input: UpdateWatchInput!): Watch!
+}
 
 "Date in ISO-8601 format (e.g. 2020-02-11)"
 scalar Date
 
-enum UserAdminRole {
-    SUPERADMIN
-    SALESADMIN
-    ADMIN
-    USER
-}
-
-enum PostRole {
-    CREATEDBY
-    RECEIVING
-    PROVIDING
-}
-
-enum PostStatus {
-    OPEN
-    ACCEPTED
-    DELIVERED
-    RECEIVED
-    COMPLETED
-    REMOVED
-}
-
-enum PostSize {
-    TINY
-    SMALL
-    MEDIUM
-    LARGE
-    XLARGE
-}
-
-"Visibility for Posts, ALL organizations, TRUSTED organizations, or SAME organization only"
-enum PostVisibility {
-    "Visible to all users from all organizations in the system"
-    ALL
-    "Visible to users from all organizations trusted by the Post creator's organization"
-    TRUSTED
-    "Visible only to users from the same organization as the Post creator"
-    SAME
-}
+"Date and Time in ISO-8601 format (e.g. 2020-02-11T18:08:56Z)"
+scalar Time
 
 "Visibility for Meetings (Events), determines who can see a `Meeting`."
 enum MeetingVisibility {
@@ -169,44 +131,42 @@ enum MeetingVisibility {
     INVITE_ONLY
 }
 
-type User {
-    id: ID!
-    email: String!
-    nickname: String!
-    createdAt: Time!
-    updatedAt: Time!
-    adminRole: UserAdminRole
-    "avatarURL is generated from an attached photo if present, an external URL if present, or a Gravatar URL"
-    avatarURL: String
-    "`File` ID of the user's photo, if present"
-    photoID: String
-    preferences: UserPreferences
-    "user's home location"
-    location: Location
-    unreadMessageCount: Int!
-    organizations: [Organization!]!
-    posts(role: PostRole!): [Post!]!
-    "meetings in which the user is a participant"
-    meetingsAsParticipant: [Meeting!]!
+enum PostRole {
+    CREATEDBY
+    RECEIVING
+    PROVIDING
 }
 
-type UserPreferences {
-    language: String
-    timeZone: String
-    weightUnit: String
+enum PostSize {
+    TINY
+    SMALL
+    MEDIUM
+    LARGE
+    XLARGE
 }
 
-"Input object for `updateUser`"
-input UpdateUserInput {
-    id: ID
-    nickname: String
-    "File ID of avatar photo. If omitted or `null`, the photo is removed from the profile."
-    photoID: String
-    """
-    Specify the user's "home" location. If omitted or `null`, the location is removed from the profile.
-    """
-    location: LocationInput
-    preferences: UpdateUserPreferencesInput
+enum PostStatus {
+    OPEN
+    ACCEPTED
+    DELIVERED
+    RECEIVED
+    COMPLETED
+    REMOVED
+}
+
+enum PostType {
+    REQUEST
+    OFFER
+}
+
+"Visibility for Posts, ALL organizations, TRUSTED organizations, or SAME organization only"
+enum PostVisibility {
+    "Visible to all users from all organizations in the system"
+    ALL
+    "Visible to users from all organizations trusted by the Post creator's organization"
+    TRUSTED
+    "Visible only to users from the same organization as the Post creator"
+    SAME
 }
 
 enum PreferredLanguage {
@@ -222,75 +182,20 @@ enum PreferredWeightUnit {
     KILOGRAMS
 }
 
-
-input UpdateUserPreferencesInput {
-    language: PreferredLanguage
-    timeZone: String
-    weightUnit: PreferredWeightUnit
+enum UserAdminRole {
+    SUPERADMIN
+    SALESADMIN
+    ADMIN
+    USER
 }
 
-"User fields that can safely be visible to any user in the system"
-type PublicProfile {
+type File {
     id: ID!
-    nickname: String!
-    avatarURL: String
-}
-
-enum PostType {
-    REQUEST
-    OFFER
-}
-
-type Post {
-    id: ID!
-    type: PostType!
-    "Profile of the user that created this post."
-    createdBy: PublicProfile!
-    "Profile of the user that is receiver of this post. For requests, this is the same as `createdBy`."
-    receiver: PublicProfile
-    "Profile of the user that is the provider for this post. For offers, this is the same as `createdBy`."
-    provider: PublicProfile
-    potentialProviders: [PublicProfile!]
-    "Organization associated with this post."
-    organization: Organization
-    "Short description of item"
-    title: String!
-    "Optional, longer description of the item."
-    description: String
-    "Geographic location where item is needed"
-    destination: Location!
-    "Date (yyyy-mm-dd) before which the item will be needed. The record may be hidden or removed after this date."
-    neededBefore: Date
-    "Date (yyyy-mm-dd) on which the request moved into the COMPLETED status"
-    completedOn: Date
-    "Optional geographic location where the item can be picked up, purchased, or otherwise obtained"
-    origin: Location
-    "Broad category of the size of item"
-    size: PostSize!
-    "Status of the post. Use mutation `updatePostStatus` to change the status."
-    status: PostStatus!
-    "List of message threads associated with this post"
-    threads: [Thread!]!
-    "Date and time this post was created"
-    createdAt: Time!
-    "Date and time this post was last updated"
-    updatedAt: Time!
-    "Optional URL to further describe or point to detail about the item"
-    url: String
-    "Optional weight of the item, measured in kilograms"
-    kilograms: Float
-    "Photo of the item"
-    photo: File
-    "UUID of the photo of the item"
-    photoID: ID
-    "List of attached files. Does not include the post photo."
-    files: [File!]!
-    "Meeting associated with this post. Affects visibility of the post."
-    meeting: Meeting
-    "Dynamically set to indicate if the current user is allowed to edit this post using the `updatePost` mutation"
-    isEditable: Boolean!
-    "Visibility restrictions for this post"
-    visibility: PostVisibility!
+    url: String!
+    urlExpiration: Time!
+    name: String!
+    size: Int!
+    contentType: String!
 }
 
 type Meeting {
@@ -322,136 +227,6 @@ type Meeting {
     organizers: [PublicProfile!]!
 }
 
-type Organization {
-    id: ID!
-    name: String!
-    url: String
-    createdAt: Time!
-    updatedAt: Time!
-    domains: [OrganizationDomain!]!
-    logoURL: String
-    trustedOrganizations: [Organization!]!
-}
-
-input CreateOrganizationInput {
-    name: String!
-    url: String
-    authType: String!
-    authConfig: String!
-    logoFileID: ID
-}
-
-input UpdateOrganizationInput {
-    id: ID!
-    name: String!
-    url: String
-    authType: String!
-    authConfig: String!
-    logoFileID: ID
-}
-
-type OrganizationDomain {
-    domain: String!
-    organizationID: ID!
-    authType: String!
-    authConfig: String!
-}
-
-input CreateOrganizationDomainInput {
-    domain: String!
-    organizationID: ID!
-    authType: String
-    authConfig: String
-}
-
-input RemoveOrganizationDomainInput {
-    domain: String!
-    organizationID: ID!
-}
-
-type Thread {
-    id: ID!
-    participants: [PublicProfile!]!
-    messages: [Message!]!
-    postID: String!
-    post: Post!
-    lastViewedAt: Time!
-    createdAt: Time!
-    updatedAt: Time!
-    unreadMessageCount: Int!
-}
-
-type Message {
-    id: ID!
-    sender: PublicProfile!
-    content: String!
-    thread: Thread!
-    createdAt: Time!
-    updatedAt: Time!
-}
-
-input CreatePostInput {
-    "ID of associated Organization. Affects visibility of the post, see also the `visibility` field."
-    orgID: String!
-    type: PostType!
-    "Short description, limited to 255 characters"
-    title: String!
-    "Optional, longer description, limited to 4096 characters"
-    description: String
-    "Geographic location where item is needed"
-    destination: LocationInput!
-    "Date (yyyy-mm-dd) before which the item will be needed. The record may be hidden or removed after this date."
-    neededBefore: Date
-    "Optional geographic location where the item can be picked up, purchased, or otherwise obtained"
-    origin: LocationInput
-    "Broad category of the size of item"
-    size: PostSize!
-    "Optional URL to further describe or point to detail about the item"
-    url: String
-    "Optional weight of the item, measured in kilograms"
-    kilograms: Float
-    "Optional photo `file` ID. First upload a file using the `/upload` REST API and then submit its ID here."
-    photoID: ID
-    "Optional meeting ID. Affects visibility of the post."
-    meetingID: ID
-    "Visibility restrictions for this post"
-    visibility: PostVisibility
-}
-
-input UpdatePostInput {
-    "ID of the post to update"
-    id: ID!
-    "Short description, limited to 255 characters. If omitted or `null`, no change is made."
-    title: String
-    "Longer description, limited to 4096 characters. If omitted or `null`, the description is removed"
-    description: String
-    "Geographic location where item is needed. If omitted or `null`, no change is made."
-    destination: LocationInput
-    """
-    Date (yyyy-mm-dd) before which the item will be needed. The record may be hidden or removed after this date. If
-    omitted or `null`, the date is removed.
-    """
-    neededBefore: Date
-    """
-    Optional geographic location where the item can be picked up, purchased, or otherwise obtained. If omitted or
-    `null`, the origin location is removed.
-    """
-    origin: LocationInput
-    "Broad category of the size of item. If omitted or `null`, no change is made."
-    size: PostSize
-    "Optional URL to further describe or point to detail about the item. If omitted or `null`, the URL is removed."
-    url: String
-    "Optional weight of the item, measured in kilograms. If omitted or `null`, the value is removed."
-    kilograms: Float
-    """
-    Optional photo `file` ID. First upload a file using the `/upload` REST API and then submit its ID here. Any
-    previously attached photo will be deleted. If omitted or `null`, no photo will be attached to this post.
-    """
-    photoID: ID
-    "Visibility restrictions for this post. If omitted or `null`, the visibility is set to `ALL`."
-    visibility: PostVisibility
-}
-
 input CreateMeetingInput {
     name: String!
     description: String
@@ -460,7 +235,7 @@ input CreateMeetingInput {
     moreInfoURL: String
     imageFileID: ID
     location: LocationInput!
-    
+
     "NOT YET IMPLEMENTED -- Who can see this meeting"
     visibility: MeetingVisibility!
 }
@@ -477,79 +252,6 @@ input UpdateMeetingInput {
 
     "NOT YET IMPLEMENTED -- Who can see this meeting"
     visibility: MeetingVisibility!
-}
-
-input CreateMessageInput {
-    content: String!
-    postID: String!
-    threadID: String
-}
-
-type File {
-    id: ID!
-    url: String!
-    urlExpiration: Time!
-    name: String!
-    size: Int!
-    contentType: String!
-}
-
-input SetThreadLastViewedAtInput {
-    threadID: ID!
-    time: Time!
-}
-
-"Describes a Geographic location"
-type Location {
-    description: String!
-    # Country, ISO 3166-1 Alpha-2 code
-    country: String!
-    latitude: Float
-    longitude: Float
-}
-
-"Specify a Geographic location"
-input LocationInput {
-    description: String!
-    # Country, ISO 3166-1 Alpha-2 code
-    country: String!
-    latitude: Float
-    longitude: Float
-}
-
-input UpdatePostStatusInput {
-    id: ID!
-    status: PostStatus!
-    providerUserID: ID
-}
-
-type Watch {
-    id: ID!
-    owner: PublicProfile!
-    location: Location
-}
-
-input CreateWatchInput {
-    location: LocationInput
-}
-
-input UpdateWatchInput {
-    id: ID!
-    location: LocationInput
-}
-
-input RemoveWatchInput {
-    id: ID!
-}
-
-input CreateOrganizationTrustInput {
-    primaryID: ID!
-    secondaryID: ID!
-}
-
-input RemoveOrganizationTrustInput {
-    primaryID: ID!
-    secondaryID: ID!
 }
 
 """
@@ -618,4 +320,303 @@ input RemoveMeetingParticipantInput {
     meetingID: ID!
     "`User` ID of the `Meeting` participant to remove"
     userID: ID!
+}
+
+type Message {
+    id: ID!
+    sender: PublicProfile!
+    content: String!
+    thread: Thread!
+    createdAt: Time!
+    updatedAt: Time!
+}
+
+input CreateMessageInput {
+    content: String!
+    postID: String!
+    threadID: String
+}
+
+"Describes a Geographic location"
+type Location {
+    description: String!
+    # Country, ISO 3166-1 Alpha-2 code
+    country: String!
+    latitude: Float
+    longitude: Float
+}
+
+"Specify a Geographic location"
+input LocationInput {
+    description: String!
+    # Country, ISO 3166-1 Alpha-2 code
+    country: String!
+    latitude: Float
+    longitude: Float
+}
+
+type Organization {
+    id: ID!
+    name: String!
+    url: String
+    createdAt: Time!
+    updatedAt: Time!
+    domains: [OrganizationDomain!]!
+    logoURL: String
+    trustedOrganizations: [Organization!]!
+}
+
+input CreateOrganizationInput {
+    name: String!
+    url: String
+    authType: String!
+    authConfig: String!
+    logoFileID: ID
+}
+
+input UpdateOrganizationInput {
+    id: ID!
+    name: String!
+    url: String
+    authType: String!
+    authConfig: String!
+    logoFileID: ID
+}
+
+type OrganizationDomain {
+    domain: String!
+    organizationID: ID!
+    authType: String!
+    authConfig: String!
+}
+
+input CreateOrganizationDomainInput {
+    domain: String!
+    organizationID: ID!
+    authType: String
+    authConfig: String
+}
+
+input RemoveOrganizationDomainInput {
+    domain: String!
+    organizationID: ID!
+}
+
+input CreateOrganizationTrustInput {
+    primaryID: ID!
+    secondaryID: ID!
+}
+
+input RemoveOrganizationTrustInput {
+    primaryID: ID!
+    secondaryID: ID!
+}
+
+type Post {
+    id: ID!
+    type: PostType!
+    "Profile of the user that created this post."
+    createdBy: PublicProfile!
+    "Profile of the user that is receiver of this post. For requests, this is the same as `createdBy`."
+    receiver: PublicProfile
+    "Profile of the user that is the provider for this post. For offers, this is the same as `createdBy`."
+    provider: PublicProfile
+    potentialProviders: [PublicProfile!]
+    "Organization associated with this post."
+    organization: Organization
+    "Short description of item"
+    title: String!
+    "Optional, longer description of the item."
+    description: String
+    "Geographic location where item is needed"
+    destination: Location!
+    "Date (yyyy-mm-dd) before which the item will be needed. The record may be hidden or removed after this date."
+    neededBefore: Date
+    "Date (yyyy-mm-dd) on which the request moved into the COMPLETED status"
+    completedOn: Date
+    "Optional geographic location where the item can be picked up, purchased, or otherwise obtained"
+    origin: Location
+    "Broad category of the size of item"
+    size: PostSize!
+    "Status of the post. Use mutation `updatePostStatus` to change the status."
+    status: PostStatus!
+    "List of message threads associated with this post"
+    threads: [Thread!]!
+    "Date and time this post was created"
+    createdAt: Time!
+    "Date and time this post was last updated"
+    updatedAt: Time!
+    "Optional URL to further describe or point to detail about the item"
+    url: String
+    "Optional weight of the item, measured in kilograms"
+    kilograms: Float
+    "Photo of the item"
+    photo: File
+    "UUID of the photo of the item"
+    photoID: ID
+    "List of attached files. Does not include the post photo."
+    files: [File!]!
+    "Meeting associated with this post. Affects visibility of the post."
+    meeting: Meeting
+    "Dynamically set to indicate if the current user is allowed to edit this post using the `updatePost` mutation"
+    isEditable: Boolean!
+    "Visibility restrictions for this post"
+    visibility: PostVisibility!
+}
+
+input CreatePostInput {
+    "ID of associated Organization. Affects visibility of the post, see also the `visibility` field."
+    orgID: String!
+    type: PostType!
+    "Short description, limited to 255 characters"
+    title: String!
+    "Optional, longer description, limited to 4096 characters"
+    description: String
+    "Geographic location where item is needed"
+    destination: LocationInput!
+    "Date (yyyy-mm-dd) before which the item will be needed. The record may be hidden or removed after this date."
+    neededBefore: Date
+    "Optional geographic location where the item can be picked up, purchased, or otherwise obtained"
+    origin: LocationInput
+    "Broad category of the size of item"
+    size: PostSize!
+    "Optional URL to further describe or point to detail about the item"
+    url: String
+    "Optional weight of the item, measured in kilograms"
+    kilograms: Float
+    "Optional photo `file` ID. First upload a file using the `/upload` REST API and then submit its ID here."
+    photoID: ID
+    "Optional meeting ID. Affects visibility of the post."
+    meetingID: ID
+    "Visibility restrictions for this post"
+    visibility: PostVisibility
+}
+
+input UpdatePostInput {
+    "ID of the post to update"
+    id: ID!
+    "Short description, limited to 255 characters. If omitted or `null`, no change is made."
+    title: String
+    "Longer description, limited to 4096 characters. If omitted or `null`, the description is removed"
+    description: String
+    "Geographic location where item is needed. If omitted or `null`, no change is made."
+    destination: LocationInput
+    """
+    Date (yyyy-mm-dd) before which the item will be needed. The record may be hidden or removed after this date. If
+    omitted or `null`, the date is removed.
+    """
+    neededBefore: Date
+    """
+    Optional geographic location where the item can be picked up, purchased, or otherwise obtained. If omitted or
+    `null`, the origin location is removed.
+    """
+    origin: LocationInput
+    "Broad category of the size of item. If omitted or `null`, no change is made."
+    size: PostSize
+    "Optional URL to further describe or point to detail about the item. If omitted or `null`, the URL is removed."
+    url: String
+    "Optional weight of the item, measured in kilograms. If omitted or `null`, the value is removed."
+    kilograms: Float
+    """
+    Optional photo `file` ID. First upload a file using the `/upload` REST API and then submit its ID here. Any
+    previously attached photo will be deleted. If omitted or `null`, no photo will be attached to this post.
+    """
+    photoID: ID
+    "Visibility restrictions for this post. If omitted or `null`, the visibility is set to `ALL`."
+    visibility: PostVisibility
+}
+
+input UpdatePostStatusInput {
+    id: ID!
+    status: PostStatus!
+    providerUserID: ID
+}
+
+type Thread {
+    id: ID!
+    participants: [PublicProfile!]!
+    messages: [Message!]!
+    postID: String!
+    post: Post!
+    lastViewedAt: Time!
+    createdAt: Time!
+    updatedAt: Time!
+    unreadMessageCount: Int!
+}
+
+input SetThreadLastViewedAtInput {
+    threadID: ID!
+    time: Time!
+}
+
+type User {
+    id: ID!
+    email: String!
+    nickname: String!
+    createdAt: Time!
+    updatedAt: Time!
+    adminRole: UserAdminRole
+    "avatarURL is generated from an attached photo if present, an external URL if present, or a Gravatar URL"
+    avatarURL: String
+    "`File` ID of the user's photo, if present"
+    photoID: String
+    preferences: UserPreferences
+    "user's home location"
+    location: Location
+    unreadMessageCount: Int!
+    organizations: [Organization!]!
+    posts(role: PostRole!): [Post!]!
+    "meetings in which the user is a participant"
+    meetingsAsParticipant: [Meeting!]!
+}
+
+"User fields that can safely be visible to any user in the system"
+type PublicProfile {
+    id: ID!
+    nickname: String!
+    avatarURL: String
+}
+
+"Input object for `updateUser`"
+input UpdateUserInput {
+    id: ID
+    nickname: String
+    "File ID of avatar photo. If omitted or `null`, the photo is removed from the profile."
+    photoID: String
+    """
+    Specify the user's "home" location. If omitted or `null`, the location is removed from the profile.
+    """
+    location: LocationInput
+    preferences: UpdateUserPreferencesInput
+}
+
+type UserPreferences {
+    language: String
+    timeZone: String
+    weightUnit: String
+}
+
+input UpdateUserPreferencesInput {
+    language: PreferredLanguage
+    timeZone: String
+    weightUnit: PreferredWeightUnit
+}
+
+type Watch {
+    id: ID!
+    owner: PublicProfile!
+    location: Location
+}
+
+input CreateWatchInput {
+    location: LocationInput
+}
+
+input RemoveWatchInput {
+    id: ID!
+}
+
+input UpdateWatchInput {
+    id: ID!
+    location: LocationInput
 }
