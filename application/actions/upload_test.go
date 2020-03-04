@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gobuffalo/nulls"
 	"github.com/gofrs/uuid"
 
 	"github.com/gobuffalo/buffalo/binding"
@@ -66,7 +67,7 @@ func Fixtures_Upload(as *ActionSuite, t *testing.T) UploadFixtures {
 
 	userAccessToken := models.UserAccessToken{
 		UserID:             user.ID,
-		UserOrganizationID: userOrg.ID,
+		UserOrganizationID: nulls.NewInt(userOrg.ID),
 		AccessToken:        hash,
 		ExpiresAt:          time.Now().Add(time.Hour),
 	}

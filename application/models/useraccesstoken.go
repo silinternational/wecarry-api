@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/validate"
 	"github.com/gobuffalo/validate/validators"
@@ -17,7 +18,7 @@ type UserAccessToken struct {
 	CreatedAt          time.Time        `json:"created_at" db:"created_at"`
 	UpdatedAt          time.Time        `json:"updated_at" db:"updated_at"`
 	UserID             int              `json:"user_id" db:"user_id"`
-	UserOrganizationID int              `json:"user_organization_id" db:"user_organization_id"`
+	UserOrganizationID nulls.Int        `json:"user_organization_id" db:"user_organization_id"`
 	AccessToken        string           `json:"access_token" db:"access_token"`
 	ExpiresAt          time.Time        `json:"expires_at" db:"expires_at"`
 	User               User             `belongs_to:"users"`

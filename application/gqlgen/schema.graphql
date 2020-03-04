@@ -100,6 +100,13 @@ type Mutation {
     "Remove a `MeetingInvite` and return the remaining invites for the `Meeting`"
     removeMeetingInvite(input: RemoveMeetingInviteInput!): [MeetingInvite!]!
 
+    """
+    Create a new `MeetingParticipant` either from a `MeetingInvite`, or by self-joining a meeting. Note that this
+    mutation can only be used by a pre-existing user; new users must go through the REST API login process. If the
+    `Meeting` is not `INVITE_ONLY`, no `MeetingInvitation` is needed and the `confirmationCode` may be omitted.
+    """
+    createMeetingParticipant(input: CreateMeetingParticipantInput!): MeetingParticipant!
+
     "Remove a `MeetingParticipant` and return the remaining participants for the `Meeting`"
     removeMeetingParticipant(input: RemoveMeetingParticipantInput!): [MeetingParticipant!]!
 }
@@ -596,9 +603,12 @@ type MeetingParticipant {
 input CreateMeetingParticipantInput {
     "ID of the `Meeting`"
     meetingID: ID!
-    "Confirmation code from the `MeetingInvite`. If not provided, the `Meeting` must not be `INVITE_ONLY`."
-    confirmationCode: String
-    "Add as a `Meeting` Organizer. Authenticated `User` must be authorized [definition TBD] to do this. "
+    """
+    Secret code from the `MeetingInvite` or invite code from the `Meeting`. If the `Meeting` is not `INVITE_ONLY`,
+    the code may be omitted.
+    """
+    code: String
+    "NOT YET IMPLEMENTED -- Add as a `Meeting` Organizer. Authenticated `User` must be authorized [definition TBD] to do this. "
     isOrganizer: Boolean
 }
 

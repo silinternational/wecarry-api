@@ -24,7 +24,7 @@ func Test_New(t *testing.T) {
 	a.Equal(provider.Name(), "azureadv2")
 	a.Equal(provider.ClientKey, applicationID)
 	a.Equal(provider.Secret, secret)
-	a.Equal(provider.CallbackURL, domain.Env.AuthCallbackURL)
+	a.Equal(provider.CallbackURL, domain.AuthCallbackURL)
 }
 
 func Test_Implements_Provider(t *testing.T) {

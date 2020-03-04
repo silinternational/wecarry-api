@@ -15,7 +15,7 @@ import (
 //  0 Mtg Past    user 0
 //  1 Mtg Recent  user 0     invitee2            user1
 //  2 Mtg Now     user 0     invitee0, invitee1  user0, user1, user2   user1
-//  3 Mtg Future  user 0
+//  3 Mtg Future  user 0     user1
 //
 //  Inviter for all invites is user 0
 func createFixturesForMeetings(as *ActionSuite) meetingQueryFixtures {
@@ -89,6 +89,11 @@ func createFixturesForMeetings(as *ActionSuite) meetingQueryFixtures {
 			MeetingID: meetings[1].ID,
 			InviterID: user.ID,
 			Email:     "invitee2@example.com",
+		},
+		{
+			MeetingID: meetings[3].ID,
+			InviterID: user.ID,
+			Email:     uf.Users[1].Email,
 		},
 	}
 	for i := range invites {

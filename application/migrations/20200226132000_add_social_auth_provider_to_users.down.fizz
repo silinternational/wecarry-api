@@ -1,0 +1,1 @@
+drop_column("users", "social_auth_provider")

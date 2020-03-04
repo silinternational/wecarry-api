@@ -1,0 +1,1 @@
+change_column("user_access_tokens", "user_organization_id", "int", {null: true})

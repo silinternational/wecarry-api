@@ -2,6 +2,7 @@ package models
 
 import (
 	"crypto/md5"
+	"database/sql"
 	"fmt"
 	"reflect"
 	"strings"
@@ -90,6 +91,50 @@ func (ms *ModelSuite) TestUser_FindOrCreateFromAuthUser() {
 				ms.NoError(err, "FindOrCreateFromAuthUser() error: %s", err)
 				ms.True(u.ID != 0, "Did not get a new user ID")
 			}
+		})
+	}
+}
+
+func (ms *ModelSuite) TestUser_FindOrCreateFromOrglessAuthUser() {
+	t := ms.T()
+
+	_ = createUserFixtures(ms.DB, 2)
+
+	unique := domain.GetUUID().String()
+
+	tests := []struct {
+		name     string
+		authType string
+		authUser *auth.User
+	}{
+		{
+			name:     "create new user: test_user1",
+			authType: AuthTypeAzureAD,
+			authUser: &auth.User{
+				FirstName: "Test",
+				LastName:  "User",
+				Email:     fmt.Sprintf("test_user1-%s@domain.com", unique),
+				UserID:    fmt.Sprintf("test_user1-%s", unique),
+			},
+		},
+		{
+			name:     "find existing user: test_user1",
+			authType: AuthTypeAzureAD,
+			authUser: &auth.User{
+				FirstName: "Test",
+				LastName:  "User",
+				Email:     fmt.Sprintf("test_user1-%s@domain.com", unique),
+				UserID:    fmt.Sprintf("test_user1-%s", unique),
+			},
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			u := &User{}
+			err := u.FindOrCreateFromOrglessAuthUser(tc.authUser, tc.authType)
+			ms.NoError(err, "unexpected error")
+			ms.True(u.ID != 0, "Did not get a new user ID")
+			ms.Equal(tc.authType, u.SocialAuthProvider.String, "incorrect SocialAuthProvider.")
 		})
 	}
 }
@@ -288,6 +333,72 @@ func (ms *ModelSuite) TestUser_CreateAccessToken() {
 					t.Errorf("CreateAccessToken() returned error: %v", err)
 				}
 				hash := HashClientIdAccessToken(test.args.clientID + token)
+
+				var dbToken UserAccessToken
+				if err := ms.DB.Where(fmt.Sprintf("access_token='%v'", hash)).First(&dbToken); err != nil {
+					t.Errorf("Can't find new token (%v)", err)
+				}
+
+				if expiry-expectedExpiry > 1 {
+					t.Errorf("Unexpected token expiry: %v, expected %v", expiry, expectedExpiry)
+				}
+
+				if dbToken.ExpiresAt.Unix()-expectedExpiry > 1 {
+					t.Errorf("Unexpected token expiry: %v, expected %v", dbToken.ExpiresAt.Unix(), expectedExpiry)
+				}
+			}
+		})
+	}
+
+	uat := &UserAccessToken{}
+	count, _ := ms.DB.Where("user_id = ?", users[0].ID).Count(uat)
+	ms.Equal(3, count, "did not find correct number of user access tokens")
+}
+
+func (ms *ModelSuite) TestUser_CreateOrglessAccessToken() {
+	t := ms.T()
+
+	uf := createUserFixtures(ms.DB, 1)
+	users := uf.Users
+
+	tests := []struct {
+		name     string
+		user     *User
+		clientID string
+		wantErr  bool
+	}{
+		{
+			name:     "abc123",
+			user:     &users[0],
+			clientID: "abc123",
+			wantErr:  false,
+		},
+		{
+			name:     "123abc",
+			user:     &users[0],
+			clientID: "123abc",
+			wantErr:  false,
+		},
+		{
+			name:     "empty client ID",
+			user:     &users[0],
+			clientID: "",
+			wantErr:  true,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			expectedExpiry := createAccessTokenExpiry().Unix()
+			token, expiry, err := tc.user.CreateOrglessAccessToken(tc.clientID)
+			if tc.wantErr {
+				if err == nil {
+					t.Errorf("expected error, but did not get one")
+				}
+			} else {
+				if err != nil && !tc.wantErr {
+					t.Errorf("CreateAccessToken() returned error: %v", err)
+				}
+				hash := HashClientIdAccessToken(tc.clientID + token)
 
 				var dbToken UserAccessToken
 				if err := ms.DB.Where(fmt.Sprintf("access_token='%v'", hash)).First(&dbToken); err != nil {
@@ -817,6 +928,90 @@ func (ms *ModelSuite) TestUser_FindByID() {
 				return
 			}
 			ms.Equal(test.ID, u.ID)
+		})
+	}
+}
+
+func (ms *ModelSuite) TestUser_FindByEmail() {
+	t := ms.T()
+
+	f := createUserFixtures(ms.DB, 2)
+
+	tests := []struct {
+		name    string
+		email   string
+		wantErr string
+	}{
+		{
+			name:    "Good",
+			email:   f.Users[0].Email,
+			wantErr: "",
+		},
+		{
+			name:    "Bad",
+			email:   "bad@example.com",
+			wantErr: sql.ErrNoRows.Error(),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			var u User
+			err := u.FindByEmail(tc.email)
+			if tc.wantErr != "" {
+				ms.Error(err)
+				ms.Contains(err.Error(), tc.wantErr)
+				return
+			}
+			ms.Equal(tc.email, u.Email)
+		})
+	}
+}
+
+func (ms *ModelSuite) TestUser_FindBySocialAuthProvider() {
+	t := ms.T()
+
+	f := createUserFixtures(ms.DB, 2)
+	user := f.Users[0]
+	user.SocialAuthProvider = nulls.NewString(auth.AuthTypeFacebook)
+	ms.NoError(user.Save(), "error saving User for test prep.")
+
+	tests := []struct {
+		name               string
+		email              string
+		socialAuthProvider string
+		wantErr            string
+	}{
+		{
+			name:               "Good",
+			email:              user.Email,
+			socialAuthProvider: user.SocialAuthProvider.String,
+			wantErr:            "",
+		},
+		{
+			name:               "Bad Email",
+			email:              "basd@example.com",
+			socialAuthProvider: user.SocialAuthProvider.String,
+			wantErr:            "sql: no rows in result set",
+		},
+		{
+			name:               "Bad SocialAuthProvider",
+			email:              user.Email,
+			socialAuthProvider: "badOne",
+			wantErr:            "sql: no rows in result set",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			var u User
+			err := u.FindByEmailAndSocialAuthProvider(tc.email, tc.socialAuthProvider)
+			if tc.wantErr != "" {
+				ms.Error(err)
+				ms.Contains(err.Error(), tc.wantErr)
+				return
+			}
+			ms.Equal(tc.email, u.Email)
 		})
 	}
 }
@@ -1531,46 +1726,6 @@ func (ms *ModelSuite) TestUser_HasOrganization() {
 	}
 }
 
-func (ms *ModelSuite) TestUser_isMeetingOrganizer() {
-	f := createMeetingFixtures(ms.DB, 2)
-
-	tests := []struct {
-		name    string
-		user    User
-		meeting Meeting
-		want    bool
-	}{
-		{
-			name:    "creator",
-			user:    f.Users[0],
-			meeting: f.Meetings[0],
-			want:    false,
-		},
-		{
-			name:    "organizer",
-			user:    f.Users[1],
-			meeting: f.Meetings[0],
-			want:    true,
-		},
-		{
-			name:    "participant",
-			user:    f.Users[2],
-			meeting: f.Meetings[0],
-			want:    false,
-		},
-	}
-	for _, tt := range tests {
-		ms.T().Run(tt.name, func(t *testing.T) {
-			ctx := &testBuffaloContext{
-				params: map[interface{}]interface{}{},
-			}
-			ctx.Set("current_user", tt.user)
-			got := tt.user.isMeetingOrganizer(ctx, tt.meeting)
-			ms.Equal(tt.want, got)
-		})
-	}
-}
-
 func (ms *ModelSuite) TestUser_MeetingsAsParticipant() {
 	f := createMeetingFixtures(ms.DB, 2)
 
@@ -1630,6 +1785,69 @@ func (ms *ModelSuite) TestUser_MeetingsAsParticipant() {
 			ms.Equal(tt.want, ids)
 
 			// teardown
+		})
+	}
+}
+
+func (ms *ModelSuite) TestUser_CanCreateMeetingParticipant() {
+	f := createMeetingFixtures(ms.DB, 2)
+
+	tests := []struct {
+		name    string
+		user    User
+		meeting Meeting
+		want    bool
+	}{
+		{
+			name:    "creator",
+			user:    f.Users[0],
+			meeting: f.Meetings[0],
+			want:    true,
+		},
+		{
+			name:    "organizer",
+			user:    f.Users[1],
+			meeting: f.Meetings[0],
+			want:    true,
+		},
+		{
+			name:    "invited participant",
+			user:    f.Users[2],
+			meeting: f.Meetings[0],
+			want:    true,
+		},
+		{
+			name:    "self-joined participant",
+			user:    f.Users[3],
+			meeting: f.Meetings[0],
+			want:    true,
+		},
+		{
+			name:    "not yet participant, cannot see meeting",
+			user:    f.Users[4],
+			meeting: f.Meetings[0],
+			want:    true, // will be false when meeting visibility is implemented
+		},
+		{
+			name:    "not yet participant, can see meeting",
+			user:    f.Users[4],
+			meeting: f.Meetings[0],
+			want:    true,
+		},
+	}
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			// setup
+			ctx := &testBuffaloContext{
+				params: map[interface{}]interface{}{},
+			}
+			ctx.Set("current_user", tt.user)
+
+			// exercise
+			got := tt.user.CanCreateMeetingParticipant(ctx, tt.meeting)
+
+			// verify
+			ms.Equal(tt.want, got)
 		})
 	}
 }

@@ -73,6 +73,9 @@ type meetingInvite struct {
 
 const allMeetingInviteFields = "meeting {id} inviter {id} email avatarURL"
 
+type meetingParticipantResponse struct {
+	MeetingParticipant meetingParticipant `json:"MeetingParticipant"`
+}
 type meetingParticipantsResponse struct {
 	MeetingParticipants []meetingParticipant `json:"MeetingParticipants"`
 }
@@ -84,10 +87,8 @@ type meetingParticipant struct {
 	User struct {
 		ID string `json:"id"`
 	} `json:"user"`
-	IsOrganizer bool `json:"isOrganizer"`
-	Invite      struct {
-		ID string `json:"id"`
-	} `json:"invite"`
+	IsOrganizer bool          `json:"isOrganizer"`
+	Invite      meetingInvite `json:"invite"`
 }
 
 const allMeetingParticipantFields = "meeting {id} user {id} isOrganizer invite {email}"
@@ -291,8 +292,8 @@ func (as *ActionSuite) Test_UpdateMeeting() {
 	err := as.testGqlQuery(query, f.Users[1].Nickname, &resp)
 	as.Error(err, "expected an authorization error but did not get one")
 
-	as.Contains(err.Error(), "You are not allowed to edit the information for that meeting.", "incorrect authorization error message")
-
+	as.Contains(err.Error(), "You are not allowed to edit the information for that event.",
+		"incorrect authorization error message")
 }
 
 func (as *ActionSuite) Test_CreateMeetingInvites() {
@@ -395,7 +396,7 @@ func (as *ActionSuite) Test_RemoveMeetingInvite() {
 			meetingID:      f.Meetings[0].UUID.String(),
 			testUser:       f.Users[0],
 			responseEmails: []string{},
-			wantErr:        "problem removing the meeting invite",
+			wantErr:        "problem removing the event invite",
 		},
 		{
 			name:           "not creator, not organizer",
@@ -511,6 +512,70 @@ func (as *ActionSuite) Test_RemoveMeetingParticipant() {
 				as.Equal(tc.responseIDs[i], resp.MeetingParticipants[i].User.ID)
 				as.Equal(tc.meetingID, resp.MeetingParticipants[i].Meeting.ID)
 			}
+		})
+	}
+}
+
+func (as *ActionSuite) Test_CreateMeetingParticipant() {
+	f := createFixturesForMeetings(as)
+
+	var resp meetingParticipantResponse
+
+	const queryTemplate = `mutation { meetingParticipant : createMeetingParticipant(input: %s) { %s } }`
+
+	type testCase struct {
+		name       string
+		code       string
+		meetingID  string
+		testUser   models.User
+		wantInvite models.MeetingInvite
+		wantErr    string
+	}
+
+	testCases := []testCase{
+		{
+			name:      "already a participant",
+			meetingID: f.Meetings[2].UUID.String(),
+			testUser:  f.Users[2],
+		},
+		{
+			name:      "meeting creator",
+			meetingID: f.Meetings[0].UUID.String(),
+			testUser:  f.Users[0],
+		},
+		{
+			name:       "regular user",
+			code:       f.MeetingInvites[3].Secret.String(),
+			meetingID:  f.Meetings[3].UUID.String(),
+			testUser:   f.Users[1],
+			wantInvite: f.MeetingInvites[3],
+		},
+	}
+
+	for _, tc := range testCases {
+		as.T().Run(tc.name, func(t *testing.T) {
+			input := ""
+			if tc.code == "" {
+				input = fmt.Sprintf(`{ meetingID: "%s" }`, tc.meetingID)
+			} else {
+				input = fmt.Sprintf(`{ meetingID: "%s" code: "%s" }`, tc.meetingID, tc.code)
+			}
+
+			query := fmt.Sprintf(queryTemplate, input, allMeetingParticipantFields)
+			err := as.testGqlQuery(query, tc.testUser.Nickname, &resp)
+
+			if tc.wantErr != "" {
+				as.Error(err)
+				as.Contains(err.Error(), tc.wantErr, "didn't get expected error message")
+				return
+			}
+			as.NoError(err)
+			as.Equal(tc.testUser.UUID.String(), resp.MeetingParticipant.User.ID)
+			as.Equal(tc.meetingID, resp.MeetingParticipant.Meeting.ID)
+			if tc.wantInvite.Email != "" {
+				as.Equal(tc.wantInvite.Email, resp.MeetingParticipant.Invite.Email)
+			}
+			as.Equal(false, resp.MeetingParticipant.IsOrganizer)
 		})
 	}
 }

@@ -100,7 +100,7 @@ func createUserFixtures(tx *pop.Connection, n int) UserFixtures {
 		}
 
 		accessTokenFixtures[i].UserID = users[i].ID
-		accessTokenFixtures[i].UserOrganizationID = userOrgs[i].ID
+		accessTokenFixtures[i].UserOrganizationID = nulls.NewInt(userOrgs[i].ID)
 		accessTokenFixtures[i].AccessToken = HashClientIdAccessToken(users[i].Nickname)
 		accessTokenFixtures[i].ExpiresAt = time.Now().Add(time.Minute * 60)
 		mustCreate(tx, &accessTokenFixtures[i])
@@ -277,6 +277,22 @@ func createPotentialProvidersFixtures(ms *ModelSuite) potentialProvidersFixtures
 // createMeetingFixtures generates any number of meeting records for testing. Related records are also
 // created. All meeting fixtures will be assigned to the first Organization in the DB. If no Organization exists,
 // one will be created. All meetings are created by the first User in the DB. If no User exists, one will be created.
+//
+//  Slice index numbers for each object are shown in the following table:
+//
+//  meeting   invites      participants        organizer user  invited user  self-joined user
+//  0         0, 1         0, 1, 2             1               2             3
+//  n         n*2, n*2+1   n*3, n*3+1, n*3+2   n*4+1           n*4+2         n*4+3
+//
+//  Creator for all meetings is user 0
+//  Inviter for all invites is user 0
+//
+//  The first invite is to an existing user
+//  The second invite is to a non-user
+//
+//  The first participant is the meeting organizer
+//  The second participant is an invited user
+//  The third participant is a self-joined user
 func createMeetingFixtures(tx *pop.Connection, nMeetings int) meetingFixtures {
 	var org Organization
 	if err := tx.First(&org); err != nil {
@@ -309,9 +325,17 @@ func createMeetingFixtures(tx *pop.Connection, nMeetings int) meetingFixtures {
 	}
 
 	const invitesPerMeeting = 2 // one pending and one participating
+	const usersPerMeeting = 4   // one organizer + one invited + one invited but not participating + one self-added
+	const participantsPerMeeting = usersPerMeeting - 1
 	invites := make(MeetingInvites, nMeetings*invitesPerMeeting)
+	users := createUserFixtures(tx, nMeetings*usersPerMeeting).Users
 	for i := range invites {
-		invites[i].Email = "invitee" + strconv.Itoa(i) + "@example.com"
+		if i%invitesPerMeeting == 0 {
+			invites[i].Email = users[i*usersPerMeeting/invitesPerMeeting+1].Email
+		}
+		if i%invitesPerMeeting == 1 {
+			invites[i].Email = users[i*usersPerMeeting/invitesPerMeeting+1].Email
+		}
 		invites[i].MeetingID = meetings[i/invitesPerMeeting].ID
 		invites[i].InviterID = user.ID
 		if err := invites[i].Create(); err != nil {
@@ -319,17 +343,15 @@ func createMeetingFixtures(tx *pop.Connection, nMeetings int) meetingFixtures {
 		}
 	}
 
-	const participantsPerMeeting = 3 // one organizer + one invited + one self-added
-	participatingUsers := createUserFixtures(tx, nMeetings*participantsPerMeeting).Users
-	participants := make(MeetingParticipants, nMeetings*participantsPerMeeting)
+	participants := make(MeetingParticipants, nMeetings*(participantsPerMeeting))
 	for i := range participants {
 		participants[i].MeetingID = meetings[i/participantsPerMeeting].ID
-		participants[i].UserID = participatingUsers[i].ID
+		participants[i].UserID = users[i*usersPerMeeting/participantsPerMeeting].ID
 		if i%participantsPerMeeting == 0 {
 			participants[i].IsOrganizer = true
 		}
 		if i%participantsPerMeeting == 1 {
-			participants[i].InviteID = nulls.NewInt(invites[i/participantsPerMeeting*invitesPerMeeting].ID)
+			participants[i].InviteID = nulls.NewInt(invites[i*invitesPerMeeting/participantsPerMeeting].ID)
 		}
 		mustCreate(tx, &participants[i])
 	}
@@ -338,6 +360,6 @@ func createMeetingFixtures(tx *pop.Connection, nMeetings int) meetingFixtures {
 		Meetings:            meetings,
 		MeetingInvites:      invites,
 		MeetingParticipants: participants,
-		Users:               append(Users{user}, participatingUsers...),
+		Users:               append(Users{user}, users...),
 	}
 }
