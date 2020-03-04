@@ -605,6 +605,40 @@ func (r *mutationResolver) RemovePotentialProvider(ctx context.Context, postID, 
 	return &post, nil
 }
 
+func (r *mutationResolver) MarkRequestAsDelivered(ctx context.Context, postID string) (*models.Post, error) {
+	cUser := models.CurrentUser(ctx)
+
+	var post models.Post
+	if err := post.FindByUUID(postID); err != nil {
+		return nil, domain.ReportError(ctx, err, "MarkRequestAsDelivered.FindPost")
+	}
+
+	extras := map[string]interface{}{
+		"user": cUser.UUID,
+		"post": post.UUID,
+	}
+
+	if cUser.AdminRole != models.UserAdminRoleSuperAdmin && cUser.ID != post.ProviderID.Int {
+		return nil, domain.ReportError(ctx, errors.New("not allowed to deliver request"),
+			"MarkRequestAsDelivered.Unauthorized", extras)
+	}
+
+	if post.Status != models.PostStatusAccepted && post.Status != models.PostStatusReceived {
+		return nil, domain.ReportError(ctx,
+			errors.New("not allowed to deliver request with status "+post.Status.String()),
+			"MarkRequestAsDelivered.WrongStatus", extras)
+	}
+
+	post.Status = models.PostStatusDelivered
+	extras["status"] = post.Status
+
+	if err := post.Update(); err != nil {
+		return nil, domain.ReportError(ctx, err, "MarkRequestAsDelivered", extras)
+	}
+
+	return &post, nil
+}
+
 func (r *mutationResolver) MarkRequestAsReceived(ctx context.Context, postID string) (*models.Post, error) {
 	cUser := models.CurrentUser(ctx)
 
@@ -639,40 +673,6 @@ func (r *mutationResolver) MarkRequestAsReceived(ctx context.Context, postID str
 	if err := post.DestroyPotentialProviders(post.Status, cUser); err != nil {
 		return nil, domain.ReportError(ctx, errors.New("error destroying post's potential providers: "+err.Error()),
 			"MarkRequestAsReceived.DestroyPotentialProviders", extras)
-	}
-
-	return &post, nil
-}
-
-func (r *mutationResolver) MarkRequestAsDelivered(ctx context.Context, postID string) (*models.Post, error) {
-	cUser := models.CurrentUser(ctx)
-
-	var post models.Post
-	if err := post.FindByUUID(postID); err != nil {
-		return nil, domain.ReportError(ctx, err, "MarkRequestAsDelivered.FindPost")
-	}
-
-	extras := map[string]interface{}{
-		"user": cUser.UUID,
-		"post": post.UUID,
-	}
-
-	if cUser.AdminRole != models.UserAdminRoleSuperAdmin && cUser.ID != post.ProviderID.Int {
-		return nil, domain.ReportError(ctx, errors.New("not allowed to deliver request"),
-			"MarkRequestAsDelivered.Unauthorized", extras)
-	}
-
-	if post.Status != models.PostStatusAccepted && post.Status != models.PostStatusReceived {
-		return nil, domain.ReportError(ctx,
-			errors.New("not allowed to deliver request with status "+post.Status.String()),
-			"MarkRequestAsDelivered.WrongStatus", extras)
-	}
-
-	post.Status = models.PostStatusDelivered
-	extras["status"] = post.Status
-
-	if err := post.Update(); err != nil {
-		return nil, domain.ReportError(ctx, err, "MarkRequestAsDelivered", extras)
 	}
 
 	return &post, nil
