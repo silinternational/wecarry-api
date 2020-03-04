@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gobuffalo/nulls"
+
 	"github.com/silinternational/wecarry-api/domain"
 )
 
@@ -128,13 +130,13 @@ func CreateUserAccessTokenFixtures(ms *ModelSuite) ([]string, User) {
 	tokens := UserAccessTokens{
 		{
 			UserID:             user.ID,
-			UserOrganizationID: userOrgs[0].ID,
+			UserOrganizationID: nulls.NewInt(userOrgs[0].ID),
 			AccessToken:        HashClientIdAccessToken(rawTokens[0]),
 			ExpiresAt:          time.Unix(0, 0),
 		},
 		{
 			UserID:             user.ID,
-			UserOrganizationID: userOrgs[0].ID,
+			UserOrganizationID: nulls.NewInt(userOrgs[0].ID),
 			AccessToken:        HashClientIdAccessToken(rawTokens[1]),
 			ExpiresAt:          time.Date(2099, time.December, 31, 0, 0, 0, 0, time.UTC),
 		},
@@ -215,13 +217,13 @@ func CreateUserAccessTokenFixtures_GetOrgs(ms *ModelSuite, users Users, userOrgs
 	tokens := UserAccessTokens{
 		{
 			UserID:             users[0].ID,
-			UserOrganizationID: userOrgs[0].ID,
+			UserOrganizationID: nulls.NewInt(userOrgs[0].ID),
 			AccessToken:        HashClientIdAccessToken(rawTokens[0]),
 			ExpiresAt:          time.Unix(0, 0),
 		},
 		{
 			UserID:             users[1].ID,
-			UserOrganizationID: userOrgs[1].ID,
+			UserOrganizationID: nulls.NewInt(userOrgs[1].ID),
 			AccessToken:        HashClientIdAccessToken(rawTokens[1]),
 			ExpiresAt:          time.Date(2099, time.December, 31, 0, 0, 0, 0, time.UTC),
 		},
@@ -318,13 +320,13 @@ func CreateFixtures_DeleteIfExpired(ms *ModelSuite, t *testing.T) AccessTokenFix
 	tokens := UserAccessTokens{
 		{
 			UserID:             users[0].ID,
-			UserOrganizationID: userOrgs[0].ID,
+			UserOrganizationID: nulls.NewInt(userOrgs[0].ID),
 			AccessToken:        HashClientIdAccessToken("abc123"),
 			ExpiresAt:          time.Unix(0, 0),
 		},
 		{
 			UserID:             users[1].ID,
-			UserOrganizationID: userOrgs[1].ID,
+			UserOrganizationID: nulls.NewInt(userOrgs[1].ID),
 			AccessToken:        HashClientIdAccessToken("xyz789"),
 			ExpiresAt:          time.Date(2099, time.December, 31, 0, 0, 0, 0, time.UTC),
 		},
@@ -374,13 +376,13 @@ func CreateFixtures_Renew(ms *ModelSuite, t *testing.T) AccessTokenFixtures {
 	tokens := UserAccessTokens{
 		{
 			UserID:             users[0].ID,
-			UserOrganizationID: userOrgs[0].ID,
+			UserOrganizationID: nulls.NewInt(userOrgs[0].ID),
 			AccessToken:        HashClientIdAccessToken("abc123"),
 			ExpiresAt:          time.Unix(0, 0),
 		},
 		{
 			UserID:             users[1].ID,
-			UserOrganizationID: userOrgs[1].ID,
+			UserOrganizationID: nulls.NewInt(userOrgs[1].ID),
 			AccessToken:        HashClientIdAccessToken("xyz789"),
 			ExpiresAt:          time.Date(2099, time.December, 31, 0, 0, 0, 0, time.UTC),
 		},
@@ -425,13 +427,13 @@ func createFixtures_UserAccessTokensDeleteExpired(ms *ModelSuite, t *testing.T) 
 	tokens := UserAccessTokens{
 		{
 			UserID:             users[0].ID,
-			UserOrganizationID: userOrgs[0].ID,
+			UserOrganizationID: nulls.NewInt(userOrgs[0].ID),
 			AccessToken:        HashClientIdAccessToken("abc123"),
 			ExpiresAt:          time.Unix(0, 0),
 		},
 		{
 			UserID:             users[1].ID,
-			UserOrganizationID: userOrgs[1].ID,
+			UserOrganizationID: nulls.NewInt(userOrgs[1].ID),
 			AccessToken:        HashClientIdAccessToken("xyz789"),
 			ExpiresAt:          time.Date(2099, time.December, 31, 0, 0, 0, 0, time.UTC),
 		},

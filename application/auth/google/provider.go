@@ -25,22 +25,27 @@ const ProviderName = "google"
 // New creates a new Google provider, and sets up important connection details.
 // You should always call `google.New` to get a new Provider. Never try to create
 // one manually.
-func New(jsonConfig json.RawMessage) (*Provider, error) {
+func New(config struct{ Key, Secret string }, jsonConfig json.RawMessage) (*Provider, error) {
 
-	googleKey := domain.Env.GoogleKey
-	googleSecret := domain.Env.GoogleSecret
+	// If jsonConfig is provided, use it. Otherwise, use the SocialAuthConfig
+	if len(jsonConfig) > 10 { // just some small number to see if it probably has valid data
+		if err := json.Unmarshal(jsonConfig, &config); err != nil {
+			err = errors.New("error unmarshaling google provider config json, " + err.Error())
+			return &Provider{}, err
+		}
+	}
 
-	if googleKey == "" || googleSecret == "" {
-		err := errors.New("missing required environment variable for Google Auth Provider")
+	if config.Key == "" || config.Secret == "" {
+		err := errors.New("missing required config value for Google Auth Provider")
 		return &Provider{}, err
 	}
 
 	scopes := []string{"profile", "email"}
 
 	p := &Provider{
-		ClientKey:    googleKey,
-		Secret:       googleSecret,
-		CallbackURL:  domain.Env.AuthCallbackURL,
+		ClientKey:    config.Key,
+		Secret:       config.Secret,
+		CallbackURL:  domain.AuthCallbackURL,
 		providerName: ProviderName,
 	}
 	p.config = newConfig(p, scopes)

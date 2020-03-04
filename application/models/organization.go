@@ -14,20 +14,14 @@ import (
 
 	"github.com/silinternational/wecarry-api/auth"
 	"github.com/silinternational/wecarry-api/auth/azureadv2"
-	"github.com/silinternational/wecarry-api/auth/facebook"
 	"github.com/silinternational/wecarry-api/auth/google"
-	"github.com/silinternational/wecarry-api/auth/linkedin"
 	"github.com/silinternational/wecarry-api/auth/saml"
-	"github.com/silinternational/wecarry-api/auth/twitter"
 	"github.com/silinternational/wecarry-api/domain"
 )
 
 const AuthTypeAzureAD = "azureadv2"
-const AuthTypeFacebook = "facebook"
 const AuthTypeGoogle = "google"
-const AuthTypeLinkedIn = "linkedin"
 const AuthTypeSaml = "saml"
-const AuthTypeTwitter = "twitter"
 
 type Organization struct {
 	ID         int          `json:"id" db:"id"`
@@ -89,16 +83,16 @@ func (o *Organization) GetAuthProvider(authEmail string) (auth.Provider, error) 
 	switch authType {
 	case AuthTypeAzureAD:
 		return azureadv2.New([]byte(authConfig))
-	case AuthTypeFacebook:
-		return facebook.New([]byte(authConfig))
 	case AuthTypeGoogle:
-		return google.New([]byte(authConfig))
-	case AuthTypeLinkedIn:
-		return linkedin.New([]byte(authConfig))
+		return google.New(
+			struct{ Key, Secret string }{
+				Key:    domain.Env.GoogleKey,
+				Secret: domain.Env.GoogleSecret,
+			},
+			[]byte(authConfig),
+		)
 	case AuthTypeSaml:
 		return saml.New([]byte(authConfig))
-	case AuthTypeTwitter:
-		return twitter.New([]byte(authConfig))
 
 	}
 
