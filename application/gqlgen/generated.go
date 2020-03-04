@@ -1710,11 +1710,22 @@ var parsedSchema = gqlparser.MustLoadSchema(
         startBefore: Date
     ): [Meeting!]!
 
+    "Return a specific meeting (event). If the meeting is not visible to the auth user, an error will be returned."
     meeting(id: ID): Meeting
+
+    "Return a specific message. If the message is not visible to the auth user, an error will be returned."
     message(id: ID): Message!
+
+    "Provides a list of message threads in which the auth user is participating."
     myThreads: [Thread!]!
+
+    "Provides a list of all of the auth user's watches."
     myWatches: [Watch!]!
+
+    "Return a specific organization. Only Super Admins, Sales Admins, and Admins for the requested org are authorized."
     organization(id: ID): Organization!
+
+    "Provides a list of all organizations for which the user is an Admin. Super Admins and Sales Admins see all orgs."
     organizations: [Organization!]!
     post(id: ID): Post
 
@@ -1739,13 +1750,25 @@ var parsedSchema = gqlparser.MustLoadSchema(
     """
     recentMeetings: [Meeting!]! @deprecated(reason: "` + "`" + `Query.recentMeetings` + "`" + ` will be replaced by ` + "`" + `endAfter` + "`" + ` parameter of ` + "`" + `Query.meetings` + "`" + `")
 
+    "Lists all threads, regardless of visibility. Note that some thread fields may cause authorization errors."
     threads: [Thread!]!
+
+    "List all users in the system. Only Super Admins are authorized for this query."
     user(id: ID): User
+
+    """
+    Return a specific user. If the ID is not specified, the authenticated user is returned. Only Super Admins are
+    authorized to query a user record other than their own.
+    """
     users: [User!]!
 }
 
 type Mutation {
+
+    "Create a new meeting (event). At this time, any user may create a meeting."
     createMeeting(input: CreateMeetingInput!): Meeting!
+
+    "Update an existing meeting (event). The meeting creator, Super Admins, Sales Admins, and Admins are authorized."
     updateMeeting(input: UpdateMeetingInput!): Meeting!
 
     """
@@ -1767,29 +1790,94 @@ type Mutation {
     "Remove a ` + "`" + `MeetingParticipant` + "`" + ` and return the remaining participants for the ` + "`" + `Meeting` + "`" + `"
     removeMeetingParticipant(input: RemoveMeetingParticipantInput!): [MeetingParticipant!]!
 
+    "Create a new message. Only authorized for posts visible to the auth user."
     createMessage(input: CreateMessageInput!): Message!
+
+    "Create a new organization. Authorized for Super Admins and Sales Admins."
     createOrganization(input: CreateOrganizationInput!): Organization!
+
+    "Update organization properties. Authorized for Super Admins, Sales Admins, and Org Admins on the specified Org."
     updateOrganization(input: UpdateOrganizationInput!): Organization!
+
+    """
+    Add a domain to an Organization's domain list. No two organizations may have the same domain. Authorized for Super
+    Admins, Sales Admins, and Org Admins on the specified Organization.
+    """
     createOrganizationDomain(input: CreateOrganizationDomainInput!): [OrganizationDomain!]!
+
+    """
+    Remove a domain from an Organization's domain list. Authorized for Super Admins, Sales Admins, and Org Admins on the
+    specified Organization.
+    """
     removeOrganizationDomain(input: RemoveOrganizationDomainInput!): [OrganizationDomain!]!
+
+    """
+    Update an Organization's domain properties. Cannot be used to change an existing domain name. Authorized for Super
+    Admins, Sales Admins, and Org Admins on the specified Organization.
+    """
     updateOrganizationDomain(input: CreateOrganizationDomainInput!): [OrganizationDomain!]!
+
+    """
+    Create a trust relationship (affilition) between two Organizations. At the present time, this creates a mutual
+    trust between the two specified Organizations. A trust allows posts (requests) and meetings (events) to be visible
+    to users of a different Organization than their own.  Authorized for Super Admins and Sales Admins.
+    """
     createOrganizationTrust(input: CreateOrganizationTrustInput!): Organization!
+
+    """
+    Remove a trust relationship (affiliation) between two Organizations.  At the present time, this removes both sides
+    of a mutual trust between the two specified Organizations. Authorized for Super Admins, Sales Admins, and Org Admins
+    on the primary Organization.
+    """
     removeOrganizationTrust(input: RemoveOrganizationTrustInput!): Organization!
+
+    """
+    Create a new Post (Request). Any user may create a standard Post. For meeting-related posts, the meeting must be
+    visible to the auth user.
+    """
     createPost(input: CreatePostInput!): Post!
+
+    """
+    Update Post (Request) properties. The auth user must be the post creator or a Super Admin, and the post must be in
+    an editable state (e.g. not COMPLETED) as identified by the ` + "`" + `isEditable` + "`" + ` field.
+    """
     updatePost(input: UpdatePostInput!): Post!
+
+    """
+    Update the Status field on a Post (Request). The post creator and Super Admins can make most status changes. The
+    provider can make limited changes (e.g. to DELIVERED).
+    """
     updatePostStatus(input: UpdatePostStatusInput!): Post!
+
+    "Make an offer to carry a request. Only allowed if the status is OPEN and the post is visible to the auth user."
     addMeAsPotentialProvider(postID: String!): Post!
+
+    "Cancel a carry offer by auth user. Authorized for the post creator, the potential provider, and Super Admins."
     removeMeAsPotentialProvider(postID: String!): Post!
+
+    "Cancel a carry offer for any user. Authorized for the post creator, the potential provider, and Super Admins."
     removePotentialProvider(postID: String!, userID: String!): Post!
+
+    """
+    Set the LastViewedAt time for a message thread. Effectively clears the unread status of messages updated before the
+    given time. The auth user must be a participant (i.e. sent or received a message) in the specified thread.
+    """
     setThreadLastViewedAt(input: SetThreadLastViewedAtInput!): Thread!
 
-    """
-    Update User profile information. If ID is not specified, the authenticated user is assumed.
-    """
+    "Update User profile information. If ID is not specified, the authenticated user is assumed."
     updateUser(input: UpdateUserInput!): User!
 
+    """
+    Create a Watch for a given location. Posts (requests) with a destination near the watch location will trigger a
+    notification to the watch creator. Other types of Watches (e.g. keyword search) may be created in future versions of
+    WeCarry. Any user may create a Watch.
+    """
     createWatch(input: CreateWatchInput!): Watch!
+
+    "Remove a Watch. Only the Watch creator is authorized."
     removeWatch(input: RemoveWatchInput!): [Watch!]!
+
+    "Update Watch properties. Only the Watch creator is authorized."
     updateWatch(input: UpdateWatchInput!): Watch!
 }
 
