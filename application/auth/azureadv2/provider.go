@@ -96,7 +96,7 @@ func New(jsonConfig json.RawMessage) (*Provider, error) {
 	p := &Provider{
 		ClientKey:    azureKey,
 		Secret:       azureSecret,
-		CallbackURL:  domain.Env.AuthCallbackURL,
+		CallbackURL:  domain.AuthCallbackURL,
 		providerName: "azureadv2",
 	}
 	p.config = newConfig(p, opts)

@@ -4,6 +4,16 @@ import (
 	"github.com/gobuffalo/buffalo"
 )
 
+const AuthTypeAzureAD = "azureadv2"
+const AuthTypeFacebook = "facebook"
+const AuthTypeGoogle = "google"
+const AuthTypeLinkedIn = "linkedin"
+const AuthTypeSaml = "saml"
+const AuthTypeTwitter = "twitter"
+
+const envTypeKey = "key"
+const envTypeSecret = "secret"
+
 // Provider interface to be implemented by any auth providers
 type Provider interface {
 	Logout(c buffalo.Context) Response

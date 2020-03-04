@@ -36,19 +36,15 @@ var (
 // one manually.
 //
 // If you'd like to use authenticate instead of authorize, use NewAuthenticate instead.
-func New(jsonConfig json.RawMessage) (*Provider, error) {
-
-	twitterKey := domain.Env.TwitterKey
-	twitterSecret := domain.Env.TwitterSecret
-
-	if twitterKey == "" || twitterSecret == "" {
-		err := errors.New("missing required environment variable for Twitter Auth Provider")
+func New(config struct{ Key, Secret string }) (*Provider, error) {
+	if config.Key == "" || config.Secret == "" {
+		err := errors.New("missing required config value for Twitter Auth Provider")
 		return &Provider{}, err
 	}
 	p := &Provider{
-		ClientKey:    twitterKey,
-		Secret:       twitterSecret,
-		CallbackURL:  domain.Env.AuthCallbackURL,
+		ClientKey:    config.Key,
+		Secret:       config.Secret,
+		CallbackURL:  domain.AuthCallbackURL,
 		providerName: ProviderName,
 	}
 	p.consumer = newConsumer(p, authorizeURL)

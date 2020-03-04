@@ -116,11 +116,13 @@ const BuffaloContext = BuffaloContextType("BuffaloContext")
 
 var Logger log.Logger
 var ErrLogger ErrLogProxy
+var AuthCallbackURL string
 
 // Env holds environment variable values loaded by init()
 var Env struct {
 	AccessTokenLifetimeSeconds int
 	ServiceIntegrationToken    string
+	ApiBaseURL                 string
 	AppName                    string
 	AuthCallbackURL            string
 	AwsRegion                  string
@@ -145,6 +147,8 @@ var Env struct {
 	MailChimpAPIKey            string
 	MailChimpListID            string
 	MailChimpUsername          string
+	MicrosoftKey               string
+	MicrosoftSecret            string
 	MobileService              string
 	PlaygroundPort             string
 	RollbarServerRoot          string
@@ -169,11 +173,13 @@ func init() {
 	ErrLogger.SetOutput(os.Stderr)
 	ErrLogger.InitRollbar()
 	Assets = packr.New("Assets", "../assets")
+	AuthCallbackURL = Env.ApiBaseURL + "/auth/callback"
 }
 
 // readEnv loads environment data into `Env`
 func readEnv() {
 	Env.AccessTokenLifetimeSeconds = envToInt("ACCESS_TOKEN_LIFETIME_SECONDS", AccessTokenLifetimeSeconds)
+	Env.ApiBaseURL = envy.Get("HOST", "")
 	Env.AppName = envy.Get("APP_NAME", "WeCarry")
 	Env.AuthCallbackURL = envy.Get("AUTH_CALLBACK_URL", "")
 	Env.AwsRegion = envy.Get("AWS_REGION", "")
@@ -198,6 +204,8 @@ func readEnv() {
 	Env.MailChimpAPIKey = envy.Get("MAILCHIMP_API_KEY", "")
 	Env.MailChimpListID = envy.Get("MAILCHIMP_LIST_ID", "")
 	Env.MailChimpUsername = envy.Get("MAILCHIMP_USERNAME", "")
+	Env.MicrosoftKey = envy.Get("MICROSOFT_KEY", "")
+	Env.MicrosoftSecret = envy.Get("MICROSOFT_SECRET", "")
 	Env.MobileService = envy.Get("MOBILE_SERVICE", "dummy")
 	Env.PlaygroundPort = envy.Get("PORT", "3000")
 	Env.RollbarServerRoot = envy.Get("ROLLBAR_SERVER_ROOT", "github.com/silinternational/wecarry-api")

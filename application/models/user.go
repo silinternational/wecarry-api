@@ -51,23 +51,24 @@ func (e UserAdminRole) String() string {
 
 // User model
 type User struct {
-	ID                int               `json:"id" db:"id"`
-	CreatedAt         time.Time         `json:"created_at" db:"created_at"`
-	UpdatedAt         time.Time         `json:"updated_at" db:"updated_at"`
-	Email             string            `json:"email" db:"email"`
-	FirstName         string            `json:"first_name" db:"first_name"`
-	LastName          string            `json:"last_name" db:"last_name"`
-	Nickname          string            `json:"nickname" db:"nickname"`
-	AdminRole         UserAdminRole     `json:"admin_role" db:"admin_role"`
-	UUID              uuid.UUID         `json:"uuid" db:"uuid"`
-	PhotoFileID       nulls.Int         `json:"photo_file_id" db:"photo_file_id"`
-	AuthPhotoURL      nulls.String      `json:"auth_photo_url" db:"auth_photo_url"`
-	LocationID        nulls.Int         `json:"location_id" db:"location_id"`
-	Organizations     Organizations     `many_to_many:"user_organizations" order_by:"name asc" json:"-"`
-	UserOrganizations UserOrganizations `has_many:"user_organizations" json:"-"`
-	UserPreferences   UserPreferences   `has_many:"user_preferences" json:"-"`
-	PhotoFile         File              `belongs_to:"files"`
-	Location          Location          `belongs_to:"locations"`
+	ID                 int               `json:"id" db:"id"`
+	CreatedAt          time.Time         `json:"created_at" db:"created_at"`
+	UpdatedAt          time.Time         `json:"updated_at" db:"updated_at"`
+	Email              string            `json:"email" db:"email"`
+	FirstName          string            `json:"first_name" db:"first_name"`
+	LastName           string            `json:"last_name" db:"last_name"`
+	Nickname           string            `json:"nickname" db:"nickname"`
+	AdminRole          UserAdminRole     `json:"admin_role" db:"admin_role"`
+	UUID               uuid.UUID         `json:"uuid" db:"uuid"`
+	SocialAuthProvider nulls.String      `json:"social_auth_provider" db:"social_auth_provider"`
+	PhotoFileID        nulls.Int         `json:"photo_file_id" db:"photo_file_id"`
+	AuthPhotoURL       nulls.String      `json:"auth_photo_url" db:"auth_photo_url"`
+	LocationID         nulls.Int         `json:"location_id" db:"location_id"`
+	Organizations      Organizations     `many_to_many:"user_organizations" order_by:"name asc" json:"-"`
+	UserOrganizations  UserOrganizations `has_many:"user_organizations" json:"-"`
+	UserPreferences    UserPreferences   `has_many:"user_preferences" json:"-"`
+	PhotoFile          File              `belongs_to:"files"`
+	Location           Location          `belongs_to:"locations"`
 }
 
 // String can be helpful for serializing the model
@@ -123,16 +124,18 @@ func (u *User) CreateAccessToken(org Organization, clientID string) (string, int
 	hash := HashClientIdAccessToken(clientID + token)
 	expireAt := createAccessTokenExpiry()
 
-	userOrg, err := u.FindUserOrganization(org)
-	if err != nil {
-		return "", 0, err
+	userAccessToken := &UserAccessToken{
+		UserID:      u.ID,
+		AccessToken: hash,
+		ExpiresAt:   expireAt,
 	}
 
-	userAccessToken := &UserAccessToken{
-		UserID:             u.ID,
-		UserOrganizationID: userOrg.ID,
-		AccessToken:        hash,
-		ExpiresAt:          expireAt,
+	if org.ID > 0 {
+		userOrg, err := u.FindUserOrganization(org)
+		if err != nil {
+			return "", 0, err
+		}
+		userAccessToken.UserOrganizationID = nulls.NewInt(userOrg.ID)
 	}
 
 	if err := userAccessToken.Create(); err != nil {
@@ -140,6 +143,11 @@ func (u *User) CreateAccessToken(org Organization, clientID string) (string, int
 	}
 
 	return token, expireAt.UTC().Unix(), nil
+}
+
+// CreateOrglessAccessToken - Create and store new UserAccessToken with no associated UserOrg
+func (u *User) CreateOrglessAccessToken(clientID string) (string, int64, error) {
+	return u.CreateAccessToken(Organization{}, clientID)
 }
 
 func (u *User) GetOrgIDs() []int {
@@ -152,6 +160,48 @@ func (u *User) GetOrgIDs() []int {
 	}
 
 	return s
+}
+
+func (u *User) hydrateFromAuthUser(authUser *auth.User, authType string) error {
+
+	newUser := true
+	if u.ID != 0 {
+		newUser = false
+	}
+
+	// update attributes from authUser
+	u.FirstName = authUser.FirstName
+	u.LastName = authUser.LastName
+	u.Email = authUser.Email
+
+	if authType != "" {
+		u.SocialAuthProvider = nulls.NewString(authType)
+	}
+
+	if authUser.PhotoURL != "" {
+		u.AuthPhotoURL = nulls.NewString(authUser.PhotoURL)
+	}
+
+	// if new user they will need a unique Nickname
+	if newUser {
+		u.Nickname = authUser.Nickname
+		if err := u.uniquifyNickname(); err != nil {
+			return err
+		}
+	}
+	if err := u.Save(); err != nil {
+		return errors.New("unable to save user record: " + err.Error())
+	}
+
+	if newUser {
+		e := events.Event{
+			Kind:    domain.EventApiUserCreated,
+			Message: "Nickname: " + u.Nickname + "  UUID: " + u.UUID.String(),
+			Payload: events.Payload{"user": u},
+		}
+		emitEvent(e)
+	}
+	return nil
 }
 
 func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
@@ -175,31 +225,8 @@ func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
 		}
 	}
 
-	newUser := true
-	if u.ID != 0 {
-		newUser = false
-	}
-
-	// update attributes from authUser
-	u.FirstName = authUser.FirstName
-	u.LastName = authUser.LastName
-	u.Email = authUser.Email
-
-	if authUser.PhotoURL != "" {
-		u.AuthPhotoURL = nulls.NewString(authUser.PhotoURL)
-	}
-
-	// if new user they will need a unique Nickname
-	if newUser {
-		u.Nickname = authUser.Nickname
-		if err := u.uniquifyNickname(); err != nil {
-			return err
-		}
-	}
-
-	err = u.Save()
-	if err != nil {
-		return fmt.Errorf("unable to save user record: %s", err.Error())
+	if err := u.hydrateFromAuthUser(authUser, ""); err != nil {
+		return err
 	}
 
 	if len(userOrgs) == 0 {
@@ -217,22 +244,17 @@ func (u *User) FindOrCreateFromAuthUser(orgID int, authUser *auth.User) error {
 		}
 	}
 
-	if newUser {
-		e := events.Event{
-			Kind:    domain.EventApiUserCreated,
-			Message: "Nickname: " + u.Nickname + "  UUID: " + u.UUID.String(),
-			Payload: events.Payload{"user": u},
-		}
-		emitEvent(e)
+	return nil
+}
+
+// FindOrCreateFromOrglessAuthUser creates a new User based on an auth.User and
+// sets its SocialAuthProvider field so they can login again in future.
+func (u *User) FindOrCreateFromOrglessAuthUser(authUser *auth.User, authType string) error {
+	if err := DB.Where("email = ?", authUser.Email).First(u); domain.IsOtherThanNoRows(err) {
+		return errors.WithStack(err)
 	}
 
-	// reload user
-	// err = DB.Eager().Where("id = ?", u.ID).First(u)
-	// if err != nil {
-	// 	return fmt.Errorf("unable to reload user after update: %s", err)
-	// }
-
-	return nil
+	return u.hydrateFromAuthUser(authUser, authType)
 }
 
 // CanCreateOrganization returns true if the given user is allowed to create organizations
@@ -379,6 +401,7 @@ func (u *User) FindByUUID(uuid string) error {
 	return nil
 }
 
+// FindByID finds a User with a given ID and loads it from the database
 func (u *User) FindByID(id int, eagerFields ...string) error {
 	if id <= 0 {
 		return errors.New("error finding user: id must be a positive number")
@@ -386,6 +409,27 @@ func (u *User) FindByID(id int, eagerFields ...string) error {
 
 	if err := DB.Eager(eagerFields...).Find(u, id); err != nil {
 		return fmt.Errorf("error finding user by id: %v, ... %v", id, err.Error())
+	}
+
+	return nil
+}
+
+// FindByEmail finds a User with a matching email
+func (u *User) FindByEmail(email string) error {
+	if err := DB.Where("email = ?", email).First(u); err != nil {
+		return fmt.Errorf("error finding user by email: %s, ... %s",
+			email, err.Error())
+	}
+
+	return nil
+}
+
+// FindByEmailAndSocialAuthProvider finds a User with a matching email and social_auth_provider
+func (u *User) FindByEmailAndSocialAuthProvider(email, auth_provider string) error {
+	err := DB.Where("email = ? and social_auth_provider = ?", email, auth_provider).First(u)
+	if err != nil {
+		return fmt.Errorf("error finding user by email and auth provider: %s, %s, ... %s",
+			email, auth_provider, err.Error())
 	}
 
 	return nil

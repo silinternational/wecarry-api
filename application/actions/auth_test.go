@@ -330,7 +330,7 @@ func (as *ActionSuite) TestGetOrSetReturnTo() {
 }
 
 // This doesn't test for errors, since it's too complicated with the call to domain.Error()
-func (as *ActionSuite) TestGetOrgAndUserOrgs() {
+func (as *ActionSuite) TestGetUserOrgs() {
 	t := as.T()
 
 	fixtures := Fixtures_GetOrgAndUserOrgs(as, t)
@@ -372,16 +372,9 @@ func (as *ActionSuite) TestGetOrgAndUserOrgs() {
 
 			c.params[OrgIDParam] = test.param
 
-			resultOrg, resultUserOrgs, _ := getOrgAndUserOrgs(test.authEmail, c)
+			resultUserOrgs, _ := getUserOrgs(c, test.authEmail)
 
 			expected := test.wantOrg
-			results := resultOrg.Name
-
-			if results != expected {
-				t.Errorf("bad Org results for test \"%s\". \nExpected %s\n but got %s",
-					test.name, expected, results)
-				return
-			}
 
 			if len(resultUserOrgs) != test.wantUserOrgCount {
 				t.Errorf("bad results for test \"%s\". \nExpected %v UserOrg(s) but got %v ... \n %+v\n",
@@ -392,7 +385,7 @@ func (as *ActionSuite) TestGetOrgAndUserOrgs() {
 			if test.wantUserOrgCount == 1 {
 
 				expected = test.wantUserOrg
-				results = resultUserOrgs[0].AuthEmail
+				results := resultUserOrgs[0].AuthEmail
 
 				if results != expected {
 					t.Errorf("bad UserOrg results for test \"%s\". \nExpected %s\n but got %s",
@@ -404,9 +397,9 @@ func (as *ActionSuite) TestGetOrgAndUserOrgs() {
 	}
 }
 
-func (as *ActionSuite) TestCreateAuthUser() {
+func (as *ActionSuite) Test_newAuthUser() {
 	t := as.T()
-	orgFixture := Fixtures_CreateAuthUser(as, t).orgs[0]
+	orgFixture := Fixtures_newAuthUser(as, t).orgs[0]
 
 	newEmail := "new@example.com"
 
@@ -424,7 +417,7 @@ func (as *ActionSuite) TestCreateAuthUser() {
 		return
 	}
 
-	resultsAuthUser, err := createAuthUser("12345678", user, orgFixture)
+	resultsAuthUser, err := newOrgBasedAuthUser("12345678", user, orgFixture)
 
 	if err != nil {
 		t.Errorf("unexpected error ... %v", err)
