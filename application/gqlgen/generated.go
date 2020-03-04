@@ -1899,32 +1899,50 @@ enum MeetingVisibility {
     INVITE_ONLY
 }
 
+"Context of a User with respect to a Post (Request)"
 enum PostRole {
+    "Posts created by the User"
     CREATEDBY
+    "Posts to be received by the User"
     RECEIVING
+    "Posts provided by the User. Posts where the user is a PotentialProvider are not included."
     PROVIDING
 }
 
+"Allowed sizes for Posts."
 enum PostSize {
+    "Tiny: fits in a purse or small backpack, often identified by airlines as a person item"
     TINY
+    "Small: fits in a carry-on bag or suitcase"
     SMALL
+    "Medium: fits in a large backpack, such as a large hiking backpack or duffel bag"
     MEDIUM
+    "Large: fits in a large suitcase"
     LARGE
+    "Extra-large: larger than what would fit in a full-size suitcase"
     XLARGE
 }
 
+"Valid states for Post Status"
 enum PostStatus {
+    "Open: no provider has been selected by the receiver"
     OPEN
+    "Accepted: a provider was selected by the receiver, but the carry has not been completed"
     ACCEPTED
+    "Delivered: the provider has said the carry was completed"
     DELIVERED
+    "Received: the receiver has said the carry was completed"
     RECEIVED
+    "Completed: both the provider and receiver have agreed the carry was completed"
     COMPLETED
+    "Removed: the request was canceled (removed) by the receiver"
     REMOVED
 }
 
+"DEPRECATED: Only posts of type REQUEST are valid"
 enum PostType {
     REQUEST
-    OFFER
+    OFFER @deprecated(reason: "Offer-type Posts have not been implemented, and will be implemented separately.")
 }
 
 "Visibility for Posts, ALL organizations, TRUSTED organizations, or SAME organization only"
@@ -1937,19 +1955,22 @@ enum PostVisibility {
     SAME
 }
 
+"User's preferred language, used for translation of system text messages. (ISO 639-1 code)"
 enum PreferredLanguage {
-    EN
-    FR
-    SP
-    KO
-    PT
+    "English"    EN
+    "French"     FR
+    "Spanish"    ES
+    "Korean"     KO
+    "Portuguese" PT
 }
 
+"User's preferred weight units"
 enum PreferredWeightUnit {
     POUNDS
     KILOGRAMS
 }
 
+"User Admin roles"
 enum UserAdminRole {
     SUPERADMIN
     SALESADMIN
@@ -1957,91 +1978,128 @@ enum UserAdminRole {
     USER
 }
 
+"""
+File metadata for images and other supported file types. If the URL expiration time passes, a new query will refresh
+the URL and the URL expiration time.
+"""
 type File {
+    "gloablly unique identifier for the ` + "`" + `File` + "`" + ` object"
     id: ID!
+    "file content can be loaded from the given URL if the expiration time has not passed, limited to 1,024 characters"
     url: String!
+    "expiration time of the URL, re-issue the query to get a new URL and expiration time"
     urlExpiration: Time!
+    "filename with extension, limited to 255 characters, e.g. ` + "`" + `image.jpg` + "`" + `"
     name: String!
+    "file size in bytes"
     size: Int!
+    "MIME content type, limited to 255 characters, e.g. 'image/jpeg'"
     contentType: String!
 }
 
 "Describes a Geographic location"
 type Location {
+    "Human-friendly description, limited to 255 characters, e.g. 'Los Angeles, CA, USA'"
     description: String!
-    # Country, ISO 3166-1 Alpha-2 code
+    "Country (ISO 3166-1 Alpha-2 code), e.g. 'US'"
     country: String!
+    "Latitude in decimal degrees, e.g. -30.95 = 30 degrees 57 minutes south"
     latitude: Float
+    "Longitude in decimal degrees, e.g. -80.05 = 80 degrees 3 minutes west"
     longitude: Float
 }
 
 "Specify a Geographic location"
 input LocationInput {
+    "Human-friendly description, e.g. 'Los Angeles, CA, USA'"
     description: String!
-    # Country, ISO 3166-1 Alpha-2 code
+    "Country (ISO 3166-1 Alpha-2 code), e.g. 'US'"
     country: String!
+    "Latitude in decimal degrees, e.g. -30.95 = 30 degrees 57 minutes south"
     latitude: Float
+    "Longitude in decimal degrees, e.g. -80.05 = 80 degrees 3 minutes west"
     longitude: Float
 }
 
+"Meeting, a/k/a Event, to serve as a focal point for finding, answering, carrying, and exchanging requests"
 type Meeting {
+    "gloablly unique identifier for the ` + "`" + `Meeting` + "`" + ` object"
     id: ID!
+    "short name, limited to 80 characters"
     name: String!
+    "text-only description, limited to 4096 characters"
     description: String
+    "meeting (event) information URL -- should be a full website, but could be an information document such as a pdf"
     moreInfoURL: String
+    "date of the first day of the meeting (event)"
     startDate: Date!
+    "date of the last day of the meeting (event)"
     endDate: Date!
+    "time the meeting (event) was added to the app"
     createdAt: Time!
+    "time the meeting (event) was last modified in the app"
     updatedAt: Time!
+    "user that added the meeting (event) to the app"
     createdBy: PublicProfile!
+    "image file, typically a logo"
     imageFile: File
+    "meeting (event) location -- notifications and filters may use this location"
     location: Location!
-
-    "Posts (Requests) associated with the meeting"
+    "associated Posts (Requests)"
     posts: [Post!]!
-
-    "NOT YET IMPLEMENTED -- Who can see this meeting"
+    "NOT YET IMPLEMENTED -- what subset of users can view and interact with this meeting"
     visibility: MeetingVisibility!
-
-    "Invites to the ` + "`" + `Meeting` + "`" + ` that have been sent to the invitees for their confirmation to join the ` + "`" + `Meeting` + "`" + `"
+    "Invites to the ` + "`" + `Meeting` + "`" + ` (event) for confirmation to join as a participant"
     invites: [MeetingInvite!]!
-
     "Participants of a ` + "`" + `Meeting` + "`" + ` are able to see all posts associated with the ` + "`" + `Meeting` + "`" + `"
     participants: [MeetingParticipant!]!
-
     "Organizers of a ` + "`" + `Meeting` + "`" + ` are able to make changes and invite people"
     organizers: [PublicProfile!]!
 }
 
 input CreateMeetingInput {
+    "short name, limited to 80 characters"
     name: String!
+    "text-only description, limited to 4096 characters"
     description: String
+    "date of the first day of the meeting (event)"
     startDate: Date!
+    "date of the last day of the meeting (event)"
     endDate: Date!
+    "meeting (event) information URL -- should be a full website, but could be an information document such as a pdf"
     moreInfoURL: String
+    "ID of pre-stored image file, typically a logo. Upload using the ` + "`" + `upload` + "`" + ` REST API endpoint."
     imageFileID: ID
+    "meeting (event) location -- notifications and filters may use this location"
     location: LocationInput!
-
-    "NOT YET IMPLEMENTED -- Who can see this meeting"
+    "NOT YET IMPLEMENTED -- what subset of users can view and interact with this meeting"
     visibility: MeetingVisibility!
 }
 
 input UpdateMeetingInput {
+    "gloablly unique identifier for the ` + "`" + `Meeting` + "`" + ` object to be modified"
     id: ID!
+    "short name, limited to 80 characters"
     name: String!
+    "text-only description, limited to 4096 characters. If omitted, any existing text is erased."
     description: String
+    "date of the first day of the meeting (event)"
     startDate: Date!
+    "date of the last day of the meeting (event)"
     endDate: Date!
+    "meeting (event) information URL -- should be a full website. If omitted, any existing URL is erased."
     moreInfoURL: String
+    "ID of pre-stored logo file. Upload using the ` + "`" + `upload` + "`" + ` REST API endpoint. If omitted, existing logo is erased."
     imageFileID: ID
+    "meeting (event) location -- notifications and filters may use this location"
     location: LocationInput!
-
-    "NOT YET IMPLEMENTED -- Who can see this meeting"
+    "NOT YET IMPLEMENTED -- what subset of users can view and interact with this meeting"
     visibility: MeetingVisibility!
 }
 
 """
-Invite to a ` + "`" + `Meeting` + "`" + `. An invite must be confirmed by the invitee before they may be added to a ` + "`" + `Meeting` + "`" + `.
+Invite to a ` + "`" + `Meeting` + "`" + `. An invite must be confirmed by the invitee before they may be added to a ` + "`" + `Meeting` + "`" + `. Can also
+be used as an authentication mechanism to sign on to the App.
 """
 type MeetingInvite {
     meeting: Meeting!
@@ -2057,10 +2115,8 @@ type MeetingInvite {
 input CreateMeetingInvitesInput {
     "ID of the ` + "`" + `Meeting` + "`" + `"
     meetingID: ID!
-
     "Email addresses of the invitees. Duplicate values are ignored."
     emails: [String!]!
-
     "NOT YET IMPLEMENTED -- Send email invites. Default is 'false', do not send any emails."
     sendEmail: Boolean
 }
@@ -2075,7 +2131,7 @@ input RemoveMeetingInviteInput {
 
 """
 Confirmed participant of a ` + "`" + `Meeting` + "`" + `. An invited person will not appear as a ` + "`" + `MeetingParticipant` + "`" + ` until they have
-confirmed a ` + "`" + `MeetingInvite` + "`" + `.
+confirmed a ` + "`" + `MeetingInvite` + "`" + ` or self-joined a non-INVITE_ONLY meeting.
 """
 type MeetingParticipant {
     meeting: Meeting!
@@ -2108,93 +2164,155 @@ input RemoveMeetingParticipantInput {
     userID: ID!
 }
 
+"In-app chat message"
 type Message {
+    "gloablly unique identifier for the Message"
     id: ID!
+    "user profile of the message sender"
     sender: PublicProfile!
+    "message content, limited to 4,096 characters"
     content: String!
+    "message thread to which this message belongs"
     thread: Thread!
+    "time at which the message was created"
     createdAt: Time!
+    "time the message was last edited. Compare against ` + "`" + `Thread.lastViewedAt` + "`" + ` to determine read/unread status."
     updatedAt: Time!
 }
 
 input CreateMessageInput {
+    "message content, limited to 4,096 characters"
     content: String!
+    "ID of the subject Post (request)"
     postID: String!
+    "Message thread to which the new message should be attached. If not specified, a new thread is created."
     threadID: String
 }
 
+"""
+Organization subscribed to the App. Provides privacy controls for visibility of Posts and Meetings, and specifies
+authentication for associated users.
+"""
 type Organization {
+    "unique identifier for the Organization"
     id: ID!
+    "Organization name, limited to 255 characters"
     name: String!
+    "Website URL of the Organization, limited to 255 characters"
     url: String
+    "time at which the Organization was added to the app"
     createdAt: Time!
+    "time at which the Organization was last modified in the app"
     updatedAt: Time!
+    """
+    Internet domains owned by the organization. Only one organization can own a domain. Users with email addresses on
+    this Organization's domain(s) will authenticate using this Organization's authentication method
+    """
     domains: [OrganizationDomain!]!
+    "URL of an image file for the Organization's logo"
     logoURL: String
+    "Trusted (affiliated) organizations. Posts can be shared between organizations that have a OrganizationTrust"
     trustedOrganizations: [Organization!]!
 }
 
 input CreateOrganizationInput {
+    "Organization name, limited to 255 characters"
     name: String!
+    "Website URL of the Organization, limited to 255 characters"
     url: String
+    "Authentication type for the organization. Can be ` + "`" + `saml` + "`" + `, ` + "`" + `google` + "`" + `, or ` + "`" + `azureadv2` + "`" + `."
     authType: String!
+    "Authentication configuration. See https://github.com/silinternational/wecarry-api/blob/master/README.md"
     authConfig: String!
+    "ID of pre-stored image logo file. Upload using the ` + "`" + `upload` + "`" + ` REST API endpoint."
     logoFileID: ID
 }
 
 input UpdateOrganizationInput {
+    "unique identifier for the Organization to be updated"
     id: ID!
+    "Organization name, limited to 255 characters"
     name: String!
+    "Website URL of the Organization, limited to 255 characters. If omitted, existing URL is erased."
     url: String
+    "Authentication type for the organization. Can be 'saml', 'google', or 'azureadv2'."
     authType: String!
+    "Authentication configuration. See https://github.com/silinternational/wecarry-api/blob/master/README.md"
     authConfig: String!
+    "ID of image logo file. Upload using the ` + "`" + `upload` + "`" + ` REST API endpoint. If omitted, existing logo is erased."
     logoFileID: ID
 }
 
+"""
+Internet domains owned by the organization. Only one organization can own a domain. Users with email addresses on
+an Organization's domain(s) will authenticate using that Organization's authentication method
+"""
 type OrganizationDomain {
+    "domain name, limited to 255 characters"
     domain: String!
+    "ID of the Organization that owns this domain"
     organizationID: ID!
+    "Authentication type, overriding the Organization's ` + "`" + `authType` + "`" + `. Can be: ` + "`" + `saml` + "`" + `, ` + "`" + `google` + "`" + `, ` + "`" + `azureadv2` + "`" + `."
     authType: String!
+    """
+    Authentication configuration, overriding the Organization's ` + "`" + `authConfig. See
+    https://github.com/silinternational/wecarry-api/blob/master/README.md
+    """
     authConfig: String!
 }
 
 input CreateOrganizationDomainInput {
+    "domain name, limited to 255 characters"
     domain: String!
+    "ID of the Organization that owns this domain"
     organizationID: ID!
+    "Authentication type, overriding the Organization's ` + "`" + `authType` + "`" + `. Can be: ` + "`" + `saml` + "`" + `, ` + "`" + `google` + "`" + `, ` + "`" + `azureadv2` + "`" + `."
     authType: String
+    """
+    Authentication configuration, overriding the Organization's ` + "`" + `authConfig. See
+    https://github.com/silinternational/wecarry-api/blob/master/README.md
+    """
     authConfig: String
 }
 
 input RemoveOrganizationDomainInput {
+    "domain name, limited to 255 characters"
     domain: String!
+    "ID of the Organization that owns this domain"
     organizationID: ID!
 }
 
 input CreateOrganizationTrustInput {
+    "ID of one of the two Organizations to join in a trusted affiliation"
     primaryID: ID!
+    "ID of the second of two Organizations to join in a trusted affiliation"
     secondaryID: ID!
 }
 
 input RemoveOrganizationTrustInput {
+    "ID of one of the two Organizations in the trust to be removed"
     primaryID: ID!
+    "ID of the second of two Organizations in the trust to be removed"
     secondaryID: ID!
 }
 
 type Post {
+    "unique identifier for the Post (Request)"
     id: ID!
-    type: PostType!
+    type: PostType! @deprecated(reason: "Offer-type Posts will be implemented separately.")
     "Profile of the user that created this post."
     createdBy: PublicProfile!
     "Profile of the user that is receiver of this post. For requests, this is the same as ` + "`" + `createdBy` + "`" + `."
     receiver: PublicProfile
     "Profile of the user that is the provider for this post. For offers, this is the same as ` + "`" + `createdBy` + "`" + `."
     provider: PublicProfile
+    "Users that have offered to carry this request."
     potentialProviders: [PublicProfile!]
     "Organization associated with this post."
     organization: Organization
-    "Short description of item"
+    "Short description of item, limited to 255 characters"
     title: String!
-    "Optional, longer description of the item."
+    "Optional, longer description of the item, limited to 4,096 characters"
     description: String
     "Geographic location where item is needed"
     destination: Location!
@@ -2214,7 +2332,7 @@ type Post {
     createdAt: Time!
     "Date and time this post was last updated"
     updatedAt: Time!
-    "Optional URL to further describe or point to detail about the item"
+    "Optional URL to further describe or point to detail about the item, limited to 255 characters"
     url: String
     "Optional weight of the item, measured in kilograms"
     kilograms: Float
@@ -2235,6 +2353,7 @@ type Post {
 input CreatePostInput {
     "ID of associated Organization. Affects visibility of the post, see also the ` + "`" + `visibility` + "`" + ` field."
     orgID: String!
+    "DEPRECATED: Must be REQUEST"
     type: PostType!
     "Short description, limited to 255 characters"
     title: String!
@@ -2248,7 +2367,7 @@ input CreatePostInput {
     origin: LocationInput
     "Broad category of the size of item"
     size: PostSize!
-    "Optional URL to further describe or point to detail about the item"
+    "Optional URL to further describe or point to detail about the item, limited to 255 characters"
     url: String
     "Optional weight of the item, measured in kilograms"
     kilograms: Float
@@ -2295,20 +2414,33 @@ input UpdatePostInput {
 }
 
 input UpdatePostStatusInput {
+    "ID of the post to update"
     id: ID!
+    "New Status. Only a limited set of transitions are allowed."
     status: PostStatus!
+    "User ID of the accepted provider. Required if ` + "`" + `status` + "`" + ` is ACCEPTED and ignored otherwise."
     providerUserID: ID
 }
 
+"In-App Message Thread"
 type Thread {
+    "unique identifier for the message thread"
     id: ID!
+    "Users participating in the message thread. The post creator is automatically added to all of the posts's threads"
     participants: [PublicProfile!]!
+    "Messages on the thread"
     messages: [Message!]!
+    "ID of the post that owns this message thread"
     postID: String!
+    "Post that owns this message thread"
     post: Post!
+    "The time the auth user last viewed this thread. Messages with ` + "`" + `updatedAt` + "`" + ` after this time can be considered unread."
     lastViewedAt: Time!
+    "The time this thread was started"
     createdAt: Time!
+    "The time this thread was last updated or messages added to the thread"
     updatedAt: Time!
+    "The number of messages unread by the auth user"
     unreadMessageCount: Int!
 }
 
@@ -2317,12 +2449,19 @@ input SetThreadLastViewedAtInput {
     time: Time!
 }
 
+"Attributes of a user of the App"
 type User {
+    "unique identifier for the User"
     id: ID!
+    "Email address to be used for notifications to the User. Not necessarily the same as the authentication email."
     email: String!
+    "User's nickname. Auto-assigned upon creation of a User, but editable by the User. Limited to 255 characters."
     nickname: String!
+    "Time the user was added to the App"
     createdAt: Time!
+    "Time the user profile was last edited"
     updatedAt: Time!
+    "An admin role other than the default (USER) provides additional privileges"
     adminRole: UserAdminRole
     "avatarURL is generated from an attached photo if present, an external URL if present, or a Gravatar URL"
     avatarURL: String
@@ -2332,7 +2471,9 @@ type User {
     "user's home location"
     location: Location
     unreadMessageCount: Int!
+    "Organizations that the User is affilated with. This can be empty or have a single entry. Future capability is TBD"
     organizations: [Organization!]!
+    "A list of the user's posts, as determined by the given PostRole relationship"
     posts(role: PostRole!): [Post!]!
     "meetings in which the user is a participant"
     meetingsAsParticipant: [Meeting!]!
@@ -2340,52 +2481,73 @@ type User {
 
 "User fields that can safely be visible to any user in the system"
 type PublicProfile {
+    "unique identifier for the User, the same value as in the ` + "`" + `User` + "`" + ` type"
     id: ID!
+    "User's nickname. Auto-assigned upon creation of a User, but editable by the User. Limited to 255 characters."
     nickname: String!
+    "avatarURL is generated from an attached photo if present, an external URL if present, or a Gravatar URL"
     avatarURL: String
 }
 
 "Input object for ` + "`" + `updateUser` + "`" + `"
 input UpdateUserInput {
+    "unique identifier for the User to be updated"
     id: ID
+    "User's nickname. Auto-assigned upon creation of a User, but editable by the User. Limited to 255 characters."
     nickname: String
     "File ID of avatar photo. If omitted or ` + "`" + `null` + "`" + `, the photo is removed from the profile."
-    photoID: String
-    """
-    Specify the user's "home" location. If omitted or ` + "`" + `null` + "`" + `, the location is removed from the profile.
-    """
+    photoID: ID
+    "Specify the user's 'home' location. If omitted or ` + "`" + `null` + "`" + `, the location is removed from the profile."
     location: LocationInput
+    "New user preferences. If ` + "`" + `null` + "`" + ` no changes are made."
     preferences: UpdateUserPreferencesInput
 }
 
 type UserPreferences {
+    "preferred language for translation of App text, including notifications and error messages"
     language: String
+    "preferred time zone for localization of dates and times, particularly in notification messages"
     timeZone: String
+    "preferred weight unit for customized display of weight quantities"
     weightUnit: String
 }
 
 input UpdateUserPreferencesInput {
+    "preferred language -- if omitted, the preference is set to the App default"
     language: PreferredLanguage
+    "time zone -- if omitted, the preference is set to the App default"
     timeZone: String
+    "weight unit-- if omitted, the preference is set to the App default"
     weightUnit: PreferredWeightUnit
 }
 
+"""
+A Watch for a given location. Posts (requests) with a destination near the watch location will trigger a notification to
+the watch creator. Other types of Watches (e.g. keyword search) may be created in future versions of WeCarry.
+"""
 type Watch {
+    "unique identifier for the Watch"
     id: ID!
+    "Owner of the Watch, and the recipient of notifications for this Watch"
     owner: PublicProfile!
+    "Location to watch. If a new request has a destination near this location, a notification will be sent."
     location: Location
 }
 
 input CreateWatchInput {
+    "Location to watch. If a new request has a destination near this location, a notification will be sent."
     location: LocationInput
 }
 
 input RemoveWatchInput {
+    "unique identifier for the Watch to be removed"
     id: ID!
 }
 
 input UpdateWatchInput {
+    "unique identifier for the Watch to be updated"
     id: ID!
+    "Location to watch. If a new request has a destination near this location, a notification will be sent."
     location: LocationInput
 }
 `},
@@ -10559,7 +10721,7 @@ func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, o
 			}
 		case "photoID":
 			var err error
-			it.PhotoID, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			it.PhotoID, err = ec.unmarshalOID2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
