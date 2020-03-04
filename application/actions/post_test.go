@@ -511,3 +511,55 @@ func (as *ActionSuite) Test_UpdatePostStatus_DestroyPotentialProviders() {
 		}
 	}
 }
+
+func (as *ActionSuite) Test_MarkRequestAsDelivered() {
+	f := createFixturesForMarkRequestAsDelivered(as)
+	posts := f.Posts
+
+	var postsResp PostResponse
+
+	creator := f.Users[0]
+	provider := f.Users[1]
+
+	testCases := []struct {
+		name       string
+		postID     int
+		user       models.User
+		wantStatus string
+		wantErr    bool
+	}{
+		{name: "a", postID: posts[0].ID, user: provider, wantErr: true},
+		{name: "b", postID: posts[0].ID, user: creator, wantErr: false},
+		{name: "c", postID: posts[1].ID, user: provider, wantErr: true},
+		{name: "d", postID: posts[1].ID, user: creator, wantErr: false},
+		{name: "e", postID: posts[2].ID, user: provider, wantErr: false},
+		{name: "f", postID: posts[3].ID, user: provider, wantErr: false},
+	}
+
+	for _, tc := range testCases {
+		as.T().Run(tc.name, func(t *testing.T) {
+			input := `id: "` + f.Posts[0].UUID.String() + `", status: ` + tc.status.String()
+			if tc.providerID != "" {
+				input += `, providerUserID: "` + tc.providerID + `"`
+			}
+			query := `mutation { post: updatePostStatus(input: {` + input + `}) {id status completedOn}}`
+
+			err := as.testGqlQuery(query, tc.user.Nickname, &postsResp)
+			if tc.wantErr {
+				as.Error(err, "user=%s, query=%s", tc.user.Nickname, query)
+				continue
+			}
+
+			as.NoError(err, "user=%s, query=%s", tc.user.Nickname, query)
+			as.Equal(tc.status, postsResp.Post.Status)
+
+			if tc.status == models.PostStatusCompleted {
+				as.NotNil(postsResp.Post.CompletedOn, "expected valid CompletedOn date.")
+				as.Equal(time.Now().Format(domain.DateFormat), *postsResp.Post.CompletedOn,
+					"incorrect CompletedOn date.")
+			} else {
+				as.Nil(postsResp.Post.CompletedOn, "expected nil CompletedOn field.")
+			}
+		})
+	}
+}

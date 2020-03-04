@@ -171,3 +171,15 @@ func createFixturesForUpdatePostStatus(as *ActionSuite) UpdatePostStatusFixtures
 		Users: users,
 	}
 }
+
+func createFixturesForMarkRequestAsDelivered(as *ActionSuite) UpdatePostStatusFixtures {
+	userFixtures := test.CreateUserFixtures(as.DB, 2)
+	users := userFixtures.Users
+
+	posts := test.CreatePostFixtures(as.DB, 1, false)
+
+	return UpdatePostStatusFixtures{
+		Posts: posts,
+		Users: users,
+	}
+}
