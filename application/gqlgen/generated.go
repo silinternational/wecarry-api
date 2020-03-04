@@ -125,6 +125,8 @@ type ComplexityRoot struct {
 		CreateOrganizationTrust     func(childComplexity int, input CreateOrganizationTrustInput) int
 		CreatePost                  func(childComplexity int, input postInput) int
 		CreateWatch                 func(childComplexity int, input watchInput) int
+		MarkRequestAsDelivered      func(childComplexity int, postID string) int
+		MarkRequestAsReceived       func(childComplexity int, postID string) int
 		RemoveMeAsPotentialProvider func(childComplexity int, postID string) int
 		RemoveMeetingInvite         func(childComplexity int, input RemoveMeetingInviteInput) int
 		RemoveMeetingParticipant    func(childComplexity int, input RemoveMeetingParticipantInput) int
@@ -301,6 +303,8 @@ type MutationResolver interface {
 	AddMeAsPotentialProvider(ctx context.Context, postID string) (*models.Post, error)
 	RemoveMeAsPotentialProvider(ctx context.Context, postID string) (*models.Post, error)
 	RemovePotentialProvider(ctx context.Context, postID string, userID string) (*models.Post, error)
+	MarkRequestAsReceived(ctx context.Context, postID string) (*models.Post, error)
+	MarkRequestAsDelivered(ctx context.Context, postID string) (*models.Post, error)
 	UpdateUser(ctx context.Context, input UpdateUserInput) (*models.User, error)
 	CreateMeeting(ctx context.Context, input meetingInput) (*models.Meeting, error)
 	UpdateMeeting(ctx context.Context, input meetingInput) (*models.Meeting, error)
@@ -814,6 +818,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CreateWatch(childComplexity, args["input"].(watchInput)), true
+
+	case "Mutation.markRequestAsDelivered":
+		if e.complexity.Mutation.MarkRequestAsDelivered == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_markRequestAsDelivered_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.MarkRequestAsDelivered(childComplexity, args["postID"].(string)), true
+
+	case "Mutation.markRequestAsReceived":
+		if e.complexity.Mutation.MarkRequestAsReceived == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_markRequestAsReceived_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.MarkRequestAsReceived(childComplexity, args["postID"].(string)), true
 
 	case "Mutation.removeMeAsPotentialProvider":
 		if e.complexity.Mutation.RemoveMeAsPotentialProvider == nil {
@@ -1751,6 +1779,8 @@ type Mutation {
     addMeAsPotentialProvider(postID: String!): Post!
     removeMeAsPotentialProvider(postID: String!): Post!
     removePotentialProvider(postID: String!, userID: String!): Post!
+    markRequestAsReceived(postID: String!): Post!
+    markRequestAsDelivered(postID: String!): Post!
 
     """
     Update User profile information. If ID is not specified, the authenticated user is assumed.
@@ -2443,6 +2473,34 @@ func (ec *executionContext) field_Mutation_createWatch_args(ctx context.Context,
 		}
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_markRequestAsDelivered_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["postID"]; ok {
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["postID"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_markRequestAsReceived_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["postID"]; ok {
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["postID"] = arg0
 	return args, nil
 }
 
@@ -4572,6 +4630,94 @@ func (ec *executionContext) _Mutation_removePotentialProvider(ctx context.Contex
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Mutation().RemovePotentialProvider(rctx, args["postID"].(string), args["userID"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Post)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNPost2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_markRequestAsReceived(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_markRequestAsReceived_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().MarkRequestAsReceived(rctx, args["postID"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Post)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNPost2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_markRequestAsDelivered(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_markRequestAsDelivered_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().MarkRequestAsDelivered(rctx, args["postID"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11123,6 +11269,16 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "removePotentialProvider":
 			out.Values[i] = ec._Mutation_removePotentialProvider(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "markRequestAsReceived":
+			out.Values[i] = ec._Mutation_markRequestAsReceived(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "markRequestAsDelivered":
+			out.Values[i] = ec._Mutation_markRequestAsDelivered(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}

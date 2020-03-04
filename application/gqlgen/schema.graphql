@@ -71,6 +71,8 @@ type Mutation {
     addMeAsPotentialProvider(postID: String!): Post!
     removeMeAsPotentialProvider(postID: String!): Post!
     removePotentialProvider(postID: String!, userID: String!): Post!
+    markRequestAsReceived(postID: String!): Post!
+    markRequestAsDelivered(postID: String!): Post!
 
     """
     Update User profile information. If ID is not specified, the authenticated user is assumed.
