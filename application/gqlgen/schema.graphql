@@ -303,7 +303,7 @@ File metadata for images and other supported file types. If the URL expiration t
 the URL and the URL expiration time.
 """
 type File {
-    "gloablly unique identifier for the `File` object"
+    "unique identifier for the `File` object"
     id: ID!
     "file content can be loaded from the given URL if the expiration time has not passed, limited to 1,024 characters"
     url: String!
@@ -343,7 +343,7 @@ input LocationInput {
 
 "Meeting, a/k/a Event, to serve as a focal point for finding, answering, carrying, and exchanging requests"
 type Meeting {
-    "gloablly unique identifier for the `Meeting` object"
+    "unique identifier for the `Meeting` object"
     id: ID!
     "short name, limited to 80 characters"
     name: String!
@@ -397,7 +397,7 @@ input CreateMeetingInput {
 }
 
 input UpdateMeetingInput {
-    "gloablly unique identifier for the `Meeting` object to be modified"
+    "unique identifier for the `Meeting` object to be modified"
     id: ID!
     "short name, limited to 80 characters"
     name: String!
@@ -486,7 +486,7 @@ input RemoveMeetingParticipantInput {
 
 "In-app chat message"
 type Message {
-    "gloablly unique identifier for the Message"
+    "unique identifier for the Message"
     id: ID!
     "user profile of the message sender"
     sender: PublicProfile!
