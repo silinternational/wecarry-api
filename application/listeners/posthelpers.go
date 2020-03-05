@@ -26,7 +26,7 @@ type postUsers struct {
 // Post Provider assuming their email is not blank.
 func getPostUsers(post models.Post) postUsers {
 
-	receiver, _ := post.GetReceiver()
+	receiver, _ := post.GetCreator()
 	provider, _ := post.GetProvider()
 
 	var recipients postUsers
@@ -196,7 +196,7 @@ func sendRejectionToPotentialProvider(potentialProvider models.User, post models
 		ppEmail = "Missing Email"
 	}
 
-	receiver, err := post.GetReceiver()
+	receiver, err := post.GetCreator()
 	if err != nil {
 		domain.ErrLogger.Printf("error getting Post Receiver for email data, %s", err)
 	}
@@ -358,6 +358,7 @@ func sendNewPostNotifications(post models.Post, users models.Users) {
 		if !user.WantsPostNotification(post) {
 			continue
 		}
+		fmt.Printf(" ----------- %d\n", users[i].ID)
 
 		if err := sendNewPostNotification(user, post); err != nil {
 			domain.ErrLogger.Printf("error sending post created notification (%d of %d), %s",
@@ -371,12 +372,7 @@ func sendNewPostNotification(user models.User, post models.Post) error {
 		return errors.New("'To' email address is required")
 	}
 
-	newPostTemplates := map[string]string{
-		models.PostTypeRequest.String(): domain.MessageTemplateNewRequest,
-		models.PostTypeOffer.String():   domain.MessageTemplateNewOffer,
-	}
-
-	receiver, err := post.GetReceiver()
+	receiver, err := post.GetCreator()
 	if err != nil {
 		return err
 	}
@@ -393,7 +389,7 @@ func sendNewPostNotification(user models.User, post models.Post) error {
 	msg := notifications.Message{
 		Subject: domain.GetTranslatedSubject(user.GetLanguagePreference(),
 			"Email.Subject.NewRequest", map[string]string{}),
-		Template:  newPostTemplates[post.Type.String()],
+		Template:  domain.MessageTemplateNewRequest,
 		ToName:    user.GetRealName(),
 		ToEmail:   user.Email,
 		FromEmail: domain.EmailFromAddress(nil),

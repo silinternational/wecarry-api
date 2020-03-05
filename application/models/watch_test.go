@@ -163,7 +163,7 @@ func (ms *ModelSuite) TestWatch_GetSetLocation() {
 }
 
 func (ms *ModelSuite) TestWatch_matchesPost() {
-	posts := createPostFixtures(ms.DB, 1, 0, false)
+	posts := createPostFixtures(ms.DB, 1, false)
 	watches := createWatchFixtures(ms.DB, createUserFixtures(ms.DB, 1).Users)
 
 	dest, err := posts[0].GetDestination()

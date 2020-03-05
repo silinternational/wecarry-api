@@ -75,7 +75,6 @@ func (pH PostHistory) createForPost(post Post) error {
 		newPH := PostHistory{
 			Status:     post.Status,
 			PostID:     post.ID,
-			ReceiverID: post.ReceiverID,
 			ProviderID: post.ProviderID,
 		}
 

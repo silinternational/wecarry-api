@@ -27,7 +27,6 @@ func (ms *ModelSuite) TestPost_Validate() {
 			name: "minimum",
 			post: Post{
 				CreatedByID:    1,
-				Type:           PostTypeRequest,
 				OrganizationID: 1,
 				Title:          "A Request",
 				Size:           PostSizeMedium,
@@ -39,7 +38,6 @@ func (ms *ModelSuite) TestPost_Validate() {
 		{
 			name: "missing created_by",
 			post: Post{
-				Type:           PostTypeRequest,
 				OrganizationID: 1,
 				Title:          "A Request",
 				Size:           PostSizeMedium,
@@ -66,7 +64,6 @@ func (ms *ModelSuite) TestPost_Validate() {
 			name: "missing organization_id",
 			post: Post{
 				CreatedByID: 1,
-				Type:        PostTypeRequest,
 				Title:       "A Request",
 				Size:        PostSizeMedium,
 				Status:      PostStatusOpen,
@@ -79,7 +76,6 @@ func (ms *ModelSuite) TestPost_Validate() {
 			name: "missing title",
 			post: Post{
 				CreatedByID:    1,
-				Type:           PostTypeRequest,
 				OrganizationID: 1,
 				Size:           PostSizeMedium,
 				Status:         PostStatusOpen,
@@ -92,7 +88,6 @@ func (ms *ModelSuite) TestPost_Validate() {
 			name: "missing size",
 			post: Post{
 				CreatedByID:    1,
-				Type:           PostTypeRequest,
 				OrganizationID: 1,
 				Title:          "A Request",
 				Status:         PostStatusOpen,
@@ -105,7 +100,6 @@ func (ms *ModelSuite) TestPost_Validate() {
 			name: "missing status",
 			post: Post{
 				CreatedByID:    1,
-				Type:           PostTypeRequest,
 				OrganizationID: 1,
 				Title:          "A Request",
 				Size:           PostSizeMedium,
@@ -118,7 +112,6 @@ func (ms *ModelSuite) TestPost_Validate() {
 			name: "missing uuid",
 			post: Post{
 				CreatedByID:    1,
-				Type:           PostTypeRequest,
 				OrganizationID: 1,
 				Title:          "A Request",
 				Size:           PostSizeMedium,
@@ -158,7 +151,6 @@ func (ms *ModelSuite) TestPost_ValidateCreate() {
 			name: "good - open",
 			post: Post{
 				CreatedByID:    1,
-				Type:           PostTypeRequest,
 				OrganizationID: 1,
 				Title:          "A Request",
 				Size:           PostSizeMedium,
@@ -171,7 +163,6 @@ func (ms *ModelSuite) TestPost_ValidateCreate() {
 			name: "bad status - accepted",
 			post: Post{
 				CreatedByID:    1,
-				Type:           PostTypeRequest,
 				OrganizationID: 1,
 				Title:          "A Request",
 				Size:           PostSizeMedium,
@@ -186,7 +177,6 @@ func (ms *ModelSuite) TestPost_ValidateCreate() {
 			post: Post{
 				CreatedByID:    1,
 				OrganizationID: 1,
-				Type:           PostTypeRequest,
 				Title:          "A Request",
 				Size:           PostSizeMedium,
 				Status:         PostStatusDelivered,
@@ -200,7 +190,6 @@ func (ms *ModelSuite) TestPost_ValidateCreate() {
 			post: Post{
 				CreatedByID:    1,
 				OrganizationID: 1,
-				Type:           PostTypeRequest,
 				Title:          "A Request",
 				Size:           PostSizeMedium,
 				Status:         PostStatusReceived,
@@ -214,7 +203,6 @@ func (ms *ModelSuite) TestPost_ValidateCreate() {
 			post: Post{
 				CreatedByID:    1,
 				OrganizationID: 1,
-				Type:           PostTypeRequest,
 				Title:          "A Request",
 				Size:           PostSizeMedium,
 				Status:         PostStatusCompleted,
@@ -228,7 +216,6 @@ func (ms *ModelSuite) TestPost_ValidateCreate() {
 			post: Post{
 				CreatedByID:    1,
 				OrganizationID: 1,
-				Type:           PostTypeRequest,
 				Title:          "A Request",
 				Size:           PostSizeMedium,
 				Status:         PostStatusRemoved,
@@ -241,7 +228,6 @@ func (ms *ModelSuite) TestPost_ValidateCreate() {
 			name: "bad neededBefore (today)",
 			post: Post{
 				CreatedByID:    1,
-				Type:           PostTypeRequest,
 				OrganizationID: 1,
 				Title:          "A Request",
 				NeededBefore:   nulls.NewTime(time.Now()),
@@ -256,7 +242,6 @@ func (ms *ModelSuite) TestPost_ValidateCreate() {
 			name: "good neededBefore (tommorrow)",
 			post: Post{
 				CreatedByID:    1,
-				Type:           PostTypeRequest,
 				OrganizationID: 1,
 				Title:          "A Request",
 				NeededBefore:   nulls.NewTime(time.Now().Add(domain.DurationDay)),
@@ -355,7 +340,6 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_OpenRequest() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			errField := "status"
-			test.post.Type = PostTypeRequest // only Requests have been implemented thus far
 			vErr, _ := test.post.ValidateUpdate(DB)
 			if test.wantErr {
 				if vErr.Count() == 0 {
@@ -437,7 +421,6 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_AcceptedRequest() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			errField := "status"
-			test.post.Type = PostTypeRequest // only Requests have been implemented thus far
 			vErr, _ := test.post.ValidateUpdate(DB)
 			if test.wantErr {
 				if vErr.Count() == 0 {
@@ -511,7 +494,6 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_DeliveredRequest() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			errField := "status"
-			test.post.Type = PostTypeRequest // only Requests have been implemented thus far
 			vErr, _ := test.post.ValidateUpdate(DB)
 			if test.wantErr {
 				if vErr.Count() == 0 {
@@ -586,7 +568,6 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_ReceivedRequest() {
 		t.Run(test.name, func(t *testing.T) {
 			errField := "status"
 
-			test.post.Type = PostTypeRequest // only Requests have been implemented thus far
 			vErr, _ := test.post.ValidateUpdate(DB)
 			if test.wantErr {
 				if vErr.Count() == 0 {
@@ -669,7 +650,6 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_CompletedRequest() {
 		t.Run(test.name, func(t *testing.T) {
 			errField := "status"
 
-			test.post.Type = PostTypeRequest // only Requests have been implemented thus far
 			vErr, _ := test.post.ValidateUpdate(DB)
 			if test.wantErr {
 				if vErr.Count() == 0 {
@@ -752,7 +732,6 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_RemovedRequest() {
 		t.Run(test.name, func(t *testing.T) {
 			errField := "status"
 
-			test.post.Type = PostTypeRequest // only Requests have been implemented thus far
 			vErr, _ := test.post.ValidateUpdate(DB)
 			if test.wantErr {
 				if vErr.Count() == 0 {
@@ -918,7 +897,6 @@ func (ms *ModelSuite) TestPost_manageStatusTransition_forwardProgression() {
 			ms.NoError(err)
 
 			ms.Equal(test.newStatus, ph.Status, "incorrect Status ")
-			ms.Equal(test.post.ReceiverID, ph.ReceiverID, "incorrect ReceiverID ")
 			ms.Equal(test.providerID, ph.ProviderID, "incorrect ProviderID ")
 
 			if test.wantCompletedOn {
@@ -989,7 +967,6 @@ func (ms *ModelSuite) TestPost_manageStatusTransition_backwardProgression() {
 			ms.NoError(err)
 
 			ms.Equal(test.newStatus, ph.Status, "incorrect Status ")
-			ms.Equal(test.post.ReceiverID, ph.ReceiverID, "incorrect ReceiverID ")
 			ms.Equal(test.providerID, ph.ProviderID, "incorrect ProviderID ")
 			ms.Equal(test.wantCompletedOn, test.post.CompletedOn.Valid, "incorrect CompletedOn valuie")
 		})
@@ -1000,7 +977,7 @@ func (ms *ModelSuite) TestPost_FindByID() {
 	t := ms.T()
 
 	users := createUserFixtures(ms.DB, 2).Users
-	posts := createPostFixtures(ms.DB, 1, 1, false)
+	posts := createPostFixtures(ms.DB, 1, false)
 
 	tests := []struct {
 		name          string
@@ -1050,7 +1027,7 @@ func (ms *ModelSuite) TestPost_FindByUUID() {
 	t := ms.T()
 
 	_ = createUserFixtures(ms.DB, 2)
-	posts := createPostFixtures(ms.DB, 1, 1, false)
+	posts := createPostFixtures(ms.DB, 1, false)
 
 	tests := []struct {
 		name    string
@@ -1085,7 +1062,7 @@ func (ms *ModelSuite) TestPost_GetCreator() {
 	t := ms.T()
 
 	uf := createUserFixtures(ms.DB, 2)
-	posts := createPostFixtures(ms.DB, 1, 1, false)
+	posts := createPostFixtures(ms.DB, 1, false)
 
 	tests := []struct {
 		name string
@@ -1110,7 +1087,7 @@ func (ms *ModelSuite) TestPost_GetProvider() {
 	t := ms.T()
 
 	uf := createUserFixtures(ms.DB, 2)
-	posts := createPostFixtures(ms.DB, 1, 1, false)
+	posts := createPostFixtures(ms.DB, 1, false)
 
 	tests := []struct {
 		name string
@@ -1138,43 +1115,11 @@ func (ms *ModelSuite) TestPost_GetProvider() {
 	}
 }
 
-func (ms *ModelSuite) TestPost_GetReceiver() {
-	t := ms.T()
-
-	uf := createUserFixtures(ms.DB, 2)
-	posts := createPostFixtures(ms.DB, 1, 1, false)
-
-	tests := []struct {
-		name string
-		post Post
-		want *uuid.UUID
-	}{
-		{name: "good", post: posts[0], want: &uf.Users[0].UUID},
-		{name: "nil", post: posts[1], want: nil},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			user, err := test.post.GetReceiver()
-			if err != nil {
-				t.Errorf("GetReceiver() error = %v", err)
-			} else if test.want == nil {
-				if user != nil {
-					t.Errorf("expected nil, got %s", user.UUID.String())
-				}
-			} else if user == nil {
-				t.Errorf("received nil, expected %v", test.want.String())
-			} else if user.UUID != *test.want {
-				t.Errorf("GetProvider() got = %s, want %s", user.UUID, test.want)
-			}
-		})
-	}
-}
-
 func (ms *ModelSuite) TestPost_GetOrganization() {
 	t := ms.T()
 
 	_ = createUserFixtures(ms.DB, 2)
-	posts := createPostFixtures(ms.DB, 1, 1, false)
+	posts := createPostFixtures(ms.DB, 1, false)
 	ms.NoError(ms.DB.Load(&posts, "Organization"))
 
 	tests := []struct {
@@ -1200,7 +1145,7 @@ func (ms *ModelSuite) TestPost_GetThreads() {
 	t := ms.T()
 
 	users := createUserFixtures(ms.DB, 2).Users
-	posts := createPostFixtures(ms.DB, 1, 1, false)
+	posts := createPostFixtures(ms.DB, 1, false)
 	threadFixtures := CreateThreadFixtures(ms, posts[0])
 	threads := threadFixtures.Threads
 
@@ -1298,7 +1243,7 @@ func (ms *ModelSuite) TestPost_GetFiles() {
 }
 
 func (ms *ModelSuite) TestPost_AttachPhoto() {
-	posts := createPostFixtures(ms.DB, 3, 0, false)
+	posts := createPostFixtures(ms.DB, 3, false)
 
 	files := createFileFixtures(3)
 	posts[1].PhotoFileID = nulls.NewInt(files[0].ID)
@@ -1351,7 +1296,7 @@ func (ms *ModelSuite) TestPost_AttachPhoto() {
 }
 
 func (ms *ModelSuite) TestPost_RemovePhoto() {
-	posts := createPostFixtures(ms.DB, 3, 0, false)
+	posts := createPostFixtures(ms.DB, 3, false)
 
 	files := createFileFixtures(3)
 	posts[1].PhotoFileID = nulls.NewInt(files[0].ID)
@@ -1396,7 +1341,7 @@ func (ms *ModelSuite) TestPost_RemovePhoto() {
 
 // TestPost_GetPhoto tests the GetPhoto method of models.Post
 func (ms *ModelSuite) TestPost_GetPhotoID() {
-	posts := createPostFixtures(ms.DB, 1, 0, false)
+	posts := createPostFixtures(ms.DB, 1, false)
 	post := posts[0]
 
 	var photoFixture File
@@ -1421,7 +1366,7 @@ func (ms *ModelSuite) TestPost_GetPhotoID() {
 
 // TestPost_GetPhoto tests the GetPhoto method of models.Post
 func (ms *ModelSuite) TestPost_GetPhoto() {
-	posts := createPostFixtures(ms.DB, 1, 0, false)
+	posts := createPostFixtures(ms.DB, 1, false)
 	post := posts[0]
 
 	var photoFixture File
@@ -1525,7 +1470,7 @@ func (ms *ModelSuite) TestPost_GetSetDestination() {
 }
 
 func (ms *ModelSuite) TestPost_Origin() {
-	posts := createPostFixtures(ms.DB, 1, 0, false)
+	posts := createPostFixtures(ms.DB, 1, false)
 	post := posts[0]
 	post.OriginID = nulls.Int{}
 	ms.NoError(ms.DB.Save(&post))
@@ -1582,33 +1527,21 @@ func (ms *ModelSuite) TestPost_NewWithUser() {
 
 	tests := []struct {
 		name           string
-		pType          PostType
-		wantPostType   PostType
 		wantPostStatus PostStatus
-		wantReceiverID int
 		wantProviderID int
 		wantErr        bool
 	}{
-		{name: "Good Request", pType: PostTypeRequest,
-			wantPostType: PostTypeRequest, wantPostStatus: PostStatusOpen,
-			wantReceiverID: user.ID,
-		},
-		{name: "Good Offer", pType: PostTypeRequest,
-			wantPostType: PostTypeRequest, wantPostStatus: PostStatusOpen,
-			wantProviderID: user.ID,
-		},
-		{name: "Bad Type", pType: "BADTYPE", wantErr: true},
+		{name: "Good Request", wantPostStatus: PostStatusOpen},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var post Post
-			err := post.NewWithUser(test.pType, user)
+			err := post.NewWithUser(user)
 
 			if test.wantErr {
 				ms.Error(err)
 			} else {
 				ms.NoError(err)
-				ms.Equal(test.wantPostType, post.Type)
 				ms.Equal(user.ID, post.CreatedByID)
 				ms.Equal(test.wantPostStatus, post.Status)
 			}
@@ -1623,18 +1556,14 @@ func (ms *ModelSuite) TestPost_SetProviderWithStatus() {
 	tests := []struct {
 		name           string
 		status         PostStatus
-		pType          PostType
 		wantProviderID nulls.Int
 	}{
-		{name: "Accepted Request", status: PostStatusAccepted,
-			pType: PostTypeRequest, wantProviderID: nulls.NewInt(user.ID)},
-		{name: "Accepted Offer", status: PostStatusAccepted,
-			pType: PostTypeOffer, wantProviderID: nulls.Int{}},
+		{name: "Accepted Request", status: PostStatusAccepted, wantProviderID: nulls.NewInt(user.ID)},
+		{name: "Accepted Offer", status: PostStatusAccepted, wantProviderID: nulls.Int{}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var post Post
-			post.Type = test.pType
 			userID := user.UUID.String()
 			post.SetProviderWithStatus(test.status, &userID)
 
@@ -1725,22 +1654,17 @@ func (ms *ModelSuite) TestPosts_FindByUser_SearchText() {
 		name        string
 		user        User
 		matchText   string
-		postType    PostType
 		wantPostIDs []int
 		wantErr     bool
 	}{
 		{name: "user 0 matching case request", user: f.Users[0], matchText: "Match",
-			postType:    PostTypeRequest,
 			wantPostIDs: []int{f.Posts[5].ID, f.Posts[1].ID, f.Posts[0].ID}},
 		{name: "user 0 lower case request", user: f.Users[0], matchText: "match",
-			postType:    PostTypeRequest,
 			wantPostIDs: []int{f.Posts[5].ID, f.Posts[1].ID, f.Posts[0].ID}},
 		{name: "user 1", user: f.Users[1], matchText: "Match",
-			postType:    PostTypeRequest,
 			wantPostIDs: []int{f.Posts[5].ID, f.Posts[1].ID}},
 		{name: "non-existent user", user: User{}, matchText: "Match",
-			postType: PostTypeRequest,
-			wantErr:  true,
+			wantErr: true,
 		},
 	}
 	for _, test := range tests {
@@ -1852,7 +1776,7 @@ func (ms *ModelSuite) TestPost_canUserChangeStatus() {
 		},
 		{
 			name:      "Open to Accepted",
-			post:      Post{CreatedByID: 1, Status: PostStatusOpen, Type: PostTypeRequest},
+			post:      Post{CreatedByID: 1, Status: PostStatusOpen},
 			user:      User{ID: 1},
 			newStatus: PostStatusAccepted,
 			want:      true,
@@ -1864,58 +1788,43 @@ func (ms *ModelSuite) TestPost_canUserChangeStatus() {
 			want:      false,
 		},
 		{
-			name:      "Offer Received",
-			post:      Post{Type: PostTypeOffer, CreatedByID: 1},
-			newStatus: PostStatusReceived,
-			want:      true,
-		},
-		{
 			name:      "Request Received",
-			post:      Post{Type: PostTypeRequest, CreatedByID: 1},
+			post:      Post{CreatedByID: 1},
 			newStatus: PostStatusReceived,
-			want:      false,
-		},
-		{
-			name:      "Offer Delivered",
-			newStatus: PostStatusDelivered,
-			post:      Post{Type: PostTypeOffer, CreatedByID: 1},
 			want:      false,
 		},
 		{
 			name:      "Request From Delivered to Accepted By Requester",
 			newStatus: PostStatusAccepted,
-			post: Post{Type: PostTypeRequest, CreatedByID: 1, ProviderID: nulls.NewInt(2),
-				Status: PostStatusDelivered},
-			user: User{ID: 1},
-			want: false,
+			post:      Post{CreatedByID: 1, ProviderID: nulls.NewInt(2), Status: PostStatusDelivered},
+			user:      User{ID: 1},
+			want:      false,
 		},
 		{
 			name:      "Request From Delivered to Accepted By Provider",
 			newStatus: PostStatusAccepted,
-			post: Post{Type: PostTypeRequest, CreatedByID: 1, ProviderID: nulls.NewInt(2),
-				Status: PostStatusDelivered},
-			user: User{ID: 2},
-			want: true,
+			post:      Post{CreatedByID: 1, ProviderID: nulls.NewInt(2), Status: PostStatusDelivered},
+			user:      User{ID: 2},
+			want:      true,
 		},
 		{
 			name:      "Request From Delivered to Accepted By non-Provider",
 			newStatus: PostStatusAccepted,
-			post: Post{Type: PostTypeRequest, CreatedByID: 1, ProviderID: nulls.NewInt(2),
-				Status: PostStatusDelivered},
-			user: User{ID: 3},
-			want: false,
+			post:      Post{CreatedByID: 1, ProviderID: nulls.NewInt(2), Status: PostStatusDelivered},
+			user:      User{ID: 3},
+			want:      false,
 		},
 		{
 			name:      "Request Delivered By Provider",
 			newStatus: PostStatusDelivered,
-			post:      Post{Type: PostTypeRequest, CreatedByID: 1, ProviderID: nulls.NewInt(2)},
+			post:      Post{CreatedByID: 1, ProviderID: nulls.NewInt(2)},
 			user:      User{ID: 2},
 			want:      true,
 		},
 		{
 			name:      "Request Delivered By non-Provider",
 			newStatus: PostStatusDelivered,
-			post:      Post{Type: PostTypeRequest, CreatedByID: 1, ProviderID: nulls.NewInt(2)},
+			post:      Post{CreatedByID: 1, ProviderID: nulls.NewInt(2)},
 			user:      User{ID: 3},
 			want:      false,
 		},
@@ -2038,7 +1947,7 @@ func (ms *ModelSuite) TestPost_GetLocationForNotifications() {
 
 func (ms *ModelSuite) TestPost_Meeting() {
 	t := ms.T()
-	posts := createPostFixtures(ms.DB, 2, 0, false)
+	posts := createPostFixtures(ms.DB, 2, false)
 	meeting := Meeting{
 		UUID:        domain.GetUUID(),
 		Name:        "a meeting",

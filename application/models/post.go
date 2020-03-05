@@ -21,42 +21,6 @@ import (
 	"github.com/silinternational/wecarry-api/domain"
 )
 
-type PostType string
-
-const (
-	PostTypeRequest PostType = "REQUEST"
-	PostTypeOffer   PostType = "OFFER"
-)
-
-func (e PostType) IsValid() bool {
-	switch e {
-	case PostTypeRequest, PostTypeOffer:
-		return true
-	}
-	return false
-}
-
-func (e PostType) String() string {
-	return string(e)
-}
-
-func (e *PostType) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = PostType(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid PostType", str)
-	}
-	return nil
-}
-
-func (e PostType) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
 type PostStatus string
 
 const (
@@ -226,7 +190,6 @@ type Post struct {
 	CreatedAt      time.Time      `json:"created_at" db:"created_at"`
 	UpdatedAt      time.Time      `json:"updated_at" db:"updated_at"`
 	CreatedByID    int            `json:"created_by_id" db:"created_by_id"`
-	Type           PostType       `json:"type" db:"type"`
 	OrganizationID int            `json:"organization_id" db:"organization_id"`
 	NeededBefore   nulls.Time     `json:"needed_before" db:"needed_before"`
 	Status         PostStatus     `json:"status" db:"status"`
@@ -234,7 +197,6 @@ type Post struct {
 	Title          string         `json:"title" db:"title"`
 	Size           PostSize       `json:"size" db:"size"`
 	UUID           uuid.UUID      `json:"uuid" db:"uuid"`
-	ReceiverID     nulls.Int      `json:"receiver_id" db:"receiver_id"`
 	ProviderID     nulls.Int      `json:"provider_id" db:"provider_id"`
 	Description    nulls.String   `json:"description" db:"description"`
 	URL            nulls.String   `json:"url" db:"url"`
@@ -288,28 +250,16 @@ func (p *Post) Update() error {
 	return update(p)
 }
 
-func (p *Post) NewWithUser(pType PostType, currentUser User) error {
+func (p *Post) NewWithUser(currentUser User) error {
 	p.CreatedByID = currentUser.ID
 	p.Status = PostStatusOpen
-
-	switch pType {
-	case PostTypeRequest:
-		p.ReceiverID = nulls.NewInt(currentUser.ID)
-	case PostTypeOffer:
-		p.ProviderID = nulls.NewInt(currentUser.ID)
-	default:
-		return errors.New("bad type for new post: " + pType.String())
-	}
-
-	p.Type = pType
-
 	return nil
 }
 
 // SetProviderWithStatus sets the new Status of the Post and if needed it
 // also sets the ProviderID (i.e. when the new status is ACCEPTED)
 func (p *Post) SetProviderWithStatus(status PostStatus, providerID *string) error {
-	if p.Type == PostTypeRequest && status == PostStatusAccepted {
+	if status == PostStatusAccepted {
 		if providerID == nil {
 			return errors.New("provider ID must not be nil")
 		}
@@ -328,10 +278,6 @@ func (p *Post) SetProviderWithStatus(status PostStatus, providerID *string) erro
 // GetPotentialProviders returns the User objects associated with the Post's
 // PotentialProviders
 func (p *Post) GetPotentialProviders() (Users, error) {
-	if p.Type != PostTypeRequest {
-		return Users{}, nil
-	}
-
 	providers := PotentialProviders{}
 	users, err := providers.FindUsersByPostID(p.ID)
 	return users, err
@@ -340,7 +286,7 @@ func (p *Post) GetPotentialProviders() (Users, error) {
 // DestroyPotentialProviders destroys all the PotentialProvider records
 // associated with the Post if the Post's status is COMPLETED
 func (p *Post) DestroyPotentialProviders(status PostStatus, user User) error {
-	if p.Type != PostTypeRequest || status != PostStatusCompleted {
+	if status != PostStatusCompleted {
 		return nil
 	}
 
@@ -352,7 +298,6 @@ func (p *Post) DestroyPotentialProviders(status PostStatus, user User) error {
 func (p *Post) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
 		&validators.IntIsPresent{Field: p.CreatedByID, Name: "CreatedBy"},
-		&validators.StringIsPresent{Field: p.Type.String(), Name: "Type"},
 		&validators.IntIsPresent{Field: p.OrganizationID, Name: "OrganizationID"},
 		&validators.StringIsPresent{Field: p.Title, Name: "Title"},
 		&validators.StringIsPresent{Field: p.Size.String(), Name: "Size"},
@@ -407,12 +352,7 @@ type updateStatusValidator struct {
 }
 
 func (v *updateStatusValidator) IsValid(errors *validate.Errors) {
-	switch v.Post.Type {
-	case PostTypeOffer:
-		v.isOfferValid(errors)
-	case PostTypeRequest:
-		v.isRequestValid(errors)
-	}
+	v.isRequestValid(errors)
 }
 
 func (v *updateStatusValidator) isOfferValid(errors *validate.Errors) {
@@ -547,7 +487,7 @@ func (p *Post) AfterUpdate(tx *pop.Connection) error {
 		return err
 	}
 
-	if p.Type != PostTypeRequest || p.Status != PostStatusOpen {
+	if p.Status != PostStatusOpen {
 		return nil
 	}
 
@@ -564,7 +504,7 @@ func (p *Post) AfterUpdate(tx *pop.Connection) error {
 
 // AfterCreate is called by Pop after successful creation of the record
 func (p *Post) AfterCreate(tx *pop.Connection) error {
-	if p.Type != PostTypeRequest || p.Status != PostStatusOpen {
+	if p.Status != PostStatusOpen {
 		return nil
 	}
 
@@ -637,14 +577,6 @@ func (p *Post) GetProvider() (*User, error) {
 		return nil, nil // provider is a nullable field, so ignore any error
 	}
 	return &provider, nil
-}
-
-func (p *Post) GetReceiver() (*User, error) {
-	receiver := User{}
-	if err := DB.Find(&receiver, p.ReceiverID); err != nil {
-		return nil, nil // receiver is a nullable field, so ignore any error
-	}
-	return &receiver, nil
 }
 
 func (p *Post) GetOrganization() (*Organization, error) {
@@ -993,21 +925,14 @@ func (p *Post) canUserChangeStatus(user User, newStatus PostStatus) bool {
 		return true
 	}
 
-	switch p.Type {
-	case PostTypeRequest:
-		if p.ProviderID.Int != user.ID {
-			return false
-		}
-		if newStatus == PostStatusDelivered {
-			return true
-		}
-		// for cancelling a DELIVERED status
-		return newStatus == PostStatusAccepted && p.Status == PostStatusDelivered
-	case PostTypeOffer:
-		return newStatus == PostStatusReceived && p.ReceiverID.Int == user.ID
+	if p.ProviderID.Int != user.ID {
+		return false
 	}
-
-	return false
+	if newStatus == PostStatusDelivered {
+		return true
+	}
+	// for cancelling a DELIVERED status
+	return newStatus == PostStatusAccepted && p.Status == PostStatusDelivered
 }
 
 // GetAudience returns a list of all of the users which have visibility to this post. As of this writing, it is
@@ -1031,19 +956,10 @@ func (p *Post) GetAudience() (Users, error) {
 // the origin for requests, and the destination for offers.
 func (p *Post) GetLocationForNotifications() (*Location, error) {
 	var postLocation Location
-	switch p.Type {
-	case PostTypeRequest:
-		if err := DB.Load(p, "Origin"); err != nil {
-			return nil, fmt.Errorf("loading post origin failed, %s", err)
-		}
-		postLocation = p.Origin
-
-	case PostTypeOffer:
-		if err := DB.Load(p, "Destination"); err != nil {
-			return nil, fmt.Errorf("loading post destination failed, %s", err)
-		}
-		postLocation = p.Destination
+	if err := DB.Load(p, "Origin"); err != nil {
+		return nil, fmt.Errorf("loading post origin failed, %s", err)
 	}
+	postLocation = p.Origin
 	return &postLocation, nil
 }
 

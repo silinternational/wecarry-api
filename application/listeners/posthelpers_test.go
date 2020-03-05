@@ -285,7 +285,7 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 }
 
 func (ms *ModelSuite) TestSendNewPostNotification() {
-	t := ms.T()
+	post := test.CreatePostFixtures(ms.DB, 1, false)[0]
 	tests := []struct {
 		name     string
 		user     models.User
@@ -295,36 +295,20 @@ func (ms *ModelSuite) TestSendNewPostNotification() {
 	}{
 		{
 			name:    "error - no user email",
-			post:    models.Post{UUID: domain.GetUUID(), Title: "post title", Type: models.PostTypeRequest},
+			post:    post,
 			wantErr: "'To' email address is required",
-		},
-		{
-			name: "error - invalid post type",
-			user: models.User{
-				Email: "user@example.com",
-			},
-			post:    models.Post{UUID: domain.GetUUID(), Title: "post title", Type: "bogus"},
-			wantErr: "invalid template name",
 		},
 		{
 			name: "request",
 			user: models.User{
 				Email: "user@example.com",
 			},
-			post:     models.Post{UUID: domain.GetUUID(), Title: "post title", Type: models.PostTypeRequest},
+			post:     post,
 			wantBody: "There is a new request",
-		},
-		{
-			name: "offer",
-			user: models.User{
-				Email: "user@example.com",
-			},
-			post:     models.Post{UUID: domain.GetUUID(), Title: "post title", Type: models.PostTypeOffer},
-			wantBody: "There is a new offer",
 		},
 	}
 	for _, nextT := range tests {
-		t.Run(nextT.name, func(t *testing.T) {
+		ms.T().Run(nextT.name, func(t *testing.T) {
 			notifications.TestEmailService.DeleteSentMessages()
 
 			err := sendNewPostNotification(nextT.user, nextT.post)
@@ -413,7 +397,7 @@ func (ms *ModelSuite) TestSendPotentialProviderCreatedNotification() {
 	requester := models.User{
 		Email: "user@example.com",
 	}
-	post := models.Post{UUID: domain.GetUUID(), Title: "post title", Type: models.PostTypeRequest}
+	post := models.Post{UUID: domain.GetUUID(), Title: "post title"}
 	wantBody := "has offered to help fulfill your request"
 
 	notifications.TestEmailService.DeleteSentMessages()
@@ -440,7 +424,7 @@ func (ms *ModelSuite) TestSendPotentialProviderSelfDestroyedNotification() {
 	requester := models.User{
 		Email: "user@example.com",
 	}
-	post := models.Post{UUID: domain.GetUUID(), Title: "post title", Type: models.PostTypeRequest}
+	post := models.Post{UUID: domain.GetUUID(), Title: "post title"}
 	wantBody := "indicated they can't fulfill your request afterall"
 
 	notifications.TestEmailService.DeleteSentMessages()
@@ -467,7 +451,7 @@ func (ms *ModelSuite) TestSendPotentialProviderRejectedNotification() {
 	provider := models.User{
 		Email: "user@example.com",
 	}
-	post := models.Post{UUID: domain.GetUUID(), Title: "post title", Type: models.PostTypeRequest}
+	post := models.Post{UUID: domain.GetUUID(), Title: "post title"}
 	wantBody := "is not prepared to have you fulfill their request"
 
 	notifications.TestEmailService.DeleteSentMessages()

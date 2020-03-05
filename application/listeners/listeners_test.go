@@ -141,9 +141,7 @@ func (ms *ModelSuite) TestSendNewMessageNotification() {
 }
 
 func createFixturesForSendPostCreatedNotifications(ms *ModelSuite) PostFixtures {
-	userFixtures := test.CreateUserFixtures(ms.DB, 3)
-	org := userFixtures.Organization
-	users := userFixtures.Users
+	users := test.CreateUserFixtures(ms.DB, 3).Users
 
 	for i := range users {
 		ms.NoError(ms.DB.Load(&users[i], "Location"))
@@ -151,17 +149,9 @@ func createFixturesForSendPostCreatedNotifications(ms *ModelSuite) PostFixtures 
 		ms.NoError(ms.DB.Save(&users[i].Location))
 	}
 
-	location := models.Location{Country: "KH"}
-	createFixture(ms, &location)
-
-	post := models.Post{
-		OrganizationID: org.ID,
-		UUID:           domain.GetUUID(),
-		CreatedByID:    users[0].ID,
-		DestinationID:  location.ID,
-		Type:           models.PostTypeOffer,
-	}
-	createFixture(ms, &post)
+	post := test.CreatePostFixtures(ms.DB, 1, false)[0]
+	origin := models.Location{Description: "KH", Country: "KH"}
+	ms.NoError(post.SetOrigin(origin))
 
 	return PostFixtures{
 		Posts: models.Posts{post},

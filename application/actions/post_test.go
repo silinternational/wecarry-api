@@ -33,12 +33,11 @@ type PotentialProvider struct {
 }
 
 type Post struct {
-	ID           string          `json:"id"`
-	Type         models.PostType `json:"type"`
-	Title        string          `json:"title"`
-	Description  *string         `json:"description"`
-	NeededBefore *string         `json:"neededBefore"`
-	CompletedOn  *string         `json:"completedOn"`
+	ID           string  `json:"id"`
+	Title        string  `json:"title"`
+	Description  *string `json:"description"`
+	NeededBefore *string `json:"neededBefore"`
+	CompletedOn  *string `json:"completedOn"`
 	Destination  struct {
 		Description string  `json:"description"`
 		Country     string  `json:"country"`
@@ -64,11 +63,6 @@ type Post struct {
 		Nickname  string `json:"nickname"`
 		AvatarURL string `json:"avatarURL"`
 	} `json:"createdBy"`
-	Receiver struct {
-		ID        string `json:"id"`
-		Nickname  string `json:"nickname"`
-		AvatarURL string `json:"avatarURL"`
-	} `json:"receiver"`
 	Provider struct {
 		ID        string `json:"id"`
 		Nickname  string `json:"nickname"`
@@ -92,9 +86,7 @@ type Post struct {
 
 const allPostFields = `{
 			id
-		    type
 			createdBy { id nickname avatarURL }
-			receiver { id nickname avatarURL }
 			provider { id nickname avatarURL }
             potentialProviders { id nickname avatarURL }
 			organization { id }
@@ -131,7 +123,6 @@ func (as *ActionSuite) Test_PostQuery() {
 	as.NoError(err)
 
 	as.Equal(f.Posts[0].UUID.String(), resp.Post.ID)
-	as.Equal(f.Posts[0].Type, resp.Post.Type)
 	as.Equal(f.Posts[0].Title, resp.Post.Title)
 	as.Equal(f.Posts[0].Description.String, *resp.Post.Description)
 
@@ -162,9 +153,6 @@ func (as *ActionSuite) Test_PostQuery() {
 	as.Equal(f.Users[0].UUID.String(), resp.Post.CreatedBy.ID, "creator ID doesn't match")
 	as.Equal(f.Users[0].Nickname, resp.Post.CreatedBy.Nickname, "creator nickname doesn't match")
 	as.Equal(f.Users[0].AuthPhotoURL.String, resp.Post.CreatedBy.AvatarURL, "creator avatar URL doesn't match")
-	as.Equal(f.Users[0].UUID.String(), resp.Post.Receiver.ID, "receiver ID doesn't match")
-	as.Equal(f.Users[0].Nickname, resp.Post.Receiver.Nickname, "receiver nickname doesn't match")
-	as.Equal(f.Users[0].AuthPhotoURL.String, resp.Post.Receiver.AvatarURL, "receiver avatar URL doesn't match")
 	as.Equal(f.Users[1].UUID.String(), resp.Post.Provider.ID, "provider ID doesn't match")
 	as.Equal(f.Users[1].Nickname, resp.Post.Provider.Nickname, "provider nickname doesn't match")
 	as.Equal(f.Users[1].AuthPhotoURL.String, resp.Post.Provider.AvatarURL, "provider avatar URL doesn't match")
@@ -352,7 +340,6 @@ func (as *ActionSuite) Test_CreatePost() {
 	input := `orgID: "` + f.Organization.UUID.String() + `"` +
 		`photoID: "` + f.File.UUID.String() + `"` +
 		`
-			type: REQUEST
 			title: "title"
 			description: "new description"
 			destination: {description:"dest" country:"dc" latitude:1.1 longitude:2.2}
@@ -362,7 +349,7 @@ func (as *ActionSuite) Test_CreatePost() {
 			visibility: ALL
 			kilograms: 1.5
 		`
-	query := `mutation { post: createPost(input: {` + input + `}) { organization { id } photo { id } type title
+	query := `mutation { post: createPost(input: {` + input + `}) { organization { id } photo { id } title
 			neededBefore description destination { description country latitude longitude }
 			origin { description country latitude longitude }
 			size url kilograms visibility }}`
@@ -371,7 +358,6 @@ func (as *ActionSuite) Test_CreatePost() {
 
 	as.Equal(f.Organization.UUID.String(), postsResp.Post.Organization.ID)
 	as.Equal(f.File.UUID.String(), postsResp.Post.Photo.ID)
-	as.Equal(models.PostTypeRequest, postsResp.Post.Type)
 	as.Equal("title", postsResp.Post.Title)
 	as.Equal("new description", *postsResp.Post.Description)
 	as.Nil(postsResp.Post.NeededBefore)
@@ -393,7 +379,6 @@ func (as *ActionSuite) Test_CreatePost() {
 	input = `orgID: "` + f.Organization.UUID.String() + `"` +
 		`meetingID: "` + f.Meetings[0].UUID.String() + `"` +
 		`
-			type: REQUEST
 			title: "title"
 			description: "new description"
 			neededBefore: "` + neededBefore + `"
