@@ -72,20 +72,6 @@ func (r *threadResolver) Messages(ctx context.Context, obj *models.Thread) ([]mo
 	return messages, nil
 }
 
-// PostID retrieves the UUID of the post to which the queried thread belongs.
-func (r *threadResolver) PostID(ctx context.Context, obj *models.Thread) (string, error) {
-	if obj == nil {
-		return "", nil
-	}
-
-	post, err := obj.GetPost()
-	if err != nil {
-		return "", domain.ReportError(ctx, err, "GetThreadPostID")
-	}
-
-	return post.UUID.String(), nil
-}
-
 // Post retrieves the post to which the queried thread belongs.
 func (r *threadResolver) Post(ctx context.Context, obj *models.Thread) (*models.Post, error) {
 	if obj == nil {

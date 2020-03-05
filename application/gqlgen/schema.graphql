@@ -536,7 +536,6 @@ type Thread {
     id: ID!
     participants: [PublicProfile!]!
     messages: [Message!]!
-    postID: String!
     post: Post!
     lastViewedAt: Time!
     createdAt: Time!

@@ -219,7 +219,6 @@ type ComplexityRoot struct {
 		Messages           func(childComplexity int) int
 		Participants       func(childComplexity int) int
 		Post               func(childComplexity int) int
-		PostID             func(childComplexity int) int
 		UnreadMessageCount func(childComplexity int) int
 		UpdatedAt          func(childComplexity int) int
 	}
@@ -378,7 +377,6 @@ type ThreadResolver interface {
 	ID(ctx context.Context, obj *models.Thread) (string, error)
 	Participants(ctx context.Context, obj *models.Thread) ([]PublicProfile, error)
 	Messages(ctx context.Context, obj *models.Thread) ([]models.Message, error)
-	PostID(ctx context.Context, obj *models.Thread) (string, error)
 	Post(ctx context.Context, obj *models.Thread) (*models.Post, error)
 	LastViewedAt(ctx context.Context, obj *models.Thread) (*time.Time, error)
 
@@ -1456,13 +1454,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Thread.Post(childComplexity), true
 
-	case "Thread.postID":
-		if e.complexity.Thread.PostID == nil {
-			break
-		}
-
-		return e.complexity.Thread.PostID(childComplexity), true
-
 	case "Thread.unreadMessageCount":
 		if e.complexity.Thread.UnreadMessageCount == nil {
 			break
@@ -2222,7 +2213,6 @@ type Thread {
     id: ID!
     participants: [PublicProfile!]!
     messages: [Message!]!
-    postID: String!
     post: Post!
     lastViewedAt: Time!
     createdAt: Time!
@@ -7608,43 +7598,6 @@ func (ec *executionContext) _Thread_messages(ctx context.Context, field graphql.
 	return ec.marshalNMessage2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMessage(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Thread_postID(ctx context.Context, field graphql.CollectedField, obj *models.Thread) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Thread",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Thread().PostID(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _Thread_post(ctx context.Context, field graphql.CollectedField, obj *models.Thread) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -11963,20 +11916,6 @@ func (ec *executionContext) _Thread(ctx context.Context, sel ast.SelectionSet, o
 					}
 				}()
 				res = ec._Thread_messages(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			})
-		case "postID":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Thread_postID(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
