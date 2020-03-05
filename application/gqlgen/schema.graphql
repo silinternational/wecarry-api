@@ -385,7 +385,7 @@ input UpdateOrganizationInput {
 
 type OrganizationDomain {
     domain: String!
-    organizationID: ID!
+    organization: Organization!
     authType: String!
     authConfig: String!
 }

@@ -14,16 +14,18 @@ func (r *Resolver) OrganizationDomain() OrganizationDomainResolver {
 
 type organizationDomainResolver struct{ *Resolver }
 
-// OrganizationID converts the organization's autoincrement ID to its UUID
-func (r *organizationDomainResolver) OrganizationID(ctx context.Context, obj *models.OrganizationDomain) (string, error) {
+// Organization associated with the domain
+func (r *organizationDomainResolver) Organization(ctx context.Context, obj *models.OrganizationDomain) (
+	*models.Organization, error) {
+
 	if obj == nil {
-		return "", nil
+		return nil, nil
 	}
 
-	id, err := obj.GetOrganizationUUID()
+	organization, err := obj.Organization()
 	if err != nil {
-		return "", domain.ReportError(ctx, err, "GetOrganizationDomainOrganizationID")
+		return nil, domain.ReportError(ctx, err, "GetOrganizationDomainOrganization")
 	}
 
-	return id, nil
+	return &organization, nil
 }

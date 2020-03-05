@@ -155,10 +155,10 @@ type ComplexityRoot struct {
 	}
 
 	OrganizationDomain struct {
-		AuthConfig     func(childComplexity int) int
-		AuthType       func(childComplexity int) int
-		Domain         func(childComplexity int) int
-		OrganizationID func(childComplexity int) int
+		AuthConfig   func(childComplexity int) int
+		AuthType     func(childComplexity int) int
+		Domain       func(childComplexity int) int
+		Organization func(childComplexity int) int
 	}
 
 	Post struct {
@@ -331,7 +331,7 @@ type OrganizationResolver interface {
 	TrustedOrganizations(ctx context.Context, obj *models.Organization) ([]models.Organization, error)
 }
 type OrganizationDomainResolver interface {
-	OrganizationID(ctx context.Context, obj *models.OrganizationDomain) (string, error)
+	Organization(ctx context.Context, obj *models.OrganizationDomain) (*models.Organization, error)
 }
 type PostResolver interface {
 	ID(ctx context.Context, obj *models.Post) (string, error)
@@ -1076,12 +1076,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.OrganizationDomain.Domain(childComplexity), true
 
-	case "OrganizationDomain.organizationID":
-		if e.complexity.OrganizationDomain.OrganizationID == nil {
+	case "OrganizationDomain.organization":
+		if e.complexity.OrganizationDomain.Organization == nil {
 			break
 		}
 
-		return e.complexity.OrganizationDomain.OrganizationID(childComplexity), true
+		return e.complexity.OrganizationDomain.Organization(childComplexity), true
 
 	case "Post.completedOn":
 		if e.complexity.Post.CompletedOn == nil {
@@ -2062,7 +2062,7 @@ input UpdateOrganizationInput {
 
 type OrganizationDomain {
     domain: String!
-    organizationID: ID!
+    organization: Organization!
     authType: String!
     authConfig: String!
 }
@@ -5749,7 +5749,7 @@ func (ec *executionContext) _OrganizationDomain_domain(ctx context.Context, fiel
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _OrganizationDomain_organizationID(ctx context.Context, field graphql.CollectedField, obj *models.OrganizationDomain) (ret graphql.Marshaler) {
+func (ec *executionContext) _OrganizationDomain_organization(ctx context.Context, field graphql.CollectedField, obj *models.OrganizationDomain) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -5768,7 +5768,7 @@ func (ec *executionContext) _OrganizationDomain_organizationID(ctx context.Conte
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.OrganizationDomain().OrganizationID(rctx, obj)
+		return ec.resolvers.OrganizationDomain().Organization(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5780,10 +5780,10 @@ func (ec *executionContext) _OrganizationDomain_organizationID(ctx context.Conte
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*models.Organization)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNOrganization2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganization(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _OrganizationDomain_authType(ctx context.Context, field graphql.CollectedField, obj *models.OrganizationDomain) (ret graphql.Marshaler) {
@@ -11312,7 +11312,7 @@ func (ec *executionContext) _OrganizationDomain(ctx context.Context, sel ast.Sel
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "organizationID":
+		case "organization":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
 				defer func() {
@@ -11320,7 +11320,7 @@ func (ec *executionContext) _OrganizationDomain(ctx context.Context, sel ast.Sel
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._OrganizationDomain_organizationID(ctx, field, obj)
+				res = ec._OrganizationDomain_organization(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
