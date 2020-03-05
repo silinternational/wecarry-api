@@ -560,7 +560,7 @@ type User {
     avatarURL: String
     "`File` ID of the user's photo, if present"
     photoID: String
-    preferences: UserPreferences
+    preferences: UserPreferences!
     "user's home location"
     location: Location
     unreadMessageCount: Int!
@@ -591,9 +591,9 @@ input UpdateUserInput {
 }
 
 type UserPreferences {
-    language: String
+    language: PreferredLanguage
     timeZone: String
-    weightUnit: String
+    weightUnit: PreferredWeightUnit
 }
 
 input UpdateUserPreferencesInput {
