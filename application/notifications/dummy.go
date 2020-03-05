@@ -22,6 +22,10 @@ type dummyTemplate struct {
 	subject, body string
 }
 
+type DummyMessageInfo struct {
+	Subject, ToName, ToEmail string
+}
+
 var dummyTemplates = map[string]dummyTemplate{
 	domain.MessageTemplateNewRequest: {
 		subject: "new request",
@@ -165,4 +169,16 @@ func (t *DummyEmailService) GetLastBody() string {
 	}
 
 	return t.sentMessages[len(t.sentMessages)-1].body
+}
+
+func (t *DummyEmailService) GetSentMessages() []DummyMessageInfo {
+	messages := make([]DummyMessageInfo, len(t.sentMessages))
+	for i, m := range t.sentMessages {
+		messages[i] = DummyMessageInfo{
+			Subject: m.subject,
+			ToName:  m.toName,
+			ToEmail: m.toEmail,
+		}
+	}
+	return messages
 }
