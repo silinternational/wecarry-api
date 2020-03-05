@@ -33,43 +33,65 @@ type CreateMeetingParticipantInput struct {
 }
 
 type CreateMessageInput struct {
-	Content  string  `json:"content"`
-	PostID   string  `json:"postID"`
+	// message content, limited to 4,096 characters
+	Content string `json:"content"`
+	// ID of the subject Post (request)
+	PostID string `json:"postID"`
+	// Message thread to which the new message should be attached. If not specified, a new thread is created.
 	ThreadID *string `json:"threadID"`
 }
 
 type CreateOrganizationDomainInput struct {
-	Domain         string  `json:"domain"`
-	OrganizationID string  `json:"organizationID"`
-	AuthType       *string `json:"authType"`
-	AuthConfig     *string `json:"authConfig"`
+	// domain name, limited to 255 characters
+	Domain string `json:"domain"`
+	// ID of the Organization that owns this domain
+	OrganizationID string `json:"organizationID"`
+	// Authentication type, overriding the Organization's `authType`. Can be: `saml`, `google`, `azureadv2`.
+	AuthType *string `json:"authType"`
+	// Authentication configuration, overriding the Organization's `authConfig. See
+	// https://github.com/silinternational/wecarry-api/blob/master/README.md
+	AuthConfig *string `json:"authConfig"`
 }
 
 type CreateOrganizationInput struct {
-	Name       string  `json:"name"`
-	URL        *string `json:"url"`
-	AuthType   string  `json:"authType"`
-	AuthConfig string  `json:"authConfig"`
+	// Organization name, limited to 255 characters
+	Name string `json:"name"`
+	// Website URL of the Organization, limited to 255 characters
+	URL *string `json:"url"`
+	// Authentication type for the organization. Can be `saml`, `google`, or `azureadv2`.
+	AuthType string `json:"authType"`
+	// Authentication configuration. See https://github.com/silinternational/wecarry-api/blob/master/README.md
+	AuthConfig string `json:"authConfig"`
+	// ID of pre-stored image logo file. Upload using the `upload` REST API endpoint.
 	LogoFileID *string `json:"logoFileID"`
 }
 
 type CreateOrganizationTrustInput struct {
-	PrimaryID   string `json:"primaryID"`
+	// ID of one of the two Organizations to join in a trusted affiliation
+	PrimaryID string `json:"primaryID"`
+	// ID of the second of two Organizations to join in a trusted affiliation
 	SecondaryID string `json:"secondaryID"`
 }
 
 // Specify a Geographic location
 type LocationInput struct {
-	Description string   `json:"description"`
-	Country     string   `json:"country"`
-	Latitude    *float64 `json:"latitude"`
-	Longitude   *float64 `json:"longitude"`
+	// Human-friendly description, e.g. 'Los Angeles, CA, USA'
+	Description string `json:"description"`
+	// Country (ISO 3166-1 Alpha-2 code), e.g. 'US'
+	Country string `json:"country"`
+	// Latitude in decimal degrees, e.g. -30.95 = 30 degrees 57 minutes south
+	Latitude *float64 `json:"latitude"`
+	// Longitude in decimal degrees, e.g. -80.05 = 80 degrees 3 minutes west
+	Longitude *float64 `json:"longitude"`
 }
 
 // User fields that can safely be visible to any user in the system
 type PublicProfile struct {
-	ID        string  `json:"id"`
-	Nickname  string  `json:"nickname"`
+	// unique identifier for the User, the same value as in the `User` type
+	ID string `json:"id"`
+	// User's nickname. Auto-assigned upon creation of a User, but editable by the User. Limited to 255 characters.
+	Nickname string `json:"nickname"`
+	// avatarURL is generated from an attached photo if present, an external URL if present, or a Gravatar URL
 	AvatarURL *string `json:"avatarURL"`
 }
 
@@ -90,16 +112,21 @@ type RemoveMeetingParticipantInput struct {
 }
 
 type RemoveOrganizationDomainInput struct {
-	Domain         string `json:"domain"`
+	// domain name, limited to 255 characters
+	Domain string `json:"domain"`
+	// ID of the Organization that owns this domain
 	OrganizationID string `json:"organizationID"`
 }
 
 type RemoveOrganizationTrustInput struct {
-	PrimaryID   string `json:"primaryID"`
+	// ID of one of the two Organizations in the trust to be removed
+	PrimaryID string `json:"primaryID"`
+	// ID of the second of two Organizations in the trust to be removed
 	SecondaryID string `json:"secondaryID"`
 }
 
 type RemoveWatchInput struct {
+	// unique identifier for the Watch to be removed
 	ID string `json:"id"`
 }
 
@@ -109,34 +136,49 @@ type SetThreadLastViewedAtInput struct {
 }
 
 type UpdateOrganizationInput struct {
-	ID         string  `json:"id"`
-	Name       string  `json:"name"`
-	URL        *string `json:"url"`
-	AuthType   string  `json:"authType"`
-	AuthConfig string  `json:"authConfig"`
+	// unique identifier for the Organization to be updated
+	ID string `json:"id"`
+	// Organization name, limited to 255 characters
+	Name string `json:"name"`
+	// Website URL of the Organization, limited to 255 characters. If omitted, existing URL is erased.
+	URL *string `json:"url"`
+	// Authentication type for the organization. Can be 'saml', 'google', or 'azureadv2'.
+	AuthType string `json:"authType"`
+	// Authentication configuration. See https://github.com/silinternational/wecarry-api/blob/master/README.md
+	AuthConfig string `json:"authConfig"`
+	// ID of image logo file. Upload using the `upload` REST API endpoint. If omitted, existing logo is erased.
 	LogoFileID *string `json:"logoFileID"`
 }
 
 type UpdatePostStatusInput struct {
-	ID             string            `json:"id"`
-	Status         models.PostStatus `json:"status"`
-	ProviderUserID *string           `json:"providerUserID"`
+	// ID of the post to update
+	ID string `json:"id"`
+	// New Status. Only a limited set of transitions are allowed.
+	Status models.PostStatus `json:"status"`
+	// User ID of the accepted provider. Required if `status` is ACCEPTED and ignored otherwise.
+	ProviderUserID *string `json:"providerUserID"`
 }
 
 // Input object for `updateUser`
 type UpdateUserInput struct {
-	ID       *string `json:"id"`
+	// unique identifier for the User to be updated
+	ID *string `json:"id"`
+	// User's nickname. Auto-assigned upon creation of a User, but editable by the User. Limited to 255 characters.
 	Nickname *string `json:"nickname"`
 	// File ID of avatar photo. If omitted or `null`, the photo is removed from the profile.
 	PhotoID *string `json:"photoID"`
-	// Specify the user's "home" location. If omitted or `null`, the location is removed from the profile.
-	Location    *LocationInput              `json:"location"`
+	// Specify the user's 'home' location. If omitted or `null`, the location is removed from the profile.
+	Location *LocationInput `json:"location"`
+	// New user preferences. If `null` no changes are made.
 	Preferences *UpdateUserPreferencesInput `json:"preferences"`
 }
 
 type UpdateUserPreferencesInput struct {
-	Language   *PreferredLanguage   `json:"language"`
-	TimeZone   *string              `json:"timeZone"`
+	// preferred language -- if omitted, the preference is set to the App default
+	Language *PreferredLanguage `json:"language"`
+	// time zone -- if omitted, the preference is set to the App default
+	TimeZone *string `json:"timeZone"`
+	// weight unit-- if omitted, the preference is set to the App default
 	WeightUnit *PreferredWeightUnit `json:"weightUnit"`
 }
 
@@ -190,11 +232,15 @@ func (e MeetingVisibility) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
+// Context of a User with respect to a Post (Request)
 type PostRole string
 
 const (
+	// Posts created by the User
 	PostRoleCreatedby PostRole = "CREATEDBY"
+	// Posts to be received by the User
 	PostRoleReceiving PostRole = "RECEIVING"
+	// Posts provided by the User. Posts where the user is a PotentialProvider are not included.
 	PostRoleProviding PostRole = "PROVIDING"
 )
 
@@ -233,27 +279,33 @@ func (e PostRole) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
+// User's preferred language, used for translation of system text messages. (ISO 639-1 code)
 type PreferredLanguage string
 
 const (
+	// English
 	PreferredLanguageEn PreferredLanguage = "EN"
+	// French
 	PreferredLanguageFr PreferredLanguage = "FR"
-	PreferredLanguageSp PreferredLanguage = "SP"
+	// Spanish
+	PreferredLanguageEs PreferredLanguage = "ES"
+	// Korean
 	PreferredLanguageKo PreferredLanguage = "KO"
+	// Portuguese
 	PreferredLanguagePt PreferredLanguage = "PT"
 )
 
 var AllPreferredLanguage = []PreferredLanguage{
 	PreferredLanguageEn,
 	PreferredLanguageFr,
-	PreferredLanguageSp,
+	PreferredLanguageEs,
 	PreferredLanguageKo,
 	PreferredLanguagePt,
 }
 
 func (e PreferredLanguage) IsValid() bool {
 	switch e {
-	case PreferredLanguageEn, PreferredLanguageFr, PreferredLanguageSp, PreferredLanguageKo, PreferredLanguagePt:
+	case PreferredLanguageEn, PreferredLanguageFr, PreferredLanguageEs, PreferredLanguageKo, PreferredLanguagePt:
 		return true
 	}
 	return false
@@ -280,6 +332,7 @@ func (e PreferredLanguage) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
+// User's preferred weight units
 type PreferredWeightUnit string
 
 const (
