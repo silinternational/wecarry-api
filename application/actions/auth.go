@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -755,9 +756,14 @@ func getLoginSuccessRedirectURL(authUser AuthUser, returnTo string) string {
 	if authUser.IsNew {
 		uiURL += "/#/welcome"
 		if len(returnTo) > 0 {
-			params += "&" + ReturnToParam + "=" + returnTo
+			params += "&" + ReturnToParam + "=" + url.QueryEscape(returnTo)
 		}
 		return uiURL + params
+	}
+
+	// Avoid two question marks in the params
+	if strings.Contains(returnTo, "?") && strings.HasPrefix(params, "?") {
+		params = "&" + params[1:]
 	}
 
 	return uiURL + returnTo + params
