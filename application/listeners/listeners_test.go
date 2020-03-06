@@ -6,6 +6,7 @@ import (
 	"os"
 	"reflect"
 	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/gobuffalo/events"
@@ -155,6 +156,7 @@ func createFixturesForSendPostCreatedNotifications(ms *ModelSuite) PostFixtures 
 
 	return PostFixtures{
 		Posts: models.Posts{post},
+		Users: users,
 	}
 }
 
@@ -173,6 +175,17 @@ func (ms *ModelSuite) TestSendPostCreatedNotifications() {
 
 	sendPostCreatedNotifications(e)
 
-	emailCount := notifications.TestEmailService.GetNumberOfMessagesSent()
-	ms.Equal(2, emailCount, "wrong email count")
+	emailsSent := notifications.TestEmailService.GetSentMessages()
+	nMessages := 0
+	for _, e := range emailsSent {
+		if !strings.Contains(e.Subject, "New Request on WeCarry") {
+			continue
+		}
+		if e.ToEmail != f.Users[1].Email && e.ToEmail != f.Users[2].Email {
+			continue
+		}
+
+		nMessages++
+	}
+	ms.GreaterOrEqual(nMessages, 2, "wrong email count")
 }

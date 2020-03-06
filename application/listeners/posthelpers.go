@@ -358,7 +358,6 @@ func sendNewPostNotifications(post models.Post, users models.Users) {
 		if !user.WantsPostNotification(post) {
 			continue
 		}
-		fmt.Printf(" ----------- %d\n", users[i].ID)
 
 		if err := sendNewPostNotification(user, post); err != nil {
 			domain.ErrLogger.Printf("error sending post created notification (%d of %d), %s",

@@ -2,7 +2,6 @@ package listeners
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/gobuffalo/events"
 
@@ -214,10 +213,6 @@ func sendPostCreatedNotifications(e events.Event) {
 	if err != nil {
 		domain.ErrLogger.Printf("unable to get post audience in event listener: %s", err.Error())
 		return
-	}
-
-	for i := range users {
-		fmt.Printf(" ----------- %d\n", users[i].ID)
 	}
 
 	sendNewPostNotifications(post, users)
