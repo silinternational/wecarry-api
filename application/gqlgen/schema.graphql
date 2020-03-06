@@ -570,8 +570,8 @@ an Organization's domain(s) will authenticate using that Organization's authenti
 type OrganizationDomain {
     "domain name, limited to 255 characters"
     domain: String!
-    "ID of the Organization that owns this domain"
-    organizationID: ID!
+    "Organization that owns this domain"
+    organization: Organization!
     "Authentication type, overriding the Organization's `authType`. Can be: `saml`, `google`, `azureadv2`."
     authType: String!
     """
@@ -750,8 +750,6 @@ type Thread {
     participants: [PublicProfile!]!
     "Messages on the thread"
     messages: [Message!]!
-    "ID of the post that owns this message thread"
-    postID: String!
     "Post that owns this message thread"
     post: Post!
     "The time the auth user last viewed this thread. Messages with `updatedAt` after this time can be considered unread."
@@ -787,7 +785,7 @@ type User {
     avatarURL: String
     "`File` ID of the user's photo, if present"
     photoID: String
-    preferences: UserPreferences
+    preferences: UserPreferences!
     "user's home location"
     location: Location
     unreadMessageCount: Int!
@@ -825,11 +823,11 @@ input UpdateUserInput {
 
 type UserPreferences {
     "preferred language for translation of App text, including notifications and error messages"
-    language: String
+    language: PreferredLanguage
     "preferred time zone for localization of dates and times, particularly in notification messages"
     timeZone: String
     "preferred weight unit for customized display of weight quantities"
-    weightUnit: String
+    weightUnit: PreferredWeightUnit
 }
 
 input UpdateUserPreferencesInput {

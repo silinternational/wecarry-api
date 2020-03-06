@@ -49,6 +49,7 @@ type ResolverRoot interface {
 	Query() QueryResolver
 	Thread() ThreadResolver
 	User() UserResolver
+	UserPreferences() UserPreferencesResolver
 	Watch() WatchResolver
 }
 
@@ -154,10 +155,10 @@ type ComplexityRoot struct {
 	}
 
 	OrganizationDomain struct {
-		AuthConfig     func(childComplexity int) int
-		AuthType       func(childComplexity int) int
-		Domain         func(childComplexity int) int
-		OrganizationID func(childComplexity int) int
+		AuthConfig   func(childComplexity int) int
+		AuthType     func(childComplexity int) int
+		Domain       func(childComplexity int) int
+		Organization func(childComplexity int) int
 	}
 
 	Post struct {
@@ -218,7 +219,6 @@ type ComplexityRoot struct {
 		Messages           func(childComplexity int) int
 		Participants       func(childComplexity int) int
 		Post               func(childComplexity int) int
-		PostID             func(childComplexity int) int
 		UnreadMessageCount func(childComplexity int) int
 		UpdatedAt          func(childComplexity int) int
 	}
@@ -331,7 +331,7 @@ type OrganizationResolver interface {
 	TrustedOrganizations(ctx context.Context, obj *models.Organization) ([]models.Organization, error)
 }
 type OrganizationDomainResolver interface {
-	OrganizationID(ctx context.Context, obj *models.OrganizationDomain) (string, error)
+	Organization(ctx context.Context, obj *models.OrganizationDomain) (*models.Organization, error)
 }
 type PostResolver interface {
 	ID(ctx context.Context, obj *models.Post) (string, error)
@@ -377,7 +377,6 @@ type ThreadResolver interface {
 	ID(ctx context.Context, obj *models.Thread) (string, error)
 	Participants(ctx context.Context, obj *models.Thread) ([]PublicProfile, error)
 	Messages(ctx context.Context, obj *models.Thread) ([]models.Message, error)
-	PostID(ctx context.Context, obj *models.Thread) (string, error)
 	Post(ctx context.Context, obj *models.Thread) (*models.Post, error)
 	LastViewedAt(ctx context.Context, obj *models.Thread) (*time.Time, error)
 
@@ -393,6 +392,11 @@ type UserResolver interface {
 	UnreadMessageCount(ctx context.Context, obj *models.User) (int, error)
 	Organizations(ctx context.Context, obj *models.User) ([]models.Organization, error)
 	Posts(ctx context.Context, obj *models.User, role PostRole) ([]models.Post, error)
+}
+type UserPreferencesResolver interface {
+	Language(ctx context.Context, obj *models.StandardPreferences) (*PreferredLanguage, error)
+
+	WeightUnit(ctx context.Context, obj *models.StandardPreferences) (*PreferredWeightUnit, error)
 }
 type WatchResolver interface {
 	ID(ctx context.Context, obj *models.Watch) (string, error)
@@ -1072,12 +1076,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.OrganizationDomain.Domain(childComplexity), true
 
-	case "OrganizationDomain.organizationID":
-		if e.complexity.OrganizationDomain.OrganizationID == nil {
+	case "OrganizationDomain.organization":
+		if e.complexity.OrganizationDomain.Organization == nil {
 			break
 		}
 
-		return e.complexity.OrganizationDomain.OrganizationID(childComplexity), true
+		return e.complexity.OrganizationDomain.Organization(childComplexity), true
 
 	case "Post.completedOn":
 		if e.complexity.Post.CompletedOn == nil {
@@ -1449,13 +1453,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Thread.Post(childComplexity), true
-
-	case "Thread.postID":
-		if e.complexity.Thread.PostID == nil {
-			break
-		}
-
-		return e.complexity.Thread.PostID(childComplexity), true
 
 	case "Thread.unreadMessageCount":
 		if e.complexity.Thread.UnreadMessageCount == nil {
@@ -2250,8 +2247,8 @@ an Organization's domain(s) will authenticate using that Organization's authenti
 type OrganizationDomain {
     "domain name, limited to 255 characters"
     domain: String!
-    "ID of the Organization that owns this domain"
-    organizationID: ID!
+    "Organization that owns this domain"
+    organization: Organization!
     "Authentication type, overriding the Organization's ` + "`" + `authType` + "`" + `. Can be: ` + "`" + `saml` + "`" + `, ` + "`" + `google` + "`" + `, ` + "`" + `azureadv2` + "`" + `."
     authType: String!
     """
@@ -2430,8 +2427,6 @@ type Thread {
     participants: [PublicProfile!]!
     "Messages on the thread"
     messages: [Message!]!
-    "ID of the post that owns this message thread"
-    postID: String!
     "Post that owns this message thread"
     post: Post!
     "The time the auth user last viewed this thread. Messages with ` + "`" + `updatedAt` + "`" + ` after this time can be considered unread."
@@ -2467,7 +2462,7 @@ type User {
     avatarURL: String
     "` + "`" + `File` + "`" + ` ID of the user's photo, if present"
     photoID: String
-    preferences: UserPreferences
+    preferences: UserPreferences!
     "user's home location"
     location: Location
     unreadMessageCount: Int!
@@ -2505,11 +2500,11 @@ input UpdateUserInput {
 
 type UserPreferences {
     "preferred language for translation of App text, including notifications and error messages"
-    language: String
+    language: PreferredLanguage
     "preferred time zone for localization of dates and times, particularly in notification messages"
     timeZone: String
     "preferred weight unit for customized display of weight quantities"
-    weightUnit: String
+    weightUnit: PreferredWeightUnit
 }
 
 input UpdateUserPreferencesInput {
@@ -6003,7 +5998,7 @@ func (ec *executionContext) _OrganizationDomain_domain(ctx context.Context, fiel
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _OrganizationDomain_organizationID(ctx context.Context, field graphql.CollectedField, obj *models.OrganizationDomain) (ret graphql.Marshaler) {
+func (ec *executionContext) _OrganizationDomain_organization(ctx context.Context, field graphql.CollectedField, obj *models.OrganizationDomain) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -6022,7 +6017,7 @@ func (ec *executionContext) _OrganizationDomain_organizationID(ctx context.Conte
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.OrganizationDomain().OrganizationID(rctx, obj)
+		return ec.resolvers.OrganizationDomain().Organization(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6034,10 +6029,10 @@ func (ec *executionContext) _OrganizationDomain_organizationID(ctx context.Conte
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*models.Organization)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNOrganization2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganization(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _OrganizationDomain_authType(ctx context.Context, field graphql.CollectedField, obj *models.OrganizationDomain) (ret graphql.Marshaler) {
@@ -7852,43 +7847,6 @@ func (ec *executionContext) _Thread_messages(ctx context.Context, field graphql.
 	return ec.marshalNMessage2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMessage(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Thread_postID(ctx context.Context, field graphql.CollectedField, obj *models.Thread) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Thread",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Thread().PostID(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _Thread_post(ctx context.Context, field graphql.CollectedField, obj *models.Thread) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -8387,12 +8345,15 @@ func (ec *executionContext) _User_preferences(ctx context.Context, field graphql
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(*models.StandardPreferences)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOUserPreferences2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐStandardPreferences(ctx, field.Selections, res)
+	return ec.marshalNUserPreferences2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐStandardPreferences(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _User_location(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
@@ -8597,13 +8558,13 @@ func (ec *executionContext) _UserPreferences_language(ctx context.Context, field
 		Object:   "UserPreferences",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Language, nil
+		return ec.resolvers.UserPreferences().Language(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8612,10 +8573,10 @@ func (ec *executionContext) _UserPreferences_language(ctx context.Context, field
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*PreferredLanguage)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOString2string(ctx, field.Selections, res)
+	return ec.marshalOPreferredLanguage2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPreferredLanguage(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _UserPreferences_timeZone(ctx context.Context, field graphql.CollectedField, obj *models.StandardPreferences) (ret graphql.Marshaler) {
@@ -8665,13 +8626,13 @@ func (ec *executionContext) _UserPreferences_weightUnit(ctx context.Context, fie
 		Object:   "UserPreferences",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.WeightUnit, nil
+		return ec.resolvers.UserPreferences().WeightUnit(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8680,10 +8641,10 @@ func (ec *executionContext) _UserPreferences_weightUnit(ctx context.Context, fie
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*PreferredWeightUnit)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOString2string(ctx, field.Selections, res)
+	return ec.marshalOPreferredWeightUnit2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPreferredWeightUnit(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Watch_id(ctx context.Context, field graphql.CollectedField, obj *models.Watch) (ret graphql.Marshaler) {
@@ -11600,7 +11561,7 @@ func (ec *executionContext) _OrganizationDomain(ctx context.Context, sel ast.Sel
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "organizationID":
+		case "organization":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
 				defer func() {
@@ -11608,7 +11569,7 @@ func (ec *executionContext) _OrganizationDomain(ctx context.Context, sel ast.Sel
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._OrganizationDomain_organizationID(ctx, field, obj)
+				res = ec._OrganizationDomain_organization(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -12209,20 +12170,6 @@ func (ec *executionContext) _Thread(ctx context.Context, sel ast.SelectionSet, o
 				}
 				return res
 			})
-		case "postID":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Thread_postID(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			})
 		case "post":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -12364,6 +12311,9 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 					}
 				}()
 				res = ec._User_preferences(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			})
 		case "location":
@@ -12456,11 +12406,29 @@ func (ec *executionContext) _UserPreferences(ctx context.Context, sel ast.Select
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("UserPreferences")
 		case "language":
-			out.Values[i] = ec._UserPreferences_language(ctx, field, obj)
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._UserPreferences_language(ctx, field, obj)
+				return res
+			})
 		case "timeZone":
 			out.Values[i] = ec._UserPreferences_timeZone(ctx, field, obj)
 		case "weightUnit":
-			out.Values[i] = ec._UserPreferences_weightUnit(ctx, field, obj)
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._UserPreferences_weightUnit(ctx, field, obj)
+				return res
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -13700,6 +13668,20 @@ func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋsilinternationalᚋwe
 	return ec._User(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNUserPreferences2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐStandardPreferences(ctx context.Context, sel ast.SelectionSet, v models.StandardPreferences) graphql.Marshaler {
+	return ec._UserPreferences(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUserPreferences2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐStandardPreferences(ctx context.Context, sel ast.SelectionSet, v *models.StandardPreferences) graphql.Marshaler {
+	if v == nil {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._UserPreferences(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNWatch2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐWatch(ctx context.Context, sel ast.SelectionSet, v models.Watch) graphql.Marshaler {
 	return ec._Watch(ctx, sel, &v)
 }
@@ -14347,17 +14329,6 @@ func (ec *executionContext) unmarshalOUserAdminRole2githubᚗcomᚋsilinternatio
 
 func (ec *executionContext) marshalOUserAdminRole2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUserAdminRole(ctx context.Context, sel ast.SelectionSet, v models.UserAdminRole) graphql.Marshaler {
 	return graphql.MarshalString(string(v))
-}
-
-func (ec *executionContext) marshalOUserPreferences2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐStandardPreferences(ctx context.Context, sel ast.SelectionSet, v models.StandardPreferences) graphql.Marshaler {
-	return ec._UserPreferences(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalOUserPreferences2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐStandardPreferences(ctx context.Context, sel ast.SelectionSet, v *models.StandardPreferences) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._UserPreferences(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValue(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {
