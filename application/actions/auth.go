@@ -747,18 +747,21 @@ func getLoginSuccessRedirectURL(authUser AuthUser, returnTo string) string {
 	params := fmt.Sprintf("?%s=Bearer&%s=%s&%s=%s",
 		TokenTypeParam, ExpiresUTCParam, tokenExpiry, AccessTokenParam, authUser.AccessToken)
 
-	// Ensure there is one set of /# between uiURL and the returnTo
-	if !strings.HasPrefix(returnTo, `/#`) {
-		returnTo = "/#" + returnTo
-	}
-
 	// New Users go straight to the welcome page
 	if authUser.IsNew {
 		uiURL += "/#/welcome"
-		if len(returnTo) > 0 {
+		if len(returnTo) > 0 { // Ensure there is one set of /# between uiURL and the returnTo
+			if strings.HasPrefix(returnTo, `/#/`) {
+				returnTo = returnTo[2:]
+			}
 			params += "&" + ReturnToParam + "=" + url.QueryEscape(returnTo)
 		}
 		return uiURL + params
+	}
+
+	// Ensure there is one set of /# between uiURL and the returnTo
+	if !strings.HasPrefix(returnTo, `/#`) {
+		returnTo = `/#` + returnTo
 	}
 
 	// Avoid two question marks in the params
