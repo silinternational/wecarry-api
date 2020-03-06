@@ -756,7 +756,7 @@ func getLoginSuccessRedirectURL(authUser AuthUser, returnTo string) string {
 	if authUser.IsNew {
 		uiURL += "/#/welcome"
 		if len(returnTo) > 0 {
-			params += "&" + url.QueryEscape(ReturnToParam) + "=" + url.QueryEscape(returnTo)
+			params += "&" + ReturnToParam + "=" + url.QueryEscape(returnTo)
 		}
 		return uiURL + params
 	}
