@@ -3,6 +3,9 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gobuffalo/nulls"
@@ -19,9 +22,43 @@ import (
 	"github.com/silinternational/wecarry-api/domain"
 )
 
-const AuthTypeAzureAD = "azureadv2"
-const AuthTypeGoogle = "google"
-const AuthTypeSaml = "saml"
+type AuthType string
+
+const (
+	AuthTypeAzureAD AuthType = "AZUREADV2"
+	AuthTypeDefault AuthType = "DEFAULT"
+	AuthTypeGoogle  AuthType = "GOOGLE"
+	AuthTypeSaml    AuthType = "SAML"
+)
+
+func (e AuthType) IsValid() bool {
+	switch e {
+	case AuthTypeAzureAD, AuthTypeDefault, AuthTypeGoogle, AuthTypeSaml:
+		return true
+	}
+	return false
+}
+
+func (e AuthType) String() string {
+	return string(e)
+}
+
+func (e *AuthType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = AuthType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid AuthType", str)
+	}
+	return nil
+}
+
+func (e AuthType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
 
 type Organization struct {
 	ID         int          `json:"id" db:"id"`
@@ -29,7 +66,7 @@ type Organization struct {
 	UpdatedAt  time.Time    `json:"updated_at" db:"updated_at"`
 	Name       string       `json:"name" db:"name"`
 	Url        nulls.String `json:"url" db:"url"`
-	AuthType   string       `json:"auth_type" db:"auth_type"`
+	AuthType   AuthType     `json:"auth_type" db:"auth_type"`
 	AuthConfig string       `json:"auth_config" db:"auth_config"`
 	UUID       uuid.UUID    `json:"uuid" db:"uuid"`
 	LogoFileID nulls.Int    `json:"logo_file_id" db:"logo_file_id"`
@@ -48,7 +85,7 @@ type Organizations []Organization
 func (o *Organization) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
 		&validators.StringIsPresent{Field: o.Name, Name: "Name"},
-		&validators.StringIsPresent{Field: o.AuthType, Name: "AuthType"},
+		&validators.StringIsPresent{Field: o.AuthType.String(), Name: "AuthType"},
 		&validators.UUIDIsPresent{Field: o.UUID, Name: "UUID"},
 	), nil
 }
@@ -66,7 +103,7 @@ func (o *Organization) ValidateUpdate(tx *pop.Connection) (*validate.Errors, err
 // GetAuthProvider returns the auth provider associated with the domain of `authEmail`, if assigned, otherwise from the Organization's auth provider.
 func (o *Organization) GetAuthProvider(authEmail string) (auth.Provider, error) {
 	// Use type and config from organization by default
-	authType := o.AuthType
+	authType := AuthType(strings.ToUpper(o.AuthType.String()))
 	authConfig := o.AuthConfig
 
 	// Check if organization domain has override auth config to use instead of default
@@ -75,7 +112,7 @@ func (o *Organization) GetAuthProvider(authEmail string) (auth.Provider, error) 
 	if err := orgDomain.FindByDomain(authDomain); err != nil {
 		return &auth.EmptyProvider{}, err
 	}
-	if orgDomain.AuthType != "" {
+	if orgDomain.AuthType != "" && orgDomain.AuthType != AuthTypeDefault {
 		authType = orgDomain.AuthType
 		authConfig = orgDomain.AuthConfig
 	}
@@ -125,7 +162,7 @@ func (o *Organization) FindByDomain(domain string) error {
 	return nil
 }
 
-func (o *Organization) AddDomain(domainName, authType, authConfig string) error {
+func (o *Organization) AddDomain(domainName string, authType AuthType, authConfig string) error {
 	// make sure domainName is not already in use
 	var orgDomain OrganizationDomain
 	if err := orgDomain.FindByDomain(domainName); domain.IsOtherThanNoRows(err) {

@@ -43,7 +43,7 @@ func (as *ActionSuite) Test_CreateOrganization() {
 
 	allFieldsQuery := `id domains { domain } name url logoURL`
 	allFieldsInput := fmt.Sprintf(
-		`name:"%s" url:"%s" authType:"%s" authConfig:"%s" logoFileID:"%s"`,
+		`name:"%s" url:"%s" authType:%s authConfig:"%s" logoFileID:"%s"`,
 		f.Organizations[1].Name,
 		f.Organizations[1].Url.String,
 		f.Organizations[1].AuthType,
@@ -100,9 +100,9 @@ func (as *ActionSuite) Test_OrganizationCreateRemoveUpdate() {
 		ExpectSubString string
 	}
 
-	createOrgPayload := `{"query": "mutation { createOrganization(input: { name: \"new org\", url: \"http://test.com\", authType: \"saml2\", authConfig: \"{}\", }){id} }"}`
-	updateOrgPayload := fmt.Sprintf(`{"query": "mutation { updateOrganization(input: { id: \"%s\" name: \"updated org\", url: \"http://test.com\", authType: \"saml2\", authConfig: \"{}\", }){id} }"}`, orgFixtures[Org1].UUID.String())
-	createOrgDomainPayload := fmt.Sprintf(`{"query": "mutation { createOrganizationDomain(input: { organizationID: \"%s\", domain: \"newdomain.com\"}){domain} }"}`, orgFixtures[Org1].UUID.String())
+	createOrgPayload := `{"query": "mutation { createOrganization(input: { name: \"new org\", url: \"http://test.com\", authType:SAML, authConfig: \"{}\", }){id} }"}`
+	updateOrgPayload := fmt.Sprintf(`{"query": "mutation { updateOrganization(input: { id: \"%s\" name: \"updated org\", url: \"http://test.com\", authType:SAML, authConfig: \"{}\", }){id} }"}`, orgFixtures[Org1].UUID.String())
+	createOrgDomainPayload := fmt.Sprintf(`{"query": "mutation { createOrganizationDomain(input: { organizationID: \"%s\", domain: \"newdomain.com\" authType:DEFAULT}){domain} }"}`, orgFixtures[Org1].UUID.String())
 	removeOrgDomainPayload := fmt.Sprintf(`{"query": "mutation { removeOrganizationDomain(input: { organizationID: \"%s\", domain: \"newdomain.com\"}){domain} }"}`, orgFixtures[Org1].UUID.String())
 
 	testCases := []testCase{
@@ -419,7 +419,7 @@ func (as *ActionSuite) Test_UpdateOrganization() {
 	var resp OrganizationResponse
 	allFieldsQuery := `id domains { domain } name url logoURL`
 	allFieldsInput := fmt.Sprintf(
-		`id:"%s" name:"%s" url:"%s" authType:"%s" authConfig:"%s" logoFileID:"%s"`,
+		`id:"%s" name:"%s" url:"%s" authType:%s authConfig:"%s" logoFileID:"%s"`,
 		f.Organizations[0].UUID.String(),
 		f.Organizations[0].Name,
 		f.Organizations[0].Url.String,

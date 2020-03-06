@@ -246,7 +246,7 @@ func (ms *ModelSuite) TestUserAccessToken_GetOrganization() {
 	tests := []struct {
 		name    string
 		token   UserAccessToken
-		want    string
+		want    AuthType
 		wantErr bool
 	}{
 		{name: "org0", token: tokens[0], want: orgs[0].AuthType},
