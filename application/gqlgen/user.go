@@ -242,18 +242,10 @@ func (r *userResolver) Preferences(ctx context.Context, obj *models.User) (*mode
 		return nil, nil
 	}
 
-	user := models.CurrentUser(ctx)
 	standardPrefs, err := obj.GetPreferences()
 	if err != nil {
-		extras := map[string]interface{}{
-			"user": user.UUID,
-		}
-		return nil, domain.ReportError(ctx, err, "GetUserPreferences", extras)
+		return nil, domain.ReportError(ctx, err, "GetUserPreferences")
 	}
-
-	// These have particular acceptable values, unlike TimeZone
-	standardPrefs.Language = strings.ToUpper(standardPrefs.Language)
-	standardPrefs.WeightUnit = strings.ToUpper(standardPrefs.WeightUnit)
 
 	return &standardPrefs, nil
 }
@@ -285,4 +277,20 @@ func getPublicProfile(ctx context.Context, user *models.User) *PublicProfile {
 		Nickname:  user.Nickname,
 		AvatarURL: url,
 	}
+}
+
+func (r *Resolver) UserPreferences() UserPreferencesResolver {
+	return &userPreferencesResolver{r}
+}
+
+type userPreferencesResolver struct{ *Resolver }
+
+func (u userPreferencesResolver) Language(ctx context.Context, obj *models.StandardPreferences) (*PreferredLanguage, error) {
+	language := PreferredLanguage(strings.ToUpper(obj.Language))
+	return &language, nil
+}
+
+func (u userPreferencesResolver) WeightUnit(ctx context.Context, obj *models.StandardPreferences) (*PreferredWeightUnit, error) {
+	unit := PreferredWeightUnit(strings.ToUpper(obj.WeightUnit))
+	return &unit, nil
 }
