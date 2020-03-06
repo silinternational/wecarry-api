@@ -72,20 +72,6 @@ func (r *threadResolver) Messages(ctx context.Context, obj *models.Thread) ([]mo
 	return messages, nil
 }
 
-// PostID retrieves the UUID of the post to which the queried thread belongs.
-func (r *threadResolver) PostID(ctx context.Context, obj *models.Thread) (string, error) {
-	if obj == nil {
-		return "", nil
-	}
-
-	post, err := obj.GetPost()
-	if err != nil {
-		return "", domain.ReportError(ctx, err, "GetThreadPostID")
-	}
-
-	return post.UUID.String(), nil
-}
-
 // Post retrieves the post to which the queried thread belongs.
 func (r *threadResolver) Post(ctx context.Context, obj *models.Thread) (*models.Post, error) {
 	if obj == nil {
@@ -127,11 +113,13 @@ func (r *threadResolver) UnreadMessageCount(ctx context.Context, obj *models.Thr
 	return count, nil
 }
 
-// Threads retrieves the all of the threads
+// Threads retrieves all of the threads for the current user. It is a placeholder for an admin tool for retrieving
+// all threads for a specified user.
 func (r *queryResolver) Threads(ctx context.Context) ([]models.Thread, error) {
-	threads := models.Threads{}
+	currentUser := models.CurrentUser(ctx)
 
-	if err := threads.All(); err != nil {
+	threads, err := currentUser.GetThreads()
+	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetThreads")
 	}
 
@@ -144,10 +132,7 @@ func (r *queryResolver) MyThreads(ctx context.Context) ([]models.Thread, error) 
 
 	threads, err := currentUser.GetThreads()
 	if err != nil {
-		extras := map[string]interface{}{
-			"user": currentUser.UUID,
-		}
-		return nil, domain.ReportError(ctx, err, "GetMyThreads", extras)
+		return nil, domain.ReportError(ctx, err, "GetMyThreads")
 	}
 
 	return threads, nil

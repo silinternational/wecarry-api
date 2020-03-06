@@ -17,21 +17,22 @@ import (
 
 // OrganizationResponse is for marshalling Organization query and mutation responses
 type OrganizationResponse struct {
-	Organization struct {
-		ID        string `json:"id"`
-		Name      string `json:"name"`
-		URL       string `json:"url"`
-		CreatedAt string `json:"createdAt"`
-		UpdatedAt string `json:"updatedAt"`
-		LogoURL   string `json:"logoURL"`
-		Domains   []struct {
-			Domain         string `json:"domain"`
-			OrganizationID string `json:"organizationID"`
-		} `json:"domains"`
-		TrustedOrganizations []struct {
-			ID string `json:"id"`
-		} `json:"trustedOrganizations"`
-	} `json:"organization"`
+	Organization Organization `json:"organization"`
+}
+
+type Organization struct {
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	URL       string `json:"url"`
+	CreatedAt string `json:"createdAt"`
+	UpdatedAt string `json:"updatedAt"`
+	LogoURL   string `json:"logoURL"`
+	Domains   []struct {
+		Domain string `json:"domain"`
+	} `json:"domains"`
+	TrustedOrganizations []struct {
+		ID string `json:"id"`
+	} `json:"trustedOrganizations"`
 }
 
 // Test_CreateOrganization tests the CreateOrganization GraphQL mutation
@@ -40,7 +41,7 @@ func (as *ActionSuite) Test_CreateOrganization() {
 
 	var resp OrganizationResponse
 
-	allFieldsQuery := `id domains { domain organizationID } name url logoURL`
+	allFieldsQuery := `id domains { domain } name url logoURL`
 	allFieldsInput := fmt.Sprintf(
 		`name:"%s" url:"%s" authType:"%s" authConfig:"%s" logoFileID:"%s"`,
 		f.Organizations[1].Name,
@@ -416,7 +417,7 @@ func (as *ActionSuite) Test_UpdateOrganization() {
 	f := fixturesForUpdateOrganization(as)
 
 	var resp OrganizationResponse
-	allFieldsQuery := `id domains { domain organizationID } name url logoURL`
+	allFieldsQuery := `id domains { domain } name url logoURL`
 	allFieldsInput := fmt.Sprintf(
 		`id:"%s" name:"%s" url:"%s" authType:"%s" authConfig:"%s" logoFileID:"%s"`,
 		f.Organizations[0].UUID.String(),
@@ -440,7 +441,6 @@ func (as *ActionSuite) Test_UpdateOrganization() {
 	domains := make([]string, len(resp.Organization.Domains))
 	for i := range domains {
 		domains[i] = resp.Organization.Domains[i].Domain
-		as.Equal(f.Organizations[0].UUID.String(), resp.Organization.Domains[i].OrganizationID)
 	}
 	as.Contains(domains, f.OrganizationDomains[0].Domain)
 	as.Contains(domains, f.OrganizationDomains[1].Domain)
