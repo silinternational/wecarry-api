@@ -310,7 +310,7 @@ func (m *Meeting) Participants(ctx buffalo.Context) (MeetingParticipants, error)
 	}
 	currentUser := CurrentUser(ctx)
 	if currentUser.ID != m.CreatedByID && !m.isOrganizer(ctx, currentUser.ID) && !currentUser.isSuperAdmin() {
-		return p, nil
+		return p, DB.Where("user_id = ? AND meeting_id = ?", currentUser.ID, m.ID).All(&p)
 	}
 	if err := DB.Where("meeting_id = ?", m.ID).All(&p); err != nil {
 		return p, err
