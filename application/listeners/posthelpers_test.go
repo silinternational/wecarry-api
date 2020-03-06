@@ -4,7 +4,10 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"strings"
 	"testing"
+
+	"github.com/gobuffalo/nulls"
 
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/internal/test"
@@ -483,4 +486,66 @@ func (ms *ModelSuite) TestSendPotentialProviderRejectedNotification() {
 	test.AssertStringContains(t, body, wantBody, 99)
 	test.AssertStringContains(t, body, post.Title, 99)
 	test.AssertStringContains(t, body, post.UUID.String(), 99)
+}
+
+func (ms *ModelSuite) TestSendNotificationRequestFromOpenToAccepted() {
+	// Five User and three Post fixtures will also be created.  The Posts will
+	// all be created by the first user.
+	// The first Post will have all but the first and fifth user as a potential provider.
+	f := test.CreatePotentialProvidersFixtures(ms.DB)
+
+	users := f.Users
+	post := f.Posts[0]
+
+	post.ProviderID = nulls.NewInt(f.Users[3].ID)
+
+	notifications.TestEmailService.DeleteSentMessages()
+
+	eData := models.PostStatusEventData{
+		OldStatus: models.PostStatusOpen,
+		NewStatus: models.PostStatusAccepted,
+		PostID:    post.ID,
+	}
+
+	params := senderParams{
+		template:   domain.MessageTemplateRequestFromOpenToAccepted,
+		subject:    "Email.Subject.Request.FromOpenToAccepted",
+		post:       post,
+		pEventData: eData,
+	}
+
+	sendNotificationRequestFromOpenToAccepted(params)
+
+	emailCount := notifications.TestEmailService.GetNumberOfMessagesSent()
+	ms.GreaterOrEqual(emailCount, 3, "wrong email count")
+
+	// Fourth user is Provider, so he should get acceptance email and
+	// all the others should get the rejection email
+	sentMsgs := notifications.TestEmailService.GetSentMessages()
+
+	// Timing issues are allowing older emails from the fixture creation to leak
+	// into the sentEmails after the next DeletSentMessages() call
+	acceptedSubject := "request has been accepted"
+	rejectedSubject := "was not accepted"
+
+	accepteds := []notifications.DummyMessageInfo{}
+	rejects := []notifications.DummyMessageInfo{}
+
+	for _, m := range sentMsgs {
+		if strings.Contains(m.Subject, acceptedSubject) {
+			accepteds = append(accepteds, m)
+			continue
+		}
+
+		if strings.Contains(m.Subject, rejectedSubject) {
+			rejects = append(rejects, m)
+			continue
+		}
+	}
+
+	ms.Equal(1, len(accepteds), "incorrect number of accepted messages")
+	ms.Equal(users[3].Email, accepteds[0].ToEmail, "incorrect recipient for accepted message")
+
+	ms.Equal(2, len(rejects), "incorrect number of rejected messages")
+
 }
