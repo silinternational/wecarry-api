@@ -25,10 +25,14 @@ import (
 type AuthType string
 
 const (
+	// AuthTypeAzureAD : Microsoft Azure AD (Office 365)
 	AuthTypeAzureAD AuthType = "AZUREADV2"
+	// AuthTypeDefault : Default to Organization's AuthType (only valid on OrganizationDomain)
 	AuthTypeDefault AuthType = "DEFAULT"
-	AuthTypeGoogle  AuthType = "GOOGLE"
-	AuthTypeSaml    AuthType = "SAML"
+	// AuthTypeGoogle : Google OAUTH 2.0
+	AuthTypeGoogle AuthType = "GOOGLE"
+	// AuthTypeSaml : SAML 2.0
+	AuthTypeSaml AuthType = "SAML"
 )
 
 func (e AuthType) IsValid() bool {
