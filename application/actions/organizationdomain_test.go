@@ -13,8 +13,8 @@ type OrganizationDomainFixtures struct {
 
 type OrganizationDomainResponse struct {
 	OrganizationDomain []struct {
-		OrganizationID string `json:"organizationID"`
-		Domain         string `json:"domain"`
+		Organization Organization `json:"organization"`
+		Domain       string       `json:"domain"`
 	} `json:"domain"`
 }
 
@@ -22,7 +22,7 @@ func (as *ActionSuite) Test_CreateUpdateOrganizationDomain() {
 	f := fixturesForOrganizationDomain(as)
 
 	testDomain := "example.com"
-	allFieldsQuery := `organizationID domain authType authConfig`
+	allFieldsQuery := `organization { id } domain authType authConfig`
 	allFieldsInput := fmt.Sprintf(`organizationID:"%s" domain:"%s"`,
 		f.Organizations[0].UUID.String(), testDomain)
 
@@ -34,7 +34,7 @@ func (as *ActionSuite) Test_CreateUpdateOrganizationDomain() {
 
 	as.Equal(1, len(resp.OrganizationDomain), "wrong number of domains in response")
 	as.Equal(testDomain, resp.OrganizationDomain[0].Domain, "received wrong domain")
-	as.Equal(f.Organizations[0].UUID.String(), resp.OrganizationDomain[0].OrganizationID, "received wrong org ID")
+	as.Equal(f.Organizations[0].UUID.String(), resp.OrganizationDomain[0].Organization.ID, "received wrong org ID")
 
 	var orgs models.Organizations
 	err = as.DB.Where("name = ?", f.Organizations[0].Name).All(&orgs)

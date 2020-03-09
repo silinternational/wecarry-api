@@ -19,10 +19,11 @@ func createFixturesForThreadQuery(as *ActionSuite) threadQueryFixtures {
 	org := userFixtures.Organization
 	users := userFixtures.Users
 
-	posts := test.CreatePostFixtures(as.DB, 1, false)
+	posts := test.CreatePostFixtures(as.DB, 2, false)
 
 	threads := models.Threads{
 		{UUID: domain.GetUUID(), PostID: posts[0].ID},
+		{UUID: domain.GetUUID(), PostID: posts[1].ID},
 	}
 	for i := range threads {
 		createFixture(as, &threads[i])

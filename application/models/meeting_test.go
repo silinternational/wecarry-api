@@ -629,7 +629,7 @@ func (ms *ModelSuite) TestMeeting_Participants() {
 			name:    "participant",
 			user:    f.Users[2],
 			meeting: f.Meetings[0],
-			wantIDs: []int{},
+			wantIDs: []int{f.Users[2].ID},
 		},
 	}
 	for _, tt := range tests {
