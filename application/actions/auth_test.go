@@ -75,21 +75,21 @@ func (as *ActionSuite) TestGetLoginSuccessRedirectURL() {
 			authUser:      AuthUser{ID: "1", IsNew: true, AccessToken: "new"},
 			returnTo:      "",
 			wantBeginning: uiURL + "/#/welcome?" + TokenTypeParam + "=Bearer&" + ExpiresUTCParam + "=",
-			wantEnd:       "&" + AccessTokenParam + "=new&" + ReturnToParam + "=%2F%23",
+			wantEnd:       "&" + AccessTokenParam + "=new",
 		},
 		{
 			name:          "New With Invalid ReturnTo",
 			authUser:      AuthUser{ID: "1", IsNew: true, AccessToken: "new"},
 			returnTo:      "/posts",
 			wantBeginning: uiURL + "/#/welcome?" + TokenTypeParam + "=Bearer&" + ExpiresUTCParam + "=",
-			wantEnd:       "&" + AccessTokenParam + "=new&" + ReturnToParam + "=%2F%23%2Fposts",
+			wantEnd:       "&" + AccessTokenParam + "=new&" + ReturnToParam + "=%2Fposts",
 		},
 		{
 			name:          "New With Valid ReturnTo",
 			authUser:      AuthUser{ID: "1", IsNew: true, AccessToken: "new"},
 			returnTo:      "/#/posts",
 			wantBeginning: uiURL + "/#/welcome?" + TokenTypeParam + "=Bearer&" + ExpiresUTCParam + "=",
-			wantEnd:       "&" + AccessTokenParam + "=new&" + ReturnToParam + "=%2F%23%2Fposts",
+			wantEnd:       "&" + AccessTokenParam + "=new&" + ReturnToParam + "=%2Fposts",
 		},
 		{
 			name:          "Not New With Invalid ReturnTo",
@@ -132,6 +132,7 @@ func (as *ActionSuite) TestGetLoginSuccessRedirectURL() {
 			if endResults != expected {
 				t.Errorf("Bad results at end for test \"%s\". \nExpected %s\n  but got %s",
 					test.name, expected, allResults)
+				return
 			}
 		})
 	}
