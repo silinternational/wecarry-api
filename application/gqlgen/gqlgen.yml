@@ -78,7 +78,7 @@ models:
   OrganizationDomain:
     model: models.OrganizationDomain
     fields:
-      organizationID:
+      organization:
         resolver: true
   Post:
     model: models.Post
