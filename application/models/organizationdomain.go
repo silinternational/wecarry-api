@@ -10,14 +10,13 @@ import (
 )
 
 type OrganizationDomain struct {
-	ID             int          `json:"id" db:"id"`
-	CreatedAt      time.Time    `json:"created_at" db:"created_at"`
-	UpdatedAt      time.Time    `json:"updated_at" db:"updated_at"`
-	OrganizationID int          `json:"organization_id" db:"organization_id"`
-	Domain         string       `json:"domain" db:"domain"`
-	AuthType       string       `json:"auth_type" db:"auth_type"`
-	AuthConfig     string       `json:"auth_config" db:"auth_config"`
-	Organization   Organization `belongs_to:"organizations"`
+	ID             int       `json:"id" db:"id"`
+	CreatedAt      time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at" db:"updated_at"`
+	OrganizationID int       `json:"organization_id" db:"organization_id"`
+	Domain         string    `json:"domain" db:"domain"`
+	AuthType       AuthType  `json:"auth_type" db:"auth_type"`
+	AuthConfig     string    `json:"auth_config" db:"auth_config"`
 }
 
 type OrganizationDomains []OrganizationDomain
@@ -35,15 +34,16 @@ func (o *OrganizationDomain) ValidateCreate(tx *pop.Connection) (*validate.Error
 	return validate.NewErrors(), nil
 }
 
-// GetOrganizationUUID loads the Organization record and converts its UUID to its string representation.
-func (o *OrganizationDomain) GetOrganizationUUID() (string, error) {
+// Organization loads the Organization record
+func (o *OrganizationDomain) Organization() (Organization, error) {
 	if o.OrganizationID <= 0 {
-		return "", errors.New("OrganizationID is not valid")
+		return Organization{}, errors.New("OrganizationID is not valid")
 	}
-	if err := DB.Load(o, "Organization"); err != nil {
-		return "", err
+	var organization Organization
+	if err := DB.Find(&organization, o.OrganizationID); err != nil {
+		return Organization{}, err
 	}
-	return o.Organization.UUID.String(), nil
+	return organization, nil
 }
 
 // Create stores the OrganizationDomain data as a new record in the database.

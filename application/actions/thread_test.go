@@ -21,43 +21,22 @@ type threadsResponse struct {
 	} `json:"threads"`
 }
 
+const allThreadFields = "id post { id } participants {nickname} messages {id content sender { nickname }}}"
+
 func (as *ActionSuite) TestThreadsQuery() {
 	f := createFixturesForThreadQuery(as)
-
-	query := `{ threads
-		{ id post { id } participants {nickname} messages {id content sender { nickname }}}  }`
-
-	var resp threadsResponse
-
-	err := as.testGqlQuery(query, f.Users[0].Nickname, &resp)
-
-	as.NoError(err)
-
-	as.Equal(1, len(resp.Threads))
-	as.Equal(f.Threads[0].UUID.String(), resp.Threads[0].ID)
-	as.Equal(f.Posts[0].UUID.String(), resp.Threads[0].Post.ID)
-	as.Equal(f.Messages[0].UUID.String(), resp.Threads[0].Messages[0].ID)
-	as.Equal(f.Messages[0].Content, resp.Threads[0].Messages[0].Content)
-	as.Equal(f.Users[1].Nickname, resp.Threads[0].Messages[0].Sender.Nickname)
-
-	thread := f.Threads[0]
-	err = thread.Load("Participants")
-	as.NoError(err)
-
-	participants, err := thread.GetParticipants()
-	as.NoError(err)
-	as.Equal(2, len(participants), "incorrect number of thread participants")
-
-	as.Equal(participants[0].Nickname, resp.Threads[0].Participants[0].Nickname)
-	as.Equal(participants[1].Nickname, resp.Threads[0].Participants[1].Nickname)
+	query := "{ threads {" + allThreadFields + "}"
+	// for now, the "threads" and "myThreads" queries are the same
+	testThreadsQuery(as, f, query)
 }
 
 func (as *ActionSuite) TestMyThreadsQuery() {
 	f := createFixturesForThreadQuery(as)
+	query := "{ threads: myThreads {" + allThreadFields + "}"
+	testThreadsQuery(as, f, query)
+}
 
-	query := `{ threads: myThreads
-		{ id participants {nickname} messages {id content sender { nickname }}}  }`
-
+func testThreadsQuery(as *ActionSuite, f threadQueryFixtures, query string) {
 	var resp threadsResponse
 
 	err := as.testGqlQuery(query, f.Users[0].Nickname, &resp)
@@ -65,6 +44,7 @@ func (as *ActionSuite) TestMyThreadsQuery() {
 	as.NoError(err)
 
 	as.Equal(f.Threads[0].UUID.String(), resp.Threads[0].ID)
+	as.Equal(f.Posts[0].UUID.String(), resp.Threads[0].Post.ID)
 	as.Equal(f.Messages[0].UUID.String(), resp.Threads[0].Messages[0].ID)
 	as.Equal(f.Messages[0].Content, resp.Threads[0].Messages[0].Content)
 	as.Equal(f.Users[1].Nickname, resp.Threads[0].Messages[0].Sender.Nickname)
