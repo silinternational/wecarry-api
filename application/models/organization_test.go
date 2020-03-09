@@ -671,7 +671,7 @@ func (ms *ModelSuite) TestOrganization_GetAuthProvider() {
 	orgDomain1 := OrganizationDomain{
 		OrganizationID: org.ID,
 		Domain:         "domain1.com",
-		AuthType:       "",
+		AuthType:       AuthTypeDefault,
 		AuthConfig:     "",
 	}
 	err = orgDomain1.Save()

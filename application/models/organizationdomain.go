@@ -15,7 +15,7 @@ type OrganizationDomain struct {
 	UpdatedAt      time.Time `json:"updated_at" db:"updated_at"`
 	OrganizationID int       `json:"organization_id" db:"organization_id"`
 	Domain         string    `json:"domain" db:"domain"`
-	AuthType       string    `json:"auth_type" db:"auth_type"`
+	AuthType       AuthType  `json:"auth_type" db:"auth_type"`
 	AuthConfig     string    `json:"auth_config" db:"auth_config"`
 }
 
