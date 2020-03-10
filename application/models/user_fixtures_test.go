@@ -95,7 +95,7 @@ func CreateFixturesForUserGetPosts(ms *ModelSuite) UserPostFixtures {
 	uf := createUserFixtures(ms.DB, 2)
 	users := uf.Users
 
-	posts := createPostFixtures(ms.DB, 2, false)
+	posts := createPostFixtures(ms.DB, 4, false)
 	userID := users[1].UUID.String()
 	posts[0].SetProviderWithStatus(PostStatusAccepted, &userID)
 	posts[1].SetProviderWithStatus(PostStatusAccepted, &userID)

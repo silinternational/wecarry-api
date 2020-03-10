@@ -460,7 +460,7 @@ func (u *User) FindUserOrganization(org Organization) (UserOrganization, error) 
 func (u *User) Posts(postRole string) ([]Post, error) {
 	fk := map[string]string{
 		PostsCreated:   "created_by_id=?",
-		PostsReceiving: "receiver_id=?",
+		PostsReceiving: "created_by_id=?",
 		PostsProviding: "provider_id=?",
 	}
 	var posts Posts
