@@ -1086,14 +1086,15 @@ func (ms *ModelSuite) TestPost_GetProvider() {
 	t := ms.T()
 
 	uf := createUserFixtures(ms.DB, 2)
-	posts := createPostFixtures(ms.DB, 1, false)
+	posts := createPostFixtures(ms.DB, 2, false)
+	posts[1].ProviderID = nulls.NewInt(uf.Users[1].ID)
 
 	tests := []struct {
 		name string
 		post Post
 		want *uuid.UUID
 	}{
-		{name: "good", post: posts[1], want: &uf.Users[0].UUID},
+		{name: "good", post: posts[1], want: &uf.Users[1].UUID},
 		{name: "nil", post: posts[0], want: nil},
 	}
 	for _, test := range tests {
