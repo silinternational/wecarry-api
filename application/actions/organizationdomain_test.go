@@ -23,7 +23,7 @@ func (as *ActionSuite) Test_CreateUpdateOrganizationDomain() {
 
 	testDomain := "example.com"
 	allFieldsQuery := `organization { id } domain authType authConfig`
-	allFieldsInput := fmt.Sprintf(`organizationID:"%s" domain:"%s"`,
+	allFieldsInput := fmt.Sprintf(`organizationID:"%s" domain:"%s" authType:DEFAULT`,
 		f.Organizations[0].UUID.String(), testDomain)
 
 	query := fmt.Sprintf("mutation{domain: createOrganizationDomain(input: {%s}) {%s}}",
@@ -47,7 +47,7 @@ func (as *ActionSuite) Test_CreateUpdateOrganizationDomain() {
 	as.Equal(testDomain, domains[0].Domain, "wrong domain in DB")
 
 	// Test updating orgdomains
-	validUpdateInput := fmt.Sprintf(`organizationID:"%s" domain:"%s" authType:"saml", authConfig:"{}"`,
+	validUpdateInput := fmt.Sprintf(`organizationID:"%s" domain:"%s" authType:SAML, authConfig:"{}"`,
 		f.Organizations[0].UUID.String(), testDomain)
 
 	query = fmt.Sprintf("mutation{domain: updateOrganizationDomain(input: {%s}) {%s}}",
@@ -57,7 +57,7 @@ func (as *ActionSuite) Test_CreateUpdateOrganizationDomain() {
 	as.NoError(err)
 
 	// User without admin role - should error
-	validUpdateInput = fmt.Sprintf(`organizationID:"%s" domain:"%s" authType:"saml", authConfig:"{}"`,
+	validUpdateInput = fmt.Sprintf(`organizationID:"%s" domain:"%s" authType:SAML, authConfig:"{}"`,
 		f.Organizations[0].UUID.String(), testDomain)
 
 	query = fmt.Sprintf("mutation{domain: updateOrganizationDomain(input: {%s}) {%s}}",
@@ -67,7 +67,7 @@ func (as *ActionSuite) Test_CreateUpdateOrganizationDomain() {
 	as.Error(err)
 
 	// User with admin role but invalid domain - should error
-	inValidUpdateInput := fmt.Sprintf(`organizationID:"%s" domain:"%s" authType:"saml", authConfig:"{}"`,
+	inValidUpdateInput := fmt.Sprintf(`organizationID:"%s" domain:"%s" authType:SAML, authConfig:"{}"`,
 		f.Organizations[0].UUID.String(), "invalid.com")
 
 	query = fmt.Sprintf("mutation{domain: updateOrganizationDomain(input: {%s}) {%s}}",

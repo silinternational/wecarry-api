@@ -1866,6 +1866,18 @@ scalar Date
 "Date and Time in ISO-8601 format (e.g. 2020-02-11T18:08:56Z)"
 scalar Time
 
+"Authorization types"
+enum AuthType {
+    "Microsoft Azure AD (Office 365)"
+    AZURADV2
+    "Default to Organization's AuthType (only valid on OrganizationDomain)"
+    DEFAULT
+    "Google OAUTH 2.0"
+    GOOGLE
+    "SAML 2.0"
+    SAML
+}
+
 "Visibility for Meetings (Events), determines who can see a ` + "`" + `Meeting` + "`" + `."
 enum MeetingVisibility {
     "Visible to invitees and all app users"
@@ -2192,7 +2204,7 @@ input CreateOrganizationInput {
     "Website URL of the Organization, limited to 255 characters"
     url: String
     "Authentication type for the organization. Can be ` + "`" + `saml` + "`" + `, ` + "`" + `google` + "`" + `, or ` + "`" + `azureadv2` + "`" + `."
-    authType: String!
+    authType: AuthType!
     "Authentication configuration. See https://github.com/silinternational/wecarry-api/blob/master/README.md"
     authConfig: String!
     "ID of pre-stored image logo file. Upload using the ` + "`" + `upload` + "`" + ` REST API endpoint."
@@ -2207,7 +2219,7 @@ input UpdateOrganizationInput {
     "Website URL of the Organization, limited to 255 characters. If omitted, existing URL is erased."
     url: String
     "Authentication type for the organization. Can be 'saml', 'google', or 'azureadv2'."
-    authType: String!
+    authType: AuthType!
     "Authentication configuration. See https://github.com/silinternational/wecarry-api/blob/master/README.md"
     authConfig: String!
     "ID of image logo file. Upload using the ` + "`" + `upload` + "`" + ` REST API endpoint. If omitted, existing logo is erased."
@@ -2224,7 +2236,7 @@ type OrganizationDomain {
     "Organization that owns this domain"
     organization: Organization!
     "Authentication type, overriding the Organization's ` + "`" + `authType` + "`" + `. Can be: ` + "`" + `saml` + "`" + `, ` + "`" + `google` + "`" + `, ` + "`" + `azureadv2` + "`" + `."
-    authType: String!
+    authType: AuthType!
     """
     Authentication configuration, overriding the Organization's ` + "`" + `authConfig. See
     https://github.com/silinternational/wecarry-api/blob/master/README.md
@@ -2238,7 +2250,7 @@ input CreateOrganizationDomainInput {
     "ID of the Organization that owns this domain"
     organizationID: ID!
     "Authentication type, overriding the Organization's ` + "`" + `authType` + "`" + `. Can be: ` + "`" + `saml` + "`" + `, ` + "`" + `google` + "`" + `, ` + "`" + `azureadv2` + "`" + `."
-    authType: String
+    authType: AuthType!
     """
     Authentication configuration, overriding the Organization's ` + "`" + `authConfig. See
     https://github.com/silinternational/wecarry-api/blob/master/README.md
@@ -6034,10 +6046,10 @@ func (ec *executionContext) _OrganizationDomain_authType(ctx context.Context, fi
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(models.AuthType)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNAuthType2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐAuthType(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _OrganizationDomain_authConfig(ctx context.Context, field graphql.CollectedField, obj *models.OrganizationDomain) (ret graphql.Marshaler) {
@@ -9973,7 +9985,7 @@ func (ec *executionContext) unmarshalInputCreateOrganizationDomainInput(ctx cont
 			}
 		case "authType":
 			var err error
-			it.AuthType, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			it.AuthType, err = ec.unmarshalNAuthType2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐAuthType(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -10009,7 +10021,7 @@ func (ec *executionContext) unmarshalInputCreateOrganizationInput(ctx context.Co
 			}
 		case "authType":
 			var err error
-			it.AuthType, err = ec.unmarshalNString2string(ctx, v)
+			it.AuthType, err = ec.unmarshalNAuthType2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐAuthType(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -10423,7 +10435,7 @@ func (ec *executionContext) unmarshalInputUpdateOrganizationInput(ctx context.Co
 			}
 		case "authType":
 			var err error
-			it.AuthType, err = ec.unmarshalNString2string(ctx, v)
+			it.AuthType, err = ec.unmarshalNAuthType2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐAuthType(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -12620,6 +12632,15 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 // endregion **************************** object.gotpl ****************************
 
 // region    ***************************** type.gotpl *****************************
+
+func (ec *executionContext) unmarshalNAuthType2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐAuthType(ctx context.Context, v interface{}) (models.AuthType, error) {
+	var res models.AuthType
+	return res, res.UnmarshalGQL(v)
+}
+
+func (ec *executionContext) marshalNAuthType2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐAuthType(ctx context.Context, sel ast.SelectionSet, v models.AuthType) graphql.Marshaler {
+	return v
+}
 
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	return graphql.UnmarshalBoolean(v)

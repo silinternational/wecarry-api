@@ -109,7 +109,7 @@ func (ms *ModelSuite) TestUser_FindOrCreateFromOrglessAuthUser() {
 	}{
 		{
 			name:     "create new user: test_user1",
-			authType: AuthTypeAzureAD,
+			authType: AuthTypeAzureAD.String(),
 			authUser: &auth.User{
 				FirstName: "Test",
 				LastName:  "User",
@@ -119,7 +119,7 @@ func (ms *ModelSuite) TestUser_FindOrCreateFromOrglessAuthUser() {
 		},
 		{
 			name:     "find existing user: test_user1",
-			authType: AuthTypeAzureAD,
+			authType: AuthTypeAzureAD.String(),
 			authUser: &auth.User{
 				FirstName: "Test",
 				LastName:  "User",

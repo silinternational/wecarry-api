@@ -43,7 +43,7 @@ that have a comment referring to actions.AuthRequest.
 
 ### Office365/AzureAD
 To add an organization using AzureAD authentication, create a database organization record  
-that includes an auth_type of `azureadv2` and an auth_config like the following ... 
+that includes an auth_type of `AZUREADV2` and an auth_config like the following ... 
 
 ```
 {
@@ -76,7 +76,7 @@ in the docker-compose file.)
 
 ### Google
 To add an organization using Google authentication, create a database organization record  
-that includes an auth_type of `google` and an auth_config like the following ... 
+that includes an auth_type of `GOOGLE` and an auth_config like the following ... 
 
 ```
 {}
@@ -106,7 +106,7 @@ set for the appropriate LinkedIn oauth developer account.
 
 ### SAML
 To enable authentication via a SAML2 Identity Provider, an organization 
-record will need to be created that includes an auth_type of `saml` and an
+record will need to be created that includes an auth_type of `SAML` and an
 auth_config like the following ...
 
 ```

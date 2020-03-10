@@ -17,6 +17,8 @@ autobind:
   - github.com/silinternational/wecarry-api/models
   - github.com/silinternational/wecarry-api/gqlgen
 models:
+  AuthType:
+    model: models.AuthType
   File:
     model: models.File
     fields:
