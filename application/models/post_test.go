@@ -1904,46 +1904,6 @@ func (ms *ModelSuite) TestPost_GetAudience() {
 	}
 }
 
-func (ms *ModelSuite) TestPost_GetLocationForNotifications() {
-	t := ms.T()
-	f := createFixturesForGetLocationForNotifications(ms)
-
-	var requestOrigin Location
-	ms.NoError(ms.DB.Find(&requestOrigin, f.Posts[1].OriginID.Int))
-
-	var offerDestination Location
-	ms.NoError(ms.DB.Find(&offerDestination, f.Posts[2].DestinationID))
-
-	tests := []struct {
-		name string
-		post Post
-		want int
-	}{
-		{
-			name: "request with no origin",
-			post: f.Posts[0],
-			want: 0,
-		},
-		{
-			name: "request",
-			post: f.Posts[1],
-			want: requestOrigin.ID,
-		},
-		{
-			name: "offer",
-			post: f.Posts[2],
-			want: offerDestination.ID,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.post.GetLocationForNotifications()
-			ms.NoError(err)
-			ms.Equal(tt.want, got.ID)
-		})
-	}
-}
-
 func (ms *ModelSuite) TestPost_Meeting() {
 	t := ms.T()
 	posts := createPostFixtures(ms.DB, 2, false)

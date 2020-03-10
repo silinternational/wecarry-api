@@ -952,17 +952,6 @@ func (p *Post) GetAudience() (Users, error) {
 	return users, nil
 }
 
-// GetLocationForNotifications gets the location most suitable for basic notifications. Specifically,
-// the origin for requests, and the destination for offers.
-func (p *Post) GetLocationForNotifications() (*Location, error) {
-	var postLocation Location
-	if err := DB.Load(p, "Origin"); err != nil {
-		return nil, fmt.Errorf("loading post origin failed, %s", err)
-	}
-	postLocation = p.Origin
-	return &postLocation, nil
-}
-
 // Meeting reads the meeting record, if it exists, and returns a pointer to the object.
 func (p *Post) Meeting() (*Meeting, error) {
 	if !p.MeetingID.Valid {
