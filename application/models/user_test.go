@@ -571,20 +571,12 @@ func (ms *ModelSuite) TestUser_GetPosts() {
 			want: []uuid.UUID{f.Posts[3].UUID, f.Posts[2].UUID, f.Posts[1].UUID, f.Posts[0].UUID},
 		},
 		{
-			name: "providing by",
+			name: "providing",
 			args: args{
 				user:     f.Users[1],
 				postRole: PostsProviding,
 			},
 			want: []uuid.UUID{f.Posts[1].UUID, f.Posts[0].UUID},
-		},
-		{
-			name: "receiving by",
-			args: args{
-				user:     f.Users[1],
-				postRole: PostsReceiving,
-			},
-			want: []uuid.UUID{f.Posts[3].UUID, f.Posts[2].UUID},
 		},
 	}
 	for _, test := range tests {

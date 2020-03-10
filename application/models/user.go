@@ -708,6 +708,9 @@ func (u *User) isNearPost(post Post) bool {
 		domain.ErrLogger.Printf("failed to get post location, %s", err)
 		return false
 	}
+	if postLocation == nil {
+		return false
+	}
 
 	if u.Location.IsNear(*postLocation) {
 		return true
