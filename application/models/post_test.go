@@ -48,19 +48,6 @@ func (ms *ModelSuite) TestPost_Validate() {
 			errField: "created_by",
 		},
 		{
-			name: "missing type",
-			post: Post{
-				CreatedByID:    1,
-				OrganizationID: 1,
-				Title:          "A Request",
-				Size:           PostSizeMedium,
-				Status:         PostStatusOpen,
-				UUID:           domain.GetUUID(),
-			},
-			wantErr:  true,
-			errField: "type",
-		},
-		{
 			name: "missing organization_id",
 			post: Post{
 				CreatedByID: 1,
