@@ -19,7 +19,7 @@ func createFixturesForTestPostHistory_Load(ms *ModelSuite) PostHistoryFixtures {
 	uf := createUserFixtures(ms.DB, 2)
 	users := uf.Users
 
-	posts := createPostFixtures(ms.DB, 2, 0, false)
+	posts := createPostFixtures(ms.DB, 2, false)
 
 	pHistory := PostHistory{
 		Status:     PostStatusOpen,
@@ -51,12 +51,10 @@ func createFixturesForTestPostHistory_pop(ms *ModelSuite) PostFixtures {
 
 		posts[i].UUID = domain.GetUUID()
 		posts[i].Status = PostStatusAccepted
-		posts[i].Type = "type"
 		posts[i].Size = PostSizeTiny
 		posts[i].CreatedByID = users[0].ID
 		posts[i].OrganizationID = org.ID
 		posts[i].DestinationID = locations[i].ID
-		posts[i].ReceiverID = nulls.NewInt(users[i].ID)
 		createFixture(ms, &posts[i])
 	}
 
@@ -89,7 +87,7 @@ func createFixturesForTestPostHistory_createForPost(ms *ModelSuite) PostFixtures
 	uf := createUserFixtures(ms.DB, 2)
 	users := uf.Users
 
-	posts := createPostFixtures(ms.DB, 2, 0, false)
+	posts := createPostFixtures(ms.DB, 2, false)
 
 	return PostFixtures{
 		Users: users,

@@ -31,7 +31,6 @@ func CreateFixturesValidateUpdate_RequestStatus(status PostStatus, ms *ModelSuit
 		CreatedByID:    user.ID,
 		OrganizationID: org.ID,
 		DestinationID:  location.ID,
-		Type:           PostTypeRequest,
 		Title:          "Test Request",
 		Size:           PostSizeMedium,
 		UUID:           domain.GetUUID(),
@@ -59,7 +58,6 @@ func createFixturesForTestPostCreate(ms *ModelSuite) PostFixtures {
 		createFixture(ms, &locations[i])
 
 		posts[i].Status = PostStatusOpen
-		posts[i].Type = PostTypeRequest
 		posts[i].Size = PostSizeTiny
 		posts[i].CreatedByID = user.ID
 		posts[i].OrganizationID = org.ID
@@ -74,7 +72,7 @@ func createFixturesForTestPostCreate(ms *ModelSuite) PostFixtures {
 }
 
 func createFixturesForTestPostUpdate(ms *ModelSuite) PostFixtures {
-	posts := createPostFixtures(ms.DB, 2, 0, false)
+	posts := createPostFixtures(ms.DB, 2, false)
 	posts[0].Title = "new title"
 	posts[1].Title = ""
 
@@ -87,7 +85,7 @@ func createFixturesForTestPost_manageStatusTransition_forwardProgression(ms *Mod
 	uf := createUserFixtures(ms.DB, 2)
 	users := uf.Users
 
-	posts := createPostFixtures(ms.DB, 4, 0, false)
+	posts := createPostFixtures(ms.DB, 4, false)
 	posts[1].Status = PostStatusAccepted
 	posts[1].CreatedByID = users[1].ID
 	posts[1].ProviderID = nulls.NewInt(users[0].ID)
@@ -118,7 +116,7 @@ func createFixturesForTestPost_manageStatusTransition_backwardProgression(ms *Mo
 	uf := createUserFixtures(ms.DB, 2)
 	users := uf.Users
 
-	posts := createPostFixtures(ms.DB, 4, 0, false)
+	posts := createPostFixtures(ms.DB, 4, false)
 
 	// Put the first two posts into ACCEPTED status (also give them matching PostHistory entries)
 	posts[0].Status = PostStatusAccepted
@@ -207,7 +205,7 @@ func createFixturesForPostFindByUserAndUUID(ms *ModelSuite) PostFixtures {
 		AuthEmail:      users[0].Email,
 	})
 
-	posts := createPostFixtures(ms.DB, 3, 0, false)
+	posts := createPostFixtures(ms.DB, 3, false)
 	posts[1].OrganizationID = orgs[1].ID
 	posts[2].Status = PostStatusRemoved
 	ms.NoError(ms.DB.Save(&posts))
@@ -256,7 +254,7 @@ func CreateFixtures_Posts_FindByUser(ms *ModelSuite) PostFixtures {
 	uo.OrganizationID = orgs[1].ID
 	ms.NoError(DB.UpdateColumns(&uo, "organization_id"))
 
-	posts := createPostFixtures(ms.DB, 8, 0, false)
+	posts := createPostFixtures(ms.DB, 8, false)
 	posts[1].OrganizationID = orgs[1].ID
 	posts[2].Status = PostStatusOpen
 	posts[3].Status = PostStatusRemoved
@@ -330,7 +328,6 @@ func createFixtures_Posts_FindByUser_SearchText(ms *ModelSuite) PostFixtures {
 	for i := range posts {
 		posts[i].UUID = domain.GetUUID()
 		posts[i].DestinationID = locations[i].ID
-		posts[i].Type = PostTypeRequest
 		createFixture(ms, &posts[i])
 	}
 
@@ -344,7 +341,7 @@ func CreateFixtures_Post_IsEditable(ms *ModelSuite) PostFixtures {
 	uf := createUserFixtures(ms.DB, 2)
 	users := uf.Users
 
-	posts := createPostFixtures(ms.DB, 2, 0, false)
+	posts := createPostFixtures(ms.DB, 2, false)
 	posts[1].Status = PostStatusRemoved
 
 	return PostFixtures{
@@ -362,23 +359,9 @@ func createFixturesForPostGetAudience(ms *ModelSuite) PostFixtures {
 
 	users := createUserFixtures(ms.DB, 2).Users
 
-	posts := createPostFixtures(ms.DB, 2, 0, false)
+	posts := createPostFixtures(ms.DB, 2, false)
 	posts[1].OrganizationID = orgs[1].ID
 	ms.NoError(ms.DB.Save(&posts[1]))
-
-	return PostFixtures{
-		Users: users,
-		Posts: posts,
-	}
-}
-
-func createFixturesForGetLocationForNotifications(ms *ModelSuite) PostFixtures {
-	uf := createUserFixtures(ms.DB, 1)
-	users := uf.Users
-
-	posts := createPostFixtures(ms.DB, 2, 1, false)
-	posts[0].OriginID = nulls.Int{}
-	ms.NoError(ms.DB.Save(&posts[0]))
 
 	return PostFixtures{
 		Users: users,

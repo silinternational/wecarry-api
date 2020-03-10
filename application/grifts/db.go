@@ -224,7 +224,6 @@ var _ = grift.Namespace("db", func() {
 		postUUID5, _ := uuid.FromString("35e2b332-a968-4932-b205-ca0d1eabdf0e")
 		fixturePosts := []*models.Post{
 			{
-				Type:           models.PostTypeRequest,
 				OrganizationID: primaryOrgID,
 				Title:          "Maple Syrup",
 				Size:           models.PostSizeMedium,
@@ -232,7 +231,6 @@ var _ = grift.Namespace("db", func() {
 				Description:    nulls.NewString("Missing my good, old, Canadian maple syrupy goodness"),
 			},
 			{
-				Type:           models.PostTypeRequest,
 				OrganizationID: primaryOrgID,
 				Title:          "Jif Peanut Butter",
 				Size:           models.PostSizeSmall,
@@ -240,7 +238,6 @@ var _ = grift.Namespace("db", func() {
 				Description:    nulls.NewString("Jiffy Peanut Butter goes on our daily bread!"),
 			},
 			{
-				Type:           models.PostTypeRequest,
 				OrganizationID: primaryOrgID,
 				Title:          "Burt's Bee's Lip Balm",
 				Size:           models.PostSizeTiny,
@@ -248,7 +245,6 @@ var _ = grift.Namespace("db", func() {
 				Description:    nulls.NewString("Please save me from having painfully cracked lips!"),
 			},
 			{
-				Type:           models.PostTypeRequest,
 				OrganizationID: primaryOrgID,
 				Title:          "Peanut Butter",
 				Size:           models.PostSizeSmall,
@@ -256,7 +252,6 @@ var _ = grift.Namespace("db", func() {
 				Description:    nulls.NewString("I already have chocolate, but I need peanut butter."),
 			},
 			{
-				Type:           models.PostTypeRequest,
 				OrganizationID: fixtureOrgs[0].ID,
 				Title:          "Altoids",
 				Size:           models.PostSizeTiny,
@@ -269,7 +264,6 @@ var _ = grift.Namespace("db", func() {
 			fixturePosts[i].DestinationID = fixtureLocations[i].ID
 			fixturePosts[i].Status = models.PostStatusOpen
 			fixturePosts[i].CreatedByID = fixtureUsers[i].ID
-			fixturePosts[i].ReceiverID = nulls.NewInt(fixtureUsers[i].ID)
 			fixturePosts[i].NeededBefore = nulls.NewTime(futureDate)
 			err := models.DB.Create(fixturePosts[i])
 			if err != nil {

@@ -571,20 +571,12 @@ func (ms *ModelSuite) TestUser_GetPosts() {
 			want: []uuid.UUID{f.Posts[3].UUID, f.Posts[2].UUID, f.Posts[1].UUID, f.Posts[0].UUID},
 		},
 		{
-			name: "providing by",
+			name: "providing",
 			args: args{
 				user:     f.Users[1],
 				postRole: PostsProviding,
 			},
 			want: []uuid.UUID{f.Posts[1].UUID, f.Posts[0].UUID},
-		},
-		{
-			name: "receiving by",
-			args: args{
-				user:     f.Users[1],
-				postRole: PostsReceiving,
-			},
-			want: []uuid.UUID{f.Posts[3].UUID, f.Posts[2].UUID},
 		},
 	}
 	for _, test := range tests {
@@ -724,14 +716,14 @@ func (ms *ModelSuite) TestUser_CanUpdatePostStatus() {
 		},
 		{
 			name:      "Open to Accepted",
-			post:      Post{CreatedByID: 1, Status: PostStatusOpen, Type: PostTypeRequest},
+			post:      Post{CreatedByID: 1, Status: PostStatusOpen},
 			user:      User{ID: 1},
 			newStatus: PostStatusAccepted,
 			want:      true,
 		},
 		{
 			name:      "Accepted to Accepted",
-			post:      Post{CreatedByID: 1, Status: PostStatusAccepted, Type: PostTypeRequest},
+			post:      Post{CreatedByID: 1, Status: PostStatusAccepted},
 			newStatus: PostStatusAccepted,
 			want:      false,
 		},
@@ -1506,33 +1498,21 @@ func (ms *ModelSuite) TestUser_WantsPostNotification() {
 			want: false,
 		},
 		{
-			name: "no, it's an offer to bring something not near me",
-			user: f.Users[1],
-			post: f.Posts[1],
-			want: false,
-		},
-		{
 			name: "yes, it's a request for something near me",
 			user: f.Users[1],
-			post: f.Posts[2],
-			want: true,
-		},
-		{
-			name: "yes, it's an offer to bring something near me",
-			user: f.Users[1],
-			post: f.Posts[3],
+			post: f.Posts[1],
 			want: true,
 		},
 		{
 			name: "no, there is no request origin",
 			user: f.Users[1],
-			post: f.Posts[4],
+			post: f.Posts[2],
 			want: false,
 		},
 		{
 			name: "yes, I have a watch for that location",
 			user: f.Users[2],
-			post: f.Posts[4],
+			post: f.Posts[2],
 			want: true,
 		},
 	}
