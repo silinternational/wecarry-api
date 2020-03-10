@@ -1145,7 +1145,7 @@ func (ms *ModelSuite) TestPost_GetThreads() {
 	t := ms.T()
 
 	users := createUserFixtures(ms.DB, 2).Users
-	posts := createPostFixtures(ms.DB, 1, false)
+	posts := createPostFixtures(ms.DB, 2, false)
 	threadFixtures := CreateThreadFixtures(ms, posts[0])
 	threads := threadFixtures.Threads
 
