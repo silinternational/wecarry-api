@@ -297,8 +297,6 @@ type MessageResolver interface {
 	Thread(ctx context.Context, obj *models.Message) (*models.Thread, error)
 }
 type MutationResolver interface {
-	MarkRequestAsReceived(ctx context.Context, postID string) (*models.Post, error)
-	MarkRequestAsDelivered(ctx context.Context, postID string) (*models.Post, error)
 	CreateMeeting(ctx context.Context, input meetingInput) (*models.Meeting, error)
 	UpdateMeeting(ctx context.Context, input meetingInput) (*models.Meeting, error)
 	CreateMeetingInvites(ctx context.Context, input CreateMeetingInvitesInput) ([]models.MeetingInvite, error)
@@ -319,6 +317,8 @@ type MutationResolver interface {
 	AddMeAsPotentialProvider(ctx context.Context, postID string) (*models.Post, error)
 	RemoveMeAsPotentialProvider(ctx context.Context, postID string) (*models.Post, error)
 	RemovePotentialProvider(ctx context.Context, postID string, userID string) (*models.Post, error)
+	MarkRequestAsDelivered(ctx context.Context, postID string) (*models.Post, error)
+	MarkRequestAsReceived(ctx context.Context, postID string) (*models.Post, error)
 	SetThreadLastViewedAt(ctx context.Context, input SetThreadLastViewedAtInput) (*models.Thread, error)
 	UpdateUser(ctx context.Context, input UpdateUserInput) (*models.User, error)
 	CreateWatch(ctx context.Context, input watchInput) (*models.Watch, error)
@@ -1789,9 +1789,6 @@ var parsedSchema = gqlparser.MustLoadSchema(
 }
 
 type Mutation {
-    markRequestAsReceived(postID: String!): Post!
-    markRequestAsDelivered(postID: String!): Post!
-
     "Create a new meeting (event). At this time, any user may create a meeting."
     createMeeting(input: CreateMeetingInput!): Meeting!
 
@@ -1884,6 +1881,12 @@ type Mutation {
 
     "Cancel a carry offer for any user. Authorized for the post creator, the potential provider, and Super Admins."
     removePotentialProvider(postID: String!, userID: String!): Post!
+
+    "Provider changes the status of a request to DELIVERED"
+    markRequestAsDelivered(postID: String!): Post!
+
+    "Requester changes the status of a request to RECEIVED"
+    markRequestAsReceived(postID: String!): Post!
 
     """
     Set the LastViewedAt time for a message thread. Effectively clears the unread status of messages updated before the
@@ -4641,94 +4644,6 @@ func (ec *executionContext) _Message_updatedAt(ctx context.Context, field graphq
 	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_markRequestAsReceived(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Mutation",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_markRequestAsReceived_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	rctx.Args = args
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().MarkRequestAsReceived(rctx, args["postID"].(string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*models.Post)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNPost2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Mutation_markRequestAsDelivered(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Mutation",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_markRequestAsDelivered_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	rctx.Args = args
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().MarkRequestAsDelivered(rctx, args["postID"].(string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*models.Post)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNPost2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _Mutation_createMeeting(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -5592,6 +5507,94 @@ func (ec *executionContext) _Mutation_removePotentialProvider(ctx context.Contex
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Mutation().RemovePotentialProvider(rctx, args["postID"].(string), args["userID"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Post)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNPost2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_markRequestAsDelivered(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_markRequestAsDelivered_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().MarkRequestAsDelivered(rctx, args["postID"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Post)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNPost2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_markRequestAsReceived(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_markRequestAsReceived_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().MarkRequestAsReceived(rctx, args["postID"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11466,16 +11469,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Mutation")
-		case "markRequestAsReceived":
-			out.Values[i] = ec._Mutation_markRequestAsReceived(ctx, field)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "markRequestAsDelivered":
-			out.Values[i] = ec._Mutation_markRequestAsDelivered(ctx, field)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "createMeeting":
 			out.Values[i] = ec._Mutation_createMeeting(ctx, field)
 			if out.Values[i] == graphql.Null {
@@ -11573,6 +11566,16 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "removePotentialProvider":
 			out.Values[i] = ec._Mutation_removePotentialProvider(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "markRequestAsDelivered":
+			out.Values[i] = ec._Mutation_markRequestAsDelivered(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "markRequestAsReceived":
+			out.Values[i] = ec._Mutation_markRequestAsReceived(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}

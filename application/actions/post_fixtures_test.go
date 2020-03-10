@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gobuffalo/nulls"
+
 	"github.com/silinternational/wecarry-api/aws"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/internal/test"
@@ -176,7 +177,43 @@ func createFixturesForMarkRequestAsDelivered(as *ActionSuite) UpdatePostStatusFi
 	userFixtures := test.CreateUserFixtures(as.DB, 2)
 	users := userFixtures.Users
 
-	posts := test.CreatePostFixtures(as.DB, 1, false)
+	posts := test.CreatePostFixtures(as.DB, 2, false)
+	posts[0].Status = models.PostStatusAccepted
+	posts[0].ProviderID = nulls.NewInt(users[1].ID)
+
+	posts[1].Status = models.PostStatusCompleted
+	posts[1].ProviderID = nulls.NewInt(users[1].ID)
+
+	as.NoError(as.DB.Update(&posts))
+
+	as.DB.Save(&posts[0])
+
+	return UpdatePostStatusFixtures{
+		Posts: posts,
+		Users: users,
+	}
+}
+
+func createFixturesForMarkRequestAsReceived(as *ActionSuite) UpdatePostStatusFixtures {
+	userFixtures := test.CreateUserFixtures(as.DB, 2)
+	users := userFixtures.Users
+
+	posts := test.CreatePostFixtures(as.DB, 3, false)
+	posts[0].Status = models.PostStatusAccepted
+	posts[0].ProviderID = nulls.NewInt(users[1].ID)
+
+	// Get the Accepted PostHistory added
+	posts[1].Status = models.PostStatusAccepted
+	posts[1].ProviderID = nulls.NewInt(users[1].ID)
+	as.NoError(as.DB.Update(&posts))
+
+	posts[1].Status = models.PostStatusDelivered
+
+	posts[2].Status = models.PostStatusCompleted
+	posts[2].ProviderID = nulls.NewInt(users[1].ID)
+	as.NoError(as.DB.Update(&posts))
+
+	as.DB.Save(&posts[0])
 
 	return UpdatePostStatusFixtures{
 		Posts: posts,
