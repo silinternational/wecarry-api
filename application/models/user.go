@@ -24,7 +24,6 @@ import (
 // These values are used by GraphQL to reference the names of the Post relationships on the User model.
 const (
 	PostsCreated   string = "PostsCreated"
-	PostsReceiving string = "PostsReceiving"
 	PostsProviding string = "PostsProviding"
 )
 
@@ -460,7 +459,6 @@ func (u *User) FindUserOrganization(org Organization) (UserOrganization, error) 
 func (u *User) Posts(postRole string) ([]Post, error) {
 	fk := map[string]string{
 		PostsCreated:   "created_by_id=?",
-		PostsReceiving: "created_by_id=?",
 		PostsProviding: "provider_id=?",
 	}
 	var posts Posts

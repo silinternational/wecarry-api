@@ -223,8 +223,6 @@ enum MeetingVisibility {
 enum PostRole {
     "Posts created by the User"
     CREATEDBY
-    "Posts to be received by the User"
-    RECEIVING
     "Posts provided by the User. Posts where the user is a PotentialProvider are not included."
     PROVIDING
 }

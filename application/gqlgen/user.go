@@ -12,7 +12,6 @@ import (
 // postRoleMap is used to convert PostRole gql enum values to values used by models
 var postRoleMap = map[PostRole]string{
 	PostRoleCreatedby: models.PostsCreated,
-	PostRoleReceiving: models.PostsReceiving,
 	PostRoleProviding: models.PostsProviding,
 }
 
