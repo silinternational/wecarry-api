@@ -1559,13 +1559,13 @@ func (ms *ModelSuite) TestPost_SetProviderWithStatus() {
 		wantProviderID nulls.Int
 	}{
 		{name: "Accepted Request", status: PostStatusAccepted, wantProviderID: nulls.NewInt(user.ID)},
-		{name: "Accepted Offer", status: PostStatusAccepted, wantProviderID: nulls.Int{}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var post Post
 			userID := user.UUID.String()
-			post.SetProviderWithStatus(test.status, &userID)
+			err := post.SetProviderWithStatus(test.status, &userID)
+			ms.NoError(err)
 
 			ms.Equal(test.wantProviderID, post.ProviderID)
 			ms.Equal(test.status, post.Status)
