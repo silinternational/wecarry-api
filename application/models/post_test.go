@@ -977,7 +977,7 @@ func (ms *ModelSuite) TestPost_FindByID() {
 	t := ms.T()
 
 	users := createUserFixtures(ms.DB, 2).Users
-	posts := createPostFixtures(ms.DB, 1, false)
+	posts := createPostFixtures(ms.DB, 2, false)
 
 	tests := []struct {
 		name          string
@@ -992,12 +992,11 @@ func (ms *ModelSuite) TestPost_FindByID() {
 			id:       posts[0].ID,
 			wantPost: posts[0],
 		},
-		{name: "good with two related fields",
+		{name: "good with a related field",
 			id:            posts[1].ID,
-			eagerFields:   []string{"CreatedBy", "Provider"},
+			eagerFields:   []string{"CreatedBy"},
 			wantPost:      posts[1],
 			wantCreatedBy: users[0],
-			wantProvider:  users[0],
 		},
 		{name: "zero ID", id: 0, wantErr: true},
 		{name: "wrong id", id: 99999, wantErr: true},
