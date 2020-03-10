@@ -623,6 +623,7 @@ input RemoveOrganizationTrustInput {
 type Post {
     "unique identifier for the Post (Request)"
     id: ID!
+    "Profile of the user that created this post."
     createdBy: PublicProfile!
     "Profile of the user that is the provider for this post."
     provider: PublicProfile

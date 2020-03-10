@@ -701,16 +701,16 @@ func (u *User) isNearPost(post Post) bool {
 		return false
 	}
 
-	postLocation, err := post.GetOrigin()
+	postOrigin, err := post.GetOrigin()
 	if err != nil {
-		domain.ErrLogger.Printf("failed to get post location, %s", err)
+		domain.ErrLogger.Printf("failed to get post origin, %s", err)
 		return false
 	}
-	if postLocation == nil {
+	if postOrigin == nil {
 		return false
 	}
 
-	if u.Location.IsNear(*postLocation) {
+	if u.Location.IsNear(*postOrigin) {
 		return true
 	}
 	return false

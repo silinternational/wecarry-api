@@ -368,17 +368,3 @@ func createFixturesForPostGetAudience(ms *ModelSuite) PostFixtures {
 		Posts: posts,
 	}
 }
-
-func createFixturesForGetLocationForNotifications(ms *ModelSuite) PostFixtures {
-	uf := createUserFixtures(ms.DB, 1)
-	users := uf.Users
-
-	posts := createPostFixtures(ms.DB, 2, false)
-	posts[0].OriginID = nulls.Int{}
-	ms.NoError(ms.DB.Save(&posts[0]))
-
-	return PostFixtures{
-		Users: users,
-		Posts: posts,
-	}
-}

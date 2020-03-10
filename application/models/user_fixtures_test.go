@@ -420,11 +420,11 @@ func CreateFixturesForUserWantsPostNotification(ms *ModelSuite) UserPostFixtures
 			Description: "close",
 			Country:     "US",
 		},
-		{ // Post 2 Destination
+		{ // Post 1 Destination
 			Description: "far away",
 			Country:     "KR",
 		},
-		{ // Post 4 Destination
+		{ // Post 2 Destination
 			Description: "close",
 			Country:     "US",
 		},
@@ -432,7 +432,7 @@ func CreateFixturesForUserWantsPostNotification(ms *ModelSuite) UserPostFixtures
 			Description: "far away",
 			Country:     "KR",
 		},
-		{ // Post 2 Origin
+		{ // Post 1 Origin
 			Description: "close",
 			Country:     "US",
 		},
