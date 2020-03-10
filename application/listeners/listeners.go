@@ -190,10 +190,6 @@ func sendPostStatusUpdatedNotification(e events.Event) {
 		domain.ErrLogger.Printf("unable to find post from event with id %v ... %s", pid, err)
 	}
 
-	if post.Type != models.PostTypeRequest {
-		return
-	}
-
 	requestStatusUpdatedNotifications(post, pEData)
 }
 

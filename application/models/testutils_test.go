@@ -9,6 +9,7 @@ import (
 
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop"
+
 	"github.com/silinternational/wecarry-api/domain"
 )
 
@@ -118,7 +119,7 @@ func createUserFixtures(tx *pop.Connection, n int) UserFixtures {
 // CreatePostFixtures generates any number of post records for testing. Related Location and File records are also
 // created. All post fixtures will be assigned to the first Organization in the DB. If no Organization exists,
 // one will be created. All posts are created by the first User in the DB. If no User exists, one will be created.
-func createPostFixtures(tx *pop.Connection, nRequests, nOffers int, createFiles bool) Posts {
+func createPostFixtures(tx *pop.Connection, nPosts int, createFiles bool) Posts {
 	var org Organization
 	if err := tx.First(&org); err != nil {
 		org = Organization{AuthConfig: "{}"}
@@ -131,25 +132,17 @@ func createPostFixtures(tx *pop.Connection, nRequests, nOffers int, createFiles 
 		mustCreate(tx, &user)
 	}
 
-	totalPosts := nRequests + nOffers
-	locations := createLocationFixtures(tx, totalPosts*2)
+	locations := createLocationFixtures(tx, nPosts*2)
 
 	var files Files
 	if createFiles {
-		files = createFileFixtures(totalPosts)
+		files = createFileFixtures(nPosts)
 	}
 
-	posts := make(Posts, totalPosts)
+	posts := make(Posts, nPosts)
 	created := 0
 	futureDate := time.Now().Add(4 * domain.DurationWeek)
 	for i := range posts {
-		if created < nRequests {
-			posts[i].Type = PostTypeRequest
-			posts[i].ReceiverID = nulls.NewInt(user.ID)
-		} else {
-			posts[i].Type = PostTypeOffer
-			posts[i].ProviderID = nulls.NewInt(user.ID)
-		}
 		posts[i].CreatedByID = user.ID
 		posts[i].OrganizationID = org.ID
 		posts[i].DestinationID = locations[i*2].ID
@@ -183,10 +176,10 @@ func createPostFixtures(tx *pop.Connection, nRequests, nOffers int, createFiles 
 func createPotentialProviderFixtures(tx *pop.Connection, nPosts, nProviders int) PotentialProviders {
 	var posts Posts
 	if err := tx.All(&posts); err != nil {
-		createPostFixtures(tx, nPosts, 0, false)
+		createPostFixtures(tx, nPosts, false)
 	}
 	if len(posts) < nPosts {
-		createPostFixtures(tx, nPosts-len(posts), 0, false)
+		createPostFixtures(tx, nPosts-len(posts), false)
 	}
 
 	posts = Posts{}
@@ -256,7 +249,7 @@ type potentialProvidersFixtures struct {
 // The third Post won't have any potential providers
 func createPotentialProvidersFixtures(ms *ModelSuite) potentialProvidersFixtures {
 	uf := createUserFixtures(ms.DB, 4)
-	posts := createPostFixtures(ms.DB, 3, 0, false)
+	posts := createPostFixtures(ms.DB, 3, false)
 	providers := PotentialProviders{}
 
 	for i, p := range posts[:2] {

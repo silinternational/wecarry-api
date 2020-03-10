@@ -153,7 +153,7 @@ func (ms *ModelSuite) TestFile_FindByUUID() {
 	t := ms.T()
 
 	_ = createUserFixtures(ms.DB, 2)
-	posts := createPostFixtures(ms.DB, 1, 1, false)
+	posts := createPostFixtures(ms.DB, 1, false)
 
 	if err := aws.CreateS3Bucket(); err != nil {
 		t.Errorf("failed to create S3 bucket, %s", err)
@@ -292,7 +292,7 @@ func (ms *ModelSuite) TestFiles_DeleteUnlinked() {
 
 	_ = createFileFixtures(nNewUnlinkedFiles)
 
-	posts := createPostFixtures(ms.DB, nPosts, 0, true)
+	posts := createPostFixtures(ms.DB, nPosts, true)
 
 	postFiles := createFileFixtures(nPosts)
 	for i, p := range postFiles {

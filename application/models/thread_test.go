@@ -65,7 +65,7 @@ func (ms *ModelSuite) TestThread_FindByUUID() {
 	t := ms.T()
 
 	_ = createUserFixtures(ms.DB, 2)
-	posts := createPostFixtures(ms.DB, 1, 1, false)
+	posts := createPostFixtures(ms.DB, 1, false)
 	threadFixtures := CreateThreadFixtures(ms, posts[0])
 
 	tests := []struct {
@@ -101,7 +101,7 @@ func (ms *ModelSuite) TestThread_GetPost() {
 	t := ms.T()
 
 	_ = createUserFixtures(ms.DB, 2)
-	posts := createPostFixtures(ms.DB, 1, 1, false)
+	posts := createPostFixtures(ms.DB, 1, false)
 	threadFixtures := CreateThreadFixtures(ms, posts[0])
 
 	tests := []struct {
@@ -138,7 +138,7 @@ func (ms *ModelSuite) TestThread_GetMessages() {
 	t := ms.T()
 
 	_ = createUserFixtures(ms.DB, 2)
-	posts := createPostFixtures(ms.DB, 1, 1, false)
+	posts := createPostFixtures(ms.DB, 1, false)
 	threadFixtures := CreateThreadFixtures(ms, posts[0])
 
 	tests := []struct {
@@ -191,7 +191,7 @@ func (ms *ModelSuite) TestThread_GetParticipants() {
 	t := ms.T()
 
 	users := createUserFixtures(ms.DB, 2).Users
-	posts := createPostFixtures(ms.DB, 1, 1, false)
+	posts := createPostFixtures(ms.DB, 1, false)
 	threadFixtures := CreateThreadFixtures(ms, posts[0])
 
 	tests := []struct {
@@ -244,7 +244,7 @@ func (ms *ModelSuite) TestThread_CreateWithParticipants() {
 	t := ms.T()
 
 	users := createUserFixtures(ms.DB, 2).Users
-	posts := createPostFixtures(ms.DB, 1, 0, false)
+	posts := createPostFixtures(ms.DB, 1, false)
 	post := posts[0]
 
 	var thread Thread
@@ -286,7 +286,7 @@ func (ms *ModelSuite) TestThread_ensureParticipants() {
 	t := ms.T()
 
 	users := createUserFixtures(ms.DB, 2).Users
-	posts := createPostFixtures(ms.DB, 1, 1, false)
+	posts := createPostFixtures(ms.DB, 1, false)
 	post := posts[0]
 
 	thread := Thread{
@@ -343,7 +343,7 @@ func (ms *ModelSuite) TestThread_GetLastViewedAt() {
 	t := ms.T()
 
 	users := createUserFixtures(ms.DB, 2).Users
-	posts := createPostFixtures(ms.DB, 1, 1, false)
+	posts := createPostFixtures(ms.DB, 1, false)
 	threadFixtures := CreateThreadFixtures(ms, posts[0])
 
 	tests := []struct {

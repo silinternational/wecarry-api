@@ -31,10 +31,6 @@ var dummyTemplates = map[string]dummyTemplate{
 		subject: "new request",
 		body:    "There is a new request for an item.",
 	},
-	domain.MessageTemplateNewOffer: {
-		subject: "new offer",
-		body:    "There is a new offer available.",
-	},
 	domain.MessageTemplateNewThreadMessage: {
 		subject: "new message",
 		body:    "You have a new message.",

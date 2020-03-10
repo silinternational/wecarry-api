@@ -240,8 +240,6 @@ enum MeetingVisibility {
 enum PostRole {
     "Posts created by the User"
     CREATEDBY
-    "Posts to be received by the User"
-    RECEIVING
     "Posts provided by the User. Posts where the user is a PotentialProvider are not included."
     PROVIDING
 }
@@ -274,12 +272,6 @@ enum PostStatus {
     COMPLETED
     "Removed: the request was canceled (removed) by the receiver"
     REMOVED
-}
-
-"DEPRECATED: Only posts of type REQUEST are valid"
-enum PostType {
-    REQUEST
-    OFFER @deprecated(reason: "Offer-type Posts have not been implemented, and will be implemented separately.")
 }
 
 "Visibility for Posts, ALL organizations, TRUSTED organizations, or SAME organization only"
@@ -636,12 +628,9 @@ input RemoveOrganizationTrustInput {
 type Post {
     "unique identifier for the Post (Request)"
     id: ID!
-    type: PostType! @deprecated(reason: "Offer-type Posts will be implemented separately.")
     "Profile of the user that created this post."
     createdBy: PublicProfile!
-    "Profile of the user that is receiver of this post. For requests, this is the same as `createdBy`."
-    receiver: PublicProfile
-    "Profile of the user that is the provider for this post. For offers, this is the same as `createdBy`."
+    "Profile of the user that is the provider for this post."
     provider: PublicProfile
     "Users that have offered to carry this request."
     potentialProviders: [PublicProfile!]
@@ -690,8 +679,6 @@ type Post {
 input CreatePostInput {
     "ID of associated Organization. Affects visibility of the post, see also the `visibility` field."
     orgID: String!
-    "DEPRECATED: Must be REQUEST"
-    type: PostType!
     "Short description, limited to 255 characters"
     title: String!
     "Optional, longer description, limited to 4096 characters"

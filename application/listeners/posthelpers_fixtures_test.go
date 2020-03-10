@@ -129,23 +129,19 @@ func CreateFixtures_sendNotificationRequestFromStatus(ms *ModelSuite, t *testing
 	posts := []models.Post{
 		{
 			CreatedByID:    users[0].ID,
-			Type:           models.PostTypeRequest,
 			OrganizationID: users[0].Organizations[0].ID,
 			Title:          "First Request",
 			Size:           models.PostSizeMedium,
 			Status:         models.PostStatusOpen,
 			ProviderID:     nulls.NewInt(users[1].ID),
-			ReceiverID:     nulls.NewInt(users[0].ID),
 			DestinationID:  locations[0].ID,
 		},
 		{
 			CreatedByID:    users[0].ID,
-			Type:           models.PostTypeRequest,
 			OrganizationID: users[0].Organizations[0].ID,
 			Title:          "Second Request",
 			Size:           models.PostSizeMedium,
 			Status:         models.PostStatusOpen,
-			ReceiverID:     nulls.NewInt(users[0].ID),
 			DestinationID:  locations[1].ID,
 		},
 	}

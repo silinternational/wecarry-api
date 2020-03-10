@@ -178,10 +178,6 @@ func (p *PotentialProvider) NewWithPostUUID(postUUID string, userID int) error {
 		return err
 	}
 
-	if post.Type != PostTypeRequest {
-		return fmt.Errorf("Post Type must be Request not %s", post.Type)
-	}
-
 	if post.CreatedByID == userID {
 		return errors.New("PotentialProvider User must not be the Post's Receiver.")
 	}

@@ -95,14 +95,12 @@ func CreateFixturesForUserGetPosts(ms *ModelSuite) UserPostFixtures {
 	uf := createUserFixtures(ms.DB, 2)
 	users := uf.Users
 
-	posts := createPostFixtures(ms.DB, 2, 2, false)
+	posts := createPostFixtures(ms.DB, 4, false)
 	userID := users[1].UUID.String()
 	posts[0].SetProviderWithStatus(PostStatusAccepted, &userID)
 	posts[1].SetProviderWithStatus(PostStatusAccepted, &userID)
 	posts[2].Status = PostStatusAccepted
-	posts[2].ReceiverID = nulls.NewInt(users[1].ID)
 	posts[3].Status = PostStatusAccepted
-	posts[3].ReceiverID = nulls.NewInt(users[1].ID)
 	ms.NoError(ms.DB.Save(&posts))
 
 	return UserPostFixtures{
@@ -156,7 +154,7 @@ func CreateFixturesForUserCanViewPost(ms *ModelSuite) UserPostFixtures {
 	uo.OrganizationID = orgs[2].ID
 	ms.NoError(DB.UpdateColumns(&uo, "organization_id"))
 
-	posts := createPostFixtures(ms.DB, 5, 0, false)
+	posts := createPostFixtures(ms.DB, 5, false)
 	posts[1].OrganizationID = orgs[1].ID
 	posts[1].CreatedByID = users[1].ID
 
@@ -261,7 +259,7 @@ func CreateUserFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) UserMes
 	users := uf.Users
 
 	// Each user has a request and is a provider on the other user's post
-	posts := createPostFixtures(ms.DB, 2, 0, false)
+	posts := createPostFixtures(ms.DB, 2, false)
 	posts[0].Status = PostStatusAccepted
 	posts[0].ProviderID = nulls.NewInt(users[1].ID)
 	posts[1].Status = PostStatusAccepted
@@ -427,14 +425,6 @@ func CreateFixturesForUserWantsPostNotification(ms *ModelSuite) UserPostFixtures
 			Country:     "KR",
 		},
 		{ // Post 2 Destination
-			Description: "far away",
-			Country:     "KR",
-		},
-		{ // Post 3 Destination
-			Description: "close",
-			Country:     "US",
-		},
-		{ // Post 4 Destination
 			Description: "close",
 			Country:     "US",
 		},
@@ -442,7 +432,7 @@ func CreateFixturesForUserWantsPostNotification(ms *ModelSuite) UserPostFixtures
 			Description: "far away",
 			Country:     "KR",
 		},
-		{ // Post 2 Origin
+		{ // Post 1 Origin
 			Description: "close",
 			Country:     "US",
 		},
@@ -451,23 +441,12 @@ func CreateFixturesForUserWantsPostNotification(ms *ModelSuite) UserPostFixtures
 
 	posts := Posts{
 		{
-			Type:     PostTypeRequest,
-			OriginID: nulls.NewInt(postLocations[5].ID),
+			OriginID: nulls.NewInt(postLocations[3].ID),
 		},
 		{
-			Type:     PostTypeOffer,
-			OriginID: nulls.Int{},
+			OriginID: nulls.NewInt(postLocations[4].ID),
 		},
 		{
-			Type:     PostTypeRequest,
-			OriginID: nulls.NewInt(postLocations[6].ID),
-		},
-		{
-			Type:     PostTypeOffer,
-			OriginID: nulls.Int{},
-		},
-		{
-			Type:     PostTypeRequest,
 			OriginID: nulls.Int{},
 		},
 	}

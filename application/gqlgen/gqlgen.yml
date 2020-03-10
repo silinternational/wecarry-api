@@ -117,8 +117,6 @@ models:
     model: models.PostSize
   PostStatus:
     model: models.PostStatus
-  PostType:
-    model: models.PostType
   PostVisibility:
     model: models.PostVisibility
   Thread:

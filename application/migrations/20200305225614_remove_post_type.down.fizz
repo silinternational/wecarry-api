@@ -1,0 +1,3 @@
+add_column("posts", "type", "string", {default: "REQUEST"})
+add_column("posts", "receiver_id", "integer", {null: true})
+add_foreign_key("posts", "receiver_id", {"users": ["id"]}, {"on_delete": "set null"})
