@@ -1743,14 +1743,8 @@ func (ms *ModelSuite) TestUser_MeetingsAsParticipant() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			// setup
-			ctx := &testBuffaloContext{
-				params: map[interface{}]interface{}{},
-			}
-			ctx.Set("current_user", tt.user)
-
 			// exercise
-			got, err := tt.user.MeetingsAsParticipant(ctx)
+			got, err := tt.user.MeetingsAsParticipant(createTestContext(tt.user))
 
 			// verify
 			if tt.wantErr != "" {
@@ -1817,14 +1811,8 @@ func (ms *ModelSuite) TestUser_CanCreateMeetingParticipant() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			// setup
-			ctx := &testBuffaloContext{
-				params: map[interface{}]interface{}{},
-			}
-			ctx.Set("current_user", tt.user)
-
 			// exercise
-			got := tt.user.CanCreateMeetingParticipant(ctx, tt.meeting)
+			got := tt.user.CanCreateMeetingParticipant(createTestContext(tt.user), tt.meeting)
 
 			// verify
 			ms.Equal(tt.want, got)
