@@ -140,55 +140,55 @@
 - id: SetThreadLastViewedAt
   translation: We had a problem updating the conversation last-viewed time.
 - id: GetPostCreator
-  translation: We had a problem finding the creator of that request or offer.
+  translation: We had a problem finding the creator of that request.
 - id: GetPostReceiver
-  translation: We had a problem finding the receiver for that request or offer.
+  translation: We had a problem finding the receiver for that request.
 - id: GetPostProvider
-  translation: We had a problem finding the provider for that request or offer.
+  translation: We had a problem finding the provider for that request.
 - id: GetPostOrganization
-  translation: We had a problem finding the organization for that request or offer.
+  translation: We had a problem finding the organization for that request.
 - id: GetPostDestination
-  translation: We had a problem finding the destination for that request or offer.
+  translation: We had a problem finding the destination for that request.
 - id: GetPostOrigin
-  translation: We had a problem finding the origin for that request or offer.
+  translation: We had a problem finding the origin for that request.
 - id: GetPostThreads
-  translation: We had a problem finding the list of conversations for that request or offer.
+  translation: We had a problem finding the list of conversations for that request.
 - id: GetPostPhoto
-  translation: We had a problem finding the photo for that request or offer.
+  translation: We had a problem finding the photo for that request.
 - id: GetPostFiles
-  translation: We had a problem finding the list of attachments for that request or offer.
+  translation: We had a problem finding the list of attachments for that request.
 - id: GetPostMeeting
-  translation: We had a problem finding the event associated with that request or offer.
+  translation: We had a problem finding the event associated with that request.
 - id: GetPosts
   translation: We had a problem finding a list of requests and offers.
 - id: GetPost
-  translation: We had a problem finding that request or offer.
+  translation: We had a problem finding that request.
 - id: CreatePost
-  translation: We had a problem creating that request or offer.
+  translation: We had a problem creating that request.
 - id: CreatePost.ProcessInput
-  translation: We had a problem processing the information to create that request or offer.
+  translation: We had a problem processing the information to create that request.
 - id: CreatePost.SetDestination
-  translation: We had a problem setting the destination for that new request or offer.
+  translation: We had a problem setting the destination for that new request.
 - id: CreatePost.SetOrigin
-  translation: We had a problem setting the origin for that new request or offer.
+  translation: We had a problem setting the origin for that new request.
 - id: UpdatePost
-  translation: We had a problem updating that request or offer.
+  translation: We had a problem updating that request.
 - id: UpdatePost.ProcessInput
-  translation: We had a problem processing the information to update that request or offer.
+  translation: We had a problem processing the information to update that request.
 - id: UpdatePost.GetEditable
-  translation: We had a problem preparing to update that request or offer.
+  translation: We had a problem preparing to update that request.
 - id: UpdatePost.NotEditable
-  translation: That request or offer is locked for editing.
+  translation: That request is locked for editing.
 - id: UpdatePost.SetDestination
-  translation: We had a problem setting the destination to update that request or offer.
+  translation: We had a problem setting the destination to update that request.
 - id: UpdatePost.SetOrigin
-  translation: We had a problem setting the origin to update that request or offer.
+  translation: We had a problem setting the origin to update that request.
 - id: UpdatePost.RemoveOrigin
-  translation: We had a problem removing the origin from that request or offer.
+  translation: We had a problem removing the origin from that request.
 - id: UpdatePostStatus
-  translation: We had a problem changing the status of that request or offer.
+  translation: We had a problem changing the status of that request.
 - id: UpdatePostStatus.FindPost
-  translation: We had a problem finding that request or offer for changing its status.
+  translation: We had a problem finding that request for changing its status.
 - id: UpdatePostStatus.Unauthorized
   translation: You are not allowed to change the status of that post.
 - id: Post.FindPost
@@ -218,9 +218,9 @@
 - id: GetThreadMessages
   translation: We had a problem finding the list of messages in that conversation.
 - id: GetThreadPostID
-  translation: We had a problem finding the request or offer for that conversation.
+  translation: We had a problem finding the request for that conversation.
 - id: GetThreadPost
-  translation: We had a problem finding the request or offer information for that conversation.
+  translation: We had a problem finding the request information for that conversation.
 - id: GetThreads
   translation: We had a problem finding the list of conversations.
 - id: GetMyThreads
