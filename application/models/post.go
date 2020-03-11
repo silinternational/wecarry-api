@@ -910,6 +910,24 @@ func (p *Post) isPostEditable() bool {
 	}
 }
 
+func (p *Post) canCreatorChangeStatus(newStatus PostStatus) bool {
+	// Creator can't move off of Delivered except to Completed
+	if p.Status == PostStatusDelivered {
+		return newStatus == PostStatusCompleted
+	}
+
+	// Creator can't move from Accepted to Delivered
+	return !(p.Status == PostStatusAccepted && newStatus == PostStatusDelivered)
+}
+
+func (p *Post) canProviderChangeStatus(newStatus PostStatus) bool {
+	if p.Status != PostStatusCompleted && newStatus == PostStatusDelivered {
+		return true
+	}
+	// for cancelling a DELIVERED status
+	return p.Status == PostStatusDelivered && newStatus == PostStatusAccepted
+}
+
 // canUserChangeStatus defines which posts statuses can be changed by which users.
 // Invalid transitions are not checked here; it is left for the validator to do this.
 func (p *Post) canUserChangeStatus(user User, newStatus PostStatus) bool {
@@ -917,22 +935,19 @@ func (p *Post) canUserChangeStatus(user User, newStatus PostStatus) bool {
 		return true
 	}
 
-	if p.CreatedByID == user.ID {
-		// Creator can't move off of Delivered except to Completed
-		if p.Status == PostStatusDelivered {
-			return newStatus == PostStatusCompleted
-		}
-		return true
-	}
-
-	if p.ProviderID.Int != user.ID {
+	if p.Status == PostStatusCompleted {
 		return false
 	}
-	if newStatus == PostStatusDelivered {
-		return true
+
+	if p.CreatedByID == user.ID {
+		return p.canCreatorChangeStatus(newStatus)
 	}
-	// for cancelling a DELIVERED status
-	return newStatus == PostStatusAccepted && p.Status == PostStatusDelivered
+
+	if p.ProviderID.Int == user.ID {
+		return p.canProviderChangeStatus(newStatus)
+	}
+
+	return false
 }
 
 // GetAudience returns a list of all of the users which have visibility to this post. As of this writing, it is
