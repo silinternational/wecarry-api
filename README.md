@@ -45,7 +45,7 @@ that have a comment referring to actions.AuthRequest.
 
 Three types of authentication can be used for organization-based authentication:
 Azure AD, Google, and SAML. These are configured in an Organization record or 
-an Organizations Domain record, and are supported by the GraphQL API.
+an Organization Domain record, and are supported by the GraphQL API.
 
 #### Office365/AzureAD
 To add an organization using AzureAD authentication, create a database organization record  
