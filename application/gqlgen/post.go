@@ -589,3 +589,15 @@ func (r *mutationResolver) RemovePotentialProvider(ctx context.Context, postID, 
 
 	return &post, nil
 }
+
+func (r *mutationResolver) MarkRequestAsDelivered(ctx context.Context, postID string) (*models.Post, error) {
+	input := UpdatePostStatusInput{Status: models.PostStatusDelivered, ID: postID}
+
+	return r.UpdatePostStatus(ctx, input)
+}
+
+func (r *mutationResolver) MarkRequestAsReceived(ctx context.Context, postID string) (*models.Post, error) {
+	input := UpdatePostStatusInput{Status: models.PostStatusCompleted, ID: postID}
+
+	return r.UpdatePostStatus(ctx, input)
+}
