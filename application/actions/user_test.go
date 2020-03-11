@@ -216,6 +216,22 @@ func (as *ActionSuite) TestUpdateUser() {
 
 	testCases := []testCase{
 		{
+			Name: "duplicate nickname",
+			Payload: fmt.Sprintf(`mutation { user: updateUser(input:{id: "%s", nickname: "%s"}) {nickname} }`,
+				f.Users[0].UUID, f.Users[1].Nickname),
+			TestUser:    f.Users[0],
+			Test:        func(t *testing.T) {},
+			ExpectError: "That user nickname is already taken",
+		},
+		{
+			Name: "blank nickname",
+			Payload: fmt.Sprintf(`mutation { user: updateUser(input:{id: "%s", nickname: ""}) {nickname} }`,
+				f.Users[0].UUID),
+			TestUser:    f.Users[0],
+			Test:        func(t *testing.T) {},
+			ExpectError: "Your user nickname must contain at least one visible character",
+		},
+		{
 			Name:     "allowed",
 			Payload:  update,
 			TestUser: f.Users[0],
