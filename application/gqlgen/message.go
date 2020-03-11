@@ -67,47 +67,16 @@ func (r *queryResolver) Message(ctx context.Context, id *string) (*models.Messag
 	return &message, nil
 }
 
-func convertGqlCreateMessageInputToDBMessage(gqlMessage CreateMessageInput, user models.User) (models.Message, error) {
-
-	var thread models.Thread
-
-	threadUUID := domain.ConvertStrPtrToString(gqlMessage.ThreadID)
-	if threadUUID != "" {
-		var err error
-		err = thread.FindByUUID(threadUUID)
-		if err != nil {
-			return models.Message{}, err
-		}
-
-	} else {
-		var err error
-		err = thread.CreateWithParticipants(gqlMessage.PostID, user)
-		if err != nil {
-			return models.Message{}, err
-		}
-	}
-
-	dbMessage := models.Message{}
-	dbMessage.Content = gqlMessage.Content
-	dbMessage.ThreadID = thread.ID
-	dbMessage.SentByID = user.ID
-
-	return dbMessage, nil
-}
-
 // CreateMessage is a mutation resolver for creating a new message
 func (r *mutationResolver) CreateMessage(ctx context.Context, input CreateMessageInput) (*models.Message, error) {
 	cUser := models.CurrentUser(ctx)
 	extras := map[string]interface{}{
 		"user": cUser.UUID,
 	}
-	message, err := convertGqlCreateMessageInputToDBMessage(input, cUser)
-	if err != nil {
-		return nil, domain.ReportError(ctx, err, "CreateMessage.ParseInput", extras)
-	}
 
-	if err2 := message.Create(); err2 != nil {
-		return nil, domain.ReportError(ctx, err2, "CreateMessage", extras)
+	var message models.Message
+	if err := message.Create(ctx, input.PostID, input.ThreadID, input.Content); err != nil {
+		return nil, domain.ReportError(ctx, err, "CreateMessage", extras)
 	}
 
 	return &message, nil

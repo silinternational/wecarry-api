@@ -1996,3 +1996,29 @@ func (ms *ModelSuite) TestPost_DestroyPotentialProviders() {
 		})
 	}
 }
+
+func (ms *ModelSuite) TestPost_IsVisible() {
+	f := CreateFixtures_Posts_FindByUser(ms)
+
+	tests := []struct {
+		name string
+		user User
+		post Post
+		want bool
+	}{
+		{name: "post in same org", user: f.Users[0], post: f.Posts[0], want: true},
+		{name: "COMPLETED post in same org", user: f.Users[0], post: f.Posts[2], want: false},
+		{name: "REMOVED post in same org", user: f.Users[0], post: f.Posts[3], want: false},
+		{name: "post visibility ALL in trusted org", user: f.Users[0], post: f.Posts[5], want: true},
+		{name: "post visibility TRUSTED in trusted org", user: f.Users[0], post: f.Posts[6], want: true},
+		{name: "post visibility SAME in trusted org", user: f.Users[0], post: f.Posts[7], want: false},
+		{name: "bad user", user: User{}, want: false},
+		{name: "bad user", user: User{}, want: false},
+	}
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			got := tt.post.IsVisible(createTestContext(tt.user), tt.user)
+			ms.Equal(tt.want, got)
+		})
+	}
+}

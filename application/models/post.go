@@ -759,7 +759,7 @@ func (p *Post) FindByUserAndUUID(ctx context.Context, user User, uuid string) er
 		Where("uuid = ?", uuid).First(p)
 }
 
-// FindByUser finds all posts visible to the current user.
+// FindByUser finds all posts visible to the current user, optionally filtered by location or search text.
 func (p *Posts) FindByUser(ctx context.Context, user User, destination, origin *Location, searchText *string) error {
 	if user.ID == 0 {
 		return errors.New("invalid User ID in Posts.FindByUser")
@@ -1003,4 +1003,19 @@ func (p Posts) FilterOrigin(location Location) Posts {
 		}
 	}
 	return filtered
+}
+
+// IsVisible returns true if the Post is visible to the given user. Only the post ID is used in this method.
+func (p *Post) IsVisible(ctx context.Context, user User) bool {
+	allVisible := Posts{}
+	if err := allVisible.FindByUser(ctx, user, nil, nil, nil); err != nil {
+		domain.Error(domain.GetBuffaloContext(ctx), "error in Post.IsVisible, "+err.Error())
+		return false
+	}
+	for i := range allVisible {
+		if allVisible[i].ID == p.ID {
+			return true
+		}
+	}
+	return false
 }
