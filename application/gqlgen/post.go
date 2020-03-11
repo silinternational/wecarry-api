@@ -452,7 +452,8 @@ func (r *mutationResolver) UpdatePost(ctx context.Context, input postInput) (*mo
 	return &post, nil
 }
 
-func updatePostStatus(ctx context.Context, input UpdatePostStatusInput) (*models.Post, error) {
+// UpdatePostStatus resolves the `updatePostStatus` mutation.
+func (r *mutationResolver) UpdatePostStatus(ctx context.Context, input UpdatePostStatusInput) (*models.Post, error) {
 	var post models.Post
 	if err := post.FindByUUID(input.ID); err != nil {
 		return nil, domain.ReportError(ctx, err, "UpdatePostStatus.FindPost")
@@ -485,11 +486,6 @@ func updatePostStatus(ctx context.Context, input UpdatePostStatusInput) (*models
 	}
 
 	return &post, nil
-}
-
-// UpdatePostStatus resolves the `updatePostStatus` mutation.
-func (r *mutationResolver) UpdatePostStatus(ctx context.Context, input UpdatePostStatusInput) (*models.Post, error) {
-	return updatePostStatus(ctx, input)
 }
 
 func (r *mutationResolver) AddMeAsPotentialProvider(ctx context.Context, postID string) (*models.Post, error) {
@@ -597,11 +593,11 @@ func (r *mutationResolver) RemovePotentialProvider(ctx context.Context, postID, 
 func (r *mutationResolver) MarkRequestAsDelivered(ctx context.Context, postID string) (*models.Post, error) {
 	input := UpdatePostStatusInput{Status: models.PostStatusDelivered, ID: postID}
 
-	return updatePostStatus(ctx, input)
+	return r.UpdatePostStatus(ctx, input)
 }
 
 func (r *mutationResolver) MarkRequestAsReceived(ctx context.Context, postID string) (*models.Post, error) {
 	input := UpdatePostStatusInput{Status: models.PostStatusCompleted, ID: postID}
 
-	return updatePostStatus(ctx, input)
+	return r.UpdatePostStatus(ctx, input)
 }
