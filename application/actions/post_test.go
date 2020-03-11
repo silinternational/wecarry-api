@@ -521,11 +521,11 @@ func (as *ActionSuite) Test_MarkRequestAsDelivered() {
 			wantPostHistoryCount: 3, wantErr: false},
 		{name: "ACCEPTED: delivered by Creator",
 			postID: posts[0].UUID.String(), user: creator, wantErr: true,
-			wantErrContains: "MarkRequestAsDelivered.Unauthorized",
+			wantErrContains: "not allowed to change the status",
 		},
 		{name: "COMPLETED: delivered by Provider",
 			postID: posts[1].UUID.String(), user: provider, wantErr: true,
-			wantErrContains: "MarkRequestAsDelivered.WrongStatus",
+			wantErrContains: "not allowed to change the status",
 		},
 	}
 
@@ -581,7 +581,7 @@ func (as *ActionSuite) Test_MarkRequestAsReceived() {
 	}{
 		{name: "ACCEPTED: received by Provider",
 			postID: posts[0].UUID.String(), user: provider, wantErr: true,
-			wantErrContains: "MarkRequestAsReceived.Unauthorized",
+			wantErrContains: "not allowed to change the status",
 		},
 		{name: "ACCEPTED: received by Creator",
 			postID: posts[0].UUID.String(), user: creator, wantErr: false,
@@ -595,7 +595,7 @@ func (as *ActionSuite) Test_MarkRequestAsReceived() {
 		},
 		{name: "COMPLETED: received by Creator",
 			postID: posts[2].UUID.String(), user: creator, wantErr: true,
-			wantErrContains: "MarkRequestAsReceived.WrongStatus",
+			wantErrContains: "not allowed to change the status",
 		},
 	}
 

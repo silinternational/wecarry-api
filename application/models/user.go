@@ -339,11 +339,6 @@ func (u *User) CanUpdatePostStatus(post Post, newStatus PostStatus) bool {
 		return true
 	}
 
-	// post creator can make any status changes
-	if u.ID == post.CreatedByID {
-		return true
-	}
-
 	// others can only make limited changes
 	return post.canUserChangeStatus(*u, newStatus)
 }

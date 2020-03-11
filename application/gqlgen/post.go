@@ -452,8 +452,7 @@ func (r *mutationResolver) UpdatePost(ctx context.Context, input postInput) (*mo
 	return &post, nil
 }
 
-// UpdatePostStatus resolves the `updatePostStatus` mutation.
-func (r *mutationResolver) UpdatePostStatus(ctx context.Context, input UpdatePostStatusInput) (*models.Post, error) {
+func updatePostStatus(ctx context.Context, input UpdatePostStatusInput) (*models.Post, error) {
 	var post models.Post
 	if err := post.FindByUUID(input.ID); err != nil {
 		return nil, domain.ReportError(ctx, err, "UpdatePostStatus.FindPost")
@@ -486,6 +485,11 @@ func (r *mutationResolver) UpdatePostStatus(ctx context.Context, input UpdatePos
 	}
 
 	return &post, nil
+}
+
+// UpdatePostStatus resolves the `updatePostStatus` mutation.
+func (r *mutationResolver) UpdatePostStatus(ctx context.Context, input UpdatePostStatusInput) (*models.Post, error) {
+	return updatePostStatus(ctx, input)
 }
 
 func (r *mutationResolver) AddMeAsPotentialProvider(ctx context.Context, postID string) (*models.Post, error) {
@@ -591,74 +595,13 @@ func (r *mutationResolver) RemovePotentialProvider(ctx context.Context, postID, 
 }
 
 func (r *mutationResolver) MarkRequestAsDelivered(ctx context.Context, postID string) (*models.Post, error) {
-	cUser := models.CurrentUser(ctx)
+	input := UpdatePostStatusInput{Status: models.PostStatusDelivered, ID: postID}
 
-	var post models.Post
-	if err := post.FindByUUID(postID); err != nil {
-		return nil, domain.ReportError(ctx, err, "MarkRequestAsDelivered.FindPost")
-	}
-
-	extras := map[string]interface{}{
-		"user": cUser.UUID,
-		"post": post.UUID,
-	}
-
-	if cUser.AdminRole != models.UserAdminRoleSuperAdmin && cUser.ID != post.ProviderID.Int {
-		return nil, domain.ReportError(ctx, errors.New("not allowed to deliver request"),
-			"MarkRequestAsDelivered.Unauthorized", extras)
-	}
-
-	if post.Status != models.PostStatusAccepted && post.Status != models.PostStatusReceived {
-		return nil, domain.ReportError(ctx,
-			errors.New("not allowed to deliver request with status "+post.Status.String()),
-			"MarkRequestAsDelivered.WrongStatus", extras)
-	}
-
-	post.Status = models.PostStatusDelivered
-	extras["status"] = post.Status
-
-	if err := post.Update(); err != nil {
-		return nil, domain.ReportError(ctx, err, "MarkRequestAsDelivered", extras)
-	}
-
-	return &post, nil
+	return updatePostStatus(ctx, input)
 }
 
 func (r *mutationResolver) MarkRequestAsReceived(ctx context.Context, postID string) (*models.Post, error) {
-	cUser := models.CurrentUser(ctx)
+	input := UpdatePostStatusInput{Status: models.PostStatusCompleted, ID: postID}
 
-	var post models.Post
-	if err := post.FindByUUID(postID); err != nil {
-		return nil, domain.ReportError(ctx, err, "MarkRequestAsReceived.FindPost")
-	}
-
-	extras := map[string]interface{}{
-		"user": cUser.UUID,
-		"post": post.UUID,
-	}
-
-	if cUser.AdminRole != models.UserAdminRoleSuperAdmin && cUser.ID != post.CreatedByID {
-		return nil, domain.ReportError(ctx, errors.New("not allowed to receive request"),
-			"MarkRequestAsReceived.Unauthorized", extras)
-	}
-
-	if post.Status != models.PostStatusAccepted && post.Status != models.PostStatusDelivered {
-		return nil, domain.ReportError(ctx,
-			errors.New("not allowed to receive request with status "+post.Status.String()),
-			"MarkRequestAsReceived.WrongStatus", extras)
-	}
-
-	post.Status = models.PostStatusCompleted
-	extras["status"] = post.Status
-
-	if err := post.Update(); err != nil {
-		return nil, domain.ReportError(ctx, err, "MarkRequestAsReceived", extras)
-	}
-
-	if err := post.DestroyPotentialProviders(post.Status, cUser); err != nil {
-		return nil, domain.ReportError(ctx, errors.New("error destroying post's potential providers: "+err.Error()),
-			"MarkRequestAsReceived.DestroyPotentialProviders", extras)
-	}
-
-	return &post, nil
+	return updatePostStatus(ctx, input)
 }
