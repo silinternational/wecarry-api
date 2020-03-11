@@ -184,7 +184,7 @@ func (u *User) hydrateFromAuthUser(authUser *auth.User, authType string) error {
 	// if new user they will need a unique Nickname
 	if newUser {
 		u.Nickname = authUser.Nickname
-		if err := u.uniquifyNickname(); err != nil {
+		if err := u.uniquifyNickname(getShuffledPrefixes()); err != nil {
 			return err
 		}
 	}
@@ -561,7 +561,7 @@ func (u *User) Save() error {
 	return save(u)
 }
 
-func (u *User) uniquifyNickname() error {
+func (u *User) uniquifyNickname(prefixes [30]string) error {
 
 	simpleNN := u.Nickname
 	if simpleNN == "" {
@@ -573,8 +573,8 @@ func (u *User) uniquifyNickname() error {
 
 	var err error
 
-	// User the first nickname prefix that makes it unique
-	for _, p := range allPrefixes() {
+	// Use the first nickname prefix that makes it unique
+	for _, p := range prefixes {
 		u.Nickname = p + " " + simpleNN
 
 		var existingUser User
