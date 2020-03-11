@@ -64,7 +64,7 @@ use `http:localhost` as the host for the WeCarry API, due to AzureAD's policies.
 (This affects the `AUTH_CALLBACK_URL` in the `.env` file and the `buffalo.environment.HOST` value
 in the docker-compose file.)
 
-<h4 id="google"> Google </h4>
+#### Google GSuite
 
 To add an organization using Google authentication, create a database organization record  
 that includes an auth_type of `GOOGLE` and an auth_config like the following ... 
@@ -126,7 +126,7 @@ in the docker-compose file.)
 #### Google
 
 Google can be used as a social authentication as well as an org-based authentication
-method. See the [Google](#google) section above for configuration details.
+method. See the [Google](#google-gsuite) section above for configuration details.
  
 #### Microsoft
 
