@@ -101,7 +101,7 @@ func (r *mutationResolver) CreateOrganizationDomain(ctx context.Context, input C
 		return nil, domain.ReportError(ctx, err, "CreateOrganizationDomain.Unauthorized", extras)
 	}
 
-	if err := org.AddDomain(input.Domain, domain.ConvertStrPtrToString(input.AuthType), domain.ConvertStrPtrToString(input.AuthConfig)); err != nil {
+	if err := org.AddDomain(input.Domain, input.AuthType, domain.ConvertStrPtrToString(input.AuthConfig)); err != nil {
 		return nil, domain.ReportError(ctx, err, "CreateOrganizationDomain", extras)
 	}
 
@@ -136,7 +136,7 @@ func (r *mutationResolver) UpdateOrganizationDomain(ctx context.Context, input C
 		return nil, domain.ReportError(ctx, err, "UpdateOrganizationDomain.NotFound", extras)
 	}
 
-	orgDomain.AuthType = domain.ConvertStrPtrToString(input.AuthType)
+	orgDomain.AuthType = input.AuthType
 	orgDomain.AuthConfig = domain.ConvertStrPtrToString(input.AuthConfig)
 	if err := orgDomain.Save(); err != nil {
 		return nil, domain.ReportError(ctx, err, "UpdateOrganizationDomain.SaveError", extras)

@@ -4,7 +4,10 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"strings"
 	"testing"
+
+	"github.com/gobuffalo/nulls"
 
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/internal/test"
@@ -282,7 +285,7 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 }
 
 func (ms *ModelSuite) TestSendNewPostNotification() {
-	t := ms.T()
+	post := test.CreatePostFixtures(ms.DB, 1, false)[0]
 	tests := []struct {
 		name     string
 		user     models.User
@@ -292,36 +295,20 @@ func (ms *ModelSuite) TestSendNewPostNotification() {
 	}{
 		{
 			name:    "error - no user email",
-			post:    models.Post{UUID: domain.GetUUID(), Title: "post title", Type: models.PostTypeRequest},
+			post:    post,
 			wantErr: "'To' email address is required",
-		},
-		{
-			name: "error - invalid post type",
-			user: models.User{
-				Email: "user@example.com",
-			},
-			post:    models.Post{UUID: domain.GetUUID(), Title: "post title", Type: "bogus"},
-			wantErr: "invalid template name",
 		},
 		{
 			name: "request",
 			user: models.User{
 				Email: "user@example.com",
 			},
-			post:     models.Post{UUID: domain.GetUUID(), Title: "post title", Type: models.PostTypeRequest},
+			post:     post,
 			wantBody: "There is a new request",
-		},
-		{
-			name: "offer",
-			user: models.User{
-				Email: "user@example.com",
-			},
-			post:     models.Post{UUID: domain.GetUUID(), Title: "post title", Type: models.PostTypeOffer},
-			wantBody: "There is a new offer",
 		},
 	}
 	for _, nextT := range tests {
-		t.Run(nextT.name, func(t *testing.T) {
+		ms.T().Run(nextT.name, func(t *testing.T) {
 			notifications.TestEmailService.DeleteSentMessages()
 
 			err := sendNewPostNotification(nextT.user, nextT.post)
@@ -410,7 +397,7 @@ func (ms *ModelSuite) TestSendPotentialProviderCreatedNotification() {
 	requester := models.User{
 		Email: "user@example.com",
 	}
-	post := models.Post{UUID: domain.GetUUID(), Title: "post title", Type: models.PostTypeRequest}
+	post := models.Post{UUID: domain.GetUUID(), Title: "post title"}
 	wantBody := "has offered to help fulfill your request"
 
 	notifications.TestEmailService.DeleteSentMessages()
@@ -437,7 +424,7 @@ func (ms *ModelSuite) TestSendPotentialProviderSelfDestroyedNotification() {
 	requester := models.User{
 		Email: "user@example.com",
 	}
-	post := models.Post{UUID: domain.GetUUID(), Title: "post title", Type: models.PostTypeRequest}
+	post := models.Post{UUID: domain.GetUUID(), Title: "post title"}
 	wantBody := "indicated they can't fulfill your request afterall"
 
 	notifications.TestEmailService.DeleteSentMessages()
@@ -464,7 +451,7 @@ func (ms *ModelSuite) TestSendPotentialProviderRejectedNotification() {
 	provider := models.User{
 		Email: "user@example.com",
 	}
-	post := models.Post{UUID: domain.GetUUID(), Title: "post title", Type: models.PostTypeRequest}
+	post := models.Post{UUID: domain.GetUUID(), Title: "post title"}
 	wantBody := "is not prepared to have you fulfill their request"
 
 	notifications.TestEmailService.DeleteSentMessages()
@@ -483,4 +470,66 @@ func (ms *ModelSuite) TestSendPotentialProviderRejectedNotification() {
 	test.AssertStringContains(t, body, wantBody, 99)
 	test.AssertStringContains(t, body, post.Title, 99)
 	test.AssertStringContains(t, body, post.UUID.String(), 99)
+}
+
+func (ms *ModelSuite) TestSendNotificationRequestFromOpenToAccepted() {
+	// Five User and three Post fixtures will also be created.  The Posts will
+	// all be created by the first user.
+	// The first Post will have all but the first and fifth user as a potential provider.
+	f := test.CreatePotentialProvidersFixtures(ms.DB)
+
+	users := f.Users
+	post := f.Posts[0]
+
+	post.ProviderID = nulls.NewInt(f.Users[3].ID)
+
+	notifications.TestEmailService.DeleteSentMessages()
+
+	eData := models.PostStatusEventData{
+		OldStatus: models.PostStatusOpen,
+		NewStatus: models.PostStatusAccepted,
+		PostID:    post.ID,
+	}
+
+	params := senderParams{
+		template:   domain.MessageTemplateRequestFromOpenToAccepted,
+		subject:    "Email.Subject.Request.FromOpenToAccepted",
+		post:       post,
+		pEventData: eData,
+	}
+
+	sendNotificationRequestFromOpenToAccepted(params)
+
+	emailCount := notifications.TestEmailService.GetNumberOfMessagesSent()
+	ms.GreaterOrEqual(emailCount, 3, "wrong email count")
+
+	// Fourth user is Provider, so he should get acceptance email and
+	// all the others should get the rejection email
+	sentMsgs := notifications.TestEmailService.GetSentMessages()
+
+	// Timing issues are allowing older emails from the fixture creation to leak
+	// into the sentEmails after the next DeletSentMessages() call
+	acceptedSubject := "request has been accepted"
+	rejectedSubject := "was not accepted"
+
+	accepteds := []notifications.DummyMessageInfo{}
+	rejects := []notifications.DummyMessageInfo{}
+
+	for _, m := range sentMsgs {
+		if strings.Contains(m.Subject, acceptedSubject) {
+			accepteds = append(accepteds, m)
+			continue
+		}
+
+		if strings.Contains(m.Subject, rejectedSubject) {
+			rejects = append(rejects, m)
+			continue
+		}
+	}
+
+	ms.Equal(1, len(accepteds), "incorrect number of accepted messages")
+	ms.Equal(users[3].Email, accepteds[0].ToEmail, "incorrect recipient for accepted message")
+
+	ms.Equal(2, len(rejects), "incorrect number of rejected messages")
+
 }

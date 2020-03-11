@@ -17,6 +17,57 @@ autobind:
   - github.com/silinternational/wecarry-api/models
   - github.com/silinternational/wecarry-api/gqlgen
 models:
+  AuthType:
+    model: models.AuthType
+  File:
+    model: models.File
+    fields:
+      id:
+        resolver: true
+  Location:
+    model: models.Location
+  Meeting:
+    model: models.Meeting
+    fields:
+      id:
+        resolver: true
+      createdBy:
+        resolver: true
+      startDate:
+        resolver: true
+      endDate:
+        resolver: true
+      location:
+        resolver: true
+      imageFile:
+        resolver: true
+      moreInfoURL:
+        resolver: true
+  CreateMeetingInput:
+    model: gqlgen.meetingInput
+  UpdateMeetingInput:
+    model: gqlgen.meetingInput
+  MeetingInvite:
+    model: models.MeetingInvite
+    fields:
+      avatarURL:
+        resolver: true
+  MeetingParticipant:
+    model: models.MeetingParticipant
+    fields:
+      meeting:
+        resolver: true
+      user:
+        resolver: true
+      invite:
+        resolver: true
+  Message:
+    model: models.Message
+    fields:
+      id:
+        resolver: true
+      thread:
+        resolver: true
   Organization:
     model: models.Organization
     fields:
@@ -29,20 +80,7 @@ models:
   OrganizationDomain:
     model: models.OrganizationDomain
     fields:
-      organizationID:
-        resolver: true
-  User:
-    model: models.User
-    fields:
-      id:
-        resolver: true
-      photoURL:
-        resolver: true
-      location:
-        resolver: true
-      unreadMessageCount:
-        resolver: true
-      userPreferences:
+      organization:
         resolver: true
   Post:
     model: models.Post
@@ -71,23 +109,16 @@ models:
         resolver: true
       meeting:
         resolver: true
-  Meeting:
-    model: models.Meeting
-    fields:
-      id:
-        resolver: true
-      createdBy:
-        resolver: true
-      startDate:
-        resolver: true
-      endDate:
-        resolver: true
-      location:
-        resolver: true
-      imageFile:
-        resolver: true
-      moreInfoURL:
-        resolver: true
+  CreatePostInput:
+    model: gqlgen.postInput
+  UpdatePostInput:
+    model: gqlgen.postInput
+  PostSize:
+    model: models.PostSize
+  PostStatus:
+    model: models.PostStatus
+  PostVisibility:
+    model: models.PostVisibility
   Thread:
     model: models.Thread
     fields:
@@ -101,36 +132,19 @@ models:
         resolver: true
       messages:
         resolver: true
-  Message:
-    model: models.Message
+  User:
+    model: models.User
     fields:
       id:
         resolver: true
-      thread:
+      photoURL:
         resolver: true
-  File:
-    model: models.File
-    fields:
-      id:
+      location:
         resolver: true
-  UpdateMeetingInput:
-    model: gqlgen.meetingInput
-  CreateMeetingInput:
-    model: gqlgen.meetingInput
-  UpdatePostInput:
-    model: gqlgen.postInput
-  CreatePostInput:
-    model: gqlgen.postInput
-  Location:
-    model: models.Location
-  PostType:
-    model: models.PostType
-  PostStatus:
-    model: models.PostStatus
-  PostSize:
-    model: models.PostSize
-  PostVisibility:
-    model: models.PostVisibility
+      unreadMessageCount:
+        resolver: true
+      userPreferences:
+        resolver: true
   UserAdminRole:
     model: models.UserAdminRole
   UserPreferences:
@@ -144,17 +158,3 @@ models:
     model: gqlgen.watchInput
   UpdateWatchInput:
     model: gqlgen.watchInput
-  MeetingInvite:
-    model: models.MeetingInvite
-    fields:
-      avatarURL:
-        resolver: true
-  MeetingParticipant:
-    model: models.MeetingParticipant
-    fields:
-      meeting:
-        resolver: true
-      user:
-        resolver: true
-      invite:
-        resolver: true

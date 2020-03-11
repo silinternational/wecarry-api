@@ -122,7 +122,6 @@ func CreatePostFixtures(tx *pop.Connection, n int, createFiles bool) models.Post
 	posts := make(models.Posts, n)
 	for i := range posts {
 		posts[i].CreatedByID = user.ID
-		posts[i].ReceiverID = nulls.NewInt(user.ID)
 		posts[i].OrganizationID = org.ID
 		posts[i].NeededBefore = nulls.NewTime(futureDate)
 		posts[i].DestinationID = locations[i*2].ID
@@ -130,7 +129,6 @@ func CreatePostFixtures(tx *pop.Connection, n int, createFiles bool) models.Post
 		posts[i].Title = "title " + strconv.Itoa(i)
 		posts[i].Description = nulls.NewString("description " + strconv.Itoa(i))
 		posts[i].Size = models.PostSizeSmall
-		posts[i].Type = models.PostTypeRequest
 		posts[i].Status = models.PostStatusOpen
 		posts[i].URL = nulls.NewString("https://www.example.com/" + strconv.Itoa(i))
 		posts[i].Kilograms = nulls.NewFloat64(float64(i) * 0.1)
@@ -218,7 +216,7 @@ type PotentialProvidersFixtures struct {
 // CreatePotentialProviderFixtures generates five PotentialProvider records for testing.
 // Five User and three Post fixtures will also be created.  The Posts will
 // all be created by the first user.
-// The first Post will have all but the first user as a potential provider.
+// The first Post will have all but the first and fifth user as a potential provider.
 // The second Post will have the last two users as potential providers.
 // The third Post won't have any potential providers.
 // The Fifth User will be with a different Organization.

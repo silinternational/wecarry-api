@@ -40,20 +40,6 @@ func (r *postResolver) CreatedBy(ctx context.Context, obj *models.Post) (*Public
 	return getPublicProfile(ctx, creator), nil
 }
 
-// Receiver resolves the `receiver` property of the post query. It retrieves the related record from the database.
-func (r *postResolver) Receiver(ctx context.Context, obj *models.Post) (*PublicProfile, error) {
-	if obj == nil {
-		return nil, nil
-	}
-
-	receiver, err := obj.GetReceiver()
-	if err != nil {
-		return nil, domain.ReportError(ctx, err, "GetPostReceiver")
-	}
-
-	return getPublicProfile(ctx, receiver), nil
-}
-
 // Provider resolves the `provider` property of the post query. It retrieves the related record from the database.
 func (r *postResolver) Provider(ctx context.Context, obj *models.Post) (*PublicProfile, error) {
 	if obj == nil {
@@ -306,7 +292,7 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 			return post, err
 		}
 	} else {
-		if err := post.NewWithUser(*input.Type, currentUser); err != nil {
+		if err := post.NewWithUser(currentUser); err != nil {
 			return post, err
 		}
 	}
@@ -376,7 +362,6 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 type postInput struct {
 	ID           *string
 	OrgID        *string
-	Type         *models.PostType
 	Title        *string
 	Description  *string
 	NeededBefore *string

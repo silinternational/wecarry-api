@@ -24,7 +24,6 @@ import (
 // These values are used by GraphQL to reference the names of the Post relationships on the User model.
 const (
 	PostsCreated   string = "PostsCreated"
-	PostsReceiving string = "PostsReceiving"
 	PostsProviding string = "PostsProviding"
 )
 
@@ -460,7 +459,6 @@ func (u *User) FindUserOrganization(org Organization) (UserOrganization, error) 
 func (u *User) Posts(postRole string) ([]Post, error) {
 	fk := map[string]string{
 		PostsCreated:   "created_by_id=?",
-		PostsReceiving: "receiver_id=?",
 		PostsProviding: "provider_id=?",
 	}
 	var posts Posts
@@ -703,13 +701,16 @@ func (u *User) isNearPost(post Post) bool {
 		return false
 	}
 
-	postLocation, err := post.GetLocationForNotifications()
+	postOrigin, err := post.GetOrigin()
 	if err != nil {
-		domain.ErrLogger.Printf("failed to get post location, %s", err)
+		domain.ErrLogger.Printf("failed to get post origin, %s", err)
+		return false
+	}
+	if postOrigin == nil {
 		return false
 	}
 
-	if u.Location.IsNear(*postLocation) {
+	if u.Location.IsNear(*postOrigin) {
 		return true
 	}
 	return false

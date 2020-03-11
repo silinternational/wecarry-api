@@ -59,7 +59,6 @@ const (
 
 // Notification Message Template Names
 const (
-	MessageTemplateNewOffer                        = "new_offer"
 	MessageTemplateNewRequest                      = "new_request"
 	MessageTemplateNewThreadMessage                = "new_thread_message"
 	MessageTemplateNewUserWelcome                  = "new_user_welcome"

@@ -26,7 +26,7 @@ type postUsers struct {
 // Post Provider assuming their email is not blank.
 func getPostUsers(post models.Post) postUsers {
 
-	receiver, _ := post.GetReceiver()
+	receiver, _ := post.GetCreator()
 	provider, _ := post.GetProvider()
 
 	var recipients postUsers
@@ -196,13 +196,19 @@ func sendRejectionToPotentialProvider(potentialProvider models.User, post models
 		ppEmail = "Missing Email"
 	}
 
+	receiver, err := post.GetCreator()
+	if err != nil {
+		domain.ErrLogger.Printf("error getting Post Receiver for email data, %s", err)
+	}
+
 	data := map[string]interface{}{
-		"uiURL":      domain.Env.UIURL,
-		"appName":    domain.Env.AppName,
-		"postURL":    domain.GetPostUIURL(post.UUID.String()),
-		"postTitle":  domain.Truncate(post.Title, "...", 16),
-		"ppNickname": ppNickname,
-		"ppEmail":    ppEmail,
+		"uiURL":            domain.Env.UIURL,
+		"appName":          domain.Env.AppName,
+		"postURL":          domain.GetPostUIURL(post.UUID.String()),
+		"postTitle":        domain.Truncate(post.Title, "...", 16),
+		"ppNickname":       ppNickname,
+		"ppEmail":          ppEmail,
+		"receiverNickname": receiver.Nickname,
 	}
 
 	subject := "Email.Subject.Request.OfferRejected"
@@ -224,7 +230,6 @@ func sendRejectionToPotentialProvider(potentialProvider models.User, post models
 
 func sendNotificationRequestFromOpenToAccepted(params senderParams) {
 	sendNotificationRequestToProvider(params)
-
 	post := params.post
 
 	var providers models.PotentialProviders
@@ -235,7 +240,9 @@ func sendNotificationRequestFromOpenToAccepted(params senderParams) {
 	}
 
 	for _, u := range users {
-		sendRejectionToPotentialProvider(u, post)
+		if u.ID != post.ProviderID.Int {
+			sendRejectionToPotentialProvider(u, post)
+		}
 	}
 
 }
@@ -364,12 +371,7 @@ func sendNewPostNotification(user models.User, post models.Post) error {
 		return errors.New("'To' email address is required")
 	}
 
-	newPostTemplates := map[string]string{
-		models.PostTypeRequest.String(): domain.MessageTemplateNewRequest,
-		models.PostTypeOffer.String():   domain.MessageTemplateNewOffer,
-	}
-
-	receiver, err := post.GetReceiver()
+	receiver, err := post.GetCreator()
 	if err != nil {
 		return err
 	}
@@ -386,7 +388,7 @@ func sendNewPostNotification(user models.User, post models.Post) error {
 	msg := notifications.Message{
 		Subject: domain.GetTranslatedSubject(user.GetLanguagePreference(),
 			"Email.Subject.NewRequest", map[string]string{}),
-		Template:  newPostTemplates[post.Type.String()],
+		Template:  domain.MessageTemplateNewRequest,
 		ToName:    user.GetRealName(),
 		ToEmail:   user.Email,
 		FromEmail: domain.EmailFromAddress(nil),
@@ -423,17 +425,17 @@ func sendPotentialProviderSelfDestroyedNotification(providerNickname string, req
 func sendPotentialProviderRejectedNotification(provider models.User, requester string, post models.Post) error {
 	msg := notifications.Message{
 		Subject: domain.GetTranslatedSubject(provider.GetLanguagePreference(),
-			"Email.Subject.Request.NewOffer", map[string]string{}),
+			"Email.Subject.Request.OfferRejected", map[string]string{}),
 		Template:  domain.MessageTemplatePotentialProviderRejected,
 		ToName:    provider.GetRealName(),
 		ToEmail:   provider.Email,
 		FromEmail: domain.EmailFromAddress(nil),
 		Data: map[string]interface{}{
-			"appName":           domain.Env.AppName,
-			"uiURL":             domain.Env.UIURL,
-			"postURL":           domain.GetPostUIURL(post.UUID.String()),
-			"postTitle":         domain.Truncate(post.Title, "...", 16),
-			"requesterNickname": requester,
+			"appName":          domain.Env.AppName,
+			"uiURL":            domain.Env.UIURL,
+			"postURL":          domain.GetPostUIURL(post.UUID.String()),
+			"postTitle":        domain.Truncate(post.Title, "...", 16),
+			"receiverNickname": requester,
 		},
 	}
 	return notifications.Send(msg)

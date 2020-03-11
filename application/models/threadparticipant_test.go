@@ -72,7 +72,6 @@ func CreateFixtures_ThreadParticipant_UpdateLastViewedAt(ms *ModelSuite, t *test
 	posts := Posts{
 		{
 			CreatedByID:    users[0].ID,
-			Type:           PostTypeRequest,
 			OrganizationID: org.ID,
 			Status:         PostStatusOpen,
 			Title:          "Maple Syrup",

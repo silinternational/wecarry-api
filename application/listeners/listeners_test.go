@@ -6,6 +6,7 @@ import (
 	"os"
 	"reflect"
 	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/gobuffalo/events"
@@ -141,9 +142,7 @@ func (ms *ModelSuite) TestSendNewMessageNotification() {
 }
 
 func createFixturesForSendPostCreatedNotifications(ms *ModelSuite) PostFixtures {
-	userFixtures := test.CreateUserFixtures(ms.DB, 3)
-	org := userFixtures.Organization
-	users := userFixtures.Users
+	users := test.CreateUserFixtures(ms.DB, 3).Users
 
 	for i := range users {
 		ms.NoError(ms.DB.Load(&users[i], "Location"))
@@ -151,20 +150,13 @@ func createFixturesForSendPostCreatedNotifications(ms *ModelSuite) PostFixtures 
 		ms.NoError(ms.DB.Save(&users[i].Location))
 	}
 
-	location := models.Location{Country: "KH"}
-	createFixture(ms, &location)
-
-	post := models.Post{
-		OrganizationID: org.ID,
-		UUID:           domain.GetUUID(),
-		CreatedByID:    users[0].ID,
-		DestinationID:  location.ID,
-		Type:           models.PostTypeOffer,
-	}
-	createFixture(ms, &post)
+	post := test.CreatePostFixtures(ms.DB, 1, false)[0]
+	origin := models.Location{Description: "KH", Country: "KH"}
+	ms.NoError(post.SetOrigin(origin))
 
 	return PostFixtures{
 		Posts: models.Posts{post},
+		Users: users,
 	}
 }
 
@@ -183,6 +175,17 @@ func (ms *ModelSuite) TestSendPostCreatedNotifications() {
 
 	sendPostCreatedNotifications(e)
 
-	emailCount := notifications.TestEmailService.GetNumberOfMessagesSent()
-	ms.Equal(2, emailCount, "wrong email count")
+	emailsSent := notifications.TestEmailService.GetSentMessages()
+	nMessages := 0
+	for _, e := range emailsSent {
+		if !strings.Contains(e.Subject, "New Request on WeCarry") {
+			continue
+		}
+		if e.ToEmail != f.Users[1].Email && e.ToEmail != f.Users[2].Email {
+			continue
+		}
+
+		nMessages++
+	}
+	ms.GreaterOrEqual(nMessages, 2, "wrong email count")
 }

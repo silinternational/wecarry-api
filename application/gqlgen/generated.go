@@ -49,6 +49,7 @@ type ResolverRoot interface {
 	Query() QueryResolver
 	Thread() ThreadResolver
 	User() UserResolver
+	UserPreferences() UserPreferencesResolver
 	Watch() WatchResolver
 }
 
@@ -154,10 +155,10 @@ type ComplexityRoot struct {
 	}
 
 	OrganizationDomain struct {
-		AuthConfig     func(childComplexity int) int
-		AuthType       func(childComplexity int) int
-		Domain         func(childComplexity int) int
-		OrganizationID func(childComplexity int) int
+		AuthConfig   func(childComplexity int) int
+		AuthType     func(childComplexity int) int
+		Domain       func(childComplexity int) int
+		Organization func(childComplexity int) int
 	}
 
 	Post struct {
@@ -178,12 +179,10 @@ type ComplexityRoot struct {
 		PhotoID            func(childComplexity int) int
 		PotentialProviders func(childComplexity int) int
 		Provider           func(childComplexity int) int
-		Receiver           func(childComplexity int) int
 		Size               func(childComplexity int) int
 		Status             func(childComplexity int) int
 		Threads            func(childComplexity int) int
 		Title              func(childComplexity int) int
-		Type               func(childComplexity int) int
 		URL                func(childComplexity int) int
 		UpdatedAt          func(childComplexity int) int
 		Visibility         func(childComplexity int) int
@@ -218,7 +217,6 @@ type ComplexityRoot struct {
 		Messages           func(childComplexity int) int
 		Participants       func(childComplexity int) int
 		Post               func(childComplexity int) int
-		PostID             func(childComplexity int) int
 		UnreadMessageCount func(childComplexity int) int
 		UpdatedAt          func(childComplexity int) int
 	}
@@ -295,31 +293,31 @@ type MessageResolver interface {
 	Thread(ctx context.Context, obj *models.Message) (*models.Thread, error)
 }
 type MutationResolver interface {
+	CreateMeeting(ctx context.Context, input meetingInput) (*models.Meeting, error)
+	UpdateMeeting(ctx context.Context, input meetingInput) (*models.Meeting, error)
+	CreateMeetingInvites(ctx context.Context, input CreateMeetingInvitesInput) ([]models.MeetingInvite, error)
+	RemoveMeetingInvite(ctx context.Context, input RemoveMeetingInviteInput) ([]models.MeetingInvite, error)
+	CreateMeetingParticipant(ctx context.Context, input CreateMeetingParticipantInput) (*models.MeetingParticipant, error)
+	RemoveMeetingParticipant(ctx context.Context, input RemoveMeetingParticipantInput) ([]models.MeetingParticipant, error)
+	CreateMessage(ctx context.Context, input CreateMessageInput) (*models.Message, error)
+	CreateOrganization(ctx context.Context, input CreateOrganizationInput) (*models.Organization, error)
+	UpdateOrganization(ctx context.Context, input UpdateOrganizationInput) (*models.Organization, error)
+	CreateOrganizationDomain(ctx context.Context, input CreateOrganizationDomainInput) ([]models.OrganizationDomain, error)
+	RemoveOrganizationDomain(ctx context.Context, input RemoveOrganizationDomainInput) ([]models.OrganizationDomain, error)
+	UpdateOrganizationDomain(ctx context.Context, input CreateOrganizationDomainInput) ([]models.OrganizationDomain, error)
+	CreateOrganizationTrust(ctx context.Context, input CreateOrganizationTrustInput) (*models.Organization, error)
+	RemoveOrganizationTrust(ctx context.Context, input RemoveOrganizationTrustInput) (*models.Organization, error)
 	CreatePost(ctx context.Context, input postInput) (*models.Post, error)
 	UpdatePost(ctx context.Context, input postInput) (*models.Post, error)
 	UpdatePostStatus(ctx context.Context, input UpdatePostStatusInput) (*models.Post, error)
 	AddMeAsPotentialProvider(ctx context.Context, postID string) (*models.Post, error)
 	RemoveMeAsPotentialProvider(ctx context.Context, postID string) (*models.Post, error)
 	RemovePotentialProvider(ctx context.Context, postID string, userID string) (*models.Post, error)
-	UpdateUser(ctx context.Context, input UpdateUserInput) (*models.User, error)
-	CreateMeeting(ctx context.Context, input meetingInput) (*models.Meeting, error)
-	UpdateMeeting(ctx context.Context, input meetingInput) (*models.Meeting, error)
-	CreateMessage(ctx context.Context, input CreateMessageInput) (*models.Message, error)
-	CreateOrganization(ctx context.Context, input CreateOrganizationInput) (*models.Organization, error)
-	UpdateOrganization(ctx context.Context, input UpdateOrganizationInput) (*models.Organization, error)
-	CreateOrganizationDomain(ctx context.Context, input CreateOrganizationDomainInput) ([]models.OrganizationDomain, error)
-	UpdateOrganizationDomain(ctx context.Context, input CreateOrganizationDomainInput) ([]models.OrganizationDomain, error)
-	RemoveOrganizationDomain(ctx context.Context, input RemoveOrganizationDomainInput) ([]models.OrganizationDomain, error)
 	SetThreadLastViewedAt(ctx context.Context, input SetThreadLastViewedAtInput) (*models.Thread, error)
+	UpdateUser(ctx context.Context, input UpdateUserInput) (*models.User, error)
 	CreateWatch(ctx context.Context, input watchInput) (*models.Watch, error)
-	UpdateWatch(ctx context.Context, input watchInput) (*models.Watch, error)
 	RemoveWatch(ctx context.Context, input RemoveWatchInput) ([]models.Watch, error)
-	CreateOrganizationTrust(ctx context.Context, input CreateOrganizationTrustInput) (*models.Organization, error)
-	RemoveOrganizationTrust(ctx context.Context, input RemoveOrganizationTrustInput) (*models.Organization, error)
-	CreateMeetingInvites(ctx context.Context, input CreateMeetingInvitesInput) ([]models.MeetingInvite, error)
-	RemoveMeetingInvite(ctx context.Context, input RemoveMeetingInviteInput) ([]models.MeetingInvite, error)
-	CreateMeetingParticipant(ctx context.Context, input CreateMeetingParticipantInput) (*models.MeetingParticipant, error)
-	RemoveMeetingParticipant(ctx context.Context, input RemoveMeetingParticipantInput) ([]models.MeetingParticipant, error)
+	UpdateWatch(ctx context.Context, input watchInput) (*models.Watch, error)
 }
 type OrganizationResolver interface {
 	ID(ctx context.Context, obj *models.Organization) (string, error)
@@ -331,13 +329,11 @@ type OrganizationResolver interface {
 	TrustedOrganizations(ctx context.Context, obj *models.Organization) ([]models.Organization, error)
 }
 type OrganizationDomainResolver interface {
-	OrganizationID(ctx context.Context, obj *models.OrganizationDomain) (string, error)
+	Organization(ctx context.Context, obj *models.OrganizationDomain) (*models.Organization, error)
 }
 type PostResolver interface {
 	ID(ctx context.Context, obj *models.Post) (string, error)
-
 	CreatedBy(ctx context.Context, obj *models.Post) (*PublicProfile, error)
-	Receiver(ctx context.Context, obj *models.Post) (*PublicProfile, error)
 	Provider(ctx context.Context, obj *models.Post) (*PublicProfile, error)
 	PotentialProviders(ctx context.Context, obj *models.Post) ([]PublicProfile, error)
 	Organization(ctx context.Context, obj *models.Post) (*models.Organization, error)
@@ -359,25 +355,24 @@ type PostResolver interface {
 	IsEditable(ctx context.Context, obj *models.Post) (bool, error)
 }
 type QueryResolver interface {
-	Users(ctx context.Context) ([]models.User, error)
-	User(ctx context.Context, id *string) (*models.User, error)
-	Posts(ctx context.Context, destination *LocationInput, origin *LocationInput, searchText *string) ([]models.Post, error)
-	Post(ctx context.Context, id *string) (*models.Post, error)
-	Threads(ctx context.Context) ([]models.Thread, error)
-	MyThreads(ctx context.Context) ([]models.Thread, error)
-	Message(ctx context.Context, id *string) (*models.Message, error)
-	Organizations(ctx context.Context) ([]models.Organization, error)
-	Organization(ctx context.Context, id *string) (*models.Organization, error)
 	Meetings(ctx context.Context, endAfter *string, endBefore *string, startAfter *string, startBefore *string) ([]models.Meeting, error)
 	Meeting(ctx context.Context, id *string) (*models.Meeting, error)
-	RecentMeetings(ctx context.Context) ([]models.Meeting, error)
+	Message(ctx context.Context, id *string) (*models.Message, error)
+	MyThreads(ctx context.Context) ([]models.Thread, error)
 	MyWatches(ctx context.Context) ([]models.Watch, error)
+	Organization(ctx context.Context, id *string) (*models.Organization, error)
+	Organizations(ctx context.Context) ([]models.Organization, error)
+	Post(ctx context.Context, id *string) (*models.Post, error)
+	Posts(ctx context.Context, destination *LocationInput, origin *LocationInput, searchText *string) ([]models.Post, error)
+	RecentMeetings(ctx context.Context) ([]models.Meeting, error)
+	Threads(ctx context.Context) ([]models.Thread, error)
+	User(ctx context.Context, id *string) (*models.User, error)
+	Users(ctx context.Context) ([]models.User, error)
 }
 type ThreadResolver interface {
 	ID(ctx context.Context, obj *models.Thread) (string, error)
 	Participants(ctx context.Context, obj *models.Thread) ([]PublicProfile, error)
 	Messages(ctx context.Context, obj *models.Thread) ([]models.Message, error)
-	PostID(ctx context.Context, obj *models.Thread) (string, error)
 	Post(ctx context.Context, obj *models.Thread) (*models.Post, error)
 	LastViewedAt(ctx context.Context, obj *models.Thread) (*time.Time, error)
 
@@ -393,6 +388,11 @@ type UserResolver interface {
 	UnreadMessageCount(ctx context.Context, obj *models.User) (int, error)
 	Organizations(ctx context.Context, obj *models.User) ([]models.Organization, error)
 	Posts(ctx context.Context, obj *models.User, role PostRole) ([]models.Post, error)
+}
+type UserPreferencesResolver interface {
+	Language(ctx context.Context, obj *models.StandardPreferences) (*PreferredLanguage, error)
+
+	WeightUnit(ctx context.Context, obj *models.StandardPreferences) (*PreferredWeightUnit, error)
 }
 type WatchResolver interface {
 	ID(ctx context.Context, obj *models.Watch) (string, error)
@@ -1072,12 +1072,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.OrganizationDomain.Domain(childComplexity), true
 
-	case "OrganizationDomain.organizationID":
-		if e.complexity.OrganizationDomain.OrganizationID == nil {
+	case "OrganizationDomain.organization":
+		if e.complexity.OrganizationDomain.Organization == nil {
 			break
 		}
 
-		return e.complexity.OrganizationDomain.OrganizationID(childComplexity), true
+		return e.complexity.OrganizationDomain.Organization(childComplexity), true
 
 	case "Post.completedOn":
 		if e.complexity.Post.CompletedOn == nil {
@@ -1198,13 +1198,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Post.Provider(childComplexity), true
 
-	case "Post.receiver":
-		if e.complexity.Post.Receiver == nil {
-			break
-		}
-
-		return e.complexity.Post.Receiver(childComplexity), true
-
 	case "Post.size":
 		if e.complexity.Post.Size == nil {
 			break
@@ -1232,13 +1225,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Post.Title(childComplexity), true
-
-	case "Post.type":
-		if e.complexity.Post.Type == nil {
-			break
-		}
-
-		return e.complexity.Post.Type(childComplexity), true
 
 	case "Post.url":
 		if e.complexity.Post.URL == nil {
@@ -1449,13 +1435,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Thread.Post(childComplexity), true
-
-	case "Thread.postID":
-		if e.complexity.Thread.PostID == nil {
-			break
-		}
-
-		return e.complexity.Thread.PostID(childComplexity), true
 
 	case "Thread.unreadMessageCount":
 		if e.complexity.Thread.UnreadMessageCount == nil {
@@ -1680,32 +1659,6 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 var parsedSchema = gqlparser.MustLoadSchema(
 	&ast.Source{Name: "schema.graphql", Input: `type Query {
 
-    users: [User!]!
-    user(id: ID): User
-
-    """
-    Posts, aka Requests. With no parameters supplied, all posts visible to the authenticated user are returned. Filter
-    parameters only remove from this default list and never include posts that are not visible to the authenticated
-    user. For posts associated with a ` + "`" + `User` + "`" + ` or ` + "`" + `Meeting` + "`" + `, use the ` + "`" + `posts` + "`" + ` field on ` + "`" + `User` + "`" + ` and ` + "`" + `Meeting` + "`" + `.
-    """
-    posts(
-        "Only include posts that have a destination near the given location."
-        destination: LocationInput,
-
-        "Only include posts that have an origin near the given location."
-        origin: LocationInput
-
-        "Search by text in ` + "`" + `title` + "`" + ` or ` + "`" + `description` + "`" + `"
-        searchText: String
-    ): [Post!]!
-
-    post(id: ID): Post
-    threads: [Thread!]!
-    myThreads: [Thread!]!
-    message(id: ID): Message!
-    organizations: [Organization!]!
-    organization(id: ID): Organization!
-
     """
     Meetings, aka Events. With no parameters supplied, only future meetings are returned.
     NOT YET IMPLEMENTED: ` + "`" + `endAfter` + "`" + `, ` + "`" + `endBefore` + "`" + `, ` + "`" + `startafter` + "`" + `, ` + "`" + `startBefore` + "`" + `
@@ -1735,41 +1688,67 @@ var parsedSchema = gqlparser.MustLoadSchema(
         """
         startBefore: Date
     ): [Meeting!]!
+
+    "Return a specific meeting (event). If the meeting is not visible to the auth user, an error will be returned."
     meeting(id: ID): Meeting
+
+    "Return a specific message. If the message is not visible to the auth user, an error will be returned."
+    message(id: ID): Message!
+
+    "Provides a list of message threads in which the auth user is participating."
+    myThreads: [Thread!]!
+
+    "Provides a list of all of the auth user's watches."
+    myWatches: [Watch!]!
+
+    "Return a specific organization. Only Super Admins, Sales Admins, and Admins for the requested org are authorized."
+    organization(id: ID): Organization!
+
+    "Provides a list of all organizations for which the user is an Admin. Super Admins and Sales Admins see all orgs."
+    organizations: [Organization!]!
+    post(id: ID): Post
+
+    """
+    Posts, aka Requests. With no parameters supplied, all posts visible to the authenticated user are returned. Filter
+    parameters only remove from this default list and never include posts that are not visible to the authenticated
+    user. For posts associated with a ` + "`" + `User` + "`" + ` or ` + "`" + `Meeting` + "`" + `, use the ` + "`" + `posts` + "`" + ` field on ` + "`" + `User` + "`" + ` and ` + "`" + `Meeting` + "`" + `.
+    """
+    posts(
+        "Only include posts that have a destination near the given location."
+        destination: LocationInput,
+
+        "Only include posts that have an origin near the given location."
+        origin: LocationInput
+
+        "Search by text in ` + "`" + `title` + "`" + ` or ` + "`" + `description` + "`" + `"
+        searchText: String
+    ): [Post!]!
 
     """
     DEPRECATED: ` + "`" + `Query.recentMeetings` + "`" + ` will be replaced by the ` + "`" + `endAfter` + "`" + ` parameter of ` + "`" + `Query.meetings` + "`" + `
     """
     recentMeetings: [Meeting!]! @deprecated(reason: "` + "`" + `Query.recentMeetings` + "`" + ` will be replaced by ` + "`" + `endAfter` + "`" + ` parameter of ` + "`" + `Query.meetings` + "`" + `")
-    myWatches: [Watch!]!
+
+    "Lists all threads, regardless of visibility. Note that some thread fields may cause authorization errors."
+    threads: [Thread!]!
+
+    "List all users in the system. Only Super Admins are authorized for this query."
+    user(id: ID): User
+
+    """
+    Return a specific user. If the ID is not specified, the authenticated user is returned. Only Super Admins are
+    authorized to query a user record other than their own.
+    """
+    users: [User!]!
 }
 
 type Mutation {
-    createPost(input: CreatePostInput!): Post!
-    updatePost(input: UpdatePostInput!): Post!
-    updatePostStatus(input: UpdatePostStatusInput!): Post!
-    addMeAsPotentialProvider(postID: String!): Post!
-    removeMeAsPotentialProvider(postID: String!): Post!
-    removePotentialProvider(postID: String!, userID: String!): Post!
 
-    """
-    Update User profile information. If ID is not specified, the authenticated user is assumed.
-    """
-    updateUser(input: UpdateUserInput!): User!
+    "Create a new meeting (event). At this time, any user may create a meeting."
     createMeeting(input: CreateMeetingInput!): Meeting!
+
+    "Update an existing meeting (event). The meeting creator, Super Admins, Sales Admins, and Admins are authorized."
     updateMeeting(input: UpdateMeetingInput!): Meeting!
-    createMessage(input: CreateMessageInput!): Message!
-    createOrganization(input: CreateOrganizationInput!): Organization!
-    updateOrganization(input: UpdateOrganizationInput!): Organization!
-    createOrganizationDomain(input: CreateOrganizationDomainInput!): [OrganizationDomain!]!
-    updateOrganizationDomain(input: CreateOrganizationDomainInput!): [OrganizationDomain!]!
-    removeOrganizationDomain(input: RemoveOrganizationDomainInput!): [OrganizationDomain!]!
-    setThreadLastViewedAt(input: SetThreadLastViewedAtInput!): Thread!
-    createWatch(input: CreateWatchInput!): Watch!
-    updateWatch(input: UpdateWatchInput!): Watch!
-    removeWatch(input: RemoveWatchInput!): [Watch!]!
-    createOrganizationTrust(input: CreateOrganizationTrustInput!): Organization!
-    removeOrganizationTrust(input: RemoveOrganizationTrustInput!): Organization!
 
     """
     Bulk create ` + "`" + `MeetingInvite` + "`" + `s and return the updated list of invites for the specified meeting. Subsequent calls
@@ -1789,52 +1768,114 @@ type Mutation {
 
     "Remove a ` + "`" + `MeetingParticipant` + "`" + ` and return the remaining participants for the ` + "`" + `Meeting` + "`" + `"
     removeMeetingParticipant(input: RemoveMeetingParticipantInput!): [MeetingParticipant!]!
-}
 
-"Date and Time in ISO-8601 format (e.g. 2020-02-11T18:08:56Z)"
-scalar Time
+    "Create a new message. Only authorized for posts visible to the auth user."
+    createMessage(input: CreateMessageInput!): Message!
+
+    "Create a new organization. Authorized for Super Admins and Sales Admins."
+    createOrganization(input: CreateOrganizationInput!): Organization!
+
+    "Update organization properties. Authorized for Super Admins, Sales Admins, and Org Admins on the specified Org."
+    updateOrganization(input: UpdateOrganizationInput!): Organization!
+
+    """
+    Add a domain to an Organization's domain list. No two organizations may have the same domain. Authorized for Super
+    Admins, Sales Admins, and Org Admins on the specified Organization.
+    """
+    createOrganizationDomain(input: CreateOrganizationDomainInput!): [OrganizationDomain!]!
+
+    """
+    Remove a domain from an Organization's domain list. Authorized for Super Admins, Sales Admins, and Org Admins on the
+    specified Organization.
+    """
+    removeOrganizationDomain(input: RemoveOrganizationDomainInput!): [OrganizationDomain!]!
+
+    """
+    Update an Organization's domain properties. Cannot be used to change an existing domain name. Authorized for Super
+    Admins, Sales Admins, and Org Admins on the specified Organization.
+    """
+    updateOrganizationDomain(input: CreateOrganizationDomainInput!): [OrganizationDomain!]!
+
+    """
+    Create a trust relationship (affilition) between two Organizations. At the present time, this creates a mutual
+    trust between the two specified Organizations. A trust allows posts (requests) and meetings (events) to be visible
+    to users of a different Organization than their own.  Authorized for Super Admins and Sales Admins.
+    """
+    createOrganizationTrust(input: CreateOrganizationTrustInput!): Organization!
+
+    """
+    Remove a trust relationship (affiliation) between two Organizations.  At the present time, this removes both sides
+    of a mutual trust between the two specified Organizations. Authorized for Super Admins, Sales Admins, and Org Admins
+    on the primary Organization.
+    """
+    removeOrganizationTrust(input: RemoveOrganizationTrustInput!): Organization!
+
+    """
+    Create a new Post (Request). Any user may create a standard Post. For meeting-related posts, the meeting must be
+    visible to the auth user.
+    """
+    createPost(input: CreatePostInput!): Post!
+
+    """
+    Update Post (Request) properties. The auth user must be the post creator or a Super Admin, and the post must be in
+    an editable state (e.g. not COMPLETED) as identified by the ` + "`" + `isEditable` + "`" + ` field.
+    """
+    updatePost(input: UpdatePostInput!): Post!
+
+    """
+    Update the Status field on a Post (Request). The post creator and Super Admins can make most status changes. The
+    provider can make limited changes (e.g. to DELIVERED).
+    """
+    updatePostStatus(input: UpdatePostStatusInput!): Post!
+
+    "Make an offer to carry a request. Only allowed if the status is OPEN and the post is visible to the auth user."
+    addMeAsPotentialProvider(postID: String!): Post!
+
+    "Cancel a carry offer by auth user. Authorized for the post creator, the potential provider, and Super Admins."
+    removeMeAsPotentialProvider(postID: String!): Post!
+
+    "Cancel a carry offer for any user. Authorized for the post creator, the potential provider, and Super Admins."
+    removePotentialProvider(postID: String!, userID: String!): Post!
+
+    """
+    Set the LastViewedAt time for a message thread. Effectively clears the unread status of messages updated before the
+    given time. The auth user must be a participant (i.e. sent or received a message) in the specified thread.
+    """
+    setThreadLastViewedAt(input: SetThreadLastViewedAtInput!): Thread!
+
+    "Update User profile information. If ID is not specified, the authenticated user is assumed."
+    updateUser(input: UpdateUserInput!): User!
+
+    """
+    Create a Watch for a given location. Posts (requests) with a destination near the watch location will trigger a
+    notification to the watch creator. Other types of Watches (e.g. keyword search) may be created in future versions of
+    WeCarry. Any user may create a Watch.
+    """
+    createWatch(input: CreateWatchInput!): Watch!
+
+    "Remove a Watch. Only the Watch creator is authorized."
+    removeWatch(input: RemoveWatchInput!): [Watch!]!
+
+    "Update Watch properties. Only the Watch creator is authorized."
+    updateWatch(input: UpdateWatchInput!): Watch!
+}
 
 "Date in ISO-8601 format (e.g. 2020-02-11)"
 scalar Date
 
-enum UserAdminRole {
-    SUPERADMIN
-    SALESADMIN
-    ADMIN
-    USER
-}
+"Date and Time in ISO-8601 format (e.g. 2020-02-11T18:08:56Z)"
+scalar Time
 
-enum PostRole {
-    CREATEDBY
-    RECEIVING
-    PROVIDING
-}
-
-enum PostStatus {
-    OPEN
-    ACCEPTED
-    DELIVERED
-    RECEIVED
-    COMPLETED
-    REMOVED
-}
-
-enum PostSize {
-    TINY
-    SMALL
-    MEDIUM
-    LARGE
-    XLARGE
-}
-
-"Visibility for Posts, ALL organizations, TRUSTED organizations, or SAME organization only"
-enum PostVisibility {
-    "Visible to all users from all organizations in the system"
-    ALL
-    "Visible to users from all organizations trusted by the Post creator's organization"
-    TRUSTED
-    "Visible only to users from the same organization as the Post creator"
-    SAME
+"Authorization types"
+enum AuthType {
+    "Microsoft Azure AD (Office 365)"
+    AZURADV2
+    "Default to Organization's AuthType (only valid on OrganizationDomain)"
+    DEFAULT
+    "Google OAUTH 2.0"
+    GOOGLE
+    "SAML 2.0"
+    SAML
 }
 
 "Visibility for Meetings (Events), determines who can see a ` + "`" + `Meeting` + "`" + `."
@@ -1849,93 +1890,408 @@ enum MeetingVisibility {
     INVITE_ONLY
 }
 
-type User {
-    id: ID!
-    email: String!
-    nickname: String!
-    createdAt: Time!
-    updatedAt: Time!
-    adminRole: UserAdminRole
-    "avatarURL is generated from an attached photo if present, an external URL if present, or a Gravatar URL"
-    avatarURL: String
-    "` + "`" + `File` + "`" + ` ID of the user's photo, if present"
-    photoID: String
-    preferences: UserPreferences
-    "user's home location"
-    location: Location
-    unreadMessageCount: Int!
-    organizations: [Organization!]!
-    posts(role: PostRole!): [Post!]!
-    "meetings in which the user is a participant"
-    meetingsAsParticipant: [Meeting!]!
+"Context of a User with respect to a Post (Request)"
+enum PostRole {
+    "Posts created by the User"
+    CREATEDBY
+    "Posts provided by the User. Posts where the user is a PotentialProvider are not included."
+    PROVIDING
 }
 
-type UserPreferences {
-    language: String
-    timeZone: String
-    weightUnit: String
+"Allowed sizes for Posts."
+enum PostSize {
+    "Tiny: fits in a purse or small backpack, often identified by airlines as a person item"
+    TINY
+    "Small: fits in a carry-on bag or suitcase"
+    SMALL
+    "Medium: fits in a large backpack, such as a large hiking backpack or duffel bag"
+    MEDIUM
+    "Large: fits in a large suitcase"
+    LARGE
+    "Extra-large: larger than what would fit in a full-size suitcase"
+    XLARGE
 }
 
-"Input object for ` + "`" + `updateUser` + "`" + `"
-input UpdateUserInput {
-    id: ID
-    nickname: String
-    "File ID of avatar photo. If omitted or ` + "`" + `null` + "`" + `, the photo is removed from the profile."
-    photoID: String
-    """
-    Specify the user's "home" location. If omitted or ` + "`" + `null` + "`" + `, the location is removed from the profile.
-    """
-    location: LocationInput
-    preferences: UpdateUserPreferencesInput
+"Valid states for Post Status"
+enum PostStatus {
+    "Open: no provider has been selected by the receiver"
+    OPEN
+    "Accepted: a provider was selected by the receiver, but the carry has not been completed"
+    ACCEPTED
+    "Delivered: the provider has said the carry was completed"
+    DELIVERED
+    "Received: the receiver has said the carry was completed"
+    RECEIVED
+    "Completed: both the provider and receiver have agreed the carry was completed"
+    COMPLETED
+    "Removed: the request was canceled (removed) by the receiver"
+    REMOVED
 }
 
+"Visibility for Posts, ALL organizations, TRUSTED organizations, or SAME organization only"
+enum PostVisibility {
+    "Visible to all users from all organizations in the system"
+    ALL
+    "Visible to users from all organizations trusted by the Post creator's organization"
+    TRUSTED
+    "Visible only to users from the same organization as the Post creator"
+    SAME
+}
+
+"User's preferred language, used for translation of system text messages. (ISO 639-1 code)"
 enum PreferredLanguage {
-    EN
-    FR
-    SP
-    KO
-    PT
+    "English"    EN
+    "French"     FR
+    "Spanish"    ES
+    "Korean"     KO
+    "Portuguese" PT
 }
 
+"User's preferred weight units"
 enum PreferredWeightUnit {
     POUNDS
     KILOGRAMS
 }
 
-
-input UpdateUserPreferencesInput {
-    language: PreferredLanguage
-    timeZone: String
-    weightUnit: PreferredWeightUnit
+"User Admin roles"
+enum UserAdminRole {
+    SUPERADMIN
+    SALESADMIN
+    ADMIN
+    USER
 }
 
-"User fields that can safely be visible to any user in the system"
-type PublicProfile {
+"""
+File metadata for images and other supported file types. If the URL expiration time passes, a new query will refresh
+the URL and the URL expiration time.
+"""
+type File {
+    "unique identifier for the ` + "`" + `File` + "`" + ` object"
     id: ID!
-    nickname: String!
-    avatarURL: String
+    "file content can be loaded from the given URL if the expiration time has not passed, limited to 1,024 characters"
+    url: String!
+    "expiration time of the URL, re-issue the query to get a new URL and expiration time"
+    urlExpiration: Time!
+    "filename with extension, limited to 255 characters, e.g. ` + "`" + `image.jpg` + "`" + `"
+    name: String!
+    "file size in bytes"
+    size: Int!
+    "MIME content type, limited to 255 characters, e.g. 'image/jpeg'"
+    contentType: String!
 }
 
-enum PostType {
-    REQUEST
-    OFFER
+"Describes a Geographic location"
+type Location {
+    "Human-friendly description, limited to 255 characters, e.g. 'Los Angeles, CA, USA'"
+    description: String!
+    "Country (ISO 3166-1 Alpha-2 code), e.g. 'US'"
+    country: String!
+    "Latitude in decimal degrees, e.g. -30.95 = 30 degrees 57 minutes south"
+    latitude: Float
+    "Longitude in decimal degrees, e.g. -80.05 = 80 degrees 3 minutes west"
+    longitude: Float
+}
+
+"Specify a Geographic location"
+input LocationInput {
+    "Human-friendly description, e.g. 'Los Angeles, CA, USA'"
+    description: String!
+    "Country (ISO 3166-1 Alpha-2 code), e.g. 'US'"
+    country: String!
+    "Latitude in decimal degrees, e.g. -30.95 = 30 degrees 57 minutes south"
+    latitude: Float
+    "Longitude in decimal degrees, e.g. -80.05 = 80 degrees 3 minutes west"
+    longitude: Float
+}
+
+"Meeting, a/k/a Event, to serve as a focal point for finding, answering, carrying, and exchanging requests"
+type Meeting {
+    "unique identifier for the ` + "`" + `Meeting` + "`" + ` object"
+    id: ID!
+    "short name, limited to 80 characters"
+    name: String!
+    "text-only description, limited to 4096 characters"
+    description: String
+    "meeting (event) information URL -- should be a full website, but could be an information document such as a pdf"
+    moreInfoURL: String
+    "date of the first day of the meeting (event)"
+    startDate: Date!
+    "date of the last day of the meeting (event)"
+    endDate: Date!
+    "time the meeting (event) was added to the app"
+    createdAt: Time!
+    "time the meeting (event) was last modified in the app"
+    updatedAt: Time!
+    "user that added the meeting (event) to the app"
+    createdBy: PublicProfile!
+    "image file, typically a logo"
+    imageFile: File
+    "meeting (event) location -- notifications and filters may use this location"
+    location: Location!
+    "associated Posts (Requests)"
+    posts: [Post!]!
+    "NOT YET IMPLEMENTED -- what subset of users can view and interact with this meeting"
+    visibility: MeetingVisibility!
+    "Invites to the ` + "`" + `Meeting` + "`" + ` (event) for confirmation to join as a participant"
+    invites: [MeetingInvite!]!
+    "Participants of a ` + "`" + `Meeting` + "`" + ` are able to see all posts associated with the ` + "`" + `Meeting` + "`" + `"
+    participants: [MeetingParticipant!]!
+    "Organizers of a ` + "`" + `Meeting` + "`" + ` are able to make changes and invite people"
+    organizers: [PublicProfile!]!
+}
+
+input CreateMeetingInput {
+    "short name, limited to 80 characters"
+    name: String!
+    "text-only description, limited to 4096 characters"
+    description: String
+    "date of the first day of the meeting (event)"
+    startDate: Date!
+    "date of the last day of the meeting (event)"
+    endDate: Date!
+    "meeting (event) information URL -- should be a full website, but could be an information document such as a pdf"
+    moreInfoURL: String
+    "ID of pre-stored image file, typically a logo. Upload using the ` + "`" + `upload` + "`" + ` REST API endpoint."
+    imageFileID: ID
+    "meeting (event) location -- notifications and filters may use this location"
+    location: LocationInput!
+    "NOT YET IMPLEMENTED -- what subset of users can view and interact with this meeting"
+    visibility: MeetingVisibility!
+}
+
+input UpdateMeetingInput {
+    "unique identifier for the ` + "`" + `Meeting` + "`" + ` object to be modified"
+    id: ID!
+    "short name, limited to 80 characters"
+    name: String!
+    "text-only description, limited to 4096 characters. If omitted, any existing text is erased."
+    description: String
+    "date of the first day of the meeting (event)"
+    startDate: Date!
+    "date of the last day of the meeting (event)"
+    endDate: Date!
+    "meeting (event) information URL -- should be a full website. If omitted, any existing URL is erased."
+    moreInfoURL: String
+    "ID of pre-stored logo file. Upload using the ` + "`" + `upload` + "`" + ` REST API endpoint. If omitted, existing logo is erased."
+    imageFileID: ID
+    "meeting (event) location -- notifications and filters may use this location"
+    location: LocationInput!
+    "NOT YET IMPLEMENTED -- what subset of users can view and interact with this meeting"
+    visibility: MeetingVisibility!
+}
+
+"""
+Invite to a ` + "`" + `Meeting` + "`" + `. An invite must be confirmed by the invitee before they may be added to a ` + "`" + `Meeting` + "`" + `. Can also
+be used as an authentication mechanism to sign on to the App.
+"""
+type MeetingInvite {
+    meeting: Meeting!
+    "` + "`" + `User` + "`" + ` making the invite"
+    inviter: PublicProfile!
+    "Email address of the invitee"
+    email: String!
+    "Gravatar image URL. Always a valid URL, but depending on the email address, it may reference a generic avatar."
+    avatarURL: String!
+}
+
+"Input object for ` + "`" + `createMeetingInvites` + "`" + `"
+input CreateMeetingInvitesInput {
+    "ID of the ` + "`" + `Meeting` + "`" + `"
+    meetingID: ID!
+    "Email addresses of the invitees. Duplicate values are ignored."
+    emails: [String!]!
+    "NOT YET IMPLEMENTED -- Send email invites. Default is 'false', do not send any emails."
+    sendEmail: Boolean
+}
+
+"Input object for ` + "`" + `removeMeetingInvite` + "`" + `"
+input RemoveMeetingInviteInput {
+    "ID of the ` + "`" + `Meeting` + "`" + `"
+    meetingID: ID!
+    "Email addresse of the invitee to remove"
+    email: String!
+}
+
+"""
+Confirmed participant of a ` + "`" + `Meeting` + "`" + `. An invited person will not appear as a ` + "`" + `MeetingParticipant` + "`" + ` until they have
+confirmed a ` + "`" + `MeetingInvite` + "`" + ` or self-joined a non-INVITE_ONLY meeting.
+"""
+type MeetingParticipant {
+    meeting: Meeting!
+    "` + "`" + `User` + "`" + ` information for the ` + "`" + `Meeting` + "`" + ` participant"
+    user: User!
+    "true if ` + "`" + `User` + "`" + ` is a meeting Organizer"
+    isOrganizer: Boolean
+    "The ` + "`" + `MeetingInvite` + "`" + `, valid if the participant was invited. ` + "`" + `null` + "`" + ` indicates the ` + "`" + `User` + "`" + ` self-joined"
+    invite: MeetingInvite
+}
+
+"Input object for ` + "`" + `createMeetingParticipant` + "`" + `"
+input CreateMeetingParticipantInput {
+    "ID of the ` + "`" + `Meeting` + "`" + `"
+    meetingID: ID!
+    """
+    Secret code from the ` + "`" + `MeetingInvite` + "`" + ` or invite code from the ` + "`" + `Meeting` + "`" + `. If the ` + "`" + `Meeting` + "`" + ` is not ` + "`" + `INVITE_ONLY` + "`" + `,
+    the code may be omitted.
+    """
+    code: String
+    "NOT YET IMPLEMENTED -- Add as a ` + "`" + `Meeting` + "`" + ` Organizer. Authenticated ` + "`" + `User` + "`" + ` must be authorized [definition TBD] to do this. "
+    isOrganizer: Boolean
+}
+
+"Input object for ` + "`" + `removeMeetingParticipant` + "`" + `"
+input RemoveMeetingParticipantInput {
+    "ID of the ` + "`" + `Meeting` + "`" + `"
+    meetingID: ID!
+    "` + "`" + `User` + "`" + ` ID of the ` + "`" + `Meeting` + "`" + ` participant to remove"
+    userID: ID!
+}
+
+"In-app chat message"
+type Message {
+    "unique identifier for the Message"
+    id: ID!
+    "user profile of the message sender"
+    sender: PublicProfile!
+    "message content, limited to 4,096 characters"
+    content: String!
+    "message thread to which this message belongs"
+    thread: Thread!
+    "time at which the message was created"
+    createdAt: Time!
+    "time the message was last edited. Compare against ` + "`" + `Thread.lastViewedAt` + "`" + ` to determine read/unread status."
+    updatedAt: Time!
+}
+
+input CreateMessageInput {
+    "message content, limited to 4,096 characters"
+    content: String!
+    "ID of the subject Post (request)"
+    postID: String!
+    "Message thread to which the new message should be attached. If not specified, a new thread is created."
+    threadID: String
+}
+
+"""
+Organization subscribed to the App. Provides privacy controls for visibility of Posts and Meetings, and specifies
+authentication for associated users.
+"""
+type Organization {
+    "unique identifier for the Organization"
+    id: ID!
+    "Organization name, limited to 255 characters"
+    name: String!
+    "Website URL of the Organization, limited to 255 characters"
+    url: String
+    "time at which the Organization was added to the app"
+    createdAt: Time!
+    "time at which the Organization was last modified in the app"
+    updatedAt: Time!
+    """
+    Internet domains owned by the organization. Only one organization can own a domain. Users with email addresses on
+    this Organization's domain(s) will authenticate using this Organization's authentication method
+    """
+    domains: [OrganizationDomain!]!
+    "URL of an image file for the Organization's logo"
+    logoURL: String
+    "Trusted (affiliated) organizations. Posts can be shared between organizations that have a OrganizationTrust"
+    trustedOrganizations: [Organization!]!
+}
+
+input CreateOrganizationInput {
+    "Organization name, limited to 255 characters"
+    name: String!
+    "Website URL of the Organization, limited to 255 characters"
+    url: String
+    "Authentication type for the organization. Can be ` + "`" + `saml` + "`" + `, ` + "`" + `google` + "`" + `, or ` + "`" + `azureadv2` + "`" + `."
+    authType: AuthType!
+    "Authentication configuration. See https://github.com/silinternational/wecarry-api/blob/master/README.md"
+    authConfig: String!
+    "ID of pre-stored image logo file. Upload using the ` + "`" + `upload` + "`" + ` REST API endpoint."
+    logoFileID: ID
+}
+
+input UpdateOrganizationInput {
+    "unique identifier for the Organization to be updated"
+    id: ID!
+    "Organization name, limited to 255 characters"
+    name: String!
+    "Website URL of the Organization, limited to 255 characters. If omitted, existing URL is erased."
+    url: String
+    "Authentication type for the organization. Can be 'saml', 'google', or 'azureadv2'."
+    authType: AuthType!
+    "Authentication configuration. See https://github.com/silinternational/wecarry-api/blob/master/README.md"
+    authConfig: String!
+    "ID of image logo file. Upload using the ` + "`" + `upload` + "`" + ` REST API endpoint. If omitted, existing logo is erased."
+    logoFileID: ID
+}
+
+"""
+Internet domains owned by the organization. Only one organization can own a domain. Users with email addresses on
+an Organization's domain(s) will authenticate using that Organization's authentication method
+"""
+type OrganizationDomain {
+    "domain name, limited to 255 characters"
+    domain: String!
+    "Organization that owns this domain"
+    organization: Organization!
+    "Authentication type, overriding the Organization's ` + "`" + `authType` + "`" + `. Can be: ` + "`" + `saml` + "`" + `, ` + "`" + `google` + "`" + `, ` + "`" + `azureadv2` + "`" + `."
+    authType: AuthType!
+    """
+    Authentication configuration, overriding the Organization's ` + "`" + `authConfig. See
+    https://github.com/silinternational/wecarry-api/blob/master/README.md
+    """
+    authConfig: String!
+}
+
+input CreateOrganizationDomainInput {
+    "domain name, limited to 255 characters"
+    domain: String!
+    "ID of the Organization that owns this domain"
+    organizationID: ID!
+    "Authentication type, overriding the Organization's ` + "`" + `authType` + "`" + `. Can be: ` + "`" + `saml` + "`" + `, ` + "`" + `google` + "`" + `, ` + "`" + `azureadv2` + "`" + `."
+    authType: AuthType!
+    """
+    Authentication configuration, overriding the Organization's ` + "`" + `authConfig. See
+    https://github.com/silinternational/wecarry-api/blob/master/README.md
+    """
+    authConfig: String
+}
+
+input RemoveOrganizationDomainInput {
+    "domain name, limited to 255 characters"
+    domain: String!
+    "ID of the Organization that owns this domain"
+    organizationID: ID!
+}
+
+input CreateOrganizationTrustInput {
+    "ID of one of the two Organizations to join in a trusted affiliation"
+    primaryID: ID!
+    "ID of the second of two Organizations to join in a trusted affiliation"
+    secondaryID: ID!
+}
+
+input RemoveOrganizationTrustInput {
+    "ID of one of the two Organizations in the trust to be removed"
+    primaryID: ID!
+    "ID of the second of two Organizations in the trust to be removed"
+    secondaryID: ID!
 }
 
 type Post {
+    "unique identifier for the Post (Request)"
     id: ID!
-    type: PostType!
-    "Profile of the user that created this post."
     createdBy: PublicProfile!
-    "Profile of the user that is receiver of this post. For requests, this is the same as ` + "`" + `createdBy` + "`" + `."
-    receiver: PublicProfile
-    "Profile of the user that is the provider for this post. For offers, this is the same as ` + "`" + `createdBy` + "`" + `."
+    "Profile of the user that is the provider for this post."
     provider: PublicProfile
+    "Users that have offered to carry this request."
     potentialProviders: [PublicProfile!]
     "Organization associated with this post."
     organization: Organization
-    "Short description of item"
+    "Short description of item, limited to 255 characters"
     title: String!
-    "Optional, longer description of the item."
+    "Optional, longer description of the item, limited to 4,096 characters"
     description: String
     "Geographic location where item is needed"
     destination: Location!
@@ -1955,7 +2311,7 @@ type Post {
     createdAt: Time!
     "Date and time this post was last updated"
     updatedAt: Time!
-    "Optional URL to further describe or point to detail about the item"
+    "Optional URL to further describe or point to detail about the item, limited to 255 characters"
     url: String
     "Optional weight of the item, measured in kilograms"
     kilograms: Float
@@ -1973,107 +2329,9 @@ type Post {
     visibility: PostVisibility!
 }
 
-type Meeting {
-    id: ID!
-    name: String!
-    description: String
-    moreInfoURL: String
-    startDate: Date!
-    endDate: Date!
-    createdAt: Time!
-    updatedAt: Time!
-    createdBy: PublicProfile!
-    imageFile: File
-    location: Location!
-
-    "Posts (Requests) associated with the meeting"
-    posts: [Post!]!
-
-    "NOT YET IMPLEMENTED -- Who can see this meeting"
-    visibility: MeetingVisibility!
-
-    "Invites to the ` + "`" + `Meeting` + "`" + ` that have been sent to the invitees for their confirmation to join the ` + "`" + `Meeting` + "`" + `"
-    invites: [MeetingInvite!]!
-
-    "Participants of a ` + "`" + `Meeting` + "`" + ` are able to see all posts associated with the ` + "`" + `Meeting` + "`" + `"
-    participants: [MeetingParticipant!]!
-
-    "Organizers of a ` + "`" + `Meeting` + "`" + ` are able to make changes and invite people"
-    organizers: [PublicProfile!]!
-}
-
-type Organization {
-    id: ID!
-    name: String!
-    url: String
-    createdAt: Time!
-    updatedAt: Time!
-    domains: [OrganizationDomain!]!
-    logoURL: String
-    trustedOrganizations: [Organization!]!
-}
-
-input CreateOrganizationInput {
-    name: String!
-    url: String
-    authType: String!
-    authConfig: String!
-    logoFileID: ID
-}
-
-input UpdateOrganizationInput {
-    id: ID!
-    name: String!
-    url: String
-    authType: String!
-    authConfig: String!
-    logoFileID: ID
-}
-
-type OrganizationDomain {
-    domain: String!
-    organizationID: ID!
-    authType: String!
-    authConfig: String!
-}
-
-input CreateOrganizationDomainInput {
-    domain: String!
-    organizationID: ID!
-    authType: String
-    authConfig: String
-}
-
-input RemoveOrganizationDomainInput {
-    domain: String!
-    organizationID: ID!
-}
-
-type Thread {
-    id: ID!
-    participants: [PublicProfile!]!
-    messages: [Message!]!
-    postID: String!
-    post: Post!
-    lastViewedAt: Time!
-    createdAt: Time!
-    updatedAt: Time!
-    unreadMessageCount: Int!
-}
-
-type Message {
-    id: ID!
-    sender: PublicProfile!
-    content: String!
-    thread: Thread!
-    createdAt: Time!
-    updatedAt: Time!
-}
-
 input CreatePostInput {
     "ID of associated Organization. Affects visibility of the post, see also the ` + "`" + `visibility` + "`" + ` field."
     orgID: String!
-    type: PostType!
     "Short description, limited to 255 characters"
     title: String!
     "Optional, longer description, limited to 4096 characters"
@@ -2086,7 +2344,7 @@ input CreatePostInput {
     origin: LocationInput
     "Broad category of the size of item"
     size: PostSize!
-    "Optional URL to further describe or point to detail about the item"
+    "Optional URL to further describe or point to detail about the item, limited to 255 characters"
     url: String
     "Optional weight of the item, measured in kilograms"
     kilograms: Float
@@ -2132,46 +2390,33 @@ input UpdatePostInput {
     visibility: PostVisibility
 }
 
-input CreateMeetingInput {
-    name: String!
-    description: String
-    startDate: Date!
-    endDate: Date!
-    moreInfoURL: String
-    imageFileID: ID
-    location: LocationInput!
-    
-    "NOT YET IMPLEMENTED -- Who can see this meeting"
-    visibility: MeetingVisibility!
-}
-
-input UpdateMeetingInput {
+input UpdatePostStatusInput {
+    "ID of the post to update"
     id: ID!
-    name: String!
-    description: String
-    startDate: Date!
-    endDate: Date!
-    moreInfoURL: String
-    imageFileID: ID
-    location: LocationInput!
-
-    "NOT YET IMPLEMENTED -- Who can see this meeting"
-    visibility: MeetingVisibility!
+    "New Status. Only a limited set of transitions are allowed."
+    status: PostStatus!
+    "User ID of the accepted provider. Required if ` + "`" + `status` + "`" + ` is ACCEPTED and ignored otherwise."
+    providerUserID: ID
 }
 
-input CreateMessageInput {
-    content: String!
-    postID: String!
-    threadID: String
-}
-
-type File {
+"In-App Message Thread"
+type Thread {
+    "unique identifier for the message thread"
     id: ID!
-    url: String!
-    urlExpiration: Time!
-    name: String!
-    size: Int!
-    contentType: String!
+    "Users participating in the message thread. The post creator is automatically added to all of the posts's threads"
+    participants: [PublicProfile!]!
+    "Messages on the thread"
+    messages: [Message!]!
+    "Post that owns this message thread"
+    post: Post!
+    "The time the auth user last viewed this thread. Messages with ` + "`" + `updatedAt` + "`" + ` after this time can be considered unread."
+    lastViewedAt: Time!
+    "The time this thread was started"
+    createdAt: Time!
+    "The time this thread was last updated or messages added to the thread"
+    updatedAt: Time!
+    "The number of messages unread by the auth user"
+    unreadMessageCount: Int!
 }
 
 input SetThreadLastViewedAtInput {
@@ -2179,125 +2424,106 @@ input SetThreadLastViewedAtInput {
     time: Time!
 }
 
-"Describes a Geographic location"
-type Location {
-    description: String!
-    # Country, ISO 3166-1 Alpha-2 code
-    country: String!
-    latitude: Float
-    longitude: Float
-}
-
-"Specify a Geographic location"
-input LocationInput {
-    description: String!
-    # Country, ISO 3166-1 Alpha-2 code
-    country: String!
-    latitude: Float
-    longitude: Float
-}
-
-input UpdatePostStatusInput {
+"Attributes of a user of the App"
+type User {
+    "unique identifier for the User"
     id: ID!
-    status: PostStatus!
-    providerUserID: ID
+    "Email address to be used for notifications to the User. Not necessarily the same as the authentication email."
+    email: String!
+    "User's nickname. Auto-assigned upon creation of a User, but editable by the User. Limited to 255 characters."
+    nickname: String!
+    "Time the user was added to the App"
+    createdAt: Time!
+    "Time the user profile was last edited"
+    updatedAt: Time!
+    "An admin role other than the default (USER) provides additional privileges"
+    adminRole: UserAdminRole
+    "avatarURL is generated from an attached photo if present, an external URL if present, or a Gravatar URL"
+    avatarURL: String
+    "` + "`" + `File` + "`" + ` ID of the user's photo, if present"
+    photoID: String
+    preferences: UserPreferences!
+    "user's home location"
+    location: Location
+    unreadMessageCount: Int!
+    "Organizations that the User is affilated with. This can be empty or have a single entry. Future capability is TBD"
+    organizations: [Organization!]!
+    "A list of the user's posts, as determined by the given PostRole relationship"
+    posts(role: PostRole!): [Post!]!
+    "meetings in which the user is a participant"
+    meetingsAsParticipant: [Meeting!]!
 }
 
+"User fields that can safely be visible to any user in the system"
+type PublicProfile {
+    "unique identifier for the User, the same value as in the ` + "`" + `User` + "`" + ` type"
+    id: ID!
+    "User's nickname. Auto-assigned upon creation of a User, but editable by the User. Limited to 255 characters."
+    nickname: String!
+    "avatarURL is generated from an attached photo if present, an external URL if present, or a Gravatar URL"
+    avatarURL: String
+}
+
+"Input object for ` + "`" + `updateUser` + "`" + `"
+input UpdateUserInput {
+    "unique identifier for the User to be updated"
+    id: ID
+    "User's nickname. Auto-assigned upon creation of a User, but editable by the User. Limited to 255 characters."
+    nickname: String
+    "File ID of avatar photo. If omitted or ` + "`" + `null` + "`" + `, the photo is removed from the profile."
+    photoID: ID
+    "Specify the user's 'home' location. If omitted or ` + "`" + `null` + "`" + `, the location is removed from the profile."
+    location: LocationInput
+    "New user preferences. If ` + "`" + `null` + "`" + ` no changes are made."
+    preferences: UpdateUserPreferencesInput
+}
+
+type UserPreferences {
+    "preferred language for translation of App text, including notifications and error messages"
+    language: PreferredLanguage
+    "preferred time zone for localization of dates and times, particularly in notification messages"
+    timeZone: String
+    "preferred weight unit for customized display of weight quantities"
+    weightUnit: PreferredWeightUnit
+}
+
+input UpdateUserPreferencesInput {
+    "preferred language -- if omitted, the preference is set to the App default"
+    language: PreferredLanguage
+    "time zone -- if omitted, the preference is set to the App default"
+    timeZone: String
+    "weight unit-- if omitted, the preference is set to the App default"
+    weightUnit: PreferredWeightUnit
+}
+
+"""
+A Watch for a given location. Posts (requests) with a destination near the watch location will trigger a notification to
+the watch creator. Other types of Watches (e.g. keyword search) may be created in future versions of WeCarry.
+"""
 type Watch {
+    "unique identifier for the Watch"
     id: ID!
+    "Owner of the Watch, and the recipient of notifications for this Watch"
     owner: PublicProfile!
+    "Location to watch. If a new request has a destination near this location, a notification will be sent."
     location: Location
 }
 
 input CreateWatchInput {
-    location: LocationInput
-}
-
-input UpdateWatchInput {
-    id: ID!
+    "Location to watch. If a new request has a destination near this location, a notification will be sent."
     location: LocationInput
 }
 
 input RemoveWatchInput {
+    "unique identifier for the Watch to be removed"
     id: ID!
 }
 
-input CreateOrganizationTrustInput {
-    primaryID: ID!
-    secondaryID: ID!
-}
-
-input RemoveOrganizationTrustInput {
-    primaryID: ID!
-    secondaryID: ID!
-}
-
-"""
-Invite to a ` + "`" + `Meeting` + "`" + `. An invite must be confirmed by the invitee before they may be added to a ` + "`" + `Meeting` + "`" + `.
-"""
-type MeetingInvite {
-    meeting: Meeting!
-    "` + "`" + `User` + "`" + ` making the invite"
-    inviter: PublicProfile!
-    "Email address of the invitee"
-    email: String!
-    "Gravatar image URL. Always a valid URL, but depending on the email address, it may reference a generic avatar."
-    avatarURL: String!
-}
-
-"Input object for ` + "`" + `createMeetingInvites` + "`" + `"
-input CreateMeetingInvitesInput {
-    "ID of the ` + "`" + `Meeting` + "`" + `"
-    meetingID: ID!
-
-    "Email addresses of the invitees. Duplicate values are ignored."
-    emails: [String!]!
-
-    "NOT YET IMPLEMENTED -- Send email invites. Default is 'false', do not send any emails."
-    sendEmail: Boolean
-}
-
-"Input object for ` + "`" + `removeMeetingInvite` + "`" + `"
-input RemoveMeetingInviteInput {
-    "ID of the ` + "`" + `Meeting` + "`" + `"
-    meetingID: ID!
-    "Email addresse of the invitee to remove"
-    email: String!
-}
-
-"""
-Confirmed participant of a ` + "`" + `Meeting` + "`" + `. An invited person will not appear as a ` + "`" + `MeetingParticipant` + "`" + ` until they have
-confirmed a ` + "`" + `MeetingInvite` + "`" + `.
-"""
-type MeetingParticipant {
-    meeting: Meeting!
-    "` + "`" + `User` + "`" + ` information for the ` + "`" + `Meeting` + "`" + ` participant"
-    user: User!
-    "true if ` + "`" + `User` + "`" + ` is a meeting Organizer"
-    isOrganizer: Boolean
-    "The ` + "`" + `MeetingInvite` + "`" + `, valid if the participant was invited. ` + "`" + `null` + "`" + ` indicates the ` + "`" + `User` + "`" + ` self-joined"
-    invite: MeetingInvite
-}
-
-"Input object for ` + "`" + `createMeetingParticipant` + "`" + `"
-input CreateMeetingParticipantInput {
-    "ID of the ` + "`" + `Meeting` + "`" + `"
-    meetingID: ID!
-    """
-    Secret code from the ` + "`" + `MeetingInvite` + "`" + ` or invite code from the ` + "`" + `Meeting` + "`" + `. If the ` + "`" + `Meeting` + "`" + ` is not ` + "`" + `INVITE_ONLY` + "`" + `,
-    the code may be omitted.
-    """
-    code: String
-    "NOT YET IMPLEMENTED -- Add as a ` + "`" + `Meeting` + "`" + ` Organizer. Authenticated ` + "`" + `User` + "`" + ` must be authorized [definition TBD] to do this. "
-    isOrganizer: Boolean
-}
-
-"Input object for ` + "`" + `removeMeetingParticipant` + "`" + `"
-input RemoveMeetingParticipantInput {
-    "ID of the ` + "`" + `Meeting` + "`" + `"
-    meetingID: ID!
-    "` + "`" + `User` + "`" + ` ID of the ` + "`" + `Meeting` + "`" + ` participant to remove"
-    userID: ID!
+input UpdateWatchInput {
+    "unique identifier for the Watch to be updated"
+    id: ID!
+    "Location to watch. If a new request has a destination near this location, a notification will be sent."
+    location: LocationInput
 }
 `},
 )
@@ -4325,6 +4551,622 @@ func (ec *executionContext) _Message_updatedAt(ctx context.Context, field graphq
 	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Mutation_createMeeting(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_createMeeting_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateMeeting(rctx, args["input"].(meetingInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Meeting)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNMeeting2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeeting(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_updateMeeting(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_updateMeeting_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateMeeting(rctx, args["input"].(meetingInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Meeting)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNMeeting2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeeting(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_createMeetingInvites(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_createMeetingInvites_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateMeetingInvites(rctx, args["input"].(CreateMeetingInvitesInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]models.MeetingInvite)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNMeetingInvite2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeetingInvite(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_removeMeetingInvite(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_removeMeetingInvite_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().RemoveMeetingInvite(rctx, args["input"].(RemoveMeetingInviteInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]models.MeetingInvite)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNMeetingInvite2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeetingInvite(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_createMeetingParticipant(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_createMeetingParticipant_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateMeetingParticipant(rctx, args["input"].(CreateMeetingParticipantInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.MeetingParticipant)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNMeetingParticipant2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeetingParticipant(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_removeMeetingParticipant(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_removeMeetingParticipant_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().RemoveMeetingParticipant(rctx, args["input"].(RemoveMeetingParticipantInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]models.MeetingParticipant)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNMeetingParticipant2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeetingParticipant(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_createMessage(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_createMessage_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateMessage(rctx, args["input"].(CreateMessageInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Message)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNMessage2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMessage(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_createOrganization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_createOrganization_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateOrganization(rctx, args["input"].(CreateOrganizationInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Organization)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNOrganization2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganization(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_updateOrganization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_updateOrganization_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateOrganization(rctx, args["input"].(UpdateOrganizationInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Organization)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNOrganization2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganization(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_createOrganizationDomain(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_createOrganizationDomain_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateOrganizationDomain(rctx, args["input"].(CreateOrganizationDomainInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]models.OrganizationDomain)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNOrganizationDomain2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganizationDomain(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_removeOrganizationDomain(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_removeOrganizationDomain_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().RemoveOrganizationDomain(rctx, args["input"].(RemoveOrganizationDomainInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]models.OrganizationDomain)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNOrganizationDomain2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganizationDomain(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_updateOrganizationDomain(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_updateOrganizationDomain_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateOrganizationDomain(rctx, args["input"].(CreateOrganizationDomainInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]models.OrganizationDomain)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNOrganizationDomain2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganizationDomain(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_createOrganizationTrust(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_createOrganizationTrust_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateOrganizationTrust(rctx, args["input"].(CreateOrganizationTrustInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Organization)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNOrganization2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganization(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_removeOrganizationTrust(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_removeOrganizationTrust_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().RemoveOrganizationTrust(rctx, args["input"].(RemoveOrganizationTrustInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Organization)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNOrganization2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganization(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Mutation_createPost(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -4589,402 +5431,6 @@ func (ec *executionContext) _Mutation_removePotentialProvider(ctx context.Contex
 	return ec.marshalNPost2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_updateUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Mutation",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_updateUser_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	rctx.Args = args
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateUser(rctx, args["input"].(UpdateUserInput))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*models.User)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Mutation_createMeeting(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Mutation",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_createMeeting_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	rctx.Args = args
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateMeeting(rctx, args["input"].(meetingInput))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*models.Meeting)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNMeeting2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeeting(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Mutation_updateMeeting(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Mutation",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_updateMeeting_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	rctx.Args = args
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateMeeting(rctx, args["input"].(meetingInput))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*models.Meeting)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNMeeting2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeeting(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Mutation_createMessage(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Mutation",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_createMessage_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	rctx.Args = args
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateMessage(rctx, args["input"].(CreateMessageInput))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*models.Message)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNMessage2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMessage(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Mutation_createOrganization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Mutation",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_createOrganization_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	rctx.Args = args
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateOrganization(rctx, args["input"].(CreateOrganizationInput))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*models.Organization)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNOrganization2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganization(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Mutation_updateOrganization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Mutation",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_updateOrganization_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	rctx.Args = args
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateOrganization(rctx, args["input"].(UpdateOrganizationInput))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*models.Organization)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNOrganization2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganization(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Mutation_createOrganizationDomain(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Mutation",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_createOrganizationDomain_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	rctx.Args = args
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateOrganizationDomain(rctx, args["input"].(CreateOrganizationDomainInput))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]models.OrganizationDomain)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNOrganizationDomain2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganizationDomain(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Mutation_updateOrganizationDomain(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Mutation",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_updateOrganizationDomain_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	rctx.Args = args
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateOrganizationDomain(rctx, args["input"].(CreateOrganizationDomainInput))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]models.OrganizationDomain)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNOrganizationDomain2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganizationDomain(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Mutation_removeOrganizationDomain(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Mutation",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_removeOrganizationDomain_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	rctx.Args = args
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().RemoveOrganizationDomain(rctx, args["input"].(RemoveOrganizationDomainInput))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]models.OrganizationDomain)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNOrganizationDomain2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganizationDomain(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _Mutation_setThreadLastViewedAt(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -5029,6 +5475,50 @@ func (ec *executionContext) _Mutation_setThreadLastViewedAt(ctx context.Context,
 	return ec.marshalNThread2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐThread(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Mutation_updateUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_updateUser_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateUser(rctx, args["input"].(UpdateUserInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.User)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Mutation_createWatch(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -5056,50 +5546,6 @@ func (ec *executionContext) _Mutation_createWatch(ctx context.Context, field gra
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Mutation().CreateWatch(rctx, args["input"].(watchInput))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*models.Watch)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNWatch2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐWatch(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Mutation_updateWatch(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Mutation",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_updateWatch_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	rctx.Args = args
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateWatch(rctx, args["input"].(watchInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5161,7 +5607,7 @@ func (ec *executionContext) _Mutation_removeWatch(ctx context.Context, field gra
 	return ec.marshalNWatch2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐWatch(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_createOrganizationTrust(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_updateWatch(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -5178,7 +5624,7 @@ func (ec *executionContext) _Mutation_createOrganizationTrust(ctx context.Contex
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_createOrganizationTrust_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_updateWatch_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -5187,7 +5633,7 @@ func (ec *executionContext) _Mutation_createOrganizationTrust(ctx context.Contex
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateOrganizationTrust(rctx, args["input"].(CreateOrganizationTrustInput))
+		return ec.resolvers.Mutation().UpdateWatch(rctx, args["input"].(watchInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5199,230 +5645,10 @@ func (ec *executionContext) _Mutation_createOrganizationTrust(ctx context.Contex
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*models.Organization)
+	res := resTmp.(*models.Watch)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNOrganization2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganization(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Mutation_removeOrganizationTrust(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Mutation",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_removeOrganizationTrust_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	rctx.Args = args
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().RemoveOrganizationTrust(rctx, args["input"].(RemoveOrganizationTrustInput))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*models.Organization)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNOrganization2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganization(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Mutation_createMeetingInvites(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Mutation",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_createMeetingInvites_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	rctx.Args = args
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateMeetingInvites(rctx, args["input"].(CreateMeetingInvitesInput))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]models.MeetingInvite)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNMeetingInvite2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeetingInvite(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Mutation_removeMeetingInvite(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Mutation",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_removeMeetingInvite_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	rctx.Args = args
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().RemoveMeetingInvite(rctx, args["input"].(RemoveMeetingInviteInput))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]models.MeetingInvite)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNMeetingInvite2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeetingInvite(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Mutation_createMeetingParticipant(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Mutation",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_createMeetingParticipant_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	rctx.Args = args
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateMeetingParticipant(rctx, args["input"].(CreateMeetingParticipantInput))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*models.MeetingParticipant)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNMeetingParticipant2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeetingParticipant(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Mutation_removeMeetingParticipant(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Mutation",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_removeMeetingParticipant_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	rctx.Args = args
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().RemoveMeetingParticipant(rctx, args["input"].(RemoveMeetingParticipantInput))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]models.MeetingParticipant)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNMeetingParticipant2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeetingParticipant(ctx, field.Selections, res)
+	return ec.marshalNWatch2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐWatch(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Organization_id(ctx context.Context, field graphql.CollectedField, obj *models.Organization) (ret graphql.Marshaler) {
@@ -5752,7 +5978,7 @@ func (ec *executionContext) _OrganizationDomain_domain(ctx context.Context, fiel
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _OrganizationDomain_organizationID(ctx context.Context, field graphql.CollectedField, obj *models.OrganizationDomain) (ret graphql.Marshaler) {
+func (ec *executionContext) _OrganizationDomain_organization(ctx context.Context, field graphql.CollectedField, obj *models.OrganizationDomain) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -5771,7 +5997,7 @@ func (ec *executionContext) _OrganizationDomain_organizationID(ctx context.Conte
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.OrganizationDomain().OrganizationID(rctx, obj)
+		return ec.resolvers.OrganizationDomain().Organization(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5783,10 +6009,10 @@ func (ec *executionContext) _OrganizationDomain_organizationID(ctx context.Conte
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*models.Organization)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNOrganization2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganization(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _OrganizationDomain_authType(ctx context.Context, field graphql.CollectedField, obj *models.OrganizationDomain) (ret graphql.Marshaler) {
@@ -5820,10 +6046,10 @@ func (ec *executionContext) _OrganizationDomain_authType(ctx context.Context, fi
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(models.AuthType)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNAuthType2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐAuthType(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _OrganizationDomain_authConfig(ctx context.Context, field graphql.CollectedField, obj *models.OrganizationDomain) (ret graphql.Marshaler) {
@@ -5900,43 +6126,6 @@ func (ec *executionContext) _Post_id(ctx context.Context, field graphql.Collecte
 	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Post_type(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Post",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Type, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(models.PostType)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNPostType2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostType(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _Post_createdBy(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -5972,40 +6161,6 @@ func (ec *executionContext) _Post_createdBy(ctx context.Context, field graphql.C
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNPublicProfile2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPublicProfile(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Post_receiver(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Post",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Post().Receiver(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*PublicProfile)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOPublicProfile2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPublicProfile(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Post_provider(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
@@ -6894,368 +7049,6 @@ func (ec *executionContext) _PublicProfile_avatarURL(ctx context.Context, field 
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Query_users(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Query",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Users(rctx)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]models.User)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNUser2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Query_user(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Query",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_user_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	rctx.Args = args
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().User(rctx, args["id"].(*string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*models.User)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Query_posts(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Query",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_posts_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	rctx.Args = args
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Posts(rctx, args["destination"].(*LocationInput), args["origin"].(*LocationInput), args["searchText"].(*string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]models.Post)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNPost2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Query_post(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Query",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_post_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	rctx.Args = args
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Post(rctx, args["id"].(*string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*models.Post)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOPost2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Query_threads(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Query",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Threads(rctx)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]models.Thread)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNThread2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐThread(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Query_myThreads(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Query",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().MyThreads(rctx)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]models.Thread)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNThread2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐThread(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Query_message(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Query",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_message_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	rctx.Args = args
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Message(rctx, args["id"].(*string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*models.Message)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNMessage2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMessage(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Query_organizations(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Query",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Organizations(rctx)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]models.Organization)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNOrganization2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganization(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Query_organization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Query",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_organization_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	rctx.Args = args
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Organization(rctx, args["id"].(*string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*models.Organization)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNOrganization2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganization(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _Query_meetings(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -7341,7 +7134,51 @@ func (ec *executionContext) _Query_meeting(ctx context.Context, field graphql.Co
 	return ec.marshalOMeeting2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeeting(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Query_recentMeetings(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Query_message(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_message_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Message(rctx, args["id"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Message)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNMessage2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMessage(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_myThreads(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -7360,7 +7197,7 @@ func (ec *executionContext) _Query_recentMeetings(ctx context.Context, field gra
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().RecentMeetings(rctx)
+		return ec.resolvers.Query().MyThreads(rctx)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7372,10 +7209,10 @@ func (ec *executionContext) _Query_recentMeetings(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]models.Meeting)
+	res := resTmp.([]models.Thread)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNMeeting2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeeting(ctx, field.Selections, res)
+	return ec.marshalNThread2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐThread(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_myWatches(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -7413,6 +7250,324 @@ func (ec *executionContext) _Query_myWatches(ctx context.Context, field graphql.
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNWatch2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐWatch(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_organization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_organization_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Organization(rctx, args["id"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Organization)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNOrganization2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganization(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_organizations(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Organizations(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]models.Organization)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNOrganization2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganization(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_post(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_post_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Post(rctx, args["id"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*models.Post)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOPost2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_posts(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_posts_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Posts(rctx, args["destination"].(*LocationInput), args["origin"].(*LocationInput), args["searchText"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]models.Post)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNPost2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_recentMeetings(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().RecentMeetings(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]models.Meeting)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNMeeting2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeeting(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_threads(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Threads(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]models.Thread)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNThread2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐThread(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_user(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_user_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().User(rctx, args["id"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*models.User)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_users(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Users(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]models.User)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNUser2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -7599,43 +7754,6 @@ func (ec *executionContext) _Thread_messages(ctx context.Context, field graphql.
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNMessage2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMessage(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Thread_postID(ctx context.Context, field graphql.CollectedField, obj *models.Thread) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Thread",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Thread().PostID(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Thread_post(ctx context.Context, field graphql.CollectedField, obj *models.Thread) (ret graphql.Marshaler) {
@@ -8136,12 +8254,15 @@ func (ec *executionContext) _User_preferences(ctx context.Context, field graphql
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(*models.StandardPreferences)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOUserPreferences2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐStandardPreferences(ctx, field.Selections, res)
+	return ec.marshalNUserPreferences2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐStandardPreferences(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _User_location(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
@@ -8346,13 +8467,13 @@ func (ec *executionContext) _UserPreferences_language(ctx context.Context, field
 		Object:   "UserPreferences",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Language, nil
+		return ec.resolvers.UserPreferences().Language(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8361,10 +8482,10 @@ func (ec *executionContext) _UserPreferences_language(ctx context.Context, field
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*PreferredLanguage)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOString2string(ctx, field.Selections, res)
+	return ec.marshalOPreferredLanguage2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPreferredLanguage(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _UserPreferences_timeZone(ctx context.Context, field graphql.CollectedField, obj *models.StandardPreferences) (ret graphql.Marshaler) {
@@ -8414,13 +8535,13 @@ func (ec *executionContext) _UserPreferences_weightUnit(ctx context.Context, fie
 		Object:   "UserPreferences",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.WeightUnit, nil
+		return ec.resolvers.UserPreferences().WeightUnit(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8429,10 +8550,10 @@ func (ec *executionContext) _UserPreferences_weightUnit(ctx context.Context, fie
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*PreferredWeightUnit)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOString2string(ctx, field.Selections, res)
+	return ec.marshalOPreferredWeightUnit2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPreferredWeightUnit(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Watch_id(ctx context.Context, field graphql.CollectedField, obj *models.Watch) (ret graphql.Marshaler) {
@@ -9864,7 +9985,7 @@ func (ec *executionContext) unmarshalInputCreateOrganizationDomainInput(ctx cont
 			}
 		case "authType":
 			var err error
-			it.AuthType, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			it.AuthType, err = ec.unmarshalNAuthType2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐAuthType(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -9900,7 +10021,7 @@ func (ec *executionContext) unmarshalInputCreateOrganizationInput(ctx context.Co
 			}
 		case "authType":
 			var err error
-			it.AuthType, err = ec.unmarshalNString2string(ctx, v)
+			it.AuthType, err = ec.unmarshalNAuthType2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐAuthType(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -9955,12 +10076,6 @@ func (ec *executionContext) unmarshalInputCreatePostInput(ctx context.Context, o
 		case "orgID":
 			var err error
 			it.OrgID, err = ec.unmarshalNString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "type":
-			var err error
-			it.Type, err = ec.unmarshalNPostType2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostType(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -10320,7 +10435,7 @@ func (ec *executionContext) unmarshalInputUpdateOrganizationInput(ctx context.Co
 			}
 		case "authType":
 			var err error
-			it.AuthType, err = ec.unmarshalNString2string(ctx, v)
+			it.AuthType, err = ec.unmarshalNAuthType2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐAuthType(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -10470,7 +10585,7 @@ func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, o
 			}
 		case "photoID":
 			var err error
-			it.PhotoID, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			it.PhotoID, err = ec.unmarshalOID2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -11096,6 +11211,76 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Mutation")
+		case "createMeeting":
+			out.Values[i] = ec._Mutation_createMeeting(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "updateMeeting":
+			out.Values[i] = ec._Mutation_updateMeeting(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "createMeetingInvites":
+			out.Values[i] = ec._Mutation_createMeetingInvites(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "removeMeetingInvite":
+			out.Values[i] = ec._Mutation_removeMeetingInvite(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "createMeetingParticipant":
+			out.Values[i] = ec._Mutation_createMeetingParticipant(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "removeMeetingParticipant":
+			out.Values[i] = ec._Mutation_removeMeetingParticipant(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "createMessage":
+			out.Values[i] = ec._Mutation_createMessage(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "createOrganization":
+			out.Values[i] = ec._Mutation_createOrganization(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "updateOrganization":
+			out.Values[i] = ec._Mutation_updateOrganization(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "createOrganizationDomain":
+			out.Values[i] = ec._Mutation_createOrganizationDomain(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "removeOrganizationDomain":
+			out.Values[i] = ec._Mutation_removeOrganizationDomain(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "updateOrganizationDomain":
+			out.Values[i] = ec._Mutation_updateOrganizationDomain(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "createOrganizationTrust":
+			out.Values[i] = ec._Mutation_createOrganizationTrust(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "removeOrganizationTrust":
+			out.Values[i] = ec._Mutation_removeOrganizationTrust(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "createPost":
 			out.Values[i] = ec._Mutation_createPost(ctx, field)
 			if out.Values[i] == graphql.Null {
@@ -11126,53 +11311,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "updateUser":
-			out.Values[i] = ec._Mutation_updateUser(ctx, field)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "createMeeting":
-			out.Values[i] = ec._Mutation_createMeeting(ctx, field)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "updateMeeting":
-			out.Values[i] = ec._Mutation_updateMeeting(ctx, field)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "createMessage":
-			out.Values[i] = ec._Mutation_createMessage(ctx, field)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "createOrganization":
-			out.Values[i] = ec._Mutation_createOrganization(ctx, field)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "updateOrganization":
-			out.Values[i] = ec._Mutation_updateOrganization(ctx, field)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "createOrganizationDomain":
-			out.Values[i] = ec._Mutation_createOrganizationDomain(ctx, field)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "updateOrganizationDomain":
-			out.Values[i] = ec._Mutation_updateOrganizationDomain(ctx, field)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "removeOrganizationDomain":
-			out.Values[i] = ec._Mutation_removeOrganizationDomain(ctx, field)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "setThreadLastViewedAt":
 			out.Values[i] = ec._Mutation_setThreadLastViewedAt(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "updateUser":
+			out.Values[i] = ec._Mutation_updateUser(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -11181,43 +11326,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "updateWatch":
-			out.Values[i] = ec._Mutation_updateWatch(ctx, field)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "removeWatch":
 			out.Values[i] = ec._Mutation_removeWatch(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "createOrganizationTrust":
-			out.Values[i] = ec._Mutation_createOrganizationTrust(ctx, field)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "removeOrganizationTrust":
-			out.Values[i] = ec._Mutation_removeOrganizationTrust(ctx, field)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "createMeetingInvites":
-			out.Values[i] = ec._Mutation_createMeetingInvites(ctx, field)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "removeMeetingInvite":
-			out.Values[i] = ec._Mutation_removeMeetingInvite(ctx, field)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "createMeetingParticipant":
-			out.Values[i] = ec._Mutation_createMeetingParticipant(ctx, field)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "removeMeetingParticipant":
-			out.Values[i] = ec._Mutation_removeMeetingParticipant(ctx, field)
+		case "updateWatch":
+			out.Values[i] = ec._Mutation_updateWatch(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -11349,7 +11464,7 @@ func (ec *executionContext) _OrganizationDomain(ctx context.Context, sel ast.Sel
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "organizationID":
+		case "organization":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
 				defer func() {
@@ -11357,7 +11472,7 @@ func (ec *executionContext) _OrganizationDomain(ctx context.Context, sel ast.Sel
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._OrganizationDomain_organizationID(ctx, field, obj)
+				res = ec._OrganizationDomain_organization(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -11409,11 +11524,6 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 				}
 				return res
 			})
-		case "type":
-			out.Values[i] = ec._Post_type(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
 		case "createdBy":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -11426,17 +11536,6 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
-				return res
-			})
-		case "receiver":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Post_receiver(ctx, field, obj)
 				return res
 			})
 		case "provider":
@@ -11717,126 +11816,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
-		case "users":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_users(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			})
-		case "user":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_user(ctx, field)
-				return res
-			})
-		case "posts":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_posts(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			})
-		case "post":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_post(ctx, field)
-				return res
-			})
-		case "threads":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_threads(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			})
-		case "myThreads":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_myThreads(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			})
-		case "message":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_message(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			})
-		case "organizations":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_organizations(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			})
-		case "organization":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_organization(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			})
 		case "meetings":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -11862,7 +11841,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				res = ec._Query_meeting(ctx, field)
 				return res
 			})
-		case "recentMeetings":
+		case "message":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
 				defer func() {
@@ -11870,7 +11849,21 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_recentMeetings(ctx, field)
+				res = ec._Query_message(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "myThreads":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_myThreads(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -11885,6 +11878,112 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_myWatches(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "organization":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_organization(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "organizations":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_organizations(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "post":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_post(ctx, field)
+				return res
+			})
+		case "posts":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_posts(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "recentMeetings":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_recentMeetings(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "threads":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_threads(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "user":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_user(ctx, field)
+				return res
+			})
+		case "users":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_users(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -11953,20 +12052,6 @@ func (ec *executionContext) _Thread(ctx context.Context, sel ast.SelectionSet, o
 					}
 				}()
 				res = ec._Thread_messages(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			})
-		case "postID":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Thread_postID(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -12113,6 +12198,9 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 					}
 				}()
 				res = ec._User_preferences(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			})
 		case "location":
@@ -12205,11 +12293,29 @@ func (ec *executionContext) _UserPreferences(ctx context.Context, sel ast.Select
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("UserPreferences")
 		case "language":
-			out.Values[i] = ec._UserPreferences_language(ctx, field, obj)
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._UserPreferences_language(ctx, field, obj)
+				return res
+			})
 		case "timeZone":
 			out.Values[i] = ec._UserPreferences_timeZone(ctx, field, obj)
 		case "weightUnit":
-			out.Values[i] = ec._UserPreferences_weightUnit(ctx, field, obj)
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._UserPreferences_weightUnit(ctx, field, obj)
+				return res
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -12526,6 +12632,15 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 // endregion **************************** object.gotpl ****************************
 
 // region    ***************************** type.gotpl *****************************
+
+func (ec *executionContext) unmarshalNAuthType2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐAuthType(ctx context.Context, v interface{}) (models.AuthType, error) {
+	var res models.AuthType
+	return res, res.UnmarshalGQL(v)
+}
+
+func (ec *executionContext) marshalNAuthType2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐAuthType(ctx context.Context, sel ast.SelectionSet, v models.AuthType) graphql.Marshaler {
+	return v
+}
 
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	return graphql.UnmarshalBoolean(v)
@@ -13119,33 +13234,6 @@ func (ec *executionContext) marshalNPostStatus2githubᚗcomᚋsilinternational�
 	return v
 }
 
-func (ec *executionContext) unmarshalNPostType2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostType(ctx context.Context, v interface{}) (models.PostType, error) {
-	var res models.PostType
-	return res, res.UnmarshalGQL(v)
-}
-
-func (ec *executionContext) marshalNPostType2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostType(ctx context.Context, sel ast.SelectionSet, v models.PostType) graphql.Marshaler {
-	return v
-}
-
-func (ec *executionContext) unmarshalNPostType2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostType(ctx context.Context, v interface{}) (*models.PostType, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalNPostType2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostType(ctx, v)
-	return &res, err
-}
-
-func (ec *executionContext) marshalNPostType2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostType(ctx context.Context, sel ast.SelectionSet, v *models.PostType) graphql.Marshaler {
-	if v == nil {
-		if !ec.HasError(graphql.GetResolverContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	return v
-}
-
 func (ec *executionContext) unmarshalNPostVisibility2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostVisibility(ctx context.Context, v interface{}) (models.PostVisibility, error) {
 	var res models.PostVisibility
 	return res, res.UnmarshalGQL(v)
@@ -13447,6 +13535,20 @@ func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋsilinternationalᚋwe
 		return graphql.Null
 	}
 	return ec._User(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNUserPreferences2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐStandardPreferences(ctx context.Context, sel ast.SelectionSet, v models.StandardPreferences) graphql.Marshaler {
+	return ec._UserPreferences(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUserPreferences2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐStandardPreferences(ctx context.Context, sel ast.SelectionSet, v *models.StandardPreferences) graphql.Marshaler {
+	if v == nil {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._UserPreferences(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNWatch2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐWatch(ctx context.Context, sel ast.SelectionSet, v models.Watch) graphql.Marshaler {
@@ -14096,17 +14198,6 @@ func (ec *executionContext) unmarshalOUserAdminRole2githubᚗcomᚋsilinternatio
 
 func (ec *executionContext) marshalOUserAdminRole2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐUserAdminRole(ctx context.Context, sel ast.SelectionSet, v models.UserAdminRole) graphql.Marshaler {
 	return graphql.MarshalString(string(v))
-}
-
-func (ec *executionContext) marshalOUserPreferences2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐStandardPreferences(ctx context.Context, sel ast.SelectionSet, v models.StandardPreferences) graphql.Marshaler {
-	return ec._UserPreferences(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalOUserPreferences2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐStandardPreferences(ctx context.Context, sel ast.SelectionSet, v *models.StandardPreferences) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._UserPreferences(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValue(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {

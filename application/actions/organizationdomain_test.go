@@ -13,8 +13,8 @@ type OrganizationDomainFixtures struct {
 
 type OrganizationDomainResponse struct {
 	OrganizationDomain []struct {
-		OrganizationID string `json:"organizationID"`
-		Domain         string `json:"domain"`
+		Organization Organization `json:"organization"`
+		Domain       string       `json:"domain"`
 	} `json:"domain"`
 }
 
@@ -22,8 +22,8 @@ func (as *ActionSuite) Test_CreateUpdateOrganizationDomain() {
 	f := fixturesForOrganizationDomain(as)
 
 	testDomain := "example.com"
-	allFieldsQuery := `organizationID domain authType authConfig`
-	allFieldsInput := fmt.Sprintf(`organizationID:"%s" domain:"%s"`,
+	allFieldsQuery := `organization { id } domain authType authConfig`
+	allFieldsInput := fmt.Sprintf(`organizationID:"%s" domain:"%s" authType:DEFAULT`,
 		f.Organizations[0].UUID.String(), testDomain)
 
 	query := fmt.Sprintf("mutation{domain: createOrganizationDomain(input: {%s}) {%s}}",
@@ -34,7 +34,7 @@ func (as *ActionSuite) Test_CreateUpdateOrganizationDomain() {
 
 	as.Equal(1, len(resp.OrganizationDomain), "wrong number of domains in response")
 	as.Equal(testDomain, resp.OrganizationDomain[0].Domain, "received wrong domain")
-	as.Equal(f.Organizations[0].UUID.String(), resp.OrganizationDomain[0].OrganizationID, "received wrong org ID")
+	as.Equal(f.Organizations[0].UUID.String(), resp.OrganizationDomain[0].Organization.ID, "received wrong org ID")
 
 	var orgs models.Organizations
 	err = as.DB.Where("name = ?", f.Organizations[0].Name).All(&orgs)
@@ -47,7 +47,7 @@ func (as *ActionSuite) Test_CreateUpdateOrganizationDomain() {
 	as.Equal(testDomain, domains[0].Domain, "wrong domain in DB")
 
 	// Test updating orgdomains
-	validUpdateInput := fmt.Sprintf(`organizationID:"%s" domain:"%s" authType:"saml", authConfig:"{}"`,
+	validUpdateInput := fmt.Sprintf(`organizationID:"%s" domain:"%s" authType:SAML, authConfig:"{}"`,
 		f.Organizations[0].UUID.String(), testDomain)
 
 	query = fmt.Sprintf("mutation{domain: updateOrganizationDomain(input: {%s}) {%s}}",
@@ -57,7 +57,7 @@ func (as *ActionSuite) Test_CreateUpdateOrganizationDomain() {
 	as.NoError(err)
 
 	// User without admin role - should error
-	validUpdateInput = fmt.Sprintf(`organizationID:"%s" domain:"%s" authType:"saml", authConfig:"{}"`,
+	validUpdateInput = fmt.Sprintf(`organizationID:"%s" domain:"%s" authType:SAML, authConfig:"{}"`,
 		f.Organizations[0].UUID.String(), testDomain)
 
 	query = fmt.Sprintf("mutation{domain: updateOrganizationDomain(input: {%s}) {%s}}",
@@ -67,7 +67,7 @@ func (as *ActionSuite) Test_CreateUpdateOrganizationDomain() {
 	as.Error(err)
 
 	// User with admin role but invalid domain - should error
-	inValidUpdateInput := fmt.Sprintf(`organizationID:"%s" domain:"%s" authType:"saml", authConfig:"{}"`,
+	inValidUpdateInput := fmt.Sprintf(`organizationID:"%s" domain:"%s" authType:SAML, authConfig:"{}"`,
 		f.Organizations[0].UUID.String(), "invalid.com")
 
 	query = fmt.Sprintf("mutation{domain: updateOrganizationDomain(input: {%s}) {%s}}",

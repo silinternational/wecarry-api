@@ -507,7 +507,7 @@ func (ms *ModelSuite) TestMeeting_CanUpdate() {
 func (ms *ModelSuite) TestMeeting_GetPosts() {
 	meetings := createMeetingFixtures(ms.DB, 2).Meetings
 
-	posts := createPostFixtures(ms.DB, 3, 0, false)
+	posts := createPostFixtures(ms.DB, 3, false)
 	posts[0].MeetingID = nulls.NewInt(meetings[1].ID)
 	posts[1].MeetingID = nulls.NewInt(meetings[1].ID)
 	ms.NoError(ms.DB.Update(&posts))
@@ -629,7 +629,7 @@ func (ms *ModelSuite) TestMeeting_Participants() {
 			name:    "participant",
 			user:    f.Users[2],
 			meeting: f.Meetings[0],
-			wantIDs: []int{},
+			wantIDs: []int{f.Users[2].ID},
 		},
 	}
 	for _, tt := range tests {
