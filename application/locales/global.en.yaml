@@ -257,6 +257,10 @@
   translation: We had a problem setting the location on the user profile.
 - id: UpdateUser
   translation: We had a problem updating the user profile.
+- id: UpdateUser.InvisibleNickname
+  translation: Your user nickname must contain at least one visible character.
+- id: UpdateUser.DuplicateNickname
+  translation: That user nickname is already taken.
 
 # Request Post Status Transition email subjects
 - id: Email.Subject.Request.FromAcceptedToDelivered

@@ -228,6 +228,12 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 	}
 
 	if err = user.Save(); err != nil {
+		if strings.Contains(err.Error(), "Nickname must have a visible character") {
+			return nil, domain.ReportError(ctx, err, "UpdateUser.InvisibleNickname")
+		}
+		if strings.Contains(err.Error(), `duplicate key value violates unique constraint "users_nickname_idx"`) {
+			return nil, domain.ReportError(ctx, err, "UpdateUser.DuplicateNickname")
+		}
 		return nil, domain.ReportError(ctx, err, "UpdateUser")
 	}
 

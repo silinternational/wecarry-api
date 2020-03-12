@@ -746,7 +746,7 @@ func getLoginSuccessRedirectURL(authUser AuthUser, returnTo string) string {
 	// New Users go straight to the welcome page
 	if authUser.IsNew {
 		uiURL += "/#/welcome"
-		if len(returnTo) > 0 { // Ensure there is one set of /# between uiURL and the returnTo
+		if len(returnTo) > 0 { // Ensure there is no `/#` at the beginning of the return-to param value
 			if strings.HasPrefix(returnTo, `/#/`) {
 				returnTo = returnTo[2:]
 			}
