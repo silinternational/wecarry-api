@@ -231,8 +231,8 @@ func (t *Thread) IsVisible(userID int) bool {
 		return false
 	}
 	if users, err := t.GetParticipants(); err == nil {
-		for i := range users {
-			if users[i].ID == userID {
+		for _, user := range users {
+			if user.ID == userID {
 				return true
 			}
 		}

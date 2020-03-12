@@ -1012,8 +1012,8 @@ func (p *Post) IsVisible(ctx context.Context, user User) bool {
 		domain.Error(domain.GetBuffaloContext(ctx), "error in Post.IsVisible, "+err.Error())
 		return false
 	}
-	for i := range allVisible {
-		if allVisible[i].ID == p.ID {
+	for _, visible := range allVisible {
+		if visible.ID == p.ID {
 			return true
 		}
 	}
