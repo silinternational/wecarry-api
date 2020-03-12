@@ -150,28 +150,28 @@ func (m *Message) Create(ctx context.Context, postUUID string, threadUUID *strin
 
 	var post Post
 	if err := post.FindByUUID(postUUID); err != nil {
-		return err
+		return errors.New("failed to find post, " + err.Error())
 	}
 	if !post.IsVisible(ctx, user) {
-		return errors.New("user cannot create a message on this post")
+		return errors.New("user cannot create a message on post")
 	}
 
 	var thread Thread
 	if threadUUID != nil {
 		err := thread.FindByUUID(*threadUUID)
 		if err != nil {
-			return err
+			return errors.New("failed to find thread, " + err.Error())
 		}
 		if thread.PostID != post.ID {
-			return errors.New("that thread is not valid for that post")
+			return errors.New("thread is not valid for post")
 		}
 		if !thread.IsVisible(user.ID) {
-			return errors.New("user cannot create a message on this thread")
+			return errors.New("user cannot create a message on thread")
 		}
 	} else {
 		err := thread.CreateWithParticipants(post, user)
 		if err != nil {
-			return err
+			return errors.New("failed to create new thread on post, " + err.Error())
 		}
 	}
 
@@ -179,7 +179,7 @@ func (m *Message) Create(ctx context.Context, postUUID string, threadUUID *strin
 	m.ThreadID = thread.ID
 	m.SentByID = user.ID
 	if err := create(m); err != nil {
-		return err
+		return errors.New("failed to crate new message, " + err.Error())
 	}
 
 	return nil
