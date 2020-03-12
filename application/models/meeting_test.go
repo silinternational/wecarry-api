@@ -792,7 +792,7 @@ func (ms *ModelSuite) TestMeeting_RemoveParticipant() {
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
 			// setup
-			ctx := createTestContext(tt.user)
+			ctx := createTestContext(tt.testUser)
 
 			// execute
 			err := tt.meeting.RemoveParticipant(ctx, tt.user.UUID.String())
