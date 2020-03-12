@@ -2012,8 +2012,8 @@ func (ms *ModelSuite) TestPost_IsVisible() {
 		{name: "post visibility ALL in trusted org", user: f.Users[0], post: f.Posts[5], want: true},
 		{name: "post visibility TRUSTED in trusted org", user: f.Users[0], post: f.Posts[6], want: true},
 		{name: "post visibility SAME in trusted org", user: f.Users[0], post: f.Posts[7], want: false},
-		{name: "bad user", user: User{}, want: false},
-		{name: "bad user", user: User{}, want: false},
+		{name: "bad user", user: User{}, post: f.Posts[5], want: false},
+		{name: "bad post", user: f.Users[0], post: Post{}, want: false},
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
