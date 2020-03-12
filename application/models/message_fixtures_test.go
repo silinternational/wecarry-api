@@ -52,6 +52,12 @@ func Fixtures_Message_GetSender(ms *ModelSuite, t *testing.T) MessageFixtures {
 
 }
 
+// Post 0: Org A (no threads)
+// Post 1: Org B
+//     Thread 0: User 0
+//     Thread 1: User 0, User 2
+//     Thread 2: (no thread participants)
+// Post 2: Org A (no threads)
 func Fixtures_Message_Create(ms *ModelSuite, t *testing.T) MessageFixtures {
 	uf := createUserFixtures(ms.DB, 2)
 	users := uf.Users
