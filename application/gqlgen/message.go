@@ -69,14 +69,9 @@ func (r *queryResolver) Message(ctx context.Context, id *string) (*models.Messag
 
 // CreateMessage is a mutation resolver for creating a new message
 func (r *mutationResolver) CreateMessage(ctx context.Context, input CreateMessageInput) (*models.Message, error) {
-	cUser := models.CurrentUser(ctx)
-	extras := map[string]interface{}{
-		"user": cUser.UUID,
-	}
-
 	var message models.Message
 	if err := message.Create(ctx, input.PostID, input.ThreadID, input.Content); err != nil {
-		return nil, domain.ReportError(ctx, err, "CreateMessage", extras)
+		return nil, domain.ReportError(ctx, err, "CreateMessage")
 	}
 
 	return &message, nil
