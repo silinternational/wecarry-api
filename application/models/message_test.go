@@ -188,9 +188,11 @@ func (ms *ModelSuite) TestMessage_Create() {
 
 			if tt.wantErr {
 				ms.Error(err)
-			} else {
-				ms.NoError(err)
+				return
 			}
+
+			ms.NoError(err)
+			ms.Greater(message.ID, 0, "new message contains invalid ID")
 		})
 	}
 }
