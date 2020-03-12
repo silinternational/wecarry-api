@@ -731,10 +731,6 @@ func setCurrentUser(next buffalo.Handler) buffalo.Handler {
 		}
 		domain.Info(c, msg, extras)
 
-		if err := userAccessToken.Renew(); err != nil {
-			domain.Error(c, fmt.Sprintf("error renewing access token, %s", c.Request().RemoteAddr), extras)
-		}
-
 		return next(c)
 	}
 }
