@@ -179,7 +179,7 @@ func (m *Message) Create(ctx context.Context, postUUID string, threadUUID *strin
 	m.ThreadID = thread.ID
 	m.SentByID = user.ID
 	if err := create(m); err != nil {
-		return errors.New("failed to crate new message, " + err.Error())
+		return errors.New("failed to create new message, " + err.Error())
 	}
 
 	return nil
