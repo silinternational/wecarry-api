@@ -759,8 +759,16 @@ func (p *Post) FindByUserAndUUID(ctx context.Context, user User, uuid string) er
 		Where("uuid = ?", uuid).First(p)
 }
 
+// PostFilterParams are optional parameters to narrow the list of posts returned from a query
+type PostFilterParams struct {
+	Destination *Location
+	Origin      *Location
+	SearchText  *string
+	PostID      *int
+}
+
 // FindByUser finds all posts visible to the current user, optionally filtered by location or search text.
-func (p *Posts) FindByUser(ctx context.Context, user User, destination, origin *Location, searchText *string) error {
+func (p *Posts) FindByUser(ctx context.Context, user User, filter PostFilterParams) error {
 	if user.ID == 0 {
 		return errors.New("invalid User ID in Posts.FindByUser")
 	}
@@ -793,10 +801,14 @@ func (p *Posts) FindByUser(ctx context.Context, user User, destination, origin *
 	args := []interface{}{user.ID, PostVisibilityAll, PostVisibilityTrusted, PostStatusRemoved,
 		PostStatusCompleted}
 
-	if searchText != nil {
+	if filter.SearchText != nil {
 		selectClause = selectClause + " AND (LOWER(title) LIKE ? or LOWER(description) LIKE ?)"
-		likeText := "%" + strings.ToLower(*searchText) + "%"
+		likeText := "%" + strings.ToLower(*filter.SearchText) + "%"
 		args = append(args, likeText, likeText)
+	}
+	if filter.PostID != nil {
+		selectClause = selectClause + " AND posts.id = ?"
+		args = append(args, *filter.PostID)
 	}
 
 	posts := Posts{}
@@ -805,11 +817,11 @@ func (p *Posts) FindByUser(ctx context.Context, user User, destination, origin *
 		return fmt.Errorf("error finding posts for user %s, %s", user.UUID.String(), err)
 	}
 
-	if destination != nil {
-		posts = posts.FilterDestination(*destination)
+	if filter.Destination != nil {
+		posts = posts.FilterDestination(*filter.Destination)
 	}
-	if origin != nil {
-		posts = posts.FilterOrigin(*origin)
+	if filter.Origin != nil {
+		posts = posts.FilterOrigin(*filter.Origin)
 	}
 
 	*p = Posts{}
@@ -1007,15 +1019,10 @@ func (p Posts) FilterOrigin(location Location) Posts {
 
 // IsVisible returns true if the Post is visible to the given user. Only the post ID is used in this method.
 func (p *Post) IsVisible(ctx context.Context, user User) bool {
-	allVisible := Posts{}
-	if err := allVisible.FindByUser(ctx, user, nil, nil, nil); err != nil {
+	posts := Posts{}
+	if err := posts.FindByUser(ctx, user, PostFilterParams{PostID: &p.ID}); err != nil {
 		domain.Error(domain.GetBuffaloContext(ctx), "error in Post.IsVisible, "+err.Error())
 		return false
 	}
-	for _, visible := range allVisible {
-		if visible.ID == p.ID {
-			return true
-		}
-	}
-	return false
+	return len(posts) > 0
 }

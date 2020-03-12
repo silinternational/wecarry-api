@@ -1570,6 +1570,7 @@ func (ms *ModelSuite) TestPosts_FindByUser() {
 		user        User
 		dest        *Location
 		orig        *Location
+		postID      *int
 		wantPostIDs []int
 		wantErr     bool
 	}{
@@ -1581,12 +1582,19 @@ func (ms *ModelSuite) TestPosts_FindByUser() {
 		{name: "non-existent user", user: User{}, wantErr: true},
 		{name: "destination", user: f.Users[0], dest: &Location{Country: "AU"}, wantPostIDs: []int{f.Posts[0].ID}},
 		{name: "origin", user: f.Users[0], orig: &Location{Country: "AU"}, wantPostIDs: []int{f.Posts[1].ID}},
+		{name: "user 0, post 1 (visible)", user: f.Users[0], postID: &f.Posts[1].ID, wantPostIDs: []int{f.Posts[1].ID}},
+		{name: "user 0, post 2 (not visible)", user: f.Users[0], postID: &f.Posts[2].ID, wantPostIDs: []int{}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			posts := Posts{}
 			var c context.Context
-			err := posts.FindByUser(c, test.user, test.dest, test.orig, nil)
+			filter := PostFilterParams{
+				Destination: test.dest,
+				Origin:      test.orig,
+				PostID:      test.postID,
+			}
+			err := posts.FindByUser(c, test.user, filter)
 
 			if test.wantErr {
 				ms.Error(err)
@@ -1658,7 +1666,7 @@ func (ms *ModelSuite) TestPosts_FindByUser_SearchText() {
 		t.Run(test.name, func(t *testing.T) {
 			posts := Posts{}
 			var c context.Context
-			err := posts.FindByUser(c, test.user, nil, nil, &test.matchText)
+			err := posts.FindByUser(c, test.user, PostFilterParams{SearchText: &test.matchText})
 
 			if test.wantErr {
 				ms.Error(err)
