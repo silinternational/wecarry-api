@@ -496,3 +496,137 @@ func (as *ActionSuite) Test_UpdatePostStatus_DestroyPotentialProviders() {
 		}
 	}
 }
+
+func (as *ActionSuite) Test_MarkRequestAsDelivered() {
+	f := createFixturesForMarkRequestAsDelivered(as)
+	posts := f.Posts
+
+	var postsResp PostResponse
+
+	creator := f.Users[0]
+	provider := f.Users[1]
+
+	testCases := []struct {
+		name                 string
+		postID               string
+		user                 models.User
+		wantStatus           string
+		wantPostHistoryCount int
+		wantErr              bool
+		wantErrContains      string
+	}{
+		{name: "ACCEPTED: delivered by Provider",
+			postID: posts[0].UUID.String(), user: provider,
+			wantStatus:           models.PostStatusDelivered.String(),
+			wantPostHistoryCount: 3, wantErr: false},
+		{name: "ACCEPTED: delivered by Creator",
+			postID: posts[0].UUID.String(), user: creator, wantErr: true,
+			wantErrContains: "not allowed to change the status",
+		},
+		{name: "COMPLETED: delivered by Provider",
+			postID: posts[1].UUID.String(), user: provider, wantErr: true,
+			wantErrContains: "not allowed to change the status",
+		},
+	}
+
+	for _, tc := range testCases {
+		as.T().Run(tc.name, func(t *testing.T) {
+			query := fmt.Sprintf(`mutation { post: markRequestAsDelivered(postID: "%v") {id status completedOn}}`,
+				tc.postID)
+
+			err := as.testGqlQuery(query, tc.user.Nickname, &postsResp)
+			if tc.wantErr {
+				as.Error(err, "user=%d, query=%s", tc.user.ID, query)
+				as.Contains(err.Error(), tc.wantErrContains, "incorrect error message")
+				return
+			}
+
+			as.NoError(err, "user=%d, query=%s", tc.user.ID, query)
+			as.Equal(tc.wantStatus, postsResp.Post.Status.String(), "incorrect status")
+
+			if tc.wantPostHistoryCount < 1 {
+				return
+			}
+
+			// Check for correct PostHistory
+			var post models.Post
+			as.NoError(post.FindByUUID(tc.postID))
+			pHistories := models.PostHistories{}
+			err = as.DB.Where("post_id = ?", post.ID).All(&pHistories)
+			as.NoError(err)
+			as.Equal(tc.wantPostHistoryCount, len(pHistories), "incorrect number of PostHistories")
+			lastPH := pHistories[tc.wantPostHistoryCount-1]
+			as.Equal(tc.wantStatus, lastPH.Status.String(), "incorrect status on last PostHistory")
+		})
+	}
+}
+
+func (as *ActionSuite) Test_MarkRequestAsReceived() {
+	f := createFixturesForMarkRequestAsReceived(as)
+	posts := f.Posts
+
+	var postsResp PostResponse
+
+	creator := f.Users[0]
+	provider := f.Users[1]
+
+	testCases := []struct {
+		name                 string
+		postID               string
+		user                 models.User
+		wantStatus           string
+		wantPostHistoryCount int
+		wantErr              bool
+		wantErrContains      string
+	}{
+		{name: "ACCEPTED: received by Provider",
+			postID: posts[0].UUID.String(), user: provider, wantErr: true,
+			wantErrContains: "not allowed to change the status",
+		},
+		{name: "ACCEPTED: received by Creator",
+			postID: posts[0].UUID.String(), user: creator, wantErr: false,
+			wantStatus:           models.PostStatusCompleted.String(),
+			wantPostHistoryCount: 3,
+		},
+		{name: "DELIVERED: received by Creator",
+			postID: posts[1].UUID.String(), user: creator, wantErr: false,
+			wantStatus:           models.PostStatusCompleted.String(),
+			wantPostHistoryCount: 4,
+		},
+		{name: "COMPLETED: received by Creator",
+			postID: posts[2].UUID.String(), user: creator, wantErr: true,
+			wantErrContains: "not allowed to change the status",
+		},
+	}
+
+	for _, tc := range testCases {
+		as.T().Run(tc.name, func(t *testing.T) {
+			query := fmt.Sprintf(`mutation { post: markRequestAsReceived(postID: "%v") {id status completedOn}}`,
+				tc.postID)
+
+			err := as.testGqlQuery(query, tc.user.Nickname, &postsResp)
+			if tc.wantErr {
+				as.Error(err, "user=%d, query=%s", tc.user.ID, query)
+				as.Contains(err.Error(), tc.wantErrContains, "incorrect error message")
+				return
+			}
+
+			as.NoError(err, "user=%d, query=%s", tc.user.ID, query)
+			as.Equal(tc.wantStatus, postsResp.Post.Status.String(), "incorrect status")
+
+			if tc.wantPostHistoryCount < 1 {
+				return
+			}
+
+			// Check for correct PostHistory
+			var post models.Post
+			as.NoError(post.FindByUUID(tc.postID))
+			pHistories := models.PostHistories{}
+			err = as.DB.Where("post_id = ?", post.ID).All(&pHistories)
+			as.NoError(err)
+			as.Equal(tc.wantPostHistoryCount, len(pHistories), "incorrect number of PostHistories")
+			lastPH := pHistories[tc.wantPostHistoryCount-1]
+			as.Equal(tc.wantStatus, lastPH.Status.String(), "incorrect status on last PostHistory")
+		})
+	}
+}
