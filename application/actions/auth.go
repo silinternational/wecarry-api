@@ -28,9 +28,6 @@ const (
 	ClientIDParam      = "client-id"
 	ClientIDSessionKey = "ClientID"
 
-	// http param for expires utc
-	ExpiresUTCParam = "expires-utc"
-
 	// http params for the Invite type and code
 	InviteCodeParam        = "code"
 	InviteTypeMeetingParam = "meeting"
@@ -739,14 +736,13 @@ func setCurrentUser(next buffalo.Handler) buffalo.Handler {
 func getLoginSuccessRedirectURL(authUser AuthUser, returnTo string) string {
 	uiURL := domain.Env.UIURL
 
-	tokenExpiry := time.Unix(authUser.AccessTokenExpiresAt, 0).Format(time.RFC3339)
-	params := fmt.Sprintf("?%s=Bearer&%s=%s&%s=%s",
-		TokenTypeParam, ExpiresUTCParam, tokenExpiry, AccessTokenParam, authUser.AccessToken)
+	params := fmt.Sprintf("?%s=Bearer&%s=%s",
+		TokenTypeParam, AccessTokenParam, authUser.AccessToken)
 
 	// New Users go straight to the welcome page
 	if authUser.IsNew {
 		uiURL += "/#/welcome"
-		if len(returnTo) > 0 { // Ensure there is one set of /# between uiURL and the returnTo
+		if len(returnTo) > 0 { // Ensure there is no `/#` at the beginning of the return-to param value
 			if strings.HasPrefix(returnTo, `/#/`) {
 				returnTo = returnTo[2:]
 			}

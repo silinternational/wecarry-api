@@ -1263,11 +1263,12 @@ func (ms *ModelSuite) TestUser_Save() {
 
 func (ms *ModelSuite) TestUser_UniquifyNickname() {
 	t := ms.T()
-	existingUser := CreateUserFixturesForNicknames(ms, t)
-	prefix := allPrefixes()[0]
-	prefix2 := allPrefixes()[1]
+	allPrefs := getShuffledPrefixes()
+	prefix := allPrefs[0]
+	prefix2 := allPrefs[1]
+	existingUser := CreateUserFixturesForNicknames(ms, t, prefix)
 
-	tests := []struct {
+	testCases := []struct {
 		name string
 		user User
 		want string
@@ -1292,17 +1293,17 @@ func (ms *ModelSuite) TestUser_UniquifyNickname() {
 		},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			err := test.user.uniquifyNickname()
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.user.uniquifyNickname(allPrefs)
 			if err != nil {
 				t.Errorf("uniquifyNickname() returned error: %s", err)
 			}
 
-			got := test.user.Nickname
+			got := tc.user.Nickname
 
-			if test.want != "" {
-				ms.Equal(test.want, got)
+			if tc.want != "" {
+				ms.Equal(tc.want, got)
 				return
 			}
 		})
