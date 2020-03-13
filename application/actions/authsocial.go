@@ -109,7 +109,7 @@ func getSocialAuthProvider(authType string) (auth.Provider, error) {
 }
 
 // Forbidden. Do NOT call this function.  (Only called by init() and a test)
-func getSocialAuthSelectors(authConfigs map[string]SocialAuthConfig) []authSelector {
+func getSocialAuthSelectors(authConfigs map[string]SocialAuthConfig) []authOption {
 	// sort the provider types for ease of testing (avoid map's random order)
 	pTypes := []string{}
 	for pt, _ := range authConfigs {
@@ -118,9 +118,9 @@ func getSocialAuthSelectors(authConfigs map[string]SocialAuthConfig) []authSelec
 
 	sort.Strings(pTypes)
 
-	selectors := []authSelector{}
+	selectors := []authOption{}
 	for _, pt := range pTypes {
-		s := authSelector{
+		s := authOption{
 			Name:        pt,
 			RedirectURL: fmt.Sprintf(AuthSelectPath, domain.Env.ApiBaseURL, AuthTypeParam, pt),
 		}

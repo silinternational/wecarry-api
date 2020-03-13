@@ -119,7 +119,7 @@ func (ts *TestSuite) Test_getSocialAuthSelectors() {
 	configs := getSocialAuthConfigs()
 	got := getSocialAuthSelectors(configs)
 
-	want := []authSelector{
+	want := []authOption{
 		{
 			Name:        AuthTypeFacebook,
 			RedirectURL: fmt.Sprintf("%s/auth/select/?%s=%s", domain.Env.ApiBaseURL, AuthTypeParam, AuthTypeFacebook),

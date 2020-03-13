@@ -7,7 +7,7 @@ type SocialAuthConfig struct{ Key, Secret string }
 var socialAuthConfigs = map[string]SocialAuthConfig{}
 
 // Don't Modify outside of this file.
-var socialAuthSelectors = []authSelector{}
+var socialAuthSelectors = []authOption{}
 
 func init() {
 	socialAuthConfigs = getSocialAuthConfigs()
