@@ -225,6 +225,29 @@ func (m *Meeting) ImageFile() (*File, error) {
 	return &f, nil
 }
 
+// RemoveImage removes an attached image from the Meeting
+func (m *Meeting) RemoveImage() error {
+	if m.ID < 1 {
+		return fmt.Errorf("invalid User ID %d", m.ID)
+	}
+
+	oldID := m.ImageFileID
+	m.ImageFileID = nulls.Int{}
+	if err := DB.UpdateColumns(m, "image_file_id"); err != nil {
+		return err
+	}
+
+	if !oldID.Valid {
+		return nil
+	}
+
+	oldFile := File{ID: oldID.Int}
+	if err := oldFile.ClearLinked(); err != nil {
+		domain.ErrLogger.Printf("error marking old meeting image file %d as unlinked, %s", oldFile.ID, err)
+	}
+	return nil
+}
+
 func (m *Meeting) GetCreator() (*User, error) {
 	creator := User{}
 	if err := DB.Find(&creator, m.CreatedByID); err != nil {

@@ -31,6 +31,8 @@
   translation: We had a problem finding the invites for the event
 - id: Meeting.Participants
   translation: We had a problem finding the participants for the event
+- id: Meeting.UpdateImageFile
+  translation: We had a problem updating the event logo
 
 # MeetingInvite
 - id: CreateMeetingInvite.FindMeeting
