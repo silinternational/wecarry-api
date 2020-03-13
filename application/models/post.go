@@ -801,12 +801,12 @@ func (p *Posts) FindByUser(ctx context.Context, user User, filter PostFilterPara
 	args := []interface{}{user.ID, PostVisibilityAll, PostVisibilityTrusted, PostStatusRemoved,
 		PostStatusCompleted}
 
-	if filter.SearchText != nil {
+	if filter.SearchText != nil && *filter.SearchText != "" {
 		selectClause = selectClause + " AND (LOWER(title) LIKE ? or LOWER(description) LIKE ?)"
 		likeText := "%" + strings.ToLower(*filter.SearchText) + "%"
 		args = append(args, likeText, likeText)
 	}
-	if filter.PostID != nil {
+	if filter.PostID != nil && *filter.PostID > 0 {
 		selectClause = selectClause + " AND posts.id = ?"
 		args = append(args, *filter.PostID)
 	}
