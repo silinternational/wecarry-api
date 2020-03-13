@@ -231,20 +231,23 @@ func gravatarURL(email string) string {
 
 func removeFile(m interface{}) error {
 	idField := fieldByName(m, "ID")
-	if idField.IsValid() && idField.Interface().(int) < 1 {
+	if !idField.IsValid() {
+		return errors.New("error identifying ID field")
+	}
+
+	if idField.Interface().(int) < 1 {
 		return fmt.Errorf("invalid ID %d", idField.Interface().(int))
 	}
 
 	imageField := fieldByName(m, "FileID")
-
-	var oldID nulls.Int
-	if imageField.IsValid() {
-		oldID = imageField.Interface().(nulls.Int)
+	if !imageField.IsValid() {
+		return errors.New("error identifying FileID field")
 	}
 
+	oldID := imageField.Interface().(nulls.Int)
 	imageField.Set(reflect.ValueOf(nulls.Int{}))
 	if err := DB.UpdateColumns(m, "file_id"); err != nil {
-		return err
+		return fmt.Errorf("failed to update file_id column, %s", err)
 	}
 
 	if !oldID.Valid {
