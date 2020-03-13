@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/gobuffalo/buffalo"
+	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/suite"
 
 	"github.com/silinternational/wecarry-api/domain"
@@ -90,4 +91,55 @@ func (ms *ModelSuite) TestCurrentUser() {
 	}
 
 	// teardown
+}
+
+func (ms *ModelSuite) Test_removeImage() {
+	uf := createUserFixtures(ms.DB, 2)
+	users := uf.Users
+
+	files := createFileFixtures(1)
+	users[1].PhotoFileID = nulls.NewInt(files[0].ID)
+	ms.NoError(ms.DB.UpdateColumns(&users[1], "photo_file_id"))
+	files[0].Linked = true
+	ms.NoError(ms.DB.UpdateColumns(&files[0], "linked"))
+
+	tests := []struct {
+		name     string
+		user     User
+		oldImage *File
+		want     File
+		wantErr  string
+	}{
+		{
+			name: "no file",
+			user: users[0],
+		},
+		{
+			name:     "has a file",
+			user:     users[1],
+			oldImage: &files[0],
+		},
+		{
+			name:    "bad ID",
+			user:    User{},
+			wantErr: "invalid ID",
+		},
+	}
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			err := removeImage(&tt.user)
+			if tt.wantErr != "" {
+				ms.Error(err, "did not get expected error")
+				ms.Contains(err.Error(), tt.wantErr)
+				return
+			}
+			ms.NoError(err, "unexpected error")
+			ms.NoError(ms.DB.Reload(&tt.user))
+			ms.False(tt.user.PhotoFileID.Valid, "image was not removed, %+v", tt.user.PhotoFileID)
+			if tt.oldImage != nil {
+				ms.NoError(ms.DB.Reload(tt.oldImage))
+				ms.Equal(false, tt.oldImage.Linked, "old file is not marked as unlinked")
+			}
+		})
+	}
 }

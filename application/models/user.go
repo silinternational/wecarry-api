@@ -496,25 +496,7 @@ func (u *User) AttachPhoto(fileID string) (File, error) {
 
 // RemovePhoto removes an attached photo from the User profile
 func (u *User) RemovePhoto() error {
-	if u.ID < 1 {
-		return fmt.Errorf("invalid User ID %d", u.ID)
-	}
-
-	oldID := u.PhotoFileID
-	u.PhotoFileID = nulls.Int{}
-	if err := DB.UpdateColumns(u, "photo_file_id"); err != nil {
-		return err
-	}
-
-	if !oldID.Valid {
-		return nil
-	}
-
-	oldFile := File{ID: oldID.Int}
-	if err := oldFile.ClearLinked(); err != nil {
-		domain.ErrLogger.Printf("error marking old user photo file %d as unlinked, %s", oldFile.ID, err)
-	}
-	return nil
+	return removeImage(u)
 }
 
 // GetPhotoID retrieves the UUID of the User's photo file

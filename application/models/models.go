@@ -191,7 +191,7 @@ func update(m interface{}) error {
 }
 
 func save(m interface{}) error {
-	uuidField := reflect.ValueOf(m).Elem().FieldByName("UUID")
+	uuidField := fieldByName(m, "UUID")
 	if uuidField.IsValid() && uuidField.Interface().(uuid.UUID).Version() == 0 {
 		uuidField.Set(reflect.ValueOf(domain.GetUUID()))
 	}
@@ -227,4 +227,37 @@ func gravatarURL(email string) string {
 	hash := md5.Sum([]byte(strings.ToLower(strings.TrimSpace(email))))
 	url := fmt.Sprintf("https://www.gravatar.com/avatar/%x.jpg?s=200&d=mp", hash)
 	return url
+}
+
+func removeImage(m interface{}) error {
+	idField := fieldByName(m, "ID")
+	if idField.IsValid() && idField.Interface().(int) < 1 {
+		return fmt.Errorf("invalid ID %d", idField.Interface().(int))
+	}
+
+	imageField := fieldByName(m, "PhotoFileID")
+
+	var oldID nulls.Int
+	if imageField.IsValid() {
+		oldID = imageField.Interface().(nulls.Int)
+	}
+
+	imageField.Set(reflect.ValueOf(nulls.Int{}))
+	if err := DB.UpdateColumns(m, "photo_file_id"); err != nil {
+		return err
+	}
+
+	if !oldID.Valid {
+		return nil
+	}
+
+	oldFile := File{ID: oldID.Int}
+	if err := oldFile.ClearLinked(); err != nil {
+		domain.ErrLogger.Printf("error marking old meeting image file %d as unlinked, %s", oldFile.ID, err)
+	}
+	return nil
+}
+
+func fieldByName(i interface{}, name string) reflect.Value {
+	return reflect.ValueOf(i).Elem().FieldByName(name)
 }

@@ -1062,52 +1062,6 @@ func (ms *ModelSuite) TestUser_AttachPhoto() {
 	}
 }
 
-func (ms *ModelSuite) TestUser_RemovePhoto() {
-	uf := createUserFixtures(ms.DB, 2)
-	users := uf.Users
-
-	files := createFileFixtures(2)
-	users[1].PhotoFileID = nulls.NewInt(files[0].ID)
-	ms.NoError(ms.DB.UpdateColumns(&users[1], "photo_file_id"))
-
-	tests := []struct {
-		name     string
-		user     User
-		oldImage *File
-		want     File
-		wantErr  string
-	}{
-		{
-			name: "no file",
-			user: users[0],
-		},
-		{
-			name:     "has a file",
-			user:     users[1],
-			oldImage: &files[0],
-		},
-		{
-			name:    "bad ID",
-			user:    User{},
-			wantErr: "invalid User ID",
-		},
-	}
-	for _, tt := range tests {
-		ms.T().Run(tt.name, func(t *testing.T) {
-			err := tt.user.RemovePhoto()
-			if tt.wantErr != "" {
-				ms.Error(err, "did not get expected error")
-				ms.Contains(err.Error(), tt.wantErr)
-				return
-			}
-			ms.NoError(err, "unexpected error")
-			if tt.oldImage != nil {
-				ms.Equal(false, tt.oldImage.Linked, "old user photo file is not marked as unlinked")
-			}
-		})
-	}
-}
-
 func (ms *ModelSuite) TestUser_GetPhotoID() {
 	t := ms.T()
 	f := createFixturesForTestUserGetPhoto(ms)
