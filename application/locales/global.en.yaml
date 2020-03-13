@@ -107,6 +107,8 @@
   translation: You are not allowed to edit information for that organization.
 - id: UpdateOrganization.LogoFileNotFound
   translation: We had a problem finding the logo file for that organization.
+- id: UpdateOrganization.RemoveLogo
+  translation: We had a problem removing the logo file for that organization.
 - id: GetOrganizationLogoURL
   translation: We had a problem getting the logo for that organization.
 - id: ViewOrganization.NotFound

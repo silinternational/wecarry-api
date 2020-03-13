@@ -72,6 +72,10 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, input UpdateO
 		if _, err := org.AttachLogo(*input.LogoFileID); err != nil {
 			return nil, domain.ReportError(ctx, err, "UpdateOrganization.LogoFileNotFound")
 		}
+	} else {
+		if err := org.RemoveFile(); err != nil {
+			return nil, domain.ReportError(ctx, err, "UpdateOrganization.RemoveLogo")
+		}
 	}
 
 	org.Name = input.Name
