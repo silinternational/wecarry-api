@@ -1013,8 +1013,8 @@ func (ms *ModelSuite) TestUser_AttachPhoto() {
 	users := uf.Users
 
 	files := createFileFixtures(3)
-	users[1].PhotoFileID = nulls.NewInt(files[0].ID)
-	ms.NoError(ms.DB.UpdateColumns(&users[1], "photo_file_id"))
+	users[1].FileID = nulls.NewInt(files[0].ID)
+	ms.NoError(ms.DB.UpdateColumns(&users[1], "file_id"))
 
 	tests := []struct {
 		name     string

@@ -1233,8 +1233,8 @@ func (ms *ModelSuite) TestPost_AttachPhoto() {
 	posts := createPostFixtures(ms.DB, 3, false)
 
 	files := createFileFixtures(3)
-	posts[1].PhotoFileID = nulls.NewInt(files[0].ID)
-	ms.NoError(ms.DB.UpdateColumns(&posts[1], "photo_file_id"))
+	posts[1].FileID = nulls.NewInt(files[0].ID)
+	ms.NoError(ms.DB.UpdateColumns(&posts[1], "file_id"))
 
 	tests := []struct {
 		name     string
@@ -1286,8 +1286,8 @@ func (ms *ModelSuite) TestPost_RemovePhoto() {
 	posts := createPostFixtures(ms.DB, 3, false)
 
 	files := createFileFixtures(3)
-	posts[1].PhotoFileID = nulls.NewInt(files[0].ID)
-	ms.NoError(ms.DB.UpdateColumns(&posts[1], "photo_file_id"))
+	posts[1].FileID = nulls.NewInt(files[0].ID)
+	ms.NoError(ms.DB.UpdateColumns(&posts[1], "file_id"))
 
 	tests := []struct {
 		name     string
@@ -1312,7 +1312,7 @@ func (ms *ModelSuite) TestPost_RemovePhoto() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			err := tt.post.RemovePhoto()
+			err := tt.post.RemoveFile()
 			if tt.wantErr != "" {
 				ms.Error(err, "did not get expected error")
 				ms.Contains(err.Error(), tt.wantErr)

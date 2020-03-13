@@ -98,8 +98,8 @@ func (ms *ModelSuite) Test_removeImage() {
 	users := uf.Users
 
 	files := createFileFixtures(1)
-	users[1].PhotoFileID = nulls.NewInt(files[0].ID)
-	ms.NoError(ms.DB.UpdateColumns(&users[1], "photo_file_id"))
+	users[1].FileID = nulls.NewInt(files[0].ID)
+	ms.NoError(ms.DB.UpdateColumns(&users[1], "file_id"))
 	files[0].Linked = true
 	ms.NoError(ms.DB.UpdateColumns(&files[0], "linked"))
 
@@ -127,7 +127,7 @@ func (ms *ModelSuite) Test_removeImage() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			err := removeImage(&tt.user)
+			err := removeFile(&tt.user)
 			if tt.wantErr != "" {
 				ms.Error(err, "did not get expected error")
 				ms.Contains(err.Error(), tt.wantErr)
@@ -135,7 +135,7 @@ func (ms *ModelSuite) Test_removeImage() {
 			}
 			ms.NoError(err, "unexpected error")
 			ms.NoError(ms.DB.Reload(&tt.user))
-			ms.False(tt.user.PhotoFileID.Valid, "image was not removed, %+v", tt.user.PhotoFileID)
+			ms.False(tt.user.FileID.Valid, "image was not removed, %+v", tt.user.FileID)
 			if tt.oldImage != nil {
 				ms.NoError(ms.DB.Reload(tt.oldImage))
 				ms.Equal(false, tt.oldImage.Linked, "old file is not marked as unlinked")

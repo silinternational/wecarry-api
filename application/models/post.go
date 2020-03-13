@@ -201,7 +201,7 @@ type Post struct {
 	Description    nulls.String   `json:"description" db:"description"`
 	URL            nulls.String   `json:"url" db:"url"`
 	Kilograms      nulls.Float64  `json:"kilograms" db:"kilograms"`
-	PhotoFileID    nulls.Int      `json:"photo_file_id" db:"photo_file_id"`
+	FileID         nulls.Int      `json:"file_id" db:"file_id"`
 	DestinationID  int            `json:"destination_id" db:"destination_id"`
 	OriginID       nulls.Int      `json:"origin_id" db:"origin_id"`
 	MeetingID      nulls.Int      `json:"meeting_id" db:"meeting_id"`
@@ -659,10 +659,10 @@ func (p *Post) AttachPhoto(fileID string) (File, error) {
 		return f, err
 	}
 
-	oldID := p.PhotoFileID
-	p.PhotoFileID = nulls.NewInt(f.ID)
+	oldID := p.FileID
+	p.FileID = nulls.NewInt(f.ID)
 	if p.ID > 0 {
-		if err := DB.UpdateColumns(p, "photo_file_id"); err != nil {
+		if err := DB.UpdateColumns(p, "file_id"); err != nil {
 			return f, err
 		}
 	}
@@ -681,27 +681,9 @@ func (p *Post) AttachPhoto(fileID string) (File, error) {
 	return f, nil
 }
 
-// RemovePhoto removes an attached photo from the Post
-func (p *Post) RemovePhoto() error {
-	if p.ID < 1 {
-		return fmt.Errorf("invalid Post ID %d", p.ID)
-	}
-
-	oldID := p.PhotoFileID
-	p.PhotoFileID = nulls.Int{}
-	if err := DB.UpdateColumns(p, "photo_file_id"); err != nil {
-		return err
-	}
-
-	if !oldID.Valid {
-		return nil
-	}
-
-	oldFile := File{ID: oldID.Int}
-	if err := oldFile.ClearLinked(); err != nil {
-		domain.ErrLogger.Printf("error marking old post photo file %d as unlinked, %s", oldFile.ID, err)
-	}
-	return nil
+// RemoveFile removes an attached file from the Post
+func (p *Post) RemoveFile() error {
+	return removeFile(p)
 }
 
 // GetPhoto retrieves the file attached as the Post photo
@@ -710,7 +692,7 @@ func (p *Post) GetPhoto() (*File, error) {
 		return nil, err
 	}
 
-	if !p.PhotoFileID.Valid {
+	if !p.FileID.Valid {
 		return nil, nil
 	}
 
@@ -727,7 +709,7 @@ func (p *Post) GetPhotoID() (*string, error) {
 		return nil, err
 	}
 
-	if p.PhotoFileID.Valid {
+	if p.FileID.Valid {
 		photoID := p.PhotoFile.UUID.String()
 		return &photoID, nil
 	}

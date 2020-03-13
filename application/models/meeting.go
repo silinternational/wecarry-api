@@ -29,10 +29,10 @@ type Meeting struct {
 	CreatedAt   time.Time    `json:"created_at" db:"created_at"`
 	UpdatedAt   time.Time    `json:"updated_at" db:"updated_at"`
 	CreatedByID int          `json:"created_by_id" db:"created_by_id"`
-	ImageFileID nulls.Int    `json:"image_file_id" db:"image_file_id"`
+	FileID      nulls.Int    `json:"file_id" db:"file_id"`
 	LocationID  int          `json:"location_id" db:"location_id"`
 
-	ImgFile  *File    `belongs_to:"files" fk_id:"ImageFileID"`
+	ImgFile  *File    `belongs_to:"files" fk_id:"FileID"`
 	Location Location `belongs_to:"locations"`
 }
 
@@ -186,10 +186,10 @@ func (m *Meeting) SetImageFile(fileID string) (File, error) {
 		return f, err
 	}
 
-	oldID := m.ImageFileID
-	m.ImageFileID = nulls.NewInt(f.ID)
+	oldID := m.FileID
+	m.FileID = nulls.NewInt(f.ID)
 	if m.ID > 0 {
-		if err := DB.UpdateColumns(m, "image_file_id"); err != nil {
+		if err := DB.UpdateColumns(m, "file_id"); err != nil {
 			return f, err
 		}
 	}
@@ -210,7 +210,7 @@ func (m *Meeting) SetImageFile(fileID string) (File, error) {
 
 // ImageFile retrieves the file attached as the Meeting Image
 func (m *Meeting) ImageFile() (*File, error) {
-	if !m.ImageFileID.Valid {
+	if !m.FileID.Valid {
 		return nil, nil
 	}
 	if m.ImgFile == nil {
@@ -225,27 +225,9 @@ func (m *Meeting) ImageFile() (*File, error) {
 	return &f, nil
 }
 
-// RemoveImage removes an attached image from the Meeting
-func (m *Meeting) RemoveImage() error {
-	if m.ID < 1 {
-		return fmt.Errorf("invalid User ID %d", m.ID)
-	}
-
-	oldID := m.ImageFileID
-	m.ImageFileID = nulls.Int{}
-	if err := DB.UpdateColumns(m, "image_file_id"); err != nil {
-		return err
-	}
-
-	if !oldID.Valid {
-		return nil
-	}
-
-	oldFile := File{ID: oldID.Int}
-	if err := oldFile.ClearLinked(); err != nil {
-		domain.ErrLogger.Printf("error marking old meeting image file %d as unlinked, %s", oldFile.ID, err)
-	}
-	return nil
+// RemoveFile removes an attached file from the Meeting
+func (m *Meeting) RemoveFile() error {
+	return removeFile(m)
 }
 
 func (m *Meeting) GetCreator() (*User, error) {
@@ -349,7 +331,7 @@ func (m *Meeting) Organizers(ctx buffalo.Context) (Users, error) {
 		return u, nil
 	}
 	if err := DB.
-		Select("users.id", "users.uuid", "nickname", "photo_file_id", "auth_photo_url").
+		Select("users.id", "users.uuid", "nickname", "file_id", "auth_photo_url").
 		Where("meeting_participants.is_organizer=true").
 		Where("meeting_participants.meeting_id=?", m.ID).
 		Join("meeting_participants", "meeting_participants.user_id=users.id").

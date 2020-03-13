@@ -60,7 +60,7 @@ type User struct {
 	AdminRole          UserAdminRole     `json:"admin_role" db:"admin_role"`
 	UUID               uuid.UUID         `json:"uuid" db:"uuid"`
 	SocialAuthProvider nulls.String      `json:"social_auth_provider" db:"social_auth_provider"`
-	PhotoFileID        nulls.Int         `json:"photo_file_id" db:"photo_file_id"`
+	FileID             nulls.Int         `json:"file_id" db:"file_id"`
 	AuthPhotoURL       nulls.String      `json:"auth_photo_url" db:"auth_photo_url"`
 	LocationID         nulls.Int         `json:"location_id" db:"location_id"`
 	Organizations      Organizations     `many_to_many:"user_organizations" order_by:"name asc" json:"-"`
@@ -474,9 +474,9 @@ func (u *User) AttachPhoto(fileID string) (File, error) {
 		return f, err
 	}
 
-	oldID := u.PhotoFileID
-	u.PhotoFileID = nulls.NewInt(f.ID)
-	if err := DB.UpdateColumns(u, "photo_file_id"); err != nil {
+	oldID := u.FileID
+	u.FileID = nulls.NewInt(f.ID)
+	if err := DB.UpdateColumns(u, "file_id"); err != nil {
 		return f, err
 	}
 
@@ -494,9 +494,9 @@ func (u *User) AttachPhoto(fileID string) (File, error) {
 	return f, nil
 }
 
-// RemovePhoto removes an attached photo from the User profile
-func (u *User) RemovePhoto() error {
-	return removeImage(u)
+// RemoveFile removes an attached file from the User profile
+func (u *User) RemoveFile() error {
+	return removeFile(u)
 }
 
 // GetPhotoID retrieves the UUID of the User's photo file
@@ -504,7 +504,7 @@ func (u *User) GetPhotoID() (*string, error) {
 	if err := DB.Load(u, "PhotoFile"); err != nil {
 		return nil, err
 	}
-	if u.PhotoFileID.Valid {
+	if u.FileID.Valid {
 		photoID := u.PhotoFile.UUID.String()
 		return &photoID, nil
 	}
@@ -518,7 +518,7 @@ func (u *User) GetPhotoURL() (*string, error) {
 		return nil, err
 	}
 
-	if !u.PhotoFileID.Valid {
+	if !u.FileID.Valid {
 		if u.AuthPhotoURL.Valid {
 			return &u.AuthPhotoURL.String, nil
 		}

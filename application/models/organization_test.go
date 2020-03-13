@@ -80,7 +80,7 @@ func (ms *ModelSuite) TestOrganization_Create() {
 				AuthType:   AuthTypeSaml,
 				AuthConfig: "{}",
 				Url:        nulls.NewString("https://www.example.com"),
-				LogoFileID: nulls.NewInt(file.ID),
+				FileID:     nulls.NewInt(file.ID),
 			},
 			wantErr: false,
 		},
@@ -308,7 +308,7 @@ func (ms *ModelSuite) TestOrganization_Save() {
 		Url:        nulls.String{},
 		AuthType:   AuthTypeSaml,
 		AuthConfig: "{}",
-		LogoFileID: nulls.NewInt(file.ID),
+		FileID:     nulls.NewInt(file.ID),
 	}
 
 	err = newOrg.Save()
@@ -441,7 +441,7 @@ func (ms *ModelSuite) TestOrganization_LogoURL() {
 
 	orgFixtures := createOrganizationFixtures(ms.DB, 1)
 	var file File
-	ms.NoError(ms.DB.Find(&file, orgFixtures[0].LogoFileID.Int))
+	ms.NoError(ms.DB.Find(&file, orgFixtures[0].FileID.Int))
 	logoURL := file.URL
 
 	tests := []struct {
@@ -452,7 +452,7 @@ func (ms *ModelSuite) TestOrganization_LogoURL() {
 		wantErr string
 	}{
 		{name: "good", org: orgFixtures[0], want: logoURL},
-		{name: "bad", org: Organization{LogoFileID: nulls.NewInt(1)}, wantErr: "no rows in result set"},
+		{name: "bad", org: Organization{FileID: nulls.NewInt(1)}, wantErr: "no rows in result set"},
 		{name: "no file", org: Organization{}, wantNil: true},
 	}
 	for _, tt := range tests {
@@ -593,8 +593,8 @@ func (ms *ModelSuite) TestOrganization_TrustedOrganizations() {
 func (ms *ModelSuite) TestOrganization_AttachLogo() {
 	orgs := createOrganizationFixtures(ms.DB, 3)
 	files := createFileFixtures(3)
-	orgs[1].LogoFileID = nulls.NewInt(files[0].ID)
-	ms.NoError(ms.DB.UpdateColumns(&orgs[1], "logo_file_id"))
+	orgs[1].FileID = nulls.NewInt(files[0].ID)
+	ms.NoError(ms.DB.UpdateColumns(&orgs[1], "file_id"))
 
 	tests := []struct {
 		name    string

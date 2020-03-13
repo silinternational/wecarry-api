@@ -236,7 +236,7 @@ func convertGqlMeetingInputToDBMeeting(ctx context.Context, input meetingInput, 
 	if input.ImageFileID != nil {
 		_, err = meeting.SetImageFile(*input.ImageFileID)
 	} else {
-		err = meeting.RemoveImage()
+		err = meeting.RemoveFile()
 	}
 	if err != nil {
 		return meeting, domain.ReportError(ctx, fmt.Errorf("error updating meeting image file, %s",

@@ -229,13 +229,13 @@ func gravatarURL(email string) string {
 	return url
 }
 
-func removeImage(m interface{}) error {
+func removeFile(m interface{}) error {
 	idField := fieldByName(m, "ID")
 	if idField.IsValid() && idField.Interface().(int) < 1 {
 		return fmt.Errorf("invalid ID %d", idField.Interface().(int))
 	}
 
-	imageField := fieldByName(m, "PhotoFileID")
+	imageField := fieldByName(m, "FileID")
 
 	var oldID nulls.Int
 	if imageField.IsValid() {
@@ -243,7 +243,7 @@ func removeImage(m interface{}) error {
 	}
 
 	imageField.Set(reflect.ValueOf(nulls.Int{}))
-	if err := DB.UpdateColumns(m, "photo_file_id"); err != nil {
+	if err := DB.UpdateColumns(m, "file_id"); err != nil {
 		return err
 	}
 
@@ -253,7 +253,7 @@ func removeImage(m interface{}) error {
 
 	oldFile := File{ID: oldID.Int}
 	if err := oldFile.ClearLinked(); err != nil {
-		domain.ErrLogger.Printf("error marking old meeting image file %d as unlinked, %s", oldFile.ID, err)
+		domain.ErrLogger.Printf("error marking old meeting file %d as unlinked, %s", oldFile.ID, err)
 	}
 	return nil
 }

@@ -195,8 +195,8 @@ func createFixturesForTestUserGetPhoto(ms *ModelSuite) UserPostFixtures {
 	users := Users{
 		{},
 		{AuthPhotoURL: nulls.NewString("http://www.example.com")},
-		{PhotoFileID: nulls.NewInt(fileFixtures[0].ID)},
-		{AuthPhotoURL: nulls.NewString("http://www.example.com"), PhotoFileID: nulls.NewInt(fileFixtures[1].ID)},
+		{FileID: nulls.NewInt(fileFixtures[0].ID)},
+		{AuthPhotoURL: nulls.NewString("http://www.example.com"), FileID: nulls.NewInt(fileFixtures[1].ID)},
 	}
 	for i := range users {
 		users[i].UUID = domain.GetUUID()

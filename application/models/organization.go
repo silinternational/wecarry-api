@@ -73,7 +73,7 @@ type Organization struct {
 	AuthType   AuthType     `json:"auth_type" db:"auth_type"`
 	AuthConfig string       `json:"auth_config" db:"auth_config"`
 	UUID       uuid.UUID    `json:"uuid" db:"uuid"`
-	LogoFileID nulls.Int    `json:"logo_file_id" db:"logo_file_id"`
+	FileID     nulls.Int    `json:"file_id" db:"file_id"`
 	Users      Users        `many_to_many:"user_organizations" order_by:"nickname"`
 }
 
@@ -259,10 +259,10 @@ func scopeUserAdminOrgs(cUser User) pop.ScopeFunc {
 
 // LogoURL retrieves the logo URL from the attached file
 func (o *Organization) LogoURL() (*string, error) {
-	if o.LogoFileID.Valid {
+	if o.FileID.Valid {
 		var file File
-		if err := DB.Find(&file, o.LogoFileID); err != nil {
-			return nil, fmt.Errorf("couldn't find org file %d, %s", o.LogoFileID.Int, err)
+		if err := DB.Find(&file, o.FileID); err != nil {
+			return nil, fmt.Errorf("couldn't find org file %d, %s", o.FileID.Int, err)
 		}
 		if err := file.refreshURL(); err != nil {
 			return nil, fmt.Errorf("error getting logo URL, %s", err)
@@ -326,10 +326,10 @@ func (o *Organization) AttachLogo(fileID string) (File, error) {
 		return f, err
 	}
 
-	oldID := o.LogoFileID
-	o.LogoFileID = nulls.NewInt(f.ID)
+	oldID := o.FileID
+	o.FileID = nulls.NewInt(f.ID)
 	if o.ID > 0 {
-		if err := DB.UpdateColumns(o, "logo_file_id"); err != nil {
+		if err := DB.UpdateColumns(o, "file_id"); err != nil {
 			return f, err
 		}
 	}
@@ -346,4 +346,9 @@ func (o *Organization) AttachLogo(fileID string) (File, error) {
 	}
 
 	return f, nil
+}
+
+// RemoveFile removes an attached file from the Post
+func (o *Organization) RemoveFile() error {
+	return removeFile(o)
 }

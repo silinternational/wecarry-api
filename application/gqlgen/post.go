@@ -197,7 +197,7 @@ func (r *postResolver) PhotoID(ctx context.Context, obj *models.Post) (*string, 
 		return nil, nil
 	}
 
-	if !obj.PhotoFileID.Valid {
+	if !obj.FileID.Valid {
 		return nil, nil
 	}
 
@@ -340,7 +340,7 @@ func convertGqlPostInputToDBPost(ctx context.Context, input postInput, currentUs
 
 	if input.PhotoID == nil {
 		if post.ID > 0 {
-			if err := post.RemovePhoto(); err != nil {
+			if err := post.RemoveFile(); err != nil {
 				return models.Post{}, err
 			}
 		}

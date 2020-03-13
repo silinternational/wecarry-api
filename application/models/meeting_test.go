@@ -349,8 +349,8 @@ func (ms *ModelSuite) TestMeeting_FindByInviteCode() {
 func (ms *ModelSuite) TestMeeting_SetImageFile() {
 	meetings := createMeetingFixtures(ms.DB, 3).Meetings
 	files := createFileFixtures(3)
-	meetings[1].ImageFileID = nulls.NewInt(files[0].ID)
-	ms.NoError(ms.DB.UpdateColumns(&meetings[1], "image_file_id"))
+	meetings[1].FileID = nulls.NewInt(files[0].ID)
+	ms.NoError(ms.DB.UpdateColumns(&meetings[1], "file_id"))
 
 	tests := []struct {
 		name     string
