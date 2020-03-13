@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gobuffalo/nulls"
-
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 )
@@ -203,18 +201,8 @@ func convertGqlMeetingInputToDBMeeting(ctx context.Context, input meetingInput, 
 	}
 
 	setStringField(input.Name, &meeting.Name)
-
-	if input.Description != nil {
-		meeting.Description = nulls.NewString(*input.Description)
-	} else {
-		meeting.Description = nulls.String{}
-	}
-
-	if input.MoreInfoURL != nil {
-		meeting.MoreInfoURL = nulls.NewString(*input.MoreInfoURL)
-	} else {
-		meeting.MoreInfoURL = nulls.String{}
-	}
+	meeting.Description = models.ConvertStringPtrToNullsString(input.Description)
+	meeting.MoreInfoURL = models.ConvertStringPtrToNullsString(input.MoreInfoURL)
 
 	if input.StartDate != nil {
 		startTime, err := domain.ConvertStringPtrToDate(input.StartDate)
