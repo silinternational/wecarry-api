@@ -87,8 +87,6 @@
   translation: We had a problem finding the message conversation information.
 - id: GetMessage
   translation: We had a problem finding the message information.
-- id: CreateMessage.ParseInput
-  translation: We had a problem processing the new message.
 - id: CreateMessage
   translation: We had a problem creating the new message.
 

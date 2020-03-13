@@ -186,10 +186,7 @@ func (ms *ModelSuite) TestMeetingParticipant_FindOrCreate() {
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
 			// setup
-			ctx := &testBuffaloContext{
-				params: map[interface{}]interface{}{},
-			}
-			ctx.Set("current_user", tt.user)
+			ctx := createTestContext(tt.user)
 
 			var code *string
 			if tt.code.Valid {

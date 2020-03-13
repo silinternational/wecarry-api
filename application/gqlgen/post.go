@@ -252,8 +252,13 @@ func (r *queryResolver) Posts(ctx context.Context, destination, origin *Location
 	posts := models.Posts{}
 	cUser := models.CurrentUser(ctx)
 
-	err := posts.FindByUser(ctx, cUser, convertOptionalLocation(destination), convertOptionalLocation(origin),
-		searchText)
+	filter := models.PostFilterParams{
+		Destination: convertOptionalLocation(destination),
+		Origin:      convertOptionalLocation(origin),
+		SearchText:  searchText,
+		PostID:      nil,
+	}
+	err := posts.FindByUser(ctx, cUser, filter)
 	if err != nil {
 		extras := map[string]interface{}{
 			"user": cUser.UUID,

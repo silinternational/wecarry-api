@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/gobuffalo/nulls"
+
 	"github.com/silinternational/wecarry-api/domain"
 )
 
@@ -13,6 +14,7 @@ type MessageFixtures struct {
 	Messages
 	Threads
 	ThreadParticipants
+	Posts
 }
 
 func Fixtures_Message_GetSender(ms *ModelSuite, t *testing.T) MessageFixtures {
@@ -51,46 +53,27 @@ func Fixtures_Message_GetSender(ms *ModelSuite, t *testing.T) MessageFixtures {
 
 }
 
+// Post 0: Org A (no threads)
+// Post 1: Org B
+//     Thread 0: User 0
+//     Thread 1: User 0, User 2
+//     Thread 2: (no thread participants)
+// Post 2: Org A (no threads)
 func Fixtures_Message_Create(ms *ModelSuite, t *testing.T) MessageFixtures {
 	uf := createUserFixtures(ms.DB, 2)
-	org := uf.Organization
 	users := uf.Users
+	posts := createPostFixtures(ms.DB, 3, false)
 
-	location := Location{}
-	createFixture(ms, &location)
+	org := createOrganizationFixtures(ms.DB, 1)[0]
+	posts[0].OrganizationID = org.ID
+	ms.NoError(posts[0].Update())
 
-	posts := Posts{
-		{UUID: domain.GetUUID(), CreatedByID: users[0].ID, OrganizationID: org.ID, DestinationID: location.ID},
-	}
-	createFixture(ms, &posts[0])
-
-	threads := Threads{
-		{
-			UUID:      domain.GetUUID(),
-			CreatedAt: time.Now().Add(-10 * time.Minute),
-			UpdatedAt: time.Now().Add(-10 * time.Minute),
-			PostID:    posts[0].ID,
-		},
-	}
-	for i, thread := range threads {
-		threads[i].UUID = domain.GetUUID()
-		if err := ms.DB.RawQuery(`INSERT INTO threads (created_at, updated_at, uuid, post_id) VALUES (?, ?, ?, ?)`,
-			thread.CreatedAt, thread.UpdatedAt, thread.UUID, thread.PostID).Exec(); err != nil {
-			t.Errorf("error loading threads, %v", err)
-			t.FailNow()
-		}
-
-		// get the new thread ID
-		err := ms.DB.Where("uuid = ?", thread.UUID.String()).First(&threads[i])
-		if err != nil {
-			ms.T().Errorf("error finding thread fixture %s, %s", thread.UUID.String(), err)
-			ms.T().FailNow()
-		}
-	}
+	tf := CreateThreadFixtures(ms, posts[1])
 
 	return MessageFixtures{
-		Users:   users,
-		Threads: threads,
+		Users:   append(users, tf.Users...),
+		Threads: tf.Threads,
+		Posts:   posts,
 	}
 }
 
@@ -201,13 +184,18 @@ func CreateMessageFixtures_AfterCreate(ms *ModelSuite, t *testing.T) MessageFixt
 	posts[1].ProviderID = nulls.NewInt(users[0].ID)
 	ms.NoError(ms.DB.Save(&posts))
 
-	threads := []Thread{{PostID: posts[0].ID}, {PostID: posts[1].ID}}
+	tenMinutesAgo := time.Now().Add(-10 * time.Minute)
+	threads := make([]Thread, 2)
+	for i, thread := range threads {
+		thread.UUID = domain.GetUUID()
+		err := ms.DB.RawQuery(`INSERT INTO threads (created_at, updated_at, uuid, post_id) VALUES (?, ?, ?, ?)`,
+			tenMinutesAgo, tenMinutesAgo, thread.UUID, posts[i].ID).Exec()
+		ms.NoError(err, "error loading threads")
 
-	for i := range threads {
-		threads[i].UUID = domain.GetUUID()
-		createFixture(ms, &threads[i])
+		// get the record back from the database
+		err = ms.DB.Where("uuid = ?", thread.UUID.String()).First(&threads[i])
+		ms.NoError(err, "error finding thread fixture %s, %s", thread.UUID.String(), err)
 	}
-
 	tNow := time.Now().Round(time.Duration(time.Second))
 	oldTime := tNow.Add(-time.Duration(time.Hour))
 	oldOldTime := oldTime.Add(-time.Duration(time.Hour))

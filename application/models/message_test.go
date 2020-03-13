@@ -4,7 +4,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gobuffalo/events"
 	"github.com/gobuffalo/validate"
+
 	"github.com/silinternational/wecarry-api/domain"
 )
 
@@ -128,33 +130,69 @@ func (ms *ModelSuite) TestMessage_Create() {
 	t := ms.T()
 
 	f := Fixtures_Message_Create(ms, t)
-	msg := Message{
-		ThreadID: f.Threads[0].ID,
-		SentByID: f.Users[0].ID,
-		Content:  `Owe nothing to anyone, except to love one another.`,
-	}
+	threadUUID := f.Threads[0].UUID.String()
 
 	tests := []struct {
-		name    string
-		msg     Message
-		wantErr bool
+		name       string
+		user       User
+		postUUID   string
+		threadUUID *string
+		content    string
+		wantErr    bool
 	}{
-		{name: "good", msg: msg},
-		{name: "validation error", msg: Message{}, wantErr: true},
+		{
+			name:       "good, 1st message, visible post",
+			user:       f.Users[2],
+			postUUID:   f.Posts[1].UUID.String(),
+			threadUUID: nil,
+			content:    "Owe nothing to anyone, except to love one another.",
+			wantErr:    false,
+		},
+		{
+			name:       "good, already a participant",
+			user:       f.Users[0],
+			postUUID:   f.Posts[1].UUID.String(),
+			threadUUID: &threadUUID,
+			content:    "Hatred stirs up conflict, but love covers over all wrongs.",
+			wantErr:    false,
+		},
+		{
+			name:       "bad, not a participant",
+			user:       f.Users[1],
+			postUUID:   f.Posts[1].UUID.String(),
+			threadUUID: &threadUUID,
+			content:    "bad message",
+			wantErr:    true,
+		},
+		{
+			name:       "bad, not a visible post",
+			user:       f.Users[1],
+			postUUID:   f.Posts[0].UUID.String(),
+			threadUUID: nil,
+			content:    "another bad message",
+			wantErr:    true,
+		},
+		{
+			name:       "bad, thread not valid for post",
+			user:       f.Users[0],
+			postUUID:   f.Posts[2].UUID.String(),
+			threadUUID: &threadUUID,
+			content:    "another bad message",
+			wantErr:    true,
+		},
 	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			message := test.msg
-			err := message.Create()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var message Message
+			err := message.Create(createTestContext(tt.user), tt.postUUID, tt.threadUUID, tt.content)
 
-			if test.wantErr {
+			if tt.wantErr {
 				ms.Error(err)
-			} else {
-				ms.NoError(err)
-				_ = ms.DB.Reload(&f.Threads[0])
-				ms.WithinDuration(time.Now(), f.Threads[0].UpdatedAt, time.Second,
-					"thread.updated_at was not set to the current time")
+				return
 			}
+
+			ms.NoError(err)
+			ms.Greater(message.ID, 0, "new message contains invalid ID")
 		})
 	}
 }
@@ -311,10 +349,19 @@ func (ms *ModelSuite) TestMessage_AfterCreate() {
 		Content:  "This message should update LastViewedAt",
 	}
 
-	err := DB.Create(&newMessage)
+	var eventDetected bool
+	deleteFn, err := events.Listen(func(e events.Event) {
+		if e.Kind == domain.EventApiMessageCreated {
+			eventDetected = true
+		}
+	})
+	ms.NoError(err, "error registering event listener")
+	defer deleteFn()
+
+	err = DB.Create(&newMessage)
 	ms.NoError(err)
 
-	tSecond := time.Duration(time.Second)
+	const tSecond = time.Second
 
 	gotTP := ThreadParticipant{}
 	err = DB.Find(&gotTP, eagerThreadP.ID)
@@ -325,4 +372,10 @@ func (ms *ModelSuite) TestMessage_AfterCreate() {
 	err = DB.Find(&gotTP, lazyThreadP.ID)
 	ms.NoError(err)
 	ms.WithinDuration(time.Now(), gotTP.LastViewedAt, tSecond)
+
+	_ = ms.DB.Reload(&f.Threads[1])
+	ms.WithinDuration(time.Now(), f.Threads[1].UpdatedAt, tSecond,
+		"thread.updated_at was not set to the current time")
+
+	ms.True(eventDetected, "EventApiMessageCreated event was not emitted")
 }
