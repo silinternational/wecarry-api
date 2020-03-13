@@ -47,7 +47,6 @@ type Query {
 
     "Provides a list of all organizations for which the user is an Admin. Super Admins and Sales Admins see all orgs."
     organizations: [Organization!]!
-    post(id: ID): Post
 
     """
     Posts, aka Requests. With no parameters supplied, all posts visible to the authenticated user are returned. Filter

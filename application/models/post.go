@@ -752,13 +752,6 @@ func scopeNotCompleted() pop.ScopeFunc {
 	}
 }
 
-// FindByUserAndUUID finds the post identified by the given UUID if it belongs to the same organization as the
-// given user and if the post has not been marked as removed.
-func (p *Post) FindByUserAndUUID(ctx context.Context, user User, uuid string) error {
-	return DB.Scope(scopeUserOrgs(user)).Scope(scopeNotRemoved()).
-		Where("uuid = ?", uuid).First(p)
-}
-
 // PostFilterParams are optional parameters to narrow the list of posts returned from a query
 type PostFilterParams struct {
 	Destination *Location
