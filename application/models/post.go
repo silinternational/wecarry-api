@@ -296,14 +296,33 @@ func (p *Post) DestroyPotentialProviders(status PostStatus, user User) error {
 
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
 func (p *Post) Validate(tx *pop.Connection) (*validate.Errors, error) {
-	return validate.Validate(
+	v := []validate.Validator{
 		&validators.IntIsPresent{Field: p.CreatedByID, Name: "CreatedBy"},
 		&validators.IntIsPresent{Field: p.OrganizationID, Name: "OrganizationID"},
 		&validators.StringIsPresent{Field: p.Title, Name: "Title"},
 		&validators.StringIsPresent{Field: p.Size.String(), Name: "Size"},
 		&validators.UUIDIsPresent{Field: p.UUID, Name: "UUID"},
 		&validators.StringIsPresent{Field: p.Status.String(), Name: "Status"},
-	), nil
+	}
+
+	if !p.NeededBefore.Valid {
+		return validate.Validate(v...), nil
+	}
+
+	var oldPost Post
+	_ = oldPost.FindByID(p.ID)
+	if oldPost.ID == 0 || p.NeededBefore != oldPost.NeededBefore {
+		neededBeforeDate := p.NeededBefore.Time
+		v = append(v, &validators.TimeAfterTime{
+			FirstName:  "NeededBefore",
+			FirstTime:  neededBeforeDate,
+			SecondName: "Tomorrow",
+			SecondTime: time.Now().Truncate(domain.DurationDay).Add(domain.DurationDay),
+			Message:    fmt.Sprintf("Post neededBefore must not be before tomorrow. Got %v", neededBeforeDate),
+		})
+	}
+
+	return validate.Validate(v...), nil
 }
 
 type createStatusValidator struct {
@@ -324,24 +343,12 @@ func (v *createStatusValidator) IsValid(errors *validate.Errors) {
 
 // ValidateCreate gets run every time you call "pop.ValidateAndCreate" method.
 func (p *Post) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) {
-	tomorrow := time.Now().Truncate(domain.DurationDay).Add(domain.DurationDay)
-
-	// If null, make it pass by pretending it's in the future
-	neededBeforeDate := time.Now().Add(domain.DurationWeek)
-	if p.NeededBefore.Valid {
-		neededBeforeDate = p.NeededBefore.Time
-	}
-
 	return validate.Validate(
 		&createStatusValidator{
 			Name:   "Create Status",
 			Status: p.Status,
 		},
-		&validators.TimeAfterTime{FirstName: "NeededBefore", FirstTime: neededBeforeDate,
-			SecondName: "Tomorrow", SecondTime: tomorrow,
-			Message: fmt.Sprintf("Post neededBefore must not be before tomorrow. Got %v", neededBeforeDate)},
 	), nil
-	//return validate.NewErrors(), nil
 }
 
 type updateStatusValidator struct {
