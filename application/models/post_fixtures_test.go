@@ -187,6 +187,35 @@ func CreateFixturesForPostsGetFiles(ms *ModelSuite) PostFixtures {
 	}
 }
 
+//func createFixturesForPostFindByUserAndUUID(ms *ModelSuite) PostFixtures {
+//	orgs := Organizations{{}, {}}
+//	for i := range orgs {
+//		orgs[i].UUID = domain.GetUUID()
+//		orgs[i].AuthConfig = "{}"
+//		createFixture(ms, &orgs[i])
+//	}
+//
+//	users := createUserFixtures(ms.DB, 2).Users
+//
+//	// both users are in org 0, but need user 0 to also be in org 1
+//	createFixture(ms, &UserOrganization{
+//		OrganizationID: orgs[1].ID,
+//		UserID:         users[0].ID,
+//		AuthID:         users[0].Email,
+//		AuthEmail:      users[0].Email,
+//	})
+//
+//	posts := createPostFixtures(ms.DB, 3, false)
+//	posts[1].OrganizationID = orgs[1].ID
+//	posts[2].Status = PostStatusRemoved
+//	ms.NoError(ms.DB.Save(&posts))
+//
+//	return PostFixtures{
+//		Users: users,
+//		Posts: posts,
+//	}
+//}
+
 //        Org0                Org1           Org2
 //        |  |                | | |          | |
 //        |  +----+-----------+ | +----+-----+ +

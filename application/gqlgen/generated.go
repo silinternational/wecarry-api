@@ -1721,6 +1721,9 @@ var parsedSchema = gqlparser.MustLoadSchema(
     "Provides a list of all organizations for which the user is an Admin. Super Admins and Sales Admins see all orgs."
     organizations: [Organization!]!
 
+#    'post' is disabled because it doesn't work for shared posts from a trusted org
+#    post(id: ID): Post
+
     """
     Posts, aka Requests. With no parameters supplied, all posts visible to the authenticated user are returned. Filter
     parameters only remove from this default list and never include posts that are not visible to the authenticated
