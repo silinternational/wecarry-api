@@ -1008,60 +1008,6 @@ func (ms *ModelSuite) TestUser_FindBySocialAuthProvider() {
 	}
 }
 
-func (ms *ModelSuite) TestUser_AttachPhoto() {
-	uf := createUserFixtures(ms.DB, 3)
-	users := uf.Users
-
-	files := createFileFixtures(3)
-	users[1].FileID = nulls.NewInt(files[0].ID)
-	ms.NoError(ms.DB.UpdateColumns(&users[1], "file_id"))
-
-	tests := []struct {
-		name     string
-		user     User
-		oldImage *File
-		newImage string
-		want     File
-		wantErr  string
-	}{
-		{
-			name:     "no previous file",
-			user:     users[0],
-			newImage: files[1].UUID.String(),
-			want:     files[1],
-		},
-		{
-			name:     "previous file",
-			user:     users[1],
-			oldImage: &files[0],
-			newImage: files[2].UUID.String(),
-			want:     files[2],
-		},
-		{
-			name:     "bad ID",
-			user:     users[2],
-			newImage: uuid.UUID{}.String(),
-			wantErr:  "no rows in result set",
-		},
-	}
-	for _, tt := range tests {
-		ms.T().Run(tt.name, func(t *testing.T) {
-			got, err := tt.user.AttachPhoto(tt.newImage)
-			if tt.wantErr != "" {
-				ms.Error(err, "did not get expected error")
-				ms.Contains(err.Error(), tt.wantErr)
-				return
-			}
-			ms.NoError(err, "unexpected error")
-			ms.Equal(tt.want.UUID.String(), got.UUID.String(), "wrong file returned")
-			ms.Equal(true, got.Linked, "new user photo file is not marked as linked")
-			if tt.oldImage != nil {
-				ms.Equal(false, tt.oldImage.Linked, "old user photo file is not marked as unlinked")
-			}
-		})
-	}
-}
-
 func (ms *ModelSuite) TestUser_GetPhotoID() {
 	t := ms.T()
 	f := createFixturesForTestUserGetPhoto(ms)

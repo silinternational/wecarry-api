@@ -212,7 +212,7 @@ type Post struct {
 	Provider     User         `belongs_to:"users"`
 
 	Files       PostFiles `has_many:"post_files"`
-	PhotoFile   File      `belongs_to:"files"`
+	PhotoFile   File      `belongs_to:"files" fk_id:"FileID"`
 	Destination Location  `belongs_to:"locations"`
 	Origin      Location  `belongs_to:"locations"`
 }
@@ -654,31 +654,7 @@ func (p *Post) GetFiles() ([]File, error) {
 // AttachPhoto assigns a previously-stored File to this Post as its photo. Parameter `fileID` is the UUID
 // of the photo to attach.
 func (p *Post) AttachPhoto(fileID string) (File, error) {
-	var f File
-	if err := f.FindByUUID(fileID); err != nil {
-		return f, err
-	}
-
-	oldID := p.FileID
-	p.FileID = nulls.NewInt(f.ID)
-	if p.ID > 0 {
-		if err := DB.UpdateColumns(p, "file_id"); err != nil {
-			return f, err
-		}
-	}
-
-	if err := f.SetLinked(); err != nil {
-		domain.ErrLogger.Printf("error marking post image file %d as linked, %s", f.ID, err)
-	}
-
-	if oldID.Valid {
-		oldFile := File{ID: oldID.Int}
-		if err := oldFile.ClearLinked(); err != nil {
-			domain.ErrLogger.Printf("error marking old post image file %d as unlinked, %s", oldFile.ID, err)
-		}
-	}
-
-	return f, nil
+	return addFile(p, fileID)
 }
 
 // RemoveFile removes an attached file from the Post

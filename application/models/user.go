@@ -66,7 +66,7 @@ type User struct {
 	Organizations      Organizations     `many_to_many:"user_organizations" order_by:"name asc" json:"-"`
 	UserOrganizations  UserOrganizations `has_many:"user_organizations" json:"-"`
 	UserPreferences    UserPreferences   `has_many:"user_preferences" json:"-"`
-	PhotoFile          File              `belongs_to:"files"`
+	PhotoFile          File              `belongs_to:"files" fk_id:"FileID"`
 	Location           Location          `belongs_to:"locations"`
 }
 
@@ -465,33 +465,7 @@ func (u *User) Posts(postRole string) ([]Post, error) {
 
 // AttachPhoto assigns a previously-stored File to this User as a profile photo
 func (u *User) AttachPhoto(fileID string) (File, error) {
-	if u.ID < 1 {
-		return File{}, fmt.Errorf("invalid User ID %d", u.ID)
-	}
-
-	var f File
-	if err := f.FindByUUID(fileID); err != nil {
-		return f, err
-	}
-
-	oldID := u.FileID
-	u.FileID = nulls.NewInt(f.ID)
-	if err := DB.UpdateColumns(u, "file_id"); err != nil {
-		return f, err
-	}
-
-	if err := f.SetLinked(); err != nil {
-		domain.ErrLogger.Printf("error marking user photo file %d as linked, %s", f.ID, err)
-	}
-
-	if oldID.Valid {
-		oldFile := File{ID: oldID.Int}
-		if err := oldFile.ClearLinked(); err != nil {
-			domain.ErrLogger.Printf("error marking old user photo file %d as unlinked, %s", oldFile.ID, err)
-		}
-	}
-
-	return f, nil
+	return addFile(u, fileID)
 }
 
 // RemoveFile removes an attached file from the User profile
