@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/99designs/gqlgen/graphql"
-	"github.com/gobuffalo/nulls"
 	"github.com/vektah/gqlparser/gqlerror"
 
 	"github.com/silinternational/wecarry-api/domain"
@@ -64,9 +63,7 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, input UpdateO
 		return nil, domain.ReportError(ctx, err, "UpdateOrganization.Unauthorized", extras)
 	}
 
-	if input.URL != nil {
-		org.Url = nulls.NewString(*input.URL)
-	}
+	org.Url = models.ConvertStringPtrToNullsString(input.URL)
 
 	if input.LogoFileID != nil {
 		if _, err := org.AttachLogo(*input.LogoFileID); err != nil {
