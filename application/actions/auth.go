@@ -55,13 +55,6 @@ const (
 )
 
 type authOption struct {
-	ID          string `json:"ID"`
-	Name        string `json:"Name"`
-	LogoURL     string `json:"LogoURL"`
-	RedirectURL string `json:"RedirectURL"`
-}
-
-type authSelector struct {
 	Name        string `json:"Name"`
 	RedirectURL string `json:"RedirectURL"`
 }
@@ -209,11 +202,7 @@ func getOrgBasedAuthOption(c buffalo.Context, authEmail string, org models.Organ
 		}
 	}
 
-	option := authOption{
-		Name:        org.Name,
-		LogoURL:     "",
-		RedirectURL: redirectURL,
-	}
+	option := authOption{Name: org.Name, RedirectURL: redirectURL}
 
 	return option, nil
 }
