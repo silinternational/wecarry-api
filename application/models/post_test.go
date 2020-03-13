@@ -1282,50 +1282,6 @@ func (ms *ModelSuite) TestPost_AttachPhoto() {
 	}
 }
 
-func (ms *ModelSuite) TestPost_RemovePhoto() {
-	posts := createPostFixtures(ms.DB, 3, false)
-
-	files := createFileFixtures(3)
-	posts[1].FileID = nulls.NewInt(files[0].ID)
-	ms.NoError(ms.DB.UpdateColumns(&posts[1], "file_id"))
-
-	tests := []struct {
-		name     string
-		post     Post
-		oldImage *File
-		wantErr  string
-	}{
-		{
-			name: "no previous file",
-			post: posts[0],
-		},
-		{
-			name:     "previous file",
-			post:     posts[1],
-			oldImage: &files[0],
-		},
-		{
-			name:    "bad ID",
-			post:    Post{},
-			wantErr: "invalid Post ID",
-		},
-	}
-	for _, tt := range tests {
-		ms.T().Run(tt.name, func(t *testing.T) {
-			err := tt.post.RemoveFile()
-			if tt.wantErr != "" {
-				ms.Error(err, "did not get expected error")
-				ms.Contains(err.Error(), tt.wantErr)
-				return
-			}
-			ms.NoError(err, "unexpected error")
-			if tt.oldImage != nil {
-				ms.Equal(false, tt.oldImage.Linked, "old post photo file is not marked as unlinked")
-			}
-		})
-	}
-}
-
 // TestPost_GetPhoto tests the GetPhoto method of models.Post
 func (ms *ModelSuite) TestPost_GetPhotoID() {
 	posts := createPostFixtures(ms.DB, 1, false)
