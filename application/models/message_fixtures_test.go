@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/gobuffalo/nulls"
+
 	"github.com/silinternational/wecarry-api/domain"
 )
 
@@ -183,31 +184,18 @@ func CreateMessageFixtures_AfterCreate(ms *ModelSuite, t *testing.T) MessageFixt
 	posts[1].ProviderID = nulls.NewInt(users[0].ID)
 	ms.NoError(ms.DB.Save(&posts))
 
-	threads := []Thread{
-		{
-			UUID:      domain.GetUUID(),
-			PostID:    posts[0].ID,
-			CreatedAt: time.Now().Add(-10 * time.Minute),
-			UpdatedAt: time.Now().Add(-10 * time.Minute),
-		},
-		{
-			UUID:      domain.GetUUID(),
-			PostID:    posts[1].ID,
-			CreatedAt: time.Now().Add(-10 * time.Minute),
-			UpdatedAt: time.Now().Add(-10 * time.Minute),
-		},
-	}
-
+	tenMinutesAgo := time.Now().Add(-10 * time.Minute)
+	threads := make([]Thread, 2)
 	for i, thread := range threads {
+		thread.UUID = domain.GetUUID()
 		err := ms.DB.RawQuery(`INSERT INTO threads (created_at, updated_at, uuid, post_id) VALUES (?, ?, ?, ?)`,
-			thread.CreatedAt, thread.UpdatedAt, thread.UUID, thread.PostID).Exec()
+			tenMinutesAgo, tenMinutesAgo, thread.UUID, posts[i].ID).Exec()
 		ms.NoError(err, "error loading threads")
 
-		// get the new thread ID
+		// get the record back from the database
 		err = ms.DB.Where("uuid = ?", thread.UUID.String()).First(&threads[i])
 		ms.NoError(err, "error finding thread fixture %s, %s", thread.UUID.String(), err)
 	}
-
 	tNow := time.Now().Round(time.Duration(time.Second))
 	oldTime := tNow.Add(-time.Duration(time.Hour))
 	oldOldTime := oldTime.Add(-time.Duration(time.Hour))
