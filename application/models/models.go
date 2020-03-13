@@ -162,7 +162,7 @@ func emitEvent(e events.Event) {
 }
 
 func create(m interface{}) error {
-	uuidField := reflect.ValueOf(m).Elem().FieldByName("UUID")
+	uuidField := fieldByName(m, "UUID")
 	if uuidField.IsValid() && uuidField.Interface().(uuid.UUID).Version() == 0 {
 		uuidField.Set(reflect.ValueOf(domain.GetUUID()))
 	}
