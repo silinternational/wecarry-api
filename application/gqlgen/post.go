@@ -269,22 +269,22 @@ func (r *queryResolver) Posts(ctx context.Context, destination, origin *Location
 	return posts, nil
 }
 
-// Post resolves the `post` query
-func (r *queryResolver) Post(ctx context.Context, id *string) (*models.Post, error) {
-	if id == nil {
-		return nil, nil
-	}
-	var post models.Post
-	cUser := models.CurrentUser(ctx)
-	if err := post.FindByUserAndUUID(ctx, cUser, *id); err != nil {
-		extras := map[string]interface{}{
-			"user": cUser.UUID,
-		}
-		return nil, domain.ReportError(ctx, err, "GetPost", extras)
-	}
-
-	return &post, nil
-}
+//// Post resolves the `post` query
+//func (r *queryResolver) Post(ctx context.Context, id *string) (*models.Post, error) {
+//	if id == nil {
+//		return nil, nil
+//	}
+//	var post models.Post
+//	cUser := models.CurrentUser(ctx)
+//	if err := post.FindByUserAndUUID(ctx, cUser, *id); err != nil {
+//		extras := map[string]interface{}{
+//			"user": cUser.UUID,
+//		}
+//		return nil, domain.ReportError(ctx, err, "GetPost", extras)
+//	}
+//
+//	return &post, nil
+//}
 
 // convertGqlPostInputToDBPost takes a `PostInput` and either finds a record matching the UUID given in `input.ID` or
 // creates a new `models.Post` with a new UUID. In either case, all properties that are not `nil` are set to the value

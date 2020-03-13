@@ -204,7 +204,6 @@ type ComplexityRoot struct {
 		MyWatches      func(childComplexity int) int
 		Organization   func(childComplexity int, id *string) int
 		Organizations  func(childComplexity int) int
-		Post           func(childComplexity int, id *string) int
 		Posts          func(childComplexity int, destination *LocationInput, origin *LocationInput, searchText *string) int
 		RecentMeetings func(childComplexity int) int
 		Threads        func(childComplexity int) int
@@ -366,7 +365,6 @@ type QueryResolver interface {
 	MyWatches(ctx context.Context) ([]models.Watch, error)
 	Organization(ctx context.Context, id *string) (*models.Organization, error)
 	Organizations(ctx context.Context) ([]models.Organization, error)
-	Post(ctx context.Context, id *string) (*models.Post, error)
 	Posts(ctx context.Context, destination *LocationInput, origin *LocationInput, searchText *string) ([]models.Post, error)
 	RecentMeetings(ctx context.Context) ([]models.Meeting, error)
 	Threads(ctx context.Context) ([]models.Thread, error)
@@ -1365,18 +1363,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Organizations(childComplexity), true
 
-	case "Query.post":
-		if e.complexity.Query.Post == nil {
-			break
-		}
-
-		args, err := ec.field_Query_post_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.Post(childComplexity, args["id"].(*string)), true
-
 	case "Query.posts":
 		if e.complexity.Query.Posts == nil {
 			break
@@ -1734,7 +1720,9 @@ var parsedSchema = gqlparser.MustLoadSchema(
 
     "Provides a list of all organizations for which the user is an Admin. Super Admins and Sales Admins see all orgs."
     organizations: [Organization!]!
-    post(id: ID): Post
+
+#    'post' is disabled because it doesn't work for shared posts from a trusted org
+#    post(id: ID): Post
 
     """
     Posts, aka Requests. With no parameters supplied, all posts visible to the authenticated user are returned. Filter
@@ -3033,20 +3021,6 @@ func (ec *executionContext) field_Query_message_args(ctx context.Context, rawArg
 }
 
 func (ec *executionContext) field_Query_organization_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 *string
-	if tmp, ok := rawArgs["id"]; ok {
-		arg0, err = ec.unmarshalOID2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["id"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_post_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 *string
@@ -7481,47 +7455,6 @@ func (ec *executionContext) _Query_organizations(ctx context.Context, field grap
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNOrganization2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganization(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Query_post(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "Query",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_post_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	rctx.Args = args
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Post(rctx, args["id"].(*string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*models.Post)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOPost2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_posts(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -12071,17 +12004,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				return res
 			})
-		case "post":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_post(ctx, field)
-				return res
-			})
 		case "posts":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -14145,17 +14067,6 @@ func (ec *executionContext) marshalOOrganization2ᚖgithubᚗcomᚋsilinternatio
 		return graphql.Null
 	}
 	return ec._Organization(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOPost2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx context.Context, sel ast.SelectionSet, v models.Post) graphql.Marshaler {
-	return ec._Post(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalOPost2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx context.Context, sel ast.SelectionSet, v *models.Post) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Post(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOPostSize2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostSize(ctx context.Context, v interface{}) (models.PostSize, error) {
