@@ -30,8 +30,8 @@ import (
 const (
 	Megabyte                    = 1048576
 	DateFormat                  = "2006-01-02"
-	MaxFileSize                 = 1024 * 1024 * 10 // 10 Megabytes
-	AccessTokenLifetimeSeconds  = 3600
+	MaxFileSize                 = 1024 * 1024 * 10       // 10 Megabytes
+	AccessTokenLifetimeSeconds  = 60*60*24*13 + 60*60*12 // 13 days, 12 hours
 	DateTimeFormat              = "2006-01-02 15:04:05"
 	NewMessageNotificationDelay = 1 * time.Minute
 	DefaultProximityDistanceKm  = 1000

@@ -111,14 +111,9 @@ func (t *Thread) GetParticipants() ([]User, error) {
 	return users, nil
 }
 
-func (t *Thread) CreateWithParticipants(postUUID string, user User) error {
+func (t *Thread) CreateWithParticipants(post Post, user User) error {
 	if user.ID <= 0 {
 		return fmt.Errorf("error creating thread, invalid user ID %v", user.ID)
-	}
-
-	var post Post
-	if err := post.FindByUUID(postUUID); err != nil {
-		return err
 	}
 
 	thread := Thread{
@@ -228,4 +223,19 @@ func (t *Thread) Create() error {
 // Update writes the Thread data to an existing database record.
 func (t *Thread) Update() error {
 	return update(t)
+}
+
+// IsVisible returns true if and only if the given user is already a participant of the message thread.
+func (t *Thread) IsVisible(userID int) bool {
+	if userID < 1 {
+		return false
+	}
+	if users, err := t.GetParticipants(); err == nil {
+		for _, user := range users {
+			if user.ID == userID {
+				return true
+			}
+		}
+	}
+	return false
 }

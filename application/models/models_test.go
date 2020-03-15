@@ -44,14 +44,18 @@ func (b *testBuffaloContext) Set(key string, val interface{}) {
 	b.params[key] = val
 }
 
-func (ms *ModelSuite) TestCurrentUser() {
-	// setup
-	user := createUserFixtures(ms.DB, 1).Users[0]
-
+func createTestContext(user User) buffalo.Context {
 	ctx := &testBuffaloContext{
 		params: map[interface{}]interface{}{},
 	}
 	ctx.Set("current_user", user)
+	return ctx
+}
+
+func (ms *ModelSuite) TestCurrentUser() {
+	// setup
+	user := createUserFixtures(ms.DB, 1).Users[0]
+	ctx := createTestContext(user)
 
 	tests := []struct {
 		name     string

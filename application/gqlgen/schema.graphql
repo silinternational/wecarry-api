@@ -47,7 +47,9 @@ type Query {
 
     "Provides a list of all organizations for which the user is an Admin. Super Admins and Sales Admins see all orgs."
     organizations: [Organization!]!
-    post(id: ID): Post
+
+#    'post' is disabled because it doesn't work for shared posts from a trusted org
+#    post(id: ID): Post
 
     """
     Posts, aka Requests. With no parameters supplied, all posts visible to the authenticated user are returned. Filter
@@ -84,7 +86,6 @@ type Query {
 }
 
 type Mutation {
-
     "Create a new meeting (event). At this time, any user may create a meeting."
     createMeeting(input: CreateMeetingInput!): Meeting!
 
@@ -177,6 +178,12 @@ type Mutation {
 
     "Cancel a carry offer for any user. Authorized for the post creator, the potential provider, and Super Admins."
     removePotentialProvider(postID: String!, userID: String!): Post!
+
+    "Provider changes the status of a request to DELIVERED"
+    markRequestAsDelivered(postID: String!): Post!
+
+    "Requester changes the status of a request to RECEIVED"
+    markRequestAsReceived(postID: String!): Post!
 
     """
     Set the LastViewedAt time for a message thread. Effectively clears the unread status of messages updated before the

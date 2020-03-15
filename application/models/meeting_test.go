@@ -580,11 +580,7 @@ func (ms *ModelSuite) TestMeeting_Invites() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			ctx := &testBuffaloContext{
-				params: map[interface{}]interface{}{},
-			}
-			ctx.Set("current_user", tt.user)
-			got, err := tt.meeting.Invites(ctx)
+			got, err := tt.meeting.Invites(createTestContext(tt.user))
 			if tt.wantErr != "" {
 				ms.Error(err, "did not get expected error")
 				ms.Contains(err.Error(), tt.wantErr)
@@ -634,11 +630,7 @@ func (ms *ModelSuite) TestMeeting_Participants() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			ctx := &testBuffaloContext{
-				params: map[interface{}]interface{}{},
-			}
-			ctx.Set("current_user", tt.user)
-			got, err := tt.meeting.Participants(ctx)
+			got, err := tt.meeting.Participants(createTestContext(tt.user))
 			if tt.wantErr != "" {
 				ms.Error(err, "did not get expected error")
 				ms.Contains(err.Error(), tt.wantErr)
@@ -688,11 +680,7 @@ func (ms *ModelSuite) TestMeeting_Organizers() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			ctx := &testBuffaloContext{
-				params: map[interface{}]interface{}{},
-			}
-			ctx.Set("current_user", tt.user)
-			got, err := tt.meeting.Organizers(ctx)
+			got, err := tt.meeting.Organizers(createTestContext(tt.user))
 			if tt.wantErr != "" {
 				ms.Error(err, "did not get expected error")
 				ms.Contains(err.Error(), tt.wantErr)
@@ -747,10 +735,7 @@ func (ms *ModelSuite) TestMeeting_RemoveInvite() {
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
 			// setup
-			ctx := &testBuffaloContext{
-				params: map[interface{}]interface{}{},
-			}
-			ctx.Set("current_user", tt.user)
+			ctx := createTestContext(tt.user)
 
 			// execute
 			err := tt.meeting.RemoveInvite(ctx, tt.email)
@@ -807,10 +792,7 @@ func (ms *ModelSuite) TestMeeting_RemoveParticipant() {
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
 			// setup
-			ctx := &testBuffaloContext{
-				params: map[interface{}]interface{}{},
-			}
-			ctx.Set("current_user", tt.testUser)
+			ctx := createTestContext(tt.testUser)
 
 			// execute
 			err := tt.meeting.RemoveParticipant(ctx, tt.user.UUID.String())
@@ -909,11 +891,7 @@ func (ms *ModelSuite) TestMeeting_isOrganizer() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			ctx := &testBuffaloContext{
-				params: map[interface{}]interface{}{},
-			}
-			ctx.Set("current_user", tt.user)
-			got := tt.meeting.isOrganizer(ctx, tt.user.ID)
+			got := tt.meeting.isOrganizer(createTestContext(tt.user), tt.user.ID)
 			ms.Equal(tt.want, got)
 		})
 	}

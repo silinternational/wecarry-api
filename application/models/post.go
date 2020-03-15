@@ -296,14 +296,33 @@ func (p *Post) DestroyPotentialProviders(status PostStatus, user User) error {
 
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
 func (p *Post) Validate(tx *pop.Connection) (*validate.Errors, error) {
-	return validate.Validate(
+	v := []validate.Validator{
 		&validators.IntIsPresent{Field: p.CreatedByID, Name: "CreatedBy"},
 		&validators.IntIsPresent{Field: p.OrganizationID, Name: "OrganizationID"},
 		&validators.StringIsPresent{Field: p.Title, Name: "Title"},
 		&validators.StringIsPresent{Field: p.Size.String(), Name: "Size"},
 		&validators.UUIDIsPresent{Field: p.UUID, Name: "UUID"},
 		&validators.StringIsPresent{Field: p.Status.String(), Name: "Status"},
-	), nil
+	}
+
+	if !p.NeededBefore.Valid {
+		return validate.Validate(v...), nil
+	}
+
+	var oldPost Post
+	_ = oldPost.FindByID(p.ID)
+	if oldPost.ID == 0 || p.NeededBefore != oldPost.NeededBefore {
+		neededBeforeDate := p.NeededBefore.Time
+		v = append(v, &validators.TimeAfterTime{
+			FirstName:  "NeededBefore",
+			FirstTime:  neededBeforeDate,
+			SecondName: "Tomorrow",
+			SecondTime: time.Now().Truncate(domain.DurationDay).Add(domain.DurationDay),
+			Message:    fmt.Sprintf("Post neededBefore must not be before tomorrow. Got %v", neededBeforeDate),
+		})
+	}
+
+	return validate.Validate(v...), nil
 }
 
 type createStatusValidator struct {
@@ -324,24 +343,12 @@ func (v *createStatusValidator) IsValid(errors *validate.Errors) {
 
 // ValidateCreate gets run every time you call "pop.ValidateAndCreate" method.
 func (p *Post) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) {
-	tomorrow := time.Now().Truncate(domain.DurationDay).Add(domain.DurationDay)
-
-	// If null, make it pass by pretending it's in the future
-	neededBeforeDate := time.Now().Add(domain.DurationWeek)
-	if p.NeededBefore.Valid {
-		neededBeforeDate = p.NeededBefore.Time
-	}
-
 	return validate.Validate(
 		&createStatusValidator{
 			Name:   "Create Status",
 			Status: p.Status,
 		},
-		&validators.TimeAfterTime{FirstName: "NeededBefore", FirstTime: neededBeforeDate,
-			SecondName: "Tomorrow", SecondTime: tomorrow,
-			Message: fmt.Sprintf("Post neededBefore must not be before tomorrow. Got %v", neededBeforeDate)},
 	), nil
-	//return validate.NewErrors(), nil
 }
 
 type updateStatusValidator struct {
@@ -754,13 +761,22 @@ func scopeNotCompleted() pop.ScopeFunc {
 
 // FindByUserAndUUID finds the post identified by the given UUID if it belongs to the same organization as the
 // given user and if the post has not been marked as removed.
-func (p *Post) FindByUserAndUUID(ctx context.Context, user User, uuid string) error {
-	return DB.Scope(scopeUserOrgs(user)).Scope(scopeNotRemoved()).
-		Where("uuid = ?", uuid).First(p)
+// FIXME: This method will fail to find a shared post from a trusted Organization
+//func (p *Post) FindByUserAndUUID(ctx context.Context, user User, uuid string) error {
+//	return DB.Scope(scopeUserOrgs(user)).Scope(scopeNotRemoved()).
+//		Where("uuid = ?", uuid).First(p)
+//}
+
+// PostFilterParams are optional parameters to narrow the list of posts returned from a query
+type PostFilterParams struct {
+	Destination *Location
+	Origin      *Location
+	SearchText  *string
+	PostID      *int
 }
 
-// FindByUser finds all posts visible to the current user.
-func (p *Posts) FindByUser(ctx context.Context, user User, destination, origin *Location, searchText *string) error {
+// FindByUser finds all posts visible to the current user, optionally filtered by location or search text.
+func (p *Posts) FindByUser(ctx context.Context, user User, filter PostFilterParams) error {
 	if user.ID == 0 {
 		return errors.New("invalid User ID in Posts.FindByUser")
 	}
@@ -793,10 +809,14 @@ func (p *Posts) FindByUser(ctx context.Context, user User, destination, origin *
 	args := []interface{}{user.ID, PostVisibilityAll, PostVisibilityTrusted, PostStatusRemoved,
 		PostStatusCompleted}
 
-	if searchText != nil {
+	if filter.SearchText != nil {
 		selectClause = selectClause + " AND (LOWER(title) LIKE ? or LOWER(description) LIKE ?)"
-		likeText := "%" + strings.ToLower(*searchText) + "%"
+		likeText := "%" + strings.ToLower(*filter.SearchText) + "%"
 		args = append(args, likeText, likeText)
+	}
+	if filter.PostID != nil {
+		selectClause = selectClause + " AND posts.id = ?"
+		args = append(args, *filter.PostID)
 	}
 
 	posts := Posts{}
@@ -805,11 +825,11 @@ func (p *Posts) FindByUser(ctx context.Context, user User, destination, origin *
 		return fmt.Errorf("error finding posts for user %s, %s", user.UUID.String(), err)
 	}
 
-	if destination != nil {
-		posts = posts.FilterDestination(*destination)
+	if filter.Destination != nil {
+		posts = posts.FilterDestination(*filter.Destination)
 	}
-	if origin != nil {
-		posts = posts.FilterOrigin(*origin)
+	if filter.Origin != nil {
+		posts = posts.FilterOrigin(*filter.Origin)
 	}
 
 	*p = Posts{}
@@ -910,6 +930,24 @@ func (p *Post) isPostEditable() bool {
 	}
 }
 
+func (p *Post) canCreatorChangeStatus(newStatus PostStatus) bool {
+	// Creator can't move off of Delivered except to Completed
+	if p.Status == PostStatusDelivered {
+		return newStatus == PostStatusCompleted
+	}
+
+	// Creator can't move from Accepted to Delivered
+	return !(p.Status == PostStatusAccepted && newStatus == PostStatusDelivered)
+}
+
+func (p *Post) canProviderChangeStatus(newStatus PostStatus) bool {
+	if p.Status != PostStatusCompleted && newStatus == PostStatusDelivered {
+		return true
+	}
+	// for cancelling a DELIVERED status
+	return p.Status == PostStatusDelivered && newStatus == PostStatusAccepted
+}
+
 // canUserChangeStatus defines which posts statuses can be changed by which users.
 // Invalid transitions are not checked here; it is left for the validator to do this.
 func (p *Post) canUserChangeStatus(user User, newStatus PostStatus) bool {
@@ -917,22 +955,19 @@ func (p *Post) canUserChangeStatus(user User, newStatus PostStatus) bool {
 		return true
 	}
 
-	if p.CreatedByID == user.ID {
-		// Creator can't move off of Delivered except to Completed
-		if p.Status == PostStatusDelivered {
-			return newStatus == PostStatusCompleted
-		}
-		return true
-	}
-
-	if p.ProviderID.Int != user.ID {
+	if p.Status == PostStatusCompleted {
 		return false
 	}
-	if newStatus == PostStatusDelivered {
-		return true
+
+	if p.CreatedByID == user.ID {
+		return p.canCreatorChangeStatus(newStatus)
 	}
-	// for cancelling a DELIVERED status
-	return newStatus == PostStatusAccepted && p.Status == PostStatusDelivered
+
+	if p.ProviderID.Int == user.ID {
+		return p.canProviderChangeStatus(newStatus)
+	}
+
+	return false
 }
 
 // GetAudience returns a list of all of the users which have visibility to this post. As of this writing, it is
@@ -988,4 +1023,14 @@ func (p Posts) FilterOrigin(location Location) Posts {
 		}
 	}
 	return filtered
+}
+
+// IsVisible returns true if the Post is visible to the given user. Only the post ID is used in this method.
+func (p *Post) IsVisible(ctx context.Context, user User) bool {
+	posts := Posts{}
+	if err := posts.FindByUser(ctx, user, PostFilterParams{PostID: &p.ID}); err != nil {
+		domain.Error(domain.GetBuffaloContext(ctx), "error in Post.IsVisible, "+err.Error())
+		return false
+	}
+	return len(posts) > 0
 }

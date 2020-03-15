@@ -112,76 +112,78 @@ const allPostFields = `{
 			visibility
 		}`
 
-func (as *ActionSuite) Test_PostQuery() {
-	f := createFixturesForPostQuery(as)
+func (as *ActionSuite) verifyPostResponse(post models.Post, resp Post) {
+	as.Equal(post.UUID.String(), resp.ID)
+	as.Equal(post.Title, resp.Title)
+	as.Equal(post.Description.String, *resp.Description)
 
-	query := fmt.Sprintf(`{ post(id: "%s") %s }`, f.Posts[0].UUID, allPostFields)
+	wantDate := post.NeededBefore.Time.Format(domain.DateFormat)
+	as.Equal(wantDate, *resp.NeededBefore, "incorrect NeededBefore date")
+	as.Nil(resp.CompletedOn, "expected a nil completedOn date string")
 
-	var resp PostResponse
+	as.NoError(as.DB.Load(&post, "Destination", "Origin", "PhotoFile", "Files.File"))
 
-	err := as.testGqlQuery(query, f.Users[1].Nickname, &resp)
+	as.Equal(post.Destination.Description, resp.Destination.Description)
+	as.Equal(post.Destination.Country, resp.Destination.Country)
+	as.Equal(post.Destination.Latitude.Float64, resp.Destination.Lat)
+	as.Equal(post.Destination.Longitude.Float64, resp.Destination.Long)
+
+	as.Equal(post.Origin.Description, resp.Origin.Description)
+	as.Equal(post.Origin.Country, resp.Origin.Country)
+	as.Equal(post.Origin.Latitude.Float64, resp.Origin.Lat)
+	as.Equal(post.Origin.Longitude.Float64, resp.Origin.Long)
+
+	as.Equal(post.Size, resp.Size)
+	as.Equal(post.Status, resp.Status)
+	as.Equal(post.CreatedAt.Format(time.RFC3339), resp.CreatedAt)
+	as.Equal(post.UpdatedAt.Format(time.RFC3339), resp.UpdatedAt)
+	as.Equal(post.Kilograms.Float64, *resp.Kilograms)
+	as.Equal(post.URL.String, *resp.Url)
+	as.Equal(post.Visibility.String(), resp.Visibility)
+	as.Equal(false, resp.IsEditable)
+
+	creator, err := post.GetCreator()
 	as.NoError(err)
+	as.Equal(creator.UUID.String(), resp.CreatedBy.ID, "creator ID doesn't match")
+	as.Equal(creator.Nickname, resp.CreatedBy.Nickname, "creator nickname doesn't match")
+	as.Equal(creator.AuthPhotoURL.String, resp.CreatedBy.AvatarURL, "creator avatar URL doesn't match")
 
-	as.Equal(f.Posts[0].UUID.String(), resp.Post.ID)
-	as.Equal(f.Posts[0].Title, resp.Post.Title)
-	as.Equal(f.Posts[0].Description.String, *resp.Post.Description)
-
-	wantDate := f.Posts[0].NeededBefore.Time.Format(domain.DateFormat)
-	as.Equal(wantDate, *resp.Post.NeededBefore, "incorrect NeededBefore date")
-	as.Nil(resp.Post.CompletedOn, "expected a nil completedOn date string")
-
-	as.NoError(as.DB.Load(&f.Posts[0], "Destination", "Origin", "PhotoFile", "Files.File"))
-
-	as.Equal(f.Posts[0].Destination.Description, resp.Post.Destination.Description)
-	as.Equal(f.Posts[0].Destination.Country, resp.Post.Destination.Country)
-	as.Equal(f.Posts[0].Destination.Latitude.Float64, resp.Post.Destination.Lat)
-	as.Equal(f.Posts[0].Destination.Longitude.Float64, resp.Post.Destination.Long)
-
-	as.Equal(f.Posts[0].Origin.Description, resp.Post.Origin.Description)
-	as.Equal(f.Posts[0].Origin.Country, resp.Post.Origin.Country)
-	as.Equal(f.Posts[0].Origin.Latitude.Float64, resp.Post.Origin.Lat)
-	as.Equal(f.Posts[0].Origin.Longitude.Float64, resp.Post.Origin.Long)
-
-	as.Equal(f.Posts[0].Size, resp.Post.Size)
-	as.Equal(f.Posts[0].Status, resp.Post.Status)
-	as.Equal(f.Posts[0].CreatedAt.Format(time.RFC3339), resp.Post.CreatedAt)
-	as.Equal(f.Posts[0].UpdatedAt.Format(time.RFC3339), resp.Post.UpdatedAt)
-	as.Equal(f.Posts[0].Kilograms.Float64, *resp.Post.Kilograms)
-	as.Equal(f.Posts[0].URL.String, *resp.Post.Url)
-	as.Equal(f.Posts[0].Visibility.String(), resp.Post.Visibility)
-	as.Equal(false, resp.Post.IsEditable)
-	as.Equal(f.Users[0].UUID.String(), resp.Post.CreatedBy.ID, "creator ID doesn't match")
-	as.Equal(f.Users[0].Nickname, resp.Post.CreatedBy.Nickname, "creator nickname doesn't match")
-	as.Equal(f.Users[0].AuthPhotoURL.String, resp.Post.CreatedBy.AvatarURL, "creator avatar URL doesn't match")
-	as.Equal(f.Users[1].UUID.String(), resp.Post.Provider.ID, "provider ID doesn't match")
-	as.Equal(f.Users[1].Nickname, resp.Post.Provider.Nickname, "provider nickname doesn't match")
-	as.Equal(f.Users[1].AuthPhotoURL.String, resp.Post.Provider.AvatarURL, "provider avatar URL doesn't match")
-	as.Equal(f.Organization.UUID.String(), resp.Post.Organization.ID)
-	as.Equal(f.Posts[0].PhotoFile.UUID.String(), resp.Post.Photo.ID)
-	as.Equal(f.Posts[0].PhotoFile.UUID.String(), resp.Post.PhotoID)
-	as.Equal(1, len(resp.Post.Files))
-	as.Equal(f.Posts[0].Files[0].File.UUID.String(), resp.Post.Files[0].ID)
-
-	// Check an actual CompletedOn field
-	query = fmt.Sprintf(`{ post(id: "%s") %s }`, f.Posts[2].UUID, allPostFields)
-	err = as.testGqlQuery(query, f.Users[1].Nickname, &resp)
+	provider, err := post.GetProvider()
 	as.NoError(err)
+	if provider != nil {
+		as.Equal(provider.UUID.String(), resp.Provider.ID, "provider ID doesn't match")
+		as.Equal(provider.Nickname, resp.Provider.Nickname, "provider nickname doesn't match")
+		as.Equal(provider.AuthPhotoURL.String, resp.Provider.AvatarURL, "provider avatar URL doesn't match")
+	}
 
-	wantDate = f.Posts[2].CompletedOn.Time.Format(domain.DateFormat)
-	as.Equal(wantDate, *resp.Post.CompletedOn, "incorrect CompletedOn date")
+	org, err := post.GetOrganization()
+	as.NoError(err)
+	as.Equal(org.UUID.String(), resp.Organization.ID)
+
+	as.Equal(post.PhotoFile.UUID.String(), resp.Photo.ID)
+	as.Equal(post.PhotoFile.UUID.String(), resp.PhotoID)
+	as.Equal(len(post.Files), len(resp.Files))
+	for i := range post.Files {
+		as.Equal(post.Files[i].File.UUID.String(), resp.Files[i].ID)
+	}
+
+	if resp.CompletedOn != nil {
+		wantDate = post.CompletedOn.Time.Format(domain.DateFormat)
+		as.Equal(wantDate, *resp.CompletedOn, "incorrect CompletedOn date")
+	}
 }
 
 func (as *ActionSuite) Test_PostsQuery() {
 	f := createFixturesForPostQuery(as)
 
 	type testCase struct {
-		Name        string
-		SearchText  string
-		Destination string
-		Origin      string
-		TestUser    models.User
-		ExpectError bool
-		Test        func(t *testing.T)
+		name        string
+		searchText  string
+		destination string
+		origin      string
+		testUser    models.User
+		expectError bool
+		verifyFunc  func()
 	}
 
 	const queryTemplate = `{ posts (searchText: %s, destination: %s, origin: %s)` + allPostFields + `}`
@@ -190,62 +192,65 @@ func (as *ActionSuite) Test_PostsQuery() {
 
 	testCases := []testCase{
 		{
-			Name:        "default",
-			SearchText:  "null",
-			Destination: "null",
-			Origin:      "null",
-			TestUser:    f.Users[1],
-			Test: func(t *testing.T) {
+			name:        "default",
+			searchText:  "null",
+			destination: "null",
+			origin:      "null",
+			testUser:    f.Users[1],
+			verifyFunc: func() {
 				as.Equal(2, len(resp.Posts))
-				as.Equal(f.Posts[0].UUID.String(), resp.Posts[1].ID)
-				as.Equal(f.Posts[1].UUID.String(), resp.Posts[0].ID)
+				as.verifyPostResponse(f.Posts[0], resp.Posts[1])
+				as.verifyPostResponse(f.Posts[1], resp.Posts[0])
 			},
 		},
 		{
-			Name:        "searchText filter",
-			SearchText:  `"title 0"`,
-			Destination: "null",
-			Origin:      "null",
-			TestUser:    f.Users[1],
-			Test: func(t *testing.T) {
+			name:        "searchText filter",
+			searchText:  `"title 0"`,
+			destination: "null",
+			origin:      "null",
+			testUser:    f.Users[1],
+			verifyFunc: func() {
 				as.Equal(1, len(resp.Posts))
-				as.Equal(f.Posts[0].UUID.String(), resp.Posts[0].ID)
+				as.verifyPostResponse(f.Posts[0], resp.Posts[0])
 			},
 		},
 		{
-			Name:        "destination filter",
-			SearchText:  "null",
-			Destination: `{description:"Australia",country:"AU"}`,
-			Origin:      "null",
-			TestUser:    f.Users[1],
-			Test: func(t *testing.T) {
+			name:        "destination filter",
+			searchText:  "null",
+			destination: `{description:"Australia",country:"AU"}`,
+			origin:      "null",
+			testUser:    f.Users[1],
+			verifyFunc: func() {
 				as.Equal(1, len(resp.Posts))
-				as.Equal(f.Posts[0].UUID.String(), resp.Posts[0].ID)
+				as.verifyPostResponse(f.Posts[0], resp.Posts[0])
 			},
 		},
 		{
-			Name:        "origin filter",
-			SearchText:  "null",
-			Destination: "null",
-			Origin:      `{description:"Australia",country:"AU"}`,
-			TestUser:    f.Users[1],
-			Test: func(t *testing.T) {
+			name:        "origin filter",
+			searchText:  "null",
+			destination: "null",
+			origin:      `{description:"Australia",country:"AU"}`,
+			testUser:    f.Users[1],
+			verifyFunc: func() {
 				as.Equal(1, len(resp.Posts))
-				as.Equal(f.Posts[1].UUID.String(), resp.Posts[0].ID)
+				as.verifyPostResponse(f.Posts[1], resp.Posts[0])
 			},
 		},
 	}
 
 	for _, tc := range testCases {
-		query := fmt.Sprintf(queryTemplate, tc.SearchText, tc.Destination, tc.Origin)
-		err := as.testGqlQuery(query, tc.TestUser.Nickname, &resp)
+		as.T().Run(tc.name, func(t *testing.T) {
+			query := fmt.Sprintf(queryTemplate, tc.searchText, tc.destination, tc.origin)
+			resp = PostsResponse{}
+			err := as.testGqlQuery(query, tc.testUser.Nickname, &resp)
 
-		if tc.ExpectError {
-			as.Error(err)
-		} else {
+			if tc.expectError {
+				as.Error(err)
+				return
+			}
 			as.NoError(err)
-		}
-		as.T().Run(tc.Name, tc.Test)
+			tc.verifyFunc()
+		})
 	}
 }
 
@@ -494,5 +499,139 @@ func (as *ActionSuite) Test_UpdatePostStatus_DestroyPotentialProviders() {
 			as.NoError(err, "user=%s, query=%s", step.user.Nickname, query)
 			as.Equal(step.status, postsResp.Post.Status)
 		}
+	}
+}
+
+func (as *ActionSuite) Test_MarkRequestAsDelivered() {
+	f := createFixturesForMarkRequestAsDelivered(as)
+	posts := f.Posts
+
+	var postsResp PostResponse
+
+	creator := f.Users[0]
+	provider := f.Users[1]
+
+	testCases := []struct {
+		name                 string
+		postID               string
+		user                 models.User
+		wantStatus           string
+		wantPostHistoryCount int
+		wantErr              bool
+		wantErrContains      string
+	}{
+		{name: "ACCEPTED: delivered by Provider",
+			postID: posts[0].UUID.String(), user: provider,
+			wantStatus:           models.PostStatusDelivered.String(),
+			wantPostHistoryCount: 3, wantErr: false},
+		{name: "ACCEPTED: delivered by Creator",
+			postID: posts[0].UUID.String(), user: creator, wantErr: true,
+			wantErrContains: "not allowed to change the status",
+		},
+		{name: "COMPLETED: delivered by Provider",
+			postID: posts[1].UUID.String(), user: provider, wantErr: true,
+			wantErrContains: "not allowed to change the status",
+		},
+	}
+
+	for _, tc := range testCases {
+		as.T().Run(tc.name, func(t *testing.T) {
+			query := fmt.Sprintf(`mutation { post: markRequestAsDelivered(postID: "%v") {id status completedOn}}`,
+				tc.postID)
+
+			err := as.testGqlQuery(query, tc.user.Nickname, &postsResp)
+			if tc.wantErr {
+				as.Error(err, "user=%d, query=%s", tc.user.ID, query)
+				as.Contains(err.Error(), tc.wantErrContains, "incorrect error message")
+				return
+			}
+
+			as.NoError(err, "user=%d, query=%s", tc.user.ID, query)
+			as.Equal(tc.wantStatus, postsResp.Post.Status.String(), "incorrect status")
+
+			if tc.wantPostHistoryCount < 1 {
+				return
+			}
+
+			// Check for correct PostHistory
+			var post models.Post
+			as.NoError(post.FindByUUID(tc.postID))
+			pHistories := models.PostHistories{}
+			err = as.DB.Where("post_id = ?", post.ID).All(&pHistories)
+			as.NoError(err)
+			as.Equal(tc.wantPostHistoryCount, len(pHistories), "incorrect number of PostHistories")
+			lastPH := pHistories[tc.wantPostHistoryCount-1]
+			as.Equal(tc.wantStatus, lastPH.Status.String(), "incorrect status on last PostHistory")
+		})
+	}
+}
+
+func (as *ActionSuite) Test_MarkRequestAsReceived() {
+	f := createFixturesForMarkRequestAsReceived(as)
+	posts := f.Posts
+
+	var postsResp PostResponse
+
+	creator := f.Users[0]
+	provider := f.Users[1]
+
+	testCases := []struct {
+		name                 string
+		postID               string
+		user                 models.User
+		wantStatus           string
+		wantPostHistoryCount int
+		wantErr              bool
+		wantErrContains      string
+	}{
+		{name: "ACCEPTED: received by Provider",
+			postID: posts[0].UUID.String(), user: provider, wantErr: true,
+			wantErrContains: "not allowed to change the status",
+		},
+		{name: "ACCEPTED: received by Creator",
+			postID: posts[0].UUID.String(), user: creator, wantErr: false,
+			wantStatus:           models.PostStatusCompleted.String(),
+			wantPostHistoryCount: 3,
+		},
+		{name: "DELIVERED: received by Creator",
+			postID: posts[1].UUID.String(), user: creator, wantErr: false,
+			wantStatus:           models.PostStatusCompleted.String(),
+			wantPostHistoryCount: 4,
+		},
+		{name: "COMPLETED: received by Creator",
+			postID: posts[2].UUID.String(), user: creator, wantErr: true,
+			wantErrContains: "not allowed to change the status",
+		},
+	}
+
+	for _, tc := range testCases {
+		as.T().Run(tc.name, func(t *testing.T) {
+			query := fmt.Sprintf(`mutation { post: markRequestAsReceived(postID: "%v") {id status completedOn}}`,
+				tc.postID)
+
+			err := as.testGqlQuery(query, tc.user.Nickname, &postsResp)
+			if tc.wantErr {
+				as.Error(err, "user=%d, query=%s", tc.user.ID, query)
+				as.Contains(err.Error(), tc.wantErrContains, "incorrect error message")
+				return
+			}
+
+			as.NoError(err, "user=%d, query=%s", tc.user.ID, query)
+			as.Equal(tc.wantStatus, postsResp.Post.Status.String(), "incorrect status")
+
+			if tc.wantPostHistoryCount < 1 {
+				return
+			}
+
+			// Check for correct PostHistory
+			var post models.Post
+			as.NoError(post.FindByUUID(tc.postID))
+			pHistories := models.PostHistories{}
+			err = as.DB.Where("post_id = ?", post.ID).All(&pHistories)
+			as.NoError(err)
+			as.Equal(tc.wantPostHistoryCount, len(pHistories), "incorrect number of PostHistories")
+			lastPH := pHistories[tc.wantPostHistoryCount-1]
+			as.Equal(tc.wantStatus, lastPH.Status.String(), "incorrect status on last PostHistory")
+		})
 	}
 }

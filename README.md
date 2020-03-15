@@ -33,7 +33,7 @@ may have earlier versions of these installed.
 Make sure to uninstall docker-compose packages, and then following the
 instructions here: https://docs.docker.com/compose/install/
 
-## Auth
+## Authentication
 
 ### Auth Request Error Codes
 When an auth request is made to the wecarry api and something goes wrong, the api
@@ -41,7 +41,13 @@ will render json with a Code entry for the error. To see a list of possible code
 refer to domain/errorcodes.go.  In particular, the related codes are those 
 that have a comment referring to actions.AuthRequest.
 
-### Office365/AzureAD
+### Organization Authentication
+
+Three types of authentication can be used for organization-based authentication:
+Azure AD, Google, and SAML. These are configured in an Organization record or 
+an Organization Domain record, and are supported by the GraphQL API.
+
+#### Office365/AzureAD
 To add an organization using AzureAD authentication, create a database organization record  
 that includes an auth_type of `AZUREADV2` and an auth_config like the following ... 
 
@@ -58,23 +64,8 @@ use `http:localhost` as the host for the WeCarry API, due to AzureAD's policies.
 (This affects the `AUTH_CALLBACK_URL` in the `.env` file and the `buffalo.environment.HOST` value
 in the docker-compose file.)
 
-### Facebook
-To add an organization using Facebook authentication, create a database organization record  
-that includes an auth_type of `facebook` and an auth_config like the following ... 
+#### Google GSuite
 
-```
-{}
-```
-
-The two environment variables `FACEBOOK_KEY` and `FACEBOOK_SECRET` 
-will need to be set for the appropriate Facebook oauth account and application.
-
-For local development, if you are using `http`, then you will likely need to 
-use `http:localhost` as the host for the WeCarry API, due to Facebook's policies.
-(This affects the `AUTH_CALLBACK_URL` in the `.env` file and the `buffalo.environment.HOST` value
-in the docker-compose file.)
-
-### Google
 To add an organization using Google authentication, create a database organization record  
 that includes an auth_type of `GOOGLE` and an auth_config like the following ... 
 
@@ -93,18 +84,7 @@ So, for local development, your api's host should probably just be `localhost`
 (It may also be the case that using `buffalo dev` will require the use of `localhost` to avoid 
 losing track of the google related session during authentication.)
 
-### LinkedIn
-To add an organization using LinkedIn authentication, create a database organization record  
-that includes an auth_type of `linkedin` and an auth_config like the following ... 
-
-```
-{}
-```
-
-The two environment variables `LINKED_IN_KEY` and `LINKED_IN_SECRET` will need to be 
-set for the appropriate LinkedIn oauth developer account. 
-
-### SAML
+#### SAML
 To enable authentication via a SAML2 Identity Provider, an organization 
 record will need to be created that includes an auth_type of `SAML` and an
 auth_config like the following ...
@@ -127,13 +107,38 @@ auth_config like the following ...
 }
 ```
 
-### Twitter (Dicey Auth Option)
-To add an organization using Twitter authentication, create a database organization record  
-that includes an auth_type of `twitter` and an auth_config like the following ... 
+### Social Network Authentication
 
-```
-{}
-```
+Social network authentication is used only for authenticating users that are not
+associated with a subscribing Organization, but have been invited to a WeCarry
+Event.
+
+#### Facebook
+
+The two environment variables `FACEBOOK_KEY` and `FACEBOOK_SECRET` 
+will need to be set for the appropriate Facebook oauth account and application.
+
+For local development, if you are using `http`, then you will likely need to 
+use `http:localhost` as the host for the WeCarry API, due to Facebook's policies.
+(This affects the `AUTH_CALLBACK_URL` in the `.env` file and the `buffalo.environment.HOST` value
+in the docker-compose file.)
+
+#### Google
+
+Google can be used as a social authentication as well as an org-based authentication
+method. See the [Google](#google-gsuite) section above for configuration details.
+ 
+#### Microsoft
+
+The two environment variables `MICROSOFT_KEY` and `MICROSOFT_SECRET` will need 
+to be set for a Microsoft developer account. 
+
+#### LinkedIn
+
+The two environment variables `LINKED_IN_KEY` and `LINKED_IN_SECRET` will need to be 
+set for the appropriate LinkedIn oauth developer account. 
+
+#### Twitter (Dicey Auth Option)
 
 The two environment variables `TWITTER_KEY` and `TWITTER_SECRET` will need to be 
 set for the appropriate LinkedIn oauth developer account. 

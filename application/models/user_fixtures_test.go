@@ -234,8 +234,7 @@ func createFixturesForTestUserSave(ms *ModelSuite) UserPostFixtures {
 	}
 }
 
-func CreateUserFixturesForNicknames(ms *ModelSuite, t *testing.T) User {
-	prefix := allPrefixes()[0]
+func CreateUserFixturesForNicknames(ms *ModelSuite, t *testing.T, prefix string) User {
 
 	// Load User test fixtures
 	user := User{
