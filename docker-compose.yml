@@ -9,13 +9,13 @@ services:
       - ./application:/wecarry
       - ./dev:/wecarry/dev
     ports:
-      - "3000:3000"
-      - "6060:6060"
+      - "443:3000"
+      - "6060"
     env_file:
       - ./.env
     environment:
       ADDR: 0.0.0.0
-      HOST: http://wecarry.local:3000
+      HOST: https://local.wecarry.app
       # Needed for Google and AzureAD OAuth locally
       # HOST: http://localhost:3000
       PORT: 3000

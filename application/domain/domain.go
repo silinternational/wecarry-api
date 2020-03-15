@@ -132,6 +132,9 @@ var Env struct {
 	AwsS3SecretAccessKey       string
 	AwsSESAccessKeyID          string
 	AwsSESSecretAccessKey      string
+	CertDomainName             string
+	CloudflareAuthEmail        string
+	CloudflareAuthKey          string
 	EmailService               string
 	EmailFromAddress           string
 	FacebookKey                string
@@ -189,6 +192,9 @@ func readEnv() {
 	Env.AwsS3SecretAccessKey = envy.Get("AWS_S3_SECRET_ACCESS_KEY", "")
 	Env.AwsSESAccessKeyID = envy.Get("AWS_SES_ACCESS_KEY_ID", Env.AwsS3AccessKeyID)
 	Env.AwsSESSecretAccessKey = envy.Get("AWS_SES_SECRET_ACCESS_KEY", Env.AwsS3SecretAccessKey)
+	Env.CertDomainName = envy.Get("CERT_DOMAIN_NAME", "")
+	Env.CloudflareAuthEmail = envy.Get("CLOUDFLARE_AUTH_EMAIL", "")
+	Env.CloudflareAuthKey = envy.Get("CLOUDFLARE_AUTH_KEY", "")
 	Env.EmailService = envy.Get("EMAIL_SERVICE", "sendgrid")
 	Env.EmailFromAddress = envy.Get("EMAIL_FROM_ADDRESS", "no_reply@example.com")
 	Env.FacebookKey = envy.Get("FACEBOOK_KEY", "")
