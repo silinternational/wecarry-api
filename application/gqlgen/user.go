@@ -125,6 +125,21 @@ func (r *userResolver) UnreadMessageCount(ctx context.Context, obj *models.User)
 	return total, nil
 }
 
+// Preferences resolves the `preferences` property of the user query, retrieving the related records from the database
+// and using them to hydrate a StandardPreferences struct.
+func (r *userResolver) Preferences(ctx context.Context, obj *models.User) (*models.StandardPreferences, error) {
+	if obj == nil {
+		return nil, nil
+	}
+
+	standardPrefs, err := obj.GetPreferences()
+	if err != nil {
+		return nil, domain.ReportError(ctx, err, "GetUserPreferences")
+	}
+
+	return &standardPrefs, nil
+}
+
 // Users retrieves a list of users
 func (r *queryResolver) Users(ctx context.Context) ([]models.User, error) {
 	currentUser := models.CurrentUser(ctx)
@@ -238,21 +253,6 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 	}
 
 	return &user, nil
-}
-
-// Preferences resolves the `preferences` property of the user query, retrieving the related records from the database
-// and using them to hydrate a StandardPreferences struct.
-func (r *userResolver) Preferences(ctx context.Context, obj *models.User) (*models.StandardPreferences, error) {
-	if obj == nil {
-		return nil, nil
-	}
-
-	standardPrefs, err := obj.GetPreferences()
-	if err != nil {
-		return nil, domain.ReportError(ctx, err, "GetUserPreferences")
-	}
-
-	return &standardPrefs, nil
 }
 
 // getPublicProfiles converts a list of models.User to PublicProfile, hiding private profile information
