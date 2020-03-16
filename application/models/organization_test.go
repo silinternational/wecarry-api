@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/gobuffalo/nulls"
-	"github.com/gofrs/uuid"
 
 	"github.com/silinternational/wecarry-api/auth/azureadv2"
 	"github.com/silinternational/wecarry-api/auth/google"
@@ -80,7 +79,7 @@ func (ms *ModelSuite) TestOrganization_Create() {
 				AuthType:   AuthTypeSaml,
 				AuthConfig: "{}",
 				Url:        nulls.NewString("https://www.example.com"),
-				LogoFileID: nulls.NewInt(file.ID),
+				FileID:     nulls.NewInt(file.ID),
 			},
 			wantErr: false,
 		},
@@ -308,7 +307,7 @@ func (ms *ModelSuite) TestOrganization_Save() {
 		Url:        nulls.String{},
 		AuthType:   AuthTypeSaml,
 		AuthConfig: "{}",
-		LogoFileID: nulls.NewInt(file.ID),
+		FileID:     nulls.NewInt(file.ID),
 	}
 
 	err = newOrg.Save()
@@ -441,7 +440,7 @@ func (ms *ModelSuite) TestOrganization_LogoURL() {
 
 	orgFixtures := createOrganizationFixtures(ms.DB, 1)
 	var file File
-	ms.NoError(ms.DB.Find(&file, orgFixtures[0].LogoFileID.Int))
+	ms.NoError(ms.DB.Find(&file, orgFixtures[0].FileID.Int))
 	logoURL := file.URL
 
 	tests := []struct {
@@ -452,7 +451,7 @@ func (ms *ModelSuite) TestOrganization_LogoURL() {
 		wantErr string
 	}{
 		{name: "good", org: orgFixtures[0], want: logoURL},
-		{name: "bad", org: Organization{LogoFileID: nulls.NewInt(1)}, wantErr: "no rows in result set"},
+		{name: "bad", org: Organization{FileID: nulls.NewInt(1)}, wantErr: "no rows in result set"},
 		{name: "no file", org: Organization{}, wantNil: true},
 	}
 	for _, tt := range tests {
@@ -585,58 +584,6 @@ func (ms *ModelSuite) TestOrganization_TrustedOrganizations() {
 			}
 			for i := range tt.want {
 				ms.Contains(ids, tt.want[i], "didn't get expected org in trusted list")
-			}
-		})
-	}
-}
-
-func (ms *ModelSuite) TestOrganization_AttachLogo() {
-	orgs := createOrganizationFixtures(ms.DB, 3)
-	files := createFileFixtures(3)
-	orgs[1].LogoFileID = nulls.NewInt(files[0].ID)
-	ms.NoError(ms.DB.UpdateColumns(&orgs[1], "logo_file_id"))
-
-	tests := []struct {
-		name    string
-		org     Organization
-		oldLogo *File
-		newLogo string
-		want    File
-		wantErr string
-	}{
-		{
-			name:    "no previous file",
-			org:     orgs[0],
-			newLogo: files[1].UUID.String(),
-			want:    files[1],
-		},
-		{
-			name:    "previous file",
-			org:     orgs[1],
-			oldLogo: &files[0],
-			newLogo: files[2].UUID.String(),
-			want:    files[2],
-		},
-		{
-			name:    "bad ID",
-			org:     orgs[2],
-			newLogo: uuid.UUID{}.String(),
-			wantErr: "no rows in result set",
-		},
-	}
-	for _, tt := range tests {
-		ms.T().Run(tt.name, func(t *testing.T) {
-			got, err := tt.org.AttachLogo(tt.newLogo)
-			if tt.wantErr != "" {
-				ms.Error(err, "did not get expected error")
-				ms.Contains(err.Error(), tt.wantErr)
-				return
-			}
-			ms.NoError(err, "unexpected error")
-			ms.Equal(tt.want.UUID.String(), got.UUID.String(), "wrong file returned")
-			ms.Equal(true, got.Linked, "new logo file is not marked as linked")
-			if tt.oldLogo != nil {
-				ms.Equal(false, tt.oldLogo.Linked, "old logo file is not marked as unlinked")
 			}
 		})
 	}

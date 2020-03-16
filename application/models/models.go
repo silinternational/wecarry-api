@@ -162,7 +162,7 @@ func emitEvent(e events.Event) {
 }
 
 func create(m interface{}) error {
-	uuidField := reflect.ValueOf(m).Elem().FieldByName("UUID")
+	uuidField := fieldByName(m, "UUID")
 	if uuidField.IsValid() && uuidField.Interface().(uuid.UUID).Version() == 0 {
 		uuidField.Set(reflect.ValueOf(domain.GetUUID()))
 	}
@@ -191,7 +191,7 @@ func update(m interface{}) error {
 }
 
 func save(m interface{}) error {
-	uuidField := reflect.ValueOf(m).Elem().FieldByName("UUID")
+	uuidField := fieldByName(m, "UUID")
 	if uuidField.IsValid() && uuidField.Interface().(uuid.UUID).Version() == 0 {
 		uuidField.Set(reflect.ValueOf(domain.GetUUID()))
 	}
@@ -227,4 +227,80 @@ func gravatarURL(email string) string {
 	hash := md5.Sum([]byte(strings.ToLower(strings.TrimSpace(email))))
 	url := fmt.Sprintf("https://www.gravatar.com/avatar/%x.jpg?s=200&d=mp", hash)
 	return url
+}
+
+func addFile(m interface{}, fileID string) (File, error) {
+	var f File
+
+	if err := f.FindByUUID(fileID); err != nil {
+		return f, err
+	}
+
+	fileField := fieldByName(m, "FileID")
+	if !fileField.IsValid() {
+		return f, errors.New("error identifying FileID field")
+	}
+
+	oldID := fileField.Interface().(nulls.Int)
+	fileField.Set(reflect.ValueOf(nulls.NewInt(f.ID)))
+	idField := fieldByName(m, "ID")
+	if !idField.IsValid() {
+		return f, errors.New("error identifying ID field")
+	}
+	if idField.Interface().(int) > 0 {
+		if err := DB.UpdateColumns(m, "file_id"); err != nil {
+			return f, fmt.Errorf("failed to update the file_id column, %s", err)
+		}
+	}
+
+	if err := f.SetLinked(); err != nil {
+		domain.ErrLogger.Printf("error marking file %d as linked, %s", f.ID, err)
+	}
+
+	if !oldID.Valid {
+		return f, nil
+	}
+
+	oldFile := File{ID: oldID.Int}
+	if err := oldFile.ClearLinked(); err != nil {
+		domain.ErrLogger.Printf("error marking old file %d as unlinked, %s", oldFile.ID, err)
+	}
+
+	return f, nil
+}
+
+func removeFile(m interface{}) error {
+	idField := fieldByName(m, "ID")
+	if !idField.IsValid() {
+		return errors.New("error identifying ID field")
+	}
+
+	if idField.Interface().(int) < 1 {
+		return fmt.Errorf("invalid ID %d", idField.Interface().(int))
+	}
+
+	imageField := fieldByName(m, "FileID")
+	if !imageField.IsValid() {
+		return errors.New("error identifying FileID field")
+	}
+
+	oldID := imageField.Interface().(nulls.Int)
+	imageField.Set(reflect.ValueOf(nulls.Int{}))
+	if err := DB.UpdateColumns(m, "file_id"); err != nil {
+		return fmt.Errorf("failed to update file_id column, %s", err)
+	}
+
+	if !oldID.Valid {
+		return nil
+	}
+
+	oldFile := File{ID: oldID.Int}
+	if err := oldFile.ClearLinked(); err != nil {
+		domain.ErrLogger.Printf("error marking old meeting file %d as unlinked, %s", oldFile.ID, err)
+	}
+	return nil
+}
+
+func fieldByName(i interface{}, name string) reflect.Value {
+	return reflect.ValueOf(i).Elem().FieldByName(name)
 }

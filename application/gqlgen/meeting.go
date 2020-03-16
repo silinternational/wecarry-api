@@ -2,11 +2,8 @@ package gqlgen
 
 import (
 	"context"
+	"fmt"
 	"time"
-
-	"github.com/99designs/gqlgen/graphql"
-	"github.com/gobuffalo/nulls"
-	"github.com/vektah/gqlparser/gqlerror"
 
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
@@ -137,7 +134,7 @@ func (r *meetingResolver) Participants(ctx context.Context, obj *models.Meeting)
 }
 
 func (r *meetingResolver) Visibility(ctx context.Context, obj *models.Meeting) (MeetingVisibility, error) {
-	return MeetingVisibilityInviteOnly, nil
+	return MeetingVisibilityAll, nil
 }
 
 func (r *meetingResolver) Organizers(ctx context.Context, obj *models.Meeting) ([]PublicProfile, error) {
@@ -204,14 +201,8 @@ func convertGqlMeetingInputToDBMeeting(ctx context.Context, input meetingInput, 
 	}
 
 	setStringField(input.Name, &meeting.Name)
-
-	if input.Description != nil {
-		meeting.Description = nulls.NewString(*input.Description)
-	}
-
-	if input.MoreInfoURL != nil {
-		meeting.MoreInfoURL = nulls.NewString(*input.MoreInfoURL)
-	}
+	meeting.Description = models.ConvertStringPtrToNullsString(input.Description)
+	meeting.MoreInfoURL = models.ConvertStringPtrToNullsString(input.MoreInfoURL)
 
 	if input.StartDate != nil {
 		startTime, err := domain.ConvertStringPtrToDate(input.StartDate)
@@ -229,10 +220,15 @@ func convertGqlMeetingInputToDBMeeting(ctx context.Context, input meetingInput, 
 		meeting.EndDate = endTime
 	}
 
+	var err error
 	if input.ImageFileID != nil {
-		if _, err := meeting.SetImageFile(*input.ImageFileID); err != nil {
-			graphql.AddError(ctx, gqlerror.Errorf("Error attaching image file to Meeting, %s", err.Error()))
-		}
+		_, err = meeting.SetImageFile(*input.ImageFileID)
+	} else if meeting.ID > 0 {
+		err = meeting.RemoveFile()
+	}
+	if err != nil {
+		return meeting, domain.ReportError(ctx, fmt.Errorf("error updating meeting image file, %s",
+			err.Error()), "Meeting.UpdateImageFile")
 	}
 
 	return meeting, nil

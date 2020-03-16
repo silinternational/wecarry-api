@@ -31,6 +31,8 @@
   translation: We had a problem finding the invites for the event
 - id: Meeting.Participants
   translation: We had a problem finding the participants for the event
+- id: Meeting.UpdateImageFile
+  translation: We had a problem updating the event logo
 
 # MeetingInvite
 - id: CreateMeetingInvite.FindMeeting
@@ -105,6 +107,8 @@
   translation: You are not allowed to edit information for that organization.
 - id: UpdateOrganization.LogoFileNotFound
   translation: We had a problem finding the logo file for that organization.
+- id: UpdateOrganization.RemoveLogo
+  translation: We had a problem removing the logo file for that organization.
 - id: GetOrganizationLogoURL
   translation: We had a problem getting the logo for that organization.
 - id: ViewOrganization.NotFound

@@ -60,13 +60,13 @@ type User struct {
 	AdminRole          UserAdminRole     `json:"admin_role" db:"admin_role"`
 	UUID               uuid.UUID         `json:"uuid" db:"uuid"`
 	SocialAuthProvider nulls.String      `json:"social_auth_provider" db:"social_auth_provider"`
-	PhotoFileID        nulls.Int         `json:"photo_file_id" db:"photo_file_id"`
+	FileID             nulls.Int         `json:"file_id" db:"file_id"`
 	AuthPhotoURL       nulls.String      `json:"auth_photo_url" db:"auth_photo_url"`
 	LocationID         nulls.Int         `json:"location_id" db:"location_id"`
 	Organizations      Organizations     `many_to_many:"user_organizations" order_by:"name asc" json:"-"`
 	UserOrganizations  UserOrganizations `has_many:"user_organizations" json:"-"`
 	UserPreferences    UserPreferences   `has_many:"user_preferences" json:"-"`
-	PhotoFile          File              `belongs_to:"files"`
+	PhotoFile          File              `belongs_to:"files" fk_id:"FileID"`
 	Location           Location          `belongs_to:"locations"`
 }
 
@@ -465,56 +465,12 @@ func (u *User) Posts(postRole string) ([]Post, error) {
 
 // AttachPhoto assigns a previously-stored File to this User as a profile photo
 func (u *User) AttachPhoto(fileID string) (File, error) {
-	if u.ID < 1 {
-		return File{}, fmt.Errorf("invalid User ID %d", u.ID)
-	}
-
-	var f File
-	if err := f.FindByUUID(fileID); err != nil {
-		return f, err
-	}
-
-	oldID := u.PhotoFileID
-	u.PhotoFileID = nulls.NewInt(f.ID)
-	if err := DB.UpdateColumns(u, "photo_file_id"); err != nil {
-		return f, err
-	}
-
-	if err := f.SetLinked(); err != nil {
-		domain.ErrLogger.Printf("error marking user photo file %d as linked, %s", f.ID, err)
-	}
-
-	if oldID.Valid {
-		oldFile := File{ID: oldID.Int}
-		if err := oldFile.ClearLinked(); err != nil {
-			domain.ErrLogger.Printf("error marking old user photo file %d as unlinked, %s", oldFile.ID, err)
-		}
-	}
-
-	return f, nil
+	return addFile(u, fileID)
 }
 
-// RemovePhoto removes an attached photo from the User profile
-func (u *User) RemovePhoto() error {
-	if u.ID < 1 {
-		return fmt.Errorf("invalid User ID %d", u.ID)
-	}
-
-	oldID := u.PhotoFileID
-	u.PhotoFileID = nulls.Int{}
-	if err := DB.UpdateColumns(u, "photo_file_id"); err != nil {
-		return err
-	}
-
-	if !oldID.Valid {
-		return nil
-	}
-
-	oldFile := File{ID: oldID.Int}
-	if err := oldFile.ClearLinked(); err != nil {
-		domain.ErrLogger.Printf("error marking old user photo file %d as unlinked, %s", oldFile.ID, err)
-	}
-	return nil
+// RemoveFile removes an attached file from the User profile
+func (u *User) RemoveFile() error {
+	return removeFile(u)
 }
 
 // GetPhotoID retrieves the UUID of the User's photo file
@@ -522,7 +478,7 @@ func (u *User) GetPhotoID() (*string, error) {
 	if err := DB.Load(u, "PhotoFile"); err != nil {
 		return nil, err
 	}
-	if u.PhotoFileID.Valid {
+	if u.FileID.Valid {
 		photoID := u.PhotoFile.UUID.String()
 		return &photoID, nil
 	}
@@ -536,7 +492,7 @@ func (u *User) GetPhotoURL() (*string, error) {
 		return nil, err
 	}
 
-	if !u.PhotoFileID.Valid {
+	if !u.FileID.Valid {
 		if u.AuthPhotoURL.Valid {
 			return &u.AuthPhotoURL.String, nil
 		}

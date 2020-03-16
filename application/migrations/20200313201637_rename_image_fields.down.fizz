@@ -1,0 +1,4 @@
+rename_column("users", "file_id", "photo_file_id")
+rename_column("organizations", "file_id", "logo_file_id")
+rename_column("posts", "file_id", "photo_file_id")
+rename_column("meetings", "file_id", "image_file_id")

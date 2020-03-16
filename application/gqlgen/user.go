@@ -81,7 +81,7 @@ func (r *userResolver) PhotoID(ctx context.Context, obj *models.User) (*string, 
 		return nil, nil
 	}
 
-	if !obj.PhotoFileID.Valid {
+	if !obj.FileID.Valid {
 		return nil, nil
 	}
 
@@ -197,7 +197,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 
 	var err error
 	if input.PhotoID == nil {
-		err = user.RemovePhoto()
+		err = user.RemoveFile()
 	} else {
 		_, err = user.AttachPhoto(*input.PhotoID)
 	}
