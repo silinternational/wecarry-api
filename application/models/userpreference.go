@@ -187,11 +187,7 @@ func updateUsersStandardPreferences(user User, prefs StandardPreferences) error 
 
 func (p *UserPreference) remove(user User, key string) error {
 	if err := p.getForUser(user, key); err != nil {
-		if domain.IsOtherThanNoRows(err) {
-			return err
-		}
-		return nil
+		return err
 	}
-
 	return DB.Destroy(p)
 }
