@@ -245,12 +245,10 @@ func (as *ActionSuite) TestUpdateUser() {
 				as.Equal("Paris, France", resp.User.Location.Description, "incorrect location")
 				as.Equal("FR", resp.User.Location.Country, "incorrect country")
 
-				as.Equal(strings.ToUpper(f.UserPreferences[0].Value), *resp.User.Preferences.Language,
-					"incorrect preference - language")
 				as.Equal(strings.ToUpper(domain.UserPreferenceWeightUnitKGs), *resp.User.Preferences.WeightUnit,
 					"incorrect preference - weightUnit")
-				as.Equal("America/New_York", *resp.User.Preferences.TimeZone,
-					"incorrect preference - timeZone")
+				as.Equal(strings.ToUpper(""), *resp.User.Preferences.Language, "incorrect preference - language")
+				as.Equal("", *resp.User.Preferences.TimeZone, "incorrect preference - timeZone")
 			},
 		},
 		{
