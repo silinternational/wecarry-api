@@ -248,7 +248,7 @@ func (ms *ModelSuite) TestThread_CreateWithParticipants() {
 	post := posts[0]
 
 	var thread Thread
-	if err := thread.CreateWithParticipants(post.UUID.String(), users[1]); err != nil {
+	if err := thread.CreateWithParticipants(post, users[1]); err != nil {
 		t.Errorf("TestThread_CreateWithParticipants() error = %v", err)
 		t.FailNow()
 	}
@@ -472,6 +472,52 @@ func (ms *ModelSuite) TestThread_UnreadMessageCount() {
 
 			ms.NoError(err)
 			ms.Equal(test.want, got)
+		})
+	}
+}
+
+func (ms *ModelSuite) TestThread_IsVisible() {
+	t := ms.T()
+
+	post := createPostFixtures(ms.DB, 1, false)[0]
+	f := CreateThreadFixtures(ms, post)
+
+	tests := []struct {
+		name   string
+		thread Thread
+		user   User
+		want   bool
+	}{
+		{
+			name:   "bad thread",
+			thread: Thread{},
+			user:   f.Users[0],
+			want:   false,
+		},
+		{
+			name:   "bad user",
+			thread: f.Threads[1],
+			user:   User{},
+			want:   false,
+		},
+		{
+			name:   "no",
+			thread: f.Threads[0],
+			user:   f.Users[0],
+			want:   false,
+		},
+		{
+			name:   "yes",
+			thread: f.Threads[1],
+			user:   f.Users[0],
+			want:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.thread.IsVisible(tt.user.ID)
+			ms.Equal(tt.want, got)
 		})
 	}
 }

@@ -251,7 +251,7 @@ func (as *ActionSuite) Test_CreateMeeting() {
 	as.Equal("2025-03-21", gotMtg.EndDate,
 		"incorrect meeting EndDate")
 
-	as.Equal(f.File.UUID.String(), gotMtg.ImageFile.ID, "incorrect ImageFileID")
+	as.Equal(f.File.UUID.String(), gotMtg.ImageFile.ID, "incorrect FileID")
 
 	as.Equal("dc", gotMtg.Location.Country, "incorrect meeting Location.Country")
 }

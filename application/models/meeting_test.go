@@ -346,58 +346,6 @@ func (ms *ModelSuite) TestMeeting_FindByInviteCode() {
 	}
 }
 
-func (ms *ModelSuite) TestMeeting_SetImageFile() {
-	meetings := createMeetingFixtures(ms.DB, 3).Meetings
-	files := createFileFixtures(3)
-	meetings[1].ImageFileID = nulls.NewInt(files[0].ID)
-	ms.NoError(ms.DB.UpdateColumns(&meetings[1], "image_file_id"))
-
-	tests := []struct {
-		name     string
-		meeting  Meeting
-		oldImage *File
-		newImage string
-		want     File
-		wantErr  string
-	}{
-		{
-			name:     "no previous file",
-			meeting:  meetings[0],
-			newImage: files[1].UUID.String(),
-			want:     files[1],
-		},
-		{
-			name:     "previous file",
-			meeting:  meetings[1],
-			oldImage: &files[0],
-			newImage: files[2].UUID.String(),
-			want:     files[2],
-		},
-		{
-			name:     "bad ID",
-			meeting:  meetings[2],
-			newImage: uuid.UUID{}.String(),
-			wantErr:  "no rows in result set",
-		},
-	}
-	for _, tt := range tests {
-		ms.T().Run(tt.name, func(t *testing.T) {
-			got, err := tt.meeting.SetImageFile(tt.newImage)
-			if tt.wantErr != "" {
-				ms.Error(err, "did not get expected error")
-				ms.Contains(err.Error(), tt.wantErr)
-				return
-			}
-			ms.NoError(err, "unexpected error")
-			ms.Equal(tt.want.UUID.String(), got.UUID.String(), "wrong file returned")
-			ms.Equal(true, got.Linked, "new image file is not marked as linked")
-			if tt.oldImage != nil {
-				ms.Equal(false, tt.oldImage.Linked, "old image file is not marked as unlinked")
-			}
-		})
-	}
-}
-
 func (ms *ModelSuite) TestMeeting_ImageFile() {
 	user := User{}
 	createFixture(ms, &user)
@@ -580,11 +528,7 @@ func (ms *ModelSuite) TestMeeting_Invites() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			ctx := &testBuffaloContext{
-				params: map[interface{}]interface{}{},
-			}
-			ctx.Set("current_user", tt.user)
-			got, err := tt.meeting.Invites(ctx)
+			got, err := tt.meeting.Invites(createTestContext(tt.user))
 			if tt.wantErr != "" {
 				ms.Error(err, "did not get expected error")
 				ms.Contains(err.Error(), tt.wantErr)
@@ -634,11 +578,7 @@ func (ms *ModelSuite) TestMeeting_Participants() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			ctx := &testBuffaloContext{
-				params: map[interface{}]interface{}{},
-			}
-			ctx.Set("current_user", tt.user)
-			got, err := tt.meeting.Participants(ctx)
+			got, err := tt.meeting.Participants(createTestContext(tt.user))
 			if tt.wantErr != "" {
 				ms.Error(err, "did not get expected error")
 				ms.Contains(err.Error(), tt.wantErr)
@@ -688,11 +628,7 @@ func (ms *ModelSuite) TestMeeting_Organizers() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			ctx := &testBuffaloContext{
-				params: map[interface{}]interface{}{},
-			}
-			ctx.Set("current_user", tt.user)
-			got, err := tt.meeting.Organizers(ctx)
+			got, err := tt.meeting.Organizers(createTestContext(tt.user))
 			if tt.wantErr != "" {
 				ms.Error(err, "did not get expected error")
 				ms.Contains(err.Error(), tt.wantErr)
@@ -747,10 +683,7 @@ func (ms *ModelSuite) TestMeeting_RemoveInvite() {
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
 			// setup
-			ctx := &testBuffaloContext{
-				params: map[interface{}]interface{}{},
-			}
-			ctx.Set("current_user", tt.user)
+			ctx := createTestContext(tt.user)
 
 			// execute
 			err := tt.meeting.RemoveInvite(ctx, tt.email)
@@ -807,10 +740,7 @@ func (ms *ModelSuite) TestMeeting_RemoveParticipant() {
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
 			// setup
-			ctx := &testBuffaloContext{
-				params: map[interface{}]interface{}{},
-			}
-			ctx.Set("current_user", tt.testUser)
+			ctx := createTestContext(tt.testUser)
 
 			// execute
 			err := tt.meeting.RemoveParticipant(ctx, tt.user.UUID.String())
@@ -909,11 +839,7 @@ func (ms *ModelSuite) TestMeeting_isOrganizer() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			ctx := &testBuffaloContext{
-				params: map[interface{}]interface{}{},
-			}
-			ctx.Set("current_user", tt.user)
-			got := tt.meeting.isOrganizer(ctx, tt.user.ID)
+			got := tt.meeting.isOrganizer(createTestContext(tt.user), tt.user.ID)
 			ms.Equal(tt.want, got)
 		})
 	}

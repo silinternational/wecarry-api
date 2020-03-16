@@ -107,6 +107,33 @@ func (ms *ModelSuite) TestPost_Validate() {
 			wantErr:  true,
 			errField: "uuid",
 		},
+		{
+			name: "bad neededBefore (today)",
+			post: Post{
+				CreatedByID:    1,
+				OrganizationID: 1,
+				Title:          "A Request",
+				NeededBefore:   nulls.NewTime(time.Now()),
+				Size:           PostSizeMedium,
+				Status:         PostStatusOpen,
+				UUID:           domain.GetUUID(),
+			},
+			wantErr:  true,
+			errField: "needed_before",
+		},
+		{
+			name: "good neededBefore (tomorrow)",
+			post: Post{
+				CreatedByID:    1,
+				OrganizationID: 1,
+				Title:          "A Request",
+				NeededBefore:   nulls.NewTime(time.Now().Add(domain.DurationDay)),
+				Size:           PostSizeMedium,
+				Status:         PostStatusOpen,
+				UUID:           domain.GetUUID(),
+			},
+			wantErr: false,
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -210,33 +237,6 @@ func (ms *ModelSuite) TestPost_ValidateCreate() {
 			},
 			wantErr:  true,
 			errField: "create_status",
-		},
-		{
-			name: "bad neededBefore (today)",
-			post: Post{
-				CreatedByID:    1,
-				OrganizationID: 1,
-				Title:          "A Request",
-				NeededBefore:   nulls.NewTime(time.Now()),
-				Size:           PostSizeMedium,
-				Status:         PostStatusOpen,
-				UUID:           domain.GetUUID(),
-			},
-			wantErr:  true,
-			errField: "needed_before",
-		},
-		{
-			name: "good neededBefore (tommorrow)",
-			post: Post{
-				CreatedByID:    1,
-				OrganizationID: 1,
-				Title:          "A Request",
-				NeededBefore:   nulls.NewTime(time.Now().Add(domain.DurationDay)),
-				Size:           PostSizeMedium,
-				Status:         PostStatusOpen,
-				UUID:           domain.GetUUID(),
-			},
-			wantErr: false,
 		},
 	}
 	for _, test := range tests {
@@ -1229,103 +1229,6 @@ func (ms *ModelSuite) TestPost_GetFiles() {
 	ms.Equal(expectedFilenames, receivedFilenames, "incorrect list of files")
 }
 
-func (ms *ModelSuite) TestPost_AttachPhoto() {
-	posts := createPostFixtures(ms.DB, 3, false)
-
-	files := createFileFixtures(3)
-	posts[1].PhotoFileID = nulls.NewInt(files[0].ID)
-	ms.NoError(ms.DB.UpdateColumns(&posts[1], "photo_file_id"))
-
-	tests := []struct {
-		name     string
-		post     Post
-		oldImage *File
-		newImage string
-		want     File
-		wantErr  string
-	}{
-		{
-			name:     "no previous file",
-			post:     posts[0],
-			newImage: files[1].UUID.String(),
-			want:     files[1],
-		},
-		{
-			name:     "previous file",
-			post:     posts[1],
-			oldImage: &files[0],
-			newImage: files[2].UUID.String(),
-			want:     files[2],
-		},
-		{
-			name:     "bad ID",
-			post:     posts[2],
-			newImage: uuid.UUID{}.String(),
-			wantErr:  "no rows in result set",
-		},
-	}
-	for _, tt := range tests {
-		ms.T().Run(tt.name, func(t *testing.T) {
-			got, err := tt.post.AttachPhoto(tt.newImage)
-			if tt.wantErr != "" {
-				ms.Error(err, "did not get expected error")
-				ms.Contains(err.Error(), tt.wantErr)
-				return
-			}
-			ms.NoError(err, "unexpected error")
-			ms.Equal(tt.want.UUID.String(), got.UUID.String(), "wrong file returned")
-			ms.Equal(true, got.Linked, "new post photo file is not marked as linked")
-			if tt.oldImage != nil {
-				ms.Equal(false, tt.oldImage.Linked, "old post photo file is not marked as unlinked")
-			}
-		})
-	}
-}
-
-func (ms *ModelSuite) TestPost_RemovePhoto() {
-	posts := createPostFixtures(ms.DB, 3, false)
-
-	files := createFileFixtures(3)
-	posts[1].PhotoFileID = nulls.NewInt(files[0].ID)
-	ms.NoError(ms.DB.UpdateColumns(&posts[1], "photo_file_id"))
-
-	tests := []struct {
-		name     string
-		post     Post
-		oldImage *File
-		wantErr  string
-	}{
-		{
-			name: "no previous file",
-			post: posts[0],
-		},
-		{
-			name:     "previous file",
-			post:     posts[1],
-			oldImage: &files[0],
-		},
-		{
-			name:    "bad ID",
-			post:    Post{},
-			wantErr: "invalid Post ID",
-		},
-	}
-	for _, tt := range tests {
-		ms.T().Run(tt.name, func(t *testing.T) {
-			err := tt.post.RemovePhoto()
-			if tt.wantErr != "" {
-				ms.Error(err, "did not get expected error")
-				ms.Contains(err.Error(), tt.wantErr)
-				return
-			}
-			ms.NoError(err, "unexpected error")
-			if tt.oldImage != nil {
-				ms.Equal(false, tt.oldImage.Linked, "old post photo file is not marked as unlinked")
-			}
-		})
-	}
-}
-
 // TestPost_GetPhoto tests the GetPhoto method of models.Post
 func (ms *ModelSuite) TestPost_GetPhotoID() {
 	posts := createPostFixtures(ms.DB, 1, false)
@@ -1379,41 +1282,41 @@ func (ms *ModelSuite) TestPost_GetPhoto() {
 	}
 }
 
-func (ms *ModelSuite) TestPost_FindByUserAndUUID() {
-	t := ms.T()
-	f := createFixturesForPostFindByUserAndUUID(ms)
-
-	tests := []struct {
-		name    string
-		user    User
-		post    Post
-		wantErr string
-	}{
-		{name: "user 0, post 0", user: f.Users[0], post: f.Posts[0]},
-		{name: "user 0, post 1", user: f.Users[0], post: f.Posts[1]},
-		{name: "user 0, post 2 Removed", user: f.Users[0], post: f.Posts[2], wantErr: "no rows in result set"},
-		{name: "user 1, post 0", user: f.Users[1], post: f.Posts[0]},
-		{name: "user 1, post 1", user: f.Users[1], post: f.Posts[1], wantErr: "no rows in result set"},
-		{name: "non-existent user", post: f.Posts[1], wantErr: "no rows in result set"},
-		{name: "non-existent post", user: f.Users[1], wantErr: "no rows in result set"},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			var post Post
-			var c context.Context
-			err := post.FindByUserAndUUID(c, test.user, test.post.UUID.String())
-
-			if test.wantErr != "" {
-				ms.Error(err)
-				ms.Contains(err.Error(), test.wantErr, "unexpected error")
-				return
-			}
-
-			ms.NoError(err)
-			ms.Equal(test.post.ID, post.ID)
-		})
-	}
-}
+//func (ms *ModelSuite) TestPost_FindByUserAndUUID() {
+//	t := ms.T()
+//	f := createFixturesForPostFindByUserAndUUID(ms)
+//
+//	tests := []struct {
+//		name    string
+//		user    User
+//		post    Post
+//		wantErr string
+//	}{
+//		{name: "user 0, post 0", user: f.Users[0], post: f.Posts[0]},
+//		{name: "user 0, post 1", user: f.Users[0], post: f.Posts[1]},
+//		{name: "user 0, post 2 Removed", user: f.Users[0], post: f.Posts[2], wantErr: "no rows in result set"},
+//		{name: "user 1, post 0", user: f.Users[1], post: f.Posts[0]},
+//		{name: "user 1, post 1", user: f.Users[1], post: f.Posts[1], wantErr: "no rows in result set"},
+//		{name: "non-existent user", post: f.Posts[1], wantErr: "no rows in result set"},
+//		{name: "non-existent post", user: f.Users[1], wantErr: "no rows in result set"},
+//	}
+//	for _, test := range tests {
+//		t.Run(test.name, func(t *testing.T) {
+//			var post Post
+//			var c context.Context
+//			err := post.FindByUserAndUUID(c, test.user, test.post.UUID.String())
+//
+//			if test.wantErr != "" {
+//				ms.Error(err)
+//				ms.Contains(err.Error(), test.wantErr, "unexpected error")
+//				return
+//			}
+//
+//			ms.NoError(err)
+//			ms.Equal(test.post.ID, post.ID)
+//		})
+//	}
+//}
 
 func (ms *ModelSuite) TestPost_GetSetDestination() {
 	t := ms.T()
@@ -1570,6 +1473,7 @@ func (ms *ModelSuite) TestPosts_FindByUser() {
 		user        User
 		dest        *Location
 		orig        *Location
+		postID      *int
 		wantPostIDs []int
 		wantErr     bool
 	}{
@@ -1581,12 +1485,19 @@ func (ms *ModelSuite) TestPosts_FindByUser() {
 		{name: "non-existent user", user: User{}, wantErr: true},
 		{name: "destination", user: f.Users[0], dest: &Location{Country: "AU"}, wantPostIDs: []int{f.Posts[0].ID}},
 		{name: "origin", user: f.Users[0], orig: &Location{Country: "AU"}, wantPostIDs: []int{f.Posts[1].ID}},
+		{name: "user 0, post 1 (visible)", user: f.Users[0], postID: &f.Posts[1].ID, wantPostIDs: []int{f.Posts[1].ID}},
+		{name: "user 0, post 2 (not visible)", user: f.Users[0], postID: &f.Posts[2].ID, wantPostIDs: []int{}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			posts := Posts{}
 			var c context.Context
-			err := posts.FindByUser(c, test.user, test.dest, test.orig, nil)
+			filter := PostFilterParams{
+				Destination: test.dest,
+				Origin:      test.orig,
+				PostID:      test.postID,
+			}
+			err := posts.FindByUser(c, test.user, filter)
 
 			if test.wantErr {
 				ms.Error(err)
@@ -1658,7 +1569,7 @@ func (ms *ModelSuite) TestPosts_FindByUser_SearchText() {
 		t.Run(test.name, func(t *testing.T) {
 			posts := Posts{}
 			var c context.Context
-			err := posts.FindByUser(c, test.user, nil, nil, &test.matchText)
+			err := posts.FindByUser(c, test.user, PostFilterParams{SearchText: &test.matchText})
 
 			if test.wantErr {
 				ms.Error(err)
@@ -1993,6 +1904,32 @@ func (ms *ModelSuite) TestPost_DestroyPotentialProviders() {
 			}
 
 			ms.Equal(test.wantIDs, pIDs)
+		})
+	}
+}
+
+func (ms *ModelSuite) TestPost_IsVisible() {
+	f := CreateFixtures_Posts_FindByUser(ms)
+
+	tests := []struct {
+		name string
+		user User
+		post Post
+		want bool
+	}{
+		{name: "post in same org", user: f.Users[0], post: f.Posts[0], want: true},
+		{name: "COMPLETED post in same org", user: f.Users[0], post: f.Posts[2], want: false},
+		{name: "REMOVED post in same org", user: f.Users[0], post: f.Posts[3], want: false},
+		{name: "post visibility ALL in trusted org", user: f.Users[0], post: f.Posts[5], want: true},
+		{name: "post visibility TRUSTED in trusted org", user: f.Users[0], post: f.Posts[6], want: true},
+		{name: "post visibility SAME in trusted org", user: f.Users[0], post: f.Posts[7], want: false},
+		{name: "bad user", user: User{}, post: f.Posts[5], want: false},
+		{name: "bad post", user: f.Users[0], post: Post{}, want: false},
+	}
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			got := tt.post.IsVisible(createTestContext(tt.user), tt.user)
+			ms.Equal(tt.want, got)
 		})
 	}
 }

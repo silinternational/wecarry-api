@@ -109,7 +109,7 @@ func getSocialAuthProvider(authType string) (auth.Provider, error) {
 }
 
 // Forbidden. Do NOT call this function.  (Only called by init() and a test)
-func getSocialAuthSelectors(authConfigs map[string]SocialAuthConfig) []authSelector {
+func getSocialAuthOptions(authConfigs map[string]SocialAuthConfig) []authOption {
 	// sort the provider types for ease of testing (avoid map's random order)
 	pTypes := []string{}
 	for pt, _ := range authConfigs {
@@ -118,15 +118,15 @@ func getSocialAuthSelectors(authConfigs map[string]SocialAuthConfig) []authSelec
 
 	sort.Strings(pTypes)
 
-	selectors := []authSelector{}
+	options := []authOption{}
 	for _, pt := range pTypes {
-		s := authSelector{
+		s := authOption{
 			Name:        pt,
 			RedirectURL: fmt.Sprintf(AuthSelectPath, domain.Env.ApiBaseURL, AuthTypeParam, pt),
 		}
-		selectors = append(selectors, s)
+		options = append(options, s)
 	}
-	return selectors
+	return options
 }
 
 // For non invite based ... based on a User in the database with a SocialAuthProvider value
@@ -177,7 +177,7 @@ func finishAuthRequestForSocialUser(c buffalo.Context, authEmail string) error {
 // Just get the list of auth/select/... URLS
 func finishInviteBasedSocialAuthRequest(c buffalo.Context, extras map[string]interface{}) error {
 	// Reply with a 200 and leave it to the UI to do the redirect
-	return c.Render(http.StatusOK, render.JSON(socialAuthSelectors))
+	return c.Render(http.StatusOK, render.JSON(socialAuthOptions))
 }
 
 // Redirect user to their selected social auth provider

@@ -73,7 +73,7 @@ type Organization struct {
 	AuthType   AuthType     `json:"auth_type" db:"auth_type"`
 	AuthConfig string       `json:"auth_config" db:"auth_config"`
 	UUID       uuid.UUID    `json:"uuid" db:"uuid"`
-	LogoFileID nulls.Int    `json:"logo_file_id" db:"logo_file_id"`
+	FileID     nulls.Int    `json:"file_id" db:"file_id"`
 	Users      Users        `many_to_many:"user_organizations" order_by:"nickname"`
 }
 
@@ -259,10 +259,10 @@ func scopeUserAdminOrgs(cUser User) pop.ScopeFunc {
 
 // LogoURL retrieves the logo URL from the attached file
 func (o *Organization) LogoURL() (*string, error) {
-	if o.LogoFileID.Valid {
+	if o.FileID.Valid {
 		var file File
-		if err := DB.Find(&file, o.LogoFileID); err != nil {
-			return nil, fmt.Errorf("couldn't find org file %d, %s", o.LogoFileID.Int, err)
+		if err := DB.Find(&file, o.FileID); err != nil {
+			return nil, fmt.Errorf("couldn't find org file %d, %s", o.FileID.Int, err)
 		}
 		if err := file.refreshURL(); err != nil {
 			return nil, fmt.Errorf("error getting logo URL, %s", err)
@@ -320,30 +320,10 @@ func (o *Organization) TrustedOrganizations() (Organizations, error) {
 // AttachLogo assigns a previously-stored File to this Organization as its logo. Parameter `fileID` is the UUID
 // of the file to attach.
 func (o *Organization) AttachLogo(fileID string) (File, error) {
-	var f File
-	if err := f.FindByUUID(fileID); err != nil {
-		err = fmt.Errorf("error finding organization logo with id %s ... %s", fileID, err)
-		return f, err
-	}
+	return addFile(o, fileID)
+}
 
-	oldID := o.LogoFileID
-	o.LogoFileID = nulls.NewInt(f.ID)
-	if o.ID > 0 {
-		if err := DB.UpdateColumns(o, "logo_file_id"); err != nil {
-			return f, err
-		}
-	}
-
-	if err := f.SetLinked(); err != nil {
-		domain.ErrLogger.Printf("error marking org logo file %d as linked, %s", f.ID, err)
-	}
-
-	if oldID.Valid {
-		oldFile := File{ID: oldID.Int}
-		if err := oldFile.ClearLinked(); err != nil {
-			domain.ErrLogger.Printf("error marking old org logo file %d as unlinked, %s", oldFile.ID, err)
-		}
-	}
-
-	return f, nil
+// RemoveFile removes an attached file from the Post
+func (o *Organization) RemoveFile() error {
+	return removeFile(o)
 }

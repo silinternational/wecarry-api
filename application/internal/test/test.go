@@ -135,7 +135,7 @@ func CreatePostFixtures(tx *pop.Connection, n int, createFiles bool) models.Post
 		posts[i].Visibility = models.PostVisibilitySame
 
 		if createFiles {
-			posts[i].PhotoFileID = nulls.NewInt(files[i].ID)
+			posts[i].FileID = nulls.NewInt(files[i].ID)
 		}
 
 		MustCreate(tx, &posts[i])

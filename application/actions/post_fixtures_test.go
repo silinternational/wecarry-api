@@ -147,7 +147,7 @@ func createFixturesForCreatePost(as *ActionSuite) CreatePostFixtures {
 			StartDate:   start,
 			EndDate:     start.Add(time.Duration(rand.Intn(200)) * time.Hour),
 			CreatedByID: userFixtures.Users[0].ID,
-			ImageFileID: nulls.Int{},
+			FileID:      nulls.Int{},
 			LocationID:  meetingLocations[i].ID,
 		}
 		test.MustCreate(as.DB, &meetings[i])

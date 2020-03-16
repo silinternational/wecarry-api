@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 	"github.com/gobuffalo/validate"
 	"github.com/gobuffalo/validate/validators"
 	"github.com/gofrs/uuid"
+
 	"github.com/silinternational/wecarry-api/domain"
 )
 
@@ -72,8 +74,9 @@ func (m *Message) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }
 
-// AfterCreate updates the LastViewedAt value on the associated ThreadParticipant to right now
-// It also ensures the associated ThreadParticipant records exist
+// AfterCreate updates the LastViewedAt value on the associated ThreadParticipant and the UpdatedAt on the Thread to
+// the current time. It also ensures the associated ThreadParticipant records exist, and emits an EventApiMessageCreated
+// event.
 func (m *Message) AfterCreate(tx *pop.Connection) error {
 
 	thread, err := m.GetThread()
@@ -103,6 +106,21 @@ func (m *Message) AfterCreate(tx *pop.Connection) error {
 		return nil
 	}
 
+	// Touch the "updatedAt" field on the thread so thread lists can easily be sorted by last activity
+	if err := DB.Load(m, "Thread"); err == nil {
+		if err = m.Thread.Update(); err != nil {
+			domain.Logger.Print("failed to save thread on message create,", err.Error())
+		}
+	}
+
+	e := events.Event{
+		Kind:    domain.EventApiMessageCreated,
+		Message: "New Message Created",
+		Payload: events.Payload{domain.ArgMessageID: m.ID},
+	}
+
+	emitEvent(e)
+
 	return nil
 }
 
@@ -126,26 +144,43 @@ func (m *Message) GetThread() (*Thread, error) {
 	return &thread, nil
 }
 
-// Create a new message. Sends an `EventApiMessageCreated` event.
-func (m *Message) Create() error {
-	if err := create(m); err != nil {
-		return err
+// Create a new message if authorized.
+func (m *Message) Create(ctx context.Context, postUUID string, threadUUID *string, content string) error {
+	user := CurrentUser(ctx)
+
+	var post Post
+	if err := post.FindByUUID(postUUID); err != nil {
+		return errors.New("failed to find post, " + err.Error())
+	}
+	if !post.IsVisible(ctx, user) {
+		return errors.New("user cannot create a message on post")
 	}
 
-	// Touch the "updatedAt" field on the thread so thread lists can easily be sorted by last activity
-	if err := DB.Load(m, "Thread"); err == nil {
-		if err := m.Thread.Update(); err != nil {
-			domain.Logger.Print("failed to save thread on message create,", err.Error())
+	var thread Thread
+	if threadUUID != nil {
+		err := thread.FindByUUID(*threadUUID)
+		if err != nil {
+			return errors.New("failed to find thread, " + err.Error())
+		}
+		if thread.PostID != post.ID {
+			return errors.New("thread is not valid for post")
+		}
+		if !thread.IsVisible(user.ID) {
+			return errors.New("user cannot create a message on thread")
+		}
+	} else {
+		err := thread.CreateWithParticipants(post, user)
+		if err != nil {
+			return errors.New("failed to create new thread on post, " + err.Error())
 		}
 	}
 
-	e := events.Event{
-		Kind:    domain.EventApiMessageCreated,
-		Message: "New Message Created",
-		Payload: events.Payload{domain.ArgMessageID: m.ID},
+	m.Content = content
+	m.ThreadID = thread.ID
+	m.SentByID = user.ID
+	if err := create(m); err != nil {
+		return errors.New("failed to create new message, " + err.Error())
 	}
-
-	emitEvent(e)
 
 	return nil
 }

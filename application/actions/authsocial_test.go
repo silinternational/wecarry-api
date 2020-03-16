@@ -96,7 +96,7 @@ func (ts *TestSuite) Test_GetSocialAuthProvider() {
 	ts.IsType(&facebook.Provider{}, got, "auth provider not expected facebook type")
 }
 
-func (ts *TestSuite) Test_getSocialAuthSelectors() {
+func (ts *TestSuite) Test_getSocialAuthOptions() {
 	fbKey := "testFBKey"
 	fbSecret := "testFBSecret"
 
@@ -117,9 +117,9 @@ func (ts *TestSuite) Test_getSocialAuthSelectors() {
 
 	domain.Env.ApiBaseURL = "http://wecarry.local:3000"
 	configs := getSocialAuthConfigs()
-	got := getSocialAuthSelectors(configs)
+	got := getSocialAuthOptions(configs)
 
-	want := []authSelector{
+	want := []authOption{
 		{
 			Name:        AuthTypeFacebook,
 			RedirectURL: fmt.Sprintf("%s/auth/select/?%s=%s", domain.Env.ApiBaseURL, AuthTypeParam, AuthTypeFacebook),
@@ -130,7 +130,7 @@ func (ts *TestSuite) Test_getSocialAuthSelectors() {
 		},
 		// Others won't be included because of missing values
 	}
-	ts.Equal(want, got, "incorrect auth selectors")
+	ts.Equal(want, got, "incorrect auth options")
 }
 
 func (as *ActionSuite) Test_newOrglessAuthUser() {

@@ -40,7 +40,7 @@ func createFixturesForAuthInvite(as *ActionSuite) meetingFixtures {
 	as.Nil(fErr, "failed to create ImageFile fixture")
 
 	meetings := make(models.Meetings, 2)
-	meetings[1].ImageFileID = nulls.NewInt(fileFixture.ID)
+	meetings[1].FileID = nulls.NewInt(fileFixture.ID)
 
 	for i := range meetings {
 		meetings[i].CreatedByID = user.ID
@@ -230,7 +230,7 @@ func createFixturesForEnsureMeetingParticipant(as *ActionSuite) meetingFixtures 
 	as.Nil(fErr, "failed to create ImageFile fixture")
 
 	meetings := make(models.Meetings, 2)
-	meetings[1].ImageFileID = nulls.NewInt(fileFixture.ID)
+	meetings[1].FileID = nulls.NewInt(fileFixture.ID)
 
 	for i := range meetings {
 		meetings[i].CreatedByID = users[0].ID
