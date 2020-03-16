@@ -1,6 +1,7 @@
 package models
 
 import (
+	"database/sql"
 	"reflect"
 	"runtime"
 	"strconv"
@@ -300,6 +301,46 @@ func (ms *ModelSuite) TestUserPreference_updateForUserByKey() {
 			}
 			ms.Equal(test.want.Key, p.Key, "incorrect key result from updatePreferenceByKey()")
 			ms.Equal(test.want.Value, p.Value, "incorrect value result for "+test.want.Key)
+		})
+	}
+}
+
+func (ms *ModelSuite) TestUserPreference_remove() {
+	t := ms.T()
+
+	user := createUserFixtures(ms.DB, 1).Users[0]
+	userPreference := UserPreference{
+		UserID: user.ID,
+		Key:    domain.UserPreferenceKeyLanguage,
+		Value:  domain.UserPreferenceLanguageEnglish,
+	}
+	mustCreate(ms.DB, &userPreference)
+
+	tests := []struct {
+		name string
+		user User
+		key  string
+	}{
+		{
+			name: "Remove language",
+			user: user,
+			key:  domain.UserPreferenceKeyLanguage,
+		},
+		{
+			name: "Remove nonexistent key",
+			user: user,
+			key:  domain.UserPreferenceKeyTimeZone,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			p := UserPreference{}
+			err := p.remove(test.user, test.key)
+			ms.NoError(err, "unexpected error from UserPreference.remove()")
+
+			err = ms.DB.Where("user_id = ? AND key = ?", test.user.ID, test.key).First(&p)
+			ms.Error(err, "expected to get an error while finding deleted key")
+			ms.Equal(sql.ErrNoRows, err, "unexpected error type while finding deleted key")
 		})
 	}
 }

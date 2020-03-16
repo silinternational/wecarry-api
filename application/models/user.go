@@ -790,3 +790,12 @@ func (u *User) CanCreateMeetingParticipant(ctx buffalo.Context, meeting Meeting)
 func (u *User) CanRemoveMeetingParticipant(ctx buffalo.Context, meeting Meeting) bool {
 	return u.ID == meeting.CreatedByID || meeting.isOrganizer(ctx, u.ID) || u.isSuperAdmin()
 }
+
+// RemovePreferences removes all of the users's preferences
+func (u *User) RemovePreferences() error {
+	if u == nil || u.ID < 1 {
+		return nil
+	}
+	var p UserPreference
+	return p.removeAll(u.ID)
+}
