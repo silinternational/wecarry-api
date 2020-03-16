@@ -135,6 +135,7 @@ var Env struct {
 	CertDomainName             string
 	CloudflareAuthEmail        string
 	CloudflareAuthKey          string
+	DisableTLS                 bool
 	EmailService               string
 	EmailFromAddress           string
 	FacebookKey                string
@@ -195,6 +196,7 @@ func readEnv() {
 	Env.CertDomainName = envy.Get("CERT_DOMAIN_NAME", "")
 	Env.CloudflareAuthEmail = envy.Get("CLOUDFLARE_AUTH_EMAIL", "")
 	Env.CloudflareAuthKey = envy.Get("CLOUDFLARE_AUTH_KEY", "")
+	Env.DisableTLS, _ = strconv.ParseBool(envy.Get("DISABLE_TLS", "false"))
 	Env.EmailService = envy.Get("EMAIL_SERVICE", "sendgrid")
 	Env.EmailFromAddress = envy.Get("EMAIL_FROM_ADDRESS", "no_reply@example.com")
 	Env.FacebookKey = envy.Get("FACEBOOK_KEY", "")

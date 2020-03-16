@@ -34,41 +34,46 @@ func main() {
 	rollbar.SetCodeVersion(GitCommitHash)
 	rollbar.SetServerRoot(domain.Env.RollbarServerRoot)
 
-	certmagic.Default.Storage = &dynamodbstore.Storage{
-		Table: "CertMagic",
-	}
+	var srv servers.Server
+	if domain.Env.DisableTLS {
+		srv = servers.New()
+	} else {
+		certmagic.Default.Storage = &dynamodbstore.Storage{
+			Table: "CertMagic",
+		}
 
-	cloudflareConfig := cloudflare.NewDefaultConfig()
-	cloudflareConfig.AuthEmail = domain.Env.CloudflareAuthEmail
-	cloudflareConfig.AuthKey = domain.Env.CloudflareAuthKey
-	dnsProvider, err := cloudflare.NewDNSProviderConfig(cloudflareConfig)
-	if err != nil {
-		rollbar.Error("failed to init Cloudflare dns provider for LetsEncrypt: %s", err.Error())
-		os.Exit(1)
-	}
+		cloudflareConfig := cloudflare.NewDefaultConfig()
+		cloudflareConfig.AuthEmail = domain.Env.CloudflareAuthEmail
+		cloudflareConfig.AuthKey = domain.Env.CloudflareAuthKey
+		dnsProvider, err := cloudflare.NewDNSProviderConfig(cloudflareConfig)
+		if err != nil {
+			rollbar.Error("failed to init Cloudflare dns provider for LetsEncrypt: %s", err.Error())
+			os.Exit(1)
+		}
 
-	if domain.Env.GoEnv != "prod" && domain.Env.GoEnv != "production" {
-		certmagic.DefaultACME.CA = certmagic.LetsEncryptStagingCA
-	}
+		if domain.Env.GoEnv != "prod" && domain.Env.GoEnv != "production" {
+			certmagic.DefaultACME.CA = certmagic.LetsEncryptStagingCA
+		}
 
-	certmagic.DefaultACME.Email = domain.Env.SupportEmail
-	certmagic.DefaultACME.Agreed = true
-	certmagic.DefaultACME.DNSProvider = dnsProvider
-	certmagic.DefaultACME.DisableHTTPChallenge = true
-	certmagic.DefaultACME.DisableTLSALPNChallenge = true
-	intPort, err := strconv.Atoi(envy.Get("PORT", "3000"))
-	if err != nil {
-		domain.Logger.Printf("failed to convert PORT env var to integer: %s", err.Error())
-		os.Exit(2)
-	}
-	certmagic.HTTPSPort = intPort
+		certmagic.DefaultACME.Email = domain.Env.SupportEmail
+		certmagic.DefaultACME.Agreed = true
+		certmagic.DefaultACME.DNSProvider = dnsProvider
+		certmagic.DefaultACME.DisableHTTPChallenge = true
+		certmagic.DefaultACME.DisableTLSALPNChallenge = true
+		intPort, err := strconv.Atoi(envy.Get("PORT", "3000"))
+		if err != nil {
+			domain.Logger.Printf("failed to convert PORT env var to integer: %s", err.Error())
+			os.Exit(2)
+		}
+		certmagic.HTTPSPort = intPort
 
-	listener, err := certmagic.Listen([]string{domain.Env.CertDomainName})
-	if err != nil {
-		domain.Logger.Printf("failed to get TLS config: %s", err.Error())
-		os.Exit(3)
+		listener, err := certmagic.Listen([]string{domain.Env.CertDomainName})
+		if err != nil {
+			domain.Logger.Printf("failed to get TLS config: %s", err.Error())
+			os.Exit(3)
+		}
+		srv = servers.WrapListener(&http.Server{}, listener)
 	}
-	srv := servers.WrapListener(&http.Server{}, listener)
 
 	app := actions.App()
 	rollbar.WrapAndWait(func() {

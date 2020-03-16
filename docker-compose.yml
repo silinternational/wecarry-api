@@ -9,7 +9,7 @@ services:
       - ./application:/wecarry
       - ./dev:/wecarry/dev
     ports:
-      - "443:3000"
+      - "3000:3000"
       - "6060"
     env_file:
       - ./.env
