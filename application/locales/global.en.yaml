@@ -263,6 +263,10 @@
   translation: Your user nickname must contain at least one visible character.
 - id: UpdateUser.DuplicateNickname
   translation: That user nickname is already taken.
+- id: UpdateUser.Preferences
+  translation: We had a problem while updating user preferences.
+- id: UpdateUser.RemovePreferences
+  translation: We had a problem while removing user preferences.
 
 # Request Post Status Transition email subjects
 - id: Email.Subject.Request.FromAcceptedToDelivered

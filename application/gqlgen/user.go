@@ -229,7 +229,6 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 		return nil, domain.ReportError(ctx, err, "UpdateUser.SetLocationError")
 	}
 
-	// No deleting of preferences supported at this time
 	if input.Preferences != nil {
 		standardPrefs, err := convertUserPreferencesToStandardPreferences(input.Preferences)
 
@@ -239,6 +238,10 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 
 		if _, err = user.UpdateStandardPreferences(standardPrefs); err != nil {
 			return nil, domain.ReportError(ctx, err, "UpdateUser.Preferences")
+		}
+	} else {
+		if err := user.RemovePreferences(); err != nil {
+			return nil, domain.ReportError(ctx, err, "UpdateUser.RemovePreferences")
 		}
 	}
 

@@ -185,6 +185,10 @@ func updateUsersStandardPreferences(user User, prefs StandardPreferences) error 
 	return nil
 }
 
+func (p *UserPreference) removeAll(userID int) error {
+	return DB.RawQuery("DELETE FROM user_preferences WHERE user_id = ?", userID).Exec()
+}
+
 func (p *UserPreference) remove(user User, key string) error {
 	if err := p.getForUser(user, key); err != nil {
 		return err
