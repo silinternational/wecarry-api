@@ -247,7 +247,7 @@ func (as *ActionSuite) TestUpdateUser() {
 
 				as.Equal(strings.ToUpper(domain.UserPreferenceWeightUnitKGs), *resp.User.Preferences.WeightUnit,
 					"incorrect preference - weightUnit")
-				as.Equal(strings.ToUpper(""), *resp.User.Preferences.Language, "incorrect preference - language")
+				as.Equal("", *resp.User.Preferences.Language, "incorrect preference - language")
 				as.Equal("", *resp.User.Preferences.TimeZone, "incorrect preference - timeZone")
 			},
 		},
