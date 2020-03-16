@@ -100,7 +100,7 @@ func (r *meetingResolver) ImageFile(ctx context.Context, obj *models.Meeting) (*
 	return image, nil
 }
 
-func (r *meetingResolver) Posts(ctx context.Context, obj *models.Meeting) ([]models.Post, error) {
+func (r *meetingResolver) Requests(ctx context.Context, obj *models.Meeting) ([]models.Post, error) {
 	if obj == nil {
 		return nil, nil
 	}

@@ -35,8 +35,8 @@ type CreateMeetingParticipantInput struct {
 type CreateMessageInput struct {
 	// message content, limited to 4,096 characters
 	Content string `json:"content"`
-	// ID of the subject Post (request)
-	PostID string `json:"postID"`
+	// ID of the subject Request
+	RequestID string `json:"requestID"`
 	// Message thread to which the new message should be attached. If not specified, a new thread is created.
 	ThreadID *string `json:"threadID"`
 }
@@ -150,8 +150,8 @@ type UpdateOrganizationInput struct {
 	LogoFileID *string `json:"logoFileID"`
 }
 
-type UpdatePostStatusInput struct {
-	// ID of the post to update
+type UpdateRequestStatusInput struct {
+	// ID of the request to update
 	ID string `json:"id"`
 	// New Status. Only a limited set of transitions are allowed.
 	Status models.PostStatus `json:"status"`
@@ -229,50 +229,6 @@ func (e *MeetingVisibility) UnmarshalGQL(v interface{}) error {
 }
 
 func (e MeetingVisibility) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-// Context of a User with respect to a Post (Request)
-type PostRole string
-
-const (
-	// Posts created by the User
-	PostRoleCreatedby PostRole = "CREATEDBY"
-	// Posts provided by the User. Posts where the user is a PotentialProvider are not included.
-	PostRoleProviding PostRole = "PROVIDING"
-)
-
-var AllPostRole = []PostRole{
-	PostRoleCreatedby,
-	PostRoleProviding,
-}
-
-func (e PostRole) IsValid() bool {
-	switch e {
-	case PostRoleCreatedby, PostRoleProviding:
-		return true
-	}
-	return false
-}
-
-func (e PostRole) String() string {
-	return string(e)
-}
-
-func (e *PostRole) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = PostRole(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid PostRole", str)
-	}
-	return nil
-}
-
-func (e PostRole) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
@@ -368,5 +324,49 @@ func (e *PreferredWeightUnit) UnmarshalGQL(v interface{}) error {
 }
 
 func (e PreferredWeightUnit) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+// Context of a User with respect to a Request
+type RequestRole string
+
+const (
+	// Requests created by the User
+	RequestRoleCreatedby RequestRole = "CREATEDBY"
+	// Requests provided by the User. Requests where the user is a PotentialProvider are not included.
+	RequestRoleProviding RequestRole = "PROVIDING"
+)
+
+var AllRequestRole = []RequestRole{
+	RequestRoleCreatedby,
+	RequestRoleProviding,
+}
+
+func (e RequestRole) IsValid() bool {
+	switch e {
+	case RequestRoleCreatedby, RequestRoleProviding:
+		return true
+	}
+	return false
+}
+
+func (e RequestRole) String() string {
+	return string(e)
+}
+
+func (e *RequestRole) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = RequestRole(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid RequestRole", str)
+	}
+	return nil
+}
+
+func (e RequestRole) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
