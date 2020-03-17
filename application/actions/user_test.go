@@ -43,7 +43,7 @@ type User struct {
 	} `json:"organizations"`
 	Posts []struct {
 		ID string `json:"id"`
-	} `json:"posts"`
+	} `json:"requests"`
 	MeetingsAsParticipant []struct {
 		ID string `json:"id"`
 	} `json:"meetingsAsParticipant"`
@@ -53,7 +53,7 @@ const allUserFields = `id email nickname createdAt updatedAt adminRole avatarURL
 	preferences {language timeZone weightUnit}
 	location {description country latitude longitude}
 	organizations {id}
-	posts (role: CREATEDBY) {id}
+	requests (role: CREATEDBY) {id}
 	meetingsAsParticipant {id}
 	`
 

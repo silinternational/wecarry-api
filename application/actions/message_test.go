@@ -49,7 +49,7 @@ func (as *ActionSuite) TestCreateMessage() {
 
 	newContent := "New Message Created"
 
-	input := `postID: "` + f.Posts[0].UUID.String() + `" ` +
+	input := `requestID: "` + f.Posts[0].UUID.String() + `" ` +
 		`threadID: "` + f.Threads[0].UUID.String() + `" content: "` + newContent + `" `
 	query := `mutation { message: createMessage (input: {` + input +
 		`}) { id content thread {id}}}`
