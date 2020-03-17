@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -21,7 +22,12 @@ type Watch struct {
 	UpdatedAt  time.Time `json:"updated_at" db:"updated_at"`
 	UUID       uuid.UUID `json:"uuid" db:"uuid"`
 	OwnerID    int       `json:"owner_id" db:"owner_id"`
+	Title      string
 	LocationID nulls.Int `json:"location_id" db:"location_id"`
+	MeetingID  nulls.Int
+	SearchText nulls.String
+	Size       PostSize
+	Kilograms  nulls.Float64
 }
 
 // Watches is used for methods that operate on lists of objects
@@ -131,4 +137,8 @@ func (w *Watch) matchesPost(post Post) bool {
 		return true
 	}
 	return false
+}
+
+func (w *Watch) Meeting(ctx context.Context) (*Meeting, error) {
+	return nil, nil
 }

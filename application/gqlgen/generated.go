@@ -246,9 +246,14 @@ type ComplexityRoot struct {
 	}
 
 	Watch struct {
-		ID       func(childComplexity int) int
-		Location func(childComplexity int) int
-		Owner    func(childComplexity int) int
+		ID         func(childComplexity int) int
+		Kilograms  func(childComplexity int) int
+		Location   func(childComplexity int) int
+		Meeting    func(childComplexity int) int
+		Owner      func(childComplexity int) int
+		SearchText func(childComplexity int) int
+		Size       func(childComplexity int) int
+		Title      func(childComplexity int) int
 	}
 }
 
@@ -399,7 +404,12 @@ type UserPreferencesResolver interface {
 type WatchResolver interface {
 	ID(ctx context.Context, obj *models.Watch) (string, error)
 	Owner(ctx context.Context, obj *models.Watch) (*PublicProfile, error)
+
 	Location(ctx context.Context, obj *models.Watch) (*models.Location, error)
+
+	SearchText(ctx context.Context, obj *models.Watch) (*string, error)
+
+	Kilograms(ctx context.Context, obj *models.Watch) (*float64, error)
 }
 
 type executableSchema struct {
@@ -1595,6 +1605,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Watch.ID(childComplexity), true
 
+	case "Watch.kilograms":
+		if e.complexity.Watch.Kilograms == nil {
+			break
+		}
+
+		return e.complexity.Watch.Kilograms(childComplexity), true
+
 	case "Watch.location":
 		if e.complexity.Watch.Location == nil {
 			break
@@ -1602,12 +1619,40 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Watch.Location(childComplexity), true
 
+	case "Watch.meeting":
+		if e.complexity.Watch.Meeting == nil {
+			break
+		}
+
+		return e.complexity.Watch.Meeting(childComplexity), true
+
 	case "Watch.owner":
 		if e.complexity.Watch.Owner == nil {
 			break
 		}
 
 		return e.complexity.Watch.Owner(childComplexity), true
+
+	case "Watch.searchText":
+		if e.complexity.Watch.SearchText == nil {
+			break
+		}
+
+		return e.complexity.Watch.SearchText(childComplexity), true
+
+	case "Watch.size":
+		if e.complexity.Watch.Size == nil {
+			break
+		}
+
+		return e.complexity.Watch.Size(childComplexity), true
+
+	case "Watch.title":
+		if e.complexity.Watch.Title == nil {
+			break
+		}
+
+		return e.complexity.Watch.Title(childComplexity), true
 
 	}
 	return 0, false
@@ -2519,21 +2564,41 @@ input UpdateUserPreferencesInput {
 }
 
 """
-A Watch for a given location. Posts (requests) with a destination near the watch location will trigger a notification to
-the watch creator. Other types of Watches (e.g. keyword search) may be created in future versions of WeCarry.
+A Watch for a given location. New Posts (requests) matching all of the given criterium will generate a new
+notification. At least one filter criterion must be given.
 """
 type Watch {
     "unique identifier for the Watch"
     id: ID!
     "Owner of the Watch, and the recipient of notifications for this Watch"
     owner: PublicProfile!
+    "Short description, as named by the Watch creator"
+    title: String!
     "Location to watch. If a new request has a destination near this location, a notification will be sent."
     location: Location
+    "Meeting to watch. Notifications will be sent for new requests tied to this event."
+    meeting: Meeting
+    "Search by text in request ` + "`" + `title` + "`" + ` or ` + "`" + `description` + "`" + `"
+    searchText: String
+    "Maximum size of a requested item"
+    size: PostSize
+    "Maximum weight of a requested item, measured in kilograms"
+    kilograms: Float
 }
 
 input CreateWatchInput {
+    "Short description, as named by the Watch creator"
+    title: String!
     "Location to watch. If a new request has a destination near this location, a notification will be sent."
     location: LocationInput
+    "Meeting to watch. Notifications will be sent for new requests tied to this event."
+    meetingID: ID
+    "Search by text in ` + "`" + `title` + "`" + ` or ` + "`" + `description` + "`" + `"
+    searchText: String
+    "Maximum size of a requested item"
+    size: PostSize
+    "Maximum weight of a requested item, measured in kilograms"
+    kilograms: Float
 }
 
 input RemoveWatchInput {
@@ -2541,11 +2606,23 @@ input RemoveWatchInput {
     id: ID!
 }
 
+"""
+Properties to update on the Watch identified by the given ID. If any parameter is omitted or null, that parameter
+will be removed from the Watch criteria.
+"""
 input UpdateWatchInput {
     "unique identifier for the Watch to be updated"
     id: ID!
     "Location to watch. If a new request has a destination near this location, a notification will be sent."
     location: LocationInput
+    "Meeting to watch. Notifications will be sent for new requests tied to this event."
+    meetingID: ID
+    "Search by text in ` + "`" + `title` + "`" + ` or ` + "`" + `description` + "`" + `"
+    searchText: String
+    "Maximum size of a requested item"
+    size: PostSize
+    "Maximum weight of a requested item, measured in kilograms"
+    kilograms: Float
 }
 `},
 )
@@ -8713,6 +8790,43 @@ func (ec *executionContext) _Watch_owner(ctx context.Context, field graphql.Coll
 	return ec.marshalNPublicProfile2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPublicProfile(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Watch_title(ctx context.Context, field graphql.CollectedField, obj *models.Watch) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Watch",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Title, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Watch_location(ctx context.Context, field graphql.CollectedField, obj *models.Watch) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -8745,6 +8859,142 @@ func (ec *executionContext) _Watch_location(ctx context.Context, field graphql.C
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalOLocation2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐLocation(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Watch_meeting(ctx context.Context, field graphql.CollectedField, obj *models.Watch) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Watch",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Meeting(ctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*models.Meeting)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOMeeting2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeeting(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Watch_searchText(ctx context.Context, field graphql.CollectedField, obj *models.Watch) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Watch",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Watch().SearchText(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Watch_size(ctx context.Context, field graphql.CollectedField, obj *models.Watch) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Watch",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Size, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(models.PostSize)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOPostSize2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostSize(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Watch_kilograms(ctx context.Context, field graphql.CollectedField, obj *models.Watch) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Watch",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Watch().Kilograms(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*float64)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOFloat2ᚖfloat64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
@@ -10240,9 +10490,39 @@ func (ec *executionContext) unmarshalInputCreateWatchInput(ctx context.Context, 
 
 	for k, v := range asMap {
 		switch k {
+		case "title":
+			var err error
+			it.Title, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		case "location":
 			var err error
 			it.Location, err = ec.unmarshalOLocationInput2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐLocationInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "meetingID":
+			var err error
+			it.MeetingID, err = ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "searchText":
+			var err error
+			it.SearchText, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "size":
+			var err error
+			it.Size, err = ec.unmarshalOPostSize2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostSize(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "kilograms":
+			var err error
+			it.Kilograms, err = ec.unmarshalOFloat2ᚖfloat64(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -10735,6 +11015,30 @@ func (ec *executionContext) unmarshalInputUpdateWatchInput(ctx context.Context, 
 		case "location":
 			var err error
 			it.Location, err = ec.unmarshalOLocationInput2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐLocationInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "meetingID":
+			var err error
+			it.MeetingID, err = ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "searchText":
+			var err error
+			it.SearchText, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "size":
+			var err error
+			it.Size, err = ec.unmarshalOPostSize2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostSize(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "kilograms":
+			var err error
+			it.Kilograms, err = ec.unmarshalOFloat2ᚖfloat64(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -12448,6 +12752,11 @@ func (ec *executionContext) _Watch(ctx context.Context, sel ast.SelectionSet, ob
 				}
 				return res
 			})
+		case "title":
+			out.Values[i] = ec._Watch_title(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "location":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -12457,6 +12766,41 @@ func (ec *executionContext) _Watch(ctx context.Context, sel ast.SelectionSet, ob
 					}
 				}()
 				res = ec._Watch_location(ctx, field, obj)
+				return res
+			})
+		case "meeting":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Watch_meeting(ctx, field, obj)
+				return res
+			})
+		case "searchText":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Watch_searchText(ctx, field, obj)
+				return res
+			})
+		case "size":
+			out.Values[i] = ec._Watch_size(ctx, field, obj)
+		case "kilograms":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Watch_kilograms(ctx, field, obj)
 				return res
 			})
 		default:

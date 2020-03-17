@@ -846,21 +846,41 @@ input UpdateUserPreferencesInput {
 }
 
 """
-A Watch for a given location. Posts (requests) with a destination near the watch location will trigger a notification to
-the watch creator. Other types of Watches (e.g. keyword search) may be created in future versions of WeCarry.
+A Watch for a given location. New Posts (requests) matching all of the given criterium will generate a new
+notification. At least one filter criterion must be given.
 """
 type Watch {
     "unique identifier for the Watch"
     id: ID!
     "Owner of the Watch, and the recipient of notifications for this Watch"
     owner: PublicProfile!
+    "Short description, as named by the Watch creator"
+    title: String!
     "Location to watch. If a new request has a destination near this location, a notification will be sent."
     location: Location
+    "Meeting to watch. Notifications will be sent for new requests tied to this event."
+    meeting: Meeting
+    "Search by text in request `title` or `description`"
+    searchText: String
+    "Maximum size of a requested item"
+    size: PostSize
+    "Maximum weight of a requested item, measured in kilograms"
+    kilograms: Float
 }
 
 input CreateWatchInput {
+    "Short description, as named by the Watch creator"
+    title: String!
     "Location to watch. If a new request has a destination near this location, a notification will be sent."
     location: LocationInput
+    "Meeting to watch. Notifications will be sent for new requests tied to this event."
+    meetingID: ID
+    "Search by text in `title` or `description`"
+    searchText: String
+    "Maximum size of a requested item"
+    size: PostSize
+    "Maximum weight of a requested item, measured in kilograms"
+    kilograms: Float
 }
 
 input RemoveWatchInput {
@@ -868,9 +888,21 @@ input RemoveWatchInput {
     id: ID!
 }
 
+"""
+Properties to update on the Watch identified by the given ID. If any parameter is omitted or null, that parameter
+will be removed from the Watch criteria.
+"""
 input UpdateWatchInput {
     "unique identifier for the Watch to be updated"
     id: ID!
     "Location to watch. If a new request has a destination near this location, a notification will be sent."
     location: LocationInput
+    "Meeting to watch. Notifications will be sent for new requests tied to this event."
+    meetingID: ID
+    "Search by text in `title` or `description`"
+    searchText: String
+    "Maximum size of a requested item"
+    size: PostSize
+    "Maximum weight of a requested item, measured in kilograms"
+    kilograms: Float
 }

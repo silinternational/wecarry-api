@@ -53,6 +53,30 @@ func (r *watchResolver) Location(ctx context.Context, obj *models.Watch) (*model
 	return location, nil
 }
 
+// Kilograms resolves the `kilograms` property of the watch query as a pointer to a float64
+func (r *watchResolver) Kilograms(ctx context.Context, obj *models.Watch) (*float64, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	if !obj.Kilograms.Valid {
+		return nil, nil
+	}
+
+	return &obj.Kilograms.Float64, nil
+}
+
+// SearchText resolves the `searchText` property of the watch query
+func (r *watchResolver) SearchText(ctx context.Context, obj *models.Watch) (*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	if !obj.SearchText.Valid {
+		return nil, nil
+	}
+
+	return &obj.SearchText.String, nil
+}
+
 // MyWatches resolves the `myWatches` query by getting a list of Watches owned by the current user
 func (r *queryResolver) MyWatches(ctx context.Context) ([]models.Watch, error) {
 	watches := models.Watches{}
@@ -85,8 +109,13 @@ func convertWatchInput(ctx context.Context, input watchInput, currentUser models
 }
 
 type watchInput struct {
-	ID       *string
-	Location *LocationInput
+	ID         *string
+	Title      string
+	Location   *LocationInput
+	MeetingID  *string
+	SearchText *string
+	Size       *models.PostSize
+	Kilograms  *float64
 }
 
 // CreateWatch resolves the `createWatch` mutation.
