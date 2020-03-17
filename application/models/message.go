@@ -157,7 +157,7 @@ func (m *Message) Create(ctx context.Context, postUUID string, threadUUID *strin
 	}
 
 	var thread Thread
-	if threadUUID != nil {
+	if threadUUID != nil && *threadUUID != "" {
 		err := thread.FindByUUID(*threadUUID)
 		if err != nil {
 			return errors.New("failed to find thread, " + err.Error())
