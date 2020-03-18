@@ -1,9 +1,14 @@
 package actions
 
 import (
+	"fmt"
+	"testing"
+	"time"
+
 	"github.com/gobuffalo/nulls"
 	"github.com/gofrs/uuid"
 
+	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/internal/test"
 	"github.com/silinternational/wecarry-api/models"
 )
@@ -12,6 +17,7 @@ type watchQueryFixtures struct {
 	models.Users
 	models.Locations
 	models.Watches
+	models.Meetings
 }
 
 type watchesResponse struct {
@@ -27,26 +33,80 @@ type watch struct {
 	Owner struct {
 		Nickname string `json:"nickname"`
 	} `json:"owner"`
+	Name     string
 	Location struct {
-		Country string `json:"country"`
+		Country     string  `json:"country"`
+		Description string  `json:"description"`
+		Latitude    float64 `json:"latitude"`
+		Longitude   float64 `json:"longitude"`
 	} `json:"location"`
+	Meeting struct {
+		ID string `json:"id"`
+	}
+	SearchText string  `json:"searchText"`
+	Size       string  `json:"size"`
+	Kilograms  float64 `json:"kilograms"`
 }
+
+type watchInput struct {
+	id         *string
+	name       string
+	location   locationInput
+	meetingID  string
+	searchText string
+	size       models.PostSize
+	kilograms  float64
+}
+
+type locationInput struct {
+	description string
+	country     string
+	latitude    float64
+	longitude   float64
+}
+
+const allWatchFields = `
+    id
+    owner { nickname }
+    name
+    location { description country latitude longitude }
+    meeting { id }
+    searchText
+    size
+    kilograms
+	`
 
 func createFixturesForWatches(as *ActionSuite) watchQueryFixtures {
 	// make 2 users, 1 that has Watches, and another that will try to mess with those Watches
 	uf := test.CreateUserFixtures(as.DB, 2)
-	locations := test.CreateLocationFixtures(as.DB, 2)
+	locations := test.CreateLocationFixtures(as.DB, 3)
 	watches := make(models.Watches, 2)
 	for i := range watches {
 		watches[i].OwnerID = uf.Users[0].ID
 		watches[i].LocationID = nulls.NewInt(locations[i].ID)
 		test.MustCreate(as.DB, &watches[i])
 	}
+	meetings := models.Meetings{
+		{
+			CreatedByID: uf.Users[0].ID,
+			Name:        "Mtg",
+			LocationID:  locations[2].ID,
+
+			StartDate: time.Now().Add(domain.DurationWeek * 8),
+			EndDate:   time.Now().Add(domain.DurationWeek * 10),
+		},
+	}
+
+	for i := range meetings {
+		meetings[i].UUID = domain.GetUUID()
+		createFixture(as, &meetings[i])
+	}
 
 	return watchQueryFixtures{
 		Users:     uf.Users,
 		Locations: locations,
 		Watches:   watches,
+		Meetings:  meetings,
 	}
 }
 
@@ -54,7 +114,7 @@ func (as *ActionSuite) Test_MyWatches() {
 	f := createFixturesForWatches(as)
 	watches := f.Watches
 
-	query := `{ watches: myWatches { id owner { nickname } location { country } }}`
+	query := "{ watches: myWatches { " + allWatchFields + "}}"
 
 	var resp watchesResponse
 
@@ -75,19 +135,63 @@ func (as *ActionSuite) Test_CreateWatch() {
 	f := createFixturesForWatches(as)
 	user := f.Users[0]
 
-	input := `location: {description:"watch location" country:"dc" latitude:1.1 longitude:2.2}`
-
-	query := `mutation { watch: createWatch(input: {` + input + `})
-		{ id owner { nickname } location { country } }}`
+	type testCase struct {
+		name        string
+		watch       watchInput
+		testUser    models.User
+		expectError bool
+	}
 
 	var resp watchResponse
-	as.NoError(as.testGqlQuery(query, user.Nickname, &resp))
 
-	got := resp.Watch
+	testCases := []testCase{
+		{
+			name: "all fields",
+			watch: watchInput{
+				name: "foo",
+				location: locationInput{
+					description: "watch location",
+					country:     "dc",
+					latitude:    1.1,
+					longitude:   2.2,
+				},
+				meetingID:  f.Meetings[0].UUID.String(),
+				searchText: "search",
+				size:       models.PostSizeXlarge,
+				kilograms:  0.454,
+			},
+			testUser: f.Users[0],
+		},
+	}
 
-	as.True(uuid.UUID{}.String() != got.ID, "don't want empty UUID")
-	as.Equal(user.Nickname, got.Owner.Nickname, "incorrect Watch Owner")
-	as.Equal("dc", got.Location.Country, "incorrect watch Location.Country")
+	for _, tc := range testCases {
+		as.T().Run(tc.name, func(t *testing.T) {
+			query := "mutation { watch: createWatch(input: {" + as.watchInputString(tc.watch) + "}) {" + allWatchFields + "}}"
+			resp = watchResponse{}
+			err := as.testGqlQuery(query, tc.testUser.Nickname, &resp)
+
+			if tc.expectError {
+				as.Error(err, "didn't get expected error")
+			} else {
+				as.NoError(err, "unexpected error")
+			}
+
+			as.True(uuid.UUID{}.String() != resp.Watch.ID, "don't want empty UUID")
+			as.Equal(user.Nickname, resp.Watch.Owner.Nickname, "incorrect Watch Owner")
+			as.Equal(tc.watch.name, resp.Watch.Name, "incorrect Watch name")
+			as.Equal(tc.watch.location.country, resp.Watch.Location.Country, "incorrect watch Country")
+			as.Equal(tc.watch.location.description, resp.Watch.Location.Description, "incorrect watch Description")
+			as.Equal(tc.watch.location.latitude, resp.Watch.Location.Latitude, "incorrect watch Latitude")
+			as.Equal(tc.watch.location.longitude, resp.Watch.Location.Longitude, "incorrect watch Longitude")
+			as.Equal(tc.watch.meetingID, resp.Watch.Meeting.ID, "incorrect Watch meeting ID")
+			as.Equal(tc.watch.searchText, resp.Watch.SearchText, "incorrect Watch search text")
+			as.Equal(tc.watch.kilograms, resp.Watch.Kilograms, "incorrect Watch kilograms")
+
+			var dbWatch models.Watch
+			err = as.DB.Where("uuid = ?", resp.Watch.ID).First(&dbWatch)
+			as.NoError(err, "didn't find Watch in database")
+		})
+	}
 }
 
 func (as *ActionSuite) Test_UpdateWatch() {
@@ -96,7 +200,7 @@ func (as *ActionSuite) Test_UpdateWatch() {
 	var resp watchResponse
 
 	input := `id: "` + f.Watches[0].UUID.String() + `" ` +
-		`location: {description:"new location" country:"dc" latitude:1.1 longitude:2.2}`
+		`name: "foo" location: {description:"new location" country:"dc" latitude:1.1 longitude:2.2}`
 
 	query := `mutation { watch: updateWatch(input: {` + input + `})
 		{ id owner { nickname } location { country } }}`
@@ -115,6 +219,13 @@ func (as *ActionSuite) Test_UpdateWatch() {
 
 	as.Contains(err.Error(), "Watch not found",
 		"incorrect authorization error message")
+}
+
+func (as *ActionSuite) watchInputString(watch watchInput) string {
+	return fmt.Sprintf(`name: "%s" location: {description:"%s" country:"%s" latitude:%f longitude:%f}
+		meetingID: "%s" searchText: "%s" size: %s kilograms: %f`,
+		watch.name, watch.location.description, watch.location.country, watch.location.latitude,
+		watch.location.longitude, watch.meetingID, watch.searchText, watch.size, watch.kilograms)
 }
 
 func (as *ActionSuite) Test_RemoveWatch() {
