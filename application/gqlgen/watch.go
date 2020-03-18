@@ -123,6 +123,7 @@ func convertWatchInput(ctx context.Context, input watchInput, currentUser models
 		if err := meeting.FindByUUID(*input.MeetingID); err != nil {
 			return watch, err
 		}
+		watch.MeetingID = nulls.NewInt(meeting.ID)
 	}
 
 	return watch, nil
