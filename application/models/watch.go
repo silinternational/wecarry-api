@@ -140,7 +140,7 @@ func (w *Watch) matchesPost(post Post) bool {
 }
 
 func (w *Watch) Meeting(ctx context.Context) (*Meeting, error) {
-	if w == nil || !w.MeetingID.Valid {
+	if w == nil || !w.MeetingID.Valid || CurrentUser(ctx).ID != w.OwnerID {
 		return nil, nil
 	}
 	meeting := &Meeting{}
