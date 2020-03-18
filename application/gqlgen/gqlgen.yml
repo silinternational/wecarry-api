@@ -82,7 +82,7 @@ models:
     fields:
       organization:
         resolver: true
-  Post:
+  Request:
     model: models.Post
     fields:
       id:
@@ -109,22 +109,22 @@ models:
         resolver: true
       meeting:
         resolver: true
-  CreatePostInput:
-    model: gqlgen.postInput
-  UpdatePostInput:
-    model: gqlgen.postInput
-  PostSize:
+  CreateRequestInput:
+    model: gqlgen.requestInput
+  UpdateRequestInput:
+    model: gqlgen.requestInput
+  RequestSize:
     model: models.PostSize
-  PostStatus:
+  RequestStatus:
     model: models.PostStatus
-  PostVisibility:
+  RequestVisibility:
     model: models.PostVisibility
   Thread:
     model: models.Thread
     fields:
       id:
         resolver: true
-      post:
+      request:
         resolver: true
       lastViewedAt:
         resolver: true
