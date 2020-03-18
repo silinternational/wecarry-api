@@ -1,0 +1,5 @@
+drop_column("watches", "name")
+drop_column("watches", "meeting_id")
+drop_column("watches", "search_text")
+drop_column("watches", "size")
+drop_column("watches", "kilograms")

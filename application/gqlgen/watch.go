@@ -105,12 +105,32 @@ func convertWatchInput(ctx context.Context, input watchInput, currentUser models
 		watch.OwnerID = currentUser.ID
 	}
 
+	watch.Name = input.Name
+	watch.SearchText = models.ConvertStringPtrToNullsString(input.SearchText)
+	setOptionalFloatField(input.Kilograms, &watch.Kilograms)
+
+	if input.Size == nil {
+		watch.Size = nil
+	} else {
+		s := *input.Size
+		watch.Size = &s
+	}
+
+	if input.MeetingID == nil {
+		watch.MeetingID = nulls.Int{}
+	} else {
+		var meeting models.Meeting
+		if err := meeting.FindByUUID(*input.MeetingID); err != nil {
+			return watch, err
+		}
+	}
+
 	return watch, nil
 }
 
 type watchInput struct {
 	ID         *string
-	Title      string
+	Name       string
 	Location   *LocationInput
 	MeetingID  *string
 	SearchText *string

@@ -17,17 +17,17 @@ import (
 
 // Watch is the model for storing post watches that trigger notifications on the conditions specified
 type Watch struct {
-	ID         int       `json:"id" db:"id"`
-	CreatedAt  time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at" db:"updated_at"`
-	UUID       uuid.UUID `json:"uuid" db:"uuid"`
-	OwnerID    int       `json:"owner_id" db:"owner_id"`
-	Title      string
-	LocationID nulls.Int `json:"location_id" db:"location_id"`
-	MeetingID  nulls.Int
-	SearchText nulls.String
-	Size       PostSize
-	Kilograms  nulls.Float64
+	ID         int           `json:"id" db:"id"`
+	CreatedAt  time.Time     `json:"created_at" db:"created_at"`
+	UpdatedAt  time.Time     `json:"updated_at" db:"updated_at"`
+	UUID       uuid.UUID     `json:"uuid" db:"uuid"`
+	OwnerID    int           `json:"owner_id" db:"owner_id"`
+	Name       string        `json:"name" db:"name"`
+	LocationID nulls.Int     `json:"location_id" db:"location_id"`
+	MeetingID  nulls.Int     `json:"meeting_id" db:"meeting_id"`
+	SearchText nulls.String  `json:"search_text" db:"search_text"`
+	Size       *PostSize     `json:"size" db:"size"`
+	Kilograms  nulls.Float64 `json:"kilograms" db:"kilograms"`
 }
 
 // Watches is used for methods that operate on lists of objects
@@ -140,5 +140,12 @@ func (w *Watch) matchesPost(post Post) bool {
 }
 
 func (w *Watch) Meeting(ctx context.Context) (*Meeting, error) {
-	return nil, nil
+	if w == nil || !w.MeetingID.Valid {
+		return nil, nil
+	}
+	meeting := &Meeting{}
+	if err := DB.Find(meeting, w.MeetingID); err != nil {
+		return nil, err
+	}
+	return meeting, nil
 }

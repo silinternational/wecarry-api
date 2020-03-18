@@ -855,7 +855,7 @@ type Watch {
     "Owner of the Watch, and the recipient of notifications for this Watch"
     owner: PublicProfile!
     "Short description, as named by the Watch creator"
-    title: String!
+    name: String!
     "Location to watch. If a new request has a destination near this location, a notification will be sent."
     location: Location
     "Meeting to watch. Notifications will be sent for new requests tied to this event."
@@ -870,7 +870,7 @@ type Watch {
 
 input CreateWatchInput {
     "Short description, as named by the Watch creator"
-    title: String!
+    name: String!
     "Location to watch. If a new request has a destination near this location, a notification will be sent."
     location: LocationInput
     "Meeting to watch. Notifications will be sent for new requests tied to this event."
@@ -895,6 +895,8 @@ will be removed from the Watch criteria.
 input UpdateWatchInput {
     "unique identifier for the Watch to be updated"
     id: ID!
+    "Short description, as named by the Watch creator"
+    name: String!
     "Location to watch. If a new request has a destination near this location, a notification will be sent."
     location: LocationInput
     "Meeting to watch. Notifications will be sent for new requests tied to this event."

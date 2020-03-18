@@ -250,10 +250,10 @@ type ComplexityRoot struct {
 		Kilograms  func(childComplexity int) int
 		Location   func(childComplexity int) int
 		Meeting    func(childComplexity int) int
+		Name       func(childComplexity int) int
 		Owner      func(childComplexity int) int
 		SearchText func(childComplexity int) int
 		Size       func(childComplexity int) int
-		Title      func(childComplexity int) int
 	}
 }
 
@@ -1626,6 +1626,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Watch.Meeting(childComplexity), true
 
+	case "Watch.name":
+		if e.complexity.Watch.Name == nil {
+			break
+		}
+
+		return e.complexity.Watch.Name(childComplexity), true
+
 	case "Watch.owner":
 		if e.complexity.Watch.Owner == nil {
 			break
@@ -1646,13 +1653,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Watch.Size(childComplexity), true
-
-	case "Watch.title":
-		if e.complexity.Watch.Title == nil {
-			break
-		}
-
-		return e.complexity.Watch.Title(childComplexity), true
 
 	}
 	return 0, false
@@ -2573,7 +2573,7 @@ type Watch {
     "Owner of the Watch, and the recipient of notifications for this Watch"
     owner: PublicProfile!
     "Short description, as named by the Watch creator"
-    title: String!
+    name: String!
     "Location to watch. If a new request has a destination near this location, a notification will be sent."
     location: Location
     "Meeting to watch. Notifications will be sent for new requests tied to this event."
@@ -2588,7 +2588,7 @@ type Watch {
 
 input CreateWatchInput {
     "Short description, as named by the Watch creator"
-    title: String!
+    name: String!
     "Location to watch. If a new request has a destination near this location, a notification will be sent."
     location: LocationInput
     "Meeting to watch. Notifications will be sent for new requests tied to this event."
@@ -2613,6 +2613,8 @@ will be removed from the Watch criteria.
 input UpdateWatchInput {
     "unique identifier for the Watch to be updated"
     id: ID!
+    "Short description, as named by the Watch creator"
+    name: String!
     "Location to watch. If a new request has a destination near this location, a notification will be sent."
     location: LocationInput
     "Meeting to watch. Notifications will be sent for new requests tied to this event."
@@ -8790,7 +8792,7 @@ func (ec *executionContext) _Watch_owner(ctx context.Context, field graphql.Coll
 	return ec.marshalNPublicProfile2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐPublicProfile(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Watch_title(ctx context.Context, field graphql.CollectedField, obj *models.Watch) (ret graphql.Marshaler) {
+func (ec *executionContext) _Watch_name(ctx context.Context, field graphql.CollectedField, obj *models.Watch) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -8809,7 +8811,7 @@ func (ec *executionContext) _Watch_title(ctx context.Context, field graphql.Coll
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Title, nil
+		return obj.Name, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8957,10 +8959,10 @@ func (ec *executionContext) _Watch_size(ctx context.Context, field graphql.Colle
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(models.PostSize)
+	res := resTmp.(*models.PostSize)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOPostSize2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostSize(ctx, field.Selections, res)
+	return ec.marshalOPostSize2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostSize(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Watch_kilograms(ctx context.Context, field graphql.CollectedField, obj *models.Watch) (ret graphql.Marshaler) {
@@ -10490,9 +10492,9 @@ func (ec *executionContext) unmarshalInputCreateWatchInput(ctx context.Context, 
 
 	for k, v := range asMap {
 		switch k {
-		case "title":
+		case "name":
 			var err error
-			it.Title, err = ec.unmarshalNString2string(ctx, v)
+			it.Name, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -11009,6 +11011,12 @@ func (ec *executionContext) unmarshalInputUpdateWatchInput(ctx context.Context, 
 		case "id":
 			var err error
 			it.ID, err = ec.unmarshalNID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "name":
+			var err error
+			it.Name, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -12752,8 +12760,8 @@ func (ec *executionContext) _Watch(ctx context.Context, sel ast.SelectionSet, ob
 				}
 				return res
 			})
-		case "title":
-			out.Values[i] = ec._Watch_title(ctx, field, obj)
+		case "name":
+			out.Values[i] = ec._Watch_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
