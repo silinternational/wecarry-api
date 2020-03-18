@@ -35,6 +35,8 @@ func (as *ActionSuite) testGqlQuery(gqlQuery, accessToken string, response inter
 	responseBody, err := ioutil.ReadAll(rr.Body)
 	as.NoError(err)
 
+	domain.Logger.Println("response: " + string(responseBody))
+
 	var gqlResponse struct {
 		Errors []struct {
 			Message string   `json:"message"`
