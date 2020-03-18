@@ -199,3 +199,49 @@ func (ms *ModelSuite) TestWatch_matchesPost() {
 		})
 	}
 }
+
+func (ms *ModelSuite) TestWatch_Meeting() {
+	users := createUserFixtures(ms.DB, 2).Users
+	watches := createWatchFixtures(ms.DB, users)
+	meeting := createMeetingFixtures(ms.DB, 1).Meetings[0]
+	watches[1].MeetingID = nulls.NewInt(meeting.ID)
+	ms.NoError(watches[1].Update())
+
+	tests := []struct {
+		name     string
+		testUser User
+		watch    Watch
+		want     *Meeting
+	}{
+		{
+			name:     "no meeting",
+			testUser: users[0],
+			watch:    watches[0],
+			want:     nil,
+		},
+		{
+			name:     "has meeting",
+			testUser: users[0],
+			watch:    watches[1],
+			want:     &meeting,
+		},
+		{
+			name:     "not authorized",
+			testUser: users[1],
+			watch:    watches[1],
+			want:     nil,
+		},
+	}
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			got, err := tt.watch.Meeting(createTestContext(tt.testUser))
+			ms.NoError(err)
+			if tt.want == nil {
+				ms.Nil(got)
+				return
+			}
+			ms.NotNil(got, "Watch.Meeting() returned nil")
+			ms.Equal(tt.want.ID, got.ID)
+		})
+	}
+}
