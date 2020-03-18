@@ -61,7 +61,7 @@ func (r *requestResolver) PotentialProviders(ctx context.Context, obj *models.Po
 		return nil, nil
 	}
 
-	providers, err := obj.GetPotentialProviders()
+	providers, err := obj.GetPotentialProviders(models.CurrentUser(ctx))
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetPotentialProviders")
 	}
@@ -526,7 +526,7 @@ func (r *mutationResolver) RemoveMeAsPotentialProvider(ctx context.Context, requ
 
 	var provider models.PotentialProvider
 
-	if err := provider.FindWithPostUUIDAndUserUUID(requestID, cUser.UUID.String(), cUser); err != nil {
+	if err := provider.FindWithPostUUIDAndUserUUID(requestID, cUser.UUID.String()); err != nil {
 		return nil, domain.ReportError(ctx, errors.New("unable to find PotentialProvider in order to delete it: "+err.Error()),
 			"RemoveMeAsPotentialProvider")
 	}
@@ -563,7 +563,7 @@ func (r *mutationResolver) RemovePotentialProvider(ctx context.Context, requestI
 
 	var provider models.PotentialProvider
 
-	if err := provider.FindWithPostUUIDAndUserUUID(requestID, cUser.UUID.String(), cUser); err != nil {
+	if err := provider.FindWithPostUUIDAndUserUUID(requestID, userID); err != nil {
 		return nil, domain.ReportError(ctx, errors.New("unable to find PotentialProvider in order to delete it: "+err.Error()),
 			"RemovePotentialProvider")
 	}

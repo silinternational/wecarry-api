@@ -1518,28 +1518,35 @@ func (ms *ModelSuite) TestPosts_GetPotentialProviders() {
 	t := ms.T()
 
 	f := createPotentialProvidersFixtures(ms)
+	users := f.Users
 	posts := f.Posts
 	pps := f.PotentialProviders
 
 	tests := []struct {
 		name      string
 		post      Post
+		user      User
 		wantPPIDs []int
 	}{
-		{name: "pps for first post", post: posts[0], wantPPIDs: []int{pps[0].UserID, pps[1].UserID, pps[2].UserID}},
+		{name: "pps for first post by requester", post: posts[0], user: users[0],
+			wantPPIDs: []int{pps[0].UserID, pps[1].UserID, pps[2].UserID}},
+		{name: "pps for first post by one of the potential providers", post: posts[0], user: users[1],
+			wantPPIDs: []int{pps[0].UserID}},
+		{name: "pps for second post by a non potential provider", post: posts[1], user: users[1],
+			wantPPIDs: []int{}},
 		{name: "no pps for third post", post: posts[2], wantPPIDs: []int{}},
 	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			post := test.post
-			pps, err := post.GetPotentialProviders()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			post := tt.post
+			pps, err := post.GetPotentialProviders(tt.user)
 			ms.NoError(err, "unexpected error")
 
 			ids := make([]int, len(pps))
 			for i, pp := range pps {
 				ids[i] = pp.ID
 			}
-			ms.Equal(test.wantPPIDs, ids)
+			ms.Equal(tt.wantPPIDs, ids)
 		})
 	}
 }

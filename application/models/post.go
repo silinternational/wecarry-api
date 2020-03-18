@@ -277,9 +277,9 @@ func (p *Post) SetProviderWithStatus(status PostStatus, providerID *string) erro
 
 // GetPotentialProviders returns the User objects associated with the Post's
 // PotentialProviders
-func (p *Post) GetPotentialProviders() (Users, error) {
+func (p *Post) GetPotentialProviders(currentUser User) (Users, error) {
 	providers := PotentialProviders{}
-	users, err := providers.FindUsersByPostID(p.ID)
+	users, err := providers.FindUsersByPostIDIfAuthorized(*p, currentUser)
 	return users, err
 }
 

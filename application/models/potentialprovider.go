@@ -138,6 +138,35 @@ func (p *PotentialProviders) FindUsersByPostID(postID int) (Users, error) {
 	return users, nil
 }
 
+// FindUsersByPostID gets the Users associated with the PotentialProviders
+func (p *PotentialProviders) FindUsersByPostIDIfAuthorized(post Post, currentUser User) (Users, error) {
+	if post.ID <= 0 {
+		return Users{}, fmt.Errorf("error finding potential_provider, invalid id %v", post.ID)
+	}
+
+	if post.CreatedByID == currentUser.ID {
+		if err := DB.Eager("User").Where("post_id = ?", post.ID).All(p); err != nil {
+			if domain.IsOtherThanNoRows(err) {
+				return Users{}, fmt.Errorf("failed to find potential_provider record for post %d, %s",
+					post.ID, err)
+			}
+		}
+	} else {
+		if err := DB.Eager("User").Where("post_id = ? and user_id = ?", post.ID, currentUser.ID).All(p); err != nil {
+			if domain.IsOtherThanNoRows(err) {
+				return Users{}, fmt.Errorf("failed to find potential_provider record for post %d, %s",
+					post.ID, err)
+			}
+		}
+	}
+	users := make(Users, len(*p))
+	for i, pp := range *p {
+		users[i] = pp.User
+	}
+
+	return users, nil
+}
+
 // CanUserAccessPotentialProvider returns whether the current user is a SuperAdmin, the Post's creator or
 // the user associated with the PotentialProvider
 func (p *PotentialProvider) CanUserAccessPotentialProvider(post Post, currentUser User) bool {
@@ -148,7 +177,7 @@ func (p *PotentialProvider) CanUserAccessPotentialProvider(post Post, currentUse
 }
 
 // FindWithPostUUIDAndUserUUID  finds the PotentialProvider associated with both the postUUID and the userUUID
-func (p *PotentialProvider) FindWithPostUUIDAndUserUUID(postUUID, userUUID string, currentUser User) error {
+func (p *PotentialProvider) FindWithPostUUIDAndUserUUID(postUUID, userUUID string) error {
 	var post Post
 	if err := post.FindByUUID(postUUID); err != nil {
 		return errors.New("unable to find Post in order to find PotentialProvider: " + err.Error())
