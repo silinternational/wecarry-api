@@ -116,7 +116,7 @@ func convertWatchInput(ctx context.Context, input watchInput, currentUser models
 		watch.Size = &s
 	}
 
-	if input.MeetingID == nil {
+	if input.MeetingID == nil || *input.MeetingID == "" {
 		watch.MeetingID = nulls.Int{}
 	} else {
 		var meeting models.Meeting
