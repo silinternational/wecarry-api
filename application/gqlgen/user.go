@@ -10,9 +10,9 @@ import (
 )
 
 // postRoleMap is used to convert PostRole gql enum values to values used by models
-var postRoleMap = map[PostRole]string{
-	PostRoleCreatedby: models.PostsCreated,
-	PostRoleProviding: models.PostsProviding,
+var postRoleMap = map[RequestRole]string{
+	RequestRoleCreatedby: models.PostsCreated,
+	RequestRoleProviding: models.PostsProviding,
 }
 
 // User is required by gqlgen
@@ -45,7 +45,7 @@ func (r *userResolver) Organizations(ctx context.Context, obj *models.User) ([]m
 }
 
 // Posts retrieves the list of Posts associated with the queried user, where association is defined by the given `role`.
-func (r *userResolver) Posts(ctx context.Context, obj *models.User, role PostRole) ([]models.Post, error) {
+func (r *userResolver) Requests(ctx context.Context, obj *models.User, role RequestRole) ([]models.Post, error) {
 	if obj == nil {
 		return nil, nil
 	}

@@ -48,24 +48,24 @@ type Query {
     "Provides a list of all organizations for which the user is an Admin. Super Admins and Sales Admins see all orgs."
     organizations: [Organization!]!
 
-#    'post' is disabled because it doesn't work for shared posts from a trusted org
-#    post(id: ID): Post
+#    'request' is disabled because it doesn't work for shared requests from a trusted org
+#    request(id: ID): Request
 
     """
-    Posts, aka Requests. With no parameters supplied, all posts visible to the authenticated user are returned. Filter
-    parameters only remove from this default list and never include posts that are not visible to the authenticated
-    user. For posts associated with a `User` or `Meeting`, use the `posts` field on `User` and `Meeting`.
+    With no parameters supplied, all requests visible to the authenticated user are returned. Filter
+    parameters only remove from this default list and never include requests that are not visible to the authenticated
+    user. For requests associated with a `User` or `Meeting`, use the `requests` field on `User` and `Meeting`.
     """
-    posts(
-        "Only include posts that have a destination near the given location."
+    requests(
+        "Only include requests that have a destination near the given location."
         destination: LocationInput,
 
-        "Only include posts that have an origin near the given location."
+        "Only include requests that have an origin near the given location."
         origin: LocationInput
 
         "Search by text in `title` or `description`"
         searchText: String
-    ): [Post!]!
+    ): [Request!]!
 
     """
     DEPRECATED: `Query.recentMeetings` will be replaced by the `endAfter` parameter of `Query.meetings`
@@ -111,7 +111,7 @@ type Mutation {
     "Remove a `MeetingParticipant` and return the remaining participants for the `Meeting`"
     removeMeetingParticipant(input: RemoveMeetingParticipantInput!): [MeetingParticipant!]!
 
-    "Create a new message. Only authorized for posts visible to the auth user."
+    "Create a new message. Only authorized for requests visible to the auth user."
     createMessage(input: CreateMessageInput!): Message!
 
     "Create a new organization. Authorized for Super Admins and Sales Admins."
@@ -140,7 +140,7 @@ type Mutation {
 
     """
     Create a trust relationship (affilition) between two Organizations. At the present time, this creates a mutual
-    trust between the two specified Organizations. A trust allows posts (requests) and meetings (events) to be visible
+    trust between the two specified Organizations. A trust allows requests and meetings (events) to be visible
     to users of a different Organization than their own.  Authorized for Super Admins and Sales Admins.
     """
     createOrganizationTrust(input: CreateOrganizationTrustInput!): Organization!
@@ -153,37 +153,37 @@ type Mutation {
     removeOrganizationTrust(input: RemoveOrganizationTrustInput!): Organization!
 
     """
-    Create a new Post (Request). Any user may create a standard Post. For meeting-related posts, the meeting must be
+    Create a new Request. Any user may create a standard Request. For meeting-related requests, the meeting must be
     visible to the auth user.
     """
-    createPost(input: CreatePostInput!): Post!
+    createRequest(input: CreateRequestInput!): Request!
 
     """
-    Update Post (Request) properties. The auth user must be the post creator or a Super Admin, and the post must be in
+    Update Request properties. The auth user must be the request creator or a Super Admin, and the request must be in
     an editable state (e.g. not COMPLETED) as identified by the `isEditable` field.
     """
-    updatePost(input: UpdatePostInput!): Post!
+    updateRequest(input: UpdateRequestInput!): Request!
 
     """
-    Update the Status field on a Post (Request). The post creator and Super Admins can make most status changes. The
+    Update the Status field on a Request. The request creator and Super Admins can make most status changes. The
     provider can make limited changes (e.g. to DELIVERED).
     """
-    updatePostStatus(input: UpdatePostStatusInput!): Post!
+    updateRequestStatus(input: UpdateRequestStatusInput!): Request!
 
-    "Make an offer to carry a request. Only allowed if the status is OPEN and the post is visible to the auth user."
-    addMeAsPotentialProvider(postID: String!): Post!
+    "Make an offer to carry a request. Only allowed if the status is OPEN and the request is visible to the auth user."
+    addMeAsPotentialProvider(requestID: String!): Request!
 
-    "Cancel a carry offer by auth user. Authorized for the post creator, the potential provider, and Super Admins."
-    removeMeAsPotentialProvider(postID: String!): Post!
+    "Cancel a carry offer by auth user. Authorized for the request creator, the potential provider, and Super Admins."
+    removeMeAsPotentialProvider(requestID: String!): Request!
 
-    "Cancel a carry offer for any user. Authorized for the post creator, the potential provider, and Super Admins."
-    removePotentialProvider(postID: String!, userID: String!): Post!
+    "Cancel a carry offer for any user. Authorized for the request creator, the potential provider, and Super Admins."
+    removePotentialProvider(requestID: String!, userID: String!): Request!
 
     "Provider changes the status of a request to DELIVERED"
-    markRequestAsDelivered(postID: String!): Post!
+    markRequestAsDelivered(requestID: String!): Request!
 
     "Requester changes the status of a request to RECEIVED"
-    markRequestAsReceived(postID: String!): Post!
+    markRequestAsReceived(requestID: String!): Request!
 
     """
     Set the LastViewedAt time for a message thread. Effectively clears the unread status of messages updated before the
@@ -195,7 +195,7 @@ type Mutation {
     updateUser(input: UpdateUserInput!): User!
 
     """
-    Create a Watch for a given location. Posts (requests) with a destination near the watch location will trigger a
+    Create a Watch for a given location. Requests with a destination near the watch location will trigger a
     notification to the watch creator. Other types of Watches (e.g. keyword search) may be created in future versions of
     WeCarry. Any user may create a Watch.
     """
@@ -238,16 +238,16 @@ enum MeetingVisibility {
     INVITE_ONLY
 }
 
-"Context of a User with respect to a Post (Request)"
-enum PostRole {
-    "Posts created by the User"
+"Context of a User with respect to a Request"
+enum RequestRole {
+    "Requests created by the User"
     CREATEDBY
-    "Posts provided by the User. Posts where the user is a PotentialProvider are not included."
+    "Requests provided by the User. Requests where the user is a PotentialProvider are not included."
     PROVIDING
 }
 
-"Allowed sizes for Posts."
-enum PostSize {
+"Allowed sizes for Requests."
+enum RequestSize {
     "Tiny: fits in a purse or small backpack, often identified by airlines as a person item"
     TINY
     "Small: fits in a carry-on bag or suitcase"
@@ -260,8 +260,8 @@ enum PostSize {
     XLARGE
 }
 
-"Valid states for Post Status"
-enum PostStatus {
+"Valid states for Request Status"
+enum RequestStatus {
     "Open: no provider has been selected by the receiver"
     OPEN
     "Accepted: a provider was selected by the receiver, but the carry has not been completed"
@@ -276,13 +276,13 @@ enum PostStatus {
     REMOVED
 }
 
-"Visibility for Posts, ALL organizations, TRUSTED organizations, or SAME organization only"
-enum PostVisibility {
+"Visibility for Requests, ALL organizations, TRUSTED organizations, or SAME organization only"
+enum RequestVisibility {
     "Visible to all users from all organizations in the system"
     ALL
-    "Visible to users from all organizations trusted by the Post creator's organization"
+    "Visible to users from all organizations trusted by the Request creator's organization"
     TRUSTED
-    "Visible only to users from the same organization as the Post creator"
+    "Visible only to users from the same organization as the Request creator"
     SAME
 }
 
@@ -376,13 +376,13 @@ type Meeting {
     imageFile: File
     "meeting (event) location -- notifications and filters may use this location"
     location: Location!
-    "associated Posts (Requests)"
-    posts: [Post!]!
+    "associated Requests"
+    requests: [Request!]!
     "NOT YET IMPLEMENTED -- what subset of users can view and interact with this meeting"
     visibility: MeetingVisibility!
     "Invites to the `Meeting` (event) for confirmation to join as a participant"
     invites: [MeetingInvite!]!
-    "Participants of a `Meeting` are able to see all posts associated with the `Meeting`"
+    "Participants of a `Meeting` are able to see all requests associated with the `Meeting`"
     participants: [MeetingParticipant!]!
     "Organizers of a `Meeting` are able to make changes and invite people"
     organizers: [PublicProfile!]!
@@ -514,14 +514,14 @@ type Message {
 input CreateMessageInput {
     "message content, limited to 4,096 characters"
     content: String!
-    "ID of the subject Post (request)"
-    postID: String!
+    "ID of the subject Request"
+    requestID: String!
     "Message thread to which the new message should be attached. If not specified, a new thread is created."
     threadID: String
 }
 
 """
-Organization subscribed to the App. Provides privacy controls for visibility of Posts and Meetings, and specifies
+Organization subscribed to the App. Provides privacy controls for visibility of Requests and Meetings, and specifies
 authentication for associated users.
 """
 type Organization {
@@ -542,7 +542,7 @@ type Organization {
     domains: [OrganizationDomain!]!
     "URL of an image file for the Organization's logo"
     logoURL: String
-    "Trusted (affiliated) organizations. Posts can be shared between organizations that have a OrganizationTrust"
+    "Trusted (affiliated) organizations. Requests can be shared between organizations that have a OrganizationTrust"
     trustedOrganizations: [Organization!]!
 }
 
@@ -627,16 +627,16 @@ input RemoveOrganizationTrustInput {
     secondaryID: ID!
 }
 
-type Post {
-    "unique identifier for the Post (Request)"
+type Request {
+    "unique identifier for the Request"
     id: ID!
-    "Profile of the user that created this post."
+    "Profile of the user that created this request."
     createdBy: PublicProfile!
-    "Profile of the user that is the provider for this post."
+    "Profile of the user that is the provider for this request."
     provider: PublicProfile
     "Users that have offered to carry this request."
     potentialProviders: [PublicProfile!]
-    "Organization associated with this post."
+    "Organization associated with this request."
     organization: Organization
     "Short description of item, limited to 255 characters"
     title: String!
@@ -651,14 +651,14 @@ type Post {
     "Optional geographic location where the item can be picked up, purchased, or otherwise obtained"
     origin: Location
     "Broad category of the size of item"
-    size: PostSize!
-    "Status of the post. Use mutation `updatePostStatus` to change the status."
-    status: PostStatus!
-    "List of message threads associated with this post"
+    size: RequestSize!
+    "Status of the request. Use mutation `updateRequestStatus` to change the status."
+    status: RequestStatus!
+    "List of message threads associated with this request"
     threads: [Thread!]!
-    "Date and time this post was created"
+    "Date and time this request was created"
     createdAt: Time!
-    "Date and time this post was last updated"
+    "Date and time this request was last updated"
     updatedAt: Time!
     "Optional URL to further describe or point to detail about the item, limited to 255 characters"
     url: String
@@ -668,18 +668,18 @@ type Post {
     photo: File
     "UUID of the photo of the item"
     photoID: ID
-    "List of attached files. Does not include the post photo."
+    "List of attached files. Does not include the request photo."
     files: [File!]!
-    "Meeting associated with this post. Affects visibility of the post."
+    "Meeting associated with this request. Affects visibility of the request."
     meeting: Meeting
-    "Dynamically set to indicate if the current user is allowed to edit this post using the `updatePost` mutation"
+    "Dynamically set to indicate if the current user is allowed to edit this request using the `updateRequest` mutation"
     isEditable: Boolean!
-    "Visibility restrictions for this post"
-    visibility: PostVisibility!
+    "Visibility restrictions for this request"
+    visibility: RequestVisibility!
 }
 
-input CreatePostInput {
-    "ID of associated Organization. Affects visibility of the post, see also the `visibility` field."
+input CreateRequestInput {
+    "ID of associated Organization. Affects visibility of the request, see also the `visibility` field."
     orgID: String!
     "Short description, limited to 255 characters"
     title: String!
@@ -692,21 +692,21 @@ input CreatePostInput {
     "Optional geographic location where the item can be picked up, purchased, or otherwise obtained"
     origin: LocationInput
     "Broad category of the size of item"
-    size: PostSize!
+    size: RequestSize!
     "Optional URL to further describe or point to detail about the item, limited to 255 characters"
     url: String
     "Optional weight of the item, measured in kilograms"
     kilograms: Float
     "Optional photo `file` ID. First upload a file using the `/upload` REST API and then submit its ID here."
     photoID: ID
-    "Optional meeting ID. Affects visibility of the post."
+    "Optional meeting ID. Affects visibility of the request."
     meetingID: ID
-    "Visibility restrictions for this post"
-    visibility: PostVisibility
+    "Visibility restrictions for this request"
+    visibility: RequestVisibility
 }
 
-input UpdatePostInput {
-    "ID of the post to update"
+input UpdateRequestInput {
+    "ID of the request to update"
     id: ID!
     "Short description, limited to 255 characters. If omitted or `null`, no change is made."
     title: String
@@ -725,25 +725,25 @@ input UpdatePostInput {
     """
     origin: LocationInput
     "Broad category of the size of item. If omitted or `null`, no change is made."
-    size: PostSize
+    size: RequestSize
     "Optional URL to further describe or point to detail about the item. If omitted or `null`, the URL is removed."
     url: String
     "Optional weight of the item, measured in kilograms. If omitted or `null`, the value is removed."
     kilograms: Float
     """
     Optional photo `file` ID. First upload a file using the `/upload` REST API and then submit its ID here. Any
-    previously attached photo will be deleted. If omitted or `null`, no photo will be attached to this post.
+    previously attached photo will be deleted. If omitted or `null`, no photo will be attached to this request.
     """
     photoID: ID
-    "Visibility restrictions for this post. If omitted or `null`, the visibility is set to `ALL`."
-    visibility: PostVisibility
+    "Visibility restrictions for this request. If omitted or `null`, the visibility is set to `ALL`."
+    visibility: RequestVisibility
 }
 
-input UpdatePostStatusInput {
-    "ID of the post to update"
+input UpdateRequestStatusInput {
+    "ID of the request to update"
     id: ID!
     "New Status. Only a limited set of transitions are allowed."
-    status: PostStatus!
+    status: RequestStatus!
     "User ID of the accepted provider. Required if `status` is ACCEPTED and ignored otherwise."
     providerUserID: ID
 }
@@ -752,12 +752,12 @@ input UpdatePostStatusInput {
 type Thread {
     "unique identifier for the message thread"
     id: ID!
-    "Users participating in the message thread. The post creator is automatically added to all of the posts's threads"
+    "Users participating in the message thread. The request creator is automatically added to all of the requests's threads"
     participants: [PublicProfile!]!
     "Messages on the thread"
     messages: [Message!]!
-    "Post that owns this message thread"
-    post: Post!
+    "Request that owns this message thread"
+    request: Request!
     "The time the auth user last viewed this thread. Messages with `updatedAt` after this time can be considered unread."
     lastViewedAt: Time!
     "The time this thread was started"
@@ -797,8 +797,8 @@ type User {
     unreadMessageCount: Int!
     "Organizations that the User is affilated with. This can be empty or have a single entry. Future capability is TBD"
     organizations: [Organization!]!
-    "A list of the user's posts, as determined by the given PostRole relationship"
-    posts(role: PostRole!): [Post!]!
+    "A list of the user's requests, as determined by the given RequestRole relationship"
+    requests(role: RequestRole!): [Request!]!
     "meetings in which the user is a participant"
     meetingsAsParticipant: [Meeting!]!
 }
@@ -846,7 +846,7 @@ input UpdateUserPreferencesInput {
 }
 
 """
-A Watch for a given location. Posts (requests) with a destination near the watch location will trigger a notification to
+A Watch for a given location. Requests with a destination near the watch location will trigger a notification to
 the watch creator. Other types of Watches (e.g. keyword search) may be created in future versions of WeCarry.
 """
 type Watch {

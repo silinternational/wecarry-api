@@ -17,11 +17,11 @@ type threadsResponse struct {
 		} `json:"messages"`
 		Post struct {
 			ID string `json:"id"`
-		} `json:"post"`
+		} `json:"request"`
 	} `json:"threads"`
 }
 
-const allThreadFields = "id post { id } participants {nickname} messages {id content sender { nickname }}}"
+const allThreadFields = "id request { id } participants {nickname} messages {id content sender { nickname }}}"
 
 func (as *ActionSuite) TestThreadsQuery() {
 	f := createFixturesForThreadQuery(as)
