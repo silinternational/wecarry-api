@@ -7,7 +7,7 @@ import (
 	"github.com/gofrs/uuid"
 )
 
-func (ms *ModelSuite) TestPotentialProviders_FindUsersByPostIDIfAuthorized() {
+func (ms *ModelSuite) TestPotentialProviders_FindUsersByPostID() {
 	f := createPotentialProvidersFixtures(ms)
 	users := f.Users
 	users[3].AdminRole = UserAdminRoleSuperAdmin
@@ -56,7 +56,7 @@ func (ms *ModelSuite) TestPotentialProviders_FindUsersByPostIDIfAuthorized() {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			providers := PotentialProviders{}
-			users, err := providers.FindUsersByPostIDIfAuthorized(tt.post, tt.user)
+			users, err := providers.FindUsersByPostID(tt.post, tt.user)
 			ms.NoError(err, "unexpected error")
 			ids := make([]int, len(users))
 			for i, u := range users {

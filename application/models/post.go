@@ -279,7 +279,7 @@ func (p *Post) SetProviderWithStatus(status PostStatus, providerID *string) erro
 // PotentialProviders
 func (p *Post) GetPotentialProviders(currentUser User) (Users, error) {
 	providers := PotentialProviders{}
-	users, err := providers.FindUsersByPostIDIfAuthorized(*p, currentUser)
+	users, err := providers.FindUsersByPostID(*p, currentUser)
 	return users, err
 }
 

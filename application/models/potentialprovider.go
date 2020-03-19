@@ -124,7 +124,7 @@ func (p *PotentialProvider) Update() error {
 // If the currentUser is the requester or a SuperAdmin, then all potentialProvider Users are returned.
 // If the currentUser is one of the potentialProviders, that User is returned.
 // Otherwise, an empty slice of Users is returned.
-func (p *PotentialProviders) FindUsersByPostIDIfAuthorized(post Post, currentUser User) (Users, error) {
+func (p *PotentialProviders) FindUsersByPostID(post Post, currentUser User) (Users, error) {
 	if post.ID <= 0 {
 		return Users{}, fmt.Errorf("error finding potential_provider, invalid id %v", post.ID)
 	}
@@ -162,6 +162,7 @@ func (p *PotentialProvider) CanUserAccessPotentialProvider(post Post, currentUse
 }
 
 // FindWithPostUUIDAndUserUUID  finds the PotentialProvider associated with both the postUUID and the userUUID
+// No authorization checks are performed - they must be done separately
 func (p *PotentialProvider) FindWithPostUUIDAndUserUUID(postUUID, userUUID string) error {
 	var post Post
 	if err := post.FindByUUID(postUUID); err != nil {
