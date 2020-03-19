@@ -34,7 +34,7 @@ const (
 	AccessTokenLifetimeSeconds  = 60*60*24*13 + 60*60*12 // 13 days, 12 hours
 	DateTimeFormat              = "2006-01-02 15:04:05"
 	NewMessageNotificationDelay = 1 * time.Minute
-	DefaultProximityDistanceKm  = 1000
+	DefaultProximityDistanceKm  = 100
 	DurationDay                 = time.Duration(time.Hour * 24)
 	DurationWeek                = time.Duration(DurationDay * 7)
 	RecentMeetingDelay          = DurationDay * 30

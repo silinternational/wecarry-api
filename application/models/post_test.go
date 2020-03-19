@@ -1468,6 +1468,11 @@ func (ms *ModelSuite) TestPosts_FindByUser() {
 
 	f := CreateFixtures_Posts_FindByUser(ms)
 
+	var postZeroDestination Location
+	ms.NoError(ms.DB.Find(&postZeroDestination, f.Posts[0].DestinationID))
+	var postOneOrigin Location
+	ms.NoError(ms.DB.Find(&postOneOrigin, f.Posts[1].OriginID))
+
 	tests := []struct {
 		name        string
 		user        User
@@ -1483,8 +1488,8 @@ func (ms *ModelSuite) TestPosts_FindByUser() {
 		{name: "user 2", user: f.Users[2], wantPostIDs: []int{f.Posts[7].ID, f.Posts[6].ID, f.Posts[5].ID}},
 		{name: "user 3", user: f.Users[3], wantPostIDs: []int{f.Posts[6].ID, f.Posts[5].ID, f.Posts[1].ID}},
 		{name: "non-existent user", user: User{}, wantErr: true},
-		{name: "destination", user: f.Users[0], dest: &Location{Country: "AU"}, wantPostIDs: []int{f.Posts[0].ID}},
-		{name: "origin", user: f.Users[0], orig: &Location{Country: "AU"}, wantPostIDs: []int{f.Posts[1].ID}},
+		{name: "destination", user: f.Users[0], dest: &postZeroDestination, wantPostIDs: []int{f.Posts[0].ID}},
+		{name: "origin", user: f.Users[0], orig: &postOneOrigin, wantPostIDs: []int{f.Posts[1].ID}},
 		{name: "user 0, post 1 (visible)", user: f.Users[0], postID: &f.Posts[1].ID, wantPostIDs: []int{f.Posts[1].ID}},
 		{name: "user 0, post 2 (not visible)", user: f.Users[0], postID: &f.Posts[2].ID, wantPostIDs: []int{}},
 	}

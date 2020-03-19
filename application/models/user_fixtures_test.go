@@ -405,7 +405,6 @@ func CreateUserFixtures_GetThreads(ms *ModelSuite) UserPostFixtures {
 
 func CreateFixturesForUserWantsPostNotification(ms *ModelSuite) UserPostFixtures {
 	uf := createUserFixtures(ms.DB, 3)
-	org := uf.Organization
 	users := uf.Users
 
 	for i := range users {
@@ -414,57 +413,21 @@ func CreateFixturesForUserWantsPostNotification(ms *ModelSuite) UserPostFixtures
 		ms.NoError(ms.DB.Save(&users[i].Location))
 	}
 
-	postLocations := Locations{
-		{ // Post 0 Destination
-			Description: "close",
-			Country:     "US",
-		},
-		{ // Post 1 Destination
-			Description: "far away",
-			Country:     "KR",
-		},
-		{ // Post 2 Destination
-			Description: "close",
-			Country:     "US",
-		},
-		{ // Post 0 Origin
-			Description: "far away",
-			Country:     "KR",
-		},
-		{ // Post 1 Origin
-			Description: "close",
-			Country:     "US",
-		},
-	}
-	createFixture(ms, &postLocations)
+	posts := createPostFixtures(ms.DB, 3, false)
+	postOneLocation, err := posts[1].GetOrigin()
+	ms.NoError(err)
+	ms.NoError(users[1].SetLocation(*postOneLocation))
 
-	posts := Posts{
-		{
-			OriginID: nulls.NewInt(postLocations[3].ID),
-		},
-		{
-			OriginID: nulls.NewInt(postLocations[4].ID),
-		},
-		{
-			OriginID: nulls.Int{},
-		},
-	}
-	for i := range posts {
-		posts[i].UUID = domain.GetUUID()
-		posts[i].CreatedByID = users[0].ID
-		posts[i].OrganizationID = org.ID
-		posts[i].DestinationID = postLocations[i].ID
-		createFixture(ms, &posts[i])
-	}
-
-	// user 2 has a watch for the location of post 4
-	watchLocation := postLocations[4]
-	watchLocation.ID = 0
-	createFixture(ms, &watchLocation)
-	createFixture(ms, &Watch{
+	// make a copy of the post destination and assign it to a watch
+	watchLocation, err := posts[2].GetDestination()
+	ms.NoError(err)
+	createFixture(ms, watchLocation)
+	watch := Watch{
+		UUID:       domain.GetUUID(),
 		OwnerID:    users[2].ID,
 		LocationID: nulls.NewInt(watchLocation.ID),
-	})
+	}
+	createFixture(ms, &watch)
 
 	return UserPostFixtures{
 		Users: users,
