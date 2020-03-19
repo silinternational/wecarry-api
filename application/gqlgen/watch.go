@@ -151,11 +151,13 @@ func (r *mutationResolver) CreateWatch(ctx context.Context, input watchInput) (*
 		return nil, domain.ReportError(ctx, err, "CreateWatch.ProcessInput", extras)
 	}
 
-	location := convertLocation(*input.Location)
-	if err = location.Create(); err != nil {
-		return nil, domain.ReportError(ctx, err, "CreateWatch.SetLocation", extras)
+	if input.Location != nil {
+		location := convertLocation(*input.Location)
+		if err = location.Create(); err != nil {
+			return nil, domain.ReportError(ctx, err, "CreateWatch.SetLocation", extras)
+		}
+		watch.LocationID = nulls.NewInt(location.ID)
 	}
-	watch.LocationID = nulls.NewInt(location.ID)
 
 	if err = watch.Create(); err != nil {
 		return nil, domain.ReportError(ctx, err, "CreateWatch", extras)
