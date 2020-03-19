@@ -7,45 +7,12 @@ import (
 	"github.com/gofrs/uuid"
 )
 
-func (ms *ModelSuite) TestPotentialProviders_FindUsersByPostID() {
-	f := createPotentialProvidersFixtures(ms)
-	posts := f.Posts
-	pps := f.PotentialProviders
-	t := ms.T()
-	tests := []struct {
-		name    string
-		post    Post
-		wantIDs []int
-	}{
-		{
-			name:    "first post",
-			post:    posts[0],
-			wantIDs: []int{pps[0].UserID, pps[1].UserID, pps[2].UserID},
-		},
-		{
-			name:    "second post",
-			post:    posts[1],
-			wantIDs: []int{pps[3].UserID, pps[4].UserID},
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			providers := PotentialProviders{}
-			users, err := providers.FindUsersByPostID(test.post.ID)
-			ms.NoError(err, "unexpected error")
-			ids := make([]int, len(users))
-			for i, u := range users {
-				ids[i] = u.ID
-			}
-
-			ms.Equal(test.wantIDs, ids)
-		})
-	}
-}
-
 func (ms *ModelSuite) TestPotentialProviders_FindUsersByPostIDIfAuthorized() {
 	f := createPotentialProvidersFixtures(ms)
 	users := f.Users
+	users[3].AdminRole = UserAdminRoleSuperAdmin
+	ms.NoError(ms.DB.Save(&users[3]), "error making user fixture a SuperAdmin")
+
 	posts := f.Posts
 	pps := f.PotentialProviders
 	t := ms.T()
@@ -68,10 +35,22 @@ func (ms *ModelSuite) TestPotentialProviders_FindUsersByPostIDIfAuthorized() {
 			wantIDs: []int{pps[0].UserID},
 		},
 		{
+			name:    "current user is SuperAdmin",
+			post:    posts[0],
+			user:    users[3],
+			wantIDs: []int{pps[0].UserID, pps[1].UserID, pps[2].UserID},
+		},
+		{
 			name:    "non potential provider as current user",
 			post:    posts[1],
 			user:    users[1],
 			wantIDs: []int{},
+		},
+		{
+			name:    "empty current user",
+			post:    posts[1],
+			user:    User{},
+			wantIDs: []int{pps[3].UserID, pps[4].UserID},
 		},
 	}
 	for _, tt := range tests {

@@ -233,7 +233,7 @@ func sendNotificationRequestFromOpenToAccepted(params senderParams) {
 	post := params.post
 
 	var providers models.PotentialProviders
-	users, err := providers.FindUsersByPostID(post.ID)
+	users, err := providers.FindUsersByPostIDIfAuthorized(post, models.User{})
 	if err != nil {
 		domain.ErrLogger.Printf("error finding rejected potential providers for post id, %v ... %v",
 			post.ID, err)
