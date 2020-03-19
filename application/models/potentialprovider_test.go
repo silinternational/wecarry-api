@@ -112,6 +112,7 @@ func (ms *ModelSuite) TestPotentialProvider_FindWithPostUUIDAndUserUUID() {
 				tt.ppUserUUID.String(), tt.currentUser)
 
 			if tt.wantErr != "" {
+				ms.Error(err)
 				ms.Contains(err.Error(), tt.wantErr, "didn't get the expected error")
 				return
 			}
