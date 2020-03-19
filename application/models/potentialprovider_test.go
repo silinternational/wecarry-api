@@ -9,36 +9,61 @@ import (
 
 func (ms *ModelSuite) TestPotentialProviders_FindUsersByPostID() {
 	f := createPotentialProvidersFixtures(ms)
+	users := f.Users
+	users[3].AdminRole = UserAdminRoleSuperAdmin
+	ms.NoError(ms.DB.Save(&users[3]), "error making user fixture a SuperAdmin")
+
 	posts := f.Posts
 	pps := f.PotentialProviders
 	t := ms.T()
 	tests := []struct {
 		name    string
 		post    Post
+		user    User
 		wantIDs []int
 	}{
 		{
-			name:    "first post",
+			name:    "requester as current user",
 			post:    posts[0],
+			user:    users[0],
 			wantIDs: []int{pps[0].UserID, pps[1].UserID, pps[2].UserID},
 		},
 		{
-			name:    "second post",
+			name:    "potential provider as current user",
+			post:    posts[0],
+			user:    users[1],
+			wantIDs: []int{pps[0].UserID},
+		},
+		{
+			name:    "current user is SuperAdmin",
+			post:    posts[0],
+			user:    users[3],
+			wantIDs: []int{pps[0].UserID, pps[1].UserID, pps[2].UserID},
+		},
+		{
+			name:    "non potential provider as current user",
 			post:    posts[1],
+			user:    users[1],
+			wantIDs: []int{},
+		},
+		{
+			name:    "empty current user",
+			post:    posts[1],
+			user:    User{},
 			wantIDs: []int{pps[3].UserID, pps[4].UserID},
 		},
 	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 			providers := PotentialProviders{}
-			users, err := providers.FindUsersByPostID(test.post.ID)
+			users, err := providers.FindUsersByPostID(tt.post, tt.user)
 			ms.NoError(err, "unexpected error")
 			ids := make([]int, len(users))
 			for i, u := range users {
 				ids[i] = u.ID
 			}
 
-			ms.Equal(test.wantIDs, ids)
+			ms.Equal(tt.wantIDs, ids)
 		})
 	}
 }
@@ -51,39 +76,49 @@ func (ms *ModelSuite) TestPotentialProvider_FindWithPostUUIDAndUserUUID() {
 	t := ms.T()
 	tests := []struct {
 		name        string
-		currentUser User
 		post        Post
 		ppUserUUID  uuid.UUID
+		currentUser User
 		wantID      int
+		wantErr     string
 	}{
 		{
 			name:        "post Creator as current user",
-			currentUser: users[0],
 			post:        posts[0],
 			ppUserUUID:  users[1].UUID,
+			currentUser: users[1],
 			wantID:      pps[0].ID,
 		},
 		{
 			name:        "potential provider as current user",
-			currentUser: users[2],
 			post:        posts[0],
 			ppUserUUID:  users[2].UUID,
+			currentUser: users[2],
 			wantID:      pps[1].ID,
 		},
 		{
 			name:        "current user is not potential provider",
-			currentUser: users[1],
 			post:        posts[1],
 			ppUserUUID:  users[3].UUID,
+			currentUser: users[2],
 			wantID:      pps[4].ID,
+			wantErr:     "user not allowed to access PotentialProvider",
 		},
 	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 			provider := PotentialProvider{}
-			err := provider.FindWithPostUUIDAndUserUUID(test.post.UUID.String(), test.ppUserUUID.String(), test.currentUser)
+			err := provider.FindWithPostUUIDAndUserUUID(tt.post.UUID.String(),
+				tt.ppUserUUID.String(), tt.currentUser)
+
+			if tt.wantErr != "" {
+				ms.Error(err)
+				ms.Contains(err.Error(), tt.wantErr, "didn't get the expected error")
+				return
+			}
+
 			ms.NoError(err, "unexpected error")
-			ms.Equal(test.wantID, provider.ID)
+			ms.Equal(tt.wantID, provider.ID)
 		})
 	}
 }

@@ -118,18 +118,32 @@ func (p *PotentialProvider) Update() error {
 	return update(p)
 }
 
-// FindUsersByPostID gets the Users associated with the PotentialProviders
-func (p *PotentialProviders) FindUsersByPostID(postID int) (Users, error) {
-	if postID <= 0 {
-		return Users{}, fmt.Errorf("error finding potential_provider, invalid id %v", postID)
+// FindUsersByPostID gets the Users associated with the Post's PotentialProviders
+// This can be used without authorization by providing an empty currentUser object
+//  (e.g. in the case of a notifications listener needing all the potentialProviders).
+// If the currentUser is the requester or a SuperAdmin, then all potentialProvider Users are returned.
+// If the currentUser is one of the potentialProviders, that User is returned.
+// Otherwise, an empty slice of Users is returned.
+func (p *PotentialProviders) FindUsersByPostID(post Post, currentUser User) (Users, error) {
+	if post.ID <= 0 {
+		return Users{}, fmt.Errorf("error finding potential_provider, invalid id %v", post.ID)
 	}
 
-	if err := DB.Eager("User").Where("post_id = ?", postID).All(p); err != nil {
+	// Default - only authorized to see self
+	whereQ := fmt.Sprintf("post_id = %v and user_id = %v", post.ID, currentUser.ID)
+
+	// See all, if authorized.
+	if post.CreatedByID == currentUser.ID || currentUser.ID == 0 || currentUser.AdminRole == UserAdminRoleSuperAdmin {
+		whereQ = fmt.Sprintf("post_id = %v", post.ID)
+	}
+
+	if err := DB.Eager("User").Where(whereQ).All(p); err != nil {
 		if domain.IsOtherThanNoRows(err) {
-			return Users{}, fmt.Errorf("failed to find potential_provider record for post %d, %s",
-				postID, err)
+			return Users{}, fmt.Errorf("failed to find potential_provider records for post %d, %s",
+				post.ID, err)
 		}
 	}
+
 	users := make(Users, len(*p))
 	for i, pp := range *p {
 		users[i] = pp.User
@@ -148,6 +162,7 @@ func (p *PotentialProvider) CanUserAccessPotentialProvider(post Post, currentUse
 }
 
 // FindWithPostUUIDAndUserUUID  finds the PotentialProvider associated with both the postUUID and the userUUID
+// No authorization checks are performed - they must be done separately
 func (p *PotentialProvider) FindWithPostUUIDAndUserUUID(postUUID, userUUID string, currentUser User) error {
 	var post Post
 	if err := post.FindByUUID(postUUID); err != nil {
@@ -161,6 +176,11 @@ func (p *PotentialProvider) FindWithPostUUIDAndUserUUID(postUUID, userUUID strin
 
 	if err := DB.Where("post_id = ? AND user_id = ?", post.ID, user.ID).First(p); err != nil {
 		return errors.New("unable to find PotentialProvider: " + err.Error())
+	}
+
+	if !p.CanUserAccessPotentialProvider(post, currentUser) {
+		p = nil
+		return errors.New("user not allowed to access PotentialProvider")
 	}
 
 	return nil
