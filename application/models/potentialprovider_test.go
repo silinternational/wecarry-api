@@ -75,36 +75,49 @@ func (ms *ModelSuite) TestPotentialProvider_FindWithPostUUIDAndUserUUID() {
 	pps := f.PotentialProviders
 	t := ms.T()
 	tests := []struct {
-		name       string
-		post       Post
-		ppUserUUID uuid.UUID
-		wantID     int
+		name        string
+		post        Post
+		ppUserUUID  uuid.UUID
+		currentUser User
+		wantID      int
+		wantErr     string
 	}{
 		{
-			name:       "post Creator as current user",
-			post:       posts[0],
-			ppUserUUID: users[1].UUID,
-			wantID:     pps[0].ID,
+			name:        "post Creator as current user",
+			post:        posts[0],
+			ppUserUUID:  users[1].UUID,
+			currentUser: users[1],
+			wantID:      pps[0].ID,
 		},
 		{
-			name:       "potential provider as current user",
-			post:       posts[0],
-			ppUserUUID: users[2].UUID,
-			wantID:     pps[1].ID,
+			name:        "potential provider as current user",
+			post:        posts[0],
+			ppUserUUID:  users[2].UUID,
+			currentUser: users[2],
+			wantID:      pps[1].ID,
 		},
 		{
-			name:       "current user is not potential provider",
-			post:       posts[1],
-			ppUserUUID: users[3].UUID,
-			wantID:     pps[4].ID,
+			name:        "current user is not potential provider",
+			post:        posts[1],
+			ppUserUUID:  users[3].UUID,
+			currentUser: users[2],
+			wantID:      pps[4].ID,
+			wantErr:     "user not allowed to access PotentialProvider",
 		},
 	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 			provider := PotentialProvider{}
-			err := provider.FindWithPostUUIDAndUserUUID(test.post.UUID.String(), test.ppUserUUID.String())
+			err := provider.FindWithPostUUIDAndUserUUID(tt.post.UUID.String(),
+				tt.ppUserUUID.String(), tt.currentUser)
+
+			if tt.wantErr != "" {
+				ms.Contains(err.Error(), tt.wantErr, "didn't get the expected error")
+				return
+			}
+
 			ms.NoError(err, "unexpected error")
-			ms.Equal(test.wantID, provider.ID)
+			ms.Equal(tt.wantID, provider.ID)
 		})
 	}
 }

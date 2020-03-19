@@ -163,7 +163,7 @@ func (p *PotentialProvider) CanUserAccessPotentialProvider(post Post, currentUse
 
 // FindWithPostUUIDAndUserUUID  finds the PotentialProvider associated with both the postUUID and the userUUID
 // No authorization checks are performed - they must be done separately
-func (p *PotentialProvider) FindWithPostUUIDAndUserUUID(postUUID, userUUID string) error {
+func (p *PotentialProvider) FindWithPostUUIDAndUserUUID(postUUID, userUUID string, currentUser User) error {
 	var post Post
 	if err := post.FindByUUID(postUUID); err != nil {
 		return errors.New("unable to find Post in order to find PotentialProvider: " + err.Error())
@@ -176,6 +176,11 @@ func (p *PotentialProvider) FindWithPostUUIDAndUserUUID(postUUID, userUUID strin
 
 	if err := DB.Where("post_id = ? AND user_id = ?", post.ID, user.ID).First(p); err != nil {
 		return errors.New("unable to find PotentialProvider: " + err.Error())
+	}
+
+	if !p.CanUserAccessPotentialProvider(post, currentUser) {
+		p = nil
+		return errors.New("user not allowed to access PotentialProvider")
 	}
 
 	return nil
