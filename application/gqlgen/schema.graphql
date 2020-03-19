@@ -847,7 +847,7 @@ input UpdateUserPreferencesInput {
 
 """
 A Watch for a given location. New requests matching all of the given criterium will generate a new
-notification. At least one filter criterion must be given.
+notification.
 """
 type Watch {
     "unique identifier for the Watch"
