@@ -12,6 +12,7 @@ import (
 	"github.com/gobuffalo/httptest"
 
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/models"
 )
 
 type gqlErrorResponse struct {
@@ -149,4 +150,12 @@ func (as *ActionSuite) Test_BadRoute() {
 	}
 
 	as.Equal(want, gqlResponse, "incorrect app error")
+}
+
+func (as *ActionSuite) locationInput(l models.Location) string {
+	var geo string
+	if l.Latitude.Valid && l.Longitude.Valid {
+		geo = fmt.Sprintf(",latitude:%f,longitude:%f", l.Latitude.Float64, l.Longitude.Float64)
+	}
+	return fmt.Sprintf(`{description:"%s",country:"%s"%s}`, l.Description, l.Country, geo)
 }

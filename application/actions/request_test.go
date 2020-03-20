@@ -176,6 +176,11 @@ func (as *ActionSuite) verifyRequestResponse(request models.Post, resp Request) 
 func (as *ActionSuite) Test_RequestsQuery() {
 	f := createFixturesForRequestQuery(as)
 
+	postZeroDestination, err := f.Posts[0].GetDestination()
+	as.NoError(err)
+	postOneOrigin, err := f.Posts[1].GetOrigin()
+	as.NoError(err)
+
 	type testCase struct {
 		name        string
 		searchText  string
@@ -217,7 +222,7 @@ func (as *ActionSuite) Test_RequestsQuery() {
 		{
 			name:        "destination filter",
 			searchText:  "null",
-			destination: `{description:"Australia",country:"AU"}`,
+			destination: as.locationInput(*postZeroDestination),
 			origin:      "null",
 			testUser:    f.Users[1],
 			verifyFunc: func() {
@@ -229,7 +234,7 @@ func (as *ActionSuite) Test_RequestsQuery() {
 			name:        "origin filter",
 			searchText:  "null",
 			destination: "null",
-			origin:      `{description:"Australia",country:"AU"}`,
+			origin:      as.locationInput(*postOneOrigin),
 			testUser:    f.Users[1],
 			verifyFunc: func() {
 				as.Equal(1, len(resp.Requests))
