@@ -856,31 +856,31 @@ type Watch {
     owner: PublicProfile!
     "Short description, as named by the Watch creator"
     name: String!
-    "Location to watch. If a new request has a destination near this location, a notification will be sent."
-    location: Location
+    "Destination to watch. If a new request has a destination near this location, a notification will be sent."
+    destination: Location
+    "Origin to watch. If a new request has an origin near this location, a notification will be sent."
+    origin: Location
     "Meeting to watch. Notifications will be sent for new requests tied to this event."
     meeting: Meeting
     "Search by text in request `title` or `description`"
     searchText: String
     "Maximum size of a requested item"
     size: RequestSize
-    "Maximum weight of a requested item, measured in kilograms"
-    kilograms: Float
 }
 
 input CreateWatchInput {
     "Short description, as named by the Watch creator"
     name: String!
-    "Location to watch. If a new request has a destination near this location, a notification will be sent."
-    location: LocationInput
+    "Destination to watch. If a new request has a destination near this location, a notification will be sent."
+    destination: LocationInput
+    "Origin to watch. If a new request has an origin near this location, a notification will be sent."
+    origin: LocationInput
     "Meeting to watch. Notifications will be sent for new requests tied to this event."
     meetingID: ID
     "Search by text in `title` or `description`"
     searchText: String
     "Maximum size of a requested item"
     size: RequestSize
-    "Maximum weight of a requested item, measured in kilograms"
-    kilograms: Float
 }
 
 input RemoveWatchInput {
@@ -897,14 +897,14 @@ input UpdateWatchInput {
     id: ID!
     "Short description, as named by the Watch creator"
     name: String!
-    "Location to watch. If a new request has a destination near this location, a notification will be sent."
-    location: LocationInput
+    "Destination to watch. If a new request has a destination near this location, a notification will be sent."
+    destination: LocationInput
+    "Origin to watch. If a new request has an origin near this location, a notification will be sent."
+    origin: LocationInput
     "Meeting to watch. Notifications will be sent for new requests tied to this event."
     meetingID: ID
     "Search by text in `title` or `description`"
     searchText: String
     "Maximum size of a requested item"
     size: RequestSize
-    "Maximum weight of a requested item, measured in kilograms"
-    kilograms: Float
 }

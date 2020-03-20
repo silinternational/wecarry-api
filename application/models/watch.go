@@ -17,17 +17,17 @@ import (
 
 // Watch is the model for storing post watches that trigger notifications on the conditions specified
 type Watch struct {
-	ID         int           `json:"id" db:"id"`
-	CreatedAt  time.Time     `json:"created_at" db:"created_at"`
-	UpdatedAt  time.Time     `json:"updated_at" db:"updated_at"`
-	UUID       uuid.UUID     `json:"uuid" db:"uuid"`
-	OwnerID    int           `json:"owner_id" db:"owner_id"`
-	Name       string        `json:"name" db:"name"`
-	LocationID nulls.Int     `json:"location_id" db:"location_id"`
-	MeetingID  nulls.Int     `json:"meeting_id" db:"meeting_id"`
-	SearchText nulls.String  `json:"search_text" db:"search_text"`
-	Size       *PostSize     `json:"size" db:"size"`
-	Kilograms  nulls.Float64 `json:"kilograms" db:"kilograms"`
+	ID            int          `json:"id" db:"id"`
+	CreatedAt     time.Time    `json:"created_at" db:"created_at"`
+	UpdatedAt     time.Time    `json:"updated_at" db:"updated_at"`
+	UUID          uuid.UUID    `json:"uuid" db:"uuid"`
+	OwnerID       int          `json:"owner_id" db:"owner_id"`
+	Name          string       `json:"name" db:"name"`
+	DestinationID nulls.Int    `json:"destination_id" db:"destination_id"`
+	OriginID      nulls.Int    `json:"origin_id" db:"origin_id"`
+	MeetingID     nulls.Int    `json:"meeting_id" db:"meeting_id"`
+	SearchText    nulls.String `json:"search_text" db:"search_text"`
+	Size          *PostSize    `json:"size" db:"size"`
 }
 
 // Watches is used for methods that operate on lists of objects
@@ -92,28 +92,53 @@ func (w *Watch) GetOwner() (*User, error) {
 	return &owner, nil
 }
 
-// GetLocation returns the related Location object.
-func (w *Watch) GetLocation() (*Location, error) {
+// GetDestination does not check authorization
+func (w *Watch) GetDestination() (*Location, error) {
 	location := &Location{}
-	if !w.LocationID.Valid {
+	if !w.DestinationID.Valid {
 		return nil, nil
 	}
-	if err := DB.Find(location, w.LocationID); err != nil {
+	if err := DB.Find(location, w.DestinationID); err != nil {
 		return nil, err
 	}
 	return location, nil
 }
 
-// SetLocation sets the location field, creating a new record in the database if necessary.
-func (w *Watch) SetLocation(location Location) error {
-	if w.LocationID.Valid {
-		location.ID = w.LocationID.Int
+// GetOrigin does not check authorization
+func (w *Watch) GetOrigin() (*Location, error) {
+	location := &Location{}
+	if !w.OriginID.Valid {
+		return nil, nil
+	}
+	if err := DB.Find(location, w.OriginID); err != nil {
+		return nil, err
+	}
+	return location, nil
+}
+
+// SetDestination sets the destination field, creating a new record in the database if necessary.
+func (w *Watch) SetDestination(location Location) error {
+	if w.DestinationID.Valid {
+		location.ID = w.DestinationID.Int
 		return location.Update()
 	}
 	if err := location.Create(); err != nil {
 		return err
 	}
-	w.LocationID = nulls.NewInt(location.ID)
+	w.DestinationID = nulls.NewInt(location.ID)
+	return w.Update()
+}
+
+// SetOrigin sets the origin field, creating a new record in the database if necessary.
+func (w *Watch) SetOrigin(location Location) error {
+	if w.OriginID.Valid {
+		location.ID = w.OriginID.Int
+		return location.Update()
+	}
+	if err := location.Create(); err != nil {
+		return err
+	}
+	w.OriginID = nulls.NewInt(location.ID)
 	return w.Update()
 }
 
@@ -129,9 +154,9 @@ func (w *Watch) matchesPost(post Post) bool {
 		domain.ErrLogger.Printf("failed to get post %s destination in Watch.matchesPost, %s", post.UUID, err)
 		return false
 	}
-	loc, err := w.GetLocation()
+	loc, err := w.GetDestination()
 	if err != nil {
-		domain.ErrLogger.Printf("failed to get watch %s location in Watch.matchesPost, %s", w.UUID, err)
+		domain.ErrLogger.Printf("failed to get watch %s destination in Watch.matchesPost, %s", w.UUID, err)
 	}
 	if loc.IsNear(*dest) {
 		return true

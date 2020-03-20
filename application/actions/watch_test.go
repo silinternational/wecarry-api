@@ -33,29 +33,31 @@ type watch struct {
 	Owner struct {
 		Nickname string `json:"nickname"`
 	} `json:"owner"`
-	Name     string
-	Location struct {
-		Country     string  `json:"country"`
-		Description string  `json:"description"`
-		Latitude    float64 `json:"latitude"`
-		Longitude   float64 `json:"longitude"`
-	} `json:"location"`
-	Meeting struct {
+	Name        string
+	Destination location `json:"destination"`
+	Origin      location `json:"origin"`
+	Meeting     struct {
 		ID string `json:"id"`
 	}
-	SearchText string  `json:"searchText"`
-	Size       string  `json:"size"`
-	Kilograms  float64 `json:"kilograms"`
+	SearchText string `json:"searchText"`
+	Size       string `json:"size"`
+}
+
+type location struct {
+	Country     string  `json:"country"`
+	Description string  `json:"description"`
+	Latitude    float64 `json:"latitude"`
+	Longitude   float64 `json:"longitude"`
 }
 
 type watchInput struct {
-	id         *string
-	name       string
-	location   locationInput
-	meetingID  string
-	searchText string
-	size       models.PostSize
-	kilograms  float64
+	id          *string
+	name        string
+	destination locationInput
+	origin      locationInput
+	meetingID   string
+	searchText  string
+	size        models.PostSize
 }
 
 type locationInput struct {
@@ -69,11 +71,11 @@ const allWatchFields = `
     id
     owner { nickname }
     name
-    location { description country latitude longitude }
+    destination { description country latitude longitude }
+    origin { description country latitude longitude }
     meeting { id }
     searchText
     size
-    kilograms
 	`
 
 func createFixturesForWatches(as *ActionSuite) watchQueryFixtures {
@@ -83,7 +85,7 @@ func createFixturesForWatches(as *ActionSuite) watchQueryFixtures {
 	watches := make(models.Watches, 2)
 	for i := range watches {
 		watches[i].OwnerID = uf.Users[0].ID
-		watches[i].LocationID = nulls.NewInt(locations[i].ID)
+		watches[i].DestinationID = nulls.NewInt(locations[i].ID)
 		test.MustCreate(as.DB, &watches[i])
 	}
 	meetings := models.Meetings{
@@ -128,7 +130,7 @@ func (as *ActionSuite) Test_MyWatches() {
 	as.Equal(2, len(got), "incorrect number of Watches")
 	as.Equal(watches[1].UUID.String(), got[0].ID, "incorrect Watch UUID")
 	as.Equal(user.Nickname, got[1].Owner.Nickname, "incorrect Watch Owner")
-	as.Equal(f.Locations[0].Country, got[1].Location.Country, "incorrect Watch Location")
+	as.Equal(f.Locations[0].Country, got[1].Destination.Country, "incorrect Watch Destination")
 }
 
 func (as *ActionSuite) Test_CreateWatch() {
@@ -149,8 +151,8 @@ func (as *ActionSuite) Test_CreateWatch() {
 			name: "all fields",
 			watch: watchInput{
 				name: "foo",
-				location: locationInput{
-					description: "watch location",
+				destination: locationInput{
+					description: "watch destination",
 					country:     "dc",
 					latitude:    1.1,
 					longitude:   2.2,
@@ -158,7 +160,6 @@ func (as *ActionSuite) Test_CreateWatch() {
 				meetingID:  f.Meetings[0].UUID.String(),
 				searchText: "search",
 				size:       models.PostSizeXlarge,
-				kilograms:  0.454,
 			},
 			testUser: f.Users[0],
 		},
@@ -179,13 +180,12 @@ func (as *ActionSuite) Test_CreateWatch() {
 			as.True(uuid.UUID{}.String() != resp.Watch.ID, "don't want empty UUID")
 			as.Equal(user.Nickname, resp.Watch.Owner.Nickname, "incorrect Watch Owner")
 			as.Equal(tc.watch.name, resp.Watch.Name, "incorrect Watch name")
-			as.Equal(tc.watch.location.country, resp.Watch.Location.Country, "incorrect watch Country")
-			as.Equal(tc.watch.location.description, resp.Watch.Location.Description, "incorrect watch Description")
-			as.Equal(tc.watch.location.latitude, resp.Watch.Location.Latitude, "incorrect watch Latitude")
-			as.Equal(tc.watch.location.longitude, resp.Watch.Location.Longitude, "incorrect watch Longitude")
+			as.Equal(tc.watch.destination.country, resp.Watch.Destination.Country, "incorrect watch Country")
+			as.Equal(tc.watch.destination.description, resp.Watch.Destination.Description, "incorrect watch Description")
+			as.Equal(tc.watch.destination.latitude, resp.Watch.Destination.Latitude, "incorrect watch Latitude")
+			as.Equal(tc.watch.destination.longitude, resp.Watch.Destination.Longitude, "incorrect watch Longitude")
 			as.Equal(tc.watch.meetingID, resp.Watch.Meeting.ID, "incorrect Watch meeting ID")
 			as.Equal(tc.watch.searchText, resp.Watch.SearchText, "incorrect Watch search text")
-			as.Equal(tc.watch.kilograms, resp.Watch.Kilograms, "incorrect Watch kilograms")
 
 			var dbWatch models.Watch
 			err = as.DB.Where("uuid = ?", resp.Watch.ID).First(&dbWatch)
@@ -215,7 +215,7 @@ func (as *ActionSuite) Test_UpdateWatch() {
 			watch: watchInput{
 				id:   &watchUUID,
 				name: "foo",
-				location: locationInput{
+				destination: locationInput{
 					description: "new location",
 					country:     "dc",
 					latitude:    1.1,
@@ -224,7 +224,6 @@ func (as *ActionSuite) Test_UpdateWatch() {
 				meetingID:  f.Meetings[0].UUID.String(),
 				searchText: "search",
 				size:       models.PostSizeXlarge,
-				kilograms:  0.454,
 			},
 			testUser: f.Users[0],
 		},
@@ -256,13 +255,12 @@ func (as *ActionSuite) Test_UpdateWatch() {
 			as.Equal(*tc.watch.id, resp.Watch.ID, "incorrect Watch UUID")
 			as.Equal(user.Nickname, resp.Watch.Owner.Nickname, "incorrect Watch Owner")
 			as.Equal(tc.watch.name, resp.Watch.Name, "incorrect Watch name")
-			as.Equal(tc.watch.location.country, resp.Watch.Location.Country, "incorrect watch Country")
-			as.Equal(tc.watch.location.description, resp.Watch.Location.Description, "incorrect watch Description")
-			as.Equal(tc.watch.location.latitude, resp.Watch.Location.Latitude, "incorrect watch Latitude")
-			as.Equal(tc.watch.location.longitude, resp.Watch.Location.Longitude, "incorrect watch Longitude")
+			as.Equal(tc.watch.destination.country, resp.Watch.Destination.Country, "incorrect watch Country")
+			as.Equal(tc.watch.destination.description, resp.Watch.Destination.Description, "incorrect watch Description")
+			as.Equal(tc.watch.destination.latitude, resp.Watch.Destination.Latitude, "incorrect watch Latitude")
+			as.Equal(tc.watch.destination.longitude, resp.Watch.Destination.Longitude, "incorrect watch Longitude")
 			as.Equal(tc.watch.meetingID, resp.Watch.Meeting.ID, "incorrect Watch meeting ID")
 			as.Equal(tc.watch.searchText, resp.Watch.SearchText, "incorrect Watch search text")
-			as.Equal(tc.watch.kilograms, resp.Watch.Kilograms, "incorrect Watch kilograms")
 
 			var dbWatch models.Watch
 			err = as.DB.Where("uuid = ?", resp.Watch.ID).First(&dbWatch)
@@ -281,10 +279,10 @@ func (as *ActionSuite) watchInputString(watch watchInput) string {
 		watch.size = models.PostSizeXlarge
 	}
 
-	input = fmt.Sprintf(`%s name: "%s" location: {description:"%s" country:"%s" latitude:%f longitude:%f}
-		meetingID: "%s" searchText: "%s" size: %s kilograms: %f`,
-		input, watch.name, watch.location.description, watch.location.country, watch.location.latitude,
-		watch.location.longitude, watch.meetingID, watch.searchText, watch.size, watch.kilograms)
+	input = fmt.Sprintf(`%s name: "%s" destination: {description:"%s" country:"%s" latitude:%f longitude:%f}
+		meetingID: "%s" searchText: "%s" size: %s`,
+		input, watch.name, watch.destination.description, watch.destination.country, watch.destination.latitude,
+		watch.destination.longitude, watch.meetingID, watch.searchText, watch.size)
 
 	return input
 }
@@ -295,7 +293,7 @@ func (as *ActionSuite) Test_RemoveWatch() {
 	var resp watchesResponse
 
 	query1 := `mutation { watches: removeWatch (input: {id: "` + f.Watches[0].UUID.String() +
-		`"}) { id owner { nickname } location { country } }}`
+		`"}) { ` + allWatchFields + "}}"
 
 	// Not authorized
 	err := as.testGqlQuery(query1, f.Users[1].Nickname, &resp)
@@ -307,10 +305,10 @@ func (as *ActionSuite) Test_RemoveWatch() {
 	as.Equal(1, len(resp.Watches))
 	as.Equal(f.Watches[1].UUID.String(), resp.Watches[0].ID)
 	as.Equal(f.Users[0].Nickname, resp.Watches[0].Owner.Nickname, "incorrect Watch Owner")
-	as.Equal(f.Locations[1].Country, resp.Watches[0].Location.Country, "incorrect Watch Location")
+	as.Equal(f.Locations[1].Country, resp.Watches[0].Destination.Country, "incorrect Watch Destination")
 
 	query2 := `mutation { watches: removeWatch (input: {id: "` + f.Watches[1].UUID.String() +
-		`"}) { id owner { nickname } location { country } }}`
+		`"}) {` + allWatchFields + "}}"
 
 	// Remove last Watch
 	as.NoError(as.testGqlQuery(query2, f.Users[0].Nickname, &resp))

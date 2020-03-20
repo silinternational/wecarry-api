@@ -423,9 +423,9 @@ func CreateFixturesForUserWantsPostNotification(ms *ModelSuite) UserPostFixtures
 	ms.NoError(err)
 	createFixture(ms, watchLocation)
 	watch := Watch{
-		UUID:       domain.GetUUID(),
-		OwnerID:    users[2].ID,
-		LocationID: nulls.NewInt(watchLocation.ID),
+		UUID:          domain.GetUUID(),
+		OwnerID:       users[2].ID,
+		DestinationID: nulls.NewInt(watchLocation.ID),
 	}
 	createFixture(ms, &watch)
 

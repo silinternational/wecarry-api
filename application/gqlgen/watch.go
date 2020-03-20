@@ -39,30 +39,32 @@ func (r *watchResolver) Owner(ctx context.Context, obj *models.Watch) (*PublicPr
 	return getPublicProfile(ctx, creator), nil
 }
 
-// Location resolves the `location` property of the watch query, retrieving the related record from the database.
-func (r *watchResolver) Location(ctx context.Context, obj *models.Watch) (*models.Location, error) {
+// Destination is a field resolver
+func (r *watchResolver) Destination(ctx context.Context, obj *models.Watch) (*models.Location, error) {
 	if obj == nil {
 		return &models.Location{}, nil
 	}
 
-	location, err := obj.GetLocation()
+	location, err := obj.GetDestination()
 	if err != nil {
-		return &models.Location{}, domain.ReportError(ctx, err, "GetWatchLocation")
+		return &models.Location{}, domain.ReportError(ctx, err, "GetWatchDestination")
 	}
 
 	return location, nil
 }
 
-// Kilograms resolves the `kilograms` property of the watch query as a pointer to a float64
-func (r *watchResolver) Kilograms(ctx context.Context, obj *models.Watch) (*float64, error) {
+// Origin is a field resolver
+func (r *watchResolver) Origin(ctx context.Context, obj *models.Watch) (*models.Location, error) {
 	if obj == nil {
-		return nil, nil
-	}
-	if !obj.Kilograms.Valid {
-		return nil, nil
+		return &models.Location{}, nil
 	}
 
-	return &obj.Kilograms.Float64, nil
+	location, err := obj.GetOrigin()
+	if err != nil {
+		return &models.Location{}, domain.ReportError(ctx, err, "GetWatchOrigin")
+	}
+
+	return location, nil
 }
 
 // SearchText resolves the `searchText` property of the watch query
@@ -107,7 +109,6 @@ func convertWatchInput(ctx context.Context, input watchInput, currentUser models
 
 	watch.Name = input.Name
 	watch.SearchText = models.ConvertStringPtrToNullsString(input.SearchText)
-	setOptionalFloatField(input.Kilograms, &watch.Kilograms)
 
 	if input.Size == nil {
 		watch.Size = nil
@@ -130,13 +131,13 @@ func convertWatchInput(ctx context.Context, input watchInput, currentUser models
 }
 
 type watchInput struct {
-	ID         *string
-	Name       string
-	Location   *LocationInput
-	MeetingID  *string
-	SearchText *string
-	Size       *models.PostSize
-	Kilograms  *float64
+	ID          *string
+	Name        string
+	Destination *LocationInput
+	Origin      *LocationInput
+	MeetingID   *string
+	SearchText  *string
+	Size        *models.PostSize
 }
 
 // CreateWatch resolves the `createWatch` mutation.
@@ -151,12 +152,20 @@ func (r *mutationResolver) CreateWatch(ctx context.Context, input watchInput) (*
 		return nil, domain.ReportError(ctx, err, "CreateWatch.ProcessInput", extras)
 	}
 
-	if input.Location != nil {
-		location := convertLocation(*input.Location)
+	if input.Destination != nil {
+		location := convertLocation(*input.Destination)
 		if err = location.Create(); err != nil {
 			return nil, domain.ReportError(ctx, err, "CreateWatch.SetLocation", extras)
 		}
-		watch.LocationID = nulls.NewInt(location.ID)
+		watch.DestinationID = nulls.NewInt(location.ID)
+	}
+
+	if input.Origin != nil {
+		location := convertLocation(*input.Origin)
+		if err = location.Create(); err != nil {
+			return nil, domain.ReportError(ctx, err, "CreateWatch.SetOrigin", extras)
+		}
+		watch.OriginID = nulls.NewInt(location.ID)
 	}
 
 	if err = watch.Create(); err != nil {
@@ -187,9 +196,15 @@ func (r *mutationResolver) UpdateWatch(ctx context.Context, input watchInput) (*
 		return nil, domain.ReportError(ctx, err, "UpdateWatch", extras)
 	}
 
-	if input.Location != nil {
-		if err = watch.SetLocation(convertLocation(*input.Location)); err != nil {
-			return nil, domain.ReportError(ctx, err, "UpdateWatch.SetLocation", extras)
+	if input.Destination != nil {
+		if err = watch.SetDestination(convertLocation(*input.Destination)); err != nil {
+			return nil, domain.ReportError(ctx, err, "UpdateWatch.SetDestination", extras)
+		}
+	}
+
+	if input.Origin != nil {
+		if err = watch.SetOrigin(convertLocation(*input.Origin)); err != nil {
+			return nil, domain.ReportError(ctx, err, "UpdateWatch.SetOrigin", extras)
 		}
 	}
 
