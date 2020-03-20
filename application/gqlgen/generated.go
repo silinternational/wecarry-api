@@ -2624,8 +2624,6 @@ input UpdateWatchInput {
     searchText: String
     "Maximum size of a requested item"
     size: RequestSize
-    "Maximum weight of a requested item, measured in kilograms"
-    kilograms: Float
 }
 `},
 )
@@ -11048,12 +11046,6 @@ func (ec *executionContext) unmarshalInputUpdateWatchInput(ctx context.Context, 
 		case "size":
 			var err error
 			it.Size, err = ec.unmarshalORequestSize2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostSize(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "kilograms":
-			var err error
-			it.Kilograms, err = ec.unmarshalOFloat2ᚖfloat64(ctx, v)
 			if err != nil {
 				return it, err
 			}
