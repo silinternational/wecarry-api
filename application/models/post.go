@@ -32,9 +32,10 @@ const (
 	PostStatusRemoved   PostStatus = "REMOVED"
 )
 
-type statusTransitionTarget struct {
-	status     PostStatus
-	isBackStep bool
+type StatusTransitionTarget struct {
+	Status           PostStatus
+	IsBackStep       bool
+	isProviderAction bool
 }
 
 type PostVisibility string
@@ -74,32 +75,32 @@ func (e PostVisibility) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
-func getStatusTransitions() map[PostStatus][]statusTransitionTarget {
-	return map[PostStatus][]statusTransitionTarget{
+func getStatusTransitions() map[PostStatus][]StatusTransitionTarget {
+	return map[PostStatus][]StatusTransitionTarget{
 		PostStatusOpen: {
-			{status: PostStatusAccepted},
-			{status: PostStatusRemoved},
+			{Status: PostStatusAccepted},
+			{Status: PostStatusRemoved},
 		},
 		PostStatusAccepted: {
-			{status: PostStatusOpen, isBackStep: true}, // to correct a false acceptance
-			{status: PostStatusDelivered},
-			{status: PostStatusReceived},  // This transition is in here for later, in case one day it's not skippable
-			{status: PostStatusCompleted}, // For now, `DELIVERED` is not a required step
-			{status: PostStatusRemoved},
+			{Status: PostStatusOpen, IsBackStep: true}, // to correct a false acceptance
+			{Status: PostStatusDelivered, isProviderAction: true},
+			{Status: PostStatusReceived},  // This transition is in here for later, in case one day it's not skippable
+			{Status: PostStatusCompleted}, // For now, `DELIVERED` is not a required step
+			{Status: PostStatusRemoved},
 		},
 		PostStatusDelivered: {
-			{status: PostStatusAccepted, isBackStep: true}, // to correct a false delivery
-			{status: PostStatusCompleted},
+			{Status: PostStatusAccepted, IsBackStep: true, isProviderAction: true}, // to correct a false delivery
+			{Status: PostStatusCompleted},
 		},
 		PostStatusReceived: {
-			{status: PostStatusAccepted, isBackStep: true},
-			{status: PostStatusDelivered},
-			{status: PostStatusCompleted},
+			{Status: PostStatusAccepted, IsBackStep: true},
+			{Status: PostStatusDelivered},
+			{Status: PostStatusCompleted},
 		},
 		PostStatusCompleted: {
-			{status: PostStatusAccepted, isBackStep: true},  // to correct a false completion
-			{status: PostStatusDelivered, isBackStep: true}, // to correct a false completion
-			{status: PostStatusReceived, isBackStep: true},  // to correct a false completion
+			{Status: PostStatusAccepted, IsBackStep: true},                         // to correct a false completion
+			{Status: PostStatusDelivered, IsBackStep: true},                        // to correct a false completion
+			{Status: PostStatusReceived, IsBackStep: true, isProviderAction: true}, // to correct a false completion
 		},
 		PostStatusRemoved: {},
 	}
@@ -113,7 +114,7 @@ func isTransitionValid(status1, status2 PostStatus) (bool, error) {
 	}
 
 	for _, target := range targets {
-		if status2 == target.status {
+		if status2 == target.Status {
 			return true, nil
 		}
 	}
@@ -133,8 +134,8 @@ func isTransitionBackStep(status1, status2 PostStatus) (bool, error) {
 	}
 
 	for _, target := range targets {
-		if status2 == target.status {
-			return target.isBackStep, nil
+		if status2 == target.Status {
+			return target.IsBackStep, nil
 		}
 	}
 	// Not worrying about invalid transitions, since this is called by AfterUpdate
@@ -584,6 +585,33 @@ func (p *Post) GetProvider() (*User, error) {
 		return nil, nil // provider is a nullable field, so ignore any error
 	}
 	return &provider, nil
+}
+
+// GetStatusTransitions finds the forward and backward transitions for the current user
+func (p *Post) GetStatusTransitions(user User) ([]StatusTransitionTarget, error) {
+	status := p.Status
+	transitions := getStatusTransitions()
+
+	statusOptions, ok := transitions[status]
+	if !ok {
+		return statusOptions, fmt.Errorf("could not find Status transitions from Status %s.", status)
+	}
+
+	finalOptions := []StatusTransitionTarget{}
+
+	for _, o := range statusOptions {
+		// User is the Creator - sees all but Provider's actions
+		if user.ID == p.CreatedByID && !o.isProviderAction {
+			finalOptions = append(finalOptions, o)
+			continue
+		}
+		// User is the Provider and sees only the Provider's actions
+		if o.isProviderAction && p.ProviderID.Valid && user.ID == p.ProviderID.Int {
+			finalOptions = append(finalOptions, o)
+		}
+	}
+
+	return finalOptions, nil
 }
 
 func (p *Post) GetOrganization() (*Organization, error) {

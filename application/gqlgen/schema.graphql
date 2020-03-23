@@ -654,6 +654,8 @@ type Request {
     size: RequestSize!
     "Status of the request. Use mutation `updateRequestStatus` to change the status."
     status: RequestStatus!
+    "Status of the request. Use mutation `updateRequestStatus` to change the status."
+    statusTransitions: [RequestStatusTransition!]!
     "List of message threads associated with this request"
     threads: [Thread!]!
     "Date and time this request was created"
@@ -811,6 +813,14 @@ type PublicProfile {
     nickname: String!
     "avatarURL is generated from an attached photo if present, an external URL if present, or a Gravatar URL"
     avatarURL: String
+}
+
+"Current forward and backward status transitions for a request"
+type RequestStatusTransition {
+    "Is this transition a step backward (or just a step forward)"
+    isBackStep: Boolean!
+    "The possible next status for the request"
+    newStatus: RequestStatus!
 }
 
 "Input object for `updateUser`"

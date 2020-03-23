@@ -97,6 +97,8 @@ models:
         resolver: true
       receiver:
         resolver: true
+      statusTransitions:
+        resolver: true
       provider:
         resolver: true
       potentialProviders:

@@ -204,11 +204,17 @@ type ComplexityRoot struct {
 		Provider           func(childComplexity int) int
 		Size               func(childComplexity int) int
 		Status             func(childComplexity int) int
+		StatusTransitions  func(childComplexity int) int
 		Threads            func(childComplexity int) int
 		Title              func(childComplexity int) int
 		URL                func(childComplexity int) int
 		UpdatedAt          func(childComplexity int) int
 		Visibility         func(childComplexity int) int
+	}
+
+	RequestStatusTransition struct {
+		IsBackStep func(childComplexity int) int
+		NewStatus  func(childComplexity int) int
 	}
 
 	Thread struct {
@@ -361,6 +367,7 @@ type RequestResolver interface {
 	CompletedOn(ctx context.Context, obj *models.Post) (*string, error)
 	Origin(ctx context.Context, obj *models.Post) (*models.Location, error)
 
+	StatusTransitions(ctx context.Context, obj *models.Post) ([]RequestStatusTransition, error)
 	Threads(ctx context.Context, obj *models.Post) ([]models.Thread, error)
 
 	URL(ctx context.Context, obj *models.Post) (*string, error)
@@ -1373,6 +1380,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Request.Status(childComplexity), true
 
+	case "Request.statusTransitions":
+		if e.complexity.Request.StatusTransitions == nil {
+			break
+		}
+
+		return e.complexity.Request.StatusTransitions(childComplexity), true
+
 	case "Request.threads":
 		if e.complexity.Request.Threads == nil {
 			break
@@ -1407,6 +1421,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Request.Visibility(childComplexity), true
+
+	case "RequestStatusTransition.isBackStep":
+		if e.complexity.RequestStatusTransition.IsBackStep == nil {
+			break
+		}
+
+		return e.complexity.RequestStatusTransition.IsBackStep(childComplexity), true
+
+	case "RequestStatusTransition.newStatus":
+		if e.complexity.RequestStatusTransition.NewStatus == nil {
+			break
+		}
+
+		return e.complexity.RequestStatusTransition.NewStatus(childComplexity), true
 
 	case "Thread.createdAt":
 		if e.complexity.Thread.CreatedAt == nil {
@@ -2327,6 +2355,8 @@ type Request {
     size: RequestSize!
     "Status of the request. Use mutation ` + "`" + `updateRequestStatus` + "`" + ` to change the status."
     status: RequestStatus!
+    "Status of the request. Use mutation ` + "`" + `updateRequestStatus` + "`" + ` to change the status."
+    statusTransitions: [RequestStatusTransition!]!
     "List of message threads associated with this request"
     threads: [Thread!]!
     "Date and time this request was created"
@@ -2484,6 +2514,14 @@ type PublicProfile {
     nickname: String!
     "avatarURL is generated from an attached photo if present, an external URL if present, or a Gravatar URL"
     avatarURL: String
+}
+
+"Current forward and backward status transitions for a request"
+type RequestStatusTransition {
+    "Is this transition a step backward (or just a step forward)"
+    isBackStep: Boolean!
+    "The possible next status for the request"
+    newStatus: RequestStatus!
 }
 
 "Input object for ` + "`" + `updateUser` + "`" + `"
@@ -7336,6 +7374,43 @@ func (ec *executionContext) _Request_status(ctx context.Context, field graphql.C
 	return ec.marshalNRequestStatus2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostStatus(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Request_statusTransitions(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Request",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Request().StatusTransitions(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]RequestStatusTransition)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNRequestStatusTransition2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐRequestStatusTransition(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Request_threads(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -7726,6 +7801,80 @@ func (ec *executionContext) _Request_visibility(ctx context.Context, field graph
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNRequestVisibility2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostVisibility(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _RequestStatusTransition_isBackStep(ctx context.Context, field graphql.CollectedField, obj *RequestStatusTransition) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "RequestStatusTransition",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsBackStep, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _RequestStatusTransition_newStatus(ctx context.Context, field graphql.CollectedField, obj *RequestStatusTransition) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "RequestStatusTransition",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NewStatus, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(models.PostStatus)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNRequestStatus2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Thread_id(ctx context.Context, field graphql.CollectedField, obj *models.Thread) (ret graphql.Marshaler) {
@@ -11963,6 +12112,20 @@ func (ec *executionContext) _Request(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "statusTransitions":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Request_statusTransitions(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "threads":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -12074,6 +12237,38 @@ func (ec *executionContext) _Request(ctx context.Context, sel ast.SelectionSet, 
 			out.Values[i] = ec._Request_visibility(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var requestStatusTransitionImplementors = []string{"RequestStatusTransition"}
+
+func (ec *executionContext) _RequestStatusTransition(ctx context.Context, sel ast.SelectionSet, obj *RequestStatusTransition) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.RequestContext, sel, requestStatusTransitionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RequestStatusTransition")
+		case "isBackStep":
+			out.Values[i] = ec._RequestStatusTransition_isBackStep(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "newStatus":
+			out.Values[i] = ec._RequestStatusTransition_newStatus(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -13385,6 +13580,47 @@ func (ec *executionContext) unmarshalNRequestStatus2githubᚗcomᚋsilinternatio
 
 func (ec *executionContext) marshalNRequestStatus2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostStatus(ctx context.Context, sel ast.SelectionSet, v models.PostStatus) graphql.Marshaler {
 	return v
+}
+
+func (ec *executionContext) marshalNRequestStatusTransition2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐRequestStatusTransition(ctx context.Context, sel ast.SelectionSet, v RequestStatusTransition) graphql.Marshaler {
+	return ec._RequestStatusTransition(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNRequestStatusTransition2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐRequestStatusTransition(ctx context.Context, sel ast.SelectionSet, v []RequestStatusTransition) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		rctx := &graphql.ResolverContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNRequestStatusTransition2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐRequestStatusTransition(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
 }
 
 func (ec *executionContext) unmarshalNRequestVisibility2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostVisibility(ctx context.Context, v interface{}) (models.PostVisibility, error) {

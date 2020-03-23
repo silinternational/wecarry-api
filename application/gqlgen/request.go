@@ -140,6 +140,30 @@ func (r *requestResolver) Origin(ctx context.Context, obj *models.Post) (*models
 }
 
 // Threads resolves the `threads` property of the request query, retrieving the related records from the database.
+func (r *requestResolver) StatusTransitions(ctx context.Context, obj *models.Post) ([]RequestStatusTransition, error) {
+	if obj == nil {
+		return []RequestStatusTransition{}, nil
+	}
+
+	user := models.CurrentUser(ctx)
+	dbTransitions, err := obj.GetStatusTransitions(user)
+	if err != nil {
+		extras := map[string]interface{}{
+			"user": user.UUID,
+		}
+		return []RequestStatusTransition{}, domain.ReportError(ctx, err, "GetRequestStatusTransitions", extras)
+	}
+
+	transitions := make([]RequestStatusTransition, len(dbTransitions))
+	for i, t := range dbTransitions {
+		transitions[i].IsBackStep = t.IsBackStep
+		transitions[i].NewStatus = t.Status
+	}
+
+	return transitions, nil
+}
+
+// Threads resolves the `threads` property of the request query, retrieving the related records from the database.
 func (r *requestResolver) Threads(ctx context.Context, obj *models.Post) ([]models.Thread, error) {
 	if obj == nil {
 		return nil, nil
