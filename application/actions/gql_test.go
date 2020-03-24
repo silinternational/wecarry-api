@@ -14,12 +14,36 @@ import (
 	"github.com/silinternational/wecarry-api/domain"
 )
 
+type gqlError struct {
+	Message string            `json:"message"`
+	Path    []json.RawMessage `json:"path"` // Includes strings and ints
+}
+
 type gqlErrorResponse struct {
-	Errors []struct {
-		Message string   `json:"message"`
-		Path    []string `json:"path"`
-	} `json:"errors"`
-	Data interface{} `json:"data"`
+	Errors []gqlError      `json:"errors"`
+	Data   json.RawMessage `json:"data"`
+}
+
+type humanizedError struct {
+	Message string
+	Path    []string
+}
+
+func humanizeGQLErrors(gqlErrors []gqlError) []humanizedError {
+	outErrors := []humanizedError{}
+	for _, e := range gqlErrors {
+		paths := []string{}
+		for _, p := range e.Path {
+			nextP := string(p)
+			paths = append(paths, nextP)
+		}
+		outErrors = append(outErrors, humanizedError{
+			Message: e.Message,
+			Path:    paths,
+		})
+	}
+
+	return outErrors
 }
 
 func (as *ActionSuite) testGqlQuery(gqlQuery, accessToken string, response interface{}) error {
@@ -35,20 +59,16 @@ func (as *ActionSuite) testGqlQuery(gqlQuery, accessToken string, response inter
 	responseBody, err := ioutil.ReadAll(rr.Body)
 	as.NoError(err)
 
-	var gqlResponse struct {
-		Errors []struct {
-			Message string   `json:"message"`
-			Path    []string `json:"path"`
-		} `json:"errors"`
-		Data json.RawMessage `json:"data"`
-	}
+	var gqlResponse gqlErrorResponse
 	err = json.Unmarshal(responseBody, &gqlResponse)
-	as.NoError(err)
+
+	as.NoError(err, "unable to unmarshall gql response")
 
 	as.NoError(json.Unmarshal(gqlResponse.Data, &response))
 
 	if len(gqlResponse.Errors) > 0 {
-		return fmt.Errorf("gql error: %v", gqlResponse.Errors)
+		outErrors := humanizeGQLErrors(gqlResponse.Errors)
+		return fmt.Errorf("gql error: %v", outErrors)
 	}
 
 	return nil

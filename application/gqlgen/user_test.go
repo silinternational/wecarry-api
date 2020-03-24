@@ -27,24 +27,23 @@ func (gs *GqlgenSuite) Test_getPublicProfile() {
 	t := gs.T()
 	f := createFixturesForGetPublicProfile()
 	tests := []struct {
-		name    string
-		user    *models.User
-		want    PublicProfile
-		wantNil bool
+		name string
+		user *models.User
+		want *PublicProfile
 	}{
 		{
 			name: "fully-specified User",
 			user: &f.User,
-			want: PublicProfile{
+			want: &PublicProfile{
 				ID:        f.User.UUID.String(),
 				Nickname:  f.User.Nickname,
 				AvatarURL: &f.User.AuthPhotoURL.String,
 			},
 		},
 		{
-			name:    "nil user",
-			user:    nil,
-			wantNil: true,
+			name: "nil user",
+			user: nil,
+			want: &PublicProfile{},
 		},
 	}
 	for _, test := range tests {
@@ -52,14 +51,8 @@ func (gs *GqlgenSuite) Test_getPublicProfile() {
 			var ctx *buffalo.DefaultContext
 			profile := getPublicProfile(ctx, test.user)
 
-			if test.wantNil {
-				gs.Nil(profile)
-				return
-			}
 			gs.NotNil(profile)
-			gs.Equal(test.want.ID, profile.ID, "ID doesn't match")
-			gs.Equal(test.want.Nickname, profile.Nickname, "Nickname doesn't match")
-			gs.Equal(*test.want.AvatarURL, *profile.AvatarURL, "AvatarURL doesn't match")
+			gs.Equal(test.want, profile, "incorrect provfile")
 		})
 	}
 }
