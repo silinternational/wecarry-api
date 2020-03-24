@@ -201,7 +201,7 @@ type Post struct {
 	Description    nulls.String   `json:"description" db:"description"`
 	URL            nulls.String   `json:"url" db:"url"`
 	Kilograms      nulls.Float64  `json:"kilograms" db:"kilograms"`
-	PhotoFileID    nulls.Int      `json:"photo_file_id" db:"photo_file_id"`
+	FileID         nulls.Int      `json:"file_id" db:"file_id"`
 	DestinationID  int            `json:"destination_id" db:"destination_id"`
 	OriginID       nulls.Int      `json:"origin_id" db:"origin_id"`
 	MeetingID      nulls.Int      `json:"meeting_id" db:"meeting_id"`
@@ -212,7 +212,7 @@ type Post struct {
 	Provider     User         `belongs_to:"users"`
 
 	Files       PostFiles `has_many:"post_files"`
-	PhotoFile   File      `belongs_to:"files"`
+	PhotoFile   File      `belongs_to:"files" fk_id:"FileID"`
 	Destination Location  `belongs_to:"locations"`
 	Origin      Location  `belongs_to:"locations"`
 }
@@ -277,9 +277,9 @@ func (p *Post) SetProviderWithStatus(status PostStatus, providerID *string) erro
 
 // GetPotentialProviders returns the User objects associated with the Post's
 // PotentialProviders
-func (p *Post) GetPotentialProviders() (Users, error) {
+func (p *Post) GetPotentialProviders(currentUser User) (Users, error) {
 	providers := PotentialProviders{}
-	users, err := providers.FindUsersByPostID(p.ID)
+	users, err := providers.FindUsersByPostID(*p, currentUser)
 	return users, err
 }
 
@@ -654,54 +654,12 @@ func (p *Post) GetFiles() ([]File, error) {
 // AttachPhoto assigns a previously-stored File to this Post as its photo. Parameter `fileID` is the UUID
 // of the photo to attach.
 func (p *Post) AttachPhoto(fileID string) (File, error) {
-	var f File
-	if err := f.FindByUUID(fileID); err != nil {
-		return f, err
-	}
-
-	oldID := p.PhotoFileID
-	p.PhotoFileID = nulls.NewInt(f.ID)
-	if p.ID > 0 {
-		if err := DB.UpdateColumns(p, "photo_file_id"); err != nil {
-			return f, err
-		}
-	}
-
-	if err := f.SetLinked(); err != nil {
-		domain.ErrLogger.Printf("error marking post image file %d as linked, %s", f.ID, err)
-	}
-
-	if oldID.Valid {
-		oldFile := File{ID: oldID.Int}
-		if err := oldFile.ClearLinked(); err != nil {
-			domain.ErrLogger.Printf("error marking old post image file %d as unlinked, %s", oldFile.ID, err)
-		}
-	}
-
-	return f, nil
+	return addFile(p, fileID)
 }
 
-// RemovePhoto removes an attached photo from the Post
-func (p *Post) RemovePhoto() error {
-	if p.ID < 1 {
-		return fmt.Errorf("invalid Post ID %d", p.ID)
-	}
-
-	oldID := p.PhotoFileID
-	p.PhotoFileID = nulls.Int{}
-	if err := DB.UpdateColumns(p, "photo_file_id"); err != nil {
-		return err
-	}
-
-	if !oldID.Valid {
-		return nil
-	}
-
-	oldFile := File{ID: oldID.Int}
-	if err := oldFile.ClearLinked(); err != nil {
-		domain.ErrLogger.Printf("error marking old post photo file %d as unlinked, %s", oldFile.ID, err)
-	}
-	return nil
+// RemoveFile removes an attached file from the Post
+func (p *Post) RemoveFile() error {
+	return removeFile(p)
 }
 
 // GetPhoto retrieves the file attached as the Post photo
@@ -710,7 +668,7 @@ func (p *Post) GetPhoto() (*File, error) {
 		return nil, err
 	}
 
-	if !p.PhotoFileID.Valid {
+	if !p.FileID.Valid {
 		return nil, nil
 	}
 
@@ -727,7 +685,7 @@ func (p *Post) GetPhotoID() (*string, error) {
 		return nil, err
 	}
 
-	if p.PhotoFileID.Valid {
+	if p.FileID.Valid {
 		photoID := p.PhotoFile.UUID.String()
 		return &photoID, nil
 	}

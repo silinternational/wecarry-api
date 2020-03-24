@@ -43,7 +43,7 @@ type User struct {
 	} `json:"organizations"`
 	Posts []struct {
 		ID string `json:"id"`
-	} `json:"posts"`
+	} `json:"requests"`
 	MeetingsAsParticipant []struct {
 		ID string `json:"id"`
 	} `json:"meetingsAsParticipant"`
@@ -53,7 +53,7 @@ const allUserFields = `id email nickname createdAt updatedAt adminRole avatarURL
 	preferences {language timeZone weightUnit}
 	location {description country latitude longitude}
 	organizations {id}
-	posts (role: CREATEDBY) {id}
+	requests (role: CREATEDBY) {id}
 	meetingsAsParticipant {id}
 	`
 
@@ -245,26 +245,24 @@ func (as *ActionSuite) TestUpdateUser() {
 				as.Equal("Paris, France", resp.User.Location.Description, "incorrect location")
 				as.Equal("FR", resp.User.Location.Country, "incorrect country")
 
-				as.Equal(strings.ToUpper(f.UserPreferences[0].Value), *resp.User.Preferences.Language,
-					"incorrect preference - language")
 				as.Equal(strings.ToUpper(domain.UserPreferenceWeightUnitKGs), *resp.User.Preferences.WeightUnit,
 					"incorrect preference - weightUnit")
-				as.Equal("America/New_York", *resp.User.Preferences.TimeZone,
-					"incorrect preference - timeZone")
+				as.Equal("", *resp.User.Preferences.Language, "incorrect preference - language")
+				as.Equal("", *resp.User.Preferences.TimeZone, "incorrect preference - timeZone")
 			},
 		},
 		{
 			Name: "not allowed",
-			Payload: fmt.Sprintf(`mutation {user: updateUser(input:{id: "%v", location: %v}) {nickname}}`,
-				f.Users[0].UUID, location),
+			Payload: fmt.Sprintf(`mutation {user: updateUser(input:{id: "%v", location: %v}) {%s}}`,
+				f.Users[0].UUID, location, allUserFields),
 			TestUser:    f.Users[1],
 			Test:        func(t *testing.T) {},
 			ExpectError: "not allowed",
 		},
 		{
 			Name: "remove photo",
-			Payload: fmt.Sprintf(`mutation {user: updateUser(input:{id: "%v", location: %v}) {avatarURL}}`,
-				f.Users[1].UUID, location),
+			Payload: fmt.Sprintf(`mutation {user: updateUser(input:{id: "%v", location: %v, preferences: %s}) {%s}}`,
+				f.Users[1].UUID, location, preferences, allUserFields),
 			TestUser: f.Users[0],
 			Test: func(t *testing.T) {
 				as.Equal(f.Users[1].AuthPhotoURL.String, resp.User.AvatarURL, "expected photo to be deleted")
@@ -272,11 +270,20 @@ func (as *ActionSuite) TestUpdateUser() {
 		},
 		{
 			Name: "remove location",
-			Payload: fmt.Sprintf(`mutation {user: updateUser(input:{id: "%v"}) {location{description}}}`,
-				f.Users[1].UUID),
+			Payload: fmt.Sprintf(`mutation {user: updateUser(input:{id: "%v", preferences: %s}) {%s}}`,
+				f.Users[1].UUID, preferences, allUserFields),
 			TestUser: f.Users[0],
 			Test: func(t *testing.T) {
 				as.Nil(resp.User.Location, "expected location to be deleted")
+			},
+		},
+		{
+			Name: "remove preferences",
+			Payload: fmt.Sprintf(`mutation {user: updateUser(input:{id: "%v"}) {%s}}`,
+				f.Users[1].UUID, allUserFields),
+			TestUser: f.Users[0],
+			Test: func(t *testing.T) {
+				as.Equal("", *resp.User.Preferences.WeightUnit, "expected preferences to be deleted")
 			},
 		},
 	}

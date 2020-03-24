@@ -346,58 +346,6 @@ func (ms *ModelSuite) TestMeeting_FindByInviteCode() {
 	}
 }
 
-func (ms *ModelSuite) TestMeeting_SetImageFile() {
-	meetings := createMeetingFixtures(ms.DB, 3).Meetings
-	files := createFileFixtures(3)
-	meetings[1].ImageFileID = nulls.NewInt(files[0].ID)
-	ms.NoError(ms.DB.UpdateColumns(&meetings[1], "image_file_id"))
-
-	tests := []struct {
-		name     string
-		meeting  Meeting
-		oldImage *File
-		newImage string
-		want     File
-		wantErr  string
-	}{
-		{
-			name:     "no previous file",
-			meeting:  meetings[0],
-			newImage: files[1].UUID.String(),
-			want:     files[1],
-		},
-		{
-			name:     "previous file",
-			meeting:  meetings[1],
-			oldImage: &files[0],
-			newImage: files[2].UUID.String(),
-			want:     files[2],
-		},
-		{
-			name:     "bad ID",
-			meeting:  meetings[2],
-			newImage: uuid.UUID{}.String(),
-			wantErr:  "no rows in result set",
-		},
-	}
-	for _, tt := range tests {
-		ms.T().Run(tt.name, func(t *testing.T) {
-			got, err := tt.meeting.SetImageFile(tt.newImage)
-			if tt.wantErr != "" {
-				ms.Error(err, "did not get expected error")
-				ms.Contains(err.Error(), tt.wantErr)
-				return
-			}
-			ms.NoError(err, "unexpected error")
-			ms.Equal(tt.want.UUID.String(), got.UUID.String(), "wrong file returned")
-			ms.Equal(true, got.Linked, "new image file is not marked as linked")
-			if tt.oldImage != nil {
-				ms.Equal(false, tt.oldImage.Linked, "old image file is not marked as unlinked")
-			}
-		})
-	}
-}
-
 func (ms *ModelSuite) TestMeeting_ImageFile() {
 	user := User{}
 	createFixture(ms, &user)

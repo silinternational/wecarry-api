@@ -48,13 +48,13 @@ type meeting struct {
 	} `json:"location"`
 	Posts []struct {
 		ID string `json:"id"`
-	} `json:"posts"`
+	} `json:"requests"`
 	Invites      []meetingInvite      `json:"invites"`
 	Participants []meetingParticipant `json:"participants"`
 }
 
 const allMeetingFields = `id name description moreInfoURL startDate endDate createdBy {nickname} imageFile {id}
-	location {country} posts {id} invites {meeting{id} email} participants {user{id} meeting{id}}`
+	location {country} requests {id} invites {meeting{id} email} participants {user{id} meeting{id}}`
 
 type meetingInvitesResponse struct {
 	MeetingInvites []meetingInvite `json:"MeetingInvites"`
@@ -132,8 +132,8 @@ func (as *ActionSuite) Test_MeetingQuery() {
 	as.Equal(testLocation.Country, gotMtg.Location.Country, "incorrect meeting Location")
 
 	as.Equal(2, len(gotMtg.Posts), "incorrect number of meeting posts")
-	as.Equal(f.Posts[1].UUID.String(), gotMtg.Posts[0].ID, "wrong post returned in meeting posts")
-	as.Equal(f.Posts[0].UUID.String(), gotMtg.Posts[1].ID, "wrong post returned in meeting posts")
+	as.Equal(f.Posts[1].UUID.String(), gotMtg.Posts[0].ID, "wrong request returned in meeting posts")
+	as.Equal(f.Posts[0].UUID.String(), gotMtg.Posts[1].ID, "wrong request returned in meeting posts")
 
 	as.Equal(2, len(gotMtg.Invites), "incorrect number of invites")
 	for i := range gotMtg.Invites {
@@ -251,7 +251,7 @@ func (as *ActionSuite) Test_CreateMeeting() {
 	as.Equal("2025-03-21", gotMtg.EndDate,
 		"incorrect meeting EndDate")
 
-	as.Equal(f.File.UUID.String(), gotMtg.ImageFile.ID, "incorrect ImageFileID")
+	as.Equal(f.File.UUID.String(), gotMtg.ImageFile.ID, "incorrect FileID")
 
 	as.Equal("dc", gotMtg.Location.Country, "incorrect meeting Location.Country")
 }

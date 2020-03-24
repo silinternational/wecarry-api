@@ -36,8 +36,8 @@ type UserPreference struct {
 }
 
 // String can be helpful for serializing the model
-func (s UserPreference) String() string {
-	jm, _ := json.Marshal(s)
+func (p UserPreference) String() string {
+	jm, _ := json.Marshal(p)
 	return string(jm)
 }
 
@@ -163,15 +163,18 @@ func (p *UserPreference) updateForUserByKey(user User, key, value string) error 
 func updateUsersStandardPreferences(user User, prefs StandardPreferences) error {
 	fieldAndValidators := getPreferencesFieldsAndValidators(prefs)
 	for fieldName, fV := range fieldAndValidators {
+		var p UserPreference
+
 		if fV.fieldValue == "" {
+			if err := p.remove(user, fieldName); err != nil {
+				return fmt.Errorf("error removing preference %s, %s", fieldName, err)
+			}
 			continue
 		}
 
 		if !fV.validator(fV.fieldValue) {
 			return fmt.Errorf("unexpected UserPreference %s ... %s", fieldName, fV.fieldValue)
 		}
-
-		var p UserPreference
 
 		err := p.updateForUserByKey(user, fieldName, fV.fieldValue)
 		if err != nil {
@@ -180,4 +183,15 @@ func updateUsersStandardPreferences(user User, prefs StandardPreferences) error 
 	}
 
 	return nil
+}
+
+func (p *UserPreference) removeAll(userID int) error {
+	return DB.RawQuery("DELETE FROM user_preferences WHERE user_id = ?", userID).Exec()
+}
+
+func (p *UserPreference) remove(user User, key string) error {
+	if err := p.getForUser(user, key); err != nil {
+		return err
+	}
+	return DB.Destroy(p)
 }

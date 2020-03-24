@@ -10,9 +10,9 @@ import (
 )
 
 // postRoleMap is used to convert PostRole gql enum values to values used by models
-var postRoleMap = map[PostRole]string{
-	PostRoleCreatedby: models.PostsCreated,
-	PostRoleProviding: models.PostsProviding,
+var postRoleMap = map[RequestRole]string{
+	RequestRoleCreatedby: models.PostsCreated,
+	RequestRoleProviding: models.PostsProviding,
 }
 
 // User is required by gqlgen
@@ -45,7 +45,7 @@ func (r *userResolver) Organizations(ctx context.Context, obj *models.User) ([]m
 }
 
 // Posts retrieves the list of Posts associated with the queried user, where association is defined by the given `role`.
-func (r *userResolver) Posts(ctx context.Context, obj *models.User, role PostRole) ([]models.Post, error) {
+func (r *userResolver) Requests(ctx context.Context, obj *models.User, role RequestRole) ([]models.Post, error) {
 	if obj == nil {
 		return nil, nil
 	}
@@ -81,7 +81,7 @@ func (r *userResolver) PhotoID(ctx context.Context, obj *models.User) (*string, 
 		return nil, nil
 	}
 
-	if !obj.PhotoFileID.Valid {
+	if !obj.FileID.Valid {
 		return nil, nil
 	}
 
@@ -123,6 +123,21 @@ func (r *userResolver) UnreadMessageCount(ctx context.Context, obj *models.User)
 	}
 
 	return total, nil
+}
+
+// Preferences resolves the `preferences` property of the user query, retrieving the related records from the database
+// and using them to hydrate a StandardPreferences struct.
+func (r *userResolver) Preferences(ctx context.Context, obj *models.User) (*models.StandardPreferences, error) {
+	if obj == nil {
+		return nil, nil
+	}
+
+	standardPrefs, err := obj.GetPreferences()
+	if err != nil {
+		return nil, domain.ReportError(ctx, err, "GetUserPreferences")
+	}
+
+	return &standardPrefs, nil
 }
 
 // Users retrieves a list of users
@@ -197,7 +212,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 
 	var err error
 	if input.PhotoID == nil {
-		err = user.RemovePhoto()
+		err = user.RemoveFile()
 	} else {
 		_, err = user.AttachPhoto(*input.PhotoID)
 	}
@@ -214,7 +229,6 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 		return nil, domain.ReportError(ctx, err, "UpdateUser.SetLocationError")
 	}
 
-	// No deleting of preferences supported at this time
 	if input.Preferences != nil {
 		standardPrefs, err := convertUserPreferencesToStandardPreferences(input.Preferences)
 
@@ -224,6 +238,10 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 
 		if _, err = user.UpdateStandardPreferences(standardPrefs); err != nil {
 			return nil, domain.ReportError(ctx, err, "UpdateUser.Preferences")
+		}
+	} else {
+		if err := user.RemovePreferences(); err != nil {
+			return nil, domain.ReportError(ctx, err, "UpdateUser.RemovePreferences")
 		}
 	}
 
@@ -238,21 +256,6 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 	}
 
 	return &user, nil
-}
-
-// Preferences resolves the `preferences` property of the user query, retrieving the related records from the database
-// and using them to hydrate a StandardPreferences struct.
-func (r *userResolver) Preferences(ctx context.Context, obj *models.User) (*models.StandardPreferences, error) {
-	if obj == nil {
-		return nil, nil
-	}
-
-	standardPrefs, err := obj.GetPreferences()
-	if err != nil {
-		return nil, domain.ReportError(ctx, err, "GetUserPreferences")
-	}
-
-	return &standardPrefs, nil
 }
 
 // getPublicProfiles converts a list of models.User to PublicProfile, hiding private profile information

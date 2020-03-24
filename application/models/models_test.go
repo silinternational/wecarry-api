@@ -5,7 +5,9 @@ import (
 	"testing"
 
 	"github.com/gobuffalo/buffalo"
+	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/suite"
+	"github.com/gofrs/uuid"
 
 	"github.com/silinternational/wecarry-api/domain"
 )
@@ -90,4 +92,112 @@ func (ms *ModelSuite) TestCurrentUser() {
 	}
 
 	// teardown
+}
+
+func (ms *ModelSuite) Test_addFile() {
+	uf := createUserFixtures(ms.DB, 3)
+	users := uf.Users
+
+	files := createFileFixtures(3)
+	users[1].FileID = nulls.NewInt(files[0].ID)
+	ms.NoError(ms.DB.UpdateColumns(&users[1], "file_id"))
+
+	tests := []struct {
+		name     string
+		user     User
+		oldImage *File
+		newImage string
+		want     File
+		wantErr  string
+	}{
+		{
+			name:     "no previous file",
+			user:     users[0],
+			newImage: files[1].UUID.String(),
+			want:     files[1],
+		},
+		{
+			name:     "previous file",
+			user:     users[1],
+			oldImage: &files[0],
+			newImage: files[2].UUID.String(),
+			want:     files[2],
+		},
+		{
+			name:     "bad ID",
+			user:     users[2],
+			newImage: uuid.UUID{}.String(),
+			wantErr:  "no rows in result set",
+		},
+	}
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			got, err := addFile(&tt.user, tt.newImage)
+			if tt.wantErr != "" {
+				ms.Error(err, "did not get expected error")
+				ms.Contains(err.Error(), tt.wantErr)
+				return
+			}
+			ms.NoError(err, "unexpected error")
+			ms.Equal(tt.want.UUID.String(), got.UUID.String(), "wrong file returned")
+			ms.NoError(ms.DB.Reload(&tt.user))
+			ms.Equal(tt.want.ID, tt.user.FileID.Int, "user file ID isn't correct")
+			ms.Equal(true, got.Linked, "new user photo file is not marked as linked")
+			if tt.oldImage != nil {
+				ms.NoError(ms.DB.Reload(tt.oldImage))
+				ms.Equal(false, tt.oldImage.Linked, "old user photo file is not marked as unlinked")
+			}
+		})
+	}
+}
+
+func (ms *ModelSuite) Test_removeFile() {
+	uf := createUserFixtures(ms.DB, 2)
+	users := uf.Users
+
+	files := createFileFixtures(1)
+	users[1].FileID = nulls.NewInt(files[0].ID)
+	ms.NoError(ms.DB.UpdateColumns(&users[1], "file_id"))
+	files[0].Linked = true
+	ms.NoError(ms.DB.UpdateColumns(&files[0], "linked"))
+
+	tests := []struct {
+		name     string
+		user     User
+		oldImage *File
+		want     File
+		wantErr  string
+	}{
+		{
+			name: "no file",
+			user: users[0],
+		},
+		{
+			name:     "has a file",
+			user:     users[1],
+			oldImage: &files[0],
+		},
+		{
+			name:    "bad ID",
+			user:    User{},
+			wantErr: "invalid ID",
+		},
+	}
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			err := removeFile(&tt.user)
+			if tt.wantErr != "" {
+				ms.Error(err, "did not get expected error")
+				ms.Contains(err.Error(), tt.wantErr)
+				return
+			}
+			ms.NoError(err, "unexpected error")
+			ms.NoError(ms.DB.Reload(&tt.user))
+			ms.False(tt.user.FileID.Valid, "image was not removed, %+v", tt.user.FileID)
+			if tt.oldImage != nil {
+				ms.NoError(ms.DB.Reload(tt.oldImage))
+				ms.Equal(false, tt.oldImage.Linked, "old file is not marked as unlinked")
+			}
+		})
+	}
 }

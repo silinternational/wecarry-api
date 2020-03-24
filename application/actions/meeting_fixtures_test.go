@@ -53,7 +53,7 @@ func createFixturesForMeetings(as *ActionSuite) meetingQueryFixtures {
 			LocationID:  locations[2].ID,
 			StartDate:   time.Now().Add(time.Duration(-domain.DurationWeek * 2)),
 			EndDate:     time.Now().Add(time.Duration(domain.DurationWeek * 2)),
-			ImageFileID: nulls.NewInt(fileFixture.ID),
+			FileID:      nulls.NewInt(fileFixture.ID),
 		},
 		{
 			CreatedByID: user.ID,

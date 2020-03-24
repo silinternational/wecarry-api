@@ -44,7 +44,7 @@ func (ms *ModelSuite) TestOrganizationDomain_Organization() {
 			ms.Equal(test.want.UUID, got.UUID)
 			ms.Equal(test.want.Name, got.Name)
 			ms.Equal(test.want.Url, got.Url)
-			ms.Equal(test.want.LogoFileID, got.LogoFileID)
+			ms.Equal(test.want.FileID, got.FileID)
 			ms.Equal(test.want.AuthType, got.AuthType)
 			ms.Equal(test.want.AuthConfig, got.AuthConfig)
 		})

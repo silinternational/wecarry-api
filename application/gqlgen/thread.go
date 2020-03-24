@@ -72,8 +72,8 @@ func (r *threadResolver) Messages(ctx context.Context, obj *models.Thread) ([]mo
 	return messages, nil
 }
 
-// Post retrieves the post to which the queried thread belongs.
-func (r *threadResolver) Post(ctx context.Context, obj *models.Thread) (*models.Post, error) {
+// Request retrieves the post to which the queried thread belongs.
+func (r *threadResolver) Request(ctx context.Context, obj *models.Thread) (*models.Post, error) {
 	if obj == nil {
 		return nil, nil
 	}
