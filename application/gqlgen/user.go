@@ -96,12 +96,12 @@ func (r *userResolver) PhotoID(ctx context.Context, obj *models.User) (*string, 
 // Location retrieves the queried user's location.
 func (r *userResolver) Location(ctx context.Context, obj *models.User) (*models.Location, error) {
 	if obj == nil {
-		return nil, nil
+		return &models.Location{}, nil
 	}
 
 	location, err := obj.GetLocation()
 	if err != nil {
-		return nil, domain.ReportError(ctx, err, "GetUserLocation")
+		return &models.Location{}, domain.ReportError(ctx, err, "GetUserLocation")
 	}
 
 	return location, nil
@@ -175,12 +175,12 @@ func (r *queryResolver) User(ctx context.Context, id *string) (*models.User, err
 		extras := map[string]interface{}{
 			"role": role,
 		}
-		return nil, domain.ReportError(ctx, err, "GetUser.Unauthorized", extras)
+		return &models.User{}, domain.ReportError(ctx, err, "GetUser.Unauthorized", extras)
 	}
 
 	dbUser := models.User{}
 	if err := dbUser.FindByUUID(*id); err != nil {
-		return nil, domain.ReportError(ctx, err, "GetUser")
+		return &models.User{}, domain.ReportError(ctx, err, "GetUser")
 	}
 
 	return &dbUser, nil
@@ -195,7 +195,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 
 	if input.ID != nil {
 		if err := user.FindByUUID(*(input.ID)); err != nil {
-			return nil, domain.ReportError(ctx, err, "UpdateUser.NotFound")
+			return &models.User{}, domain.ReportError(ctx, err, "UpdateUser.NotFound")
 		}
 	} else {
 		user = cUser
@@ -203,7 +203,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 
 	if cUser.AdminRole != models.UserAdminRoleSuperAdmin && cUser.ID != user.ID {
 		err := errors.New("insufficient permissions")
-		return nil, domain.ReportError(ctx, err, "UpdateUser.Unauthorized")
+		return &models.User{}, domain.ReportError(ctx, err, "UpdateUser.Unauthorized")
 	}
 
 	if input.Nickname != nil {
@@ -217,7 +217,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 		_, err = user.AttachPhoto(*input.PhotoID)
 	}
 	if err != nil {
-		return nil, domain.ReportError(ctx, err, "UpdateUser.UpdatePhoto")
+		return &models.User{}, domain.ReportError(ctx, err, "UpdateUser.UpdatePhoto")
 	}
 
 	if input.Location == nil {
@@ -226,33 +226,33 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 		err = user.SetLocation(convertLocation(*input.Location))
 	}
 	if err != nil {
-		return nil, domain.ReportError(ctx, err, "UpdateUser.SetLocationError")
+		return &models.User{}, domain.ReportError(ctx, err, "UpdateUser.SetLocationError")
 	}
 
 	if input.Preferences != nil {
 		standardPrefs, err := convertUserPreferencesToStandardPreferences(input.Preferences)
 
 		if err != nil {
-			return nil, domain.ReportError(ctx, err, "UpdateUser.PreferencesInput")
+			return &models.User{}, domain.ReportError(ctx, err, "UpdateUser.PreferencesInput")
 		}
 
 		if _, err = user.UpdateStandardPreferences(standardPrefs); err != nil {
-			return nil, domain.ReportError(ctx, err, "UpdateUser.Preferences")
+			return &models.User{}, domain.ReportError(ctx, err, "UpdateUser.Preferences")
 		}
 	} else {
 		if err := user.RemovePreferences(); err != nil {
-			return nil, domain.ReportError(ctx, err, "UpdateUser.RemovePreferences")
+			return &models.User{}, domain.ReportError(ctx, err, "UpdateUser.RemovePreferences")
 		}
 	}
 
 	if err = user.Save(); err != nil {
 		if strings.Contains(err.Error(), "Nickname must have a visible character") {
-			return nil, domain.ReportError(ctx, err, "UpdateUser.InvisibleNickname")
+			return &models.User{}, domain.ReportError(ctx, err, "UpdateUser.InvisibleNickname")
 		}
 		if strings.Contains(err.Error(), `duplicate key value violates unique constraint "users_nickname_idx"`) {
-			return nil, domain.ReportError(ctx, err, "UpdateUser.DuplicateNickname")
+			return &models.User{}, domain.ReportError(ctx, err, "UpdateUser.DuplicateNickname")
 		}
-		return nil, domain.ReportError(ctx, err, "UpdateUser")
+		return &models.User{}, domain.ReportError(ctx, err, "UpdateUser")
 	}
 
 	return &user, nil
@@ -271,13 +271,16 @@ func getPublicProfiles(ctx context.Context, users []models.User) []PublicProfile
 // getPublicProfile converts a models.User to a PublicProfile, which hides private profile information
 func getPublicProfile(ctx context.Context, user *models.User) *PublicProfile {
 	if user == nil {
-		return nil
+		return &PublicProfile{}
 	}
 
 	url, err := user.GetPhotoURL()
 	if err != nil {
-		_ = domain.ReportError(ctx, err, "", map[string]interface{}{"user": user.UUID})
-		return nil
+		_ = domain.ReportError(ctx, err, "", map[string]interface{}{"user": user.UUID.String()})
+		return &PublicProfile{
+			ID:       user.UUID.String(),
+			Nickname: user.Nickname,
+		}
 	}
 
 	return &PublicProfile{

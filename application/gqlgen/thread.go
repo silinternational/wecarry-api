@@ -75,12 +75,12 @@ func (r *threadResolver) Messages(ctx context.Context, obj *models.Thread) ([]mo
 // Request retrieves the post to which the queried thread belongs.
 func (r *threadResolver) Request(ctx context.Context, obj *models.Thread) (*models.Post, error) {
 	if obj == nil {
-		return nil, nil
+		return &models.Post{}, nil
 	}
 
 	post, err := obj.GetPost()
 	if err != nil {
-		return nil, domain.ReportError(ctx, err, "GetThreadPost")
+		return &models.Post{}, domain.ReportError(ctx, err, "GetThreadPost")
 	}
 
 	return post, nil

@@ -23,7 +23,7 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input CreateO
 	if !cUser.CanCreateOrganization() {
 		extras["user.admin_role"] = cUser.AdminRole
 		err := errors.New("insufficient permissions")
-		return nil, domain.ReportError(ctx, err, "CreateOrganization.Unauthorized", extras)
+		return &models.Organization{}, domain.ReportError(ctx, err, "CreateOrganization.Unauthorized", extras)
 	}
 
 	org := models.Organization{
@@ -35,12 +35,12 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input CreateO
 
 	if input.LogoFileID != nil {
 		if _, err := org.AttachLogo(*input.LogoFileID); err != nil {
-			return nil, domain.ReportError(ctx, err, "CreateOrganization.LogoFileNotFound")
+			return &models.Organization{}, domain.ReportError(ctx, err, "CreateOrganization.LogoFileNotFound")
 		}
 	}
 
 	if err := org.Save(); err != nil {
-		return nil, domain.ReportError(ctx, err, "CreateOrganization")
+		return &models.Organization{}, domain.ReportError(ctx, err, "CreateOrganization")
 	}
 
 	return &org, nil
@@ -55,23 +55,23 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, input UpdateO
 
 	var org models.Organization
 	if err := org.FindByUUID(input.ID); err != nil {
-		return nil, domain.ReportError(ctx, err, "UpdateOrganization.NotFound", extras)
+		return &models.Organization{}, domain.ReportError(ctx, err, "UpdateOrganization.NotFound", extras)
 	}
 
 	if !cUser.CanEditOrganization(org.ID) {
 		err := errors.New("insufficient permissions")
-		return nil, domain.ReportError(ctx, err, "UpdateOrganization.Unauthorized", extras)
+		return &models.Organization{}, domain.ReportError(ctx, err, "UpdateOrganization.Unauthorized", extras)
 	}
 
 	org.Url = models.ConvertStringPtrToNullsString(input.URL)
 
 	if input.LogoFileID != nil {
 		if _, err := org.AttachLogo(*input.LogoFileID); err != nil {
-			return nil, domain.ReportError(ctx, err, "UpdateOrganization.LogoFileNotFound")
+			return &models.Organization{}, domain.ReportError(ctx, err, "UpdateOrganization.LogoFileNotFound")
 		}
 	} else {
 		if err := org.RemoveFile(); err != nil {
-			return nil, domain.ReportError(ctx, err, "UpdateOrganization.RemoveLogo")
+			return &models.Organization{}, domain.ReportError(ctx, err, "UpdateOrganization.RemoveLogo")
 		}
 	}
 
@@ -79,7 +79,7 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, input UpdateO
 	org.AuthType = input.AuthType
 	org.AuthConfig = input.AuthConfig
 	if err := org.Save(); err != nil {
-		return nil, domain.ReportError(ctx, err, "UpdateOrganization", extras)
+		return &models.Organization{}, domain.ReportError(ctx, err, "UpdateOrganization", extras)
 	}
 
 	return &org, nil
@@ -191,11 +191,11 @@ func (r *mutationResolver) SetThreadLastViewedAt(ctx context.Context, input SetT
 
 	var thread models.Thread
 	if err := thread.FindByUUID(input.ThreadID); err != nil {
-		return nil, domain.ReportError(ctx, err, "SetThreadLastViewedAt.NotFound", extras)
+		return &models.Thread{}, domain.ReportError(ctx, err, "SetThreadLastViewedAt.NotFound", extras)
 	}
 
 	if err := thread.UpdateLastViewedAt(cUser.ID, input.Time); err != nil {
-		return nil, domain.ReportError(ctx, err, "SetThreadLastViewedAt", extras)
+		return &models.Thread{}, domain.ReportError(ctx, err, "SetThreadLastViewedAt", extras)
 	}
 
 	return &thread, nil
@@ -210,16 +210,16 @@ func (r *mutationResolver) CreateOrganizationTrust(ctx context.Context, input Cr
 
 	var organization models.Organization
 	if err := organization.FindByUUID(input.PrimaryID); err != nil {
-		return nil, domain.ReportError(ctx, err, "CreateOrganizationTrust.FindPrimaryOrganization", extras)
+		return &models.Organization{}, domain.ReportError(ctx, err, "CreateOrganizationTrust.FindPrimaryOrganization", extras)
 	}
 
 	if !cUser.CanCreateOrganizationTrust() {
 		err := errors.New("insufficient permissions")
-		return nil, domain.ReportError(ctx, err, "CreateOrganizationTrust.Unauthorized", extras)
+		return &models.Organization{}, domain.ReportError(ctx, err, "CreateOrganizationTrust.Unauthorized", extras)
 	}
 
 	if err := organization.CreateTrust(input.SecondaryID); err != nil {
-		return nil, domain.ReportError(ctx, err, "CreateOrganizationTrust", extras)
+		return &models.Organization{}, domain.ReportError(ctx, err, "CreateOrganizationTrust", extras)
 	}
 
 	return &organization, nil
@@ -234,16 +234,16 @@ func (r *mutationResolver) RemoveOrganizationTrust(ctx context.Context, input Re
 
 	var organization models.Organization
 	if err := organization.FindByUUID(input.PrimaryID); err != nil {
-		return nil, domain.ReportError(ctx, err, "RemoveOrganizationTrust.FindPrimaryOrganization", extras)
+		return &models.Organization{}, domain.ReportError(ctx, err, "RemoveOrganizationTrust.FindPrimaryOrganization", extras)
 	}
 
 	if !cUser.CanRemoveOrganizationTrust(organization.ID) {
 		err := errors.New("insufficient permissions")
-		return nil, domain.ReportError(ctx, err, "RemoveOrganizationTrust.Unauthorized", extras)
+		return &models.Organization{}, domain.ReportError(ctx, err, "RemoveOrganizationTrust.Unauthorized", extras)
 	}
 
 	if err := organization.RemoveTrust(input.SecondaryID); err != nil {
-		return nil, domain.ReportError(ctx, err, "RemoveOrganizationTrust", extras)
+		return &models.Organization{}, domain.ReportError(ctx, err, "RemoveOrganizationTrust", extras)
 	}
 
 	return &organization, nil
@@ -321,13 +321,13 @@ func (r *mutationResolver) CreateMeetingParticipant(ctx context.Context, input C
 
 	var meeting models.Meeting
 	if err := meeting.FindByUUID(input.MeetingID); err != nil {
-		return nil, domain.ReportError(ctx, err, "CreateMeetingParticipant.FindMeeting")
+		return &models.MeetingParticipant{}, domain.ReportError(ctx, err, "CreateMeetingParticipant.FindMeeting")
 	}
 
 	var participant models.MeetingParticipant
 	if err := participant.FindOrCreate(ctx, meeting, input.Code); err != nil {
 		// MeetingParticipant.Create returns localized error messages
-		return nil, err
+		return &models.MeetingParticipant{}, err
 	}
 	return &participant, nil
 }
