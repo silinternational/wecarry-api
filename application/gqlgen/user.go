@@ -96,12 +96,12 @@ func (r *userResolver) PhotoID(ctx context.Context, obj *models.User) (*string, 
 // Location retrieves the queried user's location.
 func (r *userResolver) Location(ctx context.Context, obj *models.User) (*models.Location, error) {
 	if obj == nil {
-		return &models.Location{}, nil
+		return nil, nil
 	}
 
 	location, err := obj.GetLocation()
 	if err != nil {
-		return &models.Location{}, domain.ReportError(ctx, err, "GetUserLocation")
+		return nil, domain.ReportError(ctx, err, "GetUserLocation")
 	}
 
 	return location, nil
@@ -175,7 +175,7 @@ func (r *queryResolver) User(ctx context.Context, id *string) (*models.User, err
 		extras := map[string]interface{}{
 			"role": role,
 		}
-		return &models.User{}, domain.ReportError(ctx, err, "GetUser.Unauthorized", extras)
+		return nil, domain.ReportError(ctx, err, "GetUser.Unauthorized", extras)
 	}
 
 	dbUser := models.User{}
