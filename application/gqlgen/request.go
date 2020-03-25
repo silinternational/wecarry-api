@@ -140,27 +140,23 @@ func (r *requestResolver) Origin(ctx context.Context, obj *models.Post) (*models
 }
 
 // Threads resolves the `threads` property of the request query, retrieving the related records from the database.
-func (r *requestResolver) StatusTransitions(ctx context.Context, obj *models.Post) ([]RequestStatusTransition, error) {
+func (r *requestResolver) Actions(ctx context.Context, obj *models.Post) ([]string, error) {
 	if obj == nil {
-		return []RequestStatusTransition{}, nil
+		return []string{}, nil
 	}
 
 	user := models.CurrentUser(ctx)
-	dbTransitions, err := obj.GetStatusTransitions(user)
+	extras := map[string]interface{}{
+		"user": user.UUID,
+	}
+
+	actions, err := obj.GetCurrentActions(user)
 	if err != nil {
-		extras := map[string]interface{}{
-			"user": user.UUID,
-		}
-		return []RequestStatusTransition{}, domain.ReportError(ctx, err, "GetRequestStatusTransitions", extras)
+		return actions, domain.ReportError(ctx, err, "GetRequestActions", extras)
 	}
 
-	transitions := make([]RequestStatusTransition, len(dbTransitions))
-	for i, t := range dbTransitions {
-		transitions[i].IsBackStep = t.IsBackStep
-		transitions[i].NewStatus = t.Status
-	}
+	return actions, nil
 
-	return transitions, nil
 }
 
 // Threads resolves the `threads` property of the request query, retrieving the related records from the database.
@@ -577,7 +573,7 @@ func (r *mutationResolver) RemoveMeAsPotentialProvider(ctx context.Context, requ
 	return &request, nil
 }
 
-func (r *mutationResolver) RemovePotentialProvider(ctx context.Context, requestID, userID string) (*models.Post, error) {
+func (r *mutationResolver) RejectPotentialProvider(ctx context.Context, requestID, userID string) (*models.Post, error) {
 	cUser := models.CurrentUser(ctx)
 
 	var provider models.PotentialProvider

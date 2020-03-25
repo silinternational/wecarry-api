@@ -177,7 +177,7 @@ type Mutation {
     removeMeAsPotentialProvider(requestID: String!): Request!
 
     "Cancel a carry offer for any user. Authorized for the request creator, the potential provider, and Super Admins."
-    removePotentialProvider(requestID: String!, userID: String!): Request!
+    rejectPotentialProvider(requestID: String!, userID: String!): Request!
 
     "Provider changes the status of a request to DELIVERED"
     markRequestAsDelivered(requestID: String!): Request!
@@ -654,8 +654,8 @@ type Request {
     size: RequestSize!
     "Status of the request. Use mutation `updateRequestStatus` to change the status."
     status: RequestStatus!
-    "Status of the request. Use mutation `updateRequestStatus` to change the status."
-    statusTransitions: [RequestStatusTransition!]!
+    "List of this request's actions available to the current user"
+    actions: [String!]!
     "List of message threads associated with this request"
     threads: [Thread!]!
     "Date and time this request was created"
@@ -815,13 +815,6 @@ type PublicProfile {
     avatarURL: String
 }
 
-"Current forward and backward status transitions for a request"
-type RequestStatusTransition {
-    "Is this transition a step backward (or just a step forward)"
-    isBackStep: Boolean!
-    "The possible next status for the request"
-    newStatus: RequestStatus!
-}
 
 "Input object for `updateUser`"
 input UpdateUserInput {

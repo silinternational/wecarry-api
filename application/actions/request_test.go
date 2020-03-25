@@ -68,6 +68,7 @@ type Request struct {
 		Nickname  string `json:"nickname"`
 		AvatarURL string `json:"avatarURL"`
 	} `json:"provider"`
+	Actions            []string            `json:"actions"`
 	PotentialProviders []PotentialProvider `json:"potentialProviders"`
 	Organization       struct {
 		ID string `json:"id"`

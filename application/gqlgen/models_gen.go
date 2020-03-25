@@ -130,14 +130,6 @@ type RemoveWatchInput struct {
 	ID string `json:"id"`
 }
 
-// Current forward and backward status transitions for a request
-type RequestStatusTransition struct {
-	// Is this transition a step backward (or just a step forward)
-	IsBackStep bool `json:"isBackStep"`
-	// The possible next status for the request
-	NewStatus models.PostStatus `json:"newStatus"`
-}
-
 type SetThreadLastViewedAtInput struct {
 	ThreadID string    `json:"threadID"`
 	Time     time.Time `json:"time"`

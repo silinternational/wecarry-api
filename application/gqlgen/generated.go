@@ -128,12 +128,12 @@ type ComplexityRoot struct {
 		CreateWatch                 func(childComplexity int, input watchInput) int
 		MarkRequestAsDelivered      func(childComplexity int, requestID string) int
 		MarkRequestAsReceived       func(childComplexity int, requestID string) int
+		RejectPotentialProvider     func(childComplexity int, requestID string, userID string) int
 		RemoveMeAsPotentialProvider func(childComplexity int, requestID string) int
 		RemoveMeetingInvite         func(childComplexity int, input RemoveMeetingInviteInput) int
 		RemoveMeetingParticipant    func(childComplexity int, input RemoveMeetingParticipantInput) int
 		RemoveOrganizationDomain    func(childComplexity int, input RemoveOrganizationDomainInput) int
 		RemoveOrganizationTrust     func(childComplexity int, input RemoveOrganizationTrustInput) int
-		RemovePotentialProvider     func(childComplexity int, requestID string, userID string) int
 		RemoveWatch                 func(childComplexity int, input RemoveWatchInput) int
 		SetThreadLastViewedAt       func(childComplexity int, input SetThreadLastViewedAtInput) int
 		UpdateMeeting               func(childComplexity int, input meetingInput) int
@@ -185,6 +185,7 @@ type ComplexityRoot struct {
 	}
 
 	Request struct {
+		Actions            func(childComplexity int) int
 		CompletedOn        func(childComplexity int) int
 		CreatedAt          func(childComplexity int) int
 		CreatedBy          func(childComplexity int) int
@@ -204,17 +205,11 @@ type ComplexityRoot struct {
 		Provider           func(childComplexity int) int
 		Size               func(childComplexity int) int
 		Status             func(childComplexity int) int
-		StatusTransitions  func(childComplexity int) int
 		Threads            func(childComplexity int) int
 		Title              func(childComplexity int) int
 		URL                func(childComplexity int) int
 		UpdatedAt          func(childComplexity int) int
 		Visibility         func(childComplexity int) int
-	}
-
-	RequestStatusTransition struct {
-		IsBackStep func(childComplexity int) int
-		NewStatus  func(childComplexity int) int
 	}
 
 	Thread struct {
@@ -319,7 +314,7 @@ type MutationResolver interface {
 	UpdateRequestStatus(ctx context.Context, input UpdateRequestStatusInput) (*models.Post, error)
 	AddMeAsPotentialProvider(ctx context.Context, requestID string) (*models.Post, error)
 	RemoveMeAsPotentialProvider(ctx context.Context, requestID string) (*models.Post, error)
-	RemovePotentialProvider(ctx context.Context, requestID string, userID string) (*models.Post, error)
+	RejectPotentialProvider(ctx context.Context, requestID string, userID string) (*models.Post, error)
 	MarkRequestAsDelivered(ctx context.Context, requestID string) (*models.Post, error)
 	MarkRequestAsReceived(ctx context.Context, requestID string) (*models.Post, error)
 	SetThreadLastViewedAt(ctx context.Context, input SetThreadLastViewedAtInput) (*models.Thread, error)
@@ -367,7 +362,7 @@ type RequestResolver interface {
 	CompletedOn(ctx context.Context, obj *models.Post) (*string, error)
 	Origin(ctx context.Context, obj *models.Post) (*models.Location, error)
 
-	StatusTransitions(ctx context.Context, obj *models.Post) ([]RequestStatusTransition, error)
+	Actions(ctx context.Context, obj *models.Post) ([]string, error)
 	Threads(ctx context.Context, obj *models.Post) ([]models.Thread, error)
 
 	URL(ctx context.Context, obj *models.Post) (*string, error)
@@ -848,6 +843,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.MarkRequestAsReceived(childComplexity, args["requestID"].(string)), true
 
+	case "Mutation.rejectPotentialProvider":
+		if e.complexity.Mutation.RejectPotentialProvider == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_rejectPotentialProvider_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.RejectPotentialProvider(childComplexity, args["requestID"].(string), args["userID"].(string)), true
+
 	case "Mutation.removeMeAsPotentialProvider":
 		if e.complexity.Mutation.RemoveMeAsPotentialProvider == nil {
 			break
@@ -907,18 +914,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.RemoveOrganizationTrust(childComplexity, args["input"].(RemoveOrganizationTrustInput)), true
-
-	case "Mutation.removePotentialProvider":
-		if e.complexity.Mutation.RemovePotentialProvider == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_removePotentialProvider_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.RemovePotentialProvider(childComplexity, args["requestID"].(string), args["userID"].(string)), true
 
 	case "Mutation.removeWatch":
 		if e.complexity.Mutation.RemoveWatch == nil {
@@ -1247,6 +1242,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Users(childComplexity), true
 
+	case "Request.actions":
+		if e.complexity.Request.Actions == nil {
+			break
+		}
+
+		return e.complexity.Request.Actions(childComplexity), true
+
 	case "Request.completedOn":
 		if e.complexity.Request.CompletedOn == nil {
 			break
@@ -1380,13 +1382,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Request.Status(childComplexity), true
 
-	case "Request.statusTransitions":
-		if e.complexity.Request.StatusTransitions == nil {
-			break
-		}
-
-		return e.complexity.Request.StatusTransitions(childComplexity), true
-
 	case "Request.threads":
 		if e.complexity.Request.Threads == nil {
 			break
@@ -1421,20 +1416,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Request.Visibility(childComplexity), true
-
-	case "RequestStatusTransition.isBackStep":
-		if e.complexity.RequestStatusTransition.IsBackStep == nil {
-			break
-		}
-
-		return e.complexity.RequestStatusTransition.IsBackStep(childComplexity), true
-
-	case "RequestStatusTransition.newStatus":
-		if e.complexity.RequestStatusTransition.NewStatus == nil {
-			break
-		}
-
-		return e.complexity.RequestStatusTransition.NewStatus(childComplexity), true
 
 	case "Thread.createdAt":
 		if e.complexity.Thread.CreatedAt == nil {
@@ -1878,7 +1859,7 @@ type Mutation {
     removeMeAsPotentialProvider(requestID: String!): Request!
 
     "Cancel a carry offer for any user. Authorized for the request creator, the potential provider, and Super Admins."
-    removePotentialProvider(requestID: String!, userID: String!): Request!
+    rejectPotentialProvider(requestID: String!, userID: String!): Request!
 
     "Provider changes the status of a request to DELIVERED"
     markRequestAsDelivered(requestID: String!): Request!
@@ -2355,8 +2336,8 @@ type Request {
     size: RequestSize!
     "Status of the request. Use mutation ` + "`" + `updateRequestStatus` + "`" + ` to change the status."
     status: RequestStatus!
-    "Status of the request. Use mutation ` + "`" + `updateRequestStatus` + "`" + ` to change the status."
-    statusTransitions: [RequestStatusTransition!]!
+    "List of this request's actions available to the current user"
+    actions: [String!]!
     "List of message threads associated with this request"
     threads: [Thread!]!
     "Date and time this request was created"
@@ -2516,13 +2497,6 @@ type PublicProfile {
     avatarURL: String
 }
 
-"Current forward and backward status transitions for a request"
-type RequestStatusTransition {
-    "Is this transition a step backward (or just a step forward)"
-    isBackStep: Boolean!
-    "The possible next status for the request"
-    newStatus: RequestStatus!
-}
 
 "Input object for ` + "`" + `updateUser` + "`" + `"
 input UpdateUserInput {
@@ -2760,6 +2734,28 @@ func (ec *executionContext) field_Mutation_markRequestAsReceived_args(ctx contex
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_rejectPotentialProvider_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["requestID"]; ok {
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["requestID"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["userID"]; ok {
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["userID"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_removeMeAsPotentialProvider_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -2827,28 +2823,6 @@ func (ec *executionContext) field_Mutation_removeOrganizationTrust_args(ctx cont
 		}
 	}
 	args["input"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_removePotentialProvider_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["requestID"]; ok {
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["requestID"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["userID"]; ok {
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["userID"] = arg1
 	return args, nil
 }
 
@@ -5461,7 +5435,7 @@ func (ec *executionContext) _Mutation_removeMeAsPotentialProvider(ctx context.Co
 	return ec.marshalNRequest2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_removePotentialProvider(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_rejectPotentialProvider(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -5478,7 +5452,7 @@ func (ec *executionContext) _Mutation_removePotentialProvider(ctx context.Contex
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_removePotentialProvider_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_rejectPotentialProvider_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -5487,7 +5461,7 @@ func (ec *executionContext) _Mutation_removePotentialProvider(ctx context.Contex
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().RemovePotentialProvider(rctx, args["requestID"].(string), args["userID"].(string))
+		return ec.resolvers.Mutation().RejectPotentialProvider(rctx, args["requestID"].(string), args["userID"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7374,7 +7348,7 @@ func (ec *executionContext) _Request_status(ctx context.Context, field graphql.C
 	return ec.marshalNRequestStatus2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostStatus(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Request_statusTransitions(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Request_actions(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -7393,7 +7367,7 @@ func (ec *executionContext) _Request_statusTransitions(ctx context.Context, fiel
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Request().StatusTransitions(rctx, obj)
+		return ec.resolvers.Request().Actions(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7405,10 +7379,10 @@ func (ec *executionContext) _Request_statusTransitions(ctx context.Context, fiel
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]RequestStatusTransition)
+	res := resTmp.([]string)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNRequestStatusTransition2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐRequestStatusTransition(ctx, field.Selections, res)
+	return ec.marshalNString2ᚕstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Request_threads(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
@@ -7801,80 +7775,6 @@ func (ec *executionContext) _Request_visibility(ctx context.Context, field graph
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNRequestVisibility2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostVisibility(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _RequestStatusTransition_isBackStep(ctx context.Context, field graphql.CollectedField, obj *RequestStatusTransition) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "RequestStatusTransition",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.IsBackStep, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _RequestStatusTransition_newStatus(ctx context.Context, field graphql.CollectedField, obj *RequestStatusTransition) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "RequestStatusTransition",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.NewStatus, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(models.PostStatus)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNRequestStatus2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Thread_id(ctx context.Context, field graphql.CollectedField, obj *models.Thread) (ret graphql.Marshaler) {
@@ -11538,8 +11438,8 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "removePotentialProvider":
-			out.Values[i] = ec._Mutation_removePotentialProvider(ctx, field)
+		case "rejectPotentialProvider":
+			out.Values[i] = ec._Mutation_rejectPotentialProvider(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -12112,7 +12012,7 @@ func (ec *executionContext) _Request(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "statusTransitions":
+		case "actions":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
 				defer func() {
@@ -12120,7 +12020,7 @@ func (ec *executionContext) _Request(ctx context.Context, sel ast.SelectionSet, 
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Request_statusTransitions(ctx, field, obj)
+				res = ec._Request_actions(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -12237,38 +12137,6 @@ func (ec *executionContext) _Request(ctx context.Context, sel ast.SelectionSet, 
 			out.Values[i] = ec._Request_visibility(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
-var requestStatusTransitionImplementors = []string{"RequestStatusTransition"}
-
-func (ec *executionContext) _RequestStatusTransition(ctx context.Context, sel ast.SelectionSet, obj *RequestStatusTransition) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.RequestContext, sel, requestStatusTransitionImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("RequestStatusTransition")
-		case "isBackStep":
-			out.Values[i] = ec._RequestStatusTransition_isBackStep(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "newStatus":
-			out.Values[i] = ec._RequestStatusTransition_newStatus(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -13580,47 +13448,6 @@ func (ec *executionContext) unmarshalNRequestStatus2githubᚗcomᚋsilinternatio
 
 func (ec *executionContext) marshalNRequestStatus2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostStatus(ctx context.Context, sel ast.SelectionSet, v models.PostStatus) graphql.Marshaler {
 	return v
-}
-
-func (ec *executionContext) marshalNRequestStatusTransition2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐRequestStatusTransition(ctx context.Context, sel ast.SelectionSet, v RequestStatusTransition) graphql.Marshaler {
-	return ec._RequestStatusTransition(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNRequestStatusTransition2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐRequestStatusTransition(ctx context.Context, sel ast.SelectionSet, v []RequestStatusTransition) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		rctx := &graphql.ResolverContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithResolverContext(ctx, rctx)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNRequestStatusTransition2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋgqlgenᚐRequestStatusTransition(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-	return ret
 }
 
 func (ec *executionContext) unmarshalNRequestVisibility2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostVisibility(ctx context.Context, v interface{}) (models.PostVisibility, error) {
