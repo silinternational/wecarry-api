@@ -128,10 +128,8 @@ var Env struct {
 	AwsS3Endpoint              string
 	AwsS3DisableSSL            bool
 	AwsS3Bucket                string
-	AwsS3AccessKeyID           string
-	AwsS3SecretAccessKey       string
-	AwsSESAccessKeyID          string
-	AwsSESSecretAccessKey      string
+	AwsAccessKeyID             string
+	AwsSecretAccessKey         string
 	CertDomainName             string
 	CloudflareAuthEmail        string
 	CloudflareAuthKey          string
@@ -189,10 +187,8 @@ func readEnv() {
 	Env.AwsS3Endpoint = envy.Get("AWS_S3_ENDPOINT", "")
 	Env.AwsS3DisableSSL, _ = strconv.ParseBool(envy.Get("AWS_S3_DISABLE_SSL", "false"))
 	Env.AwsS3Bucket = envy.Get("AWS_S3_BUCKET", "")
-	Env.AwsS3AccessKeyID = envy.Get("AWS_S3_ACCESS_KEY_ID", "")
-	Env.AwsS3SecretAccessKey = envy.Get("AWS_S3_SECRET_ACCESS_KEY", "")
-	Env.AwsSESAccessKeyID = envy.Get("AWS_SES_ACCESS_KEY_ID", Env.AwsS3AccessKeyID)
-	Env.AwsSESSecretAccessKey = envy.Get("AWS_SES_SECRET_ACCESS_KEY", Env.AwsS3SecretAccessKey)
+	Env.AwsAccessKeyID = envy.Get("AWS_ACCESS_KEY_ID", "")
+	Env.AwsSecretAccessKey = envy.Get("AWS_SECRET_ACCESS_KEY", "")
 	Env.CertDomainName = envy.Get("CERT_DOMAIN_NAME", "")
 	Env.CloudflareAuthEmail = envy.Get("CLOUDFLARE_AUTH_EMAIL", "")
 	Env.CloudflareAuthKey = envy.Get("CLOUDFLARE_AUTH_KEY", "")

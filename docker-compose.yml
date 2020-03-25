@@ -82,5 +82,5 @@ services:
     env_file:
       - ./.env
     environment:
-      MINIO_ACCESS_KEY: ${AWS_S3_ACCESS_KEY_ID}
-      MINIO_SECRET_KEY: ${AWS_S3_SECRET_ACCESS_KEY}
+      MINIO_ACCESS_KEY: ${AWS_ACCESS_KEY_ID}
+      MINIO_SECRET_KEY: ${AWS_SECRET_ACCESS_KEY}

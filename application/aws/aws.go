@@ -41,8 +41,8 @@ const urlLifespan = 10 * time.Minute
 
 func getS3ConfigFromEnv() awsConfig {
 	var a awsConfig
-	a.awsAccessKeyID = domain.Env.AwsS3AccessKeyID
-	a.awsSecretAccessKey = domain.Env.AwsS3SecretAccessKey
+	a.awsAccessKeyID = domain.Env.AwsAccessKeyID
+	a.awsSecretAccessKey = domain.Env.AwsSecretAccessKey
 	a.awsEndpoint = domain.Env.AwsS3Endpoint
 	a.awsRegion = domain.Env.AwsRegion
 	a.awsS3Bucket = domain.Env.AwsS3Bucket
@@ -321,8 +321,8 @@ func rawEmail(to, from, subject, body string) []byte {
 
 func getSESConfigFromEnv() awsConfig {
 	return awsConfig{
-		awsAccessKeyID:     domain.Env.AwsSESAccessKeyID,
-		awsSecretAccessKey: domain.Env.AwsSESSecretAccessKey,
+		awsAccessKeyID:     domain.Env.AwsAccessKeyID,
+		awsSecretAccessKey: domain.Env.AwsSecretAccessKey,
 		awsRegion:          domain.Env.AwsRegion,
 	}
 }
