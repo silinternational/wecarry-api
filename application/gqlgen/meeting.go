@@ -89,12 +89,12 @@ func (r *meetingResolver) EndDate(ctx context.Context, obj *models.Meeting) (str
 // ImageFile retrieves the file associated with the meeting
 func (r *meetingResolver) ImageFile(ctx context.Context, obj *models.Meeting) (*models.File, error) {
 	if obj == nil {
-		return &models.File{}, nil
+		return nil, nil
 	}
 
 	image, err := obj.ImageFile()
 	if err != nil {
-		return &models.File{}, domain.ReportError(ctx, err, "GetMeetingImage")
+		return nil, domain.ReportError(ctx, err, "GetMeetingImage")
 	}
 
 	return image, nil
