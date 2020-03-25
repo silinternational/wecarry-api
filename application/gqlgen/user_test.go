@@ -52,7 +52,7 @@ func (gs *GqlgenSuite) Test_getPublicProfile() {
 			profile := getPublicProfile(ctx, test.user)
 
 			gs.NotNil(profile)
-			gs.Equal(test.want, profile, "incorrect provfile")
+			gs.Equal(test.want, profile, "incorrect profile")
 		})
 	}
 }

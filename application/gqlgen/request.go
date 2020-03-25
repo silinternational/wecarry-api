@@ -74,12 +74,12 @@ func (r *requestResolver) PotentialProviders(ctx context.Context, obj *models.Po
 // database.
 func (r *requestResolver) Organization(ctx context.Context, obj *models.Post) (*models.Organization, error) {
 	if obj == nil {
-		return &models.Organization{}, nil
+		return nil, nil
 	}
 
 	organization, err := obj.GetOrganization()
 	if err != nil {
-		return &models.Organization{}, domain.ReportError(ctx, err, "GetRequestOrganization")
+		return nil, domain.ReportError(ctx, err, "GetRequestOrganization")
 	}
 
 	return organization, nil
@@ -128,12 +128,12 @@ func (r *requestResolver) Destination(ctx context.Context, obj *models.Post) (*m
 // Origin resolves the `origin` property of the request query, retrieving the related record from the database.
 func (r *requestResolver) Origin(ctx context.Context, obj *models.Post) (*models.Location, error) {
 	if obj == nil {
-		return &models.Location{}, nil
+		return nil, nil
 	}
 
 	origin, err := obj.GetOrigin()
 	if err != nil {
-		return &models.Location{}, domain.ReportError(ctx, err, "GetRequestOrigin")
+		return nil, domain.ReportError(ctx, err, "GetRequestOrigin")
 	}
 
 	return origin, nil
@@ -204,12 +204,12 @@ func (r *requestResolver) Kilograms(ctx context.Context, obj *models.Post) (*flo
 // Photo retrieves the file attached as the primary photo
 func (r *requestResolver) Photo(ctx context.Context, obj *models.Post) (*models.File, error) {
 	if obj == nil {
-		return &models.File{}, nil
+		return nil, nil
 	}
 
 	photo, err := obj.GetPhoto()
 	if err != nil {
-		return &models.File{}, domain.ReportError(ctx, err, "GetRequestPhoto")
+		return nil, domain.ReportError(ctx, err, "GetRequestPhoto")
 	}
 
 	return photo, nil
@@ -249,12 +249,12 @@ func (r *requestResolver) Files(ctx context.Context, obj *models.Post) ([]models
 // Meeting resolves the `meeting` property of the request query, retrieving the related record from the database.
 func (r *requestResolver) Meeting(ctx context.Context, obj *models.Post) (*models.Meeting, error) {
 	if obj == nil {
-		return &models.Meeting{}, nil
+		return nil, nil
 	}
 
 	meeting, err := obj.Meeting()
 	if err != nil {
-		return &models.Meeting{}, domain.ReportError(ctx, err, "GetRequestMeeting")
+		return nil, domain.ReportError(ctx, err, "GetRequestMeeting")
 	}
 
 	return meeting, nil
