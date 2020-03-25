@@ -166,7 +166,7 @@ func (r *queryResolver) User(ctx context.Context, id *string) (*models.User, err
 	currentUser := models.CurrentUser(ctx)
 
 	if id == nil {
-		return nil, nil
+		return &currentUser, nil
 	}
 
 	role := currentUser.AdminRole
