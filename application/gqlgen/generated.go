@@ -1757,13 +1757,13 @@ var parsedSchema = gqlparser.MustLoadSchema(
     "Lists all threads, regardless of visibility. Note that some thread fields may cause authorization errors."
     threads: [Thread!]!
 
-    "List all users in the system. Only Super Admins are authorized for this query."
-    user(id: ID): User
-
     """
     Return a specific user. If the ID is not specified, the authenticated user is returned. Only Super Admins are
     authorized to query a user record other than their own.
     """
+    user(id: ID): User
+
+    "List all users in the system. Only Super Admins are authorized for this query."
     users: [User!]!
 }
 
@@ -2336,7 +2336,16 @@ type Request {
     size: RequestSize!
     "Status of the request. Use mutation ` + "`" + `updateRequestStatus` + "`" + ` to change the status."
     status: RequestStatus!
-    "List of this request's actions available to the current user"
+    """
+    List of this request's actions available to the current user. These can be ...
+     "reopen": request creator reverto the status of the request to OPEN
+     "offer": non-creator offers to fulfill the request (addMeAsPotentialProvider)
+     "retractOffer": offerer retracts offer to fulfill a request (removeMeAsPotentialProvider)
+     "accept": request creator accepts someone's offer
+     "deliver": request provider claims to have fulfilled the request
+     "receive": request creator claims to have received the request
+     "remove": request creator cancels the request altogether
+    """
     actions: [String!]!
     "List of message threads associated with this request"
     threads: [Thread!]!
@@ -2496,7 +2505,6 @@ type PublicProfile {
     "avatarURL is generated from an attached photo if present, an external URL if present, or a Gravatar URL"
     avatarURL: String
 }
-
 
 "Input object for ` + "`" + `updateUser` + "`" + `"
 input UpdateUserInput {

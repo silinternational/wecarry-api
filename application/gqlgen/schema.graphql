@@ -75,13 +75,13 @@ type Query {
     "Lists all threads, regardless of visibility. Note that some thread fields may cause authorization errors."
     threads: [Thread!]!
 
-    "List all users in the system. Only Super Admins are authorized for this query."
-    user(id: ID): User
-
     """
     Return a specific user. If the ID is not specified, the authenticated user is returned. Only Super Admins are
     authorized to query a user record other than their own.
     """
+    user(id: ID): User
+
+    "List all users in the system. Only Super Admins are authorized for this query."
     users: [User!]!
 }
 
@@ -656,7 +656,7 @@ type Request {
     status: RequestStatus!
     """
     List of this request's actions available to the current user. These can be ...
-     "reopen": request creator reverta the status of the request to OPEN
+     "reopen": request creator reverto the status of the request to OPEN
      "offer": non-creator offers to fulfill the request (addMeAsPotentialProvider)
      "retractOffer": offerer retracts offer to fulfill a request (removeMeAsPotentialProvider)
      "accept": request creator accepts someone's offer
