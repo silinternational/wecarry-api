@@ -7,17 +7,18 @@ build:
       GO_ENV: test
       EMAIL_SERVICE: dummy
       AWS_S3_ENDPOINT: http://localhost:9000
-      AWS_S3_ACCESS_KEY_ID: abc123
-      AWS_S3_SECRET_ACCESS_KEY: abcd1234
+      AWS_ACCESS_KEY_ID: abc123
+      AWS_SECRET_ACCESS_KEY: abcd1234
       AWS_S3_DISABLE_SSL: true
       AWS_S3_BUCKET: wca-test-bucket
-      AWS_REGION: us-east-1
+      AWS_DEFAULT_REGION: us-east-1
       FACEBOOK_KEY: test
       FACEBOOK_SECRET: test
       GOOGLE_KEY: test
       GOOGLE_SECRET: test
       SERVICE_INTEGRATION_TOKEN: abc123test
       TEST_DATABASE_URL: postgres://scrutinizer:scrutinizer@localhost:5432/scrutinizer?sslmode=disable
+      DISABLE_TLS: true
   nodes:
     analysis:
       project_setup:

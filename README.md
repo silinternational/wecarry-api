@@ -167,3 +167,25 @@ will erase or set to `null`. Note that this does not address the
 GraphQL spec requirement to not modify an omitted field. The reference UI 
 implementation, [wecarry-ui](https://github.com/silinternational/wecarry-ui),
 will always include all supported fields.
+
+## TLS / HTTPS
+
+WeCarry API can either run with HTTPS/TLS or standard HTTP. If running behind a load balancer that terminates SSL/TLS 
+connections for you, using HTTPS/TLS in the container as well may not be necessary, but if possible it's a good 
+idea. WeCarry API uses [CertMagic](https://github.com/caddyserver/certmagic) to work it's magic with Let's Encrypt
+for certificate provisioning and configuring a TLS listener that Buffalo can use to serve the app. 
+
+TLS is used by default but can be disabled by setting `DISABLE_TLS=true` in the environment. 
+
+When TLS is used, WeCarry API is coded to use Cloudflare for DNS validation in order to be able to run in a clustered
+environment. CertMagic is also configured to use DynamoDB for storage/persistence of the certificate and use in a 
+clustered environment. To use TLS the following environment variables are required:
+
+ - `CERT_DOMAIN_NAME` - What domain name should the certificate be registered for
+ - `CLOUDFLARE_AUTH_EMAIL` - Email address for use with Cloudflare APIs
+ - `CLOUDFLARE_AUTH_KEY` - Cloudflare authentication key / token
+ 
+It is also assumed there is a `DynamoDB` table in your account named `CertMagic`. See 
+[certmagic-storage-dynamodb](https://github.com/silinternational/certmagic-storage-dynamodb) for an example of 
+how to create the necessary table. It is not created as part of this project or repo because it can be used by 
+multiple applications using CertMagic for certificate management. 

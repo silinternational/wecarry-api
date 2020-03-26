@@ -183,7 +183,7 @@ func readEnv() {
 	Env.ApiBaseURL = envy.Get("HOST", "")
 	Env.AppName = envy.Get("APP_NAME", "WeCarry")
 	Env.AuthCallbackURL = envy.Get("AUTH_CALLBACK_URL", "")
-	Env.AwsRegion = envy.Get("AWS_REGION", "")
+	Env.AwsRegion = envy.Get("AWS_DEFAULT_REGION", "")
 	Env.AwsS3Endpoint = envy.Get("AWS_S3_ENDPOINT", "")
 	Env.AwsS3DisableSSL, _ = strconv.ParseBool(envy.Get("AWS_S3_DISABLE_SSL", "false"))
 	Env.AwsS3Bucket = envy.Get("AWS_S3_BUCKET", "")
