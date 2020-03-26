@@ -1078,10 +1078,8 @@ func (p *Post) GetCurrentActions(user User) ([]string, error) {
 	return actions, nil
 }
 
+// Creator gets the full User record of the post creator
 func (p *Post) Creator() (User, error) {
-	if p.CreatedBy.ID > 0 {
-		return p.CreatedBy, nil
-	}
-	err := DB.Load(p, "CreatedBy")
-	return p.CreatedBy, err
+	var u User
+	return u, DB.Find(&u, p.CreatedByID)
 }
