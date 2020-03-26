@@ -857,21 +857,41 @@ input UpdateUserPreferencesInput {
 }
 
 """
-A Watch for a given location. Requests with a destination near the watch location will trigger a notification to
-the watch creator. Other types of Watches (e.g. keyword search) may be created in future versions of WeCarry.
+A Watch for a given location. New requests matching all of the given criterium will generate a new
+notification.
 """
 type Watch {
     "unique identifier for the Watch"
     id: ID!
     "Owner of the Watch, and the recipient of notifications for this Watch"
     owner: PublicProfile!
-    "Location to watch. If a new request has a destination near this location, a notification will be sent."
-    location: Location
+    "Short description, as named by the Watch creator"
+    name: String!
+    "Destination to watch. If a new request has a destination near this location, a notification will be sent."
+    destination: Location
+    "Origin to watch. If a new request has an origin near this location, a notification will be sent."
+    origin: Location
+    "Meeting to watch. Notifications will be sent for new requests tied to this event."
+    meeting: Meeting
+    "Search by text in request `title` or `description`"
+    searchText: String
+    "Maximum size of a requested item"
+    size: RequestSize
 }
 
 input CreateWatchInput {
-    "Location to watch. If a new request has a destination near this location, a notification will be sent."
-    location: LocationInput
+    "Short description, as named by the Watch creator"
+    name: String!
+    "Destination to watch. If a new request has a destination near this location, a notification will be sent."
+    destination: LocationInput
+    "Origin to watch. If a new request has an origin near this location, a notification will be sent."
+    origin: LocationInput
+    "Meeting to watch. Notifications will be sent for new requests tied to this event."
+    meetingID: ID
+    "Search by text in `title` or `description`"
+    searchText: String
+    "Maximum size of a requested item"
+    size: RequestSize
 }
 
 input RemoveWatchInput {
@@ -879,9 +899,23 @@ input RemoveWatchInput {
     id: ID!
 }
 
+"""
+Properties to update on the Watch identified by the given ID. If any parameter is omitted or null, that parameter
+will be removed from the Watch criteria.
+"""
 input UpdateWatchInput {
     "unique identifier for the Watch to be updated"
     id: ID!
-    "Location to watch. If a new request has a destination near this location, a notification will be sent."
-    location: LocationInput
+    "Short description, as named by the Watch creator"
+    name: String!
+    "Destination to watch. If a new request has a destination near this location, a notification will be sent."
+    destination: LocationInput
+    "Origin to watch. If a new request has an origin near this location, a notification will be sent."
+    origin: LocationInput
+    "Meeting to watch. Notifications will be sent for new requests tied to this event."
+    meetingID: ID
+    "Search by text in `title` or `description`"
+    searchText: String
+    "Maximum size of a requested item"
+    size: RequestSize
 }

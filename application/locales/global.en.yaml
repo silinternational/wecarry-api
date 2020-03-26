@@ -306,29 +306,35 @@
 
 # Watch
 - id: GetWatchCreator
-  translation: We had a problem finding the Watch creator
-- id: GetWatchLocation
-  translation: We had a problem finding the Watch location
+  translation: We had a problem finding the Alert creator
+- id: GetWatchDestination
+  translation: We had a problem finding the Alert destination
+- id: GetWatchOrigin
+  translation: We had a problem finding the Alert origin
 - id: MyWatches
   translation: We had a problem getting a list of your Watches
 - id: CreateWatch
-  translation: We had a problem creating a new Watch
-- id: CreateWatch.SetLocation
-  translation: We had a problem setting the location for your new Watch
+  translation: We had a problem creating a new Alert
+- id: CreateWatch.SetDestination
+  translation: We had a problem setting the destination for your new Alert
+- id: CreateWatch.SetOrigin
+  translation: We had a problem setting the origin for your new Alert
 - id: CreateWatch.ProcessInput
-  translation: We had a problem processing the information for your new Watch
+  translation: We had a problem processing the information for your new Alert
 - id: UpdateWatch
-  translation: We had a problem updating your Watch
+  translation: We had a problem updating your Alert
 - id: UpdateWatch.ProcessInput
-  translation: We had a problem processing the information to update your Watch
+  translation: We had a problem processing the information to update your Alert
 - id: UpdateWatch.NotFound
-  translation: Watch not found
-- id: UpdateWatch.SetLocation
-  translation: We had a problem setting the location for your Watch
+  translation: Alert not found
+- id: UpdateWatch.SetDestination
+  translation: We had a problem setting the destination for your Alert
+- id: UpdateWatch.SetOrigin
+  translation: We had a problem setting the origin for your Alert
 - id: RemoveWatch
-  translation: We had a problem removing that Watch
+  translation: We had a problem removing that Alert
 - id: RemoveWatch.NotFound
-  translation: We had a problem finding the Watch to be removed
+  translation: We had a problem finding the Alert to be removed
 - id: RemoveWatch.FindByUser
   translation: We had a problem getting a list of remaining Watches
 
