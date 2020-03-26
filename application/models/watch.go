@@ -150,15 +150,15 @@ func (w *Watch) Destroy() error {
 
 // matchesPost returns true if the Watch's Location is near the Post's Destination
 func (w *Watch) matchesPost(post Post) bool {
-	compareFunctions := []func(watch Watch, post Post) bool{
-		watchCompareSize,
-		watchCompareText,
-		watchCompareMeeting,
-		watchCompareDestination,
-		watchCompareOrigin,
+	compareFunctions := []func(*Watch, Post) bool{
+		(*Watch).compareSize,
+		(*Watch).compareText,
+		(*Watch).compareMeeting,
+		(*Watch).compareDestination,
+		(*Watch).compareOrigin,
 	}
 	for _, c := range compareFunctions {
-		if c(*w, post) {
+		if c(w, post) {
 			return true
 		}
 	}
@@ -176,69 +176,89 @@ func (w *Watch) Meeting(ctx context.Context) (*Meeting, error) {
 	return meeting, nil
 }
 
-func watchCompareDestination(watch Watch, post Post) bool {
-	if !watch.DestinationID.Valid {
+func (w *Watch) compareDestination(post Post) bool {
+	if w == nil {
+		domain.ErrLogger.Printf("nil receiver in Watch.compareDestination")
+		return false
+	}
+	if !w.DestinationID.Valid {
 		return true
 	}
 	postDestination, err := post.GetDestination()
 	if err != nil {
-		domain.ErrLogger.Printf("failed to get post %s destination in watchCompareDestination, %s", post.UUID, err)
+		domain.ErrLogger.Printf("failed to get post %s destination in compareDestination, %s", post.UUID, err)
 		return false
 	}
-	watchDestination, err := watch.GetDestination()
+	watchDestination, err := w.GetDestination()
 	if err != nil {
-		domain.ErrLogger.Printf("failed to get watch %s destination in watchCompareDestination, %s", watch.UUID, err)
+		domain.ErrLogger.Printf("failed to get watch %s destination in compareDestination, %s", w.UUID, err)
 	}
 	return watchDestination.IsNear(*postDestination)
 }
 
-func watchCompareOrigin(watch Watch, post Post) bool {
-	if !watch.OriginID.Valid {
+func (w *Watch) compareOrigin(post Post) bool {
+	if w == nil {
+		domain.ErrLogger.Printf("nil receiver in Watch.compareOrigin")
+		return false
+	}
+	if !w.OriginID.Valid {
 		return true
 	}
 	postOrigin, err := post.GetOrigin()
 	if err != nil {
-		domain.ErrLogger.Printf("failed to get post %s origin in watchCompareOrigin, %s", post.UUID, err)
+		domain.ErrLogger.Printf("failed to get post %s origin in compareOrigin, %s", post.UUID, err)
 		return false
 	}
-	watchOrigin, err := watch.GetOrigin()
+	watchOrigin, err := w.GetOrigin()
 	if err != nil {
-		domain.ErrLogger.Printf("failed to get watch %s origin in watchCompareOrigin, %s", watch.UUID, err)
+		domain.ErrLogger.Printf("failed to get watch %s origin in compareOrigin, %s", w.UUID, err)
 	}
 	return watchOrigin.IsNear(*postOrigin)
 }
 
-func watchCompareMeeting(watch Watch, post Post) bool {
-	if !watch.MeetingID.Valid {
+func (w *Watch) compareMeeting(post Post) bool {
+	if w == nil {
+		domain.ErrLogger.Printf("nil receiver in Watch.compareMeeting")
+		return false
+	}
+	if !w.MeetingID.Valid {
 		return true
 	}
-	return watch.MeetingID == post.MeetingID
+	return w.MeetingID == post.MeetingID
 }
 
-func watchCompareText(watch Watch, post Post) bool {
-	if !watch.SearchText.Valid {
+func (w *Watch) compareText(post Post) bool {
+	if w == nil {
+		domain.ErrLogger.Printf("nil receiver in Watch.compareText")
+		return false
+	}
+	if !w.SearchText.Valid {
 		return true
 	}
-	if strings.Contains(post.Title, watch.SearchText.String) {
+	if strings.Contains(post.Title, w.SearchText.String) {
 		return true
 	}
-	if strings.Contains(post.Description.String, watch.SearchText.String) {
+	if strings.Contains(post.Description.String, w.SearchText.String) {
 		return true
 	}
 	creator, err := post.Creator()
 	if err != nil {
-		domain.ErrLogger.Printf("failed to get post %s creator in watchCompareText, %s", post.UUID, err)
+		domain.ErrLogger.Printf("failed to get post %s creator in compareText, %s", post.UUID, err)
 		return false
 	}
-	if strings.Contains(creator.Nickname, watch.SearchText.String) {
+	if strings.Contains(creator.Nickname, w.SearchText.String) {
 		return true
 	}
 	return false
 }
 
-func watchCompareSize(watch Watch, post Post) bool {
-	if watch.Size == nil {
+func (w *Watch) compareSize(post Post) bool {
+	if w == nil {
+		domain.ErrLogger.Printf("nil receiver in Watch.compareSize")
+		return false
+	}
+	if w.Size == nil {
 		return true
 	}
-	return watch.Size.isLargerOrSame(post.Size)
+	return w.Size.isLargerOrSame(post.Size)
 }
