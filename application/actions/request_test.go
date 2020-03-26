@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gobuffalo/nulls"
 	"github.com/gofrs/uuid"
 
 	"github.com/silinternational/wecarry-api/domain"
@@ -68,6 +69,7 @@ type Request struct {
 		Nickname  string `json:"nickname"`
 		AvatarURL string `json:"avatarURL"`
 	} `json:"provider"`
+	Actions            []string            `json:"actions"`
 	PotentialProviders []PotentialProvider `json:"potentialProviders"`
 	Organization       struct {
 		ID string `json:"id"`
@@ -176,6 +178,11 @@ func (as *ActionSuite) verifyRequestResponse(request models.Post, resp Request) 
 func (as *ActionSuite) Test_RequestsQuery() {
 	f := createFixturesForRequestQuery(as)
 
+	postZeroDestination, err := f.Posts[0].GetDestination()
+	as.NoError(err)
+	postOneOrigin, err := f.Posts[1].GetOrigin()
+	as.NoError(err)
+
 	type testCase struct {
 		name        string
 		searchText  string
@@ -217,7 +224,7 @@ func (as *ActionSuite) Test_RequestsQuery() {
 		{
 			name:        "destination filter",
 			searchText:  "null",
-			destination: `{description:"Australia",country:"AU"}`,
+			destination: as.locationInput(*postZeroDestination),
 			origin:      "null",
 			testUser:    f.Users[1],
 			verifyFunc: func() {
@@ -229,7 +236,7 @@ func (as *ActionSuite) Test_RequestsQuery() {
 			name:        "origin filter",
 			searchText:  "null",
 			destination: "null",
-			origin:      `{description:"Australia",country:"AU"}`,
+			origin:      as.locationInput(*postOneOrigin),
 			testUser:    f.Users[1],
 			verifyFunc: func() {
 				as.Equal(1, len(resp.Requests))
@@ -632,6 +639,68 @@ func (as *ActionSuite) Test_MarkRequestAsReceived() {
 			as.Equal(tc.wantRequestHistoryCount, len(pHistories), "incorrect number of RequestHistories")
 			lastPH := pHistories[tc.wantRequestHistoryCount-1]
 			as.Equal(tc.wantStatus, lastPH.Status.String(), "incorrect status on last RequestHistory")
+		})
+	}
+}
+
+func (as *ActionSuite) Test_RequestActions() {
+	f := test.CreatePotentialProvidersFixtures(as.DB)
+	requests := f.Posts
+
+	creator := f.Users[0]
+	provider := f.Users[1]
+
+	acceptedRequest := requests[0]
+	acceptedRequest.Status = models.PostStatusAccepted
+	acceptedRequest.ProviderID = nulls.NewInt(provider.ID)
+
+	err := acceptedRequest.Update()
+	as.NoError(err, "unable to change Requests's status to prepare for test")
+
+	testCases := []struct {
+		name string
+		user models.User
+		want map[string][]string
+	}{
+		{name: "Creator",
+			user: creator,
+			want: map[string][]string{
+				requests[0].UUID.String(): {models.RequestActionReopen, models.RequestActionReceive, models.RequestActionRemove},
+				requests[1].UUID.String(): {models.RequestActionAccept, models.RequestActionRemove},
+				requests[2].UUID.String(): {models.RequestActionAccept, models.RequestActionRemove},
+			},
+		},
+		{name: "Provider",
+			user: provider,
+			want: map[string][]string{
+				requests[0].UUID.String(): {models.RequestActionDeliver},
+				requests[1].UUID.String(): {models.RequestActionOffer},
+				requests[2].UUID.String(): {models.RequestActionOffer},
+			},
+		},
+		{name: "Other User",
+			user: f.Users[2],
+			want: map[string][]string{
+				requests[0].UUID.String(): {},
+				requests[1].UUID.String(): {models.RequestActionRetractOffer},
+				requests[2].UUID.String(): {models.RequestActionOffer},
+			},
+		},
+	}
+	const query = `{ requests {id actions}}`
+
+	var resp RequestsResponse
+	for _, tc := range testCases {
+		as.T().Run(tc.name, func(t *testing.T) {
+
+			err := as.testGqlQuery(query, tc.user.Nickname, &resp)
+			as.NoError(err)
+
+			actions := map[string][]string{}
+			for _, request := range resp.Requests {
+				actions[request.ID] = request.Actions
+			}
+			as.Equal(tc.want, actions)
 		})
 	}
 }

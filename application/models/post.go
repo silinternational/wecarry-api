@@ -30,11 +30,21 @@ const (
 	PostStatusReceived  PostStatus = "RECEIVED"
 	PostStatusCompleted PostStatus = "COMPLETED"
 	PostStatusRemoved   PostStatus = "REMOVED"
+
+	RequestActionReopen       = "reopen"
+	RequestActionOffer        = "offer"
+	RequestActionRetractOffer = "retractOffer"
+	RequestActionAccept       = "accept"
+	RequestActionDeliver      = "deliver"
+	RequestActionReceive      = "receive"
+	//RequestActionComplete     = "complete"  //  For now Receiving a Post makes it Completed
+	RequestActionRemove = "remove"
 )
 
-type statusTransitionTarget struct {
-	status     PostStatus
-	isBackStep bool
+type StatusTransitionTarget struct {
+	Status           PostStatus
+	IsBackStep       bool
+	isProviderAction bool
 }
 
 type PostVisibility string
@@ -74,46 +84,53 @@ func (e PostVisibility) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
-func getStatusTransitions() map[PostStatus][]statusTransitionTarget {
-	return map[PostStatus][]statusTransitionTarget{
+func allStatusTransitions() map[PostStatus][]StatusTransitionTarget {
+	return map[PostStatus][]StatusTransitionTarget{
 		PostStatusOpen: {
-			{status: PostStatusAccepted},
-			{status: PostStatusRemoved},
+			{Status: PostStatusAccepted},
+			{Status: PostStatusRemoved},
 		},
 		PostStatusAccepted: {
-			{status: PostStatusOpen, isBackStep: true}, // to correct a false acceptance
-			{status: PostStatusDelivered},
-			{status: PostStatusReceived},  // This transition is in here for later, in case one day it's not skippable
-			{status: PostStatusCompleted}, // For now, `DELIVERED` is not a required step
-			{status: PostStatusRemoved},
+			{Status: PostStatusOpen, IsBackStep: true}, // to correct a false acceptance
+			{Status: PostStatusDelivered, isProviderAction: true},
+			{Status: PostStatusReceived},  // This transition is in here for later, in case one day it's not skippable
+			{Status: PostStatusCompleted}, // For now, `DELIVERED` is not a required step
+			{Status: PostStatusRemoved},
 		},
 		PostStatusDelivered: {
-			{status: PostStatusAccepted, isBackStep: true}, // to correct a false delivery
-			{status: PostStatusCompleted},
+			{Status: PostStatusAccepted, IsBackStep: true, isProviderAction: true}, // to correct a false delivery
+			{Status: PostStatusCompleted},
 		},
 		PostStatusReceived: {
-			{status: PostStatusAccepted, isBackStep: true},
-			{status: PostStatusDelivered},
-			{status: PostStatusCompleted},
+			{Status: PostStatusAccepted, IsBackStep: true},
+			{Status: PostStatusDelivered},
+			{Status: PostStatusCompleted},
 		},
 		PostStatusCompleted: {
-			{status: PostStatusAccepted, isBackStep: true},  // to correct a false completion
-			{status: PostStatusDelivered, isBackStep: true}, // to correct a false completion
-			{status: PostStatusReceived, isBackStep: true},  // to correct a false completion
+			{Status: PostStatusAccepted, IsBackStep: true},  // to correct a false completion
+			{Status: PostStatusDelivered, IsBackStep: true}, // to correct a false completion
+			//	{Status: PostStatusReceived, IsBackStep: true, isProviderAction: true}, // to correct a false completion
 		},
 		PostStatusRemoved: {},
 	}
 }
 
-func isTransitionValid(status1, status2 PostStatus) (bool, error) {
-	transitions := getStatusTransitions()
-	targets, ok := transitions[status1]
+func getNextStatusPossibilities(status PostStatus) ([]StatusTransitionTarget, error) {
+	targets, ok := allStatusTransitions()[status]
 	if !ok {
-		return false, errors.New("unexpected initial status - " + status1.String())
+		return []StatusTransitionTarget{}, errors.New("unexpected initial status - " + status.String())
+	}
+	return targets, nil
+}
+
+func isTransitionValid(status1, status2 PostStatus) (bool, error) {
+	targets, err := getNextStatusPossibilities(status1)
+	if err != nil {
+		return false, err
 	}
 
 	for _, target := range targets {
-		if status2 == target.status {
+		if status2 == target.Status {
 			return true, nil
 		}
 	}
@@ -126,19 +143,29 @@ func isTransitionBackStep(status1, status2 PostStatus) (bool, error) {
 		return false, nil
 	}
 
-	transitions := getStatusTransitions()
-	targets, ok := transitions[status1]
-	if !ok {
-		return false, errors.New("unexpected initial status - " + status1.String())
+	targets, err := getNextStatusPossibilities(status1)
+	if err != nil {
+		return false, err
 	}
 
 	for _, target := range targets {
-		if status2 == target.status {
-			return target.isBackStep, nil
+		if status2 == target.Status {
+			return target.IsBackStep, nil
 		}
 	}
 	// Not worrying about invalid transitions, since this is called by AfterUpdate
 	return false, nil
+}
+
+func statusActions() map[PostStatus]string {
+	return map[PostStatus]string{
+		PostStatusOpen:      RequestActionReopen,
+		PostStatusAccepted:  RequestActionAccept,
+		PostStatusDelivered: RequestActionDeliver,
+		//PostStatusReceived:  RequestActionReceive,  // One day we may want this back in
+		PostStatusCompleted: RequestActionReceive,
+		PostStatusRemoved:   RequestActionRemove,
+	}
 }
 
 func (e PostStatus) IsValid() bool {
@@ -277,9 +304,9 @@ func (p *Post) SetProviderWithStatus(status PostStatus, providerID *string) erro
 
 // GetPotentialProviders returns the User objects associated with the Post's
 // PotentialProviders
-func (p *Post) GetPotentialProviders() (Users, error) {
+func (p *Post) GetPotentialProviders(currentUser User) (Users, error) {
 	providers := PotentialProviders{}
-	users, err := providers.FindUsersByPostID(p.ID)
+	users, err := providers.FindUsersByPostID(*p, currentUser)
 	return users, err
 }
 
@@ -584,6 +611,53 @@ func (p *Post) GetProvider() (*User, error) {
 		return nil, nil // provider is a nullable field, so ignore any error
 	}
 	return &provider, nil
+}
+
+// GetStatusTransitions finds the forward and backward transitions for the current user
+func (p *Post) GetStatusTransitions(currentUser User) ([]StatusTransitionTarget, error) {
+	statusOptions, err := getNextStatusPossibilities(p.Status)
+	if err != nil {
+		domain.ErrLogger.Printf(err.Error())
+		return statusOptions, nil
+	}
+
+	finalOptions := []StatusTransitionTarget{}
+
+	for _, o := range statusOptions {
+		// User is the Creator - sees all but Provider's actions
+		if currentUser.ID == p.CreatedByID && !o.isProviderAction {
+			finalOptions = append(finalOptions, o)
+			continue
+		}
+		// User is the Provider and sees only the Provider's actions
+		if o.isProviderAction && p.ProviderID.Valid && currentUser.ID == p.ProviderID.Int {
+			finalOptions = append(finalOptions, o)
+		}
+	}
+
+	return finalOptions, nil
+}
+
+// GetPotentialProviderActions
+func (p *Post) GetPotentialProviderActions(currentUser User) ([]string, error) {
+	if p.Status != PostStatusOpen || currentUser.ID == p.CreatedByID {
+		return []string{}, nil
+	}
+
+	providers, err := p.GetPotentialProviders(currentUser)
+	if err != nil {
+		return []string{}, err
+	}
+
+	// User is not the Creator
+	for _, pp := range providers {
+		// If user is already one of the PotentiaProviders
+		if pp.ID == currentUser.ID {
+			return []string{RequestActionRetractOffer}, nil
+		}
+	}
+
+	return []string{RequestActionOffer}, nil
 }
 
 func (p *Post) GetOrganization() (*Organization, error) {
@@ -991,4 +1065,29 @@ func (p *Post) IsVisible(ctx context.Context, user User) bool {
 		return false
 	}
 	return len(posts) > 0
+}
+
+func (p *Post) GetCurrentActions(user User) ([]string, error) {
+	transitions, err := p.GetStatusTransitions(user)
+	if err != nil {
+		return []string{}, err
+	}
+
+	allActions := statusActions()
+
+	actions := []string{}
+	for _, t := range transitions {
+		if action := allActions[t.Status]; action != "" {
+			actions = append(actions, action)
+		}
+	}
+
+	providerActions, err := p.GetPotentialProviderActions(user)
+	if err != nil {
+		return actions, err
+	}
+
+	actions = append(actions, providerActions...)
+
+	return actions, nil
 }

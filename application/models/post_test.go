@@ -593,7 +593,7 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_CompletedRequest() {
 			wantErr: false,
 		},
 		{
-			name: "bad status - from completed to accepted",
+			name: "good status - from completed to accepted",
 			post: Post{
 				Status: PostStatusAccepted,
 				UUID:   post.UUID,
@@ -609,12 +609,12 @@ func (ms *ModelSuite) TestPost_ValidateUpdate_CompletedRequest() {
 			wantErr: false,
 		},
 		{
-			name: "good status - from completed to received",
+			name: "bad status - from completed to received",
 			post: Post{
 				Status: PostStatusReceived,
 				UUID:   post.UUID,
 			},
-			wantErr: false,
+			wantErr: true,
 		},
 		{
 			name: "bad status - from completed to open",
@@ -1102,6 +1102,176 @@ func (ms *ModelSuite) TestPost_GetProvider() {
 	}
 }
 
+func (ms *ModelSuite) TestPost_GetStatusTransitions() {
+
+	tests := []struct {
+		name string
+		post Post
+		user User
+		want []StatusTransitionTarget
+	}{
+		{name: "Open Post - Creator",
+			post: Post{ID: 1, CreatedByID: 11, Status: PostStatusOpen},
+			user: User{ID: 11},
+			want: []StatusTransitionTarget{
+				{Status: PostStatusAccepted},
+				{Status: PostStatusRemoved},
+			},
+		},
+		{name: "Accepted Post - Creator",
+			post: Post{ID: 1, CreatedByID: 11, Status: PostStatusAccepted},
+			user: User{ID: 11},
+			want: []StatusTransitionTarget{
+				{Status: PostStatusOpen, IsBackStep: true},
+				{Status: PostStatusReceived},
+				{Status: PostStatusCompleted},
+				{Status: PostStatusRemoved},
+			},
+		},
+		{name: "Delivered Post - Creator",
+			post: Post{ID: 1, CreatedByID: 11, Status: PostStatusDelivered},
+			user: User{ID: 11},
+			want: []StatusTransitionTarget{{Status: PostStatusCompleted}},
+		},
+		{name: "Completed Post - Creator",
+			post: Post{ID: 1, CreatedByID: 11, Status: PostStatusCompleted},
+			user: User{ID: 11},
+			want: []StatusTransitionTarget{
+				{Status: PostStatusAccepted, IsBackStep: true},
+				{Status: PostStatusDelivered, IsBackStep: true},
+			},
+		},
+		{name: "Accepted Post - Provider",
+			post: Post{ID: 1, ProviderID: nulls.NewInt(12), Status: PostStatusAccepted},
+			user: User{ID: 12},
+			want: []StatusTransitionTarget{
+				{Status: PostStatusDelivered, isProviderAction: true},
+			},
+		},
+		{name: "Delivered Post - Provider",
+			post: Post{ID: 1, ProviderID: nulls.NewInt(12), Status: PostStatusDelivered},
+			user: User{ID: 12},
+			want: []StatusTransitionTarget{
+				{Status: PostStatusAccepted, IsBackStep: true, isProviderAction: true},
+			},
+		},
+		{name: "Completed Post - Provider",
+			post: Post{ID: 1, ProviderID: nulls.NewInt(12), Status: PostStatusCompleted},
+			user: User{ID: 12},
+			want: []StatusTransitionTarget{},
+		},
+		{name: "Open Post - Not Creator Or Provider",
+			post: Post{ID: 1, Status: PostStatusOpen},
+			user: User{ID: 99}, want: []StatusTransitionTarget{},
+		},
+		{name: "Accepted Post - Not Creator Or Provider",
+			post: Post{ID: 1, Status: PostStatusAccepted},
+			user: User{ID: 99}, want: []StatusTransitionTarget{},
+		},
+	}
+
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			got, err := tt.post.GetStatusTransitions(tt.user)
+			ms.NoError(err)
+			ms.Equal(tt.want, got, "incorrect status transitions")
+		})
+	}
+}
+
+func (ms *ModelSuite) TestPost_GetPotentialProviderActions() {
+	f := createUserFixtures(ms.DB, 3)
+	users := f.Users
+	posts := createPostFixtures(ms.DB, 2, false)
+	createPotentialProviderFixtures(ms.DB, 0, 2)
+
+	acceptedPost := posts[0]
+	acceptedPost.Status = PostStatusAccepted // This doesn't change the post in the slice
+
+	tests := []struct {
+		name string
+		post Post
+		user User
+		want []string
+	}{
+		{name: "Open Post - Creator",
+			post: posts[1],
+			user: users[0],
+			want: []string{},
+		},
+		{name: "Open Post with no offers - not Creator",
+			post: posts[1],
+			user: users[1],
+			want: []string{RequestActionOffer},
+		},
+		{name: "Open Post with offer - Offerer",
+			post: posts[0],
+			user: users[1],
+			want: []string{RequestActionRetractOffer},
+		},
+	}
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			got, err := tt.post.GetPotentialProviderActions(tt.user)
+			ms.NoError(err)
+			ms.Equal(tt.want, got, "incorrect actions")
+		})
+	}
+}
+
+func (ms *ModelSuite) TestPost_GetCurrentActions() {
+	f := createUserFixtures(ms.DB, 3)
+	users := f.Users
+	posts := createPostFixtures(ms.DB, 2, false)
+	_ = createPotentialProviderFixtures(ms.DB, 0, 2)
+
+	acceptedPost := posts[0]
+	acceptedPost.Status = PostStatusAccepted // This doesn't change the post in the slice
+	acceptedPost.ProviderID = nulls.NewInt(users[1].ID)
+
+	// The rest of the scenarios are already tested elsewhere
+	tests := []struct {
+		name string
+		post Post
+		user User
+		want []string
+	}{
+		{name: "Open Post with offers - Creator",
+			post: posts[0],
+			user: users[0],
+			want: []string{RequestActionAccept, RequestActionRemove},
+		},
+		{name: "Accepted Post - Creator",
+			post: acceptedPost,
+			user: users[0],
+			want: []string{RequestActionReopen, RequestActionReceive, RequestActionRemove},
+		},
+		{name: "Open Post with no offers - not Creator",
+			post: posts[1],
+			user: users[1],
+			want: []string{RequestActionOffer},
+		},
+		{name: "Open Post with offer - not Creator",
+			post: posts[0],
+			user: users[1],
+			want: []string{RequestActionRetractOffer},
+		},
+		{name: "Accepted Post - Provider",
+			post: acceptedPost,
+			user: users[1],
+			want: []string{RequestActionDeliver},
+		},
+	}
+
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			got, err := tt.post.GetCurrentActions(tt.user)
+			ms.NoError(err)
+			ms.Equal(tt.want, got, "incorrect actions")
+		})
+	}
+}
+
 func (ms *ModelSuite) TestPost_GetOrganization() {
 	t := ms.T()
 
@@ -1468,6 +1638,11 @@ func (ms *ModelSuite) TestPosts_FindByUser() {
 
 	f := CreateFixtures_Posts_FindByUser(ms)
 
+	var postZeroDestination Location
+	ms.NoError(ms.DB.Find(&postZeroDestination, f.Posts[0].DestinationID))
+	var postOneOrigin Location
+	ms.NoError(ms.DB.Find(&postOneOrigin, f.Posts[1].OriginID))
+
 	tests := []struct {
 		name        string
 		user        User
@@ -1483,8 +1658,8 @@ func (ms *ModelSuite) TestPosts_FindByUser() {
 		{name: "user 2", user: f.Users[2], wantPostIDs: []int{f.Posts[7].ID, f.Posts[6].ID, f.Posts[5].ID}},
 		{name: "user 3", user: f.Users[3], wantPostIDs: []int{f.Posts[6].ID, f.Posts[5].ID, f.Posts[1].ID}},
 		{name: "non-existent user", user: User{}, wantErr: true},
-		{name: "destination", user: f.Users[0], dest: &Location{Country: "AU"}, wantPostIDs: []int{f.Posts[0].ID}},
-		{name: "origin", user: f.Users[0], orig: &Location{Country: "AU"}, wantPostIDs: []int{f.Posts[1].ID}},
+		{name: "destination", user: f.Users[0], dest: &postZeroDestination, wantPostIDs: []int{f.Posts[0].ID}},
+		{name: "origin", user: f.Users[0], orig: &postOneOrigin, wantPostIDs: []int{f.Posts[1].ID}},
 		{name: "user 0, post 1 (visible)", user: f.Users[0], postID: &f.Posts[1].ID, wantPostIDs: []int{f.Posts[1].ID}},
 		{name: "user 0, post 2 (not visible)", user: f.Users[0], postID: &f.Posts[2].ID, wantPostIDs: []int{}},
 	}
@@ -1518,28 +1693,35 @@ func (ms *ModelSuite) TestPosts_GetPotentialProviders() {
 	t := ms.T()
 
 	f := createPotentialProvidersFixtures(ms)
+	users := f.Users
 	posts := f.Posts
 	pps := f.PotentialProviders
 
 	tests := []struct {
 		name      string
 		post      Post
+		user      User
 		wantPPIDs []int
 	}{
-		{name: "pps for first post", post: posts[0], wantPPIDs: []int{pps[0].UserID, pps[1].UserID, pps[2].UserID}},
+		{name: "pps for first post by requester", post: posts[0], user: users[0],
+			wantPPIDs: []int{pps[0].UserID, pps[1].UserID, pps[2].UserID}},
+		{name: "pps for first post by one of the potential providers", post: posts[0], user: users[1],
+			wantPPIDs: []int{pps[0].UserID}},
+		{name: "pps for second post by a non potential provider", post: posts[1], user: users[1],
+			wantPPIDs: []int{}},
 		{name: "no pps for third post", post: posts[2], wantPPIDs: []int{}},
 	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			post := test.post
-			pps, err := post.GetPotentialProviders()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			post := tt.post
+			pps, err := post.GetPotentialProviders(tt.user)
 			ms.NoError(err, "unexpected error")
 
 			ids := make([]int, len(pps))
 			for i, pp := range pps {
 				ids[i] = pp.ID
 			}
-			ms.Equal(test.wantPPIDs, ids)
+			ms.Equal(tt.wantPPIDs, ids)
 		})
 	}
 }

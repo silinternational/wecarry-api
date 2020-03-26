@@ -144,15 +144,13 @@ func (ms *ModelSuite) TestSendNewMessageNotification() {
 func createFixturesForSendPostCreatedNotifications(ms *ModelSuite) PostFixtures {
 	users := test.CreateUserFixtures(ms.DB, 3).Users
 
-	for i := range users {
-		ms.NoError(ms.DB.Load(&users[i], "Location"))
-		users[i].Location.Country = "KH"
-		ms.NoError(ms.DB.Save(&users[i].Location))
-	}
-
 	post := test.CreatePostFixtures(ms.DB, 1, false)[0]
-	origin := models.Location{Description: "KH", Country: "KH"}
-	ms.NoError(post.SetOrigin(origin))
+	postOrigin, err := post.GetOrigin()
+	ms.NoError(err)
+
+	for i := range users {
+		ms.NoError(users[i].SetLocation(*postOrigin))
+	}
 
 	return PostFixtures{
 		Posts: models.Posts{post},

@@ -263,7 +263,7 @@ func (ms *ModelSuite) TestLocation_IsNear() {
 				Latitude:    nulls.NewFloat64(47.6062),
 				Longitude:   nulls.NewFloat64(-122.3321),
 			},
-			want: true,
+			want: false,
 		},
 		{
 			name: "different countries, but small distance",
@@ -344,10 +344,10 @@ func (ms *ModelSuite) TestLocation_IsNear() {
 				Country:     "US",
 			},
 			location2: Location{
-				Description: "Miami, FL, USA",
+				Description: "Chula Vista, CA, USA",
 				Country:     "US",
 			},
-			want: true,
+			want: false,
 		},
 	}
 	for _, test := range tests {

@@ -75,13 +75,13 @@ type Query {
     "Lists all threads, regardless of visibility. Note that some thread fields may cause authorization errors."
     threads: [Thread!]!
 
-    "List all users in the system. Only Super Admins are authorized for this query."
-    user(id: ID): User
-
     """
     Return a specific user. If the ID is not specified, the authenticated user is returned. Only Super Admins are
     authorized to query a user record other than their own.
     """
+    user(id: ID): User
+
+    "List all users in the system. Only Super Admins are authorized for this query."
     users: [User!]!
 }
 
@@ -177,7 +177,7 @@ type Mutation {
     removeMeAsPotentialProvider(requestID: String!): Request!
 
     "Cancel a carry offer for any user. Authorized for the request creator, the potential provider, and Super Admins."
-    removePotentialProvider(requestID: String!, userID: String!): Request!
+    rejectPotentialProvider(requestID: String!, userID: String!): Request!
 
     "Provider changes the status of a request to DELIVERED"
     markRequestAsDelivered(requestID: String!): Request!
@@ -654,6 +654,17 @@ type Request {
     size: RequestSize!
     "Status of the request. Use mutation `updateRequestStatus` to change the status."
     status: RequestStatus!
+    """
+    List of this request's actions available to the current user. These can be ...
+     "reopen": request creator reverts the status of the request to OPEN
+     "offer": non-creator offers to fulfill the request (addMeAsPotentialProvider)
+     "retractOffer": offerer retracts offer to fulfill a request (removeMeAsPotentialProvider)
+     "accept": request creator accepts someone's offer
+     "deliver": request provider claims to have fulfilled the request
+     "receive": request creator claims to have received the request
+     "remove": request creator cancels the request altogether
+    """
+    actions: [String!]!
     "List of message threads associated with this request"
     threads: [Thread!]!
     "Date and time this request was created"
@@ -846,21 +857,41 @@ input UpdateUserPreferencesInput {
 }
 
 """
-A Watch for a given location. Requests with a destination near the watch location will trigger a notification to
-the watch creator. Other types of Watches (e.g. keyword search) may be created in future versions of WeCarry.
+A Watch for a given location. New requests matching all of the given criteria will generate a new
+notification.
 """
 type Watch {
     "unique identifier for the Watch"
     id: ID!
     "Owner of the Watch, and the recipient of notifications for this Watch"
     owner: PublicProfile!
-    "Location to watch. If a new request has a destination near this location, a notification will be sent."
-    location: Location
+    "Short description, as named by the Watch creator"
+    name: String!
+    "Destination to watch. If a new request has a destination near this location, a notification will be sent."
+    destination: Location
+    "Origin to watch. If a new request has an origin near this location, a notification will be sent."
+    origin: Location
+    "Meeting to watch. Notifications will be sent for new requests tied to this event."
+    meeting: Meeting
+    "Search by text in request `title` or `description`"
+    searchText: String
+    "Maximum size of a requested item"
+    size: RequestSize
 }
 
 input CreateWatchInput {
-    "Location to watch. If a new request has a destination near this location, a notification will be sent."
-    location: LocationInput
+    "Short description, as named by the Watch creator"
+    name: String!
+    "Destination to watch. If a new request has a destination near this location, a notification will be sent."
+    destination: LocationInput
+    "Origin to watch. If a new request has an origin near this location, a notification will be sent."
+    origin: LocationInput
+    "Meeting to watch. Notifications will be sent for new requests tied to this event."
+    meetingID: ID
+    "Search by text in `title` or `description`"
+    searchText: String
+    "Maximum size of a requested item"
+    size: RequestSize
 }
 
 input RemoveWatchInput {
@@ -868,9 +899,23 @@ input RemoveWatchInput {
     id: ID!
 }
 
+"""
+Properties to update on the Watch identified by the given ID. If any parameter is omitted or null, that parameter
+will be removed from the Watch criteria.
+"""
 input UpdateWatchInput {
     "unique identifier for the Watch to be updated"
     id: ID!
-    "Location to watch. If a new request has a destination near this location, a notification will be sent."
-    location: LocationInput
+    "Short description, as named by the Watch creator"
+    name: String!
+    "Destination to watch. If a new request has a destination near this location, a notification will be sent."
+    destination: LocationInput
+    "Origin to watch. If a new request has an origin near this location, a notification will be sent."
+    origin: LocationInput
+    "Meeting to watch. Notifications will be sent for new requests tied to this event."
+    meetingID: ID
+    "Search by text in `title` or `description`"
+    searchText: String
+    "Maximum size of a requested item"
+    size: RequestSize
 }

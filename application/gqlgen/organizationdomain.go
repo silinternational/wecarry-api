@@ -19,12 +19,12 @@ func (r *organizationDomainResolver) Organization(ctx context.Context, obj *mode
 	*models.Organization, error) {
 
 	if obj == nil {
-		return nil, nil
+		return &models.Organization{}, nil
 	}
 
 	organization, err := obj.Organization()
 	if err != nil {
-		return nil, domain.ReportError(ctx, err, "GetOrganizationDomainOrganization")
+		return &models.Organization{}, domain.ReportError(ctx, err, "GetOrganizationDomainOrganization")
 	}
 
 	return &organization, nil
