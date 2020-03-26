@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/gobuffalo/nulls"
@@ -149,17 +150,17 @@ func (w *Watch) Destroy() error {
 
 // matchesPost returns true if the Watch's Location is near the Post's Destination
 func (w *Watch) matchesPost(post Post) bool {
-	dest, err := post.GetDestination()
-	if err != nil {
-		domain.ErrLogger.Printf("failed to get post %s destination in Watch.matchesPost, %s", post.UUID, err)
-		return false
+	compareFunctions := []func(watch Watch, post Post) bool{
+		watchCompareSize,
+		watchCompareText,
+		watchCompareMeeting,
+		watchCompareDestination,
+		watchCompareOrigin,
 	}
-	loc, err := w.GetDestination()
-	if err != nil {
-		domain.ErrLogger.Printf("failed to get watch %s destination in Watch.matchesPost, %s", w.UUID, err)
-	}
-	if loc.IsNear(*dest) {
-		return true
+	for _, c := range compareFunctions {
+		if c(*w, post) {
+			return true
+		}
 	}
 	return false
 }
@@ -173,4 +174,71 @@ func (w *Watch) Meeting(ctx context.Context) (*Meeting, error) {
 		return nil, err
 	}
 	return meeting, nil
+}
+
+func watchCompareDestination(watch Watch, post Post) bool {
+	if !watch.DestinationID.Valid {
+		return true
+	}
+	postDestination, err := post.GetDestination()
+	if err != nil {
+		domain.ErrLogger.Printf("failed to get post %s destination in watchCompareDestination, %s", post.UUID, err)
+		return false
+	}
+	watchDestination, err := watch.GetDestination()
+	if err != nil {
+		domain.ErrLogger.Printf("failed to get watch %s destination in watchCompareDestination, %s", watch.UUID, err)
+	}
+	return watchDestination.IsNear(*postDestination)
+}
+
+func watchCompareOrigin(watch Watch, post Post) bool {
+	if !watch.OriginID.Valid {
+		return true
+	}
+	postOrigin, err := post.GetOrigin()
+	if err != nil {
+		domain.ErrLogger.Printf("failed to get post %s origin in watchCompareOrigin, %s", post.UUID, err)
+		return false
+	}
+	watchOrigin, err := watch.GetOrigin()
+	if err != nil {
+		domain.ErrLogger.Printf("failed to get watch %s origin in watchCompareOrigin, %s", watch.UUID, err)
+	}
+	return watchOrigin.IsNear(*postOrigin)
+}
+
+func watchCompareMeeting(watch Watch, post Post) bool {
+	if !watch.MeetingID.Valid {
+		return true
+	}
+	return watch.MeetingID == post.MeetingID
+}
+
+func watchCompareText(watch Watch, post Post) bool {
+	if !watch.SearchText.Valid {
+		return true
+	}
+	if strings.Contains(post.Title, watch.SearchText.String) {
+		return true
+	}
+	if strings.Contains(post.Description.String, watch.SearchText.String) {
+		return true
+	}
+	creator, err := post.Creator()
+	if err != nil {
+		domain.ErrLogger.Printf("failed to get post %s creator in watchCompareText, %s", post.UUID, err)
+		return false
+	}
+	if strings.Contains(creator.Nickname, watch.SearchText.String) {
+		return true
+	}
+	return false
+}
+
+func watchCompareSize(watch Watch, post Post) bool {
+	if watch.Size == nil {
+		return true
+	}
+	return watch.Size.isLargerOrSame(post.Size)
 }
