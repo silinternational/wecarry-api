@@ -140,6 +140,26 @@ func (r *requestResolver) Origin(ctx context.Context, obj *models.Post) (*models
 }
 
 // Threads resolves the `threads` property of the request query, retrieving the related records from the database.
+func (r *requestResolver) Actions(ctx context.Context, obj *models.Post) ([]string, error) {
+	if obj == nil {
+		return []string{}, nil
+	}
+
+	user := models.CurrentUser(ctx)
+	extras := map[string]interface{}{
+		"user": user.UUID,
+	}
+
+	actions, err := obj.GetCurrentActions(user)
+	if err != nil {
+		return actions, domain.ReportError(ctx, err, "GetRequestActions", extras)
+	}
+
+	return actions, nil
+
+}
+
+// Threads resolves the `threads` property of the request query, retrieving the related records from the database.
 func (r *requestResolver) Threads(ctx context.Context, obj *models.Post) ([]models.Thread, error) {
 	if obj == nil {
 		return nil, nil
@@ -553,7 +573,7 @@ func (r *mutationResolver) RemoveMeAsPotentialProvider(ctx context.Context, requ
 	return &request, nil
 }
 
-func (r *mutationResolver) RemovePotentialProvider(ctx context.Context, requestID, userID string) (*models.Post, error) {
+func (r *mutationResolver) RejectPotentialProvider(ctx context.Context, requestID, userID string) (*models.Post, error) {
 	cUser := models.CurrentUser(ctx)
 
 	var provider models.PotentialProvider

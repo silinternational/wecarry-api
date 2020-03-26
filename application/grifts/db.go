@@ -272,6 +272,21 @@ var _ = grift.Namespace("db", func() {
 			}
 		}
 
+		// add Potential Providers (each user for the post after, except for last user and the first post)
+		posts := fixturePosts[1:]
+
+		for i, post := range posts {
+			pp := models.PotentialProvider{
+				PostID: post.ID,
+				UserID: fixtureUsers[i].ID,
+			}
+			err := models.DB.Create(&pp)
+			if err != nil {
+				err = fmt.Errorf("error loading potential provider fixture ... %+v\n %v", pp, err.Error())
+				return err
+			}
+		}
+
 		// THREADS Table
 		threadUUID1, _ := uuid.FromString("bdb7515d-06a9-4896-97a4-aeae962b85e2")
 		threadUUID2, _ := uuid.FromString("216c4b08-a4b4-4b7f-b62c-543be07e07c0")
