@@ -235,7 +235,7 @@ func (as *ActionSuite) Test_UpdateWatch() {
 				searchText: "search",
 			},
 			testUser:    f.Users[1],
-			expectError: "Watch not found",
+			expectError: "Alert not found",
 		},
 	}
 
@@ -247,7 +247,7 @@ func (as *ActionSuite) Test_UpdateWatch() {
 
 			if tc.expectError != "" {
 				as.Error(err, "didn't get expected error")
-				as.Contains(err.Error(), "Watch not found", "incorrect error message")
+				as.Contains(err.Error(), tc.expectError, "incorrect error message")
 				return
 			}
 			as.NoError(err, "unexpected error")
@@ -298,7 +298,7 @@ func (as *ActionSuite) Test_RemoveWatch() {
 	// Not authorized
 	err := as.testGqlQuery(query1, f.Users[1].Nickname, &resp)
 	as.Error(err, "expected an authorization error but did not get one")
-	as.Contains(err.Error(), "problem finding the Watch", "incorrect authorization error message")
+	as.Contains(err.Error(), "problem finding the Alert", "incorrect authorization error message")
 
 	// Delete one, leave one
 	as.NoError(as.testGqlQuery(query1, f.Users[0].Nickname, &resp))
