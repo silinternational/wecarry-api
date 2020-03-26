@@ -282,7 +282,7 @@ var _ = grift.Namespace("db", func() {
 			}
 			err := models.DB.Create(&pp)
 			if err != nil {
-				err = fmt.Errorf("error loading post fixture ... %+v\n %v", post, err.Error())
+				err = fmt.Errorf("error loading potential provider fixture ... %+v\n %v", pp, err.Error())
 				return err
 			}
 		}

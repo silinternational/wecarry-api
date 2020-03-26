@@ -115,11 +115,18 @@ func allStatusTransitions() map[PostStatus][]StatusTransitionTarget {
 	}
 }
 
-func isTransitionValid(status1, status2 PostStatus) (bool, error) {
-	transitions := allStatusTransitions()
-	targets, ok := transitions[status1]
+func getNextStatusPossibilities(status PostStatus) ([]StatusTransitionTarget, error) {
+	targets, ok := allStatusTransitions()[status]
 	if !ok {
-		return false, errors.New("unexpected initial status - " + status1.String())
+		return []StatusTransitionTarget{}, errors.New("unexpected initial status - " + status.String())
+	}
+	return targets, nil
+}
+
+func isTransitionValid(status1, status2 PostStatus) (bool, error) {
+	targets, err := getNextStatusPossibilities(status1)
+	if err != nil {
+		return false, err
 	}
 
 	for _, target := range targets {
@@ -136,10 +143,9 @@ func isTransitionBackStep(status1, status2 PostStatus) (bool, error) {
 		return false, nil
 	}
 
-	transitions := allStatusTransitions()
-	targets, ok := transitions[status1]
-	if !ok {
-		return false, errors.New("unexpected initial status - " + status1.String())
+	targets, err := getNextStatusPossibilities(status1)
+	if err != nil {
+		return false, err
 	}
 
 	for _, target := range targets {
@@ -609,12 +615,10 @@ func (p *Post) GetProvider() (*User, error) {
 
 // GetStatusTransitions finds the forward and backward transitions for the current user
 func (p *Post) GetStatusTransitions(currentUser User) ([]StatusTransitionTarget, error) {
-	status := p.Status
-	transitions := allStatusTransitions()
-
-	statusOptions, ok := transitions[status]
-	if !ok {
-		return statusOptions, fmt.Errorf("could not find Status transitions from Status %s.", status)
+	statusOptions, err := getNextStatusPossibilities(p.Status)
+	if err != nil {
+		domain.ErrLogger.Printf(err.Error())
+		return statusOptions, nil
 	}
 
 	finalOptions := []StatusTransitionTarget{}

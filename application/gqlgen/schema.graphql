@@ -654,7 +654,16 @@ type Request {
     size: RequestSize!
     "Status of the request. Use mutation `updateRequestStatus` to change the status."
     status: RequestStatus!
-    "List of this request's actions available to the current user"
+    """
+    List of this request's actions available to the current user. These can be ...
+     "reopen": request creator reverta the status of the request to OPEN
+     "offer": non-creator offers to fulfill the request (addMeAsPotentialProvider)
+     "retractOffer": offerer retracts offer to fulfill a request (removeMeAsPotentialProvider)
+     "accept": request creator accepts someone's offer
+     "deliver": request provider claims to have fulfilled the request
+     "receive": request creator claims to have received the request
+     "remove": request creator cancels the request altogether
+    """
     actions: [String!]!
     "List of message threads associated with this request"
     threads: [Thread!]!
@@ -814,7 +823,6 @@ type PublicProfile {
     "avatarURL is generated from an attached photo if present, an external URL if present, or a Gravatar URL"
     avatarURL: String
 }
-
 
 "Input object for `updateUser`"
 input UpdateUserInput {

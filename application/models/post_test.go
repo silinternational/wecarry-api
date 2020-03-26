@@ -1229,25 +1229,13 @@ func (ms *ModelSuite) TestPost_GetCurrentActions() {
 	acceptedPost.Status = PostStatusAccepted // This doesn't change the post in the slice
 	acceptedPost.ProviderID = nulls.NewInt(users[1].ID)
 
-	deliveredPost := posts[0]
-	deliveredPost.Status = PostStatusDelivered // This doesn't change the post in the slice
-	deliveredPost.ProviderID = nulls.NewInt(users[1].ID)
-
-	completedPost := posts[0]
-	completedPost.Status = PostStatusCompleted // This doesn't change the post in the slice
-	completedPost.ProviderID = nulls.NewInt(users[1].ID)
-
+	// The rest of the scenarios are already tested elsewhere
 	tests := []struct {
 		name string
 		post Post
 		user User
 		want []string
 	}{
-		{name: "Open Post with no offers - Creator",
-			post: posts[1],
-			user: users[0],
-			want: []string{RequestActionAccept, RequestActionRemove},
-		},
 		{name: "Open Post with offers - Creator",
 			post: posts[0],
 			user: users[0],
@@ -1272,36 +1260,6 @@ func (ms *ModelSuite) TestPost_GetCurrentActions() {
 			post: acceptedPost,
 			user: users[1],
 			want: []string{RequestActionDeliver},
-		},
-		{name: "Accepted Post - Not Provider",
-			post: acceptedPost,
-			user: users[2],
-			want: []string{},
-		},
-		{name: "Delivered Post - Creator",
-			post: deliveredPost,
-			user: users[0],
-			want: []string{RequestActionReceive},
-		},
-		{name: "Completed Post - Creator",
-			post: completedPost,
-			user: users[0],
-			want: []string{RequestActionAccept, RequestActionDeliver},
-		},
-		{name: "Accepted Post - Provider",
-			post: acceptedPost,
-			user: users[1],
-			want: []string{RequestActionDeliver},
-		},
-		{name: "Delivered Post - Provider",
-			post: deliveredPost,
-			user: users[1],
-			want: []string{RequestActionAccept},
-		},
-		{name: "Completed Post - Provider",
-			post: completedPost,
-			user: users[1],
-			want: []string{},
 		},
 	}
 
