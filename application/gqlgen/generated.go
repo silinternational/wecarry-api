@@ -128,12 +128,12 @@ type ComplexityRoot struct {
 		CreateWatch                 func(childComplexity int, input watchInput) int
 		MarkRequestAsDelivered      func(childComplexity int, requestID string) int
 		MarkRequestAsReceived       func(childComplexity int, requestID string) int
+		RejectPotentialProvider     func(childComplexity int, requestID string, userID string) int
 		RemoveMeAsPotentialProvider func(childComplexity int, requestID string) int
 		RemoveMeetingInvite         func(childComplexity int, input RemoveMeetingInviteInput) int
 		RemoveMeetingParticipant    func(childComplexity int, input RemoveMeetingParticipantInput) int
 		RemoveOrganizationDomain    func(childComplexity int, input RemoveOrganizationDomainInput) int
 		RemoveOrganizationTrust     func(childComplexity int, input RemoveOrganizationTrustInput) int
-		RemovePotentialProvider     func(childComplexity int, requestID string, userID string) int
 		RemoveWatch                 func(childComplexity int, input RemoveWatchInput) int
 		SetThreadLastViewedAt       func(childComplexity int, input SetThreadLastViewedAtInput) int
 		UpdateMeeting               func(childComplexity int, input meetingInput) int
@@ -185,6 +185,7 @@ type ComplexityRoot struct {
 	}
 
 	Request struct {
+		Actions            func(childComplexity int) int
 		CompletedOn        func(childComplexity int) int
 		CreatedAt          func(childComplexity int) int
 		CreatedBy          func(childComplexity int) int
@@ -318,7 +319,7 @@ type MutationResolver interface {
 	UpdateRequestStatus(ctx context.Context, input UpdateRequestStatusInput) (*models.Post, error)
 	AddMeAsPotentialProvider(ctx context.Context, requestID string) (*models.Post, error)
 	RemoveMeAsPotentialProvider(ctx context.Context, requestID string) (*models.Post, error)
-	RemovePotentialProvider(ctx context.Context, requestID string, userID string) (*models.Post, error)
+	RejectPotentialProvider(ctx context.Context, requestID string, userID string) (*models.Post, error)
 	MarkRequestAsDelivered(ctx context.Context, requestID string) (*models.Post, error)
 	MarkRequestAsReceived(ctx context.Context, requestID string) (*models.Post, error)
 	SetThreadLastViewedAt(ctx context.Context, input SetThreadLastViewedAtInput) (*models.Thread, error)
@@ -366,6 +367,7 @@ type RequestResolver interface {
 	CompletedOn(ctx context.Context, obj *models.Post) (*string, error)
 	Origin(ctx context.Context, obj *models.Post) (*models.Location, error)
 
+	Actions(ctx context.Context, obj *models.Post) ([]string, error)
 	Threads(ctx context.Context, obj *models.Post) ([]models.Thread, error)
 
 	URL(ctx context.Context, obj *models.Post) (*string, error)
@@ -850,6 +852,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.MarkRequestAsReceived(childComplexity, args["requestID"].(string)), true
 
+	case "Mutation.rejectPotentialProvider":
+		if e.complexity.Mutation.RejectPotentialProvider == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_rejectPotentialProvider_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.RejectPotentialProvider(childComplexity, args["requestID"].(string), args["userID"].(string)), true
+
 	case "Mutation.removeMeAsPotentialProvider":
 		if e.complexity.Mutation.RemoveMeAsPotentialProvider == nil {
 			break
@@ -909,18 +923,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.RemoveOrganizationTrust(childComplexity, args["input"].(RemoveOrganizationTrustInput)), true
-
-	case "Mutation.removePotentialProvider":
-		if e.complexity.Mutation.RemovePotentialProvider == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_removePotentialProvider_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.RemovePotentialProvider(childComplexity, args["requestID"].(string), args["userID"].(string)), true
 
 	case "Mutation.removeWatch":
 		if e.complexity.Mutation.RemoveWatch == nil {
@@ -1248,6 +1250,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Users(childComplexity), true
+
+	case "Request.actions":
+		if e.complexity.Request.Actions == nil {
+			break
+		}
+
+		return e.complexity.Request.Actions(childComplexity), true
 
 	case "Request.completedOn":
 		if e.complexity.Request.CompletedOn == nil {
@@ -1894,7 +1903,7 @@ type Mutation {
     removeMeAsPotentialProvider(requestID: String!): Request!
 
     "Cancel a carry offer for any user. Authorized for the request creator, the potential provider, and Super Admins."
-    removePotentialProvider(requestID: String!, userID: String!): Request!
+    rejectPotentialProvider(requestID: String!, userID: String!): Request!
 
     "Provider changes the status of a request to DELIVERED"
     markRequestAsDelivered(requestID: String!): Request!
@@ -2371,6 +2380,8 @@ type Request {
     size: RequestSize!
     "Status of the request. Use mutation ` + "`" + `updateRequestStatus` + "`" + ` to change the status."
     status: RequestStatus!
+    "List of this request's actions available to the current user"
+    actions: [String!]!
     "List of message threads associated with this request"
     threads: [Thread!]!
     "Date and time this request was created"
@@ -2529,6 +2540,7 @@ type PublicProfile {
     "avatarURL is generated from an attached photo if present, an external URL if present, or a Gravatar URL"
     avatarURL: String
 }
+
 
 "Input object for ` + "`" + `updateUser` + "`" + `"
 input UpdateUserInput {
@@ -2800,6 +2812,28 @@ func (ec *executionContext) field_Mutation_markRequestAsReceived_args(ctx contex
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_rejectPotentialProvider_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["requestID"]; ok {
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["requestID"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["userID"]; ok {
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["userID"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_removeMeAsPotentialProvider_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -2867,28 +2901,6 @@ func (ec *executionContext) field_Mutation_removeOrganizationTrust_args(ctx cont
 		}
 	}
 	args["input"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_removePotentialProvider_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["requestID"]; ok {
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["requestID"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["userID"]; ok {
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["userID"] = arg1
 	return args, nil
 }
 
@@ -5501,7 +5513,7 @@ func (ec *executionContext) _Mutation_removeMeAsPotentialProvider(ctx context.Co
 	return ec.marshalNRequest2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPost(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_removePotentialProvider(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_rejectPotentialProvider(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -5518,7 +5530,7 @@ func (ec *executionContext) _Mutation_removePotentialProvider(ctx context.Contex
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_removePotentialProvider_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_rejectPotentialProvider_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -5527,7 +5539,7 @@ func (ec *executionContext) _Mutation_removePotentialProvider(ctx context.Contex
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().RemovePotentialProvider(rctx, args["requestID"].(string), args["userID"].(string))
+		return ec.resolvers.Mutation().RejectPotentialProvider(rctx, args["requestID"].(string), args["userID"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7412,6 +7424,43 @@ func (ec *executionContext) _Request_status(ctx context.Context, field graphql.C
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNRequestStatus2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐPostStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Request_actions(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Request",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Request().Actions(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNString2ᚕstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Request_threads(ctx context.Context, field graphql.CollectedField, obj *models.Post) (ret graphql.Marshaler) {
@@ -11700,8 +11749,8 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "removePotentialProvider":
-			out.Values[i] = ec._Mutation_removePotentialProvider(ctx, field)
+		case "rejectPotentialProvider":
+			out.Values[i] = ec._Mutation_rejectPotentialProvider(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -12274,6 +12323,20 @@ func (ec *executionContext) _Request(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "actions":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Request_actions(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "threads":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {

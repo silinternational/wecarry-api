@@ -27,12 +27,12 @@ func (r *meetingResolver) ID(ctx context.Context, obj *models.Meeting) (string, 
 // CreatedBy resolves the `createdBy` property of the meeting query. It retrieves the related record from the database.
 func (r *meetingResolver) CreatedBy(ctx context.Context, obj *models.Meeting) (*PublicProfile, error) {
 	if obj == nil {
-		return nil, nil
+		return &PublicProfile{}, nil
 	}
 
 	creator, err := obj.GetCreator()
 	if err != nil {
-		return nil, domain.ReportError(ctx, err, "GetMeetingCreator")
+		return &PublicProfile{}, domain.ReportError(ctx, err, "GetMeetingCreator")
 	}
 
 	return getPublicProfile(ctx, creator), nil
@@ -175,12 +175,12 @@ func (r *queryResolver) RecentMeetings(ctx context.Context) ([]models.Meeting, e
 // Meeting resolves the `meeting` query
 func (r *queryResolver) Meeting(ctx context.Context, id *string) (*models.Meeting, error) {
 	if id == nil {
-		return nil, nil
+		return &models.Meeting{}, nil
 	}
 	var meeting models.Meeting
 	if err := meeting.FindByUUID(*id); err != nil {
 		extras := map[string]interface{}{}
-		return nil, domain.ReportError(ctx, err, "GetMeeting", extras)
+		return &models.Meeting{}, domain.ReportError(ctx, err, "GetMeeting", extras)
 	}
 
 	return &meeting, nil
@@ -255,21 +255,21 @@ func (r *mutationResolver) CreateMeeting(ctx context.Context, input meetingInput
 
 	meeting, err := convertGqlMeetingInputToDBMeeting(ctx, input, cUser)
 	if err != nil {
-		return nil, domain.ReportError(ctx, err, "CreateMeeting.ProcessInput", extras)
+		return &models.Meeting{}, domain.ReportError(ctx, err, "CreateMeeting.ProcessInput", extras)
 	}
 
 	if !meeting.CanCreate(cUser) {
-		return nil, domain.ReportError(ctx, err, "CreateMeeting.Unauthorized", extras)
+		return &models.Meeting{}, domain.ReportError(ctx, err, "CreateMeeting.Unauthorized", extras)
 	}
 
 	location := convertLocation(*input.Location)
 	if err = location.Create(); err != nil {
-		return nil, domain.ReportError(ctx, err, "CreateMeeting.SetLocation", extras)
+		return &models.Meeting{}, domain.ReportError(ctx, err, "CreateMeeting.SetLocation", extras)
 	}
 	meeting.LocationID = location.ID
 
 	if err = meeting.Create(); err != nil {
-		return nil, domain.ReportError(ctx, err, "CreateMeeting", extras)
+		return &models.Meeting{}, domain.ReportError(ctx, err, "CreateMeeting", extras)
 	}
 
 	return &meeting, nil
@@ -284,20 +284,20 @@ func (r *mutationResolver) UpdateMeeting(ctx context.Context, input meetingInput
 
 	meeting, err := convertGqlMeetingInputToDBMeeting(ctx, input, cUser)
 	if err != nil {
-		return nil, domain.ReportError(ctx, err, "UpdateMeeting.ProcessInput", extras)
+		return &models.Meeting{}, domain.ReportError(ctx, err, "UpdateMeeting.ProcessInput", extras)
 	}
 
 	if !meeting.CanUpdate(cUser) {
-		return nil, domain.ReportError(ctx, err, "UpdateMeeting.Unauthorized", extras)
+		return &models.Meeting{}, domain.ReportError(ctx, err, "UpdateMeeting.Unauthorized", extras)
 	}
 
 	if err := meeting.Update(); err != nil {
-		return nil, domain.ReportError(ctx, err, "UpdateMeeting", extras)
+		return &models.Meeting{}, domain.ReportError(ctx, err, "UpdateMeeting", extras)
 	}
 
 	if input.Location != nil {
 		if err = meeting.SetLocation(convertLocation(*input.Location)); err != nil {
-			return nil, domain.ReportError(ctx, err, "UpdateMeeting.SetLocation", extras)
+			return &models.Meeting{}, domain.ReportError(ctx, err, "UpdateMeeting.SetLocation", extras)
 		}
 	}
 

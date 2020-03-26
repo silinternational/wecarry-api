@@ -28,12 +28,12 @@ func (r *watchResolver) ID(ctx context.Context, obj *models.Watch) (string, erro
 // Owner resolves the `owner` property of the watch query. It retrieves the related record from the database.
 func (r *watchResolver) Owner(ctx context.Context, obj *models.Watch) (*PublicProfile, error) {
 	if obj == nil {
-		return nil, nil
+		return &PublicProfile{}, nil
 	}
 
 	creator, err := obj.GetOwner()
 	if err != nil {
-		return nil, domain.ReportError(ctx, err, "GetWatchCreator")
+		return &PublicProfile{}, domain.ReportError(ctx, err, "GetWatchCreator")
 	}
 
 	return getPublicProfile(ctx, creator), nil
@@ -149,13 +149,13 @@ func (r *mutationResolver) CreateWatch(ctx context.Context, input watchInput) (*
 
 	watch, err := convertWatchInput(ctx, input, cUser)
 	if err != nil {
-		return nil, domain.ReportError(ctx, err, "CreateWatch.ProcessInput", extras)
+		return &models.Watch{}, domain.ReportError(ctx, err, "CreateWatch.ProcessInput", extras)
 	}
 
 	if input.Destination != nil {
 		location := convertLocation(*input.Destination)
 		if err = location.Create(); err != nil {
-			return nil, domain.ReportError(ctx, err, "CreateWatch.SetLocation", extras)
+			return &models.Watch{}, domain.ReportError(ctx, err, "CreateWatch.SetLocation", extras)
 		}
 		watch.DestinationID = nulls.NewInt(location.ID)
 	}
@@ -169,7 +169,7 @@ func (r *mutationResolver) CreateWatch(ctx context.Context, input watchInput) (*
 	}
 
 	if err = watch.Create(); err != nil {
-		return nil, domain.ReportError(ctx, err, "CreateWatch", extras)
+		return &models.Watch{}, domain.ReportError(ctx, err, "CreateWatch", extras)
 	}
 
 	return &watch, nil
@@ -184,21 +184,21 @@ func (r *mutationResolver) UpdateWatch(ctx context.Context, input watchInput) (*
 
 	watch, err := convertWatchInput(ctx, input, currentUser)
 	if err != nil {
-		return nil, domain.ReportError(ctx, err, "UpdateWatch.ProcessInput", extras)
+		return &models.Watch{}, domain.ReportError(ctx, err, "UpdateWatch.ProcessInput", extras)
 	}
 
 	if watch.OwnerID != currentUser.ID {
-		return nil, domain.ReportError(ctx, errors.New("user attempted to update non-owned Watch"),
+		return &models.Watch{}, domain.ReportError(ctx, errors.New("user attempted to update non-owned Watch"),
 			"UpdateWatch.NotFound", extras)
 	}
 
 	if err := watch.Update(); err != nil {
-		return nil, domain.ReportError(ctx, err, "UpdateWatch", extras)
+		return &models.Watch{}, domain.ReportError(ctx, err, "UpdateWatch", extras)
 	}
 
 	if input.Destination != nil {
 		if err = watch.SetDestination(convertLocation(*input.Destination)); err != nil {
-			return nil, domain.ReportError(ctx, err, "UpdateWatch.SetDestination", extras)
+			return &models.Watch{}, domain.ReportError(ctx, err, "UpdateWatch.SetDestination", extras)
 		}
 	}
 

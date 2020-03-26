@@ -97,6 +97,8 @@ models:
         resolver: true
       receiver:
         resolver: true
+      actions:
+        resolver: true
       provider:
         resolver: true
       potentialProviders:

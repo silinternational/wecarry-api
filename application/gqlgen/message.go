@@ -25,11 +25,11 @@ func (r *messageResolver) ID(ctx context.Context, obj *models.Message) (string, 
 // Sender resolves the `sender` property of the message query
 func (r *messageResolver) Sender(ctx context.Context, obj *models.Message) (*PublicProfile, error) {
 	if obj == nil {
-		return nil, nil
+		return &PublicProfile{}, nil
 	}
 	user, err := obj.GetSender()
 	if err != nil {
-		return nil, domain.ReportError(ctx, err, "GetMessageSender")
+		return &PublicProfile{}, domain.ReportError(ctx, err, "GetMessageSender")
 	}
 
 	return getPublicProfile(ctx, user), nil
@@ -38,12 +38,12 @@ func (r *messageResolver) Sender(ctx context.Context, obj *models.Message) (*Pub
 // Thread resolves the `thread` property of the message query
 func (r *messageResolver) Thread(ctx context.Context, obj *models.Message) (*models.Thread, error) {
 	if obj == nil {
-		return nil, nil
+		return &models.Thread{}, nil
 	}
 
 	thread, err := obj.GetThread()
 	if err != nil {
-		return nil, domain.ReportError(ctx, err, "GetMessageThread")
+		return &models.Thread{}, domain.ReportError(ctx, err, "GetMessageThread")
 	}
 
 	return thread, nil
@@ -52,7 +52,7 @@ func (r *messageResolver) Thread(ctx context.Context, obj *models.Message) (*mod
 // Message resolves the `message` model
 func (r *queryResolver) Message(ctx context.Context, id *string) (*models.Message, error) {
 	if id == nil {
-		return nil, nil
+		return &models.Message{}, nil
 	}
 	currentUser := models.CurrentUser(ctx)
 	var message models.Message
@@ -61,7 +61,7 @@ func (r *queryResolver) Message(ctx context.Context, id *string) (*models.Messag
 		extras := map[string]interface{}{
 			"user": currentUser.UUID.String(),
 		}
-		return nil, domain.ReportError(ctx, err, "GetMessage", extras)
+		return &models.Message{}, domain.ReportError(ctx, err, "GetMessage", extras)
 	}
 
 	return &message, nil
@@ -71,7 +71,7 @@ func (r *queryResolver) Message(ctx context.Context, id *string) (*models.Messag
 func (r *mutationResolver) CreateMessage(ctx context.Context, input CreateMessageInput) (*models.Message, error) {
 	var message models.Message
 	if err := message.Create(ctx, input.RequestID, input.ThreadID, input.Content); err != nil {
-		return nil, domain.ReportError(ctx, err, "CreateMessage")
+		return &models.Message{}, domain.ReportError(ctx, err, "CreateMessage")
 	}
 
 	return &message, nil

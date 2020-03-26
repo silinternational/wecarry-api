@@ -61,7 +61,7 @@ func (r *requestResolver) PotentialProviders(ctx context.Context, obj *models.Po
 		return nil, nil
 	}
 
-	providers, err := obj.GetPotentialProviders()
+	providers, err := obj.GetPotentialProviders(models.CurrentUser(ctx))
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetPotentialProviders")
 	}
@@ -114,12 +114,12 @@ func (r *requestResolver) CompletedOn(ctx context.Context, obj *models.Post) (*s
 // Destination resolves the `destination` property of the request query, retrieving the related record from the database.
 func (r *requestResolver) Destination(ctx context.Context, obj *models.Post) (*models.Location, error) {
 	if obj == nil {
-		return nil, nil
+		return &models.Location{}, nil
 	}
 
 	destination, err := obj.GetDestination()
 	if err != nil {
-		return nil, domain.ReportError(ctx, err, "GetRequestDestination")
+		return &models.Location{}, domain.ReportError(ctx, err, "GetRequestDestination")
 	}
 
 	return destination, nil
@@ -137,6 +137,26 @@ func (r *requestResolver) Origin(ctx context.Context, obj *models.Post) (*models
 	}
 
 	return origin, nil
+}
+
+// Threads resolves the `threads` property of the request query, retrieving the related records from the database.
+func (r *requestResolver) Actions(ctx context.Context, obj *models.Post) ([]string, error) {
+	if obj == nil {
+		return []string{}, nil
+	}
+
+	user := models.CurrentUser(ctx)
+	extras := map[string]interface{}{
+		"user": user.UUID,
+	}
+
+	actions, err := obj.GetCurrentActions(user)
+	if err != nil {
+		return actions, domain.ReportError(ctx, err, "GetRequestActions", extras)
+	}
+
+	return actions, nil
+
 }
 
 // Threads resolves the `threads` property of the request query, retrieving the related records from the database.
@@ -389,24 +409,24 @@ func (r *mutationResolver) CreateRequest(ctx context.Context, input requestInput
 
 	request, err := convertGqlRequestInputToDBRequest(ctx, input, cUser)
 	if err != nil {
-		return nil, domain.ReportError(ctx, err, "CreateRequest.ProcessInput", extras)
+		return &models.Post{}, domain.ReportError(ctx, err, "CreateRequest.ProcessInput", extras)
 	}
 
 	if !request.MeetingID.Valid {
 		dest := convertLocation(*input.Destination)
 		if err = dest.Create(); err != nil {
-			return nil, domain.ReportError(ctx, err, "CreateRequest.SetDestination", extras)
+			return &models.Post{}, domain.ReportError(ctx, err, "CreateRequest.SetDestination", extras)
 		}
 		request.DestinationID = dest.ID
 	}
 
 	if err = request.Create(); err != nil {
-		return nil, domain.ReportError(ctx, err, "CreateRequest", extras)
+		return &models.Post{}, domain.ReportError(ctx, err, "CreateRequest", extras)
 	}
 
 	if input.Origin != nil {
 		if err = request.SetOrigin(convertLocation(*input.Origin)); err != nil {
-			return nil, domain.ReportError(ctx, err, "CreateRequest.SetOrigin", extras)
+			return &models.Post{}, domain.ReportError(ctx, err, "CreateRequest.SetOrigin", extras)
 		}
 	}
 
@@ -422,35 +442,35 @@ func (r *mutationResolver) UpdateRequest(ctx context.Context, input requestInput
 
 	request, err := convertGqlRequestInputToDBRequest(ctx, input, cUser)
 	if err != nil {
-		return nil, domain.ReportError(ctx, err, "UpdateRequest.ProcessInput", extras)
+		return &models.Post{}, domain.ReportError(ctx, err, "UpdateRequest.ProcessInput", extras)
 	}
 
 	var dbRequest models.Post
 	_ = dbRequest.FindByID(request.ID)
 	if editable, err := dbRequest.IsEditable(cUser); err != nil {
-		return nil, domain.ReportError(ctx, err, "UpdateRequest.GetEditable", extras)
+		return &models.Post{}, domain.ReportError(ctx, err, "UpdateRequest.GetEditable", extras)
 	} else if !editable {
-		return nil, domain.ReportError(ctx, errors.New("attempt to update a non-editable request"),
+		return &models.Post{}, domain.ReportError(ctx, errors.New("attempt to update a non-editable request"),
 			"UpdateRequest.NotEditable", extras)
 	}
 
 	if err := request.Update(); err != nil {
-		return nil, domain.ReportError(ctx, err, "UpdateRequest", extras)
+		return &models.Post{}, domain.ReportError(ctx, err, "UpdateRequest", extras)
 	}
 
 	if input.Destination != nil {
 		if err := request.SetDestination(convertLocation(*input.Destination)); err != nil {
-			return nil, domain.ReportError(ctx, err, "UpdateRequest.SetDestination", extras)
+			return &models.Post{}, domain.ReportError(ctx, err, "UpdateRequest.SetDestination", extras)
 		}
 	}
 
 	if input.Origin == nil {
 		if err := request.RemoveOrigin(); err != nil {
-			return nil, domain.ReportError(ctx, err, "UpdateRequest.RemoveOrigin", extras)
+			return &models.Post{}, domain.ReportError(ctx, err, "UpdateRequest.RemoveOrigin", extras)
 		}
 	} else {
 		if err := request.SetOrigin(convertLocation(*input.Origin)); err != nil {
-			return nil, domain.ReportError(ctx, err, "UpdateRequest.SetOrigin", extras)
+			return &models.Post{}, domain.ReportError(ctx, err, "UpdateRequest.SetOrigin", extras)
 		}
 	}
 
@@ -461,7 +481,7 @@ func (r *mutationResolver) UpdateRequest(ctx context.Context, input requestInput
 func (r *mutationResolver) UpdateRequestStatus(ctx context.Context, input UpdateRequestStatusInput) (*models.Post, error) {
 	var request models.Post
 	if err := request.FindByUUID(input.ID); err != nil {
-		return nil, domain.ReportError(ctx, err, "UpdateRequestStatus.FindRequest")
+		return &models.Post{}, domain.ReportError(ctx, err, "UpdateRequestStatus.FindRequest")
 	}
 
 	cUser := models.CurrentUser(ctx)
@@ -472,21 +492,21 @@ func (r *mutationResolver) UpdateRequestStatus(ctx context.Context, input Update
 	}
 
 	if !cUser.CanUpdatePostStatus(request, input.Status) {
-		return nil, domain.ReportError(ctx, errors.New("not allowed to change request status"),
+		return &models.Post{}, domain.ReportError(ctx, errors.New("not allowed to change request status"),
 			"UpdateRequestStatus.Unauthorized", extras)
 	}
 
 	if err := request.SetProviderWithStatus(input.Status, input.ProviderUserID); err != nil {
-		return nil, domain.ReportError(ctx, errors.New("error setting provider with status: "+err.Error()),
+		return &models.Post{}, domain.ReportError(ctx, errors.New("error setting provider with status: "+err.Error()),
 			"UpdateRequestStatus.SetProvider", extras)
 	}
 
 	if err := request.Update(); err != nil {
-		return nil, domain.ReportError(ctx, err, "UpdateRequestStatus", extras)
+		return &models.Post{}, domain.ReportError(ctx, err, "UpdateRequestStatus", extras)
 	}
 
 	if err := request.DestroyPotentialProviders(input.Status, cUser); err != nil {
-		return nil, domain.ReportError(ctx, errors.New("error destroying request's potential providers: "+err.Error()),
+		return &models.Post{}, domain.ReportError(ctx, errors.New("error destroying request's potential providers: "+err.Error()),
 			"UpdateRequestStatus.DestroyPotentialProviders", extras)
 	}
 
@@ -498,23 +518,23 @@ func (r *mutationResolver) AddMeAsPotentialProvider(ctx context.Context, request
 
 	var request models.Post
 	if err := request.FindByUUIDForCurrentUser(requestID, cUser); err != nil {
-		return nil, domain.ReportError(ctx, err, "AddMeAsPotentialProvider.FindRequest")
+		return &models.Post{}, domain.ReportError(ctx, err, "AddMeAsPotentialProvider.FindRequest")
 	}
 
 	if request.Status != models.PostStatusOpen {
-		return nil, domain.ReportError(ctx, errors.New(
+		return &models.Post{}, domain.ReportError(ctx, errors.New(
 			"Can only create PotentialProvider for a Request that has Status=Open. Got "+request.Status.String()),
 			"AddMeAsPotentialProvider.BadRequestStatus")
 	}
 
 	var provider models.PotentialProvider
 	if err := provider.NewWithPostUUID(requestID, cUser.ID); err != nil {
-		return nil, domain.ReportError(ctx, errors.New("error preparing potential provider: "+err.Error()),
+		return &models.Post{}, domain.ReportError(ctx, errors.New("error preparing potential provider: "+err.Error()),
 			"AddMeAsPotentialProvider")
 	}
 
 	if err := provider.Create(); err != nil {
-		return nil, domain.ReportError(ctx, errors.New("error creating potential provider: "+err.Error()),
+		return &models.Post{}, domain.ReportError(ctx, errors.New("error creating potential provider: "+err.Error()),
 			"AddMeAsPotentialProvider")
 	}
 
@@ -527,13 +547,13 @@ func (r *mutationResolver) RemoveMeAsPotentialProvider(ctx context.Context, requ
 	var provider models.PotentialProvider
 
 	if err := provider.FindWithPostUUIDAndUserUUID(requestID, cUser.UUID.String(), cUser); err != nil {
-		return nil, domain.ReportError(ctx, errors.New("unable to find PotentialProvider in order to delete it: "+err.Error()),
+		return &models.Post{}, domain.ReportError(ctx, errors.New("unable to find PotentialProvider in order to delete it: "+err.Error()),
 			"RemoveMeAsPotentialProvider")
 	}
 
 	var request models.Post
 	if err := request.FindByUUID(requestID); err != nil {
-		return nil, domain.ReportError(ctx, err, "RemoveMeAsPotentialProvider.FindRequest")
+		return &models.Post{}, domain.ReportError(ctx, err, "RemoveMeAsPotentialProvider.FindRequest")
 	}
 
 	extras := map[string]interface{}{
@@ -541,36 +561,31 @@ func (r *mutationResolver) RemoveMeAsPotentialProvider(ctx context.Context, requ
 		"request": request.UUID,
 	}
 
-	if !provider.CanUserAccessPotentialProvider(request, cUser) {
-		return nil, domain.ReportError(ctx, errors.New("user not allowed to access PotentialProvider"),
-			"RemoveMeAsPotentialProvider.NotAuthorized", extras)
-	}
-
 	if err := provider.Destroy(); err != nil {
-		return nil, domain.ReportError(ctx, errors.New("error removing potential provider: "+err.Error()),
+		return &models.Post{}, domain.ReportError(ctx, errors.New("error removing potential provider: "+err.Error()),
 			"RemoveMeAsPotentialProvider", extras)
 	}
 
 	if err := request.FindByUUID(requestID); err != nil {
-		return nil, domain.ReportError(ctx, err, "RemoveMeAsPotentialProvider.FindRequest")
+		return &models.Post{}, domain.ReportError(ctx, err, "RemoveMeAsPotentialProvider.FindRequest")
 	}
 
 	return &request, nil
 }
 
-func (r *mutationResolver) RemovePotentialProvider(ctx context.Context, requestID, userID string) (*models.Post, error) {
+func (r *mutationResolver) RejectPotentialProvider(ctx context.Context, requestID, userID string) (*models.Post, error) {
 	cUser := models.CurrentUser(ctx)
 
 	var provider models.PotentialProvider
 
-	if err := provider.FindWithPostUUIDAndUserUUID(requestID, cUser.UUID.String(), cUser); err != nil {
-		return nil, domain.ReportError(ctx, errors.New("unable to find PotentialProvider in order to delete it: "+err.Error()),
+	if err := provider.FindWithPostUUIDAndUserUUID(requestID, userID, cUser); err != nil {
+		return &models.Post{}, domain.ReportError(ctx, errors.New("unable to find PotentialProvider in order to delete it: "+err.Error()),
 			"RemovePotentialProvider")
 	}
 
 	var request models.Post
 	if err := request.FindByUUID(requestID); err != nil {
-		return nil, domain.ReportError(ctx, err, "RemovePotentialProvider.FindRequest")
+		return &models.Post{}, domain.ReportError(ctx, err, "RemovePotentialProvider.FindRequest")
 	}
 
 	extras := map[string]interface{}{
@@ -578,18 +593,13 @@ func (r *mutationResolver) RemovePotentialProvider(ctx context.Context, requestI
 		"request": request.UUID,
 	}
 
-	if !provider.CanUserAccessPotentialProvider(request, cUser) {
-		return nil, domain.ReportError(ctx, errors.New("user not allowed to access PotentialProvider"),
-			"RemovePotentialProvider.NotAuthorized", extras)
-	}
-
 	if err := provider.Destroy(); err != nil {
-		return nil, domain.ReportError(ctx, errors.New("error removing potential provider: "+err.Error()),
+		return &models.Post{}, domain.ReportError(ctx, errors.New("error removing potential provider: "+err.Error()),
 			"RemovePotentialProvider", extras)
 	}
 
 	if err := request.FindByUUID(requestID); err != nil {
-		return nil, domain.ReportError(ctx, err, "RemovePotentialProvider.FindRequest")
+		return &models.Post{}, domain.ReportError(ctx, err, "RemovePotentialProvider.FindRequest")
 	}
 
 	return &request, nil
