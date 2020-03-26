@@ -42,12 +42,12 @@ func (r *watchResolver) Owner(ctx context.Context, obj *models.Watch) (*PublicPr
 // Destination is a field resolver
 func (r *watchResolver) Destination(ctx context.Context, obj *models.Watch) (*models.Location, error) {
 	if obj == nil {
-		return &models.Location{}, nil
+		return nil, nil
 	}
 
 	location, err := obj.GetDestination()
 	if err != nil {
-		return &models.Location{}, domain.ReportError(ctx, err, "GetWatchDestination")
+		return nil, domain.ReportError(ctx, err, "GetWatchDestination")
 	}
 
 	return location, nil
@@ -56,12 +56,12 @@ func (r *watchResolver) Destination(ctx context.Context, obj *models.Watch) (*mo
 // Origin is a field resolver
 func (r *watchResolver) Origin(ctx context.Context, obj *models.Watch) (*models.Location, error) {
 	if obj == nil {
-		return &models.Location{}, nil
+		return nil, nil
 	}
 
 	location, err := obj.GetOrigin()
 	if err != nil {
-		return &models.Location{}, domain.ReportError(ctx, err, "GetWatchOrigin")
+		return nil, domain.ReportError(ctx, err, "GetWatchOrigin")
 	}
 
 	return location, nil
