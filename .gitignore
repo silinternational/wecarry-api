@@ -6,7 +6,8 @@ tmp/
 *-packr.go
 .vscode/
 .grifter/
-*.env
+.env
+codeship.env
 **/.DS_Store
 *.pid
 coverage
