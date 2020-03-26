@@ -656,7 +656,7 @@ type Request {
     status: RequestStatus!
     """
     List of this request's actions available to the current user. These can be ...
-     "reopen": request creator reverto the status of the request to OPEN
+     "reopen": request creator reverts the status of the request to OPEN
      "offer": non-creator offers to fulfill the request (addMeAsPotentialProvider)
      "retractOffer": offerer retracts offer to fulfill a request (removeMeAsPotentialProvider)
      "accept": request creator accepts someone's offer
