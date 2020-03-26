@@ -2583,7 +2583,7 @@ input UpdateUserPreferencesInput {
 }
 
 """
-A Watch for a given location. New requests matching all of the given criterium will generate a new
+A Watch for a given location. New requests matching all of the given criteria will generate a new
 notification.
 """
 type Watch {
