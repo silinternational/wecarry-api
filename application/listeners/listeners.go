@@ -239,7 +239,11 @@ func potentialProviderCreated(e events.Event) {
 		domain.ErrLogger.Printf("unable to find post %d from PotentialProvider event, %s", eventData.PostID, err)
 	}
 
-	creator := post.CreatedBy
+	creator, err := post.Creator()
+	if err != nil {
+		domain.ErrLogger.Printf("unable to find post %d creator from PotentialProvider event, %s",
+			eventData.PostID, err)
+	}
 
 	sendPotentialProviderCreatedNotification(potentialProvider.Nickname, creator, post)
 }
@@ -265,7 +269,11 @@ func potentialProviderSelfDestroyed(e events.Event) {
 		domain.ErrLogger.Printf("unable to find post %d from PotentialProvider event, %s", eventData.PostID, err)
 	}
 
-	creator := post.CreatedBy
+	creator, err := post.Creator()
+	if err != nil {
+		domain.ErrLogger.Printf("unable to find post %d creator from PotentialProvider event, %s",
+			eventData.PostID, err)
+	}
 
 	sendPotentialProviderSelfDestroyedNotification(potentialProvider.Nickname, creator, post)
 }
@@ -291,9 +299,13 @@ func potentialProviderRejected(e events.Event) {
 		domain.ErrLogger.Printf("unable to find post %d from PotentialProvider event, %s", eventData.PostID, err)
 	}
 
-	creator := post.CreatedBy.Nickname
+	creator, err := post.Creator()
+	if err != nil {
+		domain.ErrLogger.Printf("unable to find post %d creator from PotentialProvider event, %s",
+			eventData.PostID, err)
+	}
 
-	sendPotentialProviderRejectedNotification(potentialProvider, creator, post)
+	sendPotentialProviderRejectedNotification(potentialProvider, creator.Nickname, post)
 }
 
 func sendNewUserWelcome(user models.User) error {
