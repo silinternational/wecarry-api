@@ -128,8 +128,7 @@ func createPostFixtures(tx *pop.Connection, nPosts int, createFiles bool) Posts 
 
 	var user User
 	if err := tx.First(&user); err != nil {
-		user = User{}
-		mustCreate(tx, &user)
+		user = createUserFixtures(tx, 1).Users[0]
 	}
 
 	locations := createLocationFixtures(tx, nPosts*2)
