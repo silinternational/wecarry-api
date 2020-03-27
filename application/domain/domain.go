@@ -128,10 +128,13 @@ var Env struct {
 	AwsS3Endpoint              string
 	AwsS3DisableSSL            bool
 	AwsS3Bucket                string
-	AwsS3AccessKeyID           string
-	AwsS3SecretAccessKey       string
-	AwsSESAccessKeyID          string
-	AwsSESSecretAccessKey      string
+	AwsAccessKeyID             string
+	AwsSecretAccessKey         string
+	CertDomainName             string
+	CloudflareAuthEmail        string
+	CloudflareAuthKey          string
+	DisableTLS                 bool
+	DynamoDBTable              string
 	EmailService               string
 	EmailFromAddress           string
 	FacebookKey                string
@@ -153,6 +156,7 @@ var Env struct {
 	RollbarServerRoot          string
 	RollbarToken               string
 	SendGridAPIKey             string
+	ServerPort                 int
 	SessionSecret              string
 	SupportEmail               string
 	TwitterKey                 string
@@ -181,14 +185,17 @@ func readEnv() {
 	Env.ApiBaseURL = envy.Get("HOST", "")
 	Env.AppName = envy.Get("APP_NAME", "WeCarry")
 	Env.AuthCallbackURL = envy.Get("AUTH_CALLBACK_URL", "")
-	Env.AwsRegion = envy.Get("AWS_REGION", "")
+	Env.AwsRegion = envy.Get("AWS_DEFAULT_REGION", "")
 	Env.AwsS3Endpoint = envy.Get("AWS_S3_ENDPOINT", "")
 	Env.AwsS3DisableSSL, _ = strconv.ParseBool(envy.Get("AWS_S3_DISABLE_SSL", "false"))
 	Env.AwsS3Bucket = envy.Get("AWS_S3_BUCKET", "")
-	Env.AwsS3AccessKeyID = envy.Get("AWS_S3_ACCESS_KEY_ID", "")
-	Env.AwsS3SecretAccessKey = envy.Get("AWS_S3_SECRET_ACCESS_KEY", "")
-	Env.AwsSESAccessKeyID = envy.Get("AWS_SES_ACCESS_KEY_ID", Env.AwsS3AccessKeyID)
-	Env.AwsSESSecretAccessKey = envy.Get("AWS_SES_SECRET_ACCESS_KEY", Env.AwsS3SecretAccessKey)
+	Env.AwsAccessKeyID = envy.Get("AWS_ACCESS_KEY_ID", "")
+	Env.AwsSecretAccessKey = envy.Get("AWS_SECRET_ACCESS_KEY", "")
+	Env.CertDomainName = envy.Get("CERT_DOMAIN_NAME", "")
+	Env.CloudflareAuthEmail = envy.Get("CLOUDFLARE_AUTH_EMAIL", "")
+	Env.CloudflareAuthKey = envy.Get("CLOUDFLARE_AUTH_KEY", "")
+	Env.DisableTLS, _ = strconv.ParseBool(envy.Get("DISABLE_TLS", "false"))
+	Env.DynamoDBTable = envy.Get("DYNAMO_DB_TABLE", "CertMagic")
 	Env.EmailService = envy.Get("EMAIL_SERVICE", "sendgrid")
 	Env.EmailFromAddress = envy.Get("EMAIL_FROM_ADDRESS", "no_reply@example.com")
 	Env.FacebookKey = envy.Get("FACEBOOK_KEY", "")
@@ -210,6 +217,7 @@ func readEnv() {
 	Env.RollbarServerRoot = envy.Get("ROLLBAR_SERVER_ROOT", "github.com/silinternational/wecarry-api")
 	Env.RollbarToken = envy.Get("ROLLBAR_TOKEN", "")
 	Env.SendGridAPIKey = envy.Get("SENDGRID_API_KEY", "")
+	Env.ServerPort, _ = strconv.Atoi(envy.Get("PORT", "3000"))
 	Env.ServiceIntegrationToken = envy.Get("SERVICE_INTEGRATION_TOKEN", "")
 	Env.SessionSecret = envy.Get("SESSION_SECRET", "testing")
 	Env.SupportEmail = envy.Get("SUPPORT_EMAIL", "")

@@ -198,20 +198,6 @@ func (e RequestStatus) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
-type RequestSize string
-
-const (
-	RequestSizeTiny   RequestSize = "TINY"
-	RequestSizeSmall  RequestSize = "SMALL"
-	RequestSizeMedium RequestSize = "MEDIUM"
-	RequestSizeLarge  RequestSize = "LARGE"
-	RequestSizeXlarge RequestSize = "XLARGE"
-)
-
-func (e RequestSize) String() string {
-	return string(e)
-}
-
 type Request struct {
 	ID             int               `json:"id" db:"id"`
 	CreatedAt      time.Time         `json:"created_at" db:"created_at"`
@@ -1090,4 +1076,10 @@ func (p *Request) GetCurrentActions(user User) ([]string, error) {
 	actions = append(actions, providerActions...)
 
 	return actions, nil
+}
+
+// Creator gets the full User record of the post creator
+func (p *Request) Creator() (User, error) {
+	var u User
+	return u, DB.Find(&u, p.CreatedByID)
 }

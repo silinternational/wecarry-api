@@ -1,0 +1,9 @@
+
+rename_table("posts", "requests")
+rename_table("post_files", "request_files")
+rename_table("post_histories", "request_histories")
+
+rename_column("request_files", "post_id", "request_id")
+rename_column("request_histories", "post_id", "request_id")
+rename_column("potential_providers", "post_id", "request_id")
+rename_column("threads", "post_id", "request_id")

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/gobuffalo/nulls"
@@ -147,23 +148,6 @@ func (w *Watch) Destroy() error {
 	return DB.Destroy(w)
 }
 
-// matchesRequest returns true if the Watch's Location is near the Request's Destination
-func (w *Watch) matchesRequest(request Request) bool {
-	dest, err := request.GetDestination()
-	if err != nil {
-		domain.ErrLogger.Printf("failed to get request %s destination in Watch.matchesRequest, %s", request.UUID, err)
-		return false
-	}
-	loc, err := w.GetDestination()
-	if err != nil {
-		domain.ErrLogger.Printf("failed to get watch %s destination in Watch.matchesRequest, %s", w.UUID, err)
-	}
-	if loc.IsNear(*dest) {
-		return true
-	}
-	return false
-}
-
 func (w *Watch) Meeting(ctx context.Context) (*Meeting, error) {
 	if w == nil || !w.MeetingID.Valid || CurrentUser(ctx).ID != w.OwnerID {
 		return nil, nil
@@ -173,4 +157,117 @@ func (w *Watch) Meeting(ctx context.Context) (*Meeting, error) {
 		return nil, err
 	}
 	return meeting, nil
+}
+
+// matchesRequest returns true if all non-null watch criteria match the request
+func (w *Watch) matchesRequest(request Request) bool {
+	if w == nil {
+		domain.ErrLogger.Printf("nil receiver in Watch.matchesRequest")
+		return false
+	}
+	matchFunctions := []func(*Watch, Request) bool{
+		(*Watch).sizeMatches,
+		(*Watch).textMatches,
+		(*Watch).meetingMatches,
+		(*Watch).destinationMatches,
+		(*Watch).originMatches,
+	}
+	for _, c := range matchFunctions {
+		if !c(w, request) {
+			return false
+		}
+	}
+	return true
+}
+
+// destinationMatches returns true if watch destination is not provided or passes the IsNear test
+func (w *Watch) destinationMatches(request Request) bool {
+	if w == nil {
+		domain.ErrLogger.Printf("nil receiver in Watch.destinationMatches")
+		return false
+	}
+	if !w.DestinationID.Valid {
+		return true
+	}
+	requestDestination, err := request.GetDestination()
+	if err != nil {
+		domain.ErrLogger.Printf("failed to get request %s destination in destinationMatches, %s", request.UUID, err)
+		return false
+	}
+	watchDestination, err := w.GetDestination()
+	if err != nil {
+		domain.ErrLogger.Printf("failed to get watch %s destination in destinationMatches, %s", w.UUID, err)
+	}
+	return watchDestination.IsNear(*requestDestination)
+}
+
+// originMatches returns true if watch origin is not provided or passes the IsNear test
+func (w *Watch) originMatches(request Request) bool {
+	if w == nil {
+		domain.ErrLogger.Printf("nil receiver in Watch.originMatches")
+		return false
+	}
+	if !w.OriginID.Valid {
+		return true
+	}
+	requestOrigin, err := request.GetOrigin()
+	if err != nil {
+		domain.ErrLogger.Printf("failed to get request %s origin in originMatches, %s", request.UUID, err)
+		return false
+	}
+	watchOrigin, err := w.GetOrigin()
+	if err != nil {
+		domain.ErrLogger.Printf("failed to get watch %s origin in originMatches, %s", w.UUID, err)
+	}
+	return watchOrigin.IsNear(*requestOrigin)
+}
+
+// meetingMatches returns true if watch meeting is not provided or is identical to the request meeting
+func (w *Watch) meetingMatches(request Request) bool {
+	if w == nil {
+		domain.ErrLogger.Printf("nil receiver in Watch.meetingMatches")
+		return false
+	}
+	if !w.MeetingID.Valid {
+		return true
+	}
+	return w.MeetingID == request.MeetingID
+}
+
+// textMatches returns true if watch text is not provided or is in the request title, description or creator's nickname
+func (w *Watch) textMatches(request Request) bool {
+	if w == nil {
+		domain.ErrLogger.Printf("nil receiver in Watch.textMatches")
+		return false
+	}
+	if !w.SearchText.Valid {
+		return true
+	}
+	if strings.Contains(request.Title, w.SearchText.String) {
+		return true
+	}
+	if strings.Contains(request.Description.String, w.SearchText.String) {
+		return true
+	}
+	creator, err := request.Creator()
+	if err != nil {
+		domain.ErrLogger.Printf("failed to get request %s creator in textMatches, %s", request.UUID, err)
+		return false
+	}
+	if strings.Contains(creator.Nickname, w.SearchText.String) {
+		return true
+	}
+	return false
+}
+
+// sizeMatches returns true if watch size is larger or the same as the request size
+func (w *Watch) sizeMatches(request Request) bool {
+	if w == nil {
+		domain.ErrLogger.Printf("nil receiver in Watch.sizeMatches")
+		return false
+	}
+	if w.Size == nil {
+		return true
+	}
+	return w.Size.isLargerOrSame(request.Size)
 }
