@@ -372,13 +372,11 @@ func (ms *ModelSuite) TestWatch_compareSize() {
 	posts := createPostFixtures(ms.DB, 1, false)
 	watches := createWatchFixtures(ms.DB, createUserFixtures(ms.DB, 2).Users)
 
+	// don't need to save these changes because compareSize doesn't access the database
 	postSize := posts[0].Size // PostSizeSmall
 	watches[0].Size = &postSize
-	ms.NoError(watches[0].Update())
-
 	tiny := PostSizeTiny
 	watches[1].Size = &tiny
-	ms.NoError(watches[1].Update())
 
 	tests := []struct {
 		name  string

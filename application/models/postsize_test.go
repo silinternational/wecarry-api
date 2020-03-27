@@ -30,12 +30,12 @@ func (ms *ModelSuite) TestPostSize_isLargerOrSame() {
 		{
 			name: "p empty",
 			p:    PostSize(""),
-			p2:   PostSizeTiny,
+			p2:   PostSizeXlarge,
 			want: true,
 		},
 		{
 			name: "p2 empty",
-			p:    PostSizeSmall,
+			p:    PostSizeXlarge,
 			p2:   PostSize(""),
 			want: false,
 		},
