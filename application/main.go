@@ -1,15 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"os"
-	"strconv"
 
 	"github.com/caddyserver/certmagic"
 	"github.com/go-acme/lego/providers/dns/cloudflare"
 	"github.com/gobuffalo/buffalo/servers"
-	"github.com/gobuffalo/envy"
-
 	"github.com/rollbar/rollbar-go"
 
 	dynamodbstore "github.com/silinternational/certmagic-storage-dynamodb"
@@ -34,45 +32,10 @@ func main() {
 	rollbar.SetCodeVersion(GitCommitHash)
 	rollbar.SetServerRoot(domain.Env.RollbarServerRoot)
 
-	var srv servers.Server
-	if domain.Env.DisableTLS {
-		srv = servers.New()
-	} else {
-		certmagic.Default.Storage = &dynamodbstore.Storage{
-			Table: "CertMagic",
-		}
-
-		cloudflareConfig := cloudflare.NewDefaultConfig()
-		cloudflareConfig.AuthEmail = domain.Env.CloudflareAuthEmail
-		cloudflareConfig.AuthKey = domain.Env.CloudflareAuthKey
-		dnsProvider, err := cloudflare.NewDNSProviderConfig(cloudflareConfig)
-		if err != nil {
-			rollbar.Error("failed to init Cloudflare dns provider for LetsEncrypt: %s", err.Error())
-			os.Exit(1)
-		}
-
-		if domain.Env.GoEnv != "prod" && domain.Env.GoEnv != "production" {
-			certmagic.DefaultACME.CA = certmagic.LetsEncryptStagingCA
-		}
-
-		certmagic.DefaultACME.Email = domain.Env.SupportEmail
-		certmagic.DefaultACME.Agreed = true
-		certmagic.DefaultACME.DNSProvider = dnsProvider
-		certmagic.DefaultACME.DisableHTTPChallenge = true
-		certmagic.DefaultACME.DisableTLSALPNChallenge = true
-		intPort, err := strconv.Atoi(envy.Get("PORT", "3000"))
-		if err != nil {
-			domain.Logger.Printf("failed to convert PORT env var to integer: %s", err.Error())
-			os.Exit(2)
-		}
-		certmagic.HTTPSPort = intPort
-
-		listener, err := certmagic.Listen([]string{domain.Env.CertDomainName})
-		if err != nil {
-			domain.Logger.Printf("failed to get TLS config: %s", err.Error())
-			os.Exit(3)
-		}
-		srv = servers.WrapListener(&http.Server{}, listener)
+	srv, err := getServer()
+	if err != nil {
+		domain.ErrLogger.Printf(err.Error())
+		os.Exit(1)
 	}
 
 	app := actions.App()
@@ -85,6 +48,42 @@ func main() {
 		}
 	})
 
+}
+
+func getServer() (servers.Server, error) {
+	if domain.Env.DisableTLS {
+		return servers.New(), nil
+	}
+
+	certmagic.Default.Storage = &dynamodbstore.Storage{
+		Table: domain.Env.DynamoDBTable,
+	}
+
+	cloudflareConfig := cloudflare.NewDefaultConfig()
+	cloudflareConfig.AuthEmail = domain.Env.CloudflareAuthEmail
+	cloudflareConfig.AuthKey = domain.Env.CloudflareAuthKey
+	dnsProvider, err := cloudflare.NewDNSProviderConfig(cloudflareConfig)
+	if err != nil {
+		return servers.New(), fmt.Errorf("failed to init Cloudflare dns provider for LetsEncrypt: %s", err.Error())
+	}
+
+	if domain.Env.GoEnv != "prod" && domain.Env.GoEnv != "production" {
+		certmagic.DefaultACME.CA = certmagic.LetsEncryptStagingCA
+	}
+
+	certmagic.DefaultACME.Email = domain.Env.SupportEmail
+	certmagic.DefaultACME.Agreed = true
+	certmagic.DefaultACME.DNSProvider = dnsProvider
+	certmagic.DefaultACME.DisableHTTPChallenge = true
+	certmagic.DefaultACME.DisableTLSALPNChallenge = true
+	certmagic.HTTPSPort = domain.Env.ServerPort
+
+	listener, err := certmagic.Listen([]string{domain.Env.CertDomainName})
+	if err != nil {
+		return servers.New(), fmt.Errorf("failed to get TLS config: %s", err.Error())
+	}
+
+	return servers.WrapListener(&http.Server{}, listener), nil
 }
 
 /*

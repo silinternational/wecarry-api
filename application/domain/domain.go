@@ -134,6 +134,7 @@ var Env struct {
 	CloudflareAuthEmail        string
 	CloudflareAuthKey          string
 	DisableTLS                 bool
+	DynamoDBTable              string
 	EmailService               string
 	EmailFromAddress           string
 	FacebookKey                string
@@ -155,6 +156,7 @@ var Env struct {
 	RollbarServerRoot          string
 	RollbarToken               string
 	SendGridAPIKey             string
+	ServerPort                 int
 	SessionSecret              string
 	SupportEmail               string
 	TwitterKey                 string
@@ -193,6 +195,7 @@ func readEnv() {
 	Env.CloudflareAuthEmail = envy.Get("CLOUDFLARE_AUTH_EMAIL", "")
 	Env.CloudflareAuthKey = envy.Get("CLOUDFLARE_AUTH_KEY", "")
 	Env.DisableTLS, _ = strconv.ParseBool(envy.Get("DISABLE_TLS", "false"))
+	Env.DynamoDBTable = envy.Get("DYNAMO_DB_TABLE", "CertMagic")
 	Env.EmailService = envy.Get("EMAIL_SERVICE", "sendgrid")
 	Env.EmailFromAddress = envy.Get("EMAIL_FROM_ADDRESS", "no_reply@example.com")
 	Env.FacebookKey = envy.Get("FACEBOOK_KEY", "")
@@ -214,6 +217,7 @@ func readEnv() {
 	Env.RollbarServerRoot = envy.Get("ROLLBAR_SERVER_ROOT", "github.com/silinternational/wecarry-api")
 	Env.RollbarToken = envy.Get("ROLLBAR_TOKEN", "")
 	Env.SendGridAPIKey = envy.Get("SENDGRID_API_KEY", "")
+	Env.ServerPort, _ = strconv.Atoi(envy.Get("PORT", "3000"))
 	Env.ServiceIntegrationToken = envy.Get("SERVICE_INTEGRATION_TOKEN", "")
 	Env.SessionSecret = envy.Get("SESSION_SECRET", "testing")
 	Env.SupportEmail = envy.Get("SUPPORT_EMAIL", "")
