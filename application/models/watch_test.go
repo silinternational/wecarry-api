@@ -209,7 +209,7 @@ func (ms *ModelSuite) TestWatch_Meeting() {
 	}
 }
 
-func (ms *ModelSuite) TestWatch_matchesPost() {
+func (ms *ModelSuite) TestWatch_postMatches() {
 	posts := createPostFixtures(ms.DB, 1, false)
 	watches := createWatchFixtures(ms.DB, createUserFixtures(ms.DB, 2).Users)
 
@@ -270,7 +270,7 @@ func (ms *ModelSuite) TestWatch_matchesPost() {
 	}
 }
 
-func (ms *ModelSuite) TestWatch_compareDestination() {
+func (ms *ModelSuite) TestWatch_destinationMatches() {
 	posts := createPostFixtures(ms.DB, 1, false)
 	watches := createWatchFixtures(ms.DB, createUserFixtures(ms.DB, 2).Users)
 
@@ -314,12 +314,12 @@ func (ms *ModelSuite) TestWatch_compareDestination() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			ms.Equal(tt.want, tt.watch.compareDestination(tt.post))
+			ms.Equal(tt.want, tt.watch.destinationMatches(tt.post))
 		})
 	}
 }
 
-func (ms *ModelSuite) TestWatch_compareOrigin() {
+func (ms *ModelSuite) TestWatch_originMatches() {
 	posts := createPostFixtures(ms.DB, 1, false)
 	watches := createWatchFixtures(ms.DB, createUserFixtures(ms.DB, 2).Users)
 
@@ -363,16 +363,16 @@ func (ms *ModelSuite) TestWatch_compareOrigin() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			ms.Equal(tt.want, tt.watch.compareOrigin(tt.post))
+			ms.Equal(tt.want, tt.watch.originMatches(tt.post))
 		})
 	}
 }
 
-func (ms *ModelSuite) TestWatch_compareSize() {
+func (ms *ModelSuite) TestWatch_sizeMatches() {
 	posts := createPostFixtures(ms.DB, 1, false)
 	watches := createWatchFixtures(ms.DB, createUserFixtures(ms.DB, 2).Users)
 
-	// don't need to save these changes because compareSize doesn't access the database
+	// don't need to save these changes because sizeMatches doesn't access the database
 	postSize := posts[0].Size // PostSizeSmall
 	watches[0].Size = &postSize
 	tiny := PostSizeTiny
@@ -411,16 +411,16 @@ func (ms *ModelSuite) TestWatch_compareSize() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			ms.Equal(tt.want, tt.watch.compareSize(tt.post))
+			ms.Equal(tt.want, tt.watch.sizeMatches(tt.post))
 		})
 	}
 }
 
-func (ms *ModelSuite) TestWatch_compareMeeting() {
+func (ms *ModelSuite) TestWatch_meetingMatches() {
 	posts := createPostFixtures(ms.DB, 1, false)
 	watches := createWatchFixtures(ms.DB, createUserFixtures(ms.DB, 2).Users)
 
-	// don't need to save these changes because compareMeeting doesn't access the database
+	// don't need to save these changes because meetingMatches doesn't access the database
 	watches[0].MeetingID = nulls.NewInt(1)
 	watches[1].MeetingID = nulls.NewInt(2)
 	posts[0].MeetingID = nulls.NewInt(1)
@@ -458,12 +458,12 @@ func (ms *ModelSuite) TestWatch_compareMeeting() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			ms.Equal(tt.want, tt.watch.compareMeeting(tt.post))
+			ms.Equal(tt.want, tt.watch.meetingMatches(tt.post))
 		})
 	}
 }
 
-func (ms *ModelSuite) TestWatch_compareText() {
+func (ms *ModelSuite) TestWatch_textMatches() {
 	posts := createPostFixtures(ms.DB, 1, false)
 	watches := createWatchFixtures(ms.DB, createUserFixtures(ms.DB, 3).Users)
 
@@ -532,7 +532,7 @@ func (ms *ModelSuite) TestWatch_compareText() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			ms.Equal(tt.want, tt.watch.compareText(tt.post))
+			ms.Equal(tt.want, tt.watch.textMatches(tt.post))
 		})
 	}
 }
