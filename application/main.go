@@ -56,7 +56,8 @@ func getServer() (servers.Server, error) {
 	}
 
 	certmagic.Default.Storage = &dynamodbstore.Storage{
-		Table: domain.Env.DynamoDBTable,
+		Table:     domain.Env.DynamoDBTable,
+		AwsRegion: domain.Env.AwsRegion,
 	}
 
 	cloudflareConfig := cloudflare.NewDefaultConfig()
