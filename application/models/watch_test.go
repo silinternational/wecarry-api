@@ -57,13 +57,14 @@ func (ms *ModelSuite) TestWatch_Validate() {
 	}
 }
 
+// createWatchFixtures prepares Watch fixtures that will not match anything until modified to meet the needs of a test
 func createWatchFixtures(tx *pop.Connection, users Users) Watches {
 	watches := make(Watches, len(users)*2)
-	locations := createLocationFixtures(tx, len(watches))
 	for i := range watches {
 		watches[i].UUID = domain.GetUUID()
 		watches[i].OwnerID = users[i/2].ID
-		watches[i].DestinationID = nulls.NewInt(locations[i].ID)
+		watches[i].Name = domain.GetUUID().String()
+		watches[i].SearchText = nulls.NewString(watches[i].Name)
 		mustCreate(tx, &watches[i])
 	}
 	return watches
@@ -204,6 +205,67 @@ func (ms *ModelSuite) TestWatch_Meeting() {
 			}
 			ms.NotNil(got, "Watch.Meeting() returned nil")
 			ms.Equal(tt.want.ID, got.ID)
+		})
+	}
+}
+
+func (ms *ModelSuite) TestWatch_matchesPost() {
+	posts := createPostFixtures(ms.DB, 1, false)
+	watches := createWatchFixtures(ms.DB, createUserFixtures(ms.DB, 2).Users)
+
+	// watch 0 matches on text, but doesn't match size
+	tiny := PostSizeTiny
+	watches[0].Size = &tiny
+	postTitle := posts[0].Title
+	watches[0].SearchText = nulls.NewString(postTitle[:len(postTitle)-1])
+	ms.NoError(watches[1].Update())
+
+	// watch 1 matches on text and size
+	small := PostSizeSmall
+	watches[1].Size = &small
+	watches[1].SearchText = nulls.NewString(postTitle[:len(postTitle)-1])
+	ms.NoError(watches[1].Update())
+
+	// watch 2 matches on neither text nor size
+	watches[2].Size = &tiny
+	watches[2].SearchText = nulls.NewString("not going to match this")
+	ms.NoError(watches[2].Update())
+
+	tests := []struct {
+		name  string
+		watch *Watch
+		post  Post
+		want  bool
+	}{
+		{
+			name:  "nil",
+			watch: nil,
+			want:  false,
+		},
+		{
+			name:  "one matching field, one mismatching field",
+			watch: &watches[0],
+			post:  posts[0],
+			want:  false,
+		},
+		{
+			name:  "two matching fields",
+			watch: &watches[1],
+			post:  posts[0],
+			want:  true,
+		},
+		{
+			name:  "two mis-matching fields",
+			watch: &watches[2],
+			post:  posts[0],
+			want:  false,
+		},
+	}
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			if got := tt.watch.matchesPost(tt.post); got != tt.want {
+				t.Errorf("matchesPost() = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }
