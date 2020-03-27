@@ -1,9 +1,16 @@
 package main
 
 import (
+	"fmt"
+	"net/http"
 	"os"
 
+	"github.com/caddyserver/certmagic"
+	"github.com/go-acme/lego/providers/dns/cloudflare"
+	"github.com/gobuffalo/buffalo/servers"
 	"github.com/rollbar/rollbar-go"
+
+	dynamodbstore "github.com/silinternational/certmagic-storage-dynamodb"
 
 	"github.com/silinternational/wecarry-api/actions"
 	"github.com/silinternational/wecarry-api/domain"
@@ -25,9 +32,15 @@ func main() {
 	rollbar.SetCodeVersion(GitCommitHash)
 	rollbar.SetServerRoot(domain.Env.RollbarServerRoot)
 
+	srv, err := getServer()
+	if err != nil {
+		domain.ErrLogger.Printf(err.Error())
+		os.Exit(1)
+	}
+
 	app := actions.App()
 	rollbar.WrapAndWait(func() {
-		if err := app.Serve(); err != nil {
+		if err := app.Serve(srv); err != nil {
 			if err.Error() != "context canceled" {
 				panic(err)
 			}
@@ -35,6 +48,42 @@ func main() {
 		}
 	})
 
+}
+
+func getServer() (servers.Server, error) {
+	if domain.Env.DisableTLS {
+		return servers.New(), nil
+	}
+
+	certmagic.Default.Storage = &dynamodbstore.Storage{
+		Table: domain.Env.DynamoDBTable,
+	}
+
+	cloudflareConfig := cloudflare.NewDefaultConfig()
+	cloudflareConfig.AuthEmail = domain.Env.CloudflareAuthEmail
+	cloudflareConfig.AuthKey = domain.Env.CloudflareAuthKey
+	dnsProvider, err := cloudflare.NewDNSProviderConfig(cloudflareConfig)
+	if err != nil {
+		return servers.New(), fmt.Errorf("failed to init Cloudflare dns provider for LetsEncrypt: %s", err.Error())
+	}
+
+	if domain.Env.GoEnv != "prod" && domain.Env.GoEnv != "production" {
+		certmagic.DefaultACME.CA = certmagic.LetsEncryptStagingCA
+	}
+
+	certmagic.DefaultACME.Email = domain.Env.SupportEmail
+	certmagic.DefaultACME.Agreed = true
+	certmagic.DefaultACME.DNSProvider = dnsProvider
+	certmagic.DefaultACME.DisableHTTPChallenge = true
+	certmagic.DefaultACME.DisableTLSALPNChallenge = true
+	certmagic.HTTPSPort = domain.Env.ServerPort
+
+	listener, err := certmagic.Listen([]string{domain.Env.CertDomainName})
+	if err != nil {
+		return servers.New(), fmt.Errorf("failed to get TLS config: %s", err.Error())
+	}
+
+	return servers.WrapListener(&http.Server{}, listener), nil
 }
 
 /*
