@@ -1,10 +1,10 @@
 package listeners
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/gobuffalo/nulls"
+
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/internal/test"
 	"github.com/silinternational/wecarry-api/models"
@@ -168,26 +168,14 @@ func createFixturesForTestSendNewPostNotifications(ms *ModelSuite) orgUserPostFi
 	org := models.Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
 	createFixture(ms, &org)
 
-	unique := org.UUID.String()
-	users := make(models.Users, 3)
-	userLocations := make(models.Locations, len(users))
-	for i := range users {
-		userLocations[i].Country = "US"
-		createFixture(ms, &userLocations[i])
-
-		users[i] = models.User{
-			Email:      fmt.Sprintf("%s_user%d@example.com", unique, i),
-			Nickname:   fmt.Sprintf("%s_User%d", unique, i),
-			UUID:       domain.GetUUID(),
-			LocationID: nulls.NewInt(userLocations[i].ID),
-		}
-		createFixture(ms, &users[i])
-	}
-
 	posts := test.CreatePostFixtures(ms.DB, 1, false)
-	ms.NoError(ms.DB.Load(&posts[0], "Origin"))
-	posts[0].Origin.Country = "US"
-	ms.NoError(ms.DB.Save(&posts[0].Origin))
+	postOrigin, err := posts[0].GetOrigin()
+	ms.NoError(err)
+
+	users := test.CreateUserFixtures(ms.DB, 3).Users
+	for i := range users {
+		ms.NoError(users[i].SetLocation(*postOrigin))
+	}
 
 	return orgUserPostFixtures{
 		users: users,

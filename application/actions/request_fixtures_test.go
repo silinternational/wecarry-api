@@ -43,8 +43,6 @@ func createFixturesForRequestQuery(as *ActionSuite) RequestQueryFixtures {
 	requests[0].Status = models.PostStatusAccepted
 	requests[0].ProviderID = nulls.NewInt(users[1].ID)
 	as.NoError(as.DB.Save(&requests[0]))
-	as.NoError(requests[0].SetDestination(models.Location{Description: "Australia", Country: "AU"}))
-	as.NoError(requests[1].SetOrigin(models.Location{Description: "Australia", Country: "AU"}))
 
 	requests[2].Status = models.PostStatusCompleted
 	requests[2].CompletedOn = nulls.NewTime(time.Now())

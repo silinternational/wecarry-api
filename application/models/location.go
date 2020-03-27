@@ -113,13 +113,6 @@ func (l *Location) DistanceKm(loc2 Location) float64 {
 
 // IsNear answers the question "Are these two locations near each other?"
 func (l *Location) IsNear(loc2 Location) bool {
-	if l.Country != "" && l.Country == loc2.Country {
-		return true
-	}
-
-	if d := l.DistanceKm(loc2); !math.IsNaN(d) && d < domain.DefaultProximityDistanceKm {
-		return true
-	}
-
-	return false
+	d := l.DistanceKm(loc2)
+	return !math.IsNaN(d) && d < domain.DefaultProximityDistanceKm
 }

@@ -63,7 +63,7 @@ func createWatchFixtures(tx *pop.Connection, users Users) Watches {
 	for i := range watches {
 		watches[i].UUID = domain.GetUUID()
 		watches[i].OwnerID = users[i/2].ID
-		watches[i].LocationID = nulls.NewInt(locations[i].ID)
+		watches[i].DestinationID = nulls.NewInt(locations[i].ID)
 		mustCreate(tx, &watches[i])
 	}
 	return watches
@@ -151,10 +151,10 @@ func (ms *ModelSuite) TestWatch_GetSetLocation() {
 	newLoc := createLocationFixtures(ms.DB, 1)[0]
 	watches := createWatchFixtures(ms.DB, createUserFixtures(ms.DB, 1).Users)
 
-	err := watches[0].SetLocation(newLoc)
-	ms.NoError(err, "unexpected error from SetLocation()")
+	err := watches[0].SetDestination(newLoc)
+	ms.NoError(err, "unexpected error from SetDestination()")
 
-	got, err := watches[0].GetLocation()
+	got, err := watches[0].GetDestination()
 	ms.NoError(err, "unexpected error from GetLocation()")
 	ms.Equal(newLoc.Country, got.Country, "country doesn't match")
 	ms.Equal(newLoc.Description, got.Description, "description doesn't match")
@@ -170,9 +170,9 @@ func (ms *ModelSuite) TestWatch_matchesPost() {
 	ms.NoError(err)
 	dest.ID = 0
 	ms.NoError(dest.Create())
-	ms.NoError(watches[0].SetLocation(*dest))
+	ms.NoError(watches[0].SetDestination(*dest))
 
-	ms.NoError(watches[1].SetLocation(Location{Country: "XX", Description: "-"}))
+	ms.NoError(watches[1].SetDestination(Location{Country: "XX", Description: "-"}))
 
 	tests := []struct {
 		name  string
@@ -196,6 +196,52 @@ func (ms *ModelSuite) TestWatch_matchesPost() {
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
 			ms.Equal(tt.want, tt.watch.matchesPost(tt.post))
+		})
+	}
+}
+
+func (ms *ModelSuite) TestWatch_Meeting() {
+	users := createUserFixtures(ms.DB, 2).Users
+	watches := createWatchFixtures(ms.DB, users)
+	meeting := createMeetingFixtures(ms.DB, 1).Meetings[0]
+	watches[1].MeetingID = nulls.NewInt(meeting.ID)
+	ms.NoError(watches[1].Update())
+
+	tests := []struct {
+		name     string
+		testUser User
+		watch    Watch
+		want     *Meeting
+	}{
+		{
+			name:     "no meeting",
+			testUser: users[0],
+			watch:    watches[0],
+			want:     nil,
+		},
+		{
+			name:     "has meeting",
+			testUser: users[0],
+			watch:    watches[1],
+			want:     &meeting,
+		},
+		{
+			name:     "not authorized",
+			testUser: users[1],
+			watch:    watches[1],
+			want:     nil,
+		},
+	}
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			got, err := tt.watch.Meeting(createTestContext(tt.testUser))
+			ms.NoError(err)
+			if tt.want == nil {
+				ms.Nil(got)
+				return
+			}
+			ms.NotNil(got, "Watch.Meeting() returned nil")
+			ms.Equal(tt.want.ID, got.ID)
 		})
 	}
 }
