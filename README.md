@@ -171,7 +171,7 @@ will always include all supported fields.
 ## TLS / HTTPS
 
 WeCarry API can either run with HTTPS/TLS or standard HTTP. If running behind a load balancer that terminates SSL/TLS 
-connections for you, using HTTPS/TLS in the container as well may not be necessary, but if possible its a good 
+connections for you, using HTTPS/TLS in the container as well may not be necessary, but if possible it's a good 
 idea. WeCarry API uses [CertMagic](https://github.com/caddyserver/certmagic) to work its magic with Let's Encrypt
 for certificate provisioning and configuring a TLS listener that Buffalo can use to serve the app. 
 
