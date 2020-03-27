@@ -148,23 +148,6 @@ func (w *Watch) Destroy() error {
 	return DB.Destroy(w)
 }
 
-// matchesPost returns true if the Watch's Location is near the Post's Destination
-func (w *Watch) matchesPost(post Post) bool {
-	compareFunctions := []func(*Watch, Post) bool{
-		(*Watch).compareSize,
-		(*Watch).compareText,
-		(*Watch).compareMeeting,
-		(*Watch).compareDestination,
-		(*Watch).compareOrigin,
-	}
-	for _, c := range compareFunctions {
-		if c(w, post) {
-			return true
-		}
-	}
-	return false
-}
-
 func (w *Watch) Meeting(ctx context.Context) (*Meeting, error) {
 	if w == nil || !w.MeetingID.Valid || CurrentUser(ctx).ID != w.OwnerID {
 		return nil, nil
@@ -176,6 +159,28 @@ func (w *Watch) Meeting(ctx context.Context) (*Meeting, error) {
 	return meeting, nil
 }
 
+// matchesPost returns true if all non-null watch criteria match the post
+func (w *Watch) matchesPost(post Post) bool {
+	if w == nil {
+		domain.ErrLogger.Printf("nil receiver in Watch.matchesPost")
+		return false
+	}
+	compareFunctions := []func(*Watch, Post) bool{
+		(*Watch).compareSize,
+		(*Watch).compareText,
+		(*Watch).compareMeeting,
+		(*Watch).compareDestination,
+		(*Watch).compareOrigin,
+	}
+	for _, c := range compareFunctions {
+		if !c(w, post) {
+			return false
+		}
+	}
+	return true
+}
+
+// compareDestination returns true if watch destination is not provided or passes the IsNear test
 func (w *Watch) compareDestination(post Post) bool {
 	if w == nil {
 		domain.ErrLogger.Printf("nil receiver in Watch.compareDestination")
@@ -196,6 +201,7 @@ func (w *Watch) compareDestination(post Post) bool {
 	return watchDestination.IsNear(*postDestination)
 }
 
+// compareOrigin returns true if watch origin is not provided or passes the IsNear test
 func (w *Watch) compareOrigin(post Post) bool {
 	if w == nil {
 		domain.ErrLogger.Printf("nil receiver in Watch.compareOrigin")
@@ -216,6 +222,7 @@ func (w *Watch) compareOrigin(post Post) bool {
 	return watchOrigin.IsNear(*postOrigin)
 }
 
+// compareMeeting returns true if watch meeting is not provided or is identical to the post meeting
 func (w *Watch) compareMeeting(post Post) bool {
 	if w == nil {
 		domain.ErrLogger.Printf("nil receiver in Watch.compareMeeting")
@@ -227,6 +234,7 @@ func (w *Watch) compareMeeting(post Post) bool {
 	return w.MeetingID == post.MeetingID
 }
 
+// compareText returns true if watch text is not provided or is in the post title, description or creator's nickname
 func (w *Watch) compareText(post Post) bool {
 	if w == nil {
 		domain.ErrLogger.Printf("nil receiver in Watch.compareText")
@@ -252,6 +260,7 @@ func (w *Watch) compareText(post Post) bool {
 	return false
 }
 
+// compareSize returns true if watch size is larger or the same as the post size
 func (w *Watch) compareSize(post Post) bool {
 	if w == nil {
 		domain.ErrLogger.Printf("nil receiver in Watch.compareSize")
