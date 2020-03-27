@@ -22,9 +22,9 @@ type postUsers struct {
 	Provider postUser
 }
 
-// getPostUsers returns up to two entries for the Post Requester and
-// Post Provider assuming their email is not blank.
-func getPostUsers(post models.Post) postUsers {
+// getPostUsers returns up to two entries for the Request Requester and
+// Request Provider assuming their email is not blank.
+func getPostUsers(post models.Request) postUsers {
 
 	receiver, _ := post.GetCreator()
 	provider, _ := post.GetProvider()
@@ -50,7 +50,7 @@ func getPostUsers(post models.Post) postUsers {
 	return recipients
 }
 
-func getMessageForProvider(postUsers postUsers, post models.Post, template string) notifications.Message {
+func getMessageForProvider(postUsers postUsers, post models.Request, template string) notifications.Message {
 	data := map[string]interface{}{
 		"uiURL":            domain.Env.UIURL,
 		"appName":          domain.Env.AppName,
@@ -70,7 +70,7 @@ func getMessageForProvider(postUsers postUsers, post models.Post, template strin
 	}
 }
 
-func getMessageForReceiver(postUsers postUsers, post models.Post, template string) notifications.Message {
+func getMessageForReceiver(postUsers postUsers, post models.Request, template string) notifications.Message {
 	data := map[string]interface{}{
 		"uiURL":            domain.Env.UIURL,
 		"appName":          domain.Env.AppName,
@@ -91,7 +91,7 @@ func getMessageForReceiver(postUsers postUsers, post models.Post, template strin
 }
 
 func getPotentialProviderMessageForReceiver(
-	requester models.User, providerNickname, template string, post models.Post) notifications.Message {
+	requester models.User, providerNickname, template string, post models.Request) notifications.Message {
 	data := map[string]interface{}{
 		"appName":          domain.Env.AppName,
 		"uiURL":            domain.Env.UIURL,
@@ -186,7 +186,7 @@ func sendNotificationRequestFromAcceptedToRemoved(params senderParams) {
 	sendNotificationRequestToProvider(params)
 }
 
-func sendRejectionToPotentialProvider(potentialProvider models.User, post models.Post) {
+func sendRejectionToPotentialProvider(potentialProvider models.User, post models.Request) {
 	template := domain.MessageTemplatePotentialProviderRejected
 	ppNickname := potentialProvider.Nickname
 	ppEmail := potentialProvider.Email
@@ -198,7 +198,7 @@ func sendRejectionToPotentialProvider(potentialProvider models.User, post models
 
 	receiver, err := post.GetCreator()
 	if err != nil {
-		domain.ErrLogger.Printf("error getting Post Receiver for email data, %s", err)
+		domain.ErrLogger.Printf("error getting Request Receiver for email data, %s", err)
 	}
 
 	data := map[string]interface{}{
@@ -233,7 +233,7 @@ func sendNotificationRequestFromOpenToAccepted(params senderParams) {
 	post := params.post
 
 	var providers models.PotentialProviders
-	users, err := providers.FindUsersByPostID(post, models.User{})
+	users, err := providers.FindUsersByRequestID(post, models.User{})
 	if err != nil {
 		domain.ErrLogger.Printf("error finding rejected potential providers for post id, %v ... %v",
 			post.ID, err)
@@ -262,78 +262,78 @@ func sendNotificationEmpty(params senderParams) {
 type senderParams struct {
 	template   string
 	subject    string
-	post       models.Post
-	pEventData models.PostStatusEventData
+	post       models.Request
+	pEventData models.RequestStatusEventData
 }
 
 type sender struct {
 	template string
 	subject  string
-	sender   func(senderParams) // string, string, models.Post, models.PostStatusEventData)
+	sender   func(senderParams) // string, string, models.Request, models.RequestStatusEventData)
 }
 
-func join(s1, s2 models.PostStatus) string {
+func join(s1, s2 models.RequestStatus) string {
 	return fmt.Sprintf("%s-%s", s1, s2)
 }
 
 var statusSenders = map[string]sender{
-	join(models.PostStatusAccepted, models.PostStatusCompleted): sender{
+	join(models.RequestStatusAccepted, models.RequestStatusCompleted): sender{
 		template: domain.MessageTemplateRequestFromAcceptedToCompleted,
 		subject:  "Email.Subject.Request.FromAcceptedOrDeliveredToCompleted",
 		sender:   sendNotificationRequestFromAcceptedOrDeliveredToCompleted},
 
-	join(models.PostStatusAccepted, models.PostStatusOpen): sender{
+	join(models.RequestStatusAccepted, models.RequestStatusOpen): sender{
 		template: domain.MessageTemplateRequestFromAcceptedToOpen,
 		subject:  "Email.Subject.Request.FromAcceptedToOpen",
 		sender:   sendNotificationRequestFromAcceptedToOpen},
 
-	join(models.PostStatusAccepted, models.PostStatusReceived): sender{
+	join(models.RequestStatusAccepted, models.RequestStatusReceived): sender{
 		template: domain.MessageTemplateRequestFromAcceptedToCompleted,
 		subject:  "Email.Subject.Request.FromAcceptedOrDeliveredToCompleted",
 		sender:   sendNotificationRequestFromAcceptedOrDeliveredToCompleted},
 
-	join(models.PostStatusAccepted, models.PostStatusRemoved): sender{
+	join(models.RequestStatusAccepted, models.RequestStatusRemoved): sender{
 		template: domain.MessageTemplateRequestFromAcceptedToRemoved,
 		subject:  "Email.Subject.Request.FromAcceptedToRemoved",
 		sender:   sendNotificationRequestFromAcceptedToRemoved},
 
-	join(models.PostStatusCompleted, models.PostStatusAccepted): sender{
+	join(models.RequestStatusCompleted, models.RequestStatusAccepted): sender{
 		template: domain.MessageTemplateRequestFromCompletedToAccepted,
 		subject:  "Email.Subject.Request.FromCompletedToAcceptedOrDelivered",
 		sender:   sendNotificationRequestFromCompletedToAcceptedOrDelivered},
 
-	join(models.PostStatusCompleted, models.PostStatusDelivered): sender{
+	join(models.RequestStatusCompleted, models.RequestStatusDelivered): sender{
 		template: domain.MessageTemplateRequestFromCompletedToDelivered,
 		subject:  "Email.Subject.Request.FromCompletedToAcceptedOrDelivered",
 		sender:   sendNotificationRequestFromCompletedToAcceptedOrDelivered},
 
-	join(models.PostStatusCompleted, models.PostStatusReceived): sender{
+	join(models.RequestStatusCompleted, models.RequestStatusReceived): sender{
 		template: domain.MessageTemplateRequestFromCompletedToReceived,
 		subject:  "",
 		sender:   sendNotificationEmpty},
 
-	join(models.PostStatusDelivered, models.PostStatusAccepted): sender{
+	join(models.RequestStatusDelivered, models.RequestStatusAccepted): sender{
 		template: domain.MessageTemplateRequestFromDeliveredToAccepted,
 		subject:  "Email.Subject.Request.FromDeliveredToAccepted",
 		sender:   sendNotificationRequestFromDeliveredToAccepted},
 
-	join(models.PostStatusDelivered, models.PostStatusCompleted): sender{
+	join(models.RequestStatusDelivered, models.RequestStatusCompleted): sender{
 		template: domain.MessageTemplateRequestFromDeliveredToCompleted,
 		subject:  "Email.Subject.Request.FromAcceptedOrDeliveredToCompleted",
 		sender:   sendNotificationRequestFromAcceptedOrDeliveredToCompleted},
 
-	join(models.PostStatusOpen, models.PostStatusAccepted): sender{
+	join(models.RequestStatusOpen, models.RequestStatusAccepted): sender{
 		template: domain.MessageTemplateRequestFromOpenToAccepted,
 		subject:  "Email.Subject.Request.FromOpenToAccepted",
 		sender:   sendNotificationRequestFromOpenToAccepted},
 
-	join(models.PostStatusReceived, models.PostStatusCompleted): sender{
+	join(models.RequestStatusReceived, models.RequestStatusCompleted): sender{
 		template: domain.MessageTemplateRequestFromReceivedToCompleted,
 		subject:  "",
 		sender:   sendNotificationEmpty},
 }
 
-func requestStatusUpdatedNotifications(post models.Post, eData models.PostStatusEventData) {
+func requestStatusUpdatedNotifications(post models.Request, eData models.RequestStatusEventData) {
 
 	fromStatusTo := join(eData.OldStatus, eData.NewStatus)
 	sender, ok := statusSenders[fromStatusTo]
@@ -353,9 +353,9 @@ func requestStatusUpdatedNotifications(post models.Post, eData models.PostStatus
 	sender.sender(params)
 }
 
-func sendNewPostNotifications(post models.Post, users models.Users) {
+func sendNewPostNotifications(post models.Request, users models.Users) {
 	for i, user := range users {
-		if !user.WantsPostNotification(post) {
+		if !user.WantsRequestNotification(post) {
 			continue
 		}
 
@@ -366,7 +366,7 @@ func sendNewPostNotifications(post models.Post, users models.Users) {
 	}
 }
 
-func sendNewPostNotification(user models.User, post models.Post) error {
+func sendNewPostNotification(user models.User, post models.Request) error {
 	if user.Email == "" {
 		return errors.New("'To' email address is required")
 	}
@@ -405,7 +405,7 @@ func sendNewPostNotification(user models.User, post models.Post) error {
 	return notifications.Send(msg)
 }
 
-func sendPotentialProviderCreatedNotification(providerNickname string, requester models.User, post models.Post) error {
+func sendPotentialProviderCreatedNotification(providerNickname string, requester models.User, post models.Request) error {
 	template := domain.MessageTemplatePotentialProviderCreated
 	msg := getPotentialProviderMessageForReceiver(requester, providerNickname, template, post)
 	msg.Subject = domain.GetTranslatedSubject(requester.GetLanguagePreference(),
@@ -414,7 +414,7 @@ func sendPotentialProviderCreatedNotification(providerNickname string, requester
 	return notifications.Send(msg)
 }
 
-func sendPotentialProviderSelfDestroyedNotification(providerNickname string, requester models.User, post models.Post) error {
+func sendPotentialProviderSelfDestroyedNotification(providerNickname string, requester models.User, post models.Request) error {
 	template := domain.MessageTemplatePotentialProviderSelfDestroyed
 	msg := getPotentialProviderMessageForReceiver(requester, providerNickname, template, post)
 	msg.Subject = domain.GetTranslatedSubject(requester.GetLanguagePreference(),
@@ -422,7 +422,7 @@ func sendPotentialProviderSelfDestroyedNotification(providerNickname string, req
 	return notifications.Send(msg)
 }
 
-func sendPotentialProviderRejectedNotification(provider models.User, requester string, post models.Post) error {
+func sendPotentialProviderRejectedNotification(provider models.User, requester string, post models.Request) error {
 	msg := notifications.Message{
 		Subject: domain.GetTranslatedSubject(provider.GetLanguagePreference(),
 			"Email.Subject.Request.OfferRejected", map[string]string{}),

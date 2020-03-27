@@ -54,7 +54,7 @@ func (ms *ModelSuite) TestGetPostUsers() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 
-			var post models.Post
+			var post models.Request
 			err := post.FindByID(test.id)
 			ms.NoError(err, "error finding post for test")
 
@@ -77,10 +77,10 @@ func (ms *ModelSuite) TestRequestStatusUpdatedNotifications() {
 	orgUserPostFixtures := CreateFixtures_RequestStatusUpdatedNotifications(ms, t)
 	posts := orgUserPostFixtures.posts
 
-	postStatusEData := models.PostStatusEventData{
-		OldStatus: models.PostStatusOpen,
-		NewStatus: models.PostStatusAccepted,
-		PostID:    posts[0].ID,
+	postStatusEData := models.RequestStatusEventData{
+		OldStatus: models.RequestStatusOpen,
+		NewStatus: models.RequestStatusAccepted,
+		RequestID: posts[0].ID,
 	}
 
 	var buf bytes.Buffer
@@ -99,7 +99,7 @@ func (ms *ModelSuite) TestRequestStatusUpdatedNotifications() {
 	buf.Reset()
 
 	// Logging message expected about bad transition
-	postStatusEData.NewStatus = models.PostStatusDelivered
+	postStatusEData.NewStatus = models.RequestStatusDelivered
 	requestStatusUpdatedNotifications(posts[0], postStatusEData)
 
 	got = buf.String()
@@ -126,8 +126,8 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 	tests := []struct {
 		name             string
 		template         string
-		post             models.Post
-		eventData        models.PostStatusEventData
+		post             models.Request
+		eventData        models.RequestStatusEventData
 		sendFunction     func(senderParams)
 		wantEmailsSent   int
 		wantToEmail      string
@@ -137,10 +137,10 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 	}{
 		{name: "Good - Accepted to Open",
 			post: posts[0],
-			eventData: models.PostStatusEventData{
-				OldStatus:     models.PostStatusAccepted,
-				NewStatus:     models.PostStatusOpen,
-				PostID:        posts[0].ID,
+			eventData: models.RequestStatusEventData{
+				OldStatus:     models.RequestStatusAccepted,
+				NewStatus:     models.RequestStatusOpen,
+				RequestID:     posts[0].ID,
 				OldProviderID: *models.GetIntFromNullsInt(posts[0].ProviderID),
 			},
 			template:         domain.MessageTemplateRequestFromAcceptedToOpen,
@@ -181,10 +181,10 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 		},
 		{name: "Good - Accepted to Open",
 			post: posts[0],
-			eventData: models.PostStatusEventData{
-				OldStatus:     models.PostStatusAccepted,
-				NewStatus:     models.PostStatusOpen,
-				PostID:        posts[0].ID,
+			eventData: models.RequestStatusEventData{
+				OldStatus:     models.RequestStatusAccepted,
+				NewStatus:     models.RequestStatusOpen,
+				RequestID:     posts[0].ID,
 				OldProviderID: *models.GetIntFromNullsInt(posts[0].ProviderID),
 			},
 			template:         domain.MessageTemplateRequestFromAcceptedToOpen,
@@ -285,11 +285,11 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 }
 
 func (ms *ModelSuite) TestSendNewPostNotification() {
-	post := test.CreatePostFixtures(ms.DB, 1, false)[0]
+	post := test.CreateRequestFixtures(ms.DB, 1, false)[0]
 	tests := []struct {
 		name     string
 		user     models.User
-		post     models.Post
+		post     models.Request
 		wantBody string
 		wantErr  string
 	}{
@@ -341,7 +341,7 @@ func (ms *ModelSuite) TestSendNewPostNotifications() {
 
 	tests := []struct {
 		name           string
-		post           models.Post
+		post           models.Request
 		users          models.Users
 		wantEmailCount int
 	}{
@@ -397,7 +397,7 @@ func (ms *ModelSuite) TestSendPotentialProviderCreatedNotification() {
 	requester := models.User{
 		Email: "user@example.com",
 	}
-	post := models.Post{UUID: domain.GetUUID(), Title: "post title"}
+	post := models.Request{UUID: domain.GetUUID(), Title: "post title"}
 	wantBody := "has offered to help fulfill your request"
 
 	notifications.TestEmailService.DeleteSentMessages()
@@ -424,7 +424,7 @@ func (ms *ModelSuite) TestSendPotentialProviderSelfDestroyedNotification() {
 	requester := models.User{
 		Email: "user@example.com",
 	}
-	post := models.Post{UUID: domain.GetUUID(), Title: "post title"}
+	post := models.Request{UUID: domain.GetUUID(), Title: "post title"}
 	wantBody := "indicated they can't fulfill your request afterall"
 
 	notifications.TestEmailService.DeleteSentMessages()
@@ -451,7 +451,7 @@ func (ms *ModelSuite) TestSendPotentialProviderRejectedNotification() {
 	provider := models.User{
 		Email: "user@example.com",
 	}
-	post := models.Post{UUID: domain.GetUUID(), Title: "post title"}
+	post := models.Request{UUID: domain.GetUUID(), Title: "post title"}
 	wantBody := "is not prepared to have you fulfill their request"
 
 	notifications.TestEmailService.DeleteSentMessages()
@@ -473,22 +473,22 @@ func (ms *ModelSuite) TestSendPotentialProviderRejectedNotification() {
 }
 
 func (ms *ModelSuite) TestSendNotificationRequestFromOpenToAccepted() {
-	// Five User and three Post fixtures will also be created.  The Posts will
+	// Five User and three Request fixtures will also be created.  The Requests will
 	// all be created by the first user.
-	// The first Post will have all but the first and fifth user as a potential provider.
+	// The first Request will have all but the first and fifth user as a potential provider.
 	f := test.CreatePotentialProvidersFixtures(ms.DB)
 
 	users := f.Users
-	post := f.Posts[0]
+	post := f.Requests[0]
 
 	post.ProviderID = nulls.NewInt(f.Users[3].ID)
 
 	notifications.TestEmailService.DeleteSentMessages()
 
-	eData := models.PostStatusEventData{
-		OldStatus: models.PostStatusOpen,
-		NewStatus: models.PostStatusAccepted,
-		PostID:    post.ID,
+	eData := models.RequestStatusEventData{
+		OldStatus: models.RequestStatusOpen,
+		NewStatus: models.RequestStatusAccepted,
+		RequestID: post.ID,
 	}
 
 	params := senderParams{

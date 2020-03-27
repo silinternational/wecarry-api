@@ -45,8 +45,8 @@ const (
 	EventApiUserCreated                    = "api:user:created"
 	EventApiAuthUserLoggedIn               = "api:auth:user:loggedin"
 	EventApiMessageCreated                 = "api:message:created"
-	EventApiPostStatusUpdated              = "api:post:status:updated"
-	EventApiPostCreated                    = "api:post:status:created"
+	EventApiRequestStatusUpdated           = "api:post:status:updated"
+	EventApiRequestCreated                 = "api:post:status:created"
 	EventApiPotentialProviderCreated       = "api:potentialprovider:created"
 	EventApiPotentialProviderRejected      = "api:potentialprovider:rejected"
 	EventApiPotentialProviderSelfDestroyed = "api:potentialprovider:selfdestroyed"
@@ -466,7 +466,7 @@ func RollbarSetPerson(c buffalo.Context, id, username, email string) {
 	}
 }
 
-// GetPostUIURL returns a UI URL for the given Post
+// GetPostUIURL returns a UI URL for the given Request
 func GetPostUIURL(postUUID string) string {
 	return Env.UIURL + postUIPath + postUUID
 }

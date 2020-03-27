@@ -21,15 +21,15 @@ import (
 	"github.com/silinternational/wecarry-api/domain"
 )
 
-type PostStatus string
+type RequestStatus string
 
 const (
-	PostStatusOpen      PostStatus = "OPEN"
-	PostStatusAccepted  PostStatus = "ACCEPTED"
-	PostStatusDelivered PostStatus = "DELIVERED"
-	PostStatusReceived  PostStatus = "RECEIVED"
-	PostStatusCompleted PostStatus = "COMPLETED"
-	PostStatusRemoved   PostStatus = "REMOVED"
+	RequestStatusOpen      RequestStatus = "OPEN"
+	RequestStatusAccepted  RequestStatus = "ACCEPTED"
+	RequestStatusDelivered RequestStatus = "DELIVERED"
+	RequestStatusReceived  RequestStatus = "RECEIVED"
+	RequestStatusCompleted RequestStatus = "COMPLETED"
+	RequestStatusRemoved   RequestStatus = "REMOVED"
 
 	RequestActionReopen       = "reopen"
 	RequestActionOffer        = "offer"
@@ -37,85 +37,85 @@ const (
 	RequestActionAccept       = "accept"
 	RequestActionDeliver      = "deliver"
 	RequestActionReceive      = "receive"
-	//RequestActionComplete     = "complete"  //  For now Receiving a Post makes it Completed
+	//RequestActionComplete     = "complete"  //  For now Receiving a Request makes it Completed
 	RequestActionRemove = "remove"
 )
 
 type StatusTransitionTarget struct {
-	Status           PostStatus
+	Status           RequestStatus
 	IsBackStep       bool
 	isProviderAction bool
 }
 
-type PostVisibility string
+type RequestVisibility string
 
 const (
-	PostVisibilityAll     PostVisibility = "ALL"
-	PostVisibilityTrusted PostVisibility = "TRUSTED"
-	PostVisibilitySame    PostVisibility = "SAME"
+	RequestVisibilityAll     RequestVisibility = "ALL"
+	RequestVisibilityTrusted RequestVisibility = "TRUSTED"
+	RequestVisibilitySame    RequestVisibility = "SAME"
 )
 
-func (e PostVisibility) IsValid() bool {
+func (e RequestVisibility) IsValid() bool {
 	switch e {
-	case PostVisibilityAll, PostVisibilityTrusted, PostVisibilitySame:
+	case RequestVisibilityAll, RequestVisibilityTrusted, RequestVisibilitySame:
 		return true
 	}
 	return false
 }
 
-func (e PostVisibility) String() string {
+func (e RequestVisibility) String() string {
 	return string(e)
 }
 
-func (e *PostVisibility) UnmarshalGQL(v interface{}) error {
+func (e *RequestVisibility) UnmarshalGQL(v interface{}) error {
 	str, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("enums must be strings")
 	}
 
-	*e = PostVisibility(str)
+	*e = RequestVisibility(str)
 	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid PostVisibility", str)
+		return fmt.Errorf("%s is not a valid RequestVisibility", str)
 	}
 	return nil
 }
 
-func (e PostVisibility) MarshalGQL(w io.Writer) {
+func (e RequestVisibility) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
-func allStatusTransitions() map[PostStatus][]StatusTransitionTarget {
-	return map[PostStatus][]StatusTransitionTarget{
-		PostStatusOpen: {
-			{Status: PostStatusAccepted},
-			{Status: PostStatusRemoved},
+func allStatusTransitions() map[RequestStatus][]StatusTransitionTarget {
+	return map[RequestStatus][]StatusTransitionTarget{
+		RequestStatusOpen: {
+			{Status: RequestStatusAccepted},
+			{Status: RequestStatusRemoved},
 		},
-		PostStatusAccepted: {
-			{Status: PostStatusOpen, IsBackStep: true}, // to correct a false acceptance
-			{Status: PostStatusDelivered, isProviderAction: true},
-			{Status: PostStatusReceived},  // This transition is in here for later, in case one day it's not skippable
-			{Status: PostStatusCompleted}, // For now, `DELIVERED` is not a required step
-			{Status: PostStatusRemoved},
+		RequestStatusAccepted: {
+			{Status: RequestStatusOpen, IsBackStep: true}, // to correct a false acceptance
+			{Status: RequestStatusDelivered, isProviderAction: true},
+			{Status: RequestStatusReceived},  // This transition is in here for later, in case one day it's not skippable
+			{Status: RequestStatusCompleted}, // For now, `DELIVERED` is not a required step
+			{Status: RequestStatusRemoved},
 		},
-		PostStatusDelivered: {
-			{Status: PostStatusAccepted, IsBackStep: true, isProviderAction: true}, // to correct a false delivery
-			{Status: PostStatusCompleted},
+		RequestStatusDelivered: {
+			{Status: RequestStatusAccepted, IsBackStep: true, isProviderAction: true}, // to correct a false delivery
+			{Status: RequestStatusCompleted},
 		},
-		PostStatusReceived: {
-			{Status: PostStatusAccepted, IsBackStep: true},
-			{Status: PostStatusDelivered},
-			{Status: PostStatusCompleted},
+		RequestStatusReceived: {
+			{Status: RequestStatusAccepted, IsBackStep: true},
+			{Status: RequestStatusDelivered},
+			{Status: RequestStatusCompleted},
 		},
-		PostStatusCompleted: {
-			{Status: PostStatusAccepted, IsBackStep: true},  // to correct a false completion
-			{Status: PostStatusDelivered, IsBackStep: true}, // to correct a false completion
-			//	{Status: PostStatusReceived, IsBackStep: true, isProviderAction: true}, // to correct a false completion
+		RequestStatusCompleted: {
+			{Status: RequestStatusAccepted, IsBackStep: true},  // to correct a false completion
+			{Status: RequestStatusDelivered, IsBackStep: true}, // to correct a false completion
+			//	{Status: RequestStatusReceived, IsBackStep: true, isProviderAction: true}, // to correct a false completion
 		},
-		PostStatusRemoved: {},
+		RequestStatusRemoved: {},
 	}
 }
 
-func getNextStatusPossibilities(status PostStatus) ([]StatusTransitionTarget, error) {
+func getNextStatusPossibilities(status RequestStatus) ([]StatusTransitionTarget, error) {
 	targets, ok := allStatusTransitions()[status]
 	if !ok {
 		return []StatusTransitionTarget{}, errors.New("unexpected initial status - " + status.String())
@@ -123,7 +123,7 @@ func getNextStatusPossibilities(status PostStatus) ([]StatusTransitionTarget, er
 	return targets, nil
 }
 
-func isTransitionValid(status1, status2 PostStatus) (bool, error) {
+func isTransitionValid(status1, status2 RequestStatus) (bool, error) {
 	targets, err := getNextStatusPossibilities(status1)
 	if err != nil {
 		return false, err
@@ -138,7 +138,7 @@ func isTransitionValid(status1, status2 PostStatus) (bool, error) {
 	return false, nil
 }
 
-func isTransitionBackStep(status1, status2 PostStatus) (bool, error) {
+func isTransitionBackStep(status1, status2 RequestStatus) (bool, error) {
 	if status1 == "" {
 		return false, nil
 	}
@@ -157,136 +157,136 @@ func isTransitionBackStep(status1, status2 PostStatus) (bool, error) {
 	return false, nil
 }
 
-func statusActions() map[PostStatus]string {
-	return map[PostStatus]string{
-		PostStatusOpen:      RequestActionReopen,
-		PostStatusAccepted:  RequestActionAccept,
-		PostStatusDelivered: RequestActionDeliver,
-		//PostStatusReceived:  RequestActionReceive,  // One day we may want this back in
-		PostStatusCompleted: RequestActionReceive,
-		PostStatusRemoved:   RequestActionRemove,
+func statusActions() map[RequestStatus]string {
+	return map[RequestStatus]string{
+		RequestStatusOpen:      RequestActionReopen,
+		RequestStatusAccepted:  RequestActionAccept,
+		RequestStatusDelivered: RequestActionDeliver,
+		//RequestStatusReceived:  RequestActionReceive,  // One day we may want this back in
+		RequestStatusCompleted: RequestActionReceive,
+		RequestStatusRemoved:   RequestActionRemove,
 	}
 }
 
-func (e PostStatus) IsValid() bool {
+func (e RequestStatus) IsValid() bool {
 	switch e {
-	case PostStatusOpen, PostStatusAccepted, PostStatusDelivered, PostStatusReceived,
-		PostStatusCompleted, PostStatusRemoved:
+	case RequestStatusOpen, RequestStatusAccepted, RequestStatusDelivered, RequestStatusReceived,
+		RequestStatusCompleted, RequestStatusRemoved:
 		return true
 	}
 	return false
 }
 
-func (e PostStatus) String() string {
+func (e RequestStatus) String() string {
 	return string(e)
 }
 
-func (e *PostStatus) UnmarshalGQL(v interface{}) error {
+func (e *RequestStatus) UnmarshalGQL(v interface{}) error {
 	str, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("enums must be strings")
 	}
 
-	*e = PostStatus(str)
+	*e = RequestStatus(str)
 	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid PostStatus", str)
+		return fmt.Errorf("%s is not a valid RequestStatus", str)
 	}
 	return nil
 }
 
-func (e PostStatus) MarshalGQL(w io.Writer) {
+func (e RequestStatus) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
-type PostSize string
+type RequestSize string
 
 const (
-	PostSizeTiny   PostSize = "TINY"
-	PostSizeSmall  PostSize = "SMALL"
-	PostSizeMedium PostSize = "MEDIUM"
-	PostSizeLarge  PostSize = "LARGE"
-	PostSizeXlarge PostSize = "XLARGE"
+	RequestSizeTiny   RequestSize = "TINY"
+	RequestSizeSmall  RequestSize = "SMALL"
+	RequestSizeMedium RequestSize = "MEDIUM"
+	RequestSizeLarge  RequestSize = "LARGE"
+	RequestSizeXlarge RequestSize = "XLARGE"
 )
 
-func (e PostSize) String() string {
+func (e RequestSize) String() string {
 	return string(e)
 }
 
-type Post struct {
-	ID             int            `json:"id" db:"id"`
-	CreatedAt      time.Time      `json:"created_at" db:"created_at"`
-	UpdatedAt      time.Time      `json:"updated_at" db:"updated_at"`
-	CreatedByID    int            `json:"created_by_id" db:"created_by_id"`
-	OrganizationID int            `json:"organization_id" db:"organization_id"`
-	NeededBefore   nulls.Time     `json:"needed_before" db:"needed_before"`
-	Status         PostStatus     `json:"status" db:"status"`
-	CompletedOn    nulls.Time     `json:"completed_on" db:"completed_on"`
-	Title          string         `json:"title" db:"title"`
-	Size           PostSize       `json:"size" db:"size"`
-	UUID           uuid.UUID      `json:"uuid" db:"uuid"`
-	ProviderID     nulls.Int      `json:"provider_id" db:"provider_id"`
-	Description    nulls.String   `json:"description" db:"description"`
-	URL            nulls.String   `json:"url" db:"url"`
-	Kilograms      nulls.Float64  `json:"kilograms" db:"kilograms"`
-	FileID         nulls.Int      `json:"file_id" db:"file_id"`
-	DestinationID  int            `json:"destination_id" db:"destination_id"`
-	OriginID       nulls.Int      `json:"origin_id" db:"origin_id"`
-	MeetingID      nulls.Int      `json:"meeting_id" db:"meeting_id"`
-	Visibility     PostVisibility `json:"visibility" db:"visibility"`
+type Request struct {
+	ID             int               `json:"id" db:"id"`
+	CreatedAt      time.Time         `json:"created_at" db:"created_at"`
+	UpdatedAt      time.Time         `json:"updated_at" db:"updated_at"`
+	CreatedByID    int               `json:"created_by_id" db:"created_by_id"`
+	OrganizationID int               `json:"organization_id" db:"organization_id"`
+	NeededBefore   nulls.Time        `json:"needed_before" db:"needed_before"`
+	Status         RequestStatus     `json:"status" db:"status"`
+	CompletedOn    nulls.Time        `json:"completed_on" db:"completed_on"`
+	Title          string            `json:"title" db:"title"`
+	Size           RequestSize       `json:"size" db:"size"`
+	UUID           uuid.UUID         `json:"uuid" db:"uuid"`
+	ProviderID     nulls.Int         `json:"provider_id" db:"provider_id"`
+	Description    nulls.String      `json:"description" db:"description"`
+	URL            nulls.String      `json:"url" db:"url"`
+	Kilograms      nulls.Float64     `json:"kilograms" db:"kilograms"`
+	FileID         nulls.Int         `json:"file_id" db:"file_id"`
+	DestinationID  int               `json:"destination_id" db:"destination_id"`
+	OriginID       nulls.Int         `json:"origin_id" db:"origin_id"`
+	MeetingID      nulls.Int         `json:"meeting_id" db:"meeting_id"`
+	Visibility     RequestVisibility `json:"visibility" db:"visibility"`
 
 	CreatedBy    User         `belongs_to:"users"`
 	Organization Organization `belongs_to:"organizations"`
 	Provider     User         `belongs_to:"users"`
 
-	Files       PostFiles `has_many:"post_files"`
-	PhotoFile   File      `belongs_to:"files" fk_id:"FileID"`
-	Destination Location  `belongs_to:"locations"`
-	Origin      Location  `belongs_to:"locations"`
+	Files       RequestFiles `has_many:"request_files"`
+	PhotoFile   File         `belongs_to:"files" fk_id:"FileID"`
+	Destination Location     `belongs_to:"locations"`
+	Origin      Location     `belongs_to:"locations"`
 }
 
-// PostCreatedEventData holds data needed by the New Post event listener
-type PostCreatedEventData struct {
-	PostID int
+// RequestCreatedEventData holds data needed by the New Request event listener
+type RequestCreatedEventData struct {
+	RequestID int
 }
 
 // String can be helpful for serializing the model
-func (p Post) String() string {
+func (p Request) String() string {
 	jp, _ := json.Marshal(p)
 	return string(jp)
 }
 
-// Posts is merely for convenience and brevity
-type Posts []Post
+// Requests is merely for convenience and brevity
+type Requests []Request
 
 // String can be helpful for serializing the model
-func (p Posts) String() string {
+func (p Requests) String() string {
 	jp, _ := json.Marshal(p)
 	return string(jp)
 }
 
-// Create stores the Post data as a new record in the database.
-func (p *Post) Create() error {
+// Create stores the Request data as a new record in the database.
+func (p *Request) Create() error {
 	if p.Visibility == "" {
-		p.Visibility = PostVisibilitySame
+		p.Visibility = RequestVisibilitySame
 	}
 	return create(p)
 }
 
-// Update writes the Post data to an existing database record.
-func (p *Post) Update() error {
+// Update writes the Request data to an existing database record.
+func (p *Request) Update() error {
 	return update(p)
 }
 
-func (p *Post) NewWithUser(currentUser User) error {
+func (p *Request) NewWithUser(currentUser User) error {
 	p.CreatedByID = currentUser.ID
-	p.Status = PostStatusOpen
+	p.Status = RequestStatusOpen
 	return nil
 }
 
-// SetProviderWithStatus sets the new Status of the Post and if needed it
+// SetProviderWithStatus sets the new Status of the Request and if needed it
 // also sets the ProviderID (i.e. when the new status is ACCEPTED)
-func (p *Post) SetProviderWithStatus(status PostStatus, providerID *string) error {
-	if status == PostStatusAccepted {
+func (p *Request) SetProviderWithStatus(status RequestStatus, providerID *string) error {
+	if status == RequestStatusAccepted {
 		if providerID == nil {
 			return errors.New("provider ID must not be nil")
 		}
@@ -302,27 +302,27 @@ func (p *Post) SetProviderWithStatus(status PostStatus, providerID *string) erro
 	return nil
 }
 
-// GetPotentialProviders returns the User objects associated with the Post's
+// GetPotentialProviders returns the User objects associated with the Request's
 // PotentialProviders
-func (p *Post) GetPotentialProviders(currentUser User) (Users, error) {
+func (p *Request) GetPotentialProviders(currentUser User) (Users, error) {
 	providers := PotentialProviders{}
-	users, err := providers.FindUsersByPostID(*p, currentUser)
+	users, err := providers.FindUsersByRequestID(*p, currentUser)
 	return users, err
 }
 
 // DestroyPotentialProviders destroys all the PotentialProvider records
-// associated with the Post if the Post's status is COMPLETED
-func (p *Post) DestroyPotentialProviders(status PostStatus, user User) error {
-	if status != PostStatusCompleted {
+// associated with the Request if the Request's status is COMPLETED
+func (p *Request) DestroyPotentialProviders(status RequestStatus, user User) error {
+	if status != RequestStatusCompleted {
 		return nil
 	}
 
 	var pps PotentialProviders
-	return pps.DestroyAllWithPostUUID(p.UUID.String(), user)
+	return pps.DestroyAllWithRequestUUID(p.UUID.String(), user)
 }
 
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
-func (p *Post) Validate(tx *pop.Connection) (*validate.Errors, error) {
+func (p *Request) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	v := []validate.Validator{
 		&validators.IntIsPresent{Field: p.CreatedByID, Name: "CreatedBy"},
 		&validators.IntIsPresent{Field: p.OrganizationID, Name: "OrganizationID"},
@@ -336,16 +336,16 @@ func (p *Post) Validate(tx *pop.Connection) (*validate.Errors, error) {
 		return validate.Validate(v...), nil
 	}
 
-	var oldPost Post
-	_ = oldPost.FindByID(p.ID)
-	if oldPost.ID == 0 || p.NeededBefore != oldPost.NeededBefore {
+	var oldRequest Request
+	_ = oldRequest.FindByID(p.ID)
+	if oldRequest.ID == 0 || p.NeededBefore != oldRequest.NeededBefore {
 		neededBeforeDate := p.NeededBefore.Time
 		v = append(v, &validators.TimeAfterTime{
 			FirstName:  "NeededBefore",
 			FirstTime:  neededBeforeDate,
 			SecondName: "Tomorrow",
 			SecondTime: time.Now().Truncate(domain.DurationDay).Add(domain.DurationDay),
-			Message:    fmt.Sprintf("Post neededBefore must not be before tomorrow. Got %v", neededBeforeDate),
+			Message:    fmt.Sprintf("Request neededBefore must not be before tomorrow. Got %v", neededBeforeDate),
 		})
 	}
 
@@ -354,22 +354,22 @@ func (p *Post) Validate(tx *pop.Connection) (*validate.Errors, error) {
 
 type createStatusValidator struct {
 	Name    string
-	Status  PostStatus
+	Status  RequestStatus
 	Message string
 }
 
 func (v *createStatusValidator) IsValid(errors *validate.Errors) {
-	if v.Status == PostStatusOpen {
+	if v.Status == RequestStatusOpen {
 		return
 	}
 
-	v.Message = fmt.Sprintf("Can only create a post with '%s' status, not '%s' status",
-		PostStatusOpen, v.Status)
+	v.Message = fmt.Sprintf("Can only create a request with '%s' status, not '%s' status",
+		RequestStatusOpen, v.Status)
 	errors.Add(validators.GenerateKey(v.Name), v.Message)
 }
 
 // ValidateCreate gets run every time you call "pop.ValidateAndCreate" method.
-func (p *Post) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) {
+func (p *Request) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
 		&createStatusValidator{
 			Name:   "Create Status",
@@ -380,7 +380,7 @@ func (p *Post) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) {
 
 type updateStatusValidator struct {
 	Name    string
-	Post    *Post
+	Request *Request
 	Context buffalo.Context
 	Message string
 }
@@ -395,59 +395,59 @@ func (v *updateStatusValidator) isOfferValid(errors *validate.Errors) {
 }
 
 func (v *updateStatusValidator) isRequestValid(errors *validate.Errors) {
-	oldPost := Post{}
-	uuid := v.Post.UUID.String()
-	if err := oldPost.FindByUUID(uuid); err != nil {
-		v.Message = fmt.Sprintf("error finding existing post by UUID %s ... %v", uuid, err)
+	oldRequest := Request{}
+	uuid := v.Request.UUID.String()
+	if err := oldRequest.FindByUUID(uuid); err != nil {
+		v.Message = fmt.Sprintf("error finding existing request by UUID %s ... %v", uuid, err)
 		errors.Add(validators.GenerateKey(v.Name), v.Message)
 	}
 
-	if oldPost.Status == v.Post.Status {
+	if oldRequest.Status == v.Request.Status {
 		return
 	}
 
-	isTransValid, err := isTransitionValid(oldPost.Status, v.Post.Status)
+	isTransValid, err := isTransitionValid(oldRequest.Status, v.Request.Status)
 	if err != nil {
-		v.Message = fmt.Sprintf("%s on post %s", err, uuid)
+		v.Message = fmt.Sprintf("%s on request %s", err, uuid)
 		errors.Add(validators.GenerateKey(v.Name), v.Message)
 		return
 	}
 
 	if !isTransValid {
-		errorMsg := "cannot move post %s from '%s' status to '%s' status"
-		v.Message = fmt.Sprintf(errorMsg, uuid, oldPost.Status, v.Post.Status)
+		errorMsg := "cannot move request %s from '%s' status to '%s' status"
+		v.Message = fmt.Sprintf(errorMsg, uuid, oldRequest.Status, v.Request.Status)
 		errors.Add(validators.GenerateKey(v.Name), v.Message)
 	}
 }
 
 // ValidateUpdate gets run every time you call "pop.ValidateAndUpdate" method.
-func (p *Post) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
+func (p *Request) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
 		&updateStatusValidator{
-			Name: "Status",
-			Post: p,
+			Name:    "Status",
+			Request: p,
 		},
 	), nil
 }
 
-// PostStatusEventData holds data needed by the Post Status Updated event listener
-type PostStatusEventData struct {
-	OldStatus     PostStatus
-	NewStatus     PostStatus
+// RequestStatusEventData holds data needed by the Request Status Updated event listener
+type RequestStatusEventData struct {
+	OldStatus     RequestStatus
+	NewStatus     RequestStatus
 	OldProviderID int
-	PostID        int
+	RequestID     int
 }
 
-func (p *Post) manageStatusTransition() error {
+func (p *Request) manageStatusTransition() error {
 	if p.Status == "" {
 		return nil
 	}
-	lastPostHistory := PostHistory{}
-	if err := lastPostHistory.getLastForPost(*p); err != nil {
+	lastRequestHistory := RequestHistory{}
+	if err := lastRequestHistory.getLastForRequest(*p); err != nil {
 		return err
 	}
 
-	lastStatus := lastPostHistory.Status
+	lastStatus := lastRequestHistory.Status
 	if p.Status == lastStatus {
 		return nil
 	}
@@ -457,27 +457,27 @@ func (p *Post) manageStatusTransition() error {
 		return err
 	}
 
-	var pH PostHistory
+	var pH RequestHistory
 	if isBackStep {
-		err = pH.popForPost(*p, lastStatus)
+		err = pH.popForRequest(*p, lastStatus)
 	} else {
-		err = pH.createForPost(*p)
+		err = pH.createForRequest(*p)
 	}
 
 	if err != nil {
 		return err
 	}
 
-	eventData := PostStatusEventData{
+	eventData := RequestStatusEventData{
 		OldStatus:     lastStatus,
 		NewStatus:     p.Status,
-		PostID:        p.ID,
-		OldProviderID: *GetIntFromNullsInt(lastPostHistory.ProviderID),
+		RequestID:     p.ID,
+		OldProviderID: *GetIntFromNullsInt(lastRequestHistory.ProviderID),
 	}
 
 	e := events.Event{
-		Kind:    domain.EventApiPostStatusUpdated,
-		Message: "Post Status changed",
+		Kind:    domain.EventApiRequestStatusUpdated,
+		Message: "Request Status changed",
 		Payload: events.Payload{"eventData": eventData},
 	}
 
@@ -486,27 +486,27 @@ func (p *Post) manageStatusTransition() error {
 	// If completed, hydrate CompletedOn. If not completed, nullify CompletedOn
 	// Don't use p.UpdateColumns, due to this being called by the AfterUpdate function
 	switch p.Status {
-	case PostStatusCompleted:
+	case RequestStatusCompleted:
 		if !p.CompletedOn.Valid {
 			err := DB.RawQuery(
-				fmt.Sprintf(`UPDATE posts set completed_on = '%s' where ID = %v`,
+				fmt.Sprintf(`UPDATE requests set completed_on = '%s' where ID = %v`,
 					time.Now().Format(domain.DateFormat), p.ID)).Exec()
 			if err != nil {
-				domain.ErrLogger.Printf("unable to set Post.CompletedOn for ID: %v, %s", p.ID, err)
+				domain.ErrLogger.Printf("unable to set Request.CompletedOn for ID: %v, %s", p.ID, err)
 			}
 			if err := DB.Reload(p); err != nil {
-				domain.ErrLogger.Printf("unable to reload Post ID: %v, %s", p.ID, err)
+				domain.ErrLogger.Printf("unable to reload Request ID: %v, %s", p.ID, err)
 			}
 		}
-	case PostStatusOpen, PostStatusAccepted, PostStatusDelivered:
+	case RequestStatusOpen, RequestStatusAccepted, RequestStatusDelivered:
 		if p.CompletedOn.Valid {
 			err := DB.RawQuery(
-				fmt.Sprintf(`UPDATE posts set completed_on = NULL where ID = %v`, p.ID)).Exec()
+				fmt.Sprintf(`UPDATE requests set completed_on = NULL where ID = %v`, p.ID)).Exec()
 			if err != nil {
-				domain.ErrLogger.Printf("unable to nullify Post.CompletedOn for ID: %v, %s", p.ID, err)
+				domain.ErrLogger.Printf("unable to nullify Request.CompletedOn for ID: %v, %s", p.ID, err)
 			}
 			if err := DB.Reload(p); err != nil {
-				domain.ErrLogger.Printf("unable to reload Post ID: %v, %s", p.ID, err)
+				domain.ErrLogger.Printf("unable to reload Request ID: %v, %s", p.ID, err)
 			}
 		}
 	}
@@ -515,13 +515,13 @@ func (p *Post) manageStatusTransition() error {
 }
 
 // Make sure there is no provider on an Open Request
-func (p *Post) AfterUpdate(tx *pop.Connection) error {
+func (p *Request) AfterUpdate(tx *pop.Connection) error {
 
 	if err := p.manageStatusTransition(); err != nil {
 		return err
 	}
 
-	if p.Status != PostStatusOpen {
+	if p.Status != RequestStatusOpen {
 		return nil
 	}
 
@@ -529,29 +529,29 @@ func (p *Post) AfterUpdate(tx *pop.Connection) error {
 
 	// Don't try to use DB.Update inside AfterUpdate, since that gets into an eternal loop
 	if err := DB.RawQuery(
-		fmt.Sprintf(`UPDATE posts set provider_id = NULL where ID = %v`, p.ID)).Exec(); err != nil {
-		domain.ErrLogger.Printf("error removing provider id from post: %s", err.Error())
+		fmt.Sprintf(`UPDATE requests set provider_id = NULL where ID = %v`, p.ID)).Exec(); err != nil {
+		domain.ErrLogger.Printf("error removing provider id from request: %s", err.Error())
 	}
 
 	return nil
 }
 
 // AfterCreate is called by Pop after successful creation of the record
-func (p *Post) AfterCreate(tx *pop.Connection) error {
-	if p.Status != PostStatusOpen {
+func (p *Request) AfterCreate(tx *pop.Connection) error {
+	if p.Status != RequestStatusOpen {
 		return nil
 	}
 
-	var pH PostHistory
-	if err := pH.createForPost(*p); err != nil {
+	var pH RequestHistory
+	if err := pH.createForRequest(*p); err != nil {
 		return err
 	}
 
 	e := events.Event{
-		Kind:    domain.EventApiPostCreated,
-		Message: "Post created",
-		Payload: events.Payload{"eventData": PostCreatedEventData{
-			PostID: p.ID,
+		Kind:    domain.EventApiRequestCreated,
+		Message: "Request created",
+		Payload: events.Payload{"eventData": RequestCreatedEventData{
+			RequestID: p.ID,
 		}},
 	}
 
@@ -559,45 +559,45 @@ func (p *Post) AfterCreate(tx *pop.Connection) error {
 	return nil
 }
 
-func (p *Post) FindByID(id int, eagerFields ...string) error {
+func (p *Request) FindByID(id int, eagerFields ...string) error {
 	if id <= 0 {
-		return errors.New("error finding post: id must a positive number")
+		return errors.New("error finding request: id must a positive number")
 	}
 
 	if err := DB.Eager(eagerFields...).Find(p, id); err != nil {
-		return fmt.Errorf("error finding post by id: %s", err.Error())
+		return fmt.Errorf("error finding request by id: %s", err.Error())
 	}
 
 	return nil
 }
 
-func (p *Post) FindByUUID(uuid string) error {
+func (p *Request) FindByUUID(uuid string) error {
 	if uuid == "" {
-		return errors.New("error finding post: uuid must not be blank")
+		return errors.New("error finding request: uuid must not be blank")
 	}
 
 	queryString := fmt.Sprintf("uuid = '%s'", uuid)
 
 	if err := DB.Eager("CreatedBy").Where(queryString).First(p); err != nil {
-		return fmt.Errorf("error finding post by uuid: %s", err.Error())
+		return fmt.Errorf("error finding request by uuid: %s", err.Error())
 	}
 
 	return nil
 }
 
-func (p *Post) FindByUUIDForCurrentUser(uuid string, user User) error {
+func (p *Request) FindByUUIDForCurrentUser(uuid string, user User) error {
 	if err := p.FindByUUID(uuid); err != nil {
 		return err
 	}
 
-	if !user.canViewPost(*p) {
-		return fmt.Errorf("unauthorized: user %v may not view post %v.", user.ID, p.ID)
+	if !user.canViewRequest(*p) {
+		return fmt.Errorf("unauthorized: user %v may not view request %v.", user.ID, p.ID)
 	}
 
 	return nil
 }
 
-func (p *Post) GetCreator() (*User, error) {
+func (p *Request) GetCreator() (*User, error) {
 	creator := User{}
 	if err := DB.Find(&creator, p.CreatedByID); err != nil {
 		return nil, err
@@ -605,7 +605,7 @@ func (p *Post) GetCreator() (*User, error) {
 	return &creator, nil
 }
 
-func (p *Post) GetProvider() (*User, error) {
+func (p *Request) GetProvider() (*User, error) {
 	provider := User{}
 	if err := DB.Find(&provider, p.ProviderID); err != nil {
 		return nil, nil // provider is a nullable field, so ignore any error
@@ -614,7 +614,7 @@ func (p *Post) GetProvider() (*User, error) {
 }
 
 // GetStatusTransitions finds the forward and backward transitions for the current user
-func (p *Post) GetStatusTransitions(currentUser User) ([]StatusTransitionTarget, error) {
+func (p *Request) GetStatusTransitions(currentUser User) ([]StatusTransitionTarget, error) {
 	statusOptions, err := getNextStatusPossibilities(p.Status)
 	if err != nil {
 		domain.ErrLogger.Printf(err.Error())
@@ -639,8 +639,8 @@ func (p *Post) GetStatusTransitions(currentUser User) ([]StatusTransitionTarget,
 }
 
 // GetPotentialProviderActions
-func (p *Post) GetPotentialProviderActions(currentUser User) ([]string, error) {
-	if p.Status != PostStatusOpen || currentUser.ID == p.CreatedByID {
+func (p *Request) GetPotentialProviderActions(currentUser User) ([]string, error) {
+	if p.Status != RequestStatusOpen || currentUser.ID == p.CreatedByID {
 		return []string{}, nil
 	}
 
@@ -660,7 +660,7 @@ func (p *Post) GetPotentialProviderActions(currentUser User) ([]string, error) {
 	return []string{RequestActionOffer}, nil
 }
 
-func (p *Post) GetOrganization() (*Organization, error) {
+func (p *Request) GetOrganization() (*Organization, error) {
 	organization := Organization{}
 	if err := DB.Find(&organization, p.OrganizationID); err != nil {
 		return nil, err
@@ -669,13 +669,13 @@ func (p *Post) GetOrganization() (*Organization, error) {
 	return &organization, nil
 }
 
-// GetThreads finds all threads on this post in which the given user is participating
-func (p *Post) GetThreads(user User) ([]Thread, error) {
+// GetThreads finds all threads on this request in which the given user is participating
+func (p *Request) GetThreads(user User) ([]Thread, error) {
 	var threads Threads
 	query := DB.Q().
 		Join("thread_participants tp", "threads.id = tp.thread_id").
 		Order("threads.updated_at DESC").
-		Where("tp.user_id = ? AND threads.post_id = ?", user.ID, p.ID)
+		Where("tp.user_id = ? AND threads.request_id = ?", user.ID, p.ID)
 	if err := query.All(&threads); err != nil {
 		return nil, err
 	}
@@ -683,35 +683,35 @@ func (p *Post) GetThreads(user User) ([]Thread, error) {
 	return threads, nil
 }
 
-// AttachFile adds a previously-stored File to this Post
-func (p *Post) AttachFile(fileID string) (File, error) {
+// AttachFile adds a previously-stored File to this Request
+func (p *Request) AttachFile(fileID string) (File, error) {
 	var f File
 	if err := f.FindByUUID(fileID); err != nil {
 		return f, err
 	}
 
-	postFile := PostFile{PostID: p.ID, FileID: f.ID}
-	if err := postFile.Create(); err != nil {
+	requestFile := RequestFile{RequestID: p.ID, FileID: f.ID}
+	if err := requestFile.Create(); err != nil {
 		return f, err
 	}
 	if err := f.SetLinked(); err != nil {
-		domain.ErrLogger.Printf("error marking new post file %d as linked, %s", f.ID, err)
+		domain.ErrLogger.Printf("error marking new request file %d as linked, %s", f.ID, err)
 	}
 
 	return f, nil
 }
 
-// GetFiles retrieves the metadata for all of the files attached to this Post
-func (p *Post) GetFiles() ([]File, error) {
-	var pf []*PostFile
+// GetFiles retrieves the metadata for all of the files attached to this Request
+func (p *Request) GetFiles() ([]File, error) {
+	var pf []*RequestFile
 
 	err := DB.Eager("File").
 		Select().
-		Where("post_id = ?", p.ID).
+		Where("request_id = ?", p.ID).
 		Order("updated_at desc").
 		All(&pf)
 	if err != nil {
-		return nil, fmt.Errorf("error getting files for post id %d, %s", p.ID, err)
+		return nil, fmt.Errorf("error getting files for request id %d, %s", p.ID, err)
 	}
 
 	files := make([]File, len(pf))
@@ -725,19 +725,19 @@ func (p *Post) GetFiles() ([]File, error) {
 	return files, nil
 }
 
-// AttachPhoto assigns a previously-stored File to this Post as its photo. Parameter `fileID` is the UUID
+// AttachPhoto assigns a previously-stored File to this Request as its photo. Parameter `fileID` is the UUID
 // of the photo to attach.
-func (p *Post) AttachPhoto(fileID string) (File, error) {
+func (p *Request) AttachPhoto(fileID string) (File, error) {
 	return addFile(p, fileID)
 }
 
-// RemoveFile removes an attached file from the Post
-func (p *Post) RemoveFile() error {
+// RemoveFile removes an attached file from the Request
+func (p *Request) RemoveFile() error {
 	return removeFile(p)
 }
 
-// GetPhoto retrieves the file attached as the Post photo
-func (p *Post) GetPhoto() (*File, error) {
+// GetPhoto retrieves the file attached as the Request photo
+func (p *Request) GetPhoto() (*File, error) {
 	if err := DB.Load(p, "PhotoFile"); err != nil {
 		return nil, err
 	}
@@ -753,8 +753,8 @@ func (p *Post) GetPhoto() (*File, error) {
 	return &p.PhotoFile, nil
 }
 
-// GetPhotoID retrieves UUID of the file attached as the Post photo
-func (p *Post) GetPhotoID() (*string, error) {
+// GetPhotoID retrieves UUID of the file attached as the Request photo
+func (p *Request) GetPhotoID() (*string, error) {
 	if err := DB.Load(p, "PhotoFile"); err != nil {
 		return nil, err
 	}
@@ -766,7 +766,7 @@ func (p *Post) GetPhotoID() (*string, error) {
 	return nil, nil
 }
 
-// scope query to only include posts from an organization associated with the current user
+// scope query to only include requests from an organization associated with the current user
 func scopeUserOrgs(cUser User) pop.ScopeFunc {
 	return func(q *pop.Query) *pop.Query {
 		orgs := cUser.GetOrgIDs()
@@ -777,44 +777,44 @@ func scopeUserOrgs(cUser User) pop.ScopeFunc {
 	}
 }
 
-// scope query to not include removed posts
+// scope query to not include removed requests
 func scopeNotRemoved() pop.ScopeFunc {
 	return func(q *pop.Query) *pop.Query {
-		return q.Where("status != ?", PostStatusRemoved)
+		return q.Where("status != ?", RequestStatusRemoved)
 	}
 }
 
-// scope query to not include removed or completed posts
+// scope query to not include removed or completed requests
 func scopeNotCompleted() pop.ScopeFunc {
 	return func(q *pop.Query) *pop.Query {
-		return q.Where("status not in (?)", PostStatusRemoved, PostStatusCompleted)
+		return q.Where("status not in (?)", RequestStatusRemoved, RequestStatusCompleted)
 	}
 }
 
-// FindByUserAndUUID finds the post identified by the given UUID if it belongs to the same organization as the
-// given user and if the post has not been marked as removed.
-// FIXME: This method will fail to find a shared post from a trusted Organization
-//func (p *Post) FindByUserAndUUID(ctx context.Context, user User, uuid string) error {
+// FindByUserAndUUID finds the request identified by the given UUID if it belongs to the same organization as the
+// given user and if the request has not been marked as removed.
+// FIXME: This method will fail to find a shared request from a trusted Organization
+//func (p *Request) FindByUserAndUUID(ctx context.Context, user User, uuid string) error {
 //	return DB.Scope(scopeUserOrgs(user)).Scope(scopeNotRemoved()).
 //		Where("uuid = ?", uuid).First(p)
 //}
 
-// PostFilterParams are optional parameters to narrow the list of posts returned from a query
-type PostFilterParams struct {
+// RequestFilterParams are optional parameters to narrow the list of requests returned from a query
+type RequestFilterParams struct {
 	Destination *Location
 	Origin      *Location
 	SearchText  *string
-	PostID      *int
+	RequestID   *int
 }
 
-// FindByUser finds all posts visible to the current user, optionally filtered by location or search text.
-func (p *Posts) FindByUser(ctx context.Context, user User, filter PostFilterParams) error {
+// FindByUser finds all requests visible to the current user, optionally filtered by location or search text.
+func (p *Requests) FindByUser(ctx context.Context, user User, filter RequestFilterParams) error {
 	if user.ID == 0 {
-		return errors.New("invalid User ID in Posts.FindByUser")
+		return errors.New("invalid User ID in Requests.FindByUser")
 	}
 
 	if !user.HasOrganization() {
-		*p = Posts{}
+		*p = Requests{}
 		return nil
 	}
 
@@ -824,7 +824,7 @@ func (p *Posts) FindByUser(ctx context.Context, user User, filter PostFilterPara
 			SELECT organization_id FROM user_organizations WHERE user_id = ?
 		)
 	)
-	SELECT * FROM posts WHERE
+	SELECT * FROM requests WHERE
 	(
 		organization_id IN (SELECT id FROM o)
 		OR
@@ -838,41 +838,41 @@ func (p *Posts) FindByUser(ctx context.Context, user User, filter PostFilterPara
 	)
 	AND status not in (?, ?)`
 
-	args := []interface{}{user.ID, PostVisibilityAll, PostVisibilityTrusted, PostStatusRemoved,
-		PostStatusCompleted}
+	args := []interface{}{user.ID, RequestVisibilityAll, RequestVisibilityTrusted, RequestStatusRemoved,
+		RequestStatusCompleted}
 
 	if filter.SearchText != nil {
 		selectClause = selectClause + " AND (LOWER(title) LIKE ? or LOWER(description) LIKE ?)"
 		likeText := "%" + strings.ToLower(*filter.SearchText) + "%"
 		args = append(args, likeText, likeText)
 	}
-	if filter.PostID != nil {
-		selectClause = selectClause + " AND posts.id = ?"
-		args = append(args, *filter.PostID)
+	if filter.RequestID != nil {
+		selectClause = selectClause + " AND requests.id = ?"
+		args = append(args, *filter.RequestID)
 	}
 
-	posts := Posts{}
+	requests := Requests{}
 	q := DB.RawQuery(selectClause+" ORDER BY created_at desc", args...)
-	if err := q.All(&posts); err != nil {
-		return fmt.Errorf("error finding posts for user %s, %s", user.UUID.String(), err)
+	if err := q.All(&requests); err != nil {
+		return fmt.Errorf("error finding requests for user %s, %s", user.UUID.String(), err)
 	}
 
 	if filter.Destination != nil {
-		posts = posts.FilterDestination(*filter.Destination)
+		requests = requests.FilterDestination(*filter.Destination)
 	}
 	if filter.Origin != nil {
-		posts = posts.FilterOrigin(*filter.Origin)
+		requests = requests.FilterOrigin(*filter.Origin)
 	}
 
-	*p = Posts{}
-	for i := range posts {
-		*p = append(*p, posts[i])
+	*p = Requests{}
+	for i := range requests {
+		*p = append(*p, requests[i])
 	}
 	return nil
 }
 
 // GetDestination reads the destination record, if it exists, and returns the Location object.
-func (p *Post) GetDestination() (*Location, error) {
+func (p *Request) GetDestination() (*Location, error) {
 	location := Location{}
 	if err := DB.Find(&location, p.DestinationID); err != nil {
 		return nil, err
@@ -882,7 +882,7 @@ func (p *Post) GetDestination() (*Location, error) {
 }
 
 // GetOrigin reads the origin record, if it exists, and returns the Location object.
-func (p *Post) GetOrigin() (*Location, error) {
+func (p *Request) GetOrigin() (*Location, error) {
 	if !p.OriginID.Valid {
 		return nil, nil
 	}
@@ -894,8 +894,8 @@ func (p *Post) GetOrigin() (*Location, error) {
 	return &location, nil
 }
 
-// RemoveOrigin removes the origin from the post
-func (p *Post) RemoveOrigin() error {
+// RemoveOrigin removes the origin from the request
+func (p *Request) RemoveOrigin() error {
 	if !p.OriginID.Valid {
 		return nil
 	}
@@ -904,14 +904,14 @@ func (p *Post) RemoveOrigin() error {
 		return err
 	}
 	p.OriginID = nulls.Int{}
-	// don't need to save the post because the database foreign key constraint is set to "ON DELETE SET NULL"
+	// don't need to save the request because the database foreign key constraint is set to "ON DELETE SET NULL"
 	return nil
 }
 
 // SetDestination sets the destination location fields, creating a new record in the database if necessary.
-func (p *Post) SetDestination(location Location) error {
+func (p *Request) SetDestination(location Location) error {
 	if p.MeetingID.Valid {
-		return errors.New("Attempted to set destination on event-based post")
+		return errors.New("Attempted to set destination on event-based request")
 	}
 	location.ID = p.DestinationID
 	p.Destination = location
@@ -919,7 +919,7 @@ func (p *Post) SetDestination(location Location) error {
 }
 
 // SetOrigin sets the origin location fields, creating a new record in the database if necessary.
-func (p *Post) SetOrigin(location Location) error {
+func (p *Request) SetOrigin(location Location) error {
 	if p.OriginID.Valid {
 		location.ID = p.OriginID.Int
 		p.Origin = location
@@ -932,9 +932,9 @@ func (p *Post) SetOrigin(location Location) error {
 	return p.Update()
 }
 
-// IsEditable response with true if the given user is the owner of the post or an admin,
+// IsEditable response with true if the given user is the owner of the request or an admin,
 // and it is not in a locked status.
-func (p *Post) IsEditable(user User) (bool, error) {
+func (p *Request) IsEditable(user User) (bool, error) {
 	if user.ID <= 0 {
 		return false, errors.New("user.ID must be a valid primary key")
 	}
@@ -945,49 +945,49 @@ func (p *Post) IsEditable(user User) (bool, error) {
 		}
 	}
 
-	if user.ID != p.CreatedByID && !user.canEditAllPosts() {
+	if user.ID != p.CreatedByID && !user.canEditAllRequests() {
 		return false, nil
 	}
 
-	return p.isPostEditable(), nil
+	return p.isRequestEditable(), nil
 }
 
-// isPostEditable defines at which states can posts be edited.
-func (p *Post) isPostEditable() bool {
+// isRequestEditable defines at which states can requests be edited.
+func (p *Request) isRequestEditable() bool {
 	switch p.Status {
-	case PostStatusOpen, PostStatusAccepted, PostStatusReceived, PostStatusDelivered:
+	case RequestStatusOpen, RequestStatusAccepted, RequestStatusReceived, RequestStatusDelivered:
 		return true
 	default:
 		return false
 	}
 }
 
-func (p *Post) canCreatorChangeStatus(newStatus PostStatus) bool {
+func (p *Request) canCreatorChangeStatus(newStatus RequestStatus) bool {
 	// Creator can't move off of Delivered except to Completed
-	if p.Status == PostStatusDelivered {
-		return newStatus == PostStatusCompleted
+	if p.Status == RequestStatusDelivered {
+		return newStatus == RequestStatusCompleted
 	}
 
 	// Creator can't move from Accepted to Delivered
-	return !(p.Status == PostStatusAccepted && newStatus == PostStatusDelivered)
+	return !(p.Status == RequestStatusAccepted && newStatus == RequestStatusDelivered)
 }
 
-func (p *Post) canProviderChangeStatus(newStatus PostStatus) bool {
-	if p.Status != PostStatusCompleted && newStatus == PostStatusDelivered {
+func (p *Request) canProviderChangeStatus(newStatus RequestStatus) bool {
+	if p.Status != RequestStatusCompleted && newStatus == RequestStatusDelivered {
 		return true
 	}
 	// for cancelling a DELIVERED status
-	return p.Status == PostStatusDelivered && newStatus == PostStatusAccepted
+	return p.Status == RequestStatusDelivered && newStatus == RequestStatusAccepted
 }
 
-// canUserChangeStatus defines which posts statuses can be changed by which users.
+// canUserChangeStatus defines which requests statuses can be changed by which users.
 // Invalid transitions are not checked here; it is left for the validator to do this.
-func (p *Post) canUserChangeStatus(user User, newStatus PostStatus) bool {
+func (p *Request) canUserChangeStatus(user User, newStatus RequestStatus) bool {
 	if user.AdminRole == UserAdminRoleSuperAdmin {
 		return true
 	}
 
-	if p.Status == PostStatusCompleted {
+	if p.Status == RequestStatusCompleted {
 		return false
 	}
 
@@ -1002,11 +1002,11 @@ func (p *Post) canUserChangeStatus(user User, newStatus PostStatus) bool {
 	return false
 }
 
-// GetAudience returns a list of all of the users which have visibility to this post. As of this writing, it is
-// simply the users in the organization associated with this post.
-func (p *Post) GetAudience() (Users, error) {
+// GetAudience returns a list of all of the users which have visibility to this request. As of this writing, it is
+// simply the users in the organization associated with this request.
+func (p *Request) GetAudience() (Users, error) {
 	if p.ID <= 0 {
-		return nil, errors.New("invalid post ID in GetAudience")
+		return nil, errors.New("invalid request ID in GetAudience")
 	}
 	org, err := p.GetOrganization()
 	if err != nil {
@@ -1014,13 +1014,13 @@ func (p *Post) GetAudience() (Users, error) {
 	}
 	users, err := org.GetUsers()
 	if err != nil {
-		return nil, fmt.Errorf("unable to get post organization user list, %s", err.Error())
+		return nil, fmt.Errorf("unable to get request organization user list, %s", err.Error())
 	}
 	return users, nil
 }
 
 // Meeting reads the meeting record, if it exists, and returns a pointer to the object.
-func (p *Post) Meeting() (*Meeting, error) {
+func (p *Request) Meeting() (*Meeting, error) {
 	if !p.MeetingID.Valid {
 		return nil, nil
 	}
@@ -1032,10 +1032,10 @@ func (p *Post) Meeting() (*Meeting, error) {
 	return &meeting, nil
 }
 
-// FilterDestination returns a list of all posts with a Destination near the given location. The database is not
+// FilterDestination returns a list of all requests with a Destination near the given location. The database is not
 // touched.
-func (p Posts) FilterDestination(location Location) Posts {
-	filtered := make(Posts, 0)
+func (p Requests) FilterDestination(location Location) Requests {
+	filtered := make(Requests, 0)
 	_ = DB.Load(&p, "Destination")
 	for i := range p {
 		if p[i].Destination.IsNear(location) {
@@ -1045,9 +1045,9 @@ func (p Posts) FilterDestination(location Location) Posts {
 	return filtered
 }
 
-// FilterOrigin returns a list of all posts that have an Origin near the given location. The database is not touched.
-func (p Posts) FilterOrigin(location Location) Posts {
-	filtered := make(Posts, 0)
+// FilterOrigin returns a list of all requests that have an Origin near the given location. The database is not touched.
+func (p Requests) FilterOrigin(location Location) Requests {
+	filtered := make(Requests, 0)
 	_ = DB.Load(&p, "Origin")
 	for i := range p {
 		if p[i].Origin.IsNear(location) {
@@ -1057,17 +1057,17 @@ func (p Posts) FilterOrigin(location Location) Posts {
 	return filtered
 }
 
-// IsVisible returns true if the Post is visible to the given user. Only the post ID is used in this method.
-func (p *Post) IsVisible(ctx context.Context, user User) bool {
-	posts := Posts{}
-	if err := posts.FindByUser(ctx, user, PostFilterParams{PostID: &p.ID}); err != nil {
-		domain.Error(domain.GetBuffaloContext(ctx), "error in Post.IsVisible, "+err.Error())
+// IsVisible returns true if the Request is visible to the given user. Only the request ID is used in this method.
+func (p *Request) IsVisible(ctx context.Context, user User) bool {
+	requests := Requests{}
+	if err := requests.FindByUser(ctx, user, RequestFilterParams{RequestID: &p.ID}); err != nil {
+		domain.Error(domain.GetBuffaloContext(ctx), "error in Request.IsVisible, "+err.Error())
 		return false
 	}
-	return len(posts) > 0
+	return len(requests) > 0
 }
 
-func (p *Post) GetCurrentActions(user User) ([]string, error) {
+func (p *Request) GetCurrentActions(user User) ([]string, error) {
 	transitions, err := p.GetStatusTransitions(user)
 	if err != nil {
 		return []string{}, err

@@ -14,7 +14,7 @@ import (
 type UserQueryFixtures struct {
 	models.Organization
 	models.Users
-	models.Posts
+	models.Requests
 	models.Locations
 	models.UserPreferences
 	models.Files
@@ -55,20 +55,20 @@ func fixturesForUserQuery(as *ActionSuite) UserQueryFixtures {
 	}
 
 	loc := test.CreateLocationFixtures(as.DB, 2)
-	postDestination := loc[0]
+	requestDestination := loc[0]
 	meetingLocation := loc[1]
 
-	posts := models.Posts{
+	requests := models.Requests{
 		{
 			CreatedByID:    users[1].ID,
 			OrganizationID: org.ID,
 			ProviderID:     nulls.NewInt(users[1].ID),
-			DestinationID:  postDestination.ID,
+			DestinationID:  requestDestination.ID,
 		},
 	}
-	for i := range posts {
-		posts[i].UUID = domain.GetUUID()
-		createFixture(as, &posts[i])
+	for i := range requests {
+		requests[i].UUID = domain.GetUUID()
+		createFixture(as, &requests[i])
 	}
 
 	as.NoError(aws.CreateS3Bucket(), "unexpected error creating S3 bucket")
@@ -97,7 +97,7 @@ func fixturesForUserQuery(as *ActionSuite) UserQueryFixtures {
 		Organization:    org,
 		Users:           users,
 		UserPreferences: userPreferences,
-		Posts:           posts,
+		Requests:        requests,
 		Locations:       uf.Locations,
 		Files:           models.Files{f},
 		Meetings:        meetings,

@@ -69,10 +69,10 @@ func createFixturesForMeetings(as *ActionSuite) meetingQueryFixtures {
 		createFixture(as, &meetings[i])
 	}
 
-	posts := test.CreatePostFixtures(as.DB, 3, false)
-	posts[0].MeetingID = nulls.NewInt(meetings[2].ID)
-	posts[1].MeetingID = nulls.NewInt(meetings[2].ID)
-	as.NoError(as.DB.Update(&posts))
+	requests := test.CreateRequestFixtures(as.DB, 3, false)
+	requests[0].MeetingID = nulls.NewInt(meetings[2].ID)
+	requests[1].MeetingID = nulls.NewInt(meetings[2].ID)
+	as.NoError(as.DB.Update(&requests))
 
 	invites := models.MeetingInvites{
 		{
@@ -132,7 +132,7 @@ func createFixturesForMeetings(as *ActionSuite) meetingQueryFixtures {
 		Meetings:            meetings,
 		Users:               uf.Users,
 		File:                fileFixture,
-		Posts:               posts,
+		Requests:            requests,
 		MeetingInvites:      invites,
 		MeetingParticipants: participants,
 	}

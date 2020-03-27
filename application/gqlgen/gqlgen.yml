@@ -83,7 +83,7 @@ models:
       organization:
         resolver: true
   Request:
-    model: models.Post
+    model: models.Request
     fields:
       id:
         resolver: true
@@ -116,11 +116,11 @@ models:
   UpdateRequestInput:
     model: gqlgen.requestInput
   RequestSize:
-    model: models.PostSize
+    model: models.RequestSize
   RequestStatus:
-    model: models.PostStatus
+    model: models.RequestStatus
   RequestVisibility:
-    model: models.PostVisibility
+    model: models.RequestVisibility
   Thread:
     model: models.Thread
     fields:

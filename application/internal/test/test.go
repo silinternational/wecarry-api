@@ -94,10 +94,10 @@ func CreateUserFixtures(tx *pop.Connection, n int) UserFixtures {
 	}
 }
 
-// CreatePostFixtures generates any number of post records for testing. Related Location and File records are also
+// CreateRequestFixtures generates any number of post records for testing. Related Location and File records are also
 // created. All post fixtures will be assigned to the first Organization in the DB. If no Organization exists,
 // one will be created. All posts are created by the first User in the DB. If no User exists, one will be created.
-func CreatePostFixtures(tx *pop.Connection, n int, createFiles bool) models.Posts {
+func CreateRequestFixtures(tx *pop.Connection, n int, createFiles bool) models.Requests {
 	var org models.Organization
 	if err := tx.First(&org); err != nil {
 		org = models.Organization{AuthConfig: "{}"}
@@ -119,7 +119,7 @@ func CreatePostFixtures(tx *pop.Connection, n int, createFiles bool) models.Post
 
 	futureDate := time.Now().Add(4 * domain.DurationWeek)
 
-	posts := make(models.Posts, n)
+	posts := make(models.Requests, n)
 	for i := range posts {
 		posts[i].CreatedByID = user.ID
 		posts[i].OrganizationID = org.ID
@@ -128,11 +128,11 @@ func CreatePostFixtures(tx *pop.Connection, n int, createFiles bool) models.Post
 		posts[i].OriginID = nulls.NewInt(locations[i*2+1].ID)
 		posts[i].Title = "title " + strconv.Itoa(i)
 		posts[i].Description = nulls.NewString("description " + strconv.Itoa(i))
-		posts[i].Size = models.PostSizeSmall
-		posts[i].Status = models.PostStatusOpen
+		posts[i].Size = models.RequestSizeSmall
+		posts[i].Status = models.RequestStatusOpen
 		posts[i].URL = nulls.NewString("https://www.example.com/" + strconv.Itoa(i))
 		posts[i].Kilograms = nulls.NewFloat64(float64(i) * 0.1)
-		posts[i].Visibility = models.PostVisibilitySame
+		posts[i].Visibility = models.RequestVisibilitySame
 
 		if createFiles {
 			posts[i].FileID = nulls.NewInt(files[i].ID)
@@ -209,25 +209,25 @@ func AssertStringContains(t *testing.T, haystack, needle string, outputLen int) 
 
 type PotentialProvidersFixtures struct {
 	models.Users
-	models.Posts
+	models.Requests
 	models.PotentialProviders
 }
 
 // CreatePotentialProviderFixtures generates five PotentialProvider records for testing.
-// Five User and three Post fixtures will also be created.  The Posts will
+// Five User and three Request fixtures will also be created.  The Requests will
 // all be created by the first user.
-// The first Post will have all but the first and fifth user as a potential provider.
-// The second Post will have the last two users as potential providers.
-// The third Post won't have any potential providers.
+// The first Request will have all but the first and fifth user as a potential provider.
+// The second Request will have the last two users as potential providers.
+// The third Request won't have any potential providers.
 // The Fifth User will be with a different Organization.
 func CreatePotentialProvidersFixtures(tx *pop.Connection) PotentialProvidersFixtures {
 	uf := CreateUserFixtures(tx, 5)
-	posts := CreatePostFixtures(tx, 3, false)
+	posts := CreateRequestFixtures(tx, 3, false)
 	providers := models.PotentialProviders{}
 
 	for i, p := range posts[:2] {
 		for _, u := range uf.Users[i+1 : 4] {
-			c := models.PotentialProvider{PostID: p.ID, UserID: u.ID}
+			c := models.PotentialProvider{RequestID: p.ID, UserID: u.ID}
 			c.Create()
 			providers = append(providers, c)
 		}
@@ -257,7 +257,7 @@ func CreatePotentialProvidersFixtures(tx *pop.Connection) PotentialProvidersFixt
 
 	return PotentialProvidersFixtures{
 		Users:              uf.Users,
-		Posts:              posts,
+		Requests:           posts,
 		PotentialProviders: providers,
 	}
 }

@@ -15,7 +15,7 @@ import (
 	"github.com/silinternational/wecarry-api/domain"
 )
 
-// Watch is the model for storing post watches that trigger notifications on the conditions specified
+// Watch is the model for storing request watches that trigger notifications on the conditions specified
 type Watch struct {
 	ID            int          `json:"id" db:"id"`
 	CreatedAt     time.Time    `json:"created_at" db:"created_at"`
@@ -27,7 +27,7 @@ type Watch struct {
 	OriginID      nulls.Int    `json:"origin_id" db:"origin_id"`
 	MeetingID     nulls.Int    `json:"meeting_id" db:"meeting_id"`
 	SearchText    nulls.String `json:"search_text" db:"search_text"`
-	Size          *PostSize    `json:"size" db:"size"`
+	Size          *RequestSize `json:"size" db:"size"`
 }
 
 // Watches is used for methods that operate on lists of objects
@@ -147,16 +147,16 @@ func (w *Watch) Destroy() error {
 	return DB.Destroy(w)
 }
 
-// matchesPost returns true if the Watch's Location is near the Post's Destination
-func (w *Watch) matchesPost(post Post) bool {
-	dest, err := post.GetDestination()
+// matchesRequest returns true if the Watch's Location is near the Request's Destination
+func (w *Watch) matchesRequest(request Request) bool {
+	dest, err := request.GetDestination()
 	if err != nil {
-		domain.ErrLogger.Printf("failed to get post %s destination in Watch.matchesPost, %s", post.UUID, err)
+		domain.ErrLogger.Printf("failed to get request %s destination in Watch.matchesRequest, %s", request.UUID, err)
 		return false
 	}
 	loc, err := w.GetDestination()
 	if err != nil {
-		domain.ErrLogger.Printf("failed to get watch %s destination in Watch.matchesPost, %s", w.UUID, err)
+		domain.ErrLogger.Printf("failed to get watch %s destination in Watch.matchesRequest, %s", w.UUID, err)
 	}
 	if loc.IsNear(*dest) {
 		return true

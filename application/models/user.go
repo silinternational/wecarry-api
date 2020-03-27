@@ -21,10 +21,10 @@ import (
 	"github.com/silinternational/wecarry-api/domain"
 )
 
-// These values are used by GraphQL to reference the names of the Post relationships on the User model.
+// These values are used by GraphQL to reference the names of the Request relationships on the User model.
 const (
-	PostsCreated   string = "PostsCreated"
-	PostsProviding string = "PostsProviding"
+	RequestsCreated   string = "RequestsCreated"
+	RequestsProviding string = "RequestsProviding"
 )
 
 type UserAdminRole string
@@ -328,52 +328,52 @@ func (u *User) CanEditOrganization(orgId int) bool {
 	return false
 }
 
-// canEditAllPosts indicates whether the user is allowed to edit all posts.
-func (u *User) canEditAllPosts() bool {
+// canEditAllRequests indicates whether the user is allowed to edit all requests.
+func (u *User) canEditAllRequests() bool {
 	return u.AdminRole == UserAdminRoleSuperAdmin
 }
 
-// CanUpdatePostStatus indicates whether the user is allowed to change the post status.
-func (u *User) CanUpdatePostStatus(post Post, newStatus PostStatus) bool {
+// CanUpdateRequestStatus indicates whether the user is allowed to change the request status.
+func (u *User) CanUpdateRequestStatus(request Request, newStatus RequestStatus) bool {
 	if u.AdminRole == UserAdminRoleSuperAdmin {
 		return true
 	}
 
 	// others can only make limited changes
-	return post.canUserChangeStatus(*u, newStatus)
+	return request.canUserChangeStatus(*u, newStatus)
 }
 
-func (u *User) canViewPost(post Post) bool {
+func (u *User) canViewRequest(request Request) bool {
 	if u.AdminRole == UserAdminRoleSuperAdmin {
 		return true
 	}
 
-	if post.Visibility == PostVisibilityAll {
+	if request.Visibility == RequestVisibilityAll {
 		return true
 	}
 
-	// post creator can view it
-	if u.ID == post.CreatedByID {
+	// request creator can view it
+	if u.ID == request.CreatedByID {
 		return true
 	}
 
 	// If the user has a matching org, then yes
 	uOrgIDs := u.GetOrgIDs()
 	for _, oID := range uOrgIDs {
-		if oID == post.OrganizationID {
+		if oID == request.OrganizationID {
 			return true
 		}
 	}
 
 	// No matching or, so no if not open to trusted orgs
-	if post.Visibility == PostVisibilitySame {
+	if request.Visibility == RequestVisibilitySame {
 		return false
 	}
 
 	// Check Trusted Orgs
 	var orgTrust OrganizationTrust
 	for _, oID := range uOrgIDs {
-		err := orgTrust.FindByOrgIDs(post.OrganizationID, oID)
+		err := orgTrust.FindByOrgIDs(request.OrganizationID, oID)
 		if err == nil {
 			return true
 		}
@@ -451,16 +451,16 @@ func (u *User) FindUserOrganization(org Organization) (UserOrganization, error) 
 	return userOrg, nil
 }
 
-func (u *User) Posts(postRole string) ([]Post, error) {
+func (u *User) Requests(requestRole string) ([]Request, error) {
 	fk := map[string]string{
-		PostsCreated:   "created_by_id=?",
-		PostsProviding: "provider_id=?",
+		RequestsCreated:   "created_by_id=?",
+		RequestsProviding: "provider_id=?",
 	}
-	var posts Posts
-	if err := DB.Where(fk[postRole], u.ID).Order("updated_at desc").All(&posts); err != nil {
-		return nil, fmt.Errorf("error getting posts for user id %v ... %v", u.ID, err)
+	var requests Requests
+	if err := DB.Where(fk[requestRole], u.ID).Order("updated_at desc").All(&requests); err != nil {
+		return nil, fmt.Errorf("error getting requests for user id %v ... %v", u.ID, err)
 	}
-	return posts, nil
+	return requests, nil
 }
 
 // AttachPhoto assigns a previously-stored File to this User as a profile photo
@@ -633,48 +633,48 @@ func (u *User) GetThreads() (Threads, error) {
 	return t, nil
 }
 
-// WantsPostNotification answers the question "Does the user want notifications for this post?"
-func (u *User) WantsPostNotification(post Post) bool {
-	if post.CreatedByID == u.ID {
+// WantsRequestNotification answers the question "Does the user want notifications for this request?"
+func (u *User) WantsRequestNotification(request Request) bool {
+	if request.CreatedByID == u.ID {
 		return false
 	}
 
-	if u.isNearPost(post) {
+	if u.isNearRequest(request) {
 		return true
 	}
 
-	return u.hasMatchingWatch(post)
+	return u.hasMatchingWatch(request)
 }
 
-func (u *User) isNearPost(post Post) bool {
+func (u *User) isNearRequest(request Request) bool {
 	if err := DB.Load(u, "Location"); err != nil {
 		domain.ErrLogger.Printf("load of user location failed, %s", err)
 		return false
 	}
 
-	postOrigin, err := post.GetOrigin()
+	requestOrigin, err := request.GetOrigin()
 	if err != nil {
-		domain.ErrLogger.Printf("failed to get post origin, %s", err)
+		domain.ErrLogger.Printf("failed to get request origin, %s", err)
 		return false
 	}
-	if postOrigin == nil {
+	if requestOrigin == nil {
 		return false
 	}
 
-	if u.Location.IsNear(*postOrigin) {
+	if u.Location.IsNear(*requestOrigin) {
 		return true
 	}
 	return false
 }
 
-func (u *User) hasMatchingWatch(post Post) bool {
+func (u *User) hasMatchingWatch(request Request) bool {
 	watches := Watches{}
 	if err := watches.FindByUser(*u); err != nil {
 		domain.ErrLogger.Printf("failed to get watch list, %s", err)
 		return false
 	}
 	for _, watch := range watches {
-		if watch.matchesPost(post) {
+		if watch.matchesRequest(request) {
 			return true
 		}
 	}

@@ -18,8 +18,8 @@ type Thread struct {
 	CreatedAt    time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at" db:"updated_at"`
 	UUID         uuid.UUID `json:"uuid" db:"uuid"`
-	PostID       int       `json:"post_id" db:"post_id"`
-	Post         Post      `belongs_to:"posts"`
+	RequestID    int       `json:"request_id" db:"request_id"`
+	Request      Request   `belongs_to:"requests"`
 	Participants Users     `many_to_many:"thread_participants"`
 }
 
@@ -42,7 +42,7 @@ func (t Threads) String() string {
 func (t *Thread) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
 		&validators.UUIDIsPresent{Field: t.UUID, Name: "UUID"},
-		&validators.IntIsPresent{Field: t.PostID, Name: "PostID"},
+		&validators.IntIsPresent{Field: t.RequestID, Name: "RequestID"},
 	), nil
 }
 
@@ -70,17 +70,17 @@ func (t *Thread) FindByUUID(uuid string) error {
 	return nil
 }
 
-func (t *Thread) GetPost() (*Post, error) {
-	if t.PostID <= 0 {
+func (t *Thread) GetRequest() (*Request, error) {
+	if t.RequestID <= 0 {
 		if err := t.FindByUUID(t.UUID.String()); err != nil {
 			return nil, err
 		}
 	}
-	post := Post{}
-	if err := DB.Find(&post, t.PostID); err != nil {
-		return nil, fmt.Errorf("error loading post %v %s", t.PostID, err)
+	request := Request{}
+	if err := DB.Find(&request, t.RequestID); err != nil {
+		return nil, fmt.Errorf("error loading request %v %s", t.RequestID, err)
 	}
-	return &post, nil
+	return &request, nil
 }
 
 func (t *Thread) Messages() ([]Message, error) {
@@ -111,13 +111,13 @@ func (t *Thread) GetParticipants() ([]User, error) {
 	return users, nil
 }
 
-func (t *Thread) CreateWithParticipants(post Post, user User) error {
+func (t *Thread) CreateWithParticipants(request Request, user User) error {
 	if user.ID <= 0 {
 		return fmt.Errorf("error creating thread, invalid user ID %v", user.ID)
 	}
 
 	thread := Thread{
-		PostID: post.ID,
+		RequestID: request.ID,
 	}
 
 	if err := thread.Create(); err != nil {
@@ -126,21 +126,21 @@ func (t *Thread) CreateWithParticipants(post Post, user User) error {
 	}
 
 	*t = thread
-	return t.ensureParticipants(post, user.ID)
+	return t.ensureParticipants(request, user.ID)
 }
 
-func (t *Thread) ensureParticipants(post Post, userID int) error {
+func (t *Thread) ensureParticipants(request Request, userID int) error {
 	threadParticipants, err := t.GetParticipants()
 	if domain.IsOtherThanNoRows(err) {
 		err = errors.New("error getting threadParticipants for thread: " + err.Error())
 		return err
 	}
 
-	if err := t.createParticipantIfNeeded(threadParticipants, post.CreatedByID); err != nil {
+	if err := t.createParticipantIfNeeded(threadParticipants, request.CreatedByID); err != nil {
 		return err
 	}
 
-	if userID == post.CreatedByID {
+	if userID == request.CreatedByID {
 		return nil
 	}
 

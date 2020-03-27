@@ -222,39 +222,39 @@ var _ = grift.Namespace("db", func() {
 		postUUID3, _ := uuid.FromString("e625a482-c8ff-4f52-b8ed-73e6b3eac4d7")
 		postUUID4, _ := uuid.FromString("8e08011d-bd5f-4c1a-a4f4-0c019beb939b")
 		postUUID5, _ := uuid.FromString("35e2b332-a968-4932-b205-ca0d1eabdf0e")
-		fixturePosts := []*models.Post{
+		fixturePosts := []*models.Request{
 			{
 				OrganizationID: primaryOrgID,
 				Title:          "Maple Syrup",
-				Size:           models.PostSizeMedium,
+				Size:           models.RequestSizeMedium,
 				UUID:           postUUID1,
 				Description:    nulls.NewString("Missing my good, old, Canadian maple syrupy goodness"),
 			},
 			{
 				OrganizationID: primaryOrgID,
 				Title:          "Jif Peanut Butter",
-				Size:           models.PostSizeSmall,
+				Size:           models.RequestSizeSmall,
 				UUID:           postUUID2,
 				Description:    nulls.NewString("Jiffy Peanut Butter goes on our daily bread!"),
 			},
 			{
 				OrganizationID: primaryOrgID,
 				Title:          "Burt's Bee's Lip Balm",
-				Size:           models.PostSizeTiny,
+				Size:           models.RequestSizeTiny,
 				UUID:           postUUID3,
 				Description:    nulls.NewString("Please save me from having painfully cracked lips!"),
 			},
 			{
 				OrganizationID: primaryOrgID,
 				Title:          "Peanut Butter",
-				Size:           models.PostSizeSmall,
+				Size:           models.RequestSizeSmall,
 				UUID:           postUUID4,
 				Description:    nulls.NewString("I already have chocolate, but I need peanut butter."),
 			},
 			{
 				OrganizationID: fixtureOrgs[0].ID,
 				Title:          "Altoids",
-				Size:           models.PostSizeTiny,
+				Size:           models.RequestSizeTiny,
 				UUID:           postUUID5,
 				Description:    nulls.NewString("The original celebrated curiously strong mints"),
 			},
@@ -262,7 +262,7 @@ var _ = grift.Namespace("db", func() {
 
 		for i, post := range fixturePosts {
 			fixturePosts[i].DestinationID = fixtureLocations[i].ID
-			fixturePosts[i].Status = models.PostStatusOpen
+			fixturePosts[i].Status = models.RequestStatusOpen
 			fixturePosts[i].CreatedByID = fixtureUsers[i].ID
 			fixturePosts[i].NeededBefore = nulls.NewTime(futureDate)
 			err := models.DB.Create(fixturePosts[i])
@@ -277,8 +277,8 @@ var _ = grift.Namespace("db", func() {
 
 		for i, post := range posts {
 			pp := models.PotentialProvider{
-				PostID: post.ID,
-				UserID: fixtureUsers[i].ID,
+				RequestID: post.ID,
+				UserID:    fixtureUsers[i].ID,
 			}
 			err := models.DB.Create(&pp)
 			if err != nil {
@@ -308,7 +308,7 @@ var _ = grift.Namespace("db", func() {
 		}
 
 		for i, thread := range fixtureThreads {
-			fixtureThreads[i].PostID = fixturePosts[i].ID
+			fixtureThreads[i].RequestID = fixturePosts[i].ID
 			err := models.DB.Create(fixtureThreads[i])
 			if err != nil {
 				err = fmt.Errorf("error loading thread fixture ... %+v\n %v", thread, err.Error())

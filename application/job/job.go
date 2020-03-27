@@ -46,18 +46,18 @@ func newThreadMessageHandler(args worker.Args) error {
 		return fmt.Errorf("bad ID (%d) received by new thread message handler, %s", id, err)
 	}
 
-	if err := m.Thread.Load("Participants", "Post"); err != nil {
-		return errors.New("failed to load Participants and Post in new thread message handler")
+	if err := m.Thread.Load("Participants", "Request"); err != nil {
+		return errors.New("failed to load Participants and Request in new thread message handler")
 	}
 
 	template := domain.MessageTemplateNewThreadMessage
-	postTitle := domain.Truncate(m.Thread.Post.Title, "...", 16)
+	postTitle := domain.Truncate(m.Thread.Request.Title, "...", 16)
 	msg := notifications.Message{
 		Template: template,
 		Data: map[string]interface{}{
 			"appName":        domain.Env.AppName,
 			"uiURL":          domain.Env.UIURL,
-			"postURL":        domain.GetPostUIURL(m.Thread.Post.UUID.String()),
+			"postURL":        domain.GetPostUIURL(m.Thread.Request.UUID.String()),
 			"postTitle":      postTitle,
 			"messageContent": m.Content,
 			"sentByNickname": m.SentBy.Nickname,

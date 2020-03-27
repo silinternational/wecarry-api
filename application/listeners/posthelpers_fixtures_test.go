@@ -13,7 +13,7 @@ import (
 type orgUserPostFixtures struct {
 	orgs  models.Organizations
 	users models.Users
-	posts models.Posts
+	posts models.Requests
 }
 
 func CreateFixtures_GetPostUsers(ms *ModelSuite, t *testing.T) orgUserPostFixtures {
@@ -25,8 +25,8 @@ func CreateFixtures_GetPostUsers(ms *ModelSuite, t *testing.T) orgUserPostFixtur
 
 	ms.NoError(err, "could not create language preference for user "+users[1].Nickname)
 
-	posts := test.CreatePostFixtures(ms.DB, 2, false)
-	posts[0].Status = models.PostStatusAccepted
+	posts := test.CreateRequestFixtures(ms.DB, 2, false)
+	posts[0].Status = models.RequestStatusAccepted
 	posts[0].ProviderID = nulls.NewInt(users[1].ID)
 	ms.NoError(ms.DB.Save(&posts[0]))
 
@@ -45,8 +45,8 @@ func CreateFixtures_RequestStatusUpdatedNotifications(ms *ModelSuite, t *testing
 	tU := models.User{}
 	ms.NoError(tU.FindByID(users[1].ID))
 
-	posts := test.CreatePostFixtures(ms.DB, 2, false)
-	posts[0].Status = models.PostStatusAccepted
+	posts := test.CreateRequestFixtures(ms.DB, 2, false)
+	posts[0].Status = models.RequestStatusAccepted
 	posts[0].ProviderID = nulls.NewInt(users[1].ID)
 	ms.NoError(posts[0].Update())
 
@@ -125,14 +125,14 @@ func CreateFixtures_sendNotificationRequestFromStatus(ms *ModelSuite, t *testing
 		createFixture(ms, &locations[i])
 	}
 
-	// Load Post test fixtures
-	posts := []models.Post{
+	// Load Request test fixtures
+	posts := []models.Request{
 		{
 			CreatedByID:    users[0].ID,
 			OrganizationID: users[0].Organizations[0].ID,
 			Title:          "First Request",
-			Size:           models.PostSizeMedium,
-			Status:         models.PostStatusOpen,
+			Size:           models.RequestSizeMedium,
+			Status:         models.RequestStatusOpen,
 			ProviderID:     nulls.NewInt(users[1].ID),
 			DestinationID:  locations[0].ID,
 		},
@@ -140,8 +140,8 @@ func CreateFixtures_sendNotificationRequestFromStatus(ms *ModelSuite, t *testing
 			CreatedByID:    users[0].ID,
 			OrganizationID: users[0].Organizations[0].ID,
 			Title:          "Second Request",
-			Size:           models.PostSizeMedium,
-			Status:         models.PostStatusOpen,
+			Size:           models.RequestSizeMedium,
+			Status:         models.RequestStatusOpen,
 			DestinationID:  locations[1].ID,
 		},
 	}
@@ -168,7 +168,7 @@ func createFixturesForTestSendNewPostNotifications(ms *ModelSuite) orgUserPostFi
 	org := models.Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
 	createFixture(ms, &org)
 
-	posts := test.CreatePostFixtures(ms.DB, 1, false)
+	posts := test.CreateRequestFixtures(ms.DB, 1, false)
 	postOrigin, err := posts[0].GetOrigin()
 	ms.NoError(err)
 

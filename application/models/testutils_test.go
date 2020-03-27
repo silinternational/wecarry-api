@@ -116,10 +116,10 @@ func createUserFixtures(tx *pop.Connection, n int) UserFixtures {
 	}
 }
 
-// CreatePostFixtures generates any number of post records for testing. Related Location and File records are also
-// created. All post fixtures will be assigned to the first Organization in the DB. If no Organization exists,
-// one will be created. All posts are created by the first User in the DB. If no User exists, one will be created.
-func createPostFixtures(tx *pop.Connection, nPosts int, createFiles bool) Posts {
+// createRequestFixtures generates any number of request records for testing. Related Location and File records are also
+// created. All request fixtures will be assigned to the first Organization in the DB. If no Organization exists,
+// one will be created. All requests are created by the first User in the DB. If no User exists, one will be created.
+func createRequestFixtures(tx *pop.Connection, nRequests int, createFiles bool) Requests {
 	var org Organization
 	if err := tx.First(&org); err != nil {
 		org = Organization{AuthConfig: "{}"}
@@ -132,58 +132,58 @@ func createPostFixtures(tx *pop.Connection, nPosts int, createFiles bool) Posts 
 		mustCreate(tx, &user)
 	}
 
-	locations := createLocationFixtures(tx, nPosts*2)
+	locations := createLocationFixtures(tx, nRequests*2)
 
 	var files Files
 	if createFiles {
-		files = createFileFixtures(nPosts)
+		files = createFileFixtures(nRequests)
 	}
 
-	posts := make(Posts, nPosts)
+	requests := make(Requests, nRequests)
 	created := 0
 	futureDate := time.Now().Add(4 * domain.DurationWeek)
-	for i := range posts {
-		posts[i].CreatedByID = user.ID
-		posts[i].OrganizationID = org.ID
-		posts[i].DestinationID = locations[i*2].ID
-		posts[i].OriginID = nulls.NewInt(locations[i*2+1].ID)
-		posts[i].Title = "title " + strconv.Itoa(i)
-		posts[i].Description = nulls.NewString("description " + strconv.Itoa(i))
-		posts[i].NeededBefore = nulls.NewTime(futureDate)
-		posts[i].Size = PostSizeSmall
-		posts[i].Status = PostStatusOpen
-		posts[i].URL = nulls.NewString("https://www.example.com/" + strconv.Itoa(i))
-		posts[i].Kilograms = nulls.NewFloat64(float64(i) * 0.1)
-		posts[i].Visibility = PostVisibilitySame
+	for i := range requests {
+		requests[i].CreatedByID = user.ID
+		requests[i].OrganizationID = org.ID
+		requests[i].DestinationID = locations[i*2].ID
+		requests[i].OriginID = nulls.NewInt(locations[i*2+1].ID)
+		requests[i].Title = "title " + strconv.Itoa(i)
+		requests[i].Description = nulls.NewString("description " + strconv.Itoa(i))
+		requests[i].NeededBefore = nulls.NewTime(futureDate)
+		requests[i].Size = RequestSizeSmall
+		requests[i].Status = RequestStatusOpen
+		requests[i].URL = nulls.NewString("https://www.example.com/" + strconv.Itoa(i))
+		requests[i].Kilograms = nulls.NewFloat64(float64(i) * 0.1)
+		requests[i].Visibility = RequestVisibilitySame
 
 		if createFiles {
-			if _, err := posts[i].AttachPhoto(files[i].UUID.String()); err != nil {
-				panic("error attaching photo to post fixture, " + err.Error())
+			if _, err := requests[i].AttachPhoto(files[i].UUID.String()); err != nil {
+				panic("error attaching photo to request fixture, " + err.Error())
 			}
 		}
 
-		mustCreate(tx, &posts[i])
+		mustCreate(tx, &requests[i])
 		created++
 	}
 
-	return posts
+	return requests
 }
 
 // createPotentialProviderFixtures generates any number of PotentialProvider records for testing.
-// All of these will be assigned to the first Post (Request) in the DB, which has the first User as
+// All of these will be assigned to the first Request (Request) in the DB, which has the first User as
 // its CreatedBy.
-// If necessary, User and Post fixtures will also be created.
-func createPotentialProviderFixtures(tx *pop.Connection, nPosts, nProviders int) PotentialProviders {
-	var posts Posts
-	if err := tx.All(&posts); err != nil {
-		createPostFixtures(tx, nPosts, false)
+// If necessary, User and Request fixtures will also be created.
+func createPotentialProviderFixtures(tx *pop.Connection, nRequests, nProviders int) PotentialProviders {
+	var requests Requests
+	if err := tx.All(&requests); err != nil {
+		createRequestFixtures(tx, nRequests, false)
 	}
-	if len(posts) < nPosts {
-		createPostFixtures(tx, nPosts-len(posts), false)
+	if len(requests) < nRequests {
+		createRequestFixtures(tx, nRequests-len(requests), false)
 	}
 
-	posts = Posts{}
-	tx.All(&posts)
+	requests = Requests{}
+	tx.All(&requests)
 
 	var users Users
 	if err := tx.All(&users); err != nil {
@@ -198,8 +198,8 @@ func createPotentialProviderFixtures(tx *pop.Connection, nPosts, nProviders int)
 	providers := make(PotentialProviders, nProviders)
 	for i := range providers {
 		providers[i] = PotentialProvider{
-			PostID: posts[0].ID,
-			UserID: users[i+1].ID,
+			RequestID: requests[0].ID,
+			UserID:    users[i+1].ID,
 		}
 		mustCreate(tx, &providers[i])
 	}
@@ -237,24 +237,24 @@ func createFileFixtures(n int) Files {
 
 type potentialProvidersFixtures struct {
 	Users
-	Posts
+	Requests
 	PotentialProviders
 }
 
 // createPotentialProviderFixtures generates five PotentialProvider records for testing.
-// If necessary, four User and three Post fixtures will also be created.  The Posts will
+// If necessary, four User and three Request fixtures will also be created.  The Requests will
 // all be created by the first user.
-// The first Post will have all but the first user as a potential provider.
-// The second Post will have the last two users as potential providers.
-// The third Post won't have any potential providers
+// The first Request will have all but the first user as a potential provider.
+// The second Request will have the last two users as potential providers.
+// The third Request won't have any potential providers
 func createPotentialProvidersFixtures(ms *ModelSuite) potentialProvidersFixtures {
 	uf := createUserFixtures(ms.DB, 4)
-	posts := createPostFixtures(ms.DB, 3, false)
+	requests := createRequestFixtures(ms.DB, 3, false)
 	providers := PotentialProviders{}
 
-	for i, p := range posts[:2] {
+	for i, p := range requests[:2] {
 		for _, u := range uf.Users[i+1:] {
-			c := PotentialProvider{PostID: p.ID, UserID: u.ID}
+			c := PotentialProvider{RequestID: p.ID, UserID: u.ID}
 			c.Create()
 			providers = append(providers, c)
 		}
@@ -262,7 +262,7 @@ func createPotentialProvidersFixtures(ms *ModelSuite) potentialProvidersFixtures
 
 	return potentialProvidersFixtures{
 		Users:              uf.Users,
-		Posts:              posts,
+		Requests:           requests,
 		PotentialProviders: providers,
 	}
 }

@@ -255,14 +255,14 @@ func (m *Meeting) CanUpdate(user User) bool {
 	return user.ID == m.CreatedByID
 }
 
-// Posts return all associated Posts
-func (m *Meeting) Posts() (Posts, error) {
-	var posts Posts
-	if err := DB.Where("meeting_id = ?", m.ID).Order("updated_at desc").All(&posts); err != nil {
-		return nil, fmt.Errorf("error getting posts for meeting id %v ... %v", m.ID, err)
+// Requests return all associated Requests
+func (m *Meeting) Requests() (Requests, error) {
+	var requests Requests
+	if err := DB.Where("meeting_id = ?", m.ID).Order("updated_at desc").All(&requests); err != nil {
+		return nil, fmt.Errorf("error getting requests for meeting id %v ... %v", m.ID, err)
 	}
 
-	return posts, nil
+	return requests, nil
 }
 
 // Invites returns all of the MeetingInvites for this Meeting. Only the meeting creator and organizers are authorized.

@@ -9,7 +9,7 @@ import (
 type threadQueryFixtures struct {
 	models.Organization
 	models.Users
-	models.Posts
+	models.Requests
 	models.Threads
 	models.Messages
 }
@@ -19,18 +19,18 @@ func createFixturesForThreadQuery(as *ActionSuite) threadQueryFixtures {
 	org := userFixtures.Organization
 	users := userFixtures.Users
 
-	posts := test.CreatePostFixtures(as.DB, 2, false)
+	requests := test.CreateRequestFixtures(as.DB, 2, false)
 
 	threads := models.Threads{
-		{UUID: domain.GetUUID(), PostID: posts[0].ID},
-		{UUID: domain.GetUUID(), PostID: posts[1].ID},
+		{UUID: domain.GetUUID(), RequestID: requests[0].ID},
+		{UUID: domain.GetUUID(), RequestID: requests[1].ID},
 	}
 	for i := range threads {
 		createFixture(as, &threads[i])
 	}
 
 	threadParticipants := models.ThreadParticipants{
-		{ThreadID: threads[0].ID, UserID: posts[0].CreatedByID},
+		{ThreadID: threads[0].ID, UserID: requests[0].CreatedByID},
 	}
 	for i := range threadParticipants {
 		createFixture(as, &threadParticipants[i])
@@ -56,7 +56,7 @@ func createFixturesForThreadQuery(as *ActionSuite) threadQueryFixtures {
 	return threadQueryFixtures{
 		Organization: org,
 		Users:        users,
-		Posts:        posts,
+		Requests:     requests,
 		Threads:      threads,
 		Messages:     messages,
 	}

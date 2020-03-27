@@ -9,10 +9,10 @@ import (
 	"github.com/silinternational/wecarry-api/models"
 )
 
-// postRoleMap is used to convert PostRole gql enum values to values used by models
-var postRoleMap = map[RequestRole]string{
-	RequestRoleCreatedby: models.PostsCreated,
-	RequestRoleProviding: models.PostsProviding,
+// requestRoleMap is used to convert RequestRole gql enum values to values used by models
+var requestRoleMap = map[RequestRole]string{
+	RequestRoleCreatedby: models.RequestsCreated,
+	RequestRoleProviding: models.RequestsProviding,
 }
 
 // User is required by gqlgen
@@ -44,21 +44,21 @@ func (r *userResolver) Organizations(ctx context.Context, obj *models.User) ([]m
 	return organizations, nil
 }
 
-// Posts retrieves the list of Posts associated with the queried user, where association is defined by the given `role`.
-func (r *userResolver) Requests(ctx context.Context, obj *models.User, role RequestRole) ([]models.Post, error) {
+// Requests retrieves the list of Requests associated with the queried user, where association is defined by the given `role`.
+func (r *userResolver) Requests(ctx context.Context, obj *models.User, role RequestRole) ([]models.Request, error) {
 	if obj == nil {
 		return nil, nil
 	}
 
-	posts, err := obj.Posts(postRoleMap[role])
+	requests, err := obj.Requests(requestRoleMap[role])
 	if err != nil {
 		extras := map[string]interface{}{
 			"role": role,
 		}
-		return nil, domain.ReportError(ctx, err, "GetUserPosts", extras)
+		return nil, domain.ReportError(ctx, err, "GetUserRequests", extras)
 	}
 
-	return posts, nil
+	return requests, nil
 }
 
 // AvatarURL retrieves a URL for the user profile photo or avatar.

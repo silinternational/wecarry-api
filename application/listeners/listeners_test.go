@@ -24,7 +24,7 @@ type ModelSuite struct {
 
 type PostFixtures struct {
 	models.Users
-	models.Posts
+	models.Requests
 }
 
 func Test_ModelSuite(t *testing.T) {
@@ -144,7 +144,7 @@ func (ms *ModelSuite) TestSendNewMessageNotification() {
 func createFixturesForSendPostCreatedNotifications(ms *ModelSuite) PostFixtures {
 	users := test.CreateUserFixtures(ms.DB, 3).Users
 
-	post := test.CreatePostFixtures(ms.DB, 1, false)[0]
+	post := test.CreateRequestFixtures(ms.DB, 1, false)[0]
 	postOrigin, err := post.GetOrigin()
 	ms.NoError(err)
 
@@ -153,8 +153,8 @@ func createFixturesForSendPostCreatedNotifications(ms *ModelSuite) PostFixtures 
 	}
 
 	return PostFixtures{
-		Posts: models.Posts{post},
-		Users: users,
+		Requests: models.Requests{post},
+		Users:    users,
 	}
 }
 
@@ -162,10 +162,10 @@ func (ms *ModelSuite) TestSendPostCreatedNotifications() {
 	f := createFixturesForSendPostCreatedNotifications(ms)
 
 	e := events.Event{
-		Kind:    domain.EventApiPostCreated,
-		Message: "Post created",
-		Payload: events.Payload{"eventData": models.PostCreatedEventData{
-			PostID: f.Posts[0].ID,
+		Kind:    domain.EventApiRequestCreated,
+		Message: "Request created",
+		Payload: events.Payload{"eventData": models.RequestCreatedEventData{
+			RequestID: f.Requests[0].ID,
 		}},
 	}
 

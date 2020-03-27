@@ -14,7 +14,7 @@ type MessageFixtures struct {
 	Messages
 	Threads
 	ThreadParticipants
-	Posts
+	Requests
 }
 
 func Fixtures_Message_GetSender(ms *ModelSuite, t *testing.T) MessageFixtures {
@@ -25,13 +25,13 @@ func Fixtures_Message_GetSender(ms *ModelSuite, t *testing.T) MessageFixtures {
 	location := Location{}
 	createFixture(ms, &location)
 
-	posts := Posts{
+	requests := Requests{
 		{UUID: domain.GetUUID(), CreatedByID: users[0].ID, OrganizationID: org.ID, DestinationID: location.ID},
 	}
-	createFixture(ms, &posts[0])
+	createFixture(ms, &requests[0])
 
 	threads := Threads{
-		{UUID: domain.GetUUID(), PostID: posts[0].ID},
+		{UUID: domain.GetUUID(), RequestID: requests[0].ID},
 	}
 	createFixture(ms, &threads[0])
 
@@ -53,27 +53,27 @@ func Fixtures_Message_GetSender(ms *ModelSuite, t *testing.T) MessageFixtures {
 
 }
 
-// Post 0: Org A (no threads)
-// Post 1: Org B
+// Request 0: Org A (no threads)
+// Request 1: Org B
 //     Thread 0: User 0
 //     Thread 1: User 0, User 2
 //     Thread 2: (no thread participants)
-// Post 2: Org A (no threads)
+// Request 2: Org A (no threads)
 func Fixtures_Message_Create(ms *ModelSuite, t *testing.T) MessageFixtures {
 	uf := createUserFixtures(ms.DB, 2)
 	users := uf.Users
-	posts := createPostFixtures(ms.DB, 3, false)
+	requests := createRequestFixtures(ms.DB, 3, false)
 
 	org := createOrganizationFixtures(ms.DB, 1)[0]
-	posts[0].OrganizationID = org.ID
-	ms.NoError(posts[0].Update())
+	requests[0].OrganizationID = org.ID
+	ms.NoError(requests[0].Update())
 
-	tf := CreateThreadFixtures(ms, posts[1])
+	tf := CreateThreadFixtures(ms, requests[1])
 
 	return MessageFixtures{
-		Users:   append(users, tf.Users...),
-		Threads: tf.Threads,
-		Posts:   posts,
+		Users:    append(users, tf.Users...),
+		Threads:  tf.Threads,
+		Requests: requests,
 	}
 }
 
@@ -85,13 +85,13 @@ func Fixtures_Message_FindByID(ms *ModelSuite, t *testing.T) MessageFixtures {
 	location := Location{}
 	createFixture(ms, &location)
 
-	posts := Posts{
+	requests := Requests{
 		{UUID: domain.GetUUID(), CreatedByID: users[0].ID, OrganizationID: org.ID, DestinationID: location.ID},
 	}
-	createFixture(ms, &posts[0])
+	createFixture(ms, &requests[0])
 
 	threads := Threads{
-		{UUID: domain.GetUUID(), PostID: posts[0].ID},
+		{UUID: domain.GetUUID(), RequestID: requests[0].ID},
 	}
 	createFixture(ms, &threads[0])
 
@@ -133,15 +133,15 @@ func Fixtures_Message_Find(ms *ModelSuite) MessageFixtures {
 	location := Location{}
 	createFixture(ms, &location)
 
-	posts := Posts{
+	requests := Requests{
 		{UUID: domain.GetUUID(), CreatedByID: users[0].ID, OrganizationID: org.ID, DestinationID: location.ID},
 	}
-	createFixture(ms, &posts[0])
+	createFixture(ms, &requests[0])
 
 	threads := make(Threads, 2)
 	for i := range threads {
 		threads[i].UUID = domain.GetUUID()
-		threads[i].PostID = posts[0].ID
+		threads[i].RequestID = requests[0].ID
 		createFixture(ms, &threads[i])
 	}
 
@@ -175,21 +175,21 @@ func CreateMessageFixtures_AfterCreate(ms *ModelSuite, t *testing.T) MessageFixt
 	uf := createUserFixtures(ms.DB, 2)
 	users := uf.Users
 
-	// Each user has a request and is a provider on the other user's post
-	posts := createPostFixtures(ms.DB, 2, false)
-	posts[0].Status = PostStatusAccepted
-	posts[0].ProviderID = nulls.NewInt(users[1].ID)
-	posts[1].Status = PostStatusAccepted
-	posts[1].CreatedByID = users[1].ID
-	posts[1].ProviderID = nulls.NewInt(users[0].ID)
-	ms.NoError(ms.DB.Save(&posts))
+	// Each user has a request and is a provider on the other user's request
+	requests := createRequestFixtures(ms.DB, 2, false)
+	requests[0].Status = RequestStatusAccepted
+	requests[0].ProviderID = nulls.NewInt(users[1].ID)
+	requests[1].Status = RequestStatusAccepted
+	requests[1].CreatedByID = users[1].ID
+	requests[1].ProviderID = nulls.NewInt(users[0].ID)
+	ms.NoError(ms.DB.Save(&requests))
 
 	tenMinutesAgo := time.Now().Add(-10 * time.Minute)
 	threads := make([]Thread, 2)
 	for i, thread := range threads {
 		thread.UUID = domain.GetUUID()
-		err := ms.DB.RawQuery(`INSERT INTO threads (created_at, updated_at, uuid, post_id) VALUES (?, ?, ?, ?)`,
-			tenMinutesAgo, tenMinutesAgo, thread.UUID, posts[i].ID).Exec()
+		err := ms.DB.RawQuery(`INSERT INTO threads (created_at, updated_at, uuid, request_id) VALUES (?, ?, ?, ?)`,
+			tenMinutesAgo, tenMinutesAgo, thread.UUID, requests[i].ID).Exec()
 		ms.NoError(err, "error loading threads")
 
 		// get the record back from the database
@@ -200,26 +200,26 @@ func CreateMessageFixtures_AfterCreate(ms *ModelSuite, t *testing.T) MessageFixt
 	oldTime := tNow.Add(-time.Duration(time.Hour))
 	oldOldTime := oldTime.Add(-time.Duration(time.Hour))
 
-	// One thread per post with 2 users per thread
+	// One thread per request with 2 users per thread
 	threadParticipants := []ThreadParticipant{
 		{
 			ThreadID:     threads[0].ID,
-			UserID:       posts[0].CreatedByID,
+			UserID:       requests[0].CreatedByID,
 			LastViewedAt: tNow, // This will get overridden and then reset again
 		},
 		{
 			ThreadID:     threads[0].ID,
-			UserID:       posts[0].ProviderID.Int,
+			UserID:       requests[0].ProviderID.Int,
 			LastViewedAt: oldTime,
 		},
 		{
 			ThreadID:     threads[1].ID,
-			UserID:       posts[1].CreatedByID,
+			UserID:       requests[1].CreatedByID,
 			LastViewedAt: oldTime,
 		},
 		{
 			ThreadID:     threads[1].ID,
-			UserID:       posts[1].ProviderID.Int,
+			UserID:       requests[1].ProviderID.Int,
 			LastViewedAt: tNow,
 		},
 	}
@@ -231,38 +231,38 @@ func CreateMessageFixtures_AfterCreate(ms *ModelSuite, t *testing.T) MessageFixt
 	// I can't seem to give them custom times
 	messages := Messages{
 		{
-			ThreadID:  threads[0].ID,        // user 0's post
-			SentByID:  posts[0].CreatedByID, // user 0 (Eager)
+			ThreadID:  threads[0].ID,           // user 0's request
+			SentByID:  requests[0].CreatedByID, // user 0 (Eager)
 			Content:   "I can being chocolate if you bring PB",
 			CreatedAt: oldOldTime,
 		},
 		{
-			ThreadID:  threads[0].ID,           // user 0's post
-			SentByID:  posts[0].ProviderID.Int, // user 1 (Lazy)
+			ThreadID:  threads[0].ID,              // user 0's request
+			SentByID:  requests[0].ProviderID.Int, // user 1 (Lazy)
 			Content:   "Great",
 			CreatedAt: oldTime,
 		},
 		{
-			ThreadID:  threads[0].ID,        // user 0's post
-			SentByID:  posts[0].CreatedByID, // user 0 (Eager)
+			ThreadID:  threads[0].ID,           // user 0's request
+			SentByID:  requests[0].CreatedByID, // user 0 (Eager)
 			Content:   "Can you get it here by next week?",
 			CreatedAt: tNow, // Lazy User doesn't see this one
 		},
 		{
-			ThreadID:  threads[1].ID,        // user 1's post
-			SentByID:  posts[1].CreatedByID, // user 1 (Lazy)
+			ThreadID:  threads[1].ID,           // user 1's request
+			SentByID:  requests[1].CreatedByID, // user 1 (Lazy)
 			Content:   "I can being PB if you bring chocolate",
 			CreatedAt: oldTime,
 		},
 		{
-			ThreadID:  threads[1].ID,           // user 1's post
-			SentByID:  posts[1].ProviderID.Int, // user 0 (Eager)
+			ThreadID:  threads[1].ID,              // user 1's request
+			SentByID:  requests[1].ProviderID.Int, // user 0 (Eager)
 			Content:   "Did you see my other message?",
 			CreatedAt: tNow, // Lazy User doesn't see this one
 		},
 		{
-			ThreadID:  threads[1].ID,           // user 1's post
-			SentByID:  posts[1].ProviderID.Int, // user 0 (Eager)
+			ThreadID:  threads[1].ID,              // user 1's request
+			SentByID:  requests[1].ProviderID.Int, // user 0 (Eager)
 			Content:   "Anyone Home?",
 			CreatedAt: tNow, // Lazy User doesn't see this one
 		},

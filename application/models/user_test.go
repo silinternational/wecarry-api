@@ -549,13 +549,13 @@ func (ms *ModelSuite) TestUser_FindUserOrganization() {
 	}
 }
 
-func (ms *ModelSuite) TestUser_GetPosts() {
+func (ms *ModelSuite) TestUser_GetRequests() {
 	t := ms.T()
-	f := CreateFixturesForUserGetPosts(ms)
+	f := CreateFixturesForUserGetRequests(ms)
 
 	type args struct {
-		user     User
-		postRole string
+		user        User
+		requestRole string
 	}
 	tests := []struct {
 		name string
@@ -565,25 +565,25 @@ func (ms *ModelSuite) TestUser_GetPosts() {
 		{
 			name: "created by",
 			args: args{
-				user:     f.Users[0],
-				postRole: PostsCreated,
+				user:        f.Users[0],
+				requestRole: RequestsCreated,
 			},
-			want: []uuid.UUID{f.Posts[3].UUID, f.Posts[2].UUID, f.Posts[1].UUID, f.Posts[0].UUID},
+			want: []uuid.UUID{f.Requests[3].UUID, f.Requests[2].UUID, f.Requests[1].UUID, f.Requests[0].UUID},
 		},
 		{
 			name: "providing",
 			args: args{
-				user:     f.Users[1],
-				postRole: PostsProviding,
+				user:        f.Users[1],
+				requestRole: RequestsProviding,
 			},
-			want: []uuid.UUID{f.Posts[1].UUID, f.Posts[0].UUID},
+			want: []uuid.UUID{f.Requests[1].UUID, f.Requests[0].UUID},
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := test.args.user.Posts(test.args.postRole)
+			got, err := test.args.user.Requests(test.args.requestRole)
 			if err != nil {
-				t.Errorf("Posts() returned error: %s", err)
+				t.Errorf("Requests() returned error: %s", err)
 			}
 
 			ids := make([]uuid.UUID, len(got))
@@ -662,9 +662,9 @@ func (ms *ModelSuite) TestUser_CanEditOrganization() {
 	}
 }
 
-func (ms *ModelSuite) TestUser_CanEditAllPosts() {
+func (ms *ModelSuite) TestUser_CanEditAllRequests() {
 	t := ms.T()
-	f := CreateUserFixtures_CanEditAllPosts(ms)
+	f := CreateUserFixtures_CanEditAllRequests(ms)
 
 	tests := []struct {
 		name string
@@ -681,129 +681,129 @@ func (ms *ModelSuite) TestUser_CanEditAllPosts() {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			ms.Equal(test.want, test.user.canEditAllPosts(), "canEditAllPosts() incorrect result")
+			ms.Equal(test.want, test.user.canEditAllRequests(), "canEditAllRequests() incorrect result")
 		})
 	}
 }
 
-func (ms *ModelSuite) TestUser_CanUpdatePostStatus() {
+func (ms *ModelSuite) TestUser_CanUpdateRequestStatus() {
 	t := ms.T()
 
 	tests := []struct {
 		name      string
-		post      Post
+		request   Request
 		user      User
-		newStatus PostStatus
+		newStatus RequestStatus
 		want      bool
 	}{
 		{
-			name: "Creator",
-			post: Post{CreatedByID: 1},
-			user: User{ID: 1},
-			want: true,
+			name:    "Creator",
+			request: Request{CreatedByID: 1},
+			user:    User{ID: 1},
+			want:    true,
 		},
 		{
-			name: "SuperAdmin",
-			post: Post{},
-			user: User{AdminRole: UserAdminRoleSuperAdmin},
-			want: true,
+			name:    "SuperAdmin",
+			request: Request{},
+			user:    User{AdminRole: UserAdminRoleSuperAdmin},
+			want:    true,
 		},
 		{
 			name:      "Open",
-			post:      Post{CreatedByID: 1},
-			newStatus: PostStatusOpen,
+			request:   Request{CreatedByID: 1},
+			newStatus: RequestStatusOpen,
 			want:      false,
 		},
 		{
 			name:      "Open to Accepted",
-			post:      Post{CreatedByID: 1, Status: PostStatusOpen},
+			request:   Request{CreatedByID: 1, Status: RequestStatusOpen},
 			user:      User{ID: 1},
-			newStatus: PostStatusAccepted,
+			newStatus: RequestStatusAccepted,
 			want:      true,
 		},
 		{
 			name:      "Accepted to Accepted",
-			post:      Post{CreatedByID: 1, Status: PostStatusAccepted},
-			newStatus: PostStatusAccepted,
+			request:   Request{CreatedByID: 1, Status: RequestStatusAccepted},
+			newStatus: RequestStatusAccepted,
 			want:      false,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			ms.Equal(test.want, test.user.CanUpdatePostStatus(test.post, test.newStatus),
+			ms.Equal(test.want, test.user.CanUpdateRequestStatus(test.request, test.newStatus),
 				"incorrect result")
 		})
 	}
 }
 
-func (ms *ModelSuite) TestUser_CanViewPost() {
+func (ms *ModelSuite) TestUser_CanViewRequest() {
 	t := ms.T()
 
-	f := CreateFixturesForUserCanViewPost(ms)
+	f := CreateFixturesForUserCanViewRequest(ms)
 	users := f.Users
-	posts := f.Posts
+	requests := f.Requests
 
 	tests := []struct {
 		name      string
-		post      Post
+		request   Request
 		user      User
-		newStatus PostStatus
+		newStatus RequestStatus
 		want      bool
 	}{
 		{
-			name: "Creator",
-			post: posts[0],
-			user: users[0],
-			want: true,
+			name:    "Creator",
+			request: requests[0],
+			user:    users[0],
+			want:    true,
 		},
 		{
-			name: "SuperAdmin",
-			post: posts[0],
-			user: users[3],
-			want: true,
+			name:    "SuperAdmin",
+			request: requests[0],
+			user:    users[3],
+			want:    true,
 		},
 		{
-			name: "User's Org",
-			post: posts[0],
-			user: users[1],
-			want: true,
+			name:    "User's Org",
+			request: requests[0],
+			user:    users[1],
+			want:    true,
 		},
 		{
-			name: "All with User's untrusted Org",
-			post: posts[2],
-			user: users[0],
-			want: true,
+			name:    "All with User's untrusted Org",
+			request: requests[2],
+			user:    users[0],
+			want:    true,
 		},
 		{
-			name: "Trusted with User's trusted Org",
-			post: posts[3],
-			user: users[1],
-			want: true,
+			name:    "Trusted with User's trusted Org",
+			request: requests[3],
+			user:    users[1],
+			want:    true,
 		},
 		{
-			name: "Trusted with User's untrusted Org",
-			post: posts[3],
-			user: users[0],
-			want: false,
+			name:    "Trusted with User's untrusted Org",
+			request: requests[3],
+			user:    users[0],
+			want:    false,
 		},
 		{
-			name: "Same with User's untrusted Org",
-			post: posts[4],
-			user: users[0],
-			want: false,
+			name:    "Same with User's untrusted Org",
+			request: requests[4],
+			user:    users[0],
+			want:    false,
 		},
 		{
-			name: "Same with User's trusted Org",
-			post: posts[4],
-			user: users[1],
-			want: false,
+			name:    "Same with User's trusted Org",
+			request: requests[4],
+			user:    users[1],
+			want:    false,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			ms.Equal(test.want, test.user.canViewPost(test.post),
+			ms.Equal(test.want, test.user.canViewRequest(test.request),
 				"incorrect result")
 		})
 	}
@@ -1376,52 +1376,52 @@ func (ms *ModelSuite) TestUser_GetThreads() {
 	}
 }
 
-func (ms *ModelSuite) TestUser_WantsPostNotification() {
+func (ms *ModelSuite) TestUser_WantsRequestNotification() {
 	t := ms.T()
-	f := CreateFixturesForUserWantsPostNotification(ms)
+	f := CreateFixturesForUserWantsRequestNotification(ms)
 
 	tests := []struct {
-		name string
-		user User
-		post Post
-		want bool
+		name    string
+		user    User
+		request Request
+		want    bool
 	}{
 		{
-			name: "no, I created it",
-			user: f.Users[0],
-			post: f.Posts[0],
-			want: false,
+			name:    "no, I created it",
+			user:    f.Users[0],
+			request: f.Requests[0],
+			want:    false,
 		},
 		{
-			name: "no, it's a request for something not near me",
-			user: f.Users[1],
-			post: f.Posts[0],
-			want: false,
+			name:    "no, it's a request for something not near me",
+			user:    f.Users[1],
+			request: f.Requests[0],
+			want:    false,
 		},
 		{
-			name: "yes, it's a request for something near me",
-			user: f.Users[1],
-			post: f.Posts[1],
-			want: true,
+			name:    "yes, it's a request for something near me",
+			user:    f.Users[1],
+			request: f.Requests[1],
+			want:    true,
 		},
 		{
-			name: "no, there is no request origin",
-			user: f.Users[1],
-			post: f.Posts[2],
-			want: false,
+			name:    "no, there is no request origin",
+			user:    f.Users[1],
+			request: f.Requests[2],
+			want:    false,
 		},
 		{
-			name: "yes, I have a watch for that location",
-			user: f.Users[2],
-			post: f.Posts[2],
-			want: true,
+			name:    "yes, I have a watch for that location",
+			user:    f.Users[2],
+			request: f.Requests[2],
+			want:    true,
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got := test.user.WantsPostNotification(test.post)
+			got := test.user.WantsRequestNotification(test.request)
 
-			ms.Equal(test.want, got, "incorrect result from WantsPostNotification()")
+			ms.Equal(test.want, got, "incorrect result from WantsRequestNotification()")
 		})
 	}
 }

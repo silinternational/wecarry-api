@@ -45,14 +45,14 @@ var apiListeners = map[string][]apiListener{
 		},
 	},
 
-	domain.EventApiPostStatusUpdated: {
+	domain.EventApiRequestStatusUpdated: {
 		{
 			name:     "post-status-updated-notification",
 			listener: sendPostStatusUpdatedNotification,
 		},
 	},
 
-	domain.EventApiPostCreated: {
+	domain.EventApiRequestCreated: {
 		{
 			name:     "post-created-notification",
 			listener: sendPostCreatedNotifications,
@@ -173,19 +173,19 @@ func sendNewThreadMessageNotification(e events.Event) {
 }
 
 func sendPostStatusUpdatedNotification(e events.Event) {
-	if e.Kind != domain.EventApiPostStatusUpdated {
+	if e.Kind != domain.EventApiRequestStatusUpdated {
 		return
 	}
 
-	pEData, ok := e.Payload["eventData"].(models.PostStatusEventData)
+	pEData, ok := e.Payload["eventData"].(models.RequestStatusEventData)
 	if !ok {
-		domain.ErrLogger.Printf("unable to parse Post Status Updated event payload")
+		domain.ErrLogger.Printf("unable to parse Request Status Updated event payload")
 		return
 	}
 
-	pid := pEData.PostID
+	pid := pEData.RequestID
 
-	post := models.Post{}
+	post := models.Request{}
 	if err := post.FindByID(pid); err != nil {
 		domain.ErrLogger.Printf("unable to find post from event with id %v ... %s", pid, err)
 	}
@@ -194,19 +194,19 @@ func sendPostStatusUpdatedNotification(e events.Event) {
 }
 
 func sendPostCreatedNotifications(e events.Event) {
-	if e.Kind != domain.EventApiPostCreated {
+	if e.Kind != domain.EventApiRequestCreated {
 		return
 	}
 
-	eventData, ok := e.Payload["eventData"].(models.PostCreatedEventData)
+	eventData, ok := e.Payload["eventData"].(models.RequestCreatedEventData)
 	if !ok {
-		domain.ErrLogger.Printf("Post Created event payload incorrect type: %T", e.Payload["eventData"])
+		domain.ErrLogger.Printf("Request Created event payload incorrect type: %T", e.Payload["eventData"])
 		return
 	}
 
-	var post models.Post
-	if err := post.FindByID(eventData.PostID); err != nil {
-		domain.ErrLogger.Printf("unable to find post %d from post-created event, %s", eventData.PostID, err)
+	var post models.Request
+	if err := post.FindByID(eventData.RequestID); err != nil {
+		domain.ErrLogger.Printf("unable to find post %d from post-created event, %s", eventData.RequestID, err)
 	}
 
 	users, err := post.GetAudience()
@@ -234,9 +234,9 @@ func potentialProviderCreated(e events.Event) {
 		domain.ErrLogger.Printf("unable to find PotentialProvider User %d, %s", eventData.UserID, err)
 	}
 
-	var post models.Post
-	if err := post.FindByID(eventData.PostID); err != nil {
-		domain.ErrLogger.Printf("unable to find post %d from PotentialProvider event, %s", eventData.PostID, err)
+	var post models.Request
+	if err := post.FindByID(eventData.RequestID); err != nil {
+		domain.ErrLogger.Printf("unable to find post %d from PotentialProvider event, %s", eventData.RequestID, err)
 	}
 
 	creator := post.CreatedBy
@@ -260,9 +260,9 @@ func potentialProviderSelfDestroyed(e events.Event) {
 		domain.ErrLogger.Printf("unable to find PotentialProvider User %d, %s", eventData.UserID, err)
 	}
 
-	var post models.Post
-	if err := post.FindByID(eventData.PostID); err != nil {
-		domain.ErrLogger.Printf("unable to find post %d from PotentialProvider event, %s", eventData.PostID, err)
+	var post models.Request
+	if err := post.FindByID(eventData.RequestID); err != nil {
+		domain.ErrLogger.Printf("unable to find post %d from PotentialProvider event, %s", eventData.RequestID, err)
 	}
 
 	creator := post.CreatedBy
@@ -286,9 +286,9 @@ func potentialProviderRejected(e events.Event) {
 		domain.ErrLogger.Printf("unable to find PotentialProvider User %d, %s", eventData.UserID, err)
 	}
 
-	var post models.Post
-	if err := post.FindByID(eventData.PostID); err != nil {
-		domain.ErrLogger.Printf("unable to find post %d from PotentialProvider event, %s", eventData.PostID, err)
+	var post models.Request
+	if err := post.FindByID(eventData.RequestID); err != nil {
+		domain.ErrLogger.Printf("unable to find post %d from PotentialProvider event, %s", eventData.RequestID, err)
 	}
 
 	creator := post.CreatedBy.Nickname

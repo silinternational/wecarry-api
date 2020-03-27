@@ -323,7 +323,7 @@ func (o *Organization) AttachLogo(fileID string) (File, error) {
 	return addFile(o, fileID)
 }
 
-// RemoveFile removes an attached file from the Post
+// RemoveFile removes an attached file from the Request
 func (o *Organization) RemoveFile() error {
 	return removeFile(o)
 }

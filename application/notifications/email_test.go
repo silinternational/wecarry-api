@@ -20,7 +20,7 @@ func TestSend(t *testing.T) {
 			"uiURL":          "example.com",
 			"appName":        "Our App",
 			"postURL":        "mypost.example.com",
-			"postTitle":      "My Post<script>doBadThings()</script>",
+			"postTitle":      "My Request<script>doBadThings()</script>",
 			"messageContent": "I can bring it<script>doBadThings()</script>",
 			"sentByNickname": "Fred<script>doBadThings()</script>",
 			"threadURL":      "ourthread.example.com",

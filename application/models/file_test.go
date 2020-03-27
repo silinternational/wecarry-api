@@ -127,7 +127,7 @@ func (ms *ModelSuite) TestFile_Store() {
 	}
 }
 
-func CreateFileFixtures(ms *ModelSuite, posts Posts) Files {
+func CreateFileFixtures(ms *ModelSuite, requests Requests) Files {
 	t := ms.T()
 	const n = 2
 	files := make(Files, n)
@@ -153,13 +153,13 @@ func (ms *ModelSuite) TestFile_FindByUUID() {
 	t := ms.T()
 
 	_ = createUserFixtures(ms.DB, 2)
-	posts := createPostFixtures(ms.DB, 1, false)
+	requests := createRequestFixtures(ms.DB, 1, false)
 
 	if err := aws.CreateS3Bucket(); err != nil {
 		t.Errorf("failed to create S3 bucket, %s", err)
 		t.FailNow()
 	}
-	files := CreateFileFixtures(ms, posts)
+	files := CreateFileFixtures(ms, requests)
 
 	type args struct {
 		fileUUID string
@@ -280,7 +280,7 @@ func (ms *ModelSuite) TestFiles_DeleteUnlinked() {
 	const (
 		nOldUnlinkedFiles = 2
 		nNewUnlinkedFiles = 2
-		nPosts            = 2
+		nRequests         = 2
 		nMeetings         = 2
 		nOrganizations    = 2
 		nUsers            = 2
@@ -292,11 +292,11 @@ func (ms *ModelSuite) TestFiles_DeleteUnlinked() {
 
 	_ = createFileFixtures(nNewUnlinkedFiles)
 
-	posts := createPostFixtures(ms.DB, nPosts, true)
+	requests := createRequestFixtures(ms.DB, nRequests, true)
 
-	postFiles := createFileFixtures(nPosts)
-	for i, p := range postFiles {
-		_, err := posts[i].AttachFile(p.UUID.String())
+	requestFiles := createFileFixtures(nRequests)
+	for i, p := range requestFiles {
+		_, err := requests[i].AttachFile(p.UUID.String())
 		ms.NoError(err)
 	}
 
@@ -319,7 +319,7 @@ func (ms *ModelSuite) TestFiles_DeleteUnlinked() {
 	domain.Env.MaxFileDelete = 2
 	ms.NoError(f.DeleteUnlinked())
 	n, _ := DB.Count(&f)
-	ms.Equal(nPosts*2+nMeetings+nOrganizations+nUsers+nNewUnlinkedFiles, n, "wrong number of files remain")
+	ms.Equal(nRequests*2+nMeetings+nOrganizations+nUsers+nNewUnlinkedFiles, n, "wrong number of files remain")
 }
 
 func (ms *ModelSuite) Test_changeFileExtension() {
