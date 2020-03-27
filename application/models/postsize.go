@@ -15,12 +15,14 @@ func (p PostSize) String() string {
 }
 
 func (p PostSize) isLargerOrSame(other PostSize) bool {
+	// use reverse order of values so undefined is larger than X-large
 	sizes := map[PostSize]int{
-		PostSizeTiny:   1,
-		PostSizeSmall:  2,
+		PostSizeTiny:   5,
+		PostSizeSmall:  4,
 		PostSizeMedium: 3,
-		PostSizeLarge:  4,
-		PostSizeXlarge: 5,
+		PostSizeLarge:  2,
+		PostSizeXlarge: 1,
 	}
-	return sizes[p] >= sizes[other]
+
+	return sizes[p] <= sizes[other]
 }
