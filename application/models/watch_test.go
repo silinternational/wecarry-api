@@ -210,7 +210,7 @@ func (ms *ModelSuite) TestWatch_Meeting() {
 
 func (ms *ModelSuite) TestWatch_compareDestination() {
 	posts := createPostFixtures(ms.DB, 1, false)
-	watches := createWatchFixtures(ms.DB, createUserFixtures(ms.DB, 1).Users)
+	watches := createWatchFixtures(ms.DB, createUserFixtures(ms.DB, 2).Users)
 
 	dest, err := posts[0].GetDestination()
 	ms.NoError(err)
@@ -238,7 +238,13 @@ func (ms *ModelSuite) TestWatch_compareDestination() {
 			want:  false,
 		},
 		{
-			name:  "nil",
+			name:  "destination is nil",
+			watch: &watches[2],
+			post:  posts[0],
+			want:  true,
+		},
+		{
+			name:  "watch is nil",
 			watch: nil,
 			post:  posts[0],
 			want:  false,
@@ -253,7 +259,7 @@ func (ms *ModelSuite) TestWatch_compareDestination() {
 
 func (ms *ModelSuite) TestWatch_compareOrigin() {
 	posts := createPostFixtures(ms.DB, 1, false)
-	watches := createWatchFixtures(ms.DB, createUserFixtures(ms.DB, 1).Users)
+	watches := createWatchFixtures(ms.DB, createUserFixtures(ms.DB, 2).Users)
 
 	origin, err := posts[0].GetOrigin()
 	ms.NoError(err)
@@ -281,7 +287,13 @@ func (ms *ModelSuite) TestWatch_compareOrigin() {
 			want:  false,
 		},
 		{
-			name:  "nil",
+			name:  "origin is nil",
+			watch: &watches[2],
+			post:  posts[0],
+			want:  true,
+		},
+		{
+			name:  "watch is nil",
 			watch: nil,
 			post:  posts[0],
 			want:  false,
@@ -296,7 +308,7 @@ func (ms *ModelSuite) TestWatch_compareOrigin() {
 
 func (ms *ModelSuite) TestWatch_compareSize() {
 	posts := createPostFixtures(ms.DB, 1, false)
-	watches := createWatchFixtures(ms.DB, createUserFixtures(ms.DB, 1).Users)
+	watches := createWatchFixtures(ms.DB, createUserFixtures(ms.DB, 2).Users)
 
 	postSize := posts[0].Size // PostSizeSmall
 	watches[0].Size = &postSize
@@ -325,7 +337,13 @@ func (ms *ModelSuite) TestWatch_compareSize() {
 			want:  false,
 		},
 		{
-			name:  "nil",
+			name:  "size is nil",
+			watch: &watches[2],
+			post:  posts[0],
+			want:  true,
+		},
+		{
+			name:  "watch is nil",
 			watch: nil,
 			post:  posts[0],
 			want:  false,
@@ -340,7 +358,7 @@ func (ms *ModelSuite) TestWatch_compareSize() {
 
 func (ms *ModelSuite) TestWatch_compareMeeting() {
 	posts := createPostFixtures(ms.DB, 1, false)
-	watches := createWatchFixtures(ms.DB, createUserFixtures(ms.DB, 1).Users)
+	watches := createWatchFixtures(ms.DB, createUserFixtures(ms.DB, 2).Users)
 
 	// don't need to save these changes because compareMeeting doesn't access the database
 	watches[0].MeetingID = nulls.NewInt(1)
@@ -366,7 +384,13 @@ func (ms *ModelSuite) TestWatch_compareMeeting() {
 			want:  false,
 		},
 		{
-			name:  "nil",
+			name:  "meeting is nil",
+			watch: &watches[2],
+			post:  posts[0],
+			want:  true,
+		},
+		{
+			name:  "watch is nil",
 			watch: nil,
 			post:  posts[0],
 			want:  false,
@@ -381,7 +405,7 @@ func (ms *ModelSuite) TestWatch_compareMeeting() {
 
 func (ms *ModelSuite) TestWatch_compareText() {
 	posts := createPostFixtures(ms.DB, 1, false)
-	watches := createWatchFixtures(ms.DB, createUserFixtures(ms.DB, 4).Users)
+	watches := createWatchFixtures(ms.DB, createUserFixtures(ms.DB, 3).Users)
 
 	postDescription := posts[0].Description.String
 	watches[0].SearchText = nulls.NewString(postDescription[:len(postDescription)-1])
@@ -399,6 +423,9 @@ func (ms *ModelSuite) TestWatch_compareText() {
 
 	watches[3].SearchText = nulls.NewString("not a match for anything")
 	ms.NoError(watches[3].Update())
+
+	watches[4].SearchText = nulls.String{}
+	ms.NoError(watches[4].Update())
 
 	tests := []struct {
 		name  string
@@ -431,7 +458,13 @@ func (ms *ModelSuite) TestWatch_compareText() {
 			want:  false,
 		},
 		{
-			name:  "nil",
+			name:  "search is nil",
+			watch: &watches[4],
+			post:  posts[0],
+			want:  true,
+		},
+		{
+			name:  "watch is nil",
 			watch: nil,
 			post:  posts[0],
 			want:  false,
