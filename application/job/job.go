@@ -51,14 +51,14 @@ func newThreadMessageHandler(args worker.Args) error {
 	}
 
 	template := domain.MessageTemplateNewThreadMessage
-	postTitle := domain.Truncate(m.Thread.Request.Title, "...", 16)
+	requestTitle := domain.Truncate(m.Thread.Request.Title, "...", 16)
 	msg := notifications.Message{
 		Template: template,
 		Data: map[string]interface{}{
 			"appName":        domain.Env.AppName,
 			"uiURL":          domain.Env.UIURL,
-			"postURL":        domain.GetPostUIURL(m.Thread.Request.UUID.String()),
-			"postTitle":      postTitle,
+			"requestURL":     domain.GetRequestUIURL(m.Thread.Request.UUID.String()),
+			"requestTitle":   requestTitle,
 			"messageContent": m.Content,
 			"sentByNickname": m.SentBy.Nickname,
 			"threadURL":      domain.GetThreadUIURL(m.Thread.UUID.String()),
@@ -87,7 +87,7 @@ func newThreadMessageHandler(args worker.Args) error {
 		msg.ToEmail = p.Email
 		msg.Subject = domain.GetTranslatedSubject(p.GetLanguagePreference(),
 			"Email.Subject.Message.Created",
-			map[string]string{"sentByNickname": m.SentBy.Nickname, "postTitle": postTitle})
+			map[string]string{"sentByNickname": m.SentBy.Nickname, "requestTitle": requestTitle})
 
 		if err := notifications.Send(msg); err != nil {
 			domain.ErrLogger.Printf("error sending 'New Thread Message' notification, %s", err)

@@ -10,13 +10,13 @@ import (
 	"github.com/silinternational/wecarry-api/models"
 )
 
-type orgUserPostFixtures struct {
-	orgs  models.Organizations
-	users models.Users
-	posts models.Requests
+type orgUserRequestFixtures struct {
+	orgs     models.Organizations
+	users    models.Users
+	requests models.Requests
 }
 
-func CreateFixtures_GetPostUsers(ms *ModelSuite, t *testing.T) orgUserPostFixtures {
+func CreateFixtures_GetRequestUsers(ms *ModelSuite, t *testing.T) orgUserRequestFixtures {
 	userFixtures := test.CreateUserFixtures(ms.DB, 3)
 	org := userFixtures.Organization
 	users := userFixtures.Users
@@ -25,19 +25,19 @@ func CreateFixtures_GetPostUsers(ms *ModelSuite, t *testing.T) orgUserPostFixtur
 
 	ms.NoError(err, "could not create language preference for user "+users[1].Nickname)
 
-	posts := test.CreateRequestFixtures(ms.DB, 2, false)
-	posts[0].Status = models.RequestStatusAccepted
-	posts[0].ProviderID = nulls.NewInt(users[1].ID)
-	ms.NoError(ms.DB.Save(&posts[0]))
+	requests := test.CreateRequestFixtures(ms.DB, 2, false)
+	requests[0].Status = models.RequestStatusAccepted
+	requests[0].ProviderID = nulls.NewInt(users[1].ID)
+	ms.NoError(ms.DB.Save(&requests[0]))
 
-	return orgUserPostFixtures{
-		orgs:  models.Organizations{org},
-		users: users,
-		posts: posts,
+	return orgUserRequestFixtures{
+		orgs:     models.Organizations{org},
+		users:    users,
+		requests: requests,
 	}
 }
 
-func CreateFixtures_RequestStatusUpdatedNotifications(ms *ModelSuite, t *testing.T) orgUserPostFixtures {
+func CreateFixtures_RequestStatusUpdatedNotifications(ms *ModelSuite, t *testing.T) orgUserRequestFixtures {
 	userFixtures := test.CreateUserFixtures(ms.DB, 3)
 	org := userFixtures.Organization
 	users := userFixtures.Users
@@ -45,19 +45,19 @@ func CreateFixtures_RequestStatusUpdatedNotifications(ms *ModelSuite, t *testing
 	tU := models.User{}
 	ms.NoError(tU.FindByID(users[1].ID))
 
-	posts := test.CreateRequestFixtures(ms.DB, 2, false)
-	posts[0].Status = models.RequestStatusAccepted
-	posts[0].ProviderID = nulls.NewInt(users[1].ID)
-	ms.NoError(posts[0].Update())
+	requests := test.CreateRequestFixtures(ms.DB, 2, false)
+	requests[0].Status = models.RequestStatusAccepted
+	requests[0].ProviderID = nulls.NewInt(users[1].ID)
+	ms.NoError(requests[0].Update())
 
-	return orgUserPostFixtures{
-		orgs:  models.Organizations{org},
-		users: users,
-		posts: posts,
+	return orgUserRequestFixtures{
+		orgs:     models.Organizations{org},
+		users:    users,
+		requests: requests,
 	}
 }
 
-func CreateFixtures_sendNotificationRequestFromStatus(ms *ModelSuite, t *testing.T) orgUserPostFixtures {
+func CreateFixtures_sendNotificationRequestFromStatus(ms *ModelSuite, t *testing.T) orgUserRequestFixtures {
 
 	unique := domain.GetUUID().String()
 
@@ -126,7 +126,7 @@ func CreateFixtures_sendNotificationRequestFromStatus(ms *ModelSuite, t *testing
 	}
 
 	// Load Request test fixtures
-	posts := []models.Request{
+	requests := []models.Request{
 		{
 			CreatedByID:    users[0].ID,
 			OrganizationID: users[0].Organizations[0].ID,
@@ -145,41 +145,41 @@ func CreateFixtures_sendNotificationRequestFromStatus(ms *ModelSuite, t *testing
 			DestinationID:  locations[1].ID,
 		},
 	}
-	for i := range posts {
-		posts[i].UUID = domain.GetUUID()
-		if err := ms.DB.Create(&posts[i]); err != nil {
-			t.Errorf("could not create test post ... %v", err)
+	for i := range requests {
+		requests[i].UUID = domain.GetUUID()
+		if err := ms.DB.Create(&requests[i]); err != nil {
+			t.Errorf("could not create test request ... %v", err)
 			t.FailNow()
 		}
-		if err := models.DB.Load(&posts[i], "CreatedBy", "Provider", "Organization"); err != nil {
-			t.Errorf("Error loading post associations: %s", err)
+		if err := models.DB.Load(&requests[i], "CreatedBy", "Provider", "Organization"); err != nil {
+			t.Errorf("Error loading request associations: %s", err)
 			t.FailNow()
 		}
 	}
 
-	return orgUserPostFixtures{
-		orgs:  models.Organizations{org},
-		users: users,
-		posts: posts,
+	return orgUserRequestFixtures{
+		orgs:     models.Organizations{org},
+		users:    users,
+		requests: requests,
 	}
 }
 
-func createFixturesForTestSendNewPostNotifications(ms *ModelSuite) orgUserPostFixtures {
+func createFixturesForTestSendNewRequestNotifications(ms *ModelSuite) orgUserRequestFixtures {
 	org := models.Organization{UUID: domain.GetUUID(), AuthConfig: "{}"}
 	createFixture(ms, &org)
 
-	posts := test.CreateRequestFixtures(ms.DB, 1, false)
-	postOrigin, err := posts[0].GetOrigin()
+	requests := test.CreateRequestFixtures(ms.DB, 1, false)
+	requestOrigin, err := requests[0].GetOrigin()
 	ms.NoError(err)
 
 	users := test.CreateUserFixtures(ms.DB, 3).Users
 	for i := range users {
-		ms.NoError(users[i].SetLocation(*postOrigin))
+		ms.NoError(users[i].SetLocation(*requestOrigin))
 	}
 
-	return orgUserPostFixtures{
-		users: users,
-		posts: posts,
+	return orgUserRequestFixtures{
+		users:    users,
+		requests: requests,
 	}
 }
 

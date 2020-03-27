@@ -2,7 +2,7 @@ package models
 
 import "testing"
 
-func (ms *ModelSuite) TestPostSize_isLargerOrSame() {
+func (ms *ModelSuite) TestRequestSize_isLargerOrSame() {
 	tests := []struct {
 		name string
 		p    RequestSize

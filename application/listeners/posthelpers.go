@@ -9,30 +9,30 @@ import (
 	"github.com/silinternational/wecarry-api/notifications"
 )
 
-const postTitleKey = "postTitle"
+const requestTitleKey = "requestTitle"
 
-type postUser struct {
+type requestUser struct {
 	Language string
 	Nickname string
 	Email    string
 }
 
-type postUsers struct {
-	Receiver postUser
-	Provider postUser
+type requestUsers struct {
+	Receiver requestUser
+	Provider requestUser
 }
 
-// getPostUsers returns up to two entries for the Request Requester and
+// getRequestUsers returns up to two entries for the Request Requester and
 // Request Provider assuming their email is not blank.
-func getPostUsers(post models.Request) postUsers {
+func getRequestUsers(request models.Request) requestUsers {
 
-	receiver, _ := post.GetCreator()
-	provider, _ := post.GetProvider()
+	receiver, _ := request.GetCreator()
+	provider, _ := request.GetProvider()
 
-	var recipients postUsers
+	var recipients requestUsers
 
 	if receiver != nil {
-		recipients.Receiver = postUser{
+		recipients.Receiver = requestUser{
 			Language: receiver.GetLanguagePreference(),
 			Nickname: receiver.Nickname,
 			Email:    receiver.Email,
@@ -40,7 +40,7 @@ func getPostUsers(post models.Request) postUsers {
 	}
 
 	if provider != nil {
-		recipients.Provider = postUser{
+		recipients.Provider = requestUser{
 			Language: provider.GetLanguagePreference(),
 			Nickname: provider.Nickname,
 			Email:    provider.Email,
@@ -50,53 +50,53 @@ func getPostUsers(post models.Request) postUsers {
 	return recipients
 }
 
-func getMessageForProvider(postUsers postUsers, post models.Request, template string) notifications.Message {
+func getMessageForProvider(requestUsers requestUsers, request models.Request, template string) notifications.Message {
 	data := map[string]interface{}{
-		"uiURL":            domain.Env.UIURL,
-		"appName":          domain.Env.AppName,
-		"postURL":          domain.GetPostUIURL(post.UUID.String()),
-		"postTitle":        domain.Truncate(post.Title, "...", 16),
-		"postDescription":  post.Description,
-		"receiverNickname": postUsers.Receiver.Nickname,
-		"receiverEmail":    postUsers.Receiver.Email,
+		"uiURL":              domain.Env.UIURL,
+		"appName":            domain.Env.AppName,
+		"requestURL":         domain.GetRequestUIURL(request.UUID.String()),
+		"requestTitle":       domain.Truncate(request.Title, "...", 16),
+		"requestDescription": request.Description,
+		"receiverNickname":   requestUsers.Receiver.Nickname,
+		"receiverEmail":      requestUsers.Receiver.Email,
 	}
 
 	return notifications.Message{
 		Template:  template,
 		Data:      data,
-		ToName:    postUsers.Provider.Nickname,
-		ToEmail:   postUsers.Provider.Email,
+		ToName:    requestUsers.Provider.Nickname,
+		ToEmail:   requestUsers.Provider.Email,
 		FromEmail: domain.EmailFromAddress(nil),
 	}
 }
 
-func getMessageForReceiver(postUsers postUsers, post models.Request, template string) notifications.Message {
+func getMessageForReceiver(requestUsers requestUsers, request models.Request, template string) notifications.Message {
 	data := map[string]interface{}{
-		"uiURL":            domain.Env.UIURL,
-		"appName":          domain.Env.AppName,
-		"postURL":          domain.GetPostUIURL(post.UUID.String()),
-		"postTitle":        domain.Truncate(post.Title, "...", 16),
-		"postDescription":  post.Description,
-		"providerNickname": postUsers.Provider.Nickname,
-		"providerEmail":    postUsers.Provider.Email,
+		"uiURL":              domain.Env.UIURL,
+		"appName":            domain.Env.AppName,
+		"requestURL":         domain.GetRequestUIURL(request.UUID.String()),
+		"requestTitle":       domain.Truncate(request.Title, "...", 16),
+		"requestDescription": request.Description,
+		"providerNickname":   requestUsers.Provider.Nickname,
+		"providerEmail":      requestUsers.Provider.Email,
 	}
 
 	return notifications.Message{
 		Template:  template,
 		Data:      data,
-		ToName:    postUsers.Receiver.Nickname,
-		ToEmail:   postUsers.Receiver.Email,
+		ToName:    requestUsers.Receiver.Nickname,
+		ToEmail:   requestUsers.Receiver.Email,
 		FromEmail: domain.EmailFromAddress(nil),
 	}
 }
 
 func getPotentialProviderMessageForReceiver(
-	requester models.User, providerNickname, template string, post models.Request) notifications.Message {
+	requester models.User, providerNickname, template string, request models.Request) notifications.Message {
 	data := map[string]interface{}{
 		"appName":          domain.Env.AppName,
 		"uiURL":            domain.Env.UIURL,
-		"postURL":          domain.GetPostUIURL(post.UUID.String()),
-		"postTitle":        domain.Truncate(post.Title, "...", 16),
+		"requestURL":       domain.GetRequestUIURL(request.UUID.String()),
+		"requestTitle":     domain.Truncate(request.Title, "...", 16),
 		"providerNickname": providerNickname,
 	}
 
@@ -110,18 +110,18 @@ func getPotentialProviderMessageForReceiver(
 }
 
 func sendNotificationRequestToProvider(params senderParams) {
-	post := params.post
+	request := params.request
 	template := params.template
-	postUsers := getPostUsers(post)
+	requestUsers := getRequestUsers(request)
 
-	if postUsers.Provider.Nickname == "" {
+	if requestUsers.Provider.Nickname == "" {
 		domain.ErrLogger.Printf("error preparing '%s' notification - no provider", template)
 		return
 	}
 
-	msg := getMessageForProvider(postUsers, post, template)
-	msg.Subject = domain.GetTranslatedSubject(postUsers.Provider.Language, params.subject,
-		map[string]string{postTitleKey: post.Title})
+	msg := getMessageForProvider(requestUsers, request, template)
+	msg.Subject = domain.GetTranslatedSubject(requestUsers.Provider.Language, params.subject,
+		map[string]string{requestTitleKey: request.Title})
 
 	if err := notifications.Send(msg); err != nil {
 		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
@@ -129,19 +129,19 @@ func sendNotificationRequestToProvider(params senderParams) {
 }
 
 func sendNotificationRequestToReceiver(params senderParams) {
-	post := params.post
+	request := params.request
 	template := params.template
 
-	postUsers := getPostUsers(post)
+	requestUsers := getRequestUsers(request)
 
-	if postUsers.Provider.Nickname == "" {
+	if requestUsers.Provider.Nickname == "" {
 		domain.ErrLogger.Printf("error preparing '%s' notification - no provider", template)
 		return
 	}
 
-	msg := getMessageForReceiver(postUsers, post, template)
-	msg.Subject = domain.GetTranslatedSubject(postUsers.Receiver.Language, params.subject,
-		map[string]string{postTitleKey: post.Title})
+	msg := getMessageForReceiver(requestUsers, request, template)
+	msg.Subject = domain.GetTranslatedSubject(requestUsers.Receiver.Language, params.subject,
+		map[string]string{requestTitleKey: request.Title})
 
 	if err := notifications.Send(msg); err != nil {
 		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
@@ -153,11 +153,11 @@ func sendNotificationRequestFromAcceptedToDelivered(params senderParams) {
 }
 
 func sendNotificationRequestFromAcceptedToOpen(params senderParams) {
-	post := params.post
+	request := params.request
 	template := params.template
 	eData := params.pEventData
 
-	postUsers := getPostUsers(post)
+	requestUsers := getRequestUsers(request)
 
 	oldProvider := models.User{}
 	if err := oldProvider.FindByID(eData.OldProviderID); err != nil {
@@ -166,12 +166,12 @@ func sendNotificationRequestFromAcceptedToOpen(params senderParams) {
 		return
 	}
 
-	msg := getMessageForProvider(postUsers, post, template)
+	msg := getMessageForProvider(requestUsers, request, template)
 
 	msg.ToName = oldProvider.GetRealName()
 	msg.ToEmail = oldProvider.Email
 	msg.Subject = domain.GetTranslatedSubject(oldProvider.GetLanguagePreference(), params.subject,
-		map[string]string{postTitleKey: post.Title})
+		map[string]string{requestTitleKey: request.Title})
 
 	if err := notifications.Send(msg); err != nil {
 		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
@@ -186,7 +186,7 @@ func sendNotificationRequestFromAcceptedToRemoved(params senderParams) {
 	sendNotificationRequestToProvider(params)
 }
 
-func sendRejectionToPotentialProvider(potentialProvider models.User, post models.Request) {
+func sendRejectionToPotentialProvider(potentialProvider models.User, request models.Request) {
 	template := domain.MessageTemplatePotentialProviderRejected
 	ppNickname := potentialProvider.Nickname
 	ppEmail := potentialProvider.Email
@@ -196,7 +196,7 @@ func sendRejectionToPotentialProvider(potentialProvider models.User, post models
 		ppEmail = "Missing Email"
 	}
 
-	receiver, err := post.GetCreator()
+	receiver, err := request.GetCreator()
 	if err != nil {
 		domain.ErrLogger.Printf("error getting Request Receiver for email data, %s", err)
 	}
@@ -204,8 +204,8 @@ func sendRejectionToPotentialProvider(potentialProvider models.User, post models
 	data := map[string]interface{}{
 		"uiURL":            domain.Env.UIURL,
 		"appName":          domain.Env.AppName,
-		"postURL":          domain.GetPostUIURL(post.UUID.String()),
-		"postTitle":        domain.Truncate(post.Title, "...", 16),
+		"requestURL":       domain.GetRequestUIURL(request.UUID.String()),
+		"requestTitle":     domain.Truncate(request.Title, "...", 16),
 		"ppNickname":       ppNickname,
 		"ppEmail":          ppEmail,
 		"receiverNickname": receiver.Nickname,
@@ -220,7 +220,7 @@ func sendRejectionToPotentialProvider(potentialProvider models.User, post models
 		ToEmail:   ppEmail,
 		FromEmail: domain.EmailFromAddress(nil),
 		Subject: domain.GetTranslatedSubject(potentialProvider.GetLanguagePreference(), subject,
-			map[string]string{postTitleKey: post.Title}),
+			map[string]string{requestTitleKey: request.Title}),
 	}
 
 	if err := notifications.Send(msg); err != nil {
@@ -230,18 +230,18 @@ func sendRejectionToPotentialProvider(potentialProvider models.User, post models
 
 func sendNotificationRequestFromOpenToAccepted(params senderParams) {
 	sendNotificationRequestToProvider(params)
-	post := params.post
+	request := params.request
 
 	var providers models.PotentialProviders
-	users, err := providers.FindUsersByRequestID(post, models.User{})
+	users, err := providers.FindUsersByRequestID(request, models.User{})
 	if err != nil {
-		domain.ErrLogger.Printf("error finding rejected potential providers for post id, %v ... %v",
-			post.ID, err)
+		domain.ErrLogger.Printf("error finding rejected potential providers for request id, %v ... %v",
+			request.ID, err)
 	}
 
 	for _, u := range users {
-		if u.ID != post.ProviderID.Int {
-			sendRejectionToPotentialProvider(u, post)
+		if u.ID != request.ProviderID.Int {
+			sendRejectionToPotentialProvider(u, request)
 		}
 	}
 
@@ -262,7 +262,7 @@ func sendNotificationEmpty(params senderParams) {
 type senderParams struct {
 	template   string
 	subject    string
-	post       models.Request
+	request    models.Request
 	pEventData models.RequestStatusEventData
 }
 
@@ -333,7 +333,7 @@ var statusSenders = map[string]sender{
 		sender:   sendNotificationEmpty},
 }
 
-func requestStatusUpdatedNotifications(post models.Request, eData models.RequestStatusEventData) {
+func requestStatusUpdatedNotifications(request models.Request, eData models.RequestStatusEventData) {
 
 	fromStatusTo := join(eData.OldStatus, eData.NewStatus)
 	sender, ok := statusSenders[fromStatusTo]
@@ -346,32 +346,32 @@ func requestStatusUpdatedNotifications(post models.Request, eData models.Request
 	params := senderParams{
 		template:   notifications.GetEmailTemplate(sender.template),
 		subject:    sender.subject,
-		post:       post,
+		request:    request,
 		pEventData: eData,
 	}
 
 	sender.sender(params)
 }
 
-func sendNewPostNotifications(post models.Request, users models.Users) {
+func sendNewRequestNotifications(request models.Request, users models.Users) {
 	for i, user := range users {
-		if !user.WantsRequestNotification(post) {
+		if !user.WantsRequestNotification(request) {
 			continue
 		}
 
-		if err := sendNewPostNotification(user, post); err != nil {
-			domain.ErrLogger.Printf("error sending post created notification (%d of %d), %s",
+		if err := sendNewRequestNotification(user, request); err != nil {
+			domain.ErrLogger.Printf("error sending request created notification (%d of %d), %s",
 				i, len(users), err)
 		}
 	}
 }
 
-func sendNewPostNotification(user models.User, post models.Request) error {
+func sendNewRequestNotification(user models.User, request models.Request) error {
 	if user.Email == "" {
 		return errors.New("'To' email address is required")
 	}
 
-	receiver, err := post.GetCreator()
+	receiver, err := request.GetCreator()
 	if err != nil {
 		return err
 	}
@@ -380,9 +380,9 @@ func sendNewPostNotification(user models.User, post models.Request) error {
 		receiverNickname = receiver.Nickname
 	}
 
-	postDestination := ""
-	if dest, err := post.GetDestination(); err == nil && dest != nil {
-		postDestination = dest.Description
+	requestDestination := ""
+	if dest, err := request.GetDestination(); err == nil && dest != nil {
+		requestDestination = dest.Description
 	}
 
 	msg := notifications.Message{
@@ -393,36 +393,36 @@ func sendNewPostNotification(user models.User, post models.Request) error {
 		ToEmail:   user.Email,
 		FromEmail: domain.EmailFromAddress(nil),
 		Data: map[string]interface{}{
-			"appName":          domain.Env.AppName,
-			"uiURL":            domain.Env.UIURL,
-			"postURL":          domain.GetPostUIURL(post.UUID.String()),
-			"postTitle":        domain.Truncate(post.Title, "...", 16),
-			"receiverNickname": receiverNickname,
-			"postDescription":  post.Description,
-			"postDestination":  postDestination,
+			"appName":            domain.Env.AppName,
+			"uiURL":              domain.Env.UIURL,
+			"requestURL":         domain.GetRequestUIURL(request.UUID.String()),
+			"requestTitle":       domain.Truncate(request.Title, "...", 16),
+			"receiverNickname":   receiverNickname,
+			"requestDescription": request.Description,
+			"requestDestination": requestDestination,
 		},
 	}
 	return notifications.Send(msg)
 }
 
-func sendPotentialProviderCreatedNotification(providerNickname string, requester models.User, post models.Request) error {
+func sendPotentialProviderCreatedNotification(providerNickname string, requester models.User, request models.Request) error {
 	template := domain.MessageTemplatePotentialProviderCreated
-	msg := getPotentialProviderMessageForReceiver(requester, providerNickname, template, post)
+	msg := getPotentialProviderMessageForReceiver(requester, providerNickname, template, request)
 	msg.Subject = domain.GetTranslatedSubject(requester.GetLanguagePreference(),
 		"Email.Subject.Request.NewOffer", map[string]string{})
 
 	return notifications.Send(msg)
 }
 
-func sendPotentialProviderSelfDestroyedNotification(providerNickname string, requester models.User, post models.Request) error {
+func sendPotentialProviderSelfDestroyedNotification(providerNickname string, requester models.User, request models.Request) error {
 	template := domain.MessageTemplatePotentialProviderSelfDestroyed
-	msg := getPotentialProviderMessageForReceiver(requester, providerNickname, template, post)
+	msg := getPotentialProviderMessageForReceiver(requester, providerNickname, template, request)
 	msg.Subject = domain.GetTranslatedSubject(requester.GetLanguagePreference(),
 		"Email.Subject.Request.OfferRetracted", map[string]string{})
 	return notifications.Send(msg)
 }
 
-func sendPotentialProviderRejectedNotification(provider models.User, requester string, post models.Request) error {
+func sendPotentialProviderRejectedNotification(provider models.User, requester string, request models.Request) error {
 	msg := notifications.Message{
 		Subject: domain.GetTranslatedSubject(provider.GetLanguagePreference(),
 			"Email.Subject.Request.OfferRejected", map[string]string{}),
@@ -433,8 +433,8 @@ func sendPotentialProviderRejectedNotification(provider models.User, requester s
 		Data: map[string]interface{}{
 			"appName":          domain.Env.AppName,
 			"uiURL":            domain.Env.UIURL,
-			"postURL":          domain.GetPostUIURL(post.UUID.String()),
-			"postTitle":        domain.Truncate(post.Title, "...", 16),
+			"requestURL":       domain.GetRequestUIURL(request.UUID.String()),
+			"requestTitle":     domain.Truncate(request.Title, "...", 16),
 			"receiverNickname": requester,
 		},
 	}
