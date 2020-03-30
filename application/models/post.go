@@ -236,8 +236,8 @@ type RequestCreatedEventData struct {
 }
 
 // String can be helpful for serializing the model
-func (p Request) String() string {
-	jp, _ := json.Marshal(p)
+func (r Request) String() string {
+	jp, _ := json.Marshal(r)
 	return string(jp)
 }
 
@@ -245,33 +245,33 @@ func (p Request) String() string {
 type Requests []Request
 
 // String can be helpful for serializing the model
-func (p Requests) String() string {
-	jp, _ := json.Marshal(p)
+func (r Requests) String() string {
+	jp, _ := json.Marshal(r)
 	return string(jp)
 }
 
 // Create stores the Request data as a new record in the database.
-func (p *Request) Create() error {
-	if p.Visibility == "" {
-		p.Visibility = RequestVisibilitySame
+func (r *Request) Create() error {
+	if r.Visibility == "" {
+		r.Visibility = RequestVisibilitySame
 	}
-	return create(p)
+	return create(r)
 }
 
 // Update writes the Request data to an existing database record.
-func (p *Request) Update() error {
-	return update(p)
+func (r *Request) Update() error {
+	return update(r)
 }
 
-func (p *Request) NewWithUser(currentUser User) error {
-	p.CreatedByID = currentUser.ID
-	p.Status = RequestStatusOpen
+func (r *Request) NewWithUser(currentUser User) error {
+	r.CreatedByID = currentUser.ID
+	r.Status = RequestStatusOpen
 	return nil
 }
 
 // SetProviderWithStatus sets the new Status of the Request and if needed it
 // also sets the ProviderID (i.e. when the new status is ACCEPTED)
-func (p *Request) SetProviderWithStatus(status RequestStatus, providerID *string) error {
+func (r *Request) SetProviderWithStatus(status RequestStatus, providerID *string) error {
 	if status == RequestStatusAccepted {
 		if providerID == nil {
 			return errors.New("provider ID must not be nil")
@@ -282,50 +282,50 @@ func (p *Request) SetProviderWithStatus(status RequestStatus, providerID *string
 		if err := user.FindByUUID(*providerID); err != nil {
 			return errors.New("error finding provider: " + err.Error())
 		}
-		p.ProviderID = nulls.NewInt(user.ID)
+		r.ProviderID = nulls.NewInt(user.ID)
 	}
-	p.Status = status
+	r.Status = status
 	return nil
 }
 
 // GetPotentialProviders returns the User objects associated with the Request's
 // PotentialProviders
-func (p *Request) GetPotentialProviders(currentUser User) (Users, error) {
+func (r *Request) GetPotentialProviders(currentUser User) (Users, error) {
 	providers := PotentialProviders{}
-	users, err := providers.FindUsersByRequestID(*p, currentUser)
+	users, err := providers.FindUsersByRequestID(*r, currentUser)
 	return users, err
 }
 
 // DestroyPotentialProviders destroys all the PotentialProvider records
 // associated with the Request if the Request's status is COMPLETED
-func (p *Request) DestroyPotentialProviders(status RequestStatus, user User) error {
+func (r *Request) DestroyPotentialProviders(status RequestStatus, user User) error {
 	if status != RequestStatusCompleted {
 		return nil
 	}
 
 	var pps PotentialProviders
-	return pps.DestroyAllWithRequestUUID(p.UUID.String(), user)
+	return pps.DestroyAllWithRequestUUID(r.UUID.String(), user)
 }
 
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
-func (p *Request) Validate(tx *pop.Connection) (*validate.Errors, error) {
+func (r *Request) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	v := []validate.Validator{
-		&validators.IntIsPresent{Field: p.CreatedByID, Name: "CreatedBy"},
-		&validators.IntIsPresent{Field: p.OrganizationID, Name: "OrganizationID"},
-		&validators.StringIsPresent{Field: p.Title, Name: "Title"},
-		&validators.StringIsPresent{Field: p.Size.String(), Name: "Size"},
-		&validators.UUIDIsPresent{Field: p.UUID, Name: "UUID"},
-		&validators.StringIsPresent{Field: p.Status.String(), Name: "Status"},
+		&validators.IntIsPresent{Field: r.CreatedByID, Name: "CreatedBy"},
+		&validators.IntIsPresent{Field: r.OrganizationID, Name: "OrganizationID"},
+		&validators.StringIsPresent{Field: r.Title, Name: "Title"},
+		&validators.StringIsPresent{Field: r.Size.String(), Name: "Size"},
+		&validators.UUIDIsPresent{Field: r.UUID, Name: "UUID"},
+		&validators.StringIsPresent{Field: r.Status.String(), Name: "Status"},
 	}
 
-	if !p.NeededBefore.Valid {
+	if !r.NeededBefore.Valid {
 		return validate.Validate(v...), nil
 	}
 
 	var oldRequest Request
-	_ = oldRequest.FindByID(p.ID)
-	if oldRequest.ID == 0 || p.NeededBefore != oldRequest.NeededBefore {
-		neededBeforeDate := p.NeededBefore.Time
+	_ = oldRequest.FindByID(r.ID)
+	if oldRequest.ID == 0 || r.NeededBefore != oldRequest.NeededBefore {
+		neededBeforeDate := r.NeededBefore.Time
 		v = append(v, &validators.TimeAfterTime{
 			FirstName:  "NeededBefore",
 			FirstTime:  neededBeforeDate,
@@ -355,11 +355,11 @@ func (v *createStatusValidator) IsValid(errors *validate.Errors) {
 }
 
 // ValidateCreate gets run every time you call "pop.ValidateAndCreate" method.
-func (p *Request) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) {
+func (r *Request) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
 		&createStatusValidator{
 			Name:   "Create Status",
-			Status: p.Status,
+			Status: r.Status,
 		},
 	), nil
 }
@@ -407,11 +407,11 @@ func (v *updateStatusValidator) isRequestValid(errors *validate.Errors) {
 }
 
 // ValidateUpdate gets run every time you call "pop.ValidateAndUpdate" method.
-func (p *Request) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
+func (r *Request) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
 		&updateStatusValidator{
 			Name:    "Status",
-			Request: p,
+			Request: r,
 		},
 	), nil
 }
@@ -424,30 +424,30 @@ type RequestStatusEventData struct {
 	RequestID     int
 }
 
-func (p *Request) manageStatusTransition() error {
-	if p.Status == "" {
+func (r *Request) manageStatusTransition() error {
+	if r.Status == "" {
 		return nil
 	}
 	lastRequestHistory := RequestHistory{}
-	if err := lastRequestHistory.getLastForRequest(*p); err != nil {
+	if err := lastRequestHistory.getLastForRequest(*r); err != nil {
 		return err
 	}
 
 	lastStatus := lastRequestHistory.Status
-	if p.Status == lastStatus {
+	if r.Status == lastStatus {
 		return nil
 	}
 
-	isBackStep, err := isTransitionBackStep(lastStatus, p.Status)
+	isBackStep, err := isTransitionBackStep(lastStatus, r.Status)
 	if err != nil {
 		return err
 	}
 
-	var pH RequestHistory
+	var rH RequestHistory
 	if isBackStep {
-		err = pH.popForRequest(*p, lastStatus)
+		err = rH.popForRequest(*r, lastStatus)
 	} else {
-		err = pH.createForRequest(*p)
+		err = rH.createForRequest(*r)
 	}
 
 	if err != nil {
@@ -456,8 +456,8 @@ func (p *Request) manageStatusTransition() error {
 
 	eventData := RequestStatusEventData{
 		OldStatus:     lastStatus,
-		NewStatus:     p.Status,
-		RequestID:     p.ID,
+		NewStatus:     r.Status,
+		RequestID:     r.ID,
 		OldProviderID: *GetIntFromNullsInt(lastRequestHistory.ProviderID),
 	}
 
@@ -470,29 +470,29 @@ func (p *Request) manageStatusTransition() error {
 	emitEvent(e)
 
 	// If completed, hydrate CompletedOn. If not completed, nullify CompletedOn
-	// Don't use p.UpdateColumns, due to this being called by the AfterUpdate function
-	switch p.Status {
+	// Don't use r.UpdateColumns, due to this being called by the AfterUpdate function
+	switch r.Status {
 	case RequestStatusCompleted:
-		if !p.CompletedOn.Valid {
+		if !r.CompletedOn.Valid {
 			err := DB.RawQuery(
 				fmt.Sprintf(`UPDATE requests set completed_on = '%s' where ID = %v`,
-					time.Now().Format(domain.DateFormat), p.ID)).Exec()
+					time.Now().Format(domain.DateFormat), r.ID)).Exec()
 			if err != nil {
-				domain.ErrLogger.Printf("unable to set Request.CompletedOn for ID: %v, %s", p.ID, err)
+				domain.ErrLogger.Printf("unable to set Request.CompletedOn for ID: %v, %s", r.ID, err)
 			}
-			if err := DB.Reload(p); err != nil {
-				domain.ErrLogger.Printf("unable to reload Request ID: %v, %s", p.ID, err)
+			if err := DB.Reload(r); err != nil {
+				domain.ErrLogger.Printf("unable to reload Request ID: %v, %s", r.ID, err)
 			}
 		}
 	case RequestStatusOpen, RequestStatusAccepted, RequestStatusDelivered:
-		if p.CompletedOn.Valid {
+		if r.CompletedOn.Valid {
 			err := DB.RawQuery(
-				fmt.Sprintf(`UPDATE requests set completed_on = NULL where ID = %v`, p.ID)).Exec()
+				fmt.Sprintf(`UPDATE requests set completed_on = NULL where ID = %v`, r.ID)).Exec()
 			if err != nil {
-				domain.ErrLogger.Printf("unable to nullify Request.CompletedOn for ID: %v, %s", p.ID, err)
+				domain.ErrLogger.Printf("unable to nullify Request.CompletedOn for ID: %v, %s", r.ID, err)
 			}
-			if err := DB.Reload(p); err != nil {
-				domain.ErrLogger.Printf("unable to reload Request ID: %v, %s", p.ID, err)
+			if err := DB.Reload(r); err != nil {
+				domain.ErrLogger.Printf("unable to reload Request ID: %v, %s", r.ID, err)
 			}
 		}
 	}
@@ -501,21 +501,21 @@ func (p *Request) manageStatusTransition() error {
 }
 
 // Make sure there is no provider on an Open Request
-func (p *Request) AfterUpdate(tx *pop.Connection) error {
+func (r *Request) AfterUpdate(tx *pop.Connection) error {
 
-	if err := p.manageStatusTransition(); err != nil {
+	if err := r.manageStatusTransition(); err != nil {
 		return err
 	}
 
-	if p.Status != RequestStatusOpen {
+	if r.Status != RequestStatusOpen {
 		return nil
 	}
 
-	p.ProviderID = nulls.Int{}
+	r.ProviderID = nulls.Int{}
 
 	// Don't try to use DB.Update inside AfterUpdate, since that gets into an eternal loop
 	if err := DB.RawQuery(
-		fmt.Sprintf(`UPDATE requests set provider_id = NULL where ID = %v`, p.ID)).Exec(); err != nil {
+		fmt.Sprintf(`UPDATE requests set provider_id = NULL where ID = %v`, r.ID)).Exec(); err != nil {
 		domain.ErrLogger.Printf("error removing provider id from request: %s", err.Error())
 	}
 
@@ -523,13 +523,13 @@ func (p *Request) AfterUpdate(tx *pop.Connection) error {
 }
 
 // AfterCreate is called by Pop after successful creation of the record
-func (p *Request) AfterCreate(tx *pop.Connection) error {
-	if p.Status != RequestStatusOpen {
+func (r *Request) AfterCreate(tx *pop.Connection) error {
+	if r.Status != RequestStatusOpen {
 		return nil
 	}
 
-	var pH RequestHistory
-	if err := pH.createForRequest(*p); err != nil {
+	var rH RequestHistory
+	if err := rH.createForRequest(*r); err != nil {
 		return err
 	}
 
@@ -537,7 +537,7 @@ func (p *Request) AfterCreate(tx *pop.Connection) error {
 		Kind:    domain.EventApiRequestCreated,
 		Message: "Request created",
 		Payload: events.Payload{"eventData": RequestCreatedEventData{
-			RequestID: p.ID,
+			RequestID: r.ID,
 		}},
 	}
 
@@ -545,63 +545,63 @@ func (p *Request) AfterCreate(tx *pop.Connection) error {
 	return nil
 }
 
-func (p *Request) FindByID(id int, eagerFields ...string) error {
+func (r *Request) FindByID(id int, eagerFields ...string) error {
 	if id <= 0 {
 		return errors.New("error finding request: id must a positive number")
 	}
 
-	if err := DB.Eager(eagerFields...).Find(p, id); err != nil {
+	if err := DB.Eager(eagerFields...).Find(r, id); err != nil {
 		return fmt.Errorf("error finding request by id: %s", err.Error())
 	}
 
 	return nil
 }
 
-func (p *Request) FindByUUID(uuid string) error {
+func (r *Request) FindByUUID(uuid string) error {
 	if uuid == "" {
 		return errors.New("error finding request: uuid must not be blank")
 	}
 
 	queryString := fmt.Sprintf("uuid = '%s'", uuid)
 
-	if err := DB.Eager("CreatedBy").Where(queryString).First(p); err != nil {
+	if err := DB.Eager("CreatedBy").Where(queryString).First(r); err != nil {
 		return fmt.Errorf("error finding request by uuid: %s", err.Error())
 	}
 
 	return nil
 }
 
-func (p *Request) FindByUUIDForCurrentUser(uuid string, user User) error {
-	if err := p.FindByUUID(uuid); err != nil {
+func (r *Request) FindByUUIDForCurrentUser(uuid string, user User) error {
+	if err := r.FindByUUID(uuid); err != nil {
 		return err
 	}
 
-	if !user.canViewRequest(*p) {
-		return fmt.Errorf("unauthorized: user %v may not view request %v.", user.ID, p.ID)
+	if !user.canViewRequest(*r) {
+		return fmt.Errorf("unauthorized: user %v may not view request %v.", user.ID, r.ID)
 	}
 
 	return nil
 }
 
-func (p *Request) GetCreator() (*User, error) {
+func (r *Request) GetCreator() (*User, error) {
 	creator := User{}
-	if err := DB.Find(&creator, p.CreatedByID); err != nil {
+	if err := DB.Find(&creator, r.CreatedByID); err != nil {
 		return nil, err
 	}
 	return &creator, nil
 }
 
-func (p *Request) GetProvider() (*User, error) {
+func (r *Request) GetProvider() (*User, error) {
 	provider := User{}
-	if err := DB.Find(&provider, p.ProviderID); err != nil {
+	if err := DB.Find(&provider, r.ProviderID); err != nil {
 		return nil, nil // provider is a nullable field, so ignore any error
 	}
 	return &provider, nil
 }
 
 // GetStatusTransitions finds the forward and backward transitions for the current user
-func (p *Request) GetStatusTransitions(currentUser User) ([]StatusTransitionTarget, error) {
-	statusOptions, err := getNextStatusPossibilities(p.Status)
+func (r *Request) GetStatusTransitions(currentUser User) ([]StatusTransitionTarget, error) {
+	statusOptions, err := getNextStatusPossibilities(r.Status)
 	if err != nil {
 		domain.ErrLogger.Printf(err.Error())
 		return statusOptions, nil
@@ -611,12 +611,12 @@ func (p *Request) GetStatusTransitions(currentUser User) ([]StatusTransitionTarg
 
 	for _, o := range statusOptions {
 		// User is the Creator - sees all but Provider's actions
-		if currentUser.ID == p.CreatedByID && !o.isProviderAction {
+		if currentUser.ID == r.CreatedByID && !o.isProviderAction {
 			finalOptions = append(finalOptions, o)
 			continue
 		}
 		// User is the Provider and sees only the Provider's actions
-		if o.isProviderAction && p.ProviderID.Valid && currentUser.ID == p.ProviderID.Int {
+		if o.isProviderAction && r.ProviderID.Valid && currentUser.ID == r.ProviderID.Int {
 			finalOptions = append(finalOptions, o)
 		}
 	}
@@ -625,12 +625,12 @@ func (p *Request) GetStatusTransitions(currentUser User) ([]StatusTransitionTarg
 }
 
 // GetPotentialProviderActions
-func (p *Request) GetPotentialProviderActions(currentUser User) ([]string, error) {
-	if p.Status != RequestStatusOpen || currentUser.ID == p.CreatedByID {
+func (r *Request) GetPotentialProviderActions(currentUser User) ([]string, error) {
+	if r.Status != RequestStatusOpen || currentUser.ID == r.CreatedByID {
 		return []string{}, nil
 	}
 
-	providers, err := p.GetPotentialProviders(currentUser)
+	providers, err := r.GetPotentialProviders(currentUser)
 	if err != nil {
 		return []string{}, err
 	}
@@ -646,9 +646,9 @@ func (p *Request) GetPotentialProviderActions(currentUser User) ([]string, error
 	return []string{RequestActionOffer}, nil
 }
 
-func (p *Request) GetOrganization() (*Organization, error) {
+func (r *Request) GetOrganization() (*Organization, error) {
 	organization := Organization{}
-	if err := DB.Find(&organization, p.OrganizationID); err != nil {
+	if err := DB.Find(&organization, r.OrganizationID); err != nil {
 		return nil, err
 	}
 
@@ -656,12 +656,12 @@ func (p *Request) GetOrganization() (*Organization, error) {
 }
 
 // GetThreads finds all threads on this request in which the given user is participating
-func (p *Request) GetThreads(user User) ([]Thread, error) {
+func (r *Request) GetThreads(user User) ([]Thread, error) {
 	var threads Threads
 	query := DB.Q().
 		Join("thread_participants tp", "threads.id = tp.thread_id").
 		Order("threads.updated_at DESC").
-		Where("tp.user_id = ? AND threads.request_id = ?", user.ID, p.ID)
+		Where("tp.user_id = ? AND threads.request_id = ?", user.ID, r.ID)
 	if err := query.All(&threads); err != nil {
 		return nil, err
 	}
@@ -670,13 +670,13 @@ func (p *Request) GetThreads(user User) ([]Thread, error) {
 }
 
 // AttachFile adds a previously-stored File to this Request
-func (p *Request) AttachFile(fileID string) (File, error) {
+func (r *Request) AttachFile(fileID string) (File, error) {
 	var f File
 	if err := f.FindByUUID(fileID); err != nil {
 		return f, err
 	}
 
-	requestFile := RequestFile{RequestID: p.ID, FileID: f.ID}
+	requestFile := RequestFile{RequestID: r.ID, FileID: f.ID}
 	if err := requestFile.Create(); err != nil {
 		return f, err
 	}
@@ -688,21 +688,21 @@ func (p *Request) AttachFile(fileID string) (File, error) {
 }
 
 // GetFiles retrieves the metadata for all of the files attached to this Request
-func (p *Request) GetFiles() ([]File, error) {
-	var pf []*RequestFile
+func (r *Request) GetFiles() ([]File, error) {
+	var rf []*RequestFile
 
 	err := DB.Eager("File").
 		Select().
-		Where("request_id = ?", p.ID).
+		Where("request_id = ?", r.ID).
 		Order("updated_at desc").
-		All(&pf)
+		All(&rf)
 	if err != nil {
-		return nil, fmt.Errorf("error getting files for request id %d, %s", p.ID, err)
+		return nil, fmt.Errorf("error getting files for request id %d, %s", r.ID, err)
 	}
 
-	files := make([]File, len(pf))
-	for i, p := range pf {
-		files[i] = p.File
+	files := make([]File, len(rf))
+	for i, f := range rf {
+		files[i] = f.File
 		if err := files[i].refreshURL(); err != nil {
 			return files, err
 		}
@@ -713,40 +713,40 @@ func (p *Request) GetFiles() ([]File, error) {
 
 // AttachPhoto assigns a previously-stored File to this Request as its photo. Parameter `fileID` is the UUID
 // of the photo to attach.
-func (p *Request) AttachPhoto(fileID string) (File, error) {
-	return addFile(p, fileID)
+func (r *Request) AttachPhoto(fileID string) (File, error) {
+	return addFile(r, fileID)
 }
 
 // RemoveFile removes an attached file from the Request
-func (p *Request) RemoveFile() error {
-	return removeFile(p)
+func (r *Request) RemoveFile() error {
+	return removeFile(r)
 }
 
 // GetPhoto retrieves the file attached as the Request photo
-func (p *Request) GetPhoto() (*File, error) {
-	if err := DB.Load(p, "PhotoFile"); err != nil {
+func (r *Request) GetPhoto() (*File, error) {
+	if err := DB.Load(r, "PhotoFile"); err != nil {
 		return nil, err
 	}
 
-	if !p.FileID.Valid {
+	if !r.FileID.Valid {
 		return nil, nil
 	}
 
-	if err := p.PhotoFile.refreshURL(); err != nil {
+	if err := r.PhotoFile.refreshURL(); err != nil {
 		return nil, err
 	}
 
-	return &p.PhotoFile, nil
+	return &r.PhotoFile, nil
 }
 
 // GetPhotoID retrieves UUID of the file attached as the Request photo
-func (p *Request) GetPhotoID() (*string, error) {
-	if err := DB.Load(p, "PhotoFile"); err != nil {
+func (r *Request) GetPhotoID() (*string, error) {
+	if err := DB.Load(r, "PhotoFile"); err != nil {
 		return nil, err
 	}
 
-	if p.FileID.Valid {
-		photoID := p.PhotoFile.UUID.String()
+	if r.FileID.Valid {
+		photoID := r.PhotoFile.UUID.String()
 		return &photoID, nil
 	}
 	return nil, nil
@@ -858,9 +858,9 @@ func (p *Requests) FindByUser(ctx context.Context, user User, filter RequestFilt
 }
 
 // GetDestination reads the destination record, if it exists, and returns the Location object.
-func (p *Request) GetDestination() (*Location, error) {
+func (r *Request) GetDestination() (*Location, error) {
 	location := Location{}
-	if err := DB.Find(&location, p.DestinationID); err != nil {
+	if err := DB.Find(&location, r.DestinationID); err != nil {
 		return nil, err
 	}
 
@@ -868,12 +868,12 @@ func (p *Request) GetDestination() (*Location, error) {
 }
 
 // GetOrigin reads the origin record, if it exists, and returns the Location object.
-func (p *Request) GetOrigin() (*Location, error) {
-	if !p.OriginID.Valid {
+func (r *Request) GetOrigin() (*Location, error) {
+	if !r.OriginID.Valid {
 		return nil, nil
 	}
 	location := Location{}
-	if err := DB.Find(&location, p.OriginID); err != nil {
+	if err := DB.Find(&location, r.OriginID); err != nil {
 		return nil, err
 	}
 
@@ -881,66 +881,66 @@ func (p *Request) GetOrigin() (*Location, error) {
 }
 
 // RemoveOrigin removes the origin from the request
-func (p *Request) RemoveOrigin() error {
-	if !p.OriginID.Valid {
+func (r *Request) RemoveOrigin() error {
+	if !r.OriginID.Valid {
 		return nil
 	}
 
-	if err := DB.Destroy(&Location{ID: p.OriginID.Int}); err != nil {
+	if err := DB.Destroy(&Location{ID: r.OriginID.Int}); err != nil {
 		return err
 	}
-	p.OriginID = nulls.Int{}
+	r.OriginID = nulls.Int{}
 	// don't need to save the request because the database foreign key constraint is set to "ON DELETE SET NULL"
 	return nil
 }
 
 // SetDestination sets the destination location fields, creating a new record in the database if necessary.
-func (p *Request) SetDestination(location Location) error {
-	if p.MeetingID.Valid {
+func (r *Request) SetDestination(location Location) error {
+	if r.MeetingID.Valid {
 		return errors.New("Attempted to set destination on event-based request")
 	}
-	location.ID = p.DestinationID
-	p.Destination = location
-	return p.Destination.Update()
+	location.ID = r.DestinationID
+	r.Destination = location
+	return r.Destination.Update()
 }
 
 // SetOrigin sets the origin location fields, creating a new record in the database if necessary.
-func (p *Request) SetOrigin(location Location) error {
-	if p.OriginID.Valid {
-		location.ID = p.OriginID.Int
-		p.Origin = location
-		return p.Origin.Update()
+func (r *Request) SetOrigin(location Location) error {
+	if r.OriginID.Valid {
+		location.ID = r.OriginID.Int
+		r.Origin = location
+		return r.Origin.Update()
 	}
 	if err := location.Create(); err != nil {
 		return err
 	}
-	p.OriginID = nulls.NewInt(location.ID)
-	return p.Update()
+	r.OriginID = nulls.NewInt(location.ID)
+	return r.Update()
 }
 
 // IsEditable response with true if the given user is the owner of the request or an admin,
 // and it is not in a locked status.
-func (p *Request) IsEditable(user User) (bool, error) {
+func (r *Request) IsEditable(user User) (bool, error) {
 	if user.ID <= 0 {
 		return false, errors.New("user.ID must be a valid primary key")
 	}
 
-	if p.CreatedByID <= 0 {
-		if err := DB.Reload(p); err != nil {
+	if r.CreatedByID <= 0 {
+		if err := DB.Reload(r); err != nil {
 			return false, err
 		}
 	}
 
-	if user.ID != p.CreatedByID && !user.canEditAllRequests() {
+	if user.ID != r.CreatedByID && !user.canEditAllRequests() {
 		return false, nil
 	}
 
-	return p.isRequestEditable(), nil
+	return r.isRequestEditable(), nil
 }
 
 // isRequestEditable defines at which states can requests be edited.
-func (p *Request) isRequestEditable() bool {
-	switch p.Status {
+func (r *Request) isRequestEditable() bool {
+	switch r.Status {
 	case RequestStatusOpen, RequestStatusAccepted, RequestStatusReceived, RequestStatusDelivered:
 		return true
 	default:
@@ -948,41 +948,41 @@ func (p *Request) isRequestEditable() bool {
 	}
 }
 
-func (p *Request) canCreatorChangeStatus(newStatus RequestStatus) bool {
+func (r *Request) canCreatorChangeStatus(newStatus RequestStatus) bool {
 	// Creator can't move off of Delivered except to Completed
-	if p.Status == RequestStatusDelivered {
+	if r.Status == RequestStatusDelivered {
 		return newStatus == RequestStatusCompleted
 	}
 
 	// Creator can't move from Accepted to Delivered
-	return !(p.Status == RequestStatusAccepted && newStatus == RequestStatusDelivered)
+	return !(r.Status == RequestStatusAccepted && newStatus == RequestStatusDelivered)
 }
 
-func (p *Request) canProviderChangeStatus(newStatus RequestStatus) bool {
-	if p.Status != RequestStatusCompleted && newStatus == RequestStatusDelivered {
+func (r *Request) canProviderChangeStatus(newStatus RequestStatus) bool {
+	if r.Status != RequestStatusCompleted && newStatus == RequestStatusDelivered {
 		return true
 	}
 	// for cancelling a DELIVERED status
-	return p.Status == RequestStatusDelivered && newStatus == RequestStatusAccepted
+	return r.Status == RequestStatusDelivered && newStatus == RequestStatusAccepted
 }
 
 // canUserChangeStatus defines which requests statuses can be changed by which users.
 // Invalid transitions are not checked here; it is left for the validator to do this.
-func (p *Request) canUserChangeStatus(user User, newStatus RequestStatus) bool {
+func (r *Request) canUserChangeStatus(user User, newStatus RequestStatus) bool {
 	if user.AdminRole == UserAdminRoleSuperAdmin {
 		return true
 	}
 
-	if p.Status == RequestStatusCompleted {
+	if r.Status == RequestStatusCompleted {
 		return false
 	}
 
-	if p.CreatedByID == user.ID {
-		return p.canCreatorChangeStatus(newStatus)
+	if r.CreatedByID == user.ID {
+		return r.canCreatorChangeStatus(newStatus)
 	}
 
-	if p.ProviderID.Int == user.ID {
-		return p.canProviderChangeStatus(newStatus)
+	if r.ProviderID.Int == user.ID {
+		return r.canProviderChangeStatus(newStatus)
 	}
 
 	return false
@@ -990,11 +990,11 @@ func (p *Request) canUserChangeStatus(user User, newStatus RequestStatus) bool {
 
 // GetAudience returns a list of all of the users which have visibility to this request. As of this writing, it is
 // simply the users in the organization associated with this request.
-func (p *Request) GetAudience() (Users, error) {
-	if p.ID <= 0 {
+func (r *Request) GetAudience() (Users, error) {
+	if r.ID <= 0 {
 		return nil, errors.New("invalid request ID in GetAudience")
 	}
-	org, err := p.GetOrganization()
+	org, err := r.GetOrganization()
 	if err != nil {
 		return nil, err
 	}
@@ -1006,12 +1006,12 @@ func (p *Request) GetAudience() (Users, error) {
 }
 
 // Meeting reads the meeting record, if it exists, and returns a pointer to the object.
-func (p *Request) Meeting() (*Meeting, error) {
-	if !p.MeetingID.Valid {
+func (r *Request) Meeting() (*Meeting, error) {
+	if !r.MeetingID.Valid {
 		return nil, nil
 	}
 	var meeting Meeting
-	if err := DB.Find(&meeting, p.MeetingID); err != nil {
+	if err := DB.Find(&meeting, r.MeetingID); err != nil {
 		return nil, err
 	}
 
@@ -1044,17 +1044,17 @@ func (p Requests) FilterOrigin(location Location) Requests {
 }
 
 // IsVisible returns true if the Request is visible to the given user. Only the request ID is used in this method.
-func (p *Request) IsVisible(ctx context.Context, user User) bool {
+func (r *Request) IsVisible(ctx context.Context, user User) bool {
 	requests := Requests{}
-	if err := requests.FindByUser(ctx, user, RequestFilterParams{RequestID: &p.ID}); err != nil {
+	if err := requests.FindByUser(ctx, user, RequestFilterParams{RequestID: &r.ID}); err != nil {
 		domain.Error(domain.GetBuffaloContext(ctx), "error in Request.IsVisible, "+err.Error())
 		return false
 	}
 	return len(requests) > 0
 }
 
-func (p *Request) GetCurrentActions(user User) ([]string, error) {
-	transitions, err := p.GetStatusTransitions(user)
+func (r *Request) GetCurrentActions(user User) ([]string, error) {
+	transitions, err := r.GetStatusTransitions(user)
 	if err != nil {
 		return []string{}, err
 	}
@@ -1068,7 +1068,7 @@ func (p *Request) GetCurrentActions(user User) ([]string, error) {
 		}
 	}
 
-	providerActions, err := p.GetPotentialProviderActions(user)
+	providerActions, err := r.GetPotentialProviderActions(user)
 	if err != nil {
 		return actions, err
 	}
@@ -1079,7 +1079,7 @@ func (p *Request) GetCurrentActions(user User) ([]string, error) {
 }
 
 // Creator gets the full User record of the post creator
-func (p *Request) Creator() (User, error) {
+func (r *Request) Creator() (User, error) {
 	var u User
-	return u, DB.Find(&u, p.CreatedByID)
+	return u, DB.Find(&u, r.CreatedByID)
 }

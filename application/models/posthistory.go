@@ -23,8 +23,8 @@ type RequestHistory struct {
 }
 
 // String can be helpful for serializing the model
-func (p RequestHistory) String() string {
-	jt, _ := json.Marshal(p)
+func (rH RequestHistory) String() string {
+	jt, _ := json.Marshal(rH)
 	return string(jt)
 }
 
@@ -38,24 +38,24 @@ func (p RequestHistories) String() string {
 }
 
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
-func (p *RequestHistory) Validate(tx *pop.Connection) (*validate.Errors, error) {
+func (rH *RequestHistory) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(), nil
 }
 
 // ValidateCreate gets run every time you call "pop.ValidateAndCreate" method.
-func (p *RequestHistory) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) {
+func (rH *RequestHistory) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }
 
 // ValidateUpdate gets run every time you call "pop.ValidateAndUpdate" method.
-func (p *RequestHistory) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
+func (rH *RequestHistory) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }
 
 // Load reads the selected fields from the database
-func (p *RequestHistory) Load(fields ...string) error {
-	if err := DB.Load(p, fields...); err != nil {
-		return fmt.Errorf("error loading data for request history %v, %s", p.ID, err)
+func (rH *RequestHistory) Load(fields ...string) error {
+	if err := DB.Load(rH, fields...); err != nil {
+		return fmt.Errorf("error loading data for request history %v, %s", rH.ID, err)
 	}
 
 	return nil
@@ -64,22 +64,22 @@ func (p *RequestHistory) Load(fields ...string) error {
 // createForRequest checks if the request has a status that is different than the
 // most recent of its Request History entries.  If so, it creates a new Request History
 // with the Request's new status.
-func (pH RequestHistory) createForRequest(request Request) error {
-	err := DB.Where("request_id = ?", request.ID).Last(&pH)
+func (rH RequestHistory) createForRequest(request Request) error {
+	err := DB.Where("request_id = ?", request.ID).Last(&rH)
 
 	if domain.IsOtherThanNoRows(err) {
 		return err
 	}
 
-	if pH.Status != request.Status {
-		newPH := RequestHistory{
+	if rH.Status != request.Status {
+		newRH := RequestHistory{
 			Status:     request.Status,
 			RequestID:  request.ID,
 			ReceiverID: nulls.NewInt(request.CreatedByID),
 			ProviderID: request.ProviderID,
 		}
 
-		if err := newPH.Create(); err != nil {
+		if err := newRH.Create(); err != nil {
 			return err
 		}
 	}
@@ -89,8 +89,8 @@ func (pH RequestHistory) createForRequest(request Request) error {
 
 // pop deletes the most recent requestHistory entry for a request
 // assuming it's status matches the expected one.
-func (pH RequestHistory) popForRequest(request Request, currentStatus RequestStatus) error {
-	if err := DB.Where("request_id = ?", request.ID).Last(&pH); err != nil {
+func (rH RequestHistory) popForRequest(request Request, currentStatus RequestStatus) error {
+	if err := DB.Where("request_id = ?", request.ID).Last(&rH); err != nil {
 		if domain.IsOtherThanNoRows(err) {
 			return err
 		}
@@ -99,22 +99,22 @@ func (pH RequestHistory) popForRequest(request Request, currentStatus RequestSta
 		return nil
 	}
 
-	if pH.Status != currentStatus {
+	if rH.Status != currentStatus {
 		domain.ErrLogger.Printf(
 			"error popping request histories for request id %v. Expected newStatus %s but found %s",
-			request.ID, currentStatus, pH.Status)
+			request.ID, currentStatus, rH.Status)
 		return nil
 	}
 
-	if err := DB.Destroy(&pH); err != nil {
+	if err := DB.Destroy(&rH); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (pH *RequestHistory) getLastForRequest(request Request) error {
-	if err := DB.Where("request_id = ?", request.ID).Last(pH); err != nil {
+func (rH *RequestHistory) getLastForRequest(request Request) error {
+	if err := DB.Where("request_id = ?", request.ID).Last(rH); err != nil {
 		if domain.IsOtherThanNoRows(err) {
 			return fmt.Errorf("error getting last Request History for request %v ... %v", request.ID, err)
 		}
@@ -123,6 +123,6 @@ func (pH *RequestHistory) getLastForRequest(request Request) error {
 }
 
 // Create stores the RequestHistory data as a new record in the database.
-func (pH *RequestHistory) Create() error {
-	return create(pH)
+func (rH *RequestHistory) Create() error {
+	return create(rH)
 }

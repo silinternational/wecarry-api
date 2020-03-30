@@ -773,11 +773,11 @@ func (ms *ModelSuite) TestRequest_Create() {
 			ms.NoError(err)
 
 			ms.True(test.request.UUID.Version() != 0)
-			var p Request
-			ms.NoError(p.FindByID(test.request.ID))
+			var r Request
+			ms.NoError(r.FindByID(test.request.ID))
 
 			pHistories := RequestHistories{}
-			err = ms.DB.Where("request_id = ?", p.ID).All(&pHistories)
+			err = ms.DB.Where("request_id = ?", r.ID).All(&pHistories)
 			ms.NoError(err)
 
 			ms.Equal(1, len(pHistories), "incorrect number of RequestHistories")
@@ -818,8 +818,8 @@ func (ms *ModelSuite) TestRequest_Update() {
 			ms.NoError(err)
 
 			ms.True(test.request.UUID.Version() != 0)
-			var p Request
-			ms.NoError(p.FindByID(test.request.ID))
+			var r Request
+			ms.NoError(r.FindByID(test.request.ID))
 		})
 	}
 }
@@ -1818,8 +1818,8 @@ func (ms *ModelSuite) TestRequest_isRequestEditable() {
 	}
 	for _, tt := range tests {
 		t.Run(tt.status.String(), func(t *testing.T) {
-			p := Request{Status: tt.status}
-			if got := p.isRequestEditable(); got != tt.want {
+			r := Request{Status: tt.status}
+			if got := r.isRequestEditable(); got != tt.want {
 				t.Errorf("isStatusEditable() = %v, want %v", got, tt.want)
 			}
 		})

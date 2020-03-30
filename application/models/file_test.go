@@ -295,8 +295,8 @@ func (ms *ModelSuite) TestFiles_DeleteUnlinked() {
 	requests := createRequestFixtures(ms.DB, nRequests, true)
 
 	requestFiles := createFileFixtures(nRequests)
-	for i, p := range requestFiles {
-		_, err := requests[i].AttachFile(p.UUID.String())
+	for i, r := range requestFiles {
+		_, err := requests[i].AttachFile(r.UUID.String())
 		ms.NoError(err)
 	}
 

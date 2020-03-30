@@ -215,69 +215,69 @@ var _ = grift.Namespace("db", func() {
 			}
 		}
 
-		// POSTS Table
+		// REQUESTS Table
 		futureDate := time.Now().Add(8 * domain.DurationWeek)
-		postUUID1, _ := uuid.FromString("270fa549-65f2-43c0-ac27-78a054cf49a1")
-		postUUID2, _ := uuid.FromString("028164cd-a8f5-43b9-98d0-f8a7778ea2f1")
-		postUUID3, _ := uuid.FromString("e625a482-c8ff-4f52-b8ed-73e6b3eac4d7")
-		postUUID4, _ := uuid.FromString("8e08011d-bd5f-4c1a-a4f4-0c019beb939b")
-		postUUID5, _ := uuid.FromString("35e2b332-a968-4932-b205-ca0d1eabdf0e")
-		fixturePosts := []*models.Request{
+		requestUUID1, _ := uuid.FromString("270fa549-65f2-43c0-ac27-78a054cf49a1")
+		requestUUID2, _ := uuid.FromString("028164cd-a8f5-43b9-98d0-f8a7778ea2f1")
+		requestUUID3, _ := uuid.FromString("e625a482-c8ff-4f52-b8ed-73e6b3eac4d7")
+		requestUUID4, _ := uuid.FromString("8e08011d-bd5f-4c1a-a4f4-0c019beb939b")
+		requestUUID5, _ := uuid.FromString("35e2b332-a968-4932-b205-ca0d1eabdf0e")
+		fixtureRequests := []*models.Request{
 			{
 				OrganizationID: primaryOrgID,
 				Title:          "Maple Syrup",
 				Size:           models.RequestSizeMedium,
-				UUID:           postUUID1,
+				UUID:           requestUUID1,
 				Description:    nulls.NewString("Missing my good, old, Canadian maple syrupy goodness"),
 			},
 			{
 				OrganizationID: primaryOrgID,
 				Title:          "Jif Peanut Butter",
 				Size:           models.RequestSizeSmall,
-				UUID:           postUUID2,
+				UUID:           requestUUID2,
 				Description:    nulls.NewString("Jiffy Peanut Butter goes on our daily bread!"),
 			},
 			{
 				OrganizationID: primaryOrgID,
 				Title:          "Burt's Bee's Lip Balm",
 				Size:           models.RequestSizeTiny,
-				UUID:           postUUID3,
+				UUID:           requestUUID3,
 				Description:    nulls.NewString("Please save me from having painfully cracked lips!"),
 			},
 			{
 				OrganizationID: primaryOrgID,
 				Title:          "Peanut Butter",
 				Size:           models.RequestSizeSmall,
-				UUID:           postUUID4,
+				UUID:           requestUUID4,
 				Description:    nulls.NewString("I already have chocolate, but I need peanut butter."),
 			},
 			{
 				OrganizationID: fixtureOrgs[0].ID,
 				Title:          "Altoids",
 				Size:           models.RequestSizeTiny,
-				UUID:           postUUID5,
+				UUID:           requestUUID5,
 				Description:    nulls.NewString("The original celebrated curiously strong mints"),
 			},
 		}
 
-		for i, post := range fixturePosts {
-			fixturePosts[i].DestinationID = fixtureLocations[i].ID
-			fixturePosts[i].Status = models.RequestStatusOpen
-			fixturePosts[i].CreatedByID = fixtureUsers[i].ID
-			fixturePosts[i].NeededBefore = nulls.NewTime(futureDate)
-			err := models.DB.Create(fixturePosts[i])
+		for i, request := range fixtureRequests {
+			fixtureRequests[i].DestinationID = fixtureLocations[i].ID
+			fixtureRequests[i].Status = models.RequestStatusOpen
+			fixtureRequests[i].CreatedByID = fixtureUsers[i].ID
+			fixtureRequests[i].NeededBefore = nulls.NewTime(futureDate)
+			err := models.DB.Create(fixtureRequests[i])
 			if err != nil {
-				err = fmt.Errorf("error loading post fixture ... %+v\n %v", post, err.Error())
+				err = fmt.Errorf("error loading request fixture ... %+v\n %v", request, err.Error())
 				return err
 			}
 		}
 
-		// add Potential Providers (each user for the post after, except for last user and the first post)
-		posts := fixturePosts[1:]
+		// add Potential Providers (each user for the request after, except for last user and the first request)
+		requests := fixtureRequests[1:]
 
-		for i, post := range posts {
+		for i, request := range requests {
 			pp := models.PotentialProvider{
-				RequestID: post.ID,
+				RequestID: request.ID,
 				UserID:    fixtureUsers[i].ID,
 			}
 			err := models.DB.Create(&pp)
@@ -308,7 +308,7 @@ var _ = grift.Namespace("db", func() {
 		}
 
 		for i, thread := range fixtureThreads {
-			fixtureThreads[i].RequestID = fixturePosts[i].ID
+			fixtureThreads[i].RequestID = fixtureRequests[i].ID
 			err := models.DB.Create(fixtureThreads[i])
 			if err != nil {
 				err = fmt.Errorf("error loading thread fixture ... %+v\n %v", thread, err.Error())

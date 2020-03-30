@@ -587,8 +587,8 @@ func (ms *ModelSuite) TestUser_GetRequests() {
 			}
 
 			ids := make([]uuid.UUID, len(got))
-			for i, p := range got {
-				ids[i] = p.UUID
+			for i, r := range got {
+				ids[i] = r.UUID
 			}
 			if !reflect.DeepEqual(ids, test.want) {
 				t.Errorf("GetOrgIDs() = \"%v\", want \"%v\"", ids, test.want)
