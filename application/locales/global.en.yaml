@@ -268,15 +268,15 @@
 - id: UpdateUser.RemovePreferences
   translation: We had a problem while removing user preferences.
 
-# Request Post Status Transition email subjects
+# Request Status Transition email subjects
 - id: Email.Subject.Request.FromAcceptedToDelivered
-  translation: Your {{.AppName}} request for "{{.postTitle}}" has been delivered!
+  translation: Your {{.AppName}} request for "{{.requestTitle}}" has been delivered!
 - id: Email.Subject.Request.FromAcceptedToOpen
-  translation: Your {{.AppName}} offer for "{{.postTitle}}" is no longer needed
+  translation: Your {{.AppName}} offer for "{{.requestTitle}}" is no longer needed
 - id: Email.Subject.Request.FromAcceptedOrDeliveredToCompleted
   translation: Thank you for fulfilling a request on {{.AppName}}
 - id: Email.Subject.Request.FromAcceptedToRemoved
-  translation: Your {{.AppName}} offer for "{{.postTitle}}" is no longer needed
+  translation: Your {{.AppName}} offer for "{{.requestTitle}}" is no longer needed
 - id: Email.Subject.Request.FromCompletedToAcceptedOrDelivered
   translation: Request not received on {{.AppName}} after all
 - id: Email.Subject.Request.FromOpenToAccepted
@@ -286,7 +286,7 @@
 
 # Notifications regarding Request offers/potential providers
 - id: Email.Subject.Request.OfferRejected
-  translation: Your {{.AppName}} offer for "{{.postTitle}}" was not accepted
+  translation: Your {{.AppName}} offer for "{{.requestTitle}}" was not accepted
 - id: Email.Subject.Request.OfferRetracted
   translation: An offer to fulfill your request on {{.AppName}} has been retracted
 - id: Email.Subject.Request.NewOffer
@@ -294,7 +294,7 @@
 
 # New Message notification subject
 - id: Email.Subject.Message.Created
-  translation: "{{.AppName}} message from {{.sentByNickname}} about {{.postTitle}}"
+  translation: "{{.AppName}} message from {{.sentByNickname}} about {{.requestTitle}}"
 
 # New User welcome subject
 - id: Email.Subject.Welcome
