@@ -6,7 +6,10 @@ require (
 	github.com/99designs/gqlgen v0.10.1
 	github.com/aws/aws-sdk-go v1.25.0
 	github.com/beevik/etree v1.1.0 // indirect
+	github.com/caddyserver/certmagic v0.10.5
+	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
 	github.com/cockroachdb/cockroach-go v0.0.0-20190925194419-606b3d062051 // indirect
+	github.com/go-acme/lego v2.7.2+incompatible
 	github.com/gobuffalo/buffalo v0.15.3
 	github.com/gobuffalo/envy v1.8.1
 	github.com/gobuffalo/events v1.4.0
@@ -34,11 +37,12 @@ require (
 	github.com/russellhaering/gosaml2 v0.3.1
 	github.com/russellhaering/goxmldsig v0.0.0-20180430223755-7acd5e4a6ef7
 	github.com/sendgrid/sendgrid-go v3.5.0+incompatible
+	github.com/silinternational/certmagic-storage-dynamodb v0.0.0-20200316155358-4e6c577f652a
 	github.com/ssor/bom v0.0.0-20170718123548-6386211fdfcf // indirect
 	github.com/stretchr/testify v1.4.0
 	github.com/vektah/gqlparser v1.1.2
 	golang.org/x/image v0.0.0-20191214001246-9130b4cfad52
-	golang.org/x/oauth2 v0.0.0-20181203162652-d668ce993890
+	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
 	jaytaylor.com/html2text v0.0.0-20190408195923-01ec452cbe43
 )
 
