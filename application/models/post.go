@@ -198,20 +198,6 @@ func (e PostStatus) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
-type PostSize string
-
-const (
-	PostSizeTiny   PostSize = "TINY"
-	PostSizeSmall  PostSize = "SMALL"
-	PostSizeMedium PostSize = "MEDIUM"
-	PostSizeLarge  PostSize = "LARGE"
-	PostSizeXlarge PostSize = "XLARGE"
-)
-
-func (e PostSize) String() string {
-	return string(e)
-}
-
 type Post struct {
 	ID             int            `json:"id" db:"id"`
 	CreatedAt      time.Time      `json:"created_at" db:"created_at"`
@@ -1090,4 +1076,10 @@ func (p *Post) GetCurrentActions(user User) ([]string, error) {
 	actions = append(actions, providerActions...)
 
 	return actions, nil
+}
+
+// Creator gets the full User record of the post creator
+func (p *Post) Creator() (User, error) {
+	var u User
+	return u, DB.Find(&u, p.CreatedByID)
 }

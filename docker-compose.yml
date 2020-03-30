@@ -10,12 +10,12 @@ services:
       - ./dev:/wecarry/dev
     ports:
       - "3000:3000"
-      - "6060:6060"
+      - "6060"
     env_file:
-      - ./.env
+      - .env
     environment:
       ADDR: 0.0.0.0
-      HOST: http://wecarry.local:3000
+      HOST: https://local.wecarry.app
       # Needed for Google and AzureAD OAuth locally
       # HOST: http://localhost:3000
       PORT: 3000
@@ -80,7 +80,7 @@ services:
       - "9000:9000"
     command: server /data
     env_file:
-      - ./.env
+      - .env
     environment:
-      MINIO_ACCESS_KEY: ${AWS_S3_ACCESS_KEY_ID}
-      MINIO_SECRET_KEY: ${AWS_S3_SECRET_ACCESS_KEY}
+      MINIO_ACCESS_KEY: ${AWS_ACCESS_KEY_ID}
+      MINIO_SECRET_KEY: ${AWS_SECRET_ACCESS_KEY}
