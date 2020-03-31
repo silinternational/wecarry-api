@@ -469,7 +469,7 @@ func (ts *TestSuite) TestIsTimeZoneAllowed() {
 
 func (ts *TestSuite) TestGetTranslatedSubject() {
 	t := ts.T()
-	postTitle := "MyPost"
+	requestTitle := "MyRequest"
 
 	tests := []struct {
 		name          string
@@ -480,7 +480,7 @@ func (ts *TestSuite) TestGetTranslatedSubject() {
 		{
 			name:          "delivered",
 			translationID: "Email.Subject.Request.FromAcceptedToDelivered",
-			want:          `Your ` + Env.AppName + ` request for "` + postTitle + `" has been delivered!`,
+			want:          `Your ` + Env.AppName + ` request for "` + requestTitle + `" has been delivered!`,
 		},
 		{
 			name:          "delivered in Spanish",
@@ -496,12 +496,12 @@ func (ts *TestSuite) TestGetTranslatedSubject() {
 		{
 			name:          "from accepted to open",
 			translationID: "Email.Subject.Request.FromAcceptedToOpen",
-			want:          `Your ` + Env.AppName + ` offer for "` + postTitle + `" is no longer needed`,
+			want:          `Your ` + Env.AppName + ` offer for "` + requestTitle + `" is no longer needed`,
 		},
 		{
 			name:          "from accepted to removed",
 			translationID: "Email.Subject.Request.FromAcceptedToRemoved",
-			want:          `Your ` + Env.AppName + ` offer for "` + postTitle + `" is no longer needed`,
+			want:          `Your ` + Env.AppName + ` offer for "` + requestTitle + `" is no longer needed`,
 		},
 		{
 			name:          "from completed to accepted",
@@ -522,7 +522,7 @@ func (ts *TestSuite) TestGetTranslatedSubject() {
 				language = test.language
 			}
 			got := GetTranslatedSubject(language, test.translationID,
-				map[string]string{"postTitle": postTitle})
+				map[string]string{"requestTitle": requestTitle})
 			ts.Equal(test.want, got, "bad subject translation")
 		})
 	}

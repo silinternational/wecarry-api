@@ -9,7 +9,7 @@ import (
 type messageQueryFixtures struct {
 	models.Organization
 	models.Users
-	models.Posts
+	models.Requests
 	models.Threads
 	models.Messages
 }
@@ -19,17 +19,17 @@ func createFixtures_MessageQuery(as *ActionSuite) messageQueryFixtures {
 	org := userFixtures.Organization
 	users := userFixtures.Users
 
-	posts := test.CreatePostFixtures(as.DB, 1, false)
+	requests := test.CreateRequestFixtures(as.DB, 1, false)
 
 	threads := models.Threads{
-		{UUID: domain.GetUUID(), PostID: posts[0].ID},
+		{UUID: domain.GetUUID(), RequestID: requests[0].ID},
 	}
 	for i := range threads {
 		createFixture(as, &threads[i])
 	}
 
 	threadParticipants := models.ThreadParticipants{
-		{ThreadID: threads[0].ID, UserID: posts[0].CreatedByID},
+		{ThreadID: threads[0].ID, UserID: requests[0].CreatedByID},
 	}
 	for i := range threadParticipants {
 		createFixture(as, &threadParticipants[i])
@@ -56,7 +56,7 @@ func createFixtures_MessageQuery(as *ActionSuite) messageQueryFixtures {
 	return messageQueryFixtures{
 		Organization: org,
 		Users:        users,
-		Posts:        posts,
+		Requests:     requests,
 		Threads:      threads,
 		Messages:     messages,
 	}

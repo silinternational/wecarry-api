@@ -69,23 +69,23 @@ func CreateFixtures_ThreadParticipant_UpdateLastViewedAt(ms *ModelSuite, t *test
 	location := Location{}
 	createFixture(ms, &location)
 
-	posts := Posts{
+	requests := Requests{
 		{
 			CreatedByID:    users[0].ID,
 			OrganizationID: org.ID,
-			Status:         PostStatusOpen,
+			Status:         RequestStatusOpen,
 			Title:          "Maple Syrup",
-			Size:           PostSizeMedium,
+			Size:           RequestSizeMedium,
 			UUID:           domain.GetUUID(),
 			DestinationID:  location.ID,
 		},
 	}
-	for i := range posts {
-		createFixture(ms, &posts[i])
+	for i := range requests {
+		createFixture(ms, &requests[i])
 	}
 
 	threads := Threads{
-		{UUID: domain.GetUUID(), PostID: posts[0].ID},
+		{UUID: domain.GetUUID(), RequestID: requests[0].ID},
 	}
 	for i := range threads {
 		createFixture(ms, &threads[i])
@@ -158,15 +158,15 @@ func CreateFixtures_ThreadParticipant_FindByThreadIDAndUserID(ms *ModelSuite) Th
 	location := Location{}
 	createFixture(ms, &location)
 
-	posts := Posts{
+	requests := Requests{
 		{UUID: domain.GetUUID(), CreatedByID: users[0].ID, OrganizationID: org.ID, DestinationID: location.ID},
 	}
-	for i := range posts {
-		createFixture(ms, &posts[i])
+	for i := range requests {
+		createFixture(ms, &requests[i])
 	}
 
 	threads := Threads{
-		{UUID: domain.GetUUID(), PostID: posts[0].ID},
+		{UUID: domain.GetUUID(), RequestID: requests[0].ID},
 	}
 	for i := range threads {
 		createFixture(ms, &threads[i])
@@ -229,15 +229,15 @@ func CreateFixtures_ThreadParticipant_UpdateLastNotifiedAt(ms *ModelSuite, t *te
 	location := Location{}
 	createFixture(ms, &location)
 
-	posts := Posts{
+	requests := Requests{
 		{UUID: domain.GetUUID(), CreatedByID: users[0].ID, OrganizationID: org.ID, DestinationID: location.ID},
 	}
-	for i := range posts {
-		createFixture(ms, &posts[i])
+	for i := range requests {
+		createFixture(ms, &requests[i])
 	}
 
 	threads := Threads{
-		{UUID: domain.GetUUID(), PostID: posts[0].ID},
+		{UUID: domain.GetUUID(), RequestID: requests[0].ID},
 	}
 	for i := range threads {
 		createFixture(ms, &threads[i])

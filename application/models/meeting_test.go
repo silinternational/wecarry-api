@@ -452,13 +452,13 @@ func (ms *ModelSuite) TestMeeting_CanUpdate() {
 	ms.False(mtg.CanUpdate(otherUser), "normal user (non meeting creator) should NOT be authorized")
 }
 
-func (ms *ModelSuite) TestMeeting_GetPosts() {
+func (ms *ModelSuite) TestMeeting_GetRequests() {
 	meetings := createMeetingFixtures(ms.DB, 2).Meetings
 
-	posts := createPostFixtures(ms.DB, 3, false)
-	posts[0].MeetingID = nulls.NewInt(meetings[1].ID)
-	posts[1].MeetingID = nulls.NewInt(meetings[1].ID)
-	ms.NoError(ms.DB.Update(&posts))
+	requests := createRequestFixtures(ms.DB, 3, false)
+	requests[0].MeetingID = nulls.NewInt(meetings[1].ID)
+	requests[1].MeetingID = nulls.NewInt(meetings[1].ID)
+	ms.NoError(ms.DB.Update(&requests))
 
 	tests := []struct {
 		name    string
@@ -474,12 +474,12 @@ func (ms *ModelSuite) TestMeeting_GetPosts() {
 		{
 			name:    "two",
 			meeting: meetings[1],
-			wantIDs: []int{posts[1].ID, posts[0].ID},
+			wantIDs: []int{requests[1].ID, requests[0].ID},
 		},
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			got, err := tt.meeting.Posts()
+			got, err := tt.meeting.Requests()
 			if tt.wantErr != "" {
 				ms.Error(err, "did not get expected error")
 				ms.Contains(err.Error(), tt.wantErr)

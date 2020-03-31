@@ -123,7 +123,7 @@ func (ms *ModelSuite) TestMessage_GetThread() {
 
 	ms.Equal(threads[0].ID, threadResults.ID, "Bad thread ID")
 	ms.Equal(threads[0].UUID, threadResults.UUID, "Bad thread UUID")
-	ms.Equal(threads[0].PostID, threadResults.PostID, "Bad thread PostID")
+	ms.Equal(threads[0].RequestID, threadResults.RequestID, "Bad thread RequestID")
 }
 
 func (ms *ModelSuite) TestMessage_Create() {
@@ -133,58 +133,58 @@ func (ms *ModelSuite) TestMessage_Create() {
 	threadUUID := f.Threads[0].UUID.String()
 
 	tests := []struct {
-		name       string
-		user       User
-		postUUID   string
-		threadUUID *string
-		content    string
-		wantErr    bool
+		name        string
+		user        User
+		requestUUID string
+		threadUUID  *string
+		content     string
+		wantErr     bool
 	}{
 		{
-			name:       "good, 1st message, visible post",
-			user:       f.Users[2],
-			postUUID:   f.Posts[1].UUID.String(),
-			threadUUID: nil,
-			content:    "Owe nothing to anyone, except to love one another.",
-			wantErr:    false,
+			name:        "good, 1st message, visible request",
+			user:        f.Users[2],
+			requestUUID: f.Requests[1].UUID.String(),
+			threadUUID:  nil,
+			content:     "Owe nothing to anyone, except to love one another.",
+			wantErr:     false,
 		},
 		{
-			name:       "good, already a participant",
-			user:       f.Users[0],
-			postUUID:   f.Posts[1].UUID.String(),
-			threadUUID: &threadUUID,
-			content:    "Hatred stirs up conflict, but love covers over all wrongs.",
-			wantErr:    false,
+			name:        "good, already a participant",
+			user:        f.Users[0],
+			requestUUID: f.Requests[1].UUID.String(),
+			threadUUID:  &threadUUID,
+			content:     "Hatred stirs up conflict, but love covers over all wrongs.",
+			wantErr:     false,
 		},
 		{
-			name:       "bad, not a participant",
-			user:       f.Users[1],
-			postUUID:   f.Posts[1].UUID.String(),
-			threadUUID: &threadUUID,
-			content:    "bad message",
-			wantErr:    true,
+			name:        "bad, not a participant",
+			user:        f.Users[1],
+			requestUUID: f.Requests[1].UUID.String(),
+			threadUUID:  &threadUUID,
+			content:     "bad message",
+			wantErr:     true,
 		},
 		{
-			name:       "bad, not a visible post",
-			user:       f.Users[1],
-			postUUID:   f.Posts[0].UUID.String(),
-			threadUUID: nil,
-			content:    "another bad message",
-			wantErr:    true,
+			name:        "bad, not a visible request",
+			user:        f.Users[1],
+			requestUUID: f.Requests[0].UUID.String(),
+			threadUUID:  nil,
+			content:     "another bad message",
+			wantErr:     true,
 		},
 		{
-			name:       "bad, thread not valid for post",
-			user:       f.Users[0],
-			postUUID:   f.Posts[2].UUID.String(),
-			threadUUID: &threadUUID,
-			content:    "another bad message",
-			wantErr:    true,
+			name:        "bad, thread not valid for request",
+			user:        f.Users[0],
+			requestUUID: f.Requests[2].UUID.String(),
+			threadUUID:  &threadUUID,
+			content:     "another bad message",
+			wantErr:     true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var message Message
-			err := message.Create(createTestContext(tt.user), tt.postUUID, tt.threadUUID, tt.content)
+			err := message.Create(createTestContext(tt.user), tt.requestUUID, tt.threadUUID, tt.content)
 
 			if tt.wantErr {
 				ms.Error(err)
@@ -337,8 +337,8 @@ func (ms *ModelSuite) TestMessage_FindByUserAndUUID() {
 func (ms *ModelSuite) TestMessage_AfterCreate() {
 	f := CreateMessageFixtures_AfterCreate(ms, ms.T())
 
-	eagerThreadP := f.ThreadParticipants[1] // Lazy User's side of Eager User's post thread
-	lazyThreadP := f.ThreadParticipants[2]  // Lazy User's own post thread
+	eagerThreadP := f.ThreadParticipants[1] // Lazy User's side of Eager User's request thread
+	lazyThreadP := f.ThreadParticipants[2]  // Lazy User's own request thread
 
 	eagerThreadPLVA := eagerThreadP.LastViewedAt
 

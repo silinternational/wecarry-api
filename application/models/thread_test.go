@@ -23,23 +23,23 @@ func (ms *ModelSuite) TestThread_Validate() {
 		{
 			name: "minimum",
 			thread: Thread{
-				PostID: 1,
-				UUID:   domain.GetUUID(),
+				RequestID: 1,
+				UUID:      domain.GetUUID(),
 			},
 			wantErr: false,
 		},
 		{
-			name: "missing post_id",
+			name: "missing request_id",
 			thread: Thread{
 				UUID: domain.GetUUID(),
 			},
 			wantErr:  true,
-			errField: "post_id",
+			errField: "request_id",
 		},
 		{
 			name: "missing uuid",
 			thread: Thread{
-				PostID: 1,
+				RequestID: 1,
 			},
 			wantErr:  true,
 			errField: "uuid",
@@ -65,8 +65,8 @@ func (ms *ModelSuite) TestThread_FindByUUID() {
 	t := ms.T()
 
 	_ = createUserFixtures(ms.DB, 2)
-	posts := createPostFixtures(ms.DB, 1, false)
-	threadFixtures := CreateThreadFixtures(ms, posts[0])
+	requests := createRequestFixtures(ms.DB, 1, false)
+	threadFixtures := CreateThreadFixtures(ms, requests[0])
 
 	tests := []struct {
 		name    string
@@ -97,37 +97,37 @@ func (ms *ModelSuite) TestThread_FindByUUID() {
 	}
 }
 
-func (ms *ModelSuite) TestThread_GetPost() {
+func (ms *ModelSuite) TestThread_GetRequest() {
 	t := ms.T()
 
 	_ = createUserFixtures(ms.DB, 2)
-	posts := createPostFixtures(ms.DB, 1, false)
-	threadFixtures := CreateThreadFixtures(ms, posts[0])
+	requests := createRequestFixtures(ms.DB, 1, false)
+	threadFixtures := CreateThreadFixtures(ms, requests[0])
 
 	tests := []struct {
 		name    string
 		thread  Thread
-		want    Post
+		want    Request
 		wantErr bool
 	}{
 		{
 			name:   "good",
 			thread: threadFixtures.Threads[0],
-			want:   posts[0],
+			want:   requests[0],
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := test.thread.GetPost()
+			got, err := test.thread.GetRequest()
 			if test.wantErr {
 				if (err != nil) != test.wantErr {
-					t.Errorf("GetPost() did not return expected error")
+					t.Errorf("GetRequest() did not return expected error")
 				}
 			} else {
 				if err != nil {
-					t.Errorf("GetPost() error = %v", err)
+					t.Errorf("GetRequest() error = %v", err)
 				} else if got.UUID != test.want.UUID {
-					t.Errorf("GetPost() got = %s, want %s", got.UUID, test.want.UUID)
+					t.Errorf("GetRequest() got = %s, want %s", got.UUID, test.want.UUID)
 				}
 			}
 		})
@@ -138,8 +138,8 @@ func (ms *ModelSuite) TestThread_GetMessages() {
 	t := ms.T()
 
 	_ = createUserFixtures(ms.DB, 2)
-	posts := createPostFixtures(ms.DB, 1, false)
-	threadFixtures := CreateThreadFixtures(ms, posts[0])
+	requests := createRequestFixtures(ms.DB, 1, false)
+	threadFixtures := CreateThreadFixtures(ms, requests[0])
 
 	tests := []struct {
 		name    string
@@ -191,8 +191,8 @@ func (ms *ModelSuite) TestThread_GetParticipants() {
 	t := ms.T()
 
 	users := createUserFixtures(ms.DB, 2).Users
-	posts := createPostFixtures(ms.DB, 1, false)
-	threadFixtures := CreateThreadFixtures(ms, posts[0])
+	requests := createRequestFixtures(ms.DB, 1, false)
+	threadFixtures := CreateThreadFixtures(ms, requests[0])
 
 	tests := []struct {
 		name    string
@@ -244,11 +244,11 @@ func (ms *ModelSuite) TestThread_CreateWithParticipants() {
 	t := ms.T()
 
 	users := createUserFixtures(ms.DB, 2).Users
-	posts := createPostFixtures(ms.DB, 1, false)
-	post := posts[0]
+	requests := createRequestFixtures(ms.DB, 1, false)
+	request := requests[0]
 
 	var thread Thread
-	if err := thread.CreateWithParticipants(post, users[1]); err != nil {
+	if err := thread.CreateWithParticipants(request, users[1]); err != nil {
 		t.Errorf("TestThread_CreateWithParticipants() error = %v", err)
 		t.FailNow()
 	}
@@ -258,9 +258,9 @@ func (ms *ModelSuite) TestThread_CreateWithParticipants() {
 		t.Errorf("TestThread_CreateWithParticipants() couldn't find new thread: %s", err)
 	}
 
-	if threadFromDB.PostID != post.ID {
-		t.Errorf("TestThread_CreateWithParticipants() post ID is wrong, got %d, expected %d",
-			threadFromDB.PostID, post.ID)
+	if threadFromDB.RequestID != request.ID {
+		t.Errorf("TestThread_CreateWithParticipants() request ID is wrong, got %d, expected %d",
+			threadFromDB.RequestID, request.ID)
 	}
 
 	participants, _ := threadFromDB.GetParticipants()
@@ -270,7 +270,7 @@ func (ms *ModelSuite) TestThread_CreateWithParticipants() {
 		ids[i] = threadFromDB.Participants[i].UUID
 	}
 
-	ms.Contains(ids, users[0].UUID, "new thread doesn't include post creator as participant")
+	ms.Contains(ids, users[0].UUID, "new thread doesn't include request creator as participant")
 	ms.Contains(ids, users[1].UUID, "new thread doesn't include provided user as participant")
 	ms.Equal(2, len(ids), "incorrect number of participants found")
 
@@ -286,12 +286,12 @@ func (ms *ModelSuite) TestThread_ensureParticipants() {
 	t := ms.T()
 
 	users := createUserFixtures(ms.DB, 2).Users
-	posts := createPostFixtures(ms.DB, 1, false)
-	post := posts[0]
+	requests := createRequestFixtures(ms.DB, 1, false)
+	request := requests[0]
 
 	thread := Thread{
-		PostID: post.ID,
-		UUID:   domain.GetUUID(),
+		RequestID: request.ID,
+		UUID:      domain.GetUUID(),
 	}
 
 	err := DB.Save(&thread)
@@ -316,7 +316,7 @@ func (ms *ModelSuite) TestThread_ensureParticipants() {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := thread.ensureParticipants(post, test.userID)
+			err := thread.ensureParticipants(request, test.userID)
 			ms.NoError(err)
 
 			participants, err := thread.GetParticipants()
@@ -329,7 +329,7 @@ func (ms *ModelSuite) TestThread_ensureParticipants() {
 
 			ms.Equal(len(test.want), len(ids), "incorrect number of participants found")
 
-			ms.Contains(ids, test.want[0], "new thread doesn't include post creator as participant")
+			ms.Contains(ids, test.want[0], "new thread doesn't include request creator as participant")
 
 			if len(test.want) == 2 {
 				ms.Contains(ids, users[1].UUID, "new thread doesn't include provided user as participant")
@@ -343,8 +343,8 @@ func (ms *ModelSuite) TestThread_GetLastViewedAt() {
 	t := ms.T()
 
 	users := createUserFixtures(ms.DB, 2).Users
-	posts := createPostFixtures(ms.DB, 1, false)
-	threadFixtures := CreateThreadFixtures(ms, posts[0])
+	requests := createRequestFixtures(ms.DB, 1, false)
+	threadFixtures := CreateThreadFixtures(ms, requests[0])
 
 	tests := []struct {
 		name    string
@@ -479,8 +479,8 @@ func (ms *ModelSuite) TestThread_UnreadMessageCount() {
 func (ms *ModelSuite) TestThread_IsVisible() {
 	t := ms.T()
 
-	post := createPostFixtures(ms.DB, 1, false)[0]
-	f := CreateThreadFixtures(ms, post)
+	request := createRequestFixtures(ms.DB, 1, false)[0]
+	f := CreateThreadFixtures(ms, request)
 
 	tests := []struct {
 		name   string

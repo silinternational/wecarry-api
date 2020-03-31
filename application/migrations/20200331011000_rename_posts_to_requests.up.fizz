@@ -1,0 +1,37 @@
+
+rename_table("posts", "requests")
+rename_table("post_files", "request_files")
+rename_table("post_histories", "request_histories")
+
+rename_column("request_files", "post_id", "request_id")
+rename_column("request_histories", "post_id", "request_id")
+rename_column("potential_providers", "post_id", "request_id")
+rename_column("threads", "post_id", "request_id")
+
+sql("ALTER INDEX post_files_pkey RENAME TO request_files_pkey")
+sql("ALTER INDEX post_files_file_id_idx RENAME TO request_files_file_id_idx")
+sql("ALTER INDEX post_histories_pkey RENAME TO request_histories_pkey")
+sql("ALTER INDEX post_histories_created_at_idx RENAME TO request_histories_created_at_idx")
+sql("ALTER INDEX potential_providers_post_id_user_id_idx RENAME TO potential_providers_request_id_user_id_idx")
+
+sql("ALTER SEQUENCE post_files_id_seq RENAME TO request_files_id_seq")
+sql("ALTER SEQUENCE post_histories_id_seq RENAME TO request_histories_id_seq")
+sql("ALTER SEQUENCE posts_id_seq RENAME TO requests_id_seq")
+
+sql("ALTER TABLE request_files RENAME CONSTRAINT post_files_post_id_fkey TO request_files_request_id_fkey")
+
+sql("ALTER TABLE request_histories RENAME CONSTRAINT post_histories_post_id_fkey TO request_histories_request_id_fkey")
+sql("ALTER TABLE request_histories RENAME CONSTRAINT post_histories_provider_id_fkey TO request_histories_provider_id_fkey")
+sql("ALTER TABLE request_histories RENAME CONSTRAINT post_histories_receiver_id_fkey TO request_histories_receiver_id_fkey")
+
+sql("ALTER TABLE potential_providers RENAME CONSTRAINT potential_providers_post_id_fkey TO potential_providers_request_id_fkey")
+
+sql("ALTER TABLE threads RENAME CONSTRAINT threads_post_id_fkey TO threads_request_id_fkey")
+
+sql("ALTER TABLE requests RENAME CONSTRAINT posts_created_by_id_fkey TO requests_created_by_id_fkey")
+sql("ALTER TABLE requests RENAME CONSTRAINT posts_organization_id_fkey TO requests_organization_id_fkey")
+sql("ALTER TABLE requests RENAME CONSTRAINT posts_provider_id_fkey TO requests_provider_id_fkey")
+sql("ALTER TABLE requests RENAME CONSTRAINT post_destination_fk TO requests_destination_fkey")
+sql("ALTER TABLE requests RENAME CONSTRAINT post_origin_fk TO requests_origin_fkey")
+sql("ALTER TABLE requests RENAME CONSTRAINT meeting_fk TO requests_meeting_fkey")
+

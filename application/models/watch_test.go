@@ -209,21 +209,21 @@ func (ms *ModelSuite) TestWatch_Meeting() {
 	}
 }
 
-func (ms *ModelSuite) TestWatch_postMatches() {
-	posts := createPostFixtures(ms.DB, 1, false)
+func (ms *ModelSuite) TestWatch_requestMatches() {
+	requests := createRequestFixtures(ms.DB, 1, false)
 	watches := createWatchFixtures(ms.DB, createUserFixtures(ms.DB, 2).Users)
 
 	// watch 0 matches on text, but doesn't match size
-	tiny := PostSizeTiny
+	tiny := RequestSizeTiny
 	watches[0].Size = &tiny
-	postTitle := posts[0].Title
-	watches[0].SearchText = nulls.NewString(postTitle[:len(postTitle)-1])
+	requestTitle := requests[0].Title
+	watches[0].SearchText = nulls.NewString(requestTitle[:len(requestTitle)-1])
 	ms.NoError(watches[1].Update())
 
 	// watch 1 matches on text and size
-	small := PostSizeSmall
+	small := RequestSizeSmall
 	watches[1].Size = &small
-	watches[1].SearchText = nulls.NewString(postTitle[:len(postTitle)-1])
+	watches[1].SearchText = nulls.NewString(requestTitle[:len(requestTitle)-1])
 	ms.NoError(watches[1].Update())
 
 	// watch 2 matches on neither text nor size
@@ -232,10 +232,10 @@ func (ms *ModelSuite) TestWatch_postMatches() {
 	ms.NoError(watches[2].Update())
 
 	tests := []struct {
-		name  string
-		watch *Watch
-		post  Post
-		want  bool
+		name    string
+		watch   *Watch
+		request Request
+		want    bool
 	}{
 		{
 			name:  "nil",
@@ -243,38 +243,38 @@ func (ms *ModelSuite) TestWatch_postMatches() {
 			want:  false,
 		},
 		{
-			name:  "one matching field, one mismatching field",
-			watch: &watches[0],
-			post:  posts[0],
-			want:  false,
+			name:    "one matching field, one mismatching field",
+			watch:   &watches[0],
+			request: requests[0],
+			want:    false,
 		},
 		{
-			name:  "two matching fields",
-			watch: &watches[1],
-			post:  posts[0],
-			want:  true,
+			name:    "two matching fields",
+			watch:   &watches[1],
+			request: requests[0],
+			want:    true,
 		},
 		{
-			name:  "two mis-matching fields",
-			watch: &watches[2],
-			post:  posts[0],
-			want:  false,
+			name:    "two mis-matching fields",
+			watch:   &watches[2],
+			request: requests[0],
+			want:    false,
 		},
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			if got := tt.watch.matchesPost(tt.post); got != tt.want {
-				t.Errorf("matchesPost() = %v, want %v", got, tt.want)
+			if got := tt.watch.matchesRequest(tt.request); got != tt.want {
+				t.Errorf("matchesRequest() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
 func (ms *ModelSuite) TestWatch_destinationMatches() {
-	posts := createPostFixtures(ms.DB, 1, false)
+	requests := createRequestFixtures(ms.DB, 1, false)
 	watches := createWatchFixtures(ms.DB, createUserFixtures(ms.DB, 2).Users)
 
-	dest, err := posts[0].GetDestination()
+	dest, err := requests[0].GetDestination()
 	ms.NoError(err)
 	ms.NoError(dest.Create())
 	ms.NoError(watches[0].SetDestination(*dest))
@@ -282,48 +282,48 @@ func (ms *ModelSuite) TestWatch_destinationMatches() {
 	ms.NoError(watches[1].SetDestination(Location{Country: "XX", Description: "-"}))
 
 	tests := []struct {
-		name  string
-		watch *Watch
-		post  Post
-		want  bool
+		name    string
+		watch   *Watch
+		request Request
+		want    bool
 	}{
 		{
-			name:  "match",
-			watch: &watches[0],
-			post:  posts[0],
-			want:  true,
+			name:    "match",
+			watch:   &watches[0],
+			request: requests[0],
+			want:    true,
 		},
 		{
-			name:  "not match",
-			watch: &watches[1],
-			post:  posts[0],
-			want:  false,
+			name:    "not match",
+			watch:   &watches[1],
+			request: requests[0],
+			want:    false,
 		},
 		{
-			name:  "destination is nil",
-			watch: &watches[2],
-			post:  posts[0],
-			want:  true,
+			name:    "destination is nil",
+			watch:   &watches[2],
+			request: requests[0],
+			want:    true,
 		},
 		{
-			name:  "watch is nil",
-			watch: nil,
-			post:  posts[0],
-			want:  false,
+			name:    "watch is nil",
+			watch:   nil,
+			request: requests[0],
+			want:    false,
 		},
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			ms.Equal(tt.want, tt.watch.destinationMatches(tt.post))
+			ms.Equal(tt.want, tt.watch.destinationMatches(tt.request))
 		})
 	}
 }
 
 func (ms *ModelSuite) TestWatch_originMatches() {
-	posts := createPostFixtures(ms.DB, 1, false)
+	requests := createRequestFixtures(ms.DB, 1, false)
 	watches := createWatchFixtures(ms.DB, createUserFixtures(ms.DB, 2).Users)
 
-	origin, err := posts[0].GetOrigin()
+	origin, err := requests[0].GetOrigin()
 	ms.NoError(err)
 	ms.NoError(origin.Create())
 	ms.NoError(watches[0].SetOrigin(*origin))
@@ -331,154 +331,154 @@ func (ms *ModelSuite) TestWatch_originMatches() {
 	ms.NoError(watches[1].SetOrigin(Location{Country: "XX", Description: "-"}))
 
 	tests := []struct {
-		name  string
-		watch *Watch
-		post  Post
-		want  bool
+		name    string
+		watch   *Watch
+		request Request
+		want    bool
 	}{
 		{
-			name:  "match",
-			watch: &watches[0],
-			post:  posts[0],
-			want:  true,
+			name:    "match",
+			watch:   &watches[0],
+			request: requests[0],
+			want:    true,
 		},
 		{
-			name:  "not match",
-			watch: &watches[1],
-			post:  posts[0],
-			want:  false,
+			name:    "not match",
+			watch:   &watches[1],
+			request: requests[0],
+			want:    false,
 		},
 		{
-			name:  "origin is nil",
-			watch: &watches[2],
-			post:  posts[0],
-			want:  true,
+			name:    "origin is nil",
+			watch:   &watches[2],
+			request: requests[0],
+			want:    true,
 		},
 		{
-			name:  "watch is nil",
-			watch: nil,
-			post:  posts[0],
-			want:  false,
+			name:    "watch is nil",
+			watch:   nil,
+			request: requests[0],
+			want:    false,
 		},
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			ms.Equal(tt.want, tt.watch.originMatches(tt.post))
+			ms.Equal(tt.want, tt.watch.originMatches(tt.request))
 		})
 	}
 }
 
 func (ms *ModelSuite) TestWatch_sizeMatches() {
-	posts := createPostFixtures(ms.DB, 1, false)
+	requests := createRequestFixtures(ms.DB, 1, false)
 	watches := createWatchFixtures(ms.DB, createUserFixtures(ms.DB, 2).Users)
 
 	// don't need to save these changes because sizeMatches doesn't access the database
-	postSize := posts[0].Size // PostSizeSmall
-	watches[0].Size = &postSize
-	tiny := PostSizeTiny
+	requestSize := requests[0].Size // RequestSizeSmall
+	watches[0].Size = &requestSize
+	tiny := RequestSizeTiny
 	watches[1].Size = &tiny
 
 	tests := []struct {
-		name  string
-		watch *Watch
-		post  Post
-		want  bool
+		name    string
+		watch   *Watch
+		request Request
+		want    bool
 	}{
 		{
-			name:  "match",
-			watch: &watches[0],
-			post:  posts[0],
-			want:  true,
+			name:    "match",
+			watch:   &watches[0],
+			request: requests[0],
+			want:    true,
 		},
 		{
-			name:  "not match",
-			watch: &watches[1],
-			post:  posts[0],
-			want:  false,
+			name:    "not match",
+			watch:   &watches[1],
+			request: requests[0],
+			want:    false,
 		},
 		{
-			name:  "size is nil",
-			watch: &watches[2],
-			post:  posts[0],
-			want:  true,
+			name:    "size is nil",
+			watch:   &watches[2],
+			request: requests[0],
+			want:    true,
 		},
 		{
-			name:  "watch is nil",
-			watch: nil,
-			post:  posts[0],
-			want:  false,
+			name:    "watch is nil",
+			watch:   nil,
+			request: requests[0],
+			want:    false,
 		},
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			ms.Equal(tt.want, tt.watch.sizeMatches(tt.post))
+			ms.Equal(tt.want, tt.watch.sizeMatches(tt.request))
 		})
 	}
 }
 
 func (ms *ModelSuite) TestWatch_meetingMatches() {
-	posts := createPostFixtures(ms.DB, 1, false)
+	requests := createRequestFixtures(ms.DB, 1, false)
 	watches := createWatchFixtures(ms.DB, createUserFixtures(ms.DB, 2).Users)
 
 	// don't need to save these changes because meetingMatches doesn't access the database
 	watches[0].MeetingID = nulls.NewInt(1)
 	watches[1].MeetingID = nulls.NewInt(2)
-	posts[0].MeetingID = nulls.NewInt(1)
+	requests[0].MeetingID = nulls.NewInt(1)
 
 	tests := []struct {
-		name  string
-		watch *Watch
-		post  Post
-		want  bool
+		name    string
+		watch   *Watch
+		request Request
+		want    bool
 	}{
 		{
-			name:  "match",
-			watch: &watches[0],
-			post:  posts[0],
-			want:  true,
+			name:    "match",
+			watch:   &watches[0],
+			request: requests[0],
+			want:    true,
 		},
 		{
-			name:  "not match",
-			watch: &watches[1],
-			post:  posts[0],
-			want:  false,
+			name:    "not match",
+			watch:   &watches[1],
+			request: requests[0],
+			want:    false,
 		},
 		{
-			name:  "meeting is nil",
-			watch: &watches[2],
-			post:  posts[0],
-			want:  true,
+			name:    "meeting is nil",
+			watch:   &watches[2],
+			request: requests[0],
+			want:    true,
 		},
 		{
-			name:  "watch is nil",
-			watch: nil,
-			post:  posts[0],
-			want:  false,
+			name:    "watch is nil",
+			watch:   nil,
+			request: requests[0],
+			want:    false,
 		},
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			ms.Equal(tt.want, tt.watch.meetingMatches(tt.post))
+			ms.Equal(tt.want, tt.watch.meetingMatches(tt.request))
 		})
 	}
 }
 
 func (ms *ModelSuite) TestWatch_textMatches() {
-	posts := createPostFixtures(ms.DB, 1, false)
+	requests := createRequestFixtures(ms.DB, 1, false)
 	watches := createWatchFixtures(ms.DB, createUserFixtures(ms.DB, 3).Users)
 
-	postDescription := posts[0].Description.String
-	watches[0].SearchText = nulls.NewString(postDescription[:len(postDescription)-1])
+	requestDescription := requests[0].Description.String
+	watches[0].SearchText = nulls.NewString(requestDescription[:len(requestDescription)-1])
 	ms.NoError(watches[0].Update())
 
-	postTitle := posts[0].Title
-	watches[1].SearchText = nulls.NewString(postTitle[:len(postTitle)-1])
+	requestTitle := requests[0].Title
+	watches[1].SearchText = nulls.NewString(requestTitle[:len(requestTitle)-1])
 	ms.NoError(watches[1].Update())
 
-	postCreator, err := posts[0].Creator()
+	requestCreator, err := requests[0].Creator()
 	ms.NoError(err)
-	postCreatorNickname := postCreator.Nickname
-	watches[2].SearchText = nulls.NewString(postCreatorNickname[:5])
+	requestCreatorNickname := requestCreator.Nickname
+	watches[2].SearchText = nulls.NewString(requestCreatorNickname[:5])
 	ms.NoError(watches[2].Update())
 
 	watches[3].SearchText = nulls.NewString("not a match for anything")
@@ -488,51 +488,51 @@ func (ms *ModelSuite) TestWatch_textMatches() {
 	ms.NoError(watches[4].Update())
 
 	tests := []struct {
-		name  string
-		watch *Watch
-		post  Post
-		want  bool
+		name    string
+		watch   *Watch
+		request Request
+		want    bool
 	}{
 		{
-			name:  "match description",
-			watch: &watches[0],
-			post:  posts[0],
-			want:  true,
+			name:    "match description",
+			watch:   &watches[0],
+			request: requests[0],
+			want:    true,
 		},
 		{
-			name:  "match title",
-			watch: &watches[1],
-			post:  posts[0],
-			want:  true,
+			name:    "match title",
+			watch:   &watches[1],
+			request: requests[0],
+			want:    true,
 		},
 		{
-			name:  "match nickname",
-			watch: &watches[2],
-			post:  posts[0],
-			want:  true,
+			name:    "match nickname",
+			watch:   &watches[2],
+			request: requests[0],
+			want:    true,
 		},
 		{
-			name:  "not match",
-			watch: &watches[3],
-			post:  posts[0],
-			want:  false,
+			name:    "not match",
+			watch:   &watches[3],
+			request: requests[0],
+			want:    false,
 		},
 		{
-			name:  "search is nil",
-			watch: &watches[4],
-			post:  posts[0],
-			want:  true,
+			name:    "search is nil",
+			watch:   &watches[4],
+			request: requests[0],
+			want:    true,
 		},
 		{
-			name:  "watch is nil",
-			watch: nil,
-			post:  posts[0],
-			want:  false,
+			name:    "watch is nil",
+			watch:   nil,
+			request: requests[0],
+			want:    false,
 		},
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			ms.Equal(tt.want, tt.watch.textMatches(tt.post))
+			ms.Equal(tt.want, tt.watch.textMatches(tt.request))
 		})
 	}
 }

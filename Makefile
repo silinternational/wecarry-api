@@ -39,6 +39,7 @@ test:
 	docker-compose run --rm test whenavail testdb 5432 10 buffalo test
 
 testenv: migratetestdb
+	@echo "\n\nIf minio hasn't been initialized, run grift minio:seed\n"
 	docker-compose run --rm test bash
 
 clean:

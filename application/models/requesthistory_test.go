@@ -8,61 +8,61 @@ import (
 	"testing"
 )
 
-func (ms *ModelSuite) TestPostHistory_Load() {
+func (ms *ModelSuite) TestRequestHistory_Load() {
 	t := ms.T()
-	f := createFixturesForTestPostHistory_Load(ms)
+	f := createFixturesForTestRequestHistory_Load(ms)
 
 	tests := []struct {
-		name        string
-		postHistory PostHistory
-		wantErr     string
-		wantEmail   string
+		name           string
+		requestHistory RequestHistory
+		wantErr        string
+		wantEmail      string
 	}{
 		{
-			name:        "open",
-			postHistory: f.PostHistories[0],
-			wantEmail:   f.Users[0].Email,
+			name:           "open",
+			requestHistory: f.RequestHistories[0],
+			wantEmail:      f.Users[0].Email,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := test.postHistory.Load("Receiver")
+			err := test.requestHistory.Load("Receiver")
 			ms.NoError(err, "did not expect any error")
 
-			ms.Equal(test.wantEmail, test.postHistory.Receiver.Email, "incorrect Receiver email")
+			ms.Equal(test.wantEmail, test.requestHistory.Receiver.Email, "incorrect Receiver email")
 
 		})
 	}
 }
 
-func (ms *ModelSuite) TestPost_pop() {
+func (ms *ModelSuite) TestRequestHistory_pop() {
 	t := ms.T()
-	f := createFixturesForTestPostHistory_pop(ms)
+	f := createFixturesForTestRequestHistory_pop(ms)
 
 	tests := []struct {
 		name          string
-		post          Post
-		newStatus     PostStatus
-		currentStatus PostStatus
+		request       Request
+		newStatus     RequestStatus
+		currentStatus RequestStatus
 		providerID    int
 		wantErr       string
 		wantLog       string
-		want          PostHistories
+		want          RequestHistories
 	}{
 		{
 			name:      "null to open - log error",
-			post:      f.Posts[1],
-			newStatus: PostStatusOpen,
+			request:   f.Requests[1],
+			newStatus: RequestStatusOpen,
 			wantLog:   "None Found",
-			want:      PostHistories{},
+			want:      RequestHistories{},
 		},
 		{
 			name:          "from accepted back to open",
-			post:          f.Posts[0],
-			newStatus:     PostStatusOpen,
-			currentStatus: PostStatusAccepted,
-			want:          PostHistories{f.PostHistories[0]},
+			request:       f.Requests[0],
+			newStatus:     RequestStatusOpen,
+			currentStatus: RequestStatusAccepted,
+			want:          RequestHistories{f.RequestHistories[0]},
 		},
 	}
 
@@ -76,10 +76,10 @@ func (ms *ModelSuite) TestPost_pop() {
 				domain.Logger.SetOutput(os.Stdout)
 			}()
 
-			test.post.Status = test.newStatus
-			var pHistory PostHistory
+			test.request.Status = test.newStatus
+			var pHistory RequestHistory
 
-			err := pHistory.popForPost(test.post, test.currentStatus)
+			err := pHistory.popForRequest(test.request, test.currentStatus)
 			if test.wantErr != "" {
 				ms.Error(err)
 				ms.Contains(err.Error(), test.wantErr, "unexpected error message")
@@ -96,8 +96,8 @@ func (ms *ModelSuite) TestPost_pop() {
 				ms.Contains(gotLog, test.wantLog, "did not get expected logging message")
 			}
 
-			var histories PostHistories
-			err = DB.Where("post_id = ?", test.post.ID).All(&histories)
+			var histories RequestHistories
+			err = DB.Where("request_id = ?", test.request.ID).All(&histories)
 			ms.NoError(err, "unexpected error fetching histories")
 
 			ms.Equal(len(test.want), len(histories), "incorrect number of histories")
@@ -110,62 +110,62 @@ func (ms *ModelSuite) TestPost_pop() {
 	}
 }
 
-func (ms *ModelSuite) TestPostHistory_createForPost() {
+func (ms *ModelSuite) TestRequestHistory_createForRequest() {
 	t := ms.T()
-	f := createFixturesForTestPostHistory_createForPost(ms)
+	f := createFixturesForTestRequestHistory_createForRequest(ms)
 
 	tests := []struct {
 		name       string
-		post       Post
-		status     PostStatus
+		request    Request
+		status     RequestStatus
 		providerID int
 		wantErr    string
-		want       PostHistories
+		want       RequestHistories
 	}{
 		{
 			name:       "open to accepted",
-			post:       f.Posts[0],
-			status:     PostStatusAccepted,
+			request:    f.Requests[0],
+			status:     RequestStatusAccepted,
 			providerID: f.Users[1].ID,
-			want: PostHistories{
+			want: RequestHistories{
 				{
-					Status:     PostStatusOpen,
-					PostID:     f.Posts[0].ID,
-					ReceiverID: nulls.NewInt(f.Posts[0].CreatedByID),
+					Status:     RequestStatusOpen,
+					RequestID:  f.Requests[0].ID,
+					ReceiverID: nulls.NewInt(f.Requests[0].CreatedByID),
 				},
 				{
-					Status:     PostStatusAccepted,
+					Status:     RequestStatusAccepted,
 					ReceiverID: nulls.NewInt(f.Users[0].ID),
 					ProviderID: nulls.NewInt(f.Users[1].ID),
 				},
 			},
 		},
 		{
-			name:   "null to open",
-			post:   f.Posts[1],
-			status: PostStatusOpen,
-			want:   PostHistories{{Status: PostStatusOpen, ReceiverID: nulls.NewInt(f.Users[0].ID)}},
+			name:    "null to open",
+			request: f.Requests[1],
+			status:  RequestStatusOpen,
+			want:    RequestHistories{{Status: RequestStatusOpen, ReceiverID: nulls.NewInt(f.Users[0].ID)}},
 		},
 		{
 			name:       "bad provider id",
-			post:       f.Posts[1],
-			status:     PostStatusAccepted,
+			request:    f.Requests[1],
+			status:     RequestStatusAccepted,
 			providerID: 999999,
-			wantErr:    `key constraint "post_histories_provider_id_fkey"`,
+			wantErr:    `key constraint "request_histories_provider_id_fkey"`,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			test.post.Status = test.status
+			test.request.Status = test.status
 
 			if test.providerID > 0 {
-				test.post.ProviderID = nulls.NewInt(test.providerID)
+				test.request.ProviderID = nulls.NewInt(test.providerID)
 			}
 
-			var pH PostHistory
+			var pH RequestHistory
 
-			err := pH.createForPost(test.post)
+			err := pH.createForRequest(test.request)
 			if test.wantErr != "" {
 				ms.Error(err)
 				ms.Contains(err.Error(), test.wantErr, "unexpected error message")
@@ -174,8 +174,8 @@ func (ms *ModelSuite) TestPostHistory_createForPost() {
 
 			ms.NoError(err, "did not expect any error")
 
-			var histories PostHistories
-			err = DB.Where("post_id = ?", test.post.ID).All(&histories)
+			var histories RequestHistories
+			err = DB.Where("request_id = ?", test.request.ID).All(&histories)
 			ms.NoError(err, "unexpected error fetching histories")
 
 			ms.Equal(len(test.want), len(histories), "incorrect number of histories")

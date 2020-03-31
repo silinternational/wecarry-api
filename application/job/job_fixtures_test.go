@@ -29,20 +29,20 @@ func CreateFixtures_TestNewThreadMessageHandler(js *JobSuite) MessageFixtures {
 	location := models.Location{}
 	createFixture(js, &location)
 
-	posts := models.Posts{
+	requests := models.Requests{
 		{UUID: domain.GetUUID(), CreatedByID: users[0].ID, OrganizationID: org.ID, DestinationID: location.ID},
 	}
-	for i := range posts {
-		createFixture(js, &posts[i])
+	for i := range requests {
+		createFixture(js, &requests[i])
 	}
 
 	threads := models.Threads{
-		{UUID: domain.GetUUID(), PostID: posts[0].ID},
-		{UUID: domain.GetUUID(), PostID: posts[0].ID},
-		{UUID: domain.GetUUID(), PostID: posts[0].ID},
-		{UUID: domain.GetUUID(), PostID: posts[0].ID},
-		{UUID: domain.GetUUID(), PostID: posts[0].ID},
-		{UUID: domain.GetUUID(), PostID: posts[0].ID},
+		{UUID: domain.GetUUID(), RequestID: requests[0].ID},
+		{UUID: domain.GetUUID(), RequestID: requests[0].ID},
+		{UUID: domain.GetUUID(), RequestID: requests[0].ID},
+		{UUID: domain.GetUUID(), RequestID: requests[0].ID},
+		{UUID: domain.GetUUID(), RequestID: requests[0].ID},
+		{UUID: domain.GetUUID(), RequestID: requests[0].ID},
 	}
 	for i := range threads {
 		createFixture(js, &threads[i])

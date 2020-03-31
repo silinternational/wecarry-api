@@ -72,8 +72,9 @@ github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6r
 github.com/blang/semver v3.5.1+incompatible h1:cQNTCjp13qL8KC3Nbxr/y2Bqb63oX6wdnnjpJbkM4JQ=
 github.com/blang/semver v3.5.1+incompatible/go.mod h1:kRBLl5iJ+tD4TcOOxsy/0fnwebNt5EWlYSAyrTnjyyk=
 github.com/bradfitz/go-smtpd v0.0.0-20170404230938-deb6d6237625/go.mod h1:HYsPBTaaSFSlLx/70C2HPIMNZpVV8+vt/A+FMnYP11g=
-github.com/caddyserver/certmagic v0.10.0 h1:kbQsqN5RmdUMClVUNd8svTzemCo8W6NNc8UJOXnUIu0=
 github.com/caddyserver/certmagic v0.10.0/go.mod h1:Y8jcUBctgk/IhpAzlHKfimZNyXCkfGgRTC0orl8gROQ=
+github.com/caddyserver/certmagic v0.10.5 h1:Dg4ipO1y23rWvFmiiRqhtUTh5Hy7PmfoFvPfDpnE8Z8=
+github.com/caddyserver/certmagic v0.10.5/go.mod h1:Y8jcUBctgk/IhpAzlHKfimZNyXCkfGgRTC0orl8gROQ=
 github.com/cenkalti/backoff v2.2.1+incompatible h1:tNowT99t7UNflLxfYYSlKYsBpXdEet03Pg2g16Swow4=
 github.com/cenkalti/backoff v2.2.1+incompatible/go.mod h1:90ReRw6GdpyfrHakVjL/QHaoyV4aDUVVkXQJJJ3NXXM=
 github.com/cenkalti/backoff/v4 v4.0.0 h1:6VeaLF9aI+MAUQ95106HwWzYZgJJpZ4stumjj6RFYAU=
@@ -616,7 +617,6 @@ github.com/golang/protobuf v1.1.0/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5y
 github.com/golang/protobuf v1.2.0/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
 github.com/golang/protobuf v1.3.1 h1:YF8+flBXS5eO826T4nzqPrxfhQThhXl0YzfuUPu4SBg=
 github.com/golang/protobuf v1.3.1/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
-github.com/golang/protobuf v1.3.2 h1:6nsPYzhq5kReh6QImI3k5qWzO4PEbvbIW2cwSfR/6xs=
 github.com/golang/protobuf v1.3.2/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
 github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db/go.mod h1:/XxbfmMg8lxefKM7IXC3fBNl/7bRcc72aCRzEWrmP2Q=
 github.com/gomodule/redigo v2.0.0+incompatible/go.mod h1:B4C85qUVwatsJoIUNIfCRsp7qO0iAmpGFZ4EELWSbC4=
@@ -985,10 +985,8 @@ github.com/shurcooL/sanitized_anchor_name v1.0.0/go.mod h1:1NzhyTcUVG4SuEtjjoZeV
 github.com/shurcooL/users v0.0.0-20180125191416-49c67e49c537/go.mod h1:QJTqeLYEDaXHZDBsXlPCDqdhQuJkuw4NOtaxYe3xii4=
 github.com/shurcooL/vfsgen v0.0.0-20180121065927-ffb13db8def0/go.mod h1:TrYk7fJVaAttu97ZZKrO9UbRa8izdowaMIZcxYMbVaw=
 github.com/shurcooL/webdavfs v0.0.0-20170829043945-18c3829fa133/go.mod h1:hKmq5kWdCj2z2KEozexVbfEZIWiTjhE0+UjmZgPqehw=
-github.com/silinternational/certmagic-storage-dynamodb v0.0.0-20200313182524-6c1466c6f78d h1:DsSuFWk16ZyCxlAWLTrLpTIFdhGfWy5+rIYjA35rRUg=
-github.com/silinternational/certmagic-storage-dynamodb v0.0.0-20200313182524-6c1466c6f78d/go.mod h1:yFh5Bj5pMbXc+EauEMdLT0BMooB9uvn+n4iXr45YhpU=
-github.com/silinternational/certmagic-storage-dynamodb v0.0.0-20200315153348-148abe9fdacf h1:+kl4hE0JAHUDy9FAImmQu+3DY340PQcMu3UyHypCVI8=
-github.com/silinternational/certmagic-storage-dynamodb v0.0.0-20200315153348-148abe9fdacf/go.mod h1:yFh5Bj5pMbXc+EauEMdLT0BMooB9uvn+n4iXr45YhpU=
+github.com/silinternational/certmagic-storage-dynamodb v0.0.0-20200316155358-4e6c577f652a h1:5yR3nJPiF0WddmesmFgKdhMlyCvVtXbT2NG0rS+WXjw=
+github.com/silinternational/certmagic-storage-dynamodb v0.0.0-20200316155358-4e6c577f652a/go.mod h1:yFh5Bj5pMbXc+EauEMdLT0BMooB9uvn+n4iXr45YhpU=
 github.com/silinternational/envy v1.7.0/go.mod h1:n7DRkBerg/aorDM8kbduw5dN3oXGswK5liaSCx4T5NI=
 github.com/sirupsen/logrus v1.0.6/go.mod h1:pMByvHTf9Beacp5x1UXfOR9xyW/9antXMhjMPG0dEzc=
 github.com/sirupsen/logrus v1.1.0/go.mod h1:zrgwTnHtNr00buQ1vSptGe8m1f/BbgsPukg8qsT7A+A=

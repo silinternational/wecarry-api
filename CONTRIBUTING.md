@@ -19,7 +19,7 @@ Tools - File Watchers, add and enable `goimports`.
 
 Within the `model` package, we have decided on function names starting with
 certain standardized verbs: Get, Find, Create, Delete. When possible, functions
-should have a model struct attached as a pointer: `func (p *Post)
+should have a model struct attached as a pointer: `func (r *Request)
 FindByUUID(uuid string) error`.
 
 ### Unit test naming
@@ -85,10 +85,10 @@ For example:
 
 ```go
 extras := map[string]interface{}{
-    "oldStatus": post.Status,
+    "oldStatus": request.Status,
     "newStatus": input.Status,
 }    
-return nil, domain.ReportError(ctx, err, "UpdatePostStatus.Unauthorized", extras)
+return nil, domain.ReportError(ctx, err, "UpdateRequestStatus.Unauthorized", extras)
 ``` 
 
 Errors within a query, such as an authorization failure on a request field, should

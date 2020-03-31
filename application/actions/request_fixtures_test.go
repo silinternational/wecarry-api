@@ -14,13 +14,13 @@ import (
 )
 
 type UpdateRequestFixtures struct {
-	models.Posts
+	models.Requests
 	models.Users
 	models.Files
 	models.Locations
 }
 
-type CreatePostFixtures struct {
+type CreateRequestFixtures struct {
 	models.Users
 	models.Organization
 	models.File
@@ -28,7 +28,7 @@ type CreatePostFixtures struct {
 }
 
 type UpdateRequestStatusFixtures struct {
-	models.Posts
+	models.Requests
 	models.Users
 }
 
@@ -39,18 +39,18 @@ func createFixturesForRequestQuery(as *ActionSuite) RequestQueryFixtures {
 	org := userFixtures.Organization
 	users := userFixtures.Users
 
-	requests := test.CreatePostFixtures(as.DB, 3, true)
-	requests[0].Status = models.PostStatusAccepted
+	requests := test.CreateRequestFixtures(as.DB, 3, true)
+	requests[0].Status = models.RequestStatusAccepted
 	requests[0].ProviderID = nulls.NewInt(users[1].ID)
 	as.NoError(as.DB.Save(&requests[0]))
 
-	requests[2].Status = models.PostStatusCompleted
+	requests[2].Status = models.RequestStatusCompleted
 	requests[2].CompletedOn = nulls.NewTime(time.Now())
 	requests[2].ProviderID = nulls.NewInt(users[1].ID)
 	as.NoError(as.DB.Save(&requests[2]))
 
 	threads := []models.Thread{
-		{UUID: domain.GetUUID(), PostID: requests[0].ID},
+		{UUID: domain.GetUUID(), RequestID: requests[0].ID},
 	}
 	for i := range threads {
 		createFixture(as, &threads[i])
@@ -79,7 +79,7 @@ func createFixturesForRequestQuery(as *ActionSuite) RequestQueryFixtures {
 	return RequestQueryFixtures{
 		Organization: org,
 		Users:        users,
-		Posts:        requests,
+		Requests:     requests,
 		Threads:      threads,
 	}
 }
@@ -89,14 +89,14 @@ func createFixturesForSearchRequestsQuery(as *ActionSuite) RequestQueryFixtures 
 	org := userFixtures.Organization
 	users := userFixtures.Users
 
-	requests := test.CreatePostFixtures(as.DB, 2, false)
+	requests := test.CreateRequestFixtures(as.DB, 2, false)
 	requests[0].Title = "A Match"
 	as.NoError(as.DB.Save(&requests[0]))
 
 	return RequestQueryFixtures{
 		Organization: org,
 		Users:        users,
-		Posts:        requests,
+		Requests:     requests,
 	}
 }
 
@@ -104,7 +104,7 @@ func createFixturesForUpdateRequest(as *ActionSuite) UpdateRequestFixtures {
 	userFixtures := test.CreateUserFixtures(as.DB, 2)
 	users := userFixtures.Users
 
-	requests := test.CreatePostFixtures(as.DB, 1, false)
+	requests := test.CreateRequestFixtures(as.DB, 1, false)
 	requests[0].OriginID = nulls.Int{}
 	as.NoError(as.DB.Save(&requests[0]))
 
@@ -112,13 +112,13 @@ func createFixturesForUpdateRequest(as *ActionSuite) UpdateRequestFixtures {
 	as.Nil(fileFixture.Store("new_photo.webp", []byte("RIFFxxxxWEBPVP")), "failed to create file fixture")
 
 	return UpdateRequestFixtures{
-		Posts: requests,
-		Users: users,
-		Files: models.Files{fileFixture},
+		Requests: requests,
+		Users:    users,
+		Files:    models.Files{fileFixture},
 	}
 }
 
-func createFixturesForCreateRequest(as *ActionSuite) CreatePostFixtures {
+func createFixturesForCreateRequest(as *ActionSuite) CreateRequestFixtures {
 	t := as.T()
 
 	userFixtures := test.CreateUserFixtures(as.DB, 1)
@@ -151,7 +151,7 @@ func createFixturesForCreateRequest(as *ActionSuite) CreatePostFixtures {
 		test.MustCreate(as.DB, &meetings[i])
 	}
 
-	return CreatePostFixtures{
+	return CreateRequestFixtures{
 		Users:        userFixtures.Users,
 		Organization: org,
 		File:         fileFixture,
@@ -163,11 +163,11 @@ func createFixturesForUpdateRequestStatus(as *ActionSuite) UpdateRequestStatusFi
 	userFixtures := test.CreateUserFixtures(as.DB, 2)
 	users := userFixtures.Users
 
-	requests := test.CreatePostFixtures(as.DB, 1, false)
+	requests := test.CreateRequestFixtures(as.DB, 1, false)
 
 	return UpdateRequestStatusFixtures{
-		Posts: requests,
-		Users: users,
+		Requests: requests,
+		Users:    users,
 	}
 }
 
@@ -175,11 +175,11 @@ func createFixturesForMarkRequestAsDelivered(as *ActionSuite) UpdateRequestStatu
 	userFixtures := test.CreateUserFixtures(as.DB, 2)
 	users := userFixtures.Users
 
-	requests := test.CreatePostFixtures(as.DB, 2, false)
-	requests[0].Status = models.PostStatusAccepted
+	requests := test.CreateRequestFixtures(as.DB, 2, false)
+	requests[0].Status = models.RequestStatusAccepted
 	requests[0].ProviderID = nulls.NewInt(users[1].ID)
 
-	requests[1].Status = models.PostStatusCompleted
+	requests[1].Status = models.RequestStatusCompleted
 	requests[1].ProviderID = nulls.NewInt(users[1].ID)
 
 	as.NoError(as.DB.Update(&requests))
@@ -187,8 +187,8 @@ func createFixturesForMarkRequestAsDelivered(as *ActionSuite) UpdateRequestStatu
 	as.DB.Save(&requests[0])
 
 	return UpdateRequestStatusFixtures{
-		Posts: requests,
-		Users: users,
+		Requests: requests,
+		Users:    users,
 	}
 }
 
@@ -196,25 +196,25 @@ func createFixturesForMarkRequestAsReceived(as *ActionSuite) UpdateRequestStatus
 	userFixtures := test.CreateUserFixtures(as.DB, 2)
 	users := userFixtures.Users
 
-	requests := test.CreatePostFixtures(as.DB, 3, false)
-	requests[0].Status = models.PostStatusAccepted
+	requests := test.CreateRequestFixtures(as.DB, 3, false)
+	requests[0].Status = models.RequestStatusAccepted
 	requests[0].ProviderID = nulls.NewInt(users[1].ID)
 
 	// Get the Accepted RequestHistory added
-	requests[1].Status = models.PostStatusAccepted
+	requests[1].Status = models.RequestStatusAccepted
 	requests[1].ProviderID = nulls.NewInt(users[1].ID)
 	as.NoError(as.DB.Update(&requests))
 
-	requests[1].Status = models.PostStatusDelivered
+	requests[1].Status = models.RequestStatusDelivered
 
-	requests[2].Status = models.PostStatusCompleted
+	requests[2].Status = models.RequestStatusCompleted
 	requests[2].ProviderID = nulls.NewInt(users[1].ID)
 	as.NoError(as.DB.Update(&requests))
 
 	as.DB.Save(&requests[0])
 
 	return UpdateRequestStatusFixtures{
-		Posts: requests,
-		Users: users,
+		Requests: requests,
+		Users:    users,
 	}
 }

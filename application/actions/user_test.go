@@ -41,7 +41,7 @@ type User struct {
 	Organizations []struct {
 		ID string `json:"id"`
 	} `json:"organizations"`
-	Posts []struct {
+	Requests []struct {
 		ID string `json:"id"`
 	} `json:"requests"`
 	MeetingsAsParticipant []struct {
@@ -105,8 +105,8 @@ func (as *ActionSuite) TestUserQuery() {
 				as.Equal(1, len(resp.User.Organizations), "wrong number of Organizations")
 				as.Equal(f.Organization.UUID.String(), resp.User.Organizations[0].ID, "incorrect Organization ID")
 
-				as.Equal(1, len(resp.User.Posts), "wrong number of posts")
-				as.Equal(f.Posts[0].UUID.String(), resp.User.Posts[0].ID, "incorrect Post ID")
+				as.Equal(1, len(resp.User.Requests), "wrong number of requests")
+				as.Equal(f.Requests[0].UUID.String(), resp.User.Requests[0].ID, "incorrect Request ID")
 
 				as.Equal(1, len(resp.User.MeetingsAsParticipant), "wrong number of meetings")
 				as.Equal(f.Meetings[0].UUID.String(), resp.User.MeetingsAsParticipant[0].ID, "incorrect Meeting ID")
