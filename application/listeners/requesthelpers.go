@@ -282,6 +282,11 @@ var statusSenders = map[string]sender{
 		subject:  "Email.Subject.Request.FromAcceptedOrDeliveredToCompleted",
 		sender:   sendNotificationRequestFromAcceptedOrDeliveredToCompleted},
 
+	join(models.RequestStatusAccepted, models.RequestStatusDelivered): sender{
+		template: domain.MessageTemplateRequestFromAcceptedToDelivered,
+		subject:  "Email.Subject.Request.FromAcceptedToDelivered",
+		sender:   sendNotificationRequestFromAcceptedToDelivered},
+
 	join(models.RequestStatusAccepted, models.RequestStatusOpen): sender{
 		template: domain.MessageTemplateRequestFromAcceptedToOpen,
 		subject:  "Email.Subject.Request.FromAcceptedToOpen",
