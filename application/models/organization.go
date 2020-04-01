@@ -341,13 +341,8 @@ func (o *Organization) RemoveFile() error {
 	return removeFile(o)
 }
 
-// FindUsersByIDs finds all Users associated with the given IDs and loads them from the database
-func FindOrganizationsByIDs(ids []int) ([]Organization, error) {
+// FindByIDs finds all Organizations associated with the given IDs and loads them from the database
+func (o *Organizations) FindByIDs(ids []int) error {
 	ids = domain.UniquifyIntSlice(ids)
-	objects := []Organization{}
-	if err := DB.Where("id in (?)", ids).All(&objects); err != nil {
-		return []Organization{}, err
-	}
-
-	return objects, nil
+	return DB.Where("id in (?)", ids).All(o)
 }

@@ -288,13 +288,8 @@ func (f *File) ClearLinked() error {
 	return DB.UpdateColumns(f, "linked")
 }
 
-// FindFilesByIDs finds all Files associated with the given IDs and loads them from the database
-func FindFilesByIDs(ids []int) ([]File, error) {
+// FindByIDs finds all Files associated with the given IDs and loads them from the database
+func (f *Files) FindByIDs(ids []int) error {
 	ids = domain.UniquifyIntSlice(ids)
-	objects := []File{}
-	if err := DB.Where("id in (?)", ids).All(&objects); err != nil {
-		return []File{}, err
-	}
-
-	return objects, nil
+	return DB.Where("id in (?)", ids).All(f)
 }

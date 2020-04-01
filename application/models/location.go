@@ -121,13 +121,8 @@ func (l *Location) FindByID(id int) error {
 	return DB.Find(l, id)
 }
 
-// FindLocationsByIDs finds all Locations associated with the given IDs and loads them from the database
-func FindLocationsByIDs(ids []int) ([]Location, error) {
+// FindByIDs finds all Locations associated with the given IDs and loads them from the database
+func (l *Locations) FindByIDs(ids []int) error {
 	ids = domain.UniquifyIntSlice(ids)
-	objects := []Location{}
-	if err := DB.Where("id in (?)", ids).All(&objects); err != nil {
-		return []Location{}, err
-	}
-
-	return objects, nil
+	return DB.Where("id in (?)", ids).All(l)
 }

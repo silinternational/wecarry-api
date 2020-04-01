@@ -19,8 +19,8 @@ type Loaders struct {
 
 func getFetchFileCallback() func([]int) ([]*models.File, []error) {
 	return func(ids []int) ([]*models.File, []error) {
-		objects, err := models.FindFilesByIDs(ids)
-		if err != nil {
+		var objects models.Files
+		if err := objects.FindByIDs(ids); err != nil {
 			return []*models.File{}, []error{err}
 		}
 
@@ -43,8 +43,8 @@ func getFetchFileCallback() func([]int) ([]*models.File, []error) {
 
 func getFetchLocationCallback() func([]int) ([]*models.Location, []error) {
 	return func(ids []int) ([]*models.Location, []error) {
-		objects, err := models.FindLocationsByIDs(ids)
-		if err != nil {
+		var objects models.Locations
+		if err := objects.FindByIDs(ids); err != nil {
 			return []*models.Location{}, []error{err}
 		}
 
@@ -67,8 +67,8 @@ func getFetchLocationCallback() func([]int) ([]*models.Location, []error) {
 
 func getFetchMeetingCallback() func([]int) ([]*models.Meeting, []error) {
 	return func(ids []int) ([]*models.Meeting, []error) {
-		objects, err := models.FindMeetingsByIDs(ids)
-		if err != nil {
+		var objects models.Meetings
+		if err := objects.FindByIDs(ids); err != nil {
 			return []*models.Meeting{}, []error{err}
 		}
 
@@ -91,8 +91,8 @@ func getFetchMeetingCallback() func([]int) ([]*models.Meeting, []error) {
 
 func getFetchOrganizationCallback() func([]int) ([]*models.Organization, []error) {
 	return func(ids []int) ([]*models.Organization, []error) {
-		objects, err := models.FindOrganizationsByIDs(ids)
-		if err != nil {
+		var objects models.Organizations
+		if err := objects.FindByIDs(ids); err != nil {
 			return []*models.Organization{}, []error{err}
 		}
 
@@ -115,11 +115,11 @@ func getFetchOrganizationCallback() func([]int) ([]*models.Organization, []error
 
 func getFetchUserCallback() func([]int) ([]*models.User, []error) {
 	return func(ids []int) ([]*models.User, []error) {
-		objects, err := models.FindUsersByIDs(ids)
-		if err != nil {
+
+		var objects models.Users
+		if err := objects.FindByIDs(ids); err != nil {
 			return []*models.User{}, []error{err}
 		}
-
 		objMap := map[int]models.User{}
 		for _, o := range objects {
 			objMap[o.ID] = o
