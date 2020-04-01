@@ -7,6 +7,7 @@ import (
 
 	"github.com/gobuffalo/nulls"
 
+	"github.com/silinternational/wecarry-api/dataloader"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 )
@@ -32,7 +33,7 @@ func (r *requestResolver) CreatedBy(ctx context.Context, obj *models.Request) (*
 		return nil, nil
 	}
 
-	creator, err := obj.GetCreator()
+	creator, err := dataloader.For(ctx).UserByID.Load(obj.CreatedByID)
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetRequestCreator")
 	}
@@ -46,7 +47,11 @@ func (r *requestResolver) Provider(ctx context.Context, obj *models.Request) (*P
 		return nil, nil
 	}
 
-	provider, err := obj.GetProvider()
+	if !obj.ProviderID.Valid {
+		return nil, nil
+	}
+
+	provider, err := dataloader.For(ctx).UserByID.Load(obj.ProviderID.Int)
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetRequestProvider")
 	}
@@ -77,11 +82,10 @@ func (r *requestResolver) Organization(ctx context.Context, obj *models.Request)
 		return nil, nil
 	}
 
-	organization, err := obj.GetOrganization()
+	organization, err := dataloader.For(ctx).OrganizationByID.Load(obj.OrganizationID)
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetRequestOrganization")
 	}
-
 	return organization, nil
 }
 
@@ -248,11 +252,21 @@ func (r *requestResolver) Meeting(ctx context.Context, obj *models.Request) (*mo
 		return nil, nil
 	}
 
-	meeting, err := obj.Meeting()
-	if err != nil {
-		return nil, domain.ReportError(ctx, err, "GetRequestMeeting")
+	//meeting, err := obj.Meeting()
+	//if err != nil {
+	//	return nil, domain.ReportError(ctx, err, "GetRequestMeeting")
+	//}
+	//
+	//return meeting, nil
+
+	if !obj.MeetingID.Valid {
+		return nil, nil
 	}
 
+	meeting, err := dataloader.For(ctx).MeetingByID.Load(obj.MeetingID.Int)
+	if err != nil {
+		return nil, domain.ReportError(ctx, err, "GetRequestProvider")
+	}
 	return meeting, nil
 }
 

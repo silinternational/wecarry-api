@@ -97,6 +97,19 @@ func (v *dateValidator) IsValid(errors *validate.Errors) {
 }
 
 // FindByUUID finds a meeting by the UUID field and loads its CreatedBy field
+func (m *Meeting) FindByID(id int) error {
+	if id <= 0 {
+		return errors.New("error finding meeting: id must be positive")
+	}
+
+	if err := DB.Find(m, id); err != nil {
+		return fmt.Errorf("error finding meeting by id: %s", err.Error())
+	}
+
+	return nil
+}
+
+// FindByUUID finds a meeting by the UUID field and loads its CreatedBy field
 func (m *Meeting) FindByUUID(uuid string) error {
 	if uuid == "" {
 		return errors.New("error finding meeting: uuid must not be blank")

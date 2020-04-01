@@ -140,6 +140,19 @@ func (o *Organization) GetAuthProvider(authEmail string) (auth.Provider, error) 
 	return &auth.EmptyProvider{}, fmt.Errorf("unsupported auth provider type: %s", o.AuthType)
 }
 
+func (o *Organization) FindByID(id int) error {
+
+	if id <= 0 {
+		return errors.New("error: org id must be positive")
+	}
+
+	if err := DB.Find(o, id); err != nil {
+		return fmt.Errorf("error finding org by id: %s", err.Error())
+	}
+
+	return nil
+}
+
 func (o *Organization) FindByUUID(uuid string) error {
 
 	if uuid == "" {
