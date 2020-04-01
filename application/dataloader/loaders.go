@@ -33,7 +33,7 @@ func getFetchMeetingCallback() func([]int) ([]*models.Meeting, []error) {
 			objectsByID[obj.ID] = &obj
 		}
 
-		objects := make([]*models.Meeting, len(objectsByID))
+		objects := make([]*models.Meeting, len(ids))
 		for i, id := range ids {
 			objects[i] = objectsByID[id]
 		}
@@ -60,7 +60,7 @@ func getFetchOrganizationCallback() func([]int) ([]*models.Organization, []error
 			objectsByID[obj.ID] = &obj
 		}
 
-		objects := make([]*models.Organization, len(objectsByID))
+		objects := make([]*models.Organization, len(ids))
 		for i, id := range ids {
 			objects[i] = objectsByID[id]
 		}
@@ -87,7 +87,7 @@ func getFetchUserCallback() func([]int) ([]*models.User, []error) {
 			objectsByID[obj.ID] = &obj
 		}
 
-		objects := make([]*models.User, len(objectsByID))
+		objects := make([]*models.User, len(ids))
 		for i, id := range ids {
 			objects[i] = objectsByID[id]
 		}
