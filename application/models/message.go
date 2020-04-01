@@ -33,8 +33,8 @@ type MessageCreatedEventData struct {
 	MessageCreatorNickName string
 	MessageCreatorEmail    string
 	MessageContent         string
-	PostUUID               string
-	PostTitle              string
+	RequestUUID            string
+	RequestTitle           string
 	ThreadUUID             string
 	MessageRecipients      []struct{ Nickname, Email string }
 }
@@ -84,13 +84,13 @@ func (m *Message) AfterCreate(tx *pop.Connection) error {
 		return errors.New("error getting message's Thread ... " + err.Error())
 	}
 
-	post, err := thread.GetPost()
+	request, err := thread.GetRequest()
 	if err != nil {
-		return errors.New("error getting message's Post ... " + err.Error())
+		return errors.New("error getting message's Request ... " + err.Error())
 	}
 
 	// Ensure a matching threadparticipant exists
-	if err := thread.ensureParticipants(*post, m.SentByID); err != nil {
+	if err := thread.ensureParticipants(*request, m.SentByID); err != nil {
 		return err
 	}
 
@@ -145,15 +145,15 @@ func (m *Message) GetThread() (*Thread, error) {
 }
 
 // Create a new message if authorized.
-func (m *Message) Create(ctx context.Context, postUUID string, threadUUID *string, content string) error {
+func (m *Message) Create(ctx context.Context, requestUUID string, threadUUID *string, content string) error {
 	user := CurrentUser(ctx)
 
-	var post Post
-	if err := post.FindByUUID(postUUID); err != nil {
-		return errors.New("failed to find post, " + err.Error())
+	var request Request
+	if err := request.FindByUUID(requestUUID); err != nil {
+		return errors.New("failed to find request, " + err.Error())
 	}
-	if !post.IsVisible(ctx, user) {
-		return errors.New("user cannot create a message on post")
+	if !request.IsVisible(ctx, user) {
+		return errors.New("user cannot create a message on request")
 	}
 
 	var thread Thread
@@ -162,16 +162,16 @@ func (m *Message) Create(ctx context.Context, postUUID string, threadUUID *strin
 		if err != nil {
 			return errors.New("failed to find thread, " + err.Error())
 		}
-		if thread.PostID != post.ID {
-			return errors.New("thread is not valid for post")
+		if thread.RequestID != request.ID {
+			return errors.New("thread is not valid for request")
 		}
 		if !thread.IsVisible(user.ID) {
 			return errors.New("user cannot create a message on thread")
 		}
 	} else {
-		err := thread.CreateWithParticipants(post, user)
+		err := thread.CreateWithParticipants(request, user)
 		if err != nil {
-			return errors.New("failed to create new thread on post, " + err.Error())
+			return errors.New("failed to create new thread on request, " + err.Error())
 		}
 	}
 

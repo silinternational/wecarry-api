@@ -15,36 +15,36 @@ import (
 	"github.com/silinternational/wecarry-api/notifications"
 )
 
-func (ms *ModelSuite) TestGetPostUsers() {
+func (ms *ModelSuite) TestGetRequestUsers() {
 	t := ms.T()
 
-	orgUserPostFixtures := CreateFixtures_GetPostUsers(ms, t)
-	users := orgUserPostFixtures.users
-	posts := orgUserPostFixtures.posts
+	orgUserRequestFixtures := CreateFixtures_GetRequestUsers(ms, t)
+	users := orgUserRequestFixtures.users
+	requests := orgUserRequestFixtures.requests
 
 	tests := []struct {
 		name          string
 		id            int
-		wantRequester postUser
-		wantProvider  postUser
+		wantRequester requestUser
+		wantProvider  requestUser
 		wantErr       bool
 	}{
 		{name: "Request by User0 with User1 as Provider",
-			id: posts[0].ID,
-			wantRequester: postUser{
+			id: requests[0].ID,
+			wantRequester: requestUser{
 				Language: domain.UserPreferenceLanguageEnglish,
 				Nickname: users[0].Nickname,
 				Email:    users[0].Email,
 			},
-			wantProvider: postUser{
+			wantProvider: requestUser{
 				Language: domain.UserPreferenceLanguageFrench,
 				Nickname: users[1].Nickname,
 				Email:    users[1].Email,
 			},
 		},
 		{name: "Request by User0 with no Provider",
-			id: posts[1].ID,
-			wantRequester: postUser{
+			id: requests[1].ID,
+			wantRequester: requestUser{
 				Language: domain.UserPreferenceLanguageEnglish,
 				Nickname: users[0].Nickname,
 				Email:    users[0].Email,
@@ -54,18 +54,18 @@ func (ms *ModelSuite) TestGetPostUsers() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 
-			var post models.Post
-			err := post.FindByID(test.id)
-			ms.NoError(err, "error finding post for test")
+			var request models.Request
+			err := request.FindByID(test.id)
+			ms.NoError(err, "error finding request for test")
 
-			postUsers := getPostUsers(post)
+			requestUsers := getRequestUsers(request)
 
 			if test.wantErr {
 				ms.Error(err)
 			} else {
 				ms.NoError(err)
-				ms.Equal(test.wantRequester, postUsers.Receiver)
-				ms.Equal(test.wantProvider, postUsers.Provider)
+				ms.Equal(test.wantRequester, requestUsers.Receiver)
+				ms.Equal(test.wantProvider, requestUsers.Provider)
 			}
 		})
 	}
@@ -74,13 +74,13 @@ func (ms *ModelSuite) TestGetPostUsers() {
 func (ms *ModelSuite) TestRequestStatusUpdatedNotifications() {
 	t := ms.T()
 
-	orgUserPostFixtures := CreateFixtures_RequestStatusUpdatedNotifications(ms, t)
-	posts := orgUserPostFixtures.posts
+	orgUserRequestFixtures := CreateFixtures_RequestStatusUpdatedNotifications(ms, t)
+	requests := orgUserRequestFixtures.requests
 
-	postStatusEData := models.PostStatusEventData{
-		OldStatus: models.PostStatusOpen,
-		NewStatus: models.PostStatusAccepted,
-		PostID:    posts[0].ID,
+	requestStatusEData := models.RequestStatusEventData{
+		OldStatus: models.RequestStatusOpen,
+		NewStatus: models.RequestStatusAccepted,
+		RequestID: requests[0].ID,
 	}
 
 	var buf bytes.Buffer
@@ -91,7 +91,7 @@ func (ms *ModelSuite) TestRequestStatusUpdatedNotifications() {
 	}()
 
 	// No logging message expected
-	requestStatusUpdatedNotifications(posts[0], postStatusEData)
+	requestStatusUpdatedNotifications(requests[0], requestStatusEData)
 
 	got := buf.String()
 	ms.Equal("", got, "Got an unexpected error log entry")
@@ -99,8 +99,8 @@ func (ms *ModelSuite) TestRequestStatusUpdatedNotifications() {
 	buf.Reset()
 
 	// Logging message expected about bad transition
-	postStatusEData.NewStatus = models.PostStatusDelivered
-	requestStatusUpdatedNotifications(posts[0], postStatusEData)
+	requestStatusEData.NewStatus = models.RequestStatusDelivered
+	requestStatusUpdatedNotifications(requests[0], requestStatusEData)
 
 	got = buf.String()
 	want := "unexpected status transition 'OPEN-DELIVERED'"
@@ -111,8 +111,8 @@ func (ms *ModelSuite) TestRequestStatusUpdatedNotifications() {
 func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 	t := ms.T()
 
-	orgUserPostFixtures := CreateFixtures_sendNotificationRequestFromStatus(ms, t)
-	posts := orgUserPostFixtures.posts
+	orgUserRequestFixtures := CreateFixtures_sendNotificationRequestFromStatus(ms, t)
+	requests := orgUserRequestFixtures.requests
 
 	var buf bytes.Buffer
 	domain.ErrLogger.SetOutput(&buf)
@@ -126,8 +126,8 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 	tests := []struct {
 		name             string
 		template         string
-		post             models.Post
-		eventData        models.PostStatusEventData
+		request          models.Request
+		eventData        models.RequestStatusEventData
 		sendFunction     func(senderParams)
 		wantEmailsSent   int
 		wantToEmail      string
@@ -136,119 +136,119 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 		wantErrLog       string
 	}{
 		{name: "Good - Accepted to Open",
-			post: posts[0],
-			eventData: models.PostStatusEventData{
-				OldStatus:     models.PostStatusAccepted,
-				NewStatus:     models.PostStatusOpen,
-				PostID:        posts[0].ID,
-				OldProviderID: *models.GetIntFromNullsInt(posts[0].ProviderID),
+			request: requests[0],
+			eventData: models.RequestStatusEventData{
+				OldStatus:     models.RequestStatusAccepted,
+				NewStatus:     models.RequestStatusOpen,
+				RequestID:     requests[0].ID,
+				OldProviderID: *models.GetIntFromNullsInt(requests[0].ProviderID),
 			},
 			template:         domain.MessageTemplateRequestFromAcceptedToOpen,
 			sendFunction:     sendNotificationRequestFromAcceptedToOpen,
 			wantEmailsSent:   1,
-			wantToEmail:      posts[0].Provider.Email,
+			wantToEmail:      requests[0].Provider.Email,
 			wantBodyContains: "isn't ready after all to have you fulfill",
 		},
 		{name: "Good - Accepted to Completed",
-			post:             posts[0],
+			request:          requests[0],
 			template:         domain.MessageTemplateRequestFromAcceptedToCompleted,
 			sendFunction:     sendNotificationRequestFromAcceptedOrDeliveredToCompleted,
 			wantEmailsSent:   1,
-			wantToEmail:      posts[0].Provider.Email,
+			wantToEmail:      requests[0].Provider.Email,
 			wantBodyContains: "reported that they have received",
 		},
 		{name: "Bad - Accepted to Completed", // No Provider
-			post:         posts[1],
+			request:      requests[1],
 			template:     domain.MessageTemplateRequestFromAcceptedToCompleted,
 			sendFunction: sendNotificationRequestFromAcceptedOrDeliveredToCompleted,
 			wantErrLog: fmt.Sprintf("error preparing '%s' notification - no provider\n",
 				domain.MessageTemplateRequestReceived),
 		},
 		{name: "Good - Accepted to Delivered",
-			post:             posts[0],
+			request:          requests[0],
 			template:         domain.MessageTemplateRequestDelivered,
 			sendFunction:     sendNotificationRequestFromAcceptedToDelivered,
 			wantEmailsSent:   1,
-			wantToEmail:      posts[0].CreatedBy.Email,
+			wantToEmail:      requests[0].CreatedBy.Email,
 			wantBodyContains: "reported that they have delivered your request",
 		},
 		{name: "Bad - Accepted to Delivered", // No Provider
-			post:         posts[1],
+			request:      requests[1],
 			template:     domain.MessageTemplateRequestFromAcceptedToDelivered,
 			sendFunction: sendNotificationRequestFromAcceptedToDelivered,
 			wantErrLog: fmt.Sprintf("error preparing '%s' notification - no provider\n",
 				getT(domain.MessageTemplateRequestFromAcceptedToDelivered)),
 		},
 		{name: "Good - Accepted to Open",
-			post: posts[0],
-			eventData: models.PostStatusEventData{
-				OldStatus:     models.PostStatusAccepted,
-				NewStatus:     models.PostStatusOpen,
-				PostID:        posts[0].ID,
-				OldProviderID: *models.GetIntFromNullsInt(posts[0].ProviderID),
+			request: requests[0],
+			eventData: models.RequestStatusEventData{
+				OldStatus:     models.RequestStatusAccepted,
+				NewStatus:     models.RequestStatusOpen,
+				RequestID:     requests[0].ID,
+				OldProviderID: *models.GetIntFromNullsInt(requests[0].ProviderID),
 			},
 			template:         domain.MessageTemplateRequestFromAcceptedToOpen,
 			sendFunction:     sendNotificationRequestFromAcceptedToOpen,
 			wantEmailsSent:   1,
-			wantToEmail:      posts[0].Provider.Email,
+			wantToEmail:      requests[0].Provider.Email,
 			wantBodyContains: "isn't ready after all to have you fulfill",
 		},
 		{name: "Good - Accepted to Removed",
-			post:             posts[0],
+			request:          requests[0],
 			template:         domain.MessageTemplateRequestFromAcceptedToRemoved,
 			sendFunction:     sendNotificationRequestFromAcceptedToRemoved,
 			wantEmailsSent:   1,
-			wantToEmail:      posts[0].Provider.Email,
+			wantToEmail:      requests[0].Provider.Email,
 			wantBodyContains: "has removed this request",
 		},
 		{name: "Bad - Accepted to Removed", // No Provider
-			post:         posts[1],
+			request:      requests[1],
 			template:     domain.MessageTemplateRequestFromAcceptedToRemoved,
 			sendFunction: sendNotificationRequestFromAcceptedToRemoved,
 			wantErrLog: fmt.Sprintf("error preparing '%s' notification - no provider\n",
 				domain.MessageTemplateRequestFromAcceptedToRemoved),
 		},
 		{name: "Good - Completed to Accepted",
-			post:             posts[0],
+			request:          requests[0],
 			template:         domain.MessageTemplateRequestFromCompletedToAccepted,
 			sendFunction:     sendNotificationRequestFromCompletedToAcceptedOrDelivered,
 			wantEmailsSent:   1,
-			wantToEmail:      posts[0].Provider.Email,
+			wantToEmail:      requests[0].Provider.Email,
 			wantBodyContains: "but now have corrected that",
 		},
 		{name: "Bad - Completed to Accepted", // No Provider
-			post:         posts[1],
+			request:      requests[1],
 			template:     domain.MessageTemplateRequestFromCompletedToAccepted,
 			sendFunction: sendNotificationRequestFromCompletedToAcceptedOrDelivered,
 			wantErrLog: fmt.Sprintf("error preparing '%s' notification - no provider\n",
 				domain.MessageTemplateRequestNotReceivedAfterAll),
 		},
 		{name: "Good - Delivered to Accepted",
-			post:             posts[0],
+			request:          requests[0],
 			template:         domain.MessageTemplateRequestFromDeliveredToAccepted,
 			sendFunction:     sendNotificationRequestFromDeliveredToAccepted,
 			wantEmailsSent:   1,
-			wantToEmail:      posts[0].CreatedBy.Email,
+			wantToEmail:      requests[0].CreatedBy.Email,
 			wantBodyContains: "corrected themselves to say they haven't",
 		},
 		{name: "Good - Delivered to Completed",
-			post:             posts[0],
+			request:          requests[0],
 			template:         domain.MessageTemplateRequestReceived,
 			sendFunction:     sendNotificationRequestFromAcceptedOrDeliveredToCompleted,
 			wantEmailsSent:   1,
-			wantToEmail:      posts[0].Provider.Email,
+			wantToEmail:      requests[0].Provider.Email,
 			wantBodyContains: "reported that they have received",
 		},
 		{name: "Good - Open to Accepted",
-			post:             posts[0],
+			request:          requests[0],
 			template:         domain.MessageTemplateRequestFromOpenToAccepted,
 			sendFunction:     sendNotificationRequestFromOpenToAccepted,
 			wantEmailsSent:   1,
-			wantToEmail:      posts[0].Provider.Email,
+			wantToEmail:      requests[0].Provider.Email,
 			wantBodyContains: "has accepted your offer",
 		},
 		{name: "Bad - Open to Accepted", // No Provider
-			post:         posts[1],
+			request:      requests[1],
 			template:     domain.MessageTemplateRequestFromOpenToAccepted,
 			sendFunction: sendNotificationRequestFromOpenToAccepted,
 			wantErrLog: fmt.Sprintf("error preparing '%s' notification - no provider\n",
@@ -264,7 +264,7 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 			params := senderParams{
 				template:   getT(nextT.template),
 				subject:    "test subject",
-				post:       nextT.post,
+				request:    nextT.request,
 				pEventData: nextT.eventData,
 			}
 
@@ -284,18 +284,18 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 
 }
 
-func (ms *ModelSuite) TestSendNewPostNotification() {
-	post := test.CreatePostFixtures(ms.DB, 1, false)[0]
+func (ms *ModelSuite) TestSendNewRequestNotification() {
+	request := test.CreateRequestFixtures(ms.DB, 1, false)[0]
 	tests := []struct {
 		name     string
 		user     models.User
-		post     models.Post
+		request  models.Request
 		wantBody string
 		wantErr  string
 	}{
 		{
 			name:    "error - no user email",
-			post:    post,
+			request: request,
 			wantErr: "'To' email address is required",
 		},
 		{
@@ -303,7 +303,7 @@ func (ms *ModelSuite) TestSendNewPostNotification() {
 			user: models.User{
 				Email: "user@example.com",
 			},
-			post:     post,
+			request:  request,
 			wantBody: "There is a new request",
 		},
 	}
@@ -311,7 +311,7 @@ func (ms *ModelSuite) TestSendNewPostNotification() {
 		ms.T().Run(nextT.name, func(t *testing.T) {
 			notifications.TestEmailService.DeleteSentMessages()
 
-			err := sendNewPostNotification(nextT.user, nextT.post)
+			err := sendNewRequestNotification(nextT.user, nextT.request)
 			if nextT.wantErr != "" {
 				ms.Error(err)
 				ms.Contains(err.Error(), nextT.wantErr)
@@ -329,30 +329,30 @@ func (ms *ModelSuite) TestSendNewPostNotification() {
 			body := notifications.TestEmailService.GetLastBody()
 
 			test.AssertStringContains(t, body, nextT.wantBody, 99)
-			test.AssertStringContains(t, body, nextT.post.Title, 99)
-			test.AssertStringContains(t, body, nextT.post.UUID.String(), 99)
+			test.AssertStringContains(t, body, nextT.request.Title, 99)
+			test.AssertStringContains(t, body, nextT.request.UUID.String(), 99)
 		})
 	}
 }
 
-func (ms *ModelSuite) TestSendNewPostNotifications() {
+func (ms *ModelSuite) TestSendNewRequestNotifications() {
 	t := ms.T()
-	f := createFixturesForTestSendNewPostNotifications(ms)
+	f := createFixturesForTestSendNewRequestNotifications(ms)
 
 	tests := []struct {
 		name           string
-		post           models.Post
+		request        models.Request
 		users          models.Users
 		wantEmailCount int
 	}{
 		{
 			name:           "empty",
-			post:           f.posts[0],
+			request:        f.requests[0],
 			wantEmailCount: 0,
 		},
 		{
-			name: "two users",
-			post: f.posts[0],
+			name:    "two users",
+			request: f.requests[0],
 			users: models.Users{
 				f.users[1],
 				f.users[2],
@@ -360,8 +360,8 @@ func (ms *ModelSuite) TestSendNewPostNotifications() {
 			wantEmailCount: 2,
 		},
 		{
-			name: "blank in the middle",
-			post: f.posts[0],
+			name:    "blank in the middle",
+			request: f.requests[0],
 			users: models.Users{
 				f.users[1],
 				{Email: ""},
@@ -374,7 +374,7 @@ func (ms *ModelSuite) TestSendNewPostNotifications() {
 		t.Run(test.name, func(t *testing.T) {
 			notifications.TestEmailService.DeleteSentMessages()
 
-			sendNewPostNotifications(test.post, test.users)
+			sendNewRequestNotifications(test.request, test.users)
 
 			emailCount := notifications.TestEmailService.GetNumberOfMessagesSent()
 			ms.Equal(test.wantEmailCount, emailCount, "wrong email count")
@@ -397,12 +397,12 @@ func (ms *ModelSuite) TestSendPotentialProviderCreatedNotification() {
 	requester := models.User{
 		Email: "user@example.com",
 	}
-	post := models.Post{UUID: domain.GetUUID(), Title: "post title"}
+	request := models.Request{UUID: domain.GetUUID(), Title: "request title"}
 	wantBody := "has offered to help fulfill your request"
 
 	notifications.TestEmailService.DeleteSentMessages()
 
-	err := sendPotentialProviderCreatedNotification(provider, requester, post)
+	err := sendPotentialProviderCreatedNotification(provider, requester, request)
 	ms.NoError(err)
 
 	emailCount := notifications.TestEmailService.GetNumberOfMessagesSent()
@@ -414,8 +414,8 @@ func (ms *ModelSuite) TestSendPotentialProviderCreatedNotification() {
 	body := notifications.TestEmailService.GetLastBody()
 
 	test.AssertStringContains(t, body, wantBody, 99)
-	test.AssertStringContains(t, body, post.Title, 99)
-	test.AssertStringContains(t, body, post.UUID.String(), 99)
+	test.AssertStringContains(t, body, request.Title, 99)
+	test.AssertStringContains(t, body, request.UUID.String(), 99)
 }
 
 func (ms *ModelSuite) TestSendPotentialProviderSelfDestroyedNotification() {
@@ -424,12 +424,12 @@ func (ms *ModelSuite) TestSendPotentialProviderSelfDestroyedNotification() {
 	requester := models.User{
 		Email: "user@example.com",
 	}
-	post := models.Post{UUID: domain.GetUUID(), Title: "post title"}
+	request := models.Request{UUID: domain.GetUUID(), Title: "request title"}
 	wantBody := "indicated they can't fulfill your request afterall"
 
 	notifications.TestEmailService.DeleteSentMessages()
 
-	err := sendPotentialProviderSelfDestroyedNotification(provider, requester, post)
+	err := sendPotentialProviderSelfDestroyedNotification(provider, requester, request)
 	ms.NoError(err)
 
 	emailCount := notifications.TestEmailService.GetNumberOfMessagesSent()
@@ -441,8 +441,8 @@ func (ms *ModelSuite) TestSendPotentialProviderSelfDestroyedNotification() {
 	body := notifications.TestEmailService.GetLastBody()
 
 	test.AssertStringContains(t, body, wantBody, 99)
-	test.AssertStringContains(t, body, post.Title, 99)
-	test.AssertStringContains(t, body, post.UUID.String(), 99)
+	test.AssertStringContains(t, body, request.Title, 99)
+	test.AssertStringContains(t, body, request.UUID.String(), 99)
 }
 
 func (ms *ModelSuite) TestSendPotentialProviderRejectedNotification() {
@@ -451,12 +451,12 @@ func (ms *ModelSuite) TestSendPotentialProviderRejectedNotification() {
 	provider := models.User{
 		Email: "user@example.com",
 	}
-	post := models.Post{UUID: domain.GetUUID(), Title: "post title"}
+	request := models.Request{UUID: domain.GetUUID(), Title: "request title"}
 	wantBody := "is not prepared to have you fulfill their request"
 
 	notifications.TestEmailService.DeleteSentMessages()
 
-	err := sendPotentialProviderRejectedNotification(provider, requester, post)
+	err := sendPotentialProviderRejectedNotification(provider, requester, request)
 	ms.NoError(err)
 
 	emailCount := notifications.TestEmailService.GetNumberOfMessagesSent()
@@ -468,33 +468,33 @@ func (ms *ModelSuite) TestSendPotentialProviderRejectedNotification() {
 	body := notifications.TestEmailService.GetLastBody()
 
 	test.AssertStringContains(t, body, wantBody, 99)
-	test.AssertStringContains(t, body, post.Title, 99)
-	test.AssertStringContains(t, body, post.UUID.String(), 99)
+	test.AssertStringContains(t, body, request.Title, 99)
+	test.AssertStringContains(t, body, request.UUID.String(), 99)
 }
 
 func (ms *ModelSuite) TestSendNotificationRequestFromOpenToAccepted() {
-	// Five User and three Post fixtures will also be created.  The Posts will
+	// Five User and three Request fixtures will also be created.  The Requests will
 	// all be created by the first user.
-	// The first Post will have all but the first and fifth user as a potential provider.
+	// The first Request will have all but the first and fifth user as a potential provider.
 	f := test.CreatePotentialProvidersFixtures(ms.DB)
 
 	users := f.Users
-	post := f.Posts[0]
+	request := f.Requests[0]
 
-	post.ProviderID = nulls.NewInt(f.Users[3].ID)
+	request.ProviderID = nulls.NewInt(f.Users[3].ID)
 
 	notifications.TestEmailService.DeleteSentMessages()
 
-	eData := models.PostStatusEventData{
-		OldStatus: models.PostStatusOpen,
-		NewStatus: models.PostStatusAccepted,
-		PostID:    post.ID,
+	eData := models.RequestStatusEventData{
+		OldStatus: models.RequestStatusOpen,
+		NewStatus: models.RequestStatusAccepted,
+		RequestID: request.ID,
 	}
 
 	params := senderParams{
 		template:   domain.MessageTemplateRequestFromOpenToAccepted,
 		subject:    "Email.Subject.Request.FromOpenToAccepted",
-		post:       post,
+		request:    request,
 		pEventData: eData,
 	}
 

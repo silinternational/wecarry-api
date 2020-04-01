@@ -16,7 +16,7 @@ import (
 type RequestQueryFixtures struct {
 	models.Organization
 	models.Users
-	models.Posts
+	models.Requests
 	models.Threads
 }
 
@@ -51,14 +51,14 @@ type Request struct {
 		Lat         float64 `json:"latitude"`
 		Long        float64 `json:"longitude"`
 	} `json:"origin"`
-	Size       models.PostSize   `json:"size"`
-	Status     models.PostStatus `json:"status"`
-	CreatedAt  string            `json:"createdAt"`
-	UpdatedAt  string            `json:"updatedAt"`
-	Kilograms  *float64          `json:"kilograms"`
-	IsEditable bool              `json:"isEditable"`
-	Url        *string           `json:"url"`
-	Visibility string            `json:"visibility"`
+	Size       models.RequestSize   `json:"size"`
+	Status     models.RequestStatus `json:"status"`
+	CreatedAt  string               `json:"createdAt"`
+	UpdatedAt  string               `json:"updatedAt"`
+	Kilograms  *float64             `json:"kilograms"`
+	IsEditable bool                 `json:"isEditable"`
+	Url        *string              `json:"url"`
+	Visibility string               `json:"visibility"`
 	CreatedBy  struct {
 		ID        string `json:"id"`
 		Nickname  string `json:"nickname"`
@@ -114,7 +114,7 @@ const allRequestFields = `{
 			visibility
 		}`
 
-func (as *ActionSuite) verifyRequestResponse(request models.Post, resp Request) {
+func (as *ActionSuite) verifyRequestResponse(request models.Request, resp Request) {
 	as.Equal(request.UUID.String(), resp.ID)
 	as.Equal(request.Title, resp.Title)
 	as.Equal(request.Description.String, *resp.Description)
@@ -178,9 +178,9 @@ func (as *ActionSuite) verifyRequestResponse(request models.Post, resp Request) 
 func (as *ActionSuite) Test_RequestsQuery() {
 	f := createFixturesForRequestQuery(as)
 
-	postZeroDestination, err := f.Posts[0].GetDestination()
+	requestZeroDestination, err := f.Requests[0].GetDestination()
 	as.NoError(err)
-	postOneOrigin, err := f.Posts[1].GetOrigin()
+	requestOneOrigin, err := f.Requests[1].GetOrigin()
 	as.NoError(err)
 
 	type testCase struct {
@@ -206,8 +206,8 @@ func (as *ActionSuite) Test_RequestsQuery() {
 			testUser:    f.Users[1],
 			verifyFunc: func() {
 				as.Equal(2, len(resp.Requests))
-				as.verifyRequestResponse(f.Posts[0], resp.Requests[1])
-				as.verifyRequestResponse(f.Posts[1], resp.Requests[0])
+				as.verifyRequestResponse(f.Requests[0], resp.Requests[1])
+				as.verifyRequestResponse(f.Requests[1], resp.Requests[0])
 			},
 		},
 		{
@@ -218,29 +218,29 @@ func (as *ActionSuite) Test_RequestsQuery() {
 			testUser:    f.Users[1],
 			verifyFunc: func() {
 				as.Equal(1, len(resp.Requests))
-				as.verifyRequestResponse(f.Posts[0], resp.Requests[0])
+				as.verifyRequestResponse(f.Requests[0], resp.Requests[0])
 			},
 		},
 		{
 			name:        "destination filter",
 			searchText:  "null",
-			destination: as.locationInput(*postZeroDestination),
+			destination: as.locationInput(*requestZeroDestination),
 			origin:      "null",
 			testUser:    f.Users[1],
 			verifyFunc: func() {
 				as.Equal(1, len(resp.Requests))
-				as.verifyRequestResponse(f.Posts[0], resp.Requests[0])
+				as.verifyRequestResponse(f.Requests[0], resp.Requests[0])
 			},
 		},
 		{
 			name:        "origin filter",
 			searchText:  "null",
 			destination: "null",
-			origin:      as.locationInput(*postOneOrigin),
+			origin:      as.locationInput(*requestOneOrigin),
 			testUser:    f.Users[1],
 			verifyFunc: func() {
 				as.Equal(1, len(resp.Requests))
-				as.verifyRequestResponse(f.Posts[1], resp.Requests[0])
+				as.verifyRequestResponse(f.Requests[1], resp.Requests[0])
 			},
 		},
 	}
@@ -268,7 +268,7 @@ func (as *ActionSuite) Test_UpdateRequest() {
 
 	var requestsResp RequestResponse
 
-	input := `id: "` + f.Posts[0].UUID.String() + `" photoID: "` + f.Files[0].UUID.String() + `"` +
+	input := `id: "` + f.Requests[0].UUID.String() + `" photoID: "` + f.Files[0].UUID.String() + `"` +
 		`   title: "title"
 			description: "new description"
 			destination: {description:"dest" country:"dc" latitude:1.1 longitude:2.2}
@@ -287,12 +287,12 @@ func (as *ActionSuite) Test_UpdateRequest() {
 
 	as.NoError(as.testGqlQuery(query, f.Users[0].Nickname, &requestsResp))
 
-	if err := as.DB.Load(&(f.Posts[0]), "PhotoFile", "Files"); err != nil {
+	if err := as.DB.Load(&(f.Requests[0]), "PhotoFile", "Files"); err != nil {
 		t.Errorf("failed to load request fixture, %s", err)
 		t.FailNow()
 	}
 
-	as.Equal(f.Posts[0].UUID.String(), requestsResp.Request.ID)
+	as.Equal(f.Requests[0].UUID.String(), requestsResp.Request.ID)
 	as.Equal(f.Files[0].UUID.String(), requestsResp.Request.Photo.ID)
 	as.Equal("title", requestsResp.Request.Title)
 	as.Equal("new description", *requestsResp.Request.Description)
@@ -305,21 +305,21 @@ func (as *ActionSuite) Test_UpdateRequest() {
 	as.Equal("oc", requestsResp.Request.Origin.Country)
 	as.Equal(3.3, requestsResp.Request.Origin.Lat)
 	as.Equal(4.4, requestsResp.Request.Origin.Long)
-	as.Equal(models.PostSizeTiny, requestsResp.Request.Size)
+	as.Equal(models.RequestSizeTiny, requestsResp.Request.Size)
 	as.Equal("example.com", *requestsResp.Request.Url)
 	as.Equal(22.22, *requestsResp.Request.Kilograms)
 	as.Equal("ALL", requestsResp.Request.Visibility)
 	as.Equal(true, requestsResp.Request.IsEditable)
 
 	// Attempt to edit a locked request
-	input = `id: "` + f.Posts[0].UUID.String() + `" description: "new description"`
+	input = `id: "` + f.Requests[0].UUID.String() + `" description: "new description"`
 	query = `mutation { request: updateRequest(input: {` + input + `}) { id status}}`
 
 	as.Error(as.testGqlQuery(query, f.Users[1].Nickname, &requestsResp))
 
 	newNeededBefore := "2099-12-25"
 	// Modify request's NeededBefore
-	input = `id: "` + f.Posts[0].UUID.String() + `"
+	input = `id: "` + f.Requests[0].UUID.String() + `"
 		neededBefore: "` + newNeededBefore + `"`
 	query = `mutation { request: updateRequest(input: {` + input + `}) { id neededBefore }}`
 
@@ -327,7 +327,7 @@ func (as *ActionSuite) Test_UpdateRequest() {
 	as.Equal(newNeededBefore, *requestsResp.Request.NeededBefore, "incorrect NeededBefore")
 
 	// Null out request's nullable fields
-	input = `id: "` + f.Posts[0].UUID.String() + `"`
+	input = `id: "` + f.Requests[0].UUID.String() + `"`
 	query = `mutation { request: updateRequest(input: {` + input + `}) { id description url neededBefore kilograms
 		photo { id } origin { description } meeting { id }  }}`
 
@@ -373,7 +373,7 @@ func (as *ActionSuite) Test_CreateRequest() {
 	as.Equal("title", requestsResp.Request.Title)
 	as.Equal("new description", *requestsResp.Request.Description)
 	as.Nil(requestsResp.Request.NeededBefore)
-	as.Equal(models.PostStatus(""), requestsResp.Request.Status)
+	as.Equal(models.RequestStatus(""), requestsResp.Request.Status)
 	as.Equal("dest", requestsResp.Request.Destination.Description)
 	as.Equal("dc", requestsResp.Request.Destination.Country)
 	as.Equal(1.1, requestsResp.Request.Destination.Lat)
@@ -382,7 +382,7 @@ func (as *ActionSuite) Test_CreateRequest() {
 	as.Equal("oc", requestsResp.Request.Origin.Country)
 	as.Equal(3.3, requestsResp.Request.Origin.Lat)
 	as.Equal(4.4, requestsResp.Request.Origin.Long)
-	as.Equal(models.PostSizeTiny, requestsResp.Request.Size)
+	as.Equal(models.RequestSizeTiny, requestsResp.Request.Size)
 	as.Equal("example.com", *requestsResp.Request.Url)
 	as.Equal(1.5, *requestsResp.Request.Kilograms)
 	as.Equal("ALL", requestsResp.Request.Visibility)
@@ -426,23 +426,23 @@ func (as *ActionSuite) Test_UpdateRequestStatus() {
 	provider := f.Users[1]
 
 	steps := []struct {
-		status     models.PostStatus
+		status     models.RequestStatus
 		user       models.User
 		providerID string
 		wantErr    bool
 	}{
-		{status: models.PostStatusAccepted, user: provider, providerID: provider.UUID.String(), wantErr: true},
-		{status: models.PostStatusAccepted, user: creator, providerID: provider.UUID.String(), wantErr: false},
-		{status: models.PostStatusReceived, user: provider, wantErr: true},
-		{status: models.PostStatusReceived, user: creator, wantErr: false},
-		{status: models.PostStatusDelivered, user: provider, wantErr: false},
-		{status: models.PostStatusCompleted, user: provider, wantErr: true},
-		{status: models.PostStatusCompleted, user: creator, wantErr: false},
-		{status: models.PostStatusRemoved, user: creator, wantErr: true},
+		{status: models.RequestStatusAccepted, user: provider, providerID: provider.UUID.String(), wantErr: true},
+		{status: models.RequestStatusAccepted, user: creator, providerID: provider.UUID.String(), wantErr: false},
+		{status: models.RequestStatusReceived, user: provider, wantErr: true},
+		{status: models.RequestStatusReceived, user: creator, wantErr: false},
+		{status: models.RequestStatusDelivered, user: provider, wantErr: false},
+		{status: models.RequestStatusCompleted, user: provider, wantErr: true},
+		{status: models.RequestStatusCompleted, user: creator, wantErr: false},
+		{status: models.RequestStatusRemoved, user: creator, wantErr: true},
 	}
 
 	for _, step := range steps {
-		input := `id: "` + f.Posts[0].UUID.String() + `", status: ` + step.status.String()
+		input := `id: "` + f.Requests[0].UUID.String() + `", status: ` + step.status.String()
 		if step.providerID != "" {
 			input += `, providerUserID: "` + step.providerID + `"`
 		}
@@ -457,7 +457,7 @@ func (as *ActionSuite) Test_UpdateRequestStatus() {
 		as.NoError(err, "user=%s, query=%s", step.user.Nickname, query)
 		as.Equal(step.status, requestsResp.Request.Status)
 
-		if step.status == models.PostStatusCompleted {
+		if step.status == models.RequestStatusCompleted {
 			as.NotNil(requestsResp.Request.CompletedOn, "expected valid CompletedOn date.")
 			as.Equal(time.Now().Format(domain.DateFormat), *requestsResp.Request.CompletedOn,
 				"incorrect CompletedOn date.")
@@ -476,27 +476,27 @@ func (as *ActionSuite) Test_UpdateRequestStatus_DestroyPotentialProviders() {
 	creator := f.Users[0]
 	provider := f.Users[1]
 
-	request0 := f.Posts[0]
-	request0.Status = models.PostStatusAccepted
+	request0 := f.Requests[0]
+	request0.Status = models.RequestStatusAccepted
 	err := request0.Update()
 	as.NoError(err, "unable to change Requests's status to prepare for test")
 
 	steps := []struct {
-		status    models.PostStatus
+		status    models.RequestStatus
 		user      models.User
 		wantPPIDs []uuid.UUID
 		wantErr   bool
 	}{
-		{status: models.PostStatusReceived, user: creator,
+		{status: models.RequestStatusReceived, user: creator,
 			wantPPIDs: []uuid.UUID{users[1].UUID, users[2].UUID, users[3].UUID}},
-		{status: models.PostStatusDelivered, user: creator,
+		{status: models.RequestStatusDelivered, user: creator,
 			wantPPIDs: []uuid.UUID{users[1].UUID, users[2].UUID, users[3].UUID}},
-		{status: models.PostStatusCompleted, user: provider, wantErr: true},
-		{status: models.PostStatusCompleted, user: creator, wantPPIDs: []uuid.UUID{}},
+		{status: models.RequestStatusCompleted, user: provider, wantErr: true},
+		{status: models.RequestStatusCompleted, user: creator, wantPPIDs: []uuid.UUID{}},
 	}
 
 	for _, step := range steps {
-		input := `id: "` + f.Posts[0].UUID.String() + `", status: ` + step.status.String()
+		input := `id: "` + f.Requests[0].UUID.String() + `", status: ` + step.status.String()
 		query := `mutation { request: updateRequestStatus(input: {` + input + `}) {id status potentialProviders {id}}}`
 
 		err := as.testGqlQuery(query, step.user.Nickname, &requestsResp)
@@ -511,7 +511,7 @@ func (as *ActionSuite) Test_UpdateRequestStatus_DestroyPotentialProviders() {
 
 func (as *ActionSuite) Test_MarkRequestAsDelivered() {
 	f := createFixturesForMarkRequestAsDelivered(as)
-	requests := f.Posts
+	requests := f.Requests
 
 	var requestsResp RequestResponse
 
@@ -529,7 +529,7 @@ func (as *ActionSuite) Test_MarkRequestAsDelivered() {
 	}{
 		{name: "ACCEPTED: delivered by Provider",
 			requestID: requests[0].UUID.String(), user: provider,
-			wantStatus:              models.PostStatusDelivered.String(),
+			wantStatus:              models.RequestStatusDelivered.String(),
 			wantRequestHistoryCount: 3, wantErr: false},
 		{name: "ACCEPTED: delivered by Creator",
 			requestID: requests[0].UUID.String(), user: creator, wantErr: true,
@@ -561,10 +561,10 @@ func (as *ActionSuite) Test_MarkRequestAsDelivered() {
 			}
 
 			// Check for correct RequestHistory
-			var request models.Post
+			var request models.Request
 			as.NoError(request.FindByUUID(tc.requestID))
-			pHistories := models.PostHistories{}
-			err = as.DB.Where("post_id = ?", request.ID).All(&pHistories)
+			pHistories := models.RequestHistories{}
+			err = as.DB.Where("request_id = ?", request.ID).All(&pHistories)
 			as.NoError(err)
 			as.Equal(tc.wantRequestHistoryCount, len(pHistories), "incorrect number of RequestHistories")
 			lastPH := pHistories[tc.wantRequestHistoryCount-1]
@@ -575,7 +575,7 @@ func (as *ActionSuite) Test_MarkRequestAsDelivered() {
 
 func (as *ActionSuite) Test_MarkRequestAsReceived() {
 	f := createFixturesForMarkRequestAsReceived(as)
-	requests := f.Posts
+	requests := f.Requests
 
 	var requestsResp RequestResponse
 
@@ -597,12 +597,12 @@ func (as *ActionSuite) Test_MarkRequestAsReceived() {
 		},
 		{name: "ACCEPTED: received by Creator",
 			requestID: requests[0].UUID.String(), user: creator, wantErr: false,
-			wantStatus:              models.PostStatusCompleted.String(),
+			wantStatus:              models.RequestStatusCompleted.String(),
 			wantRequestHistoryCount: 3,
 		},
 		{name: "DELIVERED: received by Creator",
 			requestID: requests[1].UUID.String(), user: creator, wantErr: false,
-			wantStatus:              models.PostStatusCompleted.String(),
+			wantStatus:              models.RequestStatusCompleted.String(),
 			wantRequestHistoryCount: 4,
 		},
 		{name: "COMPLETED: received by Creator",
@@ -631,10 +631,10 @@ func (as *ActionSuite) Test_MarkRequestAsReceived() {
 			}
 
 			// Check for correct RequestHistory
-			var request models.Post
+			var request models.Request
 			as.NoError(request.FindByUUID(tc.requestID))
-			pHistories := models.PostHistories{}
-			err = as.DB.Where("post_id = ?", request.ID).All(&pHistories)
+			pHistories := models.RequestHistories{}
+			err = as.DB.Where("request_id = ?", request.ID).All(&pHistories)
 			as.NoError(err)
 			as.Equal(tc.wantRequestHistoryCount, len(pHistories), "incorrect number of RequestHistories")
 			lastPH := pHistories[tc.wantRequestHistoryCount-1]
@@ -645,13 +645,13 @@ func (as *ActionSuite) Test_MarkRequestAsReceived() {
 
 func (as *ActionSuite) Test_RequestActions() {
 	f := test.CreatePotentialProvidersFixtures(as.DB)
-	requests := f.Posts
+	requests := f.Requests
 
 	creator := f.Users[0]
 	provider := f.Users[1]
 
 	acceptedRequest := requests[0]
-	acceptedRequest.Status = models.PostStatusAccepted
+	acceptedRequest.Status = models.RequestStatusAccepted
 	acceptedRequest.ProviderID = nulls.NewInt(provider.ID)
 
 	err := acceptedRequest.Update()

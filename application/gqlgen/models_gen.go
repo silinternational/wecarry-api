@@ -154,7 +154,7 @@ type UpdateRequestStatusInput struct {
 	// ID of the request to update
 	ID string `json:"id"`
 	// New Status. Only a limited set of transitions are allowed.
-	Status models.PostStatus `json:"status"`
+	Status models.RequestStatus `json:"status"`
 	// User ID of the accepted provider. Required if `status` is ACCEPTED and ignored otherwise.
 	ProviderUserID *string `json:"providerUserID"`
 }

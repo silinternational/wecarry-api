@@ -18,7 +18,7 @@ type PotentialProvider struct {
 	ID        int       `json:"id" db:"id"`
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
-	PostID    int       `json:"post_id" db:"post_id"`
+	RequestID int       `json:"request_id" db:"request_id"`
 	UserID    int       `json:"user_id" db:"user_id"`
 	User      User      `belongs_to:"users"`
 }
@@ -41,7 +41,7 @@ func (p PotentialProviders) String() string {
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
 func (p *PotentialProvider) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
-		&validators.IntIsPresent{Field: p.PostID, Name: "PostID"},
+		&validators.IntIsPresent{Field: p.RequestID, Name: "RequestID"},
 		&validators.IntIsPresent{Field: p.UserID, Name: "UserID"},
 		&uniqueTogetherValidator{Object: p, Name: "UniqueTogether"},
 	), nil
@@ -64,12 +64,12 @@ type uniqueTogetherValidator struct {
 }
 
 // IsValid ensures there are no other PotentialProviders with both the
-// same PostID and UserID
+// same RequestID and UserID
 func (v *uniqueTogetherValidator) IsValid(errors *validate.Errors) {
 	p := PotentialProvider{}
-	pID := v.Object.PostID
+	pID := v.Object.RequestID
 	uID := v.Object.UserID
-	if err := DB.Where("post_id = ? and user_id = ?", pID, uID).First(&p); err != nil {
+	if err := DB.Where("request_id = ? and user_id = ?", pID, uID).First(&p); err != nil {
 		if domain.IsOtherThanNoRows(err) {
 			v.Message = "Error database for duplicate potential providers: " + err.Error()
 			errors.Add(validators.GenerateKey(v.Name), v.Message)
@@ -78,7 +78,7 @@ func (v *uniqueTogetherValidator) IsValid(errors *validate.Errors) {
 	}
 
 	// No error means we found a match
-	v.Message = fmt.Sprintf("Duplicate potential provider exists with PostID: %v and UserID: %v",
+	v.Message = fmt.Sprintf("Duplicate potential provider exists with RequestID: %v and UserID: %v",
 		pID, uID)
 	errors.Add(validators.GenerateKey(v.Name), v.Message)
 	return
@@ -86,8 +86,8 @@ func (v *uniqueTogetherValidator) IsValid(errors *validate.Errors) {
 
 // PotentialProviderEventData holds data needed by the event listener that deals with a single PotentialProvider
 type PotentialProviderEventData struct {
-	UserID int
-	PostID int
+	UserID    int
+	RequestID int
 }
 
 // Create stores the PotentialProvider data as a new record in the database.
@@ -98,8 +98,8 @@ func (p *PotentialProvider) Create() error {
 	}
 
 	eventData := PotentialProviderEventData{
-		UserID: p.UserID,
-		PostID: p.PostID,
+		UserID:    p.UserID,
+		RequestID: p.RequestID,
 	}
 
 	e := events.Event{
@@ -118,29 +118,29 @@ func (p *PotentialProvider) Update() error {
 	return update(p)
 }
 
-// FindUsersByPostID gets the Users associated with the Post's PotentialProviders
+// FindUsersByRequestID gets the Users associated with the Request's PotentialProviders
 // This can be used without authorization by providing an empty currentUser object
 //  (e.g. in the case of a notifications listener needing all the potentialProviders).
 // If the currentUser is the requester or a SuperAdmin, then all potentialProvider Users are returned.
 // If the currentUser is one of the potentialProviders, that User is returned.
 // Otherwise, an empty slice of Users is returned.
-func (p *PotentialProviders) FindUsersByPostID(post Post, currentUser User) (Users, error) {
-	if post.ID <= 0 {
-		return Users{}, fmt.Errorf("error finding potential_provider, invalid id %v", post.ID)
+func (p *PotentialProviders) FindUsersByRequestID(request Request, currentUser User) (Users, error) {
+	if request.ID <= 0 {
+		return Users{}, fmt.Errorf("error finding potential_provider, invalid id %v", request.ID)
 	}
 
 	// Default - only authorized to see self
-	whereQ := fmt.Sprintf("post_id = %v and user_id = %v", post.ID, currentUser.ID)
+	whereQ := fmt.Sprintf("request_id = %v and user_id = %v", request.ID, currentUser.ID)
 
 	// See all, if authorized.
-	if post.CreatedByID == currentUser.ID || currentUser.ID == 0 || currentUser.AdminRole == UserAdminRoleSuperAdmin {
-		whereQ = fmt.Sprintf("post_id = %v", post.ID)
+	if request.CreatedByID == currentUser.ID || currentUser.ID == 0 || currentUser.AdminRole == UserAdminRoleSuperAdmin {
+		whereQ = fmt.Sprintf("request_id = %v", request.ID)
 	}
 
 	if err := DB.Eager("User").Where(whereQ).All(p); err != nil {
 		if domain.IsOtherThanNoRows(err) {
-			return Users{}, fmt.Errorf("failed to find potential_provider records for post %d, %s",
-				post.ID, err)
+			return Users{}, fmt.Errorf("failed to find potential_provider records for request %d, %s",
+				request.ID, err)
 		}
 	}
 
@@ -152,21 +152,21 @@ func (p *PotentialProviders) FindUsersByPostID(post Post, currentUser User) (Use
 	return users, nil
 }
 
-// CanUserAccessPotentialProvider returns whether the current user is a SuperAdmin, the Post's creator or
+// CanUserAccessPotentialProvider returns whether the current user is a SuperAdmin, the Request's creator or
 // the user associated with the PotentialProvider
-func (p *PotentialProvider) CanUserAccessPotentialProvider(post Post, currentUser User) bool {
-	if currentUser.AdminRole == UserAdminRoleSuperAdmin || currentUser.ID == post.CreatedByID {
+func (p *PotentialProvider) CanUserAccessPotentialProvider(request Request, currentUser User) bool {
+	if currentUser.AdminRole == UserAdminRoleSuperAdmin || currentUser.ID == request.CreatedByID {
 		return true
 	}
 	return p.UserID == currentUser.ID
 }
 
-// FindWithPostUUIDAndUserUUID  finds the PotentialProvider associated with both the postUUID and the userUUID
+// FindWithRequestUUIDAndUserUUID  finds the PotentialProvider associated with both the requestUUID and the userUUID
 // No authorization checks are performed - they must be done separately
-func (p *PotentialProvider) FindWithPostUUIDAndUserUUID(postUUID, userUUID string, currentUser User) error {
-	var post Post
-	if err := post.FindByUUID(postUUID); err != nil {
-		return errors.New("unable to find Post in order to find PotentialProvider: " + err.Error())
+func (p *PotentialProvider) FindWithRequestUUIDAndUserUUID(requestUUID, userUUID string, currentUser User) error {
+	var request Request
+	if err := request.FindByUUID(requestUUID); err != nil {
+		return errors.New("unable to find Request in order to find PotentialProvider: " + err.Error())
 	}
 
 	var user User
@@ -174,11 +174,11 @@ func (p *PotentialProvider) FindWithPostUUIDAndUserUUID(postUUID, userUUID strin
 		return errors.New("unable to find User in order to find PotentialProvider: " + err.Error())
 	}
 
-	if err := DB.Where("post_id = ? AND user_id = ?", post.ID, user.ID).First(p); err != nil {
+	if err := DB.Where("request_id = ? AND user_id = ?", request.ID, user.ID).First(p); err != nil {
 		return errors.New("unable to find PotentialProvider: " + err.Error())
 	}
 
-	if !p.CanUserAccessPotentialProvider(post, currentUser) {
+	if !p.CanUserAccessPotentialProvider(request, currentUser) {
 		p = nil
 		return errors.New("user not allowed to access PotentialProvider")
 	}
@@ -186,23 +186,23 @@ func (p *PotentialProvider) FindWithPostUUIDAndUserUUID(postUUID, userUUID strin
 	return nil
 }
 
-// NewWithPostUUID populates a new PotentialProvider but does not save it
-func (p *PotentialProvider) NewWithPostUUID(postUUID string, userID int) error {
+// NewWithRequestUUID populates a new PotentialProvider but does not save it
+func (p *PotentialProvider) NewWithRequestUUID(requestUUID string, userID int) error {
 	var user User
 	if err := user.FindByID(userID); err != nil {
 		return err
 	}
 
-	var post Post
-	if err := post.FindByUUID(postUUID); err != nil {
+	var request Request
+	if err := request.FindByUUID(requestUUID); err != nil {
 		return err
 	}
 
-	if post.CreatedByID == userID {
-		return errors.New("PotentialProvider User must not be the Post's Receiver.")
+	if request.CreatedByID == userID {
+		return errors.New("PotentialProvider User must not be the Request's Receiver.")
 	}
 
-	p.PostID = post.ID
+	p.RequestID = request.ID
 	p.UserID = user.ID
 
 	return nil
@@ -213,21 +213,21 @@ func (p *PotentialProvider) Destroy() error {
 	return DB.Destroy(p)
 }
 
-// DestroyAllWithPostUUID Destroys all the PotentialProviders associated with a Post depending
-//  on whether the current user is a SuperAdmin or the Post's creator.
-func (p *PotentialProviders) DestroyAllWithPostUUID(postUUID string, currentUser User) error {
-	var post Post
-	if err := post.FindByUUID(postUUID); err != nil {
-		return errors.New("unable to find Post in order to remove PotentialProviders: " + err.Error())
+// DestroyAllWithRequestUUID Destroys all the PotentialProviders associated with a Request depending
+//  on whether the current user is a SuperAdmin or the Request's creator.
+func (p *PotentialProviders) DestroyAllWithRequestUUID(requestUUID string, currentUser User) error {
+	var request Request
+	if err := request.FindByUUID(requestUUID); err != nil {
+		return errors.New("unable to find Request in order to remove PotentialProviders: " + err.Error())
 	}
 
-	if currentUser.AdminRole != UserAdminRoleSuperAdmin && currentUser.ID != post.CreatedByID {
-		return fmt.Errorf("user %v has insufficient permissions to destroy PotentialProviders for Post %v",
-			currentUser.ID, post.ID)
+	if currentUser.AdminRole != UserAdminRoleSuperAdmin && currentUser.ID != request.CreatedByID {
+		return fmt.Errorf("user %v has insufficient permissions to destroy PotentialProviders for Request %v",
+			currentUser.ID, request.ID)
 	}
 
-	if err := DB.Where("post_id = ?", post.ID).All(p); err != nil {
-		return errors.New("unable to find Post's Potential Providers in order to remove them: " + err.Error())
+	if err := DB.Where("request_id = ?", request.ID).All(p); err != nil {
+		return errors.New("unable to find Request's Potential Providers in order to remove them: " + err.Error())
 	}
 	return DB.Destroy(p)
 }

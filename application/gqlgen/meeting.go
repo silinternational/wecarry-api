@@ -100,15 +100,15 @@ func (r *meetingResolver) ImageFile(ctx context.Context, obj *models.Meeting) (*
 	return image, nil
 }
 
-func (r *meetingResolver) Requests(ctx context.Context, obj *models.Meeting) ([]models.Post, error) {
+func (r *meetingResolver) Requests(ctx context.Context, obj *models.Meeting) ([]models.Request, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	posts, err := obj.Posts()
+	requests, err := obj.Requests()
 	if err != nil {
-		return nil, domain.ReportError(ctx, err, "Meeting.Posts")
+		return nil, domain.ReportError(ctx, err, "Meeting.Requests")
 	}
-	return posts, nil
+	return requests, nil
 }
 
 func (r *meetingResolver) Invites(ctx context.Context, obj *models.Meeting) ([]models.MeetingInvite, error) {

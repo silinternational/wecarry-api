@@ -22,9 +22,9 @@ type ModelSuite struct {
 	*suite.Model
 }
 
-type PostFixtures struct {
+type RequestFixtures struct {
 	models.Users
-	models.Posts
+	models.Requests
 }
 
 func Test_ModelSuite(t *testing.T) {
@@ -141,37 +141,37 @@ func (ms *ModelSuite) TestSendNewMessageNotification() {
 	test.AssertStringContains(ms.T(), got, want, 64)
 }
 
-func createFixturesForSendPostCreatedNotifications(ms *ModelSuite) PostFixtures {
+func createFixturesForSendRequestCreatedNotifications(ms *ModelSuite) RequestFixtures {
 	users := test.CreateUserFixtures(ms.DB, 3).Users
 
-	post := test.CreatePostFixtures(ms.DB, 1, false)[0]
-	postOrigin, err := post.GetOrigin()
+	request := test.CreateRequestFixtures(ms.DB, 1, false)[0]
+	requestOrigin, err := request.GetOrigin()
 	ms.NoError(err)
 
 	for i := range users {
-		ms.NoError(users[i].SetLocation(*postOrigin))
+		ms.NoError(users[i].SetLocation(*requestOrigin))
 	}
 
-	return PostFixtures{
-		Posts: models.Posts{post},
-		Users: users,
+	return RequestFixtures{
+		Requests: models.Requests{request},
+		Users:    users,
 	}
 }
 
-func (ms *ModelSuite) TestSendPostCreatedNotifications() {
-	f := createFixturesForSendPostCreatedNotifications(ms)
+func (ms *ModelSuite) TestSendRequestCreatedNotifications() {
+	f := createFixturesForSendRequestCreatedNotifications(ms)
 
 	e := events.Event{
-		Kind:    domain.EventApiPostCreated,
-		Message: "Post created",
-		Payload: events.Payload{"eventData": models.PostCreatedEventData{
-			PostID: f.Posts[0].ID,
+		Kind:    domain.EventApiRequestCreated,
+		Message: "Request created",
+		Payload: events.Payload{"eventData": models.RequestCreatedEventData{
+			RequestID: f.Requests[0].ID,
 		}},
 	}
 
 	notifications.TestEmailService.DeleteSentMessages()
 
-	sendPostCreatedNotifications(e)
+	sendRequestCreatedNotifications(e)
 
 	emailsSent := notifications.TestEmailService.GetSentMessages()
 	nMessages := 0

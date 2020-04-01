@@ -8,46 +8,46 @@ import (
 	"github.com/gobuffalo/validate"
 )
 
-type PostFile struct {
+type RequestFile struct {
 	ID        int       `json:"id" db:"id"`
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
-	PostID    int       `json:"post_id" db:"post_id"`
+	RequestID int       `json:"request_id" db:"request_id"`
 	FileID    int       `json:"file_id" db:"file_id"`
 	File      File      `belongs_to:"files"`
 }
 
 // String can be helpful for serializing the model
-func (p PostFile) String() string {
+func (p RequestFile) String() string {
 	jp, _ := json.Marshal(p)
 	return string(jp)
 }
 
-// PostFiles is merely for convenience and brevity
-type PostFiles []PostFile
+// RequestFiles is merely for convenience and brevity
+type RequestFiles []RequestFile
 
 // String can be helpful for serializing the model
-func (p PostFiles) String() string {
+func (p RequestFiles) String() string {
 	jp, _ := json.Marshal(p)
 	return string(jp)
 }
 
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
-func (p *PostFile) Validate(tx *pop.Connection) (*validate.Errors, error) {
+func (p *RequestFile) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }
 
 // ValidateCreate gets run every time you call "pop.ValidateAndCreate" method.
-func (p *PostFile) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) {
+func (p *RequestFile) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }
 
 // ValidateUpdate gets run every time you call "pop.ValidateAndUpdate" method.
-func (p *PostFile) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
+func (p *RequestFile) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.NewErrors(), nil
 }
 
-// Create stores the PostFile data as a new record in the database.
-func (p *PostFile) Create() error {
+// Create stores the RequestFile data as a new record in the database.
+func (p *RequestFile) Create() error {
 	return create(p)
 }

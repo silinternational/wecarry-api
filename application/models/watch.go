@@ -16,7 +16,7 @@ import (
 	"github.com/silinternational/wecarry-api/domain"
 )
 
-// Watch is the model for storing post watches that trigger notifications on the conditions specified
+// Watch is the model for storing request watches that trigger notifications on the conditions specified
 type Watch struct {
 	ID            int          `json:"id" db:"id"`
 	CreatedAt     time.Time    `json:"created_at" db:"created_at"`
@@ -28,7 +28,7 @@ type Watch struct {
 	OriginID      nulls.Int    `json:"origin_id" db:"origin_id"`
 	MeetingID     nulls.Int    `json:"meeting_id" db:"meeting_id"`
 	SearchText    nulls.String `json:"search_text" db:"search_text"`
-	Size          *PostSize    `json:"size" db:"size"`
+	Size          *RequestSize `json:"size" db:"size"`
 }
 
 // Watches is used for methods that operate on lists of objects
@@ -159,13 +159,13 @@ func (w *Watch) Meeting(ctx context.Context) (*Meeting, error) {
 	return meeting, nil
 }
 
-// matchesPost returns true if all non-null watch criteria match the post
-func (w *Watch) matchesPost(post Post) bool {
+// matchesRequest returns true if all non-null watch criteria match the request
+func (w *Watch) matchesRequest(request Request) bool {
 	if w == nil {
-		domain.ErrLogger.Printf("nil receiver in Watch.matchesPost")
+		domain.ErrLogger.Printf("nil receiver in Watch.matchesRequest")
 		return false
 	}
-	matchFunctions := []func(*Watch, Post) bool{
+	matchFunctions := []func(*Watch, Request) bool{
 		(*Watch).sizeMatches,
 		(*Watch).textMatches,
 		(*Watch).meetingMatches,
@@ -173,7 +173,7 @@ func (w *Watch) matchesPost(post Post) bool {
 		(*Watch).originMatches,
 	}
 	for _, c := range matchFunctions {
-		if !c(w, post) {
+		if !c(w, request) {
 			return false
 		}
 	}
@@ -181,7 +181,7 @@ func (w *Watch) matchesPost(post Post) bool {
 }
 
 // destinationMatches returns true if watch destination is not provided or passes the IsNear test
-func (w *Watch) destinationMatches(post Post) bool {
+func (w *Watch) destinationMatches(request Request) bool {
 	if w == nil {
 		domain.ErrLogger.Printf("nil receiver in Watch.destinationMatches")
 		return false
@@ -189,20 +189,20 @@ func (w *Watch) destinationMatches(post Post) bool {
 	if !w.DestinationID.Valid {
 		return true
 	}
-	postDestination, err := post.GetDestination()
+	requestDestination, err := request.GetDestination()
 	if err != nil {
-		domain.ErrLogger.Printf("failed to get post %s destination in destinationMatches, %s", post.UUID, err)
+		domain.ErrLogger.Printf("failed to get request %s destination in destinationMatches, %s", request.UUID, err)
 		return false
 	}
 	watchDestination, err := w.GetDestination()
 	if err != nil {
 		domain.ErrLogger.Printf("failed to get watch %s destination in destinationMatches, %s", w.UUID, err)
 	}
-	return watchDestination.IsNear(*postDestination)
+	return watchDestination.IsNear(*requestDestination)
 }
 
 // originMatches returns true if watch origin is not provided or passes the IsNear test
-func (w *Watch) originMatches(post Post) bool {
+func (w *Watch) originMatches(request Request) bool {
 	if w == nil {
 		domain.ErrLogger.Printf("nil receiver in Watch.originMatches")
 		return false
@@ -210,20 +210,20 @@ func (w *Watch) originMatches(post Post) bool {
 	if !w.OriginID.Valid {
 		return true
 	}
-	postOrigin, err := post.GetOrigin()
+	requestOrigin, err := request.GetOrigin()
 	if err != nil {
-		domain.ErrLogger.Printf("failed to get post %s origin in originMatches, %s", post.UUID, err)
+		domain.ErrLogger.Printf("failed to get request %s origin in originMatches, %s", request.UUID, err)
 		return false
 	}
 	watchOrigin, err := w.GetOrigin()
 	if err != nil {
 		domain.ErrLogger.Printf("failed to get watch %s origin in originMatches, %s", w.UUID, err)
 	}
-	return watchOrigin.IsNear(*postOrigin)
+	return watchOrigin.IsNear(*requestOrigin)
 }
 
-// meetingMatches returns true if watch meeting is not provided or is identical to the post meeting
-func (w *Watch) meetingMatches(post Post) bool {
+// meetingMatches returns true if watch meeting is not provided or is identical to the request meeting
+func (w *Watch) meetingMatches(request Request) bool {
 	if w == nil {
 		domain.ErrLogger.Printf("nil receiver in Watch.meetingMatches")
 		return false
@@ -231,11 +231,11 @@ func (w *Watch) meetingMatches(post Post) bool {
 	if !w.MeetingID.Valid {
 		return true
 	}
-	return w.MeetingID == post.MeetingID
+	return w.MeetingID == request.MeetingID
 }
 
-// textMatches returns true if watch text is not provided or is in the post title, description or creator's nickname
-func (w *Watch) textMatches(post Post) bool {
+// textMatches returns true if watch text is not provided or is in the request title, description or creator's nickname
+func (w *Watch) textMatches(request Request) bool {
 	if w == nil {
 		domain.ErrLogger.Printf("nil receiver in Watch.textMatches")
 		return false
@@ -243,15 +243,15 @@ func (w *Watch) textMatches(post Post) bool {
 	if !w.SearchText.Valid {
 		return true
 	}
-	if strings.Contains(post.Title, w.SearchText.String) {
+	if strings.Contains(request.Title, w.SearchText.String) {
 		return true
 	}
-	if strings.Contains(post.Description.String, w.SearchText.String) {
+	if strings.Contains(request.Description.String, w.SearchText.String) {
 		return true
 	}
-	creator, err := post.Creator()
+	creator, err := request.Creator()
 	if err != nil {
-		domain.ErrLogger.Printf("failed to get post %s creator in textMatches, %s", post.UUID, err)
+		domain.ErrLogger.Printf("failed to get request %s creator in textMatches, %s", request.UUID, err)
 		return false
 	}
 	if strings.Contains(creator.Nickname, w.SearchText.String) {
@@ -260,8 +260,8 @@ func (w *Watch) textMatches(post Post) bool {
 	return false
 }
 
-// sizeMatches returns true if watch size is larger or the same as the post size
-func (w *Watch) sizeMatches(post Post) bool {
+// sizeMatches returns true if watch size is larger or the same as the request size
+func (w *Watch) sizeMatches(request Request) bool {
 	if w == nil {
 		domain.ErrLogger.Printf("nil receiver in Watch.sizeMatches")
 		return false
@@ -269,5 +269,5 @@ func (w *Watch) sizeMatches(post Post) bool {
 	if w.Size == nil {
 		return true
 	}
-	return w.Size.isLargerOrSame(post.Size)
+	return w.Size.isLargerOrSame(request.Size)
 }

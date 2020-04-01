@@ -15,7 +15,7 @@ type threadsResponse struct {
 				Nickname string `json:"nickname"`
 			} `json:"sender"`
 		} `json:"messages"`
-		Post struct {
+		Request struct {
 			ID string `json:"id"`
 		} `json:"request"`
 	} `json:"threads"`
@@ -44,7 +44,7 @@ func testThreadsQuery(as *ActionSuite, f threadQueryFixtures, query string) {
 	as.NoError(err)
 
 	as.Equal(f.Threads[0].UUID.String(), resp.Threads[0].ID)
-	as.Equal(f.Posts[0].UUID.String(), resp.Threads[0].Post.ID)
+	as.Equal(f.Requests[0].UUID.String(), resp.Threads[0].Request.ID)
 	as.Equal(f.Messages[0].UUID.String(), resp.Threads[0].Messages[0].ID)
 	as.Equal(f.Messages[0].Content, resp.Threads[0].Messages[0].Content)
 	as.Equal(f.Users[1].Nickname, resp.Threads[0].Messages[0].Sender.Nickname)

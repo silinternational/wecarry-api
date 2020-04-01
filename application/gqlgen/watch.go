@@ -137,7 +137,7 @@ type watchInput struct {
 	Origin      *LocationInput
 	MeetingID   *string
 	SearchText  *string
-	Size        *models.PostSize
+	Size        *models.RequestSize
 }
 
 // CreateWatch resolves the `createWatch` mutation.

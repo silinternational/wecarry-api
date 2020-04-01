@@ -57,7 +57,7 @@ type watchInput struct {
 	origin      locationInput
 	meetingID   string
 	searchText  string
-	size        models.PostSize
+	size        models.RequestSize
 }
 
 type locationInput struct {
@@ -159,7 +159,7 @@ func (as *ActionSuite) Test_CreateWatch() {
 				},
 				meetingID:  f.Meetings[0].UUID.String(),
 				searchText: "search",
-				size:       models.PostSizeXlarge,
+				size:       models.RequestSizeXlarge,
 			},
 			testUser: f.Users[0],
 		},
@@ -223,7 +223,7 @@ func (as *ActionSuite) Test_UpdateWatch() {
 				},
 				meetingID:  f.Meetings[0].UUID.String(),
 				searchText: "search",
-				size:       models.PostSizeXlarge,
+				size:       models.RequestSizeXlarge,
 			},
 			testUser: f.Users[0],
 		},
@@ -276,7 +276,7 @@ func (as *ActionSuite) watchInputString(watch watchInput) string {
 	}
 
 	if watch.size == "" {
-		watch.size = models.PostSizeXlarge
+		watch.size = models.RequestSizeXlarge
 	}
 
 	input = fmt.Sprintf(`%s name: "%s" destination: {description:"%s" country:"%s" latitude:%f longitude:%f}

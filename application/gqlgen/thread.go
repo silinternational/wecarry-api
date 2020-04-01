@@ -72,18 +72,18 @@ func (r *threadResolver) Messages(ctx context.Context, obj *models.Thread) ([]mo
 	return messages, nil
 }
 
-// Request retrieves the post to which the queried thread belongs.
-func (r *threadResolver) Request(ctx context.Context, obj *models.Thread) (*models.Post, error) {
+// Request retrieves the request to which the queried thread belongs.
+func (r *threadResolver) Request(ctx context.Context, obj *models.Thread) (*models.Request, error) {
 	if obj == nil {
-		return &models.Post{}, nil
+		return &models.Request{}, nil
 	}
 
-	post, err := obj.GetPost()
+	request, err := obj.GetRequest()
 	if err != nil {
-		return &models.Post{}, domain.ReportError(ctx, err, "GetThreadPost")
+		return &models.Request{}, domain.ReportError(ctx, err, "GetThreadRequest")
 	}
 
-	return post, nil
+	return request, nil
 }
 
 // UnreadMessageCount retrieves the number of unread messages the current user has on the queried thread.
