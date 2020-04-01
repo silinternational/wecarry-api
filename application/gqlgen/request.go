@@ -121,7 +121,7 @@ func (r *requestResolver) Destination(ctx context.Context, obj *models.Request) 
 		return &models.Location{}, nil
 	}
 
-	destination, err := obj.GetDestination()
+	destination, err := dataloader.For(ctx).LocationByID.Load(obj.DestinationID) // obj.GetDestination()
 	if err != nil {
 		return &models.Location{}, domain.ReportError(ctx, err, "GetRequestDestination")
 	}
@@ -135,7 +135,11 @@ func (r *requestResolver) Origin(ctx context.Context, obj *models.Request) (*mod
 		return nil, nil
 	}
 
-	origin, err := obj.GetOrigin()
+	if !obj.OriginID.Valid {
+		return nil, nil
+	}
+
+	origin, err := dataloader.For(ctx).LocationByID.Load(obj.OriginID.Int)
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetRequestOrigin")
 	}

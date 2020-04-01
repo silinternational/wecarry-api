@@ -10,94 +10,59 @@ import (
 const loadersKey = "dataloaders"
 
 type Loaders struct {
+	LocationByID     LocationLoader
 	MeetingByID      MeetingLoader
 	OrganizationByID OrganizationLoader
 	UserByID         UserLoader
 }
 
+func getFetchLocationCallback() func([]int) ([]*models.Location, []error) {
+	return func(ids []int) ([]*models.Location, []error) {
+		objPtrs, err := models.FindLocationsByIDs(ids)
+		if err != nil {
+			return []*models.Location{}, []error{err}
+		}
+		return objPtrs, nil
+	}
+}
+
 func getFetchMeetingCallback() func([]int) ([]*models.Meeting, []error) {
 	return func(ids []int) ([]*models.Meeting, []error) {
-		gotErrors := []error{}
-
-		objectsByID := map[int]*models.Meeting{}
-		for _, id := range ids {
-			obj := models.Meeting{}
-			if _, ok := objectsByID[id]; ok {
-				continue
-			}
-			err := obj.FindByID(id)
-			if err != nil {
-				gotErrors = append(gotErrors, err)
-				continue
-			}
-			objectsByID[obj.ID] = &obj
+		objPtrs, err := models.FindMeetingsByIDs(ids)
+		if err != nil {
+			return []*models.Meeting{}, []error{err}
 		}
-
-		objects := make([]*models.Meeting, len(ids))
-		for i, id := range ids {
-			objects[i] = objectsByID[id]
-		}
-
-		return objects, nil
+		return objPtrs, nil
 	}
 }
 
 func getFetchOrganizationCallback() func([]int) ([]*models.Organization, []error) {
 	return func(ids []int) ([]*models.Organization, []error) {
-		gotErrors := []error{}
-
-		objectsByID := map[int]*models.Organization{}
-		for _, id := range ids {
-			obj := models.Organization{}
-			if _, ok := objectsByID[id]; ok {
-				continue
-			}
-			err := obj.FindByID(id)
-			if err != nil {
-				gotErrors = append(gotErrors, err)
-				continue
-			}
-			objectsByID[obj.ID] = &obj
+		objPtrs, err := models.FindOrganizationsByIDs(ids)
+		if err != nil {
+			return []*models.Organization{}, []error{err}
 		}
-
-		objects := make([]*models.Organization, len(ids))
-		for i, id := range ids {
-			objects[i] = objectsByID[id]
-		}
-
-		return objects, nil
+		return objPtrs, nil
 	}
 }
 
 func getFetchUserCallback() func([]int) ([]*models.User, []error) {
 	return func(ids []int) ([]*models.User, []error) {
-		gotErrors := []error{}
-
-		objectsByID := map[int]*models.User{}
-		for _, id := range ids {
-			obj := models.User{}
-			if _, ok := objectsByID[id]; ok {
-				continue
-			}
-			err := obj.FindByID(id)
-			if err != nil {
-				gotErrors = append(gotErrors, err)
-				continue
-			}
-			objectsByID[obj.ID] = &obj
+		objPtrs, err := models.FindUsersByIDs(ids)
+		if err != nil {
+			return []*models.User{}, []error{err}
 		}
-
-		objects := make([]*models.User, len(ids))
-		for i, id := range ids {
-			objects[i] = objectsByID[id]
-		}
-
-		return objects, nil
+		return objPtrs, nil
 	}
 }
 
 func GetDataLoaderContext(c context.Context) context.Context {
 	ctx := context.WithValue(c, loadersKey, &Loaders{
+		LocationByID: LocationLoader{
+			maxBatch: domain.DataLoaderMaxBatch,
+			wait:     domain.DataLoaderWaitMilliSeconds,
+			fetch:    getFetchLocationCallback(),
+		},
 		MeetingByID: MeetingLoader{
 			maxBatch: domain.DataLoaderMaxBatch,
 			wait:     domain.DataLoaderWaitMilliSeconds,

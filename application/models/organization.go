@@ -340,3 +340,20 @@ func (o *Organization) AttachLogo(fileID string) (File, error) {
 func (o *Organization) RemoveFile() error {
 	return removeFile(o)
 }
+
+// FindUsersByIDs finds all Users associated with the given IDs and loads them from the database
+func FindOrganizationsByIDs(ids []int) ([]*Organization, error) {
+	ids = domain.UniquifyIntSlice(ids)
+	objects := []Organization{}
+	if err := DB.Where("id in (?)", ids).All(&objects); err != nil {
+		return []*Organization{}, err
+	}
+
+	ptrs := []*Organization{}
+	for _, o := range objects {
+		o2 := o
+		ptrs = append(ptrs, &o2)
+	}
+
+	return ptrs, nil
+}

@@ -717,3 +717,15 @@ func GetFunctionName(skip int) string {
 	fn := runtime.FuncForPC(pc)
 	return fmt.Sprintf("%s:%d %s", file, line, fn.Name())
 }
+
+func UniquifyIntSlice(intSlice []int) []int {
+	keys := make(map[int]bool)
+	list := []int{}
+	for _, entry := range intSlice {
+		if _, ok := keys[entry]; !ok {
+			keys[entry] = true
+			list = append(list, entry)
+		}
+	}
+	return list
+}
