@@ -184,7 +184,7 @@ func (f *File) FindByUUID(fileUUID string) error {
 		return err
 	}
 
-	if err := file.refreshURL(); err != nil {
+	if err := file.RefreshURL(); err != nil {
 		return err
 	}
 
@@ -192,8 +192,8 @@ func (f *File) FindByUUID(fileUUID string) error {
 	return nil
 }
 
-// refreshURL ensures the file URL is good for at least a few minutes
-func (f *File) refreshURL() error {
+// RefreshURL ensures the file URL is good for at least a few minutes
+func (f *File) RefreshURL() error {
 	if f.URLExpiration.After(time.Now().Add(time.Minute * 5)) {
 		return nil
 	}
@@ -286,4 +286,21 @@ func (f *File) SetLinked() error {
 func (f *File) ClearLinked() error {
 	f.Linked = false
 	return DB.UpdateColumns(f, "linked")
+}
+
+// FindFilesByIDs finds all Files associated with the given IDs and loads them from the database
+func FindFilesByIDs(ids []int) ([]*File, error) {
+	ids = domain.UniquifyIntSlice(ids)
+	objects := []File{}
+	if err := DB.Where("id in (?)", ids).All(&objects); err != nil {
+		return []*File{}, err
+	}
+
+	ptrs := []*File{}
+	for _, o := range objects {
+		o2 := o
+		ptrs = append(ptrs, &o2)
+	}
+
+	return ptrs, nil
 }

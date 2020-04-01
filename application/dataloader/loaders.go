@@ -10,10 +10,21 @@ import (
 const loadersKey = "dataloaders"
 
 type Loaders struct {
-	LocationByID     LocationLoader
-	MeetingByID      MeetingLoader
-	OrganizationByID OrganizationLoader
-	UserByID         UserLoader
+	FilesByID         FileLoader
+	LocationsByID     LocationLoader
+	MeetingsByID      MeetingLoader
+	OrganizationsByID OrganizationLoader
+	UsersByID         UserLoader
+}
+
+func getFetchFileCallback() func([]int) ([]*models.File, []error) {
+	return func(ids []int) ([]*models.File, []error) {
+		objPtrs, err := models.FindFilesByIDs(ids)
+		if err != nil {
+			return []*models.File{}, []error{err}
+		}
+		return objPtrs, nil
+	}
 }
 
 func getFetchLocationCallback() func([]int) ([]*models.Location, []error) {
@@ -58,22 +69,27 @@ func getFetchUserCallback() func([]int) ([]*models.User, []error) {
 
 func GetDataLoaderContext(c context.Context) context.Context {
 	ctx := context.WithValue(c, loadersKey, &Loaders{
-		LocationByID: LocationLoader{
+		FilesByID: FileLoader{
+			maxBatch: domain.DataLoaderMaxBatch,
+			wait:     domain.DataLoaderWaitMilliSeconds,
+			fetch:    getFetchFileCallback(),
+		},
+		LocationsByID: LocationLoader{
 			maxBatch: domain.DataLoaderMaxBatch,
 			wait:     domain.DataLoaderWaitMilliSeconds,
 			fetch:    getFetchLocationCallback(),
 		},
-		MeetingByID: MeetingLoader{
+		MeetingsByID: MeetingLoader{
 			maxBatch: domain.DataLoaderMaxBatch,
 			wait:     domain.DataLoaderWaitMilliSeconds,
 			fetch:    getFetchMeetingCallback(),
 		},
-		OrganizationByID: OrganizationLoader{
+		OrganizationsByID: OrganizationLoader{
 			maxBatch: domain.DataLoaderMaxBatch,
 			wait:     domain.DataLoaderWaitMilliSeconds,
 			fetch:    getFetchOrganizationCallback(),
 		},
-		UserByID: UserLoader{
+		UsersByID: UserLoader{
 			maxBatch: domain.DataLoaderMaxBatch,
 			wait:     domain.DataLoaderWaitMilliSeconds,
 			fetch:    getFetchUserCallback(),

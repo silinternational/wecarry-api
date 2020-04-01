@@ -517,7 +517,7 @@ func (u *User) GetPhotoURL() (*string, error) {
 		return &url, nil
 	}
 
-	if err := u.PhotoFile.refreshURL(); err != nil {
+	if err := u.PhotoFile.RefreshURL(); err != nil {
 		return nil, err
 	}
 	return &u.PhotoFile.URL, nil

@@ -277,7 +277,7 @@ func (o *Organization) LogoURL() (*string, error) {
 		if err := DB.Find(&file, o.FileID); err != nil {
 			return nil, fmt.Errorf("couldn't find org file %d, %s", o.FileID.Int, err)
 		}
-		if err := file.refreshURL(); err != nil {
+		if err := file.RefreshURL(); err != nil {
 			return nil, fmt.Errorf("error getting logo URL, %s", err)
 		}
 		return &file.URL, nil
