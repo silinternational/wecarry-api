@@ -430,20 +430,14 @@ func (u *User) FindByEmailAndSocialAuthProvider(email, auth_provider string) err
 }
 
 // FindUsersByIDs finds all Users associated with the given IDs and loads them from the database
-func FindUsersByIDs(ids []int) ([]*User, error) {
+func FindUsersByIDs(ids []int) ([]User, error) {
 	ids = domain.UniquifyIntSlice(ids)
 	objects := []User{}
 	if err := DB.Where("id in (?)", ids).All(&objects); err != nil {
-		return []*User{}, err
+		return []User{}, err
 	}
 
-	ptrs := []*User{}
-	for _, o := range objects {
-		o2 := o
-		ptrs = append(ptrs, &o2)
-	}
-
-	return ptrs, nil
+	return objects, nil
 }
 
 // HashClientIdAccessToken just returns a sha256.Sum256 of the input value

@@ -289,18 +289,12 @@ func (f *File) ClearLinked() error {
 }
 
 // FindFilesByIDs finds all Files associated with the given IDs and loads them from the database
-func FindFilesByIDs(ids []int) ([]*File, error) {
+func FindFilesByIDs(ids []int) ([]File, error) {
 	ids = domain.UniquifyIntSlice(ids)
 	objects := []File{}
 	if err := DB.Where("id in (?)", ids).All(&objects); err != nil {
-		return []*File{}, err
+		return []File{}, err
 	}
 
-	ptrs := []*File{}
-	for _, o := range objects {
-		o2 := o
-		ptrs = append(ptrs, &o2)
-	}
-
-	return ptrs, nil
+	return objects, nil
 }

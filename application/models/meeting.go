@@ -375,18 +375,12 @@ func (m *Meeting) isVisible(ctx buffalo.Context, userID int) bool {
 }
 
 // FindMeetingsByIDs finds all Users associated with the given IDs and loads them from the database
-func FindMeetingsByIDs(ids []int) ([]*Meeting, error) {
+func FindMeetingsByIDs(ids []int) ([]Meeting, error) {
 	ids = domain.UniquifyIntSlice(ids)
 	objects := []Meeting{}
 	if err := DB.Where("id in (?)", ids).All(&objects); err != nil {
-		return []*Meeting{}, err
+		return []Meeting{}, err
 	}
 
-	ptrs := []*Meeting{}
-	for _, o := range objects {
-		o2 := o
-		ptrs = append(ptrs, &o2)
-	}
-
-	return ptrs, nil
+	return objects, nil
 }

@@ -342,18 +342,12 @@ func (o *Organization) RemoveFile() error {
 }
 
 // FindUsersByIDs finds all Users associated with the given IDs and loads them from the database
-func FindOrganizationsByIDs(ids []int) ([]*Organization, error) {
+func FindOrganizationsByIDs(ids []int) ([]Organization, error) {
 	ids = domain.UniquifyIntSlice(ids)
 	objects := []Organization{}
 	if err := DB.Where("id in (?)", ids).All(&objects); err != nil {
-		return []*Organization{}, err
+		return []Organization{}, err
 	}
 
-	ptrs := []*Organization{}
-	for _, o := range objects {
-		o2 := o
-		ptrs = append(ptrs, &o2)
-	}
-
-	return ptrs, nil
+	return objects, nil
 }
