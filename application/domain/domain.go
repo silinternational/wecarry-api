@@ -39,7 +39,7 @@ const (
 	DurationWeek                = time.Duration(DurationDay * 7)
 	RecentMeetingDelay          = DurationDay * 30
 	DataLoaderMaxBatch          = 100
-	DataLoaderWaitMilliSeconds  = 1 * time.Millisecond
+	DataLoaderWaitMilliSeconds  = 5 * time.Millisecond
 )
 
 // Event Kinds
