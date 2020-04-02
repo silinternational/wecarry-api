@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/silinternational/wecarry-api/dataloader"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 )
@@ -30,7 +31,7 @@ func (r *meetingResolver) CreatedBy(ctx context.Context, obj *models.Meeting) (*
 		return &PublicProfile{}, nil
 	}
 
-	creator, err := obj.GetCreator()
+	creator, err := dataloader.For(ctx).UsersByID.Load(obj.CreatedByID)
 	if err != nil {
 		return &PublicProfile{}, domain.ReportError(ctx, err, "GetMeetingCreator")
 	}
