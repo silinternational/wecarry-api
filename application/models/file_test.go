@@ -203,6 +203,49 @@ func (ms *ModelSuite) TestFile_FindByUUID() {
 	}
 }
 
+func (ms *ModelSuite) TestFiles_FindByIDs() {
+	t := ms.T()
+
+	_ = createUserFixtures(ms.DB, 2)
+	requests := createRequestFixtures(ms.DB, 1, false)
+
+	if err := aws.CreateS3Bucket(); err != nil {
+		t.Errorf("failed to create S3 bucket, %s", err)
+		t.FailNow()
+	}
+	files := CreateFileFixtures(ms, requests)
+
+	tests := []struct {
+		name string
+		ids  []int
+		want []string
+	}{
+		{
+			name: "good",
+			ids:  []int{files[0].ID, files[1].ID, files[0].ID},
+			want: []string{files[0].Name, files[1].Name},
+		},
+		{
+			name: "missing",
+			ids:  []int{99999},
+			want: []string{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var f Files
+			err := f.FindByIDs(tt.ids)
+			ms.NoError(err)
+
+			fileNames := make([]string, len(f))
+			for i, ff := range f {
+				fileNames[i] = ff.Name
+			}
+			ms.Equal(tt.want, fileNames, "incorrect file names")
+		})
+	}
+}
+
 func (ms *ModelSuite) Test_detectContentType() {
 	t := ms.T()
 	tests := []struct {

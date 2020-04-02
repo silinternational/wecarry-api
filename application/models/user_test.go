@@ -1720,3 +1720,40 @@ func (ms *ModelSuite) TestUser_CanCreateMeetingParticipant() {
 		})
 	}
 }
+
+func (ms *ModelSuite) TestUsers_FindByIDs() {
+	t := ms.T()
+
+	f := createUserFixtures(ms.DB, 3)
+	users := f.Users
+
+	tests := []struct {
+		name string
+		ids  []int
+		want []string
+	}{
+		{
+			name: "good",
+			ids:  []int{users[2].ID, users[2].ID, users[1].ID},
+			want: []string{users[1].Nickname, users[2].Nickname},
+		},
+		{
+			name: "missing",
+			ids:  []int{99999},
+			want: []string{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var u Users
+			err := u.FindByIDs(tt.ids)
+			ms.NoError(err)
+
+			got := make([]string, len(u))
+			for i, uu := range u {
+				got[i] = uu.Nickname
+			}
+			ms.Equal(tt.want, got, "incorrect user nicknames")
+		})
+	}
+}
