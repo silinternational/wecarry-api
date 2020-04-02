@@ -30,12 +30,12 @@ func (r *requestResolver) ID(ctx context.Context, obj *models.Request) (string, 
 // CreatedBy resolves the `createdBy` property of the request query. It retrieves the related record from the database.
 func (r *requestResolver) CreatedBy(ctx context.Context, obj *models.Request) (*PublicProfile, error) {
 	if obj == nil {
-		return nil, nil
+		return &PublicProfile{}, nil
 	}
 
 	creator, err := dataloader.For(ctx).UsersByID.Load(obj.CreatedByID)
 	if err != nil {
-		return nil, domain.ReportError(ctx, err, "GetRequestCreator")
+		return &PublicProfile{}, domain.ReportError(ctx, err, "GetRequestCreator")
 	}
 
 	return getPublicProfile(ctx, creator), nil
