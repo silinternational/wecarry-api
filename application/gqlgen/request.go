@@ -121,7 +121,7 @@ func (r *requestResolver) Destination(ctx context.Context, obj *models.Request) 
 		return &models.Location{}, nil
 	}
 
-	destination, err := dataloader.For(ctx).LocationsByID.Load(obj.DestinationID) // obj.GetDestination()
+	destination, err := dataloader.For(ctx).LocationsByID.Load(obj.DestinationID)
 	if err != nil {
 		return &models.Location{}, domain.ReportError(ctx, err, "GetRequestDestination")
 	}

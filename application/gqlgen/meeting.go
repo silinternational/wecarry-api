@@ -53,12 +53,11 @@ func (r *meetingResolver) Location(ctx context.Context, obj *models.Meeting) (*m
 		return &models.Location{}, nil
 	}
 
-	location, err := obj.GetLocation()
+	location, err := dataloader.For(ctx).LocationsByID.Load(obj.LocationID)
 	if err != nil {
 		return &models.Location{}, domain.ReportError(ctx, err, "GetMeetingLocation")
 	}
-
-	return &location, nil
+	return location, nil
 }
 
 // MoreInfoURL resolves the `moreInfoURL` property, converting a nulls.String to a *string.
@@ -93,9 +92,17 @@ func (r *meetingResolver) ImageFile(ctx context.Context, obj *models.Meeting) (*
 		return nil, nil
 	}
 
-	image, err := obj.ImageFile()
+	if !obj.FileID.Valid {
+		return nil, nil
+	}
+
+	image, err := dataloader.For(ctx).FilesByID.Load(obj.FileID.Int)
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetMeetingImage")
+	}
+
+	if err := image.RefreshURL(); err != nil {
+		return nil, err
 	}
 
 	return image, nil
