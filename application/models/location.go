@@ -117,10 +117,6 @@ func (l *Location) IsNear(loc2 Location) bool {
 	return !math.IsNaN(d) && d < domain.DefaultProximityDistanceKm
 }
 
-func (l *Location) FindByID(id int) error {
-	return DB.Find(l, id)
-}
-
 // FindByIDs finds all Locations associated with the given IDs and loads them from the database
 func (l *Locations) FindByIDs(ids []int) error {
 	ids = domain.UniquifyIntSlice(ids)
