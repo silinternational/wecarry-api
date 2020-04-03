@@ -19,7 +19,7 @@ type Loaders struct {
 
 func getFetchFileCallback() func([]int) ([]*models.File, []error) {
 	return func(ids []int) ([]*models.File, []error) {
-		var objects models.Files
+		objects := models.Files{}
 		if err := objects.FindByIDs(ids); err != nil {
 			return []*models.File{}, []error{err}
 		}
@@ -43,7 +43,7 @@ func getFetchFileCallback() func([]int) ([]*models.File, []error) {
 
 func getFetchLocationCallback() func([]int) ([]*models.Location, []error) {
 	return func(ids []int) ([]*models.Location, []error) {
-		var objects models.Locations
+		objects := models.Locations{}
 		if err := objects.FindByIDs(ids); err != nil {
 			return []*models.Location{}, []error{err}
 		}
@@ -67,7 +67,7 @@ func getFetchLocationCallback() func([]int) ([]*models.Location, []error) {
 
 func getFetchMeetingCallback() func([]int) ([]*models.Meeting, []error) {
 	return func(ids []int) ([]*models.Meeting, []error) {
-		var objects models.Meetings
+		objects := models.Meetings{}
 		if err := objects.FindByIDs(ids); err != nil {
 			return []*models.Meeting{}, []error{err}
 		}
@@ -91,7 +91,7 @@ func getFetchMeetingCallback() func([]int) ([]*models.Meeting, []error) {
 
 func getFetchOrganizationCallback() func([]int) ([]*models.Organization, []error) {
 	return func(ids []int) ([]*models.Organization, []error) {
-		var objects models.Organizations
+		objects := models.Organizations{}
 		if err := objects.FindByIDs(ids); err != nil {
 			return []*models.Organization{}, []error{err}
 		}
@@ -115,8 +115,7 @@ func getFetchOrganizationCallback() func([]int) ([]*models.Organization, []error
 
 func getFetchUserCallback() func([]int) ([]*models.User, []error) {
 	return func(ids []int) ([]*models.User, []error) {
-
-		var objects models.Users
+		objects := models.Users{}
 		if err := objects.FindByIDs(ids); err != nil {
 			return []*models.User{}, []error{err}
 		}
