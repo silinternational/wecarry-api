@@ -17,11 +17,19 @@ type Loaders struct {
 	UsersByID         UserLoader
 }
 
+func convertErrToSlice(err error) []error {
+	if err == nil {
+		return nil
+	}
+	return []error{err}
+}
+
 func getFetchFileCallback() func([]int) ([]*models.File, []error) {
 	return func(ids []int) ([]*models.File, []error) {
 		objects := models.Files{}
-		if err := objects.FindByIDs(ids); err != nil {
-			return []*models.File{}, []error{err}
+		err := objects.FindByIDs(ids)
+		if len(objects) == 0 {
+			return []*models.File{}, convertErrToSlice(err)
 		}
 
 		objMap := map[int]models.File{}
@@ -37,15 +45,16 @@ func getFetchFileCallback() func([]int) ([]*models.File, []error) {
 			}
 		}
 
-		return objPtrs, nil
+		return objPtrs, convertErrToSlice(err)
 	}
 }
 
 func getFetchLocationCallback() func([]int) ([]*models.Location, []error) {
 	return func(ids []int) ([]*models.Location, []error) {
 		objects := models.Locations{}
-		if err := objects.FindByIDs(ids); err != nil {
-			return []*models.Location{}, []error{err}
+		err := objects.FindByIDs(ids)
+		if len(objects) == 0 {
+			return []*models.Location{}, convertErrToSlice(err)
 		}
 
 		objMap := map[int]models.Location{}
@@ -61,15 +70,16 @@ func getFetchLocationCallback() func([]int) ([]*models.Location, []error) {
 			}
 		}
 
-		return objPtrs, nil
+		return objPtrs, convertErrToSlice(err)
 	}
 }
 
 func getFetchMeetingCallback() func([]int) ([]*models.Meeting, []error) {
 	return func(ids []int) ([]*models.Meeting, []error) {
 		objects := models.Meetings{}
-		if err := objects.FindByIDs(ids); err != nil {
-			return []*models.Meeting{}, []error{err}
+		err := objects.FindByIDs(ids)
+		if len(objects) == 0 {
+			return []*models.Meeting{}, convertErrToSlice(err)
 		}
 
 		objMap := map[int]models.Meeting{}
@@ -85,15 +95,16 @@ func getFetchMeetingCallback() func([]int) ([]*models.Meeting, []error) {
 			}
 		}
 
-		return objPtrs, nil
+		return objPtrs, convertErrToSlice(err)
 	}
 }
 
 func getFetchOrganizationCallback() func([]int) ([]*models.Organization, []error) {
 	return func(ids []int) ([]*models.Organization, []error) {
 		objects := models.Organizations{}
-		if err := objects.FindByIDs(ids); err != nil {
-			return []*models.Organization{}, []error{err}
+		err := objects.FindByIDs(ids)
+		if len(objects) == 0 {
+			return []*models.Organization{}, convertErrToSlice(err)
 		}
 
 		objMap := map[int]models.Organization{}
@@ -109,16 +120,18 @@ func getFetchOrganizationCallback() func([]int) ([]*models.Organization, []error
 			}
 		}
 
-		return objPtrs, nil
+		return objPtrs, convertErrToSlice(err)
 	}
 }
 
 func getFetchUserCallback() func([]int) ([]*models.User, []error) {
 	return func(ids []int) ([]*models.User, []error) {
 		objects := models.Users{}
-		if err := objects.FindByIDs(ids); err != nil {
-			return []*models.User{}, []error{err}
+		err := objects.FindByIDs(ids)
+		if len(objects) == 0 {
+			return []*models.User{}, convertErrToSlice(err)
 		}
+
 		objMap := map[int]models.User{}
 		for _, o := range objects {
 			objMap[o.ID] = o
@@ -132,7 +145,7 @@ func getFetchUserCallback() func([]int) ([]*models.User, []error) {
 			}
 		}
 
-		return objPtrs, nil
+		return objPtrs, convertErrToSlice(err)
 	}
 }
 
