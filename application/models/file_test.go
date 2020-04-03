@@ -206,7 +206,6 @@ func (ms *ModelSuite) TestFile_FindByUUID() {
 func (ms *ModelSuite) TestFiles_FindByIDs() {
 	t := ms.T()
 
-	_ = createUserFixtures(ms.DB, 2)
 	requests := createRequestFixtures(ms.DB, 1, false)
 
 	if err := aws.CreateS3Bucket(); err != nil {
