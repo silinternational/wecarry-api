@@ -720,7 +720,7 @@ func GetFunctionName(skip int) string {
 
 func UniquifyIntSlice(intSlice []int) []int {
 	keys := make(map[int]bool)
-	list := []int{}
+	list := make([]int, 0, len(keys))
 	for _, entry := range intSlice {
 		if _, ok := keys[entry]; !ok {
 			keys[entry] = true
