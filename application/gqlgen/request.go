@@ -264,20 +264,13 @@ func (r *requestResolver) Meeting(ctx context.Context, obj *models.Request) (*mo
 		return nil, nil
 	}
 
-	//meeting, err := obj.Meeting()
-	//if err != nil {
-	//	return nil, domain.ReportError(ctx, err, "GetRequestMeeting")
-	//}
-	//
-	//return meeting, nil
-
 	if !obj.MeetingID.Valid {
 		return nil, nil
 	}
 
 	meeting, err := dataloader.For(ctx).MeetingsByID.Load(obj.MeetingID.Int)
 	if err != nil {
-		return nil, domain.ReportError(ctx, err, "GetRequestProvider")
+		return nil, domain.ReportError(ctx, err, "GetRequestMeeting")
 	}
 	return meeting, nil
 }
