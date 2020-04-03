@@ -220,10 +220,6 @@ func (r *requestResolver) Photo(ctx context.Context, obj *models.Request) (*mode
 		return nil, domain.ReportError(ctx, err, "GetRequestPhoto")
 	}
 
-	if err := photo.RefreshURL(); err != nil {
-		return nil, err
-	}
-
 	return photo, nil
 }
 

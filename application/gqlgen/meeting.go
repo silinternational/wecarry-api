@@ -101,10 +101,6 @@ func (r *meetingResolver) ImageFile(ctx context.Context, obj *models.Meeting) (*
 		return nil, domain.ReportError(ctx, err, "GetMeetingImage")
 	}
 
-	if err := image.RefreshURL(); err != nil {
-		return nil, err
-	}
-
 	return image, nil
 }
 

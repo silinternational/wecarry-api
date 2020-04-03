@@ -38,11 +38,27 @@ func getFetchFileCallback() func([]int) ([]*models.File, []error) {
 		}
 
 		objPtrs := make([]*models.File, len(ids))
+		errors := make([]error, len(ids))
+		if err != nil {
+			errors[0] = err
+		}
+
+		foundErr := false
 
 		for i, id := range ids {
 			if obj, ok := objMap[id]; ok {
+				if err := obj.RefreshURL(); err != nil {
+					foundErr = true
+					errors[i] = err
+					continue
+				}
+
 				objPtrs[i] = &obj
 			}
+		}
+
+		if foundErr {
+			return objPtrs, errors
 		}
 
 		return objPtrs, convertErrToSlice(err)
