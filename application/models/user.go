@@ -429,6 +429,12 @@ func (u *User) FindByEmailAndSocialAuthProvider(email, auth_provider string) err
 	return nil
 }
 
+// FindByIDs finds all Users associated with the given IDs and loads them from the database
+func (u *Users) FindByIDs(ids []int) error {
+	ids = domain.UniquifyIntSlice(ids)
+	return DB.Where("id in (?)", ids).All(u)
+}
+
 // HashClientIdAccessToken just returns a sha256.Sum256 of the input value
 func HashClientIdAccessToken(accessToken string) string {
 	return fmt.Sprintf("%x", sha256.Sum256([]byte(accessToken)))
@@ -500,7 +506,7 @@ func (u *User) GetPhotoURL() (*string, error) {
 		return &url, nil
 	}
 
-	if err := u.PhotoFile.refreshURL(); err != nil {
+	if err := u.PhotoFile.RefreshURL(); err != nil {
 		return nil, err
 	}
 	return &u.PhotoFile.URL, nil

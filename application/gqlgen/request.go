@@ -7,6 +7,7 @@ import (
 
 	"github.com/gobuffalo/nulls"
 
+	"github.com/silinternational/wecarry-api/dataloader"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 )
@@ -29,12 +30,12 @@ func (r *requestResolver) ID(ctx context.Context, obj *models.Request) (string, 
 // CreatedBy resolves the `createdBy` property of the request query. It retrieves the related record from the database.
 func (r *requestResolver) CreatedBy(ctx context.Context, obj *models.Request) (*PublicProfile, error) {
 	if obj == nil {
-		return nil, nil
+		return &PublicProfile{}, nil
 	}
 
-	creator, err := obj.GetCreator()
+	creator, err := dataloader.For(ctx).UsersByID.Load(obj.CreatedByID)
 	if err != nil {
-		return nil, domain.ReportError(ctx, err, "GetRequestCreator")
+		return &PublicProfile{}, domain.ReportError(ctx, err, "GetRequestCreator")
 	}
 
 	return getPublicProfile(ctx, creator), nil
@@ -46,7 +47,11 @@ func (r *requestResolver) Provider(ctx context.Context, obj *models.Request) (*P
 		return nil, nil
 	}
 
-	provider, err := obj.GetProvider()
+	if !obj.ProviderID.Valid {
+		return nil, nil
+	}
+
+	provider, err := dataloader.For(ctx).UsersByID.Load(obj.ProviderID.Int)
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetRequestProvider")
 	}
@@ -77,11 +82,10 @@ func (r *requestResolver) Organization(ctx context.Context, obj *models.Request)
 		return nil, nil
 	}
 
-	organization, err := obj.GetOrganization()
+	organization, err := dataloader.For(ctx).OrganizationsByID.Load(obj.OrganizationID)
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetRequestOrganization")
 	}
-
 	return organization, nil
 }
 
@@ -117,7 +121,7 @@ func (r *requestResolver) Destination(ctx context.Context, obj *models.Request) 
 		return &models.Location{}, nil
 	}
 
-	destination, err := obj.GetDestination()
+	destination, err := dataloader.For(ctx).LocationsByID.Load(obj.DestinationID)
 	if err != nil {
 		return &models.Location{}, domain.ReportError(ctx, err, "GetRequestDestination")
 	}
@@ -131,7 +135,11 @@ func (r *requestResolver) Origin(ctx context.Context, obj *models.Request) (*mod
 		return nil, nil
 	}
 
-	origin, err := obj.GetOrigin()
+	if !obj.OriginID.Valid {
+		return nil, nil
+	}
+
+	origin, err := dataloader.For(ctx).LocationsByID.Load(obj.OriginID.Int)
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetRequestOrigin")
 	}
@@ -203,7 +211,11 @@ func (r *requestResolver) Photo(ctx context.Context, obj *models.Request) (*mode
 		return nil, nil
 	}
 
-	photo, err := obj.GetPhoto()
+	if !obj.FileID.Valid {
+		return nil, nil
+	}
+
+	photo, err := dataloader.For(ctx).FilesByID.Load(obj.FileID.Int)
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetRequestPhoto")
 	}
@@ -211,7 +223,7 @@ func (r *requestResolver) Photo(ctx context.Context, obj *models.Request) (*mode
 	return photo, nil
 }
 
-// PhotoID retrieves the ID for the user profile photo
+// PhotoID retrieves UUID of the file attached as the Request photo
 func (r *requestResolver) PhotoID(ctx context.Context, obj *models.Request) (*string, error) {
 	if obj == nil {
 		return nil, nil
@@ -248,11 +260,14 @@ func (r *requestResolver) Meeting(ctx context.Context, obj *models.Request) (*mo
 		return nil, nil
 	}
 
-	meeting, err := obj.Meeting()
+	if !obj.MeetingID.Valid {
+		return nil, nil
+	}
+
+	meeting, err := dataloader.For(ctx).MeetingsByID.Load(obj.MeetingID.Int)
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetRequestMeeting")
 	}
-
 	return meeting, nil
 }
 

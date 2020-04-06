@@ -38,6 +38,8 @@ const (
 	DurationDay                 = time.Duration(time.Hour * 24)
 	DurationWeek                = time.Duration(DurationDay * 7)
 	RecentMeetingDelay          = DurationDay * 30
+	DataLoaderMaxBatch          = 100
+	DataLoaderWaitMilliSeconds  = 5 * time.Millisecond
 )
 
 // Event Kinds
@@ -714,4 +716,16 @@ func GetFunctionName(skip int) string {
 
 	fn := runtime.FuncForPC(pc)
 	return fmt.Sprintf("%s:%d %s", file, line, fn.Name())
+}
+
+func UniquifyIntSlice(intSlice []int) []int {
+	keys := make(map[int]bool)
+	list := make([]int, 0, len(keys))
+	for _, entry := range intSlice {
+		if _, ok := keys[entry]; !ok {
+			keys[entry] = true
+			list = append(list, entry)
+		}
+	}
+	return list
 }

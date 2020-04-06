@@ -647,3 +647,39 @@ func (ms *ModelSuite) TestOrganization_GetAuthProvider() {
 	ms.NoError(err, "unable to get authprovider for test@domain2.com")
 	ms.IsType(&google.Provider{}, provider, "auth provider not expected google type")
 }
+
+func (ms *ModelSuite) TestOrganizations_FindByIDs() {
+	t := ms.T()
+
+	orgs := createOrganizationFixtures(ms.DB, 3)
+
+	tests := []struct {
+		name string
+		ids  []int
+		want []string
+	}{
+		{
+			name: "good",
+			ids:  []int{orgs[0].ID, orgs[2].ID, orgs[0].ID},
+			want: []string{orgs[0].Name, orgs[2].Name},
+		},
+		{
+			name: "missing",
+			ids:  []int{99999},
+			want: []string{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var o Organizations
+			err := o.FindByIDs(tt.ids)
+			ms.NoError(err)
+
+			got := make([]string, len(o))
+			for i, oo := range o {
+				got[i] = oo.Name
+			}
+			ms.Equal(tt.want, got, "incorrect organization names")
+		})
+	}
+}
