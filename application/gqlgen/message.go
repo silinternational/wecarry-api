@@ -3,6 +3,7 @@ package gqlgen
 import (
 	"context"
 
+	"github.com/silinternational/wecarry-api/dataloader"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 )
@@ -27,7 +28,8 @@ func (r *messageResolver) Sender(ctx context.Context, obj *models.Message) (*Pub
 	if obj == nil {
 		return &PublicProfile{}, nil
 	}
-	user, err := obj.GetSender()
+
+	user, err := dataloader.For(ctx).UsersByID.Load(obj.SentByID)
 	if err != nil {
 		return &PublicProfile{}, domain.ReportError(ctx, err, "GetMessageSender")
 	}

@@ -193,7 +193,7 @@ func (m *Meeting) ImageFile() (*File, error) {
 			return nil, err
 		}
 	}
-	if err := (*m.ImgFile).refreshURL(); err != nil {
+	if err := (*m.ImgFile).RefreshURL(); err != nil {
 		return nil, err
 	}
 	f := *m.ImgFile
@@ -359,4 +359,10 @@ func (m *Meeting) isOrganizer(ctx buffalo.Context, userID int) bool {
 
 func (m *Meeting) isVisible(ctx buffalo.Context, userID int) bool {
 	return true
+}
+
+// FindByIDs finds all Meetings associated with the given IDs and loads them from the database
+func (m *Meetings) FindByIDs(ids []int) error {
+	ids = domain.UniquifyIntSlice(ids)
+	return DB.Where("id in (?)", ids).All(m)
 }

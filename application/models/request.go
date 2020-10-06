@@ -703,7 +703,7 @@ func (r *Request) GetFiles() ([]File, error) {
 	files := make([]File, len(rf))
 	for i, f := range rf {
 		files[i] = f.File
-		if err := files[i].refreshURL(); err != nil {
+		if err := files[i].RefreshURL(); err != nil {
 			return files, err
 		}
 	}
@@ -732,7 +732,7 @@ func (r *Request) GetPhoto() (*File, error) {
 		return nil, nil
 	}
 
-	if err := r.PhotoFile.refreshURL(); err != nil {
+	if err := r.PhotoFile.RefreshURL(); err != nil {
 		return nil, err
 	}
 

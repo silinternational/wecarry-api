@@ -264,7 +264,7 @@ func (o *Organization) LogoURL() (*string, error) {
 		if err := DB.Find(&file, o.FileID); err != nil {
 			return nil, fmt.Errorf("couldn't find org file %d, %s", o.FileID.Int, err)
 		}
-		if err := file.refreshURL(); err != nil {
+		if err := file.RefreshURL(); err != nil {
 			return nil, fmt.Errorf("error getting logo URL, %s", err)
 		}
 		return &file.URL, nil
@@ -326,4 +326,10 @@ func (o *Organization) AttachLogo(fileID string) (File, error) {
 // RemoveFile removes an attached file from the Request
 func (o *Organization) RemoveFile() error {
 	return removeFile(o)
+}
+
+// FindByIDs finds all Organizations associated with the given IDs and loads them from the database
+func (o *Organizations) FindByIDs(ids []int) error {
+	ids = domain.UniquifyIntSlice(ids)
+	return DB.Where("id in (?)", ids).All(o)
 }

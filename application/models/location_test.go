@@ -357,3 +357,39 @@ func (ms *ModelSuite) TestLocation_IsNear() {
 		})
 	}
 }
+
+func (ms *ModelSuite) TestLocations_FindByIDs() {
+	t := ms.T()
+
+	locations := createLocationFixtures(ms.DB, 3)
+
+	tests := []struct {
+		name string
+		ids  []int
+		want []string
+	}{
+		{
+			name: "good",
+			ids:  []int{locations[0].ID, locations[1].ID, locations[0].ID},
+			want: []string{locations[0].Description, locations[1].Description},
+		},
+		{
+			name: "missing",
+			ids:  []int{99999},
+			want: []string{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var l Locations
+			err := l.FindByIDs(tt.ids)
+			ms.NoError(err)
+
+			got := make([]string, len(l))
+			for i, ll := range l {
+				got[i] = ll.Description
+			}
+			ms.Equal(tt.want, got, "incorrect location descriptions")
+		})
+	}
+}

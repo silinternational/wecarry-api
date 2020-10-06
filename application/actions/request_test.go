@@ -115,9 +115,9 @@ const allRequestFields = `{
 		}`
 
 func (as *ActionSuite) verifyRequestResponse(request models.Request, resp Request) {
-	as.Equal(request.UUID.String(), resp.ID)
-	as.Equal(request.Title, resp.Title)
-	as.Equal(request.Description.String, *resp.Description)
+	as.Equal(request.UUID.String(), resp.ID, "incorrect request UUID")
+	as.Equal(request.Title, resp.Title, "incorrect Title")
+	as.Equal(request.Description.String, *resp.Description, "incorrect Description")
 
 	wantDate := request.NeededBefore.Time.Format(domain.DateFormat)
 	as.Equal(wantDate, *resp.NeededBefore, "incorrect NeededBefore date")
@@ -125,12 +125,12 @@ func (as *ActionSuite) verifyRequestResponse(request models.Request, resp Reques
 
 	as.NoError(as.DB.Load(&request, "Destination", "Origin", "PhotoFile", "Files.File"))
 
-	as.Equal(request.Destination.Description, resp.Destination.Description)
+	as.Equal(request.Destination.Description, resp.Destination.Description, "incorrect Destination")
 	as.Equal(request.Destination.Country, resp.Destination.Country)
 	as.Equal(request.Destination.Latitude.Float64, resp.Destination.Lat)
 	as.Equal(request.Destination.Longitude.Float64, resp.Destination.Long)
 
-	as.Equal(request.Origin.Description, resp.Origin.Description)
+	as.Equal(request.Origin.Description, resp.Origin.Description, "incorrect Origin")
 	as.Equal(request.Origin.Country, resp.Origin.Country)
 	as.Equal(request.Origin.Latitude.Float64, resp.Origin.Lat)
 	as.Equal(request.Origin.Longitude.Float64, resp.Origin.Long)
@@ -160,10 +160,10 @@ func (as *ActionSuite) verifyRequestResponse(request models.Request, resp Reques
 
 	org, err := request.GetOrganization()
 	as.NoError(err)
-	as.Equal(org.UUID.String(), resp.Organization.ID)
+	as.Equal(org.UUID.String(), resp.Organization.ID, "incorrect Org UUID")
 
-	as.Equal(request.PhotoFile.UUID.String(), resp.Photo.ID)
-	as.Equal(request.PhotoFile.UUID.String(), resp.PhotoID)
+	as.Equal(request.PhotoFile.UUID.String(), resp.Photo.ID, "incorrect Photo UUID")
+	as.Equal(request.PhotoFile.UUID.String(), resp.PhotoID, "incorrect PhotoID UUID")
 	as.Equal(len(request.Files), len(resp.Files))
 	for i := range request.Files {
 		as.Equal(request.Files[i].File.UUID.String(), resp.Files[i].ID)

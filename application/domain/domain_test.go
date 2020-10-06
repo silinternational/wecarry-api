@@ -726,3 +726,23 @@ func (ts *TestSuite) TestStringIsVisible_IsValid() {
 		})
 	}
 }
+
+func (ts *TestSuite) TestUniquifyIntSlice() {
+	tests := []struct {
+		name string
+		ids  []int
+		want []int
+	}{
+		{name: "empty", ids: []int{}, want: []int{}},
+		{name: "single", ids: []int{3}, want: []int{3}},
+		{name: "all unique", ids: []int{3, 7, 11}, want: []int{3, 7, 11}},
+		{name: "all the same", ids: []int{3, 3, 3, 3}, want: []int{3}},
+		{name: "some duplicates", ids: []int{3, 4, 5, 4, 3, 3}, want: []int{3, 4, 5}},
+	}
+	for _, tt := range tests {
+		ts.T().Run(tt.name, func(t *testing.T) {
+			got := UniquifyIntSlice(tt.ids)
+			ts.Equal(tt.want, got, "incorrect int results")
+		})
+	}
+}

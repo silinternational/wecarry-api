@@ -844,3 +844,40 @@ func (ms *ModelSuite) TestMeeting_isOrganizer() {
 		})
 	}
 }
+
+func (ms *ModelSuite) TestMeetings_FindByIDs() {
+	t := ms.T()
+
+	f := createMeetingFixtures(ms.DB, 3)
+	meetings := f.Meetings
+
+	tests := []struct {
+		name string
+		ids  []int
+		want []string
+	}{
+		{
+			name: "good",
+			ids:  []int{meetings[0].ID, meetings[1].ID, meetings[0].ID},
+			want: []string{meetings[0].Name, meetings[1].Name},
+		},
+		{
+			name: "missing",
+			ids:  []int{99999},
+			want: []string{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var m Meetings
+			err := m.FindByIDs(tt.ids)
+			ms.NoError(err)
+
+			got := make([]string, len(m))
+			for i, mm := range m {
+				got[i] = mm.Name
+			}
+			ms.Equal(tt.want, got, "incorrect meeting names")
+		})
+	}
+}
