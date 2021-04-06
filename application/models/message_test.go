@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/gobuffalo/events"
-	"github.com/gobuffalo/validate"
+	"github.com/gobuffalo/validate/v3"
 
 	"github.com/silinternational/wecarry-api/domain"
 )

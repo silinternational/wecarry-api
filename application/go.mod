@@ -22,12 +22,9 @@ require (
 	github.com/gobuffalo/mw-paramlogger v0.0.0-20190224201358-0d45762ab655
 	github.com/gobuffalo/nulls v0.4.0
 	github.com/gobuffalo/packr/v2 v2.8.0
-	github.com/gobuffalo/plush/v4 v4.1.0 // indirect
-	github.com/gobuffalo/pop v4.13.1+incompatible
-	github.com/gobuffalo/pop/v5 v5.3.3 // indirect
-	github.com/gobuffalo/suite v2.8.1+incompatible
-	github.com/gobuffalo/validate v2.0.4+incompatible
-	github.com/gobuffalo/validate/v3 v3.3.0 // indirect
+	github.com/gobuffalo/pop/v5 v5.3.3
+	github.com/gobuffalo/suite/v3 v3.0.2
+	github.com/gobuffalo/validate/v3 v3.3.0
 	github.com/gofrs/uuid v4.0.0+incompatible
 	github.com/gorilla/handlers v1.5.1 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
