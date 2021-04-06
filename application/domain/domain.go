@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"io"
@@ -537,7 +538,7 @@ func IsOtherThanNoRows(err error) bool {
 		return false
 	}
 
-	if strings.Contains(err.Error(), "sql: no rows in result set") {
+	if strings.Contains(err.Error(), sql.ErrNoRows.Error()) {
 		return false
 	}
 
