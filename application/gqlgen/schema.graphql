@@ -195,9 +195,8 @@ type Mutation {
     updateUser(input: UpdateUserInput!): User!
 
     """
-    Create a Watch for a given location. Requests with a destination near the watch location will trigger a
-    notification to the watch creator. Other types of Watches (e.g. keyword search) may be created in future versions of
-    WeCarry. Any user may create a Watch.
+    Create a Watch for specified filter criteria. New requests matching all of the given criteria will
+    generate a new notification. Any user may create a Watch.
     """
     createWatch(input: CreateWatchInput!): Watch!
 
@@ -857,7 +856,7 @@ input UpdateUserPreferencesInput {
 }
 
 """
-A Watch for a given location. New requests matching all of the given criteria will generate a new
+A Watch for specified filter criteria. New requests matching all of the given criteria will generate a new
 notification.
 """
 type Watch {

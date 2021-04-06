@@ -1,4 +1,4 @@
-FROM gobuffalo/buffalo:v0.15.3
+FROM gobuffalo/buffalo:v0.16.21
 
 RUN chmod -R o=,g=rwX $GOPATH/pkg
 

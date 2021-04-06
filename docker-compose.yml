@@ -45,6 +45,8 @@ services:
       FACEBOOK_SECRET: test
       GOOGLE_KEY: test
       GOOGLE_SECRET: test
+      HISTCONTROL: ignoreboth:erasedups
+      LOG_LEVEL: fatal
     depends_on:
       - testdb
       - minio
@@ -70,7 +72,6 @@ services:
     image: adminer
     depends_on:
       - db
-    restart: always
     ports:
       - 8080:8080
 
