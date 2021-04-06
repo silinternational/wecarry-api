@@ -6,7 +6,7 @@ require (
 	github.com/99designs/gqlgen v0.10.1
 	github.com/aws/aws-sdk-go v1.38.13
 	github.com/beevik/etree v1.1.0 // indirect
-	github.com/caddyserver/certmagic v0.11.0
+	github.com/caddyserver/certmagic v0.11.2
 	github.com/cockroachdb/cockroach-go v2.0.1+incompatible // indirect
 	github.com/fatih/color v1.10.0 // indirect
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
