@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"io"
@@ -21,8 +22,8 @@ import (
 	"github.com/gobuffalo/envy"
 	mwi18n "github.com/gobuffalo/mw-i18n"
 	"github.com/gobuffalo/packr/v2"
-	"github.com/gobuffalo/validate"
-	"github.com/gobuffalo/validate/validators"
+	"github.com/gobuffalo/validate/v3"
+	"github.com/gobuffalo/validate/v3/validators"
 	uuid2 "github.com/gofrs/uuid"
 	"github.com/rollbar/rollbar-go"
 )
@@ -537,7 +538,7 @@ func IsOtherThanNoRows(err error) bool {
 		return false
 	}
 
-	if strings.Contains(err.Error(), "sql: no rows in result set") {
+	if strings.Contains(err.Error(), sql.ErrNoRows.Error()) {
 		return false
 	}
 

@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/gobuffalo/events"
-	"github.com/gobuffalo/validate"
+	"github.com/gobuffalo/validate/v3"
 
 	"github.com/silinternational/wecarry-api/domain"
 )
@@ -263,7 +263,7 @@ func (ms *ModelSuite) TestMessage_FindByUUID() {
 		},
 		{name: "empty ID", uuid: "", wantErr: "error: message uuid must not be blank"},
 		{name: "wrong id", uuid: domain.GetUUID().String(), wantErr: "sql: no rows in result set"},
-		{name: "invalid UUID", uuid: "40FE092C-8FF1-45BE-BCD4-65AD66C1D0DX", wantErr: "pq: invalid input syntax"},
+		{name: "invalid UUID", uuid: "40FE092C-8FF1-45BE-BCD4-65AD66C1D0DX", wantErr: "invalid input syntax"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -301,7 +301,7 @@ func (ms *ModelSuite) TestMessage_FindByUserAndUUID() {
 	}{
 		{name: "empty ID", uuid: &emptyString, wantErr: "error: message uuid must not be blank"},
 		{name: "wrong id", uuid: &wrongUUID, wantErr: "sql: no rows in result set"},
-		{name: "invalid UUID", uuid: &badUUID, wantErr: "pq: invalid input syntax"},
+		{name: "invalid UUID", uuid: &badUUID, wantErr: "invalid input syntax"},
 		{name: "on thread, user", user: f.Users[1], message: f.Messages[0]},
 		{name: "on thread, admin", user: f.Users[2], message: f.Messages[0]},
 		{name: "on thread, salesAdmin", user: f.Users[3], message: f.Messages[0]},

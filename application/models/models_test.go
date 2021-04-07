@@ -6,7 +6,7 @@ import (
 
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/nulls"
-	"github.com/gobuffalo/suite"
+	"github.com/gobuffalo/suite/v3"
 	"github.com/gofrs/uuid"
 
 	"github.com/silinternational/wecarry-api/domain"

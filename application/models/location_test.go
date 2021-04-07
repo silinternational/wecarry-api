@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/gobuffalo/nulls"
-	"github.com/gobuffalo/validate"
+	"github.com/gobuffalo/validate/v3"
 )
 
 func (ms *ModelSuite) TestLocation_Validate() {

@@ -2,11 +2,12 @@ package models
 
 import (
 	"errors"
+	"strings"
 	"time"
 
-	"github.com/gobuffalo/pop"
-	"github.com/gobuffalo/validate"
-	"github.com/gobuffalo/validate/validators"
+	"github.com/gobuffalo/pop/v5"
+	"github.com/gobuffalo/validate/v3"
+	"github.com/gobuffalo/validate/v3/validators"
 	"github.com/gofrs/uuid"
 
 	"github.com/silinternational/wecarry-api/domain"
@@ -42,8 +43,7 @@ func (m *MeetingInvite) Create() error {
 	invite.Secret = domain.GetUUID()
 
 	err := create(&invite)
-	if err != nil && err.Error() ==
-		`pq: duplicate key value violates unique constraint "meeting_invites_meeting_id_email_idx"` {
+	if err != nil && strings.Contains(err.Error(), `duplicate key value violates unique constraint`) {
 		err = nil
 	}
 	if err == nil {
