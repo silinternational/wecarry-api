@@ -2,7 +2,7 @@ package domain
 
 import (
 	"errors"
-	"github.com/gobuffalo/validate"
+	"github.com/gobuffalo/validate/v3"
 	"github.com/stretchr/testify/suite"
 	"net/http"
 	"testing"

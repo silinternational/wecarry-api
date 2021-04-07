@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/gobuffalo/events"
-	"github.com/gobuffalo/suite"
+	"github.com/gobuffalo/suite/v3"
 
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/internal/test"

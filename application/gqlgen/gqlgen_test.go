@@ -3,7 +3,7 @@ package gqlgen
 import (
 	"testing"
 
-	"github.com/gobuffalo/suite"
+	"github.com/gobuffalo/suite/v3"
 )
 
 // GqlgenSuite establishes a test suite for gqlgen tests

@@ -7,7 +7,7 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/gobuffalo/suite"
+	"github.com/gobuffalo/suite/v3"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 	"github.com/silinternational/wecarry-api/notifications"
