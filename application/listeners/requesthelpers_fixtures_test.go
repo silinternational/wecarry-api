@@ -58,7 +58,6 @@ func CreateFixtures_RequestStatusUpdatedNotifications(ms *ModelSuite, t *testing
 }
 
 func CreateFixtures_sendNotificationRequestFromStatus(ms *ModelSuite, t *testing.T) orgUserRequestFixtures {
-
 	unique := domain.GetUUID().String()
 
 	// Load Organization test fixtures

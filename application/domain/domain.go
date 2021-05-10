@@ -116,9 +116,11 @@ type BuffaloContextType string
 // BuffaloContext is the key for the call to context.WithValue in gqlHandler
 const BuffaloContext = BuffaloContextType("BuffaloContext")
 
-var Logger log.Logger
-var ErrLogger ErrLogProxy
-var AuthCallbackURL string
+var (
+	Logger          log.Logger
+	ErrLogger       ErrLogProxy
+	AuthCallbackURL string
+)
 
 // Env holds environment variable values loaded by init()
 var Env struct {
@@ -508,7 +510,6 @@ func IsWeightUnitAllowed(unit string) bool {
 
 func IsTimeZoneAllowed(name string) bool {
 	_, err := time.LoadLocation(name)
-
 	if err != nil {
 		Logger.Printf("error evaluating timezone %s ... %v", name, err)
 		return false
@@ -572,7 +573,6 @@ func GetTranslatedSubject(language, translationID string, translationData map[st
 	translationData["AppName"] = Env.AppName
 
 	subj, err := TranslateWithLang(language, translationID, translationData)
-
 	if err != nil {
 		ErrLogger.Printf("error translating '%s' notification subject, %s", translationID, err)
 	}
@@ -612,7 +612,7 @@ func RemoveUnwantedChars(str, allowed string) string {
 }
 
 func isSafeRune(r rune) bool {
-	var safeRanges = &unicode.RangeTable{
+	safeRanges := &unicode.RangeTable{
 		R16: []unicode.Range16{
 			{Lo: 0x0030, Hi: 0x0039, Stride: 1}, // 0-9
 			{Lo: 0x0041, Hi: 0x005a, Stride: 1}, // upper-case Latin
@@ -646,7 +646,7 @@ type StringIsVisible struct {
 
 // IsValid adds an error if the field is not empty and not a url.
 func (v *StringIsVisible) IsValid(errors *validate.Errors) {
-	var asciiSpace = map[int32]bool{'\t': true, '\n': true, '\v': true, '\f': true, '\r': true, ' ': true}
+	asciiSpace := map[int32]bool{'\t': true, '\n': true, '\v': true, '\f': true, '\r': true, ' ': true}
 	for _, c := range v.Field {
 		if !asciiSpace[c] && unicode.IsGraphic(c) && c != 0xfe0f { // VS16 (0xfe0f) is "Graphic" but invisible
 			return

@@ -25,9 +25,9 @@ const (
 	authURL  string = "https://www.linkedin.com/oauth/v2/authorization"
 	tokenURL string = "https://www.linkedin.com/oauth/v2/accessToken"
 
-	//userEndpoint requires scope "r_liteprofile"
+	// userEndpoint requires scope "r_liteprofile"
 	userEndpoint string = "//api.linkedin.com/v2/me?projection=(id,firstName,lastName,profilePicture(displayImage~:playableStreams))"
-	//emailEndpoint requires scope "r_emailaddress"
+	// emailEndpoint requires scope "r_emailaddress"
 	emailEndpoint string = "//api.linkedin.com/v2/emailAddress?q=members&projection=(elements*(handle~))"
 )
 
@@ -84,7 +84,6 @@ func (p *Provider) Debug(debug bool) {}
 
 // AuthRequest calls BeginAuth and returns the URL for the authentication end-point
 func (p *Provider) AuthRequest(c buffalo.Context) (string, error) {
-
 	req := c.Request()
 
 	sess, err := p.BeginAuth(auth.SetState(req))
@@ -385,12 +384,12 @@ func newConfig(provider *Provider, scopes []string) *oauth2.Config {
 	return c
 }
 
-//RefreshToken refresh token is not provided by linkedin
+// RefreshToken refresh token is not provided by linkedin
 func (p *Provider) RefreshToken(refreshToken string) (*oauth2.Token, error) {
 	return nil, errors.New("Refresh token is not provided by linkedin")
 }
 
-//RefreshTokenAvailable refresh token is not provided by linkedin
+// RefreshTokenAvailable refresh token is not provided by linkedin
 func (p *Provider) RefreshTokenAvailable() bool {
 	return false
 }

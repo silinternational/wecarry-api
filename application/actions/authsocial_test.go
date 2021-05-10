@@ -39,12 +39,18 @@ func (ts *TestSuite) Test_addConfig() {
 		secret   string
 		want     map[string]SocialAuthConfig
 	}{
-		{name: "Facebook", authType: AuthTypeFacebook, key: fbKey, secret: fbSecret,
-			want: map[string]SocialAuthConfig{AuthTypeFacebook: fbConfig}},
-		{name: "Twitter", authType: AuthTypeTwitter, key: twKey, secret: twSecret,
-			want: map[string]SocialAuthConfig{AuthTypeTwitter: twConfig}},
-		{name: "Twitter", authType: AuthTypeLinkedIn, key: "", secret: twSecret,
-			want: map[string]SocialAuthConfig{}},
+		{
+			name: "Facebook", authType: AuthTypeFacebook, key: fbKey, secret: fbSecret,
+			want: map[string]SocialAuthConfig{AuthTypeFacebook: fbConfig},
+		},
+		{
+			name: "Twitter", authType: AuthTypeTwitter, key: twKey, secret: twSecret,
+			want: map[string]SocialAuthConfig{AuthTypeTwitter: twConfig},
+		},
+		{
+			name: "Twitter", authType: AuthTypeLinkedIn, key: "", secret: twSecret,
+			want: map[string]SocialAuthConfig{},
+		},
 	}
 
 	for _, tc := range tests {
@@ -134,7 +140,6 @@ func (ts *TestSuite) Test_getSocialAuthOptions() {
 }
 
 func (as *ActionSuite) Test_newOrglessAuthUser() {
-
 	uf := test.CreateUserFixtures(as.DB, 2)
 	user := uf.Users[0]
 

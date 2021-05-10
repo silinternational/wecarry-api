@@ -54,7 +54,6 @@ func fixturesForCreateOrganization(as *ActionSuite) OrganizationFixtures {
 }
 
 func fixturesForOrganizationCreateRemoveUpdate(as *ActionSuite, t *testing.T) OrganizationFixtures {
-
 	// Array indexes for convenience in references
 	const (
 		SalesAdmin    = 0

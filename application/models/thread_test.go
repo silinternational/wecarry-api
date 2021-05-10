@@ -334,7 +334,6 @@ func (ms *ModelSuite) TestThread_ensureParticipants() {
 			if len(test.want) == 2 {
 				ms.Contains(ids, users[1].UUID, "new thread doesn't include provided user as participant")
 			}
-
 		})
 	}
 }

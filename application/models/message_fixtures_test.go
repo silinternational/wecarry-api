@@ -50,7 +50,6 @@ func Fixtures_Message_GetSender(ms *ModelSuite, t *testing.T) MessageFixtures {
 		Messages: messages,
 		Threads:  threads,
 	}
-
 }
 
 // Request 0: Org A (no threads)

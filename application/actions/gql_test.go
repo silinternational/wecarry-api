@@ -97,7 +97,6 @@ func makeCall(as *ActionSuite, httpMethod, route, accessToken string, body io.Re
 }
 
 func gqlMeetingResp(as *ActionSuite, accessToken string, httpMethod string) domain.AppError {
-
 	query := `{ meetings {id name}}`
 
 	body := strings.NewReader(fmt.Sprintf(`{"query":"%s"}`, jsonEscapeString(query)))

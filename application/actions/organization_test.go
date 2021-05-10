@@ -264,7 +264,7 @@ func (as *ActionSuite) Test_OrganizationViewAndList() {
 	test.MustCreate(as.DB, &org2)
 
 	userFixtures := test.CreateUserFixtures(as.DB, 4)
-	for i, _ := range userFixtures.Users {
+	for i := range userFixtures.Users {
 		as.NoError(as.DB.Load(&userFixtures.Users[i], "UserOrganizations"))
 	}
 
@@ -410,7 +410,6 @@ func (as *ActionSuite) Test_OrganizationViewAndList() {
 
 		as.Equal(tc.Expect, tc.Response, tc.Name)
 	}
-
 }
 
 func (as *ActionSuite) Test_UpdateOrganization() {

@@ -312,12 +312,18 @@ func createFixtures_Requests_FindByUser_SearchText(ms *ModelSuite) RequestFixtur
 
 	requests := Requests{
 		{CreatedByID: users[0].ID, OrganizationID: orgs[0].ID, Title: "With Match"},
-		{CreatedByID: users[0].ID, OrganizationID: orgs[1].ID, Title: "MXtch In Description",
-			Description: nulls.NewString("This has the lower case match in it.")},
-		{CreatedByID: users[0].ID, OrganizationID: orgs[0].ID, Status: RequestStatusCompleted,
-			Title: "With Match But Completed"},
-		{CreatedByID: users[0].ID, OrganizationID: orgs[0].ID, Status: RequestStatusRemoved,
-			Title: "With Match But Removed"},
+		{
+			CreatedByID: users[0].ID, OrganizationID: orgs[1].ID, Title: "MXtch In Description",
+			Description: nulls.NewString("This has the lower case match in it."),
+		},
+		{
+			CreatedByID: users[0].ID, OrganizationID: orgs[0].ID, Status: RequestStatusCompleted,
+			Title: "With Match But Completed",
+		},
+		{
+			CreatedByID: users[0].ID, OrganizationID: orgs[0].ID, Status: RequestStatusRemoved,
+			Title: "With Match But Removed",
+		},
 		{CreatedByID: users[1].ID, OrganizationID: orgs[1].ID, Title: "User1 No MXtch"},
 		{CreatedByID: users[1].ID, OrganizationID: orgs[1].ID, Title: "User1 With MATCH"},
 	}

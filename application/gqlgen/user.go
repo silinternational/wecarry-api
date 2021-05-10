@@ -113,7 +113,6 @@ func (r *userResolver) UnreadMessageCount(ctx context.Context, obj *models.User)
 		return 0, nil
 	}
 	mCounts, err := obj.UnreadMessageCount()
-
 	if err != nil {
 		return 0, domain.ReportError(ctx, err, "GetUserUnreadMessageCount")
 	}
@@ -231,7 +230,6 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 
 	if input.Preferences != nil {
 		standardPrefs, err := convertUserPreferencesToStandardPreferences(input.Preferences)
-
 		if err != nil {
 			return &models.User{}, domain.ReportError(ctx, err, "UpdateUser.PreferencesInput")
 		}

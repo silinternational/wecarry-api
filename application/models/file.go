@@ -173,7 +173,6 @@ func changeFileExtension(name *string, contentType string) {
 		return
 	}
 	*name = strings.TrimSuffix(*name, filepath.Ext(*name)) + ext[0]
-
 }
 
 // FindByUUID locates an file by UUID and returns the result, including a valid URL.

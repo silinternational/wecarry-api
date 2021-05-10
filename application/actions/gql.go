@@ -2,9 +2,10 @@ package actions
 
 import (
 	"context"
+	"io/ioutil"
+
 	"github.com/99designs/gqlgen/handler"
 	"github.com/gobuffalo/buffalo"
-	"io/ioutil"
 
 	"github.com/silinternational/wecarry-api/dataloader"
 	"github.com/silinternational/wecarry-api/domain"

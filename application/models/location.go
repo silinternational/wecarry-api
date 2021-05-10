@@ -102,9 +102,9 @@ func (l *Location) DistanceKm(loc2 Location) float64 {
 
 	// Haversine formula implementation derived from Stack Overflow answer:
 	// https://stackoverflow.com/a/21623206
-	var p = math.Pi / 180
+	p := math.Pi / 180
 
-	var a = 0.5 - math.Cos((lat2-lat1)*p)/2 +
+	a := 0.5 - math.Cos((lat2-lat1)*p)/2 +
 		math.Cos(lat1*p)*math.Cos(lat2*p)*
 			(1-math.Cos((lon2-lon1)*p))/2
 

@@ -75,7 +75,6 @@ XZ9jcIL+Gwpfi/QLvhJrmMGJ
 -----END PRIVATE KEY-----`
 
 func TestNew(t *testing.T) {
-
 	config := Config{
 		IDPEntityID:                 "",
 		SPEntityID:                  "",

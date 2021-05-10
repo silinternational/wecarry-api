@@ -16,9 +16,11 @@ import (
 	"github.com/silinternational/wecarry-api/domain"
 )
 
-const TwitterKey = "TestTwitterKey"
-const TwitterSecret = "TestTwitterSecret"
-const EnvAuthCallbackURL = "wecarry.local/auth/callback/"
+const (
+	TwitterKey         = "TestTwitterKey"
+	TwitterSecret      = "TestTwitterSecret"
+	EnvAuthCallbackURL = "wecarry.local/auth/callback/"
+)
 
 func Test_New(t *testing.T) {
 	t.Parallel()
@@ -144,7 +146,6 @@ func mockTwitter(f func(*httptest.Server)) {
 }
 
 func TestGetFirstLastFromName(t *testing.T) {
-
 	type args struct {
 		s []string
 	}

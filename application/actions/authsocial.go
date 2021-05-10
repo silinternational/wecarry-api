@@ -112,7 +112,7 @@ func getSocialAuthProvider(authType string) (auth.Provider, error) {
 func getSocialAuthOptions(authConfigs map[string]SocialAuthConfig) []authOption {
 	// sort the provider types for ease of testing (avoid map's random order)
 	pTypes := []string{}
-	for pt, _ := range authConfigs {
+	for pt := range authConfigs {
 		pTypes = append(pTypes, pt)
 	}
 
@@ -171,7 +171,6 @@ func finishAuthRequestForSocialUser(c buffalo.Context, authEmail string) error {
 
 	// Reply with a 200 and leave it to the UI to do the redirect
 	return c.Render(http.StatusOK, render.JSON(authOptions))
-
 }
 
 // Just get the list of auth/select/... URLS

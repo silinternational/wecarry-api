@@ -222,7 +222,8 @@ func (ms *ModelSuite) TestUserPreference_getPreferencesFieldsAndValidators() {
 	gotValues := [3]string{
 		fAndVs[domain.UserPreferenceKeyLanguage].fieldValue,
 		fAndVs[domain.UserPreferenceKeyTimeZone].fieldValue,
-		fAndVs[domain.UserPreferenceKeyWeightUnit].fieldValue}
+		fAndVs[domain.UserPreferenceKeyWeightUnit].fieldValue,
+	}
 	ms.Equal(wantValues, gotValues, "incorrect field values")
 
 	wantValrs := [3]string{

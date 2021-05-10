@@ -141,7 +141,6 @@ func (o *Organization) GetAuthProvider(authEmail string) (auth.Provider, error) 
 }
 
 func (o *Organization) FindByUUID(uuid string) error {
-
 	if uuid == "" {
 		return errors.New("error: org uuid must not be blank")
 	}

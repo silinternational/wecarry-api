@@ -76,6 +76,7 @@ const allMeetingInviteFields = "meeting {id} inviter {id} email avatarURL"
 type meetingParticipantResponse struct {
 	MeetingParticipant meetingParticipant `json:"MeetingParticipant"`
 }
+
 type meetingParticipantsResponse struct {
 	MeetingParticipants []meetingParticipant `json:"MeetingParticipants"`
 }

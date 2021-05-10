@@ -37,7 +37,7 @@ const (
 	RequestActionAccept       = "accept"
 	RequestActionDeliver      = "deliver"
 	RequestActionReceive      = "receive"
-	//RequestActionComplete     = "complete"  //  For now Receiving a Request makes it Completed
+	// RequestActionComplete     = "complete"  //  For now Receiving a Request makes it Completed
 	RequestActionRemove = "remove"
 )
 
@@ -162,7 +162,7 @@ func statusActions() map[RequestStatus]string {
 		RequestStatusOpen:      RequestActionReopen,
 		RequestStatusAccepted:  RequestActionAccept,
 		RequestStatusDelivered: RequestActionDeliver,
-		//RequestStatusReceived:  RequestActionReceive,  // One day we may want this back in
+		// RequestStatusReceived:  RequestActionReceive,  // One day we may want this back in
 		RequestStatusCompleted: RequestActionReceive,
 		RequestStatusRemoved:   RequestActionRemove,
 	}
@@ -502,7 +502,6 @@ func (r *Request) manageStatusTransition() error {
 
 // Make sure there is no provider on an Open Request
 func (r *Request) AfterUpdate(tx *pop.Connection) error {
-
 	if err := r.manageStatusTransition(); err != nil {
 		return err
 	}
@@ -824,8 +823,10 @@ func (p *Requests) FindByUser(ctx context.Context, user User, filter RequestFilt
 	)
 	AND status not in (?, ?)`
 
-	args := []interface{}{user.ID, RequestVisibilityAll, RequestVisibilityTrusted, RequestStatusRemoved,
-		RequestStatusCompleted}
+	args := []interface{}{
+		user.ID, RequestVisibilityAll, RequestVisibilityTrusted, RequestStatusRemoved,
+		RequestStatusCompleted,
+	}
 
 	if filter.SearchText != nil {
 		selectClause = selectClause + " AND (LOWER(title) LIKE ? or LOWER(description) LIKE ?)"

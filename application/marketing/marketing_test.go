@@ -102,7 +102,6 @@ func (ts *TestSuite) Test_callApi() {
 			tt.apiRequest.Headers = map[string]string{}
 			resp.Headers = map[string]string{}
 			ts.Equal(resp, tt.apiRequest, "api response does not match expected")
-
 		})
 	}
 }

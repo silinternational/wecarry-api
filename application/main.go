@@ -25,7 +25,6 @@ var GitCommitHash string
 // call `app.Serve()`, unless you don't want to start your
 // application that is. :)
 func main() {
-
 	// init rollbar
 	rollbar.SetToken(domain.Env.RollbarToken)
 	rollbar.SetEnvironment(domain.Env.GoEnv)
@@ -47,7 +46,6 @@ func main() {
 			os.Exit(0)
 		}
 	})
-
 }
 
 func getServer() (servers.Server, error) {

@@ -235,7 +235,6 @@ func createFixturesForTestUserSave(ms *ModelSuite) UserRequestFixtures {
 }
 
 func CreateUserFixturesForNicknames(ms *ModelSuite, t *testing.T, prefix string) User {
-
 	// Load User test fixtures
 	user := User{
 		Email:     fmt.Sprintf("user1-%s@example.com", t.Name()),

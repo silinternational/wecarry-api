@@ -175,7 +175,6 @@ func (p *Provider) Debug(debug bool) {}
 
 // AuthRequest calls BeginAuth and returns the URL for the authentication end-point
 func (p *Provider) AuthRequest(c buffalo.Context) (string, error) {
-
 	req := c.Request()
 
 	sess, err := p.BeginAuth(auth.SetState(req))
@@ -323,12 +322,12 @@ func newConfig(provider *Provider, scopes []string) *oauth2.Config {
 	return c
 }
 
-//RefreshToken refresh token is not provided by facebook
+// RefreshToken refresh token is not provided by facebook
 func (p *Provider) RefreshToken(refreshToken string) (*oauth2.Token, error) {
 	return nil, errors.New("Refresh token is not provided by facebook")
 }
 
-//RefreshTokenAvailable refresh token is not provided by facebook
+// RefreshTokenAvailable refresh token is not provided by facebook
 func (p *Provider) RefreshTokenAvailable() bool {
 	return false
 }

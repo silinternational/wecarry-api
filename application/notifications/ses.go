@@ -10,8 +10,7 @@ import (
 )
 
 // SES sends email using Amazon Simple Email Service (SES)
-type SES struct {
-}
+type SES struct{}
 
 // Send a message
 func (s *SES) Send(msg Message) error {
