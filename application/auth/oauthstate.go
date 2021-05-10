@@ -20,10 +20,8 @@ import (
 // store can/should be set by applications using an oauth2 provider like google.
 // The default is a cookie store.
 // Borrowed from gothic
-var (
-	store        sessions.Store
-	defaultStore sessions.Store
-)
+var store sessions.Store
+var defaultStore sessions.Store
 
 var keySet = false
 

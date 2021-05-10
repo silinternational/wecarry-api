@@ -69,6 +69,7 @@ func New(jsonConfig json.RawMessage) (*Provider, error) {
 }
 
 func (p *Provider) initSAMLServiceProvider() error {
+
 	idpCertStore, err := getCertStore(p.Config.IDPPublicCert)
 	if err != nil {
 		return err
@@ -237,6 +238,7 @@ func getRsaPrivateKey(privateKey, publicCert string) (*rsa.PrivateKey, error) {
 	rsaKey.PublicKey = *pubKey
 
 	return rsaKey, nil
+
 }
 
 func pemToBase64(pemStr string) (string, error) {
