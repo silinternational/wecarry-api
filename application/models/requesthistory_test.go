@@ -2,10 +2,11 @@ package models
 
 import (
 	"bytes"
-	"github.com/gobuffalo/nulls"
-	"github.com/silinternational/wecarry-api/domain"
 	"os"
 	"testing"
+
+	"github.com/gobuffalo/nulls"
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 func (ms *ModelSuite) TestRequestHistory_Load() {
@@ -31,7 +32,6 @@ func (ms *ModelSuite) TestRequestHistory_Load() {
 			ms.NoError(err, "did not expect any error")
 
 			ms.Equal(test.wantEmail, test.requestHistory.Receiver.Email, "incorrect Receiver email")
-
 		})
 	}
 }
@@ -68,7 +68,6 @@ func (ms *ModelSuite) TestRequestHistory_pop() {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-
 			var buf bytes.Buffer
 			domain.ErrLogger.SetOutput(&buf)
 

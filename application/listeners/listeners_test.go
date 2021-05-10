@@ -59,7 +59,6 @@ func (ms *ModelSuite) TestRegisterListeners() {
 
 	gotCount := len(newLs)
 	ms.Equal(wantCount, gotCount, "Wrong number of listeners registered")
-
 }
 
 // Go through all the listeners that should normally get registered and
@@ -118,7 +117,6 @@ func (ms *ModelSuite) TestUserCreated() {
 
 	emailCount := notifications.TestEmailService.GetNumberOfMessagesSent()
 	ms.Equal(1, emailCount, "wrong email count")
-
 }
 
 func (ms *ModelSuite) TestSendNewMessageNotification() {

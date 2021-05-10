@@ -190,8 +190,10 @@ func (ms *ModelSuite) TestMeeting_FindOnDate() {
 		testNow time.Time
 	}{
 		{name: "one for actual now", testNow: time.Now(), want: []string{meetings[2].Name}},
-		{name: "two for now in near future", testNow: nearFuture,
-			want: []string{meetings[1].Name, meetings[2].Name}},
+		{
+			name: "two for now in near future", testNow: nearFuture,
+			want: []string{meetings[1].Name, meetings[2].Name},
+		},
 		{name: "empty for now in far future", testNow: farFuture, want: []string{}},
 	}
 	for _, test := range tests {

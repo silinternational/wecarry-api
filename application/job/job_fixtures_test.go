@@ -21,6 +21,7 @@ func createFixture(js *JobSuite, f interface{}) {
 		js.T().FailNow()
 	}
 }
+
 func CreateFixtures_TestNewThreadMessageHandler(js *JobSuite) MessageFixtures {
 	uf := test.CreateUserFixtures(js.DB, 7)
 	org := uf.Organization

@@ -7,7 +7,6 @@ import (
 )
 
 func (as *ActionSuite) Test_AddMeAsPotentialProvider() {
-
 	f := test.CreatePotentialProvidersFixtures(as.DB)
 	requests := f.Requests
 
@@ -55,11 +54,9 @@ func (as *ActionSuite) Test_AddMeAsPotentialProvider() {
 	err = as.testGqlQuery(query, f.Users[4].Nickname, &resp)
 	as.Error(err, "expected an error (unauthorized) but didn't get one")
 	as.Equal(want, resp.Request.PotentialProviders, "incorrect potential providers")
-
 }
 
 func (as *ActionSuite) Test_RemoveMeAsPotentialProvider() {
-
 	f := test.CreatePotentialProvidersFixtures(as.DB)
 	requests := f.Requests
 
@@ -80,7 +77,6 @@ func (as *ActionSuite) Test_RemoveMeAsPotentialProvider() {
 }
 
 func (as *ActionSuite) Test_RejectPotentialProvider() {
-
 	f := test.CreatePotentialProvidersFixtures(as.DB)
 	requests := f.Requests
 

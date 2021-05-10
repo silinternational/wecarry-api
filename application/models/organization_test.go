@@ -318,7 +318,6 @@ func (ms *ModelSuite) TestOrganization_Save() {
 	if newOrg.ID == 0 {
 		t.Error("new organization not updated after save")
 	}
-
 }
 
 func (ms *ModelSuite) TestOrganization_All() {
@@ -335,7 +334,6 @@ func (ms *ModelSuite) TestOrganization_All() {
 	if len(allOrgs) != len(orgFixtures) {
 		t.Errorf("Did not get expected number of orgs, got %v, wanted %v", len(allOrgs), len(orgFixtures))
 	}
-
 }
 
 func (ms *ModelSuite) TestOrganization_GetDomains() {
@@ -432,7 +430,6 @@ func (ms *ModelSuite) TestOrganization_AllWhereUserIsOrgAdmin() {
 			ms.Equal(test.wantOrgIDs, gotNames, "incorrect list of org Names")
 		})
 	}
-
 }
 
 func (ms *ModelSuite) TestOrganization_LogoURL() {
@@ -590,7 +587,6 @@ func (ms *ModelSuite) TestOrganization_TrustedOrganizations() {
 }
 
 func (ms *ModelSuite) TestOrganization_GetAuthProvider() {
-
 	adTenantID := "TestADTenant"
 	adSecret := "TestADKey"
 	adApplicationID := "testADSecret"

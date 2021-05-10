@@ -29,8 +29,9 @@ func (ms *ModelSuite) TestGetRequestUsers() {
 		wantProvider  requestUser
 		wantErr       bool
 	}{
-		{name: "Request by User0 with User1 as Provider",
-			id: requests[0].ID,
+		{
+			name: "Request by User0 with User1 as Provider",
+			id:   requests[0].ID,
 			wantRequester: requestUser{
 				Language: domain.UserPreferenceLanguageEnglish,
 				Nickname: users[0].Nickname,
@@ -42,8 +43,9 @@ func (ms *ModelSuite) TestGetRequestUsers() {
 				Email:    users[1].Email,
 			},
 		},
-		{name: "Request by User0 with no Provider",
-			id: requests[1].ID,
+		{
+			name: "Request by User0 with no Provider",
+			id:   requests[1].ID,
 			wantRequester: requestUser{
 				Language: domain.UserPreferenceLanguageEnglish,
 				Nickname: users[0].Nickname,
@@ -53,7 +55,6 @@ func (ms *ModelSuite) TestGetRequestUsers() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-
 			var request models.Request
 			err := request.FindByID(test.id)
 			ms.NoError(err, "error finding request for test")
@@ -105,7 +106,6 @@ func (ms *ModelSuite) TestRequestStatusUpdatedNotifications() {
 	got = buf.String()
 	want := "unexpected status transition 'OPEN-DELIVERED'"
 	test.AssertStringContains(t, got, want, 45)
-
 }
 
 func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
@@ -121,7 +121,7 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 		domain.ErrLogger.SetOutput(os.Stderr)
 	}()
 
-	var getT = notifications.GetEmailTemplate
+	getT := notifications.GetEmailTemplate
 
 	tests := []struct {
 		name             string
@@ -135,7 +135,8 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 		wantEmailNumber  int
 		wantErrLog       string
 	}{
-		{name: "Good - Accepted to Open",
+		{
+			name:    "Good - Accepted to Open",
 			request: requests[0],
 			eventData: models.RequestStatusEventData{
 				OldStatus:     models.RequestStatusAccepted,
@@ -149,7 +150,8 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 			wantToEmail:      requests[0].Provider.Email,
 			wantBodyContains: "isn't ready after all to have you fulfill",
 		},
-		{name: "Good - Accepted to Completed",
+		{
+			name:             "Good - Accepted to Completed",
 			request:          requests[0],
 			template:         domain.MessageTemplateRequestFromAcceptedToCompleted,
 			sendFunction:     sendNotificationRequestFromAcceptedOrDeliveredToCompleted,
@@ -157,14 +159,16 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 			wantToEmail:      requests[0].Provider.Email,
 			wantBodyContains: "reported that they have received",
 		},
-		{name: "Bad - Accepted to Completed", // No Provider
+		{
+			name:         "Bad - Accepted to Completed", // No Provider
 			request:      requests[1],
 			template:     domain.MessageTemplateRequestFromAcceptedToCompleted,
 			sendFunction: sendNotificationRequestFromAcceptedOrDeliveredToCompleted,
 			wantErrLog: fmt.Sprintf("error preparing '%s' notification - no provider\n",
 				domain.MessageTemplateRequestReceived),
 		},
-		{name: "Good - Accepted to Delivered",
+		{
+			name:             "Good - Accepted to Delivered",
 			request:          requests[0],
 			template:         domain.MessageTemplateRequestDelivered,
 			sendFunction:     sendNotificationRequestFromAcceptedToDelivered,
@@ -172,14 +176,16 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 			wantToEmail:      requests[0].CreatedBy.Email,
 			wantBodyContains: "reported that they have delivered your request",
 		},
-		{name: "Bad - Accepted to Delivered", // No Provider
+		{
+			name:         "Bad - Accepted to Delivered", // No Provider
 			request:      requests[1],
 			template:     domain.MessageTemplateRequestFromAcceptedToDelivered,
 			sendFunction: sendNotificationRequestFromAcceptedToDelivered,
 			wantErrLog: fmt.Sprintf("error preparing '%s' notification - no provider\n",
 				getT(domain.MessageTemplateRequestFromAcceptedToDelivered)),
 		},
-		{name: "Good - Accepted to Open",
+		{
+			name:    "Good - Accepted to Open",
 			request: requests[0],
 			eventData: models.RequestStatusEventData{
 				OldStatus:     models.RequestStatusAccepted,
@@ -193,7 +199,8 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 			wantToEmail:      requests[0].Provider.Email,
 			wantBodyContains: "isn't ready after all to have you fulfill",
 		},
-		{name: "Good - Accepted to Removed",
+		{
+			name:             "Good - Accepted to Removed",
 			request:          requests[0],
 			template:         domain.MessageTemplateRequestFromAcceptedToRemoved,
 			sendFunction:     sendNotificationRequestFromAcceptedToRemoved,
@@ -201,14 +208,16 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 			wantToEmail:      requests[0].Provider.Email,
 			wantBodyContains: "has removed this request",
 		},
-		{name: "Bad - Accepted to Removed", // No Provider
+		{
+			name:         "Bad - Accepted to Removed", // No Provider
 			request:      requests[1],
 			template:     domain.MessageTemplateRequestFromAcceptedToRemoved,
 			sendFunction: sendNotificationRequestFromAcceptedToRemoved,
 			wantErrLog: fmt.Sprintf("error preparing '%s' notification - no provider\n",
 				domain.MessageTemplateRequestFromAcceptedToRemoved),
 		},
-		{name: "Good - Completed to Accepted",
+		{
+			name:             "Good - Completed to Accepted",
 			request:          requests[0],
 			template:         domain.MessageTemplateRequestFromCompletedToAccepted,
 			sendFunction:     sendNotificationRequestFromCompletedToAcceptedOrDelivered,
@@ -216,14 +225,16 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 			wantToEmail:      requests[0].Provider.Email,
 			wantBodyContains: "but now have corrected that",
 		},
-		{name: "Bad - Completed to Accepted", // No Provider
+		{
+			name:         "Bad - Completed to Accepted", // No Provider
 			request:      requests[1],
 			template:     domain.MessageTemplateRequestFromCompletedToAccepted,
 			sendFunction: sendNotificationRequestFromCompletedToAcceptedOrDelivered,
 			wantErrLog: fmt.Sprintf("error preparing '%s' notification - no provider\n",
 				domain.MessageTemplateRequestNotReceivedAfterAll),
 		},
-		{name: "Good - Delivered to Accepted",
+		{
+			name:             "Good - Delivered to Accepted",
 			request:          requests[0],
 			template:         domain.MessageTemplateRequestFromDeliveredToAccepted,
 			sendFunction:     sendNotificationRequestFromDeliveredToAccepted,
@@ -231,7 +242,8 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 			wantToEmail:      requests[0].CreatedBy.Email,
 			wantBodyContains: "corrected themselves to say they haven't",
 		},
-		{name: "Good - Delivered to Completed",
+		{
+			name:             "Good - Delivered to Completed",
 			request:          requests[0],
 			template:         domain.MessageTemplateRequestReceived,
 			sendFunction:     sendNotificationRequestFromAcceptedOrDeliveredToCompleted,
@@ -239,7 +251,8 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 			wantToEmail:      requests[0].Provider.Email,
 			wantBodyContains: "reported that they have received",
 		},
-		{name: "Good - Open to Accepted",
+		{
+			name:             "Good - Open to Accepted",
 			request:          requests[0],
 			template:         domain.MessageTemplateRequestFromOpenToAccepted,
 			sendFunction:     sendNotificationRequestFromOpenToAccepted,
@@ -247,7 +260,8 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 			wantToEmail:      requests[0].Provider.Email,
 			wantBodyContains: "has accepted your offer",
 		},
-		{name: "Bad - Open to Accepted", // No Provider
+		{
+			name:         "Bad - Open to Accepted", // No Provider
 			request:      requests[1],
 			template:     domain.MessageTemplateRequestFromOpenToAccepted,
 			sendFunction: sendNotificationRequestFromOpenToAccepted,
@@ -258,7 +272,6 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 
 	for _, nextT := range tests {
 		t.Run(nextT.name, func(t *testing.T) {
-
 			notifications.TestEmailService.DeleteSentMessages()
 
 			params := senderParams{
@@ -281,7 +294,6 @@ func (ms *ModelSuite) TestSendNotificationRequestFromStatus() {
 			test.AssertStringContains(t, body, nextT.wantBodyContains, 99)
 		})
 	}
-
 }
 
 func (ms *ModelSuite) TestSendNewRequestNotification() {
@@ -531,5 +543,4 @@ func (ms *ModelSuite) TestSendNotificationRequestFromOpenToAccepted() {
 	ms.Equal(users[3].Email, accepteds[0].ToEmail, "incorrect recipient for accepted message")
 
 	ms.Equal(2, len(rejects), "incorrect number of rejected messages")
-
 }

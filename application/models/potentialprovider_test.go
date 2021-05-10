@@ -250,7 +250,9 @@ func (ms *ModelSuite) TestPotentialProvider_Validate() {
 			userID:    users[3].ID,
 			wantErrs: map[string][]string{
 				"unique_together": {
-					fmt.Sprintf("Duplicate potential provider exists with RequestID: %v and UserID: %v", requests[1].ID, users[3].ID)}},
+					fmt.Sprintf("Duplicate potential provider exists with RequestID: %v and UserID: %v", requests[1].ID, users[3].ID),
+				},
+			},
 		},
 	}
 	for _, test := range tests {

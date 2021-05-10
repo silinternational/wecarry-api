@@ -164,7 +164,6 @@ func (r *requestResolver) Actions(ctx context.Context, obj *models.Request) ([]s
 	}
 
 	return actions, nil
-
 }
 
 // Threads resolves the `threads` property of the request query, retrieving the related records from the database.

@@ -4,15 +4,19 @@ import (
 	"github.com/gobuffalo/buffalo"
 )
 
-const AuthTypeAzureAD = "azureadv2"
-const AuthTypeFacebook = "facebook"
-const AuthTypeGoogle = "google"
-const AuthTypeLinkedIn = "linkedin"
-const AuthTypeSaml = "saml"
-const AuthTypeTwitter = "twitter"
+const (
+	AuthTypeAzureAD  = "azureadv2"
+	AuthTypeFacebook = "facebook"
+	AuthTypeGoogle   = "google"
+	AuthTypeLinkedIn = "linkedin"
+	AuthTypeSaml     = "saml"
+	AuthTypeTwitter  = "twitter"
+)
 
-const envTypeKey = "key"
-const envTypeSecret = "secret"
+const (
+	envTypeKey    = "key"
+	envTypeSecret = "secret"
+)
 
 // Provider interface to be implemented by any auth providers
 type Provider interface {

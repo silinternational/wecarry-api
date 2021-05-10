@@ -146,7 +146,6 @@ func userCreatedAddToMarketingList(e events.Event) {
 
 	err := marketing.AddUserToList(*user, domain.Env.MailChimpAPIBaseURL, domain.Env.MailChimpListID,
 		domain.Env.MailChimpUsername, domain.Env.MailChimpAPIKey)
-
 	if err != nil {
 		domain.ErrLogger.Printf("error calling marketing.AddUserToList when trying to add %s: %s",
 			user.Email, err.Error())

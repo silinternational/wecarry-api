@@ -271,7 +271,6 @@ func meetingAuthRequest(c buffalo.Context, authEmail string, extras map[string]i
 
 // Decide whether an invitee should use social login or org-based login
 func inviteAuthRequest(c buffalo.Context, authEmail, inviteType string) error {
-
 	extras := map[string]interface{}{"authEmail": authEmail, "inviteType": inviteType}
 	if inviteType == "" {
 		authErr := authError{
@@ -459,7 +458,6 @@ func ensureMeetingParticipant(c buffalo.Context, meetingUUID string, user models
 
 // Deals with the situation when a user logins as a response to an invite
 func dealWithInviteFromCallback(c buffalo.Context, inviteType, objectUUID string, user models.User) {
-
 	switch inviteType {
 	case InviteTypeMeetingParam:
 		ensureMeetingParticipant(c, objectUUID, user)
