@@ -149,6 +149,7 @@ func CreateLocationFixtures(tx *pop.Connection, n int) models.Locations {
 	countries := []string{"US", "CA", "MX", "TH", "FR", "PG"}
 	locations := make(models.Locations, n)
 	for i := range locations {
+		// #nosec G404
 		locations[i] = models.Location{
 			Country:     countries[rand.Intn(6)],
 			Description: "Random Location " + strconv.Itoa(rand.Int()),
@@ -164,6 +165,7 @@ func CreateFileFixtures(n int) models.Files {
 	fileFixtures := make([]models.File, n)
 	for i := range fileFixtures {
 		var f models.File
+		// #nosec G404
 		if err := f.Store(strconv.Itoa(rand.Int())+".gif", []byte("GIF89a")); err != nil {
 			panic(fmt.Sprintf("failed to create file fixture, %s", err))
 		}

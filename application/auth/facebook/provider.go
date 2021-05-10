@@ -26,7 +26,7 @@ import (
 
 const (
 	authURL         string = "https://www.facebook.com/dialog/oauth"
-	tokenURL        string = "https://graph.facebook.com/oauth/access_token"
+	tokenURL        string = "https://graph.facebook.com/oauth/access_token" // #nosec G101
 	endpointProfile string = "https://graph.facebook.com/me?fields="
 )
 

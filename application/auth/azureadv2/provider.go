@@ -18,7 +18,7 @@ import (
 
 const (
 	authURLTemplate  string = "https://login.microsoftonline.com/%s/oauth2/v2.0/authorize"
-	tokenURLTemplate string = "https://login.microsoftonline.com/%s/oauth2/v2.0/token"
+	tokenURLTemplate string = "https://login.microsoftonline.com/%s/oauth2/v2.0/token" // #nosec G101
 	graphAPIResource string = "https://graph.microsoft.com/v1.0/"
 )
 
