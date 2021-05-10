@@ -27,7 +27,7 @@ var (
 	requestURL      = "https://api.twitter.com/oauth/request_token"
 	authorizeURL    = "https://api.twitter.com/oauth/authorize"
 	authenticateURL = "https://api.twitter.com/oauth/authenticate"
-	tokenURL        = "https://api.twitter.com/oauth/access_token"
+	tokenURL        = "https://api.twitter.com/oauth/access_token" // #nosec G101
 	endpointProfile = "https://api.twitter.com/1.1/account/verify_credentials.json"
 )
 

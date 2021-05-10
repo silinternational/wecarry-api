@@ -57,8 +57,8 @@ func (f File) String() string {
 type Files []File
 
 // String can be helpful for serializing the model
-func (i Files) String() string {
-	ji, _ := json.Marshal(i)
+func (f Files) String() string {
+	ji, _ := json.Marshal(f)
 	return string(ji)
 }
 
@@ -261,7 +261,8 @@ func (f *Files) DeleteUnlinked() error {
 		}
 		nRemovedFromS3++
 
-		if err := DB.Destroy(&file); err != nil {
+		f := file
+		if err := DB.Destroy(&f); err != nil {
 			domain.ErrLogger.Printf("file %d destroy error, %s", file.ID, err)
 			continue
 		}

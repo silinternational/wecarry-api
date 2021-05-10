@@ -2,7 +2,7 @@ package models
 
 import (
 	"context"
-	"crypto/md5"
+	"crypto/md5" // #nosec G501 weak cryptography used for gravatar URL only
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
@@ -224,7 +224,7 @@ func IsDBConnected() bool {
 
 func gravatarURL(email string) string {
 	// ref: https://en.gravatar.com/site/implement/images/
-	hash := md5.Sum([]byte(strings.ToLower(strings.TrimSpace(email))))
+	hash := md5.Sum([]byte(strings.ToLower(strings.TrimSpace(email)))) // #nosec G401 weak cryptography acceptable here
 	url := fmt.Sprintf("https://www.gravatar.com/avatar/%x.jpg?s=200&d=mp", hash)
 	return url
 }

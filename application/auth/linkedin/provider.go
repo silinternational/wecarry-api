@@ -23,7 +23,7 @@ import (
 
 const (
 	authURL  string = "https://www.linkedin.com/oauth/v2/authorization"
-	tokenURL string = "https://www.linkedin.com/oauth/v2/accessToken"
+	tokenURL string = "https://www.linkedin.com/oauth/v2/accessToken" // #nosec G101
 
 	//userEndpoint requires scope "r_liteprofile"
 	userEndpoint string = "//api.linkedin.com/v2/me?projection=(id,firstName,lastName,profilePicture(displayImage~:playableStreams))"

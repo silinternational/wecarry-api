@@ -260,7 +260,8 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 func getPublicProfiles(ctx context.Context, users []models.User) []PublicProfile {
 	profiles := make([]PublicProfile, len(users))
 	for i, p := range users {
-		prof := getPublicProfile(ctx, &p)
+		user := p
+		prof := getPublicProfile(ctx, &user)
 		profiles[i] = *prof
 	}
 	return profiles
