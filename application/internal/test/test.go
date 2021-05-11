@@ -227,6 +227,12 @@ func CreatePotentialProvidersFixtures(tx *pop.Connection) PotentialProvidersFixt
 	requests := CreateRequestFixtures(tx, 3, false)
 	providers := models.PotentialProviders{}
 
+	// ensure the first user is actually the creator (timing issues tend to make this unreliable otherwise)
+	for i := range requests {
+		requests[i].CreatedByID = uf.Users[0].ID
+	}
+	tx.Update(&requests)
+
 	for i, r := range requests[:2] {
 		for _, u := range uf.Users[i+1 : 4] {
 			c := models.PotentialProvider{RequestID: r.ID, UserID: u.ID}

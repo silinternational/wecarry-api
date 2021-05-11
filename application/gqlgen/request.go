@@ -147,7 +147,7 @@ func (r *requestResolver) Origin(ctx context.Context, obj *models.Request) (*mod
 	return origin, nil
 }
 
-// Threads resolves the `threads` property of the request query, retrieving the related records from the database.
+// Actions resolves the `actions` property of the request query, retrieving the related records from the database.
 func (r *requestResolver) Actions(ctx context.Context, obj *models.Request) ([]string, error) {
 	if obj == nil {
 		return []string{}, nil
