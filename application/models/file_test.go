@@ -240,7 +240,7 @@ func (ms *ModelSuite) TestFiles_FindByIDs() {
 			for i, ff := range f {
 				fileNames[i] = ff.Name
 			}
-			ms.Equal(tt.want, fileNames, "incorrect file names")
+			ms.ElementsMatch(tt.want, fileNames, "incorrect file names")
 		})
 	}
 }

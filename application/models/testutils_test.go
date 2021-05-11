@@ -251,6 +251,12 @@ func createPotentialProvidersFixtures(ms *ModelSuite) potentialProvidersFixtures
 	requests := createRequestFixtures(ms.DB, 3, false)
 	providers := PotentialProviders{}
 
+	// ensure the first user is actually the creator (timing issues tend to make this unreliable otherwise)
+	for i := range requests {
+		requests[i].CreatedByID = uf.Users[0].ID
+	}
+	ms.DB.Update(&requests)
+
 	for i, p := range requests[:2] {
 		for _, u := range uf.Users[i+1:] {
 			c := PotentialProvider{RequestID: p.ID, UserID: u.ID}
