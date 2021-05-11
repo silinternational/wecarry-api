@@ -1369,14 +1369,12 @@ func (ms *ModelSuite) TestRequest_AttachFile() {
 	}
 	createFixture(ms, &request)
 
-	var fileFixture File
-	const filename = "photo.gif"
-	ms.Nil(fileFixture.Store(filename, []byte("GIF89a")), "failed to create file fixture")
+	file := createFileFixture()
 
-	if attachedFile, err := request.AttachFile(fileFixture.UUID.String()); err != nil {
+	if attachedFile, err := request.AttachFile(file.UUID.String()); err != nil {
 		t.Errorf("failed to attach file to request, %s", err)
 	} else {
-		ms.Equal(filename, attachedFile.Name)
+		ms.Equal(file.Name, attachedFile.Name)
 		ms.True(attachedFile.ID != 0)
 		ms.True(attachedFile.UUID.Version() != 0)
 	}
@@ -1391,7 +1389,7 @@ func (ms *ModelSuite) TestRequest_AttachFile() {
 		t.Errorf("failed to load files relations for test request, %s", err)
 	}
 
-	ms.Equal(filename, request.Files[0].File.Name)
+	ms.Equal(file.Name, request.Files[0].File.Name)
 }
 
 func (ms *ModelSuite) TestRequest_GetFiles() {
@@ -1422,19 +1420,17 @@ func (ms *ModelSuite) TestRequest_GetPhotoID() {
 	requests := createRequestFixtures(ms.DB, 1, false)
 	request := requests[0]
 
-	var photoFixture File
-	const filename = "photo.gif"
-	ms.Nil(photoFixture.Store(filename, []byte("GIF89a")), "failed to create file fixture")
+	photoFixture := createFileFixture()
 
 	attachedFile, err := request.AttachPhoto(photoFixture.UUID.String())
 	ms.NoError(err, "failed to attach photo to request")
-	ms.Equal(filename, attachedFile.Name)
+	ms.Equal(photoFixture.Name, attachedFile.Name)
 	ms.True(attachedFile.ID != 0)
 	ms.True(attachedFile.UUID.Version() != 0)
 
 	ms.NoError(DB.Load(&request), "failed to load photo relation for test request")
 
-	ms.Equal(filename, request.PhotoFile.Name)
+	ms.Equal(photoFixture.Name, request.PhotoFile.Name)
 
 	got, err := request.GetPhotoID()
 	ms.NoError(err, "unexpected error")
@@ -1447,24 +1443,21 @@ func (ms *ModelSuite) TestRequest_GetPhoto() {
 	requests := createRequestFixtures(ms.DB, 1, false)
 	request := requests[0]
 
-	var photoFixture File
-	const filename = "photo.gif"
-	ms.Nil(photoFixture.Store(filename, []byte("GIF89a")), "failed to create file fixture")
+	photoFixture := createFileFixture()
 
 	attachedFile, err := request.AttachPhoto(photoFixture.UUID.String())
 	ms.NoError(err, "failed to attach photo to request")
-	ms.Equal(filename, attachedFile.Name)
+	ms.Equal(photoFixture.Name, attachedFile.Name)
 	ms.True(attachedFile.ID != 0)
 	ms.True(attachedFile.UUID.Version() != 0)
 
 	ms.NoError(DB.Load(&request), "failed to load photo relation for test request")
 
-	ms.Equal(filename, request.PhotoFile.Name)
+	ms.Equal(photoFixture.Name, request.PhotoFile.Name)
 
 	if got, err := request.GetPhoto(); err == nil {
 		ms.Equal(attachedFile.UUID.String(), got.UUID.String())
-		ms.True(got.URLExpiration.After(time.Now().Add(time.Minute)))
-		ms.Equal(filename, got.Name)
+		ms.Equal(attachedFile.Name, got.Name)
 	} else {
 		ms.Fail("request.GetPhoto failed, %s", err)
 	}

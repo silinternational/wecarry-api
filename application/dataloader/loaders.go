@@ -27,7 +27,7 @@ func convertErrToSlice(err error) []error {
 func getFetchFileCallback() func([]int) ([]*models.File, []error) {
 	return func(ids []int) ([]*models.File, []error) {
 		objects := models.Files{}
-		err := objects.FindByIDs(ids)
+		err := objects.FindByIDs(models.DB, ids)
 		if len(objects) == 0 {
 			return []*models.File{}, convertErrToSlice(err)
 		}
@@ -43,22 +43,10 @@ func getFetchFileCallback() func([]int) ([]*models.File, []error) {
 			errors[0] = err
 		}
 
-		foundErr := false
-
 		for i, id := range ids {
 			if obj, ok := objMap[id]; ok {
-				if err := obj.RefreshURL(); err != nil {
-					foundErr = true
-					errors[i] = err
-					continue
-				}
-
 				objPtrs[i] = &obj
 			}
-		}
-
-		if foundErr {
-			return objPtrs, errors
 		}
 
 		return objPtrs, convertErrToSlice(err)

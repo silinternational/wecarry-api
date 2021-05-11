@@ -164,14 +164,21 @@ func CreateLocationFixtures(tx *pop.Connection, n int) models.Locations {
 func CreateFileFixtures(n int) models.Files {
 	fileFixtures := make([]models.File, n)
 	for i := range fileFixtures {
-		var f models.File
-		// #nosec G404
-		if err := f.Store(strconv.Itoa(rand.Int())+".gif", []byte("GIF89a")); err != nil {
-			panic(fmt.Sprintf("failed to create file fixture, %s", err))
-		}
-		fileFixtures[i] = f
+		fileFixtures[i] = CreateFileFixture()
 	}
 	return fileFixtures
+}
+
+func CreateFileFixture() models.File {
+	// #nosec G404
+	f := models.File{
+		Name:    strconv.Itoa(rand.Int()) + ".gif",
+		Content: []byte("GIF89a"),
+	}
+	if err := f.Store(); err != nil {
+		panic(fmt.Sprintf("failed to create file fixture, %s", err))
+	}
+	return f
 }
 
 // AssertStringContains makes the test fail if the string does not contain the substring.

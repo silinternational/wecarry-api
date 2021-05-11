@@ -421,28 +421,25 @@ var _ = grift.Namespace("db", func() {
 		fileUUID3, _ := uuid.FromString("c1eed7f0-2c8f-4d17-911c-99a54d29b0a1")
 		fixtureFiles := []*models.File{
 			{
-				UUID:          fileUUID1,
-				Name:          "iccmlogo.png",
-				URL:           "https://iccm.africa/img/iccmlogo.png",
-				URLExpiration: time.Date(2099, 12, 31, 0, 0, 0, 0, time.UTC),
-				Size:          5279,
-				ContentType:   "image/png",
+				UUID:        fileUUID1,
+				Name:        "iccmlogo.png",
+				URL:         "https://iccm.africa/img/iccmlogo.png",
+				Size:        5279,
+				ContentType: "image/png",
 			},
 			{
-				UUID:          fileUUID2,
-				Name:          "thesend.png",
-				URL:           "http://thesend.org.br/wp-content/uploads/2019/06/logo.png",
-				URLExpiration: time.Date(2099, 12, 31, 0, 0, 0, 0, time.UTC),
-				Size:          15,
-				ContentType:   "image/png",
+				UUID:        fileUUID2,
+				Name:        "thesend.png",
+				URL:         "http://thesend.org.br/wp-content/uploads/2019/06/logo.png",
+				Size:        15,
+				ContentType: "image/png",
 			},
 			{
-				UUID:          fileUUID3,
-				Name:          "logo.png",
-				URL:           "https://static.wixstatic.com/media/f85009_a5b1c807a4a34e3284576f8e0cf334ca~mv2.jpg/v1/fill/w_755,h_1008,al_c,q_85/f85009_a5b1c807a4a34e3284576f8e0cf334ca~mv2.jpg",
-				URLExpiration: time.Date(2099, 12, 31, 0, 0, 0, 0, time.UTC),
-				Size:          15000,
-				ContentType:   "image/jpg",
+				UUID:        fileUUID3,
+				Name:        "logo.png",
+				URL:         "https://static.wixstatic.com/media/f85009_a5b1c807a4a34e3284576f8e0cf334ca~mv2.jpg/v1/fill/w_755,h_1008,al_c,q_85/f85009_a5b1c807a4a34e3284576f8e0cf334ca~mv2.jpg",
+				Size:        15000,
+				ContentType: "image/jpg",
 			},
 		}
 

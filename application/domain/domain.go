@@ -123,7 +123,15 @@ var (
 	AuthCallbackURL string
 )
 
-// Env holds environment variable values loaded by init()
+var AllowedFileUploadTypes = []string{
+	"image/bmp",
+	"image/gif",
+	"image/jpeg",
+	"image/png",
+	"image/webp",
+	"application/pdf",
+}
+
 var Env struct {
 	AccessTokenLifetimeSeconds int
 	ServiceIntegrationToken    string

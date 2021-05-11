@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/gobuffalo/nulls"
-
 	"github.com/silinternational/wecarry-api/aws"
 	"github.com/silinternational/wecarry-api/domain"
 )
@@ -179,17 +178,7 @@ func CreateFixturesForUserCanViewRequest(ms *ModelSuite) UserRequestFixtures {
 func createFixturesForTestUserGetPhoto(ms *ModelSuite) UserRequestFixtures {
 	ms.NoError(aws.CreateS3Bucket())
 
-	fileFixtures := make([]File, 2)
-	for i := range fileFixtures {
-		var f File
-		ms.Nil(f.Store(fmt.Sprintf("photo%d.gif", i), []byte("GIF89a")), "unexpected error uploading file")
-		fileFixtures[i] = f
-	}
-
-	var photoFixture File
-	const filename = "photo.gif"
-	err := photoFixture.Store(filename, []byte("GIF89a"))
-	ms.Nil(err, "failed to create file fixture")
+	fileFixtures := createFileFixtures(2)
 
 	unique := domain.GetUUID()
 	users := Users{

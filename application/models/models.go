@@ -253,7 +253,7 @@ func addFile(m interface{}, fileID string) (File, error) {
 		}
 	}
 
-	if err := f.SetLinked(); err != nil {
+	if err := f.SetLinked(DB); err != nil {
 		domain.ErrLogger.Printf("error marking file %d as linked, %s", f.ID, err)
 	}
 
@@ -262,7 +262,7 @@ func addFile(m interface{}, fileID string) (File, error) {
 	}
 
 	oldFile := File{ID: oldID.Int}
-	if err := oldFile.ClearLinked(); err != nil {
+	if err := oldFile.ClearLinked(DB); err != nil {
 		domain.ErrLogger.Printf("error marking old file %d as unlinked, %s", oldFile.ID, err)
 	}
 
@@ -295,7 +295,7 @@ func removeFile(m interface{}) error {
 	}
 
 	oldFile := File{ID: oldID.Int}
-	if err := oldFile.ClearLinked(); err != nil {
+	if err := oldFile.ClearLinked(DB); err != nil {
 		domain.ErrLogger.Printf("error marking old meeting file %d as unlinked, %s", oldFile.ID, err)
 	}
 	return nil

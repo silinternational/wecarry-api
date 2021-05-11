@@ -192,9 +192,6 @@ func (m *Meeting) ImageFile() (*File, error) {
 			return nil, err
 		}
 	}
-	if err := (*m.ImgFile).RefreshURL(); err != nil {
-		return nil, err
-	}
 	f := *m.ImgFile
 	return &f, nil
 }

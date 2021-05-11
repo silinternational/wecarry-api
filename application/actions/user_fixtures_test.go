@@ -73,8 +73,7 @@ func fixturesForUserQuery(as *ActionSuite) UserQueryFixtures {
 
 	as.NoError(aws.CreateS3Bucket(), "unexpected error creating S3 bucket")
 
-	var f models.File
-	as.Nil(f.Store("photo.gif", []byte("GIF89a")), "unexpected error storing file")
+	f := test.CreateFileFixture()
 
 	_, err := users[1].AttachPhoto(f.UUID.String())
 	as.NoError(err, "unexpected error attaching photo to user")

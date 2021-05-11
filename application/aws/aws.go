@@ -8,7 +8,6 @@ import (
 	"mime/multipart"
 	"net/textproto"
 	"net/url"
-	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -21,11 +20,6 @@ import (
 	"github.com/silinternational/wecarry-api/domain"
 )
 
-type ObjectUrl struct {
-	Url        string
-	Expiration time.Time
-}
-
 type awsConfig struct {
 	awsAccessKeyID     string
 	awsSecretAccessKey string
@@ -36,8 +30,8 @@ type awsConfig struct {
 	getPresignedUrl    bool
 }
 
-// presigned URL expiration
-const urlLifespan = 10 * time.Minute
+// presigned URL expiration, set to 1 week, which is the limit imposed by minio
+const urlLifespan = 1 * domain.DurationWeek
 
 func getS3ConfigFromEnv() awsConfig {
 	var a awsConfig
@@ -68,13 +62,10 @@ func createS3Service(config awsConfig) (*s3.S3, error) {
 	return svc, err
 }
 
-func getObjectURL(config awsConfig, svc *s3.S3, key string) (ObjectUrl, error) {
-	var objectUrl ObjectUrl
-
+func getObjectURL(config awsConfig, svc *s3.S3, key string) (string, error) {
 	if !config.getPresignedUrl {
-		objectUrl.Url = fmt.Sprintf("https://%s.s3.amazonaws.com/%s", config.awsS3Bucket, url.PathEscape(key))
-		objectUrl.Expiration = time.Date(9999, time.December, 31, 0, 0, 0, 0, time.UTC)
-		return objectUrl, nil
+		url := fmt.Sprintf("https://%s.s3.amazonaws.com/%s", config.awsS3Bucket, url.PathEscape(key))
+		return url, nil
 	}
 
 	req, _ := svc.GetObjectRequest(&s3.GetObjectInput{
@@ -82,24 +73,16 @@ func getObjectURL(config awsConfig, svc *s3.S3, key string) (ObjectUrl, error) {
 		Key:    aws.String(key),
 	})
 
-	if newUrl, err := req.Presign(urlLifespan); err == nil {
-		objectUrl.Url = newUrl
-		// return a time slightly before the actual url expiration to account for delays
-		objectUrl.Expiration = time.Now().Add(urlLifespan - time.Minute)
-	} else {
-		return objectUrl, err
-	}
-
-	return objectUrl, nil
+	return req.Presign(urlLifespan)
 }
 
 // StoreFile saves content in an AWS S3 bucket or compatible storage, depending on environment configuration.
-func StoreFile(key, contentType string, content []byte) (ObjectUrl, error) {
+func StoreFile(key, contentType string, content []byte) (string, error) {
 	config := getS3ConfigFromEnv()
 
 	svc, err := createS3Service(config)
 	if err != nil {
-		return ObjectUrl{}, err
+		return "", err
 	}
 
 	acl := ""
@@ -113,12 +96,12 @@ func StoreFile(key, contentType string, content []byte) (ObjectUrl, error) {
 		ACL:         aws.String(acl),
 		Body:        bytes.NewReader(content),
 	}); err != nil {
-		return ObjectUrl{}, err
+		return "", err
 	}
 
 	objectUrl, err := getObjectURL(config, svc, key)
 	if err != nil {
-		return ObjectUrl{}, err
+		return "", err
 	}
 
 	return objectUrl, nil
@@ -126,12 +109,12 @@ func StoreFile(key, contentType string, content []byte) (ObjectUrl, error) {
 
 // GetFileURL retrieves a URL from which a stored object can be loaded. The URL should not require external
 // credentials to access. It may reference a file with public_read access or it may be a pre-signed URL.
-func GetFileURL(key string) (ObjectUrl, error) {
+func GetFileURL(key string) (string, error) {
 	config := getS3ConfigFromEnv()
 
 	svc, err := createS3Service(config)
 	if err != nil {
-		return ObjectUrl{}, err
+		return "", err
 	}
 
 	return getObjectURL(config, svc, key)

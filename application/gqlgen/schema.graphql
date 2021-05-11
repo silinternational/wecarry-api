@@ -317,8 +317,6 @@ type File {
     id: ID!
     "file content can be loaded from the given URL if the expiration time has not passed, limited to 1,024 characters"
     url: String!
-    "expiration time of the URL, re-issue the query to get a new URL and expiration time"
-    urlExpiration: Time!
     "filename with extension, limited to 255 characters, e.g. `image.jpg`"
     name: String!
     "file size in bytes"

@@ -58,12 +58,11 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	File struct {
-		ContentType   func(childComplexity int) int
-		ID            func(childComplexity int) int
-		Name          func(childComplexity int) int
-		Size          func(childComplexity int) int
-		URL           func(childComplexity int) int
-		URLExpiration func(childComplexity int) int
+		ContentType func(childComplexity int) int
+		ID          func(childComplexity int) int
+		Name        func(childComplexity int) int
+		Size        func(childComplexity int) int
+		URL         func(childComplexity int) int
 	}
 
 	Location struct {
@@ -462,13 +461,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.File.URL(childComplexity), true
-
-	case "File.urlExpiration":
-		if e.complexity.File.URLExpiration == nil {
-			break
-		}
-
-		return e.complexity.File.URLExpiration(childComplexity), true
 
 	case "Location.country":
 		if e.complexity.Location.Country == nil {
@@ -1921,9 +1913,8 @@ type Mutation {
     updateUser(input: UpdateUserInput!): User!
 
     """
-    Create a Watch for a given location. Requests with a destination near the watch location will trigger a
-    notification to the watch creator. Other types of Watches (e.g. keyword search) may be created in future versions of
-    WeCarry. Any user may create a Watch.
+    Create a Watch for specified filter criteria. New requests matching all of the given criteria will
+    generate a new notification. Any user may create a Watch.
     """
     createWatch(input: CreateWatchInput!): Watch!
 
@@ -2044,8 +2035,6 @@ type File {
     id: ID!
     "file content can be loaded from the given URL if the expiration time has not passed, limited to 1,024 characters"
     url: String!
-    "expiration time of the URL, re-issue the query to get a new URL and expiration time"
-    urlExpiration: Time!
     "filename with extension, limited to 255 characters, e.g. ` + "`" + `image.jpg` + "`" + `"
     name: String!
     "file size in bytes"
@@ -2583,7 +2572,7 @@ input UpdateUserPreferencesInput {
 }
 
 """
-A Watch for a given location. New requests matching all of the given criteria will generate a new
+A Watch for specified filter criteria. New requests matching all of the given criteria will generate a new
 notification.
 """
 type Watch {
@@ -3298,43 +3287,6 @@ func (ec *executionContext) _File_url(ctx context.Context, field graphql.Collect
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _File_urlExpiration(ctx context.Context, field graphql.CollectedField, obj *models.File) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "File",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.URLExpiration, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(time.Time)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _File_name(ctx context.Context, field graphql.CollectedField, obj *models.File) (ret graphql.Marshaler) {
@@ -11147,11 +11099,6 @@ func (ec *executionContext) _File(ctx context.Context, sel ast.SelectionSet, obj
 			})
 		case "url":
 			out.Values[i] = ec._File_url(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
-		case "urlExpiration":
-			out.Values[i] = ec._File_urlExpiration(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}

@@ -679,7 +679,7 @@ func (r *Request) AttachFile(fileID string) (File, error) {
 	if err := requestFile.Create(); err != nil {
 		return f, err
 	}
-	if err := f.SetLinked(); err != nil {
+	if err := f.SetLinked(DB); err != nil {
 		domain.ErrLogger.Printf("error marking new request file %d as linked, %s", f.ID, err)
 	}
 
@@ -702,9 +702,6 @@ func (r *Request) GetFiles() ([]File, error) {
 	files := make([]File, len(rf))
 	for i, f := range rf {
 		files[i] = f.File
-		if err := files[i].RefreshURL(); err != nil {
-			return files, err
-		}
 	}
 
 	return files, nil
@@ -729,10 +726,6 @@ func (r *Request) GetPhoto() (*File, error) {
 
 	if !r.FileID.Valid {
 		return nil, nil
-	}
-
-	if err := r.PhotoFile.RefreshURL(); err != nil {
-		return nil, err
 	}
 
 	return &r.PhotoFile, nil
