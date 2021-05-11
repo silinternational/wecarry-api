@@ -23,41 +23,9 @@ type ModelSuite struct {
 	DB *pop.Connection
 }
 
-func (m *ModelSuite) SetupTest() {
-	m.Assertions = require.New(m.T())
-	m.DestroyAll()
-}
-
-func (m *ModelSuite) DestroyAll() {
-	// delete all Requests, RequestHistories, RequestFiles, PotentialProviders, Threads, and ThreadParticipants
-	var requests Requests
-	m.NoError(m.DB.All(&requests))
-	m.NoError(m.DB.Destroy(&requests))
-
-	// delete all Meetings, MeetingParticipants, and MeetingInvites
-	var meetings Meetings
-	m.NoError(m.DB.All(&meetings))
-	m.NoError(m.DB.Destroy(&meetings))
-
-	// delete all Organizations, OrganizationDomains, OrganizationTrusts, and UserOrganizations
-	var organizations Organizations
-	m.NoError(m.DB.All(&organizations))
-	m.NoError(m.DB.Destroy(&organizations))
-
-	// delete all Users, Messages, UserAccessTokens, and Watches
-	var users Users
-	m.NoError(m.DB.All(&users))
-	m.NoError(m.DB.Destroy(&users))
-
-	// delete all Files
-	var files Files
-	m.NoError(m.DB.All(&files))
-	m.NoError(m.DB.Destroy(&files))
-
-	// delete all Locations
-	var locations Locations
-	m.NoError(m.DB.All(&locations))
-	m.NoError(m.DB.Destroy(&locations))
+func (ms *ModelSuite) SetupTest() {
+	ms.Assertions = require.New(ms.T())
+	DestroyAll()
 }
 
 // Test_ModelSuite runs the test suite
