@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -418,7 +419,7 @@ func RollbarMiddleware(next buffalo.Handler) buffalo.Handler {
 }
 
 func mergeExtras(extras []map[string]interface{}) map[string]interface{} {
-	var allExtras map[string]interface{}
+	allExtras := map[string]interface{}{}
 
 	// I didn't think I would need this, but without it at least one test was failing
 	// The code allowed a map[string]interface{} to get through (i.e. not in a slice)
@@ -445,8 +446,34 @@ func Error(c buffalo.Context, msg string, extras ...map[string]interface{}) {
 	}
 
 	es := mergeExtras(extras)
-	logger.Error(msg, es)
+	if es == nil {
+		es = map[string]interface{}{}
+	}
+
 	rollbarMessage(c, rollbar.ERR, msg, es)
+
+	es["message"] = msg
+
+	encoder := jsonMin
+	if Env.GoEnv == "development" {
+		encoder = jsonIndented
+	}
+
+	j, err := encoder(&es)
+	if err != nil {
+		logger.Error("failed to json encode error message: %s", err)
+		return
+	}
+
+	logger.Error(string(j))
+}
+
+func jsonMin(i interface{}) ([]byte, error) {
+	return json.Marshal(i)
+}
+
+func jsonIndented(i interface{}) ([]byte, error) {
+	return json.MarshalIndent(i, "", "  ")
 }
 
 // Warn log warning and send to Rollbar
