@@ -1,7 +1,6 @@
 package actions
 
 import (
-	"fmt"
 	"net/http"
 	"testing"
 
@@ -9,7 +8,6 @@ import (
 	"github.com/gobuffalo/httptest"
 	"github.com/gobuffalo/pop/v5"
 	"github.com/gorilla/sessions"
-	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
