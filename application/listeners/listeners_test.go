@@ -9,8 +9,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gobuffalo/envy"
 	"github.com/gobuffalo/events"
-	"github.com/gobuffalo/suite/v3"
+	"github.com/gobuffalo/pop/v5"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/internal/test"
@@ -18,22 +21,32 @@ import (
 	"github.com/silinternational/wecarry-api/notifications"
 )
 
+// ModelSuite doesn't contain a buffalo suite.Model and can be used for tests that don't need access to the database
+// or don't need the buffalo test runner to refresh the database
 type ModelSuite struct {
-	*suite.Model
+	suite.Suite
+	*require.Assertions
+	DB *pop.Connection
+}
+
+func (ms *ModelSuite) SetupTest() {
+	ms.Assertions = require.New(ms.T())
+	models.DestroyAll()
+}
+
+// Test_ModelSuite runs the test suite
+func Test_ModelSuite(t *testing.T) {
+	ms := &ModelSuite{}
+	c, err := pop.Connect(envy.Get("GO_ENV", "test"))
+	if err == nil {
+		ms.DB = c
+	}
+	suite.Run(t, ms)
 }
 
 type RequestFixtures struct {
 	models.Users
 	models.Requests
-}
-
-func Test_ModelSuite(t *testing.T) {
-	model := suite.NewModel()
-
-	as := &ModelSuite{
-		Model: model,
-	}
-	suite.Run(t, as)
 }
 
 func (ms *ModelSuite) TestRegisterListeners() {

@@ -52,39 +52,7 @@ func (as *ActionSuite) SetupTest() {
 		Session: s,
 	}
 
-	as.DestroyAll()
-}
-
-func (as *ActionSuite) DestroyAll() {
-	// delete all Requests, RequestHistories, RequestFiles, PotentialProviders, Threads, and ThreadParticipants
-	var requests models.Requests
-	as.NoError(as.DB.All(&requests))
-	as.NoError(as.DB.Destroy(&requests))
-
-	// delete all Meetings, MeetingParticipants, and MeetingInvites
-	var meetings models.Meetings
-	as.NoError(as.DB.All(&meetings))
-	as.NoError(as.DB.Destroy(&meetings))
-
-	// delete all Organizations, OrganizationDomains, OrganizationTrusts, and UserOrganizations
-	var organizations models.Organizations
-	as.NoError(as.DB.All(&organizations))
-	as.NoError(as.DB.Destroy(&organizations))
-
-	// delete all Users, Messages, UserAccessTokens, and Watches
-	var users models.Users
-	as.NoError(as.DB.All(&users))
-	as.NoError(as.DB.Destroy(&users))
-
-	// delete all Files
-	var files models.Files
-	as.NoError(as.DB.All(&files))
-	as.NoError(as.DB.Destroy(&files))
-
-	// delete all Locations
-	var locations models.Locations
-	as.NoError(as.DB.All(&locations))
-	as.NoError(as.DB.Destroy(&locations))
+	models.DestroyAll()
 }
 
 // sessionStore copied from gobuffalo/suite session.go
