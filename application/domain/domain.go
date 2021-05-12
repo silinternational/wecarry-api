@@ -15,6 +15,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 	"unicode"
 
@@ -182,6 +183,8 @@ var T *mwi18n.Translator
 
 // Assets is a packr box with asset files such as images
 var Assets *packr.Box
+
+var extrasLock = sync.RWMutex{}
 
 func init() {
 	readEnv()
@@ -433,10 +436,13 @@ func Error(c buffalo.Context, msg string) {
 		return
 	}
 
-	extras := GetExtras(c)
+	extras := getExtras(c)
 	if extras == nil {
 		extras = map[string]interface{}{}
 	}
+
+	extrasLock.RLock()
+	defer extrasLock.RUnlock()
 
 	rollbarMessage(c, rollbar.ERR, msg, extras)
 
@@ -466,14 +472,21 @@ func jsonIndented(i interface{}) ([]byte, error) {
 
 // Warn - log warning and send to Rollbar
 func Warn(c buffalo.Context, msg string) {
-	extras := GetExtras(c)
+	extras := getExtras(c)
+	extrasLock.RLock()
+	defer extrasLock.RUnlock()
+
 	c.Logger().Warn(msg, extras)
 	rollbarMessage(c, rollbar.WARN, msg, extras)
 }
 
 // Info - log info message
-func Info(c buffalo.Context, msg string, extras ...map[string]interface{}) {
-	c.Logger().Info(msg, GetExtras(c))
+func Info(c buffalo.Context, msg string) {
+	extras := getExtras(c)
+	extrasLock.RLock()
+	defer extrasLock.RUnlock()
+
+	c.Logger().Info(msg, extras)
 }
 
 // rollbarMessage is a wrapper function to call rollbar's client.MessageWithExtras function from client stored in context
@@ -743,15 +756,20 @@ func UniquifyIntSlice(intSlice []int) []int {
 
 func NewExtra(ctx context.Context, key string, e interface{}) {
 	c := GetBuffaloContext(ctx)
-	extras := GetExtras(c)
+	extras := getExtras(c)
+
+	extrasLock.Lock()
+	defer extrasLock.Unlock()
 	extras[key] = e
+
 	c.Set(ContextKeyExtras, extras)
 }
 
-func GetExtras(c buffalo.Context) map[string]interface{} {
+func getExtras(c buffalo.Context) map[string]interface{} {
 	extras, _ := c.Value(ContextKeyExtras).(map[string]interface{})
 	if extras == nil {
 		extras = map[string]interface{}{}
 	}
+
 	return extras
 }

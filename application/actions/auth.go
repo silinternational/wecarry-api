@@ -704,12 +704,10 @@ func setCurrentUser(next buffalo.Handler) buffalo.Handler {
 		// set person on rollbar session
 		domain.RollbarSetPerson(c, user.UUID.String(), user.Nickname, user.Email)
 		msg := fmt.Sprintf("user %s authenticated with bearer token from ip %s", user.Email, c.Request().RemoteAddr)
-		extras := map[string]interface{}{
-			"user_id": user.ID,
-			"email":   user.Email,
-			"ip":      c.Request().RemoteAddr,
-		}
-		domain.Info(c, msg, extras)
+		domain.NewExtra(c, "user_id", user.ID)
+		domain.NewExtra(c, "email", user.Email)
+		domain.NewExtra(c, "ip", c.Request().RemoteAddr)
+		domain.Info(c, msg)
 
 		return next(c)
 	}
