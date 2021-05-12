@@ -304,3 +304,38 @@ func removeFile(m interface{}) error {
 func fieldByName(i interface{}, name string) reflect.Value {
 	return reflect.ValueOf(i).Elem().FieldByName(name)
 }
+
+func DestroyAll() {
+	// delete all Requests, RequestHistories, RequestFiles, PotentialProviders, Threads, and ThreadParticipants
+	var requests Requests
+	destroyTable(&requests)
+
+	// delete all Meetings, MeetingParticipants, and MeetingInvites
+	var meetings Meetings
+	destroyTable(&meetings)
+
+	// delete all Organizations, OrganizationDomains, OrganizationTrusts, and UserOrganizations
+	var organizations Organizations
+	destroyTable(&organizations)
+
+	// delete all Users, Messages, UserAccessTokens, and Watches
+	var users Users
+	destroyTable(&users)
+
+	// delete all Files
+	var files Files
+	destroyTable(&files)
+
+	// delete all Locations
+	var locations Locations
+	destroyTable(&locations)
+}
+
+func destroyTable(i interface{}) {
+	if err := DB.All(i); err != nil {
+		panic(err.Error())
+	}
+	if err := DB.Destroy(i); err != nil {
+		panic(err.Error())
+	}
+}
