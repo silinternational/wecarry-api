@@ -60,10 +60,7 @@ func (r *queryResolver) Message(ctx context.Context, id *string) (*models.Messag
 	var message models.Message
 
 	if err := message.FindByUserAndUUID(currentUser, *id); err != nil {
-		extras := map[string]interface{}{
-			"user": currentUser.UUID.String(),
-		}
-		return &models.Message{}, domain.ReportError(ctx, err, "GetMessage", extras)
+		return &models.Message{}, domain.ReportError(ctx, err, "GetMessage")
 	}
 
 	return &message, nil

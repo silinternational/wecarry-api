@@ -63,7 +63,7 @@ func createTestContext(user User) buffalo.Context {
 	ctx := &testBuffaloContext{
 		params: map[interface{}]interface{}{},
 	}
-	ctx.Set("current_user", user)
+	ctx.Set(domain.ContextKeyCurrentUser, user)
 	return ctx
 }
 

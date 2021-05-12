@@ -116,7 +116,8 @@ func CurrentUser(ctx context.Context) User {
 	if ok {
 		return CurrentUser(bc)
 	}
-	user, _ := ctx.Value("current_user").(User)
+	user, _ := ctx.Value(domain.ContextKeyCurrentUser).(User)
+	domain.NewExtra(ctx, "currentUserID", user.UUID)
 	return user
 }
 

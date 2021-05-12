@@ -78,8 +78,8 @@ func (m *meetingParticipantResolver) Meeting(ctx context.Context, obj *models.Me
 
 	mtg, err := obj.Meeting()
 	if err != nil {
-		return nil, domain.ReportError(ctx, err, "MeetingParticipant.Meeting",
-			map[string]interface{}{"meetingParticipant": *obj})
+		domain.NewExtra(ctx, "meetingParticipant", *obj)
+		return nil, domain.ReportError(ctx, err, "MeetingParticipant.Meeting")
 	}
 	return &mtg, err
 }
@@ -91,8 +91,8 @@ func (m *meetingParticipantResolver) User(ctx context.Context, obj *models.Meeti
 
 	user, err := obj.User()
 	if err != nil {
-		return nil, domain.ReportError(ctx, err, "MeetingParticipant.User",
-			map[string]interface{}{"meetingParticipant": *obj})
+		domain.NewExtra(ctx, "meetingParticipant", *obj)
+		return nil, domain.ReportError(ctx, err, "MeetingParticipant.User")
 	}
 
 	return &user, nil
@@ -107,8 +107,8 @@ func (m *meetingParticipantResolver) Invite(ctx context.Context, obj *models.Mee
 
 	inv, err := obj.Invite()
 	if err != nil {
-		return nil, domain.ReportError(ctx, err, "MeetingParticipant.Invite",
-			map[string]interface{}{"meetingParticipant": *obj})
+		domain.NewExtra(ctx, "meetingParticipant", *obj)
+		return nil, domain.ReportError(ctx, err, "MeetingParticipant.Invite")
 	}
 
 	return inv, nil

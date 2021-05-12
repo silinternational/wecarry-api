@@ -773,7 +773,8 @@ func (u *User) MeetingsAsParticipant(ctx context.Context) ([]Meeting, error) {
 		Where("meeting_participants.user_id=?", u.ID).
 		Join("meeting_participants", "meeting_participants.meeting_id=meetings.id").
 		All(&m); err != nil {
-		return m, domain.ReportError(ctx, err, "User.MeetingsAsParticipant", map[string]interface{}{"user": u.UUID})
+		domain.NewExtra(ctx, "user", u.UUID)
+		return m, domain.ReportError(ctx, err, "User.MeetingsAsParticipant")
 	}
 	return m, nil
 }

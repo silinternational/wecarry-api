@@ -154,13 +154,10 @@ func (r *requestResolver) Actions(ctx context.Context, obj *models.Request) ([]s
 	}
 
 	user := models.CurrentUser(ctx)
-	extras := map[string]interface{}{
-		"user": user.UUID,
-	}
 
 	actions, err := obj.GetCurrentActions(user)
 	if err != nil {
-		return actions, domain.ReportError(ctx, err, "GetRequestActions", extras)
+		return actions, domain.ReportError(ctx, err, "GetRequestActions")
 	}
 
 	return actions, nil
@@ -175,10 +172,7 @@ func (r *requestResolver) Threads(ctx context.Context, obj *models.Request) ([]m
 	user := models.CurrentUser(ctx)
 	threads, err := obj.GetThreads(user)
 	if err != nil {
-		extras := map[string]interface{}{
-			"user": user.UUID,
-		}
-		return nil, domain.ReportError(ctx, err, "GetRequestThreads", extras)
+		return nil, domain.ReportError(ctx, err, "GetRequestThreads")
 	}
 
 	return threads, nil
@@ -294,10 +288,7 @@ func (r *queryResolver) Requests(ctx context.Context, destination, origin *Locat
 	}
 	err := requests.FindByUser(ctx, cUser, filter)
 	if err != nil {
-		extras := map[string]interface{}{
-			"user": cUser.UUID,
-		}
-		return nil, domain.ReportError(ctx, err, "GetRequests", extras)
+		return nil, domain.ReportError(ctx, err, "GetRequests")
 	}
 
 	return requests, nil
@@ -417,30 +408,27 @@ type requestInput struct {
 // CreateRequest resolves the `createRequest` mutation.
 func (r *mutationResolver) CreateRequest(ctx context.Context, input requestInput) (*models.Request, error) {
 	cUser := models.CurrentUser(ctx)
-	extras := map[string]interface{}{
-		"user": cUser.UUID,
-	}
 
 	request, err := convertGqlRequestInputToDBRequest(ctx, input, cUser)
 	if err != nil {
-		return &models.Request{}, domain.ReportError(ctx, err, "CreateRequest.ProcessInput", extras)
+		return &models.Request{}, domain.ReportError(ctx, err, "CreateRequest.ProcessInput")
 	}
 
 	if !request.MeetingID.Valid {
 		dest := convertLocation(*input.Destination)
 		if err = dest.Create(); err != nil {
-			return &models.Request{}, domain.ReportError(ctx, err, "CreateRequest.SetDestination", extras)
+			return &models.Request{}, domain.ReportError(ctx, err, "CreateRequest.SetDestination")
 		}
 		request.DestinationID = dest.ID
 	}
 
 	if err = request.Create(); err != nil {
-		return &models.Request{}, domain.ReportError(ctx, err, "CreateRequest", extras)
+		return &models.Request{}, domain.ReportError(ctx, err, "CreateRequest")
 	}
 
 	if input.Origin != nil {
 		if err = request.SetOrigin(convertLocation(*input.Origin)); err != nil {
-			return &models.Request{}, domain.ReportError(ctx, err, "CreateRequest.SetOrigin", extras)
+			return &models.Request{}, domain.ReportError(ctx, err, "CreateRequest.SetOrigin")
 		}
 	}
 
@@ -450,41 +438,38 @@ func (r *mutationResolver) CreateRequest(ctx context.Context, input requestInput
 // UpdateRequest resolves the `updateRequest` mutation.
 func (r *mutationResolver) UpdateRequest(ctx context.Context, input requestInput) (*models.Request, error) {
 	cUser := models.CurrentUser(ctx)
-	extras := map[string]interface{}{
-		"user": cUser.UUID,
-	}
 
 	request, err := convertGqlRequestInputToDBRequest(ctx, input, cUser)
 	if err != nil {
-		return &models.Request{}, domain.ReportError(ctx, err, "UpdateRequest.ProcessInput", extras)
+		return &models.Request{}, domain.ReportError(ctx, err, "UpdateRequest.ProcessInput")
 	}
 
 	var dbRequest models.Request
 	_ = dbRequest.FindByID(request.ID)
 	if editable, err := dbRequest.IsEditable(cUser); err != nil {
-		return &models.Request{}, domain.ReportError(ctx, err, "UpdateRequest.GetEditable", extras)
+		return &models.Request{}, domain.ReportError(ctx, err, "UpdateRequest.GetEditable")
 	} else if !editable {
 		return &models.Request{}, domain.ReportError(ctx, errors.New("attempt to update a non-editable request"),
-			"UpdateRequest.NotEditable", extras)
+			"UpdateRequest.NotEditable")
 	}
 
 	if err := request.Update(); err != nil {
-		return &models.Request{}, domain.ReportError(ctx, err, "UpdateRequest", extras)
+		return &models.Request{}, domain.ReportError(ctx, err, "UpdateRequest")
 	}
 
 	if input.Destination != nil {
 		if err := request.SetDestination(convertLocation(*input.Destination)); err != nil {
-			return &models.Request{}, domain.ReportError(ctx, err, "UpdateRequest.SetDestination", extras)
+			return &models.Request{}, domain.ReportError(ctx, err, "UpdateRequest.SetDestination")
 		}
 	}
 
 	if input.Origin == nil {
 		if err := request.RemoveOrigin(); err != nil {
-			return &models.Request{}, domain.ReportError(ctx, err, "UpdateRequest.RemoveOrigin", extras)
+			return &models.Request{}, domain.ReportError(ctx, err, "UpdateRequest.RemoveOrigin")
 		}
 	} else {
 		if err := request.SetOrigin(convertLocation(*input.Origin)); err != nil {
-			return &models.Request{}, domain.ReportError(ctx, err, "UpdateRequest.SetOrigin", extras)
+			return &models.Request{}, domain.ReportError(ctx, err, "UpdateRequest.SetOrigin")
 		}
 	}
 
@@ -499,29 +484,26 @@ func (r *mutationResolver) UpdateRequestStatus(ctx context.Context, input Update
 	}
 
 	cUser := models.CurrentUser(ctx)
-	extras := map[string]interface{}{
-		"user":      cUser.UUID,
-		"oldStatus": request.Status,
-		"newStatus": input.Status,
-	}
+	domain.NewExtra(ctx, "oldStatus", request.Status)
+	domain.NewExtra(ctx, "newStatus", input.Status)
 
 	if !cUser.CanUpdateRequestStatus(request, input.Status) {
 		return &models.Request{}, domain.ReportError(ctx, errors.New("not allowed to change request status"),
-			"UpdateRequestStatus.Unauthorized", extras)
+			"UpdateRequestStatus.Unauthorized")
 	}
 
 	if err := request.SetProviderWithStatus(input.Status, input.ProviderUserID); err != nil {
 		return &models.Request{}, domain.ReportError(ctx, errors.New("error setting provider with status: "+err.Error()),
-			"UpdateRequestStatus.SetProvider", extras)
+			"UpdateRequestStatus.SetProvider")
 	}
 
 	if err := request.Update(); err != nil {
-		return &models.Request{}, domain.ReportError(ctx, err, "UpdateRequestStatus", extras)
+		return &models.Request{}, domain.ReportError(ctx, err, "UpdateRequestStatus")
 	}
 
 	if err := request.DestroyPotentialProviders(input.Status, cUser); err != nil {
 		return &models.Request{}, domain.ReportError(ctx, errors.New("error destroying request's potential providers: "+err.Error()),
-			"UpdateRequestStatus.DestroyPotentialProviders", extras)
+			"UpdateRequestStatus.DestroyPotentialProviders")
 	}
 
 	return &request, nil
@@ -570,14 +552,11 @@ func (r *mutationResolver) RemoveMeAsPotentialProvider(ctx context.Context, requ
 		return &models.Request{}, domain.ReportError(ctx, err, "RemoveMeAsPotentialProvider.FindRequest")
 	}
 
-	extras := map[string]interface{}{
-		"user":    cUser.UUID,
-		"request": request.UUID,
-	}
+	domain.NewExtra(ctx, "request", request.UUID)
 
 	if err := provider.Destroy(); err != nil {
 		return &models.Request{}, domain.ReportError(ctx, errors.New("error removing potential provider: "+err.Error()),
-			"RemoveMeAsPotentialProvider", extras)
+			"RemoveMeAsPotentialProvider")
 	}
 
 	if err := request.FindByUUID(requestID); err != nil {
@@ -602,14 +581,11 @@ func (r *mutationResolver) RejectPotentialProvider(ctx context.Context, requestI
 		return &models.Request{}, domain.ReportError(ctx, err, "RemovePotentialProvider.FindRequest")
 	}
 
-	extras := map[string]interface{}{
-		"user":    cUser.UUID,
-		"request": request.UUID,
-	}
+	domain.NewExtra(ctx, "request", request.UUID)
 
 	if err := provider.Destroy(); err != nil {
 		return &models.Request{}, domain.ReportError(ctx, errors.New("error removing potential provider: "+err.Error()),
-			"RemovePotentialProvider", extras)
+			"RemovePotentialProvider")
 	}
 
 	if err := request.FindByUUID(requestID); err != nil {
