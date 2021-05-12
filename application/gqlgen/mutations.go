@@ -17,13 +17,11 @@ type mutationResolver struct{ *Resolver }
 // CreateOrganization adds a new organization, if the current user has appropriate permissions.
 func (r *mutationResolver) CreateOrganization(ctx context.Context, input CreateOrganizationInput) (*models.Organization, error) {
 	cUser := models.CurrentUser(ctx)
-	extras := map[string]interface{}{
-		"user": cUser.UUID,
-	}
+
 	if !cUser.CanCreateOrganization() {
-		extras["user.admin_role"] = cUser.AdminRole
+		domain.NewExtra(ctx, "user.admin_role", cUser.AdminRole)
 		err := errors.New("insufficient permissions")
-		return &models.Organization{}, domain.ReportError(ctx, err, "CreateOrganization.Unauthorized", extras)
+		return &models.Organization{}, domain.ReportError(ctx, err, "CreateOrganization.Unauthorized")
 	}
 
 	org := models.Organization{
@@ -49,18 +47,15 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input CreateO
 // UpdateOrganization updates an organization, if the current user has appropriate permissions.
 func (r *mutationResolver) UpdateOrganization(ctx context.Context, input UpdateOrganizationInput) (*models.Organization, error) {
 	cUser := models.CurrentUser(ctx)
-	extras := map[string]interface{}{
-		"user": cUser.UUID,
-	}
 
 	var org models.Organization
 	if err := org.FindByUUID(input.ID); err != nil {
-		return &models.Organization{}, domain.ReportError(ctx, err, "UpdateOrganization.NotFound", extras)
+		return &models.Organization{}, domain.ReportError(ctx, err, "UpdateOrganization.NotFound")
 	}
 
 	if !cUser.CanEditOrganization(org.ID) {
 		err := errors.New("insufficient permissions")
-		return &models.Organization{}, domain.ReportError(ctx, err, "UpdateOrganization.Unauthorized", extras)
+		return &models.Organization{}, domain.ReportError(ctx, err, "UpdateOrganization.Unauthorized")
 	}
 
 	org.Url = models.ConvertStringPtrToNullsString(input.URL)
@@ -79,7 +74,7 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, input UpdateO
 	org.AuthType = input.AuthType
 	org.AuthConfig = input.AuthConfig
 	if err := org.Save(); err != nil {
-		return &models.Organization{}, domain.ReportError(ctx, err, "UpdateOrganization", extras)
+		return &models.Organization{}, domain.ReportError(ctx, err, "UpdateOrganization")
 	}
 
 	return &org, nil
@@ -88,28 +83,25 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, input UpdateO
 // CreateOrganizationDomain is the resolver for the `createOrganizationDomain` mutation
 func (r *mutationResolver) CreateOrganizationDomain(ctx context.Context, input CreateOrganizationDomainInput) ([]models.OrganizationDomain, error) {
 	cUser := models.CurrentUser(ctx)
-	extras := map[string]interface{}{
-		"user": cUser.UUID,
-	}
 
 	var org models.Organization
 	if err := org.FindByUUID(input.OrganizationID); err != nil {
-		return nil, domain.ReportError(ctx, err, "CreateOrganizationDomain.NotFound", extras)
+		return nil, domain.ReportError(ctx, err, "CreateOrganizationDomain.NotFound")
 	}
 
 	if !cUser.CanEditOrganization(org.ID) {
 		err := errors.New("insufficient permissions")
-		return nil, domain.ReportError(ctx, err, "CreateOrganizationDomain.Unauthorized", extras)
+		return nil, domain.ReportError(ctx, err, "CreateOrganizationDomain.Unauthorized")
 	}
 
 	if err := org.AddDomain(input.Domain, input.AuthType, domain.ConvertStrPtrToString(input.AuthConfig)); err != nil {
-		return nil, domain.ReportError(ctx, err, "CreateOrganizationDomain", extras)
+		return nil, domain.ReportError(ctx, err, "CreateOrganizationDomain")
 	}
 
 	domains, err2 := org.Domains()
 	if err2 != nil {
 		// don't return an error since the AddDomain operation succeeded
-		_ = domain.ReportError(ctx, err2, "", extras)
+		_ = domain.ReportError(ctx, err2, "")
 	}
 
 	return domains, nil
@@ -118,35 +110,32 @@ func (r *mutationResolver) CreateOrganizationDomain(ctx context.Context, input C
 // UpdateOrganizationDomain is the resolver for the `updateOrganizationDomain` mutation
 func (r *mutationResolver) UpdateOrganizationDomain(ctx context.Context, input CreateOrganizationDomainInput) ([]models.OrganizationDomain, error) {
 	cUser := models.CurrentUser(ctx)
-	extras := map[string]interface{}{
-		"user": cUser.UUID,
-	}
 
 	var org models.Organization
 	if err := org.FindByUUID(input.OrganizationID); err != nil {
-		return nil, domain.ReportError(ctx, err, "UpdateOrganizationDomain.NotFound", extras)
+		return nil, domain.ReportError(ctx, err, "UpdateOrganizationDomain.NotFound")
 	}
 
 	if !cUser.CanEditOrganization(org.ID) {
 		err := errors.New("insufficient permissions")
-		return nil, domain.ReportError(ctx, err, "UpdateOrganizationDomain.Unauthorized", extras)
+		return nil, domain.ReportError(ctx, err, "UpdateOrganizationDomain.Unauthorized")
 	}
 
 	var orgDomain models.OrganizationDomain
 	if err := orgDomain.FindByDomain(input.Domain); err != nil {
-		return nil, domain.ReportError(ctx, err, "UpdateOrganizationDomain.NotFound", extras)
+		return nil, domain.ReportError(ctx, err, "UpdateOrganizationDomain.NotFound")
 	}
 
 	orgDomain.AuthType = input.AuthType
 	orgDomain.AuthConfig = domain.ConvertStrPtrToString(input.AuthConfig)
 	if err := orgDomain.Save(); err != nil {
-		return nil, domain.ReportError(ctx, err, "UpdateOrganizationDomain.SaveError", extras)
+		return nil, domain.ReportError(ctx, err, "UpdateOrganizationDomain.SaveError")
 	}
 
 	domains, err2 := org.Domains()
 	if err2 != nil {
 		// don't return an error since the operation succeeded
-		_ = domain.ReportError(ctx, err2, "", extras)
+		_ = domain.ReportError(ctx, err2, "")
 	}
 
 	return domains, nil
@@ -155,28 +144,25 @@ func (r *mutationResolver) UpdateOrganizationDomain(ctx context.Context, input C
 // RemoveOrganizationDomain is the resolver for the `removeOrganizationDomain` mutation
 func (r *mutationResolver) RemoveOrganizationDomain(ctx context.Context, input RemoveOrganizationDomainInput) ([]models.OrganizationDomain, error) {
 	cUser := models.CurrentUser(ctx)
-	extras := map[string]interface{}{
-		"user": cUser.UUID,
-	}
 
 	var org models.Organization
 	if err := org.FindByUUID(input.OrganizationID); err != nil {
-		return nil, domain.ReportError(ctx, err, "RemoveOrganizationDomain.NotFound", extras)
+		return nil, domain.ReportError(ctx, err, "RemoveOrganizationDomain.NotFound")
 	}
 
 	if !cUser.CanEditOrganization(org.ID) {
 		err := errors.New("insufficient permissions")
-		return nil, domain.ReportError(ctx, err, "RemoveOrganizationDomain.Unauthorized", extras)
+		return nil, domain.ReportError(ctx, err, "RemoveOrganizationDomain.Unauthorized")
 	}
 
 	if err := org.RemoveDomain(input.Domain); err != nil {
-		return nil, domain.ReportError(ctx, err, "RemoveOrganizationDomain", extras)
+		return nil, domain.ReportError(ctx, err, "RemoveOrganizationDomain")
 	}
 
 	domains, err2 := org.Domains()
 	if err2 != nil {
 		// don't return an error since the RemoveDomain operation succeeded
-		_ = domain.ReportError(ctx, err2, "", extras)
+		_ = domain.ReportError(ctx, err2, "")
 	}
 
 	return domains, nil
@@ -185,17 +171,14 @@ func (r *mutationResolver) RemoveOrganizationDomain(ctx context.Context, input R
 // SetThreadLastViewedAt sets the last viewed time for the current user on the given thread
 func (r *mutationResolver) SetThreadLastViewedAt(ctx context.Context, input SetThreadLastViewedAtInput) (*models.Thread, error) {
 	cUser := models.CurrentUser(ctx)
-	extras := map[string]interface{}{
-		"user": cUser.UUID,
-	}
 
 	var thread models.Thread
 	if err := thread.FindByUUID(input.ThreadID); err != nil {
-		return &models.Thread{}, domain.ReportError(ctx, err, "SetThreadLastViewedAt.NotFound", extras)
+		return &models.Thread{}, domain.ReportError(ctx, err, "SetThreadLastViewedAt.NotFound")
 	}
 
 	if err := thread.UpdateLastViewedAt(cUser.ID, input.Time); err != nil {
-		return &models.Thread{}, domain.ReportError(ctx, err, "SetThreadLastViewedAt", extras)
+		return &models.Thread{}, domain.ReportError(ctx, err, "SetThreadLastViewedAt")
 	}
 
 	return &thread, nil
@@ -204,22 +187,19 @@ func (r *mutationResolver) SetThreadLastViewedAt(ctx context.Context, input SetT
 // CreateOrganizationTrust establishes a OrganizationTrust between two organizations
 func (r *mutationResolver) CreateOrganizationTrust(ctx context.Context, input CreateOrganizationTrustInput) (*models.Organization, error) {
 	cUser := models.CurrentUser(ctx)
-	extras := map[string]interface{}{
-		"user": cUser.UUID,
-	}
 
 	var organization models.Organization
 	if err := organization.FindByUUID(input.PrimaryID); err != nil {
-		return &models.Organization{}, domain.ReportError(ctx, err, "CreateOrganizationTrust.FindPrimaryOrganization", extras)
+		return &models.Organization{}, domain.ReportError(ctx, err, "CreateOrganizationTrust.FindPrimaryOrganization")
 	}
 
 	if !cUser.CanCreateOrganizationTrust() {
 		err := errors.New("insufficient permissions")
-		return &models.Organization{}, domain.ReportError(ctx, err, "CreateOrganizationTrust.Unauthorized", extras)
+		return &models.Organization{}, domain.ReportError(ctx, err, "CreateOrganizationTrust.Unauthorized")
 	}
 
 	if err := organization.CreateTrust(input.SecondaryID); err != nil {
-		return &models.Organization{}, domain.ReportError(ctx, err, "CreateOrganizationTrust", extras)
+		return &models.Organization{}, domain.ReportError(ctx, err, "CreateOrganizationTrust")
 	}
 
 	return &organization, nil
@@ -228,22 +208,19 @@ func (r *mutationResolver) CreateOrganizationTrust(ctx context.Context, input Cr
 // RemoveOrganizationTrust removes a OrganizationTrust between two organizations
 func (r *mutationResolver) RemoveOrganizationTrust(ctx context.Context, input RemoveOrganizationTrustInput) (*models.Organization, error) {
 	cUser := models.CurrentUser(ctx)
-	extras := map[string]interface{}{
-		"user": cUser.UUID,
-	}
 
 	var organization models.Organization
 	if err := organization.FindByUUID(input.PrimaryID); err != nil {
-		return &models.Organization{}, domain.ReportError(ctx, err, "RemoveOrganizationTrust.FindPrimaryOrganization", extras)
+		return &models.Organization{}, domain.ReportError(ctx, err, "RemoveOrganizationTrust.FindPrimaryOrganization")
 	}
 
 	if !cUser.CanRemoveOrganizationTrust(organization.ID) {
 		err := errors.New("insufficient permissions")
-		return &models.Organization{}, domain.ReportError(ctx, err, "RemoveOrganizationTrust.Unauthorized", extras)
+		return &models.Organization{}, domain.ReportError(ctx, err, "RemoveOrganizationTrust.Unauthorized")
 	}
 
 	if err := organization.RemoveTrust(input.SecondaryID); err != nil {
-		return &models.Organization{}, domain.ReportError(ctx, err, "RemoveOrganizationTrust", extras)
+		return &models.Organization{}, domain.ReportError(ctx, err, "RemoveOrganizationTrust")
 	}
 
 	return &organization, nil

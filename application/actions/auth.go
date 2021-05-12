@@ -488,23 +488,23 @@ func orgBasedAuthCallback(c buffalo.Context, orgUUID, authEmail, clientID string
 			fmt.Sprintf("error finding org with UUID %s ... %v", orgUUID, err.Error()))
 	}
 
-	extras := map[string]interface{}{"authEmail": authEmail}
+	domain.NewExtra(c, "authEmail", authEmail)
 
 	ap, err := org.GetAuthProvider(authEmail)
 	if err != nil {
 		return logErrorAndRedirect(c, domain.ErrorLoadingAuthProvider,
-			fmt.Sprintf("error loading auth provider for '%s' ... %v", org.Name, err), extras)
+			fmt.Sprintf("error loading auth provider for '%s' ... %v", org.Name, err))
 	}
 
 	authResp := ap.AuthCallback(c)
 	if authResp.Error != nil {
-		return logErrorAndRedirect(c, domain.ErrorAuthProvidersCallback, authResp.Error.Error(), extras)
+		return logErrorAndRedirect(c, domain.ErrorAuthProvidersCallback, authResp.Error.Error())
 	}
 
 	returnTo := getOrSetReturnTo(c)
 
 	if authResp.AuthUser == nil {
-		return logErrorAndRedirect(c, domain.ErrorAuthProvidersCallback, "nil authResp.AuthUser", extras)
+		return logErrorAndRedirect(c, domain.ErrorAuthProvidersCallback, "nil authResp.AuthUser")
 	}
 
 	// if we have an authuser, find or create user in local db and finish login
@@ -512,8 +512,8 @@ func orgBasedAuthCallback(c buffalo.Context, orgUUID, authEmail, clientID string
 
 	if err := verifyEmails(c, authEmail, authResp.AuthUser.Email); err != nil {
 		c.Session().Clear()
-		extras := map[string]interface{}{"authEmail": authEmail}
-		return logErrorAndRedirect(c, domain.ErrorAuthEmailMismatch, err.Error(), extras)
+		domain.NewExtra(c, "authEmail", authEmail)
+		return logErrorAndRedirect(c, domain.ErrorAuthEmailMismatch, err.Error())
 	}
 
 	// Check for an invite in the Session
@@ -595,9 +595,7 @@ func mergeExtras(code string, extras ...map[string]interface{}) map[string]inter
 
 // Make extras variadic, so that it can be omitted from the params
 func authRequestError(c buffalo.Context, authErr authError, extras ...map[string]interface{}) error {
-	allExtras := mergeExtras(authErr.errorKey, extras...)
-
-	domain.Error(c, authErr.errorMsg, allExtras)
+	domain.Error(c, authErr.errorMsg)
 
 	appErr := domain.AppError{
 		Code: authErr.httpStatus,
@@ -610,10 +608,8 @@ func authRequestError(c buffalo.Context, authErr authError, extras ...map[string
 }
 
 // Make extras variadic, so that it can be omitted from the params
-func logErrorAndRedirect(c buffalo.Context, code, message string, extras ...map[string]interface{}) error {
-	allExtras := mergeExtras(code, extras...)
-
-	domain.Error(c, message, allExtras)
+func logErrorAndRedirect(c buffalo.Context, code, message string) error {
+	domain.Error(c, message)
 
 	c.Session().Clear()
 
@@ -703,7 +699,7 @@ func setCurrentUser(next buffalo.Handler) buffalo.Handler {
 		if err != nil {
 			return c.Error(http.StatusInternalServerError, fmt.Errorf("error finding user by access token, %s", err.Error()))
 		}
-		c.Set("current_user", user)
+		c.Set(domain.ContextKeyCurrentUser, user)
 
 		// set person on rollbar session
 		domain.RollbarSetPerson(c, user.UUID.String(), user.Nickname, user.Email)

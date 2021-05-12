@@ -52,10 +52,8 @@ func (r *userResolver) Requests(ctx context.Context, obj *models.User, role Requ
 
 	requests, err := obj.Requests(requestRoleMap[role])
 	if err != nil {
-		extras := map[string]interface{}{
-			"role": role,
-		}
-		return nil, domain.ReportError(ctx, err, "GetUserRequests", extras)
+		domain.NewExtra(ctx, "role", role)
+		return nil, domain.ReportError(ctx, err, "GetUserRequests")
 	}
 
 	return requests, nil
@@ -146,10 +144,8 @@ func (r *queryResolver) Users(ctx context.Context) ([]models.User, error) {
 	role := currentUser.AdminRole
 	if role != models.UserAdminRoleSuperAdmin {
 		err := errors.New("insufficient permissions")
-		extras := map[string]interface{}{
-			"role": role,
-		}
-		return nil, domain.ReportError(ctx, err, "GetUsers.Unauthorized", extras)
+		domain.NewExtra(ctx, "role", role)
+		return nil, domain.ReportError(ctx, err, "GetUsers.Unauthorized")
 	}
 
 	users := models.Users{}
@@ -171,10 +167,8 @@ func (r *queryResolver) User(ctx context.Context, id *string) (*models.User, err
 	role := currentUser.AdminRole
 	if role != models.UserAdminRoleSuperAdmin && currentUser.UUID.String() != *id {
 		err := errors.New("insufficient permissions")
-		extras := map[string]interface{}{
-			"role": role,
-		}
-		return nil, domain.ReportError(ctx, err, "GetUser.Unauthorized", extras)
+		domain.NewExtra(ctx, "role", role)
+		return nil, domain.ReportError(ctx, err, "GetUser.Unauthorized")
 	}
 
 	dbUser := models.User{}
@@ -275,7 +269,8 @@ func getPublicProfile(ctx context.Context, user *models.User) *PublicProfile {
 
 	url, err := user.GetPhotoURL()
 	if err != nil {
-		_ = domain.ReportError(ctx, err, "", map[string]interface{}{"user": user.UUID.String()})
+		domain.NewExtra(ctx, "user", user.UUID)
+		_ = domain.ReportError(ctx, err, "")
 		return &PublicProfile{
 			ID:       user.UUID.String(),
 			Nickname: user.Nickname,
