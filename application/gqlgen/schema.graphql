@@ -51,6 +51,9 @@ type Query {
 #    'request' is disabled because it doesn't work for shared requests from a trusted org
 #    request(id: ID): Request
 
+    "Return a single request. Authenticated user must be authorized to the request."
+    request(id: ID): Request!
+
     """
     With no parameters supplied, all requests visible to the authenticated user are returned. Filter
     parameters only remove from this default list and never include requests that are not visible to the authenticated

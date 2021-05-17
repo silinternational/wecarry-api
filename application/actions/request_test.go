@@ -175,6 +175,60 @@ func (as *ActionSuite) verifyRequestResponse(request models.Request, resp Reques
 	}
 }
 
+func (as *ActionSuite) Test_RequestQuery() {
+	f := createFixturesForRequestQuery(as)
+
+	type testCase struct {
+		name        string
+		id          string
+		testUser    models.User
+		expectError bool
+		verifyFunc  func()
+	}
+
+	const queryTemplate = `{ request (id: %s)` + allRequestFields + `}`
+
+	var resp RequestResponse
+
+	testCases := []testCase{
+		{
+			name:        "missing ID",
+			testUser:    f.Users[1],
+			id:          "",
+			expectError: true,
+		},
+		{
+			name:        "bad ID",
+			testUser:    f.Users[1],
+			id:          domain.GetUUID().String(),
+			expectError: true,
+		},
+		{
+			name:     "good",
+			testUser: f.Users[1],
+			id:       f.Requests[0].UUID.String(),
+			verifyFunc: func() {
+				as.verifyRequestResponse(f.Requests[0], resp.Request)
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		as.T().Run(tc.name, func(t *testing.T) {
+			query := fmt.Sprintf(queryTemplate, tc.id)
+			resp = RequestResponse{}
+			err := as.testGqlQuery(query, tc.testUser.Nickname, &resp)
+
+			if tc.expectError {
+				as.Error(err)
+				return
+			}
+			as.NoError(err)
+			tc.verifyFunc()
+		})
+	}
+}
+
 func (as *ActionSuite) Test_RequestsQuery() {
 	f := createFixturesForRequestQuery(as)
 
