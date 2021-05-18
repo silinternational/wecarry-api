@@ -43,12 +43,9 @@ func mustCreate(tx *pop.Connection, f interface{}) {
 // createOrganizationFixtures generates any number of organization records for testing.
 //  Their names will be called "Org1", "Org2", ...
 func createOrganizationFixtures(tx *pop.Connection, n int) Organizations {
-	files := make([]File, n)
+	files := createFileFixtures(n)
 	organizations := make(Organizations, n)
 	for i := range organizations {
-		if err := files[i].Store("logo.gif", []byte("GIF89a")); err != nil {
-			panic("error storing org logo, " + err.Error())
-		}
 		organizations[i].Name = fmt.Sprintf("Org%v", i+1)
 		organizations[i].AuthType = AuthTypeSaml
 		organizations[i].AuthConfig = "{}"
@@ -225,13 +222,21 @@ func createLocationFixtures(tx *pop.Connection, n int) Locations {
 func createFileFixtures(n int) Files {
 	fileFixtures := make([]File, n)
 	for i := range fileFixtures {
-		var f File
-		if err := f.Store(strconv.Itoa(rand.Int())+".gif", []byte("GIF89a")); err != nil {
-			panic(fmt.Sprintf("failed to create file fixture, %s", err))
-		}
-		fileFixtures[i] = f
+		fileFixtures[i] = createFileFixture()
 	}
 	return fileFixtures
+}
+
+func createFileFixture() File {
+	// #nosec G404
+	f := File{
+		Name:    strconv.Itoa(rand.Int()) + ".gif",
+		Content: []byte("GIF89a"),
+	}
+	if err := f.Store(); err != nil {
+		panic(fmt.Sprintf("failed to create file fixture, %s", err))
+	}
+	return f
 }
 
 type potentialProvidersFixtures struct {

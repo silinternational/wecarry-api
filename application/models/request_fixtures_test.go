@@ -1,7 +1,6 @@
 package models
 
 import (
-	"fmt"
 	"strconv"
 	"testing"
 	"time"
@@ -169,13 +168,9 @@ func CreateFixturesForRequestsGetFiles(ms *ModelSuite) RequestFixtures {
 	request := Request{CreatedByID: user.ID, OrganizationID: organization.ID, DestinationID: location.ID}
 	createFixture(ms, &request)
 
-	files := make(Files, 3)
+	files := createFileFixtures(3)
 
 	for i := range files {
-		var file File
-		ms.Nil(file.Store(fmt.Sprintf("file_%d.gif", i), []byte("GIF87a")),
-			"failed to create file fixture")
-		files[i] = file
 		_, err := request.AttachFile(files[i].UUID.String())
 		ms.NoError(err, "failed to attach file to request fixture")
 	}

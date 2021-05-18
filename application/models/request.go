@@ -679,7 +679,7 @@ func (r *Request) AttachFile(fileID string) (File, error) {
 	if err := requestFile.Create(); err != nil {
 		return f, err
 	}
-	if err := f.SetLinked(); err != nil {
+	if err := f.SetLinked(DB); err != nil {
 		domain.ErrLogger.Printf("error marking new request file %d as linked, %s", f.ID, err)
 	}
 

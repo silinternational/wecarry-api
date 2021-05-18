@@ -27,7 +27,7 @@ func convertErrToSlice(err error) []error {
 func getFetchFileCallback() func([]int) ([]*models.File, []error) {
 	return func(ids []int) ([]*models.File, []error) {
 		objects := models.Files{}
-		err := objects.FindByIDs(ids)
+		err := objects.FindByIDs(models.DB, ids)
 		if len(objects) == 0 {
 			return []*models.File{}, convertErrToSlice(err)
 		}

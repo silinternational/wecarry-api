@@ -26,9 +26,7 @@ func createFixturesForMeetings(as *ActionSuite) meetingQueryFixtures {
 	err := aws.CreateS3Bucket()
 	as.NoError(err, "failed to create S3 bucket, %s", err)
 
-	var fileFixture models.File
-	fErr := fileFixture.Store("new_photo.webp", []byte("RIFFxxxxWEBPVP"))
-	as.Nil(fErr, "failed to create ImageFile fixture")
+	fileFixture := test.CreateFileFixture()
 
 	meetings := models.Meetings{
 		{
