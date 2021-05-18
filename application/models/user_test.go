@@ -803,7 +803,7 @@ func (ms *ModelSuite) TestUser_CanViewRequest() {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			ms.Equal(test.want, test.user.canViewRequest(test.request),
+			ms.Equal(test.want, test.user.CanViewRequest(test.request),
 				"incorrect result")
 		})
 	}
