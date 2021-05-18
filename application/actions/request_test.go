@@ -186,7 +186,7 @@ func (as *ActionSuite) Test_RequestQuery() {
 		verifyFunc  func()
 	}
 
-	const queryTemplate = `{ request (id: %s)` + allRequestFields + `}`
+	const queryTemplate = `{ request (id: "%s")` + allRequestFields + `}`
 
 	var resp RequestResponse
 
@@ -223,7 +223,7 @@ func (as *ActionSuite) Test_RequestQuery() {
 				as.Error(err)
 				return
 			}
-			as.NoError(err)
+			as.NoError(err, "unexpected gql error, query: %s\nerr: %s", query, err)
 			tc.verifyFunc()
 		})
 	}
