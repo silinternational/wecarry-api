@@ -43,8 +43,7 @@ func fixturesForCreateOrganization(as *ActionSuite) OrganizationFixtures {
 	users[0].AdminRole = models.UserAdminRoleSuperAdmin
 	as.NoError(as.DB.Save(&users[0]))
 
-	var file models.File
-	as.Nil(file.Store("photo.gif", []byte("GIF89a")), "unexpected error storing file")
+	file := test.CreateFileFixture()
 
 	return OrganizationFixtures{
 		Users:         users,
@@ -264,8 +263,7 @@ func fixturesForUpdateOrganization(as *ActionSuite) OrganizationFixtures {
 	users[0].AdminRole = models.UserAdminRoleSuperAdmin
 	as.NoError(as.DB.Save(&users[0]))
 
-	var file models.File
-	as.Nil(file.Store("photo.gif", []byte("GIF89a")), "unexpected error storing file")
+	file := test.CreateFileFixture()
 
 	return OrganizationFixtures{
 		Users:               users,
@@ -297,8 +295,7 @@ func fixturesForCreateTrust(as *ActionSuite) OrganizationFixtures {
 	users[1].AdminRole = models.UserAdminRoleAdmin
 	as.NoError(as.DB.Save(&users[1]))
 
-	var file models.File
-	as.Nil(file.Store("photo.gif", []byte("GIF89a")), "unexpected error storing file")
+	file := test.CreateFileFixture()
 
 	return OrganizationFixtures{
 		Users:         users,
@@ -333,8 +330,7 @@ func fixturesForRemoveTrust(as *ActionSuite) OrganizationFixtures {
 	users[1].AdminRole = models.UserAdminRoleAdmin
 	as.NoError(as.DB.Save(&users[1]))
 
-	var file models.File
-	as.Nil(file.Store("photo.gif", []byte("GIF89a")), "unexpected error storing file")
+	file := test.CreateFileFixture()
 
 	return OrganizationFixtures{
 		Users:         users,
