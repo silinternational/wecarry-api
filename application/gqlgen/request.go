@@ -17,6 +17,27 @@ func (r *Resolver) Request() RequestResolver {
 	return &requestResolver{r}
 }
 
+func (r *queryResolver) Request(ctx context.Context, id *string) (*models.Request, error) {
+	if id == nil {
+		return nil, errors.New("ID must not be null")
+	}
+
+	cUser := models.CurrentUser(ctx)
+	domain.NewExtra(ctx, "requestUUID", *id)
+
+	request := models.Request{}
+	if err := request.FindByUUID(*id); err != nil {
+		return &request, domain.ReportError(ctx, err, "ViewRequest.Error")
+	}
+
+	if request.ID != 0 && cUser.CanViewRequest(request) {
+		return &request, nil
+	}
+
+	return &models.Request{}, domain.ReportError(ctx, errors.New("user not allowed to view request"),
+		"ViewRequest.NotFound")
+}
+
 type requestResolver struct{ *Resolver }
 
 // ID resolves the `ID` property of the request query. It provides the UUID instead of the autoincrement ID.
@@ -284,7 +305,6 @@ func (r *queryResolver) Requests(ctx context.Context, destination, origin *Locat
 		Destination: convertOptionalLocation(destination),
 		Origin:      convertOptionalLocation(origin),
 		SearchText:  searchText,
-		RequestID:   nil,
 	}
 	err := requests.FindByUser(ctx, cUser, filter)
 	if err != nil {

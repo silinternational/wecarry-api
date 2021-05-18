@@ -136,6 +136,11 @@
 - id: GetOrganizationDomains
   translation: We had a problem finding the list of domains for the organization.
 
+# Request
+- id: ViewRequest.NotFound
+  translation: Request not found
+- id: ViewRequest.Error
+  translation: There was a problem viewing that request
 
 - id: SetThreadLastViewedAt.NotFound
   translation: We had a problem finding the conversation to update its last-viewed time.

@@ -575,7 +575,7 @@ func (r *Request) FindByUUIDForCurrentUser(uuid string, user User) error {
 		return err
 	}
 
-	if !user.canViewRequest(*r) {
+	if !user.CanViewRequest(*r) {
 		return fmt.Errorf("unauthorized: user %v may not view request %v.", user.ID, r.ID)
 	}
 

@@ -342,7 +342,7 @@ func (u *User) CanUpdateRequestStatus(request Request, newStatus RequestStatus) 
 	return request.canUserChangeStatus(*u, newStatus)
 }
 
-func (u *User) canViewRequest(request Request) bool {
+func (u *User) CanViewRequest(request Request) bool {
 	if u.AdminRole == UserAdminRoleSuperAdmin {
 		return true
 	}
