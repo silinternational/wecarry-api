@@ -705,7 +705,7 @@ func ReportError(ctx context.Context, err error, errID string) error {
 	NewExtra(c, "function", GetFunctionName(2))
 
 	if r := graphql.GetRequestContext(ctx); r != nil {
-		NewExtra(c, "query", r.RawQuery)
+		NewExtra(c, "query", fmt.Sprintf("%#v", r.RawQuery)) // escape control characters
 	}
 
 	errStr := errID
