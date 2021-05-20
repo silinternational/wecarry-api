@@ -88,16 +88,16 @@ func (ms *ModelSuite) TestUserAccessToken_DeleteByBearerToken() {
 func (ms *ModelSuite) TestUserAccessToken_FindByBearerToken() {
 	t := ms.T()
 
-	tokens, user := CreateUserAccessTokenFixtures(ms)
+	rawTokens, tokens := CreateUserAccessTokenFixtures(ms)
 
 	tests := []struct {
 		name    string
 		token   string
-		want    User
+		want    UserAccessToken
 		wantErr bool
 	}{
-		{name: "valid0", token: tokens[0], want: user},
-		{name: "valid1", token: tokens[1], want: user},
+		{name: "valid0", token: rawTokens[0], want: tokens[0]},
+		{name: "valid1", token: rawTokens[1], want: tokens[1]},
 		{name: "invalid", token: "000000", wantErr: true},
 		{name: "empty", token: "", wantErr: true},
 	}
@@ -106,21 +106,17 @@ func (ms *ModelSuite) TestUserAccessToken_FindByBearerToken() {
 			var u UserAccessToken
 			err := u.FindByBearerToken(test.token)
 			if test.wantErr {
-				if err == nil {
-					t.Errorf("Expected an error, but did not get one")
-				}
-			} else {
-				if err != nil {
-					t.Errorf("FindByAccessToken() returned an error: %v", err)
-				} else if u.User.UUID != test.want.UUID {
-					t.Errorf("found %v, expected %v", u, test.want)
-				}
+				ms.Error(err)
+				return
 			}
+			ms.NoError(err)
+
+			ms.Equal(test.want.ID, u.ID)
 		})
 	}
 }
 
-func CreateUserAccessTokenFixtures(ms *ModelSuite) ([]string, User) {
+func CreateUserAccessTokenFixtures(ms *ModelSuite) ([]string, UserAccessTokens) {
 	uf := createUserFixtures(ms.DB, 1)
 	user := uf.Users[0]
 	userOrgs := uf.UserOrganizations
@@ -146,7 +142,7 @@ func CreateUserAccessTokenFixtures(ms *ModelSuite) ([]string, User) {
 		createFixture(ms, &tokens[i])
 	}
 
-	return rawTokens, user
+	return rawTokens, tokens
 }
 
 func CreateUserFixtures_GetOrg(ms *ModelSuite, t *testing.T) ([]Organization, Users, UserOrganizations) {
