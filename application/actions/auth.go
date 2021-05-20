@@ -637,13 +637,13 @@ func authDestroy(c buffalo.Context) error {
 		return logErrorAndRedirect(c, domain.ErrorFindingOrgForAccessToken, err.Error())
 	}
 
-	// set person on rollbar session
-	domain.RollbarSetPerson(c, uat.User.UUID.String(), uat.User.Nickname, uat.User.Email)
-
 	authUser, err := uat.GetUser()
 	if err != nil {
 		return logErrorAndRedirect(c, domain.ErrorAuthProvidersLogout, err.Error())
 	}
+
+	// set person on rollbar session
+	domain.RollbarSetPerson(c, authUser.UUID.String(), authUser.Nickname, authUser.Email)
 
 	authPro, err := org.GetAuthProvider(authUser.Email)
 	if err != nil {
