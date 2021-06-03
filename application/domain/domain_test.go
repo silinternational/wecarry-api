@@ -2,11 +2,12 @@ package domain
 
 import (
 	"errors"
-	"github.com/gobuffalo/validate/v3"
-	"github.com/stretchr/testify/suite"
 	"net/http"
 	"testing"
 	"time"
+
+	"github.com/gobuffalo/validate/v3"
+	"github.com/stretchr/testify/suite"
 
 	"github.com/gofrs/uuid"
 )
@@ -409,7 +410,6 @@ func (ts *TestSuite) TestIsOtherThanNoRows() {
 }
 
 func (ts *TestSuite) TestGetStructFieldTags() {
-
 	type testStruct struct {
 		Language string `json:"language"`
 		TimeZone string `json:"time_zone"`
@@ -625,8 +625,10 @@ func (ts *TestSuite) TestRemoveUnwantedChars() {
 		{name: "empty str", str: "", allowed: "#", want: ""},
 		{name: "Korean", str: string([]rune{0xae40}), want: string([]rune{0xae40})},
 		{name: "Flag", str: string([]rune{0x1f1fa, 0x1f1f8}), want: string([]rune{0x1f1fa, 0x1f1f8})},
-		{name: "Zero-width joiner", str: string([]rune{0x1f468, 0x200d, 0x1f9b3}),
-			want: string([]rune{0x1f468, 0x200d, 0x1f9b3})},
+		{
+			name: "Zero-width joiner", str: string([]rune{0x1f468, 0x200d, 0x1f9b3}),
+			want: string([]rune{0x1f468, 0x200d, 0x1f9b3}),
+		},
 		{name: "Flag", str: string([]rune{0x1f1fa, 0x1f1f8}), want: string([]rune{0x1f1fa, 0x1f1f8})},
 		{name: "Chinese", str: string([]rune{0x540d, 0x79f0}), want: ""},
 		{name: "Script", str: "<script></script>", allowed: "-_ .,'&", want: "scriptscript"},

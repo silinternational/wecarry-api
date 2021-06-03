@@ -8,11 +8,12 @@ import (
 	"github.com/silinternational/wecarry-api/domain"
 )
 
-var sender mail.Sender
-var r *render.Engine
+var (
+	sender mail.Sender
+	r      *render.Engine
+)
 
 func init() {
-
 	// Pulling config from the env.
 	sender = ssender.NewSendgridSender(domain.Env.SendGridAPIKey)
 

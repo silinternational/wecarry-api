@@ -11,8 +11,7 @@ import (
 	"jaytaylor.com/html2text"
 )
 
-type SendGridService struct {
-}
+type SendGridService struct{}
 
 type sendGridTemplate struct {
 	// ID of SendGrid hosted template
@@ -46,7 +45,6 @@ func (e *SendGridService) Send(msg Message) error {
 	m := mail.NewSingleEmail(from, msg.Subject, to, tbody, body)
 	client := sendgrid.NewSendClient(apiKey)
 	response, err := client.Send(m)
-
 	if err != nil {
 		return fmt.Errorf("error attempting to send message, %s", err)
 	}

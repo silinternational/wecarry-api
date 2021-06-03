@@ -18,8 +18,7 @@ type Notifier interface {
 }
 
 // EmailNotifier is an email notifier that conforms to the Notifier interface.
-type EmailNotifier struct {
-}
+type EmailNotifier struct{}
 
 // Send a notification using an email notifier.
 func (e *EmailNotifier) Send(msg Message) error {
@@ -51,8 +50,7 @@ func (e *EmailNotifier) Send(msg Message) error {
 }
 
 // MobileNotifier is an email notifier that conforms to the Notifier interface.
-type MobileNotifier struct {
-}
+type MobileNotifier struct{}
 
 // Send a notification using a mobile notifier.
 func (m *MobileNotifier) Send(msg Message) error {

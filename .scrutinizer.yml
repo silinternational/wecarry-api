@@ -2,7 +2,7 @@ checks:
   go: true
 build:
   environment:
-    go: go1.13.5
+    go: go1.16.4
     variables:
       GO_ENV: test
       EMAIL_SERVICE: dummy

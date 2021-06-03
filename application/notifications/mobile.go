@@ -20,9 +20,11 @@ type msgTemplate struct {
 
 var templateData = map[string]msgTemplate{
 	domain.MessageTemplateNewThreadMessage: {
-		subject: "new message", body: "You have a new message."},
+		subject: "new message", body: "You have a new message.",
+	},
 	domain.MessageTemplateNewRequest: {
-		subject: "new request", body: "There is a new request for an item from your location."},
+		subject: "new request", body: "There is a new request for an item from your location.",
+	},
 }
 
 func (t *DummyMobileService) Send(msg Message) error {

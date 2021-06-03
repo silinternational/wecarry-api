@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -14,6 +15,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 	"unicode"
 
@@ -116,11 +118,28 @@ type BuffaloContextType string
 // BuffaloContext is the key for the call to context.WithValue in gqlHandler
 const BuffaloContext = BuffaloContextType("BuffaloContext")
 
-var Logger log.Logger
-var ErrLogger ErrLogProxy
-var AuthCallbackURL string
+// Context keys
+const (
+	ContextKeyCurrentUser = "current_user"
+	ContextKeyExtras      = "extras"
+	ContextKeyRollbar     = "rollbar"
+)
 
-// Env holds environment variable values loaded by init()
+var (
+	Logger          log.Logger
+	ErrLogger       ErrLogProxy
+	AuthCallbackURL string
+)
+
+var AllowedFileUploadTypes = []string{
+	"image/bmp",
+	"image/gif",
+	"image/jpeg",
+	"image/png",
+	"image/webp",
+	"application/pdf",
+}
+
 var Env struct {
 	AccessTokenLifetimeSeconds int
 	ServiceIntegrationToken    string
@@ -172,6 +191,8 @@ var T *mwi18n.Translator
 
 // Assets is a packr box with asset files such as images
 var Assets *packr.Box
+
+var extrasLock = sync.RWMutex{}
 
 func init() {
 	readEnv()
@@ -406,7 +427,7 @@ func RollbarMiddleware(next buffalo.Handler) buffalo.Handler {
 			"",
 			Env.RollbarServerRoot)
 
-		c.Set("rollbar", client)
+		c.Set(ContextKeyRollbar, client)
 
 		err := next(c)
 
@@ -415,53 +436,70 @@ func RollbarMiddleware(next buffalo.Handler) buffalo.Handler {
 	}
 }
 
-func mergeExtras(extras []map[string]interface{}) map[string]interface{} {
-	var allExtras map[string]interface{}
-
-	// I didn't think I would need this, but without it at least one test was failing
-	// The code allowed a map[string]interface{} to get through (i.e. not in a slice)
-	// without the compiler complaining
-	if len(extras) == 1 {
-		return extras[0]
-	}
-
-	for _, e := range extras {
-		for k, v := range e {
-			allExtras[k] = v
-		}
-	}
-
-	return allExtras
-}
-
 // Error log error and send to Rollbar
-func Error(c buffalo.Context, msg string, extras ...map[string]interface{}) {
+func Error(c buffalo.Context, msg string) {
 	// Avoid panics running tests when c doesn't have the necessary nested methods
 	logger := c.Logger()
 	if logger == nil {
 		return
 	}
 
-	es := mergeExtras(extras)
-	logger.Error(msg, es)
-	rollbarMessage(c, rollbar.ERR, msg, es)
+	extras := getExtras(c)
+	if extras == nil {
+		extras = map[string]interface{}{}
+	}
+
+	extrasLock.RLock()
+	defer extrasLock.RUnlock()
+
+	rollbarMessage(c, rollbar.ERR, msg, extras)
+
+	extras["message"] = msg
+
+	encoder := jsonMin
+	if Env.GoEnv == "development" {
+		encoder = jsonIndented
+	}
+
+	j, err := encoder(&extras)
+	if err != nil {
+		logger.Error("failed to json encode error message: %s", err)
+		return
+	}
+
+	logger.Error(string(j))
 }
 
-// Warn log warning and send to Rollbar
-func Warn(c buffalo.Context, msg string, extras ...map[string]interface{}) {
-	es := mergeExtras(extras)
-	c.Logger().Warn(msg, es)
-	rollbarMessage(c, rollbar.WARN, msg, es)
+func jsonMin(i interface{}) ([]byte, error) {
+	return json.Marshal(i)
 }
 
-// Log info message
-func Info(c buffalo.Context, msg string, extras ...map[string]interface{}) {
-	c.Logger().Info(msg, mergeExtras(extras))
+func jsonIndented(i interface{}) ([]byte, error) {
+	return json.MarshalIndent(i, "", "  ")
+}
+
+// Warn - log warning and send to Rollbar
+func Warn(c buffalo.Context, msg string) {
+	extras := getExtras(c)
+	extrasLock.RLock()
+	defer extrasLock.RUnlock()
+
+	c.Logger().Warn(msg, extras)
+	rollbarMessage(c, rollbar.WARN, msg, extras)
+}
+
+// Info - log info message
+func Info(c buffalo.Context, msg string) {
+	extras := getExtras(c)
+	extrasLock.RLock()
+	defer extrasLock.RUnlock()
+
+	c.Logger().Info(msg, extras)
 }
 
 // rollbarMessage is a wrapper function to call rollbar's client.MessageWithExtras function from client stored in context
 func rollbarMessage(c buffalo.Context, level string, msg string, extras map[string]interface{}) {
-	rc, ok := c.Value("rollbar").(*rollbar.Client)
+	rc, ok := c.Value(ContextKeyRollbar).(*rollbar.Client)
 	if ok {
 		rc.MessageWithExtras(level, msg, extras)
 		return
@@ -470,7 +508,7 @@ func rollbarMessage(c buffalo.Context, level string, msg string, extras map[stri
 
 // RollbarSetPerson sets person on the rollbar context for further logging
 func RollbarSetPerson(c buffalo.Context, id, username, email string) {
-	rc, ok := c.Value("rollbar").(*rollbar.Client)
+	rc, ok := c.Value(ContextKeyRollbar).(*rollbar.Client)
 	if ok {
 		rc.SetPerson(id, username, email)
 		return
@@ -508,7 +546,6 @@ func IsWeightUnitAllowed(unit string) bool {
 
 func IsTimeZoneAllowed(name string) bool {
 	_, err := time.LoadLocation(name)
-
 	if err != nil {
 		Logger.Printf("error evaluating timezone %s ... %v", name, err)
 		return false
@@ -572,7 +609,6 @@ func GetTranslatedSubject(language, translationID string, translationData map[st
 	translationData["AppName"] = Env.AppName
 
 	subj, err := TranslateWithLang(language, translationID, translationData)
-
 	if err != nil {
 		ErrLogger.Printf("error translating '%s' notification subject, %s", translationID, err)
 	}
@@ -612,7 +648,7 @@ func RemoveUnwantedChars(str, allowed string) string {
 }
 
 func isSafeRune(r rune) bool {
-	var safeRanges = &unicode.RangeTable{
+	safeRanges := &unicode.RangeTable{
 		R16: []unicode.Range16{
 			{Lo: 0x0030, Hi: 0x0039, Stride: 1}, // 0-9
 			{Lo: 0x0041, Hi: 0x005a, Stride: 1}, // upper-case Latin
@@ -646,7 +682,7 @@ type StringIsVisible struct {
 
 // IsValid adds an error if the field is not empty and not a url.
 func (v *StringIsVisible) IsValid(errors *validate.Errors) {
-	var asciiSpace = map[int32]bool{'\t': true, '\n': true, '\v': true, '\f': true, '\r': true, ' ': true}
+	asciiSpace := map[int32]bool{'\t': true, '\n': true, '\v': true, '\f': true, '\r': true, ' ': true}
 	for _, c := range v.Field {
 		if !asciiSpace[c] && unicode.IsGraphic(c) && c != 0xfe0f { // VS16 (0xfe0f) is "Graphic" but invisible
 			return
@@ -663,25 +699,20 @@ func (v *StringIsVisible) IsValid(errors *validate.Errors) {
 
 // ReportError logs an error with details, and returns a user-friendly, translated error identified by translation key
 // string `errID`. If called with a full GraphQL context, the query text will be logged in the extras.
-func ReportError(ctx context.Context, err error, errID string, extras ...map[string]interface{}) error {
+func ReportError(ctx context.Context, err error, errID string) error {
 	c := GetBuffaloContext(ctx)
-	allExtras := map[string]interface{}{
-		"function": GetFunctionName(2),
-	}
+
+	NewExtra(c, "function", GetFunctionName(2))
+
 	if r := graphql.GetRequestContext(ctx); r != nil {
-		allExtras["query"] = r.RawQuery
-	}
-	for _, e := range extras {
-		for key, val := range e {
-			allExtras[key] = val
-		}
+		NewExtra(c, "query", fmt.Sprintf("%#v", r.RawQuery)) // escape control characters
 	}
 
 	errStr := errID
 	if err != nil {
 		errStr = err.Error()
 	}
-	Error(c, errStr, allExtras)
+	Error(c, errStr)
 
 	if T == nil {
 		return errors.New(errID)
@@ -729,4 +760,24 @@ func UniquifyIntSlice(intSlice []int) []int {
 		}
 	}
 	return list
+}
+
+func NewExtra(ctx context.Context, key string, e interface{}) {
+	c := GetBuffaloContext(ctx)
+	extras := getExtras(c)
+
+	extrasLock.Lock()
+	defer extrasLock.Unlock()
+	extras[key] = e
+
+	c.Set(ContextKeyExtras, extras)
+}
+
+func getExtras(c buffalo.Context) map[string]interface{} {
+	extras, _ := c.Value(ContextKeyExtras).(map[string]interface{})
+	if extras == nil {
+		extras = map[string]interface{}{}
+	}
+
+	return extras
 }

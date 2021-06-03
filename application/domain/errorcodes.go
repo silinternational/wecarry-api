@@ -116,7 +116,7 @@ const ErrorFindingOrgForAccessToken = "ErrorFindingOrgForAccessToken"
 const ErrorAuthProvidersLogout = "ErrorAuthProvidersLogout"
 
 // actions.authDestroy
-const ErrorDeletingAccessToken = "ErrorDeletingAccessToken"
+const ErrorDeletingAccessToken = "ErrorDeletingAccessToken" // #nosec G101
 
 // actions.UploadHandler
 const ErrorReceivingFile = "ErrorReceivingFile"

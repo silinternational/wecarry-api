@@ -178,6 +178,7 @@ type ComplexityRoot struct {
 		Organization   func(childComplexity int, id *string) int
 		Organizations  func(childComplexity int) int
 		RecentMeetings func(childComplexity int) int
+		Request        func(childComplexity int, id *string) int
 		Requests       func(childComplexity int, destination *LocationInput, origin *LocationInput, searchText *string) int
 		Threads        func(childComplexity int) int
 		User           func(childComplexity int, id *string) int
@@ -348,6 +349,7 @@ type QueryResolver interface {
 	MyWatches(ctx context.Context) ([]models.Watch, error)
 	Organization(ctx context.Context, id *string) (*models.Organization, error)
 	Organizations(ctx context.Context) ([]models.Organization, error)
+	Request(ctx context.Context, id *string) (*models.Request, error)
 	Requests(ctx context.Context, destination *LocationInput, origin *LocationInput, searchText *string) ([]models.Request, error)
 	RecentMeetings(ctx context.Context) ([]models.Meeting, error)
 	Threads(ctx context.Context) ([]models.Thread, error)
@@ -1213,6 +1215,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.RecentMeetings(childComplexity), true
 
+	case "Query.request":
+		if e.complexity.Query.Request == nil {
+			break
+		}
+
+		args, err := ec.field_Query_request_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Request(childComplexity, args["id"].(*string)), true
+
 	case "Query.requests":
 		if e.complexity.Query.Requests == nil {
 			break
@@ -1777,6 +1791,9 @@ var parsedSchema = gqlparser.MustLoadSchema(
 #    'request' is disabled because it doesn't work for shared requests from a trusted org
 #    request(id: ID): Request
 
+    "Return a single request. Authenticated user must be authorized to the request."
+    request(id: ID): Request!
+
     """
     With no parameters supplied, all requests visible to the authenticated user are returned. Filter
     parameters only remove from this default list and never include requests that are not visible to the authenticated
@@ -1921,9 +1938,8 @@ type Mutation {
     updateUser(input: UpdateUserInput!): User!
 
     """
-    Create a Watch for a given location. Requests with a destination near the watch location will trigger a
-    notification to the watch creator. Other types of Watches (e.g. keyword search) may be created in future versions of
-    WeCarry. Any user may create a Watch.
+    Create a Watch for specified filter criteria. New requests matching all of the given criteria will
+    generate a new notification. Any user may create a Watch.
     """
     createWatch(input: CreateWatchInput!): Watch!
 
@@ -2583,7 +2599,7 @@ input UpdateUserPreferencesInput {
 }
 
 """
-A Watch for a given location. New requests matching all of the given criteria will generate a new
+A Watch for specified filter criteria. New requests matching all of the given criteria will generate a new
 notification.
 """
 type Watch {
@@ -3119,6 +3135,20 @@ func (ec *executionContext) field_Query_message_args(ctx context.Context, rawArg
 }
 
 func (ec *executionContext) field_Query_organization_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *string
+	if tmp, ok := rawArgs["id"]; ok {
+		arg0, err = ec.unmarshalOID2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_request_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 *string
@@ -6701,6 +6731,50 @@ func (ec *executionContext) _Query_organizations(ctx context.Context, field grap
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNOrganization2ᚕgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐOrganization(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_request(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_request_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Request(rctx, args["id"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Request)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNRequest2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐRequest(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_requests(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -12099,6 +12173,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_organizations(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "request":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_request(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}

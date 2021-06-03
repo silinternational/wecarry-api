@@ -157,8 +157,7 @@ func (r *meetingResolver) Organizers(ctx context.Context, obj *models.Meeting) (
 func (r *queryResolver) Meetings(ctx context.Context, endAfter, endBefore, startAfter, startBefore *string) ([]models.Meeting, error) {
 	meetings := models.Meetings{}
 	if err := meetings.FindOnOrAfterDate(time.Now()); err != nil {
-		extras := map[string]interface{}{}
-		return nil, domain.ReportError(ctx, err, "GetMeetings", extras)
+		return nil, domain.ReportError(ctx, err, "GetMeetings")
 	}
 
 	return meetings, nil
@@ -169,8 +168,7 @@ func (r *queryResolver) Meetings(ctx context.Context, endAfter, endBefore, start
 func (r *queryResolver) RecentMeetings(ctx context.Context) ([]models.Meeting, error) {
 	meetings := models.Meetings{}
 	if err := meetings.FindRecent(time.Now()); err != nil {
-		extras := map[string]interface{}{}
-		return nil, domain.ReportError(ctx, err, "GetRecentMeetings", extras)
+		return nil, domain.ReportError(ctx, err, "GetRecentMeetings")
 	}
 
 	return meetings, nil
@@ -183,8 +181,7 @@ func (r *queryResolver) Meeting(ctx context.Context, id *string) (*models.Meetin
 	}
 	var meeting models.Meeting
 	if err := meeting.FindByUUID(*id); err != nil {
-		extras := map[string]interface{}{}
-		return &models.Meeting{}, domain.ReportError(ctx, err, "GetMeeting", extras)
+		return &models.Meeting{}, domain.ReportError(ctx, err, "GetMeeting")
 	}
 
 	return &meeting, nil
@@ -253,27 +250,24 @@ type meetingInput struct {
 // CreateMeeting resolves the `createMeeting` mutation.
 func (r *mutationResolver) CreateMeeting(ctx context.Context, input meetingInput) (*models.Meeting, error) {
 	cUser := models.CurrentUser(ctx)
-	extras := map[string]interface{}{
-		"user": cUser.UUID,
-	}
 
 	meeting, err := convertGqlMeetingInputToDBMeeting(ctx, input, cUser)
 	if err != nil {
-		return &models.Meeting{}, domain.ReportError(ctx, err, "CreateMeeting.ProcessInput", extras)
+		return &models.Meeting{}, domain.ReportError(ctx, err, "CreateMeeting.ProcessInput")
 	}
 
 	if !meeting.CanCreate(cUser) {
-		return &models.Meeting{}, domain.ReportError(ctx, err, "CreateMeeting.Unauthorized", extras)
+		return &models.Meeting{}, domain.ReportError(ctx, err, "CreateMeeting.Unauthorized")
 	}
 
 	location := convertLocation(*input.Location)
 	if err = location.Create(); err != nil {
-		return &models.Meeting{}, domain.ReportError(ctx, err, "CreateMeeting.SetLocation", extras)
+		return &models.Meeting{}, domain.ReportError(ctx, err, "CreateMeeting.SetLocation")
 	}
 	meeting.LocationID = location.ID
 
 	if err = meeting.Create(); err != nil {
-		return &models.Meeting{}, domain.ReportError(ctx, err, "CreateMeeting", extras)
+		return &models.Meeting{}, domain.ReportError(ctx, err, "CreateMeeting")
 	}
 
 	return &meeting, nil
@@ -282,26 +276,23 @@ func (r *mutationResolver) CreateMeeting(ctx context.Context, input meetingInput
 // UpdateMeeting resolves the `updateMeeting` mutation.
 func (r *mutationResolver) UpdateMeeting(ctx context.Context, input meetingInput) (*models.Meeting, error) {
 	cUser := models.CurrentUser(ctx)
-	extras := map[string]interface{}{
-		"user": cUser.UUID,
-	}
 
 	meeting, err := convertGqlMeetingInputToDBMeeting(ctx, input, cUser)
 	if err != nil {
-		return &models.Meeting{}, domain.ReportError(ctx, err, "UpdateMeeting.ProcessInput", extras)
+		return &models.Meeting{}, domain.ReportError(ctx, err, "UpdateMeeting.ProcessInput")
 	}
 
 	if !meeting.CanUpdate(cUser) {
-		return &models.Meeting{}, domain.ReportError(ctx, err, "UpdateMeeting.Unauthorized", extras)
+		return &models.Meeting{}, domain.ReportError(ctx, err, "UpdateMeeting.Unauthorized")
 	}
 
 	if err := meeting.Update(); err != nil {
-		return &models.Meeting{}, domain.ReportError(ctx, err, "UpdateMeeting", extras)
+		return &models.Meeting{}, domain.ReportError(ctx, err, "UpdateMeeting")
 	}
 
 	if input.Location != nil {
 		if err = meeting.SetLocation(convertLocation(*input.Location)); err != nil {
-			return &models.Meeting{}, domain.ReportError(ctx, err, "UpdateMeeting.SetLocation", extras)
+			return &models.Meeting{}, domain.ReportError(ctx, err, "UpdateMeeting.SetLocation")
 		}
 	}
 

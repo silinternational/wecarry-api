@@ -803,7 +803,7 @@ func (ms *ModelSuite) TestUser_CanViewRequest() {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			ms.Equal(test.want, test.user.canViewRequest(test.request),
+			ms.Equal(test.want, test.user.CanViewRequest(test.request),
 				"incorrect result")
 		})
 	}
@@ -1187,7 +1187,7 @@ func (ms *ModelSuite) TestUser_UniquifyNickname() {
 			user: User{
 				FirstName: existingUser.FirstName,
 				LastName:  existingUser.LastName,
-				Nickname:  existingUser.Nickname[len(prefix)+1:], //remove the prefix so it can be added back on
+				Nickname:  existingUser.Nickname[len(prefix)+1:], // remove the prefix so it can be added back on
 			},
 			want: prefix2 + " " + existingUser.FirstName + " " + existingUser.LastName[:1],
 		},
@@ -1330,7 +1330,6 @@ func (ms *ModelSuite) TestUser_UnreadMessageCount() {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-
 			got, err := test.user.UnreadMessageCount()
 			if test.wantErr {
 				ms.Error(err, "did not get expected error")

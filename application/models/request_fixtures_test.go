@@ -1,7 +1,6 @@
 package models
 
 import (
-	"fmt"
 	"strconv"
 	"testing"
 	"time"
@@ -169,13 +168,9 @@ func CreateFixturesForRequestsGetFiles(ms *ModelSuite) RequestFixtures {
 	request := Request{CreatedByID: user.ID, OrganizationID: organization.ID, DestinationID: location.ID}
 	createFixture(ms, &request)
 
-	files := make(Files, 3)
+	files := createFileFixtures(3)
 
 	for i := range files {
-		var file File
-		ms.Nil(file.Store(fmt.Sprintf("file_%d.gif", i), []byte("GIF87a")),
-			"failed to create file fixture")
-		files[i] = file
 		_, err := request.AttachFile(files[i].UUID.String())
 		ms.NoError(err, "failed to attach file to request fixture")
 	}
@@ -312,12 +307,18 @@ func createFixtures_Requests_FindByUser_SearchText(ms *ModelSuite) RequestFixtur
 
 	requests := Requests{
 		{CreatedByID: users[0].ID, OrganizationID: orgs[0].ID, Title: "With Match"},
-		{CreatedByID: users[0].ID, OrganizationID: orgs[1].ID, Title: "MXtch In Description",
-			Description: nulls.NewString("This has the lower case match in it.")},
-		{CreatedByID: users[0].ID, OrganizationID: orgs[0].ID, Status: RequestStatusCompleted,
-			Title: "With Match But Completed"},
-		{CreatedByID: users[0].ID, OrganizationID: orgs[0].ID, Status: RequestStatusRemoved,
-			Title: "With Match But Removed"},
+		{
+			CreatedByID: users[0].ID, OrganizationID: orgs[1].ID, Title: "MXtch In Description",
+			Description: nulls.NewString("This has the lower case match in it."),
+		},
+		{
+			CreatedByID: users[0].ID, OrganizationID: orgs[0].ID, Status: RequestStatusCompleted,
+			Title: "With Match But Completed",
+		},
+		{
+			CreatedByID: users[0].ID, OrganizationID: orgs[0].ID, Status: RequestStatusRemoved,
+			Title: "With Match But Removed",
+		},
 		{CreatedByID: users[1].ID, OrganizationID: orgs[1].ID, Title: "User1 No MXtch"},
 		{CreatedByID: users[1].ID, OrganizationID: orgs[1].ID, Title: "User1 With MATCH"},
 	}

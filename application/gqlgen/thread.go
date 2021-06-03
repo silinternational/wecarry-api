@@ -48,10 +48,7 @@ func (r *threadResolver) LastViewedAt(ctx context.Context, obj *models.Thread) (
 	currentUser := models.CurrentUser(ctx)
 	lastViewedAt, err := obj.GetLastViewedAt(currentUser)
 	if err != nil {
-		extras := map[string]interface{}{
-			"user": currentUser.UUID,
-		}
-		return nil, domain.ReportError(ctx, err, "GetThreadLastViewedAt", extras)
+		return nil, domain.ReportError(ctx, err, "GetThreadLastViewedAt")
 	}
 
 	return lastViewedAt, nil

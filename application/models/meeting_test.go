@@ -190,8 +190,10 @@ func (ms *ModelSuite) TestMeeting_FindOnDate() {
 		testNow time.Time
 	}{
 		{name: "one for actual now", testNow: time.Now(), want: []string{meetings[2].Name}},
-		{name: "two for now in near future", testNow: nearFuture,
-			want: []string{meetings[1].Name, meetings[2].Name}},
+		{
+			name: "two for now in near future", testNow: nearFuture,
+			want: []string{meetings[1].Name, meetings[2].Name},
+		},
 		{name: "empty for now in far future", testNow: farFuture, want: []string{}},
 	}
 	for _, test := range tests {
@@ -367,9 +369,7 @@ func (ms *ModelSuite) TestMeeting_ImageFile() {
 	ms.NoError(err, "unexpected error from Meeting.ImageFile()")
 	ms.Nil(f, "expected nil returned from Meeting.ImageFile()")
 
-	var imageFixture File
-	const filename = "photo.gif"
-	ms.Nil(imageFixture.Store(filename, []byte("GIF89a")), "failed to create file fixture")
+	imageFixture := createFileFixture()
 
 	attachedFile, err := meeting.SetImageFile(imageFixture.UUID.String())
 	ms.NoError(err)
@@ -377,7 +377,7 @@ func (ms *ModelSuite) TestMeeting_ImageFile() {
 	if got, err := meeting.ImageFile(); err == nil {
 		ms.Equal(attachedFile.UUID.String(), got.UUID.String())
 		ms.True(got.URLExpiration.After(time.Now().Add(time.Minute)))
-		ms.Equal(filename, got.Name)
+		ms.Equal(imageFixture.Name, got.Name)
 	} else {
 		ms.Fail("meeting.GetImage failed, %s", err)
 	}

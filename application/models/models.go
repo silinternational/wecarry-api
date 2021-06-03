@@ -2,7 +2,7 @@ package models
 
 import (
 	"context"
-	"crypto/md5"
+	"crypto/md5" // #nosec G501 weak cryptography used for gravatar URL only
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
@@ -116,7 +116,8 @@ func CurrentUser(ctx context.Context) User {
 	if ok {
 		return CurrentUser(bc)
 	}
-	user, _ := ctx.Value("current_user").(User)
+	user, _ := ctx.Value(domain.ContextKeyCurrentUser).(User)
+	domain.NewExtra(ctx, "currentUserID", user.UUID)
 	return user
 }
 
@@ -224,7 +225,7 @@ func IsDBConnected() bool {
 
 func gravatarURL(email string) string {
 	// ref: https://en.gravatar.com/site/implement/images/
-	hash := md5.Sum([]byte(strings.ToLower(strings.TrimSpace(email))))
+	hash := md5.Sum([]byte(strings.ToLower(strings.TrimSpace(email)))) // #nosec G401 weak cryptography acceptable here
 	url := fmt.Sprintf("https://www.gravatar.com/avatar/%x.jpg?s=200&d=mp", hash)
 	return url
 }
@@ -253,7 +254,7 @@ func addFile(m interface{}, fileID string) (File, error) {
 		}
 	}
 
-	if err := f.SetLinked(); err != nil {
+	if err := f.SetLinked(DB); err != nil {
 		domain.ErrLogger.Printf("error marking file %d as linked, %s", f.ID, err)
 	}
 
@@ -262,7 +263,7 @@ func addFile(m interface{}, fileID string) (File, error) {
 	}
 
 	oldFile := File{ID: oldID.Int}
-	if err := oldFile.ClearLinked(); err != nil {
+	if err := oldFile.ClearLinked(DB); err != nil {
 		domain.ErrLogger.Printf("error marking old file %d as unlinked, %s", oldFile.ID, err)
 	}
 
@@ -295,7 +296,7 @@ func removeFile(m interface{}) error {
 	}
 
 	oldFile := File{ID: oldID.Int}
-	if err := oldFile.ClearLinked(); err != nil {
+	if err := oldFile.ClearLinked(DB); err != nil {
 		domain.ErrLogger.Printf("error marking old meeting file %d as unlinked, %s", oldFile.ID, err)
 	}
 	return nil
@@ -303,4 +304,39 @@ func removeFile(m interface{}) error {
 
 func fieldByName(i interface{}, name string) reflect.Value {
 	return reflect.ValueOf(i).Elem().FieldByName(name)
+}
+
+func DestroyAll() {
+	// delete all Requests, RequestHistories, RequestFiles, PotentialProviders, Threads, and ThreadParticipants
+	var requests Requests
+	destroyTable(&requests)
+
+	// delete all Meetings, MeetingParticipants, and MeetingInvites
+	var meetings Meetings
+	destroyTable(&meetings)
+
+	// delete all Organizations, OrganizationDomains, OrganizationTrusts, and UserOrganizations
+	var organizations Organizations
+	destroyTable(&organizations)
+
+	// delete all Users, Messages, UserAccessTokens, and Watches
+	var users Users
+	destroyTable(&users)
+
+	// delete all Files
+	var files Files
+	destroyTable(&files)
+
+	// delete all Locations
+	var locations Locations
+	destroyTable(&locations)
+}
+
+func destroyTable(i interface{}) {
+	if err := DB.All(i); err != nil {
+		panic(err.Error())
+	}
+	if err := DB.Destroy(i); err != nil {
+		panic(err.Error())
+	}
 }

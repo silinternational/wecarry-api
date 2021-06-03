@@ -129,7 +129,6 @@ func (m *Meetings) FindOnDate(timeInFocus time.Time) error {
 
 // FindOnOrAfterDate finds the meetings that have an EndDate on or after the timeInFocus-date
 func (m *Meetings) FindOnOrAfterDate(timeInFocus time.Time) error {
-
 	date := timeInFocus.Format(domain.DateTimeFormat)
 
 	if err := getOrdered(m, DB.Where("end_date >= ?", date)); err != nil {
@@ -311,7 +310,6 @@ func (m *Meeting) Organizers(ctx buffalo.Context) (Users, error) {
 		Where("meeting_participants.meeting_id=?", m.ID).
 		Join("meeting_participants", "meeting_participants.user_id=users.id").
 		All(&u); err != nil {
-
 		return u, err
 	}
 	return u, nil

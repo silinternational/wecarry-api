@@ -112,7 +112,6 @@ func getPreferencesFieldsAndValidators(prefs StandardPreferences) map[string]fie
 }
 
 func (p *UserPreference) createForUser(user User, key, value string) error {
-
 	if user.ID <= 0 {
 		return errors.New("invalid user ID in userpreference.createForUser.")
 	}
@@ -141,7 +140,6 @@ func (p *UserPreference) getForUser(user User, key string) error {
 
 // updateForUserByKey will also create a new instance, if a match is not found for that user
 func (p *UserPreference) updateForUserByKey(user User, key, value string) error {
-
 	err := p.getForUser(user, key)
 	if err != nil {
 		return err

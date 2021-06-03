@@ -112,7 +112,7 @@ func getSocialAuthProvider(authType string) (auth.Provider, error) {
 func getSocialAuthOptions(authConfigs map[string]SocialAuthConfig) []authOption {
 	// sort the provider types for ease of testing (avoid map's random order)
 	pTypes := []string{}
-	for pt, _ := range authConfigs {
+	for pt := range authConfigs {
 		pTypes = append(pTypes, pt)
 	}
 
@@ -171,7 +171,6 @@ func finishAuthRequestForSocialUser(c buffalo.Context, authEmail string) error {
 
 	// Reply with a 200 and leave it to the UI to do the redirect
 	return c.Render(http.StatusOK, render.JSON(authOptions))
-
 }
 
 // Just get the list of auth/select/... URLS
@@ -277,17 +276,18 @@ func processSocialAuthCallback(c buffalo.Context, authEmail, authType string) ca
 // Finish the auth callback process for an Orgless user that has no invite associated
 // with this login.
 func socialLoginNonInviteBasedAuthCallback(c buffalo.Context, authEmail, authType, clientID string) error {
-	extras := map[string]interface{}{"authEmail": authEmail, "authType": authType}
+	domain.NewExtra(c, "authEmail", authEmail)
+	domain.NewExtra(c, "authType", authType)
 
 	var user models.User
 	if err := user.FindByEmailAndSocialAuthProvider(authEmail, authType); err != nil {
 		return logErrorAndRedirect(c, domain.ErrorGettingSocialAuthUser,
-			fmt.Sprintf("error loading social auth user for '%s' ... %v", authType, err), extras)
+			fmt.Sprintf("error loading social auth user for '%s' ... %v", authType, err))
 	}
 
 	callbackValues := processSocialAuthCallback(c, authEmail, authType)
 	if callbackValues.errCode != "" {
-		return logErrorAndRedirect(c, callbackValues.errCode, callbackValues.errMsg, extras)
+		return logErrorAndRedirect(c, callbackValues.errCode, callbackValues.errMsg)
 	}
 
 	authUser, err := newOrglessAuthUser(clientID, user)
@@ -308,7 +308,8 @@ func socialLoginBasedAuthCallback(c buffalo.Context, authEmail, clientID string)
 			SocialAuthTypeSessionKey+" session entry is required to complete login")
 	}
 
-	extras := map[string]interface{}{"authEmail": authEmail, "authType": authType}
+	domain.NewExtra(c, "authEmail", authEmail)
+	domain.NewExtra(c, "authType", authType)
 
 	// Check for an invite in the Session
 	inviteType, inviteObjectUUID := getInviteInfoFromSession(c)
@@ -321,7 +322,7 @@ func socialLoginBasedAuthCallback(c buffalo.Context, authEmail, clientID string)
 	// There is an invite associated with this process, so deal ith it
 	callbackValues := processSocialAuthCallback(c, authEmail, authType)
 	if callbackValues.errCode != "" {
-		return logErrorAndRedirect(c, callbackValues.errCode, callbackValues.errMsg, extras)
+		return logErrorAndRedirect(c, callbackValues.errCode, callbackValues.errMsg)
 	}
 
 	// if we have an authuser, find or create user in local db and finish login

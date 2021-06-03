@@ -25,7 +25,6 @@ type requestUsers struct {
 // getRequestUsers returns up to two entries for the Request Requester and
 // Request Provider assuming their email is not blank.
 func getRequestUsers(request models.Request) requestUsers {
-
 	receiver, _ := request.GetCreator()
 	provider, _ := request.GetProvider()
 
@@ -244,7 +243,6 @@ func sendNotificationRequestFromOpenToAccepted(params senderParams) {
 			sendRejectionToPotentialProvider(u, request)
 		}
 	}
-
 }
 
 func sendNotificationRequestFromDeliveredToAccepted(params senderParams) {
@@ -277,69 +275,80 @@ func join(s1, s2 models.RequestStatus) string {
 }
 
 var statusSenders = map[string]sender{
-	join(models.RequestStatusAccepted, models.RequestStatusCompleted): sender{
+	join(models.RequestStatusAccepted, models.RequestStatusCompleted): {
 		template: domain.MessageTemplateRequestFromAcceptedToCompleted,
 		subject:  "Email.Subject.Request.FromAcceptedOrDeliveredToCompleted",
-		sender:   sendNotificationRequestFromAcceptedOrDeliveredToCompleted},
+		sender:   sendNotificationRequestFromAcceptedOrDeliveredToCompleted,
+	},
 
-	join(models.RequestStatusAccepted, models.RequestStatusDelivered): sender{
+	join(models.RequestStatusAccepted, models.RequestStatusDelivered): {
 		template: domain.MessageTemplateRequestFromAcceptedToDelivered,
 		subject:  "Email.Subject.Request.FromAcceptedToDelivered",
-		sender:   sendNotificationRequestFromAcceptedToDelivered},
+		sender:   sendNotificationRequestFromAcceptedToDelivered,
+	},
 
-	join(models.RequestStatusAccepted, models.RequestStatusOpen): sender{
+	join(models.RequestStatusAccepted, models.RequestStatusOpen): {
 		template: domain.MessageTemplateRequestFromAcceptedToOpen,
 		subject:  "Email.Subject.Request.FromAcceptedToOpen",
-		sender:   sendNotificationRequestFromAcceptedToOpen},
+		sender:   sendNotificationRequestFromAcceptedToOpen,
+	},
 
-	join(models.RequestStatusAccepted, models.RequestStatusReceived): sender{
+	join(models.RequestStatusAccepted, models.RequestStatusReceived): {
 		template: domain.MessageTemplateRequestFromAcceptedToCompleted,
 		subject:  "Email.Subject.Request.FromAcceptedOrDeliveredToCompleted",
-		sender:   sendNotificationRequestFromAcceptedOrDeliveredToCompleted},
+		sender:   sendNotificationRequestFromAcceptedOrDeliveredToCompleted,
+	},
 
-	join(models.RequestStatusAccepted, models.RequestStatusRemoved): sender{
+	join(models.RequestStatusAccepted, models.RequestStatusRemoved): {
 		template: domain.MessageTemplateRequestFromAcceptedToRemoved,
 		subject:  "Email.Subject.Request.FromAcceptedToRemoved",
-		sender:   sendNotificationRequestFromAcceptedToRemoved},
+		sender:   sendNotificationRequestFromAcceptedToRemoved,
+	},
 
-	join(models.RequestStatusCompleted, models.RequestStatusAccepted): sender{
+	join(models.RequestStatusCompleted, models.RequestStatusAccepted): {
 		template: domain.MessageTemplateRequestFromCompletedToAccepted,
 		subject:  "Email.Subject.Request.FromCompletedToAcceptedOrDelivered",
-		sender:   sendNotificationRequestFromCompletedToAcceptedOrDelivered},
+		sender:   sendNotificationRequestFromCompletedToAcceptedOrDelivered,
+	},
 
-	join(models.RequestStatusCompleted, models.RequestStatusDelivered): sender{
+	join(models.RequestStatusCompleted, models.RequestStatusDelivered): {
 		template: domain.MessageTemplateRequestFromCompletedToDelivered,
 		subject:  "Email.Subject.Request.FromCompletedToAcceptedOrDelivered",
-		sender:   sendNotificationRequestFromCompletedToAcceptedOrDelivered},
+		sender:   sendNotificationRequestFromCompletedToAcceptedOrDelivered,
+	},
 
-	join(models.RequestStatusCompleted, models.RequestStatusReceived): sender{
+	join(models.RequestStatusCompleted, models.RequestStatusReceived): {
 		template: domain.MessageTemplateRequestFromCompletedToReceived,
 		subject:  "",
-		sender:   sendNotificationEmpty},
+		sender:   sendNotificationEmpty,
+	},
 
-	join(models.RequestStatusDelivered, models.RequestStatusAccepted): sender{
+	join(models.RequestStatusDelivered, models.RequestStatusAccepted): {
 		template: domain.MessageTemplateRequestFromDeliveredToAccepted,
 		subject:  "Email.Subject.Request.FromDeliveredToAccepted",
-		sender:   sendNotificationRequestFromDeliveredToAccepted},
+		sender:   sendNotificationRequestFromDeliveredToAccepted,
+	},
 
-	join(models.RequestStatusDelivered, models.RequestStatusCompleted): sender{
+	join(models.RequestStatusDelivered, models.RequestStatusCompleted): {
 		template: domain.MessageTemplateRequestFromDeliveredToCompleted,
 		subject:  "Email.Subject.Request.FromAcceptedOrDeliveredToCompleted",
-		sender:   sendNotificationRequestFromAcceptedOrDeliveredToCompleted},
+		sender:   sendNotificationRequestFromAcceptedOrDeliveredToCompleted,
+	},
 
-	join(models.RequestStatusOpen, models.RequestStatusAccepted): sender{
+	join(models.RequestStatusOpen, models.RequestStatusAccepted): {
 		template: domain.MessageTemplateRequestFromOpenToAccepted,
 		subject:  "Email.Subject.Request.FromOpenToAccepted",
-		sender:   sendNotificationRequestFromOpenToAccepted},
+		sender:   sendNotificationRequestFromOpenToAccepted,
+	},
 
-	join(models.RequestStatusReceived, models.RequestStatusCompleted): sender{
+	join(models.RequestStatusReceived, models.RequestStatusCompleted): {
 		template: domain.MessageTemplateRequestFromReceivedToCompleted,
 		subject:  "",
-		sender:   sendNotificationEmpty},
+		sender:   sendNotificationEmpty,
+	},
 }
 
 func requestStatusUpdatedNotifications(request models.Request, eData models.RequestStatusEventData) {
-
 	fromStatusTo := join(eData.OldStatus, eData.NewStatus)
 	sender, ok := statusSenders[fromStatusTo]
 

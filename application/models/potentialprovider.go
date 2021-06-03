@@ -92,7 +92,6 @@ type PotentialProviderEventData struct {
 
 // Create stores the PotentialProvider data as a new record in the database.
 func (p *PotentialProvider) Create() error {
-
 	if err := create(p); err != nil {
 		return err
 	}

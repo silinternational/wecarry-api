@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/gobuffalo/nulls"
-
 	"github.com/silinternational/wecarry-api/auth/azureadv2"
 	"github.com/silinternational/wecarry-api/auth/google"
 	"github.com/silinternational/wecarry-api/domain"
@@ -63,8 +62,7 @@ func (ms *ModelSuite) TestOrganization_FindOrgByUUID() {
 }
 
 func (ms *ModelSuite) TestOrganization_Create() {
-	var file File
-	ms.Nil(file.Store("logo.gif", []byte("GIF89a")), "unexpected error storing file")
+	file := createFileFixture()
 
 	t := ms.T()
 	tests := []struct {
@@ -281,8 +279,7 @@ func (ms *ModelSuite) TestOrganization_Save() {
 	t := ms.T()
 
 	orgFixtures := createOrganizationFixtures(ms.DB, 2)
-	var file File
-	ms.Nil(file.Store("logo.gif", []byte("GIF89a")), "unexpected error storing file")
+	file := createFileFixture()
 
 	// test save of existing organization
 	orgFixtures[0].Name = "changed"
@@ -318,7 +315,6 @@ func (ms *ModelSuite) TestOrganization_Save() {
 	if newOrg.ID == 0 {
 		t.Error("new organization not updated after save")
 	}
-
 }
 
 func (ms *ModelSuite) TestOrganization_All() {
@@ -335,7 +331,6 @@ func (ms *ModelSuite) TestOrganization_All() {
 	if len(allOrgs) != len(orgFixtures) {
 		t.Errorf("Did not get expected number of orgs, got %v, wanted %v", len(allOrgs), len(orgFixtures))
 	}
-
 }
 
 func (ms *ModelSuite) TestOrganization_GetDomains() {
@@ -432,7 +427,6 @@ func (ms *ModelSuite) TestOrganization_AllWhereUserIsOrgAdmin() {
 			ms.Equal(test.wantOrgIDs, gotNames, "incorrect list of org Names")
 		})
 	}
-
 }
 
 func (ms *ModelSuite) TestOrganization_LogoURL() {
@@ -590,7 +584,6 @@ func (ms *ModelSuite) TestOrganization_TrustedOrganizations() {
 }
 
 func (ms *ModelSuite) TestOrganization_GetAuthProvider() {
-
 	adTenantID := "TestADTenant"
 	adSecret := "TestADKey"
 	adApplicationID := "testADSecret"

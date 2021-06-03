@@ -208,7 +208,7 @@ func (ms *ModelSuite) TestMeetingParticipant_FindOrCreate() {
 			}
 			ms.NoError(err, "unexpected error")
 
-			ctx.Set("current_user", f.Users[0])
+			ctx.Set(domain.ContextKeyCurrentUser, f.Users[0])
 			participants, err := tt.meeting.Participants(ctx)
 			ms.NoError(err)
 

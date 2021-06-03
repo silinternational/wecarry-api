@@ -975,11 +975,13 @@ func (ms *ModelSuite) TestRequest_FindByID() {
 		wantProvider  User
 		wantErr       bool
 	}{
-		{name: "good with no related fields",
+		{
+			name:        "good with no related fields",
 			id:          requests[0].ID,
 			wantRequest: requests[0],
 		},
-		{name: "good with a related field",
+		{
+			name:          "good with a related field",
 			id:            requests[1].ID,
 			eagerFields:   []string{"CreatedBy"},
 			wantRequest:   requests[1],
@@ -1103,14 +1105,14 @@ func (ms *ModelSuite) TestRequest_GetProvider() {
 }
 
 func (ms *ModelSuite) TestRequest_GetStatusTransitions() {
-
 	tests := []struct {
 		name    string
 		request Request
 		user    User
 		want    []StatusTransitionTarget
 	}{
-		{name: "Open Request - Creator",
+		{
+			name:    "Open Request - Creator",
 			request: Request{ID: 1, CreatedByID: 11, Status: RequestStatusOpen},
 			user:    User{ID: 11},
 			want: []StatusTransitionTarget{
@@ -1118,7 +1120,8 @@ func (ms *ModelSuite) TestRequest_GetStatusTransitions() {
 				{Status: RequestStatusRemoved},
 			},
 		},
-		{name: "Accepted Request - Creator",
+		{
+			name:    "Accepted Request - Creator",
 			request: Request{ID: 1, CreatedByID: 11, Status: RequestStatusAccepted},
 			user:    User{ID: 11},
 			want: []StatusTransitionTarget{
@@ -1128,12 +1131,14 @@ func (ms *ModelSuite) TestRequest_GetStatusTransitions() {
 				{Status: RequestStatusRemoved},
 			},
 		},
-		{name: "Delivered Request - Creator",
+		{
+			name:    "Delivered Request - Creator",
 			request: Request{ID: 1, CreatedByID: 11, Status: RequestStatusDelivered},
 			user:    User{ID: 11},
 			want:    []StatusTransitionTarget{{Status: RequestStatusCompleted}},
 		},
-		{name: "Completed Request - Creator",
+		{
+			name:    "Completed Request - Creator",
 			request: Request{ID: 1, CreatedByID: 11, Status: RequestStatusCompleted},
 			user:    User{ID: 11},
 			want: []StatusTransitionTarget{
@@ -1141,30 +1146,35 @@ func (ms *ModelSuite) TestRequest_GetStatusTransitions() {
 				{Status: RequestStatusDelivered, IsBackStep: true},
 			},
 		},
-		{name: "Accepted Request - Provider",
+		{
+			name:    "Accepted Request - Provider",
 			request: Request{ID: 1, ProviderID: nulls.NewInt(12), Status: RequestStatusAccepted},
 			user:    User{ID: 12},
 			want: []StatusTransitionTarget{
 				{Status: RequestStatusDelivered, isProviderAction: true},
 			},
 		},
-		{name: "Delivered Request - Provider",
+		{
+			name:    "Delivered Request - Provider",
 			request: Request{ID: 1, ProviderID: nulls.NewInt(12), Status: RequestStatusDelivered},
 			user:    User{ID: 12},
 			want: []StatusTransitionTarget{
 				{Status: RequestStatusAccepted, IsBackStep: true, isProviderAction: true},
 			},
 		},
-		{name: "Completed Request - Provider",
+		{
+			name:    "Completed Request - Provider",
 			request: Request{ID: 1, ProviderID: nulls.NewInt(12), Status: RequestStatusCompleted},
 			user:    User{ID: 12},
 			want:    []StatusTransitionTarget{},
 		},
-		{name: "Open Request - Not Creator Or Provider",
+		{
+			name:    "Open Request - Not Creator Or Provider",
 			request: Request{ID: 1, Status: RequestStatusOpen},
 			user:    User{ID: 99}, want: []StatusTransitionTarget{},
 		},
-		{name: "Accepted Request - Not Creator Or Provider",
+		{
+			name:    "Accepted Request - Not Creator Or Provider",
 			request: Request{ID: 1, Status: RequestStatusAccepted},
 			user:    User{ID: 99}, want: []StatusTransitionTarget{},
 		},
@@ -1194,17 +1204,20 @@ func (ms *ModelSuite) TestRequest_GetPotentialProviderActions() {
 		user    User
 		want    []string
 	}{
-		{name: "Open Request - Creator",
+		{
+			name:    "Open Request - Creator",
 			request: requests[1],
 			user:    users[0],
 			want:    []string{},
 		},
-		{name: "Open Request with no offers - not Creator",
+		{
+			name:    "Open Request with no offers - not Creator",
 			request: requests[1],
 			user:    users[1],
 			want:    []string{RequestActionOffer},
 		},
-		{name: "Open Request with offer - Offerer",
+		{
+			name:    "Open Request with offer - Offerer",
 			request: requests[0],
 			user:    users[1],
 			want:    []string{RequestActionRetractOffer},
@@ -1236,27 +1249,32 @@ func (ms *ModelSuite) TestRequest_GetCurrentActions() {
 		user    User
 		want    []string
 	}{
-		{name: "Open Request with offers - Creator",
+		{
+			name:    "Open Request with offers - Creator",
 			request: requests[0],
 			user:    users[0],
 			want:    []string{RequestActionAccept, RequestActionRemove},
 		},
-		{name: "Accepted Request - Creator",
+		{
+			name:    "Accepted Request - Creator",
 			request: acceptedRequest,
 			user:    users[0],
 			want:    []string{RequestActionReopen, RequestActionReceive, RequestActionRemove},
 		},
-		{name: "Open Request with no offers - not Creator",
+		{
+			name:    "Open Request with no offers - not Creator",
 			request: requests[1],
 			user:    users[1],
 			want:    []string{RequestActionOffer},
 		},
-		{name: "Open Request with offer - not Creator",
+		{
+			name:    "Open Request with offer - not Creator",
 			request: requests[0],
 			user:    users[1],
 			want:    []string{RequestActionRetractOffer},
 		},
-		{name: "Accepted Request - Provider",
+		{
+			name:    "Accepted Request - Provider",
 			request: acceptedRequest,
 			user:    users[1],
 			want:    []string{RequestActionDeliver},
@@ -1351,14 +1369,12 @@ func (ms *ModelSuite) TestRequest_AttachFile() {
 	}
 	createFixture(ms, &request)
 
-	var fileFixture File
-	const filename = "photo.gif"
-	ms.Nil(fileFixture.Store(filename, []byte("GIF89a")), "failed to create file fixture")
+	file := createFileFixture()
 
-	if attachedFile, err := request.AttachFile(fileFixture.UUID.String()); err != nil {
+	if attachedFile, err := request.AttachFile(file.UUID.String()); err != nil {
 		t.Errorf("failed to attach file to request, %s", err)
 	} else {
-		ms.Equal(filename, attachedFile.Name)
+		ms.Equal(file.Name, attachedFile.Name)
 		ms.True(attachedFile.ID != 0)
 		ms.True(attachedFile.UUID.Version() != 0)
 	}
@@ -1373,7 +1389,7 @@ func (ms *ModelSuite) TestRequest_AttachFile() {
 		t.Errorf("failed to load files relations for test request, %s", err)
 	}
 
-	ms.Equal(filename, request.Files[0].File.Name)
+	ms.Equal(file.Name, request.Files[0].File.Name)
 }
 
 func (ms *ModelSuite) TestRequest_GetFiles() {
@@ -1404,19 +1420,17 @@ func (ms *ModelSuite) TestRequest_GetPhotoID() {
 	requests := createRequestFixtures(ms.DB, 1, false)
 	request := requests[0]
 
-	var photoFixture File
-	const filename = "photo.gif"
-	ms.Nil(photoFixture.Store(filename, []byte("GIF89a")), "failed to create file fixture")
+	photoFixture := createFileFixture()
 
 	attachedFile, err := request.AttachPhoto(photoFixture.UUID.String())
 	ms.NoError(err, "failed to attach photo to request")
-	ms.Equal(filename, attachedFile.Name)
+	ms.Equal(photoFixture.Name, attachedFile.Name)
 	ms.True(attachedFile.ID != 0)
 	ms.True(attachedFile.UUID.Version() != 0)
 
 	ms.NoError(DB.Load(&request), "failed to load photo relation for test request")
 
-	ms.Equal(filename, request.PhotoFile.Name)
+	ms.Equal(photoFixture.Name, request.PhotoFile.Name)
 
 	got, err := request.GetPhotoID()
 	ms.NoError(err, "unexpected error")
@@ -1429,24 +1443,21 @@ func (ms *ModelSuite) TestRequest_GetPhoto() {
 	requests := createRequestFixtures(ms.DB, 1, false)
 	request := requests[0]
 
-	var photoFixture File
-	const filename = "photo.gif"
-	ms.Nil(photoFixture.Store(filename, []byte("GIF89a")), "failed to create file fixture")
+	photoFixture := createFileFixture()
 
 	attachedFile, err := request.AttachPhoto(photoFixture.UUID.String())
 	ms.NoError(err, "failed to attach photo to request")
-	ms.Equal(filename, attachedFile.Name)
+	ms.Equal(photoFixture.Name, attachedFile.Name)
 	ms.True(attachedFile.ID != 0)
 	ms.True(attachedFile.UUID.Version() != 0)
 
 	ms.NoError(DB.Load(&request), "failed to load photo relation for test request")
 
-	ms.Equal(filename, request.PhotoFile.Name)
+	ms.Equal(photoFixture.Name, request.PhotoFile.Name)
 
 	if got, err := request.GetPhoto(); err == nil {
 		ms.Equal(attachedFile.UUID.String(), got.UUID.String())
-		ms.True(got.URLExpiration.After(time.Now().Add(time.Minute)))
-		ms.Equal(filename, got.Name)
+		ms.Equal(attachedFile.Name, got.Name)
 	} else {
 		ms.Fail("request.GetPhoto failed, %s", err)
 	}
@@ -1652,8 +1663,10 @@ func (ms *ModelSuite) TestRequests_FindByUser() {
 		wantRequestIDs []int
 		wantErr        bool
 	}{
-		{name: "user 0", user: f.Users[0],
-			wantRequestIDs: []int{f.Requests[6].ID, f.Requests[5].ID, f.Requests[4].ID, f.Requests[1].ID, f.Requests[0].ID}},
+		{
+			name: "user 0", user: f.Users[0],
+			wantRequestIDs: []int{f.Requests[6].ID, f.Requests[5].ID, f.Requests[4].ID, f.Requests[1].ID, f.Requests[0].ID},
+		},
 		{name: "user 1", user: f.Users[1], wantRequestIDs: []int{f.Requests[5].ID, f.Requests[4].ID, f.Requests[0].ID}},
 		{name: "user 2", user: f.Users[2], wantRequestIDs: []int{f.Requests[7].ID, f.Requests[6].ID, f.Requests[5].ID}},
 		{name: "user 3", user: f.Users[3], wantRequestIDs: []int{f.Requests[6].ID, f.Requests[5].ID, f.Requests[1].ID}},
@@ -1703,12 +1716,18 @@ func (ms *ModelSuite) TestRequests_GetPotentialProviders() {
 		user      User
 		wantPPIDs []int
 	}{
-		{name: "pps for first request by requester", request: requests[0], user: users[0],
-			wantPPIDs: []int{pps[0].UserID, pps[1].UserID, pps[2].UserID}},
-		{name: "pps for first request by one of the potential providers", request: requests[0], user: users[1],
-			wantPPIDs: []int{pps[0].UserID}},
-		{name: "pps for second request by a non potential provider", request: requests[1], user: users[1],
-			wantPPIDs: []int{}},
+		{
+			name: "pps for first request by requester", request: requests[0], user: users[0],
+			wantPPIDs: []int{pps[0].UserID, pps[1].UserID, pps[2].UserID},
+		},
+		{
+			name: "pps for first request by one of the potential providers", request: requests[0], user: users[1],
+			wantPPIDs: []int{pps[0].UserID},
+		},
+		{
+			name: "pps for second request by a non potential provider", request: requests[1], user: users[1],
+			wantPPIDs: []int{},
+		},
 		{name: "no pps for third request", request: requests[2], wantPPIDs: []int{}},
 	}
 	for _, tt := range tests {
@@ -1737,13 +1756,20 @@ func (ms *ModelSuite) TestRequests_FindByUser_SearchText() {
 		wantRequestIDs []int
 		wantErr        bool
 	}{
-		{name: "user 0 matching case request", user: f.Users[0], matchText: "Match",
-			wantRequestIDs: []int{f.Requests[5].ID, f.Requests[1].ID, f.Requests[0].ID}},
-		{name: "user 0 lower case request", user: f.Users[0], matchText: "match",
-			wantRequestIDs: []int{f.Requests[5].ID, f.Requests[1].ID, f.Requests[0].ID}},
-		{name: "user 1", user: f.Users[1], matchText: "Match",
-			wantRequestIDs: []int{f.Requests[5].ID, f.Requests[1].ID}},
-		{name: "non-existent user", user: User{}, matchText: "Match",
+		{
+			name: "user 0 matching case request", user: f.Users[0], matchText: "Match",
+			wantRequestIDs: []int{f.Requests[5].ID, f.Requests[1].ID, f.Requests[0].ID},
+		},
+		{
+			name: "user 0 lower case request", user: f.Users[0], matchText: "match",
+			wantRequestIDs: []int{f.Requests[5].ID, f.Requests[1].ID, f.Requests[0].ID},
+		},
+		{
+			name: "user 1", user: f.Users[1], matchText: "Match",
+			wantRequestIDs: []int{f.Requests[5].ID, f.Requests[1].ID},
+		},
+		{
+			name: "non-existent user", user: User{}, matchText: "Match",
 			wantErr: true,
 		},
 	}

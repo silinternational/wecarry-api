@@ -42,7 +42,6 @@ func (as *ActionSuite) TestVerifyEmails() {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-
 			c := &bufTestCtx{
 				sess:   as.Session,
 				params: map[string]string{},
@@ -128,7 +127,7 @@ func (as *ActionSuite) TestGetLoginSuccessRedirectURL() {
 			}
 
 			expected = test.wantEnd
-			endResults := allResults[len(allResults)-len(expected) : len(allResults)]
+			endResults := allResults[len(allResults)-len(expected):]
 			if endResults != expected {
 				t.Errorf("Bad results at end for test \"%s\". \nExpected %s\n  but got %s",
 					test.name, expected, allResults)
@@ -186,6 +185,7 @@ func (l testLogger) Panic(i ...interface{})            {}
 func (l testLogger) WithField(s string, i interface{}) logger.FieldLogger {
 	return testLogger{}
 }
+
 func (l testLogger) WithFields(m map[string]interface{}) logger.FieldLogger {
 	return testLogger{}
 }
@@ -292,7 +292,6 @@ func (as *ActionSuite) TestGetOrSetReturnTo() {
 	for _, test := range tests {
 		// Test the first part and last part of the resulting urls
 		t.Run(test.name, func(t *testing.T) {
-
 			c := &bufTestCtx{
 				sess:   as.Session,
 				params: map[string]string{},
@@ -365,7 +364,6 @@ func (as *ActionSuite) TestGetUserOrgs() {
 	for _, test := range tests {
 		// Test the first part and last part of the resulting urls
 		t.Run(test.name, func(t *testing.T) {
-
 			c := &bufTestCtx{
 				sess:   as.Session,
 				params: map[string]string{},
@@ -419,7 +417,6 @@ func (as *ActionSuite) Test_newAuthUser() {
 	}
 
 	resultsAuthUser, err := newOrgBasedAuthUser("12345678", user, orgFixture)
-
 	if err != nil {
 		t.Errorf("unexpected error ... %v", err)
 		return

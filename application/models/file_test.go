@@ -1,7 +1,6 @@
 package models
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -114,8 +113,11 @@ func (ms *ModelSuite) TestFile_Store() {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var f File
-			fErr := f.Store(tt.args.name, tt.args.content)
+			f := File{
+				Name:    tt.args.name,
+				Content: tt.args.content,
+			}
+			fErr := f.Store()
 			if tt.wantErr {
 				ms.NotNil(fErr)
 				ms.Equal(fErr.ErrorCode, tt.wantCode, "incorrect error type")
@@ -127,39 +129,16 @@ func (ms *ModelSuite) TestFile_Store() {
 	}
 }
 
-func CreateFileFixtures(ms *ModelSuite, requests Requests) Files {
-	t := ms.T()
-	const n = 2
-	files := make(Files, n)
-
-	for i := 0; i < n; i++ {
-		var file File
-		if fErr := file.Store(fmt.Sprintf("file_%d.gif", i), []byte("GIF87a")); fErr != nil {
-			t.Errorf("failed to create file fixture %d, %v", i, fErr)
-			t.FailNow()
-		}
-		files[i] = file
-	}
-
-	files[1].URLExpiration = time.Now().Add(-time.Minute)
-	if err := ms.DB.Save(&files[1]); err != nil {
-		t.Errorf("failed to update file fixture")
-	}
-
-	return files
-}
-
 func (ms *ModelSuite) TestFile_FindByUUID() {
 	t := ms.T()
 
 	_ = createUserFixtures(ms.DB, 2)
-	requests := createRequestFixtures(ms.DB, 1, false)
 
 	if err := aws.CreateS3Bucket(); err != nil {
 		t.Errorf("failed to create S3 bucket, %s", err)
 		t.FailNow()
 	}
-	files := CreateFileFixtures(ms, requests)
+	files := createFileFixtures(2)
 
 	type args struct {
 		fileUUID string
@@ -206,13 +185,11 @@ func (ms *ModelSuite) TestFile_FindByUUID() {
 func (ms *ModelSuite) TestFiles_FindByIDs() {
 	t := ms.T()
 
-	requests := createRequestFixtures(ms.DB, 1, false)
-
 	if err := aws.CreateS3Bucket(); err != nil {
 		t.Errorf("failed to create S3 bucket, %s", err)
 		t.FailNow()
 	}
-	files := CreateFileFixtures(ms, requests)
+	files := createFileFixtures(2)
 
 	tests := []struct {
 		name string
@@ -233,14 +210,14 @@ func (ms *ModelSuite) TestFiles_FindByIDs() {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var f Files
-			err := f.FindByIDs(tt.ids)
+			err := f.FindByIDs(ms.DB, tt.ids)
 			ms.NoError(err)
 
 			fileNames := make([]string, len(f))
 			for i, ff := range f {
 				fileNames[i] = ff.Name
 			}
-			ms.Equal(tt.want, fileNames, "incorrect file names")
+			ms.ElementsMatch(tt.want, fileNames, "incorrect file names")
 		})
 	}
 }
@@ -392,9 +369,9 @@ func (ms *ModelSuite) Test_changeFileExtension() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			n := tt.filename
-			changeFileExtension(&n, tt.contentType)
-			ms.Equal(tt.want, n)
+			f := File{Name: tt.filename, ContentType: tt.contentType}
+			f.changeFileExtension()
+			ms.Equal(tt.want, f.Name)
 		})
 	}
 }

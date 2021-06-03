@@ -13,10 +13,8 @@ import (
 )
 
 var _ = grift.Namespace("db", func() {
-
 	grift.Desc("seed", "Seeds a database")
 	_ = grift.Add("seed", func(c *grift.Context) error {
-
 		var existingOrgs models.Organizations
 		_ = models.DB.All(&existingOrgs)
 		if len(existingOrgs) > 1 {
@@ -145,6 +143,22 @@ var _ = grift.Namespace("db", func() {
 			err := models.DB.Create(fixtureUserOrgs[i])
 			if err != nil {
 				err = fmt.Errorf("error loading user organizations fixture ... %+v\n %v", userOrgs, err.Error())
+				return err
+			}
+		}
+
+		oneYearFromNow := time.Now().UTC().Add(time.Second * 60 * 60 * 24 * 365)
+
+		fixtureUserTokens := make(models.UserAccessTokens, len(fixtureUsers))
+		for i, token := range fixtureUserTokens {
+			fixtureUserTokens[i].UserID = fixtureUsers[i].ID
+			fixtureUserTokens[i].UserOrganizationID = nulls.NewInt(fixtureUserOrgs[i].ID)
+			fixtureUserTokens[i].AccessToken = models.HashClientIdAccessToken(fixtureUsers[i].Nickname)
+			fixtureUserTokens[i].ExpiresAt = oneYearFromNow
+
+			err := models.DB.Create(&fixtureUserTokens[i])
+			if err != nil {
+				err = fmt.Errorf("error loading user token fixture ... %+v\n %v", token, err.Error())
 				return err
 			}
 		}
@@ -500,7 +514,8 @@ var _ = grift.Namespace("db", func() {
 				FileID:      nulls.NewInt(fixtureFiles[2].ID),
 				StartDate:   time.Date(2020, 4, 4, 0, 0, 0, 0, time.UTC),
 				EndDate:     time.Date(2020, 4, 9, 0, 0, 0, 0, time.UTC),
-			}}
+			},
+		}
 
 		for i, meeting := range fixtureMeetings {
 			err := models.DB.Create(fixtureMeetings[i])
@@ -575,5 +590,4 @@ var _ = grift.Namespace("db", func() {
 
 		return nil
 	})
-
 })

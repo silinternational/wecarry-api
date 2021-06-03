@@ -17,14 +17,11 @@ type organizationResolver struct{ *Resolver }
 
 func (r *queryResolver) Organizations(ctx context.Context) ([]models.Organization, error) {
 	cUser := models.CurrentUser(ctx)
-	extras := map[string]interface{}{
-		"user": cUser.UUID,
-	}
 
 	// get list of orgs that cUser is allowed to see
 	orgs := models.Organizations{}
 	if err := orgs.AllWhereUserIsOrgAdmin(cUser); err != nil {
-		return orgs, domain.ReportError(ctx, err, "ListOrganizations.Error", extras)
+		return orgs, domain.ReportError(ctx, err, "ListOrganizations.Error")
 	}
 
 	return orgs, nil
@@ -32,14 +29,11 @@ func (r *queryResolver) Organizations(ctx context.Context) ([]models.Organizatio
 
 func (r *queryResolver) Organization(ctx context.Context, id *string) (*models.Organization, error) {
 	cUser := models.CurrentUser(ctx)
-	extras := map[string]interface{}{
-		"user":    cUser.UUID,
-		"orgUUID": *id,
-	}
+	domain.NewExtra(ctx, "orgUUID", *id)
 
 	org := &models.Organization{}
 	if err := org.FindByUUID(*id); err != nil {
-		return org, domain.ReportError(ctx, err, "ViewOrganization.Error", extras)
+		return org, domain.ReportError(ctx, err, "ViewOrganization.Error")
 	}
 
 	if org.ID != 0 && cUser.CanViewOrganization(org.ID) {
@@ -47,7 +41,7 @@ func (r *queryResolver) Organization(ctx context.Context, id *string) (*models.O
 	}
 
 	return &models.Organization{}, domain.ReportError(ctx, errors.New("user not allowed to view organization"),
-		"ViewOrganization.NotFound", extras)
+		"ViewOrganization.NotFound")
 }
 
 // ID resolves the `ID` property of the organization query. It provides the UUID instead of the autoincrement ID.

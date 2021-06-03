@@ -5,24 +5,37 @@ import (
 	"testing"
 
 	"github.com/gobuffalo/buffalo"
+	"github.com/gobuffalo/envy"
 	"github.com/gobuffalo/nulls"
-	"github.com/gobuffalo/suite/v3"
+	"github.com/gobuffalo/pop/v5"
 	"github.com/gofrs/uuid"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 
 	"github.com/silinternational/wecarry-api/domain"
 )
 
+// ModelSuite doesn't contain a buffalo suite.Model and can be used for tests that don't need access to the database
+// or don't need the buffalo test runner to refresh the database
 type ModelSuite struct {
-	*suite.Model
+	suite.Suite
+	*require.Assertions
+	DB *pop.Connection
 }
 
-func Test_ModelSuite(t *testing.T) {
-	model := suite.NewModel()
+func (ms *ModelSuite) SetupTest() {
+	ms.Assertions = require.New(ms.T())
+	DestroyAll()
+}
 
-	as := &ModelSuite{
-		Model: model,
+// Test_ModelSuite runs the test suite
+func Test_ModelSuite(t *testing.T) {
+	ms := &ModelSuite{}
+	c, err := pop.Connect(envy.Get("GO_ENV", "test"))
+	if err == nil {
+		ms.DB = c
 	}
-	suite.Run(t, as)
+	suite.Run(t, ms)
 }
 
 func createFixture(ms *ModelSuite, f interface{}) {
@@ -50,7 +63,7 @@ func createTestContext(user User) buffalo.Context {
 	ctx := &testBuffaloContext{
 		params: map[interface{}]interface{}{},
 	}
-	ctx.Set("current_user", user)
+	ctx.Set(domain.ContextKeyCurrentUser, user)
 	return ctx
 }
 

@@ -175,6 +175,60 @@ func (as *ActionSuite) verifyRequestResponse(request models.Request, resp Reques
 	}
 }
 
+func (as *ActionSuite) Test_RequestQuery() {
+	f := createFixturesForRequestQuery(as)
+
+	type testCase struct {
+		name        string
+		id          string
+		testUser    models.User
+		expectError bool
+		verifyFunc  func()
+	}
+
+	const queryTemplate = `{ request (id: "%s")` + allRequestFields + `}`
+
+	var resp RequestResponse
+
+	testCases := []testCase{
+		{
+			name:        "missing ID",
+			testUser:    f.Users[1],
+			id:          "",
+			expectError: true,
+		},
+		{
+			name:        "bad ID",
+			testUser:    f.Users[1],
+			id:          domain.GetUUID().String(),
+			expectError: true,
+		},
+		{
+			name:     "good",
+			testUser: f.Users[1],
+			id:       f.Requests[0].UUID.String(),
+			verifyFunc: func() {
+				as.verifyRequestResponse(f.Requests[0], resp.Request)
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		as.T().Run(tc.name, func(t *testing.T) {
+			query := fmt.Sprintf(queryTemplate, tc.id)
+			resp = RequestResponse{}
+			err := as.testGqlQuery(query, tc.testUser.Nickname, &resp)
+
+			if tc.expectError {
+				as.Error(err)
+				return
+			}
+			as.NoError(err, "unexpected gql error, query: %s\nerr: %s", query, err)
+			tc.verifyFunc()
+		})
+	}
+}
+
 func (as *ActionSuite) Test_RequestsQuery() {
 	f := createFixturesForRequestQuery(as)
 
@@ -487,10 +541,14 @@ func (as *ActionSuite) Test_UpdateRequestStatus_DestroyPotentialProviders() {
 		wantPPIDs []uuid.UUID
 		wantErr   bool
 	}{
-		{status: models.RequestStatusReceived, user: creator,
-			wantPPIDs: []uuid.UUID{users[1].UUID, users[2].UUID, users[3].UUID}},
-		{status: models.RequestStatusDelivered, user: creator,
-			wantPPIDs: []uuid.UUID{users[1].UUID, users[2].UUID, users[3].UUID}},
+		{
+			status: models.RequestStatusReceived, user: creator,
+			wantPPIDs: []uuid.UUID{users[1].UUID, users[2].UUID, users[3].UUID},
+		},
+		{
+			status: models.RequestStatusDelivered, user: creator,
+			wantPPIDs: []uuid.UUID{users[1].UUID, users[2].UUID, users[3].UUID},
+		},
 		{status: models.RequestStatusCompleted, user: provider, wantErr: true},
 		{status: models.RequestStatusCompleted, user: creator, wantPPIDs: []uuid.UUID{}},
 	}
@@ -527,15 +585,19 @@ func (as *ActionSuite) Test_MarkRequestAsDelivered() {
 		wantErr                 bool
 		wantErrContains         string
 	}{
-		{name: "ACCEPTED: delivered by Provider",
+		{
+			name:      "ACCEPTED: delivered by Provider",
 			requestID: requests[0].UUID.String(), user: provider,
 			wantStatus:              models.RequestStatusDelivered.String(),
-			wantRequestHistoryCount: 3, wantErr: false},
-		{name: "ACCEPTED: delivered by Creator",
+			wantRequestHistoryCount: 3, wantErr: false,
+		},
+		{
+			name:      "ACCEPTED: delivered by Creator",
 			requestID: requests[0].UUID.String(), user: creator, wantErr: true,
 			wantErrContains: "not allowed to change the status",
 		},
-		{name: "COMPLETED: delivered by Provider",
+		{
+			name:      "COMPLETED: delivered by Provider",
 			requestID: requests[1].UUID.String(), user: provider, wantErr: true,
 			wantErrContains: "not allowed to change the status",
 		},
@@ -591,21 +653,25 @@ func (as *ActionSuite) Test_MarkRequestAsReceived() {
 		wantErr                 bool
 		wantErrContains         string
 	}{
-		{name: "ACCEPTED: received by Provider",
+		{
+			name:      "ACCEPTED: received by Provider",
 			requestID: requests[0].UUID.String(), user: provider, wantErr: true,
 			wantErrContains: "not allowed to change the status",
 		},
-		{name: "ACCEPTED: received by Creator",
+		{
+			name:      "ACCEPTED: received by Creator",
 			requestID: requests[0].UUID.String(), user: creator, wantErr: false,
 			wantStatus:              models.RequestStatusCompleted.String(),
 			wantRequestHistoryCount: 3,
 		},
-		{name: "DELIVERED: received by Creator",
+		{
+			name:      "DELIVERED: received by Creator",
 			requestID: requests[1].UUID.String(), user: creator, wantErr: false,
 			wantStatus:              models.RequestStatusCompleted.String(),
 			wantRequestHistoryCount: 4,
 		},
-		{name: "COMPLETED: received by Creator",
+		{
+			name:      "COMPLETED: received by Creator",
 			requestID: requests[2].UUID.String(), user: creator, wantErr: true,
 			wantErrContains: "not allowed to change the status",
 		},
@@ -662,7 +728,8 @@ func (as *ActionSuite) Test_RequestActions() {
 		user models.User
 		want map[string][]string
 	}{
-		{name: "Creator",
+		{
+			name: "Creator",
 			user: creator,
 			want: map[string][]string{
 				requests[0].UUID.String(): {models.RequestActionReopen, models.RequestActionReceive, models.RequestActionRemove},
@@ -670,7 +737,8 @@ func (as *ActionSuite) Test_RequestActions() {
 				requests[2].UUID.String(): {models.RequestActionAccept, models.RequestActionRemove},
 			},
 		},
-		{name: "Provider",
+		{
+			name: "Provider",
 			user: provider,
 			want: map[string][]string{
 				requests[0].UUID.String(): {models.RequestActionDeliver},
@@ -678,7 +746,8 @@ func (as *ActionSuite) Test_RequestActions() {
 				requests[2].UUID.String(): {models.RequestActionOffer},
 			},
 		},
-		{name: "Other User",
+		{
+			name: "Other User",
 			user: f.Users[2],
 			want: map[string][]string{
 				requests[0].UUID.String(): {},
@@ -692,7 +761,6 @@ func (as *ActionSuite) Test_RequestActions() {
 	var resp RequestsResponse
 	for _, tc := range testCases {
 		as.T().Run(tc.name, func(t *testing.T) {
-
 			err := as.testGqlQuery(query, tc.user.Nickname, &resp)
 			as.NoError(err)
 

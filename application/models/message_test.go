@@ -95,7 +95,6 @@ func (ms *ModelSuite) TestMessage_GetSender() {
 	users := messageFixtures.Users
 
 	userResults, err := messages[0].GetSender()
-
 	if err != nil {
 		t.Errorf("unexpected error ... %v", err)
 		t.FailNow()
@@ -115,7 +114,6 @@ func (ms *ModelSuite) TestMessage_GetThread() {
 	threads := messageFixtures.Threads
 
 	threadResults, err := messages[0].GetThread()
-
 	if err != nil {
 		t.Errorf("unexpected error ... %v", err)
 		t.FailNow()
@@ -211,11 +209,13 @@ func (ms *ModelSuite) TestMessage_FindByID() {
 		wantThread  Thread
 		wantErr     bool
 	}{
-		{name: "good with no extra fields",
+		{
+			name:        "good with no extra fields",
 			id:          f.Messages[0].ID,
 			wantMessage: f.Messages[0],
 		},
-		{name: "good with two extra fields",
+		{
+			name:        "good with two extra fields",
 			id:          f.Messages[0].ID,
 			eagerFields: []string{"SentBy", "Thread"},
 			wantMessage: f.Messages[0],
@@ -255,7 +255,8 @@ func (ms *ModelSuite) TestMessage_FindByUUID() {
 		wantCreatedAt time.Time
 		wantErr       string
 	}{
-		{name: "good",
+		{
+			name:          "good",
 			uuid:          f.Messages[0].UUID.String(),
 			wantID:        f.Messages[0].ID,
 			wantContent:   f.Messages[0].Content,

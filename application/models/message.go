@@ -78,7 +78,6 @@ func (m *Message) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 // the current time. It also ensures the associated ThreadParticipant records exist, and emits an EventApiMessageCreated
 // event.
 func (m *Message) AfterCreate(tx *pop.Connection) error {
-
 	thread, err := m.GetThread()
 	if err != nil {
 		return errors.New("error getting message's Thread ... " + err.Error())

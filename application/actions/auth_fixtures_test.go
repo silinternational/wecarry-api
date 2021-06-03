@@ -2,14 +2,13 @@ package actions
 
 import (
 	"fmt"
+	"testing"
 	"time"
 
 	"github.com/silinternational/wecarry-api/aws"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/internal/test"
 	"github.com/silinternational/wecarry-api/models"
-
-	"testing"
 
 	"github.com/gobuffalo/nulls"
 )
@@ -35,9 +34,7 @@ func createFixturesForAuthInvite(as *ActionSuite) meetingFixtures {
 	err := aws.CreateS3Bucket()
 	as.NoError(err, "failed to create S3 bucket, %s", err)
 
-	var fileFixture models.File
-	fErr := fileFixture.Store("new_photo.webp", []byte("RIFFxxxxWEBPVP"))
-	as.Nil(fErr, "failed to create ImageFile fixture")
+	fileFixture := test.CreateFileFixture()
 
 	meetings := make(models.Meetings, 2)
 	meetings[1].FileID = nulls.NewInt(fileFixture.ID)
@@ -225,9 +222,7 @@ func createFixturesForEnsureMeetingParticipant(as *ActionSuite) meetingFixtures 
 	err := aws.CreateS3Bucket()
 	as.NoError(err, "failed to create S3 bucket, %s", err)
 
-	var fileFixture models.File
-	fErr := fileFixture.Store("new_photo.webp", []byte("RIFFxxxxWEBPVP"))
-	as.Nil(fErr, "failed to create ImageFile fixture")
+	fileFixture := test.CreateFileFixture()
 
 	meetings := make(models.Meetings, 2)
 	meetings[1].FileID = nulls.NewInt(fileFixture.ID)

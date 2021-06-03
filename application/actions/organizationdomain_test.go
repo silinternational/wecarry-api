@@ -75,5 +75,4 @@ func (as *ActionSuite) Test_CreateUpdateOrganizationDomain() {
 	var resp4 OrganizationDomainResponse
 	err = as.testGqlQuery(query, f.Users[1].Nickname, &resp4)
 	as.Error(err)
-
 }

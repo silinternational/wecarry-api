@@ -162,7 +162,6 @@ func (u *User) GetOrgIDs() []int {
 }
 
 func (u *User) hydrateFromAuthUser(authUser *auth.User, authType string) error {
-
 	newUser := true
 	if u.ID != 0 {
 		newUser = false
@@ -343,7 +342,7 @@ func (u *User) CanUpdateRequestStatus(request Request, newStatus RequestStatus) 
 	return request.canUserChangeStatus(*u, newStatus)
 }
 
-func (u *User) canViewRequest(request Request) bool {
+func (u *User) CanViewRequest(request Request) bool {
 	if u.AdminRole == UserAdminRoleSuperAdmin {
 		return true
 	}
@@ -519,7 +518,6 @@ func (u *User) Save() error {
 }
 
 func (u *User) uniquifyNickname(prefixes [30]string) error {
-
 	simpleNN := u.Nickname
 	if simpleNN == "" {
 		simpleNN = u.FirstName
@@ -775,8 +773,8 @@ func (u *User) MeetingsAsParticipant(ctx context.Context) ([]Meeting, error) {
 		Where("meeting_participants.user_id=?", u.ID).
 		Join("meeting_participants", "meeting_participants.meeting_id=meetings.id").
 		All(&m); err != nil {
-
-		return m, domain.ReportError(ctx, err, "User.MeetingsAsParticipant", map[string]interface{}{"user": u.UUID})
+		domain.NewExtra(ctx, "user", u.UUID)
+		return m, domain.ReportError(ctx, err, "User.MeetingsAsParticipant")
 	}
 	return m, nil
 }
