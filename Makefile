@@ -23,7 +23,7 @@ buffalo: db
 
 bounce: db
 	docker-compose kill buffalo
-	docker-compose rm buffalo
+	docker-compose rm -f buffalo
 	docker-compose up -d buffalo
 
 logs:
