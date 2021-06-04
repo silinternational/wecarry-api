@@ -24,7 +24,11 @@ func gqlHandler(c buffalo.Context) error {
 	newCtx := context.WithValue(c.Request().Context(), domain.BuffaloContext, c)
 	newCtx = dataloader.GetDataLoaderContext(newCtx)
 
-	h.ServeHTTP(c.Response(), c.Request().WithContext(newCtx))
+	server.SetErrorPresenter(func(ctx context.Context, e error) *gqlerror.Error {
+		err := graphql.DefaultErrorPresenter(ctx, e)
+		domain.Error(c, err.Error())
+		return err
+	})
 
 	server.ServeHTTP(c.Response(), c.Request().WithContext(newCtx))
 
