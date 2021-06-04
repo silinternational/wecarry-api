@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/99designs/gqlgen/graphql"
-	"github.com/vektah/gqlparser/gqlerror"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
