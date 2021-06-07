@@ -704,8 +704,9 @@ func ReportError(ctx context.Context, err error, errID string) error {
 
 	NewExtra(c, "function", GetFunctionName(2))
 
-	if r := graphql.GetRequestContext(ctx); r != nil {
-		NewExtra(c, "query", fmt.Sprintf("%#v", r.RawQuery)) // escape control characters
+	// need to use direct access instead of graphql.GetOperationContext to avoid a panic during unit tests
+	if oc, ok := ctx.Value("operation_context").(*graphql.OperationContext); ok && oc != nil {
+		NewExtra(c, "query", fmt.Sprintf("%#v", oc.RawQuery)) // escape control characters
 	}
 
 	errStr := errID
