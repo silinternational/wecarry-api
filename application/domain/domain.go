@@ -106,9 +106,9 @@ const (
 
 // UI URL Paths
 const (
-	DefaultUIPath = "/#/requests"
-	requestUIPath = "/#/requests/"
-	threadUIPath  = "/#/messages/"
+	DefaultUIPath = "/requests"
+	requestUIPath = "/requests/"
+	threadUIPath  = "/messages/"
 )
 
 // BuffaloContextType is a custom type used as a value key passed to context.WithValue as per the recommendations

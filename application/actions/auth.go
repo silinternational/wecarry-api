@@ -613,7 +613,7 @@ func logErrorAndRedirect(c buffalo.Context, code, message string) error {
 
 	c.Session().Clear()
 
-	uiUrl := domain.Env.UIURL + "/#/login"
+	uiUrl := domain.Env.UIURL + "/login"
 	return c.Redirect(http.StatusFound, uiUrl)
 }
 
@@ -722,19 +722,11 @@ func getLoginSuccessRedirectURL(authUser AuthUser, returnTo string) string {
 
 	// New Users go straight to the welcome page
 	if authUser.IsNew {
-		uiURL += "/#/welcome"
-		if len(returnTo) > 0 { // Ensure there is no `/#` at the beginning of the return-to param value
-			if strings.HasPrefix(returnTo, `/#/`) {
-				returnTo = returnTo[2:]
-			}
+		uiURL += "/welcome"
+		if len(returnTo) > 0 {
 			params += "&" + ReturnToParam + "=" + url.QueryEscape(returnTo)
 		}
 		return uiURL + params
-	}
-
-	// Ensure there is one set of /# between uiURL and the returnTo
-	if !strings.HasPrefix(returnTo, `/#`) {
-		returnTo = `/#` + returnTo
 	}
 
 	// Avoid two question marks in the params
