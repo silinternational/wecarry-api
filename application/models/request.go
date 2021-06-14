@@ -1079,7 +1079,7 @@ func (r *Request) GetCurrentActions(user User) ([]string, error) {
 	return actions, nil
 }
 
-// Creator gets the full User record of the post creator
+// Creator gets the full User record of the Request creator
 func (r *Request) Creator() (User, error) {
 	var u User
 	return u, DB.Find(&u, r.CreatedByID)
