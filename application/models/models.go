@@ -249,7 +249,7 @@ func addFile(m interface{}, fileID string) (File, error) {
 		return f, errors.New("error identifying ID field")
 	}
 	if idField.Interface().(int) > 0 {
-		if err := DB.UpdateColumns(m, "file_id"); err != nil {
+		if err := DB.UpdateColumns(m, "file_id", "updated_at"); err != nil {
 			return f, fmt.Errorf("failed to update the file_id column, %s", err)
 		}
 	}
@@ -287,7 +287,7 @@ func removeFile(m interface{}) error {
 
 	oldID := imageField.Interface().(nulls.Int)
 	imageField.Set(reflect.ValueOf(nulls.Int{}))
-	if err := DB.UpdateColumns(m, "file_id"); err != nil {
+	if err := DB.UpdateColumns(m, "file_id", "updated_at"); err != nil {
 		return fmt.Errorf("failed to update file_id column, %s", err)
 	}
 
