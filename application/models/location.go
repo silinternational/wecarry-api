@@ -122,3 +122,80 @@ func (l *Locations) FindByIDs(ids []int) error {
 	ids = domain.UniquifyIntSlice(ids)
 	return DB.Where("id in (?)", ids).All(l)
 }
+
+// DeleteUnused removes all locations that are no longer used
+func (l *Locations) DeleteUnused() error {
+	var usedLocations []int
+
+	var meetings Meetings
+	if err := DB.All(&meetings); err != nil {
+		return fmt.Errorf("could not load meetings in Locations.DeleteUnused, %s", err)
+	}
+	for _, m := range meetings {
+		usedLocations = append(usedLocations, m.LocationID)
+	}
+
+	var requests Requests
+	if err := DB.All(&requests); err != nil {
+		return fmt.Errorf("could not load requests in Locations.DeleteUnused, %s", err)
+	}
+	for _, m := range requests {
+		usedLocations = append(usedLocations, m.DestinationID)
+		if m.OriginID.Valid {
+			usedLocations = append(usedLocations, m.OriginID.Int)
+		}
+	}
+
+	var users Users
+	if err := DB.Where("location_id IS NOT NULL").All(&users); err != nil {
+		return fmt.Errorf("could not load users in Locations.DeleteUnused, %s", err)
+	}
+	for _, m := range users {
+		if m.LocationID.Valid {
+			usedLocations = append(usedLocations, m.LocationID.Int)
+		}
+	}
+
+	var watches Watches
+	if err := DB.Where("origin_id IS NOT NULL OR destination_id IS NOT NULL").
+		All(&watches); err != nil {
+		return fmt.Errorf("could not load watches in Locations.DeleteUnused, %s", err)
+	}
+	for _, m := range watches {
+		if m.OriginID.Valid {
+			usedLocations = append(usedLocations, m.OriginID.Int)
+		}
+		if m.DestinationID.Valid {
+			usedLocations = append(usedLocations, m.DestinationID.Int)
+		}
+	}
+
+	var locations Locations
+	if err := DB.Where("id NOT IN (?)", usedLocations).All(&locations); err != nil {
+		return fmt.Errorf("could not load locations in Locations.DeleteUnused, %s", err)
+	}
+
+	if len(locations) > domain.Env.MaxLocationDelete {
+		return fmt.Errorf("attempted to delete too many locations, MaxLocationDelete=%d", domain.Env.MaxFileDelete)
+	}
+	if len(locations) == 0 {
+		return nil
+	}
+
+	nRemovedFromDB := len(locations) // temporarily bypass the delete to be safe
+	//nRemovedFromDB := 0
+	//for _, file := range locations {
+	//	f := file
+	//	if err := DB.Destroy(&f); err != nil {
+	//		domain.ErrLogger.Printf("file %d destroy error, %s", file.ID, err)
+	//		continue
+	//	}
+	//	nRemovedFromDB++
+	//}
+
+	if nRemovedFromDB < len(locations) {
+		domain.ErrLogger.Printf("not all unused locations were removed")
+	}
+	domain.Logger.Printf("removed %d from file table", nRemovedFromDB)
+	return nil
+}
