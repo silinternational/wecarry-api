@@ -61,7 +61,7 @@ func uploadHandler(c buffalo.Context) error {
 		Name:    f.Filename,
 		Content: content,
 	}
-	if fErr := fileObject.Store(); fErr != nil {
+	if fErr := fileObject.Store(models.Tx(c)); fErr != nil {
 		domain.Error(c, fmt.Sprintf("error storing uploaded file ... %v", fErr))
 		return c.Render(fErr.HttpStatus, render.JSON(domain.AppError{
 			Code: fErr.HttpStatus,

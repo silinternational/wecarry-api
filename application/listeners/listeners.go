@@ -185,7 +185,7 @@ func sendRequestStatusUpdatedNotification(e events.Event) {
 	pid := pEData.RequestID
 
 	request := models.Request{}
-	if err := request.FindByID(pid); err != nil {
+	if err := request.FindByID(models.DB, pid); err != nil {
 		domain.ErrLogger.Printf("unable to find request from event with id %v ... %s", pid, err)
 	}
 
@@ -204,11 +204,11 @@ func sendRequestCreatedNotifications(e events.Event) {
 	}
 
 	var request models.Request
-	if err := request.FindByID(eventData.RequestID); err != nil {
+	if err := request.FindByID(models.DB, eventData.RequestID); err != nil {
 		domain.ErrLogger.Printf("unable to find request %d from request-created event, %s", eventData.RequestID, err)
 	}
 
-	users, err := request.GetAudience()
+	users, err := request.GetAudience(models.DB)
 	if err != nil {
 		domain.ErrLogger.Printf("unable to get request audience in event listener: %s", err.Error())
 		return
@@ -229,16 +229,16 @@ func potentialProviderCreated(e events.Event) {
 	}
 
 	var potentialProvider models.User
-	if err := potentialProvider.FindByID(eventData.UserID); err != nil {
+	if err := potentialProvider.FindByID(models.DB, eventData.UserID); err != nil {
 		domain.ErrLogger.Printf("unable to find PotentialProvider User %d, %s", eventData.UserID, err)
 	}
 
 	var request models.Request
-	if err := request.FindByID(eventData.RequestID); err != nil {
+	if err := request.FindByID(models.DB, eventData.RequestID); err != nil {
 		domain.ErrLogger.Printf("unable to find request %d from PotentialProvider event, %s", eventData.RequestID, err)
 	}
 
-	creator, err := request.Creator()
+	creator, err := request.Creator(models.DB)
 	if err != nil {
 		domain.ErrLogger.Printf("unable to find request %d creator from PotentialProvider event, %s",
 			eventData.RequestID, err)
@@ -259,16 +259,16 @@ func potentialProviderSelfDestroyed(e events.Event) {
 	}
 
 	var potentialProvider models.User
-	if err := potentialProvider.FindByID(eventData.UserID); err != nil {
+	if err := potentialProvider.FindByID(models.DB, eventData.UserID); err != nil {
 		domain.ErrLogger.Printf("unable to find PotentialProvider User %d, %s", eventData.UserID, err)
 	}
 
 	var request models.Request
-	if err := request.FindByID(eventData.RequestID); err != nil {
+	if err := request.FindByID(models.DB, eventData.RequestID); err != nil {
 		domain.ErrLogger.Printf("unable to find request %d from PotentialProvider event, %s", eventData.RequestID, err)
 	}
 
-	creator, err := request.Creator()
+	creator, err := request.Creator(models.DB)
 	if err != nil {
 		domain.ErrLogger.Printf("unable to find request %d creator from PotentialProvider event, %s",
 			eventData.RequestID, err)
@@ -289,16 +289,16 @@ func potentialProviderRejected(e events.Event) {
 	}
 
 	var potentialProvider models.User
-	if err := potentialProvider.FindByID(eventData.UserID); err != nil {
+	if err := potentialProvider.FindByID(models.DB, eventData.UserID); err != nil {
 		domain.ErrLogger.Printf("unable to find PotentialProvider User %d, %s", eventData.UserID, err)
 	}
 
 	var request models.Request
-	if err := request.FindByID(eventData.RequestID); err != nil {
+	if err := request.FindByID(models.DB, eventData.RequestID); err != nil {
 		domain.ErrLogger.Printf("unable to find request %d from PotentialProvider event, %s", eventData.RequestID, err)
 	}
 
-	creator, err := request.Creator()
+	creator, err := request.Creator(models.DB)
 	if err != nil {
 		domain.ErrLogger.Printf("unable to find request %d creator from PotentialProvider event, %s",
 			eventData.RequestID, err)
@@ -312,7 +312,7 @@ func sendNewUserWelcome(user models.User) error {
 		return errors.New("'To' email address is required")
 	}
 
-	language := user.GetLanguagePreference()
+	language := user.GetLanguagePreference(models.DB)
 	subject := domain.GetTranslatedSubject(language, "Email.Subject.Welcome", map[string]string{})
 
 	msg := notifications.Message{

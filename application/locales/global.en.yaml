@@ -29,6 +29,8 @@
   translation: We had a problem finding the requests for the event
 - id: Meeting.Invites
   translation: We had a problem finding the invites for the event
+- id: Meeting.Organizers
+  translation: We had a problem finding the organizers for the event
 - id: Meeting.Participants
   translation: We had a problem finding the participants for the event
 - id: Meeting.UpdateImageFile

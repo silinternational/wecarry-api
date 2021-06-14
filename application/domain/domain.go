@@ -437,14 +437,22 @@ func RollbarMiddleware(next buffalo.Handler) buffalo.Handler {
 }
 
 // Error log error and send to Rollbar
-func Error(c buffalo.Context, msg string) {
+func Error(ctx context.Context, msg string) {
+	bc, ok := ctx.Value(BuffaloContext).(buffalo.Context)
+	if ok {
+		Error(bc, msg)
+	}
+
+	// Doesn't have a BuffaloContext value, so it must be the actual BuffaloContext
+	bc = ctx.(buffalo.Context)
+
 	// Avoid panics running tests when c doesn't have the necessary nested methods
-	logger := c.Logger()
+	logger := bc.Logger()
 	if logger == nil {
 		return
 	}
 
-	extras := getExtras(c)
+	extras := getExtras(bc)
 	if extras == nil {
 		extras = map[string]interface{}{}
 	}
@@ -452,7 +460,7 @@ func Error(c buffalo.Context, msg string) {
 	extrasLock.RLock()
 	defer extrasLock.RUnlock()
 
-	rollbarMessage(c, rollbar.ERR, msg, extras)
+	rollbarMessage(bc, rollbar.ERR, msg, extras)
 
 	extras["message"] = msg
 
@@ -479,13 +487,21 @@ func jsonIndented(i interface{}) ([]byte, error) {
 }
 
 // Warn - log warning and send to Rollbar
-func Warn(c buffalo.Context, msg string) {
-	extras := getExtras(c)
+func Warn(ctx context.Context, msg string) {
+	bc, ok := ctx.Value(BuffaloContext).(buffalo.Context)
+	if ok {
+		Error(bc, msg)
+	}
+
+	// Doesn't have a BuffaloContext value, so it must be the actual BuffaloContext
+	bc = ctx.(buffalo.Context)
+
+	extras := getExtras(bc)
 	extrasLock.RLock()
 	defer extrasLock.RUnlock()
 
-	c.Logger().Warn(msg, extras)
-	rollbarMessage(c, rollbar.WARN, msg, extras)
+	bc.Logger().Warn(msg, extras)
+	rollbarMessage(bc, rollbar.WARN, msg, extras)
 }
 
 // Info - log info message

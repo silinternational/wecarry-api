@@ -2,6 +2,7 @@ package dataloader
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
@@ -47,7 +48,7 @@ func getFetchFileCallback() func([]int) ([]*models.File, []error) {
 
 		for i, id := range ids {
 			if obj, ok := objMap[id]; ok {
-				if err := obj.RefreshURL(); err != nil {
+				if err := obj.RefreshURL(models.DB); err != nil {
 					foundErr = true
 					errors[i] = err
 					continue
@@ -68,7 +69,7 @@ func getFetchFileCallback() func([]int) ([]*models.File, []error) {
 func getFetchLocationCallback() func([]int) ([]*models.Location, []error) {
 	return func(ids []int) ([]*models.Location, []error) {
 		objects := models.Locations{}
-		err := objects.FindByIDs(ids)
+		err := objects.FindByIDs(models.DB, ids)
 		if len(objects) == 0 {
 			return []*models.Location{}, convertErrToSlice(err)
 		}
@@ -93,7 +94,7 @@ func getFetchLocationCallback() func([]int) ([]*models.Location, []error) {
 func getFetchMeetingCallback() func([]int) ([]*models.Meeting, []error) {
 	return func(ids []int) ([]*models.Meeting, []error) {
 		objects := models.Meetings{}
-		err := objects.FindByIDs(ids)
+		err := objects.FindByIDs(models.DB, ids)
 		if len(objects) == 0 {
 			return []*models.Meeting{}, convertErrToSlice(err)
 		}
@@ -118,7 +119,7 @@ func getFetchMeetingCallback() func([]int) ([]*models.Meeting, []error) {
 func getFetchOrganizationCallback() func([]int) ([]*models.Organization, []error) {
 	return func(ids []int) ([]*models.Organization, []error) {
 		objects := models.Organizations{}
-		err := objects.FindByIDs(ids)
+		err := objects.FindByIDs(models.DB, ids)
 		if len(objects) == 0 {
 			return []*models.Organization{}, convertErrToSlice(err)
 		}
@@ -143,7 +144,7 @@ func getFetchOrganizationCallback() func([]int) ([]*models.Organization, []error
 func getFetchUserCallback() func([]int) ([]*models.User, []error) {
 	return func(ids []int) ([]*models.User, []error) {
 		objects := models.Users{}
-		err := objects.FindByIDs(ids)
+		err := objects.FindByIDs(models.DB, ids)
 		if len(objects) == 0 {
 			return []*models.User{}, convertErrToSlice(err)
 		}
@@ -198,5 +199,6 @@ func GetDataLoaderContext(c context.Context) context.Context {
 }
 
 func For(ctx context.Context) *Loaders {
+	fmt.Printf("---------------- For")
 	return ctx.Value(loadersKey).(*Loaders)
 }

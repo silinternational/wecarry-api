@@ -23,7 +23,7 @@ func (r *threadResolver) Participants(ctx context.Context, obj *models.Thread) (
 		return nil, nil
 	}
 
-	participants, err := obj.GetParticipants()
+	participants, err := obj.GetParticipants(models.Tx(ctx))
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetThreadParticipants")
 	}
@@ -46,7 +46,7 @@ func (r *threadResolver) LastViewedAt(ctx context.Context, obj *models.Thread) (
 	}
 
 	currentUser := models.CurrentUser(ctx)
-	lastViewedAt, err := obj.GetLastViewedAt(currentUser)
+	lastViewedAt, err := obj.GetLastViewedAt(ctx, currentUser)
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetThreadLastViewedAt")
 	}
@@ -61,7 +61,7 @@ func (r *threadResolver) Messages(ctx context.Context, obj *models.Thread) ([]mo
 		return nil, nil
 	}
 
-	messages, err := obj.Messages()
+	messages, err := obj.Messages(ctx)
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetThreadMessages")
 	}
@@ -75,7 +75,7 @@ func (r *threadResolver) Request(ctx context.Context, obj *models.Thread) (*mode
 		return &models.Request{}, nil
 	}
 
-	request, err := obj.GetRequest()
+	request, err := obj.GetRequest(models.Tx(ctx))
 	if err != nil {
 		return &models.Request{}, domain.ReportError(ctx, err, "GetThreadRequest")
 	}
@@ -90,21 +90,21 @@ func (r *threadResolver) UnreadMessageCount(ctx context.Context, obj *models.Thr
 	}
 	user := models.CurrentUser(ctx)
 
-	lastViewedAt, err := obj.GetLastViewedAt(user)
+	lastViewedAt, err := obj.GetLastViewedAt(ctx, user)
 	if err != nil {
-		domain.Warn(domain.GetBuffaloContext(ctx), err.Error())
+		domain.Warn(ctx, err.Error())
 		return 0, nil
 	}
 
 	if lastViewedAt == nil {
-		domain.Warn(domain.GetBuffaloContext(ctx),
+		domain.Warn(ctx,
 			fmt.Sprintf("lastViewedAt nil for user %v on thread %v", user.ID, obj.ID))
 		return 0, nil
 	}
 
-	count, err2 := obj.UnreadMessageCount(user.ID, *lastViewedAt)
+	count, err2 := obj.UnreadMessageCount(ctx, user.ID, *lastViewedAt)
 	if err2 != nil {
-		domain.Warn(domain.GetBuffaloContext(ctx), err2.Error())
+		domain.Warn(ctx, err2.Error())
 		return 0, nil
 	}
 	return count, nil
@@ -115,7 +115,7 @@ func (r *threadResolver) UnreadMessageCount(ctx context.Context, obj *models.Thr
 func (r *queryResolver) Threads(ctx context.Context) ([]models.Thread, error) {
 	currentUser := models.CurrentUser(ctx)
 
-	threads, err := currentUser.GetThreads()
+	threads, err := currentUser.GetThreads(ctx)
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetThreads")
 	}
@@ -127,7 +127,7 @@ func (r *queryResolver) Threads(ctx context.Context) ([]models.Thread, error) {
 func (r *queryResolver) MyThreads(ctx context.Context) ([]models.Thread, error) {
 	currentUser := models.CurrentUser(ctx)
 
-	threads, err := currentUser.GetThreads()
+	threads, err := currentUser.GetThreads(ctx)
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetMyThreads")
 	}

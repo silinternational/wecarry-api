@@ -42,11 +42,11 @@ func newThreadMessageHandler(args worker.Args) error {
 	}
 
 	var m models.Message
-	if err := m.FindByID(id, "SentBy", "Thread"); err != nil {
+	if err := m.FindByID(models.DB, id, "SentBy", "Thread"); err != nil {
 		return fmt.Errorf("bad ID (%d) received by new thread message handler, %s", id, err)
 	}
 
-	if err := m.Thread.Load("Participants", "Request"); err != nil {
+	if err := m.Thread.Load(models.DB, "Participants", "Request"); err != nil {
 		return errors.New("failed to load Participants and Request in new thread message handler")
 	}
 
@@ -73,7 +73,7 @@ func newThreadMessageHandler(args worker.Args) error {
 		}
 
 		var tp models.ThreadParticipant
-		if err := tp.FindByThreadIDAndUserID(m.ThreadID, p.ID); err != nil {
+		if err := tp.FindByThreadIDAndUserID(models.DB, m.ThreadID, p.ID); err != nil {
 			domain.ErrLogger.Printf("newThreadMessageHandler error, %s", err)
 			lastErr = err
 			continue
@@ -85,7 +85,7 @@ func newThreadMessageHandler(args worker.Args) error {
 
 		msg.ToName = p.GetRealName()
 		msg.ToEmail = p.Email
-		msg.Subject = domain.GetTranslatedSubject(p.GetLanguagePreference(),
+		msg.Subject = domain.GetTranslatedSubject(p.GetLanguagePreference(models.DB),
 			"Email.Subject.Message.Created",
 			map[string]string{"sentByNickname": m.SentBy.Nickname, "requestTitle": requestTitle})
 
@@ -95,7 +95,7 @@ func newThreadMessageHandler(args worker.Args) error {
 			continue
 		}
 
-		if err := tp.UpdateLastNotifiedAt(time.Now()); err != nil {
+		if err := tp.UpdateLastNotifiedAt(models.DB, time.Now()); err != nil {
 			domain.ErrLogger.Printf("newThreadMessageHandler error, %s", err)
 			lastErr = err
 		}
@@ -107,7 +107,7 @@ func newThreadMessageHandler(args worker.Args) error {
 // fileCleanupHandler removes unlinked files
 func fileCleanupHandler(args worker.Args) error {
 	files := models.Files{}
-	if err := files.DeleteUnlinked(); err != nil {
+	if err := files.DeleteUnlinked(models.DB); err != nil {
 		return fmt.Errorf("file cleanup failed with error, %s", err)
 	}
 	return nil
@@ -116,7 +116,7 @@ func fileCleanupHandler(args worker.Args) error {
 // tokenCleanupHandler removes expired user access tokens
 func tokenCleanupHandler(args worker.Args) error {
 	u := models.UserAccessTokens{}
-	deleted, err := u.DeleteExpired()
+	deleted, err := u.DeleteExpired(models.DB)
 	if err != nil {
 		return fmt.Errorf("error cleaning expired user access tokens: %v", err)
 	}

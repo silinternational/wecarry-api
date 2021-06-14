@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -43,7 +44,7 @@ func (p *PotentialProvider) Validate(tx *pop.Connection) (*validate.Errors, erro
 	return validate.Validate(
 		&validators.IntIsPresent{Field: p.RequestID, Name: "RequestID"},
 		&validators.IntIsPresent{Field: p.UserID, Name: "UserID"},
-		&uniqueTogetherValidator{Object: p, Name: "UniqueTogether"},
+		&uniqueTogetherValidator{Object: p, Name: "UniqueTogether", tx: tx},
 	), nil
 }
 
@@ -61,6 +62,7 @@ type uniqueTogetherValidator struct {
 	Name    string
 	Object  *PotentialProvider
 	Message string
+	tx      *pop.Connection
 }
 
 // IsValid ensures there are no other PotentialProviders with both the
@@ -69,7 +71,7 @@ func (v *uniqueTogetherValidator) IsValid(errors *validate.Errors) {
 	p := PotentialProvider{}
 	pID := v.Object.RequestID
 	uID := v.Object.UserID
-	if err := DB.Where("request_id = ? and user_id = ?", pID, uID).First(&p); err != nil {
+	if err := v.tx.Where("request_id = ? and user_id = ?", pID, uID).First(&p); err != nil {
 		if domain.IsOtherThanNoRows(err) {
 			v.Message = "Error database for duplicate potential providers: " + err.Error()
 			errors.Add(validators.GenerateKey(v.Name), v.Message)
@@ -91,8 +93,8 @@ type PotentialProviderEventData struct {
 }
 
 // Create stores the PotentialProvider data as a new record in the database.
-func (p *PotentialProvider) Create() error {
-	if err := create(p); err != nil {
+func (p *PotentialProvider) Create(ctx context.Context) error {
+	if err := create(Tx(ctx), p); err != nil {
 		return err
 	}
 
@@ -113,8 +115,8 @@ func (p *PotentialProvider) Create() error {
 }
 
 // Update writes the PotentialProvider data to an existing database record.
-func (p *PotentialProvider) Update() error {
-	return update(p)
+func (p *PotentialProvider) Update(tx *pop.Connection) error {
+	return update(tx, p)
 }
 
 // FindUsersByRequestID gets the Users associated with the Request's PotentialProviders
@@ -123,7 +125,7 @@ func (p *PotentialProvider) Update() error {
 // If the currentUser is the requester or a SuperAdmin, then all potentialProvider Users are returned.
 // If the currentUser is one of the potentialProviders, that User is returned.
 // Otherwise, an empty slice of Users is returned.
-func (p *PotentialProviders) FindUsersByRequestID(request Request, currentUser User) (Users, error) {
+func (p *PotentialProviders) FindUsersByRequestID(tx *pop.Connection, request Request, currentUser User) (Users, error) {
 	if request.ID <= 0 {
 		return Users{}, fmt.Errorf("error finding potential_provider, invalid id %v", request.ID)
 	}
@@ -136,7 +138,7 @@ func (p *PotentialProviders) FindUsersByRequestID(request Request, currentUser U
 		whereQ = fmt.Sprintf("request_id = %v", request.ID)
 	}
 
-	if err := DB.Eager("User").Where(whereQ).All(p); err != nil {
+	if err := tx.Eager("User").Where(whereQ).All(p); err != nil {
 		if domain.IsOtherThanNoRows(err) {
 			return Users{}, fmt.Errorf("failed to find potential_provider records for request %d, %s",
 				request.ID, err)
@@ -162,23 +164,23 @@ func (p *PotentialProvider) CanUserAccessPotentialProvider(request Request, curr
 
 // FindWithRequestUUIDAndUserUUID  finds the PotentialProvider associated with both the requestUUID and the userUUID
 // No authorization checks are performed - they must be done separately
-func (p *PotentialProvider) FindWithRequestUUIDAndUserUUID(requestUUID, userUUID string, currentUser User) error {
+func (p *PotentialProvider) FindWithRequestUUIDAndUserUUID(ctx context.Context, requestUUID, userUUID string, currentUser User) error {
 	var request Request
-	if err := request.FindByUUID(requestUUID); err != nil {
+	tx := Tx(ctx)
+	if err := request.FindByUUID(tx, requestUUID); err != nil {
 		return errors.New("unable to find Request in order to find PotentialProvider: " + err.Error())
 	}
 
 	var user User
-	if err := user.FindByUUID(userUUID); err != nil {
+	if err := user.FindByUUID(ctx, userUUID); err != nil {
 		return errors.New("unable to find User in order to find PotentialProvider: " + err.Error())
 	}
 
-	if err := DB.Where("request_id = ? AND user_id = ?", request.ID, user.ID).First(p); err != nil {
+	if err := tx.Where("request_id = ? AND user_id = ?", request.ID, user.ID).First(p); err != nil {
 		return errors.New("unable to find PotentialProvider: " + err.Error())
 	}
 
 	if !p.CanUserAccessPotentialProvider(request, currentUser) {
-		p = nil
 		return errors.New("user not allowed to access PotentialProvider")
 	}
 
@@ -186,19 +188,20 @@ func (p *PotentialProvider) FindWithRequestUUIDAndUserUUID(requestUUID, userUUID
 }
 
 // NewWithRequestUUID populates a new PotentialProvider but does not save it
-func (p *PotentialProvider) NewWithRequestUUID(requestUUID string, userID int) error {
+func (p *PotentialProvider) NewWithRequestUUID(ctx context.Context, requestUUID string, userID int) error {
 	var user User
-	if err := user.FindByID(userID); err != nil {
+	tx := Tx(ctx)
+	if err := user.FindByID(tx, userID); err != nil {
 		return err
 	}
 
 	var request Request
-	if err := request.FindByUUID(requestUUID); err != nil {
+	if err := request.FindByUUID(tx, requestUUID); err != nil {
 		return err
 	}
 
 	if request.CreatedByID == userID {
-		return errors.New("PotentialProvider User must not be the Request's Receiver.")
+		return errors.New("the PotentialProvider User must not be the Request's Receiver")
 	}
 
 	p.RequestID = request.ID
@@ -208,15 +211,15 @@ func (p *PotentialProvider) NewWithRequestUUID(requestUUID string, userID int) e
 }
 
 // Destroy destroys the PotentialProvider
-func (p *PotentialProvider) Destroy() error {
-	return DB.Destroy(p)
+func (p *PotentialProvider) Destroy(ctx context.Context) error {
+	return Tx(ctx).Destroy(p)
 }
 
 // DestroyAllWithRequestUUID Destroys all the PotentialProviders associated with a Request depending
 //  on whether the current user is a SuperAdmin or the Request's creator.
-func (p *PotentialProviders) DestroyAllWithRequestUUID(requestUUID string, currentUser User) error {
+func (p *PotentialProviders) DestroyAllWithRequestUUID(tx *pop.Connection, requestUUID string, currentUser User) error {
 	var request Request
-	if err := request.FindByUUID(requestUUID); err != nil {
+	if err := request.FindByUUID(tx, requestUUID); err != nil {
 		return errors.New("unable to find Request in order to remove PotentialProviders: " + err.Error())
 	}
 
@@ -225,8 +228,8 @@ func (p *PotentialProviders) DestroyAllWithRequestUUID(requestUUID string, curre
 			currentUser.ID, request.ID)
 	}
 
-	if err := DB.Where("request_id = ?", request.ID).All(p); err != nil {
+	if err := tx.Where("request_id = ?", request.ID).All(p); err != nil {
 		return errors.New("unable to find Request's Potential Providers in order to remove them: " + err.Error())
 	}
-	return DB.Destroy(p)
+	return tx.Destroy(p)
 }

@@ -108,7 +108,7 @@ func (r *meetingResolver) Requests(ctx context.Context, obj *models.Meeting) ([]
 	if obj == nil {
 		return nil, nil
 	}
-	requests, err := obj.Requests()
+	requests, err := obj.Requests(ctx)
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "Meeting.Requests")
 	}
@@ -119,7 +119,7 @@ func (r *meetingResolver) Invites(ctx context.Context, obj *models.Meeting) ([]m
 	if obj == nil {
 		return nil, nil
 	}
-	invites, err := obj.Invites(domain.GetBuffaloContext(ctx))
+	invites, err := obj.Invites(ctx)
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "Meeting.Invites")
 	}
@@ -130,7 +130,7 @@ func (r *meetingResolver) Participants(ctx context.Context, obj *models.Meeting)
 	if obj == nil {
 		return nil, nil
 	}
-	participants, err := obj.Participants(domain.GetBuffaloContext(ctx))
+	participants, err := obj.Participants(ctx)
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "Meeting.Participants")
 	}
@@ -145,9 +145,9 @@ func (r *meetingResolver) Organizers(ctx context.Context, obj *models.Meeting) (
 	if obj == nil {
 		return nil, nil
 	}
-	users, err := obj.Organizers(domain.GetBuffaloContext(ctx))
+	users, err := obj.Organizers(ctx)
 	if err != nil {
-		return nil, err
+		return nil, domain.ReportError(ctx, err, "Meeting.Organizers")
 	}
 	return getPublicProfiles(ctx, users), nil
 }
@@ -156,7 +156,7 @@ func (r *meetingResolver) Organizers(ctx context.Context, obj *models.Meeting) (
 // end date in the future
 func (r *queryResolver) Meetings(ctx context.Context, endAfter, endBefore, startAfter, startBefore *string) ([]models.Meeting, error) {
 	meetings := models.Meetings{}
-	if err := meetings.FindOnOrAfterDate(time.Now()); err != nil {
+	if err := meetings.FindOnOrAfterDate(ctx, time.Now()); err != nil {
 		return nil, domain.ReportError(ctx, err, "GetMeetings")
 	}
 
@@ -167,7 +167,7 @@ func (r *queryResolver) Meetings(ctx context.Context, endAfter, endBefore, start
 // end date in the last <domain.RecentMeetingDelay> time period
 func (r *queryResolver) RecentMeetings(ctx context.Context) ([]models.Meeting, error) {
 	meetings := models.Meetings{}
-	if err := meetings.FindRecent(time.Now()); err != nil {
+	if err := meetings.FindRecent(ctx, time.Now()); err != nil {
 		return nil, domain.ReportError(ctx, err, "GetRecentMeetings")
 	}
 
@@ -180,7 +180,7 @@ func (r *queryResolver) Meeting(ctx context.Context, id *string) (*models.Meetin
 		return &models.Meeting{}, nil
 	}
 	var meeting models.Meeting
-	if err := meeting.FindByUUID(*id); err != nil {
+	if err := meeting.FindByUUID(models.Tx(ctx), *id); err != nil {
 		return &models.Meeting{}, domain.ReportError(ctx, err, "GetMeeting")
 	}
 
@@ -192,9 +192,8 @@ func (r *queryResolver) Meeting(ctx context.Context, id *string) (*models.Meetin
 // provided in `input`
 func convertGqlMeetingInputToDBMeeting(ctx context.Context, input meetingInput, currentUser models.User) (models.Meeting, error) {
 	meeting := models.Meeting{}
-
 	if input.ID != nil {
-		if err := meeting.FindByUUID(*input.ID); err != nil {
+		if err := meeting.FindByUUID(models.Tx(ctx), *input.ID); err != nil {
 			return meeting, err
 		}
 	} else {
@@ -223,9 +222,9 @@ func convertGqlMeetingInputToDBMeeting(ctx context.Context, input meetingInput, 
 
 	var err error
 	if input.ImageFileID != nil {
-		_, err = meeting.SetImageFile(*input.ImageFileID)
+		_, err = meeting.SetImageFile(ctx, *input.ImageFileID)
 	} else if meeting.ID > 0 {
-		err = meeting.RemoveFile()
+		err = meeting.RemoveFile(ctx)
 	}
 	if err != nil {
 		return meeting, domain.ReportError(ctx, fmt.Errorf("error updating meeting image file, %s",
@@ -261,12 +260,12 @@ func (r *mutationResolver) CreateMeeting(ctx context.Context, input meetingInput
 	}
 
 	location := convertLocation(*input.Location)
-	if err = location.Create(); err != nil {
+	if err = location.Create(ctx); err != nil {
 		return &models.Meeting{}, domain.ReportError(ctx, err, "CreateMeeting.SetLocation")
 	}
 	meeting.LocationID = location.ID
 
-	if err = meeting.Create(); err != nil {
+	if err = meeting.Create(ctx); err != nil {
 		return &models.Meeting{}, domain.ReportError(ctx, err, "CreateMeeting")
 	}
 
@@ -276,7 +275,6 @@ func (r *mutationResolver) CreateMeeting(ctx context.Context, input meetingInput
 // UpdateMeeting resolves the `updateMeeting` mutation.
 func (r *mutationResolver) UpdateMeeting(ctx context.Context, input meetingInput) (*models.Meeting, error) {
 	cUser := models.CurrentUser(ctx)
-
 	meeting, err := convertGqlMeetingInputToDBMeeting(ctx, input, cUser)
 	if err != nil {
 		return &models.Meeting{}, domain.ReportError(ctx, err, "UpdateMeeting.ProcessInput")
@@ -286,12 +284,12 @@ func (r *mutationResolver) UpdateMeeting(ctx context.Context, input meetingInput
 		return &models.Meeting{}, domain.ReportError(ctx, err, "UpdateMeeting.Unauthorized")
 	}
 
-	if err := meeting.Update(); err != nil {
+	if err := meeting.Update(ctx); err != nil {
 		return &models.Meeting{}, domain.ReportError(ctx, err, "UpdateMeeting")
 	}
 
 	if input.Location != nil {
-		if err = meeting.SetLocation(convertLocation(*input.Location)); err != nil {
+		if err = meeting.SetLocation(ctx, convertLocation(*input.Location)); err != nil {
 			return &models.Meeting{}, domain.ReportError(ctx, err, "UpdateMeeting.SetLocation")
 		}
 	}

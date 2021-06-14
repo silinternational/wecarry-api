@@ -13,6 +13,7 @@ require (
 	github.com/go-acme/lego v2.7.2+incompatible
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
 	github.com/gobuffalo/buffalo v0.16.23
+	github.com/gobuffalo/buffalo-pop/v2 v2.0.4
 	github.com/gobuffalo/envy v1.9.0
 	github.com/gobuffalo/events v1.4.1
 	github.com/gobuffalo/fizz v1.13.0 // indirect

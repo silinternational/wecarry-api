@@ -71,21 +71,21 @@ func (p *UserPreference) ValidateUpdate(tx *pop.Connection) (*validate.Errors, e
 }
 
 // FindByUUID loads from DB the UserPreference record identified by the given UUID
-func (p *UserPreference) FindByUUID(id string) error {
+func (p *UserPreference) FindByUUID(tx *pop.Connection, id string) error {
 	if id == "" {
 		return errors.New("error: user preference uuid must not be blank")
 	}
 
-	if err := DB.Where("uuid = ?", id).First(p); err != nil {
+	if err := tx.Where("uuid = ?", id).First(p); err != nil {
 		return fmt.Errorf("error finding user preference by uuid: %s", err.Error())
 	}
 
 	return nil
 }
 
-// Save wraps DB.Save() call to create a UUID if it's empty and check for errors
-func (p *UserPreference) Save() error {
-	return save(p)
+// Save wraps tx.Save() call to create a UUID if it's empty and check for errors
+func (p *UserPreference) Save(tx *pop.Connection) error {
+	return save(tx, p)
 }
 
 type fieldAndValidator struct {
@@ -111,12 +111,12 @@ func getPreferencesFieldsAndValidators(prefs StandardPreferences) map[string]fie
 	return fieldAndValidators
 }
 
-func (p *UserPreference) createForUser(user User, key, value string) error {
+func (p *UserPreference) createForUser(tx *pop.Connection, user User, key, value string) error {
 	if user.ID <= 0 {
-		return errors.New("invalid user ID in userpreference.createForUser.")
+		return errors.New("invalid user ID in userpreference.createForUser")
 	}
 
-	_ = DB.Where("user_id = ?", user.ID).Where("key = ?", key).First(p)
+	_ = tx.Where("user_id = ?", user.ID).Where("key = ?", key).First(p)
 	if p.ID > 0 {
 		err := fmt.Errorf("can't create UserPreference with key %s.  Already exists with id %v.", key, p.ID)
 		return err
@@ -126,11 +126,11 @@ func (p *UserPreference) createForUser(user User, key, value string) error {
 	p.Key = key
 	p.Value = value
 
-	return p.Save()
+	return p.Save(tx)
 }
 
-func (p *UserPreference) getForUser(user User, key string) error {
-	err := DB.Where("user_id = ?", user.ID).Where("key = ?", key).First(p)
+func (p *UserPreference) getForUser(tx *pop.Connection, user User, key string) error {
+	err := tx.Where("user_id = ?", user.ID).Where("key = ?", key).First(p)
 	if domain.IsOtherThanNoRows(err) {
 		return err
 	}
@@ -139,14 +139,14 @@ func (p *UserPreference) getForUser(user User, key string) error {
 }
 
 // updateForUserByKey will also create a new instance, if a match is not found for that user
-func (p *UserPreference) updateForUserByKey(user User, key, value string) error {
-	err := p.getForUser(user, key)
+func (p *UserPreference) updateForUserByKey(tx *pop.Connection, user User, key, value string) error {
+	err := p.getForUser(tx, user, key)
 	if err != nil {
 		return err
 	}
 
 	if p.ID == 0 {
-		return p.createForUser(user, key, value)
+		return p.createForUser(tx, user, key, value)
 	}
 
 	if p.Value == value {
@@ -155,16 +155,16 @@ func (p *UserPreference) updateForUserByKey(user User, key, value string) error 
 
 	p.Value = value
 
-	return p.Save()
+	return p.Save(tx)
 }
 
-func updateUsersStandardPreferences(user User, prefs StandardPreferences) error {
+func updateUsersStandardPreferences(tx *pop.Connection, user User, prefs StandardPreferences) error {
 	fieldAndValidators := getPreferencesFieldsAndValidators(prefs)
 	for fieldName, fV := range fieldAndValidators {
 		var p UserPreference
 
 		if fV.fieldValue == "" {
-			if err := p.remove(user, fieldName); err != nil {
+			if err := p.remove(tx, user, fieldName); err != nil {
 				return fmt.Errorf("error removing preference %s, %s", fieldName, err)
 			}
 			continue
@@ -174,7 +174,7 @@ func updateUsersStandardPreferences(user User, prefs StandardPreferences) error 
 			return fmt.Errorf("unexpected UserPreference %s ... %s", fieldName, fV.fieldValue)
 		}
 
-		err := p.updateForUserByKey(user, fieldName, fV.fieldValue)
+		err := p.updateForUserByKey(tx, user, fieldName, fV.fieldValue)
 		if err != nil {
 			return err
 		}
@@ -183,13 +183,13 @@ func updateUsersStandardPreferences(user User, prefs StandardPreferences) error 
 	return nil
 }
 
-func (p *UserPreference) removeAll(userID int) error {
-	return DB.RawQuery("DELETE FROM user_preferences WHERE user_id = ?", userID).Exec()
+func (p *UserPreference) removeAll(tx *pop.Connection, userID int) error {
+	return tx.RawQuery("DELETE FROM user_preferences WHERE user_id = ?", userID).Exec()
 }
 
-func (p *UserPreference) remove(user User, key string) error {
-	if err := p.getForUser(user, key); err != nil {
+func (p *UserPreference) remove(tx *pop.Connection, user User, key string) error {
+	if err := p.getForUser(tx, user, key); err != nil {
 		return err
 	}
-	return DB.Destroy(p)
+	return tx.Destroy(p)
 }

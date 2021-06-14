@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -80,13 +81,13 @@ func (v *geoValidator) IsValid(errors *validate.Errors) {
 }
 
 // Create stores the Location data as a new record in the database.
-func (l *Location) Create() error {
-	return create(l)
+func (l *Location) Create(ctx context.Context) error {
+	return create(Tx(ctx), l)
 }
 
 // Update writes the Location data to an existing database record.
-func (l *Location) Update() error {
-	return update(l)
+func (l *Location) Update(tx *pop.Connection) error {
+	return update(tx, l)
 }
 
 // DistanceKm calculates the distance in km between two locations
@@ -118,7 +119,7 @@ func (l *Location) IsNear(loc2 Location) bool {
 }
 
 // FindByIDs finds all Locations associated with the given IDs and loads them from the database
-func (l *Locations) FindByIDs(ids []int) error {
+func (l *Locations) FindByIDs(tx *pop.Connection, ids []int) error {
 	ids = domain.UniquifyIntSlice(ids)
-	return DB.Where("id in (?)", ids).All(l)
+	return tx.Where("id in (?)", ids).All(l)
 }

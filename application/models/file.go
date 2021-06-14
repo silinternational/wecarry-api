@@ -81,7 +81,7 @@ func (f *File) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 }
 
 // Store takes a byte slice and stores it into S3 and saves the metadata in the database file table.
-func (f *File) Store() *FileUploadError {
+func (f *File) Store(tx *pop.Connection) *FileUploadError {
 	if len(f.Content) > domain.MaxFileSize {
 		e := FileUploadError{
 			HttpStatus: http.StatusBadRequest,
@@ -120,7 +120,7 @@ func (f *File) Store() *FileUploadError {
 	f.URL = url.Url
 	f.URLExpiration = url.Expiration
 	f.Size = len(f.Content)
-	if err := f.Create(); err != nil {
+	if err := f.Create(tx); err != nil {
 		e := FileUploadError{
 			HttpStatus: http.StatusInternalServerError,
 			ErrorCode:  domain.ErrorUnableToStoreFile,
@@ -172,13 +172,13 @@ func (f *File) changeFileExtension() {
 
 // FindByUUID locates a file by UUID and returns the result, including a valid URL.
 // None of the struct members of f are used as input, but are updated if the function is successful.
-func (f *File) FindByUUID(fileUUID string) error {
+func (f *File) FindByUUID(tx *pop.Connection, fileUUID string) error {
 	var file File
-	if err := DB.Where("uuid = ?", fileUUID).First(&file); err != nil {
+	if err := tx.Where("uuid = ?", fileUUID).First(&file); err != nil {
 		return err
 	}
 
-	if err := file.RefreshURL(); err != nil {
+	if err := file.RefreshURL(tx); err != nil {
 		return err
 	}
 
@@ -187,7 +187,7 @@ func (f *File) FindByUUID(fileUUID string) error {
 }
 
 // RefreshURL ensures the file URL is good for at least a few minutes
-func (f *File) RefreshURL() error {
+func (f *File) RefreshURL(tx *pop.Connection) error {
 	if f.URLExpiration.After(time.Now().Add(time.Minute * 5)) {
 		return nil
 	}
@@ -198,7 +198,7 @@ func (f *File) RefreshURL() error {
 	}
 	f.URL = newURL.Url
 	f.URLExpiration = newURL.Expiration
-	if err = f.Update(); err != nil {
+	if err = f.Update(tx); err != nil {
 		return err
 	}
 	return nil
@@ -213,19 +213,19 @@ func validateContentType(content []byte) (string, error) {
 }
 
 // Create stores the File data as a new record in the database.
-func (f *File) Create() error {
-	return create(f)
+func (f *File) Create(tx *pop.Connection) error {
+	return create(tx, f)
 }
 
 // Update writes the File data to an existing database record.
-func (f *File) Update() error {
-	return update(f)
+func (f *File) Update(tx *pop.Connection) error {
+	return update(tx, f)
 }
 
 // DeleteUnlinked removes all files that are no longer linked to any database records
-func (f *Files) DeleteUnlinked() error {
+func (f *Files) DeleteUnlinked(tx *pop.Connection) error {
 	var files Files
-	if err := DB.Select("id", "uuid").
+	if err := tx.Select("id", "uuid").
 		Where("linked = FALSE AND updated_at < ?", time.Now().Add(-4*domain.DurationWeek)).
 		All(&files); err != nil {
 		return err
@@ -248,7 +248,7 @@ func (f *Files) DeleteUnlinked() error {
 		nRemovedFromS3++
 
 		f := file
-		if err := DB.Destroy(&f); err != nil {
+		if err := tx.Destroy(&f); err != nil {
 			domain.ErrLogger.Printf("file %d destroy error, %s", file.ID, err)
 			continue
 		}
