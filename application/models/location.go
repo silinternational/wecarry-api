@@ -176,7 +176,7 @@ func (l *Locations) DeleteUnused() error {
 	}
 
 	if len(locations) > domain.Env.MaxLocationDelete {
-		return fmt.Errorf("attempted to delete too many locations, MaxLocationDelete=%d", domain.Env.MaxFileDelete)
+		return fmt.Errorf("attempted to delete too many locations, MaxLocationDelete=%d", domain.Env.MaxLocationDelete)
 	}
 	if len(locations) == 0 {
 		return nil
@@ -184,10 +184,10 @@ func (l *Locations) DeleteUnused() error {
 
 	nRemovedFromDB := len(locations) // temporarily bypass the delete to be safe
 	//nRemovedFromDB := 0
-	//for _, file := range locations {
-	//	f := file
-	//	if err := DB.Destroy(&f); err != nil {
-	//		domain.ErrLogger.Printf("file %d destroy error, %s", file.ID, err)
+	//for _, location := range locations {
+	//	l := location
+	//	if err := DB.Destroy(&l); err != nil {
+	//		domain.ErrLogger.Printf("location %d destroy error, %s", location.ID, err)
 	//		continue
 	//	}
 	//	nRemovedFromDB++
@@ -196,6 +196,6 @@ func (l *Locations) DeleteUnused() error {
 	if nRemovedFromDB < len(locations) {
 		domain.ErrLogger.Printf("not all unused locations were removed")
 	}
-	domain.Logger.Printf("removed %d from file table", nRemovedFromDB)
+	domain.Logger.Printf("removed %d from location table", nRemovedFromDB)
 	return nil
 }
