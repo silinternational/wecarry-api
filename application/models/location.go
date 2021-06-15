@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 
@@ -125,6 +126,12 @@ func (l *Locations) FindByIDs(ids []int) error {
 
 // DeleteUnused removes all locations that are no longer used
 func (l *Locations) DeleteUnused() error {
+	if found, err := checkLocationsFks(); err != nil {
+		return errors.New("error checking for new locations references, " + err.Error())
+	} else if found {
+		return errors.New("new key found, canceling location cleanup")
+	}
+
 	var usedLocations []int
 
 	var meetings Meetings
@@ -198,4 +205,38 @@ func (l *Locations) DeleteUnused() error {
 	}
 	domain.Logger.Printf("removed %d from location table", nRemovedFromDB)
 	return nil
+}
+
+func checkLocationsFks() (bool, error) {
+	type KeyType struct {
+		ForeignTable string `db:"foreign_table"`
+		FkColumns    string `db:"fk_columns"`
+	}
+	var keys []KeyType
+	if err := DB.RawQuery(`
+SELECT kcu.table_name AS foreign_table, string_agg(kcu.column_name, ', ') as fk_columns
+FROM information_schema.table_constraints tco
+JOIN information_schema.key_column_usage kcu
+          ON tco.constraint_schema = kcu.constraint_schema
+          AND tco.constraint_name = kcu.constraint_name
+JOIN information_schema.referential_constraints rco
+          ON tco.constraint_schema = rco.constraint_schema
+          AND tco.constraint_name = rco.constraint_name
+JOIN information_schema.table_constraints rel_tco
+          ON rco.unique_constraint_schema = rel_tco.constraint_schema
+          AND rco.unique_constraint_name = rel_tco.constraint_name
+WHERE tco.constraint_type = 'FOREIGN KEY' AND rel_tco.table_name = 'locations'
+GROUP BY kcu.table_schema,
+         kcu.table_name,
+         rel_tco.table_name,
+         rel_tco.table_schema,
+         kcu.constraint_name
+ORDER BY kcu.table_schema,
+         kcu.table_name;`).All(&keys); err != nil {
+		return false, err
+	}
+	if len(keys) != 6 {
+		return true, nil
+	}
+	return false, nil
 }
