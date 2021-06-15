@@ -33,6 +33,9 @@ const (
 	// ServiceTaskFileCleanup removes files not linked to any object
 	ServiceTaskFileCleanup ServiceTaskName = "file_cleanup"
 
+	// ServiceTaskLocationCleanup removes locations not used by any object
+	ServiceTaskLocationCleanup ServiceTaskName = "location_cleanup"
+
 	// ServiceTaskTokenCleanup removes expired user access tokens
 	ServiceTaskTokenCleanup ServiceTaskName = "token_cleanup"
 )
@@ -40,6 +43,9 @@ const (
 var serviceTasks = map[ServiceTaskName]ServiceTask{
 	ServiceTaskFileCleanup: {
 		Handler: fileCleanupHandler,
+	},
+	ServiceTaskLocationCleanup: {
+		Handler: locationCleanupHandler,
 	},
 	ServiceTaskTokenCleanup: {
 		Handler: tokenCleanupHandler,
@@ -80,6 +86,13 @@ func serviceHandler(c buffalo.Context) error {
 func fileCleanupHandler(c buffalo.Context) error {
 	if err := job.Submit(job.FileCleanup, nil); err != nil {
 		return c.Error(http.StatusInternalServerError, fmt.Errorf("file cleanup job not started, %s", err))
+	}
+	return nil
+}
+
+func locationCleanupHandler(c buffalo.Context) error {
+	if err := job.Submit(job.LocationCleanup, nil); err != nil {
+		return c.Error(http.StatusInternalServerError, fmt.Errorf("location cleanup job not started, %s", err))
 	}
 	return nil
 }
