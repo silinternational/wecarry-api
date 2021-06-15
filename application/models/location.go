@@ -236,6 +236,7 @@ ORDER BY kcu.table_schema,
 		return false, err
 	}
 	if len(keys) != 6 {
+		// expected 6 foreign keys: [{meetings location_id} {requests destination_id} {requests origin_id} {users location_id} {watches destination_id} {watches origin_id}]
 		return true, nil
 	}
 	return false, nil
