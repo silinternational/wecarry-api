@@ -231,7 +231,7 @@ func readEnv() {
 	Env.LinkedInKey = envy.Get("LINKED_IN_KEY", "")
 	Env.LinkedInSecret = envy.Get("LINKED_IN_SECRET", "")
 	Env.MaxFileDelete = envToInt("MAX_FILE_DELETE", 10)
-	Env.MaxLocationDelete = envToInt("MAX_LOCATION_DELETE", 500)
+	Env.MaxLocationDelete = envToInt("MAX_LOCATION_DELETE", 10)
 	Env.MailChimpAPIBaseURL = envy.Get("MAILCHIMP_API_BASE_URL", "https://us4.api.mailchimp.com/3.0")
 	Env.MailChimpAPIKey = envy.Get("MAILCHIMP_API_KEY", "")
 	Env.MailChimpListID = envy.Get("MAILCHIMP_LIST_ID", "")
