@@ -183,7 +183,8 @@ func (l *Locations) DeleteUnused() error {
 	}
 
 	if len(locations) > domain.Env.MaxLocationDelete {
-		return fmt.Errorf("attempted to delete too many locations, MaxLocationDelete=%d", domain.Env.MaxLocationDelete)
+		return fmt.Errorf("attempted to delete too many locations, unused=%d, MaxLocationDelete=%d",
+			len(locations), domain.Env.MaxLocationDelete)
 	}
 	if len(locations) == 0 {
 		return nil
