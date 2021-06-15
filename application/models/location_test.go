@@ -396,7 +396,6 @@ func (ms *ModelSuite) TestLocations_FindByIDs() {
 }
 
 func (ms *ModelSuite) TestLocations_DeleteUnused() {
-	return // because the actual delete operation is temporarily disabled
 	const (
 		nUnusedLocations = 2
 		nRequests        = 2

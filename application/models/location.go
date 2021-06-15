@@ -190,16 +190,15 @@ func (l *Locations) DeleteUnused() error {
 		return nil
 	}
 
-	nRemovedFromDB := len(locations) // temporarily bypass the delete to be safe
-	//nRemovedFromDB := 0
-	//for _, location := range locations {
-	//	l := location
-	//	if err := DB.Destroy(&l); err != nil {
-	//		domain.ErrLogger.Printf("location %d destroy error, %s", location.ID, err)
-	//		continue
-	//	}
-	//	nRemovedFromDB++
-	//}
+	nRemovedFromDB := 0
+	for _, location := range locations {
+		l := location
+		if err := DB.Destroy(&l); err != nil {
+			domain.ErrLogger.Printf("location %d destroy error, %s", location.ID, err)
+			continue
+		}
+		nRemovedFromDB++
+	}
 
 	if nRemovedFromDB < len(locations) {
 		domain.ErrLogger.Printf("not all unused locations were removed")
