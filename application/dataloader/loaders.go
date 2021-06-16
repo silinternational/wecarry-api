@@ -2,7 +2,6 @@ package dataloader
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
@@ -199,6 +198,5 @@ func GetDataLoaderContext(c context.Context) context.Context {
 }
 
 func For(ctx context.Context) *Loaders {
-	fmt.Printf("---------------- For")
 	return ctx.Value(loadersKey).(*Loaders)
 }
