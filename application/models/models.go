@@ -350,9 +350,7 @@ func Tx(ctx context.Context) *pop.Connection {
 	}
 	tx, ok := ctx.Value("tx").(*pop.Connection)
 	if !ok {
-		domain.Error(ctx, "transaction not found in context")
 		return DB
 	}
-	domain.Warn(ctx, "------------- found connection")
 	return tx
 }

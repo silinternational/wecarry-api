@@ -2,7 +2,6 @@ package actions
 
 import (
 	"github.com/gobuffalo/buffalo"
-	"github.com/gobuffalo/buffalo-pop/v2/pop/popmw"
 	i18n "github.com/gobuffalo/mw-i18n"
 	paramlogger "github.com/gobuffalo/mw-paramlogger"
 	"github.com/gobuffalo/packr/v2"
@@ -10,7 +9,6 @@ import (
 	"github.com/rs/cors"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/listeners"
-	"github.com/silinternational/wecarry-api/models"
 )
 
 var app *buffalo.App
@@ -45,9 +43,6 @@ func App() *buffalo.App {
 		})
 
 		registerCustomErrorHandler(app)
-
-		// Wraps each request in a transaction.
-		app.Use(popmw.Transaction(models.DB))
 
 		// Initialize and attach "rollbar" to context
 		app.Use(domain.RollbarMiddleware)
