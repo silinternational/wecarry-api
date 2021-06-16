@@ -83,7 +83,7 @@ func (ms *ModelSuite) TestMeetingParticipant_Meeting() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			got, err := tt.participant.Meeting()
+			got, err := tt.participant.Meeting(Ctx())
 			if tt.wantErr != "" {
 				ms.Error(err, `didn't get expected error: "%s"`, tt.wantErr)
 				ms.Contains(err.Error(), tt.wantErr, "wrong error message")
@@ -118,7 +118,7 @@ func (ms *ModelSuite) TestMeetingParticipant_User() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			got, err := tt.participant.User()
+			got, err := tt.participant.User(Ctx())
 			if tt.wantErr != "" {
 				ms.Error(err, `didn't get expected error: "%s"`, tt.wantErr)
 				ms.Contains(err.Error(), tt.wantErr, "wrong error message")

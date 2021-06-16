@@ -128,7 +128,7 @@ func (ms *ModelSuite) TestUserPreference_FindByUUID() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var u UserPreference
-			err := u.FindByUUID(test.uuid)
+			err := u.FindByUUID(ms.DB, test.uuid)
 			if test.wantErr != "" {
 				ms.Error(err)
 				ms.Contains(err.Error(), test.wantErr)
@@ -175,7 +175,7 @@ func (ms *ModelSuite) TestUserPreference_Save() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := test.pref.Save()
+			err := test.pref.Save(ms.DB)
 			if test.wantErr != "" {
 				ms.Error(err)
 				ms.Contains(err.Error(), test.wantErr)
@@ -184,7 +184,7 @@ func (ms *ModelSuite) TestUserPreference_Save() {
 			ms.NoError(err)
 
 			var u UserPreference
-			ms.NoError(u.FindByUUID(test.pref.UUID.String()))
+			ms.NoError(u.FindByUUID(ms.DB, test.pref.UUID.String()))
 			ms.Equal(test.pref.UserID, u.UserID)
 			ms.Equal(test.pref.Key, u.Key)
 			ms.Equal(test.pref.Value, u.Value)
@@ -292,7 +292,7 @@ func (ms *ModelSuite) TestUserPreference_updateForUserByKey() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			p := UserPreference{}
-			err := p.updateForUserByKey(test.user, test.key, test.value)
+			err := p.updateForUserByKey(ms.DB, test.user, test.key, test.value)
 			ms.NoError(err)
 
 			if test.want.ID > 0 {
@@ -336,7 +336,7 @@ func (ms *ModelSuite) TestUserPreference_remove() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			p := UserPreference{}
-			err := p.remove(test.user, test.key)
+			err := p.remove(ms.DB, test.user, test.key)
 			ms.NoError(err, "unexpected error from UserPreference.remove()")
 
 			err = ms.DB.Where("user_id = ? AND key = ?", test.user.ID, test.key).First(&p)

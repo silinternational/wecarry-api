@@ -125,7 +125,7 @@ func (ms *ModelSuite) TestThreadParticipant_UpdateLastViewedAt() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			tp := test.threadParticipant
-			err := tp.UpdateLastViewedAt(test.lastViewedAt)
+			err := tp.UpdateLastViewedAt(ms.DB, test.lastViewedAt)
 
 			// reload from database to ensure the new time was saved
 			_ = ms.DB.Reload(&tp)
@@ -205,7 +205,7 @@ func (ms *ModelSuite) TestThreadParticipant_FindByThreadIDAndUserID() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var tp ThreadParticipant
-			err := tp.FindByThreadIDAndUserID(test.threadID, test.userID)
+			err := tp.FindByThreadIDAndUserID(ms.DB, test.threadID, test.userID)
 
 			if test.wantErr {
 				ms.Error(err, "did not get an error from FindByThreadIDAndUserID")
@@ -277,7 +277,7 @@ func (ms *ModelSuite) TestThreadParticipant_UpdateLastNotifiedAt() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			tp := test.threadParticipant
-			err := tp.UpdateLastNotifiedAt(test.LastNotifiedAt)
+			err := tp.UpdateLastNotifiedAt(ms.DB, test.LastNotifiedAt)
 
 			// reload from database to ensure the new time was saved
 			_ = ms.DB.Reload(&tp)

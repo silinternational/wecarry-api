@@ -144,13 +144,13 @@ func (as *ActionSuite) verifyRequestResponse(request models.Request, resp Reques
 	as.Equal(request.Visibility.String(), resp.Visibility)
 	as.Equal(false, resp.IsEditable)
 
-	creator, err := request.GetCreator()
+	creator, err := request.GetCreator(as.DB)
 	as.NoError(err)
 	as.Equal(creator.UUID.String(), resp.CreatedBy.ID, "creator ID doesn't match")
 	as.Equal(creator.Nickname, resp.CreatedBy.Nickname, "creator nickname doesn't match")
 	as.Equal(creator.AuthPhotoURL.String, resp.CreatedBy.AvatarURL, "creator avatar URL doesn't match")
 
-	provider, err := request.GetProvider()
+	provider, err := request.GetProvider(as.DB)
 	as.NoError(err)
 	if provider != nil {
 		as.Equal(provider.UUID.String(), resp.Provider.ID, "provider ID doesn't match")
@@ -158,7 +158,7 @@ func (as *ActionSuite) verifyRequestResponse(request models.Request, resp Reques
 		as.Equal(provider.AuthPhotoURL.String, resp.Provider.AvatarURL, "provider avatar URL doesn't match")
 	}
 
-	org, err := request.GetOrganization()
+	org, err := request.GetOrganization(as.DB)
 	as.NoError(err)
 	as.Equal(org.UUID.String(), resp.Organization.ID, "incorrect Org UUID")
 
@@ -232,9 +232,9 @@ func (as *ActionSuite) Test_RequestQuery() {
 func (as *ActionSuite) Test_RequestsQuery() {
 	f := createFixturesForRequestQuery(as)
 
-	requestZeroDestination, err := f.Requests[0].GetDestination()
+	requestZeroDestination, err := f.Requests[0].GetDestination(as.DB)
 	as.NoError(err)
-	requestOneOrigin, err := f.Requests[1].GetOrigin()
+	requestOneOrigin, err := f.Requests[1].GetOrigin(as.DB)
 	as.NoError(err)
 
 	type testCase struct {
@@ -532,7 +532,7 @@ func (as *ActionSuite) Test_UpdateRequestStatus_DestroyPotentialProviders() {
 
 	request0 := f.Requests[0]
 	request0.Status = models.RequestStatusAccepted
-	err := request0.Update()
+	err := request0.Update(test.Ctx())
 	as.NoError(err, "unable to change Requests's status to prepare for test")
 
 	steps := []struct {
@@ -624,7 +624,7 @@ func (as *ActionSuite) Test_MarkRequestAsDelivered() {
 
 			// Check for correct RequestHistory
 			var request models.Request
-			as.NoError(request.FindByUUID(tc.requestID))
+			as.NoError(request.FindByUUID(as.DB, tc.requestID))
 			pHistories := models.RequestHistories{}
 			err = as.DB.Where("request_id = ?", request.ID).All(&pHistories)
 			as.NoError(err)
@@ -698,7 +698,7 @@ func (as *ActionSuite) Test_MarkRequestAsReceived() {
 
 			// Check for correct RequestHistory
 			var request models.Request
-			as.NoError(request.FindByUUID(tc.requestID))
+			as.NoError(request.FindByUUID(as.DB, tc.requestID))
 			pHistories := models.RequestHistories{}
 			err = as.DB.Where("request_id = ?", request.ID).All(&pHistories)
 			as.NoError(err)
@@ -720,7 +720,7 @@ func (as *ActionSuite) Test_RequestActions() {
 	acceptedRequest.Status = models.RequestStatusAccepted
 	acceptedRequest.ProviderID = nulls.NewInt(provider.ID)
 
-	err := acceptedRequest.Update()
+	err := acceptedRequest.Update(test.Ctx())
 	as.NoError(err, "unable to change Requests's status to prepare for test")
 
 	testCases := []struct {

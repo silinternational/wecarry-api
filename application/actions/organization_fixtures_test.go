@@ -286,7 +286,7 @@ func fixturesForCreateTrust(as *ActionSuite) OrganizationFixtures {
 	}
 
 	trust := models.OrganizationTrust{PrimaryID: orgs[0].ID, SecondaryID: orgs[1].ID}
-	as.NoError(trust.CreateSymmetric())
+	as.NoError(trust.CreateSymmetric(as.DB))
 
 	userFixtures := test.CreateUserFixtures(as.DB, 2)
 	users := userFixtures.Users
@@ -320,8 +320,8 @@ func fixturesForRemoveTrust(as *ActionSuite) OrganizationFixtures {
 		{PrimaryID: orgs[0].ID, SecondaryID: orgs[1].ID},
 		{PrimaryID: orgs[0].ID, SecondaryID: orgs[2].ID},
 	}
-	as.NoError(trusts[0].CreateSymmetric())
-	as.NoError(trusts[1].CreateSymmetric())
+	as.NoError(trusts[0].CreateSymmetric(as.DB))
+	as.NoError(trusts[1].CreateSymmetric(as.DB))
 
 	userFixtures := test.CreateUserFixtures(as.DB, 2)
 	users := userFixtures.Users

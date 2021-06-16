@@ -94,7 +94,7 @@ func (ms *ModelSuite) TestMessage_GetSender() {
 	messages := messageFixtures.Messages
 	users := messageFixtures.Users
 
-	userResults, err := messages[0].GetSender()
+	userResults, err := messages[0].GetSender(ms.DB)
 	if err != nil {
 		t.Errorf("unexpected error ... %v", err)
 		t.FailNow()
@@ -113,7 +113,7 @@ func (ms *ModelSuite) TestMessage_GetThread() {
 	messages := messageFixtures.Messages
 	threads := messageFixtures.Threads
 
-	threadResults, err := messages[0].GetThread()
+	threadResults, err := messages[0].GetThread(ms.DB)
 	if err != nil {
 		t.Errorf("unexpected error ... %v", err)
 		t.FailNow()
@@ -228,7 +228,7 @@ func (ms *ModelSuite) TestMessage_FindByID() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var message Message
-			err := message.FindByID(test.id, test.eagerFields...)
+			err := message.FindByID(ms.DB, test.id, test.eagerFields...)
 
 			if test.wantErr {
 				ms.Error(err)
@@ -269,7 +269,7 @@ func (ms *ModelSuite) TestMessage_FindByUUID() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var message Message
-			err := message.findByUUID(test.uuid)
+			err := message.findByUUID(ms.DB, test.uuid)
 
 			if test.wantErr != "" {
 				ms.Error(err)
@@ -321,7 +321,7 @@ func (ms *ModelSuite) TestMessage_FindByUserAndUUID() {
 			} else {
 				testUUID = *test.uuid
 			}
-			err := message.FindByUserAndUUID(test.user, testUUID)
+			err := message.FindByUserAndUUID(Ctx(), test.user, testUUID)
 
 			if test.wantErr != "" {
 				ms.Error(err)

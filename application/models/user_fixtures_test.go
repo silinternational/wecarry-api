@@ -96,8 +96,8 @@ func CreateFixturesForUserGetRequests(ms *ModelSuite) UserRequestFixtures {
 
 	requests := createRequestFixtures(ms.DB, 4, false)
 	userID := users[1].UUID.String()
-	requests[0].SetProviderWithStatus(RequestStatusAccepted, &userID)
-	requests[1].SetProviderWithStatus(RequestStatusAccepted, &userID)
+	requests[0].SetProviderWithStatus(Ctx(), RequestStatusAccepted, &userID)
+	requests[1].SetProviderWithStatus(Ctx(), RequestStatusAccepted, &userID)
 	requests[2].Status = RequestStatusAccepted
 	requests[3].Status = RequestStatusAccepted
 	ms.NoError(ms.DB.Save(&requests))
@@ -142,13 +142,13 @@ func CreateFixturesForUserCanViewRequest(ms *ModelSuite) UserRequestFixtures {
 	})
 
 	// Switch User2's org to Org2
-	uo, err := users[2].FindUserOrganization(orgs[0])
+	uo, err := users[2].FindUserOrganization(ms.DB, orgs[0])
 	ms.NoError(err)
 	uo.OrganizationID = orgs[2].ID
 	ms.NoError(DB.UpdateColumns(&uo, "organization_id"))
 
 	// Switch User3's org to Org2
-	uo, err = users[3].FindUserOrganization(orgs[0])
+	uo, err = users[3].FindUserOrganization(ms.DB, orgs[0])
 	ms.NoError(err)
 	uo.OrganizationID = orgs[2].ID
 	ms.NoError(DB.UpdateColumns(&uo, "organization_id"))
@@ -178,7 +178,7 @@ func CreateFixturesForUserCanViewRequest(ms *ModelSuite) UserRequestFixtures {
 func createFixturesForTestUserGetPhoto(ms *ModelSuite) UserRequestFixtures {
 	ms.NoError(aws.CreateS3Bucket())
 
-	fileFixtures := createFileFixtures(2)
+	fileFixtures := createFileFixtures(ms.DB, 2)
 
 	unique := domain.GetUUID()
 	users := Users{
@@ -402,12 +402,12 @@ func CreateFixturesForUserWantsRequestNotification(ms *ModelSuite) UserRequestFi
 	}
 
 	requests := createRequestFixtures(ms.DB, 3, false)
-	requestOneLocation, err := requests[1].GetOrigin()
+	requestOneLocation, err := requests[1].GetOrigin(ms.DB)
 	ms.NoError(err)
-	ms.NoError(users[1].SetLocation(*requestOneLocation))
+	ms.NoError(users[1].SetLocation(Ctx(), *requestOneLocation))
 
 	// make a copy of the request destination and assign it to a watch
-	watchLocation, err := requests[2].GetDestination()
+	watchLocation, err := requests[2].GetDestination(ms.DB)
 	ms.NoError(err)
 	createFixture(ms, watchLocation)
 	watch := Watch{

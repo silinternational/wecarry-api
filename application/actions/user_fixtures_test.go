@@ -75,7 +75,7 @@ func fixturesForUserQuery(as *ActionSuite) UserQueryFixtures {
 
 	f := test.CreateFileFixture()
 
-	_, err := users[1].AttachPhoto(f.UUID.String())
+	_, err := users[1].AttachPhoto(test.Ctx(), f.UUID.String())
 	as.NoError(err, "unexpected error attaching photo to user")
 
 	meetings := models.Meetings{

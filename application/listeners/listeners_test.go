@@ -156,11 +156,11 @@ func createFixturesForSendRequestCreatedNotifications(ms *ModelSuite) RequestFix
 	users := test.CreateUserFixtures(ms.DB, 3).Users
 
 	request := test.CreateRequestFixtures(ms.DB, 1, false)[0]
-	requestOrigin, err := request.GetOrigin()
+	requestOrigin, err := request.GetOrigin(ms.DB)
 	ms.NoError(err)
 
 	for i := range users {
-		ms.NoError(users[i].SetLocation(*requestOrigin))
+		ms.NoError(users[i].SetLocation(test.Ctx(), *requestOrigin))
 	}
 
 	return RequestFixtures{

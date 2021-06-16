@@ -81,7 +81,7 @@ func (ms *ModelSuite) TestThread_FindByUUID() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var thread Thread
-			err := thread.FindByUUID(test.uuid)
+			err := thread.FindByUUID(ms.DB, test.uuid)
 			if test.wantErr {
 				if (err != nil) != test.wantErr {
 					t.Errorf("FindByUUID() did not return expected error")
@@ -118,7 +118,7 @@ func (ms *ModelSuite) TestThread_GetRequest() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := test.thread.GetRequest()
+			got, err := test.thread.GetRequest(ms.DB)
 			if test.wantErr {
 				if (err != nil) != test.wantErr {
 					t.Errorf("GetRequest() did not return expected error")
@@ -165,7 +165,7 @@ func (ms *ModelSuite) TestThread_GetMessages() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := test.thread.Messages()
+			got, err := test.thread.Messages(Ctx())
 			if test.wantErr {
 				if (err != nil) != test.wantErr {
 					t.Errorf("Messages() did not return expected error")
@@ -218,7 +218,7 @@ func (ms *ModelSuite) TestThread_GetParticipants() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := test.thread.GetParticipants()
+			got, err := test.thread.GetParticipants(ms.DB)
 			if test.wantErr {
 				if (err != nil) != test.wantErr {
 					t.Errorf("GetParticipants() did not return expected error")
@@ -248,7 +248,7 @@ func (ms *ModelSuite) TestThread_CreateWithParticipants() {
 	request := requests[0]
 
 	var thread Thread
-	if err := thread.CreateWithParticipants(request, users[1]); err != nil {
+	if err := thread.CreateWithParticipants(ms.DB, request, users[1]); err != nil {
 		t.Errorf("TestThread_CreateWithParticipants() error = %v", err)
 		t.FailNow()
 	}
@@ -263,7 +263,7 @@ func (ms *ModelSuite) TestThread_CreateWithParticipants() {
 			threadFromDB.RequestID, request.ID)
 	}
 
-	participants, _ := threadFromDB.GetParticipants()
+	participants, _ := threadFromDB.GetParticipants(ms.DB)
 
 	ids := make([]uuid.UUID, len(participants))
 	for i := range threadFromDB.Participants {
@@ -316,10 +316,10 @@ func (ms *ModelSuite) TestThread_ensureParticipants() {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := thread.ensureParticipants(request, test.userID)
+			err := thread.ensureParticipants(ms.DB, request, test.userID)
 			ms.NoError(err)
 
-			participants, err := thread.GetParticipants()
+			participants, err := thread.GetParticipants(ms.DB)
 			ms.NoError(err, "can't get thread participants from thread")
 
 			ids := make([]uuid.UUID, len(participants))
@@ -373,7 +373,7 @@ func (ms *ModelSuite) TestThread_GetLastViewedAt() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			lastViewedAt, err := test.thread.GetLastViewedAt(test.user)
+			lastViewedAt, err := test.thread.GetLastViewedAt(Ctx(), test.user)
 			if test.wantErr {
 				ms.Error(err, "did not get expected error")
 				return
@@ -403,7 +403,7 @@ func (ms *ModelSuite) TestThread_UpdateLastViewedAt() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := test.thread.UpdateLastViewedAt(test.user.ID, test.lastViewedAt)
+			err := test.thread.UpdateLastViewedAt(Ctx(), test.user.ID, test.lastViewedAt)
 
 			if test.wantErr != "" {
 				ms.Error(err)
@@ -412,7 +412,7 @@ func (ms *ModelSuite) TestThread_UpdateLastViewedAt() {
 			}
 			ms.NoError(err)
 
-			lastViewedAt, err := test.thread.GetLastViewedAt(test.user)
+			lastViewedAt, err := test.thread.GetLastViewedAt(Ctx(), test.user)
 			ms.NoError(err)
 			ms.WithinDuration(test.lastViewedAt, *lastViewedAt, time.Second,
 				fmt.Sprintf("time not correct, got %v, wanted %v", lastViewedAt, test.lastViewedAt))
@@ -463,7 +463,7 @@ func (ms *ModelSuite) TestThread_UnreadMessageCount() {
 			err := DB.Load(&test.threadP)
 			ms.NoError(err)
 
-			got, err := test.threadP.Thread.UnreadMessageCount(test.user.ID, test.threadP.LastViewedAt)
+			got, err := test.threadP.Thread.UnreadMessageCount(Ctx(), test.user.ID, test.threadP.LastViewedAt)
 			if test.wantErr {
 				ms.Error(err, "did not get expected error")
 				return
@@ -515,7 +515,7 @@ func (ms *ModelSuite) TestThread_IsVisible() {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := tt.thread.IsVisible(tt.user.ID)
+			got := tt.thread.IsVisible(ms.DB, tt.user.ID)
 			ms.Equal(tt.want, got)
 		})
 	}

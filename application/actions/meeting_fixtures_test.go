@@ -95,7 +95,7 @@ func createFixturesForMeetings(as *ActionSuite) meetingQueryFixtures {
 		},
 	}
 	for i := range invites {
-		as.NoError(invites[i].Create())
+		as.NoError(invites[i].Create(test.Ctx()))
 	}
 
 	participants := models.MeetingParticipants{

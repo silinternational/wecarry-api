@@ -122,7 +122,7 @@ func (as *ActionSuite) Test_MeetingQuery() {
 	as.Equal(testMtg.EndDate.Format(domain.DateFormat), gotMtg.EndDate,
 		"incorrect meeting EndDate")
 
-	image, err := testMtg.ImageFile()
+	image, err := testMtg.ImageFile(as.DB)
 	as.NoError(err, "unexpected error getting ImageFile")
 	wantUUID := ""
 	if image != nil {
@@ -177,7 +177,7 @@ func (as *ActionSuite) Test_MeetingsQuery() {
 		as.Equal(wantMtg.EndDate.Format(domain.DateFormat), gotMtg.EndDate,
 			"incorrect meeting EndDate")
 
-		image, err := wantMtg.ImageFile()
+		image, err := wantMtg.ImageFile(as.DB)
 		as.NoError(err, "unexpected error getting ImageFile")
 		wantUUID := ""
 		if image != nil {

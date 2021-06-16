@@ -93,7 +93,7 @@ func (ms *ModelSuite) TestTrust_Create() {
 				PrimaryID:   tt.trust.PrimaryID,
 				SecondaryID: tt.trust.SecondaryID,
 			}
-			err := newTrust.CreateSymmetric()
+			err := newTrust.CreateSymmetric(ms.DB)
 			if tt.wantErr != "" {
 				ms.Error(err)
 				ms.Contains(err.Error(), tt.wantErr, "wrong error type")
@@ -102,7 +102,7 @@ func (ms *ModelSuite) TestTrust_Create() {
 			ms.NoError(err, "unexpected error")
 
 			org := Organization{ID: tt.trust.PrimaryID}
-			orgs, err := org.TrustedOrganizations()
+			orgs, err := org.TrustedOrganizations(Ctx())
 			ms.NoError(err)
 
 			ms.Equal(tt.want, len(orgs), "incorrect number of OrganizationTrust records")
@@ -134,7 +134,7 @@ func (ms *ModelSuite) TestTrust_Remove() {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var trust OrganizationTrust
-			err := trust.RemoveSymmetric(tt.trust.PrimaryID, tt.trust.SecondaryID)
+			err := trust.RemoveSymmetric(ms.DB, tt.trust.PrimaryID, tt.trust.SecondaryID)
 			if tt.wantErr != "" {
 				ms.Error(err)
 				ms.Contains(err.Error(), tt.wantErr, "wrong error type")
@@ -143,11 +143,11 @@ func (ms *ModelSuite) TestTrust_Remove() {
 			ms.NoError(err, "unexpected error")
 
 			org1 := Organization{ID: tt.trust.PrimaryID}
-			orgs1, err := org1.TrustedOrganizations()
+			orgs1, err := org1.TrustedOrganizations(Ctx())
 			ms.NoError(err)
 
 			org2 := Organization{ID: tt.trust.SecondaryID}
-			orgs2, err := org2.TrustedOrganizations()
+			orgs2, err := org2.TrustedOrganizations(Ctx())
 			ms.NoError(err)
 
 			ms.Equal(tt.want, len(orgs1)+len(orgs2), "incorrect number of OrganizationTrust records")
@@ -179,7 +179,7 @@ func (ms *ModelSuite) TestTrust_FindByOrgIDs() {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var trust OrganizationTrust
-			err := trust.FindByOrgIDs(tt.id1, tt.id2)
+			err := trust.FindByOrgIDs(ms.DB, tt.id1, tt.id2)
 			if tt.wantErr != "" {
 				ms.Error(err)
 				ms.Contains(err.Error(), tt.wantErr, "wrong error type")
@@ -220,7 +220,7 @@ func (ms *ModelSuite) TestTrusts_FindByOrgID() {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var trusts OrganizationTrusts
-			err := trusts.FindByOrgID(tt.id)
+			err := trusts.FindByOrgID(ms.DB, tt.id)
 			if tt.wantErr != "" {
 				ms.Error(err)
 				ms.Contains(err.Error(), tt.wantErr, "wrong error type")

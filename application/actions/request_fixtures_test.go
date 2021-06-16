@@ -70,7 +70,7 @@ func createFixturesForRequestQuery(as *ActionSuite) RequestQueryFixtures {
 
 	fileFixture := test.CreateFileFixture()
 
-	if _, err := requests[0].AttachFile(fileFixture.UUID.String()); err != nil {
+	if _, err := requests[0].AttachFile(as.DB, fileFixture.UUID.String()); err != nil {
 		t.Errorf("failed to attach file to request, %s", err)
 		t.FailNow()
 	}

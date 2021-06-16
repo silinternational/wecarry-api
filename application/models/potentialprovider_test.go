@@ -56,7 +56,7 @@ func (ms *ModelSuite) TestPotentialProviders_FindUsersByRequestID() {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			providers := PotentialProviders{}
-			users, err := providers.FindUsersByRequestID(tt.request, tt.user)
+			users, err := providers.FindUsersByRequestID(ms.DB, tt.request, tt.user)
 			ms.NoError(err, "unexpected error")
 			ids := make([]int, len(users))
 			for i, u := range users {
@@ -108,7 +108,7 @@ func (ms *ModelSuite) TestPotentialProvider_FindWithRequestUUIDAndUserUUID() {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			provider := PotentialProvider{}
-			err := provider.FindWithRequestUUIDAndUserUUID(tt.request.UUID.String(),
+			err := provider.FindWithRequestUUIDAndUserUUID(Ctx(), tt.request.UUID.String(),
 				tt.ppUserUUID.String(), tt.currentUser)
 
 			if tt.wantErr != "" {
@@ -160,7 +160,7 @@ func (ms *ModelSuite) TestPotentialProviders_DestroyAllWithRequestUUID() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			providers := PotentialProviders{}
-			err := providers.DestroyAllWithRequestUUID(test.request.UUID.String(), test.currentUser)
+			err := providers.DestroyAllWithRequestUUID(ms.DB, test.request.UUID.String(), test.currentUser)
 
 			if test.wantErr != "" {
 				ms.Error(err, "did not get error as expected")
@@ -201,7 +201,7 @@ func (ms *ModelSuite) TestNewWithRequestUUID() {
 			name:    "bad - using request's CreatedBy",
 			request: requests[0],
 			userID:  users[0].ID,
-			wantErr: "PotentialProvider User must not be the Request's Receiver.",
+			wantErr: "the PotentialProvider User must not be the Request's Receiver",
 		},
 		{
 			name:    "good - second request second user",
@@ -212,7 +212,7 @@ func (ms *ModelSuite) TestNewWithRequestUUID() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			provider := PotentialProvider{}
-			err := provider.NewWithRequestUUID(test.request.UUID.String(), test.userID)
+			err := provider.NewWithRequestUUID(Ctx(), test.request.UUID.String(), test.userID)
 			if test.wantErr != "" {
 				ms.Error(err, "expected an error but did not get one")
 				ms.Equal(test.wantErr, err.Error(), "incorrect error message")

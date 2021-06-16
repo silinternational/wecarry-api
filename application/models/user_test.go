@@ -84,7 +84,7 @@ func (ms *ModelSuite) TestUser_FindOrCreateFromAuthUser() {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			u := &User{}
-			err := u.FindOrCreateFromAuthUser(tt.args.orgID, tt.args.authUser)
+			err := u.FindOrCreateFromAuthUser(Ctx(), tt.args.orgID, tt.args.authUser)
 			if tt.wantErr {
 				ms.Error(err, "FindOrCreateFromAuthUser() did not return expected error")
 			} else {
@@ -131,7 +131,7 @@ func (ms *ModelSuite) TestUser_FindOrCreateFromOrglessAuthUser() {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			u := &User{}
-			err := u.FindOrCreateFromOrglessAuthUser(tc.authUser, tc.authType)
+			err := u.FindOrCreateFromOrglessAuthUser(Ctx(), tc.authUser, tc.authType)
 			ms.NoError(err, "unexpected error")
 			ms.True(u.ID != 0, "Did not get a new user ID")
 			ms.Equal(tc.authType, u.SocialAuthProvider.String, "incorrect SocialAuthProvider.")
@@ -323,7 +323,7 @@ func (ms *ModelSuite) TestUser_CreateAccessToken() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			expectedExpiry := createAccessTokenExpiry().Unix()
-			token, expiry, err := test.args.user.CreateAccessToken(uf.Organization, test.args.clientID)
+			token, expiry, err := test.args.user.CreateAccessToken(ms.DB, uf.Organization, test.args.clientID)
 			if test.wantErr {
 				if err == nil {
 					t.Errorf("expected error, but did not get one")
@@ -389,7 +389,7 @@ func (ms *ModelSuite) TestUser_CreateOrglessAccessToken() {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			expectedExpiry := createAccessTokenExpiry().Unix()
-			token, expiry, err := tc.user.CreateOrglessAccessToken(tc.clientID)
+			token, expiry, err := tc.user.CreateOrglessAccessToken(ms.DB, tc.clientID)
 			if tc.wantErr {
 				if err == nil {
 					t.Errorf("expected error, but did not get one")
@@ -439,7 +439,7 @@ func (ms *ModelSuite) TestUser_GetOrgIDs() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got := test.user.GetOrgIDs()
+			got := test.user.GetOrgIDs(ms.DB)
 
 			if !reflect.DeepEqual(got, test.want) {
 				t.Errorf("GetOrgIDs() = \"%v\", want \"%v\"", got, test.want)
@@ -466,7 +466,7 @@ func (ms *ModelSuite) TestUser_GetOrganizations() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := test.user.GetOrganizations()
+			got, err := test.user.GetOrganizations(Ctx())
 			if err != nil {
 				t.Errorf("GetOrganizations() returned error: %s", err)
 			}
@@ -532,7 +532,7 @@ func (ms *ModelSuite) TestUser_FindUserOrganization() {
 		t.Run(test.name, func(t *testing.T) {
 			user := test.args.user
 			org := test.args.org
-			uo, err := user.FindUserOrganization(org)
+			uo, err := user.FindUserOrganization(ms.DB, org)
 			if test.wantErr {
 				if err == nil {
 					t.Errorf("Expected an error, but did not get one, %v", uo.ID)
@@ -581,7 +581,7 @@ func (ms *ModelSuite) TestUser_GetRequests() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := test.args.user.Requests(test.args.requestRole)
+			got, err := test.args.user.Requests(Ctx(), test.args.requestRole)
 			if err != nil {
 				t.Errorf("Requests() returned error: %s", err)
 			}
@@ -654,10 +654,10 @@ func (ms *ModelSuite) TestUser_CanEditOrganization() {
 		createFixture(ms, &userOrgFixtures[i])
 	}
 
-	if !user.CanEditOrganization(orgFixtures[0].ID) {
+	if !user.CanEditOrganization(Ctx(), orgFixtures[0].ID) {
 		t.Error("user unable to edit org that they should be able to edit")
 	}
-	if user.CanEditOrganization(orgFixtures[1].ID) {
+	if user.CanEditOrganization(Ctx(), orgFixtures[1].ID) {
 		t.Error("user is able to edit org that they should not be able to edit")
 	}
 }
@@ -803,7 +803,7 @@ func (ms *ModelSuite) TestUser_CanViewRequest() {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			ms.Equal(test.want, test.user.CanViewRequest(test.request),
+			ms.Equal(test.want, test.user.CanViewRequest(Ctx(), test.request),
 				"incorrect result")
 		})
 	}
@@ -844,10 +844,10 @@ func (ms *ModelSuite) TestUser_CanViewOrganization() {
 		createFixture(ms, &userOrgFixtures[i])
 	}
 
-	if !user.CanViewOrganization(orgFixtures[0].ID) {
+	if !user.CanViewOrganization(Ctx(), orgFixtures[0].ID) {
 		t.Error("user unable to view org that they should be able to view")
 	}
-	if user.CanViewOrganization(orgFixtures[1].ID) {
+	if user.CanViewOrganization(Ctx(), orgFixtures[1].ID) {
 		t.Error("user is able to view org that they should not be able to view")
 	}
 }
@@ -877,7 +877,7 @@ func (ms *ModelSuite) TestUser_FindByUUID() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var u User
-			err := u.FindByUUID(test.UUID)
+			err := u.FindByUUID(Ctx(), test.UUID)
 			if test.wantErr != "" {
 				ms.Error(err)
 				ms.Contains(err.Error(), test.wantErr)
@@ -913,7 +913,7 @@ func (ms *ModelSuite) TestUser_FindByID() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var u User
-			err := u.FindByID(test.ID)
+			err := u.FindByID(ms.DB, test.ID)
 			if test.wantErr != "" {
 				ms.Error(err)
 				ms.Contains(err.Error(), test.wantErr)
@@ -949,7 +949,7 @@ func (ms *ModelSuite) TestUser_FindByEmail() {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			var u User
-			err := u.FindByEmail(tc.email)
+			err := u.FindByEmail(ms.DB, tc.email)
 			if tc.wantErr != "" {
 				ms.Error(err)
 				ms.Contains(err.Error(), tc.wantErr)
@@ -966,7 +966,7 @@ func (ms *ModelSuite) TestUser_FindBySocialAuthProvider() {
 	f := createUserFixtures(ms.DB, 2)
 	user := f.Users[0]
 	user.SocialAuthProvider = nulls.NewString(auth.AuthTypeFacebook)
-	ms.NoError(user.Save(), "error saving User for test prep.")
+	ms.NoError(user.Save(Ctx()), "error saving User for test prep.")
 
 	tests := []struct {
 		name               string
@@ -997,7 +997,7 @@ func (ms *ModelSuite) TestUser_FindBySocialAuthProvider() {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			var u User
-			err := u.FindByEmailAndSocialAuthProvider(tc.email, tc.socialAuthProvider)
+			err := u.FindByEmailAndSocialAuthProvider(ms.DB, tc.email, tc.socialAuthProvider)
 			if tc.wantErr != "" {
 				ms.Error(err)
 				ms.Contains(err.Error(), tc.wantErr)
@@ -1044,7 +1044,7 @@ func (ms *ModelSuite) TestUser_GetPhotoID() {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			photoID, err := test.user.GetPhotoID()
+			photoID, err := test.user.GetPhotoID(Ctx())
 			if test.wantErr != "" {
 				ms.Error(err)
 				ms.Contains(err.Error(), test.wantErr, "unexpected error message")
@@ -1094,7 +1094,7 @@ func (ms *ModelSuite) TestUser_GetPhoto() {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			url, err := test.user.GetPhotoURL()
+			url, err := test.user.GetPhotoURL(Ctx())
 			if test.wantErr != "" {
 				ms.Error(err)
 				ms.Contains(err.Error(), test.wantErr, "unexpected error message")
@@ -1146,7 +1146,7 @@ func (ms *ModelSuite) TestUser_Save() {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := test.user.Save()
+			err := test.user.Save(Ctx())
 			if test.wantErr != "" {
 				ms.Error(err)
 				ms.Contains(err.Error(), test.wantErr, "unexpected error message")
@@ -1156,7 +1156,7 @@ func (ms *ModelSuite) TestUser_Save() {
 
 			ms.True(test.user.UUID.Version() != 0)
 			var u User
-			ms.NoError(u.FindByID(test.user.ID))
+			ms.NoError(u.FindByID(ms.DB, test.user.ID))
 		})
 	}
 }
@@ -1195,7 +1195,7 @@ func (ms *ModelSuite) TestUser_UniquifyNickname() {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := tc.user.uniquifyNickname(allPrefs)
+			err := tc.user.uniquifyNickname(ms.DB, allPrefs)
 			if err != nil {
 				t.Errorf("uniquifyNickname() returned error: %s", err)
 			}
@@ -1248,10 +1248,10 @@ func (ms *ModelSuite) TestUser_SetLocation() {
 
 	for _, test := range tests {
 		ms.T().Run(test.name, func(t *testing.T) {
-			err := user.SetLocation(test.newLocation)
+			err := user.SetLocation(Ctx(), test.newLocation)
 			ms.NoError(err, "unexpected error from user.SetLocation()")
 
-			locationFromDB, err := user.GetLocation()
+			locationFromDB, err := user.GetLocation(Ctx())
 			ms.NoError(err, "unexpected error from user.GetLocation()")
 
 			if test.wantNil {
@@ -1288,10 +1288,10 @@ func (ms *ModelSuite) TestUser_RemoveLocation() {
 		ms.T().Run(tt.name, func(t *testing.T) {
 			id := tt.user.LocationID
 			fmt.Print(id)
-			err := tt.user.RemoveLocation()
+			err := tt.user.RemoveLocation(Ctx())
 			ms.NoError(err, "unexpected error from user.RemoveLocation()")
 
-			locationFromDB, err := tt.user.GetLocation()
+			locationFromDB, err := tt.user.GetLocation(Ctx())
 			ms.NoError(err, "unexpected error from user.GetLocation()")
 			ms.Nil(locationFromDB)
 
@@ -1330,7 +1330,7 @@ func (ms *ModelSuite) TestUser_UnreadMessageCount() {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := test.user.UnreadMessageCount()
+			got, err := test.user.UnreadMessageCount(Ctx())
 			if test.wantErr {
 				ms.Error(err, "did not get expected error")
 				return
@@ -1363,7 +1363,7 @@ func (ms *ModelSuite) TestUser_GetThreads() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := test.user.GetThreads()
+			got, err := test.user.GetThreads(Ctx())
 			ms.NoError(err)
 
 			ids := make([]uuid.UUID, len(got))
@@ -1418,7 +1418,7 @@ func (ms *ModelSuite) TestUser_WantsRequestNotification() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got := test.user.WantsRequestNotification(test.request)
+			got := test.user.WantsRequestNotification(ms.DB, test.request)
 
 			ms.Equal(test.want, got, "incorrect result from WantsRequestNotification()")
 		})
@@ -1463,7 +1463,7 @@ func (ms *ModelSuite) TestUser_UpdateStandardPreferences() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := test.user.UpdateStandardPreferences(test.SPrefs)
+			got, err := test.user.UpdateStandardPreferences(Ctx(), test.SPrefs)
 			ms.NoError(err)
 
 			ms.Equal(test.want, got, "incorrect result from UpdateStandardPreferences()")
@@ -1497,7 +1497,7 @@ func (ms *ModelSuite) TestUser_GetPreferences() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := test.user.GetPreferences()
+			got, err := test.user.GetPreferences(ms.DB)
 			ms.NoError(err)
 
 			ms.Equal(test.want, got, "incorrect result from GetPreferences()")
@@ -1533,7 +1533,7 @@ func (ms *ModelSuite) TestUser_GetLanguagePreference() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got := test.user.GetLanguagePreference()
+			got := test.user.GetLanguagePreference(ms.DB)
 
 			ms.Equal(test.want, got, "incorrect result from GetLanguagePreference()")
 		})
@@ -1599,7 +1599,7 @@ func (ms *ModelSuite) TestUser_HasOrganization() {
 	}
 	for _, test := range tests {
 		ms.T().Run(test.name, func(t *testing.T) {
-			got := test.user.HasOrganization()
+			got := test.user.HasOrganization(ms.DB)
 
 			ms.Equal(test.want, got, "incorrect result from HasOrganization()")
 		})
@@ -1745,7 +1745,7 @@ func (ms *ModelSuite) TestUsers_FindByIDs() {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var u Users
-			err := u.FindByIDs(tt.ids)
+			err := u.FindByIDs(ms.DB, tt.ids)
 			ms.NoError(err)
 
 			got := make([]string, len(u))

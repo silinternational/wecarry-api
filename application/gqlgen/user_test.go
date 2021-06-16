@@ -3,9 +3,9 @@ package gqlgen
 import (
 	"testing"
 
-	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/nulls"
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/internal/test"
 	"github.com/silinternational/wecarry-api/models"
 )
 
@@ -46,13 +46,12 @@ func (gs *GqlgenSuite) Test_getPublicProfile() {
 			want: &PublicProfile{},
 		},
 	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			var ctx *buffalo.DefaultContext
-			profile := getPublicProfile(ctx, test.user)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			profile := getPublicProfile(test.Ctx(), tt.user)
 
 			gs.NotNil(profile)
-			gs.Equal(test.want, profile, "incorrect profile")
+			gs.Equal(tt.want, profile, "incorrect profile")
 		})
 	}
 }

@@ -56,7 +56,7 @@ func (ms *ModelSuite) TestGetRequestUsers() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var request models.Request
-			err := request.FindByID(test.id)
+			err := request.FindByID(ms.DB, test.id)
 			ms.NoError(err, "error finding request for test")
 
 			requestUsers := getRequestUsers(request)
