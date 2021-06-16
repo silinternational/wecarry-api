@@ -99,14 +99,14 @@ func (m *MeetingParticipant) FindOrCreate(ctx context.Context, meeting Meeting, 
 
 	if code == nil {
 		if cUser.CanCreateMeetingParticipant(ctx, meeting) {
-			return m.createWithoutInvite(ctx, tx, meeting)
+			return m.createWithoutInvite(ctx, meeting)
 		}
 		return domain.ReportError(ctx, errors.New("user is not allowed to self-join meeting without a code"),
 			"CreateMeetingParticipant.Unauthorized")
 	}
 
 	if meeting.IsCodeValid(tx, *code) {
-		return m.createWithoutInvite(ctx, tx, meeting)
+		return m.createWithoutInvite(ctx, meeting)
 	}
 
 	var invite MeetingInvite
@@ -126,10 +126,10 @@ func (m *MeetingParticipant) FindOrCreate(ctx context.Context, meeting Meeting, 
 	return nil
 }
 
-func (m *MeetingParticipant) createWithoutInvite(ctx context.Context, tx *pop.Connection, meeting Meeting) error {
+func (m *MeetingParticipant) createWithoutInvite(ctx context.Context, meeting Meeting) error {
 	m.UserID = CurrentUser(ctx).ID
 	m.MeetingID = meeting.ID
-	if err := tx.Create(m); err != nil {
+	if err := Tx(ctx).Create(m); err != nil {
 		return domain.ReportError(ctx, err, "CreateMeetingParticipant")
 	}
 	return nil
