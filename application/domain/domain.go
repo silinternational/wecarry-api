@@ -446,7 +446,7 @@ func Error(ctx context.Context, msg string) {
 	// Doesn't have a BuffaloContext value, so it must be the actual BuffaloContext
 	bc = ctx.(buffalo.Context)
 
-	// Avoid panics running tests when c doesn't have the necessary nested methods
+	// Avoid panics running tests when bc doesn't have the necessary nested methods
 	logger := bc.Logger()
 	if logger == nil {
 		return

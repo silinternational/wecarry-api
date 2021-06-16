@@ -473,7 +473,6 @@ func (r *mutationResolver) UpdateRequest(ctx context.Context, input requestInput
 			"UpdateRequest.NotEditable")
 	}
 
-	// TODO: move this to the end of the function? I did it back in 2019 but didn't make any not as to the reason
 	if err := request.Update(ctx); err != nil {
 		return &models.Request{}, domain.ReportError(ctx, err, "UpdateRequest")
 	}
