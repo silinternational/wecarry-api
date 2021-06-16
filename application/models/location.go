@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 
@@ -121,4 +122,122 @@ func (l *Location) IsNear(loc2 Location) bool {
 func (l *Locations) FindByIDs(ids []int) error {
 	ids = domain.UniquifyIntSlice(ids)
 	return DB.Where("id in (?)", ids).All(l)
+}
+
+// DeleteUnused removes all locations that are no longer used
+func (l *Locations) DeleteUnused() error {
+	if found, err := checkLocationsFks(); err != nil {
+		return errors.New("error checking for new locations references, " + err.Error())
+	} else if found {
+		return errors.New("new key found, canceling location cleanup")
+	}
+
+	var usedLocations []int
+
+	var meetings Meetings
+	if err := DB.All(&meetings); err != nil {
+		return fmt.Errorf("could not load meetings in Locations.DeleteUnused, %s", err)
+	}
+	for _, m := range meetings {
+		usedLocations = append(usedLocations, m.LocationID)
+	}
+
+	var requests Requests
+	if err := DB.All(&requests); err != nil {
+		return fmt.Errorf("could not load requests in Locations.DeleteUnused, %s", err)
+	}
+	for _, m := range requests {
+		usedLocations = append(usedLocations, m.DestinationID)
+		if m.OriginID.Valid {
+			usedLocations = append(usedLocations, m.OriginID.Int)
+		}
+	}
+
+	var users Users
+	if err := DB.Where("location_id IS NOT NULL").All(&users); err != nil {
+		return fmt.Errorf("could not load users in Locations.DeleteUnused, %s", err)
+	}
+	for _, m := range users {
+		if m.LocationID.Valid {
+			usedLocations = append(usedLocations, m.LocationID.Int)
+		}
+	}
+
+	var watches Watches
+	if err := DB.Where("origin_id IS NOT NULL OR destination_id IS NOT NULL").
+		All(&watches); err != nil {
+		return fmt.Errorf("could not load watches in Locations.DeleteUnused, %s", err)
+	}
+	for _, m := range watches {
+		if m.OriginID.Valid {
+			usedLocations = append(usedLocations, m.OriginID.Int)
+		}
+		if m.DestinationID.Valid {
+			usedLocations = append(usedLocations, m.DestinationID.Int)
+		}
+	}
+
+	var locations Locations
+	if err := DB.Where("id NOT IN (?)", usedLocations).All(&locations); err != nil {
+		return fmt.Errorf("could not load locations in Locations.DeleteUnused, %s", err)
+	}
+
+	if len(locations) > domain.Env.MaxLocationDelete {
+		return fmt.Errorf("attempted to delete too many locations, unused=%d, MaxLocationDelete=%d",
+			len(locations), domain.Env.MaxLocationDelete)
+	}
+	if len(locations) == 0 {
+		return nil
+	}
+
+	nRemovedFromDB := 0
+	for _, location := range locations {
+		l := location
+		if err := DB.Destroy(&l); err != nil {
+			domain.ErrLogger.Printf("location %d destroy error, %s", location.ID, err)
+			continue
+		}
+		nRemovedFromDB++
+	}
+
+	if nRemovedFromDB < len(locations) {
+		domain.ErrLogger.Printf("not all unused locations were removed")
+	}
+	domain.Logger.Printf("removed %d from location table", nRemovedFromDB)
+	return nil
+}
+
+func checkLocationsFks() (bool, error) {
+	type KeyType struct {
+		ForeignTable string `db:"foreign_table"`
+		FkColumns    string `db:"fk_columns"`
+	}
+	var keys []KeyType
+	if err := DB.RawQuery(`
+SELECT kcu.table_name AS foreign_table, string_agg(kcu.column_name, ', ') as fk_columns
+FROM information_schema.table_constraints tco
+JOIN information_schema.key_column_usage kcu
+          ON tco.constraint_schema = kcu.constraint_schema
+          AND tco.constraint_name = kcu.constraint_name
+JOIN information_schema.referential_constraints rco
+          ON tco.constraint_schema = rco.constraint_schema
+          AND tco.constraint_name = rco.constraint_name
+JOIN information_schema.table_constraints rel_tco
+          ON rco.unique_constraint_schema = rel_tco.constraint_schema
+          AND rco.unique_constraint_name = rel_tco.constraint_name
+WHERE tco.constraint_type = 'FOREIGN KEY' AND rel_tco.table_name = 'locations'
+GROUP BY kcu.table_schema,
+         kcu.table_name,
+         rel_tco.table_name,
+         rel_tco.table_schema,
+         kcu.constraint_name
+ORDER BY kcu.table_schema,
+         kcu.table_name;`).All(&keys); err != nil {
+		return false, err
+	}
+	if len(keys) != 6 {
+		// expected 6 foreign keys: [{meetings location_id} {requests destination_id} {requests origin_id} {users location_id} {watches destination_id} {watches origin_id}]
+		return true, nil
+	}
+	return false, nil
 }

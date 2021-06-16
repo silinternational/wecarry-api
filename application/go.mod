@@ -3,7 +3,7 @@ module github.com/silinternational/wecarry-api
 go 1.13
 
 require (
-	github.com/99designs/gqlgen v0.10.1
+	github.com/99designs/gqlgen v0.11.1
 	github.com/aws/aws-sdk-go v1.38.13
 	github.com/beevik/etree v1.1.0 // indirect
 	github.com/caddyserver/certmagic v0.11.2
@@ -51,7 +51,7 @@ require (
 	github.com/spf13/cobra v1.1.3 // indirect
 	github.com/ssor/bom v0.0.0-20170718123548-6386211fdfcf // indirect
 	github.com/stretchr/testify v1.7.0
-	github.com/vektah/gqlparser v1.1.2
+	github.com/vektah/gqlparser/v2 v2.0.1
 	golang.org/x/crypto v0.0.0-20210506145944-38f3c27a63bf // indirect
 	golang.org/x/image v0.0.0-20191214001246-9130b4cfad52
 	golang.org/x/mod v0.4.2 // indirect

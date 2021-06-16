@@ -106,9 +106,9 @@ const (
 
 // UI URL Paths
 const (
-	DefaultUIPath = "/#/requests"
-	requestUIPath = "/#/requests/"
-	threadUIPath  = "/#/messages/"
+	DefaultUIPath = "/requests"
+	requestUIPath = "/requests/"
+	threadUIPath  = "/messages/"
 )
 
 // BuffaloContextType is a custom type used as a value key passed to context.WithValue as per the recommendations
@@ -167,6 +167,7 @@ var Env struct {
 	LinkedInKey                string
 	LinkedInSecret             string
 	MaxFileDelete              int
+	MaxLocationDelete          int
 	MailChimpAPIBaseURL        string
 	MailChimpAPIKey            string
 	MailChimpListID            string
@@ -230,6 +231,7 @@ func readEnv() {
 	Env.LinkedInKey = envy.Get("LINKED_IN_KEY", "")
 	Env.LinkedInSecret = envy.Get("LINKED_IN_SECRET", "")
 	Env.MaxFileDelete = envToInt("MAX_FILE_DELETE", 10)
+	Env.MaxLocationDelete = envToInt("MAX_LOCATION_DELETE", 10)
 	Env.MailChimpAPIBaseURL = envy.Get("MAILCHIMP_API_BASE_URL", "https://us4.api.mailchimp.com/3.0")
 	Env.MailChimpAPIKey = envy.Get("MAILCHIMP_API_KEY", "")
 	Env.MailChimpListID = envy.Get("MAILCHIMP_LIST_ID", "")
@@ -704,8 +706,9 @@ func ReportError(ctx context.Context, err error, errID string) error {
 
 	NewExtra(c, "function", GetFunctionName(2))
 
-	if r := graphql.GetRequestContext(ctx); r != nil {
-		NewExtra(c, "query", fmt.Sprintf("%#v", r.RawQuery)) // escape control characters
+	// need to use direct access instead of graphql.GetOperationContext to avoid a panic during unit tests
+	if oc, ok := ctx.Value("operation_context").(*graphql.OperationContext); ok && oc != nil {
+		NewExtra(c, "query", fmt.Sprintf("%#v", oc.RawQuery)) // escape control characters
 	}
 
 	errStr := errID

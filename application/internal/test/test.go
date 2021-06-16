@@ -266,7 +266,7 @@ func CreatePotentialProvidersFixtures(tx *pop.Connection) PotentialProvidersFixt
 	}
 
 	uo.OrganizationID = org2.ID
-	if err := tx.UpdateColumns(&uo, "organization_id"); err != nil {
+	if err := tx.UpdateColumns(&uo, "organization_id", "updated_at"); err != nil {
 		panic("Couldn't change User4's UserOrg: " + err.Error())
 	}
 
