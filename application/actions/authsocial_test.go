@@ -143,7 +143,7 @@ func (as *ActionSuite) Test_newOrglessAuthUser() {
 	uf := test.CreateUserFixtures(as.DB, 2)
 	user := uf.Users[0]
 
-	resultsAuthUser, err := newOrglessAuthUser("12345678", user)
+	resultsAuthUser, err := newOrglessAuthUser(test.Ctx(), "12345678", user)
 	as.NoError(err)
 
 	got := resultsAuthUser
