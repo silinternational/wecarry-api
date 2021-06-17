@@ -269,9 +269,7 @@ type AppError struct {
 	// since these will be converted to human-friendly texts on the UI
 	Key string `json:"key"`
 
-	// Message providing detail about the error condition, only provided in development mode
 	DebugMsg string `json:"debug_msg,omitempty"`
-	Message  string
 }
 
 // ErrLogProxy wraps standard error logger plus sends to Rollbar
