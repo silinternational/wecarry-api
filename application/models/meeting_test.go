@@ -835,7 +835,8 @@ func (ms *ModelSuite) TestMeeting_isOrganizer() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			got, _ := tt.meeting.isOrganizer(ms.DB, tt.user.ID)
+			got, err := tt.meeting.isOrganizer(ms.DB, tt.user.ID)
+			ms.NoError(err)
 			ms.Equal(tt.want, got)
 		})
 	}

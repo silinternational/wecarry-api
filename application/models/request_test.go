@@ -2132,7 +2132,8 @@ func (ms *ModelSuite) TestRequest_IsVisible() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			got, _ := tt.request.IsVisible(ms.DB, tt.user)
+			got, err := tt.request.IsVisible(ms.DB, tt.user)
+			ms.NoError(err)
 			ms.Equal(tt.want, got)
 		})
 	}
