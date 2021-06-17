@@ -128,10 +128,10 @@ func (m *Meetings) FindOnDate(tx *pop.Connection, timeInFocus time.Time) error {
 }
 
 // FindOnOrAfterDate finds the meetings that have an EndDate on or after the timeInFocus-date
-func (m *Meetings) FindOnOrAfterDate(ctx context.Context, timeInFocus time.Time) error {
+func (m *Meetings) FindOnOrAfterDate(tx *pop.Connection, timeInFocus time.Time) error {
 	date := timeInFocus.Format(domain.DateTimeFormat)
 
-	if err := getOrdered(m, Tx(ctx).Where("end_date >= ?", date)); err != nil {
+	if err := getOrdered(m, tx.Where("end_date >= ?", date)); err != nil {
 		return fmt.Errorf("error finding meeting with end_date before %s ... %s", date, err.Error())
 	}
 
@@ -151,12 +151,12 @@ func (m *Meetings) FindAfterDate(tx *pop.Connection, timeInFocus time.Time) erro
 
 // FindRecent finds the meetings that have an EndDate within the past <domain.RecentMeetingDelay> days
 // before timeInFocus-date (not inclusive)
-func (m *Meetings) FindRecent(ctx context.Context, timeInFocus time.Time) error {
+func (m *Meetings) FindRecent(tx *pop.Connection, timeInFocus time.Time) error {
 	yesterday := timeInFocus.Add(-domain.DurationDay).Format(domain.DateTimeFormat)
 	recentDate := timeInFocus.Add(-domain.RecentMeetingDelay)
 	where := "end_date between ? and ?"
 
-	if err := getOrdered(m, Tx(ctx).Where(where, recentDate, yesterday)); err != nil {
+	if err := getOrdered(m, tx.Where(where, recentDate, yesterday)); err != nil {
 		return fmt.Errorf("error finding meeting with end_date between %s and %s ... %s",
 			recentDate, yesterday, err.Error())
 	}

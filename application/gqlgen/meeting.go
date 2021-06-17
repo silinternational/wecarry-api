@@ -156,7 +156,7 @@ func (r *meetingResolver) Organizers(ctx context.Context, obj *models.Meeting) (
 // end date in the future
 func (r *queryResolver) Meetings(ctx context.Context, endAfter, endBefore, startAfter, startBefore *string) ([]models.Meeting, error) {
 	meetings := models.Meetings{}
-	if err := meetings.FindOnOrAfterDate(ctx, time.Now()); err != nil {
+	if err := meetings.FindOnOrAfterDate(models.Tx(ctx), time.Now()); err != nil {
 		return nil, domain.ReportError(ctx, err, "GetMeetings")
 	}
 
@@ -167,7 +167,7 @@ func (r *queryResolver) Meetings(ctx context.Context, endAfter, endBefore, start
 // end date in the last <domain.RecentMeetingDelay> time period
 func (r *queryResolver) RecentMeetings(ctx context.Context) ([]models.Meeting, error) {
 	meetings := models.Meetings{}
-	if err := meetings.FindRecent(ctx, time.Now()); err != nil {
+	if err := meetings.FindRecent(models.Tx(ctx), time.Now()); err != nil {
 		return nil, domain.ReportError(ctx, err, "GetRecentMeetings")
 	}
 

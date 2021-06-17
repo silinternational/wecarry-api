@@ -245,7 +245,7 @@ func (ms *ModelSuite) TestMeeting_FindOnOrAfterDate() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var meetings Meetings
-			err := meetings.FindOnOrAfterDate(Ctx(), test.testNow)
+			err := meetings.FindOnOrAfterDate(ms.DB, test.testNow)
 			ms.NoError(err, "unexpected error")
 
 			mNames := getMeetingNames(meetings)
@@ -311,7 +311,7 @@ func (ms *ModelSuite) TestMeeting_FindRecent() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var meetings Meetings
-			err := meetings.FindRecent(Ctx(), test.testNow)
+			err := meetings.FindRecent(ms.DB, test.testNow)
 			ms.NoError(err, "unexpected error")
 
 			mNames := getMeetingNames(meetings)
