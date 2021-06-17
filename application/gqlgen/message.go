@@ -43,7 +43,7 @@ func (r *messageResolver) Thread(ctx context.Context, obj *models.Message) (*mod
 		return &models.Thread{}, nil
 	}
 
-	thread, err := obj.GetThread()
+	thread, err := obj.GetThread(models.Tx(ctx))
 	if err != nil {
 		return &models.Thread{}, domain.ReportError(ctx, err, "GetMessageThread")
 	}
@@ -59,7 +59,7 @@ func (r *queryResolver) Message(ctx context.Context, id *string) (*models.Messag
 	currentUser := models.CurrentUser(ctx)
 	var message models.Message
 
-	if err := message.FindByUserAndUUID(currentUser, *id); err != nil {
+	if err := message.FindByUserAndUUID(ctx, currentUser, *id); err != nil {
 		return &models.Message{}, domain.ReportError(ctx, err, "GetMessage")
 	}
 

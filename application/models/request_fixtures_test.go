@@ -168,10 +168,10 @@ func CreateFixturesForRequestsGetFiles(ms *ModelSuite) RequestFixtures {
 	request := Request{CreatedByID: user.ID, OrganizationID: organization.ID, DestinationID: location.ID}
 	createFixture(ms, &request)
 
-	files := createFileFixtures(3)
+	files := createFileFixtures(ms.DB, 3)
 
 	for i := range files {
-		_, err := request.AttachFile(files[i].UUID.String())
+		_, err := request.AttachFile(ms.DB, files[i].UUID.String())
 		ms.NoError(err, "failed to attach file to request fixture")
 	}
 
@@ -239,12 +239,12 @@ func CreateFixtures_Requests_FindByUser(ms *ModelSuite) RequestFixtures {
 		AuthEmail:      users[0].Email,
 	})
 
-	uo, err := users[2].FindUserOrganization(orgs[0])
+	uo, err := users[2].FindUserOrganization(ms.DB, orgs[0])
 	ms.NoError(err)
 	uo.OrganizationID = orgs[2].ID
 	ms.NoError(DB.UpdateColumns(&uo, "organization_id"))
 
-	uo, err = users[3].FindUserOrganization(orgs[0])
+	uo, err = users[3].FindUserOrganization(ms.DB, orgs[0])
 	ms.NoError(err)
 	uo.OrganizationID = orgs[1].ID
 	ms.NoError(DB.UpdateColumns(&uo, "organization_id"))

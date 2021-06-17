@@ -26,7 +26,7 @@ func createFixturesForMeetings(as *ActionSuite) meetingQueryFixtures {
 	err := aws.CreateS3Bucket()
 	as.NoError(err, "failed to create S3 bucket, %s", err)
 
-	fileFixture := test.CreateFileFixture()
+	fileFixture := test.CreateFileFixture(as.DB)
 
 	meetings := models.Meetings{
 		{
@@ -95,7 +95,7 @@ func createFixturesForMeetings(as *ActionSuite) meetingQueryFixtures {
 		},
 	}
 	for i := range invites {
-		as.NoError(invites[i].Create())
+		as.NoError(invites[i].Create(test.Ctx()))
 	}
 
 	participants := models.MeetingParticipants{

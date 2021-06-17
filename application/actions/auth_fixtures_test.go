@@ -34,7 +34,7 @@ func createFixturesForAuthInvite(as *ActionSuite) meetingFixtures {
 	err := aws.CreateS3Bucket()
 	as.NoError(err, "failed to create S3 bucket, %s", err)
 
-	fileFixture := test.CreateFileFixture()
+	fileFixture := test.CreateFileFixture(as.DB)
 
 	meetings := make(models.Meetings, 2)
 	meetings[1].FileID = nulls.NewInt(fileFixture.ID)
@@ -222,7 +222,7 @@ func createFixturesForEnsureMeetingParticipant(as *ActionSuite) meetingFixtures 
 	err := aws.CreateS3Bucket()
 	as.NoError(err, "failed to create S3 bucket, %s", err)
 
-	fileFixture := test.CreateFileFixture()
+	fileFixture := test.CreateFileFixture(as.DB)
 
 	meetings := make(models.Meetings, 2)
 	meetings[1].FileID = nulls.NewInt(fileFixture.ID)

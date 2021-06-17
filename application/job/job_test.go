@@ -88,7 +88,7 @@ func (js *JobSuite) TestNewThreadMessageHandler() {
 
 			if test.wantNumberOfEmails == 1 {
 				var tp models.ThreadParticipant
-				_ = tp.FindByThreadIDAndUserID(test.message.ThreadID, test.recipientID)
+				_ = tp.FindByThreadIDAndUserID(js.DB, test.message.ThreadID, test.recipientID)
 				expect := time.Now()
 				js.WithinDuration(expect, tp.LastNotifiedAt, time.Second,
 					"last notified time not correct, got %v, wanted %v", tp.LastNotifiedAt, expect)

@@ -31,7 +31,7 @@ func (r *watchResolver) Owner(ctx context.Context, obj *models.Watch) (*PublicPr
 		return &PublicProfile{}, nil
 	}
 
-	creator, err := obj.GetOwner()
+	creator, err := obj.GetOwner(ctx)
 	if err != nil {
 		return &PublicProfile{}, domain.ReportError(ctx, err, "GetWatchCreator")
 	}
@@ -45,7 +45,7 @@ func (r *watchResolver) Destination(ctx context.Context, obj *models.Watch) (*mo
 		return nil, nil
 	}
 
-	location, err := obj.GetDestination()
+	location, err := obj.GetDestination(models.Tx(ctx))
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetWatchDestination")
 	}
@@ -59,7 +59,7 @@ func (r *watchResolver) Origin(ctx context.Context, obj *models.Watch) (*models.
 		return nil, nil
 	}
 
-	location, err := obj.GetOrigin()
+	location, err := obj.GetOrigin(models.Tx(ctx))
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetWatchOrigin")
 	}
@@ -83,7 +83,7 @@ func (r *watchResolver) SearchText(ctx context.Context, obj *models.Watch) (*str
 func (r *queryResolver) MyWatches(ctx context.Context) ([]models.Watch, error) {
 	watches := models.Watches{}
 	currentUser := models.CurrentUser(ctx)
-	if err := watches.FindByUser(currentUser); err != nil {
+	if err := watches.FindByUser(models.Tx(ctx), currentUser); err != nil {
 		return nil, domain.ReportError(ctx, err, "MyWatches")
 	}
 
@@ -97,7 +97,7 @@ func convertWatchInput(ctx context.Context, input watchInput, currentUser models
 	watch := models.Watch{}
 
 	if input.ID != nil {
-		if err := watch.FindByUUID(*input.ID); err != nil {
+		if err := watch.FindByUUID(ctx, *input.ID); err != nil {
 			return watch, err
 		}
 	} else {
@@ -118,7 +118,7 @@ func convertWatchInput(ctx context.Context, input watchInput, currentUser models
 		watch.MeetingID = nulls.Int{}
 	} else {
 		var meeting models.Meeting
-		if err := meeting.FindByUUID(*input.MeetingID); err != nil {
+		if err := meeting.FindByUUID(models.Tx(ctx), *input.MeetingID); err != nil {
 			return watch, err
 		}
 		watch.MeetingID = nulls.NewInt(meeting.ID)
@@ -148,7 +148,7 @@ func (r *mutationResolver) CreateWatch(ctx context.Context, input watchInput) (*
 
 	if input.Destination != nil {
 		location := convertLocation(*input.Destination)
-		if err = location.Create(); err != nil {
+		if err = location.Create(ctx); err != nil {
 			return &models.Watch{}, domain.ReportError(ctx, err, "CreateWatch.SetLocation")
 		}
 		watch.DestinationID = nulls.NewInt(location.ID)
@@ -156,13 +156,13 @@ func (r *mutationResolver) CreateWatch(ctx context.Context, input watchInput) (*
 
 	if input.Origin != nil {
 		location := convertLocation(*input.Origin)
-		if err = location.Create(); err != nil {
+		if err = location.Create(ctx); err != nil {
 			return nil, domain.ReportError(ctx, err, "CreateWatch.SetOrigin")
 		}
 		watch.OriginID = nulls.NewInt(location.ID)
 	}
 
-	if err = watch.Create(); err != nil {
+	if err = watch.Create(ctx); err != nil {
 		return &models.Watch{}, domain.ReportError(ctx, err, "CreateWatch")
 	}
 
@@ -182,18 +182,18 @@ func (r *mutationResolver) UpdateWatch(ctx context.Context, input watchInput) (*
 			"UpdateWatch.NotFound")
 	}
 
-	if err := watch.Update(); err != nil {
+	if err := watch.Update(ctx); err != nil {
 		return &models.Watch{}, domain.ReportError(ctx, err, "UpdateWatch")
 	}
 
 	if input.Destination != nil {
-		if err = watch.SetDestination(convertLocation(*input.Destination)); err != nil {
+		if err = watch.SetDestination(ctx, convertLocation(*input.Destination)); err != nil {
 			return &models.Watch{}, domain.ReportError(ctx, err, "UpdateWatch.SetDestination")
 		}
 	}
 
 	if input.Origin != nil {
-		if err = watch.SetOrigin(convertLocation(*input.Origin)); err != nil {
+		if err = watch.SetOrigin(ctx, convertLocation(*input.Origin)); err != nil {
 			return nil, domain.ReportError(ctx, err, "UpdateWatch.SetOrigin")
 		}
 	}
@@ -206,7 +206,7 @@ func (r *mutationResolver) RemoveWatch(ctx context.Context, input RemoveWatchInp
 	currentUser := models.CurrentUser(ctx)
 
 	var watch models.Watch
-	if err := watch.FindByUUID(input.ID); err != nil {
+	if err := watch.FindByUUID(ctx, input.ID); err != nil {
 		return nil, domain.ReportError(ctx, err, "RemoveWatch.NotFound")
 	}
 
@@ -215,12 +215,12 @@ func (r *mutationResolver) RemoveWatch(ctx context.Context, input RemoveWatchInp
 			"RemoveWatch.NotFound")
 	}
 
-	if err := watch.Destroy(); err != nil {
+	if err := watch.Destroy(ctx); err != nil {
 		return nil, domain.ReportError(ctx, err, "RemoveWatch")
 	}
 
 	var watches models.Watches
-	if err := watches.FindByUser(currentUser); err != nil {
+	if err := watches.FindByUser(models.Tx(ctx), currentUser); err != nil {
 		return nil, domain.ReportError(ctx, err, "RemoveWatch.FindByUser")
 	}
 

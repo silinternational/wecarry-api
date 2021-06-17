@@ -32,7 +32,7 @@ func (ms *ModelSuite) TestOrganizationDomain_Organization() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			o := test.orgDomain
-			got, err := o.Organization()
+			got, err := o.Organization(Ctx())
 
 			if test.wantErr {
 				ms.Error(err)

@@ -1,5 +1,7 @@
 package actions
 
+import "github.com/silinternational/wecarry-api/internal/test"
+
 type messageResponse struct {
 	Message struct {
 		ID      string `json:"id"`
@@ -29,10 +31,10 @@ func (as *ActionSuite) TestMessageQuery() {
 	err := as.testGqlQuery(query, f.Users[0].Nickname, &resp)
 	as.NoError(err)
 
-	thread, err := f.Messages[0].GetThread()
+	thread, err := f.Messages[0].GetThread(as.DB)
 	as.NoError(err)
 
-	participants, err := thread.GetParticipants()
+	participants, err := thread.GetParticipants(as.DB)
 	as.NoError(err)
 	as.Equal(2, len(participants), "incorrect number of thread participants")
 
@@ -59,10 +61,10 @@ func (as *ActionSuite) TestCreateMessage() {
 	err := as.testGqlQuery(query, f.Users[0].Nickname, &resp)
 	as.NoError(err)
 
-	thread, err := f.Messages[0].GetThread()
+	thread, err := f.Messages[0].GetThread(as.DB)
 	as.NoError(err)
 
-	messages, err := thread.Messages()
+	messages, err := thread.Messages(test.Ctx())
 	as.NoError(err)
 	as.Equal(3, len(messages), "incorrect number of thread messages")
 

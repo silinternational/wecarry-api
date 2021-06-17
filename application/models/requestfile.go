@@ -48,6 +48,6 @@ func (p *RequestFile) ValidateUpdate(tx *pop.Connection) (*validate.Errors, erro
 }
 
 // Create stores the RequestFile data as a new record in the database.
-func (p *RequestFile) Create() error {
-	return create(p)
+func (p *RequestFile) Create(tx *pop.Connection) error {
+	return create(tx, p)
 }

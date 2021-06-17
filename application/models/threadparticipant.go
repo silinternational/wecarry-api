@@ -55,21 +55,21 @@ func (t *ThreadParticipant) ValidateUpdate(tx *pop.Connection) (*validate.Errors
 }
 
 // UpdateLastViewedAt sets the last viewed time field and writes to the database
-func (t *ThreadParticipant) UpdateLastViewedAt(lastViewedAt time.Time) error {
+func (t *ThreadParticipant) UpdateLastViewedAt(tx *pop.Connection, lastViewedAt time.Time) error {
 	t.LastViewedAt = lastViewedAt
-	if err := t.Update(); err != nil {
+	if err := t.Update(tx); err != nil {
 		return fmt.Errorf("failed to update thread_participant.last_viewed_at, %s", err)
 	}
 	return nil
 }
 
 // FindByThreadIDAndUserID reads a record by the given Thread ID and User ID
-func (t *ThreadParticipant) FindByThreadIDAndUserID(threadID, userID int) error {
+func (t *ThreadParticipant) FindByThreadIDAndUserID(tx *pop.Connection, threadID, userID int) error {
 	if threadID <= 0 || userID <= 0 {
 		return fmt.Errorf("error finding thread_participant, invalid id ... threadID %v, userID %v", threadID, userID)
 	}
 
-	if err := DB.Where("user_id = ? AND thread_id = ?", userID, threadID).First(t); err != nil {
+	if err := tx.Where("user_id = ? AND thread_id = ?", userID, threadID).First(t); err != nil {
 		return fmt.Errorf("failed to find thread_participant record for user %d and thread %d, %s",
 			userID, threadID, err)
 	}
@@ -77,20 +77,20 @@ func (t *ThreadParticipant) FindByThreadIDAndUserID(threadID, userID int) error 
 }
 
 // UpdateLastNotifiedAt sets LastNotifiedAt and writes to the database
-func (t *ThreadParticipant) UpdateLastNotifiedAt(newTime time.Time) error {
+func (t *ThreadParticipant) UpdateLastNotifiedAt(tx *pop.Connection, newTime time.Time) error {
 	t.LastNotifiedAt = newTime
-	if err := t.Update(); err != nil {
+	if err := t.Update(tx); err != nil {
 		return fmt.Errorf("failed to update thread_participant.last_notified_at, %s", err)
 	}
 	return nil
 }
 
 // Create stores the ThreadParticipant data as a new record in the database.
-func (t *ThreadParticipant) Create() error {
-	return create(t)
+func (t *ThreadParticipant) Create(tx *pop.Connection) error {
+	return create(tx, t)
 }
 
 // Update writes the ThreadParticipant data to an existing database record.
-func (t *ThreadParticipant) Update() error {
-	return update(t)
+func (t *ThreadParticipant) Update(tx *pop.Connection) error {
+	return update(tx, t)
 }

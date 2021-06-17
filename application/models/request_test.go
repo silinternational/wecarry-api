@@ -1,7 +1,6 @@
 package models
 
 import (
-	"context"
 	"fmt"
 	"reflect"
 	"testing"
@@ -764,7 +763,7 @@ func (ms *ModelSuite) TestRequest_Create() {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := test.request.Create()
+			err := test.request.Create(Ctx())
 			if test.wantErr != "" {
 				ms.Error(err)
 				ms.Contains(err.Error(), test.wantErr, "unexpected error message")
@@ -774,7 +773,7 @@ func (ms *ModelSuite) TestRequest_Create() {
 
 			ms.True(test.request.UUID.Version() != 0)
 			var r Request
-			ms.NoError(r.FindByID(test.request.ID))
+			ms.NoError(r.FindByID(ms.DB, test.request.ID))
 
 			pHistories := RequestHistories{}
 			err = ms.DB.Where("request_id = ?", r.ID).All(&pHistories)
@@ -809,7 +808,7 @@ func (ms *ModelSuite) TestRequest_Update() {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := test.request.Update()
+			err := test.request.Update(Ctx())
 			if test.wantErr != "" {
 				ms.Error(err)
 				ms.Contains(err.Error(), test.wantErr, "unexpected error message")
@@ -819,7 +818,7 @@ func (ms *ModelSuite) TestRequest_Update() {
 
 			ms.True(test.request.UUID.Version() != 0)
 			var r Request
-			ms.NoError(r.FindByID(test.request.ID))
+			ms.NoError(r.FindByID(ms.DB, test.request.ID))
 		})
 	}
 }
@@ -876,11 +875,11 @@ func (ms *ModelSuite) TestRequest_manageStatusTransition_forwardProgression() {
 		t.Run(test.name, func(t *testing.T) {
 			test.request.Status = test.newStatus
 			test.request.ProviderID = test.providerID
-			err := test.request.manageStatusTransition()
+			err := test.request.manageStatusTransition(ms.DB)
 			ms.NoError(err)
 
 			ph := RequestHistory{}
-			err = ph.getLastForRequest(test.request)
+			err = ph.getLastForRequest(ms.DB, test.request)
 			ms.NoError(err)
 
 			ms.Equal(test.newStatus, ph.Status, "incorrect Status ")
@@ -941,7 +940,7 @@ func (ms *ModelSuite) TestRequest_manageStatusTransition_backwardProgression() {
 		t.Run(test.name, func(t *testing.T) {
 			test.request.Status = test.newStatus
 			test.request.ProviderID = test.providerID
-			err := test.request.manageStatusTransition()
+			err := test.request.manageStatusTransition(ms.DB)
 			if test.wantErr != "" {
 				ms.Error(err)
 				ms.Contains(err.Error(), test.wantErr, "unexpected error message")
@@ -950,7 +949,7 @@ func (ms *ModelSuite) TestRequest_manageStatusTransition_backwardProgression() {
 			ms.NoError(err)
 
 			ph := RequestHistory{}
-			err = ph.getLastForRequest(test.request)
+			err = ph.getLastForRequest(ms.DB, test.request)
 			ms.NoError(err)
 
 			ms.Equal(test.newStatus, ph.Status, "incorrect Status ")
@@ -993,7 +992,7 @@ func (ms *ModelSuite) TestRequest_FindByID() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var request Request
-			err := request.FindByID(test.id, test.eagerFields...)
+			err := request.FindByID(ms.DB, test.id, test.eagerFields...)
 
 			if test.wantErr {
 				ms.Error(err)
@@ -1030,7 +1029,7 @@ func (ms *ModelSuite) TestRequest_FindByUUID() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var request Request
-			err := request.FindByUUID(test.uuid)
+			err := request.FindByUUID(ms.DB, test.uuid)
 			if test.wantErr {
 				if (err != nil) != test.wantErr {
 					t.Errorf("FindByUUID() did not return expected error")
@@ -1061,7 +1060,7 @@ func (ms *ModelSuite) TestRequest_GetCreator() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			user, err := test.request.GetCreator()
+			user, err := test.request.GetCreator(ms.DB)
 			if err != nil {
 				t.Errorf("GetCreator() error = %v", err)
 			} else if user.UUID != test.want {
@@ -1088,7 +1087,7 @@ func (ms *ModelSuite) TestRequest_GetProvider() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			user, err := test.request.GetProvider()
+			user, err := test.request.GetProvider(ms.DB)
 			if err != nil {
 				t.Errorf("GetProvider() error = %v", err)
 			} else if test.want == nil {
@@ -1225,7 +1224,7 @@ func (ms *ModelSuite) TestRequest_GetPotentialProviderActions() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			got, err := tt.request.GetPotentialProviderActions(tt.user)
+			got, err := tt.request.GetPotentialProviderActions(Ctx(), tt.user)
 			ms.NoError(err)
 			ms.Equal(tt.want, got, "incorrect actions")
 		})
@@ -1283,7 +1282,7 @@ func (ms *ModelSuite) TestRequest_GetCurrentActions() {
 
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			got, err := tt.request.GetCurrentActions(tt.user)
+			got, err := tt.request.GetCurrentActions(Ctx(), tt.user)
 			ms.NoError(err)
 			ms.Equal(tt.want, got, "incorrect actions")
 		})
@@ -1306,7 +1305,7 @@ func (ms *ModelSuite) TestRequest_GetOrganization() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			org, err := test.request.GetOrganization()
+			org, err := test.request.GetOrganization(ms.DB)
 			if err != nil {
 				t.Errorf("GetOrganization() error = %v", err)
 			} else if org.UUID != test.want {
@@ -1334,7 +1333,7 @@ func (ms *ModelSuite) TestRequest_GetThreads() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := test.request.GetThreads(users[0])
+			got, err := test.request.GetThreads(Ctx(), users[0])
 			if err != nil {
 				t.Errorf("GetThreads() error: %v", err)
 			} else {
@@ -1369,9 +1368,9 @@ func (ms *ModelSuite) TestRequest_AttachFile() {
 	}
 	createFixture(ms, &request)
 
-	file := createFileFixture()
+	file := createFileFixture(ms.DB)
 
-	if attachedFile, err := request.AttachFile(file.UUID.String()); err != nil {
+	if attachedFile, err := request.AttachFile(ms.DB, file.UUID.String()); err != nil {
 		t.Errorf("failed to attach file to request, %s", err)
 	} else {
 		ms.Equal(file.Name, attachedFile.Name)
@@ -1395,7 +1394,7 @@ func (ms *ModelSuite) TestRequest_AttachFile() {
 func (ms *ModelSuite) TestRequest_GetFiles() {
 	f := CreateFixturesForRequestsGetFiles(ms)
 
-	files, err := f.Requests[0].GetFiles()
+	files, err := f.Requests[0].GetFiles(Ctx())
 	ms.NoError(err, "failed to get files list for request, %s", err)
 
 	ms.Equal(len(f.Files), len(files))
@@ -1420,9 +1419,9 @@ func (ms *ModelSuite) TestRequest_GetPhotoID() {
 	requests := createRequestFixtures(ms.DB, 1, false)
 	request := requests[0]
 
-	photoFixture := createFileFixture()
+	photoFixture := createFileFixture(ms.DB)
 
-	attachedFile, err := request.AttachPhoto(photoFixture.UUID.String())
+	attachedFile, err := request.AttachPhoto(Ctx(), photoFixture.UUID.String())
 	ms.NoError(err, "failed to attach photo to request")
 	ms.Equal(photoFixture.Name, attachedFile.Name)
 	ms.True(attachedFile.ID != 0)
@@ -1432,7 +1431,7 @@ func (ms *ModelSuite) TestRequest_GetPhotoID() {
 
 	ms.Equal(photoFixture.Name, request.PhotoFile.Name)
 
-	got, err := request.GetPhotoID()
+	got, err := request.GetPhotoID(Ctx())
 	ms.NoError(err, "unexpected error")
 	attachedFileUUID := attachedFile.UUID.String()
 	ms.Equal(&attachedFileUUID, got)
@@ -1443,9 +1442,9 @@ func (ms *ModelSuite) TestRequest_GetPhoto() {
 	requests := createRequestFixtures(ms.DB, 1, false)
 	request := requests[0]
 
-	photoFixture := createFileFixture()
+	photoFixture := createFileFixture(ms.DB)
 
-	attachedFile, err := request.AttachPhoto(photoFixture.UUID.String())
+	attachedFile, err := request.AttachPhoto(Ctx(), photoFixture.UUID.String())
 	ms.NoError(err, "failed to attach photo to request")
 	ms.Equal(photoFixture.Name, attachedFile.Name)
 	ms.True(attachedFile.ID != 0)
@@ -1455,7 +1454,7 @@ func (ms *ModelSuite) TestRequest_GetPhoto() {
 
 	ms.Equal(photoFixture.Name, request.PhotoFile.Name)
 
-	if got, err := request.GetPhoto(); err == nil {
+	if got, err := request.GetPhoto(ms.DB); err == nil {
 		ms.Equal(attachedFile.UUID.String(), got.UUID.String())
 		ms.Equal(attachedFile.Name, got.Name)
 	} else {
@@ -1484,8 +1483,7 @@ func (ms *ModelSuite) TestRequest_GetPhoto() {
 //	for _, test := range tests {
 //		t.Run(test.name, func(t *testing.T) {
 //			var request Request
-//			var c context.Context
-//			err := request.FindByUserAndUUID(c, test.user, test.request.UUID.String())
+//			err := request.FindByUserAndUUID(Ctx(), test.user, test.request.UUID.String())
 //
 //			if test.wantErr != "" {
 //				ms.Error(err)
@@ -1527,10 +1525,10 @@ func (ms *ModelSuite) TestRequest_GetSetDestination() {
 	request := Request{CreatedByID: user.ID, OrganizationID: organization.ID, DestinationID: locations[0].ID}
 	createFixture(ms, &request)
 
-	err := request.SetDestination(locations[1])
+	err := request.SetDestination(Ctx(), locations[1])
 	ms.NoError(err, "unexpected error from request.SetDestination()")
 
-	locationFromDB, err := request.GetDestination()
+	locationFromDB, err := request.GetDestination(ms.DB)
 	ms.NoError(err, "unexpected error from request.GetDestination()")
 	locations[1].ID = locationFromDB.ID
 	ms.Equal(locations[1], *locationFromDB, "destination data doesn't match after update")
@@ -1561,19 +1559,19 @@ func (ms *ModelSuite) TestRequest_Origin() {
 		},
 	}
 
-	err := request.SetOrigin(locationFixtures[0])
+	err := request.SetOrigin(Ctx(), locationFixtures[0])
 	ms.NoError(err, "unexpected error from request.SetOrigin()")
 
-	locationFromDB, err := request.GetOrigin()
+	locationFromDB, err := request.GetOrigin(ms.DB)
 	ms.NoError(err, "unexpected error from request.GetOrigin()")
 
 	locationFixtures[0].ID = locationFromDB.ID
 	ms.Equal(locationFixtures[0], *locationFromDB, "origin data doesn't match new location")
 
-	err = request.SetOrigin(locationFixtures[1])
+	err = request.SetOrigin(Ctx(), locationFixtures[1])
 	ms.NoError(err, "unexpected error from request.SetOrigin()")
 
-	locationFromDB, err = request.GetOrigin()
+	locationFromDB, err = request.GetOrigin(ms.DB)
 	ms.NoError(err, "unexpected error from request.GetOrigin()")
 	ms.Equal(locationFixtures[0].ID, locationFromDB.ID,
 		"Location ID doesn't match -- location record was probably not reused")
@@ -1585,7 +1583,7 @@ func (ms *ModelSuite) TestRequest_Origin() {
 	ms.False(locationFromDB.Latitude.Valid)
 	ms.False(locationFromDB.Longitude.Valid)
 
-	ms.NoError(request.RemoveOrigin())
+	ms.NoError(request.RemoveOrigin(Ctx()))
 	ms.False(request.OriginID.Valid, "expected the origin to have been removed")
 	err = ms.DB.Find(locationFromDB, locationFromDB.ID)
 	ms.Error(err, "expected error when looking for removed origin")
@@ -1635,7 +1633,7 @@ func (ms *ModelSuite) TestRequest_SetProviderWithStatus() {
 		t.Run(test.name, func(t *testing.T) {
 			var request Request
 			userID := user.UUID.String()
-			err := request.SetProviderWithStatus(test.status, &userID)
+			err := request.SetProviderWithStatus(Ctx(), test.status, &userID)
 			ms.NoError(err)
 
 			ms.Equal(test.wantProviderID, request.ProviderID)
@@ -1679,13 +1677,12 @@ func (ms *ModelSuite) TestRequests_FindByUser() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			requests := Requests{}
-			var c context.Context
 			filter := RequestFilterParams{
 				Destination: test.dest,
 				Origin:      test.orig,
 				RequestID:   test.requestID,
 			}
-			err := requests.FindByUser(c, test.user, filter)
+			err := requests.FindByUser(Ctx(), test.user, filter)
 
 			if test.wantErr {
 				ms.Error(err)
@@ -1733,7 +1730,7 @@ func (ms *ModelSuite) TestRequests_GetPotentialProviders() {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			request := tt.request
-			pps, err := request.GetPotentialProviders(tt.user)
+			pps, err := request.GetPotentialProviders(Ctx(), tt.user)
 			ms.NoError(err, "unexpected error")
 
 			ids := make([]int, len(pps))
@@ -1776,8 +1773,7 @@ func (ms *ModelSuite) TestRequests_FindByUser_SearchText() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			requests := Requests{}
-			var c context.Context
-			err := requests.FindByUser(c, test.user, RequestFilterParams{SearchText: &test.matchText})
+			err := requests.FindByUser(Ctx(), test.user, RequestFilterParams{SearchText: &test.matchText})
 
 			if test.wantErr {
 				ms.Error(err)
@@ -1814,7 +1810,7 @@ func (ms *ModelSuite) TestRequest_IsEditable() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			editable, err := test.request.IsEditable(test.user)
+			editable, err := test.request.IsEditable(Ctx(), test.user)
 
 			if test.wantErr {
 				ms.Error(err)
@@ -1991,7 +1987,7 @@ func (ms *ModelSuite) TestRequest_GetAudience() {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.request.GetAudience()
+			got, err := tt.request.GetAudience(ms.DB)
 			if tt.wantErr != "" {
 				ms.Error(err)
 				ms.Contains(err.Error(), tt.wantErr)
@@ -2042,7 +2038,7 @@ func (ms *ModelSuite) TestRequest_Meeting() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := test.request.Meeting()
+			got, err := test.request.Meeting(ms.DB)
 			ms.NoError(err)
 			if test.want == nil {
 				ms.Nil(got)
@@ -2092,7 +2088,7 @@ func (ms *ModelSuite) TestRequest_DestroyPotentialProviders() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := test.request.DestroyPotentialProviders(test.status, test.currentUser)
+			err := test.request.DestroyPotentialProviders(Ctx(), test.status, test.currentUser)
 
 			if test.wantErr != "" {
 				ms.Error(err, "did not get error as expected")

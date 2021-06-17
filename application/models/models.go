@@ -91,7 +91,7 @@ func GetStringFromNullsString(inString nulls.String) *string {
 // GetIntFromNullsInt returns a pointer to make it easier for calling
 // functions to return a pointer without an extra line of code.
 func GetIntFromNullsInt(in nulls.Int) *int {
-	output := int(0)
+	output := 0
 	if in.Valid {
 		output = in.Int
 	}
@@ -162,13 +162,13 @@ func emitEvent(e events.Event) {
 	}
 }
 
-func create(m interface{}) error {
+func create(tx *pop.Connection, m interface{}) error {
 	uuidField := fieldByName(m, "UUID")
 	if uuidField.IsValid() && uuidField.Interface().(uuid.UUID).Version() == 0 {
 		uuidField.Set(reflect.ValueOf(domain.GetUUID()))
 	}
 
-	valErrs, err := DB.ValidateAndCreate(m)
+	valErrs, err := tx.ValidateAndCreate(m)
 	if err != nil {
 		return err
 	}
@@ -179,8 +179,8 @@ func create(m interface{}) error {
 	return nil
 }
 
-func update(m interface{}) error {
-	valErrs, err := DB.ValidateAndUpdate(m)
+func update(tx *pop.Connection, m interface{}) error {
+	valErrs, err := tx.ValidateAndUpdate(m)
 	if err != nil {
 		return err
 	}
@@ -191,13 +191,13 @@ func update(m interface{}) error {
 	return nil
 }
 
-func save(m interface{}) error {
+func save(tx *pop.Connection, m interface{}) error {
 	uuidField := fieldByName(m, "UUID")
 	if uuidField.IsValid() && uuidField.Interface().(uuid.UUID).Version() == 0 {
 		uuidField.Set(reflect.ValueOf(domain.GetUUID()))
 	}
 
-	validationErrs, err := DB.ValidateAndSave(m)
+	validationErrs, err := tx.ValidateAndSave(m)
 	if validationErrs != nil && validationErrs.HasAny() {
 		return errors.New(flattenPopErrors(validationErrs))
 	}
@@ -230,10 +230,10 @@ func gravatarURL(email string) string {
 	return url
 }
 
-func addFile(m interface{}, fileID string) (File, error) {
+func addFile(tx *pop.Connection, m interface{}, fileID string) (File, error) {
 	var f File
 
-	if err := f.FindByUUID(fileID); err != nil {
+	if err := f.FindByUUID(tx, fileID); err != nil {
 		return f, err
 	}
 
@@ -249,12 +249,12 @@ func addFile(m interface{}, fileID string) (File, error) {
 		return f, errors.New("error identifying ID field")
 	}
 	if idField.Interface().(int) > 0 {
-		if err := DB.UpdateColumns(m, "file_id", "updated_at"); err != nil {
+		if err := tx.UpdateColumns(m, "file_id", "updated_at"); err != nil {
 			return f, fmt.Errorf("failed to update the file_id column, %s", err)
 		}
 	}
 
-	if err := f.SetLinked(DB); err != nil {
+	if err := f.SetLinked(tx); err != nil {
 		domain.ErrLogger.Printf("error marking file %d as linked, %s", f.ID, err)
 	}
 
@@ -263,14 +263,14 @@ func addFile(m interface{}, fileID string) (File, error) {
 	}
 
 	oldFile := File{ID: oldID.Int}
-	if err := oldFile.ClearLinked(DB); err != nil {
+	if err := oldFile.ClearLinked(tx); err != nil {
 		domain.ErrLogger.Printf("error marking old file %d as unlinked, %s", oldFile.ID, err)
 	}
 
 	return f, nil
 }
 
-func removeFile(m interface{}) error {
+func removeFile(tx *pop.Connection, m interface{}) error {
 	idField := fieldByName(m, "ID")
 	if !idField.IsValid() {
 		return errors.New("error identifying ID field")
@@ -287,7 +287,7 @@ func removeFile(m interface{}) error {
 
 	oldID := imageField.Interface().(nulls.Int)
 	imageField.Set(reflect.ValueOf(nulls.Int{}))
-	if err := DB.UpdateColumns(m, "file_id", "updated_at"); err != nil {
+	if err := tx.UpdateColumns(m, "file_id", "updated_at"); err != nil {
 		return fmt.Errorf("failed to update file_id column, %s", err)
 	}
 
@@ -296,7 +296,7 @@ func removeFile(m interface{}) error {
 	}
 
 	oldFile := File{ID: oldID.Int}
-	if err := oldFile.ClearLinked(DB); err != nil {
+	if err := oldFile.ClearLinked(tx); err != nil {
 		domain.ErrLogger.Printf("error marking old meeting file %d as unlinked, %s", oldFile.ID, err)
 	}
 	return nil
@@ -339,4 +339,18 @@ func destroyTable(i interface{}) {
 	if err := DB.Destroy(i); err != nil {
 		panic(err.Error())
 	}
+}
+
+// Tx retrieves the database transaction from the context, which can be the context
+// provided by gqlgen or the inner "BuffaloContext" assigned to the value key of the same name.
+func Tx(ctx context.Context) *pop.Connection {
+	bc, ok := ctx.Value(domain.BuffaloContext).(buffalo.Context)
+	if ok {
+		return Tx(bc)
+	}
+	tx, ok := ctx.Value("tx").(*pop.Connection)
+	if !ok {
+		return DB
+	}
+	return tx
 }

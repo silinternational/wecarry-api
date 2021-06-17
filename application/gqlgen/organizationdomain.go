@@ -22,7 +22,7 @@ func (r *organizationDomainResolver) Organization(ctx context.Context, obj *mode
 		return &models.Organization{}, nil
 	}
 
-	organization, err := obj.Organization()
+	organization, err := obj.Organization(ctx)
 	if err != nil {
 		return &models.Organization{}, domain.ReportError(ctx, err, "GetOrganizationDomainOrganization")
 	}

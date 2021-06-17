@@ -81,7 +81,7 @@ func (e *RequestVisibility) UnmarshalGQL(v interface{}) error {
 }
 
 func (e RequestVisibility) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func allStatusTransitions() map[RequestStatus][]StatusTransitionTarget {
@@ -195,7 +195,7 @@ func (e *RequestStatus) UnmarshalGQL(v interface{}) error {
 }
 
 func (e RequestStatus) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 type Request struct {
@@ -251,16 +251,16 @@ func (r Requests) String() string {
 }
 
 // Create stores the Request data as a new record in the database.
-func (r *Request) Create() error {
+func (r *Request) Create(ctx context.Context) error {
 	if r.Visibility == "" {
 		r.Visibility = RequestVisibilitySame
 	}
-	return create(r)
+	return create(Tx(ctx), r)
 }
 
 // Update writes the Request data to an existing database record.
-func (r *Request) Update() error {
-	return update(r)
+func (r *Request) Update(ctx context.Context) error {
+	return update(Tx(ctx), r)
 }
 
 func (r *Request) NewWithUser(currentUser User) error {
@@ -271,7 +271,7 @@ func (r *Request) NewWithUser(currentUser User) error {
 
 // SetProviderWithStatus sets the new Status of the Request and if needed it
 // also sets the ProviderID (i.e. when the new status is ACCEPTED)
-func (r *Request) SetProviderWithStatus(status RequestStatus, providerID *string) error {
+func (r *Request) SetProviderWithStatus(ctx context.Context, status RequestStatus, providerID *string) error {
 	if status == RequestStatusAccepted {
 		if providerID == nil {
 			return errors.New("provider ID must not be nil")
@@ -279,7 +279,7 @@ func (r *Request) SetProviderWithStatus(status RequestStatus, providerID *string
 
 		var user User
 
-		if err := user.FindByUUID(*providerID); err != nil {
+		if err := user.FindByUUID(ctx, *providerID); err != nil {
 			return errors.New("error finding provider: " + err.Error())
 		}
 		r.ProviderID = nulls.NewInt(user.ID)
@@ -290,21 +290,21 @@ func (r *Request) SetProviderWithStatus(status RequestStatus, providerID *string
 
 // GetPotentialProviders returns the User objects associated with the Request's
 // PotentialProviders
-func (r *Request) GetPotentialProviders(currentUser User) (Users, error) {
+func (r *Request) GetPotentialProviders(ctx context.Context, currentUser User) (Users, error) {
 	providers := PotentialProviders{}
-	users, err := providers.FindUsersByRequestID(*r, currentUser)
+	users, err := providers.FindUsersByRequestID(Tx(ctx), *r, currentUser)
 	return users, err
 }
 
 // DestroyPotentialProviders destroys all the PotentialProvider records
 // associated with the Request if the Request's status is COMPLETED
-func (r *Request) DestroyPotentialProviders(status RequestStatus, user User) error {
+func (r *Request) DestroyPotentialProviders(ctx context.Context, status RequestStatus, user User) error {
 	if status != RequestStatusCompleted {
 		return nil
 	}
 
-	var pps PotentialProviders
-	return pps.DestroyAllWithRequestUUID(r.UUID.String(), user)
+	pps := PotentialProviders{}
+	return pps.DestroyAllWithRequestUUID(Tx(ctx), r.UUID.String(), user)
 }
 
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
@@ -323,7 +323,7 @@ func (r *Request) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	}
 
 	var oldRequest Request
-	_ = oldRequest.FindByID(r.ID)
+	_ = oldRequest.FindByID(tx, r.ID)
 	if oldRequest.ID == 0 || r.NeededBefore != oldRequest.NeededBefore {
 		neededBeforeDate := r.NeededBefore.Time
 		v = append(v, &validators.TimeAfterTime{
@@ -369,6 +369,7 @@ type updateStatusValidator struct {
 	Request *Request
 	Context buffalo.Context
 	Message string
+	tx      *pop.Connection
 }
 
 func (v *updateStatusValidator) IsValid(errors *validate.Errors) {
@@ -382,9 +383,9 @@ func (v *updateStatusValidator) isOfferValid(errors *validate.Errors) {
 
 func (v *updateStatusValidator) isRequestValid(errors *validate.Errors) {
 	oldRequest := Request{}
-	uuid := v.Request.UUID.String()
-	if err := oldRequest.FindByUUID(uuid); err != nil {
-		v.Message = fmt.Sprintf("error finding existing request by UUID %s ... %v", uuid, err)
+	requestUUID := v.Request.UUID.String()
+	if err := oldRequest.FindByUUID(v.tx, requestUUID); err != nil {
+		v.Message = fmt.Sprintf("error finding existing request by UUID %s ... %v", requestUUID, err)
 		errors.Add(validators.GenerateKey(v.Name), v.Message)
 	}
 
@@ -394,14 +395,14 @@ func (v *updateStatusValidator) isRequestValid(errors *validate.Errors) {
 
 	isTransValid, err := isTransitionValid(oldRequest.Status, v.Request.Status)
 	if err != nil {
-		v.Message = fmt.Sprintf("%s on request %s", err, uuid)
+		v.Message = fmt.Sprintf("%s on request %s", err, requestUUID)
 		errors.Add(validators.GenerateKey(v.Name), v.Message)
 		return
 	}
 
 	if !isTransValid {
 		errorMsg := "cannot move request %s from '%s' status to '%s' status"
-		v.Message = fmt.Sprintf(errorMsg, uuid, oldRequest.Status, v.Request.Status)
+		v.Message = fmt.Sprintf(errorMsg, requestUUID, oldRequest.Status, v.Request.Status)
 		errors.Add(validators.GenerateKey(v.Name), v.Message)
 	}
 }
@@ -412,6 +413,7 @@ func (r *Request) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 		&updateStatusValidator{
 			Name:    "Status",
 			Request: r,
+			tx:      tx,
 		},
 	), nil
 }
@@ -424,12 +426,12 @@ type RequestStatusEventData struct {
 	RequestID     int
 }
 
-func (r *Request) manageStatusTransition() error {
+func (r *Request) manageStatusTransition(tx *pop.Connection) error {
 	if r.Status == "" {
 		return nil
 	}
 	lastRequestHistory := RequestHistory{}
-	if err := lastRequestHistory.getLastForRequest(*r); err != nil {
+	if err := lastRequestHistory.getLastForRequest(tx, *r); err != nil {
 		return err
 	}
 
@@ -445,9 +447,9 @@ func (r *Request) manageStatusTransition() error {
 
 	var rH RequestHistory
 	if isBackStep {
-		err = rH.popForRequest(*r, lastStatus)
+		err = rH.popForRequest(tx, *r, lastStatus)
 	} else {
-		err = rH.createForRequest(*r)
+		err = rH.createForRequest(tx, *r)
 	}
 
 	if err != nil {
@@ -474,24 +476,24 @@ func (r *Request) manageStatusTransition() error {
 	switch r.Status {
 	case RequestStatusCompleted:
 		if !r.CompletedOn.Valid {
-			err := DB.RawQuery(
+			err := tx.RawQuery(
 				fmt.Sprintf(`UPDATE requests set completed_on = '%s' where ID = %v`,
 					time.Now().Format(domain.DateFormat), r.ID)).Exec()
 			if err != nil {
 				domain.ErrLogger.Printf("unable to set Request.CompletedOn for ID: %v, %s", r.ID, err)
 			}
-			if err := DB.Reload(r); err != nil {
+			if err := tx.Reload(r); err != nil {
 				domain.ErrLogger.Printf("unable to reload Request ID: %v, %s", r.ID, err)
 			}
 		}
 	case RequestStatusOpen, RequestStatusAccepted, RequestStatusDelivered:
 		if r.CompletedOn.Valid {
-			err := DB.RawQuery(
+			err := tx.RawQuery(
 				fmt.Sprintf(`UPDATE requests set completed_on = NULL where ID = %v`, r.ID)).Exec()
 			if err != nil {
 				domain.ErrLogger.Printf("unable to nullify Request.CompletedOn for ID: %v, %s", r.ID, err)
 			}
-			if err := DB.Reload(r); err != nil {
+			if err := tx.Reload(r); err != nil {
 				domain.ErrLogger.Printf("unable to reload Request ID: %v, %s", r.ID, err)
 			}
 		}
@@ -500,9 +502,9 @@ func (r *Request) manageStatusTransition() error {
 	return nil
 }
 
-// Make sure there is no provider on an Open Request
+// AfterUpdate ensures there is no provider on an Open Request
 func (r *Request) AfterUpdate(tx *pop.Connection) error {
-	if err := r.manageStatusTransition(); err != nil {
+	if err := r.manageStatusTransition(tx); err != nil {
 		return err
 	}
 
@@ -512,8 +514,8 @@ func (r *Request) AfterUpdate(tx *pop.Connection) error {
 
 	r.ProviderID = nulls.Int{}
 
-	// Don't try to use DB.Update inside AfterUpdate, since that gets into an eternal loop
-	if err := DB.RawQuery(
+	// Don't try to use tx.Update inside AfterUpdate, since that gets into an eternal loop
+	if err := tx.RawQuery(
 		fmt.Sprintf(`UPDATE requests set provider_id = NULL where ID = %v`, r.ID)).Exec(); err != nil {
 		domain.ErrLogger.Printf("error removing provider id from request: %s", err.Error())
 	}
@@ -528,7 +530,7 @@ func (r *Request) AfterCreate(tx *pop.Connection) error {
 	}
 
 	var rH RequestHistory
-	if err := rH.createForRequest(*r); err != nil {
+	if err := rH.createForRequest(tx, *r); err != nil {
 		return err
 	}
 
@@ -544,55 +546,55 @@ func (r *Request) AfterCreate(tx *pop.Connection) error {
 	return nil
 }
 
-func (r *Request) FindByID(id int, eagerFields ...string) error {
+func (r *Request) FindByID(tx *pop.Connection, id int, eagerFields ...string) error {
 	if id <= 0 {
 		return errors.New("error finding request: id must a positive number")
 	}
 
-	if err := DB.Eager(eagerFields...).Find(r, id); err != nil {
+	if err := tx.Eager(eagerFields...).Find(r, id); err != nil {
 		return fmt.Errorf("error finding request by id: %s", err.Error())
 	}
 
 	return nil
 }
 
-func (r *Request) FindByUUID(uuid string) error {
+func (r *Request) FindByUUID(tx *pop.Connection, uuid string) error {
 	if uuid == "" {
 		return errors.New("error finding request: uuid must not be blank")
 	}
 
 	queryString := fmt.Sprintf("uuid = '%s'", uuid)
 
-	if err := DB.Eager("CreatedBy").Where(queryString).First(r); err != nil {
+	if err := tx.Eager("CreatedBy").Where(queryString).First(r); err != nil {
 		return fmt.Errorf("error finding request by uuid: %s", err.Error())
 	}
 
 	return nil
 }
 
-func (r *Request) FindByUUIDForCurrentUser(uuid string, user User) error {
-	if err := r.FindByUUID(uuid); err != nil {
+func (r *Request) FindByUUIDForCurrentUser(ctx context.Context, uuid string, user User) error {
+	if err := r.FindByUUID(Tx(ctx), uuid); err != nil {
 		return err
 	}
 
-	if !user.CanViewRequest(*r) {
-		return fmt.Errorf("unauthorized: user %v may not view request %v.", user.ID, r.ID)
+	if !user.CanViewRequest(ctx, *r) {
+		return fmt.Errorf("unauthorized: user %v may not view request %v", user.ID, r.ID)
 	}
 
 	return nil
 }
 
-func (r *Request) GetCreator() (*User, error) {
+func (r *Request) GetCreator(tx *pop.Connection) (*User, error) {
 	creator := User{}
-	if err := DB.Find(&creator, r.CreatedByID); err != nil {
+	if err := tx.Find(&creator, r.CreatedByID); err != nil {
 		return nil, err
 	}
 	return &creator, nil
 }
 
-func (r *Request) GetProvider() (*User, error) {
+func (r *Request) GetProvider(tx *pop.Connection) (*User, error) {
 	provider := User{}
-	if err := DB.Find(&provider, r.ProviderID); err != nil {
+	if err := tx.Find(&provider, r.ProviderID); err != nil {
 		return nil, nil // provider is a nullable field, so ignore any error
 	}
 	return &provider, nil
@@ -623,13 +625,12 @@ func (r *Request) GetStatusTransitions(currentUser User) ([]StatusTransitionTarg
 	return finalOptions, nil
 }
 
-// GetPotentialProviderActions
-func (r *Request) GetPotentialProviderActions(currentUser User) ([]string, error) {
+func (r *Request) GetPotentialProviderActions(ctx context.Context, currentUser User) ([]string, error) {
 	if r.Status != RequestStatusOpen || currentUser.ID == r.CreatedByID {
 		return []string{}, nil
 	}
 
-	providers, err := r.GetPotentialProviders(currentUser)
+	providers, err := r.GetPotentialProviders(ctx, currentUser)
 	if err != nil {
 		return []string{}, err
 	}
@@ -645,9 +646,9 @@ func (r *Request) GetPotentialProviderActions(currentUser User) ([]string, error
 	return []string{RequestActionOffer}, nil
 }
 
-func (r *Request) GetOrganization() (*Organization, error) {
+func (r *Request) GetOrganization(tx *pop.Connection) (*Organization, error) {
 	organization := Organization{}
-	if err := DB.Find(&organization, r.OrganizationID); err != nil {
+	if err := tx.Find(&organization, r.OrganizationID); err != nil {
 		return nil, err
 	}
 
@@ -655,9 +656,9 @@ func (r *Request) GetOrganization() (*Organization, error) {
 }
 
 // GetThreads finds all threads on this request in which the given user is participating
-func (r *Request) GetThreads(user User) ([]Thread, error) {
+func (r *Request) GetThreads(ctx context.Context, user User) ([]Thread, error) {
 	var threads Threads
-	query := DB.Q().
+	query := Tx(ctx).Q().
 		Join("thread_participants tp", "threads.id = tp.thread_id").
 		Order("threads.updated_at DESC").
 		Where("tp.user_id = ? AND threads.request_id = ?", user.ID, r.ID)
@@ -669,17 +670,17 @@ func (r *Request) GetThreads(user User) ([]Thread, error) {
 }
 
 // AttachFile adds a previously-stored File to this Request
-func (r *Request) AttachFile(fileID string) (File, error) {
+func (r *Request) AttachFile(tx *pop.Connection, fileID string) (File, error) {
 	var f File
-	if err := f.FindByUUID(fileID); err != nil {
+	if err := f.FindByUUID(tx, fileID); err != nil {
 		return f, err
 	}
 
 	requestFile := RequestFile{RequestID: r.ID, FileID: f.ID}
-	if err := requestFile.Create(); err != nil {
+	if err := requestFile.Create(tx); err != nil {
 		return f, err
 	}
-	if err := f.SetLinked(DB); err != nil {
+	if err := f.SetLinked(tx); err != nil {
 		domain.ErrLogger.Printf("error marking new request file %d as linked, %s", f.ID, err)
 	}
 
@@ -687,10 +688,11 @@ func (r *Request) AttachFile(fileID string) (File, error) {
 }
 
 // GetFiles retrieves the metadata for all of the files attached to this Request
-func (r *Request) GetFiles() ([]File, error) {
+func (r *Request) GetFiles(ctx context.Context) ([]File, error) {
 	var rf []*RequestFile
 
-	err := DB.Eager("File").
+	tx := Tx(ctx)
+	err := tx.Eager("File").
 		Select().
 		Where("request_id = ?", r.ID).
 		Order("updated_at desc").
@@ -702,7 +704,7 @@ func (r *Request) GetFiles() ([]File, error) {
 	files := make([]File, len(rf))
 	for i, f := range rf {
 		files[i] = f.File
-		if err := files[i].RefreshURL(); err != nil {
+		if err := files[i].RefreshURL(tx); err != nil {
 			return files, err
 		}
 	}
@@ -712,18 +714,18 @@ func (r *Request) GetFiles() ([]File, error) {
 
 // AttachPhoto assigns a previously-stored File to this Request as its photo. Parameter `fileID` is the UUID
 // of the photo to attach.
-func (r *Request) AttachPhoto(fileID string) (File, error) {
-	return addFile(r, fileID)
+func (r *Request) AttachPhoto(ctx context.Context, fileID string) (File, error) {
+	return addFile(Tx(ctx), r, fileID)
 }
 
 // RemoveFile removes an attached file from the Request
-func (r *Request) RemoveFile() error {
-	return removeFile(r)
+func (r *Request) RemoveFile(ctx context.Context) error {
+	return removeFile(Tx(ctx), r)
 }
 
 // GetPhoto retrieves the file attached as the Request photo
-func (r *Request) GetPhoto() (*File, error) {
-	if err := DB.Load(r, "PhotoFile"); err != nil {
+func (r *Request) GetPhoto(tx *pop.Connection) (*File, error) {
+	if err := tx.Load(r, "PhotoFile"); err != nil {
 		return nil, err
 	}
 
@@ -731,7 +733,7 @@ func (r *Request) GetPhoto() (*File, error) {
 		return nil, nil
 	}
 
-	if err := r.PhotoFile.RefreshURL(); err != nil {
+	if err := r.PhotoFile.RefreshURL(tx); err != nil {
 		return nil, err
 	}
 
@@ -739,8 +741,8 @@ func (r *Request) GetPhoto() (*File, error) {
 }
 
 // GetPhotoID retrieves UUID of the file attached as the Request photo
-func (r *Request) GetPhotoID() (*string, error) {
-	if err := DB.Load(r, "PhotoFile"); err != nil {
+func (r *Request) GetPhotoID(ctx context.Context) (*string, error) {
+	if err := Tx(ctx).Load(r, "PhotoFile"); err != nil {
 		return nil, err
 	}
 
@@ -752,9 +754,9 @@ func (r *Request) GetPhotoID() (*string, error) {
 }
 
 // scope query to only include requests from an organization associated with the current user
-func scopeUserOrgs(cUser User) pop.ScopeFunc {
+func scopeUserOrgs(tx *pop.Connection, cUser User) pop.ScopeFunc {
 	return func(q *pop.Query) *pop.Query {
-		orgs := cUser.GetOrgIDs()
+		orgs := cUser.GetOrgIDs(tx)
 		if len(orgs) == 0 {
 			return q.Where("organization_id = -1")
 		}
@@ -780,7 +782,7 @@ func scopeNotCompleted() pop.ScopeFunc {
 // given user and if the request has not been marked as removed.
 // FIXME: This method will fail to find a shared request from a trusted Organization
 //func (p *Request) FindByUserAndUUID(ctx context.Context, user User, uuid string) error {
-//	return DB.Scope(scopeUserOrgs(user)).Scope(scopeNotRemoved()).
+//	return tx.Scope(scopeUserOrgs(tx, user)).Scope(scopeNotRemoved()).
 //		Where("uuid = ?", uuid).First(p)
 //}
 
@@ -793,13 +795,15 @@ type RequestFilterParams struct {
 }
 
 // FindByUser finds all requests visible to the current user, optionally filtered by location or search text.
-func (p *Requests) FindByUser(ctx context.Context, user User, filter RequestFilterParams) error {
+func (r *Requests) FindByUser(ctx context.Context, user User, filter RequestFilterParams) error {
 	if user.ID == 0 {
 		return errors.New("invalid User ID in Requests.FindByUser")
 	}
 
-	if !user.HasOrganization() {
-		*p = Requests{}
+	tx := Tx(ctx)
+
+	if !user.HasOrganization(tx) {
+		*r = Requests{}
 		return nil
 	}
 
@@ -839,29 +843,29 @@ func (p *Requests) FindByUser(ctx context.Context, user User, filter RequestFilt
 	}
 
 	requests := Requests{}
-	q := DB.RawQuery(selectClause+" ORDER BY created_at desc", args...)
+	q := tx.RawQuery(selectClause+" ORDER BY created_at desc", args...)
 	if err := q.All(&requests); err != nil {
 		return fmt.Errorf("error finding requests for user %s, %s", user.UUID.String(), err)
 	}
 
 	if filter.Destination != nil {
-		requests = requests.FilterDestination(*filter.Destination)
+		requests = requests.FilterDestination(tx, *filter.Destination)
 	}
 	if filter.Origin != nil {
-		requests = requests.FilterOrigin(*filter.Origin)
+		requests = requests.FilterOrigin(tx, *filter.Origin)
 	}
 
-	*p = Requests{}
+	*r = Requests{}
 	for i := range requests {
-		*p = append(*p, requests[i])
+		*r = append(*r, requests[i])
 	}
 	return nil
 }
 
 // GetDestination reads the destination record, if it exists, and returns the Location object.
-func (r *Request) GetDestination() (*Location, error) {
+func (r *Request) GetDestination(tx *pop.Connection) (*Location, error) {
 	location := Location{}
-	if err := DB.Find(&location, r.DestinationID); err != nil {
+	if err := tx.Find(&location, r.DestinationID); err != nil {
 		return nil, err
 	}
 
@@ -869,12 +873,12 @@ func (r *Request) GetDestination() (*Location, error) {
 }
 
 // GetOrigin reads the origin record, if it exists, and returns the Location object.
-func (r *Request) GetOrigin() (*Location, error) {
+func (r *Request) GetOrigin(tx *pop.Connection) (*Location, error) {
 	if !r.OriginID.Valid {
 		return nil, nil
 	}
 	location := Location{}
-	if err := DB.Find(&location, r.OriginID); err != nil {
+	if err := tx.Find(&location, r.OriginID); err != nil {
 		return nil, err
 	}
 
@@ -882,12 +886,12 @@ func (r *Request) GetOrigin() (*Location, error) {
 }
 
 // RemoveOrigin removes the origin from the request
-func (r *Request) RemoveOrigin() error {
+func (r *Request) RemoveOrigin(ctx context.Context) error {
 	if !r.OriginID.Valid {
 		return nil
 	}
 
-	if err := DB.Destroy(&Location{ID: r.OriginID.Int}); err != nil {
+	if err := Tx(ctx).Destroy(&Location{ID: r.OriginID.Int}); err != nil {
 		return err
 	}
 	r.OriginID = nulls.Int{}
@@ -896,38 +900,39 @@ func (r *Request) RemoveOrigin() error {
 }
 
 // SetDestination sets the destination location fields, creating a new record in the database if necessary.
-func (r *Request) SetDestination(location Location) error {
+func (r *Request) SetDestination(ctx context.Context, location Location) error {
 	if r.MeetingID.Valid {
 		return errors.New("Attempted to set destination on event-based request")
 	}
 	location.ID = r.DestinationID
 	r.Destination = location
-	return r.Destination.Update()
+	return r.Destination.Update(Tx(ctx))
 }
 
 // SetOrigin sets the origin location fields, creating a new record in the database if necessary.
-func (r *Request) SetOrigin(location Location) error {
+func (r *Request) SetOrigin(ctx context.Context, location Location) error {
+	tx := Tx(ctx)
 	if r.OriginID.Valid {
 		location.ID = r.OriginID.Int
 		r.Origin = location
-		return r.Origin.Update()
+		return r.Origin.Update(tx)
 	}
-	if err := location.Create(); err != nil {
+	if err := location.Create(ctx); err != nil {
 		return err
 	}
 	r.OriginID = nulls.NewInt(location.ID)
-	return r.Update()
+	return r.Update(ctx)
 }
 
 // IsEditable response with true if the given user is the owner of the request or an admin,
 // and it is not in a locked status.
-func (r *Request) IsEditable(user User) (bool, error) {
+func (r *Request) IsEditable(ctx context.Context, user User) (bool, error) {
 	if user.ID <= 0 {
 		return false, errors.New("user.ID must be a valid primary key")
 	}
 
 	if r.CreatedByID <= 0 {
-		if err := DB.Reload(r); err != nil {
+		if err := Tx(ctx).Reload(r); err != nil {
 			return false, err
 		}
 	}
@@ -991,15 +996,15 @@ func (r *Request) canUserChangeStatus(user User, newStatus RequestStatus) bool {
 
 // GetAudience returns a list of all of the users which have visibility to this request. As of this writing, it is
 // simply the users in the organization associated with this request.
-func (r *Request) GetAudience() (Users, error) {
+func (r *Request) GetAudience(tx *pop.Connection) (Users, error) {
 	if r.ID <= 0 {
 		return nil, errors.New("invalid request ID in GetAudience")
 	}
-	org, err := r.GetOrganization()
+	org, err := r.GetOrganization(tx)
 	if err != nil {
 		return nil, err
 	}
-	users, err := org.GetUsers()
+	users, err := org.GetUsers(tx)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get request organization user list, %s", err.Error())
 	}
@@ -1007,12 +1012,12 @@ func (r *Request) GetAudience() (Users, error) {
 }
 
 // Meeting reads the meeting record, if it exists, and returns a pointer to the object.
-func (r *Request) Meeting() (*Meeting, error) {
+func (r *Request) Meeting(tx *pop.Connection) (*Meeting, error) {
 	if !r.MeetingID.Valid {
 		return nil, nil
 	}
 	var meeting Meeting
-	if err := DB.Find(&meeting, r.MeetingID); err != nil {
+	if err := tx.Find(&meeting, r.MeetingID); err != nil {
 		return nil, err
 	}
 
@@ -1021,24 +1026,24 @@ func (r *Request) Meeting() (*Meeting, error) {
 
 // FilterDestination returns a list of all requests with a Destination near the given location. The database is not
 // touched.
-func (p Requests) FilterDestination(location Location) Requests {
+func (r Requests) FilterDestination(tx *pop.Connection, location Location) Requests {
 	filtered := make(Requests, 0)
-	_ = DB.Load(&p, "Destination")
-	for i := range p {
-		if p[i].Destination.IsNear(location) {
-			filtered = append(filtered, p[i])
+	_ = tx.Load(&r, "Destination")
+	for i := range r {
+		if r[i].Destination.IsNear(location) {
+			filtered = append(filtered, r[i])
 		}
 	}
 	return filtered
 }
 
 // FilterOrigin returns a list of all requests that have an Origin near the given location. The database is not touched.
-func (p Requests) FilterOrigin(location Location) Requests {
+func (r Requests) FilterOrigin(tx *pop.Connection, location Location) Requests {
 	filtered := make(Requests, 0)
-	_ = DB.Load(&p, "Origin")
-	for i := range p {
-		if p[i].Origin.IsNear(location) {
-			filtered = append(filtered, p[i])
+	_ = tx.Load(&r, "Origin")
+	for i := range r {
+		if r[i].Origin.IsNear(location) {
+			filtered = append(filtered, r[i])
 		}
 	}
 	return filtered
@@ -1048,13 +1053,13 @@ func (p Requests) FilterOrigin(location Location) Requests {
 func (r *Request) IsVisible(ctx context.Context, user User) bool {
 	requests := Requests{}
 	if err := requests.FindByUser(ctx, user, RequestFilterParams{RequestID: &r.ID}); err != nil {
-		domain.Error(domain.GetBuffaloContext(ctx), "error in Request.IsVisible, "+err.Error())
+		domain.Error(ctx, "error in Request.IsVisible, "+err.Error())
 		return false
 	}
 	return len(requests) > 0
 }
 
-func (r *Request) GetCurrentActions(user User) ([]string, error) {
+func (r *Request) GetCurrentActions(ctx context.Context, user User) ([]string, error) {
 	transitions, err := r.GetStatusTransitions(user)
 	if err != nil {
 		return []string{}, err
@@ -1069,7 +1074,7 @@ func (r *Request) GetCurrentActions(user User) ([]string, error) {
 		}
 	}
 
-	providerActions, err := r.GetPotentialProviderActions(user)
+	providerActions, err := r.GetPotentialProviderActions(ctx, user)
 	if err != nil {
 		return actions, err
 	}
@@ -1080,7 +1085,7 @@ func (r *Request) GetCurrentActions(user User) ([]string, error) {
 }
 
 // Creator gets the full User record of the Request creator
-func (r *Request) Creator() (User, error) {
+func (r *Request) Creator(tx *pop.Connection) (User, error) {
 	var u User
-	return u, DB.Find(&u, r.CreatedByID)
+	return u, tx.Find(&u, r.CreatedByID)
 }

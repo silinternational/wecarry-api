@@ -1,6 +1,7 @@
 package test
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"reflect"
@@ -10,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop/v5"
 
@@ -114,7 +116,7 @@ func CreateRequestFixtures(tx *pop.Connection, n int, createFiles bool) models.R
 
 	var files models.Files
 	if createFiles {
-		files = CreateFileFixtures(n)
+		files = CreateFileFixtures(tx, n)
 	}
 
 	futureDate := time.Now().Add(4 * domain.DurationWeek)
@@ -161,21 +163,21 @@ func CreateLocationFixtures(tx *pop.Connection, n int) models.Locations {
 	return locations
 }
 
-func CreateFileFixtures(n int) models.Files {
+func CreateFileFixtures(tx *pop.Connection, n int) models.Files {
 	fileFixtures := make([]models.File, n)
 	for i := range fileFixtures {
-		fileFixtures[i] = CreateFileFixture()
+		fileFixtures[i] = CreateFileFixture(tx)
 	}
 	return fileFixtures
 }
 
-func CreateFileFixture() models.File {
+func CreateFileFixture(tx *pop.Connection) models.File {
 	// #nosec G404
 	f := models.File{
 		Name:    strconv.Itoa(rand.Int()) + ".gif",
 		Content: []byte("GIF89a"),
 	}
-	if err := f.Store(); err != nil {
+	if err := f.Store(tx); err != nil {
 		panic(fmt.Sprintf("failed to create file fixture, %s", err))
 	}
 	return f
@@ -243,7 +245,7 @@ func CreatePotentialProvidersFixtures(tx *pop.Connection) PotentialProvidersFixt
 	for i, r := range requests[:2] {
 		for _, u := range uf.Users[i+1 : 4] {
 			c := models.PotentialProvider{RequestID: r.ID, UserID: u.ID}
-			c.Create()
+			c.Create(Ctx())
 			providers = append(providers, c)
 		}
 	}
@@ -260,7 +262,7 @@ func CreatePotentialProvidersFixtures(tx *pop.Connection) PotentialProvidersFixt
 	users := uf.Users
 
 	// Switch User4's org to org2
-	uo, err := users[4].FindUserOrganization(uf.Organization)
+	uo, err := users[4].FindUserOrganization(tx, uf.Organization)
 	if err != nil {
 		panic("Couldn't find User4's UserOrg: " + err.Error())
 	}
@@ -275,4 +277,24 @@ func CreatePotentialProvidersFixtures(tx *pop.Connection) PotentialProvidersFixt
 		Requests:           requests,
 		PotentialProviders: providers,
 	}
+}
+
+type testBuffaloContext struct {
+	buffalo.DefaultContext
+	params map[interface{}]interface{}
+}
+
+func (b *testBuffaloContext) Value(key interface{}) interface{} {
+	return b.params[key]
+}
+
+func (b *testBuffaloContext) Set(key string, val interface{}) {
+	b.params[key] = val
+}
+
+func Ctx() context.Context {
+	ctx := &testBuffaloContext{
+		params: map[interface{}]interface{}{},
+	}
+	return ctx
 }

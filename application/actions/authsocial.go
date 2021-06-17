@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -132,7 +133,7 @@ func getSocialAuthOptions(authConfigs map[string]SocialAuthConfig) []authOption 
 // For non invite based ... based on a User in the database with a SocialAuthProvider value
 func finishAuthRequestForSocialUser(c buffalo.Context, authEmail string) error {
 	var user models.User
-	if err := user.FindByEmail(authEmail); err != nil {
+	if err := user.FindByEmail(models.Tx(c), authEmail); err != nil {
 		authErr := authError{
 			httpStatus: http.StatusInternalServerError,
 			errorKey:   domain.ErrorFindingUserByEmail,
@@ -280,7 +281,7 @@ func socialLoginNonInviteBasedAuthCallback(c buffalo.Context, authEmail, authTyp
 	domain.NewExtra(c, "authType", authType)
 
 	var user models.User
-	if err := user.FindByEmailAndSocialAuthProvider(authEmail, authType); err != nil {
+	if err := user.FindByEmailAndSocialAuthProvider(models.Tx(c), authEmail, authType); err != nil {
 		return logErrorAndRedirect(c, domain.ErrorGettingSocialAuthUser,
 			fmt.Sprintf("error loading social auth user for '%s' ... %v", authType, err))
 	}
@@ -290,7 +291,7 @@ func socialLoginNonInviteBasedAuthCallback(c buffalo.Context, authEmail, authTyp
 		return logErrorAndRedirect(c, callbackValues.errCode, callbackValues.errMsg)
 	}
 
-	authUser, err := newOrglessAuthUser(clientID, user)
+	authUser, err := newOrglessAuthUser(c, clientID, user)
 	if err != nil {
 		return err
 	}
@@ -328,7 +329,7 @@ func socialLoginBasedAuthCallback(c buffalo.Context, authEmail, clientID string)
 	// if we have an authuser, find or create user in local db and finish login
 	var user models.User
 
-	if err := user.FindOrCreateFromOrglessAuthUser(callbackValues.authResp.AuthUser, authType); err != nil {
+	if err := user.FindOrCreateFromOrglessAuthUser(c, callbackValues.authResp.AuthUser, authType); err != nil {
 		return logErrorAndRedirect(c, domain.ErrorWithAuthUser, err.Error())
 	}
 
@@ -338,7 +339,7 @@ func socialLoginBasedAuthCallback(c buffalo.Context, authEmail, clientID string)
 		dealWithInviteFromCallback(c, inviteType, inviteObjectUUID, user)
 	}
 
-	authUser, err := newOrglessAuthUser(clientID, user)
+	authUser, err := newOrglessAuthUser(c, clientID, user)
 	if err != nil {
 		return err
 	}
@@ -350,8 +351,8 @@ func socialLoginBasedAuthCallback(c buffalo.Context, authEmail, clientID string)
 }
 
 // Hydrates an AuthUser struct based on a User without an Org
-func newOrglessAuthUser(clientID string, user models.User) (AuthUser, error) {
-	accessToken, expiresAt, err := user.CreateOrglessAccessToken(clientID)
+func newOrglessAuthUser(ctx context.Context, clientID string, user models.User) (AuthUser, error) {
+	accessToken, expiresAt, err := user.CreateOrglessAccessToken(models.Tx(ctx), clientID)
 	if err != nil {
 		return AuthUser{}, err
 	}

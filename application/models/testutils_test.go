@@ -43,13 +43,13 @@ func mustCreate(tx *pop.Connection, f interface{}) {
 // createOrganizationFixtures generates any number of organization records for testing.
 //  Their names will be called "Org1", "Org2", ...
 func createOrganizationFixtures(tx *pop.Connection, n int) Organizations {
-	files := createFileFixtures(n)
+	files := createFileFixtures(tx, n)
 	organizations := make(Organizations, n)
 	for i := range organizations {
 		organizations[i].Name = fmt.Sprintf("Org%v", i+1)
 		organizations[i].AuthType = AuthTypeSaml
 		organizations[i].AuthConfig = "{}"
-		if _, err := organizations[i].AttachLogo(files[i].UUID.String()); err != nil {
+		if _, err := organizations[i].AttachLogo(Ctx(), files[i].UUID.String()); err != nil {
 			panic("error attaching logo to org fixture, " + err.Error())
 		}
 
@@ -132,7 +132,7 @@ func createRequestFixtures(tx *pop.Connection, nRequests int, createFiles bool) 
 
 	var files Files
 	if createFiles {
-		files = createFileFixtures(nRequests)
+		files = createFileFixtures(tx, nRequests)
 	}
 
 	requests := make(Requests, nRequests)
@@ -153,7 +153,7 @@ func createRequestFixtures(tx *pop.Connection, nRequests int, createFiles bool) 
 		requests[i].Visibility = RequestVisibilitySame
 
 		if createFiles {
-			if _, err := requests[i].AttachPhoto(files[i].UUID.String()); err != nil {
+			if _, err := requests[i].AttachPhoto(Ctx(), files[i].UUID.String()); err != nil {
 				panic("error attaching photo to request fixture, " + err.Error())
 			}
 		}
@@ -219,21 +219,21 @@ func createLocationFixtures(tx *pop.Connection, n int) Locations {
 	return locations
 }
 
-func createFileFixtures(n int) Files {
+func createFileFixtures(tx *pop.Connection, n int) Files {
 	fileFixtures := make([]File, n)
 	for i := range fileFixtures {
-		fileFixtures[i] = createFileFixture()
+		fileFixtures[i] = createFileFixture(tx)
 	}
 	return fileFixtures
 }
 
-func createFileFixture() File {
+func createFileFixture(tx *pop.Connection) File {
 	// #nosec G404
 	f := File{
 		Name:    strconv.Itoa(rand.Int()) + ".gif",
 		Content: []byte("GIF89a"),
 	}
-	if err := f.Store(); err != nil {
+	if err := f.Store(tx); err != nil {
 		panic(fmt.Sprintf("failed to create file fixture, %s", err))
 	}
 	return f
@@ -265,7 +265,7 @@ func createPotentialProvidersFixtures(ms *ModelSuite) potentialProvidersFixtures
 	for i, p := range requests[:2] {
 		for _, u := range uf.Users[i+1:] {
 			c := PotentialProvider{RequestID: p.ID, UserID: u.ID}
-			c.Create()
+			c.Create(Ctx())
 			providers = append(providers, c)
 		}
 	}
@@ -311,7 +311,7 @@ func createMeetingFixtures(tx *pop.Connection, nMeetings int) meetingFixtures {
 
 	locations := createLocationFixtures(tx, nMeetings)
 
-	files := createFileFixtures(nMeetings)
+	files := createFileFixtures(tx, nMeetings)
 
 	meetings := make(Meetings, nMeetings)
 	for i := range meetings {
@@ -321,7 +321,7 @@ func createMeetingFixtures(tx *pop.Connection, nMeetings int) meetingFixtures {
 		meetings[i].StartDate = time.Now()
 		meetings[i].EndDate = time.Now().Add(time.Hour * 24)
 		meetings[i].InviteCode = nulls.NewUUID(domain.GetUUID())
-		if _, err := meetings[i].SetImageFile(files[i].UUID.String()); err != nil {
+		if _, err := meetings[i].SetImageFile(Ctx(), files[i].UUID.String()); err != nil {
 			panic("error attaching image to meeting fixture, " + err.Error())
 		}
 		mustCreate(tx, &meetings[i])
@@ -341,7 +341,7 @@ func createMeetingFixtures(tx *pop.Connection, nMeetings int) meetingFixtures {
 		}
 		invites[i].MeetingID = meetings[i/invitesPerMeeting].ID
 		invites[i].InviterID = user.ID
-		if err := invites[i].Create(); err != nil {
+		if err := invites[i].Create(Ctx()); err != nil {
 			panic(fmt.Sprintf("error creating invite fixture %d, %s", i, err))
 		}
 	}

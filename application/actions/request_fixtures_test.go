@@ -68,9 +68,9 @@ func createFixturesForRequestQuery(as *ActionSuite) RequestQueryFixtures {
 		t.FailNow()
 	}
 
-	fileFixture := test.CreateFileFixture()
+	fileFixture := test.CreateFileFixture(as.DB)
 
-	if _, err := requests[0].AttachFile(fileFixture.UUID.String()); err != nil {
+	if _, err := requests[0].AttachFile(as.DB, fileFixture.UUID.String()); err != nil {
 		t.Errorf("failed to attach file to request, %s", err)
 		t.FailNow()
 	}
@@ -107,7 +107,7 @@ func createFixturesForUpdateRequest(as *ActionSuite) UpdateRequestFixtures {
 	requests[0].OriginID = nulls.Int{}
 	as.NoError(as.DB.Save(&requests[0]))
 
-	fileFixture := test.CreateFileFixture()
+	fileFixture := test.CreateFileFixture(as.DB)
 
 	return UpdateRequestFixtures{
 		Requests: requests,
@@ -127,7 +127,7 @@ func createFixturesForCreateRequest(as *ActionSuite) CreateRequestFixtures {
 		t.FailNow()
 	}
 
-	fileFixture := test.CreateFileFixture()
+	fileFixture := test.CreateFileFixture(as.DB)
 
 	meetingLocations := test.CreateLocationFixtures(as.DB, 1)
 

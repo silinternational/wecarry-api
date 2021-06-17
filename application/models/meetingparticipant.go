@@ -43,24 +43,24 @@ func (m *MeetingParticipant) Validate(tx *pop.Connection) (*validate.Errors, err
 }
 
 // Meeting returns the related Meeting record
-func (m *MeetingParticipant) Meeting() (Meeting, error) {
+func (m *MeetingParticipant) Meeting(ctx context.Context) (Meeting, error) {
 	var meeting Meeting
-	return meeting, DB.Find(&meeting, m.MeetingID)
+	return meeting, Tx(ctx).Find(&meeting, m.MeetingID)
 }
 
 // User returns the related User record of the participant
-func (m *MeetingParticipant) User() (User, error) {
+func (m *MeetingParticipant) User(ctx context.Context) (User, error) {
 	var user User
-	return user, DB.Find(&user, m.UserID)
+	return user, Tx(ctx).Find(&user, m.UserID)
 }
 
 // Invite returns the related MeetingInvite record
-func (m *MeetingParticipant) Invite() (*MeetingInvite, error) {
+func (m *MeetingParticipant) Invite(ctx context.Context) (*MeetingInvite, error) {
 	var invite MeetingInvite
 	if !m.InviteID.Valid {
 		return nil, nil
 	}
-	err := DB.Find(&invite, m.InviteID.Int)
+	err := Tx(ctx).Find(&invite, m.InviteID.Int)
 	if err != nil {
 		return nil, err
 	}
@@ -68,28 +68,28 @@ func (m *MeetingParticipant) Invite() (*MeetingInvite, error) {
 }
 
 // FindByMeetingIDAndUserID does what it says
-func (m *MeetingParticipant) FindByMeetingIDAndUserID(meetingID, userID int) error {
-	return DB.Where("meeting_id = ? and user_id = ?", meetingID, userID).First(m)
+func (m *MeetingParticipant) FindByMeetingIDAndUserID(tx *pop.Connection, meetingID, userID int) error {
+	return tx.Where("meeting_id = ? and user_id = ?", meetingID, userID).First(m)
 }
 
 // CreateFromInvite creates a new MeetingParticipant using the MeetingInvite's information
-func (m *MeetingParticipant) CreateFromInvite(invite MeetingInvite, userID int) error {
+func (m *MeetingParticipant) CreateFromInvite(tx *pop.Connection, invite MeetingInvite, userID int) error {
 	m.InviteID = nulls.NewInt(invite.ID)
 	m.UserID = userID
 	m.MeetingID = invite.MeetingID
-	return DB.Create(m)
+	return tx.Create(m)
 }
 
-func (m *MeetingParticipant) Destroy() error {
-	return DB.Destroy(m)
+func (m *MeetingParticipant) Destroy(tx *pop.Connection) error {
+	return tx.Destroy(m)
 }
 
 // FindOrCreate a new MeetingParticipant from a meeting ID and code. If `code` is nil, the meeting must be non-INVITE_ONLY.
 // Otherwise, `code` must match either a MeetingInvite secret code or a Meeting invite code.
 func (m *MeetingParticipant) FindOrCreate(ctx context.Context, meeting Meeting, code *string) error {
 	cUser := CurrentUser(ctx)
-
-	if err := m.FindByMeetingIDAndUserID(meeting.ID, cUser.ID); domain.IsOtherThanNoRows(err) {
+	tx := Tx(ctx)
+	if err := m.FindByMeetingIDAndUserID(tx, meeting.ID, cUser.ID); domain.IsOtherThanNoRows(err) {
 		return domain.ReportError(ctx, err,
 			"CreateMeetingParticipant.FindExisting")
 	}
@@ -98,19 +98,19 @@ func (m *MeetingParticipant) FindOrCreate(ctx context.Context, meeting Meeting, 
 	}
 
 	if code == nil {
-		if cUser.CanCreateMeetingParticipant(domain.GetBuffaloContext(ctx), meeting) {
+		if cUser.CanCreateMeetingParticipant(ctx, meeting) {
 			return m.createWithoutInvite(ctx, meeting)
 		}
 		return domain.ReportError(ctx, errors.New("user is not allowed to self-join meeting without a code"),
 			"CreateMeetingParticipant.Unauthorized")
 	}
 
-	if meeting.IsCodeValid(*code) {
+	if meeting.IsCodeValid(tx, *code) {
 		return m.createWithoutInvite(ctx, meeting)
 	}
 
 	var invite MeetingInvite
-	if err := invite.FindBySecret(meeting.ID, cUser.Email, *code); domain.IsOtherThanNoRows(err) {
+	if err := invite.FindBySecret(tx, meeting.ID, cUser.Email, *code); domain.IsOtherThanNoRows(err) {
 		return domain.ReportError(ctx, err, "CreateMeetingParticipant.FindBySecret")
 	}
 	if invite.ID == 0 {
@@ -120,7 +120,7 @@ func (m *MeetingParticipant) FindOrCreate(ctx context.Context, meeting Meeting, 
 	m.InviteID = nulls.NewInt(invite.ID)
 	m.UserID = cUser.ID
 	m.MeetingID = meeting.ID
-	if err := DB.Create(m); err != nil {
+	if err := tx.Create(m); err != nil {
 		return domain.ReportError(ctx, err, "CreateMeetingParticipant")
 	}
 	return nil
@@ -129,7 +129,7 @@ func (m *MeetingParticipant) FindOrCreate(ctx context.Context, meeting Meeting, 
 func (m *MeetingParticipant) createWithoutInvite(ctx context.Context, meeting Meeting) error {
 	m.UserID = CurrentUser(ctx).ID
 	m.MeetingID = meeting.ID
-	if err := DB.Create(m); err != nil {
+	if err := Tx(ctx).Create(m); err != nil {
 		return domain.ReportError(ctx, err, "CreateMeetingParticipant")
 	}
 	return nil

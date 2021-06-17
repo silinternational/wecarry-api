@@ -4145,7 +4145,7 @@ func (ec *executionContext) _MeetingInvite_meeting(ctx context.Context, field gr
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Meeting()
+		return obj.Meeting(ctx)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -10973,10 +10973,19 @@ func (ec *executionContext) _MeetingInvite(ctx context.Context, sel ast.Selectio
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("MeetingInvite")
 		case "meeting":
-			out.Values[i] = ec._MeetingInvite_meeting(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._MeetingInvite_meeting(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "inviter":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {

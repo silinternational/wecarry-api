@@ -26,7 +26,7 @@ func gqlHandler(c buffalo.Context) error {
 
 	server.SetErrorPresenter(func(ctx context.Context, e error) *gqlerror.Error {
 		err := graphql.DefaultErrorPresenter(ctx, e)
-		domain.Error(c, err.Error())
+		domain.Error(c, "graphql error: "+err.Error())
 		return err
 	})
 

@@ -43,7 +43,7 @@ func (m *meetingInviteResolver) Meeting(ctx context.Context, obj *models.Meeting
 		return nil, nil
 	}
 
-	mtg, err := obj.Meeting()
+	mtg, err := obj.Meeting(ctx)
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "MeetingInvite.Meeting")
 	}
@@ -55,7 +55,7 @@ func (m *meetingInviteResolver) Inviter(ctx context.Context, obj *models.Meeting
 		return nil, nil
 	}
 
-	inviter, err := obj.Inviter()
+	inviter, err := obj.Inviter(ctx)
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "MeetingInvite.Inviter")
 	}
@@ -76,7 +76,7 @@ func (m *meetingParticipantResolver) Meeting(ctx context.Context, obj *models.Me
 		return nil, nil
 	}
 
-	mtg, err := obj.Meeting()
+	mtg, err := obj.Meeting(ctx)
 	if err != nil {
 		domain.NewExtra(ctx, "meetingParticipant", *obj)
 		return nil, domain.ReportError(ctx, err, "MeetingParticipant.Meeting")
@@ -89,7 +89,7 @@ func (m *meetingParticipantResolver) User(ctx context.Context, obj *models.Meeti
 		return nil, nil
 	}
 
-	user, err := obj.User()
+	user, err := obj.User(ctx)
 	if err != nil {
 		domain.NewExtra(ctx, "meetingParticipant", *obj)
 		return nil, domain.ReportError(ctx, err, "MeetingParticipant.User")
@@ -105,7 +105,7 @@ func (m *meetingParticipantResolver) Invite(ctx context.Context, obj *models.Mee
 		return nil, nil
 	}
 
-	inv, err := obj.Invite()
+	inv, err := obj.Invite(ctx)
 	if err != nil {
 		domain.NewExtra(ctx, "meetingParticipant", *obj)
 		return nil, domain.ReportError(ctx, err, "MeetingParticipant.Invite")

@@ -1,11 +1,11 @@
 package models
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
 
-	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop/v5"
 	"github.com/gobuffalo/validate/v3"
@@ -97,12 +97,12 @@ func (v *dateValidator) IsValid(errors *validate.Errors) {
 }
 
 // FindByUUID finds a meeting by the UUID field and loads its CreatedBy field
-func (m *Meeting) FindByUUID(uuid string) error {
+func (m *Meeting) FindByUUID(tx *pop.Connection, uuid string) error {
 	if uuid == "" {
 		return errors.New("error finding meeting: uuid must not be blank")
 	}
 
-	if err := DB.Where("uuid = ?", uuid).First(m); err != nil {
+	if err := tx.Where("uuid = ?", uuid).First(m); err != nil {
 		return fmt.Errorf("error finding meeting by uuid: %s", err.Error())
 	}
 
@@ -115,11 +115,11 @@ func getOrdered(m *Meetings, q *pop.Query) error {
 
 // FindOnDate finds the meetings that have StartDate before timeInFocus-date and an EndDate after it
 // (inclusive on both)
-func (m *Meetings) FindOnDate(timeInFocus time.Time) error {
+func (m *Meetings) FindOnDate(tx *pop.Connection, timeInFocus time.Time) error {
 	date := timeInFocus.Format(domain.DateTimeFormat)
 	where := "start_date <= ? and end_date >= ?"
 
-	if err := getOrdered(m, DB.Where(where, date, date)); err != nil {
+	if err := getOrdered(m, tx.Where(where, date, date)); err != nil {
 		return fmt.Errorf("error finding meeting with start_date and end_date straddling %s ... %s",
 			date, err.Error())
 	}
@@ -128,10 +128,10 @@ func (m *Meetings) FindOnDate(timeInFocus time.Time) error {
 }
 
 // FindOnOrAfterDate finds the meetings that have an EndDate on or after the timeInFocus-date
-func (m *Meetings) FindOnOrAfterDate(timeInFocus time.Time) error {
+func (m *Meetings) FindOnOrAfterDate(tx *pop.Connection, timeInFocus time.Time) error {
 	date := timeInFocus.Format(domain.DateTimeFormat)
 
-	if err := getOrdered(m, DB.Where("end_date >= ?", date)); err != nil {
+	if err := getOrdered(m, tx.Where("end_date >= ?", date)); err != nil {
 		return fmt.Errorf("error finding meeting with end_date before %s ... %s", date, err.Error())
 	}
 
@@ -139,10 +139,10 @@ func (m *Meetings) FindOnOrAfterDate(timeInFocus time.Time) error {
 }
 
 // FindAfterDate finds the meetings that have a StartDate after the timeInFocus-date
-func (m *Meetings) FindAfterDate(timeInFocus time.Time) error {
+func (m *Meetings) FindAfterDate(tx *pop.Connection, timeInFocus time.Time) error {
 	date := timeInFocus.Format(domain.DateTimeFormat)
 
-	if err := getOrdered(m, DB.Where("start_date > ?", date)); err != nil {
+	if err := getOrdered(m, tx.Where("start_date > ?", date)); err != nil {
 		return fmt.Errorf("error finding meeting with start_date after %s ... %s", date, err.Error())
 	}
 
@@ -151,12 +151,12 @@ func (m *Meetings) FindAfterDate(timeInFocus time.Time) error {
 
 // FindRecent finds the meetings that have an EndDate within the past <domain.RecentMeetingDelay> days
 // before timeInFocus-date (not inclusive)
-func (m *Meetings) FindRecent(timeInFocus time.Time) error {
+func (m *Meetings) FindRecent(tx *pop.Connection, timeInFocus time.Time) error {
 	yesterday := timeInFocus.Add(-domain.DurationDay).Format(domain.DateTimeFormat)
 	recentDate := timeInFocus.Add(-domain.RecentMeetingDelay)
 	where := "end_date between ? and ?"
 
-	if err := getOrdered(m, DB.Where(where, recentDate, yesterday)); err != nil {
+	if err := getOrdered(m, tx.Where(where, recentDate, yesterday)); err != nil {
 		return fmt.Errorf("error finding meeting with end_date between %s and %s ... %s",
 			recentDate, yesterday, err.Error())
 	}
@@ -164,12 +164,12 @@ func (m *Meetings) FindRecent(timeInFocus time.Time) error {
 	return nil
 }
 
-func (m *Meeting) FindByInviteCode(code string) error {
+func (m *Meeting) FindByInviteCode(tx *pop.Connection, code string) error {
 	if code == "" {
 		return errors.New("error finding meeting: invite_code must not be blank")
 	}
 
-	if err := DB.Where("invite_code = ?", code).First(m); err != nil {
+	if err := tx.Where("invite_code = ?", code).First(m); err != nil {
 		return fmt.Errorf("error finding meeting by invite_code: %s", err.Error())
 	}
 
@@ -178,21 +178,21 @@ func (m *Meeting) FindByInviteCode(code string) error {
 
 // SetImageFile assigns a previously-stored File to this Meeting as its image. Parameter `fileID` is the UUID
 // of the image to attach.
-func (m *Meeting) SetImageFile(fileID string) (File, error) {
-	return addFile(m, fileID)
+func (m *Meeting) SetImageFile(ctx context.Context, fileID string) (File, error) {
+	return addFile(Tx(ctx), m, fileID)
 }
 
 // ImageFile retrieves the file attached as the Meeting Image
-func (m *Meeting) ImageFile() (*File, error) {
+func (m *Meeting) ImageFile(tx *pop.Connection) (*File, error) {
 	if !m.FileID.Valid {
 		return nil, nil
 	}
 	if m.ImgFile == nil {
-		if err := DB.Load(m, "ImgFile"); err != nil {
+		if err := tx.Load(m, "ImgFile"); err != nil {
 			return nil, err
 		}
 	}
-	if err := (*m.ImgFile).RefreshURL(); err != nil {
+	if err := (*m.ImgFile).RefreshURL(tx); err != nil {
 		return nil, err
 	}
 	f := *m.ImgFile
@@ -200,22 +200,22 @@ func (m *Meeting) ImageFile() (*File, error) {
 }
 
 // RemoveFile removes an attached file from the Meeting
-func (m *Meeting) RemoveFile() error {
-	return removeFile(m)
+func (m *Meeting) RemoveFile(ctx context.Context) error {
+	return removeFile(Tx(ctx), m)
 }
 
-func (m *Meeting) GetCreator() (*User, error) {
+func (m *Meeting) GetCreator(tx *pop.Connection) (*User, error) {
 	creator := User{}
-	if err := DB.Find(&creator, m.CreatedByID); err != nil {
+	if err := tx.Find(&creator, m.CreatedByID); err != nil {
 		return nil, err
 	}
 	return &creator, nil
 }
 
 // GetLocation returns the related Location object.
-func (m *Meeting) GetLocation() (Location, error) {
+func (m *Meeting) GetLocation(tx *pop.Connection) (Location, error) {
 	location := Location{}
-	if err := DB.Find(&location, m.LocationID); err != nil {
+	if err := tx.Find(&location, m.LocationID); err != nil {
 		return location, err
 	}
 
@@ -223,20 +223,20 @@ func (m *Meeting) GetLocation() (Location, error) {
 }
 
 // Create stores the Meeting data as a new record in the database.
-func (m *Meeting) Create() error {
-	return create(m)
+func (m *Meeting) Create(ctx context.Context) error {
+	return create(Tx(ctx), m)
 }
 
 // Update writes the Meeting data to an existing database record.
-func (m *Meeting) Update() error {
-	return update(m)
+func (m *Meeting) Update(ctx context.Context) error {
+	return update(Tx(ctx), m)
 }
 
 // SetLocation sets the location field, creating a new record in the database if necessary.
-func (m *Meeting) SetLocation(location Location) error {
+func (m *Meeting) SetLocation(ctx context.Context, location Location) error {
 	location.ID = m.LocationID
 	m.Location = location
-	return m.Location.Update()
+	return m.Location.Update(Tx(ctx))
 }
 
 // CanCreate returns a bool based on whether the current user is allowed to create a meeting
@@ -255,9 +255,9 @@ func (m *Meeting) CanUpdate(user User) bool {
 }
 
 // Requests return all associated Requests
-func (m *Meeting) Requests() (Requests, error) {
+func (m *Meeting) Requests(ctx context.Context) (Requests, error) {
 	var requests Requests
-	if err := DB.Where("meeting_id = ?", m.ID).Order("updated_at desc").All(&requests); err != nil {
+	if err := Tx(ctx).Where("meeting_id = ?", m.ID).Order("updated_at desc").All(&requests); err != nil {
 		return nil, fmt.Errorf("error getting requests for meeting id %v ... %v", m.ID, err)
 	}
 
@@ -265,7 +265,8 @@ func (m *Meeting) Requests() (Requests, error) {
 }
 
 // Invites returns all of the MeetingInvites for this Meeting. Only the meeting creator and organizers are authorized.
-func (m *Meeting) Invites(ctx buffalo.Context) (MeetingInvites, error) {
+func (m *Meeting) Invites(ctx context.Context) (MeetingInvites, error) {
+	tx := Tx(ctx)
 	i := MeetingInvites{}
 	if m == nil {
 		return i, nil
@@ -274,7 +275,7 @@ func (m *Meeting) Invites(ctx buffalo.Context) (MeetingInvites, error) {
 	if currentUser.ID != m.CreatedByID && !m.isOrganizer(ctx, currentUser.ID) && !currentUser.isSuperAdmin() {
 		return i, nil
 	}
-	if err := DB.Where("meeting_id = ?", m.ID).All(&i); err != nil {
+	if err := tx.Where("meeting_id = ?", m.ID).All(&i); err != nil {
 		return i, err
 	}
 	return i, nil
@@ -282,16 +283,17 @@ func (m *Meeting) Invites(ctx buffalo.Context) (MeetingInvites, error) {
 
 // Participants returns all of the MeetingParticipants for this Meeting. Only the meeting creator and organizers are
 // authorized.
-func (m *Meeting) Participants(ctx buffalo.Context) (MeetingParticipants, error) {
+func (m *Meeting) Participants(ctx context.Context) (MeetingParticipants, error) {
+	tx := Tx(ctx)
 	p := MeetingParticipants{}
 	if m == nil {
 		return p, nil
 	}
 	currentUser := CurrentUser(ctx)
 	if currentUser.ID != m.CreatedByID && !m.isOrganizer(ctx, currentUser.ID) && !currentUser.isSuperAdmin() {
-		return p, DB.Where("user_id = ? AND meeting_id = ?", currentUser.ID, m.ID).All(&p)
+		return p, tx.Where("user_id = ? AND meeting_id = ?", currentUser.ID, m.ID).All(&p)
 	}
-	if err := DB.Where("meeting_id = ?", m.ID).All(&p); err != nil {
+	if err := tx.Where("meeting_id = ?", m.ID).All(&p); err != nil {
 		return p, err
 	}
 	return p, nil
@@ -299,12 +301,12 @@ func (m *Meeting) Participants(ctx buffalo.Context) (MeetingParticipants, error)
 
 // Organizers returns all of the users who are organizers for this Meeting. No authorization is checked, so
 // any queries should render this as a PublicProfile to limit field visibility.
-func (m *Meeting) Organizers(ctx buffalo.Context) (Users, error) {
+func (m *Meeting) Organizers(ctx context.Context) (Users, error) {
 	u := Users{}
 	if m == nil {
 		return u, nil
 	}
-	if err := DB.
+	if err := Tx(ctx).
 		Select("users.id", "users.uuid", "nickname", "file_id", "auth_photo_url").
 		Where("meeting_participants.is_organizer=true").
 		Where("meeting_participants.meeting_id=?", m.ID).
@@ -315,34 +317,36 @@ func (m *Meeting) Organizers(ctx buffalo.Context) (Users, error) {
 	return u, nil
 }
 
-func (m *Meeting) RemoveInvite(ctx buffalo.Context, email string) error {
+func (m *Meeting) RemoveInvite(ctx context.Context, email string) error {
 	var invite MeetingInvite
-	if err := invite.FindByMeetingIDAndEmail(m.ID, email); err != nil {
+	tx := Tx(ctx)
+	if err := invite.FindByMeetingIDAndEmail(tx, m.ID, email); err != nil {
 		return err
 	}
-	return invite.Destroy()
+	return invite.Destroy(tx)
 }
 
-func (m *Meeting) RemoveParticipant(ctx buffalo.Context, userUUID string) error {
+func (m *Meeting) RemoveParticipant(ctx context.Context, userUUID string) error {
 	var user User
-	if err := user.FindByUUID(userUUID); err != nil {
+	tx := Tx(ctx)
+	if err := user.FindByUUID(ctx, userUUID); err != nil {
 		return fmt.Errorf("invalid user ID %s in Meeting.RemoveParticipant, %s", userUUID, err)
 	}
 	var participant MeetingParticipant
-	if err := participant.FindByMeetingIDAndUserID(m.ID, user.ID); err != nil {
+	if err := participant.FindByMeetingIDAndUserID(tx, m.ID, user.ID); err != nil {
 		return fmt.Errorf("failed to load MeetingParticipant in Meeting.RemoveParticipant, %s", err)
 	}
-	return participant.Destroy()
+	return participant.Destroy(tx)
 }
 
-func (m *Meeting) IsCodeValid(code string) bool {
+func (m *Meeting) IsCodeValid(tx *pop.Connection, code string) bool {
 	if m.InviteCode.Valid && m.InviteCode.UUID.String() == code {
 		return true
 	}
 	return false
 }
 
-func (m *Meeting) isOrganizer(ctx buffalo.Context, userID int) bool {
+func (m *Meeting) isOrganizer(ctx context.Context, userID int) bool {
 	organizers, err := m.Organizers(ctx)
 	if err != nil {
 		domain.Error(ctx, "isOrganizer() error reading list of meeting organizers, "+err.Error())
@@ -355,12 +359,12 @@ func (m *Meeting) isOrganizer(ctx buffalo.Context, userID int) bool {
 	return false
 }
 
-func (m *Meeting) isVisible(ctx buffalo.Context, userID int) bool {
+func (m *Meeting) isVisible(ctx context.Context, userID int) bool {
 	return true
 }
 
 // FindByIDs finds all Meetings associated with the given IDs and loads them from the database
-func (m *Meetings) FindByIDs(ids []int) error {
+func (m *Meetings) FindByIDs(tx *pop.Connection, ids []int) error {
 	ids = domain.UniquifyIntSlice(ids)
-	return DB.Where("id in (?)", ids).All(m)
+	return tx.Where("id in (?)", ids).All(m)
 }

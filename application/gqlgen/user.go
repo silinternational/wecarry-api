@@ -36,7 +36,7 @@ func (r *userResolver) Organizations(ctx context.Context, obj *models.User) ([]m
 		return nil, nil
 	}
 
-	organizations, err := obj.GetOrganizations()
+	organizations, err := obj.GetOrganizations(ctx)
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetUserOrganizations")
 	}
@@ -50,7 +50,7 @@ func (r *userResolver) Requests(ctx context.Context, obj *models.User, role Requ
 		return nil, nil
 	}
 
-	requests, err := obj.Requests(requestRoleMap[role])
+	requests, err := obj.Requests(ctx, requestRoleMap[role])
 	if err != nil {
 		domain.NewExtra(ctx, "role", role)
 		return nil, domain.ReportError(ctx, err, "GetUserRequests")
@@ -65,7 +65,7 @@ func (r *userResolver) AvatarURL(ctx context.Context, obj *models.User) (*string
 		return nil, nil
 	}
 
-	photoURL, err := obj.GetPhotoURL()
+	photoURL, err := obj.GetPhotoURL(ctx)
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetUserPhotoURL")
 	}
@@ -83,7 +83,7 @@ func (r *userResolver) PhotoID(ctx context.Context, obj *models.User) (*string, 
 		return nil, nil
 	}
 
-	photoID, err := obj.GetPhotoID()
+	photoID, err := obj.GetPhotoID(ctx)
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetUserPhotoID")
 	}
@@ -97,7 +97,7 @@ func (r *userResolver) Location(ctx context.Context, obj *models.User) (*models.
 		return nil, nil
 	}
 
-	location, err := obj.GetLocation()
+	location, err := obj.GetLocation(ctx)
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetUserLocation")
 	}
@@ -110,7 +110,7 @@ func (r *userResolver) UnreadMessageCount(ctx context.Context, obj *models.User)
 	if obj == nil {
 		return 0, nil
 	}
-	mCounts, err := obj.UnreadMessageCount()
+	mCounts, err := obj.UnreadMessageCount(ctx)
 	if err != nil {
 		return 0, domain.ReportError(ctx, err, "GetUserUnreadMessageCount")
 	}
@@ -129,7 +129,7 @@ func (r *userResolver) Preferences(ctx context.Context, obj *models.User) (*mode
 		return nil, nil
 	}
 
-	standardPrefs, err := obj.GetPreferences()
+	standardPrefs, err := obj.GetPreferences(models.Tx(ctx))
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetUserPreferences")
 	}
@@ -149,7 +149,7 @@ func (r *queryResolver) Users(ctx context.Context) ([]models.User, error) {
 	}
 
 	users := models.Users{}
-	if err := users.All(); err != nil {
+	if err := users.All(ctx); err != nil {
 		return nil, domain.ReportError(ctx, err, "GetUsers")
 	}
 
@@ -172,7 +172,7 @@ func (r *queryResolver) User(ctx context.Context, id *string) (*models.User, err
 	}
 
 	dbUser := models.User{}
-	if err := dbUser.FindByUUID(*id); err != nil {
+	if err := dbUser.FindByUUID(ctx, *id); err != nil {
 		return &models.User{}, domain.ReportError(ctx, err, "GetUser")
 	}
 
@@ -187,7 +187,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 	var user models.User
 
 	if input.ID != nil {
-		if err := user.FindByUUID(*(input.ID)); err != nil {
+		if err := user.FindByUUID(ctx, *(input.ID)); err != nil {
 			return &models.User{}, domain.ReportError(ctx, err, "UpdateUser.NotFound")
 		}
 	} else {
@@ -205,18 +205,18 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 
 	var err error
 	if input.PhotoID == nil {
-		err = user.RemoveFile()
+		err = user.RemoveFile(ctx)
 	} else {
-		_, err = user.AttachPhoto(*input.PhotoID)
+		_, err = user.AttachPhoto(ctx, *input.PhotoID)
 	}
 	if err != nil {
 		return &models.User{}, domain.ReportError(ctx, err, "UpdateUser.UpdatePhoto")
 	}
 
 	if input.Location == nil {
-		err = user.RemoveLocation()
+		err = user.RemoveLocation(ctx)
 	} else {
-		err = user.SetLocation(convertLocation(*input.Location))
+		err = user.SetLocation(ctx, convertLocation(*input.Location))
 	}
 	if err != nil {
 		return &models.User{}, domain.ReportError(ctx, err, "UpdateUser.SetLocationError")
@@ -228,16 +228,16 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input UpdateUserInput
 			return &models.User{}, domain.ReportError(ctx, err, "UpdateUser.PreferencesInput")
 		}
 
-		if _, err = user.UpdateStandardPreferences(standardPrefs); err != nil {
+		if _, err = user.UpdateStandardPreferences(ctx, standardPrefs); err != nil {
 			return &models.User{}, domain.ReportError(ctx, err, "UpdateUser.Preferences")
 		}
 	} else {
-		if err := user.RemovePreferences(); err != nil {
+		if err := user.RemovePreferences(ctx); err != nil {
 			return &models.User{}, domain.ReportError(ctx, err, "UpdateUser.RemovePreferences")
 		}
 	}
 
-	if err = user.Save(); err != nil {
+	if err = user.Save(ctx); err != nil {
 		if strings.Contains(err.Error(), "Nickname must have a visible character") {
 			return &models.User{}, domain.ReportError(ctx, err, "UpdateUser.InvisibleNickname")
 		}
@@ -267,7 +267,7 @@ func getPublicProfile(ctx context.Context, user *models.User) *PublicProfile {
 		return &PublicProfile{}
 	}
 
-	url, err := user.GetPhotoURL()
+	url, err := user.GetPhotoURL(ctx)
 	if err != nil {
 		domain.NewExtra(ctx, "user", user.UUID)
 		_ = domain.ReportError(ctx, err, "")
