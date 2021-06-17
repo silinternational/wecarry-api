@@ -6,6 +6,7 @@ import (
 
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/validate/v3"
+	"github.com/silinternational/wecarry-api/domain"
 )
 
 func (ms *ModelSuite) TestLocation_Validate() {
@@ -392,4 +393,41 @@ func (ms *ModelSuite) TestLocations_FindByIDs() {
 			ms.Equal(tt.want, got, "incorrect location descriptions")
 		})
 	}
+}
+
+func (ms *ModelSuite) TestLocations_DeleteUnused() {
+	const (
+		nUnusedLocations = 2
+		nRequests        = 2
+		nMeetings        = 2
+	)
+
+	_ = createLocationFixtures(ms.DB, nUnusedLocations)
+
+	users := createMeetingFixtures(ms.DB, nMeetings).Users
+	nUsers := len(users)
+
+	watches := createWatchFixtures(ms.DB, users)
+	nWatches := len(watches)
+
+	watchLocations := createLocationFixtures(ms.DB, nWatches*2)
+	for i := range watches {
+		watches[i].DestinationID = nulls.NewInt(watchLocations[i*2].ID)
+		watches[i].OriginID = nulls.NewInt(watchLocations[i*2+1].ID)
+	}
+	ms.NoError(ms.DB.Update(&watches))
+
+	_ = createRequestFixtures(ms.DB, nRequests, false)
+
+	locations := Locations{}
+
+	domain.Env.MaxLocationDelete = 1
+	ms.Error(locations.DeleteUnused())
+
+	domain.Env.MaxLocationDelete = 2
+	ms.NoError(locations.DeleteUnused())
+	n, _ := DB.Count(&locations)
+
+	// 1 user doesn't get a location in createMeetingFixtures()
+	ms.Equal(nRequests*2+nMeetings+nWatches*2+nUsers-1, n, "wrong number of locations remain")
 }

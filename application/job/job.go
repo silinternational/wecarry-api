@@ -14,6 +14,7 @@ import (
 const (
 	NewThreadMessage = "new_thread_message"
 	FileCleanup      = "file_cleanup"
+	LocationCleanup  = "location_cleanup"
 	TokenCleanup     = "token_cleanup"
 )
 
@@ -22,6 +23,7 @@ var w worker.Worker
 var handlers = map[string]func(worker.Args) error{
 	NewThreadMessage: newThreadMessageHandler,
 	FileCleanup:      fileCleanupHandler,
+	LocationCleanup:  locationCleanupHandler,
 	TokenCleanup:     tokenCleanupHandler,
 }
 
@@ -109,6 +111,15 @@ func fileCleanupHandler(args worker.Args) error {
 	files := models.Files{}
 	if err := files.DeleteUnlinked(models.DB); err != nil {
 		return fmt.Errorf("file cleanup failed with error, %s", err)
+	}
+	return nil
+}
+
+// locationCleanupHandler removes unused locations
+func locationCleanupHandler(args worker.Args) error {
+	locations := models.Locations{}
+	if err := locations.DeleteUnused(); err != nil {
+		return fmt.Errorf("location cleanup failed with error, %s", err)
 	}
 	return nil
 }
