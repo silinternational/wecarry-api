@@ -182,7 +182,7 @@ func (ms *ModelSuite) TestMessage_Create() {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var message Message
-			err := message.Create(createTestContext(tt.user), tt.requestUUID, tt.threadUUID, tt.content)
+			err := message.Create(ms.DB, tt.user, tt.requestUUID, tt.threadUUID, tt.content)
 
 			if tt.wantErr {
 				ms.Error(err)
@@ -321,7 +321,7 @@ func (ms *ModelSuite) TestMessage_FindByUserAndUUID() {
 			} else {
 				testUUID = *test.uuid
 			}
-			err := message.FindByUserAndUUID(Ctx(), test.user, testUUID)
+			err := message.FindByUserAndUUID(ms.DB, test.user, testUUID)
 
 			if test.wantErr != "" {
 				ms.Error(err)

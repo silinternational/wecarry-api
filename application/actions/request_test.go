@@ -532,7 +532,7 @@ func (as *ActionSuite) Test_UpdateRequestStatus_DestroyPotentialProviders() {
 
 	request0 := f.Requests[0]
 	request0.Status = models.RequestStatusAccepted
-	err := request0.Update(test.Ctx())
+	err := request0.Update(as.DB)
 	as.NoError(err, "unable to change Requests's status to prepare for test")
 
 	steps := []struct {
@@ -720,7 +720,7 @@ func (as *ActionSuite) Test_RequestActions() {
 	acceptedRequest.Status = models.RequestStatusAccepted
 	acceptedRequest.ProviderID = nulls.NewInt(provider.ID)
 
-	err := acceptedRequest.Update(test.Ctx())
+	err := acceptedRequest.Update(as.DB)
 	as.NoError(err, "unable to change Requests's status to prepare for test")
 
 	testCases := []struct {

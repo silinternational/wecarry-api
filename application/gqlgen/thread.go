@@ -46,7 +46,7 @@ func (r *threadResolver) LastViewedAt(ctx context.Context, obj *models.Thread) (
 	}
 
 	currentUser := models.CurrentUser(ctx)
-	lastViewedAt, err := obj.GetLastViewedAt(ctx, currentUser)
+	lastViewedAt, err := obj.GetLastViewedAt(models.Tx(ctx), currentUser)
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetThreadLastViewedAt")
 	}
@@ -61,7 +61,7 @@ func (r *threadResolver) Messages(ctx context.Context, obj *models.Thread) ([]mo
 		return nil, nil
 	}
 
-	messages, err := obj.Messages(ctx)
+	messages, err := obj.Messages(models.Tx(ctx))
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetThreadMessages")
 	}
@@ -90,7 +90,8 @@ func (r *threadResolver) UnreadMessageCount(ctx context.Context, obj *models.Thr
 	}
 	user := models.CurrentUser(ctx)
 
-	lastViewedAt, err := obj.GetLastViewedAt(ctx, user)
+	tx := models.Tx(ctx)
+	lastViewedAt, err := obj.GetLastViewedAt(tx, user)
 	if err != nil {
 		domain.Warn(ctx, err.Error())
 		return 0, nil
@@ -102,7 +103,7 @@ func (r *threadResolver) UnreadMessageCount(ctx context.Context, obj *models.Thr
 		return 0, nil
 	}
 
-	count, err2 := obj.UnreadMessageCount(ctx, user.ID, *lastViewedAt)
+	count, err2 := obj.UnreadMessageCount(tx, user.ID, *lastViewedAt)
 	if err2 != nil {
 		domain.Warn(ctx, err2.Error())
 		return 0, nil
@@ -115,7 +116,7 @@ func (r *threadResolver) UnreadMessageCount(ctx context.Context, obj *models.Thr
 func (r *queryResolver) Threads(ctx context.Context) ([]models.Thread, error) {
 	currentUser := models.CurrentUser(ctx)
 
-	threads, err := currentUser.GetThreads(ctx)
+	threads, err := currentUser.GetThreads(models.Tx(ctx))
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetThreads")
 	}
@@ -127,7 +128,7 @@ func (r *queryResolver) Threads(ctx context.Context) ([]models.Thread, error) {
 func (r *queryResolver) MyThreads(ctx context.Context) ([]models.Thread, error) {
 	currentUser := models.CurrentUser(ctx)
 
-	threads, err := currentUser.GetThreads(ctx)
+	threads, err := currentUser.GetThreads(models.Tx(ctx))
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetMyThreads")
 	}

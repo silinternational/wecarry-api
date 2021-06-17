@@ -160,7 +160,7 @@ func createFixturesForSendRequestCreatedNotifications(ms *ModelSuite) RequestFix
 	ms.NoError(err)
 
 	for i := range users {
-		ms.NoError(users[i].SetLocation(test.Ctx(), *requestOrigin))
+		ms.NoError(users[i].SetLocation(ms.DB, *requestOrigin))
 	}
 
 	return RequestFixtures{

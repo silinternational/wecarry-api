@@ -20,7 +20,7 @@ func (r *queryResolver) Organizations(ctx context.Context) ([]models.Organizatio
 
 	// get list of orgs that cUser is allowed to see
 	orgs := models.Organizations{}
-	if err := orgs.AllWhereUserIsOrgAdmin(ctx, cUser); err != nil {
+	if err := orgs.AllWhereUserIsOrgAdmin(models.Tx(ctx), cUser); err != nil {
 		return orgs, domain.ReportError(ctx, err, "ListOrganizations.Error")
 	}
 
@@ -36,7 +36,7 @@ func (r *queryResolver) Organization(ctx context.Context, id *string) (*models.O
 		return org, domain.ReportError(ctx, err, "ViewOrganization.Error")
 	}
 
-	if org.ID != 0 && cUser.CanViewOrganization(ctx, org.ID) {
+	if org.ID != 0 && cUser.CanViewOrganization(models.Tx(ctx), org.ID) {
 		return org, nil
 	}
 
@@ -66,7 +66,7 @@ func (r *organizationResolver) Domains(ctx context.Context, obj *models.Organiza
 		return nil, nil
 	}
 
-	domains, err := obj.Domains(ctx)
+	domains, err := obj.Domains(models.Tx(ctx))
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetOrganizationDomains")
 	}
@@ -80,7 +80,7 @@ func (r *organizationResolver) LogoURL(ctx context.Context, obj *models.Organiza
 		return nil, nil
 	}
 
-	logoURL, err := obj.LogoURL(ctx)
+	logoURL, err := obj.LogoURL(models.Tx(ctx))
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetOrganizationLogoURL")
 	}
@@ -94,7 +94,7 @@ func (r *organizationResolver) TrustedOrganizations(ctx context.Context, obj *mo
 		return nil, nil
 	}
 
-	organizations, err := obj.TrustedOrganizations(ctx)
+	organizations, err := obj.TrustedOrganizations(models.Tx(ctx))
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetOrganizationTrustedOrganizations")
 	}

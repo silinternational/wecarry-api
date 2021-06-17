@@ -165,7 +165,7 @@ func (ms *ModelSuite) TestThread_GetMessages() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := test.thread.Messages(Ctx())
+			got, err := test.thread.Messages(ms.DB)
 			if test.wantErr {
 				if (err != nil) != test.wantErr {
 					t.Errorf("Messages() did not return expected error")
@@ -373,7 +373,7 @@ func (ms *ModelSuite) TestThread_GetLastViewedAt() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			lastViewedAt, err := test.thread.GetLastViewedAt(Ctx(), test.user)
+			lastViewedAt, err := test.thread.GetLastViewedAt(ms.DB, test.user)
 			if test.wantErr {
 				ms.Error(err, "did not get expected error")
 				return
@@ -403,7 +403,7 @@ func (ms *ModelSuite) TestThread_UpdateLastViewedAt() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := test.thread.UpdateLastViewedAt(Ctx(), test.user.ID, test.lastViewedAt)
+			err := test.thread.UpdateLastViewedAt(ms.DB, test.user.ID, test.lastViewedAt)
 
 			if test.wantErr != "" {
 				ms.Error(err)
@@ -412,7 +412,7 @@ func (ms *ModelSuite) TestThread_UpdateLastViewedAt() {
 			}
 			ms.NoError(err)
 
-			lastViewedAt, err := test.thread.GetLastViewedAt(Ctx(), test.user)
+			lastViewedAt, err := test.thread.GetLastViewedAt(ms.DB, test.user)
 			ms.NoError(err)
 			ms.WithinDuration(test.lastViewedAt, *lastViewedAt, time.Second,
 				fmt.Sprintf("time not correct, got %v, wanted %v", lastViewedAt, test.lastViewedAt))
@@ -463,7 +463,7 @@ func (ms *ModelSuite) TestThread_UnreadMessageCount() {
 			err := DB.Load(&test.threadP)
 			ms.NoError(err)
 
-			got, err := test.threadP.Thread.UnreadMessageCount(Ctx(), test.user.ID, test.threadP.LastViewedAt)
+			got, err := test.threadP.Thread.UnreadMessageCount(ms.DB, test.user.ID, test.threadP.LastViewedAt)
 			if test.wantErr {
 				ms.Error(err, "did not get expected error")
 				return

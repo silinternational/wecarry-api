@@ -26,11 +26,12 @@ func (r *queryResolver) Request(ctx context.Context, id *string) (*models.Reques
 	domain.NewExtra(ctx, "requestUUID", *id)
 
 	request := models.Request{}
-	if err := request.FindByUUID(models.Tx(ctx), *id); err != nil {
+	tx := models.Tx(ctx)
+	if err := request.FindByUUID(tx, *id); err != nil {
 		return &request, domain.ReportError(ctx, err, "ViewRequest.Error")
 	}
 
-	if request.ID != 0 && cUser.CanViewRequest(ctx, request) {
+	if request.ID != 0 && cUser.CanViewRequest(tx, request) {
 		return &request, nil
 	}
 
@@ -87,7 +88,7 @@ func (r *requestResolver) PotentialProviders(ctx context.Context, obj *models.Re
 		return nil, nil
 	}
 
-	providers, err := obj.GetPotentialProviders(ctx, models.CurrentUser(ctx))
+	providers, err := obj.GetPotentialProviders(models.Tx(ctx), models.CurrentUser(ctx))
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetPotentialProviders")
 	}
@@ -176,7 +177,7 @@ func (r *requestResolver) Actions(ctx context.Context, obj *models.Request) ([]s
 
 	user := models.CurrentUser(ctx)
 
-	actions, err := obj.GetCurrentActions(ctx, user)
+	actions, err := obj.GetCurrentActions(models.Tx(ctx), user)
 	if err != nil {
 		return actions, domain.ReportError(ctx, err, "GetRequestActions")
 	}
@@ -191,7 +192,7 @@ func (r *requestResolver) Threads(ctx context.Context, obj *models.Request) ([]m
 	}
 
 	user := models.CurrentUser(ctx)
-	threads, err := obj.GetThreads(ctx, user)
+	threads, err := obj.GetThreads(models.Tx(ctx), user)
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetRequestThreads")
 	}
@@ -247,7 +248,7 @@ func (r *requestResolver) PhotoID(ctx context.Context, obj *models.Request) (*st
 		return nil, nil
 	}
 
-	photoID, err := obj.GetPhotoID(ctx)
+	photoID, err := obj.GetPhotoID(models.Tx(ctx))
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetUserPhotoID")
 	}
@@ -260,7 +261,7 @@ func (r *requestResolver) Files(ctx context.Context, obj *models.Request) ([]mod
 	if obj == nil {
 		return nil, nil
 	}
-	files, err := obj.GetFiles(ctx)
+	files, err := obj.GetFiles(models.Tx(ctx))
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetRequestFiles")
 	}
@@ -291,7 +292,7 @@ func (r *requestResolver) IsEditable(ctx context.Context, obj *models.Request) (
 		return false, nil
 	}
 	cUser := models.CurrentUser(ctx)
-	return obj.IsEditable(ctx, cUser)
+	return obj.IsEditable(models.Tx(ctx), cUser)
 }
 
 // Requests resolves the `requests` query
@@ -306,7 +307,7 @@ func (r *queryResolver) Requests(ctx context.Context, destination, origin *Locat
 		Origin:      convertOptionalLocation(origin),
 		SearchText:  searchText,
 	}
-	err := requests.FindByUser(ctx, cUser, filter)
+	err := requests.FindByUser(models.Tx(ctx), cUser, filter)
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetRequests")
 	}
@@ -337,8 +338,9 @@ func (r *queryResolver) Requests(ctx context.Context, destination, origin *Locat
 func convertGqlRequestInputToDBRequest(ctx context.Context, input requestInput, currentUser models.User) (models.Request, error) {
 	request := models.Request{}
 
+	tx := models.Tx(ctx)
 	if input.ID != nil {
-		if err := request.FindByUUID(models.Tx(ctx), *input.ID); err != nil {
+		if err := request.FindByUUID(tx, *input.ID); err != nil {
 			return request, err
 		}
 	} else {
@@ -349,7 +351,7 @@ func convertGqlRequestInputToDBRequest(ctx context.Context, input requestInput, 
 
 	if input.OrgID != nil {
 		var org models.Organization
-		err := org.FindByUUID(models.Tx(ctx), *input.OrgID)
+		err := org.FindByUUID(tx, *input.OrgID)
 		if err != nil {
 			return models.Request{}, err
 		}
@@ -385,12 +387,12 @@ func convertGqlRequestInputToDBRequest(ctx context.Context, input requestInput, 
 
 	if input.PhotoID == nil {
 		if request.ID > 0 {
-			if err := request.RemoveFile(ctx); err != nil {
+			if err := request.RemoveFile(tx); err != nil {
 				return models.Request{}, err
 			}
 		}
 	} else {
-		if _, err := request.AttachPhoto(ctx, *input.PhotoID); err != nil {
+		if _, err := request.AttachPhoto(tx, *input.PhotoID); err != nil {
 			return models.Request{}, err
 		}
 	}
@@ -399,7 +401,7 @@ func convertGqlRequestInputToDBRequest(ctx context.Context, input requestInput, 
 		request.MeetingID = nulls.Int{}
 	} else {
 		var meeting models.Meeting
-		if err := meeting.FindByUUID(models.Tx(ctx), *input.MeetingID); err != nil {
+		if err := meeting.FindByUUID(tx, *input.MeetingID); err != nil {
 			return models.Request{}, fmt.Errorf("invalid meetingID, %s", err)
 		}
 		request.MeetingID = nulls.NewInt(meeting.ID)
@@ -434,20 +436,21 @@ func (r *mutationResolver) CreateRequest(ctx context.Context, input requestInput
 		return &models.Request{}, domain.ReportError(ctx, err, "CreateRequest.ProcessInput")
 	}
 
+	tx := models.Tx(ctx)
 	if !request.MeetingID.Valid {
 		dest := convertLocation(*input.Destination)
-		if err = dest.Create(ctx); err != nil {
+		if err = dest.Create(tx); err != nil {
 			return &models.Request{}, domain.ReportError(ctx, err, "CreateRequest.SetDestination")
 		}
 		request.DestinationID = dest.ID
 	}
 
-	if err = request.Create(ctx); err != nil {
+	if err = request.Create(tx); err != nil {
 		return &models.Request{}, domain.ReportError(ctx, err, "CreateRequest")
 	}
 
 	if input.Origin != nil {
-		if err = request.SetOrigin(ctx, convertLocation(*input.Origin)); err != nil {
+		if err = request.SetOrigin(tx, convertLocation(*input.Origin)); err != nil {
 			return &models.Request{}, domain.ReportError(ctx, err, "CreateRequest.SetOrigin")
 		}
 	}
@@ -465,30 +468,31 @@ func (r *mutationResolver) UpdateRequest(ctx context.Context, input requestInput
 	}
 
 	var dbRequest models.Request
-	_ = dbRequest.FindByID(models.Tx(ctx), request.ID)
-	if editable, err := dbRequest.IsEditable(ctx, cUser); err != nil {
+	tx := models.Tx(ctx)
+	_ = dbRequest.FindByID(tx, request.ID)
+	if editable, err := dbRequest.IsEditable(tx, cUser); err != nil {
 		return &models.Request{}, domain.ReportError(ctx, err, "UpdateRequest.GetEditable")
 	} else if !editable {
 		return &models.Request{}, domain.ReportError(ctx, errors.New("attempt to update a non-editable request"),
 			"UpdateRequest.NotEditable")
 	}
 
-	if err := request.Update(ctx); err != nil {
+	if err := request.Update(tx); err != nil {
 		return &models.Request{}, domain.ReportError(ctx, err, "UpdateRequest")
 	}
 
 	if input.Destination != nil {
-		if err := request.SetDestination(ctx, convertLocation(*input.Destination)); err != nil {
+		if err := request.SetDestination(tx, convertLocation(*input.Destination)); err != nil {
 			return &models.Request{}, domain.ReportError(ctx, err, "UpdateRequest.SetDestination")
 		}
 	}
 
 	if input.Origin == nil {
-		if err := request.RemoveOrigin(ctx); err != nil {
+		if err := request.RemoveOrigin(tx); err != nil {
 			return &models.Request{}, domain.ReportError(ctx, err, "UpdateRequest.RemoveOrigin")
 		}
 	} else {
-		if err := request.SetOrigin(ctx, convertLocation(*input.Origin)); err != nil {
+		if err := request.SetOrigin(tx, convertLocation(*input.Origin)); err != nil {
 			return &models.Request{}, domain.ReportError(ctx, err, "UpdateRequest.SetOrigin")
 		}
 	}
@@ -499,7 +503,8 @@ func (r *mutationResolver) UpdateRequest(ctx context.Context, input requestInput
 // UpdateRequestStatus resolves the `updateRequestStatus` mutation.
 func (r *mutationResolver) UpdateRequestStatus(ctx context.Context, input UpdateRequestStatusInput) (*models.Request, error) {
 	var request models.Request
-	if err := request.FindByUUID(models.Tx(ctx), input.ID); err != nil {
+	tx := models.Tx(ctx)
+	if err := request.FindByUUID(tx, input.ID); err != nil {
 		return &models.Request{}, domain.ReportError(ctx, err, "UpdateRequestStatus.FindRequest")
 	}
 
@@ -512,16 +517,16 @@ func (r *mutationResolver) UpdateRequestStatus(ctx context.Context, input Update
 			"UpdateRequestStatus.Unauthorized")
 	}
 
-	if err := request.SetProviderWithStatus(ctx, input.Status, input.ProviderUserID); err != nil {
+	if err := request.SetProviderWithStatus(tx, input.Status, input.ProviderUserID); err != nil {
 		return &models.Request{}, domain.ReportError(ctx, errors.New("error setting provider with status: "+err.Error()),
 			"UpdateRequestStatus.SetProvider")
 	}
 
-	if err := request.Update(ctx); err != nil {
+	if err := request.Update(tx); err != nil {
 		return &models.Request{}, domain.ReportError(ctx, err, "UpdateRequestStatus")
 	}
 
-	if err := request.DestroyPotentialProviders(ctx, input.Status, cUser); err != nil {
+	if err := request.DestroyPotentialProviders(tx, input.Status, cUser); err != nil {
 		return &models.Request{}, domain.ReportError(ctx, errors.New("error destroying request's potential providers: "+err.Error()),
 			"UpdateRequestStatus.DestroyPotentialProviders")
 	}
@@ -532,7 +537,8 @@ func (r *mutationResolver) UpdateRequestStatus(ctx context.Context, input Update
 func (r *mutationResolver) AddMeAsPotentialProvider(ctx context.Context, requestID string) (*models.Request, error) {
 	cUser := models.CurrentUser(ctx)
 	var request models.Request
-	if err := request.FindByUUIDForCurrentUser(ctx, requestID, cUser); err != nil {
+	tx := models.Tx(ctx)
+	if err := request.FindByUUIDForCurrentUser(tx, requestID, cUser); err != nil {
 		return &models.Request{}, domain.ReportError(ctx, err, "AddMeAsPotentialProvider.FindRequest")
 	}
 
@@ -543,12 +549,12 @@ func (r *mutationResolver) AddMeAsPotentialProvider(ctx context.Context, request
 	}
 
 	var provider models.PotentialProvider
-	if err := provider.NewWithRequestUUID(ctx, requestID, cUser.ID); err != nil {
+	if err := provider.NewWithRequestUUID(tx, requestID, cUser.ID); err != nil {
 		return &models.Request{}, domain.ReportError(ctx, errors.New("error preparing potential provider: "+err.Error()),
 			"AddMeAsPotentialProvider")
 	}
 
-	if err := provider.Create(ctx); err != nil {
+	if err := provider.Create(tx); err != nil {
 		return &models.Request{}, domain.ReportError(ctx, errors.New("error creating potential provider: "+err.Error()),
 			"AddMeAsPotentialProvider")
 	}
@@ -561,24 +567,25 @@ func (r *mutationResolver) RemoveMeAsPotentialProvider(ctx context.Context, requ
 
 	var provider models.PotentialProvider
 
-	if err := provider.FindWithRequestUUIDAndUserUUID(ctx, requestID, cUser.UUID.String(), cUser); err != nil {
+	tx := models.Tx(ctx)
+	if err := provider.FindWithRequestUUIDAndUserUUID(tx, requestID, cUser.UUID.String(), cUser); err != nil {
 		return &models.Request{}, domain.ReportError(ctx, errors.New("unable to find PotentialProvider in order to delete it: "+err.Error()),
 			"RemoveMeAsPotentialProvider")
 	}
 
 	var request models.Request
-	if err := request.FindByUUID(models.Tx(ctx), requestID); err != nil {
+	if err := request.FindByUUID(tx, requestID); err != nil {
 		return &models.Request{}, domain.ReportError(ctx, err, "RemoveMeAsPotentialProvider.FindRequest")
 	}
 
 	domain.NewExtra(ctx, "request", request.UUID)
 
-	if err := provider.Destroy(ctx); err != nil {
+	if err := provider.Destroy(tx); err != nil {
 		return &models.Request{}, domain.ReportError(ctx, errors.New("error removing potential provider: "+err.Error()),
 			"RemoveMeAsPotentialProvider")
 	}
 
-	if err := request.FindByUUID(models.Tx(ctx), requestID); err != nil {
+	if err := request.FindByUUID(tx, requestID); err != nil {
 		return &models.Request{}, domain.ReportError(ctx, err, "RemoveMeAsPotentialProvider.FindRequest")
 	}
 
@@ -588,24 +595,25 @@ func (r *mutationResolver) RemoveMeAsPotentialProvider(ctx context.Context, requ
 func (r *mutationResolver) RejectPotentialProvider(ctx context.Context, requestID, userID string) (*models.Request, error) {
 	cUser := models.CurrentUser(ctx)
 	var provider models.PotentialProvider
-	if err := provider.FindWithRequestUUIDAndUserUUID(ctx, requestID, userID, cUser); err != nil {
+	tx := models.Tx(ctx)
+	if err := provider.FindWithRequestUUIDAndUserUUID(tx, requestID, userID, cUser); err != nil {
 		return &models.Request{}, domain.ReportError(ctx, errors.New("unable to find PotentialProvider in order to delete it: "+err.Error()),
 			"RemovePotentialProvider")
 	}
 
 	var request models.Request
-	if err := request.FindByUUID(models.Tx(ctx), requestID); err != nil {
+	if err := request.FindByUUID(tx, requestID); err != nil {
 		return &models.Request{}, domain.ReportError(ctx, err, "RemovePotentialProvider.FindRequest")
 	}
 
 	domain.NewExtra(ctx, "request", request.UUID)
 
-	if err := provider.Destroy(ctx); err != nil {
+	if err := provider.Destroy(tx); err != nil {
 		return &models.Request{}, domain.ReportError(ctx, errors.New("error removing potential provider: "+err.Error()),
 			"RemovePotentialProvider")
 	}
 
-	if err := request.FindByUUID(models.Tx(ctx), requestID); err != nil {
+	if err := request.FindByUUID(tx, requestID); err != nil {
 		return &models.Request{}, domain.ReportError(ctx, err, "RemovePotentialProvider.FindRequest")
 	}
 

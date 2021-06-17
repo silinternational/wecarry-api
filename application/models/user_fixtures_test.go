@@ -96,8 +96,8 @@ func CreateFixturesForUserGetRequests(ms *ModelSuite) UserRequestFixtures {
 
 	requests := createRequestFixtures(ms.DB, 4, false)
 	userID := users[1].UUID.String()
-	requests[0].SetProviderWithStatus(Ctx(), RequestStatusAccepted, &userID)
-	requests[1].SetProviderWithStatus(Ctx(), RequestStatusAccepted, &userID)
+	requests[0].SetProviderWithStatus(ms.DB, RequestStatusAccepted, &userID)
+	requests[1].SetProviderWithStatus(ms.DB, RequestStatusAccepted, &userID)
 	requests[2].Status = RequestStatusAccepted
 	requests[3].Status = RequestStatusAccepted
 	ms.NoError(ms.DB.Save(&requests))
@@ -404,7 +404,7 @@ func CreateFixturesForUserWantsRequestNotification(ms *ModelSuite) UserRequestFi
 	requests := createRequestFixtures(ms.DB, 3, false)
 	requestOneLocation, err := requests[1].GetOrigin(ms.DB)
 	ms.NoError(err)
-	ms.NoError(users[1].SetLocation(Ctx(), *requestOneLocation))
+	ms.NoError(users[1].SetLocation(ms.DB, *requestOneLocation))
 
 	// make a copy of the request destination and assign it to a watch
 	watchLocation, err := requests[2].GetDestination(ms.DB)

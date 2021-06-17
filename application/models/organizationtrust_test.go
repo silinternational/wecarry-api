@@ -102,7 +102,7 @@ func (ms *ModelSuite) TestTrust_Create() {
 			ms.NoError(err, "unexpected error")
 
 			org := Organization{ID: tt.trust.PrimaryID}
-			orgs, err := org.TrustedOrganizations(Ctx())
+			orgs, err := org.TrustedOrganizations(ms.DB)
 			ms.NoError(err)
 
 			ms.Equal(tt.want, len(orgs), "incorrect number of OrganizationTrust records")
@@ -143,11 +143,11 @@ func (ms *ModelSuite) TestTrust_Remove() {
 			ms.NoError(err, "unexpected error")
 
 			org1 := Organization{ID: tt.trust.PrimaryID}
-			orgs1, err := org1.TrustedOrganizations(Ctx())
+			orgs1, err := org1.TrustedOrganizations(ms.DB)
 			ms.NoError(err)
 
 			org2 := Organization{ID: tt.trust.SecondaryID}
-			orgs2, err := org2.TrustedOrganizations(Ctx())
+			orgs2, err := org2.TrustedOrganizations(ms.DB)
 			ms.NoError(err)
 
 			ms.Equal(tt.want, len(orgs1)+len(orgs2), "incorrect number of OrganizationTrust records")

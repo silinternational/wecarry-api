@@ -411,7 +411,7 @@ func (as *ActionSuite) Test_newAuthUser() {
 	}
 
 	var user models.User
-	err := user.FindOrCreateFromAuthUser(test.Ctx(), orgFixture.ID, &authUser)
+	err := user.FindOrCreateFromAuthUser(as.DB, orgFixture.ID, &authUser)
 	if err != nil {
 		t.Errorf("could not run test because of error calling user.FindOrCreateFromAuthUser ...\n %v", err)
 		return

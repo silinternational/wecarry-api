@@ -371,7 +371,7 @@ func (ms *ModelSuite) TestMeeting_ImageFile() {
 
 	imageFixture := createFileFixture(ms.DB)
 
-	attachedFile, err := meeting.SetImageFile(Ctx(), imageFixture.UUID.String())
+	attachedFile, err := meeting.SetImageFile(ms.DB, imageFixture.UUID.String())
 	ms.NoError(err)
 
 	if got, err := meeting.ImageFile(ms.DB); err == nil {
@@ -421,7 +421,7 @@ func (ms *ModelSuite) TestMeeting_GetSetLocation() {
 	meeting := Meeting{CreatedByID: user.ID, Name: "name", LocationID: locations[0].ID}
 	createFixture(ms, &meeting)
 
-	err := meeting.SetLocation(Ctx(), locations[1])
+	err := meeting.SetLocation(ms.DB, locations[1])
 	ms.NoError(err, "unexpected error from meeting.SetLocation()")
 
 	locationFromDB, err := meeting.GetLocation(ms.DB)
@@ -479,7 +479,7 @@ func (ms *ModelSuite) TestMeeting_GetRequests() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			got, err := tt.meeting.Requests(Ctx())
+			got, err := tt.meeting.Requests(ms.DB)
 			if tt.wantErr != "" {
 				ms.Error(err, "did not get expected error")
 				ms.Contains(err.Error(), tt.wantErr)
@@ -528,7 +528,7 @@ func (ms *ModelSuite) TestMeeting_Invites() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			got, err := tt.meeting.Invites(createTestContext(tt.user))
+			got, err := tt.meeting.Invites(ms.DB, tt.user)
 			if tt.wantErr != "" {
 				ms.Error(err, "did not get expected error")
 				ms.Contains(err.Error(), tt.wantErr)
@@ -578,7 +578,7 @@ func (ms *ModelSuite) TestMeeting_Participants() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			got, err := tt.meeting.Participants(createTestContext(tt.user))
+			got, err := tt.meeting.Participants(ms.DB, tt.user)
 			if tt.wantErr != "" {
 				ms.Error(err, "did not get expected error")
 				ms.Contains(err.Error(), tt.wantErr)
@@ -628,7 +628,7 @@ func (ms *ModelSuite) TestMeeting_Organizers() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			got, err := tt.meeting.Organizers(createTestContext(tt.user))
+			got, err := tt.meeting.Organizers(ms.DB)
 			if tt.wantErr != "" {
 				ms.Error(err, "did not get expected error")
 				ms.Contains(err.Error(), tt.wantErr)
@@ -683,10 +683,9 @@ func (ms *ModelSuite) TestMeeting_RemoveInvite() {
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
 			// setup
-			ctx := createTestContext(tt.user)
 
 			// execute
-			err := tt.meeting.RemoveInvite(ctx, tt.email)
+			err := tt.meeting.RemoveInvite(ms.DB, tt.email)
 
 			// verify
 			if tt.wantErr != "" {
@@ -696,7 +695,7 @@ func (ms *ModelSuite) TestMeeting_RemoveInvite() {
 			}
 			ms.NoError(err, "unexpected error")
 
-			remaining, err := tt.meeting.Invites(ctx)
+			remaining, err := tt.meeting.Invites(ms.DB, tt.user)
 			ms.NoError(err)
 
 			emails := make([]string, len(remaining))
@@ -739,11 +738,8 @@ func (ms *ModelSuite) TestMeeting_RemoveParticipant() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			// setup
-			ctx := createTestContext(tt.testUser)
-
 			// execute
-			err := tt.meeting.RemoveParticipant(ctx, tt.user.UUID.String())
+			err := tt.meeting.RemoveParticipant(ms.DB, tt.user.UUID.String())
 
 			// verify
 			if tt.wantErr != "" {
@@ -753,7 +749,7 @@ func (ms *ModelSuite) TestMeeting_RemoveParticipant() {
 			}
 			ms.NoError(err, "unexpected error")
 
-			remaining, err := tt.meeting.Participants(ctx)
+			remaining, err := tt.meeting.Participants(ms.DB, tt.testUser)
 			ms.NoError(err)
 
 			ids := make([]int, len(remaining))
@@ -839,7 +835,7 @@ func (ms *ModelSuite) TestMeeting_isOrganizer() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			got := tt.meeting.isOrganizer(createTestContext(tt.user), tt.user.ID)
+			got, _ := tt.meeting.isOrganizer(ms.DB, tt.user.ID)
 			ms.Equal(tt.want, got)
 		})
 	}
