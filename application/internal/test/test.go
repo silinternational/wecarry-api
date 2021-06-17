@@ -116,7 +116,7 @@ func CreateRequestFixtures(tx *pop.Connection, n int, createFiles bool) models.R
 
 	var files models.Files
 	if createFiles {
-		files = CreateFileFixtures(n)
+		files = CreateFileFixtures(tx, n)
 	}
 
 	futureDate := time.Now().Add(4 * domain.DurationWeek)
@@ -163,21 +163,21 @@ func CreateLocationFixtures(tx *pop.Connection, n int) models.Locations {
 	return locations
 }
 
-func CreateFileFixtures(n int) models.Files {
+func CreateFileFixtures(tx *pop.Connection, n int) models.Files {
 	fileFixtures := make([]models.File, n)
 	for i := range fileFixtures {
-		fileFixtures[i] = CreateFileFixture()
+		fileFixtures[i] = CreateFileFixture(tx)
 	}
 	return fileFixtures
 }
 
-func CreateFileFixture() models.File {
+func CreateFileFixture(tx *pop.Connection) models.File {
 	// #nosec G404
 	f := models.File{
 		Name:    strconv.Itoa(rand.Int()) + ".gif",
 		Content: []byte("GIF89a"),
 	}
-	if err := f.Store(models.DB); err != nil {
+	if err := f.Store(tx); err != nil {
 		panic(fmt.Sprintf("failed to create file fixture, %s", err))
 	}
 	return f

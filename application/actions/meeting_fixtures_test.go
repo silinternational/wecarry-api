@@ -26,7 +26,7 @@ func createFixturesForMeetings(as *ActionSuite) meetingQueryFixtures {
 	err := aws.CreateS3Bucket()
 	as.NoError(err, "failed to create S3 bucket, %s", err)
 
-	fileFixture := test.CreateFileFixture()
+	fileFixture := test.CreateFileFixture(as.DB)
 
 	meetings := models.Meetings{
 		{
