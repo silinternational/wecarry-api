@@ -33,8 +33,7 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input CreateO
 
 	tx := models.Tx(ctx)
 	if input.LogoFileID != nil {
-		if _, err := org.AttachLogo(
-			tx, *input.LogoFileID); err != nil {
+		if _, err := org.AttachLogo(tx, *input.LogoFileID); err != nil {
 			return &models.Organization{}, domain.ReportError(ctx, err, "CreateOrganization.LogoFileNotFound")
 		}
 	}
