@@ -2120,6 +2120,7 @@ func (ms *ModelSuite) TestRequest_IsVisible() {
 		user    User
 		request Request
 		want    bool
+		wantErr bool
 	}{
 		{name: "request in same org", user: f.Users[0], request: f.Requests[0], want: true},
 		{name: "COMPLETED request in same org", user: f.Users[0], request: f.Requests[2], want: false},
@@ -2127,12 +2128,16 @@ func (ms *ModelSuite) TestRequest_IsVisible() {
 		{name: "request visibility ALL in trusted org", user: f.Users[0], request: f.Requests[5], want: true},
 		{name: "request visibility TRUSTED in trusted org", user: f.Users[0], request: f.Requests[6], want: true},
 		{name: "request visibility SAME in trusted org", user: f.Users[0], request: f.Requests[7], want: false},
-		{name: "bad user", user: User{}, request: f.Requests[5], want: false},
+		{name: "bad user", user: User{}, request: f.Requests[5], wantErr: true},
 		{name: "bad request", user: f.Users[0], request: Request{}, want: false},
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
 			got, err := tt.request.IsVisible(ms.DB, tt.user)
+			if tt.wantErr {
+				ms.Error(err)
+				return
+			}
 			ms.NoError(err)
 			ms.Equal(tt.want, got)
 		})
