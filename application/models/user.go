@@ -647,24 +647,20 @@ func (u *User) GetThreadsForConversations(tx *pop.Connection) (Threads, error) {
 	}
 
 	for i := range t {
-		messages, err := t[i].GetMessagesWithSentBy(tx)
-		if err != nil {
-			return nil, err
-		}
-		t[i].Messages = messages
-
-		participants, err := t[i].GetParticipants(tx)
-		if err != nil {
-			return nil, err
-		}
-		t[i].Participants = participants
-
-		request, err := t[i].GetRequest(tx)
+		err := t[i].LoadMessages(tx, "SentBy")
 		if err != nil {
 			return nil, err
 		}
 
-		t[i].Request = *request
+		err = t[i].LoadParticipants(tx)
+		if err != nil {
+			return nil, err
+		}
+
+		err = t[i].LoadRequest(tx, "CreatedBy")
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return t, nil

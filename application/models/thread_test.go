@@ -118,16 +118,17 @@ func (ms *ModelSuite) TestThread_GetRequest() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := test.thread.GetRequest(ms.DB)
+			err := test.thread.LoadRequest(ms.DB)
 			if test.wantErr {
 				if (err != nil) != test.wantErr {
-					t.Errorf("GetRequest() did not return expected error")
+					t.Errorf("LoadRequest() did not return expected error")
 				}
 			} else {
+				got := test.thread.Request
 				if err != nil {
-					t.Errorf("GetRequest() error = %v", err)
+					t.Errorf("LoadRequest() error = %v", err)
 				} else if got.UUID != test.want.UUID {
-					t.Errorf("GetRequest() got = %s, want %s", got.UUID, test.want.UUID)
+					t.Errorf("LoadRequest() got = %s, want %s", got.UUID, test.want.UUID)
 				}
 			}
 		})
@@ -165,7 +166,7 @@ func (ms *ModelSuite) TestThread_GetMessages() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := test.thread.GetMessages(ms.DB)
+			err := test.thread.LoadMessages(ms.DB)
 			if test.wantErr {
 				if (err != nil) != test.wantErr {
 					t.Errorf("Messages() did not return expected error")
@@ -174,6 +175,7 @@ func (ms *ModelSuite) TestThread_GetMessages() {
 				if err != nil {
 					t.Errorf("Messages() error = %v", err)
 				} else {
+					got := test.thread.Messages
 					ids := make([]uuid.UUID, len(got))
 					for i := range got {
 						ids[i] = got[i].UUID
@@ -187,7 +189,7 @@ func (ms *ModelSuite) TestThread_GetMessages() {
 	}
 }
 
-func (ms *ModelSuite) TestThread_GetParticipants() {
+func (ms *ModelSuite) TestThread_LoadParticipants() {
 	t := ms.T()
 
 	users := createUserFixtures(ms.DB, 2).Users
@@ -218,12 +220,13 @@ func (ms *ModelSuite) TestThread_GetParticipants() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := test.thread.GetParticipants(ms.DB)
+			err := test.thread.LoadParticipants(ms.DB)
 			if test.wantErr {
 				if (err != nil) != test.wantErr {
 					t.Errorf("GetParticipants() did not return expected error")
 				}
 			} else {
+				got := test.thread.Participants
 				if err != nil {
 					t.Errorf("GetParticipants() error = %v", err)
 				} else {
@@ -263,9 +266,10 @@ func (ms *ModelSuite) TestThread_CreateWithParticipants() {
 			threadFromDB.RequestID, request.ID)
 	}
 
-	participants, _ := threadFromDB.GetParticipants(ms.DB)
+	err := threadFromDB.LoadParticipants(ms.DB)
+	ms.NoError(err)
 
-	ids := make([]uuid.UUID, len(participants))
+	ids := make([]uuid.UUID, len(threadFromDB.Participants))
 	for i := range threadFromDB.Participants {
 		ids[i] = threadFromDB.Participants[i].UUID
 	}
@@ -319,12 +323,12 @@ func (ms *ModelSuite) TestThread_ensureParticipants() {
 			err := thread.ensureParticipants(ms.DB, request, test.userID)
 			ms.NoError(err)
 
-			participants, err := thread.GetParticipants(ms.DB)
+			err = thread.LoadParticipants(ms.DB)
 			ms.NoError(err, "can't get thread participants from thread")
 
-			ids := make([]uuid.UUID, len(participants))
-			for i := range participants {
-				ids[i] = participants[i].UUID
+			ids := make([]uuid.UUID, len(thread.Participants))
+			for i := range ids {
+				ids[i] = thread.Participants[i].UUID
 			}
 
 			ms.Equal(len(test.want), len(ids), "incorrect number of participants found")

@@ -82,13 +82,13 @@ func (m *Message) AfterCreate(tx *pop.Connection) error {
 		return errors.New("error getting message's Thread ... " + err.Error())
 	}
 
-	request, err := thread.GetRequest(tx)
+	err = thread.LoadRequest(tx)
 	if err != nil {
 		return errors.New("error getting message's Request ... " + err.Error())
 	}
 
 	// Ensure a matching threadparticipant exists
-	if err := thread.ensureParticipants(tx, *request, m.SentByID); err != nil {
+	if err := thread.ensureParticipants(tx, thread.Request, m.SentByID); err != nil {
 		return err
 	}
 
