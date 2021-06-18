@@ -28,6 +28,7 @@ import (
 	"github.com/gobuffalo/validate/v3/validators"
 	uuid2 "github.com/gofrs/uuid"
 	"github.com/rollbar/rollbar-go"
+	"github.com/silinternational/wecarry-api/wcerror"
 )
 
 const (
@@ -439,31 +440,28 @@ func RollbarMiddleware(next buffalo.Handler) buffalo.Handler {
 }
 
 // Error log error and send to Rollbar
-func Error(c buffalo.Context, msg string) {
+func Error(c buffalo.Context, msg string, extras ...map[string]interface{}) {
 	// Avoid panics running tests when c doesn't have the necessary nested methods
 	logger := c.Logger()
 	if logger == nil {
 		return
 	}
 
-	extras := getExtras(c)
-	if extras == nil {
-		extras = map[string]interface{}{}
+	es := MergeExtras(extras)
+	if es == nil {
+		es = map[string]interface{}{}
 	}
 
-	extrasLock.RLock()
-	defer extrasLock.RUnlock()
+	rollbarMessage(c, rollbar.ERR, msg, es)
 
-	rollbarMessage(c, rollbar.ERR, msg, extras)
-
-	extras["message"] = msg
+	es["message"] = msg
 
 	encoder := jsonMin
 	if Env.GoEnv == "development" {
 		encoder = jsonIndented
 	}
 
-	j, err := encoder(&extras)
+	j, err := encoder(&es)
 	if err != nil {
 		logger.Error("failed to json encode error message: %s", err)
 		return
@@ -783,4 +781,45 @@ func getExtras(c buffalo.Context) map[string]interface{} {
 	}
 
 	return extras
+}
+
+// ConvertToOtherType uses json marshal/unmarshal to convert one type to another.
+// Output parameter should be a pointer to the receiving struct
+func ConvertToOtherType(input, output interface{}) error {
+	str, err := json.Marshal(input)
+	if err != nil {
+		return wcerror.New(
+			fmt.Errorf("failed to convert to apitype. marshal error: %s", err.Error()),
+			wcerror.FailedToConvertToAPIType,
+			wcerror.CategoryInternal,
+		)
+	}
+	if err := json.Unmarshal(str, output); err != nil {
+		return wcerror.New(
+			fmt.Errorf("failed to convert to apitype. unmarshal error: %s", err.Error()),
+			wcerror.FailedToConvertToAPIType,
+			wcerror.CategoryInternal,
+		)
+	}
+
+	return nil
+}
+
+func MergeExtras(extras []map[string]interface{}) map[string]interface{} {
+	allExtras := map[string]interface{}{}
+
+	// I didn't think I would need this, but without it at least one test was failing
+	// The code allowed a map[string]interface{} to get through (i.e. not in a slice)
+	// without the compiler complaining
+	if len(extras) == 1 {
+		return extras[0]
+	}
+
+	for _, e := range extras {
+		for k, v := range e {
+			allExtras[k] = v
+		}
+	}
+
+	return allExtras
 }
