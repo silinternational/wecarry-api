@@ -326,7 +326,7 @@ func (ms *ModelSuite) TestFiles_DeleteUnlinked() {
 	users := createUserFixtures(ms.DB, nUsers).Users
 	userPhotos := createFileFixtures(ms.DB, nUsers)
 	for i, u := range users {
-		_, err := u.AttachPhoto(Ctx(), userPhotos[i].UUID.String())
+		_, err := u.AttachPhoto(ms.DB, userPhotos[i].UUID.String())
 		ms.NoError(err)
 	}
 

@@ -108,7 +108,7 @@ func (r *meetingResolver) Requests(ctx context.Context, obj *models.Meeting) ([]
 	if obj == nil {
 		return nil, nil
 	}
-	requests, err := obj.Requests(ctx)
+	requests, err := obj.Requests(models.Tx(ctx))
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "Meeting.Requests")
 	}
@@ -119,7 +119,7 @@ func (r *meetingResolver) Invites(ctx context.Context, obj *models.Meeting) ([]m
 	if obj == nil {
 		return nil, nil
 	}
-	invites, err := obj.Invites(ctx)
+	invites, err := obj.Invites(models.Tx(ctx), models.CurrentUser(ctx))
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "Meeting.Invites")
 	}
@@ -130,7 +130,7 @@ func (r *meetingResolver) Participants(ctx context.Context, obj *models.Meeting)
 	if obj == nil {
 		return nil, nil
 	}
-	participants, err := obj.Participants(ctx)
+	participants, err := obj.Participants(models.Tx(ctx), models.CurrentUser(ctx))
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "Meeting.Participants")
 	}
@@ -145,7 +145,7 @@ func (r *meetingResolver) Organizers(ctx context.Context, obj *models.Meeting) (
 	if obj == nil {
 		return nil, nil
 	}
-	users, err := obj.Organizers(ctx)
+	users, err := obj.Organizers(models.Tx(ctx))
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "Meeting.Organizers")
 	}
@@ -192,8 +192,9 @@ func (r *queryResolver) Meeting(ctx context.Context, id *string) (*models.Meetin
 // provided in `input`
 func convertGqlMeetingInputToDBMeeting(ctx context.Context, input meetingInput, currentUser models.User) (models.Meeting, error) {
 	meeting := models.Meeting{}
+	tx := models.Tx(ctx)
 	if input.ID != nil {
-		if err := meeting.FindByUUID(models.Tx(ctx), *input.ID); err != nil {
+		if err := meeting.FindByUUID(tx, *input.ID); err != nil {
 			return meeting, err
 		}
 	} else {
@@ -222,9 +223,9 @@ func convertGqlMeetingInputToDBMeeting(ctx context.Context, input meetingInput, 
 
 	var err error
 	if input.ImageFileID != nil {
-		_, err = meeting.SetImageFile(ctx, *input.ImageFileID)
+		_, err = meeting.SetImageFile(tx, *input.ImageFileID)
 	} else if meeting.ID > 0 {
-		err = meeting.RemoveFile(ctx)
+		err = meeting.RemoveFile(tx)
 	}
 	if err != nil {
 		return meeting, domain.ReportError(ctx, fmt.Errorf("error updating meeting image file, %s",
@@ -260,12 +261,13 @@ func (r *mutationResolver) CreateMeeting(ctx context.Context, input meetingInput
 	}
 
 	location := convertLocation(*input.Location)
-	if err = location.Create(ctx); err != nil {
+	tx := models.Tx(ctx)
+	if err = location.Create(tx); err != nil {
 		return &models.Meeting{}, domain.ReportError(ctx, err, "CreateMeeting.SetLocation")
 	}
 	meeting.LocationID = location.ID
 
-	if err = meeting.Create(ctx); err != nil {
+	if err = meeting.Create(tx); err != nil {
 		return &models.Meeting{}, domain.ReportError(ctx, err, "CreateMeeting")
 	}
 
@@ -284,12 +286,13 @@ func (r *mutationResolver) UpdateMeeting(ctx context.Context, input meetingInput
 		return &models.Meeting{}, domain.ReportError(ctx, err, "UpdateMeeting.Unauthorized")
 	}
 
-	if err := meeting.Update(ctx); err != nil {
+	tx := models.Tx(ctx)
+	if err := meeting.Update(tx); err != nil {
 		return &models.Meeting{}, domain.ReportError(ctx, err, "UpdateMeeting")
 	}
 
 	if input.Location != nil {
-		if err = meeting.SetLocation(ctx, convertLocation(*input.Location)); err != nil {
+		if err = meeting.SetLocation(tx, convertLocation(*input.Location)); err != nil {
 			return &models.Meeting{}, domain.ReportError(ctx, err, "UpdateMeeting.SetLocation")
 		}
 	}

@@ -91,7 +91,7 @@ func (ms *ModelSuite) TestMeetingInvite_Create() {
 		InviterID: inviter.ID,
 		Email:     "existing@example.com",
 	}
-	ms.NoError(invite.Create(Ctx()))
+	ms.NoError(invite.Create(ms.DB))
 
 	tests := []struct {
 		name    string
@@ -132,7 +132,7 @@ func (ms *ModelSuite) TestMeetingInvite_Create() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			err := tt.invite.Create(Ctx())
+			err := tt.invite.Create(ms.DB)
 			if tt.wantErr != "" {
 				ms.Error(err, `didn't get expected error: "%s"`, tt.wantErr)
 				ms.Contains(err.Error(), tt.wantErr, "wrong error message")
@@ -170,7 +170,7 @@ func (ms *ModelSuite) TestMeetingInvite_Meeting() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			got, err := tt.invite.Meeting(Ctx())
+			got, err := tt.invite.Meeting(ms.DB)
 			if tt.wantErr != "" {
 				ms.Error(err, `didn't get expected error: "%s"`, tt.wantErr)
 				ms.Contains(err.Error(), tt.wantErr, "wrong error message")
@@ -205,7 +205,7 @@ func (ms *ModelSuite) TestMeetingInvite_Inviter() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			got, err := tt.invite.Inviter(Ctx())
+			got, err := tt.invite.Inviter(ms.DB)
 			if tt.wantErr != "" {
 				ms.Error(err, `didn't get expected error: "%s"`, tt.wantErr)
 				ms.Contains(err.Error(), tt.wantErr, "wrong error message")

@@ -70,7 +70,7 @@ func (as *ActionSuite) Test_CreateOrganization() {
 	as.Equal(f.Organizations[1].AuthType, orgs[0].AuthType, "AuthType doesn't match")
 	as.Equal(f.Organizations[1].AuthConfig, orgs[0].AuthConfig, "AuthConfig doesn't match")
 
-	domains, _ := orgs[0].Domains(test.Ctx())
+	domains, _ := orgs[0].Domains(as.DB)
 	as.Equal(0, len(domains), "new organization has unexpected domains")
 
 	as.Equal(resp.Organization.ID, orgs[0].UUID.String(), "UUID doesn't match")
@@ -453,7 +453,7 @@ func (as *ActionSuite) Test_UpdateOrganization() {
 	as.Equal(f.Organizations[0].Url, orgs[0].Url, "URL doesn't match")
 	as.Equal(f.Organizations[0].AuthType, orgs[0].AuthType, "AuthType doesn't match")
 	as.Equal(f.Organizations[0].AuthConfig, orgs[0].AuthConfig, "AuthConfig doesn't match")
-	dbDomains, _ := orgs[0].Domains(test.Ctx())
+	dbDomains, _ := orgs[0].Domains(as.DB)
 	as.Equal(2, len(dbDomains), "updated organization has unexpected domains")
 	as.Equal(resp.Organization.ID, orgs[0].UUID.String(), "UUID from query doesn't match database")
 }

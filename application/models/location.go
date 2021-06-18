@@ -1,7 +1,6 @@
 package models
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -82,8 +81,8 @@ func (v *geoValidator) IsValid(errors *validate.Errors) {
 }
 
 // Create stores the Location data as a new record in the database.
-func (l *Location) Create(ctx context.Context) error {
-	return create(Tx(ctx), l)
+func (l *Location) Create(tx *pop.Connection) error {
+	return create(tx, l)
 }
 
 // Update writes the Location data to an existing database record.

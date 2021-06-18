@@ -3,7 +3,6 @@ package actions
 import (
 	"fmt"
 
-	"github.com/silinternational/wecarry-api/internal/test"
 	"github.com/silinternational/wecarry-api/models"
 )
 
@@ -42,7 +41,7 @@ func (as *ActionSuite) Test_CreateUpdateOrganizationDomain() {
 	as.NoError(err)
 
 	as.GreaterOrEqual(1, len(orgs), "no Organization found")
-	domains, err := orgs[0].Domains(test.Ctx())
+	domains, err := orgs[0].Domains(as.DB)
 	as.NoError(err)
 	as.Equal(1, len(domains), "wrong number of domains in DB")
 	as.Equal(testDomain, domains[0].Domain, "wrong domain in DB")

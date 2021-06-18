@@ -1,7 +1,6 @@
 package models
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -251,16 +250,16 @@ func (r Requests) String() string {
 }
 
 // Create stores the Request data as a new record in the database.
-func (r *Request) Create(ctx context.Context) error {
+func (r *Request) Create(tx *pop.Connection) error {
 	if r.Visibility == "" {
 		r.Visibility = RequestVisibilitySame
 	}
-	return create(Tx(ctx), r)
+	return create(tx, r)
 }
 
 // Update writes the Request data to an existing database record.
-func (r *Request) Update(ctx context.Context) error {
-	return update(Tx(ctx), r)
+func (r *Request) Update(tx *pop.Connection) error {
+	return update(tx, r)
 }
 
 func (r *Request) NewWithUser(currentUser User) error {
@@ -271,7 +270,7 @@ func (r *Request) NewWithUser(currentUser User) error {
 
 // SetProviderWithStatus sets the new Status of the Request and if needed it
 // also sets the ProviderID (i.e. when the new status is ACCEPTED)
-func (r *Request) SetProviderWithStatus(ctx context.Context, status RequestStatus, providerID *string) error {
+func (r *Request) SetProviderWithStatus(tx *pop.Connection, status RequestStatus, providerID *string) error {
 	if status == RequestStatusAccepted {
 		if providerID == nil {
 			return errors.New("provider ID must not be nil")
@@ -279,7 +278,7 @@ func (r *Request) SetProviderWithStatus(ctx context.Context, status RequestStatu
 
 		var user User
 
-		if err := user.FindByUUID(ctx, *providerID); err != nil {
+		if err := user.FindByUUID(tx, *providerID); err != nil {
 			return errors.New("error finding provider: " + err.Error())
 		}
 		r.ProviderID = nulls.NewInt(user.ID)
@@ -290,21 +289,21 @@ func (r *Request) SetProviderWithStatus(ctx context.Context, status RequestStatu
 
 // GetPotentialProviders returns the User objects associated with the Request's
 // PotentialProviders
-func (r *Request) GetPotentialProviders(ctx context.Context, currentUser User) (Users, error) {
+func (r *Request) GetPotentialProviders(tx *pop.Connection, currentUser User) (Users, error) {
 	providers := PotentialProviders{}
-	users, err := providers.FindUsersByRequestID(Tx(ctx), *r, currentUser)
+	users, err := providers.FindUsersByRequestID(tx, *r, currentUser)
 	return users, err
 }
 
 // DestroyPotentialProviders destroys all the PotentialProvider records
 // associated with the Request if the Request's status is COMPLETED
-func (r *Request) DestroyPotentialProviders(ctx context.Context, status RequestStatus, user User) error {
+func (r *Request) DestroyPotentialProviders(tx *pop.Connection, status RequestStatus, user User) error {
 	if status != RequestStatusCompleted {
 		return nil
 	}
 
 	pps := PotentialProviders{}
-	return pps.DestroyAllWithRequestUUID(Tx(ctx), r.UUID.String(), user)
+	return pps.DestroyAllWithRequestUUID(tx, r.UUID.String(), user)
 }
 
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
@@ -572,12 +571,12 @@ func (r *Request) FindByUUID(tx *pop.Connection, uuid string) error {
 	return nil
 }
 
-func (r *Request) FindByUUIDForCurrentUser(ctx context.Context, uuid string, user User) error {
-	if err := r.FindByUUID(Tx(ctx), uuid); err != nil {
+func (r *Request) FindByUUIDForCurrentUser(tx *pop.Connection, uuid string, user User) error {
+	if err := r.FindByUUID(tx, uuid); err != nil {
 		return err
 	}
 
-	if !user.CanViewRequest(ctx, *r) {
+	if !user.CanViewRequest(tx, *r) {
 		return fmt.Errorf("unauthorized: user %v may not view request %v", user.ID, r.ID)
 	}
 
@@ -625,12 +624,12 @@ func (r *Request) GetStatusTransitions(currentUser User) ([]StatusTransitionTarg
 	return finalOptions, nil
 }
 
-func (r *Request) GetPotentialProviderActions(ctx context.Context, currentUser User) ([]string, error) {
+func (r *Request) GetPotentialProviderActions(tx *pop.Connection, currentUser User) ([]string, error) {
 	if r.Status != RequestStatusOpen || currentUser.ID == r.CreatedByID {
 		return []string{}, nil
 	}
 
-	providers, err := r.GetPotentialProviders(ctx, currentUser)
+	providers, err := r.GetPotentialProviders(tx, currentUser)
 	if err != nil {
 		return []string{}, err
 	}
@@ -656,9 +655,9 @@ func (r *Request) GetOrganization(tx *pop.Connection) (*Organization, error) {
 }
 
 // GetThreads finds all threads on this request in which the given user is participating
-func (r *Request) GetThreads(ctx context.Context, user User) ([]Thread, error) {
+func (r *Request) GetThreads(tx *pop.Connection, user User) ([]Thread, error) {
 	var threads Threads
-	query := Tx(ctx).Q().
+	query := tx.Q().
 		Join("thread_participants tp", "threads.id = tp.thread_id").
 		Order("threads.updated_at DESC").
 		Where("tp.user_id = ? AND threads.request_id = ?", user.ID, r.ID)
@@ -688,10 +687,9 @@ func (r *Request) AttachFile(tx *pop.Connection, fileID string) (File, error) {
 }
 
 // GetFiles retrieves the metadata for all of the files attached to this Request
-func (r *Request) GetFiles(ctx context.Context) ([]File, error) {
+func (r *Request) GetFiles(tx *pop.Connection) ([]File, error) {
 	var rf []*RequestFile
 
-	tx := Tx(ctx)
 	err := tx.Eager("File").
 		Select().
 		Where("request_id = ?", r.ID).
@@ -714,13 +712,13 @@ func (r *Request) GetFiles(ctx context.Context) ([]File, error) {
 
 // AttachPhoto assigns a previously-stored File to this Request as its photo. Parameter `fileID` is the UUID
 // of the photo to attach.
-func (r *Request) AttachPhoto(ctx context.Context, fileID string) (File, error) {
-	return addFile(Tx(ctx), r, fileID)
+func (r *Request) AttachPhoto(tx *pop.Connection, fileID string) (File, error) {
+	return addFile(tx, r, fileID)
 }
 
 // RemoveFile removes an attached file from the Request
-func (r *Request) RemoveFile(ctx context.Context) error {
-	return removeFile(Tx(ctx), r)
+func (r *Request) RemoveFile(tx *pop.Connection) error {
+	return removeFile(tx, r)
 }
 
 // GetPhoto retrieves the file attached as the Request photo
@@ -741,8 +739,8 @@ func (r *Request) GetPhoto(tx *pop.Connection) (*File, error) {
 }
 
 // GetPhotoID retrieves UUID of the file attached as the Request photo
-func (r *Request) GetPhotoID(ctx context.Context) (*string, error) {
-	if err := Tx(ctx).Load(r, "PhotoFile"); err != nil {
+func (r *Request) GetPhotoID(tx *pop.Connection) (*string, error) {
+	if err := tx.Load(r, "PhotoFile"); err != nil {
 		return nil, err
 	}
 
@@ -781,7 +779,7 @@ func scopeNotCompleted() pop.ScopeFunc {
 // FindByUserAndUUID finds the request identified by the given UUID if it belongs to the same organization as the
 // given user and if the request has not been marked as removed.
 // FIXME: This method will fail to find a shared request from a trusted Organization
-//func (p *Request) FindByUserAndUUID(ctx context.Context, user User, uuid string) error {
+//func (p *Request) FindByUserAndUUID(tx *pop.Connection, user User, uuid string) error {
 //	return tx.Scope(scopeUserOrgs(tx, user)).Scope(scopeNotRemoved()).
 //		Where("uuid = ?", uuid).First(p)
 //}
@@ -795,12 +793,10 @@ type RequestFilterParams struct {
 }
 
 // FindByUser finds all requests visible to the current user, optionally filtered by location or search text.
-func (r *Requests) FindByUser(ctx context.Context, user User, filter RequestFilterParams) error {
+func (r *Requests) FindByUser(tx *pop.Connection, user User, filter RequestFilterParams) error {
 	if user.ID == 0 {
 		return errors.New("invalid User ID in Requests.FindByUser")
 	}
-
-	tx := Tx(ctx)
 
 	if !user.HasOrganization(tx) {
 		*r = Requests{}
@@ -886,12 +882,12 @@ func (r *Request) GetOrigin(tx *pop.Connection) (*Location, error) {
 }
 
 // RemoveOrigin removes the origin from the request
-func (r *Request) RemoveOrigin(ctx context.Context) error {
+func (r *Request) RemoveOrigin(tx *pop.Connection) error {
 	if !r.OriginID.Valid {
 		return nil
 	}
 
-	if err := Tx(ctx).Destroy(&Location{ID: r.OriginID.Int}); err != nil {
+	if err := tx.Destroy(&Location{ID: r.OriginID.Int}); err != nil {
 		return err
 	}
 	r.OriginID = nulls.Int{}
@@ -900,39 +896,38 @@ func (r *Request) RemoveOrigin(ctx context.Context) error {
 }
 
 // SetDestination sets the destination location fields, creating a new record in the database if necessary.
-func (r *Request) SetDestination(ctx context.Context, location Location) error {
+func (r *Request) SetDestination(tx *pop.Connection, location Location) error {
 	if r.MeetingID.Valid {
 		return errors.New("Attempted to set destination on event-based request")
 	}
 	location.ID = r.DestinationID
 	r.Destination = location
-	return r.Destination.Update(Tx(ctx))
+	return r.Destination.Update(tx)
 }
 
 // SetOrigin sets the origin location fields, creating a new record in the database if necessary.
-func (r *Request) SetOrigin(ctx context.Context, location Location) error {
-	tx := Tx(ctx)
+func (r *Request) SetOrigin(tx *pop.Connection, location Location) error {
 	if r.OriginID.Valid {
 		location.ID = r.OriginID.Int
 		r.Origin = location
 		return r.Origin.Update(tx)
 	}
-	if err := location.Create(ctx); err != nil {
+	if err := location.Create(tx); err != nil {
 		return err
 	}
 	r.OriginID = nulls.NewInt(location.ID)
-	return r.Update(ctx)
+	return r.Update(tx)
 }
 
 // IsEditable response with true if the given user is the owner of the request or an admin,
 // and it is not in a locked status.
-func (r *Request) IsEditable(ctx context.Context, user User) (bool, error) {
+func (r *Request) IsEditable(tx *pop.Connection, user User) (bool, error) {
 	if user.ID <= 0 {
 		return false, errors.New("user.ID must be a valid primary key")
 	}
 
 	if r.CreatedByID <= 0 {
-		if err := Tx(ctx).Reload(r); err != nil {
+		if err := tx.Reload(r); err != nil {
 			return false, err
 		}
 	}
@@ -1050,16 +1045,15 @@ func (r Requests) FilterOrigin(tx *pop.Connection, location Location) Requests {
 }
 
 // IsVisible returns true if the Request is visible to the given user. Only the request ID is used in this method.
-func (r *Request) IsVisible(ctx context.Context, user User) bool {
+func (r *Request) IsVisible(tx *pop.Connection, user User) (bool, error) {
 	requests := Requests{}
-	if err := requests.FindByUser(ctx, user, RequestFilterParams{RequestID: &r.ID}); err != nil {
-		domain.Error(ctx, "error in Request.IsVisible, "+err.Error())
-		return false
+	if err := requests.FindByUser(tx, user, RequestFilterParams{RequestID: &r.ID}); err != nil {
+		return false, errors.New("error in Request.IsVisible, " + err.Error())
 	}
-	return len(requests) > 0
+	return len(requests) > 0, nil
 }
 
-func (r *Request) GetCurrentActions(ctx context.Context, user User) ([]string, error) {
+func (r *Request) GetCurrentActions(tx *pop.Connection, user User) ([]string, error) {
 	transitions, err := r.GetStatusTransitions(user)
 	if err != nil {
 		return []string{}, err
@@ -1074,7 +1068,7 @@ func (r *Request) GetCurrentActions(ctx context.Context, user User) ([]string, e
 		}
 	}
 
-	providerActions, err := r.GetPotentialProviderActions(ctx, user)
+	providerActions, err := r.GetPotentialProviderActions(tx, user)
 	if err != nil {
 		return actions, err
 	}

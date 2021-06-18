@@ -1,7 +1,6 @@
 package models
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -84,9 +83,9 @@ func (t *Thread) GetRequest(tx *pop.Connection) (*Request, error) {
 	return &request, nil
 }
 
-func (t *Thread) Messages(ctx context.Context) ([]Message, error) {
+func (t *Thread) Messages(tx *pop.Connection) ([]Message, error) {
 	var messages []Message
-	if err := Tx(ctx).Where("thread_id = ?", t.ID).All(&messages); err != nil {
+	if err := tx.Where("thread_id = ?", t.ID).All(&messages); err != nil {
 		return messages, fmt.Errorf("error getting messages for thread id %v ... %v", t.ID, err)
 	}
 
@@ -165,9 +164,9 @@ func (t *Thread) createParticipantIfNeeded(tx *pop.Connection, tpUsers Users, us
 }
 
 // GetLastViewedAt gets the last viewed time for the given user on the thread
-func (t *Thread) GetLastViewedAt(ctx context.Context, user User) (*time.Time, error) {
+func (t *Thread) GetLastViewedAt(tx *pop.Connection, user User) (*time.Time, error) {
 	var tp ThreadParticipant
-	if err := tp.FindByThreadIDAndUserID(Tx(ctx), t.ID, user.ID); err != nil {
+	if err := tp.FindByThreadIDAndUserID(tx, t.ID, user.ID); err != nil {
 		return nil, err
 	}
 	lastViewedAt := tp.LastViewedAt
@@ -175,10 +174,9 @@ func (t *Thread) GetLastViewedAt(ctx context.Context, user User) (*time.Time, er
 }
 
 // UpdateLastViewedAt sets the last viewed time for the given user on the thread
-func (t *Thread) UpdateLastViewedAt(ctx context.Context, userID int, time time.Time) error {
+func (t *Thread) UpdateLastViewedAt(tx *pop.Connection, userID int, time time.Time) error {
 	var tp ThreadParticipant
 
-	tx := Tx(ctx)
 	if err := tp.FindByThreadIDAndUserID(tx, t.ID, userID); err != nil {
 		return err
 	}
@@ -197,13 +195,13 @@ func (t *Thread) Load(tx *pop.Connection, fields ...string) error {
 
 // UnreadMessageCount returns the number of messages on this thread that the current
 //  user has not created and for which the CreatedAt value is after the lastViewedAt value
-func (t *Thread) UnreadMessageCount(ctx context.Context, userID int, lastViewedAt time.Time) (int, error) {
+func (t *Thread) UnreadMessageCount(tx *pop.Connection, userID int, lastViewedAt time.Time) (int, error) {
 	count := 0
 	if userID <= 0 {
 		return count, fmt.Errorf("error in UnreadMessageCount, invalid id %v", userID)
 	}
 
-	msgs, err := t.Messages(ctx)
+	msgs, err := t.Messages(tx)
 	if err != nil {
 		return count, err
 	}

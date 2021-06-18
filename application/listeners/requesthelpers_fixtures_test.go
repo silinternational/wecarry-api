@@ -21,7 +21,7 @@ func CreateFixtures_GetRequestUsers(ms *ModelSuite, t *testing.T) orgUserRequest
 	org := userFixtures.Organization
 	users := userFixtures.Users
 
-	_, err := users[1].UpdateStandardPreferences(test.Ctx(), models.StandardPreferences{Language: domain.UserPreferenceLanguageFrench})
+	_, err := users[1].UpdateStandardPreferences(ms.DB, models.StandardPreferences{Language: domain.UserPreferenceLanguageFrench})
 
 	ms.NoError(err, "could not create language preference for user "+users[1].Nickname)
 
@@ -48,7 +48,7 @@ func CreateFixtures_RequestStatusUpdatedNotifications(ms *ModelSuite, t *testing
 	requests := test.CreateRequestFixtures(ms.DB, 2, false)
 	requests[0].Status = models.RequestStatusAccepted
 	requests[0].ProviderID = nulls.NewInt(users[1].ID)
-	ms.NoError(requests[0].Update(test.Ctx()))
+	ms.NoError(requests[0].Update(ms.DB))
 
 	return orgUserRequestFixtures{
 		orgs:     models.Organizations{org},
@@ -173,7 +173,7 @@ func createFixturesForTestSendNewRequestNotifications(ms *ModelSuite) orgUserReq
 
 	users := test.CreateUserFixtures(ms.DB, 3).Users
 	for i := range users {
-		ms.NoError(users[i].SetLocation(test.Ctx(), *requestOrigin))
+		ms.NoError(users[i].SetLocation(ms.DB, *requestOrigin))
 	}
 
 	return orgUserRequestFixtures{

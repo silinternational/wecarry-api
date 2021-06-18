@@ -1,7 +1,6 @@
 package models
 
 import (
-	"context"
 	"errors"
 	"strings"
 	"time"
@@ -39,11 +38,11 @@ func (m *MeetingInvite) Validate(tx *pop.Connection) (*validate.Errors, error) {
 }
 
 // Create validates and stores the MeetingInvite data as a new record in the database.
-func (m *MeetingInvite) Create(ctx context.Context) error {
+func (m *MeetingInvite) Create(tx *pop.Connection) error {
 	invite := *m
 	invite.Secret = domain.GetUUID()
 
-	err := create(Tx(ctx), &invite)
+	err := create(tx, &invite)
 	if err != nil && strings.Contains(err.Error(), `duplicate key value violates unique constraint`) {
 		err = nil
 	}
@@ -54,15 +53,15 @@ func (m *MeetingInvite) Create(ctx context.Context) error {
 }
 
 // Meeting returns the related Meeting record
-func (m *MeetingInvite) Meeting(ctx context.Context) (Meeting, error) {
+func (m *MeetingInvite) Meeting(tx *pop.Connection) (Meeting, error) {
 	var meeting Meeting
-	return meeting, Tx(ctx).Find(&meeting, m.MeetingID)
+	return meeting, tx.Find(&meeting, m.MeetingID)
 }
 
 // Inviter returns the related User record of the inviter
-func (m *MeetingInvite) Inviter(ctx context.Context) (User, error) {
+func (m *MeetingInvite) Inviter(tx *pop.Connection) (User, error) {
 	var user User
-	return user, Tx(ctx).Find(&user, m.InviterID)
+	return user, tx.Find(&user, m.InviterID)
 }
 
 // AvatarURL returns a generated gravatar URL for the inivitee

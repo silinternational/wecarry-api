@@ -1,9 +1,7 @@
 package models
 
 import (
-	"context"
 	"encoding/json"
-	"errors"
 	"time"
 
 	"github.com/gobuffalo/nulls"
@@ -43,24 +41,24 @@ func (m *MeetingParticipant) Validate(tx *pop.Connection) (*validate.Errors, err
 }
 
 // Meeting returns the related Meeting record
-func (m *MeetingParticipant) Meeting(ctx context.Context) (Meeting, error) {
+func (m *MeetingParticipant) Meeting(tx *pop.Connection) (Meeting, error) {
 	var meeting Meeting
-	return meeting, Tx(ctx).Find(&meeting, m.MeetingID)
+	return meeting, tx.Find(&meeting, m.MeetingID)
 }
 
 // User returns the related User record of the participant
-func (m *MeetingParticipant) User(ctx context.Context) (User, error) {
+func (m *MeetingParticipant) User(tx *pop.Connection) (User, error) {
 	var user User
-	return user, Tx(ctx).Find(&user, m.UserID)
+	return user, tx.Find(&user, m.UserID)
 }
 
 // Invite returns the related MeetingInvite record
-func (m *MeetingParticipant) Invite(ctx context.Context) (*MeetingInvite, error) {
+func (m *MeetingParticipant) Invite(tx *pop.Connection) (*MeetingInvite, error) {
 	var invite MeetingInvite
 	if !m.InviteID.Valid {
 		return nil, nil
 	}
-	err := Tx(ctx).Find(&invite, m.InviteID.Int)
+	err := tx.Find(&invite, m.InviteID.Int)
 	if err != nil {
 		return nil, err
 	}
@@ -86,51 +84,65 @@ func (m *MeetingParticipant) Destroy(tx *pop.Connection) error {
 
 // FindOrCreate a new MeetingParticipant from a meeting ID and code. If `code` is nil, the meeting must be non-INVITE_ONLY.
 // Otherwise, `code` must match either a MeetingInvite secret code or a Meeting invite code.
-func (m *MeetingParticipant) FindOrCreate(ctx context.Context, meeting Meeting, code *string) error {
-	cUser := CurrentUser(ctx)
-	tx := Tx(ctx)
-	if err := m.FindByMeetingIDAndUserID(tx, meeting.ID, cUser.ID); domain.IsOtherThanNoRows(err) {
-		return domain.ReportError(ctx, err,
-			"CreateMeetingParticipant.FindExisting")
+func (m *MeetingParticipant) FindOrCreate(tx *pop.Connection, meeting Meeting, user User, code *string) *domain.AppError {
+	if err := m.FindByMeetingIDAndUserID(tx, meeting.ID, user.ID); domain.IsOtherThanNoRows(err) {
+		return &domain.AppError{
+			Key:      "CreateMeetingParticipant.FindExisting",
+			DebugMsg: err.Error(),
+		}
 	}
 	if m.ID > 0 {
 		return nil
 	}
 
 	if code == nil {
-		if cUser.CanCreateMeetingParticipant(ctx, meeting) {
-			return m.createWithoutInvite(ctx, meeting)
+		if user.CanCreateMeetingParticipant(tx, meeting) {
+			return m.createWithoutInvite(tx, user, meeting)
 		}
-		return domain.ReportError(ctx, errors.New("user is not allowed to self-join meeting without a code"),
-			"CreateMeetingParticipant.Unauthorized")
+		return &domain.AppError{
+			DebugMsg: "user is not allowed to self-join meeting without a code",
+			Key:      "CreateMeetingParticipant.Unauthorized",
+		}
 	}
 
 	if meeting.IsCodeValid(tx, *code) {
-		return m.createWithoutInvite(ctx, meeting)
+		return m.createWithoutInvite(tx, user, meeting)
 	}
 
 	var invite MeetingInvite
-	if err := invite.FindBySecret(tx, meeting.ID, cUser.Email, *code); domain.IsOtherThanNoRows(err) {
-		return domain.ReportError(ctx, err, "CreateMeetingParticipant.FindBySecret")
+	if err := invite.FindBySecret(tx, meeting.ID, user.Email, *code); domain.IsOtherThanNoRows(err) {
+		return &domain.AppError{
+			DebugMsg: err.Error(),
+			Key:      "CreateMeetingParticipant.FindBySecret",
+		}
 	}
 	if invite.ID == 0 {
-		return domain.ReportError(ctx, errors.New("invalid invite secret"), "CreateMeetingParticipant.InvalidSecret")
+		return &domain.AppError{
+			DebugMsg: "invalid invite secret",
+			Key:      "CreateMeetingParticipant.InvalidSecret",
+		}
 	}
 
 	m.InviteID = nulls.NewInt(invite.ID)
-	m.UserID = cUser.ID
+	m.UserID = user.ID
 	m.MeetingID = meeting.ID
 	if err := tx.Create(m); err != nil {
-		return domain.ReportError(ctx, err, "CreateMeetingParticipant")
+		return &domain.AppError{
+			DebugMsg: err.Error(),
+			Key:      "CreateMeetingParticipant",
+		}
 	}
 	return nil
 }
 
-func (m *MeetingParticipant) createWithoutInvite(ctx context.Context, meeting Meeting) error {
-	m.UserID = CurrentUser(ctx).ID
+func (m *MeetingParticipant) createWithoutInvite(tx *pop.Connection, user User, meeting Meeting) *domain.AppError {
+	m.UserID = user.ID
 	m.MeetingID = meeting.ID
-	if err := Tx(ctx).Create(m); err != nil {
-		return domain.ReportError(ctx, err, "CreateMeetingParticipant")
+	if err := tx.Create(m); err != nil {
+		return &domain.AppError{
+			Key:      "CreateMeetingParticipant",
+			DebugMsg: err.Error(),
+		}
 	}
 	return nil
 }

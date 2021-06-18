@@ -1,7 +1,6 @@
 package models
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -93,8 +92,8 @@ type PotentialProviderEventData struct {
 }
 
 // Create stores the PotentialProvider data as a new record in the database.
-func (p *PotentialProvider) Create(ctx context.Context) error {
-	if err := create(Tx(ctx), p); err != nil {
+func (p *PotentialProvider) Create(tx *pop.Connection) error {
+	if err := create(tx, p); err != nil {
 		return err
 	}
 
@@ -164,15 +163,14 @@ func (p *PotentialProvider) CanUserAccessPotentialProvider(request Request, curr
 
 // FindWithRequestUUIDAndUserUUID  finds the PotentialProvider associated with both the requestUUID and the userUUID
 // No authorization checks are performed - they must be done separately
-func (p *PotentialProvider) FindWithRequestUUIDAndUserUUID(ctx context.Context, requestUUID, userUUID string, currentUser User) error {
+func (p *PotentialProvider) FindWithRequestUUIDAndUserUUID(tx *pop.Connection, requestUUID, userUUID string, currentUser User) error {
 	var request Request
-	tx := Tx(ctx)
 	if err := request.FindByUUID(tx, requestUUID); err != nil {
 		return errors.New("unable to find Request in order to find PotentialProvider: " + err.Error())
 	}
 
 	var user User
-	if err := user.FindByUUID(ctx, userUUID); err != nil {
+	if err := user.FindByUUID(tx, userUUID); err != nil {
 		return errors.New("unable to find User in order to find PotentialProvider: " + err.Error())
 	}
 
@@ -188,9 +186,8 @@ func (p *PotentialProvider) FindWithRequestUUIDAndUserUUID(ctx context.Context, 
 }
 
 // NewWithRequestUUID populates a new PotentialProvider but does not save it
-func (p *PotentialProvider) NewWithRequestUUID(ctx context.Context, requestUUID string, userID int) error {
+func (p *PotentialProvider) NewWithRequestUUID(tx *pop.Connection, requestUUID string, userID int) error {
 	var user User
-	tx := Tx(ctx)
 	if err := user.FindByID(tx, userID); err != nil {
 		return err
 	}
@@ -211,8 +208,8 @@ func (p *PotentialProvider) NewWithRequestUUID(ctx context.Context, requestUUID 
 }
 
 // Destroy destroys the PotentialProvider
-func (p *PotentialProvider) Destroy(ctx context.Context) error {
-	return Tx(ctx).Destroy(p)
+func (p *PotentialProvider) Destroy(tx *pop.Connection) error {
+	return tx.Destroy(p)
 }
 
 // DestroyAllWithRequestUUID Destroys all the PotentialProviders associated with a Request depending

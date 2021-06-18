@@ -329,7 +329,7 @@ func socialLoginBasedAuthCallback(c buffalo.Context, authEmail, clientID string)
 	// if we have an authuser, find or create user in local db and finish login
 	var user models.User
 
-	if err := user.FindOrCreateFromOrglessAuthUser(c, callbackValues.authResp.AuthUser, authType); err != nil {
+	if err := user.FindOrCreateFromOrglessAuthUser(models.Tx(c), callbackValues.authResp.AuthUser, authType); err != nil {
 		return logErrorAndRedirect(c, domain.ErrorWithAuthUser, err.Error())
 	}
 

@@ -1,7 +1,6 @@
 package models
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -53,22 +52,22 @@ func (w *Watch) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 }
 
 // Create stores the Watch data as a new record in the database.
-func (w *Watch) Create(ctx context.Context) error {
-	return create(Tx(ctx), w)
+func (w *Watch) Create(tx *pop.Connection) error {
+	return create(tx, w)
 }
 
 // Update writes the Watch data to an existing database record.
-func (w *Watch) Update(ctx context.Context) error {
-	return update(Tx(ctx), w)
+func (w *Watch) Update(tx *pop.Connection) error {
+	return update(tx, w)
 }
 
 // FindByUUID loads from DB the Watch record identified by the given UUID
-func (w *Watch) FindByUUID(ctx context.Context, id string) error {
+func (w *Watch) FindByUUID(tx *pop.Connection, id string) error {
 	if id == "" {
 		return errors.New("error: watch uuid must not be blank")
 	}
 
-	if err := Tx(ctx).Where("uuid = ?", id).First(w); err != nil {
+	if err := tx.Where("uuid = ?", id).First(w); err != nil {
 		return fmt.Errorf("error finding watch by uuid: %s", err.Error())
 	}
 
@@ -85,9 +84,9 @@ func (w *Watches) FindByUser(tx *pop.Connection, user User) error {
 }
 
 // GetOwner returns the owner of the watch.
-func (w *Watch) GetOwner(ctx context.Context) (*User, error) {
+func (w *Watch) GetOwner(tx *pop.Connection) (*User, error) {
 	owner := User{}
-	if err := Tx(ctx).Find(&owner, w.OwnerID); err != nil {
+	if err := tx.Find(&owner, w.OwnerID); err != nil {
 		return nil, err
 	}
 	return &owner, nil
@@ -118,44 +117,42 @@ func (w *Watch) GetOrigin(tx *pop.Connection) (*Location, error) {
 }
 
 // SetDestination sets the destination field, creating a new record in the database if necessary.
-func (w *Watch) SetDestination(ctx context.Context, location Location) error {
-	tx := Tx(ctx)
+func (w *Watch) SetDestination(tx *pop.Connection, location Location) error {
 	if w.DestinationID.Valid {
 		location.ID = w.DestinationID.Int
 		return location.Update(tx)
 	}
-	if err := location.Create(ctx); err != nil {
+	if err := location.Create(tx); err != nil {
 		return err
 	}
 	w.DestinationID = nulls.NewInt(location.ID)
-	return w.Update(ctx)
+	return w.Update(tx)
 }
 
 // SetOrigin sets the origin field, creating a new record in the database if necessary.
-func (w *Watch) SetOrigin(ctx context.Context, location Location) error {
-	tx := Tx(ctx)
+func (w *Watch) SetOrigin(tx *pop.Connection, location Location) error {
 	if w.OriginID.Valid {
 		location.ID = w.OriginID.Int
 		return location.Update(tx)
 	}
-	if err := location.Create(ctx); err != nil {
+	if err := location.Create(tx); err != nil {
 		return err
 	}
 	w.OriginID = nulls.NewInt(location.ID)
-	return w.Update(ctx)
+	return w.Update(tx)
 }
 
 // Destroy wraps the Pop function of the same name
-func (w *Watch) Destroy(ctx context.Context) error {
-	return Tx(ctx).Destroy(w)
+func (w *Watch) Destroy(tx *pop.Connection) error {
+	return tx.Destroy(w)
 }
 
-func (w *Watch) Meeting(ctx context.Context) (*Meeting, error) {
-	if w == nil || !w.MeetingID.Valid || CurrentUser(ctx).ID != w.OwnerID {
+func (w *Watch) Meeting(tx *pop.Connection, user User) (*Meeting, error) {
+	if w == nil || !w.MeetingID.Valid || user.ID != w.OwnerID {
 		return nil, nil
 	}
 	meeting := &Meeting{}
-	if err := Tx(ctx).Find(meeting, w.MeetingID); err != nil {
+	if err := tx.Find(meeting, w.MeetingID); err != nil {
 		return nil, err
 	}
 	return meeting, nil

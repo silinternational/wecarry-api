@@ -1,7 +1,6 @@
 package models
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -144,15 +143,14 @@ func (m *Message) GetThread(tx *pop.Connection) (*Thread, error) {
 }
 
 // Create a new message if authorized.
-func (m *Message) Create(ctx context.Context, requestUUID string, threadUUID *string, content string) error {
-	user := CurrentUser(ctx)
-	tx := Tx(ctx)
-
+func (m *Message) Create(tx *pop.Connection, user User, requestUUID string, threadUUID *string, content string) error {
 	var request Request
 	if err := request.FindByUUID(tx, requestUUID); err != nil {
 		return errors.New("failed to find request, " + err.Error())
 	}
-	if !request.IsVisible(ctx, user) {
+	if isVisible, err := request.IsVisible(tx, user); err != nil {
+		return err
+	} else if !isVisible {
 		return errors.New("user cannot create a message on request")
 	}
 
@@ -220,8 +218,7 @@ func (m *Message) findByUUID(tx *pop.Connection, id string) error {
 }
 
 // FindByUserAndUUID loads from DB the Message record identified by the given UUID, if the given user is allowed.
-func (m *Message) FindByUserAndUUID(ctx context.Context, user User, id string) error {
-	tx := Tx(ctx)
+func (m *Message) FindByUserAndUUID(tx *pop.Connection, user User, id string) error {
 	if err := m.findByUUID(tx, id); err != nil {
 		return err
 	}

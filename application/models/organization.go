@@ -1,7 +1,6 @@
 package models
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -106,7 +105,7 @@ func (o *Organization) ValidateUpdate(tx *pop.Connection) (*validate.Errors, err
 }
 
 // GetAuthProvider returns the auth provider associated with the domain of `authEmail`, if assigned, otherwise from the Organization's auth provider.
-func (o *Organization) GetAuthProvider(ctx context.Context, authEmail string) (auth.Provider, error) {
+func (o *Organization) GetAuthProvider(tx *pop.Connection, authEmail string) (auth.Provider, error) {
 	// Use type and config from organization by default
 	authType := AuthType(strings.ToUpper(o.AuthType.String()))
 	authConfig := o.AuthConfig
@@ -114,7 +113,7 @@ func (o *Organization) GetAuthProvider(ctx context.Context, authEmail string) (a
 	// Check if organization domain has override auth config to use instead of default
 	authDomain := domain.EmailDomain(authEmail)
 	var orgDomain OrganizationDomain
-	if err := orgDomain.FindByDomain(ctx, authDomain); err != nil {
+	if err := orgDomain.FindByDomain(tx, authDomain); err != nil {
 		return &auth.EmptyProvider{}, err
 	}
 	if orgDomain.AuthType != "" && orgDomain.AuthType != AuthTypeDefault {
@@ -166,10 +165,10 @@ func (o *Organization) FindByDomain(tx *pop.Connection, domain string) error {
 	return nil
 }
 
-func (o *Organization) AddDomain(ctx context.Context, domainName string, authType AuthType, authConfig string) error {
+func (o *Organization) AddDomain(tx *pop.Connection, domainName string, authType AuthType, authConfig string) error {
 	// make sure domainName is not already in use
 	var orgDomain OrganizationDomain
-	if err := orgDomain.FindByDomain(ctx, domainName); domain.IsOtherThanNoRows(err) {
+	if err := orgDomain.FindByDomain(tx, domainName); domain.IsOtherThanNoRows(err) {
 		return err
 	}
 	if orgDomain.ID != 0 {
@@ -180,12 +179,11 @@ func (o *Organization) AddDomain(ctx context.Context, domainName string, authTyp
 	orgDomain.OrganizationID = o.ID
 	orgDomain.AuthType = authType
 	orgDomain.AuthConfig = authConfig
-	return orgDomain.Create(Tx(ctx))
+	return orgDomain.Create(tx)
 }
 
-func (o *Organization) RemoveDomain(ctx context.Context, domain string) error {
+func (o *Organization) RemoveDomain(tx *pop.Connection, domain string) error {
 	var orgDomain OrganizationDomain
-	tx := Tx(ctx)
 	if err := tx.Where("organization_id = ? and domain = ?", o.ID, domain).First(&orgDomain); err != nil {
 		return err
 	}
@@ -194,16 +192,15 @@ func (o *Organization) RemoveDomain(ctx context.Context, domain string) error {
 }
 
 // Save wrap tx.Save() call to check for errors and operate on attached object
-func (o *Organization) Save(ctx context.Context) error {
-	return save(Tx(ctx), o)
+func (o *Organization) Save(tx *pop.Connection) error {
+	return save(tx, o)
 }
 
 func (o *Organizations) All(tx *pop.Connection) error {
 	return tx.All(o)
 }
 
-func (o *Organizations) AllWhereUserIsOrgAdmin(ctx context.Context, cUser User) error {
-	tx := Tx(ctx)
+func (o *Organizations) AllWhereUserIsOrgAdmin(tx *pop.Connection, cUser User) error {
 	if cUser.AdminRole == UserAdminRoleSuperAdmin || cUser.AdminRole == UserAdminRoleSalesAdmin {
 		return o.All(tx)
 	}
@@ -215,9 +212,9 @@ func (o *Organizations) AllWhereUserIsOrgAdmin(ctx context.Context, cUser User) 
 }
 
 // Domains finds and returns all related OrganizationDomain rows.
-func (o *Organization) Domains(ctx context.Context) ([]OrganizationDomain, error) {
+func (o *Organization) Domains(tx *pop.Connection) ([]OrganizationDomain, error) {
 	var domains OrganizationDomains
-	if err := Tx(ctx).Where("organization_id=?", o.ID).Order("domain asc").All(&domains); err != nil {
+	if err := tx.Where("organization_id=?", o.ID).Order("domain asc").All(&domains); err != nil {
 		return nil, err
 	}
 
@@ -260,10 +257,10 @@ func scopeUserAdminOrgs(tx *pop.Connection, cUser User) pop.ScopeFunc {
 }
 
 // LogoURL retrieves the logo URL from the attached file
-func (o *Organization) LogoURL(ctx context.Context) (*string, error) {
+func (o *Organization) LogoURL(tx *pop.Connection) (*string, error) {
 	if o.FileID.Valid {
 		var file File
-		tx := Tx(ctx)
+		tx := tx
 		if err := tx.Find(&file, o.FileID); err != nil {
 			return nil, fmt.Errorf("couldn't find org file %d, %s", o.FileID.Int, err)
 		}
@@ -276,34 +273,33 @@ func (o *Organization) LogoURL(ctx context.Context) (*string, error) {
 }
 
 // CreateTrust creates a OrganizationTrust record linking this Organization with the organization identified by `secondaryID`
-func (o *Organization) CreateTrust(ctx context.Context, secondaryID string) error {
+func (o *Organization) CreateTrust(tx *pop.Connection, secondaryID string) error {
 	var secondaryOrg Organization
-	if err := secondaryOrg.FindByUUID(Tx(ctx), secondaryID); err != nil {
+	if err := secondaryOrg.FindByUUID(tx, secondaryID); err != nil {
 		return fmt.Errorf("CreateTrust, error finding secondary org, %s", err)
 	}
 	var t OrganizationTrust
 	t.PrimaryID = o.ID
 	t.SecondaryID = secondaryOrg.ID
-	if err := t.CreateSymmetric(Tx(ctx)); err != nil {
+	if err := t.CreateSymmetric(tx); err != nil {
 		return fmt.Errorf("failed to create new OrganizationTrust, %s", err)
 	}
 	return nil
 }
 
 // RemoveTrust removes a OrganizationTrust record between this Organization and the organization identified by `secondaryID`
-func (o *Organization) RemoveTrust(ctx context.Context, secondaryID string) error {
+func (o *Organization) RemoveTrust(tx *pop.Connection, secondaryID string) error {
 	var secondaryOrg Organization
-	if err := secondaryOrg.FindByUUID(Tx(ctx), secondaryID); err != nil {
+	if err := secondaryOrg.FindByUUID(tx, secondaryID); err != nil {
 		return fmt.Errorf("RemoveTrust, error finding secondary org, %s", err)
 	}
 	var t OrganizationTrust
-	return t.RemoveSymmetric(Tx(ctx), o.ID, secondaryOrg.ID)
+	return t.RemoveSymmetric(tx, o.ID, secondaryOrg.ID)
 }
 
 // TrustedOrganizations gets a list of connected Organizations
-func (o *Organization) TrustedOrganizations(ctx context.Context) (Organizations, error) {
+func (o *Organization) TrustedOrganizations(tx *pop.Connection) (Organizations, error) {
 	t := OrganizationTrusts{}
-	tx := Tx(ctx)
 	if err := t.FindByOrgID(tx, o.ID); domain.IsOtherThanNoRows(err) {
 		return nil, err
 	}
@@ -323,13 +319,13 @@ func (o *Organization) TrustedOrganizations(ctx context.Context) (Organizations,
 
 // AttachLogo assigns a previously-stored File to this Organization as its logo. Parameter `fileID` is the UUID
 // of the file to attach.
-func (o *Organization) AttachLogo(ctx context.Context, fileID string) (File, error) {
-	return addFile(Tx(ctx), o, fileID)
+func (o *Organization) AttachLogo(tx *pop.Connection, fileID string) (File, error) {
+	return addFile(tx, o, fileID)
 }
 
 // RemoveFile removes an attached file from the Request
-func (o *Organization) RemoveFile(ctx context.Context) error {
-	return removeFile(Tx(ctx), o)
+func (o *Organization) RemoveFile(tx *pop.Connection) error {
+	return removeFile(tx, o)
 }
 
 // FindByIDs finds all Organizations associated with the given IDs and loads them from the database
