@@ -79,13 +79,15 @@ func (t *Thread) LoadRequest(tx *pop.Connection, eagerFields ...string) error {
 	}
 	request := Request{}
 	// If no eagerFields, then don't use Eager at all, otherwise it uses Eager on all of them
-	newTx := tx
-	if len(eagerFields) > 0 {
-		newTx = tx.Eager(eagerFields...)
-	}
 
-	if err := newTx.Find(&request, t.RequestID); err != nil {
-		return fmt.Errorf("error loading request %v %s", t.RequestID, err)
+	if len(eagerFields) > 0 {
+		if err := tx.EagerPreload(eagerFields...).Find(&request, t.RequestID); err != nil {
+			return fmt.Errorf("error loading (preloading) request %v %s", t.RequestID, err)
+		}
+	} else {
+		if err := tx.Find(&request, t.RequestID); err != nil {
+			return fmt.Errorf("error loading request %v %s", t.RequestID, err)
+		}
 	}
 	t.Request = request
 	return nil
@@ -94,12 +96,15 @@ func (t *Thread) LoadRequest(tx *pop.Connection, eagerFields ...string) error {
 func (t *Thread) LoadMessages(tx *pop.Connection, eagerFields ...string) error {
 	var messages []Message
 	// If no eagerFields, then don't use Eager at all, otherwise it uses Eager on all of them
-	newTx := tx
+
 	if len(eagerFields) > 0 {
-		newTx = tx.Eager(eagerFields...)
-	}
-	if err := newTx.Where("thread_id = ?", t.ID).All(&messages); err != nil {
-		return fmt.Errorf("error getting messages for thread id %v ... %v", t.ID, err)
+		if err := tx.EagerPreload(eagerFields...).Where("thread_id = ?", t.ID).All(&messages); err != nil {
+			return fmt.Errorf("error getting messages (preload) for thread id %v ... %v", t.ID, err)
+		}
+	} else {
+		if err := tx.Where("thread_id = ?", t.ID).All(&messages); err != nil {
+			return fmt.Errorf("error getting messages for thread id %v ... %v", t.ID, err)
+		}
 	}
 
 	t.Messages = messages
