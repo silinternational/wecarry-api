@@ -61,7 +61,7 @@ func (r *threadResolver) Messages(ctx context.Context, obj *models.Thread) ([]mo
 		return nil, nil
 	}
 
-	messages, err := obj.Messages(models.Tx(ctx))
+	messages, err := obj.GetMessages(models.Tx(ctx))
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetThreadMessages")
 	}

@@ -635,6 +635,41 @@ func (u *User) GetThreads(tx *pop.Connection) (Threads, error) {
 	return t, nil
 }
 
+// GetThreads finds all threads that the user is participating in.
+func (u *User) GetThreadsForConversations(tx *pop.Connection) (Threads, error) {
+	var t Threads
+	query := tx.Q().
+		LeftJoin("thread_participants tp", "threads.id = tp.thread_id").
+		Where("tp.user_id = ?", u.ID).
+		Order("updated_at desc")
+	if err := query.All(&t); err != nil {
+		return nil, err
+	}
+
+	for i := range t {
+		messages, err := t[i].GetMessagesWithSentBy(tx)
+		if err != nil {
+			return nil, err
+		}
+		t[i].Messages = messages
+
+		participants, err := t[i].GetParticipants(tx)
+		if err != nil {
+			return nil, err
+		}
+		t[i].Participants = participants
+
+		request, err := t[i].GetRequest(tx)
+		if err != nil {
+			return nil, err
+		}
+
+		t[i].Request = *request
+	}
+
+	return t, nil
+}
+
 // WantsRequestNotification answers the question "Does the user want notifications for this request?"
 func (u *User) WantsRequestNotification(tx *pop.Connection, request Request) bool {
 	if request.CreatedByID == u.ID {

@@ -165,7 +165,7 @@ func (ms *ModelSuite) TestThread_GetMessages() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := test.thread.Messages(ms.DB)
+			got, err := test.thread.GetMessages(ms.DB)
 			if test.wantErr {
 				if (err != nil) != test.wantErr {
 					t.Errorf("Messages() did not return expected error")
