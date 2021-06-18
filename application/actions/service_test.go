@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/domain"
 )
 
@@ -17,28 +18,28 @@ func (as *ActionSuite) Test_serviceHandler() {
 		token       string
 		requestBody string
 		wantCode    int
-		wantKey     string
+		wantKey     api.ErrorKey
 		wantTask    ServiceTaskName
 	}{
 		{
 			name:     "incorrect bearer token",
 			token:    "bad token",
 			wantCode: http.StatusUnauthorized,
-			wantKey:  domain.ErrorNotAuthenticated,
+			wantKey:  api.ErrorNotAuthenticated,
 		},
 		{
 			name:        "malformed body",
 			token:       domain.Env.ServiceIntegrationToken,
 			requestBody: "malformed",
 			wantCode:    http.StatusBadRequest,
-			wantKey:     domain.ErrorBadRequest,
+			wantKey:     api.ErrorBadRequest,
 		},
 		{
 			name:        "bad task name",
 			token:       domain.Env.ServiceIntegrationToken,
 			requestBody: `{"task":"bad_task"}`,
 			wantCode:    http.StatusUnprocessableEntity,
-			wantKey:     domain.ErrorUnprocessableEntity,
+			wantKey:     api.ErrorUnprocessableEntity,
 		},
 		{
 			name:        "file cleanup",
@@ -74,11 +75,11 @@ func (as *ActionSuite) Test_serviceHandler() {
 				return
 			}
 
-			var gqlResponse domain.AppError
+			var gqlResponse api.AppError
 			err := json.Unmarshal(responseBody, &gqlResponse)
 			as.NoError(err, "response body parsing error")
 
-			want := domain.AppError{
+			want := api.AppError{
 				Code: tt.wantCode,
 				Key:  tt.wantKey,
 			}

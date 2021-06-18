@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/gobuffalo/validate/v3"
+	"github.com/silinternational/wecarry-api/api"
 
 	"github.com/silinternational/wecarry-api/aws"
 	"github.com/silinternational/wecarry-api/domain"
@@ -74,7 +75,7 @@ func (ms *ModelSuite) TestFile_Store() {
 		name     string
 		args     args
 		wantErr  bool
-		wantCode string
+		wantCode api.ErrorKey
 	}{
 		{
 			name: "empty file",
@@ -83,7 +84,7 @@ func (ms *ModelSuite) TestFile_Store() {
 				content: []byte{},
 			},
 			wantErr:  true,
-			wantCode: "ErrorStoreFileBadContentType",
+			wantCode: api.ErrorStoreFileBadContentType,
 		},
 		{
 			name: "GIF87a file",

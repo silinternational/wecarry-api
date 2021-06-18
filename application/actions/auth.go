@@ -13,6 +13,7 @@ import (
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/buffalo/render"
 	"github.com/gobuffalo/pop/v5"
+	"github.com/silinternational/wecarry-api/api"
 
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
@@ -102,7 +103,7 @@ func getAuthInviteResponse(c buffalo.Context) (authInviteResponse, error) {
 	if inviteCode == "" {
 		authErr := authError{
 			httpStatus: http.StatusBadRequest,
-			errorKey:   domain.ErrorInvalidInviteCode,
+			errorKey:   api.ErrorInvalidInviteCode,
 			errorMsg:   "missing Invite Code.",
 		}
 		return authInviteResponse{}, authRequestError(c, authErr)
@@ -115,7 +116,7 @@ func getAuthInviteResponse(c buffalo.Context) (authInviteResponse, error) {
 	if err := meeting.FindByInviteCode(tx, inviteCode); err != nil {
 		authErr := authError{
 			httpStatus: http.StatusNotFound,
-			errorKey:   domain.ErrorInvalidInviteCode,
+			errorKey:   api.ErrorInvalidInviteCode,
 			errorMsg:   "error validating Invite Code: " + err.Error(),
 		}
 		return authInviteResponse{}, authRequestError(c, authErr, extras)
@@ -179,7 +180,7 @@ func getOrgForNewUser(tx *pop.Connection, authEmail string) (models.Organization
 
 type authError struct {
 	httpStatus int
-	errorKey   string
+	errorKey   api.ErrorKey
 	errorMsg   string
 }
 
@@ -190,7 +191,7 @@ func getOrgBasedAuthOption(c buffalo.Context, authEmail string, org models.Organ
 	if err != nil {
 		return authOption{}, &authError{
 			httpStatus: http.StatusInternalServerError,
-			errorKey:   domain.ErrorLoadingAuthProvider,
+			errorKey:   api.ErrorLoadingAuthProvider,
 			errorMsg:   fmt.Sprintf("unable to load auth provider for '%s' ... %v", org.Name, err),
 		}
 	}
@@ -199,7 +200,7 @@ func getOrgBasedAuthOption(c buffalo.Context, authEmail string, org models.Organ
 	if err != nil {
 		return authOption{}, &authError{
 			httpStatus: http.StatusInternalServerError,
-			errorKey:   domain.ErrorGettingAuthURL,
+			errorKey:   api.ErrorGettingAuthURL,
 			errorMsg: fmt.Sprintf("unable to determine what the authentication url should be for '%s' ... %v",
 				org.Name, err),
 		}
@@ -216,7 +217,7 @@ func meetingAuthRequest(c buffalo.Context, authEmail string, extras map[string]i
 	if !ok {
 		authErr := authError{
 			httpStatus: http.StatusBadRequest,
-			errorKey:   domain.ErrorMissingSessionInviteObjectUUID,
+			errorKey:   api.ErrorMissingSessionInviteObjectUUID,
 			errorMsg:   InviteObjectUUIDSessionKey + " session entry is required to complete login for an invite",
 		}
 		return authRequestError(c, authErr, extras)
@@ -227,7 +228,7 @@ func meetingAuthRequest(c buffalo.Context, authEmail string, extras map[string]i
 	if err := meeting.FindByUUID(tx, meetingUUID); err != nil {
 		authErr := authError{
 			httpStatus: http.StatusNotFound,
-			errorKey:   domain.ErrorInvalidSessionInviteObjectUUID,
+			errorKey:   api.ErrorInvalidSessionInviteObjectUUID,
 			errorMsg: InviteObjectUUIDSessionKey +
 				" session entry caused an error finding the related meeting: " + err.Error(),
 		}
@@ -239,7 +240,7 @@ func meetingAuthRequest(c buffalo.Context, authEmail string, extras map[string]i
 	if err != nil {
 		authErr := authError{
 			httpStatus: http.StatusNotFound,
-			errorKey:   domain.ErrorFindingUserOrgs,
+			errorKey:   api.ErrorFindingUserOrgs,
 			errorMsg:   "error getting UserOrganizations: " + err.Error(),
 		}
 		return authRequestError(c, authErr, extras)
@@ -254,7 +255,7 @@ func meetingAuthRequest(c buffalo.Context, authEmail string, extras map[string]i
 	if err != nil && domain.IsOtherThanNoRows(err) {
 		authErr := authError{
 			httpStatus: http.StatusNotFound,
-			errorKey:   domain.ErrorFindingOrgForNewUser,
+			errorKey:   api.ErrorFindingOrgForNewUser,
 			errorMsg:   "error getting UserOrganizations: " + err.Error(),
 		}
 		return authRequestError(c, authErr, extras)
@@ -279,7 +280,7 @@ func inviteAuthRequest(c buffalo.Context, authEmail, inviteType string) error {
 	if inviteType == "" {
 		authErr := authError{
 			httpStatus: http.StatusBadRequest,
-			errorKey:   domain.ErrorCannotFindOrg,
+			errorKey:   api.ErrorCannotFindOrg,
 			errorMsg:   "unable to find an organization for this user",
 		}
 		return authRequestError(c, authErr, extras)
@@ -291,7 +292,7 @@ func inviteAuthRequest(c buffalo.Context, authEmail, inviteType string) error {
 	default:
 		authErr := authError{
 			httpStatus: http.StatusBadRequest,
-			errorKey:   domain.ErrorInvalidInviteType,
+			errorKey:   api.ErrorInvalidInviteType,
 			errorMsg:   "Invite Type '" + inviteType + "' is not valid.",
 		}
 		return authRequestError(c, authErr, extras)
@@ -352,7 +353,7 @@ func authRequest(c buffalo.Context) error {
 	if clientID == "" {
 		authErr := authError{
 			httpStatus: http.StatusBadRequest,
-			errorKey:   domain.ErrorMissingClientID,
+			errorKey:   api.ErrorMissingClientID,
 			errorMsg:   ClientIDParam + " is required to login",
 		}
 		return authRequestError(c, authErr)
@@ -365,7 +366,7 @@ func authRequest(c buffalo.Context) error {
 	if authEmail == "" {
 		authErr := authError{
 			httpStatus: http.StatusBadRequest,
-			errorKey:   domain.ErrorMissingAuthEmail,
+			errorKey:   api.ErrorMissingAuthEmail,
 			errorMsg:   AuthEmailParam + " is required to login",
 		}
 		return authRequestError(c, authErr)
@@ -387,7 +388,7 @@ func authRequest(c buffalo.Context) error {
 	if err != nil {
 		authErr := authError{
 			httpStatus: http.StatusNotFound,
-			errorKey:   domain.ErrorFindingUserOrgs,
+			errorKey:   api.ErrorFindingUserOrgs,
 			errorMsg:   "error getting UserOrganizations: " + err.Error(),
 		}
 		return authRequestError(c, authErr, extras)
@@ -403,7 +404,7 @@ func authRequest(c buffalo.Context) error {
 		if domain.IsOtherThanNoRows(err) {
 			authErr := authError{
 				httpStatus: http.StatusNotFound,
-				errorKey:   domain.ErrorFindingOrgForNewUser,
+				errorKey:   api.ErrorFindingOrgForNewUser,
 				errorMsg:   "error getting UserOrganizations: " + err.Error(),
 			}
 			return authRequestError(c, authErr, extras)
@@ -424,7 +425,7 @@ func authRequest(c buffalo.Context) error {
 	// If no matching Org, then error, since this isn't based on an invite
 	authErr := authError{
 		httpStatus: http.StatusNotFound,
-		errorKey:   domain.ErrorOrglessUserNotAllowed,
+		errorKey:   api.ErrorOrglessUserNotAllowed,
 		errorMsg:   "no Organization found for this authEmail",
 	}
 	return authRequestError(c, authErr, extras)
@@ -490,7 +491,7 @@ func orgBasedAuthCallback(c buffalo.Context, orgUUID, authEmail, clientID string
 	tx := models.Tx(c)
 	err := org.FindByUUID(tx, orgUUID)
 	if err != nil {
-		return logErrorAndRedirect(c, domain.ErrorFindingOrgByID,
+		return logErrorAndRedirect(c, api.ErrorFindingOrgByID,
 			fmt.Sprintf("error finding org with UUID %s ... %v", orgUUID, err.Error()))
 	}
 
@@ -498,19 +499,19 @@ func orgBasedAuthCallback(c buffalo.Context, orgUUID, authEmail, clientID string
 
 	ap, err := org.GetAuthProvider(tx, authEmail)
 	if err != nil {
-		return logErrorAndRedirect(c, domain.ErrorLoadingAuthProvider,
+		return logErrorAndRedirect(c, api.ErrorLoadingAuthProvider,
 			fmt.Sprintf("error loading auth provider for '%s' ... %v", org.Name, err))
 	}
 
 	authResp := ap.AuthCallback(c)
 	if authResp.Error != nil {
-		return logErrorAndRedirect(c, domain.ErrorAuthProvidersCallback, authResp.Error.Error())
+		return logErrorAndRedirect(c, api.ErrorAuthProvidersCallback, authResp.Error.Error())
 	}
 
 	returnTo := getOrSetReturnTo(c)
 
 	if authResp.AuthUser == nil {
-		return logErrorAndRedirect(c, domain.ErrorAuthProvidersCallback, "nil authResp.AuthUser")
+		return logErrorAndRedirect(c, api.ErrorAuthProvidersCallback, "nil authResp.AuthUser")
 	}
 
 	// if we have an authuser, find or create user in local db and finish login
@@ -519,7 +520,7 @@ func orgBasedAuthCallback(c buffalo.Context, orgUUID, authEmail, clientID string
 	if err := verifyEmails(c, authEmail, authResp.AuthUser.Email); err != nil {
 		c.Session().Clear()
 		domain.NewExtra(c, "authEmail", authEmail)
-		return logErrorAndRedirect(c, domain.ErrorAuthEmailMismatch, err.Error())
+		return logErrorAndRedirect(c, api.ErrorAuthEmailMismatch, err.Error())
 	}
 
 	// Check for an invite in the Session
@@ -529,7 +530,7 @@ func orgBasedAuthCallback(c buffalo.Context, orgUUID, authEmail, clientID string
 	c.Session().Clear()
 
 	if err := user.FindOrCreateFromAuthUser(tx, org.ID, authResp.AuthUser); err != nil {
-		return logErrorAndRedirect(c, domain.ErrorWithAuthUser, err.Error())
+		return logErrorAndRedirect(c, api.ErrorWithAuthUser, err.Error())
 	}
 
 	if inviteType != "" {
@@ -552,13 +553,13 @@ func orgBasedAuthCallback(c buffalo.Context, orgUUID, authEmail, clientID string
 func authCallback(c buffalo.Context) error {
 	clientID, ok := c.Session().Get(ClientIDSessionKey).(string)
 	if !ok {
-		return logErrorAndRedirect(c, domain.ErrorMissingSessionClientID,
+		return logErrorAndRedirect(c, api.ErrorMissingSessionClientID,
 			ClientIDSessionKey+" session entry is required to complete login")
 	}
 
 	authEmail, ok := c.Session().Get(AuthEmailSessionKey).(string)
 	if !ok {
-		return logErrorAndRedirect(c, domain.ErrorMissingSessionAuthEmail,
+		return logErrorAndRedirect(c, api.ErrorMissingSessionAuthEmail,
 			AuthEmailSessionKey+" session entry is required to complete login")
 	}
 
@@ -603,7 +604,7 @@ func mergeExtras(code string, extras ...map[string]interface{}) map[string]inter
 func authRequestError(c buffalo.Context, authErr authError, extras ...map[string]interface{}) error {
 	domain.Error(c, authErr.errorMsg)
 
-	appErr := domain.AppError{
+	appErr := api.AppError{
 		Code: authErr.httpStatus,
 		Key:  authErr.errorKey,
 	}
@@ -614,7 +615,7 @@ func authRequestError(c buffalo.Context, authErr authError, extras ...map[string
 }
 
 // Make extras variadic, so that it can be omitted from the params
-func logErrorAndRedirect(c buffalo.Context, code, message string) error {
+func logErrorAndRedirect(c buffalo.Context, code api.ErrorKey, message string) error {
 	domain.Error(c, message)
 
 	c.Session().Clear()
@@ -628,7 +629,7 @@ func logErrorAndRedirect(c buffalo.Context, code, message string) error {
 func authDestroy(c buffalo.Context) error {
 	tokenParam := c.Param(LogoutToken)
 	if tokenParam == "" {
-		return logErrorAndRedirect(c, domain.ErrorMissingLogoutToken,
+		return logErrorAndRedirect(c, api.ErrorMissingLogoutToken,
 			LogoutToken+" is required to logout")
 	}
 
@@ -636,17 +637,17 @@ func authDestroy(c buffalo.Context) error {
 	tx := models.Tx(c)
 	err := uat.FindByBearerToken(tx, tokenParam)
 	if err != nil {
-		return logErrorAndRedirect(c, domain.ErrorFindingAccessToken, err.Error())
+		return logErrorAndRedirect(c, api.ErrorFindingAccessToken, err.Error())
 	}
 
 	org, err := uat.GetOrganization(tx)
 	if err != nil {
-		return logErrorAndRedirect(c, domain.ErrorFindingOrgForAccessToken, err.Error())
+		return logErrorAndRedirect(c, api.ErrorFindingOrgForAccessToken, err.Error())
 	}
 
 	authUser, err := uat.GetUser(tx)
 	if err != nil {
-		return logErrorAndRedirect(c, domain.ErrorAuthProvidersLogout, err.Error())
+		return logErrorAndRedirect(c, api.ErrorAuthProvidersLogout, err.Error())
 	}
 
 	// set person on rollbar session
@@ -654,12 +655,12 @@ func authDestroy(c buffalo.Context) error {
 
 	authPro, err := org.GetAuthProvider(tx, authUser.Email)
 	if err != nil {
-		return logErrorAndRedirect(c, domain.ErrorLoadingAuthProvider, err.Error())
+		return logErrorAndRedirect(c, api.ErrorLoadingAuthProvider, err.Error())
 	}
 
 	authResp := authPro.Logout(c)
 	if authResp.Error != nil {
-		return logErrorAndRedirect(c, domain.ErrorAuthProvidersLogout, authResp.Error.Error())
+		return logErrorAndRedirect(c, api.ErrorAuthProvidersLogout, authResp.Error.Error())
 	}
 
 	redirectURL := domain.Env.UIURL
@@ -668,7 +669,7 @@ func authDestroy(c buffalo.Context) error {
 		var uat models.UserAccessToken
 		err = uat.DeleteByBearerToken(tx, tokenParam)
 		if err != nil {
-			return logErrorAndRedirect(c, domain.ErrorDeletingAccessToken, err.Error())
+			return logErrorAndRedirect(c, api.ErrorDeletingAccessToken, err.Error())
 		}
 		c.Session().Clear()
 		redirectURL = authResp.RedirectURL
