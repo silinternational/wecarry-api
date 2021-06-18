@@ -269,6 +269,8 @@ type AppError struct {
 	// Don't change the value of these Key entries without making a corresponding change on the UI,
 	// since these will be converted to human-friendly texts on the UI
 	Key string `json:"key"`
+
+	DebugMsg string `json:"debug_msg,omitempty"`
 }
 
 // ErrLogProxy wraps standard error logger plus sends to Rollbar

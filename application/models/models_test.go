@@ -67,13 +67,6 @@ func createTestContext(user User) buffalo.Context {
 	return ctx
 }
 
-func Ctx() context.Context {
-	ctx := &testBuffaloContext{
-		params: map[interface{}]interface{}{},
-	}
-	return ctx
-}
-
 func (ms *ModelSuite) TestCurrentUser() {
 	// setup
 	user := createUserFixtures(ms.DB, 1).Users[0]

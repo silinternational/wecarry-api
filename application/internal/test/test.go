@@ -245,7 +245,7 @@ func CreatePotentialProvidersFixtures(tx *pop.Connection) PotentialProvidersFixt
 	for i, r := range requests[:2] {
 		for _, u := range uf.Users[i+1 : 4] {
 			c := models.PotentialProvider{RequestID: r.ID, UserID: u.ID}
-			c.Create(Ctx())
+			c.Create(tx)
 			providers = append(providers, c)
 		}
 	}

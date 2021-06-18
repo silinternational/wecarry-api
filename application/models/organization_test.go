@@ -101,7 +101,7 @@ func (ms *ModelSuite) TestOrganization_Create() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := test.org.Save(Ctx())
+			err := test.org.Save(ms.DB)
 			if test.wantErr == true {
 				if err == nil {
 					t.Errorf("Expected an error, but did not get one")
@@ -250,28 +250,28 @@ func (ms *ModelSuite) TestOrganization_AddRemoveDomain() {
 
 	orgFixtures := createOrganizationFixtures(ms.DB, 2)
 
-	err := orgFixtures[0].AddDomain(Ctx(), "first.com", "", "")
+	err := orgFixtures[0].AddDomain(ms.DB, "first.com", "", "")
 	ms.NoError(err, "unable to add first domain to Org1: %s", err)
-	domains, _ := orgFixtures[0].Domains(Ctx())
+	domains, _ := orgFixtures[0].Domains(ms.DB)
 	if len(domains) != 1 {
 		t.Errorf("did not get error, but failed to add first domain to Org1")
 	}
 
-	err = orgFixtures[0].AddDomain(Ctx(), "second.com", "", "")
+	err = orgFixtures[0].AddDomain(ms.DB, "second.com", "", "")
 	ms.NoError(err, "unable to add second domain to Org1: %s", err)
-	domains, _ = orgFixtures[0].Domains(Ctx())
+	domains, _ = orgFixtures[0].Domains(ms.DB)
 	if len(domains) != 2 {
 		t.Errorf("did not get error, but failed to add second domain to Org1")
 	}
 
-	err = orgFixtures[1].AddDomain(Ctx(), "second.com", "", "")
+	err = orgFixtures[1].AddDomain(ms.DB, "second.com", "", "")
 	ms.Error(err, "was able to add existing domain (second.com) to Org2 but should have gotten error")
-	domains, _ = orgFixtures[0].Domains(Ctx())
+	domains, _ = orgFixtures[0].Domains(ms.DB)
 	ms.Equal(2, len(domains), "after reloading org domains we did not get what we expected")
 
-	err = orgFixtures[0].RemoveDomain(Ctx(), "first.com")
+	err = orgFixtures[0].RemoveDomain(ms.DB, "first.com")
 	ms.NoError(err, "unable to remove domain: %s", err)
-	domains, _ = orgFixtures[0].Domains(Ctx())
+	domains, _ = orgFixtures[0].Domains(ms.DB)
 	ms.Equal(1, len(domains), "org domains count after removing domain is not correct")
 }
 
@@ -283,7 +283,7 @@ func (ms *ModelSuite) TestOrganization_Save() {
 
 	// test save of existing organization
 	orgFixtures[0].Name = "changed"
-	err := orgFixtures[0].Save(Ctx())
+	err := orgFixtures[0].Save(ms.DB)
 	if err != nil {
 		t.Error(err)
 	}
@@ -307,7 +307,7 @@ func (ms *ModelSuite) TestOrganization_Save() {
 		FileID:     nulls.NewInt(file.ID),
 	}
 
-	err = newOrg.Save(Ctx())
+	err = newOrg.Save(ms.DB)
 	if err != nil {
 		t.Error(err)
 	}
@@ -336,7 +336,7 @@ func (ms *ModelSuite) TestOrganization_All() {
 func (ms *ModelSuite) TestOrganization_GetDomains() {
 	f := CreateFixturesForOrganizationGetDomains(ms)
 
-	orgDomains, err := f.Organizations[0].Domains(Ctx())
+	orgDomains, err := f.Organizations[0].Domains(ms.DB)
 	ms.NoError(err)
 
 	domains := make([]string, len(orgDomains))
@@ -411,7 +411,7 @@ func (ms *ModelSuite) TestOrganization_AllWhereUserIsOrgAdmin() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var got Organizations
-			err := got.AllWhereUserIsOrgAdmin(Ctx(), test.user)
+			err := got.AllWhereUserIsOrgAdmin(ms.DB, test.user)
 
 			if test.wantErr != "" {
 				ms.Error(err)
@@ -450,7 +450,7 @@ func (ms *ModelSuite) TestOrganization_LogoURL() {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			logoURL, err := tt.org.LogoURL(Ctx())
+			logoURL, err := tt.org.LogoURL(ms.DB)
 			if tt.wantErr != "" {
 				ms.Errorf(err, "expected error %s but got no error", tt.wantErr, err)
 				ms.Contains(err.Error(), tt.wantErr)
@@ -490,14 +490,14 @@ func (ms *ModelSuite) TestOrganization_CreateTrust() {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.primary.CreateTrust(Ctx(), tt.secondary.UUID.String())
+			err := tt.primary.CreateTrust(ms.DB, tt.secondary.UUID.String())
 			if tt.wantErr != "" {
 				ms.Errorf(err, "expected error %s but got no error", tt.wantErr, err)
 				ms.Contains(err.Error(), tt.wantErr)
 				return
 			}
 			ms.NoError(err)
-			trustedOrgs, err := tt.primary.TrustedOrganizations(Ctx())
+			trustedOrgs, err := tt.primary.TrustedOrganizations(ms.DB)
 			ms.NoError(err)
 			ms.Equal(tt.want, len(trustedOrgs))
 		})
@@ -530,14 +530,14 @@ func (ms *ModelSuite) TestOrganization_RemoveTrust() {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.primary.RemoveTrust(Ctx(), tt.secondary.UUID.String())
+			err := tt.primary.RemoveTrust(ms.DB, tt.secondary.UUID.String())
 			if tt.wantErr != "" {
 				ms.Errorf(err, "expected error %s but got no error", tt.wantErr, err)
 				ms.Contains(err.Error(), tt.wantErr)
 				return
 			}
 			ms.NoError(err)
-			trustedOrgs, err := tt.primary.TrustedOrganizations(Ctx())
+			trustedOrgs, err := tt.primary.TrustedOrganizations(ms.DB)
 			ms.NoError(err)
 			ms.Equal(tt.want, len(trustedOrgs))
 		})
@@ -568,7 +568,7 @@ func (ms *ModelSuite) TestOrganization_TrustedOrganizations() {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.primary.TrustedOrganizations(Ctx())
+			got, err := tt.primary.TrustedOrganizations(ms.DB)
 			ms.NoError(err, "unexpected error from UUT")
 			ms.Equal(len(tt.want), len(got), "received incorrect number of orgs")
 			ids := make([]int, len(got))
@@ -605,7 +605,7 @@ func (ms *ModelSuite) TestOrganization_GetAuthProvider() {
 		AuthConfig: adAuthConfig,
 		UUID:       uid,
 	}
-	err := org.Save(Ctx())
+	err := org.Save(ms.DB)
 	ms.NoError(err, "unable to create organization fixture")
 
 	orgDomain1 := OrganizationDomain{
@@ -614,7 +614,7 @@ func (ms *ModelSuite) TestOrganization_GetAuthProvider() {
 		AuthType:       AuthTypeDefault,
 		AuthConfig:     "",
 	}
-	err = orgDomain1.Save(Ctx())
+	err = orgDomain1.Save(ms.DB)
 	ms.NoError(err, "unable to create orgDomain1 fixture")
 
 	orgDomain2 := OrganizationDomain{
@@ -623,7 +623,7 @@ func (ms *ModelSuite) TestOrganization_GetAuthProvider() {
 		AuthType:       AuthTypeGoogle,
 		AuthConfig:     "",
 	}
-	err = orgDomain2.Save(Ctx())
+	err = orgDomain2.Save(ms.DB)
 	ms.NoError(err, "unable to create orgDomain2 fixture")
 
 	var o Organization
@@ -631,12 +631,12 @@ func (ms *ModelSuite) TestOrganization_GetAuthProvider() {
 	ms.NoError(err, "unable to find organization fixture")
 
 	// should get type azuread:
-	provider, err := o.GetAuthProvider(Ctx(), "test@domain1.com")
+	provider, err := o.GetAuthProvider(ms.DB, "test@domain1.com")
 	ms.NoError(err, "unable to get authprovider for test@domain1.com")
 	ms.IsType(&azureadv2.Provider{}, provider, "auth provider not expected azureAD type")
 
 	// should get type google:
-	provider, err = o.GetAuthProvider(Ctx(), "test@domain2.com")
+	provider, err = o.GetAuthProvider(ms.DB, "test@domain2.com")
 	ms.NoError(err, "unable to get authprovider for test@domain2.com")
 	ms.IsType(&google.Provider{}, provider, "auth provider not expected google type")
 }

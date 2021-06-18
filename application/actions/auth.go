@@ -186,7 +186,7 @@ type authError struct {
 func getOrgBasedAuthOption(c buffalo.Context, authEmail string, org models.Organization) (authOption, *authError) {
 	c.Session().Set(OrgIDSessionKey, org.UUID.String())
 
-	sp, err := org.GetAuthProvider(c, authEmail)
+	sp, err := org.GetAuthProvider(models.Tx(c), authEmail)
 	if err != nil {
 		return authOption{}, &authError{
 			httpStatus: http.StatusInternalServerError,
@@ -223,7 +223,8 @@ func meetingAuthRequest(c buffalo.Context, authEmail string, extras map[string]i
 	}
 
 	var meeting models.Meeting
-	if err := meeting.FindByUUID(models.Tx(c), meetingUUID); err != nil {
+	tx := models.Tx(c)
+	if err := meeting.FindByUUID(tx, meetingUUID); err != nil {
 		authErr := authError{
 			httpStatus: http.StatusNotFound,
 			errorKey:   domain.ErrorInvalidSessionInviteObjectUUID,
@@ -249,7 +250,7 @@ func meetingAuthRequest(c buffalo.Context, authEmail string, extras map[string]i
 	}
 
 	// Check if user's email has a domain that matches an Organization
-	org, err := getOrgForNewUser(models.Tx(c), authEmail)
+	org, err := getOrgForNewUser(tx, authEmail)
 	if err != nil && domain.IsOtherThanNoRows(err) {
 		authErr := authError{
 			httpStatus: http.StatusNotFound,
@@ -486,7 +487,8 @@ func getInviteInfoFromSession(c buffalo.Context) (string, string) {
 
 func orgBasedAuthCallback(c buffalo.Context, orgUUID, authEmail, clientID string) error {
 	org := models.Organization{}
-	err := org.FindByUUID(models.Tx(c), orgUUID)
+	tx := models.Tx(c)
+	err := org.FindByUUID(tx, orgUUID)
 	if err != nil {
 		return logErrorAndRedirect(c, domain.ErrorFindingOrgByID,
 			fmt.Sprintf("error finding org with UUID %s ... %v", orgUUID, err.Error()))
@@ -494,7 +496,7 @@ func orgBasedAuthCallback(c buffalo.Context, orgUUID, authEmail, clientID string
 
 	domain.NewExtra(c, "authEmail", authEmail)
 
-	ap, err := org.GetAuthProvider(c, authEmail)
+	ap, err := org.GetAuthProvider(tx, authEmail)
 	if err != nil {
 		return logErrorAndRedirect(c, domain.ErrorLoadingAuthProvider,
 			fmt.Sprintf("error loading auth provider for '%s' ... %v", org.Name, err))
@@ -526,7 +528,7 @@ func orgBasedAuthCallback(c buffalo.Context, orgUUID, authEmail, clientID string
 	// login was success, clear session so new login can be initiated if needed
 	c.Session().Clear()
 
-	if err := user.FindOrCreateFromAuthUser(c, org.ID, authResp.AuthUser); err != nil {
+	if err := user.FindOrCreateFromAuthUser(tx, org.ID, authResp.AuthUser); err != nil {
 		return logErrorAndRedirect(c, domain.ErrorWithAuthUser, err.Error())
 	}
 
@@ -650,7 +652,7 @@ func authDestroy(c buffalo.Context) error {
 	// set person on rollbar session
 	domain.RollbarSetPerson(c, authUser.UUID.String(), authUser.Nickname, authUser.Email)
 
-	authPro, err := org.GetAuthProvider(c, authUser.Email)
+	authPro, err := org.GetAuthProvider(tx, authUser.Email)
 	if err != nil {
 		return logErrorAndRedirect(c, domain.ErrorLoadingAuthProvider, err.Error())
 	}

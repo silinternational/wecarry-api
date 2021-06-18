@@ -1,7 +1,6 @@
 package models
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -178,8 +177,8 @@ func (m *Meeting) FindByInviteCode(tx *pop.Connection, code string) error {
 
 // SetImageFile assigns a previously-stored File to this Meeting as its image. Parameter `fileID` is the UUID
 // of the image to attach.
-func (m *Meeting) SetImageFile(ctx context.Context, fileID string) (File, error) {
-	return addFile(Tx(ctx), m, fileID)
+func (m *Meeting) SetImageFile(tx *pop.Connection, fileID string) (File, error) {
+	return addFile(tx, m, fileID)
 }
 
 // ImageFile retrieves the file attached as the Meeting Image
@@ -200,8 +199,8 @@ func (m *Meeting) ImageFile(tx *pop.Connection) (*File, error) {
 }
 
 // RemoveFile removes an attached file from the Meeting
-func (m *Meeting) RemoveFile(ctx context.Context) error {
-	return removeFile(Tx(ctx), m)
+func (m *Meeting) RemoveFile(tx *pop.Connection) error {
+	return removeFile(tx, m)
 }
 
 func (m *Meeting) GetCreator(tx *pop.Connection) (*User, error) {
@@ -223,20 +222,20 @@ func (m *Meeting) GetLocation(tx *pop.Connection) (Location, error) {
 }
 
 // Create stores the Meeting data as a new record in the database.
-func (m *Meeting) Create(ctx context.Context) error {
-	return create(Tx(ctx), m)
+func (m *Meeting) Create(tx *pop.Connection) error {
+	return create(tx, m)
 }
 
 // Update writes the Meeting data to an existing database record.
-func (m *Meeting) Update(ctx context.Context) error {
-	return update(Tx(ctx), m)
+func (m *Meeting) Update(tx *pop.Connection) error {
+	return update(tx, m)
 }
 
 // SetLocation sets the location field, creating a new record in the database if necessary.
-func (m *Meeting) SetLocation(ctx context.Context, location Location) error {
+func (m *Meeting) SetLocation(tx *pop.Connection, location Location) error {
 	location.ID = m.LocationID
 	m.Location = location
-	return m.Location.Update(Tx(ctx))
+	return m.Location.Update(tx)
 }
 
 // CanCreate returns a bool based on whether the current user is allowed to create a meeting
@@ -255,9 +254,9 @@ func (m *Meeting) CanUpdate(user User) bool {
 }
 
 // Requests return all associated Requests
-func (m *Meeting) Requests(ctx context.Context) (Requests, error) {
+func (m *Meeting) Requests(tx *pop.Connection) (Requests, error) {
 	var requests Requests
-	if err := Tx(ctx).Where("meeting_id = ?", m.ID).Order("updated_at desc").All(&requests); err != nil {
+	if err := tx.Where("meeting_id = ?", m.ID).Order("updated_at desc").All(&requests); err != nil {
 		return nil, fmt.Errorf("error getting requests for meeting id %v ... %v", m.ID, err)
 	}
 
@@ -265,14 +264,18 @@ func (m *Meeting) Requests(ctx context.Context) (Requests, error) {
 }
 
 // Invites returns all of the MeetingInvites for this Meeting. Only the meeting creator and organizers are authorized.
-func (m *Meeting) Invites(ctx context.Context) (MeetingInvites, error) {
-	tx := Tx(ctx)
+func (m *Meeting) Invites(tx *pop.Connection, user User) (MeetingInvites, error) {
 	i := MeetingInvites{}
 	if m == nil {
 		return i, nil
 	}
-	currentUser := CurrentUser(ctx)
-	if currentUser.ID != m.CreatedByID && !m.isOrganizer(ctx, currentUser.ID) && !currentUser.isSuperAdmin() {
+
+	isOrganizer, err := m.isOrganizer(tx, user.ID)
+	if err != nil {
+		return i, err
+	}
+
+	if user.ID != m.CreatedByID && !isOrganizer && !user.isSuperAdmin() {
 		return i, nil
 	}
 	if err := tx.Where("meeting_id = ?", m.ID).All(&i); err != nil {
@@ -283,15 +286,19 @@ func (m *Meeting) Invites(ctx context.Context) (MeetingInvites, error) {
 
 // Participants returns all of the MeetingParticipants for this Meeting. Only the meeting creator and organizers are
 // authorized.
-func (m *Meeting) Participants(ctx context.Context) (MeetingParticipants, error) {
-	tx := Tx(ctx)
+func (m *Meeting) Participants(tx *pop.Connection, user User) (MeetingParticipants, error) {
 	p := MeetingParticipants{}
 	if m == nil {
 		return p, nil
 	}
-	currentUser := CurrentUser(ctx)
-	if currentUser.ID != m.CreatedByID && !m.isOrganizer(ctx, currentUser.ID) && !currentUser.isSuperAdmin() {
-		return p, tx.Where("user_id = ? AND meeting_id = ?", currentUser.ID, m.ID).All(&p)
+
+	isOrganizer, err := m.isOrganizer(tx, user.ID)
+	if err != nil {
+		return p, err
+	}
+
+	if user.ID != m.CreatedByID && !isOrganizer && !user.isSuperAdmin() {
+		return p, tx.Where("user_id = ? AND meeting_id = ?", user.ID, m.ID).All(&p)
 	}
 	if err := tx.Where("meeting_id = ?", m.ID).All(&p); err != nil {
 		return p, err
@@ -301,12 +308,12 @@ func (m *Meeting) Participants(ctx context.Context) (MeetingParticipants, error)
 
 // Organizers returns all of the users who are organizers for this Meeting. No authorization is checked, so
 // any queries should render this as a PublicProfile to limit field visibility.
-func (m *Meeting) Organizers(ctx context.Context) (Users, error) {
+func (m *Meeting) Organizers(tx *pop.Connection) (Users, error) {
 	u := Users{}
 	if m == nil {
 		return u, nil
 	}
-	if err := Tx(ctx).
+	if err := tx.
 		Select("users.id", "users.uuid", "nickname", "file_id", "auth_photo_url").
 		Where("meeting_participants.is_organizer=true").
 		Where("meeting_participants.meeting_id=?", m.ID).
@@ -317,19 +324,17 @@ func (m *Meeting) Organizers(ctx context.Context) (Users, error) {
 	return u, nil
 }
 
-func (m *Meeting) RemoveInvite(ctx context.Context, email string) error {
+func (m *Meeting) RemoveInvite(tx *pop.Connection, email string) error {
 	var invite MeetingInvite
-	tx := Tx(ctx)
 	if err := invite.FindByMeetingIDAndEmail(tx, m.ID, email); err != nil {
 		return err
 	}
 	return invite.Destroy(tx)
 }
 
-func (m *Meeting) RemoveParticipant(ctx context.Context, userUUID string) error {
+func (m *Meeting) RemoveParticipant(tx *pop.Connection, userUUID string) error {
 	var user User
-	tx := Tx(ctx)
-	if err := user.FindByUUID(ctx, userUUID); err != nil {
+	if err := user.FindByUUID(tx, userUUID); err != nil {
 		return fmt.Errorf("invalid user ID %s in Meeting.RemoveParticipant, %s", userUUID, err)
 	}
 	var participant MeetingParticipant
@@ -346,20 +351,20 @@ func (m *Meeting) IsCodeValid(tx *pop.Connection, code string) bool {
 	return false
 }
 
-func (m *Meeting) isOrganizer(ctx context.Context, userID int) bool {
-	organizers, err := m.Organizers(ctx)
+func (m *Meeting) isOrganizer(tx *pop.Connection, userID int) (bool, error) {
+	organizers, err := m.Organizers(tx)
 	if err != nil {
-		domain.Error(ctx, "isOrganizer() error reading list of meeting organizers, "+err.Error())
+		return false, errors.New("isOrganizer() error reading list of meeting organizers, " + err.Error())
 	}
 	for _, o := range organizers {
 		if o.ID == userID {
-			return true
+			return true, nil
 		}
 	}
-	return false
+	return false, nil
 }
 
-func (m *Meeting) isVisible(ctx context.Context, userID int) bool {
+func (m *Meeting) isVisible(tx *pop.Connection, userID int) bool {
 	return true
 }
 

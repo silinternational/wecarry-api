@@ -108,7 +108,7 @@ func (ms *ModelSuite) TestPotentialProvider_FindWithRequestUUIDAndUserUUID() {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			provider := PotentialProvider{}
-			err := provider.FindWithRequestUUIDAndUserUUID(Ctx(), tt.request.UUID.String(),
+			err := provider.FindWithRequestUUIDAndUserUUID(ms.DB, tt.request.UUID.String(),
 				tt.ppUserUUID.String(), tt.currentUser)
 
 			if tt.wantErr != "" {
@@ -212,7 +212,7 @@ func (ms *ModelSuite) TestNewWithRequestUUID() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			provider := PotentialProvider{}
-			err := provider.NewWithRequestUUID(Ctx(), test.request.UUID.String(), test.userID)
+			err := provider.NewWithRequestUUID(ms.DB, test.request.UUID.String(), test.userID)
 			if test.wantErr != "" {
 				ms.Error(err, "expected an error but did not get one")
 				ms.Equal(test.wantErr, err.Error(), "incorrect error message")

@@ -83,7 +83,7 @@ func (ms *ModelSuite) TestMeetingParticipant_Meeting() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			got, err := tt.participant.Meeting(Ctx())
+			got, err := tt.participant.Meeting(ms.DB)
 			if tt.wantErr != "" {
 				ms.Error(err, `didn't get expected error: "%s"`, tt.wantErr)
 				ms.Contains(err.Error(), tt.wantErr, "wrong error message")
@@ -118,7 +118,7 @@ func (ms *ModelSuite) TestMeetingParticipant_User() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			got, err := tt.participant.User(Ctx())
+			got, err := tt.participant.User(ms.DB)
 			if tt.wantErr != "" {
 				ms.Error(err, `didn't get expected error: "%s"`, tt.wantErr)
 				ms.Contains(err.Error(), tt.wantErr, "wrong error message")
@@ -186,8 +186,6 @@ func (ms *ModelSuite) TestMeetingParticipant_FindOrCreate() {
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
 			// setup
-			ctx := createTestContext(tt.user)
-
 			var code *string
 			if tt.code.Valid {
 				c := tt.code.UUID.String()
@@ -198,18 +196,17 @@ func (ms *ModelSuite) TestMeetingParticipant_FindOrCreate() {
 
 			// execute
 			var p MeetingParticipant
-			err := p.FindOrCreate(ctx, tt.meeting, code)
+			appErr := p.FindOrCreate(ms.DB, tt.meeting, tt.user, code)
 
 			// verify
 			if tt.wantErr != "" {
-				ms.Error(err, "did not get expected error")
-				ms.Contains(err.Error(), tt.wantErr)
+				ms.NotNil(appErr, "did not get expected error")
+				ms.Contains(appErr.Key, tt.wantErr)
 				return
 			}
-			ms.NoError(err, "unexpected error")
+			ms.Nil(appErr, "unexpected error")
 
-			ctx.Set(domain.ContextKeyCurrentUser, f.Users[0])
-			participants, err := tt.meeting.Participants(ctx)
+			participants, err := tt.meeting.Participants(ms.DB, f.Users[0])
 			ms.NoError(err)
 
 			ids := make([]int, len(participants))

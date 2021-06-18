@@ -89,7 +89,7 @@ func (ms *ModelSuite) TestWatch_FindByUUID() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var watch Watch
-			err := watch.FindByUUID(Ctx(), test.uuid)
+			err := watch.FindByUUID(ms.DB, test.uuid)
 			if test.wantErr != "" {
 				ms.Error(err)
 				ms.Contains(err.Error(), test.wantErr, "wrong error type")
@@ -143,7 +143,7 @@ func (ms *ModelSuite) TestWatch_GetOwner() {
 	users := createUserFixtures(ms.DB, 2).Users
 	watches := createWatchFixtures(ms.DB, users)
 
-	owner, err := watches[0].GetOwner(Ctx())
+	owner, err := watches[0].GetOwner(ms.DB)
 	ms.NoError(err, "unexpected error")
 	ms.Equal(users[0].UUID, owner.UUID, "incorrect owner")
 }
@@ -152,7 +152,7 @@ func (ms *ModelSuite) TestWatch_GetSetLocation() {
 	newLoc := createLocationFixtures(ms.DB, 1)[0]
 	watches := createWatchFixtures(ms.DB, createUserFixtures(ms.DB, 1).Users)
 
-	err := watches[0].SetDestination(Ctx(), newLoc)
+	err := watches[0].SetDestination(ms.DB, newLoc)
 	ms.NoError(err, "unexpected error from SetDestination()")
 
 	got, err := watches[0].GetDestination(ms.DB)
@@ -168,7 +168,7 @@ func (ms *ModelSuite) TestWatch_Meeting() {
 	watches := createWatchFixtures(ms.DB, users)
 	meeting := createMeetingFixtures(ms.DB, 1).Meetings[0]
 	watches[1].MeetingID = nulls.NewInt(meeting.ID)
-	ms.NoError(watches[1].Update(Ctx()))
+	ms.NoError(watches[1].Update(ms.DB))
 
 	tests := []struct {
 		name     string
@@ -197,7 +197,7 @@ func (ms *ModelSuite) TestWatch_Meeting() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			got, err := tt.watch.Meeting(createTestContext(tt.testUser))
+			got, err := tt.watch.Meeting(ms.DB, tt.testUser)
 			ms.NoError(err)
 			if tt.want == nil {
 				ms.Nil(got)
@@ -218,18 +218,18 @@ func (ms *ModelSuite) TestWatch_requestMatches() {
 	watches[0].Size = &tiny
 	requestTitle := requests[0].Title
 	watches[0].SearchText = nulls.NewString(requestTitle[:len(requestTitle)-1])
-	ms.NoError(watches[1].Update(Ctx()))
+	ms.NoError(watches[1].Update(ms.DB))
 
 	// watch 1 matches on text and size
 	small := RequestSizeSmall
 	watches[1].Size = &small
 	watches[1].SearchText = nulls.NewString(requestTitle[:len(requestTitle)-1])
-	ms.NoError(watches[1].Update(Ctx()))
+	ms.NoError(watches[1].Update(ms.DB))
 
 	// watch 2 matches on neither text nor size
 	watches[2].Size = &tiny
 	watches[2].SearchText = nulls.NewString("not going to match this")
-	ms.NoError(watches[2].Update(Ctx()))
+	ms.NoError(watches[2].Update(ms.DB))
 
 	tests := []struct {
 		name    string
@@ -276,10 +276,10 @@ func (ms *ModelSuite) TestWatch_destinationMatches() {
 
 	dest, err := requests[0].GetDestination(ms.DB)
 	ms.NoError(err)
-	ms.NoError(dest.Create(Ctx()))
-	ms.NoError(watches[0].SetDestination(Ctx(), *dest))
+	ms.NoError(dest.Create(ms.DB))
+	ms.NoError(watches[0].SetDestination(ms.DB, *dest))
 
-	ms.NoError(watches[1].SetDestination(Ctx(), Location{Country: "XX", Description: "-"}))
+	ms.NoError(watches[1].SetDestination(ms.DB, Location{Country: "XX", Description: "-"}))
 
 	tests := []struct {
 		name    string
@@ -325,10 +325,10 @@ func (ms *ModelSuite) TestWatch_originMatches() {
 
 	origin, err := requests[0].GetOrigin(ms.DB)
 	ms.NoError(err)
-	ms.NoError(origin.Create(Ctx()))
-	ms.NoError(watches[0].SetOrigin(Ctx(), *origin))
+	ms.NoError(origin.Create(ms.DB))
+	ms.NoError(watches[0].SetOrigin(ms.DB, *origin))
 
-	ms.NoError(watches[1].SetOrigin(Ctx(), Location{Country: "XX", Description: "-"}))
+	ms.NoError(watches[1].SetOrigin(ms.DB, Location{Country: "XX", Description: "-"}))
 
 	tests := []struct {
 		name    string
@@ -469,23 +469,23 @@ func (ms *ModelSuite) TestWatch_textMatches() {
 
 	requestDescription := requests[0].Description.String
 	watches[0].SearchText = nulls.NewString(requestDescription[:len(requestDescription)-1])
-	ms.NoError(watches[0].Update(Ctx()))
+	ms.NoError(watches[0].Update(ms.DB))
 
 	requestTitle := requests[0].Title
 	watches[1].SearchText = nulls.NewString(requestTitle[:len(requestTitle)-1])
-	ms.NoError(watches[1].Update(Ctx()))
+	ms.NoError(watches[1].Update(ms.DB))
 
 	requestCreator, err := requests[0].Creator(ms.DB)
 	ms.NoError(err)
 	requestCreatorNickname := requestCreator.Nickname
 	watches[2].SearchText = nulls.NewString(requestCreatorNickname[:5])
-	ms.NoError(watches[2].Update(Ctx()))
+	ms.NoError(watches[2].Update(ms.DB))
 
 	watches[3].SearchText = nulls.NewString("not a match for anything")
-	ms.NoError(watches[3].Update(Ctx()))
+	ms.NoError(watches[3].Update(ms.DB))
 
 	watches[4].SearchText = nulls.String{}
-	ms.NoError(watches[4].Update(Ctx()))
+	ms.NoError(watches[4].Update(ms.DB))
 
 	tests := []struct {
 		name    string

@@ -1,7 +1,6 @@
 package models
 
 import (
-	"context"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
@@ -108,8 +107,8 @@ func (u *User) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 }
 
 // All retrieves all Users from the database.
-func (u *Users) All(ctx context.Context) error {
-	return Tx(ctx).Order("nickname asc").All(u)
+func (u *Users) All(tx *pop.Connection) error {
+	return tx.Order("nickname asc").All(u)
 }
 
 // CreateAccessToken - Create and store new UserAccessToken
@@ -160,7 +159,7 @@ func (u *User) GetOrgIDs(tx *pop.Connection) []int {
 	return s
 }
 
-func (u *User) hydrateFromAuthUser(ctx context.Context, authUser *auth.User, authType string) error {
+func (u *User) hydrateFromAuthUser(tx *pop.Connection, authUser *auth.User, authType string) error {
 	newUser := true
 	if u.ID != 0 {
 		newUser = false
@@ -182,11 +181,11 @@ func (u *User) hydrateFromAuthUser(ctx context.Context, authUser *auth.User, aut
 	// if new user they will need a unique Nickname
 	if newUser {
 		u.Nickname = authUser.Nickname
-		if err := u.uniquifyNickname(Tx(ctx), getShuffledPrefixes()); err != nil {
+		if err := u.uniquifyNickname(tx, getShuffledPrefixes()); err != nil {
 			return err
 		}
 	}
-	if err := u.Save(ctx); err != nil {
+	if err := u.Save(tx); err != nil {
 		return errors.New("unable to save user record: " + err.Error())
 	}
 
@@ -201,9 +200,8 @@ func (u *User) hydrateFromAuthUser(ctx context.Context, authUser *auth.User, aut
 	return nil
 }
 
-func (u *User) FindOrCreateFromAuthUser(ctx context.Context, orgID int, authUser *auth.User) error {
+func (u *User) FindOrCreateFromAuthUser(tx *pop.Connection, orgID int, authUser *auth.User) error {
 	userOrgs := UserOrganizations{}
-	tx := Tx(ctx)
 	err := userOrgs.FindByAuthEmail(tx, authUser.Email, orgID)
 	if err != nil {
 		return errors.WithStack(err)
@@ -223,7 +221,7 @@ func (u *User) FindOrCreateFromAuthUser(ctx context.Context, orgID int, authUser
 		}
 	}
 
-	if err := u.hydrateFromAuthUser(ctx, authUser, ""); err != nil {
+	if err := u.hydrateFromAuthUser(tx, authUser, ""); err != nil {
 		return err
 	}
 
@@ -247,12 +245,12 @@ func (u *User) FindOrCreateFromAuthUser(ctx context.Context, orgID int, authUser
 
 // FindOrCreateFromOrglessAuthUser creates a new User based on an auth.User and
 // sets its SocialAuthProvider field so they can login again in future.
-func (u *User) FindOrCreateFromOrglessAuthUser(ctx context.Context, authUser *auth.User, authType string) error {
-	if err := Tx(ctx).Where("email = ?", authUser.Email).First(u); domain.IsOtherThanNoRows(err) {
+func (u *User) FindOrCreateFromOrglessAuthUser(tx *pop.Connection, authUser *auth.User, authType string) error {
+	if err := tx.Where("email = ?", authUser.Email).First(u); domain.IsOtherThanNoRows(err) {
 		return errors.WithStack(err)
 	}
 
-	return u.hydrateFromAuthUser(ctx, authUser, authType)
+	return u.hydrateFromAuthUser(tx, authUser, authType)
 }
 
 // CanCreateOrganization returns true if the given user is allowed to create organizations
@@ -266,14 +264,14 @@ func (u *User) CanCreateOrganizationTrust() bool {
 }
 
 // CanRemoveOrganizationTrust returns true if the given user is allowed to remove an OrganizationTrust
-func (u *User) CanRemoveOrganizationTrust(ctx context.Context, orgId int) bool {
+func (u *User) CanRemoveOrganizationTrust(tx *pop.Connection, orgId int) bool {
 	// if user is a system admin, allow
 	if u.AdminRole == UserAdminRoleSuperAdmin || u.AdminRole == UserAdminRoleSalesAdmin {
 		return true
 	}
 
 	// make sure we're checking current user orgs
-	if err := Tx(ctx).Load(u, "UserOrganizations"); err != nil {
+	if err := tx.Load(u, "UserOrganizations"); err != nil {
 		return false
 	}
 
@@ -287,14 +285,14 @@ func (u *User) CanRemoveOrganizationTrust(ctx context.Context, orgId int) bool {
 }
 
 // CanViewOrganization returns true if the given user is allowed to view the specified organization
-func (u *User) CanViewOrganization(ctx context.Context, orgId int) bool {
+func (u *User) CanViewOrganization(tx *pop.Connection, orgId int) bool {
 	// if user is a system admin, allow
 	if u.AdminRole == UserAdminRoleSuperAdmin || u.AdminRole == UserAdminRoleSalesAdmin {
 		return true
 	}
 
 	// make sure we're checking current user orgs
-	if err := Tx(ctx).Load(u, "UserOrganizations"); err != nil {
+	if err := tx.Load(u, "UserOrganizations"); err != nil {
 		return false
 	}
 
@@ -307,14 +305,14 @@ func (u *User) CanViewOrganization(ctx context.Context, orgId int) bool {
 	return false
 }
 
-func (u *User) CanEditOrganization(ctx context.Context, orgId int) bool {
+func (u *User) CanEditOrganization(tx *pop.Connection, orgId int) bool {
 	// if user is a system admin, allow
 	if u.AdminRole == UserAdminRoleSuperAdmin || u.AdminRole == UserAdminRoleSalesAdmin {
 		return true
 	}
 
 	// make sure we're checking current user orgs
-	if err := Tx(ctx).Load(u, "UserOrganizations"); err != nil {
+	if err := tx.Load(u, "UserOrganizations"); err != nil {
 		return false
 	}
 
@@ -342,7 +340,7 @@ func (u *User) CanUpdateRequestStatus(request Request, newStatus RequestStatus) 
 	return request.canUserChangeStatus(*u, newStatus)
 }
 
-func (u *User) CanViewRequest(ctx context.Context, request Request) bool {
+func (u *User) CanViewRequest(tx *pop.Connection, request Request) bool {
 	if u.AdminRole == UserAdminRoleSuperAdmin {
 		return true
 	}
@@ -355,8 +353,6 @@ func (u *User) CanViewRequest(ctx context.Context, request Request) bool {
 	if u.ID == request.CreatedByID {
 		return true
 	}
-
-	tx := Tx(ctx)
 
 	// If the user has a matching org, then yes
 	uOrgIDs := u.GetOrgIDs(tx)
@@ -384,12 +380,12 @@ func (u *User) CanViewRequest(ctx context.Context, request Request) bool {
 }
 
 // FindByUUID find a User with the given UUID and loads it from the database.
-func (u *User) FindByUUID(ctx context.Context, uuid string) error {
+func (u *User) FindByUUID(tx *pop.Connection, uuid string) error {
 	if uuid == "" {
 		return errors.New("error: uuid must not be blank")
 	}
 
-	if err := Tx(ctx).Where("uuid = ?", uuid).First(u); err != nil {
+	if err := tx.Where("uuid = ?", uuid).First(u); err != nil {
 		return fmt.Errorf("error finding user by uuid: %s", err.Error())
 	}
 
@@ -441,8 +437,8 @@ func HashClientIdAccessToken(accessToken string) string {
 	return fmt.Sprintf("%x", sha256.Sum256([]byte(accessToken)))
 }
 
-func (u *User) GetOrganizations(ctx context.Context) (Organizations, error) {
-	if err := Tx(ctx).Load(u, "Organizations"); err != nil {
+func (u *User) GetOrganizations(tx *pop.Connection) (Organizations, error) {
+	if err := tx.Load(u, "Organizations"); err != nil {
 		return nil, fmt.Errorf("error getting organizations for user id %v ... %v", u.ID, err)
 	}
 
@@ -458,31 +454,31 @@ func (u *User) FindUserOrganization(tx *pop.Connection, org Organization) (UserO
 	return userOrg, nil
 }
 
-func (u *User) Requests(ctx context.Context, requestRole string) ([]Request, error) {
+func (u *User) Requests(tx *pop.Connection, requestRole string) ([]Request, error) {
 	fk := map[string]string{
 		RequestsCreated:   "created_by_id=?",
 		RequestsProviding: "provider_id=?",
 	}
 	var requests Requests
-	if err := Tx(ctx).Where(fk[requestRole], u.ID).Order("updated_at desc").All(&requests); err != nil {
+	if err := tx.Where(fk[requestRole], u.ID).Order("updated_at desc").All(&requests); err != nil {
 		return nil, fmt.Errorf("error getting requests for user id %v ... %v", u.ID, err)
 	}
 	return requests, nil
 }
 
 // AttachPhoto assigns a previously-stored File to this User as a profile photo
-func (u *User) AttachPhoto(ctx context.Context, fileID string) (File, error) {
-	return addFile(Tx(ctx), u, fileID)
+func (u *User) AttachPhoto(tx *pop.Connection, fileID string) (File, error) {
+	return addFile(tx, u, fileID)
 }
 
 // RemoveFile removes an attached file from the User profile
-func (u *User) RemoveFile(ctx context.Context) error {
-	return removeFile(Tx(ctx), u)
+func (u *User) RemoveFile(tx *pop.Connection) error {
+	return removeFile(tx, u)
 }
 
 // GetPhotoID retrieves the UUID of the User's photo file
-func (u *User) GetPhotoID(ctx context.Context) (*string, error) {
-	if err := Tx(ctx).Load(u, "PhotoFile"); err != nil {
+func (u *User) GetPhotoID(tx *pop.Connection) (*string, error) {
+	if err := tx.Load(u, "PhotoFile"); err != nil {
 		return nil, err
 	}
 	if u.FileID.Valid {
@@ -494,8 +490,7 @@ func (u *User) GetPhotoID(ctx context.Context) (*string, error) {
 }
 
 // GetPhotoURL retrieves the photo URL from the attached file
-func (u *User) GetPhotoURL(ctx context.Context) (*string, error) {
-	tx := Tx(ctx)
+func (u *User) GetPhotoURL(tx *pop.Connection) (*string, error) {
 	if err := tx.Load(u, "PhotoFile"); err != nil {
 		return nil, err
 	}
@@ -515,9 +510,9 @@ func (u *User) GetPhotoURL(ctx context.Context) (*string, error) {
 }
 
 // Save wraps tx.Save() call to check for errors and operate on attached object
-func (u *User) Save(ctx context.Context) error {
+func (u *User) Save(tx *pop.Connection) error {
 	u.Nickname = domain.RemoveUnwantedChars(u.Nickname, "-_ .,'&@")
-	return save(Tx(ctx), u)
+	return save(tx, u)
 }
 
 func (u *User) uniquifyNickname(tx *pop.Connection, prefixes [30]string) error {
@@ -553,12 +548,12 @@ func (u *User) uniquifyNickname(tx *pop.Connection, prefixes [30]string) error {
 }
 
 // GetLocation reads the location record, if it exists, and returns the Location object.
-func (u *User) GetLocation(ctx context.Context) (*Location, error) {
+func (u *User) GetLocation(tx *pop.Connection) (*Location, error) {
 	if !u.LocationID.Valid {
 		return nil, nil
 	}
 	location := Location{}
-	if err := Tx(ctx).Find(&location, u.LocationID); err != nil {
+	if err := tx.Find(&location, u.LocationID); err != nil {
 		return nil, err
 	}
 
@@ -566,27 +561,26 @@ func (u *User) GetLocation(ctx context.Context) (*Location, error) {
 }
 
 // SetLocation sets the user location fields, creating a new record in the database if necessary.
-func (u *User) SetLocation(ctx context.Context, location Location) error {
-	tx := Tx(ctx)
+func (u *User) SetLocation(tx *pop.Connection, location Location) error {
 	if u.LocationID.Valid {
 		location.ID = u.LocationID.Int
 		u.Location = location
 		return u.Location.Update(tx)
 	}
-	if err := location.Create(ctx); err != nil {
+	if err := location.Create(tx); err != nil {
 		return err
 	}
 	u.LocationID = nulls.NewInt(location.ID)
-	return u.Save(ctx)
+	return u.Save(tx)
 }
 
 // RemoveLocation removes the location record associated with the user
-func (u *User) RemoveLocation(ctx context.Context) error {
+func (u *User) RemoveLocation(tx *pop.Connection) error {
 	if !u.LocationID.Valid {
 		return nil
 	}
 
-	if err := Tx(ctx).Destroy(&Location{ID: u.LocationID.Int}); err != nil {
+	if err := tx.Destroy(&Location{ID: u.LocationID.Int}); err != nil {
 		return err
 	}
 	u.LocationID = nulls.Int{}
@@ -601,18 +595,18 @@ type UnreadThread struct {
 
 // UnreadMessageCount returns an entry for each thread that has other users' messages
 // that have not yet been read by this this user.
-func (u *User) UnreadMessageCount(ctx context.Context) ([]UnreadThread, error) {
+func (u *User) UnreadMessageCount(tx *pop.Connection) ([]UnreadThread, error) {
 	emptyUnreads := []UnreadThread{}
 
 	threadPs := ThreadParticipants{}
-	if err := Tx(ctx).Eager("Thread").Where("user_id = ?", u.ID).All(&threadPs); err != nil {
+	if err := tx.Eager("Thread").Where("user_id = ?", u.ID).All(&threadPs); err != nil {
 		return emptyUnreads, err
 	}
 
 	unreads := []UnreadThread{}
 
 	for _, tp := range threadPs {
-		msgCount, err := tp.Thread.UnreadMessageCount(ctx, u.ID, tp.LastViewedAt)
+		msgCount, err := tp.Thread.UnreadMessageCount(tx, u.ID, tp.LastViewedAt)
 		if err != nil {
 			domain.ErrLogger.Printf("error getting count of unread messages for thread %s ... %v",
 				tp.Thread.UUID, err)
@@ -628,9 +622,9 @@ func (u *User) UnreadMessageCount(ctx context.Context) ([]UnreadThread, error) {
 }
 
 // GetThreads finds all threads that the user is participating in.
-func (u *User) GetThreads(ctx context.Context) (Threads, error) {
+func (u *User) GetThreads(tx *pop.Connection) (Threads, error) {
 	var t Threads
-	query := Tx(ctx).Q().
+	query := tx.Q().
 		LeftJoin("thread_participants tp", "threads.id = tp.thread_id").
 		Where("tp.user_id = ?", u.ID).
 		Order("updated_at desc")
@@ -730,8 +724,7 @@ func (u *User) GetPreferences(tx *pop.Connection) (StandardPreferences, error) {
 }
 
 // UpdateStandardPreferences validates and updates a user's standard preferences
-func (u *User) UpdateStandardPreferences(ctx context.Context, prefs StandardPreferences) (StandardPreferences, error) {
-	tx := Tx(ctx)
+func (u *User) UpdateStandardPreferences(tx *pop.Connection, prefs StandardPreferences) (StandardPreferences, error) {
 	if err := updateUsersStandardPreferences(tx, *u, prefs); err != nil {
 		return StandardPreferences{}, err
 	}
@@ -772,39 +765,53 @@ func (u *User) isSuperAdmin() bool {
 }
 
 // MeetingsAsParticipant returns all meetings in which the user is a participant
-func (u *User) MeetingsAsParticipant(ctx context.Context) ([]Meeting, error) {
+func (u *User) MeetingsAsParticipant(tx *pop.Connection) ([]Meeting, error) {
 	m := Meetings{}
-	if err := Tx(ctx).
+	if err := tx.
 		Where("meeting_participants.user_id=?", u.ID).
 		Join("meeting_participants", "meeting_participants.meeting_id=meetings.id").
 		All(&m); err != nil {
-		domain.NewExtra(ctx, "user", u.UUID)
-		return m, domain.ReportError(ctx, err, "User.MeetingsAsParticipant")
+		return m, err
 	}
 	return m, nil
 }
 
-func (u *User) CanCreateMeetingInvite(ctx context.Context, meeting Meeting) bool {
-	return u.ID == meeting.CreatedByID || meeting.isOrganizer(ctx, u.ID) || u.isSuperAdmin()
+func (u *User) CanCreateMeetingInvite(tx *pop.Connection, meeting Meeting) (bool, error) {
+	isOrganizer, err := meeting.isOrganizer(tx, u.ID)
+	if err != nil {
+		return false, err
+	}
+
+	return u.ID == meeting.CreatedByID || isOrganizer || u.isSuperAdmin(), nil
 }
 
-func (u *User) CanRemoveMeetingInvite(ctx context.Context, meeting Meeting) bool {
-	return u.ID == meeting.CreatedByID || meeting.isOrganizer(ctx, u.ID) || u.isSuperAdmin()
+func (u *User) CanRemoveMeetingInvite(tx *pop.Connection, meeting Meeting) (bool, error) {
+	isOrganizer, err := meeting.isOrganizer(tx, u.ID)
+	if err != nil {
+		return false, err
+	}
+
+	return u.ID == meeting.CreatedByID || isOrganizer || u.isSuperAdmin(), nil
 }
 
-func (u *User) CanCreateMeetingParticipant(ctx context.Context, meeting Meeting) bool {
-	return u.ID == meeting.CreatedByID || meeting.isVisible(ctx, u.ID) || u.isSuperAdmin()
+func (u *User) CanCreateMeetingParticipant(tx *pop.Connection, meeting Meeting) bool {
+	return u.ID == meeting.CreatedByID || meeting.isVisible(tx, u.ID) || u.isSuperAdmin()
 }
 
-func (u *User) CanRemoveMeetingParticipant(ctx context.Context, meeting Meeting) bool {
-	return u.ID == meeting.CreatedByID || meeting.isOrganizer(ctx, u.ID) || u.isSuperAdmin()
+func (u *User) CanRemoveMeetingParticipant(tx *pop.Connection, meeting Meeting) (bool, error) {
+	isOrganizer, err := meeting.isOrganizer(tx, u.ID)
+	if err != nil {
+		return false, err
+	}
+
+	return u.ID == meeting.CreatedByID || isOrganizer || u.isSuperAdmin(), nil
 }
 
 // RemovePreferences removes all of the users's preferences
-func (u *User) RemovePreferences(ctx context.Context) error {
+func (u *User) RemovePreferences(tx *pop.Connection) error {
 	if u == nil || u.ID < 1 {
 		return nil
 	}
 	var p UserPreference
-	return p.removeAll(Tx(ctx), u.ID)
+	return p.removeAll(tx, u.ID)
 }

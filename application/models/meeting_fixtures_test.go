@@ -101,15 +101,15 @@ func createMeetingFixtures_CanUpdate(ms *ModelSuite) meetingFixtures {
 
 	superUser := &uf.Users[1]
 	superUser.AdminRole = UserAdminRoleSuperAdmin
-	ms.NoError(superUser.Save(Ctx()))
+	ms.NoError(superUser.Save(ms.DB))
 
 	salesUser := &uf.Users[2]
 	salesUser.AdminRole = UserAdminRoleSalesAdmin
-	ms.NoError(salesUser.Save(Ctx()))
+	ms.NoError(salesUser.Save(ms.DB))
 
 	adminUser := &uf.Users[3]
 	adminUser.AdminRole = UserAdminRoleAdmin
-	ms.NoError(adminUser.Save(Ctx()))
+	ms.NoError(adminUser.Save(ms.DB))
 
 	meeting := Meeting{
 		CreatedByID: mtgUser.ID,

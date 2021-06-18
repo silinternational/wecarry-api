@@ -49,7 +49,7 @@ func createOrganizationFixtures(tx *pop.Connection, n int) Organizations {
 		organizations[i].Name = fmt.Sprintf("Org%v", i+1)
 		organizations[i].AuthType = AuthTypeSaml
 		organizations[i].AuthConfig = "{}"
-		if _, err := organizations[i].AttachLogo(Ctx(), files[i].UUID.String()); err != nil {
+		if _, err := organizations[i].AttachLogo(tx, files[i].UUID.String()); err != nil {
 			panic("error attaching logo to org fixture, " + err.Error())
 		}
 
@@ -153,7 +153,7 @@ func createRequestFixtures(tx *pop.Connection, nRequests int, createFiles bool) 
 		requests[i].Visibility = RequestVisibilitySame
 
 		if createFiles {
-			if _, err := requests[i].AttachPhoto(Ctx(), files[i].UUID.String()); err != nil {
+			if _, err := requests[i].AttachPhoto(tx, files[i].UUID.String()); err != nil {
 				panic("error attaching photo to request fixture, " + err.Error())
 			}
 		}
@@ -265,7 +265,7 @@ func createPotentialProvidersFixtures(ms *ModelSuite) potentialProvidersFixtures
 	for i, p := range requests[:2] {
 		for _, u := range uf.Users[i+1:] {
 			c := PotentialProvider{RequestID: p.ID, UserID: u.ID}
-			c.Create(Ctx())
+			c.Create(ms.DB)
 			providers = append(providers, c)
 		}
 	}
@@ -321,7 +321,7 @@ func createMeetingFixtures(tx *pop.Connection, nMeetings int) meetingFixtures {
 		meetings[i].StartDate = time.Now()
 		meetings[i].EndDate = time.Now().Add(time.Hour * 24)
 		meetings[i].InviteCode = nulls.NewUUID(domain.GetUUID())
-		if _, err := meetings[i].SetImageFile(Ctx(), files[i].UUID.String()); err != nil {
+		if _, err := meetings[i].SetImageFile(tx, files[i].UUID.String()); err != nil {
 			panic("error attaching image to meeting fixture, " + err.Error())
 		}
 		mustCreate(tx, &meetings[i])
@@ -341,7 +341,7 @@ func createMeetingFixtures(tx *pop.Connection, nMeetings int) meetingFixtures {
 		}
 		invites[i].MeetingID = meetings[i/invitesPerMeeting].ID
 		invites[i].InviterID = user.ID
-		if err := invites[i].Create(Ctx()); err != nil {
+		if err := invites[i].Create(tx); err != nil {
 			panic(fmt.Sprintf("error creating invite fixture %d, %s", i, err))
 		}
 	}

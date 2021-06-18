@@ -1,7 +1,6 @@
 package models
 
 import (
-	"context"
 	"errors"
 	"time"
 
@@ -36,12 +35,12 @@ func (o *OrganizationDomain) ValidateCreate(tx *pop.Connection) (*validate.Error
 }
 
 // Organization loads the Organization record
-func (o *OrganizationDomain) Organization(ctx context.Context) (Organization, error) {
+func (o *OrganizationDomain) Organization(tx *pop.Connection) (Organization, error) {
 	if o.OrganizationID <= 0 {
 		return Organization{}, errors.New("OrganizationID is not valid")
 	}
 	var organization Organization
-	if err := Tx(ctx).Find(&organization, o.OrganizationID); err != nil {
+	if err := tx.Find(&organization, o.OrganizationID); err != nil {
 		return Organization{}, err
 	}
 	return organization, nil
@@ -53,11 +52,11 @@ func (o *OrganizationDomain) Create(tx *pop.Connection) error {
 }
 
 // FindByDomain finds a record by the domain name
-func (o *OrganizationDomain) FindByDomain(ctx context.Context, domainName string) error {
-	return Tx(ctx).Where("domain = ?", domainName).First(o)
+func (o *OrganizationDomain) FindByDomain(tx *pop.Connection, domainName string) error {
+	return tx.Where("domain = ?", domainName).First(o)
 }
 
 // Save wrap tx.Save() call to check for errors and operate on attached object
-func (o *OrganizationDomain) Save(ctx context.Context) error {
-	return save(Tx(ctx), o)
+func (o *OrganizationDomain) Save(tx *pop.Connection) error {
+	return save(tx, o)
 }

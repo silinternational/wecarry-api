@@ -284,6 +284,7 @@ type MeetingResolver interface {
 	Organizers(ctx context.Context, obj *models.Meeting) ([]PublicProfile, error)
 }
 type MeetingInviteResolver interface {
+	Meeting(ctx context.Context, obj *models.MeetingInvite) (*models.Meeting, error)
 	Inviter(ctx context.Context, obj *models.MeetingInvite) (*PublicProfile, error)
 
 	AvatarURL(ctx context.Context, obj *models.MeetingInvite) (string, error)
@@ -399,6 +400,7 @@ type UserResolver interface {
 	UnreadMessageCount(ctx context.Context, obj *models.User) (int, error)
 	Organizations(ctx context.Context, obj *models.User) ([]models.Organization, error)
 	Requests(ctx context.Context, obj *models.User, role RequestRole) ([]models.Request, error)
+	MeetingsAsParticipant(ctx context.Context, obj *models.User) ([]models.Meeting, error)
 }
 type UserPreferencesResolver interface {
 	Language(ctx context.Context, obj *models.StandardPreferences) (*PreferredLanguage, error)
@@ -411,7 +413,7 @@ type WatchResolver interface {
 
 	Destination(ctx context.Context, obj *models.Watch) (*models.Location, error)
 	Origin(ctx context.Context, obj *models.Watch) (*models.Location, error)
-
+	Meeting(ctx context.Context, obj *models.Watch) (*models.Meeting, error)
 	SearchText(ctx context.Context, obj *models.Watch) (*string, error)
 }
 
@@ -4145,7 +4147,7 @@ func (ec *executionContext) _MeetingInvite_meeting(ctx context.Context, field gr
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Meeting(ctx)
+		return ec.resolvers.MeetingInvite().Meeting(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4157,9 +4159,9 @@ func (ec *executionContext) _MeetingInvite_meeting(ctx context.Context, field gr
 		}
 		return graphql.Null
 	}
-	res := resTmp.(models.Meeting)
+	res := resTmp.(*models.Meeting)
 	fc.Result = res
-	return ec.marshalNMeeting2githubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeeting(ctx, field.Selections, res)
+	return ec.marshalNMeeting2ᚖgithubᚗcomᚋsilinternationalᚋwecarryᚑapiᚋmodelsᚐMeeting(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _MeetingInvite_inviter(ctx context.Context, field graphql.CollectedField, obj *models.MeetingInvite) (ret graphql.Marshaler) {
@@ -8300,7 +8302,7 @@ func (ec *executionContext) _User_meetingsAsParticipant(ctx context.Context, fie
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.MeetingsAsParticipant(ctx)
+		return ec.resolvers.User().MeetingsAsParticipant(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8591,7 +8593,7 @@ func (ec *executionContext) _Watch_meeting(ctx context.Context, field graphql.Co
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Meeting(ctx)
+		return ec.resolvers.Watch().Meeting(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)

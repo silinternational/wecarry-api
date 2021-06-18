@@ -65,7 +65,7 @@ func Fixtures_Message_Create(ms *ModelSuite, t *testing.T) MessageFixtures {
 
 	org := createOrganizationFixtures(ms.DB, 1)[0]
 	requests[0].OrganizationID = org.ID
-	ms.NoError(requests[0].Update(Ctx()))
+	ms.NoError(requests[0].Update(ms.DB))
 
 	tf := CreateThreadFixtures(ms, requests[1])
 

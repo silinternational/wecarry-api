@@ -316,6 +316,8 @@
   translation: We had a problem finding the Alert creator
 - id: GetWatchDestination
   translation: We had a problem finding the Alert destination
+- id: GetWatchMeeting
+  translation: We had a problem finding the Alert meeting
 - id: GetWatchOrigin
   translation: We had a problem finding the Alert origin
 - id: MyWatches

@@ -59,7 +59,7 @@ func (r *queryResolver) Message(ctx context.Context, id *string) (*models.Messag
 	currentUser := models.CurrentUser(ctx)
 	var message models.Message
 
-	if err := message.FindByUserAndUUID(ctx, currentUser, *id); err != nil {
+	if err := message.FindByUserAndUUID(models.Tx(ctx), currentUser, *id); err != nil {
 		return &models.Message{}, domain.ReportError(ctx, err, "GetMessage")
 	}
 
@@ -69,7 +69,7 @@ func (r *queryResolver) Message(ctx context.Context, id *string) (*models.Messag
 // CreateMessage is a mutation resolver for creating a new message
 func (r *mutationResolver) CreateMessage(ctx context.Context, input CreateMessageInput) (*models.Message, error) {
 	var message models.Message
-	if err := message.Create(ctx, input.RequestID, input.ThreadID, input.Content); err != nil {
+	if err := message.Create(models.Tx(ctx), models.CurrentUser(ctx), input.RequestID, input.ThreadID, input.Content); err != nil {
 		return &models.Message{}, domain.ReportError(ctx, err, "CreateMessage")
 	}
 
