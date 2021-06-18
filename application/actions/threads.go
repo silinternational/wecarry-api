@@ -50,12 +50,8 @@ func convertThreadsToAPIType(threads models.Threads) (apitypes.Threads, error) {
 		}
 		output[i].Messages = &messagesOutput
 
-		var participantsOutput apitypes.Users
-		if err := domain.ConvertToOtherType(threads[i].Participants, &participantsOutput); err != nil {
-			err := errors.New("error converting threads participants: " + err.Error())
-			return nil, err
-		}
-		output[i].Participants = &participantsOutput
+		// Not converting Participants, since that happens automatically  above and
+		// because it doesn't have nested related objects
 
 		requestOutput, err := convertRequestToAPIType(threads[i].Request)
 		if err != nil {
