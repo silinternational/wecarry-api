@@ -24,5 +24,5 @@ type Request struct {
 	// User who created this request
 	//
 	// read-only: true
-	CreatedBy User `json:"created_by"`
+	CreatedBy *User `json:"created_by"`
 }

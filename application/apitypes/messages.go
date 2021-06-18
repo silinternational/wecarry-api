@@ -33,5 +33,5 @@ type Message struct {
 	// User who sent the message
 	//
 	// read-only: true
-	Sender User `json:"sender"`
+	SentBy *User `json:"sender"`
 }

@@ -442,28 +442,39 @@ func RollbarMiddleware(next buffalo.Handler) buffalo.Handler {
 }
 
 // Error log error and send to Rollbar
-func Error(c buffalo.Context, msg string, extras ...map[string]interface{}) {
-	// Avoid panics running tests when c doesn't have the necessary nested methods
-	logger := c.Logger()
+func Error(ctx context.Context, msg string) {
+	bc, ok := ctx.Value(BuffaloContext).(buffalo.Context)
+	if ok {
+		Error(bc, msg)
+	}
+
+	// Doesn't have a BuffaloContext value, so it must be the actual BuffaloContext
+	bc = ctx.(buffalo.Context)
+
+	// Avoid panics running tests when bc doesn't have the necessary nested methods
+	logger := bc.Logger()
 	if logger == nil {
 		return
 	}
 
-	es := MergeExtras(extras)
-	if es == nil {
-		es = map[string]interface{}{}
+	extras := getExtras(bc)
+	if extras == nil {
+		extras = map[string]interface{}{}
 	}
 
-	rollbarMessage(c, rollbar.ERR, msg, es)
+	extrasLock.RLock()
+	defer extrasLock.RUnlock()
 
-	es["message"] = msg
+	rollbarMessage(bc, rollbar.ERR, msg, extras)
+
+	extras["message"] = msg
 
 	encoder := jsonMin
 	if Env.GoEnv == "development" {
 		encoder = jsonIndented
 	}
 
-	j, err := encoder(&es)
+	j, err := encoder(&extras)
 	if err != nil {
 		logger.Error("failed to json encode error message: %s", err)
 		return

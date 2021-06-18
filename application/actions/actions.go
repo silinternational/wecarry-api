@@ -86,7 +86,7 @@ func reportError(c buffalo.Context, err error) error {
 	appErr.Extras["method"] = c.Request().Method
 	appErr.Extras["URI"] = c.Request().RequestURI
 	appErr.Extras["IP"] = c.Request().RemoteAddr
-	domain.Error(c, appErr.Error(), appErr.Extras)
+	domain.Error(c, appErr.Error())
 
 	appErr.LoadTranslatedMessage(c)
 

@@ -21,15 +21,15 @@ type Thread struct {
 	// Messages in this thread
 	//
 	// read-only: true
-	Messages Messages `json:"messages"`
+	Messages *Messages `json:"messages"`
 
 	// Users associated with this thread
 	//
 	// read-only: true
-	Participants Users `json:"participants"`
+	Participants *Users `json:"participants"`
 
 	// Request associated with this thread
 	//
 	// read-only: true
-	Request Request `json:"request"`
+	Request *Request `json:"request"`
 }

@@ -21,6 +21,7 @@ type Thread struct {
 	RequestID    int       `json:"request_id" db:"request_id"`
 	Request      Request   `belongs_to:"requests"`
 	Participants Users     `many_to_many:"thread_participants"`
+	Messages     Messages  `json:"messages" db:"-"`
 }
 
 // String can be helpful for serializing the model
@@ -77,17 +78,37 @@ func (t *Thread) GetRequest(tx *pop.Connection) (*Request, error) {
 		}
 	}
 	request := Request{}
-	if err := tx.Find(&request, t.RequestID); err != nil {
+	if err := tx.Eager("CreatedBy").Find(&request, t.RequestID); err != nil {
 		return nil, fmt.Errorf("error loading request %v %s", t.RequestID, err)
 	}
+
+	fmt.Printf("\nREQUEST: %+v\n\n", request)
+
 	return &request, nil
 }
 
-func (t *Thread) Messages(tx *pop.Connection) ([]Message, error) {
+func (t *Thread) GetMessages(tx *pop.Connection) ([]Message, error) {
 	var messages []Message
 	if err := tx.Where("thread_id = ?", t.ID).All(&messages); err != nil {
 		return messages, fmt.Errorf("error getting messages for thread id %v ... %v", t.ID, err)
 	}
+
+	return messages, nil
+}
+
+func (t *Thread) GetMessagesWithSentBy(tx *pop.Connection) ([]Message, error) {
+	var messages []Message
+	if err := tx.Eager("SentBy").Where("thread_id = ?", t.ID).All(&messages); err != nil {
+		return messages, fmt.Errorf("error getting messages for thread id %v ... %v", t.ID, err)
+	}
+
+	//for i := range messages {
+	//	sentBy, err := messages[i].GetSender(tx)
+	//	if err != nil {
+	//		return []Message{}, err
+	//	}
+	//	messages[i].SentBy = *sentBy
+	//}
 
 	return messages, nil
 }
@@ -201,7 +222,7 @@ func (t *Thread) UnreadMessageCount(tx *pop.Connection, userID int, lastViewedAt
 		return count, fmt.Errorf("error in UnreadMessageCount, invalid id %v", userID)
 	}
 
-	msgs, err := t.Messages(tx)
+	msgs, err := t.GetMessages(tx)
 	if err != nil {
 		return count, err
 	}
