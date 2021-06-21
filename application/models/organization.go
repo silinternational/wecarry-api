@@ -65,16 +65,19 @@ func (e AuthType) MarshalGQL(w io.Writer) {
 }
 
 type Organization struct {
-	ID         int          `json:"id" db:"id"`
-	CreatedAt  time.Time    `json:"created_at" db:"created_at"`
-	UpdatedAt  time.Time    `json:"updated_at" db:"updated_at"`
-	Name       string       `json:"name" db:"name"`
-	Url        nulls.String `json:"url" db:"url"`
-	AuthType   AuthType     `json:"auth_type" db:"auth_type"`
-	AuthConfig string       `json:"auth_config" db:"auth_config"`
-	UUID       uuid.UUID    `json:"uuid" db:"uuid"`
-	FileID     nulls.Int    `json:"file_id" db:"file_id"`
-	Users      Users        `many_to_many:"user_organizations" order_by:"nickname"`
+	// Database-only fields
+	ID         int          `json:"-" db:"id"`
+	CreatedAt  time.Time    `json:"-" db:"created_at"`
+	UpdatedAt  time.Time    `json:"-" db:"updated_at"`
+	Url        nulls.String `json:"-" db:"url"`
+	AuthType   AuthType     `json:"-" db:"auth_type"`
+	AuthConfig string       `json:"-" db:"auth_config"`
+	FileID     nulls.Int    `json:"-" db:"file_id"`
+	Users      Users        `json:"-" many_to_many:"user_organizations" order_by:"nickname"`
+
+	// Database & API fields
+	UUID uuid.UUID `json:"id" db:"uuid"`
+	Name string    `json:"name" db:"name"`
 }
 
 // String is used to serialize error extras

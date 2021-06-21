@@ -48,24 +48,31 @@ func (e UserAdminRole) String() string {
 
 // User model
 type User struct {
-	ID                 int               `json:"id" db:"id"`
-	CreatedAt          time.Time         `json:"created_at" db:"created_at"`
-	UpdatedAt          time.Time         `json:"updated_at" db:"updated_at"`
-	Email              string            `json:"email" db:"email"`
-	FirstName          string            `json:"first_name" db:"first_name"`
-	LastName           string            `json:"last_name" db:"last_name"`
-	Nickname           string            `json:"nickname" db:"nickname"`
-	AdminRole          UserAdminRole     `json:"admin_role" db:"admin_role"`
-	UUID               uuid.UUID         `json:"uuid" db:"uuid"`
-	SocialAuthProvider nulls.String      `json:"social_auth_provider" db:"social_auth_provider"`
-	FileID             nulls.Int         `json:"file_id" db:"file_id"`
-	AuthPhotoURL       nulls.String      `json:"auth_photo_url" db:"auth_photo_url"`
-	LocationID         nulls.Int         `json:"location_id" db:"location_id"`
-	Organizations      Organizations     `many_to_many:"user_organizations" order_by:"name asc" json:"-"`
-	UserOrganizations  UserOrganizations `has_many:"user_organizations" json:"-"`
-	UserPreferences    UserPreferences   `has_many:"user_preferences" json:"-"`
-	PhotoFile          File              `belongs_to:"files" fk_id:"FileID"`
-	Location           Location          `belongs_to:"locations"`
+	// Database-only fields
+	ID                 int               `json:"-" db:"id"`
+	CreatedAt          time.Time         `json:"-" db:"created_at"`
+	UpdatedAt          time.Time         `json:"-" db:"updated_at"`
+	FirstName          string            `json:"-" db:"first_name"`
+	LastName           string            `json:"-" db:"last_name"`
+	AdminRole          UserAdminRole     `json:"-" db:"admin_role"`
+	SocialAuthProvider nulls.String      `json:"-" db:"social_auth_provider"`
+	FileID             nulls.Int         `json:"-" db:"file_id"`
+	AuthPhotoURL       nulls.String      `json:"-" db:"auth_photo_url"`
+	LocationID         nulls.Int         `json:"-" db:"location_id"`
+	UserOrganizations  UserOrganizations `json:"-" has_many:"user_organizations"`
+	UserPreferences    UserPreferences   `json:"-" has_many:"user_preferences"`
+	PhotoFile          File              `json:"-" belongs_to:"files" fk_id:"FileID"`
+	Location           Location          `json:"-" belongs_to:"locations"`
+
+	// Database & API fields
+	UUID          uuid.UUID     `json:"id" db:"uuid"`
+	Email         string        `json:"email" db:"email"`
+	Nickname      string        `json:"nickname" db:"nickname"`
+	Organizations Organizations `json:"organizations" many_to_many:"user_organizations" order_by:"name asc"`
+
+	// API-only fields
+	AvatarURL nulls.String `json:"avatar_url" db:"-"`
+	PhotoID   uuid.UUID    `json:"photo_id" db:"-"`
 }
 
 // String can be helpful for serializing the model
