@@ -7,10 +7,8 @@ import (
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/buffalo/render"
 
-	"github.com/silinternational/wecarry-api/apitypes"
-	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/models"
-	"github.com/silinternational/wecarry-api/wcerror"
 )
 
 // uploadHandler responds to POST requests at /upload
@@ -20,10 +18,10 @@ func usersThreads(c buffalo.Context) error {
 
 	threads, err := cUser.GetThreadsForConversations(tx)
 	if err != nil {
-		return reportError(c, &apitypes.AppError{
+		return reportError(c, &api.AppError{
 			HttpStatus: http.StatusInternalServerError,
-			Key:        wcerror.ThreadsLoadFailure,
-			DebugMsg:   err.Error(),
+			Key:        api.ThreadsLoadFailure,
+			Err:        err,
 		})
 	}
 
@@ -35,9 +33,9 @@ func usersThreads(c buffalo.Context) error {
 	return c.Render(200, render.JSON(output))
 }
 
-func convertThreadsToAPIType(threads models.Threads) (apitypes.Threads, error) {
-	var output apitypes.Threads
-	if err := domain.ConvertToOtherType(threads, &output); err != nil {
+func convertThreadsToAPIType(threads models.Threads) (api.Threads, error) {
+	var output api.Threads
+	if err := api.ConvertToOtherType(threads, &output); err != nil {
 		err = errors.New("error converting threads to apitype.threads: " + err.Error())
 		return nil, err
 	}

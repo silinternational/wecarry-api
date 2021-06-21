@@ -28,7 +28,6 @@ import (
 	"github.com/gobuffalo/validate/v3/validators"
 	uuid2 "github.com/gofrs/uuid"
 	"github.com/rollbar/rollbar-go"
-	"github.com/silinternational/wecarry-api/wcerror"
 )
 
 const (
@@ -792,28 +791,6 @@ func getExtras(c buffalo.Context) map[string]interface{} {
 	}
 
 	return extras
-}
-
-// ConvertToOtherType uses json marshal/unmarshal to convert one type to another.
-// Output parameter should be a pointer to the receiving struct
-func ConvertToOtherType(input, output interface{}) error {
-	str, err := json.Marshal(input)
-	if err != nil {
-		return wcerror.New(
-			fmt.Errorf("failed to convert to apitype. marshal error: %s", err.Error()),
-			wcerror.FailedToConvertToAPIType,
-			wcerror.CategoryInternal,
-		)
-	}
-	if err := json.Unmarshal(str, output); err != nil {
-		return wcerror.New(
-			fmt.Errorf("failed to convert to apitype. unmarshal error: %s", err.Error()),
-			wcerror.FailedToConvertToAPIType,
-			wcerror.CategoryInternal,
-		)
-	}
-
-	return nil
 }
 
 func MergeExtras(extras []map[string]interface{}) map[string]interface{} {

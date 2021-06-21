@@ -7,10 +7,8 @@ import (
 
 	"github.com/gobuffalo/buffalo"
 
-	"github.com/silinternational/wecarry-api/apitypes"
+	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/domain"
-
-	"github.com/silinternational/wecarry-api/wcerror"
 )
 
 // SocialAuthConfig holds the Key and Secret for a social auth provider
@@ -39,37 +37,37 @@ func GetFunctionName(skip int) string {
 	return fmt.Sprintf("%s:%d %s", file, line, fn.Name())
 }
 
-func httpStatusForErrCategory(cat wcerror.ErrorCategory) int {
+func httpStatusForErrCategory(cat api.ErrorCategory) int {
 	switch cat {
-	case wcerror.CategoryInternal, wcerror.CategoryDatabase:
+	case api.CategoryInternal, api.CategoryDatabase:
 		return http.StatusInternalServerError
-	case wcerror.CategoryForbidden, wcerror.CategoryNotFound:
+	case api.CategoryForbidden, api.CategoryNotFound:
 		return http.StatusNotFound
 	}
 	return http.StatusBadRequest
 }
 
-func appErrorFromErr(err error) *apitypes.AppError {
-	terr, ok := err.(*wcerror.WCerror)
+func appErrorFromErr(err error) *api.AppError {
+	aerr, ok := err.(*api.AppError)
 	if ok {
-		return &apitypes.AppError{
-			HttpStatus: httpStatusForErrCategory(terr.Category),
-			Key:        terr.Key,
-			DebugMsg:   terr.Error(),
+		return &api.AppError{
+			HttpStatus: httpStatusForErrCategory(aerr.Category),
+			Key:        aerr.Key,
+			Err:        aerr,
 		}
 	}
 
-	return &apitypes.AppError{
+	return &api.AppError{
 		HttpStatus: http.StatusInternalServerError,
-		Key:        wcerror.UnknownError,
-		DebugMsg:   err.Error(),
+		Key:        api.UnknownError,
+		Err:        err,
 	}
 }
 
 // reportError logs an error with details and renders the error with buffalo.Render.
 // If the HTTP status code provided is in the 300 family, buffalo.Redirect is used instead.
 func reportError(c buffalo.Context, err error) error {
-	appErr, ok := err.(*apitypes.AppError)
+	appErr, ok := err.(*api.AppError)
 	if !ok {
 		appErr = appErrorFromErr(err)
 	}
@@ -93,7 +91,6 @@ func reportError(c buffalo.Context, err error) error {
 	// clear out debugging info if not in development or test
 	if domain.Env.GoEnv != "development" && domain.Env.GoEnv != "test" {
 		appErr.Extras = map[string]interface{}{}
-		appErr.DebugMsg = ""
 	}
 
 	if appErr.HttpStatus >= 300 && appErr.HttpStatus < 399 {
