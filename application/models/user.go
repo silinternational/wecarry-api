@@ -46,9 +46,10 @@ func (e UserAdminRole) String() string {
 	return string(e)
 }
 
-// User model
+// Attributes of a user of the App
+// swagger:model
 type User struct {
-	// Database-only fields
+	// ----- Database-only fields
 	ID                 int               `json:"-" db:"id"`
 	CreatedAt          time.Time         `json:"-" db:"created_at"`
 	UpdatedAt          time.Time         `json:"-" db:"updated_at"`
@@ -64,15 +65,32 @@ type User struct {
 	PhotoFile          File              `json:"-" belongs_to:"files" fk_id:"FileID"`
 	Location           Location          `json:"-" belongs_to:"locations"`
 
-	// Database & API fields
-	UUID          uuid.UUID     `json:"id" db:"uuid"`
-	Email         string        `json:"email" db:"email"`
-	Nickname      string        `json:"nickname" db:"nickname"`
+	// ----- Database & API fields
+
+	// unique identifier for the User
+	// swagger:strfmt uuid4
+	// example: 63d5b060-1460-4348-bdf0-ad03c105a8d5
+	UUID uuid.UUID `json:"id" db:"uuid"`
+
+	// Email address to be used for notifications to the User. Not necessarily the same as the authentication email.
+	Email string `json:"email" db:"email"`
+
+	// User's nickname. Auto-assigned upon creation of a User, but editable by the User. Limited to 255 characters.
+	Nickname string `json:"nickname" db:"nickname"`
+
+	// Organizations that the User is affilated with. This can be empty or have a single entry. Future capability is TBD
 	Organizations Organizations `json:"organizations" many_to_many:"user_organizations" order_by:"name asc"`
 
-	// API-only fields
+	// ----- API-only fields
+
+	// avatarURL is generated from an attached photo if present, an external URL if present, or a Gravatar URL
+	// swagger:strfmt url
 	AvatarURL nulls.String `json:"avatar_url" db:"-"`
-	PhotoID   uuid.UUID    `json:"photo_id" db:"-"`
+
+	// `File` ID of the user's photo, if present
+	// swagger:strfmt uuid4
+	// example: 63d5b060-1460-4348-bdf0-ad03c105a8d5
+	PhotoID uuid.UUID `json:"photo_id" db:"-"`
 }
 
 // String can be helpful for serializing the model

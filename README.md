@@ -148,6 +148,13 @@ First Name and Last Name. We added a function that either uses a space or
 underscore as the separator (based on the User.Name) or just duplicates the
 User.Name as both the First and Last Names.
 
+
+## REST API Documentation
+The source of this application is annotated with special annotations for [go-swagger](https://goswagger.io) to use
+to generate a Swagger specification file as well as render it as HTML. 
+
+To generate the swagger spec `swagger/swagger.json` run `make swagger`.
+
 ## GraphQL API
 
 ### API Documentation

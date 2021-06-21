@@ -64,8 +64,11 @@ func (e AuthType) MarshalGQL(w io.Writer) {
 	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
+// Organization subscribed to the App. Provides privacy controls for visibility of Requests and Meetings, and specifies
+// authentication for associated users.
+// swagger:model
 type Organization struct {
-	// Database-only fields
+	// ----- Database-only fields
 	ID         int          `json:"-" db:"id"`
 	CreatedAt  time.Time    `json:"-" db:"created_at"`
 	UpdatedAt  time.Time    `json:"-" db:"updated_at"`
@@ -75,9 +78,15 @@ type Organization struct {
 	FileID     nulls.Int    `json:"-" db:"file_id"`
 	Users      Users        `json:"-" many_to_many:"user_organizations" order_by:"nickname"`
 
-	// Database & API fields
+	// ----- Database & API fields
+
+	// unique identifier for the Organization
+	// swagger:strfmt uuid4
+	// example: 63d5b060-1460-4348-bdf0-ad03c105a8d5
 	UUID uuid.UUID `json:"id" db:"uuid"`
-	Name string    `json:"name" db:"name"`
+
+	// Organization name, limited to 255 characters
+	Name string `json:"name" db:"name"`
 }
 
 // String is used to serialize error extras
