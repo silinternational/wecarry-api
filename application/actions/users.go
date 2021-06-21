@@ -18,9 +18,7 @@ import (
 //   '200':
 //     description: authenticated user
 //     schema:
-//       type: array
-//       items:
-//         "$ref": "#/definitions/User"
+//       "$ref": "#/definitions/User"
 func usersMe(c buffalo.Context) error {
 	user := models.CurrentUser(c)
 
