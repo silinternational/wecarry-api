@@ -21,6 +21,7 @@ type Thread struct {
 	RequestID    int       `json:"request_id" db:"request_id"`
 	Request      Request   `belongs_to:"requests"`
 	Participants Users     `many_to_many:"thread_participants"`
+	Messages     Messages  `json:"messages" db:"-"`
 }
 
 // String can be helpful for serializing the model
@@ -70,45 +71,65 @@ func (t *Thread) FindByUUID(tx *pop.Connection, uuid string) error {
 	return nil
 }
 
-func (t *Thread) GetRequest(tx *pop.Connection) (*Request, error) {
+func (t *Thread) LoadRequest(tx *pop.Connection, eagerFields ...string) error {
 	if t.RequestID <= 0 {
 		if err := t.FindByUUID(tx, t.UUID.String()); err != nil {
-			return nil, err
+			return err
 		}
 	}
 	request := Request{}
-	if err := tx.Find(&request, t.RequestID); err != nil {
-		return nil, fmt.Errorf("error loading request %v %s", t.RequestID, err)
+	// If no eagerFields, then don't use Eager at all, otherwise it uses Eager on all of them
+
+	if len(eagerFields) > 0 {
+		if err := tx.EagerPreload(eagerFields...).Find(&request, t.RequestID); err != nil {
+			return fmt.Errorf("error loading (preloading) request %v %s", t.RequestID, err)
+		}
+	} else {
+		if err := tx.Find(&request, t.RequestID); err != nil {
+			return fmt.Errorf("error loading request %v %s", t.RequestID, err)
+		}
 	}
-	return &request, nil
+	t.Request = request
+	return nil
 }
 
-func (t *Thread) Messages(tx *pop.Connection) ([]Message, error) {
+func (t *Thread) LoadMessages(tx *pop.Connection, eagerFields ...string) error {
 	var messages []Message
-	if err := tx.Where("thread_id = ?", t.ID).All(&messages); err != nil {
-		return messages, fmt.Errorf("error getting messages for thread id %v ... %v", t.ID, err)
+	// If no eagerFields, then don't use Eager at all, otherwise it uses Eager on all of them
+
+	if len(eagerFields) > 0 {
+		if err := tx.EagerPreload(eagerFields...).Where("thread_id = ?", t.ID).All(&messages); err != nil {
+			return fmt.Errorf("error getting messages (preload) for thread id %v ... %v", t.ID, err)
+		}
+	} else {
+		if err := tx.Where("thread_id = ?", t.ID).All(&messages); err != nil {
+			return fmt.Errorf("error getting messages for thread id %v ... %v", t.ID, err)
+		}
 	}
 
-	return messages, nil
+	t.Messages = messages
+	return nil
 }
 
-func (t *Thread) GetParticipants(tx *pop.Connection) ([]User, error) {
+func (t *Thread) LoadParticipants(tx *pop.Connection) error {
 	var users []User
 	var threadParticipants []*ThreadParticipant
 
 	if err := tx.Where("thread_id = ?", t.ID).Order("id asc").All(&threadParticipants); err != nil {
-		return users, fmt.Errorf("error reading from thread_participants table %v ... %v", t.ID, err)
+		return fmt.Errorf("error reading from thread_participants table %v ... %v", t.ID, err)
 	}
 
 	for _, tp := range threadParticipants {
 		u := User{}
 
 		if err := tx.Find(&u, tp.UserID); err != nil {
-			return users, fmt.Errorf("error finding users on thread %v ... %v", t.ID, err)
+			return fmt.Errorf("error finding users on thread %v ... %v", t.ID, err)
 		}
 		users = append(users, u)
 	}
-	return users, nil
+
+	t.Participants = users
+	return nil
 }
 
 func (t *Thread) CreateWithParticipants(tx *pop.Connection, request Request, user User) error {
@@ -130,13 +151,13 @@ func (t *Thread) CreateWithParticipants(tx *pop.Connection, request Request, use
 }
 
 func (t *Thread) ensureParticipants(tx *pop.Connection, request Request, userID int) error {
-	threadParticipants, err := t.GetParticipants(tx)
+	err := t.LoadParticipants(tx)
 	if domain.IsOtherThanNoRows(err) {
 		err = errors.New("error getting threadParticipants for thread: " + err.Error())
 		return err
 	}
 
-	if err := t.createParticipantIfNeeded(tx, threadParticipants, request.CreatedByID); err != nil {
+	if err := t.createParticipantIfNeeded(tx, t.Participants, request.CreatedByID); err != nil {
 		return err
 	}
 
@@ -144,7 +165,7 @@ func (t *Thread) ensureParticipants(tx *pop.Connection, request Request, userID 
 		return nil
 	}
 
-	return t.createParticipantIfNeeded(tx, threadParticipants, userID)
+	return t.createParticipantIfNeeded(tx, t.Participants, userID)
 }
 
 func (t *Thread) createParticipantIfNeeded(tx *pop.Connection, tpUsers Users, userID int) error {
@@ -201,12 +222,12 @@ func (t *Thread) UnreadMessageCount(tx *pop.Connection, userID int, lastViewedAt
 		return count, fmt.Errorf("error in UnreadMessageCount, invalid id %v", userID)
 	}
 
-	msgs, err := t.Messages(tx)
+	err := t.LoadMessages(tx)
 	if err != nil {
 		return count, err
 	}
 
-	for _, m := range msgs {
+	for _, m := range t.Messages {
 		if m.SentByID != userID && m.CreatedAt.After(lastViewedAt) {
 			count++
 		}
@@ -230,8 +251,8 @@ func (t *Thread) IsVisible(tx *pop.Connection, userID int) bool {
 	if userID < 1 {
 		return false
 	}
-	if users, err := t.GetParticipants(tx); err == nil {
-		for _, user := range users {
+	if err := t.LoadParticipants(tx); err == nil {
+		for _, user := range t.Participants {
 			if user.ID == userID {
 				return true
 			}

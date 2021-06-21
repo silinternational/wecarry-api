@@ -53,10 +53,10 @@ func testThreadsQuery(as *ActionSuite, f threadQueryFixtures, query string) {
 	err = thread.Load(as.DB, "Participants")
 	as.NoError(err)
 
-	participants, err := thread.GetParticipants(as.DB)
+	err = thread.LoadParticipants(as.DB)
 	as.NoError(err)
-	as.Equal(2, len(participants), "incorrect number of thread participants")
+	as.Equal(2, len(thread.Participants), "incorrect number of thread participants")
 
-	as.Equal(participants[0].Nickname, resp.Threads[0].Participants[0].Nickname)
-	as.Equal(participants[1].Nickname, resp.Threads[0].Participants[1].Nickname)
+	as.Equal(thread.Participants[0].Nickname, resp.Threads[0].Participants[0].Nickname)
+	as.Equal(thread.Participants[1].Nickname, resp.Threads[0].Participants[1].Nickname)
 }
