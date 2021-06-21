@@ -112,7 +112,7 @@ or 500-level http response with a json body containing a `code` and a `key`:
 This can be generated as follows:
 
 ```go
-err := domain.AppError{
+err := apitypes.AppError{
     Code: httpStatus,
     Key:  errorCode,
 }

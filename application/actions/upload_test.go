@@ -11,6 +11,7 @@ import (
 
 	"github.com/gobuffalo/nulls"
 	"github.com/gofrs/uuid"
+	"github.com/silinternational/wecarry-api/api"
 
 	"github.com/gobuffalo/buffalo/binding"
 
@@ -142,12 +143,12 @@ func (as *ActionSuite) Test_Upload() {
 	body, err = ioutil.ReadAll(resp.Body)
 	as.NoError(err, "error reading response body")
 
-	var appErr domain.AppError
+	var appErr api.AppError
 	err = json.Unmarshal(body, &appErr)
 	as.NoError(err, "error unmarshalling response")
 
 	as.Equal(http.StatusBadRequest, appErr.Code, "incorrect error code")
-	as.Equal(domain.ErrorStoreFileTooLarge, appErr.Key, "incorrect error code")
+	as.Equal(api.ErrorStoreFileTooLarge, appErr.Key, "incorrect error code")
 
 	// Bad Content Type
 	const badFilename = "test.bad"
@@ -168,5 +169,5 @@ func (as *ActionSuite) Test_Upload() {
 	as.NoError(err, "error unmarshalling response")
 
 	as.Equal(http.StatusBadRequest, appErr.Code, "incorrect error code")
-	as.Equal(domain.ErrorStoreFileBadContentType, appErr.Key, "incorrect error code")
+	as.Equal(api.ErrorStoreFileBadContentType, appErr.Key, "incorrect error code")
 }

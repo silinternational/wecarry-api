@@ -312,7 +312,7 @@ func (r *mutationResolver) CreateMeetingParticipant(ctx context.Context, input C
 	var participant models.MeetingParticipant
 	if err := participant.FindOrCreate(tx, meeting, models.CurrentUser(ctx), input.Code); err != nil {
 		// MeetingParticipant.Create returns localized error messages
-		return &models.MeetingParticipant{}, domain.ReportError(ctx, errors.New(err.DebugMsg), err.Key)
+		return &models.MeetingParticipant{}, domain.ReportError(ctx, err.Err, err.Key.String())
 	}
 	return &participant, nil
 }

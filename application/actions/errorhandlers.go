@@ -5,17 +5,16 @@ import (
 	"net/http"
 
 	"github.com/gobuffalo/buffalo"
-
-	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/api"
 )
 
-var httpErrorCodes = map[int]string{
-	http.StatusBadRequest:          domain.ErrorBadRequest,
-	http.StatusUnauthorized:        domain.ErrorNotAuthenticated,
-	http.StatusNotFound:            domain.ErrorRouteNotFound,
-	http.StatusMethodNotAllowed:    domain.ErrorMethodNotAllowed,
-	http.StatusUnprocessableEntity: domain.ErrorUnprocessableEntity,
-	http.StatusInternalServerError: domain.ErrorInternalServerError,
+var httpErrorCodes = map[int]api.ErrorKey{
+	http.StatusBadRequest:          api.ErrorBadRequest,
+	http.StatusUnauthorized:        api.ErrorNotAuthenticated,
+	http.StatusNotFound:            api.ErrorRouteNotFound,
+	http.StatusMethodNotAllowed:    api.ErrorMethodNotAllowed,
+	http.StatusUnprocessableEntity: api.ErrorUnprocessableEntity,
+	http.StatusInternalServerError: api.ErrorInternalServerError,
 }
 
 func registerCustomErrorHandler(app *buffalo.App) {
@@ -24,11 +23,11 @@ func registerCustomErrorHandler(app *buffalo.App) {
 	}
 }
 
-func getErrorCodeFromStatus(status int) string {
+func getErrorCodeFromStatus(status int) api.ErrorKey {
 	if s, ok := httpErrorCodes[status]; ok {
 		return s
 	}
-	return domain.ErrorUnexpectedHTTPStatus
+	return api.ErrorUnexpectedHTTPStatus
 }
 
 func customErrorHandler(status int, origErr error, c buffalo.Context) error {
@@ -36,7 +35,7 @@ func customErrorHandler(status int, origErr error, c buffalo.Context) error {
 	c.Response().WriteHeader(status)
 	c.Response().Header().Set("content-type", "application/json")
 
-	appError := domain.AppError{
+	appError := api.AppError{
 		Code: status,
 		Key:  getErrorCodeFromStatus(status),
 	}

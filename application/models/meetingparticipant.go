@@ -2,12 +2,14 @@ package models
 
 import (
 	"encoding/json"
+	"errors"
 	"time"
 
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop/v5"
 	"github.com/gobuffalo/validate/v3"
 	"github.com/gobuffalo/validate/v3/validators"
+	"github.com/silinternational/wecarry-api/api"
 
 	"github.com/silinternational/wecarry-api/domain"
 )
@@ -84,11 +86,11 @@ func (m *MeetingParticipant) Destroy(tx *pop.Connection) error {
 
 // FindOrCreate a new MeetingParticipant from a meeting ID and code. If `code` is nil, the meeting must be non-INVITE_ONLY.
 // Otherwise, `code` must match either a MeetingInvite secret code or a Meeting invite code.
-func (m *MeetingParticipant) FindOrCreate(tx *pop.Connection, meeting Meeting, user User, code *string) *domain.AppError {
+func (m *MeetingParticipant) FindOrCreate(tx *pop.Connection, meeting Meeting, user User, code *string) *api.AppError {
 	if err := m.FindByMeetingIDAndUserID(tx, meeting.ID, user.ID); domain.IsOtherThanNoRows(err) {
-		return &domain.AppError{
-			Key:      "CreateMeetingParticipant.FindExisting",
-			DebugMsg: err.Error(),
+		return &api.AppError{
+			Key: "CreateMeetingParticipant.FindExisting",
+			Err: err,
 		}
 	}
 	if m.ID > 0 {
@@ -99,9 +101,9 @@ func (m *MeetingParticipant) FindOrCreate(tx *pop.Connection, meeting Meeting, u
 		if user.CanCreateMeetingParticipant(tx, meeting) {
 			return m.createWithoutInvite(tx, user, meeting)
 		}
-		return &domain.AppError{
-			DebugMsg: "user is not allowed to self-join meeting without a code",
-			Key:      "CreateMeetingParticipant.Unauthorized",
+		return &api.AppError{
+			Err: errors.New("user is not allowed to self-join meeting without a code"),
+			Key: "CreateMeetingParticipant.Unauthorized",
 		}
 	}
 
@@ -111,15 +113,15 @@ func (m *MeetingParticipant) FindOrCreate(tx *pop.Connection, meeting Meeting, u
 
 	var invite MeetingInvite
 	if err := invite.FindBySecret(tx, meeting.ID, user.Email, *code); domain.IsOtherThanNoRows(err) {
-		return &domain.AppError{
-			DebugMsg: err.Error(),
-			Key:      "CreateMeetingParticipant.FindBySecret",
+		return &api.AppError{
+			Err: err,
+			Key: "CreateMeetingParticipant.FindBySecret",
 		}
 	}
 	if invite.ID == 0 {
-		return &domain.AppError{
-			DebugMsg: "invalid invite secret",
-			Key:      "CreateMeetingParticipant.InvalidSecret",
+		return &api.AppError{
+			Err: errors.New("invalid invite secret"),
+			Key: "CreateMeetingParticipant.InvalidSecret",
 		}
 	}
 
@@ -127,21 +129,21 @@ func (m *MeetingParticipant) FindOrCreate(tx *pop.Connection, meeting Meeting, u
 	m.UserID = user.ID
 	m.MeetingID = meeting.ID
 	if err := tx.Create(m); err != nil {
-		return &domain.AppError{
-			DebugMsg: err.Error(),
-			Key:      "CreateMeetingParticipant",
+		return &api.AppError{
+			Err: err,
+			Key: "CreateMeetingParticipant",
 		}
 	}
 	return nil
 }
 
-func (m *MeetingParticipant) createWithoutInvite(tx *pop.Connection, user User, meeting Meeting) *domain.AppError {
+func (m *MeetingParticipant) createWithoutInvite(tx *pop.Connection, user User, meeting Meeting) *api.AppError {
 	m.UserID = user.ID
 	m.MeetingID = meeting.ID
 	if err := tx.Create(m); err != nil {
-		return &domain.AppError{
-			Key:      "CreateMeetingParticipant",
-			DebugMsg: err.Error(),
+		return &api.AppError{
+			Key: "CreateMeetingParticipant",
+			Err: err,
 		}
 	}
 	return nil

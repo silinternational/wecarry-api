@@ -262,16 +262,6 @@ func envToInt(name string, def int) int {
 	return n
 }
 
-type AppError struct {
-	Code int `json:"code"`
-
-	// Don't change the value of these Key entries without making a corresponding change on the UI,
-	// since these will be converted to human-friendly texts on the UI
-	Key string `json:"key"`
-
-	DebugMsg string `json:"debug_msg,omitempty"`
-}
-
 // ErrLogProxy wraps standard error logger plus sends to Rollbar
 type ErrLogProxy struct {
 	LocalLog  log.Logger
