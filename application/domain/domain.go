@@ -792,22 +792,3 @@ func getExtras(c buffalo.Context) map[string]interface{} {
 
 	return extras
 }
-
-func MergeExtras(extras []map[string]interface{}) map[string]interface{} {
-	allExtras := map[string]interface{}{}
-
-	// I didn't think I would need this, but without it at least one test was failing
-	// The code allowed a map[string]interface{} to get through (i.e. not in a slice)
-	// without the compiler complaining
-	if len(extras) == 1 {
-		return extras[0]
-	}
-
-	for _, e := range extras {
-		for k, v := range e {
-			allExtras[k] = v
-		}
-	}
-
-	return allExtras
-}

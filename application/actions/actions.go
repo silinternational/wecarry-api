@@ -76,7 +76,7 @@ func reportError(c buffalo.Context, err error) error {
 		appErr.Extras = map[string]interface{}{}
 	}
 
-	appErr.Extras = domain.MergeExtras([]map[string]interface{}{getExtras(c), appErr.Extras})
+	appErr.Extras = api.MergeExtras([]map[string]interface{}{getExtras(c), appErr.Extras})
 	appErr.Extras["function"] = GetFunctionName(2)
 	appErr.Extras["key"] = appErr.Key
 	appErr.Extras["status"] = appErr.HttpStatus
