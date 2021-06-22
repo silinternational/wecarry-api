@@ -70,6 +70,13 @@ func App() *buffalo.App {
 			SessionStore: sessions.NewCookieStore([]byte(domain.Env.SessionSecret)),
 		})
 
+		var err error
+		domain.T, err = i18n.New(packr.New("locales", "../locales"), "en")
+		if err != nil {
+			_ = app.Stop(err)
+		}
+		app.Use(domain.T.Middleware())
+
 		registerCustomErrorHandler(app)
 
 		// Initialize and attach "rollbar" to context
@@ -81,13 +88,6 @@ func App() *buffalo.App {
 		//  Added for authorization
 		app.Use(setCurrentUser)
 		app.Middleware.Skip(setCurrentUser, statusHandler, serviceHandler)
-
-		var err error
-		domain.T, err = i18n.New(packr.New("locales", "../locales"), "en")
-		if err != nil {
-			_ = app.Stop(err)
-		}
-		app.Use(domain.T.Middleware())
 
 		app.GET("/site/status", statusHandler)
 		app.Middleware.Skip(buffalo.RequestLogger, statusHandler)
