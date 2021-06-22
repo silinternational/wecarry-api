@@ -70,27 +70,27 @@ type User struct {
 	// unique identifier for the User
 	// swagger:strfmt uuid4
 	// example: 63d5b060-1460-4348-bdf0-ad03c105a8d5
-	UUID uuid.UUID `json:"id" db:"uuid"`
+	UUID uuid.UUID `json:"id" db:"uuid" groups:"api"`
 
 	// Email address to be used for notifications to the User. Not necessarily the same as the authentication email.
-	Email string `json:"email" db:"email"`
+	Email string `json:"email" db:"email" groups:"api"`
 
 	// User's nickname. Auto-assigned upon creation of a User, but editable by the User. Limited to 255 characters.
-	Nickname string `json:"nickname" db:"nickname"`
+	Nickname string `json:"nickname" db:"nickname" groups:"api"`
 
 	// Organizations that the User is affilated with. This can be empty or have a single entry. Future capability is TBD
-	Organizations Organizations `json:"organizations" many_to_many:"user_organizations" order_by:"name asc"`
+	Organizations Organizations `json:"organizations" many_to_many:"user_organizations" order_by:"name asc" groups:"api"`
 
 	// ----- API-only fields
 
 	// avatarURL is generated from an attached photo if present, an external URL if present, or a Gravatar URL
 	// swagger:strfmt url
-	AvatarURL nulls.String `json:"avatar_url" db:"-"`
+	AvatarURL nulls.String `json:"avatar_url" db:"-" groups:"api"`
 
 	// `File` ID of the user's photo, if present
 	// swagger:strfmt uuid4
 	// example: 63d5b060-1460-4348-bdf0-ad03c105a8d5
-	PhotoID uuid.UUID `json:"photo_id" db:"-"`
+	PhotoID uuid.UUID `json:"photo_id" db:"-" groups:"api"`
 }
 
 // String can be helpful for serializing the model

@@ -47,5 +47,5 @@ func usersMe(c buffalo.Context) error {
 	}
 	user.Organizations = organizations
 
-	return c.Render(http.StatusOK, r.JSON(user))
+	return c.Render(http.StatusOK, sheriffRenderer{value: user, groups: []string{"api"}})
 }

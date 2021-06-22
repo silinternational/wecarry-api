@@ -13,7 +13,6 @@ require (
 	github.com/go-acme/lego v2.7.2+incompatible
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
 	github.com/gobuffalo/buffalo v0.16.23
-	github.com/gobuffalo/buffalo-pop/v2 v2.0.4
 	github.com/gobuffalo/envy v1.9.0
 	github.com/gobuffalo/events v1.4.1
 	github.com/gobuffalo/fizz v1.13.0 // indirect
@@ -33,6 +32,7 @@ require (
 	github.com/gorilla/pat v0.0.0-20180118222023-199c85a7f6d1
 	github.com/gorilla/sessions v1.2.1
 	github.com/jackc/pgproto3/v2 v2.0.7 // indirect
+	github.com/liip/sheriff v0.10.0
 	github.com/markbates/goth v1.56.0
 	github.com/markbates/grift v1.5.0
 	github.com/microcosm-cc/bluemonday v1.0.9 // indirect
