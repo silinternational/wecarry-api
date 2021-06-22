@@ -1,5 +1,33 @@
 package actions
 
+// WeCarry API
+//
+// Terms Of Service:
+//
+// there are no TOS at this moment, use at your own risk we take no responsibility
+//
+//     Schemes: https
+//     Host: localhost
+//     BasePath: /
+//     Version: 0.0.1
+//     License: MIT http://opensource.org/licenses/MIT
+//
+//     Consumes:
+//     - application/json
+//
+//     Produces:
+//     - application/json
+//
+//     Security:
+//     - oauth2:
+//
+//     SecurityDefinitions:
+//     bearerAuth:
+//         type: http
+//         scheme: bearer
+//
+// swagger:meta
+
 import (
 	"github.com/gobuffalo/buffalo"
 	i18n "github.com/gobuffalo/mw-i18n"

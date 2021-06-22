@@ -87,3 +87,11 @@ services:
     environment:
       MINIO_ACCESS_KEY: ${AWS_ACCESS_KEY_ID}
       MINIO_SECRET_KEY: ${AWS_SECRET_ACCESS_KEY}
+
+  swagger:
+    image: quay.io/goswagger/swagger:latest
+    ports:
+      - "8082:8082"
+    volumes:
+      - ./application/:/app
+    working_dir: /app

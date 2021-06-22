@@ -21,6 +21,12 @@ adminer:
 buffalo: db
 	docker-compose up -d buffalo
 
+swagger: swaggerspec
+	docker-compose run --rm --service-ports swagger serve -p 8082 --no-open swagger.json
+
+swaggerspec:
+	docker-compose run --rm swagger generate spec -m -o swagger.json
+
 bounce: db
 	docker-compose kill buffalo
 	docker-compose rm -f buffalo
