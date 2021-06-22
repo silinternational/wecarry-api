@@ -86,6 +86,8 @@ func App() *buffalo.App {
 
 		auth.GET("/logout", authDestroy)
 
+		app.GET("/users/me", usersMe)
+
 		listeners.RegisterListeners()
 	}
 
