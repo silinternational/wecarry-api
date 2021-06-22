@@ -32,16 +32,16 @@ func (as *ActionSuite) TestMessageQuery() {
 	thread, err := f.Messages[0].GetThread(as.DB)
 	as.NoError(err)
 
-	participants, err := thread.GetParticipants(as.DB)
+	err = thread.LoadParticipants(as.DB)
 	as.NoError(err)
-	as.Equal(2, len(participants), "incorrect number of thread participants")
+	as.Equal(2, len(thread.Participants), "incorrect number of thread participants")
 
 	as.Equal(f.Messages[0].UUID.String(), resp.Message.ID)
 	as.Equal(f.Messages[0].Content, resp.Message.Content)
 	as.Equal(f.Users[1].Nickname, resp.Message.Sender.Nickname)
 	as.Equal(thread.UUID.String(), resp.Message.Thread.ID)
-	as.Equal(participants[0].Nickname, resp.Message.Thread.Participants[0].Nickname)
-	as.Equal(participants[1].Nickname, resp.Message.Thread.Participants[1].Nickname)
+	as.Equal(thread.Participants[0].Nickname, resp.Message.Thread.Participants[0].Nickname)
+	as.Equal(thread.Participants[1].Nickname, resp.Message.Thread.Participants[1].Nickname)
 }
 
 func (as *ActionSuite) TestCreateMessage() {
@@ -62,9 +62,9 @@ func (as *ActionSuite) TestCreateMessage() {
 	thread, err := f.Messages[0].GetThread(as.DB)
 	as.NoError(err)
 
-	messages, err := thread.Messages(as.DB)
+	err = thread.LoadMessages(as.DB)
 	as.NoError(err)
-	as.Equal(3, len(messages), "incorrect number of thread messages")
+	as.Equal(3, len(thread.Messages), "incorrect number of thread messages")
 
 	as.Equal(newContent, resp.Message.Content)
 	as.Equal(thread.UUID.String(), resp.Message.Thread.ID)

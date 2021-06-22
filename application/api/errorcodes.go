@@ -26,6 +26,9 @@ const (
 	ConfigurationError              = ErrorKey("ErrorConfigurationError")
 	FailedToConvertToAPIType        = ErrorKey("ErrorFailedToConvertToAPIType")
 	ErrorGenericInternalServerError = ErrorKey("ErrorGenericInternalServerError")
+
+	// ============================  Threads =========================================
+	ThreadsLoadFailure = ErrorKey("ErrorThreadsLoadFailure")
 )
 
 // ********************************************************************
