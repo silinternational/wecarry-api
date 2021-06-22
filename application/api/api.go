@@ -123,14 +123,14 @@ func ConvertToOtherType(input, output interface{}) error {
 	str, err := json.Marshal(input)
 	if err != nil {
 		return NewAppError(
-			fmt.Errorf("failed to convert to apitype. marshal error: %s", err.Error()),
+			fmt.Errorf("failed to convert to api. marshal error: %s", err.Error()),
 			FailedToConvertToAPIType,
 			CategoryInternal,
 		)
 	}
 	if err := json.Unmarshal(str, output); err != nil {
 		return NewAppError(
-			fmt.Errorf("failed to convert to apitype. unmarshal error: %s", err.Error()),
+			fmt.Errorf("failed to convert to api. unmarshal error: %s", err.Error()),
 			FailedToConvertToAPIType,
 			CategoryInternal,
 		)
