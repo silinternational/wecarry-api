@@ -20,7 +20,7 @@ type Thread struct {
 	UUID         uuid.UUID `json:"uuid" db:"uuid"`
 	RequestID    int       `json:"request_id" db:"request_id"`
 	Request      Request   `belongs_to:"requests"`
-	Participants Users     `many_to_many:"thread_participants"`
+	Participants Users     `many_to_many:"thread_participants" order_by:"id asc"`
 	Messages     Messages  `json:"messages" db:"-"`
 }
 
@@ -97,14 +97,14 @@ func (t *Thread) LoadMessages(tx *pop.Connection, eagerFields ...string) error {
 	var messages []Message
 	// If no eagerFields, then don't use Eager at all, otherwise it uses Eager on all of them
 
+	var q *pop.Query
 	if len(eagerFields) > 0 {
-		if err := tx.EagerPreload(eagerFields...).Where("thread_id = ?", t.ID).All(&messages); err != nil {
-			return fmt.Errorf("error getting messages (preload) for thread id %v ... %v", t.ID, err)
-		}
+		q = tx.EagerPreload(eagerFields...).Where("thread_id = ?", t.ID)
 	} else {
-		if err := tx.Where("thread_id = ?", t.ID).All(&messages); err != nil {
-			return fmt.Errorf("error getting messages for thread id %v ... %v", t.ID, err)
-		}
+		q = tx.Where("thread_id = ?", t.ID)
+	}
+	if err := q.All(&messages); err != nil {
+		return fmt.Errorf("error getting messages for thread id %v ... %v", t.ID, err)
 	}
 
 	t.Messages = messages
@@ -112,23 +112,10 @@ func (t *Thread) LoadMessages(tx *pop.Connection, eagerFields ...string) error {
 }
 
 func (t *Thread) LoadParticipants(tx *pop.Connection) error {
-	var users []User
-	var threadParticipants []*ThreadParticipant
 
-	if err := tx.Where("thread_id = ?", t.ID).Order("id asc").All(&threadParticipants); err != nil {
-		return fmt.Errorf("error reading from thread_participants table %v ... %v", t.ID, err)
+	if err := tx.Load(t, "Participants"); err != nil {
+		return fmt.Errorf("error loading threads participants %v ... %v", t.ID, err)
 	}
-
-	for _, tp := range threadParticipants {
-		u := User{}
-
-		if err := tx.Find(&u, tp.UserID); err != nil {
-			return fmt.Errorf("error finding users on thread %v ... %v", t.ID, err)
-		}
-		users = append(users, u)
-	}
-
-	t.Participants = users
 	return nil
 }
 

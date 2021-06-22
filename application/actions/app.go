@@ -66,7 +66,7 @@ func App() *buffalo.App {
 
 		app.POST("/gql/", gqlHandler)
 
-		app.GET("/conversations/", usersThreads)
+		app.GET("/conversations", usersThreads)
 
 		app.POST("/upload/", uploadHandler)
 

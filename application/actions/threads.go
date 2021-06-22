@@ -11,7 +11,7 @@ import (
 	"github.com/silinternational/wecarry-api/models"
 )
 
-// uploadHandler responds to POST requests at /upload
+// usersThreads responds to Get requests at /conversations
 func usersThreads(c buffalo.Context) error {
 	cUser := models.CurrentUser(c)
 	tx := models.Tx(c)

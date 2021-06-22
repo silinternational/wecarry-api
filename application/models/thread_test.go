@@ -3,6 +3,7 @@ package models
 import (
 	"fmt"
 	"reflect"
+	"sort"
 	"testing"
 	"time"
 
@@ -199,46 +200,42 @@ func (ms *ModelSuite) TestThread_LoadParticipants() {
 	tests := []struct {
 		name    string
 		thread  Thread
-		want    []uuid.UUID
+		want    []int
 		wantErr bool
 	}{
 		{
 			name:   "one participant",
 			thread: threadFixtures.Threads[0],
-			want: []uuid.UUID{
-				users[0].UUID,
+			want: []int{
+				users[0].ID,
 			},
 		},
 		{
 			name:   "two participants",
 			thread: threadFixtures.Threads[1],
-			want: []uuid.UUID{
-				threadFixtures.Users[0].UUID,
-				users[0].UUID,
+			want: []int{
+				threadFixtures.Users[0].ID,
+				users[0].ID,
 			},
 		},
 	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			err := test.thread.LoadParticipants(ms.DB)
-			if test.wantErr {
-				if (err != nil) != test.wantErr {
-					t.Errorf("GetParticipants() did not return expected error")
-				}
-			} else {
-				got := test.thread.Participants
-				if err != nil {
-					t.Errorf("GetParticipants() error = %v", err)
-				} else {
-					ids := make([]uuid.UUID, len(got))
-					for i := range got {
-						ids[i] = got[i].UUID
-					}
-					if !reflect.DeepEqual(ids, test.want) {
-						t.Errorf("GetParticipants() got = %s, want %s", ids, test.want)
-					}
-				}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.thread.LoadParticipants(ms.DB)
+			if tt.wantErr {
+				ms.Error(err)
+				return
 			}
+			ms.NoError(err)
+			got := tt.thread.Participants
+
+			ids := make([]int, len(got))
+			for i := range got {
+				ids[i] = got[i].ID
+			}
+			sort.Ints(tt.want)
+			ms.EqualValues(tt.want, ids)
+
 		})
 	}
 }

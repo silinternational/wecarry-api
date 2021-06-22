@@ -15,7 +15,7 @@ func convertMessagesToAPIType(messages models.Messages) (api.Messages, error) {
 	}
 
 	// Hydrate the thread's messages
-	for i := range messages {
+	for i := range output {
 		var sentByOutput api.User
 		if err := api.ConvertToOtherType(messages[i].SentBy, &sentByOutput); err != nil {
 			err = errors.New("error converting messages sent_by user: " + err.Error())
