@@ -96,6 +96,8 @@ func App() *buffalo.App {
 
 		app.GET("/conversations", usersThreads)
 
+		app.GET("/requests", getRequests)
+
 		app.POST("/upload/", uploadHandler)
 
 		app.POST("/service", serviceHandler)
