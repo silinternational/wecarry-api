@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/gobuffalo/buffalo"
@@ -30,7 +31,7 @@ func usersMe(c buffalo.Context) error {
 	return c.Render(http.StatusOK, r.JSON(output))
 }
 
-func convertUserToAPIType(c buffalo.Context, user models.User) (api.User, error) {
+func convertUserToAPIType(c context.Context, user models.User) (api.User, error) {
 	tx := models.Tx(c)
 
 	output := api.User{}
