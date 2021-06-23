@@ -34,28 +34,28 @@ func usersThreads(c buffalo.Context) error {
 	return c.Render(200, render.JSON(output))
 }
 
-// swagger:operation POST /projects Threads SetThreadLastViewedAt
+// swagger:operation POST /projects Threads MarkMessagesAsRead
 //
 // Sets the last viewed time for the current user on the given thread
 //
 // ---
-//   - name: set_thread_last_viewed_at
+//   - name: MarkMessagesAsRead
 //     in: body
-//     description: SetThreadLastViewedAt input object
+//     description: MarkMessagesAsRead input object
 //     schema:
-//       "$ref": "#/definitions/SetThreadLastViewedAtInput"
+//       "$ref": "#/definitions/MarkMessagesAsReadInput"
 func threadsMarkMessagesAsRead(c buffalo.Context) error {
 	cUser := models.CurrentUser(c)
 	tx := models.Tx(c)
 
 	var thread models.Thread
 
-	var input api.SetThreadLastViewedAtInput
+	var input api.MarkMessagesAsReadInput
 	if err := StrictBind(c, &input); err != nil {
 		return reportError(c, &api.AppError{
 			HttpStatus: http.StatusBadRequest,
 			Key:        api.InvalidRequestBody,
-			Err:        errors.New("unable to unmarshal Post data into SetThreadLastViewedAtInput struct, error: " + err.Error()),
+			Err:        errors.New("unable to unmarshal Post data into MarkMessagesAsReadInput struct, error: " + err.Error()),
 		})
 	}
 
@@ -115,7 +115,7 @@ func convertThreadsToAPIType(c context.Context, threads models.Threads) (api.Thr
 		// Not converting Participants, since that happens automatically  above and
 		// because it doesn't have nested related objects
 
-		requestOutput, err := convertRequestToAPIType(threads[i].Request)
+		requestOutput, err := convertRequestToAPIType(c, threads[i].Request)
 		if err != nil {
 			return nil, err
 		}

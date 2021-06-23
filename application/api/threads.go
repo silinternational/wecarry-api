@@ -42,9 +42,9 @@ type Thread struct {
 	UpdatedAt time.Time
 }
 
-// SetThreadLastViewedAtInput is an object for setting the last_viewed_at time of a thread
+// MarkMessagesAsReadInput is an object for setting the last_viewed_at time of a thread
 // swagger:model
-type SetThreadLastViewedAtInput struct {
+type MarkMessagesAsReadInput struct {
 	// unique id (uuid) for thread
 	//
 	// swagger:strfmt uuid4

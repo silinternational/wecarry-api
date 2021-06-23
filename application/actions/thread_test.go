@@ -103,7 +103,7 @@ func (as *ActionSuite) TestMarkMessagesAsRead() {
 	users0 := f.Users[0]
 	testTime := time.Now().Add(1)
 
-	reqBody := api.SetThreadLastViewedAtInput{
+	reqBody := api.MarkMessagesAsReadInput{
 		ThreadID: f.Threads[0].UUID.String(),
 		Time:     testTime,
 	}

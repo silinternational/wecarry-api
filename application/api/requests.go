@@ -17,12 +17,8 @@ type Request struct {
 	ID uuid.UUID `json:"id"`
 
 	// Description of this request
-	//
-	// read-only: true
 	Description string `json:"description"`
 
-	// User who created this request
-	//
-	// read-only: true
+	// Profile of the user that created this request.
 	CreatedBy *User `json:"created_by"`
 }
