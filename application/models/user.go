@@ -606,7 +606,7 @@ func (u *User) UnreadMessageCount(tx *pop.Connection) ([]UnreadThread, error) {
 	unreads := []UnreadThread{}
 
 	for _, tp := range threadPs {
-		msgCount, err := tp.Thread.UnreadMessageCount(tx, u.ID, tp.LastViewedAt)
+		msgCount, err := tp.Thread.GetUnreadMessageCount(tx, u.ID, tp.LastViewedAt)
 		if err != nil {
 			domain.ErrLogger.Printf("error getting count of unread messages for thread %s ... %v",
 				tp.Thread.UUID, err)
@@ -647,17 +647,7 @@ func (u *User) GetThreadsForConversations(tx *pop.Connection) (Threads, error) {
 	}
 
 	for i := range t {
-		err := t[i].LoadMessages(tx, "SentBy")
-		if err != nil {
-			return nil, err
-		}
-
-		err = t[i].LoadParticipants(tx)
-		if err != nil {
-			return nil, err
-		}
-
-		err = t[i].LoadRequest(tx, "CreatedBy")
+		err := t[i].LoadForAPI(tx, *u)
 		if err != nil {
 			return nil, err
 		}

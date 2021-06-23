@@ -67,6 +67,7 @@ func App() *buffalo.App {
 		app.POST("/gql/", gqlHandler)
 
 		app.GET("/conversations", usersThreads)
+		app.POST("/markMessagesAsRead", threadsMarkMessagesAsRead)
 
 		app.POST("/upload/", uploadHandler)
 

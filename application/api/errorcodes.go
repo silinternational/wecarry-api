@@ -28,7 +28,9 @@ const (
 	ErrorGenericInternalServerError = ErrorKey("ErrorGenericInternalServerError")
 
 	// ============================  Threads =========================================
-	ThreadsLoadFailure = ErrorKey("ErrorThreadsLoadFailure")
+	ThreadsLoadFailure    = ErrorKey("ErrorThreadsLoadFailure")
+	ThreadNotFound        = ErrorKey("ErrorThreadNotFound")
+	ThreadSetLastViewedAt = ErrorKey("ErrorThreadSetLastViewedAt")
 )
 
 // ********************************************************************

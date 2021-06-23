@@ -1,6 +1,8 @@
 package api
 
 import (
+	"time"
+
 	"github.com/gofrs/uuid"
 )
 
@@ -18,18 +20,37 @@ type Thread struct {
 	// example: 63d5b060-1460-4348-bdf0-ad03c105a8d5
 	ID uuid.UUID `json:"uuid"`
 
+	// CreatedAt - the time this thread was started
+	CreatedAt time.Time `json:"created_at"`
+
+	// LastViewedAt is the time the auth user last viewed this thread. Messages with `updatedAt` after this time can be considered unread.
+	LastViewedAt *time.Time `json:"last_viewed_at"`
+
 	// Messages in this thread
-	//
-	// read-only: true
 	Messages *Messages `json:"messages"`
 
-	// Users associated with this thread
-	//
-	// read-only: true
+	// Users participating in the message thread. The request creator is automatically added to all of the requests's threads
 	Participants *Users `json:"participants"`
 
-	// Request associated with this thread
-	//
-	// read-only: true
+	// Request that owns this message thread
 	Request *Request `json:"request"`
+
+	// UnreadMessageCount is The number of messages unread by the auth user
+	UnreadMessageCount int `json:"unread_message_count"`
+
+	// UpdatedAt = the time this thread was last updated or messages added to the thread
+	UpdatedAt time.Time
+}
+
+// SetThreadLastViewedAtInput is an object for setting the last_viewed_at time of a thread
+// swagger:model
+type SetThreadLastViewedAtInput struct {
+	// unique id (uuid) for thread
+	//
+	// swagger:strfmt uuid4
+	// unique: true
+	// example: 63d5b060-1460-4348-bdf0-ad03c105a8d5
+	ThreadID string `json:"threadID"`
+
+	Time time.Time `json:"time"`
 }
