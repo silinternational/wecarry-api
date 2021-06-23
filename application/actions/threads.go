@@ -99,7 +99,7 @@ func threadsMarkMessagesAsRead(c buffalo.Context) error {
 func convertThreadsToAPIType(threads models.Threads) (api.Threads, error) {
 	var output api.Threads
 	if err := api.ConvertToOtherType(threads, &output); err != nil {
-		err = errors.New("error converting threads to apitype.threads: " + err.Error())
+		err = errors.New("error converting threads to api.threads: " + err.Error())
 		return nil, err
 	}
 

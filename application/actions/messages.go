@@ -10,7 +10,7 @@ import (
 func convertMessagesToAPIType(messages models.Messages) (api.Messages, error) {
 	var output api.Messages
 	if err := api.ConvertToOtherType(messages, &output); err != nil {
-		err = errors.New("error converting messages to apitype.messages: " + err.Error())
+		err = errors.New("error converting messages to api.messages: " + err.Error())
 		return nil, err
 	}
 

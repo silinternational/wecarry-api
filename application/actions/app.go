@@ -1,5 +1,33 @@
 package actions
 
+// WeCarry API
+//
+// Terms Of Service:
+//
+// there are no TOS at this moment, use at your own risk we take no responsibility
+//
+//     Schemes: https
+//     Host: localhost
+//     BasePath: /
+//     Version: 0.0.1
+//     License: MIT http://opensource.org/licenses/MIT
+//
+//     Consumes:
+//     - application/json
+//
+//     Produces:
+//     - application/json
+//
+//     Security:
+//     - oauth2:
+//
+//     SecurityDefinitions:
+//     bearerAuth:
+//         type: http
+//         scheme: bearer
+//
+// swagger:meta
+
 import (
 	"github.com/gobuffalo/buffalo"
 	i18n "github.com/gobuffalo/mw-i18n"
@@ -42,6 +70,13 @@ func App() *buffalo.App {
 			SessionStore: sessions.NewCookieStore([]byte(domain.Env.SessionSecret)),
 		})
 
+		var err error
+		domain.T, err = i18n.New(packr.New("locales", "../locales"), "en")
+		if err != nil {
+			_ = app.Stop(err)
+		}
+		app.Use(domain.T.Middleware())
+
 		registerCustomErrorHandler(app)
 
 		// Initialize and attach "rollbar" to context
@@ -53,13 +88,6 @@ func App() *buffalo.App {
 		//  Added for authorization
 		app.Use(setCurrentUser)
 		app.Middleware.Skip(setCurrentUser, statusHandler, serviceHandler)
-
-		var err error
-		domain.T, err = i18n.New(packr.New("locales", "../locales"), "en")
-		if err != nil {
-			_ = app.Stop(err)
-		}
-		app.Use(domain.T.Middleware())
 
 		app.GET("/site/status", statusHandler)
 		app.Middleware.Skip(buffalo.RequestLogger, statusHandler)
@@ -86,6 +114,8 @@ func App() *buffalo.App {
 		auth.POST("/callback", authCallback) // for SAML
 
 		auth.GET("/logout", authDestroy)
+
+		app.GET("/users/me", usersMe)
 
 		listeners.RegisterListeners()
 	}
