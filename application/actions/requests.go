@@ -10,7 +10,7 @@ import (
 func convertRequestToAPIType(request models.Request) (api.Request, error) {
 	var output api.Request
 	if err := api.ConvertToOtherType(request, &output); err != nil {
-		err = errors.New("error converting request to apitype.request: " + err.Error())
+		err = errors.New("error converting request to api.request: " + err.Error())
 		return api.Request{}, err
 	}
 
