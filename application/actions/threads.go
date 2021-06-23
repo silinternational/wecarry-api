@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
@@ -25,7 +26,7 @@ func usersThreads(c buffalo.Context) error {
 		})
 	}
 
-	output, err := convertThreadsToAPIType(threads)
+	output, err := convertThreadsToAPIType(c, threads)
 	if err != nil {
 		return reportError(c, appErrorFromErr(err))
 	}
@@ -83,7 +84,7 @@ func threadsMarkMessagesAsRead(c buffalo.Context) error {
 	}
 
 	threads := models.Threads{thread}
-	converted, err := convertThreadsToAPIType(threads)
+	converted, err := convertThreadsToAPIType(c, threads)
 	if err != nil {
 		return reportError(c, appErrorFromErr(err))
 	}
@@ -96,7 +97,7 @@ func threadsMarkMessagesAsRead(c buffalo.Context) error {
 	return c.Render(200, render.JSON(converted[0]))
 }
 
-func convertThreadsToAPIType(threads models.Threads) (api.Threads, error) {
+func convertThreadsToAPIType(c context.Context, threads models.Threads) (api.Threads, error) {
 	var output api.Threads
 	if err := api.ConvertToOtherType(threads, &output); err != nil {
 		err = errors.New("error converting threads to api.threads: " + err.Error())
@@ -105,7 +106,7 @@ func convertThreadsToAPIType(threads models.Threads) (api.Threads, error) {
 
 	// Hydrate the thread's messages, participants
 	for i := range threads {
-		messagesOutput, err := convertMessagesToAPIType(threads[i].Messages)
+		messagesOutput, err := convertMessagesToAPIType(c, threads[i].Messages)
 		if err != nil {
 			return nil, err
 		}
@@ -120,6 +121,7 @@ func convertThreadsToAPIType(threads models.Threads) (api.Threads, error) {
 		}
 
 		output[i].Request = &requestOutput
+		output[i].ID = threads[i].UUID
 	}
 
 	return output, nil

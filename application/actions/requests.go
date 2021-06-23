@@ -21,6 +21,7 @@ func convertRequestToAPIType(request models.Request) (api.Request, error) {
 		return api.Request{}, err
 	}
 	output.CreatedBy = &createdBy
+	output.ID = request.UUID
 
 	return output, nil
 }

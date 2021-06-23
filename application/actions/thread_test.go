@@ -83,14 +83,14 @@ func (as *ActionSuite) TestConversations() {
 	as.Equal(200, res.Code, "incorrect status code returned, body: %s", body)
 
 	wantContains := []string{
-		fmt.Sprintf(`"uuid":"%s"`, f.Threads[0].UUID),
+		fmt.Sprintf(`"id":"%s"`, f.Threads[0].UUID),
 		fmt.Sprintf(`"nickname":"%s"`, users0.Nickname),
 		fmt.Sprintf(`"nickname":"%s"`, users1.Nickname),
 		fmt.Sprintf(`"content":"Reply from %s"`, users0.Nickname),
 		fmt.Sprintf(`"content":"Message from %s"`, users1.Nickname),
-		fmt.Sprintf(`"sender":{"uuid":"%s"`, users0.UUID),
-		fmt.Sprintf(`"sender":{"uuid":"%s"`, users1.UUID),
-		fmt.Sprintf(`"request":{"uuid":"%s"`, f.Requests[0].UUID),
+		fmt.Sprintf(`"sender":{"id":"%s"`, users0.UUID),
+		fmt.Sprintf(`"sender":{"id":"%s"`, users1.UUID),
+		fmt.Sprintf(`"request":{"id":"%s"`, f.Requests[0].UUID),
 	}
 	for _, w := range wantContains {
 		as.Contains(body, w)
@@ -118,12 +118,12 @@ func (as *ActionSuite) TestMarkMessagesAsRead() {
 
 	//wantContains := fmt.Sprintf(`"last_viewed_at":"%s`, testTime.Format("2006-01-02T15:04:05"))
 	wantContains := []string{
-		fmt.Sprintf(`"uuid":"%s"`, f.Threads[0].UUID),
+		fmt.Sprintf(`"id":"%s"`, f.Threads[0].UUID),
 		fmt.Sprintf(`"nickname":"%s"`, users0.Nickname),
 		fmt.Sprintf(`"last_viewed_at":"%s`, testTime.Format("2006-01-02T15:04:05")),
 		fmt.Sprintf(`"content":"Reply from %s"`, users0.Nickname),
-		fmt.Sprintf(`"sender":{"uuid":"%s"`, users0.UUID),
-		fmt.Sprintf(`"request":{"uuid":"%s"`, f.Requests[0].UUID),
+		fmt.Sprintf(`"sender":{"id":"%s"`, users0.UUID),
+		fmt.Sprintf(`"request":{"id":"%s"`, f.Requests[0].UUID),
 	}
 	for _, w := range wantContains {
 		as.Contains(body, w)
