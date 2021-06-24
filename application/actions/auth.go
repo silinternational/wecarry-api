@@ -302,8 +302,8 @@ func inviteAuthRequest(c buffalo.Context, authEmail, inviteType string) error {
 }
 
 // Hydrates an AuthUser struct based on a user with an Org
-func newOrgBasedAuthUser(c context.Context, clientID string, user models.User, org models.Organization) (AuthUser, error) {
-	accessToken, expiresAt, err := user.CreateAccessToken(models.Tx(c), org, clientID)
+func newOrgBasedAuthUser(ctx context.Context, clientID string, user models.User, org models.Organization) (AuthUser, error) {
+	accessToken, expiresAt, err := user.CreateAccessToken(models.Tx(ctx), org, clientID)
 	if err != nil {
 		return AuthUser{}, err
 	}

@@ -8,7 +8,7 @@ import (
 	"github.com/silinternational/wecarry-api/models"
 )
 
-func convertRequestToAPIType(c context.Context, request models.Request) (api.Request, error) {
+func convertRequestToAPIType(ctx context.Context, request models.Request) (api.Request, error) {
 	var output api.Request
 	if err := api.ConvertToOtherType(request, &output); err != nil {
 		err = errors.New("error converting request to api.request: " + err.Error())
@@ -16,7 +16,7 @@ func convertRequestToAPIType(c context.Context, request models.Request) (api.Req
 	}
 
 	// Hydrate the request's CreatedBy user
-	outputUser, err := convertUserToAPIType(c, request.CreatedBy)
+	outputUser, err := convertUserToAPIType(ctx, request.CreatedBy)
 	if err != nil {
 		err = errors.New("error converting request created_by user: " + err.Error())
 		return api.Request{}, err

@@ -31,8 +31,8 @@ func usersMe(c buffalo.Context) error {
 	return c.Render(http.StatusOK, r.JSON(output))
 }
 
-func convertUserToPrivateAPIType(c context.Context, user models.User) (api.UserPrivate, error) {
-	tx := models.Tx(c)
+func convertUserToPrivateAPIType(ctx context.Context, user models.User) (api.UserPrivate, error) {
+	tx := models.Tx(ctx)
 
 	output := api.UserPrivate{}
 	if err := api.ConvertToOtherType(user, &output); err != nil {
@@ -65,8 +65,8 @@ func convertUserToPrivateAPIType(c context.Context, user models.User) (api.UserP
 	return output, nil
 }
 
-func convertUserToAPIType(c context.Context, user models.User) (api.User, error) {
-	tx := models.Tx(c)
+func convertUserToAPIType(ctx context.Context, user models.User) (api.User, error) {
+	tx := models.Tx(ctx)
 
 	output := api.User{}
 	if err := api.ConvertToOtherType(user, &output); err != nil {
