@@ -91,6 +91,7 @@ func (as *ActionSuite) TestConversations() {
 		fmt.Sprintf(`"sender":{"id":"%s"`, users0.UUID),
 		fmt.Sprintf(`"sender":{"id":"%s"`, users1.UUID),
 		fmt.Sprintf(`"request":{"id":"%s"`, f.Requests[0].UUID),
+		`"unread_message_count":1`,
 	}
 	for _, w := range wantContains {
 		as.Contains(body, w)

@@ -6,6 +6,8 @@ import (
 	"github.com/gofrs/uuid"
 )
 
+// Threads is a list of conversations that each have a list of messages between users
+//
 // swagger:model
 type Threads []Thread
 
@@ -35,7 +37,7 @@ type Thread struct {
 	// Request that owns this message thread
 	Request *Request `json:"request"`
 
-	// UnreadMessageCount is The number of messages unread by the auth user
+	// UnreadMessageCount is the number of messages unread by the auth user
 	UnreadMessageCount int `json:"unread_message_count"`
 
 	// UpdatedAt = the time this thread was last updated or messages added to the thread

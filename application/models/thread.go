@@ -190,6 +190,7 @@ func (t *Thread) GetLastViewedAt(tx *pop.Connection, user User) (*time.Time, err
 	if err := tp.FindByThreadIDAndUserID(tx, t.ID, user.ID); err != nil {
 		return nil, err
 	}
+
 	lastViewedAt := tp.LastViewedAt
 	return &lastViewedAt, nil
 }
@@ -229,6 +230,13 @@ func (t *Thread) LoadForAPI(tx *pop.Connection, user User) error {
 
 	t.LastViewedAt = lastViewed
 
+	count, err := t.GetUnreadMessageCount(tx, user.ID, *lastViewed)
+	if err != nil {
+		return errors.New("error getting thread unreadMessageCount: " + err.Error())
+	}
+
+	t.UnreadMessageCount = count
+
 	return nil
 }
 
@@ -249,9 +257,11 @@ func (t *Thread) GetUnreadMessageCount(tx *pop.Connection, userID int, lastViewe
 		return count, fmt.Errorf("error in GetUnreadMessageCount, invalid id %v", userID)
 	}
 
-	err := t.LoadMessages(tx)
-	if err != nil {
-		return count, err
+	if len(t.Messages) == 0 {
+		err := t.LoadMessages(tx)
+		if err != nil {
+			return count, err
+		}
 	}
 
 	for _, m := range t.Messages {
