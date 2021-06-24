@@ -83,8 +83,5 @@ func convertUserToAPIType(c context.Context, user models.User) (api.User, error)
 		output.AvatarURL = nulls.NewString(*photoURL)
 	}
 
-	if err != nil {
-		return api.User{}, err
-	}
 	return output, nil
 }
