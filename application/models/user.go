@@ -635,7 +635,7 @@ func (u *User) GetThreads(tx *pop.Connection) (Threads, error) {
 	return t, nil
 }
 
-// GetThreads finds all threads that the user is participating in.
+// GetThreadsForConversations finds all threads that the user is participating in.
 func (u *User) GetThreadsForConversations(tx *pop.Connection) (Threads, error) {
 	var t Threads
 	query := tx.Q().

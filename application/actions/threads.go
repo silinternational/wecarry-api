@@ -12,7 +12,18 @@ import (
 	"github.com/silinternational/wecarry-api/models"
 )
 
-// usersThreads responds to Get requests at /conversations
+// swagger:operation GET /conversations Threads Conversations
+//
+// List the User's Conversations
+//
+// ---
+// responses:
+//   '200':
+//     description: A list of the conversations with their messages
+//     type: array
+//     items:
+//       schema:
+//         "$ref": "#/definitions/Threads"
 func usersThreads(c buffalo.Context) error {
 	cUser := models.CurrentUser(c)
 	tx := models.Tx(c)
@@ -39,11 +50,19 @@ func usersThreads(c buffalo.Context) error {
 // Sets the last viewed time for the current user on the given thread
 //
 // ---
-//   - name: MarkMessagesAsRead
+// parameters:
+//   - name: MarkMessagesAsReadInput
 //     in: body
+//     required: true
 //     description: MarkMessagesAsRead input object
 //     schema:
 //       "$ref": "#/definitions/MarkMessagesAsReadInput"
+//
+// responses:
+//   '200':
+//     description: A thread of messages
+//     schema:
+//       "$ref": "#/definitions/Thread"
 func threadsMarkMessagesAsRead(c buffalo.Context) error {
 	cUser := models.CurrentUser(c)
 	tx := models.Tx(c)
