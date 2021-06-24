@@ -94,8 +94,9 @@ func App() *buffalo.App {
 
 		app.POST("/gql/", gqlHandler)
 
-		app.GET("/conversations", usersThreads)
-		app.POST("/markMessagesAsRead", threadsMarkMessagesAsRead)
+		threadsGroup := app.Group("/threads")
+		threadsGroup.GET("/", threadsMine)
+		threadsGroup.PUT("/{thread_id}/read", threadsMarkAsRead)
 
 		app.GET("/requests", requestsList)
 

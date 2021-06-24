@@ -1,0 +1,62 @@
+package actions
+
+type threadsResponse struct {
+	Threads []struct {
+		ID           string `json:"id"`
+		Participants []struct {
+			ID       string `json:"id"`
+			Nickname string `json:"nickname"`
+		} `json:"participants"`
+		Messages []struct {
+			ID      string `json:"id"`
+			Content string `json:"content"`
+			Sender  struct {
+				ID       string `json:"id"`
+				Nickname string `json:"nickname"`
+			} `json:"sender"`
+		} `json:"messages"`
+		Request struct {
+			ID string `json:"id"`
+		} `json:"request"`
+	} `json:"threads"`
+}
+
+const allThreadFields = "id request { id } participants {nickname} messages {id content sender { nickname }}}"
+
+func (as *ActionSuite) TestThreadsQuery() {
+	f := createFixturesForThreadQuery(as)
+	query := "{ threads {" + allThreadFields + "}"
+	// for now, the "threads" and "myThreads" queries are the same
+	testThreadsQuery(as, f, query)
+}
+
+func (as *ActionSuite) TestMyThreadsQuery() {
+	f := createFixturesForThreadQuery(as)
+	query := "{ threads: myThreads {" + allThreadFields + "}"
+	testThreadsQuery(as, f, query)
+}
+
+func testThreadsQuery(as *ActionSuite, f threadQueryFixtures, query string) {
+	var resp threadsResponse
+
+	err := as.testGqlQuery(query, f.Users[0].Nickname, &resp)
+
+	as.NoError(err)
+
+	as.Equal(f.Threads[0].UUID.String(), resp.Threads[0].ID)
+	as.Equal(f.Requests[0].UUID.String(), resp.Threads[0].Request.ID)
+	as.Equal(f.Messages[0].UUID.String(), resp.Threads[0].Messages[0].ID)
+	as.Equal(f.Messages[0].Content, resp.Threads[0].Messages[0].Content)
+	as.Equal(f.Users[1].Nickname, resp.Threads[0].Messages[0].Sender.Nickname)
+
+	thread := f.Threads[0]
+	err = thread.Load(as.DB, "Participants")
+	as.NoError(err)
+
+	err = thread.LoadParticipants(as.DB)
+	as.NoError(err)
+	as.Equal(2, len(thread.Participants), "incorrect number of thread participants")
+
+	as.Equal(thread.Participants[0].Nickname, resp.Threads[0].Participants[0].Nickname)
+	as.Equal(thread.Participants[1].Nickname, resp.Threads[0].Participants[1].Nickname)
+}
