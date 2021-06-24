@@ -174,10 +174,12 @@ func createFixturesForMarkRequestAsDelivered(as *ActionSuite) UpdateRequestStatu
 
 	requests := test.CreateRequestFixtures(as.DB, 2, false)
 	requests[0].Status = models.RequestStatusAccepted
+	requests[0].CreatedByID = users[0].ID
 	requests[0].ProviderID = nulls.NewInt(users[1].ID)
 
 	requests[1].Status = models.RequestStatusCompleted
-	requests[1].ProviderID = nulls.NewInt(users[1].ID)
+	requests[1].CreatedByID = users[1].ID
+	requests[1].ProviderID = nulls.NewInt(users[0].ID)
 
 	as.NoError(as.DB.Update(&requests))
 

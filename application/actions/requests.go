@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"context"
 	"errors"
 
 	"github.com/gobuffalo/buffalo"
@@ -11,7 +12,7 @@ import (
 	"github.com/silinternational/wecarry-api/models"	
 )
 
-func convertRequestToAPIType(request models.Request) (api.Request, error) {
+func convertRequestToAPIType(c context.Context, request models.Request) (api.Request, error) {
 	var output api.Request
 	if err := api.ConvertToOtherType(request, &output); err != nil {
 		err = errors.New("error converting request to api.request: " + err.Error())
@@ -19,12 +20,13 @@ func convertRequestToAPIType(request models.Request) (api.Request, error) {
 	}
 
 	// Hydrate the request's CreatedBy user
-	var createdBy api.User
-	if err := api.ConvertToOtherType(request.CreatedBy, &createdBy); err != nil {
+	outputUser, err := convertUserToAPIType(c, request.CreatedBy)
+	if err != nil {
 		err = errors.New("error converting request created_by user: " + err.Error())
 		return api.Request{}, err
 	}
-	output.CreatedBy = &createdBy
+	output.CreatedBy = &outputUser
+	output.ID = request.UUID
 
 	return output, nil
 }

@@ -16,7 +16,7 @@ import (
 )
 
 type Message struct {
-	ID        int       `json:"id" db:"id"`
+	ID        int       `json:"-" db:"id"`
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 	UUID      uuid.UUID `json:"uuid" db:"uuid"`

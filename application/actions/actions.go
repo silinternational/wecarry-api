@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"runtime"
@@ -23,6 +24,13 @@ var socialAuthOptions = []authOption{}
 func init() {
 	socialAuthConfigs = getSocialAuthConfigs()
 	socialAuthOptions = getSocialAuthOptions(socialAuthConfigs)
+}
+
+// StrictBind hydrates a struct with values from a POST
+func StrictBind(c buffalo.Context, dest interface{}) error {
+	dec := json.NewDecoder(c.Request().Body)
+	dec.DisallowUnknownFields()
+	return dec.Decode(dest)
 }
 
 // GetFunctionName provides the filename, line number, and function name of the caller, skipping the top `skip`

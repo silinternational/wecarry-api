@@ -198,7 +198,7 @@ func (e RequestStatus) MarshalGQL(w io.Writer) {
 }
 
 type Request struct {
-	ID             int               `json:"id" db:"id"`
+	ID             int               `json:"-" db:"id"`
 	CreatedAt      time.Time         `json:"created_at" db:"created_at"`
 	UpdatedAt      time.Time         `json:"updated_at" db:"updated_at"`
 	CreatedByID    int               `json:"created_by_id" db:"created_by_id"`
