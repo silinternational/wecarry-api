@@ -12,19 +12,18 @@ import (
 	"github.com/silinternational/wecarry-api/models"
 )
 
-// swagger:operation GET /conversations Threads Conversations
+// swagger:operation GET /threads Threads UsersThreads
 //
-// List the User's Conversations
+// List the User's Conversations/Threads
 //
 //
 // ---
 // responses:
 //   '200':
-//     description: A list of the user's conversations with their messages
+//     description: A list of the user's threads/conversations with their messages
 //     schema:
-//       items:
-//         "$ref": "#/definitions/Threads"
-func usersThreads(c buffalo.Context) error {
+//       "$ref": "#/definitions/Threads"
+func threadsMine(c buffalo.Context) error {
 	cUser := models.CurrentUser(c)
 	tx := models.Tx(c)
 
@@ -45,7 +44,7 @@ func usersThreads(c buffalo.Context) error {
 	return c.Render(200, render.JSON(output))
 }
 
-// swagger:operation POST /markMessagesAsRead Threads MarkMessagesAsRead
+// swagger:operation PUT /threads/{thread_id}/read Threads MarkAsRead
 //
 // Sets the last viewed time for the current user on the given thread
 //
@@ -54,7 +53,7 @@ func usersThreads(c buffalo.Context) error {
 //   - name: MarkMessagesAsReadInput
 //     in: body
 //     required: true
-//     description: MarkMessagesAsRead input object
+//     description: input object
 //     schema:
 //       "$ref": "#/definitions/MarkMessagesAsReadInput"
 //
@@ -63,9 +62,14 @@ func usersThreads(c buffalo.Context) error {
 //     description: A thread of messages
 //     schema:
 //       "$ref": "#/definitions/Thread"
-func threadsMarkMessagesAsRead(c buffalo.Context) error {
+func threadsMarkAsRead(c buffalo.Context) error {
 	cUser := models.CurrentUser(c)
 	tx := models.Tx(c)
+
+	id, err := getUUIDFromParam(c, "thread_id")
+	if err != nil {
+		return reportError(c, err)
+	}
 
 	var thread models.Thread
 
@@ -78,7 +82,7 @@ func threadsMarkMessagesAsRead(c buffalo.Context) error {
 		})
 	}
 
-	if err := thread.FindByUUID(tx, input.ThreadID); err != nil {
+	if err := thread.FindByUUID(tx, id.String()); err != nil {
 		return reportError(c, &api.AppError{
 			HttpStatus: http.StatusNotFound,
 			Key:        api.ThreadNotFound,
@@ -116,7 +120,7 @@ func threadsMarkMessagesAsRead(c buffalo.Context) error {
 	return c.Render(200, render.JSON(converted[0]))
 }
 
-func convertThreadsToAPIType(c context.Context, threads models.Threads) (api.Threads, error) {
+func convertThreadsToAPIType(ctx context.Context, threads models.Threads) (api.Threads, error) {
 	var output api.Threads
 	if err := api.ConvertToOtherType(threads, &output); err != nil {
 		err = errors.New("error converting threads to api.threads: " + err.Error())
@@ -125,7 +129,7 @@ func convertThreadsToAPIType(c context.Context, threads models.Threads) (api.Thr
 
 	// Hydrate the thread's messages, participants
 	for i := range threads {
-		messagesOutput, err := convertMessagesToAPIType(c, threads[i].Messages)
+		messagesOutput, err := convertMessagesToAPIType(ctx, threads[i].Messages)
 		if err != nil {
 			return nil, err
 		}
@@ -133,8 +137,11 @@ func convertThreadsToAPIType(c context.Context, threads models.Threads) (api.Thr
 
 		// Not converting Participants, since that happens automatically  above and
 		// because it doesn't have nested related objects
+		for j := range output[i].Participants {
+			output[i].Participants[j].ID = threads[i].Participants[j].UUID
+		}
 
-		requestOutput, err := convertRequestToAPIType(c, threads[i].Request)
+		requestOutput, err := convertRequestToAPIType(ctx, threads[i].Request)
 		if err != nil {
 			return nil, err
 		}

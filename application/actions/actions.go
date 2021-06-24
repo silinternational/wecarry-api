@@ -7,6 +7,7 @@ import (
 	"runtime"
 
 	"github.com/gobuffalo/buffalo"
+	"github.com/gofrs/uuid"
 
 	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/domain"
@@ -122,4 +123,18 @@ func getExtras(c buffalo.Context) map[string]interface{} {
 		extras = map[string]interface{}{}
 	}
 	return extras
+}
+
+func getUUIDFromParam(c buffalo.Context, param string) (uuid.UUID, error) {
+	s := c.Param(param)
+	id := uuid.FromStringOrNil(s)
+	if id == uuid.Nil {
+		newExtra(c, param, s)
+		return uuid.UUID{}, &api.AppError{
+			HttpStatus: http.StatusBadRequest,
+			Key:        api.MustBeAValidUUID,
+			Err:        fmt.Errorf("invalid %s provided: '%s'", param, s),
+		}
+	}
+	return id, nil
 }

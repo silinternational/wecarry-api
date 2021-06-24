@@ -13,7 +13,7 @@ func (as *ActionSuite) TestConversations() {
 	users0 := f.Users[0]
 	users1 := f.Users[1]
 
-	req := as.JSON("/conversations")
+	req := as.JSON("/threads")
 	req.Headers["Authorization"] = fmt.Sprintf("Bearer %s", users0.Nickname)
 	req.Headers["content-type"] = "application/json"
 	res := req.Get()
@@ -35,6 +35,8 @@ func (as *ActionSuite) TestConversations() {
 	for _, w := range wantContains {
 		as.Contains(body, w)
 	}
+
+	as.NotContains(body, `"participants":[{"id":"00000000-`)
 }
 
 func (as *ActionSuite) TestMarkMessagesAsRead() {
@@ -44,14 +46,13 @@ func (as *ActionSuite) TestMarkMessagesAsRead() {
 	testTime := time.Now().Add(1)
 
 	reqBody := api.MarkMessagesAsReadInput{
-		ThreadID: f.Threads[0].UUID.String(),
-		Time:     testTime,
+		Time: testTime,
 	}
 
-	req := as.JSON("/markMessagesAsRead")
+	req := as.JSON("/threads/%s/read", f.Threads[0].UUID.String())
 	req.Headers["Authorization"] = fmt.Sprintf("Bearer %s", users0.Nickname)
 	req.Headers["content-type"] = "application/json"
-	res := req.Post(reqBody)
+	res := req.Put(reqBody)
 
 	body := res.Body.String()
 	as.Equal(200, res.Code, "incorrect status code returned, body: %s", body)
