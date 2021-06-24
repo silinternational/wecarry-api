@@ -103,7 +103,7 @@ func (r *threadResolver) UnreadMessageCount(ctx context.Context, obj *models.Thr
 		return 0, nil
 	}
 
-	count, err2 := obj.UnreadMessageCount(tx, user.ID, *lastViewedAt)
+	count, err2 := obj.GetUnreadMessageCount(tx, user.ID, *lastViewedAt)
 	if err2 != nil {
 		domain.Warn(ctx, err2.Error())
 		return 0, nil

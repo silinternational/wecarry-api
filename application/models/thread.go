@@ -14,7 +14,7 @@ import (
 )
 
 type Thread struct {
-	ID           int       `json:"id" db:"id"`
+	ID           int       `json:"-" db:"id"`
 	CreatedAt    time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at" db:"updated_at"`
 	UUID         uuid.UUID `json:"uuid" db:"uuid"`
@@ -22,6 +22,9 @@ type Thread struct {
 	Request      Request   `belongs_to:"requests"`
 	Participants Users     `many_to_many:"thread_participants" order_by:"id asc"`
 	Messages     Messages  `json:"messages" db:"-"`
+
+	LastViewedAt       *time.Time `json:"last_viewed_at" db:"-"`
+	UnreadMessageCount int        `json:"unread_message_count" db:"-"`
 }
 
 // String can be helpful for serializing the model
@@ -116,6 +119,16 @@ func (t *Thread) LoadParticipants(tx *pop.Connection) error {
 	if err := tx.Load(t, "Participants"); err != nil {
 		return fmt.Errorf("error loading threads participants %v ... %v", t.ID, err)
 	}
+
+	return nil
+}
+
+func (t *Thread) LoadThreadParticipants(tx *pop.Connection) error {
+
+	if err := tx.Load(t, "ThreadParticipants"); err != nil {
+		return fmt.Errorf("error loading threads thread_participants %v ... %v", t.ID, err)
+	}
+
 	return nil
 }
 
@@ -177,6 +190,7 @@ func (t *Thread) GetLastViewedAt(tx *pop.Connection, user User) (*time.Time, err
 	if err := tp.FindByThreadIDAndUserID(tx, t.ID, user.ID); err != nil {
 		return nil, err
 	}
+
 	lastViewedAt := tp.LastViewedAt
 	return &lastViewedAt, nil
 }
@@ -192,6 +206,40 @@ func (t *Thread) UpdateLastViewedAt(tx *pop.Connection, userID int, time time.Ti
 	return tp.UpdateLastViewedAt(tx, time)
 }
 
+func (t *Thread) LoadForAPI(tx *pop.Connection, user User) error {
+
+	err := t.LoadMessages(tx, "SentBy")
+	if err != nil {
+		return errors.New("error loading thread messages: " + err.Error())
+	}
+
+	err = t.LoadParticipants(tx)
+	if err != nil {
+		return errors.New("error loading participants: " + err.Error())
+	}
+
+	err = t.LoadRequest(tx, "CreatedBy")
+	if err != nil {
+		return errors.New("error loading thread request: " + err.Error())
+	}
+
+	lastViewed, err := t.GetLastViewedAt(tx, user)
+	if err != nil {
+		return errors.New("error getting thread lastViewedAt: " + err.Error())
+	}
+
+	t.LastViewedAt = lastViewed
+
+	count, err := t.GetUnreadMessageCount(tx, user.ID, *lastViewed)
+	if err != nil {
+		return errors.New("error getting thread unreadMessageCount: " + err.Error())
+	}
+
+	t.UnreadMessageCount = count
+
+	return nil
+}
+
 // Load reads the selected fields from the database
 func (t *Thread) Load(tx *pop.Connection, fields ...string) error {
 	if err := tx.Load(t, fields...); err != nil {
@@ -201,17 +249,19 @@ func (t *Thread) Load(tx *pop.Connection, fields ...string) error {
 	return nil
 }
 
-// UnreadMessageCount returns the number of messages on this thread that the current
+// GetUnreadMessageCount returns the number of messages on this thread that the current
 //  user has not created and for which the CreatedAt value is after the lastViewedAt value
-func (t *Thread) UnreadMessageCount(tx *pop.Connection, userID int, lastViewedAt time.Time) (int, error) {
+func (t *Thread) GetUnreadMessageCount(tx *pop.Connection, userID int, lastViewedAt time.Time) (int, error) {
 	count := 0
 	if userID <= 0 {
-		return count, fmt.Errorf("error in UnreadMessageCount, invalid id %v", userID)
+		return count, fmt.Errorf("error in GetUnreadMessageCount, invalid id %v", userID)
 	}
 
-	err := t.LoadMessages(tx)
-	if err != nil {
-		return count, err
+	if len(t.Messages) == 0 {
+		err := t.LoadMessages(tx)
+		if err != nil {
+			return count, err
+		}
 	}
 
 	for _, m := range t.Messages {

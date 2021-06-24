@@ -573,8 +573,9 @@ func (as *ActionSuite) Test_MarkRequestAsDelivered() {
 
 	var requestsResp RequestResponse
 
-	creator := f.Users[0]
-	provider := f.Users[1]
+	// Each user is the creator for one request and the provider for the other
+	creator0Provider1 := f.Users[0]
+	provider0Creator1 := f.Users[1]
 
 	testCases := []struct {
 		name                    string
@@ -586,19 +587,25 @@ func (as *ActionSuite) Test_MarkRequestAsDelivered() {
 		wantErrContains         string
 	}{
 		{
-			name:      "ACCEPTED: delivered by Provider",
-			requestID: requests[0].UUID.String(), user: provider,
+			name:                    "ACCEPTED: delivered by Provider",
+			requestID:               requests[0].UUID.String(),
+			user:                    provider0Creator1,
 			wantStatus:              models.RequestStatusDelivered.String(),
-			wantRequestHistoryCount: 3, wantErr: false,
+			wantRequestHistoryCount: 3,
+			wantErr:                 false,
 		},
 		{
-			name:      "ACCEPTED: delivered by Creator",
-			requestID: requests[0].UUID.String(), user: creator, wantErr: true,
+			name:            "ACCEPTED: delivered by Creator",
+			requestID:       requests[0].UUID.String(),
+			user:            creator0Provider1,
+			wantErr:         true,
 			wantErrContains: "not allowed to change the status",
 		},
 		{
-			name:      "COMPLETED: delivered by Provider",
-			requestID: requests[1].UUID.String(), user: provider, wantErr: true,
+			name:            "COMPLETED: delivered by Provider",
+			requestID:       requests[1].UUID.String(),
+			user:            creator0Provider1,
+			wantErr:         true,
 			wantErrContains: "not allowed to change the status",
 		},
 	}

@@ -1,11 +1,13 @@
 package actions
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"runtime"
 
 	"github.com/gobuffalo/buffalo"
+	"github.com/gofrs/uuid"
 
 	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/domain"
@@ -23,6 +25,13 @@ var socialAuthOptions = []authOption{}
 func init() {
 	socialAuthConfigs = getSocialAuthConfigs()
 	socialAuthOptions = getSocialAuthOptions(socialAuthConfigs)
+}
+
+// StrictBind hydrates a struct with values from a POST
+func StrictBind(c buffalo.Context, dest interface{}) error {
+	dec := json.NewDecoder(c.Request().Body)
+	dec.DisallowUnknownFields()
+	return dec.Decode(dest)
 }
 
 // GetFunctionName provides the filename, line number, and function name of the caller, skipping the top `skip`
@@ -114,4 +123,18 @@ func getExtras(c buffalo.Context) map[string]interface{} {
 		extras = map[string]interface{}{}
 	}
 	return extras
+}
+
+func getUUIDFromParam(c buffalo.Context, param string) (uuid.UUID, error) {
+	s := c.Param(param)
+	id := uuid.FromStringOrNil(s)
+	if id == uuid.Nil {
+		newExtra(c, param, s)
+		return uuid.UUID{}, &api.AppError{
+			HttpStatus: http.StatusBadRequest,
+			Key:        api.MustBeAValidUUID,
+			Err:        fmt.Errorf("invalid %s provided: '%s'", param, s),
+		}
+	}
+	return id, nil
 }

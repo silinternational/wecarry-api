@@ -12,18 +12,18 @@ import (
 
 // swagger:operation GET /users/me Users UsersMe
 //
-// gets the data for authenticated User.
+// gets the data for authenticated UserPrivate.
 //
 // ---
 // responses:
 //   '200':
 //     description: authenticated user
 //     schema:
-//       "$ref": "#/definitions/User"
+//       "$ref": "#/definitions/UserPrivate"
 func usersMe(c buffalo.Context) error {
 	user := models.CurrentUser(c)
 
-	output, err := convertUserToAPIType(c, user)
+	output, err := convertUserToPrivateAPIType(c, user)
 	if err != nil {
 		return reportError(c, appErrorFromErr(err))
 	}
@@ -31,8 +31,42 @@ func usersMe(c buffalo.Context) error {
 	return c.Render(http.StatusOK, r.JSON(output))
 }
 
-func convertUserToAPIType(c context.Context, user models.User) (api.User, error) {
-	tx := models.Tx(c)
+func convertUserToPrivateAPIType(ctx context.Context, user models.User) (api.UserPrivate, error) {
+	tx := models.Tx(ctx)
+
+	output := api.UserPrivate{}
+	if err := api.ConvertToOtherType(user, &output); err != nil {
+		return api.UserPrivate{}, err
+	}
+	output.ID = user.UUID
+
+	photoURL, err := user.GetPhotoURL(tx)
+	if err != nil {
+		return api.UserPrivate{}, err
+	}
+
+	if photoURL != nil {
+		output.AvatarURL = nulls.NewString(*photoURL)
+	}
+
+	if user.FileID.Valid {
+		// depends on the earlier call to GetPhotoURL to hydrate PhotoFile
+		output.PhotoID = user.PhotoFile.UUID
+	}
+
+	organizations, err := user.GetOrganizations(tx)
+	if err != nil {
+		return api.UserPrivate{}, err
+	}
+	output.Organizations, err = convertOrganizationsToAPIType(organizations)
+	if err != nil {
+		return api.UserPrivate{}, err
+	}
+	return output, nil
+}
+
+func convertUserToAPIType(ctx context.Context, user models.User) (api.User, error) {
+	tx := models.Tx(ctx)
 
 	output := api.User{}
 	if err := api.ConvertToOtherType(user, &output); err != nil {
@@ -49,18 +83,5 @@ func convertUserToAPIType(c context.Context, user models.User) (api.User, error)
 		output.AvatarURL = nulls.NewString(*photoURL)
 	}
 
-	if user.FileID.Valid {
-		// depends on the earlier call to GetPhotoURL to hydrate PhotoFile
-		output.PhotoID = user.PhotoFile.UUID
-	}
-
-	organizations, err := user.GetOrganizations(tx)
-	if err != nil {
-		return api.User{}, err
-	}
-	output.Organizations, err = convertOrganizationsToAPIType(organizations)
-	if err != nil {
-		return api.User{}, err
-	}
 	return output, nil
 }
