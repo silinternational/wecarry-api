@@ -45,7 +45,7 @@ func usersThreads(c buffalo.Context) error {
 	return c.Render(200, render.JSON(output))
 }
 
-// swagger:operation POST /projects Threads MarkMessagesAsRead
+// swagger:operation POST /markMessagesAsRead Threads MarkMessagesAsRead
 //
 // Sets the last viewed time for the current user on the given thread
 //

@@ -22,9 +22,6 @@ type Thread struct {
 	// example: 63d5b060-1460-4348-bdf0-ad03c105a8d5
 	ID uuid.UUID `json:"id"`
 
-	// CreatedAt - the time this thread was started
-	CreatedAt time.Time `json:"created_at"`
-
 	// LastViewedAt is the time the auth user last viewed this thread. Messages with `updatedAt` after this time can be considered unread.
 	LastViewedAt *time.Time `json:"last_viewed_at"`
 

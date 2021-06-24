@@ -117,7 +117,6 @@ func (as *ActionSuite) TestMarkMessagesAsRead() {
 	body := res.Body.String()
 	as.Equal(200, res.Code, "incorrect status code returned, body: %s", body)
 
-	//wantContains := fmt.Sprintf(`"last_viewed_at":"%s`, testTime.Format("2006-01-02T15:04:05"))
 	wantContains := []string{
 		fmt.Sprintf(`"id":"%s"`, f.Threads[0].UUID),
 		fmt.Sprintf(`"nickname":"%s"`, users0.Nickname),
