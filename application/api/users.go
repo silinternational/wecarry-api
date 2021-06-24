@@ -5,7 +5,7 @@ import (
 	"github.com/gofrs/uuid"
 )
 
-// Attributes of a user of the App
+// UserPrivate has the full set of User attributes NOT intended for public exposure
 // swagger:model
 type UserPrivate struct {
 	// unique identifier for the User
@@ -35,7 +35,7 @@ type UserPrivate struct {
 // swagger:model
 type Users []User
 
-// Attributes of a user of the App
+// User has a limited set of User attributes which are intended for public exposure
 // swagger:model
 type User struct {
 	// unique identifier for the User
