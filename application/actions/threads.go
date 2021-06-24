@@ -16,13 +16,13 @@ import (
 //
 // List the User's Conversations
 //
+//
 // ---
 // responses:
 //   '200':
-//     description: A list of the conversations with their messages
-//     type: array
-//     items:
-//       schema:
+//     description: A list of the user's conversations with their messages
+//     schema:
+//       items:
 //         "$ref": "#/definitions/Threads"
 func usersThreads(c buffalo.Context) error {
 	cUser := models.CurrentUser(c)
