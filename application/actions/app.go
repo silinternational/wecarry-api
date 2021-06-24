@@ -97,7 +97,7 @@ func App() *buffalo.App {
 		app.GET("/conversations", usersThreads)
 		app.POST("/markMessagesAsRead", threadsMarkMessagesAsRead)
 
-		app.GET("/requests", getRequests)
+		app.GET("/requests", requestsList)
 
 		app.POST("/upload/", uploadHandler)
 
