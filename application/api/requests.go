@@ -21,4 +21,10 @@ type Request struct {
 
 	// Profile of the user that created this request.
 	CreatedBy *User `json:"created_by"`
+
+	// Whether request is editable by current user
+	IsEditable bool `json:"isEditable"`
+
+	// Request status: OPEN, ACCEPTED, DELIVERED, RECEIVED, COMPLETED, REMOVED
+	RequestStatus string `json:"status"`
 }
