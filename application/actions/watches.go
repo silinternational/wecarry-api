@@ -35,7 +35,6 @@ func watchesMine(c buffalo.Context) error {
 		})
 	}
 
-	var output api.Watches
 	output, err := convertWatches(tx, watches, cUser)
 	if err != nil {
 		return reportError(c, appErrorFromErr(err))

@@ -71,7 +71,13 @@ func (as *ActionSuite) Test_MyWatches() {
 		fmt.Sprintf(`"id":"%s"`, watches[0].UUID.String()),
 		fmt.Sprintf(`"id":"%s"`, watches[1].UUID.String()),
 		fmt.Sprintf(`"destination":{"description":"%s"`, destinations[0].Description),
+		fmt.Sprintf(`"country":"%s"`, destinations[0].Country),
+		fmt.Sprintf(`"latitude":%.2f`, destinations[0].Latitude.Float64),
+		fmt.Sprintf(`"longitude":%.2f`, destinations[0].Longitude.Float64),
 		fmt.Sprintf(`"destination":{"description":"%s"`, destinations[1].Description),
+		fmt.Sprintf(`"country":"%s"`, destinations[1].Country),
+		fmt.Sprintf(`"latitude":%.2f`, destinations[1].Latitude.Float64),
+		fmt.Sprintf(`"longitude":%.2f`, destinations[1].Longitude.Float64),
 	}
 	for _, w := range wantContains {
 		as.Contains(body, w)

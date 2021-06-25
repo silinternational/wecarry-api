@@ -20,10 +20,10 @@ type Watch struct {
 	Name string `json:"name"`
 
 	// Destination to watch. If a new request has a destination near this location, a notification will be sent.
-	Destination *LocationDescription `json:"destination,omitempty"`
+	Destination *Location `json:"destination,omitempty"`
 
 	// Origin to watch. If a new request has an origin near this location, a notification will be sent.
-	Origin *LocationDescription `json:"origin,omitempty"`
+	Origin *Location `json:"origin,omitempty"`
 
 	// Meeting to watch. Notifications will be sent for new requests tied to this event.
 	Meeting *Meeting `json:"meeting,omitempty"`
