@@ -128,7 +128,7 @@ func convertThreadsToAPIType(ctx context.Context, threads models.Threads) (api.T
 	}
 
 	// Hydrate the thread's messages, participants
-	for i := range threads {
+	for i := range output {
 		messagesOutput, err := convertMessagesToAPIType(ctx, threads[i].Messages)
 		if err != nil {
 			return nil, err
