@@ -59,12 +59,12 @@ func (r *watchResolver) Meeting(ctx context.Context, obj *models.Watch) (*models
 		return nil, nil
 	}
 
-	meeting, err := obj.Meeting(models.Tx(ctx), models.CurrentUser(ctx))
+	err := obj.LoadMeeting(models.Tx(ctx), models.CurrentUser(ctx))
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetWatchMeeting")
 	}
 
-	return meeting, nil
+	return obj.Meeting, nil
 }
 
 // Origin is a field resolver
