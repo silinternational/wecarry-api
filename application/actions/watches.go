@@ -61,7 +61,7 @@ func convertWatchesToAPIType(ctx context.Context, tx *pop.Connection, watches mo
 
 		ownerOutput, err := convertUserToAPIType(ctx, watches[i].Owner)
 		if err != nil {
-			err = errors.New("error converting watch meeting to api.MeetingName: " + err.Error())
+			err = errors.New("error converting watch owner to api.User " + err.Error())
 			return api.Watches{}, err
 		}
 
