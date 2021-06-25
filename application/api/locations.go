@@ -1,6 +1,6 @@
 package api
 
-// Location just gives the description of a Geographic location
+// LocationDescription just gives the description of a Geographic location
 // swagger:model
 type LocationDescription struct {
 
