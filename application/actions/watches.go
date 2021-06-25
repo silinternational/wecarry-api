@@ -66,7 +66,7 @@ func convertWatch(tx *pop.Connection, watch models.Watch, user models.User) (api
 	}
 
 	if err := watch.LoadForAPI(tx, user); err != nil {
-		err = errors.New("error converting watch to api.Watch: " + err.Error())
+		err = errors.New("error hydrating watch: " + err.Error())
 	}
 
 	output.ID = watch.UUID
