@@ -33,5 +33,5 @@ type Watch struct {
 	SearchText string `json:"search_text"`
 
 	// Maximum size of a requested item
-	Size RequestSize `json:"size"`
+	Size string `json:"size"`
 }
