@@ -1,6 +1,8 @@
 package api
 
-import "github.com/gofrs/uuid"
+import (
+	"github.com/gofrs/uuid"
+)
 
 // swagger:model
 type Watches []Watch
@@ -14,9 +16,6 @@ type Watch struct {
 	// example: 63d5b060-1460-4348-bdf0-ad03c105a8d5
 	ID uuid.UUID `json:"id"`
 
-	// Owner of the Watch, and the recipient of notifications for this Watch
-	Owner User `json:"owner"`
-
 	// Name is a short description, as named by the Watch creator
 	Name string `json:"name"`
 
@@ -27,7 +26,7 @@ type Watch struct {
 	Origin *LocationDescription `json:"origin,omitempty"`
 
 	// Meeting to watch. Notifications will be sent for new requests tied to this event.
-	Meeting *MeetingName `json:"meeting,omitempty"`
+	Meeting *Meeting `json:"meeting,omitempty"`
 
 	// Search by text in request `title` or `description`
 	SearchText string `json:"search_text"`

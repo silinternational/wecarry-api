@@ -1,7 +1,6 @@
 package actions
 
 import (
-	"context"
 	"errors"
 	"net/http"
 
@@ -28,7 +27,7 @@ func watchesMine(c buffalo.Context) error {
 	tx := models.Tx(c)
 
 	watches := models.Watches{}
-	if err := watches.FindByUser(tx, cUser, "Owner", "Destination", "Origin"); err != nil {
+	if err := watches.FindByUser(tx, cUser, "Owner", "Destination", "Origin", "Meeting"); err != nil {
 		return reportError(c, &api.AppError{
 			HttpStatus: http.StatusInternalServerError,
 			Key:        api.WatchesLoadFailure,
@@ -37,7 +36,7 @@ func watchesMine(c buffalo.Context) error {
 	}
 
 	var output api.Watches
-	output, err := convertWatchesToAPIType(c, tx, watches, cUser)
+	output, err := convertWatches(tx, watches, cUser)
 	if err != nil {
 		return reportError(c, appErrorFromErr(err))
 	}
@@ -45,46 +44,45 @@ func watchesMine(c buffalo.Context) error {
 	return c.Render(200, render.JSON(output))
 }
 
-func convertWatchesToAPIType(ctx context.Context, tx *pop.Connection, watches models.Watches, user models.User) (api.Watches, error) {
-	var output api.Watches
+func convertWatches(tx *pop.Connection, watches models.Watches, user models.User) (api.Watches, error) {
+	output := make(api.Watches, len(watches))
 
-	if err := api.ConvertToOtherType(watches, &output); err != nil {
-		err = errors.New("error converting watches to api.Watches: " + err.Error())
-		return nil, err
+	for i := range output {
+		next, err := convertWatch(tx, watches[i], user)
+		if err != nil {
+			return nil, err
+		}
+		output[i] = next
 	}
 
-	// Hydrate the watches' own and related fields
-	for i := range output {
-		if err := watches[i].LoadForAPI(tx, user); err != nil {
-			err = errors.New("error converting watch to api.Watch: " + err.Error())
-		}
+	return output, nil
+}
 
-		ownerOutput, err := convertUserToAPIType(ctx, watches[i].Owner)
-		if err != nil {
-			err = errors.New("error converting watch owner to api.User " + err.Error())
-			return api.Watches{}, err
-		}
+func convertWatch(tx *pop.Connection, watch models.Watch, user models.User) (api.Watch, error) {
+	var output api.Watch
+	if err := api.ConvertToOtherType(watch, &output); err != nil {
+		err = errors.New("error converting watches to api.Watches: " + err.Error())
+		return api.Watch{}, err
+	}
 
-		output[i].Owner = ownerOutput
+	if err := watch.LoadForAPI(tx, user); err != nil {
+		err = errors.New("error converting watch to api.Watch: " + err.Error())
+	}
 
-		if watches[i].MeetingID.Valid {
-			var meetingOutput api.MeetingName
-			if err := api.ConvertToOtherType(watches[i].Meeting, &meetingOutput); err != nil {
-				err = errors.New("error converting watch meeting to api.MeetingName: " + err.Error())
-				return api.Watches{}, err
-			}
-			output[i].Meeting = &meetingOutput
-		}
+	output.ID = watch.UUID
 
-		output[i].ID = watches[i].UUID
+	if !watch.MeetingID.Valid {
+		output.Meeting = nil
+	} else {
+		output.Meeting.ID = watch.Meeting.UUID
+	}
 
-		if !watches[i].DestinationID.Valid {
-			output[i].Destination = nil
-		}
+	if !watch.DestinationID.Valid {
+		output.Destination = nil
+	}
 
-		if !watches[i].OriginID.Valid {
-			output[i].Origin = nil
-		}
+	if !watch.OriginID.Valid {
+		output.Origin = nil
 	}
 
 	return output, nil

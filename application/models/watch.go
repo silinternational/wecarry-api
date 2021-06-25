@@ -178,11 +178,6 @@ func (w *Watch) LoadForAPI(tx *pop.Connection, user User) error {
 		return errors.New("user is not watch owner")
 	}
 
-	err := w.LoadMeeting(tx, user)
-	if err != nil {
-		return errors.New("error loading watch meeting: " + err.Error())
-	}
-
 	return nil
 }
 

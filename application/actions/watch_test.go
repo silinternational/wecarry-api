@@ -13,7 +13,7 @@ import (
 	"github.com/silinternational/wecarry-api/models"
 )
 
-type watchGQLQueryFixtures struct {
+type watchQueryFixtures struct {
 	models.Users
 	models.Locations
 	models.Watches
@@ -78,7 +78,7 @@ const allWatchFields = `
     size
 	`
 
-func createFixturesForGQLWatches(as *ActionSuite) watchGQLQueryFixtures {
+func createFixturesForGQLWatches(as *ActionSuite) watchQueryFixtures {
 	// make 2 users, 1 that has Watches, and another that will try to mess with those Watches
 	uf := test.CreateUserFixtures(as.DB, 2)
 	locations := test.CreateLocationFixtures(as.DB, 3)
@@ -104,7 +104,7 @@ func createFixturesForGQLWatches(as *ActionSuite) watchGQLQueryFixtures {
 		createFixture(as, &meetings[i])
 	}
 
-	return watchGQLQueryFixtures{
+	return watchQueryFixtures{
 		Users:     uf.Users,
 		Locations: locations,
 		Watches:   watches,

@@ -11,14 +11,14 @@ import (
 	"github.com/silinternational/wecarry-api/models"
 )
 
-type watchQueryFixtures struct {
+type watchFixtures struct {
 	models.Users
 	models.Locations
 	models.Watches
 	models.Meetings
 }
 
-func createFixturesForWatches(as *ActionSuite) watchQueryFixtures {
+func createFixturesForWatches(as *ActionSuite) watchFixtures {
 	// make 2 users, 1 that has Watches, and another that will try to mess with those Watches
 	uf := test.CreateUserFixtures(as.DB, 2)
 	locations := test.CreateLocationFixtures(as.DB, 3)
@@ -44,7 +44,7 @@ func createFixturesForWatches(as *ActionSuite) watchQueryFixtures {
 		createFixture(as, &meetings[i])
 	}
 
-	return watchQueryFixtures{
+	return watchFixtures{
 		Users:     uf.Users,
 		Locations: locations,
 		Watches:   watches,
@@ -68,9 +68,6 @@ func (as *ActionSuite) Test_MyWatches() {
 	as.Equal(200, res.Code, "incorrect status code returned, body: %s", body)
 
 	wantContains := []string{
-		fmt.Sprintf(`"owner":{"id":"%s"`, owner.UUID),
-		fmt.Sprintf(`"nickname":"%s"`, owner.Nickname),
-		fmt.Sprintf(`"avatar_url":"%s"`, owner.AuthPhotoURL.String),
 		fmt.Sprintf(`"id":"%s"`, watches[0].UUID.String()),
 		fmt.Sprintf(`"id":"%s"`, watches[1].UUID.String()),
 		fmt.Sprintf(`"destination":{"description":"%s"`, destinations[0].Description),
@@ -81,6 +78,7 @@ func (as *ActionSuite) Test_MyWatches() {
 	}
 
 	as.NotContains(body, `"origin":`)
+	as.NotContains(body, `"meeting":`)
 
 	// Try with no watches
 	nonOwner := f.Users[1]

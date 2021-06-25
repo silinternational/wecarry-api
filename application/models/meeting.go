@@ -17,7 +17,7 @@ import (
 
 // Meeting represents an event where people gather together from different locations
 type Meeting struct {
-	ID          int          `json:"id" db:"id"`
+	ID          int          `json:"-" db:"id"`
 	UUID        uuid.UUID    `json:"uuid" db:"uuid"`
 	Name        string       `json:"name" db:"name"`
 	Description nulls.String `json:"description" db:"description"`
