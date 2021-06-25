@@ -197,13 +197,15 @@ func (ms *ModelSuite) TestWatch_Meeting() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			got, err := tt.watch.Meeting(ms.DB, tt.testUser)
+			err := tt.watch.LoadMeeting(ms.DB, tt.testUser)
 			ms.NoError(err)
+			got := tt.watch.Meeting
+
 			if tt.want == nil {
 				ms.Nil(got)
 				return
 			}
-			ms.NotNil(got, "Watch.Meeting() returned nil")
+			ms.NotNil(got, "Watch.LoadMeeting() did not load a meeting")
 			ms.Equal(tt.want.ID, got.ID)
 		})
 	}

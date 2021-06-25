@@ -13,7 +13,7 @@ import (
 	"github.com/silinternational/wecarry-api/models"
 )
 
-type watchQueryFixtures struct {
+type watchGQLQueryFixtures struct {
 	models.Users
 	models.Locations
 	models.Watches
@@ -78,7 +78,7 @@ const allWatchFields = `
     size
 	`
 
-func createFixturesForWatches(as *ActionSuite) watchQueryFixtures {
+func createFixturesForGQLWatches(as *ActionSuite) watchGQLQueryFixtures {
 	// make 2 users, 1 that has Watches, and another that will try to mess with those Watches
 	uf := test.CreateUserFixtures(as.DB, 2)
 	locations := test.CreateLocationFixtures(as.DB, 3)
@@ -104,7 +104,7 @@ func createFixturesForWatches(as *ActionSuite) watchQueryFixtures {
 		createFixture(as, &meetings[i])
 	}
 
-	return watchQueryFixtures{
+	return watchGQLQueryFixtures{
 		Users:     uf.Users,
 		Locations: locations,
 		Watches:   watches,
@@ -112,8 +112,8 @@ func createFixturesForWatches(as *ActionSuite) watchQueryFixtures {
 	}
 }
 
-func (as *ActionSuite) Test_MyWatches() {
-	f := createFixturesForWatches(as)
+func (as *ActionSuite) Test_GQLMyWatches() {
+	f := createFixturesForGQLWatches(as)
 	watches := f.Watches
 
 	query := "{ watches: myWatches { " + allWatchFields + "}}"
@@ -134,7 +134,7 @@ func (as *ActionSuite) Test_MyWatches() {
 }
 
 func (as *ActionSuite) Test_CreateWatch() {
-	f := createFixturesForWatches(as)
+	f := createFixturesForGQLWatches(as)
 	user := f.Users[0]
 
 	type testCase struct {
@@ -195,7 +195,7 @@ func (as *ActionSuite) Test_CreateWatch() {
 }
 
 func (as *ActionSuite) Test_UpdateWatch() {
-	f := createFixturesForWatches(as)
+	f := createFixturesForGQLWatches(as)
 	user := f.Users[0]
 
 	type testCase struct {
@@ -288,7 +288,7 @@ func (as *ActionSuite) watchInputString(watch watchInput) string {
 }
 
 func (as *ActionSuite) Test_RemoveWatch() {
-	f := createFixturesForWatches(as)
+	f := createFixturesForGQLWatches(as)
 
 	var resp watchesResponse
 

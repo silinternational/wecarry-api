@@ -31,6 +31,9 @@ const (
 	ThreadsLoadFailure    = ErrorKey("ErrorThreadsLoadFailure")
 	ThreadNotFound        = ErrorKey("ErrorThreadNotFound")
 	ThreadSetLastViewedAt = ErrorKey("ErrorThreadSetLastViewedAt")
+
+	// ============================  Watches =========================================
+	WatchesLoadFailure = ErrorKey("ErrorWatchesLoadFailure")
 )
 
 // ********************************************************************

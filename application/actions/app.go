@@ -98,6 +98,9 @@ func App() *buffalo.App {
 		threadsGroup.GET("/", threadsMine)
 		threadsGroup.PUT("/{thread_id}/read", threadsMarkAsRead)
 
+		watchesGroup := app.Group("/watches")
+		watchesGroup.GET("/", watchesMine)
+
 		app.POST("/upload/", uploadHandler)
 
 		app.POST("/service", serviceHandler)
