@@ -119,7 +119,9 @@ func App() *buffalo.App {
 
 		auth.GET("/logout", authDestroy)
 
-		app.GET("/users/me", usersMe)
+		users := app.Group("/users")
+		users.GET("/me", usersMe)
+		users.PUT("/me", usersMeUpdate)
 
 		listeners.RegisterListeners()
 	}
