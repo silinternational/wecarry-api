@@ -9,7 +9,7 @@ import (
 
 func convertOrganizationsToAPIType(organizations models.Organizations) ([]api.Organization, error) {
 	output := make([]api.Organization, len(organizations))
-	for i := range organizations {
+	for i := range output {
 		o, err := convertOrganizationToAPIType(organizations[i])
 		if err != nil {
 			return nil, err

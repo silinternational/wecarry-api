@@ -12,12 +12,13 @@ import (
 	"github.com/gobuffalo/validate/v3/validators"
 	"github.com/gofrs/uuid"
 
+	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/domain"
 )
 
 // Watch is the model for storing request watches that trigger notifications on the conditions specified
 type Watch struct {
-	ID            int          `json:"id" db:"id"`
+	ID            int          `json:"-" db:"id"`
 	CreatedAt     time.Time    `json:"created_at" db:"created_at"`
 	UpdatedAt     time.Time    `json:"updated_at" db:"updated_at"`
 	UUID          uuid.UUID    `json:"uuid" db:"uuid"`
@@ -28,6 +29,11 @@ type Watch struct {
 	MeetingID     nulls.Int    `json:"meeting_id" db:"meeting_id"`
 	SearchText    nulls.String `json:"search_text" db:"search_text"`
 	Size          *RequestSize `json:"size" db:"size"`
+
+	Destination *Location `belongs_to:"locations"`
+	Origin      *Location `belongs_to:"locations"`
+	Owner       User      `belongs_to:"users"`
+	Meeting     *Meeting  `belongs_to:"meetings"`
 }
 
 // Watches is used for methods that operate on lists of objects
@@ -74,10 +80,58 @@ func (w *Watch) FindByUUID(tx *pop.Connection, id string) error {
 	return nil
 }
 
+// DeleteForOwner deletes the watch with the given UUID, if the user is the owner
+// of the watch.
+func (w *Watch) DeleteForOwner(tx *pop.Connection, id string, user User) (string, *api.AppError) {
+	if id == "" {
+		appError := api.AppError{
+			Category: api.CategoryUser,
+			Key:      api.WatchMissingID,
+			Err:      errors.New("error: watch uuid must not be blank"),
+		}
+		return "", &appError
+	}
+
+	if err := w.FindByUUID(tx, id); err != nil {
+		appError := api.AppError{
+			Category: api.CategoryNotFound,
+			Key:      api.WatchNotFound,
+			Err:      err,
+		}
+		return "", &appError
+	}
+	if w.OwnerID != user.ID {
+		appError := api.AppError{
+			Category: api.CategoryForbidden,
+			Key:      api.NotAuthorized,
+			Err:      errors.New("error: user may not delete a watch they don't own."),
+		}
+		return "", &appError
+	}
+
+	if err := w.Destroy(tx); err != nil {
+		appError := api.AppError{
+			Category: api.CategoryDatabase,
+			Key:      api.WatchDeleteFailure,
+			Err:      fmt.Errorf("error attempting to delete a watch with uuid %s: %s", w.UUID.String(), err.Error()),
+		}
+		return "", &appError
+	}
+
+	return w.UUID.String(), nil
+}
+
 // FindByUser returns all watches owned by the given user.
-func (w *Watches) FindByUser(tx *pop.Connection, user User) error {
-	if err := tx.Where("owner_id = ?", user.ID).Order("updated_at desc").All(w); err != nil {
-		return err
+func (w *Watches) FindByUser(tx *pop.Connection, user User, eagerFields ...string) error {
+	var q *pop.Query
+	if len(eagerFields) > 0 {
+		q = tx.EagerPreload(eagerFields...).Where("owner_id = ?", user.ID)
+	} else {
+		q = tx.Where("owner_id = ?", user.ID)
+	}
+
+	if err := q.Order("updated_at desc").All(w); err != nil {
+		return fmt.Errorf("error getting watches for user id %v ... %v", user.ID, err)
 	}
 
 	return nil
@@ -147,15 +201,26 @@ func (w *Watch) Destroy(tx *pop.Connection) error {
 	return tx.Destroy(w)
 }
 
-func (w *Watch) Meeting(tx *pop.Connection, user User) (*Meeting, error) {
+func (w *Watch) LoadMeeting(tx *pop.Connection, user User) error {
 	if w == nil || !w.MeetingID.Valid || user.ID != w.OwnerID {
-		return nil, nil
+		w.Meeting = nil
+		return nil
 	}
 	meeting := &Meeting{}
 	if err := tx.Find(meeting, w.MeetingID); err != nil {
-		return nil, err
+		return err
 	}
-	return meeting, nil
+	w.Meeting = meeting
+	return nil
+}
+
+// LoadForAPI assumes w.Destination and w.Origin were alread hydrated by an Eager query
+func (w *Watch) LoadForAPI(tx *pop.Connection, user User) error {
+	if user.ID != w.OwnerID {
+		return errors.New("user is not watch owner")
+	}
+
+	return nil
 }
 
 // matchesRequest returns true if all non-null watch criteria match the request

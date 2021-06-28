@@ -150,7 +150,7 @@ func convertRequestToAPITypeAbridged(ctx context.Context, request models.Request
 
 func hydrateRequestCreatedBy(ctx context.Context, request models.Request, tx *pop.Connection) (api.User, error) {
 	createdBy, _ := request.GetCreator(tx)
-	outputCreatedBy, err := convertUserToAPIType(ctx, *createdBy)
+	outputCreatedBy, err := convertUser(ctx, *createdBy)
 	if err != nil {
 		err = errors.New("error converting request created_by user: " + err.Error())
 		return api.User{}, err

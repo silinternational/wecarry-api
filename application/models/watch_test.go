@@ -5,7 +5,9 @@ import (
 
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop/v5"
+	"github.com/gofrs/uuid"
 
+	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/domain"
 )
 
@@ -97,6 +99,64 @@ func (ms *ModelSuite) TestWatch_FindByUUID() {
 			}
 			ms.NoError(err, "unexpected error")
 			ms.Equal(test.want.UUID, watch.UUID, "incorrect uuid")
+		})
+	}
+}
+
+func (ms *ModelSuite) TestWatch_DeleteForOwner() {
+	t := ms.T()
+
+	f := createUserFixtures(ms.DB, 2)
+	users := f.Users
+	owner := users[0]
+	notOwner := users[1]
+
+	watches := createWatchFixtures(ms.DB, users)
+
+	tests := []struct {
+		name            string
+		uuid            string
+		user            User
+		wantErr         api.ErrorKey
+		wantIDRemaining uuid.UUID
+	}{
+		{
+			name:    "bad uuid",
+			uuid:    "999",
+			user:    owner,
+			wantErr: api.WatchNotFound,
+		},
+		{
+			name:    "wrong user",
+			uuid:    watches[1].UUID.String(),
+			user:    notOwner,
+			wantErr: api.NotAuthorized,
+		},
+		{
+			name:            "delete one",
+			uuid:            watches[1].UUID.String(),
+			user:            owner,
+			wantIDRemaining: watches[0].UUID,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var watch Watch
+			got, appErr := watch.DeleteForOwner(ms.DB, tt.uuid, tt.user)
+			if tt.wantErr != "" {
+				ms.Error(appErr)
+				ms.Equal(appErr.Key, tt.wantErr, "wrong error type")
+				return
+			}
+			ms.Nil(appErr, "unexpected error")
+			ms.Equal(tt.uuid, got, "incorrect uuid")
+
+			var remaining Watches
+			err := remaining.FindByUser(ms.DB, tt.user)
+
+			ms.NoError(err, "error trying to validate post test results")
+			ms.Equal(1, len(remaining), "incorrect number of remaining watches for user")
+			ms.Equal(tt.wantIDRemaining, remaining[0].UUID, "incorrect uuid of remaining watch")
 		})
 	}
 }
@@ -197,13 +257,15 @@ func (ms *ModelSuite) TestWatch_Meeting() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			got, err := tt.watch.Meeting(ms.DB, tt.testUser)
+			err := tt.watch.LoadMeeting(ms.DB, tt.testUser)
 			ms.NoError(err)
+			got := tt.watch.Meeting
+
 			if tt.want == nil {
 				ms.Nil(got)
 				return
 			}
-			ms.NotNil(got, "Watch.Meeting() returned nil")
+			ms.NotNil(got, "Watch.LoadMeeting() did not load a meeting")
 			ms.Equal(tt.want.ID, got.ID)
 		})
 	}

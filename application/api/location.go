@@ -1,6 +1,6 @@
 package api
 
-// Location is an origin or destination location of a request
+// Location gives the description of a Geographic location
 //
 // swagger:model
 type Location struct {

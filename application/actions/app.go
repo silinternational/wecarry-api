@@ -99,6 +99,9 @@ func App() *buffalo.App {
 		threadsGroup.PUT("/{thread_id}/read", threadsMarkAsRead)
 
 		app.GET("/requests", requestsList)
+		watchesGroup := app.Group("/watches")
+		watchesGroup.GET("/", watchesMine)
+		watchesGroup.DELETE("/{watch_id}", watchesRemove)
 
 		app.POST("/upload/", uploadHandler)
 
@@ -118,7 +121,9 @@ func App() *buffalo.App {
 
 		auth.GET("/logout", authDestroy)
 
-		app.GET("/users/me", usersMe)
+		users := app.Group("/users")
+		users.GET("/me", usersMe)
+		users.PUT("/me", usersMeUpdate)
 
 		listeners.RegisterListeners()
 	}

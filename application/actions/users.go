@@ -2,6 +2,7 @@ package actions
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/gobuffalo/buffalo"
@@ -12,7 +13,7 @@ import (
 
 // swagger:operation GET /users/me Users UsersMe
 //
-// gets the data for authenticated UserPrivate.
+// gets the data for authenticated User.
 //
 // ---
 // responses:
@@ -23,7 +24,7 @@ import (
 func usersMe(c buffalo.Context) error {
 	user := models.CurrentUser(c)
 
-	output, err := convertUserToPrivateAPIType(c, user)
+	output, err := convertUserPrivate(c, user)
 	if err != nil {
 		return reportError(c, appErrorFromErr(err))
 	}
@@ -31,7 +32,69 @@ func usersMe(c buffalo.Context) error {
 	return c.Render(http.StatusOK, r.JSON(output))
 }
 
-func convertUserToPrivateAPIType(ctx context.Context, user models.User) (api.UserPrivate, error) {
+// swagger:operation PUT /users/me Users UsersMeUpdate
+//
+// Updates the data for authenticated User.
+//
+// ---
+// parameters:
+//   - name: UsersInput
+//     in: body
+//     required: true
+//     description: input object
+//     schema:
+//       "$ref": "#/definitions/UsersInput"
+//
+// responses:
+//   '200':
+//     description: authenticated user
+//     schema:
+//       "$ref": "#/definitions/UserPrivate"
+func usersMeUpdate(c buffalo.Context) error {
+	user := models.CurrentUser(c)
+
+	var input api.UsersInput
+	if err := StrictBind(c, &input); err != nil {
+		return reportError(c, &api.AppError{
+			HttpStatus: http.StatusBadRequest,
+			Key:        api.InvalidRequestBody,
+			Err:        errors.New("unable to unmarshal User data into UsersInput struct, error: " + err.Error()),
+		})
+	}
+
+	if input.Nickname != nil {
+		user.Nickname = *input.Nickname
+	}
+
+	tx := models.Tx(c)
+
+	var err error
+	if input.PhotoID == nil {
+		err = user.RemoveFile(tx)
+	} else {
+		_, err = user.AttachPhoto(tx, *input.PhotoID)
+	}
+	if err != nil {
+		return reportError(c, &api.AppError{
+			Key:        api.UserUpdatePhotoError,
+			HttpStatus: http.StatusInternalServerError,
+			Err:        err,
+		})
+	}
+
+	if err = user.Save(tx); err != nil {
+		return reportError(c, appErrorFromErr(err))
+	}
+
+	output, err := convertUserPrivate(c, user)
+	if err != nil {
+		return reportError(c, appErrorFromErr(err))
+	}
+
+	return c.Render(http.StatusOK, r.JSON(output))
+}
+
+func convertUserPrivate(ctx context.Context, user models.User) (api.UserPrivate, error) {
 	tx := models.Tx(ctx)
 
 	output := api.UserPrivate{}
@@ -51,7 +114,7 @@ func convertUserToPrivateAPIType(ctx context.Context, user models.User) (api.Use
 
 	if user.FileID.Valid {
 		// depends on the earlier call to GetPhotoURL to hydrate PhotoFile
-		output.PhotoID = user.PhotoFile.UUID
+		output.PhotoID = nulls.NewUUID(user.PhotoFile.UUID)
 	}
 
 	organizations, err := user.GetOrganizations(tx)
@@ -65,7 +128,7 @@ func convertUserToPrivateAPIType(ctx context.Context, user models.User) (api.Use
 	return output, nil
 }
 
-func convertUserToAPIType(ctx context.Context, user models.User) (api.User, error) {
+func convertUser(ctx context.Context, user models.User) (api.User, error) {
 	tx := models.Tx(ctx)
 
 	output := api.User{}
