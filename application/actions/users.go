@@ -76,7 +76,7 @@ func usersMeUpdate(c buffalo.Context) error {
 	}
 	if err != nil {
 		return reportError(c, &api.AppError{
-			Key:        "UpdateUser.UpdatePhoto",
+			Key:        api.UserUpdatePhotoError,
 			HttpStatus: http.StatusInternalServerError,
 			Err:        err,
 		})

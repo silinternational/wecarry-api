@@ -32,6 +32,12 @@ const (
 	ThreadNotFound        = ErrorKey("ErrorThreadNotFound")
 	ThreadSetLastViewedAt = ErrorKey("ErrorThreadSetLastViewedAt")
 
+	// ============================  Users =========================================
+	UserUpdateError       = ErrorKey("ErrorUserUpdate")
+	UserUpdatePhotoError  = ErrorKey("ErrorUserUpdatePhoto")
+	UserInvisibleNickname = ErrorKey("ErrorUserInvisibleNickname")
+	UserDuplicateNickname = ErrorKey("ErrorUserDuplicateNickname")
+
 	// ============================  Watches =========================================
 	WatchesLoadFailure = ErrorKey("ErrorWatchesLoadFailure")
 )
