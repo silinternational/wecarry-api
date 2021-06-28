@@ -22,7 +22,7 @@ func (as *ActionSuite) Test_convertUserToPrivateAPIType() {
 		AvatarURL:     user.AuthPhotoURL,
 		Organizations: []api.Organization{org},
 	}
-	got, _ := convertUserToPrivateAPIType(test.Ctx(), user)
+	got, _ := convertUserPrivate(test.Ctx(), user)
 	as.Equal(want, got)
 }
 
