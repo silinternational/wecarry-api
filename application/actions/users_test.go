@@ -58,7 +58,7 @@ func (as *ActionSuite) TestUsersUpdate() {
 
 	// test for removing photo
 	reqBody = api.UsersInput{
-		// remote the photo by leaving it as nil
+		// remove the photo by leaving it as nil
 	}
 	res = req.Put(reqBody)
 	body = res.Body.String()
