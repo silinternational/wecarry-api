@@ -16,7 +16,7 @@ func convertRequestToAPIType(ctx context.Context, request models.Request) (api.R
 	}
 
 	// Hydrate the request's CreatedBy user
-	outputUser, err := convertUserToAPIType(ctx, request.CreatedBy)
+	outputUser, err := convertUser(ctx, request.CreatedBy)
 	if err != nil {
 		err = errors.New("error converting request created_by user: " + err.Error())
 		return api.Request{}, err
