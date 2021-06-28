@@ -2,10 +2,13 @@ package actions
 
 import (
 	"fmt"
+	"net/http"
+	"testing"
 	"time"
 
 	"github.com/gobuffalo/nulls"
 
+	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/internal/test"
 	"github.com/silinternational/wecarry-api/models"
@@ -96,4 +99,71 @@ func (as *ActionSuite) Test_MyWatches() {
 	body = res.Body.String()
 	as.Equal(200, res.Code, "incorrect status code returned, body: %s", body)
 	as.Equal("[]\n", body, "expected an empty list in the response")
+}
+
+func (as *ActionSuite) Test_WatchRemove() {
+	f := createFixturesForWatches(as)
+	owner := f.Users[0]
+	notOwner := f.Users[1]
+	watches := f.Watches
+
+	type testCase struct {
+		name         string
+		watchID      string
+		user         models.User
+		failMsg      string
+		wantStatus   int
+		wantContains string
+	}
+
+	testCases := []testCase{
+		{
+			name:         "Bad ID",
+			watchID:      "badid",
+			user:         owner,
+			wantStatus:   http.StatusBadRequest,
+			wantContains: api.MustBeAValidUUID.String(),
+			failMsg:      "expected an error about a bad id",
+		},
+		{
+			name:         "unauthorized",
+			watchID:      watches[0].UUID.String(),
+			user:         notOwner,
+			wantStatus:   http.StatusNotFound,
+			wantContains: api.NotAuthorized.String(),
+			failMsg:      "expected a not authorized error",
+		},
+		{
+			name:         "Delete one leave one",
+			watchID:      watches[0].UUID.String(),
+			user:         owner,
+			wantStatus:   http.StatusOK,
+			wantContains: watches[0].UUID.String(),
+			failMsg:      "expected success with the watch uuid returned",
+		},
+		{
+			name:         "Delete the last one",
+			watchID:      watches[1].UUID.String(),
+			user:         owner,
+			wantStatus:   http.StatusOK,
+			wantContains: watches[1].UUID.String(),
+			failMsg:      "expected success with the watch uuid returned",
+		},
+	}
+
+	for _, tc := range testCases {
+		as.T().Run(tc.name, func(t *testing.T) {
+			req := as.JSON("/watches/%s", tc.watchID)
+			req.Headers["Authorization"] = fmt.Sprintf("Bearer %s", tc.user.Nickname)
+			req.Headers["content-type"] = "application/json"
+			res := req.Delete()
+
+			as.Equal(tc.wantStatus, res.Code, "incorrect response status code")
+
+			body := res.Body.String()
+
+			as.Contains(body, tc.wantContains, tc.failMsg)
+		})
+	}
+
 }

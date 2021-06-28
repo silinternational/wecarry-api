@@ -39,7 +39,10 @@ const (
 	UserDuplicateNickname = ErrorKey("ErrorUserDuplicateNickname")
 
 	// ============================  Watches =========================================
+	WatchDeleteFailure = ErrorKey("ErrorWatchDeleteFailure")
 	WatchesLoadFailure = ErrorKey("ErrorWatchesLoadFailure")
+	WatchMissingID     = ErrorKey("ErrorWatchMissingID")
+	WatchNotFound      = ErrorKey("ErrorWatchNotFound")
 )
 
 // ********************************************************************
