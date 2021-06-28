@@ -35,7 +35,7 @@ type Thread struct {
 	Participants Users `json:"participants"`
 
 	// Request that owns this message thread
-	Request *RequestAbridged `json:"request"`
+	Request *Request `json:"request"`
 
 	// UnreadMessageCount is the number of messages unread by the auth user
 	UnreadMessageCount int `json:"unread_message_count"`

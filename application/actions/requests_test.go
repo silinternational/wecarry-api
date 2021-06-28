@@ -334,15 +334,18 @@ func (as *ActionSuite) Test_RequestsList() {
 	as.Equal(len(requests), len(requestsList))
 
 	wantContains := []string{}
+		
 	for i := range requests {
-		wantContains = append(wantContains, fmt.Sprintf(`"id":"%s"`, requests[i].UUID))
-		wantContains = append(wantContains, fmt.Sprintf(`"nickname":"%s"`, requests[i].CreatedBy.Nickname))
-		wantContains = append(wantContains, fmt.Sprintf(`"nickname":"%s"`, requests[i].Provider.Nickname))
-		wantContains = append(wantContains, fmt.Sprintf(`"title":"%s"`, requests[i].Title))
-		wantContains = append(wantContains, fmt.Sprintf(`"country":"%s"`, requests[i].Destination.Country))
-		wantContains = append(wantContains, fmt.Sprintf(`"description":"%s"`, requests[i].Origin.Description))
-		wantContains = append(wantContains, fmt.Sprintf(`"size":"%s"`, requests[i].Size))
-		wantContains = append(wantContains, fmt.Sprintf(`"id":"%s"`, requests[i].PhotoFile.UUID))
+		wantContains = append(wantContains, []string{
+			fmt.Sprintf(`"id":"%s"`, requests[i].UUID),
+			fmt.Sprintf(`"nickname":"%s"`, requests[i].CreatedBy.Nickname),
+			fmt.Sprintf(`"nickname":"%s"`, requests[i].Provider.Nickname),
+			fmt.Sprintf(`"title":"%s"`, requests[i].Title),
+			fmt.Sprintf(`"country":"%s"`, requests[i].Destination.Country),
+			fmt.Sprintf(`"description":"%s"`, requests[i].Origin.Description),
+			fmt.Sprintf(`"size":"%s"`, requests[i].Size),
+			fmt.Sprintf(`"id":"%s"`, requests[i].PhotoFile.UUID),
+		}...)
 	}
 
 	for _, w := range wantContains {

@@ -35,7 +35,7 @@ func requestsList(c buffalo.Context) error {
 		return domain.ReportError(c, err, "GetRequests")
 	}
 
-	output,  err := convertRequestsToAPIType(c, requests)
+	output, err := convertRequestsAbridged(c, requests)
 	if err != nil {
 		return reportError(c, appErrorFromErr(err))
 	}
@@ -44,12 +44,12 @@ func requestsList(c buffalo.Context) error {
 }
 
 // converts list of model.Request into api.RequestAbridged
-func convertRequestsToAPIType(ctx context.Context, requests []models.Request) ([]api.RequestAbridged, error) {
+func convertRequestsAbridged(ctx context.Context, requests []models.Request) ([]api.RequestAbridged, error) {
 	output := make([]api.RequestAbridged, len(requests))
 
 	for i, request := range requests {
 		var err error
-		output[i], err = convertRequestToAPIType(ctx, request)
+		output[i], err = convertRequestToAPITypeAbridged(ctx, request)
 		if err != nil {
 			return []api.RequestAbridged{}, err
 		}
@@ -58,8 +58,54 @@ func convertRequestsToAPIType(ctx context.Context, requests []models.Request) ([
 	return output, nil
 }
 
+// converts model.Request into api.Request
+func convertRequestToAPIType(ctx context.Context, request models.Request) (api.Request, error) {
+	var output api.Request
+	if err := api.ConvertToOtherType(request, &output); err != nil {
+		err = errors.New("error converting request to api.request: " + err.Error())
+		return api.Request{}, err
+	}
+	output.ID = request.UUID
+
+	// Hydrate nested request fields for api.RequestAbridged
+	tx := models.Tx(ctx)
+	createdBy, err := hydrateRequestCreatedBy(ctx, request, tx)
+	if err != nil {
+		return api.Request{}, err
+	}
+	output.CreatedBy = &createdBy
+
+	origin, err := hydrateRequestOrigin(ctx, request, tx)
+	if err != nil {
+		return api.Request{}, err
+	}
+	output.Origin = &origin
+
+	destination, err := hydrateRequestDestination(ctx, request, tx)
+	if err != nil {
+		return api.Request{}, err
+	}
+	output.Destination = &destination
+
+	provider, err := hydrateProvider(ctx, request, tx)
+	if err != nil {
+		return api.Request{}, err
+	}
+	output.Provider = &provider
+
+	photo, err := hydrateRequestPhoto(ctx, request, tx)
+	if err != nil {
+		return api.Request{}, err
+	}
+	output.Photo = &photo
+
+	// TODO: hydrate other nested request fields after reconciling api.Request struct with the UI field list
+
+	return output, nil
+}
+
 // converts model.Request into api.RequestAbridged
-func convertRequestToAPIType(ctx context.Context, request models.Request) (api.RequestAbridged, error) {
+func convertRequestToAPITypeAbridged(ctx context.Context, request models.Request) (api.RequestAbridged, error) {
 	var output api.RequestAbridged
 	if err := api.ConvertToOtherType(request, &output); err != nil {
 		err = errors.New("error converting request to api.request: " + err.Error())
@@ -69,35 +115,40 @@ func convertRequestToAPIType(ctx context.Context, request models.Request) (api.R
 
 	// Hydrate nested request fields
 	tx := models.Tx(ctx)
-	createdBy, err := hydrateCreatedBy(ctx, request, tx)
+	createdBy, err := hydrateRequestCreatedBy(ctx, request, tx)
 	if err != nil {
 		return api.RequestAbridged{}, err
 	}
 	output.CreatedBy = &createdBy
-	origin, err := hydrateOrigin(ctx, request, tx)
+
+	origin, err := hydrateRequestOrigin(ctx, request, tx)
 	if err != nil {
 		return api.RequestAbridged{}, err
 	}
 	output.Origin = &origin
-	destination, err := hydrateDestination(ctx, request, tx)
+
+	destination, err := hydrateRequestDestination(ctx, request, tx)
 	if err != nil {
 		return api.RequestAbridged{}, err
 	}
 	output.Destination = &destination
+
 	provider, err := hydrateProvider(ctx, request, tx)
 	if err != nil {
 		return api.RequestAbridged{}, err
 	}
 	output.Provider = &provider
-	photo, err := hydratePhoto(ctx, request, tx)
+
+	photo, err := hydrateRequestPhoto(ctx, request, tx)
 	if err != nil {
 		return api.RequestAbridged{}, err
 	}
 	output.Photo = &photo
+	
 	return output, nil
 }
 
-func hydrateCreatedBy (ctx context.Context, request models.Request, tx *pop.Connection) (api.User, error) {
+func hydrateRequestCreatedBy(ctx context.Context, request models.Request, tx *pop.Connection) (api.User, error) {
 	createdBy, _ := request.GetCreator(tx)
 	outputCreatedBy, err := convertUserToAPIType(ctx, *createdBy)
 	if err != nil {
@@ -107,7 +158,7 @@ func hydrateCreatedBy (ctx context.Context, request models.Request, tx *pop.Conn
 	return outputCreatedBy, nil
 }
 
-func hydrateOrigin (ctx context.Context, request models.Request, tx *pop.Connection) (api.Location, error) {
+func hydrateRequestOrigin(ctx context.Context, request models.Request, tx *pop.Connection) (api.Location, error) {
 	origin, err := request.GetOrigin(tx)
 	if err != nil {
 		err = errors.New("error converting request origin: " + err.Error())
@@ -121,7 +172,7 @@ func hydrateOrigin (ctx context.Context, request models.Request, tx *pop.Connect
 	return outputOrigin, nil
 }
 
-func hydrateDestination (ctx context.Context, request models.Request, tx *pop.Connection) (api.Location, error) {
+func hydrateRequestDestination(ctx context.Context, request models.Request, tx *pop.Connection) (api.Location, error) {
 	destination, err := request.GetDestination(tx)
 	if err != nil {
 		err = errors.New("error converting request destination: " + err.Error())
@@ -135,7 +186,7 @@ func hydrateDestination (ctx context.Context, request models.Request, tx *pop.Co
 	return outputDestination, nil
 }
 
-func hydrateProvider (ctx context.Context, request models.Request, tx *pop.Connection) (api.User, error) {
+func hydrateProvider(ctx context.Context, request models.Request, tx *pop.Connection) (api.User, error) {
 	provider, err := request.GetProvider(tx)
 	if err != nil {
 		err = errors.New("error converting request provider: " + err.Error())
@@ -152,7 +203,7 @@ func hydrateProvider (ctx context.Context, request models.Request, tx *pop.Conne
 	return outputProvider, nil
 }
 
-func hydratePhoto (ctx context.Context, request models.Request, tx *pop.Connection) (api.File, error) {
+func hydrateRequestPhoto(ctx context.Context, request models.Request, tx *pop.Connection) (api.File, error) {
 	photo, err := request.GetPhoto(tx)
 	if err != nil {
 		err = errors.New("error converting request photo: " + err.Error())
@@ -168,4 +219,3 @@ func hydratePhoto (ctx context.Context, request models.Request, tx *pop.Connecti
 	}
 	return outputPhoto, nil
 }
-

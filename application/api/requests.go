@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
-
 )
 
 // swagger:model
@@ -13,6 +12,7 @@ type Requests []Request
 // Request is a hand carry request
 //
 // swagger:model
+// TODO: reconcile api.Request struct with the UI field list
 type Request struct {
 	// unique identifier for the Request
 	//

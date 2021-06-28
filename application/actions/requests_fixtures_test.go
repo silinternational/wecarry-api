@@ -47,12 +47,12 @@ func createFixturesForRequestQuery(as *ActionSuite) RequestQueryFixtures {
 	requests := test.CreateRequestFixtures(as.DB, 3, true)
 	requests[0].Status = models.RequestStatusAccepted
 	requests[0].ProviderID = nulls.NewInt(users[1].ID)
-	as.NoError(as.DB.Save(&requests[0]))
+	as.NoError(as.DB.Save(&requests))
 
 	requests[2].Status = models.RequestStatusCompleted
 	requests[2].CompletedOn = nulls.NewTime(time.Now())
 	requests[2].ProviderID = nulls.NewInt(users[1].ID)
-	as.NoError(as.DB.Save(&requests[2]))
+	as.NoError(as.DB.Save(&requests))
 
 	threads := []models.Thread{
 		{UUID: domain.GetUUID(), RequestID: requests[0].ID},
@@ -102,8 +102,8 @@ func createFixturesForRequestsList(as *ActionSuite) RequestsListFixtures {
 	as.NoError(as.DB.Save(&requests[2]))
 
 	return RequestsListFixtures{
-		Users:      usersFixtures.Users,
-		Requests:	requests,
+		Users:    usersFixtures.Users,
+		Requests: requests,
 	}
 }
 
