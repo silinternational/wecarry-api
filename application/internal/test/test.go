@@ -127,7 +127,9 @@ func CreateRequestFixtures(tx *pop.Connection, n int, createFiles bool) models.R
 		requests[i].OrganizationID = org.ID
 		requests[i].NeededBefore = nulls.NewTime(futureDate)
 		requests[i].DestinationID = locations[i*2].ID
+		requests[i].Destination = locations[i*2]
 		requests[i].OriginID = nulls.NewInt(locations[i*2+1].ID)
+		requests[i].Origin = locations[i*2+1]
 		requests[i].Title = "title " + strconv.Itoa(i)
 		requests[i].Description = nulls.NewString("description " + strconv.Itoa(i))
 		requests[i].Size = models.RequestSizeSmall

@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
@@ -8,6 +9,7 @@ import (
 	"github.com/gobuffalo/nulls"
 	"github.com/gofrs/uuid"
 
+	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/internal/test"
 	"github.com/silinternational/wecarry-api/models"
@@ -312,6 +314,39 @@ func (as *ActionSuite) Test_RequestsQuery() {
 			as.NoError(err)
 			tc.verifyFunc()
 		})
+	}
+}
+
+func (as *ActionSuite) Test_RequestsList() {
+	f := createFixturesForRequestsList(as)
+	users := f.Users
+	requests := f.Requests
+	req := as.JSON("/requests")
+	req.Headers["Authorization"] = fmt.Sprintf("Bearer %s", users[0].Nickname)
+	req.Headers["content-type"] = "application/json"
+	res := req.Get()
+
+	body := res.Body.String()
+	as.Equal(200, res.Code, "incorrect status code returned, body: %s", body)
+
+	var requestsList []api.Request
+	json.Unmarshal([]byte(body), &requestsList)
+	as.Equal(len(requests), len(requestsList))
+
+	wantContains := []string{}
+	for i := range requests {
+		wantContains = append(wantContains, fmt.Sprintf(`"id":"%s"`, requests[i].UUID))
+		wantContains = append(wantContains, fmt.Sprintf(`"nickname":"%s"`, requests[i].CreatedBy.Nickname))
+		wantContains = append(wantContains, fmt.Sprintf(`"nickname":"%s"`, requests[i].Provider.Nickname))
+		wantContains = append(wantContains, fmt.Sprintf(`"title":"%s"`, requests[i].Title))
+		wantContains = append(wantContains, fmt.Sprintf(`"country":"%s"`, requests[i].Destination.Country))
+		wantContains = append(wantContains, fmt.Sprintf(`"description":"%s"`, requests[i].Origin.Description))
+		wantContains = append(wantContains, fmt.Sprintf(`"size":"%s"`, requests[i].Size))
+		wantContains = append(wantContains, fmt.Sprintf(`"id":"%s"`, requests[i].PhotoFile.UUID))
+	}
+
+	for _, w := range wantContains {
+		as.Contains(body, w)
 	}
 }
 
