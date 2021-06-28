@@ -22,7 +22,7 @@ type UserPrivate struct {
 	// `File` ID of the user's photo, if present
 	// swagger:strfmt uuid4
 	// example: 63d5b060-1460-4348-bdf0-ad03c105a8d5
-	PhotoID uuid.UUID `json:"photo_id"`
+	PhotoID nulls.UUID `json:"photo_id"`
 
 	// avatarURL is generated from an attached photo if present, an external URL if present, or a Gravatar URL
 	// swagger:strfmt url
@@ -49,4 +49,16 @@ type User struct {
 	// avatarURL is generated from an attached photo if present, an external URL if present, or a Gravatar URL
 	// swagger:strfmt url
 	AvatarURL nulls.String `json:"avatar_url"`
+}
+
+// UsersInput contains parameters to update User
+// swagger:model
+type UsersInput struct {
+	// User's nickname. Auto-assigned upon creation of a User, but editable by the User. Limited to 255 characters.
+	Nickname *string `json:"nickname"`
+
+	// File ID of avatar photo. If omitted or `null`, the photo is removed from the profile.
+	// swagger:strfmt uuid4
+	// example: 63d5b060-1460-4348-bdf0-ad03c105a8d5
+	PhotoID *string `json:"photo_id"`
 }

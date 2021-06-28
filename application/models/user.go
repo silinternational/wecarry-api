@@ -14,6 +14,7 @@ import (
 	"github.com/gobuffalo/validate/v3/validators"
 	"github.com/gofrs/uuid"
 	"github.com/pkg/errors"
+	"github.com/silinternational/wecarry-api/api"
 
 	"github.com/silinternational/wecarry-api/auth"
 	"github.com/silinternational/wecarry-api/domain"
@@ -512,7 +513,21 @@ func (u *User) GetPhotoURL(tx *pop.Connection) (*string, error) {
 // Save wraps tx.Save() call to check for errors and operate on attached object
 func (u *User) Save(tx *pop.Connection) error {
 	u.Nickname = domain.RemoveUnwantedChars(u.Nickname, "-_ .,'&@")
-	return save(tx, u)
+	if err := save(tx, u); err != nil {
+		appError := api.AppError{Err: err}
+		if strings.Contains(err.Error(), "Nickname must have a visible character") {
+			appError.Key = api.UserInvisibleNickname
+			appError.Category = api.CategoryUser
+		} else if strings.Contains(err.Error(), `duplicate key value violates unique constraint "users_nickname_idx"`) {
+			appError.Key = api.UserDuplicateNickname
+			appError.Category = api.CategoryUser
+		} else {
+			appError.Key = api.UserUpdateError
+			appError.Category = api.CategoryInternal
+		}
+		return &appError
+	}
+	return nil
 }
 
 func (u *User) uniquifyNickname(tx *pop.Connection, prefixes [30]string) error {
