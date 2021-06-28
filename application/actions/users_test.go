@@ -8,7 +8,7 @@ import (
 	"github.com/silinternational/wecarry-api/internal/test"
 )
 
-func (as *ActionSuite) Test_convertUserToPrivateAPIType() {
+func (as *ActionSuite) Test_convertUserPrivate() {
 	uf := test.CreateUserFixtures(as.DB, 1)
 	user := uf.Users[0]
 	org, err := convertOrganizationToAPIType(uf.Organization)
@@ -18,11 +18,50 @@ func (as *ActionSuite) Test_convertUserToPrivateAPIType() {
 		ID:            user.UUID,
 		Email:         user.Email,
 		Nickname:      user.Nickname,
-		PhotoID:       nulls.NewUUID(user.PhotoFile.UUID),
 		AvatarURL:     user.AuthPhotoURL,
 		Organizations: []api.Organization{org},
 	}
 	got, _ := convertUserPrivate(test.Ctx(), user)
+	as.Equal(want, got)
+
+	// with Photo
+	photo := test.CreateFileFixture(as.DB)
+	_, err = user.AttachPhoto(as.DB, photo.UUID.String())
+	as.NoError(err)
+	want = api.UserPrivate{
+		ID:            user.UUID,
+		Email:         user.Email,
+		Nickname:      user.Nickname,
+		PhotoID:       nulls.NewUUID(photo.UUID),
+		AvatarURL:     nulls.NewString(photo.URL),
+		Organizations: []api.Organization{org},
+	}
+	got, _ = convertUserPrivate(test.Ctx(), user)
+	as.Equal(want, got)
+}
+
+func (as *ActionSuite) Test_convertUser() {
+	uf := test.CreateUserFixtures(as.DB, 1)
+	user := uf.Users[0]
+
+	want := api.User{
+		ID:        user.UUID,
+		Nickname:  user.Nickname,
+		AvatarURL: user.AuthPhotoURL,
+	}
+	got, _ := convertUser(test.Ctx(), user)
+	as.Equal(want, got)
+
+	// with Photo
+	photo := test.CreateFileFixture(as.DB)
+	_, err := user.AttachPhoto(as.DB, photo.UUID.String())
+	as.NoError(err)
+	want = api.User{
+		ID:        user.UUID,
+		Nickname:  user.Nickname,
+		AvatarURL: nulls.NewString(photo.URL),
+	}
+	got, _ = convertUser(test.Ctx(), user)
 	as.Equal(want, got)
 }
 
