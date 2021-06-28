@@ -32,9 +32,9 @@ func usersMe(c buffalo.Context) error {
 	return c.Render(http.StatusOK, r.JSON(output))
 }
 
-// swagger:operation PUT /users/me Users UsersMe
+// swagger:operation PUT /users/me Users UsersMeUpdate
 //
-// updates the data for authenticated User.
+// Updates the data for authenticated User.
 //
 // ---
 // parameters:
