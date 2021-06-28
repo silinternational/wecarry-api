@@ -12,6 +12,33 @@ import (
 	"github.com/silinternational/wecarry-api/models"
 )
 
+// swagger:operation DELETE /watches/{watch_id} Watches RemoveWatch
+//
+// Remove one of the User's Watches
+//
+// ---
+// responses:
+//   '200':
+//     description: The id (uuid) of the deleted watch
+func watchesRemove(c buffalo.Context) error {
+	cUser := models.CurrentUser(c)
+	tx := models.Tx(c)
+
+	id, err := getUUIDFromParam(c, "watch_id")
+	if err != nil {
+		return reportError(c, err)
+	}
+
+	var watch models.Watch
+	output, appErr := watch.DeleteForOwner(tx, id.String(), cUser)
+	if appErr != nil {
+		appErr.HttpStatus = httpStatusForErrCategory(appErr.Category)
+		return reportError(c, appErr)
+	}
+
+	return c.Render(200, render.JSON(output))
+}
+
 // swagger:operation GET /watches Watches UsersWatches
 //
 // List the User's Watches

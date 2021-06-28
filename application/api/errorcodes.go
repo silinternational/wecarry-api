@@ -33,7 +33,10 @@ const (
 	ThreadSetLastViewedAt = ErrorKey("ErrorThreadSetLastViewedAt")
 
 	// ============================  Watches =========================================
+	WatchDeleteFailure = ErrorKey("ErrorWatchDeleteFailure")
 	WatchesLoadFailure = ErrorKey("ErrorWatchesLoadFailure")
+	WatchMissingID     = ErrorKey("ErrorWatchMissingID")
+	WatchNotFound      = ErrorKey("ErrorWatchNotFound")
 )
 
 // ********************************************************************

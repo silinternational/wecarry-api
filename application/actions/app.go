@@ -100,6 +100,7 @@ func App() *buffalo.App {
 
 		watchesGroup := app.Group("/watches")
 		watchesGroup.GET("/", watchesMine)
+		watchesGroup.DELETE("/{watch_id}", watchesRemove)
 
 		app.POST("/upload/", uploadHandler)
 

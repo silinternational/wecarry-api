@@ -12,6 +12,7 @@ import (
 	"github.com/gobuffalo/validate/v3/validators"
 	"github.com/gofrs/uuid"
 
+	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/domain"
 )
 
@@ -77,6 +78,46 @@ func (w *Watch) FindByUUID(tx *pop.Connection, id string) error {
 	}
 
 	return nil
+}
+
+// FindByUUID loads from DB the Watch record identified by the given UUID
+func (w *Watch) DeleteForOwner(tx *pop.Connection, id string, user User) (string, *api.AppError) {
+	if id == "" {
+		appError := api.AppError{
+			Category: api.CategoryUser,
+			Key:      api.WatchMissingID,
+			Err:      errors.New("error: watch uuid must not be blank"),
+		}
+		return "", &appError
+	}
+
+	if err := w.FindByUUID(tx, id); err != nil {
+		appError := api.AppError{
+			Category: api.CategoryNotFound,
+			Key:      api.WatchNotFound,
+			Err:      err,
+		}
+		return "", &appError
+	}
+	if w.OwnerID != user.ID {
+		appError := api.AppError{
+			Category: api.CategoryForbidden,
+			Key:      api.NotAuthorized,
+			Err:      errors.New("error: user may not delete a watch they don't own."),
+		}
+		return "", &appError
+	}
+
+	if err := w.Destroy(tx); err != nil {
+		appError := api.AppError{
+			Category: api.CategoryDatabase,
+			Key:      api.WatchDeleteFailure,
+			Err:      fmt.Errorf("error attempting to delete a watch with uuid %s: %s", w.UUID.String(), err.Error()),
+		}
+		return "", &appError
+	}
+
+	return w.UUID.String(), nil
 }
 
 // FindByUser returns all watches owned by the given user.
