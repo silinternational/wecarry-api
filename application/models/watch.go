@@ -80,7 +80,8 @@ func (w *Watch) FindByUUID(tx *pop.Connection, id string) error {
 	return nil
 }
 
-// FindByUUID loads from DB the Watch record identified by the given UUID
+// DeleteForOwner deletes the watch with the given UUID, if the user is the owner
+// of the watch.
 func (w *Watch) DeleteForOwner(tx *pop.Connection, id string, user User) (string, *api.AppError) {
 	if id == "" {
 		appError := api.AppError{

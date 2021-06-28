@@ -107,20 +107,6 @@ func (as *ActionSuite) Test_WatchRemove() {
 	notOwner := f.Users[1]
 	watches := f.Watches
 
-	// Delete one, leave one
-	//as.NoError(as.testGqlQuery(query1, f.Users[0].Nickname, &resp))
-	//as.Equal(1, len(resp.Watches))
-	//as.Equal(f.Watches[1].UUID.String(), resp.Watches[0].ID)
-	//as.Equal(f.Users[0].Nickname, resp.Watches[0].Owner.Nickname, "incorrect Watch Owner")
-	//as.Equal(f.Locations[1].Country, resp.Watches[0].Destination.Country, "incorrect Watch Destination")
-	//
-	//query2 := `mutation { watches: removeWatch (input: {id: "` + f.Watches[1].UUID.String() +
-	//	`"}) {` + allWatchFields + "}}"
-	//
-	//// Remove last Watch
-	//as.NoError(as.testGqlQuery(query2, f.Users[0].Nickname, &resp))
-	//as.Equal(0, len(resp.Watches))
-
 	type testCase struct {
 		name         string
 		watchID      string
@@ -132,10 +118,10 @@ func (as *ActionSuite) Test_WatchRemove() {
 
 	testCases := []testCase{
 		{
-			name:         "No ID",
-			watchID:      "999",
+			name:         "Bad ID",
+			watchID:      "badid",
 			user:         owner,
-			wantStatus:   400,
+			wantStatus:   http.StatusBadRequest,
 			wantContains: api.MustBeAValidUUID.String(),
 			failMsg:      "expected an error about a bad id",
 		},
