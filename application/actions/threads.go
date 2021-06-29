@@ -129,26 +129,43 @@ func convertThreadsToAPIType(ctx context.Context, threads models.Threads) (api.T
 
 	// Hydrate the thread's messages, participants
 	for i := range output {
-		messagesOutput, err := convertMessagesToAPIType(ctx, threads[i].Messages)
+		newThread, err := convertThread(ctx, threads[i])
 		if err != nil {
 			return nil, err
 		}
-		output[i].Messages = &messagesOutput
-
-		// Not converting Participants, since that happens automatically  above and
-		// because it doesn't have nested related objects
-		for j := range output[i].Participants {
-			output[i].Participants[j].ID = threads[i].Participants[j].UUID
-		}
-
-		requestOutput, err := convertRequestToAPIType(ctx, threads[i].Request)
-		if err != nil {
-			return nil, err
-		}
-
-		output[i].Request = &requestOutput
-		output[i].ID = threads[i].UUID
+		output[i] = newThread
 	}
 
+	return output, nil
+}
+
+func convertThread(ctx context.Context, thread models.Thread) (api.Thread, error) {
+	var output api.Thread
+	if err := api.ConvertToOtherType(thread, &output); err != nil {
+		err = errors.New("error converting thread to api.thread: " + err.Error())
+		return api.Thread{}, err
+	}
+
+	// Hydrate the thread's messages, participants
+
+	messagesOutput, err := convertMessagesToAPIType(ctx, thread.Messages)
+	if err != nil {
+		return api.Thread{}, err
+	}
+	output.Messages = &messagesOutput
+
+	// Not converting Participants, since that happens automatically  above and
+	// because it doesn't have nested related objects
+	for i := range output.Participants {
+		output.Participants[i].ID = thread.Participants[i].UUID
+	}
+
+	requestOutput, err := convertRequestToAPIType(ctx, thread.Request)
+	if err != nil {
+		return api.Thread{}, err
+	}
+
+	output.Request = &requestOutput
+	output.ID = thread.UUID
 	return output, nil
 }
