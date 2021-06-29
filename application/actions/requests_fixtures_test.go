@@ -32,6 +32,11 @@ type UpdateRequestStatusFixtures struct {
 	models.Users
 }
 
+type RequestsListFixtures struct {
+	models.Requests
+	models.Users
+}
+
 func createFixturesForRequestQuery(as *ActionSuite) RequestQueryFixtures {
 	t := as.T()
 
@@ -42,12 +47,12 @@ func createFixturesForRequestQuery(as *ActionSuite) RequestQueryFixtures {
 	requests := test.CreateRequestFixtures(as.DB, 3, true)
 	requests[0].Status = models.RequestStatusAccepted
 	requests[0].ProviderID = nulls.NewInt(users[1].ID)
-	as.NoError(as.DB.Save(&requests[0]))
+	as.NoError(as.DB.Save(&requests))
 
 	requests[2].Status = models.RequestStatusCompleted
 	requests[2].CompletedOn = nulls.NewTime(time.Now())
 	requests[2].ProviderID = nulls.NewInt(users[1].ID)
-	as.NoError(as.DB.Save(&requests[2]))
+	as.NoError(as.DB.Save(&requests))
 
 	threads := []models.Thread{
 		{UUID: domain.GetUUID(), RequestID: requests[0].ID},
@@ -80,6 +85,25 @@ func createFixturesForRequestQuery(as *ActionSuite) RequestQueryFixtures {
 		Users:        users,
 		Requests:     requests,
 		Threads:      threads,
+	}
+}
+
+func createFixturesForRequestsList(as *ActionSuite) RequestsListFixtures {
+	usersFixtures := test.CreateUserFixtures(as.DB, 3)
+	requests := test.CreateRequestFixtures(as.DB, 5, false)
+
+	requests[0].Status = models.RequestStatusAccepted
+	requests[0].ProviderID = nulls.NewInt(usersFixtures.Users[1].ID)
+	as.NoError(as.DB.Save(&requests[0]))
+
+	requests[1].Status = models.RequestStatusCompleted
+	requests[1].CompletedOn = nulls.NewTime(time.Now())
+	requests[1].ProviderID = nulls.NewInt(usersFixtures.Users[2].ID)
+	as.NoError(as.DB.Save(&requests[2]))
+
+	return RequestsListFixtures{
+		Users:    usersFixtures.Users,
+		Requests: requests,
 	}
 }
 
@@ -160,7 +184,7 @@ func createFixturesForUpdateRequestStatus(as *ActionSuite) UpdateRequestStatusFi
 	userFixtures := test.CreateUserFixtures(as.DB, 2)
 	users := userFixtures.Users
 
-	requests := test.CreateRequestFixtures(as.DB, 1, false)
+	requests := test.CreateRequestFixtures(as.DB, 1, false, users[0].ID)
 
 	return UpdateRequestStatusFixtures{
 		Requests: requests,
