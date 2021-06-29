@@ -184,7 +184,7 @@ func createFixturesForUpdateRequestStatus(as *ActionSuite) UpdateRequestStatusFi
 	userFixtures := test.CreateUserFixtures(as.DB, 2)
 	users := userFixtures.Users
 
-	requests := test.CreateRequestFixtures(as.DB, 1, false)
+	requests := test.CreateRequestFixtures(as.DB, 1, false, users[0].ID)
 
 	return UpdateRequestStatusFixtures{
 		Requests: requests,

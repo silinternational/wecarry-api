@@ -99,19 +99,25 @@ func CreateUserFixtures(tx *pop.Connection, n int) UserFixtures {
 // CreateRequestFixtures generates any number of request records for testing. Related Location and File records are also
 // created. All request fixtures will be assigned to the first Organization in the DB. If no Organization exists,
 // one will be created. All requests are created by the first User in the DB. If no User exists, one will be created.
-func CreateRequestFixtures(tx *pop.Connection, n int, createFiles bool) models.Requests {
+func CreateRequestFixtures(tx *pop.Connection, n int, createFiles bool, userIDs ...int) models.Requests {
 	var org models.Organization
 	if err := tx.First(&org); err != nil {
 		org = models.Organization{AuthConfig: "{}"}
 		MustCreate(tx, &org)
 	}
 
+	// TODO Consider if there is a better way to do this
 	var user models.User
-	if err := tx.First(&user); err != nil {
-		user = models.User{}
-		MustCreate(tx, &user)
+	if len(userIDs) == 0 {
+		if err := tx.First(&user); err != nil {
+			user = models.User{}
+			MustCreate(tx, &user)
+		}
+	} else {
+		if err := tx.Where(`id=?`, userIDs[0]).First(&user); err != nil {
+			panic("error finding user by id for request fixtures: " + err.Error())
+		}
 	}
-
 	locations := CreateLocationFixtures(tx, n*2)
 
 	var files models.Files
