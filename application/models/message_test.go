@@ -7,6 +7,7 @@ import (
 	"github.com/gobuffalo/events"
 	"github.com/gobuffalo/validate/v3"
 
+	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/domain"
 )
 
@@ -190,6 +191,82 @@ func (ms *ModelSuite) TestMessage_Create() {
 			}
 
 			ms.NoError(err)
+			ms.Greater(message.ID, 0, "new message contains invalid ID")
+		})
+	}
+}
+
+func (ms *ModelSuite) TestMessage_CreateForRest() {
+	t := ms.T()
+
+	f := Fixtures_Message_Create(ms, t)
+	threadUUID := f.Threads[0].UUID.String()
+
+	tests := []struct {
+		name        string
+		user        User
+		requestUUID string
+		threadUUID  *string
+		content     string
+		wantErr     bool
+	}{
+		{
+			name:        "good, 1st message, visible request",
+			user:        f.Users[2],
+			requestUUID: f.Requests[1].UUID.String(),
+			threadUUID:  nil,
+			content:     "Owe nothing to anyone, except to love one another.",
+			wantErr:     false,
+		},
+		{
+			name:        "good, already a participant",
+			user:        f.Users[0],
+			requestUUID: f.Requests[1].UUID.String(),
+			threadUUID:  &threadUUID,
+			content:     "Hatred stirs up conflict, but love covers over all wrongs.",
+			wantErr:     false,
+		},
+		{
+			name:        "bad, not a participant",
+			user:        f.Users[1],
+			requestUUID: f.Requests[1].UUID.String(),
+			threadUUID:  &threadUUID,
+			content:     "bad message",
+			wantErr:     true,
+		},
+		{
+			name:        "bad, not a visible request",
+			user:        f.Users[1],
+			requestUUID: f.Requests[0].UUID.String(),
+			threadUUID:  nil,
+			content:     "another bad message",
+			wantErr:     true,
+		},
+		{
+			name:        "bad, thread not valid for request",
+			user:        f.Users[0],
+			requestUUID: f.Requests[2].UUID.String(),
+			threadUUID:  &threadUUID,
+			content:     "another bad message",
+			wantErr:     true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var message Message
+			input := api.MessageInput{
+				Content:   tt.content,
+				RequestID: tt.requestUUID,
+				ThreadID:  tt.threadUUID,
+			}
+			err := message.CreateForRest(ms.DB, tt.user, input)
+
+			if tt.wantErr {
+				ms.Error(err)
+				return
+			}
+
+			ms.Nil(err, "received unexpected error: ")
 			ms.Greater(message.ID, 0, "new message contains invalid ID")
 		})
 	}
