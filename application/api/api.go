@@ -26,6 +26,8 @@ func (e ErrorCategory) String() string {
 }
 
 type AppError struct {
+	Err error `json:"-"`
+
 	Code int `json:"code"`
 
 	// Don't change the value of these Key entries without making a corresponding change on the UI,
@@ -35,7 +37,7 @@ type AppError struct {
 	HttpStatus int `json:"status"`
 
 	// detailed error message for debugging
-	Err error `json:"debug_msg,omitempty"`
+	DebugMsg string `json:"debug_msg,omitempty"`
 
 	Category ErrorCategory `json:"-"`
 
