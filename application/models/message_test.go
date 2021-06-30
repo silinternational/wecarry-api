@@ -231,7 +231,7 @@ func (ms *ModelSuite) TestMessage_CreateForRest() {
 			user:        f.Users[1],
 			requestUUID: f.Requests[1].UUID.String(),
 			threadUUID:  &threadUUID,
-			content:     "bad message",
+			content:     "I'm not a participant",
 			wantErr:     true,
 		},
 		{
@@ -239,7 +239,7 @@ func (ms *ModelSuite) TestMessage_CreateForRest() {
 			user:        f.Users[1],
 			requestUUID: f.Requests[0].UUID.String(),
 			threadUUID:  nil,
-			content:     "another bad message",
+			content:     "I shouldn't see this request",
 			wantErr:     true,
 		},
 		{
@@ -247,7 +247,7 @@ func (ms *ModelSuite) TestMessage_CreateForRest() {
 			user:        f.Users[0],
 			requestUUID: f.Requests[2].UUID.String(),
 			threadUUID:  &threadUUID,
-			content:     "another bad message",
+			content:     "I tried the wrong request",
 			wantErr:     true,
 		},
 	}
