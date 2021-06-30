@@ -114,7 +114,7 @@ func CreateRequestFixtures(tx *pop.Connection, n int, createFiles bool, userIDs 
 			MustCreate(tx, &user)
 		}
 	} else {
-		if err := tx.Where(`id=?`, userIDs[0]).First(&user); err != nil {
+		if err := tx.Find(&user, userIDs[0]); err != nil {
 			panic("error finding user by id for request fixtures: " + err.Error())
 		}
 	}

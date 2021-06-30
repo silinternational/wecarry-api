@@ -30,6 +30,13 @@ const (
 	// ============================  Locations =========================================
 	LocationCreateFailure = ErrorKey("ErrorLocationCreateFailure")
 
+	// ============================  Messages =======================================
+	MessageBadRequestUUID        = ErrorKey("ErrorMessageBadRequestUUID")
+	MessageBadThreadUUID         = ErrorKey("ErrorMessageBadThreadUUID")
+	MessageRequestNotVisible     = ErrorKey("ErrorMessageRequestNotVisible")
+	MessageThreadRequestMismatch = ErrorKey("ErrorMessageThreadRequestMismatch")
+	MessageThreadNotVisible      = ErrorKey("MessageThreadNotVisible")
+
 	// ============================  Threads =========================================
 	ThreadsLoadFailure    = ErrorKey("ErrorThreadsLoadFailure")
 	ThreadNotFound        = ErrorKey("ErrorThreadNotFound")
