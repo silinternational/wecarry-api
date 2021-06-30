@@ -189,6 +189,44 @@ func (m *Message) Create(tx *pop.Connection, user User, requestUUID string, thre
 // CreateFromInput a new message if authorized.
 func (m *Message) CreateFromInput(tx *pop.Connection, user User, input api.MessageInput) *api.AppError {
 	var request Request
+	if aErr := findAndValidateRequest(tx, user, input, &request); aErr != nil {
+		return aErr
+	}
+
+	var thread Thread
+	if input.ThreadID != nil && *input.ThreadID != "" {
+		if aErr := findAndValidateThread(tx, user, input, &thread, request); aErr != nil {
+			return aErr
+		}
+	} else {
+		err := thread.CreateWithParticipants(tx, request, user)
+		if err != nil {
+			appError := api.AppError{
+				Category: api.CategoryInternal,
+				Key:      api.CreateFailure,
+				Err:      errors.New("failed to create new thread on request, " + err.Error()),
+			}
+			return &appError
+		}
+	}
+
+	m.Content = input.Content
+	m.ThreadID = thread.ID
+	m.Thread = thread
+	m.SentByID = user.ID
+	if err := create(tx, m); err != nil {
+		appError := api.AppError{
+			Category: api.CategoryInternal,
+			Key:      api.CreateFailure,
+			Err:      errors.New("failed to create new message, " + err.Error()),
+		}
+		return &appError
+	}
+
+	return nil
+}
+
+func findAndValidateRequest(tx *pop.Connection, user User, input api.MessageInput, request *Request) *api.AppError {
 	if err := request.FindByUUID(tx, input.RequestID); err != nil {
 		appError := api.AppError{
 			Category: api.CategoryUser,
@@ -213,55 +251,32 @@ func (m *Message) CreateFromInput(tx *pop.Connection, user User, input api.Messa
 		}
 		return &appError
 	}
+	return nil
+}
 
-	var thread Thread
-	if input.ThreadID != nil && *input.ThreadID != "" {
-		err := thread.FindByUUID(tx, *input.ThreadID)
-		if err != nil {
-			appError := api.AppError{
-				Category: api.CategoryUser,
-				Key:      api.MessageBadThreadUUID,
-				Err:      errors.New("error with new message: " + err.Error()),
-			}
-			return &appError
-		}
-		if thread.RequestID != request.ID {
-			appError := api.AppError{
-				Category: api.CategoryUser,
-				Key:      api.MessageThreadRequestMismatch,
-				Err:      errors.New("thread is not valid for request"),
-			}
-			return &appError
-		}
-		if !thread.IsVisible(tx, user.ID) {
-			appError := api.AppError{
-				Category: api.CategoryForbidden,
-				Key:      api.MessageThreadNotVisible,
-				Err:      errors.New("user cannot create a message on thread"),
-			}
-			return &appError
-		}
-	} else {
-		err := thread.CreateWithParticipants(tx, request, user)
-		if err != nil {
-			appError := api.AppError{
-				Category: api.CategoryInternal,
-				Key:      api.CreateFailure,
-				Err:      errors.New("failed to create new thread on request, " + err.Error()),
-			}
-			return &appError
-		}
-	}
-
-	m.Content = input.Content
-	m.ThreadID = thread.ID
-	m.Thread = thread
-	m.SentByID = user.ID
-	if err := create(tx, m); err != nil {
+func findAndValidateThread(tx *pop.Connection, user User, input api.MessageInput, thread *Thread, request Request) *api.AppError {
+	err := thread.FindByUUID(tx, *input.ThreadID)
+	if err != nil {
 		appError := api.AppError{
-			Category: api.CategoryInternal,
-			Key:      api.CreateFailure,
-			Err:      errors.New("failed to create new message, " + err.Error()),
+			Category: api.CategoryUser,
+			Key:      api.MessageBadThreadUUID,
+			Err:      errors.New("error with new message: " + err.Error()),
+		}
+		return &appError
+	}
+	if thread.RequestID != request.ID {
+		appError := api.AppError{
+			Category: api.CategoryUser,
+			Key:      api.MessageThreadRequestMismatch,
+			Err:      errors.New("thread is not valid for request"),
+		}
+		return &appError
+	}
+	if !thread.IsVisible(tx, user.ID) {
+		appError := api.AppError{
+			Category: api.CategoryForbidden,
+			Key:      api.MessageThreadNotVisible,
+			Err:      errors.New("user cannot create a message on thread"),
 		}
 		return &appError
 	}
