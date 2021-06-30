@@ -203,6 +203,6 @@ Good resources:
 
 Remote debugging with a compatible IDE is possible using the `delve` container. It does not have buffalo file watching capability, so any code changes will not be possible without a rebuild.
 
-Set up in GoLand is as simple as ading a Run/Debug Configuration. Use type "Go Remote" and use default settings (host: localhost, port: 2345, on disconnect: ask).
+Set up in GoLand is as simple as adding a Run/Debug Configuration. Use type "Go Remote" and use default settings (host: localhost, port: 2345, on disconnect: ask).
 
 To begin debugging, run `make debug`. This kills the `buffalo` container and starts the `debug` container. Once the app build is finished, click the debug button on the GoLand toolbar.
