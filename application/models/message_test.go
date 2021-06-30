@@ -196,7 +196,7 @@ func (ms *ModelSuite) TestMessage_Create() {
 	}
 }
 
-func (ms *ModelSuite) TestMessage_CreateForRest() {
+func (ms *ModelSuite) TestMessage_CreateFromInput() {
 	t := ms.T()
 
 	f := Fixtures_Message_Create(ms, t)
@@ -259,7 +259,7 @@ func (ms *ModelSuite) TestMessage_CreateForRest() {
 				RequestID: tt.requestUUID,
 				ThreadID:  tt.threadUUID,
 			}
-			err := message.CreateForRest(ms.DB, tt.user, input)
+			err := message.CreateFromInput(ms.DB, tt.user, input)
 
 			if tt.wantErr {
 				ms.Error(err)

@@ -43,7 +43,7 @@ func messagesCreate(c buffalo.Context) error {
 	tx := models.Tx(c)
 	var message models.Message
 
-	if appErr := message.CreateForRest(tx, user, input); appErr != nil {
+	if appErr := message.CreateFromInput(tx, user, input); appErr != nil {
 		appErr.HttpStatus = httpStatusForErrCategory(appErr.Category)
 		return reportError(c, appErr)
 	}

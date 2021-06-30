@@ -185,9 +185,9 @@ func (m *Message) Create(tx *pop.Connection, user User, requestUUID string, thre
 	return nil
 }
 
-// Todo Once gql is no longer supported, simplify the name of this function and get rid of the Create() function above
-// Create a new message if authorized.
-func (m *Message) CreateForRest(tx *pop.Connection, user User, input api.MessageInput) *api.AppError {
+// Todo Once gql is no longer supported, get rid of the Create() function above
+// CreateFromInput a new message if authorized.
+func (m *Message) CreateFromInput(tx *pop.Connection, user User, input api.MessageInput) *api.AppError {
 	var request Request
 	if err := request.FindByUUID(tx, input.RequestID); err != nil {
 		appError := api.AppError{
