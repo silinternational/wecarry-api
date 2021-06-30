@@ -8,6 +8,7 @@ import (
 	"github.com/gobuffalo/nulls"
 	"github.com/gofrs/uuid"
 
+	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/internal/test"
 	"github.com/silinternational/wecarry-api/models"
@@ -57,7 +58,7 @@ type watchInput struct {
 	origin      locationInput
 	meetingID   string
 	searchText  string
-	size        models.RequestSize
+	size        api.RequestSize
 }
 
 type locationInput struct {
@@ -159,7 +160,7 @@ func (as *ActionSuite) Test_CreateWatch() {
 				},
 				meetingID:  f.Meetings[0].UUID.String(),
 				searchText: "search",
-				size:       models.RequestSizeXlarge,
+				size:       api.RequestSizeXlarge,
 			},
 			testUser: f.Users[0],
 		},
@@ -223,7 +224,7 @@ func (as *ActionSuite) Test_UpdateWatch() {
 				},
 				meetingID:  f.Meetings[0].UUID.String(),
 				searchText: "search",
-				size:       models.RequestSizeXlarge,
+				size:       api.RequestSizeXlarge,
 			},
 			testUser: f.Users[0],
 		},
@@ -276,7 +277,7 @@ func (as *ActionSuite) watchInputString(watch watchInput) string {
 	}
 
 	if watch.size == "" {
-		watch.size = models.RequestSizeXlarge
+		watch.size = api.RequestSizeXlarge
 	}
 
 	input = fmt.Sprintf(`%s name: "%s" destination: {description:"%s" country:"%s" latitude:%f longitude:%f}

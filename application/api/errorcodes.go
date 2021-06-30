@@ -27,6 +27,9 @@ const (
 	FailedToConvertToAPIType        = ErrorKey("ErrorFailedToConvertToAPIType")
 	ErrorGenericInternalServerError = ErrorKey("ErrorGenericInternalServerError")
 
+	// ============================  Locations =========================================
+	LocationCreateFailure = ErrorKey("ErrorLocationCreateFailure")
+
 	// ============================  Threads =========================================
 	ThreadsLoadFailure    = ErrorKey("ErrorThreadsLoadFailure")
 	ThreadNotFound        = ErrorKey("ErrorThreadNotFound")
@@ -39,6 +42,7 @@ const (
 	UserDuplicateNickname = ErrorKey("ErrorUserDuplicateNickname")
 
 	// ============================  Watches =========================================
+	WatchCreateFailure = ErrorKey("ErrorWatchCreateFailure")
 	WatchDeleteFailure = ErrorKey("ErrorWatchDeleteFailure")
 	WatchesLoadFailure = ErrorKey("ErrorWatchesLoadFailure")
 	WatchMissingID     = ErrorKey("ErrorWatchMissingID")

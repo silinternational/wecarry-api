@@ -6,11 +6,85 @@ import (
 
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/buffalo/render"
+	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop/v5"
 
 	"github.com/silinternational/wecarry-api/api"
+	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 )
+
+// swagger:operation POST /watches Watches CreateWatch
+//
+// Create a new Watch for the User
+//
+// ---
+// parameters:
+//   - name: watch
+//     in: body
+//     description: watch input object
+//     required: true
+//     schema:
+//       "$ref": "#/definitions/WatchInput"
+// responses:
+//   '200':
+//     description: The id (uuid) of the created watch
+func watchesCreate(c buffalo.Context) error {
+	var input api.WatchInput
+	if err := StrictBind(c, &input); err != nil {
+		return reportError(c, &api.AppError{
+			HttpStatus: http.StatusBadRequest,
+			Key:        api.InvalidRequestBody,
+			Err:        errors.New("unable to unmarshal Watch data into WatchInput struct, error: " + err.Error()),
+		})
+	}
+
+	cUser := models.CurrentUser(c)
+	tx := models.Tx(c)
+
+	output, err := convertWatchInput(tx, input, cUser)
+	if err != nil {
+		return reportError(c, &api.AppError{
+			HttpStatus: http.StatusBadRequest,
+			Key:        api.InvalidRequestBody,
+			Err:        errors.New("unable to find Meeting related to a new Watch, error: " + err.Error()),
+		})
+	}
+
+	if input.Destination != nil {
+		location := convertLocation(*input.Destination)
+		if err = location.Create(tx); err != nil {
+			return reportError(c, &api.AppError{
+				HttpStatus: http.StatusInternalServerError,
+				Key:        api.LocationCreateFailure,
+				Err:        errors.New("unable to create the destination related to a new Watch, error: " + err.Error()),
+			})
+		}
+		output.DestinationID = nulls.NewInt(location.ID)
+	}
+
+	if input.Origin != nil {
+		location := convertLocation(*input.Origin)
+		if err = location.Create(tx); err != nil {
+			return reportError(c, &api.AppError{
+				HttpStatus: http.StatusInternalServerError,
+				Key:        api.LocationCreateFailure,
+				Err:        errors.New("unable to create the origin related to a new Watch, error: " + err.Error()),
+			})
+		}
+		output.OriginID = nulls.NewInt(location.ID)
+	}
+
+	if err = output.Create(tx); err != nil {
+		return reportError(c, &api.AppError{
+			HttpStatus: http.StatusInternalServerError,
+			Key:        api.WatchCreateFailure,
+			Err:        errors.New("unable to create the new Watch, error: " + err.Error()),
+		})
+	}
+
+	return c.Render(200, render.JSON(output))
+}
 
 // swagger:operation DELETE /watches/{watch_id} Watches RemoveWatch
 //
@@ -112,4 +186,48 @@ func convertWatch(tx *pop.Connection, watch models.Watch, user models.User) (api
 	}
 
 	return output, nil
+}
+
+// convertWatchInput takes a `WatchInput` and either finds a record matching the UUID given in `input.ID` or
+// creates a new `models.Watch` with a new UUID. In either case, all properties that are not `nil` are set to the value
+// provided in `input`
+func convertWatchInput(tx *pop.Connection, input api.WatchInput, user models.User) (models.Watch, error) {
+	watch := models.Watch{}
+
+	watch.OwnerID = user.ID
+
+	watch.Name = input.Name
+	watch.SearchText = models.ConvertStringPtrToNullsString(input.SearchText)
+
+	if input.Size == nil {
+		watch.Size = nil
+	} else {
+		apiSize := *input.Size
+		s := models.GetRequestSizeFromAPISize(apiSize)
+		watch.Size = &s
+	}
+
+	if input.MeetingID == nil || *input.MeetingID == "" {
+		watch.MeetingID = nulls.Int{}
+	} else {
+		var meeting models.Meeting
+		if err := meeting.FindByUUID(tx, *input.MeetingID); err != nil {
+			return watch, err
+		}
+		watch.MeetingID = nulls.NewInt(meeting.ID)
+	}
+
+	return watch, nil
+}
+
+func convertLocation(input api.LocationInput) models.Location {
+	l := models.Location{
+		Description: input.Description,
+		Country:     input.Country,
+	}
+
+	domain.SetOptionalFloatField(input.Latitude, &l.Latitude)
+	domain.SetOptionalFloatField(input.Longitude, &l.Longitude)
+
+	return l
 }
