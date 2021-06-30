@@ -30,7 +30,6 @@ import (
 //     schema:
 //       "$ref": "#/definitions/Thread"
 func messagesCreate(c buffalo.Context) error {
-
 	var input api.MessageInput
 	if err := StrictBind(c, &input); err != nil {
 		return reportError(c, &api.AppError{
@@ -44,17 +43,17 @@ func messagesCreate(c buffalo.Context) error {
 	var message models.Message
 
 	if appErr := message.CreateFromInput(tx, user, input); appErr != nil {
-		appErr.HttpStatus = httpStatusForErrCategory(appErr.Category)
+		appErr.SetHttpStatusFromCategory()
 		return reportError(c, appErr)
 	}
 
 	if err := message.Thread.LoadForAPI(tx, user); err != nil {
-		return reportError(c, appErrorFromErr(err))
+		return reportError(c, err)
 	}
 
 	output, err := convertThread(c, message.Thread)
 	if err != nil {
-		return reportError(c, appErrorFromErr(err))
+		return reportError(c, err)
 	}
 
 	return c.Render(200, render.JSON(output))

@@ -38,7 +38,7 @@ func threadsMine(c buffalo.Context) error {
 
 	output, err := convertThreadsToAPIType(c, threads)
 	if err != nil {
-		return reportError(c, appErrorFromErr(err))
+		return reportError(c, err)
 	}
 
 	return c.Render(200, render.JSON(output))
@@ -109,12 +109,12 @@ func threadsMarkAsRead(c buffalo.Context) error {
 	threads := models.Threads{thread}
 	converted, err := convertThreadsToAPIType(c, threads)
 	if err != nil {
-		return reportError(c, appErrorFromErr(err))
+		return reportError(c, err)
 	}
 
 	// this should never happen, but just in case ...
 	if len(converted) == 0 {
-		return reportError(c, appErrorFromErr(errors.New("thread got lost in conversion")))
+		return reportError(c, errors.New("thread got lost in conversion"))
 	}
 
 	return c.Render(200, render.JSON(converted[0]))

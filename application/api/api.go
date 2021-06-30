@@ -72,7 +72,13 @@ func NewAppError(err error, key ErrorKey, category ErrorCategory) *AppError {
 	return &a
 }
 
+// SetHttpStatusFromCategory assigns the appropriate HTTP status based on the error category, if not
+// already set.
 func (a *AppError) SetHttpStatusFromCategory() {
+	if a.HttpStatus != 0 {
+		return
+	}
+
 	switch a.Category {
 	case CategoryInternal, CategoryDatabase:
 		a.HttpStatus = http.StatusInternalServerError

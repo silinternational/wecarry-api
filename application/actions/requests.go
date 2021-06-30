@@ -37,7 +37,7 @@ func requestsList(c buffalo.Context) error {
 
 	output, err := convertRequestsAbridged(c, requests)
 	if err != nil {
-		return reportError(c, appErrorFromErr(err))
+		return reportError(c, err)
 	}
 
 	return c.Render(200, render.JSON(output))
@@ -144,7 +144,7 @@ func convertRequestToAPITypeAbridged(ctx context.Context, request models.Request
 		return api.RequestAbridged{}, err
 	}
 	output.Photo = &photo
-	
+
 	return output, nil
 }
 

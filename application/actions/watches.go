@@ -32,7 +32,7 @@ func watchesRemove(c buffalo.Context) error {
 	var watch models.Watch
 	output, appErr := watch.DeleteForOwner(tx, id.String(), cUser)
 	if appErr != nil {
-		appErr.HttpStatus = httpStatusForErrCategory(appErr.Category)
+		appErr.SetHttpStatusFromCategory()
 		return reportError(c, appErr)
 	}
 
@@ -64,7 +64,7 @@ func watchesMine(c buffalo.Context) error {
 
 	output, err := convertWatches(tx, watches, cUser)
 	if err != nil {
-		return reportError(c, appErrorFromErr(err))
+		return reportError(c, err)
 	}
 
 	return c.Render(200, render.JSON(output))

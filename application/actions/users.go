@@ -26,7 +26,7 @@ func usersMe(c buffalo.Context) error {
 
 	output, err := convertUserPrivate(c, user)
 	if err != nil {
-		return reportError(c, appErrorFromErr(err))
+		return reportError(c, err)
 	}
 
 	return c.Render(http.StatusOK, r.JSON(output))
@@ -83,12 +83,12 @@ func usersMeUpdate(c buffalo.Context) error {
 	}
 
 	if err = user.Save(tx); err != nil {
-		return reportError(c, appErrorFromErr(err))
+		return reportError(c, err)
 	}
 
 	output, err := convertUserPrivate(c, user)
 	if err != nil {
-		return reportError(c, appErrorFromErr(err))
+		return reportError(c, err)
 	}
 
 	return c.Render(http.StatusOK, r.JSON(output))
