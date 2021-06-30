@@ -35,3 +35,16 @@ type Message struct {
 	// read-only: true
 	SentBy *User `json:"sender"`
 }
+
+// MessageInput contains parameters to create a Message
+// swagger:model
+type MessageInput struct {
+	// message content, limited to 4,096 characters
+	Content string `json:"content"`
+
+	// ID of the subject Request
+	RequestID string `json:"request_id"`
+
+	// Message thread to which the new message should be attached. If not specified, a new thread is created.
+	ThreadID *string `json:"thread_id"`
+}

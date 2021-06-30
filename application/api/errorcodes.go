@@ -27,6 +27,13 @@ const (
 	FailedToConvertToAPIType        = ErrorKey("ErrorFailedToConvertToAPIType")
 	ErrorGenericInternalServerError = ErrorKey("ErrorGenericInternalServerError")
 
+	// ============================  Messages =======================================
+	MessageBadRequestUUID        = ErrorKey("ErrorMessageBadRequestUUID")
+	MessageBadThreadUUID         = ErrorKey("ErrorMessageBadThreadUUID")
+	MessageRequestNotVisible     = ErrorKey("ErrorMessageRequestNotVisible")
+	MessageThreadRequestMismatch = ErrorKey("ErrorMessageThreadRequestMismatch")
+	MessageThreadNotVisible      = ErrorKey("MessageThreadNotVisible")
+
 	// ============================  Threads =========================================
 	ThreadsLoadFailure    = ErrorKey("ErrorThreadsLoadFailure")
 	ThreadNotFound        = ErrorKey("ErrorThreadNotFound")

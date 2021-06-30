@@ -12,6 +12,7 @@ import (
 	"github.com/gobuffalo/validate/v3/validators"
 	"github.com/gofrs/uuid"
 
+	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/domain"
 )
 
@@ -148,6 +149,7 @@ func (m *Message) Create(tx *pop.Connection, user User, requestUUID string, thre
 	if err := request.FindByUUID(tx, requestUUID); err != nil {
 		return errors.New("failed to find request, " + err.Error())
 	}
+
 	if isVisible, err := request.IsVisible(tx, user); err != nil {
 		return err
 	} else if !isVisible {
@@ -178,6 +180,105 @@ func (m *Message) Create(tx *pop.Connection, user User, requestUUID string, thre
 	m.SentByID = user.ID
 	if err := create(tx, m); err != nil {
 		return errors.New("failed to create new message, " + err.Error())
+	}
+
+	return nil
+}
+
+// Todo Once gql is no longer supported, get rid of the Create() function above
+// CreateFromInput a new message if authorized.
+func (m *Message) CreateFromInput(tx *pop.Connection, user User, input api.MessageInput) *api.AppError {
+	var request Request
+	if aErr := findAndValidateRequest(tx, user, input, &request); aErr != nil {
+		return aErr
+	}
+
+	var thread Thread
+	if input.ThreadID != nil && *input.ThreadID != "" {
+		if aErr := findAndValidateThread(tx, user, input, &thread, request); aErr != nil {
+			return aErr
+		}
+	} else {
+		err := thread.CreateWithParticipants(tx, request, user)
+		if err != nil {
+			appError := api.AppError{
+				Category: api.CategoryInternal,
+				Key:      api.CreateFailure,
+				Err:      errors.New("failed to create new thread on request, " + err.Error()),
+			}
+			return &appError
+		}
+	}
+
+	m.Content = input.Content
+	m.ThreadID = thread.ID
+	m.Thread = thread
+	m.SentByID = user.ID
+	if err := create(tx, m); err != nil {
+		appError := api.AppError{
+			Category: api.CategoryInternal,
+			Key:      api.CreateFailure,
+			Err:      errors.New("failed to create new message, " + err.Error()),
+		}
+		return &appError
+	}
+
+	return nil
+}
+
+func findAndValidateRequest(tx *pop.Connection, user User, input api.MessageInput, request *Request) *api.AppError {
+	if err := request.FindByUUID(tx, input.RequestID); err != nil {
+		appError := api.AppError{
+			Category: api.CategoryUser,
+			Key:      api.MessageBadRequestUUID,
+			Err:      errors.New("error with new message: " + err.Error()),
+		}
+		return &appError
+	}
+
+	if isVisible, err := request.IsVisible(tx, user); err != nil {
+		appError := api.AppError{
+			Category: api.CategoryInternal,
+			Key:      api.QueryFailure,
+			Err:      errors.New("error with new message: " + err.Error()),
+		}
+		return &appError
+	} else if !isVisible {
+		appError := api.AppError{
+			Category: api.CategoryForbidden,
+			Key:      api.MessageRequestNotVisible,
+			Err:      errors.New("user cannot create a message on request"),
+		}
+		return &appError
+	}
+	return nil
+}
+
+func findAndValidateThread(tx *pop.Connection, user User, input api.MessageInput, thread *Thread, request Request) *api.AppError {
+	err := thread.FindByUUID(tx, *input.ThreadID)
+	if err != nil {
+		appError := api.AppError{
+			Category: api.CategoryUser,
+			Key:      api.MessageBadThreadUUID,
+			Err:      errors.New("error with new message: " + err.Error()),
+		}
+		return &appError
+	}
+	if thread.RequestID != request.ID {
+		appError := api.AppError{
+			Category: api.CategoryUser,
+			Key:      api.MessageThreadRequestMismatch,
+			Err:      errors.New("thread is not valid for request"),
+		}
+		return &appError
+	}
+	if !thread.IsVisible(tx, user.ID) {
+		appError := api.AppError{
+			Category: api.CategoryForbidden,
+			Key:      api.MessageThreadNotVisible,
+			Err:      errors.New("user cannot create a message on thread"),
+		}
+		return &appError
 	}
 
 	return nil
