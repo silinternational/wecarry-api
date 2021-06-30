@@ -27,6 +27,7 @@ func (e ErrorCategory) String() string {
 type AppError struct {
 	Err error `json:"-"`
 
+	// TODO: remove this
 	Code int `json:"code"`
 
 	// Don't change the value of these Key entries without making a corresponding change on the UI,
@@ -78,10 +79,13 @@ func (a *AppError) SetHttpStatusFromCategory() {
 	switch a.Category {
 	case CategoryInternal, CategoryDatabase:
 		a.HttpStatus = http.StatusInternalServerError
+		a.Code = http.StatusInternalServerError
 	case CategoryForbidden, CategoryNotFound:
 		a.HttpStatus = http.StatusNotFound
+		a.Code = http.StatusNotFound
 	default:
 		a.HttpStatus = http.StatusBadRequest
+		a.Code = http.StatusBadRequest
 	}
 }
 
