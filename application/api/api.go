@@ -91,14 +91,16 @@ func (a *AppError) SetHttpStatusFromCategory() {
 	}
 }
 
+// LoadTranslatedMessage assigns the error message by translating the Key into a user-friendly string, unless
+// the HttpStatus is 500 in which case a standard message is used.
 func (a *AppError) LoadTranslatedMessage(c buffalo.Context) {
+	key := a.Key
+
 	if a.HttpStatus == http.StatusInternalServerError {
-		errKey := "Error." + ErrorGenericInternalServerError.String()
-		a.Message = domain.T.Translate(c, errKey, a.Extras)
-		return
+		key = ErrorGenericInternalServerError
 	}
 
-	msgID := fmt.Sprintf("Error.%s", a.Key)
+	msgID := "Error." + key.String()
 	a.Message = domain.T.Translate(c, msgID, a.Extras)
 	if a.Message == msgID {
 		a.Message = keyToReadableString(a.Key.String())
