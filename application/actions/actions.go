@@ -122,11 +122,8 @@ func getUUIDFromParam(c buffalo.Context, param string) (uuid.UUID, error) {
 	id := uuid.FromStringOrNil(s)
 	if id == uuid.Nil {
 		newExtra(c, param, s)
-		return uuid.UUID{}, &api.AppError{
-			HttpStatus: http.StatusBadRequest,
-			Key:        api.MustBeAValidUUID,
-			Err:        fmt.Errorf("invalid %s provided: '%s'", param, s),
-		}
+		err := fmt.Errorf("invalid %s provided: '%s'", param, s)
+		return uuid.UUID{}, api.NewAppError(err, api.MustBeAValidUUID, api.CategoryUser)
 	}
 	return id, nil
 }

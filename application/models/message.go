@@ -187,7 +187,7 @@ func (m *Message) Create(tx *pop.Connection, user User, requestUUID string, thre
 
 // Todo Once gql is no longer supported, get rid of the Create() function above
 // CreateFromInput a new message if authorized.
-func (m *Message) CreateFromInput(tx *pop.Connection, user User, input api.MessageInput) *api.AppError {
+func (m *Message) CreateFromInput(tx *pop.Connection, user User, input api.MessageInput) error {
 	var request Request
 	if aErr := findAndValidateRequest(tx, user, input, &request); aErr != nil {
 		return aErr
@@ -201,12 +201,8 @@ func (m *Message) CreateFromInput(tx *pop.Connection, user User, input api.Messa
 	} else {
 		err := thread.CreateWithParticipants(tx, request, user)
 		if err != nil {
-			appError := api.AppError{
-				Category: api.CategoryInternal,
-				Key:      api.CreateFailure,
-				Err:      errors.New("failed to create new thread on request, " + err.Error()),
-			}
-			return &appError
+			err = errors.New("failed to create new thread on request, " + err.Error())
+			return api.NewAppError(err, api.CreateFailure, api.CategoryInternal)
 		}
 	}
 

@@ -3,7 +3,6 @@ package actions
 import (
 	"context"
 	"errors"
-	"net/http"
 
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/buffalo/render"
@@ -32,19 +31,15 @@ import (
 func messagesCreate(c buffalo.Context) error {
 	var input api.MessageInput
 	if err := StrictBind(c, &input); err != nil {
-		return reportError(c, &api.AppError{
-			HttpStatus: http.StatusBadRequest,
-			Key:        api.InvalidRequestBody,
-			Err:        errors.New("unable to unmarshal Message data into MessageInput struct, error: " + err.Error()),
-		})
+		err = errors.New("unable to unmarshal Message data into MessageInput struct, error: " + err.Error())
+		return reportError(c, api.NewAppError(err, api.InvalidRequestBody, api.CategoryUser))
 	}
 	user := models.CurrentUser(c)
 	tx := models.Tx(c)
 	var message models.Message
 
-	if appErr := message.CreateFromInput(tx, user, input); appErr != nil {
-		appErr.SetHttpStatusFromCategory()
-		return reportError(c, appErr)
+	if err := message.CreateFromInput(tx, user, input); err != nil {
+		return reportError(c, err)
 	}
 
 	if err := message.Thread.LoadForAPI(tx, user); err != nil {

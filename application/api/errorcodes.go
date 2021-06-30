@@ -34,6 +34,9 @@ const (
 	MessageThreadRequestMismatch = ErrorKey("ErrorMessageThreadRequestMismatch")
 	MessageThreadNotVisible      = ErrorKey("MessageThreadNotVisible")
 
+	// ============================  Requests =========================================
+	GetRequests = ErrorKey("GetRequests")
+
 	// ============================  Threads =========================================
 	ThreadsLoadFailure    = ErrorKey("ErrorThreadsLoadFailure")
 	ThreadNotFound        = ErrorKey("ErrorThreadNotFound")

@@ -9,7 +9,6 @@ import (
 	"github.com/gobuffalo/pop/v5"
 
 	"github.com/silinternational/wecarry-api/api"
-	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 )
 
@@ -32,7 +31,7 @@ func requestsList(c buffalo.Context) error {
 
 	requests := models.Requests{}
 	if err := requests.FindByUser(tx, cUser, filter); err != nil {
-		return domain.ReportError(c, err, "GetRequests")
+		return reportError(c, api.NewAppError(err, api.GetRequests, api.CategoryInternal))
 	}
 
 	output, err := convertRequestsAbridged(c, requests)

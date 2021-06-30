@@ -1,7 +1,6 @@
 package api
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -62,16 +61,11 @@ func (a *AppError) Unwrap() error {
 }
 
 func NewAppError(err error, key ErrorKey, category ErrorCategory) *AppError {
-	if err == sql.ErrNoRows {
-		key = NoRows
-	}
-	a := AppError{
+	return &AppError{
 		Err:      err,
 		Key:      key,
 		Category: category,
 	}
-	a.SetHttpStatusFromCategory()
-	return &a
 }
 
 // SetHttpStatusFromCategory assigns the appropriate HTTP status based on the error category, if not
