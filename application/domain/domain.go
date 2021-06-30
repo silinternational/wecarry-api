@@ -441,44 +441,77 @@ func RollbarMiddleware(next buffalo.Handler) buffalo.Handler {
 // Error sends a message to Rollbar and to the local logger, including
 // any extras found in the context.
 func Error(ctx context.Context, msg string) {
-	bc, ok := ctx.Value(BuffaloContext).(buffalo.Context)
-	if ok {
-		Error(bc, msg)
-	}
-
-	// Doesn't have a BuffaloContext value, so it must be the actual BuffaloContext
-	bc = ctx.(buffalo.Context)
-
-	// Avoid panics running tests when bc doesn't have the necessary nested methods
-	logger := bc.Logger()
-	if logger == nil {
-		return
-	}
+	bc := getBuffaloContext(ctx)
 
 	extras := getExtras(bc)
-	if extras == nil {
-		extras = map[string]interface{}{}
-	}
-
 	extrasLock.RLock()
 	defer extrasLock.RUnlock()
 
 	rollbarMessage(bc, rollbar.ERR, msg, extras)
 
-	extras["message"] = msg
+	logger := bc.Logger()
+	if logger != nil {
+		logger.Error(encodeLogMsg(msg, extras))
+	}
+}
 
+// Warn sends a message to Rollbar and to the local logger, including
+// any extras found in the context.
+func Warn(ctx context.Context, msg string) {
+	bc := getBuffaloContext(ctx)
+
+	extras := getExtras(bc)
+	extrasLock.RLock()
+	defer extrasLock.RUnlock()
+
+	rollbarMessage(bc, rollbar.WARN, msg, extras)
+
+	logger := bc.Logger()
+	if logger != nil {
+		logger.Warn(encodeLogMsg(msg, extras))
+	}
+}
+
+// Info sends a message to the local logger, including any extras found in the context.
+func Info(ctx context.Context, msg string) {
+	bc := getBuffaloContext(ctx)
+
+	extras := getExtras(bc)
+	extrasLock.RLock()
+	defer extrasLock.RUnlock()
+
+	logger := bc.Logger()
+	if logger != nil {
+		logger.Info(encodeLogMsg(msg, extras))
+	}
+}
+
+func getBuffaloContext(ctx context.Context) buffalo.Context {
+	bc, ok := ctx.Value(BuffaloContext).(buffalo.Context)
+	if ok {
+		return bc
+	}
+
+	// Doesn't have a BuffaloContext value, so it must be the actual BuffaloContext
+	return ctx.(buffalo.Context)
+}
+
+func encodeLogMsg(msg string, extras map[string]interface{}) string {
 	encoder := jsonMin
 	if Env.GoEnv == "development" {
 		encoder = jsonIndented
 	}
 
+	if extras == nil {
+		extras = map[string]interface{}{}
+	}
+	extras["message"] = msg
+
 	j, err := encoder(&extras)
 	if err != nil {
-		logger.Error("failed to json encode error message: %s", err)
-		return
+		return "failed to json encode error message: " + err.Error()
 	}
-
-	logger.Error(string(j))
+	return string(j)
 }
 
 func jsonMin(i interface{}) ([]byte, error) {
@@ -487,35 +520,6 @@ func jsonMin(i interface{}) ([]byte, error) {
 
 func jsonIndented(i interface{}) ([]byte, error) {
 	return json.MarshalIndent(i, "", "  ")
-}
-
-// Warn sends a message to Rollbar and to the local logger, including
-// any extras found in the context.
-func Warn(ctx context.Context, msg string) {
-	bc, ok := ctx.Value(BuffaloContext).(buffalo.Context)
-	if ok {
-		Error(bc, msg)
-	}
-
-	// Doesn't have a BuffaloContext value, so it must be the actual BuffaloContext
-	bc = ctx.(buffalo.Context)
-
-	extras := getExtras(bc)
-	extrasLock.RLock()
-	defer extrasLock.RUnlock()
-
-	bc.Logger().Warn(msg, extras)
-	rollbarMessage(bc, rollbar.WARN, msg, extras)
-}
-
-// Info sends a message to the local logger, including any extras found
-// in the context.
-func Info(c buffalo.Context, msg string) {
-	extras := getExtras(c)
-	extrasLock.RLock()
-	defer extrasLock.RUnlock()
-
-	c.Logger().Info(msg, extras)
 }
 
 // rollbarMessage is a wrapper function to call rollbar's client.MessageWithExtras function from client stored in context
