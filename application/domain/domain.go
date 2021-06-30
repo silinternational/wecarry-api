@@ -725,7 +725,7 @@ func (v *StringIsVisible) IsValid(errors *validate.Errors) {
 // ReportError logs an error with details, and returns a user-friendly, translated error identified by translation key
 // string `errID`. If called with a full GraphQL context, the query text will be logged in the extras.
 func ReportError(ctx context.Context, err error, errID string) error {
-	c := GetBuffaloContext(ctx)
+	c := getBuffaloContext(ctx)
 
 	NewExtra(c, "function", GetFunctionName(2))
 
@@ -744,24 +744,6 @@ func ReportError(ctx context.Context, err error, errID string) error {
 		return errors.New(errID)
 	}
 	return errors.New(T.Translate(c, errID))
-}
-
-// GetBuffaloContext retrieves a "BuffaloContext" from a wrapped context as constructed by
-// actions.gqlHandler. If it's already a buffalo.Context, it is returned as is, type casted to buffalo.Context.
-func GetBuffaloContext(c context.Context) buffalo.Context {
-	bc, ok := c.Value(BuffaloContext).(buffalo.Context)
-	if ok {
-		return bc
-	}
-	bc, ok = c.(buffalo.Context)
-	if ok {
-		return bc
-	}
-	return emptyContext{}
-}
-
-type emptyContext struct {
-	buffalo.Context
 }
 
 // GetFunctionName provides the filename, line number, and function name of the caller, skipping the top `skip`
@@ -789,7 +771,7 @@ func UniquifyIntSlice(intSlice []int) []int {
 }
 
 func NewExtra(ctx context.Context, key string, e interface{}) {
-	c := GetBuffaloContext(ctx)
+	c := getBuffaloContext(ctx)
 	extras := getExtras(c)
 
 	extrasLock.Lock()
