@@ -126,8 +126,13 @@ const (
 )
 
 var (
-	Logger          log.Logger
-	ErrLogger       ErrLogProxy
+	// Logger is a plain instance of log.Logger, normally set to stdout
+	Logger log.Logger
+
+	// ErrLogger is an instance of ErrLogProxy, and is the only error logging
+	// mechanism that can be used without access to the Buffalo context.
+	ErrLogger ErrLogProxy
+
 	AuthCallbackURL string
 )
 
@@ -262,7 +267,10 @@ func envToInt(name string, def int) int {
 	return n
 }
 
-// ErrLogProxy wraps standard error logger plus sends to Rollbar
+// ErrLogProxy is a "tee" that sends to Rollbar and to the local logger,
+// normally set to stderr. Rollbar is disabled if `GoEnv` is "test", and
+// is a client instantiation separate from the one used in the Rollbar
+// middleware.
 type ErrLogProxy struct {
 	LocalLog  log.Logger
 	RemoteLog *rollbar.Client
@@ -430,7 +438,8 @@ func RollbarMiddleware(next buffalo.Handler) buffalo.Handler {
 	}
 }
 
-// Error log error and send to Rollbar
+// Error sends a message to Rollbar and to the local logger, including
+// any extras found in the context.
 func Error(ctx context.Context, msg string) {
 	bc, ok := ctx.Value(BuffaloContext).(buffalo.Context)
 	if ok {
@@ -480,7 +489,8 @@ func jsonIndented(i interface{}) ([]byte, error) {
 	return json.MarshalIndent(i, "", "  ")
 }
 
-// Warn - log warning and send to Rollbar
+// Warn sends a message to Rollbar and to the local logger, including
+// any extras found in the context.
 func Warn(ctx context.Context, msg string) {
 	bc, ok := ctx.Value(BuffaloContext).(buffalo.Context)
 	if ok {
@@ -498,7 +508,8 @@ func Warn(ctx context.Context, msg string) {
 	rollbarMessage(bc, rollbar.WARN, msg, extras)
 }
 
-// Info - log info message
+// Info sends a message to the local logger, including any extras found
+// in the context.
 func Info(c buffalo.Context, msg string) {
 	extras := getExtras(c)
 	extrasLock.RLock()

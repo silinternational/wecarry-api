@@ -101,12 +101,14 @@ func reportError(c buffalo.Context, err error) error {
 	return c.Render(appErr.HttpStatus, r.JSON(appErr))
 }
 
+// newExtra inserts a new data item into the context for use in debugging
 func newExtra(c buffalo.Context, key string, e interface{}) {
 	extras := getExtras(c)
 	extras[key] = e
 	c.Set(domain.ContextKeyExtras, extras)
 }
 
+// getExtras obtains the map of extra data for insertion into a log message
 func getExtras(c buffalo.Context) map[string]interface{} {
 	extras, _ := c.Value(domain.ContextKeyExtras).(map[string]interface{})
 	if extras == nil {
