@@ -1,4 +1,4 @@
-package actions
+package conversions
 
 import (
 	"github.com/silinternational/wecarry-api/api"

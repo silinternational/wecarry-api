@@ -1,7 +1,6 @@
 package actions
 
 import (
-	"context"
 	"errors"
 	"net/http"
 
@@ -9,6 +8,7 @@ import (
 	"github.com/gobuffalo/buffalo/render"
 
 	"github.com/silinternational/wecarry-api/api"
+	"github.com/silinternational/wecarry-api/conversions"
 	"github.com/silinternational/wecarry-api/models"
 )
 
@@ -36,7 +36,7 @@ func threadsMine(c buffalo.Context) error {
 		})
 	}
 
-	output, err := convertThreadsToAPIType(c, threads)
+	output, err := conversions.ConvertThreadsToAPIType(c, threads)
 	if err != nil {
 		return reportError(c, appErrorFromErr(err))
 	}
@@ -107,7 +107,7 @@ func threadsMarkAsRead(c buffalo.Context) error {
 	}
 
 	threads := models.Threads{thread}
-	converted, err := convertThreadsToAPIType(c, threads)
+	converted, err := conversions.ConvertThreadsToAPIType(c, threads)
 	if err != nil {
 		return reportError(c, appErrorFromErr(err))
 	}
@@ -118,37 +118,4 @@ func threadsMarkAsRead(c buffalo.Context) error {
 	}
 
 	return c.Render(200, render.JSON(converted[0]))
-}
-
-func convertThreadsToAPIType(ctx context.Context, threads models.Threads) (api.Threads, error) {
-	var output api.Threads
-	if err := api.ConvertToOtherType(threads, &output); err != nil {
-		err = errors.New("error converting threads to api.threads: " + err.Error())
-		return nil, err
-	}
-
-	// Hydrate the thread's messages, participants
-	for i := range output {
-		messagesOutput, err := convertMessagesToAPIType(ctx, threads[i].Messages)
-		if err != nil {
-			return nil, err
-		}
-		output[i].Messages = &messagesOutput
-
-		// Not converting Participants, since that happens automatically  above and
-		// because it doesn't have nested related objects
-		for j := range output[i].Participants {
-			output[i].Participants[j].ID = threads[i].Participants[j].UUID
-		}
-
-		requestOutput, err := convertRequestToAPIType(ctx, threads[i].Request)
-		if err != nil {
-			return nil, err
-		}
-
-		output[i].Request = &requestOutput
-		output[i].ID = threads[i].UUID
-	}
-
-	return output, nil
 }

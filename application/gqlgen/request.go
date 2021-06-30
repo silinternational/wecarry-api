@@ -7,6 +7,8 @@ import (
 
 	"github.com/gobuffalo/nulls"
 
+	"github.com/silinternational/wecarry-api/cache"
+	"github.com/silinternational/wecarry-api/conversions"
 	"github.com/silinternational/wecarry-api/dataloader"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
@@ -454,6 +456,14 @@ func (r *mutationResolver) CreateRequest(ctx context.Context, input requestInput
 			return &models.Request{}, domain.ReportError(ctx, err, "CreateRequest.SetOrigin")
 		}
 	}
+
+	// TODO move to models logic (in a way that doesn't cause a cyclic import)
+	// or to refactored RESTful endpoint for creating requests
+	requestAbridged, err := conversions.ConvertRequestToAPITypeAbridged(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	cache.CacheRebuildOnCreate(ctx, request.Organization.Name, requestAbridged)
 
 	return &request, nil
 }

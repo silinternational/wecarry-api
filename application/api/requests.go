@@ -110,4 +110,7 @@ type RequestAbridged struct {
 
 	// Photo of the item
 	Photo *File `json:"photo"`
+
+	// Organization associated with this request
+	Organization *Organization `json:"organization,omitempty"`
 }

@@ -87,6 +87,14 @@ services:
     environment:
       MINIO_ACCESS_KEY: ${AWS_ACCESS_KEY_ID}
       MINIO_SECRET_KEY: ${AWS_SECRET_ACCESS_KEY}
+  
+  redis:
+    image: redis:6.2
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis:/usr/local/etc/redis
+    command: redis-server /usr/local/etc/redis/redis.conf
 
   swagger:
     image: quay.io/goswagger/swagger:latest

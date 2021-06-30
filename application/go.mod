@@ -9,8 +9,9 @@ require (
 	github.com/caddyserver/certmagic v0.11.2
 	github.com/fatih/color v1.10.0 // indirect
 	github.com/felixge/httpsnoop v1.0.2 // indirect
-	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/go-acme/lego v2.7.2+incompatible
+	github.com/go-redis/cache/v8 v8.4.1
+	github.com/go-redis/redis/v8 v8.10.0
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
 	github.com/gobuffalo/buffalo v0.16.23
 	github.com/gobuffalo/envy v1.9.0

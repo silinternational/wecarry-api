@@ -822,12 +822,42 @@ func (r *Requests) FindByUser(tx *pop.Connection, user User, filter RequestFilte
 		) AND visibility = ?
 	)
 	AND status not in (?, ?)`
-
 	args := []interface{}{
 		user.ID, RequestVisibilityAll, RequestVisibilityTrusted, RequestStatusRemoved,
 		RequestStatusCompleted,
 	}
 
+	return r.findBySelectClause(tx, filter, selectClause, args, fmt.Sprintf("user %s", user.UUID.String()))
+}
+
+// FindByOrganization finds all non-public requests visible to the specified organization
+// INCLUDES
+
+func (r *Requests) FindByOrganization(tx *pop.Connection, organization Organization, filter RequestFilterParams) error {
+	selectClause := `
+	SELECT * FROM requests WHERE
+	(
+		organization_id = ? AND visibility IN (?, ?)
+		OR
+		organization_id IN (
+			SELECT id FROM organizations WHERE id IN (
+				SELECT secondary_id FROM organization_trusts WHERE primary_id = ?
+			)
+		) AND visibility = ?
+	)
+	AND status not in (?, ?)
+	`
+
+	args := []interface{}{
+		organization.ID, RequestVisibilitySame, RequestVisibilityTrusted, organization.ID,
+		RequestVisibilityTrusted, RequestStatusRemoved, RequestStatusCompleted,
+	}
+
+	return r.findBySelectClause(tx, filter, selectClause, args, fmt.Sprintf("organization %s", organization.UUID.String()))
+}
+
+// findbySelectClause finds all requests visible to entity specified in select clause, optionally filtered by location or search text.
+func (r *Requests) findBySelectClause(tx *pop.Connection, filter RequestFilterParams, selectClause string, args []interface{}, entity string) error {
 	if filter.SearchText != nil {
 		selectClause = selectClause + " AND (LOWER(title) LIKE ? or LOWER(description) LIKE ?)"
 		likeText := "%" + strings.ToLower(*filter.SearchText) + "%"
@@ -841,7 +871,7 @@ func (r *Requests) FindByUser(tx *pop.Connection, user User, filter RequestFilte
 	requests := Requests{}
 	q := tx.RawQuery(selectClause+" ORDER BY created_at desc", args...)
 	if err := q.All(&requests); err != nil {
-		return fmt.Errorf("error finding requests for user %s, %s", user.UUID.String(), err)
+		return fmt.Errorf("error finding requests for , %s", entity, err)
 	}
 
 	if filter.Destination != nil {

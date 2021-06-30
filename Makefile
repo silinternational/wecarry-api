@@ -1,4 +1,4 @@
-dev: buffalo adminer migrate
+dev: buffalo redis adminer migrate 
 
 migrate: db
 	docker-compose run --rm buffalo whenavail db 5432 10 buffalo-pop pop migrate up
@@ -20,6 +20,9 @@ adminer:
 
 buffalo: db
 	docker-compose up -d buffalo
+
+redis: db
+	docker-compose up -d redis
 
 swagger: swaggerspec
 	docker-compose run --rm --service-ports swagger serve -p 8082 --no-open swagger.json
