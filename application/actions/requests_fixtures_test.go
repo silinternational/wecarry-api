@@ -101,6 +101,10 @@ func createFixturesForRequestsList(as *ActionSuite) RequestsListFixtures {
 	requests[1].ProviderID = nulls.NewInt(usersFixtures.Users[2].ID)
 	as.NoError(as.DB.Save(&requests[2]))
 
+	photo := test.CreateFileFixture(as.DB)
+	requests[0].FileID = nulls.NewInt(photo.ID)
+	as.NoError(as.DB.Save(&requests[0]))
+
 	return RequestsListFixtures{
 		Users:    usersFixtures.Users,
 		Requests: requests,
