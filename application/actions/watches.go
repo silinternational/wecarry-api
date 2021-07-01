@@ -28,7 +28,7 @@ import (
 //       "$ref": "#/definitions/WatchInput"
 // responses:
 //   '200':
-//     description: The id (uuid) of the created watch
+//     description: {"id": "<the id of the new watch>"}
 func watchesCreate(c buffalo.Context) error {
 	var input api.WatchInput
 	if err := StrictBind(c, &input); err != nil {
@@ -39,14 +39,22 @@ func watchesCreate(c buffalo.Context) error {
 		})
 	}
 
+	if input.IsEmpty() {
+		return reportError(c, &api.AppError{
+			HttpStatus: http.StatusBadRequest,
+			Key:        api.WatchInputEmpty,
+			Err:        errors.New("empty WatchInput is not allowed"),
+		})
+	}
+
 	cUser := models.CurrentUser(c)
 	tx := models.Tx(c)
 
-	output, err := convertWatchInput(tx, input, cUser)
+	newWatch, err := convertWatchInput(tx, input, cUser)
 	if err != nil {
 		return reportError(c, &api.AppError{
 			HttpStatus: http.StatusBadRequest,
-			Key:        api.InvalidRequestBody,
+			Key:        api.WatchInputMeetingFailure,
 			Err:        errors.New("unable to find Meeting related to a new Watch, error: " + err.Error()),
 		})
 	}
@@ -60,7 +68,7 @@ func watchesCreate(c buffalo.Context) error {
 				Err:        errors.New("unable to create the destination related to a new Watch, error: " + err.Error()),
 			})
 		}
-		output.DestinationID = nulls.NewInt(location.ID)
+		newWatch.DestinationID = nulls.NewInt(location.ID)
 	}
 
 	if input.Origin != nil {
@@ -72,16 +80,18 @@ func watchesCreate(c buffalo.Context) error {
 				Err:        errors.New("unable to create the origin related to a new Watch, error: " + err.Error()),
 			})
 		}
-		output.OriginID = nulls.NewInt(location.ID)
+		newWatch.OriginID = nulls.NewInt(location.ID)
 	}
 
-	if err = output.Create(tx); err != nil {
+	if err = newWatch.Create(tx); err != nil {
 		return reportError(c, &api.AppError{
 			HttpStatus: http.StatusInternalServerError,
 			Key:        api.WatchCreateFailure,
 			Err:        errors.New("unable to create the new Watch, error: " + err.Error()),
 		})
 	}
+
+	output := map[string]string{"id": newWatch.UUID.String()}
 
 	return c.Render(200, render.JSON(output))
 }
@@ -195,8 +205,8 @@ func convertWatchInput(tx *pop.Connection, input api.WatchInput, user models.Use
 	watch := models.Watch{}
 
 	watch.OwnerID = user.ID
-
 	watch.Name = input.Name
+
 	watch.SearchText = models.ConvertStringPtrToNullsString(input.SearchText)
 
 	if input.Size == nil {

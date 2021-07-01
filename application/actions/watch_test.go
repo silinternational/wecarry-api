@@ -51,17 +51,17 @@ type location struct {
 	Longitude   float64 `json:"longitude"`
 }
 
-type watchInput struct {
+type watchGQLInput struct {
 	id          *string
 	name        string
-	destination locationInput
-	origin      locationInput
+	destination locationGQLInput
+	origin      locationGQLInput
 	meetingID   string
 	searchText  string
 	size        api.RequestSize
 }
 
-type locationInput struct {
+type locationGQLInput struct {
 	description string
 	country     string
 	latitude    float64
@@ -140,7 +140,7 @@ func (as *ActionSuite) Test_CreateWatch() {
 
 	type testCase struct {
 		name        string
-		watch       watchInput
+		watch       watchGQLInput
 		testUser    models.User
 		expectError bool
 	}
@@ -150,9 +150,9 @@ func (as *ActionSuite) Test_CreateWatch() {
 	testCases := []testCase{
 		{
 			name: "all fields",
-			watch: watchInput{
+			watch: watchGQLInput{
 				name: "foo",
-				destination: locationInput{
+				destination: locationGQLInput{
 					description: "watch destination",
 					country:     "dc",
 					latitude:    1.1,
@@ -201,7 +201,7 @@ func (as *ActionSuite) Test_UpdateWatch() {
 
 	type testCase struct {
 		name        string
-		watch       watchInput
+		watch       watchGQLInput
 		testUser    models.User
 		expectError string
 	}
@@ -213,10 +213,10 @@ func (as *ActionSuite) Test_UpdateWatch() {
 	testCases := []testCase{
 		{
 			name: "all fields",
-			watch: watchInput{
+			watch: watchGQLInput{
 				id:   &watchUUID,
 				name: "foo",
-				destination: locationInput{
+				destination: locationGQLInput{
 					description: "new location",
 					country:     "dc",
 					latitude:    1.1,
@@ -230,7 +230,7 @@ func (as *ActionSuite) Test_UpdateWatch() {
 		},
 		{
 			name: "unauthorized",
-			watch: watchInput{
+			watch: watchGQLInput{
 				id:         &watchUUID,
 				name:       "foo",
 				searchText: "search",
@@ -270,7 +270,7 @@ func (as *ActionSuite) Test_UpdateWatch() {
 	}
 }
 
-func (as *ActionSuite) watchInputString(watch watchInput) string {
+func (as *ActionSuite) watchInputString(watch watchGQLInput) string {
 	input := ""
 	if watch.id != nil {
 		input = `id: "` + *watch.id + `"`

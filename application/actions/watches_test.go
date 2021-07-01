@@ -3,10 +3,12 @@ package actions
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/gobuffalo/nulls"
+	"github.com/gofrs/uuid"
 
 	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/domain"
@@ -52,6 +54,149 @@ func createFixturesForWatches(as *ActionSuite) watchFixtures {
 		Locations: locations,
 		Watches:   watches,
 		Meetings:  meetings,
+	}
+}
+
+type locationInput struct {
+	Description string
+	Country     string
+	Latitude    float64
+	Longitude   float64
+}
+
+type watchInput struct {
+	Name        string
+	Destination *locationInput
+	Origin      *locationInput
+	MeetingID   string
+	SearchText  string
+	Size        api.RequestSize
+}
+
+func (as *ActionSuite) Test_WatchesCreate() {
+	f := createFixturesForWatches(as)
+	owner := f.Users[0]
+	notOwner := f.Users[1]
+
+	type testCase struct {
+		name         string
+		watch        watchInput
+		user         models.User
+		wantStatus   int
+		wantContains string
+	}
+
+	testCases := []testCase{
+		{
+			name: "bad meeting id",
+			watch: watchInput{
+				Name:      "Bad Meeting",
+				MeetingID: domain.GetUUID().String(),
+			},
+			user:         notOwner,
+			wantStatus:   http.StatusBadRequest,
+			wantContains: api.WatchInputMeetingFailure.String(),
+		},
+		{
+			name: "just give the name field",
+			watch: watchInput{
+				Name: "Empty Fields",
+			},
+			user:         owner,
+			wantStatus:   http.StatusBadRequest,
+			wantContains: api.WatchInputEmpty.String(),
+		},
+		{
+			name: "just give the search text field",
+			watch: watchInput{
+				Name:       "Just Search Text",
+				SearchText: "OneField",
+			},
+			user:       owner,
+			wantStatus: http.StatusOK,
+		},
+		{
+			name: "give all fields",
+			watch: watchInput{
+				Name: "AllFields",
+				Destination: &locationInput{
+					Description: "good watch destination",
+					Country:     "dc",
+					Latitude:    1.1,
+					Longitude:   2.2,
+				},
+				Origin: &locationInput{
+					Description: "good watch origin",
+					Country:     "cd",
+					Latitude:    11.1,
+					Longitude:   22.2,
+				},
+				MeetingID:  f.Meetings[0].UUID.String(),
+				SearchText: "AllFields",
+				Size:       api.RequestSizeXlarge,
+			},
+			user:       owner,
+			wantStatus: http.StatusOK,
+		},
+	}
+
+	for _, tc := range testCases {
+		as.T().Run(tc.name, func(t *testing.T) {
+			req := as.JSON("/watches")
+			req.Headers["Authorization"] = fmt.Sprintf("Bearer %s", tc.user.Nickname)
+			req.Headers["content-type"] = "application/json"
+
+			res := req.Post(tc.watch)
+
+			body := res.Body.String()
+			as.Equal(tc.wantStatus, res.Code, "incorrect status code returned, body: %s", body)
+			if tc.wantContains != "" {
+				as.Contains(body, tc.wantContains)
+			}
+
+			if tc.wantStatus != http.StatusOK {
+				return
+			}
+
+			as.Contains(body, `"id":"`, "results don't include the watch id")
+
+			// Extract the uuid from the response
+			parts := strings.Split(body, ":")
+			as.True(len(parts) == 2, "results don't have exactly one colon")
+
+			uuidParts := strings.Split(parts[1], `"`)
+			as.True(len(uuidParts) == 3, `results don't have uuid surrounded by /"`)
+
+			// ensure uuid is not null
+			newUuid := uuidParts[1]
+			as.True(uuid.UUID{}.String() != newUuid, "don't want empty UUID")
+
+			// Get the new watch from the database and validate its values
+			var dbWatch models.Watch
+			err := as.DB.Eager("Destination", "Origin", "Meeting").Where("uuid = ?", newUuid).First(&dbWatch)
+			as.NoError(err, "didn't find Watch in database")
+
+			as.Equal(tc.user.ID, dbWatch.OwnerID, "incorrect Watch owner")
+			as.Equal(tc.watch.Name, dbWatch.Name, "incorrect Watch name")
+			if tc.watch.Destination != nil {
+				as.Equal(tc.watch.Destination.Country, dbWatch.Destination.Country, "incorrect Watch Destination Country")
+				as.Equal(tc.watch.Destination.Description, dbWatch.Destination.Description, "incorrect Watch Destination")
+				as.Equal(tc.watch.Destination.Latitude, dbWatch.Destination.Latitude.Float64, "incorrect Watch Destination Latitude")
+				as.Equal(tc.watch.Destination.Longitude, dbWatch.Destination.Longitude.Float64, "incorrect Watch Destination Longitude")
+			}
+			if tc.watch.Origin != nil {
+				as.Equal(tc.watch.Origin.Description, dbWatch.Origin.Description, "incorrect Watch Origin")
+			}
+
+			if tc.watch.MeetingID == "" {
+				as.False(dbWatch.MeetingID.Valid, "expected a null Watch MeetingID")
+			} else {
+				as.Equal(tc.watch.MeetingID, dbWatch.Meeting.UUID.String(), "incorrect Watch Meeting")
+			}
+
+			as.Equal(tc.watch.SearchText, dbWatch.SearchText.String, "incorrect Watch search text")
+			as.Equal(tc.watch.Size.String(), dbWatch.Size.String(), "incorrect Watch search text")
+		})
 	}
 }
 

@@ -56,3 +56,23 @@ type WatchInput struct {
 	// Maximum size of a requested item
 	Size *RequestSize
 }
+
+func (w WatchInput) IsEmpty() bool {
+	if w.Destination != nil || w.Origin != nil {
+		return false
+	}
+
+	if w.SearchText != nil && *w.SearchText != "" {
+		return false
+	}
+
+	if w.Size != nil && w.Size.String() != "" {
+		return false
+	}
+
+	if w.MeetingID != nil && *w.MeetingID != "" {
+		return false
+	}
+
+	return true
+}
