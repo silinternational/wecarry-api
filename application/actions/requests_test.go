@@ -330,21 +330,42 @@ func (as *ActionSuite) Test_RequestsList() {
 	as.Equal(200, res.Code, "incorrect status code returned, body: %s", body)
 
 	var requestsList []api.Request
-	json.Unmarshal([]byte(body), &requestsList)
-	as.Equal(len(requests), len(requestsList))
+	as.NoError(json.Unmarshal([]byte(body), &requestsList))
+	as.Equal(len(requests)-1, len(requestsList)) // one request is COMPLETED, so it won't be included
 
 	wantContains := []string{}
-		
+
 	for i := range requests {
+		if requests[i].Status == models.RequestStatusCompleted {
+			continue
+		}
+
+		creator, err := requests[i].GetCreator(as.DB)
+		as.NoError(err)
+
+		provider, err := requests[i].GetProvider(as.DB)
+		as.NoError(err)
+		providerJson := `"provider":null`
+		if provider != nil {
+			providerJson = fmt.Sprintf(`"provider":{"id":"%s"`, provider.UUID.String())
+		}
+
+		photoID, err := requests[i].GetPhotoID(as.DB)
+		as.NoError(err)
+		photoJson := `"photo":null`
+		if photoID != nil {
+			photoJson = fmt.Sprintf(`"photo":{"id":"%s"`, *photoID)
+		}
+
 		wantContains = append(wantContains, []string{
 			fmt.Sprintf(`"id":"%s"`, requests[i].UUID),
-			fmt.Sprintf(`"nickname":"%s"`, requests[i].CreatedBy.Nickname),
-			fmt.Sprintf(`"nickname":"%s"`, requests[i].Provider.Nickname),
+			fmt.Sprintf(`"nickname":"%s"`, creator.Nickname),
+			providerJson,
 			fmt.Sprintf(`"title":"%s"`, requests[i].Title),
 			fmt.Sprintf(`"country":"%s"`, requests[i].Destination.Country),
 			fmt.Sprintf(`"description":"%s"`, requests[i].Origin.Description),
 			fmt.Sprintf(`"size":"%s"`, requests[i].Size),
-			fmt.Sprintf(`"id":"%s"`, requests[i].PhotoFile.UUID),
+			photoJson,
 		}...)
 	}
 
