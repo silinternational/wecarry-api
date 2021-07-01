@@ -66,13 +66,12 @@ func ConvertRequestToAPIType(ctx context.Context, request models.Request) (api.R
 	}
 	output.Photo = &photo
 
+	// TODO: hydrate other nested request fields after reconciling api.Request struct with the UI field list
 	organization, err := hydrateRequestOrganization(ctx, request, tx)
 	if err != nil {
 		return api.Request{}, err
 	}
 	output.Organization = &organization
-
-	// TODO: hydrate other nested request fields after reconciling api.Request struct with the UI field list
 
 	return output, nil
 }
@@ -117,12 +116,6 @@ func ConvertRequestToAPITypeAbridged(ctx context.Context, request models.Request
 		return api.RequestAbridged{}, err
 	}
 	output.Photo = &photo
-
-	organization, err := hydrateRequestOrganization(ctx, request, tx)
-	if err != nil {
-		return api.RequestAbridged{}, err
-	}
-	output.Organization = &organization
 
 	return output, nil
 }

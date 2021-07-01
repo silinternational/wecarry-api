@@ -8,7 +8,6 @@ import (
 	"github.com/gobuffalo/nulls"
 
 	"github.com/silinternational/wecarry-api/cache"
-	"github.com/silinternational/wecarry-api/conversions"
 	"github.com/silinternational/wecarry-api/dataloader"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
@@ -459,11 +458,7 @@ func (r *mutationResolver) CreateRequest(ctx context.Context, input requestInput
 
 	// TODO move to models logic (in a way that doesn't cause a cyclic import)
 	// or to refactored RESTful endpoint for creating requests
-	requestAbridged, err := conversions.ConvertRequestToAPITypeAbridged(ctx, request)
-	if err != nil {
-		return nil, err
-	}
-	cache.CacheRebuildOnCreate(ctx, request.Organization.Name, requestAbridged)
+	cache.CacheRebuildOnChangedRequest(ctx, request.Organization, request)
 
 	return &request, nil
 }
@@ -507,6 +502,10 @@ func (r *mutationResolver) UpdateRequest(ctx context.Context, input requestInput
 		}
 	}
 
+	// TODO move to models logic (in a way that doesn't cause a cyclic import)
+	// or to refactored RESTful endpoint for creating requests
+	cache.CacheRebuildOnChangedRequest(ctx, request.Organization, request)
+
 	return &request, nil
 }
 
@@ -540,6 +539,10 @@ func (r *mutationResolver) UpdateRequestStatus(ctx context.Context, input Update
 		return &models.Request{}, domain.ReportError(ctx, errors.New("error destroying request's potential providers: "+err.Error()),
 			"UpdateRequestStatus.DestroyPotentialProviders")
 	}
+
+	// TODO move to models logic (in a way that doesn't cause a cyclic import)
+	// or to refactored RESTful endpoint for creating requests
+	cache.CacheRebuildOnChangedRequest(ctx, request.Organization, request)
 
 	return &request, nil
 }

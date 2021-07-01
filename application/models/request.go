@@ -831,8 +831,6 @@ func (r *Requests) FindByUser(tx *pop.Connection, user User, filter RequestFilte
 }
 
 // FindByOrganization finds all non-public requests visible to the specified organization
-// INCLUDES
-
 func (r *Requests) FindByOrganization(tx *pop.Connection, organization Organization, filter RequestFilterParams) error {
 	selectClause := `
 	SELECT * FROM requests WHERE
@@ -856,6 +854,19 @@ func (r *Requests) FindByOrganization(tx *pop.Connection, organization Organizat
 	return r.findBySelectClause(tx, filter, selectClause, args, fmt.Sprintf("organization %s", organization.UUID.String()))
 }
 
+// FindPublic finds all public requests visible to all WeCarry users
+func (r *Requests) FindPublic(tx *pop.Connection, filter RequestFilterParams) error {
+	selectClause := `
+	SELECT * FROM requests WHERE visibility = ? AND status not in (?, ?)
+	`
+
+	args := []interface{}{
+		RequestVisibilityAll, RequestStatusRemoved, RequestStatusCompleted,
+	}
+
+	return r.findBySelectClause(tx, filter, selectClause, args, "all WeCarry userss")
+}
+
 // findbySelectClause finds all requests visible to entity specified in select clause, optionally filtered by location or search text.
 func (r *Requests) findBySelectClause(tx *pop.Connection, filter RequestFilterParams, selectClause string, args []interface{}, entity string) error {
 	if filter.SearchText != nil {
@@ -871,7 +882,7 @@ func (r *Requests) findBySelectClause(tx *pop.Connection, filter RequestFilterPa
 	requests := Requests{}
 	q := tx.RawQuery(selectClause+" ORDER BY created_at desc", args...)
 	if err := q.All(&requests); err != nil {
-		return fmt.Errorf("error finding requests for , %s", entity, err)
+		return fmt.Errorf("error finding requests for %s, %s", entity, err)
 	}
 
 	if filter.Destination != nil {
