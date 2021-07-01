@@ -86,7 +86,7 @@ func (w *Watch) DeleteForOwner(tx *pop.Connection, id string, user User) (string
 	if id == "" {
 		appError := api.AppError{
 			Category: api.CategoryUser,
-			Key:      api.WatchMissingID,
+			Key:      api.ErrorWatchMissingID,
 			Err:      errors.New("error: watch uuid must not be blank"),
 		}
 		return "", &appError
@@ -95,7 +95,7 @@ func (w *Watch) DeleteForOwner(tx *pop.Connection, id string, user User) (string
 	if err := w.FindByUUID(tx, id); err != nil {
 		appError := api.AppError{
 			Category: api.CategoryNotFound,
-			Key:      api.WatchNotFound,
+			Key:      api.ErrorWatchNotFound,
 			Err:      err,
 		}
 		return "", &appError
@@ -103,7 +103,7 @@ func (w *Watch) DeleteForOwner(tx *pop.Connection, id string, user User) (string
 	if w.OwnerID != user.ID {
 		appError := api.AppError{
 			Category: api.CategoryForbidden,
-			Key:      api.NotAuthorized,
+			Key:      api.ErrorNotAuthorized,
 			Err:      errors.New("error: user may not delete a watch they don't own."),
 		}
 		return "", &appError
@@ -112,7 +112,7 @@ func (w *Watch) DeleteForOwner(tx *pop.Connection, id string, user User) (string
 	if err := w.Destroy(tx); err != nil {
 		appError := api.AppError{
 			Category: api.CategoryDatabase,
-			Key:      api.WatchDeleteFailure,
+			Key:      api.ErrorWatchDeleteFailure,
 			Err:      fmt.Errorf("error attempting to delete a watch with uuid %s: %s", w.UUID.String(), err.Error()),
 		}
 		return "", &appError

@@ -28,7 +28,7 @@ func threadsMine(c buffalo.Context) error {
 
 	threads, err := cUser.GetThreadsForConversations(tx)
 	if err != nil {
-		return reportError(c, api.NewAppError(err, api.ThreadsLoadFailure, api.CategoryInternal))
+		return reportError(c, api.NewAppError(err, api.ErrorThreadsLoadFailure, api.CategoryInternal))
 	}
 
 	output, err := convertThreadsToAPIType(c, threads)
@@ -71,19 +71,19 @@ func threadsMarkAsRead(c buffalo.Context) error {
 	var input api.MarkMessagesAsReadInput
 	if err := StrictBind(c, &input); err != nil {
 		err = errors.New("unable to unmarshal Post data into MarkMessagesAsReadInput struct, error: " + err.Error())
-		return reportError(c, api.NewAppError(err, api.InvalidRequestBody, api.CategoryUser))
+		return reportError(c, api.NewAppError(err, api.ErrorInvalidRequestBody, api.CategoryUser))
 	}
 
 	if err := thread.FindByUUID(tx, id.String()); err != nil {
-		return reportError(c, api.NewAppError(err, api.ThreadNotFound, api.CategoryNotFound))
+		return reportError(c, api.NewAppError(err, api.ErrorThreadNotFound, api.CategoryNotFound))
 	}
 
 	if err := thread.UpdateLastViewedAt(tx, cUser.ID, input.Time); err != nil {
-		return reportError(c, api.NewAppError(err, api.ThreadSetLastViewedAt, api.CategoryInternal))
+		return reportError(c, api.NewAppError(err, api.ErrorThreadSetLastViewedAt, api.CategoryInternal))
 	}
 
 	if err := thread.LoadForAPI(tx, cUser); err != nil {
-		return reportError(c, api.NewAppError(err, api.ThreadsLoadFailure, api.CategoryInternal))
+		return reportError(c, api.NewAppError(err, api.ErrorThreadsLoadFailure, api.CategoryInternal))
 	}
 
 	threads := models.Threads{thread}

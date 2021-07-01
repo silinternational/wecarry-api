@@ -165,7 +165,7 @@ func (r *mutationResolver) CreateWatch(ctx context.Context, input watchInput) (*
 	if input.Destination != nil {
 		location := convertLocation(*input.Destination)
 		if err = location.Create(tx); err != nil {
-			return &models.Watch{}, domain.ReportError(ctx, err, "CreateWatch.SetLocation")
+			return &models.Watch{}, domain.ReportError(ctx, err, "CreateWatch.SetDestination")
 		}
 		watch.DestinationID = nulls.NewInt(location.ID)
 	}
