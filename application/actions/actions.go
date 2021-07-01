@@ -46,24 +46,11 @@ func GetFunctionName(skip int) string {
 	return fmt.Sprintf("%s:%d %s", file, line, fn.Name())
 }
 
-func httpStatusForErrCategory(cat api.ErrorCategory) int {
-	switch cat {
-	case api.CategoryInternal, api.CategoryDatabase:
-		return http.StatusInternalServerError
-	case api.CategoryForbidden, api.CategoryNotFound:
-		return http.StatusNotFound
-	}
-	return http.StatusBadRequest
-}
-
+// appErrorFromErr is used by reportError to convert a generic error to an AppError
 func appErrorFromErr(err error) *api.AppError {
-	aerr, ok := err.(*api.AppError)
+	appErr, ok := err.(*api.AppError)
 	if ok {
-		return &api.AppError{
-			HttpStatus: httpStatusForErrCategory(aerr.Category),
-			Key:        aerr.Key,
-			Err:        aerr,
-		}
+		return appErr
 	}
 
 	return &api.AppError{
@@ -80,6 +67,7 @@ func reportError(c buffalo.Context, err error) error {
 	if !ok {
 		appErr = appErrorFromErr(err)
 	}
+	appErr.SetHttpStatusFromCategory()
 
 	if appErr.Extras == nil {
 		appErr.Extras = map[string]interface{}{}
@@ -98,7 +86,9 @@ func reportError(c buffalo.Context, err error) error {
 	appErr.LoadTranslatedMessage(c)
 
 	// clear out debugging info if not in development or test
-	if domain.Env.GoEnv != "development" && domain.Env.GoEnv != "test" {
+	if domain.Env.GoEnv == "development" || domain.Env.GoEnv == "test" {
+		appErr.DebugMsg = appErr.Err.Error()
+	} else {
 		appErr.Extras = map[string]interface{}{}
 	}
 
@@ -111,12 +101,14 @@ func reportError(c buffalo.Context, err error) error {
 	return c.Render(appErr.HttpStatus, r.JSON(appErr))
 }
 
+// newExtra inserts a new data item into the context for use in debugging
 func newExtra(c buffalo.Context, key string, e interface{}) {
 	extras := getExtras(c)
 	extras[key] = e
 	c.Set(domain.ContextKeyExtras, extras)
 }
 
+// getExtras obtains the map of extra data for insertion into a log message
 func getExtras(c buffalo.Context) map[string]interface{} {
 	extras, _ := c.Value(domain.ContextKeyExtras).(map[string]interface{})
 	if extras == nil {
@@ -130,11 +122,8 @@ func getUUIDFromParam(c buffalo.Context, param string) (uuid.UUID, error) {
 	id := uuid.FromStringOrNil(s)
 	if id == uuid.Nil {
 		newExtra(c, param, s)
-		return uuid.UUID{}, &api.AppError{
-			HttpStatus: http.StatusBadRequest,
-			Key:        api.MustBeAValidUUID,
-			Err:        fmt.Errorf("invalid %s provided: '%s'", param, s),
-		}
+		err := fmt.Errorf("invalid %s provided: '%s'", param, s)
+		return uuid.UUID{}, api.NewAppError(err, api.MustBeAValidUUID, api.CategoryUser)
 	}
 	return id, nil
 }

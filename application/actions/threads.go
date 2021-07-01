@@ -3,7 +3,6 @@ package actions
 import (
 	"context"
 	"errors"
-	"net/http"
 
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/buffalo/render"
@@ -29,16 +28,12 @@ func threadsMine(c buffalo.Context) error {
 
 	threads, err := cUser.GetThreadsForConversations(tx)
 	if err != nil {
-		return reportError(c, &api.AppError{
-			HttpStatus: http.StatusInternalServerError,
-			Key:        api.ThreadsLoadFailure,
-			Err:        err,
-		})
+		return reportError(c, api.NewAppError(err, api.ThreadsLoadFailure, api.CategoryInternal))
 	}
 
 	output, err := convertThreadsToAPIType(c, threads)
 	if err != nil {
-		return reportError(c, appErrorFromErr(err))
+		return reportError(c, err)
 	}
 
 	return c.Render(200, render.JSON(output))
@@ -75,46 +70,31 @@ func threadsMarkAsRead(c buffalo.Context) error {
 
 	var input api.MarkMessagesAsReadInput
 	if err := StrictBind(c, &input); err != nil {
-		return reportError(c, &api.AppError{
-			HttpStatus: http.StatusBadRequest,
-			Key:        api.InvalidRequestBody,
-			Err:        errors.New("unable to unmarshal Post data into MarkMessagesAsReadInput struct, error: " + err.Error()),
-		})
+		err = errors.New("unable to unmarshal Post data into MarkMessagesAsReadInput struct, error: " + err.Error())
+		return reportError(c, api.NewAppError(err, api.InvalidRequestBody, api.CategoryUser))
 	}
 
 	if err := thread.FindByUUID(tx, id.String()); err != nil {
-		return reportError(c, &api.AppError{
-			HttpStatus: http.StatusNotFound,
-			Key:        api.ThreadNotFound,
-			Err:        err,
-		})
+		return reportError(c, api.NewAppError(err, api.ThreadNotFound, api.CategoryNotFound))
 	}
 
 	if err := thread.UpdateLastViewedAt(tx, cUser.ID, input.Time); err != nil {
-		return reportError(c, &api.AppError{
-			HttpStatus: http.StatusInternalServerError,
-			Key:        api.ThreadSetLastViewedAt,
-			Err:        err,
-		})
+		return reportError(c, api.NewAppError(err, api.ThreadSetLastViewedAt, api.CategoryInternal))
 	}
 
 	if err := thread.LoadForAPI(tx, cUser); err != nil {
-		return reportError(c, &api.AppError{
-			HttpStatus: http.StatusInternalServerError,
-			Key:        api.ThreadsLoadFailure,
-			Err:        err,
-		})
+		return reportError(c, api.NewAppError(err, api.ThreadsLoadFailure, api.CategoryInternal))
 	}
 
 	threads := models.Threads{thread}
 	converted, err := convertThreadsToAPIType(c, threads)
 	if err != nil {
-		return reportError(c, appErrorFromErr(err))
+		return reportError(c, err)
 	}
 
 	// this should never happen, but just in case ...
 	if len(converted) == 0 {
-		return reportError(c, appErrorFromErr(errors.New("thread got lost in conversion")))
+		return reportError(c, errors.New("thread got lost in conversion"))
 	}
 
 	return c.Render(200, render.JSON(converted[0]))

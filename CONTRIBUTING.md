@@ -108,34 +108,40 @@ context is available.
 #### REST API responses
 
 Errors occurring in the processing of REST API requests should result in a 400-
-or 500-level http response with a json body containing a `code` and a `key`:
+or 500-level http response with a json body like:
 
 ```json
 {
   "code": 400,
-  "key": "ErrorMissingClientID"
+  "key": "ErrorKeyExample",
+  "message": "This is an example error message"
 }
 ``` 
 
-This can be generated as follows:
+The type `api.AppError` will render as required above by passing it to 
+`actions.reportError`. An `AppError` should be created by calling
+`api.NewAppError` as deep into the call stack as needed to provide a detailed
+key and specific category. If `actions.reportError` receives a generic `error`,
+it will render with key `UnknownError` and HTTP status 500 and the error string
+in the `DebugMsg`.
 
-```go
-err := api.AppError{
-    Code: httpStatus,
-    Key:  errorCode,
-}
-
-return c.Render(httpStatus, render.JSON(err))
-```
-
-In addition, the error should be logged using `Error` or `ErrLogger.Printf`. For 
-auth-related errors, the helper `actions.authRequestError` is available.
+| Category          | HTTP Status |
+|-------------------|-------------|
+| CategoryInternal  | 500         |
+| CategoryDatabase  | 500         |
+| CategoryForbidden | 404         |
+| CategoryNotFound  | 404         |
+| CategoryUser      | 400         |
 
 #### Internal error logging
 
 Errors that do not justify an error being passed to the API client may be logged
 to `stderr` and Rollbar using `domain.Error` if context is available, or
 `domain.ErrLogger.printf` if no context is available.
+
+`domain.Warn` can be used to log at level "warning" and also send to Rollbar
+
+`domain.Info` or `domain.Logger.printf` will log but not send to Rollbar.
  
 ## gqlgen
 
