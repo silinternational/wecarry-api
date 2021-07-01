@@ -31,7 +31,7 @@ func requestsList(c buffalo.Context) error {
 
 	requests := models.Requests{}
 	if err := requests.FindByUser(tx, cUser, filter); err != nil {
-		return reportError(c, api.NewAppError(err, api.GetRequests, api.CategoryInternal))
+		return reportError(c, api.NewAppError(err, api.ErrorGetRequests, api.CategoryInternal))
 	}
 
 	output, err := convertRequestsAbridged(c, requests)

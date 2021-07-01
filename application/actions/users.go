@@ -56,7 +56,7 @@ func usersMeUpdate(c buffalo.Context) error {
 	var input api.UsersInput
 	if err := StrictBind(c, &input); err != nil {
 		err = errors.New("unable to unmarshal User data into UsersInput struct, error: " + err.Error())
-		return reportError(c, api.NewAppError(err, api.InvalidRequestBody, api.CategoryUser))
+		return reportError(c, api.NewAppError(err, api.ErrorInvalidRequestBody, api.CategoryUser))
 	}
 
 	if input.Nickname != nil {
@@ -72,7 +72,7 @@ func usersMeUpdate(c buffalo.Context) error {
 		_, err = user.AttachPhoto(tx, *input.PhotoID)
 	}
 	if err != nil {
-		return reportError(c, api.NewAppError(err, api.UserUpdatePhotoError, api.CategoryInternal))
+		return reportError(c, api.NewAppError(err, api.ErrorUserUpdatePhoto, api.CategoryInternal))
 	}
 
 	if err = user.Save(tx); err != nil {

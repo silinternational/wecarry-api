@@ -32,7 +32,7 @@ func messagesCreate(c buffalo.Context) error {
 	var input api.MessageInput
 	if err := StrictBind(c, &input); err != nil {
 		err = errors.New("unable to unmarshal Message data into MessageInput struct, error: " + err.Error())
-		return reportError(c, api.NewAppError(err, api.InvalidRequestBody, api.CategoryUser))
+		return reportError(c, api.NewAppError(err, api.ErrorInvalidRequestBody, api.CategoryUser))
 	}
 	user := models.CurrentUser(c)
 	tx := models.Tx(c)

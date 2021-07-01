@@ -55,7 +55,7 @@ func appErrorFromErr(err error) *api.AppError {
 
 	return &api.AppError{
 		HttpStatus: http.StatusInternalServerError,
-		Key:        api.UnknownError,
+		Key:        api.ErrorUnknown,
 		Err:        err,
 	}
 }
@@ -123,7 +123,7 @@ func getUUIDFromParam(c buffalo.Context, param string) (uuid.UUID, error) {
 	if id == uuid.Nil {
 		newExtra(c, param, s)
 		err := fmt.Errorf("invalid %s provided: '%s'", param, s)
-		return uuid.UUID{}, api.NewAppError(err, api.MustBeAValidUUID, api.CategoryUser)
+		return uuid.UUID{}, api.NewAppError(err, api.ErrorMustBeAValidUUID, api.CategoryUser)
 	}
 	return id, nil
 }

@@ -11,20 +11,20 @@ const (
 const (
 	// General
 
-	CreateFailure                   = ErrorKey("ErrorCreateFailure")
-	DestroyFailure                  = ErrorKey("ErrorDestroyFailure")
-	ErrorGenericInternalServerError = ErrorKey("ErrorGenericInternalServerError")
-	FailedToConvertToAPIType        = ErrorKey("ErrorFailedToConvertToAPIType")
-	InvalidRequestBody              = ErrorKey("ErrorInvalidRequestBody")
-	MustBeAValidUUID                = ErrorKey("ErrorMustBeAValidUUID")
-	NoRows                          = ErrorKey("ErrorNoRows")
-	NotAuthorized                   = ErrorKey("ErrorNotAuthorized")
-	QueryFailure                    = ErrorKey("ErrorQueryFailure")
-	SaveFailure                     = ErrorKey("ErrorSaveFailure")
-	TransactionNotFound             = ErrorKey("ErrorTransactionNotFound")
-	UnknownError                    = ErrorKey("ErrorUnknownError")
-	UpdateFailure                   = ErrorKey("ErrorUpdateFailure")
-	ValidationError                 = ErrorKey("ErrorValidationError")
+	ErrorCreateFailure            = ErrorKey("ErrorCreateFailure")
+	ErrorDestroyFailure           = ErrorKey("ErrorDestroyFailure")
+	ErrorGenericInternalServer    = ErrorKey("ErrorGenericInternalServer")
+	ErrorFailedToConvertToAPIType = ErrorKey("ErrorFailedToConvertToAPIType")
+	ErrorInvalidRequestBody       = ErrorKey("ErrorInvalidRequestBody")
+	ErrorMustBeAValidUUID         = ErrorKey("ErrorMustBeAValidUUID")
+	ErrorNoRows                   = ErrorKey("ErrorNoRows")
+	ErrorNotAuthorized            = ErrorKey("ErrorNotAuthorized")
+	ErrorQueryFailure             = ErrorKey("ErrorQueryFailure")
+	ErrorSaveFailure              = ErrorKey("ErrorSaveFailure")
+	ErrorTransactionNotFound      = ErrorKey("ErrorTransactionNotFound")
+	ErrorUnknown                  = ErrorKey("ErrorUnknown")
+	ErrorUpdateFailure            = ErrorKey("ErrorUpdateFailure")
+	ErrorValidation               = ErrorKey("ErrorValidation")
 
 	// HTTP codes for customErrorHandler
 
@@ -76,33 +76,33 @@ const (
 
 	// Message
 
-	MessageBadRequestUUID        = ErrorKey("ErrorMessageBadRequestUUID")
-	MessageBadThreadUUID         = ErrorKey("ErrorMessageBadThreadUUID")
-	MessageRequestNotVisible     = ErrorKey("ErrorMessageRequestNotVisible")
-	MessageThreadNotVisible      = ErrorKey("MessageThreadNotVisible")
-	MessageThreadRequestMismatch = ErrorKey("ErrorMessageThreadRequestMismatch")
+	ErrorMessageBadRequestUUID        = ErrorKey("ErrorMessageBadRequestUUID")
+	ErrorMessageBadThreadUUID         = ErrorKey("ErrorMessageBadThreadUUID")
+	ErrorMessageRequestNotVisible     = ErrorKey("ErrorMessageRequestNotVisible")
+	ErrorMessageThreadNotVisible      = ErrorKey("ErrorMessageThreadNotVisible")
+	ErrorMessageThreadRequestMismatch = ErrorKey("ErrorMessageThreadRequestMismatch")
 
 	// Request
 
-	GetRequests = ErrorKey("GetRequests")
+	ErrorGetRequests = ErrorKey("ErrorGetRequests")
 
 	// Thread
 
-	ThreadsLoadFailure    = ErrorKey("ErrorThreadsLoadFailure")
-	ThreadNotFound        = ErrorKey("ErrorThreadNotFound")
-	ThreadSetLastViewedAt = ErrorKey("ErrorThreadSetLastViewedAt")
+	ErrorThreadsLoadFailure    = ErrorKey("ErrorThreadsLoadFailure")
+	ErrorThreadNotFound        = ErrorKey("ErrorThreadNotFound")
+	ErrorThreadSetLastViewedAt = ErrorKey("ErrorThreadSetLastViewedAt")
 
 	// User
 
-	UserUpdateError       = ErrorKey("ErrorUserUpdate")
-	UserUpdatePhotoError  = ErrorKey("ErrorUserUpdatePhoto")
-	UserInvisibleNickname = ErrorKey("ErrorUserInvisibleNickname")
-	UserDuplicateNickname = ErrorKey("ErrorUserDuplicateNickname")
+	ErrorUserUpdate            = ErrorKey("ErrorUserUpdate")
+	ErrorUserUpdatePhoto       = ErrorKey("ErrorUserUpdatePhoto")
+	ErrorUserInvisibleNickname = ErrorKey("ErrorUserInvisibleNickname")
+	ErrorUserDuplicateNickname = ErrorKey("ErrorUserDuplicateNickname")
 
 	// Watch
 
-	WatchDeleteFailure = ErrorKey("ErrorWatchDeleteFailure")
-	WatchesLoadFailure = ErrorKey("ErrorWatchesLoadFailure")
-	WatchMissingID     = ErrorKey("ErrorWatchMissingID")
-	WatchNotFound      = ErrorKey("ErrorWatchNotFound")
+	ErrorWatchDeleteFailure = ErrorKey("ErrorWatchDeleteFailure")
+	ErrorWatchesLoadFailure = ErrorKey("ErrorWatchesLoadFailure")
+	ErrorWatchMissingID     = ErrorKey("ErrorWatchMissingID")
+	ErrorWatchNotFound      = ErrorKey("ErrorWatchNotFound")
 )

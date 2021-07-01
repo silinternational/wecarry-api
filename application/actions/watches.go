@@ -53,7 +53,7 @@ func watchesMine(c buffalo.Context) error {
 
 	watches := models.Watches{}
 	if err := watches.FindByUser(tx, cUser, "Owner", "Destination", "Origin", "Meeting"); err != nil {
-		return reportError(c, api.NewAppError(err, api.WatchesLoadFailure, api.CategoryInternal))
+		return reportError(c, api.NewAppError(err, api.ErrorWatchesLoadFailure, api.CategoryInternal))
 	}
 
 	output, err := convertWatches(tx, watches, cUser)

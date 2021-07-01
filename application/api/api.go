@@ -95,7 +95,7 @@ func (a *AppError) LoadTranslatedMessage(c buffalo.Context) {
 	key := a.Key
 
 	if a.HttpStatus == http.StatusInternalServerError {
-		key = ErrorGenericInternalServerError
+		key = ErrorGenericInternalServer
 	}
 
 	msgID := "Error." + key.String()
@@ -132,14 +132,14 @@ func ConvertToOtherType(input, output interface{}) error {
 	if err != nil {
 		return NewAppError(
 			fmt.Errorf("failed to convert to api. marshal error: %s", err.Error()),
-			FailedToConvertToAPIType,
+			ErrorFailedToConvertToAPIType,
 			CategoryInternal,
 		)
 	}
 	if err := json.Unmarshal(str, output); err != nil {
 		return NewAppError(
 			fmt.Errorf("failed to convert to api. unmarshal error: %s", err.Error()),
-			FailedToConvertToAPIType,
+			ErrorFailedToConvertToAPIType,
 			CategoryInternal,
 		)
 	}
