@@ -36,7 +36,7 @@ func (f *FileUploadError) Error() string {
 }
 
 type File struct {
-	ID            int       `json:"id" db:"id"`
+	ID            int       `json:"-" db:"id"`
 	UUID          uuid.UUID `json:"uuid" db:"uuid"`
 	URL           string    `json:"url" db:"url"`
 	URLExpiration time.Time `json:"url_expiration" db:"url_expiration"`
