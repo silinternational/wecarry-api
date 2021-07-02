@@ -84,7 +84,9 @@ const (
 
 	// Request
 
-	ErrorGetRequests = ErrorKey("ErrorGetRequests")
+	ErrorGetRequests              = ErrorKey("ErrorGetRequests")
+	ErrorGetRequest               = ErrorKey("ErrorGetRequest")
+	ErrorGetRequestUserNotAllowed = ErrorKey("ErrorGetRequestUserNotAllowed")
 
 	// Thread
 

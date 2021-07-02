@@ -3,8 +3,11 @@ package api
 import (
 	"time"
 
+	"github.com/gobuffalo/nulls"
 	"github.com/gofrs/uuid"
 )
+
+type RequestVisibility string
 
 // swagger:model
 type Requests []Request
@@ -12,7 +15,6 @@ type Requests []Request
 // Request is a hand carry request
 //
 // swagger:model
-// TODO: reconcile api.Request struct with the UI field list
 type Request struct {
 	// unique identifier for the Request
 	//
@@ -22,58 +24,61 @@ type Request struct {
 	ID uuid.UUID `json:"id"`
 
 	// Whether request is editable by current user
-	IsEditable bool `json:"isEditable"`
+	IsEditable bool `json:"is_editable"`
 
 	// Request status: OPEN, ACCEPTED, DELIVERED, RECEIVED, COMPLETED, REMOVED
 	RequestStatus string `json:"status"`
 
 	// Profile of the user that created this request
-	CreatedBy *User `json:"created_by"`
+	CreatedBy User `json:"created_by"`
 
 	// Profile of the user that is the provider for this request
-	Provider *User `json:"provider,omitempty"`
+	Provider *User `json:"provider"`
 
 	// Users that have offered to carry this request
-	PotentialProviders *[]User `json:"potentialProviders"`
+	PotentialProviders []User `json:"potential_providers"`
 
 	// Organization associated with this request
-	Organization *Organization `json:"organization,omitempty"`
+	Organization Organization `json:"organization"`
+
+	// Visibility restrictions for this request
+	Visibility RequestVisibility `json:"visibility"`
 
 	// Short description of item, limited to 255 characters
 	Title string `json:"title"`
 
 	// Optional, longer description of the item, limited to 4,096 characters
-	Description string `json:"description"`
+	Description nulls.String `json:"description"`
 
 	// Geographic location where item is needed
-	Destination *Location `json:"destination"`
+	Destination Location `json:"destination"`
 
 	// Optional geographic location where the item can be picked up, purchased, or otherwise obtained
-	Origin *Location `json:"origin,omitempty"`
+	Origin *Location `json:"origin"`
 
 	// Broad category of the size of item
 	Size string `json:"size"`
 
-	// List of message threads associated with this request
-	Threads *Threads `json:"threads"`
-
 	// Date and time this request was created
-	CreatedAt *time.Time `json:"createdAt"`
+	CreatedAt time.Time `json:"created_at"`
 
 	// Date and time this request was last updated
-	UpdatedAt time.Time `json:"updatedAt"`
+	UpdatedAt time.Time `json:"updated_at"`
 
 	// Date (yyyy-mm-dd) before which the item will be needed. The record may be hidden or removed after this date
-	NeededBefore time.Time `json:"neededBefore"`
+	NeededBefore nulls.Time `json:"needed_before"`
 
 	// Optional weight of the item, measured in kilograms
-	Kilograms float64 `json:"kilograms"`
+	Kilograms nulls.Float64 `json:"kilograms"`
 
 	// Optional URL to further describe or point to detail about the item, limited to 255 characters
-	Url string `json:"url"`
+	Url nulls.String `json:"url"`
 
 	// Photo of the item
 	Photo *File `json:"photo"`
+
+	// Meeting associated with this request. Affects visibility of the request.
+	Meeting *Meeting `json:"meeting"`
 }
 
 // swagger:model
@@ -94,7 +99,7 @@ type RequestAbridged struct {
 	CreatedBy *User `json:"created_by"`
 
 	// Profile of the user that is the provider for this request
-	Provider *User `json:"provider,omitempty"`
+	Provider *User `json:"provider"`
 
 	// Short description of item, limited to 255 characters
 	Title string `json:"title"`
@@ -103,7 +108,7 @@ type RequestAbridged struct {
 	Destination *Location `json:"destination"`
 
 	// Optional geographic location where the item can be picked up, purchased, or otherwise obtained
-	Origin *Location `json:"origin,omitempty"`
+	Origin *Location `json:"origin"`
 
 	// Broad category of the size of item
 	Size string `json:"size"`

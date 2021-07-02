@@ -121,6 +121,18 @@ func convertUserPrivate(ctx context.Context, user models.User) (api.UserPrivate,
 	return output, nil
 }
 
+func convertUsers(ctx context.Context, users models.Users) (api.Users, error) {
+	output := make(api.Users, len(users))
+	for i := range output {
+		var err error
+		output[i], err = convertUser(ctx, users[i])
+		if err != nil {
+			return output, err
+		}
+	}
+	return output, nil
+}
+
 func convertUser(ctx context.Context, user models.User) (api.User, error) {
 	tx := models.Tx(ctx)
 

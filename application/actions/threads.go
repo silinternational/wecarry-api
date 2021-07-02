@@ -140,12 +140,17 @@ func convertThread(ctx context.Context, thread models.Thread) (api.Thread, error
 		output.Participants[i].ID = thread.Participants[i].UUID
 	}
 
-	requestOutput, err := convertRequestToAPIType(ctx, thread.Request)
-	if err != nil {
-		return api.Thread{}, err
+	if thread.Request.ID > 0 {
+		requestOutput, err := convertRequest(ctx, thread.Request)
+		if err != nil {
+			return api.Thread{}, err
+		}
+
+		output.Request = &requestOutput
+	} else {
+		output.Request = nil
 	}
 
-	output.Request = &requestOutput
 	output.ID = thread.UUID
 	return output, nil
 }

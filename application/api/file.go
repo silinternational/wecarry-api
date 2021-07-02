@@ -23,7 +23,7 @@ type File struct {
 	Url string `json:"url"`
 
 	// expiration time of the URL, re-issue the query to get a new URL and expiration time
-	UrlExpiration time.Time `json:"urlExpiration"`
+	UrlExpiration time.Time `json:"url_expiration"`
 
 	// filename with extension, limited to 255 characters, e.g. `image.jpg`
 	Name string `json:"name"`
@@ -32,5 +32,5 @@ type File struct {
 	Size int `json:"size"`
 
 	// MIME content type, limited to 255 characters, e.g. 'image/jpeg'
-	ContentType string `json:"contentType"`
+	ContentType string `json:"content_type"`
 }
