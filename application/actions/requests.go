@@ -207,7 +207,11 @@ func convertRequestAbridged(ctx context.Context, request models.Request) (api.Re
 }
 
 func loadRequestCreatedBy(ctx context.Context, request models.Request) (api.User, error) {
-	createdBy, _ := request.GetCreator(models.Tx(ctx))
+	createdBy, err := request.GetCreator(models.Tx(ctx))
+	if err != nil {
+		return api.User{}, errors.New("loading request creator, " + err.Error())
+	}
+
 	outputCreatedBy, err := convertUser(ctx, *createdBy)
 	if err != nil {
 		err = errors.New("error converting request created_by user: " + err.Error())
