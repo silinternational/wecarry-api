@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"testing"
@@ -837,4 +838,103 @@ func (as *ActionSuite) Test_RequestActions() {
 			as.Equal(tc.want, actions)
 		})
 	}
+}
+
+func (as *ActionSuite) Test_convertRequest() {
+	userFixtures := test.CreateUserFixtures(as.DB, 2)
+	creator := userFixtures.Users[0]
+	provider := userFixtures.Users[1]
+
+	requestFixtures := test.CreateRequestFixtures(as.DB, 2, false, creator.ID)
+
+	meeting := test.CreateMeetingFixtures(as.DB, 1, creator)[0]
+
+	ctx := test.CtxWithUser(creator)
+
+	min := requestFixtures[0]
+	min.ProviderID = nulls.Int{}
+	min.Description = nulls.String{}
+	min.OriginID = nulls.Int{}
+	min.NeededBefore = nulls.Time{}
+	min.Kilograms = nulls.Float64{}
+	min.URL = nulls.String{}
+	min.FileID = nulls.Int{}
+	min.MeetingID = nulls.Int{}
+
+	full := requestFixtures[1]
+	full.ProviderID = nulls.NewInt(provider.ID)
+	full.FileID = nulls.NewInt(test.CreateFileFixture(as.DB).ID)
+	full.MeetingID = nulls.NewInt(meeting.ID)
+
+	tests := []struct {
+		name    string
+		request models.Request
+		want    api.Request
+		wantErr bool
+	}{
+		{
+			name:    "minimal",
+			request: min,
+		},
+		{
+			name:    "full",
+			request: full,
+		},
+	}
+	for _, tt := range tests {
+		as.T().Run(tt.name, func(t *testing.T) {
+			apiRequest, err := convertRequest(ctx, tt.request)
+			if tt.wantErr {
+				as.Error(err)
+				return
+			}
+			as.NoError(err)
+
+			as.NoError(as.DB.Load(&tt.request))
+			as.verifyApiRequest(ctx, tt.request, apiRequest, "api.Request is not correct")
+		})
+	}
+}
+
+func (as *ActionSuite) verifyApiRequest(ctx context.Context, request models.Request, apiRequest api.Request, msg string) {
+	as.Equal(request.UUID.String(), apiRequest.ID.String(), msg+", ID is not correct")
+
+	isEditable, err := request.IsEditable(as.DB, models.CurrentUser(ctx))
+	as.NoError(err)
+	as.Equal(isEditable, apiRequest.IsEditable, msg+", IsEditable is not correct")
+
+	as.Equal(string(request.Status), string(apiRequest.Status), msg+", Status is not correct")
+
+	as.verifyApiUser(request.CreatedBy, apiRequest.CreatedBy, msg+", CreatedBy is not correct")
+
+	if request.Provider.ID == 0 {
+		as.Nil(apiRequest.Provider, "Provider should be null but isn't")
+	} else {
+		as.Equal(request.Provider.UUID, apiRequest.Provider.ID, msg+", Provider is not correct")
+	}
+
+	potentialProviders, err := request.GetPotentialProviders(as.DB, models.CurrentUser(ctx))
+	as.NoError(err)
+	as.VerifyPotentialProviders(potentialProviders, apiRequest.PotentialProviders)
+
+	// TODO: continue adding the rest of the api.Request fields...
+}
+
+func (as *ActionSuite) verifyApiUser(user models.User, apiUser api.User, msg string) {
+	as.Equal(user.UUID, apiUser.ID, msg+", ID is not correct")
+	as.Equal(user.Nickname, apiUser.Nickname, msg+", Nickname is not correct")
+
+	avatarURL, err := user.GetPhotoURL(as.DB)
+	as.NoError(err)
+	if avatarURL == nil {
+		as.False(apiUser.AvatarURL.Valid, msg+", AvatarURL should be null but isn't")
+	} else {
+		as.Equal(*avatarURL, apiUser.AvatarURL.String, msg+", AvatarURL is not correct")
+	}
+}
+
+func (as *ActionSuite) VerifyPotentialProviders(expected models.Users, got api.Users) {
+	as.Equal(len(expected), len(got), "wrong number of potential providers")
+
+	// TODO: compare at least some of the data
 }

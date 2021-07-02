@@ -7,7 +7,10 @@ import (
 	"github.com/gofrs/uuid"
 )
 
-type RequestVisibility string
+type (
+	RequestStatus     string
+	RequestVisibility string
+)
 
 // swagger:model
 type Requests []Request
@@ -27,7 +30,7 @@ type Request struct {
 	IsEditable bool `json:"is_editable"`
 
 	// Request status: OPEN, ACCEPTED, DELIVERED, RECEIVED, COMPLETED, REMOVED
-	RequestStatus string `json:"status"`
+	Status RequestStatus `json:"status"`
 
 	// Profile of the user that created this request
 	CreatedBy User `json:"created_by"`
