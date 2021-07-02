@@ -7,7 +7,6 @@ import (
 	"github.com/gobuffalo/buffalo"
 
 	"github.com/silinternational/wecarry-api/api"
-	"github.com/silinternational/wecarry-api/conversions"
 	"github.com/silinternational/wecarry-api/models"
 )
 
@@ -24,7 +23,7 @@ import (
 func usersMe(c buffalo.Context) error {
 	user := models.CurrentUser(c)
 
-	output, err := conversions.ConvertUserPrivate(c, user)
+	output, err := models.ConvertUserPrivate(c, user)
 	if err != nil {
 		return reportError(c, appErrorFromErr(err))
 	}
@@ -86,7 +85,7 @@ func usersMeUpdate(c buffalo.Context) error {
 		return reportError(c, appErrorFromErr(err))
 	}
 
-	output, err := conversions.ConvertUserPrivate(c, user)
+	output, err := models.ConvertUserPrivate(c, user)
 	if err != nil {
 		return reportError(c, appErrorFromErr(err))
 	}

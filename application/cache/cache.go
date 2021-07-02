@@ -5,29 +5,30 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/go-redis/cache/v8"
+	rediscache "github.com/go-redis/cache/v8"
 	"github.com/go-redis/redis/v8"
 
 	"github.com/silinternational/wecarry-api/api"
-	"github.com/silinternational/wecarry-api/conversions"
+	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 )
 
 var (
-	RequestsCache         *cache.Cache
-	PublicRequestsKeyName string = "public"
+	RequestsCache           *rediscache.Cache
+	PrivateRequestKeyPrefix string = "requests-orgname-affiliated_"
+	PublicRequestKey        string = "requests-allusers"
 )
 
 func init() {
 	ring := redis.NewRing(&redis.RingOptions{
 		Addrs: map[string]string{
-			"redis": "redis:6379",
+			domain.Env.RedisInstanceName: domain.Env.RedisInstanceHostPort,
 		},
 	})
 
-	RequestsCache = cache.New(&cache.Options{
+	RequestsCache = rediscache.New(&rediscache.Options{
 		Redis:      ring,
-		LocalCache: cache.NewTinyLFU(1000, time.Minute),
+		LocalCache: rediscache.NewTinyLFU(1000, time.Minute),
 		// use json in lieu of msgpack for encoding/decoding
 		Marshal:   json.Marshal,
 		Unmarshal: json.Unmarshal,
@@ -35,13 +36,18 @@ func init() {
 }
 
 // Wrapper for cache write
-func CacheWrite(ctx context.Context, organization string, requestsMap interface{}) error {
-	return RequestsCache.Set(&cache.Item{
+func cacheWrite(ctx context.Context, key string, data interface{}) error {
+	return RequestsCache.Set(&rediscache.Item{
 		Ctx:   ctx,
-		Key:   organization,
-		Value: requestsMap,
+		Key:   key,
+		Value: data,
 		TTL:   time.Hour,
 	})
+}
+
+// Wrapper for cache read
+func cacheRead(ctx context.Context, organization string, requestsMap interface{}) error {
+	return RequestsCache.Get(ctx, organization, requestsMap)
 }
 
 // Get all requests visible to user in specified organization from cache, fetching data from database if needed
@@ -59,7 +65,7 @@ func GetVisibleRequests(ctx context.Context, orgaziation models.Organization) ([
 	}
 
 	// compose them to get list of all requests visible to the current user
-	visibleRequestsList := make([]api.RequestAbridged, len(publicRequestsMap)+len(privateRequestsMap))
+	visibleRequestsList := []api.RequestAbridged{}
 	for _, privateRequest := range privateRequestsMap {
 		visibleRequestsList = append(visibleRequestsList, privateRequest)
 	}
@@ -68,11 +74,6 @@ func GetVisibleRequests(ctx context.Context, orgaziation models.Organization) ([
 	}
 
 	return visibleRequestsList, nil
-}
-
-// Wrapper for cache read
-func CacheRead(ctx context.Context, organization string, requestsMap interface{}) error {
-	return RequestsCache.Get(ctx, organization, requestsMap)
 }
 
 // Rebuild cache after a request is created or updated
@@ -88,13 +89,13 @@ func CacheRebuildOnChangedRequest(ctx context.Context, organization models.Organ
 		// was cached privately, but request visbility has completed. Just need to remove from private cache.
 		if cachedPrivately && isCompleted(request) {
 			delete(requestsMap, request.UUID.String())
-			return CacheWrite(ctx, organization.Name, requestsMap)
+			return cacheWrite(ctx, PrivateRequestKeyPrefix+organization.Name, requestsMap)
 		}
 		// was cached privately, but request visbility has changed to public.
 		// Need to remove from private and add to public cache.
 		if cachedPrivately && isPublic(request) {
 			delete(requestsMap, request.UUID.String())
-			if err := CacheWrite(ctx, organization.Name, requestsMap); err != nil {
+			if err := cacheWrite(ctx, PrivateRequestKeyPrefix+organization.Name, requestsMap); err != nil {
 				return err
 			}
 		}
@@ -102,19 +103,18 @@ func CacheRebuildOnChangedRequest(ctx context.Context, organization models.Organ
 		// should be cached privately. Need to update or create an entry in the private cache.
 		// Cannot return yet in case the request was previously public (must remove from public cache)
 		if isPrivate(request) {
-			requestAbridged, err := conversions.ConvertRequestToAPITypeAbridged(ctx, request)
+			requestAbridged, err := models.ConvertRequestToAPITypeAbridged(ctx, request)
 			if err != nil {
 				return err
 			}
 			requestsMap[request.UUID.String()] = requestAbridged
-			if err := CacheWrite(ctx, organization.Name, requestsMap); err != nil {
+			if err := cacheWrite(ctx, PrivateRequestKeyPrefix+organization.Name, requestsMap); err != nil {
 				return err
 			}
 		}
-
 		// if request was and remains public and active, we update it below
-
 	}
+
 	// update public cache
 	newEntryCreated, requestsMap, err = getOrCreateCacheEntryPublic(ctx)
 	if err != nil {
@@ -126,13 +126,13 @@ func CacheRebuildOnChangedRequest(ctx context.Context, organization models.Organ
 		// was cached publicly, but request visbility has completed. Just need to remove from public cache.
 		if cachedPublicly && isCompleted(request) {
 			delete(requestsMap, request.UUID.String())
-			return CacheWrite(ctx, organization.Name, requestsMap)
+			return cacheWrite(ctx, PublicRequestKey, requestsMap)
 		}
 		// was cached publicly, but request visbility has changed to private.
 		// Already added to private cache, now need to add to public cache.
 		if cachedPublicly && isPrivate(request) {
 			delete(requestsMap, request.UUID.String())
-			if err := CacheWrite(ctx, organization.Name, requestsMap); err != nil {
+			if err := cacheWrite(ctx, PublicRequestKey, requestsMap); err != nil {
 				return err
 			}
 		}
@@ -140,12 +140,12 @@ func CacheRebuildOnChangedRequest(ctx context.Context, organization models.Organ
 		// should be cached publicly. Just need to update or create an entry in the public cache,
 		// as we've already dealt with the case where visibility was originally private
 		if isPublic(request) {
-			requestAbridged, err := conversions.ConvertRequestToAPITypeAbridged(ctx, request)
+			requestAbridged, err := models.ConvertRequestToAPITypeAbridged(ctx, request)
 			if err != nil {
 				return err
 			}
 			requestsMap[request.UUID.String()] = requestAbridged
-			return CacheWrite(ctx, organization.Name, requestsMap)
+			return cacheWrite(ctx, PublicRequestKey, requestsMap)
 		}
 	}
 	return nil
@@ -156,7 +156,7 @@ func CacheRebuildOnChangedRequest(ctx context.Context, organization models.Organ
 func getOrCreateCacheEntryPrivate(ctx context.Context, organization models.Organization) (bool, map[string]api.RequestAbridged, error) {
 	var requestsMap map[string]api.RequestAbridged
 	// if a cache value does not exist, we create it
-	if err := CacheRead(ctx, organization.Name, requestsMap); err != nil {
+	if err := cacheRead(ctx, PrivateRequestKeyPrefix+organization.Name, requestsMap); err != nil {
 		tx := models.Tx(ctx)
 
 		var org models.Organization
@@ -172,7 +172,7 @@ func getOrCreateCacheEntryPrivate(ctx context.Context, organization models.Organ
 			return false, nil, err
 		}
 
-		requestsList, err := conversions.ConvertRequestsAbridged(ctx, requests)
+		requestsList, err := models.ConvertRequestsAbridged(ctx, requests)
 		if err != nil {
 			return false, nil, err
 		}
@@ -181,7 +181,7 @@ func getOrCreateCacheEntryPrivate(ctx context.Context, organization models.Organ
 			requestsMap[requestEntry.ID.String()] = requestEntry
 		}
 
-		return true, requestsMap, CacheWrite(ctx, organization.Name, requestsMap)
+		return true, requestsMap, cacheWrite(ctx, PrivateRequestKeyPrefix+organization.Name, requestsMap)
 	}
 
 	return false, requestsMap, nil
@@ -192,7 +192,7 @@ func getOrCreateCacheEntryPrivate(ctx context.Context, organization models.Organ
 func getOrCreateCacheEntryPublic(ctx context.Context) (bool, map[string]api.RequestAbridged, error) {
 	var requestsMap map[string]api.RequestAbridged
 	// if a cache value does not exist, we create it
-	if err := CacheRead(ctx, PublicRequestsKeyName, requestsMap); err != nil {
+	if err := cacheRead(ctx, PublicRequestKey, requestsMap); err != nil {
 		tx := models.Tx(ctx)
 
 		// RequestFilterParams is currently empty because the UI is not using it
@@ -202,7 +202,7 @@ func getOrCreateCacheEntryPublic(ctx context.Context) (bool, map[string]api.Requ
 		if err := requests.FindPublic(tx, filter); err != nil {
 			return false, nil, err
 		}
-		requestsList, err := conversions.ConvertRequestsAbridged(ctx, requests)
+		requestsList, err := models.ConvertRequestsAbridged(ctx, requests)
 		if err != nil {
 			return false, nil, err
 		}
@@ -211,7 +211,7 @@ func getOrCreateCacheEntryPublic(ctx context.Context) (bool, map[string]api.Requ
 			requestsMap[requestEntry.ID.String()] = requestEntry
 		}
 
-		return true, requestsMap, CacheWrite(ctx, PublicRequestsKeyName, requestsMap)
+		return true, requestsMap, cacheWrite(ctx, PublicRequestKey, requestsMap)
 	}
 	return false, requestsMap, nil
 }

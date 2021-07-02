@@ -1,4 +1,4 @@
-version: "3.7"
+version: "2.4"
 
 services:
   buffalo:
@@ -28,6 +28,7 @@ services:
       - db
       - minio
     command: buffalo dev
+    mem_limit: 2000m
 
   test:
     build:

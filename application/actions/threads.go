@@ -8,7 +8,6 @@ import (
 	"github.com/gobuffalo/buffalo/render"
 
 	"github.com/silinternational/wecarry-api/api"
-	"github.com/silinternational/wecarry-api/conversions"
 	"github.com/silinternational/wecarry-api/models"
 )
 
@@ -36,7 +35,7 @@ func threadsMine(c buffalo.Context) error {
 		})
 	}
 
-	output, err := conversions.ConvertThreadsToAPIType(c, threads)
+	output, err := models.ConvertThreadsToAPIType(c, threads)
 	if err != nil {
 		return reportError(c, appErrorFromErr(err))
 	}
@@ -107,7 +106,7 @@ func threadsMarkAsRead(c buffalo.Context) error {
 	}
 
 	threads := models.Threads{thread}
-	converted, err := conversions.ConvertThreadsToAPIType(c, threads)
+	converted, err := models.ConvertThreadsToAPIType(c, threads)
 	if err != nil {
 		return reportError(c, appErrorFromErr(err))
 	}

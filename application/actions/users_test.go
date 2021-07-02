@@ -6,12 +6,13 @@ import (
 	"github.com/gobuffalo/nulls"
 	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/internal/test"
+	"github.com/silinternational/wecarry-api/models"
 )
 
 func (as *ActionSuite) Test_convertUserPrivate() {
 	uf := test.CreateUserFixtures(as.DB, 1)
 	user := uf.Users[0]
-	org, err := convertOrganizationToAPIType(uf.Organization)
+	org, err := models.ConvertOrganizationToAPIType(uf.Organization)
 	as.NoError(err)
 
 	want := api.UserPrivate{
@@ -21,7 +22,7 @@ func (as *ActionSuite) Test_convertUserPrivate() {
 		AvatarURL:     user.AuthPhotoURL,
 		Organizations: []api.Organization{org},
 	}
-	got, _ := convertUserPrivate(test.Ctx(), user)
+	got, _ := models.ConvertUserPrivate(test.Ctx(), user)
 	as.Equal(want, got)
 
 	// with Photo
@@ -36,7 +37,7 @@ func (as *ActionSuite) Test_convertUserPrivate() {
 		AvatarURL:     nulls.NewString(photo.URL),
 		Organizations: []api.Organization{org},
 	}
-	got, _ = convertUserPrivate(test.Ctx(), user)
+	got, _ = models.ConvertUserPrivate(test.Ctx(), user)
 	as.Equal(want, got)
 }
 
@@ -49,7 +50,7 @@ func (as *ActionSuite) Test_convertUser() {
 		Nickname:  user.Nickname,
 		AvatarURL: user.AuthPhotoURL,
 	}
-	got, _ := convertUser(test.Ctx(), user)
+	got, _ := models.ConvertUser(test.Ctx(), user)
 	as.Equal(want, got)
 
 	// with Photo
@@ -61,7 +62,7 @@ func (as *ActionSuite) Test_convertUser() {
 		Nickname:  user.Nickname,
 		AvatarURL: nulls.NewString(photo.URL),
 	}
-	got, _ = convertUser(test.Ctx(), user)
+	got, _ = models.ConvertUser(test.Ctx(), user)
 	as.Equal(want, got)
 }
 

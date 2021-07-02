@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
@@ -850,4 +851,61 @@ func (u *User) RemovePreferences(tx *pop.Connection) error {
 	}
 	var p UserPreference
 	return p.removeAll(tx, u.ID)
+}
+
+// converts from models.User to api.UserPrivate
+func ConvertUserPrivate(ctx context.Context, user User) (api.UserPrivate, error) {
+	tx := Tx(ctx)
+
+	output := api.UserPrivate{}
+	if err := api.ConvertToOtherType(user, &output); err != nil {
+		return api.UserPrivate{}, err
+	}
+	output.ID = user.UUID
+
+	photoURL, err := user.GetPhotoURL(tx)
+	if err != nil {
+		return api.UserPrivate{}, err
+	}
+
+	if photoURL != nil {
+		output.AvatarURL = nulls.NewString(*photoURL)
+	}
+
+	if user.FileID.Valid {
+		// depends on the earlier call to GetPhotoURL to hydrate PhotoFile
+		output.PhotoID = nulls.NewUUID(user.PhotoFile.UUID)
+	}
+
+	organizations, err := user.GetOrganizations(tx)
+	if err != nil {
+		return api.UserPrivate{}, err
+	}
+	output.Organizations, err = ConvertOrganizationsToAPIType(organizations)
+	if err != nil {
+		return api.UserPrivate{}, err
+	}
+	return output, nil
+}
+
+// converts from models.User to api.UserPrivate
+func ConvertUser(ctx context.Context, user User) (api.User, error) {
+	tx := Tx(ctx)
+
+	output := api.User{}
+	if err := api.ConvertToOtherType(user, &output); err != nil {
+		return api.User{}, err
+	}
+	output.ID = user.UUID
+
+	photoURL, err := user.GetPhotoURL(tx)
+	if err != nil {
+		return api.User{}, err
+	}
+
+	if photoURL != nil {
+		output.AvatarURL = nulls.NewString(*photoURL)
+	}
+
+	return output, nil
 }

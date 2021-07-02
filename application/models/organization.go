@@ -15,6 +15,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/pkg/errors"
 
+	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/auth"
 	"github.com/silinternational/wecarry-api/auth/azureadv2"
 	"github.com/silinternational/wecarry-api/auth/google"
@@ -332,4 +333,30 @@ func (o *Organization) RemoveFile(tx *pop.Connection) error {
 func (o *Organizations) FindByIDs(tx *pop.Connection, ids []int) error {
 	ids = domain.UniquifyIntSlice(ids)
 	return tx.Where("id in (?)", ids).All(o)
+}
+
+// converts []models.Organization to []api.Organization
+func ConvertOrganizationsToAPIType(organizations Organizations) ([]api.Organization, error) {
+	output := make([]api.Organization, len(organizations))
+	for i := range output {
+		o, err := ConvertOrganizationToAPIType(organizations[i])
+		if err != nil {
+			return nil, err
+		}
+		output[i] = o
+	}
+
+	return output, nil
+}
+
+// converts models.Organization to api.Organization
+func ConvertOrganizationToAPIType(organization Organization) (api.Organization, error) {
+	var output api.Organization
+	if err := api.ConvertToOtherType(organization, &output); err != nil {
+		err = errors.New("error converting organization to api.organization: " + err.Error())
+		return api.Organization{}, err
+	}
+	output.ID = organization.UUID
+
+	return output, nil
 }
