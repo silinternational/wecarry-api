@@ -320,7 +320,7 @@ func loadRequestOrganization(ctx context.Context, request models.Request) (api.O
 
 	var outputOrganization api.Organization
 	if err := api.ConvertToOtherType(organization, &outputOrganization); err != nil {
-		err = errors.New("error converting organization to api.File: " + err.Error())
+		err = errors.New("error converting organization to api.Organization: " + err.Error())
 		return api.Organization{}, err
 	}
 	outputOrganization.ID = organization.UUID
