@@ -331,3 +331,39 @@ func ConvertThreadsToAPIType(ctx context.Context, threads Threads) (api.Threads,
 
 	return output, nil
 }
+
+func ConvertThread(ctx context.Context, thread Thread) (api.Thread, error) {
+	var output api.Thread
+	if err := api.ConvertToOtherType(thread, &output); err != nil {
+		err = errors.New("error converting thread to api.thread: " + err.Error())
+		return api.Thread{}, err
+	}
+
+	// Hydrate the thread's messages, participants
+
+	messagesOutput, err := ConvertMessagesToAPIType(ctx, thread.Messages)
+	if err != nil {
+		return api.Thread{}, err
+	}
+	output.Messages = &messagesOutput
+
+	// Not converting Participants, since that happens automatically  above and
+	// because it doesn't have nested related objects
+	for i := range output.Participants {
+		output.Participants[i].ID = thread.Participants[i].UUID
+	}
+
+	if thread.Request.ID > 0 {
+		requestOutput, err := ConvertRequestToAPIType(ctx, thread.Request)
+		if err != nil {
+			return api.Thread{}, err
+		}
+
+		output.Request = &requestOutput
+	} else {
+		output.Request = nil
+	}
+
+	output.ID = thread.UUID
+	return output, nil
+}

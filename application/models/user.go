@@ -517,13 +517,13 @@ func (u *User) Save(tx *pop.Connection) error {
 	if err := save(tx, u); err != nil {
 		appError := api.AppError{Err: err}
 		if strings.Contains(err.Error(), "Nickname must have a visible character") {
-			appError.Key = api.UserInvisibleNickname
+			appError.Key = api.ErrorUserInvisibleNickname
 			appError.Category = api.CategoryUser
 		} else if strings.Contains(err.Error(), `duplicate key value violates unique constraint "users_nickname_idx"`) {
-			appError.Key = api.UserDuplicateNickname
+			appError.Key = api.ErrorUserDuplicateNickname
 			appError.Category = api.CategoryUser
 		} else {
-			appError.Key = api.UserUpdateError
+			appError.Key = api.ErrorUserUpdate
 			appError.Category = api.CategoryInternal
 		}
 		return &appError

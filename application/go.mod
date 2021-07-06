@@ -24,6 +24,7 @@ require (
 	github.com/gobuffalo/nulls v0.4.0
 	github.com/gobuffalo/packr/v2 v2.8.1
 	github.com/gobuffalo/plush/v4 v4.1.5 // indirect
+	github.com/gobuffalo/pop v4.13.1+incompatible
 	github.com/gobuffalo/pop/v5 v5.3.4
 	github.com/gobuffalo/suite/v3 v3.0.2
 	github.com/gobuffalo/validate/v3 v3.3.0
@@ -41,7 +42,7 @@ require (
 	github.com/paganotoni/sendgrid-sender v1.0.5
 	github.com/pkg/errors v0.9.1
 	github.com/rogpeppe/go-internal v1.8.0 // indirect
-	github.com/rollbar/rollbar-go v1.1.0
+	github.com/rollbar/rollbar-go v1.4.1
 	github.com/rs/cors v1.6.0
 	github.com/russellhaering/gosaml2 v0.3.1
 	github.com/russellhaering/goxmldsig v0.0.0-20180430223755-7acd5e4a6ef7

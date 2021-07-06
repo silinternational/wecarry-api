@@ -1176,7 +1176,7 @@ func ConvertRequestToAPIType(ctx context.Context, request Request) (api.Request,
 	if err != nil {
 		return api.Request{}, err
 	}
-	output.CreatedBy = &createdBy
+	output.CreatedBy = createdBy
 
 	origin, err := hydrateRequestOrigin(ctx, request, tx)
 	if err != nil {
@@ -1188,7 +1188,7 @@ func ConvertRequestToAPIType(ctx context.Context, request Request) (api.Request,
 	if err != nil {
 		return api.Request{}, err
 	}
-	output.Destination = &destination
+	output.Destination = destination
 
 	provider, err := hydrateProvider(ctx, request, tx)
 	if err != nil {
@@ -1207,7 +1207,7 @@ func ConvertRequestToAPIType(ctx context.Context, request Request) (api.Request,
 	if err != nil {
 		return api.Request{}, err
 	}
-	output.Organization = &organization
+	output.Organization = organization
 
 	return output, nil
 }

@@ -1,8 +1,4 @@
-package models
-
-import "github.com/silinternational/wecarry-api/api"
-
-type RequestSize string
+package api
 
 const (
 	RequestSizeTiny   RequestSize = "TINY"
@@ -12,11 +8,13 @@ const (
 	RequestSizeXlarge RequestSize = "XLARGE"
 )
 
+type RequestSize string
+
 func (r RequestSize) String() string {
 	return string(r)
 }
 
-func (r RequestSize) isLargerOrSame(other RequestSize) bool {
+func (r RequestSize) IsLargerOrSame(other RequestSize) bool {
 	// use reverse order of values so undefined is larger than X-large
 	sizes := map[RequestSize]int{
 		RequestSizeTiny:   5,
@@ -27,15 +25,4 @@ func (r RequestSize) isLargerOrSame(other RequestSize) bool {
 	}
 
 	return sizes[r] <= sizes[other]
-}
-
-func GetRequestSizeFromAPISize(apiSize api.RequestSize) RequestSize {
-	sizeMap := map[api.RequestSize]RequestSize{
-		api.RequestSizeTiny:   RequestSizeTiny,
-		api.RequestSizeSmall:  RequestSizeSmall,
-		api.RequestSizeMedium: RequestSizeMedium,
-		api.RequestSizeLarge:  RequestSizeLarge,
-		api.RequestSizeXlarge: RequestSizeXlarge,
-	}
-	return sizeMap[apiSize]
 }
