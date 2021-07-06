@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
@@ -836,6 +837,63 @@ func (as *ActionSuite) Test_RequestActions() {
 				actions[request.ID] = request.Actions
 			}
 			as.Equal(tc.want, actions)
+		})
+	}
+}
+
+func (as *ActionSuite) Test_requestsGet() {
+	f := createFixturesForRequestQuery(as)
+
+	tests := []struct {
+		name       string
+		user       models.User
+		requestID  string
+		wantStatus int
+	}{
+		{
+			name:       "authn error",
+			user:       models.User{},
+			requestID:  f.Requests[0].UUID.String(),
+			wantStatus: http.StatusUnauthorized,
+		},
+		{
+			name:       "authz error",
+			user:       f.Users[1],
+			requestID:  f.Requests[3].UUID.String(),
+			wantStatus: http.StatusNotFound,
+		},
+		{
+			name:       "bad request ID",
+			user:       f.Users[1],
+			requestID:  "1",
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name:       "not found",
+			user:       f.Users[1],
+			requestID:  domain.GetUUID().String(),
+			wantStatus: http.StatusNotFound,
+		},
+		{
+			name:       "no error",
+			user:       f.Users[1],
+			requestID:  f.Requests[0].UUID.String(),
+			wantStatus: http.StatusOK,
+		},
+	}
+	for _, tt := range tests {
+		as.T().Run(tt.name, func(t *testing.T) {
+			req := as.JSON("/requests/" + tt.requestID)
+			req.Headers["Authorization"] = fmt.Sprintf("Bearer %s", tt.user.Nickname)
+			req.Headers["content-type"] = "application/json"
+			res := req.Get()
+
+			body := res.Body.String()
+			as.Equal(tt.wantStatus, res.Code, "incorrect status code returned, body: %s", body)
+
+			if tt.wantStatus == http.StatusOK {
+				as.Contains(body, fmt.Sprintf(`"id":"%s"`, tt.requestID))
+			}
 		})
 	}
 }
