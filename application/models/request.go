@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -923,6 +924,7 @@ func (r *Request) SetOrigin(tx *pop.Connection, location Location) error {
 // IsEditable response with true if the given user is the owner of the request or an admin,
 // and it is not in a locked status.
 func (r *Request) IsEditable(tx *pop.Connection, user User) (bool, error) {
+	// TODO: remove the error return value from this function, it's really annoying
 	if user.ID <= 0 {
 		return false, errors.New("user.ID must be a valid primary key")
 	}
@@ -1083,4 +1085,9 @@ func (r *Request) GetCurrentActions(tx *pop.Connection, user User) ([]string, er
 func (r *Request) Creator(tx *pop.Connection) (User, error) {
 	var u User
 	return u, tx.Find(&u, r.CreatedByID)
+}
+
+// Load loads the requested fields from the database
+func (r *Request) Load(ctx context.Context, fields ...string) error {
+	return Tx(ctx).Load(r, fields...)
 }

@@ -905,36 +905,75 @@ func (as *ActionSuite) verifyApiRequest(ctx context.Context, request models.Requ
 
 	as.Equal(string(request.Status), string(apiRequest.Status), msg+", Status is not correct")
 
-	as.verifyApiUser(request.CreatedBy, apiRequest.CreatedBy, msg+", CreatedBy is not correct")
+	as.verifyUser(request.CreatedBy, apiRequest.CreatedBy, msg+", CreatedBy is not correct")
 
-	if request.Provider.ID == 0 {
-		as.Nil(apiRequest.Provider, "Provider should be null but isn't")
+	if request.ProviderID.Valid {
+		as.NotNil(apiRequest.Provider, msg+", Provider is null but should not be")
+		as.verifyUser(request.Provider, *apiRequest.Provider, msg+", Provider is not correct")
+
 	} else {
-		as.Equal(request.Provider.UUID, apiRequest.Provider.ID, msg+", Provider is not correct")
+		as.Nil(apiRequest.Provider, msg+", Provider should be null but is not")
 	}
 
 	potentialProviders, err := request.GetPotentialProviders(as.DB, models.CurrentUser(ctx))
 	as.NoError(err)
-	as.VerifyPotentialProviders(potentialProviders, apiRequest.PotentialProviders)
+	as.verifyPotentialProviders(potentialProviders, apiRequest.PotentialProviders, msg+", potential providers are not correct")
 
-	// TODO: continue adding the rest of the api.Request fields...
-}
+	as.verifyOrganization(request.Organization, apiRequest.Organization, msg+", Organization is not correct")
 
-func (as *ActionSuite) verifyApiUser(user models.User, apiUser api.User, msg string) {
-	as.Equal(user.UUID, apiUser.ID, msg+", ID is not correct")
-	as.Equal(user.Nickname, apiUser.Nickname, msg+", Nickname is not correct")
+	as.Equal(string(request.Visibility), string(apiRequest.Visibility), msg+", Visibility is not correct")
 
-	avatarURL, err := user.GetPhotoURL(as.DB)
-	as.NoError(err)
-	if avatarURL == nil {
-		as.False(apiUser.AvatarURL.Valid, msg+", AvatarURL should be null but isn't")
+	as.Equal(request.Title, apiRequest.Title, msg+", Title is not correct")
+
+	as.Equal(request.Description, apiRequest.Description, msg+", Description is not correct")
+
+	as.verifyLocation(request.Destination, apiRequest.Destination, msg+", Destination is not correct")
+
+	if request.OriginID.Valid {
+		as.NotNil(apiRequest.Origin, msg+", Origin is null but should not be")
+		as.verifyLocation(request.Origin, *apiRequest.Origin, msg+", Origin is not correct")
 	} else {
-		as.Equal(*avatarURL, apiUser.AvatarURL.String, msg+", AvatarURL is not correct")
+		as.Nil(apiRequest.Origin, msg+", Origin should be null but is not")
 	}
-}
 
-func (as *ActionSuite) VerifyPotentialProviders(expected models.Users, got api.Users) {
-	as.Equal(len(expected), len(got), "wrong number of potential providers")
+	as.Equal(string(request.Size), string(apiRequest.Size), msg+", Size is not correct")
 
-	// TODO: compare at least some of the data
+	as.True(request.CreatedAt.Equal(apiRequest.CreatedAt), msg+", CreatedAt is not correct")
+
+	as.True(request.UpdatedAt.Equal(apiRequest.UpdatedAt), msg+", UpdatedAt is not correct")
+
+	if request.NeededBefore.Valid {
+		as.NotNil(apiRequest.NeededBefore, msg+", NeededBefore is null but should not be")
+		as.True(request.NeededBefore.Time.Equal(apiRequest.NeededBefore.Time), msg+", NeededBefore is not correct")
+	} else {
+		as.False(apiRequest.NeededBefore.Valid, msg+", NeededBefore should be null but is not")
+	}
+
+	if request.Kilograms.Valid {
+		as.NotNil(apiRequest.Kilograms, msg+", Kilograms is null but should not be")
+		as.Equal(request.Kilograms, apiRequest.Kilograms, msg+", Kilograms is not correct")
+	} else {
+		as.False(apiRequest.Kilograms.Valid, msg+", Kilograms should be null but is not")
+	}
+
+	if request.URL.Valid {
+		as.NotNil(apiRequest.URL, msg+", URL is null but should not be")
+		as.Equal(request.URL, apiRequest.URL, msg+", URL is not correct")
+	} else {
+		as.False(apiRequest.URL.Valid, msg+", URL should be null but is not")
+	}
+
+	if request.FileID.Valid {
+		as.NotNil(apiRequest.Photo, msg+", Photo is null but should not be")
+		as.verifyFile(request.PhotoFile, *apiRequest.Photo, msg+", Photo is not correct")
+	} else {
+		as.Nil(apiRequest.Photo, msg+", Photo should be null but is not")
+	}
+
+	if request.MeetingID.Valid {
+		as.NotNil(apiRequest.Meeting, msg+", Meeting is null but should not be")
+		as.verifyMeeting(request.Meeting, *apiRequest.Meeting, msg+", Meeting is not correct")
+	} else {
+		as.Nil(apiRequest.Meeting, msg+", Meeting should be null but is not")
+	}
 }

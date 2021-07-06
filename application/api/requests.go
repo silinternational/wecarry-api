@@ -75,7 +75,7 @@ type Request struct {
 	Kilograms nulls.Float64 `json:"kilograms"`
 
 	// Optional URL to further describe or point to detail about the item, limited to 255 characters
-	Url nulls.String `json:"url"`
+	URL nulls.String `json:"url"`
 
 	// Photo of the item
 	Photo *File `json:"photo"`

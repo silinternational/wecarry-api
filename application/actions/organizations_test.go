@@ -13,11 +13,12 @@ func (as *ActionSuite) Test_convertOrganizationToAPIType() {
 		UUID: u,
 		Name: "test org",
 	}
-	want := api.Organization{
-		ID:   u,
-		Name: "test org",
-	}
 	got, err := convertOrganizationToAPIType(organization)
 	as.NoError(err)
-	as.Equal(want, got)
+	as.verifyOrganization(organization, got, "Organization is not correct")
+}
+
+func (as *ActionSuite) verifyOrganization(expected models.Organization, actual api.Organization, msg string) {
+	as.Equal(expected.UUID, actual.ID, msg+", ID is not correct")
+	as.Equal(expected.Name, actual.Name, msg+", Name is not correct")
 }
