@@ -861,10 +861,20 @@ func (as *ActionSuite) Test_convertRequest() {
 	min.FileID = nulls.Int{}
 	min.MeetingID = nulls.Int{}
 
+	// because Pop doesn't update child objects when the ID changes to 0
+	min.Provider = models.User{}
+	min.Origin = models.Location{}
+	min.PhotoFile = models.File{}
+	min.Meeting = models.Meeting{}
+
+	as.NoError(as.DB.Save(&min))
+
 	full := requestFixtures[1]
 	full.ProviderID = nulls.NewInt(provider.ID)
 	full.FileID = nulls.NewInt(test.CreateFileFixture(as.DB).ID)
 	full.MeetingID = nulls.NewInt(meeting.ID)
+
+	as.NoError(as.DB.Save(&full))
 
 	tests := []struct {
 		name    string
