@@ -6,15 +6,14 @@ import (
 	"github.com/silinternational/wecarry-api/models"
 )
 
-func (as *ActionSuite) Test_convertOrganizationToAPIType() {
+func (as *ActionSuite) Test_convertOrganization() {
 	u := domain.GetUUID()
 
 	organization := models.Organization{
 		UUID: u,
 		Name: "test org",
 	}
-	got, err := convertOrganizationToAPIType(organization)
-	as.NoError(err)
+	got := convertOrganization(organization)
 	as.verifyOrganization(organization, got, "Organization is not correct")
 }
 
