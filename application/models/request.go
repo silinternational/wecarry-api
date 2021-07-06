@@ -227,6 +227,7 @@ type Request struct {
 	PhotoFile   File         `belongs_to:"files" fk_id:"FileID"`
 	Destination Location     `belongs_to:"locations"`
 	Origin      Location     `belongs_to:"locations"`
+	Meeting     Meeting      `belongs_to:"meetings"`
 }
 
 // RequestCreatedEventData holds data needed by the New Request event listener
@@ -1006,8 +1007,8 @@ func (r *Request) GetAudience(tx *pop.Connection) (Users, error) {
 	return users, nil
 }
 
-// Meeting reads the meeting record, if it exists, and returns a pointer to the object.
-func (r *Request) Meeting(tx *pop.Connection) (*Meeting, error) {
+// GetMeeting reads the meeting record, if it exists, and returns a pointer to the object.
+func (r *Request) GetMeeting(tx *pop.Connection) (*Meeting, error) {
 	if !r.MeetingID.Valid {
 		return nil, nil
 	}

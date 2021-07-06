@@ -2038,7 +2038,7 @@ func (ms *ModelSuite) TestRequest_Meeting() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := test.request.Meeting(ms.DB)
+			got, err := test.request.GetMeeting(ms.DB)
 			ms.NoError(err)
 			if test.want == nil {
 				ms.Nil(got)
