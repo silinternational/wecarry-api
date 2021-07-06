@@ -20,10 +20,10 @@ type File struct {
 	ID uuid.UUID `json:"id"`
 
 	// file content can be loaded from the given URL if the expiration time has not passed, limited to 1,024 characters
-	Url string `json:"url"`
+	URL string `json:"url"`
 
 	// expiration time of the URL, re-issue the query to get a new URL and expiration time
-	UrlExpiration time.Time `json:"url_expiration"`
+	URLExpiration time.Time `json:"url_expiration"`
 
 	// filename with extension, limited to 255 characters, e.g. `image.jpg`
 	Name string `json:"name"`
