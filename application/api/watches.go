@@ -34,3 +34,45 @@ type Watch struct {
 	// Maximum size of a requested item
 	Size string `json:"size"`
 }
+
+// Input object to create a new Watch for the user
+// swagger:model
+type WatchInput struct {
+	// Short description, as named by the Watch creator
+	Name string
+
+	// Destination to watch. If a new request has a destination near this location, a notification will be sent.
+	Destination *LocationInput
+
+	// Origin to watch. If a new request has an origin near this location, a notification will be sent.
+	Origin *LocationInput
+
+	// Meeting to watch. Notifications will be sent for new requests tied to this event.
+	MeetingID *string
+
+	// Search by text in `title` or `description`
+	SearchText *string
+
+	// Maximum size of a requested item
+	Size *RequestSize
+}
+
+func (w WatchInput) IsEmpty() bool {
+	if w.Destination != nil || w.Origin != nil {
+		return false
+	}
+
+	if w.SearchText != nil && *w.SearchText != "" {
+		return false
+	}
+
+	if w.Size != nil && w.Size.String() != "" {
+		return false
+	}
+
+	if w.MeetingID != nil && *w.MeetingID != "" {
+		return false
+	}
+
+	return true
+}

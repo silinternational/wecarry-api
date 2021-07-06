@@ -23,6 +23,7 @@ import (
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/envy"
 	mwi18n "github.com/gobuffalo/mw-i18n"
+	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/packr/v2"
 	"github.com/gobuffalo/validate/v3"
 	"github.com/gobuffalo/validate/v3/validators"
@@ -788,4 +789,12 @@ func getExtras(c buffalo.Context) map[string]interface{} {
 	}
 
 	return extras
+}
+
+func SetOptionalFloatField(input *float64, output *nulls.Float64) {
+	if input != nil {
+		*output = nulls.NewFloat64(*input)
+		return
+	}
+	*output = nulls.Float64{}
 }
