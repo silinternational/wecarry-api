@@ -95,7 +95,7 @@ func (as *ActionSuite) Test_WatchesCreate() {
 			},
 			user:         notOwner,
 			wantStatus:   http.StatusBadRequest,
-			wantContains: api.WatchInputMeetingFailure.String(),
+			wantContains: api.ErrorWatchInputMeetingFailure.String(),
 		},
 		{
 			name: "just give the name field",
@@ -104,7 +104,7 @@ func (as *ActionSuite) Test_WatchesCreate() {
 			},
 			user:         owner,
 			wantStatus:   http.StatusBadRequest,
-			wantContains: api.WatchInputEmpty.String(),
+			wantContains: api.ErrorWatchInputEmpty.String(),
 		},
 		{
 			name: "just give the search text field",
@@ -195,7 +195,7 @@ func (as *ActionSuite) Test_WatchesCreate() {
 			}
 
 			as.Equal(tc.watch.SearchText, dbWatch.SearchText.String, "incorrect Watch search text")
-			as.Equal(tc.watch.Size.String(), dbWatch.Size.String(), "incorrect Watch search text")
+			as.Equal(tc.watch.Size.String(), dbWatch.Size.String(), "incorrect Watch size")
 		})
 	}
 }

@@ -31,19 +31,13 @@ import (
 func watchesCreate(c buffalo.Context) error {
 	var input api.WatchInput
 	if err := StrictBind(c, &input); err != nil {
-		return reportError(c, &api.AppError{
-			HttpStatus: http.StatusBadRequest,
-			Key:        api.InvalidRequestBody,
-			Err:        errors.New("unable to unmarshal Watch data into WatchInput struct, error: " + err.Error()),
-		})
+		err = errors.New("unable to unmarshal Watch data into WatchInput struct, error: " + err.Error())
+		return reportError(c, api.NewAppError(err, api.ErrorInvalidRequestBody, api.CategoryUser))
 	}
 
 	if input.IsEmpty() {
-		return reportError(c, &api.AppError{
-			HttpStatus: http.StatusBadRequest,
-			Key:        api.WatchInputEmpty,
-			Err:        errors.New("empty WatchInput is not allowed"),
-		})
+		err := errors.New("empty WatchInput is not allowed")
+		return reportError(c, api.NewAppError(err, api.ErrorWatchInputEmpty, api.CategoryUser))
 	}
 
 	cUser := models.CurrentUser(c)
@@ -51,43 +45,31 @@ func watchesCreate(c buffalo.Context) error {
 
 	newWatch, err := convertWatchInput(tx, input, cUser)
 	if err != nil {
-		return reportError(c, &api.AppError{
-			HttpStatus: http.StatusBadRequest,
-			Key:        api.WatchInputMeetingFailure,
-			Err:        errors.New("unable to find Meeting related to a new Watch, error: " + err.Error()),
-		})
+		err := errors.New("unable to find Meeting related to a new Watch, error: " + err.Error())
+		return reportError(c, api.NewAppError(err, api.ErrorWatchInputMeetingFailure, api.CategoryUser))
 	}
 
 	if input.Destination != nil {
-		location := convertLocation(*input.Destination)
+		location := convertLocationInput(*input.Destination)
 		if err = location.Create(tx); err != nil {
-			return reportError(c, &api.AppError{
-				HttpStatus: http.StatusInternalServerError,
-				Key:        api.LocationCreateFailure,
-				Err:        errors.New("unable to create the destination related to a new Watch, error: " + err.Error()),
-			})
+			err := errors.New("unable to create the destination related to a new Watch, error: " + err.Error())
+			return reportError(c, api.NewAppError(err, api.ErrorLocationCreateFailure, api.CategoryInternal))
 		}
 		newWatch.DestinationID = nulls.NewInt(location.ID)
 	}
 
 	if input.Origin != nil {
-		location := convertLocation(*input.Origin)
+		location := convertLocationInput(*input.Origin)
 		if err = location.Create(tx); err != nil {
-			return reportError(c, &api.AppError{
-				HttpStatus: http.StatusInternalServerError,
-				Key:        api.LocationCreateFailure,
-				Err:        errors.New("unable to create the origin related to a new Watch, error: " + err.Error()),
-			})
+			err := errors.New("unable to create the origin related to a new Watch, error: " + err.Error())
+			return reportError(c, api.NewAppError(err, api.ErrorLocationCreateFailure, api.CategoryInternal))
 		}
 		newWatch.OriginID = nulls.NewInt(location.ID)
 	}
 
 	if err = newWatch.Create(tx); err != nil {
-		return reportError(c, &api.AppError{
-			HttpStatus: http.StatusInternalServerError,
-			Key:        api.WatchCreateFailure,
-			Err:        errors.New("unable to create the new Watch, error: " + err.Error()),
-		})
+		err := errors.New("unable to create the new Watch, error: " + err.Error())
+		return reportError(c, api.NewAppError(err, api.ErrorWatchCreateFailure, api.CategoryInternal))
 	}
 
 	output := map[string]string{"id": newWatch.UUID.String()}
@@ -224,7 +206,7 @@ func convertWatchInput(tx *pop.Connection, input api.WatchInput, user models.Use
 	return watch, nil
 }
 
-func convertLocation(input api.LocationInput) models.Location {
+func convertLocationInput(input api.LocationInput) models.Location {
 	l := models.Location{
 		Description: input.Description,
 		Country:     input.Country,

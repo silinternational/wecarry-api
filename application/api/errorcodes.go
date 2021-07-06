@@ -26,15 +26,6 @@ const (
 	ErrorUpdateFailure            = ErrorKey("ErrorUpdateFailure")
 	ErrorValidation               = ErrorKey("ErrorValidation")
 
-	// ============================  Locations =========================================
-	LocationCreateFailure = ErrorKey("ErrorLocationCreateFailure")
-
-	// ============================  Messages =======================================
-	MessageBadRequestUUID        = ErrorKey("ErrorMessageBadRequestUUID")
-	MessageBadThreadUUID         = ErrorKey("ErrorMessageBadThreadUUID")
-	MessageRequestNotVisible     = ErrorKey("ErrorMessageRequestNotVisible")
-	MessageThreadRequestMismatch = ErrorKey("ErrorMessageThreadRequestMismatch")
-	MessageThreadNotVisible      = ErrorKey("MessageThreadNotVisible")
 	// HTTP codes for customErrorHandler
 
 	ErrorBadRequest           = ErrorKey("ErrorBadRequest")
@@ -47,15 +38,6 @@ const (
 
 	// Authentication
 
-	// ============================  Watches =========================================
-	WatchInputEmpty          = ErrorKey("ErrorWatchInputEmpty")
-	WatchInputMeetingFailure = ErrorKey("ErrorWatchInputMeetingFailure")
-	WatchCreateFailure       = ErrorKey("ErrorWatchCreateFailure")
-	WatchDeleteFailure       = ErrorKey("ErrorWatchDeleteFailure")
-	WatchesLoadFailure       = ErrorKey("ErrorWatchesLoadFailure")
-	WatchMissingID           = ErrorKey("ErrorWatchMissingID")
-	WatchNotFound            = ErrorKey("ErrorWatchNotFound")
-)
 	ErrorAuthEmailMismatch              = ErrorKey("ErrorAuthEmailMismatch")
 	ErrorAuthProvidersCallback          = ErrorKey("ErrorAuthProvidersCallback")
 	ErrorAuthProvidersLogout            = ErrorKey("ErrorAuthProvidersLogout")
@@ -92,6 +74,10 @@ const (
 	ErrorUnableToReadFile        = ErrorKey("ErrorUnableToReadFile")
 	ErrorUnableToStoreFile       = ErrorKey("ErrorUnableToStoreFile")
 
+	// Location
+
+	ErrorLocationCreateFailure = ErrorKey("ErrorLocationCreateFailure")
+
 	// Message
 
 	ErrorMessageBadRequestUUID        = ErrorKey("ErrorMessageBadRequestUUID")
@@ -121,8 +107,11 @@ const (
 
 	// Watch
 
-	ErrorWatchDeleteFailure = ErrorKey("ErrorWatchDeleteFailure")
-	ErrorWatchesLoadFailure = ErrorKey("ErrorWatchesLoadFailure")
-	ErrorWatchMissingID     = ErrorKey("ErrorWatchMissingID")
-	ErrorWatchNotFound      = ErrorKey("ErrorWatchNotFound")
+	ErrorWatchCreateFailure       = ErrorKey("ErrorWatchCreateFailure")
+	ErrorWatchDeleteFailure       = ErrorKey("ErrorWatchDeleteFailure")
+	ErrorWatchInputEmpty          = ErrorKey("ErrorWatchInputEmpty")
+	ErrorWatchInputMeetingFailure = ErrorKey("ErrorWatchInputMeetingFailure")
+	ErrorWatchesLoadFailure       = ErrorKey("ErrorWatchesLoadFailure")
+	ErrorWatchMissingID           = ErrorKey("ErrorWatchMissingID")
+	ErrorWatchNotFound            = ErrorKey("ErrorWatchNotFound")
 )
