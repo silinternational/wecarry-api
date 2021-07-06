@@ -74,6 +74,10 @@ const (
 	ErrorUnableToReadFile        = ErrorKey("ErrorUnableToReadFile")
 	ErrorUnableToStoreFile       = ErrorKey("ErrorUnableToStoreFile")
 
+	// Location
+
+	ErrorLocationCreateFailure = ErrorKey("ErrorLocationCreateFailure")
+
 	// Message
 
 	ErrorMessageBadRequestUUID        = ErrorKey("ErrorMessageBadRequestUUID")
@@ -103,8 +107,11 @@ const (
 
 	// Watch
 
-	ErrorWatchDeleteFailure = ErrorKey("ErrorWatchDeleteFailure")
-	ErrorWatchesLoadFailure = ErrorKey("ErrorWatchesLoadFailure")
-	ErrorWatchMissingID     = ErrorKey("ErrorWatchMissingID")
-	ErrorWatchNotFound      = ErrorKey("ErrorWatchNotFound")
+	ErrorWatchCreateFailure       = ErrorKey("ErrorWatchCreateFailure")
+	ErrorWatchDeleteFailure       = ErrorKey("ErrorWatchDeleteFailure")
+	ErrorWatchInputEmpty          = ErrorKey("ErrorWatchInputEmpty")
+	ErrorWatchInputMeetingFailure = ErrorKey("ErrorWatchInputMeetingFailure")
+	ErrorWatchesLoadFailure       = ErrorKey("ErrorWatchesLoadFailure")
+	ErrorWatchMissingID           = ErrorKey("ErrorWatchMissingID")
+	ErrorWatchNotFound            = ErrorKey("ErrorWatchNotFound")
 )
