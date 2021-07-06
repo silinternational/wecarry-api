@@ -27,6 +27,7 @@ services:
     depends_on:
       - db
       - minio
+      - redis
     command: buffalo dev
     mem_limit: 2000m
 
@@ -51,6 +52,7 @@ services:
     depends_on:
       - testdb
       - minio
+      - redis
     working_dir: /wecarry
     command: buffalo test
 

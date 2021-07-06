@@ -27,10 +27,7 @@ func requestsList(c buffalo.Context) error {
 		return reportError(c, appErrorFromErr(err))
 	}
 
-	// TODO evaluate assumption that user can only be logged in as a member of one organization
-	organization := orgs[0]
-
-	requestsList, err := cache.GetVisibleRequests(c, organization)
+	requestsList, err := cache.GetVisibleRequests(c, orgs)
 	if err != nil {
 		return reportError(c, appErrorFromErr(err))
 	}

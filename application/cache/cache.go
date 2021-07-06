@@ -3,6 +3,7 @@ package cache
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"time"
 
 	rediscache "github.com/go-redis/cache/v8"
@@ -51,17 +52,23 @@ func cacheRead(ctx context.Context, organization string, requestsMap interface{}
 }
 
 // Get all requests visible to user in specified organization from cache, fetching data from database if needed
-func GetVisibleRequests(ctx context.Context, orgaziation models.Organization) ([]api.RequestAbridged, error) {
-	// get private requests
-	_, privateRequestsMap, err := getOrCreateCacheEntryPrivate(ctx, orgaziation)
-	if err != nil {
-		return nil, err
+func GetVisibleRequests(ctx context.Context, orgs []models.Organization) ([]api.RequestAbridged, error) {
+	// get and de-duplicate private requests for all organizations a user belongs to
+	privateRequestsMap := make(map[string]api.RequestAbridged)
+	for _, organization := range orgs {
+		_, privateRequestsMapPartial, err := getOrCreateCacheEntryPrivate(ctx, organization)
+		if err != nil {
+			return nil, errors.New("error in cache get visible requests: " + err.Error())
+		}
+		for requestID, request := range privateRequestsMapPartial {
+			privateRequestsMap[requestID] = request
+		}
 	}
 
 	// get public requests
 	_, publicRequestsMap, err := getOrCreateCacheEntryPublic(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.New("error in cache get visible requests: " + err.Error())
 	}
 
 	// compose them to get list of all requests visible to the current user
@@ -76,78 +83,66 @@ func GetVisibleRequests(ctx context.Context, orgaziation models.Organization) ([
 	return visibleRequestsList, nil
 }
 
-// Rebuild cache after a request is created or updated
-func CacheRebuildOnChangedRequest(ctx context.Context, organization models.Organization, request models.Request) error {
+// Rebuild cache after a request is created
+// We cache non-finished public requests publicly with cache key "requests-allusers"
+// We cache non-finished private caches privately with cache key "requests-orgname-affiliated_"
+// We remove a finished request from its respective cache
+func CacheRebuildOnNewRequest(ctx context.Context, request models.Request) error {
+	organization := request.Organization
+	// add to public cache only
+	if request.Visibility == models.RequestVisibilityAll {
+		newEntryCreated, requestsMap, err := getOrCreateCacheEntryPublic(ctx)
+		if err != nil {
+			return errors.New("error in cache rebuild (creation): " + err.Error())
+		}
+		if !newEntryCreated {
+			if err := updateRequestPublicCache(ctx, request, requestsMap); err != nil {
+				return errors.New("error in cache rebuild (creation): " + err.Error())
+			}
+		}
+	} else {
+		// add to private cache only
+		newEntryCreated, requestsMap, err := getOrCreateCacheEntryPrivate(ctx, organization)
+		if err != nil {
+			return errors.New("error in cache rebuild: " + err.Error())
+		}
+		if !newEntryCreated {
+			if err := updateRequestPrivateCache(ctx, request, requestsMap); err != nil {
+				return errors.New("error in cache rebuild: " + err.Error())
+			}
+		}
+	}
+	return nil
+}
+
+// Rebuild cache after a request is updated
+// We cache non-finished public requests publicly with cache key "requests-allusers"
+// We cache non-finished private caches privately with cache key "requests-orgname-affiliated_"
+// We remove a finished request from its respective cache
+func CacheRebuildOnChangedRequest(ctx context.Context, request models.Request) error {
+	organization := request.Organization
 	// update private cache
 	newEntryCreated, requestsMap, err := getOrCreateCacheEntryPrivate(ctx, organization)
 	if err != nil {
-		return err
+		return errors.New("error in cache rebuild: " + err.Error())
 	}
-	// may need to update existing cache entry with new data
 	if !newEntryCreated {
-		_, cachedPrivately := requestsMap[request.UUID.String()]
-		// was cached privately, but request visbility has completed. Just need to remove from private cache.
-		if cachedPrivately && isCompleted(request) {
-			delete(requestsMap, request.UUID.String())
-			return cacheWrite(ctx, PrivateRequestKeyPrefix+organization.Name, requestsMap)
+		if err := updateRequestPrivateCache(ctx, request, requestsMap); err != nil {
+			return errors.New("error in cache rebuild: " + err.Error())
 		}
-		// was cached privately, but request visbility has changed to public.
-		// Need to remove from private and add to public cache.
-		if cachedPrivately && isPublic(request) {
-			delete(requestsMap, request.UUID.String())
-			if err := cacheWrite(ctx, PrivateRequestKeyPrefix+organization.Name, requestsMap); err != nil {
-				return err
-			}
-		}
-
-		// should be cached privately. Need to update or create an entry in the private cache.
-		// Cannot return yet in case the request was previously public (must remove from public cache)
-		if isPrivate(request) {
-			requestAbridged, err := models.ConvertRequestToAPITypeAbridged(ctx, request)
-			if err != nil {
-				return err
-			}
-			requestsMap[request.UUID.String()] = requestAbridged
-			if err := cacheWrite(ctx, PrivateRequestKeyPrefix+organization.Name, requestsMap); err != nil {
-				return err
-			}
-		}
-		// if request was and remains public and active, we update it below
 	}
 
 	// update public cache
 	newEntryCreated, requestsMap, err = getOrCreateCacheEntryPublic(ctx)
 	if err != nil {
-		return err
+		return errors.New("error in cache rebuild: " + err.Error())
 	}
-	// may need to update existing cache entry with new data
 	if !newEntryCreated {
-		_, cachedPublicly := requestsMap[request.UUID.String()]
-		// was cached publicly, but request visbility has completed. Just need to remove from public cache.
-		if cachedPublicly && isCompleted(request) {
-			delete(requestsMap, request.UUID.String())
-			return cacheWrite(ctx, PublicRequestKey, requestsMap)
-		}
-		// was cached publicly, but request visbility has changed to private.
-		// Already added to private cache, now need to add to public cache.
-		if cachedPublicly && isPrivate(request) {
-			delete(requestsMap, request.UUID.String())
-			if err := cacheWrite(ctx, PublicRequestKey, requestsMap); err != nil {
-				return err
-			}
-		}
-
-		// should be cached publicly. Just need to update or create an entry in the public cache,
-		// as we've already dealt with the case where visibility was originally private
-		if isPublic(request) {
-			requestAbridged, err := models.ConvertRequestToAPITypeAbridged(ctx, request)
-			if err != nil {
-				return err
-			}
-			requestsMap[request.UUID.String()] = requestAbridged
-			return cacheWrite(ctx, PublicRequestKey, requestsMap)
+		if err := updateRequestPublicCache(ctx, request, requestsMap); err != nil {
+			return errors.New("error in cache rebuild: " + err.Error())
 		}
 	}
+
 	return nil
 }
 
@@ -159,16 +154,11 @@ func getOrCreateCacheEntryPrivate(ctx context.Context, organization models.Organ
 	if err := cacheRead(ctx, PrivateRequestKeyPrefix+organization.Name, requestsMap); err != nil {
 		tx := models.Tx(ctx)
 
-		var org models.Organization
-		if err := org.FindByUUID(tx, organization.UUID.String()); err != nil {
-			return false, nil, err
-		}
-
 		// RequestFilterParams is currently empty because the UI is not using it
 		filter := models.RequestFilterParams{}
 
 		requests := models.Requests{}
-		if err := requests.FindByOrganization(tx, org, filter); err != nil {
+		if err := requests.FindByOrganization(tx, organization, filter); err != nil {
 			return false, nil, err
 		}
 
@@ -216,18 +206,61 @@ func getOrCreateCacheEntryPublic(ctx context.Context) (bool, map[string]api.Requ
 	return false, requestsMap, nil
 }
 
-// we should cache non-completed public requests publicly
-func isPublic(request models.Request) bool {
-	return request.Visibility == models.RequestVisibilityAll
+func updateRequestPrivateCache(ctx context.Context, request models.Request, requestsMap map[string]api.RequestAbridged) error {
+	organization := request.Organization
+	_, cachedPrivately := requestsMap[request.UUID.String()]
+	// was cached privately, but request has been finished. Just need to remove from private cache.
+	if cachedPrivately && request.IsFinished() {
+		delete(requestsMap, request.UUID.String())
+		return cacheWrite(ctx, PrivateRequestKeyPrefix+organization.Name, requestsMap)
+	}
+	// was cached privately, but request visibility has changed to public.
+	// Need to remove from private and add to public cache.
+	if cachedPrivately && request.IsPublic() {
+		delete(requestsMap, request.UUID.String())
+		if err := cacheWrite(ctx, PrivateRequestKeyPrefix+organization.Name, requestsMap); err != nil {
+			return err
+		}
+	}
+
+	// should be cached privately. Need to update or create an entry in the private cache.
+	if request.IsPrivate() {
+		requestAbridged, err := models.ConvertRequestToAPITypeAbridged(ctx, request)
+		if err != nil {
+			return err
+		}
+		requestsMap[request.UUID.String()] = requestAbridged
+		if err := cacheWrite(ctx, PrivateRequestKeyPrefix+organization.Name, requestsMap); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
-// we should cache non-completed private requests privately (at the organizational level)
-func isPrivate(request models.Request) bool {
-	return request.Visibility != models.RequestVisibilityAll
-}
+func updateRequestPublicCache(ctx context.Context, request models.Request, requestsMap map[string]api.RequestAbridged) error {
+	_, cachedPublicly := requestsMap[request.UUID.String()]
+	// was cached publicly, but request has been finished. Just need to remove from public cache.
+	if cachedPublicly && request.IsFinished() {
+		delete(requestsMap, request.UUID.String())
+		return cacheWrite(ctx, PublicRequestKey, requestsMap)
+	}
+	// was cached publicly, but request visibility has changed to private.
+	// Need to remove from public cache.
+	if cachedPublicly && request.IsPrivate() {
+		delete(requestsMap, request.UUID.String())
+		if err := cacheWrite(ctx, PublicRequestKey, requestsMap); err != nil {
+			return err
+		}
+	}
 
-// we should remove completed requests from the cache
-func isCompleted(request models.Request) bool {
-	return request.Status.String() == models.RequestStatusRemoved.String() ||
-		request.Status.String() == models.RequestStatusCompleted.String()
+	// should be cached publicly, need to update or create an entry in the public cache.
+	if request.IsPublic() {
+		requestAbridged, err := models.ConvertRequestToAPITypeAbridged(ctx, request)
+		if err != nil {
+			return err
+		}
+		requestsMap[request.UUID.String()] = requestAbridged
+		return cacheWrite(ctx, PublicRequestKey, requestsMap)
+	}
+	return nil
 }

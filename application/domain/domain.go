@@ -52,6 +52,7 @@ const (
 	EventApiMessageCreated                 = "api:message:created"
 	EventApiRequestStatusUpdated           = "api:request:status:updated"
 	EventApiRequestCreated                 = "api:request:status:created"
+	EventApiRequestUpdated                 = "api:request:updated"
 	EventApiPotentialProviderCreated       = "api:potentialprovider:created"
 	EventApiPotentialProviderRejected      = "api:potentialprovider:rejected"
 	EventApiPotentialProviderSelfDestroyed = "api:potentialprovider:selfdestroyed"

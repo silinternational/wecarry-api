@@ -236,6 +236,11 @@ type RequestCreatedEventData struct {
 	RequestID int
 }
 
+// RequestUpdatedEventData holds data needed by the Updated Request event listener
+type RequestUpdatedEventData struct {
+	RequestID int
+}
+
 // String can be helpful for serializing the model
 func (r Request) String() string {
 	jp, _ := json.Marshal(r)
@@ -751,6 +756,20 @@ func (r *Request) GetPhotoID(tx *pop.Connection) (*string, error) {
 		return &photoID, nil
 	}
 	return nil, nil
+}
+
+func (r *Request) IsPublic() bool {
+	return r.Visibility == RequestVisibilityAll
+}
+
+func (r *Request) IsPrivate() bool {
+	return r.Visibility != RequestVisibilityAll
+}
+
+// a "finished" request has been either completed or removed
+func (r *Request) IsFinished() bool {
+	return r.Status.String() == RequestStatusRemoved.String() ||
+		r.Status.String() == RequestStatusCompleted.String()
 }
 
 // scope query to only include requests from an organization associated with the current user
