@@ -869,8 +869,6 @@ func (as *ActionSuite) Test_convertRequest() {
 	tests := []struct {
 		name    string
 		request models.Request
-		want    api.Request
-		wantErr bool
 	}{
 		{
 			name:    "minimal",
@@ -884,10 +882,6 @@ func (as *ActionSuite) Test_convertRequest() {
 	for _, tt := range tests {
 		as.T().Run(tt.name, func(t *testing.T) {
 			apiRequest, err := convertRequest(ctx, tt.request)
-			if tt.wantErr {
-				as.Error(err)
-				return
-			}
 			as.NoError(err)
 
 			as.NoError(as.DB.Load(&tt.request))
