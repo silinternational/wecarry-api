@@ -1,0 +1,95 @@
+# General Errors
+- id: Error.ErrorGenericInternalServer
+  translation: Sorry, we encountered an internal error. The developers have been notified and we apologize for the inconvenience.
+- id: Error.ErrorInvalidRequestBody
+  translation: We were unable to process your request, please check the information provided and try again
+- id: Error.ErrorMustBeAValidUUID
+  translation: The ID provided is not a valid format. Please ensure you're using IDs provided by the application
+- id: Error.ErrorNoRows
+  translation: Sorry, no records found for request
+- id: Error.ErrorNotAuthorized
+  translation: Sorry, you are not allowed to perform that action
+- id: Error.ErrorValidation
+  translation: There is a problem with the information provided, please check it and try again
+
+# =========================  Authentication =====================================
+
+# actions.processAuthCallback -- error from auth provider AuthCallback()
+- id: Error.ErrorAuthProvidersCallback
+  translation: There was a problem logging into your account. Please try again and if the problem persists try using a different service to login with.
+
+# actions.authDestroy
+- id: Error.ErrorDeletingAccessToken
+  translation: There was a problem logging out of your account. Please try again and if the problem persists please contact us.
+
+# actions.authLogin -- error from auth provider AuthRequest()
+- id: Error.ErrorGettingAuthURL
+  translation: There was a problem logging into your account. Please try again and if the problem persists try using a different login service.
+
+# actions.makeTooLongError
+- id: Error.ErrorInputTooLong
+  translation: The input value exceeded the maximum length allowed {{.MaxCharLength}}
+
+# actions -- invalid or misconfigured auth provider
+- id: Error.ErrorLoadingAuthProvider
+  translation: There was a problem logging into your account. Please try again and if the problem persists try a different service to login with.
+
+# actions.authLogin -- AuthType or ClientID not found in the URL params
+- id: Error.ErrorMissingParam
+  translation: There was a problem logging into your account. Please try again and if the problem persists try a different login service.
+
+# actions.validateInviteOnLogin -- various problems loading or validating invite code
+- id: Error.ErrorProcessingAuthInviteCode
+  translation: There was a problem logging into your account. Please try to login again and if the problem persists try using a different service to login with.
+
+# actions.getClientIDAndAuthType -- ClientID or AuthType not found in the session on authCallback
+- id: Error.ErrorMissingSessionKey
+  translation: There was a problem logging into your account. Please try to login again and if the problem persists try using a different login service.
+
+# auth.processNewCallbackUser -- various errors with the provided invite code or the associated team
+- id: Error.ErrorWithCallbackInviteCode
+  translation: There was a problem logging into your account. Please try to login again and if the problem persists try a different service to login with.
+
+# auth.processNewCallbackUser -- no user found and no invite code provided
+- id: Error.ErrorNoInviteCodeOnCallback
+  translation: There was a problem logging into your account. Please ensure your login service has the same email address you use with this app.
+
+# actions.authDestroy
+- id: Error.ErrorAuthProvidersLogout
+  translation: There was a problem logging out of your account. Please try again and if the problem persists please contact us.
+
+# token param is required on a logout request
+# actions.authDestroy
+- id: Error.ErrorMissingLogoutToken
+  translation: There was a problem logging out of your account. Please try again and if the problem persists please contact us.
+
+# actions.authDestroy
+- id: Error.ErrorFindingAccessToken
+  translation: There was a problem logging out of your account. Please try again and if the problem persists please contact us.
+
+# actions.authCallback -- various errors with the provider user or with reading or updating the app user
+- id: Error.ErrorWithAuthUser
+  translation: There was a problem logging into your account. Please check your login service account, try to login again, or try using a different login service.
+
+# ============================  File ========================================
+
+- id: Error.ErrorFileTooLarge
+  translation: The file you attempted to upload exceeds the max allowed size ({{.MaxFileSize}})
+- id: Error.ErrorFileBadContentType
+  translation: The file you attempted to upload is not a valid type. It must be one of {{.AllowedFileUploadTypes}}
+- id: Error.ErrorFileNotFound
+  translation: The file specified either does not exist or you are not allowed to use it
+
+# ===========================  User =============================================
+
+- id: Error.ErrorUserMissingUpdateInput
+  translation: Unable to update profile, make sure all required fields are filled in
+- id: Error.ErrorUserNicknameAlreadyTaken
+  translation: Unable to update profile, user nickname is already taken by another user
+- id: Error.ErrorUserNicknameTooShort
+  translation: Unable to update profile, user nickname must be at least {{.MinNicknameLength}} characters long
+
+# =========================== UserAccessToken ===========================================
+
+- id: Error.ErrorUserAccessTokenNotFound
+  translation: Sorry, that token does not exist or you are not allowed to modify it

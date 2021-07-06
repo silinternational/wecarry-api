@@ -40,7 +40,7 @@ require (
 	github.com/paganotoni/sendgrid-sender v1.0.5
 	github.com/pkg/errors v0.9.1
 	github.com/rogpeppe/go-internal v1.8.0 // indirect
-	github.com/rollbar/rollbar-go v1.1.0
+	github.com/rollbar/rollbar-go v1.4.1
 	github.com/rs/cors v1.6.0
 	github.com/russellhaering/gosaml2 v0.3.1
 	github.com/russellhaering/goxmldsig v0.0.0-20180430223755-7acd5e4a6ef7

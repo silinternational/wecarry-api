@@ -100,7 +100,9 @@ func App() *buffalo.App {
 		threadsGroup.GET("/", threadsMine)
 		threadsGroup.PUT("/{thread_id}/read", threadsMarkAsRead)
 
-		app.GET("/requests", requestsList)
+		requestsGroup := app.Group("/requests")
+		requestsGroup.GET("/", requestsList)
+		requestsGroup.GET("/{request_id}", requestsGet)
 
 		watchesGroup := app.Group("/watches")
 		watchesGroup.GET("/", watchesMine)

@@ -1,7 +1,6 @@
 package api
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -26,6 +25,9 @@ func (e ErrorCategory) String() string {
 }
 
 type AppError struct {
+	Err error `json:"-"`
+
+	// TODO: remove this
 	Code int `json:"code"`
 
 	// Don't change the value of these Key entries without making a corresponding change on the UI,
@@ -35,7 +37,7 @@ type AppError struct {
 	HttpStatus int `json:"status"`
 
 	// detailed error message for debugging
-	Err error `json:"debug_msg,omitempty"`
+	DebugMsg string `json:"debug_msg,omitempty"`
 
 	Category ErrorCategory `json:"-"`
 
@@ -60,37 +62,43 @@ func (a *AppError) Unwrap() error {
 }
 
 func NewAppError(err error, key ErrorKey, category ErrorCategory) *AppError {
-	if err == sql.ErrNoRows {
-		key = NoRows
-	}
-	a := AppError{
+	return &AppError{
 		Err:      err,
 		Key:      key,
 		Category: category,
 	}
-	a.SetHttpStatusFromCategory()
-	return &a
 }
 
+// SetHttpStatusFromCategory assigns the appropriate HTTP status based on the error category, if not
+// already set.
 func (a *AppError) SetHttpStatusFromCategory() {
-	switch a.Category {
-	case CategoryInternal, CategoryDatabase:
-		a.HttpStatus = http.StatusInternalServerError
-	case CategoryForbidden, CategoryNotFound:
-		a.HttpStatus = http.StatusNotFound
-	default:
-		a.HttpStatus = http.StatusBadRequest
-	}
-}
-
-func (a *AppError) LoadTranslatedMessage(c buffalo.Context) {
-	if a.HttpStatus == http.StatusInternalServerError {
-		errKey := "Error." + ErrorGenericInternalServerError.String()
-		a.Message = domain.T.Translate(c, errKey, a.Extras)
+	if a.HttpStatus != 0 {
 		return
 	}
 
-	msgID := fmt.Sprintf("Error.%s", a.Key)
+	switch a.Category {
+	case CategoryInternal, CategoryDatabase:
+		a.HttpStatus = http.StatusInternalServerError
+		a.Code = http.StatusInternalServerError
+	case CategoryForbidden, CategoryNotFound:
+		a.HttpStatus = http.StatusNotFound
+		a.Code = http.StatusNotFound
+	default:
+		a.HttpStatus = http.StatusBadRequest
+		a.Code = http.StatusBadRequest
+	}
+}
+
+// LoadTranslatedMessage assigns the error message by translating the Key into a user-friendly string, unless
+// the HttpStatus is 500 in which case a standard message is used.
+func (a *AppError) LoadTranslatedMessage(c buffalo.Context) {
+	key := a.Key
+
+	if a.HttpStatus == http.StatusInternalServerError {
+		key = ErrorGenericInternalServer
+	}
+
+	msgID := "Error." + key.String()
 	a.Message = domain.T.Translate(c, msgID, a.Extras)
 	if a.Message == msgID {
 		a.Message = keyToReadableString(a.Key.String())
@@ -124,14 +132,14 @@ func ConvertToOtherType(input, output interface{}) error {
 	if err != nil {
 		return NewAppError(
 			fmt.Errorf("failed to convert to api. marshal error: %s", err.Error()),
-			FailedToConvertToAPIType,
+			ErrorFailedToConvertToAPIType,
 			CategoryInternal,
 		)
 	}
 	if err := json.Unmarshal(str, output); err != nil {
 		return NewAppError(
 			fmt.Errorf("failed to convert to api. unmarshal error: %s", err.Error()),
-			FailedToConvertToAPIType,
+			ErrorFailedToConvertToAPIType,
 			CategoryInternal,
 		)
 	}

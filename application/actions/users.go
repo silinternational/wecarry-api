@@ -26,7 +26,7 @@ func usersMe(c buffalo.Context) error {
 
 	output, err := convertUserPrivate(c, user)
 	if err != nil {
-		return reportError(c, appErrorFromErr(err))
+		return reportError(c, err)
 	}
 
 	return c.Render(http.StatusOK, r.JSON(output))
@@ -55,11 +55,8 @@ func usersMeUpdate(c buffalo.Context) error {
 
 	var input api.UsersInput
 	if err := StrictBind(c, &input); err != nil {
-		return reportError(c, &api.AppError{
-			HttpStatus: http.StatusBadRequest,
-			Key:        api.InvalidRequestBody,
-			Err:        errors.New("unable to unmarshal User data into UsersInput struct, error: " + err.Error()),
-		})
+		err = errors.New("unable to unmarshal User data into UsersInput struct, error: " + err.Error())
+		return reportError(c, api.NewAppError(err, api.ErrorInvalidRequestBody, api.CategoryUser))
 	}
 
 	if input.Nickname != nil {
@@ -75,20 +72,16 @@ func usersMeUpdate(c buffalo.Context) error {
 		_, err = user.AttachPhoto(tx, *input.PhotoID)
 	}
 	if err != nil {
-		return reportError(c, &api.AppError{
-			Key:        api.UserUpdatePhotoError,
-			HttpStatus: http.StatusInternalServerError,
-			Err:        err,
-		})
+		return reportError(c, api.NewAppError(err, api.ErrorUserUpdatePhoto, api.CategoryInternal))
 	}
 
 	if err = user.Save(tx); err != nil {
-		return reportError(c, appErrorFromErr(err))
+		return reportError(c, err)
 	}
 
 	output, err := convertUserPrivate(c, user)
 	if err != nil {
-		return reportError(c, appErrorFromErr(err))
+		return reportError(c, err)
 	}
 
 	return c.Render(http.StatusOK, r.JSON(output))
@@ -124,6 +117,18 @@ func convertUserPrivate(ctx context.Context, user models.User) (api.UserPrivate,
 	output.Organizations, err = convertOrganizationsToAPIType(organizations)
 	if err != nil {
 		return api.UserPrivate{}, err
+	}
+	return output, nil
+}
+
+func convertUsers(ctx context.Context, users models.Users) (api.Users, error) {
+	output := make(api.Users, len(users))
+	for i := range output {
+		var err error
+		output[i], err = convertUser(ctx, users[i])
+		if err != nil {
+			return output, err
+		}
 	}
 	return output, nil
 }

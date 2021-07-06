@@ -267,7 +267,7 @@ func (as *ActionSuite) Test_WatchRemove() {
 			watchID:      "badid",
 			user:         owner,
 			wantStatus:   http.StatusBadRequest,
-			wantContains: api.MustBeAValidUUID.String(),
+			wantContains: api.ErrorMustBeAValidUUID.String(),
 			failMsg:      "expected an error about a bad id",
 		},
 		{
@@ -275,7 +275,7 @@ func (as *ActionSuite) Test_WatchRemove() {
 			watchID:      watches[0].UUID.String(),
 			user:         notOwner,
 			wantStatus:   http.StatusNotFound,
-			wantContains: api.NotAuthorized.String(),
+			wantContains: api.ErrorNotAuthorized.String(),
 			failMsg:      "expected a not authorized error",
 		},
 		{
@@ -310,5 +310,4 @@ func (as *ActionSuite) Test_WatchRemove() {
 			as.Contains(body, tc.wantContains, tc.failMsg)
 		})
 	}
-
 }

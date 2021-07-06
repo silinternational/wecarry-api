@@ -2,7 +2,6 @@ package actions
 
 import (
 	"errors"
-	"net/http"
 
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/buffalo/render"
@@ -116,7 +115,6 @@ func watchesRemove(c buffalo.Context) error {
 	var watch models.Watch
 	output, appErr := watch.DeleteForOwner(tx, id.String(), cUser)
 	if appErr != nil {
-		appErr.HttpStatus = httpStatusForErrCategory(appErr.Category)
 		return reportError(c, appErr)
 	}
 
@@ -139,16 +137,12 @@ func watchesMine(c buffalo.Context) error {
 
 	watches := models.Watches{}
 	if err := watches.FindByUser(tx, cUser, "Owner", "Destination", "Origin", "Meeting"); err != nil {
-		return reportError(c, &api.AppError{
-			HttpStatus: http.StatusInternalServerError,
-			Key:        api.WatchesLoadFailure,
-			Err:        err,
-		})
+		return reportError(c, api.NewAppError(err, api.ErrorWatchesLoadFailure, api.CategoryInternal))
 	}
 
 	output, err := convertWatches(tx, watches, cUser)
 	if err != nil {
-		return reportError(c, appErrorFromErr(err))
+		return reportError(c, err)
 	}
 
 	return c.Render(200, render.JSON(output))

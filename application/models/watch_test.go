@@ -124,13 +124,13 @@ func (ms *ModelSuite) TestWatch_DeleteForOwner() {
 			name:    "bad uuid",
 			uuid:    "999",
 			user:    owner,
-			wantErr: api.WatchNotFound,
+			wantErr: api.ErrorWatchNotFound,
 		},
 		{
 			name:    "wrong user",
 			uuid:    watches[1].UUID.String(),
 			user:    notOwner,
-			wantErr: api.NotAuthorized,
+			wantErr: api.ErrorNotAuthorized,
 		},
 		{
 			name:            "delete one",
