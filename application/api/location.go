@@ -1,5 +1,7 @@
 package api
 
+import "github.com/gobuffalo/nulls"
+
 // Location gives the description of a Geographic location
 //
 // swagger:model
@@ -11,10 +13,10 @@ type Location struct {
 	Country string `json:"country"`
 
 	// Latitude in decimal degrees, e.g. -30.95 = 30 degrees 57 minutes south
-	Latitude float64 `json:"latitude"`
+	Latitude nulls.Float64 `json:"latitude"`
 
 	// Longitude in decimal degrees, e.g. -80.05 = 80 degrees 3 minutes west
-	Longitude float64 `json:"longitude"`
+	Longitude nulls.Float64 `json:"longitude"`
 }
 
 // Specify a Geographic location
