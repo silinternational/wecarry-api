@@ -117,6 +117,8 @@ func convertRequest(ctx context.Context, request models.Request) (api.Request, e
 	}
 	output.CreatedBy = createdBy
 
+	output.Destination = convertLocation(request.Destination)
+
 	output.Origin = convertRequestOrigin(request)
 
 	provider, err := convertProvider(ctx, request)
@@ -169,6 +171,8 @@ func convertRequestAbridged(ctx context.Context, request models.Request) (api.Re
 		return api.RequestAbridged{}, err
 	}
 	output.CreatedBy = &createdBy
+
+	output.Destination = convertLocation(request.Destination)
 
 	output.Origin = convertRequestOrigin(request)
 

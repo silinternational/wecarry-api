@@ -108,7 +108,7 @@ type RequestAbridged struct {
 	Title string `json:"title"`
 
 	// Geographic location where item is needed
-	Destination *Location `json:"destination"`
+	Destination Location `json:"destination"`
 
 	// Optional geographic location where the item can be picked up, purchased, or otherwise obtained
 	Origin *Location `json:"origin"`
