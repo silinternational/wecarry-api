@@ -47,7 +47,7 @@ func createFixturesForRequestQuery(as *ActionSuite) RequestQueryFixtures {
 	org2 := models.Organization{Name: "org2", AuthType: AuthTypeGoogle, AuthConfig: "{}"}
 	as.NoError(org2.Save(as.DB))
 
-	requests := test.CreateRequestFixtures(as.DB, 4, true)
+	requests := test.CreateRequestFixtures(as.DB, 4, true, users[0].ID)
 	requests[0].Status = models.RequestStatusAccepted
 	requests[0].ProviderID = nulls.NewInt(users[1].ID)
 
