@@ -51,15 +51,17 @@ func cacheRead(ctx context.Context, organization string, requestsMap interface{}
 	return RequestsCache.Get(ctx, organization, requestsMap)
 }
 
-// Get all requests visible to user in specified organization from cache, fetching data from database if needed
+// GetVisibleRequests gets all requests visible to user in specified organization from cache, fetching data from database if needed
 func GetVisibleRequests(ctx context.Context, orgs []models.Organization) ([]api.RequestAbridged, error) {
 	// get and de-duplicate private requests for all organizations a user belongs to
 	privateRequestsMap := make(map[string]api.RequestAbridged)
-	for _, organization := range orgs {
-		_, privateRequestsMapPartial, err := getOrCreateCacheEntryPrivate(ctx, organization)
+	for _, org := range orgs {
+		_, privateRequestsMapPartial, err := getOrCreateCacheEntryPrivate(ctx, org)
 		if err != nil {
 			return nil, errors.New("error in cache get visible requests: " + err.Error())
 		}
+		// re-mapping requests by request ID is necessary to de-duplicate requests visible to
+		// trusted organizations (so that users belonging to multiple orgs don't see duplicated requests)
 		for requestID, request := range privateRequestsMapPartial {
 			privateRequestsMap[requestID] = request
 		}
@@ -83,7 +85,7 @@ func GetVisibleRequests(ctx context.Context, orgs []models.Organization) ([]api.
 	return visibleRequestsList, nil
 }
 
-// Rebuild cache after a request is created
+// CacheRebuildOnNewRequest rebuilds cache after a request is created
 // We cache non-finished public requests publicly with cache key "requests-allusers"
 // We cache non-finished private caches privately with cache key "requests-orgname-affiliated_"
 // We remove a finished request from its respective cache
@@ -115,7 +117,7 @@ func CacheRebuildOnNewRequest(ctx context.Context, request models.Request) error
 	return nil
 }
 
-// Rebuild cache after a request is updated
+// CacheRebuildOnChangedRequest rebuilds cache after a request is updated
 // We cache non-finished public requests publicly with cache key "requests-allusers"
 // We cache non-finished private caches privately with cache key "requests-orgname-affiliated_"
 // We remove a finished request from its respective cache
@@ -148,6 +150,7 @@ func CacheRebuildOnChangedRequest(ctx context.Context, request models.Request) e
 
 // Gets cache entry for organization, or creates one if none exists
 // Returns true if new cache entry was created
+// TODO: explore refactoring getOrCreateCacheEntryPrivate and getOrCreateCacheEntryPublic to use a common helper function
 func getOrCreateCacheEntryPrivate(ctx context.Context, organization models.Organization) (bool, map[string]api.RequestAbridged, error) {
 	var requestsMap map[string]api.RequestAbridged
 	// if a cache value does not exist, we create it
