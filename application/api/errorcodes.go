@@ -78,6 +78,11 @@ const (
 
 	ErrorLocationCreateFailure = ErrorKey("ErrorLocationCreateFailure")
 
+	// Meeting
+
+	ErrorMeetingsGet     = ErrorKey("ErrorMeetingsGet")
+	ErrorMeetingsConvert = ErrorKey("ErrorMeetingsConvert")
+
 	// Message
 
 	ErrorMessageBadRequestUUID        = ErrorKey("ErrorMessageBadRequestUUID")

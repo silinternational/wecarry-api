@@ -259,6 +259,6 @@ func convertRequestMeeting(request models.Request) *api.Meeting {
 	if !request.MeetingID.Valid {
 		return nil
 	}
-	meeting := convertMeeting(request.Meeting)
+	meeting := convertMeetingAbridged(request.Meeting)
 	return &meeting
 }

@@ -31,8 +31,8 @@ type Meeting struct {
 	FileID      nulls.Int    `json:"file_id" db:"file_id"`
 	LocationID  int          `json:"location_id" db:"location_id"`
 
-	ImgFile  *File    `belongs_to:"files" fk_id:"FileID"`
-	Location Location `belongs_to:"locations"`
+	ImgFile  *File    `json:"-" belongs_to:"files" fk_id:"FileID"`
+	Location Location `json:"-" belongs_to:"locations"`
 }
 
 // String is not required by pop and may be deleted
