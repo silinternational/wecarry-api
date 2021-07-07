@@ -526,6 +526,16 @@ func (r *Request) AfterUpdate(tx *pop.Connection) error {
 		domain.ErrLogger.Printf("error removing provider id from request: %s", err.Error())
 	}
 
+	e := events.Event{
+		Kind:    domain.EventApiRequestUpdated,
+		Message: "Request updated",
+		Payload: events.Payload{"eventData": RequestUpdatedEventData{
+			RequestID: r.ID,
+		}},
+	}
+
+	emitEvent(e)
+
 	return nil
 }
 

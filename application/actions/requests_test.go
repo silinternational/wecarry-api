@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"testing"
@@ -10,6 +11,7 @@ import (
 	"github.com/gofrs/uuid"
 
 	"github.com/silinternational/wecarry-api/api"
+	"github.com/silinternational/wecarry-api/cache"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/internal/test"
 	"github.com/silinternational/wecarry-api/models"
@@ -333,6 +335,75 @@ func (as *ActionSuite) Test_RequestsList() {
 	as.NoError(json.Unmarshal([]byte(body), &requestsList))
 	as.Equal(len(requests)-1, len(requestsList)) // one request is COMPLETED, so it won't be included
 
+	wantContains := as.getWantedRequestFields(requests)
+	for _, w := range wantContains {
+		as.Contains(body, w)
+	}
+}
+
+func (as *ActionSuite) Test_CacheRequestsList() {
+	f := createFixturesForRequestsList(as)
+	users := f.Users
+	requests := f.Requests
+	req := as.JSON("/requests")
+	req.Headers["Authorization"] = fmt.Sprintf("Bearer %s", users[0].Nickname)
+	req.Headers["content-type"] = "application/json"
+	res := req.Get()
+
+	body := res.Body.String()
+	as.Equal(200, res.Code, "incorrect status code returned, body: %s", body)
+
+	var requestsList []api.Request
+	as.NoError(json.Unmarshal([]byte(body), &requestsList))
+	as.Equal(len(requests)-1, len(requestsList)) // one request is COMPLETED, so it won't be included
+
+	wantContains := as.getWantedRequestFields(requests)
+	for _, w := range wantContains {
+		as.Contains(body, w)
+	}
+
+	// clear cache, complete one request, expect valid responses
+	cache.RequestsCache.Delete(context.Background(), cache.PublicRequestKey)
+	cache.RequestsCache.Delete(context.Background(), cache.PrivateRequestKeyPrefix+users[0].Organizations[0].Name)
+	requests[0].Status = models.RequestStatusCompleted
+	as.NoError(as.DB.Save(&requests[0]))
+
+	res = req.Get()
+	body = res.Body.String()
+	as.Equal(200, res.Code, "incorrect status code returned, body: %s", body)
+
+	wantContains = as.getWantedRequestFields(requests)
+	for _, w := range wantContains {
+		as.Contains(body, w)
+	}
+
+	// update request visibility, expect valid responses
+	for i := range requests {
+		if requests[i].Status == models.RequestStatusCompleted {
+			continue
+		}
+		if i%3 == 0 {
+			requests[i].Visibility = models.RequestVisibilitySame
+		} else if i%3 == 1 {
+			requests[i].Visibility = models.RequestVisibilityTrusted
+		} else {
+			requests[i].Visibility = models.RequestVisibilityAll
+		}
+		requests[i].Title = "nondescript " + fmt.Sprintf("%d", i)
+		as.NoError(as.DB.Save(&requests[i]))
+	}
+
+	res = req.Get()
+	body = res.Body.String()
+	as.Equal(200, res.Code, "incorrect status code returned, body: %s", body)
+
+	wantContains = as.getWantedRequestFields(requests)
+	for _, w := range wantContains {
+		as.Contains(body, w)
+	}
+}
+
+func (as *ActionSuite) getWantedRequestFields(requests []models.Request) []string {
 	wantContains := []string{}
 
 	for i := range requests {
@@ -368,10 +439,7 @@ func (as *ActionSuite) Test_RequestsList() {
 			photoJson,
 		}...)
 	}
-
-	for _, w := range wantContains {
-		as.Contains(body, w)
-	}
+	return wantContains
 }
 
 func (as *ActionSuite) Test_UpdateRequest() {
