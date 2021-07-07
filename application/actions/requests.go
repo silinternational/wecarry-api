@@ -63,11 +63,16 @@ func requestsGet(c buffalo.Context) error {
 	domain.NewExtra(c, "requestID", id)
 
 	request := models.Request{}
-	if err := request.FindByUUID(tx, id.String()); err != nil {
-		return reportError(c, api.NewAppError(err, api.ErrorGetRequest, api.CategoryInternal))
+	if err = request.FindByUUID(tx, id.String()); err != nil {
+		appError := api.NewAppError(err, api.ErrorGetRequest, api.CategoryNotFound)
+		if domain.IsOtherThanNoRows(err) {
+			appError.Category = api.CategoryInternal
+		}
+		return reportError(c, appError)
 	}
 
 	if !cUser.CanViewRequest(tx, request) {
+		err = errors.New("user not allowed to view request")
 		return reportError(c, api.NewAppError(err, api.ErrorGetRequestUserNotAllowed, api.CategoryForbidden))
 	}
 
@@ -116,6 +121,8 @@ func convertRequest(ctx context.Context, request models.Request) (api.Request, e
 		return api.Request{}, err
 	}
 	output.CreatedBy = createdBy
+
+	output.Destination = convertLocation(request.Destination)
 
 	output.Origin = convertRequestOrigin(request)
 
@@ -169,6 +176,8 @@ func convertRequestAbridged(ctx context.Context, request models.Request) (api.Re
 		return api.RequestAbridged{}, err
 	}
 	output.CreatedBy = &createdBy
+
+	output.Destination = convertLocation(request.Destination)
 
 	output.Origin = convertRequestOrigin(request)
 

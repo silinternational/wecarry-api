@@ -44,14 +44,19 @@ func createFixturesForRequestQuery(as *ActionSuite) RequestQueryFixtures {
 	org := userFixtures.Organization
 	users := userFixtures.Users
 
-	requests := test.CreateRequestFixtures(as.DB, 3, true)
+	org2 := models.Organization{Name: "org2", AuthType: AuthTypeGoogle, AuthConfig: "{}"}
+	as.NoError(org2.Save(as.DB))
+
+	requests := test.CreateRequestFixtures(as.DB, 4, true, users[0].ID)
 	requests[0].Status = models.RequestStatusAccepted
 	requests[0].ProviderID = nulls.NewInt(users[1].ID)
-	as.NoError(as.DB.Save(&requests))
 
 	requests[2].Status = models.RequestStatusCompleted
 	requests[2].CompletedOn = nulls.NewTime(time.Now())
 	requests[2].ProviderID = nulls.NewInt(users[1].ID)
+
+	requests[3].OrganizationID = org2.ID
+
 	as.NoError(as.DB.Save(&requests))
 
 	threads := []models.Thread{
