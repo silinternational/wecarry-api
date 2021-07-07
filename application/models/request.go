@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -227,6 +228,7 @@ type Request struct {
 	PhotoFile   File         `belongs_to:"files" fk_id:"FileID"`
 	Destination Location     `belongs_to:"locations"`
 	Origin      Location     `belongs_to:"locations"`
+	Meeting     Meeting      `belongs_to:"meetings"`
 }
 
 // RequestCreatedEventData holds data needed by the New Request event listener
@@ -922,6 +924,7 @@ func (r *Request) SetOrigin(tx *pop.Connection, location Location) error {
 // IsEditable response with true if the given user is the owner of the request or an admin,
 // and it is not in a locked status.
 func (r *Request) IsEditable(tx *pop.Connection, user User) (bool, error) {
+	// TODO: remove the error return value from this function, it's really annoying
 	if user.ID <= 0 {
 		return false, errors.New("user.ID must be a valid primary key")
 	}
@@ -1006,8 +1009,8 @@ func (r *Request) GetAudience(tx *pop.Connection) (Users, error) {
 	return users, nil
 }
 
-// Meeting reads the meeting record, if it exists, and returns a pointer to the object.
-func (r *Request) Meeting(tx *pop.Connection) (*Meeting, error) {
+// GetMeeting reads the meeting record, if it exists, and returns a pointer to the object.
+func (r *Request) GetMeeting(tx *pop.Connection) (*Meeting, error) {
 	if !r.MeetingID.Valid {
 		return nil, nil
 	}
@@ -1082,4 +1085,9 @@ func (r *Request) GetCurrentActions(tx *pop.Connection, user User) ([]string, er
 func (r *Request) Creator(tx *pop.Connection) (User, error) {
 	var u User
 	return u, tx.Find(&u, r.CreatedByID)
+}
+
+// Load loads the requested fields from the database
+func (r *Request) Load(ctx context.Context, fields ...string) error {
+	return Tx(ctx).Load(r, fields...)
 }

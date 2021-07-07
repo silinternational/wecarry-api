@@ -328,7 +328,7 @@ func loadRequestOrganization(ctx context.Context, request models.Request) (api.O
 }
 
 func loadRequestMeeting(ctx context.Context, request models.Request) (*api.Meeting, error) {
-	meeting, err := request.Meeting(models.Tx(ctx))
+	meeting, err := request.GetMeeting(models.Tx(ctx))
 	if err != nil {
 		err = errors.New("error converting request meeting: " + err.Error())
 		return nil, err

@@ -6,6 +6,7 @@ import (
 	"github.com/gobuffalo/nulls"
 	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/internal/test"
+	"github.com/silinternational/wecarry-api/models"
 )
 
 func (as *ActionSuite) Test_convertUserPrivate() {
@@ -109,5 +110,19 @@ func (as *ActionSuite) TestUsersUpdate() {
 	}
 	for _, w := range wantContains {
 		as.Contains(body, w)
+	}
+}
+
+func (as *ActionSuite) verifyUser(user models.User, apiUser api.User, msg string) {
+	as.Equal(user.UUID, apiUser.ID, msg+", ID is not correct")
+
+	as.Equal(user.Nickname, apiUser.Nickname, msg+", Nickname is not correct")
+
+	avatarURL, err := user.GetPhotoURL(as.DB)
+	as.NoError(err)
+	if avatarURL == nil {
+		as.False(apiUser.AvatarURL.Valid, msg+", AvatarURL should be null but isn't")
+	} else {
+		as.Equal(*avatarURL, apiUser.AvatarURL.String, msg+", AvatarURL is not correct")
 	}
 }
