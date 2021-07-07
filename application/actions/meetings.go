@@ -5,7 +5,6 @@ import (
 	"errors"
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/buffalo/render"
-	"github.com/gobuffalo/pop/v5"
 	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/models"
 	"time"
@@ -62,15 +61,13 @@ func convertMeeting(ctx context.Context, meeting models.Meeting, user models.Use
 	}
 	output.CreatedBy = createdBy
 
-	tx := models.Tx(ctx)
-
-	imageFile, err := loadMeetingImageFile(tx, meeting)
+	imageFile, err := loadMeetingImageFile(ctx, meeting)
 	if err != nil {
 		return api.Meeting{}, err
 	}
 	output.ImageFile = imageFile
 
-	location, err := loadMeetingLocation(tx, meeting)
+	location, err := loadMeetingLocation(ctx, meeting)
 	if err != nil {
 		return api.Meeting{}, err
 	}
@@ -99,8 +96,8 @@ func loadMeetingCreatedBy(ctx context.Context, meeting models.Meeting) (api.User
 	return outputCreatedBy, nil
 }
 
-func loadMeetingImageFile(tx *pop.Connection, meeting models.Meeting) (*api.File, error) {
-	imageFile, err := meeting.ImageFile(tx)
+func loadMeetingImageFile(ctx context.Context, meeting models.Meeting) (*api.File, error) {
+	imageFile, err := meeting.ImageFile(models.Tx(ctx))
 	if err != nil {
 		err = errors.New("error converting meeting image file: " + err.Error())
 		return nil, err
@@ -119,8 +116,8 @@ func loadMeetingImageFile(tx *pop.Connection, meeting models.Meeting) (*api.File
 	return &outputImage, nil
 }
 
-func loadMeetingLocation(tx *pop.Connection, meeting models.Meeting) (*api.Location, error) {
-	location, err := meeting.GetLocation(tx)
+func loadMeetingLocation(ctx context.Context, meeting models.Meeting) (*api.Location, error) {
+	location, err := meeting.GetLocation(models.Tx(ctx))
 	if err != nil {
 		err = errors.New("error converting meeting location: " + err.Error())
 		return nil, err
