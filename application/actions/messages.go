@@ -46,7 +46,7 @@ func messagesCreate(c buffalo.Context) error {
 		return reportError(c, err)
 	}
 
-	output, err := convertThread(c, message.Thread)
+	output, err := models.ConvertThread(c, message.Thread)
 	if err != nil {
 		return reportError(c, err)
 	}
@@ -63,7 +63,7 @@ func convertMessagesToAPIType(ctx context.Context, messages models.Messages) (ap
 
 	// Hydrate the thread's messages with their sentBy users
 	for i := range output {
-		sentByOutput, err := convertUser(ctx, messages[i].SentBy)
+		sentByOutput, err := models.ConvertUser(ctx, messages[i].SentBy)
 		if err != nil {
 			err = errors.New("error converting messages sentBy to api.User: " + err.Error())
 			return nil, err

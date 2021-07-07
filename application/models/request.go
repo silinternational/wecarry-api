@@ -18,6 +18,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/pkg/errors"
 
+	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/domain"
 )
 
@@ -233,6 +234,11 @@ type Request struct {
 
 // RequestCreatedEventData holds data needed by the New Request event listener
 type RequestCreatedEventData struct {
+	RequestID int
+}
+
+// RequestUpdatedEventData holds data needed by the Updated Request event listener
+type RequestUpdatedEventData struct {
 	RequestID int
 }
 
@@ -521,6 +527,16 @@ func (r *Request) AfterUpdate(tx *pop.Connection) error {
 		domain.ErrLogger.Printf("error removing provider id from request: %s", err.Error())
 	}
 
+	e := events.Event{
+		Kind:    domain.EventApiRequestUpdated,
+		Message: "Request updated",
+		Payload: events.Payload{"eventData": RequestUpdatedEventData{
+			RequestID: r.ID,
+		}},
+	}
+
+	emitEvent(e)
+
 	return nil
 }
 
@@ -753,6 +769,20 @@ func (r *Request) GetPhotoID(tx *pop.Connection) (*string, error) {
 	return nil, nil
 }
 
+func (r *Request) IsPublic() bool {
+	return r.Visibility == RequestVisibilityAll
+}
+
+func (r *Request) IsPrivate() bool {
+	return r.Visibility != RequestVisibilityAll
+}
+
+// a "finished" request has been either completed or removed
+func (r *Request) IsFinished() bool {
+	return r.Status.String() == RequestStatusRemoved.String() ||
+		r.Status.String() == RequestStatusCompleted.String()
+}
+
 // scope query to only include requests from an organization associated with the current user
 func scopeUserOrgs(tx *pop.Connection, cUser User) pop.ScopeFunc {
 	return func(q *pop.Query) *pop.Query {
@@ -824,12 +854,53 @@ func (r *Requests) FindByUser(tx *pop.Connection, user User, filter RequestFilte
 		) AND visibility = ?
 	)
 	AND status not in (?, ?)`
-
 	args := []interface{}{
 		user.ID, RequestVisibilityAll, RequestVisibilityTrusted, RequestStatusRemoved,
 		RequestStatusCompleted,
 	}
 
+	return r.findBySelectClause(tx, filter, selectClause, args, fmt.Sprintf("user %s", user.UUID.String()))
+}
+
+// FindByOrganization finds all non-public requests visible to the specified organization
+func (r *Requests) FindByOrganization(tx *pop.Connection, organization Organization, filter RequestFilterParams) error {
+	selectClause := `
+	SELECT * FROM requests WHERE
+	(
+		organization_id = ? AND visibility IN (?, ?)
+		OR
+		organization_id IN (
+			SELECT id FROM organizations WHERE id IN (
+				SELECT secondary_id FROM organization_trusts WHERE primary_id = ?
+			)
+		) AND visibility = ?
+	)
+	AND status not in (?, ?)
+	`
+
+	args := []interface{}{
+		organization.ID, RequestVisibilitySame, RequestVisibilityTrusted, organization.ID,
+		RequestVisibilityTrusted, RequestStatusRemoved, RequestStatusCompleted,
+	}
+
+	return r.findBySelectClause(tx, filter, selectClause, args, fmt.Sprintf("organization %s", organization.UUID.String()))
+}
+
+// FindPublic finds all public requests visible to all WeCarry users
+func (r *Requests) FindPublic(tx *pop.Connection, filter RequestFilterParams) error {
+	selectClause := `
+	SELECT * FROM requests WHERE visibility = ? AND status not in (?, ?)
+	`
+
+	args := []interface{}{
+		RequestVisibilityAll, RequestStatusRemoved, RequestStatusCompleted,
+	}
+
+	return r.findBySelectClause(tx, filter, selectClause, args, "all WeCarry userss")
+}
+
+// findbySelectClause finds all requests visible to entity specified in select clause, optionally filtered by location or search text.
+func (r *Requests) findBySelectClause(tx *pop.Connection, filter RequestFilterParams, selectClause string, args []interface{}, entity string) error {
 	if filter.SearchText != nil {
 		selectClause = selectClause + " AND (LOWER(title) LIKE ? or LOWER(description) LIKE ?)"
 		likeText := "%" + strings.ToLower(*filter.SearchText) + "%"
@@ -843,7 +914,7 @@ func (r *Requests) FindByUser(tx *pop.Connection, user User, filter RequestFilte
 	requests := Requests{}
 	q := tx.RawQuery(selectClause+" ORDER BY created_at desc", args...)
 	if err := q.All(&requests); err != nil {
-		return fmt.Errorf("error finding requests for user %s, %s", user.UUID.String(), err)
+		return fmt.Errorf("error finding requests for %s, %s", entity, err)
 	}
 
 	if filter.Destination != nil {
@@ -1090,4 +1161,183 @@ func (r *Request) Creator(tx *pop.Connection) (User, error) {
 // Load loads the requested fields from the database
 func (r *Request) Load(ctx context.Context, fields ...string) error {
 	return Tx(ctx).Load(r, fields...)
+}
+
+// ConvertRequestsAbridged converts list of model.Request into api.RequestAbridged
+func ConvertRequestsAbridged(ctx context.Context, requests []Request) ([]api.RequestAbridged, error) {
+	output := make([]api.RequestAbridged, len(requests))
+
+	for i, request := range requests {
+		var err error
+		output[i], err = ConvertRequestAbridged(ctx, request)
+		if err != nil {
+			return []api.RequestAbridged{}, err
+		}
+	}
+
+	return output, nil
+}
+
+// ConvertRequest converts model.Request into api.Request
+func ConvertRequest(ctx context.Context, request Request) (api.Request, error) {
+	var output api.Request
+
+	if err := request.Load(ctx); err != nil {
+		return output, err
+	}
+
+	if err := api.ConvertToOtherType(request, &output); err != nil {
+		err = errors.New("error converting request to api.request: " + err.Error())
+		return api.Request{}, err
+	}
+	output.ID = request.UUID
+
+	tx := Tx(ctx)
+	user := CurrentUser(ctx)
+
+	createdBy, err := ConvertUser(ctx, request.CreatedBy)
+	if err != nil {
+		return api.Request{}, err
+	}
+	output.CreatedBy = createdBy
+
+	output.Destination = convertLocation(request.Destination)
+
+	output.Origin = convertRequestOrigin(request)
+
+	provider, err := convertProvider(ctx, request)
+	if err != nil {
+		return api.Request{}, err
+	}
+	output.Provider = provider
+
+	photo, err := loadRequestPhoto(ctx, request)
+	if err != nil {
+		return api.Request{}, err
+	}
+	output.Photo = photo
+
+	potentialProviders, err := loadPotentialProviders(ctx, request, user)
+	if err != nil {
+		return api.Request{}, err
+	}
+	output.PotentialProviders = potentialProviders
+
+	output.Organization = ConvertOrganization(request.Organization)
+
+	output.Meeting = convertRequestMeeting(request)
+
+	isEditable, err := request.IsEditable(tx, user)
+	if err != nil {
+		return api.Request{}, err
+	}
+	output.IsEditable = isEditable
+
+	return output, nil
+}
+
+// ConvertRequestAbridged converts model.Request into api.RequestAbridged
+func ConvertRequestAbridged(ctx context.Context, request Request) (api.RequestAbridged, error) {
+	if err := request.Load(ctx); err != nil {
+		return api.RequestAbridged{}, err
+	}
+
+	var output api.RequestAbridged
+	if err := api.ConvertToOtherType(request, &output); err != nil {
+		err = errors.New("error converting request to api.request: " + err.Error())
+		return api.RequestAbridged{}, err
+	}
+	output.ID = request.UUID
+
+	// Hydrate nested request fields
+	createdBy, err := ConvertUser(ctx, request.CreatedBy)
+	if err != nil {
+		return api.RequestAbridged{}, err
+	}
+	output.CreatedBy = &createdBy
+
+	output.Destination = convertLocation(request.Destination)
+
+	output.Origin = convertRequestOrigin(request)
+
+	provider, err := convertProvider(ctx, request)
+	if err != nil {
+		return api.RequestAbridged{}, err
+	}
+	output.Provider = provider
+
+	photo, err := loadRequestPhoto(ctx, request)
+	if err != nil {
+		return api.RequestAbridged{}, err
+	}
+	output.Photo = photo
+
+	return output, nil
+}
+
+func convertRequestOrigin(request Request) *api.Location {
+	if !request.OriginID.Valid {
+		return nil
+	}
+
+	outputOrigin := convertLocation(request.Origin)
+	return &outputOrigin
+}
+
+func convertProvider(ctx context.Context, request Request) (*api.User, error) {
+	if !request.ProviderID.Valid {
+		return nil, nil
+	}
+
+	outputProvider, err := ConvertUser(ctx, request.Provider)
+	if err != nil {
+		return nil, err
+	}
+
+	return &outputProvider, nil
+}
+
+func loadPotentialProviders(ctx context.Context, request Request, user User) (api.Users, error) {
+	tx := Tx(ctx)
+
+	potentialProviders, err := request.GetPotentialProviders(tx, user)
+	if err != nil {
+		err = errors.New("error converting request potential providers: " + err.Error())
+		return nil, err
+	}
+
+	outputProviders, err := ConvertUsers(ctx, potentialProviders)
+	if err != nil {
+		return nil, err
+	}
+
+	return outputProviders, nil
+}
+
+func loadRequestPhoto(ctx context.Context, request Request) (*api.File, error) {
+	photo, err := request.GetPhoto(Tx(ctx))
+	if err != nil {
+		err = errors.New("error converting request photo: " + err.Error())
+		return nil, err
+	}
+
+	if photo == nil {
+		return nil, nil
+	}
+
+	var outputPhoto api.File
+	if err := api.ConvertToOtherType(photo, &outputPhoto); err != nil {
+		err = errors.New("error converting photo to api.File: " + err.Error())
+		return nil, err
+	}
+	outputPhoto.ID = photo.UUID
+	return &outputPhoto, nil
+}
+
+func convertRequestMeeting(request Request) *api.Meeting {
+	if !request.MeetingID.Valid {
+		return nil
+	}
+	meeting := convertMeetingAbridged(request.Meeting)
+	return &meeting
 }

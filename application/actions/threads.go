@@ -1,7 +1,6 @@
 package actions
 
 import (
-	"context"
 	"errors"
 
 	"github.com/gobuffalo/buffalo"
@@ -31,7 +30,7 @@ func threadsMine(c buffalo.Context) error {
 		return reportError(c, api.NewAppError(err, api.ErrorThreadsLoadFailure, api.CategoryInternal))
 	}
 
-	output, err := convertThreadsToAPIType(c, threads)
+	output, err := models.ConvertThreadsToAPIType(c, threads)
 	if err != nil {
 		return reportError(c, err)
 	}
@@ -87,7 +86,7 @@ func threadsMarkAsRead(c buffalo.Context) error {
 	}
 
 	threads := models.Threads{thread}
-	converted, err := convertThreadsToAPIType(c, threads)
+	converted, err := models.ConvertThreadsToAPIType(c, threads)
 	if err != nil {
 		return reportError(c, err)
 	}
@@ -98,59 +97,4 @@ func threadsMarkAsRead(c buffalo.Context) error {
 	}
 
 	return c.Render(200, render.JSON(converted[0]))
-}
-
-func convertThreadsToAPIType(ctx context.Context, threads models.Threads) (api.Threads, error) {
-	var output api.Threads
-	if err := api.ConvertToOtherType(threads, &output); err != nil {
-		err = errors.New("error converting threads to api.threads: " + err.Error())
-		return nil, err
-	}
-
-	// Hydrate the thread's messages, participants
-	for i := range output {
-		newThread, err := convertThread(ctx, threads[i])
-		if err != nil {
-			return nil, err
-		}
-		output[i] = newThread
-	}
-
-	return output, nil
-}
-
-func convertThread(ctx context.Context, thread models.Thread) (api.Thread, error) {
-	var output api.Thread
-	if err := api.ConvertToOtherType(thread, &output); err != nil {
-		err = errors.New("error converting thread to api.thread: " + err.Error())
-		return api.Thread{}, err
-	}
-
-	// Hydrate the thread's messages, participants
-
-	messagesOutput, err := convertMessagesToAPIType(ctx, thread.Messages)
-	if err != nil {
-		return api.Thread{}, err
-	}
-	output.Messages = &messagesOutput
-
-	// Not converting Participants, since that happens automatically  above and
-	// because it doesn't have nested related objects
-	for i := range output.Participants {
-		output.Participants[i].ID = thread.Participants[i].UUID
-	}
-
-	if thread.Request.ID > 0 {
-		requestOutput, err := convertRequest(ctx, thread.Request)
-		if err != nil {
-			return api.Thread{}, err
-		}
-
-		output.Request = &requestOutput
-	} else {
-		output.Request = nil
-	}
-
-	output.ID = thread.UUID
-	return output, nil
 }

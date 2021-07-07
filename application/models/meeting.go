@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -12,6 +13,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/pkg/errors"
 
+	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/domain"
 )
 
@@ -372,4 +374,158 @@ func (m *Meeting) isVisible(tx *pop.Connection, userID int) bool {
 func (m *Meetings) FindByIDs(tx *pop.Connection, ids []int) error {
 	ids = domain.UniquifyIntSlice(ids)
 	return tx.Where("id in (?)", ids).All(m)
+}
+
+// ConvertMeetings converts list of models.Meeting into list of api.Meeting
+func ConvertMeetings(ctx context.Context, meetings []Meeting, user User) ([]api.Meeting, error) {
+	output := make([]api.Meeting, len(meetings))
+
+	for i, m := range meetings {
+		var err error
+		output[i], err = convertMeeting(ctx, m, user)
+		if err != nil {
+			return []api.Meeting{}, err
+		}
+	}
+
+	return output, nil
+}
+
+// convertMeeting converts a model.Meeting into api.Meeting
+func convertMeeting(ctx context.Context, meeting Meeting, user User) (api.Meeting, error) {
+	output := convertMeetingAbridged(meeting)
+
+	createdBy, err := loadMeetingCreatedBy(ctx, meeting)
+	if err != nil {
+		return api.Meeting{}, err
+	}
+	output.CreatedBy = createdBy
+
+	imageFile, err := loadMeetingImageFile(ctx, meeting)
+	if err != nil {
+		return api.Meeting{}, err
+	}
+	output.ImageFile = imageFile
+
+	location, err := loadMeetingLocation(ctx, meeting)
+	if err != nil {
+		return api.Meeting{}, err
+	}
+	output.Location = location
+
+	participants, err := loadMeetingParticipants(ctx, meeting, user)
+	if err != nil {
+		return api.Meeting{}, err
+	}
+	output.Participants = participants
+
+	return output, nil
+}
+
+func convertMeetingParticipants(ctx context.Context, participants MeetingParticipants) (api.MeetingParticipants, error) {
+	output := make(api.MeetingParticipants, len(participants))
+	for i := range output {
+		var err error
+		output[i], err = convertMeetingParticipant(ctx, participants[i])
+		if err != nil {
+			return output, err
+		}
+	}
+	return output, nil
+}
+
+func convertMeetingParticipant(ctx context.Context, participant MeetingParticipant) (api.MeetingParticipant, error) {
+	tx := Tx(ctx)
+
+	output := api.MeetingParticipant{}
+
+	user, err := participant.User(tx)
+	if err != nil {
+		return api.MeetingParticipant{}, err
+	}
+
+	outputUser, err := ConvertUser(ctx, user)
+	if err != nil {
+		return api.MeetingParticipant{}, err
+	}
+	output.User = outputUser
+
+	output.IsOrganizer = participant.IsOrganizer
+
+	return output, nil
+}
+
+func convertMeetingAbridged(meeting Meeting) api.Meeting {
+	return api.Meeting{
+		ID:          meeting.UUID,
+		Name:        meeting.Name,
+		Description: meeting.Description.String,
+		StartDate:   meeting.StartDate,
+		EndDate:     meeting.EndDate,
+		CreatedAt:   meeting.CreatedAt,
+		UpdatedAt:   meeting.UpdatedAt,
+		MoreInfoURL: meeting.MoreInfoURL.String,
+	}
+}
+
+func loadMeetingCreatedBy(ctx context.Context, meeting Meeting) (api.User, error) {
+	createdBy, err := meeting.GetCreator(Tx(ctx))
+	if err != nil {
+		return api.User{}, errors.New("loading meeting creator, " + err.Error())
+	}
+
+	outputCreatedBy, err := ConvertUser(ctx, *createdBy)
+	if err != nil {
+		err = errors.New("error converting meeting created_by user: " + err.Error())
+		return api.User{}, err
+	}
+	return outputCreatedBy, nil
+}
+
+func loadMeetingImageFile(ctx context.Context, meeting Meeting) (*api.File, error) {
+	imageFile, err := meeting.ImageFile(Tx(ctx))
+	if err != nil {
+		err = errors.New("error converting meeting image file: " + err.Error())
+		return nil, err
+	}
+
+	if imageFile == nil {
+		return nil, nil
+	}
+
+	var outputImage api.File
+	if err := api.ConvertToOtherType(imageFile, &outputImage); err != nil {
+		err = errors.New("error converting meeting image file to api.File: " + err.Error())
+		return nil, err
+	}
+	outputImage.ID = imageFile.UUID
+	return &outputImage, nil
+}
+
+func loadMeetingLocation(ctx context.Context, meeting Meeting) (*api.Location, error) {
+	location, err := meeting.GetLocation(Tx(ctx))
+	if err != nil {
+		err = errors.New("error converting meeting location: " + err.Error())
+		return nil, err
+	}
+
+	apiLocation := convertLocation(location)
+	return &apiLocation, nil
+}
+
+func loadMeetingParticipants(ctx context.Context, meeting Meeting, user User) (api.MeetingParticipants, error) {
+	tx := Tx(ctx)
+
+	participants, err := meeting.Participants(tx, user)
+	if err != nil {
+		err = errors.New("error converting meeting participants: " + err.Error())
+		return nil, err
+	}
+
+	outputParticipants, err := convertMeetingParticipants(ctx, participants)
+	if err != nil {
+		return nil, err
+	}
+
+	return outputParticipants, nil
 }

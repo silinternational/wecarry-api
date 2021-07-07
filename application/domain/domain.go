@@ -53,6 +53,7 @@ const (
 	EventApiMessageCreated                 = "api:message:created"
 	EventApiRequestStatusUpdated           = "api:request:status:updated"
 	EventApiRequestCreated                 = "api:request:status:created"
+	EventApiRequestUpdated                 = "api:request:updated"
 	EventApiPotentialProviderCreated       = "api:potentialprovider:created"
 	EventApiPotentialProviderRejected      = "api:potentialprovider:rejected"
 	EventApiPotentialProviderSelfDestroyed = "api:potentialprovider:selfdestroyed"
@@ -182,6 +183,8 @@ var Env struct {
 	MicrosoftSecret            string
 	MobileService              string
 	PlaygroundPort             string
+	RedisInstanceName          string
+	RedisInstanceHostPort      string
 	RollbarServerRoot          string
 	RollbarToken               string
 	SendGridAPIKey             string
@@ -246,6 +249,8 @@ func readEnv() {
 	Env.MicrosoftSecret = envy.Get("MICROSOFT_SECRET", "")
 	Env.MobileService = envy.Get("MOBILE_SERVICE", "dummy")
 	Env.PlaygroundPort = envy.Get("PORT", "3000")
+	Env.RedisInstanceName = envy.Get("REDIS_INSTANCE_NAME", "redis")
+	Env.RedisInstanceHostPort = envy.Get("REDIS_INSTANCE_HOST_PORT", "redis:6379")
 	Env.RollbarServerRoot = envy.Get("ROLLBAR_SERVER_ROOT", "github.com/silinternational/wecarry-api")
 	Env.RollbarToken = envy.Get("ROLLBAR_TOKEN", "")
 	Env.SendGridAPIKey = envy.Get("SENDGRID_API_KEY", "")

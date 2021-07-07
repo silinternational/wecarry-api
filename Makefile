@@ -1,4 +1,4 @@
-dev: buffalo adminer migrate
+dev: buffalo adminer migrate 
 
 migrate:
 	docker-compose run --rm buffalo whenavail db 5432 10 buffalo-pop pop migrate up
@@ -21,6 +21,9 @@ adminer:
 buffalo:
 	docker-compose up -d buffalo
 
+redis: db
+	docker-compose up -d redis
+	
 debug: killbuffalo
 	docker-compose up -d debug
 	docker-compose logs -f debug

@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -10,6 +11,8 @@ import (
 	"github.com/gobuffalo/validate/v3/validators"
 	"github.com/gofrs/uuid"
 	"github.com/pkg/errors"
+
+	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/domain"
 )
 
@@ -115,7 +118,6 @@ func (t *Thread) LoadMessages(tx *pop.Connection, eagerFields ...string) error {
 }
 
 func (t *Thread) LoadParticipants(tx *pop.Connection) error {
-
 	if err := tx.Load(t, "Participants"); err != nil {
 		return fmt.Errorf("error loading threads participants %v ... %v", t.ID, err)
 	}
@@ -124,7 +126,6 @@ func (t *Thread) LoadParticipants(tx *pop.Connection) error {
 }
 
 func (t *Thread) LoadThreadParticipants(tx *pop.Connection) error {
-
 	if err := tx.Load(t, "ThreadParticipants"); err != nil {
 		return fmt.Errorf("error loading threads thread_participants %v ... %v", t.ID, err)
 	}
@@ -207,7 +208,6 @@ func (t *Thread) UpdateLastViewedAt(tx *pop.Connection, userID int, time time.Ti
 }
 
 func (t *Thread) LoadForAPI(tx *pop.Connection, user User) error {
-
 	err := t.LoadMessages(tx, "SentBy")
 	if err != nil {
 		return errors.New("error loading thread messages: " + err.Error())
@@ -296,4 +296,74 @@ func (t *Thread) IsVisible(tx *pop.Connection, userID int) bool {
 		}
 	}
 	return false
+}
+
+// converts models.Threads to api.Threads
+func ConvertThreadsToAPIType(ctx context.Context, threads Threads) (api.Threads, error) {
+	var output api.Threads
+	if err := api.ConvertToOtherType(threads, &output); err != nil {
+		err = errors.New("error converting threads to api.threads: " + err.Error())
+		return nil, err
+	}
+
+	// Hydrate the thread's messages, participants
+	for i := range output {
+		messagesOutput, err := ConvertMessagesToAPIType(ctx, threads[i].Messages)
+		if err != nil {
+			return nil, err
+		}
+		output[i].Messages = &messagesOutput
+
+		// Not converting Participants, since that happens automatically  above and
+		// because it doesn't have nested related objects
+		for j := range output[i].Participants {
+			output[i].Participants[j].ID = threads[i].Participants[j].UUID
+		}
+
+		requestOutput, err := ConvertRequest(ctx, threads[i].Request)
+		if err != nil {
+			return nil, err
+		}
+
+		output[i].Request = &requestOutput
+		output[i].ID = threads[i].UUID
+	}
+
+	return output, nil
+}
+
+func ConvertThread(ctx context.Context, thread Thread) (api.Thread, error) {
+	var output api.Thread
+	if err := api.ConvertToOtherType(thread, &output); err != nil {
+		err = errors.New("error converting thread to api.thread: " + err.Error())
+		return api.Thread{}, err
+	}
+
+	// Hydrate the thread's messages, participants
+
+	messagesOutput, err := ConvertMessagesToAPIType(ctx, thread.Messages)
+	if err != nil {
+		return api.Thread{}, err
+	}
+	output.Messages = &messagesOutput
+
+	// Not converting Participants, since that happens automatically  above and
+	// because it doesn't have nested related objects
+	for i := range output.Participants {
+		output.Participants[i].ID = thread.Participants[i].UUID
+	}
+
+	if thread.Request.ID > 0 {
+		requestOutput, err := ConvertRequest(ctx, thread.Request)
+		if err != nil {
+			return api.Thread{}, err
+		}
+
+		output.Request = &requestOutput
+	} else {
+		output.Request = nil
+	}
+
+	output.ID = thread.UUID
+	return output, nil
 }

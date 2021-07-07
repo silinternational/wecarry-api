@@ -13,7 +13,7 @@ func (as *ActionSuite) Test_convertOrganization() {
 		UUID: u,
 		Name: "test org",
 	}
-	got := convertOrganization(organization)
+	got := models.ConvertOrganization(organization)
 	as.verifyOrganization(organization, got, "Organization is not correct")
 }
 

@@ -95,7 +95,7 @@ func createFixturesForRequestQuery(as *ActionSuite) RequestQueryFixtures {
 
 func createFixturesForRequestsList(as *ActionSuite) RequestsListFixtures {
 	usersFixtures := test.CreateUserFixtures(as.DB, 3)
-	requests := test.CreateRequestFixtures(as.DB, 5, false)
+	requests := test.CreateRequestFixtures(as.DB, 5, false, usersFixtures.Users[0].ID)
 
 	requests[0].Status = models.RequestStatusAccepted
 	requests[0].ProviderID = nulls.NewInt(usersFixtures.Users[1].ID)
