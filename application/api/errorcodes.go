@@ -80,7 +80,8 @@ const (
 
 	// Meeting
 
-	ErrorGetMeetings = ErrorKey("ErrorGetMeetings")
+	ErrorMeetingsGet     = ErrorKey("ErrorMeetingsGet")
+	ErrorMeetingsConvert = ErrorKey("ErrorMeetingsConvert")
 
 	// Message
 
