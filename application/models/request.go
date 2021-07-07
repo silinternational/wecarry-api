@@ -1194,13 +1194,13 @@ func ConvertRequestToAPIType(ctx context.Context, request Request) (api.Request,
 	if err != nil {
 		return api.Request{}, err
 	}
-	output.Provider = &provider
+	output.Provider = provider
 
 	photo, err := hydrateRequestPhoto(ctx, request, tx)
 	if err != nil {
 		return api.Request{}, err
 	}
-	output.Photo = &photo
+	output.Photo = photo
 
 	// TODO: hydrate other nested request fields after reconciling api.Request struct with the UI field list
 	organization, err := hydrateRequestOrganization(ctx, request, tx)
@@ -1245,13 +1245,13 @@ func ConvertRequestToAPITypeAbridged(ctx context.Context, request Request) (api.
 	if err != nil {
 		return api.RequestAbridged{}, err
 	}
-	output.Provider = &provider
+	output.Provider = provider
 
 	photo, err := hydrateRequestPhoto(ctx, request, tx)
 	if err != nil {
 		return api.RequestAbridged{}, err
 	}
-	output.Photo = &photo
+	output.Photo = photo
 
 	return output, nil
 }
@@ -1294,38 +1294,41 @@ func hydrateRequestDestination(ctx context.Context, request Request, tx *pop.Con
 	return outputDestination, nil
 }
 
-func hydrateProvider(ctx context.Context, request Request, tx *pop.Connection) (api.User, error) {
+func hydrateProvider(ctx context.Context, request Request, tx *pop.Connection) (*api.User, error) {
 	provider, err := request.GetProvider(tx)
 	if err != nil {
 		err = errors.New("error converting request provider: " + err.Error())
-		return api.User{}, err
+		return nil, err
 	}
 	var outputProvider api.User
 	if err := api.ConvertToOtherType(provider, &outputProvider); err != nil {
 		err = errors.New("error converting provider to api.User: " + err.Error())
-		return api.User{}, err
+		return nil, err
 	}
-	if provider != nil {
-		outputProvider.ID = provider.UUID
+	if !request.ProviderID.Valid {
+		return nil, nil
 	}
-	return outputProvider, nil
+	outputProvider.ID = provider.UUID
+
+	return &outputProvider, nil
 }
 
-func hydrateRequestPhoto(ctx context.Context, request Request, tx *pop.Connection) (api.File, error) {
+func hydrateRequestPhoto(ctx context.Context, request Request, tx *pop.Connection) (*api.File, error) {
 	photo, err := request.GetPhoto(tx)
 	if err != nil {
 		err = errors.New("error converting request photo: " + err.Error())
-		return api.File{}, err
+		return nil, err
 	}
 	var outputPhoto api.File
 	if err := api.ConvertToOtherType(photo, &outputPhoto); err != nil {
 		err = errors.New("error converting photo to api.File: " + err.Error())
-		return api.File{}, err
+		return nil, err
 	}
-	if photo != nil {
-		outputPhoto.ID = photo.UUID
+	if photo == nil {
+		return nil, nil
 	}
-	return outputPhoto, nil
+	outputPhoto.ID = photo.UUID
+	return &outputPhoto, nil
 }
 
 func hydrateRequestOrganization(ctx context.Context, request Request, tx *pop.Connection) (api.Organization, error) {
