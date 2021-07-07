@@ -114,10 +114,7 @@ func convertUserPrivate(ctx context.Context, user models.User) (api.UserPrivate,
 	if err != nil {
 		return api.UserPrivate{}, err
 	}
-	output.Organizations, err = convertOrganizationsToAPIType(organizations)
-	if err != nil {
-		return api.UserPrivate{}, err
-	}
+	output.Organizations = convertOrganizations(organizations)
 	return output, nil
 }
 

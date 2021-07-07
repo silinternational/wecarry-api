@@ -12,8 +12,7 @@ import (
 func (as *ActionSuite) Test_convertUserPrivate() {
 	uf := test.CreateUserFixtures(as.DB, 1)
 	user := uf.Users[0]
-	org, err := convertOrganizationToAPIType(uf.Organization)
-	as.NoError(err)
+	org := convertOrganization(uf.Organization)
 
 	want := api.UserPrivate{
 		ID:            user.UUID,
@@ -27,7 +26,7 @@ func (as *ActionSuite) Test_convertUserPrivate() {
 
 	// with Photo
 	photo := test.CreateFileFixture(as.DB)
-	_, err = user.AttachPhoto(as.DB, photo.UUID.String())
+	_, err := user.AttachPhoto(as.DB, photo.UUID.String())
 	as.NoError(err)
 	want = api.UserPrivate{
 		ID:            user.UUID,

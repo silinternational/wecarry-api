@@ -220,15 +220,15 @@ type Request struct {
 	MeetingID      nulls.Int         `json:"meeting_id" db:"meeting_id"`
 	Visibility     RequestVisibility `json:"visibility" db:"visibility"`
 
-	CreatedBy    User         `belongs_to:"users"`
-	Organization Organization `belongs_to:"organizations"`
-	Provider     User         `belongs_to:"users"`
+	CreatedBy    User         `json:"-" belongs_to:"users"`
+	Organization Organization `json:"-" belongs_to:"organizations"`
+	Provider     User         `json:"-" belongs_to:"users"`
 
-	Files       RequestFiles `has_many:"request_files"`
-	PhotoFile   File         `belongs_to:"files" fk_id:"FileID"`
-	Destination Location     `belongs_to:"locations"`
-	Origin      Location     `belongs_to:"locations"`
-	Meeting     Meeting      `belongs_to:"meetings"`
+	Files       RequestFiles `json:"-" has_many:"request_files"`
+	PhotoFile   File         `json:"-" belongs_to:"files" fk_id:"FileID"`
+	Destination Location     `json:"destination" belongs_to:"locations"`
+	Origin      Location     `json:"-" belongs_to:"locations"`
+	Meeting     Meeting      `json:"-" belongs_to:"meetings"`
 }
 
 // RequestCreatedEventData holds data needed by the New Request event listener

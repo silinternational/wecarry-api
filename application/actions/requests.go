@@ -97,6 +97,11 @@ func convertRequestsAbridged(ctx context.Context, requests []models.Request) ([]
 // convertRequest converts model.Request into api.Request
 func convertRequest(ctx context.Context, request models.Request) (api.Request, error) {
 	var output api.Request
+
+	if err := request.Load(ctx); err != nil {
+		return output, err
+	}
+
 	if err := api.ConvertToOtherType(request, &output); err != nil {
 		err = errors.New("error converting request to api.request: " + err.Error())
 		return api.Request{}, err
@@ -106,25 +111,15 @@ func convertRequest(ctx context.Context, request models.Request) (api.Request, e
 	tx := models.Tx(ctx)
 	user := models.CurrentUser(ctx)
 
-	createdBy, err := loadRequestCreatedBy(ctx, request)
+	createdBy, err := convertUser(ctx, request.CreatedBy)
 	if err != nil {
 		return api.Request{}, err
 	}
 	output.CreatedBy = createdBy
 
-	origin, err := loadRequestOrigin(ctx, request)
-	if err != nil {
-		return api.Request{}, err
-	}
-	output.Origin = origin
+	output.Origin = convertRequestOrigin(request)
 
-	destination, err := loadRequestDestination(ctx, request)
-	if err != nil {
-		return api.Request{}, err
-	}
-	output.Destination = destination
-
-	provider, err := loadProvider(ctx, request)
+	provider, err := convertProvider(ctx, request)
 	if err != nil {
 		return api.Request{}, err
 	}
@@ -142,17 +137,9 @@ func convertRequest(ctx context.Context, request models.Request) (api.Request, e
 	}
 	output.PotentialProviders = potentialProviders
 
-	organization, err := loadRequestOrganization(ctx, request)
-	if err != nil {
-		return api.Request{}, err
-	}
-	output.Organization = organization
+	output.Organization = convertOrganization(request.Organization)
 
-	meeting, err := loadRequestMeeting(ctx, request)
-	if err != nil {
-		return api.Request{}, err
-	}
-	output.Meeting = meeting
+	output.Meeting = convertRequestMeeting(request)
 
 	isEditable, err := request.IsEditable(tx, user)
 	if err != nil {
@@ -165,6 +152,10 @@ func convertRequest(ctx context.Context, request models.Request) (api.Request, e
 
 // convertRequestAbridged converts model.Request into api.RequestAbridged
 func convertRequestAbridged(ctx context.Context, request models.Request) (api.RequestAbridged, error) {
+	if err := request.Load(ctx); err != nil {
+		return api.RequestAbridged{}, err
+	}
+
 	var output api.RequestAbridged
 	if err := api.ConvertToOtherType(request, &output); err != nil {
 		err = errors.New("error converting request to api.request: " + err.Error())
@@ -173,25 +164,15 @@ func convertRequestAbridged(ctx context.Context, request models.Request) (api.Re
 	output.ID = request.UUID
 
 	// Hydrate nested request fields
-	createdBy, err := loadRequestCreatedBy(ctx, request)
+	createdBy, err := convertUser(ctx, request.CreatedBy)
 	if err != nil {
 		return api.RequestAbridged{}, err
 	}
 	output.CreatedBy = &createdBy
 
-	origin, err := loadRequestOrigin(ctx, request)
-	if err != nil {
-		return api.RequestAbridged{}, err
-	}
-	output.Origin = origin
+	output.Origin = convertRequestOrigin(request)
 
-	destination, err := loadRequestDestination(ctx, request)
-	if err != nil {
-		return api.RequestAbridged{}, err
-	}
-	output.Destination = &destination
-
-	provider, err := loadProvider(ctx, request)
+	provider, err := convertProvider(ctx, request)
 	if err != nil {
 		return api.RequestAbridged{}, err
 	}
@@ -206,67 +187,21 @@ func convertRequestAbridged(ctx context.Context, request models.Request) (api.Re
 	return output, nil
 }
 
-func loadRequestCreatedBy(ctx context.Context, request models.Request) (api.User, error) {
-	createdBy, err := request.GetCreator(models.Tx(ctx))
-	if err != nil {
-		return api.User{}, errors.New("loading request creator, " + err.Error())
+func convertRequestOrigin(request models.Request) *api.Location {
+	if !request.OriginID.Valid {
+		return nil
 	}
 
-	outputCreatedBy, err := convertUser(ctx, *createdBy)
-	if err != nil {
-		err = errors.New("error converting request created_by user: " + err.Error())
-		return api.User{}, err
-	}
-	return outputCreatedBy, nil
+	outputOrigin := convertLocation(request.Origin)
+	return &outputOrigin
 }
 
-func loadRequestOrigin(ctx context.Context, request models.Request) (*api.Location, error) {
-	origin, err := request.GetOrigin(models.Tx(ctx))
-	if err != nil {
-		err = errors.New("error converting request origin: " + err.Error())
-		return nil, err
-	}
-
-	if origin == nil {
+func convertProvider(ctx context.Context, request models.Request) (*api.User, error) {
+	if !request.ProviderID.Valid {
 		return nil, nil
 	}
 
-	var outputOrigin api.Location
-	if err := api.ConvertToOtherType(origin, &outputOrigin); err != nil {
-		err = errors.New("error converting origin to api.Location: " + err.Error())
-		return nil, err
-	}
-	return &outputOrigin, nil
-}
-
-func loadRequestDestination(ctx context.Context, request models.Request) (api.Location, error) {
-	destination, err := request.GetDestination(models.Tx(ctx))
-	if err != nil {
-		err = errors.New("error converting request destination: " + err.Error())
-		return api.Location{}, err
-	}
-	var outputDestination api.Location
-	if err := api.ConvertToOtherType(destination, &outputDestination); err != nil {
-		err = errors.New("error converting destination to api.Location: " + err.Error())
-		return api.Location{}, err
-	}
-	return outputDestination, nil
-}
-
-func loadProvider(ctx context.Context, request models.Request) (*api.User, error) {
-	tx := models.Tx(ctx)
-
-	provider, err := request.GetProvider(tx)
-	if err != nil {
-		err = errors.New("error converting request provider: " + err.Error())
-		return nil, err
-	}
-
-	if provider == nil {
-		return nil, nil
-	}
-
-	outputProvider, err := convertUser(ctx, *provider)
+	outputProvider, err := convertUser(ctx, request.Provider)
 	if err != nil {
 		return nil, err
 	}
@@ -311,38 +246,10 @@ func loadRequestPhoto(ctx context.Context, request models.Request) (*api.File, e
 	return &outputPhoto, nil
 }
 
-func loadRequestOrganization(ctx context.Context, request models.Request) (api.Organization, error) {
-	organization, err := request.GetOrganization(models.Tx(ctx))
-	if err != nil {
-		err = errors.New("error converting request organization: " + err.Error())
-		return api.Organization{}, err
+func convertRequestMeeting(request models.Request) *api.Meeting {
+	if !request.MeetingID.Valid {
+		return nil
 	}
-
-	var outputOrganization api.Organization
-	if err := api.ConvertToOtherType(organization, &outputOrganization); err != nil {
-		err = errors.New("error converting organization to api.Organization: " + err.Error())
-		return api.Organization{}, err
-	}
-	outputOrganization.ID = organization.UUID
-	return outputOrganization, nil
-}
-
-func loadRequestMeeting(ctx context.Context, request models.Request) (*api.Meeting, error) {
-	meeting, err := request.GetMeeting(models.Tx(ctx))
-	if err != nil {
-		err = errors.New("error converting request meeting: " + err.Error())
-		return nil, err
-	}
-
-	if meeting == nil {
-		return nil, nil
-	}
-
-	var outputMeeting api.Meeting
-	if err := api.ConvertToOtherType(meeting, &outputMeeting); err != nil {
-		err = errors.New("error converting meeting to api.Meeting: " + err.Error())
-		return nil, err
-	}
-	outputMeeting.ID = meeting.UUID
-	return &outputMeeting, nil
+	meeting := convertMeeting(request.Meeting)
+	return &meeting
 }

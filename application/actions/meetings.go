@@ -42,7 +42,7 @@ func convertMeetings(ctx context.Context, meetings []models.Meeting, user models
 
 	for i, m := range meetings {
 		var err error
-		output[i], err = convertMeeting(ctx, m, user)
+		output[i], err = convertMeetingNew(ctx, m, user)
 		if err != nil {
 			return []api.Meeting{}, err
 		}
@@ -52,7 +52,7 @@ func convertMeetings(ctx context.Context, meetings []models.Meeting, user models
 }
 
 // converts a model.Meeting into api.Meeting
-func convertMeeting(ctx context.Context, meeting models.Meeting, user models.User) (api.Meeting, error) {
+func convertMeetingNew(ctx context.Context, meeting models.Meeting, user models.User) (api.Meeting, error) {
 	var output api.Meeting
 	if err := api.ConvertToOtherType(meeting, &output); err != nil {
 		err = errors.New("error converting meeting to api.Meeting: " + err.Error())
@@ -184,4 +184,17 @@ func convertMeetingParticipant(ctx context.Context, participant models.MeetingPa
 	output.IsOrganizer = participant.IsOrganizer
 
 	return output, nil
+}
+
+func convertMeeting(meeting models.Meeting) api.Meeting {
+	return api.Meeting{
+		ID:          meeting.UUID,
+		Name:        meeting.Name,
+		Description: meeting.Description.String,
+		StartDate:   meeting.StartDate,
+		EndDate:     meeting.EndDate,
+		CreatedAt:   meeting.CreatedAt,
+		UpdatedAt:   meeting.UpdatedAt,
+		MoreInfoURL: meeting.MoreInfoURL.String,
+	}
 }
