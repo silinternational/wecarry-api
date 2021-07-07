@@ -6,6 +6,9 @@ import (
 	"github.com/gofrs/uuid"
 )
 
+// swagger:model
+type Meetings []Meeting
+
 // Meeting a/k/a Event, to serve as a focal point for finding, answering, carrying, and exchanging requests
 // swagger:model
 type Meeting struct {
