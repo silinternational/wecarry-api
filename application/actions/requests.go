@@ -246,12 +246,7 @@ func loadRequestPhoto(ctx context.Context, request models.Request) (*api.File, e
 		return nil, nil
 	}
 
-	var outputPhoto api.File
-	if err := api.ConvertToOtherType(photo, &outputPhoto); err != nil {
-		err = errors.New("error converting photo to api.File: " + err.Error())
-		return nil, err
-	}
-	outputPhoto.ID = photo.UUID
+	outputPhoto := convertFile(*photo)
 	return &outputPhoto, nil
 }
 

@@ -37,16 +37,20 @@ func (as *ActionSuite) Test_MeetingsList() {
 		fmt.Sprintf(`"participants":[{"user":{"id":"%s"`, user.UUID.String()),
 		`"url":"http://minio:9000/wca-test-bucket`,
 	}
+
 	for i := 2; i < 4; i++ {
 		lctn := lctns[i]
-		wantContains = append(wantContains, fmt.Sprintf(`"id":"%s"`, mtgs[i].UUID.String()))
-		wantContains = append(wantContains, fmt.Sprintf(`"name":"%s"`, mtgs[i].Name))
-		wantContains = append(wantContains, fmt.Sprintf(`"start_date":"%s`, mtgs[i].StartDate.Format(domain.DateFormat)))
-		wantContains = append(wantContains, fmt.Sprintf(`"end_date":"%s`, mtgs[i].EndDate.Format(domain.DateFormat)))
-		wantContains = append(wantContains, fmt.Sprintf(`"location":{"description":"%s"`, lctn.Description))
-		wantContains = append(wantContains, fmt.Sprintf(`"country":"%s"`, lctn.Country))
-		wantContains = append(wantContains, fmt.Sprintf(`"latitude":%v`, int(lctn.Latitude.Float64)))
-		wantContains = append(wantContains, fmt.Sprintf(`"longitude":%v`, int(lctn.Longitude.Float64)))
+		moreContains := []string{
+			fmt.Sprintf(`"id":"%s"`, mtgs[i].UUID.String()),
+			fmt.Sprintf(`"name":"%s"`, mtgs[i].Name),
+			fmt.Sprintf(`"start_date":"%s`, mtgs[i].StartDate.Format(domain.DateFormat)),
+			fmt.Sprintf(`"end_date":"%s`, mtgs[i].EndDate.Format(domain.DateFormat)),
+			fmt.Sprintf(`"location":{"description":"%s"`, lctn.Description),
+			fmt.Sprintf(`"country":"%s"`, lctn.Country),
+			fmt.Sprintf(`"latitude":%v`, int(lctn.Latitude.Float64)),
+			fmt.Sprintf(`"longitude":%v`, int(lctn.Longitude.Float64)),
+		}
+		wantContains = append(wantContains, moreContains...)
 	}
 
 	for _, w := range wantContains {
