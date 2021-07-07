@@ -7,7 +7,10 @@ import (
 	"github.com/gofrs/uuid"
 )
 
-type RequestVisibility string
+type (
+	RequestStatus     string
+	RequestVisibility string
+)
 
 // swagger:model
 type Requests []Request
@@ -27,7 +30,7 @@ type Request struct {
 	IsEditable bool `json:"is_editable"`
 
 	// Request status: OPEN, ACCEPTED, DELIVERED, RECEIVED, COMPLETED, REMOVED
-	RequestStatus string `json:"status"`
+	Status RequestStatus `json:"status"`
 
 	// Profile of the user that created this request
 	CreatedBy User `json:"created_by"`
@@ -72,7 +75,7 @@ type Request struct {
 	Kilograms nulls.Float64 `json:"kilograms"`
 
 	// Optional URL to further describe or point to detail about the item, limited to 255 characters
-	Url nulls.String `json:"url"`
+	URL nulls.String `json:"url"`
 
 	// Photo of the item
 	Photo *File `json:"photo"`
@@ -105,7 +108,7 @@ type RequestAbridged struct {
 	Title string `json:"title"`
 
 	// Geographic location where item is needed
-	Destination *Location `json:"destination"`
+	Destination Location `json:"destination"`
 
 	// Optional geographic location where the item can be picked up, purchased, or otherwise obtained
 	Origin *Location `json:"origin"`

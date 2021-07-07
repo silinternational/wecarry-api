@@ -335,28 +335,20 @@ func (o *Organizations) FindByIDs(tx *pop.Connection, ids []int) error {
 	return tx.Where("id in (?)", ids).All(o)
 }
 
-// converts []models.Organization to []api.Organization
-func ConvertOrganizationsToAPIType(organizations Organizations) ([]api.Organization, error) {
+// ConvertOrganizations converts []models.Organization to []api.Organization
+func ConvertOrganizations(organizations Organizations) []api.Organization {
 	output := make([]api.Organization, len(organizations))
 	for i := range output {
-		o, err := ConvertOrganizationToAPIType(organizations[i])
-		if err != nil {
-			return nil, err
-		}
-		output[i] = o
+		output[i] = ConvertOrganization(organizations[i])
 	}
 
-	return output, nil
+	return output
 }
 
-// converts models.Organization to api.Organization
-func ConvertOrganizationToAPIType(organization Organization) (api.Organization, error) {
-	var output api.Organization
-	if err := api.ConvertToOtherType(organization, &output); err != nil {
-		err = errors.New("error converting organization to api.organization: " + err.Error())
-		return api.Organization{}, err
+// ConvertOrganization converts models.Organization to api.Organization
+func ConvertOrganization(organization Organization) api.Organization {
+	return api.Organization{
+		ID:   organization.UUID,
+		Name: organization.Name,
 	}
-	output.ID = organization.UUID
-
-	return output, nil
 }

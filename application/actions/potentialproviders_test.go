@@ -3,7 +3,9 @@ package actions
 import (
 	"fmt"
 
+	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/internal/test"
+	"github.com/silinternational/wecarry-api/models"
 )
 
 func (as *ActionSuite) Test_AddMeAsPotentialProvider() {
@@ -96,4 +98,12 @@ func (as *ActionSuite) Test_RejectPotentialProvider() {
 
 	want := []PotentialProvider{{ID: f.Users[3].UUID.String(), Nickname: f.Users[3].Nickname}}
 	as.Equal(want, resp.Request.PotentialProviders, "incorrect potential providers")
+}
+
+func (as *ActionSuite) verifyPotentialProviders(expected models.Users, actual api.Users, msg string) {
+	as.Equal(len(expected), len(actual), msg+", length is not correct")
+
+	for i := range expected {
+		as.verifyUser(expected[i], actual[i], fmt.Sprintf("%s, potential provider %d is not correct", msg, i))
+	}
 }

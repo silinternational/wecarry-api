@@ -12,8 +12,7 @@ import (
 func (as *ActionSuite) Test_convertUserPrivate() {
 	uf := test.CreateUserFixtures(as.DB, 1)
 	user := uf.Users[0]
-	org, err := models.ConvertOrganizationToAPIType(uf.Organization)
-	as.NoError(err)
+	org := models.ConvertOrganization(uf.Organization)
 
 	want := api.UserPrivate{
 		ID:            user.UUID,
@@ -27,7 +26,7 @@ func (as *ActionSuite) Test_convertUserPrivate() {
 
 	// with Photo
 	photo := test.CreateFileFixture(as.DB)
-	_, err = user.AttachPhoto(as.DB, photo.UUID.String())
+	_, err := user.AttachPhoto(as.DB, photo.UUID.String())
 	as.NoError(err)
 	want = api.UserPrivate{
 		ID:            user.UUID,
@@ -110,5 +109,19 @@ func (as *ActionSuite) TestUsersUpdate() {
 	}
 	for _, w := range wantContains {
 		as.Contains(body, w)
+	}
+}
+
+func (as *ActionSuite) verifyUser(user models.User, apiUser api.User, msg string) {
+	as.Equal(user.UUID, apiUser.ID, msg+", ID is not correct")
+
+	as.Equal(user.Nickname, apiUser.Nickname, msg+", Nickname is not correct")
+
+	avatarURL, err := user.GetPhotoURL(as.DB)
+	as.NoError(err)
+	if avatarURL == nil {
+		as.False(apiUser.AvatarURL.Valid, msg+", AvatarURL should be null but isn't")
+	} else {
+		as.Equal(*avatarURL, apiUser.AvatarURL.String, msg+", AvatarURL is not correct")
 	}
 }

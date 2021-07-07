@@ -1,6 +1,8 @@
 package actions
 
 import (
+	"errors"
+
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/buffalo/render"
 
@@ -58,15 +60,20 @@ func requestsGet(c buffalo.Context) error {
 	domain.NewExtra(c, "requestID", id)
 
 	request := models.Request{}
-	if err := request.FindByUUID(tx, id.String()); err != nil {
-		return reportError(c, api.NewAppError(err, api.ErrorGetRequest, api.CategoryInternal))
+	if err = request.FindByUUID(tx, id.String()); err != nil {
+		appError := api.NewAppError(err, api.ErrorGetRequest, api.CategoryNotFound)
+		if domain.IsOtherThanNoRows(err) {
+			appError.Category = api.CategoryInternal
+		}
+		return reportError(c, appError)
 	}
 
 	if !cUser.CanViewRequest(tx, request) {
+		err = errors.New("user not allowed to view request")
 		return reportError(c, api.NewAppError(err, api.ErrorGetRequestUserNotAllowed, api.CategoryForbidden))
 	}
 
-	output, err := models.ConvertRequestToAPITypeAbridged(c, request)
+	output, err := models.ConvertRequestAbridged(c, request)
 	if err != nil {
 		return reportError(c, err)
 	}

@@ -9,7 +9,6 @@ import (
 	"github.com/gobuffalo/pop/v5"
 
 	"github.com/silinternational/wecarry-api/api"
-	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 )
 
@@ -50,7 +49,7 @@ func watchesCreate(c buffalo.Context) error {
 	}
 
 	if input.Destination != nil {
-		location := convertLocationInput(*input.Destination)
+		location := models.ConvertLocationInput(*input.Destination)
 		if err = location.Create(tx); err != nil {
 			err := errors.New("unable to create the destination related to a new Watch, error: " + err.Error())
 			return reportError(c, api.NewAppError(err, api.ErrorLocationCreateFailure, api.CategoryInternal))
@@ -59,7 +58,7 @@ func watchesCreate(c buffalo.Context) error {
 	}
 
 	if input.Origin != nil {
-		location := convertLocationInput(*input.Origin)
+		location := models.ConvertLocationInput(*input.Origin)
 		if err = location.Create(tx); err != nil {
 			err := errors.New("unable to create the origin related to a new Watch, error: " + err.Error())
 			return reportError(c, api.NewAppError(err, api.ErrorLocationCreateFailure, api.CategoryInternal))
@@ -204,16 +203,4 @@ func convertWatchInput(tx *pop.Connection, input api.WatchInput, user models.Use
 	}
 
 	return watch, nil
-}
-
-func convertLocationInput(input api.LocationInput) models.Location {
-	l := models.Location{
-		Description: input.Description,
-		Country:     input.Country,
-	}
-
-	domain.SetOptionalFloatField(input.Latitude, &l.Latitude)
-	domain.SetOptionalFloatField(input.Longitude, &l.Longitude)
-
-	return l
 }

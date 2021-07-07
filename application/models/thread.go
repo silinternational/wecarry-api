@@ -320,7 +320,7 @@ func ConvertThreadsToAPIType(ctx context.Context, threads Threads) (api.Threads,
 			output[i].Participants[j].ID = threads[i].Participants[j].UUID
 		}
 
-		requestOutput, err := ConvertRequestToAPIType(ctx, threads[i].Request)
+		requestOutput, err := ConvertRequest(ctx, threads[i].Request)
 		if err != nil {
 			return nil, err
 		}
@@ -354,7 +354,7 @@ func ConvertThread(ctx context.Context, thread Thread) (api.Thread, error) {
 	}
 
 	if thread.Request.ID > 0 {
-		requestOutput, err := ConvertRequestToAPIType(ctx, thread.Request)
+		requestOutput, err := ConvertRequest(ctx, thread.Request)
 		if err != nil {
 			return api.Thread{}, err
 		}

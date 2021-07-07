@@ -14,6 +14,7 @@ import (
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop/v5"
+	"github.com/silinternational/wecarry-api/aws"
 
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
@@ -191,6 +192,31 @@ func CreateFileFixture(tx *pop.Connection) models.File {
 	return f
 }
 
+func CreateMeetingFixtures(tx *pop.Connection, n int, user models.User) models.Meetings {
+	locations := CreateLocationFixtures(tx, n)
+
+	if err := aws.CreateS3Bucket(); err != nil {
+		panic("failed to create S3 bucket, " + err.Error())
+	}
+	fileFixtures := CreateFileFixtures(tx, n)
+
+	meetings := make(models.Meetings, n)
+	for i := range meetings {
+		meetings[i] = models.Meeting{
+			UUID:        domain.GetUUID(),
+			CreatedByID: user.ID,
+			Name:        "Meeting " + strconv.Itoa(i),
+			LocationID:  locations[i].ID,
+			FileID:      nulls.NewInt(fileFixtures[i].ID),
+			StartDate:   time.Now().Add(domain.DurationWeek * 10),
+			EndDate:     time.Now().Add(domain.DurationWeek * 8),
+		}
+		MustCreate(tx, &meetings[i])
+	}
+
+	return meetings
+}
+
 // AssertStringContains makes the test fail if the string does not contain the substring.
 // It outputs one line from the stack trace along with a message about the failure.
 // The stack trace line chosen is the first one that contains "_test.go" in the hope
@@ -304,5 +330,13 @@ func Ctx() context.Context {
 	ctx := &testBuffaloContext{
 		params: map[interface{}]interface{}{},
 	}
+	return ctx
+}
+
+func CtxWithUser(user models.User) context.Context {
+	ctx := &testBuffaloContext{
+		params: map[interface{}]interface{}{},
+	}
+	ctx.Set(domain.ContextKeyCurrentUser, user)
 	return ctx
 }

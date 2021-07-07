@@ -853,7 +853,6 @@ func (u *User) RemovePreferences(tx *pop.Connection) error {
 	return p.removeAll(tx, u.ID)
 }
 
-// converts from models.User to api.UserPrivate
 func ConvertUserPrivate(ctx context.Context, user User) (api.UserPrivate, error) {
 	tx := Tx(ctx)
 
@@ -881,14 +880,24 @@ func ConvertUserPrivate(ctx context.Context, user User) (api.UserPrivate, error)
 	if err != nil {
 		return api.UserPrivate{}, err
 	}
-	output.Organizations, err = ConvertOrganizationsToAPIType(organizations)
-	if err != nil {
-		return api.UserPrivate{}, err
+	output.Organizations = ConvertOrganizations(organizations)
+	return output, nil
+}
+
+// ConvertUsers converts list of models.User to list of api.User
+func ConvertUsers(ctx context.Context, users Users) (api.Users, error) {
+	output := make(api.Users, len(users))
+	for i := range output {
+		var err error
+		output[i], err = ConvertUser(ctx, users[i])
+		if err != nil {
+			return output, err
+		}
 	}
 	return output, nil
 }
 
-// converts from models.User to api.UserPrivate
+// ConvertUsers converts models.User to api.User
 func ConvertUser(ctx context.Context, user User) (api.User, error) {
 	tx := Tx(ctx)
 

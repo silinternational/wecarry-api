@@ -221,14 +221,15 @@ type Request struct {
 	MeetingID      nulls.Int         `json:"meeting_id" db:"meeting_id"`
 	Visibility     RequestVisibility `json:"visibility" db:"visibility"`
 
-	CreatedBy    User         `belongs_to:"users"`
-	Organization Organization `belongs_to:"organizations"`
-	Provider     User         `belongs_to:"users"`
+	CreatedBy    User         `json:"-" belongs_to:"users"`
+	Organization Organization `json:"-" belongs_to:"organizations"`
+	Provider     User         `json:"-" belongs_to:"users"`
 
-	Files       RequestFiles `has_many:"request_files"`
-	PhotoFile   File         `belongs_to:"files" fk_id:"FileID"`
-	Destination Location     `belongs_to:"locations"`
-	Origin      Location     `belongs_to:"locations"`
+	Files       RequestFiles `json:"-" has_many:"request_files"`
+	PhotoFile   File         `json:"-" belongs_to:"files" fk_id:"FileID"`
+	Destination Location     `json:"destination" belongs_to:"locations"`
+	Origin      Location     `json:"-" belongs_to:"locations"`
+	Meeting     Meeting      `json:"-" belongs_to:"meetings"`
 }
 
 // RequestCreatedEventData holds data needed by the New Request event listener
@@ -994,6 +995,7 @@ func (r *Request) SetOrigin(tx *pop.Connection, location Location) error {
 // IsEditable response with true if the given user is the owner of the request or an admin,
 // and it is not in a locked status.
 func (r *Request) IsEditable(tx *pop.Connection, user User) (bool, error) {
+	// TODO: remove the error return value from this function, it's really annoying
 	if user.ID <= 0 {
 		return false, errors.New("user.ID must be a valid primary key")
 	}
@@ -1078,8 +1080,8 @@ func (r *Request) GetAudience(tx *pop.Connection) (Users, error) {
 	return users, nil
 }
 
-// Meeting reads the meeting record, if it exists, and returns a pointer to the object.
-func (r *Request) Meeting(tx *pop.Connection) (*Meeting, error) {
+// GetMeeting reads the meeting record, if it exists, and returns a pointer to the object.
+func (r *Request) GetMeeting(tx *pop.Connection) (*Meeting, error) {
 	if !r.MeetingID.Valid {
 		return nil, nil
 	}
@@ -1156,13 +1158,18 @@ func (r *Request) Creator(tx *pop.Connection) (User, error) {
 	return u, tx.Find(&u, r.CreatedByID)
 }
 
-// converts []model.Request into []api.RequestAbridged
+// Load loads the requested fields from the database
+func (r *Request) Load(ctx context.Context, fields ...string) error {
+	return Tx(ctx).Load(r, fields...)
+}
+
+// ConvertRequestsAbridged converts list of model.Request into api.RequestAbridged
 func ConvertRequestsAbridged(ctx context.Context, requests []Request) ([]api.RequestAbridged, error) {
 	output := make([]api.RequestAbridged, len(requests))
 
 	for i, request := range requests {
 		var err error
-		output[i], err = ConvertRequestToAPITypeAbridged(ctx, request)
+		output[i], err = ConvertRequestAbridged(ctx, request)
 		if err != nil {
 			return []api.RequestAbridged{}, err
 		}
@@ -1171,59 +1178,70 @@ func ConvertRequestsAbridged(ctx context.Context, requests []Request) ([]api.Req
 	return output, nil
 }
 
-// converts model.Request into api.Request
-func ConvertRequestToAPIType(ctx context.Context, request Request) (api.Request, error) {
+// ConvertRequest converts model.Request into api.Request
+func ConvertRequest(ctx context.Context, request Request) (api.Request, error) {
 	var output api.Request
+
+	if err := request.Load(ctx); err != nil {
+		return output, err
+	}
+
 	if err := api.ConvertToOtherType(request, &output); err != nil {
 		err = errors.New("error converting request to api.request: " + err.Error())
 		return api.Request{}, err
 	}
 	output.ID = request.UUID
 
-	// Hydrate nested request fields for api.RequestAbridged
 	tx := Tx(ctx)
-	createdBy, err := hydrateRequestCreatedBy(ctx, request, tx)
+	user := CurrentUser(ctx)
+
+	createdBy, err := ConvertUser(ctx, request.CreatedBy)
 	if err != nil {
 		return api.Request{}, err
 	}
 	output.CreatedBy = createdBy
 
-	origin, err := hydrateRequestOrigin(ctx, request, tx)
-	if err != nil {
-		return api.Request{}, err
-	}
-	output.Origin = &origin
+	output.Destination = convertLocation(request.Destination)
 
-	destination, err := hydrateRequestDestination(ctx, request, tx)
-	if err != nil {
-		return api.Request{}, err
-	}
-	output.Destination = destination
+	output.Origin = convertRequestOrigin(request)
 
-	provider, err := hydrateProvider(ctx, request, tx)
+	provider, err := convertProvider(ctx, request)
 	if err != nil {
 		return api.Request{}, err
 	}
 	output.Provider = provider
 
-	photo, err := hydrateRequestPhoto(ctx, request, tx)
+	photo, err := loadRequestPhoto(ctx, request)
 	if err != nil {
 		return api.Request{}, err
 	}
 	output.Photo = photo
 
-	// TODO: hydrate other nested request fields after reconciling api.Request struct with the UI field list
-	organization, err := hydrateRequestOrganization(ctx, request, tx)
+	potentialProviders, err := loadPotentialProviders(ctx, request, user)
 	if err != nil {
 		return api.Request{}, err
 	}
-	output.Organization = organization
+	output.PotentialProviders = potentialProviders
+
+	output.Organization = ConvertOrganization(request.Organization)
+
+	output.Meeting = convertRequestMeeting(request)
+
+	isEditable, err := request.IsEditable(tx, user)
+	if err != nil {
+		return api.Request{}, err
+	}
+	output.IsEditable = isEditable
 
 	return output, nil
 }
 
-// converts model.Request into api.RequestAbridged
-func ConvertRequestToAPITypeAbridged(ctx context.Context, request Request) (api.RequestAbridged, error) {
+// ConvertRequestAbridged converts model.Request into api.RequestAbridged
+func ConvertRequestAbridged(ctx context.Context, request Request) (api.RequestAbridged, error) {
+	if err := request.Load(ctx); err != nil {
+		return api.RequestAbridged{}, err
+	}
+
 	var output api.RequestAbridged
 	if err := api.ConvertToOtherType(request, &output); err != nil {
 		err = errors.New("error converting request to api.request: " + err.Error())
@@ -1232,32 +1250,23 @@ func ConvertRequestToAPITypeAbridged(ctx context.Context, request Request) (api.
 	output.ID = request.UUID
 
 	// Hydrate nested request fields
-	tx := Tx(ctx)
-	createdBy, err := hydrateRequestCreatedBy(ctx, request, tx)
+	createdBy, err := ConvertUser(ctx, request.CreatedBy)
 	if err != nil {
 		return api.RequestAbridged{}, err
 	}
 	output.CreatedBy = &createdBy
 
-	origin, err := hydrateRequestOrigin(ctx, request, tx)
-	if err != nil {
-		return api.RequestAbridged{}, err
-	}
-	output.Origin = &origin
+	output.Destination = convertLocation(request.Destination)
 
-	destination, err := hydrateRequestDestination(ctx, request, tx)
-	if err != nil {
-		return api.RequestAbridged{}, err
-	}
-	output.Destination = &destination
+	output.Origin = convertRequestOrigin(request)
 
-	provider, err := hydrateProvider(ctx, request, tx)
+	provider, err := convertProvider(ctx, request)
 	if err != nil {
 		return api.RequestAbridged{}, err
 	}
 	output.Provider = provider
 
-	photo, err := hydrateRequestPhoto(ctx, request, tx)
+	photo, err := loadRequestPhoto(ctx, request)
 	if err != nil {
 		return api.RequestAbridged{}, err
 	}
@@ -1266,93 +1275,69 @@ func ConvertRequestToAPITypeAbridged(ctx context.Context, request Request) (api.
 	return output, nil
 }
 
-func hydrateRequestCreatedBy(ctx context.Context, request Request, tx *pop.Connection) (api.User, error) {
-	createdBy, _ := request.GetCreator(tx)
-	outputCreatedBy, err := ConvertUser(ctx, *createdBy)
-	if err != nil {
-		err = errors.New("error converting request created_by user: " + err.Error())
-		return api.User{}, err
+func convertRequestOrigin(request Request) *api.Location {
+	if !request.OriginID.Valid {
+		return nil
 	}
-	return outputCreatedBy, nil
+
+	outputOrigin := convertLocation(request.Origin)
+	return &outputOrigin
 }
 
-func hydrateRequestOrigin(ctx context.Context, request Request, tx *pop.Connection) (api.Location, error) {
-	origin, err := request.GetOrigin(tx)
-	if err != nil {
-		err = errors.New("error converting request origin: " + err.Error())
-		return api.Location{}, err
-	}
-	var outputOrigin api.Location
-	if err := api.ConvertToOtherType(origin, &outputOrigin); err != nil {
-		err = errors.New("error converting origin to api.Location: " + err.Error())
-		return api.Location{}, err
-	}
-	return outputOrigin, nil
-}
-
-func hydrateRequestDestination(ctx context.Context, request Request, tx *pop.Connection) (api.Location, error) {
-	destination, err := request.GetDestination(tx)
-	if err != nil {
-		err = errors.New("error converting request destination: " + err.Error())
-		return api.Location{}, err
-	}
-	var outputDestination api.Location
-	if err := api.ConvertToOtherType(destination, &outputDestination); err != nil {
-		err = errors.New("error converting destination to api.Location: " + err.Error())
-		return api.Location{}, err
-	}
-	return outputDestination, nil
-}
-
-func hydrateProvider(ctx context.Context, request Request, tx *pop.Connection) (*api.User, error) {
-	provider, err := request.GetProvider(tx)
-	if err != nil {
-		err = errors.New("error converting request provider: " + err.Error())
-		return nil, err
-	}
-	var outputProvider api.User
-	if err := api.ConvertToOtherType(provider, &outputProvider); err != nil {
-		err = errors.New("error converting provider to api.User: " + err.Error())
-		return nil, err
-	}
+func convertProvider(ctx context.Context, request Request) (*api.User, error) {
 	if !request.ProviderID.Valid {
 		return nil, nil
 	}
-	outputProvider.ID = provider.UUID
+
+	outputProvider, err := ConvertUser(ctx, request.Provider)
+	if err != nil {
+		return nil, err
+	}
 
 	return &outputProvider, nil
 }
 
-func hydrateRequestPhoto(ctx context.Context, request Request, tx *pop.Connection) (*api.File, error) {
-	photo, err := request.GetPhoto(tx)
+func loadPotentialProviders(ctx context.Context, request Request, user User) (api.Users, error) {
+	tx := Tx(ctx)
+
+	potentialProviders, err := request.GetPotentialProviders(tx, user)
+	if err != nil {
+		err = errors.New("error converting request potential providers: " + err.Error())
+		return nil, err
+	}
+
+	outputProviders, err := ConvertUsers(ctx, potentialProviders)
+	if err != nil {
+		return nil, err
+	}
+
+	return outputProviders, nil
+}
+
+func loadRequestPhoto(ctx context.Context, request Request) (*api.File, error) {
+	photo, err := request.GetPhoto(Tx(ctx))
 	if err != nil {
 		err = errors.New("error converting request photo: " + err.Error())
 		return nil, err
 	}
+
+	if photo == nil {
+		return nil, nil
+	}
+
 	var outputPhoto api.File
 	if err := api.ConvertToOtherType(photo, &outputPhoto); err != nil {
 		err = errors.New("error converting photo to api.File: " + err.Error())
 		return nil, err
 	}
-	if photo == nil {
-		return nil, nil
-	}
 	outputPhoto.ID = photo.UUID
 	return &outputPhoto, nil
 }
 
-func hydrateRequestOrganization(ctx context.Context, request Request, tx *pop.Connection) (api.Organization, error) {
-	// Hydrate the request's organization
-	organization, err := request.GetOrganization(tx)
-	if err != nil {
-		err = errors.New("error converting request organization: " + err.Error())
-		return api.Organization{}, err
+func convertRequestMeeting(request Request) *api.Meeting {
+	if !request.MeetingID.Valid {
+		return nil
 	}
-	var outputOrg api.Organization
-	if err := api.ConvertToOtherType(organization, &outputOrg); err != nil {
-		err = errors.New("error converting organization to api.Organization: " + err.Error())
-		return api.Organization{}, err
-	}
-	outputOrg.ID = organization.UUID
-	return outputOrg, nil
+	meeting := convertMeetingAbridged(request.Meeting)
+	return &meeting
 }

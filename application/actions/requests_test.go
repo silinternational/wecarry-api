@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
@@ -904,5 +905,204 @@ func (as *ActionSuite) Test_RequestActions() {
 			}
 			as.Equal(tc.want, actions)
 		})
+	}
+}
+
+func (as *ActionSuite) Test_requestsGet() {
+	f := createFixturesForRequestQuery(as)
+
+	tests := []struct {
+		name       string
+		user       models.User
+		requestID  string
+		wantStatus int
+	}{
+		{
+			name:       "authn error",
+			user:       models.User{},
+			requestID:  f.Requests[0].UUID.String(),
+			wantStatus: http.StatusUnauthorized,
+		},
+		{
+			name:       "authz error",
+			user:       f.Users[1],
+			requestID:  f.Requests[3].UUID.String(),
+			wantStatus: http.StatusNotFound,
+		},
+		{
+			name:       "bad request ID",
+			user:       f.Users[1],
+			requestID:  "1",
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name:       "not found",
+			user:       f.Users[1],
+			requestID:  domain.GetUUID().String(),
+			wantStatus: http.StatusNotFound,
+		},
+		{
+			name:       "no error",
+			user:       f.Users[1],
+			requestID:  f.Requests[0].UUID.String(),
+			wantStatus: http.StatusOK,
+		},
+	}
+	for _, tt := range tests {
+		as.T().Run(tt.name, func(t *testing.T) {
+			req := as.JSON("/requests/" + tt.requestID)
+			req.Headers["Authorization"] = fmt.Sprintf("Bearer %s", tt.user.Nickname)
+			req.Headers["content-type"] = "application/json"
+			res := req.Get()
+
+			body := res.Body.String()
+			as.Equal(tt.wantStatus, res.Code, "incorrect status code returned, body: %s", body)
+
+			if tt.wantStatus == http.StatusOK {
+				as.Contains(body, fmt.Sprintf(`"id":"%s"`, tt.requestID))
+			}
+		})
+	}
+}
+
+func (as *ActionSuite) Test_convertRequest() {
+	userFixtures := test.CreateUserFixtures(as.DB, 2)
+	creator := userFixtures.Users[0]
+	provider := userFixtures.Users[1]
+
+	requestFixtures := test.CreateRequestFixtures(as.DB, 2, false, creator.ID)
+
+	meeting := test.CreateMeetingFixtures(as.DB, 1, creator)[0]
+
+	ctx := test.CtxWithUser(creator)
+
+	min := requestFixtures[0]
+	min.ProviderID = nulls.Int{}
+	min.Description = nulls.String{}
+	min.OriginID = nulls.Int{}
+	min.NeededBefore = nulls.Time{}
+	min.Kilograms = nulls.Float64{}
+	min.URL = nulls.String{}
+	min.FileID = nulls.Int{}
+	min.MeetingID = nulls.Int{}
+
+	// because Pop doesn't update child objects when the ID changes to 0
+	min.Provider = models.User{}
+	min.Origin = models.Location{}
+	min.PhotoFile = models.File{}
+	min.Meeting = models.Meeting{}
+
+	as.NoError(as.DB.Save(&min))
+
+	full := requestFixtures[1]
+	full.ProviderID = nulls.NewInt(provider.ID)
+	full.FileID = nulls.NewInt(test.CreateFileFixture(as.DB).ID)
+	full.MeetingID = nulls.NewInt(meeting.ID)
+
+	as.NoError(as.DB.Save(&full))
+
+	tests := []struct {
+		name    string
+		request models.Request
+	}{
+		{
+			name:    "minimal",
+			request: min,
+		},
+		{
+			name:    "full",
+			request: full,
+		},
+	}
+	for _, tt := range tests {
+		as.T().Run(tt.name, func(t *testing.T) {
+			apiRequest, err := models.ConvertRequest(ctx, tt.request)
+			as.NoError(err)
+
+			as.NoError(as.DB.Load(&tt.request))
+			as.verifyApiRequest(ctx, tt.request, apiRequest, "api.Request is not correct")
+		})
+	}
+}
+
+func (as *ActionSuite) verifyApiRequest(ctx context.Context, request models.Request, apiRequest api.Request, msg string) {
+	as.Equal(request.UUID.String(), apiRequest.ID.String(), msg+", ID is not correct")
+
+	isEditable, err := request.IsEditable(as.DB, models.CurrentUser(ctx))
+	as.NoError(err)
+	as.Equal(isEditable, apiRequest.IsEditable, msg+", IsEditable is not correct")
+
+	as.Equal(string(request.Status), string(apiRequest.Status), msg+", Status is not correct")
+
+	as.verifyUser(request.CreatedBy, apiRequest.CreatedBy, msg+", CreatedBy is not correct")
+
+	if request.ProviderID.Valid {
+		as.NotNil(apiRequest.Provider, msg+", Provider is null but should not be")
+		as.verifyUser(request.Provider, *apiRequest.Provider, msg+", Provider is not correct")
+
+	} else {
+		as.Nil(apiRequest.Provider, msg+", Provider should be null but is not")
+	}
+
+	potentialProviders, err := request.GetPotentialProviders(as.DB, models.CurrentUser(ctx))
+	as.NoError(err)
+	as.verifyPotentialProviders(potentialProviders, apiRequest.PotentialProviders, msg+", potential providers are not correct")
+
+	as.verifyOrganization(request.Organization, apiRequest.Organization, msg+", Organization is not correct")
+
+	as.Equal(string(request.Visibility), string(apiRequest.Visibility), msg+", Visibility is not correct")
+
+	as.Equal(request.Title, apiRequest.Title, msg+", Title is not correct")
+
+	as.Equal(request.Description, apiRequest.Description, msg+", Description is not correct")
+
+	as.verifyLocation(request.Destination, apiRequest.Destination, msg+", Destination is not correct")
+
+	if request.OriginID.Valid {
+		as.NotNil(apiRequest.Origin, msg+", Origin is null but should not be")
+		as.verifyLocation(request.Origin, *apiRequest.Origin, msg+", Origin is not correct")
+	} else {
+		as.Nil(apiRequest.Origin, msg+", Origin should be null but is not")
+	}
+
+	as.Equal(string(request.Size), string(apiRequest.Size), msg+", Size is not correct")
+
+	as.True(request.CreatedAt.Equal(apiRequest.CreatedAt), msg+", CreatedAt is not correct")
+
+	as.True(request.UpdatedAt.Equal(apiRequest.UpdatedAt), msg+", UpdatedAt is not correct")
+
+	if request.NeededBefore.Valid {
+		as.NotNil(apiRequest.NeededBefore, msg+", NeededBefore is null but should not be")
+		as.True(request.NeededBefore.Time.Equal(apiRequest.NeededBefore.Time), msg+", NeededBefore is not correct")
+	} else {
+		as.False(apiRequest.NeededBefore.Valid, msg+", NeededBefore should be null but is not")
+	}
+
+	if request.Kilograms.Valid {
+		as.NotNil(apiRequest.Kilograms, msg+", Kilograms is null but should not be")
+		as.Equal(request.Kilograms, apiRequest.Kilograms, msg+", Kilograms is not correct")
+	} else {
+		as.False(apiRequest.Kilograms.Valid, msg+", Kilograms should be null but is not")
+	}
+
+	if request.URL.Valid {
+		as.NotNil(apiRequest.URL, msg+", URL is null but should not be")
+		as.Equal(request.URL, apiRequest.URL, msg+", URL is not correct")
+	} else {
+		as.False(apiRequest.URL.Valid, msg+", URL should be null but is not")
+	}
+
+	if request.FileID.Valid {
+		as.NotNil(apiRequest.Photo, msg+", Photo is null but should not be")
+		as.verifyFile(request.PhotoFile, *apiRequest.Photo, msg+", Photo is not correct")
+	} else {
+		as.Nil(apiRequest.Photo, msg+", Photo should be null but is not")
+	}
+
+	if request.MeetingID.Valid {
+		as.NotNil(apiRequest.Meeting, msg+", Meeting is null but should not be")
+		as.verifyMeeting(request.Meeting, *apiRequest.Meeting, msg+", Meeting is not correct")
+	} else {
+		as.Nil(apiRequest.Meeting, msg+", Meeting should be null but is not")
 	}
 }

@@ -228,7 +228,7 @@ func updateRequestPrivateCache(ctx context.Context, request models.Request, requ
 
 	// should be cached privately. Need to update or create an entry in the private cache.
 	if request.IsPrivate() {
-		requestAbridged, err := models.ConvertRequestToAPITypeAbridged(ctx, request)
+		requestAbridged, err := models.ConvertRequestAbridged(ctx, request)
 		if err != nil {
 			return err
 		}
@@ -258,7 +258,7 @@ func updateRequestPublicCache(ctx context.Context, request models.Request, reque
 
 	// should be cached publicly, need to update or create an entry in the public cache.
 	if request.IsPublic() {
-		requestAbridged, err := models.ConvertRequestToAPITypeAbridged(ctx, request)
+		requestAbridged, err := models.ConvertRequestAbridged(ctx, request)
 		if err != nil {
 			return err
 		}
