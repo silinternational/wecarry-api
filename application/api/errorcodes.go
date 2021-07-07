@@ -93,9 +93,12 @@ const (
 
 	// Request
 
-	ErrorGetRequests              = ErrorKey("ErrorGetRequests")
-	ErrorGetRequest               = ErrorKey("ErrorGetRequest")
-	ErrorGetRequestUserNotAllowed = ErrorKey("ErrorGetRequestUserNotAllowed")
+	ErrorGetRequests                  = ErrorKey("ErrorGetRequests")
+	ErrorGetRequest                   = ErrorKey("ErrorGetRequest")
+	ErrorGetRequestUserNotAllowed     = ErrorKey("ErrorGetRequestUserNotAllowed")
+	ErrorCreateRequest                = ErrorKey("ErrorCreateRequest")
+	ErrorCreateRequestOrgIDNotFound   = ErrorKey("ErrorCreateRequestOrgIDNotFound")
+	ErrorCreateRequestPhotoIDNotFound = ErrorKey("ErrorCreateRequestPhotoIDNotFound")
 
 	// Thread
 

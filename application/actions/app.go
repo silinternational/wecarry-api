@@ -105,6 +105,7 @@ func App() *buffalo.App {
 
 		requestsGroup := app.Group("/requests")
 		requestsGroup.GET("/", requestsList)
+		requestsGroup.POST("/", requestsCreate)
 		requestsGroup.GET("/{request_id}", requestsGet)
 
 		watchesGroup := app.Group("/watches")

@@ -965,6 +965,61 @@ func (as *ActionSuite) Test_requestsGet() {
 	}
 }
 
+func (as *ActionSuite) Test_requestsCreate() {
+	f := createFixturesForRequestQuery(as)
+
+	destination := api.LocationInput{Description: "location description", Country: "XX"}
+
+	goodRequest := api.RequestCreateInput{
+		Destination:    destination,
+		OrganizationID: f.Organization.UUID,
+		Size:           api.RequestSize(models.RequestSizeSmall),
+		Title:          "request title",
+	}
+	badRequest := api.RequestCreateInput{}
+
+	tests := []struct {
+		name       string
+		user       models.User
+		request    api.RequestCreateInput
+		wantStatus int
+	}{
+		{
+			name:       "authn error",
+			user:       models.User{},
+			request:    goodRequest,
+			wantStatus: http.StatusUnauthorized,
+		},
+		{
+			name:       "bad input",
+			user:       f.Users[1],
+			request:    badRequest,
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name:       "good input",
+			user:       f.Users[1],
+			request:    goodRequest,
+			wantStatus: http.StatusOK,
+		},
+	}
+	for _, tt := range tests {
+		as.T().Run(tt.name, func(t *testing.T) {
+			req := as.JSON("/requests")
+			req.Headers["Authorization"] = fmt.Sprintf("Bearer %s", tt.user.Nickname)
+			req.Headers["content-type"] = "application/json"
+			res := req.Post(&tt.request)
+
+			body := res.Body.String()
+			as.Equal(tt.wantStatus, res.Code, "incorrect status code returned, body: %s", body)
+
+			if tt.wantStatus == http.StatusOK {
+				as.Contains(body, fmt.Sprintf(`"title":"%s"`, tt.request.Title))
+			}
+		})
+	}
+}
+
 func (as *ActionSuite) Test_convertRequest() {
 	userFixtures := test.CreateUserFixtures(as.DB, 2)
 	creator := userFixtures.Users[0]
@@ -1105,4 +1160,110 @@ func (as *ActionSuite) verifyApiRequest(ctx context.Context, request models.Requ
 	} else {
 		as.Nil(apiRequest.Meeting, msg+", Meeting should be null but is not")
 	}
+}
+
+func (as *ActionSuite) Test_convertCreateRequestInput() {
+	userFixtures := test.CreateUserFixtures(as.DB, 2)
+	creator := userFixtures.Users[0]
+
+	ctx := test.CtxWithUser(creator)
+
+	destination := api.LocationInput{Description: "destination", Country: "XX"}
+	origin := api.LocationInput{Description: "origin", Country: "ZZ"}
+	file := test.CreateFileFixture(as.DB)
+
+	min := api.RequestCreateInput{
+		Destination:    destination,
+		OrganizationID: userFixtures.Organization.UUID,
+		Size:           api.RequestSize(models.RequestSizeSmall),
+		Title:          "request title 1",
+	}
+
+	full := api.RequestCreateInput{
+		Description:    nulls.NewString("request description"),
+		Destination:    destination,
+		Kilograms:      nulls.NewFloat64(1.0),
+		NeededBefore:   nulls.NewTime(time.Now()),
+		Origin:         &origin,
+		OrganizationID: userFixtures.Organization.UUID,
+		PhotoID:        nulls.NewUUID(file.UUID),
+		Size:           api.RequestSize(models.RequestSizeMedium),
+		Title:          "request title 2",
+		Visibility:     api.RequestVisibility(models.RequestVisibilityAll),
+	}
+
+	tests := []struct {
+		name  string
+		input api.RequestCreateInput
+	}{
+		{
+			name:  "minimal",
+			input: min,
+		},
+		{
+			name:  "full",
+			input: full,
+		},
+	}
+	for _, tt := range tests {
+		as.T().Run(tt.name, func(t *testing.T) {
+			apiRequest, err := convertRequestInput(ctx, tt.input)
+			as.NoError(err)
+
+			as.NoError(as.DB.Load(&tt.input))
+			as.verifyRequestCreateInput(ctx, tt.input, apiRequest)
+		})
+	}
+}
+
+func (as *ActionSuite) verifyRequestCreateInput(ctx context.Context, input api.RequestCreateInput, request models.Request) {
+	as.Equal(models.CurrentUser(ctx).ID, request.CreatedByID, "CreatedBy is not correct")
+
+	as.Equal(input.Description, request.Description, "Description is not correct")
+
+	var destination models.Location
+	as.NoError(as.DB.Find(&destination, request.DestinationID))
+	as.verifyLocationInput(input.Destination, destination, "Destination is not correct")
+
+	if input.Kilograms.Valid {
+		as.NotNil(request.Kilograms, "Kilograms is null but should not be")
+		as.Equal(input.Kilograms, request.Kilograms, "Kilograms is not correct")
+	} else {
+		as.False(request.Kilograms.Valid, "Kilograms should be null but is not")
+	}
+
+	if input.NeededBefore.Valid {
+		as.NotNil(request.NeededBefore, "NeededBefore is null but should not be")
+		as.True(input.NeededBefore.Time.Equal(request.NeededBefore.Time), "NeededBefore is not correct")
+	} else {
+		as.False(request.NeededBefore.Valid, "NeededBefore should be null but is not")
+	}
+
+	if input.Origin != nil {
+		as.NotNil(request.Origin, "Origin is null but should not be")
+		var origin models.Location
+		as.NoError(as.DB.Find(&origin, request.OriginID))
+		as.verifyLocationInput(*input.Origin, origin, "Origin is not correct")
+	} else {
+		as.False(request.OriginID.Valid, "Origin should be null but is not")
+	}
+
+	var organization models.Organization
+	as.NoError(as.DB.Find(&organization, request.OrganizationID))
+	as.Equal(input.OrganizationID, organization.UUID, "Organization is not correct")
+
+	if input.PhotoID.Valid {
+		as.NotNil(request.FileID, "Photo is null but should not be")
+		var file models.File
+		as.NoError(as.DB.Find(&file, request.FileID))
+		as.Equal(input.PhotoID.UUID, file.UUID, "Photo is not correct")
+	} else {
+		as.False(request.FileID.Valid, "Photo should be null but is not")
+	}
+
+	as.Equal(string(input.Size), string(request.Size), "Size is not correct")
+
+	as.Equal(input.Title, request.Title, "Title is not correct")
+
+	as.Equal(string(input.Visibility), string(request.Visibility), "Visibility is not correct")
 }

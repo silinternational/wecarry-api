@@ -254,13 +254,10 @@ func convertLocation(location Location) api.Location {
 }
 
 func ConvertLocationInput(input api.LocationInput) Location {
-	l := Location{
+	return Location{
 		Description: input.Description,
 		Country:     input.Country,
+		Latitude:    input.Latitude,
+		Longitude:   input.Longitude,
 	}
-
-	domain.SetOptionalFloatField(input.Latitude, &l.Latitude)
-	domain.SetOptionalFloatField(input.Longitude, &l.Longitude)
-
-	return l
 }

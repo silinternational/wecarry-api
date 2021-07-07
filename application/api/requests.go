@@ -119,3 +119,38 @@ type RequestAbridged struct {
 	// Photo of the item
 	Photo *File `json:"photo"`
 }
+
+// RequestCreateInput includes the fields for creating Requests
+//
+// swagger:model
+type RequestCreateInput struct {
+	// Optional, longer description, limited to 4096 characters
+	Description nulls.String `json:"description"`
+
+	// Geographic location where item is needed
+	Destination LocationInput `json:"destination"`
+
+	// Optional weight of the item, measured in kilograms
+	Kilograms nulls.Float64 `json:"kilograms"`
+
+	// Date (yyyy-mm-dd) before which the item will be needed. The record may be hidden or removed after this date.
+	NeededBefore nulls.Time `json:"needed_before"`
+
+	// Optional geographic location where the item can be picked up, purchased, or otherwise obtained
+	Origin *LocationInput `json:"origin"`
+
+	// ID of associated Organization. Affects visibility of the request, see also the `visibility` field.
+	OrganizationID uuid.UUID `json:"org_id"`
+
+	// Optional photo `file` ID. First upload a file using the `/upload` endpoint and then submit its ID here.
+	PhotoID nulls.UUID `json:"photo_id"`
+
+	// Broad category of the size of item.
+	Size RequestSize `json:"size"`
+
+	// Short description, limited to 255 characters
+	Title string `json:"title"`
+
+	// Visibility restrictions for this request, if omitted, the default is "SAME"
+	Visibility RequestVisibility `json:"visibility"`
+}
