@@ -94,6 +94,9 @@ func App() *buffalo.App {
 
 		app.POST("/gql/", gqlHandler)
 
+		eventsGroup := app.Group("/events")
+		eventsGroup.GET("/", meetingsList)
+
 		app.POST("/messages/", messagesCreate)
 
 		threadsGroup := app.Group("/threads")

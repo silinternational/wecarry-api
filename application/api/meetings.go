@@ -28,6 +28,18 @@ type Meeting struct {
 	// The date of the last day of the meeting (event)
 	EndDate time.Time `json:"end_date"`
 
+	// Profile of the user that added this meeting (event) to the app
+	CreatedBy User `json:"created_by"`
+
+	// Image File -- typically a logo
+	ImageFile *File `json:"image_file,omitempty"`
+
+	// location -- notifications and filters may use this location
+	Location *Location `json:"location,omitempty"`
+
+	// participants
+	Participants MeetingParticipants `json:"participants"`
+
 	// The time the meeting (event) was added to the app"
 	CreatedAt time.Time `json:"created_at"`
 
@@ -36,4 +48,19 @@ type Meeting struct {
 
 	// meeting (event) information URL -- should be a full website, but could be an information document such as a pdf"
 	MoreInfoURL string `json:"more_info_url"`
+}
+
+// swagger:model
+type MeetingParticipants []MeetingParticipant
+
+// Confirmed participant of a `Meeting`. An invited person will not appear as a `MeetingParticipant`
+//   until they have confirmed a `MeetingInvite` or self-joined a non-INVITE_ONLY meeting.
+//
+// swagger:model
+type MeetingParticipant struct {
+	// `User` information for the `Meeting` participant
+	User User `json:"user"`
+
+	// "true if `User` is a meeting Organizer"
+	IsOrganizer bool `json:"is_organizer"`
 }
