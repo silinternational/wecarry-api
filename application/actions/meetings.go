@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/buffalo/render"
+	"github.com/gobuffalo/pop/v5"
 	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/models"
 	"time"
@@ -61,13 +62,15 @@ func convertMeeting(ctx context.Context, meeting models.Meeting, user models.Use
 	}
 	output.CreatedBy = createdBy
 
-	imageFile, err := loadMeetingImageFile(ctx, meeting)
+	tx := models.Tx(ctx)
+
+	imageFile, err := loadMeetingImageFile(tx, meeting)
 	if err != nil {
 		return api.Meeting{}, err
 	}
 	output.ImageFile = imageFile
 
-	location, err := loadMeetingLocation(ctx, meeting)
+	location, err := loadMeetingLocation(tx, meeting)
 	if err != nil {
 		return api.Meeting{}, err
 	}
@@ -96,8 +99,8 @@ func loadMeetingCreatedBy(ctx context.Context, meeting models.Meeting) (api.User
 	return outputCreatedBy, nil
 }
 
-func loadMeetingImageFile(ctx context.Context, meeting models.Meeting) (*api.File, error) {
-	imageFile, err := meeting.ImageFile(models.Tx(ctx))
+func loadMeetingImageFile(tx *pop.Connection, meeting models.Meeting) (*api.File, error) {
+	imageFile, err := meeting.ImageFile(tx)
 	if err != nil {
 		err = errors.New("error converting meeting image file: " + err.Error())
 		return nil, err
@@ -116,19 +119,15 @@ func loadMeetingImageFile(ctx context.Context, meeting models.Meeting) (*api.Fil
 	return &outputImage, nil
 }
 
-func loadMeetingLocation(ctx context.Context, meeting models.Meeting) (*api.Location, error) {
-	location, err := meeting.GetLocation(models.Tx(ctx))
+func loadMeetingLocation(tx *pop.Connection, meeting models.Meeting) (*api.Location, error) {
+	location, err := meeting.GetLocation(tx)
 	if err != nil {
 		err = errors.New("error converting meeting location: " + err.Error())
 		return nil, err
 	}
 
-	var outputLocation api.Location
-	if err := api.ConvertToOtherType(location, &outputLocation); err != nil {
-		err = errors.New("error converting meeting location to api.Location: " + err.Error())
-		return nil, err
-	}
-	return &outputLocation, nil
+	apiLocation := convertLocation(location)
+	return &apiLocation, nil
 }
 
 func loadMeetingParticipants(ctx context.Context, meeting models.Meeting, user models.User) (api.MeetingParticipants, error) {

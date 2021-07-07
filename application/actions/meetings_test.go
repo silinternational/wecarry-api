@@ -53,7 +53,7 @@ func (as *ActionSuite) Test_MeetingsList() {
 		as.Contains(body, w)
 	}
 
-	as.NotContains(body, `"origin":`)
-	as.NotContains(body, `"meeting":`)
+	as.NotContains(body, mtgs[0].Name, "should not have included name of past meeting")
+	as.NotContains(body, mtgs[1].Name, "should not have included name of recent meeting")
 
 }
