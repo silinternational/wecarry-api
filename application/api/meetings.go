@@ -38,7 +38,7 @@ type Meeting struct {
 	ImageFile *File `json:"image_file,omitempty"`
 
 	// location -- notifications and filters may use this location
-	Location *Location `json:"location,omitempty"`
+	Location Location `json:"location,omitempty"`
 
 	// participants
 	Participants MeetingParticipants `json:"participants"`
