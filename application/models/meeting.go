@@ -395,6 +395,10 @@ func ConvertMeetings(ctx context.Context, meetings []Meeting, user User) ([]api.
 // convertMeeting converts a model.Meeting into api.Meeting
 func convertMeeting(ctx context.Context, meeting Meeting, user User) (api.Meeting, error) {
 	output := convertMeetingAbridged(meeting)
+	tx := Tx(ctx)
+	if err := tx.Load(&meeting); err != nil {
+		return api.Meeting{}, err
+	}
 
 	createdBy, err := loadMeetingCreatedBy(ctx, meeting)
 	if err != nil {
@@ -402,17 +406,8 @@ func convertMeeting(ctx context.Context, meeting Meeting, user User) (api.Meetin
 	}
 	output.CreatedBy = createdBy
 
-	imageFile, err := loadMeetingImageFile(ctx, meeting)
-	if err != nil {
-		return api.Meeting{}, err
-	}
-	output.ImageFile = imageFile
-
-	location, err := loadMeetingLocation(ctx, meeting)
-	if err != nil {
-		return api.Meeting{}, err
-	}
-	output.Location = location
+	output.ImageFile = convertMeetingImageFile(meeting)
+	output.Location = convertLocation(meeting.Location)
 
 	participants, err := loadMeetingParticipants(ctx, meeting, user)
 	if err != nil {
@@ -423,6 +418,17 @@ func convertMeeting(ctx context.Context, meeting Meeting, user User) (api.Meetin
 	return output, nil
 }
 
+// convertMeetingImageFile converts a model.Meeting.ImgFile into an api.File
+// This assumes that the meeting's related ImageFile has already been loaded
+func convertMeetingImageFile(meeting Meeting) *api.File {
+	if meeting.ImgFile == nil {
+		return nil
+	}
+	file := convertFile(*meeting.ImgFile)
+	return &file
+}
+
+// convertMeetingParticipants converts model.MeetingParticipants into an api.MeetingParticipants
 func convertMeetingParticipants(ctx context.Context, participants MeetingParticipants) (api.MeetingParticipants, error) {
 	output := make(api.MeetingParticipants, len(participants))
 	for i := range output {
@@ -470,12 +476,7 @@ func convertMeetingAbridged(meeting Meeting) api.Meeting {
 }
 
 func loadMeetingCreatedBy(ctx context.Context, meeting Meeting) (api.User, error) {
-	createdBy, err := meeting.GetCreator(Tx(ctx))
-	if err != nil {
-		return api.User{}, errors.New("loading meeting creator, " + err.Error())
-	}
-
-	outputCreatedBy, err := ConvertUser(ctx, *createdBy)
+	outputCreatedBy, err := ConvertUser(ctx, meeting.CreatedBy)
 	if err != nil {
 		err = errors.New("error converting meeting created_by user: " + err.Error())
 		return api.User{}, err
@@ -503,15 +504,14 @@ func loadMeetingImageFile(ctx context.Context, meeting Meeting) (*api.File, erro
 	return &outputImage, nil
 }
 
-func loadMeetingLocation(ctx context.Context, meeting Meeting) (*api.Location, error) {
+func loadMeetingLocation(ctx context.Context, meeting Meeting) (api.Location, error) {
 	location, err := meeting.GetLocation(Tx(ctx))
 	if err != nil {
 		err = errors.New("error converting meeting location: " + err.Error())
-		return nil, err
+		return api.Location{}, err
 	}
 
-	apiLocation := convertLocation(location)
-	return &apiLocation, nil
+	return convertLocation(location), nil
 }
 
 func loadMeetingParticipants(ctx context.Context, meeting Meeting, user User) (api.MeetingParticipants, error) {
