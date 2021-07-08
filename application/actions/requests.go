@@ -3,16 +3,15 @@ package actions
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/buffalo/render"
 	"github.com/gobuffalo/nulls"
 	"github.com/gofrs/uuid"
-	"github.com/silinternational/wecarry-api/domain"
 
 	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/cache"
+	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 )
 
@@ -100,13 +99,13 @@ func requestsGet(c buffalo.Context) error {
 //
 // responses:
 //   '200':
-//     description: create a new request
+//     description: the created request
 //     schema:
 //       "$ref": "#/definitions/Request"
 func requestsCreate(c buffalo.Context) error {
 	var input api.RequestCreateInput
 	if err := StrictBind(c, &input); err != nil {
-		err = errors.New("unable to unmarshal data into RequestCreateInput struct, error: " + err.Error())
+		err = errors.New("unable to unmarshal data into RequestCreateInput, error: " + err.Error())
 		return reportError(c, api.NewAppError(err, api.ErrorInvalidRequestBody, api.CategoryUser))
 	}
 
@@ -117,7 +116,8 @@ func requestsCreate(c buffalo.Context) error {
 		return reportError(c, err)
 	}
 
-	if err := request.Create(tx); err != nil {
+	if err = request.Create(tx); err != nil {
+		// TODO: discern whether err is a database error or a validation error or ???
 		return reportError(c, api.NewAppError(err, api.ErrorCreateRequest, api.CategoryUser))
 	}
 
@@ -129,8 +129,8 @@ func requestsCreate(c buffalo.Context) error {
 	return c.Render(200, render.JSON(output))
 }
 
-// convertRequestInput takes a `RequestInput` and creates a new `models.Request`. All properties that are not `nil` are
-// set to the value provided in `input`
+// convertRequestInput creates a new `Request` from a `RequestCreateInput`. All properties that are not `nil` are
+// set to the value provided
 func convertRequestInput(ctx context.Context, input api.RequestCreateInput) (models.Request, error) {
 	tx := models.Tx(ctx)
 
@@ -177,7 +177,6 @@ func convertRequestInput(ctx context.Context, input api.RequestCreateInput) (mod
 	}
 	request.DestinationID = destination.ID
 
-	fmt.Printf("-----------%p %v %v\n", input.Origin, input.Origin, request.OriginID)
 	if input.Origin != nil {
 		origin := models.ConvertLocationInput(*input.Origin)
 		if err := origin.Create(tx); err != nil {
