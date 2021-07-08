@@ -67,3 +67,14 @@ type MeetingParticipant struct {
 	// "true if `User` is a meeting Organizer"
 	IsOrganizer bool `json:"is_organizer"`
 }
+
+// MeetingParticipantInput contains parameters to join an event/meeting by creating a MessageParticipant
+// swagger:model
+type MeetingParticipantInput struct {
+	// ID of the `Meeting`
+	MeetingID string `json:"meeting_id"`
+
+	// Secret code from the `MeetingInvite` or invite code from the `Meeting`.
+	// If the `Meeting` is not `INVITE_ONLY`, the code may be omitted.
+	Code *string `json:"code"`
+}

@@ -5,6 +5,7 @@ import (
 	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
+	"testing"
 )
 
 func (as *ActionSuite) verifyMeeting(expected models.Meeting, actual api.Meeting, msg string) {
@@ -60,4 +61,77 @@ func (as *ActionSuite) Test_MeetingsList() {
 	as.NotContains(body, mtgs[0].Name, "should not have included name of past meeting")
 	as.NotContains(body, mtgs[1].Name, "should not have included name of recent meeting")
 
+}
+
+func (as *ActionSuite) Test_meetingsJoin() {
+	f := createFixturesForMeetings(as)
+
+	type testCase struct {
+		name       string
+		inviteCode string
+		location   models.Location
+		meeting    models.Meeting
+		user       models.User
+		wantInvite models.MeetingInvite
+	}
+
+	testCases := []testCase{
+		{
+			name:     "already a participant",
+			location: f.Locations[2],
+			meeting:  f.Meetings[2],
+			user:     f.Users[2],
+		},
+		{
+			name:     "meeting creator",
+			location: f.Locations[0],
+			meeting:  f.Meetings[0],
+			user:     f.Users[0],
+		},
+		{
+			name:       "regular user",
+			inviteCode: f.MeetingInvites[3].Secret.String(),
+			location:   f.Locations[3],
+			meeting:    f.Meetings[3],
+			user:       f.Users[1],
+			wantInvite: f.MeetingInvites[3],
+		},
+	}
+
+	for _, tc := range testCases {
+		as.T().Run(tc.name, func(t *testing.T) {
+
+			reqBody := api.MeetingParticipantInput{
+				MeetingID: tc.meeting.UUID.String(),
+			}
+			if tc.inviteCode != "" {
+				reqBody.Code = &tc.inviteCode
+			}
+
+			req := as.JSON("/events")
+			req.Headers["Authorization"] = fmt.Sprintf("Bearer %s", tc.user.Nickname)
+			req.Headers["content-type"] = "application/json"
+			res := req.Post(reqBody)
+
+			body := res.Body.String()
+			as.Equal(200, res.Code, "incorrect status code returned, body: %s", body)
+
+			wantContains := []string{
+				fmt.Sprintf(`"nickname":"%s"`, tc.user.Nickname),
+				fmt.Sprintf(`"participants":[{"user":{"id":"%s"`, tc.user.UUID.String()),
+				fmt.Sprintf(`"id":"%s"`, tc.meeting.UUID.String()),
+				fmt.Sprintf(`"name":"%s"`, tc.meeting.Name),
+				fmt.Sprintf(`"start_date":"%s`, tc.meeting.StartDate.Format(domain.DateFormat)),
+				fmt.Sprintf(`"end_date":"%s`, tc.meeting.EndDate.Format(domain.DateFormat)),
+				fmt.Sprintf(`"location":{"description":"%s"`, tc.location.Description),
+				fmt.Sprintf(`"country":"%s"`, tc.location.Country),
+				fmt.Sprintf(`"latitude":%v`, int(tc.location.Latitude.Float64)),
+				fmt.Sprintf(`"longitude":%v`, int(tc.location.Longitude.Float64)),
+			}
+
+			for _, w := range wantContains {
+				as.Contains(body, w)
+			}
+		})
+	}
 }

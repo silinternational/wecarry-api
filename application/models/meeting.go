@@ -383,7 +383,7 @@ func ConvertMeetings(ctx context.Context, meetings []Meeting, user User) ([]api.
 
 	for i, m := range meetings {
 		var err error
-		output[i], err = convertMeeting(ctx, m, user)
+		output[i], err = ConvertMeeting(ctx, m, user)
 		if err != nil {
 			return []api.Meeting{}, err
 		}
@@ -392,8 +392,8 @@ func ConvertMeetings(ctx context.Context, meetings []Meeting, user User) ([]api.
 	return output, nil
 }
 
-// convertMeeting converts a model.Meeting into api.Meeting
-func convertMeeting(ctx context.Context, meeting Meeting, user User) (api.Meeting, error) {
+// ConvertMeeting converts a model.Meeting into api.Meeting
+func ConvertMeeting(ctx context.Context, meeting Meeting, user User) (api.Meeting, error) {
 	output := convertMeetingAbridged(meeting)
 	tx := Tx(ctx)
 	if err := tx.Load(&meeting); err != nil {
