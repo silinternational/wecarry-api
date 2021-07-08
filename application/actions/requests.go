@@ -84,7 +84,7 @@ func requestsGet(c buffalo.Context) error {
 	return c.Render(200, render.JSON(output))
 }
 
-// swagger:operation POST /requests RequestsCreate
+// swagger:operation POST /requests Requests RequestsCreate
 //
 // create a new request
 //
