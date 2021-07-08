@@ -287,3 +287,14 @@ func (f *File) ClearLinked(tx *pop.Connection) error {
 func (f *Files) FindByIDs(tx *pop.Connection, ids []int) error {
 	return tx.Where("id in (?)", ids).All(f)
 }
+
+func convertFile(file File) api.File {
+	return api.File{
+		ID:            file.UUID,
+		URL:           file.URL,
+		URLExpiration: file.URLExpiration,
+		Name:          file.Name,
+		Size:          file.Size,
+		ContentType:   file.ContentType,
+	}
+}
