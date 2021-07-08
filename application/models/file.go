@@ -288,6 +288,7 @@ func (f *Files) FindByIDs(tx *pop.Connection, ids []int) error {
 	return tx.Where("id in (?)", ids).All(f)
 }
 
+// convertFile converts a models.File to an api.File
 func convertFile(file File) api.File {
 	return api.File{
 		ID:            file.UUID,
