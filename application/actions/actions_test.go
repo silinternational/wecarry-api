@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -94,4 +95,12 @@ func createFixture(as *ActionSuite, f interface{}) {
 		as.T().Errorf("error creating %T fixture, %s", f, err)
 		as.T().FailNow()
 	}
+}
+
+// Avoid issues with int(-0.xyz) losing its negative sign
+func convertFloat64ToIntString(input float64) string {
+	if -1.0 < input && input < 0.0 {
+		return fmt.Sprintf("-%v", int(input))
+	}
+	return fmt.Sprintf("%v", int(input))
 }

@@ -49,8 +49,8 @@ func (as *ActionSuite) Test_MeetingsList() {
 			fmt.Sprintf(`"end_date":"%s`, mtgs[i].EndDate.Format(domain.DateFormat)),
 			fmt.Sprintf(`"location":{"description":"%s"`, lctn.Description),
 			fmt.Sprintf(`"country":"%s"`, lctn.Country),
-			fmt.Sprintf(`"latitude":%v`, int(lctn.Latitude.Float64)),
-			fmt.Sprintf(`"longitude":%v`, int(lctn.Longitude.Float64)),
+			fmt.Sprintf(`"latitude":%s`, convertFloat64ToIntString(lctn.Latitude.Float64)),
+			fmt.Sprintf(`"longitude":%s`, convertFloat64ToIntString(lctn.Longitude.Float64)),
 		}
 		wantContains = append(wantContains, moreContains...)
 	}
@@ -145,8 +145,8 @@ func (as *ActionSuite) Test_meetingsJoin() {
 				fmt.Sprintf(`"end_date":"%s`, tc.meeting.EndDate.Format(domain.DateFormat)),
 				fmt.Sprintf(`"location":{"description":"%s"`, tc.location.Description),
 				fmt.Sprintf(`"country":"%s"`, tc.location.Country),
-				fmt.Sprintf(`"latitude":%v`, int(tc.location.Latitude.Float64)),
-				fmt.Sprintf(`"longitude":%v`, int(tc.location.Longitude.Float64)),
+				fmt.Sprintf(`"latitude":%s`, convertFloat64ToIntString(tc.location.Latitude.Float64)),
+				fmt.Sprintf(`"longitude":%s`, convertFloat64ToIntString(tc.location.Longitude.Float64)),
 			}
 
 			for _, w := range wantContains {
