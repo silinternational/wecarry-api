@@ -10,6 +10,8 @@ import (
 	"github.com/gobuffalo/pop/v5"
 	"github.com/gobuffalo/validate/v3"
 	"github.com/gobuffalo/validate/v3/validators"
+
+	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/domain"
 )
 
@@ -240,4 +242,25 @@ ORDER BY kcu.table_schema,
 		return true, nil
 	}
 	return false, nil
+}
+
+func convertLocation(location Location) api.Location {
+	return api.Location{
+		Description: location.Description,
+		Country:     location.Country,
+		Latitude:    location.Latitude,
+		Longitude:   location.Longitude,
+	}
+}
+
+func ConvertLocationInput(input api.LocationInput) Location {
+	l := Location{
+		Description: input.Description,
+		Country:     input.Country,
+	}
+
+	domain.SetOptionalFloatField(input.Latitude, &l.Latitude)
+	domain.SetOptionalFloatField(input.Longitude, &l.Longitude)
+
+	return l
 }

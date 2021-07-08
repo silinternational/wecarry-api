@@ -1,13 +1,12 @@
 package actions
 
 import (
-	"context"
-	"errors"
+	"time"
+
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/buffalo/render"
 	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/models"
-	"time"
 )
 
 // swagger:operation GET /events Events ListEvents
@@ -28,132 +27,10 @@ func meetingsList(c buffalo.Context) error {
 		return reportError(c, api.NewAppError(err, api.ErrorMeetingsGet, api.CategoryInternal))
 	}
 
-	output, err := convertMeetings(c, meetings, cUser)
+	output, err := models.ConvertMeetings(c, meetings, cUser)
 	if err != nil {
 		return reportError(c, api.NewAppError(err, api.ErrorMeetingsConvert, api.CategoryInternal))
 	}
 
 	return c.Render(200, render.JSON(output))
-}
-
-// converts list of model.Meeting into list of api.Meeting
-func convertMeetings(ctx context.Context, meetings []models.Meeting, user models.User) ([]api.Meeting, error) {
-	output := make([]api.Meeting, len(meetings))
-
-	for i, m := range meetings {
-		var err error
-		output[i], err = convertMeeting(ctx, m, user)
-		if err != nil {
-			return []api.Meeting{}, err
-		}
-	}
-
-	return output, nil
-}
-
-// converts a model.Meeting into api.Meeting
-func convertMeeting(ctx context.Context, meeting models.Meeting, user models.User) (api.Meeting, error) {
-	output := convertMeetingAbridged(meeting)
-	tx := models.Tx(ctx)
-	if err := tx.Load(&meeting); err != nil {
-		return api.Meeting{}, err
-	}
-
-	createdBy, err := loadMeetingCreatedBy(ctx, meeting)
-	if err != nil {
-		return api.Meeting{}, err
-	}
-	output.CreatedBy = createdBy
-
-	output.ImageFile = convertMeetingImageFile(ctx, meeting)
-	output.Location = convertLocation(meeting.Location)
-
-	participants, err := loadMeetingParticipants(ctx, meeting, user)
-	if err != nil {
-		return api.Meeting{}, err
-	}
-	output.Participants = participants
-
-	return output, nil
-}
-
-func loadMeetingCreatedBy(ctx context.Context, meeting models.Meeting) (api.User, error) {
-	outputCreatedBy, err := convertUser(ctx, meeting.CreatedBy)
-	if err != nil {
-		err = errors.New("error converting meeting created_by user: " + err.Error())
-		return api.User{}, err
-	}
-	return outputCreatedBy, nil
-}
-
-func convertMeetingImageFile(ctx context.Context, meeting models.Meeting) *api.File {
-	if meeting.ImgFile == nil {
-		return nil
-	}
-
-	file := convertFile(*meeting.ImgFile)
-	return &file
-}
-
-func loadMeetingParticipants(ctx context.Context, meeting models.Meeting, user models.User) (api.MeetingParticipants, error) {
-	tx := models.Tx(ctx)
-
-	participants, err := meeting.Participants(tx, user)
-	if err != nil {
-		err = errors.New("error converting meeting participants: " + err.Error())
-		return nil, err
-	}
-
-	outputParticipants, err := convertMeetingParticipants(ctx, participants)
-	if err != nil {
-		return nil, err
-	}
-
-	return outputParticipants, nil
-}
-
-func convertMeetingParticipants(ctx context.Context, participants models.MeetingParticipants) (api.MeetingParticipants, error) {
-	output := make(api.MeetingParticipants, len(participants))
-	for i := range output {
-		var err error
-		output[i], err = convertMeetingParticipant(ctx, participants[i])
-		if err != nil {
-			return output, err
-		}
-	}
-	return output, nil
-}
-
-func convertMeetingParticipant(ctx context.Context, participant models.MeetingParticipant) (api.MeetingParticipant, error) {
-	tx := models.Tx(ctx)
-
-	output := api.MeetingParticipant{}
-
-	user, err := participant.User(tx)
-	if err != nil {
-		return api.MeetingParticipant{}, err
-	}
-
-	outputUser, err := convertUser(ctx, user)
-	if err != nil {
-		return api.MeetingParticipant{}, err
-	}
-	output.User = outputUser
-
-	output.IsOrganizer = participant.IsOrganizer
-
-	return output, nil
-}
-
-func convertMeetingAbridged(meeting models.Meeting) api.Meeting {
-	return api.Meeting{
-		ID:          meeting.UUID,
-		Name:        meeting.Name,
-		Description: meeting.Description.String,
-		StartDate:   meeting.StartDate,
-		EndDate:     meeting.EndDate,
-		CreatedAt:   meeting.CreatedAt,
-		UpdatedAt:   meeting.UpdatedAt,
-		MoreInfoURL: meeting.MoreInfoURL.String,
-	}
 }

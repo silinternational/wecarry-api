@@ -49,7 +49,7 @@ func watchesCreate(c buffalo.Context) error {
 	}
 
 	if input.Destination != nil {
-		location := convertLocationInput(*input.Destination)
+		location := models.ConvertLocationInput(*input.Destination)
 		if err = location.Create(tx); err != nil {
 			err := errors.New("unable to create the destination related to a new Watch, error: " + err.Error())
 			return reportError(c, api.NewAppError(err, api.ErrorLocationCreateFailure, api.CategoryInternal))
@@ -58,7 +58,7 @@ func watchesCreate(c buffalo.Context) error {
 	}
 
 	if input.Origin != nil {
-		location := convertLocationInput(*input.Origin)
+		location := models.ConvertLocationInput(*input.Origin)
 		if err = location.Create(tx); err != nil {
 			err := errors.New("unable to create the origin related to a new Watch, error: " + err.Error())
 			return reportError(c, api.NewAppError(err, api.ErrorLocationCreateFailure, api.CategoryInternal))
