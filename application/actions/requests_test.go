@@ -1014,7 +1014,13 @@ func (as *ActionSuite) Test_requestsCreate() {
 			as.Equal(tt.wantStatus, res.Code, "incorrect status code returned, body: %s", body)
 
 			if tt.wantStatus == http.StatusOK {
-				as.Contains(body, fmt.Sprintf(`"title":"%s"`, tt.request.Title))
+				wantData := []string{
+					`"title":"` + tt.request.Title,
+					`"created_by":{"id":"` + tt.user.UUID.String(),
+					`"organization":{"id":"` + f.Organization.UUID.String(),
+					`"destination":{"description":"` + destination.Description,
+				}
+				as.verifyResponseData(wantData, body)
 			}
 		})
 	}
