@@ -253,7 +253,7 @@ func convertLocation(location Location) api.Location {
 	}
 }
 
-func ConvertLocationInput(input api.LocationInput) Location {
+func ConvertLocationInput(input api.Location) Location {
 	return Location{
 		Description: input.Description,
 		Country:     input.Country,

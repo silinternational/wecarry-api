@@ -11,10 +11,3 @@ func (as *ActionSuite) verifyLocation(expected models.Location, actual api.Locat
 	as.Equal(expected.Latitude, actual.Latitude, msg+", Latitude is not correct")
 	as.Equal(expected.Longitude, actual.Longitude, msg+", Longitude is not correct")
 }
-
-func (as *ActionSuite) verifyLocationInput(expected api.LocationInput, actual models.Location, msg string) {
-	as.Equal(expected.Description, actual.Description, msg+", Description is not correct")
-	as.Equal(expected.Country, actual.Country, msg+", Country is not correct")
-	as.Equal(expected.Latitude, actual.Latitude, msg+", Latitude is not correct")
-	as.Equal(expected.Longitude, actual.Longitude, msg+", Longitude is not correct")
-}

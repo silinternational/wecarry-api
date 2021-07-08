@@ -42,10 +42,10 @@ type WatchInput struct {
 	Name string
 
 	// Destination to watch. If a new request has a destination near this location, a notification will be sent.
-	Destination *LocationInput
+	Destination *Location
 
 	// Origin to watch. If a new request has an origin near this location, a notification will be sent.
-	Origin *LocationInput
+	Origin *Location
 
 	// Meeting to watch. Notifications will be sent for new requests tied to this event.
 	MeetingID *string

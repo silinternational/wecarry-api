@@ -128,7 +128,7 @@ type RequestCreateInput struct {
 	Description nulls.String `json:"description"`
 
 	// Geographic location where item is needed
-	Destination LocationInput `json:"destination"`
+	Destination Location `json:"destination"`
 
 	// Optional weight of the item, measured in kilograms
 	Kilograms nulls.Float64 `json:"kilograms"`
@@ -137,7 +137,7 @@ type RequestCreateInput struct {
 	NeededBefore nulls.Time `json:"needed_before"`
 
 	// Optional geographic location where the item can be picked up, purchased, or otherwise obtained
-	Origin *LocationInput `json:"origin"`
+	Origin *Location `json:"origin"`
 
 	// ID of associated Organization. Affects visibility of the request, see also the `visibility` field.
 	OrganizationID uuid.UUID `json:"org_id"`

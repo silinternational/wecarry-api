@@ -968,7 +968,7 @@ func (as *ActionSuite) Test_requestsGet() {
 func (as *ActionSuite) Test_requestsCreate() {
 	f := createFixturesForRequestQuery(as)
 
-	destination := api.LocationInput{Description: "location description", Country: "XX"}
+	destination := api.Location{Description: "location description", Country: "XX"}
 
 	goodRequest := api.RequestCreateInput{
 		Destination:    destination,
@@ -1168,8 +1168,8 @@ func (as *ActionSuite) Test_convertCreateRequestInput() {
 
 	ctx := test.CtxWithUser(creator)
 
-	destination := api.LocationInput{Description: "destination", Country: "XX"}
-	origin := api.LocationInput{Description: "origin", Country: "ZZ"}
+	destination := api.Location{Description: "destination", Country: "XX"}
+	origin := api.Location{Description: "origin", Country: "ZZ"}
 	file := test.CreateFileFixture(as.DB)
 
 	min := api.RequestCreateInput{
@@ -1223,7 +1223,7 @@ func (as *ActionSuite) verifyRequestCreateInput(ctx context.Context, input api.R
 
 	var destination models.Location
 	as.NoError(as.DB.Find(&destination, request.DestinationID))
-	as.verifyLocationInput(input.Destination, destination, "Destination is not correct")
+	as.verifyLocation(destination, input.Destination, "Destination is not correct")
 
 	if input.Kilograms.Valid {
 		as.NotNil(request.Kilograms, "Kilograms is null but should not be")
@@ -1243,7 +1243,7 @@ func (as *ActionSuite) verifyRequestCreateInput(ctx context.Context, input api.R
 		as.NotNil(request.Origin, "Origin is null but should not be")
 		var origin models.Location
 		as.NoError(as.DB.Find(&origin, request.OriginID))
-		as.verifyLocationInput(*input.Origin, origin, "Origin is not correct")
+		as.verifyLocation(origin, *input.Origin, "Origin is not correct")
 	} else {
 		as.False(request.OriginID.Valid, "Origin should be null but is not")
 	}
