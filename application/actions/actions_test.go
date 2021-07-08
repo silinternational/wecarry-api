@@ -100,6 +100,14 @@ func createFixture(as *ActionSuite, f interface{}) {
 	}
 }
 
+// Avoid issues with int(-0.xyz) losing its negative sign
+func convertFloat64ToIntString(input float64) string {
+	if -1.0 < input && input < 0.0 {
+		return fmt.Sprintf("-%v", int(input))
+	}
+	return fmt.Sprintf("%v", int(input))
+}
+
 func (as *ActionSuite) verifyResponseData(wantData []string, body string) {
 	var b bytes.Buffer
 	as.NoError(json.Indent(&b, []byte(body), "", "    "))
