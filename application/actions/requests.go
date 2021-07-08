@@ -12,7 +12,7 @@ import (
 	"github.com/silinternational/wecarry-api/models"
 )
 
-// swagger:operation GET /requests Requests
+// swagger:operation GET /requests Requests ListRequests
 //
 // gets the list of requests for the current user
 //
@@ -39,7 +39,7 @@ func requestsList(c buffalo.Context) error {
 	return c.Render(200, render.JSON(requestsList))
 }
 
-// swagger:operation GET /requests/{request_id} RequestsGet
+// swagger:operation GET /requests/{request_id} Requests GetRequest
 //
 // gets a single request
 //
