@@ -165,7 +165,6 @@ func convertRequestInput(ctx context.Context, input api.RequestCreateInput) (mod
 			appErr := api.NewAppError(err, api.ErrorCreateRequestPhotoIDNotFound, api.CategoryUser)
 			if domain.IsOtherThanNoRows(err) {
 				appErr.Category = api.CategoryDatabase
-				return request, appErr
 			}
 			return request, appErr
 		}
