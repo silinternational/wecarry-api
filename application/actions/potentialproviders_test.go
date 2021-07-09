@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/gobuffalo/httptest"
 	"github.com/gofrs/uuid"
+	"net/http"
+	"testing"
 
 	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/internal/test"
@@ -121,59 +123,68 @@ func (as *ActionSuite) Test_AddMeAsPotentialProvider() {
 	f := test.CreatePotentialProvidersFixtures(as.DB)
 	user := f.Users[1]
 
-	request := f.Requests[2]
+	noProviders := f.Requests[2]
+	twoProviders := f.Requests[1]
 
-	res := addPotProviderResults(as, request.UUID, user.Nickname)
-	body := res.Body.String()
-	as.Equal(200, res.Code, "incorrect status code returned, body: %s", body)
-	wantData := []string{
-		fmt.Sprintf(`{"id":"%s"`, request.UUID),
-		fmt.Sprintf(`"title":"%s"`, request.Title),
-		fmt.Sprintf(`"potential_providers":[{"id":"%s"`, user.UUID),
-		fmt.Sprintf(`"nickname":"%s"`, user.Nickname),
+	type testCase struct {
+		name           string
+		request        models.Request
+		user           models.User
+		wantHttpStatus int
+		wantContains   []string
 	}
-	as.verifyResponseData(wantData, body)
 
-	// Add one to Request with two already
-	request = f.Requests[1]
-	res = addPotProviderResults(as, request.UUID, user.Nickname)
-	body = res.Body.String()
-	as.Equal(200, res.Code, "incorrect status code returned, body: %s", body)
-	wantData = []string{
-		fmt.Sprintf(`{"id":"%s"`, request.UUID),
-		fmt.Sprintf(`"title":"%s"`, request.Title),
-		fmt.Sprintf(`"id":"%s"`, user.UUID),
-		fmt.Sprintf(`"nickname":"%s"`, user.Nickname),
-		"zzz",
+	testCases := []testCase{
+		{
+			name:           "Wrong Organization",
+			request:        twoProviders,
+			user:           f.Users[4],
+			wantHttpStatus: http.StatusNotFound,
+			wantContains:   []string{api.ErrorGetRequest.String()},
+		},
+		{
+			name:           "No Other Providers",
+			request:        noProviders,
+			user:           f.Users[1],
+			wantHttpStatus: http.StatusOK,
+			wantContains: []string{
+				fmt.Sprintf(`{"id":"%s"`, noProviders.UUID),
+				fmt.Sprintf(`"title":"%s"`, noProviders.Title),
+				fmt.Sprintf(`"potential_providers":[{"id":"%s"`, user.UUID),
+				fmt.Sprintf(`"nickname":"%s"`, user.Nickname),
+			},
+		},
+		{
+			name:           "Two Other Providers",
+			request:        twoProviders,
+			user:           f.Users[1],
+			wantHttpStatus: http.StatusOK,
+			wantContains: []string{
+				fmt.Sprintf(`{"id":"%s"`, twoProviders.UUID),
+				fmt.Sprintf(`"title":"%s"`, twoProviders.Title),
+				fmt.Sprintf(`"potential_providers":[{"id":"%s"`, user.UUID),
+				fmt.Sprintf(`"nickname":"%s"`, user.Nickname),
+			},
+		},
+		{
+			name:           "Repeat Provider Gives Error",
+			request:        twoProviders,
+			user:           f.Users[1],
+			wantHttpStatus: http.StatusBadRequest,
+			wantContains:   []string{api.ErrorAddPotentialProviderDuplicate.String()},
+		},
 	}
-	as.verifyResponseData(wantData, body)
 
-	// Add one to Request with two already
-	//query = fmt.Sprintf(qTemplate, requests[1].UUID.String())
+	for _, tc := range testCases {
+		as.T().Run(tc.name, func(t *testing.T) {
+			req := as.JSON("/requests/%s/potentialprovider", tc.request.UUID.String())
+			req.Headers["Authorization"] = fmt.Sprintf("Bearer %s", tc.user.Nickname)
+			req.Headers["content-type"] = "application/json"
+			res := req.Post(nil)
 
-	//err = as.testGqlQuery(query, f.Users[1].Nickname, &resp)
-	//as.NoError(err)
-	//as.Equal(requests[1].UUID.String(), resp.Request.ID, "incorrect Request UUID")
-	//as.Equal(requests[1].Title, resp.Request.Title, "incorrect Request title")
-	//
-	//want = []PotentialProvider{
-	//	{ID: f.Users[1].UUID.String(), Nickname: f.Users[1].Nickname},
-	//}
-	//as.Equal(want, resp.Request.PotentialProviders, "incorrect potential providers")
-
-	// Adding a repeat gives an error
-	//query = fmt.Sprintf(qTemplate, requests[1].UUID.String())
-	//
-	//err = as.testGqlQuery(query, f.Users[1].Nickname, &resp)
-	//as.Error(err, "expected an error (unique together) but didn't get one")
-	//
-	//want = []PotentialProvider{
-	//	{ID: f.Users[1].UUID.String(), Nickname: f.Users[1].Nickname},
-	//}
-	//as.Equal(want, resp.Request.PotentialProviders, "incorrect potential providers")
-
-	// Adding one for a different Org gives an error
-	//err = as.testGqlQuery(query, f.Users[4].Nickname, &resp)
-	//as.Error(err, "expected an error (unauthorized) but didn't get one")
-	//as.Equal(want, resp.Request.PotentialProviders, "incorrect potential providers")
+			body := res.Body.String()
+			as.Equal(tc.wantHttpStatus, res.Code, "incorrect status code returned, body: %s", body)
+			as.verifyResponseData(tc.wantContains, body)
+		})
+	}
 }

@@ -3,6 +3,7 @@ package actions
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/buffalo/render"
@@ -210,7 +211,10 @@ func requestsAddMeAsPotentialProvider(c buffalo.Context) error {
 	request := models.Request{}
 	if err = request.AddUserAsPotentialProvider(tx, id.String(), cUser); err != nil {
 		appError := api.NewAppError(err, api.ErrorGetRequest, api.CategoryInternal)
-		if !domain.IsOtherThanNoRows(err) {
+		if strings.Contains(err.Error(), "error creating potential provider: unique_together") {
+			appError.Key = api.ErrorAddPotentialProviderDuplicate
+			appError.Category = api.CategoryUser
+		} else if !domain.IsOtherThanNoRows(err) || strings.Contains(err.Error(), "may not view request") {
 			appError.Category = api.CategoryNotFound
 		}
 		return reportError(c, appError)

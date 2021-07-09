@@ -97,6 +97,7 @@ const (
 	ErrorAddPotentialProviderRequestBadStatus = ErrorKey("ErrorAddPotentialProviderRequestBadStatus")
 	ErrorAddPotentialProviderPreparation      = ErrorKey("ErrorAddPotentialProviderPreparation")
 	ErrorAddPotentialProviderCreate           = ErrorKey("ErrorAddPotentialProviderCreate")
+	ErrorAddPotentialProviderDuplicate        = ErrorKey("ErrorAddPotentialProviderDuplicate")
 	ErrorGetRequests                          = ErrorKey("ErrorGetRequests")
 	ErrorGetRequest                           = ErrorKey("ErrorGetRequest")
 	ErrorGetRequestUserNotAllowed             = ErrorKey("ErrorGetRequestUserNotAllowed")
