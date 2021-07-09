@@ -2,8 +2,6 @@ package actions
 
 import (
 	"fmt"
-	"github.com/gobuffalo/httptest"
-	"github.com/gofrs/uuid"
 	"net/http"
 	"testing"
 
@@ -110,13 +108,6 @@ func (as *ActionSuite) verifyPotentialProviders(expected models.Users, actual ap
 	for i := range expected {
 		as.verifyUser(expected[i], actual[i], fmt.Sprintf("%s, potential provider %d is not correct", msg, i))
 	}
-}
-
-func addPotProviderResults(as *ActionSuite, uuid uuid.UUID, bearer string) *httptest.JSONResponse {
-	req := as.JSON("/requests/%s/potentialprovider", uuid)
-	req.Headers["Authorization"] = fmt.Sprintf("Bearer %s", bearer)
-	req.Headers["content-type"] = "application/json"
-	return req.Post(nil)
 }
 
 func (as *ActionSuite) Test_AddMeAsPotentialProvider() {
