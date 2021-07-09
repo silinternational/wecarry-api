@@ -3,6 +3,7 @@ package actions
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/buffalo/render"
@@ -308,4 +309,44 @@ func convertRequestUpdateInput(ctx context.Context, input api.RequestUpdateInput
 	request.NeededBefore = input.NeededBefore
 
 	return request, nil
+}
+
+// swagger:operation POST /requests/{request_id} Requests AddMeAsPotentialProvider
+//
+// Adds the current user as a potential provider to the request
+//
+// ---
+// responses:
+//   '200':
+//     description: a request
+//     schema:
+//       "$ref": "#/definitions/Request"
+func requestsAddMeAsPotentialProvider(c buffalo.Context) error {
+	cUser := models.CurrentUser(c)
+	tx := models.Tx(c)
+
+	id, err := getUUIDFromParam(c, "request_id")
+	if err != nil {
+		return reportError(c, err)
+	}
+	domain.NewExtra(c, "requestID", id)
+
+	request := models.Request{}
+	if err = request.AddUserAsPotentialProvider(tx, id.String(), cUser); err != nil {
+		appError := api.NewAppError(err, api.ErrorGetRequest, api.CategoryInternal)
+		if strings.Contains(err.Error(), "error creating potential provider: unique_together") {
+			appError.Key = api.ErrorAddPotentialProviderDuplicate
+			appError.Category = api.CategoryUser
+		} else if !domain.IsOtherThanNoRows(err) || strings.Contains(err.Error(), "may not view request") {
+			appError.Category = api.CategoryNotFound
+		}
+		return reportError(c, appError)
+	}
+
+	output, err := models.ConvertRequest(c, request)
+	if err != nil {
+		return reportError(c, err)
+	}
+
+	return c.Render(200, render.JSON(output))
 }

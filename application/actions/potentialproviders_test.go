@@ -2,13 +2,15 @@ package actions
 
 import (
 	"fmt"
+	"net/http"
+	"testing"
 
 	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/internal/test"
 	"github.com/silinternational/wecarry-api/models"
 )
 
-func (as *ActionSuite) Test_AddMeAsPotentialProvider() {
+func (as *ActionSuite) Test_GQLAddMeAsPotentialProvider() {
 	f := test.CreatePotentialProvidersFixtures(as.DB)
 	requests := f.Requests
 
@@ -105,5 +107,75 @@ func (as *ActionSuite) verifyPotentialProviders(expected models.Users, actual ap
 
 	for i := range expected {
 		as.verifyUser(expected[i], actual[i], fmt.Sprintf("%s, potential provider %d is not correct", msg, i))
+	}
+}
+
+func (as *ActionSuite) Test_AddMeAsPotentialProvider() {
+	f := test.CreatePotentialProvidersFixtures(as.DB)
+	user := f.Users[1]
+
+	noProviders := f.Requests[2]
+	twoProviders := f.Requests[1]
+
+	type testCase struct {
+		name           string
+		request        models.Request
+		user           models.User
+		wantHttpStatus int
+		wantContains   []string
+	}
+
+	testCases := []testCase{
+		{
+			name:           "Wrong Organization",
+			request:        twoProviders,
+			user:           f.Users[4],
+			wantHttpStatus: http.StatusNotFound,
+			wantContains:   []string{api.ErrorGetRequest.String()},
+		},
+		{
+			name:           "No Other Providers",
+			request:        noProviders,
+			user:           f.Users[1],
+			wantHttpStatus: http.StatusOK,
+			wantContains: []string{
+				fmt.Sprintf(`{"id":"%s"`, noProviders.UUID),
+				fmt.Sprintf(`"title":"%s"`, noProviders.Title),
+				fmt.Sprintf(`"potential_providers":[{"id":"%s"`, user.UUID),
+				fmt.Sprintf(`"nickname":"%s"`, user.Nickname),
+			},
+		},
+		{
+			name:           "Two Other Providers",
+			request:        twoProviders,
+			user:           f.Users[1],
+			wantHttpStatus: http.StatusOK,
+			wantContains: []string{
+				fmt.Sprintf(`{"id":"%s"`, twoProviders.UUID),
+				fmt.Sprintf(`"title":"%s"`, twoProviders.Title),
+				fmt.Sprintf(`"potential_providers":[{"id":"%s"`, user.UUID),
+				fmt.Sprintf(`"nickname":"%s"`, user.Nickname),
+			},
+		},
+		{
+			name:           "Repeat Provider Gives Error",
+			request:        twoProviders,
+			user:           f.Users[1],
+			wantHttpStatus: http.StatusBadRequest,
+			wantContains:   []string{api.ErrorAddPotentialProviderDuplicate.String()},
+		},
+	}
+
+	for _, tc := range testCases {
+		as.T().Run(tc.name, func(t *testing.T) {
+			req := as.JSON("/requests/%s/potentialprovider", tc.request.UUID.String())
+			req.Headers["Authorization"] = fmt.Sprintf("Bearer %s", tc.user.Nickname)
+			req.Headers["content-type"] = "application/json"
+			res := req.Post(nil)
+
+			body := res.Body.String()
+			as.Equal(tc.wantHttpStatus, res.Code, "incorrect status code returned, body: %s", body)
+			as.verifyResponseData(tc.wantContains, body)
+		})
 	}
 }
