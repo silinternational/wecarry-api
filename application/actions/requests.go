@@ -130,6 +130,7 @@ func requestsCreate(c buffalo.Context) error {
 
 // convertRequestCreateInput creates a new `Request` from a `RequestCreateInput`. All properties that are not `nil` are
 // set to the value provided
+// TODO: move the actual DB access into Request.Update()
 func convertRequestCreateInput(ctx context.Context, input api.RequestCreateInput) (models.Request, error) {
 	tx := models.Tx(ctx)
 
@@ -242,6 +243,7 @@ func requestsUpdate(c buffalo.Context) error {
 
 // convertRequestUpdateInput updates a `Request` from a `RequestUpdateInput`, with the values in
 // the database as default for any property not specified in the input.
+// TODO: move the actual DB access into Request.Update() -- Note that this requires a change of function signature so that Update has the before and after File and Location IDs.
 func convertRequestUpdateInput(ctx context.Context, input api.RequestUpdateInput, id string) (models.Request, error) {
 	tx := models.Tx(ctx)
 
