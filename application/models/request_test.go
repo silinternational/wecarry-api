@@ -1699,6 +1699,7 @@ func (ms *ModelSuite) TestRequests_FindByUser() {
 	}
 }
 
+// This also happens to test GetPotentialProviders to verify the results
 func (ms *ModelSuite) TestRequests_AddUserAsPotentialProvider() {
 	t := ms.T()
 
