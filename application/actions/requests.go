@@ -256,7 +256,7 @@ func convertRequestUpdateInput(ctx context.Context, input api.RequestUpdateInput
 
 	if input.PhotoID.Valid {
 		if _, err := request.AttachPhoto(tx, input.PhotoID.UUID.String()); err != nil {
-			err = errors.New("file ID not found, " + err.Error())
+			err = errors.New("request photo file ID not found, " + err.Error())
 			appErr := api.NewAppError(err, api.ErrorUpdateRequestPhotoIDNotFound, api.CategoryUser)
 			if domain.IsOtherThanNoRows(err) {
 				appErr.Category = api.CategoryDatabase
