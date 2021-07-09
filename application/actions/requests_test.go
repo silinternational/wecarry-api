@@ -1410,7 +1410,8 @@ func (as *ActionSuite) verifyRequestUpdateInput(ctx context.Context, input api.R
 
 	var destination models.Location
 	as.NoError(as.DB.Find(&destination, newRequest.DestinationID))
-	if msg := "Destination is not correct"; input.Destination != nil {
+	msg := "Destination is not correct"
+	if input.Destination != nil {
 		as.verifyLocation(destination, *input.Destination, msg)
 	} else {
 		as.Equal(destination.Description, oldRequest.Destination.Description, msg+", Description is not correct")
@@ -1449,19 +1450,22 @@ func (as *ActionSuite) verifyRequestUpdateInput(ctx context.Context, input api.R
 		as.False(newRequest.FileID.Valid, "Photo should be null but is not")
 	}
 
-	if msg := "Size is not correct"; input.Size != nil {
+	msg = "Size is not correct"
+	if input.Size != nil {
 		as.Equal(string(*input.Size), string(newRequest.Size), msg)
 	} else {
 		as.Equal(string(oldRequest.Size), string(newRequest.Size), msg)
 	}
 
-	if msg := "Title is not correct"; input.Title != nil {
+	msg = "Title is not correct"
+	if input.Title != nil {
 		as.Equal(*input.Title, newRequest.Title, msg)
 	} else {
 		as.Equal(oldRequest.Title, newRequest.Title, msg)
 	}
 
-	if msg := "Visibility is not correct"; input.Visibility != nil {
+	msg = "Visibility is not correct"
+	if input.Visibility != nil {
 		as.Equal(string(*input.Visibility), string(newRequest.Visibility), msg)
 	} else {
 		as.Equal(string(oldRequest.Visibility), string(newRequest.Visibility), msg)
