@@ -366,3 +366,49 @@ func createFixturesForRequestGetAudience(ms *ModelSuite) RequestFixtures {
 		Requests: requests,
 	}
 }
+
+// CreateFixtures_Request_AddUserAsPotentialProvider generates
+//   five PotentialProvider records for testing.
+// If necessary, five User and four Request fixtures will also be created.
+//  (The fifth User will be with a different organization)
+// The Requests will all be created by the first user.
+// The first Request will have all but the first user as a potential provider.
+// The second Request will have the last two users as potential providers.
+// The third Request won't have any potential providers
+// The fourth Request won't have any potential providers but will not be OPEN
+func CreateFixtures_Request_AddUserAsPotentialProvider(ms *ModelSuite) potentialProvidersFixtures {
+
+	uf := createUserFixtures(ms.DB, 5)
+
+	extraOrg := Organization{AuthConfig: "{}"}
+	mustCreate(ms.DB, &extraOrg)
+
+	otherOrgUser := uf.UserOrganizations[4]
+	otherOrgUser.OrganizationID = extraOrg.ID
+	ms.NoError(ms.DB.Save(&otherOrgUser), "failed saving OrganizationUser with new Org")
+
+	requests := createRequestFixtures(ms.DB, 4, false)
+	providers := PotentialProviders{}
+
+	// ensure the first user is actually the creator (timing issues tend to make this unreliable otherwise)
+	for i := range requests {
+		requests[i].CreatedByID = uf.Users[0].ID
+	}
+	requests[3].Status = RequestStatusAccepted
+
+	ms.DB.Update(&requests)
+
+	for i, p := range requests[:2] {
+		for _, u := range uf.Users[i+1:] {
+			c := PotentialProvider{RequestID: p.ID, UserID: u.ID}
+			c.Create(ms.DB)
+			providers = append(providers, c)
+		}
+	}
+
+	return potentialProvidersFixtures{
+		Users:              uf.Users,
+		Requests:           requests,
+		PotentialProviders: providers,
+	}
+}
