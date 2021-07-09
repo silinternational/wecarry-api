@@ -387,7 +387,7 @@ func CreateFixtures_Request_AddUserAsPotentialProvider(ms *ModelSuite) potential
 	otherOrgUser.OrganizationID = extraOrg.ID
 	ms.NoError(ms.DB.Save(&otherOrgUser), "failed saving OrganizationUser with new Org")
 
-	requests := createRequestFixtures(ms.DB, 4, false)
+	requests := createRequestFixtures(ms.DB, 4, false, uf.Users[0].ID)
 	providers := PotentialProviders{}
 
 	// ensure the first user is actually the creator (timing issues tend to make this unreliable otherwise)
