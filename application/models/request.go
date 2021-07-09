@@ -1163,6 +1163,37 @@ func (r *Request) Load(ctx context.Context, fields ...string) error {
 	return Tx(ctx).Load(r, fields...)
 }
 
+// AddUserAsPotentialProvider  creates a new PotentialProvider object in the database
+//   after first ensuring the user is allowed to view the request and the
+//   request's status is OPEN.
+func (r *Request) AddUserAsPotentialProvider(tx *pop.Connection, requestID string, cUser User) error {
+	if err := r.FindByUUIDForCurrentUser(tx, requestID, cUser); err != nil {
+		appErr := api.NewAppError(err, api.ErrorFindRequestToAddPotentialProvider, api.CategoryInternal)
+		if strings.Contains(err.Error(), "unauthorized") || !domain.IsOtherThanNoRows(err) {
+			appErr.Category = api.CategoryNotFound
+		}
+		return appErr
+	}
+
+	if r.Status != RequestStatusOpen {
+		err := errors.New("Can only create PotentialProvider for a Request that has Status=Open. Got " + r.Status.String())
+		return api.NewAppError(err, api.ErrorAddPotentialProviderRequestBadStatus, api.CategoryUser)
+	}
+
+	var provider PotentialProvider
+	if err := provider.NewWithRequestUUID(tx, requestID, cUser.ID); err != nil {
+		err = errors.New("error preparing potential provider: " + err.Error())
+		return api.NewAppError(err, api.ErrorAddPotentialProviderPreparation, api.CategoryInternal)
+	}
+
+	if err := provider.Create(tx); err != nil {
+		err = errors.New("error creating potential provider: " + err.Error())
+		return api.NewAppError(err, api.ErrorAddPotentialProviderCreate, api.CategoryInternal)
+	}
+
+	return nil
+}
+
 // ConvertRequestsAbridged converts list of model.Request into api.RequestAbridged
 func ConvertRequestsAbridged(ctx context.Context, requests []Request) ([]api.RequestAbridged, error) {
 	output := make([]api.RequestAbridged, len(requests))

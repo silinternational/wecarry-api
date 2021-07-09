@@ -109,6 +109,8 @@ func App() *buffalo.App {
 		requestsGroup.POST("/", requestsCreate)
 		requestsGroup.GET("/{request_id}", requestsGet)
 
+		requestsGroup.POST("/{request_id}/potentialprovider", requestsAddMeAsPotentialProvider)
+
 		watchesGroup := app.Group("/watches")
 		watchesGroup.GET("/", watchesMine)
 		watchesGroup.POST("/", watchesCreate)

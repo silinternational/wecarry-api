@@ -93,12 +93,16 @@ const (
 
 	// Request
 
-	ErrorGetRequests                  = ErrorKey("ErrorGetRequests")
-	ErrorGetRequest                   = ErrorKey("ErrorGetRequest")
-	ErrorGetRequestUserNotAllowed     = ErrorKey("ErrorGetRequestUserNotAllowed")
-	ErrorCreateRequest                = ErrorKey("ErrorCreateRequest")
-	ErrorCreateRequestOrgIDNotFound   = ErrorKey("ErrorCreateRequestOrgIDNotFound")
-	ErrorCreateRequestPhotoIDNotFound = ErrorKey("ErrorCreateRequestPhotoIDNotFound")
+	ErrorFindRequestToAddPotentialProvider    = ErrorKey("ErrorFindRequestToAddPotentialProvider")
+	ErrorAddPotentialProviderRequestBadStatus = ErrorKey("ErrorAddPotentialProviderRequestBadStatus")
+	ErrorAddPotentialProviderPreparation      = ErrorKey("ErrorAddPotentialProviderPreparation")
+	ErrorAddPotentialProviderCreate           = ErrorKey("ErrorAddPotentialProviderCreate")
+	ErrorGetRequests                          = ErrorKey("ErrorGetRequests")
+	ErrorGetRequest                           = ErrorKey("ErrorGetRequest")
+	ErrorGetRequestUserNotAllowed             = ErrorKey("ErrorGetRequestUserNotAllowed")
+	ErrorCreateRequest                        = ErrorKey("ErrorCreateRequest")
+	ErrorCreateRequestOrgIDNotFound           = ErrorKey("ErrorCreateRequestOrgIDNotFound")
+	ErrorCreateRequestPhotoIDNotFound         = ErrorKey("ErrorCreateRequestPhotoIDNotFound")
 
 	// Thread
 
