@@ -303,17 +303,6 @@ func (r *Request) GetPotentialProviders(tx *pop.Connection, currentUser User) (U
 	return users, err
 }
 
-// DestroyPotentialProviders destroys all the PotentialProvider records
-// associated with the Request if the Request's status is COMPLETED
-func (r *Request) DestroyPotentialProviders(tx *pop.Connection, status RequestStatus, user User) error {
-	if status != RequestStatusCompleted {
-		return nil
-	}
-
-	pps := PotentialProviders{}
-	return pps.DestroyAllWithRequestUUID(tx, r.UUID.String(), user)
-}
-
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
 func (r *Request) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	v := []validate.Validator{
@@ -503,6 +492,16 @@ func (r *Request) manageStatusTransition(tx *pop.Connection) error {
 			if err := tx.Reload(r); err != nil {
 				domain.ErrLogger.Printf("unable to reload Request ID: %v, %s", r.ID, err)
 			}
+		}
+	}
+
+	if r.Status == RequestStatusCompleted {
+		p := PotentialProviders{}
+		if err = tx.Select("id").Where("request_id = ?", r.ID).All(&p); domain.IsOtherThanNoRows(err) {
+			return errors.New("unable to find Request's Potential Providers in order to remove them: " + err.Error())
+		}
+		if err = tx.Destroy(&p); err != nil {
+			return errors.New("unable to destroy Request's Potential Providers: " + err.Error())
 		}
 	}
 

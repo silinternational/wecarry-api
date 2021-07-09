@@ -107,6 +107,9 @@ const (
 	ErrorCreateRequestPhotoIDNotFound         = ErrorKey("ErrorCreateRequestPhotoIDNotFound")
 	ErrorUpdateRequest                        = ErrorKey("ErrorUpdateRequest")
 	ErrorUpdateRequestPhotoIDNotFound         = ErrorKey("ErrorUpdateRequestPhotoIDNotFound")
+	ErrorUpdateRequestStatusNotFound    = ErrorKey("ErrorUpdateRequestStatusNotFound")
+	ErrorUpdateRequestStatusBadStatus   = ErrorKey("ErrorUpdateRequestStatusBadStatus")
+	ErrorUpdateRequestStatusBadProvider = ErrorKey("ErrorUpdateRequestStatusBadProvider")
 
 	// Thread
 

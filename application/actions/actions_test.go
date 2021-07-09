@@ -108,12 +108,12 @@ func convertFloat64ToIntString(input float64) string {
 	return fmt.Sprintf("%v", int(input))
 }
 
-func (as *ActionSuite) verifyResponseData(wantData []string, body string) {
+func (as *ActionSuite) verifyResponseData(wantData []string, body string, msg string) {
 	var b bytes.Buffer
 	as.NoError(json.Indent(&b, []byte(body), "", "    "))
 	for _, w := range wantData {
 		if !strings.Contains(body, w) {
-			as.Fail(fmt.Sprintf("response data is not correct\nwanted: %s\nin body:\n%s\n", w, b.String()))
+			as.Fail(fmt.Sprintf("%s response data is not correct\nwanted: %s\nin body:\n%s\n", msg, w, b.String()))
 		}
 	}
 }

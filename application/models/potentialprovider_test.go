@@ -123,67 +123,6 @@ func (ms *ModelSuite) TestPotentialProvider_FindWithRequestUUIDAndUserUUID() {
 	}
 }
 
-func (ms *ModelSuite) TestPotentialProviders_DestroyAllWithRequestUUID() {
-	f := createPotentialProvidersFixtures(ms)
-	requests := f.Requests
-	users := f.Users
-	pps := f.PotentialProviders
-	t := ms.T()
-	tests := []struct {
-		name        string
-		currentUser User
-		request     Request
-		wantIDs     []int
-		wantErr     string
-	}{
-		{
-			name:        "good: Request Creator as current user",
-			currentUser: users[0],
-			request:     requests[0],
-			wantIDs:     []int{pps[3].ID, pps[4].ID},
-		},
-		{
-			name:        "bad: current user is potential provider but not Request Creator",
-			currentUser: users[2],
-			request:     requests[0],
-			wantErr: fmt.Sprintf(`user %v has insufficient permissions to destroy PotentialProviders for Request %v`,
-				users[2].ID, requests[0].ID),
-		},
-		{
-			name:        "bad: current user is not Request Creator",
-			currentUser: users[1],
-			request:     requests[1],
-			wantErr: fmt.Sprintf(`user %v has insufficient permissions to destroy PotentialProviders for Request %v`,
-				users[1].ID, requests[1].ID),
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			providers := PotentialProviders{}
-			err := providers.DestroyAllWithRequestUUID(ms.DB, test.request.UUID.String(), test.currentUser)
-
-			if test.wantErr != "" {
-				ms.Error(err, "did not get error as expected")
-				ms.Equal(test.wantErr, err.Error(), "wrong error message")
-				return
-			}
-
-			ms.NoError(err, "unexpected error")
-
-			var provs PotentialProviders
-			err = DB.All(&provs)
-			ms.NoError(err, "error just getting PotentialProviders back out of the DB.")
-
-			pIDs := make([]int, len(provs))
-			for i, p := range provs {
-				pIDs[i] = p.ID
-			}
-
-			ms.Equal(test.wantIDs, pIDs)
-		})
-	}
-}
-
 func (ms *ModelSuite) TestNewWithRequestUUID() {
 	f := createPotentialProvidersFixtures(ms)
 	users := f.Users
