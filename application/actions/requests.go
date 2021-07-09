@@ -61,7 +61,6 @@ func requestsGet(c buffalo.Context) error {
 	if err != nil {
 		return reportError(c, err)
 	}
-	domain.NewExtra(c, "requestID", id)
 
 	request := models.Request{}
 	if err = request.FindByUUID(tx, id.String()); err != nil {
@@ -112,7 +111,7 @@ func requestsCreate(c buffalo.Context) error {
 
 	tx := models.Tx(c)
 
-	request, err := convertRequestInput(c, input)
+	request, err := convertRequestCreateInput(c, input)
 	if err != nil {
 		return reportError(c, err)
 	}
@@ -130,9 +129,10 @@ func requestsCreate(c buffalo.Context) error {
 	return c.Render(200, render.JSON(output))
 }
 
-// convertRequestInput creates a new `Request` from a `RequestCreateInput`. All properties that are not `nil` are
+// convertRequestCreateInput creates a new `Request` from a `RequestCreateInput`. All properties that are not `nil` are
 // set to the value provided
-func convertRequestInput(ctx context.Context, input api.RequestCreateInput) (models.Request, error) {
+// TODO: move the actual DB access into Request.Update()
+func convertRequestCreateInput(ctx context.Context, input api.RequestCreateInput) (models.Request, error) {
 	tx := models.Tx(ctx)
 
 	request := models.Request{
@@ -184,6 +184,129 @@ func convertRequestInput(ctx context.Context, input api.RequestCreateInput) (mod
 		}
 		request.OriginID = nulls.NewInt(origin.ID)
 	}
+
+	return request, nil
+}
+
+// swagger:operation PUT /requests/{request_id} Requests RequestsUpdate
+//
+// update a request
+//
+// ---
+// parameters:
+//   - name: RequestUpdateInput
+//     in: body
+//     required: true
+//     description: input object
+//     schema:
+//       "$ref": "#/definitions/RequestUpdateInput"
+//
+// responses:
+//   '200':
+//     description: the request
+//     schema:
+//       "$ref": "#/definitions/Request"
+func requestsUpdate(c buffalo.Context) error {
+	var input api.RequestUpdateInput
+	if err := StrictBind(c, &input); err != nil {
+		err = errors.New("unable to unmarshal data into RequestCreateInput, error: " + err.Error())
+		return reportError(c, api.NewAppError(err, api.ErrorInvalidRequestBody, api.CategoryUser))
+	}
+
+	tx := models.Tx(c)
+
+	requestID, err := getUUIDFromParam(c, "request_id")
+	if err != nil {
+		return reportError(c, err)
+	}
+
+	request, err := convertRequestUpdateInput(c, input, requestID.String())
+	if err != nil {
+		return reportError(c, err)
+	}
+
+	if err = request.Update(tx); err != nil {
+		appError := api.NewAppError(err, api.ErrorUpdateRequest, api.CategoryUser)
+		// TODO: check for validation errors
+		if domain.IsOtherThanNoRows(err) {
+			appError.Category = api.CategoryInternal
+		}
+		return reportError(c, appError)
+	}
+
+	output, err := models.ConvertRequest(c, request)
+	if err != nil {
+		return reportError(c, err)
+	}
+
+	return c.Render(200, render.JSON(output))
+}
+
+// convertRequestUpdateInput updates a `Request` from a `RequestUpdateInput`, with the values in
+// the database as default for any property not specified in the input.
+// TODO: move the actual DB access into Request.Update() -- Note that this requires a change of function signature so that Update has the before and after File and Location IDs.
+func convertRequestUpdateInput(ctx context.Context, input api.RequestUpdateInput, id string) (models.Request, error) {
+	tx := models.Tx(ctx)
+
+	var request models.Request
+	if err := request.FindByUUID(tx, id); err != nil {
+		appError := api.NewAppError(err, api.ErrorUpdateRequest, api.CategoryNotFound)
+		if domain.IsOtherThanNoRows(err) {
+			appError.Category = api.CategoryInternal
+		}
+		return request, appError
+	}
+
+	if input.PhotoID.Valid {
+		if _, err := request.AttachPhoto(tx, input.PhotoID.UUID.String()); err != nil {
+			err = errors.New("request photo file ID not found, " + err.Error())
+			appErr := api.NewAppError(err, api.ErrorUpdateRequestPhotoIDNotFound, api.CategoryUser)
+			if domain.IsOtherThanNoRows(err) {
+				appErr.Category = api.CategoryDatabase
+			}
+			return request, appErr
+		}
+	} else {
+		if err := request.RemoveFile(tx); err != nil {
+			return request, err
+		}
+	}
+
+	if input.Destination != nil {
+		destination := models.ConvertLocationInput(*input.Destination)
+		if err := request.SetDestination(tx, destination); err != nil {
+			return request, api.NewAppError(err, api.ErrorLocationCreateFailure, api.CategoryUser)
+		}
+	}
+
+	if input.Origin != nil {
+		origin := models.ConvertLocationInput(*input.Origin)
+		if err := request.SetOrigin(tx, origin); err != nil {
+			return request, api.NewAppError(err, api.ErrorLocationCreateFailure, api.CategoryUser)
+		}
+	} else {
+		if err := request.RemoveOrigin(tx); err != nil {
+			return request, api.NewAppError(err, api.ErrorLocationDeleteFailure, api.CategoryInternal)
+		}
+	}
+
+	if input.Size != nil {
+		request.Size = models.RequestSize(*input.Size)
+	}
+
+	if input.Title != nil {
+		request.Title = *input.Title
+	}
+
+	if input.Visibility != nil {
+		request.Visibility = models.RequestVisibility(*input.Visibility)
+	}
+
+	request.Description = input.Description
+
+	request.Kilograms = input.Kilograms
+
+	request.NeededBefore = input.NeededBefore
 
 	return request, nil
 }

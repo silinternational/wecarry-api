@@ -77,6 +77,7 @@ const (
 	// Location
 
 	ErrorLocationCreateFailure = ErrorKey("ErrorLocationCreateFailure")
+	ErrorLocationDeleteFailure = ErrorKey("ErrorLocationDeleteFailure")
 
 	// Meeting
 
@@ -104,6 +105,8 @@ const (
 	ErrorCreateRequest                        = ErrorKey("ErrorCreateRequest")
 	ErrorCreateRequestOrgIDNotFound           = ErrorKey("ErrorCreateRequestOrgIDNotFound")
 	ErrorCreateRequestPhotoIDNotFound         = ErrorKey("ErrorCreateRequestPhotoIDNotFound")
+	ErrorUpdateRequest                        = ErrorKey("ErrorUpdateRequest")
+	ErrorUpdateRequestPhotoIDNotFound         = ErrorKey("ErrorUpdateRequestPhotoIDNotFound")
 
 	// Thread
 

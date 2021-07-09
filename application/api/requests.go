@@ -154,3 +154,38 @@ type RequestCreateInput struct {
 	// Visibility restrictions for this request, if omitted, the default is "SAME"
 	Visibility RequestVisibility `json:"visibility"`
 }
+
+// RequestUpdateInput includes the fields for updating Requests
+//
+// swagger:model
+type RequestUpdateInput struct {
+	// Optional, longer description, limited to 4096 characters. If omitted or `null`, the description is removed
+	Description nulls.String `json:"description"`
+
+	// Geographic location where item is needed. If omitted or `null`, no change is made
+	Destination *Location `json:"destination"`
+
+	// Optional weight of the item, measured in kilograms. If omitted or `null`, the value is removed
+	Kilograms nulls.Float64 `json:"kilograms"`
+
+	// Date (yyyy-mm-dd) before which the item will be needed. The record may be hidden or removed after this date.
+	// If omitted or `null`, the date is removed.
+	NeededBefore nulls.Time `json:"needed_before"`
+
+	// Optional geographic location where the item can be picked up, purchased, or otherwise obtained. If omitted or
+	// `null`, the origin location is removed.
+	Origin *Location `json:"origin"`
+
+	// Optional photo `file` ID. First upload a file using the `/upload` endpoint and then submit its ID here. Any
+	// previously attached photo will be deleted. If omitted or `null`, no photo will be attached to this request
+	PhotoID nulls.UUID `json:"photo_id"`
+
+	// Broad category of the size of item. If omitted or `null`, no change is made
+	Size *RequestSize `json:"size"`
+
+	// Short description, limited to 255 characters.  If omitted or `null`, no change is made.
+	Title *string `json:"title"`
+
+	// Visibility restrictions for this request. If omitted or `null`, no change is made.
+	Visibility *RequestVisibility `json:"visibility"`
+}
