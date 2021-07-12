@@ -252,6 +252,10 @@ func convertLocation(location Location) api.Location {
 	return api.Location{
 		Description: location.Description,
 		Country:     location.Country,
+		State:       location.State,
+		County:      location.County,
+		City:        location.City,
+		Borough:     location.Borough,
 		Latitude:    location.Latitude,
 		Longitude:   location.Longitude,
 	}
@@ -261,6 +265,10 @@ func ConvertLocationInput(input api.Location) Location {
 	return Location{
 		Description: input.Description,
 		Country:     input.Country,
+		State:       input.State,
+		County:      input.County,
+		City:        input.City,
+		Borough:     input.Borough,
 		Latitude:    input.Latitude,
 		Longitude:   input.Longitude,
 	}
