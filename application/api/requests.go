@@ -116,6 +116,9 @@ type RequestAbridged struct {
 	// Broad category of the size of item
 	Size string `json:"size"`
 
+	// Optional weight of the item, measured in kilograms
+	Kilograms nulls.Float64 `json:"kilograms"`
+
 	// Photo of the item
 	Photo *File `json:"photo"`
 }
