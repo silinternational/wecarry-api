@@ -209,7 +209,7 @@ func convertRequestCreateInput(ctx context.Context, input api.RequestCreateInput
 func requestsUpdate(c buffalo.Context) error {
 	var input api.RequestUpdateInput
 	if err := StrictBind(c, &input); err != nil {
-		err = errors.New("unable to unmarshal data into RequestCreateInput, error: " + err.Error())
+		err = errors.New("unable to unmarshal data into RequestUpdateInput, error: " + err.Error())
 		return reportError(c, api.NewAppError(err, api.ErrorInvalidRequestBody, api.CategoryUser))
 	}
 
@@ -339,6 +339,73 @@ func requestsAddMeAsPotentialProvider(c buffalo.Context) error {
 			appError.Category = api.CategoryUser
 		} else if !domain.IsOtherThanNoRows(err) || strings.Contains(err.Error(), "may not view request") {
 			appError.Category = api.CategoryNotFound
+		}
+		return reportError(c, appError)
+	}
+
+	output, err := models.ConvertRequest(c, request)
+	if err != nil {
+		return reportError(c, err)
+	}
+
+	return c.Render(200, render.JSON(output))
+}
+
+// swagger:operation PUT /requests/{request_id}/status Requests RequestsUpdateStatus
+//
+// update the status of a request
+//
+// ---
+// parameters:
+//   - name: RequestUpdateStatusInput
+//     in: body
+//     required: true
+//     description: input object
+//     schema:
+//       "$ref": "#/definitions/RequestUpdateStatusInput"
+//
+// responses:
+//   '200':
+//     description: the request
+//     schema:
+//       "$ref": "#/definitions/Request"
+func requestsUpdateStatus(c buffalo.Context) error {
+	var input api.RequestUpdateStatusInput
+	if err := StrictBind(c, &input); err != nil {
+		err = errors.New("unable to unmarshal data into RequestUpdateStatusInput, error: " + err.Error())
+		return reportError(c, api.NewAppError(err, api.ErrorInvalidRequestBody, api.CategoryUser))
+	}
+
+	requestID, err := getUUIDFromParam(c, "request_id")
+	if err != nil {
+		return reportError(c, err)
+	}
+
+	tx := models.Tx(c)
+	var request models.Request
+	if err := request.FindByUUID(tx, requestID.String()); err != nil {
+		return reportError(c, api.NewAppError(err, api.ErrorUpdateRequestStatusNotFound, api.CategoryNotFound))
+	}
+
+	cUser := models.CurrentUser(c)
+	domain.NewExtra(c, "oldStatus", request.Status)
+	domain.NewExtra(c, "newStatus", input.Status)
+
+	if !cUser.CanUpdateRequestStatus(request, models.RequestStatus(input.Status)) {
+		err = errors.New("not allowed to change request status")
+		return reportError(c, api.NewAppError(err, api.ErrorUpdateRequestStatusBadStatus, api.CategoryUser))
+	}
+
+	if err = request.SetProviderWithStatus(tx, models.RequestStatus(input.Status), input.ProviderUserID); err != nil {
+		err = errors.New("error setting provider with status: " + err.Error())
+		return reportError(c, api.NewAppError(err, api.ErrorUpdateRequestStatusBadProvider, api.CategoryUser))
+	}
+
+	if err = request.Update(tx); err != nil {
+		appError := api.NewAppError(err, api.ErrorUpdateRequest, api.CategoryUser)
+		// TODO: check for validation errors
+		if domain.IsOtherThanNoRows(err) {
+			appError.Category = api.CategoryInternal
 		}
 		return reportError(c, appError)
 	}

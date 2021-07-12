@@ -1,7 +1,6 @@
 package models
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 	"time"
@@ -2080,11 +2079,17 @@ func (ms *ModelSuite) TestRequest_Meeting() {
 	}
 }
 
+// TestRequest_DestroyPotentialProviders ensures potential providers are removed in the Request.AfterUpdate callback
 func (ms *ModelSuite) TestRequest_DestroyPotentialProviders() {
 	f := createPotentialProvidersFixtures(ms)
 	requests := f.Requests
 	users := f.Users
 	pps := f.PotentialProviders
+
+	// need to bump it to ACCEPTED so the change to COMPLETED won't be blocked
+	requests[0].Status = RequestStatusAccepted
+	ms.NoError(ms.DB.Save(&requests[0]))
+
 	t := ms.T()
 	tests := []struct {
 		name        string
@@ -2108,18 +2113,11 @@ func (ms *ModelSuite) TestRequest_DestroyPotentialProviders() {
 			status:      RequestStatusCompleted,
 			wantIDs:     []int{pps[3].ID, pps[4].ID},
 		},
-		{
-			name:        "bad: current user is potential provider but not Request Creator",
-			currentUser: users[2],
-			request:     requests[0],
-			status:      RequestStatusCompleted,
-			wantErr: fmt.Sprintf(`user %v has insufficient permissions to destroy PotentialProviders for Request %v`,
-				users[2].ID, requests[0].ID),
-		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := test.request.DestroyPotentialProviders(ms.DB, test.status, test.currentUser)
+			test.request.Status = test.status
+			err := test.request.Update(ms.DB)
 
 			if test.wantErr != "" {
 				ms.Error(err, "did not get error as expected")

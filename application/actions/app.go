@@ -109,6 +109,7 @@ func App() *buffalo.App {
 		requestsGroup.POST("/", requestsCreate)
 		requestsGroup.GET("/{request_id}", requestsGet)
 		requestsGroup.PUT("/{request_id}", requestsUpdate)
+		requestsGroup.PUT("/{request_id}/status", requestsUpdateStatus)
 
 		requestsGroup.POST("/{request_id}/potentialprovider", requestsAddMeAsPotentialProvider)
 
