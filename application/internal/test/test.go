@@ -267,7 +267,7 @@ type PotentialProvidersFixtures struct {
 // The Fifth User will be with a different Organization.
 func CreatePotentialProvidersFixtures(tx *pop.Connection) PotentialProvidersFixtures {
 	uf := CreateUserFixtures(tx, 5)
-	requests := CreateRequestFixtures(tx, 3, false)
+	requests := CreateRequestFixtures(tx, 3, false, uf.Users[0].ID)
 	providers := models.PotentialProviders{}
 
 	// ensure the first user is actually the creator (timing issues tend to make this unreliable otherwise)

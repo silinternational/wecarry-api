@@ -3,6 +3,7 @@ package actions
 import (
 	"context"
 	"errors"
+	"net/http"
 	"strings"
 
 	"github.com/gobuffalo/buffalo"
@@ -311,7 +312,7 @@ func convertRequestUpdateInput(ctx context.Context, input api.RequestUpdateInput
 	return request, nil
 }
 
-// swagger:operation POST /requests/{request_id} Requests AddMeAsPotentialProvider
+// swagger:operation POST /requests/{request_id}/potentialprovider Requests AddMeAsPotentialProvider
 //
 // Adds the current user as a potential provider to the request
 //
@@ -349,6 +350,50 @@ func requestsAddMeAsPotentialProvider(c buffalo.Context) error {
 	}
 
 	return c.Render(200, render.JSON(output))
+}
+
+// swagger:operation DELETE /requests/{request_id}/potentialprovider Requests RemoveMeAsPotentialProvider
+//
+// Removes the current user as a potential provider to the request
+//
+// ---
+// responses:
+//   '204':
+//     description: OK but no content in response
+func requestsRemoveMeAsPotentialProvider(c buffalo.Context) error {
+	cUser := models.CurrentUser(c)
+	tx := models.Tx(c)
+
+	id, err := getUUIDFromParam(c, "request_id")
+	if err != nil {
+		return reportError(c, err)
+	}
+	domain.NewExtra(c, "requestID", id)
+
+	var provider models.PotentialProvider
+	if err := provider.FindWithRequestUUIDAndUserUUID(tx, id.String(), cUser.UUID.String(), cUser); err != nil {
+		appError := api.NewAppError(err, api.ErrorRemoveMeAsPotentialProviderForbidden, api.CategoryForbidden)
+		if strings.Contains(err.Error(), "unable to find User") {
+			appError.Key = api.ErrorRemoveMeAsPotentialProviderFindUser
+		} else if strings.Contains(err.Error(), "unable to find Request") {
+			appError.Key = api.ErrorGetRequest
+			appError.Category = api.CategoryUser
+		} else if strings.Contains(err.Error(), "unable to find PotentialProvider") {
+			appError.Key = api.ErrorRemoveMeAsPotentialProviderFindProvider
+			appError.Category = api.CategoryUser
+		}
+
+		return reportError(c, appError)
+	}
+
+	domain.NewExtra(c, "request", id)
+
+	if err := provider.Destroy(tx); err != nil {
+		appError := api.NewAppError(err, api.ErrorRemoveMeAsPotentialProviderDestroyIt, api.CategoryInternal)
+		return reportError(c, appError)
+	}
+
+	return c.Render(http.StatusNoContent, nil)
 }
 
 // swagger:operation PUT /requests/{request_id}/status Requests RequestsUpdateStatus
