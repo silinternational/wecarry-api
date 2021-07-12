@@ -162,6 +162,8 @@ func CreateLocationFixtures(tx *pop.Connection, n int) models.Locations {
 	cities := []string{"Miami", "Toronto", "Mexico City", "Chiang Mai", "Paris", "Port Moresby"}
 
 	locations := make(models.Locations, n)
+
+	/* #nosec */
 	for i := range locations {
 		// #nosec G404
 		randInt := rand.Intn(6)

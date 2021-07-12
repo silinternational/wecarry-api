@@ -216,6 +216,8 @@ func createLocationFixtures(tx *pop.Connection, n int) Locations {
 	states := []string{"FL", "ON", "", "", "", ""}
 	cities := []string{"Miami", "Toronto", "Mexico City", "Chiang Mai", "Paris", "Port Moresby"}
 	locations := make(Locations, n)
+
+	/* #nosec */
 	for i := range locations {
 		randInt := rand.Intn(6)
 		locations[i] = Location{
