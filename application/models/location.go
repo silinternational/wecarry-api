@@ -19,6 +19,10 @@ type Location struct {
 	ID          int           `json:"id" db:"id"`
 	Description string        `json:"description" db:"description"`
 	Country     string        `json:"country" db:"country"`
+	State       string        `json:"state" db:"state"`     // Google Place's administrative area level 1
+	County      string        `json:"county" db:"county"`   // Google Place's administrative area level 2
+	City        string        `json:"city" db:"city"`       // Google Place's locality
+	Borough     string        `json:"borough" db:"borough"` // Google Place's sub-locality
 	Latitude    nulls.Float64 `json:"latitude" db:"latitude"`
 	Longitude   nulls.Float64 `json:"longitude" db:"longitude"`
 }

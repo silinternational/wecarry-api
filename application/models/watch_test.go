@@ -218,6 +218,7 @@ func (ms *ModelSuite) TestWatch_GetSetLocation() {
 	got, err := watches[0].GetDestination(ms.DB)
 	ms.NoError(err, "unexpected error from GetLocation()")
 	ms.Equal(newLoc.Country, got.Country, "country doesn't match")
+	ms.Equal(newLoc.City, got.City, "country doesn't match")
 	ms.Equal(newLoc.Description, got.Description, "description doesn't match")
 	ms.InDelta(newLoc.Latitude.Float64, got.Latitude.Float64, 0.0001, "latitude doesn't match")
 	ms.InDelta(newLoc.Longitude.Float64, got.Longitude.Float64, 0.0001, "longitude doesn't match")

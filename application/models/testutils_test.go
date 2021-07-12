@@ -213,10 +213,13 @@ func createPotentialProviderFixtures(tx *pop.Connection, nRequests, nProviders i
 // createLocationFixtures generates any number of location records for testing.
 func createLocationFixtures(tx *pop.Connection, n int) Locations {
 	countries := []string{"US", "CA", "MX", "TH", "FR", "PG"}
+	cities := []string{"Miami", "Toronto", "Mexico City", "Chiang Mai", "Paris", "Port Moresby"}
 	locations := make(Locations, n)
 	for i := range locations {
+		randInt := rand.Intn(6)
 		locations[i] = Location{
-			Country:     countries[rand.Intn(6)],
+			Country:     countries[randInt],
+			City:        cities[randInt],
 			Description: "Random Location " + strconv.Itoa(rand.Int()),
 			Latitude:    nulls.NewFloat64(rand.Float64()*180 - 90),
 			Longitude:   nulls.NewFloat64(rand.Float64()*360 - 180),

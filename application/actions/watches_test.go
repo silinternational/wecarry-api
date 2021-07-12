@@ -220,16 +220,23 @@ func (as *ActionSuite) Test_MyWatches() {
 		fmt.Sprintf(`"id":"%s"`, watches[1].UUID.String()),
 		fmt.Sprintf(`"destination":{"description":"%s"`, destinations[0].Description),
 		fmt.Sprintf(`"country":"%s"`, destinations[0].Country),
+		fmt.Sprintf(`"state":"%s"`, destinations[0].State),
+		fmt.Sprintf(`"county":"%s"`, destinations[0].County),
+		fmt.Sprintf(`"city":"%s"`, destinations[0].City),
+		fmt.Sprintf(`"borough":"%s"`, destinations[0].Borough),
 		fmt.Sprintf(`"latitude":%s`, convertFloat64ToIntString(destinations[0].Latitude.Float64)),
 		fmt.Sprintf(`"longitude":%s`, convertFloat64ToIntString(destinations[0].Longitude.Float64)),
 		fmt.Sprintf(`"destination":{"description":"%s"`, destinations[1].Description),
 		fmt.Sprintf(`"country":"%s"`, destinations[1].Country),
+		fmt.Sprintf(`"state":"%s"`, destinations[1].State),
+		fmt.Sprintf(`"county":"%s"`, destinations[1].County),
+		fmt.Sprintf(`"city":"%s"`, destinations[1].City),
+		fmt.Sprintf(`"borough":"%s"`, destinations[1].Borough),
 		fmt.Sprintf(`"latitude":%s`, convertFloat64ToIntString(destinations[1].Latitude.Float64)),
 		fmt.Sprintf(`"longitude":%s`, convertFloat64ToIntString(destinations[1].Longitude.Float64)),
 	}
-	for _, w := range wantContains {
-		as.Contains(body, w)
-	}
+
+	as.verifyResponseData(wantContains, body, "MyWatches")
 
 	as.NotContains(body, `"origin":`)
 	as.NotContains(body, `"meeting":`)

@@ -158,11 +158,15 @@ func CreateRequestFixtures(tx *pop.Connection, n int, createFiles bool, userIDs 
 // CreateLocationFixtures generates any number of location records for testing.
 func CreateLocationFixtures(tx *pop.Connection, n int) models.Locations {
 	countries := []string{"US", "CA", "MX", "TH", "FR", "PG"}
+	cities := []string{"Miami", "Toronto", "Mexico City", "Chiang Mai", "Paris", "Port Moresby"}
+
 	locations := make(models.Locations, n)
 	for i := range locations {
 		// #nosec G404
+		randInt := rand.Intn(6)
 		locations[i] = models.Location{
-			Country:     countries[rand.Intn(6)],
+			Country:     countries[randInt],
+			City:        cities[randInt],
 			Description: "Random Location " + strconv.Itoa(rand.Int()),
 			Latitude:    nulls.NewFloat64(rand.Float64()*180 - 90),
 			Longitude:   nulls.NewFloat64(rand.Float64()*360 - 180),
