@@ -55,9 +55,7 @@ func (as *ActionSuite) Test_MeetingsList() {
 		wantContains = append(wantContains, moreContains...)
 	}
 
-	for _, w := range wantContains {
-		as.Contains(body, w)
-	}
+	as.verifyResponseData(wantContains, body, "In Test_MeetingsList")
 
 	as.NotContains(body, mtgs[0].Name, "should not have included name of past meeting")
 	as.NotContains(body, mtgs[1].Name, "should not have included name of recent meeting")
@@ -149,9 +147,7 @@ func (as *ActionSuite) Test_meetingsJoin() {
 				fmt.Sprintf(`"longitude":%s`, convertFloat64ToIntString(tc.location.Longitude.Float64)),
 			}
 
-			for _, w := range wantContains {
-				as.Contains(body, w)
-			}
+			as.verifyResponseData(wantContains, body, "In Test_meetingsJoin")
 		})
 	}
 }

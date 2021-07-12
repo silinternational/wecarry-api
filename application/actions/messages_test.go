@@ -115,7 +115,5 @@ func (as *ActionSuite) TestMessagesCreate() {
 		fmt.Sprintf(`"request":{"id":"%s"`, request0.UUID),
 		fmt.Sprintf(`"title":"%s","description":"%s"`, request0.Title, request0.Description.String),
 	}
-	for _, w := range wantContains {
-		as.Contains(body, w)
-	}
+	as.verifyResponseData(wantContains, body, "In TestMessagesCreate")
 }

@@ -91,9 +91,7 @@ func (as *ActionSuite) TestUsersUpdate() {
 		fmt.Sprintf(`"photo_id":"%s"`, photoID),
 		fmt.Sprintf(`"nickname":"%s"`, nickname),
 	}
-	for _, w := range wantContains {
-		as.Contains(body, w)
-	}
+	as.verifyResponseData(wantContains, body, "In TestUsersUpdate part A:")
 
 	// test for removing photo
 	reqBody = api.UsersInput{
@@ -107,9 +105,8 @@ func (as *ActionSuite) TestUsersUpdate() {
 		`"photo_id":null`,
 		fmt.Sprintf(`"nickname":"%s"`, nickname), // nickname should remain unchanged
 	}
-	for _, w := range wantContains {
-		as.Contains(body, w)
-	}
+
+	as.verifyResponseData(wantContains, body, "In TestUsersUpdate part B:")
 }
 
 func (as *ActionSuite) verifyUser(user models.User, apiUser api.User, msg string) {
