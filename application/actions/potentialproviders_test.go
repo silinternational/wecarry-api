@@ -192,8 +192,8 @@ func (as *ActionSuite) Test_RemoveMeAsPotentialProvider() {
 	res := req.Delete()
 
 	body := res.Body.String()
-	as.Equal(200, res.Code, "incorrect status code returned, body: %s", body)
-	as.Equal(request.UUID.String(), body, "incorrect body returned.")
+	as.Equal(http.StatusNoContent, res.Code, "incorrect status code returned, body: %s", body)
+	as.Empty(body, "incorrect body returned.")
 
 	var dbPProvider models.PotentialProvider
 	err := as.DB.Find(&dbPProvider, pprovider.ID)

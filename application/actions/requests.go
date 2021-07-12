@@ -3,6 +3,7 @@ package actions
 import (
 	"context"
 	"errors"
+	"net/http"
 	"strings"
 
 	"github.com/gobuffalo/buffalo"
@@ -357,8 +358,8 @@ func requestsAddMeAsPotentialProvider(c buffalo.Context) error {
 //
 // ---
 // responses:
-//   '200':
-//     description: The id (uuid) of the request for which the potential provider was removed
+//   '204':
+//     description: OK but no content in response
 func requestsRemoveMeAsPotentialProvider(c buffalo.Context) error {
 	cUser := models.CurrentUser(c)
 	tx := models.Tx(c)
@@ -392,7 +393,7 @@ func requestsRemoveMeAsPotentialProvider(c buffalo.Context) error {
 		return reportError(c, appError)
 	}
 
-	return c.Render(200, render.String(id.String()))
+	return c.Render(http.StatusNoContent, nil)
 }
 
 // swagger:operation PUT /requests/{request_id}/status Requests RequestsUpdateStatus
