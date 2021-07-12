@@ -77,7 +77,7 @@ func requestsGet(c buffalo.Context) error {
 		return reportError(c, api.NewAppError(err, api.ErrorGetRequestUserNotAllowed, api.CategoryForbidden))
 	}
 
-	output, err := models.ConvertRequestAbridged(c, request)
+	output, err := models.ConvertRequest(c, request)
 	if err != nil {
 		return reportError(c, err)
 	}
