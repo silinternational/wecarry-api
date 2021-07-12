@@ -112,6 +112,7 @@ func App() *buffalo.App {
 		requestsGroup.PUT("/{request_id}/status", requestsUpdateStatus)
 
 		requestsGroup.POST("/{request_id}/potentialprovider", requestsAddMeAsPotentialProvider)
+		requestsGroup.DELETE("/{request_id}/potentialprovider/{user_id}", requestsRejectPotentialProvider)
 		requestsGroup.DELETE("/{request_id}/potentialprovider", requestsRemoveMeAsPotentialProvider)
 
 		watchesGroup := app.Group("/watches")

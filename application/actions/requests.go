@@ -352,6 +352,54 @@ func requestsAddMeAsPotentialProvider(c buffalo.Context) error {
 	return c.Render(200, render.JSON(output))
 }
 
+// swagger:operation DELETE /requests/{request_id}/potentialprovider/{user_id} Requests RejectPotentialProvider
+//
+// Requester removes a potential provider attached to their request
+//
+// ---
+// responses:
+//   '204':
+//     description: OK but no content in response
+func requestsRejectPotentialProvider(c buffalo.Context) error {
+	cUser := models.CurrentUser(c)
+	tx := models.Tx(c)
+
+	requestID, err := getUUIDFromParam(c, "request_id")
+	if err != nil {
+		return reportError(c, err)
+	}
+	domain.NewExtra(c, "requestID", requestID)
+
+	userID, err := getUUIDFromParam(c, "user_id")
+	if err != nil {
+		return reportError(c, err)
+	}
+	domain.NewExtra(c, "requestID", userID)
+
+	var provider models.PotentialProvider
+	if err := provider.FindWithRequestUUIDAndUserUUID(tx, requestID.String(), userID.String(), cUser); err != nil {
+		appError := api.NewAppError(err, api.ErrorRejectPotentialProviderForbidden, api.CategoryForbidden)
+		if strings.Contains(err.Error(), "unable to find User") {
+			appError.Key = api.ErrorRejectPotentialProviderFindUser
+		} else if strings.Contains(err.Error(), "unable to find Request") {
+			appError.Key = api.ErrorGetRequest
+			appError.Category = api.CategoryUser
+		} else if strings.Contains(err.Error(), "unable to find PotentialProvider") {
+			appError.Key = api.ErrorRejectPotentialProviderFindProvider
+			appError.Category = api.CategoryUser
+		}
+
+		return reportError(c, appError)
+	}
+
+	if err := provider.Destroy(tx); err != nil {
+		appError := api.NewAppError(err, api.ErrorRejectPotentialProviderDestroyIt, api.CategoryInternal)
+		return reportError(c, appError)
+	}
+
+	return c.Render(http.StatusNoContent, nil)
+}
+
 // swagger:operation DELETE /requests/{request_id}/potentialprovider Requests RemoveMeAsPotentialProvider
 //
 // Removes the current user as a potential provider to the request
@@ -385,8 +433,6 @@ func requestsRemoveMeAsPotentialProvider(c buffalo.Context) error {
 
 		return reportError(c, appError)
 	}
-
-	domain.NewExtra(c, "request", id)
 
 	if err := provider.Destroy(tx); err != nil {
 		appError := api.NewAppError(err, api.ErrorRemoveMeAsPotentialProviderDestroyIt, api.CategoryInternal)
