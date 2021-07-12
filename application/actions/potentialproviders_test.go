@@ -2,6 +2,7 @@ package actions
 
 import (
 	"fmt"
+	"github.com/silinternational/wecarry-api/domain"
 	"net/http"
 	"testing"
 
@@ -60,7 +61,7 @@ func (as *ActionSuite) Test_GQLAddMeAsPotentialProvider() {
 	as.Equal(want, resp.Request.PotentialProviders, "incorrect potential providers")
 }
 
-func (as *ActionSuite) Test_RemoveMeAsPotentialProvider() {
+func (as *ActionSuite) Test_GQLRemoveMeAsPotentialProvider() {
 	f := test.CreatePotentialProvidersFixtures(as.DB)
 	requests := f.Requests
 
@@ -178,4 +179,25 @@ func (as *ActionSuite) Test_AddMeAsPotentialProvider() {
 			as.verifyResponseData(tc.wantContains, body)
 		})
 	}
+}
+
+func (as *ActionSuite) Test_RemoveMeAsPotentialProvider() {
+	f := test.CreatePotentialProvidersFixtures(as.DB)
+	request := f.Requests[1]
+	pprovider := f.PotentialProviders[3]
+
+	req := as.JSON("/requests/%s/potentialprovider", request.UUID.String())
+	req.Headers["Authorization"] = fmt.Sprintf("Bearer %s", f.Users[2].Nickname)
+	req.Headers["content-type"] = "application/json"
+	res := req.Delete()
+
+	body := res.Body.String()
+	as.Equal(200, res.Code, "incorrect status code returned, body: %s", body)
+	as.Equal(request.UUID.String(), body, "incorrect body returned.")
+
+	var dbPProvider models.PotentialProvider
+	err := as.DB.Find(&dbPProvider, pprovider.ID)
+
+	as.NotNil(err, "expected the PotentialProvider to be missing from the database")
+	as.False(domain.IsOtherThanNoRows(err), "got unexpected error fetching PotentialProvider from database")
 }

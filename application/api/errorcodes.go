@@ -94,19 +94,23 @@ const (
 
 	// Request
 
-	ErrorFindRequestToAddPotentialProvider    = ErrorKey("ErrorFindRequestToAddPotentialProvider")
-	ErrorAddPotentialProviderRequestBadStatus = ErrorKey("ErrorAddPotentialProviderRequestBadStatus")
-	ErrorAddPotentialProviderPreparation      = ErrorKey("ErrorAddPotentialProviderPreparation")
-	ErrorAddPotentialProviderCreate           = ErrorKey("ErrorAddPotentialProviderCreate")
-	ErrorAddPotentialProviderDuplicate        = ErrorKey("ErrorAddPotentialProviderDuplicate")
-	ErrorGetRequests                          = ErrorKey("ErrorGetRequests")
-	ErrorGetRequest                           = ErrorKey("ErrorGetRequest")
-	ErrorGetRequestUserNotAllowed             = ErrorKey("ErrorGetRequestUserNotAllowed")
-	ErrorCreateRequest                        = ErrorKey("ErrorCreateRequest")
-	ErrorCreateRequestOrgIDNotFound           = ErrorKey("ErrorCreateRequestOrgIDNotFound")
-	ErrorCreateRequestPhotoIDNotFound         = ErrorKey("ErrorCreateRequestPhotoIDNotFound")
-	ErrorUpdateRequest                        = ErrorKey("ErrorUpdateRequest")
-	ErrorUpdateRequestPhotoIDNotFound         = ErrorKey("ErrorUpdateRequestPhotoIDNotFound")
+	ErrorFindRequestToAddPotentialProvider       = ErrorKey("ErrorFindRequestToAddPotentialProvider")
+	ErrorAddPotentialProviderRequestBadStatus    = ErrorKey("ErrorAddPotentialProviderRequestBadStatus")
+	ErrorAddPotentialProviderPreparation         = ErrorKey("ErrorAddPotentialProviderPreparation")
+	ErrorAddPotentialProviderCreate              = ErrorKey("ErrorAddPotentialProviderCreate")
+	ErrorAddPotentialProviderDuplicate           = ErrorKey("ErrorAddPotentialProviderDuplicate")
+	ErrorRemoveMeAsPotentialProviderForbidden    = ErrorKey("ErrorRemoveMeAsPotentialProviderForbidden")
+	ErrorRemoveMeAsPotentialProviderFindUser     = ErrorKey("ErrorRemoveMeAsPotentialProviderFindUser")
+	ErrorRemoveMeAsPotentialProviderFindProvider = ErrorKey("ErrorRemoveMeAsPotentialProviderFindProvider")
+	ErrorRemoveMeAsPotentialProviderDestroyIt    = ErrorKey("ErrorRemoveMeAsPotentialProviderDestroyIt")
+	ErrorGetRequests                             = ErrorKey("ErrorGetRequests")
+	ErrorGetRequest                              = ErrorKey("ErrorGetRequest")
+	ErrorGetRequestUserNotAllowed                = ErrorKey("ErrorGetRequestUserNotAllowed")
+	ErrorCreateRequest                           = ErrorKey("ErrorCreateRequest")
+	ErrorCreateRequestOrgIDNotFound              = ErrorKey("ErrorCreateRequestOrgIDNotFound")
+	ErrorCreateRequestPhotoIDNotFound            = ErrorKey("ErrorCreateRequestPhotoIDNotFound")
+	ErrorUpdateRequest                           = ErrorKey("ErrorUpdateRequest")
+	ErrorUpdateRequestPhotoIDNotFound            = ErrorKey("ErrorUpdateRequestPhotoIDNotFound")
 
 	// Thread
 
