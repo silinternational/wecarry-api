@@ -176,7 +176,7 @@ func (as *ActionSuite) Test_AddMeAsPotentialProvider() {
 
 			body := res.Body.String()
 			as.Equal(tc.wantHttpStatus, res.Code, "incorrect status code returned, body: %s", body)
-			as.verifyResponseData(tc.wantContains, body)
+			as.verifyResponseData(tc.wantContains, body, "")
 		})
 	}
 }

@@ -1020,7 +1020,7 @@ func (as *ActionSuite) Test_requestsCreate() {
 					`"organization":{"id":"` + f.Organization.UUID.String(),
 					`"destination":{"description":"` + destination.Description,
 				}
-				as.verifyResponseData(wantData, body)
+				as.verifyResponseData(wantData, body, "")
 			}
 		})
 	}
@@ -1342,7 +1342,7 @@ func (as *ActionSuite) Test_requestsUpdate() {
 					`"organization":{"id":"` + f.Organization.UUID.String(),
 					`"description":"` + goodRequest.Description.String,
 				}
-				as.verifyResponseData(wantData, body)
+				as.verifyResponseData(wantData, body, "")
 			}
 		})
 	}
@@ -1469,5 +1469,86 @@ func (as *ActionSuite) verifyRequestUpdateInput(ctx context.Context, input api.R
 		as.Equal(string(*input.Visibility), string(newRequest.Visibility), msg)
 	} else {
 		as.Equal(string(oldRequest.Visibility), string(newRequest.Visibility), msg)
+	}
+}
+
+func (as *ActionSuite) Test_requestsUpdateStatus() {
+	f := createFixturesForUpdateRequestStatus(as)
+
+	request := f.Requests[0]
+	creator := f.Users[0]
+	provider := f.Users[1]
+	providerUUID := provider.UUID.String()
+
+	steps := []struct {
+		name       string
+		status     models.RequestStatus
+		user       models.User
+		requestID  string
+		wantStatus int
+		wantKey    api.ErrorKey
+		providerID *string
+	}{
+		{
+			name:       "non-creator can't change status to ACCEPTED",
+			status:     models.RequestStatusAccepted,
+			user:       provider,
+			requestID:  request.UUID.String(),
+			wantStatus: http.StatusBadRequest,
+			wantKey:    api.ErrorUpdateRequestStatusBadStatus,
+			providerID: &providerUUID,
+		},
+		{
+			name:       "request ID not found",
+			status:     models.RequestStatusAccepted,
+			user:       creator,
+			requestID:  domain.GetUUID().String(),
+			wantStatus: http.StatusNotFound,
+			wantKey:    api.ErrorUpdateRequestStatusNotFound,
+			providerID: &providerUUID,
+		},
+		{
+			name:       "null provider ID",
+			status:     models.RequestStatusAccepted,
+			user:       creator,
+			requestID:  request.UUID.String(),
+			wantStatus: http.StatusBadRequest,
+			wantKey:    api.ErrorUpdateRequestStatusBadProvider,
+			providerID: nil,
+		},
+		{
+			name:       "creator can change status to ACCEPTED",
+			status:     models.RequestStatusAccepted,
+			user:       creator,
+			requestID:  request.UUID.String(),
+			wantStatus: http.StatusOK,
+			providerID: &providerUUID,
+		},
+	}
+
+	for _, step := range steps {
+		input := api.RequestUpdateStatusInput{
+			Status:         api.RequestStatus(step.status),
+			ProviderUserID: step.providerID,
+		}
+
+		req := as.JSON("/requests/" + step.requestID + "/status")
+		req.Headers["Authorization"] = fmt.Sprintf("Bearer %s", step.user.Nickname)
+		req.Headers["content-type"] = "application/json"
+		res := req.Put(&input)
+
+		body := res.Body.String()
+		as.Equal(step.wantStatus, res.Code, `step "%s", incorrect status code returned, body: %s`, step.name, body)
+
+		if step.wantStatus != http.StatusOK {
+			as.verifyResponseData([]string{string(step.wantKey)}, body, fmt.Sprintf(`step "%s", `, step.name))
+			continue
+		}
+		wantData := []string{
+			`"status":"` + step.status.String(),
+			`"provider":{"id":"` + providerUUID,
+		}
+
+		as.verifyResponseData(wantData, body, fmt.Sprintf(`step "%s", `, step.name))
 	}
 }

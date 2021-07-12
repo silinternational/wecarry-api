@@ -189,3 +189,14 @@ type RequestUpdateInput struct {
 	// Visibility restrictions for this request. If omitted or `null`, no change is made.
 	Visibility *RequestVisibility `json:"visibility"`
 }
+
+// RequestUpdateStatusInput includes the fields for updating the status of a Request
+//
+// swagger:model
+type RequestUpdateStatusInput struct {
+	// New Status. Only a limited set of transitions are allowed.
+	Status RequestStatus `json:"status"`
+
+	// User ID of the accepted provider. Required if `status` is ACCEPTED and ignored otherwise.
+	ProviderUserID *string `json:"provider_user_id"`
+}

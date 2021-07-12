@@ -526,11 +526,6 @@ func (r *mutationResolver) UpdateRequestStatus(ctx context.Context, input Update
 		return &models.Request{}, domain.ReportError(ctx, err, "UpdateRequestStatus")
 	}
 
-	if err := request.DestroyPotentialProviders(tx, input.Status, cUser); err != nil {
-		return &models.Request{}, domain.ReportError(ctx, errors.New("error destroying request's potential providers: "+err.Error()),
-			"UpdateRequestStatus.DestroyPotentialProviders")
-	}
-
 	return &request, nil
 }
 
