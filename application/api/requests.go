@@ -98,14 +98,23 @@ type RequestAbridged struct {
 	// example: 63d5b060-1460-4348-bdf0-ad03c105a8d5
 	ID uuid.UUID `json:"id"`
 
+	// Request status: OPEN, ACCEPTED, DELIVERED, RECEIVED, COMPLETED, REMOVED
+	Status RequestStatus `json:"status"`
+
 	// Profile of the user that created this request
 	CreatedBy *User `json:"created_by"`
 
 	// Profile of the user that is the provider for this request
 	Provider *User `json:"provider"`
 
+	// Visibility restrictions for this request
+	Visibility RequestVisibility `json:"visibility"`
+
 	// Short description of item, limited to 255 characters
 	Title string `json:"title"`
+
+	// Optional, longer description of the item, limited to 4,096 characters
+	Description nulls.String `json:"description"`
 
 	// Geographic location where item is needed
 	Destination Location `json:"destination"`
@@ -116,8 +125,14 @@ type RequestAbridged struct {
 	// Broad category of the size of item
 	Size string `json:"size"`
 
+	// Date (yyyy-mm-dd) before which the item will be needed. The record may be hidden or removed after this date
+	NeededBefore nulls.Time `json:"needed_before"`
+
 	// Optional weight of the item, measured in kilograms
 	Kilograms nulls.Float64 `json:"kilograms"`
+
+	// Optional URL to further describe or point to detail about the item, limited to 255 characters
+	URL nulls.String `json:"url"`
 
 	// Photo of the item
 	Photo *File `json:"photo"`
