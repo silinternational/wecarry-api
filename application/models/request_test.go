@@ -1233,7 +1233,7 @@ func (ms *ModelSuite) TestRequest_GetPotentialProviderActions() {
 func (ms *ModelSuite) TestRequest_GetCurrentActions() {
 	f := createUserFixtures(ms.DB, 3)
 	users := f.Users
-	requests := createRequestFixtures(ms.DB, 2, false)
+	requests := createRequestFixtures(ms.DB, 2, false, users[0].ID)
 	_ = createPotentialProviderFixtures(ms.DB, 0, 2)
 
 	acceptedRequest := requests[0]
