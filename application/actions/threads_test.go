@@ -32,9 +32,7 @@ func (as *ActionSuite) TestConversations() {
 		fmt.Sprintf(`"request":{"id":"%s"`, f.Requests[0].UUID),
 		`"unread_message_count":1`,
 	}
-	for _, w := range wantContains {
-		as.Contains(body, w)
-	}
+	as.verifyResponseData(wantContains, body, "In TestConversations")
 
 	as.NotContains(body, `"participants":[{"id":"00000000-`)
 }
@@ -65,8 +63,6 @@ func (as *ActionSuite) TestMarkMessagesAsRead() {
 		fmt.Sprintf(`"sender":{"id":"%s"`, users0.UUID),
 		fmt.Sprintf(`"request":{"id":"%s"`, f.Requests[0].UUID),
 	}
-	for _, w := range wantContains {
-		as.Contains(body, w)
-	}
+	as.verifyResponseData(wantContains, body, "In TestMarkMessagesAsRead")
 
 }

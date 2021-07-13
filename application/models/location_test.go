@@ -23,6 +23,8 @@ func (ms *ModelSuite) TestLocation_Validate() {
 			location: Location{
 				Description: "Miami, FL, USA",
 				Country:     "US",
+				State:       "FL",
+				City:        "Miami",
 				Latitude:    nulls.NewFloat64(25.7617),
 				Longitude:   nulls.NewFloat64(-80.1918),
 			},
@@ -135,6 +137,8 @@ func (ms *ModelSuite) TestLocation_Create() {
 			location: Location{
 				Description: "Miami, FL, USA",
 				Country:     "US",
+				State:       "FL",
+				City:        "Miami",
 				Latitude:    nulls.NewFloat64(25.7617),
 				Longitude:   nulls.NewFloat64(-80.1918),
 			},

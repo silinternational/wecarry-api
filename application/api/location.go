@@ -12,6 +12,18 @@ type Location struct {
 	// Country (ISO 3166-1 Alpha-2 code), e.g. 'US'
 	Country string `json:"country"`
 
+	// Equivalent to Google Place's administrative area level 1
+	State string `json:"state"`
+
+	// Equivalent to Google Place's administrative area level 2
+	County string `json:"county"`
+
+	// Equivalent to Google Place's locality
+	City string `json:"city"`
+
+	// Equivalent to Google Place's sub-locality
+	Borough string `json:"borough"`
+
 	// Latitude in decimal degrees, e.g. -30.95 = 30 degrees 57 minutes south
 	Latitude nulls.Float64 `json:"latitude"`
 
