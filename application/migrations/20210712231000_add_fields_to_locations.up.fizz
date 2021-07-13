@@ -1,5 +1,5 @@
-add_column("locations", "state", "string")
-add_column("locations", "county", "string")
-add_column("locations", "city", "string")
-add_column("locations", "borough", "string")
+add_column("locations", "state", "string", {default: ""})
+add_column("locations", "county", "string", {default: ""})
+add_column("locations", "city", "string", {default: ""})
+add_column("locations", "borough", "string", {default: ""})
 
