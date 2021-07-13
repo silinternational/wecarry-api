@@ -113,11 +113,13 @@ const (
 	ErrorCreateRequest                           = ErrorKey("ErrorCreateRequest")
 	ErrorCreateRequestOrgIDNotFound              = ErrorKey("ErrorCreateRequestOrgIDNotFound")
 	ErrorCreateRequestPhotoIDNotFound            = ErrorKey("ErrorCreateRequestPhotoIDNotFound")
+	ErrorCreateRequestInvalidDate                = ErrorKey("ErrorCreateRequestInvalidDate")
 	ErrorUpdateRequest                           = ErrorKey("ErrorUpdateRequest")
 	ErrorUpdateRequestPhotoIDNotFound            = ErrorKey("ErrorUpdateRequestPhotoIDNotFound")
 	ErrorUpdateRequestStatusNotFound             = ErrorKey("ErrorUpdateRequestStatusNotFound")
 	ErrorUpdateRequestStatusBadStatus            = ErrorKey("ErrorUpdateRequestStatusBadStatus")
 	ErrorUpdateRequestStatusBadProvider          = ErrorKey("ErrorUpdateRequestStatusBadProvider")
+	ErrorUpdateRequestInvalidDate                = ErrorKey("ErrorUpdateRequestInvalidDate")
 
 	// Thread
 

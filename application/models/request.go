@@ -1263,6 +1263,11 @@ func ConvertRequest(ctx context.Context, request Request) (api.Request, error) {
 	}
 	output.IsEditable = isEditable
 
+	if request.NeededBefore.Valid {
+		n := request.NeededBefore.Time.Format("2006-01-02")
+		output.NeededBefore = nulls.NewString(n)
+	}
+
 	return output, nil
 }
 
@@ -1301,6 +1306,11 @@ func ConvertRequestAbridged(ctx context.Context, request Request) (api.RequestAb
 		return api.RequestAbridged{}, err
 	}
 	output.Photo = photo
+
+	if request.NeededBefore.Valid {
+		n := request.NeededBefore.Time.Format("2006-01-02")
+		output.NeededBefore = nulls.NewString(n)
+	}
 
 	return output, nil
 }
