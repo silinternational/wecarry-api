@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/buffalo/render"
@@ -137,14 +138,23 @@ func convertRequestCreateInput(ctx context.Context, input api.RequestCreateInput
 	tx := models.Tx(ctx)
 
 	request := models.Request{
-		CreatedByID:  models.CurrentUser(ctx).ID,
-		Description:  input.Description,
-		Kilograms:    input.Kilograms,
-		NeededBefore: input.NeededBefore,
-		Size:         models.RequestSize(input.Size),
-		Status:       models.RequestStatusOpen,
-		Title:        input.Title,
-		Visibility:   models.RequestVisibility(input.Visibility),
+		CreatedByID: models.CurrentUser(ctx).ID,
+		Description: input.Description,
+		Kilograms:   input.Kilograms,
+		Size:        models.RequestSize(input.Size),
+		Status:      models.RequestStatusOpen,
+		Title:       input.Title,
+		Visibility:  models.RequestVisibility(input.Visibility),
+	}
+
+	if input.NeededBefore.Valid {
+		n, err := time.Parse(domain.DateFormat, input.NeededBefore.String)
+		if err != nil {
+			err = errors.New("failed to parse NeededBefore, " + err.Error())
+			appErr := api.NewAppError(err, api.ErrorCreateRequestInvalidDate, api.CategoryUser)
+			return request, appErr
+		}
+		request.NeededBefore = nulls.NewTime(n)
 	}
 
 	if input.OrganizationID != uuid.Nil {
@@ -307,7 +317,17 @@ func convertRequestUpdateInput(ctx context.Context, input api.RequestUpdateInput
 
 	request.Kilograms = input.Kilograms
 
-	request.NeededBefore = input.NeededBefore
+	if input.NeededBefore.Valid {
+		n, err := time.Parse(domain.DateFormat, input.NeededBefore.String)
+		if err != nil {
+			err = errors.New("failed to parse NeededBefore, " + err.Error())
+			appErr := api.NewAppError(err, api.ErrorUpdateRequestInvalidDate, api.CategoryUser)
+			return request, appErr
+		}
+		request.NeededBefore = nulls.NewTime(n)
+	} else {
+		request.NeededBefore = nulls.Time{}
+	}
 
 	return request, nil
 }

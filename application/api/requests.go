@@ -69,7 +69,7 @@ type Request struct {
 	UpdatedAt time.Time `json:"updated_at"`
 
 	// Date (yyyy-mm-dd) before which the item will be needed. The record may be hidden or removed after this date
-	NeededBefore nulls.Time `json:"needed_before"`
+	NeededBefore nulls.String `json:"needed_before"`
 
 	// Optional weight of the item, measured in kilograms
 	Kilograms nulls.Float64 `json:"kilograms"`
@@ -126,7 +126,7 @@ type RequestAbridged struct {
 	Size string `json:"size"`
 
 	// Date (yyyy-mm-dd) before which the item will be needed. The record may be hidden or removed after this date
-	NeededBefore nulls.Time `json:"needed_before"`
+	NeededBefore nulls.String `json:"needed_before"`
 
 	// Optional weight of the item, measured in kilograms
 	Kilograms nulls.Float64 `json:"kilograms"`
@@ -152,7 +152,7 @@ type RequestCreateInput struct {
 	Kilograms nulls.Float64 `json:"kilograms"`
 
 	// Date (yyyy-mm-dd) before which the item will be needed. The record may be hidden or removed after this date.
-	NeededBefore nulls.Time `json:"needed_before"`
+	NeededBefore nulls.String `json:"needed_before"`
 
 	// Optional geographic location where the item can be picked up, purchased, or otherwise obtained
 	Origin *Location `json:"origin"`
@@ -188,7 +188,7 @@ type RequestUpdateInput struct {
 
 	// Date (yyyy-mm-dd) before which the item will be needed. The record may be hidden or removed after this date.
 	// If omitted or `null`, the date is removed.
-	NeededBefore nulls.Time `json:"needed_before"`
+	NeededBefore nulls.String `json:"needed_before"`
 
 	// Optional geographic location where the item can be picked up, purchased, or otherwise obtained. If omitted or
 	// `null`, the origin location is removed.

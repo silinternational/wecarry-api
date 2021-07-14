@@ -1134,7 +1134,8 @@ func (as *ActionSuite) verifyApiRequest(ctx context.Context, request models.Requ
 
 	if request.NeededBefore.Valid {
 		as.NotNil(apiRequest.NeededBefore, msg+", NeededBefore is null but should not be")
-		as.True(request.NeededBefore.Time.Equal(apiRequest.NeededBefore.Time), msg+", NeededBefore is not correct")
+		as.Equal(request.NeededBefore.Time.Format(domain.DateFormat),
+			apiRequest.NeededBefore.String, msg+", NeededBefore is not correct")
 	} else {
 		as.False(apiRequest.NeededBefore.Valid, msg+", NeededBefore should be null but is not")
 	}
@@ -1189,7 +1190,7 @@ func (as *ActionSuite) Test_convertCreateRequestInput() {
 		Description:    nulls.NewString("request description"),
 		Destination:    destination,
 		Kilograms:      nulls.NewFloat64(1.0),
-		NeededBefore:   nulls.NewTime(time.Now()),
+		NeededBefore:   nulls.NewString(time.Now().Format(domain.DateFormat)),
 		Origin:         &origin,
 		OrganizationID: userFixtures.Organization.UUID,
 		PhotoID:        nulls.NewUUID(file.UUID),
@@ -1240,7 +1241,8 @@ func (as *ActionSuite) verifyRequestCreateInput(ctx context.Context, input api.R
 
 	if input.NeededBefore.Valid {
 		as.NotNil(request.NeededBefore, "NeededBefore is null but should not be")
-		as.True(input.NeededBefore.Time.Equal(request.NeededBefore.Time), "NeededBefore is not correct")
+		as.Equal(input.NeededBefore.String,
+			request.NeededBefore.Time.Format(domain.DateFormat), "NeededBefore is not correct")
 	} else {
 		as.False(request.NeededBefore.Valid, "NeededBefore should be null but is not")
 	}
@@ -1368,7 +1370,7 @@ func (as *ActionSuite) Test_convertUpdateRequestInput() {
 		Description:  nulls.NewString("request description"),
 		Destination:  &destination,
 		Kilograms:    nulls.NewFloat64(1.0),
-		NeededBefore: nulls.NewTime(time.Now()),
+		NeededBefore: nulls.NewString(time.Now().Format(domain.DateFormat)),
 		Origin:       &origin,
 		PhotoID:      nulls.NewUUID(file.UUID),
 		Size:         &size,
@@ -1427,7 +1429,8 @@ func (as *ActionSuite) verifyRequestUpdateInput(ctx context.Context, input api.R
 
 	if input.NeededBefore.Valid {
 		as.NotNil(newRequest.NeededBefore, "NeededBefore is null but should not be")
-		as.True(input.NeededBefore.Time.Equal(newRequest.NeededBefore.Time), "NeededBefore is not correct")
+		as.Equal(input.NeededBefore.String,
+			newRequest.NeededBefore.Time.Format(domain.DateFormat), "NeededBefore is not correct")
 	} else {
 		as.False(newRequest.NeededBefore.Valid, "NeededBefore should be null but is not")
 	}
