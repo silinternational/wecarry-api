@@ -23,12 +23,12 @@ func (r *threadResolver) Participants(ctx context.Context, obj *models.Thread) (
 		return nil, nil
 	}
 
-	participants, err := obj.GetParticipants(models.Tx(ctx))
+	err := obj.LoadParticipants(models.Tx(ctx))
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetThreadParticipants")
 	}
 
-	return getPublicProfiles(ctx, participants), nil
+	return getPublicProfiles(ctx, obj.Participants), nil
 }
 
 // ID resolves the `ID` property of the thread query. It provides the UUID instead of the autoincrement ID.
@@ -61,12 +61,12 @@ func (r *threadResolver) Messages(ctx context.Context, obj *models.Thread) ([]mo
 		return nil, nil
 	}
 
-	messages, err := obj.Messages(models.Tx(ctx))
+	err := obj.LoadMessages(models.Tx(ctx))
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetThreadMessages")
 	}
 
-	return messages, nil
+	return obj.Messages, nil
 }
 
 // Request retrieves the request to which the queried thread belongs.
@@ -75,12 +75,12 @@ func (r *threadResolver) Request(ctx context.Context, obj *models.Thread) (*mode
 		return &models.Request{}, nil
 	}
 
-	request, err := obj.GetRequest(models.Tx(ctx))
+	err := obj.LoadRequest(models.Tx(ctx))
 	if err != nil {
 		return &models.Request{}, domain.ReportError(ctx, err, "GetThreadRequest")
 	}
 
-	return request, nil
+	return &obj.Request, nil
 }
 
 // UnreadMessageCount retrieves the number of unread messages the current user has on the queried thread.
@@ -103,7 +103,7 @@ func (r *threadResolver) UnreadMessageCount(ctx context.Context, obj *models.Thr
 		return 0, nil
 	}
 
-	count, err2 := obj.UnreadMessageCount(tx, user.ID, *lastViewedAt)
+	count, err2 := obj.GetUnreadMessageCount(tx, user.ID, *lastViewedAt)
 	if err2 != nil {
 		domain.Warn(ctx, err2.Error())
 		return 0, nil

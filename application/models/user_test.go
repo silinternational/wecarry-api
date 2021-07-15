@@ -1287,7 +1287,7 @@ func (ms *ModelSuite) TestUser_RemoveLocation() {
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
 			id := tt.user.LocationID
-			fmt.Print(id)
+
 			err := tt.user.RemoveLocation(ms.DB)
 			ms.NoError(err, "unexpected error from user.RemoveLocation()")
 

@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -17,6 +18,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/pkg/errors"
 
+	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/domain"
 )
 
@@ -198,7 +200,7 @@ func (e RequestStatus) MarshalGQL(w io.Writer) {
 }
 
 type Request struct {
-	ID             int               `json:"id" db:"id"`
+	ID             int               `json:"-" db:"id"`
 	CreatedAt      time.Time         `json:"created_at" db:"created_at"`
 	UpdatedAt      time.Time         `json:"updated_at" db:"updated_at"`
 	CreatedByID    int               `json:"created_by_id" db:"created_by_id"`
@@ -219,18 +221,24 @@ type Request struct {
 	MeetingID      nulls.Int         `json:"meeting_id" db:"meeting_id"`
 	Visibility     RequestVisibility `json:"visibility" db:"visibility"`
 
-	CreatedBy    User         `belongs_to:"users"`
-	Organization Organization `belongs_to:"organizations"`
-	Provider     User         `belongs_to:"users"`
+	CreatedBy    User         `json:"-" belongs_to:"users"`
+	Organization Organization `json:"-" belongs_to:"organizations"`
+	Provider     User         `json:"-" belongs_to:"users"`
 
-	Files       RequestFiles `has_many:"request_files"`
-	PhotoFile   File         `belongs_to:"files" fk_id:"FileID"`
-	Destination Location     `belongs_to:"locations"`
-	Origin      Location     `belongs_to:"locations"`
+	Files       RequestFiles `json:"-" has_many:"request_files"`
+	PhotoFile   File         `json:"-" belongs_to:"files" fk_id:"FileID"`
+	Destination Location     `json:"destination" belongs_to:"locations"`
+	Origin      Location     `json:"-" belongs_to:"locations"`
+	Meeting     Meeting      `json:"-" belongs_to:"meetings"`
 }
 
 // RequestCreatedEventData holds data needed by the New Request event listener
 type RequestCreatedEventData struct {
+	RequestID int
+}
+
+// RequestUpdatedEventData holds data needed by the Updated Request event listener
+type RequestUpdatedEventData struct {
 	RequestID int
 }
 
@@ -293,17 +301,6 @@ func (r *Request) GetPotentialProviders(tx *pop.Connection, currentUser User) (U
 	providers := PotentialProviders{}
 	users, err := providers.FindUsersByRequestID(tx, *r, currentUser)
 	return users, err
-}
-
-// DestroyPotentialProviders destroys all the PotentialProvider records
-// associated with the Request if the Request's status is COMPLETED
-func (r *Request) DestroyPotentialProviders(tx *pop.Connection, status RequestStatus, user User) error {
-	if status != RequestStatusCompleted {
-		return nil
-	}
-
-	pps := PotentialProviders{}
-	return pps.DestroyAllWithRequestUUID(tx, r.UUID.String(), user)
 }
 
 // Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
@@ -498,6 +495,16 @@ func (r *Request) manageStatusTransition(tx *pop.Connection) error {
 		}
 	}
 
+	if r.Status == RequestStatusCompleted {
+		p := PotentialProviders{}
+		if err = tx.Select("id").Where("request_id = ?", r.ID).All(&p); domain.IsOtherThanNoRows(err) {
+			return errors.New("unable to find Request's Potential Providers in order to remove them: " + err.Error())
+		}
+		if err = tx.Destroy(&p); err != nil {
+			return errors.New("unable to destroy Request's Potential Providers: " + err.Error())
+		}
+	}
+
 	return nil
 }
 
@@ -518,6 +525,16 @@ func (r *Request) AfterUpdate(tx *pop.Connection) error {
 		fmt.Sprintf(`UPDATE requests set provider_id = NULL where ID = %v`, r.ID)).Exec(); err != nil {
 		domain.ErrLogger.Printf("error removing provider id from request: %s", err.Error())
 	}
+
+	e := events.Event{
+		Kind:    domain.EventApiRequestUpdated,
+		Message: "Request updated",
+		Payload: events.Payload{"eventData": RequestUpdatedEventData{
+			RequestID: r.ID,
+		}},
+	}
+
+	emitEvent(e)
 
 	return nil
 }
@@ -751,6 +768,20 @@ func (r *Request) GetPhotoID(tx *pop.Connection) (*string, error) {
 	return nil, nil
 }
 
+func (r *Request) IsPublic() bool {
+	return r.Visibility == RequestVisibilityAll
+}
+
+func (r *Request) IsPrivate() bool {
+	return r.Visibility != RequestVisibilityAll
+}
+
+// a "finished" request has been either completed or removed
+func (r *Request) IsFinished() bool {
+	return r.Status.String() == RequestStatusRemoved.String() ||
+		r.Status.String() == RequestStatusCompleted.String()
+}
+
 // scope query to only include requests from an organization associated with the current user
 func scopeUserOrgs(tx *pop.Connection, cUser User) pop.ScopeFunc {
 	return func(q *pop.Query) *pop.Query {
@@ -822,12 +853,53 @@ func (r *Requests) FindByUser(tx *pop.Connection, user User, filter RequestFilte
 		) AND visibility = ?
 	)
 	AND status not in (?, ?)`
-
 	args := []interface{}{
 		user.ID, RequestVisibilityAll, RequestVisibilityTrusted, RequestStatusRemoved,
 		RequestStatusCompleted,
 	}
 
+	return r.findBySelectClause(tx, filter, selectClause, args, fmt.Sprintf("user %s", user.UUID.String()))
+}
+
+// FindByOrganization finds all non-public requests visible to the specified organization
+func (r *Requests) FindByOrganization(tx *pop.Connection, organization Organization, filter RequestFilterParams) error {
+	selectClause := `
+	SELECT * FROM requests WHERE
+	(
+		organization_id = ? AND visibility IN (?, ?)
+		OR
+		organization_id IN (
+			SELECT id FROM organizations WHERE id IN (
+				SELECT secondary_id FROM organization_trusts WHERE primary_id = ?
+			)
+		) AND visibility = ?
+	)
+	AND status not in (?, ?)
+	`
+
+	args := []interface{}{
+		organization.ID, RequestVisibilitySame, RequestVisibilityTrusted, organization.ID,
+		RequestVisibilityTrusted, RequestStatusRemoved, RequestStatusCompleted,
+	}
+
+	return r.findBySelectClause(tx, filter, selectClause, args, fmt.Sprintf("organization %s", organization.UUID.String()))
+}
+
+// FindPublic finds all public requests visible to all WeCarry users
+func (r *Requests) FindPublic(tx *pop.Connection, filter RequestFilterParams) error {
+	selectClause := `
+	SELECT * FROM requests WHERE visibility = ? AND status not in (?, ?)
+	`
+
+	args := []interface{}{
+		RequestVisibilityAll, RequestStatusRemoved, RequestStatusCompleted,
+	}
+
+	return r.findBySelectClause(tx, filter, selectClause, args, "all WeCarry userss")
+}
+
+// findbySelectClause finds all requests visible to entity specified in select clause, optionally filtered by location or search text.
+func (r *Requests) findBySelectClause(tx *pop.Connection, filter RequestFilterParams, selectClause string, args []interface{}, entity string) error {
 	if filter.SearchText != nil {
 		selectClause = selectClause + " AND (LOWER(title) LIKE ? or LOWER(description) LIKE ?)"
 		likeText := "%" + strings.ToLower(*filter.SearchText) + "%"
@@ -841,7 +913,7 @@ func (r *Requests) FindByUser(tx *pop.Connection, user User, filter RequestFilte
 	requests := Requests{}
 	q := tx.RawQuery(selectClause+" ORDER BY created_at desc", args...)
 	if err := q.All(&requests); err != nil {
-		return fmt.Errorf("error finding requests for user %s, %s", user.UUID.String(), err)
+		return fmt.Errorf("error finding requests for %s, %s", entity, err)
 	}
 
 	if filter.Destination != nil {
@@ -922,6 +994,7 @@ func (r *Request) SetOrigin(tx *pop.Connection, location Location) error {
 // IsEditable response with true if the given user is the owner of the request or an admin,
 // and it is not in a locked status.
 func (r *Request) IsEditable(tx *pop.Connection, user User) (bool, error) {
+	// TODO: remove the error return value from this function, it's really annoying
 	if user.ID <= 0 {
 		return false, errors.New("user.ID must be a valid primary key")
 	}
@@ -1006,8 +1079,8 @@ func (r *Request) GetAudience(tx *pop.Connection) (Users, error) {
 	return users, nil
 }
 
-// Meeting reads the meeting record, if it exists, and returns a pointer to the object.
-func (r *Request) Meeting(tx *pop.Connection) (*Meeting, error) {
+// GetMeeting reads the meeting record, if it exists, and returns a pointer to the object.
+func (r *Request) GetMeeting(tx *pop.Connection) (*Meeting, error) {
 	if !r.MeetingID.Valid {
 		return nil, nil
 	}
@@ -1082,4 +1155,229 @@ func (r *Request) GetCurrentActions(tx *pop.Connection, user User) ([]string, er
 func (r *Request) Creator(tx *pop.Connection) (User, error) {
 	var u User
 	return u, tx.Find(&u, r.CreatedByID)
+}
+
+// Load loads the requested fields from the database
+func (r *Request) Load(ctx context.Context, fields ...string) error {
+	return Tx(ctx).Load(r, fields...)
+}
+
+// AddUserAsPotentialProvider  creates a new PotentialProvider object in the database
+//   after first ensuring the user is allowed to view the request and the
+//   request's status is OPEN.
+func (r *Request) AddUserAsPotentialProvider(tx *pop.Connection, requestID string, cUser User) error {
+	if err := r.FindByUUIDForCurrentUser(tx, requestID, cUser); err != nil {
+		appErr := api.NewAppError(err, api.ErrorFindRequestToAddPotentialProvider, api.CategoryInternal)
+		if strings.Contains(err.Error(), "unauthorized") || !domain.IsOtherThanNoRows(err) {
+			appErr.Category = api.CategoryNotFound
+		}
+		return appErr
+	}
+
+	if r.Status != RequestStatusOpen {
+		err := errors.New("Can only create PotentialProvider for a Request that has Status=Open. Got " + r.Status.String())
+		return api.NewAppError(err, api.ErrorAddPotentialProviderRequestBadStatus, api.CategoryUser)
+	}
+
+	var provider PotentialProvider
+	if err := provider.NewWithRequestUUID(tx, requestID, cUser.ID); err != nil {
+		err = errors.New("error preparing potential provider: " + err.Error())
+		return api.NewAppError(err, api.ErrorAddPotentialProviderPreparation, api.CategoryInternal)
+	}
+
+	if err := provider.Create(tx); err != nil {
+		err = errors.New("error creating potential provider: " + err.Error())
+		return api.NewAppError(err, api.ErrorAddPotentialProviderCreate, api.CategoryInternal)
+	}
+
+	return nil
+}
+
+// ConvertRequestsAbridged converts list of model.Request into api.RequestAbridged
+func ConvertRequestsAbridged(ctx context.Context, requests []Request) ([]api.RequestAbridged, error) {
+	output := make([]api.RequestAbridged, len(requests))
+
+	for i, request := range requests {
+		var err error
+		output[i], err = ConvertRequestAbridged(ctx, request)
+		if err != nil {
+			return []api.RequestAbridged{}, err
+		}
+	}
+
+	return output, nil
+}
+
+// ConvertRequest converts model.Request into api.Request
+func ConvertRequest(ctx context.Context, request Request) (api.Request, error) {
+	var output api.Request
+
+	if err := request.Load(ctx); err != nil {
+		return output, err
+	}
+
+	if err := api.ConvertToOtherType(request, &output); err != nil {
+		err = errors.New("error converting request to api.request: " + err.Error())
+		return api.Request{}, err
+	}
+	output.ID = request.UUID
+
+	tx := Tx(ctx)
+	user := CurrentUser(ctx)
+
+	createdBy, err := ConvertUser(ctx, request.CreatedBy)
+	if err != nil {
+		return api.Request{}, err
+	}
+	output.CreatedBy = createdBy
+
+	output.Destination = convertLocation(request.Destination)
+
+	output.Origin = convertRequestOrigin(request)
+
+	provider, err := convertProvider(ctx, request)
+	if err != nil {
+		return api.Request{}, err
+	}
+	output.Provider = provider
+
+	photo, err := loadRequestPhoto(ctx, request)
+	if err != nil {
+		return api.Request{}, err
+	}
+	output.Photo = photo
+
+	potentialProviders, err := loadPotentialProviders(ctx, request, user)
+	if err != nil {
+		return api.Request{}, err
+	}
+	output.PotentialProviders = potentialProviders
+
+	output.Organization = ConvertOrganization(request.Organization)
+
+	output.Meeting = convertRequestMeeting(request)
+
+	isEditable, err := request.IsEditable(tx, user)
+	if err != nil {
+		return api.Request{}, err
+	}
+	output.IsEditable = isEditable
+
+	if request.NeededBefore.Valid {
+		n := request.NeededBefore.Time.Format("2006-01-02")
+		output.NeededBefore = nulls.NewString(n)
+	}
+
+	return output, nil
+}
+
+// ConvertRequestAbridged converts model.Request into api.RequestAbridged
+func ConvertRequestAbridged(ctx context.Context, request Request) (api.RequestAbridged, error) {
+	if err := request.Load(ctx); err != nil {
+		return api.RequestAbridged{}, err
+	}
+
+	var output api.RequestAbridged
+	if err := api.ConvertToOtherType(request, &output); err != nil {
+		err = errors.New("error converting request to api.request: " + err.Error())
+		return api.RequestAbridged{}, err
+	}
+	output.ID = request.UUID
+
+	// Hydrate nested request fields
+	createdBy, err := ConvertUser(ctx, request.CreatedBy)
+	if err != nil {
+		return api.RequestAbridged{}, err
+	}
+	output.CreatedBy = &createdBy
+
+	output.Destination = convertLocation(request.Destination)
+
+	output.Origin = convertRequestOrigin(request)
+
+	provider, err := convertProvider(ctx, request)
+	if err != nil {
+		return api.RequestAbridged{}, err
+	}
+	output.Provider = provider
+
+	photo, err := loadRequestPhoto(ctx, request)
+	if err != nil {
+		return api.RequestAbridged{}, err
+	}
+	output.Photo = photo
+
+	if request.NeededBefore.Valid {
+		n := request.NeededBefore.Time.Format("2006-01-02")
+		output.NeededBefore = nulls.NewString(n)
+	}
+
+	return output, nil
+}
+
+func convertRequestOrigin(request Request) *api.Location {
+	if !request.OriginID.Valid {
+		return nil
+	}
+
+	outputOrigin := convertLocation(request.Origin)
+	return &outputOrigin
+}
+
+func convertProvider(ctx context.Context, request Request) (*api.User, error) {
+	if !request.ProviderID.Valid {
+		return nil, nil
+	}
+
+	outputProvider, err := ConvertUser(ctx, request.Provider)
+	if err != nil {
+		return nil, err
+	}
+
+	return &outputProvider, nil
+}
+
+func loadPotentialProviders(ctx context.Context, request Request, user User) (api.Users, error) {
+	tx := Tx(ctx)
+
+	potentialProviders, err := request.GetPotentialProviders(tx, user)
+	if err != nil {
+		err = errors.New("error converting request potential providers: " + err.Error())
+		return nil, err
+	}
+
+	outputProviders, err := ConvertUsers(ctx, potentialProviders)
+	if err != nil {
+		return nil, err
+	}
+
+	return outputProviders, nil
+}
+
+func loadRequestPhoto(ctx context.Context, request Request) (*api.File, error) {
+	photo, err := request.GetPhoto(Tx(ctx))
+	if err != nil {
+		err = errors.New("error converting request photo: " + err.Error())
+		return nil, err
+	}
+
+	if photo == nil {
+		return nil, nil
+	}
+
+	var outputPhoto api.File
+	if err := api.ConvertToOtherType(photo, &outputPhoto); err != nil {
+		err = errors.New("error converting photo to api.File: " + err.Error())
+		return nil, err
+	}
+	outputPhoto.ID = photo.UUID
+	return &outputPhoto, nil
+}
+
+func convertRequestMeeting(request Request) *api.Meeting {
+	if !request.MeetingID.Valid {
+		return nil
+	}
+	meeting := convertMeetingAbridged(request.Meeting)
+	return &meeting
 }

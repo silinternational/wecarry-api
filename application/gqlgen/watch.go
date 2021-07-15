@@ -59,12 +59,12 @@ func (r *watchResolver) Meeting(ctx context.Context, obj *models.Watch) (*models
 		return nil, nil
 	}
 
-	meeting, err := obj.Meeting(models.Tx(ctx), models.CurrentUser(ctx))
+	err := obj.LoadMeeting(models.Tx(ctx), models.CurrentUser(ctx))
 	if err != nil {
 		return nil, domain.ReportError(ctx, err, "GetWatchMeeting")
 	}
 
-	return meeting, nil
+	return obj.Meeting, nil
 }
 
 // Origin is a field resolver
@@ -165,7 +165,7 @@ func (r *mutationResolver) CreateWatch(ctx context.Context, input watchInput) (*
 	if input.Destination != nil {
 		location := convertLocation(*input.Destination)
 		if err = location.Create(tx); err != nil {
-			return &models.Watch{}, domain.ReportError(ctx, err, "CreateWatch.SetLocation")
+			return &models.Watch{}, domain.ReportError(ctx, err, "CreateWatch.SetDestination")
 		}
 		watch.DestinationID = nulls.NewInt(location.ID)
 	}

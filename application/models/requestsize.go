@@ -1,5 +1,7 @@
 package models
 
+import "github.com/silinternational/wecarry-api/api"
+
 type RequestSize string
 
 const (
@@ -25,4 +27,15 @@ func (r RequestSize) isLargerOrSame(other RequestSize) bool {
 	}
 
 	return sizes[r] <= sizes[other]
+}
+
+func GetRequestSizeFromAPISize(apiSize api.RequestSize) RequestSize {
+	sizeMap := map[api.RequestSize]RequestSize{
+		api.RequestSizeTiny:   RequestSizeTiny,
+		api.RequestSizeSmall:  RequestSizeSmall,
+		api.RequestSizeMedium: RequestSizeMedium,
+		api.RequestSizeLarge:  RequestSizeLarge,
+		api.RequestSizeXlarge: RequestSizeXlarge,
+	}
+	return sizeMap[apiSize]
 }

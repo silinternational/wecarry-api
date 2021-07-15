@@ -10,6 +10,8 @@ import (
 	"github.com/gobuffalo/pop/v5"
 	"github.com/gobuffalo/validate/v3"
 	"github.com/gobuffalo/validate/v3/validators"
+
+	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/domain"
 )
 
@@ -17,6 +19,10 @@ type Location struct {
 	ID          int           `json:"id" db:"id"`
 	Description string        `json:"description" db:"description"`
 	Country     string        `json:"country" db:"country"`
+	State       string        `json:"state" db:"state"`     // Google Place's administrative area level 1
+	County      string        `json:"county" db:"county"`   // Google Place's administrative area level 2
+	City        string        `json:"city" db:"city"`       // Google Place's locality
+	Borough     string        `json:"borough" db:"borough"` // Google Place's sub-locality
 	Latitude    nulls.Float64 `json:"latitude" db:"latitude"`
 	Longitude   nulls.Float64 `json:"longitude" db:"longitude"`
 }
@@ -240,4 +246,30 @@ ORDER BY kcu.table_schema,
 		return true, nil
 	}
 	return false, nil
+}
+
+func convertLocation(location Location) api.Location {
+	return api.Location{
+		Description: location.Description,
+		Country:     location.Country,
+		State:       location.State,
+		County:      location.County,
+		City:        location.City,
+		Borough:     location.Borough,
+		Latitude:    location.Latitude,
+		Longitude:   location.Longitude,
+	}
+}
+
+func ConvertLocationInput(input api.Location) Location {
+	return Location{
+		Description: input.Description,
+		Country:     input.Country,
+		State:       input.State,
+		County:      input.County,
+		City:        input.City,
+		Borough:     input.Borough,
+		Latitude:    input.Latitude,
+		Longitude:   input.Longitude,
+	}
 }

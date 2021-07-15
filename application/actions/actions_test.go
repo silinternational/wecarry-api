@@ -1,7 +1,11 @@
 package actions
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/gobuffalo/buffalo"
@@ -93,5 +97,23 @@ func createFixture(as *ActionSuite, f interface{}) {
 	if err != nil {
 		as.T().Errorf("error creating %T fixture, %s", f, err)
 		as.T().FailNow()
+	}
+}
+
+// Avoid issues with int(-0.xyz) losing its negative sign
+func convertFloat64ToIntString(input float64) string {
+	if -1.0 < input && input < 0.0 {
+		return fmt.Sprintf("-%v", int(input))
+	}
+	return fmt.Sprintf("%v", int(input))
+}
+
+func (as *ActionSuite) verifyResponseData(wantData []string, body string, msg string) {
+	var b bytes.Buffer
+	as.NoError(json.Indent(&b, []byte(body), "", "    "))
+	for _, w := range wantData {
+		if !strings.Contains(body, w) {
+			as.Fail(fmt.Sprintf("%s response data is not correct\nwanted: %s\nin body:\n%s\n", msg, w, b.String()))
+		}
 	}
 }

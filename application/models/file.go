@@ -18,6 +18,7 @@ import (
 	"github.com/gobuffalo/validate/v3"
 	"github.com/gobuffalo/validate/v3/validators"
 	"github.com/gofrs/uuid"
+	"github.com/silinternational/wecarry-api/api"
 	_ "golang.org/x/image/webp" // enable decoding of WEBP images
 
 	"github.com/silinternational/wecarry-api/aws"
@@ -26,7 +27,7 @@ import (
 
 type FileUploadError struct {
 	HttpStatus int
-	ErrorCode  string
+	ErrorCode  api.ErrorKey
 	Message    string
 }
 
@@ -35,7 +36,7 @@ func (f *FileUploadError) Error() string {
 }
 
 type File struct {
-	ID            int       `json:"id" db:"id"`
+	ID            int       `json:"-" db:"id"`
 	UUID          uuid.UUID `json:"uuid" db:"uuid"`
 	URL           string    `json:"url" db:"url"`
 	URLExpiration time.Time `json:"url_expiration" db:"url_expiration"`
@@ -85,7 +86,7 @@ func (f *File) Store(tx *pop.Connection) *FileUploadError {
 	if len(f.Content) > domain.MaxFileSize {
 		e := FileUploadError{
 			HttpStatus: http.StatusBadRequest,
-			ErrorCode:  domain.ErrorStoreFileTooLarge,
+			ErrorCode:  api.ErrorStoreFileTooLarge,
 			Message:    fmt.Sprintf("file too large (%d bytes), max is %d bytes", len(f.Content), domain.MaxFileSize),
 		}
 		return &e
@@ -95,7 +96,7 @@ func (f *File) Store(tx *pop.Connection) *FileUploadError {
 	if err != nil {
 		e := FileUploadError{
 			HttpStatus: http.StatusBadRequest,
-			ErrorCode:  domain.ErrorStoreFileBadContentType,
+			ErrorCode:  api.ErrorStoreFileBadContentType,
 			Message:    err.Error(),
 		}
 		return &e
@@ -111,7 +112,7 @@ func (f *File) Store(tx *pop.Connection) *FileUploadError {
 	if err != nil {
 		e := FileUploadError{
 			HttpStatus: http.StatusInternalServerError,
-			ErrorCode:  domain.ErrorUnableToStoreFile,
+			ErrorCode:  api.ErrorUnableToStoreFile,
 			Message:    err.Error(),
 		}
 		return &e
@@ -123,7 +124,7 @@ func (f *File) Store(tx *pop.Connection) *FileUploadError {
 	if err := f.Create(tx); err != nil {
 		e := FileUploadError{
 			HttpStatus: http.StatusInternalServerError,
-			ErrorCode:  domain.ErrorUnableToStoreFile,
+			ErrorCode:  api.ErrorUnableToStoreFile,
 			Message:    err.Error(),
 		}
 		return &e
@@ -285,4 +286,16 @@ func (f *File) ClearLinked(tx *pop.Connection) error {
 // FindByIDs finds all Files associated with the given IDs and loads them from the database
 func (f *Files) FindByIDs(tx *pop.Connection, ids []int) error {
 	return tx.Where("id in (?)", ids).All(f)
+}
+
+// convertFile converts a models.File to an api.File
+func convertFile(file File) api.File {
+	return api.File{
+		ID:            file.UUID,
+		URL:           file.URL,
+		URLExpiration: file.URLExpiration,
+		Name:          file.Name,
+		Size:          file.Size,
+		ContentType:   file.ContentType,
+	}
 }

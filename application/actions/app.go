@@ -1,5 +1,33 @@
 package actions
 
+// WeCarry API
+//
+// Terms Of Service:
+//
+// there are no TOS at this moment, use at your own risk we take no responsibility
+//
+//     Schemes: https
+//     Host: localhost
+//     BasePath: /
+//     Version: 0.0.1
+//     License: MIT http://opensource.org/licenses/MIT
+//
+//     Consumes:
+//     - application/json
+//
+//     Produces:
+//     - application/json
+//
+//     Security:
+//     - oauth2:
+//
+//     SecurityDefinitions:
+//     bearerAuth:
+//         type: http
+//         scheme: bearer
+//
+// swagger:meta
+
 import (
 	"github.com/gobuffalo/buffalo"
 	i18n "github.com/gobuffalo/mw-i18n"
@@ -42,6 +70,13 @@ func App() *buffalo.App {
 			SessionStore: sessions.NewCookieStore([]byte(domain.Env.SessionSecret)),
 		})
 
+		var err error
+		domain.T, err = i18n.New(packr.New("locales", "../locales"), "en")
+		if err != nil {
+			_ = app.Stop(err)
+		}
+		app.Use(domain.T.Middleware())
+
 		registerCustomErrorHandler(app)
 
 		// Initialize and attach "rollbar" to context
@@ -54,17 +89,36 @@ func App() *buffalo.App {
 		app.Use(setCurrentUser)
 		app.Middleware.Skip(setCurrentUser, statusHandler, serviceHandler)
 
-		var err error
-		domain.T, err = i18n.New(packr.New("locales", "../locales"), "en")
-		if err != nil {
-			_ = app.Stop(err)
-		}
-		app.Use(domain.T.Middleware())
-
 		app.GET("/site/status", statusHandler)
 		app.Middleware.Skip(buffalo.RequestLogger, statusHandler)
 
 		app.POST("/gql/", gqlHandler)
+
+		eventsGroup := app.Group("/events")
+		eventsGroup.GET("/", meetingsList)
+		eventsGroup.POST("/", meetingsJoin)
+
+		app.POST("/messages/", messagesCreate)
+
+		threadsGroup := app.Group("/threads")
+		threadsGroup.GET("/", threadsMine)
+		threadsGroup.PUT("/{thread_id}/read", threadsMarkAsRead)
+
+		requestsGroup := app.Group("/requests")
+		requestsGroup.GET("/", requestsList)
+		requestsGroup.POST("/", requestsCreate)
+		requestsGroup.GET("/{request_id}", requestsGet)
+		requestsGroup.PUT("/{request_id}", requestsUpdate)
+		requestsGroup.PUT("/{request_id}/status", requestsUpdateStatus)
+
+		requestsGroup.POST("/{request_id}/potentialprovider", requestsAddMeAsPotentialProvider)
+		requestsGroup.DELETE("/{request_id}/potentialprovider/{user_id}", requestsRejectPotentialProvider)
+		requestsGroup.DELETE("/{request_id}/potentialprovider", requestsRemoveMeAsPotentialProvider)
+
+		watchesGroup := app.Group("/watches")
+		watchesGroup.GET("/", watchesMine)
+		watchesGroup.POST("/", watchesCreate)
+		watchesGroup.DELETE("/{watch_id}", watchesRemove)
 
 		app.POST("/upload/", uploadHandler)
 
@@ -83,6 +137,10 @@ func App() *buffalo.App {
 		auth.POST("/callback", authCallback) // for SAML
 
 		auth.GET("/logout", authDestroy)
+
+		users := app.Group("/users")
+		users.GET("/me", usersMe)
+		users.PUT("/me", usersMeUpdate)
 
 		listeners.RegisterListeners()
 	}

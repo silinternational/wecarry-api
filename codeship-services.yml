@@ -7,6 +7,7 @@ app:
   depends_on:
     - testdb
     - minio
+    - redis
   environment:
     ADDR: 0.0.0.0
     HOST: http://wecarry.local:3000
@@ -71,3 +72,6 @@ minio:
   environment:
     MINIO_ACCESS_KEY: abc123
     MINIO_SECRET_KEY: abcd1234
+
+redis:
+  image: redis:6.2

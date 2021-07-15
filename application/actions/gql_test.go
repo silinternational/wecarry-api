@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/gobuffalo/httptest"
+	"github.com/silinternational/wecarry-api/api"
 
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
@@ -96,14 +97,14 @@ func makeCall(as *ActionSuite, httpMethod, route, accessToken string, body io.Re
 	return responseBody
 }
 
-func gqlMeetingResp(as *ActionSuite, accessToken string, httpMethod string) domain.AppError {
+func gqlMeetingResp(as *ActionSuite, accessToken string, httpMethod string) api.AppError {
 	query := `{ meetings {id name}}`
 
 	body := strings.NewReader(fmt.Sprintf(`{"query":"%s"}`, jsonEscapeString(query)))
 
 	responseBody := makeCall(as, httpMethod, "/gql", accessToken, body)
 
-	var gqlResponse domain.AppError
+	var gqlResponse api.AppError
 	err := json.Unmarshal(responseBody, &gqlResponse)
 	as.NoError(err, "unmarshalling gql error response")
 	return gqlResponse
@@ -119,24 +120,24 @@ func (as *ActionSuite) Test_GqlBadQueries() {
 		name        string
 		httpMethod  string
 		accessToken string
-		want        domain.AppError
+		want        api.AppError
 	}{
 		{
 			name:        "bad because of GET",
 			httpMethod:  "GET",
 			accessToken: user.Nickname,
-			want: domain.AppError{
+			want: api.AppError{
 				Code: http.StatusMethodNotAllowed,
-				Key:  domain.ErrorMethodNotAllowed,
+				Key:  api.ErrorMethodNotAllowed,
 			},
 		},
 		{
 			name:        "bad because of no auth",
 			httpMethod:  "POST",
 			accessToken: "Bad one",
-			want: domain.AppError{
+			want: api.AppError{
 				Code: http.StatusUnauthorized,
-				Key:  domain.ErrorNotAuthenticated,
+				Key:  api.ErrorNotAuthenticated,
 			},
 		},
 	}
@@ -159,13 +160,13 @@ func (as *ActionSuite) Test_BadRoute() {
 	body := strings.NewReader("anything=goes")
 	responseBody := makeCall(as, httpMethod, "/wonderland", accessToken, body)
 
-	var gqlResponse domain.AppError
+	var gqlResponse api.AppError
 	err := json.Unmarshal(responseBody, &gqlResponse)
 	as.NoError(err, "unmarshalling gql error response")
 
-	want := domain.AppError{
+	want := api.AppError{
 		Code: http.StatusNotFound,
-		Key:  domain.ErrorRouteNotFound,
+		Key:  api.ErrorRouteNotFound,
 	}
 
 	as.Equal(want, gqlResponse, "incorrect app error")

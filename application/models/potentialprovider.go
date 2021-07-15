@@ -211,22 +211,3 @@ func (p *PotentialProvider) NewWithRequestUUID(tx *pop.Connection, requestUUID s
 func (p *PotentialProvider) Destroy(tx *pop.Connection) error {
 	return tx.Destroy(p)
 }
-
-// DestroyAllWithRequestUUID Destroys all the PotentialProviders associated with a Request depending
-//  on whether the current user is a SuperAdmin or the Request's creator.
-func (p *PotentialProviders) DestroyAllWithRequestUUID(tx *pop.Connection, requestUUID string, currentUser User) error {
-	var request Request
-	if err := request.FindByUUID(tx, requestUUID); err != nil {
-		return errors.New("unable to find Request in order to remove PotentialProviders: " + err.Error())
-	}
-
-	if currentUser.AdminRole != UserAdminRoleSuperAdmin && currentUser.ID != request.CreatedByID {
-		return fmt.Errorf("user %v has insufficient permissions to destroy PotentialProviders for Request %v",
-			currentUser.ID, request.ID)
-	}
-
-	if err := tx.Where("request_id = ?", request.ID).All(p); err != nil {
-		return errors.New("unable to find Request's Potential Providers in order to remove them: " + err.Error())
-	}
-	return tx.Destroy(p)
-}

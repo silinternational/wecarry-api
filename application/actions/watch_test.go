@@ -8,6 +8,7 @@ import (
 	"github.com/gobuffalo/nulls"
 	"github.com/gofrs/uuid"
 
+	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/internal/test"
 	"github.com/silinternational/wecarry-api/models"
@@ -50,17 +51,17 @@ type location struct {
 	Longitude   float64 `json:"longitude"`
 }
 
-type watchInput struct {
+type watchGQLInput struct {
 	id          *string
 	name        string
-	destination locationInput
-	origin      locationInput
+	destination locationGQLInput
+	origin      locationGQLInput
 	meetingID   string
 	searchText  string
-	size        models.RequestSize
+	size        api.RequestSize
 }
 
-type locationInput struct {
+type locationGQLInput struct {
 	description string
 	country     string
 	latitude    float64
@@ -78,7 +79,7 @@ const allWatchFields = `
     size
 	`
 
-func createFixturesForWatches(as *ActionSuite) watchQueryFixtures {
+func createFixturesForGQLWatches(as *ActionSuite) watchQueryFixtures {
 	// make 2 users, 1 that has Watches, and another that will try to mess with those Watches
 	uf := test.CreateUserFixtures(as.DB, 2)
 	locations := test.CreateLocationFixtures(as.DB, 3)
@@ -112,8 +113,8 @@ func createFixturesForWatches(as *ActionSuite) watchQueryFixtures {
 	}
 }
 
-func (as *ActionSuite) Test_MyWatches() {
-	f := createFixturesForWatches(as)
+func (as *ActionSuite) Test_GQLMyWatches() {
+	f := createFixturesForGQLWatches(as)
 	watches := f.Watches
 
 	query := "{ watches: myWatches { " + allWatchFields + "}}"
@@ -134,12 +135,12 @@ func (as *ActionSuite) Test_MyWatches() {
 }
 
 func (as *ActionSuite) Test_CreateWatch() {
-	f := createFixturesForWatches(as)
+	f := createFixturesForGQLWatches(as)
 	user := f.Users[0]
 
 	type testCase struct {
 		name        string
-		watch       watchInput
+		watch       watchGQLInput
 		testUser    models.User
 		expectError bool
 	}
@@ -149,9 +150,9 @@ func (as *ActionSuite) Test_CreateWatch() {
 	testCases := []testCase{
 		{
 			name: "all fields",
-			watch: watchInput{
+			watch: watchGQLInput{
 				name: "foo",
-				destination: locationInput{
+				destination: locationGQLInput{
 					description: "watch destination",
 					country:     "dc",
 					latitude:    1.1,
@@ -159,7 +160,7 @@ func (as *ActionSuite) Test_CreateWatch() {
 				},
 				meetingID:  f.Meetings[0].UUID.String(),
 				searchText: "search",
-				size:       models.RequestSizeXlarge,
+				size:       api.RequestSizeXlarge,
 			},
 			testUser: f.Users[0],
 		},
@@ -195,12 +196,12 @@ func (as *ActionSuite) Test_CreateWatch() {
 }
 
 func (as *ActionSuite) Test_UpdateWatch() {
-	f := createFixturesForWatches(as)
+	f := createFixturesForGQLWatches(as)
 	user := f.Users[0]
 
 	type testCase struct {
 		name        string
-		watch       watchInput
+		watch       watchGQLInput
 		testUser    models.User
 		expectError string
 	}
@@ -212,10 +213,10 @@ func (as *ActionSuite) Test_UpdateWatch() {
 	testCases := []testCase{
 		{
 			name: "all fields",
-			watch: watchInput{
+			watch: watchGQLInput{
 				id:   &watchUUID,
 				name: "foo",
-				destination: locationInput{
+				destination: locationGQLInput{
 					description: "new location",
 					country:     "dc",
 					latitude:    1.1,
@@ -223,13 +224,13 @@ func (as *ActionSuite) Test_UpdateWatch() {
 				},
 				meetingID:  f.Meetings[0].UUID.String(),
 				searchText: "search",
-				size:       models.RequestSizeXlarge,
+				size:       api.RequestSizeXlarge,
 			},
 			testUser: f.Users[0],
 		},
 		{
 			name: "unauthorized",
-			watch: watchInput{
+			watch: watchGQLInput{
 				id:         &watchUUID,
 				name:       "foo",
 				searchText: "search",
@@ -269,14 +270,14 @@ func (as *ActionSuite) Test_UpdateWatch() {
 	}
 }
 
-func (as *ActionSuite) watchInputString(watch watchInput) string {
+func (as *ActionSuite) watchInputString(watch watchGQLInput) string {
 	input := ""
 	if watch.id != nil {
 		input = `id: "` + *watch.id + `"`
 	}
 
 	if watch.size == "" {
-		watch.size = models.RequestSizeXlarge
+		watch.size = api.RequestSizeXlarge
 	}
 
 	input = fmt.Sprintf(`%s name: "%s" destination: {description:"%s" country:"%s" latitude:%f longitude:%f}
@@ -288,7 +289,7 @@ func (as *ActionSuite) watchInputString(watch watchInput) string {
 }
 
 func (as *ActionSuite) Test_RemoveWatch() {
-	f := createFixturesForWatches(as)
+	f := createFixturesForGQLWatches(as)
 
 	var resp watchesResponse
 

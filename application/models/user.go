@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
@@ -14,6 +15,7 @@ import (
 	"github.com/gobuffalo/validate/v3/validators"
 	"github.com/gofrs/uuid"
 	"github.com/pkg/errors"
+	"github.com/silinternational/wecarry-api/api"
 
 	"github.com/silinternational/wecarry-api/auth"
 	"github.com/silinternational/wecarry-api/domain"
@@ -48,7 +50,7 @@ func (e UserAdminRole) String() string {
 
 // User model
 type User struct {
-	ID                 int               `json:"id" db:"id"`
+	ID                 int               `json:"-" db:"id"`
 	CreatedAt          time.Time         `json:"created_at" db:"created_at"`
 	UpdatedAt          time.Time         `json:"updated_at" db:"updated_at"`
 	Email              string            `json:"email" db:"email"`
@@ -512,7 +514,21 @@ func (u *User) GetPhotoURL(tx *pop.Connection) (*string, error) {
 // Save wraps tx.Save() call to check for errors and operate on attached object
 func (u *User) Save(tx *pop.Connection) error {
 	u.Nickname = domain.RemoveUnwantedChars(u.Nickname, "-_ .,'&@")
-	return save(tx, u)
+	if err := save(tx, u); err != nil {
+		appError := api.AppError{Err: err}
+		if strings.Contains(err.Error(), "Nickname must have a visible character") {
+			appError.Key = api.ErrorUserInvisibleNickname
+			appError.Category = api.CategoryUser
+		} else if strings.Contains(err.Error(), `duplicate key value violates unique constraint "users_nickname_idx"`) {
+			appError.Key = api.ErrorUserDuplicateNickname
+			appError.Category = api.CategoryUser
+		} else {
+			appError.Key = api.ErrorUserUpdate
+			appError.Category = api.CategoryInternal
+		}
+		return &appError
+	}
+	return nil
 }
 
 func (u *User) uniquifyNickname(tx *pop.Connection, prefixes [30]string) error {
@@ -606,7 +622,7 @@ func (u *User) UnreadMessageCount(tx *pop.Connection) ([]UnreadThread, error) {
 	unreads := []UnreadThread{}
 
 	for _, tp := range threadPs {
-		msgCount, err := tp.Thread.UnreadMessageCount(tx, u.ID, tp.LastViewedAt)
+		msgCount, err := tp.Thread.GetUnreadMessageCount(tx, u.ID, tp.LastViewedAt)
 		if err != nil {
 			domain.ErrLogger.Printf("error getting count of unread messages for thread %s ... %v",
 				tp.Thread.UUID, err)
@@ -630,6 +646,27 @@ func (u *User) GetThreads(tx *pop.Connection) (Threads, error) {
 		Order("updated_at desc")
 	if err := query.All(&t); err != nil {
 		return nil, err
+	}
+
+	return t, nil
+}
+
+// GetThreadsForConversations finds all threads that the user is participating in.
+func (u *User) GetThreadsForConversations(tx *pop.Connection) (Threads, error) {
+	var t Threads
+	query := tx.Q().
+		LeftJoin("thread_participants tp", "threads.id = tp.thread_id").
+		Where("tp.user_id = ?", u.ID).
+		Order("updated_at desc")
+	if err := query.All(&t); err != nil {
+		return nil, err
+	}
+
+	for i := range t {
+		err := t[i].LoadForAPI(tx, *u)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return t, nil
@@ -814,4 +851,70 @@ func (u *User) RemovePreferences(tx *pop.Connection) error {
 	}
 	var p UserPreference
 	return p.removeAll(tx, u.ID)
+}
+
+func ConvertUserPrivate(ctx context.Context, user User) (api.UserPrivate, error) {
+	tx := Tx(ctx)
+
+	output := api.UserPrivate{}
+	if err := api.ConvertToOtherType(user, &output); err != nil {
+		return api.UserPrivate{}, err
+	}
+	output.ID = user.UUID
+
+	photoURL, err := user.GetPhotoURL(tx)
+	if err != nil {
+		return api.UserPrivate{}, err
+	}
+
+	if photoURL != nil {
+		output.AvatarURL = nulls.NewString(*photoURL)
+	}
+
+	if user.FileID.Valid {
+		// depends on the earlier call to GetPhotoURL to hydrate PhotoFile
+		output.PhotoID = nulls.NewUUID(user.PhotoFile.UUID)
+	}
+
+	organizations, err := user.GetOrganizations(tx)
+	if err != nil {
+		return api.UserPrivate{}, err
+	}
+	output.Organizations = ConvertOrganizations(organizations)
+	return output, nil
+}
+
+// ConvertUsers converts list of models.User to list of api.User
+func ConvertUsers(ctx context.Context, users Users) (api.Users, error) {
+	output := make(api.Users, len(users))
+	for i := range output {
+		var err error
+		output[i], err = ConvertUser(ctx, users[i])
+		if err != nil {
+			return output, err
+		}
+	}
+	return output, nil
+}
+
+// ConvertUsers converts models.User to api.User
+func ConvertUser(ctx context.Context, user User) (api.User, error) {
+	tx := Tx(ctx)
+
+	output := api.User{}
+	if err := api.ConvertToOtherType(user, &output); err != nil {
+		return api.User{}, err
+	}
+	output.ID = user.UUID
+
+	photoURL, err := user.GetPhotoURL(tx)
+	if err != nil {
+		return api.User{}, err
+	}
+
+	if photoURL != nil {
+		output.AvatarURL = nulls.NewString(*photoURL)
+	}
+
+	return output, nil
 }

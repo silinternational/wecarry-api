@@ -23,6 +23,7 @@ import (
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/envy"
 	mwi18n "github.com/gobuffalo/mw-i18n"
+	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/packr/v2"
 	"github.com/gobuffalo/validate/v3"
 	"github.com/gobuffalo/validate/v3/validators"
@@ -52,6 +53,7 @@ const (
 	EventApiMessageCreated                 = "api:message:created"
 	EventApiRequestStatusUpdated           = "api:request:status:updated"
 	EventApiRequestCreated                 = "api:request:status:created"
+	EventApiRequestUpdated                 = "api:request:updated"
 	EventApiPotentialProviderCreated       = "api:potentialprovider:created"
 	EventApiPotentialProviderRejected      = "api:potentialprovider:rejected"
 	EventApiPotentialProviderSelfDestroyed = "api:potentialprovider:selfdestroyed"
@@ -126,8 +128,13 @@ const (
 )
 
 var (
-	Logger          log.Logger
-	ErrLogger       ErrLogProxy
+	// Logger is a plain instance of log.Logger, normally set to stdout
+	Logger log.Logger
+
+	// ErrLogger is an instance of ErrLogProxy, and is the only error logging
+	// mechanism that can be used without access to the Buffalo context.
+	ErrLogger ErrLogProxy
+
 	AuthCallbackURL string
 )
 
@@ -176,6 +183,8 @@ var Env struct {
 	MicrosoftSecret            string
 	MobileService              string
 	PlaygroundPort             string
+	RedisInstanceName          string
+	RedisInstanceHostPort      string
 	RollbarServerRoot          string
 	RollbarToken               string
 	SendGridAPIKey             string
@@ -240,6 +249,8 @@ func readEnv() {
 	Env.MicrosoftSecret = envy.Get("MICROSOFT_SECRET", "")
 	Env.MobileService = envy.Get("MOBILE_SERVICE", "dummy")
 	Env.PlaygroundPort = envy.Get("PORT", "3000")
+	Env.RedisInstanceName = envy.Get("REDIS_INSTANCE_NAME", "redis")
+	Env.RedisInstanceHostPort = envy.Get("REDIS_INSTANCE_HOST_PORT", "redis:6379")
 	Env.RollbarServerRoot = envy.Get("ROLLBAR_SERVER_ROOT", "github.com/silinternational/wecarry-api")
 	Env.RollbarToken = envy.Get("ROLLBAR_TOKEN", "")
 	Env.SendGridAPIKey = envy.Get("SENDGRID_API_KEY", "")
@@ -262,17 +273,10 @@ func envToInt(name string, def int) int {
 	return n
 }
 
-type AppError struct {
-	Code int `json:"code"`
-
-	// Don't change the value of these Key entries without making a corresponding change on the UI,
-	// since these will be converted to human-friendly texts on the UI
-	Key string `json:"key"`
-
-	DebugMsg string `json:"debug_msg,omitempty"`
-}
-
-// ErrLogProxy wraps standard error logger plus sends to Rollbar
+// ErrLogProxy is a "tee" that sends to Rollbar and to the local logger,
+// normally set to stderr. Rollbar is disabled if `GoEnv` is "test", and
+// is a client instantiation separate from the one used in the Rollbar
+// middleware.
 type ErrLogProxy struct {
 	LocalLog  log.Logger
 	RemoteLog *rollbar.Client
@@ -440,46 +444,80 @@ func RollbarMiddleware(next buffalo.Handler) buffalo.Handler {
 	}
 }
 
-// Error log error and send to Rollbar
+// Error sends a message to Rollbar and to the local logger, including
+// any extras found in the context.
 func Error(ctx context.Context, msg string) {
-	bc, ok := ctx.Value(BuffaloContext).(buffalo.Context)
-	if ok {
-		Error(bc, msg)
-	}
-
-	// Doesn't have a BuffaloContext value, so it must be the actual BuffaloContext
-	bc = ctx.(buffalo.Context)
-
-	// Avoid panics running tests when bc doesn't have the necessary nested methods
-	logger := bc.Logger()
-	if logger == nil {
-		return
-	}
+	bc := getBuffaloContext(ctx)
 
 	extras := getExtras(bc)
-	if extras == nil {
-		extras = map[string]interface{}{}
-	}
-
 	extrasLock.RLock()
 	defer extrasLock.RUnlock()
 
 	rollbarMessage(bc, rollbar.ERR, msg, extras)
 
-	extras["message"] = msg
+	logger := bc.Logger()
+	if logger != nil {
+		logger.Error(encodeLogMsg(msg, extras))
+	}
+}
 
+// Warn sends a message to Rollbar and to the local logger, including
+// any extras found in the context.
+func Warn(ctx context.Context, msg string) {
+	bc := getBuffaloContext(ctx)
+
+	extras := getExtras(bc)
+	extrasLock.RLock()
+	defer extrasLock.RUnlock()
+
+	rollbarMessage(bc, rollbar.WARN, msg, extras)
+
+	logger := bc.Logger()
+	if logger != nil {
+		logger.Warn(encodeLogMsg(msg, extras))
+	}
+}
+
+// Info sends a message to the local logger, including any extras found in the context.
+func Info(ctx context.Context, msg string) {
+	bc := getBuffaloContext(ctx)
+
+	extras := getExtras(bc)
+	extrasLock.RLock()
+	defer extrasLock.RUnlock()
+
+	logger := bc.Logger()
+	if logger != nil {
+		logger.Info(encodeLogMsg(msg, extras))
+	}
+}
+
+func getBuffaloContext(ctx context.Context) buffalo.Context {
+	bc, ok := ctx.Value(BuffaloContext).(buffalo.Context)
+	if ok {
+		return bc
+	}
+
+	// Doesn't have a BuffaloContext value, so it must be the actual BuffaloContext
+	return ctx.(buffalo.Context)
+}
+
+func encodeLogMsg(msg string, extras map[string]interface{}) string {
 	encoder := jsonMin
 	if Env.GoEnv == "development" {
 		encoder = jsonIndented
 	}
 
+	if extras == nil {
+		extras = map[string]interface{}{}
+	}
+	extras["message"] = msg
+
 	j, err := encoder(&extras)
 	if err != nil {
-		logger.Error("failed to json encode error message: %s", err)
-		return
+		return "failed to json encode error message: " + err.Error()
 	}
-
-	logger.Error(string(j))
+	return string(j)
 }
 
 func jsonMin(i interface{}) ([]byte, error) {
@@ -488,33 +526,6 @@ func jsonMin(i interface{}) ([]byte, error) {
 
 func jsonIndented(i interface{}) ([]byte, error) {
 	return json.MarshalIndent(i, "", "  ")
-}
-
-// Warn - log warning and send to Rollbar
-func Warn(ctx context.Context, msg string) {
-	bc, ok := ctx.Value(BuffaloContext).(buffalo.Context)
-	if ok {
-		Error(bc, msg)
-	}
-
-	// Doesn't have a BuffaloContext value, so it must be the actual BuffaloContext
-	bc = ctx.(buffalo.Context)
-
-	extras := getExtras(bc)
-	extrasLock.RLock()
-	defer extrasLock.RUnlock()
-
-	bc.Logger().Warn(msg, extras)
-	rollbarMessage(bc, rollbar.WARN, msg, extras)
-}
-
-// Info - log info message
-func Info(c buffalo.Context, msg string) {
-	extras := getExtras(c)
-	extrasLock.RLock()
-	defer extrasLock.RUnlock()
-
-	c.Logger().Info(msg, extras)
 }
 
 // rollbarMessage is a wrapper function to call rollbar's client.MessageWithExtras function from client stored in context
@@ -720,7 +731,7 @@ func (v *StringIsVisible) IsValid(errors *validate.Errors) {
 // ReportError logs an error with details, and returns a user-friendly, translated error identified by translation key
 // string `errID`. If called with a full GraphQL context, the query text will be logged in the extras.
 func ReportError(ctx context.Context, err error, errID string) error {
-	c := GetBuffaloContext(ctx)
+	c := getBuffaloContext(ctx)
 
 	NewExtra(c, "function", GetFunctionName(2))
 
@@ -739,24 +750,6 @@ func ReportError(ctx context.Context, err error, errID string) error {
 		return errors.New(errID)
 	}
 	return errors.New(T.Translate(c, errID))
-}
-
-// GetBuffaloContext retrieves a "BuffaloContext" from a wrapped context as constructed by
-// actions.gqlHandler. If it's already a buffalo.Context, it is returned as is, type casted to buffalo.Context.
-func GetBuffaloContext(c context.Context) buffalo.Context {
-	bc, ok := c.Value(BuffaloContext).(buffalo.Context)
-	if ok {
-		return bc
-	}
-	bc, ok = c.(buffalo.Context)
-	if ok {
-		return bc
-	}
-	return emptyContext{}
-}
-
-type emptyContext struct {
-	buffalo.Context
 }
 
 // GetFunctionName provides the filename, line number, and function name of the caller, skipping the top `skip`
@@ -784,7 +777,7 @@ func UniquifyIntSlice(intSlice []int) []int {
 }
 
 func NewExtra(ctx context.Context, key string, e interface{}) {
-	c := GetBuffaloContext(ctx)
+	c := getBuffaloContext(ctx)
 	extras := getExtras(c)
 
 	extrasLock.Lock()
@@ -801,4 +794,12 @@ func getExtras(c buffalo.Context) map[string]interface{} {
 	}
 
 	return extras
+}
+
+func SetOptionalFloatField(input *float64, output *nulls.Float64) {
+	if input != nil {
+		*output = nulls.NewFloat64(*input)
+		return
+	}
+	*output = nulls.Float64{}
 }

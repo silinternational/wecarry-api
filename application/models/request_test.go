@@ -1,7 +1,6 @@
 package models
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 	"time"
@@ -1234,7 +1233,7 @@ func (ms *ModelSuite) TestRequest_GetPotentialProviderActions() {
 func (ms *ModelSuite) TestRequest_GetCurrentActions() {
 	f := createUserFixtures(ms.DB, 3)
 	users := f.Users
-	requests := createRequestFixtures(ms.DB, 2, false)
+	requests := createRequestFixtures(ms.DB, 2, false, users[0].ID)
 	_ = createPotentialProviderFixtures(ms.DB, 0, 2)
 
 	acceptedRequest := requests[0]
@@ -1699,39 +1698,70 @@ func (ms *ModelSuite) TestRequests_FindByUser() {
 	}
 }
 
-func (ms *ModelSuite) TestRequests_GetPotentialProviders() {
+// This also happens to test GetPotentialProviders to verify the results
+func (ms *ModelSuite) TestRequests_AddUserAsPotentialProvider() {
 	t := ms.T()
 
-	f := createPotentialProvidersFixtures(ms)
+	f := CreateFixtures_Request_AddUserAsPotentialProvider(ms)
+	requester := f.Users[0]
 	users := f.Users
-	requests := f.Requests
-	pps := f.PotentialProviders
+
+	threeProviders := f.Requests[0]
+	twoProviders := f.Requests[1]
+	noProviders := f.Requests[2]
+	notOpen := f.Requests[3]
 
 	tests := []struct {
-		name      string
-		request   Request
-		user      User
-		wantPPIDs []int
+		name            string
+		request         Request
+		user            User
+		wantErrContains string
+		wantPPIDs       []int
 	}{
 		{
-			name: "pps for first request by requester", request: requests[0], user: users[0],
-			wantPPIDs: []int{pps[0].UserID, pps[1].UserID, pps[2].UserID},
+			name:            "Requester Can't Become PProvider",
+			request:         noProviders,
+			user:            requester,
+			wantErrContains: "the PotentialProvider User must not be the Request's Receiver",
 		},
 		{
-			name: "pps for first request by one of the potential providers", request: requests[0], user: users[1],
-			wantPPIDs: []int{pps[0].UserID},
+			name:            "Other Org User Can't Become PProvider",
+			request:         noProviders,
+			user:            users[4],
+			wantErrContains: "may not view request",
 		},
 		{
-			name: "pps for second request by a non potential provider", request: requests[1], user: users[1],
-			wantPPIDs: []int{},
+			name:            "Already a PProvider",
+			request:         threeProviders,
+			user:            users[1],
+			wantErrContains: "unique_together: Duplicate potential provider exists",
 		},
-		{name: "no pps for third request", request: requests[2], wantPPIDs: []int{}},
+		{
+			name:            "Request is not Open",
+			request:         notOpen,
+			user:            users[1],
+			wantErrContains: "Can only create PotentialProvider for a Request that has Status=Open. Got ACCEPTED",
+		},
+		{
+			name:      "New User Can Become PProvider",
+			request:   twoProviders,
+			user:      users[1],
+			wantPPIDs: []int{users[1].ID},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			request := tt.request
-			pps, err := request.GetPotentialProviders(ms.DB, tt.user)
+			request := Request{}
+			err := request.AddUserAsPotentialProvider(ms.DB, tt.request.UUID.String(), tt.user)
+			if tt.wantErrContains != "" {
+				ms.Error(err)
+				ms.Contains(err.Error(), tt.wantErrContains)
+				return
+			}
 			ms.NoError(err, "unexpected error")
+
+			pps, err := request.GetPotentialProviders(ms.DB, tt.user)
+			ms.NoError(err)
 
 			ids := make([]int, len(pps))
 			for i, pp := range pps {
@@ -2038,7 +2068,7 @@ func (ms *ModelSuite) TestRequest_Meeting() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := test.request.Meeting(ms.DB)
+			got, err := test.request.GetMeeting(ms.DB)
 			ms.NoError(err)
 			if test.want == nil {
 				ms.Nil(got)
@@ -2049,11 +2079,17 @@ func (ms *ModelSuite) TestRequest_Meeting() {
 	}
 }
 
+// TestRequest_DestroyPotentialProviders ensures potential providers are removed in the Request.AfterUpdate callback
 func (ms *ModelSuite) TestRequest_DestroyPotentialProviders() {
 	f := createPotentialProvidersFixtures(ms)
 	requests := f.Requests
 	users := f.Users
 	pps := f.PotentialProviders
+
+	// need to bump it to ACCEPTED so the change to COMPLETED won't be blocked
+	requests[0].Status = RequestStatusAccepted
+	ms.NoError(ms.DB.Save(&requests[0]))
+
 	t := ms.T()
 	tests := []struct {
 		name        string
@@ -2077,18 +2113,11 @@ func (ms *ModelSuite) TestRequest_DestroyPotentialProviders() {
 			status:      RequestStatusCompleted,
 			wantIDs:     []int{pps[3].ID, pps[4].ID},
 		},
-		{
-			name:        "bad: current user is potential provider but not Request Creator",
-			currentUser: users[2],
-			request:     requests[0],
-			status:      RequestStatusCompleted,
-			wantErr: fmt.Sprintf(`user %v has insufficient permissions to destroy PotentialProviders for Request %v`,
-				users[2].ID, requests[0].ID),
-		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := test.request.DestroyPotentialProviders(ms.DB, test.status, test.currentUser)
+			test.request.Status = test.status
+			err := test.request.Update(ms.DB)
 
 			if test.wantErr != "" {
 				ms.Error(err, "did not get error as expected")

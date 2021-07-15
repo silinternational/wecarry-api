@@ -32,6 +32,11 @@ type UpdateRequestStatusFixtures struct {
 	models.Users
 }
 
+type RequestsListFixtures struct {
+	models.Requests
+	models.Users
+}
+
 func createFixturesForRequestQuery(as *ActionSuite) RequestQueryFixtures {
 	t := as.T()
 
@@ -39,15 +44,20 @@ func createFixturesForRequestQuery(as *ActionSuite) RequestQueryFixtures {
 	org := userFixtures.Organization
 	users := userFixtures.Users
 
-	requests := test.CreateRequestFixtures(as.DB, 3, true)
+	org2 := models.Organization{Name: "org2", AuthType: AuthTypeGoogle, AuthConfig: "{}"}
+	as.NoError(org2.Save(as.DB))
+
+	requests := test.CreateRequestFixtures(as.DB, 4, true, users[0].ID)
 	requests[0].Status = models.RequestStatusAccepted
 	requests[0].ProviderID = nulls.NewInt(users[1].ID)
-	as.NoError(as.DB.Save(&requests[0]))
 
 	requests[2].Status = models.RequestStatusCompleted
 	requests[2].CompletedOn = nulls.NewTime(time.Now())
 	requests[2].ProviderID = nulls.NewInt(users[1].ID)
-	as.NoError(as.DB.Save(&requests[2]))
+
+	requests[3].OrganizationID = org2.ID
+
+	as.NoError(as.DB.Save(&requests))
 
 	threads := []models.Thread{
 		{UUID: domain.GetUUID(), RequestID: requests[0].ID},
@@ -80,6 +90,29 @@ func createFixturesForRequestQuery(as *ActionSuite) RequestQueryFixtures {
 		Users:        users,
 		Requests:     requests,
 		Threads:      threads,
+	}
+}
+
+func createFixturesForRequestsList(as *ActionSuite) RequestsListFixtures {
+	usersFixtures := test.CreateUserFixtures(as.DB, 3)
+	requests := test.CreateRequestFixtures(as.DB, 5, false, usersFixtures.Users[0].ID)
+
+	requests[0].Status = models.RequestStatusAccepted
+	requests[0].ProviderID = nulls.NewInt(usersFixtures.Users[1].ID)
+	as.NoError(as.DB.Save(&requests[0]))
+
+	requests[1].Status = models.RequestStatusCompleted
+	requests[1].CompletedOn = nulls.NewTime(time.Now())
+	requests[1].ProviderID = nulls.NewInt(usersFixtures.Users[2].ID)
+	as.NoError(as.DB.Save(&requests[1]))
+
+	photo := test.CreateFileFixture(as.DB)
+	requests[0].FileID = nulls.NewInt(photo.ID)
+	as.NoError(as.DB.Save(&requests[0]))
+
+	return RequestsListFixtures{
+		Users:    usersFixtures.Users,
+		Requests: requests,
 	}
 }
 
@@ -160,7 +193,7 @@ func createFixturesForUpdateRequestStatus(as *ActionSuite) UpdateRequestStatusFi
 	userFixtures := test.CreateUserFixtures(as.DB, 2)
 	users := userFixtures.Users
 
-	requests := test.CreateRequestFixtures(as.DB, 1, false)
+	requests := test.CreateRequestFixtures(as.DB, 1, false, users[0].ID)
 
 	return UpdateRequestStatusFixtures{
 		Requests: requests,
@@ -174,10 +207,12 @@ func createFixturesForMarkRequestAsDelivered(as *ActionSuite) UpdateRequestStatu
 
 	requests := test.CreateRequestFixtures(as.DB, 2, false)
 	requests[0].Status = models.RequestStatusAccepted
+	requests[0].CreatedByID = users[0].ID
 	requests[0].ProviderID = nulls.NewInt(users[1].ID)
 
 	requests[1].Status = models.RequestStatusCompleted
-	requests[1].ProviderID = nulls.NewInt(users[1].ID)
+	requests[1].CreatedByID = users[1].ID
+	requests[1].ProviderID = nulls.NewInt(users[0].ID)
 
 	as.NoError(as.DB.Update(&requests))
 

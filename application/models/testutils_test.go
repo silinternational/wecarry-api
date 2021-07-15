@@ -116,16 +116,23 @@ func createUserFixtures(tx *pop.Connection, n int) UserFixtures {
 // createRequestFixtures generates any number of request records for testing. Related Location and File records are also
 // created. All request fixtures will be assigned to the first Organization in the DB. If no Organization exists,
 // one will be created. All requests are created by the first User in the DB. If no User exists, one will be created.
-func createRequestFixtures(tx *pop.Connection, nRequests int, createFiles bool) Requests {
+func createRequestFixtures(tx *pop.Connection, nRequests int, createFiles bool, userIDs ...int) Requests {
 	var org Organization
 	if err := tx.First(&org); err != nil {
 		org = Organization{AuthConfig: "{}"}
 		mustCreate(tx, &org)
 	}
 
+	// TODO Consider if there is a better way to do this
 	var user User
-	if err := tx.First(&user); err != nil {
-		user = createUserFixtures(tx, 1).Users[0]
+	if len(userIDs) == 0 {
+		if err := tx.First(&user); err != nil {
+			user = createUserFixtures(tx, 1).Users[0]
+		}
+	} else {
+		if err := tx.Find(&user, userIDs[0]); err != nil {
+			panic("error finding user by id for request fixtures: " + err.Error())
+		}
 	}
 
 	locations := createLocationFixtures(tx, nRequests*2)
@@ -206,10 +213,17 @@ func createPotentialProviderFixtures(tx *pop.Connection, nRequests, nProviders i
 // createLocationFixtures generates any number of location records for testing.
 func createLocationFixtures(tx *pop.Connection, n int) Locations {
 	countries := []string{"US", "CA", "MX", "TH", "FR", "PG"}
+	states := []string{"FL", "ON", "", "", "", ""}
+	cities := []string{"Miami", "Toronto", "Mexico City", "Chiang Mai", "Paris", "Port Moresby"}
 	locations := make(Locations, n)
+
+	/* #nosec */
 	for i := range locations {
+		randInt := rand.Intn(6)
 		locations[i] = Location{
-			Country:     countries[rand.Intn(6)],
+			Country:     countries[randInt],
+			State:       states[randInt],
+			City:        cities[randInt],
 			Description: "Random Location " + strconv.Itoa(rand.Int()),
 			Latitude:    nulls.NewFloat64(rand.Float64()*180 - 90),
 			Longitude:   nulls.NewFloat64(rand.Float64()*360 - 180),

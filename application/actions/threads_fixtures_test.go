@@ -1,6 +1,8 @@
 package actions
 
 import (
+	"time"
+
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/internal/test"
 	"github.com/silinternational/wecarry-api/models"
@@ -52,6 +54,10 @@ func createFixturesForThreadQuery(as *ActionSuite) threadQueryFixtures {
 		messages[i].UUID = domain.GetUUID()
 		createFixture(as, &messages[i])
 	}
+
+	// Make sure the unread Message count is doing something
+	yesterday := time.Now().Add(-time.Hour * 48)
+	threadParticipants[0].UpdateLastViewedAt(as.DB, yesterday)
 
 	return threadQueryFixtures{
 		Organization: org,

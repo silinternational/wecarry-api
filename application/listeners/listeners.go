@@ -1,10 +1,12 @@
 package listeners
 
 import (
+	"context"
 	"errors"
 
 	"github.com/gobuffalo/events"
 
+	"github.com/silinternational/wecarry-api/cache"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/job"
 	"github.com/silinternational/wecarry-api/marketing"
@@ -56,6 +58,17 @@ var apiListeners = map[string][]apiListener{
 		{
 			name:     "request-created-notification",
 			listener: sendRequestCreatedNotifications,
+		},
+		{
+			name:     "request-created-cache",
+			listener: cacheRequestCreatedListener,
+		},
+	},
+
+	domain.EventApiRequestUpdated: {
+		{
+			name:     "request-updated-cache",
+			listener: cacheRequestUpdatedListener,
 		},
 	},
 
@@ -215,6 +228,46 @@ func sendRequestCreatedNotifications(e events.Event) {
 	}
 
 	sendNewRequestNotifications(request, users)
+}
+
+func cacheRequestCreatedListener(e events.Event) {
+	if e.Kind != domain.EventApiRequestCreated {
+		return
+	}
+
+	eventData, ok := e.Payload["eventData"].(models.RequestCreatedEventData)
+	if !ok {
+		domain.ErrLogger.Printf("Request Created event payload incorrect type: %T", e.Payload["eventData"])
+		return
+	}
+
+	var request models.Request
+	if err := request.FindByID(models.DB, eventData.RequestID); err != nil {
+		domain.ErrLogger.Printf("unable to find request %d from request-created event, %s", eventData.RequestID, err)
+	}
+
+	ctx := context.Background()
+	cache.CacheRebuildOnNewRequest(ctx, request)
+}
+
+func cacheRequestUpdatedListener(e events.Event) {
+	if e.Kind != domain.EventApiRequestUpdated {
+		return
+	}
+
+	eventData, ok := e.Payload["eventData"].(models.RequestUpdatedEventData)
+	if !ok {
+		domain.ErrLogger.Printf("Request Updated event payload incorrect type: %T", e.Payload["eventData"])
+		return
+	}
+
+	var request models.Request
+	if err := request.FindByID(models.DB, eventData.RequestID); err != nil {
+		domain.ErrLogger.Printf("unable to find request %d from request-created event, %s", eventData.RequestID, err)
+	}
+
+	ctx := context.Background()
+	cache.CacheRebuildOnChangedRequest(ctx, request)
 }
 
 func potentialProviderCreated(e events.Event) {

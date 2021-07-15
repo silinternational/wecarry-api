@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -10,17 +11,23 @@ import (
 	"github.com/gobuffalo/validate/v3/validators"
 	"github.com/gofrs/uuid"
 	"github.com/pkg/errors"
+
+	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/domain"
 )
 
 type Thread struct {
-	ID           int       `json:"id" db:"id"`
+	ID           int       `json:"-" db:"id"`
 	CreatedAt    time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at" db:"updated_at"`
 	UUID         uuid.UUID `json:"uuid" db:"uuid"`
 	RequestID    int       `json:"request_id" db:"request_id"`
 	Request      Request   `belongs_to:"requests"`
-	Participants Users     `many_to_many:"thread_participants"`
+	Participants Users     `many_to_many:"thread_participants" order_by:"id asc"`
+	Messages     Messages  `json:"messages" db:"-"`
+
+	LastViewedAt       *time.Time `json:"last_viewed_at" db:"-"`
+	UnreadMessageCount int        `json:"unread_message_count" db:"-"`
 }
 
 // String can be helpful for serializing the model
@@ -70,45 +77,60 @@ func (t *Thread) FindByUUID(tx *pop.Connection, uuid string) error {
 	return nil
 }
 
-func (t *Thread) GetRequest(tx *pop.Connection) (*Request, error) {
+func (t *Thread) LoadRequest(tx *pop.Connection, eagerFields ...string) error {
 	if t.RequestID <= 0 {
 		if err := t.FindByUUID(tx, t.UUID.String()); err != nil {
-			return nil, err
+			return err
 		}
 	}
 	request := Request{}
-	if err := tx.Find(&request, t.RequestID); err != nil {
-		return nil, fmt.Errorf("error loading request %v %s", t.RequestID, err)
-	}
-	return &request, nil
-}
+	// If no eagerFields, then don't use Eager at all, otherwise it uses Eager on all of them
 
-func (t *Thread) Messages(tx *pop.Connection) ([]Message, error) {
-	var messages []Message
-	if err := tx.Where("thread_id = ?", t.ID).All(&messages); err != nil {
-		return messages, fmt.Errorf("error getting messages for thread id %v ... %v", t.ID, err)
-	}
-
-	return messages, nil
-}
-
-func (t *Thread) GetParticipants(tx *pop.Connection) ([]User, error) {
-	var users []User
-	var threadParticipants []*ThreadParticipant
-
-	if err := tx.Where("thread_id = ?", t.ID).Order("id asc").All(&threadParticipants); err != nil {
-		return users, fmt.Errorf("error reading from thread_participants table %v ... %v", t.ID, err)
-	}
-
-	for _, tp := range threadParticipants {
-		u := User{}
-
-		if err := tx.Find(&u, tp.UserID); err != nil {
-			return users, fmt.Errorf("error finding users on thread %v ... %v", t.ID, err)
+	if len(eagerFields) > 0 {
+		if err := tx.EagerPreload(eagerFields...).Find(&request, t.RequestID); err != nil {
+			return fmt.Errorf("error loading (preloading) request %v %s", t.RequestID, err)
 		}
-		users = append(users, u)
+	} else {
+		if err := tx.Find(&request, t.RequestID); err != nil {
+			return fmt.Errorf("error loading request %v %s", t.RequestID, err)
+		}
 	}
-	return users, nil
+	t.Request = request
+	return nil
+}
+
+func (t *Thread) LoadMessages(tx *pop.Connection, eagerFields ...string) error {
+	var messages []Message
+	// If no eagerFields, then don't use Eager at all, otherwise it uses Eager on all of them
+
+	var q *pop.Query
+	if len(eagerFields) > 0 {
+		q = tx.EagerPreload(eagerFields...).Where("thread_id = ?", t.ID)
+	} else {
+		q = tx.Where("thread_id = ?", t.ID)
+	}
+	if err := q.All(&messages); err != nil {
+		return fmt.Errorf("error getting messages for thread id %v ... %v", t.ID, err)
+	}
+
+	t.Messages = messages
+	return nil
+}
+
+func (t *Thread) LoadParticipants(tx *pop.Connection) error {
+	if err := tx.Load(t, "Participants"); err != nil {
+		return fmt.Errorf("error loading threads participants %v ... %v", t.ID, err)
+	}
+
+	return nil
+}
+
+func (t *Thread) LoadThreadParticipants(tx *pop.Connection) error {
+	if err := tx.Load(t, "ThreadParticipants"); err != nil {
+		return fmt.Errorf("error loading threads thread_participants %v ... %v", t.ID, err)
+	}
+
+	return nil
 }
 
 func (t *Thread) CreateWithParticipants(tx *pop.Connection, request Request, user User) error {
@@ -130,13 +152,13 @@ func (t *Thread) CreateWithParticipants(tx *pop.Connection, request Request, use
 }
 
 func (t *Thread) ensureParticipants(tx *pop.Connection, request Request, userID int) error {
-	threadParticipants, err := t.GetParticipants(tx)
+	err := t.LoadParticipants(tx)
 	if domain.IsOtherThanNoRows(err) {
 		err = errors.New("error getting threadParticipants for thread: " + err.Error())
 		return err
 	}
 
-	if err := t.createParticipantIfNeeded(tx, threadParticipants, request.CreatedByID); err != nil {
+	if err := t.createParticipantIfNeeded(tx, t.Participants, request.CreatedByID); err != nil {
 		return err
 	}
 
@@ -144,7 +166,7 @@ func (t *Thread) ensureParticipants(tx *pop.Connection, request Request, userID 
 		return nil
 	}
 
-	return t.createParticipantIfNeeded(tx, threadParticipants, userID)
+	return t.createParticipantIfNeeded(tx, t.Participants, userID)
 }
 
 func (t *Thread) createParticipantIfNeeded(tx *pop.Connection, tpUsers Users, userID int) error {
@@ -169,6 +191,7 @@ func (t *Thread) GetLastViewedAt(tx *pop.Connection, user User) (*time.Time, err
 	if err := tp.FindByThreadIDAndUserID(tx, t.ID, user.ID); err != nil {
 		return nil, err
 	}
+
 	lastViewedAt := tp.LastViewedAt
 	return &lastViewedAt, nil
 }
@@ -184,6 +207,39 @@ func (t *Thread) UpdateLastViewedAt(tx *pop.Connection, userID int, time time.Ti
 	return tp.UpdateLastViewedAt(tx, time)
 }
 
+func (t *Thread) LoadForAPI(tx *pop.Connection, user User) error {
+	err := t.LoadMessages(tx, "SentBy")
+	if err != nil {
+		return errors.New("error loading thread messages: " + err.Error())
+	}
+
+	err = t.LoadParticipants(tx)
+	if err != nil {
+		return errors.New("error loading participants: " + err.Error())
+	}
+
+	err = t.LoadRequest(tx, "CreatedBy")
+	if err != nil {
+		return errors.New("error loading thread request: " + err.Error())
+	}
+
+	lastViewed, err := t.GetLastViewedAt(tx, user)
+	if err != nil {
+		return errors.New("error getting thread lastViewedAt: " + err.Error())
+	}
+
+	t.LastViewedAt = lastViewed
+
+	count, err := t.GetUnreadMessageCount(tx, user.ID, *lastViewed)
+	if err != nil {
+		return errors.New("error getting thread unreadMessageCount: " + err.Error())
+	}
+
+	t.UnreadMessageCount = count
+
+	return nil
+}
+
 // Load reads the selected fields from the database
 func (t *Thread) Load(tx *pop.Connection, fields ...string) error {
 	if err := tx.Load(t, fields...); err != nil {
@@ -193,20 +249,22 @@ func (t *Thread) Load(tx *pop.Connection, fields ...string) error {
 	return nil
 }
 
-// UnreadMessageCount returns the number of messages on this thread that the current
+// GetUnreadMessageCount returns the number of messages on this thread that the current
 //  user has not created and for which the CreatedAt value is after the lastViewedAt value
-func (t *Thread) UnreadMessageCount(tx *pop.Connection, userID int, lastViewedAt time.Time) (int, error) {
+func (t *Thread) GetUnreadMessageCount(tx *pop.Connection, userID int, lastViewedAt time.Time) (int, error) {
 	count := 0
 	if userID <= 0 {
-		return count, fmt.Errorf("error in UnreadMessageCount, invalid id %v", userID)
+		return count, fmt.Errorf("error in GetUnreadMessageCount, invalid id %v", userID)
 	}
 
-	msgs, err := t.Messages(tx)
-	if err != nil {
-		return count, err
+	if len(t.Messages) == 0 {
+		err := t.LoadMessages(tx)
+		if err != nil {
+			return count, err
+		}
 	}
 
-	for _, m := range msgs {
+	for _, m := range t.Messages {
 		if m.SentByID != userID && m.CreatedAt.After(lastViewedAt) {
 			count++
 		}
@@ -230,12 +288,82 @@ func (t *Thread) IsVisible(tx *pop.Connection, userID int) bool {
 	if userID < 1 {
 		return false
 	}
-	if users, err := t.GetParticipants(tx); err == nil {
-		for _, user := range users {
+	if err := t.LoadParticipants(tx); err == nil {
+		for _, user := range t.Participants {
 			if user.ID == userID {
 				return true
 			}
 		}
 	}
 	return false
+}
+
+// converts models.Threads to api.Threads
+func ConvertThreadsToAPIType(ctx context.Context, threads Threads) (api.Threads, error) {
+	var output api.Threads
+	if err := api.ConvertToOtherType(threads, &output); err != nil {
+		err = errors.New("error converting threads to api.threads: " + err.Error())
+		return nil, err
+	}
+
+	// Hydrate the thread's messages, participants
+	for i := range output {
+		messagesOutput, err := ConvertMessagesToAPIType(ctx, threads[i].Messages)
+		if err != nil {
+			return nil, err
+		}
+		output[i].Messages = &messagesOutput
+
+		// Not converting Participants, since that happens automatically  above and
+		// because it doesn't have nested related objects
+		for j := range output[i].Participants {
+			output[i].Participants[j].ID = threads[i].Participants[j].UUID
+		}
+
+		requestOutput, err := ConvertRequest(ctx, threads[i].Request)
+		if err != nil {
+			return nil, err
+		}
+
+		output[i].Request = &requestOutput
+		output[i].ID = threads[i].UUID
+	}
+
+	return output, nil
+}
+
+func ConvertThread(ctx context.Context, thread Thread) (api.Thread, error) {
+	var output api.Thread
+	if err := api.ConvertToOtherType(thread, &output); err != nil {
+		err = errors.New("error converting thread to api.thread: " + err.Error())
+		return api.Thread{}, err
+	}
+
+	// Hydrate the thread's messages, participants
+
+	messagesOutput, err := ConvertMessagesToAPIType(ctx, thread.Messages)
+	if err != nil {
+		return api.Thread{}, err
+	}
+	output.Messages = &messagesOutput
+
+	// Not converting Participants, since that happens automatically  above and
+	// because it doesn't have nested related objects
+	for i := range output.Participants {
+		output.Participants[i].ID = thread.Participants[i].UUID
+	}
+
+	if thread.Request.ID > 0 {
+		requestOutput, err := ConvertRequest(ctx, thread.Request)
+		if err != nil {
+			return api.Thread{}, err
+		}
+
+		output.Request = &requestOutput
+	} else {
+		output.Request = nil
+	}
+
+	output.ID = thread.UUID
+	return output, nil
 }
