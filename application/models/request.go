@@ -1311,6 +1311,8 @@ func ConvertRequestAbridged(ctx context.Context, request Request) (api.RequestAb
 	}
 	output.Photo = photo
 
+	output.Meeting = convertRequestMeeting(request)
+
 	if request.NeededBefore.Valid {
 		n := request.NeededBefore.Time.Format("2006-01-02")
 		output.NeededBefore = nulls.NewString(n)

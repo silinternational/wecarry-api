@@ -136,6 +136,9 @@ type RequestAbridged struct {
 
 	// Photo of the item
 	Photo *File `json:"photo"`
+
+	// Meeting associated with this request. Affects visibility of the request.
+	Meeting *Meeting `json:"meeting"`
 }
 
 // RequestCreateInput includes the fields for creating Requests

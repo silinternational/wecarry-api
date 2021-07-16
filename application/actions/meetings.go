@@ -2,8 +2,9 @@ package actions
 
 import (
 	"errors"
-	"github.com/silinternational/wecarry-api/domain"
 	"time"
+
+	"github.com/silinternational/wecarry-api/domain"
 
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/buffalo/render"
@@ -37,7 +38,7 @@ func meetingsList(c buffalo.Context) error {
 	return c.Render(200, render.JSON(output))
 }
 
-// swagger:operation POST /events Events JoinEvent
+// swagger:operation POST /events/join Events JoinEvent
 //
 // User joins an event/meeting, which saves a new Meeting Participant object
 //
