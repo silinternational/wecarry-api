@@ -300,7 +300,7 @@ var _ = grift.Namespace("db", func() {
 			fixtureRequests[i].Status = models.RequestStatusOpen
 			fixtureRequests[i].CreatedByID = fixtureUsers[i].ID
 			fixtureRequests[i].NeededBefore = nulls.NewTime(futureDate)
-			err := models.DB.Create(fixtureRequests[i])
+			err := fixtureRequests[i].Create(models.DB)
 			if err != nil {
 				err = fmt.Errorf("error loading request fixture ... %+v\n %v", request, err.Error())
 				return err
