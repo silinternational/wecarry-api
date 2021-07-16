@@ -57,22 +57,6 @@ func createFixturesForWatches(as *ActionSuite) watchFixtures {
 	}
 }
 
-type locationInput struct {
-	Description string
-	Country     string
-	Latitude    float64
-	Longitude   float64
-}
-
-type watchInput struct {
-	Name        string
-	Destination *locationInput
-	Origin      *locationInput
-	MeetingID   string
-	SearchText  string
-	Size        api.RequestSize
-}
-
 func (as *ActionSuite) Test_WatchesCreate() {
 	f := createFixturesForWatches(as)
 	owner := f.Users[0]
@@ -80,18 +64,19 @@ func (as *ActionSuite) Test_WatchesCreate() {
 
 	type testCase struct {
 		name         string
-		watch        watchInput
+		watch        api.WatchInput
 		user         models.User
 		wantStatus   int
 		wantContains string
 	}
 
+	xlarge := api.RequestSizeXlarge
 	testCases := []testCase{
 		{
 			name: "bad meeting id",
-			watch: watchInput{
+			watch: api.WatchInput{
 				Name:      "Bad Meeting",
-				MeetingID: domain.GetUUID().String(),
+				MeetingID: nulls.NewUUID(domain.GetUUID()),
 			},
 			user:         notOwner,
 			wantStatus:   http.StatusBadRequest,
@@ -99,7 +84,7 @@ func (as *ActionSuite) Test_WatchesCreate() {
 		},
 		{
 			name: "just give the name field",
-			watch: watchInput{
+			watch: api.WatchInput{
 				Name: "Empty Fields",
 			},
 			user:         owner,
@@ -108,32 +93,32 @@ func (as *ActionSuite) Test_WatchesCreate() {
 		},
 		{
 			name: "just give the search text field",
-			watch: watchInput{
+			watch: api.WatchInput{
 				Name:       "Just Search Text",
-				SearchText: "OneField",
+				SearchText: nulls.NewString("OneField"),
 			},
 			user:       owner,
 			wantStatus: http.StatusOK,
 		},
 		{
 			name: "give all fields",
-			watch: watchInput{
+			watch: api.WatchInput{
 				Name: "AllFields",
-				Destination: &locationInput{
+				Destination: &api.Location{
 					Description: "good watch destination",
 					Country:     "dc",
-					Latitude:    1.1,
-					Longitude:   2.2,
+					Latitude:    nulls.NewFloat64(1.1),
+					Longitude:   nulls.NewFloat64(2.2),
 				},
-				Origin: &locationInput{
+				Origin: &api.Location{
 					Description: "good watch origin",
 					Country:     "cd",
-					Latitude:    11.1,
-					Longitude:   22.2,
+					Latitude:    nulls.NewFloat64(11.1),
+					Longitude:   nulls.NewFloat64(22.2),
 				},
-				MeetingID:  f.Meetings[0].UUID.String(),
-				SearchText: "AllFields",
-				Size:       api.RequestSizeXlarge,
+				MeetingID:  nulls.NewUUID(f.Meetings[0].UUID),
+				SearchText: nulls.NewString("AllFields"),
+				Size:       &xlarge,
 			},
 			user:       owner,
 			wantStatus: http.StatusOK,
@@ -181,21 +166,25 @@ func (as *ActionSuite) Test_WatchesCreate() {
 			if tc.watch.Destination != nil {
 				as.Equal(tc.watch.Destination.Country, dbWatch.Destination.Country, "incorrect Watch Destination Country")
 				as.Equal(tc.watch.Destination.Description, dbWatch.Destination.Description, "incorrect Watch Destination")
-				as.Equal(tc.watch.Destination.Latitude, dbWatch.Destination.Latitude.Float64, "incorrect Watch Destination Latitude")
-				as.Equal(tc.watch.Destination.Longitude, dbWatch.Destination.Longitude.Float64, "incorrect Watch Destination Longitude")
+				as.Equal(tc.watch.Destination.Latitude, dbWatch.Destination.Latitude, "incorrect Watch Destination Latitude")
+				as.Equal(tc.watch.Destination.Longitude, dbWatch.Destination.Longitude, "incorrect Watch Destination Longitude")
 			}
 			if tc.watch.Origin != nil {
 				as.Equal(tc.watch.Origin.Description, dbWatch.Origin.Description, "incorrect Watch Origin")
 			}
 
-			if tc.watch.MeetingID == "" {
-				as.False(dbWatch.MeetingID.Valid, "expected a null Watch MeetingID")
+			if tc.watch.MeetingID.Valid {
+				as.Equal(tc.watch.MeetingID.UUID, dbWatch.Meeting.UUID, "incorrect Watch Meeting")
 			} else {
-				as.Equal(tc.watch.MeetingID, dbWatch.Meeting.UUID.String(), "incorrect Watch Meeting")
+				as.False(dbWatch.MeetingID.Valid, "expected a null Watch MeetingID")
 			}
 
-			as.Equal(tc.watch.SearchText, dbWatch.SearchText.String, "incorrect Watch search text")
-			as.Equal(tc.watch.Size.String(), dbWatch.Size.String(), "incorrect Watch size")
+			as.Equal(tc.watch.SearchText, dbWatch.SearchText, "incorrect Watch search text")
+			if tc.watch.Size == nil {
+				as.Nil(dbWatch.Size)
+			} else {
+				as.Equal(tc.watch.Size.String(), dbWatch.Size.String(), "incorrect Watch size")
+			}
 		})
 	}
 }

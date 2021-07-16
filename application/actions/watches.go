@@ -182,7 +182,7 @@ func convertWatchInput(tx *pop.Connection, input api.WatchInput, user models.Use
 	watch.OwnerID = user.ID
 	watch.Name = input.Name
 
-	watch.SearchText = models.ConvertStringPtrToNullsString(input.SearchText)
+	watch.SearchText = input.SearchText
 
 	if input.Size == nil {
 		watch.Size = nil
@@ -192,11 +192,11 @@ func convertWatchInput(tx *pop.Connection, input api.WatchInput, user models.Use
 		watch.Size = &s
 	}
 
-	if input.MeetingID == nil || *input.MeetingID == "" {
+	if !input.MeetingID.Valid {
 		watch.MeetingID = nulls.Int{}
 	} else {
 		var meeting models.Meeting
-		if err := meeting.FindByUUID(tx, *input.MeetingID); err != nil {
+		if err := meeting.FindByUUID(tx, input.MeetingID.UUID.String()); err != nil {
 			return watch, err
 		}
 		watch.MeetingID = nulls.NewInt(meeting.ID)

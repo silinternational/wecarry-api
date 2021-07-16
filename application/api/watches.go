@@ -49,10 +49,10 @@ type WatchInput struct {
 	Origin *Location `json:"origin"`
 
 	// Meeting to watch. Notifications will be sent for new requests tied to this event.
-	MeetingID *string `json:"meeting_id"`
+	MeetingID nulls.UUID `json:"meeting_id"`
 
 	// Search by text in `title` or `description`
-	SearchText *string `json:"search_text"`
+	SearchText nulls.String `json:"search_text"`
 
 	// Maximum size of a requested item
 	Size *RequestSize `json:"size"`
@@ -63,7 +63,7 @@ func (w WatchInput) IsEmpty() bool {
 		return false
 	}
 
-	if w.SearchText != nil && *w.SearchText != "" {
+	if w.SearchText.Valid {
 		return false
 	}
 
@@ -71,7 +71,7 @@ func (w WatchInput) IsEmpty() bool {
 		return false
 	}
 
-	if w.MeetingID != nil && *w.MeetingID != "" {
+	if w.MeetingID.Valid {
 		return false
 	}
 
