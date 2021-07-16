@@ -17,11 +17,11 @@ type threadQueryFixtures struct {
 }
 
 func createFixturesForThreadQuery(as *ActionSuite) threadQueryFixtures {
-	userFixtures := test.CreateUserFixtures(as.DB, 2)
+	userFixtures := test.CreateUserFixtures(as.DB, 3)
 	org := userFixtures.Organization
 	users := userFixtures.Users
 
-	requests := test.CreateRequestFixtures(as.DB, 2, false)
+	requests := test.CreateRequestFixtures(as.DB, 2, false, users[0].ID)
 
 	threads := models.Threads{
 		{UUID: domain.GetUUID(), RequestID: requests[0].ID},
