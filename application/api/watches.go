@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/gobuffalo/nulls"
 	"github.com/gofrs/uuid"
 )
 
@@ -29,32 +30,32 @@ type Watch struct {
 	Meeting *Meeting `json:"meeting,omitempty"`
 
 	// Search by text in request `title` or `description`
-	SearchText string `json:"search_text"`
+	SearchText nulls.String `json:"search_text"`
 
 	// Maximum size of a requested item
-	Size string `json:"size"`
+	Size nulls.String `json:"size"`
 }
 
 // Input object to create a new Watch for the user
 // swagger:model
 type WatchInput struct {
 	// Short description, as named by the Watch creator
-	Name string
+	Name string `json:"name"`
 
 	// Destination to watch. If a new request has a destination near this location, a notification will be sent.
-	Destination *Location
+	Destination *Location `json:"destination"`
 
 	// Origin to watch. If a new request has an origin near this location, a notification will be sent.
-	Origin *Location
+	Origin *Location `json:"origin"`
 
 	// Meeting to watch. Notifications will be sent for new requests tied to this event.
-	MeetingID *string
+	MeetingID nulls.UUID `json:"meeting_id"`
 
 	// Search by text in `title` or `description`
-	SearchText *string
+	SearchText nulls.String `json:"search_text"`
 
 	// Maximum size of a requested item
-	Size *RequestSize
+	Size *RequestSize `json:"size"`
 }
 
 func (w WatchInput) IsEmpty() bool {
@@ -62,7 +63,7 @@ func (w WatchInput) IsEmpty() bool {
 		return false
 	}
 
-	if w.SearchText != nil && *w.SearchText != "" {
+	if w.SearchText.Valid {
 		return false
 	}
 
@@ -70,7 +71,7 @@ func (w WatchInput) IsEmpty() bool {
 		return false
 	}
 
-	if w.MeetingID != nil && *w.MeetingID != "" {
+	if w.MeetingID.Valid {
 		return false
 	}
 
