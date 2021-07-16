@@ -748,8 +748,12 @@ func (r *Request) GetPhoto(tx *pop.Connection) (*File, error) {
 		return nil, nil
 	}
 
+	if r.PhotoFile.UUID == uuid.Nil {
+		return nil, fmt.Errorf("in Request.GetPhoto, PhotoFile UUID is empty, request ID %v", r.ID)
+	}
+
 	if err := r.PhotoFile.RefreshURL(tx); err != nil {
-		return nil, err
+		return nil, errors.New("Request.GetPhoto, " + err.Error())
 	}
 
 	return &r.PhotoFile, nil
@@ -1357,8 +1361,12 @@ func loadPotentialProviders(ctx context.Context, request Request, user User) (ap
 func loadRequestPhoto(ctx context.Context, request Request) (*api.File, error) {
 	photo, err := request.GetPhoto(Tx(ctx))
 	if err != nil {
-		err = errors.New("error converting request photo: " + err.Error())
-		return nil, err
+		if strings.Contains(err.Error(), "PhotoFile UUID is empty") {
+			domain.Error(ctx, err.Error())
+		} else {
+			err = errors.New("error converting request photo: " + err.Error())
+			return nil, err
+		}
 	}
 
 	if photo == nil {
