@@ -121,7 +121,7 @@ func (as *ActionSuite) Test_meetingsJoin() {
 				reqBody.Code = &tc.inviteCode
 			}
 
-			req := as.JSON("/events")
+			req := as.JSON("/events/join")
 			req.Headers["Authorization"] = fmt.Sprintf("Bearer %s", tc.user.Nickname)
 			req.Headers["content-type"] = "application/json"
 			res := req.Post(reqBody)
