@@ -84,7 +84,7 @@ func createFixturesForTestRequest_manageStatusTransition_forwardProgression(ms *
 	uf := createUserFixtures(ms.DB, 2)
 	users := uf.Users
 
-	requests := createRequestFixtures(ms.DB, 4, false)
+	requests := createRequestFixtures(ms.DB, 4, false, users[0].ID)
 	requests[1].Status = RequestStatusAccepted
 	requests[1].CreatedByID = users[1].ID
 	requests[1].ProviderID = nulls.NewInt(users[0].ID)
@@ -115,7 +115,7 @@ func createFixturesForTestRequest_manageStatusTransition_backwardProgression(ms 
 	uf := createUserFixtures(ms.DB, 2)
 	users := uf.Users
 
-	requests := createRequestFixtures(ms.DB, 4, false)
+	requests := createRequestFixtures(ms.DB, 4, false, users[0].ID)
 
 	// Put the first two requests into ACCEPTED status (also give them matching RequestHistory entries)
 	requests[0].Status = RequestStatusAccepted
@@ -200,7 +200,7 @@ func CreateFixturesForRequestsGetFiles(ms *ModelSuite) RequestFixtures {
 //		AuthEmail:      users[0].Email,
 //	})
 //
-//	requests := createRequestFixtures(ms.DB, 3, false)
+//	requests := createRequestFixtures(ms.DB, 3, false, users[0].ID)
 //	requests[1].OrganizationID = orgs[1].ID
 //	requests[2].Status = RequestStatusRemoved
 //	ms.NoError(ms.DB.Save(&requests))
@@ -249,7 +249,7 @@ func CreateFixtures_Requests_FindByUser(ms *ModelSuite) RequestFixtures {
 	uo.OrganizationID = orgs[1].ID
 	ms.NoError(DB.UpdateColumns(&uo, "organization_id"))
 
-	requests := createRequestFixtures(ms.DB, 8, false)
+	requests := createRequestFixtures(ms.DB, 8, false, users[0].ID)
 	requests[1].OrganizationID = orgs[1].ID
 	requests[2].Status = RequestStatusOpen
 	requests[3].Status = RequestStatusRemoved
@@ -339,7 +339,7 @@ func CreateFixtures_Request_IsEditable(ms *ModelSuite) RequestFixtures {
 	uf := createUserFixtures(ms.DB, 2)
 	users := uf.Users
 
-	requests := createRequestFixtures(ms.DB, 2, false)
+	requests := createRequestFixtures(ms.DB, 2, false, users[0].ID)
 	requests[1].Status = RequestStatusRemoved
 
 	return RequestFixtures{
@@ -357,7 +357,7 @@ func createFixturesForRequestGetAudience(ms *ModelSuite) RequestFixtures {
 
 	users := createUserFixtures(ms.DB, 2).Users
 
-	requests := createRequestFixtures(ms.DB, 2, false)
+	requests := createRequestFixtures(ms.DB, 2, false, users[0].ID)
 	requests[1].OrganizationID = orgs[1].ID
 	ms.NoError(ms.DB.Save(&requests[1]))
 
@@ -377,7 +377,6 @@ func createFixturesForRequestGetAudience(ms *ModelSuite) RequestFixtures {
 // The third Request won't have any potential providers
 // The fourth Request won't have any potential providers but will not be OPEN
 func CreateFixtures_Request_AddUserAsPotentialProvider(ms *ModelSuite) potentialProvidersFixtures {
-
 	uf := createUserFixtures(ms.DB, 5)
 
 	extraOrg := Organization{AuthConfig: "{}"}

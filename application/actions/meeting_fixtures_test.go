@@ -67,7 +67,7 @@ func createFixturesForMeetings(as *ActionSuite) meetingQueryFixtures {
 		createFixture(as, &meetings[i])
 	}
 
-	requests := test.CreateRequestFixtures(as.DB, 3, false)
+	requests := test.CreateRequestFixtures(as.DB, 3, false, user.ID)
 	requests[0].MeetingID = nulls.NewInt(meetings[2].ID)
 	requests[1].MeetingID = nulls.NewInt(meetings[2].ID)
 	as.NoError(as.DB.Update(&requests))

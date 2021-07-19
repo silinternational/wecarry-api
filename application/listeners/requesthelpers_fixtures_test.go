@@ -25,7 +25,7 @@ func CreateFixtures_GetRequestUsers(ms *ModelSuite, t *testing.T) orgUserRequest
 
 	ms.NoError(err, "could not create language preference for user "+users[1].Nickname)
 
-	requests := test.CreateRequestFixtures(ms.DB, 2, false)
+	requests := test.CreateRequestFixtures(ms.DB, 2, false, users[0].ID)
 	requests[0].Status = models.RequestStatusAccepted
 	requests[0].ProviderID = nulls.NewInt(users[1].ID)
 	ms.NoError(ms.DB.Save(&requests[0]))
@@ -45,7 +45,7 @@ func CreateFixtures_RequestStatusUpdatedNotifications(ms *ModelSuite, t *testing
 	tU := models.User{}
 	ms.NoError(tU.FindByID(ms.DB, users[1].ID))
 
-	requests := test.CreateRequestFixtures(ms.DB, 2, false)
+	requests := test.CreateRequestFixtures(ms.DB, 2, false, users[0].ID)
 	requests[0].Status = models.RequestStatusAccepted
 	requests[0].ProviderID = nulls.NewInt(users[1].ID)
 	ms.NoError(requests[0].Update(ms.DB))

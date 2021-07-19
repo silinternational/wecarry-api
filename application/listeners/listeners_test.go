@@ -155,7 +155,7 @@ func (ms *ModelSuite) TestSendNewMessageNotification() {
 func createFixturesForSendRequestCreatedNotifications(ms *ModelSuite) RequestFixtures {
 	users := test.CreateUserFixtures(ms.DB, 3).Users
 
-	request := test.CreateRequestFixtures(ms.DB, 1, false)[0]
+	request := test.CreateRequestFixtures(ms.DB, 1, false, users[0].ID)[0]
 	requestOrigin, err := request.GetOrigin(ms.DB)
 	ms.NoError(err)
 

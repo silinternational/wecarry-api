@@ -94,7 +94,7 @@ func CreateFixturesForUserGetRequests(ms *ModelSuite) UserRequestFixtures {
 	uf := createUserFixtures(ms.DB, 2)
 	users := uf.Users
 
-	requests := createRequestFixtures(ms.DB, 4, false)
+	requests := createRequestFixtures(ms.DB, 4, false, users[0].ID)
 	userID := users[1].UUID.String()
 	requests[0].SetProviderWithStatus(ms.DB, RequestStatusAccepted, &userID)
 	requests[1].SetProviderWithStatus(ms.DB, RequestStatusAccepted, &userID)
@@ -153,7 +153,7 @@ func CreateFixturesForUserCanViewRequest(ms *ModelSuite) UserRequestFixtures {
 	uo.OrganizationID = orgs[2].ID
 	ms.NoError(DB.UpdateColumns(&uo, "organization_id"))
 
-	requests := createRequestFixtures(ms.DB, 5, false)
+	requests := createRequestFixtures(ms.DB, 5, false, users[0].ID)
 	requests[1].OrganizationID = orgs[1].ID
 	requests[1].CreatedByID = users[1].ID
 
@@ -246,7 +246,7 @@ func CreateUserFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) UserMes
 	users := uf.Users
 
 	// Each user has a request and is a provider on the other user's request
-	requests := createRequestFixtures(ms.DB, 2, false)
+	requests := createRequestFixtures(ms.DB, 2, false, users[0].ID)
 	requests[0].Status = RequestStatusAccepted
 	requests[0].ProviderID = nulls.NewInt(users[1].ID)
 	requests[1].Status = RequestStatusAccepted
@@ -401,7 +401,7 @@ func CreateFixturesForUserWantsRequestNotification(ms *ModelSuite) UserRequestFi
 		ms.NoError(ms.DB.Save(&users[i].Location))
 	}
 
-	requests := createRequestFixtures(ms.DB, 3, false)
+	requests := createRequestFixtures(ms.DB, 3, false, users[0].ID)
 	requestOneLocation, err := requests[1].GetOrigin(ms.DB)
 	ms.NoError(err)
 	ms.NoError(users[1].SetLocation(ms.DB, *requestOneLocation))

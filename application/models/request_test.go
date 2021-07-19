@@ -962,7 +962,7 @@ func (ms *ModelSuite) TestRequest_FindByID() {
 	t := ms.T()
 
 	users := createUserFixtures(ms.DB, 2).Users
-	requests := createRequestFixtures(ms.DB, 2, false)
+	requests := createRequestFixtures(ms.DB, 2, false, users[0].ID)
 
 	tests := []struct {
 		name          string
@@ -1012,8 +1012,8 @@ func (ms *ModelSuite) TestRequest_FindByID() {
 func (ms *ModelSuite) TestRequest_FindByUUID() {
 	t := ms.T()
 
-	_ = createUserFixtures(ms.DB, 2)
-	requests := createRequestFixtures(ms.DB, 1, false)
+	users := createUserFixtures(ms.DB, 2).Users
+	requests := createRequestFixtures(ms.DB, 1, false, users[0].ID)
 
 	tests := []struct {
 		name    string
@@ -1048,7 +1048,7 @@ func (ms *ModelSuite) TestRequest_GetCreator() {
 	t := ms.T()
 
 	uf := createUserFixtures(ms.DB, 2)
-	requests := createRequestFixtures(ms.DB, 1, false)
+	requests := createRequestFixtures(ms.DB, 1, false, uf.Users[0].ID)
 
 	tests := []struct {
 		name    string
@@ -1073,7 +1073,7 @@ func (ms *ModelSuite) TestRequest_GetProvider() {
 	t := ms.T()
 
 	uf := createUserFixtures(ms.DB, 2)
-	requests := createRequestFixtures(ms.DB, 2, false)
+	requests := createRequestFixtures(ms.DB, 2, false, uf.Users[0].ID)
 	requests[1].ProviderID = nulls.NewInt(uf.Users[1].ID)
 
 	tests := []struct {
@@ -1190,7 +1190,7 @@ func (ms *ModelSuite) TestRequest_GetStatusTransitions() {
 func (ms *ModelSuite) TestRequest_GetPotentialProviderActions() {
 	f := createUserFixtures(ms.DB, 3)
 	users := f.Users
-	requests := createRequestFixtures(ms.DB, 2, false)
+	requests := createRequestFixtures(ms.DB, 2, false, users[0].ID)
 	createPotentialProviderFixtures(ms.DB, 0, 2)
 
 	acceptedRequest := requests[0]
@@ -1291,8 +1291,8 @@ func (ms *ModelSuite) TestRequest_GetCurrentActions() {
 func (ms *ModelSuite) TestRequest_GetOrganization() {
 	t := ms.T()
 
-	_ = createUserFixtures(ms.DB, 2)
-	requests := createRequestFixtures(ms.DB, 1, false)
+	users := createUserFixtures(ms.DB, 2).Users
+	requests := createRequestFixtures(ms.DB, 1, false, users[0].ID)
 	ms.NoError(ms.DB.Load(&requests, "Organization"))
 
 	tests := []struct {
@@ -1318,7 +1318,7 @@ func (ms *ModelSuite) TestRequest_GetThreads() {
 	t := ms.T()
 
 	users := createUserFixtures(ms.DB, 2).Users
-	requests := createRequestFixtures(ms.DB, 2, false)
+	requests := createRequestFixtures(ms.DB, 2, false, users[0].ID)
 	threadFixtures := CreateThreadFixtures(ms, requests[0])
 	threads := threadFixtures.Threads
 

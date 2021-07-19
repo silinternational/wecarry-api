@@ -123,7 +123,6 @@ func createRequestFixtures(tx *pop.Connection, nRequests int, createFiles bool, 
 		mustCreate(tx, &org)
 	}
 
-	// TODO Consider if there is a better way to do this
 	var user User
 	if len(userIDs) == 0 {
 		if err := tx.First(&user); err != nil {
@@ -267,7 +266,7 @@ type potentialProvidersFixtures struct {
 // The third Request won't have any potential providers
 func createPotentialProvidersFixtures(ms *ModelSuite) potentialProvidersFixtures {
 	uf := createUserFixtures(ms.DB, 4)
-	requests := createRequestFixtures(ms.DB, 3, false)
+	requests := createRequestFixtures(ms.DB, 3, false, uf.Users[0].ID)
 	providers := PotentialProviders{}
 
 	// ensure the first user is actually the creator (timing issues tend to make this unreliable otherwise)
