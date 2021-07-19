@@ -13,6 +13,13 @@ import (
 	"github.com/silinternational/wecarry-api/domain"
 )
 
+var locationX = Location{
+	Country:     "XX",
+	Description: "-",
+	Latitude:    1.1,
+	Longitude:   2.2,
+}
+
 type UserFixtures struct {
 	Organization
 	Users

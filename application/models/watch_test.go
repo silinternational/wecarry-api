@@ -342,11 +342,7 @@ func (ms *ModelSuite) TestWatch_destinationMatches() {
 	ms.NoError(dest.Create(ms.DB))
 	ms.NoError(watches[0].SetDestination(ms.DB, *dest))
 
-	ms.NoError(watches[1].SetDestination(ms.DB, Location{
-		Country: "XX", Description: "-",
-		Latitude:  1.1,
-		Longitude: 2.2,
-	}))
+	ms.NoError(watches[1].SetDestination(ms.DB, locationX))
 
 	tests := []struct {
 		name    string
@@ -395,12 +391,7 @@ func (ms *ModelSuite) TestWatch_originMatches() {
 	ms.NoError(origin.Create(ms.DB))
 	ms.NoError(watches[0].SetOrigin(ms.DB, *origin))
 
-	ms.NoError(watches[1].SetOrigin(ms.DB, Location{
-		Country:     "XX",
-		Description: "-",
-		Latitude:    1.1,
-		Longitude:   2.2,
-	}))
+	ms.NoError(watches[1].SetOrigin(ms.DB, locationX))
 
 	tests := []struct {
 		name    string
