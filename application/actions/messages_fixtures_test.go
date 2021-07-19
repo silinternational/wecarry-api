@@ -6,7 +6,7 @@ import (
 	"github.com/silinternational/wecarry-api/models"
 )
 
-type messageTestFixtures struct {
+type messageFixtures struct {
 	models.Organization
 	models.Users
 	models.Requests
@@ -14,7 +14,7 @@ type messageTestFixtures struct {
 	models.Messages
 }
 
-func createFixturesForMessagesCreate(as *ActionSuite) messageTestFixtures {
+func createFixturesForMessagesCreate(as *ActionSuite) messageFixtures {
 	userFixtures := test.CreateUserFixtures(as.DB, 2)
 	org := userFixtures.Organization
 	users := userFixtures.Users
@@ -53,7 +53,7 @@ func createFixturesForMessagesCreate(as *ActionSuite) messageTestFixtures {
 		createFixture(as, &messages[i])
 	}
 
-	return messageTestFixtures{
+	return messageFixtures{
 		Organization: org,
 		Users:        users,
 		Requests:     requests,

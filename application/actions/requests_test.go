@@ -14,7 +14,7 @@ import (
 	"github.com/silinternational/wecarry-api/models"
 )
 
-type RequestTestFixtures struct {
+type RequestFixtures struct {
 	models.Organization
 	models.Users
 	models.Requests
