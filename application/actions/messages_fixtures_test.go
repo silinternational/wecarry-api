@@ -19,7 +19,7 @@ func createFixtures_MessageQuery(as *ActionSuite) messageQueryFixtures {
 	org := userFixtures.Organization
 	users := userFixtures.Users
 
-	requests := test.CreateRequestFixtures(as.DB, 1, false)
+	requests := test.CreateRequestFixtures(as.DB, 1, false, users[0].ID)
 
 	threads := models.Threads{
 		{UUID: domain.GetUUID(), RequestID: requests[0].ID},

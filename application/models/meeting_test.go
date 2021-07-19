@@ -453,9 +453,11 @@ func (ms *ModelSuite) TestMeeting_CanUpdate() {
 }
 
 func (ms *ModelSuite) TestMeeting_GetRequests() {
-	meetings := createMeetingFixtures(ms.DB, 2).Meetings
+	f := createMeetingFixtures(ms.DB, 2)
+	meetings := f.Meetings
+	users := f.Users
 
-	requests := createRequestFixtures(ms.DB, 3, false)
+	requests := createRequestFixtures(ms.DB, 3, false, users[0].ID)
 	requests[0].MeetingID = nulls.NewInt(meetings[1].ID)
 	requests[1].MeetingID = nulls.NewInt(meetings[1].ID)
 	ms.NoError(ms.DB.Update(&requests))

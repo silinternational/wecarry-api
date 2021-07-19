@@ -121,7 +121,7 @@ func createFixturesForSearchRequestsQuery(as *ActionSuite) RequestQueryFixtures 
 	org := userFixtures.Organization
 	users := userFixtures.Users
 
-	requests := test.CreateRequestFixtures(as.DB, 2, false)
+	requests := test.CreateRequestFixtures(as.DB, 2, false, users[0].ID)
 	requests[0].Title = "A Match"
 	as.NoError(as.DB.Save(&requests[0]))
 
@@ -136,7 +136,7 @@ func createFixturesForUpdateRequest(as *ActionSuite) UpdateRequestFixtures {
 	userFixtures := test.CreateUserFixtures(as.DB, 2)
 	users := userFixtures.Users
 
-	requests := test.CreateRequestFixtures(as.DB, 1, false)
+	requests := test.CreateRequestFixtures(as.DB, 1, false, users[0].ID)
 	requests[0].OriginID = nulls.Int{}
 	as.NoError(as.DB.Save(&requests[0]))
 
@@ -205,7 +205,7 @@ func createFixturesForMarkRequestAsDelivered(as *ActionSuite) UpdateRequestStatu
 	userFixtures := test.CreateUserFixtures(as.DB, 2)
 	users := userFixtures.Users
 
-	requests := test.CreateRequestFixtures(as.DB, 2, false)
+	requests := test.CreateRequestFixtures(as.DB, 2, false, users[0].ID)
 	requests[0].Status = models.RequestStatusAccepted
 	requests[0].CreatedByID = users[0].ID
 	requests[0].ProviderID = nulls.NewInt(users[1].ID)
@@ -228,7 +228,7 @@ func createFixturesForMarkRequestAsReceived(as *ActionSuite) UpdateRequestStatus
 	userFixtures := test.CreateUserFixtures(as.DB, 2)
 	users := userFixtures.Users
 
-	requests := test.CreateRequestFixtures(as.DB, 3, false)
+	requests := test.CreateRequestFixtures(as.DB, 3, false, users[0].ID)
 	requests[0].Status = models.RequestStatusAccepted
 	requests[0].ProviderID = nulls.NewInt(users[1].ID)
 

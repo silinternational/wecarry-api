@@ -65,8 +65,8 @@ func (ms *ModelSuite) TestThread_Validate() {
 func (ms *ModelSuite) TestThread_FindByUUID() {
 	t := ms.T()
 
-	_ = createUserFixtures(ms.DB, 2)
-	requests := createRequestFixtures(ms.DB, 1, false)
+	users := createUserFixtures(ms.DB, 2).Users
+	requests := createRequestFixtures(ms.DB, 1, false, users[0].ID)
 	threadFixtures := CreateThreadFixtures(ms, requests[0])
 
 	tests := []struct {
@@ -101,8 +101,8 @@ func (ms *ModelSuite) TestThread_FindByUUID() {
 func (ms *ModelSuite) TestThread_GetRequest() {
 	t := ms.T()
 
-	_ = createUserFixtures(ms.DB, 2)
-	requests := createRequestFixtures(ms.DB, 1, false)
+	users := createUserFixtures(ms.DB, 2).Users
+	requests := createRequestFixtures(ms.DB, 1, false, users[0].ID)
 	threadFixtures := CreateThreadFixtures(ms, requests[0])
 
 	tests := []struct {
@@ -139,8 +139,8 @@ func (ms *ModelSuite) TestThread_GetRequest() {
 func (ms *ModelSuite) TestThread_GetMessages() {
 	t := ms.T()
 
-	_ = createUserFixtures(ms.DB, 2)
-	requests := createRequestFixtures(ms.DB, 1, false)
+	users := createUserFixtures(ms.DB, 2).Users
+	requests := createRequestFixtures(ms.DB, 1, false, users[0].ID)
 	threadFixtures := CreateThreadFixtures(ms, requests[0])
 
 	tests := []struct {
@@ -194,7 +194,7 @@ func (ms *ModelSuite) TestThread_LoadParticipants() {
 	t := ms.T()
 
 	users := createUserFixtures(ms.DB, 2).Users
-	requests := createRequestFixtures(ms.DB, 1, false)
+	requests := createRequestFixtures(ms.DB, 1, false, users[0].ID)
 	threadFixtures := CreateThreadFixtures(ms, requests[0])
 
 	tests := []struct {
@@ -235,7 +235,6 @@ func (ms *ModelSuite) TestThread_LoadParticipants() {
 			}
 			sort.Ints(tt.want)
 			ms.EqualValues(tt.want, ids)
-
 		})
 	}
 }
@@ -244,7 +243,7 @@ func (ms *ModelSuite) TestThread_CreateWithParticipants() {
 	t := ms.T()
 
 	users := createUserFixtures(ms.DB, 2).Users
-	requests := createRequestFixtures(ms.DB, 1, false)
+	requests := createRequestFixtures(ms.DB, 1, false, users[0].ID)
 	request := requests[0]
 
 	var thread Thread
@@ -287,7 +286,7 @@ func (ms *ModelSuite) TestThread_ensureParticipants() {
 	t := ms.T()
 
 	users := createUserFixtures(ms.DB, 2).Users
-	requests := createRequestFixtures(ms.DB, 1, false)
+	requests := createRequestFixtures(ms.DB, 1, false, users[0].ID)
 	request := requests[0]
 
 	thread := Thread{
@@ -343,7 +342,7 @@ func (ms *ModelSuite) TestThread_GetLastViewedAt() {
 	t := ms.T()
 
 	users := createUserFixtures(ms.DB, 2).Users
-	requests := createRequestFixtures(ms.DB, 1, false)
+	requests := createRequestFixtures(ms.DB, 1, false, users[0].ID)
 	threadFixtures := CreateThreadFixtures(ms, requests[0])
 
 	tests := []struct {

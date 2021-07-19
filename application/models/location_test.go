@@ -421,7 +421,7 @@ func (ms *ModelSuite) TestLocations_DeleteUnused() {
 	}
 	ms.NoError(ms.DB.Update(&watches))
 
-	_ = createRequestFixtures(ms.DB, nRequests, false)
+	_ = createRequestFixtures(ms.DB, nRequests, false, users[0].ID)
 
 	locations := Locations{}
 

@@ -107,7 +107,6 @@ func CreateRequestFixtures(tx *pop.Connection, n int, createFiles bool, userIDs 
 		MustCreate(tx, &org)
 	}
 
-	// TODO Consider if there is a better way to do this
 	var user models.User
 	if len(userIDs) == 0 {
 		if err := tx.First(&user); err != nil {
