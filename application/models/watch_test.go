@@ -220,8 +220,8 @@ func (ms *ModelSuite) TestWatch_GetSetLocation() {
 	ms.Equal(newLoc.Country, got.Country, "country doesn't match")
 	ms.Equal(newLoc.City, got.City, "city doesn't match")
 	ms.Equal(newLoc.Description, got.Description, "description doesn't match")
-	ms.InDelta(newLoc.Latitude.Float64, got.Latitude.Float64, 0.0001, "latitude doesn't match")
-	ms.InDelta(newLoc.Longitude.Float64, got.Longitude.Float64, 0.0001, "longitude doesn't match")
+	ms.InDelta(newLoc.Latitude, got.Latitude, 0.0001, "latitude doesn't match")
+	ms.InDelta(newLoc.Longitude, got.Longitude, 0.0001, "longitude doesn't match")
 }
 
 func (ms *ModelSuite) TestWatch_Meeting() {
@@ -342,7 +342,7 @@ func (ms *ModelSuite) TestWatch_destinationMatches() {
 	ms.NoError(dest.Create(ms.DB))
 	ms.NoError(watches[0].SetDestination(ms.DB, *dest))
 
-	ms.NoError(watches[1].SetDestination(ms.DB, Location{Country: "XX", Description: "-"}))
+	ms.NoError(watches[1].SetDestination(ms.DB, locationX))
 
 	tests := []struct {
 		name    string
@@ -391,7 +391,7 @@ func (ms *ModelSuite) TestWatch_originMatches() {
 	ms.NoError(origin.Create(ms.DB))
 	ms.NoError(watches[0].SetOrigin(ms.DB, *origin))
 
-	ms.NoError(watches[1].SetOrigin(ms.DB, Location{Country: "XX", Description: "-"}))
+	ms.NoError(watches[1].SetOrigin(ms.DB, locationX))
 
 	tests := []struct {
 		name    string

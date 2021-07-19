@@ -171,8 +171,8 @@ func CreateLocationFixtures(tx *pop.Connection, n int) models.Locations {
 			State:       states[randInt],
 			City:        cities[randInt],
 			Description: "Random Location " + strconv.Itoa(rand.Int()),
-			Latitude:    nulls.NewFloat64(rand.Float64()*180 - 90),
-			Longitude:   nulls.NewFloat64(rand.Float64()*360 - 180),
+			Latitude:    rand.Float64()*180 - 90,
+			Longitude:   rand.Float64()*360 - 180,
 		}
 		MustCreate(tx, &locations[i])
 	}

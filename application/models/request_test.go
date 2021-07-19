@@ -1509,14 +1509,14 @@ func (ms *ModelSuite) TestRequest_GetSetDestination() {
 		{
 			Description: "a place",
 			Country:     "XY",
-			Latitude:    nulls.NewFloat64(1.1),
-			Longitude:   nulls.NewFloat64(2.2),
+			Latitude:    1.1,
+			Longitude:   2.2,
 		},
 		{
 			Description: "another place",
 			Country:     "AB",
-			Latitude:    nulls.Float64{},
-			Longitude:   nulls.Float64{},
+			Latitude:    -1.1,
+			Longitude:   -2.2,
 		},
 	}
 	createFixture(ms, &locations[0]) // only save the first record for now
@@ -1531,10 +1531,6 @@ func (ms *ModelSuite) TestRequest_GetSetDestination() {
 	ms.NoError(err, "unexpected error from request.GetDestination()")
 	locations[1].ID = locationFromDB.ID
 	ms.Equal(locations[1], *locationFromDB, "destination data doesn't match after update")
-
-	// These are redundant checks, but here to document the fact that a null overwrites previous data.
-	ms.False(locationFromDB.Latitude.Valid)
-	ms.False(locationFromDB.Longitude.Valid)
 }
 
 func (ms *ModelSuite) TestRequest_Origin() {
@@ -1547,14 +1543,14 @@ func (ms *ModelSuite) TestRequest_Origin() {
 		{
 			Description: "a place",
 			Country:     "XY",
-			Latitude:    nulls.NewFloat64(1.1),
-			Longitude:   nulls.NewFloat64(2.2),
+			Latitude:    1.1,
+			Longitude:   2.2,
 		},
 		{
 			Description: "another place",
 			Country:     "AB",
-			Latitude:    nulls.Float64{},
-			Longitude:   nulls.Float64{},
+			Latitude:    -1.1,
+			Longitude:   -2.2,
 		},
 	}
 
@@ -1577,10 +1573,6 @@ func (ms *ModelSuite) TestRequest_Origin() {
 
 	locationFixtures[1].ID = locationFromDB.ID
 	ms.Equal(locationFixtures[1], *locationFromDB, "origin data doesn't match after update")
-
-	// These are redundant checks, but here to document the fact that a null overwrites previous data.
-	ms.False(locationFromDB.Latitude.Valid)
-	ms.False(locationFromDB.Longitude.Valid)
 
 	ms.NoError(request.RemoveOrigin(ms.DB))
 	ms.False(request.OriginID.Valid, "expected the origin to have been removed")

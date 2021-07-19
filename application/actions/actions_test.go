@@ -12,10 +12,18 @@ import (
 	"github.com/gobuffalo/httptest"
 	"github.com/gobuffalo/pop/v5"
 	"github.com/gorilla/sessions"
+	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/models"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
+
+var locationX = api.Location{
+	Country:     "XX",
+	Description: "-",
+	Latitude:    1.1,
+	Longitude:   2.2,
+}
 
 type ActionSuite struct {
 	suite.Suite

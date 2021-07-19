@@ -81,10 +81,8 @@ func (as *ActionSuite) Test_requestsGet() {
 func (as *ActionSuite) Test_requestsCreate() {
 	f := createFixturesForRequests(as)
 
-	destination := api.Location{Description: "location description", Country: "XX"}
-
 	goodRequest := api.RequestCreateInput{
-		Destination:    destination,
+		Destination:    locationX,
 		OrganizationID: f.Organization.UUID,
 		Size:           api.RequestSize(models.RequestSizeSmall),
 		Title:          "request title",
@@ -131,7 +129,7 @@ func (as *ActionSuite) Test_requestsCreate() {
 					`"title":"` + tt.request.Title,
 					`"created_by":{"id":"` + tt.user.UUID.String(),
 					`"organization":{"id":"` + f.Organization.UUID.String(),
-					`"destination":{"description":"` + destination.Description,
+					`"destination":{"description":"` + locationX.Description,
 				}
 				as.verifyResponseData(wantData, body, "")
 			}
@@ -288,12 +286,15 @@ func (as *ActionSuite) Test_convertCreateRequestInput() {
 
 	ctx := test.CtxWithUser(creator)
 
-	destination := api.Location{Description: "destination", Country: "XX"}
-	origin := api.Location{Description: "origin", Country: "ZZ"}
+	origin := api.Location{
+		Description: "origin",
+		Country:     "ZZ",
+		Latitude:    -1.1,
+		Longitude:   -2.2}
 	file := test.CreateFileFixture(as.DB)
 
 	min := api.RequestCreateInput{
-		Destination:    destination,
+		Destination:    locationX,
 		OrganizationID: userFixtures.Organization.UUID,
 		Size:           api.RequestSize(models.RequestSizeSmall),
 		Title:          "request title 1",
@@ -301,7 +302,7 @@ func (as *ActionSuite) Test_convertCreateRequestInput() {
 
 	full := api.RequestCreateInput{
 		Description:    nulls.NewString("request description"),
-		Destination:    destination,
+		Destination:    locationX,
 		Kilograms:      nulls.NewFloat64(1.0),
 		NeededBefore:   nulls.NewString(time.Now().Format(domain.DateFormat)),
 		Origin:         &origin,
@@ -473,15 +474,19 @@ func (as *ActionSuite) Test_convertUpdateRequestInput() {
 
 	min := api.RequestUpdateInput{}
 
-	destination := api.Location{Description: "destination", Country: "XX"}
 	file := test.CreateFileFixture(as.DB)
-	origin := api.Location{Description: "origin", Country: "ZZ"}
+	origin := api.Location{
+		Description: "origin",
+		Country:     "ZZ",
+		Latitude:    -1.1,
+		Longitude:   -2.2,
+	}
 	size := api.RequestSize(models.RequestSizeMedium)
 	title := "request title"
 	visibility := api.RequestVisibility(models.RequestVisibilityAll)
 	full := api.RequestUpdateInput{
 		Description:  nulls.NewString("request description"),
-		Destination:  &destination,
+		Destination:  &locationX,
 		Kilograms:    nulls.NewFloat64(1.0),
 		NeededBefore: nulls.NewString(time.Now().Format(domain.DateFormat)),
 		Origin:       &origin,

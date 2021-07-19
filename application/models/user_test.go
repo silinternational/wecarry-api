@@ -1172,14 +1172,14 @@ func (ms *ModelSuite) TestUser_SetLocation() {
 		{
 			Description: "a place",
 			Country:     "XY",
-			Latitude:    nulls.NewFloat64(1.1),
-			Longitude:   nulls.NewFloat64(2.2),
+			Latitude:    1.1,
+			Longitude:   2.2,
 		},
 		{
 			Description: "another place",
 			Country:     "AB",
-			Latitude:    nulls.Float64{},
-			Longitude:   nulls.Float64{},
+			Latitude:    -1.1,
+			Longitude:   -2.2,
 		},
 	}
 

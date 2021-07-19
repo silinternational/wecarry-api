@@ -2,11 +2,12 @@ package actions
 
 import (
 	"fmt"
+	"net/http"
+	"testing"
+
 	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
-	"net/http"
-	"testing"
 )
 
 func (as *ActionSuite) verifyMeeting(expected models.Meeting, actual api.Meeting, msg string) {
@@ -49,8 +50,8 @@ func (as *ActionSuite) Test_MeetingsList() {
 			fmt.Sprintf(`"end_date":"%s`, mtgs[i].EndDate.Format(domain.DateFormat)),
 			fmt.Sprintf(`"location":{"description":"%s"`, lctn.Description),
 			fmt.Sprintf(`"country":"%s"`, lctn.Country),
-			fmt.Sprintf(`"latitude":%s`, convertFloat64ToIntString(lctn.Latitude.Float64)),
-			fmt.Sprintf(`"longitude":%s`, convertFloat64ToIntString(lctn.Longitude.Float64)),
+			fmt.Sprintf(`"latitude":%s`, convertFloat64ToIntString(lctn.Latitude)),
+			fmt.Sprintf(`"longitude":%s`, convertFloat64ToIntString(lctn.Longitude)),
 		}
 		wantContains = append(wantContains, moreContains...)
 	}
@@ -143,8 +144,8 @@ func (as *ActionSuite) Test_meetingsJoin() {
 				fmt.Sprintf(`"end_date":"%s`, tc.meeting.EndDate.Format(domain.DateFormat)),
 				fmt.Sprintf(`"location":{"description":"%s"`, tc.location.Description),
 				fmt.Sprintf(`"country":"%s"`, tc.location.Country),
-				fmt.Sprintf(`"latitude":%s`, convertFloat64ToIntString(tc.location.Latitude.Float64)),
-				fmt.Sprintf(`"longitude":%s`, convertFloat64ToIntString(tc.location.Longitude.Float64)),
+				fmt.Sprintf(`"latitude":%s`, convertFloat64ToIntString(tc.location.Latitude)),
+				fmt.Sprintf(`"longitude":%s`, convertFloat64ToIntString(tc.location.Longitude)),
 			}
 
 			as.verifyResponseData(wantContains, body, "In Test_meetingsJoin")
