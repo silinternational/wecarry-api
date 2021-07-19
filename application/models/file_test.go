@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/gobuffalo/validate/v3"
+	"github.com/silinternational/wecarry-api/api"
 
 	"github.com/silinternational/wecarry-api/aws"
 	"github.com/silinternational/wecarry-api/domain"
@@ -74,7 +75,7 @@ func (ms *ModelSuite) TestFile_Store() {
 		name     string
 		args     args
 		wantErr  bool
-		wantCode string
+		wantCode api.ErrorKey
 	}{
 		{
 			name: "empty file",
@@ -83,7 +84,7 @@ func (ms *ModelSuite) TestFile_Store() {
 				content: []byte{},
 			},
 			wantErr:  true,
-			wantCode: "ErrorStoreFileBadContentType",
+			wantCode: api.ErrorStoreFileBadContentType,
 		},
 		{
 			name: "GIF87a file",
@@ -117,7 +118,7 @@ func (ms *ModelSuite) TestFile_Store() {
 				Name:    tt.args.name,
 				Content: tt.args.content,
 			}
-			fErr := f.Store()
+			fErr := f.Store(ms.DB)
 			if tt.wantErr {
 				ms.NotNil(fErr)
 				ms.Equal(fErr.ErrorCode, tt.wantCode, "incorrect error type")
@@ -138,7 +139,7 @@ func (ms *ModelSuite) TestFile_FindByUUID() {
 		t.Errorf("failed to create S3 bucket, %s", err)
 		t.FailNow()
 	}
-	files := createFileFixtures(2)
+	files := createFileFixtures(ms.DB, 2)
 
 	type args struct {
 		fileUUID string
@@ -164,7 +165,7 @@ func (ms *ModelSuite) TestFile_FindByUUID() {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var f File
-			err := f.FindByUUID(tt.args.fileUUID)
+			err := f.FindByUUID(ms.DB, tt.args.fileUUID)
 			if tt.wantErr {
 				if err == nil {
 					t.Errorf("expected an error but did not get one")
@@ -189,7 +190,7 @@ func (ms *ModelSuite) TestFiles_FindByIDs() {
 		t.Errorf("failed to create S3 bucket, %s", err)
 		t.FailNow()
 	}
-	files := createFileFixtures(2)
+	files := createFileFixtures(ms.DB, 2)
 
 	tests := []struct {
 		name string
@@ -305,17 +306,17 @@ func (ms *ModelSuite) TestFiles_DeleteUnlinked() {
 		nUsers            = 2
 	)
 
-	_ = createFileFixtures(nOldUnlinkedFiles)
+	_ = createFileFixtures(ms.DB, nOldUnlinkedFiles)
 
 	ms.NoError(DB.RawQuery("UPDATE files set updated_at = ?", time.Now().Add(-5*domain.DurationWeek)).Exec())
 
-	_ = createFileFixtures(nNewUnlinkedFiles)
+	_ = createFileFixtures(ms.DB, nNewUnlinkedFiles)
 
 	requests := createRequestFixtures(ms.DB, nRequests, true)
 
-	requestFiles := createFileFixtures(nRequests)
+	requestFiles := createFileFixtures(ms.DB, nRequests)
 	for i, r := range requestFiles {
-		_, err := requests[i].AttachFile(r.UUID.String())
+		_, err := requests[i].AttachFile(ms.DB, r.UUID.String())
 		ms.NoError(err)
 	}
 
@@ -324,19 +325,19 @@ func (ms *ModelSuite) TestFiles_DeleteUnlinked() {
 	_ = createOrganizationFixtures(ms.DB, nOrganizations)
 
 	users := createUserFixtures(ms.DB, nUsers).Users
-	userPhotos := createFileFixtures(nUsers)
+	userPhotos := createFileFixtures(ms.DB, nUsers)
 	for i, u := range users {
-		_, err := u.AttachPhoto(userPhotos[i].UUID.String())
+		_, err := u.AttachPhoto(ms.DB, userPhotos[i].UUID.String())
 		ms.NoError(err)
 	}
 
 	f := Files{}
 
 	domain.Env.MaxFileDelete = 1
-	ms.Error(f.DeleteUnlinked())
+	ms.Error(f.DeleteUnlinked(ms.DB))
 
 	domain.Env.MaxFileDelete = 2
-	ms.NoError(f.DeleteUnlinked())
+	ms.NoError(f.DeleteUnlinked(ms.DB))
 	n, _ := DB.Count(&f)
 	ms.Equal(nRequests*2+nMeetings+nOrganizations+nUsers+nNewUnlinkedFiles, n, "wrong number of files remain")
 }

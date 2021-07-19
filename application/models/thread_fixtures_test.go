@@ -89,7 +89,7 @@ func CreateThreadFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) Threa
 	users := uf.Users
 
 	// Each user has a request and is a provider on the other user's request
-	requests := createRequestFixtures(ms.DB, 2, false)
+	requests := createRequestFixtures(ms.DB, 2, false, users[0].ID)
 	requests[0].Status = RequestStatusAccepted
 	requests[0].ProviderID = nulls.NewInt(users[1].ID)
 	requests[1].Status = RequestStatusAccepted

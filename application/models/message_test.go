@@ -7,6 +7,7 @@ import (
 	"github.com/gobuffalo/events"
 	"github.com/gobuffalo/validate/v3"
 
+	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/domain"
 )
 
@@ -94,7 +95,7 @@ func (ms *ModelSuite) TestMessage_GetSender() {
 	messages := messageFixtures.Messages
 	users := messageFixtures.Users
 
-	userResults, err := messages[0].GetSender()
+	userResults, err := messages[0].GetSender(ms.DB)
 	if err != nil {
 		t.Errorf("unexpected error ... %v", err)
 		t.FailNow()
@@ -113,7 +114,7 @@ func (ms *ModelSuite) TestMessage_GetThread() {
 	messages := messageFixtures.Messages
 	threads := messageFixtures.Threads
 
-	threadResults, err := messages[0].GetThread()
+	threadResults, err := messages[0].GetThread(ms.DB)
 	if err != nil {
 		t.Errorf("unexpected error ... %v", err)
 		t.FailNow()
@@ -124,7 +125,7 @@ func (ms *ModelSuite) TestMessage_GetThread() {
 	ms.Equal(threads[0].RequestID, threadResults.RequestID, "Bad thread RequestID")
 }
 
-func (ms *ModelSuite) TestMessage_Create() {
+func (ms *ModelSuite) TestMessage_CreateFromInput() {
 	t := ms.T()
 
 	f := Fixtures_Message_Create(ms, t)
@@ -159,7 +160,7 @@ func (ms *ModelSuite) TestMessage_Create() {
 			user:        f.Users[1],
 			requestUUID: f.Requests[1].UUID.String(),
 			threadUUID:  &threadUUID,
-			content:     "bad message",
+			content:     "I'm not a participant",
 			wantErr:     true,
 		},
 		{
@@ -167,7 +168,7 @@ func (ms *ModelSuite) TestMessage_Create() {
 			user:        f.Users[1],
 			requestUUID: f.Requests[0].UUID.String(),
 			threadUUID:  nil,
-			content:     "another bad message",
+			content:     "I shouldn't see this request",
 			wantErr:     true,
 		},
 		{
@@ -175,21 +176,26 @@ func (ms *ModelSuite) TestMessage_Create() {
 			user:        f.Users[0],
 			requestUUID: f.Requests[2].UUID.String(),
 			threadUUID:  &threadUUID,
-			content:     "another bad message",
+			content:     "I tried the wrong request",
 			wantErr:     true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var message Message
-			err := message.Create(createTestContext(tt.user), tt.requestUUID, tt.threadUUID, tt.content)
+			input := api.MessageInput{
+				Content:   tt.content,
+				RequestID: tt.requestUUID,
+				ThreadID:  tt.threadUUID,
+			}
+			err := message.CreateFromInput(ms.DB, tt.user, input)
 
 			if tt.wantErr {
 				ms.Error(err)
 				return
 			}
 
-			ms.NoError(err)
+			ms.Nil(err, "received unexpected error: ")
 			ms.Greater(message.ID, 0, "new message contains invalid ID")
 		})
 	}
@@ -228,7 +234,7 @@ func (ms *ModelSuite) TestMessage_FindByID() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var message Message
-			err := message.FindByID(test.id, test.eagerFields...)
+			err := message.FindByID(ms.DB, test.id, test.eagerFields...)
 
 			if test.wantErr {
 				ms.Error(err)
@@ -269,7 +275,7 @@ func (ms *ModelSuite) TestMessage_FindByUUID() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var message Message
-			err := message.findByUUID(test.uuid)
+			err := message.findByUUID(ms.DB, test.uuid)
 
 			if test.wantErr != "" {
 				ms.Error(err)
@@ -321,7 +327,7 @@ func (ms *ModelSuite) TestMessage_FindByUserAndUUID() {
 			} else {
 				testUUID = *test.uuid
 			}
-			err := message.FindByUserAndUUID(test.user, testUUID)
+			err := message.FindByUserAndUUID(ms.DB, test.user, testUUID)
 
 			if test.wantErr != "" {
 				ms.Error(err)

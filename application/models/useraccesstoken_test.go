@@ -75,7 +75,7 @@ func (ms *ModelSuite) TestUserAccessToken_DeleteByBearerToken() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var uat UserAccessToken
-			err := uat.DeleteByBearerToken(test.token)
+			err := uat.DeleteByBearerToken(ms.DB, test.token)
 			if err != nil && !test.wantErr {
 				t.Errorf("DeleteAccessToken() returned an unexpected error: %s", err)
 			} else if err == nil && test.wantErr {
@@ -104,7 +104,7 @@ func (ms *ModelSuite) TestUserAccessToken_FindByBearerToken() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var u UserAccessToken
-			err := u.FindByBearerToken(test.token)
+			err := u.FindByBearerToken(ms.DB, test.token)
 			if test.wantErr {
 				ms.Error(err)
 				return
@@ -252,7 +252,7 @@ func (ms *ModelSuite) TestUserAccessToken_GetOrganization() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			u := test.token
-			got, err := u.GetOrganization()
+			got, err := u.GetOrganization(ms.DB)
 			if test.wantErr {
 				if err == nil {
 					t.Errorf("Expected an error, but did not get one")
@@ -291,7 +291,7 @@ func (ms *ModelSuite) TestUserAccessToken_GetUser() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			u := test.token
-			got, err := u.GetUser()
+			got, err := u.GetUser(ms.DB)
 			if test.wantErr {
 				if err == nil {
 					t.Errorf("Expected an error, but did not get one")
@@ -353,7 +353,7 @@ func (ms *ModelSuite) TestUserAccessToken_DeleteIfExpired() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			u := test.token
-			got, err := u.DeleteIfExpired()
+			got, err := u.DeleteIfExpired(ms.DB)
 			if err != nil {
 				t.Errorf("Unexpected error: %v", err)
 				return
@@ -409,8 +409,8 @@ func (ms *ModelSuite) TestUserAccessToken_Renew() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			u := test.token
-			_ = u.Renew()
-			ms.False(u.DeleteIfExpired())
+			_ = u.Renew(ms.DB)
+			ms.False(u.DeleteIfExpired(ms.DB))
 		})
 	}
 }
@@ -453,7 +453,7 @@ func (ms *ModelSuite) TestUserAccessToken_DeleteExpired() {
 	starting, err := ms.DB.Count(&uats)
 	ms.NoError(err)
 
-	got, err := uats.DeleteExpired()
+	got, err := uats.DeleteExpired(ms.DB)
 
 	ms.NoError(err)
 

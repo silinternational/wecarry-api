@@ -67,7 +67,7 @@ func (u *UserOrganization) ValidateUpdate(tx *pop.Connection) (*validate.Errors,
 
 // FindByAuthEmail finds UserOrganizations for the given email address. However, if the
 // orgID param is greater than zero, it will find only the one with both that authEmail and orgID.
-func (u *UserOrganizations) FindByAuthEmail(authEmail string, orgID int) error {
+func (u *UserOrganizations) FindByAuthEmail(tx *pop.Connection, authEmail string, orgID int) error {
 	// Validate email address before query
 	errs := validate.Validate(&validators.EmailIsPresent{Field: authEmail})
 	if len(errs.Errors) > 0 {
@@ -82,7 +82,7 @@ func (u *UserOrganizations) FindByAuthEmail(authEmail string, orgID int) error {
 		params = append(params, orgID)
 	}
 
-	if err := DB.Eager().Where(where, params...).All(u); err != nil {
+	if err := tx.Eager().Where(where, params...).All(u); err != nil {
 		return fmt.Errorf("error finding user by email: %s", err.Error())
 	}
 
@@ -90,6 +90,6 @@ func (u *UserOrganizations) FindByAuthEmail(authEmail string, orgID int) error {
 }
 
 // Create stores the UserOrganization data as a new record in the database.
-func (u *UserOrganization) Create() error {
-	return create(u)
+func (u *UserOrganization) Create(tx *pop.Connection) error {
+	return create(tx, u)
 }

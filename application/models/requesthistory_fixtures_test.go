@@ -19,7 +19,7 @@ func createFixturesForTestRequestHistory_Load(ms *ModelSuite) RequestHistoryFixt
 	uf := createUserFixtures(ms.DB, 2)
 	users := uf.Users
 
-	requests := createRequestFixtures(ms.DB, 2, false)
+	requests := createRequestFixtures(ms.DB, 2, false, users[0].ID)
 
 	pHistory := RequestHistory{
 		Status:     RequestStatusOpen,
@@ -87,7 +87,7 @@ func createFixturesForTestRequestHistory_createForRequest(ms *ModelSuite) Reques
 	uf := createUserFixtures(ms.DB, 2)
 	users := uf.Users
 
-	requests := createRequestFixtures(ms.DB, 2, false)
+	requests := createRequestFixtures(ms.DB, 2, false, users[0].ID)
 
 	return RequestFixtures{
 		Users:    users,

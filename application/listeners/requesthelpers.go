@@ -25,14 +25,14 @@ type requestUsers struct {
 // getRequestUsers returns up to two entries for the Request Requester and
 // Request Provider assuming their email is not blank.
 func getRequestUsers(request models.Request) requestUsers {
-	receiver, _ := request.GetCreator()
-	provider, _ := request.GetProvider()
+	receiver, _ := request.GetCreator(models.DB)
+	provider, _ := request.GetProvider(models.DB)
 
 	var recipients requestUsers
 
 	if receiver != nil {
 		recipients.Receiver = requestUser{
-			Language: receiver.GetLanguagePreference(),
+			Language: receiver.GetLanguagePreference(models.DB),
 			Nickname: receiver.Nickname,
 			Email:    receiver.Email,
 		}
@@ -40,7 +40,7 @@ func getRequestUsers(request models.Request) requestUsers {
 
 	if provider != nil {
 		recipients.Provider = requestUser{
-			Language: provider.GetLanguagePreference(),
+			Language: provider.GetLanguagePreference(models.DB),
 			Nickname: provider.Nickname,
 			Email:    provider.Email,
 		}
@@ -159,7 +159,7 @@ func sendNotificationRequestFromAcceptedToOpen(params senderParams) {
 	requestUsers := getRequestUsers(request)
 
 	oldProvider := models.User{}
-	if err := oldProvider.FindByID(eData.OldProviderID); err != nil {
+	if err := oldProvider.FindByID(models.DB, eData.OldProviderID); err != nil {
 		domain.ErrLogger.Printf("error preparing '%s' notification for old provider id, %v ... %v",
 			template, eData.OldProviderID, err)
 		return
@@ -169,7 +169,7 @@ func sendNotificationRequestFromAcceptedToOpen(params senderParams) {
 
 	msg.ToName = oldProvider.GetRealName()
 	msg.ToEmail = oldProvider.Email
-	msg.Subject = domain.GetTranslatedSubject(oldProvider.GetLanguagePreference(), params.subject,
+	msg.Subject = domain.GetTranslatedSubject(oldProvider.GetLanguagePreference(models.DB), params.subject,
 		map[string]string{requestTitleKey: request.Title})
 
 	if err := notifications.Send(msg); err != nil {
@@ -195,7 +195,7 @@ func sendRejectionToPotentialProvider(potentialProvider models.User, request mod
 		ppEmail = "Missing Email"
 	}
 
-	receiver, err := request.GetCreator()
+	receiver, err := request.GetCreator(models.DB)
 	if err != nil {
 		domain.ErrLogger.Printf("error getting Request Receiver for email data, %s", err)
 	}
@@ -218,7 +218,7 @@ func sendRejectionToPotentialProvider(potentialProvider models.User, request mod
 		ToName:    potentialProvider.GetRealName(),
 		ToEmail:   ppEmail,
 		FromEmail: domain.EmailFromAddress(nil),
-		Subject: domain.GetTranslatedSubject(potentialProvider.GetLanguagePreference(), subject,
+		Subject: domain.GetTranslatedSubject(potentialProvider.GetLanguagePreference(models.DB), subject,
 			map[string]string{requestTitleKey: request.Title}),
 	}
 
@@ -232,7 +232,7 @@ func sendNotificationRequestFromOpenToAccepted(params senderParams) {
 	request := params.request
 
 	var providers models.PotentialProviders
-	users, err := providers.FindUsersByRequestID(request, models.User{})
+	users, err := providers.FindUsersByRequestID(models.DB, request, models.User{})
 	if err != nil {
 		domain.ErrLogger.Printf("error finding rejected potential providers for request id, %v ... %v",
 			request.ID, err)
@@ -369,7 +369,7 @@ func requestStatusUpdatedNotifications(request models.Request, eData models.Requ
 
 func sendNewRequestNotifications(request models.Request, users models.Users) {
 	for i, user := range users {
-		if !user.WantsRequestNotification(request) {
+		if !user.WantsRequestNotification(models.DB, request) {
 			continue
 		}
 
@@ -385,7 +385,7 @@ func sendNewRequestNotification(user models.User, request models.Request) error 
 		return errors.New("'To' email address is required")
 	}
 
-	receiver, err := request.GetCreator()
+	receiver, err := request.GetCreator(models.DB)
 	if err != nil {
 		return err
 	}
@@ -395,12 +395,12 @@ func sendNewRequestNotification(user models.User, request models.Request) error 
 	}
 
 	requestDestination := ""
-	if dest, err := request.GetDestination(); err == nil && dest != nil {
+	if dest, err := request.GetDestination(models.DB); err == nil && dest != nil {
 		requestDestination = dest.Description
 	}
 
 	msg := notifications.Message{
-		Subject: domain.GetTranslatedSubject(user.GetLanguagePreference(),
+		Subject: domain.GetTranslatedSubject(user.GetLanguagePreference(models.DB),
 			"Email.Subject.NewRequest", map[string]string{}),
 		Template:  domain.MessageTemplateNewRequest,
 		ToName:    user.GetRealName(),
@@ -422,7 +422,7 @@ func sendNewRequestNotification(user models.User, request models.Request) error 
 func sendPotentialProviderCreatedNotification(providerNickname string, requester models.User, request models.Request) error {
 	template := domain.MessageTemplatePotentialProviderCreated
 	msg := getPotentialProviderMessageForReceiver(requester, providerNickname, template, request)
-	msg.Subject = domain.GetTranslatedSubject(requester.GetLanguagePreference(),
+	msg.Subject = domain.GetTranslatedSubject(requester.GetLanguagePreference(models.DB),
 		"Email.Subject.Request.NewOffer", map[string]string{})
 
 	return notifications.Send(msg)
@@ -431,14 +431,14 @@ func sendPotentialProviderCreatedNotification(providerNickname string, requester
 func sendPotentialProviderSelfDestroyedNotification(providerNickname string, requester models.User, request models.Request) error {
 	template := domain.MessageTemplatePotentialProviderSelfDestroyed
 	msg := getPotentialProviderMessageForReceiver(requester, providerNickname, template, request)
-	msg.Subject = domain.GetTranslatedSubject(requester.GetLanguagePreference(),
+	msg.Subject = domain.GetTranslatedSubject(requester.GetLanguagePreference(models.DB),
 		"Email.Subject.Request.OfferRetracted", map[string]string{})
 	return notifications.Send(msg)
 }
 
 func sendPotentialProviderRejectedNotification(provider models.User, requester string, request models.Request) error {
 	msg := notifications.Message{
-		Subject: domain.GetTranslatedSubject(provider.GetLanguagePreference(),
+		Subject: domain.GetTranslatedSubject(provider.GetLanguagePreference(models.DB),
 			"Email.Subject.Request.OfferRejected", map[string]string{}),
 		Template:  domain.MessageTemplatePotentialProviderRejected,
 		ToName:    provider.GetRealName(),

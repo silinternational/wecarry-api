@@ -94,10 +94,10 @@ func CreateFixturesForUserGetRequests(ms *ModelSuite) UserRequestFixtures {
 	uf := createUserFixtures(ms.DB, 2)
 	users := uf.Users
 
-	requests := createRequestFixtures(ms.DB, 4, false)
+	requests := createRequestFixtures(ms.DB, 4, false, users[0].ID)
 	userID := users[1].UUID.String()
-	requests[0].SetProviderWithStatus(RequestStatusAccepted, &userID)
-	requests[1].SetProviderWithStatus(RequestStatusAccepted, &userID)
+	requests[0].SetProviderWithStatus(ms.DB, RequestStatusAccepted, &userID)
+	requests[1].SetProviderWithStatus(ms.DB, RequestStatusAccepted, &userID)
 	requests[2].Status = RequestStatusAccepted
 	requests[3].Status = RequestStatusAccepted
 	ms.NoError(ms.DB.Save(&requests))
@@ -142,18 +142,18 @@ func CreateFixturesForUserCanViewRequest(ms *ModelSuite) UserRequestFixtures {
 	})
 
 	// Switch User2's org to Org2
-	uo, err := users[2].FindUserOrganization(orgs[0])
+	uo, err := users[2].FindUserOrganization(ms.DB, orgs[0])
 	ms.NoError(err)
 	uo.OrganizationID = orgs[2].ID
 	ms.NoError(DB.UpdateColumns(&uo, "organization_id"))
 
 	// Switch User3's org to Org2
-	uo, err = users[3].FindUserOrganization(orgs[0])
+	uo, err = users[3].FindUserOrganization(ms.DB, orgs[0])
 	ms.NoError(err)
 	uo.OrganizationID = orgs[2].ID
 	ms.NoError(DB.UpdateColumns(&uo, "organization_id"))
 
-	requests := createRequestFixtures(ms.DB, 5, false)
+	requests := createRequestFixtures(ms.DB, 5, false, users[0].ID)
 	requests[1].OrganizationID = orgs[1].ID
 	requests[1].CreatedByID = users[1].ID
 
@@ -178,7 +178,7 @@ func CreateFixturesForUserCanViewRequest(ms *ModelSuite) UserRequestFixtures {
 func createFixturesForTestUserGetPhoto(ms *ModelSuite) UserRequestFixtures {
 	ms.NoError(aws.CreateS3Bucket())
 
-	fileFixtures := createFileFixtures(2)
+	fileFixtures := createFileFixtures(ms.DB, 2)
 
 	unique := domain.GetUUID()
 	users := Users{
@@ -246,7 +246,7 @@ func CreateUserFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) UserMes
 	users := uf.Users
 
 	// Each user has a request and is a provider on the other user's request
-	requests := createRequestFixtures(ms.DB, 2, false)
+	requests := createRequestFixtures(ms.DB, 2, false, users[0].ID)
 	requests[0].Status = RequestStatusAccepted
 	requests[0].ProviderID = nulls.NewInt(users[1].ID)
 	requests[1].Status = RequestStatusAccepted
@@ -401,13 +401,13 @@ func CreateFixturesForUserWantsRequestNotification(ms *ModelSuite) UserRequestFi
 		ms.NoError(ms.DB.Save(&users[i].Location))
 	}
 
-	requests := createRequestFixtures(ms.DB, 3, false)
-	requestOneLocation, err := requests[1].GetOrigin()
+	requests := createRequestFixtures(ms.DB, 3, false, users[0].ID)
+	requestOneLocation, err := requests[1].GetOrigin(ms.DB)
 	ms.NoError(err)
-	ms.NoError(users[1].SetLocation(*requestOneLocation))
+	ms.NoError(users[1].SetLocation(ms.DB, *requestOneLocation))
 
 	// make a copy of the request destination and assign it to a watch
-	watchLocation, err := requests[2].GetDestination()
+	watchLocation, err := requests[2].GetDestination(ms.DB)
 	ms.NoError(err)
 	createFixture(ms, watchLocation)
 	watch := Watch{

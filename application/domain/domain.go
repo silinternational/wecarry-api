@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -12,14 +11,12 @@ import (
 	"os"
 	"reflect"
 	"regexp"
-	"runtime"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 	"unicode"
 
-	"github.com/99designs/gqlgen/graphql"
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/envy"
 	mwi18n "github.com/gobuffalo/mw-i18n"
@@ -52,6 +49,7 @@ const (
 	EventApiMessageCreated                 = "api:message:created"
 	EventApiRequestStatusUpdated           = "api:request:status:updated"
 	EventApiRequestCreated                 = "api:request:status:created"
+	EventApiRequestUpdated                 = "api:request:updated"
 	EventApiPotentialProviderCreated       = "api:potentialprovider:created"
 	EventApiPotentialProviderRejected      = "api:potentialprovider:rejected"
 	EventApiPotentialProviderSelfDestroyed = "api:potentialprovider:selfdestroyed"
@@ -111,13 +109,6 @@ const (
 	threadUIPath  = "/messages/"
 )
 
-// BuffaloContextType is a custom type used as a value key passed to context.WithValue as per the recommendations
-// in the function docs for that function: https://golang.org/pkg/context/#WithValue
-type BuffaloContextType string
-
-// BuffaloContext is the key for the call to context.WithValue in gqlHandler
-const BuffaloContext = BuffaloContextType("BuffaloContext")
-
 // Context keys
 const (
 	ContextKeyCurrentUser = "current_user"
@@ -126,8 +117,13 @@ const (
 )
 
 var (
-	Logger          log.Logger
-	ErrLogger       ErrLogProxy
+	// Logger is a plain instance of log.Logger, normally set to stdout
+	Logger log.Logger
+
+	// ErrLogger is an instance of ErrLogProxy, and is the only error logging
+	// mechanism that can be used without access to the Buffalo context.
+	ErrLogger ErrLogProxy
+
 	AuthCallbackURL string
 )
 
@@ -176,6 +172,8 @@ var Env struct {
 	MicrosoftSecret            string
 	MobileService              string
 	PlaygroundPort             string
+	RedisInstanceName          string
+	RedisInstanceHostPort      string
 	RollbarServerRoot          string
 	RollbarToken               string
 	SendGridAPIKey             string
@@ -240,6 +238,8 @@ func readEnv() {
 	Env.MicrosoftSecret = envy.Get("MICROSOFT_SECRET", "")
 	Env.MobileService = envy.Get("MOBILE_SERVICE", "dummy")
 	Env.PlaygroundPort = envy.Get("PORT", "3000")
+	Env.RedisInstanceName = envy.Get("REDIS_INSTANCE_NAME", "redis")
+	Env.RedisInstanceHostPort = envy.Get("REDIS_INSTANCE_HOST_PORT", "redis:6379")
 	Env.RollbarServerRoot = envy.Get("ROLLBAR_SERVER_ROOT", "github.com/silinternational/wecarry-api")
 	Env.RollbarToken = envy.Get("ROLLBAR_TOKEN", "")
 	Env.SendGridAPIKey = envy.Get("SENDGRID_API_KEY", "")
@@ -262,15 +262,10 @@ func envToInt(name string, def int) int {
 	return n
 }
 
-type AppError struct {
-	Code int `json:"code"`
-
-	// Don't change the value of these Key entries without making a corresponding change on the UI,
-	// since these will be converted to human-friendly texts on the UI
-	Key string `json:"key"`
-}
-
-// ErrLogProxy wraps standard error logger plus sends to Rollbar
+// ErrLogProxy is a "tee" that sends to Rollbar and to the local logger,
+// normally set to stderr. Rollbar is disabled if `GoEnv` is "test", and
+// is a client instantiation separate from the one used in the Rollbar
+// middleware.
 type ErrLogProxy struct {
 	LocalLog  log.Logger
 	RemoteLog *rollbar.Client
@@ -345,24 +340,6 @@ func GetSubPartKeyValues(inString, outerDelimiter, innerDelimiter string) map[st
 	return keyValues
 }
 
-// ConvertTimeToStringPtr is intended to convert the
-// CreatedAt and UpdatedAt fields of database objects
-// to pointers to strings to populate the same gqlgen fields
-func ConvertTimeToStringPtr(inTime time.Time) *string {
-	inTimeStr := inTime.Format(time.RFC3339)
-	return &inTimeStr
-}
-
-// ConvertStrPtrToString dereferences a string pointer and returns
-// the result. In case nil is given, an empty string is returned.
-func ConvertStrPtrToString(inPtr *string) string {
-	if inPtr == nil {
-		return ""
-	}
-
-	return *inPtr
-}
-
 // GetCurrentTime returns a string of the current date and time
 // based on the default DateTimeFormat
 func GetCurrentTime() string {
@@ -377,17 +354,6 @@ func GetUUID() uuid2.UUID {
 		ErrLogger.Printf("error creating new uuid2 ... %v", err)
 	}
 	return uuid
-}
-
-// ConvertStringPtrToDate uses time.Parse to convert a date in yyyy-mm-dd
-// format into a time.Time object. If nil is provided, the default value
-// for time.Time is returned.
-func ConvertStringPtrToDate(inPtr *string) (time.Time, error) {
-	if inPtr == nil || *inPtr == "" {
-		return time.Time{}, nil
-	}
-
-	return time.Parse(DateFormat, *inPtr)
 }
 
 // IsStringInSlice iterates over a slice of strings, looking for the given
@@ -438,38 +404,74 @@ func RollbarMiddleware(next buffalo.Handler) buffalo.Handler {
 	}
 }
 
-// Error log error and send to Rollbar
-func Error(c buffalo.Context, msg string) {
-	// Avoid panics running tests when c doesn't have the necessary nested methods
-	logger := c.Logger()
-	if logger == nil {
-		return
-	}
+// Error sends a message to Rollbar and to the local logger, including
+// any extras found in the context.
+func Error(ctx context.Context, msg string) {
+	bc := getBuffaloContext(ctx)
 
-	extras := getExtras(c)
-	if extras == nil {
-		extras = map[string]interface{}{}
-	}
-
+	extras := getExtras(bc)
 	extrasLock.RLock()
 	defer extrasLock.RUnlock()
 
-	rollbarMessage(c, rollbar.ERR, msg, extras)
+	rollbarMessage(bc, rollbar.ERR, msg, extras)
 
-	extras["message"] = msg
+	logger := bc.Logger()
+	if logger != nil {
+		logger.Error(encodeLogMsg(msg, extras))
+	}
+}
 
+// Warn sends a message to Rollbar and to the local logger, including
+// any extras found in the context.
+func Warn(ctx context.Context, msg string) {
+	bc := getBuffaloContext(ctx)
+
+	extras := getExtras(bc)
+	extrasLock.RLock()
+	defer extrasLock.RUnlock()
+
+	rollbarMessage(bc, rollbar.WARN, msg, extras)
+
+	logger := bc.Logger()
+	if logger != nil {
+		logger.Warn(encodeLogMsg(msg, extras))
+	}
+}
+
+// Info sends a message to the local logger, including any extras found in the context.
+func Info(ctx context.Context, msg string) {
+	bc := getBuffaloContext(ctx)
+
+	extras := getExtras(bc)
+	extrasLock.RLock()
+	defer extrasLock.RUnlock()
+
+	logger := bc.Logger()
+	if logger != nil {
+		logger.Info(encodeLogMsg(msg, extras))
+	}
+}
+
+func getBuffaloContext(ctx context.Context) buffalo.Context {
+	return ctx.(buffalo.Context)
+}
+
+func encodeLogMsg(msg string, extras map[string]interface{}) string {
 	encoder := jsonMin
 	if Env.GoEnv == "development" {
 		encoder = jsonIndented
 	}
 
+	if extras == nil {
+		extras = map[string]interface{}{}
+	}
+	extras["message"] = msg
+
 	j, err := encoder(&extras)
 	if err != nil {
-		logger.Error("failed to json encode error message: %s", err)
-		return
+		return "failed to json encode error message: " + err.Error()
 	}
-
-	logger.Error(string(j))
+	return string(j)
 }
 
 func jsonMin(i interface{}) ([]byte, error) {
@@ -478,25 +480,6 @@ func jsonMin(i interface{}) ([]byte, error) {
 
 func jsonIndented(i interface{}) ([]byte, error) {
 	return json.MarshalIndent(i, "", "  ")
-}
-
-// Warn - log warning and send to Rollbar
-func Warn(c buffalo.Context, msg string) {
-	extras := getExtras(c)
-	extrasLock.RLock()
-	defer extrasLock.RUnlock()
-
-	c.Logger().Warn(msg, extras)
-	rollbarMessage(c, rollbar.WARN, msg, extras)
-}
-
-// Info - log info message
-func Info(c buffalo.Context, msg string) {
-	extras := getExtras(c)
-	extrasLock.RLock()
-	defer extrasLock.RUnlock()
-
-	c.Logger().Info(msg, extras)
 }
 
 // rollbarMessage is a wrapper function to call rollbar's client.MessageWithExtras function from client stored in context
@@ -699,60 +682,6 @@ func (v *StringIsVisible) IsValid(errors *validate.Errors) {
 	errors.Add(validators.GenerateKey(v.Name), fmt.Sprintf("%s must have a visible character.", v.Name))
 }
 
-// ReportError logs an error with details, and returns a user-friendly, translated error identified by translation key
-// string `errID`. If called with a full GraphQL context, the query text will be logged in the extras.
-func ReportError(ctx context.Context, err error, errID string) error {
-	c := GetBuffaloContext(ctx)
-
-	NewExtra(c, "function", GetFunctionName(2))
-
-	// need to use direct access instead of graphql.GetOperationContext to avoid a panic during unit tests
-	if oc, ok := ctx.Value("operation_context").(*graphql.OperationContext); ok && oc != nil {
-		NewExtra(c, "query", fmt.Sprintf("%#v", oc.RawQuery)) // escape control characters
-	}
-
-	errStr := errID
-	if err != nil {
-		errStr = err.Error()
-	}
-	Error(c, errStr)
-
-	if T == nil {
-		return errors.New(errID)
-	}
-	return errors.New(T.Translate(c, errID))
-}
-
-// GetBuffaloContext retrieves a "BuffaloContext" from a wrapped context as constructed by
-// actions.gqlHandler. If it's already a buffalo.Context, it is returned as is, type casted to buffalo.Context.
-func GetBuffaloContext(c context.Context) buffalo.Context {
-	bc, ok := c.Value(BuffaloContext).(buffalo.Context)
-	if ok {
-		return bc
-	}
-	bc, ok = c.(buffalo.Context)
-	if ok {
-		return bc
-	}
-	return emptyContext{}
-}
-
-type emptyContext struct {
-	buffalo.Context
-}
-
-// GetFunctionName provides the filename, line number, and function name of the caller, skipping the top `skip`
-// functions on the stack.
-func GetFunctionName(skip int) string {
-	pc, file, line, ok := runtime.Caller(skip)
-	if !ok {
-		return "?"
-	}
-
-	fn := runtime.FuncForPC(pc)
-	return fmt.Sprintf("%s:%d %s", file, line, fn.Name())
-}
-
 func UniquifyIntSlice(intSlice []int) []int {
 	keys := make(map[int]bool)
 	list := make([]int, 0, len(keys))
@@ -766,7 +695,7 @@ func UniquifyIntSlice(intSlice []int) []int {
 }
 
 func NewExtra(ctx context.Context, key string, e interface{}) {
-	c := GetBuffaloContext(ctx)
+	c := getBuffaloContext(ctx)
 	extras := getExtras(c)
 
 	extrasLock.Lock()

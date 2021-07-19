@@ -29,6 +29,8 @@
   translation: We had a problem finding the requests for the event
 - id: Meeting.Invites
   translation: We had a problem finding the invites for the event
+- id: Meeting.Organizers
+  translation: We had a problem finding the organizers for the event
 - id: Meeting.Participants
   translation: We had a problem finding the participants for the event
 - id: Meeting.UpdateImageFile
@@ -148,8 +150,8 @@
   translation: We had a problem updating the conversation last-viewed time.
 - id: GetRequestCreator
   translation: We had a problem finding the creator of that request.
-- id: GetRequestReceiver
-  translation: We had a problem finding the receiver for that request.
+- id: GetPotentialProviders
+  translation: We had a problem finding the potential providers for that request.
 - id: GetRequestProvider
   translation: We had a problem finding the provider for that request.
 - id: GetRequestOrganization
@@ -198,8 +200,6 @@
   translation: We had a problem finding that request for changing its status.
 - id: UpdateRequestStatus.Unauthorized
   translation: You are not allowed to change the status of that request.
-- id: Request.FindRequest
-  translation: We had a problem finding that request.
 - id: AddMeAsPotentialProvider
   translation: We had a problem registering your offer to fulfill a request.
 - id: AddMeAsPotentialProvider.FindRequest
@@ -208,14 +208,10 @@
   translation: That request has a status that does not allow offers.
 - id: RemoveMeAsPotentialProvider
   translation: We had a problem cancelling your offer to fufill a request.
-- id: RemoveMeAsPotentialProvider.NotAuthorized
-  translation: You are not allowed to cancel that user's offer.
 - id: RemoveMeAsPotentialProvider.FindRequest
   translation: We had a problem finding the request associated with your offer.
 - id: RemovePotentialProvider
   translation: We had a problem cancelling that offer to fulfill a request.
-- id: RemovePotentialProvider.NotAuthorized
-  translation: You are not allowed to cancel that user's offer.
 - id: RemovePotentialProvider.FindRequest
   translation: We had a problem finding the request associated with that offer.
 - id: GetThreadParticipants
@@ -224,8 +220,6 @@
   translation: We had a problem finding the time you last viewed that conversation.
 - id: GetThreadMessages
   translation: We had a problem finding the list of messages in that conversation.
-- id: GetThreadRequestID
-  translation: We had a problem finding the request for that conversation.
 - id: GetThreadRequest
   translation: We had a problem finding the request information for that conversation.
 - id: GetThreads
@@ -314,6 +308,8 @@
   translation: We had a problem finding the Alert creator
 - id: GetWatchDestination
   translation: We had a problem finding the Alert destination
+- id: GetWatchMeeting
+  translation: We had a problem finding the Alert meeting
 - id: GetWatchOrigin
   translation: We had a problem finding the Alert origin
 - id: MyWatches
@@ -346,15 +342,15 @@
 # Trust
 - id: GetOrganizationTrustedOrganizations
   translation: We had a problem getting a list of trusted organizations
-- id: CreateTrust.FindPrimaryOrganization
+- id: CreateOrganizationTrust.FindPrimaryOrganization
   translation: We had a problem finding the organization to create the Trust
-- id: CreateTrust.Unauthorized
+- id: CreateOrganizationTrust.Unauthorized
   translation: We had a problem finding the organization to create the Trust
 - id: CreateOrganizationTrust
   translation: We had a problem creating the Trust
-- id: RemoveTrust.FindPrimaryOrganization
+- id: RemoveOrganizationTrust.FindPrimaryOrganization
   translation: We had a problem finding the organization to remove the Trust
-- id: RemoveTrust.Unauthorized
+- id: RemoveOrganizationTrust.Unauthorized
   translation: We had a problem finding the organization to remove the Trust
-- id: RemoveTrust
+- id: RemoveOrganizationTrust
   translation: We had a problem removing the Trust

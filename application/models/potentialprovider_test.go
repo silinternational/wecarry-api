@@ -56,7 +56,7 @@ func (ms *ModelSuite) TestPotentialProviders_FindUsersByRequestID() {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			providers := PotentialProviders{}
-			users, err := providers.FindUsersByRequestID(tt.request, tt.user)
+			users, err := providers.FindUsersByRequestID(ms.DB, tt.request, tt.user)
 			ms.NoError(err, "unexpected error")
 			ids := make([]int, len(users))
 			for i, u := range users {
@@ -108,7 +108,7 @@ func (ms *ModelSuite) TestPotentialProvider_FindWithRequestUUIDAndUserUUID() {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			provider := PotentialProvider{}
-			err := provider.FindWithRequestUUIDAndUserUUID(tt.request.UUID.String(),
+			err := provider.FindWithRequestUUIDAndUserUUID(ms.DB, tt.request.UUID.String(),
 				tt.ppUserUUID.String(), tt.currentUser)
 
 			if tt.wantErr != "" {
@@ -119,67 +119,6 @@ func (ms *ModelSuite) TestPotentialProvider_FindWithRequestUUIDAndUserUUID() {
 
 			ms.NoError(err, "unexpected error")
 			ms.Equal(tt.wantID, provider.ID)
-		})
-	}
-}
-
-func (ms *ModelSuite) TestPotentialProviders_DestroyAllWithRequestUUID() {
-	f := createPotentialProvidersFixtures(ms)
-	requests := f.Requests
-	users := f.Users
-	pps := f.PotentialProviders
-	t := ms.T()
-	tests := []struct {
-		name        string
-		currentUser User
-		request     Request
-		wantIDs     []int
-		wantErr     string
-	}{
-		{
-			name:        "good: Request Creator as current user",
-			currentUser: users[0],
-			request:     requests[0],
-			wantIDs:     []int{pps[3].ID, pps[4].ID},
-		},
-		{
-			name:        "bad: current user is potential provider but not Request Creator",
-			currentUser: users[2],
-			request:     requests[0],
-			wantErr: fmt.Sprintf(`user %v has insufficient permissions to destroy PotentialProviders for Request %v`,
-				users[2].ID, requests[0].ID),
-		},
-		{
-			name:        "bad: current user is not Request Creator",
-			currentUser: users[1],
-			request:     requests[1],
-			wantErr: fmt.Sprintf(`user %v has insufficient permissions to destroy PotentialProviders for Request %v`,
-				users[1].ID, requests[1].ID),
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			providers := PotentialProviders{}
-			err := providers.DestroyAllWithRequestUUID(test.request.UUID.String(), test.currentUser)
-
-			if test.wantErr != "" {
-				ms.Error(err, "did not get error as expected")
-				ms.Equal(test.wantErr, err.Error(), "wrong error message")
-				return
-			}
-
-			ms.NoError(err, "unexpected error")
-
-			var provs PotentialProviders
-			err = DB.All(&provs)
-			ms.NoError(err, "error just getting PotentialProviders back out of the DB.")
-
-			pIDs := make([]int, len(provs))
-			for i, p := range provs {
-				pIDs[i] = p.ID
-			}
-
-			ms.Equal(test.wantIDs, pIDs)
 		})
 	}
 }
@@ -201,7 +140,7 @@ func (ms *ModelSuite) TestNewWithRequestUUID() {
 			name:    "bad - using request's CreatedBy",
 			request: requests[0],
 			userID:  users[0].ID,
-			wantErr: "PotentialProvider User must not be the Request's Receiver.",
+			wantErr: "the PotentialProvider User must not be the Request's Receiver",
 		},
 		{
 			name:    "good - second request second user",
@@ -212,7 +151,7 @@ func (ms *ModelSuite) TestNewWithRequestUUID() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			provider := PotentialProvider{}
-			err := provider.NewWithRequestUUID(test.request.UUID.String(), test.userID)
+			err := provider.NewWithRequestUUID(ms.DB, test.request.UUID.String(), test.userID)
 			if test.wantErr != "" {
 				ms.Error(err, "expected an error but did not get one")
 				ms.Equal(test.wantErr, err.Error(), "incorrect error message")

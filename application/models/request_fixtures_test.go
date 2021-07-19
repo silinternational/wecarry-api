@@ -84,7 +84,7 @@ func createFixturesForTestRequest_manageStatusTransition_forwardProgression(ms *
 	uf := createUserFixtures(ms.DB, 2)
 	users := uf.Users
 
-	requests := createRequestFixtures(ms.DB, 4, false)
+	requests := createRequestFixtures(ms.DB, 4, false, users[0].ID)
 	requests[1].Status = RequestStatusAccepted
 	requests[1].CreatedByID = users[1].ID
 	requests[1].ProviderID = nulls.NewInt(users[0].ID)
@@ -115,7 +115,7 @@ func createFixturesForTestRequest_manageStatusTransition_backwardProgression(ms 
 	uf := createUserFixtures(ms.DB, 2)
 	users := uf.Users
 
-	requests := createRequestFixtures(ms.DB, 4, false)
+	requests := createRequestFixtures(ms.DB, 4, false, users[0].ID)
 
 	// Put the first two requests into ACCEPTED status (also give them matching RequestHistory entries)
 	requests[0].Status = RequestStatusAccepted
@@ -168,10 +168,10 @@ func CreateFixturesForRequestsGetFiles(ms *ModelSuite) RequestFixtures {
 	request := Request{CreatedByID: user.ID, OrganizationID: organization.ID, DestinationID: location.ID}
 	createFixture(ms, &request)
 
-	files := createFileFixtures(3)
+	files := createFileFixtures(ms.DB, 3)
 
 	for i := range files {
-		_, err := request.AttachFile(files[i].UUID.String())
+		_, err := request.AttachFile(ms.DB, files[i].UUID.String())
 		ms.NoError(err, "failed to attach file to request fixture")
 	}
 
@@ -200,7 +200,7 @@ func CreateFixturesForRequestsGetFiles(ms *ModelSuite) RequestFixtures {
 //		AuthEmail:      users[0].Email,
 //	})
 //
-//	requests := createRequestFixtures(ms.DB, 3, false)
+//	requests := createRequestFixtures(ms.DB, 3, false, users[0].ID)
 //	requests[1].OrganizationID = orgs[1].ID
 //	requests[2].Status = RequestStatusRemoved
 //	ms.NoError(ms.DB.Save(&requests))
@@ -239,17 +239,17 @@ func CreateFixtures_Requests_FindByUser(ms *ModelSuite) RequestFixtures {
 		AuthEmail:      users[0].Email,
 	})
 
-	uo, err := users[2].FindUserOrganization(orgs[0])
+	uo, err := users[2].FindUserOrganization(ms.DB, orgs[0])
 	ms.NoError(err)
 	uo.OrganizationID = orgs[2].ID
 	ms.NoError(DB.UpdateColumns(&uo, "organization_id"))
 
-	uo, err = users[3].FindUserOrganization(orgs[0])
+	uo, err = users[3].FindUserOrganization(ms.DB, orgs[0])
 	ms.NoError(err)
 	uo.OrganizationID = orgs[1].ID
 	ms.NoError(DB.UpdateColumns(&uo, "organization_id"))
 
-	requests := createRequestFixtures(ms.DB, 8, false)
+	requests := createRequestFixtures(ms.DB, 8, false, users[0].ID)
 	requests[1].OrganizationID = orgs[1].ID
 	requests[2].Status = RequestStatusOpen
 	requests[3].Status = RequestStatusRemoved
@@ -339,7 +339,7 @@ func CreateFixtures_Request_IsEditable(ms *ModelSuite) RequestFixtures {
 	uf := createUserFixtures(ms.DB, 2)
 	users := uf.Users
 
-	requests := createRequestFixtures(ms.DB, 2, false)
+	requests := createRequestFixtures(ms.DB, 2, false, users[0].ID)
 	requests[1].Status = RequestStatusRemoved
 
 	return RequestFixtures{
@@ -357,12 +357,57 @@ func createFixturesForRequestGetAudience(ms *ModelSuite) RequestFixtures {
 
 	users := createUserFixtures(ms.DB, 2).Users
 
-	requests := createRequestFixtures(ms.DB, 2, false)
+	requests := createRequestFixtures(ms.DB, 2, false, users[0].ID)
 	requests[1].OrganizationID = orgs[1].ID
 	ms.NoError(ms.DB.Save(&requests[1]))
 
 	return RequestFixtures{
 		Users:    users,
 		Requests: requests,
+	}
+}
+
+// CreateFixtures_Request_AddUserAsPotentialProvider generates
+//   five PotentialProvider records for testing.
+// If necessary, five User and four Request fixtures will also be created.
+//  (The fifth User will be with a different organization)
+// The Requests will all be created by the first user.
+// The first Request will have all but the first user as a potential provider.
+// The second Request will have the last two users as potential providers.
+// The third Request won't have any potential providers
+// The fourth Request won't have any potential providers but will not be OPEN
+func CreateFixtures_Request_AddUserAsPotentialProvider(ms *ModelSuite) potentialProvidersFixtures {
+	uf := createUserFixtures(ms.DB, 5)
+
+	extraOrg := Organization{AuthConfig: "{}"}
+	mustCreate(ms.DB, &extraOrg)
+
+	otherOrgUser := uf.UserOrganizations[4]
+	otherOrgUser.OrganizationID = extraOrg.ID
+	ms.NoError(ms.DB.Save(&otherOrgUser), "failed saving OrganizationUser with new Org")
+
+	requests := createRequestFixtures(ms.DB, 4, false, uf.Users[0].ID)
+	providers := PotentialProviders{}
+
+	// ensure the first user is actually the creator (timing issues tend to make this unreliable otherwise)
+	for i := range requests {
+		requests[i].CreatedByID = uf.Users[0].ID
+	}
+	requests[3].Status = RequestStatusAccepted
+
+	ms.DB.Update(&requests)
+
+	for i, p := range requests[:2] {
+		for _, u := range uf.Users[i+1:] {
+			c := PotentialProvider{RequestID: p.ID, UserID: u.ID}
+			c.Create(ms.DB)
+			providers = append(providers, c)
+		}
+	}
+
+	return potentialProvidersFixtures{
+		Users:              uf.Users,
+		Requests:           requests,
+		PotentialProviders: providers,
 	}
 }

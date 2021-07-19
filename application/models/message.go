@@ -13,11 +13,12 @@ import (
 	"github.com/gobuffalo/validate/v3/validators"
 	"github.com/gofrs/uuid"
 
+	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/domain"
 )
 
 type Message struct {
-	ID        int       `json:"id" db:"id"`
+	ID        int       `json:"-" db:"id"`
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 	UUID      uuid.UUID `json:"uuid" db:"uuid"`
@@ -78,36 +79,36 @@ func (m *Message) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 // the current time. It also ensures the associated ThreadParticipant records exist, and emits an EventApiMessageCreated
 // event.
 func (m *Message) AfterCreate(tx *pop.Connection) error {
-	thread, err := m.GetThread()
+	thread, err := m.GetThread(tx)
 	if err != nil {
 		return errors.New("error getting message's Thread ... " + err.Error())
 	}
 
-	request, err := thread.GetRequest()
+	err = thread.LoadRequest(tx)
 	if err != nil {
 		return errors.New("error getting message's Request ... " + err.Error())
 	}
 
 	// Ensure a matching threadparticipant exists
-	if err := thread.ensureParticipants(*request, m.SentByID); err != nil {
+	if err := thread.ensureParticipants(tx, thread.Request, m.SentByID); err != nil {
 		return err
 	}
 
 	threadP := ThreadParticipant{}
 
-	if err := threadP.FindByThreadIDAndUserID(m.ThreadID, m.SentByID); err != nil {
+	if err := threadP.FindByThreadIDAndUserID(tx, m.ThreadID, m.SentByID); err != nil {
 		domain.ErrLogger.Printf("aftercreate new message %s", err.Error())
 		return nil
 	}
 
-	if err := threadP.UpdateLastViewedAt(time.Now()); err != nil {
+	if err := threadP.UpdateLastViewedAt(tx, time.Now()); err != nil {
 		domain.ErrLogger.Printf("aftercreate new message %s", err.Error())
 		return nil
 	}
 
 	// Touch the "updatedAt" field on the thread so thread lists can easily be sorted by last activity
-	if err := DB.Load(m, "Thread"); err == nil {
-		if err = m.Thread.Update(); err != nil {
+	if err := tx.Load(m, "Thread"); err == nil {
+		if err = m.Thread.Update(tx); err != nil {
 			domain.Logger.Print("failed to save thread on message create,", err.Error())
 		}
 	}
@@ -124,9 +125,9 @@ func (m *Message) AfterCreate(tx *pop.Connection) error {
 }
 
 // GetSender finds and returns the User that is the Sender of this Message
-func (m *Message) GetSender() (*User, error) {
+func (m *Message) GetSender(tx *pop.Connection) (*User, error) {
 	sender := User{}
-	if err := DB.Find(&sender, m.SentByID); err != nil {
+	if err := tx.Find(&sender, m.SentByID); err != nil {
 		err = fmt.Errorf("error finding message sentBy user with id %v ... %v", m.SentByID, err)
 		return nil, err
 	}
@@ -134,58 +135,111 @@ func (m *Message) GetSender() (*User, error) {
 }
 
 // GetThread finds and returns the Thread that this Message is attached to
-func (m *Message) GetThread() (*Thread, error) {
+func (m *Message) GetThread(tx *pop.Connection) (*Thread, error) {
 	thread := Thread{}
-	if err := DB.Find(&thread, m.ThreadID); err != nil {
+	if err := tx.Find(&thread, m.ThreadID); err != nil {
 		err = fmt.Errorf("error finding message thread id %v ... %v", m.ThreadID, err)
 		return nil, err
 	}
 	return &thread, nil
 }
 
-// Create a new message if authorized.
-func (m *Message) Create(ctx context.Context, requestUUID string, threadUUID *string, content string) error {
-	user := CurrentUser(ctx)
-
+// CreateFromInput a new message if authorized.
+func (m *Message) CreateFromInput(tx *pop.Connection, user User, input api.MessageInput) error {
 	var request Request
-	if err := request.FindByUUID(requestUUID); err != nil {
-		return errors.New("failed to find request, " + err.Error())
-	}
-	if !request.IsVisible(ctx, user) {
-		return errors.New("user cannot create a message on request")
+	if aErr := findAndValidateRequest(tx, user, input, &request); aErr != nil {
+		return aErr
 	}
 
 	var thread Thread
-	if threadUUID != nil && *threadUUID != "" {
-		err := thread.FindByUUID(*threadUUID)
-		if err != nil {
-			return errors.New("failed to find thread, " + err.Error())
-		}
-		if thread.RequestID != request.ID {
-			return errors.New("thread is not valid for request")
-		}
-		if !thread.IsVisible(user.ID) {
-			return errors.New("user cannot create a message on thread")
+	if input.ThreadID != nil && *input.ThreadID != "" {
+		if aErr := findAndValidateThread(tx, user, input, &thread, request); aErr != nil {
+			return aErr
 		}
 	} else {
-		err := thread.CreateWithParticipants(request, user)
+		err := thread.CreateWithParticipants(tx, request, user)
 		if err != nil {
-			return errors.New("failed to create new thread on request, " + err.Error())
+			err = errors.New("failed to create new thread on request, " + err.Error())
+			return api.NewAppError(err, api.ErrorCreateFailure, api.CategoryInternal)
 		}
 	}
 
-	m.Content = content
+	m.Content = input.Content
 	m.ThreadID = thread.ID
+	m.Thread = thread
 	m.SentByID = user.ID
-	if err := create(m); err != nil {
-		return errors.New("failed to create new message, " + err.Error())
+	if err := create(tx, m); err != nil {
+		appError := api.AppError{
+			Category: api.CategoryInternal,
+			Key:      api.ErrorCreateFailure,
+			Err:      errors.New("failed to create new message, " + err.Error()),
+		}
+		return &appError
+	}
+
+	return nil
+}
+
+func findAndValidateRequest(tx *pop.Connection, user User, input api.MessageInput, request *Request) *api.AppError {
+	if err := request.FindByUUID(tx, input.RequestID); err != nil {
+		appError := api.AppError{
+			Category: api.CategoryUser,
+			Key:      api.ErrorMessageBadRequestUUID,
+			Err:      errors.New("error with new message: " + err.Error()),
+		}
+		return &appError
+	}
+
+	if isVisible, err := request.IsVisible(tx, user); err != nil {
+		appError := api.AppError{
+			Category: api.CategoryInternal,
+			Key:      api.ErrorQueryFailure,
+			Err:      errors.New("error with new message: " + err.Error()),
+		}
+		return &appError
+	} else if !isVisible {
+		appError := api.AppError{
+			Category: api.CategoryForbidden,
+			Key:      api.ErrorMessageRequestNotVisible,
+			Err:      errors.New("user cannot create a message on request"),
+		}
+		return &appError
+	}
+	return nil
+}
+
+func findAndValidateThread(tx *pop.Connection, user User, input api.MessageInput, thread *Thread, request Request) *api.AppError {
+	err := thread.FindByUUID(tx, *input.ThreadID)
+	if err != nil {
+		appError := api.AppError{
+			Category: api.CategoryUser,
+			Key:      api.ErrorMessageBadThreadUUID,
+			Err:      errors.New("error with new message: " + err.Error()),
+		}
+		return &appError
+	}
+	if thread.RequestID != request.ID {
+		appError := api.AppError{
+			Category: api.CategoryUser,
+			Key:      api.ErrorMessageThreadRequestMismatch,
+			Err:      errors.New("thread is not valid for request"),
+		}
+		return &appError
+	}
+	if !thread.IsVisible(tx, user.ID) {
+		appError := api.AppError{
+			Category: api.CategoryForbidden,
+			Key:      api.ErrorMessageThreadNotVisible,
+			Err:      errors.New("user cannot create a message on thread"),
+		}
+		return &appError
 	}
 
 	return nil
 }
 
 // FindByID loads from DB the Message record identified by the given primary key
-func (m *Message) FindByID(id int, eagerFields ...string) error {
+func (m *Message) FindByID(tx *pop.Connection, id int, eagerFields ...string) error {
 	if id <= 0 {
 		return errors.New("error finding message, invalid id")
 	}
@@ -193,25 +247,25 @@ func (m *Message) FindByID(id int, eagerFields ...string) error {
 	var err error
 	// Eager() with an empty argument list will load all fields, which is not what is intended here
 	if len(eagerFields) > 0 {
-		err = DB.Eager(eagerFields...).Find(m, id)
+		err = tx.Eager(eagerFields...).Find(m, id)
 	} else {
-		err = DB.Find(m, id)
+		err = tx.Find(m, id)
 	}
 
 	if err != nil {
 		return fmt.Errorf("error finding message by id, %s", err)
 	}
 
-	return DB.Find(m, id)
+	return tx.Find(m, id)
 }
 
 // findByUUID loads from DB the Message record identified by the given UUID
-func (m *Message) findByUUID(id string) error {
+func (m *Message) findByUUID(tx *pop.Connection, id string) error {
 	if id == "" {
 		return errors.New("error: message uuid must not be blank")
 	}
 
-	if err := DB.Where("uuid = ?", id).First(m); err != nil {
+	if err := tx.Where("uuid = ?", id).First(m); err != nil {
 		return fmt.Errorf("error finding message by uuid: %s", err.Error())
 	}
 
@@ -219,8 +273,8 @@ func (m *Message) findByUUID(id string) error {
 }
 
 // FindByUserAndUUID loads from DB the Message record identified by the given UUID, if the given user is allowed.
-func (m *Message) FindByUserAndUUID(user User, id string) error {
-	if err := m.findByUUID(id); err != nil {
+func (m *Message) FindByUserAndUUID(tx *pop.Connection, user User, id string) error {
+	if err := m.findByUUID(tx, id); err != nil {
 		return err
 	}
 
@@ -229,7 +283,7 @@ func (m *Message) FindByUserAndUUID(user User, id string) error {
 	}
 
 	var tp ThreadParticipant
-	if err := tp.FindByThreadIDAndUserID(m.ThreadID, user.ID); err != nil {
+	if err := tp.FindByThreadIDAndUserID(tx, m.ThreadID, user.ID); err != nil {
 		if domain.IsOtherThanNoRows(err) {
 			return fmt.Errorf("error finding threadParticipant record for message %s, %s", id, err)
 		}
@@ -237,4 +291,27 @@ func (m *Message) FindByUserAndUUID(user User, id string) error {
 	}
 
 	return nil
+}
+
+// converts models.Messages to api.Messages
+func ConvertMessagesToAPIType(ctx context.Context, messages Messages) (api.Messages, error) {
+	var output api.Messages
+	if err := api.ConvertToOtherType(messages, &output); err != nil {
+		err = errors.New("error converting messages to api.Messages: " + err.Error())
+		return nil, err
+	}
+
+	// Hydrate the thread's messages with their sentBy users
+	for i := range output {
+		sentByOutput, err := ConvertUser(ctx, messages[i].SentBy)
+		if err != nil {
+			err = errors.New("error converting messages sentBy to api.User: " + err.Error())
+			return nil, err
+		}
+
+		output[i].ID = messages[i].UUID
+		output[i].SentBy = &sentByOutput
+	}
+
+	return output, nil
 }

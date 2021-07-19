@@ -19,13 +19,6 @@ type UserOrgFixtures struct {
 	userOrgs models.UserOrganizations
 }
 
-type meetingFixtures struct {
-	models.Users
-	models.Meetings
-	models.MeetingInvites
-	models.File
-}
-
 func createFixturesForAuthInvite(as *ActionSuite) meetingFixtures {
 	uf := test.CreateUserFixtures(as.DB, 2)
 	user := uf.Users[0]
@@ -34,7 +27,7 @@ func createFixturesForAuthInvite(as *ActionSuite) meetingFixtures {
 	err := aws.CreateS3Bucket()
 	as.NoError(err, "failed to create S3 bucket, %s", err)
 
-	fileFixture := test.CreateFileFixture()
+	fileFixture := test.CreateFileFixture(as.DB)
 
 	meetings := make(models.Meetings, 2)
 	meetings[1].FileID = nulls.NewInt(fileFixture.ID)
@@ -222,7 +215,7 @@ func createFixturesForEnsureMeetingParticipant(as *ActionSuite) meetingFixtures 
 	err := aws.CreateS3Bucket()
 	as.NoError(err, "failed to create S3 bucket, %s", err)
 
-	fileFixture := test.CreateFileFixture()
+	fileFixture := test.CreateFileFixture(as.DB)
 
 	meetings := make(models.Meetings, 2)
 	meetings[1].FileID = nulls.NewInt(fileFixture.ID)

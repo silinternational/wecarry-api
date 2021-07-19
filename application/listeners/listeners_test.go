@@ -155,12 +155,12 @@ func (ms *ModelSuite) TestSendNewMessageNotification() {
 func createFixturesForSendRequestCreatedNotifications(ms *ModelSuite) RequestFixtures {
 	users := test.CreateUserFixtures(ms.DB, 3).Users
 
-	request := test.CreateRequestFixtures(ms.DB, 1, false)[0]
-	requestOrigin, err := request.GetOrigin()
+	request := test.CreateRequestFixtures(ms.DB, 1, false, users[0].ID)[0]
+	requestOrigin, err := request.GetOrigin(ms.DB)
 	ms.NoError(err)
 
 	for i := range users {
-		ms.NoError(users[i].SetLocation(*requestOrigin))
+		ms.NoError(users[i].SetLocation(ms.DB, *requestOrigin))
 	}
 
 	return RequestFixtures{

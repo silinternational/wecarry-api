@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/buffalo/render"
+	"github.com/silinternational/wecarry-api/api"
 
 	"github.com/silinternational/wecarry-api/auth"
 	"github.com/silinternational/wecarry-api/auth/azureadv2"
@@ -132,10 +134,10 @@ func getSocialAuthOptions(authConfigs map[string]SocialAuthConfig) []authOption 
 // For non invite based ... based on a User in the database with a SocialAuthProvider value
 func finishAuthRequestForSocialUser(c buffalo.Context, authEmail string) error {
 	var user models.User
-	if err := user.FindByEmail(authEmail); err != nil {
+	if err := user.FindByEmail(models.Tx(c), authEmail); err != nil {
 		authErr := authError{
 			httpStatus: http.StatusInternalServerError,
-			errorKey:   domain.ErrorFindingUserByEmail,
+			errorKey:   api.ErrorFindingUserByEmail,
 			errorMsg:   err.Error(),
 		}
 		return authRequestError(c, authErr)
@@ -148,7 +150,7 @@ func finishAuthRequestForSocialUser(c buffalo.Context, authEmail string) error {
 	if err != nil {
 		authErr := authError{
 			httpStatus: http.StatusBadRequest,
-			errorKey:   domain.ErrorLoadingAuthProvider,
+			errorKey:   api.ErrorLoadingAuthProvider,
 			errorMsg:   fmt.Sprintf("error loading social auth provider, %v", err),
 		}
 		return authRequestError(c, authErr, extras)
@@ -158,7 +160,7 @@ func finishAuthRequestForSocialUser(c buffalo.Context, authEmail string) error {
 	if err != nil {
 		authErr := authError{
 			httpStatus: http.StatusInternalServerError,
-			errorKey:   domain.ErrorGettingAuthURL,
+			errorKey:   api.ErrorGettingAuthURL,
 			errorMsg:   fmt.Sprintf("error getting social auth url, %v", err),
 		}
 		return authRequestError(c, authErr, extras)
@@ -185,7 +187,7 @@ func authSelect(c buffalo.Context) error {
 	if authType == "" {
 		authErr := authError{
 			httpStatus: http.StatusBadRequest,
-			errorKey:   domain.ErrorMissingAuthType,
+			errorKey:   api.ErrorMissingAuthType,
 			errorMsg:   AuthTypeParam + " is required to login",
 		}
 		return authRequestError(c, authErr)
@@ -197,7 +199,7 @@ func authSelect(c buffalo.Context) error {
 	if err != nil {
 		authErr := authError{
 			httpStatus: http.StatusBadRequest,
-			errorKey:   domain.ErrorLoadingAuthProvider,
+			errorKey:   api.ErrorLoadingAuthProvider,
 			errorMsg:   fmt.Sprintf("error loading social auth provider, %v", err),
 		}
 		return authRequestError(c, authErr, extras)
@@ -207,7 +209,7 @@ func authSelect(c buffalo.Context) error {
 	if err != nil {
 		authErr := authError{
 			httpStatus: http.StatusInternalServerError,
-			errorKey:   domain.ErrorGettingAuthURL,
+			errorKey:   api.ErrorGettingAuthURL,
 			errorMsg:   fmt.Sprintf("error getting social auth url, %v", err),
 		}
 		return authRequestError(c, authErr, extras)
@@ -221,7 +223,7 @@ func authSelect(c buffalo.Context) error {
 type callbackValues struct {
 	authResp auth.Response
 	returnTo string
-	errCode  string
+	errCode  api.ErrorKey
 	errMsg   string
 }
 
@@ -234,7 +236,7 @@ func processSocialAuthCallback(c buffalo.Context, authEmail, authType string) ca
 	ap, err := getSocialAuthProvider(authType)
 	if err != nil {
 		return callbackValues{
-			errCode: domain.ErrorLoadingAuthProvider,
+			errCode: api.ErrorLoadingAuthProvider,
 			errMsg:  fmt.Sprintf("error loading social auth provider for '%s' ... %v", authType, err),
 		}
 	}
@@ -242,7 +244,7 @@ func processSocialAuthCallback(c buffalo.Context, authEmail, authType string) ca
 	authResp := ap.AuthCallback(c)
 	if authResp.Error != nil {
 		return callbackValues{
-			errCode: domain.ErrorAuthProvidersCallback,
+			errCode: api.ErrorAuthProvidersCallback,
 			errMsg:  authResp.Error.Error(),
 		}
 	}
@@ -251,7 +253,7 @@ func processSocialAuthCallback(c buffalo.Context, authEmail, authType string) ca
 
 	if authResp.AuthUser == nil {
 		return callbackValues{
-			errCode: domain.ErrorAuthProvidersCallback,
+			errCode: api.ErrorAuthProvidersCallback,
 			errMsg:  "nil authResp.AuthUser",
 		}
 	}
@@ -259,7 +261,7 @@ func processSocialAuthCallback(c buffalo.Context, authEmail, authType string) ca
 	if authEmail != authResp.AuthUser.Email {
 		c.Session().Clear()
 		return callbackValues{
-			errCode: domain.ErrorAuthEmailMismatch,
+			errCode: api.ErrorAuthEmailMismatch,
 			errMsg: fmt.Sprintf("mismatched emails. Began auth with %s but auth callback had %s.",
 				authEmail, authResp.AuthUser.Email),
 		}
@@ -280,8 +282,8 @@ func socialLoginNonInviteBasedAuthCallback(c buffalo.Context, authEmail, authTyp
 	domain.NewExtra(c, "authType", authType)
 
 	var user models.User
-	if err := user.FindByEmailAndSocialAuthProvider(authEmail, authType); err != nil {
-		return logErrorAndRedirect(c, domain.ErrorGettingSocialAuthUser,
+	if err := user.FindByEmailAndSocialAuthProvider(models.Tx(c), authEmail, authType); err != nil {
+		return logErrorAndRedirect(c, api.ErrorGettingSocialAuthUser,
 			fmt.Sprintf("error loading social auth user for '%s' ... %v", authType, err))
 	}
 
@@ -290,7 +292,7 @@ func socialLoginNonInviteBasedAuthCallback(c buffalo.Context, authEmail, authTyp
 		return logErrorAndRedirect(c, callbackValues.errCode, callbackValues.errMsg)
 	}
 
-	authUser, err := newOrglessAuthUser(clientID, user)
+	authUser, err := newOrglessAuthUser(c, clientID, user)
 	if err != nil {
 		return err
 	}
@@ -304,7 +306,7 @@ func socialLoginNonInviteBasedAuthCallback(c buffalo.Context, authEmail, authTyp
 func socialLoginBasedAuthCallback(c buffalo.Context, authEmail, clientID string) error {
 	authType, ok := c.Session().Get(SocialAuthTypeSessionKey).(string)
 	if !ok {
-		return logErrorAndRedirect(c, domain.ErrorMissingSessionSocialAuthType,
+		return logErrorAndRedirect(c, api.ErrorMissingSessionSocialAuthType,
 			SocialAuthTypeSessionKey+" session entry is required to complete login")
 	}
 
@@ -328,8 +330,8 @@ func socialLoginBasedAuthCallback(c buffalo.Context, authEmail, clientID string)
 	// if we have an authuser, find or create user in local db and finish login
 	var user models.User
 
-	if err := user.FindOrCreateFromOrglessAuthUser(callbackValues.authResp.AuthUser, authType); err != nil {
-		return logErrorAndRedirect(c, domain.ErrorWithAuthUser, err.Error())
+	if err := user.FindOrCreateFromOrglessAuthUser(models.Tx(c), callbackValues.authResp.AuthUser, authType); err != nil {
+		return logErrorAndRedirect(c, api.ErrorWithAuthUser, err.Error())
 	}
 
 	// If the invite is for a meeting, ensure there is a MeetingParticipant record
@@ -338,7 +340,7 @@ func socialLoginBasedAuthCallback(c buffalo.Context, authEmail, clientID string)
 		dealWithInviteFromCallback(c, inviteType, inviteObjectUUID, user)
 	}
 
-	authUser, err := newOrglessAuthUser(clientID, user)
+	authUser, err := newOrglessAuthUser(c, clientID, user)
 	if err != nil {
 		return err
 	}
@@ -350,8 +352,8 @@ func socialLoginBasedAuthCallback(c buffalo.Context, authEmail, clientID string)
 }
 
 // Hydrates an AuthUser struct based on a User without an Org
-func newOrglessAuthUser(clientID string, user models.User) (AuthUser, error) {
-	accessToken, expiresAt, err := user.CreateOrglessAccessToken(clientID)
+func newOrglessAuthUser(ctx context.Context, clientID string, user models.User) (AuthUser, error) {
+	accessToken, expiresAt, err := user.CreateOrglessAccessToken(models.Tx(ctx), clientID)
 	if err != nil {
 		return AuthUser{}, err
 	}

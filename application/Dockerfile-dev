@@ -16,16 +16,20 @@ WORKDIR /wecarry
 
 RUN echo 'alias ll="ls -al"' >> ~/.bashrc
 
-ADD . .
+COPY go.* ./
 RUN chmod 660 /wecarry/go.* && chmod 770 /wecarry
 ENV GO111MODULE=on
 
 RUN useradd user && usermod -a -G root user && mkdir /home/user && chown user.user /home/user
 USER user
-RUN go get ./...
+
 RUN go get github.com/gobuffalo/suite
 RUN go get github.com/gobuffalo/httptest
 RUN go get github.com/markbates/grift
+RUN CGO_ENABLED=0 go get -ldflags "-s -w -extldflags '-static'" github.com/go-delve/delve/cmd/dlv
+
+ADD . .
+RUN go get ./...
 
 EXPOSE 6060
 CMD ["buffalo", "dev"]

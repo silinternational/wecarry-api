@@ -7,6 +7,7 @@ import (
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/buffalo/render"
 	"github.com/gobuffalo/logger"
+	"github.com/silinternational/wecarry-api/internal/test"
 
 	"github.com/silinternational/wecarry-api/auth"
 	"github.com/silinternational/wecarry-api/domain"
@@ -410,13 +411,13 @@ func (as *ActionSuite) Test_newAuthUser() {
 	}
 
 	var user models.User
-	err := user.FindOrCreateFromAuthUser(orgFixture.ID, &authUser)
+	err := user.FindOrCreateFromAuthUser(as.DB, orgFixture.ID, &authUser)
 	if err != nil {
 		t.Errorf("could not run test because of error calling user.FindOrCreateFromAuthUser ...\n %v", err)
 		return
 	}
 
-	resultsAuthUser, err := newOrgBasedAuthUser("12345678", user, orgFixture)
+	resultsAuthUser, err := newOrgBasedAuthUser(test.Ctx(), "12345678", user, orgFixture)
 	if err != nil {
 		t.Errorf("unexpected error ... %v", err)
 		return

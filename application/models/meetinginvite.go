@@ -38,11 +38,11 @@ func (m *MeetingInvite) Validate(tx *pop.Connection) (*validate.Errors, error) {
 }
 
 // Create validates and stores the MeetingInvite data as a new record in the database.
-func (m *MeetingInvite) Create() error {
+func (m *MeetingInvite) Create(tx *pop.Connection) error {
 	invite := *m
 	invite.Secret = domain.GetUUID()
 
-	err := create(&invite)
+	err := create(tx, &invite)
 	if err != nil && strings.Contains(err.Error(), `duplicate key value violates unique constraint`) {
 		err = nil
 	}
@@ -53,15 +53,15 @@ func (m *MeetingInvite) Create() error {
 }
 
 // Meeting returns the related Meeting record
-func (m *MeetingInvite) Meeting() (Meeting, error) {
+func (m *MeetingInvite) Meeting(tx *pop.Connection) (Meeting, error) {
 	var meeting Meeting
-	return meeting, DB.Find(&meeting, m.MeetingID)
+	return meeting, tx.Find(&meeting, m.MeetingID)
 }
 
 // Inviter returns the related User record of the inviter
-func (m *MeetingInvite) Inviter() (User, error) {
+func (m *MeetingInvite) Inviter(tx *pop.Connection) (User, error) {
 	var user User
-	return user, DB.Find(&user, m.InviterID)
+	return user, tx.Find(&user, m.InviterID)
 }
 
 // AvatarURL returns a generated gravatar URL for the inivitee
@@ -69,16 +69,16 @@ func (m *MeetingInvite) AvatarURL() string {
 	return gravatarURL(m.Email)
 }
 
-func (m *MeetingInvite) FindByMeetingIDAndEmail(meetingID int, email string) error {
-	return DB.Where("meeting_id = ? and email = ?", meetingID, email).First(m)
+func (m *MeetingInvite) FindByMeetingIDAndEmail(tx *pop.Connection, meetingID int, email string) error {
+	return tx.Where("meeting_id = ? and email = ?", meetingID, email).First(m)
 }
 
-func (m *MeetingInvite) Destroy() error {
-	return DB.Destroy(m)
+func (m *MeetingInvite) Destroy(tx *pop.Connection) error {
+	return tx.Destroy(m)
 }
 
 // FindBySecret attempts to find a MeetingInvite that exactly matches a given secret, email, and meetingID
-func (m *MeetingInvite) FindBySecret(meetingID int, email, secret string) error {
+func (m *MeetingInvite) FindBySecret(tx *pop.Connection, meetingID int, email, secret string) error {
 	if meetingID < 1 {
 		return errors.New("invalid meeting ID in FindBySecret")
 	}
@@ -88,5 +88,5 @@ func (m *MeetingInvite) FindBySecret(meetingID int, email, secret string) error 
 	if secret == "" {
 		return errors.New("empty secret in FindBySecret")
 	}
-	return DB.Where("meeting_id=? AND email=? AND secret=?", meetingID, email, secret).First(m)
+	return tx.Where("meeting_id=? AND email=? AND secret=?", meetingID, email, secret).First(m)
 }

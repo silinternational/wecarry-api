@@ -168,56 +168,77 @@ var _ = grift.Namespace("db", func() {
 			{
 				Description: "Madrid, Spain",
 				Country:     "ES",
-				Latitude:    nulls.NewFloat64(40.4168),
-				Longitude:   nulls.NewFloat64(-3.7038),
+				State:       "MD",
+				County:      "M",
+				City:        "Madrid",
+				Latitude:    40.4168,
+				Longitude:   -3.7038,
 			},
 			{
 				Description: "JAARS, NC, USA",
 				Country:     "US",
-				Latitude:    nulls.NewFloat64(34.8638),
-				Longitude:   nulls.NewFloat64(-80.7459),
+				State:       "NC",
+				County:      "Union",
+				Latitude:    34.8638,
+				Longitude:   -80.7459,
 			},
 			{
 				Description: "Atlanta, GA, USA",
 				Country:     "US",
-				Latitude:    nulls.NewFloat64(33.7490),
-				Longitude:   nulls.NewFloat64(-84.3880),
+				State:       "GA",
+				County:      "Fulton",
+				City:        "Atlanta",
+				Latitude:    33.7490,
+				Longitude:   -84.3880,
 			},
 			{
 				Description: "Orlando, FL, USA",
 				Country:     "US",
-				Latitude:    nulls.NewFloat64(28.5383),
-				Longitude:   nulls.NewFloat64(-81.3792),
+				State:       "FL",
+				County:      "Orange",
+				City:        "Miami",
+				Latitude:    28.5383,
+				Longitude:   -81.3792,
 			},
 			{
 				Description: "Toronto, Canada",
 				Country:     "CA",
-				Latitude:    nulls.NewFloat64(43.6532),
-				Longitude:   nulls.NewFloat64(-79.3832),
+				State:       "ON",
+				County:      "Toronto",
+				Latitude:    43.6532,
+				Longitude:   -79.3832,
 			},
 			{
 				Description: "Port Lincoln, SA, Australia",
 				Country:     "AU",
-				Latitude:    nulls.NewFloat64(-34.730194),
-				Longitude:   nulls.NewFloat64(135.850479),
+				State:       "SA",
+				City:        "Port Lincoln",
+				Latitude:    -34.730194,
+				Longitude:   135.850479,
 			},
 			{
 				Description: "Lopburi, Thailand",
 				Country:     "TH",
-				Latitude:    nulls.NewFloat64(14.799508),
-				Longitude:   nulls.NewFloat64(100.653371),
+				State:       "จ.ลพบุรี",
+				Latitude:    14.799508,
+				Longitude:   100.653371,
 			},
 			{
 				Description: "Guča, Serbia",
 				Country:     "RS",
-				Latitude:    nulls.NewFloat64(43.7766),
-				Longitude:   nulls.NewFloat64(20.2261),
+				County:      "Moravica",
+				City:        "Guca",
+				Latitude:    43.7766,
+				Longitude:   20.2261,
 			},
 			{
 				Description: "Milwaukee, WI, USA",
 				Country:     "US",
-				Latitude:    nulls.NewFloat64(43.0389),
-				Longitude:   nulls.NewFloat64(-87.9065),
+				State:       "WI",
+				County:      "Milwaukee",
+				City:        "Milwaukee",
+				Latitude:    43.0389,
+				Longitude:   -87.9065,
 			},
 		}
 
@@ -279,7 +300,7 @@ var _ = grift.Namespace("db", func() {
 			fixtureRequests[i].Status = models.RequestStatusOpen
 			fixtureRequests[i].CreatedByID = fixtureUsers[i].ID
 			fixtureRequests[i].NeededBefore = nulls.NewTime(futureDate)
-			err := models.DB.Create(fixtureRequests[i])
+			err := fixtureRequests[i].Create(models.DB)
 			if err != nil {
 				err = fmt.Errorf("error loading request fixture ... %+v\n %v", request, err.Error())
 				return err

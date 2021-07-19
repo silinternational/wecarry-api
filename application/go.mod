@@ -3,14 +3,14 @@ module github.com/silinternational/wecarry-api
 go 1.13
 
 require (
-	github.com/99designs/gqlgen v0.11.1
 	github.com/aws/aws-sdk-go v1.38.13
 	github.com/beevik/etree v1.1.0 // indirect
 	github.com/caddyserver/certmagic v0.11.2
 	github.com/fatih/color v1.10.0 // indirect
 	github.com/felixge/httpsnoop v1.0.2 // indirect
-	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/go-acme/lego v2.7.2+incompatible
+	github.com/go-redis/cache/v8 v8.4.1
+	github.com/go-redis/redis/v8 v8.10.0
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
 	github.com/gobuffalo/buffalo v0.16.23
 	github.com/gobuffalo/envy v1.9.0
@@ -40,7 +40,7 @@ require (
 	github.com/paganotoni/sendgrid-sender v1.0.5
 	github.com/pkg/errors v0.9.1
 	github.com/rogpeppe/go-internal v1.8.0 // indirect
-	github.com/rollbar/rollbar-go v1.1.0
+	github.com/rollbar/rollbar-go v1.4.1
 	github.com/rs/cors v1.6.0
 	github.com/russellhaering/gosaml2 v0.3.1
 	github.com/russellhaering/goxmldsig v0.0.0-20180430223755-7acd5e4a6ef7
@@ -51,7 +51,6 @@ require (
 	github.com/spf13/cobra v1.1.3 // indirect
 	github.com/ssor/bom v0.0.0-20170718123548-6386211fdfcf // indirect
 	github.com/stretchr/testify v1.7.0
-	github.com/vektah/gqlparser/v2 v2.0.1
 	golang.org/x/crypto v0.0.0-20210506145944-38f3c27a63bf // indirect
 	golang.org/x/image v0.0.0-20191214001246-9130b4cfad52
 	golang.org/x/mod v0.4.2 // indirect

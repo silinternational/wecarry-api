@@ -61,11 +61,11 @@ func Fixtures_Message_GetSender(ms *ModelSuite, t *testing.T) MessageFixtures {
 func Fixtures_Message_Create(ms *ModelSuite, t *testing.T) MessageFixtures {
 	uf := createUserFixtures(ms.DB, 2)
 	users := uf.Users
-	requests := createRequestFixtures(ms.DB, 3, false)
+	requests := createRequestFixtures(ms.DB, 3, false, users[0].ID)
 
 	org := createOrganizationFixtures(ms.DB, 1)[0]
 	requests[0].OrganizationID = org.ID
-	ms.NoError(requests[0].Update())
+	ms.NoError(requests[0].Update(ms.DB))
 
 	tf := CreateThreadFixtures(ms, requests[1])
 
@@ -175,7 +175,7 @@ func CreateMessageFixtures_AfterCreate(ms *ModelSuite, t *testing.T) MessageFixt
 	users := uf.Users
 
 	// Each user has a request and is a provider on the other user's request
-	requests := createRequestFixtures(ms.DB, 2, false)
+	requests := createRequestFixtures(ms.DB, 2, false, users[0].ID)
 	requests[0].Status = RequestStatusAccepted
 	requests[0].ProviderID = nulls.NewInt(users[1].ID)
 	requests[1].Status = RequestStatusAccepted

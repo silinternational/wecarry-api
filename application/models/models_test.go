@@ -83,11 +83,6 @@ func (ms *ModelSuite) TestCurrentUser() {
 			wantUser: user,
 		},
 		{
-			name:     "gql context",
-			context:  context.WithValue(ctx, domain.BuffaloContext, ctx),
-			wantUser: user,
-		},
-		{
 			name:     "empty context",
 			context:  &testBuffaloContext{params: map[interface{}]interface{}{}},
 			wantUser: User{},
@@ -111,7 +106,7 @@ func (ms *ModelSuite) Test_addFile() {
 	uf := createUserFixtures(ms.DB, 3)
 	users := uf.Users
 
-	files := createFileFixtures(3)
+	files := createFileFixtures(ms.DB, 3)
 	users[1].FileID = nulls.NewInt(files[0].ID)
 	ms.NoError(ms.DB.UpdateColumns(&users[1], "file_id"))
 
@@ -145,7 +140,7 @@ func (ms *ModelSuite) Test_addFile() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			got, err := addFile(&tt.user, tt.newImage)
+			got, err := addFile(ms.DB, &tt.user, tt.newImage)
 			if tt.wantErr != "" {
 				ms.Error(err, "did not get expected error")
 				ms.Contains(err.Error(), tt.wantErr)
@@ -168,7 +163,7 @@ func (ms *ModelSuite) Test_removeFile() {
 	uf := createUserFixtures(ms.DB, 2)
 	users := uf.Users
 
-	files := createFileFixtures(1)
+	files := createFileFixtures(ms.DB, 1)
 	users[1].FileID = nulls.NewInt(files[0].ID)
 	ms.NoError(ms.DB.UpdateColumns(&users[1], "file_id"))
 	files[0].Linked = true
@@ -198,7 +193,7 @@ func (ms *ModelSuite) Test_removeFile() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			err := removeFile(&tt.user)
+			err := removeFile(ms.DB, &tt.user)
 			if tt.wantErr != "" {
 				ms.Error(err, "did not get expected error")
 				ms.Contains(err.Error(), tt.wantErr)

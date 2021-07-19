@@ -28,7 +28,7 @@ func (ms *ModelSuite) TestRequestHistory_Load() {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := test.requestHistory.Load("Receiver")
+			err := test.requestHistory.Load(ms.DB, "Receiver")
 			ms.NoError(err, "did not expect any error")
 
 			ms.Equal(test.wantEmail, test.requestHistory.Receiver.Email, "incorrect Receiver email")
@@ -78,7 +78,7 @@ func (ms *ModelSuite) TestRequestHistory_pop() {
 			test.request.Status = test.newStatus
 			var pHistory RequestHistory
 
-			err := pHistory.popForRequest(test.request, test.currentStatus)
+			err := pHistory.popForRequest(ms.DB, test.request, test.currentStatus)
 			if test.wantErr != "" {
 				ms.Error(err)
 				ms.Contains(err.Error(), test.wantErr, "unexpected error message")
@@ -164,7 +164,7 @@ func (ms *ModelSuite) TestRequestHistory_createForRequest() {
 
 			var pH RequestHistory
 
-			err := pH.createForRequest(test.request)
+			err := pH.createForRequest(ms.DB, test.request)
 			if test.wantErr != "" {
 				ms.Error(err)
 				ms.Contains(err.Error(), test.wantErr, "unexpected error message")
