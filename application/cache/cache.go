@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"sort"
 	"time"
 
 	rediscache "github.com/go-redis/cache/v8"
@@ -81,6 +82,10 @@ func GetVisibleRequests(ctx context.Context, orgs []models.Organization) ([]api.
 	for _, publicRequest := range publicRequestsMap {
 		visibleRequestsList = append(visibleRequestsList, publicRequest)
 	}
+
+	sort.Slice(visibleRequestsList, func(i, j int) bool {
+		return visibleRequestsList[i].CreatedAt.After(visibleRequestsList[j].CreatedAt)
+	})
 
 	return visibleRequestsList, nil
 }

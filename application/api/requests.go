@@ -139,6 +139,9 @@ type RequestAbridged struct {
 
 	// Meeting associated with this request. Affects visibility of the request.
 	Meeting *Meeting `json:"meeting"`
+
+	// CreatedAt is the time when the request was created
+	CreatedAt time.Time `json:"created_at"`
 }
 
 // RequestCreateInput includes the fields for creating Requests
