@@ -406,14 +406,14 @@ func (ms *ModelSuite) TestMeeting_GetSetLocation() {
 		{
 			Description: "a place",
 			Country:     "XY",
-			Latitude:    nulls.NewFloat64(1.1),
-			Longitude:   nulls.NewFloat64(2.2),
+			Latitude:    1.1,
+			Longitude:   2.2,
 		},
 		{
 			Description: "another place",
 			Country:     "AB",
-			Latitude:    nulls.Float64{},
-			Longitude:   nulls.Float64{},
+			Latitude:    -1.1,
+			Longitude:   -2.2,
 		},
 	}
 	createFixture(ms, &locations[0]) // only save the first record for now
@@ -429,9 +429,6 @@ func (ms *ModelSuite) TestMeeting_GetSetLocation() {
 	locations[1].ID = locationFromDB.ID
 	ms.Equal(locations[1], locationFromDB, "location data doesn't match after update")
 
-	// These are redundant checks, but here to document the fact that a null overwrites previous data.
-	ms.False(locationFromDB.Latitude.Valid)
-	ms.False(locationFromDB.Longitude.Valid)
 }
 
 func (ms *ModelSuite) TestMeeting_CanUpdate() {

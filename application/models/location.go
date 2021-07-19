@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop/v5"
 	"github.com/gobuffalo/validate/v3"
 	"github.com/gobuffalo/validate/v3/validators"
@@ -16,15 +15,15 @@ import (
 )
 
 type Location struct {
-	ID          int           `json:"id" db:"id"`
-	Description string        `json:"description" db:"description"`
-	Country     string        `json:"country" db:"country"`
-	State       string        `json:"state" db:"state"`     // Google Place's administrative area level 1
-	County      string        `json:"county" db:"county"`   // Google Place's administrative area level 2
-	City        string        `json:"city" db:"city"`       // Google Place's locality
-	Borough     string        `json:"borough" db:"borough"` // Google Place's sub-locality
-	Latitude    nulls.Float64 `json:"latitude" db:"latitude"`
-	Longitude   nulls.Float64 `json:"longitude" db:"longitude"`
+	ID          int     `json:"id" db:"id"`
+	Description string  `json:"description" db:"description"`
+	Country     string  `json:"country" db:"country"`
+	State       string  `json:"state" db:"state"`     // Google Place's administrative area level 1
+	County      string  `json:"county" db:"county"`   // Google Place's administrative area level 2
+	City        string  `json:"city" db:"city"`       // Google Place's locality
+	Borough     string  `json:"borough" db:"borough"` // Google Place's sub-locality
+	Latitude    float64 `json:"latitude" db:"latitude"`
+	Longitude   float64 `json:"longitude" db:"longitude"`
 }
 
 // String can be helpful for serializing the model
@@ -57,30 +56,23 @@ func (l *Location) Validate(tx *pop.Connection) (*validate.Errors, error) {
 
 type geoValidator struct {
 	Name, Message       string
-	Latitude, Longitude nulls.Float64
+	Latitude, Longitude float64
 }
 
 // IsValid checks the latitude and longitude valid ranges
 func (v *geoValidator) IsValid(errors *validate.Errors) {
-	if !v.Latitude.Valid && !v.Longitude.Valid {
-		return
-	}
 
-	if v.Latitude.Valid != v.Longitude.Valid {
-		errors.Add(validators.GenerateKey(v.Name), "only one coordinate given, must have neither or both")
-	}
-
-	if v.Latitude.Float64 < -90.0 || v.Latitude.Float64 > 90.0 {
+	if v.Latitude < -90.0 || v.Latitude > 90.0 {
 		v.Message = fmt.Sprintf("Latitude %v is out of range", v.Latitude)
 		errors.Add(validators.GenerateKey(v.Name), v.Message)
 	}
 
-	if v.Longitude.Float64 < -180.0 || v.Longitude.Float64 > 180.0 {
+	if v.Longitude < -180.0 || v.Longitude > 180.0 {
 		v.Message = fmt.Sprintf("Longitude %v is out of range", v.Longitude)
 		errors.Add(validators.GenerateKey(v.Name), v.Message)
 	}
 
-	if v.Longitude.Float64 == 0 && v.Latitude.Float64 == 0 {
+	if v.Longitude == 0 && v.Latitude == 0 {
 		v.Message = "a valid geo coordinate must be given"
 		errors.Add(validators.GenerateKey(v.Name), v.Message)
 	}
@@ -98,14 +90,11 @@ func (l *Location) Update(tx *pop.Connection) error {
 
 // DistanceKm calculates the distance in km between two locations
 func (l *Location) DistanceKm(loc2 Location) float64 {
-	if !l.Latitude.Valid || !l.Longitude.Valid || !loc2.Latitude.Valid || !loc2.Longitude.Valid {
-		return math.NaN()
-	}
 
-	lat1 := l.Latitude.Float64
-	lon1 := l.Longitude.Float64
-	lat2 := loc2.Latitude.Float64
-	lon2 := loc2.Longitude.Float64
+	lat1 := l.Latitude
+	lon1 := l.Longitude
+	lat2 := loc2.Latitude
+	lon2 := loc2.Longitude
 
 	// Haversine formula implementation derived from Stack Overflow answer:
 	// https://stackoverflow.com/a/21623206

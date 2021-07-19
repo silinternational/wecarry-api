@@ -1,7 +1,5 @@
 package api
 
-import "github.com/gobuffalo/nulls"
-
 // Location gives the description of a Geographic location
 //
 // swagger:model
@@ -25,8 +23,8 @@ type Location struct {
 	Borough string `json:"borough"`
 
 	// Latitude in decimal degrees, e.g. -30.95 = 30 degrees 57 minutes south
-	Latitude nulls.Float64 `json:"latitude"`
+	Latitude float64 `json:"latitude"`
 
 	// Longitude in decimal degrees, e.g. -80.05 = 80 degrees 3 minutes west
-	Longitude nulls.Float64 `json:"longitude"`
+	Longitude float64 `json:"longitude"`
 }

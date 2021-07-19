@@ -81,7 +81,12 @@ func (as *ActionSuite) Test_requestsGet() {
 func (as *ActionSuite) Test_requestsCreate() {
 	f := createFixturesForRequests(as)
 
-	destination := api.Location{Description: "location description", Country: "XX"}
+	destination := api.Location{
+		Description: "location description",
+		Country:     "XX",
+		Latitude:    1.1,
+		Longitude:   2.2,
+	}
 
 	goodRequest := api.RequestCreateInput{
 		Destination:    destination,
@@ -288,8 +293,17 @@ func (as *ActionSuite) Test_convertCreateRequestInput() {
 
 	ctx := test.CtxWithUser(creator)
 
-	destination := api.Location{Description: "destination", Country: "XX"}
-	origin := api.Location{Description: "origin", Country: "ZZ"}
+	destination := api.Location{
+		Description: "destination",
+		Country:     "XX",
+		Latitude:    1.1,
+		Longitude:   2.2,
+	}
+	origin := api.Location{
+		Description: "origin",
+		Country:     "ZZ",
+		Latitude:    -1.1,
+		Longitude:   -2.2}
 	file := test.CreateFileFixture(as.DB)
 
 	min := api.RequestCreateInput{
@@ -473,9 +487,19 @@ func (as *ActionSuite) Test_convertUpdateRequestInput() {
 
 	min := api.RequestUpdateInput{}
 
-	destination := api.Location{Description: "destination", Country: "XX"}
+	destination := api.Location{
+		Description: "destination",
+		Country:     "XX",
+		Latitude:    1.1,
+		Longitude:   2.2,
+	}
 	file := test.CreateFileFixture(as.DB)
-	origin := api.Location{Description: "origin", Country: "ZZ"}
+	origin := api.Location{
+		Description: "origin",
+		Country:     "ZZ",
+		Latitude:    -1.1,
+		Longitude:   -2.2,
+	}
 	size := api.RequestSize(models.RequestSizeMedium)
 	title := "request title"
 	visibility := api.RequestVisibility(models.RequestVisibilityAll)
