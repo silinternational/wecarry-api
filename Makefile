@@ -10,11 +10,6 @@ migratestatus:
 migratetestdb: testdb
 	docker-compose run --rm test whenavail testdb 5432 10 buffalo-pop pop migrate up
 
-gqlgen:
-	-docker-compose pause buffalo
-	-docker-compose run --rm buffalo /bin/bash -c "go generate ./gqlgen"
-	-docker-compose unpause buffalo
-
 adminer:
 	docker-compose up -d adminer
 

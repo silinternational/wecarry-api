@@ -45,7 +45,7 @@ that have a comment referring to actions.AuthRequest.
 
 Three types of authentication can be used for organization-based authentication:
 Azure AD, Google, and SAML. These are configured in an Organization record or 
-an Organization Domain record, and are supported by the GraphQL API.
+an Organization Domain record, and are supported by the REST API.
 
 #### Office365/AzureAD
 To add an organization using AzureAD authentication, create a database organization record  
@@ -154,23 +154,19 @@ to generate a Swagger specification file as well as render it as HTML.
 
 To generate the swagger spec `swagger/swagger.json` run `make swagger`.
 
-## GraphQL API
+## API
 
 ### API Documentation
 
-Reference the GraphQL Schema at application/gqlgen/schema.graphql or use
-GraphQL introspection to access the schema from the running app. API tools such
-as [Insomnia](https://insomnia.rest) include an interactive schema browser that 
-make use of GraphQL introspection.
+Coming soon
  
 ### Conventions
 
 #### Implicit `null` vs explicit `null
 
 The standard established for this API is both implicit null (field
-omitted from mutation) and explicit null (`null` specified in mutation) 
-will erase or set to `null`. Note that this does not address the
-GraphQL spec requirement to not modify an omitted field. The reference UI 
+omitted from json) and explicit null (`null` specified in json) 
+will erase or set to `null`. The reference UI 
 implementation, [wecarry-ui](https://github.com/silinternational/wecarry-ui),
 will always include all supported fields.
 

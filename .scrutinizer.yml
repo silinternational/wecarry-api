@@ -52,5 +52,3 @@ filter:
   excluded_paths:
     - "*_test.go"
     - "*_fixtures_test.go"
-    - "application/gqlgen/generated.go"
-    - "application/gqlgen/models_gen.go"

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"net/http"
 	"testing"
-	"time"
 
 	"github.com/gobuffalo/validate/v3"
 	"github.com/stretchr/testify/suite"
@@ -234,85 +233,6 @@ func (ts *TestSuite) TestGetSubPartKeyValues() {
 		t.Run(tt.name, func(t *testing.T) {
 			got := GetSubPartKeyValues(tt.args.inString, tt.args.outerDelimiter, tt.args.innerDelimiter)
 			ts.Equal(tt.want, got)
-		})
-	}
-}
-
-func (ts *TestSuite) TestConvertTimeToStringPtr() {
-	t := ts.T()
-
-	now := time.Now()
-	type args struct {
-		inTime time.Time
-	}
-	tests := []struct {
-		name string
-		args args
-		want string
-	}{
-		{
-			name: "default",
-			args: args{
-				inTime: time.Time{},
-			},
-			want: "0001-01-01T00:00:00Z",
-		},
-		{
-			name: "now",
-			args: args{
-				inTime: now,
-			},
-			want: now.Format(time.RFC3339),
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			got := ConvertTimeToStringPtr(test.args.inTime)
-			ts.Equal(test.want, *got)
-		})
-	}
-}
-
-func (ts *TestSuite) TestConvertStringPtrToDate() {
-	t := ts.T()
-
-	testTime := time.Date(2019, time.August, 12, 0, 0, 0, 0, time.UTC)
-	testStr := testTime.Format("2006-01-02") // not using a const in order to detect code changes
-	emptyStr := ""
-	badTime := "1"
-	type args struct {
-		inPtr *string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    time.Time
-		wantErr bool
-	}{{
-		name: "nil",
-		args: args{nil},
-		want: time.Time{},
-	}, {
-		name: "empty",
-		args: args{&emptyStr},
-		want: time.Time{},
-	}, {
-		name: "good",
-		args: args{&testStr},
-		want: testTime,
-	}, {
-		name:    "error",
-		args:    args{&badTime},
-		wantErr: true,
-	}}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			got, err := ConvertStringPtrToDate(test.args.inPtr)
-			if test.wantErr == false {
-				ts.NoError(err)
-			}
-
-			ts.Equal(test.want, got)
 		})
 	}
 }

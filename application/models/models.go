@@ -10,7 +10,6 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/events"
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop/v5"
@@ -109,13 +108,8 @@ func GetStringFromNullsTime(inTime nulls.Time) *string {
 	return nil
 }
 
-// CurrentUser retrieves the current user from the context, which can be the context provided by gqlgen or the inner
-// "BuffaloContext" assigned to the value key of the same name.
+// CurrentUser retrieves the current user from the context.
 func CurrentUser(ctx context.Context) User {
-	bc, ok := ctx.Value(domain.BuffaloContext).(buffalo.Context)
-	if ok {
-		return CurrentUser(bc)
-	}
 	user, _ := ctx.Value(domain.ContextKeyCurrentUser).(User)
 	domain.NewExtra(ctx, "currentUserID", user.UUID)
 	return user
@@ -341,13 +335,8 @@ func destroyTable(i interface{}) {
 	}
 }
 
-// Tx retrieves the database transaction from the context, which can be the context
-// provided by gqlgen or the inner "BuffaloContext" assigned to the value key of the same name.
+// Tx retrieves the database transaction from the context
 func Tx(ctx context.Context) *pop.Connection {
-	bc, ok := ctx.Value(domain.BuffaloContext).(buffalo.Context)
-	if ok {
-		return Tx(bc)
-	}
 	tx, ok := ctx.Value("tx").(*pop.Connection)
 	if !ok {
 		return DB

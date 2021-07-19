@@ -3,8 +3,6 @@ package models
 import (
 	"encoding/json"
 	"fmt"
-	"io"
-	"strconv"
 	"strings"
 	"time"
 
@@ -46,23 +44,6 @@ func (e AuthType) IsValid() bool {
 
 func (e AuthType) String() string {
 	return string(e)
-}
-
-func (e *AuthType) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = AuthType(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid AuthType", str)
-	}
-	return nil
-}
-
-func (e AuthType) MarshalGQL(w io.Writer) {
-	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 type Organization struct {

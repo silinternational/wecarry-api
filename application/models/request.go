@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"strconv"
 	"strings"
 	"time"
 
@@ -66,23 +64,6 @@ func (e RequestVisibility) IsValid() bool {
 
 func (e RequestVisibility) String() string {
 	return string(e)
-}
-
-func (e *RequestVisibility) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = RequestVisibility(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid RequestVisibility", str)
-	}
-	return nil
-}
-
-func (e RequestVisibility) MarshalGQL(w io.Writer) {
-	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func allStatusTransitions() map[RequestStatus][]StatusTransitionTarget {
@@ -180,23 +161,6 @@ func (e RequestStatus) IsValid() bool {
 
 func (e RequestStatus) String() string {
 	return string(e)
-}
-
-func (e *RequestStatus) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = RequestStatus(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid RequestStatus", str)
-	}
-	return nil
-}
-
-func (e RequestStatus) MarshalGQL(w io.Writer) {
-	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 type Request struct {

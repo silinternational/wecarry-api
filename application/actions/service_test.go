@@ -3,11 +3,15 @@ package actions
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
 	"testing"
 
+	"github.com/gobuffalo/httptest"
 	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/domain"
 )
@@ -75,8 +79,8 @@ func (as *ActionSuite) Test_serviceHandler() {
 				return
 			}
 
-			var gqlResponse api.AppError
-			err := json.Unmarshal(responseBody, &gqlResponse)
+			var appError api.AppError
+			err := json.Unmarshal(responseBody, &appError)
 			as.NoError(err, "response body parsing error")
 
 			want := api.AppError{
@@ -84,7 +88,21 @@ func (as *ActionSuite) Test_serviceHandler() {
 				Key:  tt.wantKey,
 			}
 
-			as.Equal(want, gqlResponse, "incorrect http error response code/key")
+			as.Equal(want, appError, "incorrect http error response code/key")
 		})
 	}
+}
+
+func makeCall(as *ActionSuite, httpMethod, route, accessToken string, body io.Reader) []byte {
+	req := httptest.NewRequest(httpMethod, route, body)
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
+	req.Header.Set("content-type", "application/json")
+
+	rr := httptest.NewRecorder()
+	as.App.ServeHTTP(rr, req)
+
+	responseBody, err := ioutil.ReadAll(rr.Body)
+	as.NoError(err)
+	return responseBody
 }

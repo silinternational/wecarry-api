@@ -9,7 +9,7 @@ import (
 )
 
 func (as *ActionSuite) TestConversations() {
-	f := createFixturesForThreadQuery(as)
+	f := createFixturesForThreads(as)
 
 	tests := []struct {
 		name         string
@@ -60,7 +60,7 @@ func (as *ActionSuite) TestConversations() {
 }
 
 func (as *ActionSuite) TestMarkMessagesAsRead() {
-	f := createFixturesForThreadQuery(as)
+	f := createFixturesForThreads(as)
 
 	users0 := f.Users[0]
 	testTime := time.Now().Add(1)
