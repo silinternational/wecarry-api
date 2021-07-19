@@ -653,7 +653,7 @@ func (u *User) GetThreads(tx *pop.Connection) (Threads, error) {
 
 // GetThreadsForConversations finds all threads that the user is participating in.
 func (u *User) GetThreadsForConversations(tx *pop.Connection) (Threads, error) {
-	var t Threads
+	t := Threads{}
 	query := tx.Q().
 		LeftJoin("thread_participants tp", "threads.id = tp.thread_id").
 		Where("tp.user_id = ?", u.ID).
