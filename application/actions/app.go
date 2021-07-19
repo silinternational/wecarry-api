@@ -92,8 +92,6 @@ func App() *buffalo.App {
 		app.GET("/site/status", statusHandler)
 		app.Middleware.Skip(buffalo.RequestLogger, statusHandler)
 
-		app.POST("/gql/", gqlHandler)
-
 		eventsGroup := app.Group("/events")
 		eventsGroup.GET("/", meetingsList)
 		eventsGroup.POST("/join", meetingsJoin)

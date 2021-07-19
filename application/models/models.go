@@ -10,7 +10,6 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/events"
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop/v5"
@@ -69,25 +68,6 @@ func getRandomToken() (string, error) {
 	return base64.URLEncoding.EncodeToString(rb), nil
 }
 
-func ConvertStringPtrToNullsString(inPtr *string) nulls.String {
-	if inPtr == nil {
-		return nulls.String{}
-	}
-
-	return nulls.NewString(*inPtr)
-}
-
-// GetStringFromNullsString returns a pointer to make it easier for calling
-// functions to return a pointer without an extra line of code.
-func GetStringFromNullsString(inString nulls.String) *string {
-	if inString.Valid {
-		output := inString.String
-		return &output
-	}
-
-	return nil
-}
-
 // GetIntFromNullsInt returns a pointer to make it easier for calling
 // functions to return a pointer without an extra line of code.
 func GetIntFromNullsInt(in nulls.Int) *int {
@@ -98,24 +78,8 @@ func GetIntFromNullsInt(in nulls.Int) *int {
 	return &output
 }
 
-// GetStringFromNullsTime returns a pointer to a string that looks
-// like a date based on a nulls.Time value
-func GetStringFromNullsTime(inTime nulls.Time) *string {
-	if inTime.Valid {
-		output := inTime.Time.Format(domain.DateFormat)
-		return &output
-	}
-
-	return nil
-}
-
-// CurrentUser retrieves the current user from the context, which can be the context provided by gqlgen or the inner
-// "BuffaloContext" assigned to the value key of the same name.
+// CurrentUser retrieves the current user from the context.
 func CurrentUser(ctx context.Context) User {
-	bc, ok := ctx.Value(domain.BuffaloContext).(buffalo.Context)
-	if ok {
-		return CurrentUser(bc)
-	}
 	user, _ := ctx.Value(domain.ContextKeyCurrentUser).(User)
 	domain.NewExtra(ctx, "currentUserID", user.UUID)
 	return user
@@ -341,13 +305,8 @@ func destroyTable(i interface{}) {
 	}
 }
 
-// Tx retrieves the database transaction from the context, which can be the context
-// provided by gqlgen or the inner "BuffaloContext" assigned to the value key of the same name.
+// Tx retrieves the database transaction from the context
 func Tx(ctx context.Context) *pop.Connection {
-	bc, ok := ctx.Value(domain.BuffaloContext).(buffalo.Context)
-	if ok {
-		return Tx(bc)
-	}
 	tx, ok := ctx.Value("tx").(*pop.Connection)
 	if !ok {
 		return DB

@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -12,18 +11,15 @@ import (
 	"os"
 	"reflect"
 	"regexp"
-	"runtime"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 	"unicode"
 
-	"github.com/99designs/gqlgen/graphql"
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/envy"
 	mwi18n "github.com/gobuffalo/mw-i18n"
-	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/packr/v2"
 	"github.com/gobuffalo/validate/v3"
 	"github.com/gobuffalo/validate/v3/validators"
@@ -112,13 +108,6 @@ const (
 	requestUIPath = "/requests/"
 	threadUIPath  = "/messages/"
 )
-
-// BuffaloContextType is a custom type used as a value key passed to context.WithValue as per the recommendations
-// in the function docs for that function: https://golang.org/pkg/context/#WithValue
-type BuffaloContextType string
-
-// BuffaloContext is the key for the call to context.WithValue in gqlHandler
-const BuffaloContext = BuffaloContextType("BuffaloContext")
 
 // Context keys
 const (
@@ -351,24 +340,6 @@ func GetSubPartKeyValues(inString, outerDelimiter, innerDelimiter string) map[st
 	return keyValues
 }
 
-// ConvertTimeToStringPtr is intended to convert the
-// CreatedAt and UpdatedAt fields of database objects
-// to pointers to strings to populate the same gqlgen fields
-func ConvertTimeToStringPtr(inTime time.Time) *string {
-	inTimeStr := inTime.Format(time.RFC3339)
-	return &inTimeStr
-}
-
-// ConvertStrPtrToString dereferences a string pointer and returns
-// the result. In case nil is given, an empty string is returned.
-func ConvertStrPtrToString(inPtr *string) string {
-	if inPtr == nil {
-		return ""
-	}
-
-	return *inPtr
-}
-
 // GetCurrentTime returns a string of the current date and time
 // based on the default DateTimeFormat
 func GetCurrentTime() string {
@@ -383,17 +354,6 @@ func GetUUID() uuid2.UUID {
 		ErrLogger.Printf("error creating new uuid2 ... %v", err)
 	}
 	return uuid
-}
-
-// ConvertStringPtrToDate uses time.Parse to convert a date in yyyy-mm-dd
-// format into a time.Time object. If nil is provided, the default value
-// for time.Time is returned.
-func ConvertStringPtrToDate(inPtr *string) (time.Time, error) {
-	if inPtr == nil || *inPtr == "" {
-		return time.Time{}, nil
-	}
-
-	return time.Parse(DateFormat, *inPtr)
 }
 
 // IsStringInSlice iterates over a slice of strings, looking for the given
@@ -493,12 +453,6 @@ func Info(ctx context.Context, msg string) {
 }
 
 func getBuffaloContext(ctx context.Context) buffalo.Context {
-	bc, ok := ctx.Value(BuffaloContext).(buffalo.Context)
-	if ok {
-		return bc
-	}
-
-	// Doesn't have a BuffaloContext value, so it must be the actual BuffaloContext
 	return ctx.(buffalo.Context)
 }
 
@@ -728,42 +682,6 @@ func (v *StringIsVisible) IsValid(errors *validate.Errors) {
 	errors.Add(validators.GenerateKey(v.Name), fmt.Sprintf("%s must have a visible character.", v.Name))
 }
 
-// ReportError logs an error with details, and returns a user-friendly, translated error identified by translation key
-// string `errID`. If called with a full GraphQL context, the query text will be logged in the extras.
-func ReportError(ctx context.Context, err error, errID string) error {
-	c := getBuffaloContext(ctx)
-
-	NewExtra(c, "function", GetFunctionName(2))
-
-	// need to use direct access instead of graphql.GetOperationContext to avoid a panic during unit tests
-	if oc, ok := ctx.Value("operation_context").(*graphql.OperationContext); ok && oc != nil {
-		NewExtra(c, "query", fmt.Sprintf("%#v", oc.RawQuery)) // escape control characters
-	}
-
-	errStr := errID
-	if err != nil {
-		errStr = err.Error()
-	}
-	Error(c, errStr)
-
-	if T == nil {
-		return errors.New(errID)
-	}
-	return errors.New(T.Translate(c, errID))
-}
-
-// GetFunctionName provides the filename, line number, and function name of the caller, skipping the top `skip`
-// functions on the stack.
-func GetFunctionName(skip int) string {
-	pc, file, line, ok := runtime.Caller(skip)
-	if !ok {
-		return "?"
-	}
-
-	fn := runtime.FuncForPC(pc)
-	return fmt.Sprintf("%s:%d %s", file, line, fn.Name())
-}
-
 func UniquifyIntSlice(intSlice []int) []int {
 	keys := make(map[int]bool)
 	list := make([]int, 0, len(keys))
@@ -794,12 +712,4 @@ func getExtras(c buffalo.Context) map[string]interface{} {
 	}
 
 	return extras
-}
-
-func SetOptionalFloatField(input *float64, output *nulls.Float64) {
-	if input != nil {
-		*output = nulls.NewFloat64(*input)
-		return
-	}
-	*output = nulls.Float64{}
 }

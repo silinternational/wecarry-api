@@ -10,8 +10,8 @@ import (
 	"github.com/silinternational/wecarry-api/models"
 )
 
-// UserQueryFixtures is for returning fixtures from Fixtures_UserQuery
-type UserQueryFixtures struct {
+// UserFixtures is for returning fixtures from `fixturesForUsers`
+type UserFixtures struct {
 	models.Organization
 	models.Users
 	models.Requests
@@ -21,7 +21,7 @@ type UserQueryFixtures struct {
 	models.Meetings
 }
 
-func fixturesForUserQuery(as *ActionSuite) UserQueryFixtures {
+func fixturesForUsers(as *ActionSuite) UserFixtures {
 	uf := test.CreateUserFixtures(as.DB, 2)
 	users := uf.Users
 	org := uf.Organization
@@ -92,7 +92,7 @@ func fixturesForUserQuery(as *ActionSuite) UserQueryFixtures {
 	mp := models.MeetingParticipant{MeetingID: meetings[0].ID, UserID: users[1].ID}
 	test.MustCreate(as.DB, &mp)
 
-	return UserQueryFixtures{
+	return UserFixtures{
 		Organization:    org,
 		Users:           users,
 		UserPreferences: userPreferences,

@@ -549,54 +549,6 @@ func (ms *ModelSuite) TestUser_FindUserOrganization() {
 	}
 }
 
-func (ms *ModelSuite) TestUser_GetRequests() {
-	t := ms.T()
-	f := CreateFixturesForUserGetRequests(ms)
-
-	type args struct {
-		user        User
-		requestRole string
-	}
-	tests := []struct {
-		name string
-		args args
-		want []uuid.UUID
-	}{
-		{
-			name: "created by",
-			args: args{
-				user:        f.Users[0],
-				requestRole: RequestsCreated,
-			},
-			want: []uuid.UUID{f.Requests[3].UUID, f.Requests[2].UUID, f.Requests[1].UUID, f.Requests[0].UUID},
-		},
-		{
-			name: "providing",
-			args: args{
-				user:        f.Users[1],
-				requestRole: RequestsProviding,
-			},
-			want: []uuid.UUID{f.Requests[1].UUID, f.Requests[0].UUID},
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			got, err := test.args.user.Requests(ms.DB, test.args.requestRole)
-			if err != nil {
-				t.Errorf("Requests() returned error: %s", err)
-			}
-
-			ids := make([]uuid.UUID, len(got))
-			for i, r := range got {
-				ids[i] = r.UUID
-			}
-			if !reflect.DeepEqual(ids, test.want) {
-				t.Errorf("GetOrgIDs() = \"%v\", want \"%v\"", ids, test.want)
-			}
-		})
-	}
-}
-
 func (ms *ModelSuite) TestUser_CanCreateOrganization() {
 	t := ms.T()
 

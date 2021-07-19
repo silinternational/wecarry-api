@@ -66,7 +66,7 @@ func (as *ActionSuite) Test_convertUser() {
 }
 
 func (as *ActionSuite) TestUsersUpdate() {
-	f := fixturesForUserQuery(as)
+	f := fixturesForUsers(as)
 	users0 := f.Users[0]
 
 	photo := test.CreateFileFixture(as.DB)

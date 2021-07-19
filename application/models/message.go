@@ -144,49 +144,6 @@ func (m *Message) GetThread(tx *pop.Connection) (*Thread, error) {
 	return &thread, nil
 }
 
-// Create a new message if authorized.
-func (m *Message) Create(tx *pop.Connection, user User, requestUUID string, threadUUID *string, content string) error {
-	var request Request
-	if err := request.FindByUUID(tx, requestUUID); err != nil {
-		return errors.New("failed to find request, " + err.Error())
-	}
-
-	if isVisible, err := request.IsVisible(tx, user); err != nil {
-		return err
-	} else if !isVisible {
-		return errors.New("user cannot create a message on request")
-	}
-
-	var thread Thread
-	if threadUUID != nil && *threadUUID != "" {
-		err := thread.FindByUUID(tx, *threadUUID)
-		if err != nil {
-			return errors.New("failed to find thread, " + err.Error())
-		}
-		if thread.RequestID != request.ID {
-			return errors.New("thread is not valid for request")
-		}
-		if !thread.IsVisible(tx, user.ID) {
-			return errors.New("user cannot create a message on thread")
-		}
-	} else {
-		err := thread.CreateWithParticipants(tx, request, user)
-		if err != nil {
-			return errors.New("failed to create new thread on request, " + err.Error())
-		}
-	}
-
-	m.Content = content
-	m.ThreadID = thread.ID
-	m.SentByID = user.ID
-	if err := create(tx, m); err != nil {
-		return errors.New("failed to create new message, " + err.Error())
-	}
-
-	return nil
-}
-
-// Todo Once gql is no longer supported, get rid of the Create() function above
 // CreateFromInput a new message if authorized.
 func (m *Message) CreateFromInput(tx *pop.Connection, user User, input api.MessageInput) error {
 	var request Request

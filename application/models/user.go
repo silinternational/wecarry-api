@@ -21,12 +21,6 @@ import (
 	"github.com/silinternational/wecarry-api/domain"
 )
 
-// These values are used by GraphQL to reference the names of the Request relationships on the User model.
-const (
-	RequestsCreated   string = "RequestsCreated"
-	RequestsProviding string = "RequestsProviding"
-)
-
 type UserAdminRole string
 
 const (
@@ -454,18 +448,6 @@ func (u *User) FindUserOrganization(tx *pop.Connection, org Organization) (UserO
 	}
 
 	return userOrg, nil
-}
-
-func (u *User) Requests(tx *pop.Connection, requestRole string) ([]Request, error) {
-	fk := map[string]string{
-		RequestsCreated:   "created_by_id=?",
-		RequestsProviding: "provider_id=?",
-	}
-	var requests Requests
-	if err := tx.Where(fk[requestRole], u.ID).Order("updated_at desc").All(&requests); err != nil {
-		return nil, fmt.Errorf("error getting requests for user id %v ... %v", u.ID, err)
-	}
-	return requests, nil
 }
 
 // AttachPhoto assigns a previously-stored File to this User as a profile photo

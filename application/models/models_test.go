@@ -83,11 +83,6 @@ func (ms *ModelSuite) TestCurrentUser() {
 			wantUser: user,
 		},
 		{
-			name:     "gql context",
-			context:  context.WithValue(ctx, domain.BuffaloContext, ctx),
-			wantUser: user,
-		},
-		{
 			name:     "empty context",
 			context:  &testBuffaloContext{params: map[interface{}]interface{}{}},
 			wantUser: User{},
