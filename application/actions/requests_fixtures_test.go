@@ -16,7 +16,7 @@ type UpdateRequestStatusFixtures struct {
 	models.Users
 }
 
-func createFixturesForRequests(as *ActionSuite) RequestTestFixtures {
+func createFixturesForRequests(as *ActionSuite) RequestFixtures {
 	t := as.T()
 
 	userFixtures := test.CreateUserFixtures(as.DB, 2)
@@ -64,7 +64,7 @@ func createFixturesForRequests(as *ActionSuite) RequestTestFixtures {
 		t.FailNow()
 	}
 
-	return RequestTestFixtures{
+	return RequestFixtures{
 		Organization: org,
 		Users:        users,
 		Requests:     requests,

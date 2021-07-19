@@ -8,7 +8,7 @@ import (
 	"github.com/silinternational/wecarry-api/models"
 )
 
-type threadTestFixtures struct {
+type threadFixtures struct {
 	models.Organization
 	models.Users
 	models.Requests
@@ -16,7 +16,7 @@ type threadTestFixtures struct {
 	models.Messages
 }
 
-func createFixturesForThreads(as *ActionSuite) threadTestFixtures {
+func createFixturesForThreads(as *ActionSuite) threadFixtures {
 	userFixtures := test.CreateUserFixtures(as.DB, 3)
 	org := userFixtures.Organization
 	users := userFixtures.Users
@@ -59,7 +59,7 @@ func createFixturesForThreads(as *ActionSuite) threadTestFixtures {
 	yesterday := time.Now().Add(-time.Hour * 48)
 	threadParticipants[0].UpdateLastViewedAt(as.DB, yesterday)
 
-	return threadTestFixtures{
+	return threadFixtures{
 		Organization: org,
 		Users:        users,
 		Requests:     requests,

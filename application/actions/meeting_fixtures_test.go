@@ -11,7 +11,7 @@ import (
 	"github.com/silinternational/wecarry-api/models"
 )
 
-type meetingTestFixtures struct {
+type meetingFixtures struct {
 	models.Locations
 	models.Meetings
 	models.Users
@@ -28,7 +28,7 @@ type meetingTestFixtures struct {
 //  3 Mtg Future  user 0     user1
 //
 //  Inviter for all invites is user 0
-func createFixturesForMeetings(as *ActionSuite) meetingTestFixtures {
+func createFixturesForMeetings(as *ActionSuite) meetingFixtures {
 	uf := test.CreateUserFixtures(as.DB, 3)
 	user := uf.Users[0]
 	locations := test.CreateLocationFixtures(as.DB, 4)
@@ -135,7 +135,7 @@ func createFixturesForMeetings(as *ActionSuite) meetingTestFixtures {
 	}
 	createFixture(as, &participants)
 
-	return meetingTestFixtures{
+	return meetingFixtures{
 		Locations:           locations,
 		Meetings:            meetings,
 		Users:               uf.Users,
