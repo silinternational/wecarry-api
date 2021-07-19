@@ -68,25 +68,6 @@ func getRandomToken() (string, error) {
 	return base64.URLEncoding.EncodeToString(rb), nil
 }
 
-func ConvertStringPtrToNullsString(inPtr *string) nulls.String {
-	if inPtr == nil {
-		return nulls.String{}
-	}
-
-	return nulls.NewString(*inPtr)
-}
-
-// GetStringFromNullsString returns a pointer to make it easier for calling
-// functions to return a pointer without an extra line of code.
-func GetStringFromNullsString(inString nulls.String) *string {
-	if inString.Valid {
-		output := inString.String
-		return &output
-	}
-
-	return nil
-}
-
 // GetIntFromNullsInt returns a pointer to make it easier for calling
 // functions to return a pointer without an extra line of code.
 func GetIntFromNullsInt(in nulls.Int) *int {
@@ -95,17 +76,6 @@ func GetIntFromNullsInt(in nulls.Int) *int {
 		output = in.Int
 	}
 	return &output
-}
-
-// GetStringFromNullsTime returns a pointer to a string that looks
-// like a date based on a nulls.Time value
-func GetStringFromNullsTime(inTime nulls.Time) *string {
-	if inTime.Valid {
-		output := inTime.Time.Format(domain.DateFormat)
-		return &output
-	}
-
-	return nil
 }
 
 // CurrentUser retrieves the current user from the context.
