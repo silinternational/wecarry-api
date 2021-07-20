@@ -13,6 +13,12 @@ import (
 	"github.com/silinternational/wecarry-api/domain"
 )
 
+const (
+	watchIDKey   = "watch_id"
+	requestIDKey = "request_id"
+	userIDKey    = "user_id"
+)
+
 // SocialAuthConfig holds the Key and Secret for a social auth provider
 type SocialAuthConfig struct{ Key, Secret string }
 

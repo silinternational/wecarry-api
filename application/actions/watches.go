@@ -87,14 +87,10 @@ func watchesCreate(c buffalo.Context) error {
 func watchesRemove(c buffalo.Context) error {
 	cUser := models.CurrentUser(c)
 	tx := models.Tx(c)
-
-	id, err := getUUIDFromParam(c, "watch_id")
-	if err != nil {
-		return reportError(c, err)
-	}
+	id := getWatchIDFromContext(c)
 
 	var watch models.Watch
-	output, appErr := watch.DeleteForOwner(tx, id.String(), cUser)
+	output, appErr := watch.DeleteForOwner(tx, id, cUser)
 	if appErr != nil {
 		return reportError(c, appErr)
 	}

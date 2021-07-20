@@ -114,6 +114,7 @@ func App() *buffalo.App {
 		requestsGroup.DELETE("/{request_id}/potentialprovider", requestsRemoveMeAsPotentialProvider)
 
 		watchesGroup := app.Group("/watches")
+		watchesGroup.Use(WatchesMiddleware)
 		watchesGroup.GET("/", watchesMine)
 		watchesGroup.POST("/", watchesCreate)
 		watchesGroup.DELETE("/{watch_id}", watchesRemove)
