@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
+
+	"github.com/gobuffalo/nulls"
 
 	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/domain"
@@ -60,7 +63,77 @@ func (as *ActionSuite) Test_MeetingsList() {
 
 	as.NotContains(body, mtgs[0].Name, "should not have included name of past meeting")
 	as.NotContains(body, mtgs[1].Name, "should not have included name of recent meeting")
+}
 
+func (as *ActionSuite) Test_MeetingsCreate() {
+	f := createFixturesForMeetings(as)
+
+	nextWeek := time.Now().UTC().Add(domain.DurationWeek)
+	weekAfterNext := time.Now().UTC().Add(domain.DurationWeek * 2)
+
+	goodMeeting := api.MeetingCreateInput{
+		Name:        "Good Meeting",
+		Description: nulls.NewString("This is a good meeting"),
+		StartDate:   nextWeek,
+		EndDate:     weekAfterNext,
+		MoreInfoURL: nulls.NewString("http://events.example.org/1"),
+		Location:    locationX,
+		ImageFileID: nulls.NewUUID(f.File.UUID),
+	}
+	badMeeting := api.MeetingCreateInput{}
+
+	tests := []struct {
+		name       string
+		user       models.User
+		meeting    api.MeetingCreateInput
+		wantStatus int
+	}{
+		{
+			name:       "authn error",
+			user:       models.User{},
+			meeting:    goodMeeting,
+			wantStatus: http.StatusUnauthorized,
+		},
+		{
+			name:       "bad input",
+			user:       f.Users[1],
+			meeting:    badMeeting,
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name:       "good input",
+			user:       f.Users[1],
+			meeting:    goodMeeting,
+			wantStatus: http.StatusOK,
+		},
+	}
+	for _, tt := range tests {
+		as.T().Run(tt.name, func(t *testing.T) {
+			req := as.JSON("/events")
+			req.Headers["Authorization"] = fmt.Sprintf("Bearer %s", tt.user.Nickname)
+			req.Headers["content-type"] = "application/json"
+			res := req.Post(&tt.meeting)
+
+			body := res.Body.String()
+			as.Equal(tt.wantStatus, res.Code, "incorrect status code returned, body: %s", body)
+
+			if tt.wantStatus != http.StatusOK {
+				return
+			}
+
+			wantData := []string{
+				`"name":"` + tt.meeting.Name,
+				`"created_by":{"id":"` + tt.user.UUID.String(),
+				`"location":{"description":"` + locationX.Description,
+				`"start_date":"` + nextWeek.Format(domain.DateFormat),
+				`"end_date":"` + weekAfterNext.Format(domain.DateFormat),
+				`"more_info_url":"` + tt.meeting.MoreInfoURL.String,
+				`"image_file":{"id":"` + tt.meeting.ImageFileID.UUID.String(),
+			}
+			as.verifyResponseData(wantData, body, "")
+
+		})
+	}
 }
 
 func (as *ActionSuite) Test_meetingsJoin() {
