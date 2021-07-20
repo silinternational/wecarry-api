@@ -81,24 +81,36 @@ func (as *ActionSuite) Test_MeetingsCreate() {
 		ImageFileID: nulls.NewUUID(f.File.UUID),
 	}
 	badMeeting := api.MeetingCreateInput{}
+	badMeetingFile := goodMeeting
+	badMeetingFile.ImageFileID = nulls.NewUUID(domain.GetUUID())
 
 	tests := []struct {
-		name       string
-		user       models.User
-		meeting    api.MeetingCreateInput
-		wantStatus int
+		name            string
+		user            models.User
+		meeting         api.MeetingCreateInput
+		wantStatus      int
+		wantErrContains string
 	}{
 		{
-			name:       "authn error",
-			user:       models.User{},
-			meeting:    goodMeeting,
-			wantStatus: http.StatusUnauthorized,
+			name:            "authn error",
+			user:            models.User{},
+			meeting:         goodMeeting,
+			wantStatus:      http.StatusUnauthorized,
+			wantErrContains: api.ErrorNotAuthenticated.String(),
 		},
 		{
-			name:       "bad input",
-			user:       f.Users[1],
-			meeting:    badMeeting,
-			wantStatus: http.StatusBadRequest,
+			name:            "bad meeting input",
+			user:            f.Users[1],
+			meeting:         badMeeting,
+			wantStatus:      http.StatusBadRequest,
+			wantErrContains: api.ErrorLocationCreateFailure.String(),
+		},
+		{
+			name:            "bad file input",
+			user:            f.Users[1],
+			meeting:         badMeetingFile,
+			wantStatus:      http.StatusBadRequest,
+			wantErrContains: api.ErrorCreateMeetingImageIDNotFound.String(),
 		},
 		{
 			name:       "good input",
@@ -118,6 +130,9 @@ func (as *ActionSuite) Test_MeetingsCreate() {
 			as.Equal(tt.wantStatus, res.Code, "incorrect status code returned, body: %s", body)
 
 			if tt.wantStatus != http.StatusOK {
+				if tt.wantErrContains != "" {
+					as.Contains(body, tt.wantErrContains, "missing error message")
+				}
 				return
 			}
 
