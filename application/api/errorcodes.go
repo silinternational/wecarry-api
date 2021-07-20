@@ -113,6 +113,7 @@ const (
 	ErrorGetRequest                              = ErrorKey("ErrorGetRequest")
 	ErrorGetRequestUserNotAllowed                = ErrorKey("ErrorGetRequestUserNotAllowed")
 	ErrorCreateRequest                           = ErrorKey("ErrorCreateRequest")
+	ErrorCreateRequestMeetingIDNotFound          = ErrorKey("ErrorCreateRequestMeetingIDNotFound")
 	ErrorCreateRequestOrgIDNotFound              = ErrorKey("ErrorCreateRequestOrgIDNotFound")
 	ErrorCreateRequestPhotoIDNotFound            = ErrorKey("ErrorCreateRequestPhotoIDNotFound")
 	ErrorCreateRequestInvalidDate                = ErrorKey("ErrorCreateRequestInvalidDate")

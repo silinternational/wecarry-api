@@ -157,6 +157,9 @@ type RequestCreateInput struct {
 	// Optional weight of the item, measured in kilograms
 	Kilograms nulls.Float64 `json:"kilograms"`
 
+	// Optional meeting (event) ID.
+	MeetingID nulls.UUID `json:"meeting_id"`
+
 	// Date (yyyy-mm-dd) before which the item will be needed. The record may be hidden or removed after this date.
 	NeededBefore nulls.String `json:"needed_before"`
 

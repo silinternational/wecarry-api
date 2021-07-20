@@ -157,6 +157,20 @@ func convertRequestCreateInput(ctx context.Context, input api.RequestCreateInput
 		request.NeededBefore = nulls.NewTime(n)
 	}
 
+	if input.MeetingID.Valid {
+		var meeting models.Meeting
+		if err := meeting.FindByUUID(tx, input.MeetingID.UUID.String()); err != nil {
+			err = errors.New("meeting ID not found, " + err.Error())
+			appErr := api.NewAppError(err, api.ErrorCreateRequestMeetingIDNotFound, api.CategoryUser)
+			if domain.IsOtherThanNoRows(err) {
+				appErr.Category = api.CategoryDatabase
+				return request, appErr
+			}
+			return request, appErr
+		}
+		request.MeetingID = nulls.NewInt(meeting.ID)
+	}
+
 	if input.OrganizationID != uuid.Nil {
 		var org models.Organization
 		if err := org.FindByUUID(tx, input.OrganizationID.String()); err != nil {
