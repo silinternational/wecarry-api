@@ -276,9 +276,7 @@ func convertRequestUpdateInput(ctx context.Context, input api.RequestUpdateInput
 		}
 	}
 
-	// TODO Find a more robust way of dealing with all the permutations of
-	// TODO  ... whether the MeetingID is valid and the request has a DestinationID
-	if input.Destination != nil && !input.MeetingID.Valid {
+	if input.Destination != nil {
 		destination := models.ConvertLocationInput(*input.Destination)
 		if err := request.SetDestination(tx, destination); err != nil {
 			return request, api.NewAppError(err, api.ErrorLocationCreateFailure, api.CategoryUser)
