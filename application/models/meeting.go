@@ -226,6 +226,11 @@ func (m *Meeting) GetLocation(tx *pop.Connection) (Location, error) {
 
 // Create stores the Meeting data as a new record in the database.
 func (m *Meeting) Create(tx *pop.Connection) error {
+	if m.EndDate.Before(m.StartDate) {
+		return fmt.Errorf(
+			"invalid meeting dates. StartDate must not come after EndDate. Got %v and %v.",
+			m.StartDate, m.EndDate)
+	}
 	return create(tx, m)
 }
 
