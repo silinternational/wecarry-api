@@ -24,7 +24,7 @@ func (as *ActionSuite) verifyMeeting(expected models.Meeting, actual api.Meeting
 	as.Equal(expected.MoreInfoURL.String, actual.MoreInfoURL, msg+", MoreInfoURL is not correct")
 }
 
-func (as *ActionSuite) Test_MeetingsList() {
+func (as *ActionSuite) Test_meetingsList() {
 	f := createFixturesForMeetings(as)
 	mtgs := f.Meetings
 	lctns := f.Locations
@@ -65,13 +65,13 @@ func (as *ActionSuite) Test_MeetingsList() {
 	as.NotContains(body, mtgs[1].Name, "should not have included name of recent meeting")
 }
 
-func (as *ActionSuite) Test_MeetingsCreate() {
+func (as *ActionSuite) Test_meetingsCreate() {
 	f := createFixturesForMeetings(as)
 
 	nextWeek := time.Now().UTC().Add(domain.DurationWeek)
 	weekAfterNext := time.Now().UTC().Add(domain.DurationWeek * 2)
 
-	goodMeeting := api.MeetingCreateInput{
+	goodMeeting := api.MeetingInput{
 		Name:        "Good Meeting",
 		Description: nulls.NewString("This is a good meeting"),
 		StartDate:   nextWeek.Format(domain.DateFormat),
@@ -80,7 +80,7 @@ func (as *ActionSuite) Test_MeetingsCreate() {
 		Location:    locationX,
 		ImageFileID: nulls.NewUUID(f.File.UUID),
 	}
-	badMeetingLocation := api.MeetingCreateInput{
+	badMeetingLocation := api.MeetingInput{
 		StartDate: "2030-01-02",
 		EndDate:   "2030-01-12",
 	}
@@ -94,7 +94,7 @@ func (as *ActionSuite) Test_MeetingsCreate() {
 	tests := []struct {
 		name            string
 		user            models.User
-		meeting         api.MeetingCreateInput
+		meeting         api.MeetingInput
 		wantStatus      int
 		wantErrContains string
 	}{
@@ -117,14 +117,14 @@ func (as *ActionSuite) Test_MeetingsCreate() {
 			user:            f.Users[1],
 			meeting:         badMeetingFile,
 			wantStatus:      http.StatusBadRequest,
-			wantErrContains: api.ErrorCreateMeetingImageIDNotFound.String(),
+			wantErrContains: api.ErrorMeetingImageIDNotFound.String(),
 		},
 		{
 			name:            "bad start date input",
 			user:            f.Users[1],
 			meeting:         badMeetingStartDate,
 			wantStatus:      http.StatusBadRequest,
-			wantErrContains: api.ErrorCreateMeetingInvalidStartDate.String(),
+			wantErrContains: api.ErrorMeetingInvalidStartDate.String(),
 		},
 		{
 			name:       "good input",
@@ -158,6 +158,106 @@ func (as *ActionSuite) Test_MeetingsCreate() {
 				`"end_date":"` + weekAfterNext.Format(domain.DateFormat),
 				`"more_info_url":"` + tt.meeting.MoreInfoURL.String,
 				`"image_file":{"id":"` + tt.meeting.ImageFileID.UUID.String(),
+			}
+			as.verifyResponseData(wantData, body, "")
+
+		})
+	}
+}
+
+func (as *ActionSuite) Test_meetingsUpdate() {
+	f := createFixturesForMeetings(as)
+
+	nextMonth := time.Now().UTC().Add(domain.DurationWeek * 4)
+	monthAfterNext := time.Now().UTC().Add(domain.DurationWeek * 8)
+
+	goodMeeting := api.MeetingInput{
+		Name:        "Good Meeting New",
+		Description: nulls.NewString("This is a new good meeting"),
+		StartDate:   nextMonth.Format(domain.DateFormat),
+		EndDate:     monthAfterNext.Format(domain.DateFormat),
+		MoreInfoURL: nulls.NewString("http://events.example.org/1/new"),
+		Location:    locationX,
+		ImageFileID: nulls.NewUUID(f.File.UUID),
+	}
+
+	badMeetingLocation := api.MeetingInput{
+		Name:      "badMeetingLocation",
+		StartDate: "2030-01-02",
+		EndDate:   "2030-01-12",
+	}
+
+	badMeetingFile := goodMeeting
+	badMeetingFile.ImageFileID = nulls.NewUUID(domain.GetUUID())
+
+	badMeetingStartDate := goodMeeting
+	badMeetingStartDate.StartDate = "2020-01-02 12:01:02"
+
+	tests := []struct {
+		name            string
+		user            models.User
+		input           api.MeetingInput
+		meeting         models.Meeting
+		wantStatus      int
+		wantErrContains string
+	}{
+		{
+			name:            "authn error",
+			user:            models.User{},
+			input:           goodMeeting,
+			meeting:         f.Meetings[0],
+			wantStatus:      http.StatusUnauthorized,
+			wantErrContains: api.ErrorNotAuthenticated.String(),
+		},
+		{
+			name:            "bad input location",
+			user:            f.Users[1],
+			input:           badMeetingLocation,
+			meeting:         f.Meetings[0],
+			wantStatus:      http.StatusBadRequest,
+			wantErrContains: api.ErrorLocationCreateFailure.String(),
+		},
+		{
+			name:            "bad input file",
+			user:            f.Users[1],
+			input:           badMeetingFile,
+			meeting:         f.Meetings[0],
+			wantStatus:      http.StatusBadRequest,
+			wantErrContains: api.ErrorMeetingImageIDNotFound.String(),
+		},
+		{
+			name:       "good input",
+			user:       f.Users[0],
+			input:      goodMeeting,
+			meeting:    f.Meetings[0],
+			wantStatus: http.StatusOK,
+		},
+	}
+	for _, tt := range tests {
+		as.T().Run(tt.name, func(t *testing.T) {
+			req := as.JSON("/events/" + tt.meeting.UUID.String())
+			req.Headers["Authorization"] = fmt.Sprintf("Bearer %s", tt.user.Nickname)
+			req.Headers["content-type"] = "application/json"
+			res := req.Put(&tt.input)
+
+			body := res.Body.String()
+			as.Equal(tt.wantStatus, res.Code, "incorrect status code returned, body: %s", body)
+
+			if tt.wantStatus != http.StatusOK {
+				if tt.wantErrContains != "" {
+					as.Contains(body, tt.wantErrContains, "missing error message")
+				}
+				return
+			}
+
+			wantData := []string{
+				`"name":"` + tt.input.Name,
+				`"created_by":{"id":"` + tt.user.UUID.String(),
+				`"location":{"description":"` + locationX.Description,
+				`"start_date":"` + nextMonth.Format(domain.DateFormat),
+				`"end_date":"` + monthAfterNext.Format(domain.DateFormat),
+				`"more_info_url":"` + tt.input.MoreInfoURL.String,
+				`"image_file":{"id":"` + tt.input.ImageFileID.UUID.String(),
 			}
 			as.verifyResponseData(wantData, body, "")
 

@@ -55,10 +55,10 @@ type Meeting struct {
 	MoreInfoURL string `json:"more_info_url"`
 }
 
-// MeetingCreateInput includes the fields for creating Meetings/Events
+// MeetingInput includes the fields for creating or updating Meetings/Events
 //
 // swagger:model
-type MeetingCreateInput struct {
+type MeetingInput struct {
 
 	// short name, limited to 80 characters
 	Name string `json:"name"`

@@ -81,12 +81,13 @@ const (
 
 	// Meeting
 
-	ErrorMeetingsGet                   = ErrorKey("ErrorMeetingsGet")
-	ErrorMeetingsConvert               = ErrorKey("ErrorMeetingsConvert")
-	ErrorCreateMeeting                 = ErrorKey("ErrorCreateMeeting")
-	ErrorCreateMeetingImageIDNotFound  = ErrorKey("ErrorCreateMeetingImageIDNotFound")
-	ErrorCreateMeetingInvalidEndDate   = ErrorKey("ErrorCreateMeetingInvalidEndDate")
-	ErrorCreateMeetingInvalidStartDate = ErrorKey("ErrorCreateMeetingInvalidStartDate")
+	ErrorMeetingsGet             = ErrorKey("ErrorMeetingsGet")
+	ErrorMeetingsConvert         = ErrorKey("ErrorMeetingsConvert")
+	ErrorCreateMeeting           = ErrorKey("ErrorCreateMeeting")
+	ErrorMeetingImageIDNotFound  = ErrorKey("ErrorMeetingImageIDNotFound")
+	ErrorMeetingInvalidEndDate   = ErrorKey("ErrorMeetingInvalidEndDate")
+	ErrorMeetingInvalidStartDate = ErrorKey("ErrorMeetingInvalidStartDate")
+	ErrorUpdateMeeting           = ErrorKey("ErrorUpdateMeeting")
 
 	// Message
 
