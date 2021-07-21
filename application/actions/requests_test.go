@@ -417,13 +417,17 @@ func (as *ActionSuite) Test_requestsUpdate() {
 		Description: nulls.NewString("new description"),
 	}
 
-	badRequestField := api.RequestCreateInput{
+	wrongTypeOfRequest := api.RequestCreateInput{
 		OrganizationID: f.Organization.UUID,
 	}
 
 	empty := ""
 	badRequestData := api.RequestUpdateInput{
 		Title: &empty,
+	}
+
+	goodRequestWithMeeting := api.RequestUpdateInput{
+		MeetingID: nulls.NewUUID(f.Meetings[0].UUID),
 	}
 
 	tests := []struct {
@@ -441,9 +445,9 @@ func (as *ActionSuite) Test_requestsUpdate() {
 			wantStatus: http.StatusUnauthorized,
 		},
 		{
-			name:       "bad input field",
+			name:       "wrong type of request input",
 			user:       f.Users[1],
-			input:      badRequestField,
+			input:      wrongTypeOfRequest,
 			request:    f.Requests[1],
 			wantStatus: http.StatusBadRequest,
 		},
@@ -458,6 +462,13 @@ func (as *ActionSuite) Test_requestsUpdate() {
 			name:       "good input",
 			user:       f.Users[0],
 			input:      goodRequest,
+			request:    f.Requests[1],
+			wantStatus: http.StatusOK,
+		},
+		{
+			name:       "good input with meeting",
+			user:       f.Users[0],
+			input:      goodRequestWithMeeting,
 			request:    f.Requests[2],
 			wantStatus: http.StatusOK,
 		},
@@ -472,14 +483,24 @@ func (as *ActionSuite) Test_requestsUpdate() {
 			body := res.Body.String()
 			as.Equal(tt.wantStatus, res.Code, "incorrect status code returned, body: %s", body)
 
-			if tt.wantStatus == http.StatusOK {
-				wantData := []string{
-					`"created_by":{"id":"` + tt.user.UUID.String(),
-					`"organization":{"id":"` + f.Organization.UUID.String(),
-					`"description":"` + goodRequest.Description.String,
-				}
-				as.verifyResponseData(wantData, body, "")
+			if tt.wantStatus != http.StatusOK {
+				return
 			}
+
+			input, ok := tt.input.(api.RequestUpdateInput)
+			as.True(ok, "didn't expect a create input object to get this far")
+
+			wantData := []string{
+				`"created_by":{"id":"` + tt.user.UUID.String(),
+				`"organization":{"id":"` + f.Organization.UUID.String(),
+				`"description":"` + input.Description.String,
+			}
+
+			if input.MeetingID.Valid {
+				wantData = append(wantData, `"meeting":{"id":"`+input.MeetingID.UUID.String())
+			}
+
+			as.verifyResponseData(wantData, body, "")
 		})
 	}
 }
