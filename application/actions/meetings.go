@@ -90,13 +90,27 @@ func meetingsCreate(c buffalo.Context) error {
 func convertMeetingCreateInput(ctx context.Context, input api.MeetingCreateInput) (models.Meeting, error) {
 	tx := models.Tx(ctx)
 
+	startDate, err := time.Parse(domain.DateFormat, input.StartDate)
+	if err != nil {
+		err = errors.New("failed to parse StartDate, " + err.Error())
+		appErr := api.NewAppError(err, api.ErrorCreateMeetingInvalidStartDate, api.CategoryUser)
+		return models.Meeting{}, appErr
+	}
+
+	endDate, err := time.Parse(domain.DateFormat, input.EndDate)
+	if err != nil {
+		err = errors.New("failed to parse EndDate, " + err.Error())
+		appErr := api.NewAppError(err, api.ErrorCreateMeetingInvalidEndDate, api.CategoryUser)
+		return models.Meeting{}, appErr
+	}
+
 	meeting := models.Meeting{
 		CreatedByID: models.CurrentUser(ctx).ID,
 		Name:        input.Name,
 		Description: input.Description,
 		MoreInfoURL: input.MoreInfoURL,
-		StartDate:   input.StartDate,
-		EndDate:     input.EndDate,
+		StartDate:   startDate,
+		EndDate:     endDate,
 	}
 
 	if input.ImageFileID.Valid {

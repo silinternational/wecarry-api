@@ -74,15 +74,22 @@ func (as *ActionSuite) Test_MeetingsCreate() {
 	goodMeeting := api.MeetingCreateInput{
 		Name:        "Good Meeting",
 		Description: nulls.NewString("This is a good meeting"),
-		StartDate:   nextWeek,
-		EndDate:     weekAfterNext,
+		StartDate:   nextWeek.Format(domain.DateFormat),
+		EndDate:     weekAfterNext.Format(domain.DateFormat),
 		MoreInfoURL: nulls.NewString("http://events.example.org/1"),
 		Location:    locationX,
 		ImageFileID: nulls.NewUUID(f.File.UUID),
 	}
-	badMeeting := api.MeetingCreateInput{}
+	badMeetingLocation := api.MeetingCreateInput{
+		StartDate: "2030-01-02",
+		EndDate:   "2030-01-12",
+	}
+
 	badMeetingFile := goodMeeting
 	badMeetingFile.ImageFileID = nulls.NewUUID(domain.GetUUID())
+
+	badMeetingStartDate := goodMeeting
+	badMeetingStartDate.StartDate = "2020-01-02 12:01:02"
 
 	tests := []struct {
 		name            string
@@ -99,9 +106,9 @@ func (as *ActionSuite) Test_MeetingsCreate() {
 			wantErrContains: api.ErrorNotAuthenticated.String(),
 		},
 		{
-			name:            "bad meeting input",
+			name:            "bad meeting location input",
 			user:            f.Users[1],
-			meeting:         badMeeting,
+			meeting:         badMeetingLocation,
 			wantStatus:      http.StatusBadRequest,
 			wantErrContains: api.ErrorLocationCreateFailure.String(),
 		},
@@ -111,6 +118,13 @@ func (as *ActionSuite) Test_MeetingsCreate() {
 			meeting:         badMeetingFile,
 			wantStatus:      http.StatusBadRequest,
 			wantErrContains: api.ErrorCreateMeetingImageIDNotFound.String(),
+		},
+		{
+			name:            "bad start date input",
+			user:            f.Users[1],
+			meeting:         badMeetingStartDate,
+			wantStatus:      http.StatusBadRequest,
+			wantErrContains: api.ErrorCreateMeetingInvalidStartDate.String(),
 		},
 		{
 			name:       "good input",

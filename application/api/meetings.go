@@ -66,11 +66,11 @@ type MeetingCreateInput struct {
 	// text-only description, limited to 4096 characters
 	Description nulls.String `json:"description"`
 
-	// date of the first day of the meeting (event)"
-	StartDate time.Time `json:"start_date"`
+	// date (yyyy-mm-dd) of the first day of the meeting (event)"
+	StartDate string `json:"start_date"`
 
-	// date of the last day of the meeting (event)"
-	EndDate time.Time `json:"end_date"`
+	// date (yyyy-mm-dd) of the last day of the meeting (event)"
+	EndDate string `json:"end_date"`
 
 	// meeting (event) information URL -- should be a full website, but could be an information document such as a pdf"
 	MoreInfoURL nulls.String `json:"more_info_url"`
