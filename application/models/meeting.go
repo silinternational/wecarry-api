@@ -426,6 +426,8 @@ func ConvertMeeting(ctx context.Context, meeting Meeting, user User) (api.Meetin
 	}
 	output.Participants = participants
 
+	output.IsEditable = meeting.CanUpdate(user)
+
 	return output, nil
 }
 

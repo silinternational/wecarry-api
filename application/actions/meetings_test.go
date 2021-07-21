@@ -48,6 +48,7 @@ func (as *ActionSuite) Test_meetingsList() {
 		lctn := lctns[i]
 		moreContains := []string{
 			fmt.Sprintf(`"id":"%s"`, mtgs[i].UUID.String()),
+			fmt.Sprintf(`"is_editable":%t`, mtgs[i].CanUpdate(user)),
 			fmt.Sprintf(`"name":"%s"`, mtgs[i].Name),
 			fmt.Sprintf(`"start_date":"%s`, mtgs[i].StartDate.Format(domain.DateFormat)),
 			fmt.Sprintf(`"end_date":"%s`, mtgs[i].EndDate.Format(domain.DateFormat)),
