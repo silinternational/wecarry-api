@@ -19,6 +19,7 @@ type RequestFixtures struct {
 	models.Users
 	models.Requests
 	models.Threads
+	models.Meetings
 }
 
 func (as *ActionSuite) Test_requestsGet() {
@@ -80,6 +81,7 @@ func (as *ActionSuite) Test_requestsGet() {
 
 func (as *ActionSuite) Test_requestsCreate() {
 	f := createFixturesForRequests(as)
+	meeting := f.Meetings[0]
 
 	goodRequest := api.RequestCreateInput{
 		Destination:    locationX,
@@ -88,6 +90,10 @@ func (as *ActionSuite) Test_requestsCreate() {
 		Title:          "request title",
 	}
 	badRequest := api.RequestCreateInput{}
+
+	meetingRequest := goodRequest
+	meetingRequest.Title = "Request with Meeting"
+	meetingRequest.MeetingID = nulls.NewUUID(meeting.UUID)
 
 	tests := []struct {
 		name       string
@@ -113,6 +119,12 @@ func (as *ActionSuite) Test_requestsCreate() {
 			request:    goodRequest,
 			wantStatus: http.StatusOK,
 		},
+		{
+			name:       "good input with meeting",
+			user:       f.Users[1],
+			request:    meetingRequest,
+			wantStatus: http.StatusOK,
+		},
 	}
 	for _, tt := range tests {
 		as.T().Run(tt.name, func(t *testing.T) {
@@ -124,15 +136,23 @@ func (as *ActionSuite) Test_requestsCreate() {
 			body := res.Body.String()
 			as.Equal(tt.wantStatus, res.Code, "incorrect status code returned, body: %s", body)
 
-			if tt.wantStatus == http.StatusOK {
-				wantData := []string{
-					`"title":"` + tt.request.Title,
-					`"created_by":{"id":"` + tt.user.UUID.String(),
-					`"organization":{"id":"` + f.Organization.UUID.String(),
-					`"destination":{"description":"` + locationX.Description,
-				}
-				as.verifyResponseData(wantData, body, "")
+			if tt.wantStatus != http.StatusOK {
+				return
 			}
+			wantData := []string{
+				`"title":"` + tt.request.Title,
+				`"created_by":{"id":"` + tt.user.UUID.String(),
+				`"organization":{"id":"` + f.Organization.UUID.String(),
+				`"destination":{"description":"` + locationX.Description,
+			}
+			if tt.request.MeetingID.Valid {
+				wantData = append(wantData, []string{
+					`"meeting":{"id":"` + meeting.UUID.String(),
+					`"name":"` + meeting.Name,
+				}...)
+			}
+			as.verifyResponseData(wantData, body, "")
+
 		})
 	}
 }
