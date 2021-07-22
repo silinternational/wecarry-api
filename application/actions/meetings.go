@@ -173,7 +173,8 @@ func convertMeetingCreateInput(ctx context.Context, input api.MeetingInput) (mod
 	return meeting, nil
 }
 
-// convertMeetingUpdateInput creates a new `Meeting` from a `MeetingInput`.
+// convertMeetingUpdateInput returns a `Meeting` from an existing record which has been
+//  updated based on a `MeetingInput`.
 // All properties in the original meeting will be overwritten.
 func convertMeetingUpdateInput(ctx context.Context, input api.MeetingInput, id string) (models.Meeting, error) {
 	tx := models.Tx(ctx)
