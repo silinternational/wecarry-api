@@ -316,7 +316,7 @@ func createPotentialProvidersFixtures(ms *ModelSuite) potentialProvidersFixtures
 //  The first participant is the meeting organizer
 //  The second participant is an invited user
 //  The third participant is a self-joined user
-func createMeetingFixtures(tx *pop.Connection, nMeetings int) meetingFixtures {
+func createMeetingFixtures(tx *pop.Connection, nMeetings int, userIDs ...int) meetingFixtures {
 	var org Organization
 	if err := tx.First(&org); err != nil {
 		org = Organization{AuthConfig: "{}"}
@@ -324,9 +324,14 @@ func createMeetingFixtures(tx *pop.Connection, nMeetings int) meetingFixtures {
 	}
 
 	var user User
-	if err := tx.First(&user); err != nil {
-		user = User{}
-		mustCreate(tx, &user)
+	if len(userIDs) == 0 {
+		if err := tx.First(&user); err != nil {
+			user = createUserFixtures(tx, 1).Users[0]
+		}
+	} else {
+		if err := tx.Find(&user, userIDs[0]); err != nil {
+			panic("error finding user by id for request fixtures: " + err.Error())
+		}
 	}
 
 	locations := createLocationFixtures(tx, nMeetings)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/gobuffalo/nulls"
@@ -542,4 +543,49 @@ func loadMeetingParticipants(ctx context.Context, meeting Meeting, user User) (a
 	}
 
 	return outputParticipants, nil
+}
+
+// CreateInvites creates meeting invitations from a list of email addresses. The addresses
+// can be comma-separated or newline separated.
+func (m *Meeting) CreateInvites(ctx context.Context, emails string) error {
+	if emails == "" {
+		return nil
+	}
+
+	cUser := CurrentUser(ctx)
+	tx := Tx(ctx)
+
+	can, err := cUser.CanCreateMeetingInvite(tx, *m)
+	if err != nil {
+		return errors.New("error creating meeting invites, " + err.Error())
+	}
+	if !can {
+		return errors.New("user cannot create invites for this meeting")
+	}
+
+	inv := MeetingInvite{
+		MeetingID: m.ID,
+		InviterID: cUser.ID,
+	}
+
+	badEmails := make([]string, 0)
+	for _, email := range splitEmailList(emails) {
+		inv.Email = email
+		if err := inv.Create(tx); err != nil {
+			badEmails = append(badEmails, email)
+		}
+	}
+	if len(badEmails) > 0 {
+		return fmt.Errorf("problems creating invitations, bad emails: %s", badEmails)
+	}
+
+	return nil
+}
+
+func splitEmailList(emails string) []string {
+	if emails == "" {
+		return []string{}
+	}
+
+	return strings.Split(strings.ReplaceAll(strings.ReplaceAll(emails, "\r\n", ","), "\n", ","), ",")
 }

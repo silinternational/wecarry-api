@@ -83,6 +83,9 @@ type MeetingInput struct {
 
 	// meeting (event) location -- notifications and filters may use this location"
 	Location Location `json:"location"`
+
+	// email addresses to which to send meeting invites. Can be comma- or newline-separated.
+	Emails string `json:"emails"`
 }
 
 // swagger:model
