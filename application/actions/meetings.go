@@ -77,6 +77,10 @@ func meetingsCreate(c buffalo.Context) error {
 		return reportError(c, api.NewAppError(err, api.ErrorCreateMeeting, api.CategoryUser))
 	}
 
+	if err = meeting.CreateInvites(c, input.Emails); err != nil {
+		return reportError(c, api.NewAppError(err, api.ErrorCreateMeeting, api.CategoryUser))
+	}
+
 	output, err := models.ConvertMeeting(c, meeting, cUser)
 	if err != nil {
 		return reportError(c, err)
@@ -279,7 +283,6 @@ func meetingsJoin(c buffalo.Context) error {
 }
 
 func parseMeetingDates(input api.MeetingInput, modelMtg *models.Meeting) error {
-
 	startDate, err := time.Parse(domain.DateFormat, input.StartDate)
 	if err != nil {
 		err = errors.New("failed to parse StartDate, " + err.Error())

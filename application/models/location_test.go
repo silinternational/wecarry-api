@@ -362,6 +362,5 @@ func (ms *ModelSuite) TestLocations_DeleteUnused() {
 	ms.NoError(locations.DeleteUnused())
 	n, _ := DB.Count(&locations)
 
-	// 1 user doesn't get a location in createMeetingFixtures()
-	ms.Equal(nRequests*2+nMeetings+nWatches*2+nUsers-1, n, "wrong number of locations remain")
+	ms.Equal(nRequests*2+nMeetings+nWatches*2+nUsers, n, "wrong number of locations remain")
 }
