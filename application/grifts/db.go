@@ -13,10 +13,8 @@ import (
 )
 
 var _ = grift.Namespace("db", func() {
-
 	grift.Desc("seed", "Seeds a database")
 	_ = grift.Add("seed", func(c *grift.Context) error {
-
 		var existingOrgs models.Organizations
 		_ = models.DB.All(&existingOrgs)
 		if len(existingOrgs) > 1 {
@@ -149,61 +147,98 @@ var _ = grift.Namespace("db", func() {
 			}
 		}
 
+		oneYearFromNow := time.Now().UTC().Add(time.Second * 60 * 60 * 24 * 365)
+
+		fixtureUserTokens := make(models.UserAccessTokens, len(fixtureUsers))
+		for i, token := range fixtureUserTokens {
+			fixtureUserTokens[i].UserID = fixtureUsers[i].ID
+			fixtureUserTokens[i].UserOrganizationID = nulls.NewInt(fixtureUserOrgs[i].ID)
+			fixtureUserTokens[i].AccessToken = models.HashClientIdAccessToken(fixtureUsers[i].Nickname)
+			fixtureUserTokens[i].ExpiresAt = oneYearFromNow
+
+			err := models.DB.Create(&fixtureUserTokens[i])
+			if err != nil {
+				err = fmt.Errorf("error loading user token fixture ... %+v\n %v", token, err.Error())
+				return err
+			}
+		}
+
 		// LOCATIONS Table
 		fixtureLocations := []*models.Location{
 			{
 				Description: "Madrid, Spain",
 				Country:     "ES",
-				Latitude:    nulls.NewFloat64(40.4168),
-				Longitude:   nulls.NewFloat64(-3.7038),
+				State:       "MD",
+				County:      "M",
+				City:        "Madrid",
+				Latitude:    40.4168,
+				Longitude:   -3.7038,
 			},
 			{
 				Description: "JAARS, NC, USA",
 				Country:     "US",
-				Latitude:    nulls.NewFloat64(34.8638),
-				Longitude:   nulls.NewFloat64(-80.7459),
+				State:       "NC",
+				County:      "Union",
+				Latitude:    34.8638,
+				Longitude:   -80.7459,
 			},
 			{
 				Description: "Atlanta, GA, USA",
 				Country:     "US",
-				Latitude:    nulls.NewFloat64(33.7490),
-				Longitude:   nulls.NewFloat64(-84.3880),
+				State:       "GA",
+				County:      "Fulton",
+				City:        "Atlanta",
+				Latitude:    33.7490,
+				Longitude:   -84.3880,
 			},
 			{
 				Description: "Orlando, FL, USA",
 				Country:     "US",
-				Latitude:    nulls.NewFloat64(28.5383),
-				Longitude:   nulls.NewFloat64(-81.3792),
+				State:       "FL",
+				County:      "Orange",
+				City:        "Miami",
+				Latitude:    28.5383,
+				Longitude:   -81.3792,
 			},
 			{
 				Description: "Toronto, Canada",
 				Country:     "CA",
-				Latitude:    nulls.NewFloat64(43.6532),
-				Longitude:   nulls.NewFloat64(-79.3832),
+				State:       "ON",
+				County:      "Toronto",
+				Latitude:    43.6532,
+				Longitude:   -79.3832,
 			},
 			{
-				Description: "Nairobi, Kenya",
-				Country:     "KE",
-				Latitude:    nulls.NewFloat64(-1.2921),
-				Longitude:   nulls.NewFloat64(36.8219),
+				Description: "Port Lincoln, SA, Australia",
+				Country:     "AU",
+				State:       "SA",
+				City:        "Port Lincoln",
+				Latitude:    -34.730194,
+				Longitude:   135.850479,
 			},
 			{
-				Description: "Brasília, Brazil",
-				Country:     "BR",
-				Latitude:    nulls.NewFloat64(-15.8267),
-				Longitude:   nulls.NewFloat64(-47.9218),
-			},
-			{
-				Description: "Chiang Mai, Thailand",
+				Description: "Lopburi, Thailand",
 				Country:     "TH",
-				Latitude:    nulls.NewFloat64(18.7953),
-				Longitude:   nulls.NewFloat64(98.9620),
+				State:       "จ.ลพบุรี",
+				Latitude:    14.799508,
+				Longitude:   100.653371,
+			},
+			{
+				Description: "Guča, Serbia",
+				Country:     "RS",
+				County:      "Moravica",
+				City:        "Guca",
+				Latitude:    43.7766,
+				Longitude:   20.2261,
 			},
 			{
 				Description: "Milwaukee, WI, USA",
 				Country:     "US",
-				Latitude:    nulls.NewFloat64(43.0389),
-				Longitude:   nulls.NewFloat64(-87.9065),
+				State:       "WI",
+				County:      "Milwaukee",
+				City:        "Milwaukee",
+				Latitude:    43.0389,
+				Longitude:   -87.9065,
 			},
 		}
 
@@ -215,65 +250,74 @@ var _ = grift.Namespace("db", func() {
 			}
 		}
 
-		// POSTS Table
+		// REQUESTS Table
 		futureDate := time.Now().Add(8 * domain.DurationWeek)
-		postUUID1, _ := uuid.FromString("270fa549-65f2-43c0-ac27-78a054cf49a1")
-		postUUID2, _ := uuid.FromString("028164cd-a8f5-43b9-98d0-f8a7778ea2f1")
-		postUUID3, _ := uuid.FromString("e625a482-c8ff-4f52-b8ed-73e6b3eac4d7")
-		postUUID4, _ := uuid.FromString("8e08011d-bd5f-4c1a-a4f4-0c019beb939b")
-		postUUID5, _ := uuid.FromString("35e2b332-a968-4932-b205-ca0d1eabdf0e")
-		fixturePosts := []*models.Post{
+		requestUUID1, _ := uuid.FromString("270fa549-65f2-43c0-ac27-78a054cf49a1")
+		requestUUID2, _ := uuid.FromString("028164cd-a8f5-43b9-98d0-f8a7778ea2f1")
+		requestUUID3, _ := uuid.FromString("e625a482-c8ff-4f52-b8ed-73e6b3eac4d7")
+		requestUUID4, _ := uuid.FromString("8e08011d-bd5f-4c1a-a4f4-0c019beb939b")
+		requestUUID5, _ := uuid.FromString("35e2b332-a968-4932-b205-ca0d1eabdf0e")
+		fixtureRequests := []*models.Request{
 			{
-				Type:           models.PostTypeRequest,
 				OrganizationID: primaryOrgID,
 				Title:          "Maple Syrup",
-				Size:           models.PostSizeMedium,
-				UUID:           postUUID1,
+				Size:           models.RequestSizeMedium,
+				UUID:           requestUUID1,
 				Description:    nulls.NewString("Missing my good, old, Canadian maple syrupy goodness"),
 			},
 			{
-				Type:           models.PostTypeRequest,
 				OrganizationID: primaryOrgID,
 				Title:          "Jif Peanut Butter",
-				Size:           models.PostSizeSmall,
-				UUID:           postUUID2,
+				Size:           models.RequestSizeSmall,
+				UUID:           requestUUID2,
 				Description:    nulls.NewString("Jiffy Peanut Butter goes on our daily bread!"),
 			},
 			{
-				Type:           models.PostTypeRequest,
 				OrganizationID: primaryOrgID,
 				Title:          "Burt's Bee's Lip Balm",
-				Size:           models.PostSizeTiny,
-				UUID:           postUUID3,
+				Size:           models.RequestSizeTiny,
+				UUID:           requestUUID3,
 				Description:    nulls.NewString("Please save me from having painfully cracked lips!"),
 			},
 			{
-				Type:           models.PostTypeRequest,
 				OrganizationID: primaryOrgID,
 				Title:          "Peanut Butter",
-				Size:           models.PostSizeSmall,
-				UUID:           postUUID4,
+				Size:           models.RequestSizeSmall,
+				UUID:           requestUUID4,
 				Description:    nulls.NewString("I already have chocolate, but I need peanut butter."),
 			},
 			{
-				Type:           models.PostTypeRequest,
 				OrganizationID: fixtureOrgs[0].ID,
 				Title:          "Altoids",
-				Size:           models.PostSizeTiny,
-				UUID:           postUUID5,
+				Size:           models.RequestSizeTiny,
+				UUID:           requestUUID5,
 				Description:    nulls.NewString("The original celebrated curiously strong mints"),
 			},
 		}
 
-		for i, post := range fixturePosts {
-			fixturePosts[i].DestinationID = fixtureLocations[i].ID
-			fixturePosts[i].Status = models.PostStatusOpen
-			fixturePosts[i].CreatedByID = fixtureUsers[i].ID
-			fixturePosts[i].ReceiverID = nulls.NewInt(fixtureUsers[i].ID)
-			fixturePosts[i].NeededBefore = nulls.NewTime(futureDate)
-			err := models.DB.Create(fixturePosts[i])
+		for i, request := range fixtureRequests {
+			fixtureRequests[i].DestinationID = fixtureLocations[i].ID
+			fixtureRequests[i].Status = models.RequestStatusOpen
+			fixtureRequests[i].CreatedByID = fixtureUsers[i].ID
+			fixtureRequests[i].NeededBefore = nulls.NewTime(futureDate)
+			err := fixtureRequests[i].Create(models.DB)
 			if err != nil {
-				err = fmt.Errorf("error loading post fixture ... %+v\n %v", post, err.Error())
+				err = fmt.Errorf("error loading request fixture ... %+v\n %v", request, err.Error())
+				return err
+			}
+		}
+
+		// add Potential Providers (each user for the request after, except for last user and the first request)
+		requests := fixtureRequests[1:]
+
+		for i, request := range requests {
+			pp := models.PotentialProvider{
+				RequestID: request.ID,
+				UserID:    fixtureUsers[i].ID,
+			}
+			err := models.DB.Create(&pp)
+			if err != nil {
+				err = fmt.Errorf("error loading potential provider fixture ... %+v\n %v", pp, err.Error())
 				return err
 			}
 		}
@@ -299,7 +343,7 @@ var _ = grift.Namespace("db", func() {
 		}
 
 		for i, thread := range fixtureThreads {
-			fixtureThreads[i].PostID = fixturePosts[i].ID
+			fixtureThreads[i].RequestID = fixtureRequests[i].ID
 			err := models.DB.Create(fixtureThreads[i])
 			if err != nil {
 				err = fmt.Errorf("error loading thread fixture ... %+v\n %v", thread, err.Error())
@@ -456,40 +500,44 @@ var _ = grift.Namespace("db", func() {
 			{
 				UUID:        meetingUUID1,
 				CreatedByID: fixtureUsers[0].ID,
-				Name:        "IT Connect / ICCM",
-				MoreInfoURL: nulls.NewString("https://iccm.africa"),
+				Name:        "Tunarama Festival 2022",
+				MoreInfoURL: nulls.NewString("https://radseason.com/event/tunarama-festival-port-lincoln-south-australia/"),
 				LocationID:  fixtureLocations[5].ID,
-				ImageFileID: nulls.NewInt(fixtureFiles[0].ID),
-				StartDate:   time.Date(2020, 3, 15, 0, 0, 0, 0, time.UTC),
-				EndDate:     time.Date(2020, 3, 21, 0, 0, 0, 0, time.UTC),
+				FileID:      nulls.NewInt(fixtureFiles[0].ID),
+				StartDate:   time.Date(2022, 1, 21, 2, 30, 0, 0, time.UTC),
+				EndDate:     time.Date(2022, 1, 23, 0, 0, 0, 0, time.UTC),
+				InviteCode:  nulls.NewUUID(meetingUUID1),
 			},
 			{
 				UUID:        meetingUUID2,
 				CreatedByID: fixtureUsers[0].ID,
-				Name:        "The Send Brazil",
-				MoreInfoURL: nulls.NewString("http://thesend.org.br/en-2/"),
+				Name:        "Monkey Buffet Festival 2021",
+				MoreInfoURL: nulls.NewString("https://www.asianguides.com/events/monkey-buffet-festival/"),
 				LocationID:  fixtureLocations[6].ID,
-				ImageFileID: nulls.NewInt(fixtureFiles[1].ID),
-				StartDate:   time.Date(2021, 2, 8, 0, 0, 0, 0, time.UTC),
-				EndDate:     time.Date(2021, 2, 8, 0, 0, 0, 0, time.UTC),
+				FileID:      nulls.NewInt(fixtureFiles[1].ID),
+				StartDate:   time.Date(2021, 11, 27, 0, 0, 0, 0, time.UTC),
+				EndDate:     time.Date(2021, 11, 27, 0, 0, 0, 0, time.UTC),
+				InviteCode:  nulls.NewUUID(meetingUUID2),
 			},
 			{
 				UUID:        meetingUUID3,
 				CreatedByID: fixtureUsers[4].ID,
-				Name:        "ICON20",
+				Name:        "Guča Trumpet Festival",
+				MoreInfoURL: nulls.NewString("https://guca-festival.com/"),
 				LocationID:  fixtureLocations[7].ID,
-				StartDate:   time.Date(2020, 4, 4, 0, 0, 0, 0, time.UTC),
-				EndDate:     time.Date(2020, 4, 9, 0, 0, 0, 0, time.UTC),
+				StartDate:   time.Date(2021, 8, 12, 0, 0, 0, 0, time.UTC),
+				EndDate:     time.Date(2021, 8, 15, 0, 0, 0, 0, time.UTC),
 			},
 			{
 				UUID:        meetingUUID4,
 				CreatedByID: fixtureUsers[2].ID,
 				Name:        "Fresh Fish Suppliers of America",
 				LocationID:  fixtureLocations[8].ID,
-				ImageFileID: nulls.NewInt(fixtureFiles[2].ID),
+				FileID:      nulls.NewInt(fixtureFiles[2].ID),
 				StartDate:   time.Date(2020, 4, 4, 0, 0, 0, 0, time.UTC),
 				EndDate:     time.Date(2020, 4, 9, 0, 0, 0, 0, time.UTC),
-			}}
+			},
+		}
 
 		for i, meeting := range fixtureMeetings {
 			err := models.DB.Create(fixtureMeetings[i])
@@ -499,7 +547,69 @@ var _ = grift.Namespace("db", func() {
 			}
 		}
 
+		// meeting_invites table
+		inviteSecret1, _ := uuid.FromString("ad08446a-65dc-4a31-9c67-497dace2d519")
+		inviteSecret2, _ := uuid.FromString("7351594a-cf3a-4b5c-b133-1f5e029e8e18")
+		inviteSecret3, _ := uuid.FromString("5ef7e8e4-33da-4fa8-a053-1570114018d8")
+		inviteSecret4, _ := uuid.FromString("5521a5cf-83a4-45b9-a579-83f668cee97e")
+		fixtureInvites := []*models.MeetingInvite{
+			{
+				MeetingID: fixtureMeetings[0].ID,
+				InviterID: fixtureUsers[0].ID,
+				Secret:    inviteSecret1,
+				Email:     "clark.kent@example.org",
+			},
+			{
+				MeetingID: fixtureMeetings[0].ID,
+				InviterID: fixtureUsers[0].ID,
+				Secret:    inviteSecret2,
+				Email:     "elmer_fudd@example.org",
+			},
+			{
+				MeetingID: fixtureMeetings[0].ID,
+				InviterID: fixtureUsers[0].ID,
+				Secret:    inviteSecret3,
+				Email:     "another.yahoo@example.com",
+			},
+			{
+				MeetingID: fixtureMeetings[0].ID,
+				InviterID: fixtureUsers[0].ID,
+				Secret:    inviteSecret4,
+				Email:     "jimmy-crack-corn@example.net",
+			},
+		}
+
+		for i, meeting := range fixtureInvites {
+			err := models.DB.Create(fixtureInvites[i])
+			if err != nil {
+				err = fmt.Errorf("error loading invite fixture ... %+v\n %v", meeting, err.Error())
+				return err
+			}
+		}
+
+		// meeting_participants table
+		fixtureMeetingParticipants := []*models.MeetingParticipant{
+			{
+				MeetingID:   fixtureMeetings[0].ID,
+				UserID:      fixtureUsers[0].ID,
+				InviteID:    nulls.NewInt(fixtureInvites[0].ID),
+				IsOrganizer: true,
+			},
+			{
+				MeetingID:   fixtureMeetings[0].ID,
+				UserID:      fixtureUsers[1].ID,
+				IsOrganizer: false,
+			},
+		}
+
+		for i, meeting := range fixtureMeetingParticipants {
+			err := models.DB.Create(fixtureMeetingParticipants[i])
+			if err != nil {
+				err = fmt.Errorf("error loading participant fixture ... %+v\n %v", meeting, err.Error())
+				return err
+			}
+		}
+
 		return nil
 	})
-
 })

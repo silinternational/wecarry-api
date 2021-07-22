@@ -1,10 +1,14 @@
 package actions
 
 import (
-	"github.com/silinternational/wecarry-api/domain"
-	"github.com/silinternational/wecarry-api/models"
-
+	"fmt"
 	"testing"
+	"time"
+
+	"github.com/silinternational/wecarry-api/aws"
+	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/internal/test"
+	"github.com/silinternational/wecarry-api/models"
 
 	"github.com/gobuffalo/nulls"
 )
@@ -13,6 +17,36 @@ type UserOrgFixtures struct {
 	users    models.Users
 	orgs     models.Organizations
 	userOrgs models.UserOrganizations
+}
+
+func createFixturesForAuthInvite(as *ActionSuite) meetingFixtures {
+	uf := test.CreateUserFixtures(as.DB, 2)
+	user := uf.Users[0]
+	locations := test.CreateLocationFixtures(as.DB, 2)
+
+	err := aws.CreateS3Bucket()
+	as.NoError(err, "failed to create S3 bucket, %s", err)
+
+	fileFixture := test.CreateFileFixture(as.DB)
+
+	meetings := make(models.Meetings, 2)
+	meetings[1].FileID = nulls.NewInt(fileFixture.ID)
+
+	for i := range meetings {
+		meetings[i].CreatedByID = user.ID
+		meetings[i].Name = fmt.Sprintf("Meeting%v", i)
+		meetings[i].StartDate = time.Now().Add(domain.DurationWeek * time.Duration(i+1))
+		meetings[i].EndDate = time.Now().Add(domain.DurationWeek * time.Duration(i+3))
+		meetings[i].UUID = domain.GetUUID()
+		meetings[i].InviteCode = nulls.NewUUID(domain.GetUUID())
+		meetings[i].LocationID = locations[i].ID
+		createFixture(as, &meetings[i])
+	}
+
+	return meetingFixtures{
+		Meetings: meetings,
+		File:     fileFixture,
+	}
 }
 
 func Fixtures_GetOrgAndUserOrgs(as *ActionSuite, t *testing.T) UserOrgFixtures {
@@ -94,7 +128,7 @@ func Fixtures_GetOrgAndUserOrgs(as *ActionSuite, t *testing.T) UserOrgFixtures {
 	}
 }
 
-func Fixtures_CreateAuthUser(as *ActionSuite, t *testing.T) UserOrgFixtures {
+func Fixtures_newAuthUser(as *ActionSuite, t *testing.T) UserOrgFixtures {
 	// Load Org test fixtures
 	org := &models.Organization{
 		Name:       "TestOrg1",
@@ -170,5 +204,48 @@ func Fixtures_CreateAuthUser(as *ActionSuite, t *testing.T) UserOrgFixtures {
 	return UserOrgFixtures{
 		users: users,
 		orgs:  models.Organizations{*org},
+	}
+}
+
+func createFixturesForEnsureMeetingParticipant(as *ActionSuite) meetingFixtures {
+	uf := test.CreateUserFixtures(as.DB, 2)
+	users := uf.Users
+	locations := test.CreateLocationFixtures(as.DB, 2)
+
+	err := aws.CreateS3Bucket()
+	as.NoError(err, "failed to create S3 bucket, %s", err)
+
+	fileFixture := test.CreateFileFixture(as.DB)
+
+	meetings := make(models.Meetings, 2)
+	meetings[1].FileID = nulls.NewInt(fileFixture.ID)
+
+	for i := range meetings {
+		meetings[i].CreatedByID = users[0].ID
+		meetings[i].Name = fmt.Sprintf("Meeting%v", i)
+		meetings[i].StartDate = time.Now().Add(domain.DurationWeek * time.Duration(i+1))
+		meetings[i].EndDate = time.Now().Add(domain.DurationWeek * time.Duration(i+3))
+		meetings[i].UUID = domain.GetUUID()
+		meetings[i].InviteCode = nulls.NewUUID(domain.GetUUID())
+		meetings[i].LocationID = locations[i].ID
+	}
+
+	createFixture(as, &meetings)
+
+	invites := make(models.MeetingInvites, 2)
+	for i := range invites {
+		invites[i].MeetingID = meetings[i].ID
+		invites[i].Email = users[1].Email
+		invites[i].Secret = domain.GetUUID()
+		invites[i].InviterID = users[0].ID
+	}
+
+	createFixture(as, &invites)
+
+	return meetingFixtures{
+		Users:          users,
+		Meetings:       meetings,
+		File:           fileFixture,
+		MeetingInvites: invites,
 	}
 }

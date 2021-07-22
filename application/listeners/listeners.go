@@ -1,10 +1,12 @@
 package listeners
 
 import (
+	"context"
 	"errors"
 
 	"github.com/gobuffalo/events"
 
+	"github.com/silinternational/wecarry-api/cache"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/job"
 	"github.com/silinternational/wecarry-api/marketing"
@@ -45,17 +47,28 @@ var apiListeners = map[string][]apiListener{
 		},
 	},
 
-	domain.EventApiPostStatusUpdated: {
+	domain.EventApiRequestStatusUpdated: {
 		{
-			name:     "post-status-updated-notification",
-			listener: sendPostStatusUpdatedNotification,
+			name:     "request-status-updated-notification",
+			listener: sendRequestStatusUpdatedNotification,
 		},
 	},
 
-	domain.EventApiPostCreated: {
+	domain.EventApiRequestCreated: {
 		{
-			name:     "post-created-notification",
-			listener: sendPostCreatedNotifications,
+			name:     "request-created-notification",
+			listener: sendRequestCreatedNotifications,
+		},
+		{
+			name:     "request-created-cache",
+			listener: cacheRequestCreatedListener,
+		},
+	},
+
+	domain.EventApiRequestUpdated: {
+		{
+			name:     "request-updated-cache",
+			listener: cacheRequestUpdatedListener,
 		},
 	},
 
@@ -146,7 +159,6 @@ func userCreatedAddToMarketingList(e events.Event) {
 
 	err := marketing.AddUserToList(*user, domain.Env.MailChimpAPIBaseURL, domain.Env.MailChimpListID,
 		domain.Env.MailChimpUsername, domain.Env.MailChimpAPIKey)
-
 	if err != nil {
 		domain.ErrLogger.Printf("error calling marketing.AddUserToList when trying to add %s: %s",
 			user.Email, err.Error())
@@ -172,54 +184,90 @@ func sendNewThreadMessageNotification(e events.Event) {
 	}
 }
 
-func sendPostStatusUpdatedNotification(e events.Event) {
-	if e.Kind != domain.EventApiPostStatusUpdated {
+func sendRequestStatusUpdatedNotification(e events.Event) {
+	if e.Kind != domain.EventApiRequestStatusUpdated {
 		return
 	}
 
-	pEData, ok := e.Payload["eventData"].(models.PostStatusEventData)
+	pEData, ok := e.Payload["eventData"].(models.RequestStatusEventData)
 	if !ok {
-		domain.ErrLogger.Printf("unable to parse Post Status Updated event payload")
+		domain.ErrLogger.Printf("unable to parse Request Status Updated event payload")
 		return
 	}
 
-	pid := pEData.PostID
+	pid := pEData.RequestID
 
-	post := models.Post{}
-	if err := post.FindByID(pid); err != nil {
-		domain.ErrLogger.Printf("unable to find post from event with id %v ... %s", pid, err)
+	request := models.Request{}
+	if err := request.FindByID(models.DB, pid); err != nil {
+		domain.ErrLogger.Printf("unable to find request from event with id %v ... %s", pid, err)
 	}
 
-	if post.Type != models.PostTypeRequest {
-		return
-	}
-
-	requestStatusUpdatedNotifications(post, pEData)
+	requestStatusUpdatedNotifications(request, pEData)
 }
 
-func sendPostCreatedNotifications(e events.Event) {
-	if e.Kind != domain.EventApiPostCreated {
+func sendRequestCreatedNotifications(e events.Event) {
+	if e.Kind != domain.EventApiRequestCreated {
 		return
 	}
 
-	eventData, ok := e.Payload["eventData"].(models.PostCreatedEventData)
+	eventData, ok := e.Payload["eventData"].(models.RequestCreatedEventData)
 	if !ok {
-		domain.ErrLogger.Printf("Post Created event payload incorrect type: %T", e.Payload["eventData"])
+		domain.ErrLogger.Printf("Request Created event payload incorrect type: %T", e.Payload["eventData"])
 		return
 	}
 
-	var post models.Post
-	if err := post.FindByID(eventData.PostID); err != nil {
-		domain.ErrLogger.Printf("unable to find post %d from post-created event, %s", eventData.PostID, err)
+	var request models.Request
+	if err := request.FindByID(models.DB, eventData.RequestID); err != nil {
+		domain.ErrLogger.Printf("unable to find request %d from request-created event, %s", eventData.RequestID, err)
 	}
 
-	users, err := post.GetAudience()
+	users, err := request.GetAudience(models.DB)
 	if err != nil {
-		domain.ErrLogger.Printf("unable to get post audience in event listener: %s", err.Error())
+		domain.ErrLogger.Printf("unable to get request audience in event listener: %s", err.Error())
 		return
 	}
 
-	sendNewPostNotifications(post, users)
+	sendNewRequestNotifications(request, users)
+}
+
+func cacheRequestCreatedListener(e events.Event) {
+	if e.Kind != domain.EventApiRequestCreated {
+		return
+	}
+
+	eventData, ok := e.Payload["eventData"].(models.RequestCreatedEventData)
+	if !ok {
+		domain.ErrLogger.Printf("Request Created event payload incorrect type: %T", e.Payload["eventData"])
+		return
+	}
+
+	var request models.Request
+	if err := request.FindByID(models.DB, eventData.RequestID); err != nil {
+		domain.ErrLogger.Printf("unable to find request %d from request-created event, %s", eventData.RequestID, err)
+	}
+
+	ctx := context.Background()
+	cache.CacheRebuildOnNewRequest(ctx, request)
+}
+
+func cacheRequestUpdatedListener(e events.Event) {
+	if e.Kind != domain.EventApiRequestUpdated {
+		return
+	}
+
+	eventData, ok := e.Payload["eventData"].(models.RequestUpdatedEventData)
+	if !ok {
+		domain.ErrLogger.Printf("Request Updated event payload incorrect type: %T", e.Payload["eventData"])
+		return
+	}
+
+	var request models.Request
+	if err := request.FindByID(models.DB, eventData.RequestID); err != nil {
+		domain.ErrLogger.Printf("unable to find request %d from request-created event, %s", eventData.RequestID, err)
+	}
+
+	ctx := context.Background()
+	cache.CacheRebuildOnChangedRequest(ctx, request)
 }
 
 func potentialProviderCreated(e events.Event) {
@@ -234,18 +282,22 @@ func potentialProviderCreated(e events.Event) {
 	}
 
 	var potentialProvider models.User
-	if err := potentialProvider.FindByID(eventData.UserID); err != nil {
+	if err := potentialProvider.FindByID(models.DB, eventData.UserID); err != nil {
 		domain.ErrLogger.Printf("unable to find PotentialProvider User %d, %s", eventData.UserID, err)
 	}
 
-	var post models.Post
-	if err := post.FindByID(eventData.PostID); err != nil {
-		domain.ErrLogger.Printf("unable to find post %d from PotentialProvider event, %s", eventData.PostID, err)
+	var request models.Request
+	if err := request.FindByID(models.DB, eventData.RequestID); err != nil {
+		domain.ErrLogger.Printf("unable to find request %d from PotentialProvider event, %s", eventData.RequestID, err)
 	}
 
-	creator := post.CreatedBy
+	creator, err := request.Creator(models.DB)
+	if err != nil {
+		domain.ErrLogger.Printf("unable to find request %d creator from PotentialProvider event, %s",
+			eventData.RequestID, err)
+	}
 
-	sendPotentialProviderCreatedNotification(potentialProvider.Nickname, creator, post)
+	sendPotentialProviderCreatedNotification(potentialProvider.Nickname, creator, request)
 }
 
 func potentialProviderSelfDestroyed(e events.Event) {
@@ -260,18 +312,22 @@ func potentialProviderSelfDestroyed(e events.Event) {
 	}
 
 	var potentialProvider models.User
-	if err := potentialProvider.FindByID(eventData.UserID); err != nil {
+	if err := potentialProvider.FindByID(models.DB, eventData.UserID); err != nil {
 		domain.ErrLogger.Printf("unable to find PotentialProvider User %d, %s", eventData.UserID, err)
 	}
 
-	var post models.Post
-	if err := post.FindByID(eventData.PostID); err != nil {
-		domain.ErrLogger.Printf("unable to find post %d from PotentialProvider event, %s", eventData.PostID, err)
+	var request models.Request
+	if err := request.FindByID(models.DB, eventData.RequestID); err != nil {
+		domain.ErrLogger.Printf("unable to find request %d from PotentialProvider event, %s", eventData.RequestID, err)
 	}
 
-	creator := post.CreatedBy
+	creator, err := request.Creator(models.DB)
+	if err != nil {
+		domain.ErrLogger.Printf("unable to find request %d creator from PotentialProvider event, %s",
+			eventData.RequestID, err)
+	}
 
-	sendPotentialProviderSelfDestroyedNotification(potentialProvider.Nickname, creator, post)
+	sendPotentialProviderSelfDestroyedNotification(potentialProvider.Nickname, creator, request)
 }
 
 func potentialProviderRejected(e events.Event) {
@@ -286,18 +342,22 @@ func potentialProviderRejected(e events.Event) {
 	}
 
 	var potentialProvider models.User
-	if err := potentialProvider.FindByID(eventData.UserID); err != nil {
+	if err := potentialProvider.FindByID(models.DB, eventData.UserID); err != nil {
 		domain.ErrLogger.Printf("unable to find PotentialProvider User %d, %s", eventData.UserID, err)
 	}
 
-	var post models.Post
-	if err := post.FindByID(eventData.PostID); err != nil {
-		domain.ErrLogger.Printf("unable to find post %d from PotentialProvider event, %s", eventData.PostID, err)
+	var request models.Request
+	if err := request.FindByID(models.DB, eventData.RequestID); err != nil {
+		domain.ErrLogger.Printf("unable to find request %d from PotentialProvider event, %s", eventData.RequestID, err)
 	}
 
-	creator := post.CreatedBy.Nickname
+	creator, err := request.Creator(models.DB)
+	if err != nil {
+		domain.ErrLogger.Printf("unable to find request %d creator from PotentialProvider event, %s",
+			eventData.RequestID, err)
+	}
 
-	sendPotentialProviderRejectedNotification(potentialProvider, creator, post)
+	sendPotentialProviderRejectedNotification(potentialProvider, creator.Nickname, request)
 }
 
 func sendNewUserWelcome(user models.User) error {
@@ -305,7 +365,7 @@ func sendNewUserWelcome(user models.User) error {
 		return errors.New("'To' email address is required")
 	}
 
-	language := user.GetLanguagePreference()
+	language := user.GetLanguagePreference(models.DB)
 	subject := domain.GetTranslatedSubject(language, "Email.Subject.Welcome", map[string]string{})
 
 	msg := notifications.Message{

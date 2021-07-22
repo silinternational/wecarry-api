@@ -4,7 +4,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gobuffalo/validate"
+	"github.com/gobuffalo/events"
+	"github.com/gobuffalo/validate/v3"
+
+	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/domain"
 )
 
@@ -92,8 +95,7 @@ func (ms *ModelSuite) TestMessage_GetSender() {
 	messages := messageFixtures.Messages
 	users := messageFixtures.Users
 
-	userResults, err := messages[0].GetSender()
-
+	userResults, err := messages[0].GetSender(ms.DB)
 	if err != nil {
 		t.Errorf("unexpected error ... %v", err)
 		t.FailNow()
@@ -112,8 +114,7 @@ func (ms *ModelSuite) TestMessage_GetThread() {
 	messages := messageFixtures.Messages
 	threads := messageFixtures.Threads
 
-	threadResults, err := messages[0].GetThread()
-
+	threadResults, err := messages[0].GetThread(ms.DB)
 	if err != nil {
 		t.Errorf("unexpected error ... %v", err)
 		t.FailNow()
@@ -121,40 +122,81 @@ func (ms *ModelSuite) TestMessage_GetThread() {
 
 	ms.Equal(threads[0].ID, threadResults.ID, "Bad thread ID")
 	ms.Equal(threads[0].UUID, threadResults.UUID, "Bad thread UUID")
-	ms.Equal(threads[0].PostID, threadResults.PostID, "Bad thread PostID")
+	ms.Equal(threads[0].RequestID, threadResults.RequestID, "Bad thread RequestID")
 }
 
-func (ms *ModelSuite) TestMessage_Create() {
+func (ms *ModelSuite) TestMessage_CreateFromInput() {
 	t := ms.T()
 
 	f := Fixtures_Message_Create(ms, t)
-	msg := Message{
-		ThreadID: f.Threads[0].ID,
-		SentByID: f.Users[0].ID,
-		Content:  `Owe nothing to anyone, except to love one another.`,
-	}
+	threadUUID := f.Threads[0].UUID.String()
 
 	tests := []struct {
-		name    string
-		msg     Message
-		wantErr bool
+		name        string
+		user        User
+		requestUUID string
+		threadUUID  *string
+		content     string
+		wantErr     bool
 	}{
-		{name: "good", msg: msg},
-		{name: "validation error", msg: Message{}, wantErr: true},
+		{
+			name:        "good, 1st message, visible request",
+			user:        f.Users[2],
+			requestUUID: f.Requests[1].UUID.String(),
+			threadUUID:  nil,
+			content:     "Owe nothing to anyone, except to love one another.",
+			wantErr:     false,
+		},
+		{
+			name:        "good, already a participant",
+			user:        f.Users[0],
+			requestUUID: f.Requests[1].UUID.String(),
+			threadUUID:  &threadUUID,
+			content:     "Hatred stirs up conflict, but love covers over all wrongs.",
+			wantErr:     false,
+		},
+		{
+			name:        "bad, not a participant",
+			user:        f.Users[1],
+			requestUUID: f.Requests[1].UUID.String(),
+			threadUUID:  &threadUUID,
+			content:     "I'm not a participant",
+			wantErr:     true,
+		},
+		{
+			name:        "bad, not a visible request",
+			user:        f.Users[1],
+			requestUUID: f.Requests[0].UUID.String(),
+			threadUUID:  nil,
+			content:     "I shouldn't see this request",
+			wantErr:     true,
+		},
+		{
+			name:        "bad, thread not valid for request",
+			user:        f.Users[0],
+			requestUUID: f.Requests[2].UUID.String(),
+			threadUUID:  &threadUUID,
+			content:     "I tried the wrong request",
+			wantErr:     true,
+		},
 	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			message := test.msg
-			err := message.Create()
-
-			if test.wantErr {
-				ms.Error(err)
-			} else {
-				ms.NoError(err)
-				_ = ms.DB.Reload(&f.Threads[0])
-				ms.WithinDuration(time.Now(), f.Threads[0].UpdatedAt, time.Second,
-					"thread.updated_at was not set to the current time")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var message Message
+			input := api.MessageInput{
+				Content:   tt.content,
+				RequestID: tt.requestUUID,
+				ThreadID:  tt.threadUUID,
 			}
+			err := message.CreateFromInput(ms.DB, tt.user, input)
+
+			if tt.wantErr {
+				ms.Error(err)
+				return
+			}
+
+			ms.Nil(err, "received unexpected error: ")
+			ms.Greater(message.ID, 0, "new message contains invalid ID")
 		})
 	}
 }
@@ -173,11 +215,13 @@ func (ms *ModelSuite) TestMessage_FindByID() {
 		wantThread  Thread
 		wantErr     bool
 	}{
-		{name: "good with no extra fields",
+		{
+			name:        "good with no extra fields",
 			id:          f.Messages[0].ID,
 			wantMessage: f.Messages[0],
 		},
-		{name: "good with two extra fields",
+		{
+			name:        "good with two extra fields",
 			id:          f.Messages[0].ID,
 			eagerFields: []string{"SentBy", "Thread"},
 			wantMessage: f.Messages[0],
@@ -190,7 +234,7 @@ func (ms *ModelSuite) TestMessage_FindByID() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var message Message
-			err := message.FindByID(test.id, test.eagerFields...)
+			err := message.FindByID(ms.DB, test.id, test.eagerFields...)
 
 			if test.wantErr {
 				ms.Error(err)
@@ -217,7 +261,8 @@ func (ms *ModelSuite) TestMessage_FindByUUID() {
 		wantCreatedAt time.Time
 		wantErr       string
 	}{
-		{name: "good",
+		{
+			name:          "good",
 			uuid:          f.Messages[0].UUID.String(),
 			wantID:        f.Messages[0].ID,
 			wantContent:   f.Messages[0].Content,
@@ -225,12 +270,12 @@ func (ms *ModelSuite) TestMessage_FindByUUID() {
 		},
 		{name: "empty ID", uuid: "", wantErr: "error: message uuid must not be blank"},
 		{name: "wrong id", uuid: domain.GetUUID().String(), wantErr: "sql: no rows in result set"},
-		{name: "invalid UUID", uuid: "40FE092C-8FF1-45BE-BCD4-65AD66C1D0DX", wantErr: "pq: invalid input syntax"},
+		{name: "invalid UUID", uuid: "40FE092C-8FF1-45BE-BCD4-65AD66C1D0DX", wantErr: "invalid input syntax"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var message Message
-			err := message.findByUUID(test.uuid)
+			err := message.findByUUID(ms.DB, test.uuid)
 
 			if test.wantErr != "" {
 				ms.Error(err)
@@ -263,7 +308,7 @@ func (ms *ModelSuite) TestMessage_FindByUserAndUUID() {
 	}{
 		{name: "empty ID", uuid: &emptyString, wantErr: "error: message uuid must not be blank"},
 		{name: "wrong id", uuid: &wrongUUID, wantErr: "sql: no rows in result set"},
-		{name: "invalid UUID", uuid: &badUUID, wantErr: "pq: invalid input syntax"},
+		{name: "invalid UUID", uuid: &badUUID, wantErr: "invalid input syntax"},
 		{name: "on thread, user", user: f.Users[1], message: f.Messages[0]},
 		{name: "on thread, admin", user: f.Users[2], message: f.Messages[0]},
 		{name: "on thread, salesAdmin", user: f.Users[3], message: f.Messages[0]},
@@ -282,7 +327,7 @@ func (ms *ModelSuite) TestMessage_FindByUserAndUUID() {
 			} else {
 				testUUID = *test.uuid
 			}
-			err := message.FindByUserAndUUID(test.user, testUUID)
+			err := message.FindByUserAndUUID(ms.DB, test.user, testUUID)
 
 			if test.wantErr != "" {
 				ms.Error(err)
@@ -299,8 +344,8 @@ func (ms *ModelSuite) TestMessage_FindByUserAndUUID() {
 func (ms *ModelSuite) TestMessage_AfterCreate() {
 	f := CreateMessageFixtures_AfterCreate(ms, ms.T())
 
-	eagerThreadP := f.ThreadParticipants[1] // Lazy User's side of Eager User's post thread
-	lazyThreadP := f.ThreadParticipants[2]  // Lazy User's own post thread
+	eagerThreadP := f.ThreadParticipants[1] // Lazy User's side of Eager User's request thread
+	lazyThreadP := f.ThreadParticipants[2]  // Lazy User's own request thread
 
 	eagerThreadPLVA := eagerThreadP.LastViewedAt
 
@@ -311,10 +356,19 @@ func (ms *ModelSuite) TestMessage_AfterCreate() {
 		Content:  "This message should update LastViewedAt",
 	}
 
-	err := DB.Create(&newMessage)
+	var eventDetected bool
+	deleteFn, err := events.Listen(func(e events.Event) {
+		if e.Kind == domain.EventApiMessageCreated {
+			eventDetected = true
+		}
+	})
+	ms.NoError(err, "error registering event listener")
+	defer deleteFn()
+
+	err = DB.Create(&newMessage)
 	ms.NoError(err)
 
-	tSecond := time.Duration(time.Second)
+	const tSecond = time.Second
 
 	gotTP := ThreadParticipant{}
 	err = DB.Find(&gotTP, eagerThreadP.ID)
@@ -325,4 +379,10 @@ func (ms *ModelSuite) TestMessage_AfterCreate() {
 	err = DB.Find(&gotTP, lazyThreadP.ID)
 	ms.NoError(err)
 	ms.WithinDuration(time.Now(), gotTP.LastViewedAt, tSecond)
+
+	_ = ms.DB.Reload(&f.Threads[1])
+	ms.WithinDuration(time.Now(), f.Threads[1].UpdatedAt, tSecond,
+		"thread.updated_at was not set to the current time")
+
+	ms.True(eventDetected, "EventApiMessageCreated event was not emitted")
 }

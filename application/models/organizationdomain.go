@@ -4,20 +4,19 @@ import (
 	"errors"
 	"time"
 
-	"github.com/gobuffalo/pop"
-	"github.com/gobuffalo/validate"
-	"github.com/gobuffalo/validate/validators"
+	"github.com/gobuffalo/pop/v5"
+	"github.com/gobuffalo/validate/v3"
+	"github.com/gobuffalo/validate/v3/validators"
 )
 
 type OrganizationDomain struct {
-	ID             int          `json:"id" db:"id"`
-	CreatedAt      time.Time    `json:"created_at" db:"created_at"`
-	UpdatedAt      time.Time    `json:"updated_at" db:"updated_at"`
-	OrganizationID int          `json:"organization_id" db:"organization_id"`
-	Domain         string       `json:"domain" db:"domain"`
-	AuthType       string       `json:"auth_type" db:"auth_type"`
-	AuthConfig     string       `json:"auth_config" db:"auth_config"`
-	Organization   Organization `belongs_to:"organizations"`
+	ID             int       `json:"id" db:"id"`
+	CreatedAt      time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at" db:"updated_at"`
+	OrganizationID int       `json:"organization_id" db:"organization_id"`
+	Domain         string    `json:"domain" db:"domain"`
+	AuthType       AuthType  `json:"auth_type" db:"auth_type"`
+	AuthConfig     string    `json:"auth_config" db:"auth_config"`
 }
 
 type OrganizationDomains []OrganizationDomain
@@ -35,28 +34,29 @@ func (o *OrganizationDomain) ValidateCreate(tx *pop.Connection) (*validate.Error
 	return validate.NewErrors(), nil
 }
 
-// GetOrganizationUUID loads the Organization record and converts its UUID to its string representation.
-func (o *OrganizationDomain) GetOrganizationUUID() (string, error) {
+// Organization loads the Organization record
+func (o *OrganizationDomain) Organization(tx *pop.Connection) (Organization, error) {
 	if o.OrganizationID <= 0 {
-		return "", errors.New("OrganizationID is not valid")
+		return Organization{}, errors.New("OrganizationID is not valid")
 	}
-	if err := DB.Load(o, "Organization"); err != nil {
-		return "", err
+	var organization Organization
+	if err := tx.Find(&organization, o.OrganizationID); err != nil {
+		return Organization{}, err
 	}
-	return o.Organization.UUID.String(), nil
+	return organization, nil
 }
 
 // Create stores the OrganizationDomain data as a new record in the database.
-func (o *OrganizationDomain) Create() error {
-	return create(o)
+func (o *OrganizationDomain) Create(tx *pop.Connection) error {
+	return create(tx, o)
 }
 
 // FindByDomain finds a record by the domain name
-func (o *OrganizationDomain) FindByDomain(domainName string) error {
-	return DB.Where("domain = ?", domainName).First(o)
+func (o *OrganizationDomain) FindByDomain(tx *pop.Connection, domainName string) error {
+	return tx.Where("domain = ?", domainName).First(o)
 }
 
-// Save wrap DB.Save() call to check for errors and operate on attached object
-func (o *OrganizationDomain) Save() error {
-	return save(o)
+// Save wrap tx.Save() call to check for errors and operate on attached object
+func (o *OrganizationDomain) Save(tx *pop.Connection) error {
+	return save(tx, o)
 }

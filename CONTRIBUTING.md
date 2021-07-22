@@ -4,8 +4,6 @@
 
 [Coding Style](#coding-style)
 
-[gqlgen](#gqlgen)
-
 ## Coding Style
 
 ### Go formatting
@@ -19,12 +17,12 @@ Tools - File Watchers, add and enable `goimports`.
 
 Within the `model` package, we have decided on function names starting with
 certain standardized verbs: Get, Find, Create, Delete. When possible, functions
-should have a model struct attached as a pointer: `func (p *Post)
+should have a model struct attached as a pointer: `func (r *Request)
 FindByUUID(uuid string) error`.
 
 ### Unit test naming
 
-Unit test functions that test struct-attached functions should be named like
+Unit test functions that test methods should be named like
 `TestObject_FunctionName` where `Object` is the name of the struct and
 `FunctionName` is the name of the function under test.
 
@@ -45,6 +43,14 @@ rather than
 func Test_FunctionName(t *testing.T) {
 }
 ```
+
+### Running tests manually
+
+To run all tests, run `make test`.
+
+To run a single test:
+1. run `make testenv` - this starts the test container and drops you into a bash prompt, from which you can run test commands.
+2. `go test -v ./actions -testify.m "Test_Name"` - this runs more quickly than `buffalo test actions -m "Test_Name"` and allows you to use go test flags like `-v`.
 
 ### Database Queries
 
@@ -70,74 +76,44 @@ situations. For example:
      
 ### Error handling and presentation
 
-Internal handling of errors consists mostly of the built-in `errors` type. When
-an error propagates up to the `gqlgen` package, the internal error should be
-logged and a new user-focused and localized message should be returned from 
-the resolver function. Translation of error messages is handled by the Buffalo
-`Translate` function. Translation keys consist of an initial identifier related to 
-a model, query or mutation name, optionally followed by a short description of the 
-point of failure. You may use the helper function `reportError` which handles all of 
-these steps. Translation text is stored in the `locales` folder.
- 
-For example:
+#### REST API responses
 
-```go
-	extras := map[string]interface{}{
-		"user": cUser.Uuid,
-	}
-    return nil, reportError(ctx, err, "CreatePost.SetDestination", extras)
+Errors occurring in the processing of REST API requests should result in a 400-
+or 500-level http response with a json body like:
+
+```json
+{
+  "code": 400,
+  "key": "ErrorKeyExample",
+  "message": "This is an example error message"
+}
 ``` 
 
-## gqlgen
+The type `api.AppError` will render as required above by passing it to 
+`actions.reportError`. An `AppError` should be created by calling
+`api.NewAppError` as deep into the call stack as needed to provide a detailed
+key and specific category. If `actions.reportError` receives a generic `error`,
+it will render with key `UnknownError` and HTTP status 500 and the error string
+in the `DebugMsg`.
 
-gqlgen generates code to handle GraphQL queries. The primary input is the 
-schema itself: [schema.graphql](application/gqlgen/schema.graphql). This file
-syntax is standardized and [documented](#graphql-documentation). The other input
-is the [gqlgen.yml](application/gqlgen/gqlgen.yml)` file.
+| Category          | HTTP Status |
+|-------------------|-------------|
+| CategoryInternal  | 500         |
+| CategoryDatabase  | 500         |
+| CategoryForbidden | 404         |
+| CategoryNotFound  | 404         |
+| CategoryUser      | 400         |
 
-### Add a query
+#### Internal error logging
 
-It is desirable to keep the number of queries to a minimum, as there is little
-room for structure and organization at the top level of the query hierarchy.
-When appropriate, adding a query is as simple as adding a new field to the
-`Query` type in [schema.graphql](application/gqlgen/schema.graphql) and
-running the [generate](#generate) tool. This adds a new function to the
-`queryResolver` interface. At this point, you need to define this new function
-in the appropriate file in the `gqlgen`
-package.  
+Errors that do not justify an error being passed to the API client may be logged
+to `stderr` and Rollbar using `domain.Error` if context is available, or
+`domain.ErrLogger.printf` if no context is available.
 
-### Add a mutation
+`domain.Warn` can be used to log at level "warning" and also send to Rollbar
 
-This is similar to adding a query, except that you will add a field to the
-`Mutation` type and add a function to the `mutationResolver` in `mutations.go`.
+`domain.Info` or `domain.Logger.printf` will log but not send to Rollbar.
  
-### Add a field to an existing query
-
-Adding fields is the preferred method for extending the schema as it enhances
-the query structure for future use. The process is similar: add one or more
-fields to an existing type in [schema.graphql](application/gqlgen/schema.graphql)
-and run the [generate](#generate) tool. This adds a function to the field-level
-resolver (e.g. `userResolver`) interface. Again, just add the new function to a
-file in the `gqlgen` package.
-
-### Add an argument
-
-Much of the power of GraphQL comes from query arguments. After adding an
-argument and regenerating the code, you will see an additional argument in
-the interface definition of the applicable resolver. Just add a new
-argument to your function definition to match the corresponding interface.  
-
-### Generate
-
-To run the gqlgen code generator, execute `make gqlgen`. This runs`go generate
-./...` inside a Docker container.
-
-### GraphQL documentation
-
-The graphql.org site has easy-to-read documentation on the schema format and 
-other GraphQL information. The schema help is at
-[https://graphql.org/learn/schema](https://graphql.org/learn/schema)
-
 ## Profiling with pprof
 
 To use pprof for profiling WeCarry, it is available when `GO_ENV=development`. 
@@ -149,3 +125,22 @@ Good resources:
 
  - https://blog.gobuffalo.io/how-to-use-pprof-with-buffalo-983e5d71e418
  - https://jvns.ca/blog/2017/09/24/profiling-go-with-pprof/
+
+## Debugging with Delve
+
+Remote debugging with a compatible IDE is possible using the `delve` container. It does not have buffalo file watching capability, so any code changes will not be possible without a rebuild.
+
+Set up in GoLand is as simple as adding a Run/Debug Configuration. Use type "Go Remote" and use default settings (host: localhost, port: 2345, on disconnect: ask).
+
+To begin debugging, run `make debug`. This kills the `buffalo` container and starts the `debug` container. Once the app build is finished, click the debug button on the GoLand toolbar.
+
+
+## Data loaders
+
+To generate a data loader for a new model, run the following command modified
+as appropriate for the new model:
+
+```shell
+cd application/dataloader
+go run github.com/vektah/dataloaden RequestLoader int *github.com/silinternational/wecarry-api/models.Request
+```

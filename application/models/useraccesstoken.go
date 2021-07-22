@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gobuffalo/pop"
-	"github.com/gobuffalo/validate"
-	"github.com/gobuffalo/validate/validators"
+	"github.com/gobuffalo/nulls"
+	"github.com/gobuffalo/pop/v5"
+	"github.com/gobuffalo/validate/v3"
+	"github.com/gobuffalo/validate/v3/validators"
 	"github.com/pkg/errors"
 	"github.com/silinternational/wecarry-api/domain"
 )
@@ -17,7 +18,7 @@ type UserAccessToken struct {
 	CreatedAt          time.Time        `json:"created_at" db:"created_at"`
 	UpdatedAt          time.Time        `json:"updated_at" db:"updated_at"`
 	UserID             int              `json:"user_id" db:"user_id"`
-	UserOrganizationID int              `json:"user_organization_id" db:"user_organization_id"`
+	UserOrganizationID nulls.Int        `json:"user_organization_id" db:"user_organization_id"`
 	AccessToken        string           `json:"access_token" db:"access_token"`
 	ExpiresAt          time.Time        `json:"expires_at" db:"expires_at"`
 	User               User             `belongs_to:"users"`
@@ -58,15 +59,15 @@ func (u *UserAccessToken) ValidateUpdate(tx *pop.Connection) (*validate.Errors, 
 	return validate.NewErrors(), nil
 }
 
-func (u *UserAccessToken) DeleteByBearerToken(bearerToken string) error {
-	if err := u.FindByBearerToken(bearerToken); err != nil {
+func (u *UserAccessToken) DeleteByBearerToken(tx *pop.Connection, bearerToken string) error {
+	if err := u.FindByBearerToken(tx, bearerToken); err != nil {
 		return err
 	}
-	return DB.Destroy(u)
+	return tx.Destroy(u)
 }
 
-func (u *UserAccessToken) FindByBearerToken(bearerToken string) error {
-	if err := DB.Eager().Where("access_token = ?", HashClientIdAccessToken(bearerToken)).First(u); err != nil {
+func (u *UserAccessToken) FindByBearerToken(tx *pop.Connection, bearerToken string) error {
+	if err := tx.Where("access_token = ?", HashClientIdAccessToken(bearerToken)).First(u); err != nil {
 		l := len(bearerToken)
 		if l > 5 {
 			l = 5
@@ -78,9 +79,9 @@ func (u *UserAccessToken) FindByBearerToken(bearerToken string) error {
 }
 
 // GetOrganization returns the Organization of the UserOrganization of the UserAccessToken
-func (u *UserAccessToken) GetOrganization() (Organization, error) {
+func (u *UserAccessToken) GetOrganization(tx *pop.Connection) (Organization, error) {
 	if u.UserOrganization.ID <= 0 {
-		if err := DB.Load(u, "UserOrganization"); err != nil {
+		if err := tx.Load(u, "UserOrganization"); err != nil {
 			return Organization{}, fmt.Errorf("error loading user organization for user access token id %v ... %v",
 				u.ID, err)
 		}
@@ -93,7 +94,7 @@ func (u *UserAccessToken) GetOrganization() (Organization, error) {
 	}
 
 	if uOrg.Organization.ID <= 0 {
-		if err := DB.Load(&uOrg, "Organization"); err != nil {
+		if err := tx.Load(&uOrg, "Organization"); err != nil {
 			return Organization{}, fmt.Errorf("error loading user organization for user access token id %v ... %v",
 				u.ID, err)
 		}
@@ -110,17 +111,17 @@ func createAccessTokenExpiry() time.Time {
 }
 
 // Renew extends the token expiration to the configured token lifetime
-func (u *UserAccessToken) Renew() error {
+func (u *UserAccessToken) Renew(tx *pop.Connection) error {
 	u.ExpiresAt = createAccessTokenExpiry()
-	if err := u.Update(); err != nil {
+	if err := u.Update(tx); err != nil {
 		return fmt.Errorf("error renewing access token, %s", err)
 	}
 	return nil
 }
 
 // GetUser returns the User associated with this access token
-func (u *UserAccessToken) GetUser() (User, error) {
-	if err := DB.Load(u, "User"); err != nil {
+func (u *UserAccessToken) GetUser(tx *pop.Connection) (User, error) {
+	if err := tx.Load(u, "User"); err != nil {
 		return User{}, err
 	}
 	if u.User.ID <= 0 {
@@ -131,9 +132,9 @@ func (u *UserAccessToken) GetUser() (User, error) {
 
 // DeleteIfExpired checks the token expiration and returns `true` if expired. Also deletes
 // the token from the database if it is expired.
-func (u *UserAccessToken) DeleteIfExpired() (bool, error) {
+func (u *UserAccessToken) DeleteIfExpired(tx *pop.Connection) (bool, error) {
 	if u.ExpiresAt.Before(time.Now()) {
-		err := DB.Destroy(u)
+		err := tx.Destroy(u)
 		if err != nil {
 			return true, fmt.Errorf("unable to delete expired userAccessToken, id: %v", u.ID)
 		}
@@ -143,14 +144,14 @@ func (u *UserAccessToken) DeleteIfExpired() (bool, error) {
 }
 
 // DeleteExpired removes all expired UserAccessToken records
-func (u *UserAccessTokens) DeleteExpired() (int, error) {
+func (u *UserAccessTokens) DeleteExpired(tx *pop.Connection) (int, error) {
 	var c Count
-	err := DB.RawQuery("SELECT COUNT(*) FROM user_access_tokens WHERE expires_at < ?", time.Now()).First(&c)
+	err := tx.RawQuery("SELECT COUNT(*) FROM user_access_tokens WHERE expires_at < ?", time.Now()).First(&c)
 	if err != nil || c.N == 0 {
 		return 0, err
 	}
 
-	err = DB.RawQuery("DELETE FROM user_access_tokens WHERE expires_at < ?", time.Now()).Exec()
+	err = tx.RawQuery("DELETE FROM user_access_tokens WHERE expires_at < ?", time.Now()).Exec()
 	if err != nil {
 		return 0, err
 	}
@@ -159,11 +160,11 @@ func (u *UserAccessTokens) DeleteExpired() (int, error) {
 }
 
 // Create stores the UserAccessToken data as a new record in the database.
-func (u *UserAccessToken) Create() error {
-	return create(u)
+func (u *UserAccessToken) Create(tx *pop.Connection) error {
+	return create(tx, u)
 }
 
 // Update writes the UserAccessToken data to an existing database record.
-func (u *UserAccessToken) Update() error {
-	return update(u)
+func (u *UserAccessToken) Update(tx *pop.Connection) error {
+	return update(tx, u)
 }

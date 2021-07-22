@@ -2,11 +2,11 @@ package domain
 
 import (
 	"errors"
-	"github.com/gobuffalo/validate"
-	"github.com/stretchr/testify/suite"
 	"net/http"
 	"testing"
-	"time"
+
+	"github.com/gobuffalo/validate/v3"
+	"github.com/stretchr/testify/suite"
 
 	"github.com/gofrs/uuid"
 )
@@ -237,85 +237,6 @@ func (ts *TestSuite) TestGetSubPartKeyValues() {
 	}
 }
 
-func (ts *TestSuite) TestConvertTimeToStringPtr() {
-	t := ts.T()
-
-	now := time.Now()
-	type args struct {
-		inTime time.Time
-	}
-	tests := []struct {
-		name string
-		args args
-		want string
-	}{
-		{
-			name: "default",
-			args: args{
-				inTime: time.Time{},
-			},
-			want: "0001-01-01T00:00:00Z",
-		},
-		{
-			name: "now",
-			args: args{
-				inTime: now,
-			},
-			want: now.Format(time.RFC3339),
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			got := ConvertTimeToStringPtr(test.args.inTime)
-			ts.Equal(test.want, *got)
-		})
-	}
-}
-
-func (ts *TestSuite) TestConvertStringPtrToDate() {
-	t := ts.T()
-
-	testTime := time.Date(2019, time.August, 12, 0, 0, 0, 0, time.UTC)
-	testStr := testTime.Format("2006-01-02") // not using a const in order to detect code changes
-	emptyStr := ""
-	badTime := "1"
-	type args struct {
-		inPtr *string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    time.Time
-		wantErr bool
-	}{{
-		name: "nil",
-		args: args{nil},
-		want: time.Time{},
-	}, {
-		name: "empty",
-		args: args{&emptyStr},
-		want: time.Time{},
-	}, {
-		name: "good",
-		args: args{&testStr},
-		want: testTime,
-	}, {
-		name:    "error",
-		args:    args{&badTime},
-		wantErr: true,
-	}}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			got, err := ConvertStringPtrToDate(test.args.inPtr)
-			if test.wantErr == false {
-				ts.NoError(err)
-			}
-
-			ts.Equal(test.want, got)
-		})
-	}
-}
-
 func (ts *TestSuite) TestIsStringInSlice() {
 	t := ts.T()
 
@@ -376,7 +297,9 @@ func (ts *TestSuite) TestEmailDomain() {
 	}{
 		{name: "empty string", email: "", want: ""},
 		{name: "domain only", email: "example.org", want: "example.org"},
+		{name: "domain only, mixed case", email: "Example.org", want: "example.org"},
 		{name: "full email", email: "user@example.org", want: "example.org"},
+		{name: "full email, mixed case", email: "User@Example.org", want: "example.org"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -407,7 +330,6 @@ func (ts *TestSuite) TestIsOtherThanNoRows() {
 }
 
 func (ts *TestSuite) TestGetStructFieldTags() {
-
 	type testStruct struct {
 		Language string `json:"language"`
 		TimeZone string `json:"time_zone"`
@@ -467,7 +389,7 @@ func (ts *TestSuite) TestIsTimeZoneAllowed() {
 
 func (ts *TestSuite) TestGetTranslatedSubject() {
 	t := ts.T()
-	postTitle := "MyPost"
+	requestTitle := "MyRequest"
 
 	tests := []struct {
 		name          string
@@ -478,7 +400,7 @@ func (ts *TestSuite) TestGetTranslatedSubject() {
 		{
 			name:          "delivered",
 			translationID: "Email.Subject.Request.FromAcceptedToDelivered",
-			want:          `Your ` + Env.AppName + ` request for "` + postTitle + `" has been delivered!`,
+			want:          `Your ` + Env.AppName + ` request for "` + requestTitle + `" has been delivered!`,
 		},
 		{
 			name:          "delivered in Spanish",
@@ -494,12 +416,12 @@ func (ts *TestSuite) TestGetTranslatedSubject() {
 		{
 			name:          "from accepted to open",
 			translationID: "Email.Subject.Request.FromAcceptedToOpen",
-			want:          `Your ` + Env.AppName + ` offer for "` + postTitle + `" is no longer needed`,
+			want:          `Your ` + Env.AppName + ` offer for "` + requestTitle + `" is no longer needed`,
 		},
 		{
 			name:          "from accepted to removed",
 			translationID: "Email.Subject.Request.FromAcceptedToRemoved",
-			want:          `Your ` + Env.AppName + ` offer for "` + postTitle + `" is no longer needed`,
+			want:          `Your ` + Env.AppName + ` offer for "` + requestTitle + `" is no longer needed`,
 		},
 		{
 			name:          "from completed to accepted",
@@ -520,7 +442,7 @@ func (ts *TestSuite) TestGetTranslatedSubject() {
 				language = test.language
 			}
 			got := GetTranslatedSubject(language, test.translationID,
-				map[string]string{"postTitle": postTitle})
+				map[string]string{"requestTitle": requestTitle})
 			ts.Equal(test.want, got, "bad subject translation")
 		})
 	}
@@ -623,8 +545,10 @@ func (ts *TestSuite) TestRemoveUnwantedChars() {
 		{name: "empty str", str: "", allowed: "#", want: ""},
 		{name: "Korean", str: string([]rune{0xae40}), want: string([]rune{0xae40})},
 		{name: "Flag", str: string([]rune{0x1f1fa, 0x1f1f8}), want: string([]rune{0x1f1fa, 0x1f1f8})},
-		{name: "Zero-width joiner", str: string([]rune{0x1f468, 0x200d, 0x1f9b3}),
-			want: string([]rune{0x1f468, 0x200d, 0x1f9b3})},
+		{
+			name: "Zero-width joiner", str: string([]rune{0x1f468, 0x200d, 0x1f9b3}),
+			want: string([]rune{0x1f468, 0x200d, 0x1f9b3}),
+		},
 		{name: "Flag", str: string([]rune{0x1f1fa, 0x1f1f8}), want: string([]rune{0x1f1fa, 0x1f1f8})},
 		{name: "Chinese", str: string([]rune{0x540d, 0x79f0}), want: ""},
 		{name: "Script", str: "<script></script>", allowed: "-_ .,'&", want: "scriptscript"},
@@ -721,6 +645,26 @@ func (ts *TestSuite) TestStringIsVisible_IsValid() {
 					ts.Equal([]string{tt.message}, vErr.Get(v.Name))
 				}
 			}
+		})
+	}
+}
+
+func (ts *TestSuite) TestUniquifyIntSlice() {
+	tests := []struct {
+		name string
+		ids  []int
+		want []int
+	}{
+		{name: "empty", ids: []int{}, want: []int{}},
+		{name: "single", ids: []int{3}, want: []int{3}},
+		{name: "all unique", ids: []int{3, 7, 11}, want: []int{3, 7, 11}},
+		{name: "all the same", ids: []int{3, 3, 3, 3}, want: []int{3}},
+		{name: "some duplicates", ids: []int{3, 4, 5, 4, 3, 3}, want: []int{3, 4, 5}},
+	}
+	for _, tt := range tests {
+		ts.T().Run(tt.name, func(t *testing.T) {
+			got := UniquifyIntSlice(tt.ids)
+			ts.Equal(tt.want, got, "incorrect int results")
 		})
 	}
 }

@@ -7,6 +7,7 @@ app:
   depends_on:
     - testdb
     - minio
+    - redis
   environment:
     ADDR: 0.0.0.0
     HOST: http://wecarry.local:3000
@@ -15,9 +16,9 @@ app:
     DATABASE_URL: postgres://wecarry:wecarry@testdb:5432/wecarry_test?sslmode=disable
     EMAIL_SERVICE: dummy
     GO_ENV: test
-    AWS_REGION: us-east-1
-    AWS_S3_ACCESS_KEY_ID: abc123
-    AWS_S3_SECRET_ACCESS_KEY: abcd1234
+    AWS_DEFAULT_REGION: us-east-1
+    AWS_ACCESS_KEY_ID: abc123
+    AWS_SECRET_ACCESS_KEY: abcd1234
     AWS_S3_ENDPOINT: http://minio:9000
     AWS_S3_DISABLE_SSL: true
     AWS_S3_BUCKET: wca-test-bucket
@@ -27,7 +28,7 @@ app:
     GOOGLE_KEY: test
     GOOGLE_SECRET: test
     SERVICE_INTEGRATION_TOKEN: abc123test
-  encrypted_env_file: .env.encrypted
+    DISABLE_TLS: "true"
   working_dir: /wecarry
   command: true
 
@@ -71,3 +72,6 @@ minio:
   environment:
     MINIO_ACCESS_KEY: abc123
     MINIO_SECRET_KEY: abcd1234
+
+redis:
+  image: redis:6.2

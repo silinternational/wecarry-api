@@ -25,7 +25,7 @@
   type: push
   image_name: 369020531563.dkr.ecr.us-east-1.amazonaws.com/wecarry-prod
   image_tag: "{{.Timestamp}}"
-  tag: master
+  tag: main
   registry: https://369020531563.dkr.ecr.us-east-1.amazonaws.com
   dockercfg_service: awsgenerator
 
@@ -34,7 +34,7 @@
   type: push
   image_name: 369020531563.dkr.ecr.us-east-1.amazonaws.com/wecarry-prod
   image_tag: "latest"
-  tag: master
+  tag: main
   registry: https://369020531563.dkr.ecr.us-east-1.amazonaws.com
   dockercfg_service: awsgenerator
 
@@ -45,15 +45,15 @@
 
 - name: deploy_production_web
   service: ecsdeploy
-  tag: master
+  tag: main
   command: "-c appsdev-prod -n wecarry-api -i 369020531563.dkr.ecr.us-east-1.amazonaws.com/wecarry-prod -e CI_TIMESTAMP -t 600"
 
 - name: track_deployment
   service: tracker
-  tag: ^(master|develop)
+  tag: ^(main|develop)
   command: "true"
 
 - name: rollbar
   service: rollbar
-  tag: ^(master|develop)
+  tag: ^(main|develop)
   command: "/notify.sh"

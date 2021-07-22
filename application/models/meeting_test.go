@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/gobuffalo/nulls"
-	"github.com/gobuffalo/validate"
+	"github.com/gobuffalo/validate/v3"
 	"github.com/gofrs/uuid"
 
 	"github.com/silinternational/wecarry-api/domain"
@@ -13,6 +13,8 @@ import (
 
 type meetingFixtures struct {
 	Meetings
+	MeetingInvites
+	MeetingParticipants
 	Users
 }
 
@@ -162,7 +164,7 @@ func (ms *ModelSuite) TestMeeting_FindByUUID() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var meeting Meeting
-			err := meeting.FindByUUID(test.uuid)
+			err := meeting.FindByUUID(ms.DB, test.uuid)
 			if test.wantErr {
 				ms.Error(err, "FindByUUID() did not return expected error")
 				return
@@ -188,14 +190,16 @@ func (ms *ModelSuite) TestMeeting_FindOnDate() {
 		testNow time.Time
 	}{
 		{name: "one for actual now", testNow: time.Now(), want: []string{meetings[2].Name}},
-		{name: "two for now in near future", testNow: nearFuture,
-			want: []string{meetings[1].Name, meetings[2].Name}},
+		{
+			name: "two for now in near future", testNow: nearFuture,
+			want: []string{meetings[1].Name, meetings[2].Name},
+		},
 		{name: "empty for now in far future", testNow: farFuture, want: []string{}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var meetings Meetings
-			err := meetings.FindOnDate(test.testNow)
+			err := meetings.FindOnDate(ms.DB, test.testNow)
 			ms.NoError(err, "unexpected error")
 
 			mNames := make([]string, len(meetings))
@@ -241,7 +245,7 @@ func (ms *ModelSuite) TestMeeting_FindOnOrAfterDate() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var meetings Meetings
-			err := meetings.FindOnOrAfterDate(test.testNow)
+			err := meetings.FindOnOrAfterDate(ms.DB, test.testNow)
 			ms.NoError(err, "unexpected error")
 
 			mNames := getMeetingNames(meetings)
@@ -274,7 +278,7 @@ func (ms *ModelSuite) TestMeeting_FindAfterDate() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var meetings Meetings
-			err := meetings.FindAfterDate(test.testNow)
+			err := meetings.FindAfterDate(ms.DB, test.testNow)
 			ms.NoError(err, "unexpected error")
 
 			mNames := getMeetingNames(meetings)
@@ -307,7 +311,7 @@ func (ms *ModelSuite) TestMeeting_FindRecent() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var meetings Meetings
-			err := meetings.FindRecent(test.testNow)
+			err := meetings.FindRecent(ms.DB, test.testNow)
 			ms.NoError(err, "unexpected error")
 
 			mNames := getMeetingNames(meetings)
@@ -316,59 +320,35 @@ func (ms *ModelSuite) TestMeeting_FindRecent() {
 	}
 }
 
-func (ms *ModelSuite) TestMeeting_AttachImage() {
-	meetings := createMeetingFixtures(ms.DB, 3)
-	files := createFileFixtures(3)
-	meetings[1].ImageFileID = nulls.NewInt(files[0].ID)
-	ms.NoError(ms.DB.UpdateColumns(&meetings[1], "image_file_id"))
+// TestMeeting_FindByUUID tests the FindByUUID function of the Meeting model
+func (ms *ModelSuite) TestMeeting_FindByInviteCode() {
+	f := createMeetingFixtures(ms.DB, 2)
 
 	tests := []struct {
-		name     string
-		meeting  Meeting
-		oldImage *File
-		newImage string
-		want     File
-		wantErr  string
+		name    string
+		code    string
+		want    Meeting
+		wantErr bool
 	}{
-		{
-			name:     "no previous file",
-			meeting:  meetings[0],
-			newImage: files[1].UUID.String(),
-			want:     files[1],
-		},
-		{
-			name:     "previous file",
-			meeting:  meetings[1],
-			oldImage: &files[0],
-			newImage: files[2].UUID.String(),
-			want:     files[2],
-		},
-		{
-			name:     "bad ID",
-			meeting:  meetings[2],
-			newImage: uuid.UUID{}.String(),
-			wantErr:  "no rows in result set",
-		},
+		{name: "good", code: f.Meetings[0].InviteCode.UUID.String(), want: f.Meetings[0]},
+		{name: "blank uuid", code: "", wantErr: true},
+		{name: "wrong uuid", code: domain.GetUUID().String(), wantErr: true},
 	}
-	for _, tt := range tests {
-		ms.T().Run(tt.name, func(t *testing.T) {
-			got, err := tt.meeting.AttachImage(tt.newImage)
-			if tt.wantErr != "" {
-				ms.Error(err, "did not get expected error")
-				ms.Contains(err.Error(), tt.wantErr)
+	for _, test := range tests {
+		ms.T().Run(test.name, func(t *testing.T) {
+			var meeting Meeting
+			err := meeting.FindByInviteCode(ms.DB, test.code)
+			if test.wantErr {
+				ms.Error(err, "FindByInviteCode() did not return expected error")
 				return
 			}
 			ms.NoError(err, "unexpected error")
-			ms.Equal(tt.want.UUID.String(), got.UUID.String(), "wrong file returned")
-			ms.Equal(true, got.Linked, "new image file is not marked as linked")
-			if tt.oldImage != nil {
-				ms.Equal(false, tt.oldImage.Linked, "old image file is not marked as unlinked")
-			}
+			ms.Equal(test.want.UUID, meeting.UUID, "incorrect uuid")
 		})
 	}
 }
 
-func (ms *ModelSuite) TestMeeting_GetImage() {
+func (ms *ModelSuite) TestMeeting_ImageFile() {
 	user := User{}
 	createFixture(ms, &user)
 
@@ -385,17 +365,19 @@ func (ms *ModelSuite) TestMeeting_GetImage() {
 	}
 	createFixture(ms, &meeting)
 
-	var imageFixture File
-	const filename = "photo.gif"
-	ms.Nil(imageFixture.Store(filename, []byte("GIF89a")), "failed to create file fixture")
+	f, err := meeting.ImageFile(ms.DB)
+	ms.NoError(err, "unexpected error from Meeting.ImageFile()")
+	ms.Nil(f, "expected nil returned from Meeting.ImageFile()")
 
-	attachedFile, err := meeting.AttachImage(imageFixture.UUID.String())
+	imageFixture := createFileFixture(ms.DB)
+
+	attachedFile, err := meeting.SetImageFile(ms.DB, imageFixture.UUID.String())
 	ms.NoError(err)
 
-	if got, err := meeting.GetImage(); err == nil {
+	if got, err := meeting.ImageFile(ms.DB); err == nil {
 		ms.Equal(attachedFile.UUID.String(), got.UUID.String())
 		ms.True(got.URLExpiration.After(time.Now().Add(time.Minute)))
-		ms.Equal(filename, got.Name)
+		ms.Equal(imageFixture.Name, got.Name)
 	} else {
 		ms.Fail("meeting.GetImage failed, %s", err)
 	}
@@ -411,7 +393,7 @@ func (ms *ModelSuite) TestMeeting_GetCreator() {
 	meeting := Meeting{CreatedByID: user.ID, Name: "name", LocationID: location.ID}
 	createFixture(ms, &meeting)
 
-	creator, err := meeting.GetCreator()
+	creator, err := meeting.GetCreator(ms.DB)
 	ms.NoError(err, "unexpected error from meeting.GetCreator()")
 	ms.Equal(user.Nickname, creator.Nickname, "incorrect user/creator of meeting")
 }
@@ -424,14 +406,14 @@ func (ms *ModelSuite) TestMeeting_GetSetLocation() {
 		{
 			Description: "a place",
 			Country:     "XY",
-			Latitude:    nulls.NewFloat64(1.1),
-			Longitude:   nulls.NewFloat64(2.2),
+			Latitude:    1.1,
+			Longitude:   2.2,
 		},
 		{
 			Description: "another place",
 			Country:     "AB",
-			Latitude:    nulls.Float64{},
-			Longitude:   nulls.Float64{},
+			Latitude:    -1.1,
+			Longitude:   -2.2,
 		},
 	}
 	createFixture(ms, &locations[0]) // only save the first record for now
@@ -439,17 +421,14 @@ func (ms *ModelSuite) TestMeeting_GetSetLocation() {
 	meeting := Meeting{CreatedByID: user.ID, Name: "name", LocationID: locations[0].ID}
 	createFixture(ms, &meeting)
 
-	err := meeting.SetLocation(locations[1])
+	err := meeting.SetLocation(ms.DB, locations[1])
 	ms.NoError(err, "unexpected error from meeting.SetLocation()")
 
-	locationFromDB, err := meeting.GetLocation()
+	locationFromDB, err := meeting.GetLocation(ms.DB)
 	ms.NoError(err, "unexpected error from meeting.GetLocation()")
 	locations[1].ID = locationFromDB.ID
 	ms.Equal(locations[1], locationFromDB, "location data doesn't match after update")
 
-	// These are redundant checks, but here to document the fact that a null overwrites previous data.
-	ms.False(locationFromDB.Latitude.Valid)
-	ms.False(locationFromDB.Longitude.Valid)
 }
 
 func (ms *ModelSuite) TestMeeting_CanUpdate() {
@@ -468,4 +447,433 @@ func (ms *ModelSuite) TestMeeting_CanUpdate() {
 	ms.True(mtg.CanUpdate(salesUser), "sales admin should be authorized")
 	ms.True(mtg.CanUpdate(adminUser), "admin should be authorized")
 	ms.False(mtg.CanUpdate(otherUser), "normal user (non meeting creator) should NOT be authorized")
+}
+
+func (ms *ModelSuite) TestMeeting_GetRequests() {
+	f := createMeetingFixtures(ms.DB, 2)
+	meetings := f.Meetings
+	users := f.Users
+
+	requests := createRequestFixtures(ms.DB, 3, false, users[0].ID)
+	requests[0].MeetingID = nulls.NewInt(meetings[1].ID)
+	requests[1].MeetingID = nulls.NewInt(meetings[1].ID)
+	ms.NoError(ms.DB.Update(&requests))
+
+	tests := []struct {
+		name    string
+		meeting Meeting
+		wantIDs []int
+		wantErr string
+	}{
+		{
+			name:    "none",
+			meeting: meetings[0],
+			wantIDs: []int{},
+		},
+		{
+			name:    "two",
+			meeting: meetings[1],
+			wantIDs: []int{requests[1].ID, requests[0].ID},
+		},
+	}
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			got, err := tt.meeting.Requests(ms.DB)
+			if tt.wantErr != "" {
+				ms.Error(err, "did not get expected error")
+				ms.Contains(err.Error(), tt.wantErr)
+				return
+			}
+			ms.NoError(err, "unexpected error")
+
+			pIDs := make([]int, len(got))
+			for i, p := range got {
+				pIDs[i] = p.ID
+			}
+
+			ms.Equal(tt.wantIDs, pIDs)
+		})
+	}
+}
+
+func (ms *ModelSuite) TestMeeting_Invites() {
+	f := createMeetingFixtures(ms.DB, 2)
+
+	tests := []struct {
+		name       string
+		user       User
+		meeting    Meeting
+		wantEmails []string
+		wantErr    string
+	}{
+		{
+			name:       "creator",
+			user:       f.Users[0],
+			meeting:    f.Meetings[0],
+			wantEmails: []string{f.MeetingInvites[0].Email, f.MeetingInvites[1].Email},
+		},
+		{
+			name:       "organizer",
+			user:       f.Users[1],
+			meeting:    f.Meetings[0],
+			wantEmails: []string{f.MeetingInvites[0].Email, f.MeetingInvites[1].Email},
+		},
+		{
+			name:       "invitee",
+			user:       f.Users[2],
+			meeting:    f.Meetings[0],
+			wantEmails: []string{},
+		},
+	}
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			got, err := tt.meeting.Invites(ms.DB, tt.user)
+			if tt.wantErr != "" {
+				ms.Error(err, "did not get expected error")
+				ms.Contains(err.Error(), tt.wantErr)
+				return
+			}
+			ms.NoError(err, "unexpected error")
+
+			ids := make([]string, len(got))
+			for i, invite := range got {
+				ids[i] = invite.Email
+				ms.Equal(tt.meeting.ID, invite.MeetingID, "wrong meeting ID in invite")
+			}
+
+			ms.Equal(tt.wantEmails, ids)
+		})
+	}
+}
+
+func (ms *ModelSuite) TestMeeting_Participants() {
+	f := createMeetingFixtures(ms.DB, 2)
+
+	tests := []struct {
+		name    string
+		user    User
+		meeting Meeting
+		wantIDs []int
+		wantErr string
+	}{
+		{
+			name:    "creator",
+			user:    f.Users[0],
+			meeting: f.Meetings[0],
+			wantIDs: []int{f.Users[1].ID, f.Users[2].ID, f.Users[3].ID},
+		},
+		{
+			name:    "organizer",
+			user:    f.Users[1],
+			meeting: f.Meetings[0],
+			wantIDs: []int{f.Users[1].ID, f.Users[2].ID, f.Users[3].ID},
+		},
+		{
+			name:    "participant",
+			user:    f.Users[2],
+			meeting: f.Meetings[0],
+			wantIDs: []int{f.Users[2].ID},
+		},
+	}
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			got, err := tt.meeting.Participants(ms.DB, tt.user)
+			if tt.wantErr != "" {
+				ms.Error(err, "did not get expected error")
+				ms.Contains(err.Error(), tt.wantErr)
+				return
+			}
+			ms.NoError(err, "unexpected error")
+
+			ids := make([]int, len(got))
+			for i, p := range got {
+				ids[i] = p.UserID
+				ms.Equal(tt.meeting.ID, p.MeetingID, "wrong meeting ID in participant")
+			}
+
+			ms.Equal(tt.wantIDs, ids)
+		})
+	}
+}
+
+func (ms *ModelSuite) TestMeeting_Organizers() {
+	f := createMeetingFixtures(ms.DB, 2)
+
+	tests := []struct {
+		name    string
+		user    User
+		meeting Meeting
+		wantIDs []int
+		wantErr string
+	}{
+		{
+			name:    "creator",
+			user:    f.Users[0],
+			meeting: f.Meetings[0],
+			wantIDs: []int{f.Users[1].ID},
+		},
+		{
+			name:    "organizer",
+			user:    f.Users[1],
+			meeting: f.Meetings[0],
+			wantIDs: []int{f.Users[1].ID},
+		},
+		{
+			name:    "participant",
+			user:    f.Users[2],
+			meeting: f.Meetings[0],
+			wantIDs: []int{f.Users[1].ID},
+		},
+	}
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			got, err := tt.meeting.Organizers(ms.DB)
+			if tt.wantErr != "" {
+				ms.Error(err, "did not get expected error")
+				ms.Contains(err.Error(), tt.wantErr)
+				return
+			}
+			ms.NoError(err, "unexpected error")
+
+			ids := make([]int, len(got))
+			for i, u := range got {
+				ids[i] = u.ID
+				ms.Equal("", u.LastName, "organizer's name was not omitted")
+			}
+
+			ms.Equal(tt.wantIDs, ids)
+		})
+	}
+}
+
+func (ms *ModelSuite) TestMeeting_RemoveInvite() {
+	f := createMeetingFixtures(ms.DB, 2)
+
+	tests := []struct {
+		name             string
+		user             User
+		meeting          Meeting
+		email            string
+		remainingInvites []string
+		wantErr          string
+	}{
+		{
+			name:    "wrong email",
+			user:    f.Users[0],
+			meeting: f.Meetings[0],
+			email:   "not-there@example.com",
+			wantErr: "no rows",
+		},
+		{
+			name:             "one remaining",
+			user:             f.Users[0],
+			meeting:          f.Meetings[0],
+			email:            f.MeetingInvites[0].Email,
+			remainingInvites: []string{f.MeetingInvites[1].Email},
+		},
+		{
+			name:             "none remaining",
+			user:             f.Users[0],
+			meeting:          f.Meetings[0],
+			email:            f.MeetingInvites[1].Email,
+			remainingInvites: []string{},
+		},
+	}
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			// setup
+
+			// execute
+			err := tt.meeting.RemoveInvite(ms.DB, tt.email)
+
+			// verify
+			if tt.wantErr != "" {
+				ms.Error(err, "did not get expected error")
+				ms.Contains(err.Error(), tt.wantErr)
+				return
+			}
+			ms.NoError(err, "unexpected error")
+
+			remaining, err := tt.meeting.Invites(ms.DB, tt.user)
+			ms.NoError(err)
+
+			emails := make([]string, len(remaining))
+			for i, m := range remaining {
+				emails[i] = m.Email
+			}
+
+			ms.Equal(tt.remainingInvites, emails)
+
+			// teardown
+		})
+	}
+}
+
+func (ms *ModelSuite) TestMeeting_RemoveParticipant() {
+	f := createMeetingFixtures(ms.DB, 2)
+
+	tests := []struct {
+		name                  string
+		testUser              User
+		meeting               Meeting
+		user                  User
+		remainingParticipants []int
+		wantErr               string
+	}{
+		{
+			name:     "user not a participant",
+			testUser: f.Users[0],
+			meeting:  f.Meetings[0],
+			user:     f.Users[0],
+			wantErr:  "no rows",
+		},
+		{
+			name:                  "good",
+			testUser:              f.Users[0],
+			meeting:               f.Meetings[0],
+			user:                  f.Users[1],
+			remainingParticipants: []int{f.MeetingParticipants[1].ID, f.MeetingParticipants[2].ID},
+		},
+	}
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			// execute
+			err := tt.meeting.RemoveParticipant(ms.DB, tt.user.UUID.String())
+
+			// verify
+			if tt.wantErr != "" {
+				ms.Error(err, "did not get expected error")
+				ms.Contains(err.Error(), tt.wantErr)
+				return
+			}
+			ms.NoError(err, "unexpected error")
+
+			remaining, err := tt.meeting.Participants(ms.DB, tt.testUser)
+			ms.NoError(err)
+
+			ids := make([]int, len(remaining))
+			for i, m := range remaining {
+				ids[i] = m.ID
+			}
+
+			ms.Equal(tt.remainingParticipants, ids)
+
+			// teardown
+		})
+	}
+}
+
+func (ms *ModelSuite) TestMeeting_isCodeValid() {
+	code := domain.GetUUID()
+
+	tests := []struct {
+		name    string
+		meeting Meeting
+		code    string
+		want    bool
+	}{
+		{
+			name:    "yes",
+			meeting: Meeting{InviteCode: nulls.NewUUID(code)},
+			code:    code.String(),
+			want:    true,
+		},
+		{
+			name:    "wrong code",
+			meeting: Meeting{InviteCode: nulls.NewUUID(domain.GetUUID())},
+			code:    code.String(),
+			want:    false,
+		},
+		{
+			name:    "null-value code",
+			meeting: Meeting{InviteCode: nulls.NewUUID(uuid.Nil)},
+			code:    code.String(),
+			want:    false,
+		},
+		{
+			name:    "invalid code",
+			meeting: Meeting{InviteCode: nulls.UUID{}},
+			code:    code.String(),
+			want:    false,
+		},
+	}
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			ms.Equal(tt.want, tt.meeting.IsCodeValid(ms.DB, tt.code), "IsCodeValid returned incorrect result")
+		})
+	}
+}
+
+func (ms *ModelSuite) TestMeeting_isOrganizer() {
+	f := createMeetingFixtures(ms.DB, 2)
+
+	tests := []struct {
+		name    string
+		user    User
+		meeting Meeting
+		want    bool
+	}{
+		{
+			name:    "creator",
+			user:    f.Users[0],
+			meeting: f.Meetings[0],
+			want:    false,
+		},
+		{
+			name:    "organizer",
+			user:    f.Users[1],
+			meeting: f.Meetings[0],
+			want:    true,
+		},
+		{
+			name:    "participant",
+			user:    f.Users[2],
+			meeting: f.Meetings[0],
+			want:    false,
+		},
+	}
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			got, err := tt.meeting.isOrganizer(ms.DB, tt.user.ID)
+			ms.NoError(err)
+			ms.Equal(tt.want, got)
+		})
+	}
+}
+
+func (ms *ModelSuite) TestMeetings_FindByIDs() {
+	t := ms.T()
+
+	f := createMeetingFixtures(ms.DB, 3)
+	meetings := f.Meetings
+
+	tests := []struct {
+		name string
+		ids  []int
+		want []string
+	}{
+		{
+			name: "good",
+			ids:  []int{meetings[0].ID, meetings[1].ID, meetings[0].ID},
+			want: []string{meetings[0].Name, meetings[1].Name},
+		},
+		{
+			name: "missing",
+			ids:  []int{99999},
+			want: []string{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var m Meetings
+			err := m.FindByIDs(ms.DB, tt.ids)
+			ms.NoError(err)
+
+			got := make([]string, len(m))
+			for i, mm := range m {
+				got[i] = mm.Name
+			}
+			ms.Equal(tt.want, got, "incorrect meeting names")
+		})
+	}
 }

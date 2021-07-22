@@ -8,9 +8,17 @@ import (
 	"time"
 
 	"github.com/gobuffalo/nulls"
-	"github.com/gobuffalo/pop"
+	"github.com/gobuffalo/pop/v5"
+
 	"github.com/silinternational/wecarry-api/domain"
 )
+
+var locationX = Location{
+	Country:     "XX",
+	Description: "-",
+	Latitude:    1.1,
+	Longitude:   2.2,
+}
 
 type UserFixtures struct {
 	Organization
@@ -42,16 +50,13 @@ func mustCreate(tx *pop.Connection, f interface{}) {
 // createOrganizationFixtures generates any number of organization records for testing.
 //  Their names will be called "Org1", "Org2", ...
 func createOrganizationFixtures(tx *pop.Connection, n int) Organizations {
-	files := make([]File, n)
+	files := createFileFixtures(tx, n)
 	organizations := make(Organizations, n)
 	for i := range organizations {
-		if err := files[i].Store("logo.gif", []byte("GIF89a")); err != nil {
-			panic("error storing org logo, " + err.Error())
-		}
 		organizations[i].Name = fmt.Sprintf("Org%v", i+1)
 		organizations[i].AuthType = AuthTypeSaml
 		organizations[i].AuthConfig = "{}"
-		if _, err := organizations[i].AttachLogo(files[i].UUID.String()); err != nil {
+		if _, err := organizations[i].AttachLogo(tx, files[i].UUID.String()); err != nil {
 			panic("error attaching logo to org fixture, " + err.Error())
 		}
 
@@ -100,7 +105,7 @@ func createUserFixtures(tx *pop.Connection, n int) UserFixtures {
 		}
 
 		accessTokenFixtures[i].UserID = users[i].ID
-		accessTokenFixtures[i].UserOrganizationID = userOrgs[i].ID
+		accessTokenFixtures[i].UserOrganizationID = nulls.NewInt(userOrgs[i].ID)
 		accessTokenFixtures[i].AccessToken = HashClientIdAccessToken(users[i].Nickname)
 		accessTokenFixtures[i].ExpiresAt = time.Now().Add(time.Minute * 60)
 		mustCreate(tx, &accessTokenFixtures[i])
@@ -115,10 +120,10 @@ func createUserFixtures(tx *pop.Connection, n int) UserFixtures {
 	}
 }
 
-// CreatePostFixtures generates any number of post records for testing. Related Location and File records are also
-// created. All post fixtures will be assigned to the first Organization in the DB. If no Organization exists,
-// one will be created. All posts are created by the first User in the DB. If no User exists, one will be created.
-func createPostFixtures(tx *pop.Connection, nRequests, nOffers int, createFiles bool) Posts {
+// createRequestFixtures generates any number of request records for testing. Related Location and File records are also
+// created. All request fixtures will be assigned to the first Organization in the DB. If no Organization exists,
+// one will be created. All requests are created by the first User in the DB. If no User exists, one will be created.
+func createRequestFixtures(tx *pop.Connection, nRequests int, createFiles bool, userIDs ...int) Requests {
 	var org Organization
 	if err := tx.First(&org); err != nil {
 		org = Organization{AuthConfig: "{}"}
@@ -126,71 +131,68 @@ func createPostFixtures(tx *pop.Connection, nRequests, nOffers int, createFiles 
 	}
 
 	var user User
-	if err := tx.First(&user); err != nil {
-		user = User{}
-		mustCreate(tx, &user)
+	if len(userIDs) == 0 {
+		if err := tx.First(&user); err != nil {
+			user = createUserFixtures(tx, 1).Users[0]
+		}
+	} else {
+		if err := tx.Find(&user, userIDs[0]); err != nil {
+			panic("error finding user by id for request fixtures: " + err.Error())
+		}
 	}
 
-	totalPosts := nRequests + nOffers
-	locations := createLocationFixtures(tx, totalPosts*2)
+	locations := createLocationFixtures(tx, nRequests*2)
 
 	var files Files
 	if createFiles {
-		files = createFileFixtures(totalPosts)
+		files = createFileFixtures(tx, nRequests)
 	}
 
-	posts := make(Posts, totalPosts)
+	requests := make(Requests, nRequests)
 	created := 0
 	futureDate := time.Now().Add(4 * domain.DurationWeek)
-	for i := range posts {
-		if created < nRequests {
-			posts[i].Type = PostTypeRequest
-			posts[i].ReceiverID = nulls.NewInt(user.ID)
-		} else {
-			posts[i].Type = PostTypeOffer
-			posts[i].ProviderID = nulls.NewInt(user.ID)
-		}
-		posts[i].CreatedByID = user.ID
-		posts[i].OrganizationID = org.ID
-		posts[i].DestinationID = locations[i*2].ID
-		posts[i].OriginID = nulls.NewInt(locations[i*2+1].ID)
-		posts[i].Title = "title " + strconv.Itoa(i)
-		posts[i].Description = nulls.NewString("description " + strconv.Itoa(i))
-		posts[i].NeededBefore = nulls.NewTime(futureDate)
-		posts[i].Size = PostSizeSmall
-		posts[i].Status = PostStatusOpen
-		posts[i].URL = nulls.NewString("https://www.example.com/" + strconv.Itoa(i))
-		posts[i].Kilograms = nulls.NewFloat64(float64(i) * 0.1)
-		posts[i].Visibility = PostVisibilitySame
+	for i := range requests {
+		requests[i].CreatedByID = user.ID
+		requests[i].OrganizationID = org.ID
+		requests[i].DestinationID = locations[i*2].ID
+		requests[i].OriginID = nulls.NewInt(locations[i*2+1].ID)
+		requests[i].Title = "title " + strconv.Itoa(i)
+		requests[i].Description = nulls.NewString("description " + strconv.Itoa(i))
+		requests[i].NeededBefore = nulls.NewTime(futureDate)
+		requests[i].Size = RequestSizeSmall
+		requests[i].Status = RequestStatusOpen
+		requests[i].URL = nulls.NewString("https://www.example.com/" + strconv.Itoa(i))
+		requests[i].Kilograms = nulls.NewFloat64(float64(i) * 0.1)
+		requests[i].Visibility = RequestVisibilitySame
 
 		if createFiles {
-			if _, err := posts[i].AttachPhoto(files[i].UUID.String()); err != nil {
-				panic("error attaching photo to post fixture, " + err.Error())
+			if _, err := requests[i].AttachPhoto(tx, files[i].UUID.String()); err != nil {
+				panic("error attaching photo to request fixture, " + err.Error())
 			}
 		}
 
-		mustCreate(tx, &posts[i])
+		mustCreate(tx, &requests[i])
 		created++
 	}
 
-	return posts
+	return requests
 }
 
 // createPotentialProviderFixtures generates any number of PotentialProvider records for testing.
-// All of these will be assigned to the first Post (Request) in the DB, which has the first User as
+// All of these will be assigned to the first Request (Request) in the DB, which has the first User as
 // its CreatedBy.
-// If necessary, User and Post fixtures will also be created.
-func createPotentialProviderFixtures(tx *pop.Connection, nPosts, nProviders int) PotentialProviders {
-	var posts Posts
-	if err := tx.All(&posts); err != nil {
-		createPostFixtures(tx, nPosts, 0, false)
+// If necessary, User and Request fixtures will also be created.
+func createPotentialProviderFixtures(tx *pop.Connection, nRequests, nProviders int) PotentialProviders {
+	var requests Requests
+	if err := tx.All(&requests); err != nil {
+		createRequestFixtures(tx, nRequests, false)
 	}
-	if len(posts) < nPosts {
-		createPostFixtures(tx, nPosts-len(posts), 0, false)
+	if len(requests) < nRequests {
+		createRequestFixtures(tx, nRequests-len(requests), false)
 	}
 
-	posts = Posts{}
-	tx.All(&posts)
+	requests = Requests{}
+	tx.All(&requests)
 
 	var users Users
 	if err := tx.All(&users); err != nil {
@@ -205,8 +207,8 @@ func createPotentialProviderFixtures(tx *pop.Connection, nPosts, nProviders int)
 	providers := make(PotentialProviders, nProviders)
 	for i := range providers {
 		providers[i] = PotentialProvider{
-			PostID: posts[0].ID,
-			UserID: users[i+1].ID,
+			RequestID: requests[0].ID,
+			UserID:    users[i+1].ID,
 		}
 		mustCreate(tx, &providers[i])
 	}
@@ -217,67 +219,104 @@ func createPotentialProviderFixtures(tx *pop.Connection, nPosts, nProviders int)
 // createLocationFixtures generates any number of location records for testing.
 func createLocationFixtures(tx *pop.Connection, n int) Locations {
 	countries := []string{"US", "CA", "MX", "TH", "FR", "PG"}
+	states := []string{"FL", "ON", "", "", "", ""}
+	cities := []string{"Miami", "Toronto", "Mexico City", "Chiang Mai", "Paris", "Port Moresby"}
 	locations := make(Locations, n)
+
+	/* #nosec */
 	for i := range locations {
+		randInt := rand.Intn(6)
 		locations[i] = Location{
-			Country:     countries[rand.Intn(6)],
+			Country:     countries[randInt],
+			State:       states[randInt],
+			City:        cities[randInt],
 			Description: "Random Location " + strconv.Itoa(rand.Int()),
-			Latitude:    nulls.NewFloat64(rand.Float64()*180 - 90),
-			Longitude:   nulls.NewFloat64(rand.Float64()*360 - 180),
+			Latitude:    rand.Float64()*180 - 90,
+			Longitude:   rand.Float64()*360 - 180,
 		}
 		mustCreate(tx, &locations[i])
 	}
 	return locations
 }
 
-func createFileFixtures(n int) Files {
+func createFileFixtures(tx *pop.Connection, n int) Files {
 	fileFixtures := make([]File, n)
 	for i := range fileFixtures {
-		var f File
-		if err := f.Store(strconv.Itoa(rand.Int())+".gif", []byte("GIF89a")); err != nil {
-			panic(fmt.Sprintf("failed to create file fixture, %s", err))
-		}
-		fileFixtures[i] = f
+		fileFixtures[i] = createFileFixture(tx)
 	}
 	return fileFixtures
 }
 
+func createFileFixture(tx *pop.Connection) File {
+	// #nosec G404
+	f := File{
+		Name:    strconv.Itoa(rand.Int()) + ".gif",
+		Content: []byte("GIF89a"),
+	}
+	if err := f.Store(tx); err != nil {
+		panic(fmt.Sprintf("failed to create file fixture, %s", err))
+	}
+	return f
+}
+
 type potentialProvidersFixtures struct {
 	Users
-	Posts
+	Requests
 	PotentialProviders
 }
 
 // createPotentialProviderFixtures generates five PotentialProvider records for testing.
-// If necessary, four User and three Post fixtures will also be created.  The Posts will
+// If necessary, four User and three Request fixtures will also be created.  The Requests will
 // all be created by the first user.
-// The first Post will have all but the first user as a potential provider.
-// The second Post will have the last two users as potential providers.
-// The third Post won't have any potential providers
+// The first Request will have all but the first user as a potential provider.
+// The second Request will have the last two users as potential providers.
+// The third Request won't have any potential providers
 func createPotentialProvidersFixtures(ms *ModelSuite) potentialProvidersFixtures {
 	uf := createUserFixtures(ms.DB, 4)
-	posts := createPostFixtures(ms.DB, 3, 0, false)
+	requests := createRequestFixtures(ms.DB, 3, false, uf.Users[0].ID)
 	providers := PotentialProviders{}
 
-	for i, p := range posts[:2] {
+	// ensure the first user is actually the creator (timing issues tend to make this unreliable otherwise)
+	for i := range requests {
+		requests[i].CreatedByID = uf.Users[0].ID
+	}
+	ms.DB.Update(&requests)
+
+	for i, p := range requests[:2] {
 		for _, u := range uf.Users[i+1:] {
-			c := PotentialProvider{PostID: p.ID, UserID: u.ID}
-			c.Create()
+			c := PotentialProvider{RequestID: p.ID, UserID: u.ID}
+			c.Create(ms.DB)
 			providers = append(providers, c)
 		}
 	}
 
 	return potentialProvidersFixtures{
 		Users:              uf.Users,
-		Posts:              posts,
+		Requests:           requests,
 		PotentialProviders: providers,
 	}
 }
 
-// createMeetingFixtures generates any number of meeting records for testing. Related Location and File records are also
+// createMeetingFixtures generates any number of meeting records for testing. Related records are also
 // created. All meeting fixtures will be assigned to the first Organization in the DB. If no Organization exists,
-// one will be created. All posts are created by the first User in the DB. If no User exists, one will be created.
-func createMeetingFixtures(tx *pop.Connection, nMeetings int) Meetings {
+// one will be created. All meetings are created by the first User in the DB. If no User exists, one will be created.
+//
+//  Slice index numbers for each object are shown in the following table:
+//
+//  meeting   invites      participants        organizer user  invited user  self-joined user
+//  0         0, 1         0, 1, 2             1               2             3
+//  n         n*2, n*2+1   n*3, n*3+1, n*3+2   n*4+1           n*4+2         n*4+3
+//
+//  Creator for all meetings is user 0
+//  Inviter for all invites is user 0
+//
+//  The first invite is to an existing user
+//  The second invite is to a non-user
+//
+//  The first participant is the meeting organizer
+//  The second participant is an invited user
+//  The third participant is a self-joined user
+func createMeetingFixtures(tx *pop.Connection, nMeetings int) meetingFixtures {
 	var org Organization
 	if err := tx.First(&org); err != nil {
 		org = Organization{AuthConfig: "{}"}
@@ -292,7 +331,7 @@ func createMeetingFixtures(tx *pop.Connection, nMeetings int) Meetings {
 
 	locations := createLocationFixtures(tx, nMeetings)
 
-	files := createFileFixtures(nMeetings)
+	files := createFileFixtures(tx, nMeetings)
 
 	meetings := make(Meetings, nMeetings)
 	for i := range meetings {
@@ -301,11 +340,49 @@ func createMeetingFixtures(tx *pop.Connection, nMeetings int) Meetings {
 		meetings[i].LocationID = locations[i].ID
 		meetings[i].StartDate = time.Now()
 		meetings[i].EndDate = time.Now().Add(time.Hour * 24)
-		if _, err := meetings[i].AttachImage(files[i].UUID.String()); err != nil {
+		meetings[i].InviteCode = nulls.NewUUID(domain.GetUUID())
+		if _, err := meetings[i].SetImageFile(tx, files[i].UUID.String()); err != nil {
 			panic("error attaching image to meeting fixture, " + err.Error())
 		}
 		mustCreate(tx, &meetings[i])
 	}
 
-	return meetings
+	const invitesPerMeeting = 2 // one pending and one participating
+	const usersPerMeeting = 4   // one organizer + one invited + one invited but not participating + one self-added
+	const participantsPerMeeting = usersPerMeeting - 1
+	invites := make(MeetingInvites, nMeetings*invitesPerMeeting)
+	users := createUserFixtures(tx, nMeetings*usersPerMeeting).Users
+	for i := range invites {
+		if i%invitesPerMeeting == 0 {
+			invites[i].Email = users[i*usersPerMeeting/invitesPerMeeting+1].Email
+		}
+		if i%invitesPerMeeting == 1 {
+			invites[i].Email = users[i*usersPerMeeting/invitesPerMeeting+1].Email
+		}
+		invites[i].MeetingID = meetings[i/invitesPerMeeting].ID
+		invites[i].InviterID = user.ID
+		if err := invites[i].Create(tx); err != nil {
+			panic(fmt.Sprintf("error creating invite fixture %d, %s", i, err))
+		}
+	}
+
+	participants := make(MeetingParticipants, nMeetings*(participantsPerMeeting))
+	for i := range participants {
+		participants[i].MeetingID = meetings[i/participantsPerMeeting].ID
+		participants[i].UserID = users[i*usersPerMeeting/participantsPerMeeting].ID
+		if i%participantsPerMeeting == 0 {
+			participants[i].IsOrganizer = true
+		}
+		if i%participantsPerMeeting == 1 {
+			participants[i].InviteID = nulls.NewInt(invites[i*invitesPerMeeting/participantsPerMeeting].ID)
+		}
+		mustCreate(tx, &participants[i])
+	}
+
+	return meetingFixtures{
+		Meetings:            meetings,
+		MeetingInvites:      invites,
+		MeetingParticipants: participants,
+		Users:               append(Users{user}, users...),
+	}
 }

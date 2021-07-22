@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
-set -x
+# output everything
 set -e
+# exit on first error
+set -x
 
 # Install deps
 go get ./...
@@ -14,9 +16,11 @@ go get -v -u github.com/gobuffalo/httptest
 go get -v -u github.com/markbates/grift
 
 # install Buffalo cli
-wget https://github.com/gobuffalo/buffalo/releases/download/v0.15.3/buffalo_0.15.3_Linux_x86_64.tar.gz
-tar -xvzf buffalo_0.15.3_Linux_x86_64.tar.gz
+wget https://github.com/gobuffalo/buffalo/releases/download/v0.16.8/buffalo_0.16.8_Linux_x86_64.tar.gz
+tar -xvzf buffalo_0.16.8_Linux_x86_64.tar.gz
 chmod a+x buffalo
+
+export LOG_LEVEL=fatal
 
 # migrate db and run tests
 buffalo-pop pop migrate up

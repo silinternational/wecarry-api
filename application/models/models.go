@@ -2,6 +2,7 @@ package models
 
 import (
 	"context"
+	"crypto/md5" // #nosec G501 weak cryptography used for gravatar URL only
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
@@ -9,12 +10,11 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/events"
 	"github.com/gobuffalo/nulls"
-	"github.com/gobuffalo/pop"
-	"github.com/gobuffalo/validate"
-	"github.com/gobuffalo/validate/validators"
+	"github.com/gobuffalo/pop/v5"
+	"github.com/gobuffalo/validate/v3"
+	"github.com/gobuffalo/validate/v3/validators"
 	"github.com/gofrs/uuid"
 	"github.com/pkg/errors"
 
@@ -68,75 +68,21 @@ func getRandomToken() (string, error) {
 	return base64.URLEncoding.EncodeToString(rb), nil
 }
 
-func ConvertStringPtrToNullsString(inPtr *string) nulls.String {
-	if inPtr == nil {
-		return nulls.String{}
-	}
-
-	return nulls.NewString(*inPtr)
-}
-
-// GetStringFromNullsString returns a pointer to make it easier for calling
-// functions to return a pointer without an extra line of code.
-func GetStringFromNullsString(inString nulls.String) *string {
-	if inString.Valid {
-		output := inString.String
-		return &output
-	}
-
-	return nil
-}
-
 // GetIntFromNullsInt returns a pointer to make it easier for calling
 // functions to return a pointer without an extra line of code.
 func GetIntFromNullsInt(in nulls.Int) *int {
-	output := int(0)
+	output := 0
 	if in.Valid {
 		output = in.Int
 	}
 	return &output
 }
 
-// GetStringFromNullsTime returns a pointer to a string that looks
-// like a date based on a nulls.Time value
-func GetStringFromNullsTime(inTime nulls.Time) *string {
-	if inTime.Valid {
-		output := inTime.Time.Format(domain.DateFormat)
-		return &output
-	}
-
-	return nil
-}
-
-func GetCurrentUserFromGqlContext(ctx context.Context) User {
-	bc, ok := ctx.Value("BuffaloContext").(buffalo.Context)
-	if !ok {
-		return User{}
-	}
-	return GetCurrentUser(bc)
-}
-
-type EmptyContext struct {
-	buffalo.Context
-}
-
-func GetBuffaloContextFromGqlContext(c context.Context) buffalo.Context {
-	bc, ok := c.Value("BuffaloContext").(buffalo.Context)
-	if ok {
-		return bc
-	}
-	return EmptyContext{}
-}
-
-func GetCurrentUser(c buffalo.Context) User {
-	user := c.Value("current_user")
-
-	switch user.(type) {
-	case User:
-		return user.(User)
-	}
-
-	return User{}
+// CurrentUser retrieves the current user from the context.
+func CurrentUser(ctx context.Context) User {
+	user, _ := ctx.Value(domain.ContextKeyCurrentUser).(User)
+	domain.NewExtra(ctx, "currentUserID", user.UUID)
+	return user
 }
 
 // flattenPopErrors - pop validation errors are complex structures, this flattens them to a simple string
@@ -180,13 +126,13 @@ func emitEvent(e events.Event) {
 	}
 }
 
-func create(m interface{}) error {
-	uuidField := reflect.ValueOf(m).Elem().FieldByName("UUID")
+func create(tx *pop.Connection, m interface{}) error {
+	uuidField := fieldByName(m, "UUID")
 	if uuidField.IsValid() && uuidField.Interface().(uuid.UUID).Version() == 0 {
 		uuidField.Set(reflect.ValueOf(domain.GetUUID()))
 	}
 
-	valErrs, err := DB.ValidateAndCreate(m)
+	valErrs, err := tx.ValidateAndCreate(m)
 	if err != nil {
 		return err
 	}
@@ -197,8 +143,8 @@ func create(m interface{}) error {
 	return nil
 }
 
-func update(m interface{}) error {
-	valErrs, err := DB.ValidateAndUpdate(m)
+func update(tx *pop.Connection, m interface{}) error {
+	valErrs, err := tx.ValidateAndUpdate(m)
 	if err != nil {
 		return err
 	}
@@ -209,13 +155,13 @@ func update(m interface{}) error {
 	return nil
 }
 
-func save(m interface{}) error {
-	uuidField := reflect.ValueOf(m).Elem().FieldByName("UUID")
+func save(tx *pop.Connection, m interface{}) error {
+	uuidField := fieldByName(m, "UUID")
 	if uuidField.IsValid() && uuidField.Interface().(uuid.UUID).Version() == 0 {
 		uuidField.Set(reflect.ValueOf(domain.GetUUID()))
 	}
 
-	validationErrs, err := DB.ValidateAndSave(m)
+	validationErrs, err := tx.ValidateAndSave(m)
 	if validationErrs != nil && validationErrs.HasAny() {
 		return errors.New(flattenPopErrors(validationErrs))
 	}
@@ -239,4 +185,131 @@ func IsDBConnected() bool {
 		return !domain.IsOtherThanNoRows(err)
 	}
 	return true
+}
+
+func gravatarURL(email string) string {
+	// ref: https://en.gravatar.com/site/implement/images/
+	hash := md5.Sum([]byte(strings.ToLower(strings.TrimSpace(email)))) // #nosec G401 weak cryptography acceptable here
+	url := fmt.Sprintf("https://www.gravatar.com/avatar/%x.jpg?s=200&d=mp", hash)
+	return url
+}
+
+func addFile(tx *pop.Connection, m interface{}, fileID string) (File, error) {
+	var f File
+
+	if err := f.FindByUUID(tx, fileID); err != nil {
+		return f, err
+	}
+
+	fileField := fieldByName(m, "FileID")
+	if !fileField.IsValid() {
+		return f, errors.New("error identifying FileID field")
+	}
+
+	oldID := fileField.Interface().(nulls.Int)
+	fileField.Set(reflect.ValueOf(nulls.NewInt(f.ID)))
+	idField := fieldByName(m, "ID")
+	if !idField.IsValid() {
+		return f, errors.New("error identifying ID field")
+	}
+	if idField.Interface().(int) > 0 {
+		if err := tx.UpdateColumns(m, "file_id", "updated_at"); err != nil {
+			return f, fmt.Errorf("failed to update the file_id column, %s", err)
+		}
+	}
+
+	if err := f.SetLinked(tx); err != nil {
+		domain.ErrLogger.Printf("error marking file %d as linked, %s", f.ID, err)
+	}
+
+	if !oldID.Valid {
+		return f, nil
+	}
+
+	oldFile := File{ID: oldID.Int}
+	if err := oldFile.ClearLinked(tx); err != nil {
+		domain.ErrLogger.Printf("error marking old file %d as unlinked, %s", oldFile.ID, err)
+	}
+
+	return f, nil
+}
+
+func removeFile(tx *pop.Connection, m interface{}) error {
+	idField := fieldByName(m, "ID")
+	if !idField.IsValid() {
+		return errors.New("error identifying ID field")
+	}
+
+	if idField.Interface().(int) < 1 {
+		return fmt.Errorf("invalid ID %d", idField.Interface().(int))
+	}
+
+	imageField := fieldByName(m, "FileID")
+	if !imageField.IsValid() {
+		return errors.New("error identifying FileID field")
+	}
+
+	oldID := imageField.Interface().(nulls.Int)
+	imageField.Set(reflect.ValueOf(nulls.Int{}))
+	if err := tx.UpdateColumns(m, "file_id", "updated_at"); err != nil {
+		return fmt.Errorf("failed to update file_id column, %s", err)
+	}
+
+	if !oldID.Valid {
+		return nil
+	}
+
+	oldFile := File{ID: oldID.Int}
+	if err := oldFile.ClearLinked(tx); err != nil {
+		domain.ErrLogger.Printf("error marking old meeting file %d as unlinked, %s", oldFile.ID, err)
+	}
+	return nil
+}
+
+func fieldByName(i interface{}, name string) reflect.Value {
+	return reflect.ValueOf(i).Elem().FieldByName(name)
+}
+
+func DestroyAll() {
+	// delete all Requests, RequestHistories, RequestFiles, PotentialProviders, Threads, and ThreadParticipants
+	var requests Requests
+	destroyTable(&requests)
+
+	// delete all Meetings, MeetingParticipants, and MeetingInvites
+	var meetings Meetings
+	destroyTable(&meetings)
+
+	// delete all Organizations, OrganizationDomains, OrganizationTrusts, and UserOrganizations
+	var organizations Organizations
+	destroyTable(&organizations)
+
+	// delete all Users, Messages, UserAccessTokens, and Watches
+	var users Users
+	destroyTable(&users)
+
+	// delete all Files
+	var files Files
+	destroyTable(&files)
+
+	// delete all Locations
+	var locations Locations
+	destroyTable(&locations)
+}
+
+func destroyTable(i interface{}) {
+	if err := DB.All(i); err != nil {
+		panic(err.Error())
+	}
+	if err := DB.Destroy(i); err != nil {
+		panic(err.Error())
+	}
+}
+
+// Tx retrieves the database transaction from the context
+func Tx(ctx context.Context) *pop.Connection {
+	tx, ok := ctx.Value("tx").(*pop.Connection)
+	if !ok {
+		return DB
+	}
+	return tx
 }

@@ -7,14 +7,13 @@ import (
 	"time"
 
 	"github.com/gobuffalo/nulls"
-
 	"github.com/silinternational/wecarry-api/aws"
 	"github.com/silinternational/wecarry-api/domain"
 )
 
 type UserMessageFixtures struct {
 	Users
-	Posts
+	Requests
 	Threads
 	ThreadParticipants
 	Messages
@@ -48,7 +47,7 @@ func createFixturesForUserGetOrganizations(ms *ModelSuite) ([]Organization, User
 	return orgs, users
 }
 
-func CreateUserFixtures_CanEditAllPosts(ms *ModelSuite) UserPostFixtures {
+func CreateUserFixtures_CanEditAllRequests(ms *ModelSuite) UserRequestFixtures {
 	org := Organization{AuthConfig: "{}", UUID: domain.GetUUID()}
 	createFixture(ms, &org)
 
@@ -86,28 +85,26 @@ func CreateUserFixtures_CanEditAllPosts(ms *ModelSuite) UserPostFixtures {
 		createFixture(ms, &userOrgFixtures[i])
 	}
 
-	return UserPostFixtures{
+	return UserRequestFixtures{
 		Users: users,
 	}
 }
 
-func CreateFixturesForUserGetPosts(ms *ModelSuite) UserPostFixtures {
+func CreateFixturesForUserGetRequests(ms *ModelSuite) UserRequestFixtures {
 	uf := createUserFixtures(ms.DB, 2)
 	users := uf.Users
 
-	posts := createPostFixtures(ms.DB, 2, 2, false)
+	requests := createRequestFixtures(ms.DB, 4, false, users[0].ID)
 	userID := users[1].UUID.String()
-	posts[0].SetProviderWithStatus(PostStatusAccepted, &userID)
-	posts[1].SetProviderWithStatus(PostStatusAccepted, &userID)
-	posts[2].Status = PostStatusAccepted
-	posts[2].ReceiverID = nulls.NewInt(users[1].ID)
-	posts[3].Status = PostStatusAccepted
-	posts[3].ReceiverID = nulls.NewInt(users[1].ID)
-	ms.NoError(ms.DB.Save(&posts))
+	requests[0].SetProviderWithStatus(ms.DB, RequestStatusAccepted, &userID)
+	requests[1].SetProviderWithStatus(ms.DB, RequestStatusAccepted, &userID)
+	requests[2].Status = RequestStatusAccepted
+	requests[3].Status = RequestStatusAccepted
+	ms.NoError(ms.DB.Save(&requests))
 
-	return UserPostFixtures{
-		Users: users,
-		Posts: posts,
+	return UserRequestFixtures{
+		Users:    users,
+		Requests: requests,
 	}
 }
 
@@ -117,13 +114,13 @@ func CreateFixturesForUserGetPosts(ms *ModelSuite) UserPostFixtures {
 //        |         |            |       |    |
 //       User0    User1         Trust   User2  User3 (SuperAdmin)
 //
-// Org0: Post0 (SAME)    <cannot be seen by User2>
-// Org1: Post1 (SAME)    <cannot be seen by User0 and User2>
-// Org2: Post2 (ALL)     <seen by all>,
-//		 Post3 (TRUSTED) <cannot be seen by User0>,
-//		 Post4 (SAME)    <cannot be seen by User0 and User1>
+// Org0: Request0 (SAME)    <cannot be seen by User2>
+// Org1: Request1 (SAME)    <cannot be seen by User0 and User2>
+// Org2: Request2 (ALL)     <seen by all>,
+//		 Request3 (TRUSTED) <cannot be seen by User0>,
+//		 Request4 (SAME)    <cannot be seen by User0 and User1>
 //
-func CreateFixturesForUserCanViewPost(ms *ModelSuite) UserPostFixtures {
+func CreateFixturesForUserCanViewRequest(ms *ModelSuite) UserRequestFixtures {
 	orgs := createOrganizationFixtures(ms.DB, 3)
 
 	trusts := OrganizationTrusts{
@@ -145,60 +142,50 @@ func CreateFixturesForUserCanViewPost(ms *ModelSuite) UserPostFixtures {
 	})
 
 	// Switch User2's org to Org2
-	uo, err := users[2].FindUserOrganization(orgs[0])
+	uo, err := users[2].FindUserOrganization(ms.DB, orgs[0])
 	ms.NoError(err)
 	uo.OrganizationID = orgs[2].ID
 	ms.NoError(DB.UpdateColumns(&uo, "organization_id"))
 
 	// Switch User3's org to Org2
-	uo, err = users[3].FindUserOrganization(orgs[0])
+	uo, err = users[3].FindUserOrganization(ms.DB, orgs[0])
 	ms.NoError(err)
 	uo.OrganizationID = orgs[2].ID
 	ms.NoError(DB.UpdateColumns(&uo, "organization_id"))
 
-	posts := createPostFixtures(ms.DB, 5, 0, false)
-	posts[1].OrganizationID = orgs[1].ID
-	posts[1].CreatedByID = users[1].ID
+	requests := createRequestFixtures(ms.DB, 5, false, users[0].ID)
+	requests[1].OrganizationID = orgs[1].ID
+	requests[1].CreatedByID = users[1].ID
 
-	posts[2].OrganizationID = orgs[2].ID
-	posts[2].CreatedByID = users[2].ID
-	posts[2].Visibility = PostVisibilityAll
+	requests[2].OrganizationID = orgs[2].ID
+	requests[2].CreatedByID = users[2].ID
+	requests[2].Visibility = RequestVisibilityAll
 
-	posts[3].OrganizationID = orgs[2].ID
-	posts[3].CreatedByID = users[2].ID
-	posts[3].Visibility = PostVisibilityTrusted
+	requests[3].OrganizationID = orgs[2].ID
+	requests[3].CreatedByID = users[2].ID
+	requests[3].Visibility = RequestVisibilityTrusted
 
-	posts[4].OrganizationID = orgs[2].ID
-	posts[4].CreatedByID = users[2].ID
-	ms.NoError(ms.DB.Save(&posts))
+	requests[4].OrganizationID = orgs[2].ID
+	requests[4].CreatedByID = users[2].ID
+	ms.NoError(ms.DB.Save(&requests))
 
-	return UserPostFixtures{
-		Users: users,
-		Posts: posts,
+	return UserRequestFixtures{
+		Users:    users,
+		Requests: requests,
 	}
 }
 
-func createFixturesForTestUserGetPhoto(ms *ModelSuite) UserPostFixtures {
+func createFixturesForTestUserGetPhoto(ms *ModelSuite) UserRequestFixtures {
 	ms.NoError(aws.CreateS3Bucket())
 
-	fileFixtures := make([]File, 2)
-	for i := range fileFixtures {
-		var f File
-		ms.Nil(f.Store(fmt.Sprintf("photo%d.gif", i), []byte("GIF89a")), "unexpected error uploading file")
-		fileFixtures[i] = f
-	}
-
-	var photoFixture File
-	const filename = "photo.gif"
-	err := photoFixture.Store(filename, []byte("GIF89a"))
-	ms.Nil(err, "failed to create file fixture")
+	fileFixtures := createFileFixtures(ms.DB, 2)
 
 	unique := domain.GetUUID()
 	users := Users{
 		{},
 		{AuthPhotoURL: nulls.NewString("http://www.example.com")},
-		{PhotoFileID: nulls.NewInt(fileFixtures[0].ID)},
-		{AuthPhotoURL: nulls.NewString("http://www.example.com"), PhotoFileID: nulls.NewInt(fileFixtures[1].ID)},
+		{FileID: nulls.NewInt(fileFixtures[0].ID)},
+		{AuthPhotoURL: nulls.NewString("http://www.example.com"), FileID: nulls.NewInt(fileFixtures[1].ID)},
 	}
 	for i := range users {
 		users[i].UUID = domain.GetUUID()
@@ -210,12 +197,12 @@ func createFixturesForTestUserGetPhoto(ms *ModelSuite) UserPostFixtures {
 		ms.NoError(DB.Load(&users[i], "PhotoFile"))
 	}
 
-	return UserPostFixtures{
+	return UserRequestFixtures{
 		Users: users,
 	}
 }
 
-func createFixturesForTestUserSave(ms *ModelSuite) UserPostFixtures {
+func createFixturesForTestUserSave(ms *ModelSuite) UserRequestFixtures {
 	unique := domain.GetUUID()
 	users := make(Users, 5)
 	for i := range users {
@@ -231,14 +218,12 @@ func createFixturesForTestUserSave(ms *ModelSuite) UserPostFixtures {
 	users[3].FirstName = "New"
 	users[4].FirstName = ""
 
-	return UserPostFixtures{
+	return UserRequestFixtures{
 		Users: users,
 	}
 }
 
-func CreateUserFixturesForNicknames(ms *ModelSuite, t *testing.T) User {
-	prefix := allPrefixes()[0]
-
+func CreateUserFixturesForNicknames(ms *ModelSuite, t *testing.T, prefix string) User {
 	// Load User test fixtures
 	user := User{
 		Email:     fmt.Sprintf("user1-%s@example.com", t.Name()),
@@ -260,16 +245,16 @@ func CreateUserFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) UserMes
 	uf := createUserFixtures(ms.DB, 2)
 	users := uf.Users
 
-	// Each user has a request and is a provider on the other user's post
-	posts := createPostFixtures(ms.DB, 2, 0, false)
-	posts[0].Status = PostStatusAccepted
-	posts[0].ProviderID = nulls.NewInt(users[1].ID)
-	posts[1].Status = PostStatusAccepted
-	posts[1].CreatedByID = users[1].ID
-	posts[1].ProviderID = nulls.NewInt(users[0].ID)
-	ms.NoError(ms.DB.Save(&posts))
+	// Each user has a request and is a provider on the other user's request
+	requests := createRequestFixtures(ms.DB, 2, false, users[0].ID)
+	requests[0].Status = RequestStatusAccepted
+	requests[0].ProviderID = nulls.NewInt(users[1].ID)
+	requests[1].Status = RequestStatusAccepted
+	requests[1].CreatedByID = users[1].ID
+	requests[1].ProviderID = nulls.NewInt(users[0].ID)
+	ms.NoError(ms.DB.Save(&requests))
 
-	threads := []Thread{{PostID: posts[0].ID}, {PostID: posts[1].ID}}
+	threads := []Thread{{RequestID: requests[0].ID}, {RequestID: requests[1].ID}}
 
 	for i := range threads {
 		threads[i].UUID = domain.GetUUID()
@@ -280,26 +265,26 @@ func CreateUserFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) UserMes
 	oldTime := tNow.Add(-time.Duration(time.Hour))
 	oldOldTime := oldTime.Add(-time.Duration(time.Hour))
 
-	// One thread per post with 2 users per thread
+	// One thread per request with 2 users per thread
 	threadParticipants := []ThreadParticipant{
 		{
 			ThreadID:     threads[0].ID,
-			UserID:       posts[0].CreatedByID,
+			UserID:       requests[0].CreatedByID,
 			LastViewedAt: tNow, // This will get overridden and then reset again
 		},
 		{
 			ThreadID:     threads[0].ID,
-			UserID:       posts[0].ProviderID.Int,
+			UserID:       requests[0].ProviderID.Int,
 			LastViewedAt: oldTime,
 		},
 		{
 			ThreadID:     threads[1].ID,
-			UserID:       posts[1].CreatedByID,
+			UserID:       requests[1].CreatedByID,
 			LastViewedAt: oldTime,
 		},
 		{
 			ThreadID:     threads[1].ID,
-			UserID:       posts[1].ProviderID.Int,
+			UserID:       requests[1].ProviderID.Int,
 			LastViewedAt: tNow,
 		},
 	}
@@ -311,38 +296,38 @@ func CreateUserFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) UserMes
 	// I can't seem to give them custom times
 	messages := Messages{
 		{
-			ThreadID:  threads[0].ID,        // user 0's post
-			SentByID:  posts[0].CreatedByID, // user 0 (Eager)
+			ThreadID:  threads[0].ID,           // user 0's request
+			SentByID:  requests[0].CreatedByID, // user 0 (Eager)
 			Content:   "I can being chocolate if you bring PB",
 			CreatedAt: oldOldTime,
 		},
 		{
-			ThreadID:  threads[0].ID,           // user 0's post
-			SentByID:  posts[0].ProviderID.Int, // user 1 (Lazy)
+			ThreadID:  threads[0].ID,              // user 0's request
+			SentByID:  requests[0].ProviderID.Int, // user 1 (Lazy)
 			Content:   "Great",
 			CreatedAt: oldTime,
 		},
 		{
-			ThreadID:  threads[0].ID,        // user 0's post
-			SentByID:  posts[0].CreatedByID, // user 0 (Eager)
+			ThreadID:  threads[0].ID,           // user 0's request
+			SentByID:  requests[0].CreatedByID, // user 0 (Eager)
 			Content:   "Can you get it here by next week?",
 			CreatedAt: tNow, // Lazy User doesn't see this one
 		},
 		{
-			ThreadID:  threads[1].ID,        // user 1's post
-			SentByID:  posts[1].CreatedByID, // user 1 (Lazy)
+			ThreadID:  threads[1].ID,           // user 1's request
+			SentByID:  requests[1].CreatedByID, // user 1 (Lazy)
 			Content:   "I can being PB if you bring chocolate",
 			CreatedAt: oldTime,
 		},
 		{
-			ThreadID:  threads[1].ID,           // user 1's post
-			SentByID:  posts[1].ProviderID.Int, // user 0 (Eager)
+			ThreadID:  threads[1].ID,              // user 1's request
+			SentByID:  requests[1].ProviderID.Int, // user 0 (Eager)
 			Content:   "Did you see my other message?",
 			CreatedAt: tNow, // Lazy User doesn't see this one
 		},
 		{
-			ThreadID:  threads[1].ID,           // user 1's post
-			SentByID:  posts[1].ProviderID.Int, // user 0 (Eager)
+			ThreadID:  threads[1].ID,              // user 1's request
+			SentByID:  requests[1].ProviderID.Int, // user 0 (Eager)
 			Content:   "Anyone Home?",
 			CreatedAt: tNow, // Lazy User doesn't see this one
 		},
@@ -366,14 +351,14 @@ func CreateUserFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) UserMes
 	}
 }
 
-type UserPostFixtures struct {
+type UserRequestFixtures struct {
 	Users
 	UserPreferences
-	Posts
+	Requests
 	Threads
 }
 
-func CreateUserFixtures_GetThreads(ms *ModelSuite) UserPostFixtures {
+func CreateUserFixtures_GetThreads(ms *ModelSuite) UserRequestFixtures {
 	uf := createUserFixtures(ms.DB, 2)
 	org := uf.Organization
 	users := uf.Users
@@ -381,12 +366,12 @@ func CreateUserFixtures_GetThreads(ms *ModelSuite) UserPostFixtures {
 	location := Location{}
 	createFixture(ms, &location)
 
-	posts := Posts{
+	requests := Requests{
 		{UUID: domain.GetUUID(), CreatedByID: users[0].ID, OrganizationID: org.ID, DestinationID: location.ID},
 	}
-	createFixture(ms, &posts[0])
+	createFixture(ms, &requests[0])
 
-	threads := []Thread{{PostID: posts[0].ID}, {PostID: posts[0].ID}}
+	threads := []Thread{{RequestID: requests[0].ID}, {RequestID: requests[0].ID}}
 	for i := range threads {
 		threads[i].UUID = domain.GetUUID()
 		createFixture(ms, &threads[i])
@@ -400,15 +385,14 @@ func CreateUserFixtures_GetThreads(ms *ModelSuite) UserPostFixtures {
 		createFixture(ms, &threadParticipants[i])
 	}
 
-	return UserPostFixtures{
+	return UserRequestFixtures{
 		Users:   users,
 		Threads: threads,
 	}
 }
 
-func CreateFixturesForUserWantsPostNotification(ms *ModelSuite) UserPostFixtures {
+func CreateFixturesForUserWantsRequestNotification(ms *ModelSuite) UserRequestFixtures {
 	uf := createUserFixtures(ms.DB, 3)
-	org := uf.Organization
 	users := uf.Users
 
 	for i := range users {
@@ -417,84 +401,29 @@ func CreateFixturesForUserWantsPostNotification(ms *ModelSuite) UserPostFixtures
 		ms.NoError(ms.DB.Save(&users[i].Location))
 	}
 
-	postLocations := Locations{
-		{ // Post 0 Destination
-			Description: "close",
-			Country:     "US",
-		},
-		{ // Post 1 Destination
-			Description: "far away",
-			Country:     "KR",
-		},
-		{ // Post 2 Destination
-			Description: "far away",
-			Country:     "KR",
-		},
-		{ // Post 3 Destination
-			Description: "close",
-			Country:     "US",
-		},
-		{ // Post 4 Destination
-			Description: "close",
-			Country:     "US",
-		},
-		{ // Post 0 Origin
-			Description: "far away",
-			Country:     "KR",
-		},
-		{ // Post 2 Origin
-			Description: "close",
-			Country:     "US",
-		},
-	}
-	createFixture(ms, &postLocations)
+	requests := createRequestFixtures(ms.DB, 3, false, users[0].ID)
+	requestOneLocation, err := requests[1].GetOrigin(ms.DB)
+	ms.NoError(err)
+	ms.NoError(users[1].SetLocation(ms.DB, *requestOneLocation))
 
-	posts := Posts{
-		{
-			Type:     PostTypeRequest,
-			OriginID: nulls.NewInt(postLocations[5].ID),
-		},
-		{
-			Type:     PostTypeOffer,
-			OriginID: nulls.Int{},
-		},
-		{
-			Type:     PostTypeRequest,
-			OriginID: nulls.NewInt(postLocations[6].ID),
-		},
-		{
-			Type:     PostTypeOffer,
-			OriginID: nulls.Int{},
-		},
-		{
-			Type:     PostTypeRequest,
-			OriginID: nulls.Int{},
-		},
+	// make a copy of the request destination and assign it to a watch
+	watchLocation, err := requests[2].GetDestination(ms.DB)
+	ms.NoError(err)
+	createFixture(ms, watchLocation)
+	watch := Watch{
+		UUID:          domain.GetUUID(),
+		OwnerID:       users[2].ID,
+		DestinationID: nulls.NewInt(watchLocation.ID),
 	}
-	for i := range posts {
-		posts[i].UUID = domain.GetUUID()
-		posts[i].CreatedByID = users[0].ID
-		posts[i].OrganizationID = org.ID
-		posts[i].DestinationID = postLocations[i].ID
-		createFixture(ms, &posts[i])
-	}
+	createFixture(ms, &watch)
 
-	// user 2 has a watch for the location of post 4
-	watchLocation := postLocations[4]
-	watchLocation.ID = 0
-	createFixture(ms, &watchLocation)
-	createFixture(ms, &Watch{
-		OwnerID:    users[2].ID,
-		LocationID: nulls.NewInt(watchLocation.ID),
-	})
-
-	return UserPostFixtures{
-		Users: users,
-		Posts: posts,
+	return UserRequestFixtures{
+		Users:    users,
+		Requests: requests,
 	}
 }
 
-func CreateUserFixtures_TestGetPreference(ms *ModelSuite) UserPostFixtures {
+func CreateUserFixtures_TestGetPreference(ms *ModelSuite) UserRequestFixtures {
 	users := createUserFixtures(ms.DB, 2).Users
 
 	// Load UserPreferences test fixtures
@@ -516,7 +445,7 @@ func CreateUserFixtures_TestGetPreference(ms *ModelSuite) UserPostFixtures {
 		createFixture(ms, &userPreferences[i])
 	}
 
-	return UserPostFixtures{Users: users, UserPreferences: userPreferences}
+	return UserRequestFixtures{Users: users, UserPreferences: userPreferences}
 }
 
 func CreateUserFixtures_TestGetLanguagePreference(ms *ModelSuite) Users {

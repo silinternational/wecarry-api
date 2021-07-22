@@ -1,36 +1,41 @@
-dev: buffalo adminer migrate
+dev: buffalo adminer migrate 
 
-migrate: db
+migrate:
 	docker-compose run --rm buffalo whenavail db 5432 10 buffalo-pop pop migrate up
 	docker-compose run --rm buffalo /bin/bash -c "grift private:seed && grift db:seed && grift minio:seed"
 
-migratestatus: db
+migratestatus:
 	docker-compose run buffalo buffalo-pop pop migrate status
 
 migratetestdb: testdb
 	docker-compose run --rm test whenavail testdb 5432 10 buffalo-pop pop migrate up
 
-gqlgen:
-	-docker-compose pause buffalo
-	docker-compose run --rm buffalo /bin/bash -c "go generate ./gqlgen"
-	-docker-compose unpause buffalo
-
 adminer:
 	docker-compose up -d adminer
 
-buffalo: db
+buffalo:
 	docker-compose up -d buffalo
 
-bounce: db
+redis: db
+	docker-compose up -d redis
+	
+debug: killbuffalo
+	docker-compose up -d debug
+	docker-compose logs -f debug
+
+swagger: swaggerspec
+	docker-compose run --rm --service-ports swagger serve -p 8082 --no-open swagger.json
+
+swaggerspec:
+	docker-compose run --rm swagger generate spec -m -o swagger.json
+
+bounce:
 	docker-compose kill buffalo
-	docker-compose rm buffalo
+	docker-compose rm -f buffalo
 	docker-compose up -d buffalo
 
 logs:
 	docker-compose logs buffalo
-
-db:
-	docker-compose up -d db
 
 testdb:
 	docker-compose up -d testdb
@@ -38,8 +43,15 @@ testdb:
 test:
 	docker-compose run --rm test whenavail testdb 5432 10 buffalo test
 
-testenv: migratetestdb
+testenv: rmtestdb migratetestdb
+	@echo "\n\nIf minio hasn't been initialized, run grift minio:seed\n"
 	docker-compose run --rm test bash
+
+rmtestdb:
+	docker-compose kill testdb && docker-compose rm -f testdb
+
+killbuffalo:
+	docker-compose kill buffalo
 
 clean:
 	docker-compose kill

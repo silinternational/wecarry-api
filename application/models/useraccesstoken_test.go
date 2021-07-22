@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gobuffalo/nulls"
+
 	"github.com/silinternational/wecarry-api/domain"
 )
 
@@ -73,7 +75,7 @@ func (ms *ModelSuite) TestUserAccessToken_DeleteByBearerToken() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var uat UserAccessToken
-			err := uat.DeleteByBearerToken(test.token)
+			err := uat.DeleteByBearerToken(ms.DB, test.token)
 			if err != nil && !test.wantErr {
 				t.Errorf("DeleteAccessToken() returned an unexpected error: %s", err)
 			} else if err == nil && test.wantErr {
@@ -86,39 +88,35 @@ func (ms *ModelSuite) TestUserAccessToken_DeleteByBearerToken() {
 func (ms *ModelSuite) TestUserAccessToken_FindByBearerToken() {
 	t := ms.T()
 
-	tokens, user := CreateUserAccessTokenFixtures(ms)
+	rawTokens, tokens := CreateUserAccessTokenFixtures(ms)
 
 	tests := []struct {
 		name    string
 		token   string
-		want    User
+		want    UserAccessToken
 		wantErr bool
 	}{
-		{name: "valid0", token: tokens[0], want: user},
-		{name: "valid1", token: tokens[1], want: user},
+		{name: "valid0", token: rawTokens[0], want: tokens[0]},
+		{name: "valid1", token: rawTokens[1], want: tokens[1]},
 		{name: "invalid", token: "000000", wantErr: true},
 		{name: "empty", token: "", wantErr: true},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var u UserAccessToken
-			err := u.FindByBearerToken(test.token)
+			err := u.FindByBearerToken(ms.DB, test.token)
 			if test.wantErr {
-				if err == nil {
-					t.Errorf("Expected an error, but did not get one")
-				}
-			} else {
-				if err != nil {
-					t.Errorf("FindByAccessToken() returned an error: %v", err)
-				} else if u.User.UUID != test.want.UUID {
-					t.Errorf("found %v, expected %v", u, test.want)
-				}
+				ms.Error(err)
+				return
 			}
+			ms.NoError(err)
+
+			ms.Equal(test.want.ID, u.ID)
 		})
 	}
 }
 
-func CreateUserAccessTokenFixtures(ms *ModelSuite) ([]string, User) {
+func CreateUserAccessTokenFixtures(ms *ModelSuite) ([]string, UserAccessTokens) {
 	uf := createUserFixtures(ms.DB, 1)
 	user := uf.Users[0]
 	userOrgs := uf.UserOrganizations
@@ -128,13 +126,13 @@ func CreateUserAccessTokenFixtures(ms *ModelSuite) ([]string, User) {
 	tokens := UserAccessTokens{
 		{
 			UserID:             user.ID,
-			UserOrganizationID: userOrgs[0].ID,
+			UserOrganizationID: nulls.NewInt(userOrgs[0].ID),
 			AccessToken:        HashClientIdAccessToken(rawTokens[0]),
 			ExpiresAt:          time.Unix(0, 0),
 		},
 		{
 			UserID:             user.ID,
-			UserOrganizationID: userOrgs[0].ID,
+			UserOrganizationID: nulls.NewInt(userOrgs[0].ID),
 			AccessToken:        HashClientIdAccessToken(rawTokens[1]),
 			ExpiresAt:          time.Date(2099, time.December, 31, 0, 0, 0, 0, time.UTC),
 		},
@@ -144,7 +142,7 @@ func CreateUserAccessTokenFixtures(ms *ModelSuite) ([]string, User) {
 		createFixture(ms, &tokens[i])
 	}
 
-	return rawTokens, user
+	return rawTokens, tokens
 }
 
 func CreateUserFixtures_GetOrg(ms *ModelSuite, t *testing.T) ([]Organization, Users, UserOrganizations) {
@@ -215,13 +213,13 @@ func CreateUserAccessTokenFixtures_GetOrgs(ms *ModelSuite, users Users, userOrgs
 	tokens := UserAccessTokens{
 		{
 			UserID:             users[0].ID,
-			UserOrganizationID: userOrgs[0].ID,
+			UserOrganizationID: nulls.NewInt(userOrgs[0].ID),
 			AccessToken:        HashClientIdAccessToken(rawTokens[0]),
 			ExpiresAt:          time.Unix(0, 0),
 		},
 		{
 			UserID:             users[1].ID,
-			UserOrganizationID: userOrgs[1].ID,
+			UserOrganizationID: nulls.NewInt(userOrgs[1].ID),
 			AccessToken:        HashClientIdAccessToken(rawTokens[1]),
 			ExpiresAt:          time.Date(2099, time.December, 31, 0, 0, 0, 0, time.UTC),
 		},
@@ -244,7 +242,7 @@ func (ms *ModelSuite) TestUserAccessToken_GetOrganization() {
 	tests := []struct {
 		name    string
 		token   UserAccessToken
-		want    string
+		want    AuthType
 		wantErr bool
 	}{
 		{name: "org0", token: tokens[0], want: orgs[0].AuthType},
@@ -254,7 +252,7 @@ func (ms *ModelSuite) TestUserAccessToken_GetOrganization() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			u := test.token
-			got, err := u.GetOrganization()
+			got, err := u.GetOrganization(ms.DB)
 			if test.wantErr {
 				if err == nil {
 					t.Errorf("Expected an error, but did not get one")
@@ -293,7 +291,7 @@ func (ms *ModelSuite) TestUserAccessToken_GetUser() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			u := test.token
-			got, err := u.GetUser()
+			got, err := u.GetUser(ms.DB)
 			if test.wantErr {
 				if err == nil {
 					t.Errorf("Expected an error, but did not get one")
@@ -318,13 +316,13 @@ func CreateFixtures_DeleteIfExpired(ms *ModelSuite, t *testing.T) AccessTokenFix
 	tokens := UserAccessTokens{
 		{
 			UserID:             users[0].ID,
-			UserOrganizationID: userOrgs[0].ID,
+			UserOrganizationID: nulls.NewInt(userOrgs[0].ID),
 			AccessToken:        HashClientIdAccessToken("abc123"),
 			ExpiresAt:          time.Unix(0, 0),
 		},
 		{
 			UserID:             users[1].ID,
-			UserOrganizationID: userOrgs[1].ID,
+			UserOrganizationID: nulls.NewInt(userOrgs[1].ID),
 			AccessToken:        HashClientIdAccessToken("xyz789"),
 			ExpiresAt:          time.Date(2099, time.December, 31, 0, 0, 0, 0, time.UTC),
 		},
@@ -355,7 +353,7 @@ func (ms *ModelSuite) TestUserAccessToken_DeleteIfExpired() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			u := test.token
-			got, err := u.DeleteIfExpired()
+			got, err := u.DeleteIfExpired(ms.DB)
 			if err != nil {
 				t.Errorf("Unexpected error: %v", err)
 				return
@@ -374,13 +372,13 @@ func CreateFixtures_Renew(ms *ModelSuite, t *testing.T) AccessTokenFixtures {
 	tokens := UserAccessTokens{
 		{
 			UserID:             users[0].ID,
-			UserOrganizationID: userOrgs[0].ID,
+			UserOrganizationID: nulls.NewInt(userOrgs[0].ID),
 			AccessToken:        HashClientIdAccessToken("abc123"),
 			ExpiresAt:          time.Unix(0, 0),
 		},
 		{
 			UserID:             users[1].ID,
-			UserOrganizationID: userOrgs[1].ID,
+			UserOrganizationID: nulls.NewInt(userOrgs[1].ID),
 			AccessToken:        HashClientIdAccessToken("xyz789"),
 			ExpiresAt:          time.Date(2099, time.December, 31, 0, 0, 0, 0, time.UTC),
 		},
@@ -411,8 +409,8 @@ func (ms *ModelSuite) TestUserAccessToken_Renew() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			u := test.token
-			_ = u.Renew()
-			ms.False(u.DeleteIfExpired())
+			_ = u.Renew(ms.DB)
+			ms.False(u.DeleteIfExpired(ms.DB))
 		})
 	}
 }
@@ -425,13 +423,13 @@ func createFixtures_UserAccessTokensDeleteExpired(ms *ModelSuite, t *testing.T) 
 	tokens := UserAccessTokens{
 		{
 			UserID:             users[0].ID,
-			UserOrganizationID: userOrgs[0].ID,
+			UserOrganizationID: nulls.NewInt(userOrgs[0].ID),
 			AccessToken:        HashClientIdAccessToken("abc123"),
 			ExpiresAt:          time.Unix(0, 0),
 		},
 		{
 			UserID:             users[1].ID,
-			UserOrganizationID: userOrgs[1].ID,
+			UserOrganizationID: nulls.NewInt(userOrgs[1].ID),
 			AccessToken:        HashClientIdAccessToken("xyz789"),
 			ExpiresAt:          time.Date(2099, time.December, 31, 0, 0, 0, 0, time.UTC),
 		},
@@ -455,7 +453,7 @@ func (ms *ModelSuite) TestUserAccessToken_DeleteExpired() {
 	starting, err := ms.DB.Count(&uats)
 	ms.NoError(err)
 
-	got, err := uats.DeleteExpired()
+	got, err := uats.DeleteExpired(ms.DB)
 
 	ms.NoError(err)
 

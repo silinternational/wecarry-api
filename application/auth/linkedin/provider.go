@@ -23,7 +23,7 @@ import (
 
 const (
 	authURL  string = "https://www.linkedin.com/oauth/v2/authorization"
-	tokenURL string = "https://www.linkedin.com/oauth/v2/accessToken"
+	tokenURL string = "https://www.linkedin.com/oauth/v2/accessToken" // #nosec G101
 
 	//userEndpoint requires scope "r_liteprofile"
 	userEndpoint string = "//api.linkedin.com/v2/me?projection=(id,firstName,lastName,profilePicture(displayImage~:playableStreams))"
@@ -36,22 +36,18 @@ const ProviderName = "linkedin"
 // New creates a new linkedin provider, and sets up important connection details.
 // You should always call `linkedin.New` to get a new Provider. Never try to create
 // one manually.
-func New(jsonConfig json.RawMessage) (*Provider, error) {
-
-	linkedInKey := domain.Env.LinkedInKey
-	linkedInSecret := domain.Env.LinkedInSecret
-
-	if linkedInKey == "" || linkedInSecret == "" {
-		err := errors.New("missing required environment variable for LinkedIn Auth Provider")
+func New(config struct{ Key, Secret string }) (*Provider, error) {
+	if config.Key == "" || config.Secret == "" {
+		err := errors.New("missing required config value for LinkedIn Auth Provider")
 		return &Provider{}, err
 	}
 
 	scopes := []string{}
 
 	p := &Provider{
-		ClientKey:    linkedInKey,
-		Secret:       linkedInSecret,
-		CallbackURL:  domain.Env.AuthCallbackURL,
+		ClientKey:    config.Key,
+		Secret:       config.Secret,
+		CallbackURL:  domain.AuthCallbackURL,
 		providerName: ProviderName,
 	}
 	p.config = newConfig(p, scopes)

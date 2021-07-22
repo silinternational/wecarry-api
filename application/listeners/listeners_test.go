@@ -6,10 +6,14 @@ import (
 	"os"
 	"reflect"
 	"runtime"
+	"strings"
 	"testing"
 
+	"github.com/gobuffalo/envy"
 	"github.com/gobuffalo/events"
-	"github.com/gobuffalo/suite"
+	"github.com/gobuffalo/pop/v5"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/internal/test"
@@ -17,22 +21,32 @@ import (
 	"github.com/silinternational/wecarry-api/notifications"
 )
 
+// ModelSuite doesn't contain a buffalo suite.Model and can be used for tests that don't need access to the database
+// or don't need the buffalo test runner to refresh the database
 type ModelSuite struct {
-	*suite.Model
+	suite.Suite
+	*require.Assertions
+	DB *pop.Connection
 }
 
-type PostFixtures struct {
-	models.Users
-	models.Posts
+func (ms *ModelSuite) SetupTest() {
+	ms.Assertions = require.New(ms.T())
+	models.DestroyAll()
 }
 
+// Test_ModelSuite runs the test suite
 func Test_ModelSuite(t *testing.T) {
-	model := suite.NewModel()
-
-	as := &ModelSuite{
-		Model: model,
+	ms := &ModelSuite{}
+	c, err := pop.Connect(envy.Get("GO_ENV", "test"))
+	if err == nil {
+		ms.DB = c
 	}
-	suite.Run(t, as)
+	suite.Run(t, ms)
+}
+
+type RequestFixtures struct {
+	models.Users
+	models.Requests
 }
 
 func (ms *ModelSuite) TestRegisterListeners() {
@@ -58,7 +72,6 @@ func (ms *ModelSuite) TestRegisterListeners() {
 
 	gotCount := len(newLs)
 	ms.Equal(wantCount, gotCount, "Wrong number of listeners registered")
-
 }
 
 // Go through all the listeners that should normally get registered and
@@ -117,7 +130,6 @@ func (ms *ModelSuite) TestUserCreated() {
 
 	emailCount := notifications.TestEmailService.GetNumberOfMessagesSent()
 	ms.Equal(1, emailCount, "wrong email count")
-
 }
 
 func (ms *ModelSuite) TestSendNewMessageNotification() {
@@ -140,49 +152,49 @@ func (ms *ModelSuite) TestSendNewMessageNotification() {
 	test.AssertStringContains(ms.T(), got, want, 64)
 }
 
-func createFixturesForSendPostCreatedNotifications(ms *ModelSuite) PostFixtures {
-	userFixtures := test.CreateUserFixtures(ms.DB, 3)
-	org := userFixtures.Organization
-	users := userFixtures.Users
+func createFixturesForSendRequestCreatedNotifications(ms *ModelSuite) RequestFixtures {
+	users := test.CreateUserFixtures(ms.DB, 3).Users
+
+	request := test.CreateRequestFixtures(ms.DB, 1, false, users[0].ID)[0]
+	requestOrigin, err := request.GetOrigin(ms.DB)
+	ms.NoError(err)
 
 	for i := range users {
-		ms.NoError(ms.DB.Load(&users[i], "Location"))
-		users[i].Location.Country = "KH"
-		ms.NoError(ms.DB.Save(&users[i].Location))
+		ms.NoError(users[i].SetLocation(ms.DB, *requestOrigin))
 	}
 
-	location := models.Location{Country: "KH"}
-	createFixture(ms, &location)
-
-	post := models.Post{
-		OrganizationID: org.ID,
-		UUID:           domain.GetUUID(),
-		CreatedByID:    users[0].ID,
-		DestinationID:  location.ID,
-		Type:           models.PostTypeOffer,
-	}
-	createFixture(ms, &post)
-
-	return PostFixtures{
-		Posts: models.Posts{post},
+	return RequestFixtures{
+		Requests: models.Requests{request},
+		Users:    users,
 	}
 }
 
-func (ms *ModelSuite) TestSendPostCreatedNotifications() {
-	f := createFixturesForSendPostCreatedNotifications(ms)
+func (ms *ModelSuite) TestSendRequestCreatedNotifications() {
+	f := createFixturesForSendRequestCreatedNotifications(ms)
 
 	e := events.Event{
-		Kind:    domain.EventApiPostCreated,
-		Message: "Post created",
-		Payload: events.Payload{"eventData": models.PostCreatedEventData{
-			PostID: f.Posts[0].ID,
+		Kind:    domain.EventApiRequestCreated,
+		Message: "Request created",
+		Payload: events.Payload{"eventData": models.RequestCreatedEventData{
+			RequestID: f.Requests[0].ID,
 		}},
 	}
 
 	notifications.TestEmailService.DeleteSentMessages()
 
-	sendPostCreatedNotifications(e)
+	sendRequestCreatedNotifications(e)
 
-	emailCount := notifications.TestEmailService.GetNumberOfMessagesSent()
-	ms.Equal(2, emailCount, "wrong email count")
+	emailsSent := notifications.TestEmailService.GetSentMessages()
+	nMessages := 0
+	for _, e := range emailsSent {
+		if !strings.Contains(e.Subject, "New Request on WeCarry") {
+			continue
+		}
+		if e.ToEmail != f.Users[1].Email && e.ToEmail != f.Users[2].Email {
+			continue
+		}
+
+		nMessages++
+	}
+	ms.GreaterOrEqual(nMessages, 2, "wrong email count")
 }

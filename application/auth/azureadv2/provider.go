@@ -18,7 +18,7 @@ import (
 
 const (
 	authURLTemplate  string = "https://login.microsoftonline.com/%s/oauth2/v2.0/authorize"
-	tokenURLTemplate string = "https://login.microsoftonline.com/%s/oauth2/v2.0/token"
+	tokenURLTemplate string = "https://login.microsoftonline.com/%s/oauth2/v2.0/token" // #nosec G101
 	graphAPIResource string = "https://graph.microsoft.com/v1.0/"
 )
 
@@ -47,6 +47,13 @@ type (
 		Scopes []ScopeType
 		Tenant TenantType
 	}
+
+	// Config holds the credentials for a organization's AzureAD domain
+	Config struct {
+		ApplicationID string `json:"ApplicationID"`
+		ClientSecret  string `json:"ClientSecret"`
+		TenantID      string `json:"TenantID"`
+	}
 )
 
 // These are the well known Azure AD Tenants. These are not an exclusive list of all Tenants
@@ -68,22 +75,28 @@ const (
 // You should always call `AzureAD.New` to get a new Provider. Never try to create
 // one manually.
 func New(jsonConfig json.RawMessage) (*Provider, error) {
-	azureKey := domain.Env.AzureADKey
-	azureSecret := domain.Env.AzureADSecret
+	var config Config
+	err := json.Unmarshal(jsonConfig, &config)
+	if err != nil {
+		return &Provider{}, err
+	}
+
+	azureKey := config.ApplicationID
+	azureSecret := config.ClientSecret
 
 	if azureKey == "" || azureSecret == "" {
-		err := errors.New("missing required environment variable for AzureAD Auth Provider")
+		err := errors.New("missing config for AzureAD Auth Provider")
 		return &Provider{}, err
 	}
 
 	opts := ProviderOptions{
-		Tenant: TenantType(domain.Env.AzureADTenant),
+		Tenant: TenantType(config.TenantID),
 	}
 
 	p := &Provider{
 		ClientKey:    azureKey,
 		Secret:       azureSecret,
-		CallbackURL:  domain.Env.AuthCallbackURL,
+		CallbackURL:  domain.AuthCallbackURL,
 		providerName: "azureadv2",
 	}
 	p.config = newConfig(p, opts)

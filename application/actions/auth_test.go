@@ -7,6 +7,7 @@ import (
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/buffalo/render"
 	"github.com/gobuffalo/logger"
+	"github.com/silinternational/wecarry-api/internal/test"
 
 	"github.com/silinternational/wecarry-api/auth"
 	"github.com/silinternational/wecarry-api/domain"
@@ -42,7 +43,6 @@ func (as *ActionSuite) TestVerifyEmails() {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-
 			c := &bufTestCtx{
 				sess:   as.Session,
 				params: map[string]string{},
@@ -74,42 +74,42 @@ func (as *ActionSuite) TestGetLoginSuccessRedirectURL() {
 			name:          "New No ReturnTo",
 			authUser:      AuthUser{ID: "1", IsNew: true, AccessToken: "new"},
 			returnTo:      "",
-			wantBeginning: uiURL + "/#/welcome?" + TokenTypeParam + "=Bearer&" + ExpiresUTCParam + "=",
-			wantEnd:       "&" + AccessTokenParam + "=new&" + ReturnToParam + "=/#",
+			wantBeginning: uiURL + "/welcome?" + TokenTypeParam + "=Bearer",
+			wantEnd:       "&" + AccessTokenParam + "=new",
 		},
 		{
 			name:          "New With Invalid ReturnTo",
 			authUser:      AuthUser{ID: "1", IsNew: true, AccessToken: "new"},
-			returnTo:      "/posts",
-			wantBeginning: uiURL + "/#/welcome?" + TokenTypeParam + "=Bearer&" + ExpiresUTCParam + "=",
-			wantEnd:       "&" + AccessTokenParam + "=new&" + ReturnToParam + "=/#/posts",
+			returnTo:      "/requests",
+			wantBeginning: uiURL + "/welcome?" + TokenTypeParam + "=Bearer",
+			wantEnd:       "&" + AccessTokenParam + "=new&" + ReturnToParam + "=%2Frequests",
 		},
 		{
 			name:          "New With Valid ReturnTo",
 			authUser:      AuthUser{ID: "1", IsNew: true, AccessToken: "new"},
-			returnTo:      "/#/posts",
-			wantBeginning: uiURL + "/#/welcome?" + TokenTypeParam + "=Bearer&" + ExpiresUTCParam + "=",
-			wantEnd:       "&" + AccessTokenParam + "=new&" + ReturnToParam + "=/#/posts",
+			returnTo:      "/requests",
+			wantBeginning: uiURL + "/welcome?" + TokenTypeParam + "=Bearer",
+			wantEnd:       "&" + AccessTokenParam + "=new&" + ReturnToParam + "=%2Frequests",
 		},
 		{
 			name:          "Not New With Invalid ReturnTo",
 			authUser:      AuthUser{ID: "1", IsNew: false, AccessToken: "old1"},
-			returnTo:      "/posts",
-			wantBeginning: uiURL + "/#/posts?" + TokenTypeParam + "=Bearer&" + ExpiresUTCParam + "=",
+			returnTo:      "/requests",
+			wantBeginning: uiURL + "/requests?" + TokenTypeParam + "=Bearer",
 			wantEnd:       "&" + AccessTokenParam + "=old1",
 		},
 		{
 			name:          "Not New With a Good ReturnTo",
 			authUser:      AuthUser{ID: "1", IsNew: false, AccessToken: "old2"},
-			returnTo:      "/#/posts",
-			wantBeginning: uiURL + "/#/posts?" + TokenTypeParam + "=Bearer&" + ExpiresUTCParam + "=",
+			returnTo:      "/requests",
+			wantBeginning: uiURL + "/requests?" + TokenTypeParam + "=Bearer",
 			wantEnd:       "&" + AccessTokenParam + "=old2",
 		},
 		{
 			name:          "Not New With No ReturnTo",
 			authUser:      AuthUser{ID: "1", IsNew: false, AccessToken: "old3"},
 			returnTo:      "",
-			wantBeginning: uiURL + "/#?" + TokenTypeParam + "=Bearer&" + ExpiresUTCParam + "=",
+			wantBeginning: uiURL + "?" + TokenTypeParam + "=Bearer",
 			wantEnd:       "&" + AccessTokenParam + "=old3",
 		},
 	}
@@ -128,10 +128,11 @@ func (as *ActionSuite) TestGetLoginSuccessRedirectURL() {
 			}
 
 			expected = test.wantEnd
-			endResults := allResults[len(allResults)-len(expected) : len(allResults)]
+			endResults := allResults[len(allResults)-len(expected):]
 			if endResults != expected {
 				t.Errorf("Bad results at end for test \"%s\". \nExpected %s\n  but got %s",
 					test.name, expected, allResults)
+				return
 			}
 		})
 	}
@@ -185,8 +186,69 @@ func (l testLogger) Panic(i ...interface{})            {}
 func (l testLogger) WithField(s string, i interface{}) logger.FieldLogger {
 	return testLogger{}
 }
+
 func (l testLogger) WithFields(m map[string]interface{}) logger.FieldLogger {
 	return testLogger{}
+}
+
+func (as *ActionSuite) TestGetAuthInviteResponse() {
+	f := createFixturesForAuthInvite(as)
+	meetings := f.Meetings
+
+	testCases := []struct {
+		name        string
+		param       string
+		want        authInviteResponse
+		wantObjUUID string
+		wantErr     bool
+		wantErrCode string
+	}{
+		{
+			name:        "No Invite Code",
+			wantErr:     true,
+			wantErrCode: "400",
+		},
+		{
+			name:  "Valid Invite Code",
+			param: meetings[1].InviteCode.UUID.String(),
+			want: authInviteResponse{
+				Type:     InviteTypeMeetingParam,
+				Name:     meetings[1].Name,
+				ImageURL: f.File.URL,
+			},
+			wantObjUUID: meetings[1].UUID.String(),
+		},
+		{
+			name:        "Invalid Invite Code",
+			param:       domain.GetUUID().String(),
+			wantErr:     true,
+			wantErrCode: "404",
+		},
+	}
+	for _, tc := range testCases {
+		// Test the first part and last part of the resulting urls
+		as.T().Run(tc.name, func(t *testing.T) {
+			c := &bufTestCtx{
+				sess:   as.Session,
+				params: map[string]string{},
+			}
+
+			if tc.param != "" {
+				c.params[InviteCodeParam] = tc.param
+			}
+
+			got, err := getAuthInviteResponse(c)
+			if tc.wantErr {
+				as.Error(err, "expected and error but didn't get one")
+				as.Equal(tc.wantErrCode, err.Error(), "invalid error code")
+				return
+			}
+			as.NoError(err)
+			as.Equal(tc.want, got, "incorrect authInviteResponse")
+			as.Equal(InviteTypeMeetingParam, c.Session().Get(InviteTypeSessionKey), "incorrect session Invite Type")
+			as.Equal(tc.wantObjUUID, c.Session().Get(InviteObjectUUIDSessionKey), "incorrect session Invite Object UUID")
+		})
+	}
 }
 
 func (as *ActionSuite) TestGetOrSetReturnTo() {
@@ -231,7 +293,6 @@ func (as *ActionSuite) TestGetOrSetReturnTo() {
 	for _, test := range tests {
 		// Test the first part and last part of the resulting urls
 		t.Run(test.name, func(t *testing.T) {
-
 			c := &bufTestCtx{
 				sess:   as.Session,
 				params: map[string]string{},
@@ -270,7 +331,7 @@ func (as *ActionSuite) TestGetOrSetReturnTo() {
 }
 
 // This doesn't test for errors, since it's too complicated with the call to domain.Error()
-func (as *ActionSuite) TestGetOrgAndUserOrgs() {
+func (as *ActionSuite) TestGetUserOrgs() {
 	t := as.T()
 
 	fixtures := Fixtures_GetOrgAndUserOrgs(as, t)
@@ -304,7 +365,6 @@ func (as *ActionSuite) TestGetOrgAndUserOrgs() {
 	for _, test := range tests {
 		// Test the first part and last part of the resulting urls
 		t.Run(test.name, func(t *testing.T) {
-
 			c := &bufTestCtx{
 				sess:   as.Session,
 				params: map[string]string{},
@@ -312,16 +372,9 @@ func (as *ActionSuite) TestGetOrgAndUserOrgs() {
 
 			c.params[OrgIDParam] = test.param
 
-			resultOrg, resultUserOrgs, _ := getOrgAndUserOrgs(test.authEmail, c)
+			resultUserOrgs, _ := getUserOrgs(c, test.authEmail)
 
 			expected := test.wantOrg
-			results := resultOrg.Name
-
-			if results != expected {
-				t.Errorf("bad Org results for test \"%s\". \nExpected %s\n but got %s",
-					test.name, expected, results)
-				return
-			}
 
 			if len(resultUserOrgs) != test.wantUserOrgCount {
 				t.Errorf("bad results for test \"%s\". \nExpected %v UserOrg(s) but got %v ... \n %+v\n",
@@ -332,7 +385,7 @@ func (as *ActionSuite) TestGetOrgAndUserOrgs() {
 			if test.wantUserOrgCount == 1 {
 
 				expected = test.wantUserOrg
-				results = resultUserOrgs[0].AuthEmail
+				results := resultUserOrgs[0].AuthEmail
 
 				if results != expected {
 					t.Errorf("bad UserOrg results for test \"%s\". \nExpected %s\n but got %s",
@@ -344,9 +397,9 @@ func (as *ActionSuite) TestGetOrgAndUserOrgs() {
 	}
 }
 
-func (as *ActionSuite) TestCreateAuthUser() {
+func (as *ActionSuite) Test_newAuthUser() {
 	t := as.T()
-	orgFixture := Fixtures_CreateAuthUser(as, t).orgs[0]
+	orgFixture := Fixtures_newAuthUser(as, t).orgs[0]
 
 	newEmail := "new@example.com"
 
@@ -358,14 +411,13 @@ func (as *ActionSuite) TestCreateAuthUser() {
 	}
 
 	var user models.User
-	err := user.FindOrCreateFromAuthUser(orgFixture.ID, &authUser)
+	err := user.FindOrCreateFromAuthUser(as.DB, orgFixture.ID, &authUser)
 	if err != nil {
 		t.Errorf("could not run test because of error calling user.FindOrCreateFromAuthUser ...\n %v", err)
 		return
 	}
 
-	resultsAuthUser, err := createAuthUser("12345678", user, orgFixture)
-
+	resultsAuthUser, err := newOrgBasedAuthUser(test.Ctx(), "12345678", user, orgFixture)
 	if err != nil {
 		t.Errorf("unexpected error ... %v", err)
 		return
@@ -376,5 +428,59 @@ func (as *ActionSuite) TestCreateAuthUser() {
 
 	if results != expected {
 		t.Errorf("bad email results: expected %v but got %v", expected, results)
+	}
+}
+
+func (as *ActionSuite) TestEnsureMeetingParticipant() {
+	f := createFixturesForEnsureMeetingParticipant(as)
+
+	testCases := []struct {
+		name            string
+		meeting         models.Meeting
+		user            models.User
+		wantParticipant bool
+	}{
+		{
+			name:            "With Invite but no Participant",
+			meeting:         f.Meetings[1],
+			user:            f.Users[1],
+			wantParticipant: true,
+		},
+		{
+			name:            "With Invite and Participant already created",
+			meeting:         f.Meetings[1],
+			user:            f.Users[1],
+			wantParticipant: true,
+		},
+		{
+			name:            "No Invite",
+			meeting:         f.Meetings[1],
+			user:            f.Users[0],
+			wantParticipant: false,
+		},
+	}
+	for _, tc := range testCases {
+		// Test the first part and last part of the resulting urls
+		as.T().Run(tc.name, func(t *testing.T) {
+			c := &bufTestCtx{
+				sess:   as.Session,
+				params: map[string]string{},
+			}
+
+			ensureMeetingParticipant(c, tc.meeting.UUID.String(), tc.user)
+
+			var participants models.MeetingParticipants
+			if tc.wantParticipant {
+				err := models.DB.Where("meeting_id = ? and user_id = ?", tc.meeting.ID, tc.user.ID).All(&participants)
+				as.NoError(err, "unexpected error finding MeetingParticipants")
+				as.Equal(1, len(participants), "incorrect number of MeetingParticipants")
+				return
+			}
+
+			// Don't want a new Participant
+			err := models.DB.Where("meeting_id = ? and user_id = ?", tc.meeting.ID, tc.user.ID).All(&participants)
+			as.NoError(err, "unexpected error finding no MeetingParticipants")
+			as.Equal(0, len(participants), "expected to find no MeetingParticipants")
+		})
 	}
 }

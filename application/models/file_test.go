@@ -1,11 +1,11 @@
 package models
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
-	"github.com/gobuffalo/validate"
+	"github.com/gobuffalo/validate/v3"
+	"github.com/silinternational/wecarry-api/api"
 
 	"github.com/silinternational/wecarry-api/aws"
 	"github.com/silinternational/wecarry-api/domain"
@@ -75,7 +75,7 @@ func (ms *ModelSuite) TestFile_Store() {
 		name     string
 		args     args
 		wantErr  bool
-		wantCode string
+		wantCode api.ErrorKey
 	}{
 		{
 			name: "empty file",
@@ -84,7 +84,7 @@ func (ms *ModelSuite) TestFile_Store() {
 				content: []byte{},
 			},
 			wantErr:  true,
-			wantCode: "ErrorStoreFileBadContentType",
+			wantCode: api.ErrorStoreFileBadContentType,
 		},
 		{
 			name: "GIF87a file",
@@ -114,8 +114,11 @@ func (ms *ModelSuite) TestFile_Store() {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var f File
-			fErr := f.Store(tt.args.name, tt.args.content)
+			f := File{
+				Name:    tt.args.name,
+				Content: tt.args.content,
+			}
+			fErr := f.Store(ms.DB)
 			if tt.wantErr {
 				ms.NotNil(fErr)
 				ms.Equal(fErr.ErrorCode, tt.wantCode, "incorrect error type")
@@ -127,39 +130,16 @@ func (ms *ModelSuite) TestFile_Store() {
 	}
 }
 
-func CreateFileFixtures(ms *ModelSuite, posts Posts) Files {
-	t := ms.T()
-	const n = 2
-	files := make(Files, n)
-
-	for i := 0; i < n; i++ {
-		var file File
-		if fErr := file.Store(fmt.Sprintf("file_%d.gif", i), []byte("GIF87a")); fErr != nil {
-			t.Errorf("failed to create file fixture %d, %v", i, fErr)
-			t.FailNow()
-		}
-		files[i] = file
-	}
-
-	files[1].URLExpiration = time.Now().Add(-time.Minute)
-	if err := ms.DB.Save(&files[1]); err != nil {
-		t.Errorf("failed to update file fixture")
-	}
-
-	return files
-}
-
 func (ms *ModelSuite) TestFile_FindByUUID() {
 	t := ms.T()
 
 	_ = createUserFixtures(ms.DB, 2)
-	posts := createPostFixtures(ms.DB, 1, 1, false)
 
 	if err := aws.CreateS3Bucket(); err != nil {
 		t.Errorf("failed to create S3 bucket, %s", err)
 		t.FailNow()
 	}
-	files := CreateFileFixtures(ms, posts)
+	files := createFileFixtures(ms.DB, 2)
 
 	type args struct {
 		fileUUID string
@@ -185,7 +165,7 @@ func (ms *ModelSuite) TestFile_FindByUUID() {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var f File
-			err := f.FindByUUID(tt.args.fileUUID)
+			err := f.FindByUUID(ms.DB, tt.args.fileUUID)
 			if tt.wantErr {
 				if err == nil {
 					t.Errorf("expected an error but did not get one")
@@ -199,6 +179,46 @@ func (ms *ModelSuite) TestFile_FindByUUID() {
 					ms.True(f.URLExpiration.After(time.Now()), "URLExpiration is in the past")
 				}
 			}
+		})
+	}
+}
+
+func (ms *ModelSuite) TestFiles_FindByIDs() {
+	t := ms.T()
+
+	if err := aws.CreateS3Bucket(); err != nil {
+		t.Errorf("failed to create S3 bucket, %s", err)
+		t.FailNow()
+	}
+	files := createFileFixtures(ms.DB, 2)
+
+	tests := []struct {
+		name string
+		ids  []int
+		want []string
+	}{
+		{
+			name: "good",
+			ids:  []int{files[0].ID, files[1].ID, files[0].ID},
+			want: []string{files[0].Name, files[1].Name},
+		},
+		{
+			name: "missing",
+			ids:  []int{99999},
+			want: []string{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var f Files
+			err := f.FindByIDs(ms.DB, tt.ids)
+			ms.NoError(err)
+
+			fileNames := make([]string, len(f))
+			for i, ff := range f {
+				fileNames[i] = ff.Name
+			}
+			ms.ElementsMatch(tt.want, fileNames, "incorrect file names")
 		})
 	}
 }
@@ -280,23 +300,23 @@ func (ms *ModelSuite) TestFiles_DeleteUnlinked() {
 	const (
 		nOldUnlinkedFiles = 2
 		nNewUnlinkedFiles = 2
-		nPosts            = 2
+		nRequests         = 2
 		nMeetings         = 2
 		nOrganizations    = 2
 		nUsers            = 2
 	)
 
-	_ = createFileFixtures(nOldUnlinkedFiles)
+	_ = createFileFixtures(ms.DB, nOldUnlinkedFiles)
 
 	ms.NoError(DB.RawQuery("UPDATE files set updated_at = ?", time.Now().Add(-5*domain.DurationWeek)).Exec())
 
-	_ = createFileFixtures(nNewUnlinkedFiles)
+	_ = createFileFixtures(ms.DB, nNewUnlinkedFiles)
 
-	posts := createPostFixtures(ms.DB, nPosts, 0, true)
+	requests := createRequestFixtures(ms.DB, nRequests, true)
 
-	postFiles := createFileFixtures(nPosts)
-	for i, p := range postFiles {
-		_, err := posts[i].AttachFile(p.UUID.String())
+	requestFiles := createFileFixtures(ms.DB, nRequests)
+	for i, r := range requestFiles {
+		_, err := requests[i].AttachFile(ms.DB, r.UUID.String())
 		ms.NoError(err)
 	}
 
@@ -305,21 +325,21 @@ func (ms *ModelSuite) TestFiles_DeleteUnlinked() {
 	_ = createOrganizationFixtures(ms.DB, nOrganizations)
 
 	users := createUserFixtures(ms.DB, nUsers).Users
-	userPhotos := createFileFixtures(nUsers)
+	userPhotos := createFileFixtures(ms.DB, nUsers)
 	for i, u := range users {
-		_, err := u.AttachPhoto(userPhotos[i].UUID.String())
+		_, err := u.AttachPhoto(ms.DB, userPhotos[i].UUID.String())
 		ms.NoError(err)
 	}
 
 	f := Files{}
 
 	domain.Env.MaxFileDelete = 1
-	ms.Error(f.DeleteUnlinked())
+	ms.Error(f.DeleteUnlinked(ms.DB))
 
 	domain.Env.MaxFileDelete = 2
-	ms.NoError(f.DeleteUnlinked())
+	ms.NoError(f.DeleteUnlinked(ms.DB))
 	n, _ := DB.Count(&f)
-	ms.Equal(nPosts*2+nMeetings+nOrganizations+nUsers+nNewUnlinkedFiles, n, "wrong number of files remain")
+	ms.Equal(nRequests*2+nMeetings+nOrganizations+nUsers+nNewUnlinkedFiles, n, "wrong number of files remain")
 }
 
 func (ms *ModelSuite) Test_changeFileExtension() {
@@ -350,9 +370,9 @@ func (ms *ModelSuite) Test_changeFileExtension() {
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
-			n := tt.filename
-			changeFileExtension(&n, tt.contentType)
-			ms.Equal(tt.want, n)
+			f := File{Name: tt.filename, ContentType: tt.contentType}
+			f.changeFileExtension()
+			ms.Equal(tt.want, f.Name)
 		})
 	}
 }

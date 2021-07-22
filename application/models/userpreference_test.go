@@ -1,12 +1,13 @@
 package models
 
 import (
+	"database/sql"
 	"reflect"
 	"runtime"
 	"strconv"
 	"testing"
 
-	"github.com/gobuffalo/validate"
+	"github.com/gobuffalo/validate/v3"
 	"github.com/silinternational/wecarry-api/domain"
 )
 
@@ -127,7 +128,7 @@ func (ms *ModelSuite) TestUserPreference_FindByUUID() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var u UserPreference
-			err := u.FindByUUID(test.uuid)
+			err := u.FindByUUID(ms.DB, test.uuid)
 			if test.wantErr != "" {
 				ms.Error(err)
 				ms.Contains(err.Error(), test.wantErr)
@@ -174,7 +175,7 @@ func (ms *ModelSuite) TestUserPreference_Save() {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := test.pref.Save()
+			err := test.pref.Save(ms.DB)
 			if test.wantErr != "" {
 				ms.Error(err)
 				ms.Contains(err.Error(), test.wantErr)
@@ -183,7 +184,7 @@ func (ms *ModelSuite) TestUserPreference_Save() {
 			ms.NoError(err)
 
 			var u UserPreference
-			ms.NoError(u.FindByUUID(test.pref.UUID.String()))
+			ms.NoError(u.FindByUUID(ms.DB, test.pref.UUID.String()))
 			ms.Equal(test.pref.UserID, u.UserID)
 			ms.Equal(test.pref.Key, u.Key)
 			ms.Equal(test.pref.Value, u.Value)
@@ -221,7 +222,8 @@ func (ms *ModelSuite) TestUserPreference_getPreferencesFieldsAndValidators() {
 	gotValues := [3]string{
 		fAndVs[domain.UserPreferenceKeyLanguage].fieldValue,
 		fAndVs[domain.UserPreferenceKeyTimeZone].fieldValue,
-		fAndVs[domain.UserPreferenceKeyWeightUnit].fieldValue}
+		fAndVs[domain.UserPreferenceKeyWeightUnit].fieldValue,
+	}
 	ms.Equal(wantValues, gotValues, "incorrect field values")
 
 	wantValrs := [3]string{
@@ -290,7 +292,7 @@ func (ms *ModelSuite) TestUserPreference_updateForUserByKey() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			p := UserPreference{}
-			err := p.updateForUserByKey(test.user, test.key, test.value)
+			err := p.updateForUserByKey(ms.DB, test.user, test.key, test.value)
 			ms.NoError(err)
 
 			if test.want.ID > 0 {
@@ -300,6 +302,46 @@ func (ms *ModelSuite) TestUserPreference_updateForUserByKey() {
 			}
 			ms.Equal(test.want.Key, p.Key, "incorrect key result from updatePreferenceByKey()")
 			ms.Equal(test.want.Value, p.Value, "incorrect value result for "+test.want.Key)
+		})
+	}
+}
+
+func (ms *ModelSuite) TestUserPreference_remove() {
+	t := ms.T()
+
+	user := createUserFixtures(ms.DB, 1).Users[0]
+	userPreference := UserPreference{
+		UserID: user.ID,
+		Key:    domain.UserPreferenceKeyLanguage,
+		Value:  domain.UserPreferenceLanguageEnglish,
+	}
+	mustCreate(ms.DB, &userPreference)
+
+	tests := []struct {
+		name string
+		user User
+		key  string
+	}{
+		{
+			name: "Remove language",
+			user: user,
+			key:  domain.UserPreferenceKeyLanguage,
+		},
+		{
+			name: "Remove nonexistent key",
+			user: user,
+			key:  domain.UserPreferenceKeyTimeZone,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			p := UserPreference{}
+			err := p.remove(ms.DB, test.user, test.key)
+			ms.NoError(err, "unexpected error from UserPreference.remove()")
+
+			err = ms.DB.Where("user_id = ? AND key = ?", test.user.ID, test.key).First(&p)
+			ms.Error(err, "expected to get an error while finding deleted key")
+			ms.Equal(sql.ErrNoRows, err, "unexpected error type while finding deleted key")
 		})
 	}
 }

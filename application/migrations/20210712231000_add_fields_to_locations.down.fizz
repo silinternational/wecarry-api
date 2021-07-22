@@ -1,0 +1,4 @@
+drop_column("locations", "state")
+drop_column("locations", "county")
+drop_column("locations", "city")
+drop_column("locations", "borough")

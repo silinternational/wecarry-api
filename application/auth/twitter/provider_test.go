@@ -16,15 +16,21 @@ import (
 	"github.com/silinternational/wecarry-api/domain"
 )
 
+const TwitterKey = "TestTwitterKey"
+const TwitterSecret = "TestTwitterSecret"
+const EnvAuthCallbackURL = "wecarry.local/auth/callback/"
+
 func Test_New(t *testing.T) {
 	t.Parallel()
 	a := assert.New(t)
 
+	domain.AuthCallbackURL = EnvAuthCallbackURL
+
 	provider, err := twitterProvider()
 	a.NoError(err)
-	a.Equal(provider.ClientKey, domain.Env.TwitterKey)
-	a.Equal(provider.Secret, domain.Env.TwitterSecret)
-	a.Equal(provider.CallbackURL, "/foo")
+	a.Equal(provider.ClientKey, TwitterKey)
+	a.Equal(provider.Secret, TwitterSecret)
+	a.Equal(provider.CallbackURL, EnvAuthCallbackURL)
 }
 
 func Test_Implements_Provider(t *testing.T) {
@@ -98,12 +104,7 @@ func Test_SessionFromJSON(t *testing.T) {
 }
 
 func twitterProvider() (*Provider, error) {
-
-	domain.Env.TwitterKey = "abc123"
-	domain.Env.TwitterSecret = "abc123"
-	domain.Env.AuthCallbackURL = "/foo"
-
-	return New([]byte(""))
+	return New(struct{ Key, Secret string }{Key: TwitterKey, Secret: TwitterSecret})
 }
 
 func twitterProviderAuthenticate() *Provider {

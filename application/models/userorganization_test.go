@@ -68,7 +68,7 @@ func (ms *ModelSuite) TestUserOrganization_FindByAuthEmail() {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var got UserOrganizations
-			err := got.FindByAuthEmail(tt.args.authEmail, 0)
+			err := got.FindByAuthEmail(ms.DB, tt.args.authEmail, 0)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("FindByAuthEmail() error = %v, wantErr %v", err, tt.wantErr)
 				return

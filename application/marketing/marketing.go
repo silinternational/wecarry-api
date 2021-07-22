@@ -11,8 +11,10 @@ import (
 	"github.com/silinternational/wecarry-api/models"
 )
 
-const ApiTimeout = 10 * time.Second
-const MailChimpStatusSubscribed = "subscribed"
+const (
+	ApiTimeout                = 10 * time.Second
+	MailChimpStatusSubscribed = "subscribed"
+)
 
 type ApiRequest struct {
 	Method      string

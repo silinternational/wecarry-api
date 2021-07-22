@@ -59,30 +59,30 @@ func createMeetingFixtures_FindByTime(ms *ModelSuite) Meetings {
 			Name:        "Mtg Past",
 			LocationID:  locations[0].ID,
 
-			StartDate: time.Now().Add(time.Duration(-domain.DurationWeek * 10)),
-			EndDate:   time.Now().Add(time.Duration(-domain.DurationWeek * 8)),
+			StartDate: time.Now().Add(-domain.DurationWeek * 10),
+			EndDate:   time.Now().Add(-domain.DurationWeek * 8),
 		},
 		{
 			CreatedByID: users[0].ID,
 			Name:        "Mtg Recent",
 			LocationID:  locations[1].ID,
 
-			StartDate: time.Now().Add(time.Duration(-domain.DurationWeek * 4)),
-			EndDate:   time.Now().Add(time.Duration(-domain.DurationWeek * 2)),
+			StartDate: time.Now().Add(-domain.DurationWeek * 4),
+			EndDate:   time.Now().Add(-domain.DurationWeek * 2),
 		},
 		{
 			CreatedByID: users[0].ID,
 			Name:        "Mtg Now",
 			LocationID:  locations[2].ID,
-			StartDate:   time.Now().Add(time.Duration(-domain.DurationWeek * 2)),
-			EndDate:     time.Now().Add(time.Duration(domain.DurationWeek * 2)),
+			StartDate:   time.Now().Add(-domain.DurationWeek * 2),
+			EndDate:     time.Now().Add(domain.DurationWeek * 2),
 		},
 		{
 			CreatedByID: users[0].ID,
 			Name:        "Mtg Future",
 			LocationID:  locations[3].ID,
-			StartDate:   time.Now().Add(time.Duration(domain.DurationWeek * 2)),
-			EndDate:     time.Now().Add(time.Duration(domain.DurationWeek * 4)),
+			StartDate:   time.Now().Add(domain.DurationWeek * 2),
+			EndDate:     time.Now().Add(domain.DurationWeek * 4),
 		},
 	}
 
@@ -101,22 +101,22 @@ func createMeetingFixtures_CanUpdate(ms *ModelSuite) meetingFixtures {
 
 	superUser := &uf.Users[1]
 	superUser.AdminRole = UserAdminRoleSuperAdmin
-	ms.NoError(superUser.Save())
+	ms.NoError(superUser.Save(ms.DB))
 
 	salesUser := &uf.Users[2]
 	salesUser.AdminRole = UserAdminRoleSalesAdmin
-	ms.NoError(salesUser.Save())
+	ms.NoError(salesUser.Save(ms.DB))
 
 	adminUser := &uf.Users[3]
 	adminUser.AdminRole = UserAdminRoleAdmin
-	ms.NoError(adminUser.Save())
+	ms.NoError(adminUser.Save(ms.DB))
 
 	meeting := Meeting{
 		CreatedByID: mtgUser.ID,
 		Name:        "Mtg Past",
 		LocationID:  locations[0].ID,
-		StartDate:   time.Now().Add(time.Duration(domain.DurationWeek * 2)),
-		EndDate:     time.Now().Add(time.Duration(domain.DurationWeek * 4)),
+		StartDate:   time.Now().Add(domain.DurationWeek * 2),
+		EndDate:     time.Now().Add(domain.DurationWeek * 4),
 	}
 
 	createFixture(ms, &meeting)

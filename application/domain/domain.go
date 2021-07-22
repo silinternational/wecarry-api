@@ -1,6 +1,9 @@
 package domain
 
 import (
+	"context"
+	"database/sql"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -10,6 +13,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 	"unicode"
 
@@ -17,8 +21,8 @@ import (
 	"github.com/gobuffalo/envy"
 	mwi18n "github.com/gobuffalo/mw-i18n"
 	"github.com/gobuffalo/packr/v2"
-	"github.com/gobuffalo/validate"
-	"github.com/gobuffalo/validate/validators"
+	"github.com/gobuffalo/validate/v3"
+	"github.com/gobuffalo/validate/v3/validators"
 	uuid2 "github.com/gofrs/uuid"
 	"github.com/rollbar/rollbar-go"
 )
@@ -26,14 +30,16 @@ import (
 const (
 	Megabyte                    = 1048576
 	DateFormat                  = "2006-01-02"
-	MaxFileSize                 = 1024 * 1024 * 10 // 10 Megabytes
-	AccessTokenLifetimeSeconds  = 3600
+	MaxFileSize                 = 1024 * 1024 * 10       // 10 Megabytes
+	AccessTokenLifetimeSeconds  = 60*60*24*13 + 60*60*12 // 13 days, 12 hours
 	DateTimeFormat              = "2006-01-02 15:04:05"
 	NewMessageNotificationDelay = 1 * time.Minute
-	DefaultProximityDistanceKm  = 1000
+	DefaultProximityDistanceKm  = 100
 	DurationDay                 = time.Duration(time.Hour * 24)
 	DurationWeek                = time.Duration(DurationDay * 7)
 	RecentMeetingDelay          = DurationDay * 30
+	DataLoaderMaxBatch          = 100
+	DataLoaderWaitMilliSeconds  = 5 * time.Millisecond
 	MarketingSiteURL            = "https://www.wecarry.app"
 )
 
@@ -42,8 +48,9 @@ const (
 	EventApiUserCreated                    = "api:user:created"
 	EventApiAuthUserLoggedIn               = "api:auth:user:loggedin"
 	EventApiMessageCreated                 = "api:message:created"
-	EventApiPostStatusUpdated              = "api:post:status:updated"
-	EventApiPostCreated                    = "api:post:status:created"
+	EventApiRequestStatusUpdated           = "api:request:status:updated"
+	EventApiRequestCreated                 = "api:request:status:created"
+	EventApiRequestUpdated                 = "api:request:updated"
 	EventApiPotentialProviderCreated       = "api:potentialprovider:created"
 	EventApiPotentialProviderRejected      = "api:potentialprovider:rejected"
 	EventApiPotentialProviderSelfDestroyed = "api:potentialprovider:selfdestroyed"
@@ -56,7 +63,6 @@ const (
 
 // Notification Message Template Names
 const (
-	MessageTemplateNewOffer                        = "new_offer"
 	MessageTemplateNewRequest                      = "new_request"
 	MessageTemplateNewThreadMessage                = "new_thread_message"
 	MessageTemplateNewUserWelcome                  = "new_user_welcome"
@@ -99,31 +105,55 @@ const (
 
 // UI URL Paths
 const (
-	DefaultUIPath = "/#/requests"
-	postUIPath    = "/#/requests/"
-	threadUIPath  = "/#/messages/"
+	DefaultUIPath = "/requests"
+	requestUIPath = "/requests/"
+	threadUIPath  = "/messages/"
 )
 
-var Logger log.Logger
-var ErrLogger ErrLogProxy
+// Context keys
+const (
+	ContextKeyCurrentUser = "current_user"
+	ContextKeyExtras      = "extras"
+	ContextKeyRollbar     = "rollbar"
+)
 
-// Env holds environment variable values loaded by init()
+var (
+	// Logger is a plain instance of log.Logger, normally set to stdout
+	Logger log.Logger
+
+	// ErrLogger is an instance of ErrLogProxy, and is the only error logging
+	// mechanism that can be used without access to the Buffalo context.
+	ErrLogger ErrLogProxy
+
+	AuthCallbackURL string
+)
+
+var AllowedFileUploadTypes = []string{
+	"image/bmp",
+	"image/gif",
+	"image/jpeg",
+	"image/png",
+	"image/webp",
+	"application/pdf",
+}
+
 var Env struct {
 	AccessTokenLifetimeSeconds int
 	ServiceIntegrationToken    string
+	ApiBaseURL                 string
 	AppName                    string
 	AuthCallbackURL            string
 	AwsRegion                  string
 	AwsS3Endpoint              string
 	AwsS3DisableSSL            bool
 	AwsS3Bucket                string
-	AwsS3AccessKeyID           string
-	AwsS3SecretAccessKey       string
-	AwsSESAccessKeyID          string
-	AwsSESSecretAccessKey      string
-	AzureADKey                 string
-	AzureADSecret              string
-	AzureADTenant              string
+	AwsAccessKeyID             string
+	AwsSecretAccessKey         string
+	CertDomainName             string
+	CloudflareAuthEmail        string
+	CloudflareAuthKey          string
+	DisableTLS                 bool
+	DynamoDBTable              string
 	EmailService               string
 	EmailFromAddress           string
 	FacebookKey                string
@@ -134,15 +164,21 @@ var Env struct {
 	LinkedInKey                string
 	LinkedInSecret             string
 	MaxFileDelete              int
+	MaxLocationDelete          int
 	MailChimpAPIBaseURL        string
 	MailChimpAPIKey            string
 	MailChimpListID            string
 	MailChimpUsername          string
+	MicrosoftKey               string
+	MicrosoftSecret            string
 	MobileService              string
 	PlaygroundPort             string
+	RedisInstanceName          string
+	RedisInstanceHostPort      string
 	RollbarServerRoot          string
 	RollbarToken               string
 	SendGridAPIKey             string
+	ServerPort                 int
 	SessionSecret              string
 	SupportEmail               string
 	TwitterKey                 string
@@ -156,30 +192,34 @@ var T *mwi18n.Translator
 // Assets is a packr box with asset files such as images
 var Assets *packr.Box
 
+var extrasLock = sync.RWMutex{}
+
 func init() {
 	readEnv()
 	Logger.SetOutput(os.Stdout)
 	ErrLogger.SetOutput(os.Stderr)
 	ErrLogger.InitRollbar()
 	Assets = packr.New("Assets", "../assets")
+	AuthCallbackURL = Env.ApiBaseURL + "/auth/callback"
 }
 
 // readEnv loads environment data into `Env`
 func readEnv() {
 	Env.AccessTokenLifetimeSeconds = envToInt("ACCESS_TOKEN_LIFETIME_SECONDS", AccessTokenLifetimeSeconds)
+	Env.ApiBaseURL = envy.Get("HOST", "")
 	Env.AppName = envy.Get("APP_NAME", "WeCarry")
 	Env.AuthCallbackURL = envy.Get("AUTH_CALLBACK_URL", "")
-	Env.AwsRegion = envy.Get("AWS_REGION", "")
+	Env.AwsRegion = envy.Get("AWS_DEFAULT_REGION", "")
 	Env.AwsS3Endpoint = envy.Get("AWS_S3_ENDPOINT", "")
 	Env.AwsS3DisableSSL, _ = strconv.ParseBool(envy.Get("AWS_S3_DISABLE_SSL", "false"))
 	Env.AwsS3Bucket = envy.Get("AWS_S3_BUCKET", "")
-	Env.AwsS3AccessKeyID = envy.Get("AWS_S3_ACCESS_KEY_ID", "")
-	Env.AwsS3SecretAccessKey = envy.Get("AWS_S3_SECRET_ACCESS_KEY", "")
-	Env.AwsSESAccessKeyID = envy.Get("AWS_SES_ACCESS_KEY_ID", Env.AwsS3AccessKeyID)
-	Env.AwsSESSecretAccessKey = envy.Get("AWS_SES_SECRET_ACCESS_KEY", Env.AwsS3SecretAccessKey)
-	Env.AzureADKey = envy.Get("AZURE_AD_KEY", "")
-	Env.AzureADSecret = envy.Get("AZURE_AD_SECRET", "")
-	Env.AzureADTenant = envy.Get("AZURE_AD_TENANT", "")
+	Env.AwsAccessKeyID = envy.Get("AWS_ACCESS_KEY_ID", "")
+	Env.AwsSecretAccessKey = envy.Get("AWS_SECRET_ACCESS_KEY", "")
+	Env.CertDomainName = envy.Get("CERT_DOMAIN_NAME", "")
+	Env.CloudflareAuthEmail = envy.Get("CLOUDFLARE_AUTH_EMAIL", "")
+	Env.CloudflareAuthKey = envy.Get("CLOUDFLARE_AUTH_KEY", "")
+	Env.DisableTLS, _ = strconv.ParseBool(envy.Get("DISABLE_TLS", "false"))
+	Env.DynamoDBTable = envy.Get("DYNAMO_DB_TABLE", "CertMagic")
 	Env.EmailService = envy.Get("EMAIL_SERVICE", "sendgrid")
 	Env.EmailFromAddress = envy.Get("EMAIL_FROM_ADDRESS", "no_reply@example.com")
 	Env.FacebookKey = envy.Get("FACEBOOK_KEY", "")
@@ -190,15 +230,21 @@ func readEnv() {
 	Env.LinkedInKey = envy.Get("LINKED_IN_KEY", "")
 	Env.LinkedInSecret = envy.Get("LINKED_IN_SECRET", "")
 	Env.MaxFileDelete = envToInt("MAX_FILE_DELETE", 10)
+	Env.MaxLocationDelete = envToInt("MAX_LOCATION_DELETE", 10)
 	Env.MailChimpAPIBaseURL = envy.Get("MAILCHIMP_API_BASE_URL", "https://us4.api.mailchimp.com/3.0")
 	Env.MailChimpAPIKey = envy.Get("MAILCHIMP_API_KEY", "")
 	Env.MailChimpListID = envy.Get("MAILCHIMP_LIST_ID", "")
 	Env.MailChimpUsername = envy.Get("MAILCHIMP_USERNAME", "")
+	Env.MicrosoftKey = envy.Get("MICROSOFT_KEY", "")
+	Env.MicrosoftSecret = envy.Get("MICROSOFT_SECRET", "")
 	Env.MobileService = envy.Get("MOBILE_SERVICE", "dummy")
 	Env.PlaygroundPort = envy.Get("PORT", "3000")
+	Env.RedisInstanceName = envy.Get("REDIS_INSTANCE_NAME", "redis")
+	Env.RedisInstanceHostPort = envy.Get("REDIS_INSTANCE_HOST_PORT", "redis:6379")
 	Env.RollbarServerRoot = envy.Get("ROLLBAR_SERVER_ROOT", "github.com/silinternational/wecarry-api")
 	Env.RollbarToken = envy.Get("ROLLBAR_TOKEN", "")
 	Env.SendGridAPIKey = envy.Get("SENDGRID_API_KEY", "")
+	Env.ServerPort, _ = strconv.Atoi(envy.Get("PORT", "3000"))
 	Env.ServiceIntegrationToken = envy.Get("SERVICE_INTEGRATION_TOKEN", "")
 	Env.SessionSecret = envy.Get("SESSION_SECRET", "testing")
 	Env.SupportEmail = envy.Get("SUPPORT_EMAIL", "")
@@ -217,15 +263,10 @@ func envToInt(name string, def int) int {
 	return n
 }
 
-type AppError struct {
-	Code int `json:"code"`
-
-	// Don't change the value of these Key entries without making a corresponding change on the UI,
-	// since these will be converted to human-friendly texts on the UI
-	Key string `json:"key"`
-}
-
-// ErrLogProxy wraps standard error logger plus sends to Rollbar
+// ErrLogProxy is a "tee" that sends to Rollbar and to the local logger,
+// normally set to stderr. Rollbar is disabled if `GoEnv` is "test", and
+// is a client instantiation separate from the one used in the Rollbar
+// middleware.
 type ErrLogProxy struct {
 	LocalLog  log.Logger
 	RemoteLog *rollbar.Client
@@ -300,24 +341,6 @@ func GetSubPartKeyValues(inString, outerDelimiter, innerDelimiter string) map[st
 	return keyValues
 }
 
-// ConvertTimeToStringPtr is intended to convert the
-// CreatedAt and UpdatedAt fields of database objects
-// to pointers to strings to populate the same gqlgen fields
-func ConvertTimeToStringPtr(inTime time.Time) *string {
-	inTimeStr := inTime.Format(time.RFC3339)
-	return &inTimeStr
-}
-
-// ConvertStrPtrToString dereferences a string pointer and returns
-// the result. In case nil is given, an empty string is returned.
-func ConvertStrPtrToString(inPtr *string) string {
-	if inPtr == nil {
-		return ""
-	}
-
-	return *inPtr
-}
-
 // GetCurrentTime returns a string of the current date and time
 // based on the default DateTimeFormat
 func GetCurrentTime() string {
@@ -332,17 +355,6 @@ func GetUUID() uuid2.UUID {
 		ErrLogger.Printf("error creating new uuid2 ... %v", err)
 	}
 	return uuid
-}
-
-// ConvertStringPtrToDate uses time.Parse to convert a date in yyyy-mm-dd
-// format into a time.Time object. If nil is provided, the default value
-// for time.Time is returned.
-func ConvertStringPtrToDate(inPtr *string) (time.Time, error) {
-	if inPtr == nil || *inPtr == "" {
-		return time.Time{}, nil
-	}
-
-	return time.Parse(DateFormat, *inPtr)
 }
 
 // IsStringInSlice iterates over a slice of strings, looking for the given
@@ -361,9 +373,9 @@ func EmailDomain(email string) string {
 	// If email includes @ it is full email address, otherwise it is just domain
 	if strings.Contains(email, "@") {
 		parts := strings.Split(email, "@")
-		return parts[1]
+		return strings.ToLower(parts[1])
 	} else {
-		return email
+		return strings.ToLower(email)
 	}
 }
 
@@ -384,7 +396,7 @@ func RollbarMiddleware(next buffalo.Handler) buffalo.Handler {
 			"",
 			Env.RollbarServerRoot)
 
-		c.Set("rollbar", client)
+		c.Set(ContextKeyRollbar, client)
 
 		err := next(c)
 
@@ -393,53 +405,87 @@ func RollbarMiddleware(next buffalo.Handler) buffalo.Handler {
 	}
 }
 
-func mergeExtras(extras []map[string]interface{}) map[string]interface{} {
-	var allExtras map[string]interface{}
+// Error sends a message to Rollbar and to the local logger, including
+// any extras found in the context.
+func Error(ctx context.Context, msg string) {
+	bc := getBuffaloContext(ctx)
 
-	// I didn't think I would need this, but without it at least one test was failing
-	// The code allowed a map[string]interface{} to get through (i.e. not in a slice)
-	// without the compiler complaining
-	if len(extras) == 1 {
-		return extras[0]
+	extras := getExtras(bc)
+	extrasLock.RLock()
+	defer extrasLock.RUnlock()
+
+	rollbarMessage(bc, rollbar.ERR, msg, extras)
+
+	logger := bc.Logger()
+	if logger != nil {
+		logger.Error(encodeLogMsg(msg, extras))
 	}
-
-	for _, e := range extras {
-		for k, v := range e {
-			allExtras[k] = v
-		}
-	}
-
-	return allExtras
 }
 
-// Error log error and send to Rollbar
-func Error(c buffalo.Context, msg string, extras ...map[string]interface{}) {
-	// Avoid panics running tests when c doesn't have the necessary nested methods
-	cType := fmt.Sprintf("%T", c)
-	if cType == "models.EmptyContext" {
-		return
+// Warn sends a message to Rollbar and to the local logger, including
+// any extras found in the context.
+func Warn(ctx context.Context, msg string) {
+	bc := getBuffaloContext(ctx)
+
+	extras := getExtras(bc)
+	extrasLock.RLock()
+	defer extrasLock.RUnlock()
+
+	rollbarMessage(bc, rollbar.WARN, msg, extras)
+
+	logger := bc.Logger()
+	if logger != nil {
+		logger.Warn(encodeLogMsg(msg, extras))
+	}
+}
+
+// Info sends a message to the local logger, including any extras found in the context.
+func Info(ctx context.Context, msg string) {
+	bc := getBuffaloContext(ctx)
+
+	extras := getExtras(bc)
+	extrasLock.RLock()
+	defer extrasLock.RUnlock()
+
+	logger := bc.Logger()
+	if logger != nil {
+		logger.Info(encodeLogMsg(msg, extras))
+	}
+}
+
+func getBuffaloContext(ctx context.Context) buffalo.Context {
+	return ctx.(buffalo.Context)
+}
+
+func encodeLogMsg(msg string, extras map[string]interface{}) string {
+	encoder := jsonMin
+	if Env.GoEnv == "development" {
+		encoder = jsonIndented
 	}
 
-	es := mergeExtras(extras)
-	c.Logger().Error(msg, es)
-	rollbarMessage(c, rollbar.ERR, msg, es)
+	if extras == nil {
+		extras = map[string]interface{}{}
+	}
+	extras["message"] = msg
+
+	j, err := encoder(&extras)
+	if err != nil {
+		return "failed to json encode error message: " + err.Error()
+	}
+	return string(j)
 }
 
-// Warn log warning and send to Rollbar
-func Warn(c buffalo.Context, msg string, extras ...map[string]interface{}) {
-	es := mergeExtras(extras)
-	c.Logger().Warn(msg, es)
-	rollbarMessage(c, rollbar.WARN, msg, es)
+func jsonMin(i interface{}) ([]byte, error) {
+	return json.Marshal(i)
 }
 
-// Log info message
-func Info(c buffalo.Context, msg string, extras ...map[string]interface{}) {
-	c.Logger().Info(msg, mergeExtras(extras))
+func jsonIndented(i interface{}) ([]byte, error) {
+	return json.MarshalIndent(i, "", "  ")
 }
 
 // rollbarMessage is a wrapper function to call rollbar's client.MessageWithExtras function from client stored in context
 func rollbarMessage(c buffalo.Context, level string, msg string, extras map[string]interface{}) {
-	rc, ok := c.Value("rollbar").(*rollbar.Client)
+	rc, ok := c.Value(ContextKeyRollbar).(*rollbar.Client)
 	if ok {
 		rc.MessageWithExtras(level, msg, extras)
 		return
@@ -448,16 +494,16 @@ func rollbarMessage(c buffalo.Context, level string, msg string, extras map[stri
 
 // RollbarSetPerson sets person on the rollbar context for further logging
 func RollbarSetPerson(c buffalo.Context, id, username, email string) {
-	rc, ok := c.Value("rollbar").(*rollbar.Client)
+	rc, ok := c.Value(ContextKeyRollbar).(*rollbar.Client)
 	if ok {
 		rc.SetPerson(id, username, email)
 		return
 	}
 }
 
-// GetPostUIURL returns a UI URL for the given Post
-func GetPostUIURL(postUUID string) string {
-	return Env.UIURL + postUIPath + postUUID
+// GetRequestUIURL returns a UI URL for the given Request
+func GetRequestUIURL(requestUUID string) string {
+	return Env.UIURL + requestUIPath + requestUUID
 }
 
 // GetThreadUIURL returns a UI URL for the given Thread
@@ -486,7 +532,6 @@ func IsWeightUnitAllowed(unit string) bool {
 
 func IsTimeZoneAllowed(name string) bool {
 	_, err := time.LoadLocation(name)
-
 	if err != nil {
 		Logger.Printf("error evaluating timezone %s ... %v", name, err)
 		return false
@@ -516,7 +561,7 @@ func IsOtherThanNoRows(err error) bool {
 		return false
 	}
 
-	if strings.Contains(err.Error(), "sql: no rows in result set") {
+	if strings.Contains(err.Error(), sql.ErrNoRows.Error()) {
 		return false
 	}
 
@@ -550,7 +595,6 @@ func GetTranslatedSubject(language, translationID string, translationData map[st
 	translationData["AppName"] = Env.AppName
 
 	subj, err := TranslateWithLang(language, translationID, translationData)
-
 	if err != nil {
 		ErrLogger.Printf("error translating '%s' notification subject, %s", translationID, err)
 	}
@@ -590,7 +634,7 @@ func RemoveUnwantedChars(str, allowed string) string {
 }
 
 func isSafeRune(r rune) bool {
-	var safeRanges = &unicode.RangeTable{
+	safeRanges := &unicode.RangeTable{
 		R16: []unicode.Range16{
 			{Lo: 0x0030, Hi: 0x0039, Stride: 1}, // 0-9
 			{Lo: 0x0041, Hi: 0x005a, Stride: 1}, // upper-case Latin
@@ -624,7 +668,7 @@ type StringIsVisible struct {
 
 // IsValid adds an error if the field is not empty and not a url.
 func (v *StringIsVisible) IsValid(errors *validate.Errors) {
-	var asciiSpace = map[int32]bool{'\t': true, '\n': true, '\v': true, '\f': true, '\r': true, ' ': true}
+	asciiSpace := map[int32]bool{'\t': true, '\n': true, '\v': true, '\f': true, '\r': true, ' ': true}
 	for _, c := range v.Field {
 		if !asciiSpace[c] && unicode.IsGraphic(c) && c != 0xfe0f { // VS16 (0xfe0f) is "Graphic" but invisible
 			return
@@ -637,4 +681,36 @@ func (v *StringIsVisible) IsValid(errors *validate.Errors) {
 	}
 
 	errors.Add(validators.GenerateKey(v.Name), fmt.Sprintf("%s must have a visible character.", v.Name))
+}
+
+func UniquifyIntSlice(intSlice []int) []int {
+	keys := make(map[int]bool)
+	list := make([]int, 0, len(keys))
+	for _, entry := range intSlice {
+		if _, ok := keys[entry]; !ok {
+			keys[entry] = true
+			list = append(list, entry)
+		}
+	}
+	return list
+}
+
+func NewExtra(ctx context.Context, key string, e interface{}) {
+	c := getBuffaloContext(ctx)
+	extras := getExtras(c)
+
+	extrasLock.Lock()
+	defer extrasLock.Unlock()
+	extras[key] = e
+
+	c.Set(ContextKeyExtras, extras)
+}
+
+func getExtras(c buffalo.Context) map[string]interface{} {
+	extras, _ := c.Value(ContextKeyExtras).(map[string]interface{})
+	if extras == nil {
+		extras = map[string]interface{}{}
+	}
+
+	return extras
 }

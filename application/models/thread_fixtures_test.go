@@ -10,25 +10,25 @@ import (
 
 type ThreadFixtures struct {
 	Users
-	Posts
+	Requests
 	Threads
 	ThreadParticipants
 	Messages
 }
 
-func CreateThreadFixtures(ms *ModelSuite, post Post) ThreadFixtures {
+func CreateThreadFixtures(ms *ModelSuite, request Request) ThreadFixtures {
 	// need another User for these fixtures, to act as the Provider and 2nd Thread Participant
 	uf := createUserFixtures(ms.DB, 1)
 
-	post.Status = PostStatusAccepted
-	post.ProviderID = nulls.NewInt(uf.Users[0].ID)
-	ms.NoError(ms.DB.Save(&post))
+	request.Status = RequestStatusAccepted
+	request.ProviderID = nulls.NewInt(uf.Users[0].ID)
+	ms.NoError(ms.DB.Save(&request))
 
 	// Load Thread test fixtures
 	threads := make(Threads, 3)
 	for i := range threads {
 		threads[i].UUID = domain.GetUUID()
-		threads[i].PostID = post.ID
+		threads[i].RequestID = request.ID
 		createFixture(ms, &threads[i])
 	}
 
@@ -36,7 +36,7 @@ func CreateThreadFixtures(ms *ModelSuite, post Post) ThreadFixtures {
 	threadParticipants := []ThreadParticipant{
 		{
 			ThreadID:     threads[0].ID,
-			UserID:       post.CreatedByID,
+			UserID:       request.CreatedByID,
 			LastViewedAt: time.Now(),
 		},
 		{
@@ -45,7 +45,7 @@ func CreateThreadFixtures(ms *ModelSuite, post Post) ThreadFixtures {
 		},
 		{
 			ThreadID: threads[1].ID,
-			UserID:   post.CreatedByID,
+			UserID:   request.CreatedByID,
 		},
 	}
 	for i := range threadParticipants {
@@ -56,7 +56,7 @@ func CreateThreadFixtures(ms *ModelSuite, post Post) ThreadFixtures {
 	messages := Messages{
 		{
 			ThreadID: threads[0].ID,
-			SentByID: post.CreatedByID,
+			SentByID: request.CreatedByID,
 			Content:  "I can being chocolate if you bring PB",
 		},
 		{
@@ -66,7 +66,7 @@ func CreateThreadFixtures(ms *ModelSuite, post Post) ThreadFixtures {
 		},
 		{
 			ThreadID: threads[1].ID,
-			SentByID: post.CreatedByID,
+			SentByID: request.CreatedByID,
 			Content:  "Great!",
 		},
 	}
@@ -88,16 +88,16 @@ func CreateThreadFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) Threa
 	uf := createUserFixtures(ms.DB, 2)
 	users := uf.Users
 
-	// Each user has a request and is a provider on the other user's post
-	posts := createPostFixtures(ms.DB, 2, 0, false)
-	posts[0].Status = PostStatusAccepted
-	posts[0].ProviderID = nulls.NewInt(users[1].ID)
-	posts[1].Status = PostStatusAccepted
-	posts[1].CreatedByID = users[1].ID
-	posts[1].ProviderID = nulls.NewInt(users[0].ID)
-	ms.NoError(ms.DB.Save(&posts))
+	// Each user has a request and is a provider on the other user's request
+	requests := createRequestFixtures(ms.DB, 2, false, users[0].ID)
+	requests[0].Status = RequestStatusAccepted
+	requests[0].ProviderID = nulls.NewInt(users[1].ID)
+	requests[1].Status = RequestStatusAccepted
+	requests[1].CreatedByID = users[1].ID
+	requests[1].ProviderID = nulls.NewInt(users[0].ID)
+	ms.NoError(ms.DB.Save(&requests))
 
-	threads := []Thread{{PostID: posts[0].ID}, {PostID: posts[1].ID}}
+	threads := []Thread{{RequestID: requests[0].ID}, {RequestID: requests[1].ID}}
 
 	for i := range threads {
 		threads[i].UUID = domain.GetUUID()
@@ -108,26 +108,26 @@ func CreateThreadFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) Threa
 	oldTime := tNow.Add(-time.Duration(time.Hour))
 	oldOldTime := oldTime.Add(-time.Duration(time.Hour))
 
-	// One thread per post with 2 users per thread
+	// One thread per request with 2 users per thread
 	threadParticipants := []ThreadParticipant{
 		{
 			ThreadID:     threads[0].ID,
-			UserID:       posts[0].CreatedByID,
+			UserID:       requests[0].CreatedByID,
 			LastViewedAt: tNow, // This will get overridden and then reset again
 		},
 		{
 			ThreadID:     threads[0].ID,
-			UserID:       posts[0].ProviderID.Int,
+			UserID:       requests[0].ProviderID.Int,
 			LastViewedAt: oldTime,
 		},
 		{
 			ThreadID:     threads[1].ID,
-			UserID:       posts[1].CreatedByID,
+			UserID:       requests[1].CreatedByID,
 			LastViewedAt: oldTime,
 		},
 		{
 			ThreadID:     threads[1].ID,
-			UserID:       posts[1].ProviderID.Int,
+			UserID:       requests[1].ProviderID.Int,
 			LastViewedAt: tNow,
 		},
 	}
@@ -139,38 +139,38 @@ func CreateThreadFixtures_UnreadMessageCount(ms *ModelSuite, t *testing.T) Threa
 	// I can't seem to give them custom times
 	messages := Messages{
 		{
-			ThreadID:  threads[0].ID,        // user 0's post
-			SentByID:  posts[0].CreatedByID, // user 0 (Eager)
+			ThreadID:  threads[0].ID,           // user 0's request
+			SentByID:  requests[0].CreatedByID, // user 0 (Eager)
 			Content:   "I can being chocolate if you bring PB",
 			CreatedAt: oldOldTime,
 		},
 		{
-			ThreadID:  threads[0].ID,           // user 0's post
-			SentByID:  posts[0].ProviderID.Int, // user 1 (Lazy)
+			ThreadID:  threads[0].ID,              // user 0's request
+			SentByID:  requests[0].ProviderID.Int, // user 1 (Lazy)
 			Content:   "Great",
 			CreatedAt: oldTime,
 		},
 		{
-			ThreadID:  threads[0].ID,        // user 0's post
-			SentByID:  posts[0].CreatedByID, // user 0 (Eager)
+			ThreadID:  threads[0].ID,           // user 0's request
+			SentByID:  requests[0].CreatedByID, // user 0 (Eager)
 			Content:   "Can you get it here by next week?",
 			CreatedAt: tNow, // Lazy User doesn't see this one
 		},
 		{
-			ThreadID:  threads[1].ID,        // user 1's post
-			SentByID:  posts[1].CreatedByID, // user 1 (Lazy)
+			ThreadID:  threads[1].ID,           // user 1's request
+			SentByID:  requests[1].CreatedByID, // user 1 (Lazy)
 			Content:   "I can being PB if you bring chocolate",
 			CreatedAt: oldTime,
 		},
 		{
-			ThreadID:  threads[1].ID,           // user 1's post
-			SentByID:  posts[1].ProviderID.Int, // user 0 (Eager)
+			ThreadID:  threads[1].ID,              // user 1's request
+			SentByID:  requests[1].ProviderID.Int, // user 0 (Eager)
 			Content:   "Did you see my other message?",
 			CreatedAt: tNow, // Lazy User doesn't see this one
 		},
 		{
-			ThreadID:  threads[1].ID,           // user 1's post
-			SentByID:  posts[1].ProviderID.Int, // user 0 (Eager)
+			ThreadID:  threads[1].ID,              // user 1's request
+			SentByID:  requests[1].ProviderID.Int, // user 0 (Eager)
 			Content:   "Anyone Home?",
 			CreatedAt: tNow, // Lazy User doesn't see this one
 		},

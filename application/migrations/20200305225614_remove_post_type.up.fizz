@@ -1,0 +1,2 @@
+drop_column("posts", "type")
+drop_column("posts", "receiver_id")

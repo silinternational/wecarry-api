@@ -5,13 +5,15 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gobuffalo/pop"
-	"github.com/gobuffalo/validate"
-	"github.com/gobuffalo/validate/validators"
+	"github.com/gobuffalo/pop/v5"
+	"github.com/gobuffalo/validate/v3"
+	"github.com/gobuffalo/validate/v3/validators"
 )
 
-const UserOrganizationRoleUser = "user"
-const UserOrganizationRoleAdmin = "admin"
+const (
+	UserOrganizationRoleUser  = "user"
+	UserOrganizationRoleAdmin = "admin"
+)
 
 type UserOrganization struct {
 	ID             int          `json:"id" db:"id"`
@@ -63,8 +65,9 @@ func (u *UserOrganization) ValidateUpdate(tx *pop.Connection) (*validate.Errors,
 	return validate.NewErrors(), nil
 }
 
-// FindByAuthEmail finds and returns an array of user organizations for the given email address
-func (u *UserOrganizations) FindByAuthEmail(authEmail string, orgID int) error {
+// FindByAuthEmail finds UserOrganizations for the given email address. However, if the
+// orgID param is greater than zero, it will find only the one with both that authEmail and orgID.
+func (u *UserOrganizations) FindByAuthEmail(tx *pop.Connection, authEmail string, orgID int) error {
 	// Validate email address before query
 	errs := validate.Validate(&validators.EmailIsPresent{Field: authEmail})
 	if len(errs.Errors) > 0 {
@@ -74,12 +77,12 @@ func (u *UserOrganizations) FindByAuthEmail(authEmail string, orgID int) error {
 	where := "auth_email = ?"
 	params := []interface{}{authEmail}
 
-	if orgID != 0 {
+	if orgID > 0 {
 		where += " AND organization_id = ?"
 		params = append(params, orgID)
 	}
 
-	if err := DB.Eager().Where(where, params...).All(u); err != nil {
+	if err := tx.Eager().Where(where, params...).All(u); err != nil {
 		return fmt.Errorf("error finding user by email: %s", err.Error())
 	}
 
@@ -87,6 +90,6 @@ func (u *UserOrganizations) FindByAuthEmail(authEmail string, orgID int) error {
 }
 
 // Create stores the UserOrganization data as a new record in the database.
-func (u *UserOrganization) Create() error {
-	return create(u)
+func (u *UserOrganization) Create(tx *pop.Connection) error {
+	return create(tx, u)
 }

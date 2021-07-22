@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gobuffalo/validate"
+	"github.com/gobuffalo/validate/v3"
 	"github.com/silinternational/wecarry-api/domain"
 )
 
@@ -69,24 +69,23 @@ func CreateFixtures_ThreadParticipant_UpdateLastViewedAt(ms *ModelSuite, t *test
 	location := Location{}
 	createFixture(ms, &location)
 
-	posts := Posts{
+	requests := Requests{
 		{
 			CreatedByID:    users[0].ID,
-			Type:           PostTypeRequest,
 			OrganizationID: org.ID,
-			Status:         PostStatusOpen,
+			Status:         RequestStatusOpen,
 			Title:          "Maple Syrup",
-			Size:           PostSizeMedium,
+			Size:           RequestSizeMedium,
 			UUID:           domain.GetUUID(),
 			DestinationID:  location.ID,
 		},
 	}
-	for i := range posts {
-		createFixture(ms, &posts[i])
+	for i := range requests {
+		createFixture(ms, &requests[i])
 	}
 
 	threads := Threads{
-		{UUID: domain.GetUUID(), PostID: posts[0].ID},
+		{UUID: domain.GetUUID(), RequestID: requests[0].ID},
 	}
 	for i := range threads {
 		createFixture(ms, &threads[i])
@@ -126,7 +125,7 @@ func (ms *ModelSuite) TestThreadParticipant_UpdateLastViewedAt() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			tp := test.threadParticipant
-			err := tp.UpdateLastViewedAt(test.lastViewedAt)
+			err := tp.UpdateLastViewedAt(ms.DB, test.lastViewedAt)
 
 			// reload from database to ensure the new time was saved
 			_ = ms.DB.Reload(&tp)
@@ -159,15 +158,15 @@ func CreateFixtures_ThreadParticipant_FindByThreadIDAndUserID(ms *ModelSuite) Th
 	location := Location{}
 	createFixture(ms, &location)
 
-	posts := Posts{
+	requests := Requests{
 		{UUID: domain.GetUUID(), CreatedByID: users[0].ID, OrganizationID: org.ID, DestinationID: location.ID},
 	}
-	for i := range posts {
-		createFixture(ms, &posts[i])
+	for i := range requests {
+		createFixture(ms, &requests[i])
 	}
 
 	threads := Threads{
-		{UUID: domain.GetUUID(), PostID: posts[0].ID},
+		{UUID: domain.GetUUID(), RequestID: requests[0].ID},
 	}
 	for i := range threads {
 		createFixture(ms, &threads[i])
@@ -206,7 +205,7 @@ func (ms *ModelSuite) TestThreadParticipant_FindByThreadIDAndUserID() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var tp ThreadParticipant
-			err := tp.FindByThreadIDAndUserID(test.threadID, test.userID)
+			err := tp.FindByThreadIDAndUserID(ms.DB, test.threadID, test.userID)
 
 			if test.wantErr {
 				ms.Error(err, "did not get an error from FindByThreadIDAndUserID")
@@ -230,15 +229,15 @@ func CreateFixtures_ThreadParticipant_UpdateLastNotifiedAt(ms *ModelSuite, t *te
 	location := Location{}
 	createFixture(ms, &location)
 
-	posts := Posts{
+	requests := Requests{
 		{UUID: domain.GetUUID(), CreatedByID: users[0].ID, OrganizationID: org.ID, DestinationID: location.ID},
 	}
-	for i := range posts {
-		createFixture(ms, &posts[i])
+	for i := range requests {
+		createFixture(ms, &requests[i])
 	}
 
 	threads := Threads{
-		{UUID: domain.GetUUID(), PostID: posts[0].ID},
+		{UUID: domain.GetUUID(), RequestID: requests[0].ID},
 	}
 	for i := range threads {
 		createFixture(ms, &threads[i])
@@ -278,7 +277,7 @@ func (ms *ModelSuite) TestThreadParticipant_UpdateLastNotifiedAt() {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			tp := test.threadParticipant
-			err := tp.UpdateLastNotifiedAt(test.LastNotifiedAt)
+			err := tp.UpdateLastNotifiedAt(ms.DB, test.LastNotifiedAt)
 
 			// reload from database to ensure the new time was saved
 			_ = ms.DB.Reload(&tp)

@@ -1,37 +1,96 @@
+# Meeting
 - id: CreateMeeting
-  translation: We had a problem creating the new meeting.
+  translation: We had a problem creating the new event.
 - id: CreateMeeting.ProcessInput
-  translation: We had a problem processing the information to create that meeting.
+  translation: We had a problem processing the information to create that event.
 - id: CreateMeeting.SetLocation
-  translation: We had a problem setting the location for that new meeting.
+  translation: We had a problem setting the location for that new event.
 - id: CreateMeeting.Unauthorized
-  translation: You are not allowed to create meetings.
+  translation: You are not allowed to create events.
 - id: GetMeeting
-  translation: We had a problem finding that meeting.
+  translation: We had a problem finding that event.
 - id: GetMeetingCreator
-  translation: We had a problem finding the creator of that meeting.
+  translation: We had a problem finding the creator of that event.
 - id: GetMeetingImage
-  translation: We had a problem finding the image for that meeting.
+  translation: We had a problem finding the image for that event.
 - id: GetMeetingLocation
-  translation: We had a problem finding the location of that meeting.
+  translation: We had a problem finding the location of that event.
 - id: GetMeetings
-  translation: We had a problem finding a list of meetings.
+  translation: We had a problem finding a list of events.
 - id: GetRecentMeetings
-  translation: We had a problem finding a list of recent meetings.
+  translation: We had a problem finding a list of recent events.
 - id: UpdateMeeting
-  translation: We had a problem updating the meeting.
+  translation: We had a problem updating the event.
 - id: UpdateMeeting.ProcessInput
-  translation: We had a problem processing the information to update that meeting.
+  translation: We had a problem processing the information to update that event.
 - id: UpdateMeeting.Unauthorized
-  translation: You are not allowed to edit the information for that meeting.
+  translation: You are not allowed to edit the information for that event.
+- id: Meeting.Requests
+  translation: We had a problem finding the requests for the event
+- id: Meeting.Invites
+  translation: We had a problem finding the invites for the event
+- id: Meeting.Organizers
+  translation: We had a problem finding the organizers for the event
+- id: Meeting.Participants
+  translation: We had a problem finding the participants for the event
+- id: Meeting.UpdateImageFile
+  translation: We had a problem updating the event logo
+
+# MeetingInvite
+- id: CreateMeetingInvite.FindMeeting
+  translation: We had a problem finding the event for the new invites
+- id: CreateMeetingInvite.Unauthorized
+  translation: You are not allowed to create invitations for that event
+- id: CreateMeetingInvite.ListInvites
+  translation: We had a problem getting the list of invites after adding the new invites
+- id: RemoveMeetingInvite.FindMeeting
+  translation: We had a problem finding the event for the invite to be removed
+- id: RemoveMeetingInvite.Unauthorized
+  translation: You are not allowed to remove invitations for that event
+- id: RemoveMeetingInvite.ListInvites
+  translation: We had a problem getting the list of invites after removing the invite
+- id: RemoveMeetingInvite
+  translation: We had a problem removing the event invite
+- id: MeetingInvite.Inviter
+  translation: We had a problem getting the user profile of the inviter
+- id: MeetingInvite.Meeting
+  translation: We had a problem getting the event data for the invite
+
+# MeetingParticipant
+- id: MeetingParticipant.Meeting
+  translation: We had a problem finding the event for the participant
+- id: MeetingParticipant.User
+  translation: We had a problem finding the user data for the participant
+- id: MeetingParticipant.Invite
+  translation: We had a problem finding the invite data for the participant
+- id: CreateMeetingParticipant.FindExisting
+  translation: We had an unexpected problem adding you as an event participant
+- id: CreateMeetingParticipant.FindMeeting
+  translation: We had a problem finding the event to add you as a participant
+- id: CreateMeetingParticipant.Unauthorized
+  translation: You are not allowed to add yourself as a participant in that event
+- id: CreateMeetingParticipant.InvalidSecret
+  translation: That event invite code is not valid for the specified event
+- id: CreateMeetingParticipant.FindBySecret
+  translation: We had a problem validating your invite code for that event
+- id: CreateMeetingParticipant
+  translation: We had a problem adding you as a participant in that event
+- id: RemoveMeetingParticipant.FindMeeting
+  translation: We had a problem finding the meeting for the participant to be removed
+- id: RemoveMeetingParticipant.Unauthorized
+  translation: You are not allowed to remove particpants for that meeting
+- id: RemoveMeetingParticipant.ListParticipants
+  translation: We had a problem getting the list of participants after removing the participant
+- id: RemoveMeetingParticipant
+  translation: We had a problem removing the participant
+
+# Message
 - id: GetMessageSender
   translation: We had a problem finding the message sender information.
 - id: GetMessageThread
   translation: We had a problem finding the message conversation information.
 - id: GetMessage
   translation: We had a problem finding the message information.
-- id: CreateMessage.ParseInput
-  translation: We had a problem processing the new message.
 - id: CreateMessage
   translation: We had a problem creating the new message.
 
@@ -50,6 +109,8 @@
   translation: You are not allowed to edit information for that organization.
 - id: UpdateOrganization.LogoFileNotFound
   translation: We had a problem finding the logo file for that organization.
+- id: UpdateOrganization.RemoveLogo
+  translation: We had a problem removing the logo file for that organization.
 - id: GetOrganizationLogoURL
   translation: We had a problem getting the logo for that organization.
 - id: ViewOrganization.NotFound
@@ -72,87 +133,86 @@
   translation: We had a problem finding the organization to remove a domain.
 - id: RemoveOrganizationDomain.Unauthorized
   translation: You are not allowed to remove domains from that organization.
-- id: GetOrganizationDomainOrganizationID
-  translation: We had a problem finding the organization ID for that domain.
+- id: GetOrganizationDomainOrganization
+  translation: We had a problem finding the organization for that domain.
 - id: GetOrganizationDomains
   translation: We had a problem finding the list of domains for the organization.
 
+# Request
+- id: ViewRequest.NotFound
+  translation: Request not found
+- id: ViewRequest.Error
+  translation: There was a problem viewing that request
 
 - id: SetThreadLastViewedAt.NotFound
   translation: We had a problem finding the conversation to update its last-viewed time.
 - id: SetThreadLastViewedAt
   translation: We had a problem updating the conversation last-viewed time.
-- id: GetPostCreator
-  translation: We had a problem finding the creator of that request or offer.
-- id: GetPostReceiver
-  translation: We had a problem finding the receiver for that request or offer.
-- id: GetPostProvider
-  translation: We had a problem finding the provider for that request or offer.
-- id: GetPostOrganization
-  translation: We had a problem finding the organization for that request or offer.
-- id: GetPostDestination
-  translation: We had a problem finding the destination for that request or offer.
-- id: GetPostOrigin
-  translation: We had a problem finding the origin for that request or offer.
-- id: GetPostThreads
-  translation: We had a problem finding the list of conversations for that request or offer.
-- id: GetPostPhoto
-  translation: We had a problem finding the photo for that request or offer.
-- id: GetPostFiles
-  translation: We had a problem finding the list of attachments for that request or offer.
-- id: GetPostMeeting
-  translation: We had a problem finding the meeting associated with that request or offer.
-- id: GetPosts
+- id: GetRequestCreator
+  translation: We had a problem finding the creator of that request.
+- id: GetPotentialProviders
+  translation: We had a problem finding the potential providers for that request.
+- id: GetRequestProvider
+  translation: We had a problem finding the provider for that request.
+- id: GetRequestOrganization
+  translation: We had a problem finding the organization for that request.
+- id: GetRequestDestination
+  translation: We had a problem finding the destination for that request.
+- id: GetRequestOrigin
+  translation: We had a problem finding the origin for that request.
+- id: GetRequestThreads
+  translation: We had a problem finding the list of conversations for that request.
+- id: GetRequestPhoto
+  translation: We had a problem finding the photo for that request.
+- id: GetRequestFiles
+  translation: We had a problem finding the list of attachments for that request.
+- id: GetRequestMeeting
+  translation: We had a problem finding the event associated with that request.
+- id: GetRequests
   translation: We had a problem finding a list of requests and offers.
-- id: GetPost
-  translation: We had a problem finding that request or offer.
-- id: CreatePost
-  translation: We had a problem creating that request or offer.
-- id: CreatePost.ProcessInput
-  translation: We had a problem processing the information to create that request or offer.
-- id: CreatePost.SetDestination
-  translation: We had a problem setting the destination for that new request or offer.
-- id: CreatePost.SetOrigin
-  translation: We had a problem setting the origin for that new request or offer.
-- id: UpdatePost
-  translation: We had a problem updating that request or offer.
-- id: UpdatePost.ProcessInput
-  translation: We had a problem processing the information to update that request or offer.
-- id: UpdatePost.GetEditable
-  translation: We had a problem preparing to update that request or offer.
-- id: UpdatePost.NotEditable
-  translation: That request or offer is locked for editing.
-- id: UpdatePost.SetDestination
-  translation: We had a problem setting the destination to update that request or offer.
-- id: UpdatePost.SetOrigin
-  translation: We had a problem setting the origin to update that request or offer.
-- id: UpdatePost.RemoveOrigin
-  translation: We had a problem removing the origin from that request or offer.
-- id: UpdatePostStatus
-  translation: We had a problem changing the status of that request or offer.
-- id: UpdatePostStatus.FindPost
-  translation: We had a problem finding that request or offer for changing its status.
-- id: UpdatePostStatus.Unauthorized
-  translation: You are not allowed to change the status of that post.
-- id: Post.FindPost
+- id: GetRequest
   translation: We had a problem finding that request.
+- id: CreateRequest
+  translation: We had a problem creating that request.
+- id: CreateRequest.ProcessInput
+  translation: We had a problem processing the information to create that request.
+- id: CreateRequest.SetDestination
+  translation: We had a problem setting the destination for that new request.
+- id: CreateRequest.SetOrigin
+  translation: We had a problem setting the origin for that new request.
+- id: UpdateRequest
+  translation: We had a problem updating that request.
+- id: UpdateRequest.ProcessInput
+  translation: We had a problem processing the information to update that request.
+- id: UpdateRequest.GetEditable
+  translation: We had a problem preparing to update that request.
+- id: UpdateRequest.NotEditable
+  translation: That request is locked for editing.
+- id: UpdateRequest.SetDestination
+  translation: We had a problem setting the destination to update that request.
+- id: UpdateRequest.SetOrigin
+  translation: We had a problem setting the origin to update that request.
+- id: UpdateRequest.RemoveOrigin
+  translation: We had a problem removing the origin from that request.
+- id: UpdateRequestStatus
+  translation: We had a problem changing the status of that request.
+- id: UpdateRequestStatus.FindRequest
+  translation: We had a problem finding that request for changing its status.
+- id: UpdateRequestStatus.Unauthorized
+  translation: You are not allowed to change the status of that request.
 - id: AddMeAsPotentialProvider
   translation: We had a problem registering your offer to fulfill a request.
-- id: AddMeAsPotentialProvider.FindPost
+- id: AddMeAsPotentialProvider.FindRequest
   translation: We had a problem finding that request to register your offer to fulfill it.
-- id: AddMeAsPotentialProvider.BadPostStatus
+- id: AddMeAsPotentialProvider.BadRequestStatus
   translation: That request has a status that does not allow offers.
 - id: RemoveMeAsPotentialProvider
   translation: We had a problem cancelling your offer to fufill a request.
-- id: RemoveMeAsPotentialProvider.NotAuthorized
-  translation: You are not allowed to cancel that user's offer.
-- id: RemoveMeAsPotentialProvider.FindPost
+- id: RemoveMeAsPotentialProvider.FindRequest
   translation: We had a problem finding the request associated with your offer.
 - id: RemovePotentialProvider
   translation: We had a problem cancelling that offer to fulfill a request.
-- id: RemovePotentialProvider.NotAuthorized
-  translation: You are not allowed to cancel that user's offer.
-- id: RemovePotentialProvider.FindPost
+- id: RemovePotentialProvider.FindRequest
   translation: We had a problem finding the request associated with that offer.
 - id: GetThreadParticipants
   translation: We had a problem getting a list of participants in that conversation.
@@ -160,18 +220,20 @@
   translation: We had a problem finding the time you last viewed that conversation.
 - id: GetThreadMessages
   translation: We had a problem finding the list of messages in that conversation.
-- id: GetThreadPostID
-  translation: We had a problem finding the request or offer for that conversation.
-- id: GetThreadPost
-  translation: We had a problem finding the request or offer information for that conversation.
+- id: GetThreadRequest
+  translation: We had a problem finding the request information for that conversation.
 - id: GetThreads
   translation: We had a problem finding the list of conversations.
 - id: GetMyThreads
   translation: We had a problem finding a list of your conversations.
+
+# User
+- id: User.MeetingsAsParticipant
+  translation: We had a problem getting a list of events for you.
 - id: GetUserOrganizations
   translation: We had a problem finding the list of organizations for the user profile.
-- id: GetUserPosts
-  translation: We had a problem finding the list of posts for the user profile.
+- id: GetUserRequests
+  translation: We had a problem finding the list of requests for the user profile.
 - id: GetUserPhotoURL
   translation: We had a problem finding the photo for the user profile.
 - id: GetUserLocation
@@ -196,16 +258,24 @@
   translation: We had a problem setting the location on the user profile.
 - id: UpdateUser
   translation: We had a problem updating the user profile.
+- id: UpdateUser.InvisibleNickname
+  translation: Your user nickname must contain at least one visible character.
+- id: UpdateUser.DuplicateNickname
+  translation: That user nickname is already taken.
+- id: UpdateUser.Preferences
+  translation: We had a problem while updating user preferences.
+- id: UpdateUser.RemovePreferences
+  translation: We had a problem while removing user preferences.
 
-# Request Post Status Transition email subjects
+# Request Status Transition email subjects
 - id: Email.Subject.Request.FromAcceptedToDelivered
-  translation: Your {{.AppName}} request for "{{.postTitle}}" has been delivered!
+  translation: Your {{.AppName}} request for "{{.requestTitle}}" has been delivered!
 - id: Email.Subject.Request.FromAcceptedToOpen
-  translation: Your {{.AppName}} offer for "{{.postTitle}}" is no longer needed
+  translation: Your {{.AppName}} offer for "{{.requestTitle}}" is no longer needed
 - id: Email.Subject.Request.FromAcceptedOrDeliveredToCompleted
   translation: Thank you for fulfilling a request on {{.AppName}}
 - id: Email.Subject.Request.FromAcceptedToRemoved
-  translation: Your {{.AppName}} offer for "{{.postTitle}}" is no longer needed
+  translation: Your {{.AppName}} offer for "{{.requestTitle}}" is no longer needed
 - id: Email.Subject.Request.FromCompletedToAcceptedOrDelivered
   translation: Request not received on {{.AppName}} after all
 - id: Email.Subject.Request.FromOpenToAccepted
@@ -215,7 +285,7 @@
 
 # Notifications regarding Request offers/potential providers
 - id: Email.Subject.Request.OfferRejected
-  translation: Your {{.AppName}} offer for "{{.postTitle}}" was not accepted
+  translation: Your {{.AppName}} offer for "{{.requestTitle}}" was not accepted
 - id: Email.Subject.Request.OfferRetracted
   translation: An offer to fulfill your request on {{.AppName}} has been retracted
 - id: Email.Subject.Request.NewOffer
@@ -223,7 +293,7 @@
 
 # New Message notification subject
 - id: Email.Subject.Message.Created
-  translation: New message from {{.sentByNickname}} on {{.AppName}}
+  translation: "{{.AppName}} message from {{.sentByNickname}} about {{.requestTitle}}"
 
 # New User welcome subject
 - id: Email.Subject.Welcome
@@ -235,44 +305,52 @@
 
 # Watch
 - id: GetWatchCreator
-  translation: We had a problem finding the Watch creator
-- id: GetWatchLocation
-  translation: We had a problem finding the Watch location
+  translation: We had a problem finding the Alert creator
+- id: GetWatchDestination
+  translation: We had a problem finding the Alert destination
+- id: GetWatchMeeting
+  translation: We had a problem finding the Alert meeting
+- id: GetWatchOrigin
+  translation: We had a problem finding the Alert origin
 - id: MyWatches
   translation: We had a problem getting a list of your Watches
 - id: CreateWatch
-  translation: We had a problem creating a new Watch
-- id: CreateWatch.SetLocation
-  translation: We had a problem setting the location for your new Watch
+  translation: We had a problem creating a new Alert
+- id: CreateWatch.SetDestination
+  translation: We had a problem setting the destination for your new Alert
+- id: CreateWatch.SetOrigin
+  translation: We had a problem setting the origin for your new Alert
 - id: CreateWatch.ProcessInput
-  translation: We had a problem processing the information for your new Watch
+  translation: We had a problem processing the information for your new Alert
 - id: UpdateWatch
-  translation: We had a problem updating your Watch
+  translation: We had a problem updating your Alert
 - id: UpdateWatch.ProcessInput
-  translation: We had a problem processing the information to update your Watch
+  translation: We had a problem processing the information to update your Alert
 - id: UpdateWatch.NotFound
-  translation: Watch not found
-- id: UpdateWatch.SetLocation
-  translation: We had a problem setting the location for your Watch
+  translation: Alert not found
+- id: UpdateWatch.SetDestination
+  translation: We had a problem setting the destination for your Alert
+- id: UpdateWatch.SetOrigin
+  translation: We had a problem setting the origin for your Alert
 - id: RemoveWatch
-  translation: We had a problem removing that Watch
+  translation: We had a problem removing that Alert
 - id: RemoveWatch.NotFound
-  translation: We had a problem finding the Watch to be removed
+  translation: We had a problem finding the Alert to be removed
 - id: RemoveWatch.FindByUser
   translation: We had a problem getting a list of remaining Watches
 
 # Trust
 - id: GetOrganizationTrustedOrganizations
   translation: We had a problem getting a list of trusted organizations
-- id: CreateTrust.FindPrimaryOrganization
+- id: CreateOrganizationTrust.FindPrimaryOrganization
   translation: We had a problem finding the organization to create the Trust
-- id: CreateTrust.Unauthorized
+- id: CreateOrganizationTrust.Unauthorized
   translation: We had a problem finding the organization to create the Trust
 - id: CreateOrganizationTrust
   translation: We had a problem creating the Trust
-- id: RemoveTrust.FindPrimaryOrganization
+- id: RemoveOrganizationTrust.FindPrimaryOrganization
   translation: We had a problem finding the organization to remove the Trust
-- id: RemoveTrust.Unauthorized
+- id: RemoveOrganizationTrust.Unauthorized
   translation: We had a problem finding the organization to remove the Trust
-- id: RemoveTrust
+- id: RemoveOrganizationTrust
   translation: We had a problem removing the Trust
