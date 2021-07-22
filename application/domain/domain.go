@@ -40,6 +40,7 @@ const (
 	RecentMeetingDelay          = DurationDay * 30
 	DataLoaderMaxBatch          = 100
 	DataLoaderWaitMilliSeconds  = 5 * time.Millisecond
+	MarketingSiteURL            = "https://www.wecarry.app"
 )
 
 // Event Kinds
@@ -249,7 +250,7 @@ func readEnv() {
 	Env.SupportEmail = envy.Get("SUPPORT_EMAIL", "")
 	Env.TwitterKey = envy.Get("TWITTER_KEY", "")
 	Env.TwitterSecret = envy.Get("TWITTER_SECRET", "")
-	Env.UIURL = envy.Get("UI_URL", "dev.wecarry.app")
+	Env.UIURL = envy.Get("UI_URL", "https://wecarry.app")
 }
 
 func envToInt(name string, def int) int {
