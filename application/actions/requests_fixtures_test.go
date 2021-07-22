@@ -64,11 +64,14 @@ func createFixturesForRequests(as *ActionSuite) RequestFixtures {
 		t.FailNow()
 	}
 
+	meetings := test.CreateMeetingFixtures(as.DB, 1, users[0])
+
 	return RequestFixtures{
 		Organization: org,
 		Users:        users,
 		Requests:     requests,
 		Threads:      threads,
+		Meetings:     meetings,
 	}
 }
 

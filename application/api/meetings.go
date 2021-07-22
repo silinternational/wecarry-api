@@ -3,6 +3,8 @@ package api
 import (
 	"time"
 
+	"github.com/gobuffalo/nulls"
+
 	"github.com/gofrs/uuid"
 )
 
@@ -18,6 +20,9 @@ type Meeting struct {
 	// unique: true
 	// example: 63d5b060-1460-4348-bdf0-ad03c105a8d5
 	ID uuid.UUID `json:"id"`
+
+	// Whether meeting is editable by current user
+	IsEditable bool `json:"is_editable"`
 
 	// Short name, limited to 80 characters
 	Name string `json:"name"`
@@ -51,6 +56,33 @@ type Meeting struct {
 
 	// meeting (event) information URL -- should be a full website, but could be an information document such as a pdf"
 	MoreInfoURL string `json:"more_info_url"`
+}
+
+// MeetingInput includes the fields for creating or updating Meetings/Events
+//
+// swagger:model
+type MeetingInput struct {
+
+	// short name, limited to 80 characters
+	Name string `json:"name"`
+
+	// text-only description, limited to 4096 characters
+	Description nulls.String `json:"description"`
+
+	// date (yyyy-mm-dd) of the first day of the meeting (event)"
+	StartDate string `json:"start_date"`
+
+	// date (yyyy-mm-dd) of the last day of the meeting (event)"
+	EndDate string `json:"end_date"`
+
+	// meeting (event) information URL -- should be a full website, but could be an information document such as a pdf"
+	MoreInfoURL nulls.String `json:"more_info_url"`
+
+	// ID of pre-stored image file, typically a logo. Upload using the `upload` REST API endpoint."
+	ImageFileID nulls.UUID `json:"image_file_id"`
+
+	// meeting (event) location -- notifications and filters may use this location"
+	Location Location `json:"location"`
 }
 
 // swagger:model

@@ -10,6 +10,7 @@ import (
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/buffalo/render"
 	"github.com/gobuffalo/nulls"
+	"github.com/gobuffalo/pop/v5"
 	"github.com/gofrs/uuid"
 
 	"github.com/silinternational/wecarry-api/api"
@@ -148,13 +149,15 @@ func convertRequestCreateInput(ctx context.Context, input api.RequestCreateInput
 	}
 
 	if input.NeededBefore.Valid {
-		n, err := time.Parse(domain.DateFormat, input.NeededBefore.String)
-		if err != nil {
-			err = errors.New("failed to parse NeededBefore, " + err.Error())
-			appErr := api.NewAppError(err, api.ErrorCreateRequestInvalidDate, api.CategoryUser)
-			return request, appErr
+		if err := addNeededBeforeToRequest(tx, input.NeededBefore, &request); err != nil {
+			return request, err
 		}
-		request.NeededBefore = nulls.NewTime(n)
+	}
+
+	if input.MeetingID.Valid {
+		if err := addMeetingIDToRequest(tx, input.MeetingID, &request); err != nil {
+			return request, err
+		}
 	}
 
 	if input.OrganizationID != uuid.Nil {
@@ -172,13 +175,8 @@ func convertRequestCreateInput(ctx context.Context, input api.RequestCreateInput
 	}
 
 	if input.PhotoID.Valid {
-		if _, err := request.AttachPhoto(tx, input.PhotoID.UUID.String()); err != nil {
-			err = errors.New("file ID not found, " + err.Error())
-			appErr := api.NewAppError(err, api.ErrorCreateRequestPhotoIDNotFound, api.CategoryUser)
-			if domain.IsOtherThanNoRows(err) {
-				appErr.Category = api.CategoryDatabase
-			}
-			return request, appErr
+		if err := attachPhotoToRequest(tx, input.PhotoID, &request); err != nil {
+			return request, err
 		}
 	}
 
@@ -269,13 +267,8 @@ func convertRequestUpdateInput(ctx context.Context, input api.RequestUpdateInput
 	}
 
 	if input.PhotoID.Valid {
-		if _, err := request.AttachPhoto(tx, input.PhotoID.UUID.String()); err != nil {
-			err = errors.New("request photo file ID not found, " + err.Error())
-			appErr := api.NewAppError(err, api.ErrorUpdateRequestPhotoIDNotFound, api.CategoryUser)
-			if domain.IsOtherThanNoRows(err) {
-				appErr.Category = api.CategoryDatabase
-			}
-			return request, appErr
+		if err := attachPhotoToRequest(tx, input.PhotoID, &request); err != nil {
+			return request, err
 		}
 	} else {
 		if err := request.RemoveFile(tx); err != nil {
@@ -317,19 +310,63 @@ func convertRequestUpdateInput(ctx context.Context, input api.RequestUpdateInput
 
 	request.Kilograms = input.Kilograms
 
-	if input.NeededBefore.Valid {
-		n, err := time.Parse(domain.DateFormat, input.NeededBefore.String)
-		if err != nil {
-			err = errors.New("failed to parse NeededBefore, " + err.Error())
-			appErr := api.NewAppError(err, api.ErrorUpdateRequestInvalidDate, api.CategoryUser)
-			return request, appErr
+	if input.MeetingID.Valid {
+		if err := addMeetingIDToRequest(tx, input.MeetingID, &request); err != nil {
+			return request, err
 		}
-		request.NeededBefore = nulls.NewTime(n)
+	} else {
+		request.MeetingID = nulls.Int{}
+	}
+
+	if input.NeededBefore.Valid {
+		if err := addNeededBeforeToRequest(tx, input.NeededBefore, &request); err != nil {
+			return request, err
+		}
 	} else {
 		request.NeededBefore = nulls.Time{}
 	}
 
 	return request, nil
+}
+
+func addNeededBeforeToRequest(tx *pop.Connection, neededBefore nulls.String, request *models.Request) error {
+	n, err := time.Parse(domain.DateFormat, neededBefore.String)
+	if err != nil {
+		err = errors.New("failed to parse NeededBefore, " + err.Error())
+		appErr := api.NewAppError(err, api.ErrorCreateRequestInvalidDate, api.CategoryUser)
+		return appErr
+	}
+	request.NeededBefore = nulls.NewTime(n)
+	return nil
+}
+
+func addMeetingIDToRequest(tx *pop.Connection, meetingID nulls.UUID, request *models.Request) error {
+	var meeting models.Meeting
+	if err := meeting.FindByUUID(tx, meetingID.UUID.String()); err != nil {
+		err = errors.New("meeting ID not found, " + err.Error())
+		appErr := api.NewAppError(err, api.ErrorRequestMeetingIDNotFound, api.CategoryUser)
+		if domain.IsOtherThanNoRows(err) {
+			appErr.Category = api.CategoryDatabase
+			return appErr
+		}
+		return appErr
+	}
+
+	request.MeetingID = nulls.NewInt(meeting.ID)
+	return nil
+}
+
+func attachPhotoToRequest(tx *pop.Connection, photoID nulls.UUID, request *models.Request) error {
+	if _, err := request.AttachPhoto(tx, photoID.UUID.String()); err != nil {
+		err = errors.New("request photo file ID not found, " + err.Error())
+		appErr := api.NewAppError(err, api.ErrorRequestPhotoIDNotFound, api.CategoryUser)
+		if domain.IsOtherThanNoRows(err) {
+			appErr.Category = api.CategoryDatabase
+		}
+		return appErr
+	}
+
+	return nil
 }
 
 // swagger:operation POST /requests/{request_id}/potentialprovider Requests AddMeAsPotentialProvider

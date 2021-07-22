@@ -237,8 +237,19 @@ func (m *Meeting) Update(tx *pop.Connection) error {
 // SetLocation sets the location field, creating a new record in the database if necessary.
 func (m *Meeting) SetLocation(tx *pop.Connection, location Location) error {
 	location.ID = m.LocationID
+	if m.LocationID == 0 {
+		if err := location.Create(tx); err != nil {
+			return err
+		}
+	} else {
+		if err := location.Update(tx); err != nil {
+			return err
+		}
+	}
+	m.LocationID = location.ID
 	m.Location = location
-	return m.Location.Update(tx)
+
+	return nil
 }
 
 // CanCreate returns a bool based on whether the current user is allowed to create a meeting
@@ -414,6 +425,8 @@ func ConvertMeeting(ctx context.Context, meeting Meeting, user User) (api.Meetin
 		return api.Meeting{}, err
 	}
 	output.Participants = participants
+
+	output.IsEditable = meeting.CanUpdate(user)
 
 	return output, nil
 }

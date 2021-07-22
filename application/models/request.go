@@ -937,9 +937,6 @@ func (r *Request) RemoveOrigin(tx *pop.Connection) error {
 
 // SetDestination sets the destination location fields, creating a new record in the database if necessary.
 func (r *Request) SetDestination(tx *pop.Connection, location Location) error {
-	if r.MeetingID.Valid {
-		return errors.New("Attempted to set destination on event-based request")
-	}
 	location.ID = r.DestinationID
 	r.Destination = location
 	return r.Destination.Update(tx)

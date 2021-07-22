@@ -81,8 +81,13 @@ const (
 
 	// Meeting
 
-	ErrorMeetingsGet     = ErrorKey("ErrorMeetingsGet")
-	ErrorMeetingsConvert = ErrorKey("ErrorMeetingsConvert")
+	ErrorMeetingsGet             = ErrorKey("ErrorMeetingsGet")
+	ErrorMeetingsConvert         = ErrorKey("ErrorMeetingsConvert")
+	ErrorCreateMeeting           = ErrorKey("ErrorCreateMeeting")
+	ErrorMeetingImageIDNotFound  = ErrorKey("ErrorMeetingImageIDNotFound")
+	ErrorMeetingInvalidEndDate   = ErrorKey("ErrorMeetingInvalidEndDate")
+	ErrorMeetingInvalidStartDate = ErrorKey("ErrorMeetingInvalidStartDate")
+	ErrorUpdateMeeting           = ErrorKey("ErrorUpdateMeeting")
 
 	// Message
 
@@ -111,11 +116,11 @@ const (
 	ErrorGetRequest                              = ErrorKey("ErrorGetRequest")
 	ErrorGetRequestUserNotAllowed                = ErrorKey("ErrorGetRequestUserNotAllowed")
 	ErrorCreateRequest                           = ErrorKey("ErrorCreateRequest")
+	ErrorRequestMeetingIDNotFound                = ErrorKey("ErrorRequestMeetingIDNotFound")
 	ErrorCreateRequestOrgIDNotFound              = ErrorKey("ErrorCreateRequestOrgIDNotFound")
-	ErrorCreateRequestPhotoIDNotFound            = ErrorKey("ErrorCreateRequestPhotoIDNotFound")
+	ErrorRequestPhotoIDNotFound                  = ErrorKey("ErrorRequestPhotoIDNotFound")
 	ErrorCreateRequestInvalidDate                = ErrorKey("ErrorCreateRequestInvalidDate")
 	ErrorUpdateRequest                           = ErrorKey("ErrorUpdateRequest")
-	ErrorUpdateRequestPhotoIDNotFound            = ErrorKey("ErrorUpdateRequestPhotoIDNotFound")
 	ErrorUpdateRequestStatusNotFound             = ErrorKey("ErrorUpdateRequestStatusNotFound")
 	ErrorUpdateRequestStatusBadStatus            = ErrorKey("ErrorUpdateRequestStatusBadStatus")
 	ErrorUpdateRequestStatusBadProvider          = ErrorKey("ErrorUpdateRequestStatusBadProvider")
