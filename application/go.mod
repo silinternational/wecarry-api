@@ -4,7 +4,6 @@ go 1.13
 
 require (
 	github.com/aws/aws-sdk-go v1.38.13
-	github.com/beevik/etree v1.1.0 // indirect
 	github.com/caddyserver/certmagic v0.11.2
 	github.com/fatih/color v1.10.0 // indirect
 	github.com/felixge/httpsnoop v1.0.2 // indirect
@@ -42,8 +41,8 @@ require (
 	github.com/rogpeppe/go-internal v1.8.0 // indirect
 	github.com/rollbar/rollbar-go v1.4.1
 	github.com/rs/cors v1.6.0
-	github.com/russellhaering/gosaml2 v0.3.1
-	github.com/russellhaering/goxmldsig v0.0.0-20180430223755-7acd5e4a6ef7
+	github.com/russellhaering/gosaml2 v0.6.0
+	github.com/russellhaering/goxmldsig v1.1.0
 	github.com/sendgrid/sendgrid-go v3.5.0+incompatible
 	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/silinternational/certmagic-storage-dynamodb v0.0.0-20200613203057-b8a4f076ab49
