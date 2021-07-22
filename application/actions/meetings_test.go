@@ -17,8 +17,8 @@ func (as *ActionSuite) verifyMeeting(expected models.Meeting, actual api.Meeting
 	as.Equal(expected.UUID, actual.ID, msg+", ID is not correct")
 	as.Equal(expected.Name, actual.Name, msg+", Name is not correct")
 	as.Equal(expected.Description.String, actual.Description, msg+", Description is not correct")
-	as.True(expected.StartDate.Equal(actual.StartDate), msg+", StartDate is not correct")
-	as.True(expected.EndDate.Equal(actual.EndDate), msg+", EndDate is not correct")
+	as.Equal(expected.StartDate.Format(domain.DateFormat), actual.StartDate, msg+", StartDate is not correct")
+	as.Equal(expected.EndDate.Format(domain.DateFormat), actual.EndDate, msg+", EndDate is not correct")
 	as.True(expected.CreatedAt.Equal(actual.CreatedAt), msg+", CreatedAt is not correct")
 	as.True(expected.UpdatedAt.Equal(actual.UpdatedAt), msg+", UpdatedAt is not correct")
 	as.Equal(expected.MoreInfoURL.String, actual.MoreInfoURL, msg+", MoreInfoURL is not correct")
@@ -161,7 +161,6 @@ func (as *ActionSuite) Test_meetingsCreate() {
 				`"image_file":{"id":"` + tt.meeting.ImageFileID.UUID.String(),
 			}
 			as.verifyResponseData(wantData, body, "")
-
 		})
 	}
 }
@@ -261,7 +260,6 @@ func (as *ActionSuite) Test_meetingsUpdate() {
 				`"image_file":{"id":"` + tt.input.ImageFileID.UUID.String(),
 			}
 			as.verifyResponseData(wantData, body, "")
-
 		})
 	}
 }
@@ -317,7 +315,6 @@ func (as *ActionSuite) Test_meetingsJoin() {
 
 	for _, tc := range testCases {
 		as.T().Run(tc.name, func(t *testing.T) {
-
 			reqBody := api.MeetingParticipantInput{
 				MeetingID: tc.meeting.UUID.String(),
 			}

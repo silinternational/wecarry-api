@@ -31,10 +31,10 @@ type Meeting struct {
 	Description string `json:"description"`
 
 	// The date of the first day of the meeting (event)
-	StartDate time.Time `json:"start_date"`
+	StartDate string `json:"start_date"`
 
 	// The date of the last day of the meeting (event)
-	EndDate time.Time `json:"end_date"`
+	EndDate string `json:"end_date"`
 
 	// Profile of the user that added this meeting (event) to the app
 	CreatedBy User `json:"created_by"`
