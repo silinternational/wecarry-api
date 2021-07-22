@@ -21,6 +21,9 @@ type Meeting struct {
 	// example: 63d5b060-1460-4348-bdf0-ad03c105a8d5
 	ID uuid.UUID `json:"id"`
 
+	// Whether meeting is editable by current user
+	IsEditable bool `json:"is_editable"`
+
 	// Short name, limited to 80 characters
 	Name string `json:"name"`
 
@@ -55,10 +58,10 @@ type Meeting struct {
 	MoreInfoURL string `json:"more_info_url"`
 }
 
-// MeetingCreateInput includes the fields for creating Meetings/Events
+// MeetingInput includes the fields for creating or updating Meetings/Events
 //
 // swagger:model
-type MeetingCreateInput struct {
+type MeetingInput struct {
 
 	// short name, limited to 80 characters
 	Name string `json:"name"`

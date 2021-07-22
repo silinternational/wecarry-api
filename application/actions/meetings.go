@@ -45,12 +45,12 @@ func meetingsList(c buffalo.Context) error {
 //
 // ---
 // parameters:
-//   - name: MeetingCreateInput
+//   - name: MeetingInput
 //     in: body
 //     required: true
 //     description: input object
 //     schema:
-//       "$ref": "#/definitions/MeetingCreateInput"
+//       "$ref": "#/definitions/MeetingInput"
 //
 // responses:
 //   '200':
@@ -60,9 +60,9 @@ func meetingsList(c buffalo.Context) error {
 func meetingsCreate(c buffalo.Context) error {
 	cUser := models.CurrentUser(c)
 
-	var input api.MeetingCreateInput
+	var input api.MeetingInput
 	if err := StrictBind(c, &input); err != nil {
-		err = errors.New("unable to unmarshal data into MeetingCreateInput, error: " + err.Error())
+		err = errors.New("unable to unmarshal data into MeetingInput, error: " + err.Error())
 		return reportError(c, api.NewAppError(err, api.ErrorInvalidRequestBody, api.CategoryUser))
 	}
 
@@ -85,38 +85,79 @@ func meetingsCreate(c buffalo.Context) error {
 	return c.Render(200, render.JSON(output))
 }
 
-// convertMeetingCreateInput creates a new `Meeting` from a `MeetingCreateInput`.
+// swagger:operation PUT /events/{event_id} Events EventsUpdate
+//
+// update an event/meeting
+//
+// ---
+// parameters:
+//   - name: MeetingInput
+//     in: body
+//     required: true
+//     description: input object
+//     schema:
+//       "$ref": "#/definitions/MeetingInput"
+//
+// responses:
+//   '200':
+//     description: the event/meeting
+//     schema:
+//       "$ref": "#/definitions/Meeting"
+func meetingsUpdate(c buffalo.Context) error {
+	cUser := models.CurrentUser(c)
+	var input api.MeetingInput
+	if err := StrictBind(c, &input); err != nil {
+		err = errors.New("unable to unmarshal data into MeetingInput, error: " + err.Error())
+		return reportError(c, api.NewAppError(err, api.ErrorInvalidRequestBody, api.CategoryUser))
+	}
+
+	tx := models.Tx(c)
+
+	id, err := getUUIDFromParam(c, "event_id")
+	if err != nil {
+		return reportError(c, err)
+	}
+
+	meeting, err := convertMeetingUpdateInput(c, input, id.String())
+	if err != nil {
+		return reportError(c, err)
+	}
+
+	if err = meeting.Update(tx); err != nil {
+		appError := api.NewAppError(err, api.ErrorUpdateMeeting, api.CategoryUser)
+		if domain.IsOtherThanNoRows(err) {
+			appError.Category = api.CategoryInternal
+		}
+		return reportError(c, appError)
+	}
+
+	output, err := models.ConvertMeeting(c, meeting, cUser)
+	if err != nil {
+		return reportError(c, err)
+	}
+
+	return c.Render(200, render.JSON(output))
+}
+
+// convertMeetingCreateInput creates a new `Meeting` from a `MeetingInput`.
 // All properties that are not `nil` are set to the value provided
-func convertMeetingCreateInput(ctx context.Context, input api.MeetingCreateInput) (models.Meeting, error) {
+func convertMeetingCreateInput(ctx context.Context, input api.MeetingInput) (models.Meeting, error) {
 	tx := models.Tx(ctx)
 
-	startDate, err := time.Parse(domain.DateFormat, input.StartDate)
-	if err != nil {
-		err = errors.New("failed to parse StartDate, " + err.Error())
-		appErr := api.NewAppError(err, api.ErrorCreateMeetingInvalidStartDate, api.CategoryUser)
-		return models.Meeting{}, appErr
+	meeting := models.Meeting{}
+	if err := parseMeetingDates(input, &meeting); err != nil {
+		return models.Meeting{}, err
 	}
 
-	endDate, err := time.Parse(domain.DateFormat, input.EndDate)
-	if err != nil {
-		err = errors.New("failed to parse EndDate, " + err.Error())
-		appErr := api.NewAppError(err, api.ErrorCreateMeetingInvalidEndDate, api.CategoryUser)
-		return models.Meeting{}, appErr
-	}
-
-	meeting := models.Meeting{
-		CreatedByID: models.CurrentUser(ctx).ID,
-		Name:        input.Name,
-		Description: input.Description,
-		MoreInfoURL: input.MoreInfoURL,
-		StartDate:   startDate,
-		EndDate:     endDate,
-	}
+	meeting.CreatedByID = models.CurrentUser(ctx).ID
+	meeting.Name = input.Name
+	meeting.Description = input.Description
+	meeting.MoreInfoURL = input.MoreInfoURL
 
 	if input.ImageFileID.Valid {
 		if _, err := meeting.SetImageFile(tx, input.ImageFileID.UUID.String()); err != nil {
 			err = errors.New("meeting image file ID not found, " + err.Error())
-			appErr := api.NewAppError(err, api.ErrorCreateMeetingImageIDNotFound, api.CategoryUser)
+			appErr := api.NewAppError(err, api.ErrorMeetingImageIDNotFound, api.CategoryUser)
 			if domain.IsOtherThanNoRows(err) {
 				appErr.Category = api.CategoryDatabase
 			}
@@ -125,10 +166,62 @@ func convertMeetingCreateInput(ctx context.Context, input api.MeetingCreateInput
 	}
 
 	location := models.ConvertLocationInput(input.Location)
-	if err := location.Create(tx); err != nil {
+	if err := meeting.SetLocation(tx, location); err != nil {
 		return meeting, api.NewAppError(err, api.ErrorLocationCreateFailure, api.CategoryUser)
 	}
-	meeting.LocationID = location.ID
+
+	return meeting, nil
+}
+
+// convertMeetingUpdateInput returns a `Meeting` from an existing record which has been
+//  updated based on a `MeetingInput`.
+// All properties in the original meeting will be overwritten.
+func convertMeetingUpdateInput(ctx context.Context, input api.MeetingInput, id string) (models.Meeting, error) {
+	tx := models.Tx(ctx)
+
+	var meeting models.Meeting
+	if err := meeting.FindByUUID(tx, id); err != nil {
+		appError := api.NewAppError(err, api.ErrorUpdateMeeting, api.CategoryNotFound)
+		if domain.IsOtherThanNoRows(err) {
+			appError.Category = api.CategoryInternal
+		}
+		return meeting, appError
+	}
+
+	if err := parseMeetingDates(input, &meeting); err != nil {
+		return models.Meeting{}, err
+	}
+
+	if input.ImageFileID.Valid {
+		if _, err := meeting.SetImageFile(tx, input.ImageFileID.UUID.String()); err != nil {
+			err = errors.New("request photo file ID not found, " + err.Error())
+			appErr := api.NewAppError(err, api.ErrorMeetingImageIDNotFound, api.CategoryUser)
+			if domain.IsOtherThanNoRows(err) {
+				appErr.Category = api.CategoryDatabase
+			}
+			return meeting, appErr
+		}
+	} else {
+		if err := meeting.RemoveFile(tx); err != nil {
+			return meeting, err
+		}
+	}
+
+	if err := tx.Load(&meeting, "Location"); err != nil {
+		appError := api.NewAppError(err, api.ErrorUpdateMeeting, api.CategoryInternal)
+		return meeting, appError
+	}
+
+	location := models.ConvertLocationInput(input.Location)
+	if location != meeting.Location {
+		if err := meeting.SetLocation(tx, location); err != nil {
+			return meeting, api.NewAppError(err, api.ErrorLocationCreateFailure, api.CategoryUser)
+		}
+	}
+
+	meeting.Name = input.Name
+	meeting.Description = input.Description
+	meeting.MoreInfoURL = input.MoreInfoURL
 
 	return meeting, nil
 }
@@ -183,4 +276,25 @@ func meetingsJoin(c buffalo.Context) error {
 	}
 
 	return c.Render(200, render.JSON(output))
+}
+
+func parseMeetingDates(input api.MeetingInput, modelMtg *models.Meeting) error {
+
+	startDate, err := time.Parse(domain.DateFormat, input.StartDate)
+	if err != nil {
+		err = errors.New("failed to parse StartDate, " + err.Error())
+		appErr := api.NewAppError(err, api.ErrorMeetingInvalidStartDate, api.CategoryUser)
+		return appErr
+	}
+	modelMtg.StartDate = startDate
+
+	endDate, err := time.Parse(domain.DateFormat, input.EndDate)
+	if err != nil {
+		err = errors.New("failed to parse EndDate, " + err.Error())
+		appErr := api.NewAppError(err, api.ErrorMeetingInvalidEndDate, api.CategoryUser)
+		return appErr
+	}
+	modelMtg.EndDate = endDate
+
+	return nil
 }
