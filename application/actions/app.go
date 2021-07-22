@@ -92,6 +92,8 @@ func App() *buffalo.App {
 		app.GET("/site/status", statusHandler)
 		app.Middleware.Skip(buffalo.RequestLogger, statusHandler)
 
+		app.Use(setHTTPExtras)
+
 		eventsGroup := app.Group("/events")
 		eventsGroup.GET("/", meetingsList)
 		eventsGroup.POST("/", meetingsCreate)
@@ -105,18 +107,21 @@ func App() *buffalo.App {
 		threadsGroup.PUT("/{thread_id}/read", threadsMarkAsRead)
 
 		requestsGroup := app.Group("/requests")
+		requestsGroup.Use(getRequestAuthz)
 		requestsGroup.GET("/", requestsList)
 		requestsGroup.POST("/", requestsCreate)
 		requestsGroup.GET("/{request_id}", requestsGet)
 		requestsGroup.PUT("/{request_id}", requestsUpdate)
 		requestsGroup.PUT("/{request_id}/status", requestsUpdateStatus)
 
+		app.Middleware.Skip(getRequestAuthz, requestsAddMeAsPotentialProvider,
+			requestsRejectPotentialProvider, requestsRemoveMeAsPotentialProvider)
+
 		requestsGroup.POST("/{request_id}/potentialprovider", requestsAddMeAsPotentialProvider)
 		requestsGroup.DELETE("/{request_id}/potentialprovider/{user_id}", requestsRejectPotentialProvider)
 		requestsGroup.DELETE("/{request_id}/potentialprovider", requestsRemoveMeAsPotentialProvider)
 
 		watchesGroup := app.Group("/watches")
-		watchesGroup.Use(WatchesMiddleware)
 		watchesGroup.GET("/", watchesMine)
 		watchesGroup.POST("/", watchesCreate)
 		watchesGroup.DELETE("/{watch_id}", watchesRemove)

@@ -449,11 +449,11 @@ func (as *ActionSuite) Test_requestsUpdate() {
 			user:       f.Users[1],
 			input:      wrongTypeOfRequest,
 			request:    f.Requests[1],
-			wantStatus: http.StatusBadRequest,
+			wantStatus: http.StatusNotFound,
 		},
 		{
 			name:       "bad input data",
-			user:       f.Users[1],
+			user:       f.Users[0],
 			input:      badRequestData,
 			request:    f.Requests[1],
 			wantStatus: http.StatusInternalServerError, // TODO: this needs to be StatusBadRequest
@@ -469,7 +469,7 @@ func (as *ActionSuite) Test_requestsUpdate() {
 			name:       "good input with meeting",
 			user:       f.Users[0],
 			input:      goodRequestWithMeeting,
-			request:    f.Requests[2],
+			request:    f.Requests[1],
 			wantStatus: http.StatusOK,
 		},
 	}
@@ -555,7 +555,7 @@ func (as *ActionSuite) Test_convertUpdateRequestInput() {
 	}
 	for _, tt := range tests {
 		as.T().Run(tt.name, func(t *testing.T) {
-			apiRequest, err := convertRequestUpdateInput(ctx, tt.input, tt.request.UUID.String())
+			apiRequest, err := convertRequestUpdateInput(ctx, tt.input, tt.request)
 			as.NoError(err)
 
 			as.NoError(as.DB.Load(&tt.input))
@@ -666,7 +666,7 @@ func (as *ActionSuite) Test_requestsUpdateStatus() {
 			user:       creator,
 			requestID:  domain.GetUUID().String(),
 			wantStatus: http.StatusNotFound,
-			wantKey:    api.ErrorUpdateRequestStatusNotFound,
+			wantKey:    api.ErrorGetRequest,
 			providerID: &providerUUID,
 		},
 		{

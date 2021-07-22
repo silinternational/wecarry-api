@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"runtime"
 
+	"github.com/silinternational/wecarry-api/models"
+
 	"github.com/gobuffalo/buffalo"
 	"github.com/gofrs/uuid"
 
@@ -14,9 +16,8 @@ import (
 )
 
 const (
-	watchIDKey   = "watch_id"
-	requestIDKey = "request_id"
-	userIDKey    = "user_id"
+	handlerDataKey = "handler_data"
+	requestIDKey   = "request_id"
 )
 
 // SocialAuthConfig holds the Key and Secret for a social auth provider
@@ -128,10 +129,20 @@ func getExtras(c buffalo.Context) map[string]interface{} {
 func getUUIDFromParam(c buffalo.Context, param string) (uuid.UUID, error) {
 	s := c.Param(param)
 	id := uuid.FromStringOrNil(s)
+	newExtra(c, param, s)
+
 	if id == uuid.Nil {
-		newExtra(c, param, s)
 		err := fmt.Errorf("invalid %s provided: '%s'", param, s)
 		return uuid.UUID{}, api.NewAppError(err, api.ErrorMustBeAValidUUID, api.CategoryUser)
 	}
 	return id, nil
+}
+
+type handlerData struct {
+	User     models.User
+	ModelObj interface{}
+}
+
+func setHandlerData(c buffalo.Context, data handlerData) {
+	c.Set(handlerDataKey, data)
 }

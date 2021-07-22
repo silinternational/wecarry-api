@@ -57,32 +57,17 @@ func requestsList(c buffalo.Context) error {
 //     schema:
 //       "$ref": "#/definitions/Request"
 func requestsGet(c buffalo.Context) error {
-	cUser := models.CurrentUser(c)
-	tx := models.Tx(c)
+	hData, err := getHandlerRequestData(c)
+	if err != nil {
+		return err
+	}
 
-	id, err := getUUIDFromParam(c, "request_id")
+	output, err := models.ConvertRequest(c, hData.Request)
 	if err != nil {
 		return reportError(c, err)
 	}
 
-	request := models.Request{}
-	if err = request.FindByUUID(tx, id.String()); err != nil {
-		appError := api.NewAppError(err, api.ErrorGetRequest, api.CategoryNotFound)
-		if domain.IsOtherThanNoRows(err) {
-			appError.Category = api.CategoryInternal
-		}
-		return reportError(c, appError)
-	}
-
-	if !cUser.CanViewRequest(tx, request) {
-		err = errors.New("user not allowed to view request")
-		return reportError(c, api.NewAppError(err, api.ErrorGetRequestUserNotAllowed, api.CategoryForbidden))
-	}
-
-	output, err := models.ConvertRequest(c, request)
-	if err != nil {
-		return reportError(c, err)
-	}
+	c.Set(handlerDataKey, nil)
 
 	return c.Render(200, render.JSON(output))
 }
@@ -216,6 +201,11 @@ func convertRequestCreateInput(ctx context.Context, input api.RequestCreateInput
 //     schema:
 //       "$ref": "#/definitions/Request"
 func requestsUpdate(c buffalo.Context) error {
+	hData, err := getHandlerRequestData(c)
+	if err != nil {
+		return err
+	}
+
 	var input api.RequestUpdateInput
 	if err := StrictBind(c, &input); err != nil {
 		err = errors.New("unable to unmarshal data into RequestUpdateInput, error: " + err.Error())
@@ -224,12 +214,7 @@ func requestsUpdate(c buffalo.Context) error {
 
 	tx := models.Tx(c)
 
-	requestID, err := getUUIDFromParam(c, "request_id")
-	if err != nil {
-		return reportError(c, err)
-	}
-
-	request, err := convertRequestUpdateInput(c, input, requestID.String())
+	request, err := convertRequestUpdateInput(c, input, hData.Request)
 	if err != nil {
 		return reportError(c, err)
 	}
@@ -254,17 +239,8 @@ func requestsUpdate(c buffalo.Context) error {
 // convertRequestUpdateInput updates a `Request` from a `RequestUpdateInput`, with the values in
 // the database as default for any property not specified in the input.
 // TODO: move the actual DB access into Request.Update() -- Note that this requires a change of function signature so that Update has the before and after File and Location IDs.
-func convertRequestUpdateInput(ctx context.Context, input api.RequestUpdateInput, id string) (models.Request, error) {
+func convertRequestUpdateInput(ctx context.Context, input api.RequestUpdateInput, request models.Request) (models.Request, error) {
 	tx := models.Tx(ctx)
-
-	var request models.Request
-	if err := request.FindByUUID(tx, id); err != nil {
-		appError := api.NewAppError(err, api.ErrorUpdateRequest, api.CategoryNotFound)
-		if domain.IsOtherThanNoRows(err) {
-			appError.Category = api.CategoryInternal
-		}
-		return request, appError
-	}
 
 	if input.PhotoID.Valid {
 		if err := attachPhotoToRequest(tx, input.PhotoID, &request); err != nil {
@@ -518,24 +494,20 @@ func requestsRemoveMeAsPotentialProvider(c buffalo.Context) error {
 //     schema:
 //       "$ref": "#/definitions/Request"
 func requestsUpdateStatus(c buffalo.Context) error {
+	hData, err := getHandlerRequestData(c)
+	if err != nil {
+		return err
+	}
+
 	var input api.RequestUpdateStatusInput
 	if err := StrictBind(c, &input); err != nil {
 		err = errors.New("unable to unmarshal data into RequestUpdateStatusInput, error: " + err.Error())
 		return reportError(c, api.NewAppError(err, api.ErrorInvalidRequestBody, api.CategoryUser))
 	}
 
-	requestID, err := getUUIDFromParam(c, "request_id")
-	if err != nil {
-		return reportError(c, err)
-	}
-
 	tx := models.Tx(c)
-	var request models.Request
-	if err := request.FindByUUID(tx, requestID.String()); err != nil {
-		return reportError(c, api.NewAppError(err, api.ErrorUpdateRequestStatusNotFound, api.CategoryNotFound))
-	}
-
-	cUser := models.CurrentUser(c)
+	cUser := hData.User
+	request := hData.Request
 	domain.NewExtra(c, "oldStatus", request.Status)
 	domain.NewExtra(c, "newStatus", input.Status)
 
