@@ -18,10 +18,10 @@ import (
 	"github.com/silinternational/wecarry-api/domain"
 )
 
-type MeetingOption string
+type MeetingOption int
 
 const (
-	MtgOptIncludeParticipants MeetingOption = "includeParticipants"
+	OptIncludeParticipants MeetingOption = iota + 1
 )
 
 // Meeting represents an event where people gather together from different locations
@@ -428,7 +428,7 @@ func ConvertMeeting(ctx context.Context, meeting Meeting, user User, options ...
 	output.Location = convertLocation(meeting.Location)
 	output.Participants = api.MeetingParticipants{}
 
-	if len(options) > 0 && options[0] == MtgOptIncludeParticipants {
+	if len(options) > 0 && options[0] == OptIncludeParticipants {
 		participants, err := loadMeetingParticipants(ctx, meeting, user)
 		if err != nil {
 			return api.Meeting{}, err
@@ -563,7 +563,7 @@ func (m *Meeting) CreateInvites(ctx context.Context, emails string) error {
 	cUser := CurrentUser(ctx)
 	tx := Tx(ctx)
 
-	can, err := cUser.CanManageMeeting(tx, *m)
+	can, err := cUser.CanCreateMeetingInvite(tx, *m)
 	if err != nil {
 		return errors.New("error creating meeting invites, " + err.Error())
 	}

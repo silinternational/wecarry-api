@@ -144,7 +144,7 @@ func meetingsUpdate(c buffalo.Context) error {
 		return reportError(c, appError)
 	}
 
-	output, err := models.ConvertMeeting(c, meeting, cUser, models.MtgOptIncludeParticipants)
+	output, err := models.ConvertMeeting(c, meeting, cUser, models.OptIncludeParticipants)
 	if err != nil {
 		return reportError(c, err)
 	}
@@ -339,7 +339,7 @@ func meetingsGet(c buffalo.Context) error {
 		return reportError(c, appError)
 	}
 
-	canViewParticipants, err := cUser.CanManageMeeting(tx, meeting)
+	canViewParticipants, err := cUser.CanViewMeetingParticipants(tx, meeting)
 	if err != nil {
 		appError := api.NewAppError(err, api.ErrorMeetingGet, api.CategoryInternal)
 		return reportError(c, appError)
@@ -347,7 +347,7 @@ func meetingsGet(c buffalo.Context) error {
 
 	var option models.MeetingOption
 	if canViewParticipants {
-		option = models.MtgOptIncludeParticipants
+		option = models.OptIncludeParticipants
 	}
 
 	output, err := models.ConvertMeeting(c, meeting, cUser, option)
