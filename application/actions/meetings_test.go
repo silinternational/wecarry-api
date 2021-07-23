@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gofrs/uuid"
+
 	"github.com/gobuffalo/nulls"
 
 	"github.com/silinternational/wecarry-api/api"
@@ -40,7 +42,7 @@ func (as *ActionSuite) Test_meetingsList() {
 
 	wantContains := []string{
 		fmt.Sprintf(`"nickname":"%s"`, user.Nickname),
-		fmt.Sprintf(`"participants":[{"user":{"id":"%s"`, user.UUID.String()),
+		fmt.Sprintf(`"participants":[]`),
 		`"url":"http://minio:9000/wca-test-bucket`,
 	}
 
@@ -226,6 +228,14 @@ func (as *ActionSuite) Test_meetingsUpdate() {
 			wantErrContains: api.ErrorMeetingImageIDNotFound.String(),
 		},
 		{
+			name:            "authz error",
+			user:            f.Users[1],
+			input:           goodMeeting,
+			meeting:         f.Meetings[0],
+			wantStatus:      http.StatusNotFound,
+			wantErrContains: api.ErrorNotAuthorized.String(),
+		},
+		{
 			name:       "good input",
 			user:       f.Users[0],
 			input:      goodMeeting,
@@ -336,8 +346,8 @@ func (as *ActionSuite) Test_meetingsJoin() {
 
 			wantContains := []string{
 				fmt.Sprintf(`"created_by":{"id":"%s"`, mtgCreator.UUID),
-				fmt.Sprintf(`"participants":[{"user":{"id":"%s"`, tc.user.UUID.String()),
-				fmt.Sprintf(`"nickname":"%s"`, tc.user.Nickname),
+				fmt.Sprintf(`"participants":[]`),
+				fmt.Sprintf(`"created_by":{"id":"%s"`, mtgCreator.UUID.String()),
 				fmt.Sprintf(`"id":"%s"`, tc.meeting.UUID.String()),
 				fmt.Sprintf(`"name":"%s"`, tc.meeting.Name),
 				fmt.Sprintf(`"start_date":"%s`, tc.meeting.StartDate.Format(domain.DateFormat)),
@@ -349,6 +359,94 @@ func (as *ActionSuite) Test_meetingsJoin() {
 			}
 
 			as.verifyResponseData(wantContains, body, "In Test_meetingsJoin")
+		})
+	}
+}
+
+func (as *ActionSuite) Test_meetingsGet() {
+	f := createFixturesForMeetings(as)
+
+	mtgCreator := f.Users[0]
+	mtgParticipant := f.Users[1]
+
+	testCases := []struct {
+		name             string
+		user             models.User
+		meeting          models.Meeting
+		wantStatus       int
+		wantParticipants bool
+	}{
+		{
+			name:       "authn error",
+			user:       models.User{},
+			meeting:    f.Meetings[0],
+			wantStatus: http.StatusUnauthorized,
+		},
+		{
+			name:       "bad meeting ID",
+			user:       mtgCreator,
+			meeting:    models.Meeting{UUID: uuid.UUID{}},
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name:       "meeting not Found",
+			user:       mtgCreator,
+			meeting:    models.Meeting{UUID: domain.GetUUID()},
+			wantStatus: http.StatusNotFound,
+		},
+		{
+			name:             "good for creator",
+			user:             mtgCreator,
+			meeting:          f.Meetings[1],
+			wantStatus:       http.StatusOK,
+			wantParticipants: true,
+		},
+		{
+			name:             "good for participant but no participants",
+			user:             mtgParticipant,
+			meeting:          f.Meetings[1],
+			wantStatus:       http.StatusOK,
+			wantParticipants: false,
+		},
+	}
+	for _, tc := range testCases {
+		as.T().Run(tc.name, func(t *testing.T) {
+			req := as.JSON("/events/" + tc.meeting.UUID.String())
+			req.Headers["Authorization"] = fmt.Sprintf("Bearer %s", tc.user.Nickname)
+			req.Headers["content-type"] = "application/json"
+			res := req.Get()
+
+			body := res.Body.String()
+			as.Equal(tc.wantStatus, res.Code, "incorrect status code returned, body: %s", body)
+
+			if tc.wantStatus != http.StatusOK {
+				return
+			}
+
+			as.NoError(as.DB.Load(&tc.meeting, "Location"), "error in test trying to load meeting location")
+
+			wantContains := []string{
+				fmt.Sprintf(`"id":"%s"`, tc.meeting.UUID.String()),
+				fmt.Sprintf(`"created_by":{"id":"%s"`, mtgCreator.UUID.String()),
+				fmt.Sprintf(`"nickname":"%s"`, mtgCreator.Nickname),
+				fmt.Sprintf(`"name":"%s"`, tc.meeting.Name),
+				fmt.Sprintf(`"start_date":"%s`, tc.meeting.StartDate.Format(domain.DateFormat)),
+				fmt.Sprintf(`"end_date":"%s`, tc.meeting.EndDate.Format(domain.DateFormat)),
+				fmt.Sprintf(`"location":{"description":"%s"`, tc.meeting.Location.Description),
+				fmt.Sprintf(`"country":"%s"`, tc.meeting.Location.Country),
+				fmt.Sprintf(`"latitude":%s`, convertFloat64ToIntString(tc.meeting.Location.Latitude)),
+				fmt.Sprintf(`"longitude":%s`, convertFloat64ToIntString(tc.meeting.Location.Longitude)),
+			}
+
+			as.verifyResponseData(wantContains, body, "In Test_meetingsGet")
+
+			if tc.wantParticipants {
+				wantContains := fmt.Sprintf(`"participants":[{"user":{"id":"%s"`, mtgParticipant.UUID.String())
+				as.Contains(body, wantContains, "incorrect participants list")
+			} else {
+				wantContains := fmt.Sprintf(`"participants":[]`)
+				as.Contains(body, wantContains, "participants list should be empty")
+			}
 		})
 	}
 }

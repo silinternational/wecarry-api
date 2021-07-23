@@ -74,11 +74,11 @@ func meetingsCreate(c buffalo.Context) error {
 	}
 
 	if err = meeting.Create(tx); err != nil {
-		return reportError(c, api.NewAppError(err, api.ErrorCreateMeeting, api.CategoryUser))
+		return reportError(c, api.NewAppError(err, api.ErrorMeetingCreate, api.CategoryUser))
 	}
 
 	if err = meeting.CreateInvites(c, input.Emails); err != nil {
-		return reportError(c, api.NewAppError(err, api.ErrorCreateMeeting, api.CategoryUser))
+		return reportError(c, api.NewAppError(err, api.ErrorMeetingCreate, api.CategoryUser))
 	}
 
 	output, err := models.ConvertMeeting(c, meeting, cUser)
@@ -109,6 +109,8 @@ func meetingsCreate(c buffalo.Context) error {
 //       "$ref": "#/definitions/Meeting"
 func meetingsUpdate(c buffalo.Context) error {
 	cUser := models.CurrentUser(c)
+	domain.NewExtra(c, "userID", cUser.ID)
+
 	var input api.MeetingInput
 	if err := StrictBind(c, &input); err != nil {
 		err = errors.New("unable to unmarshal data into MeetingInput, error: " + err.Error())
@@ -127,15 +129,22 @@ func meetingsUpdate(c buffalo.Context) error {
 		return reportError(c, err)
 	}
 
+	domain.NewExtra(c, "meetingID", meeting.ID)
+
+	if !cUser.CanUpdateMeeting(meeting) {
+		err := errors.New("user is not authorized to update meeting")
+		return reportError(c, api.NewAppError(err, api.ErrorNotAuthorized, api.CategoryForbidden))
+	}
+
 	if err = meeting.Update(tx); err != nil {
-		appError := api.NewAppError(err, api.ErrorUpdateMeeting, api.CategoryUser)
+		appError := api.NewAppError(err, api.ErrorMeetingUpdate, api.CategoryUser)
 		if domain.IsOtherThanNoRows(err) {
 			appError.Category = api.CategoryInternal
 		}
 		return reportError(c, appError)
 	}
 
-	output, err := models.ConvertMeeting(c, meeting, cUser)
+	output, err := models.ConvertMeeting(c, meeting, cUser, models.OptIncludeParticipants)
 	if err != nil {
 		return reportError(c, err)
 	}
@@ -185,7 +194,7 @@ func convertMeetingUpdateInput(ctx context.Context, input api.MeetingInput, id s
 
 	var meeting models.Meeting
 	if err := meeting.FindByUUID(tx, id); err != nil {
-		appError := api.NewAppError(err, api.ErrorUpdateMeeting, api.CategoryNotFound)
+		appError := api.NewAppError(err, api.ErrorMeetingUpdate, api.CategoryNotFound)
 		if domain.IsOtherThanNoRows(err) {
 			appError.Category = api.CategoryInternal
 		}
@@ -212,7 +221,7 @@ func convertMeetingUpdateInput(ctx context.Context, input api.MeetingInput, id s
 	}
 
 	if err := tx.Load(&meeting, "Location"); err != nil {
-		appError := api.NewAppError(err, api.ErrorUpdateMeeting, api.CategoryInternal)
+		appError := api.NewAppError(err, api.ErrorMeetingUpdate, api.CategoryInternal)
 		return meeting, appError
 	}
 
@@ -300,4 +309,51 @@ func parseMeetingDates(input api.MeetingInput, modelMtg *models.Meeting) error {
 	modelMtg.EndDate = endDate
 
 	return nil
+}
+
+// swagger:operation GET /events/{event_id} Events GetEvent
+//
+// gets one event/meeting with its participants
+//
+// ---
+// responses:
+//   '200':
+//     description: an event/meeting
+//     schema:
+//       "$ref": "#/definitions/Meeting"
+func meetingsGet(c buffalo.Context) error {
+	cUser := models.CurrentUser(c)
+	tx := models.Tx(c)
+
+	id, err := getUUIDFromParam(c, "event_id")
+	if err != nil {
+		return reportError(c, err)
+	}
+
+	meeting := models.Meeting{}
+	if err = meeting.FindByUUID(tx, id.String()); err != nil {
+		appError := api.NewAppError(err, api.ErrorMeetingGet, api.CategoryNotFound)
+		if domain.IsOtherThanNoRows(err) {
+			appError.Category = api.CategoryInternal
+		}
+		return reportError(c, appError)
+	}
+
+	canViewParticipants, err := cUser.CanViewMeetingParticipants(tx, meeting)
+	if err != nil {
+		appError := api.NewAppError(err, api.ErrorMeetingGet, api.CategoryInternal)
+		return reportError(c, appError)
+	}
+
+	var option models.MeetingOption
+	if canViewParticipants {
+		option = models.OptIncludeParticipants
+	}
+
+	output, err := models.ConvertMeeting(c, meeting, cUser, option)
+	if err != nil {
+		return reportError(c, api.NewAppError(err, api.ErrorMeetingsConvert, api.CategoryInternal))
+	}
+
+	return c.Render(200, render.JSON(output))
 }

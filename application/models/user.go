@@ -796,34 +796,27 @@ func (u *User) MeetingsAsParticipant(tx *pop.Connection) ([]Meeting, error) {
 }
 
 func (u *User) CanCreateMeetingInvite(tx *pop.Connection, meeting Meeting) (bool, error) {
-	isOrganizer, err := meeting.isOrganizer(tx, u.ID)
-	if err != nil {
-		return false, err
+	if u.ID == meeting.CreatedByID || u.isSuperAdmin() {
+		return true, nil
 	}
 
-	return u.ID == meeting.CreatedByID || isOrganizer || u.isSuperAdmin(), nil
+	return meeting.isOrganizer(tx, u.ID)
 }
 
-func (u *User) CanRemoveMeetingInvite(tx *pop.Connection, meeting Meeting) (bool, error) {
-	isOrganizer, err := meeting.isOrganizer(tx, u.ID)
-	if err != nil {
-		return false, err
-	}
-
-	return u.ID == meeting.CreatedByID || isOrganizer || u.isSuperAdmin(), nil
+func (u *User) CanUpdateMeeting(meeting Meeting) bool {
+	return u.ID == meeting.CreatedByID || u.isSuperAdmin()
 }
 
 func (u *User) CanCreateMeetingParticipant(tx *pop.Connection, meeting Meeting) bool {
 	return u.ID == meeting.CreatedByID || meeting.isVisible(tx, u.ID) || u.isSuperAdmin()
 }
 
-func (u *User) CanRemoveMeetingParticipant(tx *pop.Connection, meeting Meeting) (bool, error) {
-	isOrganizer, err := meeting.isOrganizer(tx, u.ID)
-	if err != nil {
-		return false, err
+func (u *User) CanViewMeetingParticipants(tx *pop.Connection, meeting Meeting) (bool, error) {
+	if u.ID == meeting.CreatedByID || u.isSuperAdmin() {
+		return true, nil
 	}
 
-	return u.ID == meeting.CreatedByID || isOrganizer || u.isSuperAdmin(), nil
+	return meeting.isOrganizer(tx, u.ID)
 }
 
 // RemovePreferences removes all of the users's preferences

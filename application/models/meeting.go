@@ -18,6 +18,12 @@ import (
 	"github.com/silinternational/wecarry-api/domain"
 )
 
+type MeetingOption int
+
+const (
+	OptIncludeParticipants MeetingOption = iota + 1
+)
+
 // Meeting represents an event where people gather together from different locations
 type Meeting struct {
 	ID          int          `json:"-" db:"id"`
@@ -405,7 +411,7 @@ func ConvertMeetings(ctx context.Context, meetings []Meeting, user User) ([]api.
 }
 
 // ConvertMeeting converts a model.Meeting into api.Meeting
-func ConvertMeeting(ctx context.Context, meeting Meeting, user User) (api.Meeting, error) {
+func ConvertMeeting(ctx context.Context, meeting Meeting, user User, options ...MeetingOption) (api.Meeting, error) {
 	output := convertMeetingAbridged(meeting)
 	tx := Tx(ctx)
 	if err := tx.Load(&meeting); err != nil {
@@ -420,13 +426,15 @@ func ConvertMeeting(ctx context.Context, meeting Meeting, user User) (api.Meetin
 
 	output.ImageFile = convertMeetingImageFile(meeting)
 	output.Location = convertLocation(meeting.Location)
+	output.Participants = api.MeetingParticipants{}
 
-	participants, err := loadMeetingParticipants(ctx, meeting, user)
-	if err != nil {
-		return api.Meeting{}, err
+	if len(options) > 0 && options[0] == OptIncludeParticipants {
+		participants, err := loadMeetingParticipants(ctx, meeting, user)
+		if err != nil {
+			return api.Meeting{}, err
+		}
+		output.Participants = participants
 	}
-	output.Participants = participants
-
 	output.IsEditable = meeting.CanUpdate(user)
 
 	return output, nil
