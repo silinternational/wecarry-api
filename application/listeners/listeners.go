@@ -439,7 +439,7 @@ func sendMeetingInvite(invite models.MeetingInvite) error {
 		map[string]string{"MeetingName": invite.Meeting.Name})
 
 	msg := notifications.Message{
-		Template:  domain.MessageTemplateInvite,
+		Template:  domain.MessageTemplateMeetingInvite,
 		ToEmail:   invite.Email,
 		FromEmail: domain.EmailFromAddress(nil),
 		Subject:   subject,

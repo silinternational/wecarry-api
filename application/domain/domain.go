@@ -62,9 +62,9 @@ const (
 	ArgMessageID = "message_id"
 )
 
-// Notification Message Template Names
+// Notification Message Template Names -- the values correspond to the template file names
 const (
-	MessageTemplateInvite                          = "invite"
+	MessageTemplateMeetingInvite                   = "meeting_invite"
 	MessageTemplateNewRequest                      = "new_request"
 	MessageTemplateNewThreadMessage                = "new_thread_message"
 	MessageTemplateNewUserWelcome                  = "new_user_welcome"
