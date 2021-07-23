@@ -105,6 +105,20 @@ func (v *dateValidator) IsValid(errors *validate.Errors) {
 	errors.Add(validators.GenerateKey(v.Name), v.Message)
 }
 
+func (m *Meeting) SafeDelete(tx *pop.Connection) error {
+
+	requests, err := m.Requests(tx)
+	if domain.IsOtherThanNoRows(err) {
+		return err
+	}
+
+	if len(requests) > 0 {
+		return errors.New("meeting with associated requests may not be deleted")
+	}
+
+	return tx.Destroy(m)
+}
+
 // FindByUUID finds a meeting by the UUID field and loads its CreatedBy field
 func (m *Meeting) FindByUUID(tx *pop.Connection, uuid string) error {
 	if uuid == "" {

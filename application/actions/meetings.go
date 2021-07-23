@@ -3,6 +3,8 @@ package actions
 import (
 	"context"
 	"errors"
+	"net/http"
+	"strings"
 	"time"
 
 	"github.com/silinternational/wecarry-api/domain"
@@ -356,4 +358,47 @@ func meetingsGet(c buffalo.Context) error {
 	}
 
 	return c.Render(200, render.JSON(output))
+}
+
+// swagger:operation DELETE /events/{event_id} Events DeleteEvent
+//
+// delete one event/meeting with its participants as long as there are no requests
+// associated with it
+//
+// ---
+// responses:
+//   '204':
+//     description: OK but no content in response
+func meetingsRemove(c buffalo.Context) error {
+	cUser := models.CurrentUser(c)
+	tx := models.Tx(c)
+
+	id, err := getUUIDFromParam(c, "event_id")
+	if err != nil {
+		return reportError(c, err)
+	}
+
+	meeting := models.Meeting{}
+	if err = meeting.FindByUUID(tx, id.String()); err != nil {
+		appError := api.NewAppError(err, api.ErrorMeetingGet, api.CategoryNotFound)
+		if domain.IsOtherThanNoRows(err) {
+			appError.Category = api.CategoryInternal
+		}
+		return reportError(c, appError)
+	}
+
+	if !cUser.CanUpdateMeeting(meeting) {
+		err := errors.New("user is not authorized to delete the meeting")
+		return reportError(c, api.NewAppError(err, api.ErrorNotAuthorized, api.CategoryForbidden))
+	}
+
+	if err := meeting.SafeDelete(tx); err != nil {
+		appError := api.NewAppError(err, api.ErrorMeetingDelete, api.CategoryInternal)
+		if strings.Contains(err.Error(), `meeting with associated requests may not be deleted`) {
+			appError.Category = api.CategoryForbidden
+		}
+		return reportError(c, appError)
+	}
+
+	return c.Render(http.StatusNoContent, nil)
 }
