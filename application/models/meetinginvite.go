@@ -56,7 +56,7 @@ func (m *MeetingInvite) Create(tx *pop.Connection) error {
 		e := events.Event{
 			Kind:    domain.EventApiMeetingInviteCreated,
 			Message: "Meeting Invite created",
-			Payload: events.Payload{domain.EventPayloadKeyId: m.ID},
+			Payload: events.Payload{domain.ArgId: m.ID},
 		}
 
 		emitEvent(e)

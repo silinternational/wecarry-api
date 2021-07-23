@@ -175,7 +175,7 @@ func (ms *ModelSuite) TestSendRequestCreatedNotifications() {
 	e := events.Event{
 		Kind:    domain.EventApiRequestCreated,
 		Message: "Request created",
-		Payload: events.Payload{domain.EventPayloadKeyEventData: models.RequestCreatedEventData{
+		Payload: events.Payload{domain.ArgEventData: models.RequestCreatedEventData{
 			RequestID: f.Requests[0].ID,
 		}},
 	}
@@ -215,7 +215,7 @@ func (ms *ModelSuite) TestMeetingInviteCreated() {
 	meetingInviteCreated(events.Event{
 		Kind:    domain.EventApiMeetingInviteCreated,
 		Message: "Meeting Invite created",
-		Payload: events.Payload{domain.EventPayloadKeyId: invite.ID},
+		Payload: events.Payload{domain.ArgId: invite.ID},
 	})
 
 	emailsSent := notifications.TestEmailService.GetSentMessages()

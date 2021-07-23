@@ -59,6 +59,8 @@ const (
 
 // Event and Job argument names
 const (
+	ArgId        = "id"
+	ArgEventData = "eventData"
 	ArgMessageID = "message_id"
 )
 
@@ -117,11 +119,6 @@ const (
 	ContextKeyCurrentUser = "current_user"
 	ContextKeyExtras      = "extras"
 	ContextKeyRollbar     = "rollbar"
-)
-
-const (
-	EventPayloadKeyId        = "id"
-	EventPayloadKeyEventData = "eventData"
 )
 
 var (
