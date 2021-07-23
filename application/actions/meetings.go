@@ -316,7 +316,7 @@ func parseMeetingDates(input api.MeetingInput, modelMtg *models.Meeting) error {
 // ---
 // responses:
 //   '200':
-//     description: ab event/meeting
+//     description: an event/meeting
 //     schema:
 //       "$ref": "#/definitions/Meeting"
 func meetingsGet(c buffalo.Context) error {
