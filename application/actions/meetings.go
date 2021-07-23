@@ -3,7 +3,6 @@ package actions
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/silinternational/wecarry-api/domain"
@@ -82,7 +81,7 @@ func meetingsCreate(c buffalo.Context) error {
 		return reportError(c, api.NewAppError(err, api.ErrorMeetingCreate, api.CategoryUser))
 	}
 
-	output, err := models.ConvertMeeting(c, meeting, cUser, false)
+	output, err := models.ConvertMeeting(c, meeting, cUser)
 	if err != nil {
 		return reportError(c, err)
 	}
@@ -110,6 +109,8 @@ func meetingsCreate(c buffalo.Context) error {
 //       "$ref": "#/definitions/Meeting"
 func meetingsUpdate(c buffalo.Context) error {
 	cUser := models.CurrentUser(c)
+	domain.NewExtra(c, "userID", cUser.ID)
+
 	var input api.MeetingInput
 	if err := StrictBind(c, &input); err != nil {
 		err = errors.New("unable to unmarshal data into MeetingInput, error: " + err.Error())
@@ -128,9 +129,10 @@ func meetingsUpdate(c buffalo.Context) error {
 		return reportError(c, err)
 	}
 
+	domain.NewExtra(c, "meetingID", meeting.ID)
+
 	if !cUser.CanUpdateMeeting(meeting) {
-		err := fmt.Errorf("user %s is not authorized to update meeting %s",
-			cUser.UUID.String(), meeting.UUID.String())
+		err := errors.New("user is not authorized to update meeting")
 		return reportError(c, api.NewAppError(err, api.ErrorNotAuthorized, api.CategoryForbidden))
 	}
 
@@ -142,7 +144,7 @@ func meetingsUpdate(c buffalo.Context) error {
 		return reportError(c, appError)
 	}
 
-	output, err := models.ConvertMeeting(c, meeting, cUser, true)
+	output, err := models.ConvertMeeting(c, meeting, cUser, models.MtgOptIncludeParticipants)
 	if err != nil {
 		return reportError(c, err)
 	}
@@ -281,7 +283,7 @@ func meetingsJoin(c buffalo.Context) error {
 		return reportError(c, appErr)
 	}
 
-	output, err := models.ConvertMeeting(c, meeting, user, false)
+	output, err := models.ConvertMeeting(c, meeting, user)
 	if err != nil {
 		return reportError(c, api.NewAppError(err, api.ErrorMeetingsConvert, api.CategoryInternal))
 	}
@@ -343,7 +345,12 @@ func meetingsGet(c buffalo.Context) error {
 		return reportError(c, appError)
 	}
 
-	output, err := models.ConvertMeeting(c, meeting, cUser, canViewParticipants)
+	var option models.MeetingOption
+	if canViewParticipants {
+		option = models.MtgOptIncludeParticipants
+	}
+
+	output, err := models.ConvertMeeting(c, meeting, cUser, option)
 	if err != nil {
 		return reportError(c, api.NewAppError(err, api.ErrorMeetingsConvert, api.CategoryInternal))
 	}
