@@ -52,18 +52,6 @@ func (m *MeetingInvite) Create(tx *pop.Connection) error {
 	return err
 }
 
-// Meeting returns the related Meeting record
-func (m *MeetingInvite) Meeting(tx *pop.Connection) (Meeting, error) {
-	var meeting Meeting
-	return meeting, tx.Find(&meeting, m.MeetingID)
-}
-
-// Inviter returns the related User record of the inviter
-func (m *MeetingInvite) Inviter(tx *pop.Connection) (User, error) {
-	var user User
-	return user, tx.Find(&user, m.InviterID)
-}
-
 // AvatarURL returns a generated gravatar URL for the inivitee
 func (m *MeetingInvite) AvatarURL() string {
 	return gravatarURL(m.Email)
