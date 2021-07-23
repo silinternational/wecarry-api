@@ -395,7 +395,7 @@ func meetingsRemove(c buffalo.Context) error {
 	if err := meeting.SafeDelete(tx); err != nil {
 		appError := api.NewAppError(err, api.ErrorMeetingDelete, api.CategoryInternal)
 		if strings.Contains(err.Error(), `meeting with associated requests may not be deleted`) {
-			appError.Category = api.CategoryForbidden
+			appError.Category = api.CategoryUser
 		}
 		return reportError(c, appError)
 	}
