@@ -82,8 +82,8 @@ func watchesCreate(c buffalo.Context) error {
 //
 // ---
 // responses:
-//   '200':
-//     description: The id (uuid) of the deleted watch
+//   '204':
+//     description: OK but no content in response
 func watchesRemove(c buffalo.Context) error {
 	cUser := models.CurrentUser(c)
 	tx := models.Tx(c)

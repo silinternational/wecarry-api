@@ -98,6 +98,7 @@ func App() *buffalo.App {
 		eventsGroup.PUT("/{event_id}", meetingsUpdate)
 		eventsGroup.POST("/join", meetingsJoin)
 		eventsGroup.GET("/{event_id}", meetingsGet)
+		eventsGroup.DELETE("/{event_id}", meetingsRemove)
 
 		app.POST("/messages/", messagesCreate)
 

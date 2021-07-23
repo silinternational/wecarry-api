@@ -450,3 +450,61 @@ func (as *ActionSuite) Test_meetingsGet() {
 		})
 	}
 }
+
+func (as *ActionSuite) Test_meetingsRemove() {
+	f := createFixturesForMeetings(as)
+	hasRequests := f.Meetings[2]
+
+	tests := []struct {
+		name            string
+		user            models.User
+		meeting         models.Meeting
+		wantStatus      int
+		wantErrContains string
+	}{
+		{
+			name:            "authn error",
+			user:            models.User{},
+			meeting:         f.Meetings[0],
+			wantStatus:      http.StatusUnauthorized,
+			wantErrContains: api.ErrorNotAuthenticated.String(),
+		},
+		{
+			name:            "authz error",
+			user:            f.Users[1],
+			meeting:         f.Meetings[0],
+			wantStatus:      http.StatusNotFound,
+			wantErrContains: api.ErrorNotAuthorized.String(),
+		},
+		{
+			name:            "not safe to delete",
+			user:            f.Users[0],
+			meeting:         hasRequests,
+			wantStatus:      http.StatusBadRequest,
+			wantErrContains: `meeting with associated requests may not be deleted`,
+		},
+		{
+			name:       "safe to delete",
+			user:       f.Users[0],
+			meeting:    f.Meetings[0],
+			wantStatus: http.StatusNoContent,
+		},
+	}
+	for _, tt := range tests {
+		as.T().Run(tt.name, func(t *testing.T) {
+			req := as.JSON("/events/" + tt.meeting.UUID.String())
+			req.Headers["Authorization"] = fmt.Sprintf("Bearer %s", tt.user.Nickname)
+			req.Headers["content-type"] = "application/json"
+			res := req.Delete()
+
+			body := res.Body.String()
+			as.Equal(tt.wantStatus, res.Code, "incorrect status code returned, body: %s", body)
+
+			if tt.wantStatus != http.StatusNoContent {
+				if tt.wantErrContains != "" {
+					as.Contains(body, tt.wantErrContains, "missing error message")
+				}
+			}
+		})
+	}
+}
