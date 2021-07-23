@@ -804,6 +804,10 @@ func (u *User) CanCreateMeetingInvite(tx *pop.Connection, meeting Meeting) (bool
 	return u.ID == meeting.CreatedByID || isOrganizer || u.isSuperAdmin(), nil
 }
 
+func (u *User) CanUpdateMeeting(meeting Meeting) bool {
+	return u.ID == meeting.CreatedByID || u.isSuperAdmin()
+}
+
 func (u *User) CanRemoveMeetingInvite(tx *pop.Connection, meeting Meeting) (bool, error) {
 	isOrganizer, err := meeting.isOrganizer(tx, u.ID)
 	if err != nil {

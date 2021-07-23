@@ -3,6 +3,7 @@ package actions
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/silinternational/wecarry-api/domain"
@@ -74,14 +75,14 @@ func meetingsCreate(c buffalo.Context) error {
 	}
 
 	if err = meeting.Create(tx); err != nil {
-		return reportError(c, api.NewAppError(err, api.ErrorCreateMeeting, api.CategoryUser))
+		return reportError(c, api.NewAppError(err, api.ErrorMeetingCreate, api.CategoryUser))
 	}
 
 	if err = meeting.CreateInvites(c, input.Emails); err != nil {
-		return reportError(c, api.NewAppError(err, api.ErrorCreateMeeting, api.CategoryUser))
+		return reportError(c, api.NewAppError(err, api.ErrorMeetingCreate, api.CategoryUser))
 	}
 
-	output, err := models.ConvertMeeting(c, meeting, cUser)
+	output, err := models.ConvertMeeting(c, meeting, cUser, false)
 	if err != nil {
 		return reportError(c, err)
 	}
@@ -127,15 +128,21 @@ func meetingsUpdate(c buffalo.Context) error {
 		return reportError(c, err)
 	}
 
+	if !cUser.CanUpdateMeeting(meeting) {
+		err := fmt.Errorf("user %s is not authorized to update meeting %s",
+			cUser.UUID.String(), meeting.UUID.String())
+		return reportError(c, api.NewAppError(err, api.ErrorNotAuthorized, api.CategoryForbidden))
+	}
+
 	if err = meeting.Update(tx); err != nil {
-		appError := api.NewAppError(err, api.ErrorUpdateMeeting, api.CategoryUser)
+		appError := api.NewAppError(err, api.ErrorMeetingUpdate, api.CategoryUser)
 		if domain.IsOtherThanNoRows(err) {
 			appError.Category = api.CategoryInternal
 		}
 		return reportError(c, appError)
 	}
 
-	output, err := models.ConvertMeeting(c, meeting, cUser)
+	output, err := models.ConvertMeeting(c, meeting, cUser, true)
 	if err != nil {
 		return reportError(c, err)
 	}
@@ -185,7 +192,7 @@ func convertMeetingUpdateInput(ctx context.Context, input api.MeetingInput, id s
 
 	var meeting models.Meeting
 	if err := meeting.FindByUUID(tx, id); err != nil {
-		appError := api.NewAppError(err, api.ErrorUpdateMeeting, api.CategoryNotFound)
+		appError := api.NewAppError(err, api.ErrorMeetingUpdate, api.CategoryNotFound)
 		if domain.IsOtherThanNoRows(err) {
 			appError.Category = api.CategoryInternal
 		}
@@ -212,7 +219,7 @@ func convertMeetingUpdateInput(ctx context.Context, input api.MeetingInput, id s
 	}
 
 	if err := tx.Load(&meeting, "Location"); err != nil {
-		appError := api.NewAppError(err, api.ErrorUpdateMeeting, api.CategoryInternal)
+		appError := api.NewAppError(err, api.ErrorMeetingUpdate, api.CategoryInternal)
 		return meeting, appError
 	}
 
@@ -274,7 +281,7 @@ func meetingsJoin(c buffalo.Context) error {
 		return reportError(c, appErr)
 	}
 
-	output, err := models.ConvertMeeting(c, meeting, user)
+	output, err := models.ConvertMeeting(c, meeting, user, false)
 	if err != nil {
 		return reportError(c, api.NewAppError(err, api.ErrorMeetingsConvert, api.CategoryInternal))
 	}
@@ -300,4 +307,46 @@ func parseMeetingDates(input api.MeetingInput, modelMtg *models.Meeting) error {
 	modelMtg.EndDate = endDate
 
 	return nil
+}
+
+// swagger:operation GET /events/{event_id} Events GetEvent
+//
+// gets one event/meeting with its participants
+//
+// ---
+// responses:
+//   '200':
+//     description: ab event/meeting
+//     schema:
+//       "$ref": "#/definitions/Meeting"
+func meetingsGet(c buffalo.Context) error {
+	cUser := models.CurrentUser(c)
+	tx := models.Tx(c)
+
+	id, err := getUUIDFromParam(c, "event_id")
+	if err != nil {
+		return reportError(c, err)
+	}
+
+	meeting := models.Meeting{}
+	if err = meeting.FindByUUID(tx, id.String()); err != nil {
+		appError := api.NewAppError(err, api.ErrorMeetingGet, api.CategoryNotFound)
+		if domain.IsOtherThanNoRows(err) {
+			appError.Category = api.CategoryInternal
+		}
+		return reportError(c, appError)
+	}
+
+	canViewParticipants, err := cUser.CanCreateMeetingInvite(tx, meeting)
+	if err != nil {
+		appError := api.NewAppError(err, api.ErrorMeetingGet, api.CategoryInternal)
+		return reportError(c, appError)
+	}
+
+	output, err := models.ConvertMeeting(c, meeting, cUser, canViewParticipants)
+	if err != nil {
+		return reportError(c, api.NewAppError(err, api.ErrorMeetingsConvert, api.CategoryInternal))
+	}
+
+	return c.Render(200, render.JSON(output))
 }
