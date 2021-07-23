@@ -563,7 +563,7 @@ func (m *Meeting) CreateInvites(ctx context.Context, emails string) error {
 	cUser := CurrentUser(ctx)
 	tx := Tx(ctx)
 
-	can, err := cUser.CanCreateMeetingInvite(tx, *m)
+	can, err := cUser.CanManageMeeting(tx, *m)
 	if err != nil {
 		return errors.New("error creating meeting invites, " + err.Error())
 	}

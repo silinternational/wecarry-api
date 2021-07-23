@@ -339,7 +339,7 @@ func meetingsGet(c buffalo.Context) error {
 		return reportError(c, appError)
 	}
 
-	canViewParticipants, err := cUser.CanCreateMeetingInvite(tx, meeting)
+	canViewParticipants, err := cUser.CanManageMeeting(tx, meeting)
 	if err != nil {
 		appError := api.NewAppError(err, api.ErrorMeetingGet, api.CategoryInternal)
 		return reportError(c, appError)
