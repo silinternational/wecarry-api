@@ -2,9 +2,11 @@ package models
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
+	"github.com/gobuffalo/events"
 	"github.com/gobuffalo/pop/v5"
 	"github.com/gobuffalo/validate/v3"
 	"github.com/gobuffalo/validate/v3/validators"
@@ -22,6 +24,8 @@ type MeetingInvite struct {
 	InviterID int       `json:"inviter_id" db:"inviter_id"`
 	Secret    uuid.UUID `json:"secret" db:"secret"`
 	Email     string    `json:"email" db:"email"`
+	Inviter   User      `json:"-" belongs_to:"users" fk_id:"InviterID"`
+	Meeting   Meeting   `json:"-" belongs_to:"meetings" fk_id:"MeetingID"`
 }
 
 // MeetingInvites is used for methods that operate on lists of objects
@@ -48,13 +52,40 @@ func (m *MeetingInvite) Create(tx *pop.Connection) error {
 	}
 	if err == nil {
 		*m = invite
+
+		e := events.Event{
+			Kind:    domain.EventApiMeetingInviteCreated,
+			Message: "Meeting Invite created",
+			Payload: events.Payload{domain.EventPayloadKeyId: m.ID},
+		}
+
+		emitEvent(e)
 	}
+
 	return err
 }
 
 // AvatarURL returns a generated gravatar URL for the inivitee
 func (m *MeetingInvite) AvatarURL() string {
 	return gravatarURL(m.Email)
+}
+
+func (m *MeetingInvite) FindByID(tx *pop.Connection, id int, eagerFields ...string) error {
+	if id <= 0 {
+		return errors.New("error finding invite: ID must a positive number")
+	}
+
+	var err error
+	if len(eagerFields) > 0 {
+		err = tx.Eager(eagerFields...).Find(m, id)
+	} else {
+		err = tx.Find(m, id)
+	}
+	if err != nil {
+		return fmt.Errorf("error finding invite by ID: %s", err.Error())
+	}
+
+	return nil
 }
 
 func (m *MeetingInvite) FindByMeetingIDAndEmail(tx *pop.Connection, meetingID int, email string) error {
@@ -77,4 +108,8 @@ func (m *MeetingInvite) FindBySecret(tx *pop.Connection, meetingID int, email, s
 		return errors.New("empty secret in FindBySecret")
 	}
 	return tx.Where("meeting_id=? AND email=? AND secret=?", meetingID, email, secret).First(m)
+}
+
+func (m *MeetingInvite) InviteURL() string {
+	return domain.Env.UIURL + "/invitation?code=" + m.Secret.String()
 }

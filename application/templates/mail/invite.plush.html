@@ -1,0 +1,26 @@
+<p>
+  Greetings!
+</p>
+
+<p>
+  <%= inviterName %> has invited you to <%= appName %> as a participant of the <em><%= eventName %></em> event.
+</p>
+
+<p>
+  Connecting with others to satisfy your hand-carry needs is difficult. We aim to fix that. Now available in an Early
+  Access period, <%= appName %> is a new platform for posting your needs so that others in your organization can find
+  and respond to them. It is about making it easier to serve one another in a community of grace.
+</p>
+
+<div>
+  <%= partial("button", {url: inviteURL, label: "Accept invitation"}) %>
+</div>
+
+<p>
+  If you believe you received this invite in error, you may delete this message.
+</p>
+
+<p>
+  If you have any questions or feedback about your experience with <%= appName %> please email us at
+  <a href="mailto:<%= supportEmail %>"><%= supportEmail %></a>.
+</p>

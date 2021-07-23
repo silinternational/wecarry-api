@@ -198,3 +198,39 @@ func (ms *ModelSuite) TestSendRequestCreatedNotifications() {
 	}
 	ms.GreaterOrEqual(nMessages, 2, "wrong email count")
 }
+
+func (ms *ModelSuite) TestMeetingInviteCreated() {
+	users := test.CreateUserFixtures(ms.DB, 3).Users
+
+	meeting := test.CreateMeetingFixtures(ms.DB, 1, users[0])[0]
+
+	notifications.TestEmailService.DeleteSentMessages()
+
+	ms.NoError(meeting.CreateInvites(test.CtxWithUser(users[0]), "test@example.com"))
+
+	invite := models.MeetingInvite{}
+	ms.NoError(ms.DB.Where("meeting_id = ?", meeting.ID).First(&invite))
+
+	// in test, there is no listener goroutine, so we have to fake it and call the function directly
+	meetingInviteCreated(events.Event{
+		Kind:    domain.EventApiMeetingInviteCreated,
+		Message: "Meeting Invite created",
+		Payload: events.Payload{domain.EventPayloadKeyId: invite.ID},
+	})
+
+	emailsSent := notifications.TestEmailService.GetSentMessages()
+
+	nMessages := 0
+	for _, email := range emailsSent {
+		if !strings.Contains(email.Subject, "Invitation to "+meeting.Name) {
+			continue
+		}
+
+		if email.ToEmail != invite.Email {
+			continue
+		}
+
+		nMessages++
+	}
+	ms.Equal(nMessages, 1, "wrong email count")
+}
