@@ -186,11 +186,11 @@ func (ms *ModelSuite) TestSendRequestCreatedNotifications() {
 
 	emailsSent := notifications.TestEmailService.GetSentMessages()
 	nMessages := 0
-	for _, e := range emailsSent {
-		if !strings.Contains(e.Subject, "New Request on WeCarry") {
+	for _, email := range emailsSent {
+		if !strings.Contains(email.Subject, "New Request on WeCarry") {
 			continue
 		}
-		if e.ToEmail != f.Users[1].Email && e.ToEmail != f.Users[2].Email {
+		if email.ToEmail != f.Users[1].Email && email.ToEmail != f.Users[2].Email {
 			continue
 		}
 
