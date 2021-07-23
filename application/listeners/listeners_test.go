@@ -175,7 +175,7 @@ func (ms *ModelSuite) TestSendRequestCreatedNotifications() {
 	e := events.Event{
 		Kind:    domain.EventApiRequestCreated,
 		Message: "Request created",
-		Payload: events.Payload{"eventData": models.RequestCreatedEventData{
+		Payload: events.Payload{domain.EventPayloadKeyEventData: models.RequestCreatedEventData{
 			RequestID: f.Requests[0].ID,
 		}},
 	}

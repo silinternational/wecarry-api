@@ -117,6 +117,10 @@ const (
 	ContextKeyRollbar     = "rollbar"
 )
 
+const (
+	EventPayloadKeyEventData = "eventData"
+)
+
 var (
 	// Logger is a plain instance of log.Logger, normally set to stdout
 	Logger log.Logger

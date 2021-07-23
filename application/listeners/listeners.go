@@ -189,7 +189,7 @@ func sendRequestStatusUpdatedNotification(e events.Event) {
 		return
 	}
 
-	pEData, ok := e.Payload["eventData"].(models.RequestStatusEventData)
+	pEData, ok := e.Payload[domain.EventPayloadKeyEventData].(models.RequestStatusEventData)
 	if !ok {
 		domain.ErrLogger.Printf("unable to parse Request Status Updated event payload")
 		return
@@ -210,9 +210,9 @@ func sendRequestCreatedNotifications(e events.Event) {
 		return
 	}
 
-	eventData, ok := e.Payload["eventData"].(models.RequestCreatedEventData)
+	eventData, ok := e.Payload[domain.EventPayloadKeyEventData].(models.RequestCreatedEventData)
 	if !ok {
-		domain.ErrLogger.Printf("Request Created event payload incorrect type: %T", e.Payload["eventData"])
+		domain.ErrLogger.Printf("Request Created event payload incorrect type: %T", e.Payload[domain.EventPayloadKeyEventData])
 		return
 	}
 
@@ -235,9 +235,9 @@ func cacheRequestCreatedListener(e events.Event) {
 		return
 	}
 
-	eventData, ok := e.Payload["eventData"].(models.RequestCreatedEventData)
+	eventData, ok := e.Payload[domain.EventPayloadKeyEventData].(models.RequestCreatedEventData)
 	if !ok {
-		domain.ErrLogger.Printf("Request Created event payload incorrect type: %T", e.Payload["eventData"])
+		domain.ErrLogger.Printf("Request Created event payload incorrect type: %T", e.Payload[domain.EventPayloadKeyEventData])
 		return
 	}
 
@@ -255,9 +255,9 @@ func cacheRequestUpdatedListener(e events.Event) {
 		return
 	}
 
-	eventData, ok := e.Payload["eventData"].(models.RequestUpdatedEventData)
+	eventData, ok := e.Payload[domain.EventPayloadKeyEventData].(models.RequestUpdatedEventData)
 	if !ok {
-		domain.ErrLogger.Printf("Request Updated event payload incorrect type: %T", e.Payload["eventData"])
+		domain.ErrLogger.Printf("Request Updated event payload incorrect type: %T", e.Payload[domain.EventPayloadKeyEventData])
 		return
 	}
 
@@ -275,9 +275,9 @@ func potentialProviderCreated(e events.Event) {
 		return
 	}
 
-	eventData, ok := e.Payload["eventData"].(models.PotentialProviderEventData)
+	eventData, ok := e.Payload[domain.EventPayloadKeyEventData].(models.PotentialProviderEventData)
 	if !ok {
-		domain.ErrLogger.Printf("PotentialProvider event payload incorrect type: %T", e.Payload["eventData"])
+		domain.ErrLogger.Printf("PotentialProvider event payload incorrect type: %T", e.Payload[domain.EventPayloadKeyEventData])
 		return
 	}
 
@@ -305,9 +305,9 @@ func potentialProviderSelfDestroyed(e events.Event) {
 		return
 	}
 
-	eventData, ok := e.Payload["eventData"].(models.PotentialProviderEventData)
+	eventData, ok := e.Payload[domain.EventPayloadKeyEventData].(models.PotentialProviderEventData)
 	if !ok {
-		domain.ErrLogger.Printf("PotentialProvider event payload incorrect type: %T", e.Payload["eventData"])
+		domain.ErrLogger.Printf("PotentialProvider event payload incorrect type: %T", e.Payload[domain.EventPayloadKeyEventData])
 		return
 	}
 
@@ -335,9 +335,9 @@ func potentialProviderRejected(e events.Event) {
 		return
 	}
 
-	eventData, ok := e.Payload["eventData"].(models.PotentialProviderEventData)
+	eventData, ok := e.Payload[domain.EventPayloadKeyEventData].(models.PotentialProviderEventData)
 	if !ok {
-		domain.ErrLogger.Printf("PotentialProvider event payload incorrect type: %T", e.Payload["eventData"])
+		domain.ErrLogger.Printf("PotentialProvider event payload incorrect type: %T", e.Payload[domain.EventPayloadKeyEventData])
 		return
 	}
 
