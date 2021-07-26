@@ -375,6 +375,7 @@ func (as *ActionSuite) Test_meetingsGet() {
 		meeting          models.Meeting
 		wantStatus       int
 		wantParticipants bool
+		wantIsDeletable  bool
 	}{
 		{
 			name:       "authn error",
@@ -400,6 +401,7 @@ func (as *ActionSuite) Test_meetingsGet() {
 			meeting:          f.Meetings[1],
 			wantStatus:       http.StatusOK,
 			wantParticipants: true,
+			wantIsDeletable:  true,
 		},
 		{
 			name:             "good for participant but no participants",
@@ -407,6 +409,7 @@ func (as *ActionSuite) Test_meetingsGet() {
 			meeting:          f.Meetings[1],
 			wantStatus:       http.StatusOK,
 			wantParticipants: false,
+			wantIsDeletable:  false,
 		},
 	}
 	for _, tc := range testCases {
@@ -436,6 +439,7 @@ func (as *ActionSuite) Test_meetingsGet() {
 				fmt.Sprintf(`"country":"%s"`, tc.meeting.Location.Country),
 				fmt.Sprintf(`"latitude":%s`, convertFloat64ToIntString(tc.meeting.Location.Latitude)),
 				fmt.Sprintf(`"longitude":%s`, convertFloat64ToIntString(tc.meeting.Location.Longitude)),
+				fmt.Sprintf(`"is_deletable":%t`, tc.wantIsDeletable),
 			}
 
 			as.verifyResponseData(wantContains, body, "In Test_meetingsGet")

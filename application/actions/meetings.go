@@ -352,10 +352,18 @@ func meetingsGet(c buffalo.Context) error {
 		option = models.OptIncludeParticipants
 	}
 
+	isDeletable, err := meeting.CanDelete(tx, cUser)
+	if err != nil {
+		appError := api.NewAppError(err, api.ErrorMeetingGet, api.CategoryInternal)
+		return reportError(c, appError)
+	}
+
 	output, err := models.ConvertMeeting(c, meeting, cUser, option)
 	if err != nil {
 		return reportError(c, api.NewAppError(err, api.ErrorMeetingsConvert, api.CategoryInternal))
 	}
+
+	output.IsDeletable = isDeletable
 
 	return c.Render(200, render.JSON(output))
 }
