@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gobuffalo/nulls"
+
 	"github.com/silinternational/wecarry-api/domain"
 
 	"github.com/gobuffalo/buffalo"
@@ -363,7 +365,7 @@ func meetingsGet(c buffalo.Context) error {
 		return reportError(c, api.NewAppError(err, api.ErrorMeetingsConvert, api.CategoryInternal))
 	}
 
-	output.IsDeletable = isDeletable
+	output.IsDeletable = nulls.NewBool(isDeletable)
 
 	return c.Render(200, render.JSON(output))
 }

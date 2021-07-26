@@ -58,6 +58,7 @@ func (as *ActionSuite) Test_meetingsList() {
 			fmt.Sprintf(`"country":"%s"`, lctn.Country),
 			fmt.Sprintf(`"latitude":%s`, convertFloat64ToIntString(lctn.Latitude)),
 			fmt.Sprintf(`"longitude":%s`, convertFloat64ToIntString(lctn.Longitude)),
+			`"is_deletable":null`,
 		}
 		wantContains = append(wantContains, moreContains...)
 	}

@@ -24,7 +24,7 @@ type Meeting struct {
 	// Whether meeting is deletable by current user
 	// Note: This will only be a valid value when a single
 	//       event/meeting is requested (not for a list of events)
-	IsDeletable bool `json:"is_deletable"`
+	IsDeletable nulls.Bool `json:"is_deletable"`
 
 	// Whether meeting is editable by current user
 	IsEditable bool `json:"is_editable"`
