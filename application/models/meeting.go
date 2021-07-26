@@ -278,6 +278,22 @@ func (m *Meeting) CanCreate(user User) bool {
 	return true
 }
 
+// CanDelete returns a bool based on whether the current user is
+//   allowed to update this meeting and the meeting has no requests
+//   associated with it.
+func (m *Meeting) CanDelete(tx *pop.Connection, user User) (bool, error) {
+	if !user.CanUpdateMeeting(*m) {
+		return false, nil
+	}
+
+	requests, err := m.Requests(tx)
+	if domain.IsOtherThanNoRows(err) {
+		return false, err
+	}
+
+	return len(requests) == 0, nil
+}
+
 // CanUpdate returns a bool based on whether the current user is allowed to update a meeting
 func (m *Meeting) CanUpdate(user User) bool {
 	switch user.AdminRole {
@@ -449,6 +465,7 @@ func ConvertMeeting(ctx context.Context, meeting Meeting, user User, options ...
 		}
 		output.Participants = participants
 	}
+
 	output.IsEditable = meeting.CanUpdate(user)
 
 	return output, nil
