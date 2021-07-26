@@ -90,6 +90,11 @@ func meetingsCreate(c buffalo.Context) error {
 		return reportError(c, err)
 	}
 
+	var mtgParticipant models.MeetingParticipant
+	if appErr := mtgParticipant.FindOrCreate(tx, meeting, cUser, nil); appErr != nil {
+		return reportError(c, appErr)
+	}
+
 	return c.Render(200, render.JSON(output))
 }
 

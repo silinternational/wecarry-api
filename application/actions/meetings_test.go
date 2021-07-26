@@ -3,6 +3,7 @@ package actions
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -164,6 +165,20 @@ func (as *ActionSuite) Test_meetingsCreate() {
 				`"image_file":{"id":"` + tt.meeting.ImageFileID.UUID.String(),
 			}
 			as.verifyResponseData(wantData, body, "")
+
+			// Get the new meeting's uid
+			// Don't need to check the index, since the lines above here ensure they're OK
+			bodyParts := strings.SplitN(body, `{"id":"`, 2)
+			idParts := strings.SplitN(bodyParts[1], `"`, 2)
+			id := idParts[0]
+
+			var meeting models.Meeting
+			as.NoError(meeting.FindByUUID(as.DB, id), "failed to find meeting to double check things")
+
+			participants, err := meeting.Participants(as.DB, tt.user)
+			as.NoError(err, "failed to find meeting participants")
+			as.Equal(1, len(participants), "incorrect number of meeting participants")
+			as.Equal(tt.user.ID, participants[0].UserID, "incorrect meeting participant user ID")
 		})
 	}
 }
