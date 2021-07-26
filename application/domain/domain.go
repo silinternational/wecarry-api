@@ -54,15 +54,19 @@ const (
 	EventApiPotentialProviderCreated       = "api:potentialprovider:created"
 	EventApiPotentialProviderRejected      = "api:potentialprovider:rejected"
 	EventApiPotentialProviderSelfDestroyed = "api:potentialprovider:selfdestroyed"
+	EventApiMeetingInviteCreated           = "api:meetinginvite:created"
 )
 
 // Event and Job argument names
 const (
+	ArgId        = "id"
+	ArgEventData = "eventData"
 	ArgMessageID = "message_id"
 )
 
-// Notification Message Template Names
+// Notification Message Template Names -- the values correspond to the template file names
 const (
+	MessageTemplateMeetingInvite                   = "meeting_invite"
 	MessageTemplateNewRequest                      = "new_request"
 	MessageTemplateNewThreadMessage                = "new_thread_message"
 	MessageTemplateNewUserWelcome                  = "new_user_welcome"
@@ -163,6 +167,8 @@ var Env struct {
 	GoogleSecret               string
 	LinkedInKey                string
 	LinkedInSecret             string
+	ListenerDelayMilliseconds  int
+	ListenerMaxRetries         int
 	MaxFileDelete              int
 	MaxLocationDelete          int
 	MailChimpAPIBaseURL        string
@@ -229,6 +235,8 @@ func readEnv() {
 	Env.GoogleSecret = envy.Get("GOOGLE_SECRET", "")
 	Env.LinkedInKey = envy.Get("LINKED_IN_KEY", "")
 	Env.LinkedInSecret = envy.Get("LINKED_IN_SECRET", "")
+	Env.ListenerDelayMilliseconds, _ = strconv.Atoi(envy.Get("LISTENER_DELAY_MILLISECONDS", "1000"))
+	Env.ListenerMaxRetries, _ = strconv.Atoi(envy.Get("LISTENER_MAX_RETRIES", "10"))
 	Env.MaxFileDelete = envToInt("MAX_FILE_DELETE", 10)
 	Env.MaxLocationDelete = envToInt("MAX_LOCATION_DELETE", 10)
 	Env.MailChimpAPIBaseURL = envy.Get("MAILCHIMP_API_BASE_URL", "https://us4.api.mailchimp.com/3.0")

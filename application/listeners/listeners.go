@@ -3,9 +3,9 @@ package listeners
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/gobuffalo/events"
-
 	"github.com/silinternational/wecarry-api/cache"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/job"
@@ -90,6 +90,13 @@ var apiListeners = map[string][]apiListener{
 		{
 			name:     "potentialprovider-rejected-notification",
 			listener: potentialProviderRejected,
+		},
+	},
+
+	domain.EventApiMeetingInviteCreated: {
+		{
+			name:     "meeting-invite-created",
+			listener: meetingInviteCreated,
 		},
 	},
 }
@@ -189,7 +196,7 @@ func sendRequestStatusUpdatedNotification(e events.Event) {
 		return
 	}
 
-	pEData, ok := e.Payload["eventData"].(models.RequestStatusEventData)
+	pEData, ok := e.Payload[domain.ArgEventData].(models.RequestStatusEventData)
 	if !ok {
 		domain.ErrLogger.Printf("unable to parse Request Status Updated event payload")
 		return
@@ -210,9 +217,9 @@ func sendRequestCreatedNotifications(e events.Event) {
 		return
 	}
 
-	eventData, ok := e.Payload["eventData"].(models.RequestCreatedEventData)
+	eventData, ok := e.Payload[domain.ArgEventData].(models.RequestCreatedEventData)
 	if !ok {
-		domain.ErrLogger.Printf("Request Created event payload incorrect type: %T", e.Payload["eventData"])
+		domain.ErrLogger.Printf("Request Created event payload incorrect type: %T", e.Payload[domain.ArgEventData])
 		return
 	}
 
@@ -235,9 +242,9 @@ func cacheRequestCreatedListener(e events.Event) {
 		return
 	}
 
-	eventData, ok := e.Payload["eventData"].(models.RequestCreatedEventData)
+	eventData, ok := e.Payload[domain.ArgEventData].(models.RequestCreatedEventData)
 	if !ok {
-		domain.ErrLogger.Printf("Request Created event payload incorrect type: %T", e.Payload["eventData"])
+		domain.ErrLogger.Printf("Request Created event payload incorrect type: %T", e.Payload[domain.ArgEventData])
 		return
 	}
 
@@ -255,9 +262,9 @@ func cacheRequestUpdatedListener(e events.Event) {
 		return
 	}
 
-	eventData, ok := e.Payload["eventData"].(models.RequestUpdatedEventData)
+	eventData, ok := e.Payload[domain.ArgEventData].(models.RequestUpdatedEventData)
 	if !ok {
-		domain.ErrLogger.Printf("Request Updated event payload incorrect type: %T", e.Payload["eventData"])
+		domain.ErrLogger.Printf("Request Updated event payload incorrect type: %T", e.Payload[domain.ArgEventData])
 		return
 	}
 
@@ -275,9 +282,9 @@ func potentialProviderCreated(e events.Event) {
 		return
 	}
 
-	eventData, ok := e.Payload["eventData"].(models.PotentialProviderEventData)
+	eventData, ok := e.Payload[domain.ArgEventData].(models.PotentialProviderEventData)
 	if !ok {
-		domain.ErrLogger.Printf("PotentialProvider event payload incorrect type: %T", e.Payload["eventData"])
+		domain.ErrLogger.Printf("PotentialProvider event payload incorrect type: %T", e.Payload[domain.ArgEventData])
 		return
 	}
 
@@ -305,9 +312,9 @@ func potentialProviderSelfDestroyed(e events.Event) {
 		return
 	}
 
-	eventData, ok := e.Payload["eventData"].(models.PotentialProviderEventData)
+	eventData, ok := e.Payload[domain.ArgEventData].(models.PotentialProviderEventData)
 	if !ok {
-		domain.ErrLogger.Printf("PotentialProvider event payload incorrect type: %T", e.Payload["eventData"])
+		domain.ErrLogger.Printf("PotentialProvider event payload incorrect type: %T", e.Payload[domain.ArgEventData])
 		return
 	}
 
@@ -335,9 +342,9 @@ func potentialProviderRejected(e events.Event) {
 		return
 	}
 
-	eventData, ok := e.Payload["eventData"].(models.PotentialProviderEventData)
+	eventData, ok := e.Payload[domain.ArgEventData].(models.PotentialProviderEventData)
 	if !ok {
-		domain.ErrLogger.Printf("PotentialProvider event payload incorrect type: %T", e.Payload["eventData"])
+		domain.ErrLogger.Printf("PotentialProvider event payload incorrect type: %T", e.Payload[domain.ArgEventData])
 		return
 	}
 
@@ -383,4 +390,86 @@ func sendNewUserWelcome(user models.User) error {
 		},
 	}
 	return notifications.Send(msg)
+}
+
+func meetingInviteCreated(e events.Event) {
+	if e.Kind != domain.EventApiMeetingInviteCreated {
+		return
+	}
+
+	id, err := getID(e.Payload)
+	if err != nil {
+		domain.ErrLogger.Printf("meeting invite ID not found in payload, %s", err)
+		return
+	}
+
+	foundMeetingInvite := false
+	var invite models.MeetingInvite
+	var findErr error
+
+	i := 1
+	for ; i <= domain.Env.ListenerMaxRetries; i++ {
+		findErr = invite.FindByID(models.DB, id, "Meeting", "Inviter")
+		if findErr == nil {
+			foundMeetingInvite = true
+			break
+		}
+		time.Sleep(getDelayDuration(i * i))
+	}
+	domain.Logger.Printf("listener meetingInviteCreated required %d retries with delay %d", i-1, domain.Env.ListenerDelayMilliseconds)
+
+	if !foundMeetingInvite {
+		domain.ErrLogger.Printf("failed to find MeetingInvite in meetingInviteCreated, %s", findErr)
+		return
+	}
+
+	if err = sendMeetingInvite(invite); err != nil {
+		domain.ErrLogger.Printf("unable to send invite %d in meetingInviteCreated event, %s", invite.ID, err)
+	}
+}
+
+// sendMeetingInvite sends an email to the invitee. The MeetingInvite must have its Meeting and Inviter hydrated.
+func sendMeetingInvite(invite models.MeetingInvite) error {
+	if invite.Email == "" {
+		return errors.New("'To' email address is required")
+	}
+
+	language := invite.Inviter.GetLanguagePreference(models.DB)
+	subject := domain.GetTranslatedSubject(language, "Email.Subject.MeetingInvite",
+		map[string]string{"MeetingName": invite.Meeting.Name})
+
+	msg := notifications.Message{
+		Template:  domain.MessageTemplateMeetingInvite,
+		ToEmail:   invite.Email,
+		FromEmail: domain.EmailFromAddress(nil),
+		Subject:   subject,
+		Data: map[string]interface{}{
+			"appName":      domain.Env.AppName,
+			"uiURL":        domain.Env.UIURL,
+			"supportEmail": domain.Env.SupportEmail,
+			"inviterName":  invite.Inviter.FirstName,
+			"eventName":    invite.Meeting.Name,
+			"inviteURL":    invite.InviteURL(),
+		},
+	}
+	return notifications.Send(msg)
+}
+
+// getDelayDuration is a helper function to calculate delay in milliseconds before processing event
+func getDelayDuration(multiplier int) time.Duration {
+	return time.Duration(domain.Env.ListenerDelayMilliseconds) * time.Millisecond * time.Duration(multiplier)
+}
+
+func getID(p events.Payload) (int, error) {
+	i, ok := p[domain.ArgId]
+	if !ok {
+		return 0, errors.New("id not in event payload")
+	}
+
+	id, ok := i.(int)
+	if !ok {
+		return 0, errors.New("ID is not an int")
+	}
+
+	return id, nil
 }

@@ -105,7 +105,7 @@ func (p *PotentialProvider) Create(tx *pop.Connection) error {
 	e := events.Event{
 		Kind:    domain.EventApiPotentialProviderCreated,
 		Message: "Potential Provider created",
-		Payload: events.Payload{"eventData": eventData},
+		Payload: events.Payload{domain.ArgEventData: eventData},
 	}
 
 	emitEvent(e)
