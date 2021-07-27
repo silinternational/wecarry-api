@@ -18,11 +18,26 @@ import (
 	"github.com/silinternational/wecarry-api/domain"
 )
 
-type MeetingOption int
-
 const (
 	OptIncludeParticipants MeetingOption = iota + 1
+	OptIncludeInvites      MeetingOption = iota
 )
+
+type MeetingOption int
+
+func (o *MeetingOption) isSelected(options ...MeetingOption) bool {
+	if len(options) == 0 {
+		return false
+	}
+
+	for _, mo := range options {
+		if *o == mo {
+			return true
+		}
+	}
+
+	return false
+}
 
 // Meeting represents an event where people gather together from different locations
 type Meeting struct {
@@ -329,7 +344,7 @@ func (m *Meeting) Invites(tx *pop.Connection, user User) (MeetingInvites, error)
 	if user.ID != m.CreatedByID && !isOrganizer && !user.isSuperAdmin() {
 		return i, nil
 	}
-	if err := tx.Where("meeting_id = ?", m.ID).All(&i); err != nil {
+	if err := tx.Where("meeting_id = ?", m.ID).Eager("Inviter").All(&i); err != nil {
 		return i, err
 	}
 	return i, nil
@@ -467,19 +482,38 @@ func ConvertMeeting(ctx context.Context, meeting Meeting, user User, options ...
 		output.HasJoined = false // no participant found for user
 	}
 
-	output.Participants = api.MeetingParticipants{}
-
-	if len(options) > 0 && options[0] == OptIncludeParticipants {
-		participants, err := loadMeetingParticipants(ctx, meeting, user)
-		if err != nil {
-			return api.Meeting{}, err
-		}
-		output.Participants = participants
+	if err := loadMeetingOptions(ctx, meeting, user, &output, options...); err != nil {
+		return api.Meeting{}, err
 	}
 
 	output.IsEditable = meeting.CanUpdate(user)
 
 	return output, nil
+}
+
+func loadMeetingOptions(ctx context.Context, meeting Meeting, user User, apiMeeting *api.Meeting, options ...MeetingOption) error {
+	apiMeeting.Participants = api.MeetingParticipants{}
+
+	opt := OptIncludeParticipants
+	if opt.isSelected(options...) {
+		participants, err := loadMeetingParticipants(ctx, meeting, user)
+		if err != nil {
+			return err
+		}
+		apiMeeting.Participants = participants
+	}
+
+	apiMeeting.Invites = api.MeetingInvites{}
+	opt = OptIncludeInvites
+	if opt.isSelected(options...) {
+		invites, err := loadMeetingInvites(Tx(ctx), meeting, user)
+		if err != nil {
+			return err
+		}
+		apiMeeting.Invites = invites
+	}
+
+	return nil
 }
 
 // convertMeetingImageFile converts a model.Meeting.ImgFile into an api.File
@@ -638,4 +672,32 @@ func splitEmailList(emails string) []string {
 	}
 
 	return strings.Split(strings.ReplaceAll(strings.ReplaceAll(emails, "\r\n", ","), "\n", ","), ",")
+}
+
+// loadMeetingInvites gets the meeting's invites and converts into api.MeetingInvites
+func loadMeetingInvites(tx *pop.Connection, meeting Meeting, user User) (api.MeetingInvites, error) {
+	invites, err := meeting.Invites(tx, user)
+	if err != nil {
+		return api.MeetingInvites{}, err
+	}
+	output := convertMeetingInvites(meeting, invites)
+	return output, nil
+}
+
+// convertMeetingInvites converts model.MeetingInvites into  api.MeetingInvites
+func convertMeetingInvites(meeting Meeting, invites MeetingInvites) api.MeetingInvites {
+	output := make(api.MeetingInvites, len(invites))
+	for i := range output {
+		output[i] = convertMeetingInvite(meeting, invites[i])
+	}
+	return output
+}
+
+func convertMeetingInvite(meeting Meeting, invite MeetingInvite) api.MeetingInvite {
+	output := api.MeetingInvite{}
+	output.MeetingID = meeting.UUID
+	output.InviterID = invite.Inviter.UUID
+	output.Email = invite.Email
+
+	return output
 }

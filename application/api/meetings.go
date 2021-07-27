@@ -47,6 +47,9 @@ type Meeting struct {
 	// Image File -- typically a logo
 	ImageFile *File `json:"image_file,omitempty"`
 
+	// invites for this meeting
+	Invites MeetingInvites `json:"invites"`
+
 	// location -- notifications and filters may use this location
 	Location Location `json:"location,omitempty"`
 
@@ -120,4 +123,21 @@ type MeetingParticipantInput struct {
 	// Secret code from the `MeetingInvite` or invite code from the `Meeting`.
 	// If the `Meeting` is not `INVITE_ONLY`, the code may be omitted.
 	Code *string `json:"code"`
+}
+
+// swagger:model
+type MeetingInvites []MeetingInvite
+
+// Invitation to a `Meeting`.
+//
+// swagger:model
+type MeetingInvite struct {
+	// The uuid of the meeting the invite is for
+	MeetingID uuid.UUID `json:"meeting_id"`
+
+	// The uuid of the user who created the invite
+	InviterID uuid.UUID `json:"inviter_id"`
+
+	// The email address of the person being invited
+	Email string `json:"email" db:"email"`
 }
