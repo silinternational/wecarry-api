@@ -85,14 +85,14 @@ func meetingsCreate(c buffalo.Context) error {
 		return reportError(c, api.NewAppError(err, api.ErrorMeetingCreate, api.CategoryUser))
 	}
 
-	output, err := models.ConvertMeeting(c, meeting, cUser)
-	if err != nil {
-		return reportError(c, err)
-	}
-
 	var mtgParticipant models.MeetingParticipant
 	if appErr := mtgParticipant.FindOrCreate(tx, meeting, cUser, nil); appErr != nil {
 		return reportError(c, appErr)
+	}
+
+	output, err := models.ConvertMeeting(c, meeting, cUser)
+	if err != nil {
+		return reportError(c, err)
 	}
 
 	return c.Render(200, render.JSON(output))

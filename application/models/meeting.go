@@ -456,6 +456,17 @@ func ConvertMeeting(ctx context.Context, meeting Meeting, user User, options ...
 
 	output.ImageFile = convertMeetingImageFile(meeting)
 	output.Location = convertLocation(meeting.Location)
+	output.HasJoined = true
+
+	var userP MeetingParticipant
+	if err := userP.FindByMeetingIDAndUserID(tx, meeting.ID, user.ID); err != nil {
+		if domain.IsOtherThanNoRows(err) {
+			err := fmt.Errorf("failed to load MeetingParticipant in Meeting.ConvertMeeting, %s", err)
+			return api.Meeting{}, err
+		}
+		output.HasJoined = false // no participant found for user
+	}
+
 	output.Participants = api.MeetingParticipants{}
 
 	if len(options) > 0 && options[0] == OptIncludeParticipants {

@@ -50,6 +50,9 @@ type Meeting struct {
 	// location -- notifications and filters may use this location
 	Location Location `json:"location,omitempty"`
 
+	// Whether the current user has joined this event/meeting
+	HasJoined bool `json:"has_joined"`
+
 	// participants
 	Participants MeetingParticipants `json:"participants"`
 
