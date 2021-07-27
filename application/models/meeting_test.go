@@ -966,6 +966,11 @@ func (ms *ModelSuite) Test_splitEmailList() {
 			emails: "one@example.com\r\ntwo@example.com\nthree@example.com,four@example.com",
 			want:   []string{"one@example.com", "two@example.com", "three@example.com", "four@example.com"},
 		},
+		{
+			name:   "comma space",
+			emails: "one@example.com, two@example.com",
+			want:   []string{"one@example.com", "two@example.com"},
+		},
 	}
 	for _, tt := range tests {
 		ms.T().Run(tt.name, func(t *testing.T) {
