@@ -121,7 +121,6 @@ func (v *dateValidator) IsValid(errors *validate.Errors) {
 }
 
 func (m *Meeting) SafeDelete(tx *pop.Connection) error {
-
 	requests, err := m.Requests(tx)
 	if domain.IsOtherThanNoRows(err) {
 		return err
@@ -671,7 +670,11 @@ func splitEmailList(emails string) []string {
 		return []string{}
 	}
 
-	return strings.Split(strings.ReplaceAll(strings.ReplaceAll(emails, "\r\n", ","), "\n", ","), ",")
+	split := strings.Split(strings.ReplaceAll(strings.ReplaceAll(emails, "\r\n", ","), "\n", ","), ",")
+	for i := range split {
+		split[i] = strings.TrimSpace(split[i])
+	}
+	return split
 }
 
 // loadMeetingInvites gets the meeting's invites and converts into api.MeetingInvites
