@@ -387,6 +387,7 @@ func (as *ActionSuite) Test_meetingsGet() {
 
 	mtgCreator := f.Users[0]
 	mtgParticipant := f.Users[1]
+	invites := f.MeetingInvites
 
 	testCases := []struct {
 		name             string
@@ -395,6 +396,7 @@ func (as *ActionSuite) Test_meetingsGet() {
 		wantStatus       int
 		wantParticipants bool
 		wantIsDeletable  bool
+		wantInvite       *models.MeetingInvite
 	}{
 		{
 			name:       "authn error",
@@ -421,6 +423,7 @@ func (as *ActionSuite) Test_meetingsGet() {
 			wantStatus:       http.StatusOK,
 			wantParticipants: true,
 			wantIsDeletable:  true,
+			wantInvite:       &invites[2],
 		},
 		{
 			name:             "good for participant but no participants",
@@ -474,6 +477,18 @@ func (as *ActionSuite) Test_meetingsGet() {
 			} else {
 				wantContains := fmt.Sprintf(`"participants":[]`)
 				as.Contains(body, wantContains, "participants list should be empty")
+			}
+
+			if tc.wantInvite != nil {
+				wantContains := []string{
+					fmt.Sprintf(`"invites":[{"meeting_id":"%s"`, tc.meeting.UUID),
+					fmt.Sprintf(`"email":"%s"`, tc.wantInvite.Email),
+				}
+				as.verifyResponseData(wantContains, body, "incorrect invites list")
+
+			} else {
+				wantContains := fmt.Sprintf(`"invites":[]`)
+				as.Contains(body, wantContains, "invites list should be empty")
 			}
 		})
 	}
