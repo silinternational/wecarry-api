@@ -60,6 +60,7 @@ func (as *ActionSuite) Test_meetingsList() {
 			fmt.Sprintf(`"latitude":%s`, convertFloat64ToIntString(lctn.Latitude)),
 			fmt.Sprintf(`"longitude":%s`, convertFloat64ToIntString(lctn.Longitude)),
 			`"is_deletable":null`,
+			`"has_joined":true`,
 		}
 		wantContains = append(wantContains, moreContains...)
 	}
@@ -163,6 +164,7 @@ func (as *ActionSuite) Test_meetingsCreate() {
 				`"end_date":"` + weekAfterNext.Format(domain.DateFormat),
 				`"more_info_url":"` + tt.meeting.MoreInfoURL.String,
 				`"image_file":{"id":"` + tt.meeting.ImageFileID.UUID.String(),
+				`"has_joined":true`,
 			}
 			as.verifyResponseData(wantData, body, "")
 
@@ -372,6 +374,7 @@ func (as *ActionSuite) Test_meetingsJoin() {
 				fmt.Sprintf(`"country":"%s"`, tc.location.Country),
 				fmt.Sprintf(`"latitude":%s`, convertFloat64ToIntString(tc.location.Latitude)),
 				fmt.Sprintf(`"longitude":%s`, convertFloat64ToIntString(tc.location.Longitude)),
+				`"has_joined":true`,
 			}
 
 			as.verifyResponseData(wantContains, body, "In Test_meetingsJoin")
@@ -456,13 +459,18 @@ func (as *ActionSuite) Test_meetingsGet() {
 				fmt.Sprintf(`"latitude":%s`, convertFloat64ToIntString(tc.meeting.Location.Latitude)),
 				fmt.Sprintf(`"longitude":%s`, convertFloat64ToIntString(tc.meeting.Location.Longitude)),
 				fmt.Sprintf(`"is_deletable":%t`, tc.wantIsDeletable),
+				`"has_joined":true`,
 			}
 
 			as.verifyResponseData(wantContains, body, "In Test_meetingsGet")
 
 			if tc.wantParticipants {
-				wantContains := fmt.Sprintf(`"participants":[{"user":{"id":"%s"`, mtgParticipant.UUID.String())
-				as.Contains(body, wantContains, "incorrect participants list")
+				wantContains := []string{
+					`"participants":[{"user":{`,
+					fmt.Sprintf(`"user":{"id":"%s"`, mtgCreator.UUID.String()),
+					fmt.Sprintf(`"user":{"id":"%s"`, mtgParticipant.UUID.String()),
+				}
+				as.verifyResponseData(wantContains, body, "incorrect participants list")
 			} else {
 				wantContains := fmt.Sprintf(`"participants":[]`)
 				as.Contains(body, wantContains, "participants list should be empty")

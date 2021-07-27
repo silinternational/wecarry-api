@@ -122,6 +122,10 @@ func createFixturesForMeetings(as *ActionSuite) meetingFixtures {
 			IsOrganizer: true,
 		},
 		{
+			MeetingID: meetings[1].ID,
+			UserID:    uf.Users[0].ID,
+		},
+		{
 			MeetingID:   meetings[1].ID,
 			UserID:      uf.Users[1].ID,
 			InviteID:    nulls.NewInt(invites[2].ID),
