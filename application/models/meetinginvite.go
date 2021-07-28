@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gobuffalo/nulls"
+
 	"github.com/gobuffalo/events"
 	"github.com/gobuffalo/pop/v5"
 	"github.com/gobuffalo/validate/v3"
@@ -17,15 +19,17 @@ import (
 
 // MeetingInvite is the model for storing meeting invites sent to prospective users, linked to a meeting/event
 type MeetingInvite struct {
-	ID        int       `json:"id" db:"id"`
-	CreatedAt time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
-	MeetingID int       `json:"meeting_id" db:"meeting_id"`
-	InviterID int       `json:"inviter_id" db:"inviter_id"`
-	Secret    uuid.UUID `json:"secret" db:"secret"`
-	Email     string    `json:"email" db:"email"`
-	Inviter   User      `json:"-" belongs_to:"users" fk_id:"InviterID"`
-	Meeting   Meeting   `json:"-" belongs_to:"meetings" fk_id:"MeetingID"`
+	ID        int        `json:"id" db:"id"`
+	CreatedAt time.Time  `json:"created_at" db:"created_at"`
+	UpdatedAt time.Time  `json:"updated_at" db:"updated_at"`
+	MeetingID int        `json:"meeting_id" db:"meeting_id"`
+	InviterID int        `json:"inviter_id" db:"inviter_id"`
+	Secret    uuid.UUID  `json:"secret" db:"secret"`
+	Email     string     `json:"email" db:"email"`
+	UserID    nulls.UUID `json:"user_id" db:"user_id"`
+
+	Inviter User    `json:"-" belongs_to:"users" fk_id:"InviterID"`
+	Meeting Meeting `json:"-" belongs_to:"meetings" fk_id:"MeetingID"`
 }
 
 // MeetingInvites is used for methods that operate on lists of objects
@@ -112,4 +116,24 @@ func (m *MeetingInvite) FindBySecret(tx *pop.Connection, meetingID int, email, s
 
 func (m *MeetingInvite) InviteURL() string {
 	return domain.Env.UIURL + "/invitation?code=" + m.Secret.String()
+}
+
+// Create validates and stores the MeetingInvite data as a new record in the database.
+func (m *MeetingInvite) SetUserID(tx *pop.Connection, userID uuid.UUID) error {
+
+	if m.ID == 0 {
+		return errors.New("meeting invite must have an id in MeetingInvite.SetUserID")
+	}
+
+	if userID == uuid.Nil {
+		return errors.New("user uuid must not be zero in MeetingInvite.SetUserID")
+	}
+
+	m.UserID = nulls.NewUUID(userID)
+
+	if err := update(tx, m); err != nil {
+		return errors.New("error updating meeting invite with a userID: " + err.Error())
+	}
+
+	return nil
 }
