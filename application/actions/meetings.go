@@ -424,14 +424,18 @@ func meetingsRemove(c buffalo.Context) error {
 // delete one invite from an event/meeting
 //
 // ---
-//   - name: invite_email
+// parameters:
+//   - name: invite email
+//     type: string
 //     in: body
-//     description: email of the person invited
+//     description: email of invite to be deleted
 //     required: true
+//     schema:
+//       "$ref": "#/definitions/MeetingInviteEmail"
 // responses:
 //   '204':
 //     description: OK but no content in response
-func meetingsInviteRemove(c buffalo.Context) error {
+func meetingsInviteDelete(c buffalo.Context) error {
 	cUser := models.CurrentUser(c)
 	tx := models.Tx(c)
 
@@ -440,12 +444,13 @@ func meetingsInviteRemove(c buffalo.Context) error {
 		return reportError(c, err)
 	}
 
-	inviteEmail := c.Param("invite_email")
-	if inviteEmail == "" {
-		err := errors.New("invalid invite_email provided: may not be blank.")
-		appError := api.NewAppError(err, api.ErrorMeetingInviteDelete, api.CategoryUser)
-		return reportError(c, appError)
+	input := api.MeetingInviteEmail{}
+	if err := StrictBind(c, &input); err != nil {
+		err = errors.New("unable to unmarshal data into MeetingInviteEmail, error: " + err.Error())
+		return reportError(c, api.NewAppError(err, api.ErrorInvalidRequestBody, api.CategoryUser))
 	}
+
+	inviteEmail := input.InviteEmail
 
 	var meeting models.Meeting
 	if err := meeting.FindByUUID(tx, meetingID.String()); err != nil {
