@@ -141,3 +141,10 @@ type MeetingInvite struct {
 	// The email address of the person being invited
 	Email string `json:"email" db:"email"`
 }
+
+// The email address associated with a meeting invite
+//
+// swagger:model
+type MeetingInviteEmail struct {
+	InviteEmail string `json:"invite_email"`
+}
