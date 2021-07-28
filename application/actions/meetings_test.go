@@ -303,7 +303,7 @@ func (as *ActionSuite) Test_meetingsJoin() {
 		location        models.Location
 		meeting         models.Meeting
 		user            models.User
-		wantInvite      models.MeetingInvite
+		wantInvite      *models.MeetingInvite
 		wantHTTPStatus  int
 		wantContainsErr string
 	}
@@ -336,7 +336,7 @@ func (as *ActionSuite) Test_meetingsJoin() {
 			location:       f.Locations[3],
 			meeting:        f.Meetings[3],
 			user:           f.Users[1],
-			wantInvite:     f.MeetingInvites[3],
+			wantInvite:     &f.MeetingInvites[3],
 			wantHTTPStatus: http.StatusOK,
 		},
 	}
@@ -378,6 +378,16 @@ func (as *ActionSuite) Test_meetingsJoin() {
 			}
 
 			as.verifyResponseData(wantContains, body, "In Test_meetingsJoin")
+
+			if tc.wantInvite == nil {
+				return
+			}
+
+			var invite models.MeetingInvite
+			err := as.DB.Find(&invite, tc.wantInvite.ID)
+			as.NoError(err, "error retrieving MeetingInvite for test results")
+
+			as.Equal(tc.user.UUID, invite.UserID.UUID, "incorrect MeetingInvite.UserID")
 		})
 	}
 }
@@ -483,6 +493,7 @@ func (as *ActionSuite) Test_meetingsGet() {
 				wantContains := []string{
 					fmt.Sprintf(`"invites":[{"meeting_id":"%s"`, tc.meeting.UUID),
 					fmt.Sprintf(`"email":"%s"`, tc.wantInvite.Email),
+					`"user_id":null`,
 				}
 				as.verifyResponseData(wantContains, body, "incorrect invites list")
 

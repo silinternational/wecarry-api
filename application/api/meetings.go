@@ -139,7 +139,10 @@ type MeetingInvite struct {
 	InviterID uuid.UUID `json:"inviter_id"`
 
 	// The email address of the person being invited
-	Email string `json:"email" db:"email"`
+	Email string `json:"email"`
+
+	// UUID of the user who has accepted the invite
+	UserID nulls.UUID `json:"user_id"`
 }
 
 // The email address associated with a meeting invite
