@@ -118,7 +118,7 @@ func (m *MeetingInvite) InviteURL() string {
 	return domain.Env.UIURL + "/invitation?code=" + m.Secret.String()
 }
 
-// Create validates and stores the MeetingInvite data as a new record in the database.
+// Updates the MeetingInvite with the UUID of the user who accepted it.
 func (m *MeetingInvite) SetUserID(tx *pop.Connection, userID uuid.UUID) error {
 
 	if m.ID == 0 {

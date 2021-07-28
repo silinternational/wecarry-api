@@ -141,7 +141,7 @@ type MeetingInvite struct {
 	// The email address of the person being invited
 	Email string `json:"email"`
 
-	// Whether the email belongs to a user who is already a meeting participant
+	// UUID of the user who has accepted the invite
 	UserID nulls.UUID `json:"user_id"`
 }
 
