@@ -137,7 +137,9 @@ func createFixturesForMeetings(as *ActionSuite) meetingFixtures {
 			IsOrganizer: false,
 		},
 	}
-	createFixture(as, &participants)
+	for i := range participants {
+		test.MustCreate(as.DB, &participants[i])
+	}
 
 	return meetingFixtures{
 		Locations:           locations,

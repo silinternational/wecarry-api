@@ -3,7 +3,10 @@ package models
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
+
+	"github.com/gofrs/uuid"
 
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop/v5"
@@ -17,6 +20,7 @@ import (
 // MeetingParticipant is the model for storing meeting participants, users linked to a meeting/event
 type MeetingParticipant struct {
 	ID          int       `json:"id" db:"id"`
+	UUID        uuid.UUID `json:"uuid" db:"uuid"`
 	CreatedAt   time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
 	MeetingID   int       `json:"meeting_id" db:"meeting_id"`
@@ -67,6 +71,19 @@ func (m *MeetingParticipant) Invite(tx *pop.Connection) (*MeetingInvite, error) 
 	return &invite, nil
 }
 
+// FindByUUID finds a meetingparticipant by the UUID field
+func (m *MeetingParticipant) FindByUUID(tx *pop.Connection, uuid string) error {
+	if uuid == "" {
+		return errors.New("error finding meeting participant: uuid must not be blank")
+	}
+
+	if err := tx.Where("uuid = ?", uuid).First(m); err != nil {
+		return fmt.Errorf("error finding meeting participant by uuid: %s", err.Error())
+	}
+
+	return nil
+}
+
 // FindByMeetingIDAndUserID does what it says
 func (m *MeetingParticipant) FindByMeetingIDAndUserID(tx *pop.Connection, meetingID, userID int) error {
 	return tx.Where("meeting_id = ? and user_id = ?", meetingID, userID).First(m)
@@ -83,10 +100,6 @@ func (m *MeetingParticipant) CreateFromInvite(tx *pop.Connection, invite Meeting
 	}
 
 	return invite.SetUserID(tx, user.UUID)
-}
-
-func (m *MeetingParticipant) Destroy(tx *pop.Connection) error {
-	return tx.Destroy(m)
 }
 
 // FindOrCreate a new MeetingParticipant from a meeting ID and code. If `code` is nil, the meeting must be non-INVITE_ONLY.
@@ -160,4 +173,11 @@ func (m *MeetingParticipant) createWithoutInvite(tx *pop.Connection, user User, 
 		}
 	}
 	return nil
+}
+
+// TODO consider adding checks such as ensuring there aren't any requests associated
+// TODO   with the related meeting and user
+func (m *MeetingParticipant) SafeDelete(tx *pop.Connection) error {
+
+	return tx.Destroy(m)
 }
