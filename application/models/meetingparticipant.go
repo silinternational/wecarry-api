@@ -183,7 +183,7 @@ func (m *MeetingParticipant) SafeDelete(tx *pop.Connection) error {
 	stmt := "SELECT * FROM requests WHERE meeting_id = ? AND status not in (?, ?)"
 	args := []interface{}{m.ID, RequestStatusRemoved, RequestStatusCompleted}
 	q := tx.RawQuery(stmt, args...)
-	err := q.All(requests)
+	err := q.All(&requests)
 	if err != nil {
 		return err
 	}
