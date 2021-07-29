@@ -707,60 +707,6 @@ func (ms *ModelSuite) TestMeeting_RemoveInvite() {
 	}
 }
 
-func (ms *ModelSuite) TestMeeting_RemoveParticipant() {
-	f := createMeetingFixtures(ms.DB, 2)
-
-	tests := []struct {
-		name                  string
-		testUser              User
-		meeting               Meeting
-		user                  User
-		remainingParticipants []int
-		wantErr               string
-	}{
-		{
-			name:     "user not a participant",
-			testUser: f.Users[0],
-			meeting:  f.Meetings[0],
-			user:     f.Users[0],
-			wantErr:  "no rows",
-		},
-		{
-			name:                  "good",
-			testUser:              f.Users[0],
-			meeting:               f.Meetings[0],
-			user:                  f.Users[1],
-			remainingParticipants: []int{f.MeetingParticipants[1].ID, f.MeetingParticipants[2].ID},
-		},
-	}
-	for _, tt := range tests {
-		ms.T().Run(tt.name, func(t *testing.T) {
-			// execute
-			err := tt.meeting.RemoveParticipant(ms.DB, tt.user.UUID.String())
-
-			// verify
-			if tt.wantErr != "" {
-				ms.Error(err, "did not get expected error")
-				ms.Contains(err.Error(), tt.wantErr)
-				return
-			}
-			ms.NoError(err, "unexpected error")
-
-			remaining, err := tt.meeting.Participants(ms.DB, tt.testUser)
-			ms.NoError(err)
-
-			ids := make([]int, len(remaining))
-			for i, m := range remaining {
-				ids[i] = m.ID
-			}
-
-			ms.Equal(tt.remainingParticipants, ids)
-
-			// teardown
-		})
-	}
-}
-
 func (ms *ModelSuite) TestMeeting_isCodeValid() {
 	code := domain.GetUUID()
 

@@ -819,6 +819,14 @@ func (u *User) CanViewMeetingParticipants(tx *pop.Connection, meeting Meeting) (
 	return meeting.isOrganizer(tx, u.ID)
 }
 
+func (u *User) CanRemoveMeetingParticipant(tx *pop.Connection, meeting Meeting) (bool, error) {
+	if u.ID == meeting.CreatedByID || u.isSuperAdmin() {
+		return true, nil
+	}
+
+	return meeting.isOrganizer(tx, u.ID)
+}
+
 // RemovePreferences removes all of the users's preferences
 func (u *User) RemovePreferences(tx *pop.Connection) error {
 	if u == nil || u.ID < 1 {

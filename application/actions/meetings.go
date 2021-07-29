@@ -479,3 +479,66 @@ func meetingsInviteDelete(c buffalo.Context) error {
 
 	return c.Render(http.StatusNoContent, nil)
 }
+
+// swagger:operation DELETE /events/{event_id}/participant/{participant_id} Events DeleteEventParticipant
+//
+// delete one participant from an event/meeting
+//
+// ---
+// responses:
+//   '204':
+//     description: OK but no content in response
+func meetingsParticipantDelete(c buffalo.Context) error {
+	cUser := models.CurrentUser(c)
+	tx := models.Tx(c)
+
+	participantID, err := getUUIDFromParam(c, "participant_id")
+	if err != nil {
+		return reportError(c, err)
+	}
+
+	var participant models.MeetingParticipant
+	if err := participant.FindByUUID(tx, participantID.String()); err != nil {
+		err := fmt.Errorf("could not find meeting participant with id: '%s'", participantID)
+		appError := api.NewAppError(err, api.ErrorMeetingParticipantDelete, api.CategoryNotFound)
+		return reportError(c, appError)
+	}
+
+	meetingID, err := getUUIDFromParam(c, "event_id")
+	if err != nil {
+		return reportError(c, err)
+	}
+
+	var meeting models.Meeting
+	if err := meeting.FindByUUID(tx, meetingID.String()); err != nil {
+		err := fmt.Errorf("could not find meeting with id: '%s'", meetingID)
+		appError := api.NewAppError(err, api.ErrorMeetingParticipantDelete, api.CategoryNotFound)
+		return reportError(c, appError)
+	}
+
+	if meeting.ID != participant.MeetingID {
+		err := fmt.Errorf("meeting id and meeting participant meeting id do not match: '%v' and '%v'",
+			meeting.ID, participant.MeetingID)
+		appError := api.NewAppError(err, api.ErrorMeetingParticipantDelete, api.CategoryUser)
+		return reportError(c, appError)
+	}
+
+	can, err := cUser.CanRemoveMeetingParticipant(tx, meeting)
+	if err != nil {
+		appError := api.NewAppError(err, api.ErrorMeetingParticipantDelete, api.CategoryInternal)
+		return reportError(c, appError)
+	}
+	if !can {
+		err := errors.New("insufficient permissions for deleting meeting participant")
+		appError := api.NewAppError(err, api.ErrorNotAuthorized, api.CategoryForbidden)
+		return reportError(c, appError)
+	}
+
+	if err := participant.SafeDelete(tx); err != nil {
+		err := errors.New("error deleting meeting participant: " + err.Error())
+		appError := api.NewAppError(err, api.ErrorMeetingParticipantDelete, api.CategoryInternal)
+		return reportError(c, appError)
+	}
+
+	return c.Render(http.StatusNoContent, nil)
+}

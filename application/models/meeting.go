@@ -133,7 +133,7 @@ func (m *Meeting) SafeDelete(tx *pop.Connection) error {
 	return tx.Destroy(m)
 }
 
-// FindByUUID finds a meeting by the UUID field and loads its CreatedBy field
+// FindByUUID finds a meeting by the UUID field
 func (m *Meeting) FindByUUID(tx *pop.Connection, uuid string) error {
 	if uuid == "" {
 		return errors.New("error finding meeting: uuid must not be blank")
@@ -397,18 +397,6 @@ func (m *Meeting) RemoveInvite(tx *pop.Connection, email string) error {
 	return invite.Destroy(tx)
 }
 
-func (m *Meeting) RemoveParticipant(tx *pop.Connection, userUUID string) error {
-	var user User
-	if err := user.FindByUUID(tx, userUUID); err != nil {
-		return fmt.Errorf("invalid user ID %s in Meeting.RemoveParticipant, %s", userUUID, err)
-	}
-	var participant MeetingParticipant
-	if err := participant.FindByMeetingIDAndUserID(tx, m.ID, user.ID); err != nil {
-		return fmt.Errorf("failed to load MeetingParticipant in Meeting.RemoveParticipant, %s", err)
-	}
-	return participant.Destroy(tx)
-}
-
 func (m *Meeting) IsCodeValid(tx *pop.Connection, code string) bool {
 	if m.InviteCode.Valid && m.InviteCode.UUID.String() == code {
 		return true
@@ -541,7 +529,9 @@ func convertMeetingParticipants(ctx context.Context, participants MeetingPartici
 func convertMeetingParticipant(ctx context.Context, participant MeetingParticipant) (api.MeetingParticipant, error) {
 	tx := Tx(ctx)
 
-	output := api.MeetingParticipant{}
+	output := api.MeetingParticipant{
+		ID: participant.UUID,
+	}
 
 	user, err := participant.User(tx)
 	if err != nil {

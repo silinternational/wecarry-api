@@ -396,7 +396,7 @@ func (as *ActionSuite) Test_meetingsGet() {
 	f := createFixturesForMeetings(as)
 
 	mtgCreator := f.Users[0]
-	mtgParticipant := f.Users[1]
+	mtgParticipantUser := f.Users[1]
 	invites := f.MeetingInvites
 
 	testCases := []struct {
@@ -437,7 +437,7 @@ func (as *ActionSuite) Test_meetingsGet() {
 		},
 		{
 			name:             "good for participant but no participants",
-			user:             mtgParticipant,
+			user:             mtgParticipantUser,
 			meeting:          f.Meetings[1],
 			wantStatus:       http.StatusOK,
 			wantParticipants: false,
@@ -479,9 +479,11 @@ func (as *ActionSuite) Test_meetingsGet() {
 
 			if tc.wantParticipants {
 				wantContains := []string{
-					`"participants":[{"user":{`,
+					`"participants":[`,
+					`{"id":"` + f.MeetingParticipants[2].UUID.String(),
+					`{"id":"` + f.MeetingParticipants[3].UUID.String(),
 					fmt.Sprintf(`"user":{"id":"%s"`, mtgCreator.UUID.String()),
-					fmt.Sprintf(`"user":{"id":"%s"`, mtgParticipant.UUID.String()),
+					fmt.Sprintf(`"user":{"id":"%s"`, mtgParticipantUser.UUID.String()),
 				}
 				as.verifyResponseData(wantContains, body, "incorrect participants list")
 			} else {
@@ -633,6 +635,79 @@ func (as *ActionSuite) Test_meetingsInviteDelete() {
 			as.NoError(as.DB.All(&invites))
 
 			as.Equal(len(f.MeetingInvites)-1, len(invites), "incorrect count of remaining invites")
+		})
+	}
+}
+
+func (as *ActionSuite) Test_meetingsParticipantDelete() {
+	f := createFixturesForMeetings(as)
+	meeting := f.Meetings[1]
+	participant := f.MeetingParticipants[2]
+
+	tests := []struct {
+		name            string
+		user            models.User
+		meeting         models.Meeting
+		participant     models.MeetingParticipant
+		wantStatus      int
+		wantErrContains string
+	}{
+		{
+			name:            "authn error",
+			user:            models.User{},
+			meeting:         meeting,
+			participant:     participant,
+			wantStatus:      http.StatusUnauthorized,
+			wantErrContains: api.ErrorNotAuthenticated.String(),
+		},
+		{
+			name:            "authz error",
+			user:            f.Users[1],
+			meeting:         meeting,
+			participant:     participant,
+			wantStatus:      http.StatusNotFound,
+			wantErrContains: api.ErrorNotAuthorized.String(),
+		},
+		{
+			name:            "uuid not found",
+			user:            f.Users[0],
+			meeting:         meeting,
+			participant:     models.MeetingParticipant{UUID: domain.GetUUID()},
+			wantStatus:      http.StatusNotFound,
+			wantErrContains: api.ErrorMeetingParticipantDelete.String(),
+		},
+		{
+			name:        "safe to delete",
+			user:        f.Users[0],
+			meeting:     meeting,
+			participant: participant,
+			wantStatus:  http.StatusNoContent,
+		},
+	}
+	for _, tt := range tests {
+		as.T().Run(tt.name, func(t *testing.T) {
+			fmt.Printf("\nMEETING   %+v\n", tt.meeting.ID)
+			req := as.JSON("/events/%s/participant/%s",
+				tt.meeting.UUID.String(), tt.participant.UUID.String())
+			req.Headers["Authorization"] = fmt.Sprintf("Bearer %s", tt.user.Nickname)
+			req.Headers["content-type"] = "application/json"
+
+			res := req.Delete()
+
+			body := res.Body.String()
+			as.Equal(tt.wantStatus, res.Code, "incorrect status code returned, body: %s", body)
+
+			if tt.wantStatus != http.StatusNoContent {
+				if tt.wantErrContains != "" {
+					as.Contains(body, tt.wantErrContains, "missing error message")
+				}
+				return
+			}
+
+			var ps models.MeetingParticipants
+			as.NoError(as.DB.All(&ps))
+
+			as.Equal(len(f.MeetingParticipants)-1, len(ps), "incorrect count of remaining participants")
 		})
 	}
 }

@@ -96,6 +96,10 @@ const (
 
 	ErrorMeetingInviteDelete = ErrorKey("ErrorMeetingInviteDelete")
 
+	// Meeting Participant
+
+	ErrorMeetingParticipantDelete = ErrorKey("ErrorMeetingParticipantDelete")
+
 	// Message
 
 	ErrorMessageBadRequestUUID        = ErrorKey("ErrorMessageBadRequestUUID")
