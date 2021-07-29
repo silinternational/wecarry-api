@@ -178,6 +178,23 @@ func (m *MeetingParticipant) createWithoutInvite(tx *pop.Connection, user User, 
 // TODO consider adding checks such as ensuring there aren't any requests associated
 // TODO   with the related meeting and user
 func (m *MeetingParticipant) SafeDelete(tx *pop.Connection) error {
+	requests := Requests{}
+
+	stmt := "SELECT * FROM requests WHERE meeting_id = ? AND status not in (?, ?)"
+	args := []interface{}{m.ID, RequestStatusRemoved, RequestStatusCompleted}
+	q := tx.RawQuery(stmt, args...)
+	err := q.All(&requests)
+	if err != nil {
+		return err
+	}
+
+	for _, r := range requests {
+		if r.CreatedByID == m.UserID {
+			return fmt.Errorf("user has a request related to this meeting")
+		} else if r.ProviderID.Valid && r.ProviderID.Int == m.UserID {
+			return fmt.Errorf("user is providing for a request, related to this meeting")
+		}
+	}
 
 	return tx.Destroy(m)
 }

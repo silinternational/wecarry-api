@@ -641,8 +641,10 @@ func (as *ActionSuite) Test_meetingsInviteDelete() {
 
 func (as *ActionSuite) Test_meetingsParticipantDelete() {
 	f := createFixturesForMeetings(as)
-	meeting := f.Meetings[1]
-	participant := f.MeetingParticipants[2]
+	noAuthMeeting := f.Meetings[1]
+	noAuthParticipant := f.MeetingParticipants[2]
+	meeting := f.Meetings[2]
+	participant := f.MeetingParticipants[4]
 
 	tests := []struct {
 		name            string
@@ -655,16 +657,16 @@ func (as *ActionSuite) Test_meetingsParticipantDelete() {
 		{
 			name:            "authn error",
 			user:            models.User{},
-			meeting:         meeting,
-			participant:     participant,
+			meeting:         noAuthMeeting,
+			participant:     noAuthParticipant,
 			wantStatus:      http.StatusUnauthorized,
 			wantErrContains: api.ErrorNotAuthenticated.String(),
 		},
 		{
 			name:            "authz error",
 			user:            f.Users[1],
-			meeting:         meeting,
-			participant:     participant,
+			meeting:         noAuthMeeting,
+			participant:     noAuthParticipant,
 			wantStatus:      http.StatusNotFound,
 			wantErrContains: api.ErrorNotAuthorized.String(),
 		},
