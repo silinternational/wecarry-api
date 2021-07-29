@@ -175,8 +175,8 @@ func (m *MeetingParticipant) createWithoutInvite(tx *pop.Connection, user User, 
 	return nil
 }
 
-// TODO consider adding checks such as ensuring there aren't any requests associated
-// TODO   with the related meeting and user
+// SafeDelete ensures there are no (non-completed/removed) requests that the user associated
+// with this meetingParticipant has either created or committed to.
 func (m *MeetingParticipant) SafeDelete(tx *pop.Connection) error {
 	requests := Requests{}
 
