@@ -151,3 +151,6 @@ type MeetingInvite struct {
 type MeetingInviteEmail struct {
 	InviteEmail string `json:"invite_email"`
 }
+
+// swagger:model
+type MeetingInviteEmails []string

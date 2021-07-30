@@ -95,6 +95,7 @@ const (
 	// Meeting Invite
 
 	ErrorMeetingInviteDelete = ErrorKey("ErrorMeetingInviteDelete")
+	ErrorMeetingInvitesPost  = ErrorKey("ErrorMeetingInvitesPost")
 
 	// Message
 

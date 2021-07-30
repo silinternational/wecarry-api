@@ -636,3 +636,76 @@ func (as *ActionSuite) Test_meetingsInviteDelete() {
 		})
 	}
 }
+
+func (as *ActionSuite) Test_meetingsInvitesPost() {
+	f := createFixturesForMeetings(as)
+	meeting := f.Meetings[2]
+
+	tests := []struct {
+		name            string
+		user            models.User
+		meeting         models.Meeting
+		invites         []string
+		wantStatus      int
+		wantErrContains string
+	}{
+		//{
+		//	name:            "authn error",
+		//	user:            models.User{},
+		//	meeting:         meeting,
+		//	invite:          invite,
+		//	wantStatus:      http.StatusUnauthorized,
+		//	wantErrContains: api.ErrorNotAuthenticated.String(),
+		//},
+		//{
+		//	name:            "authz error",
+		//	user:            f.Users[1],
+		//	meeting:         meeting,
+		//	invite:          invite,
+		//	wantStatus:      http.StatusNotFound,
+		//	wantErrContains: api.ErrorNotAuthorized.String(),
+		//},
+		//{
+		//	name:            "bad email",
+		//	user:            f.Users[0],
+		//	meeting:         meeting,
+		//	invite:          models.MeetingInvite{Email: "missing@example.com"},
+		//	wantStatus:      http.StatusNotFound,
+		//	wantErrContains: api.ErrorMeetingInviteDelete.String(),
+		//},
+		{
+			name:       "add meeting invites",
+			user:       f.Users[0],
+			meeting:    meeting,
+			invites:    []string{"levi_wenger@sil.org"},
+			wantStatus: http.StatusNoContent,
+		},
+	}
+	for _, tt := range tests {
+		as.T().Run(tt.name, func(t *testing.T) {
+			fmt.Printf("\nMEETING   %+v\n", tt.meeting.ID)
+			req := as.JSON("/events/%s/invite", tt.meeting.UUID.String())
+			req.Headers["Authorization"] = fmt.Sprintf("Bearer %s", tt.user.Nickname)
+			req.Headers["content-type"] = "application/json"
+
+			reqBody := tt.invites
+			res, err := req.Do(http.MethodPost, reqBody)
+			as.NoError(err, "error sending http request for test")
+
+			body := res.Body.String()
+			as.Equal(tt.wantStatus, res.Code, "incorrect status code returned, body: %s", body)
+
+			if tt.wantStatus != http.StatusNoContent {
+				if tt.wantErrContains != "" {
+					as.Contains(body, tt.wantErrContains, "missing error message")
+				}
+				return
+			}
+
+			var invites models.MeetingInvites
+			as.NoError(as.DB.All(&invites))
+
+			//as.Equal(len(f.MeetingInvites)-1, len(invites), "incorrect count of remaining invites")
+		})
+	}
+}

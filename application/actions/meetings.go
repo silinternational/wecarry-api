@@ -479,3 +479,53 @@ func meetingsInviteDelete(c buffalo.Context) error {
 
 	return c.Render(http.StatusNoContent, nil)
 }
+
+func meetingsInvitePost(c buffalo.Context) error {
+	cUser := models.CurrentUser(c)
+	tx := models.Tx(c)
+
+	meetingID, err := getUUIDFromParam(c, "event_id")
+	if err != nil {
+		return reportError(c, err)
+	}
+
+	input := api.MeetingInviteEmails{}
+	if err := StrictBind(c, &input); err != nil {
+		err = errors.New("unable to unmarshal data into MeetingInviteEmails, error: " + err.Error())
+		return reportError(c, api.NewAppError(err, api.ErrorMeetingInvitesPost, api.CategoryUser))
+	}
+
+	var meeting models.Meeting
+	if err := meeting.FindByUUID(tx, meetingID.String()); err != nil {
+		err := fmt.Errorf("could not find meeting with id: '%s'", meetingID)
+		appError := api.NewAppError(err, api.ErrorMeetingInvitesPost, api.CategoryNotFound)
+		return reportError(c, appError)
+	}
+
+	if !cUser.CanUpdateMeeting(meeting) {
+		err := errors.New("user is not authorized to add meeting invites")
+		return reportError(c, api.NewAppError(err, api.ErrorNotAuthorized, api.CategoryForbidden))
+	}
+
+	invite := models.MeetingInvite{
+		MeetingID: meeting.ID,
+		InviterID: cUser.ID,
+	}
+	for _, i := range input {
+		err := invite.FindByMeetingIDAndEmail(tx, meeting.ID, i)
+		if err == nil {
+			err := fmt.Errorf("meeting invite already exists with meeting id: '%v' and invite email: %s",
+				meeting.ID, i)
+			appError := api.NewAppError(err, api.ErrorMeetingInvitesPost, api.CategoryUser)
+			return reportError(c, appError)
+		} else {
+			invite.Email = i
+			err := invite.Create(tx)
+			if err != nil {
+				return reportError(c, api.NewAppError(err, api.ErrorMeetingInvitesPost, api.CategoryUser))
+			}
+		}
+	}
+
+	return c.Render(http.StatusNoContent, nil)
+}
