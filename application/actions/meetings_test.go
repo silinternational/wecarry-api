@@ -702,10 +702,11 @@ func (as *ActionSuite) Test_meetingsInvitesPost() {
 				return
 			}
 
-			var invites models.MeetingInvites
-			as.NoError(as.DB.All(&invites))
+			var newInvites models.MeetingInvites
+			as.NoError(as.DB.All(&newInvites))
 
-			//as.Equal(len(f.MeetingInvites)-1, len(invites), "incorrect count of remaining invites")
+			fmt.Printf("len MeetinvInvites: %d\n", len(f.MeetingInvites))
+			as.Equal(len(f.MeetingInvites)+len(tt.invites), len(newInvites), "incorrect count of remaining invites")
 		})
 	}
 }

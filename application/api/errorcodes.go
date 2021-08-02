@@ -94,8 +94,10 @@ const (
 
 	// Meeting Invite
 
-	ErrorMeetingInviteDelete = ErrorKey("ErrorMeetingInviteDelete")
-	ErrorMeetingInvitesPost  = ErrorKey("ErrorMeetingInvitesPost")
+	ErrorMeetingInviteDelete            = ErrorKey("ErrorMeetingInviteDelete")
+	ErrorMeetingInvitesPost             = ErrorKey("ErrorMeetingInvitesPost")
+	ErrorMeetingInviteAlreadyExists     = ErrorKey("ErrorMeetingInviteAlreadyExists")
+	ErrorEmailNotAssociatedWithAnyUsers = ErrorKey("ErrorEmailNotAssociatedWithAnyUsers")
 
 	// Message
 
