@@ -3,6 +3,7 @@ package actions
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -412,6 +413,67 @@ func meetingsRemove(c buffalo.Context) error {
 		if strings.Contains(err.Error(), `meeting with associated requests may not be deleted`) {
 			appError.Category = api.CategoryUser
 		}
+		return reportError(c, appError)
+	}
+
+	return c.Render(http.StatusNoContent, nil)
+}
+
+// swagger:operation DELETE /events/{event_id}/invite Events DeleteEventInvite
+//
+// delete one invite from an event/meeting
+//
+// ---
+// parameters:
+//   - name: invite email
+//     type: string
+//     in: body
+//     description: email of invite to be deleted
+//     required: true
+//     schema:
+//       "$ref": "#/definitions/MeetingInviteEmail"
+// responses:
+//   '204':
+//     description: OK but no content in response
+func meetingsInviteDelete(c buffalo.Context) error {
+	cUser := models.CurrentUser(c)
+	tx := models.Tx(c)
+
+	meetingID, err := getUUIDFromParam(c, "event_id")
+	if err != nil {
+		return reportError(c, err)
+	}
+
+	input := api.MeetingInviteEmail{}
+	if err := StrictBind(c, &input); err != nil {
+		err = errors.New("unable to unmarshal data into MeetingInviteEmail, error: " + err.Error())
+		return reportError(c, api.NewAppError(err, api.ErrorInvalidRequestBody, api.CategoryUser))
+	}
+
+	inviteEmail := input.InviteEmail
+
+	var meeting models.Meeting
+	if err := meeting.FindByUUID(tx, meetingID.String()); err != nil {
+		err := fmt.Errorf("could not find meeting with id: '%s'", meetingID)
+		appError := api.NewAppError(err, api.ErrorMeetingInviteDelete, api.CategoryNotFound)
+		return reportError(c, appError)
+	}
+
+	if !cUser.CanUpdateMeeting(meeting) {
+		err := errors.New("user is not authorized to delete the meeting invite")
+		return reportError(c, api.NewAppError(err, api.ErrorNotAuthorized, api.CategoryForbidden))
+	}
+
+	var invite models.MeetingInvite
+	if err := invite.FindByMeetingIDAndEmail(tx, meeting.ID, inviteEmail); err != nil {
+		err := fmt.Errorf("could not find meeting invite with meeting id: '%v' and invite email: %s",
+			meeting.ID, inviteEmail)
+		appError := api.NewAppError(err, api.ErrorMeetingInviteDelete, api.CategoryNotFound)
+		return reportError(c, appError)
+	}
+
+	if err := invite.Destroy(tx); err != nil {
+		appError := api.NewAppError(err, api.ErrorMeetingInviteDelete, api.CategoryInternal)
 		return reportError(c, appError)
 	}
 

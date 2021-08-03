@@ -73,11 +73,16 @@ func (m *MeetingParticipant) FindByMeetingIDAndUserID(tx *pop.Connection, meetin
 }
 
 // CreateFromInvite creates a new MeetingParticipant using the MeetingInvite's information
-func (m *MeetingParticipant) CreateFromInvite(tx *pop.Connection, invite MeetingInvite, userID int) error {
+func (m *MeetingParticipant) CreateFromInvite(tx *pop.Connection, invite MeetingInvite, user User) error {
 	m.InviteID = nulls.NewInt(invite.ID)
-	m.UserID = userID
+	m.UserID = user.ID
 	m.MeetingID = invite.MeetingID
-	return tx.Create(m)
+
+	if err := tx.Create(m); err != nil {
+		return err
+	}
+
+	return invite.SetUserID(tx, user.UUID)
 }
 
 func (m *MeetingParticipant) Destroy(tx *pop.Connection) error {
@@ -134,6 +139,14 @@ func (m *MeetingParticipant) FindOrCreate(tx *pop.Connection, meeting Meeting, u
 			Key: "CreateMeetingParticipant",
 		}
 	}
+
+	if err := invite.SetUserID(tx, user.UUID); err != nil {
+		return &api.AppError{
+			Err: err,
+			Key: "CreateMeetingParticipant",
+		}
+	}
+
 	return nil
 }
 

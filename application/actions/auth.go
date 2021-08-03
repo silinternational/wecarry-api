@@ -457,7 +457,7 @@ func ensureMeetingParticipant(c buffalo.Context, meetingUUID string, user models
 		return
 	}
 
-	if err := participant.CreateFromInvite(tx, invite, user.ID); err != nil {
+	if err := participant.CreateFromInvite(tx, invite, user); err != nil {
 		domain.Error(c, "error creating a MeetingParticipant: "+err.Error())
 	}
 }

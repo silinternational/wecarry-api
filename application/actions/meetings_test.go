@@ -303,7 +303,7 @@ func (as *ActionSuite) Test_meetingsJoin() {
 		location        models.Location
 		meeting         models.Meeting
 		user            models.User
-		wantInvite      models.MeetingInvite
+		wantInvite      *models.MeetingInvite
 		wantHTTPStatus  int
 		wantContainsErr string
 	}
@@ -336,7 +336,7 @@ func (as *ActionSuite) Test_meetingsJoin() {
 			location:       f.Locations[3],
 			meeting:        f.Meetings[3],
 			user:           f.Users[1],
-			wantInvite:     f.MeetingInvites[3],
+			wantInvite:     &f.MeetingInvites[3],
 			wantHTTPStatus: http.StatusOK,
 		},
 	}
@@ -378,6 +378,16 @@ func (as *ActionSuite) Test_meetingsJoin() {
 			}
 
 			as.verifyResponseData(wantContains, body, "In Test_meetingsJoin")
+
+			if tc.wantInvite == nil {
+				return
+			}
+
+			var invite models.MeetingInvite
+			err := as.DB.Find(&invite, tc.wantInvite.ID)
+			as.NoError(err, "error retrieving MeetingInvite for test results")
+
+			as.Equal(tc.user.UUID, invite.UserID.UUID, "incorrect MeetingInvite.UserID")
 		})
 	}
 }
@@ -483,6 +493,7 @@ func (as *ActionSuite) Test_meetingsGet() {
 				wantContains := []string{
 					fmt.Sprintf(`"invites":[{"meeting_id":"%s"`, tc.meeting.UUID),
 					fmt.Sprintf(`"email":"%s"`, tc.wantInvite.Email),
+					`"user_id":null`,
 				}
 				as.verifyResponseData(wantContains, body, "incorrect invites list")
 
@@ -548,6 +559,80 @@ func (as *ActionSuite) Test_meetingsRemove() {
 					as.Contains(body, tt.wantErrContains, "missing error message")
 				}
 			}
+		})
+	}
+}
+
+func (as *ActionSuite) Test_meetingsInviteDelete() {
+	f := createFixturesForMeetings(as)
+	meeting := f.Meetings[1]
+	invite := f.MeetingInvites[2]
+
+	tests := []struct {
+		name            string
+		user            models.User
+		meeting         models.Meeting
+		invite          models.MeetingInvite
+		wantStatus      int
+		wantErrContains string
+	}{
+		{
+			name:            "authn error",
+			user:            models.User{},
+			meeting:         meeting,
+			invite:          invite,
+			wantStatus:      http.StatusUnauthorized,
+			wantErrContains: api.ErrorNotAuthenticated.String(),
+		},
+		{
+			name:            "authz error",
+			user:            f.Users[1],
+			meeting:         meeting,
+			invite:          invite,
+			wantStatus:      http.StatusNotFound,
+			wantErrContains: api.ErrorNotAuthorized.String(),
+		},
+		{
+			name:            "bad email",
+			user:            f.Users[0],
+			meeting:         meeting,
+			invite:          models.MeetingInvite{Email: "missing@example.com"},
+			wantStatus:      http.StatusNotFound,
+			wantErrContains: api.ErrorMeetingInviteDelete.String(),
+		},
+		{
+			name:       "safe to delete",
+			user:       f.Users[0],
+			meeting:    meeting,
+			invite:     invite,
+			wantStatus: http.StatusNoContent,
+		},
+	}
+	for _, tt := range tests {
+		as.T().Run(tt.name, func(t *testing.T) {
+			fmt.Printf("\nMEETING   %+v\n", tt.meeting.ID)
+			req := as.JSON("/events/%s/invite", tt.meeting.UUID.String())
+			req.Headers["Authorization"] = fmt.Sprintf("Bearer %s", tt.user.Nickname)
+			req.Headers["content-type"] = "application/json"
+
+			reqBody := api.MeetingInviteEmail{InviteEmail: tt.invite.Email}
+			res, err := req.Do(http.MethodDelete, reqBody)
+			as.NoError(err, "error sending http request for test")
+
+			body := res.Body.String()
+			as.Equal(tt.wantStatus, res.Code, "incorrect status code returned, body: %s", body)
+
+			if tt.wantStatus != http.StatusNoContent {
+				if tt.wantErrContains != "" {
+					as.Contains(body, tt.wantErrContains, "missing error message")
+				}
+				return
+			}
+
+			var invites models.MeetingInvites
+			as.NoError(as.DB.All(&invites))
+
+			as.Equal(len(f.MeetingInvites)-1, len(invites), "incorrect count of remaining invites")
 		})
 	}
 }
