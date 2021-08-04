@@ -511,22 +511,23 @@ func meetingsInvitePost(c buffalo.Context) error {
 		MeetingID: meeting.ID,
 		InviterID: cUser.ID,
 	}
-	for _, i := range input.Emails {
-		user := models.User{}
-		err := invite.FindByMeetingIDAndEmail(tx, meeting.ID, i)
-		uErr := user.FindByEmail(tx, i)
+	for _, email := range input.Emails {
+		// Uncomment these lines to make it so emails not associated with a user are rejected
+		//user := models.User{}
+		err := invite.FindByMeetingIDAndEmail(tx, meeting.ID, email)
+		//uErr := user.FindByEmail(tx, email)
 		if err == nil {
 			err := fmt.Errorf("meeting invite already exists with meeting id: '%v' and invite email: %s",
-				meeting.ID, i)
+				meeting.ID, email)
 			appError := api.NewAppError(err, api.ErrorMeetingInviteAlreadyExists, api.CategoryUser)
 			return reportError(c, appError)
-		} else if uErr != nil {
-			err := fmt.Errorf("email is not assosiated with any user")
+		}/* else if uErr != nil {
+			err := fmt.Errorf("email is not associated with any user")
 			appError := api.NewAppError(err, api.ErrorEmailNotAssociatedWithAnyUsers, api.CategoryUser)
 			return reportError(c, appError)
-		} else {
+		}*/ else {
 			// TODO: add support for the 'SendEmail' field, determining whether to send an invite email to the emails
-			invite.Email = i
+			invite.Email = email
 			err := invite.Create(tx)
 			if err != nil {
 				return reportError(c, api.NewAppError(err, api.ErrorMeetingInvitesPost, api.CategoryUser))
