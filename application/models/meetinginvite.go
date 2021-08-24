@@ -6,9 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gobuffalo/nulls"
-
 	"github.com/gobuffalo/events"
+	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop/v5"
 	"github.com/gobuffalo/validate/v3"
 	"github.com/gobuffalo/validate/v3/validators"
@@ -120,7 +119,6 @@ func (m *MeetingInvite) InviteURL() string {
 
 // Updates the MeetingInvite with the UUID of the user who accepted it.
 func (m *MeetingInvite) SetUserID(tx *pop.Connection, userID uuid.UUID) error {
-
 	if m.ID == 0 {
 		return errors.New("meeting invite must have an id in MeetingInvite.SetUserID")
 	}

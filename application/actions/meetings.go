@@ -14,6 +14,7 @@ import (
 
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/buffalo/render"
+
 	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/models"
 )
@@ -67,8 +68,7 @@ func meetingsCreate(c buffalo.Context) error {
 
 	var input api.MeetingInput
 	if err := StrictBind(c, &input); err != nil {
-		err = errors.New("unable to unmarshal data into MeetingInput, error: " + err.Error())
-		return reportError(c, api.NewAppError(err, api.ErrorInvalidRequestBody, api.CategoryUser))
+		return reportError(c, err)
 	}
 
 	tx := models.Tx(c)
@@ -123,8 +123,7 @@ func meetingsUpdate(c buffalo.Context) error {
 
 	var input api.MeetingInput
 	if err := StrictBind(c, &input); err != nil {
-		err = errors.New("unable to unmarshal data into MeetingInput, error: " + err.Error())
-		return reportError(c, api.NewAppError(err, api.ErrorInvalidRequestBody, api.CategoryUser))
+		return reportError(c, err)
 	}
 
 	tx := models.Tx(c)
@@ -269,8 +268,7 @@ func convertMeetingUpdateInput(ctx context.Context, input api.MeetingInput, id s
 func meetingsJoin(c buffalo.Context) error {
 	var input api.MeetingParticipantInput
 	if err := StrictBind(c, &input); err != nil {
-		err = errors.New("unable to unmarshal MeetingParticipant data into MeetingParticipantInput struct, error: " + err.Error())
-		return reportError(c, api.NewAppError(err, api.ErrorInvalidRequestBody, api.CategoryUser))
+		return reportError(c, err)
 	}
 
 	user := models.CurrentUser(c)
@@ -445,9 +443,8 @@ func meetingsInviteDelete(c buffalo.Context) error {
 	}
 
 	input := api.MeetingInviteEmail{}
-	if err := StrictBind(c, &input); err != nil {
-		err = errors.New("unable to unmarshal data into MeetingInviteEmail, error: " + err.Error())
-		return reportError(c, api.NewAppError(err, api.ErrorInvalidRequestBody, api.CategoryUser))
+	if err = StrictBind(c, &input); err != nil {
+		return reportError(c, err)
 	}
 
 	inviteEmail := input.InviteEmail

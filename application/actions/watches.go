@@ -30,8 +30,7 @@ import (
 func watchesCreate(c buffalo.Context) error {
 	var input api.WatchInput
 	if err := StrictBind(c, &input); err != nil {
-		err = errors.New("unable to unmarshal Watch data into WatchInput struct, error: " + err.Error())
-		return reportError(c, api.NewAppError(err, api.ErrorInvalidRequestBody, api.CategoryUser))
+		return reportError(c, err)
 	}
 
 	if input.IsEmpty() {

@@ -108,8 +108,7 @@ func requestsGet(c buffalo.Context) error {
 func requestsCreate(c buffalo.Context) error {
 	var input api.RequestCreateInput
 	if err := StrictBind(c, &input); err != nil {
-		err = errors.New("unable to unmarshal data into RequestCreateInput, error: " + err.Error())
-		return reportError(c, api.NewAppError(err, api.ErrorInvalidRequestBody, api.CategoryUser))
+		return reportError(c, err)
 	}
 
 	tx := models.Tx(c)
@@ -218,8 +217,7 @@ func convertRequestCreateInput(ctx context.Context, input api.RequestCreateInput
 func requestsUpdate(c buffalo.Context) error {
 	var input api.RequestUpdateInput
 	if err := StrictBind(c, &input); err != nil {
-		err = errors.New("unable to unmarshal data into RequestUpdateInput, error: " + err.Error())
-		return reportError(c, api.NewAppError(err, api.ErrorInvalidRequestBody, api.CategoryUser))
+		return reportError(c, err)
 	}
 
 	tx := models.Tx(c)
@@ -520,8 +518,7 @@ func requestsRemoveMeAsPotentialProvider(c buffalo.Context) error {
 func requestsUpdateStatus(c buffalo.Context) error {
 	var input api.RequestUpdateStatusInput
 	if err := StrictBind(c, &input); err != nil {
-		err = errors.New("unable to unmarshal data into RequestUpdateStatusInput, error: " + err.Error())
-		return reportError(c, api.NewAppError(err, api.ErrorInvalidRequestBody, api.CategoryUser))
+		return reportError(c, err)
 	}
 
 	requestID, err := getUUIDFromParam(c, "request_id")
