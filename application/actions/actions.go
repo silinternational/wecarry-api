@@ -33,7 +33,10 @@ func init() {
 func StrictBind(c buffalo.Context, dest interface{}) error {
 	dec := json.NewDecoder(c.Request().Body)
 	dec.DisallowUnknownFields()
-	return dec.Decode(dest)
+	if err := dec.Decode(dest); err != nil {
+		return api.NewAppError(err, api.ErrorInvalidRequestBody, api.CategoryUser)
+	}
+	return nil
 }
 
 // GetFunctionName provides the filename, line number, and function name of the caller, skipping the top `skip`

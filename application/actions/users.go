@@ -1,7 +1,6 @@
 package actions
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/gobuffalo/buffalo"
@@ -54,8 +53,7 @@ func usersMeUpdate(c buffalo.Context) error {
 
 	var input api.UsersInput
 	if err := StrictBind(c, &input); err != nil {
-		err = errors.New("unable to unmarshal User data into UsersInput struct, error: " + err.Error())
-		return reportError(c, api.NewAppError(err, api.ErrorInvalidRequestBody, api.CategoryUser))
+		return reportError(c, err)
 	}
 
 	if input.Nickname != nil {
