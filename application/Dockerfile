@@ -1,6 +1,6 @@
 # This is a multi-stage Dockerfile and requires >= Docker 17.05
 # https://docs.docker.com/engine/userguide/eng-image/multistage-build/
-FROM gobuffalo/buffalo:v0.16.21 as builder
+FROM gobuffalo/buffalo:v0.16.27 as builder
 
 RUN mkdir -p $GOPATH/src/wecarry
 WORKDIR $GOPATH/src/wecarry

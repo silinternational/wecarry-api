@@ -1,3 +1,4 @@
 Dockerfile*
 scrutinizer-test.sh
 .gocache
+*.pem

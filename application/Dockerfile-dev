@@ -1,4 +1,4 @@
-FROM gobuffalo/buffalo:v0.16.21
+FROM gobuffalo/buffalo:v0.16.27
 
 RUN apt-get update && apt-get install -y \
     nano \
