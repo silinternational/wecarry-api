@@ -34,7 +34,6 @@ require (
 	github.com/jackc/pgproto3/v2 v2.0.7 // indirect
 	github.com/jonboulle/clockwork v0.2.2 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
-	github.com/kr/pretty v0.2.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/markbates/goth v1.56.0
 	github.com/markbates/grift v1.5.0
@@ -51,8 +50,8 @@ require (
 	github.com/rogpeppe/go-internal v1.8.0 // indirect
 	github.com/rollbar/rollbar-go v1.4.1
 	github.com/rs/cors v1.7.0
-	github.com/russellhaering/gosaml2 v0.6.0
-	github.com/russellhaering/goxmldsig v1.1.0
+	github.com/russellhaering/gosaml2 v0.6.1-0.20210916051624-757d23f1bc28
+	github.com/russellhaering/goxmldsig v1.1.1
 	github.com/sendgrid/sendgrid-go v3.5.0+incompatible
 	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
