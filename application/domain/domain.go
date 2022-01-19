@@ -153,11 +153,7 @@ var Env struct {
 	AwsS3Bucket                string
 	AwsAccessKeyID             string
 	AwsSecretAccessKey         string
-	CertDomainName             string
-	CloudflareAuthEmail        string
-	CloudflareAuthKey          string
 	DisableTLS                 bool
-	DynamoDBTable              string
 	EmailService               string
 	EmailFromAddress           string
 	FacebookKey                string
@@ -221,11 +217,7 @@ func readEnv() {
 	Env.AwsS3Bucket = envy.Get("AWS_S3_BUCKET", "")
 	Env.AwsAccessKeyID = envy.Get("AWS_ACCESS_KEY_ID", "")
 	Env.AwsSecretAccessKey = envy.Get("AWS_SECRET_ACCESS_KEY", "")
-	Env.CertDomainName = envy.Get("CERT_DOMAIN_NAME", "")
-	Env.CloudflareAuthEmail = envy.Get("CLOUDFLARE_AUTH_EMAIL", "")
-	Env.CloudflareAuthKey = envy.Get("CLOUDFLARE_AUTH_KEY", "")
 	Env.DisableTLS, _ = strconv.ParseBool(envy.Get("DISABLE_TLS", "false"))
-	Env.DynamoDBTable = envy.Get("DYNAMO_DB_TABLE", "CertMagic")
 	Env.EmailService = envy.Get("EMAIL_SERVICE", "sendgrid")
 	Env.EmailFromAddress = envy.Get("EMAIL_FROM_ADDRESS", "no_reply@example.com")
 	Env.FacebookKey = envy.Get("FACEBOOK_KEY", "")
