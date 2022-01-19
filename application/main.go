@@ -78,7 +78,10 @@ func tlsConfig(certFile, keyFile string) (*tls.Config, error) {
 		return nil, fmt.Errorf("load cert/key files: %w", err)
 	}
 
-	config := tls.Config{Certificates: []tls.Certificate{cert}}
+	config := tls.Config{
+		Certificates: []tls.Certificate{cert},
+		MinVersion:   tls.VersionTLS12,
+	}
 	return &config, nil
 }
 
