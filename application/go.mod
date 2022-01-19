@@ -38,7 +38,7 @@ require (
 	github.com/markbates/goth v1.56.0
 	github.com/markbates/grift v1.5.0
 	github.com/mattn/go-isatty v0.0.13 // indirect
-	github.com/microcosm-cc/bluemonday v1.0.9 // indirect
+	github.com/microcosm-cc/bluemonday v1.0.16 // indirect
 	github.com/monoculum/formam v0.0.0-20210131081218-41b48e2a724b // indirect
 	github.com/mrjones/oauth v0.0.0-20180629183705-f4e24b6d100c
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
@@ -61,7 +61,7 @@ require (
 	github.com/stretchr/testify v1.7.0
 	golang.org/x/crypto v0.0.0-20210915214749-c084706c2272 // indirect
 	golang.org/x/image v0.0.0-20191214001246-9130b4cfad52
-	golang.org/x/net v0.0.0-20210913180222-943fd674d43e // indirect
+	golang.org/x/net v0.0.0-20220114011407-0dd24b26b47d // indirect
 	golang.org/x/oauth2 v0.0.0-20210514164344-f6687ab2804c
 	golang.org/x/sys v0.0.0-20210915083310-ed5796bab164 // indirect
 	golang.org/x/term v0.0.0-20210503060354-a79de5458b56 // indirect
