@@ -47,6 +47,7 @@ func generateCert(certFile, keyFile string) error {
 		return fmt.Errorf("create certificate: %w", err)
 	}
 
+	// #nosec G304 -- ok to use a filename from a variable since this is not exported code
 	certOut, err := os.Create(certFile)
 	if err != nil {
 		return fmt.Errorf("open cert file '%s': %w", certFile, err)
