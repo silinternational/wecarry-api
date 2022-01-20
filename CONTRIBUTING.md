@@ -133,3 +133,14 @@ Remote debugging with a compatible IDE is possible using the `delve` container. 
 Set up in GoLand is as simple as adding a Run/Debug Configuration. Use type "Go Remote" and use default settings (host: localhost, port: 2345, on disconnect: ask).
 
 To begin debugging, run `make debug`. This kills the `buffalo` container and starts the `debug` container. Once the app build is finished, click the debug button on the GoLand toolbar.
+
+
+## Data loaders
+
+To generate a data loader for a new model, run the following command modified
+as appropriate for the new model:
+
+```shell
+cd application/dataloader
+go run github.com/vektah/dataloaden RequestLoader int *github.com/silinternational/wecarry-api/models.Request
+```

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/gobuffalo/nulls"
@@ -16,6 +17,27 @@ import (
 	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/domain"
 )
+
+const (
+	OptIncludeParticipants MeetingOption = iota + 1
+	OptIncludeInvites      MeetingOption = iota
+)
+
+type MeetingOption int
+
+func (o *MeetingOption) isSelected(options ...MeetingOption) bool {
+	if len(options) == 0 {
+		return false
+	}
+
+	for _, mo := range options {
+		if *o == mo {
+			return true
+		}
+	}
+
+	return false
+}
 
 // Meeting represents an event where people gather together from different locations
 type Meeting struct {
@@ -96,6 +118,19 @@ func (v *dateValidator) IsValid(errors *validate.Errors) {
 	v.Message = fmt.Sprintf("Start date must come no later than end date chronologically. Got %s and %s.",
 		v.StartDate.Format(domain.DateFormat), v.EndDate.Format(domain.DateFormat))
 	errors.Add(validators.GenerateKey(v.Name), v.Message)
+}
+
+func (m *Meeting) SafeDelete(tx *pop.Connection) error {
+	requests, err := m.Requests(tx)
+	if domain.IsOtherThanNoRows(err) {
+		return err
+	}
+
+	if len(requests) > 0 {
+		return errors.New("meeting with associated requests may not be deleted")
+	}
+
+	return tx.Destroy(m)
 }
 
 // FindByUUID finds a meeting by the UUID field and loads its CreatedBy field
@@ -237,13 +272,40 @@ func (m *Meeting) Update(tx *pop.Connection) error {
 // SetLocation sets the location field, creating a new record in the database if necessary.
 func (m *Meeting) SetLocation(tx *pop.Connection, location Location) error {
 	location.ID = m.LocationID
+	if m.LocationID == 0 {
+		if err := location.Create(tx); err != nil {
+			return err
+		}
+	} else {
+		if err := location.Update(tx); err != nil {
+			return err
+		}
+	}
+	m.LocationID = location.ID
 	m.Location = location
-	return m.Location.Update(tx)
+
+	return nil
 }
 
 // CanCreate returns a bool based on whether the current user is allowed to create a meeting
 func (m *Meeting) CanCreate(user User) bool {
 	return true
+}
+
+// CanDelete returns a bool based on whether the current user is
+//   allowed to update this meeting and the meeting has no requests
+//   associated with it.
+func (m *Meeting) CanDelete(tx *pop.Connection, user User) (bool, error) {
+	if !user.CanUpdateMeeting(*m) {
+		return false, nil
+	}
+
+	requests, err := m.Requests(tx)
+	if domain.IsOtherThanNoRows(err) {
+		return false, err
+	}
+
+	return len(requests) == 0, nil
 }
 
 // CanUpdate returns a bool based on whether the current user is allowed to update a meeting
@@ -281,7 +343,7 @@ func (m *Meeting) Invites(tx *pop.Connection, user User) (MeetingInvites, error)
 	if user.ID != m.CreatedByID && !isOrganizer && !user.isSuperAdmin() {
 		return i, nil
 	}
-	if err := tx.Where("meeting_id = ?", m.ID).All(&i); err != nil {
+	if err := tx.Where("meeting_id = ?", m.ID).Eager("Inviter").All(&i); err != nil {
 		return i, err
 	}
 	return i, nil
@@ -393,7 +455,7 @@ func ConvertMeetings(ctx context.Context, meetings []Meeting, user User) ([]api.
 }
 
 // ConvertMeeting converts a model.Meeting into api.Meeting
-func ConvertMeeting(ctx context.Context, meeting Meeting, user User) (api.Meeting, error) {
+func ConvertMeeting(ctx context.Context, meeting Meeting, user User, options ...MeetingOption) (api.Meeting, error) {
 	output := convertMeetingAbridged(meeting)
 	tx := Tx(ctx)
 	if err := tx.Load(&meeting); err != nil {
@@ -408,14 +470,49 @@ func ConvertMeeting(ctx context.Context, meeting Meeting, user User) (api.Meetin
 
 	output.ImageFile = convertMeetingImageFile(meeting)
 	output.Location = convertLocation(meeting.Location)
+	output.HasJoined = true
 
-	participants, err := loadMeetingParticipants(ctx, meeting, user)
-	if err != nil {
+	var userP MeetingParticipant
+	if err := userP.FindByMeetingIDAndUserID(tx, meeting.ID, user.ID); err != nil {
+		if domain.IsOtherThanNoRows(err) {
+			err := fmt.Errorf("failed to load MeetingParticipant in Meeting.ConvertMeeting, %s", err)
+			return api.Meeting{}, err
+		}
+		output.HasJoined = false // no participant found for user
+	}
+
+	if err := loadMeetingOptions(ctx, meeting, user, &output, options...); err != nil {
 		return api.Meeting{}, err
 	}
-	output.Participants = participants
+
+	output.IsEditable = meeting.CanUpdate(user)
 
 	return output, nil
+}
+
+func loadMeetingOptions(ctx context.Context, meeting Meeting, user User, apiMeeting *api.Meeting, options ...MeetingOption) error {
+	apiMeeting.Participants = api.MeetingParticipants{}
+
+	opt := OptIncludeParticipants
+	if opt.isSelected(options...) {
+		participants, err := loadMeetingParticipants(ctx, meeting, user)
+		if err != nil {
+			return err
+		}
+		apiMeeting.Participants = participants
+	}
+
+	apiMeeting.Invites = api.MeetingInvites{}
+	opt = OptIncludeInvites
+	if opt.isSelected(options...) {
+		invites, err := loadMeetingInvites(Tx(ctx), meeting, user)
+		if err != nil {
+			return err
+		}
+		apiMeeting.Invites = invites
+	}
+
+	return nil
 }
 
 // convertMeetingImageFile converts a model.Meeting.ImgFile into an api.File
@@ -467,8 +564,8 @@ func convertMeetingAbridged(meeting Meeting) api.Meeting {
 		ID:          meeting.UUID,
 		Name:        meeting.Name,
 		Description: meeting.Description.String,
-		StartDate:   meeting.StartDate,
-		EndDate:     meeting.EndDate,
+		StartDate:   meeting.StartDate.Format(domain.DateFormat),
+		EndDate:     meeting.EndDate.Format(domain.DateFormat),
 		CreatedAt:   meeting.CreatedAt,
 		UpdatedAt:   meeting.UpdatedAt,
 		MoreInfoURL: meeting.MoreInfoURL.String,
@@ -529,4 +626,81 @@ func loadMeetingParticipants(ctx context.Context, meeting Meeting, user User) (a
 	}
 
 	return outputParticipants, nil
+}
+
+// CreateInvites creates meeting invitations from a list of email addresses. The addresses
+// can be comma-separated or newline separated.
+func (m *Meeting) CreateInvites(ctx context.Context, emails string) error {
+	if emails == "" {
+		return nil
+	}
+
+	cUser := CurrentUser(ctx)
+	tx := Tx(ctx)
+
+	can, err := cUser.CanCreateMeetingInvite(tx, *m)
+	if err != nil {
+		return errors.New("error creating meeting invites, " + err.Error())
+	}
+	if !can {
+		return errors.New("user cannot create invites for this meeting")
+	}
+
+	inv := MeetingInvite{
+		MeetingID: m.ID,
+		InviterID: cUser.ID,
+	}
+
+	badEmails := make([]string, 0)
+	for _, email := range splitEmailList(emails) {
+		inv.Email = email
+		if err := inv.Create(tx); err != nil {
+			badEmails = append(badEmails, email)
+		}
+	}
+	if len(badEmails) > 0 {
+		return fmt.Errorf("problems creating invitations, bad emails: %s", badEmails)
+	}
+
+	return nil
+}
+
+func splitEmailList(emails string) []string {
+	if emails == "" {
+		return []string{}
+	}
+
+	split := strings.Split(strings.ReplaceAll(strings.ReplaceAll(emails, "\r\n", ","), "\n", ","), ",")
+	for i := range split {
+		split[i] = strings.TrimSpace(split[i])
+	}
+	return split
+}
+
+// loadMeetingInvites gets the meeting's invites and converts into api.MeetingInvites
+func loadMeetingInvites(tx *pop.Connection, meeting Meeting, user User) (api.MeetingInvites, error) {
+	invites, err := meeting.Invites(tx, user)
+	if err != nil {
+		return api.MeetingInvites{}, err
+	}
+	output := convertMeetingInvites(meeting, invites)
+	return output, nil
+}
+
+// convertMeetingInvites converts model.MeetingInvites into  api.MeetingInvites
+func convertMeetingInvites(meeting Meeting, invites MeetingInvites) api.MeetingInvites {
+	output := make(api.MeetingInvites, len(invites))
+	for i := range output {
+		output[i] = convertMeetingInvite(meeting, invites[i])
+	}
+	return output
+}
+
+func convertMeetingInvite(meeting Meeting, invite MeetingInvite) api.MeetingInvite {
+	output := api.MeetingInvite{}
+	output.MeetingID = meeting.UUID
+	output.InviterID = invite.Inviter.UUID
+	output.Email = invite.Email
+
+	return output
 }

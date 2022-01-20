@@ -14,6 +14,7 @@ import (
 	saml2 "github.com/russellhaering/gosaml2"
 	"github.com/russellhaering/gosaml2/types"
 	dsig "github.com/russellhaering/goxmldsig"
+
 	"github.com/silinternational/wecarry-api/auth"
 	"github.com/silinternational/wecarry-api/domain"
 )
@@ -131,7 +132,7 @@ func (p *Provider) Logout(c buffalo.Context) auth.Response {
 	if err != nil {
 		resp.Error = err
 	}
-	rURL := fmt.Sprintf("%s?ReturnTo=%s", p.Config.SingleLogoutURL, domain.Env.UIURL)
+	rURL := fmt.Sprintf("%s?ReturnTo=%s", p.Config.SingleLogoutURL, domain.MarketingSiteURL)
 	return auth.Response{RedirectURL: rURL}
 }
 

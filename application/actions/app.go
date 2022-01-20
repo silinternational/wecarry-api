@@ -30,6 +30,7 @@ package actions
 
 import (
 	"github.com/gobuffalo/buffalo"
+	"github.com/gobuffalo/buffalo-pop/v2/pop/popmw"
 	i18n "github.com/gobuffalo/mw-i18n"
 	paramlogger "github.com/gobuffalo/mw-paramlogger"
 	"github.com/gobuffalo/packr/v2"
@@ -37,6 +38,7 @@ import (
 	"github.com/rs/cors"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/listeners"
+	"github.com/silinternational/wecarry-api/models"
 )
 
 var app *buffalo.App
@@ -85,6 +87,9 @@ func App() *buffalo.App {
 		// Log request parameters (filters apply).
 		app.Use(paramlogger.ParameterLogger)
 
+		// Wraps each request in a transaction.
+		app.Use(popmw.Transaction(models.DB))
+
 		//  Added for authorization
 		app.Use(setCurrentUser)
 		app.Middleware.Skip(setCurrentUser, statusHandler, serviceHandler)
@@ -94,7 +99,12 @@ func App() *buffalo.App {
 
 		eventsGroup := app.Group("/events")
 		eventsGroup.GET("/", meetingsList)
+		eventsGroup.POST("/", meetingsCreate)
+		eventsGroup.PUT("/{event_id}", meetingsUpdate)
 		eventsGroup.POST("/join", meetingsJoin)
+		eventsGroup.GET("/{event_id}", meetingsGet)
+		eventsGroup.DELETE("/{event_id}", meetingsRemove)
+		eventsGroup.DELETE("/{event_id}/invite/", meetingsInviteDelete)
 
 		app.POST("/messages/", messagesCreate)
 

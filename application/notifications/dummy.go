@@ -3,7 +3,6 @@ package notifications
 import (
 	"bytes"
 	"errors"
-	"fmt"
 
 	"github.com/silinternational/wecarry-api/domain"
 )
@@ -18,89 +17,11 @@ type dummyMessage struct {
 	subject, body, fromName, fromEmail, toName, toEmail string
 }
 
-type dummyTemplate struct {
-	subject, body string
-}
-
 type DummyMessageInfo struct {
 	Subject, ToName, ToEmail string
 }
 
-var dummyTemplates = map[string]dummyTemplate{
-	domain.MessageTemplateNewRequest: {
-		subject: "new request",
-		body:    "There is a new request for an item.",
-	},
-	domain.MessageTemplateNewThreadMessage: {
-		subject: "new message",
-		body:    "You have a new message.",
-	},
-	domain.MessageTemplateRequestDelivered: {
-		subject: domain.MessageTemplateRequestDelivered,
-		body:    "The status of a request changed from accepted to delivered.",
-	},
-	domain.MessageTemplateRequestReceived: {
-		subject: domain.MessageTemplateRequestReceived,
-		body:    "The status of a request changed from accepted or delivered to received.",
-	},
-	domain.MessageTemplateRequestNotReceivedAfterAll: {
-		subject: domain.MessageTemplateRequestNotReceivedAfterAll,
-		body:    "The status of a request changed from completed to accepted or delivered.",
-	},
-	domain.MessageTemplateRequestFromAcceptedToDelivered: {
-		subject: domain.MessageTemplateRequestFromAcceptedToDelivered,
-		body:    "The status of a request changed from accepted to delivered.",
-	},
-	domain.MessageTemplateRequestFromAcceptedToOpen: {
-		subject: domain.MessageTemplateRequestFromAcceptedToOpen,
-		body:    "The status of a request changed from accepted to open.",
-	},
-	domain.MessageTemplateRequestFromAcceptedToRemoved: {
-		subject: domain.MessageTemplateRequestFromAcceptedToRemoved,
-		body:    "The status of a request changed from accepted to removed.",
-	},
-	domain.MessageTemplateRequestFromOpenToAccepted: {
-		subject: domain.MessageTemplateRequestFromOpenToAccepted,
-		body:    "The status of a request changed from open to accepted.",
-	},
-	domain.MessageTemplateRequestFromDeliveredToAccepted: {
-		subject: domain.MessageTemplateRequestFromDeliveredToAccepted,
-		body:    "The status of a request changed from delivered to accepted.",
-	},
-	domain.MessageTemplateRequestFromDeliveredToCompleted: {
-		subject: domain.MessageTemplateRequestFromDeliveredToCompleted,
-		body:    "The status of a request changed from delivered to completed.",
-	},
-	domain.MessageTemplateRequestFromOpenToRemoved: {
-		subject: domain.MessageTemplateRequestFromOpenToRemoved,
-		body:    "The status of a request changed from open to removed.",
-	},
-	domain.MessageTemplateNewUserWelcome: {
-		subject: domain.MessageTemplateNewUserWelcome,
-		body:    "welcome",
-	},
-	domain.MessageTemplatePotentialProviderCreated: {
-		subject: domain.MessageTemplatePotentialProviderCreated,
-		body:    "Someone has offered to fulfill your request",
-	},
-	domain.MessageTemplatePotentialProviderRejected: {
-		subject: domain.MessageTemplatePotentialProviderRejected,
-		body:    "Your offer to fulfill a request was not accepted",
-	},
-	domain.MessageTemplatePotentialProviderSelfDestroyed: {
-		subject: domain.MessageTemplatePotentialProviderSelfDestroyed,
-		body:    "An offer to fulfill your request was retracted",
-	},
-}
-
 func (t *DummyEmailService) Send(msg Message) error {
-	_, ok := dummyTemplates[msg.Template]
-	if !ok {
-		errMsg := fmt.Sprintf("invalid template name: %s", msg.Template)
-		domain.ErrLogger.Printf(errMsg)
-		return errors.New(errMsg)
-	}
-
 	eTemplate := msg.Template
 	bodyBuf := &bytes.Buffer{}
 	if err := eR.HTML(eTemplate).Render(bodyBuf, msg.Data); err != nil {

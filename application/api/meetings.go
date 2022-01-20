@@ -3,6 +3,8 @@ package api
 import (
 	"time"
 
+	"github.com/gobuffalo/nulls"
+
 	"github.com/gofrs/uuid"
 )
 
@@ -19,6 +21,14 @@ type Meeting struct {
 	// example: 63d5b060-1460-4348-bdf0-ad03c105a8d5
 	ID uuid.UUID `json:"id"`
 
+	// Whether meeting is deletable by current user
+	// Note: This will only be a valid value when a single
+	//       event/meeting is requested (not for a list of events)
+	IsDeletable nulls.Bool `json:"is_deletable"`
+
+	// Whether meeting is editable by current user
+	IsEditable bool `json:"is_editable"`
+
 	// Short name, limited to 80 characters
 	Name string `json:"name"`
 
@@ -26,10 +36,10 @@ type Meeting struct {
 	Description string `json:"description"`
 
 	// The date of the first day of the meeting (event)
-	StartDate time.Time `json:"start_date"`
+	StartDate string `json:"start_date"`
 
 	// The date of the last day of the meeting (event)
-	EndDate time.Time `json:"end_date"`
+	EndDate string `json:"end_date"`
 
 	// Profile of the user that added this meeting (event) to the app
 	CreatedBy User `json:"created_by"`
@@ -37,8 +47,14 @@ type Meeting struct {
 	// Image File -- typically a logo
 	ImageFile *File `json:"image_file,omitempty"`
 
+	// invites for this meeting
+	Invites MeetingInvites `json:"invites"`
+
 	// location -- notifications and filters may use this location
 	Location Location `json:"location,omitempty"`
+
+	// Whether the current user has joined this event/meeting
+	HasJoined bool `json:"has_joined"`
 
 	// participants
 	Participants MeetingParticipants `json:"participants"`
@@ -51,6 +67,36 @@ type Meeting struct {
 
 	// meeting (event) information URL -- should be a full website, but could be an information document such as a pdf"
 	MoreInfoURL string `json:"more_info_url"`
+}
+
+// MeetingInput includes the fields for creating or updating Meetings/Events
+//
+// swagger:model
+type MeetingInput struct {
+
+	// short name, limited to 80 characters
+	Name string `json:"name"`
+
+	// text-only description, limited to 4096 characters
+	Description nulls.String `json:"description"`
+
+	// date (yyyy-mm-dd) of the first day of the meeting (event)"
+	StartDate string `json:"start_date"`
+
+	// date (yyyy-mm-dd) of the last day of the meeting (event)"
+	EndDate string `json:"end_date"`
+
+	// meeting (event) information URL -- should be a full website, but could be an information document such as a pdf"
+	MoreInfoURL nulls.String `json:"more_info_url"`
+
+	// ID of pre-stored image file, typically a logo. Upload using the `upload` REST API endpoint."
+	ImageFileID nulls.UUID `json:"image_file_id"`
+
+	// meeting (event) location -- notifications and filters may use this location"
+	Location Location `json:"location"`
+
+	// email addresses to which to send meeting invites. Can be comma- or newline-separated.
+	Emails string `json:"emails"`
 }
 
 // swagger:model
@@ -77,4 +123,31 @@ type MeetingParticipantInput struct {
 	// Secret code from the `MeetingInvite` or invite code from the `Meeting`.
 	// If the `Meeting` is not `INVITE_ONLY`, the code may be omitted.
 	Code *string `json:"code"`
+}
+
+// swagger:model
+type MeetingInvites []MeetingInvite
+
+// Invitation to a `Meeting`.
+//
+// swagger:model
+type MeetingInvite struct {
+	// The uuid of the meeting the invite is for
+	MeetingID uuid.UUID `json:"meeting_id"`
+
+	// The uuid of the user who created the invite
+	InviterID uuid.UUID `json:"inviter_id"`
+
+	// The email address of the person being invited
+	Email string `json:"email"`
+
+	// UUID of the user who has accepted the invite
+	UserID nulls.UUID `json:"user_id"`
+}
+
+// The email address associated with a meeting invite
+//
+// swagger:model
+type MeetingInviteEmail struct {
+	InviteEmail string `json:"invite_email"`
 }

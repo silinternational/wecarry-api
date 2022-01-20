@@ -40,6 +40,7 @@ const (
 	RecentMeetingDelay          = DurationDay * 30
 	DataLoaderMaxBatch          = 100
 	DataLoaderWaitMilliSeconds  = 5 * time.Millisecond
+	MarketingSiteURL            = "https://www.wecarry.app"
 )
 
 // Event Kinds
@@ -53,15 +54,19 @@ const (
 	EventApiPotentialProviderCreated       = "api:potentialprovider:created"
 	EventApiPotentialProviderRejected      = "api:potentialprovider:rejected"
 	EventApiPotentialProviderSelfDestroyed = "api:potentialprovider:selfdestroyed"
+	EventApiMeetingInviteCreated           = "api:meetinginvite:created"
 )
 
 // Event and Job argument names
 const (
+	ArgId        = "id"
+	ArgEventData = "eventData"
 	ArgMessageID = "message_id"
 )
 
-// Notification Message Template Names
+// Notification Message Template Names -- the values correspond to the template file names
 const (
+	MessageTemplateMeetingInvite                   = "meeting_invite"
 	MessageTemplateNewRequest                      = "new_request"
 	MessageTemplateNewThreadMessage                = "new_thread_message"
 	MessageTemplateNewUserWelcome                  = "new_user_welcome"
@@ -148,11 +153,7 @@ var Env struct {
 	AwsS3Bucket                string
 	AwsAccessKeyID             string
 	AwsSecretAccessKey         string
-	CertDomainName             string
-	CloudflareAuthEmail        string
-	CloudflareAuthKey          string
 	DisableTLS                 bool
-	DynamoDBTable              string
 	EmailService               string
 	EmailFromAddress           string
 	FacebookKey                string
@@ -162,6 +163,8 @@ var Env struct {
 	GoogleSecret               string
 	LinkedInKey                string
 	LinkedInSecret             string
+	ListenerDelayMilliseconds  int
+	ListenerMaxRetries         int
 	MaxFileDelete              int
 	MaxLocationDelete          int
 	MailChimpAPIBaseURL        string
@@ -214,11 +217,7 @@ func readEnv() {
 	Env.AwsS3Bucket = envy.Get("AWS_S3_BUCKET", "")
 	Env.AwsAccessKeyID = envy.Get("AWS_ACCESS_KEY_ID", "")
 	Env.AwsSecretAccessKey = envy.Get("AWS_SECRET_ACCESS_KEY", "")
-	Env.CertDomainName = envy.Get("CERT_DOMAIN_NAME", "")
-	Env.CloudflareAuthEmail = envy.Get("CLOUDFLARE_AUTH_EMAIL", "")
-	Env.CloudflareAuthKey = envy.Get("CLOUDFLARE_AUTH_KEY", "")
 	Env.DisableTLS, _ = strconv.ParseBool(envy.Get("DISABLE_TLS", "false"))
-	Env.DynamoDBTable = envy.Get("DYNAMO_DB_TABLE", "CertMagic")
 	Env.EmailService = envy.Get("EMAIL_SERVICE", "sendgrid")
 	Env.EmailFromAddress = envy.Get("EMAIL_FROM_ADDRESS", "no_reply@example.com")
 	Env.FacebookKey = envy.Get("FACEBOOK_KEY", "")
@@ -228,6 +227,8 @@ func readEnv() {
 	Env.GoogleSecret = envy.Get("GOOGLE_SECRET", "")
 	Env.LinkedInKey = envy.Get("LINKED_IN_KEY", "")
 	Env.LinkedInSecret = envy.Get("LINKED_IN_SECRET", "")
+	Env.ListenerDelayMilliseconds, _ = strconv.Atoi(envy.Get("LISTENER_DELAY_MILLISECONDS", "1000"))
+	Env.ListenerMaxRetries, _ = strconv.Atoi(envy.Get("LISTENER_MAX_RETRIES", "10"))
 	Env.MaxFileDelete = envToInt("MAX_FILE_DELETE", 10)
 	Env.MaxLocationDelete = envToInt("MAX_LOCATION_DELETE", 10)
 	Env.MailChimpAPIBaseURL = envy.Get("MAILCHIMP_API_BASE_URL", "https://us4.api.mailchimp.com/3.0")
@@ -249,7 +250,7 @@ func readEnv() {
 	Env.SupportEmail = envy.Get("SUPPORT_EMAIL", "")
 	Env.TwitterKey = envy.Get("TWITTER_KEY", "")
 	Env.TwitterSecret = envy.Get("TWITTER_SECRET", "")
-	Env.UIURL = envy.Get("UI_URL", "dev.wecarry.app")
+	Env.UIURL = envy.Get("UI_URL", "https://wecarry.app")
 }
 
 func envToInt(name string, def int) int {

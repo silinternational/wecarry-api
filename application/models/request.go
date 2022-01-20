@@ -426,7 +426,7 @@ func (r *Request) manageStatusTransition(tx *pop.Connection) error {
 	e := events.Event{
 		Kind:    domain.EventApiRequestStatusUpdated,
 		Message: "Request Status changed",
-		Payload: events.Payload{"eventData": eventData},
+		Payload: events.Payload{domain.ArgEventData: eventData},
 	}
 
 	emitEvent(e)
@@ -493,7 +493,7 @@ func (r *Request) AfterUpdate(tx *pop.Connection) error {
 	e := events.Event{
 		Kind:    domain.EventApiRequestUpdated,
 		Message: "Request updated",
-		Payload: events.Payload{"eventData": RequestUpdatedEventData{
+		Payload: events.Payload{domain.ArgEventData: RequestUpdatedEventData{
 			RequestID: r.ID,
 		}},
 	}
@@ -517,7 +517,7 @@ func (r *Request) AfterCreate(tx *pop.Connection) error {
 	e := events.Event{
 		Kind:    domain.EventApiRequestCreated,
 		Message: "Request created",
-		Payload: events.Payload{"eventData": RequestCreatedEventData{
+		Payload: events.Payload{domain.ArgEventData: RequestCreatedEventData{
 			RequestID: r.ID,
 		}},
 	}
@@ -937,9 +937,6 @@ func (r *Request) RemoveOrigin(tx *pop.Connection) error {
 
 // SetDestination sets the destination location fields, creating a new record in the database if necessary.
 func (r *Request) SetDestination(tx *pop.Connection, location Location) error {
-	if r.MeetingID.Valid {
-		return errors.New("Attempted to set destination on event-based request")
-	}
 	location.ID = r.DestinationID
 	r.Destination = location
 	return r.Destination.Update(tx)

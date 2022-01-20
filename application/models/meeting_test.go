@@ -7,7 +7,6 @@ import (
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/validate/v3"
 	"github.com/gofrs/uuid"
-
 	"github.com/silinternational/wecarry-api/domain"
 )
 
@@ -428,7 +427,6 @@ func (ms *ModelSuite) TestMeeting_GetSetLocation() {
 	ms.NoError(err, "unexpected error from meeting.GetLocation()")
 	locations[1].ID = locationFromDB.ID
 	ms.Equal(locations[1], locationFromDB, "location data doesn't match after update")
-
 }
 
 func (ms *ModelSuite) TestMeeting_CanUpdate() {
@@ -874,6 +872,109 @@ func (ms *ModelSuite) TestMeetings_FindByIDs() {
 				got[i] = mm.Name
 			}
 			ms.Equal(tt.want, got, "incorrect meeting names")
+		})
+	}
+}
+
+func (ms *ModelSuite) TestMeeting_CreateInvites() {
+	uf := createUserFixtures(ms.DB, 2)
+	mf := createMeetingFixtures(ms.DB, 1, uf.Users[0].ID)
+	meetings := mf.Meetings
+
+	tests := []struct {
+		name        string
+		user        User
+		meeting     Meeting
+		emails      string
+		wantInvites int
+		wantErr     string
+	}{
+		{
+			name:    "cannot invite",
+			user:    uf.Users[1],
+			meeting: meetings[0],
+			emails:  "a@example.com",
+			wantErr: "user cannot create invites for this meeting",
+		},
+		{
+			name:    "invalid email",
+			user:    uf.Users[0],
+			meeting: meetings[0],
+			emails:  "not_good.example.com",
+			wantErr: "problems creating invitations, bad emails: [not_good.example.com]",
+		},
+		{
+			name:        "empty string",
+			user:        uf.Users[0],
+			meeting:     meetings[0],
+			emails:      "",
+			wantInvites: len(mf.MeetingInvites),
+		},
+		{
+			name:        "two emails",
+			user:        uf.Users[0],
+			meeting:     meetings[0],
+			emails:      "one@example.com,two@example.com",
+			wantInvites: len(mf.MeetingInvites) + 2,
+		},
+	}
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			err := tt.meeting.CreateInvites(CtxWithUser(tt.user), tt.emails)
+			if tt.wantErr != "" {
+				ms.Error(err)
+				ms.Contains(err.Error(), tt.wantErr, "incorrect error message")
+				return
+			}
+			ms.NoError(err)
+
+			var invites MeetingInvites
+			ms.NoError(ms.DB.Where("meeting_id = ?", tt.meeting.ID).All(&invites))
+			ms.Equal(tt.wantInvites, len(invites), "wrong number of invites in database")
+		})
+	}
+}
+
+func (ms *ModelSuite) Test_splitEmailList() {
+	tests := []struct {
+		name   string
+		emails string
+		want   []string
+	}{
+		{
+			name:   "empty string",
+			emails: "",
+			want:   []string{},
+		},
+		{
+			name:   "comma",
+			emails: "one@example.com,two@example.com",
+			want:   []string{"one@example.com", "two@example.com"},
+		},
+		{
+			name:   "lf",
+			emails: "one@example.com\ntwo@example.com",
+			want:   []string{"one@example.com", "two@example.com"},
+		},
+		{
+			name:   "cr-lf",
+			emails: "one@example.com\r\ntwo@example.com",
+			want:   []string{"one@example.com", "two@example.com"},
+		},
+		{
+			name:   "mixed",
+			emails: "one@example.com\r\ntwo@example.com\nthree@example.com,four@example.com",
+			want:   []string{"one@example.com", "two@example.com", "three@example.com", "four@example.com"},
+		},
+		{
+			name:   "comma space",
+			emails: "one@example.com, two@example.com",
+			want:   []string{"one@example.com", "two@example.com"},
+		},
+	}
+	for _, tt := range tests {
+		ms.T().Run(tt.name, func(t *testing.T) {
+			ms.Equal(tt.want, splitEmailList(tt.emails))
 		})
 	}
 }

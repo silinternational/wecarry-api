@@ -1,16 +1,13 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net/http"
 	"os"
 
-	"github.com/caddyserver/certmagic"
-	"github.com/go-acme/lego/providers/dns/cloudflare"
 	"github.com/gobuffalo/buffalo/servers"
 	"github.com/rollbar/rollbar-go"
-
-	dynamodbstore "github.com/silinternational/certmagic-storage-dynamodb"
 
 	"github.com/silinternational/wecarry-api/actions"
 	"github.com/silinternational/wecarry-api/domain"
@@ -49,40 +46,43 @@ func main() {
 }
 
 func getServer() (servers.Server, error) {
+	const (
+		certFile = "cert.pem"
+		keyFile  = "key.pem"
+	)
+
 	if domain.Env.DisableTLS {
 		return servers.New(), nil
 	}
 
-	certmagic.Default.Storage = &dynamodbstore.Storage{
-		Table:     domain.Env.DynamoDBTable,
-		AwsRegion: domain.Env.AwsRegion,
-	}
-
-	cloudflareConfig := cloudflare.NewDefaultConfig()
-	cloudflareConfig.AuthEmail = domain.Env.CloudflareAuthEmail
-	cloudflareConfig.AuthKey = domain.Env.CloudflareAuthKey
-	dnsProvider, err := cloudflare.NewDNSProviderConfig(cloudflareConfig)
+	err := generateCert(certFile, keyFile)
 	if err != nil {
-		return servers.New(), fmt.Errorf("failed to init Cloudflare dns provider for LetsEncrypt: %s", err.Error())
+		return nil, fmt.Errorf("generate cert: %w", err)
 	}
 
-	if domain.Env.GoEnv != "prod" && domain.Env.GoEnv != "production" {
-		certmagic.DefaultACME.CA = certmagic.LetsEncryptStagingCA
-	}
-
-	certmagic.DefaultACME.Email = domain.Env.SupportEmail
-	certmagic.DefaultACME.Agreed = true
-	certmagic.DefaultACME.DNSProvider = dnsProvider
-	certmagic.DefaultACME.DisableHTTPChallenge = true
-	certmagic.DefaultACME.DisableTLSALPNChallenge = true
-	certmagic.HTTPSPort = domain.Env.ServerPort
-
-	listener, err := certmagic.Listen([]string{domain.Env.CertDomainName})
+	cfg, err := tlsConfig(certFile, keyFile)
 	if err != nil {
-		return servers.New(), fmt.Errorf("failed to get TLS config: %s", err.Error())
+		return servers.New(), fmt.Errorf("get TLS config: %w", err)
+	}
+	listener, err := tls.Listen("tcp", fmt.Sprintf(":%d", domain.Env.ServerPort), cfg)
+	if err != nil {
+		return servers.New(), fmt.Errorf("get TLS listener: %w", err)
 	}
 
 	return servers.WrapListener(&http.Server{}, listener), nil
+}
+
+func tlsConfig(certFile, keyFile string) (*tls.Config, error) {
+	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+	if err != nil {
+		return nil, fmt.Errorf("load cert/key files: %w", err)
+	}
+
+	config := tls.Config{
+		Certificates: []tls.Certificate{cert},
+		MinVersion:   tls.VersionTLS12,
+	}
+	return &config, nil
 }
 
 /*

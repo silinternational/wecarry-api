@@ -299,6 +299,10 @@
 - id: Email.Subject.Welcome
   translation: Welcome to {{.AppName}}
 
+# New MeetingInvite subject
+- id: Email.Subject.MeetingInvite
+  translation: Invitation to {{.MeetingName}} on {{.AppName}}
+
 # New Request subject
 - id: Email.Subject.NewRequest
   translation: New Request on {{.AppName}}

@@ -59,7 +59,7 @@ func (b *testBuffaloContext) Set(key string, val interface{}) {
 	b.params[key] = val
 }
 
-func createTestContext(user User) buffalo.Context {
+func CtxWithUser(user User) buffalo.Context {
 	ctx := &testBuffaloContext{
 		params: map[interface{}]interface{}{},
 	}
@@ -70,7 +70,7 @@ func createTestContext(user User) buffalo.Context {
 func (ms *ModelSuite) TestCurrentUser() {
 	// setup
 	user := createUserFixtures(ms.DB, 1).Users[0]
-	ctx := createTestContext(user)
+	ctx := CtxWithUser(user)
 
 	tests := []struct {
 		name     string

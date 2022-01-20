@@ -136,6 +136,7 @@ func (ms *ModelSuite) TestMeetingParticipant_FindOrCreate() {
 		name    string
 		user    User
 		meeting Meeting
+		invite  *MeetingInvite
 		code    nulls.UUID
 		userIDs []int
 		wantErr string
@@ -173,6 +174,7 @@ func (ms *ModelSuite) TestMeetingParticipant_FindOrCreate() {
 			user:    f.Users[4],
 			meeting: f.Meetings[0],
 			code:    nulls.NewUUID(f.MeetingInvites[1].Secret),
+			invite:  &f.MeetingInvites[1],
 			userIDs: []int{f.Users[0].ID, f.Users[1].ID, f.Users[2].ID, f.Users[3].ID, f.Users[4].ID},
 		},
 		{
@@ -216,6 +218,16 @@ func (ms *ModelSuite) TestMeetingParticipant_FindOrCreate() {
 			sort.Ints(ids)
 
 			ms.Equal(tt.userIDs, ids)
+
+			if tt.invite == nil {
+				return
+			}
+
+			var invite MeetingInvite
+			err = ms.DB.Find(&invite, tt.invite.ID)
+			ms.NoError(err, "error finding MeetingInvite to validate results")
+
+			ms.Equal(tt.user.UUID, invite.UserID.UUID, "incorrect invite userID")
 
 			// teardown
 		})

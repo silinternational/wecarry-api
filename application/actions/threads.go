@@ -68,9 +68,8 @@ func threadsMarkAsRead(c buffalo.Context) error {
 	var thread models.Thread
 
 	var input api.MarkMessagesAsReadInput
-	if err := StrictBind(c, &input); err != nil {
-		err = errors.New("unable to unmarshal Post data into MarkMessagesAsReadInput struct, error: " + err.Error())
-		return reportError(c, api.NewAppError(err, api.ErrorInvalidRequestBody, api.CategoryUser))
+	if err = StrictBind(c, &input); err != nil {
+		return reportError(c, err)
 	}
 
 	if err := thread.FindByUUID(tx, id.String()); err != nil {

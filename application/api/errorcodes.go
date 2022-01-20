@@ -81,8 +81,20 @@ const (
 
 	// Meeting
 
-	ErrorMeetingsGet     = ErrorKey("ErrorMeetingsGet")
-	ErrorMeetingsConvert = ErrorKey("ErrorMeetingsConvert")
+	ErrorMeetingsGet             = ErrorKey("ErrorMeetingsGet")
+	ErrorMeetingsConvert         = ErrorKey("ErrorMeetingsConvert")
+	ErrorMeetingCreate           = ErrorKey("ErrorMeetingCreate")
+	ErrorMeetingDelete           = ErrorKey("ErrorMeetingDelete")
+	ErrorMeetingGet              = ErrorKey("ErrorMeetingGet")
+	ErrorMeetingImageIDNotFound  = ErrorKey("ErrorMeetingImageIDNotFound")
+	ErrorMeetingInvalidEndDate   = ErrorKey("ErrorMeetingInvalidEndDate")
+	ErrorMeetingInvalidStartDate = ErrorKey("ErrorMeetingInvalidStartDate")
+	ErrorMeetingUpdate           = ErrorKey("ErrorMeetingUpdate")
+	ErrorMeetingRequests         = ErrorKey("ErrorMeetingRequests")
+
+	// Meeting Invite
+
+	ErrorMeetingInviteDelete = ErrorKey("ErrorMeetingInviteDelete")
 
 	// Message
 
@@ -111,11 +123,11 @@ const (
 	ErrorGetRequest                              = ErrorKey("ErrorGetRequest")
 	ErrorGetRequestUserNotAllowed                = ErrorKey("ErrorGetRequestUserNotAllowed")
 	ErrorCreateRequest                           = ErrorKey("ErrorCreateRequest")
+	ErrorRequestMeetingIDNotFound                = ErrorKey("ErrorRequestMeetingIDNotFound")
 	ErrorCreateRequestOrgIDNotFound              = ErrorKey("ErrorCreateRequestOrgIDNotFound")
-	ErrorCreateRequestPhotoIDNotFound            = ErrorKey("ErrorCreateRequestPhotoIDNotFound")
+	ErrorRequestPhotoIDNotFound                  = ErrorKey("ErrorRequestPhotoIDNotFound")
 	ErrorCreateRequestInvalidDate                = ErrorKey("ErrorCreateRequestInvalidDate")
 	ErrorUpdateRequest                           = ErrorKey("ErrorUpdateRequest")
-	ErrorUpdateRequestPhotoIDNotFound            = ErrorKey("ErrorUpdateRequestPhotoIDNotFound")
 	ErrorUpdateRequestStatusNotFound             = ErrorKey("ErrorUpdateRequestStatusNotFound")
 	ErrorUpdateRequestStatusBadStatus            = ErrorKey("ErrorUpdateRequestStatusBadStatus")
 	ErrorUpdateRequestStatusBadProvider          = ErrorKey("ErrorUpdateRequestStatusBadProvider")

@@ -21,3 +21,4 @@ generated/
 *.aes
 application/grifts/private.go
 application/migrations/schema.sql
+*.pem
