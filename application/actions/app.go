@@ -36,6 +36,7 @@ import (
 	"github.com/gobuffalo/packr/v2"
 	"github.com/gorilla/sessions"
 	"github.com/rs/cors"
+
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/listeners"
 	"github.com/silinternational/wecarry-api/models"
@@ -87,12 +88,12 @@ func App() *buffalo.App {
 		// Log request parameters (filters apply).
 		app.Use(paramlogger.ParameterLogger)
 
-		// Wraps each request in a transaction.
-		app.Use(popmw.Transaction(models.DB))
-
 		//  Added for authorization
 		app.Use(setCurrentUser)
 		app.Middleware.Skip(setCurrentUser, statusHandler, serviceHandler)
+
+		// Wraps each request in a transaction.
+		app.Use(popmw.Transaction(models.DB))
 
 		app.GET("/site/status", statusHandler)
 		app.Middleware.Skip(buffalo.RequestLogger, statusHandler)
