@@ -13,6 +13,7 @@ import (
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/buffalo/render"
 	"github.com/gobuffalo/pop/v5"
+
 	"github.com/silinternational/wecarry-api/api"
 
 	"github.com/silinternational/wecarry-api/domain"
@@ -686,8 +687,7 @@ func setCurrentUser(next buffalo.Handler) buffalo.Handler {
 		}
 
 		var userAccessToken models.UserAccessToken
-		tx := models.Tx(c)
-		err := userAccessToken.FindByBearerToken(tx, bearerToken)
+		err := userAccessToken.FindByBearerToken(models.DB, bearerToken)
 		if err != nil {
 			if domain.IsOtherThanNoRows(err) {
 				domain.Error(c, err.Error())
@@ -695,7 +695,7 @@ func setCurrentUser(next buffalo.Handler) buffalo.Handler {
 			return c.Error(http.StatusUnauthorized, errors.New("invalid bearer token"))
 		}
 
-		isExpired, err := userAccessToken.DeleteIfExpired(tx)
+		isExpired, err := userAccessToken.DeleteIfExpired(models.DB)
 		if err != nil {
 			domain.Error(c, err.Error())
 		}
@@ -704,7 +704,7 @@ func setCurrentUser(next buffalo.Handler) buffalo.Handler {
 			return c.Error(http.StatusUnauthorized, errors.New("expired bearer token"))
 		}
 
-		user, err := userAccessToken.GetUser(tx)
+		user, err := userAccessToken.GetUser(models.DB)
 		if err != nil {
 			return c.Error(http.StatusInternalServerError, fmt.Errorf("error finding user by access token, %s", err.Error()))
 		}

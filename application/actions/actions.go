@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"runtime"
 
 	"github.com/gobuffalo/buffalo"
 	"github.com/gofrs/uuid"
@@ -39,18 +38,6 @@ func StrictBind(c buffalo.Context, dest interface{}) error {
 	return nil
 }
 
-// GetFunctionName provides the filename, line number, and function name of the caller, skipping the top `skip`
-// functions on the stack.
-func GetFunctionName(skip int) string {
-	pc, file, line, ok := runtime.Caller(skip)
-	if !ok {
-		return "?"
-	}
-
-	fn := runtime.FuncForPC(pc)
-	return fmt.Sprintf("%s:%d %s", file, line, fn.Name())
-}
-
 // appErrorFromErr is used by reportError to convert a generic error to an AppError
 func appErrorFromErr(err error) *api.AppError {
 	appErr, ok := err.(*api.AppError)
@@ -79,7 +66,7 @@ func reportError(c buffalo.Context, err error) error {
 	}
 
 	appErr.Extras = api.MergeExtras([]map[string]interface{}{getExtras(c), appErr.Extras})
-	appErr.Extras["function"] = GetFunctionName(2)
+	appErr.Extras["function"] = domain.GetFunctionName(2)
 	appErr.Extras["key"] = appErr.Key
 	appErr.Extras["status"] = appErr.HttpStatus
 	appErr.Extras["redirectURL"] = appErr.RedirectURL
