@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"reflect"
-	"runtime"
 	"strings"
 	"testing"
 
@@ -57,42 +55,16 @@ func (ms *ModelSuite) TestRegisterListeners() {
 		domain.ErrLogger.SetOutput(os.Stderr)
 	}()
 
-	RegisterListeners()
+	RegisterListener()
 	got := buf.String()
 
 	ms.Equal("", got, "Got an unexpected error log entry")
-
-	wantCount := 0
-	for _, listeners := range apiListeners {
-		wantCount += len(listeners)
-	}
 
 	newLs, err := events.List()
 	ms.NoError(err, "Got an unexpected error listing the listeners")
 
 	gotCount := len(newLs)
-	ms.Equal(wantCount, gotCount, "Wrong number of listeners registered")
-}
-
-// Go through all the listeners that should normally get registered and
-// just make sure they don't log anything for a kind they shouldn't be expecting
-func (ms *ModelSuite) TestApiListeners_UnusedKind() {
-	var buf bytes.Buffer
-	domain.Logger.SetOutput(&buf)
-
-	defer func() {
-		domain.Logger.SetOutput(os.Stdout)
-	}()
-
-	e := events.Event{Kind: "test:unused:kind"}
-	for _, listeners := range apiListeners {
-		for _, l := range listeners {
-			l.listener(e)
-			got := buf.String()
-			fn := runtime.FuncForPC(reflect.ValueOf(l.listener).Pointer()).Name()
-			ms.Equal("", got, fmt.Sprintf("Got an unexpected log entry for listener %s", fn))
-		}
-	}
+	ms.Equal(1, gotCount, "Wrong number of listeners registered")
 }
 
 func (ms *ModelSuite) TestUserCreated() {

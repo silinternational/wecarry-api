@@ -151,7 +151,7 @@ func App() *buffalo.App {
 		users.GET("/me", usersMe)
 		users.PUT("/me", usersMeUpdate)
 
-		listeners.RegisterListeners()
+		listeners.RegisterListener()
 	}
 
 	return app
