@@ -3,9 +3,11 @@ package listeners
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/gobuffalo/events"
+
 	"github.com/silinternational/wecarry-api/cache"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/job"
@@ -14,102 +16,53 @@ import (
 	"github.com/silinternational/wecarry-api/notifications"
 )
 
-type apiListener struct {
-	name     string
-	listener func(events.Event)
+var eventTypes = map[string]func(event events.Event){
+	domain.EventApiUserCreated:                    userCreatedHandler,
+	domain.EventApiMessageCreated:                 sendNewThreadMessageNotification,
+	domain.EventApiRequestStatusUpdated:           sendRequestStatusUpdatedNotification,
+	domain.EventApiRequestCreated:                 requestCreatedHandler,
+	domain.EventApiRequestUpdated:                 cacheRequestUpdatedListener,
+	domain.EventApiPotentialProviderCreated:       potentialProviderCreated,
+	domain.EventApiPotentialProviderSelfDestroyed: potentialProviderSelfDestroyed,
+	domain.EventApiPotentialProviderRejected:      potentialProviderRejected,
+	domain.EventApiMeetingInviteCreated:           meetingInviteCreated,
 }
 
-//
-// Register new listener functions here.  Remember, though, that these groupings just
-// describe what we want.  They don't make it happen this way. The listeners
-// themselves still need to verify the event kind
-//
-var apiListeners = map[string][]apiListener{
-	domain.EventApiUserCreated: {
-		{
-			name:     "user-created-logger",
-			listener: userCreatedLogger,
-		},
-		{
-			name:     "user-created-send-welcome-message",
-			listener: userCreatedSendWelcomeMessage,
-		},
-		{
-			name:     "user-created-add-to-marketing-list",
-			listener: userCreatedAddToMarketingList,
-		},
-	},
-
-	domain.EventApiMessageCreated: {
-		{
-			name:     "send-new-message-notification",
-			listener: sendNewThreadMessageNotification,
-		},
-	},
-
-	domain.EventApiRequestStatusUpdated: {
-		{
-			name:     "request-status-updated-notification",
-			listener: sendRequestStatusUpdatedNotification,
-		},
-	},
-
-	domain.EventApiRequestCreated: {
-		{
-			name:     "request-created-notification",
-			listener: sendRequestCreatedNotifications,
-		},
-		{
-			name:     "request-created-cache",
-			listener: cacheRequestCreatedListener,
-		},
-	},
-
-	domain.EventApiRequestUpdated: {
-		{
-			name:     "request-updated-cache",
-			listener: cacheRequestUpdatedListener,
-		},
-	},
-
-	domain.EventApiPotentialProviderCreated: {
-		{
-			name:     "potentialprovider-created-notification",
-			listener: potentialProviderCreated,
-		},
-	},
-
-	domain.EventApiPotentialProviderSelfDestroyed: {
-		{
-			name:     "potentialprovider-self-destroyed-notification",
-			listener: potentialProviderSelfDestroyed,
-		},
-	},
-
-	domain.EventApiPotentialProviderRejected: {
-		{
-			name:     "potentialprovider-rejected-notification",
-			listener: potentialProviderRejected,
-		},
-	},
-
-	domain.EventApiMeetingInviteCreated: {
-		{
-			name:     "meeting-invite-created",
-			listener: meetingInviteCreated,
-		},
-	},
+func userCreatedHandler(event events.Event) {
+	userCreatedLogger(event)
+	userCreatedSendWelcomeMessage(event)
+	userCreatedAddToMarketingList(event)
 }
 
-// RegisterListeners registers all the listeners to be used by the app
-func RegisterListeners() {
-	for _, listeners := range apiListeners {
-		for _, l := range listeners {
-			_, err := events.NamedListen(l.name, l.listener)
-			if err != nil {
-				domain.ErrLogger.Printf("Failed registering listener: %s, err: %s", l.name, err.Error())
-			}
+func requestCreatedHandler(event events.Event) {
+	sendRequestCreatedNotifications(event)
+	cacheRequestCreatedListener(event)
+}
+
+func listener(e events.Event) {
+	defer func() {
+		if err := recover(); err != nil {
+			domain.ErrLogger.Printf("panic in event %s: %s", e.Kind, err)
 		}
+	}()
+
+	handler, ok := eventTypes[e.Kind]
+	if !ok {
+		if strings.HasPrefix(e.Kind, "app") {
+			panic("event '" + e.Kind + "' has no handler")
+		}
+		return
+	}
+
+	time.Sleep(time.Second * 5) // a rough guess at the longest time it takes for the database transaction to close
+
+	handler(e)
+}
+
+// RegisterListener registers the event listener
+func RegisterListener() {
+	if _, err := events.Listen(listener); err != nil {
+		panic("failed to register event listener " + err.Error())
 	}
 }
 
@@ -254,7 +207,10 @@ func cacheRequestCreatedListener(e events.Event) {
 	}
 
 	ctx := context.Background()
-	cache.CacheRebuildOnNewRequest(ctx, request)
+	err := cache.CacheRebuildOnNewRequest(ctx, request)
+	if err != nil {
+		domain.ErrLogger.Printf("error in cache rebuild on new request: " + err.Error())
+	}
 }
 
 func cacheRequestUpdatedListener(e events.Event) {
@@ -274,7 +230,10 @@ func cacheRequestUpdatedListener(e events.Event) {
 	}
 
 	ctx := context.Background()
-	cache.CacheRebuildOnChangedRequest(ctx, request)
+	err := cache.CacheRebuildOnChangedRequest(ctx, request)
+	if err != nil {
+		domain.ErrLogger.Printf("error in cache rebuild on changed request: " + err.Error())
+	}
 }
 
 func potentialProviderCreated(e events.Event) {
@@ -304,7 +263,10 @@ func potentialProviderCreated(e events.Event) {
 			eventData.RequestID, err)
 	}
 
-	sendPotentialProviderCreatedNotification(potentialProvider.Nickname, creator, request)
+	err = sendPotentialProviderCreatedNotification(potentialProvider.Nickname, creator, request)
+	if err != nil {
+		domain.ErrLogger.Printf(err.Error())
+	}
 }
 
 func potentialProviderSelfDestroyed(e events.Event) {
@@ -334,7 +296,10 @@ func potentialProviderSelfDestroyed(e events.Event) {
 			eventData.RequestID, err)
 	}
 
-	sendPotentialProviderSelfDestroyedNotification(potentialProvider.Nickname, creator, request)
+	err = sendPotentialProviderSelfDestroyedNotification(potentialProvider.Nickname, creator, request)
+	if err != nil {
+		domain.ErrLogger.Printf(err.Error())
+	}
 }
 
 func potentialProviderRejected(e events.Event) {
@@ -364,7 +329,11 @@ func potentialProviderRejected(e events.Event) {
 			eventData.RequestID, err)
 	}
 
-	sendPotentialProviderRejectedNotification(potentialProvider, creator.Nickname, request)
+	err = sendPotentialProviderRejectedNotification(potentialProvider, creator.Nickname, request)
+	if err != nil {
+		domain.ErrLogger.Printf(err.Error())
+	}
+
 }
 
 func sendNewUserWelcome(user models.User) error {

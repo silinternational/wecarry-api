@@ -131,22 +131,22 @@ func CacheRebuildOnChangedRequest(ctx context.Context, request models.Request) e
 	// update private cache
 	newEntryCreated, requestsMap, err := getOrCreateCacheEntryPrivate(ctx, organization)
 	if err != nil {
-		return errors.New("error in cache rebuild: " + err.Error())
+		return errors.New("error in getOrCreateCacheEntryPrivate: " + err.Error())
 	}
 	if !newEntryCreated {
 		if err := updateRequestPrivateCache(ctx, request, requestsMap); err != nil {
-			return errors.New("error in cache rebuild: " + err.Error())
+			return errors.New("error in updateRequestPrivateCache: " + err.Error())
 		}
 	}
 
 	// update public cache
 	newEntryCreated, requestsMap, err = getOrCreateCacheEntryPublic(ctx)
 	if err != nil {
-		return errors.New("error in cache rebuild: " + err.Error())
+		return errors.New("error in getOrCreateCacheEntryPublic: " + err.Error())
 	}
 	if !newEntryCreated {
 		if err := updateRequestPublicCache(ctx, request, requestsMap); err != nil {
-			return errors.New("error in cache rebuild: " + err.Error())
+			return errors.New("error in updateRequestPublicCache: " + err.Error())
 		}
 	}
 

@@ -14,7 +14,7 @@ func Send(msg Message) error {
 		if err := n.Send(msg); err != nil {
 			return err
 		}
-		domain.Logger.Printf("%T: %s message sent", n, msg.Template)
+		domain.Logger.Printf("%T: %s message sent to %s", n, msg.Template, msg.ToEmail)
 	}
 
 	return nil
