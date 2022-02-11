@@ -19,7 +19,6 @@ services:
       # HOST: http://localhost:3000
       PORT: 3000
       APP_NAME: Local WeCarry
-      UI_URL: http://wecarry.local:5000
       DATABASE_URL: postgres://wecarry:wecarry@db:5432/wecarry?sslmode=disable
       GO_ENV: development
       SUPPORT_EMAIL: forget_about_it@example.com
@@ -89,7 +88,7 @@ services:
     environment:
       MINIO_ACCESS_KEY: ${AWS_ACCESS_KEY_ID}
       MINIO_SECRET_KEY: ${AWS_SECRET_ACCESS_KEY}
-  
+
   redis:
     image: redis:6.2
     ports:
@@ -124,7 +123,6 @@ services:
       # HOST: http://localhost:3000
       PORT: 3000
       APP_NAME: Local WeCarry
-      UI_URL: http://wecarry.local:5000
       DATABASE_URL: postgres://wecarry:wecarry@db:5432/wecarry?sslmode=disable
       GO_ENV: development
       SUPPORT_EMAIL: forget_about_it@example.com
