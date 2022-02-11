@@ -29,6 +29,8 @@ package actions
 // swagger:meta
 
 import (
+	"net/http"
+
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/buffalo-pop/v2/pop/popmw"
 	i18n "github.com/gobuffalo/mw-i18n"
@@ -70,7 +72,7 @@ func App() *buffalo.App {
 				}).Handler,
 			},
 			SessionName:  "_wecarry_session",
-			SessionStore: sessions.NewCookieStore([]byte(domain.Env.SessionSecret)),
+			SessionStore: cookieStore(),
 		})
 
 		var err error
@@ -155,4 +157,20 @@ func App() *buffalo.App {
 	}
 
 	return app
+}
+
+func cookieStore() sessions.Store {
+	store := sessions.NewCookieStore([]byte(domain.Env.SessionSecret))
+
+	store.Options.SameSite = http.SameSiteDefaultMode
+	store.Options.HttpOnly = true
+
+	if !domain.Env.DisableTLS {
+		// Cookies will be sent in all contexts, i.e. in responses to both first-party and cross-origin requests.
+		// This appears to be required to work with Firefox default cookie blocking setting.
+		store.Options.SameSite = http.SameSiteNoneMode
+		store.Options.Secure = true
+	}
+
+	return store
 }
