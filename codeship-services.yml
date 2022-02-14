@@ -12,7 +12,7 @@ app:
     ADDR: 0.0.0.0
     HOST: http://wecarry.local:3000
     PORT: 3000
-    UI_URL: http://wecarry.local:5000
+    UI_URL: http://wecarry.local:5001
     DATABASE_URL: postgres://wecarry:wecarry@testdb:5432/wecarry_test?sslmode=disable
     EMAIL_SERVICE: dummy
     GO_ENV: test
