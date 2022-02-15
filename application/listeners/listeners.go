@@ -1,12 +1,13 @@
 package listeners
 
 import (
-	"context"
 	"errors"
 	"strings"
 	"time"
 
+	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/events"
+	"github.com/gobuffalo/pop/v5"
 
 	"github.com/silinternational/wecarry-api/cache"
 	"github.com/silinternational/wecarry-api/domain"
@@ -15,6 +16,21 @@ import (
 	"github.com/silinternational/wecarry-api/models"
 	"github.com/silinternational/wecarry-api/notifications"
 )
+
+type listenerContext struct {
+	buffalo.DefaultContext
+	params map[interface{}]interface{}
+}
+
+// Value retrieves a context item added by `Set`
+func (b listenerContext) Value(key interface{}) interface{} {
+	return b.params[key]
+}
+
+// Set a new value on the Context. CAUTION: this is not thread-safe
+func (b listenerContext) Set(key string, val interface{}) {
+	b.params[key] = val
+}
 
 var eventTypes = map[string]func(event events.Event){
 	domain.EventApiUserCreated:                    userCreatedHandler,
@@ -179,6 +195,7 @@ func sendRequestCreatedNotifications(e events.Event) {
 	var request models.Request
 	if err := request.FindByID(models.DB, eventData.RequestID); err != nil {
 		domain.ErrLogger.Printf("unable to find request %d from request-created event, %s", eventData.RequestID, err)
+		return
 	}
 
 	users, err := request.GetAudience(models.DB)
@@ -206,8 +223,11 @@ func cacheRequestCreatedListener(e events.Event) {
 		domain.ErrLogger.Printf("unable to find request %d from request-created event, %s", eventData.RequestID, err)
 	}
 
-	ctx := context.Background()
-	err := cache.CacheRebuildOnNewRequest(ctx, request)
+	err := models.DB.Transaction(func(tx *pop.Connection) error {
+		ctx := newListenerContext()
+		ctx.Set(domain.ContextKeyTx, tx)
+		return cache.CacheRebuildOnNewRequest(ctx, request)
+	})
 	if err != nil {
 		domain.ErrLogger.Printf("error in cache rebuild on new request: " + err.Error())
 	}
@@ -229,8 +249,11 @@ func cacheRequestUpdatedListener(e events.Event) {
 		domain.ErrLogger.Printf("unable to find request %d from request-created event, %s", eventData.RequestID, err)
 	}
 
-	ctx := context.Background()
-	err := cache.CacheRebuildOnChangedRequest(ctx, request)
+	err := models.DB.Transaction(func(tx *pop.Connection) error {
+		ctx := newListenerContext()
+		ctx.Set(domain.ContextKeyTx, tx)
+		return cache.CacheRebuildOnChangedRequest(ctx, request)
+	})
 	if err != nil {
 		domain.ErrLogger.Printf("error in cache rebuild on changed request: " + err.Error())
 	}
@@ -333,7 +356,6 @@ func potentialProviderRejected(e events.Event) {
 	if err != nil {
 		domain.ErrLogger.Printf(err.Error())
 	}
-
 }
 
 func sendNewUserWelcome(user models.User) error {
@@ -441,4 +463,11 @@ func getID(p events.Payload) (int, error) {
 	}
 
 	return id, nil
+}
+
+func newListenerContext() *listenerContext {
+	ctx := &listenerContext{
+		params: map[interface{}]interface{}{},
+	}
+	return ctx
 }
