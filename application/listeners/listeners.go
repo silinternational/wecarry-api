@@ -22,10 +22,12 @@ type listenerContext struct {
 	params map[interface{}]interface{}
 }
 
+// Value retrieves a context item added by `Set`
 func (b listenerContext) Value(key interface{}) interface{} {
 	return b.params[key]
 }
 
+// Set a new value on the Context. CAUTION: this is not thread-safe
 func (b listenerContext) Set(key string, val interface{}) {
 	b.params[key] = val
 }
