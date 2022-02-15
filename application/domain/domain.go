@@ -120,6 +120,7 @@ const (
 	ContextKeyCurrentUser = "current_user"
 	ContextKeyExtras      = "extras"
 	ContextKeyRollbar     = "rollbar"
+	ContextKeyTx          = "tx"
 )
 
 var (
