@@ -157,7 +157,7 @@ func CacheRebuildOnChangedRequest(ctx context.Context, request models.Request) e
 // Returns true if new cache entry was created
 // TODO: explore refactoring getOrCreateCacheEntryPrivate and getOrCreateCacheEntryPublic to use a common helper function
 func getOrCreateCacheEntryPrivate(ctx context.Context, organization models.Organization) (bool, map[string]api.RequestAbridged, error) {
-	var requestsMap map[string]api.RequestAbridged
+	requestsMap := map[string]api.RequestAbridged{}
 	// if a cache value does not exist, we create it
 	if err := cacheRead(ctx, PrivateRequestKeyPrefix+organization.Name, requestsMap); err != nil {
 		tx := models.Tx(ctx)
@@ -188,7 +188,8 @@ func getOrCreateCacheEntryPrivate(ctx context.Context, organization models.Organ
 // Gets cache entry for organization, or creates one if none exists.
 // Returns true if new cache entry was created
 func getOrCreateCacheEntryPublic(ctx context.Context) (bool, map[string]api.RequestAbridged, error) {
-	var requestsMap map[string]api.RequestAbridged
+	requestsMap := map[string]api.RequestAbridged{}
+
 	// if a cache value does not exist, we create it
 	if err := cacheRead(ctx, PublicRequestKey, requestsMap); err != nil {
 		tx := models.Tx(ctx)
