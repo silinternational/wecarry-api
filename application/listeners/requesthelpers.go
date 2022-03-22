@@ -353,7 +353,7 @@ func requestStatusUpdatedNotifications(request models.Request, eData models.Requ
 	sender, ok := statusSenders[fromStatusTo]
 
 	if !ok {
-		domain.ErrLogger.Printf("unexpected status transition '%s'", fromStatusTo)
+		domain.ErrLogger.Printf("Low importance: unexpected request status transition '%s'", fromStatusTo)
 		return
 	}
 
