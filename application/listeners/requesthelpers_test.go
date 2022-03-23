@@ -104,7 +104,7 @@ func (ms *ModelSuite) TestRequestStatusUpdatedNotifications() {
 	requestStatusUpdatedNotifications(requests[0], requestStatusEData)
 
 	got = buf.String()
-	want := "unexpected status transition 'OPEN-DELIVERED'"
+	want := "unexpected request status transition 'OPEN-DELIVERED'"
 	test.AssertStringContains(t, got, want, 45)
 }
 
