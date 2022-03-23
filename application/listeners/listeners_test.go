@@ -2,6 +2,7 @@ package listeners
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -13,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/silinternational/wecarry-api/cache"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/internal/test"
 	"github.com/silinternational/wecarry-api/models"
@@ -205,4 +207,22 @@ func (ms *ModelSuite) TestMeetingInviteCreated() {
 		nMessages++
 	}
 	ms.Equal(nMessages, 1, "wrong email count")
+}
+
+func (ms *ModelSuite) Test_cacheRequestCreatedListener() {
+	f := createFixturesForSendRequestCreatedNotifications(ms)
+
+	// just want to make sure it doesn't panic
+	cacheRequestCreatedListener(events.Event{
+		Kind:    domain.EventApiRequestCreated,
+		Message: "Request created",
+		Payload: events.Payload{domain.ArgEventData: models.RequestCreatedEventData{
+			RequestID: f.Requests[0].ID,
+		}},
+	})
+
+	requests, err := cache.GetVisibleRequests(context.Background(), models.Organizations{f.Requests[0].Organization})
+	if err != nil {
+		return
+	}
 }
