@@ -1,11 +1,11 @@
 package listeners
 
 import (
+	"context"
 	"errors"
 	"strings"
 	"time"
 
-	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/events"
 	"github.com/gobuffalo/pop/v5"
 
@@ -18,7 +18,7 @@ import (
 )
 
 type listenerContext struct {
-	buffalo.DefaultContext
+	context.Context
 	params map[interface{}]interface{}
 }
 
@@ -465,9 +465,14 @@ func getID(p events.Payload) (int, error) {
 	return id, nil
 }
 
-func newListenerContext() *listenerContext {
-	ctx := &listenerContext{
+func newListenerContext() listenerContext {
+	ctx := listenerContext{
 		params: map[interface{}]interface{}{},
 	}
+	ctx.Context = context.Background()
+
+	c2, _ := context.WithCancel(ctx.Context)
+	ctx.Context = c2
+
 	return ctx
 }
