@@ -32,9 +32,7 @@ require (
 	github.com/gorilla/pat v0.0.0-20180118222023-199c85a7f6d1
 	github.com/gorilla/sessions v1.2.1
 	github.com/jackc/pgproto3/v2 v2.0.7 // indirect
-	github.com/jonboulle/clockwork v0.2.2 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
-	github.com/kr/text v0.2.0 // indirect
 	github.com/markbates/goth v1.56.0
 	github.com/markbates/grift v1.5.0
 	github.com/mattn/go-isatty v0.0.13 // indirect
@@ -47,7 +45,6 @@ require (
 	github.com/paganotoni/sendgrid-sender v1.0.5
 	github.com/pelletier/go-toml v1.6.0 // indirect
 	github.com/pkg/errors v0.9.1
-	github.com/rogpeppe/go-internal v1.8.0 // indirect
 	github.com/rollbar/rollbar-go v1.4.1
 	github.com/rs/cors v1.7.0
 	github.com/russellhaering/gosaml2 v0.6.1-0.20210916051624-757d23f1bc28
@@ -67,7 +64,6 @@ require (
 	golang.org/x/term v0.0.0-20210503060354-a79de5458b56 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	jaytaylor.com/html2text v0.0.0-20190408195923-01ec452cbe43
 )
 
