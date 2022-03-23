@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/events"
 	"github.com/gobuffalo/pop/v5"
 
@@ -18,7 +19,7 @@ import (
 )
 
 type listenerContext struct {
-	context.Context
+	buffalo.DefaultContext
 	params map[interface{}]interface{}
 }
 
@@ -469,10 +470,11 @@ func newListenerContext() listenerContext {
 	ctx := listenerContext{
 		params: map[interface{}]interface{}{},
 	}
-	ctx.Context = context.Background()
+	ctx.DefaultContext = buffalo.DefaultContext{}
+	ctx.DefaultContext.Context = context.Background()
 
-	c2, _ := context.WithCancel(ctx.Context)
-	ctx.Context = c2
+	c2, _ := context.WithCancel(ctx.DefaultContext.Context)
+	ctx.DefaultContext.Context = c2
 
 	return ctx
 }
