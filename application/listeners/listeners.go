@@ -473,8 +473,7 @@ func newListenerContext() listenerContext {
 	ctx.DefaultContext = buffalo.DefaultContext{}
 	ctx.DefaultContext.Context = context.Background()
 
-	c2, _ := context.WithCancel(ctx.DefaultContext.Context)
-	ctx.DefaultContext.Context = c2
+	_, _ = context.WithCancel(ctx.DefaultContext.Context)
 
 	return ctx
 }
