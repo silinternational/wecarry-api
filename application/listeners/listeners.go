@@ -1,6 +1,7 @@
 package listeners
 
 import (
+	"context"
 	"errors"
 	"strings"
 	"time"
@@ -465,9 +466,14 @@ func getID(p events.Payload) (int, error) {
 	return id, nil
 }
 
-func newListenerContext() *listenerContext {
-	ctx := &listenerContext{
+func newListenerContext() listenerContext {
+	ctx := listenerContext{
 		params: map[interface{}]interface{}{},
 	}
+	ctx.DefaultContext = buffalo.DefaultContext{}
+	ctx.DefaultContext.Context = context.Background()
+
+	_, _ = context.WithCancel(ctx.DefaultContext.Context)
+
 	return ctx
 }
