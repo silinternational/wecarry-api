@@ -8,6 +8,7 @@ tmp/
 .vscode/
 .grifter/
 .env
+local.env
 codeship.env
 **/.DS_Store
 *.pid
