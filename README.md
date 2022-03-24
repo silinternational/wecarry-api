@@ -13,7 +13,12 @@ This software needs docker-compose version 1.24.0 at least.
 In an appropriate directory:
 * git clone git@github.com:silinternational/wecarry-api.git
 * cd wecarry-api
-* cp .env.example .env
+* cp local-example.env local.env
+* give the entries in local.env the appropriate values
+
+  (note that for deployment to the cloud, you need to provide, 
+    e.g. via an `.env.encrypted` file, the proper settings based
+     on the `local-example.env` file)
 
 In application/grifts, copy private.go.example to private.go and 
 correct the example values.

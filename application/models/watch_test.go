@@ -383,14 +383,19 @@ func (ms *ModelSuite) TestWatch_destinationMatches() {
 }
 
 func (ms *ModelSuite) TestWatch_originMatches() {
-	requests := createRequestFixtures(ms.DB, 1, false)
-	watches := createWatchFixtures(ms.DB, createUserFixtures(ms.DB, 2).Users)
+	requests := createRequestFixtures(ms.DB, 2, false)
+	watches := createWatchFixtures(ms.DB, createUserFixtures(ms.DB, 3).Users)
 
-	origin, err := requests[0].GetOrigin(ms.DB)
+	watchNoOrigin := watches[2]
+
+	requestWithOrigin := requests[0]
+	requestNoOrigin := requests[1]
+	requestNoOrigin.OriginID = nulls.Int{}
+
+	origin, err := requestWithOrigin.GetOrigin(ms.DB)
 	ms.NoError(err)
 	ms.NoError(origin.Create(ms.DB))
 	ms.NoError(watches[0].SetOrigin(ms.DB, *origin))
-
 	ms.NoError(watches[1].SetOrigin(ms.DB, locationX))
 
 	tests := []struct {
@@ -402,25 +407,37 @@ func (ms *ModelSuite) TestWatch_originMatches() {
 		{
 			name:    "match",
 			watch:   &watches[0],
-			request: requests[0],
+			request: requestWithOrigin,
 			want:    true,
 		},
 		{
 			name:    "not match",
 			watch:   &watches[1],
-			request: requests[0],
+			request: requestWithOrigin,
 			want:    false,
 		},
 		{
 			name:    "origin is nil",
 			watch:   &watches[2],
-			request: requests[0],
+			request: requestWithOrigin,
 			want:    true,
 		},
 		{
 			name:    "watch is nil",
 			watch:   nil,
-			request: requests[0],
+			request: requestWithOrigin,
+			want:    false,
+		},
+		{
+			name:    "watch has no origin and neither does request",
+			watch:   &watchNoOrigin,
+			request: requestNoOrigin,
+			want:    true,
+		},
+		{
+			name:    "watch has origin but request has no origin",
+			watch:   &watches[1],
+			request: requestNoOrigin,
 			want:    false,
 		},
 	}
