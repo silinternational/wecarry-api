@@ -7,9 +7,10 @@ tmp/
 *-packr.go
 .vscode/
 .grifter/
-.env
-local.env
-codeship.env
+
+*.env
+!local-example.env
+
 **/.DS_Store
 *.pid
 coverage

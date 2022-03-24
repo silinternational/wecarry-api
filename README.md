@@ -16,8 +16,8 @@ In an appropriate directory:
 * cp local-example.env local.env
 * give the entries in local.env the appropriate values
 
-  (note that for deployment to the cloud, you need to provide 
-    (e.g. via an `.env.encrypted` file) the proper settings based
+  (note that for deployment to the cloud, you need to provide, 
+    e.g. via an `.env.encrypted` file, the proper settings based
      on the `local-example.env` file)
 
 In application/grifts, copy private.go.example to private.go and 
