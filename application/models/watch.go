@@ -279,6 +279,10 @@ func (w *Watch) originMatches(tx *pop.Connection, request Request) bool {
 		domain.ErrLogger.Printf("failed to get request %s origin in originMatches, %s", request.UUID, err)
 		return false
 	}
+	if requestOrigin == nil {
+		return false
+	}
+
 	watchOrigin, err := w.GetOrigin(tx)
 	if err != nil {
 		domain.ErrLogger.Printf("failed to get watch %s origin in originMatches, %s", w.UUID, err)
