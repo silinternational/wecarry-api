@@ -429,7 +429,7 @@ func (ms *ModelSuite) TestWatch_originMatches() {
 			want:    false,
 		},
 		{
-			name:    "match has no origin and neither does request",
+			name:    "watch has no origin and neither does request",
 			watch:   &watchNoOrigin,
 			request: requestNoOrigin,
 			want:    true,
