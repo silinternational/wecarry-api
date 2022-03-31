@@ -11,7 +11,7 @@ services:
       - "3000:3000"
       - "6060"
     env_file:
-      - .env
+      - local.env
     environment:
       ADDR: 0.0.0.0
       HOST: https://local.wecarry.app
@@ -84,7 +84,7 @@ services:
       - "9000:9000"
     command: server /data
     env_file:
-      - .env
+      - local.env
     environment:
       MINIO_ACCESS_KEY: ${AWS_ACCESS_KEY_ID}
       MINIO_SECRET_KEY: ${AWS_SECRET_ACCESS_KEY}
@@ -112,7 +112,7 @@ services:
     volumes:
       - ./application:/wecarry
     env_file:
-      - .env
+      - local.env
     ports:
       - 2345:2345
       - 3000:3000
