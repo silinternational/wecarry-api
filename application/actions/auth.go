@@ -520,8 +520,9 @@ func orgBasedAuthCallback(c buffalo.Context, orgUUID, authEmail, clientID string
 
 	if err := verifyEmails(c, authEmail, authResp.AuthUser.Email); err != nil {
 		c.Session().Clear()
-		domain.NewExtra(c, "authEmail", authEmail)
-		return logErrorAndRedirect(c, api.ErrorAuthEmailMismatch, err.Error())
+		appError := api.NewAppError(err, api.ErrorAuthEmailMismatch, api.CategoryUser)
+		appError.HttpStatus = 302 // Get this redirected to the UI to display an error message
+		return reportError(c, appError)
 	}
 
 	// Check for an invite in the Session
