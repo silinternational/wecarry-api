@@ -69,7 +69,7 @@ func getServer() (servers.Server, error) {
 		return servers.New(), fmt.Errorf("get TLS listener: %w", err)
 	}
 
-	return servers.WrapListener(&http.Server{}, listener), nil
+	return servers.WrapListener(&http.Server{ReadHeaderTimeout: time.Second * 15}, listener), nil
 }
 
 func tlsConfig(certFile, keyFile string) (*tls.Config, error) {
