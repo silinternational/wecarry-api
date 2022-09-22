@@ -3,9 +3,10 @@ package mailers
 import (
 	"github.com/gobuffalo/buffalo/mail"
 	"github.com/gobuffalo/buffalo/render"
-	"github.com/gobuffalo/packr/v2"
 	ssender "github.com/paganotoni/sendgrid-sender"
+
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/templates"
 )
 
 var (
@@ -18,8 +19,8 @@ func init() {
 	sender = ssender.NewSendgridSender(domain.Env.SendGridAPIKey)
 
 	r = render.New(render.Options{
-		HTMLLayout:   "layout.plush.html",
-		TemplatesBox: packr.New("app:mailers:templates", "../templates/mail"),
-		Helpers:      render.Helpers{},
+		HTMLLayout:  "layout.plush.html",
+		TemplatesFS: templates.FS(),
+		Helpers:     render.Helpers{},
 	})
 }
