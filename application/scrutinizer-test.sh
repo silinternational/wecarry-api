@@ -9,7 +9,6 @@ set -x
 go get ./...
 go get -v -u github.com/gobuffalo/buffalo
 go get -v -u github.com/gobuffalo/pop
-go get -v -u github.com/gobuffalo/packr/v2/packr2
 go get -v -u github.com/gobuffalo/buffalo-pop
 go get -v -u github.com/gobuffalo/suite
 go get -v -u github.com/gobuffalo/httptest

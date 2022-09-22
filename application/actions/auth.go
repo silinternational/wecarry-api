@@ -12,7 +12,7 @@ import (
 
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/buffalo/render"
-	"github.com/gobuffalo/pop/v5"
+	"github.com/gobuffalo/pop/v6"
 
 	"github.com/silinternational/wecarry-api/api"
 
@@ -332,8 +332,8 @@ func hydrateAuthUser(user models.User, accessToken string, accessTokenExpiresAt 
 }
 
 func finishOrgBasedAuthRequest(c buffalo.Context, authEmail string,
-	userOrgs models.UserOrganizations, extras map[string]interface{}) error {
-
+	userOrgs models.UserOrganizations, extras map[string]interface{},
+) error {
 	authOptions := []authOption{}
 
 	for _, uo := range userOrgs {
