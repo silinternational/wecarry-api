@@ -18,7 +18,7 @@ const (
 	TokenCleanup     = "token_cleanup"
 )
 
-var w worker.Worker
+var w *worker.Worker
 
 var handlers = map[string]func(worker.Args) error{
 	NewThreadMessage: newThreadMessageHandler,
@@ -27,10 +27,10 @@ var handlers = map[string]func(worker.Args) error{
 	TokenCleanup:     tokenCleanupHandler,
 }
 
-func init() {
-	w = worker.NewSimple()
+func Init(appWorker *worker.Worker) {
+	w = appWorker
 	for key, handler := range handlers {
-		if err := w.Register(key, handler); err != nil {
+		if err := (*w).Register(key, handler); err != nil {
 			domain.ErrLogger.Printf("error registering '%s' handler, %s", key, err)
 		}
 	}
@@ -143,7 +143,7 @@ func SubmitDelayed(handler string, delay time.Duration, args map[string]interfac
 		Args:    args,
 		Handler: handler,
 	}
-	return w.PerformIn(job, delay)
+	return (*w).PerformIn(job, delay)
 }
 
 // Submit enqueues a new Worker job for the given handler. Arguments can be provided in `args`.
@@ -153,5 +153,5 @@ func Submit(handler string, args map[string]interface{}) error {
 		Args:    args,
 		Handler: handler,
 	}
-	return w.Perform(job)
+	return (*w).Perform(job)
 }

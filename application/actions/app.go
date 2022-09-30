@@ -34,6 +34,7 @@ import (
 	i18n "github.com/gobuffalo/mw-i18n/v2"
 	paramlogger "github.com/gobuffalo/mw-paramlogger"
 	"github.com/rs/cors"
+	"github.com/silinternational/wecarry-api/job"
 
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/listeners"
@@ -146,6 +147,8 @@ func App() *buffalo.App {
 		users.PUT("/me", usersMeUpdate)
 
 		listeners.RegisterListener()
+
+		job.Init(&app.Worker)
 	}
 
 	return app
