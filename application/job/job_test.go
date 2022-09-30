@@ -99,18 +99,3 @@ func (js *JobSuite) TestNewThreadMessageHandler() {
 		})
 	}
 }
-
-func (js *JobSuite) TestSubmitDelayed() {
-	var buf bytes.Buffer
-	domain.ErrLogger.SetOutput(&buf)
-
-	defer func() {
-		domain.ErrLogger.SetOutput(os.Stderr)
-	}()
-
-	err := SubmitDelayed("no_handler", time.Second, nil)
-	js.NoError(err)
-
-	errLog := buf.String()
-	js.Equal("", errLog, "Got an unexpected error log entry")
-}
