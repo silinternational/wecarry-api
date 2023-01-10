@@ -88,6 +88,7 @@ const (
 	MessageTemplateRequestDelivered                = "request_delivered"
 	MessageTemplateRequestReceived                 = "request_received"
 	MessageTemplateRequestNotReceivedAfterAll      = "request_not_received_after_all"
+	MessageTemplateRequestPastNeededBefore         = "request_past_needed_before"
 	MessageTemplatePotentialProviderCreated        = "request_potentialprovider_created"
 	MessageTemplatePotentialProviderRejected       = "request_potentialprovider_rejected"
 	MessageTemplatePotentialProviderSelfDestroyed  = "request_potentialprovider_self_destroyed"
@@ -503,6 +504,11 @@ func RollbarSetPerson(c buffalo.Context, id, username, email string) {
 // GetRequestUIURL returns a UI URL for the given Request
 func GetRequestUIURL(requestUUID string) string {
 	return Env.UIURL + requestUIPath + requestUUID
+}
+
+// GetRequestEdiutUIURL returns a UI URL for modifying the given Request
+func GetRequestEditUIURL(requestUUID string) string {
+	return Env.UIURL + requestUIPath + requestUUID + "/edit"
 }
 
 // GetThreadUIURL returns a UI URL for the given Thread

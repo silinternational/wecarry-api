@@ -13,6 +13,7 @@ import (
 
 const (
 	NewThreadMessage = "new_thread_message"
+	OutdatedRequest  = "outdated_request"
 	FileCleanup      = "file_cleanup"
 	LocationCleanup  = "location_cleanup"
 	TokenCleanup     = "token_cleanup"
@@ -22,6 +23,7 @@ var w *worker.Worker
 
 var handlers = map[string]func(worker.Args) error{
 	NewThreadMessage: newThreadMessageHandler,
+	OutdatedRequest:  outdatedRequestMessageHandler,
 	FileCleanup:      fileCleanupHandler,
 	LocationCleanup:  locationCleanupHandler,
 	TokenCleanup:     tokenCleanupHandler,
@@ -34,6 +36,51 @@ func Init(appWorker *worker.Worker) {
 			domain.ErrLogger.Printf("error registering '%s' handler, %s", key, err)
 		}
 	}
+}
+
+// outdatedRequestMessageHandler is the Worker handler for new notifications
+// regarding open requests that have a needby date in the past
+func outdatedRequestMessageHandler(args worker.Args) error {
+	var requests models.Requests
+	db := models.DB
+	if err := requests.FindOpenPastNeededBefore(db, "NeededBefore", "UUID"); err != nil {
+		return fmt.Errorf("error finding outdated requests for %s worker: %s", OutdatedRequest, err)
+	}
+
+	var lastErr error
+	template := domain.MessageTemplateRequestPastNeededBefore
+	for _, r := range requests {
+		if err := db.Load(&r, "CreatedBy"); err != nil {
+			return fmt.Errorf("error loading CreatedBy User of request: %s", err)
+		}
+
+		requestTitle := domain.Truncate(r.Title, "...", 16)
+		msg := notifications.Message{
+			Template: template,
+			Data: map[string]interface{}{
+				"appName":        domain.Env.AppName,
+				"uiURL":          domain.Env.UIURL,
+				"requestURL":     domain.GetRequestUIURL(r.UUID.String()),
+				"requestEditURL": domain.GetRequestEditUIURL(r.UUID.String()),
+				"requestTitle":   requestTitle,
+			},
+			FromEmail: domain.EmailFromAddress(nil),
+		}
+
+		msg.ToName = r.CreatedBy.GetRealName()
+		msg.ToEmail = r.CreatedBy.Email
+		msg.Subject = domain.GetTranslatedSubject(r.CreatedBy.GetLanguagePreference(db),
+			"Email.Subject.Request.Outdated",
+			map[string]string{"requestTitle": requestTitle})
+
+		if err := notifications.Send(msg); err != nil {
+			domain.ErrLogger.Printf("error sending 'Outdated Request' notification, %s", err)
+			lastErr = err
+			continue
+		}
+	}
+
+	return lastErr
 }
 
 // newThreadMessageHandler is the Worker handler for new notifications of new Thread Messages
