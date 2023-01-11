@@ -40,7 +40,7 @@ logs:
 testdb:
 	docker-compose up -d testdb
 
-test:
+test: gosec
 	docker-compose run --rm test whenavail testdb 5432 10 buffalo test
 
 testenv: rmtestdb migratetestdb
@@ -52,6 +52,9 @@ rmtestdb:
 
 killbuffalo:
 	docker-compose kill buffalo
+
+gosec:
+	docker-compose run --rm gosec
 
 clean:
 	docker-compose kill

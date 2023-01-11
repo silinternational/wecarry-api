@@ -49,8 +49,8 @@ func outdatedRequestMessageHandler(args worker.Args) error {
 
 	var lastErr error
 	template := domain.MessageTemplateRequestPastNeededBefore
-	for _, r := range requests {
-		if err := db.Load(&r, "CreatedBy"); err != nil {
+	for i, r := range requests {
+		if err := db.Load(&requests[i], "CreatedBy"); err != nil {
 			return fmt.Errorf("error loading CreatedBy User of request: %s", err)
 		}
 
@@ -67,8 +67,9 @@ func outdatedRequestMessageHandler(args worker.Args) error {
 			FromEmail: domain.EmailFromAddress(nil),
 		}
 
-		msg.ToName = r.CreatedBy.GetRealName()
-		msg.ToEmail = r.CreatedBy.Email
+		creator := requests[i].CreatedBy
+		msg.ToName = creator.GetRealName()
+		msg.ToEmail = creator.Email
 		msg.Subject = domain.GetTranslatedSubject(r.CreatedBy.GetLanguagePreference(db),
 			"Email.Subject.Request.Outdated",
 			map[string]string{"requestTitle": requestTitle})
