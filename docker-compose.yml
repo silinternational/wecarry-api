@@ -135,5 +135,5 @@ services:
     image: securego/gosec:latest
     volumes:
       - ./application:/wecarry
-    # Remember tp make the exclude value match the corresponding line in codeship-test.sh
+    # Remember to make the exclude value match the corresponding line in codeship-test.sh
     command: ["-exclude=G104", "-quiet", "/wecarry/..."]
