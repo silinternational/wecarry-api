@@ -31,16 +31,16 @@ type ServiceTaskHandler func(buffalo.Context) error
 
 const (
 	// ServiceTaskFileCleanup removes files not linked to any object
-	ServiceTaskFileCleanup ServiceTaskName = "file_cleanup"
+	ServiceTaskFileCleanup ServiceTaskName = job.FileCleanup
 
 	// ServiceTaskLocationCleanup removes locations not used by any object
-	ServiceTaskLocationCleanup ServiceTaskName = "location_cleanup"
+	ServiceTaskLocationCleanup ServiceTaskName = job.LocationCleanup
 
 	// ServiceTaskTokenCleanup removes expired user access tokens
-	ServiceTaskTokenCleanup ServiceTaskName = "token_cleanup"
+	ServiceTaskTokenCleanup ServiceTaskName = job.TokenCleanup
 
-	// ServiceTaskTokenCleanup removes expired user access tokens
-	ServiceTaskOutdatedRequests ServiceTaskName = "outdated_requests"
+	// ServiceTaskOutdatedRequests sends emails to users who have requests with an outdated needed_before
+	ServiceTaskOutdatedRequests ServiceTaskName = job.OutdatedRequests
 )
 
 var serviceTasks = map[ServiceTaskName]ServiceTask{
