@@ -57,6 +57,12 @@ func (as *ActionSuite) Test_serviceHandler() {
 			requestBody: `{"task":"token_cleanup"}`,
 			wantTask:    ServiceTaskTokenCleanup,
 		},
+		{
+			name:        "outdated requests",
+			token:       domain.Env.ServiceIntegrationToken,
+			requestBody: `{"task":"outdated_requests"}`,
+			wantTask:    ServiceTaskOutdatedRequests,
+		},
 	}
 	for _, tt := range tests {
 		as.T().Run(tt.name, func(t *testing.T) {

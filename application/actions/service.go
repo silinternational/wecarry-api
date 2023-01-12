@@ -38,6 +38,9 @@ const (
 
 	// ServiceTaskTokenCleanup removes expired user access tokens
 	ServiceTaskTokenCleanup ServiceTaskName = "token_cleanup"
+
+	// ServiceTaskTokenCleanup removes expired user access tokens
+	ServiceTaskOutdatedRequests ServiceTaskName = "outdated_requests"
 )
 
 var serviceTasks = map[ServiceTaskName]ServiceTask{
@@ -49,6 +52,9 @@ var serviceTasks = map[ServiceTaskName]ServiceTask{
 	},
 	ServiceTaskTokenCleanup: {
 		Handler: tokenCleanupHandler,
+	},
+	ServiceTaskOutdatedRequests: {
+		Handler: outdatedRequestsHandler,
 	},
 }
 
@@ -100,6 +106,13 @@ func locationCleanupHandler(c buffalo.Context) error {
 func tokenCleanupHandler(c buffalo.Context) error {
 	if err := job.Submit(job.TokenCleanup, nil); err != nil {
 		return c.Error(http.StatusInternalServerError, fmt.Errorf("token cleanup job not started, %s", err))
+	}
+	return nil
+}
+
+func outdatedRequestsHandler(c buffalo.Context) error {
+	if err := job.Submit(job.OutdatedRequests, nil); err != nil {
+		return c.Error(http.StatusInternalServerError, fmt.Errorf("outdated requests job not started, %s", err))
 	}
 	return nil
 }
