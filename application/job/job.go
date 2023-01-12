@@ -13,7 +13,7 @@ import (
 
 const (
 	NewThreadMessage = "new_thread_message"
-	OutdatedRequest  = "outdated_request"
+	OutdatedRequests = "outdated_requests"
 	FileCleanup      = "file_cleanup"
 	LocationCleanup  = "location_cleanup"
 	TokenCleanup     = "token_cleanup"
@@ -23,7 +23,7 @@ var w *worker.Worker
 
 var handlers = map[string]func(worker.Args) error{
 	NewThreadMessage: newThreadMessageHandler,
-	OutdatedRequest:  outdatedRequestMessageHandler,
+	OutdatedRequests: outdatedRequestsMessageHandler,
 	FileCleanup:      fileCleanupHandler,
 	LocationCleanup:  locationCleanupHandler,
 	TokenCleanup:     tokenCleanupHandler,
@@ -38,13 +38,13 @@ func Init(appWorker *worker.Worker) {
 	}
 }
 
-// outdatedRequestMessageHandler is the Worker handler for new notifications
+// outdatedRequestsMessageHandler is the Worker handler for new notifications
 // regarding open requests that have a needby date in the past
-func outdatedRequestMessageHandler(args worker.Args) error {
+func outdatedRequestsMessageHandler(args worker.Args) error {
 	var requests models.Requests
 	db := models.DB
 	if err := requests.FindOpenPastNeededBefore(db, "NeededBefore", "UUID"); err != nil {
-		return fmt.Errorf("error finding outdated requests for %s worker: %s", OutdatedRequest, err)
+		return fmt.Errorf("error finding outdated requests for %s worker: %s", OutdatedRequests, err)
 	}
 
 	var lastErr error

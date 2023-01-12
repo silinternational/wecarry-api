@@ -37,7 +37,7 @@ func (js *JobSuite) TestOutdatedRequestMessageHandler() {
 	f := CreateFixtures_TestOutdatedRequestMessageHandler(js)
 	notifications.TestEmailService.DeleteSentMessages()
 
-	err := outdatedRequestMessageHandler(nil)
+	err := outdatedRequestsMessageHandler(nil)
 	js.NoError(err)
 	js.Equal(1, notifications.TestEmailService.GetNumberOfMessagesSent())
 
