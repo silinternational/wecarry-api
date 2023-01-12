@@ -19,7 +19,7 @@ import (
 
 func (as *ActionSuite) Test_serviceHandler() {
 
-	getPost := func(name string) string {
+	postBody := func(name string) string {
 		return fmt.Sprintf(`{"task":"%s"}`, name)
 	}
 
@@ -47,26 +47,26 @@ func (as *ActionSuite) Test_serviceHandler() {
 		{
 			name:        "bad task name",
 			token:       domain.Env.ServiceIntegrationToken,
-			requestBody: getPost("bad_task"),
+			requestBody: postBody("bad_task"),
 			wantCode:    http.StatusUnprocessableEntity,
 			wantKey:     api.ErrorUnprocessableEntity,
 		},
 		{
 			name:        "file cleanup",
 			token:       domain.Env.ServiceIntegrationToken,
-			requestBody: getPost(job.FileCleanup),
+			requestBody: postBody(job.FileCleanup),
 			wantTask:    ServiceTaskFileCleanup,
 		},
 		{
 			name:        "token cleanup",
 			token:       domain.Env.ServiceIntegrationToken,
-			requestBody: getPost(job.TokenCleanup),
+			requestBody: postBody(job.TokenCleanup),
 			wantTask:    ServiceTaskTokenCleanup,
 		},
 		{
 			name:        "outdated requests",
 			token:       domain.Env.ServiceIntegrationToken,
-			requestBody: getPost(job.OutdatedRequests),
+			requestBody: postBody(job.OutdatedRequests),
 			wantTask:    ServiceTaskOutdatedRequests,
 		},
 	}

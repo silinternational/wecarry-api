@@ -37,15 +37,12 @@ func CreateFixtures_TestOutdatedRequestHandler(js *JobSuite) RequestFixtures {
 
 	pastDate := nulls.NewTime(time.Now().Add(-1 * domain.DurationDay))
 	requests[1].NeededBefore = pastDate
-	// avoid validation error for value in the past
-	updateQuery := db.RawQuery("UPDATE requests SET needed_before = ? WHERE id = ?", pastDate, requests[1].ID)
-	js.NoError(updateQuery.Exec(), "error modifying request for test")
+	js.NoError(js.DB.Update(&requests[1]), "error modifying request for test")
 
 	return RequestFixtures{
 		Users:    users,
 		Requests: requests,
 	}
-
 }
 
 func CreateFixtures_TestNewThreadMessageHandler(js *JobSuite) MessageFixtures {
