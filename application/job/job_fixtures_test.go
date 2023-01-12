@@ -27,7 +27,7 @@ func createFixture(js *JobSuite, f interface{}) {
 	}
 }
 
-func CreateFixtures_TestOutdatedRequestMessageHandler(js *JobSuite) RequestFixtures {
+func CreateFixtures_TestOutdatedRequestHandler(js *JobSuite) RequestFixtures {
 	users := test.CreateUserFixtures(js.DB, 2).Users
 	requests := test.CreateRequestFixtures(js.DB, 2, false, users[0].ID, users[1].ID)
 	db := js.DB

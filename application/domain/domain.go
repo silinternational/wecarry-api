@@ -506,7 +506,7 @@ func GetRequestUIURL(requestUUID string) string {
 	return Env.UIURL + requestUIPath + requestUUID
 }
 
-// GetRequestEdiutUIURL returns a UI URL for modifying the given Request
+// GetRequestEditUIURL returns a UI URL for modifying the given Request
 func GetRequestEditUIURL(requestUUID string) string {
 	return Env.UIURL + requestUIPath + requestUUID + "/edit"
 }

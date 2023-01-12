@@ -26,7 +26,7 @@ func Test_JobSuite(t *testing.T) {
 	suite.Run(t, ms)
 }
 
-func (js *JobSuite) TestOutdatedRequestMessageHandler() {
+func (js *JobSuite) TestOutdatedRequestsHandler() {
 	var buf bytes.Buffer
 	domain.ErrLogger.SetOutput(&buf)
 
@@ -34,10 +34,10 @@ func (js *JobSuite) TestOutdatedRequestMessageHandler() {
 		domain.ErrLogger.SetOutput(os.Stderr)
 	}()
 
-	f := CreateFixtures_TestOutdatedRequestMessageHandler(js)
+	f := CreateFixtures_TestOutdatedRequestHandler(js)
 	notifications.TestEmailService.DeleteSentMessages()
 
-	err := outdatedRequestsMessageHandler(nil)
+	err := outdatedRequestsHandler(nil)
 	js.NoError(err)
 	js.Equal(1, notifications.TestEmailService.GetNumberOfMessagesSent())
 
