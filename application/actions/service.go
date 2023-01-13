@@ -31,13 +31,16 @@ type ServiceTaskHandler func(buffalo.Context) error
 
 const (
 	// ServiceTaskFileCleanup removes files not linked to any object
-	ServiceTaskFileCleanup ServiceTaskName = "file_cleanup"
+	ServiceTaskFileCleanup ServiceTaskName = job.FileCleanup
 
 	// ServiceTaskLocationCleanup removes locations not used by any object
-	ServiceTaskLocationCleanup ServiceTaskName = "location_cleanup"
+	ServiceTaskLocationCleanup ServiceTaskName = job.LocationCleanup
 
 	// ServiceTaskTokenCleanup removes expired user access tokens
-	ServiceTaskTokenCleanup ServiceTaskName = "token_cleanup"
+	ServiceTaskTokenCleanup ServiceTaskName = job.TokenCleanup
+
+	// ServiceTaskOutdatedRequests sends emails to users who have requests with an outdated needed_before
+	ServiceTaskOutdatedRequests ServiceTaskName = job.OutdatedRequests
 )
 
 var serviceTasks = map[ServiceTaskName]ServiceTask{
@@ -49,6 +52,9 @@ var serviceTasks = map[ServiceTaskName]ServiceTask{
 	},
 	ServiceTaskTokenCleanup: {
 		Handler: tokenCleanupHandler,
+	},
+	ServiceTaskOutdatedRequests: {
+		Handler: outdatedRequestsHandler,
 	},
 }
 
@@ -100,6 +106,13 @@ func locationCleanupHandler(c buffalo.Context) error {
 func tokenCleanupHandler(c buffalo.Context) error {
 	if err := job.Submit(job.TokenCleanup, nil); err != nil {
 		return c.Error(http.StatusInternalServerError, fmt.Errorf("token cleanup job not started, %s", err))
+	}
+	return nil
+}
+
+func outdatedRequestsHandler(c buffalo.Context) error {
+	if err := job.Submit(job.OutdatedRequests, nil); err != nil {
+		return c.Error(http.StatusInternalServerError, fmt.Errorf("outdated requests job not started, %s", err))
 	}
 	return nil
 }

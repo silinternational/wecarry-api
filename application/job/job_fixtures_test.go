@@ -3,6 +3,7 @@ package job
 import (
 	"time"
 
+	"github.com/gobuffalo/nulls"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/internal/test"
 	"github.com/silinternational/wecarry-api/models"
@@ -13,12 +14,34 @@ type MessageFixtures struct {
 	models.Messages
 	models.Threads
 }
+type RequestFixtures struct {
+	models.Users
+	models.Requests
+}
 
 func createFixture(js *JobSuite, f interface{}) {
 	err := js.DB.Create(f)
 	if err != nil {
 		js.T().Errorf("error creating %T fixture, %s", f, err)
 		js.T().FailNow()
+	}
+}
+
+func CreateFixtures_TestOutdatedRequestHandler(js *JobSuite) RequestFixtures {
+	users := test.CreateUserFixtures(js.DB, 2).Users
+	requests := test.CreateRequestFixtures(js.DB, 2, false, users[0].ID, users[1].ID)
+	db := js.DB
+
+	requests[0].Status = models.RequestStatusAccepted
+	js.NoError(requests[0].Update(db), "error modifying request for test")
+
+	pastDate := nulls.NewTime(time.Now().Add(-1 * domain.DurationDay))
+	requests[1].NeededBefore = pastDate
+	js.NoError(js.DB.Update(&requests[1]), "error modifying request for test")
+
+	return RequestFixtures{
+		Users:    users,
+		Requests: requests,
 	}
 }
 

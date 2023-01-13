@@ -184,3 +184,9 @@ idea.
 TLS is used by default but can be disabled by setting `DISABLE_TLS=true` in the environment. 
 
 When TLS is used, WeCarry API generates a self-signed certificate and provides it upon request.
+
+## Automated Jobs
+
+Certain automated jobs can be triggered via a POST http call to the `/service` endpoint.
+A companion project includes lambda functions for calling that endpoint.
+You can find it at https://github.com/silinternational/wecarry-lambdas
