@@ -29,6 +29,8 @@ func Test_JobSuite(t *testing.T) {
 func (js *JobSuite) TestOutdatedRequestsHandler() {
 	var buf bytes.Buffer
 	domain.ErrLogger.SetOutput(&buf)
+	supportEmail := `support@example.org`
+	domain.Env.SupportEmail = supportEmail
 
 	defer func() {
 		domain.ErrLogger.SetOutput(os.Stderr)
@@ -44,6 +46,7 @@ func (js *JobSuite) TestOutdatedRequestsHandler() {
 	body := notifications.TestEmailService.GetLastBody()
 	js.Contains(body, `We see that your request hasn't been fulfilled yet`)
 	js.Contains(body, f.Requests[1].Title)
+	js.Contains(body, `mailto:`+supportEmail)
 }
 
 func (js *JobSuite) TestNewThreadMessageHandler() {
