@@ -63,6 +63,7 @@ func outdatedRequestsHandler(args worker.Args) error {
 				"requestURL":     domain.GetRequestUIURL(r.UUID.String()),
 				"requestEditURL": domain.GetRequestEditUIURL(r.UUID.String()),
 				"requestTitle":   requestTitle,
+				"supportEmail":   domain.Env.SupportEmail,
 			},
 			FromEmail: domain.EmailFromAddress(nil),
 		}
