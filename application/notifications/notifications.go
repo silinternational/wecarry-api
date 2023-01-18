@@ -2,6 +2,8 @@ package notifications
 
 import "github.com/silinternational/wecarry-api/domain"
 
+const mailTemplatePath = "mail/"
+
 var notifiers []Notifier
 
 func init() {

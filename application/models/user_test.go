@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/gobuffalo/nulls"
-	"github.com/gobuffalo/pop/v5"
+	"github.com/gobuffalo/pop/v6"
 	"github.com/gofrs/uuid"
 
 	"github.com/silinternational/wecarry-api/auth"

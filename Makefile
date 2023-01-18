@@ -2,7 +2,7 @@ dev: buffalo adminer migrate
 
 migrate:
 	docker-compose run --rm buffalo whenavail db 5432 10 buffalo-pop pop migrate up
-	docker-compose run --rm buffalo /bin/bash -c "grift private:seed && grift db:seed && grift minio:seed"
+	docker-compose run --rm buffalo /bin/bash -c "buffalo task private:seed && buffalo task db:seed && buffalo task minio:seed"
 
 migratestatus:
 	docker-compose run buffalo buffalo-pop pop migrate status
@@ -40,11 +40,11 @@ logs:
 testdb:
 	docker-compose up -d testdb
 
-test:
+test: gosec
 	docker-compose run --rm test whenavail testdb 5432 10 buffalo test
 
 testenv: rmtestdb migratetestdb
-	@echo "\n\nIf minio hasn't been initialized, run grift minio:seed\n"
+	@echo "\n\nIf minio hasn't been initialized, run buffalo task minio:seed\n"
 	docker-compose run --rm test bash
 
 rmtestdb:
@@ -52,6 +52,9 @@ rmtestdb:
 
 killbuffalo:
 	docker-compose kill buffalo
+
+gosec:
+	docker-compose run --rm gosec
 
 clean:
 	docker-compose kill

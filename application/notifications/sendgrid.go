@@ -31,7 +31,7 @@ func (e *SendGridService) Send(msg Message) error {
 	msg.Data["appName"] = domain.Env.AppName
 
 	bodyBuf := &bytes.Buffer{}
-	if err := eR.HTML(msg.Template).Render(bodyBuf, msg.Data); err != nil {
+	if err := eR.HTML(mailTemplatePath+msg.Template).Render(bodyBuf, msg.Data); err != nil {
 		return errors.New("error rendering message body - " + err.Error())
 	}
 	body := bodyBuf.String()

@@ -1,9 +1,14 @@
 # This is a multi-stage Dockerfile and requires >= Docker 17.05
 # https://docs.docker.com/engine/userguide/eng-image/multistage-build/
-FROM gobuffalo/buffalo:v0.16.27 as builder
+FROM gobuffalo/buffalo:v0.18.8 as builder
 
 RUN mkdir -p $GOPATH/src/wecarry
 WORKDIR $GOPATH/src/wecarry
+
+# Install the desired version of NodeJS
+RUN npm cache clean -f && \
+    npm install -g n && \
+    n 16
 
 ADD . .
 ENV GO111MODULE=on

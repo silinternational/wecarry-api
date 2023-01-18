@@ -958,6 +958,27 @@ func (ms *ModelSuite) TestRequest_manageStatusTransition_backwardProgression() {
 	}
 }
 
+func (ms *ModelSuite) TestRequest_FindOpenPastNeededBefore() {
+	users := createUserFixtures(ms.DB, 2).Users
+	reqFix := createRequestFixtures(ms.DB, 2, false, users[0].ID)
+
+	acceptedReq := reqFix[0]
+	acceptedReq.Status = RequestStatusAccepted
+	ms.NoError(acceptedReq.Update(ms.DB), "error modifying request for test")
+
+	outdatedReq := reqFix[1]
+	pastDate := nulls.NewTime(time.Now().Add(-1 * domain.DurationDay))
+	// avoid validation error for value in the past
+	updateQuery := ms.DB.RawQuery("UPDATE requests SET needed_before = ? WHERE id = ?", pastDate, outdatedReq.ID)
+	ms.NoError(updateQuery.Exec(), "error modifying request for test")
+
+	var requests Requests
+	ms.NoError(requests.FindOpenPastNeededBefore(ms.DB))
+
+	ms.Len(requests, 1, "incorrect number of requests found")
+	ms.Equal(outdatedReq.Title, requests[0].Title, "incorrect request found")
+}
+
 func (ms *ModelSuite) TestRequest_FindByID() {
 	t := ms.T()
 

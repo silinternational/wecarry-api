@@ -433,6 +433,11 @@ func (ts *TestSuite) TestGetTranslatedSubject() {
 			translationID: "Email.Subject.Request.FromDeliveredToAccepted",
 			want:          "Request not delivered after all on " + Env.AppName,
 		},
+		{
+			name:          "outdated request",
+			translationID: "Email.Subject.Request.Outdated",
+			want:          `Your ` + Env.AppName + ` request is past its "needed before" date`,
+		},
 	}
 
 	for _, test := range tests {

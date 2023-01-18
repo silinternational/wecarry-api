@@ -16,6 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/ses"
+	"github.com/silinternational/wecarry-api/assets"
 	"jaytaylor.com/html2text"
 
 	"github.com/silinternational/wecarry-api/domain"
@@ -293,7 +294,7 @@ func rawEmail(to, from, subject, body string) []byte {
 	if err != nil {
 		domain.ErrLogger.Printf("failed to create MIME image part, %s", err)
 	} else {
-		logo, err := domain.Assets.Find("logo.png")
+		logo, err := assets.FS().ReadFile("logo.png")
 		if err != nil {
 			domain.ErrLogger.Printf("failed to read logo file, %s", err)
 		}
