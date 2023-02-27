@@ -228,7 +228,11 @@ func (p *Provider) FetchUser(session goth.Session) (goth.User, error) {
 	if err != nil {
 		return user, err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			panic("error closing linkedin auth provider response body, userEndpoint: " + err.Error())
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return user, fmt.Errorf("%s responded with a %d trying to fetch user profile", p.providerName, resp.StatusCode)
