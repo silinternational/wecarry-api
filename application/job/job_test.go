@@ -26,6 +26,29 @@ func Test_JobSuite(t *testing.T) {
 	suite.Run(t, ms)
 }
 
+func (js *JobSuite) TestOutdatedRequestsHandler() {
+	var buf bytes.Buffer
+	domain.ErrLogger.SetOutput(&buf)
+	supportEmail := `support@example.org`
+	domain.Env.SupportEmail = supportEmail
+
+	defer func() {
+		domain.ErrLogger.SetOutput(os.Stderr)
+	}()
+
+	f := CreateFixtures_TestOutdatedRequestHandler(js)
+	notifications.TestEmailService.DeleteSentMessages()
+
+	err := outdatedRequestsHandler(nil)
+	js.NoError(err)
+	js.Equal(1, notifications.TestEmailService.GetNumberOfMessagesSent())
+
+	body := notifications.TestEmailService.GetLastBody()
+	js.Contains(body, `We see that your request hasn't been fulfilled yet`)
+	js.Contains(body, f.Requests[1].Title)
+	js.Contains(body, `mailto:`+supportEmail)
+}
+
 func (js *JobSuite) TestNewThreadMessageHandler() {
 	var buf bytes.Buffer
 	domain.ErrLogger.SetOutput(&buf)

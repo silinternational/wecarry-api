@@ -130,3 +130,10 @@ services:
       - db
       - minio
     command: ./debug.sh
+
+  gosec:
+    image: securego/gosec:latest
+    volumes:
+      - ./application:/wecarry
+    # Remember to make the exclude value match the corresponding line in codeship-test.sh
+    command: ["-exclude=G104", "-quiet", "/wecarry/..."]
