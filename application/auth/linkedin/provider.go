@@ -263,7 +263,7 @@ func (p *Provider) FetchUser(session goth.Session) (goth.User, error) {
 		return user, err
 	}
 	defer func() {
-		if err := resp.Body.Close(); err != nil {
+		if err := respEmail.Body.Close(); err != nil {
 			panic("error closing linkedin auth provider response body, emailEndpoint: " + err.Error())
 		}
 	}()
