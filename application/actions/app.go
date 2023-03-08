@@ -160,7 +160,7 @@ func App() *buffalo.App {
 // for more information: https://gobuffalo.io/en/docs/localization
 func translations() buffalo.MiddlewareFunc {
 	var err error
-	if domain.T, err = i18n.New(locales.FS(), "en-US"); err != nil {
+	if domain.T, err = i18n.New(locales.FS(), "en"); err != nil {
 		_ = app.Stop(err)
 	}
 	return domain.T.Middleware()
