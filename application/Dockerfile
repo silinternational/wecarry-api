@@ -2,7 +2,7 @@
 # https://docs.docker.com/engine/userguide/eng-image/multistage-build/
 FROM gobuffalo/buffalo:v0.18.8 as builder
 
-ARG ci_build_id
+ARG ci_commit_id
 
 RUN mkdir -p $GOPATH/src/wecarry
 WORKDIR $GOPATH/src/wecarry
@@ -14,7 +14,7 @@ RUN npm cache clean -f && \
 
 COPY . .
 
-RUN sh -c "echo $ci_build_id > cmd/app/commit.txt"
+RUN sh -c "echo $ci_commit_id > cmd/app/commit.txt"
 RUN cat cmd/app/commit.txt
 
 RUN buffalo build --static -o /bin/app

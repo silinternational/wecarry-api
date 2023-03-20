@@ -45,7 +45,7 @@ binary:
     context: application
     dockerfile: Dockerfile
     args:
-      ci_build_id: "{% raw %}{{ .BuildID }}{% endraw %}"
+      ci_commit_id: "{{ .CommitID }}"
   cached: true
   working_dir: /wecarry
   command: true
