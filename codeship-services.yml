@@ -42,7 +42,7 @@ testdb:
 binary:
   build:
     image: 369020531563.dkr.ecr.us-east-1.amazonaws.com/wecarry-stg
-    context: application
+    context: .
     dockerfile: Dockerfile
   cached: true
   working_dir: /wecarry

@@ -10,7 +10,12 @@ RUN npm cache clean -f && \
     npm install -g n && \
     n 16
 
-ADD . .
+COPY application .
+
+# *** EXPERIMENTAL ***
+# Copy the git directory to enable Go's debug.BuildInfo. Messing with git like this may have unknown side effects.
+COPY .git ./.git
+
 ENV GO111MODULE=on
 RUN go get ./...
 #RUN export GIT_COMMIT=$(git rev-list -1 HEAD) && \
