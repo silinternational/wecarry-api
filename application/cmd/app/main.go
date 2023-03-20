@@ -37,10 +37,10 @@ func main() {
 
 	app := actions.App()
 
-	domain.ErrLogger.Printf("Go version: %s", runtime.Version())
-	domain.ErrLogger.Printf("Buffalo version: %s", buffalo.Version)
-	domain.ErrLogger.Printf("Buffalo build info: %s", buffalo.Build())
-	domain.ErrLogger.Printf("Commit hash: %s", domain.Commit)
+	fmt.Printf("Go version: %s\n", runtime.Version())
+	fmt.Printf("Buffalo version: %s\n", buffalo.Version)
+	fmt.Printf("Buffalo build info: %s\n", buffalo.Build())
+	fmt.Printf("Commit hash: %s\n", domain.Commit)
 
 	rollbar.WrapAndWait(func() {
 		if err := app.Serve(srv); err != nil {
