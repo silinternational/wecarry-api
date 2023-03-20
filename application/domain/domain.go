@@ -564,8 +564,7 @@ func TranslateWithLang(lang, translationID string, args ...interface{}) (string,
 }
 
 // IsOtherThanNoRows returns false if the error is nil or is just reporting that there
-//
-//	were no rows in the result set for a sql query.
+// were no rows in the result set for a sql query.
 func IsOtherThanNoRows(err error) bool {
 	if err == nil {
 		return false
