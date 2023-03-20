@@ -28,7 +28,7 @@ func main() {
 	// init rollbar
 	rollbar.SetToken(domain.Env.RollbarToken)
 	rollbar.SetEnvironment(domain.Env.GoEnv)
-	rollbar.SetCodeVersion(commit)
+	rollbar.SetCodeVersion(buffalo.Version)
 	rollbar.SetServerRoot(domain.Env.RollbarServerRoot)
 
 	srv, err := getServer()
@@ -42,7 +42,6 @@ func main() {
 	domain.ErrLogger.Printf("Go version: %s", runtime.Version())
 	domain.ErrLogger.Printf("Buffalo version: %s", buffalo.Version)
 	domain.ErrLogger.Printf("Buffalo build info: %s", buffalo.Build())
-	domain.ErrLogger.Printf("commit: %s", commit)
 
 	rollbar.WrapAndWait(func() {
 		if err := app.Serve(srv); err != nil {
