@@ -12,7 +12,7 @@ RUN npm cache clean -f && \
 
 COPY . .
 
-RUN sh -c "printf %s $(git rev-parse HEAD) > cmd/app/commit.txt"
+RUN sh -c "echo $CI_BUILD_ID > cmd/app/commit.txt"
 
 RUN buffalo build --static -o /bin/app
 
