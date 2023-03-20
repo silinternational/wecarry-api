@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"database/sql"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -28,6 +29,9 @@ import (
 
 	"github.com/silinternational/wecarry-api/locales"
 )
+
+//go:embed commit.txt
+var Commit string
 
 const (
 	Megabyte                    = 1048576
@@ -291,7 +295,7 @@ func (e *ErrLogProxy) InitRollbar() {
 	e.RemoteLog = rollbar.New(
 		Env.RollbarToken,
 		Env.GoEnv,
-		"",
+		Commit,
 		"",
 		Env.RollbarServerRoot)
 }
@@ -560,7 +564,8 @@ func TranslateWithLang(lang, translationID string, args ...interface{}) (string,
 }
 
 // IsOtherThanNoRows returns false if the error is nil or is just reporting that there
-//   were no rows in the result set for a sql query.
+//
+//	were no rows in the result set for a sql query.
 func IsOtherThanNoRows(err error) bool {
 	if err == nil {
 		return false

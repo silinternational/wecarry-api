@@ -24,3 +24,4 @@ generated/
 application/grifts/private.go
 application/migrations/schema.sql
 *.pem
+commit.txt
