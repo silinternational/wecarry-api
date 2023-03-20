@@ -14,7 +14,8 @@ RUN npm cache clean -f && \
 
 COPY . .
 
-RUN sh -c "echo $CI_BUILD_ID > cmd/app/commit.txt"
+RUN sh -c "echo $ci_build_id > cmd/app/commit.txt"
+RUN cat cmd/app/commit.txt
 
 RUN buffalo build --static -o /bin/app
 
