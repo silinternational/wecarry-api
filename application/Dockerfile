@@ -10,16 +10,10 @@ RUN npm cache clean -f && \
     npm install -g n && \
     n 16
 
-COPY application .
+COPY . .
 
-# *** EXPERIMENTAL ***
-# Copy the git directory to enable Go's debug.BuildInfo. Messing with git like this may have unknown side effects.
-COPY .git ./.git
+RUN sh -c "printf %s $(git rev-parse HEAD) > cmd/app/commit.txt"
 
-ENV GO111MODULE=on
-RUN go get ./...
-#RUN export GIT_COMMIT=$(git rev-list -1 HEAD) && \
-#    buffalo build --ldflags "-X main.GitCommitHash=$GIT_COMMIT" --static -o /bin/app
 RUN buffalo build --static -o /bin/app
 
 FROM alpine

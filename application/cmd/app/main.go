@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/tls"
+	_ "embed"
 	"fmt"
 	"net/http"
 	"os"
@@ -16,7 +17,8 @@ import (
 	"github.com/silinternational/wecarry-api/domain"
 )
 
-var GitCommitHash string
+//go:embed commit.txt
+var Commit string
 
 // main is the starting point for your Buffalo application.
 // You can feel free and add to this `main` method, change
@@ -42,6 +44,7 @@ func main() {
 	domain.ErrLogger.Printf("Go version: %s", runtime.Version())
 	domain.ErrLogger.Printf("Buffalo version: %s", buffalo.Version)
 	domain.ErrLogger.Printf("Buffalo build info: %s", buffalo.Build())
+	domain.ErrLogger.Printf("Commit hash: %s", Commit)
 
 	rollbar.WrapAndWait(func() {
 		if err := app.Serve(srv); err != nil {
