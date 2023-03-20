@@ -28,7 +28,7 @@ func main() {
 	// init rollbar
 	rollbar.SetToken(domain.Env.RollbarToken)
 	rollbar.SetEnvironment(domain.Env.GoEnv)
-	rollbar.SetCodeVersion(buffalo.Version)
+	rollbar.SetCodeVersion(buffalo.Build().Version)
 	rollbar.SetServerRoot(domain.Env.RollbarServerRoot)
 
 	srv, err := getServer()
