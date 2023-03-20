@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"runtime"
 	"time"
 
+	buffalo "github.com/gobuffalo/buffalo/runtime"
 	"github.com/gobuffalo/buffalo/servers"
 	"github.com/rollbar/rollbar-go"
 
@@ -26,7 +28,7 @@ func main() {
 	// init rollbar
 	rollbar.SetToken(domain.Env.RollbarToken)
 	rollbar.SetEnvironment(domain.Env.GoEnv)
-	rollbar.SetCodeVersion(GitCommitHash)
+	rollbar.SetCodeVersion(commit)
 	rollbar.SetServerRoot(domain.Env.RollbarServerRoot)
 
 	srv, err := getServer()
@@ -36,6 +38,12 @@ func main() {
 	}
 
 	app := actions.App()
+
+	domain.ErrLogger.Printf("Go version: %s", runtime.Version())
+	domain.ErrLogger.Printf("Buffalo version: %s", buffalo.Version)
+	domain.ErrLogger.Printf("Buffalo build info: %s", buffalo.Build())
+	domain.ErrLogger.Printf("commit: %s", commit)
+
 	rollbar.WrapAndWait(func() {
 		if err := app.Serve(srv); err != nil {
 			if err.Error() != "context canceled" {
