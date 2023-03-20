@@ -2,6 +2,8 @@
 # https://docs.docker.com/engine/userguide/eng-image/multistage-build/
 FROM gobuffalo/buffalo:v0.18.8 as builder
 
+ARG ci_build_id
+
 RUN mkdir -p $GOPATH/src/wecarry
 WORKDIR $GOPATH/src/wecarry
 

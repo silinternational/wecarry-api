@@ -44,6 +44,8 @@ binary:
     image: 369020531563.dkr.ecr.us-east-1.amazonaws.com/wecarry-stg
     context: application
     dockerfile: Dockerfile
+    args:
+      ci_build_id: $CI_BUILD_ID
   cached: true
   working_dir: /wecarry
   command: true
