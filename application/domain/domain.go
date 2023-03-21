@@ -30,6 +30,9 @@ import (
 	"github.com/silinternational/wecarry-api/locales"
 )
 
+//go:embed commit.txt
+var Commit string
+
 const (
 	Megabyte                    = 1048576
 	DateFormat                  = "2006-01-02"
@@ -158,7 +161,6 @@ var Env struct {
 	AwsS3Bucket                string
 	AwsAccessKeyID             string
 	AwsSecretAccessKey         string
-	CommitID                   string
 	DisableTLS                 bool
 	EmailService               string
 	EmailFromAddress           string
@@ -219,7 +221,6 @@ func readEnv() {
 	Env.AwsS3Bucket = envy.Get("AWS_S3_BUCKET", "")
 	Env.AwsAccessKeyID = envy.Get("AWS_ACCESS_KEY_ID", "")
 	Env.AwsSecretAccessKey = envy.Get("AWS_SECRET_ACCESS_KEY", "")
-	Env.CommitID = envy.Get("CI_COMMIT_ID", "")
 	Env.DisableTLS, _ = strconv.ParseBool(envy.Get("DISABLE_TLS", "false"))
 	Env.EmailService = envy.Get("EMAIL_SERVICE", "sendgrid")
 	Env.EmailFromAddress = envy.Get("EMAIL_FROM_ADDRESS", "no_reply@example.com")
@@ -294,7 +295,7 @@ func (e *ErrLogProxy) InitRollbar() {
 	e.RemoteLog = rollbar.New(
 		Env.RollbarToken,
 		Env.GoEnv,
-		Env.CommitID,
+		Commit,
 		"",
 		Env.RollbarServerRoot)
 }
