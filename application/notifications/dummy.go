@@ -30,7 +30,7 @@ func (t *DummyEmailService) Send(msg Message) error {
 		return errors.New(errMsg)
 	}
 
-	log.Errorf("dummy message subject: %s, recipient: %s",
+	log.Infof("dummy message subject: %s, recipient: %s",
 		msg.Subject, msg.ToName)
 
 	t.sentMessages = append(t.sentMessages,

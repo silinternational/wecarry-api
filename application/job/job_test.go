@@ -1,9 +1,6 @@
 package job
 
 import (
-	"bytes"
-	"log"
-	"os"
 	"testing"
 	"text/template"
 	"time"
@@ -29,14 +26,8 @@ func Test_JobSuite(t *testing.T) {
 }
 
 func (js *JobSuite) TestOutdatedRequestsHandler() {
-	var buf bytes.Buffer
-	log.SetOutput(&buf)
 	supportEmail := `support@example.org`
 	domain.Env.SupportEmail = supportEmail
-
-	defer func() {
-		log.SetOutput(os.Stderr)
-	}()
 
 	f := CreateFixtures_TestOutdatedRequestHandler(js)
 	notifications.TestEmailService.DeleteSentMessages()
@@ -52,13 +43,6 @@ func (js *JobSuite) TestOutdatedRequestsHandler() {
 }
 
 func (js *JobSuite) TestNewThreadMessageHandler() {
-	var buf bytes.Buffer
-	log.SetOutput(&buf)
-
-	defer func() {
-		log.SetOutput(os.Stderr)
-	}()
-
 	f := CreateFixtures_TestNewThreadMessageHandler(js)
 
 	tests := []struct {

@@ -181,8 +181,6 @@ var Env struct {
 	PlaygroundPort             string
 	RedisInstanceName          string
 	RedisInstanceHostPort      string
-	RollbarServerRoot          string
-	RollbarToken               string
 	SendGridAPIKey             string
 	ServerPort                 int
 	SessionSecret              string
@@ -248,8 +246,6 @@ func readEnv() {
 	Env.PlaygroundPort = envy.Get("PORT", "3000")
 	Env.RedisInstanceName = envy.Get("REDIS_INSTANCE_NAME", "redis")
 	Env.RedisInstanceHostPort = envy.Get("REDIS_INSTANCE_HOST_PORT", "redis:6379")
-	Env.RollbarServerRoot = envy.Get("ROLLBAR_SERVER_ROOT", "github.com/silinternational/wecarry-api")
-	Env.RollbarToken = envy.Get("ROLLBAR_TOKEN", "")
 	Env.SendGridAPIKey = envy.Get("SENDGRID_API_KEY", "")
 	Env.ServerPort, _ = strconv.Atoi(envy.Get("PORT", "3000"))
 	Env.ServiceIntegrationToken = envy.Get("SERVICE_INTEGRATION_TOKEN", "")

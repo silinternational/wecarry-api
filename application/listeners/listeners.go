@@ -89,7 +89,7 @@ func userCreatedLogger(e events.Event) {
 		return
 	}
 
-	log.Errorf("User Created: %s", e.Message)
+	log.Infof("User Created: %s", e.Message)
 }
 
 func userCreatedSendWelcomeMessage(e events.Event) {
@@ -116,8 +116,7 @@ func userCreatedAddToMarketingList(e events.Event) {
 
 	user, ok := e.Payload["user"].(*models.User)
 	if !ok {
-		log.Errorf(
-			"Failed to get User from event payload for adding to marketing list. Event message: %s", e.Message)
+		log.Errorf("Failed to get User from event payload for adding to marketing list. Event message: %s", e.Message)
 		return
 	}
 
@@ -148,7 +147,7 @@ func sendNewThreadMessageNotification(e events.Event) {
 		return
 	}
 
-	log.Errorf("%s Thread Message Created ... %s", domain.GetCurrentTime(), e.Message)
+	log.Infof("%s Thread Message Created ... %s", domain.GetCurrentTime(), e.Message)
 
 	id, ok := e.Payload[domain.ArgMessageID].(int)
 	if !ok {

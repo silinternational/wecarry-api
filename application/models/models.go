@@ -308,7 +308,7 @@ func destroyTable(i interface{}) {
 func Tx(ctx context.Context) *pop.Connection {
 	tx, ok := ctx.Value(domain.ContextKeyTx).(*pop.Connection)
 	if !ok {
-		log.Error("no transaction found in context, called from: " + domain.GetFunctionName(2))
+		log.Warning("no transaction found in context, called from: " + domain.GetFunctionName(2))
 		return DB
 	}
 	return tx

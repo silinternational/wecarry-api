@@ -51,8 +51,8 @@ func customErrorHandler(status int, origErr error, c buffalo.Context) error {
 		domain.ExtrasKey:    appError.Key,
 		domain.ExtrasStatus: status,
 		domain.ExtrasMethod: c.Request().Method,
-		"uri":               c.Request().RequestURI,
-		"ip":                address,
+		domain.ExtrasURI:    c.Request().RequestURI,
+		domain.ExtrasIP:     address,
 	})
 	if status >= 500 {
 		e.Errorf(origErr.Error())

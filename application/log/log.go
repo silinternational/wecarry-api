@@ -186,11 +186,3 @@ func SetUser(ctx context.Context, id, username, email string) {
 func SetOutput(output io.Writer) {
 	ErrLogger.LocalLog.SetOutput(output)
 }
-
-func SetLevel(level string) {
-	ErrLogger.config.level = level
-}
-
-func GetLevel() string {
-	return ErrLogger.config.level
-}

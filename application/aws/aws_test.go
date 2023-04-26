@@ -2,13 +2,13 @@ package aws
 
 import (
 	"bytes"
-	"log"
 	"os"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
 
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/log"
 )
 
 // TestSuite establishes a test suite

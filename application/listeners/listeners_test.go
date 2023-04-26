@@ -2,7 +2,6 @@ package listeners
 
 import (
 	"bytes"
-	"log"
 	"os"
 	"strings"
 	"testing"
@@ -15,6 +14,7 @@ import (
 
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/internal/test"
+	"github.com/silinternational/wecarry-api/log"
 	"github.com/silinternational/wecarry-api/models"
 	"github.com/silinternational/wecarry-api/notifications"
 )

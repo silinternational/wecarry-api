@@ -79,7 +79,7 @@ func serviceHandler(c buffalo.Context) error {
 		return c.Error(http.StatusBadRequest, fmt.Errorf("error parsing request body, %s", err))
 	}
 
-	log.Errorf("scheduling service task '%s'", input.Task)
+	log.Infof("scheduling service task '%s'", input.Task)
 
 	if task, ok := serviceTasks[input.Task]; ok {
 		if err := task.Handler(c); err != nil {

@@ -183,7 +183,7 @@ func tokenCleanupHandler(args worker.Args) error {
 		return fmt.Errorf("error cleaning expired user access tokens: %v", err)
 	}
 
-	log.Errorf("Deleted %v expired user access tokens during cleanup", deleted)
+	log.Infof("Deleted %v expired user access tokens during cleanup", deleted)
 	return nil
 }
 

@@ -197,7 +197,7 @@ func (l *Locations) DeleteUnused() error {
 	if nRemovedFromDB < len(locations) {
 		log.Errorf("not all unused locations were removed")
 	}
-	log.Errorf("removed %d from location table", nRemovedFromDB)
+	log.Infof("removed %d from location table", nRemovedFromDB)
 	return nil
 }
 

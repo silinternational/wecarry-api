@@ -6,25 +6,25 @@ package actions
 //
 // there are no TOS at this moment, use at your own risk we take no responsibility
 //
-//     Schemes: https
-//     Host: localhost
-//     BasePath: /
-//     Version: 0.0.1
-//     License: MIT http://opensource.org/licenses/MIT
+//  Schemes: https
+//  Host: localhost
+//  BasePath: /
+//  Version: 0.0.1
+//  License: MIT http://opensource.org/licenses/MIT
 //
-//     Consumes:
-//     - application/json
+//  Consumes:
+//  - application/json
 //
-//     Produces:
-//     - application/json
+//  Produces:
+//  - application/json
 //
-//     Security:
-//     - oauth2:
+//  Security:
+//  - oauth2:
 //
-//     SecurityDefinitions:
-//     bearerAuth:
-//         type: http
-//         scheme: bearer
+//  SecurityDefinitions:
+//  bearerAuth:
+//      type: http
+//      scheme: bearer
 //
 // swagger:meta
 
@@ -35,12 +35,11 @@ import (
 	paramlogger "github.com/gobuffalo/mw-paramlogger"
 	"github.com/rs/cors"
 
-	"github.com/silinternational/wecarry-api/job"
-	"github.com/silinternational/wecarry-api/log"
-
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/job"
 	"github.com/silinternational/wecarry-api/listeners"
 	"github.com/silinternational/wecarry-api/locales"
+	"github.com/silinternational/wecarry-api/log"
 	"github.com/silinternational/wecarry-api/models"
 )
 
@@ -79,7 +78,7 @@ func App() *buffalo.App {
 
 		registerCustomErrorHandler(app)
 
-		// Initialize and attach "rollbar" to context
+		// Initialize remote logger middleware
 		app.Use(log.RollbarMiddleware, log.SentryMiddleware)
 
 		// Log request parameters (filters apply).

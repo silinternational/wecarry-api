@@ -19,9 +19,8 @@ import (
 	"jaytaylor.com/html2text"
 
 	"github.com/silinternational/wecarry-api/assets"
-	"github.com/silinternational/wecarry-api/log"
-
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/log"
 )
 
 type ObjectUrl struct {
@@ -205,7 +204,7 @@ func SendEmail(to, from, subject, body string) error {
 		return fmt.Errorf("SendEmail failed using SES, %s", err)
 	}
 
-	log.Errorf("Message sent using SES, message ID: %s", *result.MessageId)
+	log.Infof("Message sent using SES, message ID: %s", *result.MessageId)
 	return nil
 }
 
@@ -215,12 +214,12 @@ func SendEmail(to, from, subject, body string) error {
 // * multipart/alternative
 //   - text/plain
 //   - multipart/related
-//   - text/html
-//   - image/png
+//     text/html
+//     image/png
 //
 // Abbreviated example of the generated email message:
 //
-//	 From: from@example.com
+//	 	From: from@example.com
 //		To: to@example.com
 //		Subject: subject text
 //		Content-Type: multipart/alternative; boundary="boundary_alternative"

@@ -2,11 +2,12 @@ package models
 
 import (
 	"bytes"
-	"log"
 	"os"
 	"testing"
 
 	"github.com/gobuffalo/nulls"
+
+	"github.com/silinternational/wecarry-api/log"
 )
 
 func (ms *ModelSuite) TestRequestHistory_Load() {

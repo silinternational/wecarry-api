@@ -12,8 +12,6 @@ import (
 	"github.com/gobuffalo/buffalo/render"
 
 	"github.com/silinternational/wecarry-api/api"
-	"github.com/silinternational/wecarry-api/log"
-
 	"github.com/silinternational/wecarry-api/auth"
 	"github.com/silinternational/wecarry-api/auth/azureadv2"
 	"github.com/silinternational/wecarry-api/auth/facebook"
@@ -21,6 +19,7 @@ import (
 	"github.com/silinternational/wecarry-api/auth/linkedin"
 	"github.com/silinternational/wecarry-api/auth/twitter"
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/log"
 	"github.com/silinternational/wecarry-api/models"
 )
 
@@ -346,7 +345,6 @@ func socialLoginBasedAuthCallback(c buffalo.Context, authEmail, clientID string)
 		return err
 	}
 
-	// set person on rollbar session
 	log.SetUser(c, authUser.ID, authUser.Nickname, authUser.Email)
 
 	return c.Redirect(302, getLoginSuccessRedirectURL(authUser, callbackValues.returnTo))

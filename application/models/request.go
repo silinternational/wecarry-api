@@ -1138,9 +1138,8 @@ func (r *Request) Load(ctx context.Context, fields ...string) error {
 }
 
 // AddUserAsPotentialProvider  creates a new PotentialProvider object in the database
-//
-//	after first ensuring the user is allowed to view the request and the
-//	request's status is OPEN.
+// after first ensuring the user is allowed to view the request and the
+// request's status is OPEN.
 func (r *Request) AddUserAsPotentialProvider(tx *pop.Connection, requestID string, cUser User) error {
 	if err := r.FindByUUIDForCurrentUser(tx, requestID, cUser); err != nil {
 		appErr := api.NewAppError(err, api.ErrorFindRequestToAddPotentialProvider, api.CategoryInternal)

@@ -16,9 +16,8 @@ import (
 	"github.com/gobuffalo/pop/v6"
 
 	"github.com/silinternational/wecarry-api/api"
-	"github.com/silinternational/wecarry-api/log"
-
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/log"
 	"github.com/silinternational/wecarry-api/models"
 )
 
@@ -618,8 +617,7 @@ func logErrorAndRedirect(c buffalo.Context, code api.ErrorKey, message string) e
 }
 
 // authDestroy uses the bearer token to find the user's access token and
-//
-//	calls the appropriate provider's logout function.
+// calls the appropriate provider's logout function.
 func authDestroy(c buffalo.Context) error {
 	tokenParam := c.Param(LogoutToken)
 	if tokenParam == "" {
@@ -644,7 +642,6 @@ func authDestroy(c buffalo.Context) error {
 		return logErrorAndRedirect(c, api.ErrorAuthProvidersLogout, err.Error())
 	}
 
-	// set person on rollbar session
 	log.SetUser(c, authUser.UUID.String(), authUser.Nickname, authUser.Email)
 
 	authPro, err := org.GetAuthProvider(tx, authUser.Email)
@@ -703,7 +700,6 @@ func setCurrentUser(next buffalo.Handler) buffalo.Handler {
 		}
 		c.Set(domain.ContextKeyCurrentUser, user)
 
-		// set person on rollbar session
 		log.SetUser(c, user.UUID.String(), user.Nickname, user.Email)
 		msg := fmt.Sprintf("user %s authenticated with bearer token from ip %s", user.Email, c.Request().RemoteAddr)
 		domain.NewExtra(c, "user_id", user.ID)

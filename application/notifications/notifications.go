@@ -16,7 +16,7 @@ func Send(msg Message) error {
 		if err := n.Send(msg); err != nil {
 			return err
 		}
-		log.Errorf("%T: %s message sent to %s", n, msg.Template, msg.ToEmail)
+		log.Infof("%T: %s message sent to %s", n, msg.Template, msg.ToEmail)
 	}
 
 	return nil

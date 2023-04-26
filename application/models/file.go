@@ -21,10 +21,9 @@ import (
 	_ "golang.org/x/image/webp" // enable decoding of WEBP images
 
 	"github.com/silinternational/wecarry-api/api"
-	"github.com/silinternational/wecarry-api/log"
-
 	"github.com/silinternational/wecarry-api/aws"
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/log"
 )
 
 type FileUploadError struct {
@@ -233,7 +232,7 @@ func (f *Files) DeleteUnlinked(tx *pop.Connection) error {
 		All(&files); err != nil {
 		return err
 	}
-	log.Errorf("unlinked files: %d", len(files))
+	log.Infof("unlinked files: %d", len(files))
 	if len(files) > domain.Env.MaxFileDelete {
 		return fmt.Errorf("attempted to delete too many files, MaxFileDelete=%d", domain.Env.MaxFileDelete)
 	}
@@ -261,7 +260,7 @@ func (f *Files) DeleteUnlinked(tx *pop.Connection) error {
 	if nRemovedFromDB < len(files) || nRemovedFromS3 < len(files) {
 		log.Errorf("not all unlinked files were removed")
 	}
-	log.Errorf("removed %d from S3, %d from file table", nRemovedFromS3, nRemovedFromDB)
+	log.Infof("removed %d from S3, %d from file table", nRemovedFromS3, nRemovedFromDB)
 	return nil
 }
 

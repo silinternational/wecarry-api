@@ -55,7 +55,7 @@ func (e *SendGridService) Send(msg Message) error {
 		return fmt.Errorf("error response (%d) from sendgrid API, %s", response.StatusCode, response.Body)
 	}
 
-	log.Errorf("mail sent, status=%v, body=%v, headers=%v",
+	log.Infof("mail sent, status=%v, body=%v, headers=%v",
 		response.StatusCode, response.Body, response.Headers)
 
 	return nil

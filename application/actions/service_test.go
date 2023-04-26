@@ -12,7 +12,6 @@ import (
 	"testing"
 
 	"github.com/gobuffalo/httptest"
-	"github.com/sirupsen/logrus"
 
 	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/domain"
@@ -76,12 +75,9 @@ func (as *ActionSuite) Test_serviceHandler() {
 		as.T().Run(tt.name, func(t *testing.T) {
 			var logOutput bytes.Buffer
 			log.SetOutput(&logOutput)
-			level := log.GetLevel()
-			log.SetLevel(logrus.InfoLevel.String())
 
 			defer func() {
 				log.SetOutput(os.Stdout)
-				log.SetLevel(level)
 			}()
 
 			body := strings.NewReader(tt.requestBody)
