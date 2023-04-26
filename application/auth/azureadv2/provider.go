@@ -278,7 +278,7 @@ func (p *Provider) AuthCallback(c buffalo.Context) auth.Response {
 
 	msg := auth.CheckSessionStore()
 	if msg != "" {
-		log.Errorf("got message from AzureAD's CheckSessionStore() in AuthCallback ... %s", msg)
+		log.WithContext(c).Errorf("got message from AzureAD's CheckSessionStore() in AuthCallback ... %s", msg)
 	}
 
 	value, err := auth.GetFromSession(ProviderName, req)
