@@ -10,10 +10,10 @@ import (
 
 	buffalo "github.com/gobuffalo/buffalo/runtime"
 	"github.com/gobuffalo/buffalo/servers"
-	"github.com/rollbar/rollbar-go"
 
 	"github.com/silinternational/wecarry-api/actions"
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/log"
 )
 
 // main is the starting point for your Buffalo application.
@@ -23,15 +23,9 @@ import (
 // call `app.Serve()`, unless you don't want to start your
 // application that is. :)
 func main() {
-	// init rollbar
-	rollbar.SetToken(domain.Env.RollbarToken)
-	rollbar.SetEnvironment(domain.Env.GoEnv)
-	rollbar.SetCodeVersion(domain.Commit)
-	rollbar.SetServerRoot(domain.Env.RollbarServerRoot)
-
 	srv, err := getServer()
 	if err != nil {
-		domain.ErrLogger.Printf(err.Error())
+		log.Errorf(err.Error())
 		os.Exit(1)
 	}
 
@@ -42,14 +36,12 @@ func main() {
 	fmt.Printf("Buffalo build info: %s\n", buffalo.Build())
 	fmt.Printf("Commit hash: %s\n", domain.Commit)
 
-	rollbar.WrapAndWait(func() {
-		if err := app.Serve(srv); err != nil {
-			if err.Error() != "context canceled" {
-				panic(err)
-			}
-			os.Exit(0)
+	if err := app.Serve(srv); err != nil {
+		if err.Error() != "context canceled" {
+			panic(err)
 		}
-	})
+		os.Exit(0)
+	}
 }
 
 func getServer() (servers.Server, error) {

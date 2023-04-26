@@ -34,7 +34,9 @@ import (
 	i18n "github.com/gobuffalo/mw-i18n/v2"
 	paramlogger "github.com/gobuffalo/mw-paramlogger"
 	"github.com/rs/cors"
+
 	"github.com/silinternational/wecarry-api/job"
+	"github.com/silinternational/wecarry-api/log"
 
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/listeners"
@@ -78,7 +80,7 @@ func App() *buffalo.App {
 		registerCustomErrorHandler(app)
 
 		// Initialize and attach "rollbar" to context
-		app.Use(domain.RollbarMiddleware)
+		app.Use(log.RollbarMiddleware, log.SentryMiddleware)
 
 		// Log request parameters (filters apply).
 		app.Use(paramlogger.ParameterLogger)

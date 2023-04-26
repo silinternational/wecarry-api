@@ -6,9 +6,11 @@ import (
 
 	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/log"
 
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/buffalo/render"
+
 	"github.com/silinternational/wecarry-api/models"
 )
 
@@ -48,7 +50,7 @@ func uploadHandler(c buffalo.Context) error {
 		Content: content,
 	}
 	if fErr := fileObject.Store(models.Tx(c)); fErr != nil {
-		domain.Error(c, fmt.Sprintf("error storing uploaded file ... %v", fErr))
+		log.WithContext(c).Errorf("error storing uploaded file ... %v", fErr)
 		return c.Render(fErr.HttpStatus, render.JSON(api.AppError{
 			Code: fErr.HttpStatus,
 			Key:  fErr.ErrorCode,

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -15,6 +16,7 @@ import (
 	"github.com/gobuffalo/pop/v6"
 
 	"github.com/silinternational/wecarry-api/api"
+	"github.com/silinternational/wecarry-api/log"
 
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
@@ -133,7 +135,7 @@ func getAuthInviteResponse(c buffalo.Context) (authInviteResponse, error) {
 	if meeting.FileID.Valid {
 		f, err := meeting.ImageFile(tx)
 		if err != nil {
-			domain.ErrLogger.Printf("error loading meeting image file: " + err.Error())
+			log.Errorf("error loading meeting image file: " + err.Error())
 		}
 		resp.ImageURL = f.URL
 	}
@@ -438,14 +440,14 @@ func ensureMeetingParticipant(c buffalo.Context, meetingUUID string, user models
 	var meeting models.Meeting
 	tx := models.Tx(c)
 	if err := meeting.FindByUUID(tx, meetingUUID); err != nil {
-		domain.Error(c, "expected to find a Meeting but got "+err.Error())
+		log.WithContext(c).Errorf("expected to find a Meeting but got %s", err)
 	}
 
 	// If there is already a MeetingParticipant record for this user, we're done
 	var participant models.MeetingParticipant
 	if err := participant.FindByMeetingIDAndUserID(tx, meeting.ID, user.ID); err != nil {
 		if domain.IsOtherThanNoRows(err) {
-			domain.Error(c, "error finding a MeetingParticpant: "+err.Error())
+			log.WithContext(c).Errorf("error finding a MeetingParticpant: %s", err)
 		}
 	} else {
 		return
@@ -454,12 +456,12 @@ func ensureMeetingParticipant(c buffalo.Context, meetingUUID string, user models
 	// Try to create a MeetingParticipant record for this user.
 	var invite models.MeetingInvite
 	if err := invite.FindByMeetingIDAndEmail(tx, meeting.ID, user.Email); err != nil {
-		domain.Error(c, "expected to find a MeetingInvite but got "+err.Error())
+		log.WithContext(c).Errorf("expected to find a MeetingInvite but got %s", err)
 		return
 	}
 
 	if err := participant.CreateFromInvite(tx, invite, user); err != nil {
-		domain.Error(c, "error creating a MeetingParticipant: "+err.Error())
+		log.WithContext(c).Errorf("error creating a MeetingParticipant: %s", err)
 	}
 }
 
@@ -469,7 +471,7 @@ func dealWithInviteFromCallback(c buffalo.Context, inviteType, objectUUID string
 	case InviteTypeMeetingParam:
 		ensureMeetingParticipant(c, objectUUID, user)
 	default:
-		domain.Error(c, "incorrect meeting invite type in session: "+inviteType)
+		log.WithContext(c).Error("incorrect meeting invite type in session: " + inviteType)
 	}
 }
 
@@ -481,7 +483,7 @@ func getInviteInfoFromSession(c buffalo.Context) (string, string) {
 
 	objectUUID, ok := c.Session().Get(InviteObjectUUIDSessionKey).(string)
 	if !ok {
-		domain.Error(c, "got meeting invite type from session but not its UUID")
+		log.WithContext(c).Error("got meeting invite type from session but not its UUID")
 		return "", ""
 	}
 	return inviteType, objectUUID
@@ -545,8 +547,7 @@ func orgBasedAuthCallback(c buffalo.Context, orgUUID, authEmail, clientID string
 		return err
 	}
 
-	// set person on rollbar session
-	domain.RollbarSetPerson(c, authUser.ID, authUser.Nickname, authUser.Email)
+	log.SetUser(c, authUser.ID, authUser.Nickname, authUser.Email)
 
 	return c.Redirect(302, getLoginSuccessRedirectURL(authUser, returnTo))
 }
@@ -584,7 +585,7 @@ func verifyEmails(c buffalo.Context, originalAuthEmail, authRespEmail string) er
 
 	if emailDomain == respDomain {
 		msg := "authentication emails don't match: " + originalAuthEmail + " vs. " + authRespEmail
-		domain.Warn(c, msg)
+		log.WithContext(c).Warning(msg)
 		return nil
 	}
 
@@ -592,20 +593,9 @@ func verifyEmails(c buffalo.Context, originalAuthEmail, authRespEmail string) er
 		" vs. " + authRespEmail)
 }
 
-func mergeExtras(code string, extras ...map[string]interface{}) map[string]interface{} {
-	allExtras := map[string]interface{}{"code": code}
-
-	for _, e := range extras {
-		for k, v := range e {
-			allExtras[k] = v
-		}
-	}
-	return allExtras
-}
-
 // Make extras variadic, so that it can be omitted from the params
 func authRequestError(c buffalo.Context, authErr authError, extras ...map[string]interface{}) error {
-	domain.Error(c, authErr.errorMsg)
+	log.WithContext(c).Error(authErr.errorMsg)
 
 	appErr := api.AppError{
 		Code: authErr.httpStatus,
@@ -619,7 +609,7 @@ func authRequestError(c buffalo.Context, authErr authError, extras ...map[string
 
 // Make extras variadic, so that it can be omitted from the params
 func logErrorAndRedirect(c buffalo.Context, code api.ErrorKey, message string) error {
-	domain.Error(c, message)
+	log.WithContext(c).Error(message)
 
 	c.Session().Clear()
 
@@ -628,7 +618,8 @@ func logErrorAndRedirect(c buffalo.Context, code api.ErrorKey, message string) e
 }
 
 // authDestroy uses the bearer token to find the user's access token and
-//  calls the appropriate provider's logout function.
+//
+//	calls the appropriate provider's logout function.
 func authDestroy(c buffalo.Context) error {
 	tokenParam := c.Param(LogoutToken)
 	if tokenParam == "" {
@@ -654,7 +645,7 @@ func authDestroy(c buffalo.Context) error {
 	}
 
 	// set person on rollbar session
-	domain.RollbarSetPerson(c, authUser.UUID.String(), authUser.Nickname, authUser.Email)
+	log.SetUser(c, authUser.UUID.String(), authUser.Nickname, authUser.Email)
 
 	authPro, err := org.GetAuthProvider(tx, authUser.Email)
 	if err != nil {
@@ -692,14 +683,14 @@ func setCurrentUser(next buffalo.Handler) buffalo.Handler {
 		err := userAccessToken.FindByBearerToken(models.DB, bearerToken)
 		if err != nil {
 			if domain.IsOtherThanNoRows(err) {
-				domain.Error(c, err.Error())
+				log.WithContext(c).Error(err)
 			}
 			return c.Error(http.StatusUnauthorized, errors.New("invalid bearer token"))
 		}
 
 		isExpired, err := userAccessToken.DeleteIfExpired(models.DB)
 		if err != nil {
-			domain.Error(c, err.Error())
+			log.WithContext(c).Error(err)
 		}
 
 		if isExpired {
@@ -713,12 +704,12 @@ func setCurrentUser(next buffalo.Handler) buffalo.Handler {
 		c.Set(domain.ContextKeyCurrentUser, user)
 
 		// set person on rollbar session
-		domain.RollbarSetPerson(c, user.UUID.String(), user.Nickname, user.Email)
+		log.SetUser(c, user.UUID.String(), user.Nickname, user.Email)
 		msg := fmt.Sprintf("user %s authenticated with bearer token from ip %s", user.Email, c.Request().RemoteAddr)
 		domain.NewExtra(c, "user_id", user.ID)
 		domain.NewExtra(c, "email", user.Email)
 		domain.NewExtra(c, "ip", c.Request().RemoteAddr)
-		domain.Info(c, msg)
+		log.WithContext(c).Info(msg)
 
 		return next(c)
 	}
@@ -746,4 +737,26 @@ func getLoginSuccessRedirectURL(authUser AuthUser, returnTo string) string {
 	}
 
 	return uiURL + returnTo + params
+}
+
+// getClientIPAddress gets the client IP address from CF-Connecting-IP or RemoteAddr
+func getClientIPAddress(c buffalo.Context) (net.IP, error) {
+	req := c.Request()
+
+	// https://developers.cloudflare.com/fundamentals/get-started/reference/http-request-headers/#cf-connecting-ip
+	if cf := req.Header.Get("CF-Connecting-IP"); cf != "" {
+		return net.ParseIP(cf), nil
+	}
+
+	ip, _, err := net.SplitHostPort(req.RemoteAddr)
+	if err != nil {
+		return nil, fmt.Errorf("userip: %q is not IP:port, %w", req.RemoteAddr, err)
+	}
+
+	userIP := net.ParseIP(ip)
+	if userIP == nil {
+		return nil, fmt.Errorf("userip: %q is not a valid IP address, %w", req.RemoteAddr, err)
+	}
+
+	return userIP, nil
 }

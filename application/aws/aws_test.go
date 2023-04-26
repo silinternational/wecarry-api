@@ -2,6 +2,7 @@ package aws
 
 import (
 	"bytes"
+	"log"
 	"os"
 	"testing"
 
@@ -34,9 +35,9 @@ func (ts *TestSuite) TestSendEmail() {
 
 func (ts *TestSuite) TestRawEmail() {
 	var buf bytes.Buffer
-	domain.ErrLogger.SetOutput(&buf)
+	log.SetOutput(&buf)
 
-	defer domain.ErrLogger.SetOutput(os.Stderr)
+	defer log.SetOutput(os.Stdout)
 
 	raw := rawEmail(
 		"to@example.com",

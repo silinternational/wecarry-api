@@ -6,11 +6,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
-
-	"fmt"
 
 	"github.com/gobuffalo/buffalo"
 	"github.com/markbates/goth"
@@ -19,6 +18,7 @@ import (
 
 	"github.com/silinternational/wecarry-api/auth"
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/log"
 )
 
 const ProviderName = "twitter"
@@ -96,7 +96,6 @@ func (p *Provider) Debug(debug bool) {
 
 // AuthRequest calls BeginAuth and returns the URL for the authentication end-point
 func (p *Provider) AuthRequest(c buffalo.Context) (string, error) {
-
 	req := c.Request()
 
 	sess, err := p.BeginAuth(auth.SetState(req))
@@ -145,7 +144,7 @@ func (p *Provider) AuthCallback(c buffalo.Context) auth.Response {
 
 	msg := auth.CheckSessionStore()
 	if msg != "" {
-		domain.Logger.Printf("got message from Twitter's CheckSessionStore() in AuthCallback ... %s", msg)
+		log.Errorf("got message from Twitter's CheckSessionStore() in AuthCallback ... %s", msg)
 	}
 
 	value, err := auth.GetFromSession(ProviderName, req)
@@ -289,12 +288,12 @@ func newConsumer(provider *Provider, authURL string) *oauth.Consumer {
 	return c
 }
 
-//RefreshToken refresh token is not provided by twitter
+// RefreshToken refresh token is not provided by twitter
 func (p *Provider) RefreshToken(refreshToken string) (*oauth2.Token, error) {
 	return nil, errors.New("Refresh token is not provided by twitter")
 }
 
-//RefreshTokenAvailable refresh token is not provided by twitter
+// RefreshTokenAvailable refresh token is not provided by twitter
 func (p *Provider) RefreshTokenAvailable() bool {
 	return false
 }

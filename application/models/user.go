@@ -19,6 +19,7 @@ import (
 	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/auth"
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/log"
 )
 
 type UserAdminRole string
@@ -606,7 +607,7 @@ func (u *User) UnreadMessageCount(tx *pop.Connection) ([]UnreadThread, error) {
 	for _, tp := range threadPs {
 		msgCount, err := tp.Thread.GetUnreadMessageCount(tx, u.ID, tp.LastViewedAt)
 		if err != nil {
-			domain.ErrLogger.Printf("error getting count of unread messages for thread %s ... %v",
+			log.Errorf("error getting count of unread messages for thread %s ... %v",
 				tp.Thread.UUID, err)
 			continue
 		}
@@ -669,13 +670,13 @@ func (u *User) WantsRequestNotification(tx *pop.Connection, request Request) boo
 
 func (u *User) isNearRequest(tx *pop.Connection, request Request) bool {
 	if err := tx.Load(u, "Location"); err != nil {
-		domain.ErrLogger.Printf("load of user location failed, %s", err)
+		log.Errorf("load of user location failed, %s", err)
 		return false
 	}
 
 	requestOrigin, err := request.GetOrigin(tx)
 	if err != nil {
-		domain.ErrLogger.Printf("failed to get request origin, %s", err)
+		log.Errorf("failed to get request origin, %s", err)
 		return false
 	}
 	if requestOrigin == nil {
@@ -691,7 +692,7 @@ func (u *User) isNearRequest(tx *pop.Connection, request Request) bool {
 func (u *User) hasMatchingWatch(tx *pop.Connection, request Request) bool {
 	watches := Watches{}
 	if err := watches.FindByUser(tx, *u); err != nil {
-		domain.ErrLogger.Printf("failed to get watch list, %s", err)
+		log.Errorf("failed to get watch list, %s", err)
 		return false
 	}
 	for _, watch := range watches {
@@ -717,7 +718,7 @@ func (u *User) GetPreferences(tx *pop.Connection) (StandardPreferences, error) {
 	for _, uP := range u.UserPreferences {
 		_, ok := allowedUserPreferenceKeys[uP.Key]
 		if !ok {
-			domain.Logger.Printf("the database included a user preference with an unexpected key %s", uP.Key)
+			log.Errorf("the database included a user preference with an unexpected key %s", uP.Key)
 			continue
 		}
 		dbPreferences[uP.Key] = uP.Value
@@ -731,7 +732,7 @@ func (u *User) GetPreferences(tx *pop.Connection) (StandardPreferences, error) {
 			if fV.validator(value) {
 				finalValues[fieldName] = value
 			} else {
-				domain.Logger.Printf("user preference %s in database not allowed ... %s", fieldName, value)
+				log.Errorf("user preference %s in database not allowed ... %s", fieldName, value)
 			}
 		}
 	}
@@ -770,7 +771,7 @@ func (u *User) HasOrganization(tx *pop.Connection) bool {
 	var c Count
 	err := tx.RawQuery("SELECT COUNT(*) FROM user_organizations WHERE user_id = ?", u.ID).First(&c)
 	if err != nil {
-		domain.ErrLogger.Printf("error counting user organizations, user = '%s', err = %s", u.UUID, err)
+		log.Errorf("error counting user organizations, user = '%s', err = %s", u.UUID, err)
 		return false
 	}
 	if c.N == 0 {

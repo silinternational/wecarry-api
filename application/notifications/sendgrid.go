@@ -7,8 +7,10 @@ import (
 
 	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
-	"github.com/silinternational/wecarry-api/domain"
 	"jaytaylor.com/html2text"
+
+	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/log"
 )
 
 type SendGridService struct{}
@@ -38,7 +40,7 @@ func (e *SendGridService) Send(msg Message) error {
 
 	tbody, err := html2text.FromString(body)
 	if err != nil {
-		domain.Logger.Printf("error converting html email to plain text ... %s", err.Error())
+		log.Errorf("error converting html email to plain text ... %s", err.Error())
 		tbody = body
 	}
 
@@ -53,7 +55,7 @@ func (e *SendGridService) Send(msg Message) error {
 		return fmt.Errorf("error response (%d) from sendgrid API, %s", response.StatusCode, response.Body)
 	}
 
-	domain.Logger.Printf("mail sent, status=%v, body=%v, headers=%v",
+	log.Errorf("mail sent, status=%v, body=%v, headers=%v",
 		response.StatusCode, response.Body, response.Headers)
 
 	return nil

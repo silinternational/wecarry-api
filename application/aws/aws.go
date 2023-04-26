@@ -16,8 +16,10 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/ses"
-	"github.com/silinternational/wecarry-api/assets"
 	"jaytaylor.com/html2text"
+
+	"github.com/silinternational/wecarry-api/assets"
+	"github.com/silinternational/wecarry-api/log"
 
 	"github.com/silinternational/wecarry-api/domain"
 )
@@ -203,7 +205,7 @@ func SendEmail(to, from, subject, body string) error {
 		return fmt.Errorf("SendEmail failed using SES, %s", err)
 	}
 
-	domain.Logger.Printf("Message sent using SES, message ID: %s", *result.MessageId)
+	log.Errorf("Message sent using SES, message ID: %s", *result.MessageId)
 	return nil
 }
 
@@ -211,38 +213,39 @@ func SendEmail(to, from, subject, body string) error {
 // follows:
 //
 // * multipart/alternative
-//   * text/plain
-//   * multipart/related
-//     * text/html
-//     * image/png
+//   - text/plain
+//   - multipart/related
+//   - text/html
+//   - image/png
 //
 // Abbreviated example of the generated email message:
-//  From: from@example.com
-//	To: to@example.com
-//	Subject: subject text
-//	Content-Type: multipart/alternative; boundary="boundary_alternative"
 //
-//	--boundary_alternative
-//	Content-Type: text/plain; charset=utf-8
+//	 From: from@example.com
+//		To: to@example.com
+//		Subject: subject text
+//		Content-Type: multipart/alternative; boundary="boundary_alternative"
 //
-//	Plain text body
-//	--boundary_alternative
-//	Content-type: multipart/related; boundary="boundary_related"
+//		--boundary_alternative
+//		Content-Type: text/plain; charset=utf-8
 //
-//	--boundary_related
-//	Content-Type: text/html; charset=utf-8
+//		Plain text body
+//		--boundary_alternative
+//		Content-type: multipart/related; boundary="boundary_related"
 //
-//	HTML body
-//	--boundary_related
-//	Content-Type: image/png
-//	Content-Transfer-Encoding: base64
-//	Content-ID: <logo>
-//	--boundary_related--
-//	--boundary_alternative--
+//		--boundary_related
+//		Content-Type: text/html; charset=utf-8
+//
+//		HTML body
+//		--boundary_related
+//		Content-Type: image/png
+//		Content-Transfer-Encoding: base64
+//		Content-ID: <logo>
+//		--boundary_related--
+//		--boundary_alternative--
 func rawEmail(to, from, subject, body string) []byte {
 	tbody, err := html2text.FromString(body)
 	if err != nil {
-		domain.Logger.Printf("error converting html email to plain text ... %s", err.Error())
+		log.Errorf("error converting html email to plain text ... %s", err.Error())
 		tbody = body
 	}
 
@@ -262,7 +265,7 @@ func rawEmail(to, from, subject, body string) []byte {
 		"Content-Disposition": {"inline"},
 	})
 	if err != nil {
-		domain.ErrLogger.Printf("failed to create MIME text part, %s", err)
+		log.Errorf("failed to create MIME text part, %s", err)
 	} else {
 		_, _ = fmt.Fprint(w, tbody)
 	}
@@ -272,7 +275,7 @@ func rawEmail(to, from, subject, body string) []byte {
 		"Content-Type": {`multipart/related; type="text/html"; boundary="` + relatedWriter.Boundary() + `"`},
 	})
 	if err != nil {
-		domain.ErrLogger.Printf("failed to create MIME related part, %s", err)
+		log.Errorf("failed to create MIME related part, %s", err)
 	}
 
 	w, err = relatedWriter.CreatePart(textproto.MIMEHeader{
@@ -280,7 +283,7 @@ func rawEmail(to, from, subject, body string) []byte {
 		"Content-Disposition": {"inline"},
 	})
 	if err != nil {
-		domain.ErrLogger.Printf("failed to create MIME html part, %s", err)
+		log.Errorf("failed to create MIME html part, %s", err)
 	} else {
 		_, _ = fmt.Fprint(w, body)
 	}
@@ -292,29 +295,29 @@ func rawEmail(to, from, subject, body string) []byte {
 		"Content-Transfer-Encoding": {"base64"},
 	})
 	if err != nil {
-		domain.ErrLogger.Printf("failed to create MIME image part, %s", err)
+		log.Errorf("failed to create MIME image part, %s", err)
 	} else {
 		logo, err := assets.FS().ReadFile("logo.png")
 		if err != nil {
-			domain.ErrLogger.Printf("failed to read logo file, %s", err)
+			log.Errorf("failed to read logo file, %s", err)
 		}
 		encoder := base64.NewEncoder(base64.StdEncoding, b)
 		_, err = encoder.Write(logo)
 		if err != nil {
-			domain.ErrLogger.Printf("failed to write logo to email, %s", err)
+			log.Errorf("failed to write logo to email, %s", err)
 		}
 		err = encoder.Close()
 		if err != nil {
-			domain.ErrLogger.Printf("failed to close logo base64 encoder, %s", err)
+			log.Errorf("failed to close logo base64 encoder, %s", err)
 		}
 	}
 
 	if err = relatedWriter.Close(); err != nil {
-		domain.ErrLogger.Printf("failed to close MIME related part, %s", err)
+		log.Errorf("failed to close MIME related part, %s", err)
 	}
 
 	if err = alternativeWriter.Close(); err != nil {
-		domain.ErrLogger.Printf("failed to close MIME alternative part, %s", err)
+		log.Errorf("failed to close MIME alternative part, %s", err)
 	}
 
 	return b.Bytes()

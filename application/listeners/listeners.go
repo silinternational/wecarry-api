@@ -13,6 +13,7 @@ import (
 	"github.com/silinternational/wecarry-api/cache"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/job"
+	"github.com/silinternational/wecarry-api/log"
 	"github.com/silinternational/wecarry-api/marketing"
 	"github.com/silinternational/wecarry-api/models"
 	"github.com/silinternational/wecarry-api/notifications"
@@ -59,7 +60,7 @@ func requestCreatedHandler(event events.Event) {
 func listener(e events.Event) {
 	defer func() {
 		if err := recover(); err != nil {
-			domain.ErrLogger.Printf("panic in event %s: %s", e.Kind, err)
+			log.Errorf("panic in event %s: %s", e.Kind, err)
 		}
 	}()
 
@@ -88,7 +89,7 @@ func userCreatedLogger(e events.Event) {
 		return
 	}
 
-	domain.Logger.Printf("User Created: %s", e.Message)
+	log.Errorf("User Created: %s", e.Message)
 }
 
 func userCreatedSendWelcomeMessage(e events.Event) {
@@ -98,12 +99,12 @@ func userCreatedSendWelcomeMessage(e events.Event) {
 
 	user, ok := e.Payload["user"].(*models.User)
 	if !ok {
-		domain.ErrLogger.Printf("Failed to get User from event payload for sending welcome message. Event message: %s", e.Message)
+		log.Errorf("Failed to get User from event payload for sending welcome message. Event message: %s", e.Message)
 		return
 	}
 
 	if err := sendNewUserWelcome(*user); err != nil {
-		domain.ErrLogger.Printf("Failed to send new user welcome to %s. Error: %s",
+		log.Errorf("Failed to send new user welcome to %s. Error: %s",
 			user.UUID.String(), err)
 	}
 }
@@ -115,29 +116,29 @@ func userCreatedAddToMarketingList(e events.Event) {
 
 	user, ok := e.Payload["user"].(*models.User)
 	if !ok {
-		domain.ErrLogger.Printf(
+		log.Errorf(
 			"Failed to get User from event payload for adding to marketing list. Event message: %s", e.Message)
 		return
 	}
 
 	// ensure env vars are present
 	if domain.Env.MailChimpAPIKey == "" {
-		domain.ErrLogger.Printf("missing required env var for MAILCHIMP_API_KEY. need to add %s to list", user.Email)
+		log.Errorf("missing required env var for MAILCHIMP_API_KEY. need to add %s to list", user.Email)
 		return
 	}
 	if domain.Env.MailChimpListID == "" {
-		domain.ErrLogger.Printf("missing required env var for MAILCHIMP_LIST_ID. need to add %s to list", user.Email)
+		log.Errorf("missing required env var for MAILCHIMP_LIST_ID. need to add %s to list", user.Email)
 		return
 	}
 	if domain.Env.MailChimpUsername == "" {
-		domain.ErrLogger.Printf("missing required env var for MAILCHIMP_USERNAME. need to add %s to list", user.Email)
+		log.Errorf("missing required env var for MAILCHIMP_USERNAME. need to add %s to list", user.Email)
 		return
 	}
 
 	err := marketing.AddUserToList(*user, domain.Env.MailChimpAPIBaseURL, domain.Env.MailChimpListID,
 		domain.Env.MailChimpUsername, domain.Env.MailChimpAPIKey)
 	if err != nil {
-		domain.ErrLogger.Printf("error calling marketing.AddUserToList when trying to add %s: %s",
+		log.Errorf("error calling marketing.AddUserToList when trying to add %s: %s",
 			user.Email, err.Error())
 	}
 }
@@ -147,17 +148,17 @@ func sendNewThreadMessageNotification(e events.Event) {
 		return
 	}
 
-	domain.Logger.Printf("%s Thread Message Created ... %s", domain.GetCurrentTime(), e.Message)
+	log.Errorf("%s Thread Message Created ... %s", domain.GetCurrentTime(), e.Message)
 
 	id, ok := e.Payload[domain.ArgMessageID].(int)
 	if !ok {
-		domain.ErrLogger.Printf("sendNewThreadMessageNotification: unable to read message ID from event payload")
+		log.Errorf("sendNewThreadMessageNotification: unable to read message ID from event payload")
 		return
 	}
 
 	if err := job.SubmitDelayed(job.NewThreadMessage, domain.NewMessageNotificationDelay,
 		map[string]interface{}{domain.ArgMessageID: id}); err != nil {
-		domain.ErrLogger.Printf("error starting 'New Message' job, %s", err)
+		log.Errorf("error starting 'New Message' job, %s", err)
 	}
 }
 
@@ -168,7 +169,7 @@ func sendRequestStatusUpdatedNotification(e events.Event) {
 
 	pEData, ok := e.Payload[domain.ArgEventData].(models.RequestStatusEventData)
 	if !ok {
-		domain.ErrLogger.Printf("unable to parse Request Status Updated event payload")
+		log.Errorf("unable to parse Request Status Updated event payload")
 		return
 	}
 
@@ -176,7 +177,7 @@ func sendRequestStatusUpdatedNotification(e events.Event) {
 
 	request := models.Request{}
 	if err := request.FindByID(models.DB, pid); err != nil {
-		domain.ErrLogger.Printf("unable to find request from event with id %v ... %s", pid, err)
+		log.Errorf("unable to find request from event with id %v ... %s", pid, err)
 	}
 
 	requestStatusUpdatedNotifications(request, pEData)
@@ -189,19 +190,19 @@ func sendRequestCreatedNotifications(e events.Event) {
 
 	eventData, ok := e.Payload[domain.ArgEventData].(models.RequestCreatedEventData)
 	if !ok {
-		domain.ErrLogger.Printf("Request Created event payload incorrect type: %T", e.Payload[domain.ArgEventData])
+		log.Errorf("Request Created event payload incorrect type: %T", e.Payload[domain.ArgEventData])
 		return
 	}
 
 	var request models.Request
 	if err := request.FindByID(models.DB, eventData.RequestID); err != nil {
-		domain.ErrLogger.Printf("unable to find request %d from request-created event, %s", eventData.RequestID, err)
+		log.Errorf("unable to find request %d from request-created event, %s", eventData.RequestID, err)
 		return
 	}
 
 	users, err := request.GetAudience(models.DB)
 	if err != nil {
-		domain.ErrLogger.Printf("unable to get request audience in event listener: %s", err.Error())
+		log.Errorf("unable to get request audience in event listener: %s", err.Error())
 		return
 	}
 
@@ -215,13 +216,13 @@ func cacheRequestCreatedListener(e events.Event) {
 
 	eventData, ok := e.Payload[domain.ArgEventData].(models.RequestCreatedEventData)
 	if !ok {
-		domain.ErrLogger.Printf("Request Created event payload incorrect type: %T", e.Payload[domain.ArgEventData])
+		log.Errorf("Request Created event payload incorrect type: %T", e.Payload[domain.ArgEventData])
 		return
 	}
 
 	var request models.Request
 	if err := request.FindByID(models.DB, eventData.RequestID); err != nil {
-		domain.ErrLogger.Printf("unable to find request %d from request-created event, %s", eventData.RequestID, err)
+		log.Errorf("unable to find request %d from request-created event, %s", eventData.RequestID, err)
 	}
 
 	err := models.DB.Transaction(func(tx *pop.Connection) error {
@@ -230,7 +231,7 @@ func cacheRequestCreatedListener(e events.Event) {
 		return cache.CacheRebuildOnNewRequest(ctx, request)
 	})
 	if err != nil {
-		domain.ErrLogger.Printf("error in cache rebuild on new request: " + err.Error())
+		log.Errorf("error in cache rebuild on new request: " + err.Error())
 	}
 }
 
@@ -241,13 +242,13 @@ func cacheRequestUpdatedListener(e events.Event) {
 
 	eventData, ok := e.Payload[domain.ArgEventData].(models.RequestUpdatedEventData)
 	if !ok {
-		domain.ErrLogger.Printf("Request Updated event payload incorrect type: %T", e.Payload[domain.ArgEventData])
+		log.Errorf("Request Updated event payload incorrect type: %T", e.Payload[domain.ArgEventData])
 		return
 	}
 
 	var request models.Request
 	if err := request.FindByID(models.DB, eventData.RequestID); err != nil {
-		domain.ErrLogger.Printf("unable to find request %d from request-created event, %s", eventData.RequestID, err)
+		log.Errorf("unable to find request %d from request-created event, %s", eventData.RequestID, err)
 	}
 
 	err := models.DB.Transaction(func(tx *pop.Connection) error {
@@ -256,7 +257,7 @@ func cacheRequestUpdatedListener(e events.Event) {
 		return cache.CacheRebuildOnChangedRequest(ctx, request)
 	})
 	if err != nil {
-		domain.ErrLogger.Printf("error in cache rebuild on changed request: " + err.Error())
+		log.Errorf("error in cache rebuild on changed request: " + err.Error())
 	}
 }
 
@@ -267,29 +268,29 @@ func potentialProviderCreated(e events.Event) {
 
 	eventData, ok := e.Payload[domain.ArgEventData].(models.PotentialProviderEventData)
 	if !ok {
-		domain.ErrLogger.Printf("PotentialProvider event payload incorrect type: %T", e.Payload[domain.ArgEventData])
+		log.Errorf("PotentialProvider event payload incorrect type: %T", e.Payload[domain.ArgEventData])
 		return
 	}
 
 	var potentialProvider models.User
 	if err := potentialProvider.FindByID(models.DB, eventData.UserID); err != nil {
-		domain.ErrLogger.Printf("unable to find PotentialProvider User %d, %s", eventData.UserID, err)
+		log.Errorf("unable to find PotentialProvider User %d, %s", eventData.UserID, err)
 	}
 
 	var request models.Request
 	if err := request.FindByID(models.DB, eventData.RequestID); err != nil {
-		domain.ErrLogger.Printf("unable to find request %d from PotentialProvider event, %s", eventData.RequestID, err)
+		log.Errorf("unable to find request %d from PotentialProvider event, %s", eventData.RequestID, err)
 	}
 
 	creator, err := request.Creator(models.DB)
 	if err != nil {
-		domain.ErrLogger.Printf("unable to find request %d creator from PotentialProvider event, %s",
+		log.Errorf("unable to find request %d creator from PotentialProvider event, %s",
 			eventData.RequestID, err)
 	}
 
 	err = sendPotentialProviderCreatedNotification(potentialProvider.Nickname, creator, request)
 	if err != nil {
-		domain.ErrLogger.Printf(err.Error())
+		log.Errorf(err.Error())
 	}
 }
 
@@ -300,29 +301,29 @@ func potentialProviderSelfDestroyed(e events.Event) {
 
 	eventData, ok := e.Payload[domain.ArgEventData].(models.PotentialProviderEventData)
 	if !ok {
-		domain.ErrLogger.Printf("PotentialProvider event payload incorrect type: %T", e.Payload[domain.ArgEventData])
+		log.Errorf("PotentialProvider event payload incorrect type: %T", e.Payload[domain.ArgEventData])
 		return
 	}
 
 	var potentialProvider models.User
 	if err := potentialProvider.FindByID(models.DB, eventData.UserID); err != nil {
-		domain.ErrLogger.Printf("unable to find PotentialProvider User %d, %s", eventData.UserID, err)
+		log.Errorf("unable to find PotentialProvider User %d, %s", eventData.UserID, err)
 	}
 
 	var request models.Request
 	if err := request.FindByID(models.DB, eventData.RequestID); err != nil {
-		domain.ErrLogger.Printf("unable to find request %d from PotentialProvider event, %s", eventData.RequestID, err)
+		log.Errorf("unable to find request %d from PotentialProvider event, %s", eventData.RequestID, err)
 	}
 
 	creator, err := request.Creator(models.DB)
 	if err != nil {
-		domain.ErrLogger.Printf("unable to find request %d creator from PotentialProvider event, %s",
+		log.Errorf("unable to find request %d creator from PotentialProvider event, %s",
 			eventData.RequestID, err)
 	}
 
 	err = sendPotentialProviderSelfDestroyedNotification(potentialProvider.Nickname, creator, request)
 	if err != nil {
-		domain.ErrLogger.Printf(err.Error())
+		log.Errorf(err.Error())
 	}
 }
 
@@ -333,29 +334,29 @@ func potentialProviderRejected(e events.Event) {
 
 	eventData, ok := e.Payload[domain.ArgEventData].(models.PotentialProviderEventData)
 	if !ok {
-		domain.ErrLogger.Printf("PotentialProvider event payload incorrect type: %T", e.Payload[domain.ArgEventData])
+		log.Errorf("PotentialProvider event payload incorrect type: %T", e.Payload[domain.ArgEventData])
 		return
 	}
 
 	var potentialProvider models.User
 	if err := potentialProvider.FindByID(models.DB, eventData.UserID); err != nil {
-		domain.ErrLogger.Printf("unable to find PotentialProvider User %d, %s", eventData.UserID, err)
+		log.Errorf("unable to find PotentialProvider User %d, %s", eventData.UserID, err)
 	}
 
 	var request models.Request
 	if err := request.FindByID(models.DB, eventData.RequestID); err != nil {
-		domain.ErrLogger.Printf("unable to find request %d from PotentialProvider event, %s", eventData.RequestID, err)
+		log.Errorf("unable to find request %d from PotentialProvider event, %s", eventData.RequestID, err)
 	}
 
 	creator, err := request.Creator(models.DB)
 	if err != nil {
-		domain.ErrLogger.Printf("unable to find request %d creator from PotentialProvider event, %s",
+		log.Errorf("unable to find request %d creator from PotentialProvider event, %s",
 			eventData.RequestID, err)
 	}
 
 	err = sendPotentialProviderRejectedNotification(potentialProvider, creator.Nickname, request)
 	if err != nil {
-		domain.ErrLogger.Printf(err.Error())
+		log.Errorf(err.Error())
 	}
 }
 
@@ -391,7 +392,7 @@ func meetingInviteCreated(e events.Event) {
 
 	id, err := getID(e.Payload)
 	if err != nil {
-		domain.ErrLogger.Printf("meeting invite ID not found in payload, %s", err)
+		log.Errorf("meeting invite ID not found in payload, %s", err)
 		return
 	}
 
@@ -408,15 +409,15 @@ func meetingInviteCreated(e events.Event) {
 		}
 		time.Sleep(getDelayDuration(i * i))
 	}
-	domain.Logger.Printf("listener meetingInviteCreated required %d retries with delay %d", i-1, domain.Env.ListenerDelayMilliseconds)
+	log.Errorf("listener meetingInviteCreated required %d retries with delay %d", i-1, domain.Env.ListenerDelayMilliseconds)
 
 	if !foundMeetingInvite {
-		domain.ErrLogger.Printf("failed to find MeetingInvite in meetingInviteCreated, %s", findErr)
+		log.Errorf("failed to find MeetingInvite in meetingInviteCreated, %s", findErr)
 		return
 	}
 
 	if err = sendMeetingInvite(invite); err != nil {
-		domain.ErrLogger.Printf("unable to send invite %d in meetingInviteCreated event, %s", invite.ID, err)
+		log.Errorf("unable to send invite %d in meetingInviteCreated event, %s", invite.ID, err)
 	}
 }
 

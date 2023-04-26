@@ -6,7 +6,6 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
-	"log"
 	"reflect"
 	"strings"
 
@@ -19,6 +18,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/log"
 )
 
 // Count can be used to receive the results of a SQL COUNT
@@ -41,19 +41,18 @@ func init() {
 	env := domain.Env.GoEnv
 	DB, err = pop.Connect(env)
 	if err != nil {
-		domain.ErrLogger.Printf("error connecting to database ... %v", err)
-		log.Fatal(err)
+		panic(fmt.Sprintf("error connecting to database ... %v", err))
 	}
 	pop.Debug = env == "development"
 
 	// Just make sure we can use the crypto/rand library on our system
 	if _, err = getRandomToken(); err != nil {
-		log.Fatal(fmt.Errorf("error using crypto/rand ... %v", err))
+		panic(fmt.Sprintf("error using crypto/rand ... %v", err))
 	}
 
 	allowedUserPreferenceKeys, err = domain.GetStructTags("json", StandardPreferences{})
 	if err != nil {
-		log.Fatal(fmt.Errorf("error loading Allowed User Preferences ... %v", err))
+		panic(fmt.Sprintf("error loading Allowed User Preferences ... %v", err))
 	}
 }
 
@@ -122,7 +121,7 @@ func (v *NullsStringIsURL) IsValid(errors *validate.Errors) {
 // This can include an event payload, which is a map[string]interface{}
 func emitEvent(e events.Event) {
 	if err := events.Emit(e); err != nil {
-		domain.ErrLogger.Printf("error emitting event %s ... %v", e.Kind, err)
+		log.Errorf("error emitting event %s ... %v", e.Kind, err)
 	}
 }
 
@@ -219,7 +218,7 @@ func addFile(tx *pop.Connection, m interface{}, fileID string) (File, error) {
 	}
 
 	if err := f.SetLinked(tx); err != nil {
-		domain.ErrLogger.Printf("error marking file %d as linked, %s", f.ID, err)
+		log.Errorf("error marking file %d as linked, %s", f.ID, err)
 	}
 
 	if !oldID.Valid {
@@ -228,7 +227,7 @@ func addFile(tx *pop.Connection, m interface{}, fileID string) (File, error) {
 
 	oldFile := File{ID: oldID.Int}
 	if err := oldFile.ClearLinked(tx); err != nil {
-		domain.ErrLogger.Printf("error marking old file %d as unlinked, %s", oldFile.ID, err)
+		log.Errorf("error marking old file %d as unlinked, %s", oldFile.ID, err)
 	}
 
 	return f, nil
@@ -261,7 +260,7 @@ func removeFile(tx *pop.Connection, m interface{}) error {
 
 	oldFile := File{ID: oldID.Int}
 	if err := oldFile.ClearLinked(tx); err != nil {
-		domain.ErrLogger.Printf("error marking old meeting file %d as unlinked, %s", oldFile.ID, err)
+		log.Errorf("error marking old meeting file %d as unlinked, %s", oldFile.ID, err)
 	}
 	return nil
 }
@@ -309,7 +308,7 @@ func destroyTable(i interface{}) {
 func Tx(ctx context.Context) *pop.Connection {
 	tx, ok := ctx.Value(domain.ContextKeyTx).(*pop.Connection)
 	if !ok {
-		domain.Logger.Print("no transaction found in context, called from: " + domain.GetFunctionName(2))
+		log.Error("no transaction found in context, called from: " + domain.GetFunctionName(2))
 		return DB
 	}
 	return tx

@@ -10,6 +10,7 @@ import (
 
 	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/log"
 )
 
 // SocialAuthConfig holds the Key and Secret for a social auth provider
@@ -28,7 +29,8 @@ func init() {
 
 // StrictBind hydrates a struct with values from a POST
 // REMEMBER the request body must have *exported* fields.
-//  Otherwise, this will give an empty result without an error.
+//
+//	Otherwise, this will give an empty result without an error.
 func StrictBind(c buffalo.Context, dest interface{}) error {
 	dec := json.NewDecoder(c.Request().Body)
 	dec.DisallowUnknownFields()
@@ -67,13 +69,22 @@ func reportError(c buffalo.Context, err error) error {
 
 	appErr.Extras = api.MergeExtras([]map[string]interface{}{getExtras(c), appErr.Extras})
 	appErr.Extras["function"] = domain.GetFunctionName(2)
-	appErr.Extras["key"] = appErr.Key
-	appErr.Extras["status"] = appErr.HttpStatus
+	appErr.Extras[domain.ExtrasKey] = appErr.Key
+	appErr.Extras[domain.ExtrasStatus] = appErr.HttpStatus
 	appErr.Extras["redirectURL"] = appErr.RedirectURL
-	appErr.Extras["method"] = c.Request().Method
-	appErr.Extras["URI"] = c.Request().RequestURI
-	appErr.Extras["IP"] = c.Request().RemoteAddr
-	domain.Error(c, appErr.Error())
+	appErr.Extras[domain.ExtrasMethod] = c.Request().Method
+	appErr.Extras[domain.ExtrasURI] = c.Request().RequestURI
+
+	address, _ := getClientIPAddress(c)
+	appErr.Extras[domain.ExtrasIP] = address
+
+	entry := log.WithContext(c).WithFields(appErr.Extras)
+	switch appErr.Category {
+	case api.CategoryUser:
+		entry.Warning(err)
+	default:
+		entry.Error(err)
+	}
 
 	appErr.LoadTranslatedMessage(c)
 
