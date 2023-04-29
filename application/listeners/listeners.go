@@ -478,7 +478,7 @@ func getID(p events.Payload) (int, error) {
 	return id, nil
 }
 
-func newListenerContext() listenerContext {
+func newListenerContext() *listenerContext {
 	ctx := listenerContext{
 		params: map[interface{}]interface{}{},
 	}
@@ -487,5 +487,5 @@ func newListenerContext() listenerContext {
 
 	_, _ = context.WithCancel(ctx.DefaultContext.Context)
 
-	return ctx
+	return &ctx
 }

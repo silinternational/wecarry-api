@@ -221,8 +221,6 @@ func (ms *ModelSuite) Test_cacheRequestCreatedListener() {
 		}},
 	})
 
-	requests, err := cache.GetVisibleRequests(context.Background(), models.Organizations{f.Requests[0].Organization})
-	if err != nil {
-		return
-	}
+	_, err := cache.GetVisibleRequests(context.Background(), models.Organizations{f.Requests[0].Organization})
+	ms.NoError(err)
 }
