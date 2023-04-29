@@ -1,13 +1,14 @@
 package listeners
 
 import (
+	"context"
 	"errors"
 	"strings"
 	"time"
 
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/events"
-	"github.com/gobuffalo/pop/v5"
+	"github.com/gobuffalo/pop/v6"
 
 	"github.com/silinternational/wecarry-api/cache"
 	"github.com/silinternational/wecarry-api/domain"
@@ -477,9 +478,14 @@ func getID(p events.Payload) (int, error) {
 	return id, nil
 }
 
-func newListenerContext() *listenerContext {
-	ctx := &listenerContext{
+func newListenerContext() listenerContext {
+	ctx := listenerContext{
 		params: map[interface{}]interface{}{},
 	}
+	ctx.DefaultContext = buffalo.DefaultContext{}
+	ctx.DefaultContext.Context = context.Background()
+
+	_, _ = context.WithCancel(ctx.DefaultContext.Context)
+
 	return ctx
 }

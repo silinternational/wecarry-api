@@ -14,9 +14,15 @@ import (
 	"github.com/gobuffalo/httptest"
 	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/job"
 )
 
 func (as *ActionSuite) Test_serviceHandler() {
+
+	postBody := func(name string) string {
+		return fmt.Sprintf(`{"task":"%s"}`, name)
+	}
+
 	tests := []struct {
 		name        string
 		token       string
@@ -41,21 +47,27 @@ func (as *ActionSuite) Test_serviceHandler() {
 		{
 			name:        "bad task name",
 			token:       domain.Env.ServiceIntegrationToken,
-			requestBody: `{"task":"bad_task"}`,
+			requestBody: postBody("bad_task"),
 			wantCode:    http.StatusUnprocessableEntity,
 			wantKey:     api.ErrorUnprocessableEntity,
 		},
 		{
 			name:        "file cleanup",
 			token:       domain.Env.ServiceIntegrationToken,
-			requestBody: `{"task":"file_cleanup"}`,
+			requestBody: postBody(job.FileCleanup),
 			wantTask:    ServiceTaskFileCleanup,
 		},
 		{
 			name:        "token cleanup",
 			token:       domain.Env.ServiceIntegrationToken,
-			requestBody: `{"task":"token_cleanup"}`,
+			requestBody: postBody(job.TokenCleanup),
 			wantTask:    ServiceTaskTokenCleanup,
+		},
+		{
+			name:        "outdated requests",
+			token:       domain.Env.ServiceIntegrationToken,
+			requestBody: postBody(job.OutdatedRequests),
+			wantTask:    ServiceTaskOutdatedRequests,
 		},
 	}
 	for _, tt := range tests {

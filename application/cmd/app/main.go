@@ -5,15 +5,16 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"runtime"
+	"time"
 
+	buffalo "github.com/gobuffalo/buffalo/runtime"
 	"github.com/gobuffalo/buffalo/servers"
 	"github.com/rollbar/rollbar-go"
 
 	"github.com/silinternational/wecarry-api/actions"
 	"github.com/silinternational/wecarry-api/domain"
 )
-
-var GitCommitHash string
 
 // main is the starting point for your Buffalo application.
 // You can feel free and add to this `main` method, change
@@ -25,7 +26,7 @@ func main() {
 	// init rollbar
 	rollbar.SetToken(domain.Env.RollbarToken)
 	rollbar.SetEnvironment(domain.Env.GoEnv)
-	rollbar.SetCodeVersion(GitCommitHash)
+	rollbar.SetCodeVersion(domain.Commit)
 	rollbar.SetServerRoot(domain.Env.RollbarServerRoot)
 
 	srv, err := getServer()
@@ -35,6 +36,12 @@ func main() {
 	}
 
 	app := actions.App()
+
+	fmt.Printf("Go version: %s\n", runtime.Version())
+	fmt.Printf("Buffalo version: %s\n", buffalo.Version)
+	fmt.Printf("Buffalo build info: %s\n", buffalo.Build())
+	fmt.Printf("Commit hash: %s\n", domain.Commit)
+
 	rollbar.WrapAndWait(func() {
 		if err := app.Serve(srv); err != nil {
 			if err.Error() != "context canceled" {
@@ -69,7 +76,7 @@ func getServer() (servers.Server, error) {
 		return servers.New(), fmt.Errorf("get TLS listener: %w", err)
 	}
 
-	return servers.WrapListener(&http.Server{}, listener), nil
+	return servers.WrapListener(&http.Server{ReadHeaderTimeout: time.Second * 15}, listener), nil
 }
 
 func tlsConfig(certFile, keyFile string) (*tls.Config, error) {

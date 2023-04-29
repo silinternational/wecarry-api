@@ -12,7 +12,7 @@ import (
 
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/buffalo/render"
-	"github.com/gobuffalo/pop/v5"
+	"github.com/gobuffalo/pop/v6"
 
 	"github.com/silinternational/wecarry-api/api"
 
@@ -332,8 +332,8 @@ func hydrateAuthUser(user models.User, accessToken string, accessTokenExpiresAt 
 }
 
 func finishOrgBasedAuthRequest(c buffalo.Context, authEmail string,
-	userOrgs models.UserOrganizations, extras map[string]interface{}) error {
-
+	userOrgs models.UserOrganizations, extras map[string]interface{},
+) error {
 	authOptions := []authOption{}
 
 	for _, uo := range userOrgs {
@@ -521,7 +521,9 @@ func orgBasedAuthCallback(c buffalo.Context, orgUUID, authEmail, clientID string
 	if err := verifyEmails(c, authEmail, authResp.AuthUser.Email); err != nil {
 		c.Session().Clear()
 		domain.NewExtra(c, "authEmail", authEmail)
-		return logErrorAndRedirect(c, api.ErrorAuthEmailMismatch, err.Error())
+		appError := api.NewAppError(err, api.ErrorAuthEmailMismatch, api.CategoryUser)
+		appError.HttpStatus = 302 // Get this redirected to the UI to display an error message
+		return reportError(c, appError)
 	}
 
 	// Check for an invite in the Session

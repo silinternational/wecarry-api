@@ -7,7 +7,7 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/gobuffalo/suite/v3"
+	"github.com/gobuffalo/suite/v4"
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 	"github.com/silinternational/wecarry-api/notifications"
@@ -24,6 +24,29 @@ func Test_JobSuite(t *testing.T) {
 		Model: model,
 	}
 	suite.Run(t, ms)
+}
+
+func (js *JobSuite) TestOutdatedRequestsHandler() {
+	var buf bytes.Buffer
+	domain.ErrLogger.SetOutput(&buf)
+	supportEmail := `support@example.org`
+	domain.Env.SupportEmail = supportEmail
+
+	defer func() {
+		domain.ErrLogger.SetOutput(os.Stderr)
+	}()
+
+	f := CreateFixtures_TestOutdatedRequestHandler(js)
+	notifications.TestEmailService.DeleteSentMessages()
+
+	err := outdatedRequestsHandler(nil)
+	js.NoError(err)
+	js.Equal(1, notifications.TestEmailService.GetNumberOfMessagesSent())
+
+	body := notifications.TestEmailService.GetLastBody()
+	js.Contains(body, `We see that your request hasn't been fulfilled yet`)
+	js.Contains(body, f.Requests[1].Title)
+	js.Contains(body, `mailto:`+supportEmail)
 }
 
 func (js *JobSuite) TestNewThreadMessageHandler() {
@@ -98,19 +121,4 @@ func (js *JobSuite) TestNewThreadMessageHandler() {
 			}
 		})
 	}
-}
-
-func (js *JobSuite) TestSubmitDelayed() {
-	var buf bytes.Buffer
-	domain.ErrLogger.SetOutput(&buf)
-
-	defer func() {
-		domain.ErrLogger.SetOutput(os.Stderr)
-	}()
-
-	err := SubmitDelayed("no_handler", time.Second, nil)
-	js.NoError(err)
-
-	errLog := buf.String()
-	js.Equal("", errLog, "Got an unexpected error log entry")
 }

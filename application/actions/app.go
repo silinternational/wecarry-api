@@ -30,15 +30,15 @@ package actions
 
 import (
 	"github.com/gobuffalo/buffalo"
-	"github.com/gobuffalo/buffalo-pop/v2/pop/popmw"
-	i18n "github.com/gobuffalo/mw-i18n"
+	"github.com/gobuffalo/buffalo-pop/v3/pop/popmw"
+	i18n "github.com/gobuffalo/mw-i18n/v2"
 	paramlogger "github.com/gobuffalo/mw-paramlogger"
-	"github.com/gobuffalo/packr/v2"
-	"github.com/gorilla/sessions"
 	"github.com/rs/cors"
+	"github.com/silinternational/wecarry-api/job"
 
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/listeners"
+	"github.com/silinternational/wecarry-api/locales"
 	"github.com/silinternational/wecarry-api/models"
 )
 
@@ -60,7 +60,8 @@ var app *buffalo.App
 func App() *buffalo.App {
 	if app == nil {
 		app = buffalo.New(buffalo.Options{
-			Env: domain.Env.GoEnv,
+			Env:         domain.Env.GoEnv,
+			SessionName: "_wecarry_session",
 			PreWares: []buffalo.PreWare{
 				cors.New(cors.Options{
 					AllowCredentials: true,
@@ -69,16 +70,10 @@ func App() *buffalo.App {
 					AllowedHeaders:   []string{"*"},
 				}).Handler,
 			},
-			SessionName:  "_wecarry_session",
-			SessionStore: sessions.NewCookieStore([]byte(domain.Env.SessionSecret)),
 		})
 
-		var err error
-		domain.T, err = i18n.New(packr.New("locales", "../locales"), "en")
-		if err != nil {
-			_ = app.Stop(err)
-		}
-		app.Use(domain.T.Middleware())
+		// Setup and use translations. This should be the first middleware if all other middleware use i18n
+		app.Use(translations())
 
 		registerCustomErrorHandler(app)
 
@@ -152,7 +147,21 @@ func App() *buffalo.App {
 		users.PUT("/me", usersMeUpdate)
 
 		listeners.RegisterListener()
+
+		job.Init(&app.Worker)
 	}
 
 	return app
+}
+
+// translations will load locale files, set up the translator `domain.T`,
+// and will return a middleware to use to load the correct locale for each
+// request.
+// for more information: https://gobuffalo.io/en/docs/localization
+func translations() buffalo.MiddlewareFunc {
+	var err error
+	if domain.T, err = i18n.New(locales.FS(), "en"); err != nil {
+		_ = app.Stop(err)
+	}
+	return domain.T.Middleware()
 }

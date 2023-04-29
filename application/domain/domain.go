@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"database/sql"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -20,13 +21,17 @@ import (
 
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/envy"
-	mwi18n "github.com/gobuffalo/mw-i18n"
-	"github.com/gobuffalo/packr/v2"
+	mwi18n "github.com/gobuffalo/mw-i18n/v2"
 	"github.com/gobuffalo/validate/v3"
 	"github.com/gobuffalo/validate/v3/validators"
 	uuid2 "github.com/gofrs/uuid"
 	"github.com/rollbar/rollbar-go"
+
+	"github.com/silinternational/wecarry-api/locales"
 )
+
+//go:embed commit.txt
+var Commit string
 
 const (
 	Megabyte                    = 1048576
@@ -87,6 +92,7 @@ const (
 	MessageTemplateRequestDelivered                = "request_delivered"
 	MessageTemplateRequestReceived                 = "request_received"
 	MessageTemplateRequestNotReceivedAfterAll      = "request_not_received_after_all"
+	MessageTemplateRequestPastNeededBefore         = "request_past_needed_before"
 	MessageTemplatePotentialProviderCreated        = "request_potentialprovider_created"
 	MessageTemplatePotentialProviderRejected       = "request_potentialprovider_rejected"
 	MessageTemplatePotentialProviderSelfDestroyed  = "request_potentialprovider_self_destroyed"
@@ -193,9 +199,6 @@ var Env struct {
 // T is the Buffalo i18n translator
 var T *mwi18n.Translator
 
-// Assets is a packr box with asset files such as images
-var Assets *packr.Box
-
 var extrasLock = sync.RWMutex{}
 
 func init() {
@@ -203,7 +206,6 @@ func init() {
 	Logger.SetOutput(os.Stdout)
 	ErrLogger.SetOutput(os.Stderr)
 	ErrLogger.InitRollbar()
-	Assets = packr.New("Assets", "../assets")
 	AuthCallbackURL = Env.ApiBaseURL + "/auth/callback"
 }
 
@@ -293,7 +295,7 @@ func (e *ErrLogProxy) InitRollbar() {
 	e.RemoteLog = rollbar.New(
 		Env.RollbarToken,
 		Env.GoEnv,
-		"",
+		Commit,
 		"",
 		Env.RollbarServerRoot)
 }
@@ -508,6 +510,11 @@ func GetRequestUIURL(requestUUID string) string {
 	return Env.UIURL + requestUIPath + requestUUID
 }
 
+// GetRequestEditUIURL returns a UI URL for modifying the given Request
+func GetRequestEditUIURL(requestUUID string) string {
+	return Env.UIURL + requestUIPath + requestUUID + "/edit"
+}
+
 // GetThreadUIURL returns a UI URL for the given Thread
 func GetThreadUIURL(threadUUID string) string {
 	return Env.UIURL + threadUIPath + threadUUID
@@ -547,7 +554,7 @@ func IsTimeZoneAllowed(name string) bool {
 // is created.  If no new packr Box has been created, i18n.Tfunc returns an error.
 func TranslateWithLang(lang, translationID string, args ...interface{}) (string, error) {
 	if T == nil {
-		_, err := mwi18n.New(packr.New("locales", "../locales"), "en")
+		_, err := mwi18n.New(locales.FS(), "en")
 		if err != nil {
 			return "", err
 		}
@@ -557,7 +564,7 @@ func TranslateWithLang(lang, translationID string, args ...interface{}) (string,
 }
 
 // IsOtherThanNoRows returns false if the error is nil or is just reporting that there
-//   were no rows in the result set for a sql query.
+// were no rows in the result set for a sql query.
 func IsOtherThanNoRows(err error) bool {
 	if err == nil {
 		return false

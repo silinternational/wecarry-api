@@ -239,7 +239,11 @@ func (p *Provider) FetchUser(session goth.Session) (goth.User, error) {
 	if err != nil {
 		return user, err
 	}
-	defer response.Body.Close()
+	defer func() {
+		if err := response.Body.Close(); err != nil {
+			panic("error closing facebook auth provider response body: " + err.Error())
+		}
+	}()
 
 	if response.StatusCode != http.StatusOK {
 		return user, fmt.Errorf("%s responded with a %d trying to fetch user information", p.providerName, response.StatusCode)

@@ -10,7 +10,7 @@ import (
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/events"
 	"github.com/gobuffalo/nulls"
-	"github.com/gobuffalo/pop/v5"
+	"github.com/gobuffalo/pop/v6"
 	"github.com/gobuffalo/validate/v3"
 	"github.com/gobuffalo/validate/v3/validators"
 	"github.com/gofrs/uuid"
@@ -523,6 +523,15 @@ func (r *Request) AfterCreate(tx *pop.Connection) error {
 	}
 
 	emitEvent(e)
+	return nil
+}
+
+func (r *Requests) FindOpenPastNeededBefore(tx *pop.Connection, eagerFields ...string) error {
+	now := time.Now().UTC()
+	queryStr := "status = ? AND needed_before IS NOT NULL AND needed_before < ?"
+	if err := tx.Where(queryStr, RequestStatusOpen, now).Eager(eagerFields...).All(r); err != nil {
+		return fmt.Errorf("error finding open requests that are past their needed_before date: %s", err.Error())
+	}
 	return nil
 }
 

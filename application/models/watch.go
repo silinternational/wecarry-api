@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/gobuffalo/nulls"
-	"github.com/gobuffalo/pop/v5"
+	"github.com/gobuffalo/pop/v6"
 	"github.com/gobuffalo/validate/v3"
 	"github.com/gobuffalo/validate/v3/validators"
 	"github.com/gofrs/uuid"
@@ -262,6 +262,11 @@ func (w *Watch) destinationMatches(tx *pop.Connection, request Request) bool {
 	if err != nil {
 		domain.ErrLogger.Printf("failed to get watch %s destination in destinationMatches, %s", w.UUID, err)
 	}
+
+	if watchDestination == nil {
+		return true
+	}
+
 	return watchDestination.IsNear(*requestDestination)
 }
 
@@ -279,9 +284,16 @@ func (w *Watch) originMatches(tx *pop.Connection, request Request) bool {
 		domain.ErrLogger.Printf("failed to get request %s origin in originMatches, %s", request.UUID, err)
 		return false
 	}
+	if requestOrigin == nil {
+		return false
+	}
+
 	watchOrigin, err := w.GetOrigin(tx)
 	if err != nil {
 		domain.ErrLogger.Printf("failed to get watch %s origin in originMatches, %s", w.UUID, err)
+	}
+	if watchOrigin == nil {
+		return true
 	}
 	return watchOrigin.IsNear(*requestOrigin)
 }

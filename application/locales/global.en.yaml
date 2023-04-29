@@ -282,6 +282,8 @@
   translation: Your offer to fulfill a {{.AppName}} request has been accepted
 - id: Email.Subject.Request.FromDeliveredToAccepted
   translation: Request not delivered after all on {{.AppName}}
+- id: Email.Subject.Request.Outdated
+  translation: Your {{.AppName}} request is past its "needed before" date
 
 # Notifications regarding Request offers/potential providers
 - id: Email.Subject.Request.OfferRejected
