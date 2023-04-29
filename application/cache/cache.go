@@ -38,9 +38,9 @@ func init() {
 }
 
 // Wrapper for cache write
-func cacheWrite(ctx context.Context, key string, data interface{}) error {
+func cacheWrite(key string, data interface{}) error {
 	return RequestsCache.Set(&rediscache.Item{
-		Ctx:   ctx,
+		Ctx:   nil,
 		Key:   key,
 		Value: data,
 		TTL:   time.Hour,
@@ -179,7 +179,7 @@ func getOrCreateCacheEntryPrivate(ctx context.Context, organization models.Organ
 			requestsMap[requestEntry.ID.String()] = requestEntry
 		}
 
-		return true, requestsMap, cacheWrite(ctx, PrivateRequestKeyPrefix+organization.Name, requestsMap)
+		return true, requestsMap, cacheWrite(PrivateRequestKeyPrefix+organization.Name, requestsMap)
 	}
 
 	return false, requestsMap, nil
@@ -210,7 +210,7 @@ func getOrCreateCacheEntryPublic(ctx context.Context) (bool, map[string]api.Requ
 			requestsMap[requestEntry.ID.String()] = requestEntry
 		}
 
-		return true, requestsMap, cacheWrite(ctx, PublicRequestKey, requestsMap)
+		return true, requestsMap, cacheWrite(PublicRequestKey, requestsMap)
 	}
 	return false, requestsMap, nil
 }
@@ -221,13 +221,13 @@ func updateRequestPrivateCache(ctx context.Context, request models.Request, requ
 	// was cached privately, but request has been finished. Just need to remove from private cache.
 	if cachedPrivately && request.IsFinished() {
 		delete(requestsMap, request.UUID.String())
-		return cacheWrite(ctx, PrivateRequestKeyPrefix+organization.Name, requestsMap)
+		return cacheWrite(PrivateRequestKeyPrefix+organization.Name, requestsMap)
 	}
 	// was cached privately, but request visibility has changed to public.
 	// Need to remove from private and add to public cache.
 	if cachedPrivately && request.IsPublic() {
 		delete(requestsMap, request.UUID.String())
-		if err := cacheWrite(ctx, PrivateRequestKeyPrefix+organization.Name, requestsMap); err != nil {
+		if err := cacheWrite(PrivateRequestKeyPrefix+organization.Name, requestsMap); err != nil {
 			return err
 		}
 	}
@@ -239,7 +239,7 @@ func updateRequestPrivateCache(ctx context.Context, request models.Request, requ
 			return err
 		}
 		requestsMap[request.UUID.String()] = requestAbridged
-		if err := cacheWrite(ctx, PrivateRequestKeyPrefix+organization.Name, requestsMap); err != nil {
+		if err := cacheWrite(PrivateRequestKeyPrefix+organization.Name, requestsMap); err != nil {
 			return err
 		}
 	}
@@ -251,13 +251,13 @@ func updateRequestPublicCache(ctx context.Context, request models.Request, reque
 	// was cached publicly, but request has been finished. Just need to remove from public cache.
 	if cachedPublicly && request.IsFinished() {
 		delete(requestsMap, request.UUID.String())
-		return cacheWrite(ctx, PublicRequestKey, requestsMap)
+		return cacheWrite(PublicRequestKey, requestsMap)
 	}
 	// was cached publicly, but request visibility has changed to private.
 	// Need to remove from public cache.
 	if cachedPublicly && request.IsPrivate() {
 		delete(requestsMap, request.UUID.String())
-		if err := cacheWrite(ctx, PublicRequestKey, requestsMap); err != nil {
+		if err := cacheWrite(PublicRequestKey, requestsMap); err != nil {
 			return err
 		}
 	}
@@ -269,7 +269,7 @@ func updateRequestPublicCache(ctx context.Context, request models.Request, reque
 			return err
 		}
 		requestsMap[request.UUID.String()] = requestAbridged
-		return cacheWrite(ctx, PublicRequestKey, requestsMap)
+		return cacheWrite(PublicRequestKey, requestsMap)
 	}
 	return nil
 }

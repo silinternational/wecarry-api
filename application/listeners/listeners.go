@@ -24,13 +24,25 @@ type listenerContext struct {
 }
 
 // Value retrieves a context item added by `Set`
-func (b listenerContext) Value(key interface{}) interface{} {
-	return b.params[key]
+func (lc *listenerContext) Value(key interface{}) interface{} {
+	return lc.params[key]
 }
 
 // Set a new value on the Context. CAUTION: this is not thread-safe
-func (b listenerContext) Set(key string, val interface{}) {
-	b.params[key] = val
+func (lc *listenerContext) Set(key string, val interface{}) {
+	lc.params[key] = val
+}
+
+func (*listenerContext) Deadline() (deadline time.Time, ok bool) {
+	return
+}
+
+func (*listenerContext) Done() <-chan struct{} {
+	return nil
+}
+
+func (*listenerContext) Err() error {
+	return nil
 }
 
 var eventTypes = map[string]func(event events.Event){
@@ -466,7 +478,7 @@ func getID(p events.Payload) (int, error) {
 	return id, nil
 }
 
-func newListenerContext() listenerContext {
+func newListenerContext() *listenerContext {
 	ctx := listenerContext{
 		params: map[interface{}]interface{}{},
 	}
@@ -475,5 +487,5 @@ func newListenerContext() listenerContext {
 
 	_, _ = context.WithCancel(ctx.DefaultContext.Context)
 
-	return ctx
+	return &ctx
 }
