@@ -79,7 +79,7 @@ func App() *buffalo.App {
 		registerCustomErrorHandler(app)
 
 		// Initialize remote logger middleware
-		app.Use(log.RollbarMiddleware, log.SentryMiddleware)
+		app.Use(log.SentryMiddleware)
 
 		// Log request parameters (filters apply).
 		app.Use(paramlogger.ParameterLogger)

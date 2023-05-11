@@ -26,8 +26,8 @@ correct the example values.
 * make
 
 Note that the data provided in `.env.example` will not allow
-all features to work. In particular, the `ROLLBAR_TOKEN` must 
-be valid. The fake AWS data will work for file uploads to the minIO
+all features to work. 
+The fake AWS data will work for file uploads to the minIO
 container, but obviously not for a real AWS S3 bucket.
 
 ## Installation Troubleshooting
