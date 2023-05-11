@@ -51,7 +51,7 @@ const (
 	EventApiAuthUserLoggedIn               = "api:auth:user:loggedin"
 	EventApiMessageCreated                 = "api:message:created"
 	EventApiRequestStatusUpdated           = "api:request:status:updated"
-	EventApiRequestCreated                 = "api:request:status:created"
+	EventApiRequestCreated                 = "api:request:created"
 	EventApiRequestUpdated                 = "api:request:updated"
 	EventApiPotentialProviderCreated       = "api:potentialprovider:created"
 	EventApiPotentialProviderRejected      = "api:potentialprovider:rejected"
