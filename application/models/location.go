@@ -12,6 +12,7 @@ import (
 
 	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/log"
 )
 
 type Location struct {
@@ -61,7 +62,6 @@ type geoValidator struct {
 
 // IsValid checks the latitude and longitude valid ranges
 func (v *geoValidator) IsValid(errors *validate.Errors) {
-
 	if v.Latitude < -90.0 || v.Latitude > 90.0 {
 		v.Message = fmt.Sprintf("Latitude %v is out of range", v.Latitude)
 		errors.Add(validators.GenerateKey(v.Name), v.Message)
@@ -90,7 +90,6 @@ func (l *Location) Update(tx *pop.Connection) error {
 
 // DistanceKm calculates the distance in km between two locations
 func (l *Location) DistanceKm(loc2 Location) float64 {
-
 	lat1 := l.Latitude
 	lon1 := l.Longitude
 	lat2 := loc2.Latitude
@@ -189,16 +188,16 @@ func (l *Locations) DeleteUnused() error {
 	for _, location := range locations {
 		l := location
 		if err := DB.Destroy(&l); err != nil {
-			domain.ErrLogger.Printf("location %d destroy error, %s", location.ID, err)
+			log.Errorf("location %d destroy error, %s", location.ID, err)
 			continue
 		}
 		nRemovedFromDB++
 	}
 
 	if nRemovedFromDB < len(locations) {
-		domain.ErrLogger.Printf("not all unused locations were removed")
+		log.Errorf("not all unused locations were removed")
 	}
-	domain.Logger.Printf("removed %d from location table", nRemovedFromDB)
+	log.Infof("removed %d from location table", nRemovedFromDB)
 	return nil
 }
 

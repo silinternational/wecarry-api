@@ -15,6 +15,7 @@ import (
 
 	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/log"
 )
 
 type Message struct {
@@ -97,19 +98,19 @@ func (m *Message) AfterCreate(tx *pop.Connection) error {
 	threadP := ThreadParticipant{}
 
 	if err := threadP.FindByThreadIDAndUserID(tx, m.ThreadID, m.SentByID); err != nil {
-		domain.ErrLogger.Printf("aftercreate new message %s", err.Error())
+		log.Errorf("aftercreate new message %s", err.Error())
 		return nil
 	}
 
 	if err := threadP.UpdateLastViewedAt(tx, time.Now()); err != nil {
-		domain.ErrLogger.Printf("aftercreate new message %s", err.Error())
+		log.Errorf("aftercreate new message %s", err.Error())
 		return nil
 	}
 
 	// Touch the "updatedAt" field on the thread so thread lists can easily be sorted by last activity
 	if err := tx.Load(m, "Thread"); err == nil {
 		if err = m.Thread.Update(tx); err != nil {
-			domain.Logger.Print("failed to save thread on message create,", err.Error())
+			log.Error("failed to save thread on message create,", err.Error())
 		}
 	}
 

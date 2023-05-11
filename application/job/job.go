@@ -6,7 +6,9 @@ import (
 	"time"
 
 	"github.com/gobuffalo/buffalo/worker"
+
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/log"
 	"github.com/silinternational/wecarry-api/models"
 	"github.com/silinternational/wecarry-api/notifications"
 )
@@ -33,7 +35,7 @@ func Init(appWorker *worker.Worker) {
 	w = appWorker
 	for key, handler := range handlers {
 		if err := (*w).Register(key, handler); err != nil {
-			domain.ErrLogger.Printf("error registering '%s' handler, %s", key, err)
+			log.Errorf("error registering '%s' handler, %s", key, err)
 		}
 	}
 }
@@ -76,7 +78,7 @@ func outdatedRequestsHandler(args worker.Args) error {
 			map[string]string{"requestTitle": requestTitle})
 
 		if err := notifications.Send(msg); err != nil {
-			domain.ErrLogger.Printf("error sending 'Outdated Request' notification, %s", err)
+			log.Errorf("error sending 'Outdated Request' notification, %s", err)
 			lastErr = err
 			continue
 		}
@@ -125,7 +127,7 @@ func newThreadMessageHandler(args worker.Args) error {
 
 		var tp models.ThreadParticipant
 		if err := tp.FindByThreadIDAndUserID(models.DB, m.ThreadID, p.ID); err != nil {
-			domain.ErrLogger.Printf("newThreadMessageHandler error, %s", err)
+			log.Errorf("newThreadMessageHandler error, %s", err)
 			lastErr = err
 			continue
 		}
@@ -141,13 +143,13 @@ func newThreadMessageHandler(args worker.Args) error {
 			map[string]string{"sentByNickname": m.SentBy.Nickname, "requestTitle": requestTitle})
 
 		if err := notifications.Send(msg); err != nil {
-			domain.ErrLogger.Printf("error sending 'New Thread Message' notification, %s", err)
+			log.Errorf("error sending 'New Thread Message' notification, %s", err)
 			lastErr = err
 			continue
 		}
 
 		if err := tp.UpdateLastNotifiedAt(models.DB, time.Now()); err != nil {
-			domain.ErrLogger.Printf("newThreadMessageHandler error, %s", err)
+			log.Errorf("newThreadMessageHandler error, %s", err)
 			lastErr = err
 		}
 	}
@@ -181,7 +183,7 @@ func tokenCleanupHandler(args worker.Args) error {
 		return fmt.Errorf("error cleaning expired user access tokens: %v", err)
 	}
 
-	domain.Logger.Printf("Deleted %v expired user access tokens during cleanup", deleted)
+	log.Infof("Deleted %v expired user access tokens during cleanup", deleted)
 	return nil
 }
 

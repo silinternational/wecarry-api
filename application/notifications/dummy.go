@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"errors"
 
-	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/log"
 )
 
 type DummyEmailService struct {
@@ -26,11 +26,11 @@ func (t *DummyEmailService) Send(msg Message) error {
 	bodyBuf := &bytes.Buffer{}
 	if err := eR.HTML(mailTemplatePath+eTemplate).Render(bodyBuf, msg.Data); err != nil {
 		errMsg := "error rendering message body - " + err.Error()
-		domain.ErrLogger.Printf(errMsg)
+		log.Errorf(errMsg)
 		return errors.New(errMsg)
 	}
 
-	domain.Logger.Printf("dummy message subject: %s, recipient: %s",
+	log.Infof("dummy message subject: %s, recipient: %s",
 		msg.Subject, msg.ToName)
 
 	t.sentMessages = append(t.sentMessages,

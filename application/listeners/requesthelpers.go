@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/log"
 	"github.com/silinternational/wecarry-api/models"
 	"github.com/silinternational/wecarry-api/notifications"
 )
@@ -90,7 +91,8 @@ func getMessageForReceiver(requestUsers requestUsers, request models.Request, te
 }
 
 func getPotentialProviderMessageForReceiver(
-	requester models.User, providerNickname, template string, request models.Request) notifications.Message {
+	requester models.User, providerNickname, template string, request models.Request,
+) notifications.Message {
 	data := map[string]interface{}{
 		"appName":          domain.Env.AppName,
 		"uiURL":            domain.Env.UIURL,
@@ -114,7 +116,7 @@ func sendNotificationRequestToProvider(params senderParams) {
 	requestUsers := getRequestUsers(request)
 
 	if requestUsers.Provider.Nickname == "" {
-		domain.ErrLogger.Printf("error preparing '%s' notification - no provider", template)
+		log.Errorf("error preparing '%s' notification - no provider", template)
 		return
 	}
 
@@ -123,7 +125,7 @@ func sendNotificationRequestToProvider(params senderParams) {
 		map[string]string{requestTitleKey: request.Title})
 
 	if err := notifications.Send(msg); err != nil {
-		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
+		log.Errorf("error sending '%s' notification, %s", template, err)
 	}
 }
 
@@ -134,7 +136,7 @@ func sendNotificationRequestToReceiver(params senderParams) {
 	requestUsers := getRequestUsers(request)
 
 	if requestUsers.Provider.Nickname == "" {
-		domain.ErrLogger.Printf("error preparing '%s' notification - no provider", template)
+		log.Errorf("error preparing '%s' notification - no provider", template)
 		return
 	}
 
@@ -143,7 +145,7 @@ func sendNotificationRequestToReceiver(params senderParams) {
 		map[string]string{requestTitleKey: request.Title})
 
 	if err := notifications.Send(msg); err != nil {
-		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
+		log.Errorf("error sending '%s' notification, %s", template, err)
 	}
 }
 
@@ -160,7 +162,7 @@ func sendNotificationRequestFromAcceptedToOpen(params senderParams) {
 
 	oldProvider := models.User{}
 	if err := oldProvider.FindByID(models.DB, eData.OldProviderID); err != nil {
-		domain.ErrLogger.Printf("error preparing '%s' notification for old provider id, %v ... %v",
+		log.Errorf("error preparing '%s' notification for old provider id, %v ... %v",
 			template, eData.OldProviderID, err)
 		return
 	}
@@ -173,7 +175,7 @@ func sendNotificationRequestFromAcceptedToOpen(params senderParams) {
 		map[string]string{requestTitleKey: request.Title})
 
 	if err := notifications.Send(msg); err != nil {
-		domain.ErrLogger.Printf("error sending '%s' notification, %s", template, err)
+		log.Errorf("error sending '%s' notification, %s", template, err)
 	}
 }
 
@@ -197,7 +199,7 @@ func sendRejectionToPotentialProvider(potentialProvider models.User, request mod
 
 	receiver, err := request.GetCreator(models.DB)
 	if err != nil {
-		domain.ErrLogger.Printf("error getting Request Receiver for email data, %s", err)
+		log.Errorf("error getting Request Receiver for email data, %s", err)
 	}
 
 	data := map[string]interface{}{
@@ -223,7 +225,7 @@ func sendRejectionToPotentialProvider(potentialProvider models.User, request mod
 	}
 
 	if err := notifications.Send(msg); err != nil {
-		domain.ErrLogger.Printf("error sending '%s' notification to rejected potentialProvider, %s", template, err)
+		log.Errorf("error sending '%s' notification to rejected potentialProvider, %s", template, err)
 	}
 }
 
@@ -234,7 +236,7 @@ func sendNotificationRequestFromOpenToAccepted(params senderParams) {
 	var providers models.PotentialProviders
 	users, err := providers.FindUsersByRequestID(models.DB, request, models.User{})
 	if err != nil {
-		domain.ErrLogger.Printf("error finding rejected potential providers for request id, %v ... %v",
+		log.Errorf("error finding rejected potential providers for request id, %v ... %v",
 			request.ID, err)
 	}
 
@@ -254,7 +256,7 @@ func sendNotificationRequestFromCompletedToAcceptedOrDelivered(params senderPara
 }
 
 func sendNotificationEmpty(params senderParams) {
-	domain.ErrLogger.Printf("Notification not implemented yet for %s", params.template)
+	log.Errorf("Notification not implemented yet for %s", params.template)
 }
 
 type senderParams struct {
@@ -353,7 +355,7 @@ func requestStatusUpdatedNotifications(request models.Request, eData models.Requ
 	sender, ok := statusSenders[fromStatusTo]
 
 	if !ok {
-		domain.ErrLogger.Printf("Low importance: unexpected request status transition '%s'", fromStatusTo)
+		log.Errorf("Low importance: unexpected request status transition '%s'", fromStatusTo)
 		return
 	}
 
@@ -374,7 +376,7 @@ func sendNewRequestNotifications(request models.Request, users models.Users) {
 		}
 
 		if err := sendNewRequestNotification(user, request); err != nil {
-			domain.ErrLogger.Printf("error sending request created notification (%d of %d), %s",
+			log.Errorf("error sending request created notification (%d of %d), %s",
 				i, len(users), err)
 		}
 	}

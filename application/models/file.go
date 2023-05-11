@@ -18,11 +18,12 @@ import (
 	"github.com/gobuffalo/validate/v3"
 	"github.com/gobuffalo/validate/v3/validators"
 	"github.com/gofrs/uuid"
-	"github.com/silinternational/wecarry-api/api"
 	_ "golang.org/x/image/webp" // enable decoding of WEBP images
 
+	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/aws"
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/log"
 )
 
 type FileUploadError struct {
@@ -231,7 +232,7 @@ func (f *Files) DeleteUnlinked(tx *pop.Connection) error {
 		All(&files); err != nil {
 		return err
 	}
-	domain.Logger.Printf("unlinked files: %d", len(files))
+	log.Infof("unlinked files: %d", len(files))
 	if len(files) > domain.Env.MaxFileDelete {
 		return fmt.Errorf("attempted to delete too many files, MaxFileDelete=%d", domain.Env.MaxFileDelete)
 	}
@@ -243,23 +244,23 @@ func (f *Files) DeleteUnlinked(tx *pop.Connection) error {
 	nRemovedFromS3 := 0
 	for _, file := range files {
 		if err := aws.RemoveFile(file.UUID.String()); err != nil {
-			domain.ErrLogger.Printf("error removing from S3, id='%s', %s", file.UUID.String(), err)
+			log.Errorf("error removing from S3, id='%s', %s", file.UUID.String(), err)
 			continue
 		}
 		nRemovedFromS3++
 
 		f := file
 		if err := tx.Destroy(&f); err != nil {
-			domain.ErrLogger.Printf("file %d destroy error, %s", file.ID, err)
+			log.Errorf("file %d destroy error, %s", file.ID, err)
 			continue
 		}
 		nRemovedFromDB++
 	}
 
 	if nRemovedFromDB < len(files) || nRemovedFromS3 < len(files) {
-		domain.ErrLogger.Printf("not all unlinked files were removed")
+		log.Errorf("not all unlinked files were removed")
 	}
-	domain.Logger.Printf("removed %d from S3, %d from file table", nRemovedFromS3, nRemovedFromDB)
+	log.Infof("removed %d from S3, %d from file table", nRemovedFromS3, nRemovedFromDB)
 	return nil
 }
 

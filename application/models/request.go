@@ -18,6 +18,7 @@ import (
 
 	"github.com/silinternational/wecarry-api/api"
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/log"
 )
 
 type RequestStatus string
@@ -440,10 +441,10 @@ func (r *Request) manageStatusTransition(tx *pop.Connection) error {
 				fmt.Sprintf(`UPDATE requests set completed_on = '%s' where ID = %v`,
 					time.Now().Format(domain.DateFormat), r.ID)).Exec()
 			if err != nil {
-				domain.ErrLogger.Printf("unable to set Request.CompletedOn for ID: %v, %s", r.ID, err)
+				log.Errorf("unable to set Request.CompletedOn for ID: %v, %s", r.ID, err)
 			}
 			if err := tx.Reload(r); err != nil {
-				domain.ErrLogger.Printf("unable to reload Request ID: %v, %s", r.ID, err)
+				log.Errorf("unable to reload Request ID: %v, %s", r.ID, err)
 			}
 		}
 	case RequestStatusOpen, RequestStatusAccepted, RequestStatusDelivered:
@@ -451,10 +452,10 @@ func (r *Request) manageStatusTransition(tx *pop.Connection) error {
 			err := tx.RawQuery(
 				fmt.Sprintf(`UPDATE requests set completed_on = NULL where ID = %v`, r.ID)).Exec()
 			if err != nil {
-				domain.ErrLogger.Printf("unable to nullify Request.CompletedOn for ID: %v, %s", r.ID, err)
+				log.Errorf("unable to nullify Request.CompletedOn for ID: %v, %s", r.ID, err)
 			}
 			if err := tx.Reload(r); err != nil {
-				domain.ErrLogger.Printf("unable to reload Request ID: %v, %s", r.ID, err)
+				log.Errorf("unable to reload Request ID: %v, %s", r.ID, err)
 			}
 		}
 	}
@@ -487,7 +488,7 @@ func (r *Request) AfterUpdate(tx *pop.Connection) error {
 	// Don't try to use tx.Update inside AfterUpdate, since that gets into an eternal loop
 	if err := tx.RawQuery(
 		fmt.Sprintf(`UPDATE requests set provider_id = NULL where ID = %v`, r.ID)).Exec(); err != nil {
-		domain.ErrLogger.Printf("error removing provider id from request: %s", err.Error())
+		log.Errorf("error removing provider id from request: %s", err.Error())
 	}
 
 	e := events.Event{
@@ -593,7 +594,7 @@ func (r *Request) GetProvider(tx *pop.Connection) (*User, error) {
 func (r *Request) GetStatusTransitions(currentUser User) ([]StatusTransitionTarget, error) {
 	statusOptions, err := getNextStatusPossibilities(r.Status)
 	if err != nil {
-		domain.ErrLogger.Printf(err.Error())
+		log.Errorf(err.Error())
 		return statusOptions, nil
 	}
 
@@ -670,7 +671,7 @@ func (r *Request) AttachFile(tx *pop.Connection, fileID string) (File, error) {
 		return f, err
 	}
 	if err := f.SetLinked(tx); err != nil {
-		domain.ErrLogger.Printf("error marking new request file %d as linked, %s", f.ID, err)
+		log.Errorf("error marking new request file %d as linked, %s", f.ID, err)
 	}
 
 	return f, nil
@@ -1137,8 +1138,8 @@ func (r *Request) Load(ctx context.Context, fields ...string) error {
 }
 
 // AddUserAsPotentialProvider  creates a new PotentialProvider object in the database
-//   after first ensuring the user is allowed to view the request and the
-//   request's status is OPEN.
+// after first ensuring the user is allowed to view the request and the
+// request's status is OPEN.
 func (r *Request) AddUserAsPotentialProvider(tx *pop.Connection, requestID string, cUser User) error {
 	if err := r.FindByUUIDForCurrentUser(tx, requestID, cUser); err != nil {
 		appErr := api.NewAppError(err, api.ErrorFindRequestToAddPotentialProvider, api.CategoryInternal)
@@ -1334,7 +1335,7 @@ func loadRequestPhoto(ctx context.Context, request Request) (*api.File, error) {
 	photo, err := request.GetPhoto(Tx(ctx))
 	if err != nil {
 		if strings.Contains(err.Error(), "PhotoFile UUID is empty") {
-			domain.Error(ctx, err.Error())
+			log.WithContext(ctx).Error(err)
 		} else {
 			err = errors.New("error converting request photo: " + err.Error())
 			return nil, err

@@ -1,13 +1,12 @@
 package job
 
 import (
-	"bytes"
-	"os"
 	"testing"
 	"text/template"
 	"time"
 
 	"github.com/gobuffalo/suite/v4"
+
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/models"
 	"github.com/silinternational/wecarry-api/notifications"
@@ -27,14 +26,8 @@ func Test_JobSuite(t *testing.T) {
 }
 
 func (js *JobSuite) TestOutdatedRequestsHandler() {
-	var buf bytes.Buffer
-	domain.ErrLogger.SetOutput(&buf)
 	supportEmail := `support@example.org`
 	domain.Env.SupportEmail = supportEmail
-
-	defer func() {
-		domain.ErrLogger.SetOutput(os.Stderr)
-	}()
 
 	f := CreateFixtures_TestOutdatedRequestHandler(js)
 	notifications.TestEmailService.DeleteSentMessages()
@@ -50,13 +43,6 @@ func (js *JobSuite) TestOutdatedRequestsHandler() {
 }
 
 func (js *JobSuite) TestNewThreadMessageHandler() {
-	var buf bytes.Buffer
-	domain.ErrLogger.SetOutput(&buf)
-
-	defer func() {
-		domain.ErrLogger.SetOutput(os.Stderr)
-	}()
-
 	f := CreateFixtures_TestNewThreadMessageHandler(js)
 
 	tests := []struct {

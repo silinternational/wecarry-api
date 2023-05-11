@@ -4,12 +4,8 @@ import (
 	"context"
 	"database/sql"
 	_ "embed"
-	"encoding/json"
 	"fmt"
-	"io"
-	"log"
 	"net/http"
-	"os"
 	"reflect"
 	"regexp"
 	"runtime"
@@ -25,9 +21,9 @@ import (
 	"github.com/gobuffalo/validate/v3"
 	"github.com/gobuffalo/validate/v3/validators"
 	uuid2 "github.com/gofrs/uuid"
-	"github.com/rollbar/rollbar-go"
 
 	"github.com/silinternational/wecarry-api/locales"
+	"github.com/silinternational/wecarry-api/log"
 )
 
 //go:embed commit.txt
@@ -125,20 +121,19 @@ const (
 const (
 	ContextKeyCurrentUser = "current_user"
 	ContextKeyExtras      = "extras"
-	ContextKeyRollbar     = "rollbar"
 	ContextKeyTx          = "tx"
 )
 
-var (
-	// Logger is a plain instance of log.Logger, normally set to stdout
-	Logger log.Logger
-
-	// ErrLogger is an instance of ErrLogProxy, and is the only error logging
-	// mechanism that can be used without access to the Buffalo context.
-	ErrLogger ErrLogProxy
-
-	AuthCallbackURL string
+// Error extras (fields)
+const (
+	ExtrasIP     = "IP"
+	ExtrasKey    = "key"
+	ExtrasMethod = "method"
+	ExtrasStatus = "status"
+	ExtrasURI    = "URI"
 )
+
+var AuthCallbackURL string
 
 var AllowedFileUploadTypes = []string{
 	"image/bmp",
@@ -173,6 +168,7 @@ var Env struct {
 	LinkedInSecret             string
 	ListenerDelayMilliseconds  int
 	ListenerMaxRetries         int
+	LogLevel                   string
 	MaxFileDelete              int
 	MaxLocationDelete          int
 	MailChimpAPIBaseURL        string
@@ -185,8 +181,6 @@ var Env struct {
 	PlaygroundPort             string
 	RedisInstanceName          string
 	RedisInstanceHostPort      string
-	RollbarServerRoot          string
-	RollbarToken               string
 	SendGridAPIKey             string
 	ServerPort                 int
 	SessionSecret              string
@@ -203,9 +197,15 @@ var extrasLock = sync.RWMutex{}
 
 func init() {
 	readEnv()
-	Logger.SetOutput(os.Stdout)
-	ErrLogger.SetOutput(os.Stderr)
-	ErrLogger.InitRollbar()
+
+	log.ErrLogger.Init(
+		log.UseCommit(Commit),
+		log.UseEnv(Env.GoEnv),
+		log.UseLevel(Env.LogLevel),
+		log.UsePretty(Env.GoEnv == "development"),
+		log.UseRemote(Env.GoEnv != "test"),
+	)
+
 	AuthCallbackURL = Env.ApiBaseURL + "/auth/callback"
 }
 
@@ -233,6 +233,7 @@ func readEnv() {
 	Env.LinkedInSecret = envy.Get("LINKED_IN_SECRET", "")
 	Env.ListenerDelayMilliseconds, _ = strconv.Atoi(envy.Get("LISTENER_DELAY_MILLISECONDS", "1000"))
 	Env.ListenerMaxRetries, _ = strconv.Atoi(envy.Get("LISTENER_MAX_RETRIES", "10"))
+	Env.LogLevel = envy.Get("LOG_LEVEL", "warning")
 	Env.MaxFileDelete = envToInt("MAX_FILE_DELETE", 10)
 	Env.MaxLocationDelete = envToInt("MAX_LOCATION_DELETE", 10)
 	Env.MailChimpAPIBaseURL = envy.Get("MAILCHIMP_API_BASE_URL", "https://us4.api.mailchimp.com/3.0")
@@ -245,8 +246,6 @@ func readEnv() {
 	Env.PlaygroundPort = envy.Get("PORT", "3000")
 	Env.RedisInstanceName = envy.Get("REDIS_INSTANCE_NAME", "redis")
 	Env.RedisInstanceHostPort = envy.Get("REDIS_INSTANCE_HOST_PORT", "redis:6379")
-	Env.RollbarServerRoot = envy.Get("ROLLBAR_SERVER_ROOT", "github.com/silinternational/wecarry-api")
-	Env.RollbarToken = envy.Get("ROLLBAR_TOKEN", "")
 	Env.SendGridAPIKey = envy.Get("SENDGRID_API_KEY", "")
 	Env.ServerPort, _ = strconv.Atoi(envy.Get("PORT", "3000"))
 	Env.ServiceIntegrationToken = envy.Get("SERVICE_INTEGRATION_TOKEN", "")
@@ -261,43 +260,10 @@ func envToInt(name string, def int) int {
 	s := envy.Get(name, strconv.Itoa(def))
 	n, err := strconv.Atoi(s)
 	if err != nil {
-		ErrLogger.Printf("invalid environment variable %s = %s, must be a number, %s", name, s, err)
+		fmt.Printf("invalid environment variable %s = %s, must be a number, %s", name, s, err)
 		return def
 	}
 	return n
-}
-
-// ErrLogProxy is a "tee" that sends to Rollbar and to the local logger,
-// normally set to stderr. Rollbar is disabled if `GoEnv` is "test", and
-// is a client instantiation separate from the one used in the Rollbar
-// middleware.
-type ErrLogProxy struct {
-	LocalLog  log.Logger
-	RemoteLog *rollbar.Client
-}
-
-func (e *ErrLogProxy) SetOutput(w io.Writer) {
-	e.LocalLog.SetOutput(w)
-}
-
-func (e *ErrLogProxy) Printf(format string, a ...interface{}) {
-	// Send to local logger
-	e.LocalLog.Printf(format, a...)
-
-	// Only send to remote log if not in test env
-	if Env.GoEnv == "test" {
-		return
-	}
-	e.RemoteLog.Errorf(rollbar.ERR, format, a...)
-}
-
-func (e *ErrLogProxy) InitRollbar() {
-	e.RemoteLog = rollbar.New(
-		Env.RollbarToken,
-		Env.GoEnv,
-		Commit,
-		"",
-		Env.RollbarServerRoot)
 }
 
 // GetFirstStringFromSlice returns the first string in the given slice, or an empty
@@ -356,7 +322,7 @@ func GetCurrentTime() string {
 func GetUUID() uuid2.UUID {
 	uuid, err := uuid2.NewV4()
 	if err != nil {
-		ErrLogger.Printf("error creating new uuid2 ... %v", err)
+		log.Errorf("error creating new uuid2 ... %v", err)
 	}
 	return uuid
 }
@@ -383,126 +349,8 @@ func EmailDomain(email string) string {
 	}
 }
 
-func RollbarMiddleware(next buffalo.Handler) buffalo.Handler {
-	return func(c buffalo.Context) error {
-		if Env.RollbarToken == "" {
-			return next(c)
-		}
-
-		if Env.GoEnv == "test" {
-			return next(c)
-		}
-
-		client := rollbar.New(
-			Env.RollbarToken,
-			Env.GoEnv,
-			"",
-			"",
-			Env.RollbarServerRoot)
-
-		c.Set(ContextKeyRollbar, client)
-
-		err := next(c)
-
-		client.Close()
-		return err
-	}
-}
-
-// Error sends a message to Rollbar and to the local logger, including
-// any extras found in the context.
-func Error(ctx context.Context, msg string) {
-	bc := getBuffaloContext(ctx)
-
-	extras := getExtras(bc)
-	extrasLock.RLock()
-	defer extrasLock.RUnlock()
-
-	rollbarMessage(bc, rollbar.ERR, msg, extras)
-
-	logger := bc.Logger()
-	if logger != nil {
-		logger.Error(encodeLogMsg(msg, extras))
-	}
-}
-
-// Warn sends a message to Rollbar and to the local logger, including
-// any extras found in the context.
-func Warn(ctx context.Context, msg string) {
-	bc := getBuffaloContext(ctx)
-
-	extras := getExtras(bc)
-	extrasLock.RLock()
-	defer extrasLock.RUnlock()
-
-	rollbarMessage(bc, rollbar.WARN, msg, extras)
-
-	logger := bc.Logger()
-	if logger != nil {
-		logger.Warn(encodeLogMsg(msg, extras))
-	}
-}
-
-// Info sends a message to the local logger, including any extras found in the context.
-func Info(ctx context.Context, msg string) {
-	bc := getBuffaloContext(ctx)
-
-	extras := getExtras(bc)
-	extrasLock.RLock()
-	defer extrasLock.RUnlock()
-
-	logger := bc.Logger()
-	if logger != nil {
-		logger.Info(encodeLogMsg(msg, extras))
-	}
-}
-
 func getBuffaloContext(ctx context.Context) buffalo.Context {
 	return ctx.(buffalo.Context)
-}
-
-func encodeLogMsg(msg string, extras map[string]interface{}) string {
-	encoder := jsonMin
-	if Env.GoEnv == "development" {
-		encoder = jsonIndented
-	}
-
-	if extras == nil {
-		extras = map[string]interface{}{}
-	}
-	extras["message"] = msg
-
-	j, err := encoder(&extras)
-	if err != nil {
-		return "failed to json encode error message: " + err.Error()
-	}
-	return string(j)
-}
-
-func jsonMin(i interface{}) ([]byte, error) {
-	return json.Marshal(i)
-}
-
-func jsonIndented(i interface{}) ([]byte, error) {
-	return json.MarshalIndent(i, "", "  ")
-}
-
-// rollbarMessage is a wrapper function to call rollbar's client.MessageWithExtras function from client stored in context
-func rollbarMessage(c buffalo.Context, level string, msg string, extras map[string]interface{}) {
-	rc, ok := c.Value(ContextKeyRollbar).(*rollbar.Client)
-	if ok {
-		rc.MessageWithExtras(level, msg, extras)
-		return
-	}
-}
-
-// RollbarSetPerson sets person on the rollbar context for further logging
-func RollbarSetPerson(c buffalo.Context, id, username, email string) {
-	rc, ok := c.Value(ContextKeyRollbar).(*rollbar.Client)
-	if ok {
-		rc.SetPerson(id, username, email)
-		return
-	}
 }
 
 // GetRequestUIURL returns a UI URL for the given Request
@@ -542,7 +390,7 @@ func IsWeightUnitAllowed(unit string) bool {
 func IsTimeZoneAllowed(name string) bool {
 	_, err := time.LoadLocation(name)
 	if err != nil {
-		Logger.Printf("error evaluating timezone %s ... %v", name, err)
+		log.Errorf("error evaluating timezone %s ... %v", name, err)
 		return false
 	}
 
@@ -605,7 +453,7 @@ func GetTranslatedSubject(language, translationID string, translationData map[st
 
 	subj, err := TranslateWithLang(language, translationID, translationData)
 	if err != nil {
-		ErrLogger.Printf("error translating '%s' notification subject, %s", translationID, err)
+		log.Errorf("error translating '%s' notification subject, %s", translationID, err)
 	}
 
 	return subj

@@ -13,11 +13,6 @@ const (
 	AuthTypeTwitter  = "twitter"
 )
 
-const (
-	envTypeKey    = "key"
-	envTypeSecret = "secret"
-)
-
 // Provider interface to be implemented by any auth providers
 type Provider interface {
 	Logout(c buffalo.Context) Response

@@ -8,7 +8,9 @@ import (
 	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop/v6"
 	"github.com/gobuffalo/validate/v3"
+
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/log"
 )
 
 type RequestHistory struct {
@@ -94,13 +96,13 @@ func (rH RequestHistory) popForRequest(tx *pop.Connection, request Request, curr
 		if domain.IsOtherThanNoRows(err) {
 			return err
 		}
-		domain.ErrLogger.Printf(
+		log.Errorf(
 			"error popping request histories for request id %v. None Found", request.ID)
 		return nil
 	}
 
 	if rH.Status != currentStatus {
-		domain.ErrLogger.Printf(
+		log.Errorf(
 			"error popping request histories for request id %v. Expected newStatus %s but found %s",
 			request.ID, currentStatus, rH.Status)
 		return nil

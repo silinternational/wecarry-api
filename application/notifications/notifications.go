@@ -1,6 +1,6 @@
 package notifications
 
-import "github.com/silinternational/wecarry-api/domain"
+import "github.com/silinternational/wecarry-api/log"
 
 const mailTemplatePath = "mail/"
 
@@ -16,7 +16,7 @@ func Send(msg Message) error {
 		if err := n.Send(msg); err != nil {
 			return err
 		}
-		domain.Logger.Printf("%T: %s message sent to %s", n, msg.Template, msg.ToEmail)
+		log.Infof("%T: %s message sent to %s", n, msg.Template, msg.ToEmail)
 	}
 
 	return nil
