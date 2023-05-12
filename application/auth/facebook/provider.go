@@ -22,6 +22,7 @@ import (
 
 	"github.com/silinternational/wecarry-api/auth"
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/log"
 )
 
 const (
@@ -76,7 +77,7 @@ func (p *Provider) AuthCallback(c buffalo.Context) auth.Response {
 
 	msg := auth.CheckSessionStore()
 	if msg != "" {
-		domain.Logger.Printf("got message from Facebook's CheckSessionStore() in AuthCallback ... %s", msg)
+		log.WithContext(c).Errorf("got message from Facebook's CheckSessionStore() in AuthCallback ... %s", msg)
 	}
 
 	value, err := auth.GetFromSession(ProviderName, req)
@@ -175,7 +176,6 @@ func (p *Provider) Debug(debug bool) {}
 
 // AuthRequest calls BeginAuth and returns the URL for the authentication end-point
 func (p *Provider) AuthRequest(c buffalo.Context) (string, error) {
-
 	req := c.Request()
 
 	sess, err := p.BeginAuth(auth.SetState(req))
@@ -327,12 +327,12 @@ func newConfig(provider *Provider, scopes []string) *oauth2.Config {
 	return c
 }
 
-//RefreshToken refresh token is not provided by facebook
+// RefreshToken refresh token is not provided by facebook
 func (p *Provider) RefreshToken(refreshToken string) (*oauth2.Token, error) {
 	return nil, errors.New("Refresh token is not provided by facebook")
 }
 
-//RefreshTokenAvailable refresh token is not provided by facebook
+// RefreshTokenAvailable refresh token is not provided by facebook
 func (p *Provider) RefreshTokenAvailable() bool {
 	return false
 }

@@ -11,6 +11,7 @@ import (
 
 	"github.com/silinternational/wecarry-api/domain"
 	"github.com/silinternational/wecarry-api/job"
+	"github.com/silinternational/wecarry-api/log"
 )
 
 // ServiceInput defines the input parameters to the "service" endpoint
@@ -78,7 +79,7 @@ func serviceHandler(c buffalo.Context) error {
 		return c.Error(http.StatusBadRequest, fmt.Errorf("error parsing request body, %s", err))
 	}
 
-	domain.Logger.Printf("scheduling service task '%s'", input.Task)
+	log.Infof("scheduling service task '%s'", input.Task)
 
 	if task, ok := serviceTasks[input.Task]; ok {
 		if err := task.Handler(c); err != nil {

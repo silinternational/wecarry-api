@@ -65,6 +65,9 @@ services:
 
   testdb:
     image: postgres:11.6
+    ports:
+    # expose the database port so testing can run locally, e.g. in Goland
+    - "5432:5432"
     environment:
       POSTGRES_USER: wecarry
       POSTGRES_PASSWORD: wecarry

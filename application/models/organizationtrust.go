@@ -10,6 +10,7 @@ import (
 	"github.com/gobuffalo/validate/v3/validators"
 
 	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/log"
 )
 
 // OrganizationTrust is the model for storing Organization connections, also known as OrganizationTrusts
@@ -96,7 +97,7 @@ func (o *OrganizationTrust) Remove(tx *pop.Connection, orgID1, orgID2 int) error
 		if domain.IsOtherThanNoRows(err) {
 			return err
 		}
-		domain.Logger.Printf("no record found when removing organization trust %d - %d", orgID1, orgID2)
+		log.Errorf("no record found when removing organization trust %d - %d", orgID1, orgID2)
 		return nil
 	}
 	return tx.Destroy(&trust)

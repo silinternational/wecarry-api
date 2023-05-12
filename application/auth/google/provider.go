@@ -13,9 +13,11 @@ import (
 
 	"github.com/gobuffalo/buffalo"
 	"github.com/markbates/goth"
+	"golang.org/x/oauth2"
+
 	"github.com/silinternational/wecarry-api/auth"
 	"github.com/silinternational/wecarry-api/domain"
-	"golang.org/x/oauth2"
+	"github.com/silinternational/wecarry-api/log"
 )
 
 const endpointProfile string = "https://www.googleapis.com/oauth2/v2/userinfo"
@@ -26,7 +28,6 @@ const ProviderName = "google"
 // You should always call `google.New` to get a new Provider. Never try to create
 // one manually.
 func New(config struct{ Key, Secret string }, jsonConfig json.RawMessage) (*Provider, error) {
-
 	// If jsonConfig is provided, use it. Otherwise, use the SocialAuthConfig
 	if len(jsonConfig) > 10 { // just some small number to see if it probably has valid data
 		if err := json.Unmarshal(jsonConfig, &config); err != nil {
@@ -84,7 +85,7 @@ func (p *Provider) AuthCallback(c buffalo.Context) auth.Response {
 
 	msg := auth.CheckSessionStore()
 	if msg != "" {
-		domain.Logger.Printf("got message from Google's CheckSessionStore() in AuthCallback ... %s", msg)
+		log.WithContext(c).Errorf("got message from Google's CheckSessionStore() in AuthCallback ... %s", msg)
 	}
 
 	value, err := auth.GetFromSession(ProviderName, req)
@@ -174,7 +175,6 @@ func (p *Provider) Debug(debug bool) {}
 
 // AuthRequest calls BeginAuth and returns the URL for the authentication end-point
 func (p *Provider) AuthRequest(c buffalo.Context) (string, error) {
-
 	req := c.Request()
 
 	sess, err := p.BeginAuth(auth.SetState(req))
@@ -293,12 +293,12 @@ func newConfig(provider *Provider, scopes []string) *oauth2.Config {
 	return c
 }
 
-//RefreshTokenAvailable refresh token is provided by auth provider or not
+// RefreshTokenAvailable refresh token is provided by auth provider or not
 func (p *Provider) RefreshTokenAvailable() bool {
 	return true
 }
 
-//RefreshToken get new access token based on the refresh token
+// RefreshToken get new access token based on the refresh token
 func (p *Provider) RefreshToken(refreshToken string) (*oauth2.Token, error) {
 	token := &oauth2.Token{RefreshToken: refreshToken}
 	ts := p.config.TokenSource(goth.ContextForClient(p.Client()), token)

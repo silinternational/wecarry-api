@@ -13,7 +13,7 @@ import (
 	"github.com/gofrs/uuid"
 
 	"github.com/silinternational/wecarry-api/api"
-	"github.com/silinternational/wecarry-api/domain"
+	"github.com/silinternational/wecarry-api/log"
 )
 
 // Watch is the model for storing request watches that trigger notifications on the conditions specified
@@ -226,7 +226,7 @@ func (w *Watch) LoadForAPI(tx *pop.Connection, user User) error {
 // matchesRequest returns true if all non-null watch criteria match the request
 func (w *Watch) matchesRequest(tx *pop.Connection, request Request) bool {
 	if w == nil {
-		domain.ErrLogger.Printf("nil receiver in Watch.matchesRequest")
+		log.Errorf("nil receiver in Watch.matchesRequest")
 		return false
 	}
 	matchFunctions := []func(*Watch, *pop.Connection, Request) bool{
@@ -247,7 +247,7 @@ func (w *Watch) matchesRequest(tx *pop.Connection, request Request) bool {
 // destinationMatches returns true if watch destination is not provided or passes the IsNear test
 func (w *Watch) destinationMatches(tx *pop.Connection, request Request) bool {
 	if w == nil {
-		domain.ErrLogger.Printf("nil receiver in Watch.destinationMatches")
+		log.Errorf("nil receiver in Watch.destinationMatches")
 		return false
 	}
 	if !w.DestinationID.Valid {
@@ -255,12 +255,12 @@ func (w *Watch) destinationMatches(tx *pop.Connection, request Request) bool {
 	}
 	requestDestination, err := request.GetDestination(tx)
 	if err != nil {
-		domain.ErrLogger.Printf("failed to get request %s destination in destinationMatches, %s", request.UUID, err)
+		log.Errorf("failed to get request %s destination in destinationMatches, %s", request.UUID, err)
 		return false
 	}
 	watchDestination, err := w.GetDestination(tx)
 	if err != nil {
-		domain.ErrLogger.Printf("failed to get watch %s destination in destinationMatches, %s", w.UUID, err)
+		log.Errorf("failed to get watch %s destination in destinationMatches, %s", w.UUID, err)
 	}
 
 	if watchDestination == nil {
@@ -273,7 +273,7 @@ func (w *Watch) destinationMatches(tx *pop.Connection, request Request) bool {
 // originMatches returns true if watch origin is not provided or passes the IsNear test
 func (w *Watch) originMatches(tx *pop.Connection, request Request) bool {
 	if w == nil {
-		domain.ErrLogger.Printf("nil receiver in Watch.originMatches")
+		log.Errorf("nil receiver in Watch.originMatches")
 		return false
 	}
 	if !w.OriginID.Valid {
@@ -281,7 +281,7 @@ func (w *Watch) originMatches(tx *pop.Connection, request Request) bool {
 	}
 	requestOrigin, err := request.GetOrigin(tx)
 	if err != nil {
-		domain.ErrLogger.Printf("failed to get request %s origin in originMatches, %s", request.UUID, err)
+		log.Errorf("failed to get request %s origin in originMatches, %s", request.UUID, err)
 		return false
 	}
 	if requestOrigin == nil {
@@ -290,7 +290,7 @@ func (w *Watch) originMatches(tx *pop.Connection, request Request) bool {
 
 	watchOrigin, err := w.GetOrigin(tx)
 	if err != nil {
-		domain.ErrLogger.Printf("failed to get watch %s origin in originMatches, %s", w.UUID, err)
+		log.Errorf("failed to get watch %s origin in originMatches, %s", w.UUID, err)
 	}
 	if watchOrigin == nil {
 		return true
@@ -301,7 +301,7 @@ func (w *Watch) originMatches(tx *pop.Connection, request Request) bool {
 // meetingMatches returns true if watch meeting is not provided or is identical to the request meeting
 func (w *Watch) meetingMatches(tx *pop.Connection, request Request) bool {
 	if w == nil {
-		domain.ErrLogger.Printf("nil receiver in Watch.meetingMatches")
+		log.Errorf("nil receiver in Watch.meetingMatches")
 		return false
 	}
 	if !w.MeetingID.Valid {
@@ -313,7 +313,7 @@ func (w *Watch) meetingMatches(tx *pop.Connection, request Request) bool {
 // textMatches returns true if watch text is not provided or is in the request title, description or creator's nickname
 func (w *Watch) textMatches(tx *pop.Connection, request Request) bool {
 	if w == nil {
-		domain.ErrLogger.Printf("nil receiver in Watch.textMatches")
+		log.Errorf("nil receiver in Watch.textMatches")
 		return false
 	}
 	if !w.SearchText.Valid {
@@ -327,7 +327,7 @@ func (w *Watch) textMatches(tx *pop.Connection, request Request) bool {
 	}
 	creator, err := request.Creator(tx)
 	if err != nil {
-		domain.ErrLogger.Printf("failed to get request %s creator in textMatches, %s", request.UUID, err)
+		log.Errorf("failed to get request %s creator in textMatches, %s", request.UUID, err)
 		return false
 	}
 	if strings.Contains(creator.Nickname, w.SearchText.String) {
@@ -339,7 +339,7 @@ func (w *Watch) textMatches(tx *pop.Connection, request Request) bool {
 // sizeMatches returns true if watch size is larger or the same as the request size
 func (w *Watch) sizeMatches(tx *pop.Connection, request Request) bool {
 	if w == nil {
-		domain.ErrLogger.Printf("nil receiver in Watch.sizeMatches")
+		log.Errorf("nil receiver in Watch.sizeMatches")
 		return false
 	}
 	if w.Size == nil {

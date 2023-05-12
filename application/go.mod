@@ -4,6 +4,7 @@ go 1.18
 
 require (
 	github.com/aws/aws-sdk-go v1.44.216
+	github.com/getsentry/sentry-go v0.20.0
 	github.com/go-redis/cache/v8 v8.4.4
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/gobuffalo/buffalo v1.1.0
@@ -26,12 +27,12 @@ require (
 	github.com/mrjones/oauth v0.0.0-20190623134757-126b35219450
 	github.com/paganotoni/sendgrid-sender v1.0.8
 	github.com/pkg/errors v0.9.1
-	github.com/rollbar/rollbar-go v1.4.5
 	github.com/rs/cors v1.8.3
 	github.com/russellhaering/gosaml2 v0.9.1
 	github.com/russellhaering/goxmldsig v1.3.0
 	github.com/sendgrid/sendgrid-go v3.12.0+incompatible
-	github.com/stretchr/testify v1.8.1
+	github.com/sirupsen/logrus v1.9.0
+	github.com/stretchr/testify v1.8.2
 	golang.org/x/image v0.6.0
 	golang.org/x/oauth2 v0.6.0
 	jaytaylor.com/html2text v0.0.0-20211105163654-bc68cce691ba
@@ -100,7 +101,6 @@ require (
 	github.com/rogpeppe/go-internal v1.9.0 // indirect
 	github.com/sendgrid/rest v2.6.9+incompatible // indirect
 	github.com/sergi/go-diff v1.3.1 // indirect
-	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d // indirect
 	github.com/sourcegraph/syntaxhighlight v0.0.0-20170531221838-bd320f5d308e // indirect
 	github.com/spf13/cobra v1.6.1 // indirect
@@ -117,7 +117,7 @@ require (
 	golang.org/x/term v0.6.0 // indirect
 	golang.org/x/text v0.8.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/protobuf v1.28.1 // indirect
+	google.golang.org/protobuf v1.29.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
