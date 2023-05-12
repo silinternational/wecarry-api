@@ -27,7 +27,6 @@ require (
 	github.com/mrjones/oauth v0.0.0-20190623134757-126b35219450
 	github.com/paganotoni/sendgrid-sender v1.0.8
 	github.com/pkg/errors v0.9.1
-	github.com/rollbar/rollbar-go v1.4.5
 	github.com/rs/cors v1.8.3
 	github.com/russellhaering/gosaml2 v0.9.1
 	github.com/russellhaering/goxmldsig v1.3.0
