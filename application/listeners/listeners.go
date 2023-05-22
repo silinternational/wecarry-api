@@ -134,15 +134,15 @@ func userCreatedAddToMarketingList(e events.Event) {
 
 	// ensure env vars are present
 	if domain.Env.MailChimpAPIKey == "" {
-		log.Errorf("missing required env var for MAILCHIMP_API_KEY. need to add %s to list", user.Email)
+		log.Infof("missing env var for MAILCHIMP_API_KEY. need to add %s to list", user.Email)
 		return
 	}
 	if domain.Env.MailChimpListID == "" {
-		log.Errorf("missing required env var for MAILCHIMP_LIST_ID. need to add %s to list", user.Email)
+		log.Infof("missing env var for MAILCHIMP_LIST_ID. need to add %s to list", user.Email)
 		return
 	}
 	if domain.Env.MailChimpUsername == "" {
-		log.Errorf("missing required env var for MAILCHIMP_USERNAME. need to add %s to list", user.Email)
+		log.Infof("missing env var for MAILCHIMP_USERNAME. need to add %s to list", user.Email)
 		return
 	}
 
