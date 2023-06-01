@@ -218,23 +218,25 @@ func (u *User) FindOrCreateFromAuthUser(tx *pop.Connection, orgID int, authUser 
 		}
 	}
 
-	if err := u.hydrateFromAuthUser(tx, authUser, ""); err != nil {
-		return err
-	}
+	//if err := u.hydrateFromAuthUser(tx, authUser, ""); err != nil {
+	//	return err
+	//}
 
 	if len(userOrgs) == 0 {
-		userOrg := &UserOrganization{
-			OrganizationID: orgID,
-			UserID:         u.ID,
-			Role:           UserOrganizationRoleUser,
-			AuthID:         authUser.UserID,
-			AuthEmail:      u.Email,
-			LastLogin:      time.Now(),
-		}
-		err = userOrg.Create(tx)
-		if err != nil {
-			return fmt.Errorf("unable to create new user_organization record: %s", err.Error())
-		}
+		//userOrg := &UserOrganization{
+		//	OrganizationID: orgID,
+		//	UserID:         u.ID,
+		//	Role:           UserOrganizationRoleUser,
+		//	AuthID:         authUser.UserID,
+		//	AuthEmail:      u.Email,
+		//	LastLogin:      time.Now(),
+		//}
+		//err = userOrg.Create(tx)
+		//if err != nil {
+		//	return fmt.Errorf("unable to create new user_organization record: %s", err.Error())
+		//}
+
+		return fmt.Errorf("no new user accounts can be created at this time")
 	}
 
 	return nil

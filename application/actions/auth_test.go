@@ -7,6 +7,7 @@ import (
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/buffalo/render"
 	"github.com/gobuffalo/logger"
+
 	"github.com/silinternational/wecarry-api/internal/test"
 
 	"github.com/silinternational/wecarry-api/auth"
@@ -399,6 +400,7 @@ func (as *ActionSuite) TestGetUserOrgs() {
 
 func (as *ActionSuite) Test_newAuthUser() {
 	t := as.T()
+	t.Skip("new account creation is disabled during app deprecation phase")
 	orgFixture := Fixtures_newAuthUser(as, t).orgs[0]
 
 	newEmail := "new@example.com"
