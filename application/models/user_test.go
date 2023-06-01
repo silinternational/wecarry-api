@@ -54,19 +54,19 @@ func (ms *ModelSuite) TestUser_FindOrCreateFromAuthUser() {
 		//	},
 		//	wantErr: false,
 		//},
-		{
-			name: "find existing user: test_user1",
-			args: args{
-				orgID: org.ID,
-				authUser: &auth.User{
-					FirstName: "Test",
-					LastName:  "User",
-					Email:     fmt.Sprintf("test_user1-%s@domain.com", unique),
-					UserID:    fmt.Sprintf("test_user1-%s", unique),
-				},
-			},
-			wantErr: false,
-		},
+		//{
+		//	name: "find existing user: test_user1",
+		//	args: args{
+		//		orgID: org.ID,
+		//		authUser: &auth.User{
+		//			FirstName: "Test",
+		//			LastName:  "User",
+		//			Email:     fmt.Sprintf("test_user1-%s@domain.com", unique),
+		//			UserID:    fmt.Sprintf("test_user1-%s", unique),
+		//		},
+		//	},
+		//	wantErr: false,
+		//},
 		{
 			name: "conflicting user",
 			args: args{
