@@ -218,9 +218,9 @@ func (u *User) FindOrCreateFromAuthUser(tx *pop.Connection, orgID int, authUser 
 		}
 	}
 
-	if err := u.hydrateFromAuthUser(tx, authUser, ""); err != nil {
-		return err
-	}
+	//if err := u.hydrateFromAuthUser(tx, authUser, ""); err != nil {
+	//	return err
+	//}
 
 	if len(userOrgs) == 0 {
 		//userOrg := &UserOrganization{
