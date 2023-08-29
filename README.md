@@ -1,3 +1,7 @@
+# Archived
+
+WeCarry has been discontinued and will not be developed further
+
 # Welcome to the WeCarry.App server code!
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/silinternational/wecarry-api)](https://goreportcard.com/report/github.com/silinternational/wecarry-api)
